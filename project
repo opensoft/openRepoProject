@@ -550,7 +550,7 @@ def update(args):
     report["updates"] = [
         {"component": "shape", "detail": "Use openRepoShape update-shape.py check/apply; --shape-source selects its checkout"},
         {"component": "workflow", "detail": "Refresh through setup-openspeckit --repo PATH"},
-        {"component": "bench", "detail": "Refresh project configuration through workBenches scripts/update-project.sh"},
+        {"component": "bench", "detail": "Refresh project configuration through the profile's exact registered update-TYPE generator"},
         {"component": "tools", "detail": "Open workBenches setup for explicit tool/environment selection"},
     ]
     if not args.apply:
