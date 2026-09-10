@@ -13,7 +13,7 @@ or generate an application directly in pinned spec/code legs.
 ## Decisions
 
 Use Python 3.10+ with PyYAML for safe manifest parsing, argument arrays for
-subprocesses, and a reproducible zipapp for distribution. YAML is a real parser,
+subprocesses, and a standalone executable for distribution. YAML is a real parser,
 not a second partial manifest grammar. The launcher reports the dependency if absent.
 Resolve configured paths relative to workBenches; accept only contained scripts.
 Keep providers as subprocess delegates and preserve exit codes/output.
@@ -25,7 +25,7 @@ Doctor/status inspect local state only, with optional read-only validator calls.
 Update reports local Git tracking state and offers explicit component delegation;
 no default pull/install. Status never calls bootstrap or fetch.
 Read a portable .project.json profile for bench/container selection.
-WorkBenches installs a SHA-256 verified zipapp from a commit-pinned raw file,
+WorkBenches installs a SHA-256 verified executable from a commit-pinned raw file,
 using the authenticated GitHub API before raw download; explicit local source
 is supported for development. Install atomically and refuse symlink targets.
 

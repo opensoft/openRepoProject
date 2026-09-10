@@ -1,0 +1,2 @@
+# Only YAML estate/workspace inspection needs this dependency.
+PyYAML>=6.0,<7
