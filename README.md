@@ -86,6 +86,28 @@ Tracking and handoff information are explicitly local and may be stale.
 can access upstream and their output is preserved. Pin correctness is delegated
 to them and is not implied by a normal status report.
 
+## Clean up Git worktrees
+
+```sh
+project clean
+project clean /path/to/project --json
+project clean --apply --action push --branch 001-feature --yes
+project clean --apply --action remove --worktree /path/to/feature-tree --yes
+project clean --apply --action delete-branch --branch 001-feature --yes
+```
+
+`clean` is read-only by default. It inspects all linked worktrees using local
+refs and labels remote comparisons as of the last fetch. It protects the
+default branch and preserves dirty, detached, unpublished, remote-gone and
+unmerged work. A pushed-but-unmerged branch is handed off to the repository's
+normal pull-request or merge process.
+
+Apply actions are always explicit and target one branch or worktree. Pushes
+are normal non-force pushes. A worktree can be removed only when it is clean,
+non-current and verified merged into the local default branch; deleting its
+local branch is a separate action. `clean` never fetches, stashes, resets,
+force-pushes, creates or merges pull requests, or replaces `park`/`resume`.
+
 A portable profile may declare:
 
 ```json

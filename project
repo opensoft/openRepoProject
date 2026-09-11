@@ -315,16 +315,203 @@ def repo_state(root):
     current = {}
     for line in (git_text(root, "worktree", "list", "--porcelain") or "").splitlines():
         if line.startswith("worktree "):
-            current = {"path": line[9:]}
+            current = {"path": line[9:], "present": Path(line[9:]).is_dir()}
             worktrees.append(current)
+        elif line.startswith("HEAD "):
+            current["head"] = line[5:]
         elif line.startswith("branch "):
             current["branch"] = line[7:].removeprefix("refs/heads/")
         elif line == "detached":
             current["branch"] = "detached"
+        elif line.startswith("prunable "):
+            current["prunable"] = True
+    for tree in worktrees:
+        tree_path = Path(tree["path"])
+        if not tree["present"]:
+            tree["classification"] = "stale-worktree"
+            tree["recommendation"] = "Review the stale worktree metadata before pruning it manually."
+            continue
+        tree_status = git(tree_path, "status", "--porcelain=v1", "--untracked-files=normal")
+        tree["dirty"] = bool(tree_status.stdout) if tree_status.returncode == 0 else None
+        tree["current"] = tree_path.resolve() == root.resolve()
+        tree["upstream"] = None
+        tree["ahead"] = tree["behind"] = None
+        if tree.get("branch") and tree["branch"] != "detached":
+            tree["upstream"] = git_text(tree_path, "rev-parse", "--abbrev-ref", "@{upstream}")
+            if tree["upstream"]:
+                delta = git_text(tree_path, "rev-list", "--left-right", "--count", "HEAD...@{upstream}")
+                if delta:
+                    tree["ahead"], tree["behind"] = map(int, delta.split())
     return {"path": str(root), "present": True, "branch": branch or "detached",
             "head": head, "dirty": bool(status.stdout), "upstream": upstream,
             "ahead": ahead, "behind": behind, "tracking_freshness": "local refs only; no fetch",
             "worktrees": worktrees}
+
+
+def default_branch(root, declared=None):
+    """Return the local branch used as the cleanup merge target."""
+    candidates = [declared, git_text(root, "symbolic-ref", "--short", "refs/remotes/origin/HEAD"),
+                  "main", "master"]
+    for candidate in candidates:
+        if not isinstance(candidate, str) or not candidate:
+            continue
+        candidate = candidate.removeprefix("origin/")
+        if git(root, "show-ref", "--verify", "--quiet", f"refs/heads/{candidate}").returncode == 0:
+            return candidate
+    return git_text(root, "symbolic-ref", "--quiet", "--short", "HEAD") or "main"
+
+
+def ancestor(root, commit, branch):
+    if not commit or not branch:
+        return None
+    result = git(root, "merge-base", "--is-ancestor", commit, f"refs/heads/{branch}")
+    return True if result.returncode == 0 else False if result.returncode == 1 else None
+
+
+def cleanup_report(root):
+    state = repo_state(root)
+    if not state.get("present"):
+        raise Refused(f"Cannot inspect Git repository at {root}")
+    _, data = manifest(root)
+    target = default_branch(root, data.get("tracking_branch"))
+    active_path = Path.cwd().resolve()
+    worktrees = []
+    for source in state["worktrees"]:
+        row = dict(source)
+        if row.get("present"):
+            tree_path = Path(row["path"]).resolve()
+            row["current"] = active_path == tree_path or active_path.is_relative_to(tree_path)
+        branch = row.get("branch", "detached")
+        row["merged_into_target"] = None
+        row["remote_present"] = None
+        if row.get("present") and branch != "detached":
+            row["merged_into_target"] = ancestor(root, row.get("head"), target)
+            if row.get("upstream"):
+                row["remote_present"] = git(root, "rev-parse", "--verify", "--quiet", row["upstream"]).returncode == 0
+        if not row.get("present"):
+            classification = "stale-worktree"
+            recommendation = "Review and prune stale worktree metadata manually."
+        elif branch == target:
+            classification = "protected-default"
+            recommendation = "Keep the default branch; use the repository's normal push or PR process."
+        elif row.get("dirty") is None:
+            classification = "inspection-error"
+            recommendation = "Preserve this worktree; Git could not establish its clean state."
+        elif row.get("dirty"):
+            classification = "dirty"
+            recommendation = "Preserve or commit the working changes before cleanup."
+        elif branch == "detached":
+            classification = "detached"
+            recommendation = "Preserve the detached commit or attach it to a named branch before cleanup."
+        elif not row.get("upstream"):
+            classification = "unpublished"
+            recommendation = "Push or otherwise preserve the branch before removing its worktree."
+        elif row.get("remote_present") is False:
+            classification = "remote-gone"
+            recommendation = "Confirm the branch should be republished before removing local work."
+        elif row.get("ahead", 0) > 0:
+            classification = "unpushed"
+            recommendation = "Use an explicit clean push, then continue through the normal review process."
+        elif row.get("merged_into_target") is True and not row.get("current"):
+            classification = "merged-removable"
+            recommendation = "This clean, merged, non-current worktree may be removed explicitly."
+        elif row.get("merged_into_target") is True:
+            classification = "merged-current"
+            recommendation = "The branch is merged, but this is the current checkout; switch away before removal."
+        elif row.get("merged_into_target") is None:
+            classification = "review-required"
+            recommendation = "Merge state could not be established from local refs; preserve it for review."
+        else:
+            classification = "pushed-unmerged"
+            recommendation = "Continue through the repository's normal pull-request or merge process."
+        row["classification"] = classification
+        row["recommendation"] = recommendation
+        worktrees.append(row)
+    return {"root": str(root), "target_branch": target,
+            "tracking_freshness": "local refs only; remote information is as of the last fetch; no fetch performed",
+            "worktrees": worktrees}
+
+
+def print_clean_report(report, as_json):
+    if as_json:
+        print(json.dumps(report, indent=2))
+        return
+    print(f"Cleanup plan for {report['root']}")
+    print(f"Merge target: {report['target_branch']}")
+    print(f"Freshness: {report['tracking_freshness']}")
+    for row in report["worktrees"]:
+        branch = row.get("branch", "unknown")
+        upstream = row.get("upstream") or "none"
+        delta = "unknown" if row.get("ahead") is None else f"ahead={row['ahead']}, behind={row['behind']}"
+        print(f"{row['classification'].upper()}: {row['path']} [{branch}] "
+              f"dirty={row.get('dirty', 'unknown')}; upstream={upstream}; {delta}; "
+              f"merged={row.get('merged_into_target', 'unknown')}")
+        print(f"  {row['recommendation']}")
+
+
+def clean(args):
+    root = discover(args.target)
+    if args.json and args.apply:
+        raise Refused("--json cannot be combined with --apply; use JSON for the read-only plan.")
+    report = cleanup_report(root)
+    if not args.apply:
+        print_clean_report(report, args.json)
+        return 0
+    if not args.action:
+        raise Refused("--apply requires --action push|remove|delete-branch")
+    rows = report["worktrees"]
+    if args.action == "push":
+        if not args.branch:
+            raise Refused("Push cleanup requires --branch BRANCH")
+        matches = [row for row in rows if row.get("branch") == args.branch]
+        if len(matches) != 1:
+            raise Refused(f"No unique linked worktree found for branch {args.branch}")
+        row = matches[0]
+        if row.get("branch") == report["target_branch"]:
+            raise Refused("The default branch is protected; use its normal repository workflow.")
+        if row.get("dirty") is not False:
+            raise Refused(f"Cannot push {args.branch}; its worktree is dirty, missing, or unreadable.")
+        if row.get("branch") == "detached":
+            raise Refused("Cannot push a detached worktree; name the branch first.")
+        if row.get("upstream"):
+            remote, separator, remote_branch = row["upstream"].partition("/")
+            if not separator or not remote or remote_branch != args.branch:
+                raise Refused(f"Unsupported upstream mapping for {args.branch}: {row['upstream']}")
+            command = ["git", "-C", str(root), "push", remote, args.branch]
+        else:
+            if not git_text(root, "remote", "get-url", "origin"):
+                raise Refused("Cannot publish a branch without an origin remote.")
+            command = ["git", "-C", str(root), "push", "-u", "origin", args.branch]
+        print(f"Cleanup action: push branch {args.branch}")
+    elif args.action == "remove":
+        if not args.worktree:
+            raise Refused("Worktree cleanup requires --worktree PATH")
+        wanted = Path(args.worktree).expanduser().resolve()
+        matches = [row for row in rows if Path(row["path"]).resolve() == wanted]
+        if len(matches) != 1:
+            raise Refused(f"No unique linked worktree found at {wanted}")
+        row = matches[0]
+        if row.get("current"):
+            raise Refused("Cannot remove the current worktree.")
+        if row.get("classification") != "merged-removable":
+            raise Refused(f"Worktree is {row.get('classification')}; only clean merged worktrees may be removed.")
+        command = ["git", "-C", str(root), "worktree", "remove", str(wanted)]
+        print(f"Cleanup action: remove merged worktree {wanted}")
+    else:
+        if not args.branch:
+            raise Refused("Branch cleanup requires --branch BRANCH")
+        matches = [row for row in rows if row.get("branch") == args.branch]
+        if args.branch == report["target_branch"]:
+            raise Refused("The default branch is protected and cannot be deleted.")
+        if matches and any(row.get("present") and row.get("branch") == args.branch for row in matches):
+            raise Refused("Remove the linked worktree first; branch deletion is a separate action.")
+        if ancestor(root, git_text(root, "rev-parse", "--verify", f"refs/heads/{args.branch}"), report["target_branch"]) is not True:
+            raise Refused(f"Branch {args.branch} is not verified as merged into {report['target_branch']}.")
+        command = ["git", "-C", str(root), "branch", "-d", args.branch]
+        print(f"Cleanup action: delete verified merged local branch {args.branch}")
+    show_plan([command], root)
+    confirm(args.yes)
+    return execute(command)
 
 
 def profile(root):
@@ -653,6 +840,15 @@ def parser():
             sub.add_argument("--branch")
             sub.add_argument("--yes", action="store_true")
             sub.add_argument("--dry-run", action="store_true")
+    cleaning = commands.add_parser("clean", help="Audit and explicitly clean Git worktrees")
+    cleaning.add_argument("target", nargs="?", help="Project path or name; defaults to current project")
+    cleaning.add_argument("--json", action="store_true", help="Print the read-only cleanup plan as JSON")
+    cleaning.add_argument("--apply", action="store_true", help="Apply one explicitly selected cleanup action")
+    cleaning.add_argument("--action", choices=("push", "remove", "delete-branch"),
+                          help="Action to apply; requires --apply")
+    cleaning.add_argument("--branch", help="Branch target for push or delete-branch")
+    cleaning.add_argument("--worktree", help="Worktree path target for remove")
+    cleaning.add_argument("--yes", action="store_true", help="Confirm the selected cleanup action")
     for sub in (creation, listing):
         sub.add_argument("--workbenches", help="workBenches checkout")
     creation.add_argument("--yes", action="store_true", help="Confirm bench creation; shape prompts are retained")
@@ -675,6 +871,8 @@ def main(argv=None):
             return 0
         if args.command == "update":
             return update(args)
+        if args.command == "clean":
+            return clean(args)
         return inspect_project(args)
     except (Refused, OSError) as exc:
         if getattr(args, "json", False):

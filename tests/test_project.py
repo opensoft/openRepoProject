@@ -4,6 +4,7 @@ import importlib.util
 import json
 import os
 from pathlib import Path
+import shutil
 import subprocess
 import sys
 import tempfile
@@ -253,6 +254,113 @@ class ProjectTests(unittest.TestCase):
                               "--at", "a" * 40, "--yes")
         self.assertEqual(result.returncode, 9, result.stderr)
         self.assertTrue(result.stdout.endswith("check\napply\n"), result.stdout)
+
+    def test_clean_is_read_only_and_classifies_linked_worktrees(self):
+        root = self.repo()
+        tree = self.base / "feature-tree"
+        self.git(root, "worktree", "add", "-b", "001-feature", str(tree))
+        before = self.git(root, "worktree", "list", "--porcelain")
+        result = self.run_cli("clean", root, "--json")
+        self.assertEqual(result.returncode, 0, result.stderr)
+        report = json.loads(result.stdout)
+        self.assertEqual(report["target_branch"], "main")
+        self.assertIn("last fetch", report["tracking_freshness"])
+        by_branch = {row["branch"]: row for row in report["worktrees"]}
+        self.assertEqual(by_branch["main"]["classification"], "protected-default")
+        self.assertEqual(by_branch["001-feature"]["classification"], "unpublished")
+        self.assertEqual(before, self.git(root, "worktree", "list", "--porcelain"))
+        self.assertTrue(tree.is_dir())
+
+    def test_clean_refuses_unmerged_worktree_removal(self):
+        root = self.repo()
+        tree = self.base / "feature-tree"
+        self.git(root, "worktree", "add", "-b", "001-feature", str(tree))
+        (tree / "work").write_text("preserve")
+        self.commit(tree)
+        result = self.run_cli("clean", root, "--apply", "--action", "remove",
+                              "--worktree", tree, "--yes")
+        self.assertEqual(result.returncode, 2)
+        self.assertIn("unpublished", result.stderr)
+        self.assertTrue(tree.is_dir())
+        result = self.run_cli("clean", root, "--apply", "--action", "delete-branch",
+                              "--branch", "001-feature", "--yes")
+        self.assertEqual(result.returncode, 2)
+        result = self.run_cli("clean", root, "--apply", "--action", "delete-branch",
+                              "--branch", "main", "--yes")
+        self.assertEqual(result.returncode, 2)
+
+    def test_clean_removes_only_merged_worktree_and_keeps_branch(self):
+        root = self.repo()
+        remote = self.base / "remote.git"
+        subprocess.run(["git", "init", "--bare", str(remote)], env=self.env, check=True,
+                       text=True, capture_output=True)
+        self.git(root, "remote", "add", "origin", remote)
+        tree = self.base / "feature-tree"
+        self.git(root, "worktree", "add", "-b", "001-feature", str(tree))
+        (tree / "work").write_text("done")
+        self.commit(tree)
+        self.git(tree, "push", "-u", "origin", "001-feature")
+        self.git(root, "-c", "user.name=Test", "-c", "user.email=test@example.invalid",
+                 "merge", "--no-ff", "001-feature", "-m", "merge feature")
+        result = self.run_cli("clean", root, "--apply", "--action", "remove",
+                              "--worktree", tree, "--yes")
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertFalse(tree.exists())
+        self.assertEqual(self.git(root, "show-ref", "--verify", "--quiet", "refs/heads/001-feature"), "")
+        result = self.run_cli("clean", root, "--apply", "--action", "delete-branch",
+                              "--branch", "001-feature", "--yes")
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertIsNone(module.git_text(root, "show-ref", "--verify", "--quiet", "refs/heads/001-feature"))
+
+    def test_clean_pushes_explicit_clean_feature_branch_without_force(self):
+        root = self.repo()
+        remote = self.base / "remote.git"
+        subprocess.run(["git", "init", "--bare", str(remote)], env=self.env, check=True,
+                       text=True, capture_output=True)
+        self.git(root, "remote", "add", "origin", remote)
+        tree = self.base / "feature-tree"
+        self.git(root, "worktree", "add", "-b", "001-feature", str(tree))
+        self.git(tree, "push", "-u", "origin", "001-feature")
+        (tree / "work").write_text("publish")
+        self.commit(tree)
+        result = self.run_cli("clean", root, "--apply", "--action", "push",
+                              "--branch", "001-feature", "--yes")
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(self.git(tree, "rev-parse", "HEAD"),
+                         self.git(root, "rev-parse", "refs/remotes/origin/001-feature"))
+
+    def test_clean_reports_dirty_detached_and_pushed_unmerged_states(self):
+        root = self.repo()
+        remote = self.base / "remote.git"
+        subprocess.run(["git", "init", "--bare", str(remote)], env=self.env, check=True,
+                       text=True, capture_output=True)
+        self.git(root, "remote", "add", "origin", remote)
+        feature = self.base / "feature-tree"
+        detached = self.base / "detached-tree"
+        dirty = self.base / "dirty-tree"
+        self.git(root, "worktree", "add", "-b", "001-feature", str(feature))
+        self.git(feature, "push", "-u", "origin", "001-feature")
+        (feature / "review-work").write_text("review")
+        self.commit(feature)
+        self.git(feature, "push", "origin", "001-feature")
+        self.git(root, "worktree", "add", "--detach", str(detached))
+        self.git(root, "worktree", "add", "-b", "001-dirty", str(dirty))
+        (dirty / "uncommitted").write_text("preserve")
+        report = json.loads(self.run_cli("clean", root, "--json", cwd=feature).stdout)
+        by_branch = {row["branch"]: row for row in report["worktrees"]}
+        self.assertEqual(by_branch["001-feature"]["classification"], "pushed-unmerged")
+        self.assertTrue(by_branch["001-feature"]["current"])
+        self.assertEqual(by_branch["detached"]["classification"], "detached")
+        self.assertEqual(by_branch["001-dirty"]["classification"], "dirty")
+
+    def test_clean_reports_stale_worktree_metadata(self):
+        root = self.repo()
+        tree = self.base / "stale-tree"
+        self.git(root, "worktree", "add", "-b", "001-stale", str(tree))
+        shutil.rmtree(tree)
+        report = json.loads(self.run_cli("clean", root, "--json").stdout)
+        stale = next(row for row in report["worktrees"] if row["path"] == str(tree))
+        self.assertEqual(stale["classification"], "stale-worktree")
 
 
 if __name__ == "__main__":
