@@ -7,4 +7,4 @@
 
 - [x] 2.1 Update cleanup documentation to describe paired local branch retirement and retained safety boundaries; verify documented commands match CLI behavior.
 - [x] 2.2 Run the complete offline test suite, diff checks, strict OpenSpec validation, and a read-only cleanup audit; verify all pass before review.
-- [ ] 2.3 Commit and push the governed change on `cleanup`, request review, and resolve any resulting review findings with regression evidence.
+- [x] 2.3 Commit and push the governed change on `cleanup`, request review, and resolve any resulting review findings with regression evidence.
