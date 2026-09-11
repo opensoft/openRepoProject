@@ -41,7 +41,7 @@ def read_yaml(path):
         raise Refused("YAML inspection needs PyYAML; use a workBench with python3-yaml installed.") from exc
     try:
         value = yaml.safe_load(path.read_text())
-    except (OSError, yaml.YAMLError) as exc:
+    except (OSError, UnicodeError, yaml.YAMLError) as exc:
         raise Refused(f"Cannot read {path}: {exc}") from exc
     if not isinstance(value, dict):
         raise Refused(f"Expected a mapping in {path}")
@@ -716,6 +716,12 @@ def snapshot(root, visited=None):
     return result
 
 
+def nested_snapshot(item):
+    """Whether a child has the complete snapshot shape used for recursion."""
+    return (isinstance(item, dict) and isinstance(item.get("repository"), dict)
+            and isinstance(item.get("kind"), str))
+
+
 def check_rows(report):
     rows = []
     def add(level, name, detail):
@@ -734,7 +740,7 @@ def check_rows(report):
         if item["kind"] == "project-manifest" and not item["park_ready"]:
             add("warning", "park/resume", "Overlay scripts are missing or not executable; refresh setup-openspeckit")
         for child in item["children"]:
-            if "repository" in child:
+            if nested_snapshot(child):
                 walk(child)
             elif not child.get("present"):
                 add("error", child["path"], "Missing checkout; use the estate's bootstrap/siblings command")
@@ -765,7 +771,7 @@ def print_report(report, as_json):
         for record in item["handoff"].get("records", []):
             print(f"{indent}    Parked {record['parked_at']}; {record['features']} feature(s); {record['record']}")
         for child in item["children"]:
-            if "repository" in child:
+            if nested_snapshot(child):
                 walk(child, indent + "  ")
             else:
                 print(f"{indent}  {child['role']}: {child['path']} — {child.get('branch', 'missing')}; dirty={child.get('dirty', 'unknown')}")
@@ -811,7 +817,7 @@ def inspect_project(args):
                     else:
                         checks.append({"level": "error", "check": name, "detail": f"Required shape validator missing: {script}"})
                 for child in item["children"]:
-                    if "repository" in child:
+                    if nested_snapshot(child):
                         validate(child)
             validate(report)
         report["checks"] = checks
@@ -823,7 +829,7 @@ def inspect_project(args):
 def update_child_states(item):
     """Yield every child checkout state, including nested family members."""
     for child in item["children"]:
-        if "repository" not in child:
+        if not nested_snapshot(child):
             yield child
             continue
         state = {**child["repository"], "path": child["root"],

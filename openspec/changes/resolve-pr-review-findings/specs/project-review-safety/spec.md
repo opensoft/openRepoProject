@@ -56,3 +56,25 @@ branch. Shape updates MUST retain the shape owner's confirmation interaction.
 
 - **WHEN** a user applies a shape update without `--yes`
 - **THEN** the delegated shape command retains its own confirmation prompt
+
+### Requirement: Reports safely distinguish nested estates from project legs
+
+Human-readable status and doctor reports SHALL recurse only into full nested
+estate snapshots. A declared project leg represented by repository state SHALL
+be rendered as a single leg row without requiring family-snapshot fields.
+
+#### Scenario: Human-readable report includes a checked-out project leg
+
+- **WHEN** a project manifest declares a present leg
+- **THEN** status and doctor render the leg state without a traceback
+
+### Requirement: YAML decoding errors are structured refusals
+
+Every YAML input read by the command SHALL turn an invalid text encoding into a
+normal refusal. JSON mode MUST preserve its structured error output and exit
+code 2 rather than printing a traceback.
+
+#### Scenario: Manifest is not valid UTF-8 text
+
+- **WHEN** a project or family manifest contains invalid UTF-8 bytes
+- **THEN** status refuses with structured JSON error output and no traceback

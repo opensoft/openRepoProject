@@ -17,8 +17,8 @@ diagnostic command into a source of data loss or arbitrary configuration errors.
 
 - Fetch remote state, resolve divergent branches, or change PR/merge policy.
 - Interpret unknown profile fields as configuration; they remain private data.
-- Repair generated Speckit tooling or invent project governance beyond the
-  current review findings.
+- Change Speckit hook behavior or invent project governance beyond the current
+  review findings.
 
 ## Decisions
 
@@ -55,6 +55,18 @@ diagnostic command into a source of data loss or arbitrary configuration errors.
    yields repository state from project legs and family-member snapshots so the
    same guard can reject missing, dirty, detached, or feature state.
 
+7. **Distinguish a full estate snapshot from shallow leg state.** Only a child
+   with both a manifest kind and repository snapshot can recurse in human or
+   validation reports; a project leg remains a one-line repository state.
+
+8. **Treat invalid YAML text as invalid YAML input.** The YAML reader catches
+   decoding errors alongside filesystem and parser errors so normal CLI error
+   formatting remains the sole error path.
+
+9. **Match registered Claude commands to local skill bundles.** The Git
+   extension's `claude` registry lists commands invoked by core/hook workflows;
+   each name maps from dots to hyphens to a committed `.claude/skills` bundle.
+
 ## Risks / Trade-offs
 
 - [Ignored generated files block a cleanup] → Preservation is preferable; a
@@ -64,6 +76,9 @@ diagnostic command into a source of data loss or arbitrary configuration errors.
   deletion in atypical repositories.
 - [Second inspection sees concurrent changes] → The command refuses instead of
   applying an action that no longer matches the displayed plan.
+- [A generated skill bundle drifts from its source] → Copy the matching
+  user-global Claude bundle and verify every registered command has a local
+  `SKILL.md`.
 
 ## Migration Plan
 

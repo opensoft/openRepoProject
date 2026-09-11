@@ -145,6 +145,14 @@ class ProjectTests(unittest.TestCase):
         self.assertEqual(result.returncode, 2)
         self.assertIn("error", json.loads(result.stdout))
 
+    def test_invalid_yaml_encoding_is_a_structured_error(self):
+        root = self.repo()
+        (root / "project.yaml").write_bytes(b"kind: \xff\n")
+        result = self.run_cli("status", root, "--json")
+        self.assertEqual(result.returncode, 2)
+        self.assertIn("error", json.loads(result.stdout))
+        self.assertNotIn("Traceback", result.stderr)
+
     def test_status_from_nested_path_and_feature_worktree_is_read_only(self):
         root = self.repo()
         child = root / "nested"
@@ -174,6 +182,15 @@ class ProjectTests(unittest.TestCase):
         self.assertFalse(report["children"][0]["present"])
         self.assertEqual(report["children"][0]["tracking_branch"], "develop")
 
+    def test_human_reports_render_present_project_leg_state(self):
+        root = self.repo("Atlas")
+        leg = self.repo("Atlas/spec")
+        (root / "project.yaml").write_text("kind: project-manifest\nlegs:\n  - {role: spec, path: spec}\n")
+        for command in ("status", "doctor"):
+            result = self.run_cli(command, root)
+            self.assertEqual(result.returncode, 0, result.stderr)
+            self.assertIn(f"spec: {leg} — main; dirty=False", result.stdout)
+
     def test_family_name_prefers_holder_and_inspects_working_sibling(self):
         root = self.repo("Family/Family")
         (root / "family.yaml").write_text("kind: family-manifest\nmembers:\n  - project: Atlas\n    path: members/Atlas\n")
@@ -194,6 +211,13 @@ class ProjectTests(unittest.TestCase):
         with patch.object(module, "projects_dirs", return_value=bases):
             with self.assertRaisesRegex(module.Refused, "Ambiguous project name"):
                 module.discover("Family")
+
+    def test_registered_claude_git_commands_have_skill_bundles(self):
+        registry = json.loads((ROOT / ".specify/extensions/.registry").read_text())
+        commands = registry["extensions"]["git"]["registered_commands"]["claude"]
+        for command in commands:
+            skill = command.replace(".", "-")
+            self.assertTrue((ROOT / ".claude/skills" / skill / "SKILL.md").is_file(), command)
 
     def test_update_default_and_dry_run_do_not_execute(self):
         root = self.repo()

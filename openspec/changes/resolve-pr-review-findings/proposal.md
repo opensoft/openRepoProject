@@ -19,6 +19,10 @@ need correction before the command becomes the project-facing entry point.
   updates return structured refusals instead of tracebacks.
 - Require complete, safe child checkouts before updates and retain the owning
   shape tool's confirmation prompt.
+- Render shallow project-leg state safely in human-readable reports and turn
+  invalid YAML text encodings into structured refusals.
+- Install Claude skill bundles for every Git extension command registered for
+  Claude, so mandatory and optional hooks remain invocable.
 - Add regression coverage for every corrected review path and close stale review
   feedback with evidence rather than an unrelated code change.
 
@@ -30,6 +34,8 @@ need correction before the command becomes the project-facing entry point.
   owner-delegated update behavior for the project command.
 - `project-clean-review-safety`: Fail-closed cleanup classifications and actions
   that preserve local Git work not proven safe to retire.
+- `speckit-extension-integration`: Registered Speckit Git commands are backed
+  by their matching Claude skill bundle.
 
 ### Modified Capabilities
 
@@ -39,6 +45,7 @@ as standalone review-safety capabilities.
 
 ## Impact
 
-The `project` executable, its disposable Git/configuration tests, README safety
-guidance, PR description, and review state are affected. No dependencies,
-remotes, or user worktrees are changed by the remediation itself.
+The `project` executable, its disposable Git/configuration tests, Claude Git
+extension skill bundles, README safety guidance, PR description, and review
+state are affected. No dependencies, remotes, or user worktrees are changed by
+the remediation itself.
