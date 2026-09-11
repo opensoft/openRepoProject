@@ -103,16 +103,26 @@ project clean --apply --action delete-branch --branch 001-feature --yes
 `clean` is read-only by default. It inspects all linked worktrees using local
 refs and labels remote comparisons as of the last fetch. It protects the
 default branch and preserves dirty, detached, unpublished, remote-gone and
-unmerged work. Ignored local files, remote divergence, and an unknown default
+unmerged work. Unknown ignored files, remote divergence, and an unknown default
 branch also stop destructive cleanup. A pushed-but-unmerged branch is handed
 off to the repository's normal pull-request or merge process.
+
+The initial disposable ignored-artifact allowlist is deliberately narrow:
+non-symlink `__pycache__/` directories and non-symlink regular `.pyc` or
+`.pyo` files inside the selected worktree. The read-only report identifies
+disposable and blocking ignored paths separately. On an otherwise removable
+worktree, a confirmed remove action lists and discards only those disposable
+Python caches before retiring the worktree and local branch; it does not ask
+for a second confirmation. Symlinks, virtual environments, dependencies,
+editor files, test data, and every other ignored path remain blocking. `clean`
+never uses a broad ignored-file deletion command.
 
 Apply actions are always explicit and target one branch or worktree. Pushes
 are normal non-force pushes. A worktree can be removed only when it is clean,
 non-current and verified merged into the local default branch. That confirmed
 removal also retires its paired local branch with normal `git branch -d`;
-remote branches are never deleted. If Git refuses the branch step, cleanup
-reports the failure and leaves that branch intact. `clean` never fetches,
+remote branches are never deleted. If cache cleanup, worktree removal, or the
+branch step fails, cleanup stops and preserves all later work. `clean` never fetches,
 stashes, resets, force-pushes, creates or merges pull requests, or replaces
 `park`/`resume`. It rechecks the selected state after confirmation and before
 executing an action.

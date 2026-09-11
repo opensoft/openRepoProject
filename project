@@ -24,6 +24,10 @@ class Refused(Exception):
     pass
 
 
+DISPOSABLE_IGNORED_DIRECTORY_NAMES = frozenset({"__pycache__"})
+DISPOSABLE_IGNORED_FILE_SUFFIXES = frozenset({".pyc", ".pyo"})
+
+
 def read_json(path):
     try:
         value = json.loads(path.read_text())
@@ -319,6 +323,41 @@ def discover(target=None):
     raise Refused(f"No project found at {path}; supply a path or name.")
 
 
+def disposable_ignored_artifact(root, value):
+    """Return a contained, non-symlink disposable Python cache path or None."""
+    relative = Path(value)
+    if relative.is_absolute() or not relative.parts or any(part == ".." for part in relative.parts):
+        return None
+    root = root.resolve()
+    candidate = root
+    for part in relative.parts:
+        candidate /= part
+        if candidate.is_symlink():
+            return None
+    try:
+        if not candidate.exists() or not candidate.resolve().is_relative_to(root):
+            return None
+    except OSError:
+        return None
+    if candidate.is_dir() and candidate.name in DISPOSABLE_IGNORED_DIRECTORY_NAMES:
+        return candidate
+    if candidate.is_file() and candidate.suffix in DISPOSABLE_IGNORED_FILE_SUFFIXES:
+        return candidate
+    return None
+
+
+def ignored_artifacts(root):
+    """Return exact ignored paths split into disposable and blocking groups."""
+    result = git(root, "status", "--porcelain=v1", "--ignored=matching", "-z")
+    if result.returncode:
+        return None
+    paths = sorted(record[3:] for record in result.stdout.split("\0") if record.startswith("!! "))
+    disposable = [path for path in paths if disposable_ignored_artifact(root, path)]
+    blocking = [path for path in paths if path not in disposable]
+    return {"ignored_paths": paths, "disposable_ignored_paths": disposable,
+            "blocking_ignored_paths": blocking}
+
+
 def repo_state(root):
     top = git_text(root, "rev-parse", "--show-toplevel")
     if not top or Path(top).resolve() != root.resolve():
@@ -354,9 +393,13 @@ def repo_state(root):
             continue
         tree_status = git(tree_path, "status", "--porcelain=v1", "--untracked-files=normal")
         tree["dirty"] = bool(tree_status.stdout) if tree_status.returncode == 0 else None
-        ignored_status = git(tree_path, "status", "--porcelain=v1", "--ignored=matching")
-        tree["ignored_files"] = (sum(line.startswith("!! ") for line in ignored_status.stdout.splitlines())
-                                 if ignored_status.returncode == 0 else None)
+        artifacts = ignored_artifacts(tree_path)
+        if artifacts is None:
+            tree["ignored_files"] = None
+            tree["ignored_paths"] = tree["disposable_ignored_paths"] = tree["blocking_ignored_paths"] = None
+        else:
+            tree.update(artifacts)
+            tree["ignored_files"] = len(artifacts["ignored_paths"])
         resolved_tree = tree_path.resolve()
         tree["current"] = active_path == resolved_tree or active_path.is_relative_to(resolved_tree)
         tree["upstream"] = None
@@ -430,7 +473,7 @@ def cleanup_report(root):
         elif row.get("ignored_files") is None:
             classification = "inspection-error"
             recommendation = "Preserve this worktree; Git could not establish its ignored-file state."
-        elif row.get("ignored_files"):
+        elif row.get("blocking_ignored_paths"):
             classification = "ignored-local-files"
             recommendation = "Preserve or relocate ignored local files before cleanup."
         elif branch == "detached":
@@ -456,7 +499,11 @@ def cleanup_report(root):
             recommendation = "Use an explicit clean push, then continue through the normal review process."
         elif row.get("merged_into_target") is True and not row.get("current"):
             classification = "merged-removable"
-            recommendation = "This clean, merged, non-current worktree may be removed explicitly."
+            if row.get("disposable_ignored_paths"):
+                recommendation = ("This clean, merged, non-current worktree may be removed explicitly; "
+                                  "confirmed removal will discard its listed disposable Python cache artifacts.")
+            else:
+                recommendation = "This clean, merged, non-current worktree may be removed explicitly."
         elif row.get("merged_into_target") is True:
             classification = "merged-current"
             recommendation = "The branch is merged, but this is the current checkout; switch away before removal."
@@ -485,15 +532,24 @@ def print_clean_report(report, as_json):
         branch = row.get("branch", "unknown")
         upstream = row.get("upstream") or "none"
         delta = "unknown" if row.get("ahead") is None else f"ahead={row['ahead']}, behind={row['behind']}"
+        ignored = "unknown" if row.get("ignored_files") is None else row.get("ignored_files", 0)
+        disposable = "unknown" if row.get("disposable_ignored_paths") is None else len(row.get("disposable_ignored_paths", []))
+        blocking = "unknown" if row.get("blocking_ignored_paths") is None else len(row.get("blocking_ignored_paths", []))
         print(f"{row['classification'].upper()}: {row['path']} [{branch}] "
               f"dirty={row.get('dirty', 'unknown')}; upstream={upstream}; {delta}; "
+              f"ignored={ignored}; disposable={disposable}; blocking={blocking}; "
               f"merged={row.get('merged_into_target', 'unknown')}")
         print(f"  {row['recommendation']}")
+        if row.get("disposable_ignored_paths"):
+            print("  Disposable ignored artifacts: " + ", ".join(row["disposable_ignored_paths"]))
+        if row.get("blocking_ignored_paths"):
+            print("  Blocking ignored artifacts: " + ", ".join(row["blocking_ignored_paths"]))
 
 
 def cleanup_signature(report, row):
-    fields = ("path", "branch", "head", "present", "dirty", "ignored_files", "upstream",
-              "ahead", "behind", "remote_present", "merged_into_target", "current", "classification")
+    fields = ("path", "branch", "head", "present", "dirty", "ignored_files", "ignored_paths",
+              "disposable_ignored_paths", "blocking_ignored_paths", "upstream", "ahead", "behind",
+              "remote_present", "merged_into_target", "current", "classification")
     return report["target_branch"], tuple((field, row.get(field)) for field in fields)
 
 
@@ -503,6 +559,13 @@ def matching_worktree(report, *, branch=None, path=None):
     else:
         rows = [row for row in report["worktrees"] if Path(row["path"]).resolve() == path]
     return rows[0] if len(rows) == 1 else None
+
+
+def cleanup_command_root(report):
+    row = matching_worktree(report, branch=report["target_branch"])
+    if not row or not row.get("present"):
+        raise Refused("Cannot find the local target-branch worktree for cleanup commands.")
+    return Path(row["path"]).resolve()
 
 
 def require_unchanged_cleanup_state(root, action, expected, *, branch=None, path=None, branch_head=None):
@@ -516,6 +579,26 @@ def require_unchanged_cleanup_state(root, action, expected, *, branch=None, path
     current = matching_worktree(refreshed, branch=branch) if branch else matching_worktree(refreshed, path=path)
     if not current or cleanup_signature(refreshed, current) != expected["signature"]:
         raise Refused("Cleanup state changed after confirmation; no command was run.")
+    return current
+
+
+def remove_disposable_ignored_artifacts(worktree, paths):
+    for path in paths:
+        candidate = disposable_ignored_artifact(worktree, path)
+        if candidate is None:
+            raise Refused("Disposable cache state changed after confirmation; no command was run.")
+        try:
+            if candidate.is_dir():
+                shutil.rmtree(candidate)
+            else:
+                candidate.unlink()
+        except OSError as exc:
+            raise Refused(f"Cannot remove disposable cache artifact {candidate}: {exc}") from exc
+
+
+def branch_still_merged(root, branch, expected_head, target_branch):
+    current_head = git_text(root, "rev-parse", "--verify", f"refs/heads/{branch}")
+    return current_head == expected_head and ancestor(root, current_head, target_branch) is True
 
 
 def clean(args):
@@ -529,6 +612,7 @@ def clean(args):
     if not args.action:
         raise Refused("--apply requires --action push|remove|delete-branch")
     rows = report["worktrees"]
+    command_root = cleanup_command_root(report)
     if args.action == "push":
         if not args.branch:
             raise Refused("Push cleanup requires --branch BRANCH")
@@ -548,11 +632,11 @@ def clean(args):
             remote, separator, remote_branch = row["upstream"].partition("/")
             if not separator or not remote or not remote_branch:
                 raise Refused(f"Unsupported upstream mapping for {args.branch}: {row['upstream']}")
-            command = ["git", "-C", str(root), "push", remote, f"{args.branch}:{remote_branch}"]
+            command = ["git", "-C", str(command_root), "push", remote, f"{args.branch}:{remote_branch}"]
         else:
             if not git_text(root, "remote", "get-url", "origin"):
                 raise Refused("Cannot publish a branch without an origin remote.")
-            command = ["git", "-C", str(root), "push", "-u", "origin", args.branch]
+            command = ["git", "-C", str(command_root), "push", "-u", "origin", args.branch]
         print(f"Cleanup action: push branch {args.branch}")
         commands = [command]
         expected = {"target_branch": report["target_branch"], "signature": cleanup_signature(report, row)}
@@ -569,9 +653,13 @@ def clean(args):
             raise Refused("Cannot remove the current worktree.")
         if row.get("classification") != "merged-removable":
             raise Refused(f"Worktree is {row.get('classification')}; only clean merged worktrees may be removed.")
-        commands = [["git", "-C", str(root), "worktree", "remove", str(wanted)],
-                    ["git", "-C", str(root), "branch", "-d", row["branch"]]]
+        commands = [["git", "-C", str(command_root), "worktree", "remove", str(wanted)],
+                    ["git", "-C", str(command_root), "branch", "-d", row["branch"]]]
         print(f"Cleanup action: retire merged worktree {wanted} and local branch {row['branch']}")
+        if row.get("disposable_ignored_paths"):
+            print("Disposable ignored artifacts to discard:")
+            for path in row["disposable_ignored_paths"]:
+                print("  " + shlex.quote(str(wanted / path)))
         expected = {"target_branch": report["target_branch"], "signature": cleanup_signature(report, row)}
         action_target = {"path": wanted}
     else:
@@ -585,16 +673,24 @@ def clean(args):
         if ancestor(root, git_text(root, "rev-parse", "--verify", f"refs/heads/{args.branch}"), report["target_branch"]) is not True:
             raise Refused(f"Branch {args.branch} is not verified as merged into {report['target_branch']}.")
         branch_head = git_text(root, "rev-parse", "--verify", f"refs/heads/{args.branch}")
-        command = ["git", "-C", str(root), "branch", "-d", args.branch]
+        command = ["git", "-C", str(command_root), "branch", "-d", args.branch]
         print(f"Cleanup action: delete verified merged local branch {args.branch}")
         commands = [command]
-    show_plan(commands, root)
+    show_plan(commands, command_root)
     confirm(args.yes)
     if args.action == "delete-branch":
         require_unchanged_cleanup_state(root, args.action, {"target_branch": report["target_branch"]},
                                         branch=args.branch, branch_head=branch_head)
     else:
-        require_unchanged_cleanup_state(root, args.action, expected, **action_target)
+        refreshed_row = require_unchanged_cleanup_state(root, args.action, expected, **action_target)
+    if args.action == "remove":
+        remove_disposable_ignored_artifacts(wanted, refreshed_row.get("disposable_ignored_paths") or [])
+        code = execute(commands[0])
+        if code:
+            return code
+        if not branch_still_merged(command_root, row["branch"], row["head"], report["target_branch"]):
+            raise Refused("Cleanup merge state changed after worktree removal; local branch was preserved.")
+        return execute(commands[1])
     for command in commands:
         code = execute(command)
         if code:
@@ -739,9 +835,12 @@ def health_status(row, target):
         if row.get("dirty"):
             return ("warning", "dirty-default",
                     "Preserve or commit the default-branch working changes before further maintenance.")
-        if row.get("ignored_files"):
+        if row.get("blocking_ignored_paths"):
             return ("warning", "ignored-local-files-default",
                     "Preserve or relocate ignored local files before further maintenance.")
+        if row.get("disposable_ignored_paths"):
+            return ("ok", "protected-default-with-disposable-cache",
+                    "Listed Python cache artifacts are disposable, but the default branch remains protected.")
         ahead, behind = row.get("ahead"), row.get("behind")
         if ahead is not None and behind is not None and ahead > 0 and behind > 0:
             return ("warning", "diverged-default",
@@ -864,8 +963,16 @@ def print_report(report, as_json):
                     print(f"{indent}    {row['health_level'].upper()} {row['health_status'].upper()}: "
                           f"{row['path']} [{branch}]; classification={row['classification']}; "
                           f"dirty={row.get('dirty', 'unknown')}; ignored={row.get('ignored_files', 'unknown')}; "
+                          f"disposable={len(row.get('disposable_ignored_paths') or [])}; "
+                          f"blocking={len(row.get('blocking_ignored_paths') or [])}; "
                           f"{delta}")
                     print(f"{indent}      {row['health_recommendation']}")
+                    if row.get("disposable_ignored_paths"):
+                        print(f"{indent}      Disposable ignored artifacts: " +
+                              ", ".join(row["disposable_ignored_paths"]))
+                    if row.get("blocking_ignored_paths"):
+                        print(f"{indent}      Blocking ignored artifacts: " +
+                              ", ".join(row["blocking_ignored_paths"]))
         print(f"{indent}  Bench: {item['profile'].get('bench', 'not declared')}; container: {item['container']['state']}")
         print(f"{indent}  Handoff: {item['handoff']['state']}")
         for record in item["handoff"].get("records", []):
