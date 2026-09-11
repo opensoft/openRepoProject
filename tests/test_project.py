@@ -186,15 +186,14 @@ class ProjectTests(unittest.TestCase):
         self.assertEqual(report["children"][0]["root"], str(member))
 
     def test_family_name_refuses_ambiguous_default_project_roots(self):
-        previous = self.env.pop("PROJECTS_DIR")
-        self.addCleanup(self.env.__setitem__, "PROJECTS_DIR", previous)
-        for base in (self.base / "home/projects", self.base / "home/Projects"):
+        bases = [self.base / "first-projects", self.base / "second-projects"]
+        for base in bases:
             holder = base / "Family/Family"
             holder.mkdir(parents=True)
             (holder / "family.yaml").write_text("kind: family-manifest\nmembers: []\n")
-        result = self.run_cli("status", "Family", "--json")
-        self.assertEqual(result.returncode, 2)
-        self.assertIn("Ambiguous project name", json.loads(result.stdout)["error"])
+        with patch.object(module, "projects_dirs", return_value=bases):
+            with self.assertRaisesRegex(module.Refused, "Ambiguous project name"):
+                module.discover("Family")
 
     def test_update_default_and_dry_run_do_not_execute(self):
         root = self.repo()
