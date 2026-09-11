@@ -67,6 +67,14 @@ diagnostic command into a source of data loss or arbitrary configuration errors.
    extension's `claude` registry lists commands invoked by core/hook workflows;
    each name maps from dots to hyphens to a committed `.claude/skills` bundle.
 
+10. **Use the process directory for current-worktree state.** Repository state
+    and cleanup plans identify a current worktree when the current directory is
+    it or is nested within it, independent of the explicit inspection target.
+
+11. **Parse complete GitHub remote forms.** Only full HTTPS or SSH remotes for
+    the `github.com` host can supply a parked-work identity; a lookalike host
+    is treated as no identity.
+
 ## Risks / Trade-offs
 
 - [Ignored generated files block a cleanup] → Preservation is preferable; a
@@ -79,6 +87,8 @@ diagnostic command into a source of data loss or arbitrary configuration errors.
 - [A generated skill bundle drifts from its source] → Copy the matching
   user-global Claude bundle and verify every registered command has a local
   `SKILL.md`.
+- [A cleanup target differs from the shell's worktree] → The shell location
+  remains protected and an explicit removal action refuses.
 
 ## Migration Plan
 

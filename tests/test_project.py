@@ -290,6 +290,19 @@ class ProjectTests(unittest.TestCase):
         self.assertEqual(json.loads(result.stdout)["handoff"]["state"],
                          "no GitHub repository identity to match a parked record")
 
+    def test_handoff_rejects_non_github_host_before_record_lookup(self):
+        root = self.repo()
+        self.git(root, "remote", "add", "origin", "https://evilgithub.com/example/repo.git")
+        config = self.base / "home/.agents"
+        config.mkdir(parents=True)
+        workspace = self.base / "parked"
+        workspace.mkdir()
+        (config / "workspace.yaml").write_text(f"repository: example/wip\npath: {workspace}\n")
+        result = self.run_cli("status", root, "--json")
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(json.loads(result.stdout)["handoff"]["state"],
+                         "no GitHub repository identity to match a parked record")
+
     def test_doctor_validate_reports_missing_owner_scripts(self):
         root = self.repo()
         (root / "project.yaml").write_text("kind: project-manifest\nlegs: []\n")
@@ -433,6 +446,25 @@ class ProjectTests(unittest.TestCase):
                               "--branch", "001-feature", "--yes")
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertIsNone(module.git_text(root, "show-ref", "--verify", "--quiet", "refs/heads/001-feature"))
+
+    def test_clean_never_removes_the_worktree_containing_the_current_directory(self):
+        root = self.repo()
+        remote = self.base / "remote.git"
+        subprocess.run(["git", "init", "--bare", str(remote)], env=self.env, check=True,
+                       text=True, capture_output=True)
+        self.git(root, "remote", "add", "origin", remote)
+        tree = self.base / "feature-tree"
+        self.git(root, "worktree", "add", "-b", "001-feature", str(tree))
+        (tree / "work").write_text("done")
+        self.commit(tree)
+        self.git(tree, "push", "-u", "origin", "001-feature")
+        self.git(root, "-c", "user.name=Test", "-c", "user.email=test@example.invalid",
+                 "merge", "--no-ff", "001-feature", "-m", "merge feature")
+        result = self.run_cli("clean", root, "--apply", "--action", "remove",
+                              "--worktree", tree, "--yes", cwd=tree)
+        self.assertEqual(result.returncode, 2)
+        self.assertIn("Cannot remove the current worktree", result.stderr)
+        self.assertTrue(tree.is_dir())
 
     def test_clean_pushes_explicit_clean_feature_branch_without_force(self):
         root = self.repo()

@@ -333,6 +333,7 @@ def repo_state(root):
     ahead, behind = map(int, delta.split()) if delta else (None, None)
     worktrees = []
     current = {}
+    active_path = Path.cwd().resolve()
     for line in (git_text(root, "worktree", "list", "--porcelain") or "").splitlines():
         if line.startswith("worktree "):
             current = {"path": line[9:], "present": Path(line[9:]).is_dir()}
@@ -356,7 +357,8 @@ def repo_state(root):
         ignored_status = git(tree_path, "status", "--porcelain=v1", "--ignored=matching")
         tree["ignored_files"] = (sum(line.startswith("!! ") for line in ignored_status.stdout.splitlines())
                                  if ignored_status.returncode == 0 else None)
-        tree["current"] = tree_path.resolve() == root.resolve()
+        resolved_tree = tree_path.resolve()
+        tree["current"] = active_path == resolved_tree or active_path.is_relative_to(resolved_tree)
         tree["upstream"] = None
         tree["ahead"] = tree["behind"] = None
         if tree.get("branch") and tree["branch"] != "detached":
@@ -614,7 +616,8 @@ def github_repository_identity(value):
 
 
 def remote_repository_identity(remote):
-    match = re.search(r"github\.com[:/]([^/]+/[^/]+?)(?:\.git)?$", remote)
+    match = re.fullmatch(r"(?:https?://github\.com/|(?:ssh://)?(?:git@)?github\.com[:/])"
+                         r"([^/]+/[^/]+?)(?:\.git)?/?", remote)
     return github_repository_identity(match.group(1)) if match else None
 
 

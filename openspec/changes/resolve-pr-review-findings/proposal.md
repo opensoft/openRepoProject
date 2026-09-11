@@ -23,6 +23,9 @@ need correction before the command becomes the project-facing entry point.
   invalid YAML text encodings into structured refusals.
 - Install Claude skill bundles for every Git extension command registered for
   Claude, so mandatory and optional hooks remain invocable.
+- Determine the current worktree from the process directory even when cleanup
+  inspects a different checkout, and only accept complete GitHub remote forms
+  before reading parked-work records.
 - Add regression coverage for every corrected review path and close stale review
   feedback with evidence rather than an unrelated code change.
 

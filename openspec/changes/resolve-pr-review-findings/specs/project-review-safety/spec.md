@@ -41,6 +41,12 @@ workspace files to be read.
 - **THEN** the report states that no GitHub repository identity is available and
   does not inspect unrelated workspace records
 
+#### Scenario: Remote uses a lookalike host
+
+- **WHEN** a local remote uses a host such as `evilgithub.com`
+- **THEN** the report states that no GitHub repository identity is available
+  and does not inspect parked-work records
+
 ### Requirement: Updates preserve estate and owner safeguards
 
 Before applying a shape or bench update, the command SHALL refuse if any
