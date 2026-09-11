@@ -34,19 +34,24 @@ diagnostic command into a source of data loss or arbitrary configuration errors.
    listing would change error selection and path handling, so consumers retain
    their purpose-specific logic after shared structural validation.
 
-3. **Fail closed in cleanup.** A worktree records tracked changes and ignored
+3. **Constrain parked-work identity before path construction.** Remote and
+   manifest identities must match GitHub owner/repository syntax before their
+   owner portion names a workspace directory. Treat an invalid value as unknown
+   identity rather than an exceptional filesystem condition.
+
+4. **Fail closed in cleanup.** A worktree records tracked changes and ignored
    files separately; ignored files block removal but do not redefine ordinary
    status output. Default branch selection has no current-branch fallback.
    Ahead-and-behind state is a distinct divergent classification. A second
    cleanup report after confirmation must agree with the selected action's
    safety evidence.
 
-4. **Shape confirmation belongs to openRepoShape.** The coordinator runs the
+5. **Shape confirmation belongs to openRepoShape.** The coordinator runs the
    owner check, then invokes owner apply without synthesizing `--yes` or an
    additional coordinator prompt. This retains the owner's wording and
    interaction contract.
 
-5. **Normalize child state for update safety.** A small recursive iterator
+6. **Normalize child state for update safety.** A small recursive iterator
    yields repository state from project legs and family-member snapshots so the
    same guard can reject missing, dirty, detached, or feature state.
 

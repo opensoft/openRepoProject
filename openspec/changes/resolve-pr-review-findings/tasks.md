@@ -3,6 +3,7 @@
 - [x] 1.1 Filter profile output to the public schema fields and add JSON report regression coverage for an extra secret-like field.
 - [x] 1.2 Add validated workBench registry access for doctor and bench update, with malformed mapping/list tests that assert structured refusal.
 - [x] 1.3 Refuse unsafe or missing project/family children before shape or bench updates, and retain openRepoShape's own confirmation interaction; verify delegated arguments and refusal paths.
+- [x] 1.4 Constrain remote/manifest GitHub identities before parked-work record lookup; verify crafted owner paths cannot read unrelated workspace records.
 
 ## 2. Cleanup safety
 

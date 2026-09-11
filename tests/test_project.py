@@ -253,6 +253,20 @@ class ProjectTests(unittest.TestCase):
         self.assertEqual(handoff["records"][0]["features"], 1)
         self.assertEqual(record.read_text(), content)
 
+    def test_handoff_rejects_path_like_remote_identity_before_record_lookup(self):
+        root = self.repo()
+        self.git(root, "remote", "add", "origin", "git@github.com:../repo")
+        config = self.base / "home/.agents"
+        config.mkdir(parents=True)
+        workspace = self.base / "parked"
+        workspace.mkdir()
+        (config / "workspace.yaml").write_text(f"repository: example/wip\npath: {workspace}\n")
+        (workspace / "sentinel.yaml").write_text("kind: [\n")
+        result = self.run_cli("status", root, "--json")
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(json.loads(result.stdout)["handoff"]["state"],
+                         "no GitHub repository identity to match a parked record")
+
     def test_doctor_validate_reports_missing_owner_scripts(self):
         root = self.repo()
         (root / "project.yaml").write_text("kind: project-manifest\nlegs: []\n")

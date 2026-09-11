@@ -606,6 +606,18 @@ def profile(root):
     return {field: data[field] for field in ("schema_version", "bench", "type", "container") if field in data}
 
 
+def github_repository_identity(value):
+    if not isinstance(value, str):
+        return None
+    match = re.fullmatch(r"([A-Za-z0-9](?:[A-Za-z0-9-]*[A-Za-z0-9])?)/([A-Za-z0-9][A-Za-z0-9_.-]*)", value)
+    return value if match else None
+
+
+def remote_repository_identity(remote):
+    match = re.search(r"github\.com[:/]([^/]+/[^/]+?)(?:\.git)?$", remote)
+    return github_repository_identity(match.group(1)) if match else None
+
+
 def handoff(root, data):
     """Read only the matching workspace record; parking remains extension-owned."""
     config_path = Path.home() / ".agents/workspace.yaml"
@@ -614,11 +626,10 @@ def handoff(root, data):
         return {"state": "workspace not configured"}
     config = read_yaml(config_path) if config_path.is_file() else {}
     remote = git_text(root, "remote", "get-url", "origin") or ""
-    match = re.search(r"github\.com[:/]([^/]+/[^/]+?)(?:\.git)?$", remote)
-    repository = match.group(1) if match else None
+    repository = remote_repository_identity(remote)
     for leg in data.get("legs", []):
         if isinstance(leg, dict) and leg.get("role") == "assembly":
-            repository = leg.get("repository") or repository
+            repository = github_repository_identity(leg.get("repository")) or repository
     if not repository:
         return {"state": "no GitHub repository identity to match a parked record"}
     org = repository.split("/", 1)[0]

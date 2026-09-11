@@ -28,6 +28,19 @@ a normal refusal with exit code 2, including JSON error output when requested.
 - **WHEN** the registry names a selected bench with a non-mapping value
 - **THEN** doctor and bench update refuse without a traceback or delegated write
 
+### Requirement: Parked-work inspection constrains repository identity
+
+Before locating a parked-work record, status and doctor SHALL accept only a
+valid GitHub `owner/repository` identity derived from the remote or manifest.
+An invalid identity MUST NOT influence the local records path or cause unrelated
+workspace files to be read.
+
+#### Scenario: Remote contains a path-like owner
+
+- **WHEN** a local remote contains an owner component such as `..`
+- **THEN** the report states that no GitHub repository identity is available and
+  does not inspect unrelated workspace records
+
 ### Requirement: Updates preserve estate and owner safeguards
 
 Before applying a shape or bench update, the command SHALL refuse if any

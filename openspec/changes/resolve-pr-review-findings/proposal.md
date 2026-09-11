@@ -13,6 +13,8 @@ need correction before the command becomes the project-facing entry point.
   branch name differs.
 - Limit portable profile data to the supported public schema fields before it is
   rendered in status or doctor output.
+- Validate GitHub repository identities before using them to locate local
+  parked-work records.
 - Centralize validation of workBench registry structures so doctor and bench
   updates return structured refusals instead of tracebacks.
 - Require complete, safe child checkouts before updates and retain the owning
@@ -38,5 +40,5 @@ as standalone review-safety capabilities.
 ## Impact
 
 The `project` executable, its disposable Git/configuration tests, README safety
-guidance, and PR review state are affected. No dependencies, remotes, or user
-worktrees are changed by the remediation itself.
+guidance, PR description, and review state are affected. No dependencies,
+remotes, or user worktrees are changed by the remediation itself.
