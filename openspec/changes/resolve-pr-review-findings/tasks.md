@@ -14,4 +14,4 @@
 ## 3. Review closure
 
 - [x] 3.1 Run the complete test suite, diff checks, OpenSpec validation, and focused cleanup smoke audit; record evidence for each current Copilot thread and identify any stale thread.
-- [ ] 3.2 Push the reviewed remediation to the existing PR and resolve or reply to each current Copilot thread with the corresponding test evidence.
+- [x] 3.2 Push the reviewed remediation to the existing PR and resolve or reply to each current Copilot thread with the corresponding test evidence.
