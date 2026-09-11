@@ -20,5 +20,5 @@
   the cleanup plan.
 - [x] 2.3 Run the full py-bench suite, diff checks, strict OpenSpec validation,
   and a read-only cleanup audit; verify all pass before review.
-- [ ] 2.4 Commit and push the governed change on cleanup, update PR #2, request
+- [x] 2.4 Commit and push the governed change on cleanup, update PR #2, request
   review, and resolve any resulting findings with regression evidence.
