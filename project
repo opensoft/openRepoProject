@@ -78,6 +78,19 @@ def git_text(root, *args):
     return result.stdout.strip() if result.returncode == 0 else None
 
 
+def upstream_branch(root, branch):
+    if not branch or branch == "detached":
+        return None
+    upstream = git_text(root, "rev-parse", "--abbrev-ref", "@{upstream}")
+    if upstream:
+        return upstream
+    remote = git_text(root, "config", "--get", f"branch.{branch}.remote")
+    merge = git_text(root, "config", "--get", f"branch.{branch}.merge")
+    if remote and merge and merge.startswith("refs/heads/"):
+        return f"{remote}/{merge.removeprefix('refs/heads/')}"
+    return None
+
+
 def projects_dirs():
     if os.environ.get("PROJECTS_DIR"):
         return [Path(os.environ["PROJECTS_DIR"]).expanduser().resolve()]
@@ -367,7 +380,7 @@ def repo_state(root):
         raise Refused(f"Cannot inspect {root}: {status.stderr.strip()}")
     branch = git_text(root, "symbolic-ref", "--quiet", "--short", "HEAD")
     head = git_text(root, "rev-parse", "--verify", "HEAD")
-    upstream = git_text(root, "rev-parse", "--abbrev-ref", "@{upstream}")
+    upstream = upstream_branch(root, branch)
     delta = git_text(root, "rev-list", "--left-right", "--count", "HEAD...@{upstream}") if upstream else None
     ahead, behind = map(int, delta.split()) if delta else (None, None)
     worktrees = []
@@ -405,7 +418,7 @@ def repo_state(root):
         tree["upstream"] = None
         tree["ahead"] = tree["behind"] = None
         if tree.get("branch") and tree["branch"] != "detached":
-            tree["upstream"] = git_text(tree_path, "rev-parse", "--abbrev-ref", "@{upstream}")
+            tree["upstream"] = upstream_branch(tree_path, tree.get("branch"))
             if tree["upstream"]:
                 delta = git_text(tree_path, "rev-list", "--left-right", "--count", "HEAD...@{upstream}")
                 if delta:
@@ -432,8 +445,52 @@ def default_branch(root, declared=None):
 def ancestor(root, commit, branch):
     if not commit or not branch:
         return None
-    result = git(root, "merge-base", "--is-ancestor", commit, f"refs/heads/{branch}")
+    return ancestor_ref(root, commit, f"refs/heads/{branch}")
+
+
+def ancestor_ref(root, commit, ref):
+    if not commit or not ref:
+        return None
+    result = git(root, "merge-base", "--is-ancestor", commit, ref)
     return True if result.returncode == 0 else False if result.returncode == 1 else None
+
+
+def remote_tracking_ref(root, upstream):
+    if not isinstance(upstream, str) or "/" not in upstream:
+        return None
+    ref = f"refs/remotes/{upstream}"
+    return ref if git(root, "show-ref", "--verify", "--quiet", ref).returncode == 0 else None
+
+
+def github_merge_evidence(root, remote_target, target_branch, branch, head):
+    """Return exact-head GitHub PR merge evidence without changing Git state."""
+    if not all(isinstance(value, str) and value for value in
+               (remote_target, target_branch, branch, head)):
+        return {"state": "unavailable", "number": None, "url": None}
+    remote, separator, _ = remote_target.partition("/")
+    if not separator or not remote:
+        return {"state": "unavailable", "number": None, "url": None}
+    repository = remote_repository_identity(git_text(root, "remote", "get-url", remote) or "")
+    if not repository or not shutil.which("gh"):
+        return {"state": "unavailable", "number": None, "url": None}
+    result = probe(["gh", "pr", "list", "--repo", repository, "--state", "all",
+                    "--head", branch, "--base", target_branch,
+                    "--json", "number,state,headRefOid,url"])
+    if result.returncode:
+        return {"state": "unavailable", "number": None, "url": None}
+    try:
+        candidates = json.loads(result.stdout)
+    except ValueError:
+        return {"state": "unavailable", "number": None, "url": None}
+    if not isinstance(candidates, list):
+        return {"state": "unavailable", "number": None, "url": None}
+    matching = [item for item in candidates if isinstance(item, dict) and item.get("headRefOid") == head]
+    if not matching:
+        return {"state": "not-merged", "number": None, "url": None}
+    item = max(matching, key=lambda value: value.get("number", 0) if isinstance(value.get("number"), int) else 0)
+    return {"state": "merged" if item.get("state") == "MERGED" else "not-merged",
+            "number": item.get("number") if isinstance(item.get("number"), int) else None,
+            "url": item.get("url") if isinstance(item.get("url"), str) else None}
 
 
 def cleanup_report(root):
@@ -445,6 +502,10 @@ def cleanup_report(root):
     if not target:
         raise Refused("Cannot determine the default branch from the manifest, origin/HEAD, main, or master.")
     active_path = Path.cwd().resolve()
+    target_source = next((row for row in state["worktrees"]
+                          if row.get("present") and row.get("branch") == target), None)
+    remote_merge_target = target_source.get("upstream") if target_source else None
+    remote_target_ref = remote_tracking_ref(root, remote_merge_target)
     worktrees = []
     for source in state["worktrees"]:
         row = dict(source)
@@ -453,9 +514,22 @@ def cleanup_report(root):
             row["current"] = active_path == tree_path or active_path.is_relative_to(tree_path)
         branch = row.get("branch", "detached")
         row["merged_into_target"] = None
+        row["remote_merge_target"] = remote_merge_target
+        row["merged_into_remote_target"] = None
+        row["github_merge_state"] = "not-checked"
+        row["github_pull_request"] = None
+        row["github_pull_request_url"] = None
         row["remote_present"] = None
         if row.get("present") and branch != "detached":
             row["merged_into_target"] = ancestor(root, row.get("head"), target)
+            if branch != target and remote_target_ref:
+                row["merged_into_remote_target"] = ancestor_ref(root, row.get("head"), remote_target_ref)
+            if (branch != target and row["merged_into_target"] is False and
+                    row["merged_into_remote_target"] is not True):
+                evidence = github_merge_evidence(root, remote_merge_target, target, branch, row.get("head"))
+                row["github_merge_state"] = evidence["state"]
+                row["github_pull_request"] = evidence["number"]
+                row["github_pull_request_url"] = evidence["url"]
             if row.get("upstream"):
                 row["remote_present"] = git(root, "rev-parse", "--verify", "--quiet", row["upstream"]).returncode == 0
         if not row.get("present"):
@@ -510,14 +584,36 @@ def cleanup_report(root):
         elif row.get("merged_into_target") is None:
             classification = "review-required"
             recommendation = "Merge state could not be established from local refs; preserve it for review."
+        elif row.get("github_merge_state") == "merged":
+            classification = "merged-on-github-awaiting-local"
+            pull_request = f"Pull request #{row['github_pull_request']}" if row.get("github_pull_request") else "A pull request"
+            recommendation = f"{pull_request} is merged on GitHub; reconcile local {target} before cleanup."
+        elif row.get("merged_into_remote_target") is True:
+            classification = "merged-remotely-awaiting-local"
+            recommendation = (f"This branch is merged into {remote_merge_target} as of the last fetch; "
+                              f"reconcile local {target} before cleanup.")
+        elif (row.get("merged_into_remote_target") is None and
+              row.get("github_merge_state") == "unavailable"):
+            classification = "merge-status-unknown"
+            recommendation = ("Remote merge state could not be established from local refs or GitHub; "
+                              "preserve this branch for review.")
         else:
             classification = "pushed-unmerged"
-            recommendation = "Continue through the repository's normal pull-request or merge process."
+            if row.get("github_merge_state") == "not-merged":
+                recommendation = (f"This branch is not merged into local {target} or on GitHub; "
+                                  "continue through the normal pull-request or merge process.")
+            else:
+                recommendation = (f"This branch is not merged into local {target} or last-fetched "
+                                  f"{remote_merge_target}; GitHub merge state is unavailable. "
+                                  "Continue through the normal pull-request or merge process.")
         row["classification"] = classification
         row["recommendation"] = recommendation
         worktrees.append(row)
     return {"root": str(root), "target_branch": target,
-            "tracking_freshness": "local refs only; remote information is as of the last fetch; no fetch performed",
+            "remote_merge_target": remote_merge_target,
+            "remote_merge_target_available": bool(remote_target_ref),
+            "tracking_freshness": ("Git ref information is as of the last fetch; exact-head GitHub PR state "
+                                    "is queried live when available; no fetch performed"),
             "worktrees": worktrees}
 
 
@@ -527,6 +623,11 @@ def print_clean_report(report, as_json):
         return
     print(f"Cleanup plan for {report['root']}")
     print(f"Merge target: {report['target_branch']}")
+    remote_target = report.get("remote_merge_target")
+    if remote_target and report.get("remote_merge_target_available"):
+        print(f"Remote merge target: {remote_target} (as of the last fetch)")
+    else:
+        print("Remote merge target: unavailable from local refs")
     print(f"Freshness: {report['tracking_freshness']}")
     for row in report["worktrees"]:
         branch = row.get("branch", "unknown")
@@ -535,10 +636,15 @@ def print_clean_report(report, as_json):
         ignored = "unknown" if row.get("ignored_files") is None else row.get("ignored_files", 0)
         disposable = "unknown" if row.get("disposable_ignored_paths") is None else len(row.get("disposable_ignored_paths", []))
         blocking = "unknown" if row.get("blocking_ignored_paths") is None else len(row.get("blocking_ignored_paths", []))
+        remote_merged = ("n/a" if branch == report["target_branch"] else
+                         "unknown" if row.get("merged_into_remote_target") is None else
+                         row["merged_into_remote_target"])
+        github_merged = "n/a" if branch == report["target_branch"] else row.get("github_merge_state", "unknown")
         print(f"{row['classification'].upper()}: {row['path']} [{branch}] "
               f"dirty={row.get('dirty', 'unknown')}; upstream={upstream}; {delta}; "
               f"ignored={ignored}; disposable={disposable}; blocking={blocking}; "
-              f"merged={row.get('merged_into_target', 'unknown')}")
+              f"merged-local={row.get('merged_into_target', 'unknown')}; "
+              f"merged-remote={remote_merged}; github-merge={github_merged}")
         print(f"  {row['recommendation']}")
         if row.get("disposable_ignored_paths"):
             print("  Disposable ignored artifacts: " + ", ".join(row["disposable_ignored_paths"]))
@@ -549,8 +655,11 @@ def print_clean_report(report, as_json):
 def cleanup_signature(report, row):
     fields = ("path", "branch", "head", "present", "dirty", "ignored_files", "ignored_paths",
               "disposable_ignored_paths", "blocking_ignored_paths", "upstream", "ahead", "behind",
-              "remote_present", "merged_into_target", "current", "classification")
-    return report["target_branch"], tuple((field, row.get(field)) for field in fields)
+              "remote_present", "remote_merge_target", "merged_into_target", "merged_into_remote_target",
+              "github_merge_state", "github_pull_request", "github_pull_request_url",
+              "current", "classification")
+    return (report["target_branch"], report.get("remote_merge_target"),
+            report.get("remote_merge_target_available")), tuple((field, row.get(field)) for field in fields)
 
 
 def matching_worktree(report, *, branch=None, path=None):
@@ -873,6 +982,8 @@ def doctor_repository_health(root):
     return {"state": "available",
             "level": "warning" if any(row["health_level"] == "warning" for row in rows) else "ok",
             "target_branch": cleanup["target_branch"],
+            "remote_merge_target": cleanup["remote_merge_target"],
+            "remote_merge_target_available": cleanup["remote_merge_target_available"],
             "tracking_freshness": cleanup["tracking_freshness"],
             "worktrees": rows}
 
@@ -957,18 +1068,26 @@ def print_report(report, as_json):
             if health["state"] == "unavailable":
                 print(f"{indent}  Repository health: UNAVAILABLE — {health['error']}")
             else:
+                remote_target = health.get("remote_merge_target")
+                remote_label = (f"{remote_target} (last fetched)" if remote_target and
+                                health.get("remote_merge_target_available") else "unavailable")
                 print(f"{indent}  Repository health: {health['level'].upper()}; target={health['target_branch']}; "
-                      f"{health['tracking_freshness']}")
+                      f"remote merge target={remote_label}; {health['tracking_freshness']}")
                 for row in health["worktrees"]:
                     branch = row.get("branch", "unknown")
                     delta = ("unknown" if row.get("ahead") is None else
                              f"ahead={row['ahead']}, behind={row['behind']}")
+                    remote_merged = ("n/a" if branch == health["target_branch"] else
+                                     "unknown" if row.get("merged_into_remote_target") is None else
+                                     row["merged_into_remote_target"])
+                    github_merged = ("n/a" if branch == health["target_branch"] else
+                                     row.get("github_merge_state", "unknown"))
                     print(f"{indent}    {row['health_level'].upper()} {row['health_status'].upper()}: "
                           f"{row['path']} [{branch}]; classification={row['classification']}; "
                           f"dirty={row.get('dirty', 'unknown')}; ignored={row.get('ignored_files', 'unknown')}; "
                           f"disposable={len(row.get('disposable_ignored_paths') or [])}; "
                           f"blocking={len(row.get('blocking_ignored_paths') or [])}; "
-                          f"{delta}")
+                          f"{delta}; merged-remote={remote_merged}; github-merge={github_merged}")
                     print(f"{indent}      {row['health_recommendation']}")
                     if row.get("disposable_ignored_paths"):
                         print(f"{indent}      Disposable ignored artifacts: " +

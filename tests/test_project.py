@@ -731,6 +731,7 @@ class ProjectTests(unittest.TestCase):
         subprocess.run(["git", "init", "--bare", str(remote)], env=self.env, check=True,
                        text=True, capture_output=True)
         self.git(root, "remote", "add", "origin", remote)
+        self.git(root, "push", "-u", "origin", "main")
         feature = self.base / "feature-tree"
         detached = self.base / "detached-tree"
         dirty = self.base / "dirty-tree"
@@ -745,9 +746,125 @@ class ProjectTests(unittest.TestCase):
         report = json.loads(self.run_cli("clean", root, "--json", cwd=feature).stdout)
         by_branch = {row["branch"]: row for row in report["worktrees"]}
         self.assertEqual(by_branch["001-feature"]["classification"], "pushed-unmerged")
+        self.assertEqual(report["remote_merge_target"], "origin/main")
+        self.assertFalse(by_branch["001-feature"]["merged_into_target"])
+        self.assertFalse(by_branch["001-feature"]["merged_into_remote_target"])
+        self.assertEqual(by_branch["001-feature"]["github_merge_state"], "unavailable")
+        self.assertIn("last-fetched origin/main", by_branch["001-feature"]["recommendation"])
         self.assertTrue(by_branch["001-feature"]["current"])
         self.assertEqual(by_branch["detached"]["classification"], "detached")
         self.assertEqual(by_branch["001-dirty"]["classification"], "dirty")
+
+    def test_clean_reports_remote_merge_awaiting_local_reconciliation(self):
+        root = self.repo()
+        remote = self.base / "remote.git"
+        subprocess.run(["git", "init", "--bare", str(remote)], env=self.env, check=True,
+                       text=True, capture_output=True)
+        self.git(root, "remote", "add", "origin", remote)
+        self.git(root, "push", "-u", "origin", "main")
+        self.git(remote, "symbolic-ref", "HEAD", "refs/heads/main")
+        tree = self.base / "feature-tree"
+        self.git(root, "worktree", "add", "-b", "001-feature", str(tree))
+        (tree / "work").write_text("done")
+        self.commit(tree)
+        self.git(tree, "push", "-u", "origin", "001-feature")
+        publisher = self.base / "publisher"
+        subprocess.run(["git", "clone", "--branch", "main", str(remote), str(publisher)], env=self.env,
+                       check=True, text=True, capture_output=True)
+        self.git(publisher, "fetch", "origin", "001-feature")
+        self.git(publisher, "-c", "user.name=Test", "-c", "user.email=test@example.invalid",
+                 "merge", "--no-ff", "origin/001-feature", "-m", "merge feature")
+        self.git(publisher, "push", "origin", "main")
+        self.git(root, "fetch", "origin")
+        report = json.loads(self.run_cli("clean", root, "--json").stdout)
+        row = next(item for item in report["worktrees"] if item["branch"] == "001-feature")
+        self.assertEqual(report["remote_merge_target"], "origin/main")
+        self.assertTrue(report["remote_merge_target_available"])
+        self.assertFalse(row["merged_into_target"])
+        self.assertTrue(row["merged_into_remote_target"])
+        self.assertEqual(row["classification"], "merged-remotely-awaiting-local")
+        self.assertIn("reconcile local main", row["recommendation"])
+        human = self.run_cli("clean", root)
+        self.assertIn("MERGED-REMOTELY-AWAITING-LOCAL", human.stdout)
+        self.assertIn("Remote merge target: origin/main", human.stdout)
+        doctor = json.loads(self.run_cli("doctor", root, "--json").stdout)
+        health = next(item for item in doctor["repository_health"]["worktrees"]
+                      if item["branch"] == "001-feature")
+        self.assertEqual(health["health_status"], "merged-remotely-awaiting-local")
+        result = self.run_cli("clean", root, "--apply", "--action", "remove", "--worktree", tree, "--yes")
+        self.assertEqual(result.returncode, 2)
+        self.assertTrue(tree.is_dir())
+
+    def test_clean_uses_exact_head_github_merge_evidence(self):
+        root = self.repo()
+        remote = self.base / "remote.git"
+        subprocess.run(["git", "init", "--bare", str(remote)], env=self.env, check=True,
+                       text=True, capture_output=True)
+        self.git(root, "remote", "add", "origin", remote)
+        self.git(root, "push", "-u", "origin", "main")
+        tree = self.base / "feature-tree"
+        self.git(root, "worktree", "add", "-b", "001-feature", str(tree))
+        (tree / "work").write_text("done")
+        self.commit(tree)
+        self.git(tree, "push", "-u", "origin", "001-feature")
+        merged = {"state": "merged", "number": 7, "url": "https://example.invalid/pull/7"}
+        with patch.object(module, "github_merge_evidence", return_value=merged):
+            report = module.cleanup_report(root)
+        row = next(item for item in report["worktrees"] if item["branch"] == "001-feature")
+        self.assertFalse(row["merged_into_target"])
+        self.assertFalse(row["merged_into_remote_target"])
+        self.assertEqual(row["github_merge_state"], "merged")
+        self.assertEqual(row["classification"], "merged-on-github-awaiting-local")
+        self.assertIn("Pull request #7 is merged on GitHub", row["recommendation"])
+        not_merged = {"state": "not-merged", "number": None, "url": None}
+        with patch.object(module, "github_merge_evidence", return_value=not_merged):
+            report = module.cleanup_report(root)
+        row = next(item for item in report["worktrees"] if item["branch"] == "001-feature")
+        self.assertEqual(row["classification"], "pushed-unmerged")
+        self.assertIn("not merged into local main or on GitHub", row["recommendation"])
+
+    def test_github_merge_evidence_requires_the_exact_feature_head(self):
+        root = self.repo()
+        self.git(root, "remote", "add", "origin", "git@github.com:example/Atlas.git")
+        head = "a" * 40
+        result = subprocess.CompletedProcess([], 0, json.dumps([
+            {"number": 6, "state": "MERGED", "headRefOid": "b" * 40,
+             "url": "https://example.invalid/pull/6"},
+            {"number": 7, "state": "MERGED", "headRefOid": head,
+             "url": "https://example.invalid/pull/7"},
+        ]), "")
+        with patch.object(module, "git_text", return_value="git@github.com:example/Atlas.git"), \
+             patch.object(module.shutil, "which", return_value="/usr/bin/gh"), \
+             patch.object(module, "probe", return_value=result) as probe:
+            evidence = module.github_merge_evidence(root, "origin/main", "main", "001-feature", head)
+        self.assertEqual(evidence, {"state": "merged", "number": 7, "url": "https://example.invalid/pull/7"})
+        command = probe.call_args.args[0]
+        self.assertEqual(command[0:3], ["gh", "pr", "list"])
+        self.assertIn("--head", command)
+        self.assertEqual(command[command.index("--head") + 1], "001-feature")
+        self.assertEqual(command[command.index("--base") + 1], "main")
+
+    def test_clean_reports_unknown_remote_merge_state(self):
+        root = self.repo()
+        remote = self.base / "remote.git"
+        subprocess.run(["git", "init", "--bare", str(remote)], env=self.env, check=True,
+                       text=True, capture_output=True)
+        self.git(root, "remote", "add", "origin", remote)
+        self.git(root, "push", "-u", "origin", "main")
+        tree = self.base / "feature-tree"
+        self.git(root, "worktree", "add", "-b", "001-feature", str(tree))
+        (tree / "work").write_text("preserve")
+        self.commit(tree)
+        self.git(tree, "push", "-u", "origin", "001-feature")
+        self.git(root, "update-ref", "-d", "refs/remotes/origin/main")
+        report = json.loads(self.run_cli("clean", root, "--json").stdout)
+        row = next(item for item in report["worktrees"] if item["branch"] == "001-feature")
+        self.assertEqual(report["remote_merge_target"], "origin/main")
+        self.assertFalse(report["remote_merge_target_available"])
+        self.assertIsNone(row["merged_into_remote_target"])
+        self.assertEqual(row["github_merge_state"], "unavailable")
+        self.assertEqual(row["classification"], "merge-status-unknown")
+        self.assertIn("could not be established", row["recommendation"])
 
     def test_clean_reports_stale_worktree_metadata(self):
         root = self.repo()
