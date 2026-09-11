@@ -1,0 +1,1007 @@
+#!/usr/bin/env python3
+"""Project creation and inspection. Copyright 2026 OpenSoft. Apache-2.0.
+
+Licensed under the Apache License, Version 2.0; see
+https://www.apache.org/licenses/LICENSE-2.0 . Distributed on an AS IS basis,
+without warranties or conditions of any kind, express or implied.
+"""
+
+from __future__ import annotations
+
+import argparse
+import hashlib
+import json
+import os
+from pathlib import Path
+import re
+import shlex
+import shutil
+import subprocess
+import sys
+
+
+class Refused(Exception):
+    pass
+
+
+def read_json(path):
+    try:
+        value = json.loads(path.read_text())
+    except (OSError, ValueError) as exc:
+        raise Refused(f"Cannot read {path}: {exc}") from exc
+    if not isinstance(value, dict):
+        raise Refused(f"Expected an object in {path}")
+    return value
+
+
+def read_yaml(path):
+    try:
+        import yaml
+    except ImportError as exc:
+        raise Refused("YAML inspection needs PyYAML; use a workBench with python3-yaml installed.") from exc
+    try:
+        value = yaml.safe_load(path.read_text())
+    except (OSError, UnicodeError, yaml.YAMLError) as exc:
+        raise Refused(f"Cannot read {path}: {exc}") from exc
+    if not isinstance(value, dict):
+        raise Refused(f"Expected a mapping in {path}")
+    return value
+
+
+def inside(root, value):
+    if not isinstance(value, str) or not value or Path(value).is_absolute():
+        raise Refused(f"Expected a relative path under {root}: {value!r}")
+    result = (root / value).resolve()
+    if result == root.resolve() or not result.is_relative_to(root.resolve()):
+        raise Refused(f"Path escapes its owner {root}: {value}")
+    return result
+
+
+def probe(argv, cwd=None):
+    try:
+        return subprocess.run(argv, cwd=cwd, text=True, capture_output=True,
+                              timeout=15, env={**os.environ, "GIT_OPTIONAL_LOCKS": "0"})
+    except (OSError, subprocess.TimeoutExpired) as exc:
+        return subprocess.CompletedProcess(argv, 2, "", str(exc))
+
+
+def git(root, *args):
+    return probe(["git", "-C", str(root), *args])
+
+
+def git_text(root, *args):
+    result = git(root, *args)
+    return result.stdout.strip() if result.returncode == 0 else None
+
+
+def projects_dirs():
+    if os.environ.get("PROJECTS_DIR"):
+        return [Path(os.environ["PROJECTS_DIR"]).expanduser().resolve()]
+    return [Path.home() / "projects", Path.home() / "Projects"]
+
+
+def workbenches(explicit=None, required=True):
+    supplied = explicit or os.environ.get("WORKBENCHES_ROOT")
+    candidates = [Path(supplied).expanduser()] if supplied else []
+    if not supplied:
+        marker = Path(sys.argv[0]).resolve().parent / ".workbenches-path"
+        if marker.is_file():
+            candidates.append(Path(marker.read_text().strip()).expanduser())
+        candidates += [p / "workBenches" for p in projects_dirs()]
+        candidates += [Path.cwd(), *(p / "workBenches" for p in Path.cwd().parents)]
+    for root in candidates:
+        if (root / "config/bench-config.json").is_file():
+            return root.resolve()
+    if required or supplied:
+        raise Refused("Cannot find workBenches; set WORKBENCHES_ROOT or --workbenches PATH.")
+    return None
+
+
+def bench_registry(root):
+    benches = read_json(root / "config/bench-config.json").get("benches")
+    if not isinstance(benches, dict):
+        raise Refused("bench-config.json must contain a benches object")
+    return benches
+
+
+def bench_definition(root, benches, bench):
+    if not isinstance(bench, str) or not bench:
+        raise Refused("A project profile must declare a bench name.")
+    data = benches.get(bench)
+    if data is None:
+        return None
+    if not isinstance(data, dict):
+        raise Refused(f"Invalid registry entry: {bench}")
+    bench_path = inside(root, data.get("path"))
+    scripts = data.get("project_scripts", [])
+    if not isinstance(scripts, list):
+        raise Refused(f"Invalid project_scripts for {bench}")
+    if not isinstance(data.get("ai_keywords", []), list):
+        raise Refused(f"Invalid ai_keywords for {bench}")
+    rows = []
+    for item in scripts:
+        if not isinstance(item, dict) or not isinstance(item.get("name"), str) or not item["name"]:
+            raise Refused(f"Invalid generator for {bench}")
+        script = inside(bench_path, item.get("script"))
+        rows.append((item, script))
+    return data, bench_path, rows
+
+
+def registry(root):
+    benches = bench_registry(root)
+    rows = []
+    for bench in sorted(benches):
+        data, _, scripts = bench_definition(root, benches, bench)
+        for item, script in scripts:
+            # Historical registry mixes maintenance scripts into project_scripts.
+            if item["name"].startswith("update-") or script.name.startswith("update-"):
+                continue
+            rows.append({"bench": bench, "type": item["name"], "script": str(script),
+                         "description": item.get("description", ""),
+                         "available": script.is_file(),
+                         "keywords": [str(k).lower() for k in data.get("ai_keywords", [])]})
+    return rows
+
+
+def ask(prompt):
+    if not sys.stdin.isatty():
+        raise Refused(f"{prompt} Supply explicit options when stdin is not a terminal.")
+    return input(prompt + " ").strip()
+
+
+def confirm(yes):
+    if not yes and ask("Type yes to run this plan:") != "yes":
+        raise Refused("Cancelled; no command was run.")
+
+
+def execute(argv, cwd=None):
+    try:
+        result = subprocess.run(argv, cwd=cwd)
+    except OSError as exc:
+        raise Refused(f"Cannot run {argv[0]}: {exc}") from exc
+    return result.returncode if result.returncode >= 0 else 128 - result.returncode
+
+
+def show_plan(commands, cwd=None):
+    if cwd:
+        print(f"Working directory: {cwd}")
+    for argv in commands:
+        print("  " + shlex.join([str(arg) for arg in argv]))
+    sys.stdout.flush()
+
+
+def choose(rows, args):
+    selected = [r for r in rows if (not args.bench or r["bench"] == args.bench)
+                and (not args.type or r["type"] == args.type)]
+    if not selected:
+        raise Refused("No matching generator; run project benches.")
+    if args.type or args.bench:
+        available = [r for r in selected if r["available"]]
+        if not available:
+            raise Refused("Configured generator is missing: " + ", ".join(r["script"] for r in selected))
+        selected = available
+    else:
+        selected = [r for r in selected if r["available"]]
+    if not selected:
+        raise Refused("No installed generators. Run workBenches setup for the required bench.")
+    if args.description:
+        scored = [(sum(bool(re.search(r"(?<!\w)" + re.escape(k) + r"(?!\w)",
+                                     args.description.lower())) for k in r["keywords"]), r)
+                  for r in selected]
+        best = max(score for score, _ in scored)
+        if best:
+            selected = [r for score, r in scored if score == best]
+    if len(selected) == 1:
+        return selected[0]
+    for i, row in enumerate(selected, 1):
+        print(f"{i}. {row['bench']}:{row['type']} — {row['description']}")
+    answer = ask("Select a generator number (or specify --bench and --type):")
+    if not answer.isdigit() or not 1 <= int(answer) <= len(selected):
+        raise Refused("Invalid generator selection.")
+    return selected[int(answer) - 1]
+
+
+def new(args):
+    name = args.name or ask("Project name:")
+    if not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9_-]*", name):
+        raise Refused("Project name must start with a letter or digit and contain letters, digits, _ or -.")
+    if args.parent and args.into:
+        raise Refused("Use either positional parent or --into.")
+    parent = Path(args.into or args.parent or projects_dirs()[0]).expanduser().resolve()
+    if args.family and not re.fullmatch(r"[A-Za-z][A-Za-z0-9]*", args.family):
+        raise Refused("Family must be a single folder name.")
+    destination = parent / name
+    if args.shape and args.family:
+        destination = (parent if parent.name == args.family else parent / args.family) / name
+    if destination.exists() or destination.is_symlink():
+        raise Refused(f"Destination already exists: {destination}")
+    if args.shape:
+        if args.bench or args.type or args.description:
+            raise Refused("Shape creation has no bench generator adapter yet; omit --bench/--type/--description.")
+        if not args.org or not args.visibility:
+            raise Refused("Shape creation requires --org and --visibility.")
+        if not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9-]*", args.org):
+            raise Refused("Invalid GitHub organization name.")
+        if not parent.is_dir():
+            raise Refused("Shape creation requires an existing --into parent directory.")
+        if not shutil.which("openRepoShape"):
+            raise Refused("Install openRepoShape through workBenches first.")
+        command = ["openRepoShape", name, "--org", args.org, "--visibility", args.visibility,
+                   "--into", str(parent)]
+        if args.family:
+            command += ["--family", args.family]
+        if args.elected_by:
+            command += ["--elected-by", args.elected_by]
+        row = None
+    else:
+        if args.org or args.visibility or args.family or args.elected_by:
+            raise Refused("--org, --visibility, --family and --elected-by require --shape.")
+        row = choose(registry(workbenches(args.workbenches)), args)
+        command = ["bash", row["script"], name, str(parent)]
+    commands = [command]
+    if args.workflow:
+        if not shutil.which("setup-openspeckit"):
+            raise Refused("--workflow requires setup-openspeckit on PATH.")
+        commands.append(["setup-openspeckit", "--repo", str(destination)])
+    print(f"Create: {destination}")
+    show_plan(commands)
+    if args.dry_run:
+        return 0
+    if not args.shape:
+        confirm(args.yes)
+        parent.mkdir(parents=True, exist_ok=True)
+    # Shape's own confirmation is always retained, including with --yes here.
+    code = execute(command, cwd=parent if args.shape else None)
+    if code:
+        return code
+    if not destination.is_dir():
+        raise Refused(f"Generator returned success but did not create {destination}")
+    if row:
+        profile = destination / ".project.json"
+        if not profile.exists():
+            with profile.open("x") as stream:
+                json.dump({"schema_version": 1, "bench": row["bench"], "type": row["type"]}, stream, indent=2)
+                stream.write("\n")
+    for followup in commands[1:]:
+        code = execute(followup)
+        if code:
+            print(f"Project created at {destination}; workflow setup failed.", file=sys.stderr)
+            return code
+    print(f"Created: {destination}\nNext: project doctor {shlex.quote(str(destination))}")
+    return 0
+
+
+def manifest(root):
+    for filename, kind in (("project.yaml", "project-manifest"), ("family.yaml", "family-manifest")):
+        path = root / filename
+        if path.is_file():
+            data = read_yaml(path)
+            if data.get("kind") != kind:
+                raise Refused(f"Unexpected kind in {path}; expected {kind}")
+            return kind, data
+    return "single", {}
+
+
+def discover(target=None):
+    if target:
+        path = Path(target).expanduser()
+        # Named estates prefer family holders over similarly named roots.
+        if not path.is_absolute() and len(path.parts) == 1:
+            families = [base / target / target for base in projects_dirs()
+                        if (base / target / target / "family.yaml").is_file()]
+            if len(families) > 1:
+                raise Refused("Ambiguous project name; supply a path.")
+            if families:
+                return families[0].resolve()
+            if not path.exists():
+                matches = [p / target for p in projects_dirs() if (p / target).is_dir()]
+                if len(matches) > 1:
+                    raise Refused("Ambiguous project name; supply a path.")
+                if matches:
+                    path = matches[0]
+        path = path.resolve()
+    else:
+        path = Path.cwd().resolve()
+    if not path.is_dir():
+        raise Refused(f"Directory does not exist: {path}")
+    holder = path / path.name
+    if (holder / "family.yaml").is_file():
+        return holder
+    ancestors = [path, *path.parents]
+    for candidate in ancestors:
+        if (candidate / "project.yaml").is_file() or (candidate / "family.yaml").is_file():
+            return candidate
+    root = git_text(path, "rev-parse", "--show-toplevel")
+    if root:
+        return Path(root)
+    if (path / ".project.json").is_file() or (path / ".devcontainer").is_dir():
+        return path
+    raise Refused(f"No project found at {path}; supply a path or name.")
+
+
+def repo_state(root):
+    top = git_text(root, "rev-parse", "--show-toplevel")
+    if not top or Path(top).resolve() != root.resolve():
+        return {"path": str(root), "present": False}
+    status = git(root, "status", "--porcelain=v1", "--untracked-files=normal")
+    if status.returncode:
+        raise Refused(f"Cannot inspect {root}: {status.stderr.strip()}")
+    branch = git_text(root, "symbolic-ref", "--quiet", "--short", "HEAD")
+    head = git_text(root, "rev-parse", "--verify", "HEAD")
+    upstream = git_text(root, "rev-parse", "--abbrev-ref", "@{upstream}")
+    delta = git_text(root, "rev-list", "--left-right", "--count", "HEAD...@{upstream}") if upstream else None
+    ahead, behind = map(int, delta.split()) if delta else (None, None)
+    worktrees = []
+    current = {}
+    active_path = Path.cwd().resolve()
+    for line in (git_text(root, "worktree", "list", "--porcelain") or "").splitlines():
+        if line.startswith("worktree "):
+            current = {"path": line[9:], "present": Path(line[9:]).is_dir()}
+            worktrees.append(current)
+        elif line.startswith("HEAD "):
+            current["head"] = line[5:]
+        elif line.startswith("branch "):
+            current["branch"] = line[7:].removeprefix("refs/heads/")
+        elif line == "detached":
+            current["branch"] = "detached"
+        elif line.startswith("prunable "):
+            current["prunable"] = True
+    for tree in worktrees:
+        tree_path = Path(tree["path"])
+        if not tree["present"]:
+            tree["classification"] = "stale-worktree"
+            tree["recommendation"] = "Review the stale worktree metadata before pruning it manually."
+            continue
+        tree_status = git(tree_path, "status", "--porcelain=v1", "--untracked-files=normal")
+        tree["dirty"] = bool(tree_status.stdout) if tree_status.returncode == 0 else None
+        ignored_status = git(tree_path, "status", "--porcelain=v1", "--ignored=matching")
+        tree["ignored_files"] = (sum(line.startswith("!! ") for line in ignored_status.stdout.splitlines())
+                                 if ignored_status.returncode == 0 else None)
+        resolved_tree = tree_path.resolve()
+        tree["current"] = active_path == resolved_tree or active_path.is_relative_to(resolved_tree)
+        tree["upstream"] = None
+        tree["ahead"] = tree["behind"] = None
+        if tree.get("branch") and tree["branch"] != "detached":
+            tree["upstream"] = git_text(tree_path, "rev-parse", "--abbrev-ref", "@{upstream}")
+            if tree["upstream"]:
+                delta = git_text(tree_path, "rev-list", "--left-right", "--count", "HEAD...@{upstream}")
+                if delta:
+                    tree["ahead"], tree["behind"] = map(int, delta.split())
+    return {"path": str(root), "present": True, "branch": branch or "detached",
+            "head": head, "dirty": bool(status.stdout), "upstream": upstream,
+            "ahead": ahead, "behind": behind, "tracking_freshness": "local refs only; no fetch",
+            "worktrees": worktrees}
+
+
+def default_branch(root, declared=None):
+    """Return the local branch used as the cleanup merge target."""
+    candidates = [declared, git_text(root, "symbolic-ref", "--short", "refs/remotes/origin/HEAD"),
+                  "main", "master"]
+    for candidate in candidates:
+        if not isinstance(candidate, str) or not candidate:
+            continue
+        candidate = candidate.removeprefix("origin/")
+        if git(root, "show-ref", "--verify", "--quiet", f"refs/heads/{candidate}").returncode == 0:
+            return candidate
+    return None
+
+
+def ancestor(root, commit, branch):
+    if not commit or not branch:
+        return None
+    result = git(root, "merge-base", "--is-ancestor", commit, f"refs/heads/{branch}")
+    return True if result.returncode == 0 else False if result.returncode == 1 else None
+
+
+def cleanup_report(root):
+    state = repo_state(root)
+    if not state.get("present"):
+        raise Refused(f"Cannot inspect Git repository at {root}")
+    _, data = manifest(root)
+    target = default_branch(root, data.get("tracking_branch"))
+    if not target:
+        raise Refused("Cannot determine the default branch from the manifest, origin/HEAD, main, or master.")
+    active_path = Path.cwd().resolve()
+    worktrees = []
+    for source in state["worktrees"]:
+        row = dict(source)
+        if row.get("present"):
+            tree_path = Path(row["path"]).resolve()
+            row["current"] = active_path == tree_path or active_path.is_relative_to(tree_path)
+        branch = row.get("branch", "detached")
+        row["merged_into_target"] = None
+        row["remote_present"] = None
+        if row.get("present") and branch != "detached":
+            row["merged_into_target"] = ancestor(root, row.get("head"), target)
+            if row.get("upstream"):
+                row["remote_present"] = git(root, "rev-parse", "--verify", "--quiet", row["upstream"]).returncode == 0
+        if not row.get("present"):
+            classification = "stale-worktree"
+            recommendation = "Review and prune stale worktree metadata manually."
+        elif branch == target:
+            classification = "protected-default"
+            recommendation = "Keep the default branch; use the repository's normal push or PR process."
+        elif row.get("dirty") is None:
+            classification = "inspection-error"
+            recommendation = "Preserve this worktree; Git could not establish its clean state."
+        elif row.get("dirty"):
+            classification = "dirty"
+            recommendation = "Preserve or commit the working changes before cleanup."
+        elif row.get("ignored_files") is None:
+            classification = "inspection-error"
+            recommendation = "Preserve this worktree; Git could not establish its ignored-file state."
+        elif row.get("ignored_files"):
+            classification = "ignored-local-files"
+            recommendation = "Preserve or relocate ignored local files before cleanup."
+        elif branch == "detached":
+            classification = "detached"
+            recommendation = "Preserve the detached commit or attach it to a named branch before cleanup."
+        elif not row.get("upstream"):
+            classification = "unpublished"
+            recommendation = "Push or otherwise preserve the branch before removing its worktree."
+        elif row.get("remote_present") is False:
+            classification = "remote-gone"
+            recommendation = "Confirm the branch should be republished before removing local work."
+        elif row.get("ahead") is None or row.get("behind") is None:
+            classification = "review-required"
+            recommendation = "Remote tracking state could not be established from local refs; preserve it for review."
+        elif row["ahead"] > 0 and row["behind"] > 0:
+            classification = "diverged"
+            recommendation = "Reconcile the diverged branch through the normal Git workflow before cleanup."
+        elif row["behind"] > 0:
+            classification = "remote-ahead"
+            recommendation = "Fetch and reconcile the newer remote branch before cleanup."
+        elif row["ahead"] > 0:
+            classification = "unpushed"
+            recommendation = "Use an explicit clean push, then continue through the normal review process."
+        elif row.get("merged_into_target") is True and not row.get("current"):
+            classification = "merged-removable"
+            recommendation = "This clean, merged, non-current worktree may be removed explicitly."
+        elif row.get("merged_into_target") is True:
+            classification = "merged-current"
+            recommendation = "The branch is merged, but this is the current checkout; switch away before removal."
+        elif row.get("merged_into_target") is None:
+            classification = "review-required"
+            recommendation = "Merge state could not be established from local refs; preserve it for review."
+        else:
+            classification = "pushed-unmerged"
+            recommendation = "Continue through the repository's normal pull-request or merge process."
+        row["classification"] = classification
+        row["recommendation"] = recommendation
+        worktrees.append(row)
+    return {"root": str(root), "target_branch": target,
+            "tracking_freshness": "local refs only; remote information is as of the last fetch; no fetch performed",
+            "worktrees": worktrees}
+
+
+def print_clean_report(report, as_json):
+    if as_json:
+        print(json.dumps(report, indent=2))
+        return
+    print(f"Cleanup plan for {report['root']}")
+    print(f"Merge target: {report['target_branch']}")
+    print(f"Freshness: {report['tracking_freshness']}")
+    for row in report["worktrees"]:
+        branch = row.get("branch", "unknown")
+        upstream = row.get("upstream") or "none"
+        delta = "unknown" if row.get("ahead") is None else f"ahead={row['ahead']}, behind={row['behind']}"
+        print(f"{row['classification'].upper()}: {row['path']} [{branch}] "
+              f"dirty={row.get('dirty', 'unknown')}; upstream={upstream}; {delta}; "
+              f"merged={row.get('merged_into_target', 'unknown')}")
+        print(f"  {row['recommendation']}")
+
+
+def cleanup_signature(report, row):
+    fields = ("path", "branch", "head", "present", "dirty", "ignored_files", "upstream",
+              "ahead", "behind", "remote_present", "merged_into_target", "current", "classification")
+    return report["target_branch"], tuple((field, row.get(field)) for field in fields)
+
+
+def matching_worktree(report, *, branch=None, path=None):
+    if branch is not None:
+        rows = [row for row in report["worktrees"] if row.get("branch") == branch]
+    else:
+        rows = [row for row in report["worktrees"] if Path(row["path"]).resolve() == path]
+    return rows[0] if len(rows) == 1 else None
+
+
+def require_unchanged_cleanup_state(root, action, expected, *, branch=None, path=None, branch_head=None):
+    refreshed = cleanup_report(root)
+    if action == "delete-branch":
+        current_head = git_text(root, "rev-parse", "--verify", f"refs/heads/{branch}")
+        if (refreshed["target_branch"] != expected["target_branch"] or current_head != branch_head or
+                ancestor(root, current_head, refreshed["target_branch"]) is not True):
+            raise Refused("Cleanup state changed after confirmation; no command was run.")
+        return
+    current = matching_worktree(refreshed, branch=branch) if branch else matching_worktree(refreshed, path=path)
+    if not current or cleanup_signature(refreshed, current) != expected["signature"]:
+        raise Refused("Cleanup state changed after confirmation; no command was run.")
+
+
+def clean(args):
+    root = discover(args.target)
+    if args.json and args.apply:
+        raise Refused("--json cannot be combined with --apply; use JSON for the read-only plan.")
+    report = cleanup_report(root)
+    if not args.apply:
+        print_clean_report(report, args.json)
+        return 0
+    if not args.action:
+        raise Refused("--apply requires --action push|remove|delete-branch")
+    rows = report["worktrees"]
+    if args.action == "push":
+        if not args.branch:
+            raise Refused("Push cleanup requires --branch BRANCH")
+        matches = [row for row in rows if row.get("branch") == args.branch]
+        if len(matches) != 1:
+            raise Refused(f"No unique linked worktree found for branch {args.branch}")
+        row = matches[0]
+        if row.get("branch") == report["target_branch"]:
+            raise Refused("The default branch is protected; use its normal repository workflow.")
+        if row.get("dirty") is not False:
+            raise Refused(f"Cannot push {args.branch}; its worktree is dirty, missing, or unreadable.")
+        if row.get("branch") == "detached":
+            raise Refused("Cannot push a detached worktree; name the branch first.")
+        if row.get("classification") in ("diverged", "remote-ahead", "review-required"):
+            raise Refused(f"Cannot push {args.branch}; reconcile its remote state first.")
+        if row.get("upstream"):
+            remote, separator, remote_branch = row["upstream"].partition("/")
+            if not separator or not remote or not remote_branch:
+                raise Refused(f"Unsupported upstream mapping for {args.branch}: {row['upstream']}")
+            command = ["git", "-C", str(root), "push", remote, f"{args.branch}:{remote_branch}"]
+        else:
+            if not git_text(root, "remote", "get-url", "origin"):
+                raise Refused("Cannot publish a branch without an origin remote.")
+            command = ["git", "-C", str(root), "push", "-u", "origin", args.branch]
+        print(f"Cleanup action: push branch {args.branch}")
+        expected = {"target_branch": report["target_branch"], "signature": cleanup_signature(report, row)}
+        action_target = {"branch": args.branch}
+    elif args.action == "remove":
+        if not args.worktree:
+            raise Refused("Worktree cleanup requires --worktree PATH")
+        wanted = Path(args.worktree).expanduser().resolve()
+        matches = [row for row in rows if Path(row["path"]).resolve() == wanted]
+        if len(matches) != 1:
+            raise Refused(f"No unique linked worktree found at {wanted}")
+        row = matches[0]
+        if row.get("current"):
+            raise Refused("Cannot remove the current worktree.")
+        if row.get("classification") != "merged-removable":
+            raise Refused(f"Worktree is {row.get('classification')}; only clean merged worktrees may be removed.")
+        command = ["git", "-C", str(root), "worktree", "remove", str(wanted)]
+        print(f"Cleanup action: remove merged worktree {wanted}")
+        expected = {"target_branch": report["target_branch"], "signature": cleanup_signature(report, row)}
+        action_target = {"path": wanted}
+    else:
+        if not args.branch:
+            raise Refused("Branch cleanup requires --branch BRANCH")
+        matches = [row for row in rows if row.get("branch") == args.branch]
+        if args.branch == report["target_branch"]:
+            raise Refused("The default branch is protected and cannot be deleted.")
+        if matches and any(row.get("present") and row.get("branch") == args.branch for row in matches):
+            raise Refused("Remove the linked worktree first; branch deletion is a separate action.")
+        if ancestor(root, git_text(root, "rev-parse", "--verify", f"refs/heads/{args.branch}"), report["target_branch"]) is not True:
+            raise Refused(f"Branch {args.branch} is not verified as merged into {report['target_branch']}.")
+        branch_head = git_text(root, "rev-parse", "--verify", f"refs/heads/{args.branch}")
+        command = ["git", "-C", str(root), "branch", "-d", args.branch]
+        print(f"Cleanup action: delete verified merged local branch {args.branch}")
+    show_plan([command], root)
+    confirm(args.yes)
+    if args.action == "delete-branch":
+        require_unchanged_cleanup_state(root, args.action, {"target_branch": report["target_branch"]},
+                                        branch=args.branch, branch_head=branch_head)
+    else:
+        require_unchanged_cleanup_state(root, args.action, expected, **action_target)
+    return execute(command)
+
+
+def profile(root):
+    path = root / ".project.json"
+    if not path.is_file():
+        return {}
+    data = read_json(path)
+    if data.get("schema_version") != 1:
+        raise Refused(f"Unsupported profile schema in {path}; expected schema_version 1")
+    for field in ("bench", "type", "container"):
+        if field in data and (not isinstance(data[field], str) or not data[field]):
+            raise Refused(f"Invalid {field} in {path}")
+    return {field: data[field] for field in ("schema_version", "bench", "type", "container") if field in data}
+
+
+def github_repository_identity(value):
+    if not isinstance(value, str):
+        return None
+    match = re.fullmatch(r"([A-Za-z0-9](?:[A-Za-z0-9-]*[A-Za-z0-9])?)/([A-Za-z0-9][A-Za-z0-9_.-]*)", value)
+    return value if match else None
+
+
+def remote_repository_identity(remote):
+    match = re.fullmatch(r"(?:https?://github\.com/|(?:ssh://)?(?:git@)?github\.com[:/])"
+                         r"([^/]+/[^/]+?)(?:\.git)?/?", remote)
+    return github_repository_identity(match.group(1)) if match else None
+
+
+def handoff(root, data):
+    """Read only the matching workspace record; parking remains extension-owned."""
+    config_path = Path.home() / ".agents/workspace.yaml"
+    override = os.environ.get("SPECKIT_WORKSPACE_PATH")
+    if not config_path.is_file() and not override:
+        return {"state": "workspace not configured"}
+    config = read_yaml(config_path) if config_path.is_file() else {}
+    remote = git_text(root, "remote", "get-url", "origin") or ""
+    repository = remote_repository_identity(remote)
+    for leg in data.get("legs", []):
+        if isinstance(leg, dict) and leg.get("role") == "assembly":
+            repository = github_repository_identity(leg.get("repository")) or repository
+    if not repository:
+        return {"state": "no GitHub repository identity to match a parked record"}
+    org = repository.split("/", 1)[0]
+    orgs = config.get("orgs", {})
+    if not isinstance(orgs, dict):
+        raise Refused(f"Invalid orgs mapping in {config_path}")
+    specific = orgs.get(org, {})
+    if not isinstance(specific, dict):
+        raise Refused(f"Invalid organization entry in {config_path}")
+    path = override or specific.get("path") or config.get("path")
+    if not isinstance(path, str) or not path:
+        return {"state": "workspace path not configured"}
+    workspace = Path(path).expanduser()
+    if not workspace.is_absolute():
+        raise Refused(f"Workspace path must be absolute or home-relative in {config_path}")
+    records = workspace / "workspaces" / org
+    if not records.is_dir():
+        return {"state": "workspace records not available locally"}
+    matches = []
+    for record in sorted(records.glob("*.yaml")):
+        document = read_yaml(record)
+        if document.get("kind") != "workspace-manifest":
+            continue
+        entries = document.get("projects", [])
+        if not isinstance(entries, list):
+            raise Refused(f"Invalid projects list in {record}")
+        for entry in entries:
+            if not isinstance(entry, dict) or entry.get("repository") != repository:
+                continue
+            if not isinstance(entry.get("features", []), list):
+                raise Refused(f"Invalid features list in {record}")
+            matches.append({"record": str(record), "parked_at": str(entry.get("parked_at", "unknown")),
+                            "active_feature": entry.get("active_feature"),
+                            "features": len(entry.get("features", []))})
+    return {"state": "recorded" if matches else "no matching parked record", "records": matches,
+            "freshness": "local workspace records only"}
+
+
+def snapshot(root, visited=None):
+    visited = set() if visited is None else visited
+    if root.resolve() in visited:
+        raise Refused(f"Cyclic estate membership at {root}")
+    visited.add(root.resolve())
+    kind, data = manifest(root)
+    result = {"name": data.get("name", root.name), "kind": kind, "root": str(root),
+              "repository": repo_state(root), "profile": profile(root), "children": [],
+              "workflow": (root / ".specify/extensions/git").is_dir(),
+              "devcontainer": (root / ".devcontainer").is_dir(),
+              "tracking_branch": data.get("tracking_branch"),
+              "park_ready": all(os.access(root / ".specify/extensions/git/scripts/bash" / f"{verb}.sh", os.X_OK)
+                                for verb in ("park", "resume"))}
+    entries = data.get("legs" if kind == "project-manifest" else "members", [])
+    if not isinstance(entries, list):
+        raise Refused(f"Expected a list of legs/members in {root}")
+    for entry in entries:
+        if not isinstance(entry, dict):
+            raise Refused(f"Invalid leg/member in {root}")
+        if kind == "project-manifest":
+            if entry.get("role") == "assembly" and entry.get("path") == ".":
+                continue
+            child = inside(root, entry.get("path"))
+            result["children"].append({"role": entry.get("role", "leg"),
+                                       "tracking_branch": data.get("tracking_branch", "main"),
+                                       **repo_state(child)})
+        elif kind == "family-manifest":
+            name = entry.get("project") or entry.get("name")
+            if not isinstance(name, str) or not re.fullmatch(r"[A-Za-z0-9_-]+", name):
+                raise Refused(f"Invalid family member name in {root}")
+            child = inside(root.parent, name)
+            if child.is_dir() and (child / "project.yaml").is_file():
+                result["children"].append({"role": "member", **snapshot(child, visited)})
+            else:
+                result["children"].append({"role": "member", "path": str(child), "present": False})
+    try:
+        result["handoff"] = handoff(root, data)
+    except Refused as exc:
+        result["handoff"] = {"state": "unavailable", "error": str(exc)}
+    container = result["profile"].get("container")
+    if container:
+        response = probe(["docker", "inspect", "--type", "container", "--format", "{{.State.Status}}", container])
+        result["container"] = {"name": container, "state": response.stdout.strip() if not response.returncode else "unavailable"}
+    else:
+        result["container"] = {"state": "not declared; set container in .project.json"}
+    return result
+
+
+def nested_snapshot(item):
+    """Whether a child has the complete snapshot shape used for recursion."""
+    return (isinstance(item, dict) and isinstance(item.get("repository"), dict)
+            and isinstance(item.get("kind"), str))
+
+
+def check_rows(report):
+    rows = []
+    def add(level, name, detail):
+        rows.append({"level": level, "check": name, "detail": detail})
+    def walk(item):
+        state = item["repository"]
+        add("ok" if state["present"] else "warning", item["root"],
+            "Git checkout present" if state["present"] else "No Git checkout; initialize through the project workflow")
+        if state.get("dirty"):
+            add("warning", item["root"], "Uncommitted work; preserve it before updates")
+        if item["handoff"].get("error"):
+            add("warning", "handoff", item["handoff"]["error"])
+        if item["kind"] != "family-manifest":
+            add("ok" if item["workflow"] else "warning", "workflow", "overlay present" if item["workflow"] else
+                f"Install workflow with: setup-openspeckit --repo {shlex.quote(item['root'])}")
+        if item["kind"] == "project-manifest" and not item["park_ready"]:
+            add("warning", "park/resume", "Overlay scripts are missing or not executable; refresh setup-openspeckit")
+        for child in item["children"]:
+            if nested_snapshot(child):
+                walk(child)
+            elif not child.get("present"):
+                add("error", child["path"], "Missing checkout; use the estate's bootstrap/siblings command")
+            elif child.get("dirty"):
+                add("warning", child["path"], "Uncommitted work in leg")
+        if item["container"].get("name"):
+            add("ok" if item["container"]["state"] == "running" else "warning", "container", str(item["container"]))
+    walk(report)
+    for command in ("git", "bash", "make", "openRepoShape", "park", "resume", "setup-openspeckit", "docker"):
+        found = shutil.which(command)
+        add("ok" if found else "warning", command, found or "Not on PATH; install through workBenches as needed")
+    return rows
+
+
+def print_report(report, as_json):
+    if as_json:
+        print(json.dumps(report, indent=2))
+        return
+    def walk(item, indent=""):
+        state = item["repository"]
+        print(f"{indent}{item['name']} ({item['kind']}) — {item['root']}")
+        print(f"{indent}  Git: {state.get('branch', 'missing')}; dirty={state.get('dirty', 'unknown')}; "
+              f"ahead={state.get('ahead')}, behind={state.get('behind')} (local refs)")
+        for tree in state.get("worktrees", []):
+            print(f"{indent}  Worktree: {tree['path']} [{tree.get('branch', 'unknown')}]")
+        print(f"{indent}  Bench: {item['profile'].get('bench', 'not declared')}; container: {item['container']['state']}")
+        print(f"{indent}  Handoff: {item['handoff']['state']}")
+        for record in item["handoff"].get("records", []):
+            print(f"{indent}    Parked {record['parked_at']}; {record['features']} feature(s); {record['record']}")
+        for child in item["children"]:
+            if nested_snapshot(child):
+                walk(child, indent + "  ")
+            else:
+                print(f"{indent}  {child['role']}: {child['path']} — {child.get('branch', 'missing')}; dirty={child.get('dirty', 'unknown')}")
+    walk(report)
+    for row in report.get("checks", []):
+        print(f"{row['level'].upper()} {row['check']}: {row['detail']}")
+    for row in report.get("updates", []):
+        print(f"{row['component']}: {row['detail']}")
+
+
+def inspect_project(args):
+    report = snapshot(discover(args.target))
+    if args.command == "doctor":
+        checks = check_rows(report)
+        wb = workbenches(args.workbenches, required=False)
+        checks.append({"level": "ok" if wb else "warning", "check": "workBenches", "detail": str(wb) if wb else "Not found; set WORKBENCHES_ROOT"})
+        declared = report["profile"].get("bench")
+        if wb and declared:
+            entry = bench_definition(wb, bench_registry(wb), declared)
+            available = bool(entry and entry[1].is_dir())
+            checks.append({"level": "ok" if available else "error", "check": "bench", "detail": declared + (" available" if available else " missing")})
+        # Presence only: never read credentials or imply that a login is valid.
+        report["ai_tools"] = {name: bool(shutil.which(name)) for name in ("claude", "codex", "gemini", "copilot")}
+        report["credential_configuration"] = {
+            "verification": "presence only; authentication not tested",
+            "claude": (Path.home() / ".claude/.credentials.json").is_file() or bool(os.environ.get("ANTHROPIC_API_KEY")),
+            "codex": (Path.home() / ".codex/auth.json").is_file() or bool(os.environ.get("OPENAI_API_KEY")),
+            "gemini": (Path.home() / ".gemini/oauth_creds.json").is_file() or bool(os.environ.get("GEMINI_API_KEY")),
+        }
+        if args.validate:
+            def validate(item):
+                root = Path(item["root"])
+                names = ("validate-family.py",) if item["kind"] == "family-manifest" else (
+                    ("validate-manifest.py", "validate-pins.py") if item["kind"] == "project-manifest" else ())
+                if not names:
+                    checks.append({"level": "warning", "check": "validators", "detail": "No shape validators apply to this single repository"})
+                for name in names:
+                    script = root / "scripts" / name
+                    if script.is_file():
+                        response = probe([sys.executable, str(script)], cwd=root)
+                        checks.append({"level": "ok" if response.returncode == 0 else "error", "check": name,
+                                       "detail": (response.stdout + response.stderr).strip(), "exit_code": response.returncode})
+                    else:
+                        checks.append({"level": "error", "check": name, "detail": f"Required shape validator missing: {script}"})
+                for child in item["children"]:
+                    if nested_snapshot(child):
+                        validate(child)
+            validate(report)
+        report["checks"] = checks
+    print_report(report, args.json)
+    return int(any(r["level"] == "error" or (args.strict and r["level"] == "warning")
+                   for r in report.get("checks", [])))
+
+
+def update_child_states(item):
+    """Yield every child checkout state, including nested family members."""
+    for child in item["children"]:
+        if not nested_snapshot(child):
+            yield child
+            continue
+        state = {**child["repository"], "path": child["root"],
+                 "tracking_branch": child.get("tracking_branch") or "main"}
+        yield state
+        yield from update_child_states(child)
+
+
+def update(args):
+    root = discover(args.target)
+    report = snapshot(root)
+    report["updates"] = [
+        {"component": "shape", "detail": "Use openRepoShape update-shape.py check/apply; --shape-source selects its checkout"},
+        {"component": "workflow", "detail": "Refresh through setup-openspeckit --repo PATH"},
+        {"component": "bench", "detail": "Refresh project configuration through the profile's exact registered update-TYPE generator"},
+        {"component": "tools", "detail": "Open workBenches setup for explicit tool/environment selection"},
+    ]
+    if not args.apply:
+        print_report(report, args.json)
+        return 0
+    if args.json:
+        raise Refused("--json is for inspection; omit it when applying updates.")
+    if not args.component:
+        raise Refused("--apply requires --component shape|workflow|bench|tools")
+    if args.component in ("shape", "bench"):
+        state = report["repository"]
+        tracking = report.get("tracking_branch") or (git_text(root, "symbolic-ref", "--short", "refs/remotes/origin/HEAD") or "origin/main").removeprefix("origin/")
+        if not state.get("present") or state.get("dirty") or state.get("branch") != tracking:
+            raise Refused("Project updates require a clean tracking checkout; preserve feature work first.")
+        for child in update_child_states(report):
+            if not child.get("present"):
+                raise Refused(f"Child checkout is missing: {child.get('path')}")
+            expected = child.get("tracking_branch") or "main"
+            if child.get("dirty") or child.get("branch") in (None, "detached") or child.get("branch") != expected:
+                raise Refused(f"Child has work to preserve: {child.get('path')}")
+    if args.component == "shape":
+        if report["kind"] == "single":
+            raise Refused("This project has no shape manifest.")
+        if not args.shape_source:
+            raise Refused("Shape updates require --shape-source PATH to an openRepoShape checkout.")
+        source = Path(args.shape_source).expanduser().resolve() / "update-shape.py"
+        if not source.is_file():
+            raise Refused(f"Missing shape updater: {source}")
+        if not args.at or not re.fullmatch(r"[0-9a-f]{40}", args.at):
+            raise Refused("Shape updates require --at with a full commit SHA.")
+        commands = [[sys.executable, str(source), "check", "--root", str(root), "--at", args.at],
+                    [sys.executable, str(source), "apply", "--root", str(root), "--at", args.at,
+                     "--branch", args.branch or f"shape/update-{args.at[:12]}"]]
+    elif args.component == "workflow":
+        commands = [["setup-openspeckit", "--repo", str(root)]]
+    else:
+        wb = workbenches(args.workbenches)
+        if args.component == "bench":
+            # Exact target adapter avoids the old updater's fuzzy folder search.
+            if report["kind"] != "single":
+                raise Refused("Bench updates require a single application checkout, not an assembly/family root.")
+            selected = report["profile"]
+            definition = bench_definition(wb, bench_registry(wb), selected.get("bench"))
+            if not definition:
+                raise Refused("The selected bench is not registered; use the bench's own updater.")
+            _, _, scripts = definition
+            candidates = [(item, script) for item, script in scripts
+                          if item["name"] == "update-" + selected.get("type", "")]
+            if len(candidates) != 1:
+                raise Refused("No exact updater registered for this .project.json bench/type; use the bench's own updater.")
+            script = candidates[0][1]
+            if not script.is_file():
+                raise Refused(f"Registered updater is missing: {script}")
+            commands = [["bash", str(script), str(root)]]
+        else:
+            commands = [["bash", str(wb / "setup.sh")]]
+    show_plan(commands, root)
+    if args.dry_run:
+        return 0
+    if args.component == "shape":
+        check = execute(commands.pop(0), cwd=root)
+        # update-shape check exits 1 when differences are available.
+        if check not in (0, 1):
+            return check
+        # The owner retains its own confirmation prompt, even if this coordinator
+        # received --yes for a different update component.
+        return execute(commands[0], cwd=root)
+    confirm(args.yes)
+    for command in commands:
+        code = execute(command, cwd=root)
+        if code:
+            return code
+    return 0
+
+
+def parser():
+    result = argparse.ArgumentParser(description="Create, inspect and maintain projects through their owning tools.")
+    result.add_argument("--version", action="version", version="openRepoProject (sha256 " + hashlib.sha256(Path(__file__).read_bytes()).hexdigest()[:12] + ")")
+    commands = result.add_subparsers(dest="command", required=True)
+    creation = commands.add_parser("new", help="Create using a bench generator or openRepoShape")
+    creation.add_argument("name", nargs="?")
+    creation.add_argument("parent", nargs="?", help="Legacy parent directory")
+    creation.add_argument("--into", help="Parent directory")
+    creation.add_argument("--bench")
+    creation.add_argument("--type", help="Generator name from project benches")
+    creation.add_argument("--description", help="Local keyword recommendation; never uploaded")
+    creation.add_argument("--shape", action="store_true")
+    creation.add_argument("--org")
+    creation.add_argument("--visibility", choices=("public", "private", "internal"))
+    creation.add_argument("--family")
+    creation.add_argument("--elected-by")
+    creation.add_argument("--workflow", action="store_true", help="Run setup-openspeckit after creation")
+    listing = commands.add_parser("benches", help="List configured generators and availability")
+    listing.add_argument("--json", action="store_true")
+    for command in ("status", "doctor", "update"):
+        sub = commands.add_parser(command)
+        sub.add_argument("target", nargs="?", help="Project path or name; defaults to current project")
+        sub.add_argument("--json", action="store_true")
+        sub.add_argument("--workbenches", help="workBenches checkout")
+        sub.add_argument("--strict", action="store_true", help="Doctor warnings cause nonzero exit")
+        if command == "doctor":
+            sub.add_argument("--validate", action="store_true", help="Run project-owned validators (may access upstream)")
+        if command == "update":
+            sub.add_argument("--component", choices=("shape", "workflow", "bench", "tools"))
+            sub.add_argument("--apply", action="store_true")
+            sub.add_argument("--shape-source")
+            sub.add_argument("--at")
+            sub.add_argument("--branch")
+            sub.add_argument("--yes", action="store_true")
+            sub.add_argument("--dry-run", action="store_true")
+    cleaning = commands.add_parser("clean", help="Audit and explicitly clean Git worktrees")
+    cleaning.add_argument("target", nargs="?", help="Project path or name; defaults to current project")
+    cleaning.add_argument("--json", action="store_true", help="Print the read-only cleanup plan as JSON")
+    cleaning.add_argument("--apply", action="store_true", help="Apply one explicitly selected cleanup action")
+    cleaning.add_argument("--action", choices=("push", "remove", "delete-branch"),
+                          help="Action to apply; requires --apply")
+    cleaning.add_argument("--branch", help="Branch target for push or delete-branch")
+    cleaning.add_argument("--worktree", help="Worktree path target for remove")
+    cleaning.add_argument("--yes", action="store_true", help="Confirm the selected cleanup action")
+    for sub in (creation, listing):
+        sub.add_argument("--workbenches", help="workBenches checkout")
+    creation.add_argument("--yes", action="store_true", help="Confirm bench creation; shape prompts are retained")
+    creation.add_argument("--dry-run", action="store_true")
+    return result
+
+
+def main(argv=None):
+    args = parser().parse_args(argv)
+    try:
+        if args.command == "new":
+            return new(args)
+        if args.command == "benches":
+            rows = registry(workbenches(args.workbenches))
+            if args.json:
+                print(json.dumps(rows, indent=2))
+            else:
+                for row in rows:
+                    print(f"{row['bench']}:{row['type']} — {'available' if row['available'] else 'missing'} — {row['description']}")
+            return 0
+        if args.command == "update":
+            return update(args)
+        if args.command == "clean":
+            return clean(args)
+        return inspect_project(args)
+    except (Refused, OSError) as exc:
+        if getattr(args, "json", False):
+            print(json.dumps({"error": str(exc)}))
+        else:
+            print(f"REFUSED: {exc}", file=sys.stderr)
+        return 2
+    except (KeyboardInterrupt, EOFError):
+        print("Cancelled.", file=sys.stderr)
+        return 130
+
+
+if __name__ == "__main__":
+    sys.exit(main())

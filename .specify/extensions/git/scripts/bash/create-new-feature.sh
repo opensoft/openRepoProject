@@ -1,0 +1,1100 @@
+#!/usr/bin/env bash
+# Git extension: create-new-feature.sh
+# Adapted from core scripts/bash/create-new-feature.sh for extension layout.
+# Sources common.sh from the project's installed scripts, falling back to
+# git-common.sh for minimal git helpers.
+
+set -e
+
+JSON_MODE=false
+DRY_RUN=false
+ALLOW_EXISTING=false
+SHORT_NAME=""
+BRANCH_NUMBER=""
+USE_TIMESTAMP=false
+OWNED_NUMBER_RESERVATION_REF=""
+OWNED_NUMBER_RESERVATION_OID=""
+ARGS=()
+i=1
+while [ $i -le $# ]; do
+    arg="${!i}"
+    case "$arg" in
+        --json)
+            JSON_MODE=true
+            ;;
+        --dry-run)
+            DRY_RUN=true
+            ;;
+        --allow-existing-branch)
+            ALLOW_EXISTING=true
+            ;;
+        --short-name)
+            if [ $((i + 1)) -gt $# ]; then
+                echo 'Error: --short-name requires a value' >&2
+                exit 1
+            fi
+            i=$((i + 1))
+            next_arg="${!i}"
+            if [[ "$next_arg" == --* ]]; then
+                echo 'Error: --short-name requires a value' >&2
+                exit 1
+            fi
+            SHORT_NAME="$next_arg"
+            ;;
+        --number)
+            if [ $((i + 1)) -gt $# ]; then
+                echo 'Error: --number requires a value' >&2
+                exit 1
+            fi
+            i=$((i + 1))
+            next_arg="${!i}"
+            if [[ "$next_arg" == --* ]]; then
+                echo 'Error: --number requires a value' >&2
+                exit 1
+            fi
+            BRANCH_NUMBER="$next_arg"
+            if [[ ! "$BRANCH_NUMBER" =~ ^[0-9]+$ ]]; then
+                echo 'Error: --number must be a non-negative integer' >&2
+                exit 1
+            fi
+            ;;
+        --timestamp)
+            USE_TIMESTAMP=true
+            ;;
+        --)
+            i=$((i + 1))
+            while [ $i -le $# ]; do
+                ARGS+=("${!i}")
+                i=$((i + 1))
+            done
+            break
+            ;;
+        --help|-h)
+            echo "Usage: $0 [--json] [--dry-run] [--allow-existing-branch] [--short-name <name>] [--number N] [--timestamp] <feature_description>"
+            echo ""
+            echo "Options:"
+            echo "  --json              Output in JSON format"
+            echo "  --dry-run           Compute branch name without creating the branch"
+            echo "  --allow-existing-branch  Switch to branch if it already exists instead of failing"
+            echo "  --short-name <name> Provide a custom short name (2-4 words) for the branch"
+            echo "  --number N          Specify branch number manually (overrides auto-detection)"
+            echo "  --timestamp         Use timestamp prefix (YYYYMMDD-HHMMSS) instead of sequential numbering"
+            echo "  --help, -h          Show this help message"
+            echo ""
+            echo "Environment variables:"
+            echo "  GIT_BRANCH_NAME     Use this exact branch name, bypassing all prefix/suffix generation"
+            echo "  SPECKIT_GIT_BRANCH_TEMPLATE  Override branch_template"
+            echo "  SPECKIT_GIT_BRANCH_PREFIX    Override branch_prefix"
+            echo ""
+            echo "Configuration:"
+            echo "  branch_template     Optional template with exactly one {number}; also supports {author}, {app}, {slug}"
+            echo "  branch_prefix       Optional namespace prepended to branch_template"
+            echo ""
+            echo "Examples:"
+            echo "  $0 'Add user authentication system' --short-name 'user-auth'"
+            echo "  $0 'Implement OAuth2 integration for API' --number 5"
+            echo "  $0 --timestamp --short-name 'user-auth' 'Add user authentication'"
+            echo "  GIT_BRANCH_NAME=my-branch $0 'feature description'"
+            exit 0
+            ;;
+        -*)
+            echo "Error: unknown option: $arg" >&2
+            exit 1
+            ;;
+        *)
+            ARGS+=("$arg")
+            ;;
+    esac
+    i=$((i + 1))
+done
+
+FEATURE_DESCRIPTION="${ARGS[*]}"
+if [ -z "$FEATURE_DESCRIPTION" ]; then
+    echo "Usage: $0 [--json] [--dry-run] [--allow-existing-branch] [--short-name <name>] [--number N] [--timestamp] <feature_description>" >&2
+    exit 1
+fi
+
+FEATURE_DESCRIPTION=$(printf '%s' "$FEATURE_DESCRIPTION" | sed -E 's/^[[:space:]]+|[[:space:]]+$//g')
+if [ -z "$FEATURE_DESCRIPTION" ]; then
+    echo "Error: Feature description cannot be empty or contain only whitespace" >&2
+    exit 1
+fi
+
+# Function to get highest number from specs directory
+get_highest_from_specs() {
+    local specs_dir="$1"
+    local highest=0
+
+    if [ -d "$specs_dir" ]; then
+        for dir in "$specs_dir"/*; do
+            [ -d "$dir" ] || continue
+            dirname=$(basename "$dir")
+            # Match sequential prefixes (>=3 digits), but skip timestamp dirs.
+            if echo "$dirname" | grep -Eq '^[0-9]{3,}-' && ! echo "$dirname" | grep -Eq '^[0-9]{8}-[0-9]{6}-'; then
+                number=$(echo "$dirname" | grep -Eo '^[0-9]+')
+                number=$((10#$number))
+                if [ "$number" -gt "$highest" ]; then
+                    highest=$number
+                fi
+            fi
+        done
+    fi
+
+    echo "$highest"
+}
+
+# Function to get highest number from git branches
+get_highest_from_branches() {
+    local scope_prefix="${1:-}"
+    git branch -a 2>/dev/null | sed -E 's/^[+*][[:space:]]+//; s/^[[:space:]]+//; s|^remotes/[^/]*/||' | _extract_highest_number "$scope_prefix"
+}
+
+# Extract the highest sequential feature number from a list of ref names (one per line).
+_extract_highest_number() {
+    local scope_prefix="${1:-}"
+    local highest=0
+    while IFS= read -r name; do
+        [ -z "$name" ] && continue
+        if [ -n "$scope_prefix" ]; then
+            case "$name" in
+                "$scope_prefix"*) name="${name#"$scope_prefix"}" ;;
+                *) continue ;;
+            esac
+        elif [[ "$name" == */* ]]; then
+            continue
+        fi
+        name="${name##*/}"
+        if echo "$name" | grep -Eq '^[0-9]{3,}-' \
+            && ! echo "$name" | grep -Eq '^[0-9]{8}-[0-9]{6}-' \
+            && ! echo "$name" | grep -Eq '^[0-9]{7}-[0-9]{6}-' \
+            && ! echo "$name" | grep -Eq '^[0-9]{7,8}-[0-9]{6}$'; then
+            number=$(echo "$name" | grep -Eo '^[0-9]{3,}-' | sed -E 's/-$//' || echo "0")
+            number=$((10#$number))
+            if [ "$number" -gt "$highest" ]; then
+                highest=$number
+            fi
+        fi
+    done
+    echo "$highest"
+}
+
+# Function to get highest number from remote branches without fetching (side-effect-free)
+get_highest_from_remote_refs() {
+    local scope_prefix="${1:-}"
+    local highest=0
+
+    for remote in $(git remote 2>/dev/null); do
+        local remote_highest
+        remote_highest=$(GIT_TERMINAL_PROMPT=0 git ls-remote --heads "$remote" 2>/dev/null | sed 's|.*refs/heads/||' | _extract_highest_number "$scope_prefix")
+        if [ "$remote_highest" -gt "$highest" ]; then
+            highest=$remote_highest
+        fi
+    done
+
+    echo "$highest"
+}
+
+# Function to check existing branches and return next available number.
+check_existing_branches() {
+    local specs_dir="$1"
+    local skip_fetch="${2:-false}"
+    local scope_prefix="${3:-}"
+
+    if [ "$skip_fetch" = true ]; then
+        local highest_remote=$(get_highest_from_remote_refs "$scope_prefix")
+        local highest_branch=$(get_highest_from_branches "$scope_prefix")
+        if [ "$highest_remote" -gt "$highest_branch" ]; then
+            highest_branch=$highest_remote
+        fi
+    else
+        git fetch --all --prune >/dev/null 2>&1 || true
+        local highest_branch=$(get_highest_from_branches "$scope_prefix")
+    fi
+
+    local highest_spec=0
+    if [ -z "$scope_prefix" ]; then
+        highest_spec=$(get_highest_from_specs "$specs_dir")
+    fi
+
+    local max_num=$highest_branch
+    if [ "$highest_spec" -gt "$max_num" ]; then
+        max_num=$highest_spec
+    fi
+
+    echo $((max_num + 1))
+}
+
+cleanup_owned_number_reservation() {
+    local exit_status=$?
+
+    if [ -n "$OWNED_NUMBER_RESERVATION_REF" ]; then
+        git update-ref -d "$OWNED_NUMBER_RESERVATION_REF" \
+            "$OWNED_NUMBER_RESERVATION_OID" >/dev/null 2>&1 || true
+    fi
+    return "$exit_status"
+}
+
+release_owned_number_reservation() {
+    local delete_error=""
+
+    [ -n "$OWNED_NUMBER_RESERVATION_REF" ] || return 0
+    if ! delete_error=$(git update-ref -d "$OWNED_NUMBER_RESERVATION_REF" \
+        "$OWNED_NUMBER_RESERVATION_OID" 2>&1); then
+        >&2 echo "Error: Failed to release owned feature number reservation '$OWNED_NUMBER_RESERVATION_REF'."
+        if [ -n "$delete_error" ]; then
+            >&2 printf '%s\n' "$delete_error"
+        fi
+        return 1
+    fi
+    OWNED_NUMBER_RESERVATION_REF=""
+    OWNED_NUMBER_RESERVATION_OID=""
+    trap - EXIT
+}
+
+reserve_next_branch_number() {
+    local specs_dir="$1"
+    local scope_prefix="$2"
+    local candidate scope_hash owner_nonce owner_oid reservation_number reservation_ref update_error visible_candidate
+
+    if ! scope_hash=$(printf '%s' "$scope_prefix" | git hash-object --stdin); then
+        >&2 echo "Error: Failed to hash the sequential branch scope."
+        return 1
+    fi
+    owner_nonce="speckit-number-reservation-owner pid=$$ ppid=${PPID:-0} time=$(date +%s) seconds=${SECONDS:-0} random=$RANDOM-$RANDOM"
+    if ! owner_oid=$(printf '%s\n' "$owner_nonce" | git hash-object -w --stdin); then
+        >&2 echo "Error: Failed to create the sequential feature number reservation owner object."
+        return 1
+    fi
+    if [ -z "$owner_oid" ]; then
+        >&2 echo "Error: Failed to create the sequential feature number reservation owner object: Git returned an empty object ID."
+        return 1
+    fi
+    candidate=$(check_existing_branches "$specs_dir" true "$scope_prefix")
+
+    while :; do
+        reservation_number=$(printf '%03d' "$candidate")
+        reservation_ref="refs/speckit/number-reservations/v1/$scope_hash/$reservation_number"
+        update_error=""
+        if update_error=$(LC_ALL=C git update-ref "$reservation_ref" "$owner_oid" "" 2>&1); then
+            OWNED_NUMBER_RESERVATION_REF="$reservation_ref"
+            OWNED_NUMBER_RESERVATION_OID="$owner_oid"
+            trap cleanup_owned_number_reservation EXIT
+            visible_candidate=$(check_existing_branches "$specs_dir" true "$scope_prefix")
+            if [ "$visible_candidate" -gt "$candidate" ]; then
+                if ! release_owned_number_reservation; then
+                    return 1
+                fi
+                candidate="$visible_candidate"
+                continue
+            fi
+            BRANCH_NUMBER="$candidate"
+            return 0
+        fi
+
+        if git show-ref --verify --quiet "$reservation_ref" \
+            || [[ "$update_error" == *"reference already exists"* ]]; then
+            candidate=$((candidate + 1))
+            continue
+        fi
+
+        >&2 echo "Error: Failed to reserve sequential feature number $reservation_number."
+        if [ -n "$update_error" ]; then
+            >&2 printf '%s\n' "$update_error"
+        fi
+        return 1
+    done
+}
+
+# Function to clean and format a branch name
+clean_branch_name() {
+    local name="$1"
+    echo "$name" | tr '[:upper:]' '[:lower:]' | sed 's/[^a-z0-9]/-/g' | sed 's/-\+/-/g' | sed 's/^-//' | sed 's/-$//'
+}
+
+# ---------------------------------------------------------------------------
+# Source optional core helpers, then the required Git extension helpers.
+#
+# Search locations in priority order:
+#  1. .specify/scripts/bash/common.sh under the project root (installed project)
+#  2. scripts/bash/common.sh under the project root (source checkout fallback)
+# git-common.sh next to this script is always loaded for Git-specific behavior.
+# ---------------------------------------------------------------------------
+SCRIPT_DIR="$(CDPATH="" cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+# Find project root by walking up from the script location
+_find_project_root() {
+    local dir="$1"
+    while [ "$dir" != "/" ]; do
+        if [ -d "$dir/.specify" ] || [ -d "$dir/.git" ]; then
+            echo "$dir"
+            return 0
+        fi
+        dir="$(dirname "$dir")"
+    done
+    return 1
+}
+
+_common_loaded=false
+_PROJECT_ROOT=$(_find_project_root "$SCRIPT_DIR") || true
+
+if [ -n "$_PROJECT_ROOT" ] && [ -f "$_PROJECT_ROOT/.specify/scripts/bash/common.sh" ]; then
+    source "$_PROJECT_ROOT/.specify/scripts/bash/common.sh"
+    _common_loaded=true
+elif [ -n "$_PROJECT_ROOT" ] && [ -f "$_PROJECT_ROOT/scripts/bash/common.sh" ]; then
+    source "$_PROJECT_ROOT/scripts/bash/common.sh"
+    _common_loaded=true
+fi
+
+if [ -f "$SCRIPT_DIR/git-common.sh" ]; then
+    source "$SCRIPT_DIR/git-common.sh"
+    _common_loaded=true
+else
+    echo "Error: Could not locate git-common.sh next to create-new-feature.sh." >&2
+    exit 1
+fi
+
+if [ "$_common_loaded" != "true" ]; then
+    echo "Error: Could not locate common.sh or git-common.sh. Please ensure the Specify core scripts are installed." >&2
+    exit 1
+fi
+
+# Resolve repository root
+if type get_repo_root >/dev/null 2>&1; then
+    REPO_ROOT=$(get_repo_root)
+elif git rev-parse --show-toplevel >/dev/null 2>&1; then
+    REPO_ROOT=$(git rev-parse --show-toplevel)
+elif [ -n "$_PROJECT_ROOT" ]; then
+    REPO_ROOT="$_PROJECT_ROOT"
+else
+    echo "Error: Could not determine repository root." >&2
+    exit 1
+fi
+
+# Check if git is available at this repo root
+if type has_git >/dev/null 2>&1; then
+    if has_git "$REPO_ROOT"; then
+        HAS_GIT=true
+    else
+        HAS_GIT=false
+    fi
+elif git -C "$REPO_ROOT" rev-parse --is-inside-work-tree >/dev/null 2>&1; then
+    HAS_GIT=true
+else
+    HAS_GIT=false
+fi
+
+CONFIG_FILE="$REPO_ROOT/.specify/extensions/git/git-config.yml"
+
+get_config_value() {
+    local key="$1"
+    local default_value="$2"
+    local env_override_name="${3:-}"
+
+    if [ -n "$env_override_name" ]; then
+        local override_value="${!env_override_name:-}"
+        if [ -n "$override_value" ]; then
+            printf '%s\n' "$override_value"
+            return 0
+        fi
+    fi
+
+    if [ -f "$CONFIG_FILE" ]; then
+        local line
+        line=$(grep -E "^[[:space:]]*$key:[[:space:]]*" "$CONFIG_FILE" | tail -n 1 || true)
+        if [ -n "$line" ]; then
+            local value="${line#*:}"
+            value=$(printf '%s' "$value" | sed -E "s/[[:space:]]+#.*$//; s/^[[:space:]]+//; s/[[:space:]]+$//; s/^['\"]//; s/['\"]$//")
+            if [ -n "$value" ]; then
+                printf '%s\n' "$value"
+                return 0
+            fi
+        fi
+    fi
+
+    printf '%s\n' "$default_value"
+}
+
+branch_token() {
+    local value="$1"
+    local fallback="$2"
+    local cleaned
+    cleaned=$(clean_branch_name "$value")
+    if [ -n "$cleaned" ]; then
+        printf '%s\n' "$cleaned"
+    else
+        printf '%s\n' "$fallback"
+    fi
+}
+
+get_author_token() {
+    local author=""
+    if command -v git >/dev/null 2>&1; then
+        author=$(git config user.name 2>/dev/null || true)
+        if [ -z "$author" ]; then
+            author=$(git config user.email 2>/dev/null | sed 's/@.*$//' || true)
+        fi
+    fi
+    if [ -z "$author" ]; then
+        author="${USER:-unknown}"
+    fi
+    branch_token "$author" "unknown"
+}
+
+get_app_token() {
+    branch_token "$(basename "$REPO_ROOT")" "app"
+}
+
+render_branch_template() {
+    local template="$1"
+    local feature_num="$2"
+    local branch_suffix="$3"
+    local rendered="$template"
+    rendered=${rendered//\{author\}/$AUTHOR_TOKEN}
+    rendered=${rendered//\{app\}/$APP_TOKEN}
+    rendered=${rendered//\{number\}/$feature_num}
+    rendered=${rendered//\{slug\}/$branch_suffix}
+    printf '%s\n' "$rendered"
+}
+
+resolve_branch_template() {
+    local template="$1"
+    local prefix="$2"
+    while [[ "$prefix" == */ ]]; do
+        prefix="${prefix%/}"
+    done
+    if [ -z "$prefix" ]; then
+        printf '%s\n' "$template"
+        return
+    fi
+    case "$template" in
+        "$prefix"|"$prefix"/*) printf '%s\n' "$template" ;;
+        *) printf '%s/%s\n' "$prefix" "$template" ;;
+    esac
+}
+
+validate_branch_template() {
+    local template="$1"
+    local feature_segment="${template##*/}"
+    local unsupported="$template"
+    local without_number
+    local number_token_count
+    local number_token="{number}"
+    unsupported=${unsupported//\{author\}/}
+    unsupported=${unsupported//\{app\}/}
+    unsupported=${unsupported//\{number\}/}
+    unsupported=${unsupported//\{slug\}/}
+    case "$unsupported" in
+        *"{"*|*"}"*)
+            >&2 echo "Error: branch_template contains an unsupported token; supported tokens are {author}, {app}, {number}, and {slug}."
+            exit 1
+            ;;
+    esac
+    without_number=${template//\{number\}/}
+    number_token_count=$(((${#template} - ${#without_number}) / ${#number_token}))
+    if [ "$number_token_count" -ne 1 ]; then
+        >&2 echo "Error: branch_template must include exactly one {number} token so generated branches remain valid feature branches."
+        exit 1
+    fi
+    case "$template" in
+        *"{slug}"*"{number}"*)
+            >&2 echo "Error: branch_template must not place {slug} before {number}; use {slug} only in the final feature segment."
+            exit 1
+            ;;
+    esac
+    case "$feature_segment" in
+        "{number}-"*) ;;
+        *)
+            >&2 echo "Error: branch_template must put {number}- at the start of the final path segment so generated branches remain valid feature branches."
+            exit 1
+            ;;
+    esac
+}
+
+build_branch_name() {
+    render_branch_template "$BRANCH_TEMPLATE" "$1" "$2"
+}
+
+branch_scope_prefix() {
+    local prefix="$BRANCH_TEMPLATE"
+    case "$prefix" in
+        *"{number}"*) prefix="${prefix%%\{number\}*}" ;;
+        *"{slug}"*) prefix="${prefix%%\{slug\}*}" ;;
+        *) return 0 ;;
+    esac
+    render_branch_template "$prefix" "" "$BRANCH_SUFFIX"
+}
+
+extract_feature_num_from_branch() {
+    local branch_name="$1"
+    local feature_segment="${branch_name##*/}"
+    local match
+    match=$(printf '%s\n' "$feature_segment" | grep -Eo '^[0-9]{8}-[0-9]{6}-' | head -n 1 || true)
+    if [ -n "$match" ]; then
+        printf '%s\n' "${match%-}"
+        return
+    fi
+    match=$(printf '%s\n' "$feature_segment" | grep -Eo '^[0-9]+-' | head -n 1 || true)
+    if [ -n "$match" ]; then
+        printf '%s\n' "${match%-}"
+        return
+    fi
+    printf '%s\n' "$branch_name"
+}
+
+resolve_path_from_repo_root() {
+    local raw_path="$1"
+    if [[ "$raw_path" == /* ]]; then
+        printf '%s\n' "$raw_path"
+    elif command -v python3 >/dev/null 2>&1; then
+        python3 - "$REPO_ROOT" "$raw_path" <<'PY'
+import os
+import sys
+
+print(os.path.abspath(os.path.join(sys.argv[1], sys.argv[2])))
+PY
+    else
+        printf '%s\n' "$REPO_ROOT/$raw_path"
+    fi
+}
+
+resolve_git_common_dir() {
+    local common_dir
+    common_dir=$(git rev-parse --git-common-dir 2>/dev/null || true)
+    if [ -z "$common_dir" ]; then
+        return 1
+    fi
+    if [[ "$common_dir" == /* ]]; then
+        printf '%s\n' "$common_dir"
+    else
+        printf '%s\n' "$REPO_ROOT/$common_dir"
+    fi
+}
+
+resolve_base_ref() {
+    local base_ref="$1"
+
+    if git show-ref --verify --quiet "refs/heads/$base_ref"; then
+        printf '%s\n' "$base_ref"
+        return 0
+    fi
+
+    if git rev-parse --verify --quiet "$base_ref^{commit}" >/dev/null 2>&1; then
+        printf '%s\n' "$base_ref"
+        return 0
+    fi
+
+    if git show-ref --verify --quiet "refs/remotes/origin/$base_ref"; then
+        printf 'origin/%s\n' "$base_ref"
+        return 0
+    fi
+
+    return 1
+}
+
+find_worktree_for_branch() {
+    local target_branch="$1"
+    local index
+
+    GIT_WORKTREE_RESULT_PATH=""
+    if ! load_git_worktrees "$REPO_ROOT"; then
+        return 2
+    fi
+    index=0
+    while [ "$index" -lt "${#GIT_WORKTREE_PATHS[@]}" ]; do
+        if verify_git_worktree_candidate "$REPO_ROOT" "$WORKTREE_ROOT" \
+            "${GIT_WORKTREE_PATHS[$index]}" "${GIT_WORKTREE_HEADS[$index]}" \
+            "${GIT_WORKTREE_BRANCH_REFS[$index]}" "${GIT_WORKTREE_DETACHED[$index]}" \
+            && [ "$GIT_WORKTREE_VERIFIED_BRANCH_REF" = "refs/heads/$target_branch" ]; then
+            GIT_WORKTREE_RESULT_PATH="$GIT_WORKTREE_VERIFIED_PATH"
+            return 0
+        fi
+        index=$((index + 1))
+    done
+
+    return 1
+}
+
+select_json_encoder() {
+    if command -v jq >/dev/null 2>&1; then
+        printf '%s\n' jq
+    elif [ "$(type -t json_escape 2>/dev/null || true)" = "function" ]; then
+        printf '%s\n' json_escape
+    elif command -v python3 >/dev/null 2>&1; then
+        printf '%s\n' python3
+    else
+        return 1
+    fi
+}
+
+assert_state_file_safe() {
+    local state_file="$1"
+
+    if [ -L "$state_file" ] || { [ -e "$state_file" ] && [ ! -f "$state_file" ]; }; then
+        printf 'Error: Speckit state path must be a regular file or missing: %s\n' "$state_file" >&2
+        return 1
+    fi
+}
+
+write_last_worktree_state() {
+    local branch_name="$1"
+    local worktree_path="$2"
+    local base_branch="$3"
+    local state_file="$STATE_FILE"
+
+    [ -n "$state_file" ] || return 0
+    local common_dir="${state_file%/*}"
+    local updated_at
+    updated_at=$(date -u +"%Y-%m-%dT%H:%M:%SZ" 2>/dev/null || echo "")
+
+    if ! python3 - "$common_dir" "${state_file##*/}" "$branch_name" "$worktree_path" "$base_branch" "$REPO_ROOT" "$updated_at" <<'PY'
+import errno
+import json
+import os
+import secrets
+import stat
+import sys
+from contextlib import ExitStack
+
+common_dir = sys.argv[1]
+state_name = sys.argv[2]
+payload = {
+    "BRANCH_NAME": sys.argv[3],
+    "WORKTREE_PATH": sys.argv[4],
+    "BASE_BRANCH": sys.argv[5],
+    "REPO_ROOT": sys.argv[6],
+    "UPDATED_AT": sys.argv[7],
+}
+serialized = (json.dumps(payload, ensure_ascii=False, separators=(",", ":")) + "\n").encode()
+directory_flags = os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW
+temporary_flags = os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW
+
+with ExitStack() as descriptors:
+    directory_fd = os.open("/", directory_flags)
+    descriptors.callback(os.close, directory_fd)
+    for component in common_dir.split("/"):
+        if component in ("", "."):
+            continue
+        directory_fd = os.open(component, directory_flags, dir_fd=directory_fd)
+        descriptors.callback(os.close, directory_fd)
+
+    temporary_name = ""
+    temporary_fd = -1
+    temporary_identity = None
+    try:
+        for _ in range(128):
+            temporary_name = ".speckit-last-worktree.json.tmp." + secrets.token_hex(8)
+            try:
+                temporary_fd = os.open(temporary_name, temporary_flags, 0o600, dir_fd=directory_fd)
+                break
+            except FileExistsError:
+                continue
+        else:
+            raise FileExistsError(errno.EEXIST, "could not create a unique state temporary")
+
+        descriptors.callback(os.close, temporary_fd)
+        temporary_identity = os.fstat(temporary_fd)
+        offset = 0
+        while offset < len(serialized):
+            offset += os.write(temporary_fd, serialized[offset:])
+        os.fchmod(temporary_fd, 0o600)
+        os.fsync(temporary_fd)
+
+        temporary_leaf = os.stat(temporary_name, dir_fd=directory_fd, follow_symlinks=False)
+        if not stat.S_ISREG(temporary_leaf.st_mode) or (
+            temporary_leaf.st_dev,
+            temporary_leaf.st_ino,
+        ) != (temporary_identity.st_dev, temporary_identity.st_ino):
+            raise OSError(errno.EPERM, "state temporary was replaced before publication")
+
+        try:
+            state_leaf = os.stat(state_name, dir_fd=directory_fd, follow_symlinks=False)
+        except FileNotFoundError:
+            state_leaf = None
+        if state_leaf is not None and not stat.S_ISREG(state_leaf.st_mode):
+            raise OSError(errno.EPERM, "Speckit state path must be a regular file or missing")
+
+        os.replace(temporary_name, state_name, src_dir_fd=directory_fd, dst_dir_fd=directory_fd)
+        temporary_name = ""
+    finally:
+        if temporary_name and temporary_identity is not None:
+            try:
+                temporary_leaf = os.stat(temporary_name, dir_fd=directory_fd, follow_symlinks=False)
+            except FileNotFoundError:
+                temporary_leaf = None
+            if temporary_leaf is not None and (
+                temporary_leaf.st_dev,
+                temporary_leaf.st_ino,
+            ) == (temporary_identity.st_dev, temporary_identity.st_ino):
+                os.unlink(temporary_name, dir_fd=directory_fd)
+PY
+    then
+        return 1
+    fi
+}
+
+cd "$REPO_ROOT"
+
+SPECS_DIR="$REPO_ROOT/specs"
+DEFAULT_WORKTREE_ROOT="../$(basename "$REPO_ROOT")-worktrees"
+CHECKOUT_MODE=$(get_config_value "checkout_mode" "branch" "SPECKIT_GIT_CHECKOUT_MODE")
+CHECKOUT_MODE=$(printf '%s' "$CHECKOUT_MODE" | tr '[:upper:]' '[:lower:]')
+BRANCH_NUMBERING=$(get_config_value "branch_numbering" "sequential" "SPECKIT_GIT_BRANCH_NUMBERING")
+BRANCH_NUMBERING=$(printf '%s' "$BRANCH_NUMBERING" | tr '[:upper:]' '[:lower:]')
+BASE_BRANCH=$(get_config_value "base_branch" "main" "SPECKIT_GIT_BASE_BRANCH")
+WORKTREE_ROOT_RAW=$(get_config_value "worktree_root" "$DEFAULT_WORKTREE_ROOT" "SPECKIT_GIT_WORKTREE_ROOT")
+WORKTREE_ROOT=$(resolve_path_from_repo_root "$WORKTREE_ROOT_RAW")
+if [ "$CHECKOUT_MODE" != "branch" ] && [ "$CHECKOUT_MODE" != "worktree" ]; then
+    echo "Error: checkout_mode must be 'branch' or 'worktree' (got '$CHECKOUT_MODE')" >&2
+    exit 1
+fi
+
+if [ "$BRANCH_NUMBERING" != "sequential" ] && [ "$BRANCH_NUMBERING" != "timestamp" ]; then
+    echo "Error: branch_numbering must be 'sequential' or 'timestamp' (got '$BRANCH_NUMBERING')" >&2
+    exit 1
+fi
+
+JSON_ENCODER=""
+if [ "$JSON_MODE" = true ] || { [ "$CHECKOUT_MODE" = "worktree" ] && [ "$DRY_RUN" != true ]; }; then
+    if ! JSON_ENCODER=$(select_json_encoder); then
+        echo "Error: JSON output requires jq, a trusted json_escape function, or Python 3; no JSON encoder is available." >&2
+        exit 1
+    fi
+fi
+if [ "$CHECKOUT_MODE" = "worktree" ] && [ "$DRY_RUN" != true ] && ! command -v python3 >/dev/null 2>&1; then
+    echo "Error: Non-dry-run worktree creation requires Python 3 for safe state publication." >&2
+    exit 1
+fi
+
+if [ "$BRANCH_NUMBERING" = "timestamp" ]; then
+    USE_TIMESTAMP=true
+fi
+
+# Function to generate branch name with stop word filtering
+generate_branch_name() {
+    local description="$1"
+
+    local stop_words="^(i|a|an|the|to|for|of|in|on|at|by|with|from|is|are|was|were|be|been|being|have|has|had|do|does|did|will|would|should|could|can|may|might|must|shall|this|that|these|those|my|your|our|their|want|need|add|get|set)$"
+
+    local clean_name=$(echo "$description" | tr '[:upper:]' '[:lower:]' | sed 's/[^a-z0-9]/ /g')
+
+    local meaningful_words=()
+    for word in $clean_name; do
+        [ -z "$word" ] && continue
+        if ! echo "$word" | grep -qiE "$stop_words"; then
+            if [ ${#word} -ge 3 ]; then
+                meaningful_words+=("$word")
+            elif printf '%s' "$description" | grep -qw -- "$(printf '%s' "$word" | tr '[:lower:]' '[:upper:]')"; then
+                meaningful_words+=("$word")
+            fi
+        fi
+    done
+
+    if [ ${#meaningful_words[@]} -gt 0 ]; then
+        local max_words=3
+        if [ ${#meaningful_words[@]} -eq 4 ]; then max_words=4; fi
+
+        local result=""
+        local count=0
+        for word in "${meaningful_words[@]}"; do
+            if [ $count -ge $max_words ]; then break; fi
+            if [ -n "$result" ]; then result="$result-"; fi
+            result="$result$word"
+            count=$((count + 1))
+        done
+        echo "$result"
+    else
+        local cleaned=$(clean_branch_name "$description")
+        echo "$cleaned" | tr '-' '\n' | grep -v '^$' | head -3 | tr '\n' '-' | sed 's/-$//'
+    fi
+}
+
+# Check for GIT_BRANCH_NAME env var override (exact branch name, no prefix/suffix)
+if [ -n "${GIT_BRANCH_NAME:-}" ]; then
+    BRANCH_NAME="$GIT_BRANCH_NAME"
+    FEATURE_NUM=$(extract_feature_num_from_branch "$BRANCH_NAME")
+    BRANCH_SUFFIX="$BRANCH_NAME"
+else
+    BRANCH_TEMPLATE_RAW=$(get_config_value "branch_template" "{number}-{slug}" "SPECKIT_GIT_BRANCH_TEMPLATE")
+    BRANCH_PREFIX=$(get_config_value "branch_prefix" "" "SPECKIT_GIT_BRANCH_PREFIX")
+    AUTHOR_TOKEN=$(get_author_token)
+    APP_TOKEN=$(get_app_token)
+    BRANCH_TEMPLATE=$(resolve_branch_template "$BRANCH_TEMPLATE_RAW" "$BRANCH_PREFIX")
+    validate_branch_template "$BRANCH_TEMPLATE"
+
+    # Generate branch name
+    if [ -n "$SHORT_NAME" ]; then
+        BRANCH_SUFFIX=$(clean_branch_name "$SHORT_NAME")
+    else
+        BRANCH_SUFFIX=$(generate_branch_name "$FEATURE_DESCRIPTION")
+    fi
+
+    if [ -z "$BRANCH_SUFFIX" ]; then
+        >&2 echo "Error: Feature branch name must include at least one alphanumeric slug word. Provide --short-name with letters or digits."
+        exit 1
+    fi
+
+    # Warn if --number and --timestamp are both specified
+    if [ "$USE_TIMESTAMP" = true ] && [ -n "$BRANCH_NUMBER" ]; then
+        >&2 echo "[specify] Warning: --number is ignored when --timestamp is used"
+        BRANCH_NUMBER=""
+    fi
+
+    # Determine branch prefix
+    if [ "$USE_TIMESTAMP" = true ]; then
+        FEATURE_NUM=$(date +%Y%m%d-%H%M%S)
+        BRANCH_NAME=$(build_branch_name "$FEATURE_NUM" "$BRANCH_SUFFIX")
+    else
+        BRANCH_SCOPE_PREFIX=$(branch_scope_prefix)
+        if [ -z "$BRANCH_NUMBER" ]; then
+            if [ "$DRY_RUN" = true ] && [ "$HAS_GIT" = true ]; then
+                BRANCH_NUMBER=$(check_existing_branches "$SPECS_DIR" true "$BRANCH_SCOPE_PREFIX")
+            elif [ "$DRY_RUN" = true ]; then
+                if [ -n "$BRANCH_SCOPE_PREFIX" ]; then
+                    HIGHEST=0
+                else
+                    HIGHEST=$(get_highest_from_specs "$SPECS_DIR")
+                fi
+                BRANCH_NUMBER=$((HIGHEST + 1))
+            elif [ "$HAS_GIT" = true ]; then
+                if ! reserve_next_branch_number "$SPECS_DIR" "$BRANCH_SCOPE_PREFIX"; then
+                    exit 1
+                fi
+            else
+                if [ -n "$BRANCH_SCOPE_PREFIX" ]; then
+                    HIGHEST=0
+                else
+                    HIGHEST=$(get_highest_from_specs "$SPECS_DIR")
+                fi
+                BRANCH_NUMBER=$((HIGHEST + 1))
+            fi
+        fi
+
+        FEATURE_NUM=$(printf "%03d" "$((10#$BRANCH_NUMBER))")
+        BRANCH_NAME=$(build_branch_name "$FEATURE_NUM" "$BRANCH_SUFFIX")
+    fi
+fi
+
+# GitHub enforces a 244-byte limit on branch names
+MAX_BRANCH_LENGTH=244
+_byte_length() { printf '%s' "$1" | LC_ALL=C wc -c | tr -d ' '; }
+BRANCH_BYTE_LEN=$(_byte_length "$BRANCH_NAME")
+if [ -n "${GIT_BRANCH_NAME:-}" ] && [ "$BRANCH_BYTE_LEN" -gt $MAX_BRANCH_LENGTH ]; then
+    >&2 echo "Error: GIT_BRANCH_NAME must be 244 bytes or fewer in UTF-8. Provided value is ${BRANCH_BYTE_LEN} bytes."
+    exit 1
+elif [ "$BRANCH_BYTE_LEN" -gt $MAX_BRANCH_LENGTH ]; then
+    ORIGINAL_BRANCH_NAME="$BRANCH_NAME"
+    TRUNCATED_SUFFIX="$BRANCH_SUFFIX"
+    while [ "$(_byte_length "$BRANCH_NAME")" -gt "$MAX_BRANCH_LENGTH" ] && [ -n "$TRUNCATED_SUFFIX" ]; do
+        TRUNCATED_SUFFIX="${TRUNCATED_SUFFIX%?}"
+        TRUNCATED_SUFFIX="${TRUNCATED_SUFFIX%-}"
+        BRANCH_NAME=$(build_branch_name "$FEATURE_NUM" "$TRUNCATED_SUFFIX")
+    done
+    if [ -z "$TRUNCATED_SUFFIX" ] || [ "${BRANCH_NAME##*/}" = "$FEATURE_NUM-" ]; then
+        >&2 echo "Error: Branch name truncation removed the feature slug; shorten branch_prefix or branch_template."
+        exit 1
+    fi
+    if [ "$(_byte_length "$BRANCH_NAME")" -gt "$MAX_BRANCH_LENGTH" ]; then
+        >&2 echo "Error: Branch template prefix exceeds GitHub's 244-byte branch name limit."
+        exit 1
+    fi
+
+    >&2 echo "[specify] Warning: Branch name exceeded GitHub's 244-byte limit"
+    >&2 echo "[specify] Original: $ORIGINAL_BRANCH_NAME ($(_byte_length "$ORIGINAL_BRANCH_NAME") bytes)"
+    >&2 echo "[specify] Truncated to: $BRANCH_NAME ($(_byte_length "$BRANCH_NAME") bytes)"
+fi
+
+if command -v git >/dev/null 2>&1 && ! git check-ref-format --branch "$BRANCH_NAME" >/dev/null 2>&1; then
+    >&2 echo "Error: Invalid Git branch name: $BRANCH_NAME"
+    exit 1
+fi
+
+WORKTREE_PATH=""
+if [ "$CHECKOUT_MODE" = "worktree" ]; then
+    WORKTREE_PATH="$WORKTREE_ROOT/$BRANCH_NAME"
+fi
+
+STATE_FILE=""
+if [ "$DRY_RUN" != true ] && [ "$HAS_GIT" = true ] && [ "$CHECKOUT_MODE" = "worktree" ]; then
+    if ! STATE_COMMON_DIR=$(resolve_git_common_dir); then
+        >&2 echo "Error: Failed to resolve the Git common directory."
+        exit 1
+    fi
+    STATE_FILE="$STATE_COMMON_DIR/speckit-last-worktree.json"
+    if ! assert_state_file_safe "$STATE_FILE"; then
+        exit 1
+    fi
+fi
+
+if [ "$DRY_RUN" != true ]; then
+    if [ "$HAS_GIT" = true ]; then
+        if [ "$CHECKOUT_MODE" = "worktree" ]; then
+            existing_worktree=""
+            find_worktree_status=0
+            find_worktree_for_branch "$BRANCH_NAME" || find_worktree_status=$?
+            if [ "$find_worktree_status" -eq 2 ]; then
+                >&2 echo "Error: Failed to list Git worktrees."
+                exit 1
+            elif [ "$find_worktree_status" -eq 0 ]; then
+                existing_worktree="$GIT_WORKTREE_RESULT_PATH"
+                if [ "$ALLOW_EXISTING" = true ]; then
+                    WORKTREE_PATH="$existing_worktree"
+                elif [ "$USE_TIMESTAMP" = true ]; then
+                    >&2 echo "Error: Branch '$BRANCH_NAME' already exists in worktree '$existing_worktree'. Rerun to get a new timestamp or use a different --short-name."
+                    exit 1
+                else
+                    >&2 echo "Error: Branch '$BRANCH_NAME' is already checked out in worktree '$existing_worktree'."
+                    exit 1
+                fi
+            elif git branch --list "$BRANCH_NAME" | grep -q .; then
+                if [ "$ALLOW_EXISTING" = true ]; then
+                    if [ -e "$WORKTREE_PATH" ]; then
+                        >&2 echo "Error: Worktree path '$WORKTREE_PATH' already exists. Please remove it or configure a different worktree_root."
+                        exit 1
+                    fi
+                    mkdir -p "$(dirname "$WORKTREE_PATH")"
+                    if ! worktree_error=$(git worktree add "$WORKTREE_PATH" "$BRANCH_NAME" 2>&1); then
+                        >&2 echo "Error: Failed to add worktree '$WORKTREE_PATH' for existing branch '$BRANCH_NAME'."
+                        >&2 printf '%s\n' "$worktree_error"
+                        exit 1
+                    fi
+                elif [ "$USE_TIMESTAMP" = true ]; then
+                    >&2 echo "Error: Branch '$BRANCH_NAME' already exists. Rerun to get a new timestamp or use a different --short-name."
+                    exit 1
+                else
+                    >&2 echo "Error: Branch '$BRANCH_NAME' already exists. Please use a different feature name or specify a different number with --number."
+                    exit 1
+                fi
+            else
+                if ! base_ref=$(resolve_base_ref "$BASE_BRANCH"); then
+                    >&2 echo "Error: Base branch '$BASE_BRANCH' does not exist locally or on origin."
+                    exit 1
+                fi
+                if [ -e "$WORKTREE_PATH" ]; then
+                    >&2 echo "Error: Worktree path '$WORKTREE_PATH' already exists. Please remove it or configure a different worktree_root."
+                    exit 1
+                fi
+                mkdir -p "$(dirname "$WORKTREE_PATH")"
+                if ! worktree_error=$(git worktree add -b "$BRANCH_NAME" "$WORKTREE_PATH" "$base_ref" 2>&1); then
+                    >&2 echo "Error: Failed to create feature worktree '$WORKTREE_PATH' from '$base_ref'."
+                    >&2 printf '%s\n' "$worktree_error"
+                    exit 1
+                fi
+                if ! release_owned_number_reservation; then
+                    exit 1
+                fi
+            fi
+        else
+            branch_create_error=""
+            if ! branch_create_error=$(git checkout -q -b "$BRANCH_NAME" 2>&1); then
+                current_branch="$(git rev-parse --abbrev-ref HEAD 2>/dev/null || true)"
+                if git branch --list "$BRANCH_NAME" | grep -q .; then
+                    if [ "$ALLOW_EXISTING" = true ]; then
+                        if [ "$current_branch" = "$BRANCH_NAME" ]; then
+                            :
+                        elif ! switch_branch_error=$(git checkout -q "$BRANCH_NAME" 2>&1); then
+                            >&2 echo "Error: Failed to switch to existing branch '$BRANCH_NAME'. Please resolve any local changes or conflicts and try again."
+                            if [ -n "$switch_branch_error" ]; then
+                                >&2 printf '%s\n' "$switch_branch_error"
+                            fi
+                            exit 1
+                        fi
+                    elif [ "$USE_TIMESTAMP" = true ]; then
+                        >&2 echo "Error: Branch '$BRANCH_NAME' already exists. Rerun to get a new timestamp or use a different --short-name."
+                        exit 1
+                    else
+                        >&2 echo "Error: Branch '$BRANCH_NAME' already exists. Please use a different feature name or specify a different number with --number."
+                        exit 1
+                    fi
+                else
+                    >&2 echo "Error: Failed to create git branch '$BRANCH_NAME'."
+                    if [ -n "$branch_create_error" ]; then
+                        >&2 printf '%s\n' "$branch_create_error"
+                    else
+                        >&2 echo "Please check your git configuration and try again."
+                    fi
+                    exit 1
+                fi
+            elif ! release_owned_number_reservation; then
+                exit 1
+            fi
+        fi
+    else
+        >&2 echo "[specify] Warning: Git repository not detected; skipped $CHECKOUT_MODE creation for $BRANCH_NAME"
+    fi
+
+    printf '# To persist: export SPECIFY_FEATURE=%q\n' "$BRANCH_NAME" >&2
+    if [ "$CHECKOUT_MODE" = "worktree" ] && [ -n "$WORKTREE_PATH" ]; then
+        write_last_worktree_state "$BRANCH_NAME" "$WORKTREE_PATH" "$BASE_BRANCH"
+        printf '# Feature worktree: %q\n' "$WORKTREE_PATH" >&2
+    fi
+fi
+
+if $JSON_MODE; then
+    if [ "$JSON_ENCODER" = jq ]; then
+        jq -cn \
+            --arg branch_name "$BRANCH_NAME" \
+            --arg feature_num "$FEATURE_NUM" \
+            --arg checkout_mode "$CHECKOUT_MODE" \
+            --arg has_git "$HAS_GIT" \
+            --arg base_branch "$BASE_BRANCH" \
+            --arg worktree_path "$WORKTREE_PATH" \
+            --arg dry_run "$DRY_RUN" \
+            '({BRANCH_NAME:$branch_name,FEATURE_NUM:$feature_num,CHECKOUT_MODE:$checkout_mode,HAS_GIT:($has_git == "true")}
+              + (if $checkout_mode == "worktree" then {BASE_BRANCH:$base_branch,WORKTREE_PATH:$worktree_path} else {} end)
+              + (if $dry_run == "true" then {DRY_RUN:true} else {} end))'
+    elif [ "$JSON_ENCODER" = json_escape ]; then
+        _je_branch=$(json_escape "$BRANCH_NAME")
+        _je_num=$(json_escape "$FEATURE_NUM")
+        _je_mode=$(json_escape "$CHECKOUT_MODE")
+        _je_base=$(json_escape "$BASE_BRANCH")
+        _je_worktree=$(json_escape "$WORKTREE_PATH")
+        if [ "$DRY_RUN" = true ]; then
+            if [ "$CHECKOUT_MODE" = "worktree" ]; then
+                printf '{"BRANCH_NAME":"%s","FEATURE_NUM":"%s","CHECKOUT_MODE":"%s","HAS_GIT":%s,"BASE_BRANCH":"%s","WORKTREE_PATH":"%s","DRY_RUN":true}\n' \
+                    "$_je_branch" "$_je_num" "$_je_mode" "$HAS_GIT" "$_je_base" "$_je_worktree"
+            else
+                printf '{"BRANCH_NAME":"%s","FEATURE_NUM":"%s","CHECKOUT_MODE":"%s","HAS_GIT":%s,"DRY_RUN":true}\n' \
+                    "$_je_branch" "$_je_num" "$_je_mode" "$HAS_GIT"
+            fi
+        else
+            if [ "$CHECKOUT_MODE" = "worktree" ]; then
+                printf '{"BRANCH_NAME":"%s","FEATURE_NUM":"%s","CHECKOUT_MODE":"%s","HAS_GIT":%s,"BASE_BRANCH":"%s","WORKTREE_PATH":"%s"}\n' \
+                    "$_je_branch" "$_je_num" "$_je_mode" "$HAS_GIT" "$_je_base" "$_je_worktree"
+            else
+                printf '{"BRANCH_NAME":"%s","FEATURE_NUM":"%s","CHECKOUT_MODE":"%s","HAS_GIT":%s}\n' \
+                    "$_je_branch" "$_je_num" "$_je_mode" "$HAS_GIT"
+            fi
+        fi
+    else
+        python3 - "$BRANCH_NAME" "$FEATURE_NUM" "$CHECKOUT_MODE" "$HAS_GIT" "$BASE_BRANCH" "$WORKTREE_PATH" "$DRY_RUN" <<'PY'
+import json
+import sys
+
+payload = {
+    "BRANCH_NAME": sys.argv[1],
+    "FEATURE_NUM": sys.argv[2],
+    "CHECKOUT_MODE": sys.argv[3],
+    "HAS_GIT": sys.argv[4] == "true",
+}
+if sys.argv[3] == "worktree":
+    payload["BASE_BRANCH"] = sys.argv[5]
+    payload["WORKTREE_PATH"] = sys.argv[6]
+if sys.argv[7] == "true":
+    payload["DRY_RUN"] = True
+json.dump(payload, sys.stdout, ensure_ascii=False, separators=(",", ":"))
+sys.stdout.write("\n")
+PY
+    fi
+else
+    echo "BRANCH_NAME: $BRANCH_NAME"
+    echo "FEATURE_NUM: $FEATURE_NUM"
+    echo "CHECKOUT_MODE: $CHECKOUT_MODE"
+    echo "HAS_GIT: $HAS_GIT"
+    if [ "$CHECKOUT_MODE" = "worktree" ]; then
+        echo "BASE_BRANCH: $BASE_BRANCH"
+        echo "WORKTREE_PATH: $WORKTREE_PATH"
+    fi
+    if [ "$DRY_RUN" != true ]; then
+        printf '# To persist in your shell: export SPECIFY_FEATURE=%q\n' "$BRANCH_NAME"
+    fi
+fi
