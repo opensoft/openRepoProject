@@ -76,9 +76,13 @@ reported as their own checkouts, along with the owning repository's worktree lis
 
 Status shows Git branches, dirty state, local tracking differences, worktrees,
 the declared bench/container, and matching local parked-work records.
-Doctor adds missing-checkout/tooling findings, workflow readiness and credential
-configuration presence. No credential values are read or printed; presence does
-not prove a working login.
+Doctor adds missing-checkout/tooling findings, workflow readiness, credential
+configuration presence, and a repository-health section. Repository health
+shows the local merge target and each linked worktree's cleanup classification,
+branch drift, blockers, and recommended next step; it does not fetch and labels
+remote comparisons as local-ref information. `project clean` remains the only
+command that plans or performs explicitly confirmed Git cleanup. No credential
+values are read or printed; presence does not prove a working login.
 
 Default inspection does not fetch, pull, reset, install, or bootstrap.
 Tracking and handoff information are explicitly local and may be stale.

@@ -732,6 +732,80 @@ def nested_snapshot(item):
             and isinstance(item.get("kind"), str))
 
 
+def health_status(row, target):
+    """Return doctor-specific health metadata without changing cleanup semantics."""
+    branch = row.get("branch")
+    if branch == target and row.get("classification") == "protected-default":
+        if row.get("dirty"):
+            return ("warning", "dirty-default",
+                    "Preserve or commit the default-branch working changes before further maintenance.")
+        if row.get("ignored_files"):
+            return ("warning", "ignored-local-files-default",
+                    "Preserve or relocate ignored local files before further maintenance.")
+        ahead, behind = row.get("ahead"), row.get("behind")
+        if ahead is not None and behind is not None and ahead > 0 and behind > 0:
+            return ("warning", "diverged-default",
+                    "Reconcile the diverged default branch through the normal Git workflow.")
+        if ahead is not None and ahead > 0:
+            return ("warning", "unpushed-default",
+                    "Push the default branch through the repository's normal protected-branch process.")
+        if behind is not None and behind > 0:
+            return ("warning", "remote-ahead-default",
+                    "Fetch and reconcile the newer remote default branch through the normal Git workflow.")
+        return ("ok", "protected-default", row["recommendation"])
+    return ("warning", row.get("classification", "review-required"), row["recommendation"])
+
+
+def doctor_repository_health(root):
+    """Build a diagnostic-only health report from the cleanup audit."""
+    try:
+        cleanup = cleanup_report(root)
+    except Refused as exc:
+        return {"state": "unavailable", "level": "warning", "error": str(exc), "worktrees": []}
+    rows = []
+    for source in cleanup["worktrees"]:
+        row = dict(source)
+        row["health_level"], row["health_status"], row["health_recommendation"] = health_status(
+            row, cleanup["target_branch"])
+        rows.append(row)
+    return {"state": "available",
+            "level": "warning" if any(row["health_level"] == "warning" for row in rows) else "ok",
+            "target_branch": cleanup["target_branch"],
+            "tracking_freshness": cleanup["tracking_freshness"],
+            "worktrees": rows}
+
+
+def attach_repository_health(item):
+    item["repository_health"] = doctor_repository_health(Path(item["root"]))
+    for child in item["children"]:
+        if nested_snapshot(child):
+            attach_repository_health(child)
+
+
+def repository_health_checks(item):
+    rows = []
+    def walk(current):
+        health = current["repository_health"]
+        name = f"{current['name']} repository health"
+        if health["state"] == "unavailable":
+            rows.append({"level": "warning", "check": name, "detail": health["error"]})
+        else:
+            warnings = [row for row in health["worktrees"] if row["health_level"] == "warning"]
+            if warnings:
+                detail = ", ".join(f"{row.get('branch', 'unknown')} ({row['health_status']})"
+                                   for row in warnings)
+                rows.append({"level": "warning", "check": name,
+                             "detail": f"{len(warnings)} worktree(s) need attention: {detail}"})
+            else:
+                rows.append({"level": "ok", "check": name,
+                             "detail": "All locally inspected worktrees are protected or healthy"})
+        for child in current["children"]:
+            if nested_snapshot(child):
+                walk(child)
+    walk(item)
+    return rows
+
+
 def check_rows(report):
     rows = []
     def add(level, name, detail):
@@ -776,6 +850,22 @@ def print_report(report, as_json):
               f"ahead={state.get('ahead')}, behind={state.get('behind')} (local refs)")
         for tree in state.get("worktrees", []):
             print(f"{indent}  Worktree: {tree['path']} [{tree.get('branch', 'unknown')}]")
+        health = item.get("repository_health")
+        if health:
+            if health["state"] == "unavailable":
+                print(f"{indent}  Repository health: UNAVAILABLE — {health['error']}")
+            else:
+                print(f"{indent}  Repository health: {health['level'].upper()}; target={health['target_branch']}; "
+                      f"{health['tracking_freshness']}")
+                for row in health["worktrees"]:
+                    branch = row.get("branch", "unknown")
+                    delta = ("unknown" if row.get("ahead") is None else
+                             f"ahead={row['ahead']}, behind={row['behind']}")
+                    print(f"{indent}    {row['health_level'].upper()} {row['health_status'].upper()}: "
+                          f"{row['path']} [{branch}]; classification={row['classification']}; "
+                          f"dirty={row.get('dirty', 'unknown')}; ignored={row.get('ignored_files', 'unknown')}; "
+                          f"{delta}")
+                    print(f"{indent}      {row['health_recommendation']}")
         print(f"{indent}  Bench: {item['profile'].get('bench', 'not declared')}; container: {item['container']['state']}")
         print(f"{indent}  Handoff: {item['handoff']['state']}")
         for record in item["handoff"].get("records", []):
@@ -795,7 +885,9 @@ def print_report(report, as_json):
 def inspect_project(args):
     report = snapshot(discover(args.target))
     if args.command == "doctor":
+        attach_repository_health(report)
         checks = check_rows(report)
+        checks.extend(repository_health_checks(report))
         wb = workbenches(args.workbenches, required=False)
         checks.append({"level": "ok" if wb else "warning", "check": "workBenches", "detail": str(wb) if wb else "Not found; set WORKBENCHES_ROOT"})
         declared = report["profile"].get("bench")

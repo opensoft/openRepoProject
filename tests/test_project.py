@@ -378,6 +378,66 @@ class ProjectTests(unittest.TestCase):
         self.assertIn("checks", report)
         self.assertEqual(report["children"][0]["path"], str(leg))
 
+    def test_doctor_repository_health_reports_default_drift_and_worktree_blockers(self):
+        root = self.repo()
+        remote = self.base / "remote.git"
+        subprocess.run(["git", "init", "--bare", str(remote)], env=self.env, check=True,
+                       text=True, capture_output=True)
+        self.git(root, "remote", "add", "origin", remote)
+        self.git(root, "push", "-u", "origin", "main")
+        self.git(remote, "symbolic-ref", "HEAD", "refs/heads/main")
+        ignored = self.base / "ignored-tree"
+        unpublished = self.base / "unpublished-tree"
+        self.git(root, "worktree", "add", "-b", "001-ignored", str(ignored))
+        (ignored / ".gitignore").write_text("local.env\n")
+        self.commit(ignored)
+        (ignored / "local.env").write_text("preserve")
+        self.git(root, "worktree", "add", "-b", "002-unpublished", str(unpublished))
+        other = self.base / "other"
+        subprocess.run(["git", "clone", "--branch", "main", str(remote), str(other)], env=self.env,
+                       check=True, text=True, capture_output=True)
+        (other / "remote").write_text("remote")
+        self.commit(other)
+        self.git(other, "push")
+        (root / "local").write_text("local")
+        self.commit(root)
+        self.git(root, "fetch", "origin")
+        before = self.git(root, "worktree", "list", "--porcelain")
+        result = self.run_cli("doctor", root, "--json")
+        self.assertEqual(result.returncode, 0, result.stderr)
+        report = json.loads(result.stdout)
+        health = report["repository_health"]
+        self.assertEqual(health["state"], "available")
+        self.assertEqual(health["target_branch"], "main")
+        by_branch = {row["branch"]: row for row in health["worktrees"]}
+        self.assertEqual(by_branch["main"]["classification"], "protected-default")
+        self.assertEqual(by_branch["main"]["health_status"], "diverged-default")
+        self.assertEqual(by_branch["main"]["health_level"], "warning")
+        self.assertEqual(by_branch["001-ignored"]["classification"], "ignored-local-files")
+        self.assertEqual(by_branch["001-ignored"]["health_level"], "warning")
+        self.assertEqual(by_branch["002-unpublished"]["classification"], "unpublished")
+        self.assertEqual(by_branch["002-unpublished"]["health_level"], "warning")
+        health_check = next(check for check in report["checks"]
+                            if check["check"].endswith("repository health"))
+        self.assertEqual(health_check["level"], "warning")
+        self.assertEqual(before, self.git(root, "worktree", "list", "--porcelain"))
+        human = self.run_cli("doctor", root)
+        self.assertEqual(human.returncode, 0, human.stderr)
+        self.assertIn("Repository health: WARNING", human.stdout)
+        self.assertIn("WARNING DIVERGED-DEFAULT", human.stdout)
+        self.assertIn("WARNING IGNORED-LOCAL-FILES", human.stdout)
+
+    def test_doctor_reports_unknown_default_as_unavailable_health(self):
+        root = self.repo(branch="develop")
+        result = self.run_cli("doctor", root, "--json")
+        self.assertEqual(result.returncode, 0, result.stderr)
+        health = json.loads(result.stdout)["repository_health"]
+        self.assertEqual(health["state"], "unavailable")
+        self.assertIn("Cannot determine the default branch", health["error"])
+        human = self.run_cli("doctor", root)
+        self.assertEqual(human.returncode, 0, human.stderr)
+        self.assertIn("Repository health: UNAVAILABLE", human.stdout)
+
     def test_shape_update_runs_check_then_apply_and_propagates_failure(self):
         root = self.repo()
         (root / "project.yaml").write_text("kind: project-manifest\nlegs: []\n")
