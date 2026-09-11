@@ -16,6 +16,7 @@ from pathlib import Path
 import re
 import shlex
 import shutil
+import stat
 import subprocess
 import sys
 
@@ -352,11 +353,35 @@ def disposable_ignored_artifact(root, value):
             return None
     except OSError:
         return None
-    if candidate.is_dir() and candidate.name in DISPOSABLE_IGNORED_DIRECTORY_NAMES:
+    if candidate.is_dir() and candidate.name in DISPOSABLE_IGNORED_DIRECTORY_NAMES and disposable_cache_tree(candidate):
         return candidate
     if candidate.is_file() and candidate.suffix in DISPOSABLE_IGNORED_FILE_SUFFIXES:
         return candidate
     return None
+
+
+def disposable_cache_tree(root):
+    """Whether a cache directory tree contains only disposable non-symlink entries."""
+    pending = [root]
+    while pending:
+        current = pending.pop()
+        try:
+            with os.scandir(current) as entries:
+                for entry in entries:
+                    if entry.is_symlink():
+                        return False
+                    if entry.is_dir(follow_symlinks=False):
+                        if entry.name not in DISPOSABLE_IGNORED_DIRECTORY_NAMES:
+                            return False
+                        pending.append(Path(entry.path))
+                    elif entry.is_file(follow_symlinks=False):
+                        if Path(entry.name).suffix not in DISPOSABLE_IGNORED_FILE_SUFFIXES:
+                            return False
+                    else:
+                        return False
+        except OSError:
+            return False
+    return True
 
 
 def ignored_artifacts(root):
@@ -674,7 +699,24 @@ def cleanup_command_root(report):
     row = matching_worktree(report, branch=report["target_branch"])
     if not row or not row.get("present"):
         raise Refused("Cannot find the local target-branch worktree for cleanup commands.")
-    return Path(row["path"]).resolve()
+    candidate = Path(row["path"]).resolve()
+    if "root" not in report:
+        return candidate
+    expected_common = git_common_dir(report.get("root", candidate))
+    candidate_common = git_common_dir(candidate)
+    if not expected_common or candidate_common != expected_common:
+        raise Refused("Cannot verify the local target-branch worktree for cleanup commands.")
+    if git_text(candidate, "symbolic-ref", "--quiet", "--short", "HEAD") != report["target_branch"]:
+        raise Refused("Cannot verify the local target-branch worktree for cleanup commands.")
+    return candidate
+
+
+def git_common_dir(root):
+    value = git_text(root, "rev-parse", "--git-common-dir")
+    if not value:
+        return None
+    path = Path(value)
+    return (path if path.is_absolute() else (Path(root) / path)).resolve()
 
 
 def require_unchanged_cleanup_state(root, action, expected, *, branch=None, path=None, branch_head=None):
@@ -692,17 +734,77 @@ def require_unchanged_cleanup_state(root, action, expected, *, branch=None, path
 
 
 def remove_disposable_ignored_artifacts(worktree, paths):
-    for path in paths:
-        candidate = disposable_ignored_artifact(worktree, path)
-        if candidate is None:
-            raise Refused("Disposable cache state changed after confirmation; no command was run.")
-        try:
-            if candidate.is_dir():
-                shutil.rmtree(candidate)
+    root = Path(worktree).resolve()
+    flags = os.O_RDONLY | getattr(os, "O_DIRECTORY", 0) | getattr(os, "O_NOFOLLOW", 0)
+    try:
+        root_fd = os.open(root, flags)
+    except OSError as exc:
+        raise Refused(f"Cannot inspect disposable cache artifacts under {root}: {exc}") from exc
+    try:
+        for path in paths:
+            candidate = None
+            opened = []
+            try:
+                candidate = disposable_ignored_artifact(root, path)
+                if candidate is None:
+                    raise Refused("Disposable cache state changed after confirmation; no command was run.")
+                parts = Path(path).parts
+                if not parts:
+                    raise Refused("Disposable cache state changed after confirmation; no command was run.")
+                parent_fd = root_fd
+                for part in parts[:-1]:
+                    info = os.lstat(part, dir_fd=parent_fd)
+                    if (stat.S_ISLNK(info.st_mode) or not stat.S_ISDIR(info.st_mode) or
+                            part not in DISPOSABLE_IGNORED_DIRECTORY_NAMES):
+                        raise Refused("Disposable cache state changed after confirmation; no command was run.")
+                    next_fd = os.open(part, flags, dir_fd=parent_fd)
+                    opened.append(next_fd)
+                    parent_fd = next_fd
+                leaf = parts[-1]
+                info = os.lstat(leaf, dir_fd=parent_fd)
+                if stat.S_ISLNK(info.st_mode):
+                    raise Refused("Disposable cache state changed after confirmation; no command was run.")
+                if stat.S_ISDIR(info.st_mode):
+                    if leaf not in DISPOSABLE_IGNORED_DIRECTORY_NAMES:
+                        raise Refused("Disposable cache state changed after confirmation; no command was run.")
+                    remove_disposable_cache_tree_fd(parent_fd, leaf, Path(path))
+                else:
+                    if not stat.S_ISREG(info.st_mode) or Path(leaf).suffix not in DISPOSABLE_IGNORED_FILE_SUFFIXES:
+                        raise Refused("Disposable cache state changed after confirmation; no command was run.")
+                    os.unlink(leaf, dir_fd=parent_fd)
+            except OSError as exc:
+                target = candidate if candidate is not None else (root / path)
+                raise Refused(f"Cannot remove disposable cache artifact {target}: {exc}") from exc
+            finally:
+                for fd in reversed(opened):
+                    os.close(fd)
+    finally:
+        os.close(root_fd)
+
+
+def remove_disposable_cache_tree_fd(parent_fd, name, display_path):
+    flags = os.O_RDONLY | getattr(os, "O_DIRECTORY", 0) | getattr(os, "O_NOFOLLOW", 0)
+    directory_fd = os.open(name, flags, dir_fd=parent_fd)
+    try:
+        for child in os.listdir(directory_fd):
+            info = os.lstat(child, dir_fd=directory_fd)
+            if stat.S_ISLNK(info.st_mode):
+                raise Refused("Disposable cache state changed after confirmation; no command was run.")
+            if stat.S_ISDIR(info.st_mode):
+                if child not in DISPOSABLE_IGNORED_DIRECTORY_NAMES:
+                    raise Refused("Disposable cache state changed after confirmation; no command was run.")
+                remove_disposable_cache_tree_fd(directory_fd, child, display_path / child)
+            elif stat.S_ISREG(info.st_mode):
+                if Path(child).suffix not in DISPOSABLE_IGNORED_FILE_SUFFIXES:
+                    raise Refused("Disposable cache state changed after confirmation; no command was run.")
+                os.unlink(child, dir_fd=directory_fd)
             else:
-                candidate.unlink()
-        except OSError as exc:
-            raise Refused(f"Cannot remove disposable cache artifact {candidate}: {exc}") from exc
+                raise Refused("Disposable cache state changed after confirmation; no command was run.")
+        os.rmdir(name, dir_fd=parent_fd)
+    except OSError as exc:
+        raise Refused(f"Cannot remove disposable cache artifact {display_path}: {exc}") from exc
+    finally:
+        os.close(directory_fd)
 
 
 def branch_still_merged(root, branch, expected_head, target_branch):
@@ -721,7 +823,7 @@ def clean(args):
     if not args.action:
         raise Refused("--apply requires --action push|remove|delete-branch")
     rows = report["worktrees"]
-    command_root = cleanup_command_root(report)
+    command_root = root
     if args.action == "push":
         if not args.branch:
             raise Refused("Push cleanup requires --branch BRANCH")
@@ -751,6 +853,7 @@ def clean(args):
         expected = {"target_branch": report["target_branch"], "signature": cleanup_signature(report, row)}
         action_target = {"branch": args.branch}
     elif args.action == "remove":
+        command_root = cleanup_command_root(report)
         if not args.worktree:
             raise Refused("Worktree cleanup requires --worktree PATH")
         wanted = Path(args.worktree).expanduser().resolve()
@@ -950,9 +1053,6 @@ def health_status(row, target):
         if row.get("blocking_ignored_paths"):
             return ("warning", "ignored-local-files-default",
                     "Preserve or relocate ignored local files before further maintenance.")
-        if row.get("disposable_ignored_paths"):
-            return ("ok", "protected-default-with-disposable-cache",
-                    "Listed Python cache artifacts are disposable, but the default branch remains protected.")
         ahead, behind = row.get("ahead"), row.get("behind")
         if ahead is not None and behind is not None and ahead > 0 and behind > 0:
             return ("warning", "diverged-default",
@@ -963,6 +1063,9 @@ def health_status(row, target):
         if behind is not None and behind > 0:
             return ("warning", "remote-ahead-default",
                     "Fetch and reconcile the newer remote default branch through the normal Git workflow.")
+        if row.get("disposable_ignored_paths"):
+            return ("ok", "protected-default-with-disposable-cache",
+                    "Listed Python cache artifacts are disposable, but the default branch remains protected.")
         return ("ok", "protected-default", row["recommendation"])
     return ("warning", row.get("classification", "review-required"), row["recommendation"])
 
