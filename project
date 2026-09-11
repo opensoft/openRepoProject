@@ -554,6 +554,7 @@ def clean(args):
                 raise Refused("Cannot publish a branch without an origin remote.")
             command = ["git", "-C", str(root), "push", "-u", "origin", args.branch]
         print(f"Cleanup action: push branch {args.branch}")
+        commands = [command]
         expected = {"target_branch": report["target_branch"], "signature": cleanup_signature(report, row)}
         action_target = {"branch": args.branch}
     elif args.action == "remove":
@@ -568,8 +569,9 @@ def clean(args):
             raise Refused("Cannot remove the current worktree.")
         if row.get("classification") != "merged-removable":
             raise Refused(f"Worktree is {row.get('classification')}; only clean merged worktrees may be removed.")
-        command = ["git", "-C", str(root), "worktree", "remove", str(wanted)]
-        print(f"Cleanup action: remove merged worktree {wanted}")
+        commands = [["git", "-C", str(root), "worktree", "remove", str(wanted)],
+                    ["git", "-C", str(root), "branch", "-d", row["branch"]]]
+        print(f"Cleanup action: retire merged worktree {wanted} and local branch {row['branch']}")
         expected = {"target_branch": report["target_branch"], "signature": cleanup_signature(report, row)}
         action_target = {"path": wanted}
     else:
@@ -585,14 +587,19 @@ def clean(args):
         branch_head = git_text(root, "rev-parse", "--verify", f"refs/heads/{args.branch}")
         command = ["git", "-C", str(root), "branch", "-d", args.branch]
         print(f"Cleanup action: delete verified merged local branch {args.branch}")
-    show_plan([command], root)
+        commands = [command]
+    show_plan(commands, root)
     confirm(args.yes)
     if args.action == "delete-branch":
         require_unchanged_cleanup_state(root, args.action, {"target_branch": report["target_branch"]},
                                         branch=args.branch, branch_head=branch_head)
     else:
         require_unchanged_cleanup_state(root, args.action, expected, **action_target)
-    return execute(command)
+    for command in commands:
+        code = execute(command)
+        if code:
+            return code
+    return 0
 
 
 def profile(root):

@@ -424,7 +424,7 @@ class ProjectTests(unittest.TestCase):
                               "--branch", "main", "--yes")
         self.assertEqual(result.returncode, 2)
 
-    def test_clean_removes_only_merged_worktree_and_keeps_branch(self):
+    def test_clean_retires_merged_worktree_and_local_branch(self):
         root = self.repo()
         remote = self.base / "remote.git"
         subprocess.run(["git", "init", "--bare", str(remote)], env=self.env, check=True,
@@ -435,17 +435,37 @@ class ProjectTests(unittest.TestCase):
         (tree / "work").write_text("done")
         self.commit(tree)
         self.git(tree, "push", "-u", "origin", "001-feature")
+        feature_head = self.git(tree, "rev-parse", "HEAD")
         self.git(root, "-c", "user.name=Test", "-c", "user.email=test@example.invalid",
                  "merge", "--no-ff", "001-feature", "-m", "merge feature")
         result = self.run_cli("clean", root, "--apply", "--action", "remove",
                               "--worktree", tree, "--yes")
         self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertIn("branch -d 001-feature", result.stdout)
         self.assertFalse(tree.exists())
-        self.assertEqual(self.git(root, "show-ref", "--verify", "--quiet", "refs/heads/001-feature"), "")
-        result = self.run_cli("clean", root, "--apply", "--action", "delete-branch",
-                              "--branch", "001-feature", "--yes")
-        self.assertEqual(result.returncode, 0, result.stderr)
         self.assertIsNone(module.git_text(root, "show-ref", "--verify", "--quiet", "refs/heads/001-feature"))
+        self.assertEqual(feature_head, self.git(remote, "rev-parse", "refs/heads/001-feature"))
+
+    def test_clean_reports_branch_retirement_failure_without_force(self):
+        root = self.base / "repo"
+        tree = self.base / "feature-tree"
+        root.mkdir()
+        tree.mkdir()
+        report = {"target_branch": "main", "worktrees": [{
+            "path": str(tree), "branch": "001-feature", "current": False,
+            "classification": "merged-removable", "head": "a" * 40,
+        }]}
+        args = module.argparse.Namespace(target=root, json=False, apply=True, action="remove",
+                                         worktree=tree, branch=None, yes=True)
+        with patch.object(module, "discover", return_value=root), \
+             patch.object(module, "cleanup_report", return_value=report), \
+             patch.object(module, "require_unchanged_cleanup_state"), \
+             patch.object(module, "execute", side_effect=[0, 7]) as execute:
+            self.assertEqual(module.clean(args), 7)
+        commands = [call.args[0] for call in execute.call_args_list]
+        self.assertEqual(commands[0][-2:], ["remove", str(tree)])
+        self.assertEqual(commands[1][-2:], ["-d", "001-feature"])
+        self.assertNotIn("-D", commands[1])
 
     def test_clean_never_removes_the_worktree_containing_the_current_directory(self):
         root = self.repo()

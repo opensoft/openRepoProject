@@ -105,11 +105,13 @@ off to the repository's normal pull-request or merge process.
 
 Apply actions are always explicit and target one branch or worktree. Pushes
 are normal non-force pushes. A worktree can be removed only when it is clean,
-non-current and verified merged into the local default branch; deleting its
-local branch is a separate action. `clean` never fetches, stashes, resets,
-force-pushes, creates or merges pull requests, or replaces `park`/`resume`.
-It rechecks the selected state after confirmation and before executing an
-action.
+non-current and verified merged into the local default branch. That confirmed
+removal also retires its paired local branch with normal `git branch -d`;
+remote branches are never deleted. If Git refuses the branch step, cleanup
+reports the failure and leaves that branch intact. `clean` never fetches,
+stashes, resets, force-pushes, creates or merges pull requests, or replaces
+`park`/`resume`. It rechecks the selected state after confirmation and before
+executing an action.
 
 A portable profile may declare:
 
