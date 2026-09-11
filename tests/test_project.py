@@ -378,6 +378,101 @@ class ProjectTests(unittest.TestCase):
         self.assertIn("checks", report)
         self.assertEqual(report["children"][0]["path"], str(leg))
 
+    def test_doctor_repository_health_reports_default_drift_and_worktree_blockers(self):
+        root = self.repo()
+        remote = self.base / "remote.git"
+        subprocess.run(["git", "init", "--bare", str(remote)], env=self.env, check=True,
+                       text=True, capture_output=True)
+        self.git(root, "remote", "add", "origin", remote)
+        self.git(root, "push", "-u", "origin", "main")
+        self.git(remote, "symbolic-ref", "HEAD", "refs/heads/main")
+        ignored = self.base / "ignored-tree"
+        unpublished = self.base / "unpublished-tree"
+        self.git(root, "worktree", "add", "-b", "001-ignored", str(ignored))
+        (ignored / ".gitignore").write_text("local.env\n")
+        self.commit(ignored)
+        (ignored / "local.env").write_text("preserve")
+        self.git(root, "worktree", "add", "-b", "002-unpublished", str(unpublished))
+        other = self.base / "other"
+        subprocess.run(["git", "clone", "--branch", "main", str(remote), str(other)], env=self.env,
+                       check=True, text=True, capture_output=True)
+        (other / "remote").write_text("remote")
+        self.commit(other)
+        self.git(other, "push")
+        (root / "local").write_text("local")
+        self.commit(root)
+        self.git(root, "fetch", "origin")
+        before = self.git(root, "worktree", "list", "--porcelain")
+        result = self.run_cli("doctor", root, "--json")
+        self.assertEqual(result.returncode, 0, result.stderr)
+        report = json.loads(result.stdout)
+        health = report["repository_health"]
+        self.assertEqual(health["state"], "available")
+        self.assertEqual(health["target_branch"], "main")
+        by_branch = {row["branch"]: row for row in health["worktrees"]}
+        self.assertEqual(by_branch["main"]["classification"], "protected-default")
+        self.assertEqual(by_branch["main"]["health_status"], "diverged-default")
+        self.assertEqual(by_branch["main"]["health_level"], "warning")
+        self.assertEqual(by_branch["001-ignored"]["classification"], "ignored-local-files")
+        self.assertEqual(by_branch["001-ignored"]["health_level"], "warning")
+        self.assertEqual(by_branch["002-unpublished"]["classification"], "unpublished")
+        self.assertEqual(by_branch["002-unpublished"]["health_level"], "warning")
+        health_check = next(check for check in report["checks"]
+                            if check["check"].endswith("repository health"))
+        self.assertEqual(health_check["level"], "warning")
+        self.assertEqual(before, self.git(root, "worktree", "list", "--porcelain"))
+        human = self.run_cli("doctor", root)
+        self.assertEqual(human.returncode, 0, human.stderr)
+        self.assertIn("Repository health: WARNING", human.stdout)
+        self.assertIn("WARNING DIVERGED-DEFAULT", human.stdout)
+        self.assertIn("WARNING IGNORED-LOCAL-FILES", human.stdout)
+
+    def test_doctor_reports_unknown_default_as_unavailable_health(self):
+        root = self.repo(branch="develop")
+        result = self.run_cli("doctor", root, "--json")
+        self.assertEqual(result.returncode, 0, result.stderr)
+        health = json.loads(result.stdout)["repository_health"]
+        self.assertEqual(health["state"], "unavailable")
+        self.assertIn("Cannot determine the default branch", health["error"])
+        human = self.run_cli("doctor", root)
+        self.assertEqual(human.returncode, 0, human.stderr)
+        self.assertIn("Repository health: UNAVAILABLE", human.stdout)
+
+    def test_doctor_strict_fails_on_repository_health_warning(self):
+        report = {"root": "/tmp/repo", "name": "repo", "kind": "single",
+                  "repository": {"present": True}, "children": [],
+                  "profile": {}, "handoff": {"state": "workspace not configured"},
+                  "container": {"state": "not declared; set container in .project.json"}}
+        args = module.argparse.Namespace(command="doctor", target="/tmp/repo", validate=False,
+                                         strict=False, json=True, workbenches=None)
+        with patch.object(module, "discover", return_value=Path("/tmp/repo")), \
+             patch.object(module, "snapshot", return_value=dict(report)), \
+             patch.object(module, "attach_repository_health"), \
+             patch.object(module, "check_rows", return_value=[]), \
+             patch.object(module, "repository_health_checks", return_value=[
+                 {"level": "warning", "check": "repo repository health", "detail": "warning"}
+             ]), \
+             patch.object(module, "workbenches", return_value=Path("/tmp/workbenches")), \
+             patch.object(module, "print_report"):
+            self.assertEqual(module.inspect_project(args), 0)
+            args.strict = True
+            self.assertEqual(module.inspect_project(args), 1)
+
+    def test_health_status_warns_when_default_inspection_is_unknown(self):
+        level, status, _ = module.health_status(
+            {"branch": "main", "classification": "protected-default", "dirty": None, "ignored_files": 0,
+             "recommendation": "keep"},
+            "main")
+        self.assertEqual((level, status), ("warning", "inspection-error-default"))
+
+    def test_health_status_prioritizes_default_divergence_over_disposable_cache(self):
+        level, status, _ = module.health_status(
+            {"branch": "main", "classification": "protected-default", "dirty": False, "ignored_files": 1,
+             "blocking_ignored_paths": [], "disposable_ignored_paths": ["__pycache__/"],
+             "ahead": 1, "behind": 1, "recommendation": "keep"},
+            "main")
+        self.assertEqual((level, status), ("warning", "diverged-default"))
+
     def test_shape_update_runs_check_then_apply_and_propagates_failure(self):
         root = self.repo()
         (root / "project.yaml").write_text("kind: project-manifest\nlegs: []\n")
@@ -424,7 +519,29 @@ class ProjectTests(unittest.TestCase):
                               "--branch", "main", "--yes")
         self.assertEqual(result.returncode, 2)
 
-    def test_clean_removes_only_merged_worktree_and_keeps_branch(self):
+    def test_clean_retires_merged_worktree_and_local_branch(self):
+        root = self.repo()
+        remote = self.base / "remote.git"
+        subprocess.run(["git", "init", "--bare", str(remote)], env=self.env, check=True,
+                       text=True, capture_output=True)
+        self.git(root, "remote", "add", "origin", remote)
+        tree = self.base / "feature-tree"
+        self.git(root, "worktree", "add", "-b", "001-feature", str(tree))
+        (tree / "work").write_text("done")
+        self.commit(tree)
+        self.git(tree, "push", "-u", "origin", "001-feature")
+        feature_head = self.git(tree, "rev-parse", "HEAD")
+        self.git(root, "-c", "user.name=Test", "-c", "user.email=test@example.invalid",
+                 "merge", "--no-ff", "001-feature", "-m", "merge feature")
+        result = self.run_cli("clean", root, "--apply", "--action", "remove",
+                              "--worktree", tree, "--yes")
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertIn("branch -d 001-feature", result.stdout)
+        self.assertFalse(tree.exists())
+        self.assertIsNone(module.git_text(root, "show-ref", "--verify", "--quiet", "refs/heads/001-feature"))
+        self.assertEqual(feature_head, self.git(remote, "rev-parse", "refs/heads/001-feature"))
+
+    def test_clean_retires_targeted_worktree_when_command_target_is_that_worktree(self):
         root = self.repo()
         remote = self.base / "remote.git"
         subprocess.run(["git", "init", "--bare", str(remote)], env=self.env, check=True,
@@ -437,15 +554,199 @@ class ProjectTests(unittest.TestCase):
         self.git(tree, "push", "-u", "origin", "001-feature")
         self.git(root, "-c", "user.name=Test", "-c", "user.email=test@example.invalid",
                  "merge", "--no-ff", "001-feature", "-m", "merge feature")
-        result = self.run_cli("clean", root, "--apply", "--action", "remove",
+        result = self.run_cli("clean", tree, "--apply", "--action", "remove",
                               "--worktree", tree, "--yes")
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertFalse(tree.exists())
-        self.assertEqual(self.git(root, "show-ref", "--verify", "--quiet", "refs/heads/001-feature"), "")
+        self.assertIsNone(module.git_text(root, "show-ref", "--verify", "--quiet", "refs/heads/001-feature"))
+
+    def test_clean_retires_merged_worktree_with_disposable_python_caches(self):
+        root = self.repo()
+        remote = self.base / "remote.git"
+        subprocess.run(["git", "init", "--bare", str(remote)], env=self.env, check=True,
+                       text=True, capture_output=True)
+        self.git(root, "remote", "add", "origin", remote)
+        tree = self.base / "feature-tree"
+        self.git(root, "worktree", "add", "-b", "001-feature", str(tree))
+        (tree / ".gitignore").write_text("__pycache__/\n*.pyc\n*.pyo\n")
+        (tree / "work").write_text("done")
+        self.commit(tree)
+        self.git(tree, "push", "-u", "origin", "001-feature")
+        self.git(root, "-c", "user.name=Test", "-c", "user.email=test@example.invalid",
+                 "merge", "--no-ff", "001-feature", "-m", "merge feature")
+        cache = tree / "__pycache__"
+        cache.mkdir()
+        (cache / "project.cpython-312.pyc").write_bytes(b"cache")
+        (tree / "legacy.pyc").write_bytes(b"cache")
+        (tree / "optimized.pyo").write_bytes(b"cache")
+        report = json.loads(self.run_cli("clean", root, "--json").stdout)
+        row = next(item for item in report["worktrees"] if item["branch"] == "001-feature")
+        self.assertEqual(row["classification"], "merged-removable")
+        self.assertEqual(row["blocking_ignored_paths"], [])
+        self.assertEqual(row["disposable_ignored_paths"],
+                         ["__pycache__/", "legacy.pyc", "optimized.pyo"])
+        result = self.run_cli("clean", root, "--apply", "--action", "remove", "--worktree", tree, "--yes")
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertIn("Disposable ignored artifacts to discard", result.stdout)
+        self.assertIn("__pycache__", result.stdout)
+        self.assertFalse(tree.exists())
+        self.assertIsNone(module.git_text(root, "show-ref", "--verify", "--quiet", "refs/heads/001-feature"))
+
+    def test_clean_blocks_cache_directory_with_non_bytecode_entries(self):
+        root = self.repo()
+        remote = self.base / "remote.git"
+        subprocess.run(["git", "init", "--bare", str(remote)], env=self.env, check=True,
+                       text=True, capture_output=True)
+        self.git(root, "remote", "add", "origin", remote)
+        tree = self.base / "feature-tree"
+        self.git(root, "worktree", "add", "-b", "001-feature", str(tree))
+        (tree / ".gitignore").write_text("__pycache__/\n")
+        (tree / "work").write_text("done")
+        self.commit(tree)
+        self.git(tree, "push", "-u", "origin", "001-feature")
+        self.git(root, "-c", "user.name=Test", "-c", "user.email=test@example.invalid",
+                 "merge", "--no-ff", "001-feature", "-m", "merge feature")
+        cache = tree / "__pycache__"
+        cache.mkdir()
+        (cache / "keep.txt").write_text("preserve")
+        report = json.loads(self.run_cli("clean", root, "--json").stdout)
+        row = next(item for item in report["worktrees"] if item["branch"] == "001-feature")
+        self.assertEqual(row["classification"], "ignored-local-files")
+        self.assertEqual(row["disposable_ignored_paths"], [])
+        self.assertEqual(row["blocking_ignored_paths"], ["__pycache__/"])
+        result = self.run_cli("clean", root, "--apply", "--action", "remove", "--worktree", tree, "--yes")
+        self.assertEqual(result.returncode, 2)
+        self.assertIn("ignored-local-files", result.stderr)
+        self.assertTrue(tree.is_dir())
+
+    def test_clean_blocks_cache_directory_with_symlink_entries(self):
+        root = self.repo()
+        remote = self.base / "remote.git"
+        subprocess.run(["git", "init", "--bare", str(remote)], env=self.env, check=True,
+                       text=True, capture_output=True)
+        self.git(root, "remote", "add", "origin", remote)
+        tree = self.base / "feature-tree"
+        self.git(root, "worktree", "add", "-b", "001-feature", str(tree))
+        (tree / ".gitignore").write_text("__pycache__/\n")
+        (tree / "work").write_text("done")
+        self.commit(tree)
+        self.git(tree, "push", "-u", "origin", "001-feature")
+        self.git(root, "-c", "user.name=Test", "-c", "user.email=test@example.invalid",
+                 "merge", "--no-ff", "001-feature", "-m", "merge feature")
+        cache = tree / "__pycache__"
+        cache.mkdir()
+        (self.base / "outside.pyc").write_bytes(b"cache")
+        (cache / "linked.pyc").symlink_to(self.base / "outside.pyc")
+        report = json.loads(self.run_cli("clean", root, "--json").stdout)
+        row = next(item for item in report["worktrees"] if item["branch"] == "001-feature")
+        self.assertEqual(row["classification"], "ignored-local-files")
+        self.assertEqual(row["disposable_ignored_paths"], [])
+        self.assertEqual(row["blocking_ignored_paths"], ["__pycache__/"])
+
+    def test_clean_deletes_a_verified_orphaned_local_branch(self):
+        root = self.repo()
+        tree = self.base / "feature-tree"
+        self.git(root, "worktree", "add", "-b", "001-feature", str(tree))
+        (tree / "work").write_text("done")
+        self.commit(tree)
+        self.git(root, "-c", "user.name=Test", "-c", "user.email=test@example.invalid",
+                 "merge", "--no-ff", "001-feature", "-m", "merge feature")
+        self.git(root, "worktree", "remove", tree)
         result = self.run_cli("clean", root, "--apply", "--action", "delete-branch",
                               "--branch", "001-feature", "--yes")
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertIsNone(module.git_text(root, "show-ref", "--verify", "--quiet", "refs/heads/001-feature"))
+
+    def test_clean_reports_branch_retirement_failure_without_force(self):
+        root = self.base / "repo"
+        tree = self.base / "feature-tree"
+        root.mkdir()
+        tree.mkdir()
+        report = {"target_branch": "main", "worktrees": [
+            {"path": str(root), "branch": "main", "present": True},
+            {"path": str(tree), "branch": "001-feature", "current": False,
+             "classification": "merged-removable", "head": "a" * 40,
+             "disposable_ignored_paths": []},
+        ]}
+        args = module.argparse.Namespace(target=root, json=False, apply=True, action="remove",
+                                         worktree=tree, branch=None, yes=True)
+        with patch.object(module, "discover", return_value=root), \
+             patch.object(module, "cleanup_report", return_value=report), \
+             patch.object(module, "require_unchanged_cleanup_state"), \
+             patch.object(module, "branch_still_merged", return_value=True), \
+             patch.object(module, "execute", side_effect=[0, 7]) as execute:
+            self.assertEqual(module.clean(args), 7)
+        commands = [call.args[0] for call in execute.call_args_list]
+        self.assertEqual(commands[0][-2:], ["remove", str(tree)])
+        self.assertEqual(commands[1][-2:], ["-d", "001-feature"])
+        self.assertNotIn("-D", commands[1])
+
+    def test_clean_stops_when_worktree_removal_fails(self):
+        root = self.base / "repo"
+        tree = self.base / "feature-tree"
+        root.mkdir()
+        tree.mkdir()
+        report = {"target_branch": "main", "worktrees": [
+            {"path": str(root), "branch": "main", "present": True},
+            {"path": str(tree), "branch": "001-feature", "current": False,
+             "classification": "merged-removable", "head": "a" * 40,
+             "disposable_ignored_paths": []},
+        ]}
+        args = module.argparse.Namespace(target=root, json=False, apply=True, action="remove",
+                                         worktree=tree, branch=None, yes=True)
+        with patch.object(module, "discover", return_value=root), \
+             patch.object(module, "cleanup_report", return_value=report), \
+             patch.object(module, "require_unchanged_cleanup_state"), \
+             patch.object(module, "execute", return_value=9) as execute:
+            self.assertEqual(module.clean(args), 9)
+        self.assertEqual(execute.call_count, 1)
+        self.assertEqual(execute.call_args.args[0][-2:], ["remove", str(tree)])
+
+    def test_clean_stops_when_cache_deletion_fails(self):
+        root = self.base / "repo"
+        tree = self.base / "feature-tree"
+        root.mkdir()
+        tree.mkdir()
+        report = {"target_branch": "main", "worktrees": [
+            {"path": str(root), "branch": "main", "present": True},
+            {"path": str(tree), "branch": "001-feature", "current": False,
+             "classification": "merged-removable", "head": "a" * 40,
+             "disposable_ignored_paths": ["__pycache__/"],
+             "blocking_ignored_paths": []},
+        ]}
+        args = module.argparse.Namespace(target=root, json=False, apply=True, action="remove",
+                                         worktree=tree, branch=None, yes=True)
+        with patch.object(module, "discover", return_value=root), \
+             patch.object(module, "cleanup_report", return_value=report), \
+             patch.object(module, "require_unchanged_cleanup_state", return_value=report["worktrees"][1]), \
+             patch.object(module, "remove_disposable_ignored_artifacts", side_effect=module.Refused("stop")), \
+             patch.object(module, "execute") as execute:
+            with self.assertRaisesRegex(module.Refused, "stop"):
+                module.clean(args)
+        execute.assert_not_called()
+
+    def test_clean_preserves_branch_when_merge_state_changes_after_worktree_removal(self):
+        root = self.base / "repo"
+        tree = self.base / "feature-tree"
+        root.mkdir()
+        tree.mkdir()
+        report = {"target_branch": "main", "worktrees": [
+            {"path": str(root), "branch": "main", "present": True},
+            {"path": str(tree), "branch": "001-feature", "current": False,
+             "classification": "merged-removable", "head": "a" * 40,
+             "disposable_ignored_paths": []},
+        ]}
+        args = module.argparse.Namespace(target=root, json=False, apply=True, action="remove",
+                                         worktree=tree, branch=None, yes=True)
+        with patch.object(module, "discover", return_value=root), \
+             patch.object(module, "cleanup_report", return_value=report), \
+             patch.object(module, "require_unchanged_cleanup_state"), \
+             patch.object(module, "branch_still_merged", return_value=False), \
+             patch.object(module, "execute", return_value=0) as execute:
+            with self.assertRaisesRegex(module.Refused, "local branch was preserved"):
+                module.clean(args)
+        self.assertEqual(execute.call_count, 1)
+        self.assertEqual(execute.call_args.args[0][-2:], ["remove", str(tree)])
 
     def test_clean_never_removes_the_worktree_containing_the_current_directory(self):
         root = self.repo()
@@ -483,12 +784,39 @@ class ProjectTests(unittest.TestCase):
         self.assertEqual(self.git(tree, "rev-parse", "HEAD"),
                          self.git(root, "rev-parse", "refs/remotes/origin/001-feature"))
 
+    def test_clean_push_uses_discovered_root_without_target_worktree_lookup(self):
+        root = self.base / "repo"
+        root.mkdir()
+        report = {"root": str(root), "target_branch": "main", "worktrees": [
+            {"path": str(self.base / "feature-tree"), "branch": "001-feature", "present": True,
+             "dirty": False, "classification": "unpushed", "upstream": None},
+        ]}
+        args = module.argparse.Namespace(target=root, json=False, apply=True, action="push",
+                                         worktree=None, branch="001-feature", yes=True)
+        with patch.object(module, "discover", return_value=root), \
+             patch.object(module, "cleanup_report", return_value=report), \
+             patch.object(module, "cleanup_command_root", side_effect=AssertionError("unexpected lookup")), \
+             patch.object(module, "confirm"), \
+             patch.object(module, "require_unchanged_cleanup_state"), \
+             patch.object(module, "git_text", return_value="git@example.invalid:opensoft/openRepoProject.git"), \
+             patch.object(module, "execute", return_value=0) as execute:
+            self.assertEqual(module.clean(args), 0)
+        self.assertEqual(execute.call_args.args[0][:3], ["git", "-C", str(root)])
+
+    def test_cleanup_command_root_refuses_unverified_target_worktree(self):
+        report = {"root": str(self.base / "repo"), "target_branch": "main",
+                  "worktrees": [{"path": str(self.base / "target-tree"), "branch": "main", "present": True}]}
+        with patch.object(module, "git_common_dir", side_effect=[self.base / "repo/.git", self.base / "other/.git"]):
+            with self.assertRaisesRegex(module.Refused, "Cannot verify"):
+                module.cleanup_command_root(report)
+
     def test_clean_reports_dirty_detached_and_pushed_unmerged_states(self):
         root = self.repo()
         remote = self.base / "remote.git"
         subprocess.run(["git", "init", "--bare", str(remote)], env=self.env, check=True,
                        text=True, capture_output=True)
         self.git(root, "remote", "add", "origin", remote)
+        self.git(root, "push", "-u", "origin", "main")
         feature = self.base / "feature-tree"
         detached = self.base / "detached-tree"
         dirty = self.base / "dirty-tree"
@@ -503,9 +831,125 @@ class ProjectTests(unittest.TestCase):
         report = json.loads(self.run_cli("clean", root, "--json", cwd=feature).stdout)
         by_branch = {row["branch"]: row for row in report["worktrees"]}
         self.assertEqual(by_branch["001-feature"]["classification"], "pushed-unmerged")
+        self.assertEqual(report["remote_merge_target"], "origin/main")
+        self.assertFalse(by_branch["001-feature"]["merged_into_target"])
+        self.assertFalse(by_branch["001-feature"]["merged_into_remote_target"])
+        self.assertEqual(by_branch["001-feature"]["github_merge_state"], "unavailable")
+        self.assertIn("last-fetched origin/main", by_branch["001-feature"]["recommendation"])
         self.assertTrue(by_branch["001-feature"]["current"])
         self.assertEqual(by_branch["detached"]["classification"], "detached")
         self.assertEqual(by_branch["001-dirty"]["classification"], "dirty")
+
+    def test_clean_reports_remote_merge_awaiting_local_reconciliation(self):
+        root = self.repo()
+        remote = self.base / "remote.git"
+        subprocess.run(["git", "init", "--bare", str(remote)], env=self.env, check=True,
+                       text=True, capture_output=True)
+        self.git(root, "remote", "add", "origin", remote)
+        self.git(root, "push", "-u", "origin", "main")
+        self.git(remote, "symbolic-ref", "HEAD", "refs/heads/main")
+        tree = self.base / "feature-tree"
+        self.git(root, "worktree", "add", "-b", "001-feature", str(tree))
+        (tree / "work").write_text("done")
+        self.commit(tree)
+        self.git(tree, "push", "-u", "origin", "001-feature")
+        publisher = self.base / "publisher"
+        subprocess.run(["git", "clone", "--branch", "main", str(remote), str(publisher)], env=self.env,
+                       check=True, text=True, capture_output=True)
+        self.git(publisher, "fetch", "origin", "001-feature")
+        self.git(publisher, "-c", "user.name=Test", "-c", "user.email=test@example.invalid",
+                 "merge", "--no-ff", "origin/001-feature", "-m", "merge feature")
+        self.git(publisher, "push", "origin", "main")
+        self.git(root, "fetch", "origin")
+        report = json.loads(self.run_cli("clean", root, "--json").stdout)
+        row = next(item for item in report["worktrees"] if item["branch"] == "001-feature")
+        self.assertEqual(report["remote_merge_target"], "origin/main")
+        self.assertTrue(report["remote_merge_target_available"])
+        self.assertFalse(row["merged_into_target"])
+        self.assertTrue(row["merged_into_remote_target"])
+        self.assertEqual(row["classification"], "merged-remotely-awaiting-local")
+        self.assertIn("reconcile local main", row["recommendation"])
+        human = self.run_cli("clean", root)
+        self.assertIn("MERGED-REMOTELY-AWAITING-LOCAL", human.stdout)
+        self.assertIn("Remote merge target: origin/main", human.stdout)
+        doctor = json.loads(self.run_cli("doctor", root, "--json").stdout)
+        health = next(item for item in doctor["repository_health"]["worktrees"]
+                      if item["branch"] == "001-feature")
+        self.assertEqual(health["health_status"], "merged-remotely-awaiting-local")
+        result = self.run_cli("clean", root, "--apply", "--action", "remove", "--worktree", tree, "--yes")
+        self.assertEqual(result.returncode, 2)
+        self.assertTrue(tree.is_dir())
+
+    def test_clean_uses_exact_head_github_merge_evidence(self):
+        root = self.repo()
+        remote = self.base / "remote.git"
+        subprocess.run(["git", "init", "--bare", str(remote)], env=self.env, check=True,
+                       text=True, capture_output=True)
+        self.git(root, "remote", "add", "origin", remote)
+        self.git(root, "push", "-u", "origin", "main")
+        tree = self.base / "feature-tree"
+        self.git(root, "worktree", "add", "-b", "001-feature", str(tree))
+        (tree / "work").write_text("done")
+        self.commit(tree)
+        self.git(tree, "push", "-u", "origin", "001-feature")
+        merged = {"state": "merged", "number": 7, "url": "https://example.invalid/pull/7"}
+        with patch.object(module, "github_merge_evidence", return_value=merged):
+            report = module.cleanup_report(root)
+        row = next(item for item in report["worktrees"] if item["branch"] == "001-feature")
+        self.assertFalse(row["merged_into_target"])
+        self.assertFalse(row["merged_into_remote_target"])
+        self.assertEqual(row["github_merge_state"], "merged")
+        self.assertEqual(row["classification"], "merged-on-github-awaiting-local")
+        self.assertIn("Pull request #7 is merged on GitHub", row["recommendation"])
+        not_merged = {"state": "not-merged", "number": None, "url": None}
+        with patch.object(module, "github_merge_evidence", return_value=not_merged):
+            report = module.cleanup_report(root)
+        row = next(item for item in report["worktrees"] if item["branch"] == "001-feature")
+        self.assertEqual(row["classification"], "pushed-unmerged")
+        self.assertIn("not merged into local main or on GitHub", row["recommendation"])
+
+    def test_github_merge_evidence_requires_the_exact_feature_head(self):
+        root = self.repo()
+        self.git(root, "remote", "add", "origin", "git@github.com:example/Atlas.git")
+        head = "a" * 40
+        result = subprocess.CompletedProcess([], 0, json.dumps([
+            {"number": 6, "state": "MERGED", "headRefOid": "b" * 40,
+             "url": "https://example.invalid/pull/6"},
+            {"number": 7, "state": "MERGED", "headRefOid": head,
+             "url": "https://example.invalid/pull/7"},
+        ]), "")
+        with patch.object(module, "git_text", return_value="git@github.com:example/Atlas.git"), \
+             patch.object(module.shutil, "which", return_value="/usr/bin/gh"), \
+             patch.object(module, "probe", return_value=result) as probe:
+            evidence = module.github_merge_evidence(root, "origin/main", "main", "001-feature", head)
+        self.assertEqual(evidence, {"state": "merged", "number": 7, "url": "https://example.invalid/pull/7"})
+        command = probe.call_args.args[0]
+        self.assertEqual(command[0:3], ["gh", "pr", "list"])
+        self.assertIn("--head", command)
+        self.assertEqual(command[command.index("--head") + 1], "001-feature")
+        self.assertEqual(command[command.index("--base") + 1], "main")
+
+    def test_clean_reports_unknown_remote_merge_state(self):
+        root = self.repo()
+        remote = self.base / "remote.git"
+        subprocess.run(["git", "init", "--bare", str(remote)], env=self.env, check=True,
+                       text=True, capture_output=True)
+        self.git(root, "remote", "add", "origin", remote)
+        self.git(root, "push", "-u", "origin", "main")
+        tree = self.base / "feature-tree"
+        self.git(root, "worktree", "add", "-b", "001-feature", str(tree))
+        (tree / "work").write_text("preserve")
+        self.commit(tree)
+        self.git(tree, "push", "-u", "origin", "001-feature")
+        self.git(root, "update-ref", "-d", "refs/remotes/origin/main")
+        report = json.loads(self.run_cli("clean", root, "--json").stdout)
+        row = next(item for item in report["worktrees"] if item["branch"] == "001-feature")
+        self.assertEqual(report["remote_merge_target"], "origin/main")
+        self.assertFalse(report["remote_merge_target_available"])
+        self.assertIsNone(row["merged_into_remote_target"])
+        self.assertEqual(row["github_merge_state"], "unavailable")
+        self.assertEqual(row["classification"], "merge-status-unknown")
+        self.assertIn("could not be established", row["recommendation"])
 
     def test_clean_reports_stale_worktree_metadata(self):
         root = self.repo()
@@ -535,9 +979,85 @@ class ProjectTests(unittest.TestCase):
         report = json.loads(self.run_cli("clean", root, "--json").stdout)
         row = next(item for item in report["worktrees"] if item["branch"] == "001-feature")
         self.assertEqual(row["classification"], "ignored-local-files")
+        self.assertEqual(row["disposable_ignored_paths"], [])
+        self.assertEqual(row["blocking_ignored_paths"], ["local.env"])
         result = self.run_cli("clean", root, "--apply", "--action", "remove", "--worktree", tree, "--yes")
         self.assertEqual(result.returncode, 2)
         self.assertTrue(ignored.is_file())
+
+    def test_clean_preserves_a_symlink_named_like_a_disposable_cache(self):
+        root = self.repo()
+        remote = self.base / "remote.git"
+        subprocess.run(["git", "init", "--bare", str(remote)], env=self.env, check=True,
+                       text=True, capture_output=True)
+        self.git(root, "remote", "add", "origin", remote)
+        tree = self.base / "feature-tree"
+        self.git(root, "worktree", "add", "-b", "001-feature", str(tree))
+        (tree / ".gitignore").write_text("__pycache__\n")
+        (tree / "work").write_text("done")
+        self.commit(tree)
+        self.git(tree, "push", "-u", "origin", "001-feature")
+        self.git(root, "-c", "user.name=Test", "-c", "user.email=test@example.invalid",
+                 "merge", "--no-ff", "001-feature", "-m", "merge feature")
+        outside = self.base / "outside"
+        outside.mkdir()
+        (tree / "__pycache__").symlink_to(outside, target_is_directory=True)
+        report = json.loads(self.run_cli("clean", root, "--json").stdout)
+        row = next(item for item in report["worktrees"] if item["branch"] == "001-feature")
+        self.assertEqual(row["classification"], "ignored-local-files")
+        self.assertEqual(row["disposable_ignored_paths"], [])
+        self.assertEqual(row["blocking_ignored_paths"], ["__pycache__"])
+        result = self.run_cli("clean", root, "--apply", "--action", "remove", "--worktree", tree, "--yes")
+        self.assertEqual(result.returncode, 2)
+        self.assertTrue((tree / "__pycache__").is_symlink())
+        self.assertTrue(outside.is_dir())
+
+    def test_clean_revalidates_disposable_cache_paths(self):
+        root = self.repo()
+        remote = self.base / "remote.git"
+        subprocess.run(["git", "init", "--bare", str(remote)], env=self.env, check=True,
+                       text=True, capture_output=True)
+        self.git(root, "remote", "add", "origin", remote)
+        tree = self.base / "feature-tree"
+        self.git(root, "worktree", "add", "-b", "001-feature", str(tree))
+        (tree / ".gitignore").write_text("__pycache__/\nlocal.env\n")
+        (tree / "work").write_text("done")
+        self.commit(tree)
+        self.git(tree, "push", "-u", "origin", "001-feature")
+        self.git(root, "-c", "user.name=Test", "-c", "user.email=test@example.invalid",
+                 "merge", "--no-ff", "001-feature", "-m", "merge feature")
+        cache = tree / "__pycache__"
+        cache.mkdir()
+        (cache / "project.cpython-312.pyc").write_bytes(b"cache")
+        def change_after_plan(_):
+            (tree / "local.env").write_text("preserve")
+        args = module.argparse.Namespace(target=str(root), json=False, apply=True, action="remove",
+                                         branch=None, worktree=str(tree), yes=True)
+        with patch.object(module, "confirm", side_effect=change_after_plan):
+            with self.assertRaises(module.Refused):
+                module.clean(args)
+        self.assertTrue(cache.is_dir())
+        self.assertTrue((tree / "local.env").is_file())
+        self.assertTrue(tree.is_dir())
+
+    def test_clean_can_retire_when_target_is_the_worktree_being_removed(self):
+        root = self.repo()
+        remote = self.base / "remote.git"
+        subprocess.run(["git", "init", "--bare", str(remote)], env=self.env, check=True,
+                       text=True, capture_output=True)
+        self.git(root, "remote", "add", "origin", remote)
+        tree = self.base / "feature-tree"
+        self.git(root, "worktree", "add", "-b", "001-feature", str(tree))
+        (tree / "work").write_text("done")
+        self.commit(tree)
+        self.git(tree, "push", "-u", "origin", "001-feature")
+        self.git(root, "-c", "user.name=Test", "-c", "user.email=test@example.invalid",
+                 "merge", "--no-ff", "001-feature", "-m", "merge feature")
+        result = self.run_cli("clean", tree, "--apply", "--action", "remove", "--worktree", tree, "--yes",
+                              cwd=root)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertFalse(tree.exists())
+        self.assertIsNone(module.git_text(root, "show-ref", "--verify", "--quiet", "refs/heads/001-feature"))
 
     def test_clean_refuses_to_guess_a_nonstandard_default_branch(self):
         root = self.repo(branch="develop")

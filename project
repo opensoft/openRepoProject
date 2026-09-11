@@ -16,12 +16,17 @@ from pathlib import Path
 import re
 import shlex
 import shutil
+import stat
 import subprocess
 import sys
 
 
 class Refused(Exception):
     pass
+
+
+DISPOSABLE_IGNORED_DIRECTORY_NAMES = frozenset({"__pycache__"})
+DISPOSABLE_IGNORED_FILE_SUFFIXES = frozenset({".pyc", ".pyo"})
 
 
 def read_json(path):
@@ -72,6 +77,19 @@ def git(root, *args):
 def git_text(root, *args):
     result = git(root, *args)
     return result.stdout.strip() if result.returncode == 0 else None
+
+
+def upstream_branch(root, branch):
+    if not branch or branch == "detached":
+        return None
+    upstream = git_text(root, "rev-parse", "--abbrev-ref", "@{upstream}")
+    if upstream:
+        return upstream
+    remote = git_text(root, "config", "--get", f"branch.{branch}.remote")
+    merge = git_text(root, "config", "--get", f"branch.{branch}.merge")
+    if remote and merge and merge.startswith("refs/heads/"):
+        return f"{remote}/{merge.removeprefix('refs/heads/')}"
+    return None
 
 
 def projects_dirs():
@@ -319,6 +337,65 @@ def discover(target=None):
     raise Refused(f"No project found at {path}; supply a path or name.")
 
 
+def disposable_ignored_artifact(root, value):
+    """Return a contained, non-symlink disposable Python cache path or None."""
+    relative = Path(value)
+    if relative.is_absolute() or not relative.parts or any(part == ".." for part in relative.parts):
+        return None
+    root = root.resolve()
+    candidate = root
+    for part in relative.parts:
+        candidate /= part
+        if candidate.is_symlink():
+            return None
+    try:
+        if not candidate.exists() or not candidate.resolve().is_relative_to(root):
+            return None
+    except OSError:
+        return None
+    if candidate.is_dir() and candidate.name in DISPOSABLE_IGNORED_DIRECTORY_NAMES and disposable_cache_tree(candidate):
+        return candidate
+    if candidate.is_file() and candidate.suffix in DISPOSABLE_IGNORED_FILE_SUFFIXES:
+        return candidate
+    return None
+
+
+def disposable_cache_tree(root):
+    """Whether a cache directory tree contains only disposable non-symlink entries."""
+    pending = [root]
+    while pending:
+        current = pending.pop()
+        try:
+            with os.scandir(current) as entries:
+                for entry in entries:
+                    if entry.is_symlink():
+                        return False
+                    if entry.is_dir(follow_symlinks=False):
+                        if entry.name not in DISPOSABLE_IGNORED_DIRECTORY_NAMES:
+                            return False
+                        pending.append(Path(entry.path))
+                    elif entry.is_file(follow_symlinks=False):
+                        if Path(entry.name).suffix not in DISPOSABLE_IGNORED_FILE_SUFFIXES:
+                            return False
+                    else:
+                        return False
+        except OSError:
+            return False
+    return True
+
+
+def ignored_artifacts(root):
+    """Return exact ignored paths split into disposable and blocking groups."""
+    result = git(root, "status", "--porcelain=v1", "--ignored=matching", "-z")
+    if result.returncode:
+        return None
+    paths = sorted(record[3:] for record in result.stdout.split("\0") if record.startswith("!! "))
+    disposable = [path for path in paths if disposable_ignored_artifact(root, path)]
+    blocking = [path for path in paths if path not in disposable]
+    return {"ignored_paths": paths, "disposable_ignored_paths": disposable,
+            "blocking_ignored_paths": blocking}
+
+
 def repo_state(root):
     top = git_text(root, "rev-parse", "--show-toplevel")
     if not top or Path(top).resolve() != root.resolve():
@@ -328,7 +405,7 @@ def repo_state(root):
         raise Refused(f"Cannot inspect {root}: {status.stderr.strip()}")
     branch = git_text(root, "symbolic-ref", "--quiet", "--short", "HEAD")
     head = git_text(root, "rev-parse", "--verify", "HEAD")
-    upstream = git_text(root, "rev-parse", "--abbrev-ref", "@{upstream}")
+    upstream = upstream_branch(root, branch)
     delta = git_text(root, "rev-list", "--left-right", "--count", "HEAD...@{upstream}") if upstream else None
     ahead, behind = map(int, delta.split()) if delta else (None, None)
     worktrees = []
@@ -354,15 +431,19 @@ def repo_state(root):
             continue
         tree_status = git(tree_path, "status", "--porcelain=v1", "--untracked-files=normal")
         tree["dirty"] = bool(tree_status.stdout) if tree_status.returncode == 0 else None
-        ignored_status = git(tree_path, "status", "--porcelain=v1", "--ignored=matching")
-        tree["ignored_files"] = (sum(line.startswith("!! ") for line in ignored_status.stdout.splitlines())
-                                 if ignored_status.returncode == 0 else None)
+        artifacts = ignored_artifacts(tree_path)
+        if artifacts is None:
+            tree["ignored_files"] = None
+            tree["ignored_paths"] = tree["disposable_ignored_paths"] = tree["blocking_ignored_paths"] = None
+        else:
+            tree.update(artifacts)
+            tree["ignored_files"] = len(artifacts["ignored_paths"])
         resolved_tree = tree_path.resolve()
         tree["current"] = active_path == resolved_tree or active_path.is_relative_to(resolved_tree)
         tree["upstream"] = None
         tree["ahead"] = tree["behind"] = None
         if tree.get("branch") and tree["branch"] != "detached":
-            tree["upstream"] = git_text(tree_path, "rev-parse", "--abbrev-ref", "@{upstream}")
+            tree["upstream"] = upstream_branch(tree_path, tree.get("branch"))
             if tree["upstream"]:
                 delta = git_text(tree_path, "rev-list", "--left-right", "--count", "HEAD...@{upstream}")
                 if delta:
@@ -389,8 +470,52 @@ def default_branch(root, declared=None):
 def ancestor(root, commit, branch):
     if not commit or not branch:
         return None
-    result = git(root, "merge-base", "--is-ancestor", commit, f"refs/heads/{branch}")
+    return ancestor_ref(root, commit, f"refs/heads/{branch}")
+
+
+def ancestor_ref(root, commit, ref):
+    if not commit or not ref:
+        return None
+    result = git(root, "merge-base", "--is-ancestor", commit, ref)
     return True if result.returncode == 0 else False if result.returncode == 1 else None
+
+
+def remote_tracking_ref(root, upstream):
+    if not isinstance(upstream, str) or "/" not in upstream:
+        return None
+    ref = f"refs/remotes/{upstream}"
+    return ref if git(root, "show-ref", "--verify", "--quiet", ref).returncode == 0 else None
+
+
+def github_merge_evidence(root, remote_target, target_branch, branch, head):
+    """Return exact-head GitHub PR merge evidence without changing Git state."""
+    if not all(isinstance(value, str) and value for value in
+               (remote_target, target_branch, branch, head)):
+        return {"state": "unavailable", "number": None, "url": None}
+    remote, separator, _ = remote_target.partition("/")
+    if not separator or not remote:
+        return {"state": "unavailable", "number": None, "url": None}
+    repository = remote_repository_identity(git_text(root, "remote", "get-url", remote) or "")
+    if not repository or not shutil.which("gh"):
+        return {"state": "unavailable", "number": None, "url": None}
+    result = probe(["gh", "pr", "list", "--repo", repository, "--state", "all",
+                    "--head", branch, "--base", target_branch,
+                    "--json", "number,state,headRefOid,url"])
+    if result.returncode:
+        return {"state": "unavailable", "number": None, "url": None}
+    try:
+        candidates = json.loads(result.stdout)
+    except ValueError:
+        return {"state": "unavailable", "number": None, "url": None}
+    if not isinstance(candidates, list):
+        return {"state": "unavailable", "number": None, "url": None}
+    matching = [item for item in candidates if isinstance(item, dict) and item.get("headRefOid") == head]
+    if not matching:
+        return {"state": "not-merged", "number": None, "url": None}
+    item = max(matching, key=lambda value: value.get("number", 0) if isinstance(value.get("number"), int) else 0)
+    return {"state": "merged" if item.get("state") == "MERGED" else "not-merged",
+            "number": item.get("number") if isinstance(item.get("number"), int) else None,
+            "url": item.get("url") if isinstance(item.get("url"), str) else None}
 
 
 def cleanup_report(root):
@@ -402,6 +527,10 @@ def cleanup_report(root):
     if not target:
         raise Refused("Cannot determine the default branch from the manifest, origin/HEAD, main, or master.")
     active_path = Path.cwd().resolve()
+    target_source = next((row for row in state["worktrees"]
+                          if row.get("present") and row.get("branch") == target), None)
+    remote_merge_target = target_source.get("upstream") if target_source else None
+    remote_target_ref = remote_tracking_ref(root, remote_merge_target)
     worktrees = []
     for source in state["worktrees"]:
         row = dict(source)
@@ -410,9 +539,22 @@ def cleanup_report(root):
             row["current"] = active_path == tree_path or active_path.is_relative_to(tree_path)
         branch = row.get("branch", "detached")
         row["merged_into_target"] = None
+        row["remote_merge_target"] = remote_merge_target
+        row["merged_into_remote_target"] = None
+        row["github_merge_state"] = "not-checked"
+        row["github_pull_request"] = None
+        row["github_pull_request_url"] = None
         row["remote_present"] = None
         if row.get("present") and branch != "detached":
             row["merged_into_target"] = ancestor(root, row.get("head"), target)
+            if branch != target and remote_target_ref:
+                row["merged_into_remote_target"] = ancestor_ref(root, row.get("head"), remote_target_ref)
+            if (branch != target and row["merged_into_target"] is False and
+                    row["merged_into_remote_target"] is not True):
+                evidence = github_merge_evidence(root, remote_merge_target, target, branch, row.get("head"))
+                row["github_merge_state"] = evidence["state"]
+                row["github_pull_request"] = evidence["number"]
+                row["github_pull_request_url"] = evidence["url"]
             if row.get("upstream"):
                 row["remote_present"] = git(root, "rev-parse", "--verify", "--quiet", row["upstream"]).returncode == 0
         if not row.get("present"):
@@ -430,7 +572,7 @@ def cleanup_report(root):
         elif row.get("ignored_files") is None:
             classification = "inspection-error"
             recommendation = "Preserve this worktree; Git could not establish its ignored-file state."
-        elif row.get("ignored_files"):
+        elif row.get("blocking_ignored_paths"):
             classification = "ignored-local-files"
             recommendation = "Preserve or relocate ignored local files before cleanup."
         elif branch == "detached":
@@ -456,21 +598,47 @@ def cleanup_report(root):
             recommendation = "Use an explicit clean push, then continue through the normal review process."
         elif row.get("merged_into_target") is True and not row.get("current"):
             classification = "merged-removable"
-            recommendation = "This clean, merged, non-current worktree may be removed explicitly."
+            if row.get("disposable_ignored_paths"):
+                recommendation = ("This clean, merged, non-current worktree may be removed explicitly; "
+                                  "confirmed removal will discard its listed disposable Python cache artifacts.")
+            else:
+                recommendation = "This clean, merged, non-current worktree may be removed explicitly."
         elif row.get("merged_into_target") is True:
             classification = "merged-current"
             recommendation = "The branch is merged, but this is the current checkout; switch away before removal."
         elif row.get("merged_into_target") is None:
             classification = "review-required"
             recommendation = "Merge state could not be established from local refs; preserve it for review."
+        elif row.get("github_merge_state") == "merged":
+            classification = "merged-on-github-awaiting-local"
+            pull_request = f"Pull request #{row['github_pull_request']}" if row.get("github_pull_request") else "A pull request"
+            recommendation = f"{pull_request} is merged on GitHub; reconcile local {target} before cleanup."
+        elif row.get("merged_into_remote_target") is True:
+            classification = "merged-remotely-awaiting-local"
+            recommendation = (f"This branch is merged into {remote_merge_target} as of the last fetch; "
+                              f"reconcile local {target} before cleanup.")
+        elif (row.get("merged_into_remote_target") is None and
+              row.get("github_merge_state") == "unavailable"):
+            classification = "merge-status-unknown"
+            recommendation = ("Remote merge state could not be established from local refs or GitHub; "
+                              "preserve this branch for review.")
         else:
             classification = "pushed-unmerged"
-            recommendation = "Continue through the repository's normal pull-request or merge process."
+            if row.get("github_merge_state") == "not-merged":
+                recommendation = (f"This branch is not merged into local {target} or on GitHub; "
+                                  "continue through the normal pull-request or merge process.")
+            else:
+                recommendation = (f"This branch is not merged into local {target} or last-fetched "
+                                  f"{remote_merge_target}; GitHub merge state is unavailable. "
+                                  "Continue through the normal pull-request or merge process.")
         row["classification"] = classification
         row["recommendation"] = recommendation
         worktrees.append(row)
     return {"root": str(root), "target_branch": target,
-            "tracking_freshness": "local refs only; remote information is as of the last fetch; no fetch performed",
+            "remote_merge_target": remote_merge_target,
+            "remote_merge_target_available": bool(remote_target_ref),
+            "tracking_freshness": ("Git ref information is as of the last fetch; exact-head GitHub PR state "
+                                    "is queried live when available; no fetch performed"),
             "worktrees": worktrees}
 
 
@@ -480,21 +648,43 @@ def print_clean_report(report, as_json):
         return
     print(f"Cleanup plan for {report['root']}")
     print(f"Merge target: {report['target_branch']}")
+    remote_target = report.get("remote_merge_target")
+    if remote_target and report.get("remote_merge_target_available"):
+        print(f"Remote merge target: {remote_target} (as of the last fetch)")
+    else:
+        print("Remote merge target: unavailable from local refs")
     print(f"Freshness: {report['tracking_freshness']}")
     for row in report["worktrees"]:
         branch = row.get("branch", "unknown")
         upstream = row.get("upstream") or "none"
         delta = "unknown" if row.get("ahead") is None else f"ahead={row['ahead']}, behind={row['behind']}"
+        ignored = "unknown" if row.get("ignored_files") is None else row.get("ignored_files", 0)
+        disposable = "unknown" if row.get("disposable_ignored_paths") is None else len(row.get("disposable_ignored_paths", []))
+        blocking = "unknown" if row.get("blocking_ignored_paths") is None else len(row.get("blocking_ignored_paths", []))
+        remote_merged = ("n/a" if branch == report["target_branch"] else
+                         "unknown" if row.get("merged_into_remote_target") is None else
+                         row["merged_into_remote_target"])
+        github_merged = "n/a" if branch == report["target_branch"] else row.get("github_merge_state", "unknown")
         print(f"{row['classification'].upper()}: {row['path']} [{branch}] "
               f"dirty={row.get('dirty', 'unknown')}; upstream={upstream}; {delta}; "
-              f"merged={row.get('merged_into_target', 'unknown')}")
+              f"ignored={ignored}; disposable={disposable}; blocking={blocking}; "
+              f"merged-local={row.get('merged_into_target', 'unknown')}; "
+              f"merged-remote={remote_merged}; github-merge={github_merged}")
         print(f"  {row['recommendation']}")
+        if row.get("disposable_ignored_paths"):
+            print("  Disposable ignored artifacts: " + ", ".join(row["disposable_ignored_paths"]))
+        if row.get("blocking_ignored_paths"):
+            print("  Blocking ignored artifacts: " + ", ".join(row["blocking_ignored_paths"]))
 
 
 def cleanup_signature(report, row):
-    fields = ("path", "branch", "head", "present", "dirty", "ignored_files", "upstream",
-              "ahead", "behind", "remote_present", "merged_into_target", "current", "classification")
-    return report["target_branch"], tuple((field, row.get(field)) for field in fields)
+    fields = ("path", "branch", "head", "present", "dirty", "ignored_files", "ignored_paths",
+              "disposable_ignored_paths", "blocking_ignored_paths", "upstream", "ahead", "behind",
+              "remote_present", "remote_merge_target", "merged_into_target", "merged_into_remote_target",
+              "github_merge_state", "github_pull_request", "github_pull_request_url",
+              "current", "classification")
+    return (report["target_branch"], report.get("remote_merge_target"),
+            report.get("remote_merge_target_available")), tuple((field, row.get(field)) for field in fields)
 
 
 def matching_worktree(report, *, branch=None, path=None):
@@ -503,6 +693,30 @@ def matching_worktree(report, *, branch=None, path=None):
     else:
         rows = [row for row in report["worktrees"] if Path(row["path"]).resolve() == path]
     return rows[0] if len(rows) == 1 else None
+
+
+def cleanup_command_root(report):
+    row = matching_worktree(report, branch=report["target_branch"])
+    if not row or not row.get("present"):
+        raise Refused("Cannot find the local target-branch worktree for cleanup commands.")
+    candidate = Path(row["path"]).resolve()
+    if "root" not in report:
+        return candidate
+    expected_common = git_common_dir(report.get("root", candidate))
+    candidate_common = git_common_dir(candidate)
+    if not expected_common or candidate_common != expected_common:
+        raise Refused("Cannot verify the local target-branch worktree for cleanup commands.")
+    if git_text(candidate, "symbolic-ref", "--quiet", "--short", "HEAD") != report["target_branch"]:
+        raise Refused("Cannot verify the local target-branch worktree for cleanup commands.")
+    return candidate
+
+
+def git_common_dir(root):
+    value = git_text(root, "rev-parse", "--git-common-dir")
+    if not value:
+        return None
+    path = Path(value)
+    return (path if path.is_absolute() else (Path(root) / path)).resolve()
 
 
 def require_unchanged_cleanup_state(root, action, expected, *, branch=None, path=None, branch_head=None):
@@ -516,6 +730,86 @@ def require_unchanged_cleanup_state(root, action, expected, *, branch=None, path
     current = matching_worktree(refreshed, branch=branch) if branch else matching_worktree(refreshed, path=path)
     if not current or cleanup_signature(refreshed, current) != expected["signature"]:
         raise Refused("Cleanup state changed after confirmation; no command was run.")
+    return current
+
+
+def remove_disposable_ignored_artifacts(worktree, paths):
+    root = Path(worktree).resolve()
+    flags = os.O_RDONLY | getattr(os, "O_DIRECTORY", 0) | getattr(os, "O_NOFOLLOW", 0)
+    try:
+        root_fd = os.open(root, flags)
+    except OSError as exc:
+        raise Refused(f"Cannot inspect disposable cache artifacts under {root}: {exc}") from exc
+    try:
+        for path in paths:
+            candidate = None
+            opened = []
+            try:
+                candidate = disposable_ignored_artifact(root, path)
+                if candidate is None:
+                    raise Refused("Disposable cache state changed after confirmation; no command was run.")
+                parts = Path(path).parts
+                if not parts:
+                    raise Refused("Disposable cache state changed after confirmation; no command was run.")
+                parent_fd = root_fd
+                for part in parts[:-1]:
+                    info = os.lstat(part, dir_fd=parent_fd)
+                    if (stat.S_ISLNK(info.st_mode) or not stat.S_ISDIR(info.st_mode) or
+                            part not in DISPOSABLE_IGNORED_DIRECTORY_NAMES):
+                        raise Refused("Disposable cache state changed after confirmation; no command was run.")
+                    next_fd = os.open(part, flags, dir_fd=parent_fd)
+                    opened.append(next_fd)
+                    parent_fd = next_fd
+                leaf = parts[-1]
+                info = os.lstat(leaf, dir_fd=parent_fd)
+                if stat.S_ISLNK(info.st_mode):
+                    raise Refused("Disposable cache state changed after confirmation; no command was run.")
+                if stat.S_ISDIR(info.st_mode):
+                    if leaf not in DISPOSABLE_IGNORED_DIRECTORY_NAMES:
+                        raise Refused("Disposable cache state changed after confirmation; no command was run.")
+                    remove_disposable_cache_tree_fd(parent_fd, leaf, Path(path))
+                else:
+                    if not stat.S_ISREG(info.st_mode) or Path(leaf).suffix not in DISPOSABLE_IGNORED_FILE_SUFFIXES:
+                        raise Refused("Disposable cache state changed after confirmation; no command was run.")
+                    os.unlink(leaf, dir_fd=parent_fd)
+            except OSError as exc:
+                target = candidate if candidate is not None else (root / path)
+                raise Refused(f"Cannot remove disposable cache artifact {target}: {exc}") from exc
+            finally:
+                for fd in reversed(opened):
+                    os.close(fd)
+    finally:
+        os.close(root_fd)
+
+
+def remove_disposable_cache_tree_fd(parent_fd, name, display_path):
+    flags = os.O_RDONLY | getattr(os, "O_DIRECTORY", 0) | getattr(os, "O_NOFOLLOW", 0)
+    directory_fd = os.open(name, flags, dir_fd=parent_fd)
+    try:
+        for child in os.listdir(directory_fd):
+            info = os.lstat(child, dir_fd=directory_fd)
+            if stat.S_ISLNK(info.st_mode):
+                raise Refused("Disposable cache state changed after confirmation; no command was run.")
+            if stat.S_ISDIR(info.st_mode):
+                if child not in DISPOSABLE_IGNORED_DIRECTORY_NAMES:
+                    raise Refused("Disposable cache state changed after confirmation; no command was run.")
+                remove_disposable_cache_tree_fd(directory_fd, child, display_path / child)
+            elif stat.S_ISREG(info.st_mode):
+                if Path(child).suffix not in DISPOSABLE_IGNORED_FILE_SUFFIXES:
+                    raise Refused("Disposable cache state changed after confirmation; no command was run.")
+                os.unlink(child, dir_fd=directory_fd)
+            else:
+                raise Refused("Disposable cache state changed after confirmation; no command was run.")
+        os.rmdir(name, dir_fd=parent_fd)
+    except OSError as exc:
+        raise Refused(f"Cannot remove disposable cache artifact {display_path}: {exc}") from exc
+    finally:
+        os.close(directory_fd)
+
+
+def branch_still_merged(root, branch, expected_head, target_branch):
+    current_head = git_text(root, "rev-parse", "--verify", f"refs/heads/{branch}")
+    return current_head == expected_head and ancestor(root, current_head, target_branch) is True
 
 
 def clean(args):
@@ -529,6 +823,7 @@ def clean(args):
     if not args.action:
         raise Refused("--apply requires --action push|remove|delete-branch")
     rows = report["worktrees"]
+    command_root = root
     if args.action == "push":
         if not args.branch:
             raise Refused("Push cleanup requires --branch BRANCH")
@@ -548,15 +843,17 @@ def clean(args):
             remote, separator, remote_branch = row["upstream"].partition("/")
             if not separator or not remote or not remote_branch:
                 raise Refused(f"Unsupported upstream mapping for {args.branch}: {row['upstream']}")
-            command = ["git", "-C", str(root), "push", remote, f"{args.branch}:{remote_branch}"]
+            command = ["git", "-C", str(command_root), "push", remote, f"{args.branch}:{remote_branch}"]
         else:
             if not git_text(root, "remote", "get-url", "origin"):
                 raise Refused("Cannot publish a branch without an origin remote.")
-            command = ["git", "-C", str(root), "push", "-u", "origin", args.branch]
+            command = ["git", "-C", str(command_root), "push", "-u", "origin", args.branch]
         print(f"Cleanup action: push branch {args.branch}")
+        commands = [command]
         expected = {"target_branch": report["target_branch"], "signature": cleanup_signature(report, row)}
         action_target = {"branch": args.branch}
     elif args.action == "remove":
+        command_root = cleanup_command_root(report)
         if not args.worktree:
             raise Refused("Worktree cleanup requires --worktree PATH")
         wanted = Path(args.worktree).expanduser().resolve()
@@ -568,8 +865,13 @@ def clean(args):
             raise Refused("Cannot remove the current worktree.")
         if row.get("classification") != "merged-removable":
             raise Refused(f"Worktree is {row.get('classification')}; only clean merged worktrees may be removed.")
-        command = ["git", "-C", str(root), "worktree", "remove", str(wanted)]
-        print(f"Cleanup action: remove merged worktree {wanted}")
+        commands = [["git", "-C", str(command_root), "worktree", "remove", str(wanted)],
+                    ["git", "-C", str(command_root), "branch", "-d", row["branch"]]]
+        print(f"Cleanup action: retire merged worktree {wanted} and local branch {row['branch']}")
+        if row.get("disposable_ignored_paths"):
+            print("Disposable ignored artifacts to discard:")
+            for path in row["disposable_ignored_paths"]:
+                print("  " + shlex.quote(str(wanted / path)))
         expected = {"target_branch": report["target_branch"], "signature": cleanup_signature(report, row)}
         action_target = {"path": wanted}
     else:
@@ -583,16 +885,29 @@ def clean(args):
         if ancestor(root, git_text(root, "rev-parse", "--verify", f"refs/heads/{args.branch}"), report["target_branch"]) is not True:
             raise Refused(f"Branch {args.branch} is not verified as merged into {report['target_branch']}.")
         branch_head = git_text(root, "rev-parse", "--verify", f"refs/heads/{args.branch}")
-        command = ["git", "-C", str(root), "branch", "-d", args.branch]
+        command = ["git", "-C", str(command_root), "branch", "-d", args.branch]
         print(f"Cleanup action: delete verified merged local branch {args.branch}")
-    show_plan([command], root)
+        commands = [command]
+    show_plan(commands, command_root)
     confirm(args.yes)
     if args.action == "delete-branch":
         require_unchanged_cleanup_state(root, args.action, {"target_branch": report["target_branch"]},
                                         branch=args.branch, branch_head=branch_head)
     else:
-        require_unchanged_cleanup_state(root, args.action, expected, **action_target)
-    return execute(command)
+        refreshed_row = require_unchanged_cleanup_state(root, args.action, expected, **action_target)
+    if args.action == "remove":
+        remove_disposable_ignored_artifacts(wanted, refreshed_row.get("disposable_ignored_paths") or [])
+        code = execute(commands[0])
+        if code:
+            return code
+        if not branch_still_merged(command_root, row["branch"], row["head"], report["target_branch"]):
+            raise Refused("Cleanup merge state changed after worktree removal; local branch was preserved.")
+        return execute(commands[1])
+    for command in commands:
+        code = execute(command)
+        if code:
+            return code
+    return 0
 
 
 def profile(root):
@@ -725,6 +1040,88 @@ def nested_snapshot(item):
             and isinstance(item.get("kind"), str))
 
 
+def health_status(row, target):
+    """Return doctor-specific health metadata without changing cleanup semantics."""
+    branch = row.get("branch")
+    if branch == target and row.get("classification") == "protected-default":
+        if row.get("dirty") is None or row.get("ignored_files") is None:
+            return ("warning", "inspection-error-default",
+                    "Preserve this default-branch checkout; Git could not inspect its local state.")
+        if row.get("dirty"):
+            return ("warning", "dirty-default",
+                    "Preserve or commit the default-branch working changes before further maintenance.")
+        if row.get("blocking_ignored_paths"):
+            return ("warning", "ignored-local-files-default",
+                    "Preserve or relocate ignored local files before further maintenance.")
+        ahead, behind = row.get("ahead"), row.get("behind")
+        if ahead is not None and behind is not None and ahead > 0 and behind > 0:
+            return ("warning", "diverged-default",
+                    "Reconcile the diverged default branch through the normal Git workflow.")
+        if ahead is not None and ahead > 0:
+            return ("warning", "unpushed-default",
+                    "Push the default branch through the repository's normal protected-branch process.")
+        if behind is not None and behind > 0:
+            return ("warning", "remote-ahead-default",
+                    "Fetch and reconcile the newer remote default branch through the normal Git workflow.")
+        if row.get("disposable_ignored_paths"):
+            return ("ok", "protected-default-with-disposable-cache",
+                    "Listed Python cache artifacts are disposable, but the default branch remains protected.")
+        return ("ok", "protected-default", row["recommendation"])
+    return ("warning", row.get("classification", "review-required"), row["recommendation"])
+
+
+def doctor_repository_health(root):
+    """Build a diagnostic-only health report from the cleanup audit."""
+    try:
+        cleanup = cleanup_report(root)
+    except Refused as exc:
+        return {"state": "unavailable", "level": "warning", "error": str(exc), "worktrees": []}
+    rows = []
+    for source in cleanup["worktrees"]:
+        row = dict(source)
+        row["health_level"], row["health_status"], row["health_recommendation"] = health_status(
+            row, cleanup["target_branch"])
+        rows.append(row)
+    return {"state": "available",
+            "level": "warning" if any(row["health_level"] == "warning" for row in rows) else "ok",
+            "target_branch": cleanup["target_branch"],
+            "remote_merge_target": cleanup["remote_merge_target"],
+            "remote_merge_target_available": cleanup["remote_merge_target_available"],
+            "tracking_freshness": cleanup["tracking_freshness"],
+            "worktrees": rows}
+
+
+def attach_repository_health(item):
+    item["repository_health"] = doctor_repository_health(Path(item["root"]))
+    for child in item["children"]:
+        if nested_snapshot(child):
+            attach_repository_health(child)
+
+
+def repository_health_checks(item):
+    rows = []
+    def walk(current):
+        health = current["repository_health"]
+        name = f"{current['name']} repository health"
+        if health["state"] == "unavailable":
+            rows.append({"level": "warning", "check": name, "detail": health["error"]})
+        else:
+            warnings = [row for row in health["worktrees"] if row["health_level"] == "warning"]
+            if warnings:
+                detail = ", ".join(f"{row.get('branch', 'unknown')} ({row['health_status']})"
+                                   for row in warnings)
+                rows.append({"level": "warning", "check": name,
+                             "detail": f"{len(warnings)} worktree(s) need attention: {detail}"})
+            else:
+                rows.append({"level": "ok", "check": name,
+                             "detail": "All locally inspected worktrees are protected or healthy"})
+        for child in current["children"]:
+            if nested_snapshot(child):
+                walk(child)
+    walk(item)
+    return rows
+
+
 def check_rows(report):
     rows = []
     def add(level, name, detail):
@@ -769,6 +1166,38 @@ def print_report(report, as_json):
               f"ahead={state.get('ahead')}, behind={state.get('behind')} (local refs)")
         for tree in state.get("worktrees", []):
             print(f"{indent}  Worktree: {tree['path']} [{tree.get('branch', 'unknown')}]")
+        health = item.get("repository_health")
+        if health:
+            if health["state"] == "unavailable":
+                print(f"{indent}  Repository health: UNAVAILABLE — {health['error']}")
+            else:
+                remote_target = health.get("remote_merge_target")
+                remote_label = (f"{remote_target} (last fetched)" if remote_target and
+                                health.get("remote_merge_target_available") else "unavailable")
+                print(f"{indent}  Repository health: {health['level'].upper()}; target={health['target_branch']}; "
+                      f"remote merge target={remote_label}; {health['tracking_freshness']}")
+                for row in health["worktrees"]:
+                    branch = row.get("branch", "unknown")
+                    delta = ("unknown" if row.get("ahead") is None else
+                             f"ahead={row['ahead']}, behind={row['behind']}")
+                    remote_merged = ("n/a" if branch == health["target_branch"] else
+                                     "unknown" if row.get("merged_into_remote_target") is None else
+                                     row["merged_into_remote_target"])
+                    github_merged = ("n/a" if branch == health["target_branch"] else
+                                     row.get("github_merge_state", "unknown"))
+                    print(f"{indent}    {row['health_level'].upper()} {row['health_status'].upper()}: "
+                          f"{row['path']} [{branch}]; classification={row['classification']}; "
+                          f"dirty={row.get('dirty', 'unknown')}; ignored={row.get('ignored_files', 'unknown')}; "
+                          f"disposable={len(row.get('disposable_ignored_paths') or [])}; "
+                          f"blocking={len(row.get('blocking_ignored_paths') or [])}; "
+                          f"{delta}; merged-remote={remote_merged}; github-merge={github_merged}")
+                    print(f"{indent}      {row['health_recommendation']}")
+                    if row.get("disposable_ignored_paths"):
+                        print(f"{indent}      Disposable ignored artifacts: " +
+                              ", ".join(row["disposable_ignored_paths"]))
+                    if row.get("blocking_ignored_paths"):
+                        print(f"{indent}      Blocking ignored artifacts: " +
+                              ", ".join(row["blocking_ignored_paths"]))
         print(f"{indent}  Bench: {item['profile'].get('bench', 'not declared')}; container: {item['container']['state']}")
         print(f"{indent}  Handoff: {item['handoff']['state']}")
         for record in item["handoff"].get("records", []):
@@ -788,7 +1217,9 @@ def print_report(report, as_json):
 def inspect_project(args):
     report = snapshot(discover(args.target))
     if args.command == "doctor":
+        attach_repository_health(report)
         checks = check_rows(report)
+        checks.extend(repository_health_checks(report))
         wb = workbenches(args.workbenches, required=False)
         checks.append({"level": "ok" if wb else "warning", "check": "workBenches", "detail": str(wb) if wb else "Not found; set WORKBENCHES_ROOT"})
         declared = report["profile"].get("bench")

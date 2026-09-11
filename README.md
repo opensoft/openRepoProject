@@ -76,12 +76,19 @@ reported as their own checkouts, along with the owning repository's worktree lis
 
 Status shows Git branches, dirty state, local tracking differences, worktrees,
 the declared bench/container, and matching local parked-work records.
-Doctor adds missing-checkout/tooling findings, workflow readiness and credential
-configuration presence. No credential values are read or printed; presence does
+Doctor adds missing-checkout/tooling findings, workflow readiness, credential
+configuration presence, and a repository-health section. Repository health
+shows the local merge target and each linked worktree's cleanup classification,
+branch drift, blockers, last-fetched remote merge evidence, and recommended
+next step; it does not fetch and labels Git-ref comparisons as local-ref
+information. When the repository has a GitHub identity, it can also inspect
+the status of an exact-head pull request without changing the checkout.
+`project clean` remains the only command that plans or performs explicitly
+confirmed Git cleanup. No credential values are read or printed; presence does
 not prove a working login.
 
 Default inspection does not fetch, pull, reset, install, or bootstrap.
-Tracking and handoff information are explicitly local and may be stale.
+Git-ref tracking and handoff information are explicitly local and may be stale.
 `doctor --validate` additionally runs project-owned validators; those validators
 can access upstream and their output is preserved. Pin correctness is delegated
 to them and is not implied by a normal status report.
@@ -99,17 +106,37 @@ project clean --apply --action delete-branch --branch 001-feature --yes
 `clean` is read-only by default. It inspects all linked worktrees using local
 refs and labels remote comparisons as of the last fetch. It protects the
 default branch and preserves dirty, detached, unpublished, remote-gone and
-unmerged work. Ignored local files, remote divergence, and an unknown default
+unmerged work. Unknown ignored files, remote divergence, and an unknown default
 branch also stop destructive cleanup. A pushed-but-unmerged branch is handed
-off to the repository's normal pull-request or merge process.
+off to the repository's normal pull-request or merge process. When the target
+branch has a usable remote-tracking ref, the audit compares feature ancestry
+with both targets. A branch merged on the last-fetched remote target but not
+local target is reported as awaiting local reconciliation. If Git ancestry is
+inconclusive, the audit checks whether GitHub has a merged pull request for the
+exact feature head, which also recognizes squash and rebase merges. A branch is
+called not merged only when neither source establishes a merge; unavailable
+remote evidence is reported as unknown and preserved. Remote evidence never
+authorizes removal: confirmed cleanup still requires local target ancestry.
+
+The initial disposable ignored-artifact allowlist is deliberately narrow:
+non-symlink `__pycache__/` directories and non-symlink regular `.pyc` or
+`.pyo` files inside the selected worktree. The read-only report identifies
+disposable and blocking ignored paths separately. On an otherwise removable
+worktree, a confirmed remove action lists and discards only those disposable
+Python caches before retiring the worktree and local branch; it does not ask
+for a second confirmation. Symlinks, virtual environments, dependencies,
+editor files, test data, and every other ignored path remain blocking. `clean`
+never uses a broad ignored-file deletion command.
 
 Apply actions are always explicit and target one branch or worktree. Pushes
 are normal non-force pushes. A worktree can be removed only when it is clean,
-non-current and verified merged into the local default branch; deleting its
-local branch is a separate action. `clean` never fetches, stashes, resets,
-force-pushes, creates or merges pull requests, or replaces `park`/`resume`.
-It rechecks the selected state after confirmation and before executing an
-action.
+non-current and verified merged into the local default branch. That confirmed
+removal also retires its paired local branch with normal `git branch -d`;
+remote branches are never deleted. If cache cleanup, worktree removal, or the
+branch step fails, cleanup stops and preserves all later work. `clean` never fetches,
+stashes, resets, force-pushes, creates or merges pull requests, or replaces
+`park`/`resume`. It rechecks the selected state after confirmation and before
+executing an action.
 
 A portable profile may declare:
 
