@@ -76,6 +76,13 @@ class ProjectTests(unittest.TestCase):
         self.assertTrue(rows[0]["available"])
         self.assertFalse(rows[1]["available"])
 
+    def test_benches_discovers_a_workbench_from_its_own_directory(self):
+        previous = self.env.pop("WORKBENCHES_ROOT")
+        self.addCleanup(self.env.__setitem__, "WORKBENCHES_ROOT", previous)
+        result = self.run_cli("benches", "--json", cwd=self.wb)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(json.loads(result.stdout)[0]["bench"], "testBench")
+
     def test_new_preserves_paths_with_spaces_and_writes_profile(self):
         parent = self.base / "new parent"
         result = self.run_cli("new", "MyApp", parent, "--type", "test", "--yes")
@@ -178,6 +185,17 @@ class ProjectTests(unittest.TestCase):
         self.assertEqual(report["root"], str(root))
         self.assertEqual(report["children"][0]["root"], str(member))
 
+    def test_family_name_refuses_ambiguous_default_project_roots(self):
+        previous = self.env.pop("PROJECTS_DIR")
+        self.addCleanup(self.env.__setitem__, "PROJECTS_DIR", previous)
+        for base in (self.base / "home/projects", self.base / "home/Projects"):
+            holder = base / "Family/Family"
+            holder.mkdir(parents=True)
+            (holder / "family.yaml").write_text("kind: family-manifest\nmembers: []\n")
+        result = self.run_cli("status", "Family", "--json")
+        self.assertEqual(result.returncode, 2)
+        self.assertIn("Ambiguous project name", json.loads(result.stdout)["error"])
+
     def test_update_default_and_dry_run_do_not_execute(self):
         root = self.repo()
         result = self.run_cli("update", root, "--json")
@@ -242,6 +260,73 @@ class ProjectTests(unittest.TestCase):
         self.assertEqual(result.returncode, 1, result.stderr)
         errors = [c for c in json.loads(result.stdout)["checks"] if c["level"] == "error"]
         self.assertEqual({c["check"] for c in errors}, {"validate-manifest.py", "validate-pins.py"})
+
+    def test_profile_reports_filter_unknown_secret_fields(self):
+        root = self.repo()
+        (root / ".project.json").write_text(json.dumps({
+            "schema_version": 1, "bench": "testBench", "type": "test", "token": "do-not-report"}))
+        status = self.run_cli("status", root, "--json")
+        self.assertEqual(status.returncode, 0, status.stderr)
+        self.assertNotIn("token", json.loads(status.stdout)["profile"])
+        doctor = self.run_cli("doctor", root, "--json")
+        self.assertEqual(doctor.returncode, 0, doctor.stderr)
+        self.assertNotIn("token", json.loads(doctor.stdout)["profile"])
+
+    def test_malformed_bench_entries_refuse_without_tracebacks(self):
+        root = self.repo()
+        (root / ".project.json").write_text(json.dumps({"schema_version": 1, "bench": "testBench", "type": "test"}))
+        self.config["benches"]["testBench"] = []
+        self.save_config()
+        doctor = self.run_cli("doctor", root, "--json")
+        self.assertEqual(doctor.returncode, 2)
+        self.assertIn("error", json.loads(doctor.stdout))
+        update = self.run_cli("update", root, "--apply", "--component", "bench", "--yes")
+        self.assertEqual(update.returncode, 2)
+        self.assertNotIn("Traceback", update.stderr)
+
+    def test_update_refuses_missing_child_and_retains_shape_owner_prompt(self):
+        root = self.repo("Atlas")
+        (root / "project.yaml").write_text("kind: project-manifest\nlegs:\n  - {role: spec, path: spec}\n")
+        self.commit(root)
+        missing = self.run_cli("update", root, "--apply", "--component", "shape", "--yes")
+        self.assertEqual(missing.returncode, 2)
+        self.assertIn("Child checkout is missing", missing.stderr)
+        source = self.base / "shape"
+        source.mkdir()
+        (source / "update-shape.py").write_text("import sys\nsys.exit(0)\n")
+        (root / "spec").mkdir()
+        self.git(root / "spec", "init", "-b", "main")
+        self.git(root / "spec", "-c", "user.name=Test", "-c", "user.email=test@example.invalid",
+                 "commit", "--allow-empty", "-m", "initial")
+        self.commit(root)
+        with patch.object(module, "execute", return_value=0) as run:
+            code = module.main(["update", str(root), "--apply", "--component", "shape", "--shape-source",
+                                str(source), "--at", "a" * 40, "--yes"])
+        self.assertEqual(code, 0)
+        self.assertEqual(run.call_count, 2)
+        self.assertTrue(all("--yes" not in call.args[0] for call in run.call_args_list))
+
+    def test_update_refuses_a_dirty_family_member(self):
+        holder = self.repo("Family/Family")
+        (holder / "family.yaml").write_text("kind: family-manifest\nmembers:\n  - project: Atlas\n")
+        self.commit(holder)
+        member = self.repo("Family/Atlas")
+        (member / "project.yaml").write_text("kind: project-manifest\nlegs: []\n")
+        self.commit(member)
+        (member / "preserve").write_text("dirty")
+        result = self.run_cli("update", holder, "--apply", "--component", "shape", "--yes")
+        self.assertEqual(result.returncode, 2)
+        self.assertIn("Child has work to preserve", result.stderr)
+
+    def test_doctor_validate_with_a_project_leg_has_structured_output(self):
+        root = self.repo("Atlas")
+        leg = self.repo("Atlas/spec")
+        (root / "project.yaml").write_text("kind: project-manifest\nlegs:\n  - {role: spec, path: spec}\n")
+        result = self.run_cli("doctor", root, "--validate", "--json")
+        self.assertEqual(result.returncode, 1, result.stderr)
+        report = json.loads(result.stdout)
+        self.assertIn("checks", report)
+        self.assertEqual(report["children"][0]["path"], str(leg))
 
     def test_shape_update_runs_check_then_apply_and_propagates_failure(self):
         root = self.repo()
@@ -361,6 +446,99 @@ class ProjectTests(unittest.TestCase):
         report = json.loads(self.run_cli("clean", root, "--json").stdout)
         stale = next(row for row in report["worktrees"] if row["path"] == str(tree))
         self.assertEqual(stale["classification"], "stale-worktree")
+
+    def test_clean_preserves_ignored_files_in_an_otherwise_merged_worktree(self):
+        root = self.repo()
+        remote = self.base / "remote.git"
+        subprocess.run(["git", "init", "--bare", str(remote)], env=self.env, check=True,
+                       text=True, capture_output=True)
+        self.git(root, "remote", "add", "origin", remote)
+        tree = self.base / "feature-tree"
+        self.git(root, "worktree", "add", "-b", "001-feature", str(tree))
+        (tree / ".gitignore").write_text("local.env\n")
+        (tree / "work").write_text("done")
+        self.commit(tree)
+        self.git(tree, "push", "-u", "origin", "001-feature")
+        self.git(root, "-c", "user.name=Test", "-c", "user.email=test@example.invalid",
+                 "merge", "--no-ff", "001-feature", "-m", "merge feature")
+        ignored = tree / "local.env"
+        ignored.write_text("preserve")
+        report = json.loads(self.run_cli("clean", root, "--json").stdout)
+        row = next(item for item in report["worktrees"] if item["branch"] == "001-feature")
+        self.assertEqual(row["classification"], "ignored-local-files")
+        result = self.run_cli("clean", root, "--apply", "--action", "remove", "--worktree", tree, "--yes")
+        self.assertEqual(result.returncode, 2)
+        self.assertTrue(ignored.is_file())
+
+    def test_clean_refuses_to_guess_a_nonstandard_default_branch(self):
+        root = self.repo(branch="develop")
+        result = self.run_cli("clean", root, "--json")
+        self.assertEqual(result.returncode, 2)
+        self.assertIn("Cannot determine the default branch", json.loads(result.stdout)["error"])
+
+    def test_clean_pushes_to_a_differently_named_upstream_branch(self):
+        root = self.repo()
+        remote = self.base / "remote.git"
+        subprocess.run(["git", "init", "--bare", str(remote)], env=self.env, check=True,
+                       text=True, capture_output=True)
+        self.git(root, "remote", "add", "origin", remote)
+        tree = self.base / "feature-tree"
+        self.git(root, "worktree", "add", "-b", "001-local", str(tree))
+        self.git(tree, "push", "-u", "origin", "001-local:review/remote")
+        (tree / "work").write_text("publish")
+        self.commit(tree)
+        result = self.run_cli("clean", root, "--apply", "--action", "push", "--branch", "001-local", "--yes")
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(self.git(tree, "rev-parse", "HEAD"),
+                         self.git(remote, "rev-parse", "refs/heads/review/remote"))
+
+    def test_clean_refuses_diverged_branch_push(self):
+        root = self.repo()
+        remote = self.base / "remote.git"
+        subprocess.run(["git", "init", "--bare", str(remote)], env=self.env, check=True,
+                       text=True, capture_output=True)
+        self.git(root, "remote", "add", "origin", remote)
+        tree = self.base / "feature-tree"
+        self.git(root, "worktree", "add", "-b", "001-feature", str(tree))
+        self.git(tree, "push", "-u", "origin", "001-feature")
+        (tree / "local").write_text("local")
+        self.commit(tree)
+        other = self.base / "other"
+        subprocess.run(["git", "clone", "--branch", "001-feature", str(remote), str(other)], env=self.env,
+                       check=True, text=True, capture_output=True)
+        (other / "remote").write_text("remote")
+        self.git(other, "add", ".")
+        self.git(other, "-c", "user.name=Test", "-c", "user.email=test@example.invalid", "commit", "-m", "remote")
+        self.git(other, "push")
+        self.git(tree, "fetch", "origin")
+        report = json.loads(self.run_cli("clean", root, "--json").stdout)
+        row = next(item for item in report["worktrees"] if item["branch"] == "001-feature")
+        self.assertEqual(row["classification"], "diverged")
+        result = self.run_cli("clean", root, "--apply", "--action", "push", "--branch", "001-feature", "--yes")
+        self.assertEqual(result.returncode, 2)
+        self.assertIn("reconcile", result.stderr)
+
+    def test_clean_revalidates_a_worktree_after_confirmation(self):
+        root = self.repo()
+        remote = self.base / "remote.git"
+        subprocess.run(["git", "init", "--bare", str(remote)], env=self.env, check=True,
+                       text=True, capture_output=True)
+        self.git(root, "remote", "add", "origin", remote)
+        tree = self.base / "feature-tree"
+        self.git(root, "worktree", "add", "-b", "001-feature", str(tree))
+        (tree / "work").write_text("done")
+        self.commit(tree)
+        self.git(tree, "push", "-u", "origin", "001-feature")
+        self.git(root, "-c", "user.name=Test", "-c", "user.email=test@example.invalid",
+                 "merge", "--no-ff", "001-feature", "-m", "merge feature")
+        def change_after_plan(_):
+            (tree / "late-change").write_text("preserve")
+        args = module.argparse.Namespace(target=str(root), json=False, apply=True, action="remove",
+                                         branch=None, worktree=str(tree), yes=True)
+        with patch.object(module, "confirm", side_effect=change_after_plan):
+            with self.assertRaises(module.Refused):
+                module.clean(args)
+        self.assertTrue(tree.is_dir())
 
 
 if __name__ == "__main__":

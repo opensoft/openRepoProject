@@ -99,14 +99,17 @@ project clean --apply --action delete-branch --branch 001-feature --yes
 `clean` is read-only by default. It inspects all linked worktrees using local
 refs and labels remote comparisons as of the last fetch. It protects the
 default branch and preserves dirty, detached, unpublished, remote-gone and
-unmerged work. A pushed-but-unmerged branch is handed off to the repository's
-normal pull-request or merge process.
+unmerged work. Ignored local files, remote divergence, and an unknown default
+branch also stop destructive cleanup. A pushed-but-unmerged branch is handed
+off to the repository's normal pull-request or merge process.
 
 Apply actions are always explicit and target one branch or worktree. Pushes
 are normal non-force pushes. A worktree can be removed only when it is clean,
 non-current and verified merged into the local default branch; deleting its
 local branch is a separate action. `clean` never fetches, stashes, resets,
 force-pushes, creates or merges pull requests, or replaces `park`/`resume`.
+It rechecks the selected state after confirmation and before executing an
+action.
 
 A portable profile may declare:
 

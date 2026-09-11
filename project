@@ -88,7 +88,7 @@ def workbenches(explicit=None, required=True):
         if marker.is_file():
             candidates.append(Path(marker.read_text().strip()).expanduser())
         candidates += [p / "workBenches" for p in projects_dirs()]
-        candidates += [p / "workBenches" for p in Path.cwd().parents]
+        candidates += [Path.cwd(), *(p / "workBenches" for p in Path.cwd().parents)]
     for root in candidates:
         if (root / "config/bench-config.json").is_file():
             return root.resolve()
@@ -97,27 +97,45 @@ def workbenches(explicit=None, required=True):
     return None
 
 
-def registry(root):
+def bench_registry(root):
     benches = read_json(root / "config/bench-config.json").get("benches")
     if not isinstance(benches, dict):
         raise Refused("bench-config.json must contain a benches object")
+    return benches
+
+
+def bench_definition(root, benches, bench):
+    if not isinstance(bench, str) or not bench:
+        raise Refused("A project profile must declare a bench name.")
+    data = benches.get(bench)
+    if data is None:
+        return None
+    if not isinstance(data, dict):
+        raise Refused(f"Invalid registry entry: {bench}")
+    bench_path = inside(root, data.get("path"))
+    scripts = data.get("project_scripts", [])
+    if not isinstance(scripts, list):
+        raise Refused(f"Invalid project_scripts for {bench}")
+    if not isinstance(data.get("ai_keywords", []), list):
+        raise Refused(f"Invalid ai_keywords for {bench}")
     rows = []
-    for bench, data in sorted(benches.items()):
-        if not isinstance(data, dict):
-            raise Refused(f"Invalid registry entry: {bench}")
-        bench_path = inside(root, data.get("path"))
-        scripts = data.get("project_scripts", [])
-        if not isinstance(scripts, list):
-            raise Refused(f"Invalid project_scripts for {bench}")
-        for item in scripts:
-            if not isinstance(item, dict) or not isinstance(item.get("name"), str):
-                raise Refused(f"Invalid generator for {bench}")
-            script = inside(bench_path, item.get("script"))
+    for item in scripts:
+        if not isinstance(item, dict) or not isinstance(item.get("name"), str) or not item["name"]:
+            raise Refused(f"Invalid generator for {bench}")
+        script = inside(bench_path, item.get("script"))
+        rows.append((item, script))
+    return data, bench_path, rows
+
+
+def registry(root):
+    benches = bench_registry(root)
+    rows = []
+    for bench in sorted(benches):
+        data, _, scripts = bench_definition(root, benches, bench)
+        for item, script in scripts:
             # Historical registry mixes maintenance scripts into project_scripts.
             if item["name"].startswith("update-") or script.name.startswith("update-"):
                 continue
-            if not isinstance(data.get("ai_keywords", []), list):
-                raise Refused(f"Invalid ai_keywords for {bench}")
             rows.append({"bench": bench, "type": item["name"], "script": str(script),
                          "description": item.get("description", ""),
                          "available": script.is_file(),
@@ -269,10 +287,12 @@ def discover(target=None):
         path = Path(target).expanduser()
         # Named estates prefer family holders over similarly named roots.
         if not path.is_absolute() and len(path.parts) == 1:
-            for base in projects_dirs():
-                family = base / target / target
-                if (family / "family.yaml").is_file():
-                    return family.resolve()
+            families = [base / target / target for base in projects_dirs()
+                        if (base / target / target / "family.yaml").is_file()]
+            if len(families) > 1:
+                raise Refused("Ambiguous project name; supply a path.")
+            if families:
+                return families[0].resolve()
             if not path.exists():
                 matches = [p / target for p in projects_dirs() if (p / target).is_dir()]
                 if len(matches) > 1:
@@ -333,6 +353,9 @@ def repo_state(root):
             continue
         tree_status = git(tree_path, "status", "--porcelain=v1", "--untracked-files=normal")
         tree["dirty"] = bool(tree_status.stdout) if tree_status.returncode == 0 else None
+        ignored_status = git(tree_path, "status", "--porcelain=v1", "--ignored=matching")
+        tree["ignored_files"] = (sum(line.startswith("!! ") for line in ignored_status.stdout.splitlines())
+                                 if ignored_status.returncode == 0 else None)
         tree["current"] = tree_path.resolve() == root.resolve()
         tree["upstream"] = None
         tree["ahead"] = tree["behind"] = None
@@ -358,7 +381,7 @@ def default_branch(root, declared=None):
         candidate = candidate.removeprefix("origin/")
         if git(root, "show-ref", "--verify", "--quiet", f"refs/heads/{candidate}").returncode == 0:
             return candidate
-    return git_text(root, "symbolic-ref", "--quiet", "--short", "HEAD") or "main"
+    return None
 
 
 def ancestor(root, commit, branch):
@@ -374,6 +397,8 @@ def cleanup_report(root):
         raise Refused(f"Cannot inspect Git repository at {root}")
     _, data = manifest(root)
     target = default_branch(root, data.get("tracking_branch"))
+    if not target:
+        raise Refused("Cannot determine the default branch from the manifest, origin/HEAD, main, or master.")
     active_path = Path.cwd().resolve()
     worktrees = []
     for source in state["worktrees"]:
@@ -400,6 +425,12 @@ def cleanup_report(root):
         elif row.get("dirty"):
             classification = "dirty"
             recommendation = "Preserve or commit the working changes before cleanup."
+        elif row.get("ignored_files") is None:
+            classification = "inspection-error"
+            recommendation = "Preserve this worktree; Git could not establish its ignored-file state."
+        elif row.get("ignored_files"):
+            classification = "ignored-local-files"
+            recommendation = "Preserve or relocate ignored local files before cleanup."
         elif branch == "detached":
             classification = "detached"
             recommendation = "Preserve the detached commit or attach it to a named branch before cleanup."
@@ -409,7 +440,16 @@ def cleanup_report(root):
         elif row.get("remote_present") is False:
             classification = "remote-gone"
             recommendation = "Confirm the branch should be republished before removing local work."
-        elif row.get("ahead", 0) > 0:
+        elif row.get("ahead") is None or row.get("behind") is None:
+            classification = "review-required"
+            recommendation = "Remote tracking state could not be established from local refs; preserve it for review."
+        elif row["ahead"] > 0 and row["behind"] > 0:
+            classification = "diverged"
+            recommendation = "Reconcile the diverged branch through the normal Git workflow before cleanup."
+        elif row["behind"] > 0:
+            classification = "remote-ahead"
+            recommendation = "Fetch and reconcile the newer remote branch before cleanup."
+        elif row["ahead"] > 0:
             classification = "unpushed"
             recommendation = "Use an explicit clean push, then continue through the normal review process."
         elif row.get("merged_into_target") is True and not row.get("current"):
@@ -449,6 +489,33 @@ def print_clean_report(report, as_json):
         print(f"  {row['recommendation']}")
 
 
+def cleanup_signature(report, row):
+    fields = ("path", "branch", "head", "present", "dirty", "ignored_files", "upstream",
+              "ahead", "behind", "remote_present", "merged_into_target", "current", "classification")
+    return report["target_branch"], tuple((field, row.get(field)) for field in fields)
+
+
+def matching_worktree(report, *, branch=None, path=None):
+    if branch is not None:
+        rows = [row for row in report["worktrees"] if row.get("branch") == branch]
+    else:
+        rows = [row for row in report["worktrees"] if Path(row["path"]).resolve() == path]
+    return rows[0] if len(rows) == 1 else None
+
+
+def require_unchanged_cleanup_state(root, action, expected, *, branch=None, path=None, branch_head=None):
+    refreshed = cleanup_report(root)
+    if action == "delete-branch":
+        current_head = git_text(root, "rev-parse", "--verify", f"refs/heads/{branch}")
+        if (refreshed["target_branch"] != expected["target_branch"] or current_head != branch_head or
+                ancestor(root, current_head, refreshed["target_branch"]) is not True):
+            raise Refused("Cleanup state changed after confirmation; no command was run.")
+        return
+    current = matching_worktree(refreshed, branch=branch) if branch else matching_worktree(refreshed, path=path)
+    if not current or cleanup_signature(refreshed, current) != expected["signature"]:
+        raise Refused("Cleanup state changed after confirmation; no command was run.")
+
+
 def clean(args):
     root = discover(args.target)
     if args.json and args.apply:
@@ -473,16 +540,20 @@ def clean(args):
             raise Refused(f"Cannot push {args.branch}; its worktree is dirty, missing, or unreadable.")
         if row.get("branch") == "detached":
             raise Refused("Cannot push a detached worktree; name the branch first.")
+        if row.get("classification") in ("diverged", "remote-ahead", "review-required"):
+            raise Refused(f"Cannot push {args.branch}; reconcile its remote state first.")
         if row.get("upstream"):
             remote, separator, remote_branch = row["upstream"].partition("/")
-            if not separator or not remote or remote_branch != args.branch:
+            if not separator or not remote or not remote_branch:
                 raise Refused(f"Unsupported upstream mapping for {args.branch}: {row['upstream']}")
-            command = ["git", "-C", str(root), "push", remote, args.branch]
+            command = ["git", "-C", str(root), "push", remote, f"{args.branch}:{remote_branch}"]
         else:
             if not git_text(root, "remote", "get-url", "origin"):
                 raise Refused("Cannot publish a branch without an origin remote.")
             command = ["git", "-C", str(root), "push", "-u", "origin", args.branch]
         print(f"Cleanup action: push branch {args.branch}")
+        expected = {"target_branch": report["target_branch"], "signature": cleanup_signature(report, row)}
+        action_target = {"branch": args.branch}
     elif args.action == "remove":
         if not args.worktree:
             raise Refused("Worktree cleanup requires --worktree PATH")
@@ -497,6 +568,8 @@ def clean(args):
             raise Refused(f"Worktree is {row.get('classification')}; only clean merged worktrees may be removed.")
         command = ["git", "-C", str(root), "worktree", "remove", str(wanted)]
         print(f"Cleanup action: remove merged worktree {wanted}")
+        expected = {"target_branch": report["target_branch"], "signature": cleanup_signature(report, row)}
+        action_target = {"path": wanted}
     else:
         if not args.branch:
             raise Refused("Branch cleanup requires --branch BRANCH")
@@ -507,10 +580,16 @@ def clean(args):
             raise Refused("Remove the linked worktree first; branch deletion is a separate action.")
         if ancestor(root, git_text(root, "rev-parse", "--verify", f"refs/heads/{args.branch}"), report["target_branch"]) is not True:
             raise Refused(f"Branch {args.branch} is not verified as merged into {report['target_branch']}.")
+        branch_head = git_text(root, "rev-parse", "--verify", f"refs/heads/{args.branch}")
         command = ["git", "-C", str(root), "branch", "-d", args.branch]
         print(f"Cleanup action: delete verified merged local branch {args.branch}")
     show_plan([command], root)
     confirm(args.yes)
+    if args.action == "delete-branch":
+        require_unchanged_cleanup_state(root, args.action, {"target_branch": report["target_branch"]},
+                                        branch=args.branch, branch_head=branch_head)
+    else:
+        require_unchanged_cleanup_state(root, args.action, expected, **action_target)
     return execute(command)
 
 
@@ -524,7 +603,7 @@ def profile(root):
     for field in ("bench", "type", "container"):
         if field in data and (not isinstance(data[field], str) or not data[field]):
             raise Refused(f"Invalid {field} in {path}")
-    return data
+    return {field: data[field] for field in ("schema_version", "bench", "type", "container") if field in data}
 
 
 def handoff(root, data):
@@ -694,9 +773,8 @@ def inspect_project(args):
         checks.append({"level": "ok" if wb else "warning", "check": "workBenches", "detail": str(wb) if wb else "Not found; set WORKBENCHES_ROOT"})
         declared = report["profile"].get("bench")
         if wb and declared:
-            benches = read_json(wb / "config/bench-config.json").get("benches", {})
-            entry = benches.get(declared)
-            available = bool(entry and inside(wb, entry.get("path")).is_dir())
+            entry = bench_definition(wb, bench_registry(wb), declared)
+            available = bool(entry and entry[1].is_dir())
             checks.append({"level": "ok" if available else "error", "check": "bench", "detail": declared + (" available" if available else " missing")})
         # Presence only: never read credentials or imply that a login is valid.
         report["ai_tools"] = {name: bool(shutil.which(name)) for name in ("claude", "codex", "gemini", "copilot")}
@@ -731,6 +809,18 @@ def inspect_project(args):
                    for r in report.get("checks", [])))
 
 
+def update_child_states(item):
+    """Yield every child checkout state, including nested family members."""
+    for child in item["children"]:
+        if "repository" not in child:
+            yield child
+            continue
+        state = {**child["repository"], "path": child["root"],
+                 "tracking_branch": child.get("tracking_branch") or "main"}
+        yield state
+        yield from update_child_states(child)
+
+
 def update(args):
     root = discover(args.target)
     report = snapshot(root)
@@ -752,9 +842,12 @@ def update(args):
         tracking = report.get("tracking_branch") or (git_text(root, "symbolic-ref", "--short", "refs/remotes/origin/HEAD") or "origin/main").removeprefix("origin/")
         if not state.get("present") or state.get("dirty") or state.get("branch") != tracking:
             raise Refused("Project updates require a clean tracking checkout; preserve feature work first.")
-        for child in report["children"]:
-            if child.get("dirty") or (child.get("branch") and child["branch"] not in (child.get("tracking_branch", "main"), "detached")):
-                raise Refused(f"Leg has work to preserve: {child.get('path')}")
+        for child in update_child_states(report):
+            if not child.get("present"):
+                raise Refused(f"Child checkout is missing: {child.get('path')}")
+            expected = child.get("tracking_branch") or "main"
+            if child.get("dirty") or child.get("branch") in (None, "detached") or child.get("branch") != expected:
+                raise Refused(f"Child has work to preserve: {child.get('path')}")
     if args.component == "shape":
         if report["kind"] == "single":
             raise Refused("This project has no shape manifest.")
@@ -767,7 +860,7 @@ def update(args):
             raise Refused("Shape updates require --at with a full commit SHA.")
         commands = [[sys.executable, str(source), "check", "--root", str(root), "--at", args.at],
                     [sys.executable, str(source), "apply", "--root", str(root), "--at", args.at,
-                     "--branch", args.branch or f"shape/update-{args.at[:12]}", "--yes"]]
+                     "--branch", args.branch or f"shape/update-{args.at[:12]}"]]
     elif args.component == "workflow":
         commands = [["setup-openspeckit", "--repo", str(root)]]
     else:
@@ -777,13 +870,15 @@ def update(args):
             if report["kind"] != "single":
                 raise Refused("Bench updates require a single application checkout, not an assembly/family root.")
             selected = report["profile"]
-            benches = read_json(wb / "config/bench-config.json").get("benches", {})
-            entry = benches.get(selected.get("bench"), {})
-            candidates = [r for r in entry.get("project_scripts", [])
-                          if r.get("name") == "update-" + selected.get("type", "")]
+            definition = bench_definition(wb, bench_registry(wb), selected.get("bench"))
+            if not definition:
+                raise Refused("The selected bench is not registered; use the bench's own updater.")
+            _, _, scripts = definition
+            candidates = [(item, script) for item, script in scripts
+                          if item["name"] == "update-" + selected.get("type", "")]
             if len(candidates) != 1:
                 raise Refused("No exact updater registered for this .project.json bench/type; use the bench's own updater.")
-            script = inside(inside(wb, entry.get("path")), candidates[0].get("script"))
+            script = candidates[0][1]
             if not script.is_file():
                 raise Refused(f"Registered updater is missing: {script}")
             commands = [["bash", str(script), str(root)]]
@@ -797,6 +892,9 @@ def update(args):
         # update-shape check exits 1 when differences are available.
         if check not in (0, 1):
             return check
+        # The owner retains its own confirmation prompt, even if this coordinator
+        # received --yes for a different update component.
+        return execute(commands[0], cwd=root)
     confirm(args.yes)
     for command in commands:
         code = execute(command, cwd=root)
