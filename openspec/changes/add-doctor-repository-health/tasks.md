@@ -17,5 +17,5 @@
   match the implementation.
 - [x] 2.3 Run the complete test suite in py-bench, diff checks, strict OpenSpec
   validation, and a read-only doctor audit; verify all pass before review.
-- [ ] 2.4 Commit and push the governed change on cleanup, update PR #2, request
+- [x] 2.4 Commit and push the governed change on cleanup, update PR #2, request
   review, and resolve any resulting review findings with regression evidence.
