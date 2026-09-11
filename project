@@ -832,6 +832,9 @@ def health_status(row, target):
     """Return doctor-specific health metadata without changing cleanup semantics."""
     branch = row.get("branch")
     if branch == target and row.get("classification") == "protected-default":
+        if row.get("dirty") is None or row.get("ignored_files") is None:
+            return ("warning", "inspection-error-default",
+                    "Preserve this default-branch checkout; Git could not inspect its local state.")
         if row.get("dirty"):
             return ("warning", "dirty-default",
                     "Preserve or commit the default-branch working changes before further maintenance.")

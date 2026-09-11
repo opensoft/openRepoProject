@@ -438,6 +438,33 @@ class ProjectTests(unittest.TestCase):
         self.assertEqual(human.returncode, 0, human.stderr)
         self.assertIn("Repository health: UNAVAILABLE", human.stdout)
 
+    def test_doctor_strict_fails_on_repository_health_warning(self):
+        report = {"root": "/tmp/repo", "name": "repo", "kind": "single",
+                  "repository": {"present": True}, "children": [],
+                  "profile": {}, "handoff": {"state": "workspace not configured"},
+                  "container": {"state": "not declared; set container in .project.json"}}
+        args = module.argparse.Namespace(command="doctor", target="/tmp/repo", validate=False,
+                                         strict=False, json=True, workbenches=None)
+        with patch.object(module, "discover", return_value=Path("/tmp/repo")), \
+             patch.object(module, "snapshot", return_value=dict(report)), \
+             patch.object(module, "attach_repository_health"), \
+             patch.object(module, "check_rows", return_value=[]), \
+             patch.object(module, "repository_health_checks", return_value=[
+                 {"level": "warning", "check": "repo repository health", "detail": "warning"}
+             ]), \
+             patch.object(module, "workbenches", return_value=Path("/tmp/workbenches")), \
+             patch.object(module, "print_report"):
+            self.assertEqual(module.inspect_project(args), 0)
+            args.strict = True
+            self.assertEqual(module.inspect_project(args), 1)
+
+    def test_health_status_warns_when_default_inspection_is_unknown(self):
+        level, status, _ = module.health_status(
+            {"branch": "main", "classification": "protected-default", "dirty": None, "ignored_files": 0,
+             "recommendation": "keep"},
+            "main")
+        self.assertEqual((level, status), ("warning", "inspection-error-default"))
+
     def test_shape_update_runs_check_then_apply_and_propagates_failure(self):
         root = self.repo()
         (root / "project.yaml").write_text("kind: project-manifest\nlegs: []\n")
@@ -505,6 +532,25 @@ class ProjectTests(unittest.TestCase):
         self.assertFalse(tree.exists())
         self.assertIsNone(module.git_text(root, "show-ref", "--verify", "--quiet", "refs/heads/001-feature"))
         self.assertEqual(feature_head, self.git(remote, "rev-parse", "refs/heads/001-feature"))
+
+    def test_clean_retires_targeted_worktree_when_command_target_is_that_worktree(self):
+        root = self.repo()
+        remote = self.base / "remote.git"
+        subprocess.run(["git", "init", "--bare", str(remote)], env=self.env, check=True,
+                       text=True, capture_output=True)
+        self.git(root, "remote", "add", "origin", remote)
+        tree = self.base / "feature-tree"
+        self.git(root, "worktree", "add", "-b", "001-feature", str(tree))
+        (tree / "work").write_text("done")
+        self.commit(tree)
+        self.git(tree, "push", "-u", "origin", "001-feature")
+        self.git(root, "-c", "user.name=Test", "-c", "user.email=test@example.invalid",
+                 "merge", "--no-ff", "001-feature", "-m", "merge feature")
+        result = self.run_cli("clean", tree, "--apply", "--action", "remove",
+                              "--worktree", tree, "--yes")
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertFalse(tree.exists())
+        self.assertIsNone(module.git_text(root, "show-ref", "--verify", "--quiet", "refs/heads/001-feature"))
 
     def test_clean_retires_merged_worktree_with_disposable_python_caches(self):
         root = self.repo()
