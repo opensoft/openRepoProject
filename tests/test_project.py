@@ -1102,6 +1102,156 @@ class ProjectTests(unittest.TestCase):
         self.assertFalse((other / "MyApp").exists())
         self.assertIsNone(self.shape_record())
 
+    def test_pty_answers_that_take_the_triad(self):
+        env = self.shape_env(ci=None)
+        for answer in ("", "1", "y", "yes", "Y", " YES "):
+            with self.subTest(answer=answer):
+                result = self.run_pty("new", "Atlas", env=env, steps=[(QUESTION_PROMPT, answer), (ORG_PROMPT, PTY_EOF)])
+                self.assert_status(result, 2)
+                self.assert_line_ends(result.stderr, REFUSED + ORG_ENDED)
+                combined = result.stdout + result.stderr
+                self.assertNotIn(GENERATOR_PROMPT, combined)
+                self.assertNotIn(CONFIRM_PROMPT, combined)
+                self.assertNotIn("Create:", result.stdout)
+                self.assertFalse((self.base / "Atlas").exists())
+        self.assertIsNone(self.shape_record())
+
+    def test_pty_organization_then_visibility(self):
+        env = self.shape_env(ci=None)
+        result = self.run_pty("new", "Atlas", env=env, steps=[(QUESTION_PROMPT, ""), (ORG_PROMPT, "-bad"),
+                                                              (ORG_PROMPT, "example"), (VIS_PROMPT, PTY_EOF)])
+        self.assert_status(result, 2)
+        self.assertNotIn(VIS_PROMPT, result.seen[1])
+        self.assertNotIn(VIS_PROMPT, result.seen[2])
+        self.assertEqual(result.stdout.split("\n").count(ORG_RETRY), 1)
+        combined = result.stdout + result.stderr
+        self.assertEqual(combined.count(ORG_PROMPT), 2)
+        self.assertEqual(combined.count(VIS_PROMPT), 1)
+        self.assert_line_ends(result.stderr, REFUSED + VIS_ENDED)
+        self.assertIsNone(self.shape_record())
+
+    def test_pty_visibility_is_a_full_word(self):
+        env = self.shape_env(ci=None)
+        for typed, word, restated in (("PUBLIC", "public", RESTATED_PUBLIC), (" private ", "private", RESTATED)):
+            with self.subTest(accepted=typed):
+                result = self.run_pty("new", "Atlas", env=env, steps=[
+                    (QUESTION_PROMPT, ""), (ORG_PROMPT, "example"), (VIS_PROMPT, typed), (FAKE_SHAPE_PROMPT, "no")])
+                self.assert_status(result, 1)
+                self.assert_line(result.stdout, restated.format(NAME="Atlas", ORG="example", VIS=word))
+                argv = self.shape_record()[-1]
+                self.assertEqual(argv[argv.index("--visibility") + 1], word)
+        for typed in ("1", "2", "3", ""):
+            with self.subTest(rejected=typed):
+                result = self.run_pty("new", "Atlas", env=env, steps=[
+                    (QUESTION_PROMPT, ""), (ORG_PROMPT, "example"), (VIS_PROMPT, typed), (VIS_PROMPT, PTY_EOF)])
+                self.assert_status(result, 2)
+                self.assertEqual(result.stdout.split("\n").count(VIS_RETRY), 1)
+                self.assert_line_ends(result.stderr, REFUSED + VIS_ENDED)
+        self.assertEqual(len(self.shape_record()), 2)
+
+    def test_pty_two_misses_at_organization_or_visibility_refuse(self):
+        env = self.shape_env(ci=None)
+        cases = {"organization": ([(ORG_PROMPT, ""), (ORG_PROMPT, "-x")], ORG_RETRY, ORG_MISSED),
+                 "visibility": ([(ORG_PROMPT, "example"), (VIS_PROMPT, "1"), (VIS_PROMPT, "")], VIS_RETRY, VIS_MISSED)}
+        for label, (steps, retry, refusal) in cases.items():
+            with self.subTest(label):
+                result = self.run_pty("new", "Atlas", env=env, steps=[(QUESTION_PROMPT, ""), *steps])
+                self.assert_status(result, 2)
+                self.assertEqual(result.stdout.split("\n").count(retry), 1)
+                self.assert_line_ends(result.stderr, REFUSED + refusal)
+                self.assertNotIn("Create:", result.stdout)
+                self.assertFalse((self.base / "Atlas").exists())
+                if label == "organization":
+                    self.assertNotIn(VIS_PROMPT, result.stdout + result.stderr)
+        self.assertIsNone(self.shape_record())
+
+    def test_pty_end_of_input_at_organization_or_visibility_refuses(self):
+        env = self.shape_env(ci=None)
+        cases = {"organization": ([(ORG_PROMPT, PTY_EOF)], ORG_ENDED),
+                 "visibility": ([(ORG_PROMPT, "example"), (VIS_PROMPT, PTY_EOF)], VIS_ENDED)}
+        for label, (steps, refusal) in cases.items():
+            with self.subTest(label):
+                result = self.run_pty("new", "Atlas", env=env, steps=[(QUESTION_PROMPT, ""), *steps])
+                self.assert_status(result, 2)
+                self.assert_line_ends(result.stderr, REFUSED + refusal)
+                self.assertNotIn(CANCELLED, result.stderr)
+                self.assertFalse((self.base / "Atlas").exists())
+        self.assertIsNone(self.shape_record())
+
+    def test_pty_interrupt_at_organization_or_visibility_cancels(self):
+        env = self.shape_env(ci=None)
+        cases = {"organization": [(ORG_PROMPT, signal.SIGINT)],
+                 "visibility": [(ORG_PROMPT, "example"), (VIS_PROMPT, signal.SIGINT)]}
+        for label, steps in cases.items():
+            with self.subTest(label):
+                result = self.run_pty("new", "Atlas", env=env, steps=[(QUESTION_PROMPT, ""), *steps])
+                self.assert_status(result, 130)
+                self.assert_line_ends(result.stderr, CANCELLED)
+                self.assertFalse((self.base / "Atlas").exists())
+        self.assertIsNone(self.shape_record())
+
+    def test_pty_restating_line_precedes_the_plan(self):
+        env = self.shape_env(ci=None)
+        destination = self.base / "Atlas"
+        for word, restated in (("private", RESTATED), ("public", RESTATED_PUBLIC)):
+            with self.subTest(word):
+                result = self.run_pty("new", "Atlas", env=env, steps=[
+                    (QUESTION_PROMPT, ""), (ORG_PROMPT, "example"), (VIS_PROMPT, word), (FAKE_SHAPE_PROMPT, "no")])
+                self.assert_status(result, 1)
+                line = restated.format(NAME="Atlas", ORG="example", VIS=word)
+                self.assert_line(result.stdout, line)
+                self.assertEqual(result.stdout.count(line), 1)
+                self.assertNotIn(line, result.seen[2])
+                self.assert_in_order(result.stdout, line, f"Create: {destination}", FAKE_SHAPE_PROMPT)
+                self.assertFalse(destination.exists())
+
+    def test_pty_triad_delegates_without_yes_and_keeps_its_confirmation(self):
+        env = self.shape_env(ci=None)
+        answers = [(QUESTION_PROMPT, ""), (ORG_PROMPT, "example"), (VIS_PROMPT, "private")]
+        destination = self.base / "Atlas"
+        result = self.run_pty("new", "Atlas", env=env, steps=[*answers, (FAKE_SHAPE_PROMPT, "yes")])
+        self.assert_status(result, 0)
+        self.assertTrue(destination.is_dir())
+        self.assertEqual(self.shape_record(),
+                         [["Atlas", "--org", "example", "--visibility", "private", "--into", str(self.base)]])
+        self.assert_in_order(result.stdout, RESTATED.format(NAME="Atlas", ORG="example", VIS="private"),
+                             f"Create: {destination}", FAKE_SHAPE_PROMPT, f"Created: {destination}")
+        self.assertNotIn("warning:", result.stdout + result.stderr)
+        declined = self.run_pty("new", "Orion", env=env, steps=[*answers, (FAKE_SHAPE_PROMPT, "no")])
+        self.assert_status(declined, 1)
+        self.assert_line(declined.stdout, FAKE_SHAPE_DECLINED)
+        self.assertFalse((self.base / "Orion").exists())
+        self.assertNotIn("Created:", declined.stdout)
+        self.assertEqual(self.shape_record()[-1],
+                         ["Orion", "--org", "example", "--visibility", "private", "--into", str(self.base)])
+        self.assertNotIn("warning:", declined.stdout + declined.stderr)
+        self.assertTrue(all("--yes" not in argv for argv in self.shape_record()))
+
+    def test_pty_openreposhape_refusal_passes_through(self):
+        env = self.shape_env(ci=None, status=5)
+        result = self.run_pty("new", "Atlas", env=env, steps=[
+            (QUESTION_PROMPT, ""), (ORG_PROMPT, "example"), (VIS_PROMPT, "private"), (FAKE_SHAPE_PROMPT, "yes")])
+        self.assert_status(result, 5)
+        self.assertEqual(len(self.shape_record()), 1)
+        self.assertNotIn("Created:", result.stdout)
+
+    def test_pty_dry_run_triad_answer_prints_the_openreposhape_plan(self):
+        env = self.shape_env(ci=None)
+        before = sorted(self.base.rglob("*"))
+        result = self.run_pty("new", "Atlas", "--dry-run", env=env, steps=[
+            (QUESTION_PROMPT, ""), (ORG_PROMPT, "example"), (VIS_PROMPT, "private")])
+        self.assert_status(result, 0)
+        destination = self.base / "Atlas"
+        command = "  " + shlex.join(["openRepoShape", "Atlas", "--org", "example", "--visibility", "private",
+                                     "--into", str(self.base)])
+        self.assert_line(result.stdout, command)
+        self.assert_in_order(result.stdout, RESTATED.format(NAME="Atlas", ORG="example", VIS="private"),
+                             f"Create: {destination}", command)
+        self.assertNotIn(FAKE_SHAPE_PROMPT, result.stdout + result.stderr)
+        self.assertIsNone(self.shape_record())
+        self.assertEqual(sorted(self.base.rglob("*")), before)
+        self.assertNotIn("warning:", result.stdout + result.stderr)
+
 
 if __name__ == "__main__":
     unittest.main()

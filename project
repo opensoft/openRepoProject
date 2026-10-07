@@ -228,6 +228,8 @@ def person_at_terminal():
 # Answers to the creation question, compared stripped and lower-cased (design D4).
 TRIAD_ANSWERS = {"": "triad", "1": "triad", "y": "triad", "yes": "triad",
                  "2": "single", "n": "single", "no": "single"}
+# The visibility is typed in full; openRepoShape receives the lower-case word (design D5).
+VISIBILITIES = ("private", "public", "internal")
 
 
 def print_creation_question(name, obstacles):
@@ -283,6 +285,23 @@ def new(args):
                           "Answer y or 1 for the Triad, n or 2 for a single repository; Enter takes the Triad.",
                           "No recognised answer to the Triad question; nothing was created.",
                           "No answer to the Triad question (end of input); nothing was created.") == "triad"
+        if triad:
+            # The answers set exactly the fields the flags would; the shape branch below re-checks them (design D2, D5).
+            args.org = ask_twice("GitHub organization for the Triad:",
+                                 lambda answer: answer if re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9-]*", answer) else None,
+                                 "An organization name starts with a letter or digit and has only letters, digits and hyphens.",
+                                 "Invalid GitHub organization name. Nothing was created.",
+                                 "No GitHub organization was given (end of input); nothing was created.")
+            args.visibility = ask_twice("Visibility (private, public or internal):",
+                                        lambda answer: answer.lower() if answer.lower() in VISIBILITIES else None,
+                                        "Type the visibility in full: private, public or internal.",
+                                        "Visibility must be private, public or internal. Nothing was created.",
+                                        "No visibility was given (end of input); nothing was created.")
+            args.shape = True
+            if args.visibility == "public":
+                print(f"Triad {name} in organization {args.org}, visibility public: anyone can read the repositories.")
+            else:
+                print(f"Triad {name} in organization {args.org}, visibility {args.visibility}.")
     if args.shape:
         if args.bench or args.type or args.description:
             raise Refused("Shape creation has no bench generator adapter yet; omit --bench/--type/--description.")
