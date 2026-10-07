@@ -11,27 +11,27 @@ empty and that every named test is defined.
 
 | # | Requirement | Scenario | Tests |
 | --- | --- | --- | --- |
-| 1 | Delegate project creation | Preview | |
-| 2 | Delegate project creation | Existing project | |
+| 1 | Delegate project creation | Preview | `test_pty_dry_run_single_answer_prints_the_generator_plan` |
+| 2 | Delegate project creation | Existing project | `test_pty_refusals_before_a_path_come_first` |
 | 3 | Delegate project creation | Shape chosen by flag | |
-| 4 | Delegate project creation | An answer is not a confirmation | |
-| 5 | Creation question is asked only of a person choosing at the terminal | A person at the terminal without a choosing flag | |
+| 4 | Delegate project creation | An answer is not a confirmation | `test_pty_single_answer_is_not_a_confirmation` |
+| 5 | Creation question is asked only of a person choosing at the terminal | A person at the terminal without a choosing flag | `test_pty_question_is_asked_once_the_name_is_known` |
 | 6 | Creation question is asked only of a person choosing at the terminal | A choosing flag skips the question | |
 | 7 | Creation question is asked only of a person choosing at the terminal | Not at a terminal | `test_inproc_person_at_terminal_rule` |
 | 8 | Creation question is asked only of a person choosing at the terminal | CI is set | `test_inproc_person_at_terminal_rule` |
 | 9 | Creation question is asked only of a person choosing at the terminal | A workspace name | |
-| 10 | Creation question is asked only of a person choosing at the terminal | A dry run asks too | |
-| 11 | Creation question is asked only of a person choosing at the terminal | Refusals before a path is chosen come first | |
+| 10 | Creation question is asked only of a person choosing at the terminal | A dry run asks too | `test_pty_dry_run_single_answer_prints_the_generator_plan` |
+| 11 | Creation question is asked only of a person choosing at the terminal | Refusals before a path is chosen come first | `test_pty_refusals_before_a_path_come_first` |
 | 12 | Creation question is asked only of a person choosing at the terminal | The workflow prerequisite is refused before the question | |
 | 13 | Creation question is asked only of a person choosing at the terminal | The refusal order of an invocation not asked the question is unchanged | |
-| 14 | Creation question offers the Triad first | The question's entries | |
+| 14 | Creation question offers the Triad first | The question's entries | `test_pty_question_entries` |
 | 15 | Creation question offers the Triad first | Answers that take the Triad | |
-| 16 | Creation question offers the Triad first | Answers that take a single repository | |
-| 17 | Creation question offers the Triad first | One unrecognised answer | |
-| 18 | Creation question offers the Triad first | Two unrecognised answers | |
-| 19 | Creation question offers the Triad first | End of input at the question | |
-| 20 | Creation question offers the Triad first | An interrupt at the question | |
-| 21 | Creation question offers the Triad first | End of input at an existing prompt is unchanged | |
+| 16 | Creation question offers the Triad first | Answers that take a single repository | `test_pty_single_answers_take_the_bench_path` |
+| 17 | Creation question offers the Triad first | One unrecognised answer | `test_pty_one_unrecognised_answer_is_asked_again` |
+| 18 | Creation question offers the Triad first | Two unrecognised answers | `test_pty_two_unrecognised_answers_refuse` |
+| 19 | Creation question offers the Triad first | End of input at the question | `test_pty_end_of_input_at_the_question_refuses` |
+| 20 | Creation question offers the Triad first | An interrupt at the question | `test_pty_interrupt_at_the_question_cancels` |
+| 21 | Creation question offers the Triad first | End of input at an existing prompt is unchanged | `test_pty_end_of_input_at_existing_prompts_is_unchanged` |
 | 22 | Known Triad obstacles are named before the question and refused on a Triad answer | A name outside the assembly-root form | |
 | 23 | Known Triad obstacles are named before the question and refused on a Triad answer | openRepoShape is not on PATH | |
 | 24 | Known Triad obstacles are named before the question and refused on a Triad answer | The parent directory is missing | |

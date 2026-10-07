@@ -225,6 +225,39 @@ def person_at_terminal():
         return False
 
 
+# Answers to the creation question, compared stripped and lower-cased (design D4).
+TRIAD_ANSWERS = {"": "triad", "1": "triad", "y": "triad", "yes": "triad",
+                 "2": "single", "n": "single", "no": "single"}
+
+
+def print_creation_question(name, obstacles):
+    """The creation question's lines on stdout, one line per known obstacle sentence (design D4, D13)."""
+    print(f"How should {name} be created? Nothing is created until you confirm.")
+    print("  1. Triad (default): an assembly root with a spec leg and a code leg, made by openRepoShape."
+          " It is preferred, not required: it stays elective and confers nothing.")
+    for sentence in obstacles:
+        print(f"     Not possible here: {sentence}")
+    print("  2. Single repository: fully supported, and no reason is asked."
+          " single-repository.yaml is the ratified way to record staying single.")
+
+
+def ask_twice(prompt, accept, retry, missed, ended):
+    """Ask through ask(); accept returns the value of a recognised answer, else None. The first
+    unrecognised answer prints retry and asks once more; a second refuses with missed, and end
+    of input refuses with ended. An interrupt is left to main() (design D4)."""
+    for attempt in range(2):
+        try:
+            answer = ask(prompt)
+        except EOFError:
+            raise Refused(ended) from None
+        value = accept(answer)
+        if value is not None:
+            return value
+        if not attempt:
+            print(retry)
+    raise Refused(missed)
+
+
 def new(args):
     name = args.name or ask("Project name:")
     if not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9_-]*", name):
@@ -244,6 +277,12 @@ def new(args):
     chosen = bool(args.shape or args.yes) or any(value is not None for value in (
         args.org, args.visibility, args.family, args.elected_by, args.bench, args.type, args.description))
     offer = not workspace and not chosen and person_at_terminal()
+    if offer:
+        print_creation_question(name, [])
+        triad = ask_twice("Create it as a Triad? [Y/n or 1/2]:", lambda answer: TRIAD_ANSWERS.get(answer.lower()),
+                          "Answer y or 1 for the Triad, n or 2 for a single repository; Enter takes the Triad.",
+                          "No recognised answer to the Triad question; nothing was created.",
+                          "No answer to the Triad question (end of input); nothing was created.") == "triad"
     if args.shape:
         if args.bench or args.type or args.description:
             raise Refused("Shape creation has no bench generator adapter yet; omit --bench/--type/--description.")

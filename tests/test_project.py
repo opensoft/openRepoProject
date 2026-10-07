@@ -332,6 +332,33 @@ class ProjectTests(unittest.TestCase):
         result.prompts = prompts
         return result
 
+    def assert_status(self, result, code):
+        self.assertEqual(result.returncode, code, f"\n--- stdout ---\n{result.stdout}\n--- stderr ---\n{result.stderr}")
+
+    def assert_line(self, transcript, line):
+        """line is a whole line of the transcript."""
+        self.assertIn(line, transcript.split("\n"), f"missing line {line!r} in:\n{transcript}")
+
+    def assert_line_ends(self, transcript, text):
+        """Some line of the transcript ends with text. A report on stderr can follow a prompt on
+        the same line, since the prompt's stream is not fixed and its answer echoes on the pty."""
+        self.assertTrue(any(line.endswith(text) for line in transcript.split("\n")),
+                        f"no line ends with {text!r} in:\n{transcript}")
+
+    def assert_in_order(self, transcript, *texts):
+        """Each text appears in the transcript after the one before it."""
+        position = -1
+        for text in texts:
+            found = transcript.find(text, position + 1)
+            self.assertGreater(found, position, f"{text!r} not found after the previous text in:\n{transcript}")
+            position = found
+
+    def assert_not_asked(self, result):
+        """No line of the creation question and no question prompt on either stream."""
+        combined = result.stdout + result.stderr
+        for text in (QUESTION_HEADER.split("{NAME}")[0], QUESTION_TRIAD, QUESTION_SINGLE, QUESTION_PROMPT):
+            self.assertNotIn(text, combined)
+
     def repo(self, name="repo", branch="main"):
         path = self.base / name
         path.mkdir(parents=True, exist_ok=True)
@@ -914,6 +941,166 @@ class ProjectTests(unittest.TestCase):
                 with self.subTest(stream=stream, error=error.__name__), self.inproc_terminal(None), \
                         patch.object(getattr(sys, stream), "isatty", side_effect=error):
                     self.assertIs(module.person_at_terminal(), False)
+
+    def test_pty_question_is_asked_once_the_name_is_known(self):
+        self.config["benches"]["testBench"]["project_scripts"].append(
+            {"name": "second", "script": "scripts/new-test.sh"})
+        self.save_config()
+        env = self.shape_env(ci=None)
+        into = self.base / "into parent"
+        into.mkdir()
+        positional = self.base / "positional parent"
+        positional.mkdir()
+        header = QUESTION_HEADER.format(NAME="MyApp")
+        cases = {"name given": ("MyApp",), "name typed": (), "--into": ("MyApp", "--into", into),
+                 "positional parent": ("MyApp", positional), "--workbenches": ("MyApp", "--workbenches", self.wb)}
+        for label, extra in cases.items():
+            with self.subTest(label):
+                steps = [(NAME_PROMPT, "MyApp")] if not extra else []
+                steps += [(QUESTION_PROMPT, "2"), (GENERATOR_PROMPT, PTY_EOF)]
+                result = self.run_pty("new", *extra, env=env, steps=steps)
+                self.assert_status(result, 130)
+                self.assert_line_ends(result.stderr, CANCELLED)
+                if not extra:
+                    self.assertNotIn(header, result.seen[0])
+                self.assert_line(result.stdout, header)
+                self.assert_in_order(result.stdout, header, "1. testBench:test", "2. testBench:second")
+                combined = result.stdout + result.stderr
+                self.assertNotIn("Create:", combined)
+                self.assertNotIn(CONFIRM_PROMPT, combined)
+                self.assertNotIn(ORG_PROMPT, combined)
+                self.assertFalse((self.base / "MyApp").exists())
+
+    def test_pty_question_entries(self):
+        env = self.shape_env(ci=None)
+        result = self.run_pty("new", "MyApp", env=env, steps=[(QUESTION_PROMPT, "2"), (CONFIRM_PROMPT, "yes")])
+        self.assert_status(result, 0)
+        lines = result.stdout.split("\n")
+        start = lines.index(QUESTION_HEADER.format(NAME="MyApp"))
+        self.assertEqual(lines[start + 1], QUESTION_TRIAD)
+        self.assertEqual(lines[start + 2], QUESTION_SINGLE)
+        self.assertNotIn(OBSTACLE_LINE_START, result.stdout)
+        self.assertIn("(default)", QUESTION_TRIAD)
+        for term in ("preferred, not required", "elective", "confers nothing"):
+            self.assertIn(term, QUESTION_TRIAD)
+        self.assertIn("single-repository.yaml", QUESTION_SINGLE)
+        self.assertTrue((self.base / "MyApp/.project.json").is_file())
+        self.assertEqual(list(self.base.rglob("single-repository.yaml")), [])
+
+    def test_pty_single_answers_take_the_bench_path(self):
+        env = self.shape_env(ci=None)
+        for number, answer in enumerate(("2", "n", "no", "N", " No "), 1):
+            name = f"Single{number}"
+            destination = self.base / name
+            with self.subTest(answer=answer):
+                result = self.run_pty("new", name, env=env,
+                                      steps=[(QUESTION_PROMPT, answer), (CONFIRM_PROMPT, "yes")])
+                self.assert_status(result, 0)
+                self.assert_in_order(result.stdout, QUESTION_HEADER.format(NAME=name), f"Create: {destination}",
+                                     f"Created: {destination}")
+                self.assert_line(result.stdout, "  " + shlex.join(["bash", str(self.generator), name, str(self.base)]))
+                self.assertTrue(destination.is_dir())
+                profile = json.loads((destination / ".project.json").read_text())
+                self.assertEqual((profile["bench"], profile["type"]), ("testBench", "test"))
+                self.assertNotIn(ORG_PROMPT, result.stdout + result.stderr)
+                self.assertNotIn("warning:", result.stdout + result.stderr)
+        self.assertIsNone(self.shape_record())
+
+    def test_pty_single_answer_is_not_a_confirmation(self):
+        env = self.shape_env(ci=None)
+        result = self.run_pty("new", "MyApp", env=env, steps=[(QUESTION_PROMPT, "2"), (CONFIRM_PROMPT, "no")])
+        self.assert_status(result, 2)
+        self.assert_line_ends(result.stderr, REFUSED + DECLINED)
+        self.assertFalse((self.base / "MyApp").exists())
+
+    def test_pty_one_unrecognised_answer_is_asked_again(self):
+        env = self.shape_env(ci=None)
+        cases = (("3", "2", "AgainOne", (), [(CONFIRM_PROMPT, "yes")], True),
+                 ("maybe", "n", "AgainTwo", ("--dry-run",), [], False))
+        for first, second, name, flags, rest, created in cases:
+            destination = self.base / name
+            with self.subTest(first=first, second=second):
+                result = self.run_pty("new", name, *flags, env=env,
+                                      steps=[(QUESTION_PROMPT, first), (QUESTION_PROMPT, second), *rest])
+                self.assert_status(result, 0)
+                self.assertEqual((result.stdout + result.stderr).count(QUESTION_PROMPT), 2)
+                self.assertEqual(result.stdout.split("\n").count(QUESTION_RETRY), 1)
+                self.assert_in_order(result.stdout, QUESTION_HEADER.format(NAME=name), QUESTION_RETRY,
+                                     f"Create: {destination}")
+                self.assert_line(result.stdout, "  " + shlex.join(["bash", str(self.generator), name, str(self.base)]))
+                self.assertEqual(destination.is_dir(), created)
+                self.assertNotIn(ORG_PROMPT, result.stdout + result.stderr)
+
+    def test_pty_two_unrecognised_answers_refuse(self):
+        env = self.shape_env(ci=None)
+        result = self.run_pty("new", "MyApp", env=env, steps=[(QUESTION_PROMPT, "3"), (QUESTION_PROMPT, "maybe")])
+        self.assert_status(result, 2)
+        self.assert_line_ends(result.stderr, REFUSED + QUESTION_MISSED)
+        self.assertEqual(result.stdout.split("\n").count(QUESTION_RETRY), 1)
+        self.assertNotIn("Create:", result.stdout)
+        self.assertFalse((self.base / "MyApp").exists())
+        self.assertIsNone(self.shape_record())
+
+    def test_pty_end_of_input_at_the_question_refuses(self):
+        env = self.shape_env(ci=None)
+        result = self.run_pty("new", "MyApp", env=env, steps=[(QUESTION_PROMPT, PTY_EOF)])
+        self.assert_status(result, 2)
+        self.assert_line_ends(result.stderr, REFUSED + QUESTION_ENDED)
+        self.assertNotIn(CANCELLED, result.stderr)
+        self.assertFalse((self.base / "MyApp").exists())
+        self.assertIsNone(self.shape_record())
+
+    def test_pty_interrupt_at_the_question_cancels(self):
+        env = self.shape_env(ci=None)
+        result = self.run_pty("new", "MyApp", env=env, steps=[(QUESTION_PROMPT, signal.SIGINT)])
+        self.assert_status(result, 130)
+        self.assert_line_ends(result.stderr, CANCELLED)
+        self.assertFalse((self.base / "MyApp").exists())
+        self.assertIsNone(self.shape_record())
+
+    def test_pty_end_of_input_at_existing_prompts_is_unchanged(self):
+        env = self.shape_env(ci=None)
+        cases = {"Project name": ((), [(NAME_PROMPT, PTY_EOF)]),
+                 "Type yes": (("MyApp",), [(QUESTION_PROMPT, "2"), (CONFIRM_PROMPT, PTY_EOF)])}
+        for label, (extra, steps) in cases.items():
+            with self.subTest(label):
+                result = self.run_pty("new", *extra, env=env, steps=steps)
+                self.assert_status(result, 130)
+                self.assert_line_ends(result.stderr, CANCELLED)
+                self.assertFalse((self.base / "MyApp").exists())
+
+    def test_pty_dry_run_single_answer_prints_the_generator_plan(self):
+        env = self.shape_env(ci=None)
+        parent = self.base / "new parent"
+        result = self.run_pty("new", "MyApp", "--into", parent, "--dry-run", env=env,
+                              steps=[(QUESTION_PROMPT, "2")])
+        self.assert_status(result, 0)
+        self.assert_in_order(result.stdout, QUESTION_HEADER.format(NAME="MyApp"), f"Create: {parent / 'MyApp'}")
+        self.assert_line(result.stdout, f"Create: {parent / 'MyApp'}")
+        self.assert_line(result.stdout, "  " + shlex.join(["bash", str(self.generator), "MyApp", str(parent)]))
+        self.assertNotIn(CONFIRM_PROMPT, result.stdout + result.stderr)
+        self.assertFalse(parent.exists())
+        self.assertNotIn("warning:", result.stdout + result.stderr)
+
+    def test_pty_refusals_before_a_path_come_first(self):
+        env = self.shape_env(ci=None)
+        existing = self.base / "Existing"
+        existing.mkdir()
+        other = self.base / "other parent"
+        other.mkdir()
+        cases = {"invalid name": (("bad name",), INVALID_NAME),
+                 "positional parent with --into": (("MyApp", other, "--into", other), PARENT_AND_INTO),
+                 "existing destination": (("Existing",), DESTINATION_EXISTS.format(PATH=existing))}
+        for label, (extra, refusal) in cases.items():
+            with self.subTest(label):
+                result = self.run_pty("new", *extra, env=env)
+                self.assert_status(result, 2)
+                self.assert_line_ends(result.stderr, REFUSED + refusal)
+                self.assert_not_asked(result)
+                self.assertNotIn("Create:", result.stdout)
+        self.assertEqual(list(existing.iterdir()), [])
+        self.assertFalse((other / "MyApp").exists())
+        self.assertIsNone(self.shape_record())
 
 
 if __name__ == "__main__":
