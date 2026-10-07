@@ -2,7 +2,8 @@ Lane: openRepoProject-1
 
 # Proposal: prefer-triad-in-project-new
 
-Status: draft, proposal only. The alignment review, the council and the design
+Status: draft, proposal only, revised after the alignment review (the
+resolution of every finding is recorded on PR #5). The council and the design
 follow in the same pull request. Nothing here is ratified.
 
 Governing issue: opensoft/openRepoProject#3, claimed by lane openRepoProject-1
@@ -23,8 +24,22 @@ the Triad first.** workBenches' `openspec/changes/project-command`
 forwards creation to `opensoft/openRepoProject`'s `project new`, whose
 `--shape` mode is opt-in today. The Triad-first offer routes THROUGH that
 lane's claim and openRepoProject's own governance, never around them; no
-repository is created that the person has not confirmed." Issue #3 hands the
+repository is created that the person has not confirmed." The packet's
+`code_surface:` names this repository for exactly that: "new-project creation,
+reached through workBenches' `project-command` change". Issue #3 hands the
 task to this repository's governance, and this change is that governance.
+
+The task routes through workBenches lane `project-command`'s claim as well
+(`openspec/changes/project-command/`, active on workBenches main). This change
+edits nothing that claim holds: `scripts/new-project.sh`, `scripts/onp` and
+`config/openrepoproject-pin.json` stay as they are. `onp` runs
+`new-project.sh`, which runs workBenches' `project` launcher, which runs the
+artifact pinned in `config/openrepoproject-pin.json` (today `a0407904`) in the
+same terminal. The scripts therefore need no edit, and they carry this
+change's behaviour only once workBenches advances that pin on its owner's act.
+When the realization merges, its merge sha is posted on issue #3 for
+codeXfactory-5's bookkeeping (comment 6028076490), which records the 5.6 tick
+in openxFactory.
 
 The other work-start surfaces already speak the preference: the shared agent
 protocol tells a session to offer the Triad first when a person creates a
@@ -37,55 +52,105 @@ reached only by typing `--shape`.
 
 ## What Changes
 
-- **`project new` asks Triad-or-single when a person is at a terminal and has
-  not chosen by flag.** The Triad is listed first and is the pre-selected
-  answer, with the posture beside it (preferred, not required; elective;
-  confers nothing). A single repository is accepted without a reason being
-  asked. The answer is not a confirmation: the Triad continues into today's
-  `--shape` path, whose openRepoShape typed confirmation is kept; single
-  continues into today's bench path, whose `Type yes` confirmation is kept.
-  The question itself creates nothing.
-- **Explicit flags keep today's behaviour byte for byte.** An invocation that
-  has already chosen by flag (`--shape` or a shape option, `--bench`, `--type`,
-  `--description`, or `--yes`), or whose stdin is not a terminal, asks nothing
-  new and keeps today's prompts, refusals, stdout, created files,
-  `.project.json` and exit status. The one addition is ratified design D2's:
-  when such an invocation creates a single repository, it writes one advisory
-  line to stderr afterwards (OQ-2). `onp` and `new-project.sh` `exec` into
-  `project new`, so they inherit both behaviours with no workBenches change.
-- **`project status` and `project doctor` give the advisory once for a
-  non-exempt single repository (OQ-1)**: only where the command already
-  reports kind `single`; only in the human report, and only when stdout is a
-  terminal and `CI` is unset or false; never as a `checks` row, so it cannot
-  change an exit status (including under `--strict`); never in `--json`. Its
-  wording mirrors setup-openspeckit's `TRIAD_ADVISORY_LINES` (workBenches
-  `9fbe609c`), in a line or two: the preference with the posture,
-  openRepoShape's `adopt-project.py` as the way to convert,
-  `single-repository.yaml` as the way to stop meeting it, and that nothing
-  changes.
-- **Silent where the shape question is answered or does not arise**, each read
-  from a declared fact and never inferred: an elected Triad root (`project.yaml`
-  with `kind: project-manifest`, `schema: project-repo-schema`, a `spec` and a
-  `code` leg); a leg clone (its `AGENTS.md` opens as openRepoShape's leg
-  templates write it), which gets the instruction to work from its assembly
-  root instead; a family holder (`family.yaml`, `kind: family-manifest`, no
-  `project.yaml`); a `<user>-wip` workspace repository (the naming policy's
-  `workspace` form on the `origin` name, or a checkout that
-  `~/.agents/workspace.yaml` names); a repository whose root
-  `single-repository.yaml` is valid by openRepoShape's rule; and a directory
-  that is not a Git repository. The first and third are never reported as
-  `single`, so they are silent by construction. No other class is exempted
-  (the packet's ruled OQ-2).
-- **`single-repository.yaml` is read as openRepoShape's black box.** Present and
-  valid by openRepoShape's published rule (at `1a9fc537`: the file parses as a
-  YAML mapping whose `kind` is `single-repository-record`; `kind:` decides, and
-  a missing field does not end the silence): silent. Absent: the advisory.
-  Present but not valid: the advisory plus one line saying why the file does not
-  silence it; nothing refuses, fails or changes an exit status. `project`
-  validates no field, writes no record and defines no schema.
-- **README and tests.** "Create a project" and "Understand a project" describe
-  the question and the advisory; tests cover both and every path that must
-  stay unchanged.
+- **`project new` offers the Triad first to a person at the terminal who has
+  not chosen by flag.** It asks one question: Triad or single repository. The
+  Triad is listed first and is the pre-selected answer (ratified design D2:
+  "In an interactive creation the Triad is listed first and is the
+  pre-selected answer"), with its posture beside it: preferred, not required;
+  elective; confers nothing. A single repository is accepted without a reason
+  being asked. The question creates nothing and is not a confirmation: the
+  Triad answer continues into today's `--shape` path, whose openRepoShape
+  typed confirmation is kept, and the single answer continues into today's
+  bench path, whose `Type yes` confirmation is kept. No repository is created
+  that the person has not confirmed.
+- **One helper decides whether a person is at the terminal.** stdin and stdout
+  are both terminals, and `CI` is unset or, stripped and compared
+  case-insensitively, one of `""`, `0`, `false`, `no`. This mirrors
+  setup-openspeckit's decision 1 (`is_interactive_run()`, workBenches
+  `9fbe609c`). The helper decides whether the question, the interactive form of
+  the offer, is shown on stdout; a single-repository creation that does not go
+  through the question gets the stderr advisory instead, unless it has a
+  workspace name (both below). It is a new
+  pattern in `project`: `ask()` checks `sys.stdin.isatty()` only
+  (`project:146-149`), and `CI` is read nowhere today. `ask()` keeps that rule
+  for today's prompts (the name, the generator number, `Type yes`).
+- **Flags that choose skip the question.** It is not asked when any of
+  `--shape`, `--org`, `--visibility`, `--family`, `--elected-by`, `--bench`,
+  `--type`, `--description` or `--yes` is given, when stdin or stdout is not a
+  terminal, or when `CI` is truthy. `--dry-run`, `--workflow`, `--into` or the
+  positional parent, and `--workbenches` choose nothing, so a dry run at a
+  terminal asks too (setup-openspeckit's decision 10, "Dry runs ask too"). Its
+  Triad answer prints today's `--shape --dry-run` plan, its single answer
+  today's bench plan, and neither writes.
+- **Where the question sits.** After the name is known (given, or asked by
+  today's `Project name:` prompt) and after every pre-flight refusal today
+  makes before a path is chosen: an invalid name, `parent` together with
+  `--into`, an existing destination, and `--workflow` without
+  `setup-openspeckit` on PATH. A refused invocation never sees the question.
+  The question comes before the chosen path's own steps and confirmation, and
+  the refusals that belong to one path (an invalid organisation or a missing
+  parent directory for the Triad, no matching generator for single) follow the
+  answer, as today. Invocations that skip the question keep today's order of
+  refusals.
+- **The answers.** Enter takes the Triad. `1` takes the Triad and `2` the
+  single repository, numbered as `choose()` numbers its generator list, with
+  surrounding whitespace stripped as `ask()` strips every answer. Any other
+  input is asked again once; a second unrecognised answer refuses with exit 2
+  and creates nothing. End-of-file at the question refuses with exit 2 and
+  creates nothing (today's prompts let end-of-file fall through to
+  `Cancelled.` and 130, so the question handles it itself). An interrupt exits
+  130 with `Cancelled.`, as today (`project:1001-1003`). The exact prompt text
+  is design's.
+- **The Triad answer and its prerequisites.** The Triad stays first and the
+  default in every case. A Triad answer never carries `--org` or
+  `--visibility`, since either would have skipped the question, so `project`
+  asks for the organisation, checked by today's organisation check
+  (`project:223`), and then for the visibility, one of `public`, `private` or
+  `internal`, with no default. `project` must ask rather than pass nothing
+  through, because openRepoShape would default the visibility to `private`
+  (`setup-project.py`, `1a9fc537`). This proposal reads a typed answer as an
+  explicit one, so canonical "Shape creation SHALL require explicit
+  organization and visibility" holds as written. When `openRepoShape` is not
+  on PATH, the question says so beside the Triad, and a Triad answer refuses at
+  once with exit 2 and today's "Install openRepoShape through workBenches
+  first.", creating nothing.
+- **Names.** `project` accepts `[A-Za-z0-9][A-Za-z0-9_-]*` (`project:206`),
+  while openRepoShape requires an assembly-root name to be "ONE CamelCase
+  token, no hyphen, underscore, dot or space" (`setup-project.py`,
+  `1a9fc537`). The question states that constraint beside the Triad. `project`
+  adds no second validator: a Triad answer for a name such as `my-app` reaches
+  openRepoShape, and the refusal is openRepoShape's own.
+- **A flag-chosen or non-interactive creation of a single repository keeps
+  today's behaviour and adds the advisory on stderr** (ratified D2: "A
+  non-interactive invocation does what its flags say, and prints the
+  recommendation when it creates a single repository"). Stdout, prompts,
+  refusals, created files, `.project.json` and exit status stay as today. Once
+  the repository exists (the generator succeeded, the destination is a
+  directory, `.project.json` is written) and before any `--workflow` step,
+  `project` flushes stdout and writes the advisory to stderr, so a later
+  workflow failure does not suppress it. A dry run creates nothing and prints
+  no advisory. A Triad creation prints none. A creation that went through the
+  question prints none, because the question was the offer.
+- **The advisory's words.** Two lines on stderr, each prefixed `warning:`
+  (setup-openspeckit's convention, `9fbe609c:2370`), carrying every element the
+  ratified text requires (packet `spec.md:58-59` and `:103-105`): the
+  preference with its posture (preferred, not required; elective; confers
+  nothing); openRepoShape's `adopt-project.py`, run by a person deciding for
+  that project, as the way to convert; `single-repository.yaml` as the way to
+  stop meeting it; and that nothing changes. These are the elements of
+  openRepoShape's `advisory_lines()` (`scripts/shape_advisory.py`, `1a9fc537`),
+  which says "when a person deciding for this project runs it".
+  setup-openspeckit's `TRIAD_ADVISORY_LINES` omits that clause; the divergence
+  is recorded here and is not this change's to fix. The exact text is design's.
+- **Silent for a workspace name.** The one ratified exemption readable from a
+  declared fact at creation is the `<user>-wip` `workspace` form of the pinned
+  naming policy, `^[a-z0-9]+(?:-[a-z0-9]+)*-wip$` (openRepoShape
+  `contracts/repository-naming.yaml`, `1a9fc537`), applied to the new
+  repository's name. Such a creation gets neither the question nor the stderr
+  advisory, and runs exactly as today. The ratified text exempts a workspace
+  repository from the advisory but is silent on the creation question for a
+  workspace name; that point is carried to clarifications.
+- **README and tests** describe and cover all of the above (see Impact).
 
 ## Rules This Change Keeps
 
@@ -93,21 +158,25 @@ The ratified packet's rules (issue #3), as non-negotiables:
 
 - **The Triad is PREFERRED, and stays ELECTIVE and confers NOTHING**: no gate,
   no floor, no grant, no clearance eligibility, no lifecycle state and no review
-  difference. Wherever `project` states the preference it states that posture
-  beside it.
+  difference. Wherever `project` states the preference, in the question or in
+  the advisory, it states that posture beside it.
 - **A single repository stays a supported, fully conformant answer**: chosen
-  without a reason asked, created exactly as today, and reported exactly as
-  today apart from the advisory line.
-- **Nothing is converted or created without the person's confirmation.** The
-  question is not the confirmation; the Triad default ends at openRepoShape's
-  own typed confirmation, so no run creates three repositories on a default
-  (ratified D2). `project` never runs `adopt-project.py`, never converts an
-  existing repository, never writes `single-repository.yaml` or a manifest on
-  the advisory's account, and records nothing about having advised.
+  without a reason asked, and created exactly as today. The only additions are
+  the question before it and, where the question was not asked, the advisory
+  on stderr after it.
+- **No repository is created that the person has not confirmed.** The question
+  is not the confirmation and creates nothing. The Triad default ends at
+  openRepoShape's own typed confirmation, so no run creates three repositories
+  on a default (ratified D2); the single answer ends at today's `Type yes`, or
+  at the `--yes` the person typed. `project` never runs `adopt-project.py`,
+  never converts an existing repository, never writes `single-repository.yaml`
+  or a manifest on the advisory's account, and records nothing about having
+  advised.
 - **Never a gate, check or review input.** The advisory is never a `checks`
-  row or a `--json` field and changes no exit status, and it is never printed
-  without a person at the terminal, so no unattended run, CI log or review
-  output carries it. No CI step or validator in this repository reads any
+  row, never a `--json` field and never review output, and it changes no exit
+  status. Where it is printed (a flag-chosen or non-interactive creation) it
+  goes to stderr and changes no stdout byte. The question is asked only of a
+  person at the terminal. No CI step or validator in this repository reads any
   repository's shape; the new tests run over temporary fixtures only.
 
 ## What This Repository Does Not Own
@@ -116,107 +185,159 @@ The ratified packet's rules (issue #3), as non-negotiables:
   (`contracts/single-repository-record.yaml`), template and silencing rule are
   openRepoShape's. Governed by opensoft/openRepoShape#163 (closed, completed)
   and realized by PR #164, squash-merged 2026-10-06 as openRepoShape main
-  `1a9fc537`. openRepoShape deliberately ships no validator for it. This change
-  follows that published rule and does not anticipate changes to it.
+  `1a9fc537`. This change names the file in the advisory and neither reads nor
+  writes it.
 - **Scaffolding, adoption and shape diagnosis**: openRepoShape (the
   `openRepoShape` launcher, `scaffold-project.py`, `adopt-project.py`,
-  `shape-doctor.py`), each with its own prompts and exits.
-- **The `onp` and `new-project.sh` forwarders and the pinned install of
-  `project`**: workBenches (lane `project-command`).
-- **The doctrine, the advisory's meaning and its exemptions list**:
-  openxFactory's ratified packet. The agent-session form is the shared
-  protocol's; the bootstrap form is setup-openspeckit's.
+  `shape-doctor.py`), each with its own prompts, name rules and exits.
+- **The `onp` and `new-project.sh` forwarders, the launcher and the pinned
+  install of `project`**: workBenches (lane `project-command`).
+- **The doctrine, the advisory's meaning, its forms and its exemptions list**:
+  openxFactory's ratified packet (lane codeXfactory-5). The agent-session form
+  is the shared protocol's; the bootstrap form is setup-openspeckit's.
 
 ## Capabilities
 
 ### New Capabilities
 
-- `project-triad-preference`: `project new` offers the Triad first at a
-  terminal and otherwise behaves as today; `status` and `doctor` advise a
-  non-exempt single repository once; both read only declared facts and never
-  gate anything.
+None.
 
 ### Modified Capabilities
 
-None. `openspec/specs/` is empty on main (`openspec list --specs`: "No specs
-found."), and `project-command`'s requirements live only in its unarchived
-change. If #4 (`chore/archive-completed-changes`, open at `0e7f029`) lands
-first and promotes `project-command`, the spec phase decides whether "Delegate
-project creation" takes a MODIFIED delta (see OQ-4).
+- `project-command`: archive PR #4 merged as `67efa80`, so the five canonical
+  specs (`project-command`, `project-review-safety`, `project-clean`,
+  `project-clean-review-safety`, `speckit-extension-integration`) are on main
+  under `openspec/specs/`. The spec phase writes this change's delta in
+  `specs/project-command/spec.md`: a MODIFIED "Delegate project creation" for
+  the question, the organisation and visibility asked at the terminal, and the
+  stderr advisory; and ADDED requirements for the question and for the
+  creation advisory. The standalone `project-triad-preference` capability the
+  first draft named is dropped: the archived reason for standalone
+  capabilities ("The existing change specifications have not yet been
+  archived into the baseline specification set",
+  `2026-10-07-resolve-pr-review-findings`) no longer applies. "Inspect and
+  diagnose" and the `project-review-safety` requirements are untouched, because
+  the inspection advisory is out of scope and the creation path reads no YAML;
+  "Explicit maintenance" and "Distribution and compatibility" are untouched too.
 
 ## Impact
 
-- **`project`**: `new()` (the question and its routing; `ask()`'s terminal rule
-  kept); a small offline advisory reader used by `inspect_project()` and
-  `print_report()` for `status` and `doctor`. No new flag is proposed. The
-  reader must never raise: a missing PyYAML, an unreadable manifest or an
-  unreadable record must not turn `status` or `doctor` of a single repository
-  into a refusal. It reads local files and local Git only, never a fetch, per
-  `project-command`'s "inspection SHALL never fetch, reset, or bootstrap".
-- **`README.md`**: "Create a project" (the question, its default, the stderr
-  line, which flags skip it) and "Understand a project" (the advisory, its
-  exemptions, and that it never touches exit codes or `--json`).
-- **`tests/test_project.py`**: pseudo-terminal runs of the question (Enter
-  reaches the shape path with the owner's confirmation kept; single reaches the
-  bench path with `Type yes`; an interrupt exits 130 with nothing created);
-  byte-identity of stdout, created tree and exit status against today for every
-  explicit-flag and non-terminal invocation; one fixture per exemption plus
-  valid, wrong-kind, unparsable and unreadable records; `--json`, `--strict`
-  and `CI=true` unchanged on a non-exempt single repository.
+- **`project`**: `new()` gains the question and its routing, the organisation
+  and visibility prompts for a Triad answer, and the stderr advisory after a
+  single-repository creation that did not go through the question; one new
+  helper decides whether a person is at the terminal. `ask()`, `confirm()`,
+  `choose()`, the shape and bench paths after the answer, and every other
+  subcommand are unchanged. No new flag and no network; the change reads
+  nothing beyond the arguments, PATH and `CI`.
+- **`README.md`**: "Create a project" describes the question (its default, its
+  answers, what skips it, that a dry run asks too) and the stderr advisory, and
+  its sentence "Before running, the command shows the generator and destination
+  and asks for `yes`" is corrected for the new first question. The
+  Configuration table gains a `CI` row. "Understand a project" is unchanged.
+- **`tests/test_project.py`**:
+  - a new `pty`-based helper beside `run_cli` for the question tests (stdin and
+    stdout on a pseudo-terminal, stderr captured apart), on Linux and macOS as
+    CI runs;
+  - every question and advisory test sets `CI` and `AGENT_PROTOCOL_ROOT`
+    explicitly, because the harness copies `os.environ` (`self.env`) and
+    GitHub Actions sets `CI=true`; in-process `module.main()` tests patch
+    `isatty` and the environment the same way;
+  - a fake `openRepoShape` executable on PATH for the Triad path, recording its
+    argv (no `--yes`; the typed organisation and visibility) and reading its
+    own typed confirmation;
+  - expected prompts, refusals and advisory lines pinned as fixtures in the
+    tests, with no comparison against "today's" output, since CI checks out at
+    depth 1;
+  - cases for Enter, `1`, `2`, unrecognised input (asked again once, then
+    refused), end-of-file, an interrupt, a hyphenated name answered Triad,
+    `openRepoShape` missing, `--dry-run` at a terminal, every choosing flag,
+    non-terminal stdout, `CI=true`, a `-wip` name, and the stderr advisory after
+    a `--workflow` failure.
+- **Speckit handoff**: implementation goes to exactly one Speckit feature,
+  `specs/002-<slug>/`, created later by `/speckit.specify` (numbering is
+  sequential and only `specs/001-project-command` exists). OpenSpec `tasks.md`
+  holds governance boxes and that one handoff only, as the archived
+  `2026-10-07-project-command/tasks.md` does.
 - **No new dependency.** Handoffs this change does not perform: workBenches
-  moves its pinned `project` artifact on its owner's act; openxFactory's
-  archiving actor checks task 5.6's box citing this change's merged PR (packet
+  advances its pinned `project` artifact on its owner's act (lane
+  `project-command`); the realization's merge sha is posted on issue #3, and
+  openxFactory's archiving actor checks task 5.6's box citing it (packet
   `tasks.md` § 6).
 
 ## Out of Scope
+
+**The inspection advisory.** Issue #3's sketch ("One possible shape. The
+owning lane decides.") had `project status` and `project doctor` give the
+advisory as well. That is outside the ratified text: the requirement says the
+advisory "SHALL be given only at such surfaces and only in these forms" and
+names three (an agent session addressing a person, the workstation bootstrap,
+and openRepoShape's scaffold, adopt and doctor), and the packet's
+`code_surface:` confines this repository to new-project creation. Adding it
+would need the doctrine owner (openxFactory, lane codeXfactory-5) to amend the
+packet, or Brett Heap's word. This change discharges task 5.6 fully without
+it. So that a design can pick it up if the scope is ever extended, the review's
+detection findings are recorded here:
+
+- Configuration root: `project` reads `Path.home() / ".agents/workspace.yaml"`
+  (`project:626`), while openRepoShape and setup-openspeckit read
+  `${AGENT_PROTOCOL_ROOT:-$HOME/.agents}/workspace.yaml`.
+- Keys read: `project` takes `SPECKIT_WORKSPACE_PATH`, then
+  `orgs.<org>.path`, then `path` (`project:645`); openRepoShape reads `path`
+  and every `orgs.*.path`; setup-openspeckit reads `path` and a `repository:`
+  matched against `origin`'s owner and name.
+- Name checked: openRepoShape checks both the directory's name and the
+  `origin` name, while setup-openspeckit checks the `origin` name only ("No
+  directory name, other remote, or other heuristic is read").
+- Remote parsing: `project`'s `remote_repository_identity` accepts only
+  `github.com` URLs (`project:618-621`), while both other readers take the last
+  path segment of any remote.
+- Record rule: openRepoShape silences on a `single-repository.yaml` that
+  parses, by its own stdlib YAML subset, as a mapping whose `kind` is
+  `single-repository-record`; setup-openspeckit reads only the top-level
+  `kind:` line of a regular, non-symlink file; `project` parses YAML with
+  PyYAML (`read_yaml`, `project:37-48`).
+
+The exemptions stay the packet's ratified five: an elected Triad root, a leg
+clone, a family holder, a `<user>-wip` workspace repository, and a project that
+recorded staying single. A directory that is not a Git repository is not a
+repository at all (openRepoShape's `not-a-repository`), not a sixth exemption.
+
+**Pre-existing and untouched:** `project doctor --validate --strict` already
+exits 1 for any single repository, because `--validate` adds the `warning` row
+"No shape validators apply to this single repository" (`project:812-813`) and
+`--strict` turns any warning into exit 1 (`project:828-829`). This change
+neither causes nor alters that.
+
+Also out of scope:
 
 - Converting an existing repository, or wrapping `adopt-project.py` in
   `project`.
 - Writing `single-repository.yaml` from any prompt (setup-openspeckit holds the
   same out, its decision 3).
-- Family traversal: the advisory concerns the inspected root only; none is
-  given per family member or leg, and `snapshot()` recursion is unchanged.
 - Any gate, check, CI step, review output or `--json` field.
-- `project update`, `project clean` and `project benches` output.
+- The output of `project status`, `doctor`, `update`, `clean` and `benches`.
 - A bench generator inside a Triad: choosing the Triad creates openRepoShape's
   structure only, as `--shape` does today ("requires a future adapter").
+- setup-openspeckit's advisory wording, which omits "run by a person deciding
+  for that project": workBenches' to fix.
+- workBenches' forwarders, launcher and pin (see Why).
 
-## Open Questions
+## Questions Resolved by the Alignment Review
 
-- **OQ-1 (alignment): is the inspection advisory admitted?** Task 5.6 governs
-  creation only; the inspection advisory comes from issue #3's "One possible
-  shape" ("The owning lane decides."). The ratified ADDED requirement says the
-  advisory "SHALL be given only at such surfaces and only in these forms" and
-  names three forms; `project status`/`doctor` is none of them by name.
-  Proposed: admit it as the form nearest openRepoShape's doctor ("MAY report it
-  beside what they already report, and SHALL NOT change an exit status"),
-  narrowed to a person at a terminal. If the review reads the list as closed,
-  the inspection bullets drop and the change is creation-only, which still
-  discharges task 5.6.
-- **OQ-2: does "byte for byte" admit D2's stderr line?** Ratified design D2: "A
-  non-interactive invocation does what its flags say, and prints the
-  recommendation when it creates a single repository." Proposed: stdout,
-  prompts, refusals, created files and exit status byte-identical; one stderr
-  line after a successful single-repository creation that did not go through
-  the question. Alternative: strict identity, with flagged creations printing
-  nothing new.
-- **OQ-3: how the exemptions are read without the network.** The record rule
-  is no longer pending: openRepoShape shipped it at `1a9fc537`, and `kind:`
-  decides, so presence-only would diverge (a wrong-kind file silences nothing
-  there). Delegating to the installed `openRepoShape --doctor` is ruled out:
-  with no checkout beside it the launcher clones the standard, which the
-  no-fetch rule forbids, and it does not pass `--json` through. Importing
-  `scripts/shape_advisory.py` needs a checkout `project` cannot assume, and
-  openRepoShape's tests confine its importers to its three tools. Proposed:
-  apply openRepoShape's published rule locally, checking `kind` only, as
-  setup-openspeckit does (its decision 7: "a second validator here would be a
-  second schema"). For design: where openRepoShape and setup-openspeckit read a
-  leg or a `<user>-wip` differently (openRepoShape also accepts a
-  `-spec`/`-code` name and the directory's own name), which to mirror.
-- **OQ-4: the Triad answer when its prerequisites are missing.** The governing
-  text is silent. Proposed: the Triad stays first and the default; missing
-  `--org`/`--visibility` are asked at the terminal (still explicit answers, as
-  "Shape creation SHALL require explicit organization and visibility" asks);
-  without `openRepoShape` on PATH the question says so up front, and the Triad
-  answer refuses with today's "Install openRepoShape through workBenches
-  first." and creates nothing.
+- **OQ-1, the inspection advisory:** not admitted by the ratified list of forms;
+  the change is creation-only (Out of Scope).
+- **OQ-2, D2's stderr line:** allowed and owed; a flag-chosen or non-interactive
+  single-repository creation keeps today's stdout, prompts, refusals, files,
+  `.project.json` and exit status, and adds the two-line advisory on stderr once
+  the repository exists.
+- **OQ-3, reading exemptions offline:** moot at creation; the one exemption read
+  is the `-wip` name form, and the inspection-time divergences are recorded
+  under Out of Scope.
+- **OQ-4, the Triad answer's prerequisites:** the Triad stays first and the
+  default; the organisation and visibility are asked, with no default
+  visibility; a missing `openRepoShape` is stated in the question and refused
+  on a Triad answer; the CamelCase constraint is stated and its refusal stays
+  openRepoShape's.
+
+Carried to clarifications: whether the creation question is owed for a
+workspace (`-wip`) name, on which the ratified text is silent.
