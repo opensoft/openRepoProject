@@ -28,7 +28,7 @@ Implementation slices, in dependency order:
    `person_at_terminal()`. In `new()`, immediately after the
    existing-destination refusal, compute `workspace`, `chosen` and `offer` once.
    If `offer` and `--workflow` and `setup-openspeckit` is not on PATH, raise
-   today's refusal there; today's later `--workflow` check stays where it is.
+   today's refusal there; today's later `--workflow` check stays where it is. (tasks.md lands this refusal in T061, after the question exists; its place in `new()` is the same.)
 2. **Known obstacles and the pinned name forms** (D3, D10). Add the module
    constants `ASSEMBLY_NAME` and `WORKSPACE_NAME`, each with its openRepoShape
    path and sha comment, applied with `fullmatch`; add a helper that returns

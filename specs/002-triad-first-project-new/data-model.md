@@ -123,7 +123,7 @@ refused nor created.
 
 | End | Status |
 | --- | --- |
-| a refusal this feature adds (hoisted `--workflow`, question, obstacles, organization, visibility) | 2 |
+| a refusal this feature adds (question, obstacles, organization, visibility), or today's `--workflow` refusal hoisted before the question | 2 |
 | today's refusals, including `Type yes` declined and a generator that did not create the destination | 2 |
 | an interrupt at any prompt; end of input at `Project name:`, the generator number or `Type yes` | 130 (`Cancelled.`) |
 | openRepoShape exits nonzero | its own, passed through; no particular status promised |

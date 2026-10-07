@@ -57,8 +57,7 @@ Environment: `CI` is read (new, read only); `PATH` is searched for
    the dry-run end; `Type yes` (bench branch); the delegate; `.project.json`
    (bench branch); the follow-up; `Created:` and `Next:`.
 
-A run that is not asked keeps today's order exactly; on the bench branch the
-creation advisory comes after `.project.json` and before the follow-up.
+A run that is not asked keeps today's order exactly; on the bench branch, unless the name is a workspace name, the creation advisory comes after `.project.json` and before the follow-up.
 
 ## Prompts
 
@@ -109,7 +108,7 @@ appears on is not part of the contract (D4, N5) and no test asserts it.
 | `Project name:` | `Cancelled.`, 130 | an invalid name refuses, 2 |
 | `Select a generator number (or specify --bench and --type):` | `Cancelled.`, 130 | not a listed number: `Invalid generator selection.`, 2 |
 | `Type yes to run this plan:` | `Cancelled.`, 130 | anything but `yes`: `Cancelled; no command was run.`, 2 |
-| openRepoShape's typed confirmation | openRepoShape's own | openRepoShape's own; its status passes through |
+| openRepoShape's typed confirmation | end of input: openRepoShape's own status, passed through; interrupt: `Cancelled.`, 130 (D9) | openRepoShape's own; its status passes through |
 
 On a non-terminal stdin, each of today's prompts refuses with exit 2, as today.
 
@@ -148,6 +147,6 @@ and status.
 | Status | When |
 | --- | --- |
 | 0 | created, or a dry run printed its plan |
-| 2 | every refusal this feature adds (hoisted `--workflow`, question, obstacles, organization, visibility); today's refusals; an argument error |
+| 2 | every refusal this feature adds (question, obstacles, organization, visibility); today's refusals, including the `--workflow` refusal where it is hoisted; an argument error |
 | 130 | an interrupt at any prompt; end of input at `Project name:`, the generator number or `Type yes`; an interrupt while openRepoShape runs (D9) |
 | the delegate's own | openRepoShape exits nonzero (no particular status promised); the generator exits nonzero; the follow-up exits nonzero |
