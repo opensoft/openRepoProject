@@ -70,10 +70,10 @@ reached only by typing `--shape`.
   `9fbe609c`). The helper decides whether the question, the interactive form of
   the offer, is shown on stdout; a single-repository creation that does not go
   through the question gets the stderr advisory instead, unless it has a
-  workspace name (both below). It is a new
-  pattern in `project`: `ask()` checks `sys.stdin.isatty()` only
-  (`project:146-149`), and `CI` is read nowhere today. `ask()` keeps that rule
-  for today's prompts (the name, the generator number, `Type yes`).
+  workspace name (both below). It is a new pattern in `project`: `ask()`
+  checks `sys.stdin.isatty()` only (`project:146-149`), and `CI` is read
+  nowhere today. `ask()` keeps that rule for today's prompts (the name, the
+  generator number, `Type yes`).
 - **Flags that choose skip the question.** It is not asked when any of
   `--shape`, `--org`, `--visibility`, `--family`, `--elected-by`, `--bench`,
   `--type`, `--description` or `--yes` is given, when stdin or stdout is not a
@@ -106,8 +106,8 @@ reached only by typing `--shape`.
   `--visibility`, since either would have skipped the question, so `project`
   asks for the organisation, checked by today's organisation check
   (`project:223`), and then for the visibility, one of `public`, `private` or
-  `internal`, with no default. `project` must ask rather than pass nothing
-  through, because openRepoShape would default the visibility to `private`
+  `internal`, with no default. `project` must ask rather than leave the
+  visibility to openRepoShape, which would default it to `private`
   (`setup-project.py`, `1a9fc537`). This proposal reads a typed answer as an
   explicit one, so canonical "Shape creation SHALL require explicit
   organization and visibility" holds as written. When `openRepoShape` is not
