@@ -19,11 +19,11 @@ empty and that every named test is defined.
 | 6 | Creation question is asked only of a person choosing at the terminal | A choosing flag skips the question | `test_pty_choosing_flags_skip_the_question` |
 | 7 | Creation question is asked only of a person choosing at the terminal | Not at a terminal | `test_inproc_person_at_terminal_rule`, `test_new_without_a_terminal_is_not_asked`, `test_inproc_stdout_not_a_terminal_is_not_asked` |
 | 8 | Creation question is asked only of a person choosing at the terminal | CI is set | `test_inproc_person_at_terminal_rule`, `test_pty_ci_decides_the_question` |
-| 9 | Creation question is asked only of a person choosing at the terminal | A workspace name | |
+| 9 | Creation question is asked only of a person choosing at the terminal | A workspace name | `test_pty_workspace_name_is_not_asked_or_advised`, `test_workspace_name_by_flag_gives_no_advisory` |
 | 10 | Creation question is asked only of a person choosing at the terminal | A dry run asks too | `test_pty_dry_run_single_answer_prints_the_generator_plan`, `test_pty_dry_run_triad_answer_prints_the_openreposhape_plan` |
 | 11 | Creation question is asked only of a person choosing at the terminal | Refusals before a path is chosen come first | `test_pty_refusals_before_a_path_come_first` |
-| 12 | Creation question is asked only of a person choosing at the terminal | The workflow prerequisite is refused before the question | |
-| 13 | Creation question is asked only of a person choosing at the terminal | The refusal order of an invocation not asked the question is unchanged | |
+| 12 | Creation question is asked only of a person choosing at the terminal | The workflow prerequisite is refused before the question | `test_pty_workflow_prerequisite_is_refused_before_the_question` |
+| 13 | Creation question is asked only of a person choosing at the terminal | The refusal order of an invocation not asked the question is unchanged | `test_workflow_refusal_order_unchanged_when_not_asked` |
 | 14 | Creation question offers the Triad first | The question's entries | `test_pty_question_entries` |
 | 15 | Creation question offers the Triad first | Answers that take the Triad | `test_pty_answers_that_take_the_triad` |
 | 16 | Creation question offers the Triad first | Answers that take a single repository | `test_pty_single_answers_take_the_bench_path` |
@@ -51,10 +51,10 @@ empty and that every named test is defined.
 | 38 | Creation advisory follows a single repository created without the question | A single repository created where the question is not asked | `test_pty_advisory_where_ci_is_true`, `test_inproc_stdout_not_a_terminal_is_not_asked` |
 | 39 | Creation advisory follows a single repository created without the question | The advisory's content | `test_advisory_content` |
 | 40 | Creation advisory follows a single repository created without the question | A generator that initialises no Git repository | `test_advisory_after_a_flag_chosen_single_repository` |
-| 41 | Creation advisory follows a single repository created without the question | Silent cases | `test_advisory_silent_cases`, `test_pty_single_answers_take_the_bench_path`, `test_pty_triad_delegates_without_yes_and_keeps_its_confirmation` |
+| 41 | Creation advisory follows a single repository created without the question | Silent cases | `test_advisory_silent_cases`, `test_pty_single_answers_take_the_bench_path`, `test_pty_triad_delegates_without_yes_and_keeps_its_confirmation`, `test_pty_workspace_name_is_not_asked_or_advised`, `test_workspace_name_by_flag_gives_no_advisory` |
 | 42 | Creation advisory follows a single repository created without the question | Standard error cannot be written | `test_advisory_with_stderr_closed`, `test_advisory_with_stderr_on_dev_full`, `test_advisory_with_stderr_on_a_closed_pipe` |
 | 43 | Creation advisory follows a single repository created without the question | Never a report input | `test_advisory_is_never_a_report_input` |
-| 44 | Creation offer precedes the workflow follow-up | Two advisories back to back | |
-| 45 | Creation offer precedes the workflow follow-up | The follow-up fails | |
-| 46 | Creation offer precedes the workflow follow-up | A single-repository answer with --workflow | |
-| 47 | Creation offer precedes the workflow follow-up | A workspace name with --workflow | |
+| 44 | Creation offer precedes the workflow follow-up | Two advisories back to back | `test_workflow_advisory_precedes_the_follow_up` |
+| 45 | Creation offer precedes the workflow follow-up | The follow-up fails | `test_workflow_follow_up_failure_keeps_the_advisory` |
+| 46 | Creation offer precedes the workflow follow-up | A single-repository answer with --workflow | `test_pty_single_answer_with_workflow_adds_no_advisory` |
+| 47 | Creation offer precedes the workflow follow-up | A workspace name with --workflow | `test_workflow_workspace_name_gives_no_advisory` |

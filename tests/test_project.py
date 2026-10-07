@@ -1671,6 +1671,107 @@ class ProjectTests(unittest.TestCase):
                 for text in ("adopt-project.py", "single-repository.yaml", "preferred, not required"):
                     self.assertNotIn(text, reports[0][1] + reports[0][2])
 
+    def test_pty_workspace_name_is_not_asked_or_advised(self):
+        destination = self.base / "alice-wip"
+        result = self.run_pty("new", "alice-wip", env=self.question_env(None), steps=[(CONFIRM_PROMPT, "yes")])
+        self.assert_status(result, 0)
+        self.assert_not_asked(result)
+        plan = self.creation_stdout("alice-wip").splitlines()
+        for line in plan:
+            self.assert_line(result.stdout, line)
+        self.assert_in_order(result.stdout, *plan)
+        self.assertNotIn("warning:", result.stdout + result.stderr)
+        self.assert_created(destination)
+
+    def test_workspace_name_by_flag_gives_no_advisory(self):
+        self.env = self.question_env(None)
+        result = self.run_cli("new", "alice-wip", "--type", "test", "--yes")
+        self.assert_status(result, 0)
+        self.assertEqual(result.stdout, self.creation_stdout("alice-wip"))
+        self.assertEqual(result.stderr, "")
+        self.assert_created(self.base / "alice-wip")
+
+    def test_workflow_advisory_precedes_the_follow_up(self):
+        self.env = self.question_env(None)
+        self.write_fake_setup_openspeckit()
+        self.assert_fake_on_path(self.env, "setup-openspeckit")
+        destination = self.base / "Flow"
+        result = self.run_cli_streams("new", "Flow", "--type", "test", "--yes", "--workflow", stderr=subprocess.STDOUT)
+        self.assert_status(result, 0)
+        merged = result.stdout
+        first, second = self.advisory("Flow")
+        marker = f"FOLLOWUP --repo {destination}"
+        for line in (first, second, marker):
+            self.assert_line(merged, line)
+        self.assertEqual(merged.split("\n").count(marker), 2)
+        self.assert_in_order(merged, first, second, marker)
+        self.assertLess(merged.index(second), merged.index(marker))
+        self.assert_created(destination)
+
+    def test_workflow_follow_up_failure_keeps_the_advisory(self):
+        self.env = self.question_env(None)
+        for status in (3, 130):
+            with self.subTest(status=status):
+                self.write_fake_setup_openspeckit(status)
+                self.assert_fake_on_path(self.env, "setup-openspeckit")
+                name = f"Flow{status}"
+                destination = self.base / name
+                result = self.run_cli("new", name, "--type", "test", "--yes", "--workflow")
+                self.assert_status(result, status)
+                self.assertEqual(result.stderr, "\n".join([*self.advisory(name), f"FOLLOWUP --repo {destination}",
+                                                           WORKFLOW_FAILED.format(PATH=destination)]) + "\n")
+                self.assertNotIn("warning:", result.stdout)
+                self.assertNotIn("Created:", result.stdout)
+                self.assert_created(destination)
+
+    def test_pty_single_answer_with_workflow_adds_no_advisory(self):
+        env = self.question_env(None)
+        self.write_fake_setup_openspeckit()
+        self.assert_fake_on_path(env, "setup-openspeckit")
+        destination = self.base / "Flow3"
+        result = self.run_pty("new", "Flow3", "--workflow", env=env, steps=[(QUESTION_PROMPT, "2"), (CONFIRM_PROMPT, "yes")])
+        self.assert_status(result, 0)
+        marker = f"FOLLOWUP --repo {destination}"
+        self.assert_line(result.stdout, "  " + shlex.join(["setup-openspeckit", "--repo", str(destination)]))
+        self.assert_line(result.stdout, marker)
+        self.assert_line_ends(result.stderr, marker)
+        self.assert_in_order(result.stdout, QUESTION_HEADER.format(NAME="Flow3"), f"Create: {destination}", marker,
+                             f"Created: {destination}")
+        self.assertNotIn("warning:", result.stdout + result.stderr)
+        self.assert_created(destination)
+
+    def test_workflow_workspace_name_gives_no_advisory(self):
+        self.env = self.question_env(None)
+        self.write_fake_setup_openspeckit()
+        self.assert_fake_on_path(self.env, "setup-openspeckit")
+        destination = self.base / "bob-wip"
+        result = self.run_cli("new", "bob-wip", "--type", "test", "--yes", "--workflow")
+        self.assert_status(result, 0)
+        marker = f"FOLLOWUP --repo {destination}"
+        self.assert_line(result.stdout, marker)
+        self.assertEqual(result.stderr, marker + "\n")
+        self.assertNotIn("warning:", result.stdout + result.stderr)
+        self.assert_created(destination)
+
+    def test_pty_workflow_prerequisite_is_refused_before_the_question(self):
+        env = self.question_env(None)
+        self.assert_absent_from_path(env, "setup-openspeckit")
+        result = self.run_pty("new", "Flow4", "--workflow", env=env)
+        self.assert_status(result, 2)
+        self.assert_line_ends(result.stderr, REFUSED + WORKFLOW_MISSING)
+        self.assert_not_asked(result)
+        self.assertNotIn("Create:", result.stdout)
+        self.assertFalse((self.base / "Flow4").exists())
+
+    def test_workflow_refusal_order_unchanged_when_not_asked(self):
+        self.env = self.question_env(None)
+        self.assert_absent_from_path(self.env, "setup-openspeckit")
+        result = self.run_cli("new", "Flow5", "--type", "nope", "--workflow")
+        self.assert_status(result, 2)
+        self.assertEqual(result.stderr, REFUSED + NO_GENERATOR + "\n")
+        self.assertEqual(result.stdout, "")
+        self.assertFalse((self.base / "Flow5").exists())
+
 
 if __name__ == "__main__":
     unittest.main()

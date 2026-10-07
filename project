@@ -325,6 +325,9 @@ def new(args):
     chosen = bool(args.shape or args.yes) or any(value is not None for value in (
         args.org, args.visibility, args.family, args.elected_by, args.bench, args.type, args.description))
     offer = not workspace and not chosen and person_at_terminal()
+    # Hoisted for an asked invocation only; the later check keeps every other invocation's order (design D2, D8).
+    if offer and args.workflow and shutil.which("setup-openspeckit") is None:
+        raise Refused("--workflow requires setup-openspeckit on PATH.")
     if offer:
         obstacles = known_obstacles(name, parent)
         print_creation_question(name, obstacles)
