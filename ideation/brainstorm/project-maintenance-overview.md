@@ -32,7 +32,7 @@ remains in the packet as the review trail.
 
 | Candidate | Proposed experience | First-version boundary |
 | --- | --- | --- |
-| `project overview` and its `--attention` filter | List local projects and highlight work to repair, preserve, or tidy, with one next command per project | Configured roots and their immediate entries; caps of 32 roots, 4,096 entries per root, 128 candidates, and 512 worktree rows; one 60 s deadline with 5 s per Git child and at most four children at once across distinct repositories; human output and a `schema_version: 1` JSON envelope; an argv clean suggestion naming the canonical repository root, in its `--all-safe` form only for a worktree that passes the batch's gates |
+| `project overview` and its `--attention` filter | List local projects and highlight work to repair, preserve, or tidy, with one next command per project | Configured roots and their immediate entries; caps of 32 roots, 4,096 entries per root, 128 candidates, and 512 worktree rows; one 60 s deadline with 5 s per Git child and at most four children at once across distinct repositories; human output and a `schema_version: 1` JSON envelope; an argv clean suggestion naming the canonical repository root, in its `--all-safe` form only for a worktree that passes the batch's gates in a repository with no `inspection-error` row |
 | `project clean <root> --all-safe` | Preview and explicitly remove every eligible linked worktree in one resolved repository | Worktree removal only; caps of 128 worktree rows (the main worktree included) and 24 targets; one 60 s deadline with a 10 s reconciliation reserve, 5 s per probe, and serial probing; a fresh confirmed plan carrying `plan_digest`; one seam shared with the single-target `remove` action, which becomes a strict one-item batch; local branch deletion stays a separate explicit action |
 
 The intended outcomes are fewer one-repository-at-a-time inspection commands,
@@ -89,8 +89,13 @@ vector without `--all-safe`; it never names a bare project and never includes
 `merged-removable` worktree that also passes the batch's gates in the batch's
 order; otherwise the first failing gate's finding (`main-worktree`,
 `unsupported-path-bytes`, `registration-mismatch`, or `locked-worktree`)
-replaces the housekeeping finding. Every `project clean` mode (the read-only
-report, `--json`, `--all-safe`, and
+replaces the housekeeping finding. A fifth gate covers the whole repository:
+while any of its worktree rows is `inspection-error` (an unreadable path, a
+registration-mismatched row, or a failed status probe), the batch plan would
+be refused as `inspection-incomplete`, so the overview withholds every
+`--all-safe` suggestion for it, and its housekeeping findings and the row
+suggest only the read-only `project clean <root>`. Every `project clean` mode
+(the read-only report, `--json`, `--all-safe`, and
 `--apply --action push|remove|delete-branch`) resolves an absolute path
 Git-first: it must be exactly a main worktree root, or it is refused with
 `target-not-repository-root` and exit 2, and no other directory is
@@ -159,31 +164,29 @@ change.
 
 Both feature documents carry a "Baseline behavior changes" section listing
 the changes to `a040790` that a proposal must carry into the governing
-cleanup specifications; batch cleanup specifies the batch-only ones.
-Together, deduplicated, they are:
+cleanup specifications. Both list the shared items; batch cleanup adds the
+batch-only items, which concern `clean` resolution, removal, and the batch
+plan. Deduplicated, the shared items are:
 
-- Resolution: every `project clean` mode, `push` and `delete-branch`
-  included, resolves an absolute path Git-first and refuses
-  `target-not-repository-root` unless the path is exactly a main worktree
-  root; today `discover` redirects `/outer/leg` to `/outer` when
-  `/outer/project.yaml` exists, and `/Atlas` to `/Atlas/Atlas` when
-  `/Atlas/Atlas/family.yaml` exists. A relative path or no argument
-  resolves to the repository Git finds there, and the report's `root` always
-  names the command directory. No path goes through `discover`: the overview
-  never passes its candidates to it, and `project clean` keeps its lookup
-  only for a bare name, whose one Git child becomes counted and
-  deadline-bounded.
+- Git-first resolution: in every `project clean` mode, `push` and
+  `delete-branch` included, an absolute path must be exactly a main worktree
+  root or is refused with `target-not-repository-root`; today `discover`
+  redirects `/outer/leg` to `/outer` when `/outer/project.yaml` exists, and
+  `/Atlas` to `/Atlas/Atlas` when `/Atlas/Atlas/family.yaml` exists. No path
+  goes through `discover`: the overview never passes its candidates to it,
+  and `project clean` keeps its lookup only for a bare name, whose one Git
+  child becomes counted and deadline-bounded.
 - Shared probes: `repo_state` and `cleanup_report` move onto the four
   repository-wide children and the one combined status probe, so overview,
   doctor, and clean read one evidence model. A deleted upstream reports
   `remote-gone` instead of `unpublished` in all three, and both are preserve
   states. The explicit `--untracked-files=normal` keeps a user's
   `status.showUntrackedFiles=no` from turning every clean, present,
-  non-default worktree into `inspection-error`. An unreadable worktree path
-  becomes one `inspection-error` row with `present: null` and an `os-error`
-  instead of refusing the whole repository; a registration-mismatched
-  worktree is no longer status-probed; a bare repository's first registry
-  record is no longer an `inspection-error` checkout; and each worktree row
+  non-default worktree into `inspection-error`. A registration-mismatched
+  worktree is no longer status-probed and is `inspection-error`. An
+  unreadable worktree path becomes one `inspection-error` row with
+  `present: null` and an `os-error`, where at `a040790` `main()` catches the
+  `OSError` and refuses the whole repository with exit 2. Each worktree row
   costs one status probe instead of two.
 - NUL-delimited parsing: a worktree path with a newline is no longer misread
   as a truncated path and classified `stale-worktree`, and a non-UTF-8 path
@@ -199,15 +202,25 @@ Together, deduplicated, they are:
 - Git 2.36 or newer: `project clean` refuses older Git with `git-too-old`
   and a missing or unusable `git` with `git-unavailable`, and
   `project doctor`, which reads `repo_state`, requires it as well.
-- Batch only: the removal command, single-target and batch alike, gains
-  `-c status.showUntrackedFiles=normal`; a worktree whose index flags an
-  entry assume-unchanged or skip-worktree is never removed
-  (`hidden-local-state`, found by the bounded `git ls-files -v -z` probe), so
-  sparse checkouts are excluded; and single-target `remove` runs through
-  `retire_worktree` as a strict one-item batch, gaining the identity checks,
-  the gates, full-repository inspection (an inspection error anywhere refuses
-  it with `inspection-incomplete`), the refusal codes `worktree-not-found` and
-  `target-excluded`, and the `unknown` outcome with exit 1.
+
+The batch-only items are:
+
+- A relative path or no argument resolves to the repository Git finds there,
+  with `root` set to its main worktree, instead of going through `discover`;
+  the report's `root` always names the command directory; and a bare
+  repository's first registry record is no longer an `inspection-error`
+  checkout.
+- The removal command, single-target and batch alike, gains
+  `-c status.showUntrackedFiles=normal`, so Git's own check sees untracked
+  files whatever the user's configuration.
+- A worktree whose index flags an entry assume-unchanged or skip-worktree is
+  never removed (`hidden-local-state`, found by the bounded
+  `git ls-files -v -z` probe), so sparse checkouts are excluded.
+- Single-target `remove` runs through `retire_worktree` as a strict one-item
+  batch, gaining the identity checks, the gates, full-repository inspection
+  (an inspection error anywhere refuses it with `inspection-incomplete`), the
+  refusal codes `worktree-not-found` and `target-excluded`, the `unknown`
+  outcome with exit 1, and its own process group for the removal child.
 
 The designs build on baseline helpers by name: `projects_dirs`, `manifest`,
 `repo_state`, `default_branch`, the classification ladder in

@@ -1062,7 +1062,8 @@ Shared with the overview:
 - The manifest's `tracking_branch` is read at `repository.root`, not at
   whichever directory `discover` returned.
 - The per-probe timeout drops from the baseline `probe()` value of 15 s to
-  5 s, under a 60 s invocation deadline where the baseline had none.
+  5 s, under a 60 s invocation deadline where the baseline had none, and
+  every Git child runs in its own process group.
 - `clean` requires Git 2.36 or newer, refusing older Git with `git-too-old`
   and a missing or unusable `git` with `git-unavailable`; `doctor` requires
   Git 2.36 as well, because it reads `repo_state`.

@@ -55,7 +55,8 @@ can compare an overview row with a cleanup plan field by field.
 An overview row's `suggested_command` is `null` unless a finding supplies
 one. When present it is a JSON argument vector naming the absolute canonical
 `repository.root`: `["project", "clean", "<root>", "--all-safe"]` when the
-row has a `merged-removable` housekeeping finding, otherwise the read-only
+row has a `merged-removable` housekeeping finding and no worktree row of the
+repository is `inspection-error`, otherwise the read-only
 `["project", "clean", "<root>"]`. It is never a shell string or a bare name,
 it never carries `--apply` or `--yes`, and a row whose `root` is `null` or
 not valid UTF-8 gets no clean suggestion.
@@ -258,11 +259,18 @@ worktree the ladder classifies `merged-removable` yields the housekeeping
 finding and the suggestion only when it also passes, in the batch's order,
 the main-worktree, path-byte, registration, and lock gates; otherwise the
 first failing gate's finding (`main-worktree`, `unsupported-path-bytes`,
-`registration-mismatch`, or `locked-worktree`) replaces it, and the row's
-classification stays what the ladder computed. The one gate the overview
-cannot apply is the batch's `git ls-files -v -z` probe, so a preview may
-still exclude a suggested worktree as `hidden-local-state`; the plan lists
-that exclusion, and the suggestion is advisory either way.
+`registration-mismatch`, or `locked-worktree`, the same codes the batch uses
+as exclusion reasons) replaces it, and the row's classification stays what
+the ladder computed. A fifth gate covers the whole repository: while any of
+its worktree rows is `inspection-error` (an unreadable path, a
+registration-mismatched row, or a failed status probe), the batch plan would
+be refused as `inspection-incomplete`, so the overview withholds every
+`--all-safe` suggestion for that repository, and its housekeeping findings
+and the row suggest only the read-only `project clean <root>`. The gate
+changes suggestions only, not the overview's completeness. The one gate the
+overview cannot apply is the batch's `git ls-files -v -z` probe, so a
+preview may still exclude a suggested worktree as `hidden-local-state`; the
+plan lists that exclusion, and the suggestion is advisory either way.
 
 “Attention” should not make normal ongoing work look broken; keep housekeeping
 opportunities distinct from warnings and errors.
