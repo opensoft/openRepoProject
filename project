@@ -232,6 +232,21 @@ TRIAD_ANSWERS = {"": "triad", "1": "triad", "y": "triad", "yes": "triad",
 VISIBILITIES = ("private", "public", "internal")
 
 
+def known_obstacles(name, parent):
+    """The known Triad obstacles as D13 sentences, in the order name, openRepoShape, parent: three
+    local reads, with no network and no subprocess (design D3)."""
+    obstacles = []
+    if not ASSEMBLY_NAME.fullmatch(name):
+        obstacles.append(f"{name} cannot be a Triad name; a Triad name is a letter first, then letters and digits"
+                         " only, such as MyApp.")
+    if shutil.which("openRepoShape") is None:
+        obstacles.append("openRepoShape is not on PATH. Install openRepoShape through workBenches first.")
+    if not parent.is_dir():
+        obstacles.append(f"The parent directory {parent} does not exist; a Triad is created inside an existing"
+                         " directory.")
+    return obstacles
+
+
 def print_creation_question(name, obstacles):
     """The creation question's lines on stdout, one line per known obstacle sentence (design D4, D13)."""
     print(f"How should {name} be created? Nothing is created until you confirm.")
@@ -280,11 +295,14 @@ def new(args):
         args.org, args.visibility, args.family, args.elected_by, args.bench, args.type, args.description))
     offer = not workspace and not chosen and person_at_terminal()
     if offer:
-        print_creation_question(name, [])
+        obstacles = known_obstacles(name, parent)
+        print_creation_question(name, obstacles)
         triad = ask_twice("Create it as a Triad? [Y/n or 1/2]:", lambda answer: TRIAD_ANSWERS.get(answer.lower()),
                           "Answer y or 1 for the Triad, n or 2 for a single repository; Enter takes the Triad.",
                           "No recognised answer to the Triad question; nothing was created.",
                           "No answer to the Triad question (end of input); nothing was created.") == "triad"
+        if triad and obstacles:
+            raise Refused("A Triad cannot be created here. " + " ".join(obstacles) + " Nothing was created.")
         if triad:
             # The answers set exactly the fields the flags would; the shape branch below re-checks them (design D2, D5).
             args.org = ask_twice("GitHub organization for the Triad:",

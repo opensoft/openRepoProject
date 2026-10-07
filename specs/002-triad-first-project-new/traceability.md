@@ -32,13 +32,13 @@ empty and that every named test is defined.
 | 19 | Creation question offers the Triad first | End of input at the question | `test_pty_end_of_input_at_the_question_refuses` |
 | 20 | Creation question offers the Triad first | An interrupt at the question | `test_pty_interrupt_at_the_question_cancels` |
 | 21 | Creation question offers the Triad first | End of input at an existing prompt is unchanged | `test_pty_end_of_input_at_existing_prompts_is_unchanged` |
-| 22 | Known Triad obstacles are named before the question and refused on a Triad answer | A name outside the assembly-root form | |
-| 23 | Known Triad obstacles are named before the question and refused on a Triad answer | openRepoShape is not on PATH | |
-| 24 | Known Triad obstacles are named before the question and refused on a Triad answer | The parent directory is missing | |
-| 25 | Known Triad obstacles are named before the question and refused on a Triad answer | A Triad answer with a known obstacle | |
-| 26 | Known Triad obstacles are named before the question and refused on a Triad answer | A dry run with a known obstacle | |
-| 27 | Known Triad obstacles are named before the question and refused on a Triad answer | A single-repository answer is unaffected | |
-| 28 | Known Triad obstacles are named before the question and refused on a Triad answer | No known obstacle | |
+| 22 | Known Triad obstacles are named before the question and refused on a Triad answer | A name outside the assembly-root form | `test_pty_name_outside_the_assembly_form_is_named` |
+| 23 | Known Triad obstacles are named before the question and refused on a Triad answer | openRepoShape is not on PATH | `test_pty_missing_openreposhape_is_named` |
+| 24 | Known Triad obstacles are named before the question and refused on a Triad answer | The parent directory is missing | `test_pty_missing_parent_is_named_without_into` |
+| 25 | Known Triad obstacles are named before the question and refused on a Triad answer | A Triad answer with a known obstacle | `test_pty_triad_answer_with_an_obstacle_refuses`, `test_inproc_triad_obstacle_runs_nothing` |
+| 26 | Known Triad obstacles are named before the question and refused on a Triad answer | A dry run with a known obstacle | `test_pty_dry_run_with_an_obstacle_refuses` |
+| 27 | Known Triad obstacles are named before the question and refused on a Triad answer | A single-repository answer is unaffected | `test_pty_single_answer_is_unaffected_by_obstacles` |
+| 28 | Known Triad obstacles are named before the question and refused on a Triad answer | No known obstacle | `test_pty_no_known_obstacle_names_none` |
 | 29 | A Triad answer asks for the organization and the visibility | Organization first, then visibility | `test_pty_organization_then_visibility` |
 | 30 | A Triad answer asks for the organization and the visibility | The visibility is a full word | `test_pty_visibility_is_a_full_word` |
 | 31 | A Triad answer asks for the organization and the visibility | Asked once more, then refused | `test_pty_two_misses_at_organization_or_visibility_refuse` |

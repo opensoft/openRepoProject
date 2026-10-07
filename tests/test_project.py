@@ -359,6 +359,36 @@ class ProjectTests(unittest.TestCase):
         for text in (QUESTION_HEADER.split("{NAME}")[0], QUESTION_TRIAD, QUESTION_SINGLE, QUESTION_PROMPT):
             self.assertNotIn(text, combined)
 
+    def assert_question(self, transcript, name, *obstacles):
+        """The question's lines in order and consecutive: the header for name, entry 1, the given
+        obstacle lines (already formatted), entry 2."""
+        lines = transcript.split("\n")
+        header = QUESTION_HEADER.format(NAME=name)
+        self.assertIn(header, lines, f"missing question header in:\n{transcript}")
+        start = lines.index(header)
+        self.assertEqual(lines[start + 1:start + 3 + len(obstacles)], [QUESTION_TRIAD, *obstacles, QUESTION_SINGLE])
+
+    def obstacle_env(self, fake):
+        """question_env(None) with the fake openRepoShape on PATH (asserted), or with none on
+        PATH (asserted) when fake is false."""
+        if fake:
+            return self.shape_env(ci=None)
+        (self.fake_bin() / "openRepoShape").unlink(missing_ok=True)
+        env = self.question_env(None)
+        self.assert_absent_from_path(env, "openRepoShape")
+        return env
+
+    def known_obstacle_cases(self):
+        """Each known obstacle alone, then all three: label to (name, whether the fake
+        openRepoShape is on PATH, extra arguments, the formatted obstacle lines in D13 order)."""
+        absent = self.base / "absent parent"
+        name_line = OBSTACLE_NAME.format(NAME="my-app")
+        parent_line = OBSTACLE_PARENT.format(PARENT=absent)
+        return {"name": ("my-app", True, (), [name_line]),
+                "openRepoShape": ("MyApp", False, (), [OBSTACLE_OPENREPOSHAPE]),
+                "parent": ("MyApp", True, ("--into", absent), [parent_line]),
+                "all three": ("my-app", False, ("--into", absent), [name_line, OBSTACLE_OPENREPOSHAPE, parent_line])}
+
     def repo(self, name="repo", branch="main"):
         path = self.base / name
         path.mkdir(parents=True, exist_ok=True)
@@ -1251,6 +1281,126 @@ class ProjectTests(unittest.TestCase):
         self.assertIsNone(self.shape_record())
         self.assertEqual(sorted(self.base.rglob("*")), before)
         self.assertNotIn("warning:", result.stdout + result.stderr)
+
+    def test_pty_name_outside_the_assembly_form_is_named(self):
+        env = self.shape_env(ci=None)
+        result = self.run_pty("new", "my-app", env=env, steps=[(QUESTION_PROMPT, PTY_EOF)])
+        self.assert_status(result, 2)
+        self.assert_question(result.stdout, "my-app", OBSTACLE_NAME.format(NAME="my-app"))
+        self.assertEqual(result.stdout.count(OBSTACLE_LINE_START), 1)
+        self.assertIn("(default)", QUESTION_TRIAD)
+        self.assert_line_ends(result.stderr, REFUSED + QUESTION_ENDED)
+        self.assertFalse((self.base / "my-app").exists())
+
+    def test_pty_missing_openreposhape_is_named(self):
+        env = self.question_env(None)
+        self.assert_absent_from_path(env, "openRepoShape")
+        result = self.run_pty("new", "MyApp", env=env, steps=[(QUESTION_PROMPT, PTY_EOF)])
+        self.assert_status(result, 2)
+        self.assert_question(result.stdout, "MyApp", OBSTACLE_OPENREPOSHAPE)
+        self.assertEqual(result.stdout.count(OBSTACLE_LINE_START), 1)
+        self.assertFalse((self.base / "MyApp").exists())
+
+    def test_pty_missing_parent_is_named_without_into(self):
+        env = self.shape_env(ci=None)
+        absent_projects = self.base / "absent projects"
+        absent_into = self.base / "absent into"
+        default_env = {key: value for key, value in env.items() if key != "PROJECTS_DIR"}
+        default_projects = Path(default_env["HOME"]) / "projects"
+        cases = {"PROJECTS_DIR": ({**env, "PROJECTS_DIR": str(absent_projects)}, (), absent_projects),
+                 "default ~/projects": (default_env, (), default_projects),
+                 "--into": (env, ("--into", absent_into), absent_into)}
+        for label, (case_env, extra, parent) in cases.items():
+            with self.subTest(label):
+                result = self.run_pty("new", "MyApp", *extra, env=case_env, steps=[(QUESTION_PROMPT, PTY_EOF)])
+                self.assert_status(result, 2)
+                self.assert_question(result.stdout, "MyApp", OBSTACLE_PARENT.format(PARENT=parent))
+                lines = result.stdout.split("\n")
+                start = lines.index(QUESTION_HEADER.format(NAME="MyApp"))
+                question = lines[start:lines.index(QUESTION_SINGLE, start) + 1]
+                self.assertTrue(all("--into" not in line for line in question), question)
+                self.assertFalse(parent.exists())
+
+    def test_pty_triad_answer_with_an_obstacle_refuses(self):
+        for label, (name, fake, extra, obstacles) in self.known_obstacle_cases().items():
+            with self.subTest(label):
+                env = self.obstacle_env(fake)
+                parent = Path(extra[1]) if extra else self.base
+                result = self.run_pty("new", name, *extra, env=env, steps=[(QUESTION_PROMPT, "")])
+                self.assert_status(result, 2)
+                self.assert_question(result.stdout, name, *obstacles)
+                self.assert_line_ends(result.stderr, REFUSED + obstacles_refusal(*obstacles))
+                self.assertNotIn(ORG_PROMPT, result.stdout + result.stderr)
+                self.assertNotIn("Create:", result.stdout)
+                self.assertFalse((parent / name).exists())
+                self.assertIsNone(self.shape_record())
+
+    def test_inproc_triad_obstacle_runs_nothing(self):
+        def forbidden(what):
+            return AssertionError(f"{what} was called on a Triad answer with a known obstacle")
+        for label, (name, fake, extra, obstacles) in self.known_obstacle_cases().items():
+            with self.subTest(label):
+                self.obstacle_env(fake)
+                parent = Path(extra[1]) if extra else self.base
+                with patch.object(module, "execute", side_effect=forbidden("execute")), \
+                        patch("subprocess.run", side_effect=forbidden("subprocess.run")), \
+                        patch("subprocess.Popen", side_effect=forbidden("subprocess.Popen")), \
+                        patch("socket.socket", side_effect=forbidden("socket.socket")):
+                    result = self.run_inproc("new", name, *extra, ci=None, answers=[""])
+                self.assert_status(result, 2)
+                self.assertEqual(result.prompts, [QUESTION_PROMPT + " "])
+                self.assertEqual(result.stdout, "\n".join([QUESTION_HEADER.format(NAME=name), QUESTION_TRIAD,
+                                                           *obstacles, QUESTION_SINGLE]) + "\n")
+                self.assertEqual(result.stderr, REFUSED + obstacles_refusal(*obstacles) + "\n")
+                self.assertFalse((parent / name).exists())
+                self.assertIsNone(self.shape_record())
+
+    def test_pty_dry_run_with_an_obstacle_refuses(self):
+        env = self.shape_env(ci=None)
+        absent = self.base / "absent parent"
+        cases = {"name": (("my-app",), [OBSTACLE_NAME.format(NAME="my-app")]),
+                 "parent": (("MyApp", "--into", absent), [OBSTACLE_PARENT.format(PARENT=absent)])}
+        for label, (extra, obstacles) in cases.items():
+            with self.subTest(label):
+                before = sorted(self.base.rglob("*"))
+                result = self.run_pty("new", *extra, "--dry-run", env=env, steps=[(QUESTION_PROMPT, "")])
+                self.assert_status(result, 2)
+                self.assert_line_ends(result.stderr, REFUSED + obstacles_refusal(*obstacles))
+                self.assertNotIn(ORG_PROMPT, result.stdout + result.stderr)
+                self.assertNotIn("Create:", result.stdout)
+                self.assertEqual(sorted(self.base.rglob("*")), before)
+                self.assertIsNone(self.shape_record())
+
+    def test_pty_single_answer_is_unaffected_by_obstacles(self):
+        env = self.obstacle_env(fake=False)
+        parent = self.base / "absent parent"
+        destination = parent / "my-app"
+        result = self.run_pty("new", "my-app", "--into", parent, env=env,
+                              steps=[(QUESTION_PROMPT, "2"), (CONFIRM_PROMPT, "yes")])
+        self.assert_status(result, 0)
+        self.assert_question(result.stdout, "my-app", OBSTACLE_NAME.format(NAME="my-app"), OBSTACLE_OPENREPOSHAPE,
+                             OBSTACLE_PARENT.format(PARENT=parent))
+        plan = [f"Create: {destination}", "  " + shlex.join(["bash", str(self.generator), "my-app", str(parent)]),
+                f"Created: {destination}", f"Next: project doctor {shlex.quote(str(destination))}"]
+        for line in plan:
+            self.assert_line(result.stdout, line)
+        self.assert_in_order(result.stdout, QUESTION_SINGLE, *plan)
+        self.assertEqual(sorted(path.name for path in destination.iterdir()), [".project.json", "arguments"])
+        self.assertEqual((destination / "arguments").read_text().splitlines(), ["my-app", str(parent)])
+        self.assertEqual(json.loads((destination / ".project.json").read_text()),
+                         {"schema_version": 1, "bench": "testBench", "type": "test"})
+        combined = result.stdout + result.stderr
+        for text in (ORG_PROMPT, REFUSED, "warning:"):
+            self.assertNotIn(text, combined)
+
+    def test_pty_no_known_obstacle_names_none(self):
+        env = self.shape_env(ci=None)
+        result = self.run_pty("new", "MyApp", env=env, steps=[(QUESTION_PROMPT, ""), (ORG_PROMPT, PTY_EOF)])
+        self.assert_status(result, 2)
+        self.assert_question(result.stdout, "MyApp")
+        self.assertNotIn(OBSTACLE_LINE_START, result.stdout + result.stderr)
+        self.assert_line_ends(result.stderr, REFUSED + ORG_ENDED)
+        self.assertIsNone(self.shape_record())
 
 
 if __name__ == "__main__":
