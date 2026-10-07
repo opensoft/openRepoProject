@@ -140,7 +140,7 @@ The ratified packet's rules (issue #3), as non-negotiables:
 
 None. `openspec/specs/` is empty on main (`openspec list --specs`: "No specs
 found."), and `project-command`'s requirements live only in its unarchived
-change. If `chore/archive-completed-changes` (pushed at `0e7f029`, no PR) lands
+change. If #4 (`chore/archive-completed-changes`, open at `0e7f029`) lands
 first and promotes `project-command`, the spec phase decides whether "Delegate
 project creation" takes a MODIFIED delta (see OQ-4).
 
