@@ -392,7 +392,10 @@ None.
     stdout, `CI=true`, a `-wip` name, and the stderr advisory after a
     `--workflow` failure;
   - an echoing fake `setup-openspeckit` that pins the chosen order under
-    `--workflow`: `project`'s advisory, then the follow-up's output;
+    `--workflow`: `project`'s advisory, then the follow-up's output; the
+    `--workflow` tests assert that the fake is what PATH resolves for
+    `setup-openspeckit`, and the `--workflow` refusal test without
+    `setup-openspeckit` asserts that PATH resolves none;
   - the guarded advisory with stderr closed (`2>&-`) and with stderr on
     `/dev/full`, each asserting that stdout and the exit status are what they
     would be without the advisory; `/dev/full` exists on Linux only, so the

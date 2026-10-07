@@ -281,11 +281,12 @@ promise no particular status for it.
 
 ### Requirement: Creation advisory follows a single repository created without the question
 When the command creates a single repository without the creation question
-having been asked (chosen by flag, or not at a terminal) and the name is not a
-workspace name, it SHALL give the creation advisory once the repository exists:
-the generator has succeeded, the destination is a directory and its
-`.project.json` exists, whether or not Git was initialised. The advisory SHALL
-come before any `--workflow` step, after standard output has been flushed.
+having been asked (chosen by flag, or the terminal rule does not hold) and the
+name is not a workspace name, it SHALL give the creation advisory once the
+repository exists: the generator has succeeded, the destination is a directory
+and its `.project.json` exists, whether or not Git was initialised. The
+advisory SHALL come before any `--workflow` step, after standard output has
+been flushed.
 
 The advisory SHALL be two lines on standard error, each prefixed `warning:`,
 in ASCII only. Together they SHALL carry: the preference with its posture
@@ -301,7 +302,8 @@ output. A failure to write it, including a closed standard error, a broken pipe
 or a full device, SHALL be ignored. The command SHALL NOT give it for a dry
 run, a Triad creation, a creation that went through the creation question, a
 workspace name, or a creation that did not succeed, and SHALL record nothing
-about having given it.
+about having given it. The command SHALL NOT run `adopt-project.py`, convert an
+existing repository, or write a manifest or record on the advisory's account.
 
 #### Scenario: A single repository chosen by flag
 - **WHEN** a single repository is created with --type and --yes

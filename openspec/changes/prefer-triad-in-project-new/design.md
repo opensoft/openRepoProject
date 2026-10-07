@@ -437,7 +437,7 @@ in the order name, openRepoShape, parent:
 
 ```
 How should NAME be created? Nothing is created until you confirm.
-  1. Triad (default): an assembly root with a spec leg and a code leg, made by openRepoShape. Preferred, not required; it stays elective and confers nothing.
+  1. Triad (default): an assembly root with a spec leg and a code leg, made by openRepoShape. It is preferred, not required: it stays elective and confers nothing.
      Not possible here: NAME cannot be a Triad name; a Triad name is a letter first, then letters and digits only, such as MyApp.
      Not possible here: openRepoShape is not on PATH. Install openRepoShape through workBenches first.
      Not possible here: The parent directory PARENT does not exist; a Triad is created inside an existing directory.
@@ -511,7 +511,9 @@ All in `tests/test_project.py`; no new dependency.
   openRepoShape or setup-openspeckit installed on a developer's machine is
   never found. Each Triad test asserts that
   `shutil.which("openRepoShape", path=env["PATH"])` is the fake; each missing
-  test asserts it is `None`.
+  test asserts it is `None`. The `--workflow` tests assert that
+  `shutil.which("setup-openspeckit", path=env["PATH"])` is the fake, and the
+  `--workflow` refusal test without `setup-openspeckit` asserts it is `None`.
 - **The fake `openRepoShape`**: an executable script that appends its argv to
   a record file beside itself, prints `Type yes to continue: `, reads one line,
   and on `yes` creates `<--into>/<name>` and exits 0 (or with a status the test
