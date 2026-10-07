@@ -201,6 +201,30 @@ def choose(rows, args):
     return selected[int(answer) - 1]
 
 
+# Name forms copied from openRepoShape and pinned by sha, never read at run time
+# (design D3, D10); re-pin both when that contract changes.
+# openRepoShape contracts/repository-naming.yaml:345 (family project-leg, role assembly)
+# at 1a9fc537bcce37301c85fc108fabd8a599b02000
+ASSEMBLY_NAME = re.compile(r"^[A-Za-z][A-Za-z0-9]*$")
+# openRepoShape contracts/repository-naming.yaml:412 (family workspace)
+# at 1a9fc537bcce37301c85fc108fabd8a599b02000
+WORKSPACE_NAME = re.compile(r"^[a-z0-9]+(?:-[a-z0-9]+)*-wip$")
+# CI values that still count as a person at a terminal: setup-openspeckit's
+# CI_FALSE_VALUES (workBenches d86ba59, setup-openspeckit:131).
+CI_FALSE_VALUES = ("", "0", "false", "no")
+
+
+def person_at_terminal():
+    """True only when CI reads false and stdin and stdout are both terminals (design D1)."""
+    if os.environ.get("CI", "").strip().lower() not in CI_FALSE_VALUES:
+        return False
+    try:
+        return bool(sys.stdin is not None and sys.stdout is not None
+                    and sys.stdin.isatty() and sys.stdout.isatty())
+    except (AttributeError, OSError, ValueError):
+        return False
+
+
 def new(args):
     name = args.name or ask("Project name:")
     if not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9_-]*", name):
@@ -215,6 +239,11 @@ def new(args):
         destination = (parent if parent.name == args.family else parent / args.family) / name
     if destination.exists() or destination.is_symlink():
         raise Refused(f"Destination already exists: {destination}")
+    # One decision, computed once; the question and the advisory read only offer (design D1, D2).
+    workspace = bool(WORKSPACE_NAME.fullmatch(name))
+    chosen = bool(args.shape or args.yes) or any(value is not None for value in (
+        args.org, args.visibility, args.family, args.elected_by, args.bench, args.type, args.description))
+    offer = not workspace and not chosen and person_at_terminal()
     if args.shape:
         if args.bench or args.type or args.description:
             raise Refused("Shape creation has no bench generator adapter yet; omit --bench/--type/--description.")

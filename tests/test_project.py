@@ -1,13 +1,20 @@
 """Offline behavioral checks with disposable Git repositories and generators."""
+import contextlib
+import errno
 import importlib.machinery
 import importlib.util
+import io
 import json
 import os
 from pathlib import Path
+import select
+import shlex
 import shutil
+import signal
 import subprocess
 import sys
 import tempfile
+import time
 import unittest
 from unittest.mock import patch
 
@@ -17,6 +24,80 @@ loader = importlib.machinery.SourceFileLoader("project_cli", str(CLI))
 spec = importlib.util.spec_from_loader(loader.name, loader)
 module = importlib.util.module_from_spec(spec)
 loader.exec_module(module)
+
+# Fixed text of design.md D13, character for character. NAME, ORG, VIS and
+# PARENT are the format fields {NAME}, {ORG}, {VIS} and {PARENT}; every other
+# character is literal. Begin D13 fixtures.
+QUESTION_HEADER = "How should {NAME} be created? Nothing is created until you confirm."
+QUESTION_TRIAD = "  1. Triad (default): an assembly root with a spec leg and a code leg, made by openRepoShape. It is preferred, not required: it stays elective and confers nothing."
+OBSTACLE_NAME = "     Not possible here: {NAME} cannot be a Triad name; a Triad name is a letter first, then letters and digits only, such as MyApp."
+OBSTACLE_OPENREPOSHAPE = "     Not possible here: openRepoShape is not on PATH. Install openRepoShape through workBenches first."
+OBSTACLE_PARENT = "     Not possible here: The parent directory {PARENT} does not exist; a Triad is created inside an existing directory."
+QUESTION_SINGLE = "  2. Single repository: fully supported, and no reason is asked. single-repository.yaml is the ratified way to record staying single."
+QUESTION_PROMPT = "Create it as a Triad? [Y/n or 1/2]:"
+ORG_PROMPT = "GitHub organization for the Triad:"
+VIS_PROMPT = "Visibility (private, public or internal):"
+QUESTION_RETRY = "Answer y or 1 for the Triad, n or 2 for a single repository; Enter takes the Triad."
+ORG_RETRY = "An organization name starts with a letter or digit and has only letters, digits and hyphens."
+VIS_RETRY = "Type the visibility in full: private, public or internal."
+QUESTION_MISSED = "No recognised answer to the Triad question; nothing was created."
+QUESTION_ENDED = "No answer to the Triad question (end of input); nothing was created."
+OBSTACLES_REFUSAL_START = "A Triad cannot be created here. "
+OBSTACLE_LINE_START = "Not possible here: "
+OBSTACLES_REFUSAL_END = " Nothing was created."
+ORG_MISSED = "Invalid GitHub organization name. Nothing was created."
+ORG_ENDED = "No GitHub organization was given (end of input); nothing was created."
+VIS_MISSED = "Visibility must be private, public or internal. Nothing was created."
+VIS_ENDED = "No visibility was given (end of input); nothing was created."
+RESTATED = "Triad {NAME} in organization {ORG}, visibility {VIS}."
+RESTATED_PUBLIC = "Triad {NAME} in organization {ORG}, visibility public: anyone can read the repositories."
+ADVISORY_PREFERENCE = "warning: {NAME} was created as a single repository. The Triad (an assembly root with a spec leg and a code leg) is preferred, not required: it stays elective and confers nothing."
+ADVISORY_CONVERSION = "warning: openRepoShape's adopt-project.py converts a repository in place when a person deciding for this project runs it, and a project that stays single can say so in single-repository.yaml. Nothing here changes."
+# End D13 fixtures.
+
+
+def obstacles_refusal(*obstacle_lines):
+    """The D13 known-obstacles refusal composed from formatted obstacle lines, in their order."""
+    sentences = [line.split(OBSTACLE_LINE_START, 1)[1] for line in obstacle_lines]
+    return OBSTACLES_REFUSAL_START + " ".join(sentences) + OBSTACLES_REFUSAL_END
+
+
+# Existing text this change keeps, pinned as literals (no test reads history).
+REFUSED = "REFUSED: "
+CANCELLED = "Cancelled."
+NAME_PROMPT = "Project name:"
+GENERATOR_PROMPT = "Select a generator number (or specify --bench and --type):"
+CONFIRM_PROMPT = "Type yes to run this plan:"
+DECLINED = "Cancelled; no command was run."
+INVALID_NAME = "Project name must start with a letter or digit and contain letters, digits, _ or -."
+PARENT_AND_INTO = "Use either positional parent or --into."
+DESTINATION_EXISTS = "Destination already exists: {PATH}"
+
+# The fakes of D14. Each is a script for this interpreter, so it needs nothing
+# else on PATH; {python} and {status} are filled in when it is written.
+FAKE_SHAPE_PROMPT = "Type yes to continue:"
+FAKE_SHAPE_DECLINED = "not confirmed; nothing was created."
+FAKE_OPENREPOSHAPE = """#!{python}
+import json, os, sys
+args = sys.argv[1:]
+with open(os.path.join(os.path.dirname(os.path.abspath(__file__)), "openRepoShape.argv"), "a") as record:
+    record.write(json.dumps(args) + "\\n")
+sys.stdout.write("Type yes to continue: ")
+sys.stdout.flush()
+if sys.stdin.readline().strip() == "yes":
+    os.makedirs(os.path.join(args[args.index("--into") + 1], args[0]))
+    sys.exit({status})
+print("not confirmed; nothing was created.")
+sys.exit(1)
+"""
+FAKE_SETUP_OPENSPECKIT = """#!{python}
+import sys
+marker = " ".join(["FOLLOWUP"] + sys.argv[1:])
+print(marker, flush=True)
+print(marker, file=sys.stderr, flush=True)
+sys.exit({status})
+"""
+PTY_EOF = "\x04"
 
 
 class ProjectTests(unittest.TestCase):
@@ -48,6 +129,208 @@ class ProjectTests(unittest.TestCase):
         return subprocess.run([sys.executable, str(CLI), *map(str, args)],
                               cwd=cwd or self.base, env=self.env, input="", text=True,
                               capture_output=True, timeout=20)
+
+    pty_timeout = 20  # seconds; a pty run that exceeds it fails with its transcript
+
+    def fake_bin(self):
+        """The temporary bin directory that holds the fakes (D14)."""
+        path = self.base / "bin"
+        path.mkdir(exist_ok=True)
+        return path
+
+    def question_env(self, ci):
+        """The environment of a question or advisory test (D14): self.env with CI set to the
+        given string or removed (None), without GH_TOKEN, GITHUB_TOKEN or any OPENREPOSHAPE_*
+        variable, and with PATH the fake bin directory plus the directories of bash, git and
+        this interpreter, so no openRepoShape or setup-openspeckit installed here is found."""
+        env = {key: value for key, value in self.env.items()
+               if key not in ("CI", "GH_TOKEN", "GITHUB_TOKEN") and not key.startswith("OPENREPOSHAPE_")}
+        if ci is not None:
+            env["CI"] = ci
+        directories = [str(self.fake_bin())]
+        for tool in (shutil.which("bash"), shutil.which("git"), sys.executable):
+            self.assertTrue(tool, "bash, git and this interpreter must be found to build PATH")
+            directory = str(Path(tool).parent)
+            if directory not in directories:
+                directories.append(directory)
+        env["PATH"] = os.pathsep.join(directories)
+        return env
+
+    def write_fake(self, tool, template, status):
+        path = self.fake_bin() / tool
+        path.write_text(template.format(python=sys.executable, status=status))
+        path.chmod(0o755)
+        return path
+
+    def write_fake_openreposhape(self, status=0):
+        """The fake openRepoShape: records its argv beside itself, prints FAKE_SHAPE_PROMPT,
+        reads one line, and on yes creates <--into>/<name> and exits with status; otherwise
+        prints FAKE_SHAPE_DECLINED and exits 1."""
+        return self.write_fake("openRepoShape", FAKE_OPENREPOSHAPE, status)
+
+    def write_fake_setup_openspeckit(self, status=0):
+        """The fake setup-openspeckit: a FOLLOWUP marker line carrying its arguments on stdout
+        and on stderr, then exits with status."""
+        return self.write_fake("setup-openspeckit", FAKE_SETUP_OPENSPECKIT, status)
+
+    def shape_record(self):
+        """The argv lists the fake openRepoShape recorded, or None when it never ran."""
+        record = self.fake_bin() / "openRepoShape.argv"
+        if not record.exists():
+            return None
+        return [json.loads(line) for line in record.read_text().splitlines()]
+
+    def assert_fake_on_path(self, env, tool):
+        self.assertEqual(shutil.which(tool, path=env["PATH"]), str(self.fake_bin() / tool),
+                         f"PATH must resolve {tool} to the fake")
+
+    def assert_absent_from_path(self, env, tool):
+        self.assertIsNone(shutil.which(tool, path=env["PATH"]), f"PATH must resolve no {tool}")
+
+    def shape_env(self, ci, status=0):
+        """question_env(ci) with the fake openRepoShape written and asserted on PATH."""
+        env = self.question_env(ci)
+        self.write_fake_openreposhape(status)
+        self.assert_fake_on_path(env, "openRepoShape")
+        return env
+
+    def run_pty(self, *args, env, steps=(), timeout=None):
+        """Run project with stdin and stdout on one pseudo-terminal and stderr on a pipe (D14).
+
+        steps is a sequence of (expected, action). Each action is taken only once its expected
+        text has appeared on either stream, past the previous match on that stream: a line of
+        text is written with a newline, PTY_EOF is written alone, and signal.SIGINT is sent
+        with send_signal and repeated until the child exits. The child starts in a new session,
+        so the pty is never a controlling terminal. Returns a CompletedProcess whose stdout is
+        the pty transcript (echoed input included) and stderr the pipe, both with \\r\\n read as
+        \\n; its seen attribute holds, for each step, both transcripts as they stood when the
+        action was taken.
+        """
+        argv = [sys.executable, str(CLI), *map(str, args)]
+        limit = timeout or self.pty_timeout
+        deadline = time.monotonic() + limit
+        master, slave = os.openpty()
+        try:
+            child = subprocess.Popen(argv, cwd=self.base, env=env, stdin=slave, stdout=slave,
+                                     stderr=subprocess.PIPE, start_new_session=True)
+        except BaseException:
+            os.close(master)
+            raise
+        finally:
+            os.close(slave)
+        error = child.stderr.fileno()
+        received = {master: bytearray(), error: bytearray()}
+        cursor = {master: 0, error: 0}
+        reading = [master, error]
+        pending = list(steps)
+        seen = []
+        interrupted = exited = None
+
+        def text(fd):
+            return bytes(received[fd]).replace(b"\r\n", b"\n").decode("utf-8", "replace")
+
+        def transcript():
+            return f"$ project {shlex.join(argv[2:])}\n--- pty ---\n{text(master)}\n--- stderr ---\n{text(error)}"
+
+        def locate(expected):
+            for fd in (master, error):
+                found = text(fd).find(expected, cursor[fd])
+                if found >= 0:
+                    cursor[fd] = found + len(expected)
+                    return True
+            return False
+
+        try:
+            while True:
+                if pending and locate(pending[0][0]):
+                    action = pending.pop(0)[1]
+                    seen.append(text(master) + text(error))
+                    if action is signal.SIGINT:
+                        child.send_signal(signal.SIGINT)
+                        interrupted = time.monotonic()
+                    else:
+                        with contextlib.suppress(OSError):
+                            os.write(master, (action if action == PTY_EOF else action + "\n").encode())
+                    continue
+                now = time.monotonic()
+                if child.poll() is not None:
+                    exited = exited or now
+                    if not reading or now - exited > 2:
+                        break
+                elif interrupted is not None and now - interrupted >= 1:
+                    child.send_signal(signal.SIGINT)
+                    interrupted = now
+                if now > deadline:
+                    with contextlib.suppress(OSError):
+                        os.killpg(child.pid, signal.SIGKILL)
+                    child.wait()
+                    waiting = repr(pending[0][0]) if pending else "the end of output"
+                    self.fail(f"pty run timed out after {limit}s waiting for {waiting}\n{transcript()}")
+                if not reading:
+                    time.sleep(0.05)
+                    continue
+                for fd in select.select(reading, [], [], 0.05)[0]:
+                    try:
+                        chunk = os.read(fd, 65536)
+                    except OSError as exc:
+                        if exc.errno != errno.EIO:
+                            raise
+                        chunk = b""
+                    if chunk:
+                        received[fd] += chunk
+                    else:
+                        reading.remove(fd)
+        finally:
+            os.close(master)
+            child.stderr.close()
+            if child.poll() is None:
+                with contextlib.suppress(OSError):
+                    os.killpg(child.pid, signal.SIGKILL)
+                child.wait()
+        if pending:
+            self.fail(f"project exited before the step waiting for {pending[0][0]!r}\n{transcript()}")
+        result = subprocess.CompletedProcess(argv, child.returncode, text(master), text(error))
+        result.seen = seen
+        return result
+
+    @contextlib.contextmanager
+    def inproc_terminal(self, ci, stdin_tty=True, stdout_tty=True):
+        """In-process streams and environment for module.main() (D14): the whole environment
+        replaced by question_env(ci), stdout and stderr redirected to StringIO, then the isatty
+        of sys.stdin and of sys.stdout patched independently. Yields (stdout, stderr)."""
+        stdout, stderr = io.StringIO(), io.StringIO()
+        with contextlib.ExitStack() as stack:
+            stack.enter_context(patch.dict(os.environ, self.question_env(ci), clear=True))
+            stack.enter_context(contextlib.redirect_stdout(stdout))
+            stack.enter_context(contextlib.redirect_stderr(stderr))
+            stack.enter_context(patch.object(sys, "stdin", io.StringIO()))
+            stack.enter_context(patch.object(sys.stdin, "isatty", return_value=stdin_tty))
+            stack.enter_context(patch.object(sys.stdout, "isatty", return_value=stdout_tty))
+            yield stdout, stderr
+
+    def run_inproc(self, *args, ci, answers=(), stdin_tty=True, stdout_tty=True):
+        """module.main(args) in process with builtins.input patched to the scripted answers;
+        an answer that is an exception (EOFError, KeyboardInterrupt) is raised instead.
+        Returns a CompletedProcess with the captured streams and a prompts attribute."""
+        script = list(answers)
+        prompts = []
+
+        def scripted_input(prompt=""):
+            prompts.append(prompt)
+            if not script:
+                raise AssertionError(f"Unscripted prompt: {prompt!r}")
+            answer = script.pop(0)
+            if isinstance(answer, BaseException) or (isinstance(answer, type) and issubclass(answer, BaseException)):
+                raise answer
+            return answer
+
+        with self.inproc_terminal(ci, stdin_tty, stdout_tty) as (stdout, stderr), \
+                patch("builtins.input", scripted_input):
+            code = module.main([str(arg) for arg in args])
+        self.assertEqual(script, [], "Scripted answers left unused")
+        result = subprocess.CompletedProcess(args, code, stdout.getvalue(), stderr.getvalue())
+        result.prompts = prompts
+        return result
 
     def repo(self, name="repo", branch="main"):
         path = self.base / name
@@ -608,6 +891,29 @@ class ProjectTests(unittest.TestCase):
             with self.assertRaises(module.Refused):
                 module.clean(args)
         self.assertTrue(tree.is_dir())
+
+    def test_inproc_person_at_terminal_rule(self):
+        for ci in (None, "", "0", "false", "no", " FALSE ", " No "):
+            with self.subTest(CI=ci), self.inproc_terminal(ci):
+                self.assertIs(module.person_at_terminal(), True)
+        for ci in ("true", "1", "yes", "anything"):
+            with self.subTest(CI=ci), self.inproc_terminal(ci):
+                self.assertIs(module.person_at_terminal(), False)
+        for stdin_tty, stdout_tty in ((False, True), (True, False), (False, False)):
+            with self.subTest(stdin_tty=stdin_tty, stdout_tty=stdout_tty), \
+                    self.inproc_terminal(None, stdin_tty, stdout_tty):
+                self.assertIs(module.person_at_terminal(), False)
+        for stream in ("stdin", "stdout"):
+            with self.subTest(stream=stream, value=None), self.inproc_terminal(None), \
+                    patch.object(sys, stream, None):
+                self.assertIs(module.person_at_terminal(), False)
+            with self.subTest(stream=stream, value="no isatty"), self.inproc_terminal(None), \
+                    patch.object(sys, stream, object()):
+                self.assertIs(module.person_at_terminal(), False)
+            for error in (OSError, ValueError, AttributeError):
+                with self.subTest(stream=stream, error=error.__name__), self.inproc_terminal(None), \
+                        patch.object(getattr(sys, stream), "isatty", side_effect=error):
+                    self.assertIs(module.person_at_terminal(), False)
 
 
 if __name__ == "__main__":
