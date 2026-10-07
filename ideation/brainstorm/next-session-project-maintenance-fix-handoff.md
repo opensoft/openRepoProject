@@ -362,6 +362,11 @@ carries the same consolidated list.
   9 medium / 13 low; all high and medium resolved in fix round 2; targeted
   re-verification of the round-2 fixes: 0 high / 1 medium / 4 low, all five
   resolved before the PR; result also recorded in the PR.
+- Design-only PR: [opensoft/openRepoProject#7][pr7] (governing issue
+  [#6][issue6]), opened 2026-10-07 from commit `506a66b`.
+
+[pr7]: https://github.com/opensoft/openRepoProject/pull/7
+[issue6]: https://github.com/opensoft/openRepoProject/issues/6
 
 ```sh
 python3 -I ~/.claude/skills/document-software-brainstorm/scripts/validate_packet.py \
@@ -369,6 +374,7 @@ python3 -I ~/.claude/skills/document-software-brainstorm/scripts/validate_packet
 git diff --check
 ```
 
-The packet passes the packet validator, and every high finding has a written
-contract and scenario. The remaining step of the completion gate is the
-design-only PR, whose link the next commit adds here.
+The completion gate is met: the packet passes the packet validator, every
+high finding has a written contract and scenario, and the design-only PR #7
+is open for review. No OpenSpec proposal is to be written until that PR is
+reviewed and merged, and the follow-ups above are for the next revision.
