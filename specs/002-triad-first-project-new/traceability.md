@@ -11,14 +11,14 @@ empty and that every named test is defined.
 
 | # | Requirement | Scenario | Tests |
 | --- | --- | --- | --- |
-| 1 | Delegate project creation | Preview | `test_pty_dry_run_single_answer_prints_the_generator_plan`, `test_pty_dry_run_triad_answer_prints_the_openreposhape_plan` |
+| 1 | Delegate project creation | Preview | `test_pty_dry_run_single_answer_prints_the_generator_plan`, `test_pty_dry_run_triad_answer_prints_the_openreposhape_plan`, `test_pty_shape_chosen_by_flag_keeps_openreposhape_confirmation`, `test_advisory_silent_cases` |
 | 2 | Delegate project creation | Existing project | `test_pty_refusals_before_a_path_come_first` |
-| 3 | Delegate project creation | Shape chosen by flag | |
+| 3 | Delegate project creation | Shape chosen by flag | `test_pty_shape_chosen_by_flag_keeps_openreposhape_confirmation`, `test_advisory_silent_cases` |
 | 4 | Delegate project creation | An answer is not a confirmation | `test_pty_single_answer_is_not_a_confirmation`, `test_pty_triad_delegates_without_yes_and_keeps_its_confirmation` |
 | 5 | Creation question is asked only of a person choosing at the terminal | A person at the terminal without a choosing flag | `test_pty_question_is_asked_once_the_name_is_known` |
-| 6 | Creation question is asked only of a person choosing at the terminal | A choosing flag skips the question | |
-| 7 | Creation question is asked only of a person choosing at the terminal | Not at a terminal | `test_inproc_person_at_terminal_rule` |
-| 8 | Creation question is asked only of a person choosing at the terminal | CI is set | `test_inproc_person_at_terminal_rule` |
+| 6 | Creation question is asked only of a person choosing at the terminal | A choosing flag skips the question | `test_pty_choosing_flags_skip_the_question` |
+| 7 | Creation question is asked only of a person choosing at the terminal | Not at a terminal | `test_inproc_person_at_terminal_rule`, `test_new_without_a_terminal_is_not_asked`, `test_inproc_stdout_not_a_terminal_is_not_asked` |
+| 8 | Creation question is asked only of a person choosing at the terminal | CI is set | `test_inproc_person_at_terminal_rule`, `test_pty_ci_decides_the_question` |
 | 9 | Creation question is asked only of a person choosing at the terminal | A workspace name | |
 | 10 | Creation question is asked only of a person choosing at the terminal | A dry run asks too | `test_pty_dry_run_single_answer_prints_the_generator_plan`, `test_pty_dry_run_triad_answer_prints_the_openreposhape_plan` |
 | 11 | Creation question is asked only of a person choosing at the terminal | Refusals before a path is chosen come first | `test_pty_refusals_before_a_path_come_first` |
@@ -47,13 +47,13 @@ empty and that every named test is defined.
 | 34 | A Triad answer asks for the organization and the visibility | The restating line | `test_pty_restating_line_precedes_the_plan` |
 | 35 | A Triad answer asks for the organization and the visibility | Delegation keeps openRepoShape's confirmation | `test_pty_triad_delegates_without_yes_and_keeps_its_confirmation` |
 | 36 | A Triad answer asks for the organization and the visibility | openRepoShape refuses | `test_pty_openreposhape_refusal_passes_through` |
-| 37 | Creation advisory follows a single repository created without the question | A single repository chosen by flag | |
-| 38 | Creation advisory follows a single repository created without the question | A single repository created where the question is not asked | |
-| 39 | Creation advisory follows a single repository created without the question | The advisory's content | |
-| 40 | Creation advisory follows a single repository created without the question | A generator that initialises no Git repository | |
-| 41 | Creation advisory follows a single repository created without the question | Silent cases | |
-| 42 | Creation advisory follows a single repository created without the question | Standard error cannot be written | |
-| 43 | Creation advisory follows a single repository created without the question | Never a report input | |
+| 37 | Creation advisory follows a single repository created without the question | A single repository chosen by flag | `test_advisory_after_a_flag_chosen_single_repository` |
+| 38 | Creation advisory follows a single repository created without the question | A single repository created where the question is not asked | `test_pty_advisory_where_ci_is_true`, `test_inproc_stdout_not_a_terminal_is_not_asked` |
+| 39 | Creation advisory follows a single repository created without the question | The advisory's content | `test_advisory_content` |
+| 40 | Creation advisory follows a single repository created without the question | A generator that initialises no Git repository | `test_advisory_after_a_flag_chosen_single_repository` |
+| 41 | Creation advisory follows a single repository created without the question | Silent cases | `test_advisory_silent_cases`, `test_pty_single_answers_take_the_bench_path`, `test_pty_triad_delegates_without_yes_and_keeps_its_confirmation` |
+| 42 | Creation advisory follows a single repository created without the question | Standard error cannot be written | `test_advisory_with_stderr_closed`, `test_advisory_with_stderr_on_dev_full`, `test_advisory_with_stderr_on_a_closed_pipe` |
+| 43 | Creation advisory follows a single repository created without the question | Never a report input | `test_advisory_is_never_a_report_input` |
 | 44 | Creation offer precedes the workflow follow-up | Two advisories back to back | |
 | 45 | Creation offer precedes the workflow follow-up | The follow-up fails | |
 | 46 | Creation offer precedes the workflow follow-up | A single-repository answer with --workflow | |

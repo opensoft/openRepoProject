@@ -72,6 +72,13 @@ DECLINED = "Cancelled; no command was run."
 INVALID_NAME = "Project name must start with a letter or digit and contain letters, digits, _ or -."
 PARENT_AND_INTO = "Use either positional parent or --into."
 DESTINATION_EXISTS = "Destination already exists: {PATH}"
+SHAPE_NEEDS_ORG_AND_VISIBILITY = "Shape creation requires --org and --visibility."
+ORG_NEEDS_SHAPE = "--org, --visibility, --family and --elected-by require --shape."
+NOT_A_TERMINAL = "{PROMPT} Supply explicit options when stdin is not a terminal."
+NOT_CREATED = "Generator returned success but did not create {PATH}"
+WORKFLOW_MISSING = "--workflow requires setup-openspeckit on PATH."
+NO_GENERATOR = "No matching generator; run project benches."
+WORKFLOW_FAILED = "Project created at {PATH}; workflow setup failed."
 
 # The fakes of D14. Each is a script for this interpreter, so it needs nothing
 # else on PATH; {python} and {status} are filled in when it is written.
@@ -388,6 +395,42 @@ class ProjectTests(unittest.TestCase):
                 "openRepoShape": ("MyApp", False, (), [OBSTACLE_OPENREPOSHAPE]),
                 "parent": ("MyApp", True, ("--into", absent), [parent_line]),
                 "all three": ("my-app", False, ("--into", absent), [name_line, OBSTACLE_OPENREPOSHAPE, parent_line])}
+
+    def run_cli_streams(self, *args, stdin="", stderr=subprocess.PIPE, prefix=()):
+        """Like run_cli, with the stdin text and the stderr target chosen by the test (a pipe,
+        subprocess.STDOUT, a descriptor or a file) and an optional command prefix, such as a
+        shell that closes stderr before it runs project."""
+        return subprocess.run([*prefix, sys.executable, str(CLI), *map(str, args)],
+                              cwd=self.base, env=self.env, input=stdin, text=True,
+                              stdout=subprocess.PIPE, stderr=stderr, timeout=20)
+
+    def creation_stdout(self, name, parent=None):
+        """The pinned stdout of a test-generator creation of name in parent (PROJECTS_DIR by
+        default) that is confirmed and not asked: the plan, then Created: and Next:."""
+        parent = parent or self.base
+        destination = parent / name
+        return (f"Create: {destination}\n  " + shlex.join(["bash", str(self.generator), name, str(parent)])
+                + f"\nCreated: {destination}\nNext: project doctor {shlex.quote(str(destination))}\n")
+
+    def advisory(self, name):
+        """The two creation advisory lines for name, from the D13 fixtures."""
+        return [ADVISORY_PREFERENCE.format(NAME=name), ADVISORY_CONVERSION]
+
+    def assert_created(self, destination, parent=None):
+        """destination holds exactly the test generator's file and the pinned .project.json."""
+        parent = parent or destination.parent
+        self.assertEqual(sorted(path.name for path in destination.iterdir()), [".project.json", "arguments"])
+        self.assertEqual((destination / "arguments").read_text(), f"{destination.name}\n{parent}\n")
+        self.assertEqual((destination / ".project.json").read_text(),
+                         json.dumps({"schema_version": 1, "bench": "testBench", "type": "test"}, indent=2) + "\n")
+
+    def assert_advised_run_unharmed(self, result, name):
+        """A --type test --yes creation whose stderr could not take the advisory: exit 0, the
+        pinned stdout with no warning: in it, and the repository created."""
+        self.assert_status(result, 0)
+        self.assertEqual(result.stdout, self.creation_stdout(name))
+        self.assertNotIn("warning:", result.stdout)
+        self.assert_created(self.base / name)
 
     def repo(self, name="repo", branch="main"):
         path = self.base / name
@@ -1401,6 +1444,232 @@ class ProjectTests(unittest.TestCase):
         self.assertNotIn(OBSTACLE_LINE_START, result.stdout + result.stderr)
         self.assert_line_ends(result.stderr, REFUSED + ORG_ENDED)
         self.assertIsNone(self.shape_record())
+
+    def test_pty_choosing_flags_skip_the_question(self):
+        env = self.shape_env(ci=None)
+        destination = self.base / "MyApp"
+        plan = [f"Create: {destination}", "  " + shlex.join(["bash", str(self.generator), "MyApp", str(self.base)])]
+        declined = [(CONFIRM_PROMPT, "no")]
+        cases = {"--shape": (("--shape",), [], 2, SHAPE_NEEDS_ORG_AND_VISIBILITY),
+                 "--org": (("--org", "example"), [], 2, ORG_NEEDS_SHAPE),
+                 "--visibility": (("--visibility", "private"), [], 2, ORG_NEEDS_SHAPE),
+                 "--family": (("--family", "Products"), [], 2, ORG_NEEDS_SHAPE),
+                 "--elected-by": (("--elected-by", "alice"), [], 2, ORG_NEEDS_SHAPE),
+                 "--bench": (("--bench", "testBench"), declined, 2, DECLINED),
+                 "--type": (("--type", "test"), declined, 2, DECLINED),
+                 "--description": (("--description", "python"), declined, 2, DECLINED),
+                 '--description ""': (("--description", ""), declined, 2, DECLINED),
+                 "--yes": (("--yes",), [], 0, None)}
+        for label, (flags, steps, status, refusal) in cases.items():
+            with self.subTest(label):
+                result = self.run_pty("new", "MyApp", *flags, env=env, steps=steps)
+                self.assert_status(result, status)
+                self.assert_not_asked(result)
+                if refusal is None:
+                    for line in [*plan, f"Created: {destination}"]:
+                        self.assert_line(result.stdout, line)
+                    self.assert_created(destination)
+                    shutil.rmtree(destination)
+                    continue
+                self.assert_line_ends(result.stderr, REFUSED + refusal)
+                if steps:
+                    for line in plan:
+                        self.assert_line(result.stdout, line)
+                else:
+                    self.assertNotIn("Create:", result.stdout)
+                self.assertFalse(destination.exists())
+        self.assertIsNone(self.shape_record())
+
+    def test_pty_shape_chosen_by_flag_keeps_openreposhape_confirmation(self):
+        env = self.shape_env(ci=None)
+        shape = ("--shape", "--org", "example", "--visibility", "private")
+        preview = self.base / "Lyra"
+        result = self.run_pty("new", "Lyra", *shape, "--dry-run", env=env)
+        self.assert_status(result, 0)
+        self.assert_not_asked(result)
+        self.assert_line(result.stdout, f"Create: {preview}")
+        self.assert_line(result.stdout, "  " + shlex.join(["openRepoShape", "Lyra", "--org", "example", "--visibility",
+                                                           "private", "--into", str(self.base)]))
+        self.assertIsNone(self.shape_record())
+        self.assertFalse(preview.exists())
+        self.assertNotIn("warning:", result.stdout + result.stderr)
+        for name, extra in (("Atlas", ()), ("Orion", ("--yes",))):
+            destination = self.base / name
+            with self.subTest(name=name, flags=" ".join(shape + extra)):
+                result = self.run_pty("new", name, *shape, *extra, env=env, steps=[(FAKE_SHAPE_PROMPT, "yes")])
+                self.assert_status(result, 0)
+                self.assert_not_asked(result)
+                self.assertTrue(destination.is_dir())
+                self.assertEqual(self.shape_record()[-1],
+                                 [name, "--org", "example", "--visibility", "private", "--into", str(self.base)])
+                self.assert_in_order(result.stdout, f"Create: {destination}", FAKE_SHAPE_PROMPT, f"Created: {destination}")
+                self.assertNotIn("warning:", result.stdout + result.stderr)
+        with self.subTest(name="my-app", flags=" ".join(shape)):
+            result = self.run_pty("new", "my-app", *shape, env=env, steps=[(FAKE_SHAPE_PROMPT, "no")])
+            self.assert_status(result, 1)
+            self.assert_not_asked(result)
+            self.assertNotIn(OBSTACLE_LINE_START, result.stdout + result.stderr)
+            self.assertEqual(self.shape_record()[-1],
+                             ["my-app", "--org", "example", "--visibility", "private", "--into", str(self.base)])
+            self.assert_line(result.stdout, FAKE_SHAPE_DECLINED)
+            self.assertFalse((self.base / "my-app").exists())
+            self.assertNotIn("warning:", result.stdout + result.stderr)
+        self.assertEqual(len(self.shape_record()), 3)
+        self.assertTrue(all("--yes" not in argv for argv in self.shape_record()))
+
+    def test_new_without_a_terminal_is_not_asked(self):
+        self.env = self.question_env(None)
+        destination = self.base / "MyApp"
+        result = self.run_cli("new", "MyApp")
+        self.assert_status(result, 2)
+        self.assert_not_asked(result)
+        self.assertEqual(result.stdout, f"Create: {destination}\n  "
+                         + shlex.join(["bash", str(self.generator), "MyApp", str(self.base)]) + "\n")
+        self.assertEqual(result.stderr, REFUSED + NOT_A_TERMINAL.format(PROMPT=CONFIRM_PROMPT) + "\n")
+        self.assertFalse(destination.exists())
+
+    def test_inproc_stdout_not_a_terminal_is_not_asked(self):
+        result = self.run_inproc("new", "MyApp", ci=None, answers=["yes"], stdin_tty=True, stdout_tty=False)
+        self.assert_status(result, 0)
+        self.assert_not_asked(result)
+        self.assertEqual(result.prompts, [CONFIRM_PROMPT + " "])
+        self.assertEqual(result.stdout, self.creation_stdout("MyApp"))
+        self.assertEqual(result.stderr, "\n".join(self.advisory("MyApp")) + "\n")
+        self.assert_created(self.base / "MyApp")
+
+    def test_pty_ci_decides_the_question(self):
+        for ci in ("true", "1", "yes", " TRUE "):
+            with self.subTest(CI=ci):
+                result = self.run_pty("new", "MyApp", env=self.question_env(ci), steps=[(CONFIRM_PROMPT, "no")])
+                self.assert_status(result, 2)
+                self.assert_not_asked(result)
+                self.assert_line_ends(result.stderr, REFUSED + DECLINED)
+        for ci in ("", "0", "false", "no", " FALSE ", " No "):
+            with self.subTest(CI=ci):
+                result = self.run_pty("new", "MyApp", env=self.question_env(ci), steps=[(QUESTION_PROMPT, PTY_EOF)])
+                self.assert_status(result, 2)
+                self.assert_line(result.stdout, QUESTION_HEADER.format(NAME="MyApp"))
+                self.assert_line_ends(result.stderr, REFUSED + QUESTION_ENDED)
+        self.assertFalse((self.base / "MyApp").exists())
+
+    def test_advisory_after_a_flag_chosen_single_repository(self):
+        self.env = self.question_env("true")
+        destination = self.base / "Flagged"
+        result = self.run_cli("new", "Flagged", "--type", "test", "--yes")
+        self.assert_status(result, 0)
+        self.assertEqual(result.stdout, self.creation_stdout("Flagged"))
+        self.assertEqual(result.stderr, "\n".join(self.advisory("Flagged")) + "\n")
+        self.assert_created(destination)
+        self.assertFalse((destination / ".git").exists())
+
+    def test_pty_advisory_where_ci_is_true(self):
+        destination = self.base / "CiApp"
+        result = self.run_pty("new", "CiApp", env=self.question_env("true"), steps=[(CONFIRM_PROMPT, "yes")])
+        self.assert_status(result, 0)
+        self.assert_not_asked(result)
+        first, second = self.advisory("CiApp")
+        self.assertNotIn("warning:", result.seen[0])
+        self.assert_line_ends(result.stderr, first)
+        self.assert_line(result.stderr, second)
+        self.assert_in_order(result.stderr, first, second)
+        self.assertNotIn("warning:", result.stdout)
+        self.assert_line(result.stdout, f"Created: {destination}")
+        self.assert_created(destination)
+
+    def test_advisory_content(self):
+        for line in (ADVISORY_PREFERENCE, ADVISORY_CONVERSION):
+            self.assertTrue(line.startswith("warning:"), line)
+            self.assertTrue(line.isascii(), line)
+        for term in ("preferred, not required", "elective", "confers nothing"):
+            self.assertIn(term, ADVISORY_PREFERENCE)
+        for term in ("adopt-project.py", "a person deciding for this project", "single-repository.yaml",
+                     "Nothing here changes"):
+            self.assertIn(term, ADVISORY_CONVERSION)
+        self.env = self.question_env("true")
+        result = self.run_cli("new", "Flagged", "--type", "test", "--yes")
+        self.assert_status(result, 0)
+        self.assertTrue(result.stderr.isascii())
+        self.assertEqual(result.stderr.splitlines(), self.advisory("Flagged"))
+
+    def test_advisory_silent_cases(self):
+        self.env = self.shape_env(ci=None)
+        with self.subTest("--dry-run"):
+            result = self.run_cli("new", "Dry", "--type", "test", "--dry-run")
+            self.assert_status(result, 0)
+            self.assertEqual(result.stdout, f"Create: {self.base / 'Dry'}\n  "
+                             + shlex.join(["bash", str(self.generator), "Dry", str(self.base)]) + "\n")
+            self.assertEqual(result.stderr, "")
+        with self.subTest("--shape through the fake"):
+            result = self.run_cli_streams("new", "Shaped", "--shape", "--org", "example", "--visibility", "private",
+                                          stdin="yes\n")
+            self.assert_status(result, 0)
+            self.assertTrue((self.base / "Shaped").is_dir())
+            self.assertEqual(self.shape_record(),
+                             [["Shaped", "--org", "example", "--visibility", "private", "--into", str(self.base)]])
+            self.assertNotIn("warning:", result.stdout + result.stderr)
+        with self.subTest("generator exits 17"):
+            self.generator.write_text("#!/bin/bash\nexit 17\n")
+            result = self.run_cli("new", "Failed", "--type", "test", "--yes")
+            self.assert_status(result, 17)
+            self.assertNotIn("warning:", result.stdout + result.stderr)
+            self.assertFalse((self.base / "Failed").exists())
+        with self.subTest("generator creates nothing"):
+            self.generator.write_text("#!/bin/bash\nexit 0\n")
+            result = self.run_cli("new", "Empty", "--type", "test", "--yes")
+            self.assert_status(result, 2)
+            self.assertEqual(result.stderr, REFUSED + NOT_CREATED.format(PATH=self.base / "Empty") + "\n")
+            self.assertNotIn("warning:", result.stdout)
+
+    def test_advisory_with_stderr_closed(self):
+        self.env = self.question_env(None)
+        result = self.run_cli_streams("new", "Closed", "--type", "test", "--yes",
+                                      prefix=("/bin/sh", "-c", 'exec "$@" 2>&-', "sh"))
+        self.assert_advised_run_unharmed(result, "Closed")
+
+    def test_advisory_with_stderr_on_dev_full(self):
+        if not os.path.exists("/dev/full"):
+            self.skipTest("/dev/full does not exist here; the closed-pipe test covers the guard")
+        self.env = self.question_env(None)
+        with open("/dev/full", "w") as full:
+            result = self.run_cli_streams("new", "Full", "--type", "test", "--yes", stderr=full)
+        self.assert_advised_run_unharmed(result, "Full")
+
+    def test_advisory_with_stderr_on_a_closed_pipe(self):
+        self.env = self.question_env(None)
+        read_end, write_end = os.pipe()
+        os.close(read_end)
+        try:
+            result = self.run_cli_streams("new", "Broken", "--type", "test", "--yes", stderr=write_end)
+        finally:
+            os.close(write_end)
+        self.assert_advised_run_unharmed(result, "Broken")
+
+    def test_advisory_is_never_a_report_input(self):
+        self.env = self.question_env(None)
+        parents = {"advised": self.base / "advised", "asked": self.base / "asked"}
+        for parent in parents.values():
+            parent.mkdir()
+        advised = self.run_cli("new", "Same", "--into", parents["advised"], "--type", "test", "--yes")
+        self.assert_status(advised, 0)
+        self.assertEqual(advised.stderr, "\n".join(self.advisory("Same")) + "\n")
+        asked = self.run_pty("new", "Same", "--into", parents["asked"], env=self.env,
+                             steps=[(QUESTION_PROMPT, "2"), (CONFIRM_PROMPT, "yes")])
+        self.assert_status(asked, 0)
+        self.assertNotIn("warning:", asked.stdout + asked.stderr)
+        roots = {label: parent / "Same" for label, parent in parents.items()}
+        for label, root in roots.items():
+            with self.subTest(files=label):
+                self.assert_created(root)
+        for command in (("status",), ("status", "--json"), ("doctor",), ("doctor", "--json")):
+            with self.subTest(report=" ".join(command)):
+                reports = []
+                for root in roots.values():
+                    result = self.run_cli(command[0], root, *command[1:])
+                    reports.append((result.returncode, result.stdout.replace(str(root), "ROOT"),
+                                    result.stderr.replace(str(root), "ROOT")))
+                self.assertEqual(reports[0], reports[1])
+                for text in ("adopt-project.py", "single-repository.yaml", "preferred, not required"):
+                    self.assertNotIn(text, reports[0][1] + reports[0][2])
 
 
 if __name__ == "__main__":

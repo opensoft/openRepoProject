@@ -275,6 +275,37 @@ def ask_twice(prompt, accept, retry, missed, ended):
     raise Refused(missed)
 
 
+def write_creation_advisory(name):
+    """The two creation advisory lines on stderr only, through a guarded write that can neither
+    reach stdout nor change the exit status (design D7, D13)."""
+    if sys.stdout is not None:
+        try:
+            sys.stdout.flush()
+        except (OSError, ValueError, AttributeError):
+            pass
+    stream = sys.stderr
+    if stream is None:
+        return
+    text = (f"warning: {name} was created as a single repository. The Triad (an assembly root with a spec leg"
+            " and a code leg) is preferred, not required: it stays elective and confers nothing.\n"
+            "warning: openRepoShape's adopt-project.py converts a repository in place when a person deciding"
+            " for this project runs it, and a project that stays single can say so in single-repository.yaml."
+            " Nothing here changes.\n")
+    try:
+        try:
+            descriptor = stream.fileno()
+        except (OSError, ValueError, AttributeError):
+            # No descriptor (an in-process StringIO): write the text to the stream itself.
+            stream.write(text)
+            return
+        # A direct descriptor write leaves nothing buffered for the interpreter's final flush.
+        data = text.encode("ascii", errors="replace")
+        while data:
+            data = data[os.write(descriptor, data):]
+    except (OSError, ValueError, AttributeError):
+        pass
+
+
 def new(args):
     name = args.name or ask("Project name:")
     if not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9_-]*", name):
@@ -367,6 +398,8 @@ def new(args):
             with profile.open("x") as stream:
                 json.dump({"schema_version": 1, "bench": row["bench"], "type": row["type"]}, stream, indent=2)
                 stream.write("\n")
+    if row and not offer and not workspace:
+        write_creation_advisory(name)
     for followup in commands[1:]:
         code = execute(followup)
         if code:
