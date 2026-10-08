@@ -18,7 +18,7 @@ duplicate them.
 ## 2. Speckit handoff
 
 - [x] 2.1 Exactly one Speckit feature owns the implementation: `specs/002-<slug>/`, to be created by `/speckit.specify` after 1.6 (numbering is sequential, and only `specs/001-project-command` exists); verified when "Speckit Handoff" below names its feature identifier, branch and repo-relative `tasks.md` path, filled in once. Created: feature 002-triad-first-project-new on branch 002-triad-first-project-new (worktree ../openRepoProject-worktrees/002-triad-first-project-new), spec at specs/002-triad-first-project-new/spec.md.
-- [ ] 2.2 `/opsx:apply` is not run until "Speckit Handoff" names exactly one feature; verified by reading that section before the first `/opsx:apply`.
+- [x] 2.2 `/opsx:apply` is not run until "Speckit Handoff" names exactly one feature; verified by reading that section before the first `/opsx:apply`. Met: the handoff named feature 002-triad-first-project-new at c492c75 before the first implementation commit 9107ee9.
 
 ## 3. Landing and archive readiness
 
@@ -38,6 +38,6 @@ and the tests of `design.md` D14.
 
 - Feature identifier: 002-triad-first-project-new
 - Branch: 002-triad-first-project-new (worktree ../openRepoProject-worktrees/002-triad-first-project-new, cut from main at ca4c615)
-- Tasks: specs/002-triad-first-project-new/tasks.md (created by /speckit.tasks; the path is reserved until then)
+- Tasks: specs/002-triad-first-project-new/tasks.md (created by /speckit.tasks)
 
 `/opsx:apply` is not run until this section names exactly one feature.

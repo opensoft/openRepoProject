@@ -67,7 +67,7 @@ The question is not asked when:
   `--elected-by`, `--bench`, `--type`, `--description` or `--yes`, even with an
   empty value;
 - stdin or stdout is not a terminal;
-- `CI` is set to anything other than empty, `0`, `false` or `no`;
+- `CI` is set to anything other than empty, `0`, `false` or `no`, in any letter case and ignoring surrounding spaces;
 - the name is a `<user>-wip` workspace name, such as `alice-wip`.
 
 A choosing flag restores the path without the question exactly: its prompts,
@@ -245,7 +245,7 @@ No component silently pulls Git branches or implements pin/worktree mechanics.
 | --- | --- |
 | `--workbenches PATH` / `WORKBENCHES_ROOT` | Explicit bench registry checkout |
 | `PROJECTS_DIR` | Projects directory for discovery and default creation |
-| `CI` | A value other than empty, `0`, `false` or `no` means `project new` asks no creation question |
+| `CI` | A value other than empty, `0`, `false` or `no` (any letter case, surrounding spaces ignored) means `project new` asks no creation question |
 | `.project.json` | Portable project bench/type/container declarations |
 | `~/.agents/workspace.yaml` | Existing park/resume workspace config, read-only here |
 | `SPECKIT_WORKSPACE_PATH` | Override the local parked-work workspace path |

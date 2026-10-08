@@ -6,7 +6,7 @@ Lane: openRepoProject-1
 
 **Created**: 2026-10-07
 
-**Status**: Draft
+**Status**: Implemented (PR #8)
 
 **Input**: User description: "Realize the ratified OpenSpec change
 prefer-triad-in-project-new: `project new` offers the Triad first to a person

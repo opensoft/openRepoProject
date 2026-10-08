@@ -1280,14 +1280,14 @@ class ProjectTests(unittest.TestCase):
 
     def test_pty_triad_delegates_without_yes_and_keeps_its_confirmation(self):
         env = self.shape_env(ci=None)
-        answers = [(QUESTION_PROMPT, ""), (ORG_PROMPT, "example"), (VIS_PROMPT, "private")]
+        answers = [(QUESTION_PROMPT, ""), (ORG_PROMPT, " Example-Org "), (VIS_PROMPT, "private")]
         destination = self.base / "Atlas"
         result = self.run_pty("new", "Atlas", env=env, steps=[*answers, (FAKE_SHAPE_PROMPT, "yes")])
         self.assert_status(result, 0)
         self.assertTrue(destination.is_dir())
         self.assertEqual(self.shape_record(),
-                         [["Atlas", "--org", "example", "--visibility", "private", "--into", str(self.base)]])
-        self.assert_in_order(result.stdout, RESTATED.format(NAME="Atlas", ORG="example", VIS="private"),
+                         [["Atlas", "--org", "Example-Org", "--visibility", "private", "--into", str(self.base)]])
+        self.assert_in_order(result.stdout, RESTATED.format(NAME="Atlas", ORG="Example-Org", VIS="private"),
                              f"Create: {destination}", FAKE_SHAPE_PROMPT, f"Created: {destination}")
         self.assertNotIn("warning:", result.stdout + result.stderr)
         declined = self.run_pty("new", "Orion", env=env, steps=[*answers, (FAKE_SHAPE_PROMPT, "no")])
@@ -1296,7 +1296,7 @@ class ProjectTests(unittest.TestCase):
         self.assertFalse((self.base / "Orion").exists())
         self.assertNotIn("Created:", declined.stdout)
         self.assertEqual(self.shape_record()[-1],
-                         ["Orion", "--org", "example", "--visibility", "private", "--into", str(self.base)])
+                         ["Orion", "--org", "Example-Org", "--visibility", "private", "--into", str(self.base)])
         self.assertNotIn("warning:", declined.stdout + declined.stderr)
         self.assertTrue(all("--yes" not in argv for argv in self.shape_record()))
 

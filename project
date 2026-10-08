@@ -320,7 +320,7 @@ def new(args):
         destination = (parent if parent.name == args.family else parent / args.family) / name
     if destination.exists() or destination.is_symlink():
         raise Refused(f"Destination already exists: {destination}")
-    # One decision, computed once; the question and the advisory read only offer (design D1, D2).
+    # One decision, computed once; the hoisted check, the question and the advisory read offer, and nothing re-derives terminal state (design D1, D2).
     workspace = bool(WORKSPACE_NAME.fullmatch(name))
     chosen = bool(args.shape or args.yes) or any(value is not None for value in (
         args.org, args.visibility, args.family, args.elected_by, args.bench, args.type, args.description))
