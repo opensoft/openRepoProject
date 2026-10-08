@@ -201,6 +201,111 @@ def choose(rows, args):
     return selected[int(answer) - 1]
 
 
+# Name forms copied from openRepoShape and pinned by sha, never read at run time
+# (design D3, D10); re-pin both when that contract changes.
+# openRepoShape contracts/repository-naming.yaml:345 (family project-leg, role assembly)
+# at 1a9fc537bcce37301c85fc108fabd8a599b02000
+ASSEMBLY_NAME = re.compile(r"^[A-Za-z][A-Za-z0-9]*$")
+# openRepoShape contracts/repository-naming.yaml:412 (family workspace)
+# at 1a9fc537bcce37301c85fc108fabd8a599b02000
+WORKSPACE_NAME = re.compile(r"^[a-z0-9]+(?:-[a-z0-9]+)*-wip$")
+# CI values that still count as a person at a terminal: setup-openspeckit's
+# CI_FALSE_VALUES (workBenches d86ba59, setup-openspeckit:131).
+CI_FALSE_VALUES = ("", "0", "false", "no")
+
+
+def person_at_terminal():
+    """True only when CI reads false and stdin and stdout are both terminals (design D1)."""
+    if os.environ.get("CI", "").strip().lower() not in CI_FALSE_VALUES:
+        return False
+    try:
+        return bool(sys.stdin is not None and sys.stdout is not None
+                    and sys.stdin.isatty() and sys.stdout.isatty())
+    except (AttributeError, OSError, ValueError):
+        return False
+
+
+# Answers to the creation question, compared stripped and lower-cased (design D4).
+TRIAD_ANSWERS = {"": "triad", "1": "triad", "y": "triad", "yes": "triad",
+                 "2": "single", "n": "single", "no": "single"}
+# The visibility is typed in full; openRepoShape receives the lower-case word (design D5).
+VISIBILITIES = ("private", "public", "internal")
+
+
+def known_obstacles(name, parent):
+    """The known Triad obstacles as D13 sentences, in the order name, openRepoShape, parent: three
+    local reads, with no network and no subprocess (design D3)."""
+    obstacles = []
+    if not ASSEMBLY_NAME.fullmatch(name):
+        obstacles.append(f"{name} cannot be a Triad name; a Triad name is a letter first, then letters and digits"
+                         " only, such as MyApp.")
+    if shutil.which("openRepoShape") is None:
+        obstacles.append("openRepoShape is not on PATH. Install openRepoShape through workBenches first.")
+    if not parent.is_dir():
+        obstacles.append(f"The parent directory {parent} does not exist; a Triad is created inside an existing"
+                         " directory.")
+    return obstacles
+
+
+def print_creation_question(name, obstacles):
+    """The creation question's lines on stdout, one line per known obstacle sentence (design D4, D13)."""
+    print(f"How should {name} be created? Nothing is created until you confirm.")
+    print("  1. Triad (default): an assembly root with a spec leg and a code leg, made by openRepoShape."
+          " It is preferred, not required: it stays elective and confers nothing.")
+    for sentence in obstacles:
+        print(f"     Not possible here: {sentence}")
+    print("  2. Single repository: fully supported, and no reason is asked."
+          " single-repository.yaml is the ratified way to record staying single.")
+
+
+def ask_twice(prompt, accept, retry, missed, ended):
+    """Ask through ask(); accept returns the value of a recognised answer, else None. The first
+    unrecognised answer prints retry and asks once more; a second refuses with missed, and end
+    of input refuses with ended. An interrupt is left to main() (design D4)."""
+    for attempt in range(2):
+        try:
+            answer = ask(prompt)
+        except EOFError:
+            raise Refused(ended) from None
+        value = accept(answer)
+        if value is not None:
+            return value
+        if not attempt:
+            print(retry)
+    raise Refused(missed)
+
+
+def write_creation_advisory(name):
+    """The two creation advisory lines on stderr only, through a guarded write that can neither
+    reach stdout nor change the exit status (design D7, D13)."""
+    if sys.stdout is not None:
+        try:
+            sys.stdout.flush()
+        except (OSError, ValueError, AttributeError):
+            pass
+    stream = sys.stderr
+    if stream is None:
+        return
+    text = (f"warning: {name} was created as a single repository. The Triad (an assembly root with a spec leg"
+            " and a code leg) is preferred, not required: it stays elective and confers nothing.\n"
+            "warning: openRepoShape's adopt-project.py converts a repository in place when a person deciding"
+            " for this project runs it, and a project that stays single can say so in single-repository.yaml."
+            " Nothing here changes.\n")
+    try:
+        try:
+            descriptor = stream.fileno()
+        except (OSError, ValueError, AttributeError):
+            # No descriptor (an in-process StringIO): write the text to the stream itself.
+            stream.write(text)
+            return
+        # A direct descriptor write leaves nothing buffered for the interpreter's final flush.
+        data = text.encode("ascii", errors="replace")
+        while data:
+            data = data[os.write(descriptor, data):]
+    except (OSError, ValueError, AttributeError):
+        pass
+
+
 def new(args):
     name = args.name or ask("Project name:")
     if not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9_-]*", name):
@@ -215,6 +320,40 @@ def new(args):
         destination = (parent if parent.name == args.family else parent / args.family) / name
     if destination.exists() or destination.is_symlink():
         raise Refused(f"Destination already exists: {destination}")
+    # One decision, computed once; the hoisted check, the question and the advisory read offer, and nothing re-derives terminal state (design D1, D2).
+    workspace = bool(WORKSPACE_NAME.fullmatch(name))
+    chosen = bool(args.shape or args.yes) or any(value is not None for value in (
+        args.org, args.visibility, args.family, args.elected_by, args.bench, args.type, args.description))
+    offer = not workspace and not chosen and person_at_terminal()
+    # Hoisted for an asked invocation only; the later check keeps every other invocation's order (design D2, D8).
+    if offer and args.workflow and shutil.which("setup-openspeckit") is None:
+        raise Refused("--workflow requires setup-openspeckit on PATH.")
+    if offer:
+        obstacles = known_obstacles(name, parent)
+        print_creation_question(name, obstacles)
+        triad = ask_twice("Create it as a Triad? [Y/n or 1/2]:", lambda answer: TRIAD_ANSWERS.get(answer.lower()),
+                          "Answer y or 1 for the Triad, n or 2 for a single repository; Enter takes the Triad.",
+                          "No recognised answer to the Triad question; nothing was created.",
+                          "No answer to the Triad question (end of input); nothing was created.") == "triad"
+        if triad and obstacles:
+            raise Refused("A Triad cannot be created here. " + " ".join(obstacles) + " Nothing was created.")
+        if triad:
+            # The answers set exactly the fields the flags would; the shape branch below re-checks them (design D2, D5).
+            args.org = ask_twice("GitHub organization for the Triad:",
+                                 lambda answer: answer if re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9-]*", answer) else None,
+                                 "An organization name starts with a letter or digit and has only letters, digits and hyphens.",
+                                 "Invalid GitHub organization name. Nothing was created.",
+                                 "No GitHub organization was given (end of input); nothing was created.")
+            args.visibility = ask_twice("Visibility (private, public or internal):",
+                                        lambda answer: answer.lower() if answer.lower() in VISIBILITIES else None,
+                                        "Type the visibility in full: private, public or internal.",
+                                        "Visibility must be private, public or internal. Nothing was created.",
+                                        "No visibility was given (end of input); nothing was created.")
+            args.shape = True
+            if args.visibility == "public":
+                print(f"Triad {name} in organization {args.org}, visibility public: anyone can read the repositories.")
+            else:
+                print(f"Triad {name} in organization {args.org}, visibility {args.visibility}.")
     if args.shape:
         if args.bench or args.type or args.description:
             raise Refused("Shape creation has no bench generator adapter yet; omit --bench/--type/--description.")
@@ -262,6 +401,8 @@ def new(args):
             with profile.open("x") as stream:
                 json.dump({"schema_version": 1, "bench": row["bench"], "type": row["type"]}, stream, indent=2)
                 stream.write("\n")
+    if row and not offer and not workspace:
+        write_creation_advisory(name)
     for followup in commands[1:]:
         code = execute(followup)
         if code:
