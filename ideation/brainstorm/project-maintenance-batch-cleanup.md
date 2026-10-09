@@ -27,19 +27,27 @@ recorded: the safety boundary, reconcilable execution and interruption,
 bounded and shared probe work, the repository and JSON contracts, and the
 batch acceptance scenarios.
 
-The design contract baseline is `a040790`. `origin/main` is now `ca4c615`:
-PR #4 archived the completed OpenSpec changes and promoted their specs to
-`openspec/specs/`, and PR #5 (merged 2026-10-07T10:02Z) added the
-`prefer-triad-in-project-new` OpenSpec proposal under `openspec/changes/`;
-the `project` executable and its tests are unchanged since `a040790`. The
+The design contract baseline is `a040790`. `origin/main` is now `d7f6b0e`,
+which merged PR #8 (feature 002, "offer the Triad first in `project new`")
+on 2026-10-08. Before it, `da33d92` merged PR #7 (this packet) on
+2026-10-07, PR #4 archived the completed OpenSpec changes and promoted their
+specs to `openspec/specs/`, and PR #5 (merged 2026-10-07T10:02Z) added the
+`prefer-triad-in-project-new` OpenSpec proposal under `openspec/changes/`.
+PR #8 added about 141 lines to `project`, all in `choose()` and `new()`, and
+1,163 lines to `tests/test_project.py`; the cleanup, status, doctor, and
+update paths are unchanged in content but sit about 141 lines lower, so every
+`project` line citation stays pinned at `a040790`, whose `project` is
+byte-identical through `da33d92`. The
 governing cleanup specification is `openspec/specs/project-clean/spec.md`
 with `openspec/specs/project-clean-review-safety/spec.md`. That contract has
 separate `remove` and `delete-branch` actions: removing a worktree leaves its
 local branch intact, and branch deletion requires a later explicit action.
 The `cleanup` branch (PR #2, closed unmerged on 2026-10-07; branch retained
 on origin at `bb91a49`) contains unmerged changes in `5fc2b51` (paired
-branch retirement), `1789ad9` (disposable cache handling), and `bb91a49`
-(cache deletion hardening). `12db36a` is review closure only.
+branch retirement), `acf0133` (doctor repository health), `80fdef3`
+(health-warning fixes and regressions), `1789ad9` (disposable cache
+handling), `09af8c8` (remote merge status), and `bb91a49` (cache deletion
+hardening). `12db36a` is review closure only.
 
 Baseline facts this design builds on: `clean` resolves its target with
 `discover`, builds `cleanup_report`, and already runs
@@ -49,9 +57,11 @@ report and compares `cleanup_signature`: `path`, `branch`, `head`, `present`,
 `dirty`, `ignored_files`, `upstream`, `ahead`, `behind`, `remote_present`,
 `merged_into_target`, `current`, and `classification`, plus `target_branch`.
 `Refused` and `OSError` exit 2, a keyboard interrupt or end of input exits
-130, `--json` with `--apply` is refused, a worktree row's `ignored_files` is
-an integer count or `null`, and each Git probe has a 15 s timeout with no
-invocation deadline.
+130, `--json` with `--apply` is refused, and a worktree row's
+`ignored_files` is an integer count or `null`. Only the children run through
+`probe()` have a timeout, a fixed 15 s; the `push`, `remove`, and
+`delete-branch` children run through `execute()` have none, and the run as
+a whole has no deadline.
 
 This MVP deliberately targets the current contract. It batches worktree
 removal only. It does not silently depend on paired branch retirement or cache
@@ -77,9 +87,11 @@ builds its own fresh plan, prints it, and asks the user to confirm the exact
 listed worktrees and their retained local branches. `--yes` accepts that
 fresh plan for scripted use, and the optional `--expect-plan` makes the
 acceptance conditional on the fresh plan matching an earlier preview; its
-value must be 64 lowercase hexadecimal characters. `--json` stays read-only,
-matching the existing interface; the apply result record is defined below, and
-whether it may be printed as JSON is an open decision. `--all-safe` cannot be
+value must be 64 lowercase hexadecimal characters. Without `--apply`,
+`--json` stays read-only, matching the existing interface; with `--apply` it
+is accepted for `--all-safe` and `--action remove` only and prints the apply
+result record defined below ("Machine-readable apply results"), and with
+`--action push` or `delete-branch` it stays refused. `--all-safe` cannot be
 combined with `--action`, `--branch`, or `--worktree`, and `--expect-plan`
 requires `--all-safe --apply`; a violation is `invalid-arguments` with exit 2,
 so scope is never ambiguous.
@@ -89,16 +101,21 @@ suggests; "Command directory and repository resolution" defines how every
 argument form resolves to one repository identity.
 
 "All" means every eligible linked worktree of one resolved Git repository,
-under two hard caps: at most 128 worktree rows (every registry entry, the main
-worktree included, except a bare repository's first record) are inspected,
-and at most 16 targets are selected. "Cap arithmetic" states the rule, row
-cap first and target cap second, that yields both. If the row cap or the
-deadline is reached, the plan is incomplete and apply is refused. If more
-than 16 rows pass every gate before the two index gates (`contains-submodule`
-and `hidden-local-state`), the plan stays complete, lists them in `selected`
-without running the hidden-state probe, and refuses apply with refusal code
-`target-cap`; the user removes some explicitly first or waits for a
-separately designed larger batch.
+under two hard caps per run: at most 128 worktree rows (every registry
+entry, the main worktree included, except a bare repository's first record,
+a later extension) are inspected, and at most 16 targets are selected. "Cap
+arithmetic" states the rule, row cap first and target cap second, that
+yields both. If the row cap or the deadline is reached, the plan is
+incomplete and apply is refused. If more than 16 rows pass every gate before
+the two index gates (`contains-submodule` and `hidden-local-state`), the
+plan selects the first 16 in canonical order, lists the rest in `excluded`
+as `deferred-target-cap` with the next command, and apply is allowed;
+re-running drains the backlog 16 at a time, and the fresh plan and
+revalidation are unchanged. Plain read-only `project clean`, with or without
+`--json`, runs as `mode: "report"` under the same deadline, with the same
+completeness fields, `completeness` and `omitted`, but caps its worktree
+rows at 256, because it spawns no revalidation and no removal (see "Cap
+arithmetic"); above 256 rows the report is incomplete.
 
 It does not mean all projects in a folder, family members, mounted spec/code
 legs, pinned member copies, or independent clones. Inspection from a family or
@@ -123,6 +140,7 @@ gates add to it. A worktree is selected only when all of these hold:
   behind are both 0.
 - `ignored_files` is exactly 0 and `ignored_files_truncated` is false.
 - Git reports no `locked` flag for it.
+- Its branch has a commit of its own (`unstarted-branch`, below).
 - Its path is valid UTF-8 and its worktree-admin registration agrees in both
   directions (see "Safety boundary").
 - Its index holds no gitlink (mode `160000`) entry, and its admin directory
@@ -149,15 +167,24 @@ writes, those of `git add` and of a new worktree's checkout included. The
 overview does not run this probe, so the batch may exclude a row that the
 overview suggested; the plan lists that exclusion.
 
+The `unstarted-branch` gate excludes a row whose branch has no commit of
+its own: its head equals the merge-target SHA, or its head is an ancestor of
+the target and the branch's creation reflog entry shows no commit since
+creation; a missing reflog fails closed, excluded with the reason stated. At
+`a040790` such a row, for example one made by `git worktree add -b x` and
+pushed with `git push -u` before any commit, classifies `merged-removable`.
+
 Each excluded row carries one `reason`: the first failing gate in the fixed
 order `main-worktree`, `unsupported-path-bytes`, `registration-mismatch`,
-`locked-worktree`, then the row's baseline classification when that is not
-`merged-removable` (`stale-worktree`, `protected-default`,
-`inspection-error`, `dirty`, `ignored-local-files`, `detached`,
-`unpublished`, `remote-gone`, `review-required`, `diverged`, `remote-ahead`,
-`unpushed`, `merged-current`, or `pushed-unmerged`), then `not-requested` for
-an eligible row other than the named one in single-target mode, then
-`contains-submodule`, and last `hidden-local-state`. A path that is not
+`locked-worktree`, `unstarted-branch`, then the row's baseline
+classification when that is not `merged-removable` (`stale-worktree`,
+`protected-default`, `inspection-error`, `dirty`, `ignored-local-files`,
+`detached`, `unpublished`, `remote-gone`, `review-required`, `diverged`,
+`remote-ahead`, `unpushed`, `merged-current`, or `pushed-unmerged`), then
+`not-requested` for an eligible row other than the named one in
+single-target mode, then `deferred-target-cap` for an eligible row beyond
+the first 16, then `contains-submodule`, and last `hidden-local-state`. A
+path that is not
 valid UTF-8 is excluded because neither the confirmation text nor the JSON
 plan can show the user exactly what would be removed. `review-required`
 stays in the shared classifier as a defensive branch only: under the shared
@@ -167,8 +194,10 @@ state reaches it.
 Use `merge target` as the one canonical term for the local branch whose tip
 proves ancestry. Its record is `merge_target: {name, source, sha}`, with
 `source` one of `manifest`, `origin-head`, `main`, or `master`. Resolution
-order is unchanged from the baseline: a manifest `tracking_branch`; the local
-branch `refs/heads/<b>`, where `<b>` is the `%(symref)` of
+order is unchanged from the baseline, and so are its two `origin/` strips: a
+manifest `tracking_branch`, minus any `origin/` prefix, so that
+`origin/develop` names `refs/heads/develop`; the local branch
+`refs/heads/<b>`, where `<b>` is the `%(symref)` of
 `refs/remotes/origin/HEAD`, which prints `refs/remotes/origin/<b>`, with that
 `refs/remotes/origin/` prefix removed; `main`; then `master`. The manifest is
 read at `repository.root`; a bare repository has no manifest candidate, and a
@@ -187,9 +216,11 @@ Preserve dirty, detached, unpublished, unpushed, remote-gone, remotely ahead,
 diverged, current, merge-target, locked, submodule-holding, hidden-state, or
 uncertain worktrees. An inspection failure for any worktree row
 (classification `inspection-error`, which includes an unreadable path and a
-broken registration) makes the plan incomplete and blocks apply, for
-single-target removal too; an ordinary, fully understood exclusion does not
-block other eligible targets. Do not prune stale worktree metadata as a side
+broken registration) makes a batch plan incomplete and blocks its apply; in
+single-target removal it blocks only when it is the named target's own row,
+and is otherwise a non-blocking omission ("One mutation seam"). An ordinary,
+fully understood exclusion does not block other eligible targets. Do not
+prune stale worktree metadata as a side
 effect.
 
 Local ancestry is the only removal proof in this MVP. GitHub or remote-target
@@ -212,18 +243,18 @@ using the packet's shared field names:
 | branch evidence | `branch`, `head`, `upstream`, `upstream_oid`, `ahead`, `behind` | the registry entry and one ref listing |
 | `merge_target` | `name`, `source`, `sha` | the resolution order above |
 
-The main worktree is the first record of the registry listing. A bare
-repository has no main worktree, so its `root` is `null`:
-`rev-parse --show-toplevel` fails there, and the identity probe asks only for
-`--git-common-dir`. Its first registry record is not a checkout; it gets no
-probe, is not a `worktrees` row, counts against neither the row cap nor
-completeness, and is listed in `excluded` as `main-worktree` with
-`classification: null`. The command directory is `repository.root`, or
-`common_dir` for a bare repository. A bare repository is reachable only from
-inside one of its linked worktrees, through a relative path, no argument, or
-a bare name; an absolute path to the bare directory or to a linked worktree
-is refused with `target-not-repository-root` (see "Command directory and
-repository resolution").
+The main worktree is the first record of the registry listing, and the
+command directory is `repository.root`. A bare repository has no main
+worktree, so its `root` is `null`: `rev-parse --show-toplevel` fails there,
+and the identity probe asks only for `--git-common-dir`. The MVP refuses a
+bare repository in every `clean` mode with `target-not-repository-root` and
+exit 2, whichever argument form reaches it: an absolute path to the bare
+directory or to a linked worktree, or a relative path, no argument, or a
+bare name from inside one of its linked worktrees (see "Command directory
+and repository resolution"). The clauses elsewhere in this document that
+name `common_dir` as a bare repository's command directory, or that handle
+a bare repository's first registry record, sketch a later extension; the
+MVP never reaches them.
 
 Worktree-admin registration is checked in both directions: `<path>/.git` must
 be a regular file whose `gitdir:` line names `<common_dir>/worktrees/<id>`,
@@ -250,7 +281,11 @@ queried with another child: `GIT_ALTERNATE_OBJECT_DIRECTORIES`,
 `GIT_SHALLOW_FILE`, and `GIT_COMMON_DIR`. `-C <directory>` alone therefore
 selects the repository, and also the worktree whose index a probe reads,
 which is why "Probe directory rule" fixes each child's directory. Read-only
-probes also set `GIT_OPTIONAL_LOCKS=0`; the removal child does not.
+probes also set `GIT_OPTIONAL_LOCKS=0`; the removal child does not. The scrub
+does not cover `GIT_CONFIG_GLOBAL` or `GIT_CONFIG_SYSTEM`, so the settings a
+result depends on are pinned with `-c` instead, which no configuration file
+overrides: every status probe and the removal child carry
+`-c core.untrackedCache=false -c core.fsmonitor=false`.
 
 ### The narrow guarantee
 
@@ -304,16 +339,19 @@ children it shares with the previous target's rescan always all run.
 
 ### Residual window
 
-The last line of defense is Git's non-force `worktree remove`. In Git 2.43 it
-refuses, with exit status 128, a locked worktree, the main worktree, a
-worktree with modified or untracked files, a worktree whose admin linkage
-fails its own validation, and a worktree that holds a populated submodule or
-whose admin directory holds `modules`. Its cleanliness check honors
-`status.showUntrackedFiles`, so under a `no` setting it would not see
-untracked files. The removal command therefore overrides that setting:
+The last line of defense is Git's non-force `worktree remove`, under the
+configuration the removal command pins. In Git 2.43 it refuses, with exit
+status 128, a locked worktree, the main worktree, a worktree with modified or
+untracked files, a worktree whose admin linkage fails its own validation, and
+a worktree that holds a populated submodule or whose admin directory holds
+`modules`. Its cleanliness check honors `status.showUntrackedFiles`, so under
+a `no` setting it would not see untracked files, and in a fixture with the
+untracked cache on, `core.checkStat=minimal`, and an index-writing status
+already run, it deleted an untracked file with exit 0. The removal command
+therefore pins all three settings:
 
 ```sh
-git -c status.showUntrackedFiles=normal -C <command directory> worktree remove <path>
+git -c status.showUntrackedFiles=normal -c core.untrackedCache=false -c core.fsmonitor=false -C <command directory> worktree remove <path>
 ```
 
 The check considers neither ignored files nor edits hidden by
@@ -374,9 +412,8 @@ digest differs; the fresh plan is still printed so the caller can see what
 changed. The digest covers what would be removed, not excluded rows or
 observation time, so a change to an excluded worktree does not invalidate a
 preview. `dev` and `ino` are host-local, so a remount or reboot that
-renumbers them changes the digest and fails closed. Whether `--expect-plan`
-is required whenever `--yes` is used is an open proposal decision; the MVP
-makes it optional.
+renumbers them changes the digest and fails closed. `--expect-plan` stays
+optional with `--yes`.
 
 ### One mutation seam
 
@@ -393,13 +430,18 @@ Single-target and batch removal share one internal operation,
    stop: the target and every later one are `not-attempted` with
    `deadline-exceeded`. Otherwise spawn the non-force removal command shown
    under "Residual window", from the command directory, in its own process
-   group, with the remaining work budget as its timeout. Both operands are
+   group, with no timeout but the 300 s hard ceiling. Both operands are
    absolute paths, so neither can be read as an option. The child is started
-   with `Popen(..., process_group=0)`, not through the baseline `probe()`,
-   whose `subprocess.run` sends SIGKILL to the single child on a timeout or
-   any exception.
-3. Reap the child, terminating it first if the work deadline passes or SIGINT
-   arrives.
+   with `Popen(..., start_new_session=True)`, not through the baseline
+   `probe()`, whose `subprocess.run` sends SIGKILL to the single child on a
+   timeout or any exception. The new session puts the child in its own
+   process group, whose id is the child's pid. `start_new_session` works on
+   Python 3.10, the project's floor, where `process_group=0` needs 3.11;
+   `preexec_fn` is never used, because it is unsafe in a process with
+   threads.
+3. Reap the child. Once it is spawned, `project` never signals it: SIGINT,
+   SIGTERM, SIGHUP, and the work deadline are deferred until it exits, and
+   only the 300 s hard ceiling ends the wait ("Interruption and expiry").
 4. Reconcile: rescan, then record the stage, reason, notes, exit status, probe
    count, and reconciliation record.
 
@@ -411,18 +453,33 @@ batch then calls the seam for each target in canonical order and stops after
 the first result that is not a plain `removed`.
 
 `project clean <root> --apply --action remove --worktree P` keeps its
-interface but is strictly a one-item batch. It builds the same full plan
-(`mode: "single"`), inspecting every worktree row under the same caps,
-selects only P, lists every other eligible row in `excluded` with reason
-`not-requested`, and calls the same seam. It therefore has the same
-`selected` entry, command, refusal codes and messages, stages, and exit codes
-as a batch whose only target is P, and an inspection error anywhere in the
-repository makes its plan incomplete and refuses it too. A P that matches no
-registry entry refuses with `worktree-not-found`, and a P that a gate excludes
-refuses with `target-excluded`, whose `reason` carries the exclusion reason.
-These tighten the baseline and are listed under "Baseline behavior changes".
+interface and runs on the same seam. It builds the full plan
+(`mode: "single"`), selects only P, lists every other eligible row in
+`excluded` with reason `not-requested`, and has the same `selected` entry,
+command, stages, and exit codes as a batch whose only target is P. Its
+completeness is the repository-wide evidence plus P's own row: other rows'
+`inspection-error`, `inspect-cap`, and unprobed states are recorded as
+non-blocking omissions in the plan, while P's own revalidation stays fully
+strict. P is probed first, so the 128-row cap, which counts registered rows,
+`present: false` included, and exempts P, never omits it, and the 16-target
+cap counts P alone, because `not-requested` precedes the counted gates. A P
+that matches no registry entry refuses with `worktree-not-found`, and a P
+that a gate excludes refuses with `target-excluded`, whose `reason` carries
+the exclusion reason; every refusal that remains names a manual remedy in its
+message (`git worktree prune`, `git worktree repair`, or removing that row by
+hand). These tighten the baseline and are listed under "Baseline behavior
+changes".
+Plain read-only `project clean` builds the same full plan too, with
+`mode: "report"`, under the same deadline and its own 256-row cap.
 `push` and `delete-branch` keep their behavior apart from argument
-resolution.
+resolution and two refusals. Under the shared ref listing a deleted
+upstream fills `upstream`, where `a040790` leaves it null, so the command
+`push` builds would change from `push -u origin <branch>` to
+`push <remote> <branch>:<remote branch>`; instead `push` refuses a
+`remote-gone` branch, which must be reviewed before it is republished, with
+refusal reason `remote-gone` and exit 2. Both refuse with
+`inspection-incomplete`, `inspect-cap`, or `deadline-exceeded` and exit 2
+when their re-inspection is incomplete.
 
 ### Deadline and budgets
 
@@ -436,7 +493,8 @@ the one `discover` runs for a bare name, gets
 `min(probe_timeout_seconds, work_remaining)`, with `probe_timeout_seconds`
 set to 5 s. A removal child is spawned only when `work_remaining` is at least
 `removal_floor_seconds` (5 s), so that no removal starts with too little time
-to finish, and it then gets `work_remaining`; otherwise the batch stops with
+to finish, and it then runs until it exits: the deadline gates only the start
+of a removal, never its completion; otherwise the batch stops with
 `deadline-exceeded`, that target and every later one are `not-attempted`,
 and the exit status is 1. Reconciliation probes run inside the reserve with
 `min(5 s, reserve_remaining)`. All budgets are in seconds, and the plan's
@@ -447,15 +505,22 @@ concurrency rule is as its document states it. A probe that times out is
 terminated and reaped like any other child, and the values it would have
 produced become `null`. A deadline that passes while the plan is being built
 makes the plan incomplete (refusal `deadline-exceeded`), so no removal starts.
+The deadline bounds the inspection children and the batch's removal
+children only: the `push` and `delete-branch` children, run through
+`execute()`, stay without a timeout, as at `a040790`.
 
 Every filesystem call (`lstat`, `realpath`, and the `.git` and `gitdir`
-reads) runs in a worker thread and is abandoned after
-`min(probe_timeout_seconds, work_remaining)`; an abandoned call records
+reads) runs in a daemon thread and is abandoned after
+`min(probe_timeout_seconds, work_remaining)`, never on a `concurrent.futures`
+pool, because the interpreter joins a pool's worker threads at exit, so an
+abandoned pool thread would block it; an abandoned call records
 `probe-timeout`, or `deadline-exceeded` when the global deadline was the
 limit that cut it short, and leaves its values `null`. A call stuck inside
 the kernel on an unresponsive mount cannot be interrupted from user space, so
 a `--yes` run ends within about 60 s of wall time, and any run within the
-deadline plus the 2 s reaping grace, except while such a call is outstanding.
+deadline plus the 2 s reaping grace, except while such a call is outstanding
+or a removal child is still running, which only the 300 s hard ceiling
+bounds.
 
 ### Interruption and expiry
 
@@ -463,23 +528,36 @@ On SIGINT, or when the work deadline passes, `project` stops scheduling: no
 further probe or removal starts. During the apply phase a SIGINT handler sets
 a flag that the seam checks, rather than letting `KeyboardInterrupt` unwind
 through a running child; probe children also run in their own process groups,
-so a terminal Ctrl-C reaches only `project`. If a child is in flight,
-`project` sends SIGTERM to the child's process group, waits at most 2 s,
-sends SIGKILL if the group is still alive, and reaps the child. `project` then
-reconciles every attempted target inside the reserve and prints the
-per-target record. A target whose child was terminated is `removed` only if
-the rescan proves removal and `unknown` otherwise; targets never reached are
-`not-attempted` with reason `interrupted` or `deadline-exceeded`. A second
-SIGINT during reconciliation abandons the remaining rescans and leaves their
-fields `null`. SIGINT or end of input before the apply phase, while planning
-or at the prompt, exits 130 with zero mutation, as in the baseline. Other
-termination signals are outside the MVP contract: the process may end without
-a record, and a fresh read-only plan is the recovery path.
+so a terminal Ctrl-C reaches only `project`. If a probe child is in flight,
+`project` sends SIGTERM to its process group, waits at most 2 s, sends
+SIGKILL if the group is still alive, and then waits at most the same 2 s
+grace to reap it, after which the child is abandoned and its row recorded
+`probe-timeout`. Every exit path terminates the process groups `project`
+started, and each child's standard error is drained and capped. A removal
+child is the exception: once it is spawned, `project` does not signal it.
+SIGINT, SIGTERM, SIGHUP, and the work deadline are deferred until it exits,
+and a separate hard ceiling of 300 s, for a hung mount, ends the wait by
+killing the group and recording the target `unknown` with a
+`partially-removed` note and the recovery text "inspect, then
+`git worktree remove --force <path>` by hand". `project` then reconciles
+every attempted target inside the reserve and prints the per-target record;
+targets never reached are `not-attempted` with reason `interrupted` or
+`deadline-exceeded`. A second SIGINT during reconciliation abandons the
+remaining rescans and leaves their fields `null`. SIGINT or end of input
+before the apply phase, while planning or at the prompt, exits 130 with zero
+mutation, as in the baseline. SIGTERM and SIGHUP get the SIGINT treatment in
+the apply phase, exiting 143 and 129, and the first signal received sets the
+status; before the apply phase they terminate and reap probe children as
+SIGINT does and exit 143 and 129 with zero mutation. After SIGHUP the
+terminal may be gone, so output is printed on a best-effort basis. Other
+termination signals are outside the MVP contract: the process may end
+without a record, and a fresh read-only plan is the recovery path.
 
 Once the apply phase begins, every exception raised while handling a target
 is caught for that target and recorded as `unknown` with reason
 `internal-error`; later targets are `not-attempted`, the result record is
-always printed, and the exit status is 1 (130 after SIGINT). An unexpected
+printed (best effort after SIGHUP), and the exit status is 1 (130, 143, or
+129 after SIGINT, SIGTERM, or SIGHUP). An unexpected
 exception before the apply phase refuses with `internal-error` and exit 2.
 
 ### Stages and reconciliation
@@ -487,10 +565,10 @@ exception before the apply phase refuses with `internal-error` and exit 2.
 | Stage | Meaning | `reason` values |
 | --- | --- | --- |
 | `pending` | selected and not yet reached; shown in the printed plan and progress, never in a final record | `null` |
-| `removed` | the child exited 0 or was terminated by `project`, the rescan shows the registry entry and path both absent, and `reconciled` is true | `null`, `branch-advanced-after-removal`, `branch-missing-after-removal` |
+| `removed` | the child exited 0, the rescan shows the registry entry and path both absent, and `reconciled` is true | `null`, `branch-advanced-after-removal`, `branch-missing-after-removal` |
 | `refused` | revalidation found a mismatch; nothing was spawned | `identity-changed`, `branch-changed`, `state-changed`, `contains-submodule`, `hidden-local-state` |
 | `failed` | the child exited nonzero on its own, or could not be spawned | `git-refused` (exit 128, Git's pre-removal refusals), `git-failed` (any other nonzero status, including 128 plus the signal number when a signal that `project` did not send ended the child), `spawn-error` |
-| `unknown` | a child ran, or an exception interrupted the target, and removal is not proven | `unconfirmed-removal`, `interrupted`, `deadline-exceeded`, `reconciliation-incomplete`, `internal-error` |
+| `unknown` | a child ran, or an exception interrupted the target, and removal is not proven; a removal child killed at the 300 s hard ceiling also carries the `partially-removed` note | `unconfirmed-removal`, `interrupted`, `deadline-exceeded`, `reconciliation-incomplete`, `internal-error` |
 | `not-attempted` | the batch stopped before reaching it, or before spawning its removal because less than `removal_floor_seconds` remained | `batch-stopped`, `interrupted`, `deadline-exceeded` |
 
 Every `removed`, `refused`, `failed`, or `unknown` target carries a
@@ -516,8 +594,8 @@ reconciliation shows `registry_entry_present: false` with
 `path_present: true`: Git unregistered the worktree but left its directory.
 
 `removed` requires rescan evidence (registry entry absent and path absent)
-and `reconciled: true`, as well as an exit status of 0 or a termination by
-`project`. The child's exit status alone never proves removal: exit 0 without
+and `reconciled: true`, as well as an exit status of 0. The child's exit
+status alone never proves removal: exit 0 without
 that evidence is `unknown` with `unconfirmed-removal`, and exit 0 with that
 evidence but an unfinished rescan or unreadable branch is `unknown` with
 `reconciliation-incomplete`. A nonzero exit by the child itself is always
@@ -529,7 +607,7 @@ unregistered the worktree but could not delete its directory.
 
 | Exit | Condition (the first matching row wins) |
 | --- | --- |
-| 130 | SIGINT was received, or input ended at the prompt |
+| 130, 143, 129 | SIGINT (130), SIGTERM (143), or SIGHUP (129) was received, the first signal received setting the status, or input ended at the prompt (130) |
 | 1 | the deadline stopped work after the apply phase began (a target is `not-attempted` or `unknown` because of it), or any target is `unknown` |
 | Git's status | a target is `failed` with `git-refused` (128) or `git-failed` (any other nonzero status, such as 255) |
 | 2 | any refusal code; a `refused` target; `removed` with a branch-after-removal reason; `failed` with `spawn-error` |
@@ -544,9 +622,10 @@ with `git-failed`, and its `exit_status`, and so the process exit status, is
 
 `--yes` is the only way to apply on noninteractive stdin. Argument-parser
 usage errors exit 2 with the parser's own message and no JSON object, as in
-the baseline. A read-only preview exits 0 when the plan is complete (even
-when `target-cap` makes `apply_allowed` false), 1 when it is incomplete, and
-2 when no plan can be built. Excluded protected work is reported without
+the baseline. A read-only preview or report exits 0 when the plan is
+complete, rows deferred as `deferred-target-cap` included, 1 when it is
+incomplete, and 2 when no plan can be built. Excluded protected work is
+reported without
 implying a batch failure.
 
 ## Probe accounting and limits
@@ -598,6 +677,11 @@ once per inspected row, and revalidation never recomputes the full report.
 | 6 | one `for-each-ref` over `refs/heads` and `refs/remotes` in the format below | the `origin/HEAD` target; which merge-target candidates exist; the merge-target SHA; every branch's head, upstream, `upstream_oid`, ahead, behind, and `remote_present` |
 | 7 | `for-each-ref --merged=<merge-target sha> --format=%(refname) refs/heads` | `merged_into_target` for every branch at once |
 
+Every Git behavior this document cites was verified on Git 2.43 only, so
+the 2.36 floor is unverified: the proposal must verify the probe set, the
+scrubbed variable list, and the removal refusals on a pinned Git 2.36, or
+raise the floor.
+
 Row 6 passes this format string, identical in both packet documents, to
 `--format=`; fields are NUL-separated and each record ends in a line feed,
 which is safe because a refname cannot contain a control character:
@@ -633,7 +717,7 @@ gets exactly one child, the combined bounded probe, which runs inside that
 row's own worktree ("Probe directory rule"):
 
 ```sh
-git -C <worktree path> status --porcelain=v1 -z --untracked-files=normal --ignored=matching
+git -c core.untrackedCache=false -c core.fsmonitor=false -C <worktree path> status --porcelain=v1 -z --untracked-files=normal --ignored=matching
 ```
 
 Git prints tracked changes, then untracked entries, then ignored (`!!`)
@@ -642,6 +726,12 @@ true as soon as a non-`!!` record arrives, and false as soon as a `!!` record
 arrives first or an empty stream ends normally; a probe that fails or times
 out before either leaves `dirty` `null`, records `probe-failed`,
 `probe-timeout`, or `deadline-exceeded`, and makes the row `inspection-error`.
+A failed, timed-out or deadline-cut status probe sets the row to
+`inspection-error` directly, on the merge-target branch too, with that code's
+repair finding of severity error. The ladder tests the merge-target branch
+before cleanliness, so such a row would otherwise read `protected-default`
+and leave the plan complete; set directly, it makes the plan incomplete. The
+repair finding is the overview's, since the batch reports no findings.
 A rename or copy record (`R` or `C`) carries a second NUL-terminated field,
 its original path, which the parser consumes without counting. The probe
 passes `--untracked-files=normal` explicitly because, under a user's
@@ -671,8 +761,8 @@ stream to its end, because `contains-submodule` comes first in the gate
 order, and a lowercase tag (assume-unchanged) or `S` (skip-worktree) on any
 entry excludes the row as `hidden-local-state`. Gitlinks therefore cost no
 extra child. The probe streams the index and keeps one flag, so its memory
-does not grow with the worktree. At most 16 rows reach it, because more than
-16 refuses `target-cap` before it runs.
+does not grow with the worktree. At most 16 rows reach it, because rows
+beyond the first 16 are deferred as `deferred-target-cap` before it runs.
 
 ### Preflight and targeted revalidation
 
@@ -733,6 +823,8 @@ the 50 s work deadline and spawns its last removal with at least
 `removal_floor_seconds` (5 s) left. The row cap is chosen first: it is the
 largest power of two for which at least 16 targets fit. The target cap is
 chosen second: it is the largest multiple of 8 that fits with that row cap.
+The fit test is per run: rows beyond the target cap are deferred as
+`deferred-target-cap`, and re-running drains them 16 at a time.
 
 | Term | Children | At 100 ms | At 150 ms |
 | --- | ---: | ---: | ---: |
@@ -773,6 +865,15 @@ Overrunning the estimate is never unsafe: the deadline and the removal floor
 stop scheduling, unreached targets are `not-attempted`, and the run exits 1
 with a reconcilable record.
 
+The plain read-only report (`mode: "report"`) spawns no revalidation,
+rescan, or removal, so the same fit test, applied to its own children,
+F + W + E = 7 + W + 16, gives it a larger row cap: 256 rows need 279
+children, about 41.85 s at 150 ms, inside the 50 s work deadline, while 512
+rows would need 535, about 80.25 s. Its `limits.worktree_rows` is therefore
+256, and "Inspection order and omitted work" applies to it with 256 in place
+of 128; the `--all-safe` and single-target `remove` plans keep 128 rows and
+16 targets.
+
 ### Inspection order and omitted work
 
 The registry listing is read completely, in one child, before any cap
@@ -781,7 +882,9 @@ itself sorts linked entries case-insensitively under `core.ignoreCase`, so
 the batch re-sorts), and the first 128 are inspected: with more rows, the
 main worktree and the 127 linked worktrees with the smallest paths. The rest
 are not probed: the plan is incomplete with refusal code `inspect-cap`, and
-`omitted: {count, exactness}` counts them. Because the registry was listed in
+`omitted: {count, exactness}` counts them. In single-target mode P is probed
+first and exempt from the cap, and the omission does not block it ("One
+mutation seam"). Because the registry was listed in
 full, `exactness` is always `exact` in a printed plan: a listing that failed
 or timed out builds no plan, so the overview's `lower-bound` and `unknown`
 never appear here. A deadline during inspection likewise leaves the
@@ -794,7 +897,9 @@ visible, and either blocks apply.
 
 The combined probe streams its NUL-delimited output and stops reading,
 terminating the child, when a 65th ignored (`!!`) record or a 4,097th record
-of any kind arrives, so a stream that ends within `ignored_entries` (64)
+of any kind arrives; a probe that `project` stops at its record bound is a
+complete outcome, never `probe-failed`. A stream that ends within
+`ignored_entries` (64)
 ignored and `status_records` (4,096) total records is complete; neither
 memory nor JSON grows with the worktree, and the full list is never
 materialized. `ignored_files` keeps its baseline name and type (an integer,
@@ -844,8 +949,9 @@ would read the main worktree's index and miss the target's flags. "Probe
 directory rule" states this for every child. The baseline already removes
 worktrees from the resolved repository root, so no surviving merge-target
 worktree is needed, and this revision drops that earlier requirement. The
-command directory is the main worktree or the bare directory, which
-`git worktree remove` never removes, so it survives every target, and it is
+command directory is the main worktree (or the bare directory, a later
+extension), which `git worktree remove` never removes, so it survives every
+target, and it is
 identity-checked at every revalidation with the rest of `repository`.
 
 Every `project clean` mode (the read-only report, `--json`, `--all-safe`, and
@@ -860,7 +966,12 @@ probe:
 | Bare name (one path component) | the baseline `discover` name lookup, its one Git child counted and bounded; then the identity probe at the directory it returns, which must be a worktree toplevel | `ambiguous-name`, `repository-not-found`, `target-not-repository-root` |
 
 When the resolved directory is a linked worktree, `root` still names the main
-worktree, and row 5 confirms it there. `discover`'s manifest-ancestor and
+worktree, and row 5 confirms it there. When the first registry record's path
+equals `common_dir`, the main checkout is a gitfile checkout: the main
+worktree is the realpath of `core.worktree`, and a command root equal to it
+resolves. A submodule checkout, whose first record lies under
+`.git/modules`, is refused with `target-not-repository-root`.
+`discover`'s manifest-ancestor and
 family-holder redirections are never applied to a path argument: a repository
 root they would redirect resolves to itself, and a non-repository directory
 they would redirect is refused. This is a baseline behavior change: today
@@ -893,7 +1004,7 @@ result.
   path or project name alone is never an identity.
 - Enums are closed within a schema version; this document lists every value.
   The plan's `notes` codes are `merge-target-conflict`, and a target's `notes`
-  codes are `orphaned-directory`.
+  codes are `orphaned-directory` and `partially-removed`.
 - `null` means unknown or not established, never a default `false` or `0`.
   The rule binds every field this design adds; baseline row fields keep their
   baseline meaning (a row's `upstream: null`, for example, means none was
@@ -936,7 +1047,9 @@ result.
   and shows the path that will be removed. Under the C locale that holds
   only for escapes below U+0080, such as `\u000a`: bash can leave a
   non-ASCII escape such as `\u202e` unexpanded, and zsh can reject it with
-  "character not in range".
+  "character not in range". Pasting also needs bash 4.2 or newer, the first
+  bash whose `$'…'` form expands `\u`; the stock bash 3.2 of macOS lacks
+  it.
 - Order: `worktrees` lists the main worktree first, then the rest by raw path
   bytes, and this order is not part of the compatibility contract; `selected`,
   `excluded`, and `targets` use canonical path order.
@@ -946,24 +1059,25 @@ result.
 
 ### Plan envelope
 
-`project clean <root> --all-safe --json` prints an additive superset of the
-baseline `clean --json` report: the baseline keys keep their names and types,
-and every new key is listed here. `root` now always names the command
-directory and a row's `present` may be `null`, both listed under "Baseline
-behavior changes".
+Every `project clean --json` prints this one `schema_version: 1` envelope,
+not only `--all-safe`: plain `project clean <root> --json` prints it with
+`mode: "report"`. The baseline keys keep their names and types, and every
+new key is listed here. `root` now always names the command directory, a
+row's `present` may be `null`, and `ignored_files` counts the ignored
+records read, all listed under "Baseline behavior changes".
 
 | Field | Type | Contract |
 | --- | --- | --- |
 | `schema_version` | integer | 1 |
 | `observed_at` | string | RFC 3339 UTC time the plan was frozen |
-| `mode` | string | `all-safe`; `single` marks the one-item plan of single-target removal |
+| `mode` | string | `all-safe`; `single` marks the one-item plan of single-target removal; `report` marks the plan of plain read-only `project clean` |
 | `root` | string | baseline key; the command directory: `repository.root`, or `common_dir` for a bare repository |
 | `target_branch` | string | baseline; equals `merge_target.name` |
 | `tracking_freshness` | string | baseline, unchanged text |
 | `worktrees` | array | baseline rows plus `locked` (boolean, never `null`), `ignored_files_truncated` (boolean, or `null` when the status probe did not run or failed), `ignored_samples` (array of at most 8 strings, or `null` likewise), `path_valid_utf8` (boolean), and `errors` (array of `{code, message, path?}`); `present` may be `null` |
 | `repository` | object | `root` (string, or `null` for a bare repository); `common_dir` (string); `dev`, `ino` (integers) |
 | `merge_target` | object | `name`, `source`, `sha` (strings); `source` is `manifest`, `origin-head`, `main`, or `master` |
-| `limits` | object | `worktree_rows` (128), `targets` (16), `ignored_entries` (64), `status_records` (4096), `ignored_samples` (8) |
+| `limits` | object | `worktree_rows` (128, or 256 in `mode: "report"`), `targets` (16), `ignored_entries` (64), `status_records` (4096), `ignored_samples` (8) |
 | `budget` | object | `probe_timeout_seconds` (5), `invocation_timeout_seconds` (60), `reconciliation_reserve_seconds` (10), `removal_floor_seconds` (5), `probe_concurrency` (1) |
 | `probes`, `operations` | object | `estimated`, `performed` (integers) |
 | `selected` | array | `path`, `branch`, `head`, `upstream`, `upstream_oid` (strings); `ahead`, `behind`, `dev`, `ino` (integers); `admin_id` (string); `operation` (`{kind: "worktree-remove", argv}`, with `argv` the exact argument vector) |
@@ -999,9 +1113,9 @@ that reads `error` and `code` handles both.
 | `manifest-invalid` | resolve | the manifest at `repository.root` cannot be read or has the wrong kind |
 | `no-merge-target` | resolve | no merge-target candidate exists as a local branch |
 | `inspection-incomplete` | plan | a repository-wide probe failed or a row is `inspection-error` |
-| `inspect-cap` | plan | more than 128 worktree rows are registered |
+| `inspect-cap` | plan | more worktree rows are registered than `limits.worktree_rows` (128, or 256 in `mode: "report"`) |
 | `deadline-exceeded` | plan | the work deadline passed while planning |
-| `target-cap` | plan | more than 16 rows pass every gate before `contains-submodule` |
+| `target-cap` | retired | no longer a refusal: rows beyond the first 16 that pass every gate before `contains-submodule` are excluded as `deferred-target-cap`, and the code survives only as the overview's limiting `suggestion_gate` |
 | `worktree-not-found` | select | single-target `--worktree` matches no registry entry |
 | `target-excluded` | select | a gate excludes the single-target worktree; `reason` carries the exclusion reason |
 | `plan-digest-mismatch` | confirm | the fresh digest differs from `--expect-plan` |
@@ -1108,6 +1222,8 @@ excludes two:
      "admin_id": "feature-login",
      "operation": {"kind": "worktree-remove",
                    "argv": ["git", "-c", "status.showUntrackedFiles=normal",
+                            "-c", "core.untrackedCache=false",
+                            "-c", "core.fsmonitor=false",
                             "-C", "/home/user/projects/Atlas",
                             "worktree", "remove",
                             "/home/user/projects/Atlas-worktrees/feature-login"]}}
@@ -1153,6 +1269,8 @@ the last spawned target was reconciled by the second target's revalidation.
      "planned_sha": "635e8931ebd09939ab00fb1598598f6e43fdaf41",
      "stage": "removed", "reason": null, "notes": [],
      "command": ["git", "-c", "status.showUntrackedFiles=normal",
+                 "-c", "core.untrackedCache=false",
+                 "-c", "core.fsmonitor=false",
                  "-C", "/home/user/projects/Atlas", "worktree", "remove",
                  "/home/user/projects/Atlas-worktrees/feature-login"],
      "exit_status": 0, "probes_performed": 5,
@@ -1165,6 +1283,8 @@ the last spawned target was reconciled by the second target's revalidation.
      "planned_sha": "368a133b9d8f342efb77df84a4c37ca69283f999",
      "stage": "refused", "reason": "branch-changed", "notes": [],
      "command": ["git", "-c", "status.showUntrackedFiles=normal",
+                 "-c", "core.untrackedCache=false",
+                 "-c", "core.fsmonitor=false",
                  "-C", "/home/user/projects/Atlas", "worktree", "remove",
                  "/home/user/projects/Atlas-worktrees/feature-search"],
      "exit_status": null, "probes_performed": 3,
@@ -1177,6 +1297,8 @@ the last spawned target was reconciled by the second target's revalidation.
      "planned_sha": "72e5554760d7cea17ea436028406d94f0f3f48e8",
      "stage": "not-attempted", "reason": "batch-stopped", "notes": [],
      "command": ["git", "-c", "status.showUntrackedFiles=normal",
+                 "-c", "core.untrackedCache=false",
+                 "-c", "core.fsmonitor=false",
                  "-C", "/home/user/projects/Atlas", "worktree", "remove",
                  "/home/user/projects/Atlas-worktrees/fix-typo"],
      "exit_status": null, "probes_performed": 0, "reconciliation": null}
@@ -1188,14 +1310,13 @@ the last spawned target was reconciled by the second target's revalidation.
 
 ### Machine-readable apply results
 
-This is an open proposal decision. The recommendation is to allow
-`--apply --json` for both single-target removal and the batch. Standard output
-then carries exactly one JSON document (the plan envelope when the run stops
-before the apply phase, otherwise the apply result record), while the human
-plan, the confirmation prompt, and progress go to standard error. The
-alternative keeps the MVP human-only and keeps the baseline refusal of
-`--json` with `--apply`; scripts then rely on the exit code and a follow-up
-read-only plan.
+`--apply --json` is accepted for single-target removal and the batch,
+`--action remove` and `--all-safe`, and nowhere else: with `--action push`
+or `--action delete-branch` it stays refused as `invalid-arguments`, exit 2.
+Standard output then carries exactly one JSON document (the plan envelope,
+or the extended error object, when the run stops before the apply phase,
+otherwise the apply result record), while the human plan, the confirmation
+prompt, and progress go to standard error.
 
 ## Baseline behavior changes
 
@@ -1209,40 +1330,60 @@ Shared with the overview:
   absolute path must be exactly a main worktree root or is refused with
   `target-not-repository-root`; today `discover` redirects `/outer/leg` to
   `/outer` and `/Atlas` to `/Atlas/Atlas`. A bare name still uses
-  `discover`, whose Git child becomes counted and deadline-bounded (the
-  proposal gives `probe()` a timeout argument).
+  `discover`, whose Git child becomes counted and deadline-bounded: every
+  inspection Git child runs through a new bounded runner (`Popen` with
+  `start_new_session=True`, a scrubbed environment, and output streamed as
+  bytes), and `probe()` stays for non-Git children (`push` and
+  `delete-branch` excepted, ruling D-W).
 - `repo_state` and `cleanup_report` move onto the shared probes, so overview,
   doctor, and clean report the same values. The baseline's
   `rev-parse --abbrev-ref @{upstream}` cannot distinguish a never-configured
   upstream from one whose remote-tracking ref was deleted, so `a040790`
   reports `unpublished` for both; the shared `for-each-ref` with
-  `%(upstream:track)` can, so all three report `remote-gone` for the deleted
-  one. Both are preserve states. The promise that baseline row fields are
-  unchanged covers field names and types (with `present` gaining `null`), not
-  the probe that fills them.
+  `%(upstream:track)` can, so overview and clean classify the deleted one
+  `remote-gone`. Doctor never classifies a deleted upstream; its only
+  worktree classification is `repo_state`'s `stale-worktree`, shown under
+  `--json`. Both are preserve states. The promise that
+  baseline row fields are unchanged covers field names and types (with
+  `present` gaining `null`), not the probe that fills them.
 - Git output is parsed NUL-delimited, so a newline path is no longer misread
   and a non-UTF-8 path no longer ends the run with an uncaught exception.
-- One combined status probe with explicit `--untracked-files=normal` replaces
-  the separate dirty and ignored probes, which fixes the failure under
+- One combined status probe with explicit `--untracked-files=normal`, run
+  with `-c core.untrackedCache=false -c core.fsmonitor=false`, replaces the
+  separate dirty and ignored probes, which fixes the failure under
   `status.showUntrackedFiles=no`.
 - A registration-mismatched row is no longer status-probed; it is
   `inspection-error`.
 - An unreadable worktree path gives that row `present: null`, an `os-error`,
   and `inspection-error`; at `a040790`, `main()` catches the `OSError` and
   refuses the whole repository with exit 2.
+- A failed `git status` in the repository root gives the main worktree's
+  row `inspection-error`, and the other rows are still reported; at
+  `a040790`, `repo_state` raises `Refused` for it, ending `clean`,
+  `status`, `doctor`, and `update` with exit 2.
 - `ignored_files` becomes "observed, at least", is paired with
   `ignored_files_truncated`, and is `null` when the probe stopped before any
   ignored entry.
 - The manifest's `tracking_branch` is read at `repository.root`, not at
   whichever directory `discover` returned.
-- The per-probe timeout drops from the baseline `probe()` value of 15 s to
-  5 s, under a 60 s invocation deadline where the baseline had none, and
-  every Git child runs in its own process group.
-- `clean` requires Git 2.36 or newer, refusing older Git with `git-too-old`
-  and a missing or unusable `git` with `git-unavailable`; `doctor` requires
-  Git 2.36 as well, because it reads `repo_state`, and refuses older or
-  unusable Git through the baseline `Refused` path with the same two codes
-  and exit 2.
+- Under `clean`'s 60 s invocation deadline, where the baseline had none,
+  each inspection Git child gets `min(5 s, work_remaining)` instead of the
+  baseline `probe()` value of 15 s, and runs in its own process group;
+  `status`, `doctor`, and `update` have no deadline and keep 15 s per Git
+  child, and the `push` and `delete-branch` children stay unbounded (ruling
+  D-W).
+- Git 2.36 or newer is required to inspect a repository. The version check
+  runs only when a Git repository is about to be inspected; a directory with
+  no `.git` keeps `present: false`. `clean` and `overview` refuse with
+  `git-too-old` or `git-unavailable`, exit 2, before any probe; under
+  `--json` they print `{"error", "code"}`. `status`, `doctor` and `update`
+  never refuse: `doctor` reports an old or unusable Git as an error check
+  row and keeps its exit semantics for error rows; `status` marks rows it
+  cannot inspect `inspection-error`;
+  `update --apply --component tools|workflow` does not require Git. The
+  overview checks once before any root is listed (ruling D-AF). The
+  baseline `main()` prints a `Refused` under `--json` as `{"error"}`, with
+  no `code`, which these refusals add.
 
 Batch only (these concern `clean` resolution, removal, and the batch plan,
 which the overview does not perform):
@@ -1250,13 +1391,37 @@ which the overview does not perform):
 - A relative path or no argument resolves to the repository Git finds there,
   with `root` set to its main worktree, instead of going through `discover`.
 - The report's `root` always names the command directory, the main worktree
-  or the bare directory; at `a040790` it names whatever `discover` returned,
+  (or the bare directory, a later extension); at `a040790` it names whatever
+  `discover` returned,
   such as a linked worktree's toplevel when `clean` runs inside one.
-- A bare repository's first registry record is no longer reported as an
+- A bare repository is refused in every `clean` mode with
+  `target-not-repository-root` and exit 2, where at `a040790`, reached from
+  one of its linked worktrees, its first registry record is reported as an
   `inspection-error` checkout.
+- `push` refuses a `remote-gone` branch with refusal reason `remote-gone`
+  and exit 2, where at `a040790` the branch reads `unpublished` and `push`
+  republishes it with `push -u origin`; `push` and `delete-branch` also
+  refuse with `inspection-incomplete`, `inspect-cap`, or `deadline-exceeded`
+  and exit 2 when their re-inspection is incomplete.
+- A gitfile main checkout, whose first registry record's path equals
+  `common_dir`, resolves through `core.worktree`, and a submodule checkout,
+  whose first record lies under `.git/modules`, is refused with
+  `target-not-repository-root`; at `a040790` `clean` handles both with
+  exit 0.
+- Plain read-only `clean` runs as `mode: "report"` under the deadline with a
+  256-row cap; above it the report is incomplete and exits 1, where at
+  `a040790` plain `clean` exits 0 whenever it prints.
+- `--apply --json` is accepted for `--all-safe` and `--action remove`,
+  printing the apply result record, where `a040790` refuses `--json` with
+  `--apply`; with `push` or `delete-branch` it stays refused.
 - The removal command, single-target and batch alike, gains
-  `-c status.showUntrackedFiles=normal` (see "Residual window"), so Git's own
-  check sees untracked files whatever the user's configuration.
+  `-c status.showUntrackedFiles=normal`, `-c core.untrackedCache=false`, and
+  `-c core.fsmonitor=false` (see "Residual window"), so Git's own check sees
+  untracked files whatever the user's configuration.
+- A worktree whose branch has no commit of its own is excluded as
+  `unstarted-branch`; at `a040790` it classifies `merged-removable`.
+- More than 16 eligible rows no longer block apply: the first 16 are
+  selected and the rest deferred as `deferred-target-cap`.
 - A worktree whose index flags an entry assume-unchanged or skip-worktree is
   never removed (`hidden-local-state`); sparse checkouts are therefore
   excluded.
@@ -1265,13 +1430,14 @@ which the overview does not perform):
   classified `merged-removable` and offered for removal, which Git then
   refuses with exit 128 whenever the submodule is populated or `modules`
   exists.
-- Single-target `remove` runs through `retire_worktree` as a strict one-item
-  batch. It gains the identity checks; the main-worktree, path-byte,
-  registration, lock, submodule, and hidden-state gates; full-repository
-  inspection, so an inspection error elsewhere refuses it with
-  `inspection-incomplete`; the refusal codes `worktree-not-found` and
-  `target-excluded`; the `unknown` outcome with exit 1; the removal floor;
-  and its own process group for the removal child.
+- Single-target `remove` runs through `retire_worktree` on the batch's seam.
+  It gains the identity checks; the main-worktree, path-byte, registration,
+  lock, unstarted-branch, submodule, and hidden-state gates; a plan whose
+  completeness is the repository-wide evidence plus its own row, other
+  rows' inspection errors and omissions being recorded as non-blocking; the
+  refusal codes `worktree-not-found` and `target-excluded`, each refusal
+  naming a manual remedy; the `unknown` outcome with exit 1; the removal
+  floor; and its own process group for the removal child.
 
 ## Partial completion and recovery
 
@@ -1302,7 +1468,13 @@ current state:
   after a permission error with exit 255. No later plan lists the directory;
   the user inspects it and deletes it by hand.
 - Registry entry present with `.git` intact but tracked files missing: a later
-  plan reports the row `dirty` and preserves it.
+  plan reports the row `dirty` and preserves it, and when its only working
+  changes are deletions of tracked files the report's ladder text carries
+  the partial-removal note beside, never instead of, the dirty
+  classification.
+- A removal killed at the 300 s hard ceiling: the target is `unknown` with
+  the `partially-removed` note and the recovery text "inspect, then
+  `git worktree remove --force <path>` by hand".
 - `.git` already deleted: Git lists the entry as `prunable`, the registration
   check fails, and a later plan reports the row as `registration-mismatch`
   with classification `inspection-error`, which keeps every plan for the
@@ -1315,7 +1487,11 @@ In every case the branch remains merged and retained.
 
 Cache disposal and paired local-branch retirement are separate future design
 options because neither is part of `origin/main`'s current batch contract.
-They must not be smuggled into the MVP's `removed` stage. Either extension
+The batch removes only worktrees with no ignored files, so caches such as
+`__pycache__` keep a worktree out until the cache-disposal change; in one
+surveyed repository 20 of 29 merged worktrees were excluded for caches
+alone, which is the evidence for that follow-on. They must not be smuggled
+into the MVP's `removed` stage. Either extension
 would run inside `retire_worktree` under the same deadline, with stage values
 of its own (cache disposal before the worktree removal, branch deletion after
 `removed` is proven by rescan), and would count its mutations in
@@ -1347,6 +1523,11 @@ may force-delete or force-push.
 ## Validation scenarios
 
 Each scenario also asserts that nothing outside its stated removals changes.
+Three platform limits apply: the non-UTF-8 path scenarios cannot be built on
+macOS APFS; raw-byte order differs from Git's `core.ignoreCase` order on a
+case-insensitive APFS volume; and a WSL2 `/mnt/c` mount does not guarantee
+stable inode numbers. The scenarios that depend on them are Linux-only and
+are skipped elsewhere with a reason.
 
 ### Selection, caps, and probe work
 
@@ -1365,10 +1546,13 @@ Each scenario also asserts that nothing outside its stated removals changes.
   smallest paths are the ones inspected. The preview exits 1, and `--apply`
   refuses with exit 2 before any mutation.
 - **Target cap.** More than 16 rows that pass every gate before
-  `contains-submodule` produce a complete read-only plan listing all of
-  them, no `modules` check or hidden-state probe runs, the refusal is
-  `target-cap`, and `apply_allowed` is false; the preview exits 0, and
-  `--apply` refuses with exit 2 before any mutation.
+  `contains-submodule` produce a complete read-only plan that selects the
+  first 16 in canonical order and lists the rest as `deferred-target-cap`
+  with the next command, `apply_allowed` is true, and the preview exits 0;
+  `--apply --yes` removes the 16, and a re-run selects the next 16.
+- **Unstarted branch.** Given `git worktree add -b x` followed by
+  `git push -u` with no commit, when the batch previews, then that worktree
+  is excluded as `unstarted-branch`.
 - **Every protected classifier.** Given one repository whose linked
   worktrees are stale, detached, dirty, holding ignored files, unpublished,
   remote-gone (an upstream whose remote-tracking ref is missing), diverged,
@@ -1484,6 +1668,12 @@ Each scenario also asserts that nothing outside its stated removals changes.
   with exit 128, the target is `failed` with `git-refused` and its
   reconciliation shows the registry entry and path present, the file
   survives, later targets are `not-attempted`, and the exit status is 128.
+- **Untracked cache.** Given `core.untrackedCache=true`,
+  `core.checkStat=minimal`, and an index-writing `git status` already run in
+  the target, when a test hook creates an untracked file after the target's
+  revalidation, then Git, run with the pinned configuration, refuses with
+  exit 128, the target is `failed` with `git-refused`, and the file
+  survives.
 - **Ignored file in the residual window.** Given a test hook that creates an
   ignored file after the target's revalidation and before the child starts,
   when the batch runs, then Git removes the worktree with exit 0, the target
@@ -1507,27 +1697,31 @@ Each scenario also asserts that nothing outside its stated removals changes.
 ### Execution, interruption, and recovery
 
 - **Deadline expiry mid-batch.** Given three targets and a test Git whose
-  removal of the second target blocks, when the work deadline passes, then the
-  child's process group receives SIGTERM, then SIGKILL if still alive 2 s
-  later, and is reaped; the second target is `removed` only if the rescan
-  shows its registry entry and path absent, and otherwise `unknown` with
-  `deadline-exceeded` and every reconciliation field it could establish
-  within the reserve (the rest `null`, with `reconciled: false`); the third is
-  `not-attempted` with `deadline-exceeded`; and the exit status is 1. Given
+  removal of the second target outlasts the work deadline, when the deadline
+  passes, then `project` does not signal the removal child; when the child
+  exits, the second target is reconciled as usual, the third is
+  `not-attempted` with `deadline-exceeded`, and the exit status is 1. Given
   instead a test Git whose first removal is slow enough that less than
   `removal_floor_seconds` (5 s) of the work deadline remains when the second
   target passes revalidation, then no second child is spawned, the second
   and third targets are `not-attempted` with `deadline-exceeded` and
   `reconciliation: null`, and the exit status is 1.
+- **Hard ceiling.** Given a test Git whose removal never exits, when 300 s
+  pass, then its group is killed, the target is `unknown` with the
+  `partially-removed` note and the recovery text, later targets are
+  `not-attempted`, and the exit status is 1. Given `project` killed with
+  SIGKILL during a deletion, a rerun of the report shows the partial-removal
+  note beside the row's `dirty` classification.
 - **Exit 0 without evidence.** Given a test Git that exits 0 without removing
   anything, when the batch runs, then the target is `unknown` with
   `unconfirmed-removal`, later targets are `not-attempted`, and the exit
   status is 1.
 - **SIGINT.** Given a batch whose second removal is in flight, when SIGINT
-  arrives, then the same terminate, reap, and reconcile sequence runs, later
-  targets are `not-attempted` with `interrupted`, and the exit status is 130
-  even though the second target's outcome would otherwise make it 1; SIGINT
-  or end of input at the confirmation prompt exits 130 with zero mutation.
+  arrives, then `project` does not signal the removal child, waits for it to
+  exit, and reconciles it; later targets are `not-attempted` with
+  `interrupted`, and the exit status is 130 even though the second target's
+  outcome would otherwise make it 1; SIGINT or end of input at the
+  confirmation prompt exits 130 with zero mutation.
 - **Git leaves an orphaned directory.** Given a target containing a
   subdirectory without write permission, when Git unregisters the worktree but
   fails to delete its directory and exits 255, then the target is `failed`
@@ -1560,7 +1754,10 @@ Each scenario also asserts that nothing outside its stated removals changes.
   same argument vector, and both end with P `removed` and exit 0. When P is
   made dirty between confirmation and revalidation in both copies, both refuse
   with `state-changed`, the same message, and exit 2. When another worktree in
-  the repository is unreadable, both refuse with `inspection-incomplete`.
+  the repository is unreadable, the batch refuses with
+  `inspection-incomplete`, while the single-target run records that row as a
+  non-blocking omission and removes P; with 17 eligible rows, or more than
+  128 registered rows, `--worktree P` still removes P.
   `--worktree` naming an unregistered path refuses with `worktree-not-found`,
   and naming a dirty worktree refuses with `target-excluded` and
   `reason: "dirty"`.
@@ -1615,6 +1812,12 @@ Each scenario also asserts that nothing outside its stated removals changes.
   `delete-branch`, then each is refused with `target-not-repository-root` and
   exit 2 before any plan is built, no other directory is substituted, and
   nothing changes.
+- **Gitfile main checkout and submodule checkout.** Given a repository made
+  with `git init --separate-git-dir`, whose first registry record's path
+  equals `common_dir`, when `project clean` runs on the realpath of its
+  `core.worktree`, then it resolves and plans as usual; given a submodule
+  checkout, whose first registry record lies under `.git/modules`, it is
+  refused with `target-not-repository-root` and exit 2.
 - **Merge target missing, invalid, or conflicting.** Given a repository with
   no manifest `tracking_branch`, no `origin/HEAD`, and neither `main` nor
   `master`, when the batch runs, then it refuses with `no-merge-target` and
@@ -1651,26 +1854,38 @@ handoff on top of the same seam.
 
 Open proposal decisions:
 
-- Whether `--expect-plan` is required whenever `--yes` is used; the MVP makes
-  it optional.
-- Whether `--apply --json` is allowed, as recommended above, or the MVP stays
-  human-only.
 - The measured per-child and per-removal costs, and therefore the final caps
-  under the stated rule, and whether any limit is user-configurable.
-- Whether SIGTERM and SIGHUP receive the SIGINT treatment, exiting 143 and
-  129.
-- Whether bare repositories are supported as sketched here (`root: null`,
-  with `common_dir` as the command directory) or refused.
-- Whether a relative path or the no-argument default should require an exact
-  repository root, as an absolute path does, instead of resolving to the
-  repository Git finds there.
-- Whether a skip-worktree entry whose file is absent from disk, as in a sparse
-  checkout, may be treated as safe instead of `hidden-local-state`.
-- Whether a gitlink that was never populated, in a worktree whose admin
-  directory holds no `modules`, may be treated as removable, as Git itself
-  treats it, instead of `contains-submodule`.
-- The final flag spelling, and whether cache disposal or paired retirement
-  deserves a separate proposal.
+  under the stated rule; the caps stay provisional until measured.
+- For Brett Heap: whether a local ancestry proof should outrank
+  `remote-gone` for worktree rows. Lane openRepoProject-3 raised it,
+  recommending yes, and lane openRepoProject-2 carries it in both proposals.
+  The ladder tests remote presence before merge state, as the baseline does;
+  GitHub's head-branch auto-delete with `fetch.prune` leaves a merged
+  branch's upstream gone; and the MVP never deletes a branch, so under the
+  baseline order such a worktree is never eligible for `--all-safe`, and
+  `push` now refuses its branch. Measured here: 4 of about 90 merged
+  worktrees, `fetch.prune` unset everywhere, and auto-delete on 2 of 21
+  repositories. Until it is ruled, the packet keeps the baseline ladder; a
+  `remote-gone` row whose `merged_into_target` is true carries the
+  recommendation "Merged locally, upstream deleted: not removable by
+  `project` until the open question is ruled; review, then
+  `git worktree remove` yourself", and the overview's `remote-gone` message
+  says whether the branch tip is already an ancestor of the merge target
+  when its evidence establishes that, its suggestion only reviewing.
+- For Brett Heap: squash merges never satisfy the ancestry proof, so the MVP
+  selects little in a squash-merge repository. The recommendation is a local
+  patch-equivalence proof (`git cherry` or patch-id against the merge
+  target), designed as a follow-on change, not in the MVP.
+- Change 1 council V4, single-target `remove` completeness (other rows'
+  inspection errors no longer block it): departure, open to Brett Heap's
+  ratification.
+- Change 1 council V5, the deferred target cap (more than 16 eligible rows
+  are drained 16 per run instead of refused): departure, open to Brett
+  Heap's ratification.
+Every other open decision this document listed is decided: the 2026-10-08
+proposals took them as proposal decisions, open to ratification, as the
+[fix handoff](next-session-project-maintenance-fix-handoff.md) records under
+"Decisions taken by the proposals — 2026-10-08".
 
 ## Relationships
 

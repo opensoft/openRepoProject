@@ -36,7 +36,10 @@ harvest source and the packet's `a040790` baseline is unchanged. Follow-ups
 for the next revision: absorb `acf0133` and `80fdef3` (doctor repository
 health, local-only read-only reporting) into the overview design, and if
 paired retirement is proposed, write it as a MODIFIED requirement on
-`project-clean`.
+`project-clean`. The first follow-up is discharged by the OpenSpec change
+`add-project-overview` (issue #10, draft PR #12), which absorbs `acf0133` and
+`80fdef3` as local-only read-only reporting; the overview design in this
+packet does not absorb them.
 
 [pr2-decision]: https://github.com/opensoft/openRepoProject/pull/2#issuecomment-6035824335
 
@@ -197,10 +200,11 @@ prove it. "Batch" is [batch cleanup](project-maintenance-batch-cleanup.md)
 and "Overview" is
 [project overview and attention](project-maintenance-project-discovery.md);
 headings read `section: subsections`. The design contract baseline is still
-`a040790`: `origin/main` has since advanced to `ca4c615`, where PR #4
-archived the completed OpenSpec changes and promoted their specifications to
-`openspec/specs/`, PR #5 added the `prefer-triad-in-project-new` OpenSpec
-proposal, and the `project` executable and its tests are unchanged.
+`a040790`: `origin/main` has since advanced to `da33d92`, which merged PR #7
+(this packet) on 2026-10-07; before it, PR #4 archived the completed OpenSpec
+changes and promoted their specifications to `openspec/specs/` and PR #5
+added the `prefer-triad-in-project-new` OpenSpec proposal; and the `project`
+executable and its tests are unchanged.
 
 | Finding | Decision | Contract | Proving scenarios |
 | --- | --- | --- | --- |
@@ -254,8 +258,10 @@ proposal, and the `project` executable and its tests are unchanged.
   (`locked-worktree` for the lock), and only while no worktree row of its
   repository is `inspection-error` and the repository has no more than 128
   worktree rows, which would make the batch plan `inspection-incomplete` or
-  `inspect-cap`; otherwise the read-only `project clean <root>` is
-  suggested. The batch may still exclude a suggested worktree as
+  `inspect-cap`, and, as amended on 2026-10-08, no worktree row of it went
+  unprobed because the 512-row cap or the deadline cut it; otherwise the
+  read-only `project clean <root>` is suggested, and the gate changes
+  suggestions only. The batch may still exclude a suggested worktree as
   `hidden-local-state` or `contains-submodule`.
 - Shared probes: one version check per invocation, the same four
   repository-wide children per repository (identity, registry listing, ref
@@ -294,8 +300,9 @@ proposal, and the `project` executable and its tests are unchanged.
   than 2.36, exit 2 before any repository probe), with the same spelling in
   both documents.
 - `remote-gone`: the shared ref listing reports a deleted upstream as `gone`,
-  so overview, doctor, and clean all report `remote-gone` where `a040790`
-  reports `unpublished`; both are preserve states.
+  so overview and clean both classify it `remote-gone` where `a040790`
+  reports `unpublished`; both are preserve states. Doctor classifies no
+  worktree: it reads the same evidence but reports no classification.
 - `ignored_files` keeps its baseline name and type but counts the ignored
   records read, a lower bound when `ignored_files_truncated` is true.
 - Path escaping: a path holding a control, bidirectional, or format code
@@ -316,8 +323,10 @@ proposal, and the `project` executable and its tests are unchanged.
 
 ### Open proposal decisions
 
-These remain open; the [packet overview](project-maintenance-overview.md)
-carries the same consolidated list.
+These remain open, except the entries marked decided, which the proposals
+took on 2026-10-08 (see "Decisions taken by the proposals — 2026-10-08");
+the [packet overview](project-maintenance-overview.md) carries the same
+consolidated list without them.
 
 - The measured per-child and per-removal costs and the overview's listing
   time, and therefore the final caps; the batch reapplies the same rule and
@@ -342,15 +351,25 @@ carries the same consolidated list.
 - Whether a gitlink that was never populated, in a worktree whose admin
   directory holds no `modules`, may be treated as removable instead of
   `contains-submodule`.
-- Whether bare repositories are supported or refused.
-- Whether SIGTERM and SIGHUP receive the SIGINT treatment.
+- Whether bare repositories are supported or refused. Decided 2026-10-08:
+  refused.
+- Whether SIGTERM and SIGHUP receive the SIGINT treatment. Decided
+  2026-10-08: yes, exiting 143 and 129, for `clean` and the overview.
 - Whether the `attention` alias merits a separate command, and how
   `--attention --json` filters.
-- Whether suggested commands also carry a display string, and whether the
-  extra `dirty` finding for a dirty default-branch checkout is wanted.
+- Whether suggested commands also carry a display string (decided
+  2026-10-08: no, argv arrays only), and whether the extra `dirty` finding
+  for a dirty default-branch checkout is wanted.
 - The final command and flag spelling.
 - Whether cache disposal, paired branch retirement, and the remote, family,
   bench, container, and park integrations deserve separate changes.
+- Added 2026-10-08, for Brett Heap and carried by both proposal lanes:
+  whether a local ancestry proof should outrank `remote-gone` for worktree
+  rows. The ladder tests remote presence before merge state, as the
+  baseline does; GitHub's head-branch auto-delete leaves a merged branch's
+  upstream gone; and the MVP never deletes a branch, so under the baseline
+  order such a worktree is never eligible for `--all-safe`. Until it is
+  ruled, the packet keeps the baseline ladder.
 
 ### Checks
 
@@ -376,5 +395,216 @@ git diff --check
 
 The completion gate is met: the packet passes the packet validator, every
 high finding has a written contract and scenario, and the design-only PR #7
-is open for review. No OpenSpec proposal is to be written until that PR is
-reviewed and merged, and the follow-ups above are for the next revision.
+was reviewed and merged on 2026-10-07 as `da33d92`. No OpenSpec proposal was
+to be written until that PR was reviewed and merged, and the follow-ups above
+are for the next revision.
+
+### Decisions taken by the proposals — 2026-10-08
+
+The packet is a non-normative design record (packet overview, "Status and
+motivation"). Lane openRepoProject-2 is proposing the two OpenSpec changes
+it feeds, `add-project-clean-all-safe` (issue #9, draft PR #11) and
+`add-project-overview` (issue #10, draft PR #12), and those proposals are
+the governing text. They took the open items below as proposal decisions,
+open to ratification, and departed from some packet decisions, each bullet
+saying so; this revision keeps the record accurate and re-decides nothing.
+A ruling is lane openRepoProject-2's of 2026-10-08 unless marked as lane
+openRepoProject-3's. Where a decision changes a packet sentence, the
+sentence now states the decision, and its bullet names the passages under
+"decided by the proposal".
+
+- `add-project-clean-all-safe` and `add-project-overview`, bare
+  repositories (OQ-15, ruling D-E): refused in every `clean` mode with
+  `target-not-repository-root`, exit 2; an overview row for one has
+  `repository.root: null` and no clean suggestion, as the packet already
+  said. Decided by the proposal: Batch "Identity" says the MVP refuses them
+  and keeps its bare-repository clauses as a sketch for a later extension;
+  the refusal replaces the void baseline change for a bare repository's
+  first registry record in Batch and the packet overview; and the packet
+  overview's first-version scope no longer names a bare command directory.
+- `add-project-clean-all-safe` and `add-project-overview`, SIGTERM and
+  SIGHUP (OQ-16, ruling D-O, with ruling D-F for `clean`): the SIGINT
+  treatment, exiting 143 and 129, now decided for both commands. In the
+  `clean` apply phase the first signal received sets the status; before it
+  they exit 143 and 129 with zero mutation. Decided by the proposal: Batch
+  "Interruption and expiry" and "Exit codes", Overview "Result semantics",
+  and the exit lists of the packet overview and the synthesis.
+- `add-project-overview`, suggested commands: `suggested_command` stays an
+  argv array only, with no display string. No packet sentence changes; the
+  entry leaves the open lists.
+- `add-project-clean-all-safe`, Git 2.36 scope (OQ-23), a departure from
+  the packet's rule that `doctor` refuses old Git, ruling D-B (lane
+  openRepoProject-2, 2026-10-08): "The version check runs only when a Git
+  repository is about to be inspected; a directory with no `.git` keeps
+  `present: false`. `clean` and `overview` refuse with `git-too-old` or
+  `git-unavailable`, exit 2, before any probe; under `--json` they print
+  `{"error", "code"}`. `status`, `doctor` and `update` never refuse:
+  `doctor` reports an old or unusable Git as an error check row and keeps
+  its exit semantics for error rows; `status` marks rows it cannot inspect
+  `inspection-error`; `update --apply --component tools|workflow` does not
+  require Git." Decided by the proposal (ruling D-B): the Git 2.36 item of
+  "Baseline behavior changes" in Batch, Overview, and the packet overview
+  now carries that text and notes that the baseline `main()` prints a
+  `Refused` under `--json` as `{"error"}`, with no `code`. The "Codes"
+  bullet above, "exit 2 before any repository probe", now holds for `clean`
+  and `overview` only.
+- `add-project-clean-all-safe`, JSON compatibility (OQ-24), a departure from
+  "additive superset" in Batch "Plan envelope" and in finding 4's row above:
+  one `schema_version: 1` envelope for every `clean --json`, not only
+  `--all-safe`. Decided by the proposal: Batch "Plan envelope" now keeps the
+  baseline key names and types, says that `root`, `present`, and
+  `ignored_files` change as "Baseline behavior changes" lists, and has plain
+  `clean --json` print the same envelope with `mode: "report"`.
+- `add-project-clean-all-safe`, the plain report (OQ-29) and its row cap
+  (ruling D-V, a lane openRepoProject-3 packet-owner decision accepted by
+  lane openRepoProject-2): plain read-only `clean` runs as
+  `mode: "report"` under the same deadline, with `completeness` and
+  `omitted`, and caps worktree rows at 256 by the same fit test applied to
+  its own children, 7 + W + 16 with no removals (about 41.85 s at 256 rows,
+  about 80.25 s at 512); the `--all-safe` and single-target plans keep 128
+  rows and 16 targets. Decided by the proposal: Batch "User interface and
+  selection", "One mutation seam", "Cap arithmetic", "Plan envelope", and
+  "Refusal codes".
+- `add-project-clean-all-safe`, deadline scope (ruling D-W, a lane
+  openRepoProject-3 decision accepted by lane openRepoProject-2): the 60 s
+  deadline bounds the inspection children and the batch's removal children
+  only; the `push` and `delete-branch` children, run through `execute()`,
+  stay without a timeout, as at `a040790`. Decided by the proposal: Batch
+  "Deadline and budgets". Batch "Focus and baseline" now also says that at
+  `a040790` only `probe()` children have a timeout; ruling D-W withdrew that
+  item (C5) as a correction, since "each Git probe" meant those children.
+- `add-project-clean-all-safe`, `push` and `remote-gone` (ruling D-D): a
+  deleted upstream now fills `upstream`, and `push` refuses a `remote-gone`
+  branch with refusal reason `remote-gone`, exit 2, instead of republishing
+  it; `push` and `delete-branch` refuse with `inspection-incomplete`,
+  `inspect-cap`, or `deadline-exceeded`, exit 2, when their re-inspection is
+  incomplete. Decided by the proposal: Batch "One mutation seam", which said
+  both keep their behavior apart from argument resolution, and the
+  batch-only baseline changes of Batch, Overview, and the packet overview.
+- `add-project-clean-all-safe`, the Git child runner (ruling D-G): Git
+  children run through a new bounded runner, `Popen(start_new_session=True)`
+  per child with a scrubbed environment and output streamed as bytes, and
+  `probe()` stays for non-Git children; abandonable filesystem calls run on
+  daemon threads, never on a `concurrent.futures` pool, and `preexec_fn` is
+  never used. Decided by the proposal: the bare-name item of "Baseline
+  behavior changes" in Batch and Overview, which said the proposal gives
+  `probe()` a timeout argument; C4 below corrects the rest.
+- `add-project-overview`, the repository gate (ruling D-J, amended after
+  lane openRepoProject-3's finding L2): the gate also withholds `--all-safe`
+  while the repository has an unprobed worktree row, its classification
+  null because the 512-row cap or the deadline cut it, because the batch
+  plan is then not known to be complete; `target-cap` does not withhold it,
+  because the batch preview is complete and lists every row that passes
+  every gate before the two index gates. The gate still changes suggestions
+  only. Decided by the proposal: Overview "Attention categories" and
+  "Repository identity and the clean handoff", the synthesis's handoff and
+  gate text, the packet overview's goals table and handoff text, and the
+  "Overview gates" bullet above.
+- `add-project-overview`, the withheld-suggestion reason (ruling D-P), a
+  departure from the project row and finding object of Overview "JSON
+  contract": a new field, `suggestion_gate`, beside `suggested_command` in
+  the overview row and the finding, carries an existing code
+  (`inspection-incomplete`, `inspect-cap`, `scan-limit`,
+  `deadline-exceeded`, `target-not-repository-root`, or
+  `unsupported-path-bytes`) naming the gate that withheld or limited a
+  suggestion. A repository of 129 to 256 worktree rows keeps the plain
+  read-only `project clean <root>` suggestion, with
+  `suggestion_gate: "inspect-cap"` only on a `merged-removable` finding
+  whose `--all-safe` was withheld; over 256 rows every read-only suggestion
+  carries `inspect-cap`, because the report itself would be incomplete.
+  Decided by the proposal: Overview "Attention categories" names the field,
+  and the packet overview and the synthesis mention it; the field tables and
+  fixture of Overview "JSON contract" do not list it.
+- `add-project-overview`, findings on the merge-target checkout (ruling
+  D-I): on a `protected-default` checkout the `dirty`, `diverged`,
+  `unpushed`, and `remote-ahead` findings carry `suggested_command: null`
+  and never set the row's suggestion, because `project clean` offers no
+  action for that checkout; the last three are the proposal's drift
+  findings for that checkout. Decided by the proposal, as a deliberate
+  narrowing of the attention table's per-code suggestions: Overview
+  "Attention categories".
+- `add-project-overview`, manifest refusals: a `Refused` from `manifest()`,
+  for an unreadable or a wrong-kind manifest, is a `manifest-invalid` row
+  error with exit 1 in the overview; the `project-review-safety` exit 2 for
+  an undecodable manifest applies to `clean`, not to an overview row.
+  Decided by the proposal: Overview "Collector boundary and error
+  isolation" and **One helper failure is isolated.**
+- `add-project-overview`, the shared model (ruling D-M): the overview reads
+  the shared evidence model through change 1's canonical `project-command`
+  requirement and states its own 60 s deadline. No packet sentence changes.
+- Both changes, measurement (ruling D-Q): the caps stay provisional in the
+  spec deltas, and `tasks.md` carries a warm- and cold-cache measurement on
+  a Linux file-system path, never `/mnt/c`, before the Speckit handoff.
+- `add-project-clean-all-safe`, `update --apply` (ruling D-R): it refuses
+  unless the root's and every child's `dirty` is exactly `false`.
+- `add-project-clean-all-safe`, `doctor` and `status` on unknown state
+  (ruling D-S, narrowed by lane openRepoProject-2 on 2026-10-09): they
+  report a failed status probe instead of exiting 2, and `doctor` renders as
+  an error check row only a null that means "not established" (a `present`
+  null, a `dirty` null left by a failed probe, any row classified
+  `inspection-error`), never a null that means "none" (`upstream`, `ahead`,
+  and `behind` for a branch with no upstream; `merged_into_target` for a
+  detached head). The overview's inherited rule is the same. The proposal
+  lists this as a baseline behavior change.
+
+### Corrections and review constraints — 2026-10-08
+
+The proposals' alignment reviews and lane openRepoProject-3's fidelity reads
+also found errors and omissions in the packet's account of `a040790`, and
+limits on how the design can be built and tested. Each correction was
+checked against `project` at `a040790`, and the packet text now carries it.
+
+- Baseline (C1): `origin/main` is `da33d92`, which merged PR #7 on
+  2026-10-07, so the `origin/main` commit the packet named is stale and
+  PR #7 is merged, not open. The cleanup-branch commit lists of the packet
+  overview and both feature documents now name all six harvest commits:
+  `5fc2b51`, `acf0133`, `80fdef3`, `1789ad9`, `09af8c8`, and `bb91a49`.
+- Doctor health follow-up (M2): the follow-up to absorb `acf0133` and
+  `80fdef3` is discharged by `add-project-overview` (issue #10, draft PR
+  #12), which absorbs them as local-only read-only reporting; "Current
+  state" above and the packet overview say so, and the overview design does
+  not absorb them itself.
+- `remote-gone` (C3): doctor classifies no worktree at `a040790`; its
+  `check_rows` reports no classification, and `repo_state` sets only
+  `stale-worktree`. Overview and clean classify a deleted upstream
+  `remote-gone`; doctor reads the same evidence but reports no
+  classification.
+- Child processes (C4): `Popen(process_group=0)` needs Python 3.11, and the
+  project's floor is 3.10, so children start with `start_new_session=True`,
+  which also gives each child its own process group, and never with
+  `preexec_fn`; filesystem calls run on daemon threads abandoned on timeout,
+  never on a `concurrent.futures` pool, whose abandoned thread would block
+  interpreter exit.
+- Failed status probe on the merge-target checkout (C6), ruling D-A: "A
+  failed, timed-out or deadline-cut status probe sets the row to
+  `inspection-error` directly, on the merge-target branch too, with that
+  code's repair finding of severity error." The baseline ladder tests the
+  merge-target branch first and would read such a row as
+  `protected-default`. Overview "Repositories and linked worktrees" and
+  "Merge target and classification reuse" and Batch "Worktree-specific
+  probes" now state the case, so the passages that assume
+  `inspection-error` stand.
+- Failed root status (M4, ruling D-N): at `a040790` a failed `git status` in
+  the repository root makes `repo_state` raise `Refused`, ending `clean`,
+  `status`, `doctor`, and `update` with exit 2; under the shared probes it
+  is a row-level `inspection-error` for the main worktree. The shared
+  baseline lists of the packet overview and both feature documents now
+  carry it.
+- Merge-target strips (ruling D-T): Batch "Eligibility and merge-target
+  terminology" now names both `origin/` strips, on the manifest's
+  `tracking_branch` and on the `origin/HEAD` symref, as the baseline
+  `default_branch` and Overview "Merge target and classification reuse" do.
+- Git 2.36 floor (C12): every Git behavior the batch design cites, the
+  `ls-files -v --stage -z` combination, the scrubbed variable list, and the
+  removal refusals among them, was verified on Git 2.43 only. The proposal
+  must verify on a pinned Git 2.36 or raise the floor, as Batch
+  "Repository-wide probes" now says.
+- Platform-bound scenarios (C13): the non-UTF-8 path scenarios, the
+  overview's **Gated merged worktrees.** and **Non-UTF-8 path.** among
+  them, cannot be built on macOS APFS; raw-byte order differs from
+  `core.ignoreCase` order on case-insensitive APFS; and WSL2 `/mnt/c` does
+  not guarantee stable inode numbers. Those scenarios are Linux-only and
+  skipped elsewhere with a reason.
+- Pasting the escaped path form (C17): the human `$'…'` form needs bash
+  4.2 or newer for `\u`; the stock bash 3.2 of macOS lacks it. Both feature
+  documents say so beside their path rules.

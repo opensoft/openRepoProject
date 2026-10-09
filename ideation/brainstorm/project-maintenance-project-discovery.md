@@ -25,14 +25,21 @@ This revision, made on 2026-10-07, resolves the overview-side findings of the
 bounded and shared probes (finding 3), the overview JSON and repository
 handoff contract (finding 4), and discovery scope and acceptance (finding 5).
 
-The design contract baseline is `a040790`. `origin/main` is now `ca4c615`:
-PR #4 archived the completed OpenSpec changes and promoted their specs to
-`openspec/specs/`, and PR #5 (merged 2026-10-07T10:02Z) added the
-`prefer-triad-in-project-new` OpenSpec proposal under `openspec/changes/`;
-the `project` executable and its tests are unchanged since `a040790`. The
+The design contract baseline is `a040790`. `origin/main` is now `d7f6b0e`,
+which merged PR #8 (feature 002, "offer the Triad first in `project new`")
+on 2026-10-08. Before it, `da33d92` merged PR #7 (this packet) on
+2026-10-07, PR #4 archived the completed OpenSpec changes and promoted their
+specs to `openspec/specs/`, and PR #5 (merged 2026-10-07T10:02Z) added the
+`prefer-triad-in-project-new` OpenSpec proposal under `openspec/changes/`.
+PR #8 added about 141 lines to `project`, all in `choose()` and `new()`, and
+1,163 lines to `tests/test_project.py`; the cleanup, status, doctor, and
+update paths are unchanged in content but sit about 141 lines lower, so every
+`project` line citation stays pinned at `a040790`, whose `project` is
+byte-identical through `da33d92`. The
 later `cleanup` branch (PR #2, closed unmerged on 2026-10-07; branch retained
-on origin at `bb91a49`) adds behavior in `5fc2b51`, `1789ad9`, and `bb91a49`;
-those commits are extension evidence and are not assumed by the overview MVP.
+on origin at `bb91a49`) adds behavior in `5fc2b51`, `acf0133`, `80fdef3`,
+`1789ad9`, `09af8c8`, and `bb91a49`; those commits are extension evidence
+and are not assumed by the overview MVP.
 The old `12db36a` review-closure commit is not a health or cache
 implementation anchor.
 
@@ -235,15 +242,26 @@ worktree and `common_dir` the canonical common directory, both printed by
 `git rev-parse --path-format=absolute --show-toplevel --git-common-dir`.
 `dev` and `ino` come from a no-follow `os.lstat` of `common_dir`. A path
 string alone is never an identity. When a linked worktree is reached first,
-the first `git worktree list` entry names the main worktree; a bare main
-entry leaves `root` null, which suppresses clean suggestions.
+in canonical candidate order, the first `git worktree list` entry names the
+main worktree; a bare main entry leaves `root` null, which suppresses clean
+suggestions. When that first record's path equals `common_dir`, the main
+checkout is a gitfile checkout: `repository.root` is the realpath of
+`core.worktree`, else the `--show-toplevel` of a candidate that is that
+checkout, else null with an `unsupported-layout` repair finding and no
+suggestion, and that record is never a status-probe row. A main-worktree
+path that does not exist gives `repository.root: null` with a
+`main-worktree-missing` repair finding, and the repository-wide probes then
+run in the candidate.
 
 A worktree is `{path, dev, ino, admin_id}`. `path` is canonical from
 `git worktree list --porcelain -z`, and `dev` and `ino` come from
 `os.lstat(path)`. `admin_id` is the `<id>` in the worktree's `.git` file
 (`gitdir: <common_dir>/worktrees/<id>`), accepted only when
 `<common_dir>/worktrees/<id>/gitdir` names `<path>/.git` in return. The main
-worktree has `admin_id: null`.
+worktree has `admin_id: null`. Registration is checked as batch cleanup
+checks it: relative values resolve against the directory holding the file,
+and both comparisons use realpaths. Where a bind mount gives two root
+spellings for one `(dev, ino)`, the one first in canonical order wins.
 
 Rows are keyed by repository identity. A linked worktree that is also an
 immediate child of a root therefore merges into its repository's row, and
@@ -257,13 +275,17 @@ one of these cases:
 | `lstat` fails with `ENOENT` or `ENOTDIR` | `false` | none | `stale-worktree`, from the ladder | housekeeping finding |
 | `lstat` fails with any other `OSError`, such as `EACCES` | `null` | none | `inspection-error`, set directly | `os-error` in `errors[]` |
 | Registration disagrees in either direction | `true` | none | `inspection-error`, set directly | `registration-mismatch` finding |
-| Present and registered; the status probe fails or times out | `true` | ran | `inspection-error`, from the ladder | `probe-failed` or `probe-timeout` in `errors[]` |
+| Present and registered; the status probe fails, times out, or is cut by the deadline | `true` | ran | `inspection-error`, set directly | `probe-failed`, `probe-timeout`, or `deadline-exceeded` in `errors[]` |
 | Present and registered; the status probe succeeds | `true` | ran | the ladder's result | per the attention table |
 
-Both rows set directly bypass the ladder on purpose. The ladder would read
-an unknown presence as `stale-worktree`, and it tests the merge-target branch
-before cleanliness, so a mismatched row on that branch would otherwise read
-`protected-default`, as batch cleanup's identical rule avoids. A
+The three rows set directly bypass the ladder on purpose. The ladder would
+read an unknown presence as `stale-worktree`, and it tests the merge-target
+branch before cleanliness, so a mismatched row on that branch, or a
+merge-target checkout whose status probe failed, would otherwise read
+`protected-default`, as batch cleanup's identical rule avoids. A failed,
+timed-out or deadline-cut status probe sets the row to `inspection-error`
+directly, on the merge-target branch too, with that code's repair finding of
+severity error. A
 registration-mismatched worktree gets no status probe, because a `.git` file
 that is missing or names another admin directory would make `git status`
 fail or report another worktree's index. Its `admin_id`, `dirty`, and
@@ -385,16 +407,19 @@ linked worktree has its own index, so the same probe run anywhere else would
 read the wrong one. Repository-wide probes run as `git -C <repository.root>`
 (`common_dir` for a bare repository), except the identity probe, which runs in
 the candidate because that is how the repository is found. When a linked
-worktree is reached first, the registry probe also runs in the candidate,
-because the main worktree's path, and so `repository.root`, comes from that
-listing. Batch cleanup states the same rule.
+worktree is reached first in canonical candidate order, the registry probe
+also runs in the candidate, because the main worktree's path, and so
+`repository.root`, comes from that listing; when the main worktree is
+missing, the repository-wide probes run there too. Batch cleanup states the
+same rule.
 
 1. Registration: `lstat` of the path and reads of its `.git` file and the
    matching `gitdir` file. These are filesystem reads, not children, and a
    mismatch skips the status probe.
 2. Status: one streamed
-   `git status --porcelain=v1 -z --untracked-files=normal --ignored=matching`
-   gives both the dirty and the ignored state. The explicit
+   `git status --porcelain=v1 -z --untracked-files=normal --ignored=matching`,
+   run with `-c core.untrackedCache=false -c core.fsmonitor=false`, gives
+   both the dirty and the ignored state. The explicit
    `--untracked-files=normal` is required: without it, a user's
    `status.showUntrackedFiles=no` makes Git refuse the `--ignored`
    combination with “Unsupported combination of ignored and untracked-files
@@ -437,16 +462,23 @@ invocation contend for one repository's lock files, which complements
 its repository is known; it only reads and takes no lock, so identity probes
 for two candidates that turn out to share a repository may overlap.
 
-Scheduling has two phases so that the result never depends on timing. In the
-first, repositories are dispatched in canonical candidate order, and each runs
-its repository-wide probes serially. A repository's rank is the canonical
-position of the first candidate that reached it. In the second, worktree rows
-are ranked by repository rank and then row order, the worktree cap selects
-the first 512, and the selected rows' worktree-specific probes run, serially
-within each repository. A repository's worktree probes may start as soon as
-every repository ranked before it has finished its first phase, because the
-ranks of its rows are then fixed. Output order is canonical whatever the
-completion order.
+Scheduling has two phases so that, in a run in which no child, task, or
+root listing reaches its budget and the deadline does not expire, the result
+never depends on timing. In the first, repositories are dispatched in
+canonical candidate order, and each runs its repository-wide probes
+serially. A repository's rank is the canonical position of the first
+candidate that reached it. In the second, worktree rows are ranked by
+repository rank and then row order, the worktree cap selects the first 512,
+and the selected rows' worktree-specific probes run, serially within each
+repository. A repository's worktree probes may start as soon as every
+repository ranked before it has finished its first phase, because the ranks
+of its rows are then fixed, and, as a barrier added to that condition, only
+after every candidate earlier in canonical order has finished its identity
+probe, completed or failed, since only then is the repository's own rank
+fixed; speculative first-phase dispatch stays allowed. Output order is
+canonical whatever the completion order, and a run that a budget or the
+deadline cuts reports each cut unit with `omitted` and the exactness of
+"Ordering, truncation, and omitted counts".
 
 ### Deadline and timeouts
 
@@ -455,19 +487,34 @@ At start, before any root is listed, the overview sets
 gets a timeout of `min(5, deadline - now)` seconds (`probe_timeout_seconds`),
 replacing the baseline `probe()` helper's fixed 15 s; when that value is not
 positive, the child is not started. Children are started with
-`subprocess.Popen(..., process_group=0)`, each in its own process group, so a
-Ctrl-C at the terminal reaches only `project`, whose SIGINT handler runs the
-termination sequence. The baseline `probe()` is not reused as it is, because
-its `subprocess.run` sends SIGKILL to a single process on a timeout. A child
+`subprocess.Popen(..., start_new_session=True)`, each in its own session and
+so in its own process group, whose id is the child's pid, so a Ctrl-C at the
+terminal reaches only `project`, whose SIGINT handler runs the termination
+sequence. `start_new_session` works on Python 3.10, the project's floor,
+where `process_group=0` needs 3.11; `preexec_fn` is never used, because it
+is unsafe in a process with threads. The baseline `probe()` is not reused as
+it is, because its `subprocess.run` sends SIGKILL to a single process on a
+timeout. A child
 that reaches its timeout, or whose stream the overview stops reading early,
 receives SIGTERM to its process group, then SIGKILL if it has not exited
-within 2 s, and is always reaped. A deliberate early stop records nothing. On
+within 2 s; the reap then waits at most the same 2 s grace, after which the
+child is abandoned and its row recorded `probe-timeout`. A deliberate early
+stop at a record bound is a complete outcome that records nothing, never
+`probe-failed`. Every exit path terminates the process groups the overview
+started, and each child's standard error is drained and capped. On
 deadline expiry or SIGINT the overview stops scheduling and terminates every
 in-flight child together in the same way; on deadline expiry each is
 recorded as a timeout (`deadline-exceeded`).
 
-Filesystem work runs in worker threads as coarse tasks, never one handoff
-per call. Discovery is one task per root, holding its `os.scandir` listing
+Filesystem work runs in daemon threads as coarse tasks, never one handoff
+per call, and a task that does not return in time is abandoned. It never
+runs on a `concurrent.futures` pool, because the interpreter joins a pool's
+worker threads at exit, so an abandoned pool thread would block it. Every
+filesystem call the overview makes, root canonicalization and deduplication,
+marker and holder checks, and manifest reads included, runs in such a
+bounded daemon task with `min(5, deadline - now)`, and the main thread never
+blocks in an unbounded filesystem call.
+Discovery is one task per root, holding its `os.scandir` listing
 and the marker checks of every entry; root tasks run concurrently, and the
 listing phase counts against the same monotonic deadline. Each root's task
 is waited for with `min(5, deadline - now)`: a root still unfinished then
@@ -479,10 +526,10 @@ reads form one task with the same wait, and a task that does not return in
 time records `probe-timeout` or `deadline-exceeded` for its row. The
 overview then moves on. A call stuck in the
 kernel on an unresponsive mount (NFS, sshfs, or a sleeping network share)
-cannot be interrupted from user space: the worker is abandoned, and process
-exit itself can block until the call returns. A run therefore ends within the
-deadline plus at most 2 s of reaping and the time to render, except while
-such a call is stuck.
+cannot be interrupted from user space: its daemon thread is abandoned, and
+process exit itself can block until the call returns. A run therefore ends
+within the deadline plus at most 2 s of reaping and the time to render,
+except while such a call is stuck.
 
 A child stopped by the 5 s limit records `probe-timeout`; one stopped or
 never started because the global deadline was the smaller limit records
@@ -527,7 +574,7 @@ count. The wrapper converts failures into data:
 
 | Raised or observed while collecting one candidate | Error code |
 | --- | --- |
-| `Refused` from `manifest()`: an unreadable, malformed, or wrong-kind manifest | `manifest-invalid` |
+| `Refused` from `manifest()`: an unreadable manifest (one that is not valid UTF-8 included), a malformed one, or one of the wrong kind | `manifest-invalid` |
 | `Refused` from any other baseline helper the proposal reuses | `refused` |
 | `OSError`, including `PermissionError` from a marker check | `os-error` |
 | `UnicodeDecodeError` from a helper that still decodes text | `undecodable-output` |
@@ -535,6 +582,14 @@ count. The wrapper converts failures into data:
 | A Git child exits nonzero | `probe-failed` |
 | A Git child or filesystem call reaches the 5 s limit | `probe-timeout` |
 | The global deadline ends a child or call, or prevents its start | `deadline-exceeded` |
+
+In the overview only, a manifest larger than 1 MiB is `manifest-invalid`
+too. Every
+`manifest-invalid` is a row error, whichever case raised it, and the
+overview exits 1 for it. The exit 2 that the `project-review-safety`
+requirement "YAML decoding errors are structured refusals" sets for a
+manifest that is not valid UTF-8 applies to `project clean` and the other
+commands that refuse as a whole, not to an overview row.
 
 An exception raised by a marker check or inside an existing helper stops
 that candidate's remaining steps. The overview's own per-worktree filesystem
@@ -596,17 +651,17 @@ mutation.
 Overview, doctor, and clean share classifier meanings. Worktree
 classification is `cleanup_report`'s ladder unchanged: the same names, the
 same test order, and the same recommendation text, fed from the memoized
-evidence instead of per-worktree probes. The proposal decides whether to
-extract the ladder into a function or inject the evidence into it. The ladder
+evidence instead of per-worktree probes, as a pure function over that
+evidence. The ladder
 runs on a worktree row only when the row is within the cap, its presence is
 established, and the repository-wide probes it reads (registry, ref listing,
 merged set) succeeded; otherwise `classification` is null, because the ladder
 would read an unknown upstream as `unpublished`. Unreadable and
-registration-mismatched rows are the exceptions: both are set to
+registration-mismatched rows, and rows whose status probe failed, timed out,
+or was cut by the deadline, are the exceptions: all three are set to
 `inspection-error` directly, as the table under "Repositories and linked
-worktrees" shows. A null `dirty` or `ignored_files`
-from a failed status probe is passed through, so the ladder yields
-its own `inspection-error`.
+worktrees" shows, so none of them reads as `protected-default` on the
+merge-target branch.
 
 `review-required` stays in the ladder as a defensive branch, but under the
 shared evidence model no Git state reaches it: `%(upstream:track)` always
@@ -642,6 +697,8 @@ classification names, and `<root>` is the absolute `repository.root`.
 | `no-merge-target` | repair | error | `local-refs` | none |
 | `registration-mismatch` | repair | warning | `worktree-registry` | none |
 | `unsupported-path-bytes` | repair | warning | `filesystem` | none |
+| `unsupported-layout` | repair | set by change 2 (lane openRepoProject-3 recommends `error`) | `worktree-registry` | none |
+| `main-worktree-missing` | repair | warning | `worktree-registry` | none |
 | `dirty` | preserve | warning | `worktree-status` | `project clean <root>` |
 | `ignored-local-files` | preserve | warning | `worktree-status` | `project clean <root>` |
 | `detached` | preserve | warning | `worktree-registry` | `project clean <root>` |
@@ -657,6 +714,11 @@ classification names, and `<root>` is the absolute `repository.root`.
 | `main-worktree` | informational | info | `worktree-registry` | none |
 | `locked-worktree` | informational | info | `worktree-registry` | `project clean <root>` |
 | `merge-target-conflict` | informational | info | `manifest` | none |
+
+On a `protected-default` checkout, `dirty`, one of `diverged`, `unpushed`,
+or `remote-ahead`, `unpublished`, and `remote-gone` apply with
+`suggested_command: null`, as the paragraph on `protected-default` below
+states.
 
 A worktree the ladder classifies `merged-removable` yields the
 `merged-removable` housekeeping finding, and with it the `--all-safe`
@@ -678,18 +740,48 @@ registration-mismatched row), the batch plan for that repository would be
 refused as `inspection-incomplete`, so the overview withholds every
 `--all-safe` suggestion for it. The same applies when the repository has
 more worktree rows than batch cleanup inspects (its `limits.worktree_rows`,
-128), because that plan would be incomplete with `inspect-cap`. Its
-`merged-removable` housekeeping findings
-remain, but each suggests only the read-only `project clean <root>`, and so
-does the row. The gate changes suggestions only; it does not change how
+128), because that plan would be incomplete with `inspect-cap`, and when any
+of its worktree rows went unprobed, its classification null because the
+512-row cap or the deadline cut it, because the batch plan for that
+repository is then not known to be complete. Its `merged-removable`
+housekeeping findings remain, but each suggests only the read-only
+`project clean <root>`, and so does the row. Each such finding carries
+`suggestion_gate`, beside its `suggested_command`, naming the code of the
+gate that withheld `--all-safe`, and `suggestion_gate_rows`, the worktree-row
+count behind an `inspect-cap` gate. A repository of 129 to 256 worktree rows
+keeps the plain read-only `project clean <root>` suggestion, with
+`suggestion_gate: "inspect-cap"` only on a `merged-removable` finding whose
+`--all-safe` was withheld; over 256 rows, the plain report's own cap, every
+read-only suggestion carries `inspect-cap`, because the report itself would
+be incomplete. The gate changes suggestions only; it does not change how
 completeness is computed, so a registration-mismatched row still leaves the
-result complete.
+result complete. `target-cap` is a limiting gate, not a withholding one:
+with more than 16 gate-passing `merged-removable` rows the `--all-safe`
+suggestion stays and its findings carry `suggestion_gate: "target-cap"`,
+whose message names the 16-target limit, says the preview is complete, and
+says the batch takes 16 per run, so re-running drains the backlog.
+
+Each `suggestion_gate` code has a fixed remedy, carried in the finding's
+message and in the human `next` line as "(withheld: ...)" or
+"(limited: ...)": `inspection-incomplete`, "repair the inspection-error rows
+first"; `inspect-cap`, "N rows exceed the batch's 128-row cap; remove
+explicitly" or "N rows exceed the 256-row report cap; the report would be
+incomplete", the two bands that `suggestion_gate_rows` tells apart; and
+`scan-limit` or `deadline-exceeded`, "re-run with --root" naming the
+repository's parent directory. The code set is `inspection-incomplete`,
+`inspect-cap`, `scan-limit`, `deadline-exceeded`,
+`target-not-repository-root`, `unsupported-path-bytes`, and `target-cap`.
 
 Batch cleanup may still exclude a suggested worktree for reasons only its
 deeper probes see. It runs bounded `git ls-files` checks in each selected
 target's own worktree and one `lstat` in its admin directory, and excludes a
 target with `hidden-local-state` (assume-unchanged or skip-worktree entries)
-or `contains-submodule`. That gate has two triggers: a gitlink (mode `160000`)
+or `contains-submodule`, and it excludes as `unstarted-branch` a row whose
+branch has no commit of its own, which only its reading of the branch's
+creation reflog establishes; for a clean worktree with no commit, at the
+merge target's tip, the overview's finding message says that it counts as
+`merged-removable` under the shared ladder. The submodule gate has two
+triggers: a gitlink (mode `160000`)
 entry in the target's index, found by the `git ls-files` check, or a
 `<common_dir>/worktrees/<admin_id>/modules` entry, found by the `lstat`, which
 is where a linked worktree's submodule repositories live. On Git 2.43,
@@ -701,7 +793,17 @@ every gitlink and every worktree with that directory, so the gate fails
 closed. The overview does not run those probes, and each such exclusion is
 listed in the batch plan.
 
-`protected-default` produces no finding by itself. Row errors and scan errors
+`protected-default` produces no finding by itself, but on a
+`protected-default` checkout the overview emits every applicable finding,
+not a first match: `dirty` (see "Merge target and classification reuse"),
+plus one of `diverged`, `unpushed`, or `remote-ahead` (the proposal's OQ-20
+drift findings); `unpublished`, with the message "merge-target branch has no
+upstream; local commits are unverified", when no upstream is configured; and
+`remote-gone` when the upstream is gone. Every one of them carries
+`suggested_command: null` and never sets the row's `suggested_command`,
+because `project clean` offers no action for the merge-target checkout. That
+narrows, for that checkout only and on purpose, the per-code suggestions the
+table above gives these codes. Row errors and scan errors
 are not findings, but they display in the repair category. A finding of
 severity `error` makes the exit 1; `warning` does so only with `--strict`;
 `info` never affects the exit.
@@ -817,6 +919,8 @@ repository gate does not apply; otherwise the read-only
 | `message` | string | the classifier's recommendation text, or a fixed sentence for other codes |
 | `observed_at` | string | RFC 3339 UTC time at which the deciding probe completed |
 | `suggested_command` | array of strings or null | argv, per the attention table |
+| `suggestion_gate` | string or null | the code of the gate that withheld or limited `suggested_command` (see "Attention categories"); null when none did |
+| `suggestion_gate_rows` | integer or null | the repository's worktree-row count behind an `inspect-cap` gate; null otherwise |
 
 ### Representation rules
 
@@ -855,8 +959,9 @@ non-null; a bare repository has no root and gets no clean suggestion. The
 `--all-safe` form is withheld for the whole repository while any of its
 worktree rows is `inspection-error`, or while it has more worktree rows than
 batch cleanup inspects, because the batch plan would then be refused as
-`inspection-incomplete` or `inspect-cap`; the read-only form is suggested
-instead.
+`inspection-incomplete` or `inspect-cap`, and while any of its rows went
+unprobed, because that plan is then not known to be complete; the read-only
+form is suggested instead.
 A suggestion never names a project by bare name and never includes `--apply`
 or `--yes`.
 A root that is not valid UTF-8 cannot be carried exactly in a JSON argv
@@ -922,7 +1027,9 @@ unchanged under a UTF-8 locale. Under the C locale that holds only for
 escapes below U+0080, such as `\u000a`: bash can leave a non-ASCII escape
 such as `\u202e` unexpanded, and zsh can reject it with “character not in
 range”. Results varied between environments on 2026-10-07, and only a path
-with bidirectional, format, or C1 characters is affected.
+with bidirectional, format, or C1 characters is affected. Pasting also needs
+bash 4.2 or newer, the first bash whose `$'…'` form expands `\u`; the
+stock bash 3.2 of macOS lacks it.
 
 ### Fixture
 
@@ -994,7 +1101,8 @@ identity probe.
           "This clean, merged, non-current worktree may be removed explicitly.",
         "observed_at": "2026-10-07T14:03:13Z",
         "suggested_command": ["project", "clean",
-                              "/home/user/projects/atlas", "--all-safe"]}
+                              "/home/user/projects/atlas", "--all-safe"],
+        "suggestion_gate": null, "suggestion_gate_rows": null}
      ],
      "suggested_command": ["project", "clean", "/home/user/projects/atlas",
                            "--all-safe"],
@@ -1072,7 +1180,7 @@ Proposed exits:
 | 0 | `completeness` is `complete` and no finding has severity `error`; warnings, housekeeping, and informational findings may be present |
 | 1 | `completeness` is `incomplete`, or a finding has severity `error`, or `--strict` is given and a finding has severity `warning` |
 | 2 | invalid invocation, Git older than 2.36 (`git-too-old`) or no usable `git` (`git-unavailable`), or an exception raised outside the collector boundary |
-| 130 | cancellation by SIGINT |
+| 130, 143, 129 | cancellation by SIGINT (130), SIGTERM (143), or SIGHUP (129) |
 
 `completeness` is `incomplete` after any scan error (`scan-limit` for roots,
 root entries, candidates, or worktree rows; `root-unreadable`; or
@@ -1091,9 +1199,11 @@ argparse's usage message on standard error, with no JSON. The overview has
 no plan envelope to extend, which is why this object is smaller than batch
 cleanup's extended error object.
 
-On SIGINT every in-flight child is terminated and reaped as for a timeout,
-`Cancelled.` goes to standard error, no result document is printed, and 130
-takes precedence over 1. The attention filter affects display, not collection
+On SIGINT, SIGTERM, or SIGHUP every in-flight child is terminated and reaped
+as for a timeout, `Cancelled.` goes to standard error (on a best-effort basis
+after SIGHUP, when the terminal may be gone), no result document is printed,
+and 130, 143, or 129 takes precedence over 1. The attention filter
+affects display, not collection
 or exit status. A complete scan with no projects says so explicitly and exits
 0.
 
@@ -1105,9 +1215,11 @@ carry them into the governing cleanup specifications,
 `openspec/specs/project-clean-review-safety/spec.md`. The batch document
 lists the same shared items plus its batch-only items: those in the last
 item below, and also the resolution of relative paths and the no-argument
-default, the meaning of the plan's `root`, and a bare repository's registry
-record. Each observation of `a040790` below was confirmed in the 2026-10-07
-scratch checks.
+default, the meaning of the plan's `root`, the refusal of bare repositories,
+`push`'s refusal of a `remote-gone` branch, the gitfile and submodule
+checkout rules, the plain report's 256-row cap, `--apply --json`, the
+`unstarted-branch` gate, and the deferred target cap. Each observation of
+`a040790` below was confirmed in the 2026-10-07 scratch checks.
 
 - Git-first resolution: every `project clean` invocation whose target is an
   absolute path (the read-only report, `--json`, `--all-safe`, and
@@ -1116,8 +1228,12 @@ scratch checks.
   worktree root. Today `discover` redirects `/outer/leg` to `/outer` when
   `/outer/project.yaml` exists, and `/Atlas` to `/Atlas/Atlas` when
   `/Atlas/Atlas/family.yaml` exists. Bare names keep the baseline lookup,
-  whose Git child becomes counted and deadline-bounded (the proposal gives
-  `probe()` a timeout argument); the overview itself never calls `discover`.
+  whose Git child becomes counted and deadline-bounded, because every
+  inspection Git child runs through a new bounded runner (`Popen` with
+  `start_new_session=True`, a scrubbed environment, and output streamed as
+  bytes) while `probe()` stays for non-Git children (`push` and
+  `delete-branch` excepted, ruling D-W); the overview itself never calls
+  `discover`.
 - Shared probes: `repo_state` and `cleanup_report` move onto the probes
   described under "Probe model and deadline", so overview, doctor, and clean
   read one evidence model. Its visible consequences:
@@ -1136,6 +1252,10 @@ scratch checks.
     `PermissionError`, so `project clean` refuses the whole repository with
     exit 2. The row now has `present: null`, an `os-error`, and
     `inspection-error`, and the other rows are still reported.
+  - Failed root status: at `a040790` a failed `git status` in the
+    repository root raises `Refused` in `repo_state`, ending `clean`,
+    `status`, `doctor`, and `update` with exit 2. The main worktree's row is
+    now `inspection-error`, and the other rows are still reported.
   - Registration mismatch: a worktree whose admin registration disagrees is
     no longer status-probed; it is `inspection-error` with a
     `registration-mismatch` finding.
@@ -1150,21 +1270,33 @@ scratch checks.
   stopped before any ignored entry.
 - The manifest's `tracking_branch` is read at `repository.root`, not at
   whichever directory `discover` returned.
-- Timeouts: every Git child gets `min(5 s, remaining)` against one 60 s
-  monotonic deadline and runs in its own process group, instead of the
-  baseline `probe()` helper's fixed 15 s with no invocation deadline.
-- Git 2.36 or newer is required for `worktree list -z`: `project clean`
-  refuses older Git with `git-too-old` and a missing or unusable `git` with
-  `git-unavailable`, and `project doctor`, which reads `repo_state`, requires
-  it as well and refuses older or missing Git the same way, with exit 2 and
-  the same two codes.
+- Timeouts: under the overview's and `clean`'s 60 s monotonic deadlines,
+  every inspection Git child gets `min(5 s, remaining)` and runs in its own
+  process group, instead of the baseline `probe()` helper's fixed 15 s with
+  no invocation deadline; `status`, `doctor`, and `update` have no deadline
+  and keep 15 s per Git child, and `push` and `delete-branch` stay unbounded
+  (ruling D-W).
+- Git 2.36 or newer is required for `worktree list -z`. The version check
+  runs only when a Git repository is about to be inspected; a directory with
+  no `.git` keeps `present: false`. `clean` and `overview` refuse with
+  `git-too-old` or `git-unavailable`, exit 2, before any probe; under
+  `--json` they print `{"error", "code"}`. `status`, `doctor` and `update`
+  never refuse: `doctor` reports an old or unusable Git as an error check
+  row and keeps its exit semantics for error rows; `status` marks rows it
+  cannot inspect `inspection-error`;
+  `update --apply --component tools|workflow` does not require Git. The
+  overview checks once before any root is listed (ruling D-AF). The
+  baseline `main()` prints a `Refused` under `--json` as `{"error"}`, with
+  no `code`, which these refusals add.
 - Batch cleanup only, specified there: single-target `remove` runs on the
-  shared removal seam, and an inspection error anywhere in the repository
-  refuses it as it refuses a batch; the removal command gains
-  `-c status.showUntrackedFiles=normal`, so Git's own cleanliness check sees
-  untracked files; and selected targets get bounded `git ls-files` checks, run
-  in each target's own worktree, and an `lstat` of each target's admin
-  `modules` path, which exclude `hidden-local-state` and `contains-submodule`.
+  shared removal seam, its completeness limited to the repository-wide
+  evidence and its own row; the removal command gains
+  `-c status.showUntrackedFiles=normal`, `-c core.untrackedCache=false`, and
+  `-c core.fsmonitor=false`, so Git's own cleanliness check sees untracked
+  files; selected targets get bounded `git ls-files` checks, run in each
+  target's own worktree, and an `lstat` of each target's admin `modules`
+  path, which exclude `hidden-local-state` and `contains-submodule`; and a
+  branch with no commit of its own is excluded as `unstarted-branch`.
 
 The path and status-configuration changes replace a wrong or failed
 classification with one drawn from real evidence. A worktree they newly show
@@ -1180,7 +1312,9 @@ for the process. Each asserts zero mutation: the before and after snapshots
 of `git for-each-ref`, `git worktree list --porcelain -z`, each checkout's
 `git status --porcelain=v1 -z --untracked-files=normal --ignored=matching`,
 each index file's modification time, and the directory tree under every root
-are identical.
+are identical. The scenarios that need a non-UTF-8 path, **Gated merged
+worktrees.** and **Non-UTF-8 path.**, cannot be built on macOS APFS; they
+are Linux-only and are skipped elsewhere with a reason.
 
 Discovery, identity, and caps:
 
@@ -1234,7 +1368,9 @@ Probes, deadline, and bounds:
   a fixture `core.fsmonitor` hook; when the overview runs; then that child is
   stopped at 5 s and reaped, the row records `probe-timeout` with
   `dirty: null` and classification `inspection-error`, every other row is
-  complete, and the exit is 1.
+  complete, and the exit is 1. The proposals pin `core.fsmonitor=false` for
+  every status probe, so this fixture cannot occur as written; feature 004
+  rewrites it, producing the hung child with an injected slow `git`.
 - **Hung filesystem call.** Given an external worktree on a fixture FUSE
   mount whose `lstat` sleeps for 10 s; when the overview runs; then the call
   is abandoned at 5 s, that worktree records `probe-timeout`, every other row
@@ -1251,7 +1387,10 @@ Probes, deadline, and bounds:
   then the process table never shows more than four of its Git children at
   once or two with the same `common_dir`, the eight held probes take about
   2 s rather than 8 s, and the JSON equals that of a run limited to one child
-  apart from timestamps and `budget.probe_concurrency`.
+  apart from timestamps and `budget.probe_concurrency`. The proposals pin
+  `core.fsmonitor=false` for every status probe, so this fixture cannot occur
+  as written; feature 004 rewrites it, holding the probes with an injected
+  slow `git`.
 - **Bounded ignored files.** Given a clean merged worktree with 10,000 ignored
   files; when the overview runs; then the stream stops early,
   `ignored_files` is 64 with `ignored_files_truncated: true`,
@@ -1283,7 +1422,10 @@ Collector boundary:
   `status: "error"`, a `manifest-invalid` error, its repository identity
   retained, and null `merge_target`, `git`, and `worktrees`. The exit is 1,
   where the same `Refused` ends `project clean` today with a whole-command
-  exit 2.
+  exit 2. This is the wrong-kind case. A `ledger/project.yaml` that is not
+  valid UTF-8 is the unreadable case, for which the `project-review-safety`
+  requirement on YAML decoding sets exit 2 on `clean`; the overview gives it
+  the same `manifest-invalid` row error and exit 1.
 
 Merge targets (where a target exists, each also asserts that its name equals
 the `target_branch` that `project clean <root> --json` reports at `a040790`,
@@ -1384,8 +1526,8 @@ External linked worktrees:
   `inspection-error`, the project row has an `os-error` in `errors[]` and
   status `error`, the other rows are reported, and the exit is 1, where
   `a040790` refuses the whole repository with exit 2. When only the
-  worktree's own status probe fails, the row records `probe-failed` and the
-  ladder's `inspection-error` instead.
+  worktree's own status probe fails, the row records `probe-failed` and
+  `inspection-error`, set directly, instead.
 
 Paths:
 
@@ -1462,28 +1604,47 @@ An arbitrary-depth recursive scan would find more nested repositories but
 would be slower and prone to discovering dependency/vendor trees. Prefer
 bounded discovery with explicit additional roots for the first version.
 
-The caps and the deadline must be reconciled by measurement. This design
-closes the arithmetic gap with bounded concurrency (four children, across
-repositories only). If the proposal rejects concurrency, the fallback is to
-lower the caps to 32 candidates and 128 worktree rows, which satisfy the same
-rule serially (1 + 32 × 4 + 128 × 1 = 257 children, about 38.6 s at 150 ms,
-or about 44.6 s with the listing estimate). If measured warm children average
-more than about 210 ms even with concurrency, the proposal must lower the
-caps or accept that very large estates end incomplete. One repository's
-children run serially whatever the concurrency, so a single repository with
-more than about 355 worktree rows
-cannot complete at the 150 ms margin rate; the proposal decides whether to
-accept that or to cap rows per repository.
+The caps and the deadline must still be reconciled by measurement: the caps
+are provisional until the proposal measures them, and if measured warm
+children average more than about 210 ms even with concurrency, the caps must
+fall or very large estates end incomplete. The proposals took this
+section's other former open items as proposal decisions, open to
+ratification, as the
+[fix handoff](next-session-project-maintenance-fix-handoff.md) records under
+"Decisions taken by the proposals — 2026-10-08": bounded concurrency of
+four children across repositories, with the serial fallback of 32
+candidates and 128 worktree rows (1 + 32 × 4 + 128 × 1 = 257 children, about
+38.6 s at 150 ms, or about 44.6 s with the listing estimate) if design
+rejects it; no per-repository row cap, so one repository with more than
+about 355 worktree rows ends at the deadline, visibly incomplete; no
+configurable limits; no `attention` alias; the full envelope under
+`--attention --json`; argv-only suggested commands; the extra `dirty`
+finding kept; and one separate change per remote, family, bench, container,
+or park integration. Exact bench/type validation remains existing-doctor
+follow-up work.
 
-Confirm whether `--attention --json` should keep printing the full envelope
-or filter `projects` behind an explicit envelope field, whether suggested
-commands should stay argv arrays or also carry a display string, and whether
-the extra `dirty` finding for a dirty default-branch checkout is wanted.
-Confirm later whether the `attention` alias merits a separate command and
-whether large-estate limits should be user-configurable. Decide whether
-remote, family, bench, container, and park integrations deserve separate
-changes after the local MVP is proven. Exact bench/type validation remains
-existing-doctor follow-up work.
+Open questions for Brett Heap:
+
+- For Brett Heap: whether a local ancestry proof should outrank
+  `remote-gone` for worktree rows. Lane openRepoProject-3 raised it,
+  recommending yes, and lane openRepoProject-2 carries it in both proposals.
+  The ladder tests remote presence before merge state, as the baseline does;
+  GitHub's head-branch auto-delete with `fetch.prune` leaves a merged
+  branch's upstream gone; and the MVP never deletes a branch, so under the
+  baseline order such a worktree is never eligible for `--all-safe`, and
+  `push` now refuses its branch. Measured here: 4 of about 90 merged
+  worktrees, `fetch.prune` unset everywhere, and auto-delete on 2 of 21
+  repositories. Until it is ruled, the packet keeps the baseline ladder; a
+  `remote-gone` row whose `merged_into_target` is true carries the
+  recommendation "Merged locally, upstream deleted: not removable by
+  `project` until the open question is ruled; review, then
+  `git worktree remove` yourself", and the overview's `remote-gone` message
+  says whether the branch tip is already an ancestor of the merge target
+  when its evidence establishes that, its suggestion only reviewing.
+- For Brett Heap: squash merges never satisfy the ancestry proof, so the MVP
+  selects little in a squash-merge repository. The recommendation is a local
+  patch-equivalence proof (`git cherry` or patch-id against the merge
+  target), designed as a follow-on change, not in the MVP.
 
 ## Relationships
 

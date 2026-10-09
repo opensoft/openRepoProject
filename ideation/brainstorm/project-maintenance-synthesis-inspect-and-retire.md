@@ -56,10 +56,11 @@ An overview row's `suggested_command` is `null` unless a finding supplies one.
 When present it is a JSON argument vector naming the absolute canonical
 `repository.root`: `["project", "clean", "<root>", "--all-safe"]` when the row
 has a `merged-removable` housekeeping finding, no worktree row of the repository
-is `inspection-error`, and the repository has no more than 128 worktree rows,
-otherwise the read-only `["project", "clean", "<root>"]`. It is never a shell
-string or a bare name, it never carries `--apply` or `--yes`, and a row whose
-`root` is `null` or not valid UTF-8 gets no clean suggestion.
+is `inspection-error` or unprobed, and the repository has no more than 128
+worktree rows, otherwise the read-only `["project", "clean", "<root>"]`. It
+is never a shell string or a bare name, it never carries `--apply` or
+`--yes`, and a row whose `root` is `null` or not valid UTF-8 gets no clean
+suggestion.
 
 Every `project clean` mode (the read-only report, `--json`, `--all-safe`,
 and `--apply --action push|remove|delete-branch`) resolves an absolute path
@@ -92,21 +93,25 @@ ahead and behind counts, and `gone` state; and the merged set, one
 resolution spawns no child. Each present, registration-verified worktree row,
 the main worktree included, gets exactly one combined bounded probe,
 `git status --porcelain=v1 -z --untracked-files=normal --ignored=matching`,
-which stops reading at a 65th ignored record or a 4,097th record of any kind; a
-row whose path is missing, unreadable, or fails the two-way registration check
-gets none, and an unreadable or registration-mismatched row is set to
-`inspection-error` directly, so a mismatched row on the merge-target branch
-never reads as `protected-default`. Every worktree-specific probe runs as
+run with `-c core.untrackedCache=false -c core.fsmonitor=false`, which stops
+reading at a 65th ignored record or a 4,097th record of any kind; a row whose
+path is missing, unreadable, or fails the two-way registration check gets
+none, and an unreadable or registration-mismatched row, or one whose status
+probe failed, timed out, or was cut by the deadline, is set to
+`inspection-error` directly, so none of them on the merge-target branch reads
+as `protected-default`. Every worktree-specific probe runs as
 `git -C <worktree path>` against that worktree's own index, only after its
 identity is verified, because each linked worktree has its own index;
 repository-wide probes run as `git -C <repository.root>` (`common_dir` for a
 bare repository), except the identity probe, which runs in the candidate. When a
-linked worktree is reached first, the registry listing also runs in the
-candidate, because the main worktree's path comes from that listing; that
-changes which directory the command runs in, never which index a probe reads.
-Because they share the ref listing, overview, doctor, and clean all report a
-deleted upstream as `remote-gone`, where the baseline reports `unpublished`;
-both are preserve states.
+linked worktree is reached first in canonical candidate order, the registry
+listing also runs in the candidate, because the main worktree's path comes
+from that listing; that changes which directory the command runs in, never
+which index a probe reads. Because they share the ref listing, overview and
+clean both classify a deleted upstream `remote-gone`, where the baseline
+reports `unpublished`; both are preserve states. Doctor never classifies a
+deleted upstream; its only worktree classification is `repo_state`'s
+`stale-worktree`, shown under `--json`.
 
 Batch cleanup adds two index gates the overview never applies, checked last for
 a row that passes every other gate: an `lstat` of its admin `modules` directory
@@ -137,19 +142,23 @@ Single-target `--apply --action remove --worktree P` and the batch call the same
 removal from the command directory in its own process group,
 
 ```sh
-git -c status.showUntrackedFiles=normal -C <command directory> worktree remove <path>
+git -c status.showUntrackedFiles=normal -c core.untrackedCache=false -c core.fsmonitor=false -C <command directory> worktree remove <path>
 ```
 
-reap; and reconcile by rescan. With less than the floor left, the target and
-every later one are `not-attempted` with `deadline-exceeded`, and the run exits
-with status 1. Single-target removal is strictly a one-item batch: it builds the
-same full plan (`mode: "single"`) under the same caps, selects only P, and lists
-every other eligible row as `not-requested`. It refuses with
-`worktree-not-found` when P matches no registry entry, with `target-excluded`,
-whose `reason` carries the exclusion reason, when a gate excludes P, and with
-`inspection-incomplete` when any row of the repository is `inspection-error`. It
-therefore shares the plan entry, command, refusal codes and messages, stages,
-and exit codes with a batch whose only target is P.
+reap, never signalling the removal child once it is spawned (signals and the
+work deadline wait until it exits, and only a 300 s hard ceiling kills it,
+leaving the target `unknown` with a `partially-removed` note); and reconcile
+by rescan. With less than the floor left, the target and every later one are
+`not-attempted` with `deadline-exceeded`, and the run exits with status 1.
+Single-target removal builds the same full plan (`mode: "single"`), selects
+only P, and lists every other eligible row as `not-requested`, but its
+completeness is the repository-wide evidence plus P's own row: other rows'
+`inspection-error`, `inspect-cap`, and unprobed states are non-blocking
+omissions, while P's own revalidation stays fully strict. It refuses with
+`worktree-not-found` when P matches no registry entry and with
+`target-excluded`, whose `reason` carries the exclusion reason, when a gate
+excludes P, each refusal naming a manual remedy. It shares the plan entry,
+command, stages, and exit codes with a batch whose only target is P.
 
 Every target ends in the closed stage enum
 `pending | removed | refused | failed | unknown | not-attempted`, where
@@ -175,8 +184,10 @@ every baseline signature field, its `locked` flag, the absence of submodules and
 of hidden local state in its own index, the manifest's `tracking_branch`, and
 the merge target's name, source (re-resolved from a fresh read of the manifest),
 and SHA all equal the confirmed plan. Git's own non-force refusal is the last
-line of defense, and the `status.showUntrackedFiles=normal` override keeps its
-untracked-file check working whatever the user's configuration. Ignored files
+line of defense, under the configuration the removal command pins:
+`-c status.showUntrackedFiles=normal`, `-c core.untrackedCache=false`, and
+`-c core.fsmonitor=false` keep its untracked-file check working whatever the
+user's configuration. Ignored files
 created, and index flags set, between revalidation and removal fall in a
 documented residual window, not under the guarantee.
 
@@ -187,21 +198,25 @@ local estate stays visible. Its collector turns each candidate's failure into
 an error row, `completeness` and the exit status expose omissions, and it
 exits 0, 1 (incomplete, an error-severity finding, or a warning under
 `--strict`), 2 (invalid invocation, `git-too-old` or `git-unavailable`, or an
-exception raised outside the collector boundary), or 130 (SIGINT).
+exception raised outside the collector boundary), 130 (SIGINT), 143
+(SIGTERM), or 129 (SIGHUP).
 
 Cleanup stops after the first target whose result is not a plain `removed`: a
 `refused`, `failed`, or `unknown` target, or a removal followed by a branch
 change. Earlier successful removals cannot be rolled back as a transaction, so
-every later target is `not-attempted`. The first matching exit wins: 130
-(SIGINT, or input ended at the prompt); 1 (the deadline stopped work after the
+every later target is `not-attempted`. The first matching exit wins: 130,
+143, or 129 (SIGINT, SIGTERM, or SIGHUP, the first signal received setting
+the status, or 130 when input ended at the prompt); 1 (the deadline stopped
+work after the
 apply phase began, including a removal not spawned because less than
 `removal_floor_seconds` (5 s) of the work deadline remained, or any target is
 `unknown`, including one whose handling raised an exception); the Git child's
 own status for a target `failed` with `git-refused` (128) or `git-failed` (any
 other nonzero status, such as 255); 2 (any refusal code, a `refused` target, a
 removal with a branch-after-removal reason, or `failed` with `spawn-error`);
-otherwise 0. A read-only preview exits 0 for a complete plan, even one that
-`target-cap` blocks, 1 for an incomplete one, and 2 when no plan can be built.
+otherwise 0. A read-only preview exits 0 for a complete plan, rows deferred as
+`deferred-target-cap` included, 1 for an incomplete one, and 2 when no plan can
+be built.
 The two policies share the evidence model, not one catch-and-continue wrapper.
 
 ### Concurrency across repositories, never inside one
@@ -213,8 +228,9 @@ runs before its repository is known and takes no lock, may overlap for
 candidates that turn out to share a repository. Batch cleanup works inside
 one repository and probes serially by design (`probe_concurrency: 1`). Apart
 from that read-only identity overlap, work inside one repository is serial in
-both features, and the overview's two-phase scheduling keeps its output
-order canonical whatever the completion order.
+both features, and in a run that no budget or deadline cuts, the overview's
+two-phase scheduling keeps its output canonical whatever the completion
+order; a cut run reports each cut unit with `omitted`.
 
 ### Local evidence and deferred remote visibility
 
@@ -268,9 +284,11 @@ alone, but the 21st removal would start inside the floor. A cap hit or a
 deadline expiry is always visible as an incomplete result (`scan-limit` or
 `deadline-exceeded` in the overview; `inspect-cap`, `inspection-incomplete`, or
 `deadline-exceeded` in the batch), never a silently shortened complete one. The
-batch's target cap instead keeps a complete plan that lists every row passing
-every gate before the two index gates (`contains-submodule` and
-`hidden-local-state`) and refuses apply with `target-cap`.
+batch's target cap is per run instead: with more than 16 rows passing every
+gate before the two index gates (`contains-submodule` and
+`hidden-local-state`), the complete plan selects the first 16 in canonical
+order, defers the rest as `deferred-target-cap`, and allows apply, so
+re-running drains the backlog 16 at a time.
 
 ## Tensions and open decisions
 
@@ -281,8 +299,9 @@ overview's caps survive measurement is open. If the proposal rejects
 concurrency, the fallback is 32 candidates and 128 worktree rows run serially
 (257 children, about 38.6 s at 150 ms, or about 44.6 s with the listing
 estimate). And because one repository's children always run serially, a single
-repository with more than about 355 worktree rows cannot complete at that rate
-unless rows are capped per repository.
+repository with more than about 355 worktree rows cannot complete at that rate;
+the proposals cap no rows per repository, so such a repository ends visibly
+incomplete.
 
 The overview's `--all-safe` suggestion follows the batch's own gates. A worktree
 the ladder classifies `merged-removable` yields the housekeeping finding and the
@@ -294,29 +313,32 @@ it, and the row's classification stays what the ladder computed. A fifth gate
 covers the whole repository: while any of its worktree rows is
 `inspection-error` (an unreadable path, a registration-mismatched row, or a
 failed status probe), or while it has more than 128 worktree rows, the batch
-plan would be refused as `inspection-incomplete` or `inspect-cap`, so the
-overview withholds every `--all-safe` suggestion for that repository, and its
-housekeeping findings and the row suggest only the read-only
-`project clean <root>`. The gate changes suggestions only, not the overview's
-completeness. The gates the overview cannot apply are the batch's two index
-gates, read through its `git -C <worktree path> ls-files -v --stage -z` probe
-and an `lstat` of its admin `worktrees/<id>/modules` directory, so a preview may
-still exclude a suggested worktree as `hidden-local-state` or
-`contains-submodule`; the plan lists that exclusion, and the suggestion is
+plan would be refused as `inspection-incomplete` or `inspect-cap`, and while
+any of its rows went unprobed because the overview's 512-row cap or deadline
+cut it, the plan is not known to be complete; so the overview withholds every
+`--all-safe` suggestion for that repository, its housekeeping findings and
+the row suggest only the read-only `project clean <root>`, and those
+findings carry a `suggestion_gate` code naming the gate. The gate changes
+suggestions only, not the overview's completeness. `target-cap` only limits:
+with more than 16 gate-passing rows the `--all-safe` suggestion stays, its
+findings carrying `suggestion_gate: "target-cap"`. The gates the overview
+cannot apply are the batch's two index gates, read through its
+`git -C <worktree path> ls-files -v --stage -z` probe and an `lstat` of its
+admin `worktrees/<id>/modules` directory, and its `unstarted-branch` gate,
+read from the branch's creation reflog, so a preview may still exclude a
+suggested worktree as `hidden-local-state`, `contains-submodule`, or
+`unstarted-branch`; the plan lists that exclusion, and the suggestion is
 advisory either way.
 
 “Attention” should not make normal ongoing work look broken; keep housekeeping
 opportunities distinct from warnings and errors.
 
-Before proposal, decide the measured costs and therefore the final caps, whether
-the MVP limits should be configurable, whether the `attention` alias merits a
-separate command, whether `--apply --json` prints the apply result record,
-whether `--expect-plan` is required with `--yes`, whether a relative path or the
-default must name an exact repository root, whether a sparse checkout's
-skip-worktree entries for absent files may count as safe, whether a
-never-populated gitlink may count as removable, and whether family, remote,
-bench, container, park, cache, or paired-branch behavior warrants a separate
-change. The packet overview holds the full consolidated list. Keep each
+Before the proposals are ratified, the measured costs, and therefore the final
+caps, remain open, with the two questions for Brett Heap that the packet
+overview lists: whether a local ancestry proof should outrank `remote-gone`,
+and how squash-merged branches can be retired. The proposals took the other
+decisions this synthesis once listed as proposal decisions, open to
+ratification, and the packet overview holds the consolidated list. Keep each
 extension bounded and preserve explicit ownership and recovery semantics.
 
 Return to the [packet overview](project-maintenance-overview.md).
