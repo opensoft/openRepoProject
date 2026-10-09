@@ -13,7 +13,7 @@ duplicate them.
 - [x] 1.3 Council resolved: verdicts V1 to V12 are applied to `proposal.md` and the noted constraints N1 to N4 recorded in `clarifications.md` (`083fcd0`); verified by "Council Verdicts" and by `design.md`, which answers N1 to N4 with D1 to D4.
 - [x] 1.4 Spec deltas and design written: `specs/project-overview/spec.md` adds twelve requirements with 61 scenarios, `specs/project-review-safety/spec.md` modifies "YAML decoding errors are structured refusals" with its existing scenario kept and the overview carve-out added, and `design.md` holds decisions D1 to D13 with the reconciliation list in D12; verified by `openspec status --change add-project-overview --json` showing every artifact done.
 - [x] 1.5 Validation passes: `openspec validate add-project-overview --strict` and `openspec validate --all --strict` both pass; verified by their output, quoted in the message of the commit that adds these artifacts.
-- [ ] 1.6 Ratified by Brett Heap's word, quoted with its link on PR #12, after `add-project-clean-all-safe` (PR #11) is ratified; verified by that quote. No implementation starts before it.
+- [x] 1.6 Ratified by Brett Heap's word: on 2026-10-09 he told lane openRepoProject-2, "ratify, merge #11 and run the runbook"; the change lands by squash-merge of PR #12 after PR #11 (`add-project-clean-all-safe`), with the Speckit handoff `005-project-overview` to follow after feature 004 merges; verified by that quote, recorded in `proposal.md`'s Status line. No implementation starts before the Speckit feature of 3.1 exists.
 
 ## 2. Before the handoff
 

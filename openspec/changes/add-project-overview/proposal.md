@@ -2,13 +2,15 @@ Lane: openRepoProject-2
 
 # Proposal: add-project-overview
 
-Status: draft, revised after the alignment review, the lead's later rulings,
-the council and the packet author's final delta read (resolutions on PR #12
-and in "Questions Resolved by the Alignment Review"; noted constraints in
-`clarifications.md`), awaiting Brett Heap's ratification; nothing here is
-ratified. Like `add-project-clean-all-safe`, it adds "Decisions Taken by This
-Proposal", "Corrections to the Packet" and "Open Questions" to the house
-sections.
+Status: ratified by Brett Heap on 2026-10-09, in his words to lane
+openRepoProject-2, "ratify, merge #11 and run the runbook". It lands by
+squash-merge of PR #12 after PR #11 (`add-project-clean-all-safe`), and the
+Speckit handoff `005-project-overview` follows after feature 004 merges. It was
+revised after the alignment review, the lead's later rulings, the council and
+the packet author's final delta read (resolutions on PR #12 and in "Questions
+Resolved by the Alignment Review"; noted constraints in `clarifications.md`).
+Like `add-project-clean-all-safe`, it adds "Decisions Taken by This Proposal",
+"Corrections to the Packet" and "Open Questions" to the house sections.
 
 Governing issue: opensoft/openRepoProject#10, claimed by lane
 openRepoProject-2 (comment 6069504479); refs #6, the design packet's record.
