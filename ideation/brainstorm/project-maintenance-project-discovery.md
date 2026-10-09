@@ -686,10 +686,12 @@ cleanup suggestion, while batch cleanup refuses with exit 2 before any
 mutation.
 
 Overview, doctor, and clean share classifier meanings. Worktree
-classification is `cleanup_report`'s ladder unchanged: the same names, the
-same test order, and the same recommendation text, fed from the memoized
-evidence instead of per-worktree probes, as a pure function over that
-evidence. The ladder
+classification is `cleanup_report`'s ladder unchanged: the same names, the same
+test order, and the same recommendation text, fed from the memoized evidence
+instead of per-worktree probes, as a pure function over that evidence, except
+that the proposals, by Brett Heap's ruling of 2026-10-09 (applied at `b772195`
+and `cc43860`), test a deleted upstream for local ancestry before the
+`remote-gone` rung. The ladder
 runs on a worktree row only when the row is within the cap, its presence is
 established, and the repository-wide probes it reads (registry, ref listing,
 merged set) succeeded; otherwise `classification` is null, because the ladder
@@ -806,27 +808,28 @@ says the batch takes 16 per run, so re-running drains the backlog.
 
 Each `suggestion_gate` code has a fixed remedy, carried in the finding's message
 and in the human `next` line as "(withheld: ...)" or "(limited: ...)", as change
-2 states them (lane openRepoProject-2, 2026-10-09; read at `996a181`, final
-`4495ae7`): `target-not-repository-root`, "run project clean from the main
-worktree root"; `unsupported-path-bytes`, "rename the path to valid UTF-8";
-`inspection-incomplete`, "repair the inspection-error rows, or re-run for the
-rows left unprobed, first", since lane openRepoProject-2 ruling R-16 (change 2
-at `ef288fe`), where `996a181` read "repair the inspection-error rows first";
-`inspect-cap`, "N rows exceed the batch's row cap of M; remove explicitly" or "N
-rows exceed the report's row cap of M; the report would be incomplete", the two
-bands that `suggestion_gate_rows` tells apart, with M read at run time from the
-shared constants (N-3) where the packet had written 128 and 256 into the text;
-`scan-limit` or `deadline-exceeded`, "re-run with --root <repository parent>",
-naming the repository's parent directory; `unstarted-branch`, "no commit was
-made on this branch here since it was created; review, then git worktree remove
-yourself"; `reflog-unavailable`, "the branch's reflog is missing, expired or
-undecidable; review, then git worktree remove yourself"; and `target-cap`,
-"limited to the batch's target limit of M per run; re-run to drain the backlog".
-The `unstarted-branch` and `reflog-unavailable` remedies take the form of change
-1's D18 under lane openRepoProject-2 rulings R-12 M6, R-14 M-B, and R-15
-(2026-10-09), which supersede R-10 and the earlier wordings of change 2 at
-`996a181`; change 1 carries the same wording since its R-15 commit, `9eeac52`.
-The code set, in the order in which a finding records the first that applies, is
+2 states them (lane openRepoProject-2, 2026-10-09; read at `996a181`, and at
+`4495ae7` (R-20; unchanged at `cc43860`)): `target-not-repository-root`, "run
+project clean from the main worktree root"; `unsupported-path-bytes`, "rename
+the path to valid UTF-8"; `inspection-incomplete`, "repair the inspection-error
+rows, or re-run for the rows left unprobed, first", since lane openRepoProject-2
+ruling R-16 (change 2 at `ef288fe`), where `996a181` read "repair the
+inspection-error rows first"; `inspect-cap`, "N rows exceed the batch's row cap
+of M; remove explicitly" or "N rows exceed the report's row cap of M; the report
+would be incomplete", the two bands that `suggestion_gate_rows` tells apart,
+with M read at run time from the shared constants (N-3) where the packet had
+written 128 and 256 into the text; `scan-limit` or `deadline-exceeded`, "re-run
+with --root <repository parent>", naming the repository's parent directory;
+`unstarted-branch`, "no commit was made on this branch here since it was
+created; review, then git worktree remove yourself"; `reflog-unavailable`, "the
+branch's reflog is missing, expired or undecidable; review, then git worktree
+remove yourself"; and `target-cap`, "limited to the batch's target limit of M
+per run; re-run to drain the backlog". The `unstarted-branch` and
+`reflog-unavailable` remedies take the form of change 1's D18 under lane
+openRepoProject-2 rulings R-12 M6, R-14 M-B, and R-15 (2026-10-09), which
+supersede R-10 and the earlier wordings of change 2 at `996a181`; change 1
+carries the same wording since its R-15 commit, `9eeac52`. The code set, in the
+order in which a finding records the first that applies, is
 `target-not-repository-root`, `unsupported-path-bytes`, `inspection-incomplete`,
 `inspect-cap`, `scan-limit`, `deadline-exceeded`, `unstarted-branch`,
 `reflog-unavailable`, and `target-cap`; lane openRepoProject-2 ruling P6-5 added
@@ -1059,10 +1062,11 @@ suggests only the read-only form, with `suggestion_gate: "unstarted-branch"`,
 and so does one whose reflog cannot decide, with
 `suggestion_gate: "reflog-unavailable"` (rulings N-5 and P6-5, with the reflog
 read of the D10 amendment and ruling R-12, change 1 at `0b3c33d` and `4f2162b`,
-mirrored in change 2, final `4495ae7`; see "Attention categories"). A suggestion
-never names a project by bare name and never includes `--apply` or `--yes`. A
-root that is not valid UTF-8 cannot be carried exactly in a JSON argv array, so
-such a row gets the `unsupported-path-bytes` finding instead of a suggestion.
+mirrored in change 2 at `4495ae7` (R-20; unchanged at `cc43860`); see "Attention
+categories"). A suggestion never names a project by bare name and never includes
+`--apply` or `--yes`. A root that is not valid UTF-8 cannot be carried exactly
+in a JSON argv array, so such a row gets the `unsupported-path-bytes` finding
+instead of a suggestion.
 
 Every `project clean` invocation whose target is an absolute path resolves it
 Git-first: the read-only report with or without `--json`, `--all-safe`, and
@@ -1319,9 +1323,10 @@ carry them into the governing cleanup specifications,
 lists the same shared items plus its batch-only items: those in the last
 item below, and also the resolution of relative paths and the no-argument
 default, the meaning of the plan's `root`, the refusal of bare repositories,
-`push`'s refusal of a `remote-gone` branch, the gitfile and submodule
-checkout rules, the plain report's 256-row cap, `--apply --json`, the
-`unstarted-branch` gate, single-target `remove` included, where `a040790`
+`push`'s refusal of a `remote-gone` branch (on the deleted upstream itself,
+whatever the row's class, since the ruling applied at `b772195`), the gitfile
+and submodule checkout rules, the plain report's 256-row cap, `--apply --json`,
+the `unstarted-branch` gate, single-target `remove` included, where `a040790`
 removes a fresh merged worktree named with `--worktree`, and the single-target
 refusal, with reason `reflog-unavailable`, of a merged worktree whose reflog
 keeps no decisive entry. The deferred target cap is listed there too, though it
@@ -1345,12 +1350,14 @@ below was confirmed in the 2026-10-07 scratch checks.
 - Shared probes: `repo_state` and `cleanup_report` move onto the probes
   described under "Probe model and deadline", so overview, doctor, and clean
   read one evidence model. Its visible consequences:
-  - Deleted upstream: the baseline `rev-parse --abbrev-ref @{upstream}`
-    cannot distinguish a never-configured upstream from a deleted one, and
-    `a040790` reports `unpublished` for both. The ref listing's
-    `%(upstream:track)` reports a deleted upstream as `gone`, so overview and
-    clean both classify it `remote-gone`, and doctor reads the same
-    evidence. Both are preserve states, so nothing becomes removable.
+  - Deleted upstream: the baseline `rev-parse --abbrev-ref @{upstream}` cannot
+    distinguish a never-configured upstream from a deleted one, and `a040790`
+    reports `unpublished` for both. The ref listing's `%(upstream:track)`
+    reports a deleted upstream as `gone`, so overview and clean both classify it
+    `remote-gone`, and doctor reads the same evidence. Both are preserve states,
+    so nothing becomes removable, except that a merged row with a deleted
+    upstream is, by Brett Heap's ruling of 2026-10-09 (applied at `b772195` and
+    `cc43860`), tested for local ancestry first and reads `merged-removable`.
   - Status configuration: the baseline ignored-file probe omits
     `--untracked-files=normal`, so under `status.showUntrackedFiles=no` Git
     refuses it, `ignored_files` becomes null, and `a040790` classifies every
@@ -1748,27 +1755,37 @@ finding kept; and one separate change per remote, family, bench, container,
 or park integration. Exact bench/type validation remains existing-doctor
 follow-up work.
 
-Questions for Brett Heap, the first ruled on 2026-10-09 and the second open:
+Questions for Brett Heap, the first ruled on 2026-10-09 and applied at `b772195`
+and `cc43860`, the second open:
 
-- For Brett Heap, ruled: whether a local ancestry proof should outrank
-  `remote-gone` for worktree rows. Brett Heap ruled yes on 2026-10-09 ("yes,
-  local ancestry proof outranks remote-gone"); the proposals' interim
-  `remote-gone` text quoted below is lane openRepoProject-2's to amend, sha to
-  follow, and the packet designs no mechanism for the ruling. Lane
+- For Brett Heap, ruled and applied: whether a local ancestry proof should
+  outrank `remote-gone` for worktree rows. Brett Heap ruled yes on 2026-10-09
+  ("yes, local ancestry proof outranks remote-gone"; to lane openRepoProject-2,
+  "yes, local ancestry proof outranks remote-gone, apply it"), and both
+  proposals applied it: change 1 at `b772195`, change 2 at `cc43860`. Lane
   openRepoProject-3 raised it, recommending yes, and lane openRepoProject-2
-  carries it in both proposals. The ladder tests remote presence before merge
-  state, as the baseline does; GitHub's head-branch auto-delete with
-  `fetch.prune` leaves a merged branch's upstream gone; and the MVP never
-  deletes a branch, so under the baseline order such a worktree is never
-  eligible for `--all-safe`, and `push` now refuses its branch. Measured here: 4
-  of about 90 merged worktrees, `fetch.prune` unset everywhere, and auto-delete
-  on 2 of 21 repositories. Until the proposals are amended, the packet keeps the
-  baseline ladder; a `remote-gone` row whose `merged_into_target` is true
-  carries the recommendation "Merged locally, upstream deleted: not removable by
-  `project` until the open question is ruled; review, then `git worktree remove`
-  yourself", and the overview's `remote-gone` message says whether the branch
-  tip is already an ancestor of the merge target when its evidence establishes
-  that, its suggestion only reviewing.
+  carried it in both proposals. The packet's own ladder tests remote presence
+  before merge state, as the baseline does, and the packet designs no mechanism
+  for the ruling; GitHub's head-branch auto-delete with `fetch.prune` leaves a
+  merged branch's upstream gone, and the MVP never deletes a branch, so under
+  that order such a worktree was never eligible for `--all-safe`. Measured here:
+  4 of about 90 merged worktrees, `fetch.prune` unset everywhere, and
+  auto-delete on 2 of 21 repositories. The proposals now test a branch whose
+  configured upstream's remote-tracking ref no longer exists for local ancestry
+  before the `remote-gone` rung: when it is merged into the target the row is
+  `merged-removable` (`merged-current` when it is the current worktree), and
+  otherwise it is `remote-gone`, so only an unmerged row is `remote-gone`. The
+  interim `remote-gone` text, the recommendation that called a merged row not
+  removable by `project`, is gone from the seven places that carried it. In
+  change 1, `push` refuses on the deleted upstream itself, whatever the row's
+  class; revalidation does not count a value null in the plan and null again as
+  a difference; and `--worktree` removes a merged worktree whose upstream was
+  deleted, where `a040790` refuses it as `unpublished`, which is the fifth
+  user-visible change; the scenario "A merged worktree whose upstream was
+  deleted" keeps its title and gains an AND clause for `--worktree`. In change
+  2, requirement 6 and its scenario mirror the ladder, the departures bullet
+  quotes Brett Heap's words and records that the ruling supersedes R-6, and
+  requirement 10's default-branch finding is untouched.
 - For Brett Heap: squash merges never satisfy the ancestry proof, so the MVP
   selects little in a squash-merge repository. The recommendation is a local
   patch-equivalence proof (`git cherry` or patch-id against the merge

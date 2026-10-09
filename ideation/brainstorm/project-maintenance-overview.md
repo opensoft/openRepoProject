@@ -134,11 +134,11 @@ undecidable keeps it with only the read-only suggestion and
 `suggestion_gate: "reflog-unavailable"`, the overview reading the branch's
 reflog as the batch does, with no Git child (the D10 amendment and lane
 openRepoProject-2 ruling R-12, 2026-10-09, change 1 at `0b3c33d` and `4f2162b`;
-change 2, read at `996a181`, final `4495ae7`). The batch may still exclude a
-suggested worktree as `hidden-local-state` or `contains-submodule`, which only
-its own index probe and admin-directory check see. Every `project clean` mode
-(the read-only report, `--json`, `--all-safe`, and
-`--apply --action push|remove|delete-branch`) resolves an absolute path
+change 2, read at `996a181`, and at `4495ae7` (R-20; unchanged at `cc43860`)).
+The batch may still exclude a suggested worktree as `hidden-local-state` or
+`contains-submodule`, which only its own index probe and admin-directory check
+see. Every `project clean` mode (the read-only report, `--json`, `--all-safe`,
+and `--apply --action push|remove|delete-branch`) resolves an absolute path
 Git-first: it must be exactly a main worktree root, or it is refused with
 `target-not-repository-root` and exit 2, and no other directory is substituted.
 A relative path or no argument resolves to the repository Git finds there. Only
@@ -257,8 +257,10 @@ plan. Deduplicated, the shared items are:
 - Shared probes: `repo_state` and `cleanup_report` move onto the four
   repository-wide children and the one combined status probe, so overview,
   doctor, and clean read one evidence model. Overview and clean classify a
-  deleted upstream `remote-gone` instead of `unpublished`, and both are
-  preserve states; doctor never classifies a deleted upstream, its only
+  deleted upstream `remote-gone` instead of `unpublished`, and both are preserve
+  states, except that a merged row is, by Brett Heap's ruling of 2026-10-09
+  (applied at `b772195` and `cc43860`), tested for local ancestry first and
+  reads `merged-removable`; doctor never classifies a deleted upstream, its only
   worktree classification being `repo_state`'s `stale-worktree`, shown under
   `--json`. The explicit
   `--untracked-files=normal` keeps a user's
@@ -314,10 +316,11 @@ The batch-only items are:
   repository is refused in every `clean` mode with
   `target-not-repository-root` and exit 2.
 - `push` refuses a `remote-gone` branch with refusal reason `remote-gone` and
-  exit 2, and `push` and `delete-branch` refuse with `inspection-incomplete`,
-  `inspect-cap`, or `deadline-exceeded` when their re-inspection is
-  incomplete, `push` doing so before or after confirmation (change 1 phase 6
-  (`90854a3`)).
+  exit 2 (on the deleted upstream itself, whatever the row's class, since Brett
+  Heap's ruling of 2026-10-09 applied at `b772195`), and `push` and
+  `delete-branch` refuse with `inspection-incomplete`, `inspect-cap`, or
+  `deadline-exceeded` when their re-inspection is incomplete, `push` doing so
+  before or after confirmation (change 1 phase 6 (`90854a3`)).
 - When the first registry record's path equals `common_dir`, a submodule
   checkout, for which `git rev-parse --show-superproject-working-tree`
   prints a path (its first record lies under `.git/modules`), is refused
@@ -420,7 +423,7 @@ are design recommendations, not recorded user approvals of every detail.
 
 The open proposal decisions, consolidated from both feature documents'
 "Alternatives and open decisions" sections, with the first question for Brett
-Heap now ruled:
+Heap now ruled and applied:
 
 - Measured costs. Both documents derive their caps at 150 ms per Git child,
   a 1.5× margin over an assumed 100 ms per warm child (and about 0.3 s per
@@ -431,25 +434,34 @@ Heap now ruled:
   The caps stay provisional until measured, and if warm children average
   more than about 210 ms even with the overview's four-way concurrency, its
   caps must fall or very large estates end incomplete.
-- For Brett Heap, ruled: whether a local ancestry proof should outrank
-  `remote-gone` for worktree rows. Brett Heap ruled yes on 2026-10-09 ("yes,
-  local ancestry proof outranks remote-gone"); the proposals' interim
-  `remote-gone` text quoted below is lane openRepoProject-2's to amend, sha to
-  follow, and the packet designs no mechanism for the ruling. Lane
+- For Brett Heap, ruled and applied: whether a local ancestry proof should
+  outrank `remote-gone` for worktree rows. Brett Heap ruled yes on 2026-10-09
+  ("yes, local ancestry proof outranks remote-gone"; to lane openRepoProject-2,
+  "yes, local ancestry proof outranks remote-gone, apply it"), and both
+  proposals applied it: change 1 at `b772195`, change 2 at `cc43860`. Lane
   openRepoProject-3 raised it, recommending yes, and lane openRepoProject-2
-  carries it in both proposals. The ladder tests remote presence before merge
-  state, as the baseline does; GitHub's head-branch auto-delete with
-  `fetch.prune` leaves a merged branch's upstream gone; and the MVP never
-  deletes a branch, so under the baseline order such a worktree is never
-  eligible for `--all-safe`, and `push` now refuses its branch. Measured here: 4
-  of about 90 merged worktrees, `fetch.prune` unset everywhere, and auto-delete
-  on 2 of 21 repositories. Until the proposals are amended, the packet keeps the
-  baseline ladder; a `remote-gone` row whose `merged_into_target` is true
-  carries the recommendation "Merged locally, upstream deleted: not removable by
-  `project` until the open question is ruled; review, then `git worktree remove`
-  yourself", and the overview's `remote-gone` message says whether the branch
-  tip is already an ancestor of the merge target when its evidence establishes
-  that, its suggestion only reviewing.
+  carried it in both proposals. The packet's own ladder tests remote presence
+  before merge state, as the baseline does, and the packet designs no mechanism
+  for the ruling; GitHub's head-branch auto-delete with `fetch.prune` leaves a
+  merged branch's upstream gone, and the MVP never deletes a branch, so under
+  that order such a worktree was never eligible for `--all-safe`. Measured here:
+  4 of about 90 merged worktrees, `fetch.prune` unset everywhere, and
+  auto-delete on 2 of 21 repositories. The proposals now test a branch whose
+  configured upstream's remote-tracking ref no longer exists for local ancestry
+  before the `remote-gone` rung: when it is merged into the target the row is
+  `merged-removable` (`merged-current` when it is the current worktree), and
+  otherwise it is `remote-gone`, so only an unmerged row is `remote-gone`. The
+  interim `remote-gone` text, the recommendation that called a merged row not
+  removable by `project`, is gone from the seven places that carried it. In
+  change 1, `push` refuses on the deleted upstream itself, whatever the row's
+  class; revalidation does not count a value null in the plan and null again as
+  a difference; and `--worktree` removes a merged worktree whose upstream was
+  deleted, where `a040790` refuses it as `unpublished`, which is the fifth
+  user-visible change; the scenario "A merged worktree whose upstream was
+  deleted" keeps its title and gains an AND clause for `--worktree`. In change
+  2, requirement 6 and its scenario mirror the ladder, the departures bullet
+  quotes Brett Heap's words and records that the ruling supersedes R-6, and
+  requirement 10's default-branch finding is untouched.
 - For Brett Heap: squash merges never satisfy the ancestry proof, so the MVP
   selects little in a squash-merge repository. The recommendation is a local
   patch-equivalence proof (`git cherry` or patch-id against the merge

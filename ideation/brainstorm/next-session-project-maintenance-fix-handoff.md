@@ -302,12 +302,12 @@ byte-identical through `da33d92`.
   only the read-only suggestion and `suggestion_gate: "unstarted-branch"`
   (rulings N-5 and P6-5 on change 1 council V2's gate), and a merged worktree
   whose reflog cannot decide keeps it with only the read-only suggestion and
-  `suggestion_gate: "reflog-unavailable"` (change 2, read at `996a181`, final
-  `4495ae7`), the overview reading the branch's reflog as the batch does (the
-  D10 amendment and ruling R-12, change 1 at `0b3c33d` and `4f2162b`). The batch
-  may still exclude a suggested worktree as `hidden-local-state` or
-  `contains-submodule`, which only its own index probe and admin-directory check
-  see.
+  `suggestion_gate: "reflog-unavailable"` (change 2, read at `996a181`, and at
+  `4495ae7` (R-20; unchanged at `cc43860`)), the overview reading the branch's
+  reflog as the batch does (the D10 amendment and ruling R-12, change 1 at
+  `0b3c33d` and `4f2162b`). The batch may still exclude a suggested worktree as
+  `hidden-local-state` or `contains-submodule`, which only its own index probe
+  and admin-directory check see.
 - Shared probes: one version check per invocation, the same four
   repository-wide children per repository (identity, registry listing, ref
   listing, and merged set) with one identical ref-listing format, and one
@@ -352,9 +352,11 @@ byte-identical through `da33d92`.
   and `manifest-invalid`, `git-unavailable`, and `git-too-old` (Git older
   than 2.36, exit 2 before any repository probe), with the same spelling in
   both documents.
-- `remote-gone`: the shared ref listing reports a deleted upstream as `gone`,
-  so overview and clean both classify it `remote-gone` where `a040790`
-  reports `unpublished`; both are preserve states. Doctor never classifies a
+- `remote-gone`: the shared ref listing reports a deleted upstream as `gone`, so
+  overview and clean both classify it `remote-gone` where `a040790` reports
+  `unpublished`; both are preserve states, except that a merged row is, by Brett
+  Heap's ruling of 2026-10-09 (applied at `b772195` and `cc43860`), tested for
+  local ancestry first and reads `merged-removable`. Doctor never classifies a
   deleted upstream; its only worktree classification is `repo_state`'s
   `stale-worktree`, shown under `--json`.
 - `ignored_files` keeps its baseline name and type but counts the ignored
@@ -380,17 +382,17 @@ byte-identical through `da33d92`.
 
 ### Open proposal decisions
 
-These were the open decisions when PR #7 merged, followed by the entries
-added on 2026-10-08. The entries marked decided were taken on 2026-10-08 by the
+These were the open decisions when PR #7 merged, followed by the entries added
+on 2026-10-08. The entries marked decided were taken on 2026-10-08 by the
 proposals as proposal decisions, open to ratification, under lane
 openRepoProject-2's OQ numbers (see "Decisions taken by the proposals —
-2026-10-08"), and the first question for Brett Heap is marked ruled, as he ruled
-it on 2026-10-09; the others remain open: the measured costs, the second
-question for Brett Heap, the four change 1 council rulings this record labels
-departures, V1, V4, V5, and V10, and the Git floor departure of change 1 lead
-ruling R-21, which await his ratification. The
-[packet overview](project-maintenance-overview.md) carries the open entries and
-names the decided ones in one paragraph.
+2026-10-08"), and the first question for Brett Heap is marked ruled and applied,
+as he ruled it on 2026-10-09 and both proposals applied it (`b772195`,
+`cc43860`); the others remain open: the measured costs, the second question for
+Brett Heap, the four change 1 council rulings this record labels departures, V1,
+V4, V5, and V10, and the Git floor departure of change 1 lead ruling R-21, which
+await his ratification. The [packet overview](project-maintenance-overview.md)
+carries the open entries and names the decided ones in one paragraph.
 
 - The measured per-child and per-removal costs and the overview's listing
   time, and therefore the final caps; the batch reapplies the same rule and
@@ -441,26 +443,37 @@ names the decided ones in one paragraph.
 - Whether cache disposal, paired branch retirement, and the remote, family,
   bench, container, and park integrations deserve separate changes. Decided
   2026-10-08 (OQ-27): yes, one change each.
-- For Brett Heap, ruled: whether a local ancestry proof should outrank
-  `remote-gone` for worktree rows. Brett Heap ruled yes on 2026-10-09 ("yes,
-  local ancestry proof outranks remote-gone"); see "Rulings R-11 to R-21 and
-  Brett Heap's ruling — 2026-10-09"; the proposals' interim `remote-gone` text
-  quoted below is lane openRepoProject-2's to amend, sha to follow, and the
-  packet designs no mechanism for the ruling. Lane openRepoProject-3 raised it
-  on 2026-10-08, recommending yes, and lane openRepoProject-2 carries it in both
-  proposals. The ladder tests remote presence before merge state, as the
-  baseline does; GitHub's head-branch auto-delete with `fetch.prune` leaves a
-  merged branch's upstream gone; and the MVP never deletes a branch, so under
-  the baseline order such a worktree is never eligible for `--all-safe`, and
-  `push` now refuses its branch. Measured here: 4 of about 90 merged worktrees,
-  `fetch.prune` unset everywhere, and auto-delete on 2 of 21 repositories. Until
-  the proposals are amended, the packet keeps the baseline ladder; a
-  `remote-gone` row whose `merged_into_target` is true carries the
-  recommendation "Merged locally, upstream deleted: not removable by `project`
-  until the open question is ruled; review, then `git worktree remove` yourself"
-  (change 1 council V7), and the overview's `remote-gone` message says whether
-  the branch tip is already an ancestor of the merge target when its evidence
-  establishes that, its suggestion only reviewing (change 2 council V11).
+- For Brett Heap, ruled and applied: whether a local ancestry proof should
+  outrank `remote-gone` for worktree rows. Brett Heap ruled yes on 2026-10-09
+  ("yes, local ancestry proof outranks remote-gone"; to lane openRepoProject-2,
+  "yes, local ancestry proof outranks remote-gone, apply it"), and both
+  proposals applied it: change 1 at `b772195`, change 2 at `cc43860`; see
+  "Rulings R-11 to R-21 and Brett Heap's ruling — 2026-10-09". Lane
+  openRepoProject-3 raised it on 2026-10-08, recommending yes, and lane
+  openRepoProject-2 carried it in both proposals. The packet's own ladder tests
+  remote presence before merge state, as the baseline does, and the packet
+  designs no mechanism for the ruling; GitHub's head-branch auto-delete with
+  `fetch.prune` leaves a merged branch's upstream gone, and the MVP never
+  deletes a branch, so under that order such a worktree was never eligible for
+  `--all-safe`. Measured here: 4 of about 90 merged worktrees, `fetch.prune`
+  unset everywhere, and auto-delete on 2 of 21 repositories. The proposals now
+  test a branch whose configured upstream's remote-tracking ref no longer exists
+  for local ancestry before the `remote-gone` rung: when it is merged into the
+  target the row is `merged-removable` (`merged-current` when it is the current
+  worktree), and otherwise it is `remote-gone`, so only an unmerged row is
+  `remote-gone`. The interim `remote-gone` text, the recommendation that called
+  a merged row not removable by `project` (change 1 council V7) and the
+  overview's message about the branch tip's ancestry (change 2 council V11), is
+  gone from the seven places that carried it. In change 1, `push` refuses on the
+  deleted upstream itself, whatever the row's class; revalidation does not count
+  a value null in the plan and null again as a difference; and `--worktree`
+  removes a merged worktree whose upstream was deleted, where `a040790` refuses
+  it as `unpublished`, which is the fifth user-visible change; the scenario "A
+  merged worktree whose upstream was deleted" keeps its title and gains an AND
+  clause for `--worktree`. In change 2, requirement 6 and its scenario mirror
+  the ladder, the departures bullet quotes Brett Heap's words and records that
+  the ruling supersedes R-6, and requirement 10's default-branch finding is
+  untouched.
 - For Brett Heap: squash merges never satisfy the ancestry proof, so the MVP
   selects little in a squash-merge repository (change 1 council V2). The
   recommendation is a local patch-equivalence proof (`git cherry` or
@@ -589,14 +602,16 @@ sentence now states the decision, and its bullet names the passages under
   item (C5) as a correction, since "each Git probe" meant those children.
 - `add-project-clean-all-safe`, `push` and `remote-gone` (ruling D-D), a
   departure from Batch "One mutation seam", which said `push` and
-  `delete-branch` keep their behavior apart from argument resolution: a
-  deleted upstream now fills `upstream`, and `push` refuses a `remote-gone`
-  branch with refusal reason `remote-gone`, exit 2, instead of republishing
-  it; `push` and `delete-branch` refuse with `inspection-incomplete`,
-  `inspect-cap`, or `deadline-exceeded`, exit 2, when their re-inspection is
-  incomplete, `push` doing so before or after confirmation (change 1 phase 6
-  (`90854a3`)). Decided by the proposal: Batch "One mutation seam" and the
-  batch-only baseline changes of Batch, Overview, and the packet overview.
+  `delete-branch` keep their behavior apart from argument resolution: a deleted
+  upstream now fills `upstream`, and `push` refuses a `remote-gone` branch with
+  refusal reason `remote-gone`, exit 2, instead of republishing it (since Brett
+  Heap's ruling of 2026-10-09, applied at `b772195`, it refuses on the deleted
+  upstream itself, whatever the row's class); `push` and `delete-branch` refuse
+  with `inspection-incomplete`, `inspect-cap`, or `deadline-exceeded`, exit 2,
+  when their re-inspection is incomplete, `push` doing so before or after
+  confirmation (change 1 phase 6 (`90854a3`)). Decided by the proposal: Batch
+  "One mutation seam" and the batch-only baseline changes of Batch, Overview,
+  and the packet overview.
 - `add-project-clean-all-safe`, the Git child runner (ruling D-G), a
   departure from the bare-name item of "Baseline behavior changes" in Batch
   and Overview (Batch lines 1212-1213 at `da33d92`, ruling D-AC), which said
@@ -886,13 +901,13 @@ Change 1, `add-project-clean-all-safe`:
   all zeros, so a head at the merge-target SHA with a movement recorded is
   merged, the fast-forward case, and a reflog that cannot decide is
   `reflog-unavailable`. The overview mirrors the read (change 2, read at
-  `996a181`, final `4495ae7`): a merged row whose reflog cannot decide keeps its
-  `merged-removable` finding with only the read-only suggestion and
-  `suggestion_gate: "reflog-unavailable"`. Batch "Eligibility and merge-target
-  terminology" and its batch-only baseline change, Overview "Attention
-  categories" and "Repository identity and the clean handoff", the synthesis's
-  handoff and gate text, the packet overview's handoff text and batch-only list,
-  and the "Overview gates" bullet above carry it.
+  `996a181`, and at `4495ae7` (R-20; unchanged at `cc43860`)): a merged row
+  whose reflog cannot decide keeps its `merged-removable` finding with only the
+  read-only suggestion and `suggestion_gate: "reflog-unavailable"`. Batch
+  "Eligibility and merge-target terminology" and its batch-only baseline change,
+  Overview "Attention categories" and "Repository identity and the clean
+  handoff", the synthesis's handoff and gate text, the packet overview's handoff
+  text and batch-only list, and the "Overview gates" bullet above carry it.
 - Change 1 council V3, configuration pins: "Every status probe and the
   removal child carry `-c core.untrackedCache=false -c core.fsmonitor=false`
   beside the `status.showUntrackedFiles` pin"; the last-defense sentence
@@ -949,16 +964,17 @@ Change 1, `add-project-clean-all-safe`:
   worktree out until the cache-disposal change; in one surveyed repository
   20 of 29 merged worktrees were excluded for caches alone. Batch "Deferred
   cache and paired-retirement extension" and the packet overview carry it.
-- Change 1 council V7, the interim `remote-gone` text: until Brett Heap rules on
+- Change 1 council V7, the interim `remote-gone` text: until Brett Heap ruled on
   the ancestry question, a `remote-gone` row whose `merged_into_target` is true
-  reads "Merged locally, upstream deleted: not removable by `project` until the
-  open question is ruled; review, then `git worktree remove` yourself", and the
-  question carries the measured numbers: 4 of about 90 merged worktrees,
-  `fetch.prune` unset everywhere, and auto-delete on 2 of 21 repositories. The
-  question in the open lists of Batch, Overview, the packet overview, and this
-  record carries both. Brett Heap ruled the question on 2026-10-09, and the text
-  stays in the proposals until lane openRepoProject-2 amends it, sha to follow
-  (see "Rulings R-11 to R-21 and Brett Heap's ruling — 2026-10-09").
+  read "Merged locally, upstream deleted: not removable by `project`", then a
+  clause that deferred to the open question and the advice to review, then
+  `git worktree remove` yourself, and the question carries the measured numbers:
+  4 of about 90 merged worktrees, `fetch.prune` unset everywhere, and
+  auto-delete on 2 of 21 repositories. The question in the open lists of Batch,
+  Overview, the packet overview, and this record carries both. Brett Heap ruled
+  the question on 2026-10-09, and change 1 applied the ruling at `b772195`,
+  which removed the text (see "Rulings R-11 to R-21 and Brett Heap's ruling —
+  2026-10-09").
 - Change 1 council V8, what the person sees: the preview lists the selected
   rows, then the excluded rows grouped by reason with each next step; the
   apply prompt names the count; and the success line and the stop block
@@ -1089,12 +1105,15 @@ Change 2, `add-project-overview`:
   gives two root spellings for one `(dev, ino)`, the canonical-first one
   wins. Overview "Repositories and linked worktrees" carries it.
 - Change 2 council V11, the interim `remote-gone` message: until Brett Heap
-  rules, a `remote-gone` finding's message states whether the worktree's branch
-  tip is already an ancestor of the merge target when the overview's evidence
-  establishes it, spawning no extra probe, and its suggestion only reviews. The
+  ruled, a `remote-gone` finding's message stated whether the worktree's branch
+  tip was already an ancestor of the merge target when the overview's evidence
+  established it, spawning no extra probe, and its suggestion only reviewed. The
   ancestry question in the open lists carries it. Brett Heap ruled on
-  2026-10-09, and the message is lane openRepoProject-2's to amend, sha to
-  follow.
+  2026-10-09, and change 2 applied the ruling at `cc43860`, which withdrew the
+  message: a worktree whose upstream was deleted and whose tip is an ancestor of
+  the merge target is `merged-removable` or `merged-current`, with that class's
+  finding and suggestion, and only an unmerged one is `remote-gone` (requirement
+  6 and its scenario).
 
 ### Change 2 phase 6 records — 2026-10-09
 
@@ -1114,8 +1133,9 @@ or under its ruling label.
   it, where the packet had said such a worktree counts as `merged-removable`,
   and the ruling D-P bullet above adds the code. The D10 amendment, landed in
   change 1 at `0b3c33d`, replaces the head test and retires the residual part:
-  the overview mirrors the batch's reflog read (change 2, read at `996a181`,
-  final `4495ae7`), as the change 1 council V2 bullet above records.
+  the overview mirrors the batch's reflog read (change 2, read at `996a181`, and
+  at `4495ae7` (R-20; unchanged at `cc43860`)), as the change 1 council V2
+  bullet above records.
 - `main-worktree-missing` replaces the `stale-worktree` finding on the main
   worktree's row. Overview "Repositories and linked worktrees" carries it.
 - `unsupported-layout` is severity error (ruling N-6, confirmed as P6-6),
@@ -1149,12 +1169,14 @@ or under its ruling label.
   mirror, and R-15, 2026-10-09) landed at `fa9f0be`: it mirrors R-12's
   anchor-based reflog test with R-15's all-zeros anchor and adopts the R-12,
   R-14, and R-15 remedy texts; `ef288fe` adds ruling R-16, `fd4b05a` ruling
-  R-18, `568c477` copies change 1's movement wording, and `4495ae7`, change 2's
-  final text, adds ruling R-20. "Rulings R-11 to R-21 and Brett Heap's ruling
-  — 2026-10-09" below records their items.
-- Change 2's final text is `4495ae7`: read at `996a181`, fix round at `fa9f0be`,
-  R-16 at `ef288fe`, R-18 at `fd4b05a` and `568c477`, and R-20 at `4495ae7`;
-  lane openRepoProject-3 read `568c477` clean on 2026-10-09, lane
+  R-18, `568c477` copies change 1's movement wording, `4495ae7` adds ruling
+  R-20, and `cc43860`, change 2's final text at the time of this record, applies
+  Brett Heap's ruling on the first open question. "Rulings R-11 to R-21 and
+  Brett Heap's ruling — 2026-10-09" below records their items.
+- Change 2's final text is `cc43860`: read at `996a181`, fix round at `fa9f0be`,
+  R-16 at `ef288fe`, R-18 at `fd4b05a` and `568c477`, R-20 at `4495ae7`, and
+  Brett Heap's ruling applied at `cc43860` (PR #12 head at the time of this
+  record); lane openRepoProject-3 read `568c477` clean on 2026-10-09, lane
   openRepoProject-2 landed that read's two LOW findings as ruling R-20, and
   PR #12 was marked ready for review at `4495ae7` the same day, ratification
   remaining Brett Heap's, as "Rulings R-11 to R-21 and Brett Heap's ruling —
@@ -1171,8 +1193,9 @@ ended at `0b3c33d`, after `9ea2f02`, where the D10 amendment landed and where
 lane openRepoProject-3 made its re-verification read; "Rulings R-11 to R-21 and
 Brett Heap's ruling — 2026-10-09" below records the fix round at `d6aaa9a`,
 the wordings at `6792e06`, ruling R-15 at `9eeac52`, ruling R-17 at `4f2162b`,
-ruling R-19 at `7e2589f`, ruling R-20 at `8973762`, and change 1's final text
-at `c873c81`, which adds ruling R-21.
+ruling R-19 at `7e2589f`, ruling R-20 at `8973762`, ruling R-21 at `c873c81`,
+and change 1's final text at `b772195`, which applies Brett Heap's ruling on the
+first open question.
 
 - Ruling M1 confirmed: lane openRepoProject-3's reading stands. A removal child
   that exits nonzero on its own, with or without a signal, is `failed` with
@@ -1262,17 +1285,21 @@ at `c873c81`, which adds ruling R-21.
   `targets` at `fa9f0be` to match `clean`'s plan. Overview "Attention
   categories", the synthesis's bounds row, and the "Caps at 150 ms" bullet above
   carry it.
-- Change 1's final text is `c873c81`: read at `0b3c33d`, fix round at
-  `d6aaa9a`, wordings at `6792e06`, R-15 at `9eeac52`, R-17 at `4f2162b`, R-19
-  at `7e2589f`, R-20 at `8973762`, and R-21 at `c873c81`; lane
+- Change 1's final text is `b772195`: read at `0b3c33d`, fix round at `d6aaa9a`,
+  wordings at `6792e06`, R-15 at `9eeac52`, R-17 at `4f2162b`, R-19 at
+  `7e2589f`, R-20 at `8973762`, R-21 at `c873c81`, and Brett Heap's ruling
+  applied at `b772195` (PR #11 head at the time of this record); lane
   openRepoProject-3 read `7e2589f` clean on 2026-10-09, lane openRepoProject-2
   landed that read's LOW finding and the change 1 proposal phrase noted in the
   `568c477` read, as ruling R-20, and PR #11 was marked ready for review at
   `8973762` the same day, ratification remaining Brett Heap's. Lane
   openRepoProject-2 then landed R-21, task 2.2's Git 2.36 floor result, at
   `c873c81`, on top of the numbering-only `cab78d8`; it changes the scrubbed
-  variable list and no scenario. "Rulings R-11 to R-21 and Brett Heap's
-  ruling — 2026-10-09" below records both.
+  variable list and no scenario. Brett Heap's ruling on the first open question
+  was applied at `b772195`, which adds the fifth user-visible change and one
+  scenario, for the sixteenth scrubbed name (R-21), 98 scenarios in all.
+  "Rulings R-11 to R-21 and Brett Heap's ruling — 2026-10-09" below records
+  these.
 
 ### Rulings R-4, R-8, and R-9 — 2026-10-09
 
@@ -1333,39 +1360,49 @@ whatever its message (R-15)"); ruling R-17 at `4f2162b` ("State what the
 report's excluded list and digest hold above 128 rows (R-17)"); ruling R-19 at
 `7e2589f` ("Scope the report digest rule to the band above 128 rows and record
 R-17 (R-19)"); `8973762` adds ruling R-20 ("Name the digest's full scope in the
-report band and align one movement phrase (R-20)"); and `c873c81`, change 1's
-final text, adds ruling R-21 ("Scrub GIT_INTERNAL_SUPER_PREFIX and tick task
-2.2 with the Git 2.36 floor results (R-21)").
-Change 2 was read at `996a181`; its fix round, carrying R-13 (b), R-14, the R-12
-mirror, and R-15, landed at `fa9f0be` (followed by a merge of `main` at
-`26a5668`, `12febc0`, that changed nothing in the change); `ef288fe` adds ruling
-R-16, takes requirement 7's anchor wording into design D5, adds the
-fetch-created case to the proposal's scenario list and D13's map, drops the
-"decision 11" phrase from its R-8 bullet, and cites change 1 at `4f2162b` in
-task 2.2, D12, D5, and the later-rulings paragraph, which also records R-16;
-`fd4b05a` adds ruling R-18; `568c477` copies change 1's movement wording into
-all four places and lists R-18 in the later-rulings list and task 2.2; and
-`4495ae7`, change 2's final text, adds ruling R-20 ("Credit selected: null to
-R-15 and complete D12's ruling record (R-20)"). Change 1's delta scenarios
-number 95 at `0b3c33d`, 96 at `d6aaa9a` and `6792e06`, and 97 at `9eeac52` and
-after, 65 in `project-clean`, 17 in `project-clean-review-safety`, and 15 in
-`project-command`: "A branch reset to the merge target's tip stays unstarted" is
-new at `d6aaa9a`, where the material of finding M4 landed as AND clauses inside
-existing scenarios and two scenarios were renamed, "A branch whose reflog is
-missing, empty or expired" and "Twenty rows pass every gate before
-deferred-target-cap", and R-15 adds "A branch fetched at the merge target's tip
-stays unstarted", with AND clauses for `update-ref` and `push .`. Change 2's
-`project-overview` delta has 61 scenarios at `fa9f0be` and after. At `996a181`
-change 2 agreed with change 1 at `0b3c33d` on every shared value, and lane
-openRepoProject-2's re-check of `fa9f0be` found its remedies byte-identical with
-change 1's. Lane openRepoProject-3's delta reads found every R-11 to R-14 item
-applied in change 1 at `d6aaa9a` and `6792e06` and every R-15 and R-17 element
-applied at `4f2162b`, recorded change 2 at `fa9f0be` as below, and found both
-changes clean at `7e2589f` and `568c477`; lane openRepoProject-2 landed the
-three LOW findings of those reads and a phrase they noted as ruling R-20, at
-`8973762` and `4495ae7`, and marked PRs #11 and #12 ready for review at those
-commits on 2026-10-09, ratification remaining Brett Heap's. At `4f2162b` and
-`7e2589f` and in change 2 at `ef288fe` and after
+report band and align one movement phrase (R-20)"); `c873c81` adds ruling R-21
+("Scrub GIT_INTERNAL_SUPER_PREFIX and tick task 2.2 with the Git 2.36 floor
+results (R-21)"); and `b772195`, change 1's final text at the time of this
+record, applies Brett Heap's ruling on the first open question ("Apply Brett
+Heap's ruling: local ancestry proof outranks remote-gone"). Change 2 was read at
+`996a181`; its fix round, carrying R-13 (b), R-14, the R-12 mirror, and R-15,
+landed at `fa9f0be` (followed by a merge of `main` at `26a5668`, `12febc0`, that
+changed nothing in the change); `ef288fe` adds ruling R-16, takes requirement
+7's anchor wording into design D5, adds the fetch-created case to the proposal's
+scenario list and D13's map, drops the "decision 11" phrase from its R-8 bullet,
+and cites change 1 at `4f2162b` in task 2.2, D12, D5, and the later-rulings
+paragraph, which also records R-16; `fd4b05a` adds ruling R-18; `568c477` copies
+change 1's movement wording into all four places and lists R-18 in the
+later-rulings list and task 2.2; `4495ae7` adds ruling R-20 ("Credit selected:
+null to R-15 and complete D12's ruling record (R-20)"); and `cc43860`, change
+2's final text at the time of this record, applies the same ruling ("Apply Brett
+Heap's ruling: local ancestry proof outranks remote-gone"). Change 1's delta
+scenarios number 95 at `0b3c33d`, 96 at `d6aaa9a` and `6792e06`, and 97 from
+`9eeac52` to `c873c81`, 65 in `project-clean`, 17 in
+`project-clean-review-safety`, and 15 in `project-command`: "A branch reset to
+the merge target's tip stays unstarted" is new at `d6aaa9a`, where the material
+of finding M4 landed as AND clauses inside existing scenarios and two scenarios
+were renamed, "A branch whose reflog is missing, empty or expired" and "Twenty
+rows pass every gate before deferred-target-cap", and R-15 adds "A branch
+fetched at the merge target's tip stays unstarted", with AND clauses for
+`update-ref` and `push .`. At `b772195` change 1 has 98, 65 in `project-clean`,
+17 in `project-clean-review-safety`, and 16 in `project-command`: "The sixteenth
+scrubbed name on Git 2.36" is new, for R-21, and the ruling replaces "A merged
+worktree whose upstream was deleted" under its title, with an AND clause for
+`--worktree`. Change 2's `project-overview` delta has 61 scenarios at `fa9f0be`
+and after, `cc43860` included, where the scenario "A merged worktree whose
+upstream was deleted" is replaced under its title. At `996a181` change 2 agreed
+with change 1 at `0b3c33d` on every shared value, and lane openRepoProject-2's
+re-check of `fa9f0be` found its remedies byte-identical with change 1's. Lane
+openRepoProject-3's delta reads found every R-11 to R-14 item applied in change
+1 at `d6aaa9a` and `6792e06` and every R-15 and R-17 element applied at
+`4f2162b`, recorded change 2 at `fa9f0be` as below, and found both changes clean
+at `7e2589f` and `568c477`; lane openRepoProject-2 landed the three LOW findings
+of those reads and a phrase they noted as ruling R-20, at `8973762` and
+`4495ae7`, and marked PRs #11 and #12 ready for review at those commits on
+2026-10-09, ratification remaining Brett Heap's. Brett Heap's ruling on the
+first open question reached both changes afterwards, at `b772195` and `cc43860`.
+At `4f2162b` and `7e2589f` and in change 2 at `ef288fe` and after
 `openspec validate --all --strict` passes 7 of 7 items. Change 2's task 2.1, the
 OQ-4 cap measurement, is still open and gates the Speckit handoff.
 
@@ -1431,8 +1468,10 @@ OQ-4 cap measurement, is still open and gates the Speckit handoff.
   governs both changes, superseding R-10, with no "explicitly":
   `unstarted-branch` reads "no commit was made on this branch here since it was
   created; review, then git worktree remove yourself", and `reflog-unavailable`
-  takes R-15's wording below. Change 1's README section now opens with four
-  user-visible changes; at `4f2162b` its task 1.2 cites `9ea2f02`, `0b3c33d`,
+  takes R-15's wording below. Change 1's README section opened with four
+  user-visible changes, and opens with five since `b772195`, which adds a merged
+  worktree whose upstream was deleted, removed by `--worktree`; at `4f2162b` its
+  task 1.2 cites `9ea2f02`, `0b3c33d`,
   `d6aaa9a`, and "the commit that anchors the reflog test on the creation entry,
   R-15", and design D10's header reads "(V2 as amended, M3, M4, R-12, R-15)".
   Batch "Eligibility and merge-target terminology", Overview "Attention
@@ -1553,26 +1592,26 @@ OQ-4 cap measurement, is still open and gates the Speckit handoff.
   line-format note says the tab and message exist only when the command wrote a
   message, `git update-ref` without `-m` writing neither, the line still an
   anchor.
-- R-20 (landed in change 1 at `8973762` and in change 2 at `4495ae7`, their
-  final texts) accepts lane openRepoProject-3's three LOW findings from its
-  final reads of `7e2589f` and `568c477`, and the proposal phrase it noted. In
-  change 1, the spec, D14, and OQ-29 now make a report's `plan_digest` at most
-  128 rows equal the `--all-safe` preview's "for the same repository identity,
-  merge target and selection", and add that the digest also covers the merge
-  target's name and SHA, so a target that advances between the report and the
-  preview gives `plan-digest-mismatch`, which is safe; the proposal's movement
-  phrase now reads "whose old and new objects are non-zero and differ", as its
-  spec and design do. In change 2, design D12 credits `selected: null` above 128
-  rows to R-15, R-17 having added only what `excluded` and `plan_digest` hold in
-  that band, names R-16 and R-18, and states the sequence: R-12, R-13 (b), and
-  R-14 landed at `fa9f0be` against change 1 at `d6aaa9a` and were re-read
-  against `4f2162b` at `ef288fe`, R-18 landed at `fd4b05a` and `568c477`, and
-  the current reconciliation is against change 1 at `7e2589f`. R-20 changes
-  wording only and is named in the two commit subjects, not in either change's
-  later-rulings list or tasks; change 1 keeps 97 delta scenarios and change 2's
-  `project-overview` delta 61. Lane openRepoProject-2 marked PR #11 ready for
-  review at `8973762` and PR #12 at `4495ae7` on 2026-10-09; ratification
-  remains Brett Heap's.
+- R-20 (landed in change 1 at `8973762` and in change 2 at `4495ae7`, the texts
+  then marked ready for review) accepts lane openRepoProject-3's three LOW
+  findings from its final reads of `7e2589f` and `568c477`, and the proposal
+  phrase it noted. In change 1, the spec, D14, and OQ-29 now make a report's
+  `plan_digest` at most 128 rows equal the `--all-safe` preview's "for the same
+  repository identity, merge target and selection", and add that the digest also
+  covers the merge target's name and SHA, so a target that advances between the
+  report and the preview gives `plan-digest-mismatch`, which is safe; the
+  proposal's movement phrase now reads "whose old and new objects are non-zero
+  and differ", as its spec and design do. In change 2, design D12 credits
+  `selected: null` above 128 rows to R-15, R-17 having added only what
+  `excluded` and `plan_digest` hold in that band, names R-16 and R-18, and
+  states the sequence: R-12, R-13 (b), and R-14 landed at `fa9f0be` against
+  change 1 at `d6aaa9a` and were re-read against `4f2162b` at `ef288fe`, R-18
+  landed at `fd4b05a` and `568c477`, and the current reconciliation is against
+  change 1 at `7e2589f`. R-20 changes wording only and is named in the two
+  commit subjects, not in either change's later-rulings list or tasks; change 1
+  keeps 97 delta scenarios and change 2's `project-overview` delta 61. Lane
+  openRepoProject-2 marked PR #11 ready for review at `8973762` and PR #12 at
+  `4495ae7` on 2026-10-09; ratification remains Brett Heap's.
 - R-21 (change 1, landed at `c873c81`; lane openRepoProject-2, 2026-10-09)
   records task 2.2's result. Task 2.2 built Git 2.36.6 and 2.40.4 from
   kernel.org tarballs and compared them with 2.43.0 on 75 captures: design D17
@@ -1589,8 +1628,9 @@ OQ-4 cap measurement, is still open and gates the Speckit handoff.
   which records a departure from task 2.2's literal rule, raising the floor to
   the lowest version verified, here 2.40, open to Brett Heap at ratification
   because 2.40 would exclude Debian 12's Git 2.39. The design's opening and the
-  proposal's later-rulings list name R-21. No scenario changed, so change 1
-  keeps 97 delta scenarios; change 2 states no count or list of the scrubbed
+  proposal's later-rulings list name R-21. No scenario changed at `c873c81`, so
+  change 1 kept 97 delta scenarios there, and `b772195` adds one, for the
+  sixteenth name, 98 in all; change 2 states no count or list of the scrubbed
   variables and is untouched. Batch "Identity" and "Repository-wide probes",
   Overview "Probe model and deadline", and the "Git 2.36 floor (C12)" bullet
   above carry it.
@@ -1598,7 +1638,9 @@ OQ-4 cap measurement, is still open and gates the Speckit handoff.
   repository at no extra child, with the outcomes recorded in "Change 2 phase 6
   records — 2026-10-09" above; R-3, the UTF-8 check of `common_dir`; R-5, the
   per-child budget `min(5 s, work remaining)`; R-6, the interim `remote-gone`
-  text, identical in all seven places across both changes; R-7, the three
+  text, identical in all seven places across both changes and withdrawn by Brett
+  Heap's ruling, applied at `b772195` and `cc43860`, which supersedes R-6; R-7,
+  the three
   `limits` keys recorded in "Change 1 phase 6 records — 2026-10-09" above; and
   the D10 mirror, which read from the creation entry until `fa9f0be` adopted the
   anchors of R-12 and R-15.
@@ -1660,8 +1702,9 @@ OQ-4 cap measurement, is still open and gates the Speckit handoff.
   the `inspection-incomplete` remedy, and task 2.2 listing R-18. It has 61
   scenarios in its `project-overview` delta and 2 in its review-safety delta;
   its interim `remote-gone` text is identical in its four places, seven with
-  change 1's three; and question 1 is still open in both changes, pending Brett
-  Heap's word to lane openRepoProject-2. Its reflog test and change 1's differ
+  change 1's three; and question 1 was then still open in both changes, until
+  Brett Heap's word to lane openRepoProject-2, which both changes applied
+  (`b772195`, `cc43860`). Its reflog test and change 1's differ
   in nine points of framing, none of which changes an outcome. Its two LOW
   findings, sent to lane openRepoProject-2, landed as ruling R-20 at `4495ae7`:
   its design credits `selected: null` above 128 rows to R-17, where change 1's
@@ -1679,20 +1722,57 @@ OQ-4 cap measurement, is still open and gates the Speckit handoff.
   the Speckit handoffs to features 004-project-clean-all-safe and
   005-project-overview after lane openRepoProject-1's PR #17 took 003; those
   commits change no content, and `8973762` and `4495ae7` remain the shas at
-  which that content was read (lane 2, 2026-10-09). PR #11's head then moved
-  once more, to `c873c81`, which does change content, the scrub list of R-21,
-  recorded in the R-21 bullet above.
+  which that content was read (lane 2, 2026-10-09). PR #11's head then moved to
+  `c873c81`, which does change content, the scrub list of R-21, recorded in the
+  R-21 bullet above. At the time of this record PR #11's head is `b772195` and
+  PR #12's is `cc43860`, the commits that apply Brett Heap's ruling; lane
+  openRepoProject-2's read-only cross-check of the two texts was still running,
+  and an edit it forces would move a head.
 - Brett Heap's ruling on the packet's first open question (Brett Heap,
   2026-10-09): "yes, local ancestry proof outranks remote-gone", delivered
   verbatim through lane openRepoProject-3's resume prompt as a preserved draft
   of his and logged as lane openRepoProject-3's RULED line of
-  2026-10-09T03:05:47Z on issue #6. A local ancestry proof outranks
-  `remote-gone` for worktree rows. The packet records it only as the answer to
-  that question: the open lists of Batch, Overview, the packet overview, the
-  synthesis, and this record mark it ruled, and the packet designs no mechanism
-  and changes no gate text. The proposals' interim `remote-gone` text is
-  unchanged in seven identical places, three in change 1 at `6792e06` and after,
-  to its final `c873c81`, and four in change 2 at `fa9f0be` and after, to its
-  final `4495ae7`, and both changes still list the question as open; amending
-  them on Brett Heap's word is lane openRepoProject-2's, sha to follow. The
-  second question, patch equivalence for squash merges, stays open.
+  2026-10-09T03:05:47Z on issue #6, and confirmed to lane openRepoProject-2 as
+  "yes, local ancestry proof outranks remote-gone, apply it". A local ancestry
+  proof outranks `remote-gone` for worktree rows. The packet first recorded it
+  only as the answer to that question, designing no mechanism and changing no
+  gate text. Lane openRepoProject-2 then applied it in both proposals, one
+  commit per change titled "Apply Brett Heap's ruling: local ancestry proof
+  outranks remote-gone": change 1 at `b772195` and change 2 at `cc43860`, the PR
+  #11 and PR #12 heads at the time of this record. The proposals now test a
+  branch whose configured upstream's remote-tracking ref no longer exists for
+  local ancestry before the `remote-gone` rung: when it is merged into the
+  target the row is `merged-removable` (`merged-current` when it is the current
+  worktree), and otherwise it is `remote-gone`, so only an unmerged row is
+  `remote-gone`. The open lists of Batch, Overview, the packet overview, the
+  synthesis, and this record mark the question ruled and applied. Lane
+  openRepoProject-2 listed the consequences: (a) the interim recommendation text
+  is gone from its seven places, three in change 1 and four in change 2; (b)
+  `push` refuses on the deleted upstream itself, whatever the row's class; (c)
+  change 1's review-safety revalidation counts a value that was null in the plan
+  and is null at revalidation, such as the `upstream_oid`, `ahead` and `behind`
+  of a selected row whose upstream was deleted, as no difference, while a value
+  that cannot be re-read still counts as one; (d) a merged row with a deleted
+  upstream removed by `--worktree` is the fifth user-visible change, where
+  `a040790` refuses it as `unpublished`, so change 1's README section opens with
+  five, not four; (e) change 1's scenario "A merged worktree whose upstream was
+  deleted" keeps its title and gains an AND clause for `--worktree`, and one
+  scenario is added for the sixteenth scrubbed name (R-21), 98 in all, 65 in
+  `project-clean`, 17 in `project-clean-review-safety`, and 16 in
+  `project-command`; (f) change 2's requirement 6 and its scenario of the same
+  title mirror the ladder, its departures bullet quotes Brett Heap's words and
+  records that the ruling supersedes R-6, and its requirement 10 default-branch
+  finding, which reads the checkout's own upstream, is untouched; it has 61
+  scenarios in its `project-overview` delta. The second question, patch
+  equivalence for squash merges, stays open.
+- Lane openRepoProject-3's read-only check of `b772195` and `cc43860`
+  (2026-10-09) found every element of the ruling applied: 98 scenarios in change
+  1 (65, 17, and 16) and 61 in change 2's `project-overview` delta, with 2 in
+  its review-safety delta; question 1 closed and question 2 open in both
+  changes. It sent three LOW wording items to lane openRepoProject-2, pending at
+  this record: change 1's scenario "A deleted upstream is remote-gone" is not
+  narrowed to unmerged rows (spec lines 149-155 against 117-122); change 2's
+  requirement 6 outcome list does not say that the earlier rungs still come
+  first (spec lines 437-440); and change 2's proposal line 483 still calls
+  change 1's modification "the ladder's names and order", though change 1's
+  ladder now has one ancestry exception.

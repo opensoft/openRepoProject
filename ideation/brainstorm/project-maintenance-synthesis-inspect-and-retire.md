@@ -63,9 +63,10 @@ is also all that an unstarted worktree's finding suggests, with
 suggests when its reflog cannot decide, with
 `suggestion_gate: "reflog-unavailable"` (rulings N-5 and P6-5, with the reflog
 read of the D10 amendment and lane openRepoProject-2 ruling R-12, change 1 at
-`0b3c33d` and `4f2162b`; change 2, read at `996a181`, final `4495ae7`). It is
-never a shell string or a bare name, it never carries `--apply` or `--yes`, and
-a row whose `root` is `null` or not valid UTF-8 gets no clean suggestion.
+`0b3c33d` and `4f2162b`; change 2, read at `996a181`, and at `4495ae7` (R-20;
+unchanged at `cc43860`)). It is never a shell string or a bare name, it never
+carries `--apply` or `--yes`, and a row whose `root` is `null` or not valid
+UTF-8 gets no clean suggestion.
 
 Every `project clean` mode (the read-only report, `--json`, `--all-safe`,
 and `--apply --action push|remove|delete-branch`) resolves an absolute path
@@ -133,7 +134,9 @@ leaves it after `git init --separate-git-dir`, the candidate toplevel whose
 name as `repository.root: null` with `unsupported-layout`, and a missing one
 with `main-worktree-missing`. Because they share the ref listing, overview
 and clean both classify a deleted upstream `remote-gone`, where the baseline
-reports `unpublished`; both are preserve states. Doctor never classifies a
+reports `unpublished`; both are preserve states, except that a merged row is, by
+Brett Heap's ruling of 2026-10-09 (applied at `b772195` and `cc43860`), tested
+for local ancestry first and reads `merged-removable`. Doctor never classifies a
 deleted upstream; its only worktree classification is `repo_state`'s
 `stale-worktree`, shown under `--json`.
 
@@ -365,13 +368,13 @@ merge-target SHA with a movement recorded is merged, the fast-forward case. A
 reflog that is missing, empty, read to its 64 KiB bound, or undecidable gives
 `reflog-unavailable`, which the batch excludes and for which the overview gives
 only the read-only suggestion, with `suggestion_gate: "reflog-unavailable"`
-(change 2, read at `996a181`, final `4495ae7`, which also carries ruling R-15's
-all-zeros anchor). The gates the overview cannot apply are the batch's two index
-gates, read through its `git -C <worktree path> ls-files -v --stage -z` probe
-and an `lstat` of its admin `worktrees/<id>/modules` directory, so a preview may
-still exclude a suggested worktree as `hidden-local-state` or
-`contains-submodule`; the plan lists that exclusion, and the suggestion is
-advisory either way.
+(change 2, read at `996a181`, and at `4495ae7` (R-20; unchanged at `cc43860`),
+which also carries ruling R-15's all-zeros anchor). The gates the overview
+cannot apply are the batch's two index gates, read through its
+`git -C <worktree path> ls-files -v --stage -z` probe and an `lstat` of its
+admin `worktrees/<id>/modules` directory, so a preview may still exclude a
+suggested worktree as `hidden-local-state` or `contains-submodule`; the plan
+lists that exclusion, and the suggestion is advisory either way.
 
 “Attention” should not make normal ongoing work look broken; keep housekeeping
 opportunities distinct from warnings and errors.
@@ -380,10 +383,14 @@ Before the proposals are ratified, the measured costs, and therefore the final
 caps, remain open, with the second of the two questions for Brett Heap that the
 packet overview lists, how squash-merged branches can be retired. He ruled the
 first on 2026-10-09: a local ancestry proof outranks `remote-gone` for worktree
-rows (Brett Heap, 2026-10-09), and the proposals' interim `remote-gone` text is
-lane openRepoProject-2's to amend, sha to follow. The proposals took the other
-decisions this synthesis once listed as proposal decisions, open to
-ratification, and the packet overview holds the consolidated list. Keep each
-extension bounded and preserve explicit ownership and recovery semantics.
+rows (Brett Heap, 2026-10-09), and both proposals applied it, change 1 at
+`b772195` and change 2 at `cc43860`: a branch whose configured upstream's
+remote-tracking ref no longer exists is tested for local ancestry before the
+`remote-gone` rung, so a merged row is `merged-removable` (`merged-current` when
+it is the current worktree) and only an unmerged row is `remote-gone`. The
+proposals took the other decisions this synthesis once listed as proposal
+decisions, open to ratification, and the packet overview holds the consolidated
+list. Keep each extension bounded and preserve explicit ownership and recovery
+semantics.
 
 Return to the [packet overview](project-maintenance-overview.md).

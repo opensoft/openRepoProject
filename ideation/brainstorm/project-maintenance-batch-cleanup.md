@@ -227,11 +227,11 @@ commit was made on this branch here since it was created; review, then git
 worktree remove yourself" for `unstarted-branch`, and "the branch's reflog is
 missing, expired or undecidable; review, then git worktree remove yourself" for
 `reflog-unavailable`. The overview mirrors the read (change 2, read at
-`996a181`, final `4495ae7`), and R-15 landed in change 1 at `9eeac52`.
-Single-target `remove` applies the gate too: a fresh merged worktree named with
-`--worktree` is refused with `target-excluded`, where `a040790` removes it, and
-so is a merged worktree whose reflog keeps no decisive entry, with reason
-`reflog-unavailable` (change 1 at `0b3c33d`).
+`996a181`, and at `4495ae7` (R-20; unchanged at `cc43860`)), and R-15 landed in
+change 1 at `9eeac52`. Single-target `remove` applies the gate too: a fresh
+merged worktree named with `--worktree` is refused with `target-excluded`, where
+`a040790` removes it, and so is a merged worktree whose reflog keeps no decisive
+entry, with reason `reflog-unavailable` (change 1 at `0b3c33d`).
 
 Each excluded row carries one `reason`: the first failing gate in the fixed
 order `main-worktree`, `unsupported-path-bytes`, `registration-mismatch`,
@@ -538,15 +538,16 @@ hand). These tighten the baseline and are listed under "Baseline behavior
 changes".
 Plain read-only `project clean` builds the same full plan too, with
 `mode: "report"`, under the same deadline and its own 256-row cap.
-`push` and `delete-branch` keep their behavior apart from argument
-resolution and two refusals. Under the shared ref listing a deleted
-upstream fills `upstream`, where `a040790` leaves it null, so the command
-`push` builds would change from `push -u origin <branch>` to
-`push <remote> <branch>:<remote branch>`; instead `push` refuses a
-`remote-gone` branch, which must be reviewed before it is republished, with
-refusal reason `remote-gone` and exit 2. Both refuse with
-`inspection-incomplete`, `inspect-cap`, or `deadline-exceeded` and exit 2
-when their re-inspection is incomplete, `push` doing so before or after
+`push` and `delete-branch` keep their behavior apart from argument resolution
+and two refusals. Under the shared ref listing a deleted upstream fills
+`upstream`, where `a040790` leaves it null, so the command `push` builds would
+change from `push -u origin <branch>` to
+`push <remote> <branch>:<remote branch>`; instead `push` refuses a `remote-gone`
+branch, which must be reviewed before it is republished, with refusal reason
+`remote-gone` and exit 2 (on the deleted upstream itself, whatever the row's
+class, since Brett Heap's ruling of 2026-10-09 applied at `b772195`). Both
+refuse with `inspection-incomplete`, `inspect-cap`, or `deadline-exceeded` and
+exit 2 when their re-inspection is incomplete, `push` doing so before or after
 confirmation (change 1 phase 6 (`90854a3`), lane openRepoProject-2, 2026-10-09).
 
 ### Deadline and budgets
@@ -803,10 +804,11 @@ replaces per-branch `merge-base --is-ancestor`; the one worktree probe below
 replaces the separate dirty and ignored `status` calls. Overview, doctor, and
 clean share this one evidence model, and the proposal proves value parity
 with the baseline through fixture tests, except for the changes listed under
-"Baseline behavior changes", of which the visible one is that a deleted
-upstream reports `remote-gone`. A failed repository-wide probe leaves every
-row's classification `null` and makes the plan incomplete
-(`inspection-incomplete`).
+"Baseline behavior changes", of which the visible one is that a deleted upstream
+reports `remote-gone`, except that a merged one reads `merged-removable` by
+Brett Heap's ruling of 2026-10-09, applied at `b772195` and `cc43860`. A failed
+repository-wide probe leaves every row's classification `null` and makes the
+plan incomplete (`inspection-incomplete`).
 
 ### Worktree-specific probes
 
@@ -1466,14 +1468,17 @@ Shared with the overview:
 - `repo_state` and `cleanup_report` move onto the shared probes, so overview,
   doctor, and clean report the same values. The baseline's
   `rev-parse --abbrev-ref @{upstream}` cannot distinguish a never-configured
-  upstream from one whose remote-tracking ref was deleted, so `a040790`
-  reports `unpublished` for both; the shared `for-each-ref` with
-  `%(upstream:track)` can, so overview and clean classify the deleted one
-  `remote-gone`. Doctor never classifies a deleted upstream; its only
-  worktree classification is `repo_state`'s `stale-worktree`, shown under
-  `--json`. Both are preserve states. The promise that
-  baseline row fields are unchanged covers field names and types (with
-  `present` gaining `null`), not the probe that fills them.
+  upstream from one whose remote-tracking ref was deleted, so `a040790` reports
+  `unpublished` for both; the shared `for-each-ref` with `%(upstream:track)`
+  can, so overview and clean classify the deleted one `remote-gone`. Doctor
+  never classifies a deleted upstream; its only worktree classification is
+  `repo_state`'s `stale-worktree`, shown under `--json`. Both are preserve
+  states. A merged row with a deleted upstream is not `remote-gone`: by Brett
+  Heap's ruling of 2026-10-09, applied at `b772195` and `cc43860`, it is tested
+  for local ancestry first and reads `merged-removable` (`merged-current` when
+  current). The promise that baseline row fields are unchanged covers field
+  names and types (with `present` gaining `null`), not the probe that fills
+  them.
 - Git output is parsed NUL-delimited, so a newline path is no longer misread
   and a non-UTF-8 path no longer ends the run with an uncaught exception.
 - One combined status probe with explicit `--untracked-files=normal`, run
@@ -1534,12 +1539,14 @@ which the overview does not perform):
   `target-not-repository-root` and exit 2, where at `a040790`, reached from
   one of its linked worktrees, its first registry record is reported as an
   `inspection-error` checkout.
-- `push` refuses a `remote-gone` branch with refusal reason `remote-gone`
-  and exit 2, where at `a040790` the branch reads `unpublished` and `push`
-  republishes it with `push -u origin`; `push` and `delete-branch` also
-  refuse with `inspection-incomplete`, `inspect-cap`, or `deadline-exceeded`
-  and exit 2 when their re-inspection is incomplete, `push` doing so before or
-  after confirmation (change 1 phase 6 (`90854a3`)).
+- `push` refuses a `remote-gone` branch with refusal reason `remote-gone` and
+  exit 2 (on the deleted upstream itself, whatever the row's class, since Brett
+  Heap's ruling of 2026-10-09 applied at `b772195`), where at `a040790` the
+  branch reads `unpublished` and `push` republishes it with `push -u origin`;
+  `push` and `delete-branch` also refuse with `inspection-incomplete`,
+  `inspect-cap`, or `deadline-exceeded` and exit 2 when their re-inspection is
+  incomplete, `push` doing so before or after confirmation (change 1 phase 6
+  (`90854a3`)).
 - When the first registry record's path equals `common_dir`, a submodule
   checkout, for which `git rev-parse --show-superproject-working-tree`
   prints a path (its first record lies under `.git/modules`), is refused
@@ -2015,29 +2022,39 @@ workstation honors such a lock today; the narrow guarantee plus Git's own
 refusals is what the MVP can actually deliver, and a later design may add a
 handoff on top of the same seam.
 
-Open proposal decisions, with the first question for Brett Heap now ruled:
+Open proposal decisions, with the first question for Brett Heap now ruled and
+applied:
 
 - The measured per-child and per-removal costs, and therefore the final caps
   under the stated rule; the caps stay provisional until measured.
-- For Brett Heap, ruled: whether a local ancestry proof should outrank
-  `remote-gone` for worktree rows. Brett Heap ruled yes on 2026-10-09 ("yes,
-  local ancestry proof outranks remote-gone"); the proposals' interim
-  `remote-gone` text quoted below is lane openRepoProject-2's to amend, sha to
-  follow, and the packet designs no mechanism for the ruling. Lane
+- For Brett Heap, ruled and applied: whether a local ancestry proof should
+  outrank `remote-gone` for worktree rows. Brett Heap ruled yes on 2026-10-09
+  ("yes, local ancestry proof outranks remote-gone"; to lane openRepoProject-2,
+  "yes, local ancestry proof outranks remote-gone, apply it"), and both
+  proposals applied it: change 1 at `b772195`, change 2 at `cc43860`. Lane
   openRepoProject-3 raised it, recommending yes, and lane openRepoProject-2
-  carries it in both proposals. The ladder tests remote presence before merge
-  state, as the baseline does; GitHub's head-branch auto-delete with
-  `fetch.prune` leaves a merged branch's upstream gone; and the MVP never
-  deletes a branch, so under the baseline order such a worktree is never
-  eligible for `--all-safe`, and `push` now refuses its branch. Measured here: 4
-  of about 90 merged worktrees, `fetch.prune` unset everywhere, and auto-delete
-  on 2 of 21 repositories. Until the proposals are amended, the packet keeps the
-  baseline ladder; a `remote-gone` row whose `merged_into_target` is true
-  carries the recommendation "Merged locally, upstream deleted: not removable by
-  `project` until the open question is ruled; review, then `git worktree remove`
-  yourself", and the overview's `remote-gone` message says whether the branch
-  tip is already an ancestor of the merge target when its evidence establishes
-  that, its suggestion only reviewing.
+  carried it in both proposals. The packet's own ladder tests remote presence
+  before merge state, as the baseline does, and the packet designs no mechanism
+  for the ruling; GitHub's head-branch auto-delete with `fetch.prune` leaves a
+  merged branch's upstream gone, and the MVP never deletes a branch, so under
+  that order such a worktree was never eligible for `--all-safe`. Measured here:
+  4 of about 90 merged worktrees, `fetch.prune` unset everywhere, and
+  auto-delete on 2 of 21 repositories. The proposals now test a branch whose
+  configured upstream's remote-tracking ref no longer exists for local ancestry
+  before the `remote-gone` rung: when it is merged into the target the row is
+  `merged-removable` (`merged-current` when it is the current worktree), and
+  otherwise it is `remote-gone`, so only an unmerged row is `remote-gone`. The
+  interim `remote-gone` text, the recommendation that called a merged row not
+  removable by `project`, is gone from the seven places that carried it. In
+  change 1, `push` refuses on the deleted upstream itself, whatever the row's
+  class; revalidation does not count a value null in the plan and null again as
+  a difference; and `--worktree` removes a merged worktree whose upstream was
+  deleted, where `a040790` refuses it as `unpublished`, which is the fifth
+  user-visible change; the scenario "A merged worktree whose upstream was
+  deleted" keeps its title and gains an AND clause for `--worktree`. In change
+  2, requirement 6 and its scenario mirror the ladder, the departures bullet
+  quotes Brett Heap's words and records that the ruling supersedes R-6, and
+  requirement 10's default-branch finding is untouched.
 - For Brett Heap: squash merges never satisfy the ancestry proof, so the MVP
   selects little in a squash-merge repository. The recommendation is a local
   patch-equivalence proof (`git cherry` or patch-id against the merge
