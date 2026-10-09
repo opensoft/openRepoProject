@@ -284,8 +284,9 @@ Scope).
   stdout document: the plan envelope or the extended error object when the
   run stops before the apply phase, otherwise the apply result record
   (`BA:1017-1042`); the human plan, prompt and progress go to stderr. Only
-  a parser usage error, and SIGINT, SIGTERM or SIGHUP before the apply phase
-  (`Cancelled.` on stderr, exit 130, 143 or 129), print no JSON document.
+  a parser usage error, and SIGINT, SIGTERM or SIGHUP before the apply phase,
+  or end of input at the question (`Cancelled.` on stderr, exit 130, 143 or
+  129), print no JSON document.
 - **Every path is exact or excluded.** JSON carries a valid UTF-8 path
   exactly with `path_valid_utf8: true`; a non-UTF-8 path is escaped, excluded
   as `unsupported-path-bytes` and never a removal operand. Every path value

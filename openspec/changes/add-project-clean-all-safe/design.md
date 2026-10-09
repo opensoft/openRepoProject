@@ -503,8 +503,8 @@ as the lead's ruling records.
 
 ### D12. The 16-per-run deferral (V5)
 
-Gates are evaluated in canonical order. Rows that pass every gate through
-`unstarted-branch` are counted; the first 16 go on to the `modules` check and
+Gates are evaluated in canonical order. Rows that pass every gate before
+`deferred-target-cap` are counted; the first 16 go on to the `modules` check and
 the hidden-state probe, and the rest are excluded as `deferred-target-cap` with
 no index probe, so at most 16 hidden-state probes run and E is at most 16. A row
 an index gate then excludes keeps its place, so a run can select fewer than 16
