@@ -1489,7 +1489,7 @@ Probes, deadline, and bounds:
   stopped at 5 s and reaped, the row records `probe-timeout` with
   `dirty: null` and classification `inspection-error`, every other row is
   complete, and the exit is 1. The proposals pin `core.fsmonitor=false` for
-  every status probe, so this fixture cannot occur as written; feature 004
+  every status probe, so this fixture cannot occur as written; feature 005
   rewrites it, producing the hung child with an injected slow `git`.
 - **Hung filesystem call.** Given an external worktree on a fixture FUSE
   mount whose `lstat` sleeps for 10 s; when the overview runs; then the call
@@ -1510,7 +1510,7 @@ Probes, deadline, and bounds:
   2 s rather than 8 s, and the JSON equals that of a run limited to one child
   apart from timestamps and `budget.probe_concurrency`. The proposals pin
   `core.fsmonitor=false` for every status probe, so this fixture cannot occur
-  as written; feature 004 rewrites it, holding the probes with an injected
+  as written; feature 005 rewrites it, holding the probes with an injected
   slow `git`.
 - **Bounded ignored files.** Given a clean merged worktree with 10,000 ignored
   files; when the overview runs; then the stream stops early,

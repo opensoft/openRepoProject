@@ -894,7 +894,7 @@ Change 1, `add-project-clean-all-safe`:
   bullets above included; the one exception, which says so, is the snapshot
   command of Overview's zero-mutation check, a test-harness command and not
   a probe. Batch gains the **Untracked cache.** scenario, and the overview's
-  two fsmonitor-held fixtures are marked for feature 004 to rewrite with an
+  two fsmonitor-held fixtures are marked for feature 005 to rewrite with an
   injected slow `git`.
 - Change 1 council V4, single-target `remove`, a departure, open to Brett Heap's
   ratification, from the packet's strict one-item batch, under which "an
@@ -1636,7 +1636,12 @@ OQ-4 cap measurement, is still open and gates the Speckit handoff.
 - Lane openRepoProject-2 marked PR #11 ready for review at `8973762` and PR #12
   at `4495ae7` on 2026-10-09, after lane openRepoProject-3's word that both
   changes read clean and the two R-20 commits, and reported both ready to Brett
-  Heap; ratification remains Brett Heap's.
+  Heap; ratification remains Brett Heap's. The PR heads later moved, PR #11 to
+  `cab78d8` and PR #12 to `704eaa9`, by numbering-only commits that renumbered
+  the Speckit handoffs to features 004-project-clean-all-safe and
+  005-project-overview after lane openRepoProject-1's PR #17 took 003; content
+  is unchanged, and `8973762` and `4495ae7` remain the content shas (lane 2,
+  2026-10-09).
 - Brett Heap's ruling on the packet's first open question (Brett Heap,
   2026-10-09): "yes, local ancestry proof outranks remote-gone", delivered
   verbatim through lane openRepoProject-3's resume prompt as a preserved draft
