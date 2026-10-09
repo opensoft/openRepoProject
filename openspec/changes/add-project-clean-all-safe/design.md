@@ -9,11 +9,13 @@ requirements. The council's noted constraints, `clarifications.md` N1 to N5, are
 answered by D1 to D5; D6 to D19 give the how of the proposal's decisions, and
 D20 maps the packet's 35 validation scenarios to the deltas. The binding rulings
 (D-A to D-AF, X1, X2, V1 to V12 with V2 as amended, lane 3's M1 to M7, and the
-lead's R-4, R-8 and R-9, R-11 to R-15, R-17, R-19 and R-21 to R-23) are already
+lead's R-4, R-8 and R-9, R-11 to R-15, R-17, R-19 and R-21 to R-25) are already
 in `proposal.md`, with the sections each edited; R-15 edited Context, D10, D14,
 D18, D19, Risks and the Migration Plan here; R-17 edited Context and D14, and
 R-19 edited Context, D14 and D19; R-21 edited Context, D6 and D17; R-22 edited
-Context and D20; R-23 edited Context, D6, D9, D11 and D20. Brett Heap's ruling
+Context and D20; R-23 edited Context, D6, D9, D11 and D20; R-24 edited D5, D9,
+D11, D12, D18, Risks and the Migration Plan; R-25 edited Context, D6, D9, D11,
+D20 and Risks. Brett Heap's ruling
 of 2026-10-09 on open question 1, that a local ancestry proof outranks
 `remote-gone` for worktree rows, is in `proposal.md` Decisions and edited
 Context, D6, D7, D20, Risks, the Migration Plan and Open Questions here.
@@ -67,7 +69,7 @@ unstarted branch):
 | `git reflog expire --all` at its defaults on a branch created 100 days and committed to 95 days earlier, then renamed 10 days earlier | only the rename entry survives, its old and new objects equal |
 | `git init --separate-git-dir` | the first `worktree list` record is the git directory; `core.worktree` is unset |
 | `rev-parse --show-toplevel --git-common-dir --show-superproject-working-tree` | three lines in a submodule checkout, the third the superproject's toplevel; two in a plain checkout |
-| the combined `status` probe in a clone made with `--no-checkout --filter=tree:0`, whose `remote.origin.uploadpack` is a script that logs each run | unpinned, the probe fetches HEAD's tree from the promisor remote and the script runs once; with `-c protocol.allow=never` it exits 128 with `transport 'file' not allowed` and the script never runs; a `protocol.file.allow=always` setting or `GIT_ALLOW_PROTOCOL=file` in the environment allows the fetch again, since a per-protocol policy outranks `protocol.allow` (R-23) |
+| the combined `status` probe in a clone made with `--no-checkout --filter=tree:0`, whose `remote.origin.uploadpack` is a script that logs each run | unpinned, the probe fetches HEAD's tree from the promisor remote and the script runs once; with `-c protocol.allow=never` alone it exits 128 with `transport 'file' not allowed` and the script never runs, yet a `protocol.file.allow=always` setting in the clone's configuration lets the fetch and the script run again, as does `GIT_ALLOW_PROTOCOL=file` in the environment even beside every pin, since Git consults that list before any configuration or `-c`; with the six per-protocol pins beside `protocol.allow` the configured `always` is refused, and with `GIT_ALLOW_PROTOCOL` removed from the environment the run is refused with the script never run; `GIT_ALLOW_PROTOCOL=always` names no protocol and refuses `file` by itself, so the check sets `file`; identical on Git 2.36.6, 2.40.4 and 2.43.0 (R-23, R-25) |
 
 ## Goals / Non-Goals
 
@@ -261,7 +263,12 @@ and script in a scratch directory, never in the repository.
   only for `reflog-unavailable` (M3) or `unstarted-branch`; the council's survey
   found about 20 eligible rows in Opensoft-Tenant.
 
-Until then the deltas mark the caps provisional.
+Task 2.1 ran it on 2026-10-09 in the `py-bench` container: the cold cache by
+`sync` and per-file eviction (`posix_fadvise`, the mechanism of `vmtouch -e`),
+confirmed with `mincore`, because `drop_caches` is impossible there; drvfs was
+not available and is unmeasured; the fit rejected no cap, so the caps were
+measured and stand, with two degraded cases and one residual that its survey
+found recorded under Risks (R-24).
 
 ### D6. The evidence pipeline
 
@@ -306,16 +313,19 @@ main worktree, or a gitfile checkout whose main worktree cannot be named), rows
 row 3 ran, as the evidence model states; `clean` refuses those layouts (D8), so
 only a reader that reports them, such as `add-project-overview`, probes there.
 
-The scrubbed environment is a copy of the caller's with sixteen variables
+The scrubbed environment is a copy of the caller's with seventeen variables
 removed, unconditionally and before any Git call, from a fixed list that is
 hard-coded rather than queried: the fifteen of BA:244-250, which Git 2.40 and
-later print from `rev-parse --local-env-vars`, and `GIT_INTERNAL_SUPER_PREFIX`,
+later print from `rev-parse --local-env-vars`; `GIT_INTERNAL_SUPER_PREFIX`,
 which 2.36 through 2.39 also print and which makes every command on 2.36 fail
-closed when it is set (D17, R-21). `GIT_CONFIG_GLOBAL` and `GIT_CONFIG_SYSTEM`
-are not in that list and stay; D11's `-c` pins override them.
+closed when it is set (D17, R-21); and `GIT_ALLOW_PROTOCOL`, which Git does not
+print and which, set to a protocol list, is consulted before every `-c` pin
+(D11, R-25). `GIT_CONFIG_GLOBAL` and `GIT_CONFIG_SYSTEM` are not in that list
+and stay; D11's `-c` pins override them.
 
 Every child in the table, `git --version` and D9's removal child included, also
-runs with `-c protocol.allow=never` (D11, R-23).
+runs with `-c protocol.allow=never` and the six per-protocol pins (D11, R-23,
+R-25).
 
 `repo_state()` and `cleanup_report()` become thin readers of this pipeline, and
 the ladder becomes a pure function of a row's evidence (OQ-28). Its one
@@ -419,10 +429,12 @@ this change leaves alone.
 The removal child is a D2 handle of kind `removal`: the scrubbed environment
 without `GIT_OPTIONAL_LOCKS`, and the argument vector `git -c
 status.showUntrackedFiles=normal -c core.untrackedCache=false -c
-core.fsmonitor=false -c protocol.allow=never -C <command directory> worktree
-remove <path>`, both operands absolute and the path passed as the raw bytes the
-registry gave. It is spawned only while at least 5 s of the work deadline
-remains (BA:437-441).
+core.fsmonitor=false -c protocol.allow=never -c protocol.file.allow=never -c
+protocol.ssh.allow=never -c protocol.git.allow=never -c
+protocol.http.allow=never -c protocol.https.allow=never -c
+protocol.ext.allow=never -C <command directory> worktree remove <path>`, both
+operands absolute and the path passed as the raw bytes the registry gave. It is
+spawned only while at least 5 s of the work deadline remains (BA:437-441).
 
 Once spawned it is waited for by D1's loop with no budget: the deadline passing
 changes nothing and a signal is only recorded, the first of either printing
@@ -438,7 +450,9 @@ exit could not be observed, the rescan decides: `removed` when its registry
 entry and path are gone, otherwise `unknown` with the note `partially-removed`;
 its reason is `removal-ceiling` either way, and the run exits 1 (D19). 300 s is
 about two hundred times fixture `k`'s 1.27 s, ample even for drvfs at ten times
-slower; D5 measures it.
+slower; task 2.1 measured it, the 20,000-file removal taking 0.66 s warm and
+0.72 s cold at low load and 14.1 s at worst under saturation, 21 times under
+the ceiling.
 
 The 10 s reserve counts from the child's exit or the ceiling, each rescan child
 getting `min(5 s, reserve remaining)`. A run with no removal in flight therefore
@@ -535,22 +549,30 @@ contrary `-c`.
 `core.fsmonitor=false` is read as a boolean from Git 2.36, when the built-in
 monitor arrived; older Git reads the value as a hook path, one more reason for
 the floor (D17). The cost is a full untracked scan where the cache would have
-helped; D5 measures it. One consequence crosses changes: feature 005's fixtures
-that rely on a running fsmonitor (DI:1233-1237, DI:1249-1254) must be rewritten,
-as the lead's ruling records.
+helped; task 2.1 measured the pinned probe at 42 to 49 ms warm for 10,000
+entries and 215 to 232 ms for 100,000. One consequence crosses changes: feature
+005's fixtures that rely on a running fsmonitor (DI:1233-1237, DI:1249-1254)
+must be rewritten, as the lead's ruling records.
 
-Every Git child, of every kind, also carries `-c protocol.allow=never` (R-23),
+Every Git child, of every kind, also carries `-c protocol.allow=never -c
+protocol.file.allow=never -c protocol.ssh.allow=never -c
+protocol.git.allow=never -c protocol.http.allow=never -c
+protocol.https.allow=never -c protocol.ext.allow=never` (R-23, R-25),
 `git --version` and the removal included. Git 2.43 has no `GIT_NO_LAZY_FETCH` or
 other switch against lazy fetches, so a read-only probe in a partial (promisor)
 clone that needs an object the clone does not hold can fetch it from the
-network. With the pin Git's transport check refuses the fetch locally, the probe
-fails with `probe-failed`, and the row is `inspection-error`, never a network
-call; the Context table records the check. A `-c` outranks `protocol.allow` in
-every configuration file, and the scrub removes `GIT_CONFIG_PARAMETERS` and
-`GIT_CONFIG_COUNT`, so a caller cannot inject a contrary `-c`. A per-protocol
-policy, a `protocol.<name>.allow` setting or `GIT_ALLOW_PROTOCOL` in the
-caller's environment, outranks `protocol.allow` for that protocol, and the pin
-does not override it.
+network. `protocol.allow` is only the default policy: a `protocol.<name>.allow`
+setting in a configuration file overrides it for that protocol, and
+`GIT_ALLOW_PROTOCOL` in the environment, which Git consults before any
+configuration, overrides every `-c`. The six per-protocol pins therefore stand
+beside it, a `-c` outranking `protocol.allow` and every `protocol.<name>.allow`
+in every configuration file, and the scrub removes `GIT_ALLOW_PROTOCOL` (D6), as
+it removes `GIT_CONFIG_PARAMETERS` and `GIT_CONFIG_COUNT`, so a caller cannot
+inject a contrary `-c` or an allow list. With the pins Git's transport check
+refuses the fetch locally, the probe fails with `probe-failed`, and the row is
+`inspection-error`, never a network call; the Context table records the check
+on Git 2.36.6, 2.40.4 and 2.43.0. The residual, recorded under Risks, is a
+remote-helper protocol of another name, which no pin names.
 
 ### D12. The 16-per-run deferral (V5)
 
@@ -560,8 +582,9 @@ the hidden-state probe, and the rest are excluded as `deferred-target-cap` with
 no index probe, so at most 16 hidden-state probes run and E is at most 16. A row
 an index gate then excludes keeps its place, so a run can select fewer than 16
 while rows stay deferred, and 16 rows that an index gate always excludes, ahead
-of a backlog, stop it until a person handles them; the human text names that
-case. The plan stays complete and apply allowed; each re-run plans and
+of a backlog, stop it until a person handles them; when every one of the 16 is
+`contains-submodule`, the human text says why the deferred rows will not drain
+(D18, R-24). The plan stays complete and apply allowed; each re-run plans and
 revalidates afresh, draining 16 at a time. `plan_digest` covers only `selected`,
 so a deferred row's change leaves a preview valid, and the report mode defers
 alike. The `target-cap` refusal (BA:96-101, BA:1004, BA:1367-1371) is retired, a
@@ -691,7 +714,7 @@ The design relies on these Git behaviours, with the release that brought each:
 | `status --ignored=matching` with `--untracked-files=normal` and `-z` | 2.16 |
 | `--show-superproject-working-tree` | 2.13 |
 | `ls-files -v` combined with `--stage`, and `worktree remove`'s refusals for a populated submodule and an admin `modules` entry | verified on 2.43 only (BA:132-137, BA:665-668) |
-| the variables of `rev-parse --local-env-vars` | measured by task 2.2: 2.36.6 prints sixteen, 2.40.4 and 2.43.0 fifteen (BA:244-250); the extra name, `GIT_INTERNAL_SUPER_PREFIX`, is printed through 2.39, and with it set 2.36 fails closed in every command with `fatal: version doesn't support --super-prefix`; resolved by scrubbing it, sixteen names in all (R-21), the floor staying 2.36 |
+| the variables of `rev-parse --local-env-vars` | measured by task 2.2: 2.36.6 prints sixteen, 2.40.4 and 2.43.0 fifteen (BA:244-250); the extra name, `GIT_INTERNAL_SUPER_PREFIX`, is printed through 2.39, and with it set 2.36 fails closed in every command with `fatal: version doesn't support --super-prefix`; resolved by scrubbing it, sixteen names then and seventeen with R-25's `GIT_ALLOW_PROTOCOL` (R-21), the floor staying 2.36 |
 
 Governance task 2.2 verifies the floor before the handoff: Git v2.36.x built
 from its release tarball in a scratch directory, first on PATH, and a scratch
@@ -717,10 +740,13 @@ PATH [BRANCH]` per row; `Excluded (M):` with, per reason, `  REASON (K): NEXT
 STEP` and one line `    PATH [BRANCH]` per row, an `ignored-local-files` row
 adding `: N ignored; first: SAMPLE` (`at least N` when truncated); for the
 deferral, `  deferred-target-cap (K): this run removes up to 16; run again:
-project clean ROOT --all-safe --apply`; the residual-window line, `Not
-protected: ignored files created or index flags set after the last check, and
-any change after Git's own check.`; and, when a complete plan selects nothing,
-`No eligible worktrees`.
+project clean ROOT --all-safe --apply`, and, when every one of the 16 rows taken
+past the cap is excluded as `contains-submodule`, the line `  these deferred
+rows will not drain while the 16 rows ahead of them are contains-submodule;
+review those worktrees, then remove them yourself` (R-24); the
+residual-window line, `Not protected: ignored files created or index flags set
+after the last check, and any change after Git's own check.`; and, when a
+complete plan selects nothing, `No eligible worktrees`.
 
 The next steps by reason: `dirty` "commit or preserve the changes";
 `ignored-local-files` "move or delete the ignored files by hand";
@@ -828,8 +854,8 @@ requirements: R1, R2, R6, D-N and OQ-29 under the reports; R9 and C3 under the
 classification and "Inspect and diagnose", and the ruling on open question 1
 under the classification; R10, R11, D-T and the manifest cap
 under Git-first resolution; V1 to V4, M3 and M4 under retirement; OQ-10, OQ-16
-and M1 under the JSON and the result; V9 and R-23 under the evidence model; D-D
-under push; D-R under maintenance; R-22 under revalidation.
+and M1 under the JSON and the result; V9, R-23 and R-25 under the evidence
+model; D-D under push; D-R under maintenance; R-22 under revalidation.
 
 ## Risks / Trade-offs
 
@@ -859,18 +885,45 @@ under push; D-R under maintenance; R-22 under revalidation.
   residual; the README asks for sessions to be closed, and no commit can be
   lost.
 - [The pins turn off the untracked cache and fsmonitor, so status probes on
-  large trees are slower] -> D5 measures it; a slow probe makes a plan
-  incomplete, never unsafe.
-- [Sixteen rows that an index gate always excludes stop the deferral from
-  draining] -> The human text names the case; V5's caveat is before Brett Heap.
+  large trees are slower] -> Task 2.1 measured it (42 to 49 ms warm for 10,000
+  entries, 215 to 232 ms for 100,000); a slow probe makes a plan incomplete,
+  never unsafe.
+- [A repository whose every worktree carries a gitlink, the V5 deferral's
+  motivating repository (Opensoft-Tenant: 20 rows pass every gate before
+  `deferred-target-cap` and all 20 are `contains-submodule` after it), yields 0
+  removable rows each run, and its deferred count never drains, because
+  `contains-submodule` is an index gate tested after the deferral] -> The order
+  stays, since the index gates cost a probe per row and the deferral keeps those
+  probes to 16 (D12); the human report says why the deferred rows will not drain
+  when every one of the 16 rows past the cap is `contains-submodule` (D18); 16
+  rows that any index gate excludes ahead of a backlog stall it alike; V5's
+  caveat is before Brett Heap.
+- [Rows of 100,000-entry indexes: the fit of BA:729-735 would give 64 rows, 16
+  targets and a report cap of 128, since the plan term alone for 128 such rows
+  is 46.6 s] -> The caps measured at 10,000 entries stand; a plan over such rows
+  goes incomplete with `deadline-exceeded`, never unsafe (BA:772-774) (task
+  2.1, R-24).
+- [CPU saturation: at load 165 on 32 threads wall times rise about eight times,
+  a 128-row plan takes 77 s, where the rule would give no cap at 16 targets, 16
+  rows and 8 targets once lowered, and a report cap of 64, and a 20,000-file
+  removal took up to 14.1 s, past the 5 s floor] -> The caps stand; the plan
+  goes incomplete with `deadline-exceeded`, never unsafe, and a removal started
+  within the floor is waited for (D9, V1). Whether to design for a saturated
+  workstation is Brett Heap's call (task 2.1, R-24).
+- [A remote-helper protocol of another name, with its own `allow=always` in the
+  repository's configuration, is not among the pins, and `GIT_ALLOW_PROTOCOL`
+  is scrubbed rather than pinned] -> Accepted as rare: such a helper could still
+  fetch for a probe in a partial clone, the probe would then succeed rather than
+  fail, and no unsafe removal follows (D11, R-25).
 - [Squash-merged branches never prove ancestry, so squash-merging
   repositories select little] -> Before Brett Heap (Open Questions).
 - [A merged worktree whose upstream was deleted is removed on local ancestry
   alone, with no remote evidence] -> Brett Heap's ruling on open question 1:
   the branch is kept, so its commits stay reachable from it and from the merge
   target, and every other gate still applies (D6).
-- [The caps and the Git floor are unverified until tasks 2.1 and 2.2] -> Both
-  run before the handoff and edit the deltas if needed.
+- [The caps and the Git floor were unverified until tasks 2.1 and 2.2] -> Both
+  ran before the handoff: the caps stand as measured (D5, the degraded cases
+  above) and the floor stays 2.36 with the scrub extended (D17, R-21).
 - [`doctor` now exits 1 where a probe fails, a worktree is unreadable or `git`
   is missing, and `push` refuses while any row is `inspection-error`] ->
   Intended (D-S, D-D); the error rows and refusals name the cause and the
@@ -898,9 +951,9 @@ ruling on open question 1). The README's clean section states them first.
 
 1. Ratification by Brett Heap's word on PR #11 (`tasks.md` 1.6), with the V5
    deferral and the squash-merge open question before him.
-2. Governance tasks 2.1 (measurement) and 2.2 (the Git floor) run before the
-   handoff; any change they force to a cap or the floor is made in the deltas
-   first.
+2. Governance tasks 2.1 (measurement) and 2.2 (the Git floor) ran before the
+   handoff, and neither forced a change to a cap or the floor: the caps stand as
+   measured, and the floor stays 2.36 with a scrub of one more name (R-21).
 3. Local `main` is synced to `origin/main`, then `/speckit.specify` creates
    feature `004-project-clean-all-safe` on branch `004-project-clean-all-safe`,
    recorded once in `tasks.md` under "Speckit Handoff"; `/opsx:apply` runs only

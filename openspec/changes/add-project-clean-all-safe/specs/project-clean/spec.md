@@ -238,8 +238,11 @@ removal, single or batch, SHALL follow one sequence: revalidate the target as
 "Cleanup revalidates destructive actions" states; spawn, only while at least the
 5 s removal floor of the work deadline remains, the non-force command `git -c
 status.showUntrackedFiles=normal -c core.untrackedCache=false -c
-core.fsmonitor=false -c protocol.allow=never -C <command directory> worktree
-remove <path>` in its own process group; wait for it; and reconcile by rescan as
+core.fsmonitor=false -c protocol.allow=never -c protocol.file.allow=never -c
+protocol.ssh.allow=never -c protocol.git.allow=never -c
+protocol.http.allow=never -c protocol.https.allow=never -c
+protocol.ext.allow=never -C <command directory> worktree remove <path>` in its
+own process group; wait for it; and reconcile by rescan as
 "Clean records a reconcilable result for every removal target" states. Removal
 SHALL stop after the first target whose result is not a plain `removed`, with no
 continuation, rollback or automatic retry.
@@ -785,7 +788,7 @@ blocked at the confirmation question (50 s of work, the 10 s reserve, and up to
 300 s, except while a filesystem call stuck in the kernel is outstanding. Push
 and delete-branch children SHALL stay unbounded, as before this change.
 
-The caps, provisional until measured, SHALL be: at most 128 worktree rows in
+The caps SHALL be: at most 128 worktree rows in
 `mode: "all-safe"` and `mode: "single"`, and 256 in `mode: "report"`, every
 registry entry counting, the main worktree and missing rows included; at most 16
 targets per run; and the ignored-file bounds that "Repository inspection
@@ -806,9 +809,12 @@ When more than 16 rows pass every gate before `deferred-target-cap`, the first
 excluded as `deferred-target-cap`, with the command to run next. The plan SHALL
 stay complete and apply SHALL be allowed; re-running SHALL take the next 16,
 each run building its own fresh plan and revalidating each of its targets. Rows
-that an index gate then excludes SHALL keep their places among the 16. No plan
-SHALL be refused for having more than 16 such rows. In a single-target removal
-the limit SHALL count P alone, because `not-requested` precedes it.
+that an index gate then excludes SHALL keep their places among the 16, so that
+when every one of those 16 is excluded as `contains-submodule` no re-run reaches
+a deferred row, and the human report SHALL say why the deferred rows will not
+drain. No plan SHALL be refused for having more than 16 such rows. In a
+single-target removal the limit SHALL count P alone, because `not-requested`
+precedes it.
 
 Plans and apply results SHALL report `probes: {estimated, performed}` and
 `operations: {estimated, performed}`, every Git child counted; `limits`
