@@ -250,17 +250,33 @@ It MUST never use a force removal, reset, or deletion of unmerged work.
 #### Scenario: A published branch with no commit of its own
 
 - **WHEN** a linked worktree is made with `git worktree add -b x`, its branch is
-  pushed with `git push -u`, and no commit is made on it
-- **THEN** `--all-safe` excludes it as `unstarted-branch`
+  pushed with `git push -u`, and no commit is made on it, so that its reflog
+  holds only the creation entry, whose new object is the branch's head
+- **THEN** `--all-safe` reads that reflog and excludes the worktree as
+  `unstarted-branch`
 - **AND** `--apply --action remove --worktree` naming it refuses with
   `target-excluded`, reason `unstarted-branch`, and exit 2, where before this
   change it was removed
+- **AND** after `git branch -m x y`, whose reflog entry has equal old and new
+  objects, it is still excluded as `unstarted-branch`
 
-#### Scenario: A branch whose reflog is missing
+#### Scenario: A fast-forward-merged branch at the target's tip stays eligible
+
+- **WHEN** an otherwise eligible linked worktree's branch gains a commit and the
+  merge target is then fast-forwarded to it, so that the branch's head equals
+  the merge target's SHA
+- **THEN** its reflog records that commit after its creation entry, `--all-safe`
+  selects it rather than excluding it as `unstarted-branch`, and
+  `--all-safe --apply --yes` removes it
+
+#### Scenario: A branch whose reflog is missing or empty
 
 - **WHEN** an otherwise eligible worktree's branch head is a strict ancestor of
   the merge target and the branch has no reflog
 - **THEN** the worktree is excluded as `reflog-unavailable` and is not removed
+- **AND** the same holds when its head equals the merge target's SHA, and when
+  its reflog file exists but is empty (0 bytes), as `git reflog expire` leaves
+  it once every entry has expired
 
 #### Scenario: Git's own check runs on the pinned configuration
 
@@ -501,12 +517,19 @@ row SHALL carry one `reason`, its first failing gate in this order:
 `not-requested`, for an eligible row other than the named one in a single-target
 removal; `unstarted-branch`, or `reflog-unavailable` where the reflog cannot
 decide it; `deferred-target-cap`; `contains-submodule`; and
-`hidden-local-state`. A branch SHALL have no commit of its own when its head
-equals the merge target's SHA, or when its head is an ancestor of the merge
-target and its reflog records no movement of the branch since its creation
-entry. The reflog SHALL be read from the filesystem, bounded and counted in the
-filesystem budget, never by a Git child, and a missing reflog, or one whose
-creation entry has expired, SHALL fail closed as `reflog-unavailable`. A row
+`hidden-local-state`. A head equal to the merge target's SHA SHALL NOT by itself
+prove a branch unstarted, because a branch fast-forward merged into the target
+sits at the target's tip, so the gate SHALL read the branch's creation reflog,
+`logs/refs/heads/<branch>` in the common directory, for every row it checks. A
+branch SHALL be `unstarted-branch` only when its reflog records no movement
+since its creation entry and that entry's new object equals the branch's
+current head; an entry whose old and new objects are equal, as a rename writes,
+SHALL NOT count as movement, and a branch whose reflog records movement since
+its creation SHALL pass the gate, its head equal to the merge target's SHA or
+not. The reflog SHALL be read from the filesystem, at most 64 KiB, counted in
+the filesystem budget and never by a Git child; a reflog that is missing, empty
+(0 bytes) or whose creation entry has expired SHALL fail closed as
+`reflog-unavailable`, at the gate's place in this order. A row
 SHALL be excluded as `contains-submodule` when its index holds any gitlink or
 its worktree administrative directory holds a `modules` entry, and as
 `hidden-local-state` when its index flags any entry assume-unchanged or
@@ -909,25 +932,39 @@ read-only plan, and SHALL name every retained branch.
 ### Requirement: Clean reports every path exactly or excludes it
 
 `project clean` SHALL read every Git output that carries a path NUL-delimited,
-so that newline, tab and other control characters in paths are supported. In
-JSON, a path that is valid UTF-8 SHALL be an ordinary string, exact after JSON
-unescaping, with `path_valid_utf8: true`, and every control, bidirectional and
-format code point SHALL be written as a JSON escape, never raw. A path that is
-not valid UTF-8 SHALL be written with each undecodable byte as the four
-characters `\xHH`, in lowercase hexadecimal, and each literal backslash doubled,
-with `path_valid_utf8: false`; its row SHALL be excluded as
+so that newline, tab and other control characters in paths are supported. A
+code point SHALL count as one to escape when its Unicode general category, as
+the running interpreter's `unicodedata.category` reports it, is Cc, Cf, Zl or
+Zp: for example the control characters U+0000 to U+001F and U+007F to U+009F,
+and the bidirectional, format and separator characters U+200E, U+200F, U+2028,
+U+2029, U+202A to U+202E and U+2066 to U+2069, as well as U+200B, U+FEFF and the
+tag characters U+E0020 to U+E007F. In JSON, a path that is valid UTF-8 SHALL be
+an ordinary string, exact after JSON unescaping, with `path_valid_utf8: true`,
+and every code point to escape SHALL be written as a JSON escape, never raw. A
+path that is not valid UTF-8 SHALL be written with each undecodable byte as the
+four characters `\xHH`, in lowercase hexadecimal, and each literal backslash
+doubled, with `path_valid_utf8: false`; its row SHALL be excluded as
 `unsupported-path-bytes` and SHALL never be a removal operand.
 
+Every path value in JSON SHALL carry its validity flag beside it, so that an
+escaped `\xHH` is never read as a valid path holding those four characters.
+Every object that carries a `path` (worktree rows; `selected`, `excluded` and
+apply-result `targets` entries; refusals and row errors) SHALL carry
+`path_valid_utf8` beside it. Each `ignored_samples` entry SHALL be an object
+`{path, path_valid_utf8}`, its `path` relative to its worktree. `repository`
+SHALL carry `root_valid_utf8` and `common_dir_valid_utf8`, the first also
+covering the envelope's `root`, which names the same directory; both are always
+true in `project clean`, because an invalid root or common directory refuses.
+
 In human output a path SHALL print verbatim in prose, and with POSIX shell
-quoting in commands, unless it contains a control character (U+0000 to U+001F,
-U+007F to U+009F), a bidirectional or format character (U+200E, U+200F, U+2028,
-U+2029, U+202A to U+202E, U+2066 to U+2069) or an undecodable byte. Such a path
-SHALL print in the `$'...'` form in prose and commands alike: each undecodable
-byte as `\xHH`, each such code point as `\uXXXX`, both in lowercase hexadecimal,
-each backslash doubled and each single quote as `\'`. `ignored_samples` entries
-SHALL be relative to their worktree and escaped like any other path. A
-`repository.root` or `common_dir` that is not valid UTF-8 SHALL refuse with
-`unsupported-path-bytes` and exit status 2 before any plan or digest is built.
+quoting in commands, unless it contains a code point to escape or an
+undecodable byte. Such a path SHALL print in the `$'...'` form in prose and
+commands alike: each undecodable byte as `\xHH`, each code point to escape as
+`\uXXXX`, or `\UXXXXXXXX` above U+FFFF, all in lowercase hexadecimal, each
+backslash doubled and each single quote as `\'`. `ignored_samples` paths SHALL
+be escaped like any other path. A `repository.root` or `common_dir` that is not
+valid UTF-8 SHALL refuse with `unsupported-path-bytes` and exit status 2 before
+any plan or digest is built.
 
 #### Scenario: Control-character and non-UTF-8 paths
 
@@ -955,9 +992,10 @@ Every `project clean --json` SHALL print one JSON document with `schema_version:
 1`. When a plan is built it SHALL be the plan envelope: `schema_version`,
 `observed_at`, `mode` (`report`, `single` or `all-safe`), `root`,
 `target_branch`, `tracking_freshness`, `worktrees`, `repository` (`root`,
-`common_dir`, `dev`, `ino`), `merge_target`, `limits`, `budget`, `probes`,
-`operations`, `selected`, `excluded`, `omitted`, `notes`, `completeness`,
-`apply_allowed`, `refusals` and `plan_digest`. When no plan can be built it
+`common_dir`, `dev`, `ino`, `root_valid_utf8`, `common_dir_valid_utf8`),
+`merge_target`, `limits`, `budget`, `probes`, `operations`, `selected`,
+`excluded`, `omitted`, `notes`, `completeness`, `apply_allowed`, `refusals` and
+`plan_digest`. When no plan can be built it
 SHALL be the existing error object `{"error": ...}` extended with `code`, then
 `schema_version`, `observed_at`, `mode`, `repository` and `merge_target` (each
 null unless established), `completeness: "incomplete"`, `apply_allowed: false`
@@ -965,10 +1003,12 @@ and `refusals`. Baseline keys SHALL keep their names and types; `root` naming
 the command directory, `ignored_files` counting the entries observed and
 `present` possibly being null are the changes of meaning that this version
 records. Worktree rows SHALL add `locked`, `ignored_files_truncated`,
-`ignored_samples`, `path_valid_utf8`, `errors` and `notes`.
+`ignored_samples` (objects `{path, path_valid_utf8}`), `path_valid_utf8`,
+`errors` and `notes`.
 
-Refusals and row errors SHALL be `{code, message, path?, reason?}` objects with
-a stable kebab-case `code`. The refusal codes SHALL be `invalid-arguments`,
+Refusals and row errors SHALL be `{code, message, path?, path_valid_utf8?,
+reason?}` objects, `path_valid_utf8` present exactly when `path` is, with a
+stable kebab-case `code`. The refusal codes SHALL be `invalid-arguments`,
 `internal-error`, `git-unavailable`, `git-too-old`, `repository-not-found`,
 `ambiguous-name`, `target-not-repository-root`, `unsupported-path-bytes`,
 `manifest-invalid`, `no-merge-target`, `inspection-incomplete`, `inspect-cap`,
@@ -990,11 +1030,12 @@ only, and SHALL print exactly one document on standard output: the plan envelope
 or the extended error object when the run stops before the apply phase, and
 otherwise the apply result record (`schema_version`, `observed_at`,
 `repository`, `merge_target`, `plan_digest`, `probes`, `operations`, `targets`,
-`exit_code` and `completeness`, each target carrying `path`, `branch`,
-`planned_sha`, `stage`, `reason`, `notes`, `command`, `exit_status`,
-`probes_performed` and `reconciliation`). The human plan, the question and
-progress SHALL then go to standard error. An argument-parser usage error SHALL
-print the parser's message and no JSON, as before this change.
+`exit_code` and `completeness`, each target carrying `path`,
+`path_valid_utf8`, `branch`, `planned_sha`, `stage`, `reason`, `notes`,
+`command`, `exit_status`, `probes_performed` and `reconciliation`). The human
+plan, the question and progress SHALL then go to standard error. An
+argument-parser usage error SHALL print the parser's message and no JSON, as
+before this change.
 
 #### Scenario: Apply with JSON prints one document
 

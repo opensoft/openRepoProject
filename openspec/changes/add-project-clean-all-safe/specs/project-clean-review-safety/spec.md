@@ -10,12 +10,14 @@ worktree whose index holds a gitlink or whose administrative directory holds a
 assume-unchanged or skip-worktree, sparse checkouts included
 (`hidden-local-state`); a worktree whose registration disagrees in either
 direction (`registration-mismatch`); a path that is not valid UTF-8
-(`unsupported-path-bytes`); a branch with no commit of its own
-(`unstarted-branch`), or one whose reflog cannot decide that
-(`reflog-unavailable`); and a worktree whose path cannot be read or whose state
-could not be established (`inspection-error`). It MUST not offer destructive
-removal for those states. A value that is not established SHALL be null, never
-false or 0, and SHALL keep its row out of every removal.
+(`unsupported-path-bytes`); a branch whose creation reflog shows no commit since
+its creation (`unstarted-branch`), a head equal to the merge target's SHA not
+being proof of that; a branch whose reflog is missing, empty or expired, or
+otherwise cannot decide that (`reflog-unavailable`); and a worktree whose path
+cannot be read or whose state could not be established (`inspection-error`). It
+MUST not offer destructive removal for those states. A value that is not
+established SHALL be null, never false or 0, and SHALL keep its row out of every
+removal.
 
 #### Scenario: A merged worktree has ignored local files
 

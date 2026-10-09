@@ -120,15 +120,21 @@ Scope).
   `hidden-local-state` (any entry flagged assume-unchanged or skip-worktree),
   the last two read in the row's own worktree (`BA:113-150`, `BA:629-675`,
   `BA:554-583`). Local ancestry is the only removal proof, and it proves that
-  a branch adds nothing, not that its work began: a branch with no commit of
-  its own (its head equals the merge-target SHA, or is an ancestor of the
-  target with its reflog showing no commit since creation) is excluded as
-  `unstarted-branch`, so a freshly created and published lane worktree is
-  never swept. The creation reflog is a bounded filesystem read of
-  `logs/refs/heads/<branch>` in the common directory, counted in the
-  filesystem budget and never a Git child, so the fit test is unchanged; a
-  missing or expired reflog fails closed with its own reason,
-  `reflog-unavailable` (M3). The gate applies in single mode too (M4).
+  a branch adds nothing, not that its work began. Nor does a head equal to
+  the merge-target SHA prove that the work never began, because a branch
+  fast-forward merged into the target sits at the target's tip, so the gate
+  reads the branch's creation reflog in every case: a branch whose reflog
+  shows no commit since its creation (its creation entry's new object equals
+  the current head, and a rename entry, whose old and new objects are equal,
+  is no movement) is excluded as `unstarted-branch`, so a freshly created and
+  published lane worktree, whose push adds no reflog entry, is never swept;
+  a branch at the target's tip whose reflog shows commits since its creation
+  is merged and stays eligible. The creation reflog is a bounded filesystem
+  read of `logs/refs/heads/<branch>` in the common directory, at most 64 KiB,
+  counted in the filesystem budget and never a Git child, so the fit test is
+  unchanged; a missing, empty (0 byte) or expired reflog fails closed with its
+  own reason, `reflog-unavailable`, at the same gate position (M3). The gate
+  applies in single mode too (M4).
 - **Single-target `remove` becomes a one-item batch.** Flags unchanged,
   `--apply --json` now accepted (OQ-10). It builds the same plan (`mode:
   "single"`), lists every other eligible row as `not-requested`, and shares
@@ -240,12 +246,15 @@ Scope).
   evidence (OQ-28). Git 2.36 is required as R6 scopes it. The visible
   consequences are the baseline behavior changes of `BA:1200-1274`, less
   `BA:1255-1256`, with `BA:1238-1240` and `BA:1268-1274` narrowed (Decisions)
-  and `BA:1241-1245` (R6), plus R1, R2, R10, R11, `unstarted-branch` in single
-  mode (M4) and the manifest cap; the deltas carry each. The manifest read
-  that resolves a merge target is capped at 1 MiB, a larger manifest being
-  `manifest-invalid`, so every reader resolves the same target; at `a040790`
-  `clean` reads a manifest of any size, so a larger one refusing `clean` with
-  `manifest-invalid`, exit 2, is a baseline behavior change beside R1 and R10.
+  and `BA:1241-1245` (R6), plus R1, R2, R10, R11, `unstarted-branch` and
+  `reflog-unavailable` in single mode (M4), the manifest cap, and
+  `ignored_samples` entries as `{path, path_valid_utf8}` objects where the
+  packet has bare path strings (`BA:804-806`); the deltas carry each. The
+  manifest read that resolves a merge target is capped at 1 MiB, a larger
+  manifest being `manifest-invalid`, so every reader resolves the same target;
+  at `a040790` `clean` reads a manifest of any size, so a larger one refusing
+  `clean` with `manifest-invalid`, exit 2, is a baseline behavior change beside
+  R1 and R10.
 - **Every `clean --json` prints one versioned envelope.** `schema_version: 1`
   with the plan fields of `BA:947-976`, `mode` being `report`, `single` or
   `all-safe` (OQ-29); refusals as `{code, message, path?, reason?}` with the
@@ -256,11 +265,17 @@ Scope).
   (`BA:1017-1042`); the human plan, prompt and progress go to stderr.
 - **Every path is exact or excluded.** JSON carries a valid UTF-8 path
   exactly with `path_valid_utf8: true`; a non-UTF-8 path is escaped, excluded
-  as `unsupported-path-bytes` and never a removal operand; human output
-  prints control, bidirectional, format and undecodable characters in the
-  `$'...'` form of `BA:913-939`. A `repository.root` or `common_dir` that is
-  not valid UTF-8 refuses with `unsupported-path-bytes`, exit 2, before any
-  plan or digest (`BA:368-370`).
+  as `unsupported-path-bytes` and never a removal operand. Every path value
+  carries its validity flag beside it, so an escaped `\xHH` never reads as a
+  valid path holding those four characters: `path_valid_utf8` beside each
+  `path`, each `ignored_samples` entry an object `{path, path_valid_utf8}`, and
+  `root_valid_utf8` and `common_dir_valid_utf8` in `repository`. JSON escapes,
+  and human output prints in the `$'...'` form of `BA:913-939`, every code
+  point of Unicode general category Cc, Cf, Zl or Zp, the packet's list of
+  control, bidirectional and format characters kept as examples; human output
+  does the same for undecodable bytes. A `repository.root` or `common_dir`
+  that is not valid UTF-8 refuses with `unsupported-path-bytes`, exit 2,
+  before any plan or digest (`BA:368-370`).
 
 ## Rules This Change Keeps
 
@@ -358,8 +373,11 @@ Headers are quoted verbatim, one per line; ADDED headers are proposed text.
     scenario (`:63-68`) stay verbatim. Added scenarios: WHEN `--all-safe
     --apply` removes every selected worktree, THEN every local branch remains
     and the result says so (`BA:1281`, `BA:1353-1356`); `worktree add -b x`
-    then `push -u` with no commit is excluded `unstarted-branch`, and
-    `--worktree` on it refuses `target-excluded` (M4); with the
+    then `push -u` with no commit, its reflog holding only the creation entry,
+    is excluded `unstarted-branch`, and `--worktree` on it refuses
+    `target-excluded` (M4); a branch fast-forward merged into the target, at
+    the target's tip with a commit in its reflog, stays eligible; a missing or
+    empty reflog is `reflog-unavailable`; with the
     untracked cache on, `core.checkStat=minimal` and an index-writing status
     run, a file created after revalidation is refused by Git with 128 and
     survives; `--worktree P` removes P beside another row's
@@ -717,6 +735,11 @@ Council decisions, with the packet text each replaces or extends:
   of 20,000 files, a `dirty` tree (council).
 - **Pinned status configuration** (`BA:307-317` pins only the untracked
   setting): unpinned, Git's own check missed and deleted a file (council).
+- **A branch with no commit of its own is preserved** (V2 as amended, M3, M4;
+  extends the gates of `BA:152-160`): the creation reflog decides
+  `unstarted-branch` in every case, because a head equal to the merge-target
+  SHA is also where a fast-forward-merged branch sits; a missing, empty or
+  expired reflog is `reflog-unavailable` (What Changes, eligibility).
 
 Left to `add-project-overview`: OQ-2, OQ-6, OQ-7, OQ-17 to OQ-21, and the
 overview halves of OQ-5, OQ-9, OQ-25 and OQ-26.

@@ -28,6 +28,10 @@ render as an error a null that means "none": `upstream`, `ahead` and `behind`
 for a branch with no upstream, and `merged_into_target` for a detached head. For
 a branch whose configured upstream's remote-tracking ref was deleted, a row's
 `upstream` SHALL be the configured short name and its `ahead` and `behind` null.
+Each path value in that JSON SHALL be written by the JSON rule that "Clean
+reports every path exactly or excludes it" states, with `path_valid_utf8`
+beside every `path`, in root, leg and worktree rows, `errors` entries and
+`ignored_samples` entries alike.
 
 #### Scenario: Missing leg
 - **WHEN** a project's declared leg has no checkout
@@ -139,11 +143,12 @@ record or the 4,097th record of any kind, so that 64 ignored entries and 4,096
 records are its bounds; a probe stopped at its bound SHALL be a complete
 outcome, never `probe-failed`. `ignored_files` SHALL count the ignored records
 read, a lower bound when `ignored_files_truncated` is true; `ignored_samples`
-SHALL hold at most 8 ignored paths; both SHALL be null when the probe did not
-run or failed, and a stream stopped before any ignored record SHALL leave
-`ignored_files` null with `dirty` true. A probe that fails or times out before
-`dirty` is established SHALL leave `dirty` null, record `probe-failed`,
-`probe-timeout` or `deadline-exceeded`, and make the row `inspection-error`.
+SHALL hold at most 8 ignored paths, each an object `{path, path_valid_utf8}`;
+both SHALL be null when the probe did not run or failed, and a stream stopped
+before any ignored record SHALL leave `ignored_files` null with `dirty` true. A
+probe that fails or times out before `dirty` is established SHALL leave `dirty`
+null, record `probe-failed`, `probe-timeout` or `deadline-exceeded`, and make
+the row `inspection-error`.
 
 Termination: each Git child's standard output SHALL be read as bytes as it
 streams, and its standard error SHALL be drained while standard output is read,
@@ -163,7 +168,8 @@ SHALL show as `inspection-error`. Children other than Git SHALL keep 15 s.
 
 Manifest: every subcommand that resolves a merge target from a project manifest
 SHALL read at most 1 MiB of it, and a larger manifest SHALL be
-`manifest-invalid`.
+`manifest-invalid`. A manifest over the cap SHALL be detected from its `st_size`
+before the read, and the read itself SHALL never exceed 1 MiB.
 
 Values SHALL equal those of the inspection this model replaces, except where a
 requirement states a change.

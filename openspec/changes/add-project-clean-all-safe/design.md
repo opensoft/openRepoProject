@@ -153,8 +153,9 @@ holds at most one partial record, exposes `bound_reached`, and on `finish()`
 returns its records or reports a truncated last record as a failure. The status
 parser reads `status --porcelain=v1 -z` (two status letters, a space, a
 NUL-terminated path; a rename or copy consumes a second path uncounted), keeps
-`dirty`, the ignored count, up to 8 samples and D4's deletion flag, and reaches
-its bound at the 65th ignored or the 4,097th record. The registry parser reads
+`dirty`, the ignored count, up to 8 samples as raw bytes (each serialized as an
+object `{path, path_valid_utf8}`) and D4's deletion flag, and reaches its bound
+at the 65th ignored or the 4,097th record. The registry parser reads
 `worktree list --porcelain -z` (NUL-terminated attributes, entries separated by
 an empty record); the ref parser reads D6's format (NUL-separated fields, a line
 feed per record); the merged-set parser one refname per line; and the
@@ -308,6 +309,15 @@ its branch evidence `{branch, head, upstream, upstream_oid, ahead, behind}`; and
 `merge_target` `{name, source, sha}`. Each selected entry also records the
 baseline signature fields (`project:494-497`) and `locked`.
 
+In JSON each of these objects carries a validity flag beside every path value
+(the escaping requirement): `repository` adds `root_valid_utf8` and
+`common_dir_valid_utf8`, always true in `clean`, which refuses an invalid root
+or common directory, and kept so that `add-project-overview`, which can report
+such a repository, draws the same object; every object with a `path` (a
+selected or excluded entry, a result target, a refusal, a row error) adds
+`path_valid_utf8`, so an escaped `\xHH` never reads as a valid path holding
+those four characters.
+
 Revalidation is BA:677-707's targeted check, in its order, stopping at the first
 difference: the identity probe; the manifest re-read (a file read, 1 MiB cap);
 the registry listing; a narrowed ref listing whose patterns name the merge
@@ -404,31 +414,49 @@ stop a probe child (SIGTERM, the 2 s grace, SIGKILL, a reap wait of up to 2 s),
 the figure the overview states; a removal in flight adds up to 300 s (M5). A
 call stuck in the kernel is the one exception.
 
-### D10. `unstarted-branch` from the reflog (V2, M3, M4)
+### D10. `unstarted-branch` from the reflog (V2 as amended, M3, M4)
 
-The gate runs for each row that is `merged-removable` and was not excluded by an
-earlier gate, in `mode: "single"` as well as the others (M4):
+A head equal to `merge_target.sha` is not by itself proof of an unstarted
+branch, because a branch fast-forward merged into the target sits at the
+target's tip. The gate therefore reads the branch's creation reflog in every
+case, and nothing else decides it. It runs for each row that is
+`merged-removable` and was not excluded by an earlier gate, in `mode: "single"`
+as well as the others (M4):
 
-1. The head equals `merge_target.sha`: `unstarted-branch`, with nothing read.
-2. Otherwise the branch's reflog, `logs/refs/heads/<branch>` under the common
-   directory (each `/` of the branch name a directory level), is read by one
-   bounded filesystem call (D6), at most 64 KiB, never by a Git child. `ENOENT`
-   or `ENOTDIR` gives `reflog-unavailable`; any other error, or a timeout,
-   records `os-error` or `probe-timeout` and makes the row `inspection-error`,
-   as the `modules` check does (BA:655-658).
-3. Each line is `<old> <new> <identity> <time> <zone>`, a tab and a message. A
+1. The branch's reflog, `logs/refs/heads/<branch>` under the common directory
+   (each `/` of the branch name a directory level), is read by one bounded
+   filesystem call (D6), at most 64 KiB, never by a Git child. `ENOENT` or
+   `ENOTDIR`, or a file of 0 bytes, gives `reflog-unavailable`; any other
+   error, or a timeout, records `os-error` or `probe-timeout` and makes the row
+   `inspection-error`, as the `modules` check does (BA:655-658).
+2. Each line is `<old> <new> <identity> <time> <zone>`, a tab and a message. A
    first line whose old object is not all zeros means the creation entry has
    expired: `reflog-unavailable`.
-4. Any later line whose new object differs from the creation entry's new object
-   means the branch moved: the gate passes, and reading stops there.
-5. A file that ends with no movement, and a head equal to the creation entry's
-   new object, gives `unstarted-branch`. A head that differs from it with no
-   movement recorded, or a read bound reached before a decision, gives
-   `reflog-unavailable`.
+3. Any later line whose new object differs from the creation entry's new object
+   means the branch moved after its creation: the gate passes, whatever the
+   head, and reading stops there. A rename's entry has equal old and new
+   objects, so it is no movement (Context).
+4. A file that ends with no movement, and a head equal to the creation entry's
+   new object, gives `unstarted-branch`, whether or not that head equals
+   `merge_target.sha`. A head that differs from it with no movement recorded,
+   or a read bound reached before a decision, gives `reflog-unavailable`.
 
-A rename's entry has equal old and new objects, so it is no movement (Context);
-a fast-forward of the target into the branch is, and passes the gate. No child
-is added, so the fit is unchanged (M3).
+A branch fast-forward merged into the target therefore passes: checked here on
+Git 2.43, its reflog holds the creation entry, then its own `commit:` entry,
+while its head equals the target's. So does a branch fast-forwarded to the
+target, whose reflog also records the move. A branch made by `worktree add -b`,
+published by `push -u` and never committed to holds only its creation entry and
+is `unstarted-branch` (Context).
+
+Creation entries expire. `git gc` runs `git reflog expire`, whose
+`gc.reflogExpire` defaults to 90 days, so a branch whose creation is more than
+90 days old when gc runs has lost its creation entry and reads
+`reflog-unavailable` whatever its later history. When every entry of a reflog
+has expired, as for an unstarted branch past that age, Git leaves the file in
+place with 0 bytes: checked here on Git 2.43 with `git reflog expire --all` at
+its defaults, a 100-day-old creation entry and rename entry expired to an empty
+file, while an 80-day-old creation entry stayed. An empty file therefore reads
+as a missing one does. No child is added, so the fit is unchanged (M3).
 
 ### D11. The pinned configuration (V3)
 
@@ -532,12 +560,15 @@ For a root or leg, `repo_state()` first checks `<path>/.git` with `lstat`:
 absent, the dict is `present: false` with no Git child, as today. Present, the
 memoized version check runs; an old or unusable Git, or a failed or timed-out
 status probe, gives the dict `classification: "inspection-error"` and `errors`
-(`{code, message, path?}`: `git-too-old`, `git-unavailable`, `probe-failed`,
-`probe-timeout` or `os-error`), `present` null when the version check failed,
-and null for every value not established. An inspected dict has neither field,
-so the JSON stays additive and unversioned. The marker is `classification`, the
-field worktree rows carry, as V11 asked the delta to name, with `errors` for the
-cause.
+(`{code, message, path?, path_valid_utf8?}`: `git-too-old`, `git-unavailable`,
+`probe-failed`, `probe-timeout` or `os-error`), `present` null when the version
+check failed, and null for every value not established. An inspected dict has
+neither field, so the JSON stays additive and unversioned. The marker is
+`classification`, the field worktree rows carry, as V11 asked the delta to name,
+with `errors` for the cause. Every `path` in these dicts, the root, leg and
+worktree rows and `errors` entries alike, carries `path_valid_utf8` beside it,
+written by `clean`'s escaping rule, and each `ignored_samples` entry is
+`{path, path_valid_utf8}`; both are additive too.
 
 `check_rows()`: the `git` tool row reports the version check, `ok` with the
 version or `error` with its code, where today a missing `git` is a warning
@@ -700,12 +731,8 @@ push; D-R under maintenance.
   do nothing] -> The wait line says why and for how long (D18); a SIGKILL of
   `project` leaves the removal running in its own session, and D4's note reports
   what it left.
-- [A branch fast-forward merged into the target sits at the target's tip and
-  reads `unstarted-branch` until the target advances] -> Fails closed, as V2
-  rules; the next step says to remove it yourself, and the overview applies the
-  same rule.
 - [Repositories without file reflogs (the reftable backend,
-  `core.logAllRefUpdates=false`) exclude every merged row behind the target as
+  `core.logAllRefUpdates=false`) exclude every merged row as
   `reflog-unavailable`] -> Fails closed with its own reason; D5's survey counts
   such rows.
 - [A live session in a started, merged worktree is not protected] -> D3's
