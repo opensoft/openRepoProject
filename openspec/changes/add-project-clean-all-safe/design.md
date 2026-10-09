@@ -856,7 +856,7 @@ section states them first.
    handoff; any change they force to a cap or the floor is made in the deltas
    first.
 3. Local `main` is synced to `origin/main`, then `/speckit.specify` creates
-   feature `003-project-clean-all-safe` on branch `003-project-clean-all-safe`,
+   feature `004-project-clean-all-safe` on branch `004-project-clean-all-safe`,
    recorded once in `tasks.md` under "Speckit Handoff"; `/opsx:apply` runs only
    then.
 4. Feature 003 implements D1 to D19 and the CI floor job (D17), merging `main`
