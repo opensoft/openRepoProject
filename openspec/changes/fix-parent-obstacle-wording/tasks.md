@@ -18,7 +18,7 @@ duplicate them.
 ## 2. Speckit handoff
 
 - [x] 2.1 Exactly one Speckit feature owns the implementation: `specs/NNN-<slug>/`, created by `/speckit.specify` after 1.6 from a local main synced to origin/main, where NNN is the next number free that day (`001` and `002` exist, and lane openRepoProject-2's PRs #11 and #12 name `003` and `004`); verified when "Speckit Handoff" below names its feature identifier, branch and repo-relative `tasks.md` path, filled in once. Created: feature 003-parent-obstacle-wording on branch 003-parent-obstacle-wording (worktree ../openRepoProject-worktrees/003-parent-obstacle-wording, cut from main at 26a5668; 003 was the next free number on 2026-10-09), spec at specs/003-parent-obstacle-wording/spec.md.
-- [ ] 2.2 `/opsx:apply` is not run until "Speckit Handoff" names exactly one feature; verified by reading that section before the first `/opsx:apply`.
+- [x] 2.2 `/opsx:apply` is not run until "Speckit Handoff" names exactly one feature; verified by reading that section before the first `/opsx:apply`. Met: the handoff named feature 003-parent-obstacle-wording at 90a4cee before the first implementation commit f492558.
 
 ## 3. Landing and archive readiness
 
