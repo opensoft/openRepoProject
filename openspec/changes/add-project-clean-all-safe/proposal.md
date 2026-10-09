@@ -152,9 +152,12 @@ Scope).
   floor remains; wait; reconcile by rescan (`BA:381-411`). Once spawned, the
   child is never signalled: SIGINT, SIGTERM, SIGHUP and the work deadline
   wait for it to exit, and only a separate 300 s hard ceiling, for a hung
-  mount, kills its group, recording the target `unknown`, reason
-  `removal-ceiling`, note `partially-removed`, with the recovery text
-  "inspect, then `git worktree remove --force <path>` by hand" (Decisions).
+  mount, kills its group. The rescan then decides, as after a signal: the
+  target is `removed` when its registry entry and path are gone, and
+  otherwise `unknown` with the note `partially-removed` and the recovery text
+  "inspect, then `git worktree remove --force <path>` by hand"; the reason
+  `removal-ceiling` names the cause in both cases, and the run exits 1
+  (Decisions).
 - **Targeted revalidation under a narrow guarantee.** Each target is
   revalidated with at most five Git children, a manifest re-read and a
   `modules` check, never the full report (`BA:677-719`), against recorded
@@ -172,9 +175,11 @@ Scope).
   `interrupted` and `deadline-exceeded` apply to targets not yet started. A
   removal in flight when a signal arrives ends by its own exit and the
   rescan: `removed` when the registry entry and path are gone, otherwise
-  `unknown`, with the `partially-removed` note where the path remains (a
+  `unknown`, with the `partially-removed` note where either remains (a
   nonzero exit of its own stays `failed`, as for any spawned target); the
   run exits per the 130 row, 130, 143 or 129, whenever a signal arrived (M1).
+  A removal ended by the ceiling is decided by the same rescan, with the
+  reason `removal-ceiling`.
   Exit codes follow `BA:528-550`, Git's status passing through; SIGINT,
   deadline expiry and exceptions follow `BA:460-483` but for that deferral;
   SIGTERM and SIGHUP exit 143 and 129, with the SIGINT treatment in the apply
@@ -358,7 +363,9 @@ Headers are quoted verbatim, one per line; ADDED headers are proposed text.
     run, a file created after revalidation is refused by Git with 128 and
     survives; `--worktree P` removes P beside another row's
     `inspection-error`, among 17 eligible rows, and among more than 128 rows;
-    a removal past the ceiling ends `unknown`, `partially-removed`; after
+    a removal past the ceiling is decided by the rescan, `removed` when the
+    registry entry and path are gone and otherwise `unknown` with
+    `partially-removed`, the reason `removal-ceiling` either way; after
     `project` and its child are killed with SIGKILL mid-deletion, the report
     shows the partial-removal note beside the `dirty` advice.
   - MODIFIED (`:70`): `### Requirement: Clean hands off work requiring review`.
@@ -396,7 +403,8 @@ Headers are quoted verbatim, one per line; ADDED headers are proposed text.
     which a second run removes.
   - ADDED:
     `### Requirement: Clean records a reconcilable result for every removal target`.
-    Stages, reasons (`removal-ceiling`, `partially-removed` added), the
+    Stages, reasons (`removal-ceiling` added to `removed` and `unknown`;
+    the target note `partially-removed`), the
     reconciliation record, exit codes, interruption deferred while a removal
     runs, and recovery. Scenario: the stop block names the stopping target
     and reason, the count removed, the targets not attempted, the next command.
