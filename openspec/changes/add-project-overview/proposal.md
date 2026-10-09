@@ -21,7 +21,7 @@ proposal adopts or rejects its contracts one by one. Its baseline holds:
 line 98 of `project-maintenance-project-discovery.md` at `da33d92`; OV, BA,
 SY and HO are the packet overview, batch cleanup, synthesis and fix-handoff
 documents beside it; PRS is `openspec/specs/project-review-safety/spec.md`;
-`project:421` is the executable.
+`project:421` is the executable at `da33d92` (Dependencies).
 
 ## Why
 
@@ -340,11 +340,12 @@ renders no nested estate or leg; `project-command`, `project-clean` and
   CI runs as `python -m ...` (`.github/workflows/tests.yml:18`).
 - **Speckit handoff**: exactly one feature, `specs/004-<slug>/`, created by
   `/speckit.specify` after ratification and after feature 003 merges. `002`
-  is lane openRepoProject-1's (draft PR #8), `003` is change 1's. OpenSpec
+  is lane openRepoProject-1's, merged by PR #8; `003` is change 1's. OpenSpec
   `tasks.md` holds governance boxes, the cap measurement (OQ-4) and that one
   handoff only.
-- **Expected conflicts**: PR #8 and feature 003 also touch `project` and
-  `tests/test_project.py`; feature 004 merges `main` in and never rebases.
+- **Expected conflicts**: feature 003, like the merged PR #8 (`d7f6b0e`, 94
+  tests), touches `project` and `tests/test_project.py`; feature 004 merges
+  `main` in and never rebases.
 - **Review inputs**: the repo-local propose flow names `docs/requirements/`
   and `docs/architecture/` (`.claude/commands/opsx/propose.md:65-69`), which
   this repository lacks; the reviews read the packet, `openspec/specs/`,
@@ -405,6 +406,11 @@ Consequences:
 - Change 1 is asked to resolve a gitfile main checkout through
   `core.worktree` and to refuse a submodule checkout as a listed baseline
   change; the overview's suggestions follow [R] (requirement 2).
+- PR #8 has merged: `origin/main` is `d7f6b0e`, with 94 tests. Every
+  `project:N` and README citation stays pinned at `da33d92`; at `d7f6b0e` the
+  cited `clean` and `repo_state` code (`manifest()` onward) sits 141 lines
+  lower and README.md:187 is :275, and feature 004's specify and plan re-pin
+  citations against the `main` of that day.
 - Change 1 is ratified first. This change's spec deltas are written against
   change 1's ratified text, and a gate, code or probe that moves in change 1's
   review re-aligns this proposal before its own ratification.
