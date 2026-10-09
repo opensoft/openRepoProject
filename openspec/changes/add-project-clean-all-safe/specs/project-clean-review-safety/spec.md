@@ -172,6 +172,21 @@ defense only on the pinned configuration that the removal command carries:
   new `branch_sha`, later targets are `not-attempted`, the branch is retained at
   the new commit, and the exit status is 2
 
+#### Scenario: Deleted upstream reappears before revalidation
+
+- **WHEN** a confirmed plan selects two merged-removable worktrees P and Q, in
+  that order, each on a branch whose configured upstream's remote-tracking ref
+  was deleted, so that each row records its `upstream` with `upstream_oid`,
+  `ahead` and `behind` null, and a `git fetch` recreates `origin/<branch>` for
+  P's branch before apply while Q's stays deleted
+- **THEN** P's `upstream_oid` is non-null at revalidation where the plan
+  recorded null, so P is `refused` with `state-changed`, no child is spawned,
+  Q is `not-attempted`, nothing is removed, and the exit status is 2
+- **AND** when the fetch instead recreates Q's upstream after P's removal child
+  exits 0 and before the rescan that follows it, P, null in the plan and null at
+  revalidation, is `removed`, Q is `refused` with `state-changed`, and the exit
+  status is 2
+
 ## ADDED Requirements
 
 ### Requirement: Cleanup states a narrow guarantee and its residual window

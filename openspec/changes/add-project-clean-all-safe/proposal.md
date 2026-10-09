@@ -1036,21 +1036,24 @@ requirement, band text; Decisions, OQ-29; design Context, D14; `tasks.md`
 1.2); R-19 (R-17's digest rule scoped to the band above 128 rows, the
 report-mode `inspect-cap` note in the normalised notes, and R-15's credit on
 D19; `project-clean` plain-report requirement, band text; Decisions, OQ-29;
-design Context, D14, D19; `tasks.md` 1.2); and R-21 (task 2.2's result:
+design Context, D14, D19; `tasks.md` 1.2); R-21 (task 2.2's result:
 `GIT_INTERNAL_SUPER_PREFIX` added to the scrub as a sixteenth name and the
 2.36 floor kept; `project-command` ADDED, evidence model; Decisions,
-departures; this list; design Context, D6, D17; `tasks.md` 2.2). Brett Heap's
-ruling of 2026-10-09 on open question 1, given to lane openRepoProject-2 in
-the words the departures quote, that a local ancestry proof outranks
+departures; this list; design Context, D6, D17; `tasks.md` 2.2); and R-22
+(the revalidation clause's other side, a deleted upstream that reappears
+before apply is `state-changed`; `project-clean-review-safety` `Cleanup
+revalidates destructive actions`, scenario "Deleted upstream reappears before
+revalidation"; this list; design Context, D20; `tasks.md` 1.2, 1.4). Brett
+Heap's ruling of 2026-10-09 on open question 1, given to lane openRepoProject-2
+in the words the departures quote, that a local ancestry proof outranks
 `remote-gone` for worktree rows, closes that question and adds the fifth
-behaviour change users will notice (What Changes, first bullet, eligibility
-and evidence model; Capabilities `:25`, `:39`, review-safety `:49`;
-Decisions, departures; Impact, README; Open Questions; this list; design
-Context, D6, D7, D20, Risks, Migration Plan, Open Questions; `tasks.md` 1.2,
-1.6; the deltas' `Clean classifies preservation and cleanup actions` and its
-scenario "A merged worktree whose upstream was deleted", `Clean can
-explicitly push safe feature branches` and `Cleanup revalidates destructive
-actions`).
+behaviour change users will notice (What Changes, first bullet, eligibility and
+evidence model; Capabilities `:25`, `:39`, review-safety `:49`; Decisions,
+departures; Impact, README; Open Questions; this list; design Context, D6, D7,
+D20, Risks, Migration Plan, Open Questions; `tasks.md` 1.2, 1.6; the deltas'
+`Clean classifies preservation and cleanup actions` and its scenario "A merged
+worktree whose upstream was deleted", `Clean can explicitly push safe feature
+branches` and `Cleanup revalidates destructive actions`).
 
 ### Council Verdicts
 

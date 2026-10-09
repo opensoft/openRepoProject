@@ -16,10 +16,11 @@ duplicate them, and nothing here is an implementation step.
 - [x] 1.2 Alignment resolved: the SA and QA findings and the lead's rulings D-A
   to D-AF are applied (`0ed2f59`, then `ea9c73b`), lane 3's delta read M1 to M7
   with the ceiling precision (`ba9f7c3`, `4b0c149`), and the lead's V2 amended
-  and R-4, R-8, R-9, R-11 to R-15, R-17 and R-19 (`9ea2f02`, `0b3c33d`,
+  and R-4, R-8, R-9, R-11 to R-15, R-17, R-19 and R-22 (`9ea2f02`, `0b3c33d`,
   `d6aaa9a`, the commit that anchors the reflog test on the creation entry,
-  R-15, `4f2162b`, R-17, and the commit that scopes the digest rule to the band
-  above 128 rows, R-19), and Brett Heap's ruling of 2026-10-09 on open
+  R-15, `4f2162b`, R-17, the commit that scopes the digest rule to the band
+  above 128 rows, R-19, and the commit titled 'Add the reappearing-upstream
+  revalidation scenario (R-22)'), and Brett Heap's ruling of 2026-10-09 on open
   question 1, local ancestry outranking `remote-gone` for worktree rows (the
   commit titled
   'Apply Brett Heap's ruling: local ancestry proof outranks remote-gone');
@@ -31,12 +32,13 @@ duplicate them, and nothing here is an implementation step.
   recorded as N1 to N5 in `clarifications.md` (`1d4ed5b`); verified by
   `design.md`, whose D1 to D5 answer N1 to N5 one for one.
 - [x] 1.4 Spec deltas and design written: `specs/project-clean/spec.md` modifies
-  five requirements and adds six, `specs/project-clean-review-safety/spec.md`
-  modifies two and adds one, and `specs/project-command/spec.md` modifies two
-  and adds one, every canonical scenario of each modified requirement kept;
-  `design.md` holds D1 to D20, mapping the packet's 35 validation scenarios to
-  the deltas (D20); verified by the scenario counts in the commit that adds
-  them.
+  five requirements and adds six (65 scenarios),
+  `specs/project-clean-review-safety/spec.md` modifies two and adds one (18
+  scenarios, the last added under R-22), and `specs/project-command/spec.md`
+  modifies two and adds one (16 scenarios), every canonical scenario of each
+  modified requirement kept; `design.md` holds D1 to D20, mapping the packet's
+  35 validation scenarios to the deltas (D20); verified by the scenario counts
+  in the commit that adds them.
 - [x] 1.5 Validation passes: `openspec validate add-project-clean-all-safe
   --strict` reports the change valid, `openspec validate --all --strict` passes
   every item, and `openspec status --change add-project-clean-all-safe` shows

@@ -9,13 +9,14 @@ requirements. The council's noted constraints, `clarifications.md` N1 to N5, are
 answered by D1 to D5; D6 to D19 give the how of the proposal's decisions, and
 D20 maps the packet's 35 validation scenarios to the deltas. The binding rulings
 (D-A to D-AF, X1, X2, V1 to V12 with V2 as amended, lane 3's M1 to M7, and the
-lead's R-4, R-8 and R-9, R-11 to R-15, R-17, R-19 and R-21) are already in
-`proposal.md`, with the sections each edited; R-15 edited Context, D10, D14,
+lead's R-4, R-8 and R-9, R-11 to R-15, R-17, R-19, R-21 and R-22) are already
+in `proposal.md`, with the sections each edited; R-15 edited Context, D10, D14,
 D18, D19, Risks and the Migration Plan here; R-17 edited Context and D14, and
-R-19 edited Context, D14 and D19; R-21 edited Context, D6 and D17. Brett Heap's
-ruling of 2026-10-09 on open question 1, that a local ancestry proof outranks
-`remote-gone` for worktree rows, is in `proposal.md` Decisions and edited
-Context, D6, D7, D20, Risks, the Migration Plan and Open Questions here.
+R-19 edited Context, D14 and D19; R-21 edited Context, D6 and D17; R-22 edited
+Context and D20. Brett Heap's ruling of 2026-10-09 on open question 1, that a
+local ancestry proof outranks `remote-gone` for worktree rows, is in
+`proposal.md` Decisions and edited Context, D6, D7, D20, Risks, the Migration
+Plan and Open Questions here.
 
 Citations are `file:line` at `da33d92`: `BA`, `DI`, `OV` and `HO` are the
 packet's batch-cleanup, project-discovery, overview and handoff documents, and
@@ -810,7 +811,7 @@ classification and "Inspect and diagnose", and the ruling on open question 1
 under the classification; R10, R11, D-T and the manifest cap
 under Git-first resolution; V1 to V4, M3 and M4 under retirement; OQ-10, OQ-16
 and M1 under the JSON and the result; V9 under the evidence model; D-D under
-push; D-R under maintenance.
+push; D-R under maintenance; R-22 under revalidation.
 
 ## Risks / Trade-offs
 
