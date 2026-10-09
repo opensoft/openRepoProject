@@ -93,23 +93,29 @@ fails otherwise (`present: null`, no status probe, an `os-error`, and
 finding and no error); otherwise the status probe runs in that worktree. No
 probe SHALL run in a path the overview could not `lstat`.
 
-When the first registry record's path equals `common_dir`, the main checkout
-is a gitfile checkout: `repository.root` SHALL be the realpath of
-`core.worktree`, a relative value resolved against the git directory, else
-the toplevel of a candidate whose identity probe reported this `common_dir`
-and whose `.git` file names `common_dir` itself, else null with an
-`unsupported-layout` repair finding of severity error, no suggestion and the
-message remedy "set core.worktree or move the checkout". The git-directory
-record SHALL NOT be a status-probed row; when `repository.root` is named, the
-main worktree row SHALL name it and take its status probe there.
+Every repository SHALL first take the submodule test of `Clean resolves its
+target Git-first`: when Git reports a superproject working tree for a
+candidate that reached the repository, it is a submodule checkout, and
+`repository.root` SHALL be null with an `unsupported-layout` repair finding of
+severity error, a message naming a submodule checkout and no suggestion,
+because that requirement refuses a submodule checkout. Otherwise a bare main
+entry SHALL leave `repository.root` null, as that requirement refuses a bare
+repository; and when the first registry record's path equals `common_dir`,
+the main checkout is a gitfile checkout: `repository.root` SHALL be the
+realpath of `core.worktree`, a relative value resolved against the git
+directory, else the toplevel of a candidate whose identity probe reported
+this `common_dir` and whose `.git` file names `common_dir` itself, else null
+with an `unsupported-layout` repair finding of severity error, no suggestion
+and the message remedy "set core.worktree or move the checkout". The
+git-directory record SHALL NOT be a status-probed row; when `repository.root`
+is named, the main worktree row SHALL name it and take its status probe there.
 
 A main worktree path that does not exist SHALL give `repository.root: null`
 and a `main-worktree-missing` repair finding of severity warning on that row
 in place of its `stale-worktree` finding, with the message remedy "restore or
 prune the main worktree by hand" and no suggestion; the repository-wide
-probes SHALL then run in the candidate. A bare main entry SHALL leave
-`repository.root` null. A suggestion for a gitfile or submodule checkout SHALL
-follow `Clean resolves its target Git-first`.
+probes SHALL then run in the candidate. A suggestion for a gitfile checkout
+SHALL follow `Clean resolves its target Git-first`.
 
 #### Scenario: One probe set per repository
 - **WHEN** a repository has a main worktree and three linked worktrees, one of them an immediate entry of the root and one outside every root
@@ -138,8 +144,8 @@ follow `Clean resolves its target Git-first`.
 
 #### Scenario: A submodule checkout under a root
 - **WHEN** an immediate entry of a root is the checkout of a submodule, whose `core.worktree` is relative to its git directory
-- **THEN** its `repository.root` is that checkout, the relative value having been resolved against the git directory
-- **AND** it gets no clean suggestion, each finding that would have suggested one naming `target-not-repository-root` in `suggestion_gate`, because `Clean resolves its target Git-first` refuses a submodule checkout
+- **THEN** its row has `repository.root: null` and an `unsupported-layout` repair finding of severity error whose message names a submodule checkout, the submodule test having decided before `core.worktree` was read, so that no `core.worktree` child ran for it
+- **AND** it gets no clean suggestion, every finding's `suggestion_gate` is null, because `Clean resolves its target Git-first` refuses a submodule checkout, and the exit status is 1
 
 #### Scenario: A deleted main worktree
 - **WHEN** a repository's main worktree directory was deleted while a linked worktree under the root remains
@@ -152,32 +158,37 @@ follow `Clean resolves its target Git-first`.
 
 ### Requirement: Overview bounds its work and reports what it omitted
 The overview SHALL bound each run by its own invocation deadline, 60 s on a
-monotonic clock set before any root is listed, and each Git child by its own
-per-child budget, `min(5 s, deadline - now)`; a child whose budget is not
-positive SHALL NOT start. Each child SHALL run in its own process group; a
-child that reaches its budget, or whose output the overview stops reading
-early, SHALL receive SIGTERM to its group, then SIGKILL after 2 s, and SHALL
-be reaped within a further 2 s grace or abandoned, its row recorded
-`probe-timeout`. On deadline expiry no further child SHALL start, every
-in-flight child SHALL be terminated together in the same way and recorded
-`deadline-exceeded`, each candidate whose collection never started SHALL
-still be a row carrying only filesystem facts, status `error` and a
-`deadline-exceeded` error, and one `deadline-exceeded` scan error SHALL count
-the candidates not started.
+monotonic clock set before any root is listed, and each Git child by the
+per-child budget that
+`Repository inspection requires Git 2.36 and shares one evidence model` gives
+under an invocation deadline, which with no reserve is
+`min(5 s, deadline - now)`; a child whose budget is not positive SHALL NOT
+start. Each child SHALL run in its own process group; a child that reaches its
+budget, or whose output the overview stops reading early, SHALL receive SIGTERM
+to its group, then SIGKILL after 2 s, and SHALL be reaped within a further 2 s
+grace or abandoned, its row recorded `probe-timeout`. On deadline expiry no
+further child SHALL start, every in-flight child SHALL be terminated together
+in the same way and recorded `deadline-exceeded`, each candidate whose
+collection never started SHALL still be a row carrying only filesystem facts,
+status `error` and a `deadline-exceeded` error, and one `deadline-exceeded`
+scan error SHALL count the candidates not started.
 
 Every filesystem call, root canonicalisation and deduplication, marker and
-holder checks, registration reads and manifest reads included, SHALL run in a
-bounded task waited for with `min(5 s, deadline - now)`; a task that does not
-finish in time SHALL record `probe-timeout`, or `deadline-exceeded` when the
-deadline was the smaller limit, for its root or row, and the overview SHALL
-move on. A root cut this way SHALL count as `truncated`, and its listing SHALL
-read no further entry once the root is abandoned. A manifest larger than the
-manifest size bound that `Repository inspection requires Git 2.36 and shares
-one evidence model` defines SHALL be `manifest-invalid` on its row. The ref
-listing SHALL be parsed as it streams, keeping only the local heads,
-`origin/HEAD`, the remote refs named as upstreams and one flag recording
-whether a remote copy of the merge target exists. The status probe and its
-record bounds SHALL be those that requirement defines.
+holder checks, registration reads, manifest reads and branch reflog reads
+included, SHALL run in a bounded task waited for with
+`min(5 s, deadline - now)`; a task that does not finish in time SHALL record
+`probe-timeout`, or `deadline-exceeded` when the deadline was the smaller
+limit, for its root or row, and the overview SHALL move on. A root cut this way
+SHALL count as `truncated`, and its listing SHALL read no further entry once
+the root is abandoned. A manifest whose `st_size`, taken before the read,
+exceeds the 1 MiB that
+`Repository inspection requires Git 2.36 and shares one evidence model` allows
+SHALL be `manifest-invalid` on its row without being read, and the manifest
+reader's read SHALL never exceed 1 MiB. The ref listing SHALL be parsed as it
+streams, keeping only the local heads, `origin/HEAD`, the remote refs named as
+upstreams and one flag recording whether a remote copy of the merge target
+exists. The status probe and its record bounds SHALL be those that requirement
+defines.
 
 The caps SHALL be 32 roots, 4,096 entries per root, 128 candidates and 512
 worktree rows across the run, main worktrees included. They are provisional:
@@ -276,7 +287,7 @@ registration-verified.
 
 #### Scenario: A manifest over the size bound
 - **WHEN** a candidate's `project.yaml` is larger than the manifest size bound
-- **THEN** its row carries a `manifest-invalid` error naming the manifest and the bound, the file is not parsed, the other rows are complete, and the exit status is 1
+- **THEN** its row carries a `manifest-invalid` error naming the manifest and the bound, the file is neither read nor parsed, the other rows are complete, and the exit status is 1
 
 ### Requirement: Overview isolates one candidate's failure
 Each candidate SHALL be collected inside one boundary that encloses, in order,
@@ -300,14 +311,15 @@ remove or reorder any other row or an earlier scan error:
 
 Each error SHALL be `{code, message, path?}`, with a message of at most 200
 characters (for a failed probe, the first line of Git's standard error) and
-`path` naming the file or directory involved. Evidence gathered before a
-failure SHALL be kept and every field not established SHALL stay null; a row
-whose `errors` is non-empty SHALL have status `error`, else `ok`. Every
-candidate entering collection SHALL yield exactly one row or merge into
-exactly one existing repository row. The boundary SHALL NOT catch an
-interrupt or an exit request. When the YAML library the manifest reader needs
-is not installed, each row whose directory holds a manifest SHALL carry a
-`manifest-invalid` error naming that cause, and the run SHALL continue.
+`path` naming the file or directory involved, `path_valid_utf8` beside it
+whenever it is present. Evidence gathered before a failure SHALL be kept and
+every field not established SHALL stay null; a row whose `errors` is non-empty
+SHALL have status `error`, else `ok`. Every candidate entering collection SHALL
+yield exactly one row or merge into exactly one existing repository row. The
+boundary SHALL NOT catch an interrupt or an exit request. When the YAML library
+the manifest reader needs is not installed, each row whose directory holds a
+manifest SHALL carry a `manifest-invalid` error naming that cause, and the run
+SHALL continue.
 
 #### Scenario: One helper failure is isolated
 - **WHEN** a root holds `alpha`, `ledger` and `zeta`, and `ledger/project.yaml` declares `kind: other`
@@ -409,14 +421,17 @@ and to `Overview reports default-branch health`:
 | `merge-target-conflict` | informational | info | `manifest` | none |
 
 A finding that reports a worktree's classification SHALL carry the ladder's
-recommendation text as its `message`, and any other finding a fixed
-sentence. A `remote-gone` worktree's message SHALL
-state whether its branch tip is already an ancestor of the merge target where
-the merged set establishes it, spawning no further probe, and its suggestion
-SHALL be the read-only command only. `protected-default` SHALL produce no
-finding by itself, apart from those of `Overview reports default-branch
-health`. Row errors and scan errors SHALL NOT be findings, and SHALL display
-in the repair category.
+recommendation text as its `message`, and any other finding a fixed sentence. A
+`remote-gone` worktree whose branch tip the merged set shows to be an ancestor
+of the merge target SHALL carry, as
+`Clean classifies preservation and cleanup actions` writes it, the message
+"Merged locally, upstream deleted: not removable by `project` until the open
+question is ruled; review, then `git worktree remove` yourself", spawning no
+further probe; any other `remote-gone` worktree SHALL carry the ladder's own
+recommendation; and the suggestion of either SHALL be the read-only command
+only. `protected-default` SHALL produce no finding by itself, apart from those
+of `Overview reports default-branch health`. Row errors and scan errors SHALL
+NOT be findings, and SHALL display in the repair category.
 
 A finding of severity `error` SHALL make the exit status 1; `warning` SHALL do
 so only under `--strict`; `info` SHALL never affect it. `--attention` SHALL
@@ -433,60 +448,72 @@ status; `--attention --json` SHALL print the full envelope.
 
 #### Scenario: A merged worktree whose upstream was deleted
 - **WHEN** a clean linked worktree's branch is an ancestor of the merge target and its upstream branch was deleted and pruned
-- **THEN** it is classified `remote-gone` with a preserve warning whose message states that the branch tip is already an ancestor of the merge target, and suggests only the read-only `project clean <root>`
-- **AND** no Git child beyond the shared probe set ran for it, and a `remote-gone` worktree whose tip is not an ancestor carries a message that says so
+- **THEN** it is classified `remote-gone` with a preserve warning whose message reads "Merged locally, upstream deleted: not removable by `project` until the open question is ruled; review, then `git worktree remove` yourself", and suggests only the read-only `project clean <root>`
+- **AND** no Git child beyond the shared probe set ran for it, and a `remote-gone` worktree whose tip is not an ancestor carries the ladder's own `remote-gone` recommendation instead
 
 ### Requirement: Overview suggests only gated clean commands
 A suggestion SHALL be an argv array, exactly `["project", "clean", "<root>",
 "--all-safe"]` or `["project", "clean", "<root>"]`, where `<root>` is the
 absolute canonical `repository.root`; it SHALL never name a project by bare
 name and never include `--apply` or `--yes`. A row whose `repository.root` is
-null, or whose root is not valid UTF-8, SHALL get no clean suggestion, the
-latter carrying an `unsupported-path-bytes` finding instead. A row's
+null, or whose root or common directory is not valid UTF-8, SHALL get no clean
+suggestion, the latter carrying an `unsupported-path-bytes` finding instead,
+as `Clean reports every path exactly or excludes it` refuses either. A row's
 `suggested_command` SHALL be the `--all-safe` form when one of its findings
 suggests it, else the read-only form when any finding suggests it, else null.
 
-The `--all-safe` form SHALL be suggested only for a worktree that `Clean
-classifies preservation and cleanup actions` classifies `merged-removable`
-and that passes the gates of `Clean previews and applies a batch of eligible
-worktree removals in one repository` the overview can evaluate from its own
-evidence, in that requirement's order: `main-worktree`,
-`unsupported-path-bytes`, `registration-mismatch` and `locked-worktree`,
-whose first failure replaces the housekeeping finding with its own while the
-classification stays; then `unstarted-branch` where the worktree's head
-equals the merge-target object id, which keeps the `merged-removable` finding
-with the read-only suggestion. The reflog part of `unstarted-branch` and the
-index gates SHALL remain exclusions only the batch applies. The `--all-safe`
-form SHALL also be withheld for every worktree of a repository whose batch
-plan would be refused as `inspection-incomplete` (any worktree row is
-`inspection-error`) or `inspect-cap` (more worktree rows than the batch's row
-cap), as `Clean bounds its Git work and reports omitted work` defines, each
-computed from the overview's own evidence, and for a repository with any row
-the overview's own cap or deadline left unclassified; those findings SHALL
-suggest the read-only form. A repository with more worktree rows than the
-report's row cap SHALL have its read-only suggestions limited by
-`inspect-cap`. When more `merged-removable` worktrees keep the `--all-safe`
-form than the batch's target limit, each SHALL keep it, limited by
-`target-cap`.
+The `--all-safe` form SHALL be suggested only for a worktree that
+`Clean classifies preservation and cleanup actions` classifies
+`merged-removable` and that passes the gates of
+`Clean previews and applies a batch of eligible worktree removals in one repository`
+the overview can evaluate from its own evidence, in that requirement's order:
+`main-worktree`, `unsupported-path-bytes`, `registration-mismatch` and
+`locked-worktree`, whose first failure replaces the housekeeping finding with
+its own while the classification stays; then `unstarted-branch` or
+`reflog-unavailable`, mirroring that requirement's gate from one bounded read,
+at most 64 KiB, of the branch's reflog, `logs/refs/heads/<branch>` under
+`common_dir`, read for every row the gate checks: `unstarted-branch` only when
+its reflog records no movement since its creation entry and that entry's new
+object equals the branch's current head, an entry whose old and new objects are
+equal, as a rename writes, not counting as movement; `reflog-unavailable` when
+the reflog is missing, empty (0 bytes) or its creation entry has expired, or it
+cannot decide otherwise, its read bound being reached first or its head
+differing from its creation entry with no movement recorded. A head equal to
+the merge-target object id whose reflog shows a commit since the branch's
+creation SHALL pass. Either code SHALL keep the `merged-removable` finding with
+the read-only suggestion. The index gates SHALL remain exclusions only the
+batch applies. The `--all-safe` form SHALL also be withheld for every worktree
+of a repository whose batch plan would be refused as `inspection-incomplete`
+(any worktree row is `inspection-error`) or `inspect-cap` (more worktree rows
+than the batch's row cap), as
+`Clean bounds its Git work and reports omitted work` defines, each computed
+from the overview's own evidence, and for a repository with any row the
+overview's own cap or deadline left unclassified; those findings SHALL suggest
+the read-only form. A repository with more worktree rows than the report's row
+cap SHALL have its read-only suggestions limited by `inspect-cap`. When more
+`merged-removable` worktrees keep the `--all-safe` form than the batch's target
+limit, each SHALL keep it, limited by `target-cap`.
 
 Each finding SHALL carry `suggestion_gate`, null unless a gate withheld or
 limited its suggestion, else the first applicable code in this order, and
 `suggestion_gate_rows`, the repository's worktree-row count when the code is
 `inspect-cap`, else null. The finding's `message` and the human text SHALL
 carry the code's fixed remedy, naming the batch's row cap, the report's row
-cap and the batch's target limit with the numbers taken from `limits` at run
-time:
+cap and the batch's target limit with the numbers taken at run time from the
+shared constants that `Clean bounds its Git work and reports omitted work`
+defines, as `limits` reports them, never from a clean plan:
 
 | Code | Effect | Fixed remedy |
 | --- | --- | --- |
-| `target-not-repository-root` | withholds every clean suggestion (a bare repository, a submodule checkout) | run project clean from the main worktree root |
-| `unsupported-path-bytes` | withholds every clean suggestion (a root that is not valid UTF-8) | rename the path to valid UTF-8 |
+| `target-not-repository-root` | withholds every clean suggestion (a bare repository) | run project clean from the main worktree root |
+| `unsupported-path-bytes` | withholds every clean suggestion (a root or common directory that is not valid UTF-8) | rename the path to valid UTF-8 |
 | `inspection-incomplete` | withholds `--all-safe` | repair the inspection-error rows first |
 | `inspect-cap` | withholds `--all-safe` over the batch's row cap | N rows exceed the batch's row cap of M; remove explicitly |
 | `inspect-cap` | limits the read-only form over the report's row cap | N rows exceed the report's row cap of M; the report would be incomplete |
 | `scan-limit` | withholds `--all-safe` for a row left unprobed by a cap | re-run with --root <repository parent> |
 | `deadline-exceeded` | withholds `--all-safe` for a row left unprobed by the deadline | re-run with --root <repository parent> |
 | `unstarted-branch` | withholds `--all-safe` for that worktree | unstarted: the branch has no commit of its own; remove the worktree explicitly if unwanted |
+| `reflog-unavailable` | withholds `--all-safe` for that worktree | the branch's reflog is missing; remove the worktree explicitly if unwanted |
 | `target-cap` | limits `--all-safe` | limited to the batch's target limit of M per run; re-run to drain the backlog |
 
 A root left null by `unsupported-layout` or `main-worktree-missing` SHALL
@@ -524,6 +551,12 @@ exclude a suggested worktree.
 - **WHEN** a linked worktree was created with a new branch at the merge target's tip and published with `git push -u`, with no commit of its own
 - **THEN** it keeps its `merged-removable` finding, which suggests only the read-only form with `suggestion_gate: "unstarted-branch"` and a message saying it is unstarted
 - **AND** no `--all-safe` suggestion is given for that repository on its account
+- **AND** a branch given one commit and then fast-forward merged into the merge target, so that its head equals the target's tip while its reflog records that commit, keeps the `--all-safe` suggestion with no gate
+
+#### Scenario: A branch whose reflog cannot decide
+- **WHEN** one gate-passing `merged-removable` worktree's branch has no reflog file, another's reflog file is empty, and a third's reflog has lost its creation entry to expiry
+- **THEN** each keeps its `merged-removable` finding, which suggests only the read-only form with `suggestion_gate: "reflog-unavailable"` and a message ending "the branch's reflog is missing; remove the worktree explicitly if unwanted"
+- **AND** no Git child is started to read any of the three reflogs, and `project clean <root> --all-safe` excludes all three as `reflog-unavailable`
 
 ### Requirement: Overview prints a versioned JSON envelope
 `--json` SHALL print exactly one JSON document with `schema_version: 1` and
@@ -533,7 +566,9 @@ exactly these fields, every one always present:
   canonical byte order; `limits`, of integers, keyed `roots`, `candidates`,
   `worktree_rows`, `root_entries`, `ignored_entries`, `status_records`,
   `ignored_samples`, `batch_row_cap`, `report_row_cap` and `target_limit`,
-  the last three carried from the batch's own limits; `budget`, of integers,
+  the last three read from the shared constants that `Clean bounds its Git
+  work and reports omitted work` defines, never from a clean plan, whose own
+  `limits.worktree_rows` is only its mode's row cap; `budget`, of integers,
   keyed `probe_timeout_seconds`, `invocation_timeout_seconds` and
   `probe_concurrency`; `probes`; `projects`, sorted by the bytes of `path`;
   `relationships`, always `[]`; `summary`; `completeness`, `complete` or
@@ -544,22 +579,27 @@ exactly these fields, every one always present:
 - project row: `name` (the manifest name, else the directory name), `path`,
   `path_valid_utf8`, `kind`, `repository`, `merge_target`, `git`,
   `worktrees`, `findings`, `suggested_command`, `status` and `errors`;
+- `repository`: `root`, `common_dir`, `dev`, `ino`, `root_valid_utf8` and
+  `common_dir_valid_utf8`;
 - `git`, for the checkout at `path`: `branch`, `head`, `dirty`, `upstream`,
   `ahead`, `behind` and `tracking_freshness`, the last never null;
 - worktree row: `path`, `path_valid_utf8`, `dev`, `ino`, `admin_id`,
   `present`, `locked`, `prunable`, `current`, `branch` (`"detached"` for a
   detached head), `head`, `upstream`, `upstream_oid`, `ahead`, `behind`,
   `remote_present`, `merged_into_target`, `dirty`, `ignored_files`,
-  `ignored_files_truncated`, `ignored_samples` and `classification`;
-- finding: `code`, `category`, `severity`, `checkout` (`{path, dev, ino,
-  admin_id}`, or null for a repository-level finding), `evidence_source`,
-  `message`, `observed_at`, `suggested_command`, `suggestion_gate` and
-  `suggestion_gate_rows`;
+  `ignored_files_truncated`, `ignored_samples` and `classification`, each
+  `ignored_samples` entry being an object `{path, path_valid_utf8}` whose
+  `path` is relative to its worktree;
+- finding: `code`, `category`, `severity`, `checkout`
+  (`{path, path_valid_utf8, dev, ino, admin_id}`, or null for a
+  repository-level finding), `evidence_source`, `message`, `observed_at`,
+  `suggested_command`, `suggestion_gate` and `suggestion_gate_rows`;
 - `summary`: `projects`, `repositories`, `worktrees`, `errors` (row errors
   plus scan errors) and `findings` counted by category, over the whole
   collection whatever `--attention` shows;
-- error object: `code`, `message` and an optional `path`, with `limit` and
-  `omitted` added on `scan-limit` and `deadline-exceeded` errors.
+- error object: `code`, `message` and an optional `path` with
+  `path_valid_utf8` beside it, with `limit` and `omitted` added on
+  `scan-limit` and `deadline-exceeded` errors.
 
 Integers SHALL be JSON integers, object ids full lowercase hexadecimal, times
 RFC 3339 UTC with a `Z` suffix, and durations integer seconds in fields ending
@@ -571,29 +611,37 @@ SHALL be closed within a version; adding a field or an enum value is
 additive, and renaming or removing a field or changing its type or meaning
 SHALL increment `schema_version`.
 
-Every path SHALL be parsed and emitted as `Repository inspection requires Git
-2.36 and shares one evidence model` and `Clean reports every path exactly or
-excludes it` define: exactly when it is valid UTF-8, with every control,
-bidirectional and format code point escaped by JSON, and otherwise escaped
-with `path_valid_utf8: false`; such a path SHALL get an
-`unsupported-path-bytes` finding and contribute to no clean suggestion. Human
-output SHALL print a path holding a control, bidirectional or format
-character or an undecodable byte in the `$'...'` form that requirement
-defines. Under `--json`, an exit status 2 other than an argument error SHALL
-print only `{"error": "<message>", "code": "<code>"}`, the code being
-`git-too-old`, `git-unavailable`, `refused`, `os-error` or `internal-error`;
-an argument error SHALL print the command-line parser's usage message on
-standard error and no JSON.
+Every path SHALL be parsed and emitted as
+`Repository inspection requires Git 2.36 and shares one evidence model` and
+`Clean reports every path exactly or excludes it` define: exactly when it is
+valid UTF-8, with every code point of Unicode general category Cc, Cf, Zl or
+Zp, as the running interpreter's `unicodedata.category` reports it (control,
+format, bidirectional, line and paragraph separator characters such as U+0007,
+U+200B, U+202E and U+2028), escaped by JSON, and otherwise escaped. Every
+serialized path SHALL carry its own validity flag: `path_valid_utf8` beside
+each `path`, and `root_valid_utf8` and `common_dir_valid_utf8` in `repository`,
+each false exactly when that path is not valid UTF-8 and null only beside a
+null path. A worktree path, root or common directory that is not valid UTF-8
+SHALL get an `unsupported-path-bytes` finding and contribute to no clean
+suggestion. Human output SHALL print a path holding a code point of those
+categories or an undecodable byte in the `$'...'` form that requirement
+defines, each such code point written as `\uXXXX`, or as `\UXXXXXXXX` above
+U+FFFF, as the tag characters need. Under `--json`, an exit status 2 other than
+an argument error SHALL print only `{"error": "<message>", "code": "<code>"}`,
+the code being `git-too-old`, `git-unavailable`, `refused`, `os-error` or
+`internal-error`; an argument error SHALL print the command-line parser's usage
+message on standard error and no JSON.
 
 #### Scenario: Control and format characters in paths
-- **WHEN** a repository's directory name contains a newline and its linked worktrees' names contain a tab, U+0007 and U+202E
-- **THEN** each JSON `path` is exact, with the escapes `\n`, `\t`, `\u0007` and `\u202e`, and `path_valid_utf8: true`, and each worktree is classified from its real state rather than as `stale-worktree`
-- **AND** the human output prints each such path in `$'...'` form, the newline as `\u000a`, the tab as `\u0009`, U+0007 as `\u0007` and U+202E as `\u202e`, and the printed suggestion, pasted into bash under a UTF-8 locale, names the same repository root
+- **WHEN** a repository's directory name contains a newline and its linked worktrees' names contain a tab, U+0007, U+202E and U+200B
+- **THEN** each JSON `path`, findings' `checkout` paths included, and `repository.root` are exact, with the escapes `\n`, `\t`, `\u0007`, `\u202e` and `\u200b`, every `path_valid_utf8` and `root_valid_utf8` is true, and each worktree is classified from its real state rather than as `stale-worktree`
+- **AND** the human output prints each such path in `$'...'` form, the newline as `\u000a`, the tab as `\u0009`, U+0007 as `\u0007`, U+202E as `\u202e` and U+200B as `\u200b`, and the printed suggestion, pasted into bash under a UTF-8 locale, names the same repository root
 
 #### Scenario: Non-UTF-8 path
 - **WHEN** a clean merged worktree's name contains the byte `0xFF`
-- **THEN** the overview completes, the worktree's `path` shows the byte as `\xff` with `path_valid_utf8: false`, the row has an `unsupported-path-bytes` repair finding, and the worktree contributes nothing to the `--all-safe` suggestion
+- **THEN** the overview completes, the worktree's `path` and its finding's `checkout.path` show the byte as `\xff`, each with `path_valid_utf8: false`, the row has an `unsupported-path-bytes` repair finding, and the worktree contributes nothing to the `--all-safe` suggestion
 - **AND** `project clean <root> --all-safe` excludes it with reason `unsupported-path-bytes`
+- **AND** when another worktree holds two ignored files, one named with the byte `0xFF` and one named with the four characters `\xff`, its two `ignored_samples` entries have the same decoded `path` and differ only in `path_valid_utf8`, false and true
 
 #### Scenario: An argument error under --json
 - **WHEN** `project overview --json --bogus` runs
@@ -601,7 +649,7 @@ standard error and no JSON.
 
 #### Scenario: Every envelope field is present
 - **WHEN** `project overview --json` runs over a fixture with one healthy repository holding one `merged-removable` worktree and one unreadable root
-- **THEN** the document carries exactly the fields listed above with their types, `limits` includes `batch_row_cap`, `report_row_cap` and `target_limit` equal to the batch's own limits, every finding carries `suggestion_gate` and `suggestion_gate_rows`, and `completeness` is `incomplete`
+- **THEN** the document carries exactly the fields listed above with their types, `limits` includes `batch_row_cap`, `report_row_cap` and `target_limit` equal to the shared constants that `Clean bounds its Git work and reports omitted work` defines, read without building a clean plan, every finding carries `suggestion_gate` and `suggestion_gate_rows`, every `path` has `path_valid_utf8` beside it, `repository` carries `root_valid_utf8` and `common_dir_valid_utf8`, and `completeness` is `incomplete`
 
 #### Scenario: An internal error outside the collector under --json
 - **WHEN** an exception is raised outside the per-candidate boundary during a `--json` run
@@ -702,22 +750,22 @@ main thread SHALL never block in an unbounded filesystem call.
 ### Requirement: Overview renders a readable human report
 Without `--json`, the overview SHALL print to standard output, for each shown
 row: one header line with the name and the absolute path; one line per shown
-finding with its category, code and message, followed by the worktree path
-for a worktree's finding; and one `next` line carrying the row's suggested
-command, printed with shell quoting or in the `$'...'` form, followed by
-`(withheld: <remedy>)` when a gate removed the `--all-safe` form or every
-clean suggestion (`target-not-repository-root`, `unsupported-path-bytes`,
+finding with its category, code and message, followed by the worktree path for
+a worktree's finding; and one `next` line carrying the row's suggested command,
+printed with shell quoting or in the `$'...'` form, followed by
+`(withheld: <remedy>)` when a gate removed the `--all-safe` form or every clean
+suggestion (`target-not-repository-root`, `unsupported-path-bytes`,
 `inspection-incomplete`, `inspect-cap` over the batch's row cap, an unprobed
-row, `unstarted-branch`), or `(limited: <remedy>)` when a suggestion is given
-but capped (`target-cap`, or `inspect-cap` over the report's row cap on the
-read-only command). Row errors SHALL display in the repair category. One
-`Incomplete:` line SHALL follow per scan error. The summary line SHALL always
-be printed, even under `--attention` when no row is shown, where it SHALL say
-that nothing needs attention, with the counts of projects, errors and
-findings by category, and SHALL state that findings reflect local refs as of
-the last fetch. When standard error is a terminal, and only then, the
-overview SHALL write one `Scanning N roots...` line to standard error before
-listing.
+row, `unstarted-branch`, `reflog-unavailable`), or `(limited: <remedy>)` when a
+suggestion is given but capped (`target-cap`, or `inspect-cap` over the
+report's row cap on the read-only command). Row errors SHALL display in the
+repair category. One `Incomplete:` line SHALL follow per scan error. The
+summary line SHALL always be printed, even under `--attention` when no row is
+shown, where it SHALL say that nothing needs attention, with the counts of
+projects, errors and findings by category, and SHALL state that findings
+reflect local refs as of the last fetch. When standard error is a terminal, and
+only then, the overview SHALL write one `Scanning N roots...` line to standard
+error before listing.
 
 #### Scenario: Nothing needs attention
 - **WHEN** `project overview --attention` runs over projects whose only findings are informational
