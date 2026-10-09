@@ -597,17 +597,21 @@ manifest cap and termination rule, [L]'s ladder and its merged `remote-gone`
 text, [G]'s gates, caps and refusals, [R]'s resolution order and [P]'s path
 rules, against change 1's spec deltas and design at `0b3c33d`, and applied the
 lead's amended V2 and R-1 to R-9 to this change's deltas, D3, D5, D8, D11 and
-D13 (commit `996a181`). It then re-read the same items against change 1's
-head at `4f2162b` and applied R-12 (the reflog anchor, its one outcome
-rule and the remedy texts), R-13 (b) and R-14 to the deltas, Context, D3, D5,
-D7, D8, D11, D13 and Risks. [G]'s reflog gate and its two remedies moved and
-are mirrored, and change 1 carries R-15's all-zeros anchor and its
-`reflog-unavailable` remedy at `4f2162b`, as this change's text states them;
-R-17's report-mode text there (`selected: null` above 128 rows) changes
-nothing the overview reads; [E]'s new sentence on where repository-wide
-probes run when `root` is null (R-13 (a)) agrees with requirement 2 and D3;
-every other item is confirmed. The 64 s run bound agrees (D13). No item
-stays open.
+D13 (commit `996a181`). R-12 (the reflog anchor, its one outcome rule and
+the remedy texts), R-13 (b) and R-14 then landed at `fa9f0be`, against
+change 1 at `d6aaa9a`, in the deltas, Context, D3, D5, D7, D8, D11, D13 and
+Risks, and were re-read against change 1 at `4f2162b` at `ef288fe`, which
+applied R-16 (the `inspection-incomplete` remedy fitted to unprobed rows).
+R-18 landed at `fd4b05a` and `568c477`. The current reconciliation is
+against change 1 at `7e2589f`; R-19 changed only change 1's report band and
+ruling records, nothing the overview reads. [G]'s reflog gate and its two
+remedies moved and are mirrored, and change 1 carries R-15's all-zeros anchor
+and its `reflog-unavailable` remedy, as this change's text states them; its
+report-mode text (`selected: null` above 128 rows, R-15; R-17 added only what
+`excluded` and `plan_digest` hold in that band) changes nothing the overview
+reads; [E]'s new sentence on where repository-wide probes run when `root` is
+null (R-13 (a)) agrees with requirement 2 and D3; every other item is
+confirmed. The 64 s run bound agrees (D13). No item stays open.
 
 ### D13. Test seams, fixtures and the scenario map
 
