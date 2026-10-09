@@ -9,14 +9,14 @@ requirements. The council's noted constraints, `clarifications.md` N1 to N5, are
 answered by D1 to D5; D6 to D19 give the how of the proposal's decisions, and
 D20 maps the packet's 35 validation scenarios to the deltas. The binding rulings
 (D-A to D-AF, X1, X2, V1 to V12 with V2 as amended, lane 3's M1 to M7, and the
-lead's R-4, R-8 and R-9, R-11 to R-15, R-17, R-19, R-21 and R-22) are already
+lead's R-4, R-8 and R-9, R-11 to R-15, R-17, R-19 and R-21 to R-23) are already
 in `proposal.md`, with the sections each edited; R-15 edited Context, D10, D14,
 D18, D19, Risks and the Migration Plan here; R-17 edited Context and D14, and
 R-19 edited Context, D14 and D19; R-21 edited Context, D6 and D17; R-22 edited
-Context and D20. Brett Heap's ruling of 2026-10-09 on open question 1, that a
-local ancestry proof outranks `remote-gone` for worktree rows, is in
-`proposal.md` Decisions and edited Context, D6, D7, D20, Risks, the Migration
-Plan and Open Questions here.
+Context and D20; R-23 edited Context, D6, D9, D11 and D20. Brett Heap's ruling
+of 2026-10-09 on open question 1, that a local ancestry proof outranks
+`remote-gone` for worktree rows, is in `proposal.md` Decisions and edited
+Context, D6, D7, D20, Risks, the Migration Plan and Open Questions here.
 
 Citations are `file:line` at `da33d92`: `BA`, `DI`, `OV` and `HO` are the
 packet's batch-cleanup, project-discovery, overview and handoff documents, and
@@ -67,6 +67,7 @@ unstarted branch):
 | `git reflog expire --all` at its defaults on a branch created 100 days and committed to 95 days earlier, then renamed 10 days earlier | only the rename entry survives, its old and new objects equal |
 | `git init --separate-git-dir` | the first `worktree list` record is the git directory; `core.worktree` is unset |
 | `rev-parse --show-toplevel --git-common-dir --show-superproject-working-tree` | three lines in a submodule checkout, the third the superproject's toplevel; two in a plain checkout |
+| the combined `status` probe in a clone made with `--no-checkout --filter=tree:0`, whose `remote.origin.uploadpack` is a script that logs each run | unpinned, the probe fetches HEAD's tree from the promisor remote and the script runs once; with `-c protocol.allow=never` it exits 128 with `transport 'file' not allowed` and the script never runs; a `protocol.file.allow=always` setting or `GIT_ALLOW_PROTOCOL=file` in the environment allows the fetch again, since a per-protocol policy outranks `protocol.allow` (R-23) |
 
 ## Goals / Non-Goals
 
@@ -313,6 +314,9 @@ which 2.36 through 2.39 also print and which makes every command on 2.36 fail
 closed when it is set (D17, R-21). `GIT_CONFIG_GLOBAL` and `GIT_CONFIG_SYSTEM`
 are not in that list and stay; D11's `-c` pins override them.
 
+Every child in the table, `git --version` and D9's removal child included, also
+runs with `-c protocol.allow=never` (D11, R-23).
+
 `repo_state()` and `cleanup_report()` become thin readers of this pipeline, and
 the ladder becomes a pure function of a row's evidence (OQ-28). Its one
 reordering, by Brett Heap's ruling on open question 1, tests
@@ -415,9 +419,10 @@ this change leaves alone.
 The removal child is a D2 handle of kind `removal`: the scrubbed environment
 without `GIT_OPTIONAL_LOCKS`, and the argument vector `git -c
 status.showUntrackedFiles=normal -c core.untrackedCache=false -c
-core.fsmonitor=false -C <command directory> worktree remove <path>`, both
-operands absolute and the path passed as the raw bytes the registry gave. It is
-spawned only while at least 5 s of the work deadline remains (BA:437-441).
+core.fsmonitor=false -c protocol.allow=never -C <command directory> worktree
+remove <path>`, both operands absolute and the path passed as the raw bytes the
+registry gave. It is spawned only while at least 5 s of the work deadline
+remains (BA:437-441).
 
 Once spawned it is waited for by D1's loop with no budget: the deadline passing
 changes nothing and a signal is only recorded, the first of either printing
@@ -533,6 +538,19 @@ the floor (D17). The cost is a full untracked scan where the cache would have
 helped; D5 measures it. One consequence crosses changes: feature 005's fixtures
 that rely on a running fsmonitor (DI:1233-1237, DI:1249-1254) must be rewritten,
 as the lead's ruling records.
+
+Every Git child, of every kind, also carries `-c protocol.allow=never` (R-23),
+`git --version` and the removal included. Git 2.43 has no `GIT_NO_LAZY_FETCH` or
+other switch against lazy fetches, so a read-only probe in a partial (promisor)
+clone that needs an object the clone does not hold can fetch it from the
+network. With the pin Git's transport check refuses the fetch locally, the probe
+fails with `probe-failed`, and the row is `inspection-error`, never a network
+call; the Context table records the check. A `-c` outranks `protocol.allow` in
+every configuration file, and the scrub removes `GIT_CONFIG_PARAMETERS` and
+`GIT_CONFIG_COUNT`, so a caller cannot inject a contrary `-c`. A per-protocol
+policy, a `protocol.<name>.allow` setting or `GIT_ALLOW_PROTOCOL` in the
+caller's environment, outranks `protocol.allow` for that protocol, and the pin
+does not override it.
 
 ### D12. The 16-per-run deferral (V5)
 
@@ -810,8 +828,8 @@ requirements: R1, R2, R6, D-N and OQ-29 under the reports; R9 and C3 under the
 classification and "Inspect and diagnose", and the ruling on open question 1
 under the classification; R10, R11, D-T and the manifest cap
 under Git-first resolution; V1 to V4, M3 and M4 under retirement; OQ-10, OQ-16
-and M1 under the JSON and the result; V9 under the evidence model; D-D under
-push; D-R under maintenance; R-22 under revalidation.
+and M1 under the JSON and the result; V9 and R-23 under the evidence model; D-D
+under push; D-R under maintenance; R-22 under revalidation.
 
 ## Risks / Trade-offs
 

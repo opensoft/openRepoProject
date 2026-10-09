@@ -185,16 +185,17 @@ Scope).
   `--apply --json` stays refused with `invalid-arguments`, exit 2.
 - **One mutation seam, `retire_worktree(plan, target)`.** Revalidate; spawn the
   non-force `git -c status.showUntrackedFiles=normal -c
-  core.untrackedCache=false -c core.fsmonitor=false -C <command directory>
-  worktree remove <path>` in its own process group, only while the removal floor
-  remains; wait; reconcile by rescan (`BA:381-411`). Once spawned, the child is
-  never signalled: SIGINT, SIGTERM, SIGHUP and the work deadline wait for it to
-  exit, and only a separate 300 s hard ceiling, for a hung mount, kills its
-  group. For that child, or one whose exit could not be observed, the rescan
-  decides: the target is `removed` when its registry entry and path are gone,
-  and otherwise `unknown` with the note `partially-removed` and the recovery
-  text "inspect, then `git worktree remove --force <path>` by hand"; the reason
-  `removal-ceiling` names the ceiling cause, and the run exits 1 (Decisions).
+  core.untrackedCache=false -c core.fsmonitor=false -c protocol.allow=never -C
+  <command directory> worktree remove <path>` in its own process group, only
+  while the removal floor remains; wait; reconcile by rescan (`BA:381-411`).
+  Once spawned, the child is never signalled: SIGINT, SIGTERM, SIGHUP and the
+  work deadline wait for it to exit, and only a separate 300 s hard ceiling, for
+  a hung mount, kills its group. For that child, or one whose exit could not be
+  observed, the rescan decides: the target is `removed` when its registry entry
+  and path are gone, and otherwise `unknown` with the note `partially-removed`
+  and the recovery text "inspect, then `git worktree remove --force <path>` by
+  hand"; the reason `removal-ceiling` names the ceiling cause, and the run exits
+  1 (Decisions).
 - **Targeted revalidation under a narrow guarantee.** Each target is
   revalidated with at most five Git children, a manifest re-read and a
   `modules` check, never the full report (`BA:677-719`), against recorded
@@ -265,15 +266,17 @@ Scope).
   format, the merged set), and one combined bounded status probe per row
   (`BA:585-652`) under `-c core.untrackedCache=false -c core.fsmonitor=false`
   (pins that also override `GIT_CONFIG_GLOBAL` and `GIT_CONFIG_SYSTEM`, which
-  the scrub leaves), all parsed NUL-delimited, with the scrubbed environment
-  of `BA:243-253`, through a new bounded runner (Impact). A probe `project`
-  stops at its record bound is complete, never `probe-failed`; after SIGKILL
-  the reap waits at most the 2 s grace, then abandons the child and records
-  `probe-timeout`; every exit path terminates the probe groups it started, and
-  a running removal child is waited for, per V1 ("A started removal is never
-  interrupted"); stderr is drained and capped. A Git child gets `min(5 s,
-  work_remaining)` under `clean`'s deadline and 15 s in `status`, `doctor` and
-  `update`, which have none (Decisions). The ladder keeps its names, and its
+  the scrub leaves), every Git child also under `-c protocol.allow=never`, so
+  that a lazy fetch in a partial (promisor) clone fails locally and its row is
+  `inspection-error` (R-23), all parsed NUL-delimited, with the scrubbed
+  environment of `BA:243-253`, through a new bounded runner (Impact). A probe
+  `project` stops at its record bound is complete, never `probe-failed`; after
+  SIGKILL the reap waits at most the 2 s grace, then abandons the child and
+  records `probe-timeout`; every exit path terminates the probe groups it
+  started, and a running removal child is waited for, per V1 ("A started removal
+  is never interrupted"); stderr is drained and capped. A Git child gets `min(5
+  s, work_remaining)` under `clean`'s deadline and 15 s in `status`, `doctor`
+  and `update`, which have none (Decisions). The ladder keeps its names, and its
   order but for one test: a row whose upstream was deleted is tested for local
   ancestry before `remote-gone`, so a merged one is `merged-removable` (or
   `merged-current`) and only an unmerged one is `remote-gone` (Brett Heap's
@@ -283,16 +286,14 @@ Scope).
   consequences are the baseline behavior changes of `BA:1200-1274`, less
   `BA:1255-1256`, with `BA:1238-1240` and `BA:1268-1274` narrowed (Decisions)
   and `BA:1241-1245` (R6), plus R1, R2, R10, R11, `unstarted-branch` and
-  `reflog-unavailable` in single mode (M4), a merged worktree whose upstream
-  was deleted reading `merged-removable` where `a040790` reads it
-  `unpublished` (that ruling), and the manifest cap; the deltas
-  carry each, and the `ignored_samples` objects are a packet departure
-  (Decisions). The
-  manifest read that resolves a merge target is capped at 1 MiB, a larger
-  manifest being `manifest-invalid`, so every reader resolves the same target;
-  at `a040790` `clean` reads a manifest of any size, so a larger one refusing
-  `clean` with `manifest-invalid`, exit 2, is a baseline behavior change beside
-  R1 and R10.
+  `reflog-unavailable` in single mode (M4), a merged worktree whose upstream was
+  deleted reading `merged-removable` where `a040790` reads it `unpublished`
+  (that ruling), and the manifest cap; the deltas carry each, and the
+  `ignored_samples` objects are a packet departure (Decisions). The manifest
+  read that resolves a merge target is capped at 1 MiB, a larger manifest being
+  `manifest-invalid`, so every reader resolves the same target; at `a040790`
+  `clean` reads a manifest of any size, so a larger one refusing `clean` with
+  `manifest-invalid`, exit 2, is a baseline behavior change beside R1 and R10.
 - **Every `clean --json` prints one versioned envelope.** `schema_version: 1`
   with the plan fields of `BA:947-976`, `mode` being `report`, `single` or
   `all-safe` (OQ-29); refusals as `{code, message, path?, path_valid_utf8?,
@@ -503,8 +504,9 @@ Headers are quoted verbatim, one per line; ADDED headers are proposed text.
     immediately before each spawn; changes after it are the residual window
     the ADDED guarantee states, and Git's own non-force check is the last
     defense only on the pinned configuration (`status.showUntrackedFiles`,
-    `core.untrackedCache`, `core.fsmonitor`). A value null in the plan and
-    null at revalidation, as a deleted upstream's `upstream_oid`, `ahead` and
+    `core.untrackedCache`, `core.fsmonitor`; the removal's
+    `protocol.allow=never` is no part of it). A value null in the plan and null
+    at revalidation, as a deleted upstream's `upstream_oid`, `ahead` and
     `behind` are, is no difference, while a value that cannot be re-read is
     (Brett Heap's ruling of 2026-10-09; Decisions). The scenario (`:55-58`)
     stays; a worktree that becomes dirty after revalidation is refused by Git
@@ -546,14 +548,15 @@ Headers are quoted verbatim, one per line; ADDED headers are proposed text.
     evidence model: the version check (`BA:593`), R6's timing not stated as a
     rule for every reader; the probe directory rule (`BA:554-583`); the scrub
     with `GIT_OPTIONAL_LOCKS=0` (`BA:243-253`); NUL parsing; the combined
-    probe, its pins and bounds (`BA:629-652`, `BA:793-814`); the 1 MiB cap on
-    the manifest read that resolves a merge target, a larger manifest being
-    `manifest-invalid`; the runner's outcomes (What Changes, evidence model);
-    its every-exit-path termination rule, stated in its own words: the probe
-    groups it started are killed in a `finally` on every exit path, and a
-    running removal child is waited for, per V1, never signalled before the
-    300 s ceiling (M7); and `min(5 s, work_remaining)` per Git child under a
-    deadline, 15 s otherwise. `status`, `doctor` and `update` get no
+    probe, its pins and bounds (`BA:629-652`, `BA:793-814`), among them the `-c
+    protocol.allow=never` pin on every Git child, against lazy fetches (R-23);
+    the 1 MiB cap on the manifest read that resolves a merge target, a larger
+    manifest being `manifest-invalid`; the runner's outcomes (What Changes,
+    evidence model); its every-exit-path termination rule, stated in its own
+    words: the probe groups it started are killed in a `finally` on every exit
+    path, and a running removal child is waited for, per V1, never signalled
+    before the 300 s ceiling (M7); and `min(5 s, work_remaining)` per Git child
+    under a deadline, 15 s otherwise. `status`, `doctor` and `update` get no
     deadline or row cap; an unreadable or timed-out row shows as
     `inspection-error`. Non-Git children (docker, doctor validators;
     `project:715`, `:817`) keep 15 s.
@@ -850,6 +853,13 @@ Council decisions, with the packet text each replaces or extends:
   of 20,000 files, a `dirty` tree (council).
 - **Pinned status configuration** (`BA:307-317` pins only the untracked
   setting): unpinned, Git's own check missed and deleted a file (council).
+- **Lazy fetches pinned off on every Git child** (R-23; an addition to
+  `BA:243-253` and `BA:307-317`, which pin no protocol policy): Git 2.43 has
+  no `GIT_NO_LAZY_FETCH`, so a read-only probe in a partial (promisor) clone
+  can fetch a missing object from the network. `-c protocol.allow=never` makes
+  the fetch fail locally and the row `inspection-error`; a
+  `protocol.<name>.allow` setting or `GIT_ALLOW_PROTOCOL` in the caller's
+  environment outranks it for that protocol (design Context, D11).
 - **A branch with no commit of its own is preserved** (V2 as amended, M3, M4;
   extends the gates of `BA:152-160`; R-12, R-15): the reflog, read from its
   anchor, the last entry whose old object is all zeros (a creation, whatever
@@ -1039,21 +1049,28 @@ D19; `project-clean` plain-report requirement, band text; Decisions, OQ-29;
 design Context, D14, D19; `tasks.md` 1.2); R-21 (task 2.2's result:
 `GIT_INTERNAL_SUPER_PREFIX` added to the scrub as a sixteenth name and the
 2.36 floor kept; `project-command` ADDED, evidence model; Decisions,
-departures; this list; design Context, D6, D17; `tasks.md` 2.2); and R-22
-(the revalidation clause's other side, a deleted upstream that reappears
-before apply is `state-changed`; `project-clean-review-safety` `Cleanup
-revalidates destructive actions`, scenario "Deleted upstream reappears before
-revalidation"; this list; design Context, D20; `tasks.md` 1.2, 1.4). Brett
-Heap's ruling of 2026-10-09 on open question 1, given to lane openRepoProject-2
-in the words the departures quote, that a local ancestry proof outranks
-`remote-gone` for worktree rows, closes that question and adds the fifth
-behaviour change users will notice (What Changes, first bullet, eligibility and
-evidence model; Capabilities `:25`, `:39`, review-safety `:49`; Decisions,
-departures; Impact, README; Open Questions; this list; design Context, D6, D7,
-D20, Risks, Migration Plan, Open Questions; `tasks.md` 1.2, 1.6; the deltas'
-`Clean classifies preservation and cleanup actions` and its scenario "A merged
-worktree whose upstream was deleted", `Clean can explicitly push safe feature
-branches` and `Cleanup revalidates destructive actions`).
+departures; this list; design Context, D6, D17; `tasks.md` 2.2); R-22 (the
+revalidation clause's other side, a deleted upstream that reappears before apply
+is `state-changed`; `project-clean-review-safety` `Cleanup revalidates
+destructive actions`, scenario "Deleted upstream reappears before revalidation";
+this list; design Context, D20; `tasks.md` 1.2, 1.4); and R-23 (`-c
+protocol.allow=never` on every Git child, so that a lazy fetch in a partial
+clone fails locally and the row is `inspection-error`; What Changes, seam and
+evidence model; Capabilities, `project-command` ADDED and review-safety `Cleanup
+revalidates destructive actions`; Decisions, departures; the deltas' `Clean can
+explicitly retire verified worktrees`, `project-command` ADDED evidence model
+and its scenario "A lazy fetch in a partial clone is refused locally"; this
+list; design Context, D6, D9, D11, D20; `tasks.md` 1.2, 1.4). Brett Heap's
+ruling of 2026-10-09 on open question 1, given to lane openRepoProject-2 in the
+words the departures quote, that a local ancestry proof outranks `remote-gone`
+for worktree rows, closes that question and adds the fifth behaviour change
+users will notice (What Changes, first bullet, eligibility and evidence model;
+Capabilities `:25`, `:39`, review-safety `:49`; Decisions, departures; Impact,
+README; Open Questions; this list; design Context, D6, D7, D20, Risks, Migration
+Plan, Open Questions; `tasks.md` 1.2, 1.6; the deltas' `Clean classifies
+preservation and cleanup actions` and its scenario "A merged worktree whose
+upstream was deleted", `Clean can explicitly push safe feature branches` and
+`Cleanup revalidates destructive actions`).
 
 ### Council Verdicts
 

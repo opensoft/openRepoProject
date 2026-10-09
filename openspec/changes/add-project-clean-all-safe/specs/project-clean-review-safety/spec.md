@@ -98,7 +98,8 @@ SHALL refuse with `inspection-incomplete`, `inspect-cap` or `deadline-exceeded`
 and exit 2 when it is incomplete. Git's own non-force check SHALL be the last
 defense only on the pinned configuration that the removal command carries:
 `status.showUntrackedFiles=normal`, `core.untrackedCache=false` and
-`core.fsmonitor=false`.
+`core.fsmonitor=false`; the `-c protocol.allow=never` that every Git child
+carries is no part of that defense.
 
 #### Scenario: Worktree changes while confirmation is pending
 

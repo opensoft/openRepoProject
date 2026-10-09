@@ -238,11 +238,11 @@ removal, single or batch, SHALL follow one sequence: revalidate the target as
 "Cleanup revalidates destructive actions" states; spawn, only while at least the
 5 s removal floor of the work deadline remains, the non-force command `git -c
 status.showUntrackedFiles=normal -c core.untrackedCache=false -c
-core.fsmonitor=false -C <command directory> worktree remove <path>` in its own
-process group; wait for it; and reconcile by rescan as "Clean records a
-reconcilable result for every removal target" states. Removal SHALL stop after
-the first target whose result is not a plain `removed`, with no continuation,
-rollback or automatic retry.
+core.fsmonitor=false -c protocol.allow=never -C <command directory> worktree
+remove <path>` in its own process group; wait for it; and reconcile by rescan as
+"Clean records a reconcilable result for every removal target" states. Removal
+SHALL stop after the first target whose result is not a plain `removed`, with no
+continuation, rollback or automatic retry.
 
 Once a removal child is spawned, `project` SHALL NOT signal it on SIGINT,
 SIGTERM, SIGHUP or the work deadline, and SHALL wait for it to exit. Only a hard

@@ -108,7 +108,11 @@ Git 2.36 through 2.39 also print and which makes every command on those
 versions fail when it is set. Read-only probes SHALL also set
 `GIT_OPTIONAL_LOCKS=0`. Every status probe SHALL pass `-c
 core.untrackedCache=false -c core.fsmonitor=false`, which also override
-`GIT_CONFIG_GLOBAL` and `GIT_CONFIG_SYSTEM`.
+`GIT_CONFIG_GLOBAL` and `GIT_CONFIG_SYSTEM`. Every Git child, of every kind,
+SHALL also pass `-c protocol.allow=never`, because Git 2.43 has no switch
+against lazy fetches and a probe in a partial (promisor) clone could otherwise
+fetch a missing object from the network; with the pin the fetch fails locally,
+the probe fails, and its row is `inspection-error`, never a network call.
 
 Directory: a worktree probe SHALL run with `-C <worktree path>`, against that
 worktree's own index, and only after that worktree's identity has been verified
@@ -212,3 +216,8 @@ requirement states a change.
 #### Scenario: The pinned status configuration
 - **WHEN** `core.untrackedCache` and `core.fsmonitor` are set to true in the file that `GIT_CONFIG_GLOBAL` names
 - **THEN** a counting `git` wrapper records `-c core.untrackedCache=false -c core.fsmonitor=false` on every status child and on every removal child
+
+#### Scenario: A lazy fetch in a partial clone is refused locally
+- **WHEN** a status probe runs in a partial clone made with `--no-checkout --filter=tree:0`, so that the probe needs a tree object the clone does not hold, and the clone's `remote.origin.uploadpack` names a script that logs each run
+- **THEN** a counting `git` wrapper records `-c protocol.allow=never` on the child, Git refuses the fetch of the missing object locally and exits nonzero, the probe is recorded `probe-failed`, and the row is `inspection-error`
+- **AND** the logging script never runs, so no connection to the remote is attempted
