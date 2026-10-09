@@ -87,8 +87,11 @@ or registration difference or a missing registry entry, `branch-changed` for a
 different branch name or head, `state-changed` for any other signature, lock,
 manifest or merge-target difference, `contains-submodule` for a new gitlink or
 `modules` entry, and `hidden-local-state` for a newly flagged index entry. A
-value that cannot be re-read, a filesystem call that times out included, SHALL
-count as a difference. The first target's repository-wide checks SHALL serve as
+value that was null in the plan and is null at revalidation, such as the
+`upstream_oid`, `ahead` and `behind` of a selected row whose upstream was
+deleted, SHALL NOT count as a difference; a value that cannot be re-read, a
+filesystem call that times out included, SHALL count as a difference. The first
+target's repository-wide checks SHALL serve as
 the preflight of every selected target, so that a difference found there removes
 nothing at all. Push and delete-branch SHALL keep the full re-inspection, and
 SHALL refuse with `inspection-incomplete`, `inspect-cap` or `deadline-exceeded`

@@ -6,7 +6,7 @@ Status: draft, awaiting Brett Heap's ratification. Nothing here is ratified.
 Revised after the alignment review and the council (resolved below and on
 PR #11; the council's noted constraints are in `clarifications.md`); it adds
 Decisions and Corrections sections because it adopts a non-normative packet,
-and Open Questions for two questions before Brett Heap.
+and Open Questions for the one question still before Brett Heap.
 
 Governing issue: opensoft/openRepoProject#9, claimed by lane openRepoProject-2
 (comment 6069500401); refs #6, the record of the project maintenance design
@@ -85,7 +85,11 @@ Scope).
   by default) is likewise refused in single mode (`target-excluded`, reason
   `reflog-unavailable`) as well as withheld from the batch, with the remedy
   "the branch's reflog is missing, expired or undecidable; review, then git
-  worktree remove yourself". The README's clean section says so first.
+  worktree remove yourself". And where `a040790` refuses a merged worktree
+  whose upstream was deleted as `unpublished`, `--worktree P` now removes it
+  as `merged-removable` when its gates pass, its branch kept (Brett Heap's
+  ruling of 2026-10-09; Decisions). The README's clean section states these
+  five first.
 - **`project clean <root> --all-safe` previews a batch.** It plans every
   eligible linked worktree of one resolved repository: `selected` and
   `excluded`, each exclusion with one reason in the fixed gate order
@@ -131,8 +135,12 @@ Scope).
   `contains-submodule` (any gitlink or admin `modules` entry) and
   `hidden-local-state` (any entry flagged assume-unchanged or skip-worktree),
   the last two read in the row's own worktree (`BA:113-150`, `BA:629-675`,
-  `BA:554-583`). Local ancestry is the only removal proof, and it proves that
-  a branch adds nothing, not that its work began. Nor does a head equal to
+  `BA:554-583`). A merged worktree whose upstream was deleted is
+  `merged-removable` and faces these gates like any other merged row, since
+  local ancestry outranks `remote-gone` for worktree rows (Brett Heap's
+  ruling of 2026-10-09; Decisions). Local ancestry is the only removal proof,
+  and it proves that a branch adds nothing, not that its work began. Nor
+  does a head equal to
   the merge-target SHA prove that the work never began, because a branch
   fast-forward merged into the target sits at the target's tip, so the gate
   reads the branch's reflog in every case. Its anchor is the last surviving
@@ -265,14 +273,19 @@ Scope).
   a running removal child is waited for, per V1 ("A started removal is never
   interrupted"); stderr is drained and capped. A Git child gets `min(5 s,
   work_remaining)` under `clean`'s deadline and 15 s in `status`, `doctor` and
-  `update`, which have none (Decisions). The ladder keeps its names and order,
-  its text changing only for a merged `remote-gone` row and the
-  partial-removal note (MODIFIED `:25`), and becomes a pure function over
+  `update`, which have none (Decisions). The ladder keeps its names, and its
+  order but for one test: a row whose upstream was deleted is tested for local
+  ancestry before `remote-gone`, so a merged one is `merged-removable` (or
+  `merged-current`) and only an unmerged one is `remote-gone` (Brett Heap's
+  ruling of 2026-10-09; Decisions). Its text changes for that and for the
+  partial-removal note (MODIFIED `:25`), and it becomes a pure function over
   evidence (OQ-28). Git 2.36 is required as R6 scopes it. The visible
   consequences are the baseline behavior changes of `BA:1200-1274`, less
   `BA:1255-1256`, with `BA:1238-1240` and `BA:1268-1274` narrowed (Decisions)
   and `BA:1241-1245` (R6), plus R1, R2, R10, R11, `unstarted-branch` and
-  `reflog-unavailable` in single mode (M4), and the manifest cap; the deltas
+  `reflog-unavailable` in single mode (M4), a merged worktree whose upstream
+  was deleted reading `merged-removable` where `a040790` reads it
+  `unpublished` (that ruling), and the manifest cap; the deltas
   carry each, and the `ignored_samples` objects are a packet departure
   (Decisions). The
   manifest read that resolves a merge target is capped at 1 MiB, a larger
@@ -373,20 +386,25 @@ Headers are quoted verbatim, one per line; ADDED headers are proposed text.
   - MODIFIED (`:25`):
     `### Requirement: Clean classifies preservation and cleanup actions`.
     `:27-28` names 7 classes and the ladder has 15 (`project:418-468`); the
-    text names all 15 in ladder order, a deleted upstream becomes
+    text names all 15 in ladder order, an unmerged deleted upstream becomes
     `remote-gone`, and unreadable, mismatched and probe-failed rows are
-    `inspection-error` directly (R1). Until the remote-gone question is ruled,
-    a `remote-gone` row with `merged_into_target` true reads "Merged locally,
-    upstream deleted: not removable by `project` until the open question is
-    ruled; review, then `git worktree remove` yourself" (not
-    `project:443-444`); a `dirty` row whose only working changes are deleted
-    tracked files carries the partial-removal note beside its advice. Names
-    and order are unchanged (OQ-28). The scenario (`:32-37`) stays.
+    `inspection-error` directly (R1). By Brett Heap's ruling of 2026-10-09 a
+    row whose upstream was deleted is tested for local ancestry before
+    `remote-gone`: merged, it is `merged-removable` (or `merged-current`)
+    with that class's recommendation, and only an unmerged one is
+    `remote-gone` (Decisions); a `dirty` row whose only working changes are
+    deleted tracked files carries the partial-removal note beside its advice.
+    Names are unchanged, and the order changes only by that ancestry test
+    (OQ-28). The scenario (`:32-37`) stays; the added scenario "A merged
+    worktree whose upstream was deleted" has `--all-safe` select it and
+    `--worktree` remove it, and an unmerged one stay `remote-gone`.
   - MODIFIED (`:39`):
     `### Requirement: Clean can explicitly push safe feature branches`.
-    Two additions; the rest stays. Push refuses a `remote-gone` branch (its
-    upstream was deleted, so it must be reviewed before it is republished;
-    `project:545-555` would push to it) with refusal reason `remote-gone`,
+    Two additions; the rest stays. Push refuses a branch on its deleted
+    upstream itself, whatever its row's class (`remote-gone` when unmerged;
+    `merged-removable` or `merged-current` when merged, under Brett Heap's
+    ruling), because it must be reviewed before it is republished
+    (`project:545-555` would push to it), with refusal reason `remote-gone`,
     exit 2, and refuses with `inspection-incomplete`, `inspect-cap` or
     `deadline-exceeded`, exit 2, when its re-inspection is incomplete. Added
     scenario: WHEN push is requested for a branch whose upstream was deleted,
@@ -485,8 +503,11 @@ Headers are quoted verbatim, one per line; ADDED headers are proposed text.
     immediately before each spawn; changes after it are the residual window
     the ADDED guarantee states, and Git's own non-force check is the last
     defense only on the pinned configuration (`status.showUntrackedFiles`,
-    `core.untrackedCache`, `core.fsmonitor`). The scenario (`:55-58`) stays;
-    a worktree that becomes dirty after revalidation is refused by Git
+    `core.untrackedCache`, `core.fsmonitor`). A value null in the plan and
+    null at revalidation, as a deleted upstream's `upstream_oid`, `ahead` and
+    `behind` are, is no difference, while a value that cannot be re-read is
+    (Brett Heap's ruling of 2026-10-09; Decisions). The scenario (`:55-58`)
+    stays; a worktree that becomes dirty after revalidation is refused by Git
     (`failed`, `git-refused`, exit 128) and is still preserved (`BA:298`).
   - Untouched (`:9`, `current` keeps its baseline meaning):
     `### Requirement: Cleanup protects the process worktree`.
@@ -574,14 +595,15 @@ Headers are quoted verbatim, one per line; ADDED headers are proposed text.
   The ladder becomes a pure function; `status`, `doctor` and `update` gain the
   Git version check (R6). No new flag outside `clean`, no network, no new
   dependency.
-- **`README.md`**: "Clean up Git worktrees" opens with the four behaviour
-  changes users will notice (R2, R6, and the `unstarted-branch` and
-  `reflog-unavailable` refusals in single mode, M4), then describes the batch
-  preview and apply,
+- **`README.md`**: "Clean up Git worktrees" opens with the five behaviour
+  changes users will notice (R2, R6, the `unstarted-branch` and
+  `reflog-unavailable` refusals in single mode, M4, and `--worktree P`
+  removing a merged worktree whose upstream was deleted on its local
+  ancestry, its branch kept, by Brett Heap's ruling; Decisions), then
+  describes the batch preview and apply,
   `--expect-plan`, the gates, the 16-per-run deferral that re-running drains,
-  the narrow guarantee and residual window, the result record and recovery,
-  and that `project` cannot yet remove a merged worktree whose upstream was
-  deleted (Open Questions); its sentence "Apply actions are
+  the narrow guarantee and residual window, and the result record and
+  recovery; its sentence "Apply actions are
   always explicit and target one branch or worktree" (README:106) is
   corrected. Install (README:17-19) states the Git 2.36 requirement, and the
   exit-code line (README:194-196) gains `clean`'s 1 for an incomplete
@@ -767,6 +789,29 @@ Departures from packet decisions, each citing the decision departed from:
 - **The manifest cap detected from `st_size`** (R-4; an addition, no packet
   text behind it): a manifest over the 1 MiB cap is detected from its
   `st_size` before the read, never by reading past the cap.
+- **Local ancestry outranks a deleted upstream** (open question 1, ruled by
+  Brett Heap on 2026-10-09 in his word to lane openRepoProject-2,
+  "yes, local ancestry proof outranks remote-gone, apply it";
+  `DI:596-598`, the ladder's "same test order" and "same
+  recommendation text", and `BA:1214-1220`, `DI:1124-1129`, `SY:107-109`,
+  `OV:210-212` and `HO:296-298`, where a deleted upstream is `remote-gone`
+  and preserved whatever its merge state): for worktree rows the ladder
+  tests `merged_into_target` before the `remote-gone` rung, so a merged row
+  whose upstream was deleted is `merged-removable`, or `merged-current` when
+  it is the current worktree, with that class's recommendation and the
+  ordinary gates, and `remote-gone` is left to unmerged rows. The MVP never
+  deletes the branch, so its commits stay reachable from the kept branch and
+  the merge target. At `a040790` such a worktree reads `unpublished` (R9)
+  and `--worktree P` refuses it; now `--worktree P` and `--all-safe --apply`
+  remove it when its gates pass, a baseline behavior change and the fifth
+  behaviour change users will notice (What Changes, first bullet). A
+  selected row of this kind records its configured `upstream` with
+  `upstream_oid`, `ahead` and `behind` null, where `BA:969` types them
+  string and integer, and its revalidation counts a value null in the plan
+  and null again as no difference (`Cleanup revalidates destructive
+  actions`); push still refuses its branch with `remote-gone`, whatever its
+  row's class (D-D). The interim recommendation that called such a row not
+  removable is withdrawn.
 
 Packet decisions adopted, not open: OQ-5, the caps and bounds of `BA:966`,
 subject to OQ-4, less the target cap's refusal; OQ-9, the budgets of
@@ -918,20 +963,15 @@ OQ-29's cap; these bind until that revision merges (C2 is now reading R9).
 
 ## Open Questions
 
-- **A merged worktree whose remote branch was deleted.** The ladder tests
-  `remote_present` before ancestry (`project:442` before `:457`), so it is
-  `remote-gone`, and MODIFIED `:39` refuses the old workaround (push, then
-  remove): no `project` command retires it. Rare here today (4 of about 90
-  merged worktrees; `fetch.prune` unset everywhere, auto-delete on 2 of 21
-  repositories; council survey), it is universal under auto-delete plus
-  prune. Before Brett Heap, recommending that a local ancestry proof outrank
-  `remote-gone` for worktree rows (the MVP never deletes the branch); until
-  he rules, the packet's ladder stands and the report says so (`:25`).
 - **Squash-merged branches.** A squash merge never puts the branch tip into
   the target's ancestry (`BA:195-199`), and this repository's `main` has no
   merge commit, so in squash-merging repositories the MVP selects little.
   Before Brett Heap, recommending a local patch-equivalence proof (`git
   cherry` or patch IDs against the target) as a follow-on change.
+
+The question of a merged worktree whose remote branch was deleted is closed:
+Brett Heap ruled on 2026-10-09 that a local ancestry proof outranks
+`remote-gone` for worktree rows (Decisions, departures).
 
 ## Questions Resolved by the Alignment Review
 
@@ -999,7 +1039,18 @@ D19; `project-clean` plain-report requirement, band text; Decisions, OQ-29;
 design Context, D14, D19; `tasks.md` 1.2); and R-21 (task 2.2's result:
 `GIT_INTERNAL_SUPER_PREFIX` added to the scrub as a sixteenth name and the
 2.36 floor kept; `project-command` ADDED, evidence model; Decisions,
-departures; this list; design Context, D6, D17; `tasks.md` 2.2).
+departures; this list; design Context, D6, D17; `tasks.md` 2.2). Brett Heap's
+ruling of 2026-10-09 on open question 1, given to lane openRepoProject-2 in
+the words the departures quote, that a local ancestry proof outranks
+`remote-gone` for worktree rows, closes that question and adds the fifth
+behaviour change users will notice (What Changes, first bullet, eligibility
+and evidence model; Capabilities `:25`, `:39`, review-safety `:49`;
+Decisions, departures; Impact, README; Open Questions; this list; design
+Context, D6, D7, D20, Risks, Migration Plan, Open Questions; `tasks.md` 1.2,
+1.6; the deltas' `Clean classifies preservation and cleanup actions` and its
+scenario "A merged worktree whose upstream was deleted", `Clean can
+explicitly push safe feature branches` and `Cleanup revalidates destructive
+actions`).
 
 ### Council Verdicts
 

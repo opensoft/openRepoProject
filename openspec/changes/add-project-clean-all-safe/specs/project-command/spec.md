@@ -205,6 +205,10 @@ requirement states a change.
 - **WHEN** `GIT_DIR`, `GIT_WORK_TREE` and `GIT_INDEX_FILE` are set in the caller's environment to name another repository
 - **THEN** every probe reads the resolved repository, and each worktree probe reads that worktree's own index
 
+#### Scenario: The sixteenth scrubbed name on Git 2.36
+- **WHEN** Git 2.36 is first on PATH and `GIT_INTERNAL_SUPER_PREFIX` is set in the caller's environment
+- **THEN** every Git child runs with `GIT_INTERNAL_SUPER_PREFIX` removed from its environment, and the inspection succeeds, where with that variable kept every command on 2.36 fails closed
+
 #### Scenario: The pinned status configuration
 - **WHEN** `core.untrackedCache` and `core.fsmonitor` are set to true in the file that `GIT_CONFIG_GLOBAL` names
 - **THEN** a counting `git` wrapper records `-c core.untrackedCache=false -c core.fsmonitor=false` on every status child and on every removal child

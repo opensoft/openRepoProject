@@ -110,20 +110,25 @@ classes, by a ladder tested in this order: `stale-worktree`,
 `detached`, `unpublished`, `remote-gone`, `review-required`, `diverged`,
 `remote-ahead`, `unpushed`, `merged-removable`, `merged-current` and
 `pushed-unmerged`. The ladder SHALL be a function of the row's evidence alone,
-and its names and order SHALL NOT change. A row whose evidence could not be
-established (a path that cannot be read, a registration that disagrees, or a
-status probe that failed or timed out) SHALL be classified `inspection-error`
-directly, whatever its branch. A branch with no configured upstream SHALL be
-`unpublished`, and a branch whose configured upstream's remote-tracking ref no
-longer exists SHALL be `remote-gone`. `review-required` SHALL remain a defensive
-rung that no value of the evidence model reaches.
+and its names SHALL NOT change; its order SHALL NOT change except by the one
+ancestry test stated here. A row whose evidence could not be established (a
+path that cannot be read, a registration that disagrees, or a status probe that
+failed or timed out) SHALL be classified `inspection-error` directly, whatever
+its branch. A branch with no configured upstream SHALL be `unpublished`. A
+branch whose configured upstream's remote-tracking ref no longer exists SHALL be
+tested for local ancestry before the `remote-gone` rung: when its
+`merged_into_target` is true, the row SHALL be `merged-removable`, or
+`merged-current` when it is the current worktree, and otherwise it SHALL be
+`remote-gone`, so that only an unmerged row is `remote-gone`.
+`review-required` SHALL remain a defensive rung that no value of the evidence
+model reaches.
 
 Every class other than `merged-removable` SHALL be preserved. Dirty, detached,
 unpublished, remote-gone, and unmerged work SHALL be preserved and SHALL include
-an actionable human handoff rather than being treated as removable. A
-`remote-gone` row whose `merged_into_target` is true SHALL carry the
-recommendation "Merged locally, upstream deleted: not removable by `project`
-until the open question is ruled; review, then `git worktree remove` yourself".
+an actionable human handoff rather than being treated as removable. A row whose
+configured upstream's remote-tracking ref no longer exists and whose
+`merged_into_target` is true SHALL carry the recommendation of its class, as
+every `merged-removable` or `merged-current` row does.
 
 A linked worktree's `dirty` row whose status records are all deletions of
 tracked files in the working tree, while its `.git` file and its registry entry
@@ -151,12 +156,16 @@ classification, the ladder or any gate.
 
 #### Scenario: A merged worktree whose upstream was deleted
 
-- **WHEN** a clean linked worktree's branch is merged into the merge target and
-  its upstream's remote-tracking ref was deleted
-- **THEN** it is classified `remote-gone`, no `project` command removes it, and
-  its recommendation reads "Merged locally, upstream deleted: not removable by
-  `project` until the open question is ruled; review, then `git worktree remove`
-  yourself"
+- **WHEN** a clean linked worktree's branch, with a commit of its own, is merged
+  into the merge target and its upstream's remote-tracking ref was deleted
+- **THEN** it is classified `merged-removable`, where before this change it read
+  `unpublished`, with the recommendation that every `merged-removable` row
+  carries, and `--all-safe` selects it
+- **AND** `--apply --action remove --worktree` naming it with `--yes` removes it
+  and keeps its branch, where before this change it was refused as `unpublished`
+- **AND** a linked worktree whose upstream's remote-tracking ref was deleted and
+  whose branch is not merged into the merge target is classified `remote-gone`
+  and preserved
 
 #### Scenario: Only tracked-file deletions
 
@@ -177,9 +186,12 @@ explicit confirmation was supplied, and preserve the delegated exit status and
 output. It SHALL refuse to push a default branch or a branch with unresolved
 local work.
 
-It SHALL refuse, with exit status 2 and no push, a branch classified
-`remote-gone`, naming the reason `remote-gone`: its configured upstream was
-deleted, so it must be reviewed before it is republished. It SHALL refuse with
+It SHALL refuse, with exit status 2 and no push, a branch whose configured
+upstream's remote-tracking ref no longer exists, on that deleted upstream
+itself, whatever its row's class (`remote-gone` when its branch is unmerged,
+`merged-removable` or `merged-current` when merged), naming the reason
+`remote-gone`: its configured upstream was deleted, so it must be reviewed
+before it is republished. It SHALL refuse with
 `inspection-incomplete`, `inspect-cap` or `deadline-exceeded`, exit status 2 and
 no push, when the full inspection it acts on, before or after confirmation, is
 incomplete. Its argument SHALL be resolved as "Clean resolves its target

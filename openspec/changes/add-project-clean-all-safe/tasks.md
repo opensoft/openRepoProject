@@ -19,9 +19,13 @@ duplicate them, and nothing here is an implementation step.
   and R-4, R-8, R-9, R-11 to R-15, R-17 and R-19 (`9ea2f02`, `0b3c33d`,
   `d6aaa9a`, the commit that anchors the reflog test on the creation entry,
   R-15, `4f2162b`, R-17, and the commit that scopes the digest rule to the band
-  above 128 rows, R-19); verified by the table "Questions Resolved by the
-  Alignment Review" in `proposal.md` and the later-rulings list under it, which
-  name the section each ruling edited.
+  above 128 rows, R-19), and Brett Heap's ruling of 2026-10-09 on open
+  question 1, local ancestry outranking `remote-gone` for worktree rows (the
+  commit titled
+  'Apply Brett Heap's ruling: local ancestry proof outranks remote-gone');
+  verified by the table "Questions Resolved by the Alignment Review" in
+  `proposal.md` and the later-rulings list under it, which name the section
+  each ruling edited.
 - [x] 1.3 Council resolved: every concern is VALID, none dismissed, the verdicts
   V1 to V12 applied to `proposal.md` (`ea9c73b`) and the five NOTED constraints
   recorded as N1 to N5 in `clarifications.md` (`1d4ed5b`); verified by
@@ -39,8 +43,8 @@ duplicate them, and nothing here is an implementation step.
   every artifact done; verified by running the three commands on this branch
   after 1.4.
 - [ ] 1.6 Ratified by Brett Heap's word on PR #11, quoted with its link here,
-  the V5 deferral and the two open questions of `design.md` before him; verified
-  by that quote. No implementation starts before it.
+  the V5 deferral and the squash-merge open question of `design.md` before him;
+  verified by that quote. No implementation starts before it.
 
 ## 2. Before the Speckit handoff
 

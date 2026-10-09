@@ -12,7 +12,10 @@ D20 maps the packet's 35 validation scenarios to the deltas. The binding rulings
 lead's R-4, R-8 and R-9, R-11 to R-15, R-17, R-19 and R-21) are already in
 `proposal.md`, with the sections each edited; R-15 edited Context, D10, D14,
 D18, D19, Risks and the Migration Plan here; R-17 edited Context and D14, and
-R-19 edited Context, D14 and D19; R-21 edited Context, D6 and D17.
+R-19 edited Context, D14 and D19; R-21 edited Context, D6 and D17. Brett Heap's
+ruling of 2026-10-09 on open question 1, that a local ancestry proof outranks
+`remote-gone` for worktree rows, is in `proposal.md` Decisions and edited
+Context, D6, D7, D20, Risks, the Migration Plan and Open Questions here.
 
 Citations are `file:line` at `da33d92`: `BA`, `DI`, `OV` and `HO` are the
 packet's batch-cleanup, project-discovery, overview and handoff documents, and
@@ -310,7 +313,12 @@ closed when it is set (D17, R-21). `GIT_CONFIG_GLOBAL` and `GIT_CONFIG_SYSTEM`
 are not in that list and stay; D11's `-c` pins override them.
 
 `repo_state()` and `cleanup_report()` become thin readers of this pipeline, and
-the ladder becomes a pure function of a row's evidence (OQ-28). Value parity
+the ladder becomes a pure function of a row's evidence (OQ-28). Its one
+reordering, by Brett Heap's ruling on open question 1, tests
+`merged_into_target` before the `remote-gone` rung for a row whose upstream is
+configured and whose `remote_present` is false: true gives `merged-removable`,
+or `merged-current` for the current worktree, and anything else `remote-gone`;
+the row's `upstream`, `ahead` and `behind` stay as row 6 gives them. Value parity
 with the baseline is tested on fixtures, except for the changes the deltas list.
 
 ### D7. Identity objects, revalidation and the residual window
@@ -339,7 +347,13 @@ their upstreams; the target's identity and `modules` check by filesystem reads;
 then, inside the target worktree, the combined status probe, which must print
 nothing, and the hidden-state probe. Ancestry needs no child: it is a function
 of the branch head and the merge-target SHA, both compared. The reflog of D10 is
-not re-read: a moved branch is already `branch-changed`.
+not re-read: a moved branch is already `branch-changed`. A selected row whose
+upstream was deleted (D6) records `upstream_oid`, `ahead` and `behind` null,
+and revalidation compares them as recorded, by the review-safety rule that a
+value null in the plan and null at revalidation is no difference while a value
+that cannot be re-read is one: the narrowed listing still showing no
+remote-tracking ref for it is no difference, and one that reappears is
+`state-changed`.
 
 The first target's three repository children are the preflight for every target
 (BA:709-711). After target k's child is reaped, its rescan runs the same three,
@@ -792,7 +806,8 @@ deferred-extension scenarios (BA:1630-1636) belong to later changes.
 
 The proposal's own scenarios are traced by their labels in the deltas'
 requirements: R1, R2, R6, D-N and OQ-29 under the reports; R9 and C3 under the
-classification and "Inspect and diagnose"; R10, R11, D-T and the manifest cap
+classification and "Inspect and diagnose", and the ruling on open question 1
+under the classification; R10, R11, D-T and the manifest cap
 under Git-first resolution; V1 to V4, M3 and M4 under retirement; OQ-10, OQ-16
 and M1 under the JSON and the result; V9 under the evidence model; D-D under
 push; D-R under maintenance.
@@ -829,9 +844,12 @@ push; D-R under maintenance.
   incomplete, never unsafe.
 - [Sixteen rows that an index gate always excludes stop the deferral from
   draining] -> The human text names the case; V5's caveat is before Brett Heap.
-- [`remote-gone` keeps merged worktrees out wherever upstreams are auto-deleted
-  and pruned, and squash-merged branches never prove ancestry] -> Both before
-  Brett Heap (Open Questions); the recommendation text says so.
+- [Squash-merged branches never prove ancestry, so squash-merging
+  repositories select little] -> Before Brett Heap (Open Questions).
+- [A merged worktree whose upstream was deleted is removed on local ancestry
+  alone, with no remote evidence] -> Brett Heap's ruling on open question 1:
+  the branch is kept, so its commits stay reachable from it and from the merge
+  target, and every other gate still applies (D6).
 - [The caps and the Git floor are unverified until tasks 2.1 and 2.2] -> Both
   run before the handoff and edit the deltas if needed.
 - [`doctor` now exits 1 where a probe fails, a worktree is unreadable or `git`
@@ -846,19 +864,21 @@ push; D-R under maintenance.
 
 ## Migration Plan
 
-Users meet four behaviour changes first: plain `project clean` exits 1 when its
+Users meet five behaviour changes first: plain `project clean` exits 1 when its
 report is incomplete; `clean` refuses below Git 2.36; `--worktree P` refuses a
 freshly created merged worktree whose branch has no commit of its own, with the
 remedy "no commit was made on this branch here since it was created; review,
-then git worktree remove yourself"; and a merged worktree whose branch reflog
-keeps no decisive entry (no activity for `gc.reflogExpire`, 90 days by default,
-D10) is refused as `reflog-unavailable` in single mode as well as withheld from
-the batch, with the remedy "the branch's reflog is missing, expired or
-undecidable; review, then git worktree remove yourself". The README's clean
-section states them first.
+then git worktree remove yourself"; a merged worktree whose branch reflog keeps
+no decisive entry (no activity for `gc.reflogExpire`, 90 days by default, D10)
+is refused as `reflog-unavailable` in single mode as well as withheld from the
+batch, with the remedy "the branch's reflog is missing, expired or undecidable;
+review, then git worktree remove yourself"; and `--worktree P` removes a merged
+worktree whose upstream was deleted, as `merged-removable` when its gates pass,
+its branch kept, where `a040790` refuses it as `unpublished` (D6, Brett Heap's
+ruling on open question 1). The README's clean section states them first.
 
 1. Ratification by Brett Heap's word on PR #11 (`tasks.md` 1.6), with the V5
-   deferral and the two open questions before him.
+   deferral and the squash-merge open question before him.
 2. Governance tasks 2.1 (measurement) and 2.2 (the Git floor) run before the
    handoff; any change they force to a cap or the floor is made in the deltas
    first.
@@ -868,10 +888,10 @@ section states them first.
    then.
 4. Feature 004 implements D1 to D19 and the CI floor job (D17), merging `main`
    into its branch as `main` moves and never rebasing.
-5. README: "Clean up Git worktrees" opens with the behaviour changes, then the
-   preview and apply, `--expect-plan`, the gates, the deferral, the narrow
-   guarantee and residual window, the result record and recovery, the
-   `remote-gone` limitation and the advice to close sessions first (D3); "Apply
+5. README: "Clean up Git worktrees" opens with the five behaviour changes, then
+   the preview and apply, `--expect-plan`, the gates, the deferral, the narrow
+   guarantee and residual window, the result record and recovery, and the
+   advice to close sessions first (D3); "Apply
    actions are always explicit and target one branch or worktree" (README:106)
    is corrected; Install (README:17-19) states the floor; the exit-code line
    (README:194-196) gains `clean`'s 1, 143 and 129 and Git's status passing
@@ -904,12 +924,6 @@ downstream.
 Each is before Brett Heap with a recommendation; the deltas implement the
 reading stated, and a different ruling edits the deltas before ratification.
 
-- A merged worktree whose remote branch was deleted reads `remote-gone`, because
-  the ladder tests `remote_present` before ancestry (`project:442` before
-  `:457`), and push refuses it, so no `project` command retires it.
-  Recommendation: a local ancestry proof outranks `remote-gone` for worktree
-  rows, since the MVP never deletes the branch. Until ruled, the packet's ladder
-  stands and the recommendation text says so.
 - Squash-merged branches never put their tip into the target's ancestry
   (BA:195-199). Recommendation: a local patch-equivalence proof (`git cherry` or
   patch IDs against the target) as a follow-on change, not in the MVP.
@@ -917,3 +931,7 @@ reading stated, and a different ruling edits the deltas before ratification.
   removals per run and `deferred-target-cap` for the rest: a departure from a
   packet decision, on the council's survey (about 20 eligible rows in
   Opensoft-Tenant), standing only on Brett Heap's ratification.
+
+Ruled on 2026-10-09: a merged worktree whose remote branch was deleted is
+`merged-removable`, Brett Heap having ruled that a local ancestry proof
+outranks `remote-gone` for worktree rows (D6; `proposal.md` Decisions).
