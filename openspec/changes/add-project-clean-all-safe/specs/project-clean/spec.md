@@ -148,9 +148,9 @@ classification, the ladder or any gate.
 
 #### Scenario: A deleted upstream is remote-gone
 
-- **WHEN** one linked worktree's branch has a configured upstream whose
-  remote-tracking ref was deleted, and another's branch has no upstream
-  configured
+- **WHEN** one linked worktree's branch, not merged into the merge target, has
+  a configured upstream whose remote-tracking ref was deleted, and another's
+  branch has no upstream configured
 - **THEN** the first is classified `remote-gone` and the second `unpublished`,
   and both are preserved, where before this change both read `unpublished`
 
