@@ -264,8 +264,9 @@ builds the shared evidence model the overview reads across many repositories.
      the last surviving entry whose old object is all zeros (a creation by
      any command, `git fetch origin feat:f1` included) or whose message
      begins `branch: Created from` or `branch: Reset to`, and a movement a
-     later entry, or any entry when no anchor survives, whose old and new
-     objects are both not all zeros and differ, a rename's entry being none
+     later entry, or any entry when no anchor survives, whose old object is
+     not all zeros and whose old and new objects differ, a rename's entry
+     being none
      (the lead's R-15); a last
      entry whose new object is not the head is `reflog-unavailable`, tested
      first; a movement passes, so a fast-forward-merged branch at the
@@ -301,8 +302,10 @@ builds the shared evidence model the overview reads across many repositories.
      batch's target limit, "limited to the batch's target limit of M per
      run; re-run to drain the backlog" (scenarios: 17 eligible rows; a
      fast-forward-merged branch; a branch reset by `worktree add -B`; a
-     branch created by `git fetch origin feat:f1` at the target's tip; a
-     missing, an empty, an expired and a rewritten reflog; an unreadable
+     branch created by `git fetch origin feat:f1` at the target's tip and
+     given an upstream by `git branch -u origin/feat f1`, which writes no
+     reflog entry; a missing, an empty, an expired and a rewritten reflog; an
+     unreadable
      one). The
      null-root findings carry no gate code and their remedy in their
      message: `unsupported-layout` "set core.worktree or move the checkout",
@@ -653,10 +656,12 @@ Departures from packet decisions, each citing the decision departed from:
   V2, R-1, R-12 and R-15. It decides from the anchor, the last surviving
   entry whose old object is all zeros, a creation by any command, or whose
   message begins `branch: Created from` or `branch: Reset to`, so a branch
-  created by `git fetch origin feat:f1` at the target's tip, or reset to it
-  by `worktree add -B`, stays unstarted, while a movement (an entry after
-  the anchor whose old and new objects are both not all zeros and differ;
-  a rename's entry is none) passes, so a branch fast-forward merged into the
+  created by `git fetch origin feat:f1` at the target's tip and given an
+  upstream by `git branch -u origin/feat f1` (which writes no reflog entry),
+  or reset to it by `worktree add -B`, stays unstarted, while a movement (an
+  entry after the anchor, or any entry when no anchor survives, whose old
+  object is not all zeros and whose old and new objects differ; a rename's
+  entry is none) passes, so a branch fast-forward merged into the
   target, sitting at its tip, passes. A last entry whose new object is not
   the head, tested first, and a missing, empty, bound-reaching or
   undecidable reflog are

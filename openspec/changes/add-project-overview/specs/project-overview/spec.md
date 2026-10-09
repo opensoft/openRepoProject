@@ -488,10 +488,10 @@ gate checks by one bounded filesystem read of at most 64 KiB, never by a Git
 child. Its anchor SHALL be its last surviving entry whose old object is all
 zeros, a creation written by any command, or whose message begins `branch:
 Created from` or `branch: Reset to`; a movement SHALL be an entry after the
-anchor, or any entry when no anchor survives, whose old and new objects are
-both not all zeros and differ. An entry whose old object is all zeros SHALL
-never be a movement, nor SHALL an entry whose old and new objects are equal,
-as a rename writes. A branch whose last reflog entry's new object
+anchor, or any entry when no anchor survives, whose old object is not all
+zeros and whose old and new objects differ. An entry whose old object is all
+zeros SHALL never be a movement, nor SHALL an entry whose old and new objects
+are equal, as a rename writes. A branch whose last reflog entry's new object
 differs from its current head SHALL be `reflog-unavailable`, this test first;
 otherwise a branch with a movement SHALL pass the gate, its head equal to the
 merge-target object id or not, and a branch whose anchor survives with no
@@ -577,7 +577,7 @@ exclude a suggested worktree.
 - **THEN** it keeps its `merged-removable` finding, which suggests only the read-only form with `suggestion_gate: "unstarted-branch"` and a message ending "no commit was made on this branch here since it was created; review, then git worktree remove yourself"
 - **AND** no `--all-safe` suggestion is given for that repository on its account, and after `git branch -m`, whose entry has equal old and new objects, it is still `unstarted-branch`
 - **AND** a branch with commits of its own, merged into the merge target and then reset to the target's tip by `git worktree add -B <branch> <path> <merge target>` with no commit after it, anchors at that `branch: Reset to` entry and is `unstarted-branch` too, its earlier commits not counting as movement
-- **AND** a branch created by `git fetch origin feat:f1` while `origin/feat` sits at the merge target's tip, then checked out in a linked worktree with no commit, anchors at that fetch entry, whose old object is all zeros, and is `unstarted-branch` too, never passing as a movement
+- **AND** a branch created by `git fetch origin feat:f1` while `origin/feat` sits at the merge target's tip, given an upstream by `git branch -u origin/feat f1`, which writes no reflog entry, then checked out in a linked worktree with no commit, anchors at that fetch entry, whose old object is all zeros, and is `unstarted-branch` too, never passing as a movement
 - **AND** a branch given one commit and then fast-forward merged into the merge target, so that its head equals the target's tip while its reflog records that commit after its anchor, keeps the `--all-safe` suggestion with no gate
 
 #### Scenario: A branch whose reflog cannot decide

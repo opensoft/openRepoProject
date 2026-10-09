@@ -287,17 +287,20 @@ computes:
   filesystem task (D8) reads `logs/refs/heads/<branch>` under `common_dir`,
   each `/` of the branch name a directory level, at most 64 KiB, the bound [G]
   states for the same read. Each line is `<old> <new> <identity> <time>
-  <zone>`, a tab and a message. The anchor is the last surviving entry whose
+  <zone>`, then a tab and the message only when the command wrote one:
+  `git update-ref` without `-m` writes neither, so such a line ends after
+  the time zone and is still an anchor by its all-zeros old object. The
+  anchor is the last surviving entry whose
   old object is all zeros, a creation written by any command (`worktree add
   -b`, `branch` and `checkout -b`, and also `fetch <remote> <ref>:<branch>`,
   `update-ref` and `push .`), or whose message begins `branch: Created from`
   or `branch: Reset to`, the latter written by `worktree add -B`, `branch -f`
   and `checkout -B` on an existing branch; the two are independent
   alternatives, and the lead's R-15 added the all-zeros one. A movement is
-  an entry after the anchor, or any
-  entry when no anchor survives, whose old and new objects are both not all
-  zeros and differ: an entry whose old object is all zeros is never a
-  movement, nor is a rename's entry, old and new objects equal. The tests run
+  an entry after the anchor, or any entry when no anchor survives, whose old
+  object is not all zeros and whose old and new objects differ: an entry
+  whose old object is all zeros is never a movement, nor is a rename's
+  entry, old and new objects equal. The tests run
   in this order: a last entry whose new object differs from the head gives
   `reflog-unavailable`, because the reflog then does not describe the branch;
   otherwise a movement passes the gate, whatever the head, the ancestry
@@ -641,7 +644,8 @@ stays open.
   a branch given one commit and fast-forward merged into the target, a
   branch renamed with `git branch -m`, a merged branch reset to the target's
   tip by `worktree add -B`, a branch created by `git fetch origin feat:f1`
-  at the target's tip, a deleted reflog file and an empty one, one
+  at the target's tip and given an upstream by `git branch -u origin/feat f1`,
+  which writes no reflog entry, a deleted reflog file and an empty one, one
   expired to its rename entry alone, one whose ref was rewritten without a
   reflog entry, and one unreadable for a permission error; none needs a Git
   child to read.
@@ -694,6 +698,11 @@ with `project clean <root> --json` at the same commit, not at `a040790`.
   and so does a branch with no surviving decisive reflog entry, because it
   saw no activity for `gc.reflogExpire` (90 days by default)] -> Fails
   closed with the read-only suggestion and its remedy, as change 1's batch
+  excludes the same rows.
+- [A reflog over 64 KiB (about 300 entries) fails closed as
+  `reflog-unavailable` even when it records movement, because the head test
+  runs first and the bound ends the read] -> Fails closed with the read-only
+  suggestion; the remedy calls the reflog undecidable, as change 1's batch
   excludes the same rows.
 - [A branch created from a remote branch that already had commits, then
   merged elsewhere, reads as unstarted, because nothing moved it here since
