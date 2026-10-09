@@ -13,11 +13,11 @@ duplicate them.
 - [x] 1.3 Clarifications recorded: the six NOTED constraints, N1 to N6, are in `clarifications.md`; verified by `design.md`, which answers each with a named decision.
 - [x] 1.4 Spec delta written: `specs/project-command/spec.md` modifies "Known Triad obstacles are named before the question and refused on a Triad answer", with its eight scenarios, one of them new; verified by `openspec validate fix-parent-obstacle-wording --strict` passing.
 - [x] 1.5 Design written: `design.md`, decisions D1 to D6, with no open question that changes what is built; verified by `openspec status --change fix-parent-obstacle-wording --json` showing every artifact done.
-- [ ] 1.6 Ratified by Brett Heap's word, quoted with its link on PR #15; verified by that quote. No implementation starts before it.
+- [x] 1.6 Ratified by Brett Heap's word "ratify 15" (2026-10-09), quoted with its link on PR #15 (https://github.com/opensoft/openRepoProject/pull/15#issuecomment-6073098640); PR #15 landed by squash as 26a5668ed81251959a233bedb226c32e70f42516; verified by that quote. No implementation started before it.
 
 ## 2. Speckit handoff
 
-- [ ] 2.1 Exactly one Speckit feature owns the implementation: `specs/NNN-<slug>/`, created by `/speckit.specify` after 1.6 from a local main synced to origin/main, where NNN is the next number free that day (`001` and `002` exist, and lane openRepoProject-2's PRs #11 and #12 name `003` and `004`); verified when "Speckit Handoff" below names its feature identifier, branch and repo-relative `tasks.md` path, filled in once.
+- [x] 2.1 Exactly one Speckit feature owns the implementation: `specs/NNN-<slug>/`, created by `/speckit.specify` after 1.6 from a local main synced to origin/main, where NNN is the next number free that day (`001` and `002` exist, and lane openRepoProject-2's PRs #11 and #12 name `003` and `004`); verified when "Speckit Handoff" below names its feature identifier, branch and repo-relative `tasks.md` path, filled in once. Created: feature 003-parent-obstacle-wording on branch 003-parent-obstacle-wording (worktree ../openRepoProject-worktrees/003-parent-obstacle-wording, cut from main at 26a5668; 003 was the next free number on 2026-10-09), spec at specs/003-parent-obstacle-wording/spec.md.
 - [ ] 2.2 `/opsx:apply` is not run until "Speckit Handoff" names exactly one feature; verified by reading that section before the first `/opsx:apply`.
 
 ## 3. Landing and archive readiness
@@ -28,13 +28,13 @@ duplicate them.
 
 ## Speckit Handoff
 
-Implementation is tracked exclusively in one Speckit feature, to be created by
+Implementation is tracked exclusively in one Speckit feature, created by
 `/speckit.specify` after ratification. The feature covers the parent sentence
 and its read (`design.md` D1 and D2) in `project`, the README sentence of D2,
 and the tests of D3, and its spec carries the supersession statement of D4.
 
-- Feature identifier: to be filled in once (`NNN-<slug>`, the next free number when `/speckit.specify` runs)
-- Branch: to be filled in once
-- Tasks: to be filled in once (`specs/NNN-<slug>/tasks.md`)
+- Feature identifier: 003-parent-obstacle-wording
+- Branch: 003-parent-obstacle-wording (worktree ../openRepoProject-worktrees/003-parent-obstacle-wording, cut from main at 26a5668)
+- Tasks: specs/003-parent-obstacle-wording/tasks.md (created by /speckit.tasks)
 
 `/opsx:apply` is not run until this section names exactly one feature.
