@@ -30,7 +30,7 @@ gives the same.
 
 ```bash
 REPO=$PWD; T=$(mktemp -d)
-mkdir -p "$T/wb/config" "$T/wb/devBenches/testBench/scripts" "$T/bin" "$T/home" "$T/realdir"
+mkdir -p "$T/wb/config" "$T/wb/devBenches/testBench/scripts" "$T/bin" "$T/home" "$T/realdir" "$T/projects"
 printf '#!/bin/bash\nmkdir -p "$2/$1"\n' > "$T/wb/devBenches/testBench/scripts/new-test.sh"
 printf '{"benches": {"testBench": {"path": "devBenches/testBench", "project_scripts": [{"name": "test", "script": "scripts/new-test.sh"}]}}}\n' > "$T/wb/config/bench-config.json"
 printf '#!/bin/sh\necho "openRepoShape ran: $*" >&2; exit 1\n' > "$T/bin/openRepoShape"; chmod +x "$T/bin/openRepoShape"
