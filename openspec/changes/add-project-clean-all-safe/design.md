@@ -568,7 +568,11 @@ select N`; above 128, where `--all-safe` itself would be incomplete, it prints
 `--all-safe would be incomplete (inspect-cap)` instead, while its JSON carries
 `selected: null` and a `notes` entry with code `inspect-cap` and `rows`, the
 count of registered worktree rows (R-15); the note does not make the report
-incomplete. It exits 0, 1 or 2 by completeness (R2).
+incomplete. Above 128 the gates still run per inspected row, so `excluded` lists
+every inspected row a gate excludes with its reason as in any report, and only
+the selection step is withheld; `plan_digest` is computed over the document as
+written, null `selected` included, and a report's digest is never consumed by
+`--expect-plan` (R-17). It exits 0, 1 or 2 by completeness (R2).
 
 ### D15. Signals before and during the apply phase (OQ-16, M1)
 

@@ -24,8 +24,12 @@ select, the per-run deferral applied, for a repository of at most 128 worktree
 rows. Above 128, `selected` SHALL be null and the plan's `notes` SHALL carry an
 `inspect-cap` entry with `rows`, the count of registered worktree rows, beside
 the human line saying that `--all-safe` itself would be incomplete with
-`inspect-cap`; that note alone SHALL NOT make the report incomplete.
-`plan_digest` SHALL be computed, and `apply_allowed` SHALL be false. It SHALL
+`inspect-cap`; that note alone SHALL NOT make the report incomplete. Above 128
+the gates SHALL still run for every inspected row, so `excluded` SHALL list
+every inspected row that a gate excludes with its `reason`, as in any report,
+and only the selection step is withheld. `plan_digest` SHALL be computed over
+the document as written, a null `selected` included, and a report's digest SHALL
+never be consumed by `--expect-plan`; `apply_allowed` SHALL be false. It SHALL
 exit 0 when the report is complete, 1 when it is incomplete (`inspect-cap`,
 `inspection-incomplete` or `deadline-exceeded`), and 2 when no report can be
 built, and its human output SHALL say when and why it is incomplete.
