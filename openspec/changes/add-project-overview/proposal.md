@@ -218,7 +218,10 @@ builds the shared evidence model the overview reads across many repositories.
      per-child rule under that deadline, `min(5 s, deadline - now)`, run each
      child in its own process group and stop it with SIGTERM to the group, then
      SIGKILL after 2 s, then reap it within a further 2 s grace or abandon it,
-     its row recorded `probe-timeout`; SHALL run every filesystem call, root
+     its row recorded `probe-timeout`; SHALL pin `-c protocol.allow=never` on
+     every Git child beside [E]'s pins, Git 2.43 having no `GIT_NO_LAZY_FETCH`,
+     so that a lazy fetch in a partial clone fails locally and never reaches
+     the network (R-23); SHALL run every filesystem call, root
      canonicalisation and dedupe, marker and holder checks, manifest reads and
      branch reflog reads (at most 64 KiB each, an unfinished one leaving its
      row unprobed for requirement 7's gate) included, in a bounded daemon
@@ -461,7 +464,8 @@ restate its contract. Change 1 owns:
 - the shared evidence model: the version check, the four repository-wide
   probes memoized per `common_dir`, the combined status probe per worktree row
   and its record bounds, NUL-delimited parsing and path escaping, the child
-  environment, the 1 MiB manifest read, over-cap judged from the file's size
+  environment and pins (R-23 adds `-c protocol.allow=never` there and in
+  requirement 3), the 1 MiB manifest read, over-cap judged from the file's size
   before the read (so `clean` and the overview resolve the same merge
   target), and the bounded runner, not `probe()`, for
   one Git child in its own process group (DI "Probe model and deadline",
@@ -581,18 +585,25 @@ OQ-22 leaves here, are in the absorption subsection below.
 Packet open decisions taken, each citing the packet text that leaves it open:
 
 - **OQ-4, measured costs** (OV:314-319; DI:179-180, DI:189-190,
-  DI:227-228): the spec deltas mark the caps provisional, and the governance
-  `tasks.md` carries the warm and cold-cache measurement, run on a Linux
-  filesystem and never on a Windows drive mounted into WSL2, before the
-  Speckit handoff; it includes the cold time of one 4,096-directory root
-  against the 5 s root bound and `for-each-ref` on one large-ref repository.
+  DI:227-228): the governance `tasks.md` records the warm and cold-cache
+  measurement of 2026-10-09, run on a Linux filesystem and never on a Windows
+  drive mounted into WSL2, and the caps stand as measured: the 32-root,
+  4,096-entry, 128-candidate and 512-row caps take 48.3 s of the 60 s
+  deadline at their worst case. This workstation's default root holds 219
+  candidates, so a default-root run here is incomplete by design, with a
+  `scan-limit` error on `candidates` and 91 omitted, and no cap moves for it.
+  Git 2.43 has no `GIT_NO_LAZY_FETCH`, so a read-only probe in a partial clone
+  could fetch from the network, and R-23 pins `-c protocol.allow=never` on
+  every Git child (requirement 3; design D13).
 - **OQ-6, concurrency** (OV:320-327): four children across distinct
   repositories. If design rejects concurrency, the packet's serial fallback
   of 32 candidates and 128 worktree rows applies (DI:1465-1471).
 - **OQ-7, a per-repository row cap** (OV:328-331): none. A repository with
   more than about 355 worktree rows ends at the deadline, visibly
   incomplete, if children cost the 150 ms margin rate; OQ-4's measurement
-  settles it (DI:219-223, DI:1473-1476).
+  kept it: one repository's children fit about 426 rows at 10,000 index
+  entries (284 with the margin) and about 75 at 100,000, and a repository
+  past that ends incomplete (DI:219-223, DI:1473-1476).
 - **OQ-8, configurable limits** (OV:332): none; the fixed values are reported
   in `limits` and `budget`.
 - **OQ-17, an `attention` alias** (OV:350; DI:1482-1483): no (DI:72-75).
@@ -610,8 +621,9 @@ Packet open decisions taken, each citing the packet text that leaves it open:
 Packet decisions adopted, not open:
 
 - **OQ-5, caps** (OV:35; DI:171-177): 32 roots, 4,096 entries per root, 128
-  candidates and 512 worktree rows, provisional until OQ-4. The record
-  bounds (64 ignored, 4,096 records, 8 samples) are [E]'s shared values.
+  candidates and 512 worktree rows, confirmed by OQ-4's measurement. The
+  record bounds (64 ignored, 4,096 records, 8 samples) are [E]'s shared
+  values.
 - **OQ-9, deadlines** (DI:451-485): 60 s per invocation, 5 s per child and
   per root listing, 2 s from TERM to KILL. The 60 s deadline and the per-root
   listing bound are the overview's own (requirement 3): the full 60 s, with
@@ -956,6 +968,16 @@ carried by change 1's [L] and mirrored here (Capabilities, requirement 6;
 Impact, README; Decisions, departures; Open Questions; requirement 6 and its
 scenario "A merged worktree whose upstream was deleted"; design D12 and Open
 Questions; task 2.2), and it supersedes R-6.
+
+R-23, from the OQ-4 measurement (task 2.1, 2026-10-09), pins
+`-c protocol.allow=never` on every Git child beside [E]'s pins: Git 2.43 has
+no `GIT_NO_LAZY_FETCH`, so a read-only probe in a partial clone could
+otherwise fetch from the network, and with the pin the lazy fetch fails
+locally and the failed probe is recorded `probe-failed`. Change 1's [E]
+carries the same pin (requirement 3; Dependencies; Decisions, OQ-4; design
+D13 and Risks; task 2.1). The same measurement confirmed the caps and found
+this workstation's default root, at 219 candidates, incomplete by design
+(Decisions, OQ-4).
 
 | Finding | Severity | Ruling | Section edited |
 | --- | --- | --- | --- |

@@ -197,14 +197,23 @@ reader's read SHALL never exceed 1 MiB. The ref listing SHALL be parsed as it
 streams, keeping only the local heads, `origin/HEAD`, the remote refs named as
 upstreams and one flag recording whether a remote copy of the merge target
 exists. The status probe and its record bounds SHALL be those that requirement
-defines.
+defines. Every Git child SHALL also run with `-c protocol.allow=never`,
+pinned beside the environment and the status pins that requirement defines
+(`GIT_OPTIONAL_LOCKS=0`, and on a status probe
+`-c core.untrackedCache=false -c core.fsmonitor=false`), because Git 2.43
+has no `GIT_NO_LAZY_FETCH`: without the pin a read-only probe in a partial
+clone could fetch missing objects from the network, and with it that fetch
+fails locally, so the failed probe is recorded as `probe-failed` on its row,
+a failed status probe leaves its worktree `inspection-error`, and no
+network call is made. That requirement carries the same pin.
 
 The caps SHALL be 32 roots, 4,096 entries per root, 128 candidates and 512
-worktree rows across the run, main worktrees included. They are provisional:
-a measurement on a Linux filesystem may lower them before implementation,
-and the values in force are always reported in `limits`. The root, candidate
-and worktree-row caps SHALL apply after canonical sorting, and the entry cap
-in listing order. Each cap that drops work SHALL be reported as a
+worktree rows across the run, main worktrees included. The OQ-4 measurement
+of governance task 2.1, made on a Linux filesystem, confirmed them, and they
+stand as measured; the values in force are always reported in `limits`. The
+root, candidate and worktree-row caps SHALL apply after canonical sorting,
+and the entry cap in listing order. Each cap that drops work SHALL be
+reported as a
 `scan-limit` error naming the cap in `limit` and carrying `omitted: {count,
 exactness}`: `exact` with the count dropped when the whole population was
 enumerated; `lower-bound` with the count known to be dropped when an

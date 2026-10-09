@@ -626,7 +626,8 @@ change 1's commit of the same title. No item stays open.
   zero-mutation snapshot of DI:1177-1183 taken before and after.
 - A counting `git` wrapper first on `PATH` records each child's argv, `-C`
   directory, process group and times, can hold a chosen argv, and asserts
-  that no argv fetches, pulls, pushes or reaches a remote. It serves the
+  that no argv fetches, pulls, pushes or reaches a remote, and that every
+  child's argv carries `-c protocol.allow=never`. It serves the
   probe-count, concurrency, hold, deadline and signal scenarios.
 - In-process tests set the scheduler's concurrency constant to 1 or 4 and
   patch the filesystem task functions to inject a slow `scandir`, `lstat` or
@@ -643,6 +644,14 @@ change 1's commit of the same title. No item stays open.
 - The deadline scenario patches the 60 s deadline and the 5 s budget down
   in-process, keeping their ratio, so the suite stays fast; the full-length
   run belongs to task 2.1's measurement.
+- Pins: every Git child runs with `-c protocol.allow=never` beside the pins
+  [E] defines (`GIT_OPTIONAL_LOCKS=0`, and on a status probe
+  `-c core.untrackedCache=false -c core.fsmonitor=false`), and [E] carries
+  the same pin (R-23). Git 2.43 has no `GIT_NO_LAZY_FETCH`, so a read-only
+  probe in a partial clone could fetch missing objects from the network;
+  with the pin that fetch fails locally, the failed probe is recorded
+  `probe-failed` on its row, a failed status probe leaves its worktree
+  `inspection-error`, and no network call is made.
 - Fixture rewrite: change 1 pins `-c core.fsmonitor=false` and
   `-c core.untrackedCache=false` on every status probe ([E]), so the
   packet's fixtures that hold `git status` with a `core.fsmonitor` hook
@@ -691,13 +700,17 @@ with `project clean <root> --json` at the same commit, not at `a040790`.
 - [A call stuck in the kernel holds process exit] -> Its worker is
   abandoned; exit may wait for it (DI:480-485), and the README says so.
 - [SIGKILL of `project` orphans read-only children] -> Recorded (D1).
-- [The caps do not fit the deadline on a real estate] -> They are marked
-  provisional, and task 2.1 measures warm and cold on a Linux filesystem path
-  and lowers them before the handoff; a run that hits them is incomplete,
-  never silently short.
-- [A Windows drive mounted into WSL2 makes every listing slow] -> Measured
-  as a degraded case only; the README says such roots can truncate on every
-  run.
+- [The caps do not fit the deadline on a real estate] -> Task 2.1 measured
+  warm and cold on a Linux filesystem path on 2026-10-09: the caps' worst case
+  takes 48.3 s of the 60 s deadline, so they stand as measured, and a run
+  that hits one is incomplete, never silently short. The workstation measured
+  holds 219 candidates in its default root, so a default-root run there is
+  incomplete by design, with 91 omitted and no cap moved for it; and Git 2.43
+  has no `GIT_NO_LAZY_FETCH`, so every Git child pins `-c protocol.allow=never`
+  (R-23; D13).
+- [A Windows drive mounted into WSL2 makes every listing slow] -> Not
+  measured, since drvfs was not available on the measuring workstation; the
+  README says such roots can truncate on every run.
 - [Change 1's final text moves a gate, code, cap or probe] -> D12 and task
   2.2; the overview copies no number (N-3, D11).
 - [`target-cap` disagrees with the batch, which sees the index gates the
