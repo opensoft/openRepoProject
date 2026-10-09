@@ -145,19 +145,18 @@ Scope).
   that row by hand. `push` and `delete-branch` change in argument resolution
   (`BA:424-425`) and two refusals (MODIFIED `:39`, `:49`); with either,
   `--apply --json` stays refused with `invalid-arguments`, exit 2.
-- **One mutation seam, `retire_worktree(plan, target)`.** Revalidate; spawn
-  the non-force `git -c status.showUntrackedFiles=normal -c
+- **One mutation seam, `retire_worktree(plan, target)`.** Revalidate; spawn the
+  non-force `git -c status.showUntrackedFiles=normal -c
   core.untrackedCache=false -c core.fsmonitor=false -C <command directory>
-  worktree remove <path>` in its own process group, only while the removal
-  floor remains; wait; reconcile by rescan (`BA:381-411`). Once spawned, the
-  child is never signalled: SIGINT, SIGTERM, SIGHUP and the work deadline
-  wait for it to exit, and only a separate 300 s hard ceiling, for a hung
-  mount, kills its group. The rescan then decides, as after a signal: the
-  target is `removed` when its registry entry and path are gone, and
-  otherwise `unknown` with the note `partially-removed` and the recovery text
-  "inspect, then `git worktree remove --force <path>` by hand"; the reason
-  `removal-ceiling` names the cause in both cases, and the run exits 1
-  (Decisions).
+  worktree remove <path>` in its own process group, only while the removal floor
+  remains; wait; reconcile by rescan (`BA:381-411`). Once spawned, the child is
+  never signalled: SIGINT, SIGTERM, SIGHUP and the work deadline wait for it to
+  exit, and only a separate 300 s hard ceiling, for a hung mount, kills its
+  group. For that child, or one whose exit could not be observed, the rescan
+  decides: the target is `removed` when its registry entry and path are gone,
+  and otherwise `unknown` with the note `partially-removed` and the recovery
+  text "inspect, then `git worktree remove --force <path>` by hand"; the reason
+  `removal-ceiling` names the ceiling cause, and the run exits 1 (Decisions).
 - **Targeted revalidation under a narrow guarantee.** Each target is
   revalidated with at most five Git children, a manifest re-read and a
   `modules` check, never the full report (`BA:677-719`), against recorded
@@ -169,46 +168,48 @@ Scope).
   (`BA:305-325`).
 - **Every target ends reconcilable.** The closed stage enum and its reasons
   (stage table `BA:485-494`, plus `removal-ceiling` and the target note
-  `partially-removed`), a reconciliation record on every `removed`,
-  `refused`, `failed` or `unknown` target, and `removed` only on rescan
-  evidence, never on the exit status alone (`BA:496-526`). The table's
-  `interrupted` and `deadline-exceeded` apply to targets not yet started. A
-  removal in flight when a signal arrives ends by its own exit and the
-  rescan: `removed` when the registry entry and path are gone, otherwise
-  `unknown`, with the `partially-removed` note where either remains (a
-  nonzero exit of its own stays `failed`, as for any spawned target); the
-  run exits per the 130 row, 130, 143 or 129, whenever a signal arrived (M1).
-  A removal ended by the ceiling is decided by the same rescan, with the
-  reason `removal-ceiling`.
-  Exit codes follow `BA:528-550`, Git's status passing through; SIGINT,
-  deadline expiry and exceptions follow `BA:460-483` but for that deferral;
-  SIGTERM and SIGHUP exit 143 and 129, with the SIGINT treatment in the apply
-  phase (Decisions, OQ-16). A registered row with only
-  tracked-file deletions stays `dirty`, the report showing the partial-removal
-  note and recovery text beside, never instead of, the dirty advice.
+  `partially-removed`), a reconciliation record on every `removed`, `refused`,
+  `failed` or `unknown` target, and `removed` only on rescan evidence, never on
+  the exit status alone (`BA:496-526`). The table's `interrupted` and
+  `deadline-exceeded` apply to targets not yet started. A removal child that
+  exits nonzero on its own is `failed` with Git's status, `git-refused` for 128
+  and `git-failed` otherwise, whether or not a signal reached `project`, and one
+  that exits 0 is `removed` only on rescan evidence. Only for a child that
+  `project` killed at the ceiling, or whose exit could not be observed, does the
+  rescan decide between `removed` and `unknown` with the note
+  `partially-removed`; `removal-ceiling` names the ceiling cause. The run exits
+  per the 130 row, 130, 143 or 129, whenever a signal arrived (M1). Exit codes
+  follow `BA:528-550`, Git's status passing through; SIGINT, deadline expiry and
+  exceptions follow `BA:460-483` but for that deferral; SIGTERM and SIGHUP exit
+  143 and 129, with the SIGINT treatment in the apply phase (Decisions, OQ-16).
+  A registered row with only tracked-file deletions stays `dirty`, the report
+  showing the partial-removal note and recovery text beside, never instead of,
+  the dirty advice.
 - **Bounded work.** One monotonic 60 s deadline with a 10 s reconciliation
-  reserve, so a 50 s work deadline; `min(5 s, work_remaining)` per Git child
-  and per filesystem call, a 5 s removal floor, a 2 s TERM-to-KILL grace for
-  probe children and serial probing (`BA:427-458`). The deadline bounds
-  inspection and gates only the start of a removal: a removal child still
-  running at the deadline is waited for, so the run overruns, bounded only by
-  the 300 s hard ceiling, and its reconciliation reserve counts from its exit.
-  A run is therefore bounded by 50 s of work, plus up to 300 s for a removal
-  in flight, plus the 10 s reserve, not "within about 60 s" (`BA:456-458`;
-  M5). `push` and `delete-branch` children, run by `execute`
+  reserve, so a 50 s work deadline; `min(5 s, work_remaining)` per Git child and
+  per filesystem call, a 5 s removal floor, a 2 s TERM-to-KILL grace for probe
+  children and serial probing (`BA:427-458`). The deadline bounds inspection and
+  gates only the start of a removal: a removal child still running at the
+  deadline is waited for, so the run overruns, bounded only by the 300 s hard
+  ceiling, and its reconciliation reserve counts from its exit. A run with no
+  removal in flight therefore ends within 64 s of its start (50 s of work, the
+  10 s reserve, and up to 4 s to stop a probe child: SIGTERM, the 2 s grace,
+  SIGKILL, then a reap wait of up to 2 s), the figure `add-project-overview`
+  states, not "within about 60 s" (`BA:456-458`; M5); a removal in flight adds
+  up to 300 s. `push` and `delete-branch` children, run by `execute`
   (`project:157-162`), stay unbounded as today. Caps of 128 worktree rows (256
   for the plain report, OQ-29) and 16 targets, and ignored-file bounds of 64,
   4,096 and 8 (`BA:721-814`). A cap or deadline hit is an incomplete plan
-  (`inspect-cap`, `inspection-incomplete`, `deadline-exceeded`, with
-  `omitted`) that blocks apply (preview exit 1). When more than 16 rows pass
-  every gate before the two index gates, the first 16 in canonical order go on
-  to those gates and the rest are excluded `deferred-target-cap` with the next
-  command; the plan stays complete, apply is allowed, and re-running drains
-  the backlog 16 at a time, the fresh plan and revalidation unchanged. The
-  `target-cap` refusal is retired; the code survives only as
-  `add-project-overview`'s limiting gate reason (Decisions). Plans and results
-  report `probes` and `operations` as `{estimated, performed}` (`BA:816-830`).
-  The spec deltas mark the caps provisional until measured (Decisions, OQ-4).
+  (`inspect-cap`, `inspection-incomplete`, `deadline-exceeded`, with `omitted`)
+  that blocks apply (preview exit 1). When more than 16 rows pass every gate
+  before the two index gates, the first 16 in canonical order go on to those
+  gates and the rest are excluded `deferred-target-cap` with the next command;
+  the plan stays complete, apply is allowed, and re-running drains the backlog
+  16 at a time, the fresh plan and revalidation unchanged. The `target-cap`
+  refusal is retired; the code survives only as `add-project-overview`'s
+  limiting gate reason (Decisions). Plans and results report `probes` and
+  `operations` as `{estimated, performed}` (`BA:816-830`). The spec deltas mark
+  the caps provisional until measured (Decisions, OQ-4).
 - **Git-first resolution in every `clean` mode.** The read-only report,
   `--json`, `--all-safe` and every `--apply --action` resolve their argument
   by the table at `BA:856-860`: an absolute path must be exactly a main

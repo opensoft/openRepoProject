@@ -390,18 +390,19 @@ files and a `dirty` tree (V1).
 
 The ceiling is 300 s from the spawn, on the monotonic clock: `terminate_group()`
 (SIGTERM, then SIGKILL after 2 s) and a bounded `reap()`, abandoning a child
-stuck in uninterruptible sleep on a hung mount. The rescan then decides, as
-after a signal: the target is `removed` when its registry entry and path are
-gone, and otherwise `unknown` with the note `partially-removed`; its reason is
-`removal-ceiling` either way, and the run exits 1 (D19). 300 s is about two
-hundred times fixture `k`'s 1.27 s, ample even for drvfs at ten times slower; D5
-measures it.
+stuck in uninterruptible sleep on a hung mount. For such a child, or one whose
+exit could not be observed, the rescan decides: `removed` when its registry
+entry and path are gone, otherwise `unknown` with the note `partially-removed`;
+its reason is `removal-ceiling` either way, and the run exits 1 (D19). 300 s is
+about two hundred times fixture `k`'s 1.27 s, ample even for drvfs at ten times
+slower; D5 measures it.
 
-The 10 s reconciliation reserve counts from the child's exit, or from the
-ceiling, each rescan child getting `min(5 s, reserve remaining)`. A run is
-therefore bounded by 50 s of work, plus up to 300 s for a removal in flight,
-plus the 10 s reserve (M5), except while a filesystem call stuck in the kernel
-is outstanding.
+The 10 s reserve counts from the child's exit or the ceiling, each rescan child
+getting `min(5 s, reserve remaining)`. A run with no removal in flight therefore
+ends within 64 s of its start: 50 s of work, the 10 s reserve, and up to 4 s to
+stop a probe child (SIGTERM, the 2 s grace, SIGKILL, a reap wait of up to 2 s),
+the figure the overview states; a removal in flight adds up to 300 s (M5). A
+call stuck in the kernel is the one exception.
 
 ### D10. `unstarted-branch` from the reflog (V2, M3, M4)
 
@@ -508,20 +509,22 @@ question's raising handler, unwinds through the `finally` clauses, which
 terminate and reap every probe group; `main()` prints `Cancelled.` on a
 best-effort basis and returns 130 for SIGINT or end of input, 143 for SIGTERM
 and 129 for SIGHUP, with nothing mutated, returning the status rather than
-re-raising the signal.
+re-raising it.
 
 During it, the handler only records. The seam reads the slot before each
 revalidation and before each spawn; a set slot makes that target and every later
 one `not-attempted` with `interrupted`. A removal already spawned is waited for
-(D9) and its target ends by its own exit and the rescan: `removed` when its
-registry entry and path are gone, `failed` for a nonzero exit of its own,
-otherwise `unknown`, with `partially-removed` where the registry entry or the
-path remains (M1). A SIGINT after the first recorded signal, while a rescan
-runs, abandons the remaining rescans (BA:473-474): the running group is
-terminated, unestablished fields stay null, and the target is `unknown` with
-`reconciliation-incomplete`. Every write of the record is guarded against
-`OSError`, since after SIGHUP the terminal may answer `EIO`. The exit status is
-D19's first matching row: 130, 143 or 129 whenever a signal arrived.
+(D9) and ends by its own exit: nonzero is `failed` with Git's status
+(`git-refused` for 128, `git-failed` otherwise), whether or not a signal reached
+`project`, and 0 is `removed` on rescan evidence, else `unknown` with
+`unconfirmed-removal` (M1); the rescan alone decides, with `partially-removed`,
+only for a child killed at the ceiling or whose exit was not observed (D9). A
+SIGINT after the first recorded signal, while a rescan runs, abandons the
+remaining rescans (BA:473-474): the running group is terminated, unestablished
+fields stay null, and the target is `unknown` with `reconciliation-incomplete`.
+Every write of the record is guarded against `OSError`, since after SIGHUP the
+terminal may answer `EIO`. The exit status is D19's first matching row: 130, 143
+or 129 whenever a signal arrived.
 
 ### D16. Status and doctor: error rows and JSON placement (R6, R7, D-S)
 
@@ -618,18 +621,15 @@ or re-run".
 
 ### D19. Stages, notes and exit codes, as normalised
 
-The stage table is BA:487-494 with V1 and M1 applied: `removed` no longer
-includes "terminated by `project`", since nothing is before the ceiling, but
-gains `removal-ceiling` for a removal the ceiling ended and the rescan proved;
-`unknown` gains `removal-ceiling` and keeps `unconfirmed-removal`,
-`reconciliation-incomplete` and `internal-error`; `interrupted` and
-`deadline-exceeded` are reasons of `not-attempted` only, because a removal in
-flight now ends by its own exit and the rescan. Notes: the plan's
-`merge-target-conflict` and, in single mode, the non-blocking
-`inspection-incomplete`, `inspect-cap` and `deadline-exceeded` (D13); a target's
-`orphaned-directory`, and `partially-removed` when it is `unknown` after its
-removal child ran and its registry entry or path remains; a row's
-`partially-removed` (D4).
+The stage table is BA:487-494 with V1 and M1 applied (D15): `removed` and
+`unknown` gain `removal-ceiling`, `failed` holds whether or not a signal
+arrived, and `interrupted` and `deadline-exceeded` are reasons of
+`not-attempted` only. Notes: the plan's `merge-target-conflict` and, in single
+mode, the non-blocking `inspection-incomplete`, `inspect-cap` and
+`deadline-exceeded` (D13); a target's `orphaned-directory`, and
+`partially-removed` when its child was killed at the ceiling, or its exit could
+not be observed, and the rescan shows its registry entry or path remaining; a
+row's `partially-removed` (D4).
 
 | Exit | First matching row |
 | --- | --- |

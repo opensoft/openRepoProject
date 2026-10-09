@@ -217,11 +217,10 @@ rollback or automatic retry.
 Once a removal child is spawned, `project` SHALL NOT signal it on SIGINT,
 SIGTERM, SIGHUP or the work deadline, and SHALL wait for it to exit. Only a hard
 ceiling 300 s after its spawn SHALL end the wait, by killing the child's process
-group. The rescan SHALL then decide the target as it does after a signal:
-`removed` when its registry entry and path are gone, and otherwise `unknown`
-with the note `partially-removed` and the recovery text "inspect, then `git
-worktree remove --force <path>` by hand"; the reason SHALL be `removal-ceiling`
-in both cases.
+group. The rescan SHALL then decide the target: `removed` when its registry
+entry and path are gone, and otherwise `unknown` with the note
+`partially-removed` and the recovery text "inspect, then `git worktree remove
+--force <path>` by hand"; the reason SHALL be `removal-ceiling` in both cases.
 
 For a removal named by `--worktree P`, the plan's completeness SHALL be the
 repository-wide evidence plus P's own row: another row's `inspection-error`, its
@@ -669,10 +668,12 @@ a removal child SHALL be spawned only while at least the 5 s removal floor of
 the work deadline remains, and otherwise that target and every later one SHALL
 be `not-attempted` with `deadline-exceeded`. A removal child still running at
 the deadline SHALL be waited for, up to its 300 s hard ceiling, and the
-reconciliation reserve SHALL count from its exit. A run SHALL therefore be
-bounded by 50 s of work, plus up to 300 s for a removal in flight, plus the 10 s
-reserve, except while a filesystem call stuck in the kernel is outstanding. Push
-and delete-branch children SHALL stay unbounded, as before this change.
+reconciliation reserve SHALL count from its exit. A run with no removal in
+flight SHALL therefore end within 64 s of its start (50 s of work, the 10 s
+reserve, and up to 4 s to stop and reap a probe child), and a removal in flight
+SHALL add at most 300 s, except while a filesystem call stuck in the kernel is
+outstanding. Push and delete-branch children SHALL stay unbounded, as before
+this change.
 
 The caps, provisional until measured, SHALL be: at most 128 worktree rows in
 `mode: "all-safe"` and `mode: "single"`, and 256 in `mode: "report"`, every
@@ -769,17 +770,18 @@ recompute the full report, and the final rescan at most three.
 The apply phase SHALL begin when the question is answered `yes` or `--yes` is
 accepted. Each selected target SHALL end in one stage with one reason:
 
-- `removed`: the child exited 0, or was killed at the hard ceiling, and the
-  rescan shows its registry entry and its path both absent, with `reconciled`
-  true; reason null, `branch-advanced-after-removal`,
-  `branch-missing-after-removal` or `removal-ceiling`;
+- `removed`: the child exited 0, was killed at the hard ceiling, or ended with
+  an exit that could not be observed, and the rescan shows its registry entry
+  and its path both absent, with `reconciled` true; reason null,
+  `branch-advanced-after-removal`, `branch-missing-after-removal` or
+  `removal-ceiling`;
 - `refused`: revalidation found a difference and nothing was spawned;
   `identity-changed`, `branch-changed`, `state-changed`, `contains-submodule` or
   `hidden-local-state`;
-- `failed`: the child exited nonzero on its own, or could not be spawned;
-  `git-refused` for exit status 128, `git-failed` for any other status (128 plus
-  the signal number when a signal that `project` did not send ended the child),
-  or `spawn-error`;
+- `failed`: the child exited nonzero on its own, whether or not a signal reached
+  `project`, or could not be spawned; `git-refused` for exit status 128,
+  `git-failed` for any other status (128 plus the signal number when a signal
+  that `project` did not send ended the child), or `spawn-error`;
 - `unknown`: a child ran, or an exception interrupted the target, and removal is
   not proven; `unconfirmed-removal`, `reconciliation-incomplete`,
   `internal-error` or `removal-ceiling`;
@@ -787,36 +789,39 @@ accepted. Each selected target SHALL end in one stage with one reason:
   spawning its removal because less than the removal floor remained;
   `batch-stopped`, `interrupted` or `deadline-exceeded`.
 
-`pending` SHALL appear only in the printed plan and progress. Every `removed`,
-`refused`, `failed` or `unknown` target SHALL carry a `reconciliation` object
-(`registry_entry_present`, `path_present`, `branch_present`, `branch_sha`,
-`reconciled`), and a `not-attempted` target SHALL carry null. The child's exit
-status alone SHALL never prove a removal. The rescan SHALL first re-establish
-the repository identity, and where it differs every reconciliation field SHALL
-be null and `reconciled` false. A target's `notes` SHALL list
-`orphaned-directory` when its registry entry is absent and its path present, and
-`partially-removed` when it is `unknown` after its removal child ran and its
-registry entry or its path remains; a `partially-removed` target SHALL show the
-recovery text "inspect, then `git worktree remove --force <path>` by hand".
+A removal child that exits nonzero on its own SHALL be `failed` with Git's
+status, `git-refused` for 128 and `git-failed` otherwise, whether or not a
+signal reached `project`. Only for a child that `project` killed at the ceiling,
+or whose exit could not be observed, SHALL the rescan decide between `removed`
+and `unknown` with the note `partially-removed`; `removal-ceiling` SHALL name
+the ceiling cause. `pending` SHALL appear only in the printed plan and progress.
+Every `removed`, `refused`, `failed` or `unknown` target SHALL carry a
+`reconciliation` object (`registry_entry_present`, `path_present`,
+`branch_present`, `branch_sha`, `reconciled`), and a `not-attempted` target
+SHALL carry null. The child's exit status alone SHALL never prove a removal. The
+rescan SHALL first re-establish the repository identity, and where it differs
+every reconciliation field SHALL be null and `reconciled` false. A target's
+`notes` SHALL list `orphaned-directory` when its registry entry is absent and
+its path present, and `partially-removed` when its removal child was killed at
+the ceiling, or its exit could not be observed, and the rescan shows its
+registry entry or its path remaining; a `partially-removed` target SHALL show
+the recovery text "inspect, then `git worktree remove --force <path>` by hand".
 
 Before the apply phase, SIGINT, SIGTERM or SIGHUP SHALL terminate and reap every
 probe child and exit 130, 143 or 129 with nothing mutated, and end of input at
 the question SHALL exit 130 the same way. During the apply phase, the first of
 those signals received SHALL set the exit status and stop scheduling, so that no
 further probe or removal starts. A removal in flight SHALL be waited for, and
-its target SHALL end by its own exit and the rescan: `removed` when the registry
-entry and path are gone, `failed` for a nonzero exit of its own, and otherwise
-`unknown`, with the note `partially-removed` where the registry entry or the
-path remains. Targets not yet started SHALL be `not-attempted` with
-`interrupted`. `project` SHALL then reconcile within the reserve and print the
-result record; a second SIGINT during reconciliation SHALL abandon the remaining
-rescans, leaving their fields null; after SIGHUP the record SHALL be printed on
-a best-effort basis. An exception while handling a target after the apply phase
-began SHALL make that target `unknown` with `internal-error` and later targets
-`not-attempted`; an unexpected exception before the apply phase SHALL refuse
-with `internal-error` and exit status 2. No `unknown` or `failed` target SHALL
-be retried automatically, and `project` SHALL never force a removal or delete a
-directory itself.
+its target SHALL end by the stage rule above. Targets not yet started SHALL be
+`not-attempted` with `interrupted`. `project` SHALL then reconcile within the
+reserve and print the result record; a second SIGINT during reconciliation SHALL
+abandon the remaining rescans, leaving their fields null; after SIGHUP the
+record SHALL be printed on a best-effort basis. An exception while handling a
+target after the apply phase began SHALL make that target `unknown` with
+`internal-error` and later targets `not-attempted`; an unexpected exception
+before the apply phase SHALL refuse with `internal-error` and exit status 2. No
+`unknown` or `failed` target SHALL be retried automatically, and `project` SHALL
+never force a removal or delete a directory itself.
 
 The exit status SHALL be the first row that matches:
 
@@ -846,9 +851,9 @@ read-only plan, and SHALL name every retained branch.
 - **WHEN** SIGINT arrives while the second of three removals is in flight
 - **THEN** the removal child is not signalled and is waited for; the second
   target is `removed` when the child exits 0 and the rescan shows its registry
-  entry and path gone, and otherwise `unknown` with the note `partially-removed`
-  where its registry entry or path remains; the third is `not-attempted` with
-  `interrupted`; and the exit status is 130
+  entry and path gone, and `failed` with Git's status when the child exits
+  nonzero on its own; the third is `not-attempted` with `interrupted`; and the
+  exit status is 130
 - **AND** SIGTERM in the same place exits 143, and SIGHUP 129
 - **AND** SIGINT or end of input at the confirmation question exits 130 with
   nothing removed
