@@ -251,10 +251,12 @@ builds the shared evidence model the overview reads across many repositories.
      `{name, source, sha}` resolved in [R]'s order, both `origin/` strips
      included.
   6. `Overview reports findings by attention category`: severity SHALL decide
-     the exit, and `--attention` SHALL change only the display; a merged
-     `remote-gone` worktree's message SHALL be [L]'s text, "Merged locally,
-     upstream deleted: not removable by `project` until the open question is
-     ruled; review, then `git worktree remove` yourself".
+     the exit, and `--attention` SHALL change only the display; a worktree
+     whose upstream was deleted SHALL be classified as [L] classifies it,
+     `merged-removable` (or `merged-current`) with that class's finding and
+     suggestion when the merged set shows its ancestry, and `remote-gone`,
+     with the read-only suggestion, only when it does not (Brett Heap's
+     ruling of 2026-10-09; Decisions, departures).
   7. `Overview suggests only gated clean commands`: SHALL suggest argv naming
      `repository.root`, `--all-safe` only behind the gates of [G] it can
      evaluate from its own evidence (`main-worktree`,
@@ -419,9 +421,12 @@ renders no nested estate or leg; `project-command`, `project-clean` and
   to check one project (`project overview --root <dir>`, replacing PR #2's
   doctor health); that `git fetch` refreshes merge evidence; that roots on a
   Windows drive mounted into WSL2 can truncate on every run; and that a
-  `remote-gone` worktree is not yet removable by `project clean`, whose
-  suggested `project clean <root>` only reviews it.
-- **`remote-gone` suggestions are review-only by design** (Open Questions).
+  merged worktree whose upstream was deleted gets the gated `--all-safe`
+  suggestion like any merged worktree, while an unmerged `remote-gone` one
+  gets only the read-only `project clean <root>`, which reviews it.
+- **A merged worktree whose upstream was deleted is housekeeping** (Brett
+  Heap's ruling of 2026-10-09; Decisions, departures); only an unmerged
+  `remote-gone` worktree's suggestion is review-only, by design.
 - **`tests/test_project.py`**: temporary fixtures only, network disabled,
   zero-mutation snapshots, covering the packet's 31 MVP scenarios
   (DI:1175-1446), the default-branch findings, the carve-out and a manifest
@@ -708,6 +713,22 @@ Departures from packet decisions, each citing the decision departed from:
   only): the SIGINT treatment, exits 143 and 129, so no Git child outlives
   the overview in its own session; after SIGHUP printing can fail with EIO,
   so `Cancelled.` is printed on a best-effort basis.
+- **Local ancestry outranks a deleted upstream** (open question 1, ruled
+  "yes, local ancestry proof outranks remote-gone, apply it" (Brett Heap,
+  2026-10-09, to lane openRepoProject-2); DI:596-598, the ladder's "same
+  test order" and "same recommendation text", and DI:1124-1129, where a
+  deleted upstream is `remote-gone` and "nothing becomes removable"): the
+  overview mirrors [L], which tests local ancestry before the `remote-gone`
+  rung for worktree rows, so a worktree whose upstream was deleted and whose
+  tip the merged set shows to be an ancestor of the merge target is
+  `merged-removable` (or `merged-current`), with the housekeeping finding and
+  the gated `--all-safe` suggestion, and only an unmerged one is
+  `remote-gone`, with the read-only suggestion (requirement 6). The ruling
+  supersedes R-6: the interim message that called such a worktree not
+  removable, which R-6 had requirement 6 quote, is withdrawn. Default-branch
+  health is untouched: its `remote-gone` finding on a `protected-default`
+  checkout (requirement 10; design D4; OQ-20) reads the checkout's own
+  upstream, not the ladder.
 
 ### Absorbing Doctor Repository Health from the Closed PR #2
 
@@ -845,20 +866,13 @@ merges, these corrections bind this change and the spec phase (OQ-3):
 
 ## Open Questions
 
-- **`remote-gone` before a merge proof.** A merged worktree whose remote branch
-  was deleted classifies `remote-gone`, because the ladder tests
-  `remote_present` before merge state (`project:442` before `:457`). Under
-  GitHub's head-branch auto-delete with `fetch.prune` that is the usual state
-  of a merged branch, so the overview's `--all-safe` suggestion never fires for
-  the commonest merged case. The question is before Brett, with lane
-  openRepoProject-3's recommendation that a local ancestry proof outrank
-  `remote-gone` for worktree rows (the MVP never deletes the branch). Until he
-  rules, the overview follows the packet's ladder; a merged `remote-gone`
-  finding carries [L]'s recommendation, "Merged locally, upstream deleted: not
-  removable by `project` until the open question is ruled; review, then
-  `git worktree remove` yourself", spawning no extra probe, and its suggestion
-  is review-only (Impact). Council PA-1's advice not to ratify before Brett
-  rules is recorded for him, not decided.
+None is open here. The one this proposal carried, `remote-gone` before a
+merge proof, was ruled by Brett Heap on 2026-10-09: a local ancestry proof
+outranks `remote-gone` for worktree rows, so the overview's `--all-safe`
+suggestion now reaches a merged worktree whose upstream was deleted (Decisions,
+departures), and council PA-1's advice not to ratify before he ruled is met.
+Change 1's open question on squash-merged branches stays open there, and the
+overview would inherit its ruling through [L].
 
 ## Questions Resolved by the Alignment Review
 
@@ -931,7 +945,14 @@ records movement, takes change 1's movement wording, an entry whose old and
 new objects are non-zero and differ (requirement 7; design D5; Decisions, the
 reflog gates), and has design D5's reflog line format say the tab and the
 message are present only when the command wrote one.
-R-10's remedy wording is superseded by R-12, R-14 and R-15.
+R-10's remedy wording is superseded by R-12, R-14 and R-15. Brett Heap's
+ruling of 2026-10-09 on open question 1, relayed by lane openRepoProject-3
+and given to lane openRepoProject-2 in his own words (Decisions, departures),
+that a local ancestry proof outranks `remote-gone` for worktree rows, is
+carried by change 1's [L] and mirrored here (Capabilities, requirement 6;
+Impact, README; Decisions, departures; Open Questions; requirement 6 and its
+scenario "A merged worktree whose upstream was deleted"; design D12 and Open
+Questions; task 2.2), and it supersedes R-6.
 
 | Finding | Severity | Ruling | Section edited |
 | --- | --- | --- | --- |

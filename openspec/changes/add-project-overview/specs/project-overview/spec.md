@@ -434,15 +434,15 @@ and to `Overview reports default-branch health`:
 
 A finding that reports a worktree's classification SHALL carry the ladder's
 recommendation text as its `message`, and any other finding a fixed sentence. A
-`remote-gone` worktree whose branch tip the merged set shows to be an ancestor
-of the merge target SHALL carry, as
-`Clean classifies preservation and cleanup actions` writes it, the message
-"Merged locally, upstream deleted: not removable by `project` until the open
-question is ruled; review, then `git worktree remove` yourself", spawning no
-further probe; any other `remote-gone` worktree SHALL carry the ladder's own
-recommendation; and the suggestion of either SHALL be the read-only command
-only. `protected-default` SHALL produce no finding by itself, apart from those
-of `Overview reports default-branch health`. Row errors and scan errors SHALL
+worktree whose upstream's remote-tracking ref is gone and whose branch tip the
+merged set shows to be an ancestor of the merge target SHALL be classified as
+`Clean classifies preservation and cleanup actions` classifies it,
+`merged-removable` or `merged-current`, with that class's finding, message and
+suggestion, spawning no further probe; only such a worktree whose tip is not an
+ancestor SHALL be `remote-gone`, with the ladder's own recommendation and the
+read-only command as its only suggestion. `protected-default` SHALL produce no
+finding by itself, apart from those of
+`Overview reports default-branch health`. Row errors and scan errors SHALL
 NOT be findings, and SHALL display in the repair category.
 
 A finding of severity `error` SHALL make the exit status 1; `warning` SHALL do
@@ -459,9 +459,9 @@ status; `--attention --json` SHALL print the full envelope.
 - **AND** without the repair project every run exits 0, and with `--strict` every run exits 1 because of the preserve warning
 
 #### Scenario: A merged worktree whose upstream was deleted
-- **WHEN** a clean linked worktree's branch is an ancestor of the merge target and its upstream branch was deleted and pruned
-- **THEN** it is classified `remote-gone` with a preserve warning whose message reads "Merged locally, upstream deleted: not removable by `project` until the open question is ruled; review, then `git worktree remove` yourself", and suggests only the read-only `project clean <root>`
-- **AND** no Git child beyond the shared probe set ran for it, and a `remote-gone` worktree whose tip is not an ancestor carries the ladder's own `remote-gone` recommendation instead
+- **WHEN** a clean linked worktree's branch, with a commit of its own, is an ancestor of the merge target and its upstream branch was deleted and pruned
+- **THEN** it is classified `merged-removable`, as `project clean <root> --json` classifies it, with the housekeeping finding whose message is the ladder's `merged-removable` recommendation, and suggests `project clean <root> --all-safe`
+- **AND** no Git child beyond the shared probe set ran for it, and a worktree whose upstream branch was deleted and pruned and whose tip is not an ancestor is classified `remote-gone`, with a preserve warning carrying the ladder's own `remote-gone` recommendation, and suggests only the read-only `project clean <root>`
 
 ### Requirement: Overview suggests only gated clean commands
 A suggestion SHALL be an argv array, exactly `["project", "clean", "<root>",

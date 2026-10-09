@@ -611,7 +611,13 @@ report-mode text (`selected: null` above 128 rows, R-15; R-17 added only what
 `excluded` and `plan_digest` hold in that band) changes nothing the overview
 reads; [E]'s new sentence on where repository-wide probes run when `root` is
 null (R-13 (a)) agrees with requirement 2 and D3; every other item is
-confirmed. The 64 s run bound agrees (D13). No item stays open.
+confirmed. The 64 s run bound agrees (D13). Brett Heap's ruling of 2026-10-09
+on open question 1 then moved [L]: local ancestry is tested before the
+`remote-gone` rung for worktree rows, and the merged `remote-gone` text is
+withdrawn; requirement 6, its scenario, the proposal and this design mirror it
+in the commit titled
+'Apply Brett Heap's ruling: local ancestry proof outranks remote-gone', against
+change 1's commit of the same title. No item stays open.
 
 ### D13. Test seams, fixtures and the scenario map
 
@@ -745,19 +751,16 @@ subcommand depends on the overview.
 
 ## Open Questions
 
-Neither changes this change's specs, the approach or the task list: each
-would change change 1's ladder or gates, which the overview cites by name.
+The question left does not change this change's specs, the approach or the
+task list: it would change change 1's ladder or gates, which the overview cites
+by name.
 
-- `remote-gone` versus local ancestry. A merged worktree whose upstream was
-  deleted classifies `remote-gone`, so under head-branch auto-delete with
-  `fetch.prune` the overview never suggests `--all-safe` for the commonest
-  merged case. Lane openRepoProject-3 recommends that a local ancestry proof
-  outrank `remote-gone` for worktree rows; until Brett Heap rules, the
-  overview follows the ladder, its message is change 1's merged
-  `remote-gone` recommendation where the merged set shows the ancestry, and
-  its suggestion only reviews.
 - Squash merges. A squash merge never puts the branch tip into the target's
   ancestry, so in squash-merging repositories few worktrees are
   `merged-removable` and housekeeping findings are rare. Change 1 recommends
   a local patch-equivalence proof as a follow-on change, which the overview
   would inherit through [L].
+
+Ruled on 2026-10-09: Brett Heap's word that a local ancestry proof outranks
+`remote-gone` for worktree rows closed the `remote-gone` question; change 1's
+[L] carries it, and requirement 6 mirrors it (D12; `proposal.md` Decisions).
