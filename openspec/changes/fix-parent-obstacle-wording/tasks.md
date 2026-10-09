@@ -9,7 +9,7 @@ duplicate them.
 ## 1. Governance record
 
 - [x] 1.1 Proposal aligned: the alignment review's sixteen fixes (stack architect and QA lead) are applied to `proposal.md` (`6a93c8f`); verified by the alignment review comment on PR #15 (issuecomment-6072132040).
-- [x] 1.2 Council resolved: thirteen concerns (product 4, architect 4, adversary 5); the VALID verdicts are applied to `proposal.md` and the NOTED ones recorded, none dismissed outright (`d13e419`); verified by that commit and by the council results comment on PR #15, which the lead posts.
+- [x] 1.2 Council resolved: thirteen concerns (product 4, architect 4, adversary 5); the VALID verdicts are applied to `proposal.md` and the NOTED ones recorded, none dismissed outright (`d13e419`); verified by that commit and by the council results comment on PR #15 (issuecomment-6072814758).
 - [x] 1.3 Clarifications recorded: the six NOTED constraints, N1 to N6, are in `clarifications.md`; verified by `design.md`, which answers each with a named decision.
 - [x] 1.4 Spec delta written: `specs/project-command/spec.md` modifies "Known Triad obstacles are named before the question and refused on a Triad answer", with its eight scenarios, one of them new; verified by `openspec validate fix-parent-obstacle-wording --strict` passing.
 - [x] 1.5 Design written: `design.md`, decisions D1 to D6, with no open question that changes what is built; verified by `openspec status --change fix-parent-obstacle-wording --json` showing every artifact done.
