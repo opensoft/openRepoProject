@@ -547,7 +547,7 @@ Consequences:
   against the `main` of that day.
 - Change 1 is ratified first. This change's spec deltas are written against
   change 1's ratified text, and a gate, code or probe that moves in change 1's
-  review re-aligns this proposal before its own ratification.
+  review re-aligns this proposal before the merge that ratifies it.
 - Speckit feature 005 is created after feature 004 merges, because the
   overview runs on the probes 004 builds; this change archives after change 1.
 - How the ladder becomes reusable is change 1's decision (OQ-28, DI:599-600);
@@ -583,7 +583,8 @@ change to `project clean` or `project doctor` (change 1's, OQ-22).
 
 ## Decisions Taken by This Proposal
 
-Each is a proposal decision, open to ratification. OQ numbers are this lane's
+Each is a proposal decision, ratified with the merge of PR #12; the departures
+from packet decisions are ratified as recorded. OQ numbers are this lane's
 list for both changes: OQ-1 to OQ-3, OQ-20 to OQ-22 and OQ-29 are lane
 additions; OQ-23 and OQ-24 are departures from packet decisions
 (BA:1241-1245; BA:949-953 with HO:210) and OQ-28 a packet open decision
@@ -810,7 +811,7 @@ Not carried: `09af8c8`'s remote merge target and pull-request lookup, which
 waits for a remote-queries proposal (PR #2 harvest table); remote evidence
 never proves cleanup (SY:219-226).
 
-Decisions, each open to ratification:
+Decisions, each ratified with the merge of PR #12:
 
 - **OQ-19, the extra `dirty` finding** (packet open decision, OV:354-355;
   DI:1480-1481; DI:626-630): kept. A dirty checkout on the merge target
