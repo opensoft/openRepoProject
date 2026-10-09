@@ -22,11 +22,11 @@ duplicate them.
 
 ## 3. Landing and archive readiness
 
-- [ ] 3.1 The realization PR is merged with green checks on all four CI jobs (`ubuntu-latest` and `macos-latest`, Python 3.10 and 3.12) and closes issue #3; verified by citing its merge sha here, from `gh pr view <number> --json mergeCommit,statusCheckRollup`.
-- [ ] 3.2 The merge sha is posted on issue #3 for codeXfactory-5's bookkeeping, with the link to the workBenches issue of 3.3 and the statement that `onp` and `new-project.sh` offer nothing until workBenches moves its pin; verified by the comment's URL.
-- [ ] 3.3 Exactly one issue is opened on opensoft/workBenches, addressed to lane `project-command`, carrying the merge sha, the sha256 of `project` at that sha, and the optional "already offered" follow-up; verified by its URL, and by no file in that lane's claim having been edited.
+- [x] 3.1 The realization PR is merged with green checks on all four CI jobs (`ubuntu-latest` and `macos-latest`, Python 3.10 and 3.12) and closes issue #3; verified by citing its merge sha here, from `gh pr view <number> --json mergeCommit,statusCheckRollup`. Met: PR #8 merged as d7f6b0eeebf3370be13de87193f397592ebd73a9 (squash, 2026-10-08T23:43:49Z, on Brett Heap's word "ratify 8"); statusCheckRollup 9 SUCCESS, 1 SKIPPED (Sourcery); issue #3 closed by the merge.
+- [x] 3.2 The merge sha is posted on issue #3 for codeXfactory-5's bookkeeping, with the link to the workBenches issue of 3.3 and the statement that `onp` and `new-project.sh` offer nothing until workBenches moves its pin; verified by the comment's URL. Met: https://github.com/opensoft/openRepoProject/issues/3#issuecomment-6071275955.
+- [x] 3.3 Exactly one issue is opened on opensoft/workBenches, addressed to lane `project-command`, carrying the merge sha, the sha256 of `project` at that sha, and the optional "already offered" follow-up; verified by its URL, and by no file in that lane's claim having been edited. Met: https://github.com/opensoft/workBenches/issues/145 (merge sha d7f6b0e; sha256 of project at that sha 91785027c0fbc570caae7c675dfcc8ca33d8fe0f980420a0e04357a73aa757a7; the "already offered" follow-up described as optional; no file of that lane's claim edited).
 - [ ] 3.4 openxFactory's task 5.6 box is checked by codeXfactory-5, never by this lane; verified by reading openxFactory's record of the tick, which cites the evidence of 3.1 to 3.3.
-- [ ] 3.5 The change is archived with `/opsx:archive` only after 3.1 to 3.3; verified by `openspec validate --all --strict` passing after the archive.
+- [x] 3.5 The change is archived with `/opsx:archive` only after 3.1 to 3.3; verified by `openspec validate --all --strict` passing after the archive. Met: archived in this pull request after 3.1 to 3.3; openspec validate --all --strict passes after the archive (see the PR body).
 
 ## Speckit Handoff
 
