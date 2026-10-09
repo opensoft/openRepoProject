@@ -284,11 +284,11 @@ builds the shared evidence model the overview reads across many repositories.
      in the finding `message` and the human text, naming the batch's row cap
      and target limit and taking their numbers at run time from the shared
      constants, never from a clean plan and never copied:
-     `inspection-incomplete` "repair the
-     inspection-error rows first"; `inspect-cap` "N rows exceed the batch's
-     row cap of M; remove explicitly" or "N rows exceed the report's row cap
-     of M; the report would be incomplete", the JSON finding carrying N in
-     `suggestion_gate_rows` and M in `limits`; `scan-limit` and
+     `inspection-incomplete` "repair the inspection-error rows, or re-run
+     for the rows left unprobed, first"; `inspect-cap` "N rows exceed the
+     batch's row cap of M; remove explicitly" or "N rows exceed the report's
+     row cap of M; the report would be incomplete", the JSON finding carrying
+     N in `suggestion_gate_rows` and M in `limits`; `scan-limit` and
      `deadline-exceeded` "re-run with --root <repository parent>";
      `unstarted-branch` "no commit was made on this branch here since it
      was created; review, then git worktree remove yourself";
@@ -301,6 +301,7 @@ builds the shared evidence model the overview reads across many repositories.
      batch's target limit, "limited to the batch's target limit of M per
      run; re-run to drain the backlog" (scenarios: 17 eligible rows; a
      fast-forward-merged branch; a branch reset by `worktree add -B`; a
+     branch created by `git fetch origin feat:f1` at the target's tip; a
      missing, an empty, an expired and a rewritten reflog; an unreadable
      one). The
      null-root findings carry no gate code and their remedy in their
@@ -688,9 +689,9 @@ Departures from packet decisions, each citing the decision departed from:
   valid path holding those four characters (the lead's R-9, on Codex's
   finding on PR #12).
 - **Escaping by general category** (the packet's single escape form,
-  `\uXXXX` for every escaped code point, HO:301-306 and SY:247-250, the
-  decision the lead's R-14 calls decision 11; and DI:910-916's enumerated
-  set of control, bidirectional and format characters): every code point of
+  `\uXXXX` for every escaped code point, HO:301-306 and SY:247-250; and
+  DI:910-916's enumerated set of control, bidirectional and format
+  characters): every code point of
   Unicode general category Cc, Cf, Zl or Zp, as the running interpreter's
   `unicodedata.category` reports it, is escaped in JSON and puts its path in
   the `$'...'` form in human output, the packet's enumerated characters
@@ -897,7 +898,7 @@ layout findings), R-3 (What Changes; requirements 7 and 8; Decisions,
 #12 (requirement 8; What Changes; Decisions, path validity flags).
 
 The re-verification of `996a181` and lane 3's read of it are applied against
-change 1's final fix at `d6aaa9a`: R-12's reflog anchor and one outcome rule
+change 1's head at `4f2162b`: R-12's reflog anchor and one outcome rule
 (requirements 3 and 7; Capabilities; Decisions, the reflog gates) and its
 remedy texts, as R-14 amends the `unstarted-branch` one (requirement 7;
 Capabilities); R-13 (b) (the three scenarios whose branches have a commit
@@ -906,13 +907,18 @@ report inspects; design Context; task 2.2); and R-14's M-A (Decisions,
 escaping by general category), M-B (requirement 7; design Risks), M-C
 (requirement 2; Capabilities; design D3 and D7) and LOW items (a scenario
 for a common directory that is not valid UTF-8; the `limits` key `targets`,
-requirement 8). R-15, lane 3's read of change 1 at `6792e06`, amends R-12
-ahead of change 1's text: an entry whose old object is all zeros is an
-anchor, written by any command, and never a movement, and the
+requirement 8). R-15, lane 3's read of change 1 at `6792e06`, amends R-12,
+and change 1 carries it at `4f2162b`: an entry whose old object is all zeros
+is an anchor, written by any command, and never a movement, and the
 `reflog-unavailable` remedy reads "the branch's reflog is missing, expired
 or undecidable; review, then git worktree remove yourself" (requirement 7;
-Capabilities; Decisions, the reflog gates; design D5 and D13). R-10's remedy
-wording is superseded by R-12, R-14 and R-15.
+Capabilities; Decisions, the reflog gates; design D5 and D13). R-16, on
+this change's addition at `fa9f0be` (a reflog read that times out leaves
+its row unprobed), fits the `inspection-incomplete` remedy to both causes,
+an `inspection-error` row and a row left unprobed (requirement 7's gate
+table and requirement 12's scenario; Capabilities), and has the escaping
+departure cite the packet's texts, not a numbered decision (Decisions).
+R-10's remedy wording is superseded by R-12, R-14 and R-15.
 
 | Finding | Severity | Ruling | Section edited |
 | --- | --- | --- | --- |

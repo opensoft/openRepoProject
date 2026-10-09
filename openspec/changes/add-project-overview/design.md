@@ -282,18 +282,19 @@ computes:
   (the registry's `locked`). The first failure replaces the housekeeping
   finding with its own, and the classification stays (DI:661-673);
 - `unstarted-branch` and `reflog-unavailable` from the reflog, mirroring [G]'s
-  gate at `d6aaa9a` (change 1's D10; the lead's amended V2, R-1 and R-12; P6-5
-  for the finding): for each remaining `merged-removable` row, one bounded
+  gate at `4f2162b` (change 1's D10; the lead's amended V2, R-1, R-12 and R-15;
+  P6-5 for the finding): for each remaining `merged-removable` row, one bounded
   filesystem task (D8) reads `logs/refs/heads/<branch>` under `common_dir`,
   each `/` of the branch name a directory level, at most 64 KiB, the bound [G]
   states for the same read. Each line is `<old> <new> <identity> <time>
   <zone>`, a tab and a message. The anchor is the last surviving entry whose
   old object is all zeros, a creation written by any command (`worktree add
-  -b`, `branch` and `checkout -b`, whose message begins `branch: Created
-  from`, and also `fetch <remote> <ref>:<branch>`, `update-ref` and `push
-  .`), or whose message begins `branch: Reset to` (`worktree add -B`,
-  `branch -f` and `checkout -B` on an existing branch); the lead's R-15
-  added the all-zeros test. A movement is an entry after the anchor, or any
+  -b`, `branch` and `checkout -b`, and also `fetch <remote> <ref>:<branch>`,
+  `update-ref` and `push .`), or whose message begins `branch: Created from`
+  or `branch: Reset to`, the latter written by `worktree add -B`, `branch -f`
+  and `checkout -B` on an existing branch; the two are independent
+  alternatives, and the lead's R-15 added the all-zeros one. A movement is
+  an entry after the anchor, or any
   entry when no anchor survives, whose old and new objects are both not all
   zeros and differ: an entry whose old object is all zeros is never a
   movement, nor is a rename's entry, old and new objects equal. The tests run
@@ -594,14 +595,16 @@ text, [G]'s gates, caps and refusals, [R]'s resolution order and [P]'s path
 rules, against change 1's spec deltas and design at `0b3c33d`, and applied the
 lead's amended V2 and R-1 to R-9 to this change's deltas, D3, D5, D8, D11 and
 D13 (commit `996a181`). It then re-read the same items against change 1's
-final fix at `d6aaa9a` and applied R-12 (the reflog anchor, its one outcome
+head at `4f2162b` and applied R-12 (the reflog anchor, its one outcome
 rule and the remedy texts), R-13 (b) and R-14 to the deltas, Context, D3, D5,
 D7, D8, D11, D13 and Risks. [G]'s reflog gate and its two remedies moved and
-are mirrored, with R-15's all-zeros anchor and `reflog-unavailable` remedy
-applied ahead of change 1's text, which states them in its own next fix
-commit; [E]'s new sentence on where repository-wide probes run when
-`root` is null (R-13 (a)) agrees with requirement 2 and D3; every other item
-is confirmed. The 64 s run bound agrees (D13). No item stays open.
+are mirrored, and change 1 carries R-15's all-zeros anchor and its
+`reflog-unavailable` remedy at `4f2162b`, as this change's text states them;
+R-17's report-mode text there (`selected: null` above 128 rows) changes
+nothing the overview reads; [E]'s new sentence on where repository-wide
+probes run when `root` is null (R-13 (a)) agrees with requirement 2 and D3;
+every other item is confirmed. The 64 s run bound agrees (D13). No item
+stays open.
 
 ### D13. Test seams, fixtures and the scenario map
 
@@ -655,7 +658,7 @@ added ones come from the council, the lead's rulings or this design.
 | 4 isolation | one helper failure | no YAML library |
 | 5 classifier | the six merge targets; every protected classifier | none |
 | 6 attention | attention filter | merged worktree with its upstream deleted |
-| 7 suggestions | gated merged worktrees; canonical identity | 17 eligible rows; two inspect-cap bands; unprobed row; unstarted branch, with the reset and fast-forward-merged branches; reflog cannot decide |
+| 7 suggestions | gated merged worktrees; canonical identity | 17 eligible rows; two inspect-cap bands; unprobed row; unstarted branch, with the reset, fetch-created and fast-forward-merged branches; reflog cannot decide |
 | 8 JSON | control characters; non-UTF-8 path | non-UTF-8 common directory; argument error; envelope fields; internal error |
 | 9 read-only | local and read-only | none |
 | 10 default branch | none | pushed without `-u`; no remote; dirty and ahead; failed probe |

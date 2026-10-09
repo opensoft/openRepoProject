@@ -532,7 +532,7 @@ defines, as `limits` reports them, never from a clean plan:
 | --- | --- | --- |
 | `target-not-repository-root` | withholds every clean suggestion (a bare repository) | run project clean from the main worktree root |
 | `unsupported-path-bytes` | withholds every clean suggestion (a root or common directory that is not valid UTF-8) | rename the path to valid UTF-8 |
-| `inspection-incomplete` | withholds `--all-safe` (an `inspection-error` row, or a row whose reflog read did not finish) | repair the inspection-error rows first |
+| `inspection-incomplete` | withholds `--all-safe` (an `inspection-error` row, or a row whose reflog read did not finish) | repair the inspection-error rows, or re-run for the rows left unprobed, first |
 | `inspect-cap` | withholds `--all-safe` over the batch's row cap | N rows exceed the batch's row cap of M; remove explicitly |
 | `inspect-cap` | limits the read-only form over the report's row cap | N rows exceed the report's row cap of M; the report would be incomplete |
 | `scan-limit` | withholds `--all-safe` for a row left unprobed by a cap | re-run with --root <repository parent> |
@@ -808,7 +808,7 @@ error before listing.
 
 #### Scenario: A gated suggestion
 - **WHEN** a repository holds a gate-passing `merged-removable` worktree and another worktree whose status probe failed
-- **THEN** the row's `next` line carries `project clean <root>` followed by `(withheld: repair the inspection-error rows first)`
+- **THEN** the row's `next` line carries `project clean <root>` followed by `(withheld: repair the inspection-error rows, or re-run for the rows left unprobed, first)`
 - **AND** the finding lines show the repair finding and the housekeeping finding with their worktree paths
 
 #### Scenario: The scanning notice
