@@ -480,8 +480,10 @@ restate its contract. Change 1 owns:
   (SY:51); this change applies that check to `project overview`, which
   refuses before any root is listed (requirement 11);
 - every modification to `project-clean`, `project-clean-review-safety` and
-  `project-command`, among them the ladder's names and order, the
-  deleted-upstream `remote-gone` change and Git-first resolution of
+  `project-command`, among them [L]'s keeping of the ladder's names and
+  order with one ancestry exception (a row whose upstream's remote-tracking
+  ref is gone is tested for local ancestry before the `remote-gone` rung),
+  the deleted-upstream `remote-gone` change and Git-first resolution of
   `project clean <path>` (DI "Baseline behavior changes", DI:1100-1173; BA
   "Command directory and repository resolution", BA:834-878), and change 1's
   R1: at `a040790` a failed `git status` in a repository root raises
