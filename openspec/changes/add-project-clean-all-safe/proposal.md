@@ -74,9 +74,12 @@ Scope).
 ## What Changes
 
 - **Behaviour changes users will notice.** Plain `project clean` exits 1 when
-  its report is incomplete, where today it exits 0 whenever it prints (R2),
-  and `clean` refuses below Git 2.36 with `git-too-old`, exit 2 (R6). The
-  README's clean section says so first.
+  its report is incomplete, where today it exits 0 whenever it prints (R2);
+  `clean` refuses below Git 2.36 with `git-too-old`, exit 2 (R6); and
+  `--apply --action remove --worktree P` refuses a freshly created merged
+  worktree whose branch has no commit of its own (`target-excluded`, reason
+  `unstarted-branch`), where `a040790` removes it (M4). The README's clean
+  section says so first.
 - **`project clean <root> --all-safe` previews a batch.** It plans every
   eligible linked worktree of one resolved repository: `selected` and
   `excluded`, each exclusion with one reason in the fixed gate order
@@ -100,12 +103,16 @@ Scope).
   `ignored-local-files` exclusion shows its bounded count and the first
   ignored path already probed (`ignored_samples`, `BA:804-806`). Apply asks
   one default-No question naming the count, such as `Remove 7 worktrees,
-  keeping 7 branches? [y/N]` (`y` or `yes` accepts, all else `cancelled`),
-  replacing `Type yes to run this plan:` (`project:153`). Success prints
+  keeping 7 branches? [yes/N]`; `yes` stays the only accepting answer and
+  anything else is `cancelled` (`BA:354`, `BA:1009`; M2). It replaces `Type
+  yes to run this plan:` (`project:153`) for `clean`'s removal apply only
+  (`--all-safe` and `--action remove`); `confirm()` as `new`, `update` and
+  `clean`'s `push` and `delete-branch` use it is unchanged. Success prints
   `Removed 7; branches kept: ...`; a stop, `Stopped at P (reason). Removed k
   of n. Not attempted: ... Next: <command>` (`BA:1276-1312`).
 - **Eligibility is `merged-removable` plus gates**, in this order
-  (`BA:152-160`): `main-worktree`, `unsupported-path-bytes`,
+  (`BA:152-160` as extended by V2 and V5, the council's AE-2 and PA-1):
+  `main-worktree`, `unsupported-path-bytes`,
   `registration-mismatch` (two-way admin registration), `locked-worktree`, the
   baseline classification when not `merged-removable`, `not-requested`,
   `unstarted-branch`, `deferred-target-cap` (Bounded work),
@@ -117,7 +124,11 @@ Scope).
   its own (its head equals the merge-target SHA, or is an ancestor of the
   target with its reflog showing no commit since creation) is excluded as
   `unstarted-branch`, so a freshly created and published lane worktree is
-  never swept; a missing reflog fails closed, the exclusion saying so.
+  never swept. The creation reflog is a bounded filesystem read of
+  `logs/refs/heads/<branch>` in the common directory, counted in the
+  filesystem budget and never a Git child, so the fit test is unchanged; a
+  missing or expired reflog fails closed with its own reason,
+  `reflog-unavailable` (M3). The gate applies in single mode too (M4).
 - **Single-target `remove` becomes a one-item batch.** Flags unchanged,
   `--apply --json` now accepted (OQ-10). It builds the same plan (`mode:
   "single"`), lists every other eligible row as `not-requested`, and shares
@@ -158,12 +169,16 @@ Scope).
   `partially-removed`), a reconciliation record on every `removed`,
   `refused`, `failed` or `unknown` target, and `removed` only on rescan
   evidence, never on the exit status alone (`BA:496-526`). The table's
-  `interrupted` and `deadline-exceeded` and the exit-130 row apply to targets
-  not yet started, never to a removal in flight, which ends as its own exit
-  and the rescan show. Exit codes follow `BA:528-550`, Git's status passing
-  through; SIGINT, deadline expiry and exceptions follow `BA:460-483` but for
-  that deferral; SIGTERM and SIGHUP exit 143 and 129, with the SIGINT
-  treatment in the apply phase (Decisions, OQ-16). A registered row with only
+  `interrupted` and `deadline-exceeded` apply to targets not yet started. A
+  removal in flight when a signal arrives ends by its own exit and the
+  rescan: `removed` when the registry entry and path are gone, otherwise
+  `unknown`, with the `partially-removed` note where the path remains (a
+  nonzero exit of its own stays `failed`, as for any spawned target); the
+  run exits per the 130 row, 130, 143 or 129, whenever a signal arrived (M1).
+  Exit codes follow `BA:528-550`, Git's status passing through; SIGINT,
+  deadline expiry and exceptions follow `BA:460-483` but for that deferral;
+  SIGTERM and SIGHUP exit 143 and 129, with the SIGINT treatment in the apply
+  phase (Decisions, OQ-16). A registered row with only
   tracked-file deletions stays `dirty`, the report showing the partial-removal
   note and recovery text beside, never instead of, the dirty advice.
 - **Bounded work.** One monotonic 60 s deadline with a 10 s reconciliation
@@ -173,20 +188,22 @@ Scope).
   inspection and gates only the start of a removal: a removal child still
   running at the deadline is waited for, so the run overruns, bounded only by
   the 300 s hard ceiling, and its reconciliation reserve counts from its exit.
-  `push` and `delete-branch` children, run by `execute` (`project:157-162`),
-  stay unbounded as today. Caps of 128 worktree rows (256 for the plain
-  report, OQ-29) and 16 targets, and ignored-file bounds of 64, 4,096 and 8
-  (`BA:721-814`). A cap or deadline hit is an incomplete plan (`inspect-cap`,
-  `inspection-incomplete`, `deadline-exceeded`, with `omitted`) that blocks
-  apply (preview exit 1). When more than 16 rows pass every gate before the
-  two index gates, the first 16 in canonical order go on to those gates and
-  the rest are excluded `deferred-target-cap` with the next command; the plan
-  stays complete, apply is allowed, and re-running drains the backlog 16 at
-  a time, the fresh plan and revalidation unchanged. The `target-cap`
-  refusal is retired; the code survives only as `add-project-overview`'s
-  limiting gate reason (Decisions). Plans and results report `probes` and
-  `operations` as `{estimated, performed}` (`BA:816-830`). The spec deltas
-  mark the caps provisional until measured (Decisions, OQ-4).
+  A run is therefore bounded by 50 s of work, plus up to 300 s for a removal
+  in flight, plus the 10 s reserve, not "within about 60 s" (`BA:456-458`;
+  M5). `push` and `delete-branch` children, run by `execute`
+  (`project:157-162`), stay unbounded as today. Caps of 128 worktree rows (256
+  for the plain report, OQ-29) and 16 targets, and ignored-file bounds of 64,
+  4,096 and 8 (`BA:721-814`). A cap or deadline hit is an incomplete plan
+  (`inspect-cap`, `inspection-incomplete`, `deadline-exceeded`, with
+  `omitted`) that blocks apply (preview exit 1). When more than 16 rows pass
+  every gate before the two index gates, the first 16 in canonical order go on
+  to those gates and the rest are excluded `deferred-target-cap` with the next
+  command; the plan stays complete, apply is allowed, and re-running drains
+  the backlog 16 at a time, the fresh plan and revalidation unchanged. The
+  `target-cap` refusal is retired; the code survives only as
+  `add-project-overview`'s limiting gate reason (Decisions). Plans and results
+  report `probes` and `operations` as `{estimated, performed}` (`BA:816-830`).
+  The spec deltas mark the caps provisional until measured (Decisions, OQ-4).
 - **Git-first resolution in every `clean` mode.** The read-only report,
   `--json`, `--all-safe` and every `--apply --action` resolve their argument
   by the table at `BA:856-860`: an absolute path must be exactly a main
@@ -197,8 +214,8 @@ Scope).
   repositories are refused in every mode (Decisions, OQ-15; R10); a gitfile
   main checkout is supported, and a submodule checkout refused (R11).
 - **One evidence model for `clean`, `status`, `doctor` and `update`.**
-  `repo_state` and `cleanup_report` move onto the shared probe set: one
-  `git --version`, four repository-wide children memoized per `common_dir`
+  `repo_state` and `cleanup_report` move onto the shared probe set: one `git
+  --version`, four repository-wide children memoized per `common_dir`
   (identity, `worktree list --porcelain -z`, one `for-each-ref` in the shared
   format, the merged set), and one combined bounded status probe per row
   (`BA:585-652`) under `-c core.untrackedCache=false -c core.fsmonitor=false`
@@ -207,18 +224,22 @@ Scope).
   of `BA:243-253`, through a new bounded runner (Impact). A probe `project`
   stops at its record bound is complete, never `probe-failed`; after SIGKILL
   the reap waits at most the 2 s grace, then abandons the child and records
-  `probe-timeout`; every exit path terminates the process groups it started;
-  stderr is drained and capped. A Git child gets `min(5 s, work_remaining)`
-  under `clean`'s deadline and 15 s in `status`, `doctor` and `update`, which
-  have none (Decisions). The ladder keeps its names and order, its text
-  changing only for a merged `remote-gone` row and the partial-removal note
-  (MODIFIED `:25`), and becomes a pure function over evidence (OQ-28). Git
-  2.36 is required as R6 scopes it. The visible consequences are the
-  baseline behavior changes of `BA:1200-1274`, less `BA:1255-1256`, with
-  `BA:1238-1240` and `BA:1268-1274` narrowed (Decisions) and `BA:1241-1245`
-  (R6), plus R1, R2, R10 and R11; the deltas carry each. The manifest read
+  `probe-timeout`; every exit path terminates the probe groups it started, and
+  a running removal child is waited for, per V1 ("A started removal is never
+  interrupted"); stderr is drained and capped. A Git child gets `min(5 s,
+  work_remaining)` under `clean`'s deadline and 15 s in `status`, `doctor` and
+  `update`, which have none (Decisions). The ladder keeps its names and order,
+  its text changing only for a merged `remote-gone` row and the
+  partial-removal note (MODIFIED `:25`), and becomes a pure function over
+  evidence (OQ-28). Git 2.36 is required as R6 scopes it. The visible
+  consequences are the baseline behavior changes of `BA:1200-1274`, less
+  `BA:1255-1256`, with `BA:1238-1240` and `BA:1268-1274` narrowed (Decisions)
+  and `BA:1241-1245` (R6), plus R1, R2, R10, R11, `unstarted-branch` in single
+  mode (M4) and the manifest cap; the deltas carry each. The manifest read
   that resolves a merge target is capped at 1 MiB, a larger manifest being
-  `manifest-invalid`, so every reader resolves the same target.
+  `manifest-invalid`, so every reader resolves the same target; at `a040790`
+  `clean` reads a manifest of any size, so a larger one refusing `clean` with
+  `manifest-invalid`, exit 2, is a baseline behavior change beside R1 and R10.
 - **Every `clean --json` prints one versioned envelope.** `schema_version: 1`
   with the plan fields of `BA:947-976`, `mode` being `report`, `single` or
   `all-safe` (OQ-29); refusals as `{code, message, path?, reason?}` with the
@@ -331,7 +352,8 @@ Headers are quoted verbatim, one per line; ADDED headers are proposed text.
     scenario (`:63-68`) stay verbatim. Added scenarios: WHEN `--all-safe
     --apply` removes every selected worktree, THEN every local branch remains
     and the result says so (`BA:1281`, `BA:1353-1356`); `worktree add -b x`
-    then `push -u` with no commit is excluded `unstarted-branch`; with the
+    then `push -u` with no commit is excluded `unstarted-branch`, and
+    `--worktree` on it refuses `target-excluded` (M4); with the
     untracked cache on, `core.checkStat=minimal` and an index-writing status
     run, a file created after revalidation is refused by Git with 128 and
     survives; `--worktree P` removes P beside another row's
@@ -355,9 +377,10 @@ Headers are quoted verbatim, one per line; ADDED headers are proposed text.
     `manifest-invalid` (a manifest over the evidence model's 1 MiB cap
     included) refuse with exit 2 before any mutation. Scenario:
     `tracking_branch: origin/develop` resolves to `refs/heads/develop`,
-    never falling back silently. It carries R11, with scenarios for a
-    `--separate-git-dir` main checkout that resolves and a submodule
-    checkout refused `target-not-repository-root`.
+    never falling back silently; a manifest over 1 MiB refuses
+    `manifest-invalid`, exit 2, before any probe of a worktree row. It
+    carries R11, with scenarios for a `--separate-git-dir` main checkout that
+    resolves and a submodule checkout refused `target-not-repository-root`.
   - ADDED:
     `### Requirement: Clean previews and applies a batch of eligible worktree removals in one repository`.
     `--all-safe`, the gate order, the fresh plan, `plan_digest` and
@@ -442,11 +465,12 @@ Headers are quoted verbatim, one per line; ADDED headers are proposed text.
     with `GIT_OPTIONAL_LOCKS=0` (`BA:243-253`); NUL parsing; the combined
     probe, its pins and bounds (`BA:629-652`, `BA:793-814`); the 1 MiB cap on
     the manifest read that resolves a merge target, a larger manifest being
-    `manifest-invalid` (a lane bound; `add-project-overview` cites it); the
-    runner's outcomes (What Changes, evidence model), its every-exit-path
-    termination matching `add-project-overview`'s "Overview exits by
-    completeness and severity"; and `min(5 s, work_remaining)` per Git child
-    under a deadline, 15 s otherwise. `status`, `doctor` and `update` get no
+    `manifest-invalid`; the runner's outcomes (What Changes, evidence model);
+    its every-exit-path termination rule, stated in its own words: the probe
+    groups it started are killed in a `finally` on every exit path, and a
+    running removal child is waited for, per V1, never signalled before the
+    300 s ceiling (M7); and `min(5 s, work_remaining)` per Git child under a
+    deadline, 15 s otherwise. `status`, `doctor` and `update` get no
     deadline or row cap; an unreadable or timed-out row shows as
     `inspection-error`. Non-Git children (docker, doctor validators;
     `project:715`, `:817`) keep 15 s.
@@ -645,11 +669,13 @@ Departures from packet decisions, each citing the decision departed from:
   deferral (What Changes), the council's survey having found about 20 such
   rows in Opensoft-Tenant. Rows an index gate then excludes keep their
   places, so 16 of them ahead of a backlog stop it until handled by hand.
-- **Per-child budget without a deadline** (`BA:1238-1240`): `status`, `doctor`
-  and `update` keep 15 s (no deadline for 5 s to protect; a timeout there now
-  fails doctor and refuses `update --apply`), withdrawing D-B's and D-M's 5 s.
-- **Single-target completeness** (`BA:419-420`, `BA:1268-1272`,
-  `BA:1562-1563`): another row's state no longer refuses `--worktree P`;
+- **Per-child budget without a deadline** (V10; `BA:1238-1240`,
+  `OV:228-230`; M5): `status`, `doctor` and `update` keep 15 s (no deadline
+  for 5 s to protect; a timeout there now fails doctor and refuses `update
+  --apply`), withdrawing D-B's and D-M's 5 s.
+- **Single-target completeness** (V4; `BA:188-192`, `BA:419-420`,
+  `BA:1268-1272`, `BA:1562-1563`, and the Resolution record, `HO:208`,
+  `HO:247-249`; M5): another row's state no longer refuses `--worktree P`;
   refusing it leaves a raw `git worktree remove`, which skips every gate.
 - **The runner** (`BA:1212-1213`, which gives `probe()` a timeout argument):
   a new bounded runner instead (Impact).
@@ -676,8 +702,10 @@ additions, with no packet text behind them:
 
 Council decisions, with the packet text each replaces or extends:
 
-- **A started removal is never interrupted** (`BA:401-402`, `BA:466-468`):
-  TERM at 0.25 s left 18,333 of 20,000 files, a `dirty` tree (council).
+- **A started removal is never interrupted** (V1; a departure from
+  `BA:396`, `BA:401-402`, `BA:437-439`, `BA:456-458`, `BA:466-468` and the
+  Resolution record, `HO:208`, `HO:247-249`; M5): TERM at 0.25 s left 18,333
+  of 20,000 files, a `dirty` tree (council).
 - **Pinned status configuration** (`BA:307-317` pins only the untracked
   setting): unpinned, Git's own check missed and deleted a file (council).
 
@@ -742,13 +770,16 @@ Readings of packet gaps:
   worktrees (`project:337-352`). This replaces `BA:1255-1256` (OQ-15).
 - **R11, gitfile and submodule checkouts** (`BA:215`, `BA:858`). Where `.git`
   is a file, Git 2.43 lists the git directory as the first registry record.
-  Reading: when that record equals `common_dir`, the main worktree is the
-  realpath of `core.worktree` or, where that is unset (as `git init
-  --separate-git-dir` leaves it, verified here), the candidate toplevel whose
-  `.git` file names `common_dir` itself; a root equal to it resolves, the git
-  directory is never a probed row, and a linked worktree whose main checkout
-  cannot be named is refused, as is a submodule checkout (first record under
-  `.git/modules`): `target-not-repository-root`, where `a040790` exits 0.
+  Reading, in this order of precedence (M6): a submodule checkout is tested
+  first, and where `rev-parse --show-superproject-working-tree` prints a path
+  the argument is refused `target-not-repository-root`; otherwise, when that
+  record equals `common_dir`, the main worktree is the realpath of
+  `core.worktree` or, where that is unset (as `git init --separate-git-dir`
+  leaves it, verified here), the candidate toplevel whose `.git` file names
+  `common_dir` itself. A root equal to it resolves, the git directory is never
+  a probed row, and a linked worktree whose main checkout cannot be named is
+  refused `target-not-repository-root`; `a040790` exits 0 in both refused
+  cases.
 
 ## Corrections to the Packet
 
@@ -825,13 +856,21 @@ refusal retired by the council), D-X (OQ-16), D-Y (Why), D-Z (Decisions),
 D-AB (Corrections; OQ-3), D-AC (Impact; Decisions), D-AD (OQ-24), D-AF
 (`project-command` ADDED), X2 (R11), the remote-gone question, and the 1 MiB
 manifest cap from lane 3's final read of `add-project-overview` (What
-Changes, evidence model; `project-command` ADDED; Git-first).
+Changes, evidence model; `project-command` ADDED; Git-first). Lane 3's delta
+read at `ea9c73b`: M1 (What Changes, reconcilable), M2 (What Changes, person
+sees), M3 and M4 (What Changes, first bullet, eligibility, evidence model;
+Capabilities `:55`), M5 (What Changes, bounded work; Decisions), M6 (R11) and
+M7 (What Changes, evidence model; `project-command` ADDED), with the manifest
+cap listed as a baseline behavior change.
 
 ### Council Verdicts
 
 The council reviewed `0ed2f59` (labels its own: PA product advocate, SA
 systems architect, AE adversary engineer). Every concern is VALID, none
 dismissed; the parts noted for design are `clarifications.md` N1 to N5.
+The lead's verdict labels, cited above, map to concerns as V1 AE-1, V2 AE-2,
+V3 AE-3, V4 SA-1 with AE-5, V5 PA-1, V6 PA-2, V7 PA-3, V8 PA-4, V9 SA-2, V10
+SA-3, V11 SA-4 and V12 AE-4.
 
 | Concern | Severity | Verdict | Section changed |
 | --- | --- | --- | --- |
