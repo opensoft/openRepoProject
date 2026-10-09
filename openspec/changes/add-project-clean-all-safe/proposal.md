@@ -3,9 +3,10 @@ Lane: openRepoProject-2
 # Proposal: add-project-clean-all-safe
 
 Status: draft, awaiting Brett Heap's ratification. Nothing here is ratified.
-Revised after the alignment review (resolved below and on PR #11); it adds
+Revised after the alignment review and the council (resolved below and on
+PR #11; the council's noted constraints are in `clarifications.md`); it adds
 Decisions and Corrections sections because it adopts a non-normative packet,
-and Open Questions for one question before Brett Heap.
+and Open Questions for two questions before Brett Heap.
 
 Governing issue: opensoft/openRepoProject#9, claimed by lane openRepoProject-2
 (comment 6069500401); refs #6, the record of the project maintenance design
@@ -50,7 +51,8 @@ tests/` is empty):
 - Worktree paths are parsed by line, so a newline path is misread and a
   non-UTF-8 path ends the run with an uncaught exception (`BA:1223-1224`).
 - One unreadable worktree path refuses the whole repository with exit 2
-  (`project:339`, `:995-1000`).
+  (`project:339`, `:995-1000`); here it is one `inspection-error` row, so
+  another named removal proceeds and the batch records it, naming a remedy.
 - A deleted upstream classifies `unpublished`, exactly like one never
   configured (re-run for this proposal; R9).
 - An absolute path is silently redirected by `discover` to a family holder or
@@ -62,10 +64,17 @@ The packet resolved these into one reviewed design (`BA`; review trail
 `HO:190-353`), and issue #6 is done only when "a later OpenSpec proposal picks
 the packet up as input". This change is that proposal for the batch. It goes
 first because the overview's `--all-safe` suggestion exists only through the
-batch's gates and refusal codes (`SY:287-306`).
+batch's gates and refusal codes (`SY:287-306`). Its yield is bounded on
+purpose: the batch removes only worktrees with no ignored files; caches such
+as `__pycache__` keep a worktree out until the cache-disposal change (Out of
+Scope).
 
 ## What Changes
 
+- **Behaviour changes users will notice.** Plain `project clean` exits 1 when
+  its report is incomplete, where today it exits 0 whenever it prints (R2),
+  and `clean` refuses below Git 2.36 with `git-too-old`, exit 2 (R6). The
+  README's clean section says so first.
 - **`project clean <root> --all-safe` previews a batch.** It plans every
   eligible linked worktree of one resolved repository: `selected` and
   `excluded`, each exclusion with one reason in the fixed gate order
@@ -84,29 +93,55 @@ batch's gates and refusal codes (`SY:287-306`).
   `plan-digest-mismatch`, before any prompt (`BA:345-379`). Targets run in
   canonical order, and the batch stops after the first target that is not a
   plain `removed`. Every local branch remains, and the result says so.
+- **What the person sees.** The preview lists the selected rows, then the
+  excluded rows grouped by reason, each group with its next step; an
+  `ignored-local-files` exclusion shows its bounded count and the first
+  ignored path already probed (`ignored_samples`, `BA:804-806`). Apply asks
+  one default-No question naming the count, such as `Remove 7 worktrees,
+  keeping 7 branches? [y/N]` (`y` or `yes` accepts, all else `cancelled`),
+  replacing `Type yes to run this plan:` (`project:153`). Success prints
+  `Removed 7; branches kept: ...`; a stop, `Stopped at P (reason). Removed k
+  of n. Not attempted: ... Next: <command>` (`BA:1276-1312`).
 - **Eligibility is `merged-removable` plus gates**, in this order
   (`BA:152-160`): `main-worktree`, `unsupported-path-bytes`,
   `registration-mismatch` (two-way admin registration), `locked-worktree`, the
   baseline classification when not `merged-removable`, `not-requested`,
+  `unstarted-branch`, `deferred-target-cap` (Bounded work),
   `contains-submodule` (any gitlink or admin `modules` entry) and
   `hidden-local-state` (any entry flagged assume-unchanged or skip-worktree),
   the last two read in the row's own worktree (`BA:113-150`, `BA:629-675`,
-  `BA:554-583`). Local ancestry is the only removal proof.
-- **Single-target `remove` becomes a strict one-item batch.** Its flags are
-  unchanged, but `--apply --json` is now accepted for `--action remove` as for
-  `--all-safe` (OQ-10). It builds the same full plan (`mode: "single"`) under
-  the same caps, lists every other eligible row as `not-requested`, and shares
-  the seam, refusal codes, stages and exit codes of a batch whose only target
-  is P; it adds `worktree-not-found` and `target-excluded`, and an inspection
-  error anywhere in the repository refuses it (`BA:413-423`). `push` and
-  `delete-branch` change in argument resolution (`BA:424-425`) and two
-  refusals (MODIFIED `:39`, `:49`); with either, `--apply --json` stays
-  refused with `invalid-arguments`, exit 2.
+  `BA:554-583`). Local ancestry is the only removal proof, and it proves that
+  a branch adds nothing, not that its work began: a branch with no commit of
+  its own (its head equals the merge-target SHA, or is an ancestor of the
+  target with its reflog showing no commit since creation) is excluded as
+  `unstarted-branch`, so a freshly created and published lane worktree is
+  never swept; a missing reflog fails closed, the exclusion saying so.
+- **Single-target `remove` becomes a one-item batch.** Flags unchanged,
+  `--apply --json` now accepted (OQ-10). It builds the same plan (`mode:
+  "single"`), lists every other eligible row as `not-requested`, and shares
+  the seam, refusal codes, stages and exit codes of a batch whose only
+  target is P, adding `worktree-not-found` and `target-excluded`
+  (`BA:413-423`). Its completeness is the repository-wide evidence plus P's
+  own row: another row's `inspection-error`, `inspect-cap` or unprobed state
+  is a non-blocking omission recorded in the plan, while P's own
+  revalidation stays fully strict (Decisions). P is probed first and is
+  exempt from the 128-row cap, which counts registered rows, `present: false`
+  included; the 16-target limit counts P alone, as `not-requested` precedes
+  the counted gates. Every plan-blocking refusal left, in either mode, names
+  a manual remedy: `git worktree prune`, `git worktree repair`, or removing
+  that row by hand. `push` and `delete-branch` change in argument resolution
+  (`BA:424-425`) and two refusals (MODIFIED `:39`, `:49`); with either,
+  `--apply --json` stays refused with `invalid-arguments`, exit 2.
 - **One mutation seam, `retire_worktree(plan, target)`.** Revalidate; spawn
-  the non-force `git -c status.showUntrackedFiles=normal -C <command
-  directory> worktree remove <path>` in its own process group, only while the
-  removal floor remains; reap; reconcile by rescan (`BA:381-411`). `project`
-  never forces, never retries, and never deletes a directory itself.
+  the non-force `git -c status.showUntrackedFiles=normal -c
+  core.untrackedCache=false -c core.fsmonitor=false -C <command directory>
+  worktree remove <path>` in its own process group, only while the removal
+  floor remains; wait; reconcile by rescan (`BA:381-411`). Once spawned, the
+  child is never signalled: SIGINT, SIGTERM, SIGHUP and the work deadline
+  wait for it to exit, and only a separate 300 s hard ceiling, for a hung
+  mount, kills its group, recording the target `unknown`, reason
+  `removal-ceiling`, note `partially-removed`, with the recovery text
+  "inspect, then `git worktree remove --force <path>` by hand" (Decisions).
 - **Targeted revalidation under a narrow guarantee.** Each target is
   revalidated with at most five Git children, a manifest re-read and a
   `modules` check, never the full report (`BA:677-719`), against recorded
@@ -117,27 +152,39 @@ batch's gates and refusal codes (`SY:287-306`).
   confirmation and result each state the residual window in one line
   (`BA:305-325`).
 - **Every target ends reconcilable.** The closed stage enum and its reasons
-  (stage table `BA:485-494`), a reconciliation record on every `removed`,
+  (stage table `BA:485-494`, plus `removal-ceiling` and the target note
+  `partially-removed`), a reconciliation record on every `removed`,
   `refused`, `failed` or `unknown` target, and `removed` only on rescan
-  evidence, never on the exit status alone (`BA:496-526`). Exit codes follow
-  `BA:528-550`, Git's own status passing through. SIGINT, deadline expiry and
-  exceptions follow `BA:460-483`; SIGTERM and SIGHUP exit 143 and 129, with
-  the SIGINT treatment in the apply phase (Decisions, OQ-16).
+  evidence, never on the exit status alone (`BA:496-526`). The table's
+  `interrupted` and `deadline-exceeded` and the exit-130 row apply to targets
+  not yet started, never to a removal in flight, which ends as its own exit
+  and the rescan show. Exit codes follow `BA:528-550`, Git's status passing
+  through; SIGINT, deadline expiry and exceptions follow `BA:460-483` but for
+  that deferral; SIGTERM and SIGHUP exit 143 and 129, with the SIGINT
+  treatment in the apply phase (Decisions, OQ-16). A registered row with only
+  tracked-file deletions stays `dirty`, the report showing the partial-removal
+  note and recovery text beside, never instead of, the dirty advice.
 - **Bounded work.** One monotonic 60 s deadline with a 10 s reconciliation
-  reserve, 5 s per Git child and per filesystem call, a 5 s removal floor, a
-  2 s TERM-to-KILL grace and serial probing (`BA:427-458`). The deadline
-  bounds inspection and the batch's removal children only; `push` and
-  `delete-branch` children, run by `execute` (`project:157-162`), stay
-  unbounded as today. Caps of 128 worktree rows (256 for the plain report,
-  OQ-29) and 16 targets, and ignored-file bounds of 64, 4,096 and 8
+  reserve, so a 50 s work deadline; `min(5 s, work_remaining)` per Git child
+  and per filesystem call, a 5 s removal floor, a 2 s TERM-to-KILL grace for
+  probe children and serial probing (`BA:427-458`). The deadline bounds
+  inspection and gates only the start of a removal: a removal child still
+  running at the deadline is waited for, so the run overruns, bounded only by
+  the 300 s hard ceiling, and its reconciliation reserve counts from its exit.
+  `push` and `delete-branch` children, run by `execute` (`project:157-162`),
+  stay unbounded as today. Caps of 128 worktree rows (256 for the plain
+  report, OQ-29) and 16 targets, and ignored-file bounds of 64, 4,096 and 8
   (`BA:721-814`). A cap or deadline hit is an incomplete plan (`inspect-cap`,
   `inspection-incomplete`, `deadline-exceeded`, with `omitted`) that blocks
-  apply (preview exit 1). More than 16 rows passing every gate before the
-  two index gates is a complete plan refused with `target-cap`, no index
-  probe run (`BA:96-101`, `BA:673-675`, `BA:1004`; preview exit 0). Plans
-  and results report `probes` and `operations` as `{estimated, performed}`
-  (`BA:816-830`). The spec deltas mark the caps provisional until measured
-  (Decisions, OQ-4).
+  apply (preview exit 1). When more than 16 rows pass every gate before the
+  two index gates, the first 16 in canonical order go on to those gates and
+  the rest are excluded `deferred-target-cap` with the next command; the plan
+  stays complete, apply is allowed, and re-running drains the backlog 16 at
+  a time, the fresh plan and revalidation unchanged. The `target-cap`
+  refusal is retired; the code survives only as `add-project-overview`'s
+  limiting gate reason (Decisions). Plans and results report `probes` and
+  `operations` as `{estimated, performed}` (`BA:816-830`). The spec deltas
+  mark the caps provisional until measured (Decisions, OQ-4).
 - **Git-first resolution in every `clean` mode.** The read-only report,
   `--json`, `--all-safe` and every `--apply --action` resolve their argument
   by the table at `BA:856-860`: an absolute path must be exactly a main
@@ -145,18 +192,29 @@ batch's gates and refusal codes (`SY:287-306`).
   argument resolves to the repository Git finds there; only a bare name keeps
   `discover`, its Git child counted and bounded. The report's `root` names
   the command directory, and the manifest is read at `repository.root`. Bare
-  repositories are refused in every mode (Decisions, OQ-15; R10).
+  repositories are refused in every mode (Decisions, OQ-15; R10); a gitfile
+  main checkout is supported, and a submodule checkout refused (R11).
 - **One evidence model for `clean`, `status`, `doctor` and `update`.**
   `repo_state` and `cleanup_report` move onto the shared probe set: one
   `git --version`, four repository-wide children memoized per `common_dir`
   (identity, `worktree list --porcelain -z`, one `for-each-ref` in the shared
   format, the merged set), and one combined bounded status probe per row
-  (`BA:585-652`), all parsed NUL-delimited, with the scrubbed environment of
-  `BA:243-253`, through a new bounded runner (Impact). The ladder keeps its
-  names, order and text and becomes a pure function over evidence (OQ-28).
-  Git 2.36 is required as R6 scopes it. The visible consequences are the
-  baseline behavior changes of `BA:1200-1274`, less `BA:1255-1256` and with
-  `BA:1238-1245` narrowed (R6), plus R1, R2 and R10; the deltas carry each.
+  (`BA:585-652`) under `-c core.untrackedCache=false -c core.fsmonitor=false`
+  (pins that also override `GIT_CONFIG_GLOBAL` and `GIT_CONFIG_SYSTEM`, which
+  the scrub leaves), all parsed NUL-delimited, with the scrubbed environment
+  of `BA:243-253`, through a new bounded runner (Impact). A probe `project`
+  stops at its record bound is complete, never `probe-failed`; after SIGKILL
+  the reap waits at most the 2 s grace, then abandons the child and records
+  `probe-timeout`; every exit path terminates the process groups it started;
+  stderr is drained and capped. A Git child gets `min(5 s, work_remaining)`
+  under `clean`'s deadline and 15 s in `status`, `doctor` and `update`, which
+  have none (Decisions). The ladder keeps its names and order, its text
+  changing only for a merged `remote-gone` row and the partial-removal note
+  (MODIFIED `:25`), and becomes a pure function over evidence (OQ-28). Git
+  2.36 is required as R6 scopes it. The visible consequences are the
+  baseline behavior changes of `BA:1200-1274`, less `BA:1255-1256`, with
+  `BA:1238-1240` and `BA:1268-1274` narrowed (Decisions) and `BA:1241-1245`
+  (R6), plus R1, R2, R10 and R11; the deltas carry each.
 - **Every `clean --json` prints one versioned envelope.** `schema_version: 1`
   with the plan fields of `BA:947-976`, `mode` being `report`, `single` or
   `all-safe` (OQ-29); refusals as `{code, message, path?, reason?}` with the
@@ -164,8 +222,7 @@ batch's gates and refusal codes (`SY:287-306`).
   (`BA:978-985`). `--apply --json` (removal only, OQ-10) prints exactly one
   stdout document: the plan envelope or the extended error object when the
   run stops before the apply phase, otherwise the apply result record
-  (`BA:1017-1042`); the human plan, prompt and progress go to stderr. The
-  plan is not called an "additive superset" (OQ-24).
+  (`BA:1017-1042`); the human plan, prompt and progress go to stderr.
 - **Every path is exact or excluded.** JSON carries a valid UTF-8 path
   exactly with `path_valid_utf8: true`; a non-UTF-8 path is escaped, excluded
   as `unsupported-path-bytes` and never a removal operand; human output
@@ -173,9 +230,6 @@ batch's gates and refusal codes (`SY:287-306`).
   `$'...'` form of `BA:913-939`. A `repository.root` or `common_dir` that is
   not valid UTF-8 refuses with `unsupported-path-bytes`, exit 2, before any
   plan or digest (`BA:368-370`).
-- **README and tests.** Each ADDED and MODIFIED requirement has at least one
-  test named after its scenario; README states the Git 2.36 floor and
-  `clean`'s exit codes 0, 1, 2, 130, 143, 129 and Git's own status (Impact).
 
 ## Rules This Change Keeps
 
@@ -199,16 +253,21 @@ batch's gates and refusal codes (`SY:287-306`).
 - **Revalidate before every destructive action**
   (`project-clean-review-safety/spec.md:49-53`), and stop at the first
   failure: no continuation, rollback or automatic retry.
+- **A started removal is never interrupted.** Signals and the deadline wait
+  for the removal child; only the 300 s hard ceiling kills it.
+- **Git's own check runs on pinned configuration.** `core.untrackedCache`
+  and `core.fsmonitor` off, untracked files listed (What Changes, seam).
 - **One repository per invocation.** Never siblings, family members, mounted
   legs, pinned member copies or independent clones (`BA:103-105`).
 - **Never prune, repair, lock or unlock.** `project` never runs
   `git worktree prune` or `repair`, and it leaves an orphaned directory for
-  the person to inspect (`BA:192-193`, `BA:1300-1303`, `BA:1537-1538`).
+  the person to inspect (`BA:192-193`, `BA:1300-1303`, `BA:1537-1538`); a
+  refusal may name them as the person's own remedy.
 
 ## What This Repository Does Not Own
 
-- **Git's own refusals**: non-force `git worktree remove` is the last line of
-  defense; this change adds a gate in front of it, never a bypass.
+- **Git's own refusals**: the pinned, non-force `git worktree remove` is the
+  last line of defense; this change adds a gate in front of it, never a bypass.
 - **Feature worktrees and park/resume**: the Speckit git extension and
   setup-openspeckit's overlay. `clean` never replaces `park`/`resume`
   (README:110).
@@ -241,7 +300,13 @@ Headers are quoted verbatim, one per line; ADDED headers are proposed text.
     `:27-28` names 7 classes and the ladder has 15 (`project:418-468`); the
     text names all 15 in ladder order, a deleted upstream becomes
     `remote-gone`, and unreadable, mismatched and probe-failed rows are
-    `inspection-error` directly (R1). The scenario (`:32-37`) stays.
+    `inspection-error` directly (R1). Until the remote-gone question is ruled,
+    a `remote-gone` row with `merged_into_target` true reads "Merged locally,
+    upstream deleted: not removable by `project` until the open question is
+    ruled; review, then `git worktree remove` yourself" (not
+    `project:443-444`); a `dirty` row whose only working changes are deleted
+    tracked files carries the partial-removal note beside its advice. Names
+    and order are unchanged (OQ-28). The scenario (`:32-37`) stays.
   - MODIFIED (`:39`):
     `### Requirement: Clean can explicitly push safe feature branches`.
     Two additions; the rest stays. Push refuses a `remote-gone` branch (its
@@ -254,12 +319,22 @@ Headers are quoted verbatim, one per line; ADDED headers are proposed text.
   - MODIFIED (`:55`):
     `### Requirement: Clean can explicitly retire verified worktrees`.
     "remove one named linked worktree" (`:57`) becomes one named worktree or
-    the `--all-safe` set, through `retire_worktree`, the gates and
-    `-c status.showUntrackedFiles=normal`, stopping at the first failure.
-    `:59-61` (branch deletion separate; never force) and the scenario
-    (`:63-68`) stay verbatim. Added scenario: WHEN `--all-safe --apply`
-    removes every selected worktree, THEN every local branch remains and the
-    result says so (`BA:1281`, `BA:1353-1356`).
+    the `--all-safe` set, through `retire_worktree`, the gates
+    (`unstarted-branch` included) and the pinned removal command, stopping at
+    the first failure; the removal child is never signalled before the 300 s
+    ceiling; a named P's completeness is the repository-wide evidence plus its
+    own row. `:59-61` (branch deletion separate; never force) and the
+    scenario (`:63-68`) stay verbatim. Added scenarios: WHEN `--all-safe
+    --apply` removes every selected worktree, THEN every local branch remains
+    and the result says so (`BA:1281`, `BA:1353-1356`); `worktree add -b x`
+    then `push -u` with no commit is excluded `unstarted-branch`; with the
+    untracked cache on, `core.checkStat=minimal` and an index-writing status
+    run, a file created after revalidation is refused by Git with 128 and
+    survives; `--worktree P` removes P beside another row's
+    `inspection-error`, among 17 eligible rows, and among more than 128 rows;
+    a removal past the ceiling ends `unknown`, `partially-removed`; after
+    `project` and its child are killed with SIGKILL mid-deletion, the report
+    shows the partial-removal note beside the `dirty` advice.
   - MODIFIED (`:70`): `### Requirement: Clean hands off work requiring review`.
     `:75-76` requires "explicit confirmation and action targets", and
     `--all-safe --apply --yes` names no single target, so the text defines
@@ -275,19 +350,28 @@ Headers are quoted verbatim, one per line; ADDED headers are proposed text.
     with a `merge-target-conflict` note; `no-merge-target` and
     `manifest-invalid` refuse with exit 2 before any mutation. Scenario:
     `tracking_branch: origin/develop` resolves to `refs/heads/develop`,
-    never falling back silently.
+    never falling back silently. It carries R11, with scenarios for a
+    `--separate-git-dir` main checkout that resolves and a submodule
+    checkout refused `target-not-repository-root`.
   - ADDED:
     `### Requirement: Clean previews and applies a batch of eligible worktree removals in one repository`.
     `--all-safe`, the gate order, the fresh plan, `plan_digest` and
-    `--expect-plan`, and single-target removal as a one-item batch.
+    `--expect-plan`, single-target removal as a one-item batch, and what the
+    person sees: the preview layout, the default-No prompt, the success line.
   - ADDED:
     `### Requirement: Clean bounds its Git work and reports omitted work`.
     The deadline, budgets, caps, `omitted`, `probes`, `operations`, `limits`
-    and `budget`, and incompleteness blocking apply.
+    and `budget`, incompleteness blocking apply, the 16-per-run
+    `deferred-target-cap` deferral (`target-cap` refusal retired), and the
+    deadline gating only a removal's start, a removal past it overrunning up
+    to the 300 s ceiling. Scenario: 20 eligible rows select 16 and defer 4,
+    which a second run removes.
   - ADDED:
     `### Requirement: Clean records a reconcilable result for every removal target`.
-    Stages, reasons, the reconciliation record, exit codes, interruption,
-    and recovery.
+    Stages, reasons (`removal-ceiling`, `partially-removed` added), the
+    reconciliation record, exit codes, interruption deferred while a removal
+    runs, and recovery. Scenario: the stop block names the stopping target
+    and reason, the count removed, the targets not attempted, the next command.
   - ADDED:
     `### Requirement: Clean reports every path exactly or excludes it`.
     NUL parsing, `path_valid_utf8`, and the JSON and human escaping rules.
@@ -299,8 +383,8 @@ Headers are quoted verbatim, one per line; ADDED headers are proposed text.
     `### Requirement: Cleanup preserves all local work not proven disposable`.
     Adds the main worktree, locked, `contains-submodule`,
     `hidden-local-state` (sparse checkouts included), `registration-mismatch`,
-    `unsupported-path-bytes` and unreadable worktrees to the preserved
-    states. Both scenarios (`:27-36`) stay.
+    `unsupported-path-bytes`, `unstarted-branch` and unreadable worktrees to
+    the preserved states. Both scenarios (`:27-36`) stay.
   - MODIFIED (`:49`): `### Requirement: Cleanup revalidates destructive actions`.
     Removal revalidates by the targeted check against the recorded identity
     objects, refusing with `identity-changed`, `branch-changed`,
@@ -310,9 +394,10 @@ Headers are quoted verbatim, one per line; ADDED headers are proposed text.
     2, when it is incomplete. The MUST is scoped to the revalidation
     immediately before each spawn; changes after it are the residual window
     the ADDED guarantee states, and Git's own non-force check is the last
-    defense. The scenario (`:55-58`) stays; a worktree that becomes dirty
-    after revalidation is refused by Git (`failed`, `git-refused`, exit 128)
-    and is still preserved (`BA:298`).
+    defense only on the pinned configuration (`status.showUntrackedFiles`,
+    `core.untrackedCache`, `core.fsmonitor`). The scenario (`:55-58`) stays;
+    a worktree that becomes dirty after revalidation is refused by Git
+    (`failed`, `git-refused`, exit 128) and is still preserved (`BA:298`).
   - Untouched (`:9`, `current` keeps its baseline meaning):
     `### Requirement: Cleanup protects the process worktree`.
   - Untouched (`:38`, a push still uses the configured mapping):
@@ -324,30 +409,37 @@ Headers are quoted verbatim, one per line; ADDED headers are proposed text.
 - `project-command` (all four accounted for):
   - MODIFIED (`:22`): `### Requirement: Inspect and diagnose`. Minimal text
     per R6: doctor's `error` check row for old or unusable Git, status's
-    `inspection-error` row, and `present: false` for a directory with no
-    `.git`; doctor also renders a null `dirty`, or any null inspection field,
-    as an `error` check row, never `ok` (`:24-25`). The rest and "Missing
-    leg" stay. Added scenario: WHEN doctor runs with no `git` on PATH, THEN
-    it reports `git-unavailable` as an error check row and exits 1.
+    `inspection-error` marker on a root or leg dict in a field matching
+    worktree rows (R7), and `present: false` for a directory with no `.git`.
+    Doctor shows as an `error` check row, never `ok` (`:24-25`), a null that
+    means "not established" (`present`, a `dirty` a failed probe left null,
+    any `inspection-error` row), never one that means "none" (`upstream`,
+    `ahead`, `behind` without an upstream, `merged_into_target` when detached;
+    `BA:897-900`, `DI:781-785`), so a fresh project with no remote passes.
+    "Missing leg" and the rest stay. Added scenario: WHEN doctor runs with no
+    `git` on PATH, THEN it reports `git-unavailable` as an error row, exit 1.
   - MODIFIED (`:31`): `### Requirement: Explicit maintenance`. One sentence:
     `update --apply` for a project-modifying component (`shape`, `bench`)
     refuses whenever the root's or any child's `dirty` is not exactly
     `false`, as push already does (`project:541`; `project:863` and `:869`
     test truthiness, which `null` passes). Added scenario: WHEN a leg's
-    status probe times out at 5 s, THEN `update --apply` refuses and the
+    status probe times out at 15 s, THEN `update --apply` refuses and the
     owner tool is never invoked.
   - ADDED:
     `### Requirement: Repository inspection requires Git 2.36 and shares one evidence model`.
-    Its readers are `clean`, `status`, `doctor` and `update` (the last three
-    through `snapshot`, `project:681`, `:699`, `:789`, `:846`) and `overview`,
-    which `add-project-overview` adds. It carries the evidence model: the
-    version check (`BA:593`), the probe directory rule (`BA:554-583`), the
-    scrub with `GIT_OPTIONAL_LOCKS=0` (`BA:243-253`), NUL parsing, the
-    combined probe and its bounds (`BA:629-652`, `BA:793-814`) and 5 s per Git
-    child. `status`, `doctor` and `update` get no invocation deadline or row
-    cap, and an unreadable or timed-out row shows as `inspection-error`.
-    Non-Git children (docker, doctor validators; `project:715`, `:817`) keep
-    15 s.
+    Its readers are named generically, "every subcommand that inspects a Git
+    repository" (today `clean`, and `status`, `doctor` and `update` through
+    `snapshot`, `project:681`, `:699`, `:789`, `:846`). It carries the
+    evidence model: the version check (`BA:593`), R6's timing not stated as a
+    rule for every reader; the probe directory rule (`BA:554-583`); the scrub
+    with `GIT_OPTIONAL_LOCKS=0` (`BA:243-253`); NUL parsing; the combined
+    probe, its pins and bounds (`BA:629-652`, `BA:793-814`); the runner's
+    outcomes (What Changes, evidence model), its every-exit-path termination
+    matching `add-project-overview`'s "Overview exits by completeness and
+    severity"; and `min(5 s, work_remaining)` per Git child under a deadline,
+    15 s otherwise. `status`, `doctor` and `update` get no deadline or row
+    cap; an unreadable or timed-out row shows as `inspection-error`. Non-Git
+    children (docker, doctor validators; `project:715`, `:817`) keep 15 s.
   - Untouched: `Delegate project creation` (`:9`, which the in-flight
     `prefer-triad-in-project-new` modifies) and
     `Distribution and compatibility` (`:40`).
@@ -356,8 +448,8 @@ Headers are quoted verbatim, one per line; ADDED headers are proposed text.
   included) and every refusal under `--apply` exits 2 with structured JSON,
   consistent with `project-review-safety/spec.md:80-82` for YAML decoding
   errors. A read-only preview or report whose plan carries `inspect-cap`,
-  `inspection-incomplete` or `deadline-exceeded` exits 1, and one carrying
-  only `target-cap` exits 0 (`BA:547-549`, `BA:1011-1015`). Its "Updates
+  `inspection-incomplete` or `deadline-exceeded` exits 1, a complete one 0,
+  deferred rows included (`BA:547-549`, `BA:1011-1015`). Its "Updates
   preserve estate and owner safeguards" (`:51-55`) is preserved, not
   modified, by MODIFIED `Explicit maintenance`.
 
@@ -368,45 +460,52 @@ Headers are quoted verbatim, one per line; ADDED headers are proposed text.
   phase signal handling and the JSON envelope. `repo_state`, `cleanup_report`,
   `default_branch` and `discover`'s Git child move onto the shared bounded
   probes, under one deadline in `clean`. Git children run through a new
-  bounded runner, not the baseline `probe()` (`BA:1212-1213`): each is a
-  `Popen` in its own process group (C4), with the environment scrubbed of
-  `BA:243-253`'s variables, and its stdout is read as bytes and streamed, so a
-  probe can stop at its record bound. `probe()` stays for non-Git children.
+  bounded runner, not the baseline `probe()` (a departure from
+  `BA:1212-1213`): each is a `Popen` in its own process group (C4), with the
+  environment scrubbed of `BA:243-253`'s variables, and its stdout is read as
+  bytes and streamed, so a probe can stop at its record bound. `probe()`
+  stays for non-Git children. The runner's shape (clarifications N2) lets
+  `add-project-overview` drive four children without forking it.
   The ladder becomes a pure function; `status`, `doctor` and `update` gain the
   Git version check (R6). No new flag outside `clean`, no network, no new
   dependency.
-- **`README.md`**: "Clean up Git worktrees" describes the batch preview and
-  apply, `--expect-plan`, the gates, the narrow guarantee and residual
-  window, the result record and recovery; its sentence "Apply actions are
+- **`README.md`**: "Clean up Git worktrees" opens with the behaviour changes
+  users will notice (R2, R6), then describes the batch preview and apply,
+  `--expect-plan`, the gates, the 16-per-run deferral that re-running drains,
+  the narrow guarantee and residual window, the result record and recovery,
+  and that `project` cannot yet remove a merged worktree whose upstream was
+  deleted (Open Questions); its sentence "Apply actions are
   always explicit and target one branch or worktree" (README:106) is
   corrected. Install (README:17-19) states the Git 2.36 requirement, and the
   exit-code line (README:194-196) gains `clean`'s 1 for an incomplete
   preview, 143 and 129, Git's own status passing through.
-- **`tests/test_project.py`**: disposable-repository tests for the packet's 35
+- **`tests/test_project.py`**: each ADDED and MODIFIED requirement has a test
+  named after its scenario; disposable-repository tests for the packet's 35
   batch scenarios (`BA:1347-1628`) as the deltas carry them; a counting `git`
   wrapper that pins each child's `-C` directory and the probe counts; hooks
   for the residual window, the branch race, deadline expiry and SIGINT;
-  value-parity tests against the baseline except the listed changes; and
-  scenarios for this proposal's own decisions: a failed status probe on the
-  merge-target row reads `inspection-error` and makes the plan incomplete, and
-  a failed root status is a row `inspection-error` in `clean`, `status` and
-  `doctor` (R1); plain `clean` over 256 rows exits 1 (R2); under Git 2.35
-  `clean` exits 2 with `git-too-old`, `status` marks the row
+  value-parity tests against the baseline except the listed changes; fake
+  `git`s that flood stderr, ignore SIGTERM, or print 5,000 `!!` records;
+  every scenario the council added (Capabilities); and scenarios for this
+  proposal's own decisions: a failed status probe on the merge-target row,
+  and a failed root status in `clean`, `status` and `doctor`, read
+  `inspection-error` (R1); plain `clean` over 256 rows exits 1 (R2); under
+  Git 2.35 `clean` exits 2 with `git-too-old`, `status` marks the row
   `inspection-error`, and `doctor` exits 1 on its error row (R6); a relative
   path inside a bare repository's linked worktree is refused (R10);
   `--apply --json` stdout holds one document and stderr the prompt (OQ-10);
-  SIGTERM mid-removal is reconciled and exits 143 (OQ-16); a deleted
-  upstream's doctor and status rows carry the C3 values. The 43 existing tests
-  keep passing, except `test_clean_revalidates_a_worktree_after_confirmation`
+  SIGTERM mid-removal waits for the child, then reconciles and exits 143
+  (OQ-16); a deleted upstream's status and doctor rows carry the C3 values.
+  The 43 existing tests keep passing, except
+  `test_clean_revalidates_a_worktree_after_confirmation`
   (`tests/test_project.py:590-611`), which moves to the result record; the
   message assertions at `:409-425`, `:450-467` and `:542-546` keep passing
   because `target-excluded` and `no-merge-target` keep the baseline wording.
   Non-UTF-8 path scenarios run on Linux only, skipped on macOS with that
-  reason; ordering tests use names that differ by more than case; WSL2
-  measurement (OQ-4) uses a Linux filesystem path, not a drvfs-mounted Windows
-  drive. The command is `python3 -m unittest discover -s tests -v`, on Linux
-  and macOS with Python 3.10 and 3.12, as CI runs
-  (`.github/workflows/tests.yml:9-18`).
+  reason; ordering tests use names that differ by more than case; the OQ-4
+  measurement fits the caps on a Linux path, drvfs only a degraded case. The
+  command is `python3 -m unittest discover -s tests -v`, on Linux and macOS
+  with Python 3.10 and 3.12, as CI runs (`.github/workflows/tests.yml:9-18`).
 - **Speckit handoff**: implementation goes to exactly one Speckit feature,
   `specs/003-<slug>/`, created by `/speckit.specify` after ratification (`002`
   is lane openRepoProject-1's `002-triad-first-project-new`). OpenSpec
@@ -443,17 +542,21 @@ Headers are quoted verbatim, one per line; ADDED headers are proposed text.
   explicitly retire verified worktrees" (`project-clean/spec.md:55`), because
   it changes `remove` (`BA:56-63`; `HO:36-39`). Its post-removal stage
   contract is `BA:1339-1345`; harvest source `5fc2b51`.
-- **Cache disposal** (`OV:144`, `OV:151-152`; `BA:1314-1337`).
+- **Cache disposal, the first follow-on change** (`OV:144`, `OV:151-152`;
+  `BA:1314-1337`): the council's survey found Omnigent-Install's 20 of 29
+  merged worktrees excluded for caches alone.
+- **Patch-equivalence retirement of squash-merged branches**, a follow-on
+  change (`BA:195-199`; Open Questions).
 - **Remote, GitHub and PR queries** (`DI:72-75`, `DI:1036-1060`; `HO:160-167`).
 - **Family traversal and relationships** (`SY:34-37`; `DI:276-290`).
 - **Bench, container and park integrations** (`OV:142-146`; `DI:1062-1064`).
 - **`project overview`, `--attention` and the doctor repository-health
   absorption** (`acf0133`, `80fdef3`): `add-project-overview`.
 - **Also excluded by the packet**: estate-wide destructive batches, merge
-  or branch reconciliation, squash-merge retirement (`BA:195-199`), a lock
-  or writer-quiescence protocol (`BA:1645-1650`), a persistent cache or
-  resumable plan, continuing after a failure (`BA:1640-1643`), and the exact
-  bench/type doctor check (`OV:148-157`, `OV:361-366`; `SY:233-235`).
+  or branch reconciliation, a lock or writer-quiescence protocol
+  (`BA:1645-1650`), a persistent cache or resumable plan, continuing after a
+  failure (`BA:1640-1643`), and the exact bench/type doctor check
+  (`OV:148-157`, `OV:361-366`; `SY:233-235`).
 - **Bare-repository support and user-configurable limits** (OQ-15, OQ-8).
 
 ## Decisions Taken by This Proposal
@@ -466,8 +569,11 @@ leaves it open:
   The spec deltas mark the caps provisional, and the governance `tasks.md`
   carries the warm and cold-cache measurement (`DI:179-180`, `DI:189-190`,
   `DI:227-228`; `OV:314-319`) before the Speckit handoff, on this
-  workstation (Git 2.43, WSL2) and a Linux filesystem path, never a drvfs
-  mount, reapplying the fit test of `BA:729-735`.
+  workstation (Git 2.43, WSL2) and a Linux filesystem path, reapplying the
+  fit test of `BA:729-735`. It also times the combined probe and
+  `for-each-ref` against index size and branch count and a large removal,
+  records each repository's eligible-row count beside the timing, and
+  measures drvfs as a stated degraded case, never used for the fit (N5).
 - **OQ-8, configurable limits** (`OV:332`): none; fixed values are reported
   in `limits` and `budget`.
 - **OQ-10, `--apply --json`** (`BA:1189-1198`; `project:523-524`): allowed
@@ -489,6 +595,7 @@ leaves it open:
   terminated and reaped as on SIGINT and the exit is 143 or 129 with zero
   mutation, where `BA:474-477` leaves them outside the contract. After
   SIGHUP output may fail with `EIO`, so the record is printed best effort.
+  A removal child in flight is waited for, never signalled.
 - **OQ-26, spelling** (`OV:356`): keep `--all-safe` and `--expect-plan`.
 - **OQ-27, extensions** (`OV:357-359`): cache, paired retirement, remote,
   family, bench, container and park each need their own change.
@@ -502,16 +609,32 @@ Departures from packet decisions, each citing the decision departed from:
   or raises the floor to the lowest version verified.
 - **OQ-24, JSON compatibility** (`BA:949-953`; `HO:210`): one
   `schema_version: 1` envelope for every `clean --json`, not an "additive
-  superset" (R7).
+  superset" (R7). Baseline keys keep their names and types, the scope the
+  packet's phrase meant; `root`, the meaning of `ignored_files` and a `null`
+  `present` are the listed baseline changes.
+- **OQ-5, the target cap's refusal** (`BA:96-101`, `BA:1004`,
+  `BA:1367-1371`), open to Brett Heap's ratification: retired for the
+  deferral (What Changes), the council's survey having found about 20 such
+  rows in Opensoft-Tenant. Rows an index gate then excludes keep their
+  places, so 16 of them ahead of a backlog stop it until handled by hand.
+- **Per-child budget without a deadline** (`BA:1238-1240`): `status`, `doctor`
+  and `update` keep 15 s (no deadline for 5 s to protect; a timeout there now
+  fails doctor and refuses `update --apply`), withdrawing D-B's and D-M's 5 s.
+- **Single-target completeness** (`BA:419-420`, `BA:1268-1272`,
+  `BA:1562-1563`): another row's state no longer refuses `--worktree P`;
+  refusing it leaves a raw `git worktree remove`, which skips every gate.
+- **The runner** (`BA:1212-1213`, which gives `probe()` a timeout argument):
+  a new bounded runner instead (Impact).
 
 Packet decisions adopted, not open: OQ-5, the caps and bounds of `BA:966`,
-subject to OQ-4; OQ-9, the budgets of `BA:427-458` and `BA:467-468`; OQ-25,
-Git's status passing through (`BA:528-543`), as `project:157-162` does, the
-record disambiguating. Lane additions, with no packet text behind them:
+subject to OQ-4, less the target cap's refusal; OQ-9, the budgets of
+`BA:427-458` and `BA:467-468`; OQ-25, Git's status passing through
+(`BA:528-543`), as `project:157-162` does, the record disambiguating. Lane
+additions, with no packet text behind them:
 
 - **OQ-1, one change or two**: two, batch first (this change).
-- **OQ-3, revise the packet first**: no; the packet stays the PR #7 record,
-  and this proposal states its readings and corrections.
+- **OQ-3, revise the packet first**: no; citations stay at `da33d92`, and the
+  readings and corrections here bind until the packet revision merges.
 - **OQ-22, a doctor health section**: none; doctor changes only through the
   shared evidence, its Git check row included (R6). `add-project-overview`
   records that `acf0133`'s unmerged `project-doctor-repository-health`
@@ -521,7 +644,14 @@ record disambiguating. Lane additions, with no packet text behind them:
   children; 256 rows take 41.85 s at 150 ms), apply modes keeping 128 rows
   and 16 targets (R2); it carries every plan field, `selected` being what
   `--all-safe` would select, `plan_digest` computed, `apply_allowed` false
-  and `target-cap` applied as in a preview.
+  and the deferral applied as in a preview.
+
+Council decisions, with the packet text each replaces or extends:
+
+- **A started removal is never interrupted** (`BA:401-402`, `BA:466-468`):
+  TERM at 0.25 s left 18,333 of 20,000 files, a `dirty` tree (council).
+- **Pinned status configuration** (`BA:307-317` pins only the untracked
+  setting): unpinned, Git's own check missed and deleted a file (council).
 
 Left to `add-project-overview`: OQ-2, OQ-6, OQ-7, OQ-17 to OQ-21, and the
 overview halves of OQ-5, OQ-9, OQ-25 and OQ-26.
@@ -544,9 +674,8 @@ Readings of packet gaps:
   `BA:413-419`; `OV:228-230`). Reading: OQ-29; it exits as a preview does,
   0 complete, 1 incomplete, 2 when no report can be built (`BA:547-549`).
   That is a baseline change: plain `clean` exits 0 whenever it prints today.
-- **R3, the classification list**: MODIFIED `:25` names all 15 classes.
-- **R4, noninteractive targets**: MODIFIED `:70` names `--all-safe` as a
-  target.
+- **R3, the classification list; R4, noninteractive targets**: MODIFIED
+  `:25` names all 15 classes, and MODIFIED `:70` `--all-safe` as a target.
 - **R5, `project-review-safety`'s exit 2**: consistent with every `clean`
   resolve refusal and every refusal under `--apply` (Capabilities); its
   conflict is with the overview, which `add-project-overview` resolves.
@@ -565,9 +694,13 @@ Readings of packet gaps:
   dropped. `root`, the meaning of `ignored_files` and a `null` `present` are
   meaning changes, which the packet's own rule (`BA:943-945`) versions;
   `schema_version: 1` lists them against the unversioned baseline.
-- **R8, the test command**: `python3 -m unittest discover -s tests -v`. A
-  bare `python3 -m unittest` from the root runs 0 tests, since `tests/` has
-  no `__init__.py`.
+  `status --json` and `doctor --json` stay unversioned here; they gain an
+  `inspection-error` marker on root and leg dicts (`project:370-373`, `:699`)
+  in a field matching worktree rows (`repository.classification` or an
+  `errors[]` list; the delta names one), nulls where they exit 2 today, C3's
+  `upstream`, a lower-bound `ignored_files`, and doctor's `error` rows (R6).
+- **R8, the test command**: `python3 -m unittest discover -s tests -v`; a
+  bare `python3 -m unittest` runs 0 tests (`tests/` has no `__init__.py`).
 - **R9, deleted upstream re-verified** (`BA:1214-1220`; `DI:1124-1129`). The
   packet's scratch-check claim holds. Re-run at `da33d92` with Git 2.43:
   `rev-parse --abbrev-ref @{upstream}` fails, the row classifies
@@ -579,10 +712,22 @@ Readings of packet gaps:
   relative path, no argument or a bare name inside one of its linked
   worktrees. At `a040790` `clean` reports such a repository and can remove its
   worktrees (`project:337-352`). This replaces `BA:1255-1256` (OQ-15).
+- **R11, gitfile and submodule checkouts** (`BA:215`, `BA:858`). Where `.git`
+  is a file, Git 2.43 lists the git directory as the first registry record.
+  Reading: when that record equals `common_dir`, the main worktree is the
+  realpath of `core.worktree` or, where that is unset (as `git init
+  --separate-git-dir` leaves it, verified here), the candidate toplevel whose
+  `.git` file names `common_dir` itself; a root equal to it resolves, the git
+  directory is never a probed row, and a linked worktree whose main checkout
+  cannot be named is refused, as is a submodule checkout (first record under
+  `.git/modules`): `target-not-repository-root`, where `a040790` exits 0.
 
 ## Corrections to the Packet
 
-The packet is not edited; these bind this change (C2 is now reading R9).
+Citations stay at `da33d92`. The packet author (lane openRepoProject-3) is
+revising the packet for C1, C3, C4, `BA:169-177`, `BA:424-425`,
+`BA:1212-1213`, `DI:1119-1120`, `DI:260`, `DI:607-609`, `DI:1387-1388` and
+OQ-29's cap; these bind until that revision merges (C2 is now reading R9).
 
 - **C1, stale baseline sentences.** `DI:28` and `BA:30` say `origin/main` "is
   now `ca4c615`", and `OV:163` and `HO:200` that it "has since advanced to
@@ -609,54 +754,66 @@ The packet is not edited; these bind this change (C2 is now reading R9).
 ## Open Questions
 
 - **A merged worktree whose remote branch was deleted.** The ladder tests
-  `remote_present` before ancestry (`project:442` before `:457`), so such a
-  worktree classifies `remote-gone`. With head-branch auto-delete and
-  `fetch.prune` that is the usual state of a merged branch, and MODIFIED
-  `:39` refuses the old workaround (push, then remove), so under this MVP
-  such worktrees are never eligible for `--all-safe`. The question is before
-  Brett Heap, recommending that a local ancestry proof outrank `remote-gone`
-  for worktree rows (the MVP never deletes the branch). Until he rules, this
-  proposal keeps the packet's ladder.
+  `remote_present` before ancestry (`project:442` before `:457`), so it is
+  `remote-gone`, and MODIFIED `:39` refuses the old workaround (push, then
+  remove): no `project` command retires it. Rare here today (4 of about 90
+  merged worktrees; `fetch.prune` unset everywhere, auto-delete on 2 of 21
+  repositories; council survey), it is universal under auto-delete plus
+  prune. Before Brett Heap, recommending that a local ancestry proof outrank
+  `remote-gone` for worktree rows (the MVP never deletes the branch); until
+  he rules, the packet's ladder stands and the report says so (`:25`).
+- **Squash-merged branches.** A squash merge never puts the branch tip into
+  the target's ancestry (`BA:195-199`), and this repository's `main` has no
+  merge commit, so in squash-merging repositories the MVP selects little.
+  Before Brett Heap, recommending a local patch-equivalence proof (`git
+  cherry` or patch IDs against the target) as a follow-on change.
 
 ## Questions Resolved by the Alignment Review
 
 SA and QA findings on `fed64d4`; rulings D-A to D-L bind where they differ.
 
-| Finding | Severity | Ruling | Section edited |
+| Findings | Severity | Ruling | Section edited |
 | --- | --- | --- | --- |
-| SA-1 | MISMATCH | applied per D-G | Impact (`project`); What Changes (evidence model); Corrections C4 |
-| SA-2 | MISMATCH | applied per D-B | What Changes (evidence model); Capabilities (`project-command`); Impact; OQ-22, OQ-23; R6 |
-| SA-3 | MISMATCH | applied per D-C | What Changes (single-target, JSON); OQ-10 |
-| SA-4 | MISMATCH | applied | Rules This Change Keeps; Capabilities (review-safety `:21`) |
-| SA-5 | DRIFT | applied per D-B | Capabilities (`project-command` ADDED) |
-| SA-6 | DRIFT | applied | Capabilities (review-safety `:49`) |
-| SA-7 | DRIFT | applied | OQ-23 |
-| SA-8 | DRIFT | applied per D-G | Corrections C4; Impact (`project`) |
-| SA-9 | DRIFT | applied; drvfs named instead of a host path | Impact (tests) |
-| SA-10 | DRIFT | applied | Impact (tests) |
-| SA-11 | DRIFT | applied per D-F | What Changes (reconcilable); OQ-16 |
-| SA-12 | DRIFT | applied per D-E | Why; R9; Corrections |
-| SA-13 | DRIFT | applied per D-F, with QA-1 | Capabilities (other capabilities); R5 |
-| SA-14 | DRIFT | applied per D-K | Status; Impact (Dependencies and Sequencing) |
-| QA-1 | MISMATCH | applied per D-F | Capabilities (other capabilities); What Changes (bounded work); R5 |
-| QA-2 | MISMATCH | applied per D-C | What Changes (single-target) |
-| QA-3 | MISMATCH | applied per D-E (R10, not R9) | What Changes (resolution, evidence model); Capabilities (Git-first); OQ-15; R10 |
-| QA-4 | MISMATCH | applied | Why |
-| QA-5 | GAP | applied per D-B; refusal text superseded by D-B | Capabilities (`project-command`); R6 |
-| QA-6 | GAP | applied | Capabilities (`:25`, `:55`, review-safety `:49`) |
+| SA-1, SA-8 | MISMATCH, DRIFT | applied per D-G | Impact (`project`); What Changes (evidence model); Corrections C4 |
+| SA-2, SA-5, QA-5 | MISMATCH, DRIFT, GAP | applied per D-B (QA-5's refusal text superseded by it) | What Changes (evidence model); Capabilities (`project-command`); Impact; OQ-22, OQ-23; R6 |
+| SA-3, QA-2, QA-10 | MISMATCH, MISMATCH, GAP | applied per D-C | What Changes (single-target, JSON); OQ-10 |
 | QA-7 | GAP | applied per D-D | What Changes (single-target); Capabilities (`:39`, review-safety `:38`, `:49`) |
+| SA-12, QA-3 | DRIFT, MISMATCH | applied per D-E (QA-3 as R10, not R9) | Why; What Changes (resolution, evidence model); Capabilities (Git-first); OQ-15; R9, R10; Corrections |
+| SA-11, SA-13, QA-1, QA-9 | DRIFT, DRIFT, MISMATCH, GAP | applied per D-F | What Changes (reconcilable, bounded work); Capabilities (other capabilities); OQ-16; R5 |
+| SA-14 | DRIFT | applied per D-K | Status; Impact (Dependencies and Sequencing) |
 | QA-8 | GAP | applied; amended per D-T (both `origin/` strips) | Capabilities (Git-first ADDED) |
-| QA-9 | GAP | applied per D-F | What Changes (reconcilable); OQ-16 |
-| QA-10 | GAP | applied per D-C | What Changes (JSON) |
-| QA-11 | GAP | applied | OQ-29 |
 | QA-12 | GAP | applied; R6 scenario superseded by D-B, R2 scenario at 256 rows per D-V | Impact (tests) |
-| QA-13 | GAP | applied | Rules This Change Keeps |
-| QA-14 | GAP | applied; caps sentence superseded by D-Q | What Changes (spelling, eligibility, bounded work, paths, README and tests); Corrections C3 |
+| QA-14 | GAP | applied; caps sentence superseded by D-Q | What Changes (spelling, eligibility, bounded work, paths); Impact (README, tests); Corrections C3 |
+| SA-4, QA-13; SA-6, QA-6 | MISMATCH, GAP; DRIFT, GAP | applied | Rules This Change Keeps, Capabilities (review-safety `:21`); Capabilities (`:25`, `:55`, review-safety `:49`) |
+| SA-7; QA-4; QA-11 | DRIFT; MISMATCH; GAP | applied | OQ-23; Why; OQ-29 |
+| SA-9, SA-10 | DRIFT | applied; drvfs named instead of a host path (SA-9), measured as degraded per the council | Impact (tests) |
 
 Later rulings from the packet author's fidelity reads: D-M (`project-command`
-ADDED), D-N and D-S (R1; `Inspect and diagnose`), D-B relabelled (R6), C1,
-C8 (R7), D-Q (OQ-4), D-R (`Explicit maintenance`), D-T (Git-first), D-U,
-D-V and D-W (Bounded work; OQ-29), D-X (OQ-16), D-Y (Why), D-Z (Decisions)
-and the remote-gone question (Open Questions).
+ADDED; its 5 s for `status`, `doctor`, `update` withdrawn by the council),
+D-N and D-S (R1; `Inspect and diagnose`, D-S narrowed to nulls meaning "not
+established"), D-B relabelled (R6), C1, C8 (R7), D-Q (OQ-4), D-R (`Explicit
+maintenance`), D-T (Git-first), D-U, D-V and D-W (Bounded work; OQ-29; D-U's
+refusal retired by the council), D-X (OQ-16), D-Y (Why), D-Z (Decisions),
+D-AB (Corrections; OQ-3), D-AC (Impact; Decisions), D-AD (OQ-24), D-AF
+(`project-command` ADDED), X2 (R11) and the remote-gone question.
 
-The council has not run; its noted constraints will go to `clarifications.md`.
+### Council Verdicts
+
+The council reviewed `0ed2f59` (labels its own: PA product advocate, SA
+systems architect, AE adversary engineer). Every concern is VALID, none
+dismissed; the parts noted for design are `clarifications.md` N1 to N5.
+
+| Concern | Severity | Verdict | Section changed |
+| --- | --- | --- | --- |
+| PA-1 | HIGH | VALID; departure | What Changes (person sees, bounded work); Capabilities (bounds); Decisions (OQ-5, OQ-4); Impact (README) |
+| PA-2 | HIGH | VALID | Why; What Changes (person sees); Out of Scope |
+| PA-3 | MEDIUM | VALID | Capabilities (`:25`); Open Questions; Impact (README) |
+| PA-4 | MEDIUM | VALID | What Changes (first bullet, person sees); Capabilities (batch, reconcilable); Impact (README) |
+| SA-1, AE-5 | HIGH, MEDIUM | VALID; departure | Why; What Changes (single-target); Rules (never prune); Capabilities (`:55`); Decisions |
+| SA-2 | MEDIUM-HIGH | VALID; loop mechanics NOTED (N1; X1 as N2) | What Changes (evidence model); Capabilities (`project-command` ADDED); Impact (`project`, tests) |
+| SA-3 | MEDIUM | VALID; departure; protocol NOTED (N5) | What Changes (evidence model); Capabilities (`project-command`); Decisions (budget, OQ-4) |
+| SA-4 | LOW-MEDIUM | VALID | Capabilities (`:22`); R7 |
+| AE-1 | HIGH | VALID; detection NOTED (N4) | What Changes (seam, reconcilable, bounded work); Rules; Capabilities (`:25`, `:55`, bounds, result); Decisions (council, OQ-4, OQ-16); Impact (tests) |
+| AE-2 | HIGH | VALID; `in-use` gate NOTED (N3) | What Changes (eligibility); Capabilities (`:55`, review-safety `:21`); Out of Scope; Open Questions |
+| AE-3 | MEDIUM-HIGH | VALID | What Changes (seam, evidence model); Rules; Does Not Own; Capabilities (`:55`, review-safety `:49`); Decisions (council) |
+| AE-4 | MEDIUM | VALID | Citations; Impact (tests; Dependencies and Sequencing), after the merge of `main` |
