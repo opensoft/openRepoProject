@@ -2,10 +2,12 @@ Lane: openRepoProject-1
 
 # Proposal: prefer-triad-in-project-new
 
-Status: draft, proposal only, revised after the alignment review and after the
-council (the resolution of every finding and verdict is recorded on PR #5; the
-council's noted constraints are in `clarifications.md`). The design follows in
-the same pull request. Nothing here is ratified.
+Status: ratified by Brett Heap, "ratify 5", 2026-10-07, quoted with its link on
+PR #5 (https://github.com/opensoft/openRepoProject/pull/5#issuecomment-6035631740),
+and landed on main as `ca4c6152c87bab77079b0e28f7a75a77c5f2b9a2`. The resolution
+of every finding and verdict is recorded on PR #5, the council's noted
+constraints are in `clarifications.md`, and the design is `design.md` in this
+same change.
 
 Governing issue: opensoft/openRepoProject#3, claimed by lane openRepoProject-1
 (comment 6027807471). Contract: task 5.6 of openxFactory's ratified change
