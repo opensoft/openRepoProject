@@ -21,12 +21,14 @@ The plain report (neither `--all-safe` nor `--apply`) SHALL be the plan that a
 batch preview builds, in `mode: "report"`, under a cap of 256 worktree rows. It
 SHALL carry every plan field: `selected` SHALL be what `--all-safe` would
 select, the per-run deferral applied, for a repository of at most 128 worktree
-rows, and above 128 the report SHALL say that `--all-safe` itself would be
-incomplete with `inspect-cap`; `plan_digest` SHALL be computed, and
-`apply_allowed` SHALL be false. It SHALL exit 0 when the report is complete, 1
-when it is incomplete (`inspect-cap`, `inspection-incomplete` or
-`deadline-exceeded`), and 2 when no report can be built, and its human output
-SHALL say when and why it is incomplete.
+rows. Above 128, `selected` SHALL be null and the plan's `notes` SHALL carry an
+`inspect-cap` entry with `rows`, the count of registered worktree rows, beside
+the human line saying that `--all-safe` itself would be incomplete with
+`inspect-cap`; that note alone SHALL NOT make the report incomplete.
+`plan_digest` SHALL be computed, and `apply_allowed` SHALL be false. It SHALL
+exit 0 when the report is complete, 1 when it is incomplete (`inspect-cap`,
+`inspection-incomplete` or `deadline-exceeded`), and 2 when no report can be
+built, and its human output SHALL say when and why it is incomplete.
 
 A worktree whose registered path cannot be read, for any reason other than its
 absence, SHALL be one row with `present: null`, an `os-error` in its `errors`
@@ -52,9 +54,10 @@ resolved repository.
 - **THEN** it prints an incomplete report carrying `inspect-cap` and `omitted`,
   and exits 1, where before this change it exited 0 whenever it printed
 - **AND** on a repository with 200 rows the plain report is complete, says that
-  `--all-safe` would be incomplete with `inspect-cap`, and exits 0, while
-  `project clean <root> --all-safe` on the same repository is incomplete with
-  `inspect-cap` and exits 1
+  `--all-safe` itself would be incomplete with `inspect-cap`, and exits 0, its
+  JSON carrying `selected: null` and a `notes` entry `inspect-cap` with
+  `rows: 200`, while `project clean <root> --all-safe` on the same repository
+  is incomplete with `inspect-cap` and exits 1
 
 #### Scenario: An unreadable worktree is one row
 
@@ -281,6 +284,20 @@ It MUST never use a force removal, reset, or deletion of unmerged work.
   moves the branch, and `--all-safe` excludes the worktree as
   `unstarted-branch`, where its earlier commits would otherwise read as
   movement
+
+#### Scenario: A branch fetched at the merge target's tip stays unstarted
+
+- **WHEN** an otherwise eligible linked worktree's branch `f1` was created by
+  `git fetch origin feat:f1` while `origin`'s `feat` was at the merge target's
+  tip, then given `origin/feat` as its upstream by `git branch -u`, so that its
+  reflog's only entry has an all-zeros old object and a message that does not
+  begin `branch:`, and no commit is made on it here
+- **THEN** that entry is the anchor and is no movement, and `--all-safe`
+  excludes the worktree as `unstarted-branch`, where reading the entry as a
+  movement would select it at the target's tip
+- **AND** the same holds for a branch created at the merge target's tip by
+  `git update-ref`, whose entry has no message, or by `git push .`, whose
+  entry's message is `push`, each given its upstream the same way
 
 #### Scenario: A branch whose reflog is missing, empty or expired
 
@@ -541,15 +558,19 @@ prove a branch unstarted, because a branch fast-forward merged into the target
 sits at the target's tip, so the gate SHALL read the branch's reflog,
 `logs/refs/heads/<branch>` in the common directory, for every row it checks,
 from the filesystem, at most 64 KiB, counted in the filesystem budget and never
-by a Git child. The reflog's anchor SHALL be its last surviving entry whose
-message begins `branch: Created from` or `branch: Reset to`, and a movement
-SHALL be an entry after the anchor, or any entry when no anchor survives, whose
-old and new objects differ; an entry whose old and new objects are equal, as a
-rename writes, SHALL NOT be a movement. A branch whose last reflog entry's new
-object differs from its current head SHALL be `reflog-unavailable`; otherwise a
-branch with a movement SHALL pass the gate, its head equal to the merge target's
-SHA or not, and a branch whose anchor survives with no movement after it, the
-anchor's new object equal to its current head, SHALL be `unstarted-branch`. One
+by a Git child. The reflog's anchor SHALL be its last surviving entry whose old
+object is all zeros, as every entry that creates the branch has, whatever
+command wrote it (`git fetch <remote> <ref>:<branch>`, `git update-ref` and
+`git push .` among them), or whose message begins `branch: Created from` or
+`branch: Reset to`; an entry whose old object is all zeros SHALL NOT be a
+movement. A movement SHALL be an entry after the anchor, or any entry when no
+anchor survives, whose old and new objects are non-zero and differ; an entry
+whose old and new objects are equal, as a rename writes, SHALL NOT be a
+movement. A branch whose last reflog entry's new object differs from its
+current head SHALL be `reflog-unavailable`; otherwise a branch with a movement
+SHALL pass the gate, its head equal to the merge target's SHA or not, and a
+branch whose anchor survives with no movement after it, the anchor's new object
+equal to its current head, SHALL be `unstarted-branch`. One
 outcome rule SHALL govern the read: a reflog that is missing (`ENOENT` or
 `ENOTDIR`), empty (0 bytes) or read to its 64 KiB bound, or whose surviving
 entries cannot decide, no anchor and no movement surviving included, SHALL make
@@ -1066,15 +1087,18 @@ stable kebab-case `code`. The refusal codes SHALL be `invalid-arguments`,
 `deadline-exceeded`, `worktree-not-found`, `target-excluded`,
 `plan-digest-mismatch`, `confirmation-required` and `cancelled`; `project clean`
 SHALL NOT raise `target-cap`. The plan's `notes` codes SHALL be
-`merge-target-conflict` and, in `mode: "single"`, the non-blocking omissions
-`inspection-incomplete`, `inspect-cap` and `deadline-exceeded`; a target's
-`notes` codes SHALL be `orphaned-directory` and `partially-removed`, and a
-worktree row's `notes` code `partially-removed`. A resolve refusal SHALL print
-the extended error object, and a plan or select refusal SHALL print the plan
-with `apply_allowed: false`. Null SHALL mean unknown or not established, never a
-default false or 0, in every field this change adds. Enums SHALL be closed
-within a schema version, and a rename, removal, type change or change of meaning
-SHALL increment `schema_version`.
+`merge-target-conflict`; in `mode: "single"`, the non-blocking omissions
+`inspection-incomplete`, `inspect-cap` and `deadline-exceeded`; and in
+`mode: "report"` with more than 128 worktree rows, `inspect-cap` with `rows`,
+the count of registered worktree rows, beside `selected: null` and the human
+line saying that `--all-safe` itself would be incomplete with `inspect-cap`. A
+target's `notes` codes SHALL be `orphaned-directory` and `partially-removed`,
+and a worktree row's `notes` code `partially-removed`. A resolve refusal SHALL
+print the extended error object, and a plan or select refusal SHALL print the
+plan with `apply_allowed: false`. Null SHALL mean unknown or not established,
+never a default false or 0, in every field this change adds. Enums SHALL be
+closed within a schema version, and a rename, removal, type change or change of
+meaning SHALL increment `schema_version`.
 
 `--apply --json` SHALL be accepted with `--all-safe` and with `--action remove`
 only, and SHALL print exactly one document on standard output: the plan envelope

@@ -9,7 +9,9 @@ requirements. The council's noted constraints, `clarifications.md` N1 to N5, are
 answered by D1 to D5; D6 to D19 give the how of the proposal's decisions, and
 D20 maps the packet's 35 validation scenarios to the deltas. The binding rulings
 (D-A to D-AF, X1, X2, V1 to V12 with V2 as amended, lane 3's M1 to M7, and the
-lead's R-4, R-8 and R-9 and R-11 to R-14) are already in `proposal.md`.
+lead's R-4, R-8 and R-9 and R-11 to R-15) are already in `proposal.md`, with the
+sections each edited; R-15 edited Context, D10, D14, D18, Risks and the
+Migration Plan here.
 
 Citations are `file:line` at `da33d92`: `BA`, `DI`, `OV` and `HO` are the
 packet's batch-cleanup, project-discovery, overview and handoff documents, and
@@ -56,6 +58,7 @@ unstarted branch):
 | a branch with one commit, then merged with `--no-ff` | the reflog holds the creation entry, then a `commit:` entry with a different new object |
 | `git branch -m x x2` on an unstarted branch | the reflog moves with the branch and gains one entry whose old and new objects are equal |
 | `git worktree add -B x <path> main` on an existing branch `x` with a commit of its own | the reflog gains `branch: Reset to main`, its old object `x`'s previous head and its new object `main`'s tip; `git branch -f` and `git checkout -B` on an existing branch also write `branch: Reset to` |
+| `git fetch origin feat:f1`, `git update-ref refs/heads/f2 HEAD` and `git push . main:f3`, each creating a branch | each new reflog holds one entry, its old object all zeros; the messages are `fetch origin feat:f1: storing head` (`fetch -q origin feat:f1: storing head` with `-q`), none (the line ends after the time zone, with no tab) and `push`; a later `git branch -u origin/feat f1` or `git worktree add <path> f1` adds no entry to that reflog |
 | `git reflog expire --all` at its defaults on a branch created 100 days and committed to 95 days earlier, then renamed 10 days earlier | only the rename entry survives, its old and new objects equal |
 | `git init --separate-git-dir` | the first `worktree list` record is the git directory; `core.worktree` is unset |
 | `rev-parse --show-toplevel --git-common-dir --show-superproject-working-tree` | three lines in a submodule checkout, the third the superproject's toplevel; two in a plain checkout |
@@ -422,7 +425,7 @@ question: 50 s of work, the 10 s reserve, and up to 4 s to stop a probe child
 overview states; a removal in flight adds up to 300 s (M5). A call stuck in the
 kernel is the one exception.
 
-### D10. `unstarted-branch` from the reflog (V2 as amended, M3, M4, R-12)
+### D10. `unstarted-branch` from the reflog (V2 as amended, M3, M4, R-12, R-15)
 
 A head equal to `merge_target.sha` is not by itself proof of an unstarted
 branch, because a branch fast-forward merged into the target sits at the
@@ -439,13 +442,20 @@ not excluded by an earlier gate, in `mode: "single"` as well as the others (M4):
    `os-error`, like any failed row probe; and a read not finished inside the
    filesystem budget leaves the row unprobed and the plan incomplete with
    `inspection-incomplete`, as for every other filesystem read.
-2. Each line is `<old> <new> <identity> <time> <zone>`, a tab and a message. The
-   anchor is the last surviving entry whose message begins `branch: Created
-   from` or `branch: Reset to`: `worktree add -b`, `branch` and `checkout -b`
-   write the first, and `worktree add -B`, `branch -f` and `checkout -B` on an
-   existing branch the second (Context). A movement is an entry after the
-   anchor, or any entry when no anchor survives, whose old and new objects
-   differ; a rename's entry has equal objects, so it is no movement.
+2. Each line is `<old> <new> <identity> <time> <zone>`, then a tab and the
+   message when there is one; an `update-ref` without `-m` writes neither
+   (Context). The anchor is the last surviving entry whose old object is all
+   zeros, or whose message begins `branch: Created from` or
+   `branch: Reset to`. Every command that creates a branch writes an all-zeros
+   old object, whatever its message: `worktree add -b`, `branch` and
+   `checkout -b` write `branch: Created from`, while
+   `git fetch <remote> <ref>:<branch>`, `update-ref` and `push .` write no
+   `branch:` message at all (Context). `worktree add -B`, `branch -f` and
+   `checkout -B` on an existing branch write `branch: Reset to`, its old object
+   the branch's previous head. An entry whose old object is all zeros is never a
+   movement. A movement is an entry after the anchor, or any entry when no
+   anchor survives, whose old and new objects are non-zero and differ; a
+   rename's entry has equal objects, so it is no movement.
 3. A last entry whose new object differs from the current head gives
    `reflog-unavailable`, because the reflog then does not describe the branch.
 4. Otherwise a movement means the branch moved after its anchor: the gate
@@ -464,7 +474,12 @@ published by `push -u` and never committed to holds only its creation entry and
 is `unstarted-branch` (Context). A branch with commits of its own that
 `worktree add -B` resets to the target's tip anchors at that `branch: Reset to`
 entry and is `unstarted-branch` until it gains a commit, where reading from its
-creation entry would count its earlier commits as movement.
+creation entry would count its earlier commits as movement. A branch created by
+`git fetch origin feat:f1` at the target's tip, given its upstream by
+`git branch -u` (which writes no entry) and never committed to here, anchors at
+that fetch entry, whose old object is all zeros, and is `unstarted-branch`;
+anchored on messages alone, that entry would have read as a movement and passed
+the gate at the target's tip (R-15).
 
 Entries expire. `git gc` runs `git reflog expire`, whose `gc.reflogExpire`
 defaults to 90 days. A branch whose anchor has expired while a later movement
@@ -550,8 +565,10 @@ running past the deadline is bounded by its ceiling, not by the fit. The report
 keeps the baseline layout and adds `Report: complete` or `Report: incomplete
 (CODES)`, and, for a repository of at most 128 worktree rows, `--all-safe would
 select N`; above 128, where `--all-safe` itself would be incomplete, it prints
-`--all-safe would be incomplete (inspect-cap)` instead. It exits 0, 1 or 2 by
-completeness (R2).
+`--all-safe would be incomplete (inspect-cap)` instead, while its JSON carries
+`selected: null` and a `notes` entry with code `inspect-cap` and `rows`, the
+count of registered worktree rows (R-15); the note does not make the report
+incomplete. It exits 0, 1 or 2 by completeness (R2).
 
 ### D15. Signals before and during the apply phase (OQ-16, M1)
 
@@ -656,10 +673,10 @@ The next steps by reason: `dirty` "commit or preserve the changes";
 `ignored-local-files` "move or delete the ignored files by hand";
 `unstarted-branch` "no commit was made on this branch here since it was created;
 review, then git worktree remove yourself"; `reflog-unavailable` "the branch's
-reflog is missing or expired; review, then git worktree remove yourself";
-`contains-submodule` and `hidden-local-state` "review, then remove the worktree
-yourself"; `registration-mismatch` and `inspection-error` "review, then git
-worktree repair or git worktree prune, or remove the row by hand";
+reflog is missing, expired or undecidable; review, then git worktree remove
+yourself"; `contains-submodule` and `hidden-local-state` "review, then remove
+the worktree yourself"; `registration-mismatch` and `inspection-error` "review,
+then git worktree repair or git worktree prune, or remove the row by hand";
 `locked-worktree` "unlock it yourself if it should go"; every other class its
 recommendation.
 
@@ -774,6 +791,11 @@ push; D-R under maintenance.
   never removable by `project` in either mode] -> Fails closed beside the
   reftable residual; the remedy names `git worktree remove` (D18), and D5's
   survey counts such rows.
+- [A reflog over 64 KiB (about 300 entries) fails closed as
+  `reflog-unavailable` even when it records movement, because the head test
+  runs first and the bound ends the read] -> Fails closed; the remedy calls the
+  reflog undecidable and names `git worktree remove` (D18), and D5's survey
+  counts such rows.
 - [A branch created from a remote branch that already had commits, then merged
   elsewhere, reads as unstarted, because nothing moved it here since its
   creation entry] -> Fails closed as `unstarted-branch`; the remedy says that no
@@ -810,9 +832,9 @@ remedy "no commit was made on this branch here since it was created; review,
 then git worktree remove yourself"; and a merged worktree whose branch reflog
 keeps no decisive entry (no activity for `gc.reflogExpire`, 90 days by default,
 D10) is refused as `reflog-unavailable` in single mode as well as withheld from
-the batch, with the remedy "the branch's reflog is missing or expired; review,
-then git worktree remove yourself". The README's clean section states them
-first.
+the batch, with the remedy "the branch's reflog is missing, expired or
+undecidable; review, then git worktree remove yourself". The README's clean
+section states them first.
 
 1. Ratification by Brett Heap's word on PR #11 (`tasks.md` 1.6), with the V5
    deferral and the two open questions before him.

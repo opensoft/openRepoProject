@@ -84,8 +84,8 @@ Scope).
   decisive entry (the branch saw no activity for `gc.reflogExpire`, 90 days
   by default) is likewise refused in single mode (`target-excluded`, reason
   `reflog-unavailable`) as well as withheld from the batch, with the remedy
-  "the branch's reflog is missing or expired; review, then git worktree remove
-  yourself". The README's clean section says so first.
+  "the branch's reflog is missing, expired or undecidable; review, then git
+  worktree remove yourself". The README's clean section says so first.
 - **`project clean <root> --all-safe` previews a batch.** It plans every
   eligible linked worktree of one resolved repository: `selected` and
   `excluded`, each exclusion with one reason in the fixed gate order
@@ -136,15 +136,20 @@ Scope).
   the merge-target SHA prove that the work never began, because a branch
   fast-forward merged into the target sits at the target's tip, so the gate
   reads the branch's reflog in every case. Its anchor is the last surviving
-  `branch: Created from` or `branch: Reset to` entry (`worktree add -B`,
-  `branch -f` and `checkout -B` write the second), and a movement is a later
-  entry, or any entry when no anchor survives, whose old and new objects
+  entry whose old object is all zeros, as every entry that creates the
+  branch has, whatever its message (`git fetch origin feat:f1`, `update-ref`
+  and `push .` write no `branch:` message), or whose message begins
+  `branch: Created from` or `branch: Reset to` (`worktree add -B`,
+  `branch -f` and `checkout -B` write the second; R-15). An entry whose old
+  object is all zeros is never a movement, and a movement is a later entry,
+  or any entry when no anchor survives, whose non-zero old and new objects
   differ (a rename's are equal). A branch whose anchor survives with no
   movement after it, at the anchor's new object, is excluded as
   `unstarted-branch`, so a freshly created and published lane worktree,
   whose push adds no reflog entry, is never swept, nor one reset to the
-  target's tip by `worktree add -B`; a branch with a movement, at the
-  target's tip or not, is merged and stays eligible. The reflog is a bounded
+  target's tip by `worktree add -B` or created there by
+  `git fetch origin feat:f1`; a branch with a movement, at the target's tip
+  or not, is merged and stays eligible. The reflog is a bounded
   filesystem read of `logs/refs/heads/<branch>` in the common directory, at
   most 64 KiB, counted in the filesystem budget and never a Git child, so the
   fit test is unchanged. One outcome rule decides the read (M3; R-12): a
@@ -401,8 +406,10 @@ Headers are quoted verbatim, one per line; ADDED headers are proposed text.
     is excluded `unstarted-branch`, and `--worktree` on it refuses
     `target-excluded` (M4); a branch fast-forward merged into the target, at
     the target's tip with a commit in its reflog, stays eligible; a branch
-    reset to the target's tip by `worktree add -B` stays `unstarted-branch`;
-    a missing, empty or expired reflog is `reflog-unavailable`, and
+    reset to the target's tip by `worktree add -B` stays `unstarted-branch`,
+    as does one created there by `git fetch origin feat:f1` and never
+    committed to here (R-15); a missing, empty or expired reflog is
+    `reflog-unavailable`, and
     `--worktree` on such a worktree refuses `target-excluded`; with the
     untracked cache on, `core.checkStat=minimal` and an index-writing status
     run, a file created after revalidation is refused by Git with 128 and
@@ -768,10 +775,11 @@ additions, with no packet text behind them:
   under the deadline and a 256-row cap by the same fit rule (7 + W + 16
   children; 256 rows take 41.85 s at 150 ms), apply modes keeping 128 rows
   and 16 targets (R2); it carries every plan field, `selected` being what
-  `--all-safe` would select (for at most 128 worktree rows; above 128 the
-  report says that `--all-safe` itself would be incomplete with
-  `inspect-cap`), `plan_digest` computed, `apply_allowed` false and the
-  deferral applied as in a preview.
+  `--all-safe` would select (for at most 128 worktree rows; above 128
+  `selected` is null and `notes` carries an `inspect-cap` entry with the row
+  count, beside the human line saying that `--all-safe` itself would be
+  incomplete with `inspect-cap`; R-15), `plan_digest` computed,
+  `apply_allowed` false and the deferral applied as in a preview.
 
 Council decisions, with the packet text each replaces or extends:
 
@@ -782,9 +790,11 @@ Council decisions, with the packet text each replaces or extends:
 - **Pinned status configuration** (`BA:307-317` pins only the untracked
   setting): unpinned, Git's own check missed and deleted a file (council).
 - **A branch with no commit of its own is preserved** (V2 as amended, M3, M4;
-  extends the gates of `BA:152-160`; R-12): the reflog, read from its last
-  creation or reset entry, decides `unstarted-branch` in every case, because
-  a head equal to the merge-target SHA is also where a fast-forward-merged
+  extends the gates of `BA:152-160`; R-12, R-15): the reflog, read from its
+  anchor, the last entry whose old object is all zeros (a creation, whatever
+  command wrote it) or whose message begins `branch: Created from` or
+  `branch: Reset to`, decides `unstarted-branch` in every case, because a
+  head equal to the merge-target SHA is also where a fast-forward-merged
   branch sits; a reflog that is missing, empty, bound-reaching or undecidable
   is `reflog-unavailable` (What Changes, eligibility).
 
@@ -941,15 +951,29 @@ read at `ea9c73b`: M1 (What Changes, reconcilable), M2 (What Changes, person
 sees), M3 and M4 (What Changes, first bullet, eligibility, evidence model;
 Capabilities `:55`), M5 (What Changes, bounded work; Decisions), M6 (R11) and
 M7 (What Changes, evidence model; `project-command` ADDED), with the manifest
-cap listed as a baseline behavior change. The lead's rulings, hyphenated to
-keep them apart from this proposal's readings R1 to R11: R-4 (the manifest
-cap's `st_size` detection), R-8 (escaping by general category) and R-9
-(validity flags on every path value), each under What Changes and the
-departures in Decisions; R-11 (the apply order, the exits of a preview, the
-report's row limit, signals under `--json`, the 64 s bound); R-12 (the reflog
-anchor and its one outcome rule; What Changes, eligibility); R-13 (the null
-`root` probe directory; `project-command` ADDED); and R-14 (the
-`unstarted-branch` remedy).
+cap listed as a baseline behavior change. The lead's V2 as amended (the reflog
+read in every case; What Changes, eligibility; Capabilities `:55`; Decisions,
+council; design D10, Risks), and the lead's rulings, hyphenated to keep them
+apart from this proposal's readings R1 to R11: R-4 (the manifest cap's
+`st_size` detection), R-8 (escaping by general category) and R-9 (validity
+flags on every path value), each under What Changes and the departures in
+Decisions; R-11 (the apply order, the exits of a preview, the report's row
+limit, signals under `--json`, the 64 s bound; What Changes, batch preview,
+fresh plan, bounded work, JSON; Capabilities `:10`, batch, bounds, result,
+JSON, `Inspect and diagnose`; OQ-29; R7; design D9, D14 to D16, D19, D20);
+R-12 (the reflog anchor and its one outcome rule, the expired-reflog
+refusals, the departures, the remedies; What Changes, first bullet,
+eligibility, evidence model; Capabilities batch, `:55`, review-safety `:21`;
+Decisions, departures and council; Impact, README; this list; design
+Context, D10, D18, Risks, Migration Plan); R-13 (the null `root` probe
+directory; `project-command` ADDED; design D6); R-14 (the `unstarted-branch`
+remedy and its Risks line; What Changes, first bullet; design D18, Risks,
+Migration Plan); and R-15 (the anchor on any entry whose old object is all
+zeros, the `reflog-unavailable` remedy, the 64 KiB residual, the report's
+JSON above 128 rows; What Changes, first bullet, eligibility; Capabilities
+`:10`, batch, `:55`, JSON, review-safety `:21`; Decisions, OQ-29 and
+council; this list; design Context, D10, D14, D18, Risks, Migration Plan;
+`tasks.md` 1.2).
 
 ### Council Verdicts
 

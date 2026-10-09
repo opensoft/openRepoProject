@@ -11,11 +11,13 @@ assume-unchanged or skip-worktree, sparse checkouts included
 (`hidden-local-state`); a worktree whose registration disagrees in either
 direction (`registration-mismatch`); a path that is not valid UTF-8
 (`unsupported-path-bytes`); a branch whose reflog shows no movement since its
-last creation or reset entry (`unstarted-branch`), a head equal to the merge
-target's SHA not being proof of that; a branch whose reflog is missing, empty or
-read to its 64 KiB bound, or whose surviving entries cannot decide that
-(`reflog-unavailable`); and a worktree whose path cannot be read or whose state
-could not be established (`inspection-error`). It
+anchor, its last entry whose old object is all zeros, as any entry that creates
+the branch has whatever its message, or whose message begins
+`branch: Created from` or `branch: Reset to` (`unstarted-branch`), a head equal
+to the merge target's SHA not being proof of that; a branch whose reflog is
+missing, empty or read to its 64 KiB bound, or whose surviving entries cannot
+decide that (`reflog-unavailable`); and a worktree whose path cannot be read or
+whose state could not be established (`inspection-error`). It
 MUST not offer destructive removal for those states. A value that is not
 established SHALL be null, never false or 0, and SHALL keep its row out of every
 removal.
