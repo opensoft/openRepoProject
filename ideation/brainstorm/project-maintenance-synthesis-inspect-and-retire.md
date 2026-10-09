@@ -84,9 +84,12 @@ apply to one preview.
 ### One evidence model; permission is not shared
 
 Overview, doctor, and clean read one evidence model. Every Git child runs with
-the variables `git rev-parse --local-env-vars` lists removed from its
-environment, from a list hard-coded from Git 2.43, and read-only children also
-set `GIT_OPTIONAL_LOCKS=0`. One `git --version` child runs per invocation. Each
+a fixed, hard-coded list of sixteen variables removed from its environment,
+unconditionally: the fifteen that `git rev-parse --local-env-vars` prints on
+Git 2.40 and later plus `GIT_INTERNAL_SUPER_PREFIX`, which Git 2.36 through 2.39
+also print, as verified on Git 2.36.6, 2.40.4, and 2.43.0 (change 1 ruling R-21,
+lane 2, 2026-10-09, `c873c81`). Read-only children also set
+`GIT_OPTIONAL_LOCKS=0`. One `git --version` child runs per invocation. Each
 repository then costs the same four repository-wide children, memoized per
 `common_dir` and fanned out to every row: identity; the registry listing,
 `git worktree list --porcelain -z`, which also yields `locked` and `prunable`;

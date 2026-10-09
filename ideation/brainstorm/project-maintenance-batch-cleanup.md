@@ -330,14 +330,19 @@ failure, such as `EACCES`, gives `present: null`, an `os-error` in the row's
 `errors`, and classification `inspection-error`, and no probe runs in that
 path.
 
-Every Git child runs with the variables that `git rev-parse --local-env-vars`
-lists removed from its environment, hard-coded from Git 2.43 rather than
-queried with another child: `GIT_ALTERNATE_OBJECT_DIRECTORIES`,
-`GIT_CONFIG`, `GIT_CONFIG_PARAMETERS`, `GIT_CONFIG_COUNT`,
-`GIT_OBJECT_DIRECTORY`, `GIT_DIR`, `GIT_WORK_TREE`,
+Every Git child runs with sixteen variables removed from its environment,
+unconditionally and before any Git call, from a fixed list that is hard-coded
+rather than queried with another child. Fifteen are the variables that
+`git rev-parse --local-env-vars` prints on Git 2.40 and later:
+`GIT_ALTERNATE_OBJECT_DIRECTORIES`, `GIT_CONFIG`, `GIT_CONFIG_PARAMETERS`,
+`GIT_CONFIG_COUNT`, `GIT_OBJECT_DIRECTORY`, `GIT_DIR`, `GIT_WORK_TREE`,
 `GIT_IMPLICIT_WORK_TREE`, `GIT_GRAFT_FILE`, `GIT_INDEX_FILE`,
 `GIT_NO_REPLACE_OBJECTS`, `GIT_REPLACE_REF_BASE`, `GIT_PREFIX`,
-`GIT_SHALLOW_FILE`, and `GIT_COMMON_DIR`. `-C <directory>` alone therefore
+`GIT_SHALLOW_FILE`, and `GIT_COMMON_DIR`. The sixteenth is
+`GIT_INTERNAL_SUPER_PREFIX`, which Git 2.36 through 2.39 also print and which
+makes every command on those versions fail when it is set. The list was
+verified on Git 2.36.6, 2.40.4, and 2.43.0, as change 1 ruling R-21 (lane 2,
+2026-10-09, `c873c81`) records. `-C <directory>` alone therefore
 selects the repository, and also the worktree whose index a probe reads,
 which is why "Probe directory rule" fixes each child's directory. Read-only
 probes also set `GIT_OPTIONAL_LOCKS=0`; the removal child does not. The scrub
@@ -764,10 +769,16 @@ once per inspected row, and revalidation never recomputes the full report.
 | 6 | one `for-each-ref` over `refs/heads` and `refs/remotes` in the format below | the `origin/HEAD` target; which merge-target candidates exist; the merge-target SHA; every branch's head, upstream, `upstream_oid`, ahead, behind, and `remote_present` |
 | 7 | `for-each-ref --merged=<merge-target sha> --format=%(refname) refs/heads` | `merged_into_target` for every branch at once |
 
-Every Git behavior this document cites was verified on Git 2.43 only, so
-the 2.36 floor is unverified: the proposal must verify the probe set, the
-scrubbed variable list, and the removal refusals on a pinned Git 2.36, or
-raise the floor.
+This document first checked every Git behavior it cites on Git 2.43 alone, and
+the proposal has since verified the 2.36 floor: the probe set, the scrubbed
+variable list, and the removal refusals, run on Git 2.36.6 and 2.40.4 against
+2.43.0 on 75 captures. Only the scrub list differed, by one name,
+`GIT_INTERNAL_SUPER_PREFIX`, which Git 2.36 through 2.39 print and which the
+scrub in "Identity" now unsets. The floor stays Git 2.36, as change 1 ruling
+R-21 (lane 2, 2026-10-09, `c873c81`) decided. That departs from task 2.2's
+rule, which applied here would raise the floor to 2.40, and the departure is
+open to Brett Heap at ratification, because 2.40 would exclude Debian 12's Git
+2.39.
 
 Row 6 passes this format string, identical in both packet documents, to
 `--format=`; fields are NUL-separated and each record ends in a line feed,
@@ -2043,6 +2054,9 @@ Open proposal decisions, with the first question for Brett Heap now ruled:
 - Change 1 council V10, the per-child budget (`status`, `doctor`, and
   `update` keep 15 s per Git child): departure, open to Brett Heap's
   ratification.
+- Change 1 R-21: the Git floor stays 2.36 with a sixteen-name scrub instead of
+  task 2.2's rule to raise it to 2.40 (Debian 12 ships 2.39); open to Brett
+  Heap at ratification.
 
 Every other open decision this document listed is decided: the 2026-10-08
 proposals took them as proposal decisions, open to ratification, as the

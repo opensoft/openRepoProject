@@ -466,6 +466,9 @@ Heap now ruled:
 - Change 1 council V10, the per-child budget (`status`, `doctor`, and
   `update` keep 15 s per Git child): departure, open to Brett Heap's
   ratification.
+- Change 1 R-21: the Git floor stays 2.36 with a sixteen-name scrub instead of
+  task 2.2's rule to raise it to 2.40 (Debian 12 ships 2.39); open to Brett
+  Heap at ratification.
 
 Every other decision this list carried is now a proposal decision, open to
 ratification, recorded in the

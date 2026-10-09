@@ -386,8 +386,9 @@ proposals as proposal decisions, open to ratification, under lane
 openRepoProject-2's OQ numbers (see "Decisions taken by the proposals —
 2026-10-08"), and the first question for Brett Heap is marked ruled, as he ruled
 it on 2026-10-09; the others remain open: the measured costs, the second
-question for Brett Heap, and the four change 1 council rulings this record
-labels departures, V1, V4, V5, and V10, which await his ratification. The
+question for Brett Heap, the four change 1 council rulings this record labels
+departures, V1, V4, V5, and V10, and the Git floor departure of change 1 lead
+ruling R-21, which await his ratification. The
 [packet overview](project-maintenance-overview.md) carries the open entries and
 names the decided ones in one paragraph.
 
@@ -442,7 +443,7 @@ names the decided ones in one paragraph.
   2026-10-08 (OQ-27): yes, one change each.
 - For Brett Heap, ruled: whether a local ancestry proof should outrank
   `remote-gone` for worktree rows. Brett Heap ruled yes on 2026-10-09 ("yes,
-  local ancestry proof outranks remote-gone"); see "Rulings R-11 to R-20 and
+  local ancestry proof outranks remote-gone"); see "Rulings R-11 to R-21 and
   Brett Heap's ruling — 2026-10-09"; the proposals' interim `remote-gone` text
   quoted below is lane openRepoProject-2's to amend, sha to follow, and the
   packet designs no mechanism for the ruling. Lane openRepoProject-3 raised it
@@ -477,6 +478,9 @@ names the decided ones in one paragraph.
 - Change 1 council V10, the per-child budget (`status`, `doctor`, and
   `update` keep 15 s per Git child): departure, open to Brett Heap's
   ratification.
+- Change 1 R-21: the Git floor stays 2.36 with a sixteen-name scrub instead of
+  task 2.2's rule to raise it to 2.40 (Debian 12 ships 2.39); open to Brett
+  Heap at ratification.
 
 ### Checks
 
@@ -768,7 +772,15 @@ checked against `project` at `a040790`, and the packet text now carries it.
   `ls-files -v --stage -z` combination, the scrubbed variable list, and the
   removal refusals among them, was verified on Git 2.43 only. The proposal
   must verify on a pinned Git 2.36 or raise the floor, as Batch
-  "Repository-wide probes" now says.
+  "Repository-wide probes" now says. Outcome (change 1 task 2.2 and ruling
+  R-21, lane openRepoProject-2, 2026-10-09, at `c873c81`): Git 2.36.6 and
+  2.40.4 were built and compared with 2.43.0 on 75 captures, and only the
+  scrub list differed, by `GIT_INTERNAL_SUPER_PREFIX`, which Git 2.36 through
+  2.39 print. The floor stays 2.36 with a fixed sixteen-name scrub, unset
+  unconditionally, a departure from task 2.2's rule (raise the floor to 2.40)
+  that is open to Brett Heap at ratification, since 2.40 would exclude Debian
+  12's Git 2.39. The R-21 bullet of "Rulings R-11 to R-21 and Brett Heap's
+  ruling — 2026-10-09" below records it.
 - Platform-bound scenarios (C13): the non-UTF-8 path scenarios, the
   overview's **Gated merged worktrees.** and **Non-UTF-8 path.** among
   them, cannot be built on macOS APFS; raw-byte order differs from
@@ -946,7 +958,7 @@ Change 1, `add-project-clean-all-safe`:
   question in the open lists of Batch, Overview, the packet overview, and this
   record carries both. Brett Heap ruled the question on 2026-10-09, and the text
   stays in the proposals until lane openRepoProject-2 amends it, sha to follow
-  (see "Rulings R-11 to R-20 and Brett Heap's ruling — 2026-10-09").
+  (see "Rulings R-11 to R-21 and Brett Heap's ruling — 2026-10-09").
 - Change 1 council V8, what the person sees: the preview lists the selected
   rows, then the excluded rows grouped by reason with each next step; the
   apply prompt names the count; and the success line and the stop block
@@ -1138,14 +1150,14 @@ or under its ruling label.
   anchor-based reflog test with R-15's all-zeros anchor and adopts the R-12,
   R-14, and R-15 remedy texts; `ef288fe` adds ruling R-16, `fd4b05a` ruling
   R-18, `568c477` copies change 1's movement wording, and `4495ae7`, change 2's
-  final text, adds ruling R-20. "Rulings R-11 to R-20 and Brett Heap's ruling
+  final text, adds ruling R-20. "Rulings R-11 to R-21 and Brett Heap's ruling
   — 2026-10-09" below records their items.
 - Change 2's final text is `4495ae7`: read at `996a181`, fix round at `fa9f0be`,
   R-16 at `ef288fe`, R-18 at `fd4b05a` and `568c477`, and R-20 at `4495ae7`;
   lane openRepoProject-3 read `568c477` clean on 2026-10-09, lane
   openRepoProject-2 landed that read's two LOW findings as ruling R-20, and
   PR #12 was marked ready for review at `4495ae7` the same day, ratification
-  remaining Brett Heap's, as "Rulings R-11 to R-20 and Brett Heap's ruling —
+  remaining Brett Heap's, as "Rulings R-11 to R-21 and Brett Heap's ruling —
   2026-10-09" below records.
 
 ### Change 1 phase 6 records — 2026-10-09
@@ -1156,11 +1168,11 @@ below. Each is recorded at its passage as "change 1 phase 6 (`90854a3`), lane
 openRepoProject-2, 2026-10-09", under its ruling label, or, for change 2's
 reconciliation, as landed in change 2 at `996a181`. Change 1's phase 6 text
 ended at `0b3c33d`, after `9ea2f02`, where the D10 amendment landed and where
-lane openRepoProject-3 made its re-verification read; "Rulings R-11 to R-20 and
+lane openRepoProject-3 made its re-verification read; "Rulings R-11 to R-21 and
 Brett Heap's ruling — 2026-10-09" below records the fix round at `d6aaa9a`,
 the wordings at `6792e06`, ruling R-15 at `9eeac52`, ruling R-17 at `4f2162b`,
-ruling R-19 at `7e2589f`, and change 1's final text at `8973762`, which adds
-ruling R-20.
+ruling R-19 at `7e2589f`, ruling R-20 at `8973762`, and change 1's final text
+at `c873c81`, which adds ruling R-21.
 
 - Ruling M1 confirmed: lane openRepoProject-3's reading stands. A removal child
   that exits nonzero on its own, with or without a signal, is `failed` with
@@ -1250,14 +1262,17 @@ ruling R-20.
   `targets` at `fa9f0be` to match `clean`'s plan. Overview "Attention
   categories", the synthesis's bounds row, and the "Caps at 150 ms" bullet above
   carry it.
-- Change 1's final text is `8973762`: read at `0b3c33d`, fix round at `d6aaa9a`,
-  wordings at `6792e06`, R-15 at `9eeac52`, R-17 at `4f2162b`, R-19 at
-  `7e2589f`, and R-20 at `8973762`; lane openRepoProject-3 read `7e2589f` clean
-  on 2026-10-09, lane openRepoProject-2 landed that read's LOW finding and the
-  change 1 proposal phrase noted in the `568c477` read, as ruling R-20, and
-  PR #11 was marked ready for review at `8973762` the same day, ratification
-  remaining Brett Heap's, as "Rulings R-11 to R-20 and Brett Heap's ruling —
-  2026-10-09" below records.
+- Change 1's final text is `c873c81`: read at `0b3c33d`, fix round at
+  `d6aaa9a`, wordings at `6792e06`, R-15 at `9eeac52`, R-17 at `4f2162b`, R-19
+  at `7e2589f`, R-20 at `8973762`, and R-21 at `c873c81`; lane
+  openRepoProject-3 read `7e2589f` clean on 2026-10-09, lane openRepoProject-2
+  landed that read's LOW finding and the change 1 proposal phrase noted in the
+  `568c477` read, as ruling R-20, and PR #11 was marked ready for review at
+  `8973762` the same day, ratification remaining Brett Heap's. Lane
+  openRepoProject-2 then landed R-21, task 2.2's Git 2.36 floor result, at
+  `c873c81`, on top of the numbering-only `cab78d8`; it changes the scrubbed
+  variable list and no scenario. "Rulings R-11 to R-21 and Brett Heap's
+  ruling — 2026-10-09" below records both.
 
 ### Rulings R-4, R-8, and R-9 — 2026-10-09
 
@@ -1303,7 +1318,7 @@ openRepoProject-2 ruling R-4, 2026-10-09".
   items of Batch, Overview, and the packet overview, and the change 2 council V7
   bullet above carry it.
 
-### Rulings R-11 to R-20 and Brett Heap's ruling — 2026-10-09
+### Rulings R-11 to R-21 and Brett Heap's ruling — 2026-10-09
 
 Lane openRepoProject-3 re-verified change 1 at `0b3c33d` and change 2 at
 `996a181` on 2026-10-09, and lane openRepoProject-2 ruled on the findings the
@@ -1317,8 +1332,10 @@ ruling R-15 landed at `9eeac52` ("Anchor the reflog test on the creation entry
 whatever its message (R-15)"); ruling R-17 at `4f2162b` ("State what the
 report's excluded list and digest hold above 128 rows (R-17)"); ruling R-19 at
 `7e2589f` ("Scope the report digest rule to the band above 128 rows and record
-R-17 (R-19)"); and `8973762`, change 1's final text, adds ruling R-20 ("Name the
-digest's full scope in the report band and align one movement phrase (R-20)").
+R-17 (R-19)"); `8973762` adds ruling R-20 ("Name the digest's full scope in the
+report band and align one movement phrase (R-20)"); and `c873c81`, change 1's
+final text, adds ruling R-21 ("Scrub GIT_INTERNAL_SUPER_PREFIX and tick task
+2.2 with the Git 2.36 floor results (R-21)").
 Change 2 was read at `996a181`; its fix round, carrying R-13 (b), R-14, the R-12
 mirror, and R-15, landed at `fa9f0be` (followed by a merge of `main` at
 `26a5668`, `12febc0`, that changed nothing in the change); `ef288fe` adds ruling
@@ -1556,6 +1573,27 @@ OQ-4 cap measurement, is still open and gates the Speckit handoff.
   `project-overview` delta 61. Lane openRepoProject-2 marked PR #11 ready for
   review at `8973762` and PR #12 at `4495ae7` on 2026-10-09; ratification
   remains Brett Heap's.
+- R-21 (change 1, landed at `c873c81`; lane openRepoProject-2, 2026-10-09)
+  records task 2.2's result. Task 2.2 built Git 2.36.6 and 2.40.4 from
+  kernel.org tarballs and compared them with 2.43.0 on 75 captures: design D17
+  rows 1 to 6 are identical on all three, and row 7, the variables of
+  `git rev-parse --local-env-vars`, differs by one name,
+  `GIT_INTERNAL_SUPER_PREFIX`, which Git 2.36 through 2.39 print and which,
+  when set, makes every command on 2.36 fail closed with "fatal: version
+  doesn't support --super-prefix". The floor stays Git 2.36, and the shared
+  evidence model's scrub becomes a fixed list of sixteen names, the fifteen of
+  Git 2.40 and later plus that one, unset unconditionally and before any Git
+  call. R-21 edits design D17 row 7, which records the difference and its
+  resolution; the scrub list of the `project-command` evidence model and
+  design D6; task 2.2, which is ticked; and the proposal's departures list,
+  which records a departure from task 2.2's literal rule, raising the floor to
+  the lowest version verified, here 2.40, open to Brett Heap at ratification
+  because 2.40 would exclude Debian 12's Git 2.39. The design's opening and the
+  proposal's later-rulings list name R-21. No scenario changed, so change 1
+  keeps 97 delta scenarios; change 2 states no count or list of the scrubbed
+  variables and is untouched. Batch "Identity" and "Repository-wide probes",
+  Overview "Probe model and deadline", and the "Git 2.36 floor (C12)" bullet
+  above carry it.
 - Change 2 at `996a181` also landed R-2, the submodule test first in every
   repository at no extra child, with the outcomes recorded in "Change 2 phase 6
   records — 2026-10-09" above; R-3, the UTF-8 check of `common_dir`; R-5, the
@@ -1639,9 +1677,11 @@ OQ-4 cap measurement, is still open and gates the Speckit handoff.
   Heap; ratification remains Brett Heap's. The PR heads later moved, PR #11 to
   `cab78d8` and PR #12 to `704eaa9`, by numbering-only commits that renumbered
   the Speckit handoffs to features 004-project-clean-all-safe and
-  005-project-overview after lane openRepoProject-1's PR #17 took 003; content
-  is unchanged, and `8973762` and `4495ae7` remain the content shas (lane 2,
-  2026-10-09).
+  005-project-overview after lane openRepoProject-1's PR #17 took 003; those
+  commits change no content, and `8973762` and `4495ae7` remain the shas at
+  which that content was read (lane 2, 2026-10-09). PR #11's head then moved
+  once more, to `c873c81`, which does change content, the scrub list of R-21,
+  recorded in the R-21 bullet above.
 - Brett Heap's ruling on the packet's first open question (Brett Heap,
   2026-10-09): "yes, local ancestry proof outranks remote-gone", delivered
   verbatim through lane openRepoProject-3's resume prompt as a preserved draft
@@ -1652,7 +1692,7 @@ OQ-4 cap measurement, is still open and gates the Speckit handoff.
   synthesis, and this record mark it ruled, and the packet designs no mechanism
   and changes no gate text. The proposals' interim `remote-gone` text is
   unchanged in seven identical places, three in change 1 at `6792e06` and after,
-  to its final `8973762`, and four in change 2 at `fa9f0be` and after, to its
+  to its final `c873c81`, and four in change 2 at `fa9f0be` and after, to its
   final `4495ae7`, and both changes still list the question as open; amending
   them on Brett Heap's word is lane openRepoProject-2's, sha to follow. The
   second question, patch equivalence for squash merges, stays open.

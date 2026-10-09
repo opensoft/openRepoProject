@@ -339,7 +339,11 @@ hard-coded, because obtaining it would cost a child:
 `GIT_CONFIG_COUNT`, `GIT_OBJECT_DIRECTORY`, `GIT_DIR`, `GIT_WORK_TREE`,
 `GIT_IMPLICIT_WORK_TREE`, `GIT_GRAFT_FILE`, `GIT_INDEX_FILE`,
 `GIT_NO_REPLACE_OBJECTS`, `GIT_REPLACE_REF_BASE`, `GIT_PREFIX`,
-`GIT_SHALLOW_FILE`, and `GIT_COMMON_DIR`, as Git 2.43 prints them. Every
+`GIT_SHALLOW_FILE`, and `GIT_COMMON_DIR`, the fifteen that Git 2.40 and later
+print. The list adds a sixteenth name, `GIT_INTERNAL_SUPER_PREFIX`, which Git
+2.36 through 2.39 also print and which makes every command on those versions
+fail when it is set, and all sixteen are unset unconditionally, as change 1
+ruling R-21 (lane 2, 2026-10-09, `c873c81`) fixed the shared scrub. Every
 overview child is a read-only probe, so each also runs with
 `GIT_OPTIONAL_LOCKS=0`, as the baseline `probe` helper already sets, and
 `status` never rewrites the index. Standard input is closed and output is
