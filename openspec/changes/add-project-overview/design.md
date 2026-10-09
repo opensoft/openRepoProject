@@ -33,20 +33,20 @@ What in `project` and the plan shapes the approach:
   and `OSError` into exit 2 and an interrupt into `Cancelled.` and 130
   (project:995-1003). At `7a9134b` the code from `manifest()` onward,
   `main()` included, sits 141 lines lower, as the proposal says, while
-  `read_yaml` and `probe()` (below) are unmoved; feature 004 re-pins every
+  `read_yaml` and `probe()` (below) are unmoved; feature 005 re-pins every
   citation against the `main` of its day.
 - Every Git child goes through `probe()` (project:60), a `subprocess.run`
   with a fixed 15 s timeout that kills one process, never a group. Feature
-  003 replaces it for Git with change 1's bounded runner, a child handle that
+  004 replaces it for Git with change 1's bounded runner, a child handle that
   starts a child in its own session, exposes its stdout and stderr, stops its
   group with the 2 s grace and reaps it (proposal, Dependencies; change 1's
   cross-change item X1). The overview drives that handle; it does not fork
   it.
-- Feature 003 also brings the shared probes and their incremental byte
+- Feature 004 also brings the shared probes and their incremental byte
   parsers, the ladder as a pure function over evidence (change 1's OQ-28),
   the version check and Git-first resolution. The overview adds discovery,
   the per-candidate collector, the scheduler, the gates and two renderers.
-  Feature 004 is created only after feature 003 merges.
+  Feature 005 is created only after feature 004 merges.
 - Tests run with `python3 -m unittest discover -s tests -v`; 94 pass at
   `7a9134b`. CI runs Ubuntu and macOS on Python 3.10 and 3.12, so nothing
   may rely on Python 3.11's `process_group` (proposal, Corrections).
@@ -641,7 +641,7 @@ confirmed. The 64 s run bound agrees (D13). No item stays open.
   `-c core.untrackedCache=false` on every status probe ([E]), so the
   packet's fixtures that hold `git status` with a `core.fsmonitor` hook
   (DI:1233-1237, the probe timeout; DI:1249-1254, bounded concurrency) hold
-  nothing. Feature 004 rewrites them to hold the status probe with the
+  nothing. Feature 005 rewrites them to hold the status probe with the
   counting `git` wrapper above, which sleeps before running the real `git`
   for a `status` argv and passes every other argv through unchanged.
 - Reflog fixtures: an unstarted branch (`worktree add -b`, then `push -u`),
@@ -732,15 +732,15 @@ subcommand's output, flags or exits change through this change.
 2. Task 2.2 reconciles this change's deltas with change 1's text after its
    phase 6 (D12), and task 2.1 records the OQ-4 measurement; both precede
    the handoff.
-3. Feature 003 (change 1) merges. `/speckit.specify` then creates exactly
-   one feature, `004-project-overview`, from the `main` of that day, and its
-   plan re-pins every `project:N` citation; feature 004 merges `main` into
+3. Feature 004 (change 1) merges. `/speckit.specify` then creates exactly
+   one feature, `005-project-overview`, from the `main` of that day, and its
+   plan re-pins every `project:N` citation; feature 005 merges `main` into
    its branch and never rebases.
-4. Feature 004 adds the `overview` subcommand, the README section that the
+4. Feature 005 adds the `overview` subcommand, the README section that the
    proposal's Impact lists, and D13's tests, at least one per scenario.
-5. This change archives after change 1, once feature 004 has merged.
+5. This change archives after change 1, once feature 005 has merged.
 
-Rollback: revert feature 004's merge; no data, configuration or other
+Rollback: revert feature 005's merge; no data, configuration or other
 subcommand depends on the overview.
 
 ## Open Questions

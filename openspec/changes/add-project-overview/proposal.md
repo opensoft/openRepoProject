@@ -431,13 +431,14 @@ renders no nested estate or leg; `project-command`, `project-clean` and
   skipped on macOS with that reason. Tests run with
   `python3 -m unittest discover -s tests -v` (README.md:187), the command
   CI runs as `python -m ...` (`.github/workflows/tests.yml:18`).
-- **Speckit handoff**: exactly one feature, `specs/004-<slug>/`, created by
-  `/speckit.specify` after ratification and after feature 003 merges. `002`
-  is lane openRepoProject-1's, merged by PR #8; `003` is change 1's. OpenSpec
+- **Speckit handoff**: exactly one feature, `specs/005-<slug>/`, created by
+  `/speckit.specify` after ratification and after feature 004 merges. `002`
+  is lane openRepoProject-1's, merged by PR #8; `003` is lane
+  openRepoProject-1's too (PR #17); `004` is change 1's. OpenSpec
   `tasks.md` holds governance boxes, the cap measurement (OQ-4) and that one
   handoff only.
-- **Expected conflicts**: feature 003, like the merged PR #8 (`d7f6b0e`, 94
-  tests), touches `project` and `tests/test_project.py`; feature 004 merges
+- **Expected conflicts**: feature 004, like the merged PR #8 (`d7f6b0e`, 94
+  tests), touches `project` and `tests/test_project.py`; feature 005 merges
   `main` in and never rebases. PR #13 (`7a9134b`) archived
   `prefer-triad-in-project-new` and touched only `openspec/`, so `project`
   and the tests are as at `d7f6b0e`.
@@ -520,13 +521,13 @@ Consequences:
   modifies, and `origin/main` is `7a9134b`. Every `project:N` and README
   citation stays pinned at `da33d92`; at `d7f6b0e` the cited `clean` and
   `repo_state` code (`manifest()` onward) sits 141 lines lower and
-  README.md:187 is :275, and feature 004's specify and plan re-pin citations
+  README.md:187 is :275, and feature 005's specify and plan re-pin citations
   against the `main` of that day.
 - Change 1 is ratified first. This change's spec deltas are written against
   change 1's ratified text, and a gate, code or probe that moves in change 1's
   review re-aligns this proposal before its own ratification.
-- Speckit feature 004 is created after feature 003 merges, because the
-  overview runs on the probes 003 builds; this change archives after change 1.
+- Speckit feature 005 is created after feature 004 merges, because the
+  overview runs on the probes 004 builds; this change archives after change 1.
 - How the ladder becomes reusable is change 1's decision (OQ-28, DI:599-600);
   this change needs it fed from memoized evidence, spawning no probe.
 - If Brett prefers one change, this proposal folds into a single
