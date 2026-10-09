@@ -102,8 +102,8 @@ builds the shared evidence model the overview reads across many repositories.
   document with exactly the envelope, row, worktree, finding and summary
   fields and types of DI:724-819, plus the finding fields `suggestion_gate`
   and `suggestion_gate_rows`, three `limits` keys read from change 1's
-  shared constants, `batch_row_cap`, `report_row_cap` and `target_limit`,
-  and a validity flag beside every serialized path: `path_valid_utf8`
+  shared constants, `batch_row_cap`, `report_row_cap` and `targets`, and a
+  validity flag beside every serialized path: `path_valid_utf8`
   beside each `path`, a finding's `checkout` and `ignored_samples` entries,
   now `{path, path_valid_utf8}` objects, included, and `root_valid_utf8` and
   `common_dir_valid_utf8` in `repository`.
@@ -186,11 +186,12 @@ builds the shared evidence model the overview reads across many repositories.
      when every root is `absent`, the human output SHALL say so, naming
      `--root` and `PROJECTS_DIR`.
   2. `Overview groups worktrees by repository identity`: rows SHALL be keyed
-     by `{root, common_dir, dev, ino}` from [E]'s identity probe, with [E]'s
-     registration rule (relative values resolved, realpaths compared;
-     BA:230-232); a family holder SHALL be one row. "Reached first" SHALL
-     mean first in canonical candidate order, and where a bind mount gives
-     two root spellings for one `(dev, ino)` the canonical-first SHALL win.
+     by `{root, common_dir, dev, ino}`, `common_dir` from [E]'s identity
+     probe, with [E]'s registration rule (relative values resolved,
+     realpaths compared; BA:230-232); a family holder SHALL be one row.
+     "Reached first" SHALL mean first in canonical candidate order, and
+     where a bind mount gives two root spellings for one `(dev, ino)` the
+     canonical-first SHALL win.
      Every repository SHALL first take [R]'s submodule test
      (`rev-parse --show-superproject-working-tree`), and a submodule
      checkout SHALL give `repository.root: null` with an
@@ -201,9 +202,14 @@ builds the shared evidence model the overview reads across many repositories.
      `repository.root` SHALL be the realpath of `core.worktree`, else the
      `--show-toplevel` of a candidate that is that checkout, else null with
      an `unsupported-layout` repair finding of severity error and no
-     suggestion, and that record SHALL NOT be a status-probe row. A main
-     worktree path that does not exist SHALL give `repository.root: null`
-     with a `main-worktree-missing` repair finding of severity warning, the
+     suggestion, and that record SHALL NOT be a status-probe row. In the
+     ordinary layout `repository.root` SHALL be the main worktree: the
+     identity probe's toplevel only when the candidate that reached the
+     repository first is the main worktree itself, else the canonical path
+     of the first registry record, never a linked worktree's toplevel (the
+     lead's R-14). A main worktree path that does not exist SHALL give
+     `repository.root: null` with a `main-worktree-missing` repair finding
+     of severity warning, the
      repository-wide probes running in the candidate. A suggestion for a
      gitfile checkout SHALL follow [R] (scenarios: `--separate-git-dir`, a
      submodule entry, a missing main worktree).
@@ -214,8 +220,10 @@ builds the shared evidence model the overview reads across many repositories.
      SIGKILL after 2 s, then reap it within a further 2 s grace or abandon it,
      its row recorded `probe-timeout`; SHALL run every filesystem call, root
      canonicalisation and dedupe, marker and holder checks, manifest reads and
-     branch reflog reads included, in a bounded daemon task waited for with
-     `min(5, deadline - now)`, a manifest whose `st_size` exceeds [E]'s 1 MiB
+     branch reflog reads (at most 64 KiB each, an unfinished one leaving its
+     row unprobed for requirement 7's gate) included, in a bounded daemon
+     task waited for with `min(5, deadline - now)`, a manifest whose
+     `st_size` exceeds [E]'s 1 MiB
      being `manifest-invalid` unread and no read exceeding 1 MiB; SHALL parse
      the ref listing as it streams, keeping heads, `origin/HEAD`, the remote
      refs named as upstreams and one flag for a remote copy of the merge
@@ -252,11 +260,23 @@ builds the shared evidence model the overview reads across many repositories.
      evaluate from its own evidence (`main-worktree`,
      `unsupported-path-bytes`, `registration-mismatch`, `locked-worktree`,
      and `unstarted-branch` or `reflog-unavailable` from one bounded
-     filesystem read of the branch's reflog: unstarted only when the reflog
-     shows no movement since the branch's creation, a missing, empty or
-     expired reflog failing closed, so a fast-forward-merged branch at the
-     target's tip passes; only the index gates stay residual exclusions the
-     batch applies) and [G]'s `inspection-incomplete` and `inspect-cap`
+     filesystem read of the branch's reflog, as [G] reads it: the anchor is
+     the last surviving entry whose old object is all zeros (a creation by
+     any command, `git fetch origin feat:f1` included) or whose message
+     begins `branch: Created from` or `branch: Reset to`, and a movement a
+     later entry, or any entry when no anchor survives, whose old and new
+     objects are both not all zeros and differ, a rename's entry being none
+     (the lead's R-15); a last
+     entry whose new object is not the head is `reflog-unavailable`, tested
+     first; a movement passes, so a fast-forward-merged branch at the
+     target's tip passes; an anchor with no movement after it, at the head,
+     is `unstarted-branch`, as is a branch reset to the target's tip by
+     `worktree add -B`; and one outcome rule makes a missing, empty,
+     bound-reaching or undecidable reflog `reflog-unavailable`, any other OS
+     error the row's `inspection-error`, and an unfinished read an unprobed
+     row (`inspection-incomplete`); only the index gates stay residual
+     exclusions the batch applies) and [G]'s `inspection-incomplete` and
+     `inspect-cap`
      refusals, and with no row left unprobed; a `merged-removable` worktree
      withheld by either reflog code SHALL keep its finding with the
      read-only suggestion. It SHALL name the gate that withheld or limited a
@@ -270,17 +290,19 @@ builds the shared evidence model the overview reads across many repositories.
      of M; the report would be incomplete", the JSON finding carrying N in
      `suggestion_gate_rows` and M in `limits`; `scan-limit` and
      `deadline-exceeded` "re-run with --root <repository parent>";
-     `unstarted-branch` "unstarted: the branch has no commit of its own;
-     remove the worktree explicitly if unwanted"; `reflog-unavailable` "the
-     branch's reflog is missing; remove the worktree explicitly if
-     unwanted";
+     `unstarted-branch` "no commit was made on this branch here since it
+     was created; review, then git worktree remove yourself";
+     `reflog-unavailable` "the branch's reflog is missing, expired or
+     undecidable; review, then git worktree remove yourself";
      `target-not-repository-root` "run project clean from the main worktree
      root"; `unsupported-path-bytes` "rename the path to valid UTF-8"; and
      `target-cap`, a limiting gate set when more gate-passing
      `merged-removable` rows keep the `--all-safe` suggestion than the
      batch's target limit, "limited to the batch's target limit of M per
      run; re-run to drain the backlog" (scenarios: 17 eligible rows; a
-     fast-forward-merged branch; a missing and an empty reflog). The
+     fast-forward-merged branch; a branch reset by `worktree add -B`; a
+     missing, an empty, an expired and a rewritten reflog; an unreadable
+     one). The
      null-root findings carry no gate code and their remedy in their
      message: `unsupported-layout` "set core.worktree or move the checkout",
      `main-worktree-missing` "restore or prune the main worktree by
@@ -288,7 +310,7 @@ builds the shared evidence model the overview reads across many repositories.
   8. `Overview prints a versioned JSON envelope`: SHALL print one
      `schema_version: 1` envelope with DI:724-819's fields plus
      `suggestion_gate`, `suggestion_gate_rows`, the `limits` keys
-     `batch_row_cap`, `report_row_cap` and `target_limit`, read from the shared
+     `batch_row_cap`, `report_row_cap` and `targets`, read from the shared
      constants and never from a clean plan, and a validity flag beside every
      serialized path (`path_valid_utf8`, `root_valid_utf8`,
      `common_dir_valid_utf8`; `ignored_samples` entries as
@@ -303,7 +325,8 @@ builds the shared evidence model the overview reads across many repositories.
      undecodable byte in `$'...'` form, with `\UXXXXXXXX` above U+FFFF, and
      SHALL give a non-UTF-8 worktree path, root or common directory an
      `unsupported-path-bytes` finding and no clean suggestion (scenarios
-     DI:1338-1347, DI:1392-1408).
+     DI:1338-1347, DI:1392-1408, and a common directory that is not valid
+     UTF-8, the lead's R-3).
   9. `Overview is local and read-only`: SHALL make no network connection and
      no filesystem or Git mutation.
   10. `Overview reports default-branch health`: a merge-target checkout
@@ -624,15 +647,23 @@ Departures from packet decisions, each citing the decision departed from:
 - **`unstarted-branch` and `reflog-unavailable` mirrored from the reflog**
   (DI:661-673 names four gates): the overview reads each remaining
   `merged-removable` worktree's branch reflog, `logs/refs/heads/<branch>`
-  under `common_dir`, by one bounded filesystem task, never a Git child, as
-  change 1's gate reads it under the lead's amended V2 and R-1: unstarted
-  only when the reflog shows no movement since the creation entry (a
-  rename's entry, old and new objects equal, is not movement), so a branch
-  fast-forward merged into the target, sitting at its tip, passes; a
-  missing, empty or expired reflog is `reflog-unavailable`. Either keeps the
-  finding with the read-only suggestion, that `suggestion_gate` and
-  requirement 7's message. Only the index gates stay residual exclusions the
-  batch applies.
+  under `common_dir`, by one bounded filesystem task of at most 64 KiB,
+  never a Git child, as change 1's gate reads it under the lead's amended
+  V2, R-1, R-12 and R-15. It decides from the anchor, the last surviving
+  entry whose old object is all zeros, a creation by any command, or whose
+  message begins `branch: Created from` or `branch: Reset to`, so a branch
+  created by `git fetch origin feat:f1` at the target's tip, or reset to it
+  by `worktree add -B`, stays unstarted, while a movement (an entry after
+  the anchor whose old and new objects are both not all zeros and differ;
+  a rename's entry is none) passes, so a branch fast-forward merged into the
+  target, sitting at its tip, passes. A last entry whose new object is not
+  the head, tested first, and a missing, empty, bound-reaching or
+  undecidable reflog are
+  `reflog-unavailable`; any other OS error makes the row
+  `inspection-error`, and an unfinished read leaves it unprobed
+  (`inspection-incomplete`). Either code keeps the finding with the
+  read-only suggestion, that `suggestion_gate` and requirement 7's message.
+  Only the index gates stay residual exclusions the batch applies.
 - **Determinism scoped** (DI:440-449, "never depends on timing"):
   requirement 3 promises timing-independent JSON only for an uncut run, and
   starts a repository's phase 2 only once every candidate earlier in
@@ -656,6 +687,17 @@ Departures from packet decisions, each citing the decision departed from:
   object, the shape change 1 adopts, so a `\xHH` escape never reads like a
   valid path holding those four characters (the lead's R-9, on Codex's
   finding on PR #12).
+- **Escaping by general category** (the packet's single escape form,
+  `\uXXXX` for every escaped code point, HO:301-306 and SY:247-250, the
+  decision the lead's R-14 calls decision 11; and DI:910-916's enumerated
+  set of control, bidirectional and format characters): every code point of
+  Unicode general category Cc, Cf, Zl or Zp, as the running interpreter's
+  `unicodedata.category` reports it, is escaped in JSON and puts its path in
+  the `$'...'` form in human output, the packet's enumerated characters
+  being examples, so U+200B, U+FEFF, U+00AD and the tag characters are
+  caught too; and human output writes a code point above U+FFFF as
+  `\UXXXXXXXX`, where the packet has only `\uXXXX` (the lead's R-8,
+  on Codex's finding on PR #11, listed here by R-14).
 - **SIGTERM and SIGHUP** (DI:1070-1075, DI:1094-1096, which treat SIGINT
   only): the SIGINT treatment, exits 143 and 129, so no Git child outlives
   the overview in its own session; after SIGHUP printing can fail with EIO,
@@ -853,6 +895,24 @@ layout findings), R-3 (What Changes; requirements 7 and 8; Decisions,
 (requirement 3; Dependencies; OQ-9), R-6 (requirement 6; Open Questions), R-7
 (requirements 7 and 8), and R-8 and R-9, from two Codex findings on PRs #11 and
 #12 (requirement 8; What Changes; Decisions, path validity flags).
+
+The re-verification of `996a181` and lane 3's read of it are applied against
+change 1's final fix at `d6aaa9a`: R-12's reflog anchor and one outcome rule
+(requirements 3 and 7; Capabilities; Decisions, the reflog gates) and its
+remedy texts, as R-14 amends the `unstarted-branch` one (requirement 7;
+Capabilities); R-13 (b) (the three scenarios whose branches have a commit
+of their own; requirement 5's claim limited to the rows `project clean`'s
+report inspects; design Context; task 2.2); and R-14's M-A (Decisions,
+escaping by general category), M-B (requirement 7; design Risks), M-C
+(requirement 2; Capabilities; design D3 and D7) and LOW items (a scenario
+for a common directory that is not valid UTF-8; the `limits` key `targets`,
+requirement 8). R-15, lane 3's read of change 1 at `6792e06`, amends R-12
+ahead of change 1's text: an entry whose old object is all zeros is an
+anchor, written by any command, and never a movement, and the
+`reflog-unavailable` remedy reads "the branch's reflog is missing, expired
+or undecidable; review, then git worktree remove yourself" (requirement 7;
+Capabilities; Decisions, the reflog gates; design D5 and D13). R-10's remedy
+wording is superseded by R-12, R-14 and R-15.
 
 | Finding | Severity | Ruling | Section edited |
 | --- | --- | --- | --- |

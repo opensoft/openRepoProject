@@ -31,8 +31,10 @@ What in `project` and the plan shapes the approach:
   an `OSError`, a `UnicodeError` or a YAML error; `manifest()` (project:274)
   reads `project.yaml` or `family.yaml` through it. `main()` turns `Refused`
   and `OSError` into exit 2 and an interrupt into `Cancelled.` and 130
-  (project:995-1003). At `7a9134b` the same code sits 141 lines lower, and
-  feature 004 re-pins every citation against the `main` of its day.
+  (project:995-1003). At `7a9134b` the code from `manifest()` onward,
+  `main()` included, sits 141 lines lower, as the proposal says, while
+  `read_yaml` and `probe()` (below) are unmoved; feature 004 re-pins every
+  citation against the `main` of its day.
 - Every Git child goes through `probe()` (project:60), a `subprocess.run`
   with a fixed 15 s timeout that kills one process, never a group. Feature
   003 replaces it for Git with change 1's bounded runner, a child handle that
@@ -206,8 +208,12 @@ third line names the superproject), so applying it everywhere adds no child.
    housekeeping finding, because `git worktree prune` never removes a main
    worktree and no read-only `project clean` can be suggested; its message
    carries "restore or prune the main worktree by hand".
-5. Ordinary: the first record is a worktree path, and `repository.root` is
-   its canonical path.
+5. Ordinary: the first record is a worktree path, the main worktree, and
+   `repository.root` names it whichever candidate reached the repository
+   first. The identity probe's toplevel names it only when that candidate
+   is the main worktree itself; when that candidate is a linked worktree,
+   `repository.root` is the canonical path of the first record, never the
+   linked worktree's toplevel (the lead's R-14).
 
 Rejected: parsing `<common_dir>/config` for `core.worktree` (includes and
 conditional includes could make it disagree with [R]); the submodule test as
@@ -275,33 +281,50 @@ computes:
   `registration-mismatch` (the two-way check failed) and `locked-worktree`
   (the registry's `locked`). The first failure replaces the housekeeping
   finding with its own, and the classification stays (DI:661-673);
-- `unstarted-branch` and `reflog-unavailable` from the reflog, as change 1's
-  gate reads it under the lead's amended V2 and R-1 (P6-5 for the finding): for
-  each remaining `merged-removable` row, one bounded filesystem task (D8) reads
-  `logs/refs/heads/<branch>` under `common_dir`, each `/` of the branch name a
-  directory level, at most 64 KiB, the bound [G] states for the same read. Each
-  line is `<old> <new> <identity> <time> <zone>`, a tab and a message. A
-  missing file (`ENOENT` or `ENOTDIR`), an empty one, or a first line whose old
-  object is not all zeros, the creation entry having expired as
-  `gc.reflogExpire`'s 90-day default allows, gives `reflog-unavailable`. A
-  later line whose new object differs from the creation entry's is movement,
-  and the gate passes; a rename's entry, old and new objects equal, is not
-  movement. A file that ends with no movement, with the head equal to the
-  creation entry's new object, gives `unstarted-branch`; a head that differs
-  from it with no movement recorded, or the bound reached first, gives
-  `reflog-unavailable`. A head equal to `merge_target.sha` decides nothing by
-  itself: a branch fast-forward merged into the target sits at its tip with a
-  commit in its reflog, and passes. Either code keeps the finding and gives the
-  read-only suggestion with that `suggestion_gate`. Any other read error, a
-  missed wait or the deadline records `os-error`, `probe-timeout` or
-  `deadline-exceeded` on the row and makes it `inspection-error`, as change 1's
-  D10 does, so `inspection-incomplete` then withholds `--all-safe`. Only the
-  index gates `contains-submodule` and `hidden-local-state` stay residual
-  exclusions the batch applies;
+- `unstarted-branch` and `reflog-unavailable` from the reflog, mirroring [G]'s
+  gate at `d6aaa9a` (change 1's D10; the lead's amended V2, R-1 and R-12; P6-5
+  for the finding): for each remaining `merged-removable` row, one bounded
+  filesystem task (D8) reads `logs/refs/heads/<branch>` under `common_dir`,
+  each `/` of the branch name a directory level, at most 64 KiB, the bound [G]
+  states for the same read. Each line is `<old> <new> <identity> <time>
+  <zone>`, a tab and a message. The anchor is the last surviving entry whose
+  old object is all zeros, a creation written by any command (`worktree add
+  -b`, `branch` and `checkout -b`, whose message begins `branch: Created
+  from`, and also `fetch <remote> <ref>:<branch>`, `update-ref` and `push
+  .`), or whose message begins `branch: Reset to` (`worktree add -B`,
+  `branch -f` and `checkout -B` on an existing branch); the lead's R-15
+  added the all-zeros test. A movement is an entry after the anchor, or any
+  entry when no anchor survives, whose old and new objects are both not all
+  zeros and differ: an entry whose old object is all zeros is never a
+  movement, nor is a rename's entry, old and new objects equal. The tests run
+  in this order: a last entry whose new object differs from the head gives
+  `reflog-unavailable`, because the reflog then does not describe the branch;
+  otherwise a movement passes the gate, whatever the head, the ancestry
+  already established deciding that the branch is merged; an anchor with no
+  movement after it, its new object equal to the head, gives
+  `unstarted-branch`, whether or not that head equals `merge_target.sha`; and
+  no anchor and no movement, or any other combination, gives
+  `reflog-unavailable`. One outcome rule governs the read: `ENOENT` or
+  `ENOTDIR`, a file of 0 bytes, the 64 KiB bound reached, or surviving entries
+  that cannot decide give `reflog-unavailable`; any other `OSError` records
+  `os-error` on the row and makes it `inspection-error`, like any failed row
+  probe; and a read not finished inside its wait records `probe-timeout`, or
+  `deadline-exceeded` where the deadline was the limit, and leaves the row
+  unprobed for the gate, as for every other filesystem read. Either of the
+  last two makes the batch's plan incomplete, so `inspection-incomplete` then
+  withholds `--all-safe`. A branch fast-forward merged into the target sits
+  at its tip with a commit after its anchor, and passes; a branch with
+  commits of its own that `worktree add -B` resets to the target's tip
+  anchors at that entry and is `unstarted-branch` until it gains a commit.
+  Either code keeps the finding and gives the read-only suggestion with that
+  `suggestion_gate`. Only the index gates `contains-submodule` and
+  `hidden-local-state` stay residual exclusions the batch applies;
 - the repository gates, computed from the overview's rows as [G] computes
   its plan's refusals: `inspection-incomplete` when any row is
   `inspection-error` (a failed or timed-out status probe, an unreadable
-  path, a registration mismatch); `inspect-cap` when the registered rows,
+  path, a registration mismatch, a reflog read failing with an `OSError`)
+  or is unprobed for the reflog gate because its read did not finish;
+  `inspect-cap` when the registered rows,
   `present: false` included, exceed `limits.batch_row_cap`; and `scan-limit`
   or `deadline-exceeded` when the overview's own worktree-row cap or
   deadline left any row with `classification: null`. Each withholds the
@@ -312,7 +335,7 @@ computes:
   every read-only suggestion of the repository is limited by `inspect-cap`,
   since that report would be incomplete;
 - `target-cap`: when more `merged-removable` findings still carry
-  `--all-safe` than `limits.target_limit`, each keeps it, limited by
+  `--all-safe` than `limits.targets`, each keeps it, limited by
   `target-cap`. Change 1's council V5 has the batch select up to the limit in
   canonical order and defer the rest as `deferred-target-cap`, apply
   allowed, re-runs draining. The overview's count can exceed what the batch
@@ -406,10 +429,14 @@ directory name.
 
 Where a bind mount or a second spelling gives two paths for one device and
 inode, the dedupe keeps the canonically first spelling (smallest bytes) for
-roots and candidates, and `repository.root` comes from the identity probe of
-the canonically first candidate that reached the repository, so a suggestion
-names one stable path. Independent clones have distinct `common_dir`
-identities and stay apart (DI:248-250), and a family holder is one row that
+roots and candidates. Where the canonically first candidate that reached the
+repository is a spelling of the main worktree directory itself,
+`repository.root` comes from that candidate's identity probe, so a
+suggestion names one stable path; where it is a linked worktree,
+`repository.root` is the canonical path of the registry's first record (D3,
+item 5), never that worktree's toplevel. Independent clones have distinct
+`common_dir` identities and stay apart (DI:248-250), and a family holder is
+one row that
 claims no member (DI:278-290).
 
 Rejected: keying by the root string or by name (DI:80-81).
@@ -431,7 +458,11 @@ now)`:
   and the matching `gitdir` file (DI:392-394); the missing-main `lstat` and
   D3's `.git` read take the same shape;
 - one task per reflog read of D5's gates, `logs/refs/heads/<branch>` under
-  `common_dir`, at most 64 KiB;
+  `common_dir`, at most 64 KiB, under D5's one outcome rule: a missing
+  (`ENOENT`, `ENOTDIR`), empty or bound-reaching file is
+  `reflog-unavailable` for the gate, any other `OSError` the row's
+  `os-error` and `inspection-error`, and a missed wait leaves the row
+  unprobed for the gate, recorded as below;
 - one task at start for the realpath of the working directory, which
   `current` needs.
 
@@ -517,7 +548,9 @@ Rejected: a gate line per finding (noise at 17 eligible rows).
 ### D11. The envelope's `limits` keys and path flags
 
 `limits` carries DI:729's seven keys plus `batch_row_cap`, `report_row_cap` and
-`target_limit` (P6-4), read at run time from the shared constants that [G]
+`targets` (P6-4; the last under the name a clean plan's `limits` gives the
+same constant, as the lead's R-14 rules), read at run time from the shared
+constants that [G]
 defines in the same file (the row caps of the `all-safe` and `report` modes,
 and the per-run target limit), never from literals of the overview's own and
 never from a clean plan, whose `limits.worktree_rows` holds only its own mode's
@@ -560,8 +593,15 @@ manifest cap and termination rule, [L]'s ladder and its merged `remote-gone`
 text, [G]'s gates, caps and refusals, [R]'s resolution order and [P]'s path
 rules, against change 1's spec deltas and design at `0b3c33d`, and applied the
 lead's amended V2 and R-1 to R-9 to this change's deltas, D3, D5, D8, D11 and
-D13. Each is confirmed or edited; the 64 s run bound agrees (D13). No item
-stays open.
+D13 (commit `996a181`). It then re-read the same items against change 1's
+final fix at `d6aaa9a` and applied R-12 (the reflog anchor, its one outcome
+rule and the remedy texts), R-13 (b) and R-14 to the deltas, Context, D3, D5,
+D7, D8, D11, D13 and Risks. [G]'s reflog gate and its two remedies moved and
+are mirrored, with R-15's all-zeros anchor and `reflog-unavailable` remedy
+applied ahead of change 1's text, which states them in its own next fix
+commit; [E]'s new sentence on where repository-wide probes run when
+`root` is null (R-13 (a)) agrees with requirement 2 and D3; every other item
+is confirmed. The 64 s run bound agrees (D13). No item stays open.
 
 ### D13. Test seams, fixtures and the scenario map
 
@@ -596,8 +636,12 @@ stays open.
   for a `status` argv and passes every other argv through unchanged.
 - Reflog fixtures: an unstarted branch (`worktree add -b`, then `push -u`),
   a branch given one commit and fast-forward merged into the target, a
-  branch renamed with `git branch -m`, a deleted reflog file and an empty
-  one; none needs a Git child to read.
+  branch renamed with `git branch -m`, a merged branch reset to the target's
+  tip by `worktree add -B`, a branch created by `git fetch origin feat:f1`
+  at the target's tip, a deleted reflog file and an empty one, one
+  expired to its rename entry alone, one whose ref was rewritten without a
+  reflog entry, and one unreadable for a permission error; none needs a Git
+  child to read.
 
 Scenario map, by the proposal's requirement numbers: the packet's MVP
 scenarios (DI:1185-1446) are covered as written except where noted, and the
@@ -611,8 +655,8 @@ added ones come from the council, the lead's rulings or this design.
 | 4 isolation | one helper failure | no YAML library |
 | 5 classifier | the six merge targets; every protected classifier | none |
 | 6 attention | attention filter | merged worktree with its upstream deleted |
-| 7 suggestions | gated merged worktrees; canonical identity | 17 eligible rows; two inspect-cap bands; unprobed row; unstarted branch, with the fast-forward-merged branch; reflog cannot decide |
-| 8 JSON | control characters; non-UTF-8 path | argument error; envelope fields; internal error |
+| 7 suggestions | gated merged worktrees; canonical identity | 17 eligible rows; two inspect-cap bands; unprobed row; unstarted branch, with the reset and fast-forward-merged branches; reflog cannot decide |
+| 8 JSON | control characters; non-UTF-8 path | non-UTF-8 common directory; argument error; envelope fields; internal error |
 | 9 read-only | local and read-only | none |
 | 10 default branch | none | pushed without `-u`; no remote; dirty and ahead; failed probe |
 | 11 exits | Git version refusal | Git unavailable; SIGTERM or SIGHUP; SIGINT |
@@ -643,9 +687,16 @@ with `project clean <root> --json` at the same commit, not at `a040790`.
   overview does not] -> The suggestion is advice; `project clean` recomputes
   and shows its own plan.
 - [Repositories without file reflogs (the reftable backend,
-  `core.logAllRefUpdates=false`) or with expired creation entries give every
-  merged row `reflog-unavailable`] -> Fails closed with the read-only
-  suggestion and its remedy, as change 1's batch excludes the same rows.
+  `core.logAllRefUpdates=false`) give every merged row `reflog-unavailable`,
+  and so does a branch with no surviving decisive reflog entry, because it
+  saw no activity for `gc.reflogExpire` (90 days by default)] -> Fails
+  closed with the read-only suggestion and its remedy, as change 1's batch
+  excludes the same rows.
+- [A branch created from a remote branch that already had commits, then
+  merged elsewhere, reads as unstarted, because nothing moved it here since
+  its anchor] -> Fails closed as `unstarted-branch` with the read-only
+  suggestion; the remedy says that no commit was made on the branch here
+  since it was created, as change 1's batch excludes the same row.
 - [The remote-copy flag reads set for a remote whose name contains `/`] ->
   It errs toward an `unpublished` warning (D9).
 - [A gitfile repository whose checkout lies outside every root reads

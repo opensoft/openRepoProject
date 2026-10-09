@@ -73,9 +73,10 @@ say that no projects directory was found and SHALL name `--root` and
 
 ### Requirement: Overview groups worktrees by repository identity
 Rows SHALL be keyed by repository identity `{root, common_dir, dev, ino}`,
-taken from the identity probe and the no-follow `lstat` of the common
-directory that `Repository inspection requires Git 2.36 and shares one
-evidence model` defines, never by a path string or a name. A linked worktree
+never by a path string or a name: `common_dir` from the identity probe, `dev`
+and `ino` from the no-follow `lstat` of the common directory that `Repository
+inspection requires Git 2.36 and shares one evidence model` defines, and
+`root` as this requirement names it. A linked worktree
 that is also a candidate SHALL merge into its repository's row, independent
 clones SHALL stay distinct, and every registered worktree, those outside
 every root included, SHALL be listed under its repository, main worktree
@@ -109,6 +110,11 @@ with an `unsupported-layout` repair finding of severity error, no suggestion
 and the message remedy "set core.worktree or move the checkout". The
 git-directory record SHALL NOT be a status-probed row; when `repository.root`
 is named, the main worktree row SHALL name it and take its status probe there.
+In the ordinary layout, where the first registry record is a worktree path,
+`repository.root` SHALL be the main worktree: the identity probe's toplevel
+when the candidate that reached the repository first is the main worktree
+itself, and otherwise, that candidate being a linked worktree, the canonical
+path of the first registry record, never the linked worktree's toplevel.
 
 A main worktree path that does not exist SHALL give `repository.root: null`
 and a `main-worktree-missing` repair finding of severity warning on that row
@@ -121,9 +127,10 @@ SHALL follow `Clean resolves its target Git-first`.
 - **WHEN** a repository has a main worktree and three linked worktrees, one of them an immediate entry of the root and one outside every root
 - **THEN** there is one project row with four worktree rows, and the external worktree adds no project
 - **AND** the identity probe, the registry, the single ref listing and the single merged-set query run once for the repository, each present row gets one status probe, and `probes.performed` equals one version check, plus one identity probe per Git candidate, plus three, plus four
+- **AND** when the main worktree lies outside every root, so that a linked worktree reaches the repository first, `repository.root` is the canonical path of the first registry record, never that linked worktree's toplevel
 
 #### Scenario: Present eligible external worktree
-- **WHEN** `atlas` has a clean, pushed, merged linked worktree outside every root
+- **WHEN** `atlas` has a clean, pushed, merged linked worktree outside every root, whose branch has a commit of its own
 - **THEN** it appears among `atlas`'s worktrees with `dev`, `ino` and a two-way-verified `admin_id`, classification `merged-removable` and a housekeeping finding
 - **AND** the suggestion is `project clean <atlas root> --all-safe`, and the project count is unchanged
 
@@ -175,10 +182,12 @@ scan error SHALL count the candidates not started.
 
 Every filesystem call, root canonicalisation and deduplication, marker and
 holder checks, registration reads, manifest reads and branch reflog reads
-included, SHALL run in a bounded task waited for with
-`min(5 s, deadline - now)`; a task that does not finish in time SHALL record
-`probe-timeout`, or `deadline-exceeded` when the deadline was the smaller
-limit, for its root or row, and the overview SHALL move on. A root cut this way
+(each at most 64 KiB and never a Git child) included, SHALL run in a bounded
+task waited for with `min(5 s, deadline - now)`; a task that does not finish
+in time SHALL record `probe-timeout`, or `deadline-exceeded` when the deadline
+was the smaller limit, for its root or row, and the overview SHALL move on, a
+reflog read cut this way leaving its row unprobed for the gate that
+`Overview suggests only gated clean commands` states. A root cut this way
 SHALL count as `truncated`, and its listing SHALL read no further entry once
 the root is abandoned. A manifest whose `st_size`, taken before the read,
 exceeds the 1 MiB that
@@ -353,9 +362,12 @@ recommendation text, fed from the overview's collected evidence and spawning
 no probe of its own. The ladder SHALL run on a row only when the row is within
 the cap, its presence is established, and the registry, ref listing and
 merged set succeeded; otherwise `classification` SHALL be null, except for the
-rows that requirement sets to `inspection-error` directly. A row's
-classification SHALL equal what `project clean <repository.root> --json`
-reports for it from the same working directory and the same refs.
+rows that requirement sets to `inspection-error` directly. For every row that
+the report of `project clean <repository.root> --json` inspects, from the same
+working directory and the same refs, the row's classification SHALL equal what
+that report gives it; that report leaves the rows beyond its own row cap
+uninspected, while the overview classifies rows up to its own worktree-row cap
+per run.
 
 #### Scenario: Manifest target
 - **WHEN** a `project.yaml` sets `tracking_branch: origin/develop`, a local `develop` exists, and there is no `origin/HEAD`
@@ -470,21 +482,34 @@ the overview can evaluate from its own evidence, in that requirement's order:
 `main-worktree`, `unsupported-path-bytes`, `registration-mismatch` and
 `locked-worktree`, whose first failure replaces the housekeeping finding with
 its own while the classification stays; then `unstarted-branch` or
-`reflog-unavailable`, mirroring that requirement's gate from one bounded read,
-at most 64 KiB, of the branch's reflog, `logs/refs/heads/<branch>` under
-`common_dir`, read for every row the gate checks: `unstarted-branch` only when
-its reflog records no movement since its creation entry and that entry's new
-object equals the branch's current head, an entry whose old and new objects are
-equal, as a rename writes, not counting as movement; `reflog-unavailable` when
-the reflog is missing, empty (0 bytes) or its creation entry has expired, or it
-cannot decide otherwise, its read bound being reached first or its head
-differing from its creation entry with no movement recorded. A head equal to
-the merge-target object id whose reflog shows a commit since the branch's
-creation SHALL pass. Either code SHALL keep the `merged-removable` finding with
-the read-only suggestion. The index gates SHALL remain exclusions only the
+`reflog-unavailable`, mirroring that requirement's gate. The branch's reflog,
+`logs/refs/heads/<branch>` under `common_dir`, SHALL be read for every row the
+gate checks by one bounded filesystem read of at most 64 KiB, never by a Git
+child. Its anchor SHALL be its last surviving entry whose old object is all
+zeros, a creation written by any command, or whose message begins `branch:
+Created from` or `branch: Reset to`; a movement SHALL be an entry after the
+anchor, or any entry when no anchor survives, whose old and new objects are
+both not all zeros and differ. An entry whose old object is all zeros SHALL
+never be a movement, nor SHALL an entry whose old and new objects are equal,
+as a rename writes. A branch whose last reflog entry's new object
+differs from its current head SHALL be `reflog-unavailable`, this test first;
+otherwise a branch with a movement SHALL pass the gate, its head equal to the
+merge-target object id or not, and a branch whose anchor survives with no
+movement after it, the anchor's new object equal to its current head, SHALL be
+`unstarted-branch`. One outcome rule SHALL govern the read: a reflog that is
+missing (`ENOENT` or `ENOTDIR`), empty (0 bytes) or read to its 64 KiB bound,
+or whose surviving entries cannot decide, no anchor and no movement surviving
+included, SHALL make that row `reflog-unavailable`; any other operating-system
+error on the read SHALL record an `os-error` and make that row
+`inspection-error`, as any failed row probe does; and a read not finished
+within the filesystem budget SHALL leave that row unprobed for the gate, as
+for every other filesystem read, recording `probe-timeout` or
+`deadline-exceeded`. Either code SHALL keep the `merged-removable` finding
+with the read-only suggestion. The index gates SHALL remain exclusions only the
 batch applies. The `--all-safe` form SHALL also be withheld for every worktree
 of a repository whose batch plan would be refused as `inspection-incomplete`
-(any worktree row is `inspection-error`) or `inspect-cap` (more worktree rows
+(any worktree row is `inspection-error`, or is unprobed for this gate because
+its reflog read did not finish) or `inspect-cap` (more worktree rows
 than the batch's row cap), as
 `Clean bounds its Git work and reports omitted work` defines, each computed
 from the overview's own evidence, and for a repository with any row the
@@ -507,13 +532,13 @@ defines, as `limits` reports them, never from a clean plan:
 | --- | --- | --- |
 | `target-not-repository-root` | withholds every clean suggestion (a bare repository) | run project clean from the main worktree root |
 | `unsupported-path-bytes` | withholds every clean suggestion (a root or common directory that is not valid UTF-8) | rename the path to valid UTF-8 |
-| `inspection-incomplete` | withholds `--all-safe` | repair the inspection-error rows first |
+| `inspection-incomplete` | withholds `--all-safe` (an `inspection-error` row, or a row whose reflog read did not finish) | repair the inspection-error rows first |
 | `inspect-cap` | withholds `--all-safe` over the batch's row cap | N rows exceed the batch's row cap of M; remove explicitly |
 | `inspect-cap` | limits the read-only form over the report's row cap | N rows exceed the report's row cap of M; the report would be incomplete |
 | `scan-limit` | withholds `--all-safe` for a row left unprobed by a cap | re-run with --root <repository parent> |
 | `deadline-exceeded` | withholds `--all-safe` for a row left unprobed by the deadline | re-run with --root <repository parent> |
-| `unstarted-branch` | withholds `--all-safe` for that worktree | unstarted: the branch has no commit of its own; remove the worktree explicitly if unwanted |
-| `reflog-unavailable` | withholds `--all-safe` for that worktree | the branch's reflog is missing; remove the worktree explicitly if unwanted |
+| `unstarted-branch` | withholds `--all-safe` for that worktree (an anchor with no movement after it) | no commit was made on this branch here since it was created; review, then git worktree remove yourself |
+| `reflog-unavailable` | withholds `--all-safe` for that worktree (a reflog that cannot decide) | the branch's reflog is missing, expired or undecidable; review, then git worktree remove yourself |
 | `target-cap` | limits `--all-safe` | limited to the batch's target limit of M per run; re-run to drain the backlog |
 
 A root left null by `unsupported-layout` or `main-worktree-missing` SHALL
@@ -525,12 +550,12 @@ exclude a suggested worktree.
 - **WHEN** four worktrees the ladder would classify `merged-removable` are one locked with `git worktree lock`, one whose `.git` file names another admin directory, one whose path contains the byte `0xFF`, and the main worktree checked out on a merged non-target branch while the overview runs elsewhere
 - **THEN** the locked one has a `locked-worktree` finding suggesting the read-only `project clean <root>`, the mismatched one gets no status probe and is `inspection-error` with a `registration-mismatch` finding, the non-UTF-8 one has `unsupported-path-bytes`, the main worktree has `main-worktree`, and none produces a housekeeping finding
 - **AND** a fifth, gate-passing `merged-removable` worktree in the same repository keeps its housekeeping finding with the read-only suggestion and `suggestion_gate: "inspection-incomplete"`, and the row suggests the read-only form
-- **AND** after `git worktree repair` fixes the mismatched registration, the `--all-safe` suggestion returns and the batch preview selects the repaired worktree and the fifth
+- **AND** after `git worktree repair` fixes the mismatched registration, the `--all-safe` suggestion returns and the batch preview selects the repaired worktree, whose branch has a commit of its own, and the fifth
 
 #### Scenario: Canonical identity through the handoff
-- **WHEN** projects named `atlas` under two roots each have a `merged-removable` worktree
+- **WHEN** projects named `atlas` under two roots each have a `merged-removable` worktree whose branch has a commit of its own
 - **THEN** the rows suggest `["project", "clean", "<first atlas root>", "--all-safe"]` and `["project", "clean", "<second atlas root>", "--all-safe"]`, and each, when run, resolves its path Git-first to a plan whose `repository` and `merge_target` equal that row's
-- **AND** for an assembly root with a `project.yaml` whose immediate-entry leg `api` is its own repository with one dirty and one `merged-removable` worktree, the leg's row suggests `--all-safe` on the leg's root, its `dirty` finding suggests the read-only form, and either reports `root` equal to the leg
+- **AND** for an assembly root with a `project.yaml` whose immediate-entry leg `api` is its own repository with one dirty and one `merged-removable` worktree whose branch has a commit of its own, the leg's row suggests `--all-safe` on the leg's root, its `dirty` finding suggests the read-only form, and either reports `root` equal to the leg
 - **AND** the same command with a linked-worktree path or a subdirectory instead of the root is refused by `project clean` with exit status 2 and `target-not-repository-root` before any mutation
 
 #### Scenario: More eligible worktrees than the batch's target limit
@@ -548,15 +573,18 @@ exclude a suggested worktree.
 - **THEN** that finding suggests the read-only form with `suggestion_gate: "scan-limit"` and the remedy "re-run with --root <repository parent>", naming the repository's parent directory
 
 #### Scenario: An unstarted branch
-- **WHEN** a linked worktree was created with a new branch at the merge target's tip and published with `git push -u`, with no commit of its own
-- **THEN** it keeps its `merged-removable` finding, which suggests only the read-only form with `suggestion_gate: "unstarted-branch"` and a message saying it is unstarted
-- **AND** no `--all-safe` suggestion is given for that repository on its account
-- **AND** a branch given one commit and then fast-forward merged into the merge target, so that its head equals the target's tip while its reflog records that commit, keeps the `--all-safe` suggestion with no gate
+- **WHEN** a linked worktree was created with a new branch at the merge target's tip and published with `git push -u`, with no commit of its own, so that its reflog holds only its `branch: Created from` entry
+- **THEN** it keeps its `merged-removable` finding, which suggests only the read-only form with `suggestion_gate: "unstarted-branch"` and a message ending "no commit was made on this branch here since it was created; review, then git worktree remove yourself"
+- **AND** no `--all-safe` suggestion is given for that repository on its account, and after `git branch -m`, whose entry has equal old and new objects, it is still `unstarted-branch`
+- **AND** a branch with commits of its own, merged into the merge target and then reset to the target's tip by `git worktree add -B <branch> <path> <merge target>` with no commit after it, anchors at that `branch: Reset to` entry and is `unstarted-branch` too, its earlier commits not counting as movement
+- **AND** a branch created by `git fetch origin feat:f1` while `origin/feat` sits at the merge target's tip, then checked out in a linked worktree with no commit, anchors at that fetch entry, whose old object is all zeros, and is `unstarted-branch` too, never passing as a movement
+- **AND** a branch given one commit and then fast-forward merged into the merge target, so that its head equals the target's tip while its reflog records that commit after its anchor, keeps the `--all-safe` suggestion with no gate
 
 #### Scenario: A branch whose reflog cannot decide
-- **WHEN** one gate-passing `merged-removable` worktree's branch has no reflog file, another's reflog file is empty, and a third's reflog has lost its creation entry to expiry
-- **THEN** each keeps its `merged-removable` finding, which suggests only the read-only form with `suggestion_gate: "reflog-unavailable"` and a message ending "the branch's reflog is missing; remove the worktree explicitly if unwanted"
-- **AND** no Git child is started to read any of the three reflogs, and `project clean <root> --all-safe` excludes all three as `reflog-unavailable`
+- **WHEN** one gate-passing `merged-removable` worktree's branch has no reflog file, another's reflog file is empty, a third's reflog keeps only a rename entry after `git reflog expire` removed its creation and commit entries, and a fourth's branch, whose reflog records a commit of its own, was then moved to another merged commit by writing its ref directly, so that its last entry's new object differs from its head
+- **THEN** each keeps its `merged-removable` finding, which suggests only the read-only form with `suggestion_gate: "reflog-unavailable"` and a message ending "the branch's reflog is missing, expired or undecidable; review, then git worktree remove yourself"
+- **AND** no Git child is started to read any of the four reflogs, and `project clean <root> --all-safe` excludes all four as `reflog-unavailable`
+- **AND** in a second repository, where one gate-passing worktree's reflog cannot be read for a permission error, that worktree records an `os-error` and is `inspection-error`, and another gate-passing `merged-removable` worktree there suggests only the read-only form with `suggestion_gate: "inspection-incomplete"`
 
 ### Requirement: Overview prints a versioned JSON envelope
 `--json` SHALL print exactly one JSON document with `schema_version: 1` and
@@ -565,10 +593,11 @@ exactly these fields, every one always present:
 - envelope: `schema_version`; `observed_at`, the collection start; `roots`, in
   canonical byte order; `limits`, of integers, keyed `roots`, `candidates`,
   `worktree_rows`, `root_entries`, `ignored_entries`, `status_records`,
-  `ignored_samples`, `batch_row_cap`, `report_row_cap` and `target_limit`,
-  the last three read from the shared constants that `Clean bounds its Git
-  work and reports omitted work` defines, never from a clean plan, whose own
-  `limits.worktree_rows` is only its mode's row cap; `budget`, of integers,
+  `ignored_samples`, `batch_row_cap`, `report_row_cap` and `targets`, the
+  last three read from the shared constants that `Clean bounds its Git work
+  and reports omitted work` defines, never from a clean plan, whose own
+  `limits.worktree_rows` is only its mode's row cap, `targets` carrying the
+  name a clean plan's `limits` gives the same constant; `budget`, of integers,
   keyed `probe_timeout_seconds`, `invocation_timeout_seconds` and
   `probe_concurrency`; `probes`; `projects`, sorted by the bytes of `path`;
   `relationships`, always `[]`; `summary`; `completeness`, `complete` or
@@ -643,13 +672,18 @@ message on standard error and no JSON.
 - **AND** `project clean <root> --all-safe` excludes it with reason `unsupported-path-bytes`
 - **AND** when another worktree holds two ignored files, one named with the byte `0xFF` and one named with the four characters `\xff`, its two `ignored_samples` entries have the same decoded `path` and differ only in `path_valid_utf8`, false and true
 
+#### Scenario: Non-UTF-8 common directory
+- **WHEN** a root holds the checkout of a repository made with `git init --separate-git-dir` into a git directory whose name contains the byte `0xFF`, and the repository has a dirty linked worktree
+- **THEN** `repository.common_dir` shows the byte as `\xff` with `common_dir_valid_utf8: false` while `root_valid_utf8` is true, and the row has a repository-level `unsupported-path-bytes` repair finding
+- **AND** neither the row nor any finding carries a clean suggestion, each finding that would have suggested one naming `unsupported-path-bytes` in `suggestion_gate`, and `project clean <root>` refuses with `unsupported-path-bytes` and exit status 2
+
 #### Scenario: An argument error under --json
 - **WHEN** `project overview --json --bogus` runs
 - **THEN** standard output is empty, standard error carries the usage message, and the exit status is 2
 
 #### Scenario: Every envelope field is present
 - **WHEN** `project overview --json` runs over a fixture with one healthy repository holding one `merged-removable` worktree and one unreadable root
-- **THEN** the document carries exactly the fields listed above with their types, `limits` includes `batch_row_cap`, `report_row_cap` and `target_limit` equal to the shared constants that `Clean bounds its Git work and reports omitted work` defines, read without building a clean plan, every finding carries `suggestion_gate` and `suggestion_gate_rows`, every `path` has `path_valid_utf8` beside it, `repository` carries `root_valid_utf8` and `common_dir_valid_utf8`, and `completeness` is `incomplete`
+- **THEN** the document carries exactly the fields listed above with their types, `limits` includes `batch_row_cap`, `report_row_cap` and `targets` equal to the shared constants that `Clean bounds its Git work and reports omitted work` defines, read without building a clean plan, every finding carries `suggestion_gate` and `suggestion_gate_rows`, every `path` has `path_valid_utf8` beside it, `repository` carries `root_valid_utf8` and `common_dir_valid_utf8`, and `completeness` is `incomplete`
 
 #### Scenario: An internal error outside the collector under --json
 - **WHEN** an exception is raised outside the per-candidate boundary during a `--json` run
