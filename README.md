@@ -24,6 +24,7 @@ For source development, run `python3 project --help` in this checkout.
 ```sh
 project benches
 project new
+project new MyApp
 project new MyApp --bench flutterBench --type flutter --dry-run
 project new MyApp ~/projects --bench flutterBench --type flutter --workflow
 project new MyApp --description "a Flutter mobile app" --dry-run
@@ -34,13 +35,87 @@ that checkout. The list reports missing scripts and excludes updater entries.
 Descriptions produce local keyword recommendations; they are never uploaded.
 Ambiguous choices require an explicit selection.
 
-Before running, the command shows the generator and destination and asks for
-`yes`. `--yes` confirms bench creation for scripted use. `--dry-run` prints the
-plan without creating even the parent directory. Existing destinations refuse.
+At a terminal, without a choosing flag, `project new` asks one question once
+the name is known, before any generator list, plan or confirmation:
+
+```text
+How should MyApp be created? Nothing is created until you confirm.
+  1. Triad (default): an assembly root with a spec leg and a code leg, made by openRepoShape. It is preferred, not required: it stays elective and confers nothing.
+  2. Single repository: fully supported, and no reason is asked. single-repository.yaml is the ratified way to record staying single.
+Create it as a Triad? [Y/n or 1/2]:
+```
+
+The Triad is first and the default: Enter, `1`, `y` or `yes` takes it, and
+`2`, `n` or `no` takes a single repository, with no reason asked. Letters are
+compared case-insensitively and surrounding spaces are ignored. Any other
+answer is asked once more; a second unrecognised answer, or end of input,
+refuses with exit 2 and creates nothing. Ctrl-C prints `Cancelled.` and exits
+130. The question is
+not a confirmation and creates nothing: each answer still ends at its own
+confirmation. `project` never writes `single-repository.yaml`.
+
+Under the Triad entry, the question names any known obstacle, read locally
+with no network access: a name that cannot be a Triad name (a letter first,
+then letters and digits only, such as `MyApp`), `openRepoShape` missing from
+`PATH`, or a parent directory that does not exist. The Triad stays first and
+the default. A Triad answer with an obstacle is refused at once with exit 2,
+before any further prompt; a single-repository answer is unaffected.
+
+The question is not asked when:
+
+- any choosing flag is given: `--shape`, `--org`, `--visibility`, `--family`,
+  `--elected-by`, `--bench`, `--type`, `--description` or `--yes`, even with an
+  empty value;
+- stdin or stdout is not a terminal;
+- `CI` is set to anything other than empty, `0`, `false` or `no`, in any letter case and ignoring surrounding spaces;
+- the name is a `<user>-wip` workspace name, such as `alice-wip`.
+
+A choosing flag restores the path without the question exactly: its prompts,
+refusals, standard output, files and exit status are those `project new` had
+before the question existed. To create a single repository without being
+asked, name the generator, for example
+`project new MyApp --bench flutterBench --type flutter`. `--dry-run`,
+`--workflow`, `--into` or the positional parent, and `--workbenches` choose
+nothing, so a dry run at a terminal asks too, then prints the plan of the path
+its answer chose and writes nothing.
+
+A Triad answer asks for the GitHub organization, then the visibility, typed in
+full as `private`, `public` or `internal`, with no default. An empty or invalid
+answer is asked once more, then refused with exit 2. One line then restates
+the choice, such as `Triad MyApp in organization example, visibility private.`;
+for `public` it says that anyone can read the repositories. The command then
+runs openRepoShape without `--yes`, so openRepoShape's own typed confirmation
+decides, and its exit status passes through.
+
+After the question, when it is asked, the command shows the destination and
+the command it will run. A single repository then asks for `yes` before
+running its generator; a Triad ends at openRepoShape's own typed confirmation.
+`--yes` confirms bench creation for scripted use. `--dry-run` prints the plan
+without creating even the parent directory. Existing destinations refuse.
 Generator errors pass through unchanged. The generator owns language runtime
 requirements and environment creation: run it in the appropriate bench.
 
+A single repository created without the question (chosen by flag, or not at a
+person's terminal) is followed by two `warning:` lines on stderr once the
+repository and its `.project.json` exist. They say that the Triad is preferred,
+not required, stays elective and confers nothing; that openRepoShape's
+`adopt-project.py` converts a repository in place when a person deciding for
+the project runs it; that `single-repository.yaml` records staying single; and
+that nothing changes. stdout, files, `.project.json` and the exit status are
+unchanged, and a stderr that cannot be written is ignored. No advisory follows
+a dry run, a Triad, a creation that went through the question, a workspace name
+or a failed creation, and nothing records it.
+
 `--workflow` runs `setup-openspeckit --repo PATH` after successful creation.
+`project`'s own offer comes first (the question before creation, or the
+advisory after it); then setup-openspeckit runs as before, and its own output
+can include its own Triad advisory and, at a terminal, its own question. So
+`--yes --workflow` prints two advisories back to back, and a person who
+answered `2` may be asked again by setup-openspeckit, where `n` stops it:
+`project` then reports that workflow setup failed and exits 130. When the
+question will be asked, `--workflow` without `setup-openspeckit` on `PATH` is
+refused before it.
+
 A small `.project.json` records the selected bench/type for later inspection.
 
 Shape scaffolding delegates directly to openRepoShape:
@@ -55,8 +130,20 @@ is supplied here. It can pass `--family` and `--elected-by`. Its output names an
 remaining family-membership step. Shape mode creates the repository structure;
 combining it with a bench application generator requires a future adapter.
 
+Ctrl-C while openRepoShape runs reaches openRepoShape too; `project` stops
+waiting after a moment and prints `Cancelled.`. Read openRepoShape's output,
+and check the organization on GitHub, before retrying.
+
 Legacy `onp NAME [PARENT]` and `new-project.sh NAME [PARENT]` in workBenches
 forward to `project new` and also accept its new flags.
+
+Agents offer the Triad in conversation, in the shared agent protocol's words
+("When a person asks to create a new project, offer the Triad first as the
+default"), then run `project new` with a choosing flag
+(`--shape --org ORG --visibility VIS`, or `--bench` and `--type`), and never
+answer the creation question, the organization, the visibility or
+openRepoShape's confirmation on a person's behalf. The terminal check cannot
+tell an agent at a pseudo-terminal from a person.
 
 ## Understand a project
 
@@ -158,6 +245,7 @@ No component silently pulls Git branches or implements pin/worktree mechanics.
 | --- | --- |
 | `--workbenches PATH` / `WORKBENCHES_ROOT` | Explicit bench registry checkout |
 | `PROJECTS_DIR` | Projects directory for discovery and default creation |
+| `CI` | A value other than empty, `0`, `false` or `no` (any letter case, surrounding spaces ignored) means `project new` asks no creation question |
 | `.project.json` | Portable project bench/type/container declarations |
 | `~/.agents/workspace.yaml` | Existing park/resume workspace config, read-only here |
 | `SPECKIT_WORKSPACE_PATH` | Override the local parked-work workspace path |

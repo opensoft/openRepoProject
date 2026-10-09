@@ -22,3 +22,15 @@ manifests. Run `python3 -m unittest discover -s tests -v` in the Python workBenc
 Use temporary fixtures for creation tests; do not create real GitHub projects.
 Generic orchestration belongs here; generators, shape mechanics and Git handoff
 stay with their existing owners. See docs/migration-review.md.
+
+## Creating a project for a person
+
+When a person asks to create a new project, offer the Triad first as the
+default, in conversation, as the shared protocol says: an assembly root with a
+spec leg and a code leg, preferred, not required, elective, and conferring
+nothing; accept a single repository without asking why. Then run `project new`
+with a choosing flag: `--shape --org ORG --visibility VIS` for a Triad, or
+`--bench BENCH --type TYPE` for a single repository. Never answer the creation
+question, the organization, the visibility or openRepoShape's typed
+confirmation on a person's behalf. The terminal check cannot tell an agent at a
+pseudo-terminal from a person.

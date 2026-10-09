@@ -1,0 +1,60 @@
+Lane: openRepoProject-1
+
+# Traceability: delta scenarios to tests
+
+One row per scenario of the ratified spec delta
+(`openspec/changes/prefer-triad-in-project-new/specs/project-command/spec.md`),
+by requirement and scenario title, in file order. The Tests column names the
+test methods in `tests/test_project.py` that cover the scenario; each test task
+fills it as its test lands (`tasks.md` T002), and T066 checks that no cell is
+empty and that every named test is defined.
+
+| # | Requirement | Scenario | Tests |
+| --- | --- | --- | --- |
+| 1 | Delegate project creation | Preview | `test_pty_dry_run_single_answer_prints_the_generator_plan`, `test_pty_dry_run_triad_answer_prints_the_openreposhape_plan`, `test_pty_shape_chosen_by_flag_keeps_openreposhape_confirmation`, `test_advisory_silent_cases` |
+| 2 | Delegate project creation | Existing project | `test_pty_refusals_before_a_path_come_first` |
+| 3 | Delegate project creation | Shape chosen by flag | `test_pty_shape_chosen_by_flag_keeps_openreposhape_confirmation`, `test_advisory_silent_cases` |
+| 4 | Delegate project creation | An answer is not a confirmation | `test_pty_single_answer_is_not_a_confirmation`, `test_pty_triad_delegates_without_yes_and_keeps_its_confirmation` |
+| 5 | Creation question is asked only of a person choosing at the terminal | A person at the terminal without a choosing flag | `test_pty_question_is_asked_once_the_name_is_known` |
+| 6 | Creation question is asked only of a person choosing at the terminal | A choosing flag skips the question | `test_pty_choosing_flags_skip_the_question` |
+| 7 | Creation question is asked only of a person choosing at the terminal | Not at a terminal | `test_inproc_person_at_terminal_rule`, `test_new_without_a_terminal_is_not_asked`, `test_inproc_stdout_not_a_terminal_is_not_asked` |
+| 8 | Creation question is asked only of a person choosing at the terminal | CI is set | `test_inproc_person_at_terminal_rule`, `test_pty_ci_decides_the_question` |
+| 9 | Creation question is asked only of a person choosing at the terminal | A workspace name | `test_pty_workspace_name_is_not_asked_or_advised`, `test_workspace_name_by_flag_gives_no_advisory` |
+| 10 | Creation question is asked only of a person choosing at the terminal | A dry run asks too | `test_pty_dry_run_single_answer_prints_the_generator_plan`, `test_pty_dry_run_triad_answer_prints_the_openreposhape_plan` |
+| 11 | Creation question is asked only of a person choosing at the terminal | Refusals before a path is chosen come first | `test_pty_refusals_before_a_path_come_first` |
+| 12 | Creation question is asked only of a person choosing at the terminal | The workflow prerequisite is refused before the question | `test_pty_workflow_prerequisite_is_refused_before_the_question` |
+| 13 | Creation question is asked only of a person choosing at the terminal | The refusal order of an invocation not asked the question is unchanged | `test_workflow_refusal_order_unchanged_when_not_asked` |
+| 14 | Creation question offers the Triad first | The question's entries | `test_pty_question_entries` |
+| 15 | Creation question offers the Triad first | Answers that take the Triad | `test_pty_answers_that_take_the_triad` |
+| 16 | Creation question offers the Triad first | Answers that take a single repository | `test_pty_single_answers_take_the_bench_path` |
+| 17 | Creation question offers the Triad first | One unrecognised answer | `test_pty_one_unrecognised_answer_is_asked_again` |
+| 18 | Creation question offers the Triad first | Two unrecognised answers | `test_pty_two_unrecognised_answers_refuse` |
+| 19 | Creation question offers the Triad first | End of input at the question | `test_pty_end_of_input_at_the_question_refuses` |
+| 20 | Creation question offers the Triad first | An interrupt at the question | `test_pty_interrupt_at_the_question_cancels` |
+| 21 | Creation question offers the Triad first | End of input at an existing prompt is unchanged | `test_pty_end_of_input_at_existing_prompts_is_unchanged` |
+| 22 | Known Triad obstacles are named before the question and refused on a Triad answer | A name outside the assembly-root form | `test_pty_name_outside_the_assembly_form_is_named` |
+| 23 | Known Triad obstacles are named before the question and refused on a Triad answer | openRepoShape is not on PATH | `test_pty_missing_openreposhape_is_named` |
+| 24 | Known Triad obstacles are named before the question and refused on a Triad answer | The parent directory is missing | `test_pty_missing_parent_is_named_without_into` |
+| 25 | Known Triad obstacles are named before the question and refused on a Triad answer | A Triad answer with a known obstacle | `test_pty_triad_answer_with_an_obstacle_refuses`, `test_inproc_triad_obstacle_runs_nothing` |
+| 26 | Known Triad obstacles are named before the question and refused on a Triad answer | A dry run with a known obstacle | `test_pty_dry_run_with_an_obstacle_refuses` |
+| 27 | Known Triad obstacles are named before the question and refused on a Triad answer | A single-repository answer is unaffected | `test_pty_single_answer_is_unaffected_by_obstacles` |
+| 28 | Known Triad obstacles are named before the question and refused on a Triad answer | No known obstacle | `test_pty_no_known_obstacle_names_none` |
+| 29 | A Triad answer asks for the organization and the visibility | Organization first, then visibility | `test_pty_organization_then_visibility` |
+| 30 | A Triad answer asks for the organization and the visibility | The visibility is a full word | `test_pty_visibility_is_a_full_word` |
+| 31 | A Triad answer asks for the organization and the visibility | Asked once more, then refused | `test_pty_two_misses_at_organization_or_visibility_refuse` |
+| 32 | A Triad answer asks for the organization and the visibility | End of input at the organization or visibility prompt | `test_pty_end_of_input_at_organization_or_visibility_refuses` |
+| 33 | A Triad answer asks for the organization and the visibility | An interrupt at the organization or visibility prompt | `test_pty_interrupt_at_organization_or_visibility_cancels` |
+| 34 | A Triad answer asks for the organization and the visibility | The restating line | `test_pty_restating_line_precedes_the_plan` |
+| 35 | A Triad answer asks for the organization and the visibility | Delegation keeps openRepoShape's confirmation | `test_pty_triad_delegates_without_yes_and_keeps_its_confirmation` |
+| 36 | A Triad answer asks for the organization and the visibility | openRepoShape refuses | `test_pty_openreposhape_refusal_passes_through` |
+| 37 | Creation advisory follows a single repository created without the question | A single repository chosen by flag | `test_advisory_after_a_flag_chosen_single_repository` |
+| 38 | Creation advisory follows a single repository created without the question | A single repository created where the question is not asked | `test_pty_advisory_where_ci_is_true`, `test_inproc_stdout_not_a_terminal_is_not_asked` |
+| 39 | Creation advisory follows a single repository created without the question | The advisory's content | `test_advisory_content` |
+| 40 | Creation advisory follows a single repository created without the question | A generator that initialises no Git repository | `test_advisory_after_a_flag_chosen_single_repository` |
+| 41 | Creation advisory follows a single repository created without the question | Silent cases | `test_advisory_silent_cases`, `test_pty_single_answers_take_the_bench_path`, `test_pty_triad_delegates_without_yes_and_keeps_its_confirmation`, `test_pty_workspace_name_is_not_asked_or_advised`, `test_workspace_name_by_flag_gives_no_advisory` |
+| 42 | Creation advisory follows a single repository created without the question | Standard error cannot be written | `test_advisory_with_stderr_closed`, `test_advisory_with_stderr_on_dev_full`, `test_advisory_with_stderr_on_a_closed_pipe` |
+| 43 | Creation advisory follows a single repository created without the question | Never a report input | `test_advisory_is_never_a_report_input` |
+| 44 | Creation offer precedes the workflow follow-up | Two advisories back to back | `test_workflow_advisory_precedes_the_follow_up` |
+| 45 | Creation offer precedes the workflow follow-up | The follow-up fails | `test_workflow_follow_up_failure_keeps_the_advisory` |
+| 46 | Creation offer precedes the workflow follow-up | A single-repository answer with --workflow | `test_pty_single_answer_with_workflow_adds_no_advisory` |
+| 47 | Creation offer precedes the workflow follow-up | A workspace name with --workflow | `test_workflow_workspace_name_gives_no_advisory` |
