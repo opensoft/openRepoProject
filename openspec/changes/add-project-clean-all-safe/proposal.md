@@ -142,9 +142,9 @@ Scope).
   `branch: Created from` or `branch: Reset to` (`worktree add -B`,
   `branch -f` and `checkout -B` write the second; R-15). An entry whose old
   object is all zeros is never a movement, and a movement is a later entry,
-  or any entry when no anchor survives, whose non-zero old and new objects
-  differ (a rename's are equal). A branch whose anchor survives with no
-  movement after it, at the anchor's new object, is excluded as
+  or any entry when no anchor survives, whose old and new objects are
+  non-zero and differ (a rename's are equal). A branch whose anchor survives
+  with no movement after it, at the anchor's new object, is excluded as
   `unstarted-branch`, so a freshly created and published lane worktree,
   whose push adds no reflog entry, is never swept, nor one reset to the
   target's tip by `worktree add -B` or created there by
@@ -781,8 +781,10 @@ additions, with no packet text behind them:
   incomplete with `inspect-cap`; R-15), `plan_digest` computed (above 128 rows
   over a null `selected`, never consumable by `--expect-plan` because the
   incomplete apply is refused first; at most 128 rows equal to the `--all-safe`
-  preview's for the same selection, an `--expect-plan` carrying it matching,
-  which is intended; R-17, R-19), `apply_allowed` false and the deferral applied
+  preview's for the same repository identity, merge target and selection, an
+  `--expect-plan` carrying it matching, which is intended, while a target that
+  advances between the report and the preview gives `plan-digest-mismatch`,
+  which is safe; R-17, R-19), `apply_allowed` false and the deferral applied
   as in a preview.
 
 Council decisions, with the packet text each replaces or extends:

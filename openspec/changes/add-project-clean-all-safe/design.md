@@ -576,9 +576,12 @@ over the same canonical text as any plan, which covers only the repository's
 identity fields, the merge target and `selected`, with `selected` null, and
 `--expect-plan` never consumes it, because an apply there is an incomplete plan
 and is refused before the digest is compared; at most 128 rows a report's digest
-equals the `--all-safe` preview's for the same selection, since the mode is not
-in the digest, and an `--expect-plan` carrying it matches, which is intended
-(R-19). It exits 0, 1 or 2 by completeness (R2).
+equals the `--all-safe` preview's for the same repository identity, merge target
+and selection, since the mode is not in the digest, and an `--expect-plan`
+carrying it matches, which is intended; the digest also covers the merge
+target's name and SHA, so a target that advances between the report and the
+preview gives `plan-digest-mismatch`, which is safe (R-19). It exits 0, 1 or 2
+by completeness (R2).
 
 ### D15. Signals before and during the apply phase (OQ-16, M1)
 

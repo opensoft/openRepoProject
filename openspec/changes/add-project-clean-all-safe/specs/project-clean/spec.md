@@ -33,11 +33,14 @@ repository's identity fields, the merge target and `selected`, with `selected`
 null, and `--expect-plan` SHALL never consume it, because an apply there is an
 incomplete plan and is refused before the digest is compared. At most 128 rows,
 a report's `plan_digest` SHALL equal the `--all-safe` preview's for the same
-selection, since the mode is not in the digest, and an `--expect-plan` carrying
-it SHALL match, which is intended. `apply_allowed` SHALL be false. It SHALL
-exit 0 when the report is complete, 1 when it is incomplete (`inspect-cap`,
-`inspection-incomplete` or `deadline-exceeded`), and 2 when no report can be
-built, and its human output SHALL say when and why it is incomplete.
+repository identity, merge target and selection, since the mode is not in the
+digest, and an `--expect-plan` carrying it SHALL match, which is intended; the
+digest also covers the merge target's name and SHA, so a target that advances
+between the report and the preview gives `plan-digest-mismatch`, which is safe.
+`apply_allowed` SHALL be false. It SHALL exit 0 when the report is complete, 1
+when it is incomplete (`inspect-cap`, `inspection-incomplete` or
+`deadline-exceeded`), and 2 when no report can be built, and its human output
+SHALL say when and why it is incomplete.
 
 A worktree whose registered path cannot be read, for any reason other than its
 absence, SHALL be one row with `present: null`, an `os-error` in its `errors`
