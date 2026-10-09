@@ -218,10 +218,16 @@ builds the shared evidence model the overview reads across many repositories.
      per-child rule under that deadline, `min(5 s, deadline - now)`, run each
      child in its own process group and stop it with SIGTERM to the group, then
      SIGKILL after 2 s, then reap it within a further 2 s grace or abandon it,
-     its row recorded `probe-timeout`; SHALL pin `-c protocol.allow=never` on
-     every Git child beside [E]'s pins, Git 2.43 having no `GIT_NO_LAZY_FETCH`,
-     so that a lazy fetch in a partial clone fails locally and never reaches
-     the network (R-23); SHALL run every filesystem call, root
+     its row recorded `probe-timeout`; SHALL pin
+     `-c protocol.allow=never -c protocol.file.allow=never -c protocol.ssh.allow=never -c protocol.git.allow=never -c protocol.http.allow=never -c protocol.https.allow=never -c protocol.ext.allow=never`
+     on every Git child beside [E]'s pins, Git 2.43 having no
+     `GIT_NO_LAZY_FETCH`, so that a lazy fetch in a partial clone fails
+     locally and never reaches the network (R-23), the per-protocol pins
+     sitting beside `protocol.allow` because it is only the default policy,
+     which a per-protocol `allow=always` in a config file or
+     `GIT_ALLOW_PROTOCOL` in the caller's environment would override, so that
+     `GIT_ALLOW_PROTOCOL` is among the seventeen names [E]'s scrub removes
+     (R-25); SHALL run every filesystem call, root
      canonicalisation and dedupe, marker and holder checks, manifest reads and
      branch reflog reads (at most 64 KiB each, an unfinished one leaving its
      row unprobed for requirement 7's gate) included, in a bounded daemon
@@ -464,7 +470,9 @@ restate its contract. Change 1 owns:
 - the shared evidence model: the version check, the four repository-wide
   probes memoized per `common_dir`, the combined status probe per worktree row
   and its record bounds, NUL-delimited parsing and path escaping, the child
-  environment and pins (R-23 adds `-c protocol.allow=never` there and in
+  environment and pins (R-23 adds `-c protocol.allow=never`, and R-25 adds
+  the six per-protocol `allow=never` pins and `GIT_ALLOW_PROTOCOL` in the
+  seventeen-name scrub, there and in
   requirement 3), the 1 MiB manifest read, over-cap judged from the file's size
   before the read (so `clean` and the overview resolve the same merge
   target), and the bounded runner, not `probe()`, for
@@ -594,7 +602,8 @@ Packet open decisions taken, each citing the packet text that leaves it open:
   `scan-limit` error on `candidates` and 91 omitted, and no cap moves for it.
   Git 2.43 has no `GIT_NO_LAZY_FETCH`, so a read-only probe in a partial clone
   could fetch from the network, and R-23 pins `-c protocol.allow=never` on
-  every Git child (requirement 3; design D13).
+  every Git child, with R-25's six per-protocol `allow=never` pins beside it
+  and `GIT_ALLOW_PROTOCOL` in [E]'s scrub (requirement 3; design D13).
 - **OQ-6, concurrency** (OV:320-327): four children across distinct
   repositories. If design rejects concurrency, the packet's serial fallback
   of 32 candidates and 128 worktree rows applies (DI:1465-1471).
@@ -978,6 +987,20 @@ carries the same pin (requirement 3; Dependencies; Decisions, OQ-4; design
 D13 and Risks; task 2.1). The same measurement confirmed the caps and found
 this workstation's default root, at 219 candidates, incomplete by design
 (Decisions, OQ-4).
+
+R-25, a gap found in change 1's application of R-23 at `8aad1e8`, completes
+the pin: `protocol.allow` is only the default policy, so a per-protocol
+`protocol.<name>.allow=always` in a config file or `GIT_ALLOW_PROTOCOL` in
+the caller's environment would still allow the fetch. Every Git child also
+pins `-c protocol.file.allow=never -c protocol.ssh.allow=never -c protocol.git.allow=never -c protocol.http.allow=never -c protocol.https.allow=never -c protocol.ext.allow=never` beside `-c protocol.allow=never`
+(command-line `-c` outranks every config file), and `GIT_ALLOW_PROTOCOL` joins
+the fixed scrub that [E] applies to the child environment, which then removes
+seventeen names; the overview carries the pins and the scrub by citation of
+[E] plus the literal list. The residual that a remote-helper protocol of
+another name, with its own `allow=always` in the repository's config, could
+still fetch is accepted: the case is rare, and the probe would then succeed
+rather than fail, so no unsafe removal follows (requirement 3; Dependencies;
+Decisions, OQ-4; design D13 and Risks; task 2.1).
 
 | Finding | Severity | Ruling | Section edited |
 | --- | --- | --- | --- |

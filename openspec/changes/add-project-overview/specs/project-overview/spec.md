@@ -197,15 +197,22 @@ reader's read SHALL never exceed 1 MiB. The ref listing SHALL be parsed as it
 streams, keeping only the local heads, `origin/HEAD`, the remote refs named as
 upstreams and one flag recording whether a remote copy of the merge target
 exists. The status probe and its record bounds SHALL be those that requirement
-defines. Every Git child SHALL also run with `-c protocol.allow=never`,
+defines. Every Git child SHALL also run with
+`-c protocol.allow=never -c protocol.file.allow=never -c protocol.ssh.allow=never -c protocol.git.allow=never -c protocol.http.allow=never -c protocol.https.allow=never -c protocol.ext.allow=never`,
 pinned beside the environment and the status pins that requirement defines
 (`GIT_OPTIONAL_LOCKS=0`, and on a status probe
 `-c core.untrackedCache=false -c core.fsmonitor=false`), because Git 2.43
-has no `GIT_NO_LAZY_FETCH`: without the pin a read-only probe in a partial
-clone could fetch missing objects from the network, and with it that fetch
+has no `GIT_NO_LAZY_FETCH`: without the pins a read-only probe in a partial
+clone could fetch missing objects from the network, and with them that fetch
 fails locally, so the failed probe is recorded as `probe-failed` on its row,
 a failed status probe leaves its worktree `inspection-error`, and no
-network call is made. That requirement carries the same pin.
+network call is made. The per-protocol pins sit beside `protocol.allow`
+because it is only the default policy: a per-protocol `allow=always` in a
+config file or `GIT_ALLOW_PROTOCOL` in the caller's environment would still
+allow the fetch (R-25). `GIT_ALLOW_PROTOCOL` is therefore among the seventeen
+names that the child-environment scrub of that requirement removes before any
+Git call, a scrub this requirement carries by citation. That requirement
+carries the same pins.
 
 The caps SHALL be 32 roots, 4,096 entries per root, 128 candidates and 512
 worktree rows across the run, main worktrees included. The OQ-4 measurement

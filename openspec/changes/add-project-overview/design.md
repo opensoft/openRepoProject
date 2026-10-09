@@ -627,8 +627,10 @@ change 1's commit of the same title. No item stays open.
 - A counting `git` wrapper first on `PATH` records each child's argv, `-C`
   directory, process group and times, can hold a chosen argv, and asserts
   that no argv fetches, pulls, pushes or reaches a remote, and that every
-  child's argv carries `-c protocol.allow=never`. It serves the
-  probe-count, concurrency, hold, deadline and signal scenarios.
+  child's argv carries
+  `-c protocol.allow=never -c protocol.file.allow=never -c protocol.ssh.allow=never -c protocol.git.allow=never -c protocol.http.allow=never -c protocol.https.allow=never -c protocol.ext.allow=never`.
+  It serves the probe-count, concurrency, hold, deadline and signal
+  scenarios.
 - In-process tests set the scheduler's concurrency constant to 1 or 4 and
   patch the filesystem task functions to inject a slow `scandir`, `lstat` or
   manifest read where no FUSE mount can be made. A FUSE fixture runs only
@@ -644,14 +646,21 @@ change 1's commit of the same title. No item stays open.
 - The deadline scenario patches the 60 s deadline and the 5 s budget down
   in-process, keeping their ratio, so the suite stays fast; the full-length
   run belongs to task 2.1's measurement.
-- Pins: every Git child runs with `-c protocol.allow=never` beside the pins
-  [E] defines (`GIT_OPTIONAL_LOCKS=0`, and on a status probe
+- Pins: every Git child runs with
+  `-c protocol.allow=never -c protocol.file.allow=never -c protocol.ssh.allow=never -c protocol.git.allow=never -c protocol.http.allow=never -c protocol.https.allow=never -c protocol.ext.allow=never`
+  beside the pins [E] defines (`GIT_OPTIONAL_LOCKS=0`, and on a status probe
   `-c core.untrackedCache=false -c core.fsmonitor=false`), and [E] carries
-  the same pin (R-23). Git 2.43 has no `GIT_NO_LAZY_FETCH`, so a read-only
-  probe in a partial clone could fetch missing objects from the network;
-  with the pin that fetch fails locally, the failed probe is recorded
-  `probe-failed` on its row, a failed status probe leaves its worktree
-  `inspection-error`, and no network call is made.
+  the same pins (R-23, R-25). Git 2.43 has no `GIT_NO_LAZY_FETCH`, so a
+  read-only probe in a partial clone could fetch missing objects from the
+  network; with the pins that fetch fails locally, the failed probe is
+  recorded `probe-failed` on its row, a failed status probe leaves its
+  worktree `inspection-error`, and no network call is made. The per-protocol
+  pins sit beside `protocol.allow` because it is only the default policy: a
+  per-protocol `allow=always` in a config file or `GIT_ALLOW_PROTOCOL` in the
+  caller's environment would still allow the fetch (R-25), so
+  `GIT_ALLOW_PROTOCOL` is among the seventeen names that [E]'s scrub of the
+  child environment removes before any Git call, a scrub the overview carries
+  by citation. Command-line `-c` outranks every config file.
 - Fixture rewrite: change 1 pins `-c core.fsmonitor=false` and
   `-c core.untrackedCache=false` on every status probe ([E]), so the
   packet's fixtures that hold `git status` with a `core.fsmonitor` hook
@@ -707,7 +716,14 @@ with `project clean <root> --json` at the same commit, not at `a040790`.
   holds 219 candidates in its default root, so a default-root run there is
   incomplete by design, with 91 omitted and no cap moved for it; and Git 2.43
   has no `GIT_NO_LAZY_FETCH`, so every Git child pins `-c protocol.allow=never`
-  (R-23; D13).
+  and the six per-protocol `allow=never` pins, and the scrub removes
+  `GIT_ALLOW_PROTOCOL` (R-23, R-25; D13).
+- [A remote-helper protocol of another name, with its own
+  `protocol.<name>.allow=always` in the repository's config, could still
+  fetch, because the pins name the default policy and the six protocols Git
+  ships] -> Accepted (R-25): the case is rare, and the probe would then
+  succeed rather than fail, so no unsafe removal follows, the overview being
+  read-only.
 - [A Windows drive mounted into WSL2 makes every listing slow] -> Not
   measured, since drvfs was not available on the measuring workstation; the
   README says such roots can truncate on every run.
