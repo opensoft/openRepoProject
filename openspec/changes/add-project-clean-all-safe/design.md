@@ -9,9 +9,10 @@ requirements. The council's noted constraints, `clarifications.md` N1 to N5, are
 answered by D1 to D5; D6 to D19 give the how of the proposal's decisions, and
 D20 maps the packet's 35 validation scenarios to the deltas. The binding rulings
 (D-A to D-AF, X1, X2, V1 to V12 with V2 as amended, lane 3's M1 to M7, and the
-lead's R-4, R-8 and R-9 and R-11 to R-15) are already in `proposal.md`, with the
-sections each edited; R-15 edited Context, D10, D14, D18, Risks and the
-Migration Plan here.
+lead's R-4, R-8 and R-9, R-11 to R-15, R-17 and R-19) are already in
+`proposal.md`, with the sections each edited; R-15 edited Context, D10, D14,
+D18, D19, Risks and the Migration Plan here; R-17 edited Context and D14, and
+R-19 edited Context, D14 and D19.
 
 Citations are `file:line` at `da33d92`: `BA`, `DI`, `OV` and `HO` are the
 packet's batch-cleanup, project-discovery, overview and handoff documents, and
@@ -570,9 +571,14 @@ select N`; above 128, where `--all-safe` itself would be incomplete, it prints
 count of registered worktree rows (R-15); the note does not make the report
 incomplete. Above 128 the gates still run per inspected row, so `excluded` lists
 every inspected row a gate excludes with its reason as in any report, and only
-the selection step is withheld; `plan_digest` is computed over the document as
-written, null `selected` included, and a report's digest is never consumed by
-`--expect-plan` (R-17). It exits 0, 1 or 2 by completeness (R2).
+the selection step is withheld (R-17). Above 128 the `plan_digest` is computed
+over the same canonical text as any plan, which covers only the repository's
+identity fields, the merge target and `selected`, with `selected` null, and
+`--expect-plan` never consumes it, because an apply there is an incomplete plan
+and is refused before the digest is compared; at most 128 rows a report's digest
+equals the `--all-safe` preview's for the same selection, since the mode is not
+in the digest, and an `--expect-plan` carrying it matches, which is intended
+(R-19). It exits 0, 1 or 2 by completeness (R2).
 
 ### D15. Signals before and during the apply phase (OQ-16, M1)
 
@@ -709,12 +715,13 @@ or re-run".
 The stage table is BA:487-494 with V1 and M1 applied (D15): `removed` and
 `unknown` gain `removal-ceiling`, `failed` holds whether or not a signal
 arrived, and `interrupted` and `deadline-exceeded` are reasons of
-`not-attempted` only. Notes: the plan's `merge-target-conflict` and, in single
-mode, the non-blocking `inspection-incomplete`, `inspect-cap` and
-`deadline-exceeded` (D13); a target's `orphaned-directory`, and
-`partially-removed` when its child was killed at the ceiling, or its exit could
-not be observed, and the rescan shows its registry entry or path remaining; a
-row's `partially-removed` (D4).
+`not-attempted` only. Notes: the plan's `merge-target-conflict`; in report mode
+above 128 rows, `inspect-cap` with `rows`, which does not make the report
+incomplete (D14, R-15); and, in single mode, the non-blocking
+`inspection-incomplete`, `inspect-cap` and `deadline-exceeded` (D13); a target's
+`orphaned-directory`, and `partially-removed` when its child was killed at the
+ceiling, or its exit could not be observed, and the rescan shows its registry
+entry or path remaining; a row's `partially-removed` (D4).
 
 | Exit | First matching row |
 | --- | --- |

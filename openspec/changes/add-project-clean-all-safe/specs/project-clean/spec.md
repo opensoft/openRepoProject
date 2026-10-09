@@ -27,9 +27,14 @@ the human line saying that `--all-safe` itself would be incomplete with
 `inspect-cap`; that note alone SHALL NOT make the report incomplete. Above 128
 the gates SHALL still run for every inspected row, so `excluded` SHALL list
 every inspected row that a gate excludes with its `reason`, as in any report,
-and only the selection step is withheld. `plan_digest` SHALL be computed over
-the document as written, a null `selected` included, and a report's digest SHALL
-never be consumed by `--expect-plan`; `apply_allowed` SHALL be false. It SHALL
+and only the selection step is withheld. Above 128 the `plan_digest` SHALL be
+computed over the same canonical text as any plan, which covers only the
+repository's identity fields, the merge target and `selected`, with `selected`
+null, and `--expect-plan` SHALL never consume it, because an apply there is an
+incomplete plan and is refused before the digest is compared. At most 128 rows,
+a report's `plan_digest` SHALL equal the `--all-safe` preview's for the same
+selection, since the mode is not in the digest, and an `--expect-plan` carrying
+it SHALL match, which is intended. `apply_allowed` SHALL be false. It SHALL
 exit 0 when the report is complete, 1 when it is incomplete (`inspect-cap`,
 `inspection-incomplete` or `deadline-exceeded`), and 2 when no report can be
 built, and its human output SHALL say when and why it is incomplete.

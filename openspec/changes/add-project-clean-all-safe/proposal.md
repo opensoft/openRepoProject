@@ -778,8 +778,12 @@ additions, with no packet text behind them:
   `--all-safe` would select (for at most 128 worktree rows; above 128
   `selected` is null and `notes` carries an `inspect-cap` entry with the row
   count, beside the human line saying that `--all-safe` itself would be
-  incomplete with `inspect-cap`; R-15), `plan_digest` computed,
-  `apply_allowed` false and the deferral applied as in a preview.
+  incomplete with `inspect-cap`; R-15), `plan_digest` computed (above 128 rows
+  over a null `selected`, never consumable by `--expect-plan` because the
+  incomplete apply is refused first; at most 128 rows equal to the `--all-safe`
+  preview's for the same selection, an `--expect-plan` carrying it matching,
+  which is intended; R-17, R-19), `apply_allowed` false and the deferral applied
+  as in a preview.
 
 Council decisions, with the packet text each replaces or extends:
 
@@ -968,12 +972,19 @@ Decisions, departures and council; Impact, README; this list; design
 Context, D10, D18, Risks, Migration Plan); R-13 (the null `root` probe
 directory; `project-command` ADDED; design D6); R-14 (the `unstarted-branch`
 remedy and its Risks line; What Changes, first bullet; design D18, Risks,
-Migration Plan); and R-15 (the anchor on any entry whose old object is all
+Migration Plan); R-15 (the anchor on any entry whose old object is all
 zeros, the `reflog-unavailable` remedy, the 64 KiB residual, the report's
 JSON above 128 rows; What Changes, first bullet, eligibility; Capabilities
 `:10`, batch, `:55`, JSON, review-safety `:21`; Decisions, OQ-29 and
-council; this list; design Context, D10, D14, D18, Risks, Migration Plan;
-`tasks.md` 1.2).
+council; this list; design Context, D10, D14, D18, D19, Risks, Migration Plan;
+`tasks.md` 1.2); R-17 (the report above 128 rows runs the gates per inspected
+row, so `excluded` lists every row a gate excludes and only the selection is
+withheld, and the report's digest rule; `project-clean` plain-report
+requirement, band text; Decisions, OQ-29; design Context, D14; `tasks.md`
+1.2); and R-19 (R-17's digest rule scoped to the band above 128 rows, the
+report-mode `inspect-cap` note in the normalised notes, and R-15's credit on
+D19; `project-clean` plain-report requirement, band text; Decisions, OQ-29;
+design Context, D14, D19; `tasks.md` 1.2).
 
 ### Council Verdicts
 
