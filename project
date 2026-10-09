@@ -234,7 +234,10 @@ VISIBILITIES = ("private", "public", "internal")
 
 def known_obstacles(name, parent):
     """The known Triad obstacles as D13 sentences, in the order name, openRepoShape, parent: three
-    local reads, with no network and no subprocess (design D3)."""
+    local facts, with no network and no subprocess (design D3). The parent fact is parent.is_dir()
+    and, only when that is false, parent.exists() on the same path, which chooses the parent
+    sentence: D13's for a parent that does not exist, or the second parent sentence, for a parent
+    that exists but is not a directory (fix-parent-obstacle-wording design D1, D2)."""
     obstacles = []
     if not ASSEMBLY_NAME.fullmatch(name):
         obstacles.append(f"{name} cannot be a Triad name; a Triad name is a letter first, then letters and digits"
@@ -242,8 +245,12 @@ def known_obstacles(name, parent):
     if shutil.which("openRepoShape") is None:
         obstacles.append("openRepoShape is not on PATH. Install openRepoShape through workBenches first.")
     if not parent.is_dir():
-        obstacles.append(f"The parent directory {parent} does not exist; a Triad is created inside an existing"
-                         " directory.")
+        if parent.exists():
+            obstacles.append(f"The parent {parent} exists but is not a directory; choose a parent that is a"
+                             " directory.")
+        else:
+            obstacles.append(f"The parent directory {parent} does not exist; a Triad is created inside an existing"
+                             " directory.")
     return obstacles
 
 

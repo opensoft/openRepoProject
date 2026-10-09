@@ -55,6 +55,12 @@ ADVISORY_PREFERENCE = "warning: {NAME} was created as a single repository. The T
 ADVISORY_CONVERSION = "warning: openRepoShape's adopt-project.py converts a repository in place when a person deciding for this project runs it, and a project that stays single can say so in single-repository.yaml. Nothing here changes."
 # End D13 fixtures.
 
+# Fixed text of openspec/changes/fix-parent-obstacle-wording/design.md, D2 (that
+# design's numbering, not the D13 block's above), character for character.
+# PARENT is the format field {PARENT}; every other character is literal. A
+# parent that does not exist keeps OBSTACLE_PARENT above, unchanged.
+OBSTACLE_PARENT_NOT_A_DIRECTORY = "     Not possible here: The parent {PARENT} exists but is not a directory; choose a parent that is a directory."
+
 
 def obstacles_refusal(*obstacle_lines):
     """The D13 known-obstacles refusal composed from formatted obstacle lines, in their order."""
@@ -391,10 +397,51 @@ class ProjectTests(unittest.TestCase):
         absent = self.base / "absent parent"
         name_line = OBSTACLE_NAME.format(NAME="my-app")
         parent_line = OBSTACLE_PARENT.format(PARENT=absent)
+        # A parent that exists but is not a directory, given as a regular file and as a symbolic link
+        # to it, both named by the file; a dangling symbolic link, named by its target with the
+        # missing-parent line; and the file with the other two obstacles, the parent line last
+        # (fix-parent-obstacle-wording design D3).
+        parent_file, file_link, dangling_link, dangling_target = self.parent_fixtures()
+        file_line = OBSTACLE_PARENT_NOT_A_DIRECTORY.format(PARENT=parent_file)
         return {"name": ("my-app", True, (), [name_line]),
                 "openRepoShape": ("MyApp", False, (), [OBSTACLE_OPENREPOSHAPE]),
                 "parent": ("MyApp", True, ("--into", absent), [parent_line]),
-                "all three": ("my-app", False, ("--into", absent), [name_line, OBSTACLE_OPENREPOSHAPE, parent_line])}
+                "all three": ("my-app", False, ("--into", absent), [name_line, OBSTACLE_OPENREPOSHAPE, parent_line]),
+                "file parent": ("MyApp", True, ("--into", parent_file), [file_line]),
+                "link to the file parent": ("MyApp", True, ("--into", file_link), [file_line]),
+                "dangling link parent": ("MyApp", True, ("--into", dangling_link),
+                                         [OBSTACLE_PARENT.format(PARENT=dangling_target)]),
+                "all three with the file parent": ("my-app", False, ("--into", parent_file),
+                                                   [name_line, OBSTACLE_OPENREPOSHAPE, file_line])}
+
+    parent_file_content = "A regular file where a parent directory is expected.\n"
+
+    def parent_file_fixture(self, path):
+        """A regular file at path holding parent_file_content: a parent that exists but is not a
+        directory (fix-parent-obstacle-wording design D3)."""
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(self.parent_file_content)
+        return path
+
+    def parent_fixtures(self):
+        """The parent fixtures of fix-parent-obstacle-wording design D3, under self.base: a regular
+        file, a symbolic link to it, and a dangling symbolic link. Returns (the file, the link to
+        it, the dangling link, the dangling link's target); the file and the target are the paths
+        new() resolves those links to, since self.base is already resolved."""
+        parent_file = self.parent_file_fixture(self.base / "file parent")
+        file_link = self.base / "link to file parent"
+        file_link.symlink_to(parent_file)
+        dangling_target = self.base / "absent link target"
+        dangling_link = self.base / "dangling link parent"
+        dangling_link.symlink_to(dangling_target)
+        return parent_file, file_link, dangling_link, dangling_target
+
+    def assert_parent_file_unchanged(self, path, before):
+        """Nothing was created under self.base since the before snapshot, and path is still a
+        regular file holding parent_file_content (fix-parent-obstacle-wording design D3, N2)."""
+        self.assertEqual(sorted(self.base.rglob("*")), before)
+        self.assertTrue(path.is_file() and not path.is_symlink(), f"{path} is no longer a regular file")
+        self.assertEqual(path.read_text(), self.parent_file_content)
 
     def run_cli_streams(self, *args, stdin="", stderr=subprocess.PIPE, prefix=()):
         """Like run_cli, with the stdin text and the stderr target chosen by the test (a pipe,
@@ -1363,12 +1410,34 @@ class ProjectTests(unittest.TestCase):
                 question = lines[start:lines.index(QUESTION_SINGLE, start) + 1]
                 self.assertTrue(all("--into" not in line for line in question), question)
                 self.assertFalse(parent.exists())
+        # A parent that exists but is not a directory, by each route (fix-parent-obstacle-wording
+        # design D3): named by the resolved file, with no question line containing --into.
+        parent_file = self.parent_file_fixture(self.base / "file parent")
+        default_file = self.parent_file_fixture(default_projects)
+        file_cases = {"--into": (env, ("--into", parent_file), parent_file),
+                      "positional parent": (env, (parent_file,), parent_file),
+                      "PROJECTS_DIR": ({**env, "PROJECTS_DIR": str(parent_file)}, (), parent_file),
+                      "default ~/projects": (default_env, (), default_file)}
+        for label, (case_env, extra, parent) in file_cases.items():
+            with self.subTest("file parent", route=label):
+                before = sorted(self.base.rglob("*"))
+                result = self.run_pty("new", "MyApp", *extra, env=case_env, steps=[(QUESTION_PROMPT, PTY_EOF)])
+                self.assert_status(result, 2)
+                self.assert_question(result.stdout, "MyApp", OBSTACLE_PARENT_NOT_A_DIRECTORY.format(PARENT=parent))
+                lines = result.stdout.split("\n")
+                start = lines.index(QUESTION_HEADER.format(NAME="MyApp"))
+                question = lines[start:lines.index(QUESTION_SINGLE, start) + 1]
+                self.assertTrue(all("--into" not in line for line in question), question)
+                self.assert_parent_file_unchanged(parent, before)
 
     def test_pty_triad_answer_with_an_obstacle_refuses(self):
         for label, (name, fake, extra, obstacles) in self.known_obstacle_cases().items():
             with self.subTest(label):
                 env = self.obstacle_env(fake)
                 parent = Path(extra[1]) if extra else self.base
+                # A parent that exists but is not a directory (fix-parent-obstacle-wording design D3).
+                file_parent = parent.exists() and not parent.is_dir()
+                before = sorted(self.base.rglob("*")) if file_parent else None
                 result = self.run_pty("new", name, *extra, env=env, steps=[(QUESTION_PROMPT, "")])
                 self.assert_status(result, 2)
                 self.assert_question(result.stdout, name, *obstacles)
@@ -1377,6 +1446,8 @@ class ProjectTests(unittest.TestCase):
                 self.assertNotIn("Create:", result.stdout)
                 self.assertFalse((parent / name).exists())
                 self.assertIsNone(self.shape_record())
+                if file_parent:
+                    self.assert_parent_file_unchanged(parent.resolve(), before)
 
     def test_inproc_triad_obstacle_runs_nothing(self):
         def forbidden(what):
@@ -1385,6 +1456,9 @@ class ProjectTests(unittest.TestCase):
             with self.subTest(label):
                 self.obstacle_env(fake)
                 parent = Path(extra[1]) if extra else self.base
+                # A parent that exists but is not a directory (fix-parent-obstacle-wording design D3).
+                file_parent = parent.exists() and not parent.is_dir()
+                before = sorted(self.base.rglob("*")) if file_parent else None
                 with patch.object(module, "execute", side_effect=forbidden("execute")), \
                         patch("subprocess.run", side_effect=forbidden("subprocess.run")), \
                         patch("subprocess.Popen", side_effect=forbidden("subprocess.Popen")), \
@@ -1397,12 +1471,24 @@ class ProjectTests(unittest.TestCase):
                 self.assertEqual(result.stderr, REFUSED + obstacles_refusal(*obstacles) + "\n")
                 self.assertFalse((parent / name).exists())
                 self.assertIsNone(self.shape_record())
+                if file_parent:
+                    self.assert_parent_file_unchanged(parent.resolve(), before)
 
     def test_pty_dry_run_with_an_obstacle_refuses(self):
         env = self.shape_env(ci=None)
         absent = self.base / "absent parent"
         cases = {"name": (("my-app",), [OBSTACLE_NAME.format(NAME="my-app")]),
                  "parent": (("MyApp", "--into", absent), [OBSTACLE_PARENT.format(PARENT=absent)])}
+        # A file, a symbolic link to it and a dangling symbolic link, each by --into
+        # (fix-parent-obstacle-wording design D3): the loop's assertions apply to them as they stand,
+        # and after the loop the file is still a regular file with its content (N2).
+        parent_file, file_link, dangling_link, dangling_target = self.parent_fixtures()
+        file_line = OBSTACLE_PARENT_NOT_A_DIRECTORY.format(PARENT=parent_file)
+        cases.update({"file parent": (("MyApp", "--into", parent_file), [file_line]),
+                      "link to the file parent": (("MyApp", "--into", file_link), [file_line]),
+                      "dangling link parent": (("MyApp", "--into", dangling_link),
+                                               [OBSTACLE_PARENT.format(PARENT=dangling_target)])})
+        fixtures_before = sorted(self.base.rglob("*"))
         for label, (extra, obstacles) in cases.items():
             with self.subTest(label):
                 before = sorted(self.base.rglob("*"))
@@ -1413,6 +1499,7 @@ class ProjectTests(unittest.TestCase):
                 self.assertNotIn("Create:", result.stdout)
                 self.assertEqual(sorted(self.base.rglob("*")), before)
                 self.assertIsNone(self.shape_record())
+        self.assert_parent_file_unchanged(parent_file, fixtures_before)
 
     def test_pty_single_answer_is_unaffected_by_obstacles(self):
         env = self.obstacle_env(fake=False)
@@ -1435,6 +1522,52 @@ class ProjectTests(unittest.TestCase):
         combined = result.stdout + result.stderr
         for text in (ORG_PROMPT, REFUSED, "warning:"):
             self.assertNotIn(text, combined)
+
+    def test_pty_single_answer_with_a_file_parent_ends_as_the_flag_chosen_path(self):
+        # fix-parent-obstacle-wording design D3: with a parent that exists but is not a directory,
+        # the single-repository answer ends as the same name and parent end with the generator
+        # chosen by flag (--type test, not asked): the same exit status, the same stdout from
+        # Create: on and the same REFUSED: line; the advisory is left out of the comparison.
+        env = self.shape_env(ci=None)
+        parent_file = self.parent_file_fixture(self.base / "file parent")
+        before = sorted(self.base.rglob("*"))
+        asked = self.run_pty("new", "MyApp", "--into", parent_file, env=env,
+                             steps=[(QUESTION_PROMPT, "2"), (CONFIRM_PROMPT, "yes")])
+        baseline = self.run_pty("new", "MyApp", "--into", parent_file, "--type", "test", env=env,
+                                steps=[(CONFIRM_PROMPT, "yes")])
+        self.assert_question(asked.stdout, "MyApp", OBSTACLE_PARENT_NOT_A_DIRECTORY.format(PARENT=parent_file))
+        self.assert_not_asked(baseline)
+        self.assert_status(asked, baseline.returncode)
+        for result in (asked, baseline):
+            self.assertIn("Create:", result.stdout)
+        self.assertEqual(asked.stdout[asked.stdout.index("Create:"):],
+                         baseline.stdout[baseline.stdout.index("Create:"):])
+        # A prompt can precede the report on its stderr line (see assert_line_ends), so each line is
+        # compared from REFUSED: on.
+        refused = [[line[line.index(REFUSED):] for line in result.stderr.split("\n") if REFUSED in line]
+                   for result in (asked, baseline)]
+        self.assertEqual(len(refused[0]), 1, asked.stderr)
+        self.assertEqual(refused[0], refused[1])
+        self.assertNotIn("warning:", asked.stdout + asked.stderr)
+        self.assertIsNone(self.shape_record())
+        self.assert_parent_file_unchanged(parent_file, before)
+
+    def test_pty_symbolic_link_to_a_directory_names_no_obstacle(self):
+        # fix-parent-obstacle-wording design D3: a symbolic link to a directory is a parent, and the
+        # question names no obstacle, as in test_pty_no_known_obstacle_names_none.
+        env = self.shape_env(ci=None)
+        target = self.base / "linked directory"
+        target.mkdir()
+        link = self.base / "link to directory parent"
+        link.symlink_to(target, target_is_directory=True)
+        result = self.run_pty("new", "MyApp", "--into", link, env=env,
+                              steps=[(QUESTION_PROMPT, ""), (ORG_PROMPT, PTY_EOF)])
+        self.assert_status(result, 2)
+        self.assert_question(result.stdout, "MyApp")
+        self.assertNotIn(OBSTACLE_LINE_START, result.stdout + result.stderr)
+        self.assert_line_ends(result.stderr, REFUSED + ORG_ENDED)
+        self.assertIsNone(self.shape_record())
+        self.assertEqual(list(target.iterdir()), [])
 
     def test_pty_no_known_obstacle_names_none(self):
         env = self.shape_env(ci=None)
