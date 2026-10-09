@@ -22,8 +22,8 @@ answer, as "The parent directory PARENT does not exist; a Triad is created
 inside an existing directory." When the parent exists and is not a directory,
 the refusal is right and the sentence is false. The ratified text named the
 fact two ways: the archived proposal and the main spec say "the parent
-directory exists" (`openspec/specs/project-command/spec.md:204`), while D3
-fixed the read as `parent.is_dir()`.
+directory exists" (`openspec/specs/project-command/spec.md:204-205` and
+`:248`), while D3 fixed the read as `parent.is_dir()`.
 
 Observed at this branch's base `7a9134b` (Python 3.12.3, a pty, a fake
 `openRepoShape` on PATH): `project new MyApp --into <a regular file>` prints
@@ -39,10 +39,11 @@ reachable however the parent is given: `--into`, the positional parent,
   (recommended; Alternatives below). A parent that does not exist keeps
   today's sentence, unchanged: `The parent directory PARENT does not exist; a
   Triad is created inside an existing directory.` A parent that exists and is
-  not a directory gets a new sentence, such as `The parent PARENT exists but is
-  not a directory; a Triad is created inside an existing directory.` The
-  design that follows fixes every new string character for character, as D13
-  did, and the tests pin it as a fixture.
+  not a directory gets a new sentence that names PARENT, says that it exists
+  and is not a directory, and does not say that it does not exist, for example
+  `The parent PARENT exists but is not a directory; a Triad is created inside
+  an existing directory.` The design that follows fixes every new string
+  character for character, as D13 did, and the tests pin it as a fixture.
 - **The check is unchanged.** The obstacle holds exactly when
   `parent.is_dir()` is false, so a symlink to a directory still counts as a
   parent and is asked with no parent obstacle, as today. The three local reads
@@ -59,8 +60,8 @@ reachable however the parent is given: `--into`, the positional parent,
   ` Nothing was created.`, built from whichever parent sentence applied.
   Exit status 2, the dry run's refusal, the Triad's first place and default,
   and the single-repository answer are unchanged.
-- **`README.md`** "Create a project" names both cases where it now says "a
-  parent directory that does not exist" (line 60).
+- **`README.md`** line 60 reads "or a parent that does not exist or exists but
+  is not a directory." in place of "or a parent directory that does not exist."
 
 ### Alternatives
 
@@ -96,36 +97,67 @@ None.
   parent fact as whether the parent is an existing directory, and names the
   parent in either case without presenting it as an `--into` value the person
   typed. The scenario "The parent directory is missing" becomes one scenario
-  for each case (whether the first keeps its name is the spec phase's call),
-  and "No known obstacle" reads "the parent is an existing directory". No
-  other requirement changes.
+  for each case (whether the first keeps its name is the spec phase's call).
+  "No known obstacle" reads "the parent is an existing directory, or a symbolic
+  link that resolves to one". The scenarios "A Triad answer with a known
+  obstacle" and "A dry run with a known obstacle" each gain the case of a
+  parent that exists and is not a directory: the refusal exits with status 2,
+  names the same parent sentence the question printed, and states that nothing
+  was created; for the Triad answer it also asks for no organization or
+  visibility, runs no openRepoShape command and creates nothing. A new scenario
+  states that a parent given as a dangling symbolic link is named by its target
+  and counts as missing. "A single-repository answer is unaffected" reads "THEN
+  the single-repository path proceeds exactly as it does for the same name and
+  parent when the creation question is not asked". A new scenario states that,
+  for a parent that exists and is not a directory, the single-repository path
+  shows the plan, asks for `yes`, and after `yes` refuses with exit status 2 as
+  it does for that parent when the generator is chosen by flag, with no
+  generator run and nothing created. No other requirement changes.
 
 ## Impact
 
 - **`project`**: one new string, and one branch in `known_obstacles()`
-  (`project:235-248`) choosing between the two sentences. The composed refusal
+  (`project:235-247`) choosing between the two sentences. The composed refusal
   in `new()` (`project:338-339`), `print_creation_question()`, the order of
   the reads and the shape branch are untouched. No new flag, environment
   variable, network access or import; all text ASCII.
 - **`tests/test_project.py`**: the fixture `OBSTACLE_PARENT` (line 35) stays,
   since the missing case's text is unchanged, and one fixture is added for the
-  new sentence. New cases for a parent that exists and is not a directory (a
-  regular file, and a symlink to one, named by its target): its line in the
-  question; the composed refusal on a Triad answer, exit 2, with no
-  organization prompt and no `openRepoShape` run; the dry run, exit 2; and a
-  single-repository answer unaffected, ending where the flag-chosen bench path
-  ends for the same parent (observed today: `parent.mkdir` refuses with
-  `[Errno 17] File exists`, exit 2). A symlink to a directory is asked with no
-  parent obstacle. `test_pty_missing_parent_is_named_without_into`,
+  new sentence, beside `OBSTACLE_PARENT`, with the block's header comment
+  extended to name this change's design for it. New cases for a parent that
+  exists and is not a directory (a regular file, and a symlink to one, named by
+  its target), and, for a dangling symlink, named by its target with today's
+  `does not exist` sentence: its line in the question, for a parent given by
+  --into, by the positional parent, by PROJECTS_DIR and by the default
+  ~/projects, with no question line containing --into; the composed refusal on
+  a Triad answer, exit 2, with no organization prompt and no `openRepoShape`
+  run; the dry run, exit 2; and a single-repository answer unaffected, ending
+  where the flag-chosen bench path ends for the same parent (observed today:
+  `parent.mkdir` refuses with `[Errno 17] File exists`, exit 2). A symlink to a
+  directory is asked with no parent obstacle. The new cases are added as new
+  rows of known_obstacle_cases() or as new tests, and each file-parent case is
+  also run in test_inproc_triad_obstacle_runs_nothing; one row combines the
+  file parent with the name and openRepoShape obstacles, the parent sentence
+  last. `test_pty_missing_parent_is_named_without_into`,
   `test_pty_triad_answer_with_an_obstacle_refuses`,
-  `test_pty_dry_run_with_an_obstacle_refuses` and
-  `test_pty_single_answer_is_unaffected_by_obstacles` use a missing parent and
-  keep passing unchanged.
+  `test_pty_dry_run_with_an_obstacle_refuses`,
+  `test_pty_single_answer_is_unaffected_by_obstacles` and
+  `test_inproc_triad_obstacle_runs_nothing` (through `known_obstacle_cases()`)
+  keep passing with every existing row and assertion unchanged: where they name
+  a parent obstacle it is a missing parent, and where they name none the parent
+  is an existing directory, as in `test_pty_no_known_obstacle_names_none`.
 - **`README.md`** line 60, and **`openspec/specs/project-command/spec.md`**
   through the delta above, at archive.
 - **`specs/002-triad-first-project-new/`** stays the record of feature 002 and
-  is not edited, although its `spec.md:152` and `quickstart.md:118` carry
-  today's wording.
+  is not edited. Its statements of the parent fact are spec.md:130-132, :140,
+  :151-154, :156, :367, :370-371 and :459-460 (User Story 3, FR-012, Key
+  Entities: "the parent directory exists", "a missing parent directory"),
+  quickstart.md:118 (today's sentence), traceability.md:37 and tasks.md:137,
+  :143; data-model.md:53 already reads parent.is_dir(). Each is true of the
+  case it describes. The new feature's spec.md states that, for the parent
+  fact, it supersedes FR-012's "whether the parent directory exists" and "the
+  missing parent directory" with the two cases above, and its traceability.md
+  names the delta's scenarios under their new titles.
 - **Speckit handoff**: implementation goes to exactly one new Speckit
   feature, `specs/003-<slug>/`, created by `/speckit.specify` after
   ratification (`001` and `002` exist). OpenSpec `tasks.md` holds governance
@@ -146,9 +178,19 @@ None.
   `--shape` path, not to the question.
 - The single-repository path's outcome for a file parent (`parent.mkdir`
   raising `File exists` once the plan is confirmed, exit 2): unchanged.
-- A parent whose status cannot be read: `is_dir()` raises `PermissionError`
-  (observed for a path inside a directory without search permission), and
-  `main()` refuses with exit 2 before the question, as today.
+- A parent whose status cannot be read: `destination.exists()` raises
+  `PermissionError` at `project:321`, in the existing-destination refusal,
+  before `known_obstacles()` is reached (observed for a parent inside a
+  directory without search permission: `REFUSED: [Errno 13] Permission denied:
+  '<parent>/MyApp'`), and `main()` refuses with exit 2 before the question, as
+  today.
+- A parent that does not exist beneath a path component that is not a directory
+  (for example --into FILE/sub): it does not exist, so it keeps today's
+  sentence, and the single-repository path's parent.mkdir refusal ([Errno 20]
+  Not a directory, exit 2) is unchanged.
+- A parent that is a symbolic-link loop: `Path.resolve()` at `project:315`
+  raises `RuntimeError` before the question (a traceback, observed on Python
+  3.12.3); unchanged by this change and not one of its two cases.
 - Any new surface or form. The change rewords one line of the existing
   question on `project new`'s creation path, and its refusal, inside the
   closed list the archived proposal kept ("only at such surfaces and only in
