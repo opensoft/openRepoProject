@@ -371,12 +371,13 @@ The merge target follows the resolution order the deltas state, over row 6's
 listing: the manifest's `tracking_branch` with `origin/` removed (as
 `project:383` already does; BA:169-177 omits it, D-T), the `%(symref)` of
 `refs/remotes/origin/HEAD` with `refs/remotes/origin/` removed, `main`,
-`master`. The manifest is read at `repository.root` by a bounded filesystem call
-that reads at most 1 MiB and one byte, a longer file being `manifest-invalid`,
-as is a wrong kind (`project:280`). `no-merge-target` keeps the baseline
-message, "Cannot determine the default branch from the manifest, origin/HEAD,
-main, or master." (`project:401`), which the existing test reads (Migration
-Plan).
+`master`. The manifest is read at `repository.root` by a bounded filesystem
+call: a manifest whose `st_size`, taken before the read, exceeds 1 MiB is
+`manifest-invalid` without being read, the read itself never exceeds 1 MiB, and
+a wrong kind is `manifest-invalid` too (`project:280`). `no-merge-target` keeps
+the baseline message, "Cannot determine the default branch from the manifest,
+origin/HEAD, main, or master." (`project:401`), which the existing test reads
+(Migration Plan).
 
 The 1 MiB cap binds only the merge-target resolution. `status`, `doctor` and
 `update` read the manifest through `snapshot()` for its kind and legs, which
@@ -760,10 +761,13 @@ push; D-R under maintenance.
 
 ## Migration Plan
 
-Users meet three behaviour changes first: plain `project clean` exits 1 when its
-report is incomplete; `clean` refuses below Git 2.36; and `--worktree P` refuses
-a freshly created merged worktree whose branch has no commit of its own. The
-README's clean section states them first.
+Users meet four behaviour changes first: plain `project clean` exits 1 when its
+report is incomplete; `clean` refuses below Git 2.36; `--worktree P` refuses a
+freshly created merged worktree whose branch has no commit of its own; and a
+merged worktree whose creation reflog entry has expired (`gc.reflogExpire`'s
+90-day default, D10) is refused as `reflog-unavailable` in single mode as well
+as withheld from the batch, with the remedy "remove the worktree explicitly if
+wanted". The README's clean section states them first.
 
 1. Ratification by Brett Heap's word on PR #11 (`tasks.md` 1.6), with the V5
    deferral and the two open questions before him.

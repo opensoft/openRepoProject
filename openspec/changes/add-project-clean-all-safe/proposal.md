@@ -78,8 +78,12 @@ Scope).
   `clean` refuses below Git 2.36 with `git-too-old`, exit 2 (R6); and
   `--apply --action remove --worktree P` refuses a freshly created merged
   worktree whose branch has no commit of its own (`target-excluded`, reason
-  `unstarted-branch`), where `a040790` removes it (M4). The README's clean
-  section says so first.
+  `unstarted-branch`), where `a040790` removes it (M4). A merged worktree
+  whose creation reflog entry has expired (`gc.reflogExpire`'s 90-day default)
+  is likewise refused in single mode (`target-excluded`, reason
+  `reflog-unavailable`) as well as withheld from the batch, with the remedy
+  "remove the worktree explicitly if wanted". The README's clean section says
+  so first.
 - **`project clean <root> --all-safe` previews a batch.** It plans every
   eligible linked worktree of one resolved repository: `selected` and
   `excluded`, each exclusion with one reason in the fixed gate order
