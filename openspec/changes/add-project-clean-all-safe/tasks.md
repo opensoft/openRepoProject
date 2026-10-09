@@ -56,12 +56,16 @@ duplicate them, and nothing here is an implementation step.
   Verified by the numbers posted on PR #11 and summarised here; a cap the fit
   rejects is lowered in the deltas before the handoff, otherwise the deltas'
   provisional caps stand as measured.
-- [ ] 2.2 The Git 2.36 floor verified by the approach of `design.md` D17: each
+- [x] 2.2 The Git 2.36 floor verified by the approach of `design.md` D17: each
   behaviour in its table checked on a pinned Git 2.36 build in a scratch
   directory, or by a CI job, against Git 2.43's output; verified by the results
   posted on PR #11. If any behaviour differs, the floor is raised to the lowest
   version verified and the deltas' Git version text and refusal are edited
-  before the handoff.
+  before the handoff. Done: Git 2.36.6, 2.40.4 and 2.43.0 compared on 75
+  captures; rows 1 to 6 identical; row 7's extra variable,
+  `GIT_INTERNAL_SUPER_PREFIX`, scrubbed under R-21, the floor kept at 2.36
+  rather than raised to 2.40 (a departure listed in `proposal.md`, open to
+  Brett Heap at ratification); results posted on PR #11 on 2026-10-09.
 - [ ] 2.3 Dependent change noted: `add-project-overview` (issue #10, PR #12)
   depends on this change and reconciles its deltas against this change's final
   requirement headers after this change lands, then is ratified after it;

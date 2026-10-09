@@ -9,10 +9,10 @@ requirements. The council's noted constraints, `clarifications.md` N1 to N5, are
 answered by D1 to D5; D6 to D19 give the how of the proposal's decisions, and
 D20 maps the packet's 35 validation scenarios to the deltas. The binding rulings
 (D-A to D-AF, X1, X2, V1 to V12 with V2 as amended, lane 3's M1 to M7, and the
-lead's R-4, R-8 and R-9, R-11 to R-15, R-17 and R-19) are already in
+lead's R-4, R-8 and R-9, R-11 to R-15, R-17, R-19 and R-21) are already in
 `proposal.md`, with the sections each edited; R-15 edited Context, D10, D14,
 D18, D19, Risks and the Migration Plan here; R-17 edited Context and D14, and
-R-19 edited Context, D14 and D19.
+R-19 edited Context, D14 and D19; R-21 edited Context, D6 and D17.
 
 Citations are `file:line` at `da33d92`: `BA`, `DI`, `OV` and `HO` are the
 packet's batch-cleanup, project-discovery, overview and handoff documents, and
@@ -301,11 +301,13 @@ main worktree, or a gitfile checkout whose main worktree cannot be named), rows
 row 3 ran, as the evidence model states; `clean` refuses those layouts (D8), so
 only a reader that reports them, such as `add-project-overview`, probes there.
 
-The scrubbed environment is a copy of the caller's with the fifteen variables of
-BA:244-250 removed, hard-coded from Git 2.43's `rev-parse --local-env-vars`
-rather than queried (D17 checks the list on 2.36). `GIT_CONFIG_GLOBAL` and
-`GIT_CONFIG_SYSTEM` are not in that list and stay; D11's `-c` pins override
-them.
+The scrubbed environment is a copy of the caller's with sixteen variables
+removed, unconditionally and before any Git call, from a fixed list that is
+hard-coded rather than queried: the fifteen of BA:244-250, which Git 2.40 and
+later print from `rev-parse --local-env-vars`, and `GIT_INTERNAL_SUPER_PREFIX`,
+which 2.36 through 2.39 also print and which makes every command on 2.36 fail
+closed when it is set (D17, R-21). `GIT_CONFIG_GLOBAL` and `GIT_CONFIG_SYSTEM`
+are not in that list and stay; D11's `-c` pins override them.
 
 `repo_state()` and `cleanup_report()` become thin readers of this pipeline, and
 the ladder becomes a pure function of a row's evidence (OQ-28). Value parity
@@ -656,15 +658,20 @@ The design relies on these Git behaviours, with the release that brought each:
 | `status --ignored=matching` with `--untracked-files=normal` and `-z` | 2.16 |
 | `--show-superproject-working-tree` | 2.13 |
 | `ls-files -v` combined with `--stage`, and `worktree remove`'s refusals for a populated submodule and an admin `modules` entry | verified on 2.43 only (BA:132-137, BA:665-668) |
-| the fifteen variables of `rev-parse --local-env-vars` | taken from 2.43 (BA:244-250) |
+| the variables of `rev-parse --local-env-vars` | measured by task 2.2: 2.36.6 prints sixteen, 2.40.4 and 2.43.0 fifteen (BA:244-250); the extra name, `GIT_INTERNAL_SUPER_PREFIX`, is printed through 2.39, and with it set 2.36 fails closed in every command with `fatal: version doesn't support --super-prefix`; resolved by scrubbing it, sixteen names in all (R-21), the floor staying 2.36 |
 
 Governance task 2.2 verifies the floor before the handoff: Git v2.36.x built
 from its release tarball in a scratch directory, first on PATH, and a scratch
 script comparing each row's output with Git 2.43's. If any row differs, the
 floor rises to the lowest version on which every row holds, and the deltas
-change before the handoff. Feature 004 adds a CI job that builds the floor
-version, cached, and runs the `clean`, `status` and `doctor` tests with it first
-on PATH.
+change before the handoff. Task 2.2 ran it on Git 2.36.6, 2.40.4 and 2.43.0
+(75 captures): rows 1 to 6 are identical on all three, and row 7 differs as the
+table records. By the rule above the floor would rise to 2.40; R-21 keeps 2.36
+and adds the one name to the scrub, because raising the floor would exclude
+Debian 12's Git 2.39 for a one-name difference. That departs from the rule and
+is open to Brett Heap at ratification (proposal, Decisions). Feature 004 adds a
+CI job that builds the floor version, cached, and runs the `clean`, `status` and
+`doctor` tests with it first on PATH.
 
 ### D18. What the person sees
 

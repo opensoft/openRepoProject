@@ -96,13 +96,18 @@ missing, fails, times out or prints an unparseable version (`git-unavailable`);
 whether the subcommand then refuses or reports is its own requirement's rule.
 
 Environment: every Git child SHALL run in its own process group, with these
-variables removed from its environment: `GIT_ALTERNATE_OBJECT_DIRECTORIES`,
-`GIT_CONFIG`, `GIT_CONFIG_PARAMETERS`, `GIT_CONFIG_COUNT`,
-`GIT_OBJECT_DIRECTORY`, `GIT_DIR`, `GIT_WORK_TREE`, `GIT_IMPLICIT_WORK_TREE`,
-`GIT_GRAFT_FILE`, `GIT_INDEX_FILE`, `GIT_NO_REPLACE_OBJECTS`,
-`GIT_REPLACE_REF_BASE`, `GIT_PREFIX`, `GIT_SHALLOW_FILE` and `GIT_COMMON_DIR`.
-Read-only probes SHALL also set `GIT_OPTIONAL_LOCKS=0`. Every status probe SHALL
-pass `-c core.untrackedCache=false -c core.fsmonitor=false`, which also override
+sixteen variables removed from its environment, unconditionally and before any
+Git call, from a fixed list that is never queried from Git: the fifteen that
+`git rev-parse --local-env-vars` prints on Git 2.40 and later
+(`GIT_ALTERNATE_OBJECT_DIRECTORIES`, `GIT_CONFIG`, `GIT_CONFIG_PARAMETERS`,
+`GIT_CONFIG_COUNT`, `GIT_OBJECT_DIRECTORY`, `GIT_DIR`, `GIT_WORK_TREE`,
+`GIT_IMPLICIT_WORK_TREE`, `GIT_GRAFT_FILE`, `GIT_INDEX_FILE`,
+`GIT_NO_REPLACE_OBJECTS`, `GIT_REPLACE_REF_BASE`, `GIT_PREFIX`,
+`GIT_SHALLOW_FILE` and `GIT_COMMON_DIR`), and `GIT_INTERNAL_SUPER_PREFIX`, which
+Git 2.36 through 2.39 also print and which makes every command on those
+versions fail when it is set. Read-only probes SHALL also set
+`GIT_OPTIONAL_LOCKS=0`. Every status probe SHALL pass `-c
+core.untrackedCache=false -c core.fsmonitor=false`, which also override
 `GIT_CONFIG_GLOBAL` and `GIT_CONFIG_SYSTEM`.
 
 Directory: a worktree probe SHALL run with `-C <worktree path>`, against that

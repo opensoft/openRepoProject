@@ -723,6 +723,16 @@ Departures from packet decisions, each citing the decision departed from:
   Design verifies each probe, the variable list and the removal refusals on
   Git 2.36 itself, by a fixture run against a pinned 2.36 build or a CI job,
   or raises the floor to the lowest version verified.
+- **The 2.36 floor kept with a sixteen-name scrub** (R-21; a departure from
+  task 2.2's rule, "the floor is raised to the lowest version verified", and
+  from D17's matching sentence): task 2.2 compared Git 2.36.6, 2.40.4 and
+  2.43.0 on 75 captures and found rows 1 to 6 identical and one difference in
+  row 7. `rev-parse --local-env-vars` prints `GIT_INTERNAL_SUPER_PREFIX` on
+  2.36 through 2.39 and not from 2.40, and with it set every command on 2.36
+  fails closed. Applying the rule would raise the floor to 2.40; the lead kept
+  2.36 and added the name to the scrub, sixteen names in all, because raising
+  would exclude Debian 12's Git 2.39 for a one-name difference. Open to Brett
+  Heap at ratification.
 - **OQ-24, JSON compatibility** (`BA:949-953`; `HO:210`): one
   `schema_version: 1` envelope for every `clean --json`, not an "additive
   superset" (R7). Baseline keys keep their names and types, the scope the
@@ -983,10 +993,13 @@ council; this list; design Context, D10, D14, D18, D19, Risks, Migration Plan;
 row, so `excluded` lists every row a gate excludes and only the selection is
 withheld, and the report's digest rule; `project-clean` plain-report
 requirement, band text; Decisions, OQ-29; design Context, D14; `tasks.md`
-1.2); and R-19 (R-17's digest rule scoped to the band above 128 rows, the
+1.2); R-19 (R-17's digest rule scoped to the band above 128 rows, the
 report-mode `inspect-cap` note in the normalised notes, and R-15's credit on
 D19; `project-clean` plain-report requirement, band text; Decisions, OQ-29;
-design Context, D14, D19; `tasks.md` 1.2).
+design Context, D14, D19; `tasks.md` 1.2); and R-21 (task 2.2's result:
+`GIT_INTERNAL_SUPER_PREFIX` added to the scrub as a sixteenth name and the
+2.36 floor kept; `project-command` ADDED, evidence model; Decisions,
+departures; this list; design Context, D6, D17; `tasks.md` 2.2).
 
 ### Council Verdicts
 
