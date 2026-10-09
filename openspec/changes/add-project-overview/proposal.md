@@ -523,9 +523,10 @@ Consequences:
 - PR #8 has merged (`d7f6b0e`, with 94 tests), and PR #13 (`7a9134b`)
   archived `prefer-triad-in-project-new`, merging its requirements into the
   canonical `project-command`; that spec at `7a9134b` is the base change 1
-  modifies, and `origin/main` is `7a9134b`. Every `project:N` and README
-  citation stays pinned at `da33d92`; at `d7f6b0e` the cited `clean` and
-  `repo_state` code (`manifest()` onward) sits 141 lines lower and
+  modifies, and `origin/main` is `f401e06` at this commit (`26a5668` merged
+  at `12febc0`; `f401e06`, lane 1's PR #17, merged below). Every `project:N`
+  and README citation stays pinned at `da33d92`; at `d7f6b0e` the cited
+  `clean` and `repo_state` code (`manifest()` onward) sits 141 lines lower and
   README.md:187 is :275, and feature 005's specify and plan re-pin citations
   against the `main` of that day.
 - Change 1 is ratified first. This change's spec deltas are written against
@@ -986,7 +987,7 @@ engineer) read `6204234`: V1 to V12 are applied here, N1 to N4 are in
 
 | Concern | Severity | Verdict | Section changed |
 | --- | --- | --- | --- |
-| PA-1 `remote-gone` advice leads nowhere | HIGH | VALID, V11 (interim wording; ratification timing is Brett's) | Open Questions; Impact |
+| PA-1 `remote-gone` advice leads nowhere | HIGH | VALID, V11 (interim wording; ratification timing is Brett's); superseded by Brett Heap's ruling of 2026-10-09 | Open Questions; Impact |
 | PA-2 no human-output requirement | HIGH | VALID, V3 | What Changes; Capabilities (requirement 12) |
 | PA-3 gate codes without remedies | MEDIUM | VALID, V4 | What Changes; Capabilities (requirement 7); Decisions (departures) |
 | PA-4 no roots, stale evidence, one project | MEDIUM | VALID, V10 (freshness through V3) | Capabilities (requirements 1, 12); Impact (README) |

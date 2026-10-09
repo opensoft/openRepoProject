@@ -434,8 +434,9 @@ and to `Overview reports default-branch health`:
 
 A finding that reports a worktree's classification SHALL carry the ladder's
 recommendation text as its `message`, and any other finding a fixed sentence. A
-worktree whose upstream's remote-tracking ref is gone and whose branch tip the
-merged set shows to be an ancestor of the merge target SHALL be classified as
+worktree that reaches the `remote-gone` rung, its upstream's remote-tracking
+ref gone, and whose branch tip the merged set shows to be an ancestor of the
+merge target SHALL be classified as
 `Clean classifies preservation and cleanup actions` classifies it,
 `merged-removable` or `merged-current`, with that class's finding, message and
 suggestion, spawning no further probe; only such a worktree whose tip is not an
