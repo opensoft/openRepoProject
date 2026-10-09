@@ -2,7 +2,10 @@ Lane: openRepoProject-2
 
 # Proposal: add-project-clean-all-safe
 
-Status: draft, awaiting Brett Heap's ratification. Nothing here is ratified.
+Status: ratified by Brett Heap on 2026-10-09, in his words to lane
+openRepoProject-2, "ratify, merge #11 and run the runbook". It lands by
+squash-merge of PR #11, with the Speckit handoff `004-project-clean-all-safe`
+to follow.
 Revised after the alignment review and the council (resolved below and on
 PR #11; the council's noted constraints are in `clarifications.md`); it adds
 Decisions and Corrections sections because it adopts a non-normative packet,
