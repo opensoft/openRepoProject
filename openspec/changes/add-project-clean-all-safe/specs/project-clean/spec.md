@@ -20,7 +20,9 @@ are versioned JSON" defines, carrying that code.
 The plain report (neither `--all-safe` nor `--apply`) SHALL be the plan that a
 batch preview builds, in `mode: "report"`, under a cap of 256 worktree rows. It
 SHALL carry every plan field: `selected` SHALL be what `--all-safe` would
-select, the per-run deferral applied, `plan_digest` SHALL be computed, and
+select, the per-run deferral applied, for a repository of at most 128 worktree
+rows, and above 128 the report SHALL say that `--all-safe` itself would be
+incomplete with `inspect-cap`; `plan_digest` SHALL be computed, and
 `apply_allowed` SHALL be false. It SHALL exit 0 when the report is complete, 1
 when it is incomplete (`inspect-cap`, `inspection-incomplete` or
 `deadline-exceeded`), and 2 when no report can be built, and its human output
@@ -49,9 +51,10 @@ resolved repository.
   registered worktree rows
 - **THEN** it prints an incomplete report carrying `inspect-cap` and `omitted`,
   and exits 1, where before this change it exited 0 whenever it printed
-- **AND** on a repository with 200 rows the plain report is complete and exits
-  0, while `project clean <root> --all-safe` on the same repository is
-  incomplete with `inspect-cap` and exits 1
+- **AND** on a repository with 200 rows the plain report is complete, says that
+  `--all-safe` would be incomplete with `inspect-cap`, and exits 0, while
+  `project clean <root> --all-safe` on the same repository is incomplete with
+  `inspect-cap` and exits 1
 
 #### Scenario: An unreadable worktree is one row
 
@@ -269,7 +272,17 @@ It MUST never use a force removal, reset, or deletion of unmerged work.
   selects it rather than excluding it as `unstarted-branch`, and
   `--all-safe --apply --yes` removes it
 
-#### Scenario: A branch whose reflog is missing or empty
+#### Scenario: A branch reset to the merge target's tip stays unstarted
+
+- **WHEN** a branch with commits of its own, merged into the merge target, is
+  reset to the merge target's tip by `git worktree add -B <branch> <path>
+  <merge target>`, and no commit is made on it afterwards
+- **THEN** its last `branch: Reset to` entry is the anchor, no entry after it
+  moves the branch, and `--all-safe` excludes the worktree as
+  `unstarted-branch`, where its earlier commits would otherwise read as
+  movement
+
+#### Scenario: A branch whose reflog is missing, empty or expired
 
 - **WHEN** an otherwise eligible worktree's branch head is a strict ancestor of
   the merge target and the branch has no reflog
@@ -277,6 +290,12 @@ It MUST never use a force removal, reset, or deletion of unmerged work.
 - **AND** the same holds when its head equals the merge target's SHA, and when
   its reflog file exists but is empty (0 bytes), as `git reflog expire` leaves
   it once every entry has expired
+- **AND** when `git reflog expire` has removed the branch's creation and commit
+  entries, older than `gc.reflogExpire`, and kept only a later rename entry,
+  `--all-safe` excludes the worktree as `reflog-unavailable`
+- **AND** `--apply --action remove --worktree` naming such a worktree refuses
+  with `target-excluded`, reason `reflog-unavailable`, and exit 2, where before
+  this change it was removed
 
 #### Scenario: Git's own check runs on the pinned configuration
 
@@ -519,27 +538,43 @@ removal; `unstarted-branch`, or `reflog-unavailable` where the reflog cannot
 decide it; `deferred-target-cap`; `contains-submodule`; and
 `hidden-local-state`. A head equal to the merge target's SHA SHALL NOT by itself
 prove a branch unstarted, because a branch fast-forward merged into the target
-sits at the target's tip, so the gate SHALL read the branch's creation reflog,
-`logs/refs/heads/<branch>` in the common directory, for every row it checks. A
-branch SHALL be `unstarted-branch` only when its reflog records no movement
-since its creation entry and that entry's new object equals the branch's
-current head; an entry whose old and new objects are equal, as a rename writes,
-SHALL NOT count as movement, and a branch whose reflog records movement since
-its creation SHALL pass the gate, its head equal to the merge target's SHA or
-not. The reflog SHALL be read from the filesystem, at most 64 KiB, counted in
-the filesystem budget and never by a Git child; a reflog that is missing, empty
-(0 bytes) or whose creation entry has expired SHALL fail closed as
-`reflog-unavailable`, at the gate's place in this order. A row
-SHALL be excluded as `contains-submodule` when its index holds any gitlink or
-its worktree administrative directory holds a `modules` entry, and as
+sits at the target's tip, so the gate SHALL read the branch's reflog,
+`logs/refs/heads/<branch>` in the common directory, for every row it checks,
+from the filesystem, at most 64 KiB, counted in the filesystem budget and never
+by a Git child. The reflog's anchor SHALL be its last surviving entry whose
+message begins `branch: Created from` or `branch: Reset to`, and a movement
+SHALL be an entry after the anchor, or any entry when no anchor survives, whose
+old and new objects differ; an entry whose old and new objects are equal, as a
+rename writes, SHALL NOT be a movement. A branch whose last reflog entry's new
+object differs from its current head SHALL be `reflog-unavailable`; otherwise a
+branch with a movement SHALL pass the gate, its head equal to the merge target's
+SHA or not, and a branch whose anchor survives with no movement after it, the
+anchor's new object equal to its current head, SHALL be `unstarted-branch`. One
+outcome rule SHALL govern the read: a reflog that is missing (`ENOENT` or
+`ENOTDIR`), empty (0 bytes) or read to its 64 KiB bound, or whose surviving
+entries cannot decide, no anchor and no movement surviving included, SHALL make
+that row `reflog-unavailable`, at the gate's place in this order; any other
+error on the read SHALL make that row `inspection-error`, as any failed row
+probe does; and a read not finished within the filesystem budget SHALL leave
+the row unprobed and the plan incomplete with `inspection-incomplete`, as for
+every other filesystem read. A row SHALL be excluded as `contains-submodule`
+when its index holds any gitlink or its worktree administrative directory holds
+a `modules` entry, and as
 `hidden-local-state` when its index flags any entry assume-unchanged or
 skip-worktree, sparse checkouts included; the index SHALL be read inside the
 row's own worktree, and both gates SHALL be checked only for rows that pass
 every earlier gate.
 
 `selected` and `excluded` SHALL be in canonical order, by raw path bytes, and
-that order SHALL be the execution order. An empty selection SHALL print "No
-eligible worktrees" and exit 0 without asking.
+that order SHALL be the execution order. Once a plan is built, these checks
+SHALL run in this order: an incomplete plan SHALL be refused first, a preview or
+report exiting 1 and a run with `--apply` refusing with exit status 2 before any
+question; an `--expect-plan` mismatch SHALL then refuse with
+`plan-digest-mismatch` and exit status 2; and only then SHALL a complete
+`--all-safe` plan whose selection is empty print "No eligible worktrees" and
+exit 0 without asking. In `mode: "single"`, a P that a gate excludes SHALL
+refuse with `target-excluded` and exit status 2, as below, and SHALL NOT be
+treated as an empty selection.
 
 `--apply` SHALL always build, print and confirm its own fresh plan; a preview
 SHALL be advisory and SHALL never be stored or reused. The plan SHALL carry
@@ -628,8 +663,12 @@ apply SHALL print `Removed N; branches kept: ` followed by the branches kept.
 
 - **WHEN** worktree paths contain spaces, an external worktree's path is
   missing, a worktree is locked, inspection is incomplete, or no row is eligible
-- **THEN** the batch keeps the safety rules of the single-target command, and an
-  empty selection prints "No eligible worktrees" and exits 0 without asking
+- **THEN** the batch keeps the safety rules of the single-target command, and a
+  complete plan whose selection is empty prints "No eligible worktrees" and
+  exits 0 without asking
+- **AND** an incomplete plan that selects nothing is refused, not reported as
+  empty: its preview exits 1, and with `--apply` it refuses with exit 2 before
+  asking
 
 #### Scenario: Preview is advisory
 
@@ -637,6 +676,9 @@ apply SHALL print `Removed N; branches kept: ` followed by the branches kept.
   --apply --yes` runs without `--expect-plan`
 - **THEN** the fresh plan excludes P1 as `dirty`, prints "No eligible
   worktrees", and exits 0 without asking
+- **AND** with `--expect-plan` naming the preview's digest, the same run refuses
+  with `plan-digest-mismatch` and exit 2 instead, because a digest mismatch is
+  refused before an empty selection is reported
 
 #### Scenario: Plan digest mismatch
 
@@ -692,20 +734,21 @@ the work deadline remains, and otherwise that target and every later one SHALL
 be `not-attempted` with `deadline-exceeded`. A removal child still running at
 the deadline SHALL be waited for, up to its 300 s hard ceiling, and the
 reconciliation reserve SHALL count from its exit. A run with no removal in
-flight SHALL therefore end within 64 s of its start (50 s of work, the 10 s
-reserve, and up to 4 s to stop and reap a probe child), and a removal in flight
-SHALL add at most 300 s, except while a filesystem call stuck in the kernel is
-outstanding. Push and delete-branch children SHALL stay unbounded, as before
-this change.
+flight SHALL therefore end within 64 s of its start, not counting the time
+blocked at the confirmation question (50 s of work, the 10 s reserve, and up to
+4 s to stop and reap a probe child), and a removal in flight SHALL add at most
+300 s, except while a filesystem call stuck in the kernel is outstanding. Push
+and delete-branch children SHALL stay unbounded, as before this change.
 
 The caps, provisional until measured, SHALL be: at most 128 worktree rows in
 `mode: "all-safe"` and `mode: "single"`, and 256 in `mode: "report"`, every
 registry entry counting, the main worktree and missing rows included; at most 16
 targets per run; and the ignored-file bounds that "Repository inspection
-requires Git 2.36 and shares one evidence model" sets. The registry SHALL be
-read completely, in one child, before any cap applies; rows SHALL be ordered
-main worktree first, then by raw path bytes; and the rows beyond the cap SHALL
-be left uninspected and counted in `omitted: {count, exactness}`, with
+requires Git 2.36 and shares one evidence model" sets. Push and delete-branch
+SHALL run in `mode: "single"` for the row cap and these bounds. The registry
+SHALL be read completely, in one child, before any cap applies; rows SHALL be
+ordered main worktree first, then by raw path bytes; and the rows beyond the cap
+SHALL be left uninspected and counted in `omitted: {count, exactness}`, with
 `exactness` `exact`. A plan SHALL be incomplete, and apply refused, when the row
 cap is exceeded (`inspect-cap`), a repository-wide probe fails or a row is
 `inspection-error` (`inspection-incomplete`), or the deadline passes while
@@ -741,13 +784,14 @@ recompute the full report, and the final rescan at most three.
   inspected, and the preview exits 1
 - **AND** `--apply` refuses with exit 2 before any mutation
 
-#### Scenario: Twenty eligible rows
+#### Scenario: Twenty rows pass every gate before deferred-target-cap
 
-- **WHEN** twenty rows pass every gate before `deferred-target-cap` and
-  `--all-safe --apply --yes` runs
-- **THEN** the first sixteen in canonical order are removed, the other four are
-  excluded as `deferred-target-cap` with the command to run next, the plan is
-  complete, and the exit status is 0
+- **WHEN** twenty rows pass every gate before `deferred-target-cap`, none of
+  them holding a submodule or hidden local state, and `--all-safe --apply
+  --yes` runs
+- **THEN** the first sixteen in canonical order are selected and removed, the
+  other four are deferred as `deferred-target-cap` with the command to run
+  next, the plan is complete, and the exit status is 0
 - **AND** a second run removes the remaining four
 
 #### Scenario: Ignored-file bound
@@ -831,8 +875,9 @@ registry entry or its path remaining; a `partially-removed` target SHALL show
 the recovery text "inspect, then `git worktree remove --force <path>` by hand".
 
 Before the apply phase, SIGINT, SIGTERM or SIGHUP SHALL terminate and reap every
-probe child and exit 130, 143 or 129 with nothing mutated, and end of input at
-the question SHALL exit 130 the same way. During the apply phase, the first of
+probe child, print "Cancelled." on standard error and no JSON document, and exit
+130, 143 or 129 with nothing mutated, and end of input at the question SHALL
+exit 130 the same way. During the apply phase, the first of
 those signals received SHALL set the exit status and stop scheduling, so that no
 further probe or removal starts. A removal in flight SHALL be waited for, and
 its target SHALL end by the stage rule above. Targets not yet started SHALL be
@@ -846,7 +891,7 @@ before the apply phase SHALL refuse with `internal-error` and exit status 2. No
 `unknown` or `failed` target SHALL be retried automatically, and `project` SHALL
 never force a removal or delete a directory itself.
 
-The exit status SHALL be the first row that matches:
+The exit status of a run with `--apply` SHALL be the first row that matches:
 
 1. 130, 143 or 129: a signal was received, the first one received deciding, or
    input ended at the question (130);
@@ -858,6 +903,10 @@ The exit status SHALL be the first row that matches:
    branch-after-removal reason; a `failed` target with `spawn-error`;
 5. 0: every selected target is `removed` with reason null, or nothing is
    eligible.
+
+A preview or report SHALL exit 2 only for a refusal raised before a plan is
+built, 1 for an incomplete plan, and 0 otherwise, the signal exits above
+excepted.
 
 A run that stops SHALL end its human result with `Stopped at P (reason). Removed
 k of n. Not attempted: ... Next: ` followed by the command that shows a fresh
@@ -888,6 +937,8 @@ read-only plan, and SHALL name every retained branch.
 - **THEN** the probe child's process group is killed 2 s after the SIGTERM and
   reaped, no process of that group remains, nothing is mutated, and the exit
   status is 143
+- **AND** under `--json` standard error carries `Cancelled.` and standard output
+  holds no JSON document
 
 #### Scenario: Git leaves an orphaned directory
 
@@ -1033,9 +1084,12 @@ otherwise the apply result record (`schema_version`, `observed_at`,
 `exit_code` and `completeness`, each target carrying `path`,
 `path_valid_utf8`, `branch`, `planned_sha`, `stage`, `reason`, `notes`,
 `command`, `exit_status`, `probes_performed` and `reconciliation`). The human
-plan, the question and progress SHALL then go to standard error. An
-argument-parser usage error SHALL print the parser's message and no JSON, as
-before this change.
+plan, the question and progress SHALL then go to standard error. Two exceptions
+SHALL print no JSON document: an argument-parser usage error SHALL print the
+parser's message, as before this change; and SIGINT, SIGTERM or SIGHUP before
+the apply phase, or end of input at the question, SHALL print "Cancelled." on
+standard error and exit 130, 143 or 129, as "Clean records a reconcilable result
+for every removal target" states.
 
 #### Scenario: Apply with JSON prints one document
 

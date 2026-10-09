@@ -19,19 +19,21 @@ command with exit status 2.
 
 In JSON, which stays unversioned for status and doctor, a root or leg state that
 could not be inspected SHALL carry `classification: "inspection-error"` and an
-`errors` list of `{code, message, path?}` objects, the fields that worktree rows
-carry, and each of its values that was not established SHALL be null. Doctor
-SHALL render as an `error` check row, never as `ok`, every null that means "not
-established": a `present` that is null, a `dirty` left null by a failed or
-timed-out probe, and any row classified `inspection-error`. Doctor SHALL NOT
-render as an error a null that means "none": `upstream`, `ahead` and `behind`
-for a branch with no upstream, and `merged_into_target` for a detached head. For
-a branch whose configured upstream's remote-tracking ref was deleted, a row's
-`upstream` SHALL be the configured short name and its `ahead` and `behind` null.
-Each path value in that JSON SHALL be written by the JSON rule that "Clean
-reports every path exactly or excludes it" states, with `path_valid_utf8`
-beside every `path`, in root, leg and worktree rows, `errors` entries and
-`ignored_samples` entries alike.
+`errors` list of `{code, message, path?, path_valid_utf8?, reason?}` objects,
+the fields that worktree rows carry, and each of its values that was not
+established SHALL be null. Doctor SHALL render as an `error` check row, never as
+`ok`, every null that means "not established": a `present` that is null, a
+`dirty` left null by a failed or timed-out probe, and any row classified
+`inspection-error`. Doctor SHALL NOT render as an error a null that means
+"none": `upstream`, `ahead` and `behind` for a branch with no upstream, and
+`merged_into_target` for a detached head. For a branch whose configured
+upstream's remote-tracking ref was deleted, a row's `upstream` SHALL be the
+configured short name and its `ahead` and `behind` null. Each path value in that
+JSON SHALL be written by the JSON rule that "Clean reports every path exactly or
+excludes it" states, with `path_valid_utf8` beside every `path`, in root, leg
+and worktree rows, `errors` entries and `ignored_samples` entries alike, and
+with `root_valid_utf8` beside the report's top-level `root` and the `root` of
+each family member it nests.
 
 #### Scenario: Missing leg
 - **WHEN** a project's declared leg has no checkout
@@ -108,7 +110,11 @@ worktree's own index, and only after that worktree's identity has been verified
 immediately before. Repository-wide probes SHALL run in the repository's main
 worktree, except the identity probe, which runs in the directory the argument
 resolves to, and the registry listing, which runs there while the main worktree
-is not yet known.
+is not yet known. Where `root` is null (a bare repository, a missing main
+worktree, or a gitfile checkout whose main worktree cannot be named),
+repository-wide probes SHALL run in the common directory for a bare repository
+and otherwise in the directory where the identity probe ran; `project clean`
+refuses those layouts.
 
 Identity: a repository SHALL be identified by `{root, common_dir, dev, ino}`
 together: the realpaths of its main worktree and of its common directory, from

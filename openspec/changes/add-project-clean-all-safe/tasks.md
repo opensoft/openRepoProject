@@ -14,10 +14,12 @@ duplicate them, and nothing here is an implementation step.
   accounting for every requirement of `project-clean`,
   `project-clean-review-safety` and `project-command`.
 - [x] 1.2 Alignment resolved: the SA and QA findings and the lead's rulings D-A
-  to D-AF are applied (`0ed2f59`, then `ea9c73b`), and lane 3's delta read M1 to
-  M7 with the ceiling precision (`ba9f7c3`, `4b0c149`); verified by the table
-  "Questions Resolved by the Alignment Review" in `proposal.md`, which names the
-  section each ruling edited.
+  to D-AF are applied (`0ed2f59`, then `ea9c73b`), lane 3's delta read M1 to M7
+  with the ceiling precision (`ba9f7c3`, `4b0c149`), and the lead's V2 amended
+  and R-1 to R-14 (`9ea2f02`, `0b3c33d` and the commit that resolves the
+  re-verification findings); verified by the table "Questions Resolved by the
+  Alignment Review" in `proposal.md` and the later-rulings list under it, which
+  name the section each ruling edited.
 - [x] 1.3 Council resolved: every concern is VALID, none dismissed, the verdicts
   V1 to V12 applied to `proposal.md` (`ea9c73b`) and the five NOTED constraints
   recorded as N1 to N5 in `clarifications.md` (`1d4ed5b`); verified by

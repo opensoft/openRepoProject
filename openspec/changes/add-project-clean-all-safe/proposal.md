@@ -78,28 +78,36 @@ Scope).
   `clean` refuses below Git 2.36 with `git-too-old`, exit 2 (R6); and
   `--apply --action remove --worktree P` refuses a freshly created merged
   worktree whose branch has no commit of its own (`target-excluded`, reason
-  `unstarted-branch`), where `a040790` removes it (M4). A merged worktree
-  whose creation reflog entry has expired (`gc.reflogExpire`'s 90-day default)
-  is likewise refused in single mode (`target-excluded`, reason
+  `unstarted-branch`), where `a040790` removes it (M4), with the remedy "no
+  commit was made on this branch here since it was created; review, then git
+  worktree remove yourself". A merged worktree whose branch reflog keeps no
+  decisive entry (the branch saw no activity for `gc.reflogExpire`, 90 days
+  by default) is likewise refused in single mode (`target-excluded`, reason
   `reflog-unavailable`) as well as withheld from the batch, with the remedy
-  "remove the worktree explicitly if wanted". The README's clean section says
-  so first.
+  "the branch's reflog is missing or expired; review, then git worktree remove
+  yourself". The README's clean section says so first.
 - **`project clean <root> --all-safe` previews a batch.** It plans every
   eligible linked worktree of one resolved repository: `selected` and
   `excluded`, each exclusion with one reason in the fixed gate order
   (`BA:152-165`), both in canonical raw-byte path order, which is also the
-  execution order (`BA:107-111`). Nothing eligible prints "No eligible
-  worktrees" and exits 0. The spelling is `project clean <root> --all-safe
-  [--json] [--apply [--yes] [--expect-plan D]]` (`BA:65-85`); `--all-safe`
-  cannot be combined with `--action`, `--branch` or `--worktree`, and
-  `--expect-plan` requires `--all-safe --apply`, else `invalid-arguments` and
-  exit 2, as is an `--expect-plan` value that is not 64 lowercase
+  execution order (`BA:107-111`). A complete plan with nothing eligible prints
+  "No eligible worktrees" and exits 0. The spelling is `project clean <root>
+  --all-safe [--json] [--apply [--yes] [--expect-plan D]]` (`BA:65-85`);
+  `--all-safe` cannot be combined with `--action`, `--branch` or `--worktree`,
+  and `--expect-plan` requires `--all-safe --apply`, else `invalid-arguments`
+  and exit 2, as is an `--expect-plan` value that is not 64 lowercase
   hexadecimal characters (`BA:79-80`, `BA:991`).
 - **`--apply` removes only what its own fresh plan selected.** It always
   recomputes, prints and confirms its plan; the preview is advisory and never
   reused. `--yes` accepts the fresh plan, and the optional `--expect-plan
   <plan_digest>` refuses a plan whose digest differs with
-  `plan-digest-mismatch`, before any prompt (`BA:345-379`). Targets run in
+  `plan-digest-mismatch`, before any prompt (`BA:345-379`). The order is
+  `BA:350-354`'s: an incomplete plan is refused first (a preview or report
+  exits 1, and `--apply` refuses with exit 2 before asking), then an
+  `--expect-plan` mismatch (exit 2), and only then does a complete plan that
+  selects nothing print "No eligible worktrees" and exit 0 without asking; a
+  single-target removal whose P a gate excludes refuses `target-excluded`,
+  exit 2, and is not an empty selection. Targets run in
   canonical order, and the batch stops after the first target that is not a
   plain `removed`. Every local branch remains, and the result says so.
 - **What the person sees.** The preview lists the selected rows, then the
@@ -127,18 +135,25 @@ Scope).
   a branch adds nothing, not that its work began. Nor does a head equal to
   the merge-target SHA prove that the work never began, because a branch
   fast-forward merged into the target sits at the target's tip, so the gate
-  reads the branch's creation reflog in every case: a branch whose reflog
-  shows no commit since its creation (its creation entry's new object equals
-  the current head, and a rename entry, whose old and new objects are equal,
-  is no movement) is excluded as `unstarted-branch`, so a freshly created and
-  published lane worktree, whose push adds no reflog entry, is never swept;
-  a branch at the target's tip whose reflog shows commits since its creation
-  is merged and stays eligible. The creation reflog is a bounded filesystem
-  read of `logs/refs/heads/<branch>` in the common directory, at most 64 KiB,
-  counted in the filesystem budget and never a Git child, so the fit test is
-  unchanged; a missing, empty (0 byte) or expired reflog fails closed with its
-  own reason, `reflog-unavailable`, at the same gate position (M3). The gate
-  applies in single mode too (M4).
+  reads the branch's reflog in every case. Its anchor is the last surviving
+  `branch: Created from` or `branch: Reset to` entry (`worktree add -B`,
+  `branch -f` and `checkout -B` write the second), and a movement is a later
+  entry, or any entry when no anchor survives, whose old and new objects
+  differ (a rename's are equal). A branch whose anchor survives with no
+  movement after it, at the anchor's new object, is excluded as
+  `unstarted-branch`, so a freshly created and published lane worktree,
+  whose push adds no reflog entry, is never swept, nor one reset to the
+  target's tip by `worktree add -B`; a branch with a movement, at the
+  target's tip or not, is merged and stays eligible. The reflog is a bounded
+  filesystem read of `logs/refs/heads/<branch>` in the common directory, at
+  most 64 KiB, counted in the filesystem budget and never a Git child, so the
+  fit test is unchanged. One outcome rule decides the read (M3; R-12): a
+  missing, empty (0 byte) or bound-reaching reflog, one whose surviving
+  entries cannot decide, and one whose last entry's new object is not the
+  head fail closed as `reflog-unavailable`, at the same gate position; any
+  other error on the read is the row's `inspection-error`; and a read not
+  finished within the filesystem budget leaves the row unprobed
+  (`inspection-incomplete`). The gate applies in single mode too (M4).
 - **Single-target `remove` becomes a one-item batch.** Flags unchanged,
   `--apply --json` now accepted (OQ-10). It builds the same plan (`mode:
   "single"`), lists every other eligible row as `not-requested`, and shares
@@ -202,7 +217,8 @@ Scope).
   gates only the start of a removal: a removal child still running at the
   deadline is waited for, so the run overruns, bounded only by the 300 s hard
   ceiling, and its reconciliation reserve counts from its exit. A run with no
-  removal in flight therefore ends within 64 s of its start (50 s of work, the
+  removal in flight therefore ends within 64 s of its start, not counting the
+  time blocked at the confirmation question (50 s of work, the
   10 s reserve, and up to 4 s to stop a probe child: SIGTERM, the 2 s grace,
   SIGKILL, then a reap wait of up to 2 s), the figure `add-project-overview`
   states, not "within about 60 s" (`BA:456-458`; M5); a removal in flight adds
@@ -251,9 +267,9 @@ Scope).
   consequences are the baseline behavior changes of `BA:1200-1274`, less
   `BA:1255-1256`, with `BA:1238-1240` and `BA:1268-1274` narrowed (Decisions)
   and `BA:1241-1245` (R6), plus R1, R2, R10, R11, `unstarted-branch` and
-  `reflog-unavailable` in single mode (M4), the manifest cap, and
-  `ignored_samples` entries as `{path, path_valid_utf8}` objects where the
-  packet has bare path strings (`BA:804-806`); the deltas carry each. The
+  `reflog-unavailable` in single mode (M4), and the manifest cap; the deltas
+  carry each, and the `ignored_samples` objects are a packet departure
+  (Decisions). The
   manifest read that resolves a merge target is capped at 1 MiB, a larger
   manifest being `manifest-invalid`, so every reader resolves the same target;
   at `a040790` `clean` reads a manifest of any size, so a larger one refusing
@@ -261,12 +277,15 @@ Scope).
   R1 and R10.
 - **Every `clean --json` prints one versioned envelope.** `schema_version: 1`
   with the plan fields of `BA:947-976`, `mode` being `report`, `single` or
-  `all-safe` (OQ-29); refusals as `{code, message, path?, reason?}` with the
+  `all-safe` (OQ-29); refusals as `{code, message, path?, path_valid_utf8?,
+  reason?}` with the
   codes of `BA:987-1015`; the extended error object when no plan can be built
   (`BA:978-985`). `--apply --json` (removal only, OQ-10) prints exactly one
   stdout document: the plan envelope or the extended error object when the
   run stops before the apply phase, otherwise the apply result record
-  (`BA:1017-1042`); the human plan, prompt and progress go to stderr.
+  (`BA:1017-1042`); the human plan, prompt and progress go to stderr. Only
+  a parser usage error, and SIGINT, SIGTERM or SIGHUP before the apply phase
+  (`Cancelled.` on stderr, exit 130, 143 or 129), print no JSON document.
 - **Every path is exact or excluded.** JSON carries a valid UTF-8 path
   exactly with `path_valid_utf8: true`; a non-UTF-8 path is escaped, excluded
   as `unsupported-path-bytes` and never a removal operand. Every path value
@@ -380,8 +399,10 @@ Headers are quoted verbatim, one per line; ADDED headers are proposed text.
     then `push -u` with no commit, its reflog holding only the creation entry,
     is excluded `unstarted-branch`, and `--worktree` on it refuses
     `target-excluded` (M4); a branch fast-forward merged into the target, at
-    the target's tip with a commit in its reflog, stays eligible; a missing or
-    empty reflog is `reflog-unavailable`; with the
+    the target's tip with a commit in its reflog, stays eligible; a branch
+    reset to the target's tip by `worktree add -B` stays `unstarted-branch`;
+    a missing, empty or expired reflog is `reflog-unavailable`, and
+    `--worktree` on such a worktree refuses `target-excluded`; with the
     untracked cache on, `core.checkStat=minimal` and an index-writing status
     run, a file created after revalidation is refused by Git with 128 and
     survives; `--worktree P` removes P beside another row's
@@ -422,8 +443,9 @@ Headers are quoted verbatim, one per line; ADDED headers are proposed text.
     and `budget`, incompleteness blocking apply, the 16-per-run
     `deferred-target-cap` deferral (`target-cap` refusal retired), and the
     deadline gating only a removal's start, a removal past it overrunning up
-    to the 300 s ceiling. Scenario: 20 eligible rows select 16 and defer 4,
-    which a second run removes.
+    to the 300 s ceiling. Scenario: twenty rows pass every gate before
+    `deferred-target-cap`; sixteen are selected, four deferred, and a second
+    run removes those four.
   - ADDED:
     `### Requirement: Clean records a reconcilable result for every removal target`.
     Stages, reasons (`removal-ceiling` added to `removed` and `unknown`;
@@ -440,10 +462,11 @@ Headers are quoted verbatim, one per line; ADDED headers are proposed text.
 - `project-clean-review-safety` (all four accounted for):
   - MODIFIED (`:21`):
     `### Requirement: Cleanup preserves all local work not proven disposable`.
-    Adds the main worktree, locked, `contains-submodule`,
-    `hidden-local-state` (sparse checkouts included), `registration-mismatch`,
-    `unsupported-path-bytes`, `unstarted-branch` and unreadable worktrees to
-    the preserved states. Both scenarios (`:27-36`) stay.
+    Adds the main worktree, locked, `contains-submodule`, `hidden-local-state`
+    (sparse checkouts included), `registration-mismatch`,
+    `unsupported-path-bytes`, `unstarted-branch`, `reflog-unavailable` and
+    unreadable worktrees to the preserved states. Both scenarios (`:27-36`)
+    stay.
   - MODIFIED (`:49`): `### Requirement: Cleanup revalidates destructive actions`.
     Removal revalidates by the targeted check against the recorded identity
     objects, refusing with `identity-changed`, `branch-changed`,
@@ -543,8 +566,10 @@ Headers are quoted verbatim, one per line; ADDED headers are proposed text.
   The ladder becomes a pure function; `status`, `doctor` and `update` gain the
   Git version check (R6). No new flag outside `clean`, no network, no new
   dependency.
-- **`README.md`**: "Clean up Git worktrees" opens with the behaviour changes
-  users will notice (R2, R6), then describes the batch preview and apply,
+- **`README.md`**: "Clean up Git worktrees" opens with the four behaviour
+  changes users will notice (R2, R6, and the `unstarted-branch` and
+  `reflog-unavailable` refusals in single mode, M4), then describes the batch
+  preview and apply,
   `--expect-plan`, the gates, the 16-per-run deferral that re-running drains,
   the narrow guarantee and residual window, the result record and recovery,
   and that `project` cannot yet remove a merged worktree whose upstream was
@@ -710,6 +735,20 @@ Departures from packet decisions, each citing the decision departed from:
   refusing it leaves a raw `git worktree remove`, which skips every gate.
 - **The runner** (`BA:1212-1213`, which gives `probe()` a timeout argument):
   a new bounded runner instead (Impact).
+- **Validity flags and sample objects** (R-9; `BA:804-806`, `BA:963-964`):
+  each `ignored_samples` entry is an object `{path, path_valid_utf8}` where
+  the packet has a bare path string, and every serialized path value carries
+  its validity flag beside it (`path_valid_utf8`, and `root_valid_utf8` and
+  `common_dir_valid_utf8` in `repository`), so an escaped `\xHH` never reads
+  as a valid path holding those four characters.
+- **Escaping by general category** (R-8; `BA:917-934`): every code point of
+  Unicode general category Cc, Cf, Zl or Zp is escaped, where the packet
+  enumerates control, bidirectional and format characters, and human output
+  writes a code point above U+FFFF as `\UXXXXXXXX`, where the packet has the
+  single `\uXXXX` form.
+- **The manifest cap detected from `st_size`** (R-4; an addition, no packet
+  text behind it): a manifest over the 1 MiB cap is detected from its
+  `st_size` before the read, never by reading past the cap.
 
 Packet decisions adopted, not open: OQ-5, the caps and bounds of `BA:966`,
 subject to OQ-4, less the target cap's refusal; OQ-9, the budgets of
@@ -728,8 +767,10 @@ additions, with no packet text behind them:
   under the deadline and a 256-row cap by the same fit rule (7 + W + 16
   children; 256 rows take 41.85 s at 150 ms), apply modes keeping 128 rows
   and 16 targets (R2); it carries every plan field, `selected` being what
-  `--all-safe` would select, `plan_digest` computed, `apply_allowed` false
-  and the deferral applied as in a preview.
+  `--all-safe` would select (for at most 128 worktree rows; above 128 the
+  report says that `--all-safe` itself would be incomplete with
+  `inspect-cap`), `plan_digest` computed, `apply_allowed` false and the
+  deferral applied as in a preview.
 
 Council decisions, with the packet text each replaces or extends:
 
@@ -740,10 +781,11 @@ Council decisions, with the packet text each replaces or extends:
 - **Pinned status configuration** (`BA:307-317` pins only the untracked
   setting): unpinned, Git's own check missed and deleted a file (council).
 - **A branch with no commit of its own is preserved** (V2 as amended, M3, M4;
-  extends the gates of `BA:152-160`): the creation reflog decides
-  `unstarted-branch` in every case, because a head equal to the merge-target
-  SHA is also where a fast-forward-merged branch sits; a missing, empty or
-  expired reflog is `reflog-unavailable` (What Changes, eligibility).
+  extends the gates of `BA:152-160`; R-12): the reflog, read from its last
+  creation or reset entry, decides `unstarted-branch` in every case, because
+  a head equal to the merge-target SHA is also where a fast-forward-merged
+  branch sits; a reflog that is missing, empty, bound-reaching or undecidable
+  is `reflog-unavailable` (What Changes, eligibility).
 
 Left to `add-project-overview`: OQ-2, OQ-6, OQ-7, OQ-17 to OQ-21, and the
 overview halves of OQ-5, OQ-9, OQ-25 and OQ-26.
@@ -790,7 +832,8 @@ Readings of packet gaps:
   `inspection-error` marker on root and leg dicts (`project:370-373`, `:699`)
   in a field matching worktree rows (`repository.classification` or an
   `errors[]` list; the delta names one), nulls where they exit 2 today, C3's
-  `upstream`, a lower-bound `ignored_files`, and doctor's `error` rows (R6).
+  `upstream`, a lower-bound `ignored_files`, `path_valid_utf8` beside each
+  `path` and `root_valid_utf8` beside `root`, and doctor's `error` rows (R6).
 - **R8, the test command**: `python3 -m unittest discover -s tests -v`; a
   bare `python3 -m unittest` runs 0 tests (`tests/` has no `__init__.py`).
 - **R9, deleted upstream re-verified** (`BA:1214-1220`; `DI:1124-1129`). The
@@ -897,7 +940,15 @@ read at `ea9c73b`: M1 (What Changes, reconcilable), M2 (What Changes, person
 sees), M3 and M4 (What Changes, first bullet, eligibility, evidence model;
 Capabilities `:55`), M5 (What Changes, bounded work; Decisions), M6 (R11) and
 M7 (What Changes, evidence model; `project-command` ADDED), with the manifest
-cap listed as a baseline behavior change.
+cap listed as a baseline behavior change. The lead's rulings, hyphenated to
+keep them apart from this proposal's readings R1 to R11: R-4 (the manifest
+cap's `st_size` detection), R-8 (escaping by general category) and R-9
+(validity flags on every path value), each under What Changes and the
+departures in Decisions; R-11 (the apply order, the exits of a preview, the
+report's row limit, signals under `--json`, the 64 s bound); R-12 (the reflog
+anchor and its one outcome rule; What Changes, eligibility); R-13 (the null
+`root` probe directory; `project-command` ADDED); and R-14 (the
+`unstarted-branch` remedy).
 
 ### Council Verdicts
 
