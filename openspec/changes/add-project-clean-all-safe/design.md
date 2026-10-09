@@ -17,7 +17,7 @@ R-19 edited Context, D14 and D19.
 Citations are `file:line` at `da33d92`: `BA`, `DI`, `OV` and `HO` are the
 packet's batch-cleanup, project-discovery, overview and handoff documents, and
 `project:N` the executable. At `7a9134b`, `project` from `discover` onward sits
-141 lines lower and the cited tests 383 lower; feature 003 re-pins every
+141 lines lower and the cited tests 383 lower; feature 004 re-pins every
 citation.
 
 What in `project` shapes the approach:
@@ -170,7 +170,7 @@ hidden-state parser `ls-files -v --stage -z`, stopping at the first mode
 
 When the driver sees `bound_reached` it stops the child with `terminate_group()`
 and returns `complete-at-bound`, never `probe-failed`. The overview's feature
-004 drives up to four handles from its own selector loop, feeds the same
+005 drives up to four handles from its own selector loop, feeds the same
 parsers, and relies on the same registry for termination (its
 `clarifications.md`, N1). A test feeds each parser a recorded stream one byte at
 a time and whole, and expects the same records and the same bound either way.
@@ -513,7 +513,7 @@ contrary `-c`.
 `core.fsmonitor=false` is read as a boolean from Git 2.36, when the built-in
 monitor arrived; older Git reads the value as a hook path, one more reason for
 the floor (D17). The cost is a full untracked scan where the cache would have
-helped; D5 measures it. One consequence crosses changes: feature 004's fixtures
+helped; D5 measures it. One consequence crosses changes: feature 005's fixtures
 that rely on a running fsmonitor (DI:1233-1237, DI:1249-1254) must be rewritten,
 as the lead's ruling records.
 
@@ -662,7 +662,7 @@ Governance task 2.2 verifies the floor before the handoff: Git v2.36.x built
 from its release tarball in a scratch directory, first on PATH, and a scratch
 script comparing each row's output with Git 2.43's. If any row differs, the
 floor rises to the lowest version on which every row holds, and the deltas
-change before the handoff. Feature 003 adds a CI job that builds the floor
+change before the handoff. Feature 004 adds a CI job that builds the floor
 version, cached, and runs the `clean`, `status` and `doctor` tests with it first
 on PATH.
 
@@ -859,7 +859,7 @@ section states them first.
    feature `004-project-clean-all-safe` on branch `004-project-clean-all-safe`,
    recorded once in `tasks.md` under "Speckit Handoff"; `/opsx:apply` runs only
    then.
-4. Feature 003 implements D1 to D19 and the CI floor job (D17), merging `main`
+4. Feature 004 implements D1 to D19 and the CI floor job (D17), merging `main`
    into its branch as `main` moves and never rebasing.
 5. README: "Clean up Git worktrees" opens with the behaviour changes, then the
    preview and apply, `--expect-plan`, the gates, the deferral, the narrow
@@ -885,7 +885,7 @@ section states them first.
    `:925`) pass unchanged, because `target-excluded` and `no-merge-target` keep
    the wording they read (D8, D18). The other 90 pass unchanged.
 7. `add-project-overview` reconciles its deltas against this change's final
-   headers after this lands, then is ratified and implemented as feature 004.
+   headers after this lands, then is ratified and implemented as feature 005.
 8. The change is archived after the realization PR merges.
 
 Rollback: revert the realization commit on `main`. Installed `project` artifacts

@@ -61,11 +61,11 @@ a removal child runs to its own end; N4 covers what the latter can leave.
 ### N2. The runner is a child handle the overview can multiplex
 **Raised by:** systems-architect of `add-project-overview`'s council (its
 SA-2, MEDIUM-HIGH), routed to this change as cross-change item X1
-**Concern:** Feature 003 ships the bounded runner for a strictly serial
+**Concern:** Feature 004 ships the bounded runner for a strictly serial
 `clean` (BA:427-458), and through `snapshot` its API is fixed at once by
 `clean`, `status`, `doctor` and `update`. A blocking `run_bounded(argv) ->
 result` call cannot run four children inside one event loop, so the
-overview's feature 004 would either fork the runner, leaving two termination
+overview's feature 005 would either fork the runner, leaving two termination
 paths and two environment scrubs, or refactor code this change owns.
 **Design impact:** design.md shapes the runner as:
 - a child handle: start (the caller's argv in its own process group, under

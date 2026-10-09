@@ -615,7 +615,7 @@ Headers are quoted verbatim, one per line; ADDED headers are proposed text.
   command is `python3 -m unittest discover -s tests -v`, on Linux and macOS
   with Python 3.10 and 3.12, as CI runs (`.github/workflows/tests.yml:9-18`).
 - **Speckit handoff**: implementation goes to exactly one Speckit feature,
-  `specs/003-<slug>/`, created by `/speckit.specify` after ratification
+  `specs/004-<slug>/`, created by `/speckit.specify` after ratification
   (`002` is lane openRepoProject-1's `002-triad-first-project-new`, merged by
   PR #8 at `d7f6b0e`). OpenSpec `tasks.md` holds governance boxes, the OQ-4
   measurement among them, and that one handoff only.
@@ -637,15 +637,15 @@ Headers are quoted verbatim, one per line; ADDED headers are proposed text.
 - **Citations stay pinned at `da33d92`.** At `7a9134b` lines 285 to 1007 of
   `da33d92`'s `project` (`discover` onward) sit 141 lines lower, with `probe`
   and `execute` unmoved, the cited test lines 383 lower and the README
-  citations up to 88 lower, and feature 003's specify and plan re-pin every
+  citations up to 88 lower, and feature 004's specify and plan re-pin every
   citation against the `main` of that day.
 - **`add-project-overview` depends on this change.** Its `--all-safe`
   suggestion is gated by this change's gates and refusal codes
   (`SY:287-306`), and it reuses this change's evidence model, ladder function
   and Git 2.36 refusal (`SY:39-51`, `SY:78-109`). It should be ratified after
   this change, and re-aligned if this change moves before ratification.
-- **Implementation order.** Feature `003-<slug>` lands before the overview's
-  `004-<slug>`. PR #8 has landed, so feature 003 builds on its `project` and
+- **Implementation order.** Feature `004-<slug>` lands before the overview's
+  `005-<slug>`. PR #8 has landed, so feature 004 builds on its `project` and
   tests and merges `main` into its branch as `main` moves. Never rebase: the
   organisation ruleset refuses force pushes.
 
