@@ -488,10 +488,10 @@ gate checks by one bounded filesystem read of at most 64 KiB, never by a Git
 child. Its anchor SHALL be its last surviving entry whose old object is all
 zeros, a creation written by any command, or whose message begins `branch:
 Created from` or `branch: Reset to`; a movement SHALL be an entry after the
-anchor, or any entry when no anchor survives, whose old object is not all
-zeros and whose old and new objects differ. An entry whose old object is all
-zeros SHALL never be a movement, nor SHALL an entry whose old and new objects
-are equal, as a rename writes. A branch whose last reflog entry's new object
+anchor, or any entry when no anchor survives, whose old and new objects are
+non-zero and differ. An entry whose old object is all zeros SHALL never be a
+movement, nor SHALL an entry whose old and new objects are equal, as a rename
+writes. A branch whose last reflog entry's new object
 differs from its current head SHALL be `reflog-unavailable`, this test first;
 otherwise a branch with a movement SHALL pass the gate, its head equal to the
 merge-target object id or not, and a branch whose anchor survives with no

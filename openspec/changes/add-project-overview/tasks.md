@@ -18,7 +18,7 @@ duplicate them.
 ## 2. Before the handoff
 
 - [ ] 2.1 OQ-4 measurement recorded: warm-cache and cold-cache runs on a Linux filesystem path, never a Windows drive mounted into WSL2, of one 4,096-directory root timed against the 5 s per-root listing bound, of `for-each-ref` on one large-ref repository, and of the per-child cost at four children against the 150 ms margin rate; drvfs recorded as a degraded case only; each measured repository's eligible-row count recorded beside its timing; verified by the figures posted on PR #12 and by the spec delta's caps confirmed or lowered to fit before 3.1.
-- [x] 2.2 Reconciled with change 1 after its phase 6: every item of `design.md` D12 ([E], [L], [G], [R], [P] and the fixture rewrite) was re-read against `add-project-clean-all-safe`'s spec deltas and design at `0b3c33d` and the moved items applied in `996a181`, then re-read against change 1's head at `4f2162b`, which carries R-15, and the lead's R-12, R-13 (b), R-14, R-15 and R-16 applied in the commits after `996a181`; verified by D12 naming each item confirmed or changed and by `openspec validate add-project-overview --strict` passing afterwards.
+- [x] 2.2 Reconciled with change 1 after its phase 6: every item of `design.md` D12 ([E], [L], [G], [R], [P] and the fixture rewrite) was re-read against `add-project-clean-all-safe`'s spec deltas and design at `0b3c33d` and the moved items applied in `996a181`, then re-read against change 1's head at `4f2162b`, which carries R-15, and the lead's R-12, R-13 (b), R-14, R-15, R-16 and R-18 applied in the commits after `996a181`; verified by D12 naming each item confirmed or changed and by `openspec validate add-project-overview --strict` passing afterwards.
 
 ## 3. Speckit handoff
 

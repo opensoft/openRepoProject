@@ -264,9 +264,8 @@ builds the shared evidence model the overview reads across many repositories.
      the last surviving entry whose old object is all zeros (a creation by
      any command, `git fetch origin feat:f1` included) or whose message
      begins `branch: Created from` or `branch: Reset to`, and a movement a
-     later entry, or any entry when no anchor survives, whose old object is
-     not all zeros and whose old and new objects differ, a rename's entry
-     being none
+     later entry, or any entry when no anchor survives, whose old and new
+     objects are non-zero and differ, a rename's entry being none
      (the lead's R-15); a last
      entry whose new object is not the head is `reflog-unavailable`, tested
      first; a movement passes, so a fast-forward-merged branch at the
@@ -660,8 +659,8 @@ Departures from packet decisions, each citing the decision departed from:
   upstream by `git branch -u origin/feat f1` (which writes no reflog entry),
   or reset to it by `worktree add -B`, stays unstarted, while a movement (an
   entry after the anchor, or any entry when no anchor survives, whose old
-  object is not all zeros and whose old and new objects differ; a rename's
-  entry is none) passes, so a branch fast-forward merged into the
+  and new objects are non-zero and differ; a rename's entry is none)
+  passes, so a branch fast-forward merged into the
   target, sitting at its tip, passes. A last entry whose new object is not
   the head, tested first, and a missing, empty, bound-reaching or
   undecidable reflog are
@@ -923,6 +922,14 @@ its row unprobed), fits the `inspection-incomplete` remedy to both causes,
 an `inspection-error` row and a row left unprobed (requirement 7's gate
 table and requirement 12's scenario; Capabilities), and has the escaping
 departure cite the packet's texts, not a numbered decision (Decisions).
+R-18 gives the fetch-created branch an upstream by `git branch -u origin/feat
+f1`, which writes no reflog entry, so its row reaches the reflog gate
+(requirement 7's scenario and the proposal's scenario list; design D13),
+records in design Risks that a reflog over 64 KiB fails closed even when it
+records movement, takes change 1's movement wording, an entry whose old and
+new objects are non-zero and differ (requirement 7; design D5; Decisions, the
+reflog gates), and has design D5's reflog line format say the tab and the
+message are present only when the command wrote one.
 R-10's remedy wording is superseded by R-12, R-14 and R-15.
 
 | Finding | Severity | Ruling | Section edited |

@@ -298,9 +298,9 @@ computes:
   and `checkout -B` on an existing branch; the two are independent
   alternatives, and the lead's R-15 added the all-zeros one. A movement is
   an entry after the anchor, or any entry when no anchor survives, whose old
-  object is not all zeros and whose old and new objects differ: an entry
-  whose old object is all zeros is never a movement, nor is a rename's
-  entry, old and new objects equal. The tests run
+  and new objects are non-zero and differ: an entry whose old object is all
+  zeros is never a movement, nor is a rename's entry, old and new objects
+  equal. The tests run
   in this order: a last entry whose new object differs from the head gives
   `reflog-unavailable`, because the reflog then does not describe the branch;
   otherwise a movement passes the gate, whatever the head, the ancestry
