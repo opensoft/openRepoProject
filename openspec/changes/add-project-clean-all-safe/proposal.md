@@ -23,7 +23,8 @@ Citations are `file:line` at `da33d92`. `BA`, `SY`, `OV` and `DI` are the
 packet's `project-maintenance-` files `batch-cleanup.md`,
 `synthesis-inspect-and-retire.md`, `overview.md` and `project-discovery.md`;
 `HO` is `next-session-project-maintenance-fix-handoff.md`; `project:N` is the
-executable. The packet's tables are cited here, not restated.
+executable at `da33d92` (Dependencies and Sequencing). The packet's tables
+are cited here, not restated.
 
 ## Why
 
@@ -35,7 +36,8 @@ confirmation and full report. Several merged worktrees need as many runs.
 Designing a batch on top of that action showed that the action itself is not
 safe enough to repeat. At `da33d92`, whose `project` and tests are unchanged
 since the packet's `a040790` baseline (`git diff a040790 da33d92 -- project
-tests/` is empty):
+tests/` is empty), and still at `7a9134b`, whose `project` gained only
+PR #8's `project new` code, all above `discover`:
 
 - A worktree whose only change is an edit to a file flagged assume-unchanged
   is classified `merged-removable`, and `--apply --action remove` deletes it
@@ -214,7 +216,9 @@ Scope).
   2.36 is required as R6 scopes it. The visible consequences are the
   baseline behavior changes of `BA:1200-1274`, less `BA:1255-1256`, with
   `BA:1238-1240` and `BA:1268-1274` narrowed (Decisions) and `BA:1241-1245`
-  (R6), plus R1, R2, R10 and R11; the deltas carry each.
+  (R6), plus R1, R2, R10 and R11; the deltas carry each. The manifest read
+  that resolves a merge target is capped at 1 MiB, a larger manifest being
+  `manifest-invalid`, so every reader resolves the same target.
 - **Every `clean --json` prints one versioned envelope.** `schema_version: 1`
   with the plan fields of `BA:947-976`, `mode` being `report`, `single` or
   `all-safe` (OQ-29); refusals as `{code, message, path?, reason?}` with the
@@ -348,7 +352,8 @@ Headers are quoted verbatim, one per line; ADDED headers are proposed text.
     `origin/HEAD` `%(symref)` less `refs/remotes/origin/`, `main`, `master`,
     as `{name, source, sha}`; a manifest conflicting with `origin/HEAD` wins
     with a `merge-target-conflict` note; `no-merge-target` and
-    `manifest-invalid` refuse with exit 2 before any mutation. Scenario:
+    `manifest-invalid` (a manifest over the evidence model's 1 MiB cap
+    included) refuse with exit 2 before any mutation. Scenario:
     `tracking_branch: origin/develop` resolves to `refs/heads/develop`,
     never falling back silently. It carries R11, with scenarios for a
     `--separate-git-dir` main checkout that resolves and a submodule
@@ -406,7 +411,9 @@ Headers are quoted verbatim, one per line; ADDED headers are proposed text.
     `### Requirement: Cleanup states a narrow guarantee and its residual window`.
     Concurrent writers outside the contract, no lock, the guarantee, the
     residual-window line, and the branch race.
-- `project-command` (all four accounted for):
+- `project-command` (all ten at `7a9134b` accounted for; line numbers are at
+  `da33d92`; at `7a9134b` `Inspect and diagnose`, `Explicit maintenance` and
+  `Distribution and compatibility` sit 22 lines lower, their text unchanged):
   - MODIFIED (`:22`): `### Requirement: Inspect and diagnose`. Minimal text
     per R6: doctor's `error` check row for old or unusable Git, status's
     `inspection-error` marker on a root or leg dict in a field matching
@@ -433,16 +440,28 @@ Headers are quoted verbatim, one per line; ADDED headers are proposed text.
     evidence model: the version check (`BA:593`), R6's timing not stated as a
     rule for every reader; the probe directory rule (`BA:554-583`); the scrub
     with `GIT_OPTIONAL_LOCKS=0` (`BA:243-253`); NUL parsing; the combined
-    probe, its pins and bounds (`BA:629-652`, `BA:793-814`); the runner's
-    outcomes (What Changes, evidence model), its every-exit-path termination
-    matching `add-project-overview`'s "Overview exits by completeness and
-    severity"; and `min(5 s, work_remaining)` per Git child under a deadline,
-    15 s otherwise. `status`, `doctor` and `update` get no deadline or row
-    cap; an unreadable or timed-out row shows as `inspection-error`. Non-Git
-    children (docker, doctor validators; `project:715`, `:817`) keep 15 s.
-  - Untouched: `Delegate project creation` (`:9`, which the in-flight
-    `prefer-triad-in-project-new` modifies) and
-    `Distribution and compatibility` (`:40`).
+    probe, its pins and bounds (`BA:629-652`, `BA:793-814`); the 1 MiB cap on
+    the manifest read that resolves a merge target, a larger manifest being
+    `manifest-invalid` (a lane bound; `add-project-overview` cites it); the
+    runner's outcomes (What Changes, evidence model), its every-exit-path
+    termination matching `add-project-overview`'s "Overview exits by
+    completeness and severity"; and `min(5 s, work_remaining)` per Git child
+    under a deadline, 15 s otherwise. `status`, `doctor` and `update` get no
+    deadline or row cap; an unreadable or timed-out row shows as
+    `inspection-error`. Non-Git children (docker, doctor validators;
+    `project:715`, `:817`) keep 15 s.
+  - Untouched (`:9`; `:7` at `7a9134b`, with the MODIFIED text PR #13
+    archived from `prefer-triad-in-project-new`):
+    `### Requirement: Delegate project creation`.
+  - Untouched (`:40`): `### Requirement: Distribution and compatibility`.
+  - Untouched, ADDED by PR #13's archive (`:70`, `:140`, `:200`, `:251`,
+    `:310` and `:367` at `7a9134b`):
+    - `### Requirement: Creation question is asked only of a person choosing at the terminal`
+    - `### Requirement: Creation question offers the Triad first`
+    - `### Requirement: Known Triad obstacles are named before the question and refused on a Triad answer`
+    - `### Requirement: A Triad answer asks for the organization and the visibility`
+    - `### Requirement: Creation advisory follows a single repository created without the question`
+    - `### Requirement: Creation offer precedes the workflow follow-up`
 - `project-review-safety` and `speckit-extension-integration`: untouched.
   Every `clean` resolve refusal (the extended error object, `manifest-invalid`
   included) and every refusal under `--apply` exits 2 with structured JSON,
@@ -495,8 +514,9 @@ Headers are quoted verbatim, one per line; ADDED headers are proposed text.
   path inside a bare repository's linked worktree is refused (R10);
   `--apply --json` stdout holds one document and stderr the prompt (OQ-10);
   SIGTERM mid-removal waits for the child, then reconciles and exits 143
-  (OQ-16); a deleted upstream's status and doctor rows carry the C3 values.
-  The 43 existing tests keep passing, except
+  (OQ-16); a deleted upstream's status and doctor rows carry the C3 values;
+  a manifest over 1 MiB refuses `manifest-invalid`. The 94 existing tests at
+  `7a9134b` (43 at `da33d92`, 51 added by PR #8) keep passing, except
   `test_clean_revalidates_a_worktree_after_confirmation`
   (`tests/test_project.py:590-611`), which moves to the result record; the
   message assertions at `:409-425`, `:450-467` and `:542-546` keep passing
@@ -507,31 +527,39 @@ Headers are quoted verbatim, one per line; ADDED headers are proposed text.
   command is `python3 -m unittest discover -s tests -v`, on Linux and macOS
   with Python 3.10 and 3.12, as CI runs (`.github/workflows/tests.yml:9-18`).
 - **Speckit handoff**: implementation goes to exactly one Speckit feature,
-  `specs/003-<slug>/`, created by `/speckit.specify` after ratification (`002`
-  is lane openRepoProject-1's `002-triad-first-project-new`). OpenSpec
-  `tasks.md` holds governance boxes, the OQ-4 measurement among them, and that
-  one handoff only.
+  `specs/003-<slug>/`, created by `/speckit.specify` after ratification
+  (`002` is lane openRepoProject-1's `002-triad-first-project-new`, merged by
+  PR #8 at `d7f6b0e`). OpenSpec `tasks.md` holds governance boxes, the OQ-4
+  measurement among them, and that one handoff only.
 - **workBenches**: `onp` carries the batch once its owner moves the pin.
 
 ### Dependencies and Sequencing
 
-- **This change depends on nothing unmerged.** It targets the canonical specs
-  at `da33d92` and the `a040790` executable. It does not depend on PR #2's
-  commits (closed unmerged; harvest source only). The in-flight
-  `prefer-triad-in-project-new` MODIFIES `Delegate project creation` in
-  `project-command`; this change MODIFIES `Inspect and diagnose` and
-  `Explicit maintenance` and ADDS a separate requirement there, so the deltas
-  touch different requirements and archive in either order.
+- **This change depends on nothing unmerged.** This branch has merged `main`
+  at `7a9134b`. PR #8 merged at `d7f6b0e` (`002-triad-first-project-new`, 141
+  lines inserted in `project`, tests 43 to 94), and PR #13's archive of
+  `prefer-triad-in-project-new` merged at `7a9134b`, so `project-command`
+  now carries its MODIFIED `Delegate project creation` and six ADDED
+  requirements. This change MODIFIES `Inspect and diagnose` and
+  `Explicit maintenance`, both verbatim and unchanged at `7a9134b`, ADDS
+  one requirement there and touches none of the archive's seven
+  (Capabilities); `project-clean` and `project-clean-review-safety` are
+  unchanged since `da33d92`. It does not depend on PR #2's commits (closed
+  unmerged; harvest source only).
+- **Citations stay pinned at `da33d92`.** At `7a9134b` lines 285 to 1007 of
+  `da33d92`'s `project` (`discover` onward) sit 141 lines lower, with `probe`
+  and `execute` unmoved, the cited test lines 383 lower and the README
+  citations up to 88 lower, and feature 003's specify and plan re-pin every
+  citation against the `main` of that day.
 - **`add-project-overview` depends on this change.** Its `--all-safe`
   suggestion is gated by this change's gates and refusal codes
   (`SY:287-306`), and it reuses this change's evidence model, ladder function
   and Git 2.36 refusal (`SY:39-51`, `SY:78-109`). It should be ratified after
   this change, and re-aligned if this change moves before ratification.
 - **Implementation order.** Feature `003-<slug>` lands before the overview's
-  `004-<slug>`. Draft PR #8 (`002-triad-first-project-new`) also edits
-  `project` and `tests/test_project.py`; whichever lands second merges
-  `main` into its branch. Never rebase: the organisation ruleset refuses
-  force pushes.
+  `004-<slug>`. PR #8 has landed, so feature 003 builds on its `project` and
+  tests and merges `main` into its branch as `main` moves. Never rebase: the
+  organisation ruleset refuses force pushes.
 
 ## Out of Scope
 
@@ -731,11 +759,11 @@ OQ-29's cap; these bind until that revision merges (C2 is now reading R9).
 
 - **C1, stale baseline sentences.** `DI:28` and `BA:30` say `origin/main` "is
   now `ca4c615`", and `OV:163` and `HO:200` that it "has since advanced to
-  `ca4c615`"; it is `da33d92`. `HO:365-366` records PR #7 as opened and
-  `HO:377-380` as "open for review"; it merged as `da33d92`. `DI:33-35` and
-  `BA:39-42` omit `acf0133` and `09af8c8`, which `OV:176-178` lists, and all
-  three omit `80fdef3`; the PR #2 decision record's harvest table is the
-  authority.
+  `ca4c615`"; PR #7's squash `da33d92` superseded it. `HO:365-366` records
+  PR #7 as opened and `HO:377-380` as "open for review"; it merged as
+  `da33d92`. `DI:33-35` and `BA:39-42` omit `acf0133` and `09af8c8`, which
+  `OV:176-178` lists, and all three omit `80fdef3`; the PR #2 decision
+  record's harvest table is the authority.
 - **C3, doctor and `remote-gone`.** `BA:1219-1220`, `OV:210-211`, `SY:107-108`
   and `HO:296-298` say doctor reports `remote-gone`. Doctor classifies no
   worktree (`project:728-758`; `repo_state` sets only `stale-worktree`,
@@ -795,7 +823,9 @@ established"), D-B relabelled (R6), C1, C8 (R7), D-Q (OQ-4), D-R (`Explicit
 maintenance`), D-T (Git-first), D-U, D-V and D-W (Bounded work; OQ-29; D-U's
 refusal retired by the council), D-X (OQ-16), D-Y (Why), D-Z (Decisions),
 D-AB (Corrections; OQ-3), D-AC (Impact; Decisions), D-AD (OQ-24), D-AF
-(`project-command` ADDED), X2 (R11) and the remote-gone question.
+(`project-command` ADDED), X2 (R11), the remote-gone question, and the 1 MiB
+manifest cap from lane 3's final read of `add-project-overview` (What
+Changes, evidence model; `project-command` ADDED; Git-first).
 
 ### Council Verdicts
 
@@ -816,4 +846,4 @@ dismissed; the parts noted for design are `clarifications.md` N1 to N5.
 | AE-1 | HIGH | VALID; detection NOTED (N4) | What Changes (seam, reconcilable, bounded work); Rules; Capabilities (`:25`, `:55`, bounds, result); Decisions (council, OQ-4, OQ-16); Impact (tests) |
 | AE-2 | HIGH | VALID; `in-use` gate NOTED (N3) | What Changes (eligibility); Capabilities (`:55`, review-safety `:21`); Out of Scope; Open Questions |
 | AE-3 | MEDIUM-HIGH | VALID | What Changes (seam, evidence model); Rules; Does Not Own; Capabilities (`:55`, review-safety `:49`); Decisions (council) |
-| AE-4 | MEDIUM | VALID | Citations; Impact (tests; Dependencies and Sequencing), after the merge of `main` |
+| AE-4 | MEDIUM | VALID | Citations (pinned at `da33d92`); Why; Capabilities (`project-command`); Impact (tests, Speckit handoff; Dependencies and Sequencing), after merging `main` at `7a9134b`; Corrections C1 |
