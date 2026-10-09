@@ -57,9 +57,11 @@ confirmation. `project` never writes `single-repository.yaml`.
 Under the Triad entry, the question names any known obstacle, read locally
 with no network access: a name that cannot be a Triad name (a letter first,
 then letters and digits only, such as `MyApp`), `openRepoShape` missing from
-`PATH`, or a parent directory that does not exist. The Triad stays first and
-the default. A Triad answer with an obstacle is refused at once with exit 2,
-before any further prompt; a single-repository answer is unaffected.
+`PATH`, or a parent that is missing or is not a directory. A single-repository
+answer creates a missing parent; a parent that exists but is not a directory
+blocks both answers, so choose another parent. The Triad stays first and the
+default. A Triad answer with an obstacle is refused at once with exit 2, before
+any further prompt; a single-repository answer is unaffected.
 
 The question is not asked when:
 
