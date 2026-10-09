@@ -2,12 +2,13 @@ Lane: openRepoProject-2
 
 # Proposal: add-project-overview
 
-Status: draft, revised after the alignment review, the lead's later rulings
-and the council (resolutions on PR #12 and in "Questions Resolved by the
-Alignment Review"; noted constraints in `clarifications.md`), awaiting Brett
-Heap's ratification; nothing here is ratified. Like
-`add-project-clean-all-safe`, it adds "Decisions Taken by This Proposal",
-"Corrections to the Packet" and "Open Questions" to the house sections.
+Status: draft, revised after the alignment review, the lead's later rulings,
+the council and the packet author's final delta read (resolutions on PR #12
+and in "Questions Resolved by the Alignment Review"; noted constraints in
+`clarifications.md`), awaiting Brett Heap's ratification; nothing here is
+ratified. Like `add-project-clean-all-safe`, it adds "Decisions Taken by This
+Proposal", "Corrections to the Packet" and "Open Questions" to the house
+sections.
 
 Governing issue: opensoft/openRepoProject#10, claimed by lane
 openRepoProject-2 (comment 6069504479); refs #6, the design packet's record.
@@ -63,8 +64,9 @@ builds the shared evidence model the overview reads across many repositories.
   exactness `unknown` (DI:117-121, DI:153-228). Dropped work is reported as
   `omitted: {count, exactness}`, and at most four Git children run at once,
   across distinct repositories (DI:429-449). Every filesystem call runs in a
-  bounded task, and a manifest over 1 MiB is `manifest-invalid`. A cap,
-  timeout or deadline makes the result `incomplete` and exits 1 (DI:222-225).
+  bounded task, and a manifest over the shared evidence model's 1 MiB bound
+  is `manifest-invalid`. A cap, timeout or deadline makes the result
+  `incomplete` and exits 1 (DI:222-225).
 - **One candidate's failure stays in its row.** A per-candidate collector
   turns exceptions and failed probes into that row's errors (DI:528-537), and
   the scan continues (DI:513-566).
@@ -80,22 +82,25 @@ builds the shared evidence model the overview reads across many repositories.
   JSON, the summary nor the exit (DI:704-714).
 - **Suggestions never carry permission.** A suggestion is an argv array naming
   the canonical `repository.root`: `project clean <root> --all-safe` only for
-  a `merged-removable` worktree that passes change 1's four per-worktree
-  gates (main-worktree, unsupported-path-bytes, registration-mismatch,
-  locked-worktree) in a repository change 1 would not refuse as
-  `inspection-incomplete` or `inspect-cap` and with no row the overview left
-  unprobed; otherwise the read-only `project clean <root>` where the
-  attention table names it, except on the merge-target checkout (OQ-20); and
-  no suggestion for a code the table marks none, a null `repository.root` or
-  a root that is not valid UTF-8. A finding names the gate that withheld or
-  limited its suggestion in `suggestion_gate`, with a fixed remedy in its
-  message. The batch may still exclude a suggested worktree through its
-  index gates. Never `--apply` or `--yes`, never a bare name (DI:661-702,
-  DI:847-886).
+  a `merged-removable` worktree that passes the batch gates the overview can
+  evaluate from its own evidence (`main-worktree`, `unsupported-path-bytes`,
+  `registration-mismatch`, `locked-worktree`, and `unstarted-branch` where
+  the worktree's head equals the merge-target SHA) in a repository change 1
+  would not refuse as `inspection-incomplete` or `inspect-cap` and with no
+  row the overview left unprobed; otherwise the read-only
+  `project clean <root>` where the attention table names it, except on the
+  merge-target checkout (OQ-20); and no suggestion for a code the table
+  marks none, a null `repository.root` or a root that is not valid UTF-8. A
+  finding names the gate that withheld or limited its suggestion in
+  `suggestion_gate`, with a fixed remedy in its message. The batch may still
+  exclude a suggested worktree through its index gates and the reflog part
+  of `unstarted-branch`. Never `--apply` or `--yes`, never a bare name
+  (DI:661-702, DI:847-886).
 - **A versioned JSON envelope.** `--json` prints one `schema_version: 1`
   document with exactly the envelope, row, worktree, finding and summary
   fields and types of DI:724-819, plus the finding fields `suggestion_gate`
-  and `suggestion_gate_rows`.
+  and `suggestion_gate_rows` and three `limits` keys carried from change 1's
+  constants, `batch_row_cap`, `report_row_cap` and `target_limit`.
 - **A readable human report** in DI:83-96's shape: a `next` line says why a
   suggestion was withheld or limited, and the summary line always prints
   and says findings reflect local refs as of the last fetch.
@@ -104,16 +109,17 @@ builds the shared evidence model the overview reads across many repositories.
   `--strict`; 2 for an invalid invocation, an exception outside the
   collector, or `git-too-old` or `git-unavailable` before any root is listed;
   130, 143 or 129 on SIGINT, SIGTERM or SIGHUP, after every child is
-  terminated and reaped, with no result document and `Cancelled.` printed on
-  a best-effort basis; a signal's status wins over 1 (DI:313-326,
-  DI:1066-1098).
+  terminated and reaped (or abandoned, if still unreaped 2 s after SIGKILL),
+  with no result document and `Cancelled.` printed on a best-effort basis; a
+  signal's status wins over 1 (DI:313-326, DI:1066-1098).
 - **Default-branch health, absorbed from the closed PR #2.** A checkout
   classified `protected-default` gains every finding that applies, not the
   first: a `dirty` preserve warning when dirty; `diverged` or `unpushed`
   (preserve, warning) or `remote-ahead` (informational, info) from its
-  ahead and behind counts; `unpublished` with no upstream, or `remote-gone`
-  with its upstream gone (preserve, warning); each with no suggested command
-  (OQ-19, OQ-20).
+  ahead and behind counts; `unpublished` with no upstream while the ref
+  listing holds a remote copy of the merge target, or `remote-gone` with its
+  upstream gone (preserve, warning); each with no suggested command (OQ-19,
+  OQ-20).
 - **One carve-out in `project-review-safety`.** A manifest with an invalid
   text encoding is a `manifest-invalid` row error in the overview, which then
   exits 1, not 2 (Capabilities).
@@ -138,7 +144,8 @@ builds the shared evidence model the overview reads across many repositories.
 - **Incomplete is visible.** Every cap, timeout and deadline surfaces as
   `completeness: "incomplete"`, an error and exit 1 (DI:222-225).
 - **Ordinary work is not trouble.** Housekeeping and informational findings
-  stay distinct from warnings and errors (SY:308-309).
+  stay distinct from warnings and errors (SY:308-309), and a merge-target
+  branch with no remote copy at all raises no `unpublished` (OQ-20).
 - **Grouping grants nothing.** Independent clones stay separate, and a later
   family grouping never permits cleaning a sibling (SY:34-37).
 
@@ -181,28 +188,34 @@ builds the shared evidence model the overview reads across many repositories.
      When the first registry record's path equals `common_dir`, the main
      checkout is a gitfile checkout: `repository.root` SHALL be the realpath
      of `core.worktree`, else the `--show-toplevel` of a candidate that is
-     that checkout, else null with an `unsupported-layout` repair finding and
-     no suggestion, and that record SHALL NOT be a status-probe row. A main
-     worktree path that does not exist SHALL give `repository.root: null`
-     with a `main-worktree-missing` repair finding, the repository-wide
-     probes running in the candidate. A suggestion for a gitfile or
-     submodule checkout SHALL follow [R] (scenarios: `--separate-git-dir`, a
-     submodule entry, a missing main worktree).
+     that checkout, else null with an `unsupported-layout` repair finding of
+     severity error and no suggestion, and that record SHALL NOT be a
+     status-probe row. A main worktree path that does not exist SHALL give
+     `repository.root: null` with a `main-worktree-missing` repair finding of
+     severity warning, the repository-wide probes running in the candidate.
+     A suggestion for a gitfile or submodule checkout SHALL follow [R]
+     (scenarios: `--separate-git-dir`, a submodule entry, a missing main
+     worktree).
   3. `Overview bounds its work and reports what it omitted`: SHALL bound the
-     run by its own 60 s invocation deadline and each Git child by [E]'s
-     per-child budget, run each child in its own process group and stop it
-     with SIGTERM to the group, then SIGKILL after 2 s, always reaping it;
-     SHALL run every filesystem call, root canonicalisation and dedupe,
-     marker and holder checks and manifest reads included, in a bounded
-     daemon task waited for with `min(5, deadline - now)`, a manifest over
-     1 MiB being `manifest-invalid`; SHALL parse the ref listing as it
-     streams, keeping heads, `origin/HEAD` and the remote refs named as
-     upstreams; SHALL apply the root, candidate and worktree-row caps after
-     sorting and the entry cap in listing order, and report each dropped
-     unit. It SHALL schedule in two canonical phases, fixing a repository's
-     rank, and starting its phase 2, only after every lower-ranked
-     candidate's identity probe has completed or failed (speculative phase-1
-     dispatch stays legal). In a run in which no child, task or root listing
+     run by its own 60 s invocation deadline and each Git child by its own
+     per-child budget, `min(5 s, deadline - now)`, run each child in its own
+     process group and stop it with SIGTERM to the group, then SIGKILL after
+     2 s, then reap it within a further 2 s grace or abandon it, its row
+     recorded `probe-timeout`; SHALL run every filesystem call, root
+     canonicalisation and dedupe, marker and holder checks and manifest reads
+     included, in a bounded daemon task waited for with
+     `min(5, deadline - now)`, a manifest over [E]'s 1 MiB bound being
+     `manifest-invalid`; SHALL parse the ref listing as it streams, keeping
+     heads, `origin/HEAD`, the remote refs named as upstreams and one flag
+     for a remote copy of the merge target; SHALL apply the root, candidate
+     and worktree-row caps after sorting and the entry cap in listing order,
+     and report each dropped unit. It SHALL schedule in two canonical phases
+     and start a repository's phase 2 only when every candidate earlier in
+     canonical order has completed or failed its identity probe and every
+     repository earlier in canonical order has finished its phase 1
+     (DI:446-448); speculative phase-1 dispatch stays legal. Without both
+     conditions a run where the worktree-row cap binds would select rows by
+     completion order. In a run in which no child, task or root listing
      reaches its budget and the deadline does not expire, the JSON, apart
      from timestamps and `budget.probe_concurrency`, SHALL NOT depend on
      concurrency or completion order; a cut run SHALL report each cut unit
@@ -210,7 +223,8 @@ builds the shared evidence model the overview reads across many repositories.
      `probes: {estimated, performed}` as DI:503-511 defines (scenarios:
      concurrency 1 and 4 on one fixture give byte-identical JSON less
      timestamps and `probe_concurrency`; a root, and a `repository.root`, on
-     a hung mount, by an injected slow call where FUSE is unavailable).
+     a hung mount, by an injected slow call where FUSE is unavailable; a
+     manifest over the bound).
   4. `Overview isolates one candidate's failure`: a failure SHALL become that
      candidate's error row and SHALL NOT change any other row.
   5. `Overview reuses the cleanup classifier and merge target`: SHALL classify
@@ -220,25 +234,44 @@ builds the shared evidence model the overview reads across many repositories.
   6. `Overview reports findings by attention category`: severity SHALL decide
      the exit, and `--attention` SHALL change only the display.
   7. `Overview suggests only gated clean commands`: SHALL suggest argv naming
-     `repository.root`, `--all-safe` only behind [G]'s four per-worktree
-     gates and its `inspection-incomplete` and `inspect-cap` refusals and
-     with no row left unprobed, and SHALL name the gate that withheld or
-     limited a finding's suggestion in `suggestion_gate`, each code with a
-     fixed remedy in the finding `message` and the human text:
-     `inspection-incomplete` "repair the inspection-error rows first";
-     `inspect-cap` "N rows exceed the batch's 128-row cap; remove
-     explicitly" or "N rows exceed the 256-row report cap; the report would
-     be incomplete", the JSON finding carrying N in `suggestion_gate_rows`;
-     `scan-limit` and `deadline-exceeded` "re-run with --root <repository
-     parent>"; and `target-cap`, a limiting gate set when more than 16
-     gate-passing `merged-removable` rows keep the `--all-safe` suggestion,
-     "limited to 16 per run; re-run to drain the backlog" (scenario: 17
-     eligible rows).
+     `repository.root`, `--all-safe` only behind the gates of [G] it can
+     evaluate from its own evidence (`main-worktree`,
+     `unsupported-path-bytes`, `registration-mismatch`, `locked-worktree`,
+     and `unstarted-branch` where the head equals the merge-target SHA, the
+     reflog part being a residual exclusion the batch applies, like its
+     index gates) and [G]'s `inspection-incomplete` and `inspect-cap`
+     refusals, and with no row left unprobed; a `merged-removable` worktree
+     withheld by `unstarted-branch` SHALL keep its finding with the
+     read-only suggestion. It SHALL name the gate that withheld or limited a
+     finding's suggestion in `suggestion_gate`, each code with a fixed remedy
+     in the finding `message` and the human text, naming the batch's row cap
+     and target limit and taking their numbers from change 1's limits at run
+     time, never copied: `inspection-incomplete` "repair the
+     inspection-error rows first"; `inspect-cap` "N rows exceed the batch's
+     row cap of M; remove explicitly" or "N rows exceed the report's row cap
+     of M; the report would be incomplete", the JSON finding carrying N in
+     `suggestion_gate_rows` and M in `limits`; `scan-limit` and
+     `deadline-exceeded` "re-run with --root <repository parent>";
+     `unstarted-branch` "unstarted: the branch has no commit of its own;
+     remove the worktree explicitly if unwanted";
+     `target-not-repository-root` "run project clean from the main worktree
+     root"; `unsupported-path-bytes` "rename the path to valid UTF-8"; and
+     `target-cap`, a limiting gate set when more gate-passing
+     `merged-removable` rows keep the `--all-safe` suggestion than the
+     batch's target limit, "limited to the batch's target limit of M per
+     run; re-run to drain the backlog" (scenario: 17 eligible rows). The
+     null-root findings carry no gate code and their remedy in their
+     message: `unsupported-layout` "set core.worktree or move the checkout",
+     `main-worktree-missing` "restore or prune the main worktree by
+     hand".
   8. `Overview prints a versioned JSON envelope`: SHALL print one
-     `schema_version: 1` envelope; a `--json` exit 2 other than an argument
-     error prints `{"error", "code"}` with code `git-too-old`,
-     `git-unavailable`, `refused`, `os-error` or `internal-error`, and an
-     argument error prints argparse's usage on standard error and no JSON.
+     `schema_version: 1` envelope with DI:724-819's fields plus
+     `suggestion_gate`, `suggestion_gate_rows` and the `limits` keys
+     `batch_row_cap`, `report_row_cap` and `target_limit`; a `--json` exit 2
+     other than an argument error prints `{"error", "code"}` with code
+     `git-too-old`, `git-unavailable`, `refused`, `os-error` or
+     `internal-error`, and an argument error prints argparse's usage on
+     standard error and no JSON.
      SHALL emit every path by [E]'s parsing and [P]'s rules: exactly when
      valid UTF-8, else escaped with `path_valid_utf8: false`; SHALL print a
      path with control, bidirectional or format characters or undecodable
@@ -249,16 +282,19 @@ builds the shared evidence model the overview reads across many repositories.
      no filesystem or Git mutation.
   10. `Overview reports default-branch health`: a merge-target checkout
       classified `protected-default` SHALL keep that classification and gain
-      every applicable OQ-19 and OQ-20 finding, never only the first
-      (scenarios: a default branch pushed without `-u`, then given two local
-      commits, shows an `unpublished` preserve warning under `--attention`;
-      a dirty default branch ahead by 3 gives both `dirty` and `unpushed`).
+      every applicable OQ-19 and OQ-20 finding, never only the first,
+      `unpublished` only where the ref listing holds a remote copy of the
+      merge target (scenarios: a default branch pushed without `-u`, then
+      given two local commits, shows an `unpublished` preserve warning under
+      `--attention`; a repository with no remote shows none; a dirty default
+      branch ahead by 3 gives both `dirty` and `unpushed`).
   11. `Overview exits by completeness and severity`: SHALL exit 0, 1, 2 or
       130 as DI:1070-1075 defines, and 143 or 129 on SIGTERM or SIGHUP;
       SHALL refuse Git older than 2.36 with `git-too-old`, and a missing or
       unusable `git` with `git-unavailable`, by [E]'s version check and with
       exit 2 before listing any root; on any of those signals SHALL
-      terminate and reap every child, print no result document, print
+      terminate and reap every child as requirement 3 states (abandoning one
+      still unreaped 2 s after SIGKILL), print no result document, print
       `Cancelled.` to standard error on a best-effort basis and exit with
       that signal's status, which wins over 1; its main thread SHALL never
       block in an unbounded filesystem call.
@@ -266,8 +302,13 @@ builds the shared evidence model the overview reads across many repositories.
       shape: one header line per row (name, absolute path); one line per
       shown finding (category, code, message, plus the worktree path for a
       worktree's finding); one `next` line carrying the row's suggested
-      command, followed by `(withheld: <reason>)` or `(limited: <reason>)`
-      when `suggestion_gate` is non-null; an `Incomplete:` line per scan
+      command, followed by `(withheld: <reason>)` when a gate removed the
+      `--all-safe` form or every clean suggestion (`inspection-incomplete`,
+      `inspect-cap` over the batch's row cap, an unprobed row,
+      `unstarted-branch`, `target-not-repository-root`,
+      `unsupported-path-bytes`), or `(limited: <reason>)` when a suggestion
+      is given but capped (`target-cap`, or `inspect-cap` over the report's
+      row cap on the read-only command); an `Incomplete:` line per scan
       error; and always the summary line, even under `--attention` with no
       row shown ("nothing needs attention" plus the counts), stating that
       findings reflect local refs as of the last fetch. SHALL write a
@@ -345,7 +386,9 @@ renders no nested estate or leg; `project-command`, `project-clean` and
   handoff only.
 - **Expected conflicts**: feature 003, like the merged PR #8 (`d7f6b0e`, 94
   tests), touches `project` and `tests/test_project.py`; feature 004 merges
-  `main` in and never rebases.
+  `main` in and never rebases. PR #13 (`7a9134b`) archived
+  `prefer-triad-in-project-new` and touched only `openspec/`, so `project`
+  and the tests are as at `d7f6b0e`.
 - **Review inputs**: the repo-local propose flow names `docs/requirements/`
   and `docs/architecture/` (`.claude/commands/opsx/propose.md:65-69`), which
   this repository lacks; the reviews read the packet, `openspec/specs/`,
@@ -360,10 +403,13 @@ restate its contract. Change 1 owns:
 - the shared evidence model: the version check, the four repository-wide
   probes memoized per `common_dir`, the combined status probe per worktree row
   and its record bounds, NUL-delimited parsing and path escaping, the child
-  environment, the 5 s per-child budget (the 60 s invocation deadline is the
-  overview's own, requirement 3), and the bounded runner, not `probe()`, for
+  environment, the 1 MiB manifest size bound (so `clean` and the overview
+  resolve the same merge target), and the bounded runner, not `probe()`, for
   one Git child in its own process group (DI "Probe model and deadline",
   DI:292-511; SY "One evidence model; permission is not shared", SY:78-130).
+  The per-child budget, `min(5 s, deadline - now)`, and the 60 s invocation
+  deadline are the overview's own (requirement 3): after change 1's council
+  verdict V10 nothing in [E] binds them for the overview.
   This change owns running up to four such children at once, terminating
   every in-flight child together on SIGINT or deadline, and its filesystem
   workers, on daemon threads and never in a `concurrent.futures` pool, so an
@@ -383,7 +429,8 @@ restate its contract. Change 1 owns:
 - the cleanup gates and refusal codes the overview's suggestions mirror: the
   per-worktree gate order `main-worktree`, `unsupported-path-bytes`,
   `registration-mismatch`, `locked-worktree` (BA "Eligibility and
-  merge-target terminology", BA:113-199), the plan refusals
+  merge-target terminology", BA:113-199), with `unstarted-branch`, which
+  change 1's council added, the plan refusals
   `inspection-incomplete` and `inspect-cap` (BA "Refusal codes", BA:987-1015)
   and the batch's worktree-row cap (BA "Cap arithmetic", BA:721-774).
 
@@ -396,9 +443,9 @@ Consequences:
   own evidence, and also when the overview's own 512-row cap or deadline left
   any of its rows unprobed (`classification: null`). It copies no number, so
   a cap that measurement moves in change 1 carries over. It does not predict
-  a plan cut by the batch's own deadline. More than 16 gate-passing rows
-  keep the suggestion under the limiting gate `target-cap` (Decisions,
-  departures).
+  a plan cut by the batch's own deadline. More gate-passing rows than the
+  batch's target limit keep the suggestion under the limiting gate
+  `target-cap` (Decisions, departures).
 - The overview needs change 1's runner as a child handle (start, readable
   fds, `terminate_group` with the 2 s grace, reap), one-wide and four-wide,
   and pure incremental byte parsers for the status, registry and ref
@@ -406,11 +453,14 @@ Consequences:
 - Change 1 is asked to resolve a gitfile main checkout through
   `core.worktree` and to refuse a submodule checkout as a listed baseline
   change; the overview's suggestions follow [R] (requirement 2).
-- PR #8 has merged: `origin/main` is `d7f6b0e`, with 94 tests. Every
-  `project:N` and README citation stays pinned at `da33d92`; at `d7f6b0e` the
-  cited `clean` and `repo_state` code (`manifest()` onward) sits 141 lines
-  lower and README.md:187 is :275, and feature 004's specify and plan re-pin
-  citations against the `main` of that day.
+- PR #8 has merged (`d7f6b0e`, with 94 tests), and PR #13 (`7a9134b`)
+  archived `prefer-triad-in-project-new`, merging its requirements into the
+  canonical `project-command`; that spec at `7a9134b` is the base change 1
+  modifies, and `origin/main` is `7a9134b`. Every `project:N` and README
+  citation stays pinned at `da33d92`; at `d7f6b0e` the cited `clean` and
+  `repo_state` code (`manifest()` onward) sits 141 lines lower and
+  README.md:187 is :275, and feature 004's specify and plan re-pin citations
+  against the `main` of that day.
 - Change 1 is ratified first. This change's spec deltas are written against
   change 1's ratified text, and a gate, code or probe that moves in change 1's
   review re-aligns this proposal before its own ratification.
@@ -495,10 +545,10 @@ Packet decisions adopted, not open:
 - **OQ-9, deadlines** (DI:451-485): 60 s per invocation, 5 s per child and
   per root listing, 2 s from TERM to KILL. The 60 s deadline and the per-root
   listing bound are the overview's own (requirement 3): the full 60 s, with
-  no reconciliation reserve and no removal floor; the 5 s per child is [E]'s
-  and the 2 s grace is stated in requirement 3. `budget` holds only
-  `probe_timeout_seconds`, `invocation_timeout_seconds` and
-  `probe_concurrency`.
+  no reconciliation reserve and no removal floor; the 5 s per child, as
+  `min(5 s, deadline - now)`, and the 2 s grace are stated there too.
+  `budget` holds only `probe_timeout_seconds`, `invocation_timeout_seconds`
+  and `probe_concurrency`.
 - **OQ-25, overview exits** (DI:1066-1098): 0, 1, 2 and 130; 130 wins over 1
   (requirement 11, which departs below for SIGTERM and SIGHUP).
 
@@ -517,29 +567,39 @@ Departures from packet decisions, each citing the decision departed from:
 - **`suggestion_gate`** (the finding object, DI:810-819): a field beside
   `suggested_command` on every finding, null unless a gate withheld or
   limited that suggestion, else the gate's code. A withheld `--all-safe`
-  form names `inspection-incomplete`, `inspect-cap`, or `scan-limit` or
-  `deadline-exceeded` for an unprobed row; a withheld clean suggestion names
-  `target-not-repository-root` (a bare repository, which change 1 refuses)
-  or `unsupported-path-bytes`; a read-only suggestion for a repository over
-  change 1's plain-report row cap (256) names `inspect-cap`, since that
-  report would be incomplete. A repository of 129 to 256 rows gets the plain
-  read-only suggestion, with no gate on findings whose table suggestion is
-  that command. Both `inspect-cap` bands keep one code (D-P's values are
-  change 1's codes), told apart by `suggestion_gate_rows` (requirement 7).
+  form names `inspection-incomplete`, `inspect-cap`, `scan-limit` or
+  `deadline-exceeded` for an unprobed row, or `unstarted-branch`; a withheld
+  clean suggestion names `target-not-repository-root` (a bare repository or
+  a submodule checkout, which change 1 refuses) or `unsupported-path-bytes`;
+  a read-only suggestion for a repository over change 1's report row cap
+  names `inspect-cap`, since that report would be incomplete. A repository
+  over the batch's row cap but within the report's gets the plain read-only
+  suggestion, with no gate on findings whose table suggestion is that
+  command. Both `inspect-cap` bands keep one code (D-P's values are change
+  1's codes, with `target-cap` carrying its deferral meaning), told apart by
+  `suggestion_gate_rows` (requirement 7).
 - **`target-cap` limits, it does not withhold** (BA:96-101 refuses apply
   over 16 gate-passing rows; D-J kept the suggestion ungated): `--all-safe`
   stays, with `suggestion_gate: target-cap` and requirement 7's message, as
-  change 1's council has the batch select the first 16 in canonical order,
-  defer the rest as `deferred-target-cap`, allow apply and drain the
-  backlog on re-runs. A clean zero-commit worktree at the target's tip gets
-  a message that change 1's ladder counts it as `merged-removable`.
+  change 1's council has the batch select rows up to its target limit in
+  canonical order, defer the rest as `deferred-target-cap`, allow apply and
+  drain the backlog on re-runs.
+- **`unstarted-branch` mirrored where the overview's evidence decides it**
+  (DI:661-673 names four gates): a `merged-removable` worktree whose head
+  equals the merge-target SHA keeps its finding but gets the read-only
+  suggestion with `suggestion_gate: unstarted-branch` and requirement 7's
+  message; the reflog part of change 1's gate is a residual exclusion the
+  batch applies, like its index gates.
 - **Determinism scoped** (DI:440-449, "never depends on timing"):
   requirement 3 promises timing-independent JSON only for an uncut run, and
-  fixes a repository's rank only once every lower-ranked candidate's
-  identity probe has completed or failed.
+  starts a repository's phase 2 only once every candidate earlier in
+  canonical order has completed or failed its identity probe and every
+  repository earlier in canonical order has finished its phase 1
+  (DI:446-448).
 - **Two layout findings** (DI:634-659's closed list; DI:236-239): repair,
-  warning, no suggestion: `unsupported-layout` and `main-worktree-missing`
-  (requirement 2).
+  no suggestion: `unsupported-layout` of severity error, since a repository
+  whose checkout cannot be named is unknown and unknown is never healthy,
+  and `main-worktree-missing` of severity warning (requirement 2).
 - **SIGTERM and SIGHUP** (DI:1070-1075, DI:1094-1096, which treat SIGINT
   only): the SIGINT treatment, exits 143 and 129, so no Git child outlives
   the overview in its own session; after SIGHUP printing can fail with EIO,
@@ -578,7 +638,7 @@ row per snapshot feeds `--strict`. Nothing is fetched.
 | Every non-default row is a warning | category and severity table (DI:638-659) | Changed on purpose: `merged-removable`, `pushed-unmerged`, `merged-current` and `remote-ahead` are `info`; `inspection-error` is `error`; the other classifications stay `warning` (DI:638-659; SY:308-309) |
 | `dirty-default` | the extra `dirty` preserve finding (DI:626-630), beside any drift finding | Changed on purpose: no longer masks drift (OQ-19, OQ-20) |
 | `diverged-`, `unpushed-default` | `diverged`, `unpushed`, preserve, warning (OQ-20) | Subsumed |
-| `ok` with no upstream, or with the upstream gone | `unpublished` or `remote-gone`, preserve, warning (OQ-20) | Changed on purpose: unverified local commits warn |
+| `ok` with no upstream, or with the upstream gone | `unpublished` (only where a remote copy of the merge target exists) or `remote-gone`, preserve, warning (OQ-20) | Changed on purpose: unverified local commits warn |
 | `remote-ahead-default` | `remote-ahead`, informational, info (OQ-20) | Changed on purpose: warning to info |
 | `ignored-local-files-default` | none | Changed on purpose (OQ-20) |
 | `inspection-error-default` | `inspection-error`, repair, error (change 1's R1) | Subsumed by change 1's R1; escalated: warning to error |
@@ -611,9 +671,12 @@ Decisions, each open to ratification:
   `dirty` (OQ-19) when dirty, and besides it one of `diverged` (ahead and
   behind both above 0) or `unpushed` (ahead above 0), each preserve and
   `warning`, or `remote-ahead` (behind above 0), informational; with no
-  upstream configured, `unpublished` (preserve, warning) with the message
-  "merge-target branch has no upstream; local commits are unverified"; with
-  its upstream `gone`, `remote-gone` (preserve, warning). This supersedes
+  upstream configured and a remote copy of the merge target in the ref
+  listing (`refs/remotes/<remote>/<name>`, one flag in the streaming parser,
+  no new probe), `unpublished` (preserve, warning) with the message
+  "merge-target branch has no upstream; local commits are unverified", a
+  repository with no such copy being ordinary work, not trouble; with its
+  upstream `gone`, `remote-gone` (preserve, warning). This supersedes
   the first-match reading applied for QA-19, `acf0133`'s single slot (council
   AE-1). They reuse their codes on a row whose classification stays
   `protected-default`, departing from DI:704 ("`protected-default` produces
@@ -710,6 +773,19 @@ requirement 11, Decisions); D-Q (OQ-4, Impact); C1, C13, L5 and D-Z
 `remote-gone` question (Open Questions); and with the council D-S narrowed
 (Rules), D-AB (Corrections), D-AE ([R], [P], requirement 3, OQ-9), D-AF
 ([E]) and lane 3's LOW items (Impact, Decisions, Corrections).
+
+Lane 3's final delta read of PR #12 at `a8cef41` and the lead's rulings on
+the phase 6 writer's six contradictions are applied as well: N-1 (What
+Changes; Rules; requirement 10; Absorbing, OQ-20 and table), N-2 (requirement
+3; Decisions, determinism), N-3 (requirement 7; Dependencies), N-4
+(requirement 3; Dependencies; OQ-9), N-5 with P6-5 (What Changes;
+requirement 7; Decisions, `suggestion_gate` and `unstarted-branch`), N-6 with
+P6-6 (requirement 2; Decisions, layout findings; P6-6 overrides the earlier
+confirmation that both layout findings warn), P6-1 (What Changes;
+requirements 3 and 11), P6-2 (requirement 7), P6-3 (requirement 12), P6-4
+(What Changes; requirement 8), and the two LOW items (Decisions,
+`suggestion_gate`; What Changes, requirement 3 and Dependencies for the
+manifest bound, which change 1 carries in [E]).
 
 | Finding | Severity | Ruling | Section edited |
 | --- | --- | --- | --- |
