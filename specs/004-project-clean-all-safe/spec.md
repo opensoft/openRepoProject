@@ -181,10 +181,10 @@ row carrying the reason the gate order gives.
    as `unstarted-branch`.
 7. **Given** an otherwise eligible worktree whose branch head is a strict
    ancestor of, or equal to, the merge target's SHA and whose reflog is
-   missing, empty (0 bytes) or expired to a lone rename entry, **When**
-   `--all-safe` plans or `--worktree` names it, **Then** it is excluded as
-   `reflog-unavailable` with the remedy fixed in `design.md` D18, a named
-   removal refusing with `target-excluded`, exit 2, where before this
+   missing, empty (0 bytes) or expired by `git reflog expire` to a lone rename
+   entry, **When** `--all-safe` plans or `--worktree` names it, **Then** it is
+   excluded as `reflog-unavailable` with the remedy fixed in `design.md` D18, a
+   named removal refusing with `target-excluded`, exit 2, where before this
    change `--worktree` removed it.
 8. **Given** a clean, merged worktree whose branch has a commit of its own and
    whose upstream's remote-tracking ref was deleted, **When** it is planned,
@@ -346,17 +346,20 @@ exit status.
    the untracked cache on with `core.checkStat=minimal` after an
    index-writing status, **When** a file is created in a target after its
    revalidation, **Then** Git's own check, on the removal command's pinned
-   configuration, refuses with 128, the target is `failed` with
-   `git-refused`, the file survives, and the exit status is 128.
+   configuration, refuses with 128, the target is `failed` with `git-refused`,
+   its reconciliation shows the registry entry and the path present, the file
+   survives, later targets are `not-attempted`, and the exit status is 128.
 5. **Given** an ignored file created in a target after its revalidation,
    **When** the removal runs, **Then** Git removes the worktree and the file
    with exit 0, the target is `removed`, and the result carries the
    residual-window line that the confirmation also carried.
 6. **Given** a target's branch advanced or deleted after Git removed the
    worktree and before the rescan, **When** the rescan runs, **Then** the
-   target is `removed` with `branch-advanced-after-removal` or
-   `branch-missing-after-removal`, no commit is lost, later targets are
-   `not-attempted`, and the exit status is 2.
+   target is `removed` with `branch-advanced-after-removal` (its reconciliation
+   showing the registry entry and the path absent and the branch present at a
+   `branch_sha` that differs from `planned_sha`) or
+   `branch-missing-after-removal` (the branch absent), no commit is lost, later
+   targets are `not-attempted`, and the exit status is 2.
 7. **Given** the repository root replaced by another clone, or its parent
    directory by a symlink to a copy, after the first target's removal and
    before its rescan, **When** the rescan runs, **Then** the first target is
@@ -525,8 +528,9 @@ statuses, the child counts and each run's elapsed time.
    merged-set listing and no probe of a non-selected worktree runs after
    confirmation, `status` and `ls-files` children run in their own
    worktree and every other child after resolution, the removals included,
-   in the command directory, and `probes.performed` equals the wrapper's
-   count of Git children other than removals.
+   in the command directory, and `probes.performed` equals the wrapper's count
+   of Git children other than removals and `operations.performed` its count of
+   removals.
 7. **Given** a test Git's removal of the second of three targets still running
    at the work deadline, **When** the deadline passes, **Then** the child is
    waited for and the second target ends by its own exit and the rescan, the
@@ -598,8 +602,9 @@ resolved `repository`, `root` and `merge_target`, or the refusal.
    it is `trunk` with `source: "origin-head"`, not `main`.
 6. **Given** no candidate, a manifest of the wrong kind, or a manifest over
    1 MiB, **When** any mode runs, **Then** it refuses with `no-merge-target`
-   (its existing message) or `manifest-invalid`, exit 2, before any worktree
-   row is probed, `--json` printing the extended error object.
+   (its existing message) or `manifest-invalid`, exit 2, before any mutation
+   and, for the manifest over 1 MiB, before any worktree row is probed,
+   `--json` printing the extended error object.
 
 **Delta scenarios**: "Absolute path that is not a repository root"; "Overview
 handoff keeps identity"; "A bare repository reached from a linked worktree";
@@ -635,7 +640,8 @@ and without `--json`, and parse standard output as JSON in every mode.
    the `$'...'` form with `\u000a`, `\u0009`, `\u0001` and `\u202e`, passed to
    Git raw as one argument each and proven removed by rescan; the fifth is
    excluded as `unsupported-path-bytes`, shown with `\xff` and
-   `path_valid_utf8: false`, never passed to a removal, and still present.
+   `path_valid_utf8: false` in both `worktrees` and `excluded`, never passed to
+   a removal, and still present.
 2. **Given** a repository root containing the byte 0xFF, **When** `project
    clean <that root> --all-safe` runs, **Then** it refuses with
    `unsupported-path-bytes`, exit 2, building no plan or digest.
@@ -746,11 +752,13 @@ configuration"; "A lazy fetch in a partial clone is refused locally";
 
 ### Edge Cases
 
-- **EC-001**: A squash-merged branch never puts its tip into the merge
-  target's ancestry, so it is never selected, and a squash-merging
-  repository's batch selects little. Open question 2 (a local
-  patch-equivalence proof) is deferred to a follow-on change and is not
-  decided here (proposal, "Open Questions"; Out of Scope).
+- **EC-001**: A squash-merged branch never puts its tip into the merge target's
+  ancestry, so it is never selected, and a squash-merging repository's batch
+  selects little. Open question 2, a local patch-equivalence proof, is still
+  before Brett Heap, with the lead's recommendation of a follow-on change (the
+  lane's question LQ-2; proposal, "Open Questions"; Out of Scope). Until he
+  rules, this feature implements the ratified rule, ancestry alone proving a
+  branch merged, and a contrary ruling amends the change and this spec first.
 - **EC-002**: An ignored cache such as `__pycache__` keeps its worktree out as
   `ignored-local-files` until the cache-disposal change; the batch's yield is
   bounded on purpose (proposal, "Why"; Out of Scope).
@@ -791,8 +799,9 @@ configuration"; "A lazy fetch in a partial clone is refused locally";
   report shows the partial-removal note or a `registration-mismatch` row
   (design D1 and D4).
 - **EC-012**: A filesystem call stuck in the kernel is abandoned after its
-  budget so the run never blocks on it, and is the one exception to the run
-  bound (design D6 and D9, Risks).
+  budget so the run never blocks on it, and is the one exception to the 64 s
+  bound of a run with no removal, push or branch-deletion child in flight
+  (FR-030, SC-004; design D6 and D9, Risks).
 - **EC-013**: After SIGHUP the terminal may answer writes with an error, so
   the result record is printed on a best-effort basis (design D15).
 - **EC-014**: A plain report of 129 to 256 rows withholds the selection, and
@@ -880,7 +889,8 @@ configuration"; "A lazy fetch in a partial clone is refused locally";
   MUST be `inspection-error` whatever its branch; a branch with no configured
   upstream MUST be `unpublished`; `review-required` stays a defensive rung
   that no evidence reaches. Traces: "Clean classifies preservation and
-  cleanup actions"; design D6.
+  cleanup actions"; design D6; Brett Heap's ruling of 2026-10-09 on open
+  question 1, "yes, local ancestry proof outranks remote-gone, apply it".
 - **FR-008**: Every class other than `merged-removable` MUST be preserved
   with an actionable human handoff, and a merged row whose upstream was
   deleted MUST carry its class's recommendation. A clean branch pushed but
@@ -896,18 +906,19 @@ configuration"; "A lazy fetch in a partial clone is refused locally";
   bound, and changing no classification, ladder rung or gate. Traces: "Clean
   classifies preservation and cleanup actions"; design D4.
 - **FR-010**: A push MUST stay a confirmed, non-force push of a named
-  non-default branch that preserves the delegated exit status and output,
-  refusing a default branch or unresolved local work. It MUST refuse, with
-  exit status 2 and no push, a branch whose configured upstream's
-  remote-tracking ref no longer exists, whatever its row's class, naming the
-  reason `remote-gone`; and it MUST refuse with `inspection-incomplete`,
-  `inspect-cap` or `deadline-exceeded`, exit 2, when the full inspection it
-  acts on, before or after confirmation, is incomplete. Push and branch
-  deletion MUST resolve their argument Git-first, run in `mode: "single"`
-  for the row cap and bounds, keep their own children unbounded as before,
-  and refuse `--apply --json` with `invalid-arguments`, exit 2. Traces:
-  "Clean can explicitly push safe feature branches"; "Clean bounds its Git
-  work and reports omitted work".
+  non-default branch to its configured upstream, or one that establishes its
+  explicitly named upstream when none exists, preserving the delegated exit
+  status and output and refusing a default branch or unresolved local work. It
+  MUST refuse, with exit status 2 and no push, a branch whose configured
+  upstream's remote-tracking ref no longer exists, whatever its row's class,
+  naming the reason `remote-gone`; and it MUST refuse with
+  `inspection-incomplete`, `inspect-cap` or `deadline-exceeded`, exit 2, when
+  the full inspection it acts on, before or after confirmation, is incomplete.
+  Push and branch deletion MUST resolve their argument Git-first, run in `mode:
+  "single"` for the row cap and bounds, keep their own children unbounded as
+  before, and refuse `--apply --json` with `invalid-arguments`, exit 2. Traces:
+  "Clean can explicitly push safe feature branches"; "Clean bounds its Git work
+  and reports omitted work".
 - **FR-011**: The command MUST remove one named linked worktree, or the set a
   fresh `--all-safe` plan selects, only when each is clean, not the current
   worktree, merged into the merge target and passing every gate of FR-020.
@@ -1086,24 +1097,25 @@ configuration"; "A lazy fetch in a partial clone is refused locally";
 - **FR-029**: Each `project clean` invocation MUST set one monotonic deadline
   60 s after it starts and hold back a 10 s reconciliation reserve, so that
   work stops 50 s after start, both moving later by the time spent blocked at
-  the confirmation question. Each Git child, and each filesystem call
-  (`lstat`, `realpath`, and the reads of `.git`, `gitdir`, reflog and
-  manifest files), MUST get `min(5 s, work remaining)` and be abandoned after
-  it, recording `probe-timeout`, or `deadline-exceeded` where the deadline
-  was the limit, and leaving its values null; probing MUST be serial; and
-  reconciliation probes MUST get `min(5 s, reserve remaining)`. Traces:
-  "Clean bounds its Git work and reports omitted work"; design D9.
+  the confirmation question. Each Git child other than a removal, push or
+  branch-deletion child (FR-010, FR-012), and each filesystem call (`lstat`,
+  `realpath`, and the reads of `.git`, `gitdir`, reflog and manifest files),
+  MUST get `min(5 s, work remaining)` and be abandoned after it, recording
+  `probe-timeout`, or `deadline-exceeded` where the deadline was the limit, and
+  leaving its values null; probing MUST be serial; and reconciliation probes
+  MUST get `min(5 s, reserve remaining)`. Traces: "Clean bounds its Git work
+  and reports omitted work"; design D9.
 - **FR-030**: The deadline MUST gate only the start of a removal: a removal
   child MUST be spawned only while at least 5 s of the work deadline
   remains, and otherwise that target and every later one MUST be
   `not-attempted` with `deadline-exceeded`; a removal still running at the
   deadline MUST be waited for, up to its 300 s ceiling, the reserve counting
-  from its exit. A run with no removal in flight MUST end within 64 s of its
-  start, not counting time blocked at the question (50 s of work, the 10 s
-  reserve and up to 4 s to stop and reap a probe child), and a removal in
-  flight MUST add at most 300 s, except while a filesystem call stuck in the
-  kernel is outstanding. Traces: "Clean bounds its Git work and reports
-  omitted work"; design D9.
+  from its exit. A run with no removal, push or branch-deletion child in flight
+  MUST end within 64 s of its start, not counting time blocked at the question
+  (50 s of work, the 10 s reserve and up to 4 s to stop and reap a probe
+  child), and a removal in flight MUST add at most 300 s, except while a
+  filesystem call stuck in the kernel is outstanding. Traces: "Clean bounds its
+  Git work and reports omitted work"; design D9.
 - **FR-031**: The caps MUST be 128 worktree rows in `mode: "all-safe"` and
   `mode: "single"` and 256 in `mode: "report"`, every registry entry
   counting, the main worktree and missing rows included; 16 targets per run;
@@ -1130,32 +1142,35 @@ configuration"; "A lazy fetch in a partial clone is refused locally";
   `target-cap`. Traces: "Clean bounds its Git work and reports omitted
   work"; design D12.
 - **FR-033**: Plans and apply results MUST report `probes` and `operations`
-  as `{estimated, performed}`, every Git child counted; `limits`
-  (`worktree_rows`, the row cap of the plan's mode, `targets`,
+  as `{estimated, performed}`, every Git child counted once, `probes` for each
+  Git child other than a removal child and `operations` for each removal child;
+  `limits` (`worktree_rows`, the row cap of the plan's mode, `targets`,
   `ignored_entries`, `status_records` and `ignored_samples`); and `budget`
   (`probe_timeout_seconds` 5, `invocation_timeout_seconds` 60,
   `reconciliation_reserve_seconds` 10, `removal_floor_seconds` 5,
   `removal_ceiling_seconds` 300 and `probe_concurrency` 1). Revalidating one
   target MUST spawn at most five Git children and never recompute the full
   report, and the final rescan at most three. Traces: "Clean bounds its Git
-  work and reports omitted work"; design D7.
+  work and reports omitted work"; design D7; lead ruling R-27 (Assumptions).
 - **FR-034**: The apply phase MUST begin when the question is answered `yes`
   or `--yes` is accepted, and each selected target MUST end in one stage
-  with one reason from that stage's list: `removed` (null,
+  with one reason from that stage's list: `removed`, when the rescan shows its
+  registry entry and its path both absent, with `reconciled` true (null,
   `branch-advanced-after-removal`, `branch-missing-after-removal` or
   `removal-ceiling`); `refused` (`identity-changed`, `branch-changed`,
   `state-changed`, `contains-submodule` or `hidden-local-state`); `failed`
-  (`git-refused` for exit status 128, `git-failed` for any other status,
-  which is 128 plus the signal number when a signal that `project` did not
-  send ended the child, or `spawn-error`); `unknown` (`unconfirmed-removal`,
+  (`git-refused` for exit status 128, `git-failed` for any other status, which
+  is 128 plus the signal number when a signal that `project` did not send ended
+  the child, or `spawn-error`); `unknown`, where a child ran or an exception
+  interrupted the target and removal is not proven (`unconfirmed-removal`,
   `reconciliation-incomplete`, `internal-error` or `removal-ceiling`); or
   `not-attempted` (`batch-stopped`, `interrupted` or `deadline-exceeded`).
   `pending` MUST appear only in the printed plan and progress. A child that
-  exits nonzero on its own MUST be `failed` with Git's status whether or not
-  a signal reached `project`, and only for a child killed at the ceiling, or
+  exits nonzero on its own MUST be `failed` with Git's status whether or not a
+  signal reached `project`, and only for a child killed at the ceiling, or
   whose exit could not be observed, MUST the rescan decide between `removed`
-  and `unknown`. Traces: "Clean records a reconcilable result for every
-  removal target"; design D19.
+  and `unknown`. Traces: "Clean records a reconcilable result for every removal
+  target"; design D19.
 - **FR-035**: Every `removed`, `refused`, `failed` or `unknown` target MUST
   carry a `reconciliation` object (`registry_entry_present`, `path_present`,
   `branch_present`, `branch_sha`, `reconciled`) and a `not-attempted` target
@@ -1175,13 +1190,13 @@ configuration"; "A lazy fetch in a partial clone is refused locally";
   are `not-attempted` with `interrupted`, and `project` reconciles within the
   reserve and prints the record, on a best-effort basis after SIGHUP; a
   second SIGINT during reconciliation MUST abandon the remaining rescans,
-  leaving their fields null. An exception after the apply phase began MUST
-  make that target `unknown` with `internal-error` and later targets
-  `not-attempted`, and one before it MUST refuse with `internal-error`, exit
-  2. An `unknown` or `failed` target MUST NOT be retried automatically, and
+  leaving their fields null and the target whose rescan was running `unknown`
+  with `reconciliation-incomplete`. An exception after the apply phase began
+  MUST make that target `unknown` with `internal-error` and later targets
+  `not-attempted`, and one before it MUST refuse with `internal-error`, exit 2.
+  An `unknown` or `failed` target MUST NOT be retried automatically, and
   `project` MUST never force a removal or delete a directory itself. Traces:
-  "Clean records a reconcilable result for every removal target"; design
-  D15.
+  "Clean records a reconcilable result for every removal target"; design D15.
 - **FR-037**: A run with `--apply` MUST exit with the first matching row: 130,
   143 or 129 when a signal was received, the first deciding, or 130 when
   input ended at the question; 1 when the deadline stopped work after the
@@ -1216,9 +1231,10 @@ configuration"; "A lazy fetch in a partial clone is refused locally";
   `selected`, `excluded` and apply-result `targets` entries; refusals and
   row errors); each `ignored_samples` entry an object `{path,
   path_valid_utf8}`, its path relative to its worktree; and
-  `root_valid_utf8` and `common_dir_valid_utf8` in `repository`, always true
-  in `project clean`. Traces: "Clean reports every path exactly or excludes
-  it"; design D7.
+  `root_valid_utf8` and `common_dir_valid_utf8` in `repository`, the first also
+  covering the envelope's top-level `root`, which names the same directory,
+  both always true in `project clean`. Traces: "Clean reports every path
+  exactly or excludes it"; design D7.
 - **FR-041**: Human output MUST print a path verbatim in prose and with POSIX
   shell quoting in commands, unless it holds a code point to escape or an
   undecodable byte; such a path MUST print in the `$'...'` form in prose and
@@ -1286,17 +1302,17 @@ configuration"; "A lazy fetch in a partial clone is refused locally";
   later target and exit 2, with `identity-changed` (an identity or
   registration difference, or a missing registry entry), `branch-changed` (a
   different branch name or head), `state-changed` (any other signature, lock,
-  manifest or merge-target difference), `contains-submodule` or
-  `hidden-local-state`. A value null in the plan and null at revalidation
-  MUST NOT count as a difference, and a value that cannot be re-read, a
-  timed-out filesystem call included, MUST. The first target's
-  repository-wide checks MUST serve as the preflight of every target. Push
-  and branch deletion MUST keep the full re-inspection and refuse with
-  `inspection-incomplete`, `inspect-cap` or `deadline-exceeded`, exit 2,
-  when it is incomplete. Git's own non-force check MUST be the last defense
-  only on the removal command's pinned status configuration, the protocol
-  pins being no part of it. Traces: "Cleanup revalidates
-  destructive actions"; design D7.
+  manifest or merge-target difference), `contains-submodule` (a new gitlink or
+  `modules` entry) or `hidden-local-state` (a newly flagged index entry). A
+  value null in the plan and null at revalidation MUST NOT count as a
+  difference, and a value that cannot be re-read, a timed-out filesystem call
+  included, MUST. The first target's repository-wide checks MUST serve as the
+  preflight of every target. Push and branch deletion MUST keep the full
+  re-inspection and refuse with `inspection-incomplete`, `inspect-cap` or
+  `deadline-exceeded`, exit 2, when it is incomplete. Git's own non-force check
+  MUST be the last defense only on the removal command's pinned status
+  configuration, the protocol pins being no part of it. Traces: "Cleanup
+  revalidates destructive actions"; design D7.
 - **FR-048**: Concurrent writers MUST be outside the safe contract, and
   cleanup MUST claim no lock, lease or writer-quiescence handoff. Its one
   guarantee MUST be that a removal child is spawned only if, at the
@@ -1307,16 +1323,16 @@ configuration"; "A lazy fetch in a partial clone is refused locally";
   MUST be outside the contract, and the confirmation and the result MUST each
   state that residual window in one line. Traces: "Cleanup states a narrow
   guarantee and its residual window"; design D7.
-- **FR-049**: Cleanup MUST never delete a branch, so that a branch race loses
-  no commit: a branch change seen at revalidation refuses with
-  `branch-changed`, and one seen only by the rescan after Git removed the
-  worktree MUST leave the target `removed` with
+- **FR-049**: The removal path, `--all-safe --apply` and `--action remove`,
+  MUST never delete a branch, so that a branch race loses no commit, a branch
+  being deleted only by FR-014's separate action: a branch change seen at
+  revalidation refuses with `branch-changed`, and one seen only by the rescan
+  after Git removed the worktree MUST leave the target `removed` with
   `branch-advanced-after-removal` or `branch-missing-after-removal`, stop the
   run and exit 2. A repository found replaced by the rescan after a removal
   MUST make that target `unknown` with `unconfirmed-removal`, every
-  reconciliation field null and `reconciled` false, and stop the run with
-  exit 1. Traces: "Cleanup states a narrow guarantee and its residual
-  window".
+  reconciliation field null and `reconciled` false, and stop the run with exit
+  1. Traces: "Cleanup states a narrow guarantee and its residual window".
 - **FR-050**: Status and doctor MUST keep their human and JSON reports for
   single repositories, project manifests, families, worktrees and local
   tooling, show missing or malformed state, and never fetch, reset or
@@ -1339,9 +1355,12 @@ configuration"; "A lazy fetch in a partial clone is refused locally";
   never one that means "none" (`upstream`, `ahead` and `behind` without an
   upstream, `merged_into_target` for a detached head). A branch whose
   upstream's remote-tracking ref was deleted MUST show its configured short
-  name as `upstream`, with `ahead` and `behind` null, and every path value
-  MUST carry its validity flag as FR-040 states, with `root_valid_utf8`
-  beside the top-level `root` and each nested family member's `root`.
+  name as `upstream`, with `ahead` and `behind` null, and each path value in
+  that JSON MUST be written by the JSON rule that "Clean reports every path
+  exactly or excludes it" states (FR-039), with `path_valid_utf8` beside every
+  `path` (FR-040), in root, leg and worktree rows, `errors` entries and
+  `ignored_samples` entries alike, and with `root_valid_utf8` beside the
+  report's top-level `root` and the `root` of each family member it nests.
   Traces: "Inspect and diagnose"; design D16.
 - **FR-052**: Update MUST report local tracking state and named owning
   commands by default, and applying it MUST require a component and
@@ -1379,11 +1398,15 @@ configuration"; "A lazy fetch in a partial clone is refused locally";
   a missing main worktree, or a gitfile checkout whose main worktree cannot be
   named), repository-wide probes MUST run in the common directory for a bare
   repository and otherwise where the identity probe ran. A repository MUST be
-  identified by `{root, common_dir, dev, ino}` and a worktree by `{path, dev,
-  ino, admin_id}`, its registration checked in both directions between
-  realpaths; a row whose registration disagrees MUST get no status probe and be
-  `inspection-error`; an `lstat` that fails because the path does not exist
-  MUST give `present: false`, and any other failure `present: null`, an
+  identified by `{root, common_dir, dev, ino}`, the device and inode being the
+  common directory's, read without following a symlink, and a worktree by
+  `{path, dev, ino, admin_id}`, its registration checked in both directions
+  between realpaths: `<path>/.git` MUST be a regular file whose `gitdir:` line
+  names `<common_dir>/worktrees/<admin_id>`, and that directory's `gitdir` file
+  MUST name `<path>/.git`, relative values resolved against the directory
+  holding the file; a row whose registration disagrees MUST get no status probe
+  and be `inspection-error`; an `lstat` that fails because the path does not
+  exist MUST give `present: false`, and any other failure `present: null`, an
   `os-error`, `inspection-error` and no probe. Traces: "Repository inspection
   requires Git 2.36 and shares one evidence model"; design D6 and D7.
 - **FR-056**: Once per common directory, the model MUST run the identity
@@ -1421,12 +1444,13 @@ configuration"; "A lazy fetch in a partial clone is refused locally";
   "Repository inspection requires Git 2.36 and shares one evidence model";
   design D1 and D2.
 - **FR-059**: Under an invocation deadline, as `project clean` has, each Git
-  child MUST get `min(5 s, work remaining)`; without one, as in status,
-  doctor and update, each Git child MUST get 15 s, and those subcommands MUST
-  have no invocation deadline and no row cap, a row whose probe is unreadable
-  or times out showing as `inspection-error`. Children other than Git MUST
-  keep 15 s. Traces: "Repository inspection requires Git 2.36 and shares one
-  evidence model".
+  child other than a removal, push or branch-deletion child (FR-010, FR-012)
+  MUST get `min(5 s, work remaining)`; without one, as in status, doctor and
+  update, each Git child MUST get 15 s, and those subcommands MUST have no
+  invocation deadline and no row cap, a row whose probe is unreadable or times
+  out showing as `inspection-error`. Children other than Git MUST keep 15 s.
+  Traces: "Repository inspection requires Git 2.36 and shares one evidence
+  model"; "Clean bounds its Git work and reports omitted work".
 - **FR-060**: Every subcommand that resolves a merge target from a project
   manifest MUST read at most 1 MiB of it, detecting a larger manifest from
   its size before the read and treating it as `manifest-invalid`; the
@@ -1614,11 +1638,45 @@ configuration"; "A lazy fetch in a partial clone is refused locally";
   and use `project` and the tools that read its JSON.
 - `.specify/memory/constitution.md` is still the unfilled template, so the
   ratified change alone governs this feature.
-- No clarification marker is used: the change is exhaustively specified.
-  Open question 2, squash-merged branches, is deferred to a follow-on change
-  and changes nothing built here; the V5 deferral (`design.md` D12) and the
-  Git 2.36 floor kept with one more scrubbed name (R-21, `design.md` D17)
-  were before Brett Heap at ratification and stand as ratified.
+- No clarification marker is used: the ratified change is the specification,
+  and the two questions that still stand before Brett Heap, the squash-merge
+  question and the push-child exception, are recorded in the next two entries,
+  this feature implementing the ratified text until he rules. The V5 deferral
+  (`design.md` D12) and the Git 2.36 floor kept with one more scrubbed name
+  (R-21, `design.md` D17) were before Brett Heap at ratification and stand as
+  ratified.
+- Open question 2, squash-merged branches (the lane's question LQ-2), is still
+  before Brett Heap, with the lead's recommendation of a follow-on change for a
+  local patch-equivalence proof (`git cherry` or patch IDs against the merge
+  target; proposal and `design.md`, Open Questions). The proposal's Out of
+  Scope keeps it out of this feature, which implements the ratified rule, local
+  ancestry alone proving a branch merged; a different ruling, patch equivalence
+  in this feature included, amends the change and this spec first. Open
+  question 1, a deleted upstream, was ruled by Brett Heap on 2026-10-09 and is
+  applied in FR-007 and FR-065.
+- The ratified pins conflict with the retained push. FR-054 and SC-003 keep the
+  ratified text, under which every Git child, of every kind, runs in its own
+  process group and carries `protocol.allow=never` and the six per-protocol
+  pins. With those pins Git refuses every transport, so FR-010's push, User
+  Story 3, scenario 6, and the two baseline push tests that push to a local
+  bare remote, `test_clean_pushes_explicit_clean_feature_branch_without_force`
+  (`tests/test_project.py:899`) and
+  `test_clean_pushes_to_a_differently_named_upstream_branch` (`:978`), both at
+  `961c405`, cannot pass: the push ends `fatal: transport 'file' not allowed`,
+  exit 128, where the unpinned push exits 0 (checked on Git 2.43.0). The
+  conflict awaits Brett Heap's word on draft PR #19 (branch
+  `change/amend-clean-all-safe-push-pins`), which carries the push-child
+  exception (the lane's question LQ-3; task 1.7, which that PR adds to the
+  change's `tasks.md`, not yet ticked). Until he rules, this feature's plan
+  builds on that exception, and a different ruling moves only the push child's
+  treatment.
+- `probes` and `operations` count each Git child once: `probes.performed` every
+  Git child other than a removal child, and `operations.performed` the removal
+  children, as the lead ruled (R-27) from the packet's arithmetic, in which a
+  removal is an operation and not a probe. The delta's words, "every Git child
+  counted" and "equals the wrapper's count", do not say under which of the two
+  a removal falls; draft PR #19 carries the clarifying wording, and FR-033,
+  User Story 6 scenario 6 and SC-006 read it so until it lands.
 - The caps and budgets stand as measured by governance task 2.1, and the
   2.36 floor as verified by task 2.2 on Git 2.36.6, 2.40.4 and 2.43.0. Their
   results are posted on PR #11, task 2.1 at
@@ -1629,8 +1687,9 @@ configuration"; "A lazy fetch in a partial clone is refused locally";
   changes.
 - The change pins its code and test citations at `da33d92` and `7a9134b`.
   Feature 003 has since changed `project` and the tests (`f401e06`), so the
-  plan re-pins every citation against the `main` of its day; this spec cites
-  no line numbers.
+  plan re-pins every citation against the `main` of its day; this spec cites no
+  line numbers but those of the two baseline tests in the push conflict above,
+  pinned at `961c405`.
 - "Every existing test" means the suite on `main` when the feature is
   implemented: 94 tests at `7a9134b`, 96 at `961c405` after feature 003's
   two. The change's exception list (one test moved to the result record,
@@ -1638,7 +1697,9 @@ configuration"; "A lazy fetch in a partial clone is refused locally";
   `no-merge-target` keep the baseline wording) applies to it unchanged.
 - Exact wording is cited from `design.md` D18 and D14 and never changed
   here; the texts quoted in this spec are verbatim from the deltas or D18,
-  except the README sentence FR-065 corrects, quoted from the proposal.
+  except the README sentence FR-065 corrects and Brett Heap's two rulings, the
+  ratification in the header and open question 1 in FR-007, quoted from the
+  proposal and `tasks.md`.
 - Concurrent writers are outside the contract by design; the README's advice
   to close sessions before a batch apply is the only mitigation for a live
   session (`design.md` D3).
@@ -1676,6 +1737,10 @@ configuration"; "A lazy fetch in a partial clone is refused locally";
   feature `005-project-overview` follows only after this feature merges.
 - **Governance**: tasks 1.1 to 1.6, 2.1 and 2.2 of the change are done; the
   Speckit handoff in its `tasks.md` names this feature.
+- **Draft PR #19** (`change/amend-clean-all-safe-push-pins`): the push-child
+  exception with its scenario, the clarified `probes` and `operations` count
+  and the task 1.7 it adds to the change's `tasks.md`; it awaits Brett Heap's
+  word, and this feature's plan builds on it until he rules (Assumptions).
 - **Runtime and CI**: Git 2.36 or later where `project` inspects a
   repository; a Git 2.36 build for the CI floor job; the existing four CI
   jobs (Linux and macOS, two runtime versions each).
@@ -1688,8 +1753,9 @@ Non-Goals"):
 - Paired retirement, deleting a branch with its worktree: a future MODIFIED
   "Clean can explicitly retire verified worktrees".
 - Cache disposal, the first follow-on change.
-- Patch-equivalence retirement of squash-merged branches (open question 2),
-  a follow-on change.
+- Patch-equivalence retirement of squash-merged branches (open question 2,
+  still before Brett Heap; see Assumptions), which the proposal keeps out of
+  this feature and the lead recommends as a follow-on change.
 - Remote, GitHub and pull-request queries; family traversal and
   relationships; bench, container and park integrations.
 - `project overview`, `--attention` and the doctor repository-health

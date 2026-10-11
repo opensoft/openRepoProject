@@ -26,18 +26,29 @@ proceeding to planning
 
 ## Requirement Completeness
 
-- [x] No [NEEDS CLARIFICATION] markers remain: 0 in the spec; open question
-  2 (squash merges) is deferred to a follow-on change, not left open here.
-- [x] Requirements are testable and unambiguous: 67 FRs, each a MUST with an
-  observable outcome and a trace to a requirement header or decision by
-  name; the review's corrections to FR-016, FR-018, FR-021, FR-022, FR-034,
-  FR-039, FR-046, FR-055, FR-066 and FR-067 are applied.
+- [x] No [NEEDS CLARIFICATION] markers remain: 0 in the spec, passing on a
+  recorded deviation. Two questions still stand before Brett Heap, open
+  question 2 (squash merges; LQ-2) and the push-child exception (draft PR #19;
+  LQ-3). Each is recorded in the Assumptions, which keep the ratified text
+  until he rules, instead of being marked; neither is settled or deferred by
+  this spec.
+- [x] Requirements are testable and unambiguous: passes on a recorded
+  deviation. 67 FRs, each a MUST with an observable outcome and a trace to a
+  requirement header or decision by name; the review's corrections to FR-016,
+  FR-018, FR-021, FR-022, FR-034, FR-039, FR-046, FR-055, FR-066 and FR-067 are
+  applied, and so are lane 3's restatements of FR-010, FR-029, FR-030, FR-033,
+  FR-034, FR-036, FR-040, FR-047, FR-049, FR-051, FR-055 and FR-059, which
+  close its contradictions between the run and budget bounds and the unbounded
+  push and branch-deletion children, and between FR-049 and FR-014. The one
+  contradiction left is the ratified text's own: FR-054 and SC-003 against
+  FR-010's push, US3 scenario 6 and two baseline tests, pending Brett Heap's
+  word on draft PR #19 (Assumptions).
 - [x] Success criteria are measurable: 14 SCs, each a count, bound, ratio or
   verbatim match (64 s, 300 s, 5 s, 128/256 rows, 16 targets, 0 network
   calls, 100 scenarios, 96 tests), SC-014 a review of named contents of the
   README section; SC-002, SC-004, SC-005, SC-008 and SC-013 were restated to
-  say what the deltas say, no more and no less, and SC-006 now says which
-  Git children `probes.performed` counts.
+  say what the deltas say, no more and no less, and SC-006 now says which Git
+  children `probes.performed` counts and which `operations.performed` counts.
 - [x] Success criteria are technology-agnostic (no implementation details):
   passes on the same recorded deviation. The earlier note, that no test
   mechanism is named, was wrong: SC-003 and SC-006 name a counting wrapper
@@ -45,16 +56,22 @@ proceeding to planning
   criteria are measured through them.
 - [x] All acceptance scenarios are defined: 73 Given/When/Then scenarios over
   9 stories, which list all 100 delta scenario titles, each exactly once;
-  the review's 11 clause-level gaps (N-1 a to k) are closed, and none of
-  the 73 was added, moved or renumbered.
+  the review's 11 clause-level gaps (N-1 a to k) are closed, as are lane 3's
+  remaining gaps in US2 scenario 7, US4 scenarios 4 and 6 and US8 scenario 1,
+  and none of the 73 was added, moved or renumbered.
 - [x] Edge cases are identified: EC-001 to EC-019, drawn from the design's
-  Risks, D3, D10 and D14 and the deltas' boundary scenarios; EC-004 now
-  says that reflog entries expire only when `git reflog expire` runs.
+  Risks, D3, D10 and D14 and the deltas' boundary scenarios; EC-004 now says
+  that reflog entries expire only when `git reflog expire` runs, EC-001 that
+  open question 2 is still before Brett Heap, and EC-012 that the stuck-call
+  exception covers runs with no removal, push or branch-deletion child in
+  flight.
 - [x] Scope is clearly bounded: Out of Scope follows the proposal's Out of
   Scope and the design's Non-Goals, and names every untouched requirement.
 - [x] Dependencies and assumptions identified: features 001 to 003, the
   archived fix-parent-obstacle-wording, add-project-overview, governance
-  tasks, runtime and CI; nine assumptions.
+  tasks, runtime and CI; twelve assumptions, three of them recording the open
+  squash-merge question, the push conflict and the count of probes and
+  operations, and draft PR #19 as a dependency.
 
 ## Feature Readiness
 
@@ -77,10 +94,10 @@ proceeding to planning
 
 ## Notes
 
-- Final state: 16 of 16 items pass, four of them (items 1, 3, 8 and 16) on
+- Final state: 16 of 16 items pass, six of them (items 1, 3, 5, 6, 8 and 16) on
   a recorded deviation. The first pass marked 16 of 16 after 3 validation
   iterations (of 3 allowed) and overclaimed in the places listed under the
-  review round below; this file re-assesses every item against the spec as
+  review rounds below; this file re-assesses every item against the spec as
   fixed.
 - Iteration 1 failed two items, both fixed in the spec:
   - "Requirements are testable and unambiguous": US1 scenario 4 said any
@@ -117,6 +134,18 @@ proceeding to planning
   no SC stated (SC-012 now states them); no language, function, module or
   test mechanism named, when FR-039, FR-066 and three SCs name one; and a
   16 of 16 pass that did not separate the deviations.
+- Second review round, lane 3 on `4e4b00f` (1 HIGH, 9 MEDIUM and 11 LOW
+  findings), applied under the lead's dispositions of 2026-10-11 with no id
+  renumbered and no scenario added. Already fixed at `aadd709`: M4, M6, M7, L2
+  and L3. Applied here: H1 as an Assumption, with "exhaustively specified"
+  dropped and FR-054 and SC-003 kept as ratified; M1, the squash-merge question
+  restated as open in EC-001, the Assumptions and Out of Scope; M2 and M3 as
+  restatements of FR-029, FR-030, FR-059, EC-012 and FR-049; M5 in FR-051; M8
+  in FR-033 and the Assumptions; M9 in this file; and L1, L4 to L11 in FR-010,
+  FR-040, FR-034, FR-047, FR-036, US7 scenario 6, FR-007, the acceptance
+  scenarios and FR-055. L10 is closed in US4 scenarios 4 and 6 and US8 scenario
+  1, and US2 scenario 7 only gains the cause of an expired reflog, its head
+  variants being in since `aadd709`.
 - Checked again after the fixes, by script or command: all 100 delta
   scenario titles are listed exactly once (65, 18 and 17 by capability;
   the after-confirmation clauses that "Hidden local state" and "Submodules"
@@ -124,12 +153,16 @@ proceeding to planning
   lists); 73 acceptance scenarios (9, 10, 9, 8, 9, 8, 6, 4, 10); 67 FRs, 14
   SCs and 19 ECs in order; 17 requirement headers traced; every quoted
   output text verbatim in the change; ASCII only; no line over 79 columns;
-  no em dash, host-absolute path or line-number citation; 0 markers.
+  no em dash or host-absolute path; no line-number citation but the two
+  baseline tests of the push conflict, pinned at `961c405`, in the Assumptions;
+  0 markers.
 - The 10 canonical scenarios the modified requirements keep were compared by
   script with `openspec/specs/` and are byte-identical in the deltas
   (SC-011).
 - The existing suite on this branch ran 96 tests, all passing
   (`python3 -m unittest discover -s tests -v`), at `961c405` and again in
-  the review round on the tree of `4e4b00f`; the figure SC-012 states.
+  the review round on the tree of `4e4b00f`; the figure SC-012 states, and once
+  more after the second review round's fixes, where it ran 96 tests, all
+  passing.
 - Items marked incomplete require spec updates before `/speckit-clarify`
   or `/speckit-plan`
