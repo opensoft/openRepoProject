@@ -111,15 +111,20 @@ would allow the fetch that the pins below refuse. Read-only probes SHALL also
 set `GIT_OPTIONAL_LOCKS=0`. Every status probe SHALL pass `-c
 core.untrackedCache=false -c core.fsmonitor=false`, which also override
 `GIT_CONFIG_GLOBAL` and `GIT_CONFIG_SYSTEM`. Every Git child, of every kind,
-SHALL also pass `-c protocol.allow=never -c protocol.file.allow=never -c
-protocol.ssh.allow=never -c protocol.git.allow=never -c
-protocol.http.allow=never -c protocol.https.allow=never -c
-protocol.ext.allow=never`, because Git 2.43 has no switch against lazy fetches,
-a probe in a partial (promisor) clone could otherwise fetch a missing object
-from the network, and `protocol.allow` is only the default policy, which a
-`protocol.<name>.allow` setting in the repository's configuration overrides and
-a `-c` on the command line outranks; with the pins the fetch fails locally, the
-probe fails, and its row is `inspection-error`, never a network call.
+except the push child of `clean --action push`, SHALL also pass `-c
+protocol.allow=never -c protocol.file.allow=never -c protocol.ssh.allow=never -c
+protocol.git.allow=never -c protocol.http.allow=never -c
+protocol.https.allow=never -c protocol.ext.allow=never`, because Git 2.43 has no
+switch against lazy fetches, a probe in a partial (promisor) clone could
+otherwise fetch a missing object from the network, and `protocol.allow` is only
+the default policy, which a `protocol.<name>.allow` setting in the repository's
+configuration overrides and a `-c` on the command line outranks; with the pins
+the fetch fails locally, the probe fails, and its row is `inspection-error`,
+never a network call. The push child is the one Git child whose purpose is to
+reach a remote: it SHALL run in its own process group with the seventeen names
+removed from its environment, and SHALL carry none of the seven protocol pins,
+so that the remote it publishes to stays reachable over any protocol; no row's
+evidence comes from it.
 
 Directory: a worktree probe SHALL run with `-C <worktree path>`, against that
 worktree's own index, and only after that worktree's identity has been verified
@@ -229,3 +234,8 @@ requirement states a change.
 - **THEN** a counting `git` wrapper records `-c protocol.allow=never` and the six per-protocol pins on the child, Git refuses the fetch of the missing object locally and exits nonzero, the probe is recorded `probe-failed`, and the row is `inspection-error`
 - **AND** the logging script never runs, so no connection to the remote is attempted
 - **AND** with `GIT_ALLOW_PROTOCOL=file` in the caller's environment and `protocol.file.allow=always` in the repository's configuration, the pinned probe is still refused and the logging script still never runs
+
+#### Scenario: The push child reaches its remote
+- **WHEN** `project clean <root> --apply --action push --branch B --yes` runs, with `<root>` the absolute path of the main worktree, for a clean feature branch B that the push action accepts (B is not the default branch, its upstream `origin/B` exists and lacks a commit that B holds, and no other worktree row is `inspection-error`), whose `origin` is a local path (the `file` protocol)
+- **THEN** a counting `git` wrapper records the push child with none of the seven protocol pins and with the seventeen names removed from its environment, and records all seven pins on every other Git child of the run
+- **AND** the push exits 0 and `origin` holds B at the commit it has locally

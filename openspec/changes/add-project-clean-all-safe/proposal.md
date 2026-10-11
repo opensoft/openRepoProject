@@ -9,7 +9,7 @@ to follow.
 Revised after the alignment review and the council (resolved below and on
 PR #11; the council's noted constraints are in `clarifications.md`); it adds
 Decisions and Corrections sections because it adopts a non-normative packet,
-and Open Questions for the one question still before Brett Heap.
+and Open Questions for the two questions still before Brett Heap.
 
 Governing issue: opensoft/openRepoProject#9, claimed by lane openRepoProject-2
 (comment 6069500401); refs #6, the record of the project maintenance design
@@ -274,12 +274,13 @@ Scope).
   format, the merged set), and one combined bounded status probe per row
   (`BA:585-652`) under `-c core.untrackedCache=false -c core.fsmonitor=false`
   (pins that also override `GIT_CONFIG_GLOBAL` and `GIT_CONFIG_SYSTEM`, which
-  the scrub leaves), every Git child also under `-c protocol.allow=never` and
-  the six per-protocol pins (`protocol.file`, `ssh`, `git`, `http`, `https` and
-  `ext`, each `.allow=never`), with `GIT_ALLOW_PROTOCOL` in the scrub, so that a
-  lazy fetch in a partial (promisor) clone fails locally and its row is
-  `inspection-error` (R-23, R-25), all parsed NUL-delimited, with the scrubbed
-  environment of `BA:243-253`, through a new bounded runner (Impact). A probe
+  the scrub leaves), every Git child except the push child also under `-c
+  protocol.allow=never` and the six per-protocol pins (`protocol.file`, `ssh`,
+  `git`, `http`, `https` and `ext`, each `.allow=never`), with
+  `GIT_ALLOW_PROTOCOL` in the scrub, so that a lazy fetch in a partial
+  (promisor) clone fails locally and its row is `inspection-error` (R-23, R-25),
+  all parsed NUL-delimited, with the scrubbed environment of `BA:243-253`,
+  through a new bounded runner (Impact). A probe
   `project` stops at its record bound is complete, never `probe-failed`; after
   SIGKILL the reap waits at most the 2 s grace, then abandons the child and
   records `probe-timeout`; every exit path terminates the probe groups it
@@ -515,8 +516,8 @@ Headers are quoted verbatim, one per line; ADDED headers are proposed text.
     the ADDED guarantee states, and Git's own non-force check is the last
     defense only on the pinned configuration (`status.showUntrackedFiles`,
     `core.untrackedCache`, `core.fsmonitor`; the protocol pins on every Git
-    child are no part of it). A value null in the plan and null
-    at revalidation, as a deleted upstream's `upstream_oid`, `ahead` and
+    child except the push child are no part of it). A value null in the plan and
+    null at revalidation, as a deleted upstream's `upstream_oid`, `ahead` and
     `behind` are, is no difference, while a value that cannot be re-read is
     (Brett Heap's ruling of 2026-10-09; Decisions). The scenario (`:55-58`)
     stays; a worktree that becomes dirty after revalidation is refused by Git
@@ -559,8 +560,9 @@ Headers are quoted verbatim, one per line; ADDED headers are proposed text.
     rule for every reader; the probe directory rule (`BA:554-583`); the scrub
     with `GIT_OPTIONAL_LOCKS=0` (`BA:243-253`); NUL parsing; the combined
     probe, its pins and bounds (`BA:629-652`, `BA:793-814`), among them the `-c
-    protocol.allow=never` pin and the six per-protocol pins on every Git child,
-    with `GIT_ALLOW_PROTOCOL` in the scrub, against lazy fetches (R-23, R-25);
+    protocol.allow=never` pin and the six per-protocol pins on every Git child
+    except the push child, with `GIT_ALLOW_PROTOCOL` in the scrub, against lazy
+    fetches (R-23, R-25);
     the 1 MiB cap on the manifest read that resolves a merge target, a larger
     manifest being `manifest-invalid`; the runner's outcomes (What Changes,
     evidence model); its every-exit-path termination rule, stated in its own
@@ -870,22 +872,25 @@ Council decisions, with the packet text each replaces or extends:
   of 20,000 files, a `dirty` tree (council).
 - **Pinned status configuration** (`BA:307-317` pins only the untracked
   setting): unpinned, Git's own check missed and deleted a file (council).
-- **Lazy fetches pinned off on every Git child** (R-23, R-25; an addition to
-  `BA:243-253` and `BA:307-317`, which pin no protocol policy): Git 2.43 has
-  no `GIT_NO_LAZY_FETCH`, so a read-only probe in a partial (promisor) clone
-  can fetch a missing object from the network. `-c protocol.allow=never` makes
-  the fetch fail locally and the row `inspection-error`, but it is only the
-  default policy: a `protocol.<name>.allow` setting in the repository's
-  configuration outranks it for that protocol, and so does `GIT_ALLOW_PROTOCOL`
-  in the caller's environment. Every Git child therefore also pins `-c
-  protocol.file.allow=never -c protocol.ssh.allow=never -c
+- **Lazy fetches pinned off, the push child excepted** (R-23, R-25; an addition
+  to `BA:243-253` and `BA:307-317`, which pin no protocol policy): Git 2.43 has
+  no `GIT_NO_LAZY_FETCH`, so a read-only probe in a partial (promisor) clone can
+  fetch a missing object from the network. `-c protocol.allow=never` makes the
+  fetch fail locally and the row `inspection-error`, but it is only the default
+  policy: a `protocol.<name>.allow` setting in the repository's configuration
+  outranks it for that protocol, and so does `GIT_ALLOW_PROTOCOL` in the
+  caller's environment. Every Git child except the push child therefore also
+  pins `-c protocol.file.allow=never -c protocol.ssh.allow=never -c
   protocol.git.allow=never -c protocol.http.allow=never -c
   protocol.https.allow=never -c protocol.ext.allow=never`, which outrank every
   configuration file, and the scrub removes `GIT_ALLOW_PROTOCOL`, which no `-c`
   outranks, seventeen names in all. Accepted residual: a remote-helper protocol
   of another name with its own `allow=always` in the repository's configuration
   could still fetch; the probe then succeeds rather than fails, and no unsafe
-  removal follows (design Context, D11, Risks).
+  removal follows (design Context, D11, Risks). The push-child exception: the
+  push child of `clean --action push` reaches a remote, which the pins would
+  refuse over every protocol, so it keeps the scrub and its own process group
+  and carries none of the pins, and no evidence comes from it (Open Questions).
 - **A branch with no commit of its own is preserved** (V2 as amended, M3, M4;
   extends the gates of `BA:152-160`; R-12, R-15): the reflog, read from its
   anchor, the last entry whose old object is all zeros (a creation, whatever
@@ -1004,6 +1009,15 @@ OQ-29's cap; these bind until that revision merges (C2 is now reading R9).
   merge commit, so in squash-merging repositories the MVP selects little.
   Before Brett Heap, recommending a local patch-equivalence proof (`git
   cherry` or patch IDs against the target) as a follow-on change.
+- **The push-child exception.** The pins on every Git child (R-23, R-25) refuse
+  a push over every protocol (a local-path `origin` fails with `fatal: transport
+  'file' not allowed`, exit 128), yet this change keeps the explicit push of
+  `clean --action push`, whose child must reach its remote. Before Brett Heap,
+  recommending that the change be amended in place before its archive, as this
+  draft does, so that the push child is the one Git child without the pins; the
+  alternative is a follow-up change after the archive, as
+  `fix-parent-obstacle-wording` followed `prefer-triad-in-project-new`, which
+  costs a second archive and leaves the archived spec wrong in between.
 
 The question of a merged worktree whose remote branch was deleted is closed:
 Brett Heap ruled on 2026-10-09 that a local ancestry proof outranks
@@ -1080,8 +1094,9 @@ revalidation clause's other side, a deleted upstream that reappears before apply
 is `state-changed`; `project-clean-review-safety` `Cleanup revalidates
 destructive actions`, scenario "Deleted upstream reappears before revalidation";
 this list; design Context, D20; `tasks.md` 1.2, 1.4); R-23 (`-c
-protocol.allow=never` on every Git child, so that a lazy fetch in a partial
-clone fails locally and the row is `inspection-error`; What Changes, seam and
+protocol.allow=never` on every Git child except the push child, so that a lazy
+fetch in a partial clone fails locally and the row is `inspection-error`; What
+Changes, seam and
 evidence model; Capabilities, `project-command` ADDED and review-safety `Cleanup
 revalidates destructive actions`; Decisions, departures; the deltas' `Clean can
 explicitly retire verified worktrees`, `project-command` ADDED evidence model
@@ -1095,8 +1110,9 @@ human report's sentence saying why; What Changes, bounded work; Decisions, OQ-4;
 the deltas' `Clean bounds its Git work and reports omitted work`, the caps and
 deferral text; this list; design D5, D9, D11, D12, D18, Risks, Migration Plan;
 `tasks.md` 1.2, 2.1); and R-25 (R-23's gap: `protocol.allow` is only the default
-policy, so every Git child also pins the six per-protocol policies and the
-scrub gains `GIT_ALLOW_PROTOCOL`, seventeen names, with the residual of a
+policy, so every Git child except the push child also pins the six per-protocol
+policies and the scrub gains `GIT_ALLOW_PROTOCOL`, seventeen names, with the
+residual of a
 remote-helper protocol of another name accepted; What Changes, seam and
 evidence model; Capabilities, `project-command` ADDED evidence model and its
 scenario "A lazy fetch in a partial clone is refused locally", and review-safety

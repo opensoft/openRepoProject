@@ -37,10 +37,11 @@ duplicate them, and nothing here is an implementation step.
   five requirements and adds six (65 scenarios),
   `specs/project-clean-review-safety/spec.md` modifies two and adds one (18
   scenarios, the last added under R-22), and `specs/project-command/spec.md`
-  modifies two and adds one (17 scenarios, the last added under R-23), every
-  canonical scenario of each modified requirement kept; `design.md` holds D1 to
-  D20, mapping the packet's 35 validation scenarios to the deltas (D20);
-  verified by the scenario counts in the commit that adds them.
+  modifies two and adds one (18 scenarios, the last added under the push-child
+  exception), every canonical scenario of each modified requirement kept;
+  `design.md` holds D1 to D20, mapping the packet's 35 validation scenarios to
+  the deltas (D20); verified by the scenario counts in the commit that adds
+  them.
 - [x] 1.5 Validation passes: `openspec validate add-project-clean-all-safe
   --strict` reports the change valid, `openspec validate --all --strict` passes
   every item, and `openspec status --change add-project-clean-all-safe` shows
@@ -51,6 +52,11 @@ duplicate them, and nothing here is an implementation step.
   verified by that quote. No implementation starts before it. Done: his word to
   lane openRepoProject-2 on 2026-10-09, verbatim: "ratify, merge #11 and run the
   runbook".
+- [ ] 1.7 The push-child exception ratified by Brett Heap's word on the pull
+  request that amends this change, quoted with its link here, the `design.md`
+  Open Questions entry before him; verified by that quote. Feature 004 plans
+  under the exception, and a different ruling edits this amendment and that
+  plan. To fill when he rules: his words, verbatim, and the link to them.
 
 ## 2. Before the Speckit handoff
 

@@ -325,7 +325,7 @@ and stay; D11's `-c` pins override them.
 
 Every child in the table, `git --version` and D9's removal child included, also
 runs with `-c protocol.allow=never` and the six per-protocol pins (D11, R-23,
-R-25).
+R-25); the push child, which is not in the table, is the exception D11 states.
 
 `repo_state()` and `cleanup_report()` become thin readers of this pipeline, and
 the ladder becomes a pure function of a row's evidence (OQ-28). Its one
@@ -554,11 +554,17 @@ entries and 215 to 232 ms for 100,000. One consequence crosses changes: feature
 005's fixtures that rely on a running fsmonitor (DI:1233-1237, DI:1249-1254)
 must be rewritten, as the lead's ruling records.
 
-Every Git child, of every kind, also carries `-c protocol.allow=never -c
-protocol.file.allow=never -c protocol.ssh.allow=never -c
-protocol.git.allow=never -c protocol.http.allow=never -c
-protocol.https.allow=never -c protocol.ext.allow=never` (R-23, R-25),
-`git --version` and the removal included. Git 2.43 has no `GIT_NO_LAZY_FETCH` or
+Every Git child, of every kind, except the push child of `clean --action push`,
+also carries `-c protocol.allow=never -c protocol.file.allow=never -c
+protocol.ssh.allow=never -c protocol.git.allow=never -c
+protocol.http.allow=never -c protocol.https.allow=never -c
+protocol.ext.allow=never` (R-23, R-25), `git --version` and the removal
+included. The push child of `clean --action push` is the one exception, because
+its purpose is to reach a remote and the pins would refuse every transport, the
+`file` one included: it keeps the scrub and its own process group, carries none
+of the pins, and no evidence comes from it (Open Questions).
+
+Git 2.43 has no `GIT_NO_LAZY_FETCH` or
 other switch against lazy fetches, so a read-only probe in a partial (promisor)
 clone that needs an object the clone does not hold can fetch it from the
 network. `protocol.allow` is only the default policy: a `protocol.<name>.allow`
@@ -854,8 +860,9 @@ requirements: R1, R2, R6, D-N and OQ-29 under the reports; R9 and C3 under the
 classification and "Inspect and diagnose", and the ruling on open question 1
 under the classification; R10, R11, D-T and the manifest cap
 under Git-first resolution; V1 to V4, M3 and M4 under retirement; OQ-10, OQ-16
-and M1 under the JSON and the result; V9, R-23 and R-25 under the evidence
-model; D-D under push; D-R under maintenance; R-22 under revalidation.
+and M1 under the JSON and the result; V9, R-23, R-25 and the push-child
+exception under the evidence model; D-D under push; D-R under maintenance; R-22
+under revalidation.
 
 ## Risks / Trade-offs
 
@@ -999,6 +1006,15 @@ reading stated, and a different ruling edits the deltas before the archive.
 - Squash-merged branches never put their tip into the target's ancestry
   (BA:195-199). Recommendation: a local patch-equivalence proof (`git cherry` or
   patch IDs against the target) as a follow-on change, not in the MVP.
+- The push-child exception: the pins on every Git child (D11, R-23, R-25) refuse
+  a push over every protocol (a local-path `origin` fails with `fatal: transport
+  'file' not allowed`, exit 128), yet the change keeps the explicit push of
+  `clean --action push`, whose child must reach its remote. Recommendation:
+  amend the change in place before its archive, as this draft does, so that the
+  push child is the one Git child without the pins. The alternative is a
+  follow-up change after the archive, as `fix-parent-obstacle-wording` followed
+  `prefer-triad-in-project-new`, which costs a second archive and leaves the
+  archived spec wrong in between.
 
 Ruled on 2026-10-09: a merged worktree whose remote branch was deleted is
 `merged-removable`, Brett Heap having ruled that a local ancestry proof
