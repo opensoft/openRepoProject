@@ -1820,3 +1820,112 @@ extension needing its own proposal (OQ-27):
   section (OQ-22).
 - Bounding a filesystem call stuck in the kernel (EC-001), and the installed
   artifact's pin in workBenches, openRepoShape and setup-openspeckit.
+
+## Appendix: Traceability
+
+Every requirement and scenario of change 2's spec deltas
+(`specs/project-overview/spec.md` and `specs/project-review-safety/spec.md`
+at `961c405`), by header, mapped to the functional requirements, user
+stories and edge cases of this spec that realize it. Requirement numbers are
+the proposal's (1 to 12); PRS is the MODIFIED `project-review-safety`
+requirement. A story scenario is written `USn sk`. The test names come with
+the tasks, in the feature's `traceability.md`, as feature 003 records them.
+
+### Requirements
+
+| # | Delta requirement | Source | FRs | Stories | Edge cases |
+| --- | --- | --- | --- | --- | --- |
+| 1 | Overview discovers projects within configured roots only | POD:10 | FR-001 to FR-005 | US1, US7 | EC-003, EC-014, EC-018 |
+| 2 | Overview groups worktrees by repository identity | POD:74 | FR-006 to FR-010 | US1, US7, US8 | EC-012, EC-018 |
+| 3 | Overview bounds its work and reports what it omitted | POD:166 | FR-011 to FR-020 | US6, US10 | EC-001 to EC-006, EC-019 |
+| 4 | Overview isolates one candidate's failure | POD:317 | FR-021, FR-022 | US7 | none |
+| 5 | Overview reuses the cleanup classifier and merge target | POD:358 | FR-024 to FR-026 | US3 | EC-013 |
+| 6 | Overview reports findings by attention category | POD:420 | FR-027 to FR-030 | US2 | none |
+| 7 | Overview suggests only gated clean commands | POD:483 | FR-031 to FR-035 | US4, US6 | EC-007 to EC-010, EC-020 |
+| 8 | Overview prints a versioned JSON envelope | POD:606 | FR-036 to FR-039 | US5, US11 | EC-016, EC-017 |
+| 9 | Overview is local and read-only | POD:709 | FR-040, FR-016 | US10 | EC-006 |
+| 10 | Overview reports default-branch health | POD:724 | FR-041 | US9 | EC-011, EC-021 |
+| 11 | Overview exits by completeness and severity | POD:761 | FR-042 to FR-044 | US10 | EC-002, EC-015 |
+| 12 | Overview renders a readable human report | POD:801 | FR-045, FR-046 | US1, US2, US4 | EC-016 |
+| PRS | YAML decoding errors are structured refusals (MODIFIED) | PRSD:3 | FR-023 | US7 | none |
+
+### Scenarios
+
+| # | Req | Delta scenario | FRs | Story scenario | Edge cases |
+| --- | --- | --- | --- | --- | --- |
+| 1 | 1 | Independent clones and aliases | FR-001, FR-002, FR-003, FR-006 | US1 s1 | EC-018 |
+| 2 | 1 | Unreadable candidate directory | FR-005, FR-022, FR-042 | US7 s1 | none |
+| 3 | 1 | Family holder count, relationships and probe ownership | FR-003, FR-004, FR-010, FR-020 | US1 s2 | none |
+| 4 | 1 | Every root is absent | FR-005, FR-045 | US1 s6 | none |
+| 5 | 2 | One probe set per repository | FR-006, FR-009, FR-010, FR-020 | US1 s3 | none |
+| 6 | 2 | Present eligible external worktree | FR-006, FR-007, FR-031, FR-032 | US1 s4 | none |
+| 7 | 2 | Missing external worktree | FR-007, FR-027, FR-029 | US1 s5 | none |
+| 8 | 2 | Unreadable external worktree | FR-007, FR-022 | US7 s2 | none |
+| 9 | 2 | A separate git directory | FR-008 | US8 s1 | EC-012 |
+| 10 | 2 | A submodule checkout under a root | FR-008, FR-031, FR-035 | US8 s2 | EC-014 |
+| 11 | 2 | A deleted main worktree | FR-009 | US8 s3 | none |
+| 12 | 2 | A bare repository with a linked worktree | FR-008, FR-035 | US8 s4 | none |
+| 13 | 3 | Candidate cap after sorting, with an exact count | FR-003, FR-017 | US6 s1 | EC-003 |
+| 14 | 3 | Candidate cap with an incomplete listing | FR-017 | US6 s1 | none |
+| 15 | 3 | Root and worktree-row caps | FR-017, FR-018, FR-019 | US6 s2 | EC-004 |
+| 16 | 3 | Probe timeout | FR-011, FR-021 | US6 s4 | EC-019 |
+| 17 | 3 | Hung filesystem call on an external worktree | FR-013 | US6 s5 | EC-001 |
+| 18 | 3 | Invocation deadline | FR-011, FR-012 | US6 s8 | EC-002 |
+| 19 | 3 | Bounded concurrency | FR-019 | US6 s9 | none |
+| 20 | 3 | The JSON does not depend on concurrency | FR-019, FR-037 | US6 s10 | none |
+| 21 | 3 | Bounded ignored files | FR-015 | US6 s11 | EC-019 |
+| 22 | 3 | User status configuration | FR-015, FR-016 | US6 s12 | none |
+| 23 | 3 | A root on a hung mount | FR-013 | US6 s6 | EC-005 |
+| 24 | 3 | A repository root on a hung mount | FR-011, FR-013 | US6 s7 | EC-001 |
+| 25 | 3 | A manifest over the size bound | FR-014 | US6 s13 | none |
+| 26 | 4 | One helper failure is isolated | FR-021, FR-022 | US7 s3 | none |
+| 27 | 4 | The YAML library is not installed | FR-022 | US7 s4 | none |
+| 28 | 5 | Manifest target | FR-024 | US3 s1 | none |
+| 29 | 5 | origin/HEAD target | FR-024 | US3 s2 | none |
+| 30 | 5 | main target | FR-024 | US3 s3 | none |
+| 31 | 5 | master target | FR-024 | US3 s3 | none |
+| 32 | 5 | Conflicting targets | FR-024, FR-029 | US3 s4 | none |
+| 33 | 5 | Missing target | FR-025 | US3 s5 | none |
+| 34 | 5 | Every protected classifier | FR-026, FR-027, FR-032 | US3 s6 | none |
+| 35 | 6 | Attention filter per category | FR-029, FR-030 | US2 s1 | none |
+| 36 | 6 | A merged worktree whose upstream was deleted | FR-028, FR-032 | US2 s2 | EC-013 |
+| 37 | 7 | Gated merged worktrees | FR-032, FR-034, FR-035 | US4 s1 | none |
+| 38 | 7 | Canonical identity through the handoff | FR-031 | US4 s2 | none |
+| 39 | 7 | More eligible worktrees than the batch's target limit | FR-034, FR-035 | US4 s3 | EC-007 |
+| 40 | 7 | The two inspect-cap bands | FR-034, FR-035 | US4 s4 | none |
+| 41 | 7 | A row left unprobed closes the repository gate | FR-034, FR-035 | US6 s3 | none |
+| 42 | 7 | An unstarted branch | FR-033, FR-035 | US4 s5 | EC-010 |
+| 43 | 7 | A branch whose reflog cannot decide | FR-033, FR-034, FR-035 | US4 s6 | EC-008, EC-009, EC-020 |
+| 44 | 8 | Control and format characters in paths | FR-038, FR-045 | US11 s1 | EC-016 |
+| 45 | 8 | Non-UTF-8 path | FR-032, FR-038 | US11 s2 | EC-017 |
+| 46 | 8 | Non-UTF-8 common directory | FR-031, FR-035, FR-038 | US11 s3 | EC-017 |
+| 47 | 8 | An argument error under --json | FR-039 | US5 s2 | none |
+| 48 | 8 | Every envelope field is present | FR-036, FR-037 | US5 s1 | none |
+| 49 | 8 | An internal error outside the collector under --json | FR-039 | US5 s3 | none |
+| 50 | 9 | Local and read-only | FR-016, FR-040 | US10 s1 | EC-006 |
+| 51 | 10 | A default branch pushed without an upstream | FR-029, FR-041 | US9 s1 | EC-011 |
+| 52 | 10 | A repository with no remote | FR-041 | US9 s2 | none |
+| 53 | 10 | A dirty default branch ahead of its upstream | FR-041 | US9 s3 | none |
+| 54 | 10 | A failed status probe on the default branch | FR-041 | US9 s4 | none |
+| 55 | 11 | Git too old | FR-039, FR-043 | US10 s2 | none |
+| 56 | 11 | Git unavailable | FR-039, FR-043 | US10 s2 | none |
+| 57 | 11 | SIGTERM or SIGHUP during collection | FR-044 | US10 s3 | EC-015 |
+| 58 | 11 | SIGINT during collection | FR-044 | US10 s4 | none |
+| 59 | 12 | Nothing needs attention | FR-030, FR-045 | US2 s3 | none |
+| 60 | 12 | A gated suggestion | FR-035, FR-045 | US4 s7 | none |
+| 61 | 12 | The scanning notice | FR-046 | US1 s7 | none |
+| 62 | PRS | Manifest is not valid UTF-8 text | FR-023 | US7 s6 | none |
+| 63 | PRS | Overview keeps a manifest with invalid text in its row | FR-021, FR-023 | US7 s5 | none |
+
+### Coverage
+
+Delta requirements mapped: 13 of 13 (12 ADDED in `project-overview`, 1
+MODIFIED in `project-review-safety`). Delta scenarios mapped: 63 of 63 (61
+and 2), each to at least one FR and exactly one story scenario; "main
+target" and "master target" share US3 s3, the two candidate-cap scenarios
+share US6 s1, and "Git too old" and "Git unavailable" share US10 s2.
+Functional requirements traced: FR-001 to FR-046 each realize at least one
+row above; FR-047 (scope), FR-048 (README) and FR-049 (tests) trace to the
+proposal's Impact and design D13, not to one scenario. Story scenarios with
+no delta scenario of their own: US1 s8 (POD:18-19; C-1) and US2 s4
+(POD:462-468).
