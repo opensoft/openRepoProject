@@ -744,10 +744,9 @@ reason:
   `state-changed` (the merge target differs from the plan, or the re-read
   could not establish a value), `branch-in-use`, `deadline-exceeded` (the work
   deadline left no time to start, or stopped, the re-read or the branch child),
-  `interrupted`, `spawn-error`, `git-refused` (the child
-  exited nonzero), `unconfirmed-retirement` (the child exited 0),
-  `probe-timeout`, or `removal-ceiling` (the target's own reason, no stage
-  having run);
+  `interrupted`, `spawn-error`, `git-refused` (the child exited nonzero),
+  `unconfirmed-retirement` (the child exited 0), `probe-timeout`, or
+  `removal-ceiling` (the target's own reason, no stage having run);
 - `not-attempted`: no stage ran, because no branch remained to retire, the
   target's worktree was not removed, or the run stopped before the target;
   `branch-missing` (the rescan or the re-read found no branch, the target
@@ -770,10 +769,10 @@ Removal SHALL stop after the first target that is `removed` and whose
 first target that is not a plain `removed`. Every target after it SHALL be
 `not-attempted` with reason `batch-stopped`, or `interrupted` or
 `deadline-exceeded` where a signal or the deadline stopped the run, and SHALL
-carry `branch_retirement` `not-attempted` with reason `branch-retention-stop`. The exit status SHALL be
-the one that "Clean records a reconcilable result for every removal target"
-orders: a retained branch exits 2 unless a signal, the deadline or a null
-`stage` decides first.
+carry `branch_retirement` `not-attempted` with reason `branch-retention-stop`.
+The exit status SHALL be the one that "Clean records a reconcilable result for
+every removal target" orders: a retained branch exits 2 unless a signal, the
+deadline or a null `stage` decides first.
 
 The re-read and the post-check SHALL be counted under `probes` and in the
 target's `probes_performed`, and the branch child under `operations`, so that
