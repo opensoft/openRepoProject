@@ -21,7 +21,8 @@ unarchived at `961c405`; `CAS/pc`, `CAS/rs`, `CAS/cmd` and `APO/ov` are their
 `project-clean`, `project-clean-review-safety`, `project-command` and
 `project-overview` deltas. `PR19/pc` is `CAS/pc` as draft PR #19 amends it
 (branch `change/amend-clean-all-safe-push-pins`, head `c462d87`, whose spec
-text equals the `5ce23d7` that the lane's rulings name). `project:N` is the
+text equals the `5ce23d7` that the lane's rulings name), and `PR19/rs` is
+`CAS/rs` as PR #19 amends it at that head. `project:N` is the
 executable at `961c405`. L-n and B-n are the lane's rulings of 2026-10-11 for
 the three extensions and for this one; CD-n are this proposal's own decisions.
 The packet is non-normative brainstorm material (`OV:16-19`); only the deltas
@@ -292,7 +293,8 @@ also names the delta text it is written on.
     "A merged worktree has ignored local files" names an ignored file that is
     not a cache; the other four stay. Added scenario: a worktree whose only
     ignored files are caches.
-  - MODIFIED (`:49`; written on CAS/rs:60), beyond the ruled list (CD-4):
+  - MODIFIED (`:49`; written on PR19/rs:60, which differs from CAS/rs:60 only
+    in its last clause), beyond the ruled list (CD-4):
     `### Requirement: Cleanup revalidates destructive actions`.
     For a target whose plan lists caches the in-worktree status check is the
     enumeration's child, which must print exactly the listed cache records; the
@@ -350,13 +352,15 @@ also names the delta text it is written on.
 
 ### Dependencies and Sequencing
 
-- **Written on change 1 (L-1).** Every MODIFIED block but one is written on
+- **Written on change 1 (L-1).** Every MODIFIED block but two is written on
   change 1's ratified text at `961c405`. "Clean bounds its Git work and reports
-  omitted work" is written on draft PR #19's text (`c462d87`, spec text equal
-  to the `5ce23d7` the rulings name), and PR #19 is a dependency: if it merges,
-  change 1's text equals that block's base; if it closes unmerged, or changes
-  that requirement again, the block is rewritten on the text of that day before
-  this change is ratified. `validate --strict` passes while change 1 is
+  omitted work", as the rulings direct, and "Cleanup revalidates destructive
+  actions", whose last clause PR #19 also rewords (the protocol pins are carried
+  by every Git child "except the push child"), are written on draft PR #19's
+  text (`c462d87`, spec text equal to the `5ce23d7` the rulings name), and PR
+  #19 is a dependency: if it merges, change 1's text equals both blocks' bases;
+  if it closes unmerged, or changes either requirement again, the blocks are
+  rewritten on the text of that day before this change is ratified. `validate --strict` passes while change 1 is
   unarchived; the archive is the gate (it fails "MODIFIED failed ... - not
   found" until change 1 is archived).
 - **Archive order (L-5).** This change archives after change 1's archive,
@@ -401,7 +405,11 @@ each citing the packet or change text that left it open:
 
 - **L-1, the base text.** Drafted on change 1 and change 2 at `961c405`, and
   "Clean bounds its Git work and reports omitted work" on PR #19 (Dependencies
-  and Sequencing). PR #19's head moved from the ruled `5ce23d7` to `c462d87`
+  and Sequencing). The six requirements lane openRepoProject-2 said PR #19 does
+  not move are the six the three extensions modify besides the bounds; "Cleanup
+  revalidates destructive actions", which CD-4 adds, is not among them and PR #19
+  rewords its last clause, so its block is written on PR #19's text by the same
+  logic. PR #19's head moved from the ruled `5ce23d7` to `c462d87`
   after the rulings; `git diff 5ce23d7 c462d87` touches only its `design.md`
   and `tasks.md`, so the spec text the block is written on is the ruled one.
 - **L-2, citations** at `da33d92`; PR #16's added sentence is quoted as "PR #16
@@ -474,7 +482,8 @@ Departures from the rulings, each naming what it departs from:
   so by L-3 it is modified: for such a target the enumeration's child replaces
   that probe at revalidation and must print exactly the planned records, the
   cache stage's failures refuse with `state-changed`, and the revalidation the
-  MUST names is the one before the stage. No other extension modifies it.
+  MUST names is the one before the stage. No other extension modifies it. Its
+  block is written on PR #19's text (L-1 above).
 - **CD-5, the enumeration's argument vector** (completes B-2). B-2 names
   `status --porcelain=v2 --ignored=matching -z`; this adds
   `--untracked-files=normal` and the status pins. Git 2.43 refuses
