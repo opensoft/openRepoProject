@@ -40,15 +40,15 @@ reports omitted work"; [R] "Clean resolves its target Git-first"; and [P]
 Feature 004's names for the same concepts (classifications, gate reasons,
 refusal and row error codes, `omitted`, `schema_version`, exit statuses) are
 used unchanged, cited from `specs/004-project-clean-all-safe/` (`spec.md`,
-`data-model.md`, `contracts/project-clean.md`) at `dd923ee` on branch
-`004-project-clean-all-safe`, whose plan is still under review, with two
-exceptions the delta makes: `omitted` keeps 004's `{count, exactness}` shape
-with the exactness enum extended to `lower-bound` and `unknown`
-(POD:224-229), and `limits.worktree_rows` is the overview's own 512-row cap,
-the batch's caps being `batch_row_cap`, `report_row_cap` and `targets`
-(POD:610-617). The change pins its code citations at `da33d92`; this spec
-cites no line of `project`, and the plan re-pins them against the `main` of
-its day (proposal, "Dependencies and Sequencing").
+`data-model.md`, `contracts/project-clean.md`) at `5a71f83` on branch
+`004-project-clean-all-safe`, which carries its reviewed plan and its tasks
+but no code yet, with two exceptions the delta makes: `omitted` keeps 004's
+`{count, exactness}` shape with the exactness enum extended to `lower-bound`
+and `unknown` (POD:224-229), and `limits.worktree_rows` is the overview's
+own 512-row cap, the batch's caps being `batch_row_cap`, `report_row_cap`
+and `targets` (POD:610-617). The change pins its code citations at
+`da33d92`; this spec cites no line of `project`, and the plan re-pins them
+against the `main` of its day (proposal, "Dependencies and Sequencing").
 
 **Created before feature 004 merges**: The change creates this feature only
 after feature 004 merges (proposal, Status and "Dependencies and
@@ -97,13 +97,13 @@ session.
   count as a failed or timed-out probe? -> A: Not when it is reaped. A probe
   stopped at its bound is a complete outcome, never `probe-failed` ([E],
   "Combined probe"; design D1, "a deliberate early stop that records
-  nothing"; change 1's design D2, `complete-at-bound`), and its end through
-  the overview's own SIGTERM is not "a Git child exits nonzero" (POD:333).
-  The stopped child still gets SIGTERM to its group and SIGKILL 2 s later,
-  and one not reaped within the further 2 s is abandoned and recorded
-  `probe-timeout` (POD:172-176; [E], "Termination"); that row's
-  classification is then the one `project clean` gives the same row
-  (POD:383-386). Where applied: EC-019; FR-011.
+  nothing"; change 1's design D2, `complete-at-bound`; feature 004's data
+  model, "Driver outcome"), and its end through the overview's own SIGTERM
+  is not "a Git child exits nonzero" (POD:333). The stopped child still gets
+  SIGTERM to its group and SIGKILL 2 s later, and one not reaped within the
+  further 2 s is abandoned and recorded `probe-timeout` (POD:172-176; [E],
+  "Termination"); that row's classification is then the one `project clean`
+  gives the same row (POD:383-386). Where applied: EC-019; FR-011.
 - **C-3** Q: What does `PROJECTS_DIR` hold, and is an empty value a root? ->
   A: One directory, read as the command's existing projects-directory rule
   reads it, an empty value counting as unset so that the defaults apply
@@ -144,10 +144,13 @@ session.
   FR-023; Dependencies.
 - **C-8** Q: Does a squash-merged branch count as merged? -> A: Not in this
   feature. A squash merge never puts the tip into the merge target's
-  ancestry; change 1's open question 2 (the lead's LQ-2, a local
-  patch-equivalence proof) is deferred to a follow-on change, and the
-  overview would inherit its ruling through [L] (design, Open Questions;
-  proposal, Open Questions). Where applied: EC-013.
+  ancestry; change 1's open question 2 (the lane's LQ-2, a local
+  patch-equivalence proof) is still before Brett Heap, with the lead's
+  recommendation of a follow-on change, and is deferred to it; until he
+  rules, ancestry alone proves a branch merged, and the overview would
+  inherit any ruling through [L] (design, Open Questions; proposal, Open
+  Questions; feature 004's spec, EC-001 and Assumptions). Where applied:
+  EC-013.
 - **C-9** Q: What does a `scan-limit` error's `limit` hold for each cap, and
   how is the root cap reported? -> A: The cap's `limits` key, as the
   scenarios spell three of them (`candidates`, `root_entries` and
@@ -1031,9 +1034,12 @@ path"; "Non-UTF-8 common directory".
 - **EC-013**: A squash merge never puts the branch tip into the merge
   target's ancestry, so squash-merging repositories yield few
   `merged-removable` rows. Open question 2 of `add-project-clean-all-safe`
-  (the lead's LQ-2), a local patch-equivalence proof, is still before Brett
-  Heap, is deferred to a follow-on change, and is not decided here; the
-  overview would inherit its ruling through [L] (design, Open Questions).
+  (the lane's question LQ-2), a local patch-equivalence proof, is still
+  before Brett Heap, with the lead's recommendation of a follow-on change,
+  and is deferred to it; until he rules, the overview inherits the ratified
+  rule through [L], ancestry alone proving a branch merged, and a contrary
+  ruling amends the changes and this spec first (design, Open Questions;
+  feature 004's spec, EC-001).
 - **EC-014**: Where a Triad assembly's legs are submodule checkouts, as
   openRepoShape's README describes the Triad (the assembly repository holds
   `project.yaml` and "the two legs as submodules", at `spec/` and `code/`),
@@ -1740,9 +1746,10 @@ and [P] are change 1's requirements as the header names them.
   day (proposal, "Dependencies and Sequencing").
 - Feature 004's names (classifications, gate and refusal codes, row error
   codes, `schema_version`, exit statuses, the shared constants) are taken
-  from its spec, data model and contract at `dd923ee`, its plan still under
-  review; where the change and feature 004 differ for the overview, the
-  change governs, and the plan reconciles against feature 004's merged text.
+  from its spec, data model and contract at `5a71f83`, which carries its
+  reviewed plan and tasks but no code yet; where the change and feature 004
+  differ for the overview, the change governs, and the plan reconciles
+  against feature 004's merged text.
 - "Every existing test" means the suite on `main` when the feature is
   implemented: 96 tests at `961c405`, plus feature 004's.
 - Exact human text is fixed in design D3, D4, D5 and D10 and in the delta's
@@ -1773,24 +1780,42 @@ and [P] are change 1's requirements as the header names them.
   serial path every other subcommand uses, beside which the overview drives
   up to four handles from its own loop (this change's clarification N1); and
   the pure incremental parsers of the status, registry and ref listings, fed
-  chunks, doing no I/O and reporting a reached record bound. It also reads
-  feature 004's evidence model [E] with the version check, the
-  seventeen-name scrub and the pins, the ladder [L] as a pure function of a
-  row's evidence, the gates and refusal codes [G] with the shared constants
-  (`batch_row_cap` 128, `report_row_cap` 256, `targets` 16), Git-first
-  resolution [R], the path rules [P] and the 1 MiB manifest read (proposal,
-  "Dependencies and Sequencing"; `add-project-clean-all-safe` clarifications
-  N2 and design D2).
+  chunks, doing no I/O and reporting a reached record bound. Feature 004's
+  data model at `5a71f83` records that handle as its "Child handle" entity,
+  with the states `running`, `terminating`, `killing`, `reaped` and
+  `abandoned`, the kinds `probe`, `removal` and `delete-branch`, and a
+  termination that never blocks (lead ruling R-30), and its contract fixes a
+  human message for each refusal code that had none, which the plan may
+  reuse for `git-too-old` and `git-unavailable`. It also reads feature 004's
+  evidence model [E] with the version check, the seventeen-name scrub and
+  the pins, the ladder [L] as a pure function of a row's evidence, the gates
+  and refusal codes [G] with the shared constants (`batch_row_cap` 128,
+  `report_row_cap` 256, `targets` 16), Git-first resolution [R], the path
+  rules [P] and the 1 MiB manifest read (proposal, "Dependencies and
+  Sequencing"; `add-project-clean-all-safe` clarifications N2 and design
+  D2).
 - **Change 1's archive order**: change 2 archives after change 1. This
   feature realizes change 2's MODIFIED `project-review-safety` requirement,
   not change 1's `project-clean-review-safety` (proposal, Capabilities;
   design, Migration Plan step 5).
+- **Readings to reconcile in the plan**: feature 004's data model at
+  `5a71f83` reads two of [G]'s reflog outcomes more narrowly than change 1's
+  and change 2's words. A reflog read past its budget makes the row
+  `inspection-error` there, where both changes leave the row unprobed for
+  the gate, the overview keeping its `merged-removable` finding with the
+  read-only suggestion (change 1, [G]; POD:521-525); and
+  `reflog-unavailable` holds there for a reflog over 65,536 bytes, where the
+  deltas say one read to its 64 KiB bound, the overview's reading being the
+  one that withholds. Change 2 governs the overview (Assumptions), and the
+  plan reconciles both readings with feature 004's merged text, so that
+  FR-026's parity and SC-004 hold.
 - **Open items elsewhere that do not block this spec**: change 1's open
-  question 2 (the lead's LQ-2: squash merges and a local patch-equivalence
-  proof) is deferred to a follow-on change, which the overview would inherit
+  question 2 (the lane's LQ-2: squash merges and a local patch-equivalence
+  proof) is still before Brett Heap and deferred, on the lead's
+  recommendation, to a follow-on change, which the overview would inherit
   through [L] (EC-013); and feature 004's push-child exception (LQ-3, draft
-  PR #19, lead ruling R-28) concerns `clean`'s push child alone, which the
-  overview never starts (FR-016).
+  PR #19, lead ruling R-28), also awaiting his word, concerns `clean`'s push
+  child alone, which the overview never starts (FR-016).
 - **Features 001 to 003** (`specs/001-project-command/`,
   `specs/002-triad-first-project-new/`,
   `specs/003-parent-obstacle-wording/`): untouched; their tests join the
@@ -1813,8 +1838,8 @@ extension needing its own proposal (OQ-27):
   the closed PR #2's remote merge-target and pull-request lookups.
 - Family traversal and relationships beyond `relationships: []`; bench,
   container and park integrations.
-- Patch-equivalence retirement of squash-merged branches (LQ-2), a follow-on
-  change.
+- Patch-equivalence retirement of squash-merged branches (LQ-2, still before
+  Brett Heap), which the lead recommends as a follow-on change.
 - An estate-wide destructive batch, merge or branch reconciliation, a lock
   or quiescence protocol, a persistent cache or plan, an arbitrary-depth
   scan, and the exact bench or type doctor check.

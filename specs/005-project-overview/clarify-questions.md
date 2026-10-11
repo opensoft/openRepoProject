@@ -49,9 +49,10 @@ no cost now, and a later change can relax it once real runs show the need.
 (proposal, Status; `tasks.md` 3.1). Brett Heap's word of
 2026-10-11T16:14:21Z moved the specify step only, and the record says the
 plan and the implementation "still wait for feature 004's code and for his
-word". Feature 004 is at its plan (`dd923ee`), with no code yet. The
-overview drives feature 004's child handle, driver and parsers (spec,
-Dependencies), and the plan re-pins every code citation against `main`.
+word". Feature 004 carries its reviewed plan and its tasks (`5a71f83`), with
+no code yet. The overview drives feature 004's child handle, driver and
+parsers (spec, Dependencies), and the plan re-pins every code citation
+against `main`.
 
 **Question**: Which state of feature 004 must exist before the plan starts?
 

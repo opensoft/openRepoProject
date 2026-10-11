@@ -87,4 +87,13 @@ Lane: openRepoProject-4
   exception (FR-016, C-5); local ancestry outranks `remote-gone` (FR-028)
   and squash merges (LQ-2) are deferred to a follow-on change (EC-013,
   C-8); the MODIFIED capability is `project-review-safety` (C-7).
+- Feature 004's citations were re-pinned from `dd923ee` to `5a71f83` after
+  this validation, on lane openRepoProject-2's word relayed by the lead.
+  Every feature 004 term the spec uses was re-checked there: no shared term
+  was renamed, the cited FR-009, FR-062 and FR-067 and the contract's "Git
+  children" section are unchanged, and `prunable`, restored there, is
+  already in the overview's worktree row. The new "Child handle" entity is
+  named under Dependencies only, and the two reflog outcomes feature 004 now
+  reads more narrowly than the changes are recorded there for the plan to
+  reconcile.
 - Items marked incomplete require spec updates before `/speckit-clarify` or `/speckit-plan`
