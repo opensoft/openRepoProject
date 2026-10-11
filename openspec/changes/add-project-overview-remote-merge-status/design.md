@@ -137,11 +137,13 @@ protocol pins:
 
 1. `git for-each-ref --format=%(upstream:remotename)%00%(upstream:remoteref)%00 refs/heads/<target>`,
    where `<target>` is `merge_target.name`. An empty remote name (no
-   `branch.<target>.remote`, or a remote given as a URL), a remote of `.`, a
-   remote name beginning with `-`, or a merge ref outside `refs/heads/` gives
-   `no-remote-target`, and the second child does not run.
+   `branch.<target>.remote`, or a remote given as a URL), a remote of `.`, or
+   a merge ref outside `refs/heads/` gives `no-remote-target`, and the second
+   child does not run.
 2. `git remote get-url <remote name>`, which prints the URL as Git expands
    `url.<base>.insteadOf`. Exit 2 ("No such remote") gives `no-remote-target`.
+   The name is passed as Git printed it; a name Git would read as an option
+   only makes the child fail.
 
 Any other failure, a budget reached or a stop at the deadline gives
 `remote-target-unread` (D7). Each child's standard output is capped at
