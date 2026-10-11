@@ -288,10 +288,10 @@ keep its existing order of refusals' (:342-343), FR-011's 'a
 single-repository answer into the existing single-repository path with its
 generator selection, plan and yes confirmation' (:360-362), and
 contracts/project-new.md step 7 (:55-58) and its sentence 'A run that is not
-asked keeps today's order exactly' (:60). Feature 003's README check
-(quickstart.md:86 and spec.md:60-62) is superseded by this feature's README
-check. Their other statements stay true." Its `traceability.md` maps each
-delta scenario to its tests, the rewritten test (D3 item 6) to "A single
+asked keeps today's order exactly' (:60). Feature 003's README check (FR-010
+:187-189, quickstart.md:86 and spec.md:60-62) is superseded by this feature's
+README check. Their other statements stay true." Its `traceability.md` maps
+each delta scenario to its tests, the rewritten test (D3 item 6) to "A single
 repository taken at the question with a parent blocked by a non-directory",
 and keeps `test_pty_single_answer_is_unaffected_by_obstacles` for "A
 single-repository answer is unaffected" (feature 003's `traceability.md:25`).

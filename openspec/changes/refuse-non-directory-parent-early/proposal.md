@@ -322,9 +322,9 @@ known obstacle" (`:245-249`) and "A dry run with a known obstacle"
   single-repository path with its generator selection, plan and `yes`
   confirmation" (`:360-362`), and contracts/project-new.md step 7 (`:55-58`)
   and its sentence "A run that is not asked keeps today's order exactly"
-  (`:60`). Feature 003's README check (quickstart.md `:86`; spec.md
-  `:60-62`) is superseded by the new feature's README check. Statements that
-  stay true (003 SC-005; 002 FR-013) are not listed.
+  (`:60`). Feature 003's README check (FR-010 `:187-189`, quickstart.md
+  `:86` and spec.md `:60-62`) is superseded by the new feature's README
+  check. Statements that stay true (003 SC-005; 002 FR-013) are not listed.
 - **Traceability, for the realization**: feature 003's traceability.md row 7
   (`:25`) points at the test being rewritten; the new feature's traceability
   maps that test to the ADDED single-repository scenario, and keeps
