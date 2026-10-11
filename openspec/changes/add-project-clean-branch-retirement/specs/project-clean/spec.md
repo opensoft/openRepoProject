@@ -742,9 +742,9 @@ reason:
   ends; `branch-changed` (the re-read found another head, or the target is
   `removed` with `branch-advanced-after-removal` and no stage ran),
   `state-changed` (the merge target differs from the plan, or the re-read
-  could not establish a value), `branch-in-use`, `deadline-exceeded` (no work
-  remained to start the re-read or the branch child, or the work deadline
-  stopped the child), `interrupted`, `spawn-error`, `git-refused` (the child
+  could not establish a value), `branch-in-use`, `deadline-exceeded` (the work
+  deadline left no time to start, or stopped, the re-read or the branch child),
+  `interrupted`, `spawn-error`, `git-refused` (the child
   exited nonzero), `unconfirmed-retirement` (the child exited 0),
   `probe-timeout`, or `removal-ceiling` (the target's own reason, no stage
   having run);
@@ -752,10 +752,10 @@ reason:
   target's worktree was not removed, or the run stopped before the target;
   `branch-missing` (the rescan or the re-read found no branch, the target
   `removed` with `branch-missing-after-removal` included),
-  `target-not-removed` (the target is `refused`, `failed` or `unknown`, or
-  `not-attempted` for a cause of its own removal stage), or
-  `branch-retention-stop` (the run stopped at an earlier target's branch
-  stage);
+  `target-not-removed` (the target is `refused`, `failed` or `unknown`, or it
+  is `not-attempted` and the run stopped at or before a target that was not
+  `removed`), or `branch-retention-stop` (the target is `not-attempted` and the
+  run stopped at an earlier target that was `removed`);
 - null, with reason `reconciliation-incomplete`, only when the post-check
   failed or timed out, so that whether the branch exists is not established.
 
@@ -765,11 +765,12 @@ the branch stage's evidence SHALL be in `branch_retirement` alone. A null
 SHALL add no value to the target's `stage` or `reason` enums, to the ladder, to
 the gates, or to the refusal and note codes.
 
-Removal SHALL stop after the first target whose `branch_retirement` is not
-`retired` with reason null. Every later target SHALL be `not-attempted` with
-reason `batch-stopped`, or `interrupted` or `deadline-exceeded` where a signal
-or the deadline stopped the run, and SHALL carry `branch_retirement`
-`not-attempted` with reason `branch-retention-stop`. The exit status SHALL be
+Removal SHALL stop after the first target that is `removed` and whose
+`branch_retirement` is not `retired` with reason null, as it stops after the
+first target that is not a plain `removed`. Every target after it SHALL be
+`not-attempted` with reason `batch-stopped`, or `interrupted` or
+`deadline-exceeded` where a signal or the deadline stopped the run, and SHALL
+carry `branch_retirement` `not-attempted` with reason `branch-retention-stop`. The exit status SHALL be
 the one that "Clean records a reconcilable result for every removal target"
 orders: a retained branch exits 2 unless a signal, the deadline or a null
 `stage` decides first.

@@ -28,7 +28,8 @@ duplicate them.
   from change 1 and PR #19, 15 added), and
   `specs/project-clean-review-safety/spec.md` modifies one (4 scenarios: 3
   carried, 1 added), every scenario of each modified requirement's source text
-  kept byte for byte; `design.md` holds D1 to D10 (`8341954`, `d0b33ce`);
+  kept byte for byte; `design.md` holds D1 to D10 (`8341954`, `d0b33ce`, and
+  the commit titled 'Settle which later targets carry branch-retention-stop');
   verified by `grep -c '^#### Scenario:'` on each spec file.
 - [x] 1.5 Validation passes: `/usr/bin/openspec validate
   add-project-clean-branch-retirement --strict` reports the change valid,

@@ -237,7 +237,7 @@ without the flag prints change 1's record byte for byte.
 | Stage | When | Reasons |
 | --- | --- | --- |
 | `retired` | the post-check shows the branch absent after the branch child ran | null (exit 0); `git-failed` (nonzero exit); `probe-timeout`, `deadline-exceeded` (`project` stopped the child past its budget, the latter when the work deadline was the limit) |
-| `retained` | the target is `removed` and its branch is present when the stage ends | `branch-changed`, `state-changed`, `branch-in-use`, `deadline-exceeded`, `interrupted`, `spawn-error`, `git-refused` (nonzero exit), `unconfirmed-retirement` (exit 0), `probe-timeout`, `removal-ceiling` |
+| `retained` | the target is `removed` and its branch is present when the stage ends | `branch-changed`, `state-changed`, `branch-in-use`, `deadline-exceeded` (the work deadline left no time to start, or stopped, the re-read or the branch child), `interrupted`, `spawn-error`, `git-refused` (nonzero exit), `unconfirmed-retirement` (exit 0), `probe-timeout`, `removal-ceiling` |
 | `not-attempted` | no stage ran | `branch-missing`, `target-not-removed`, `branch-retention-stop` |
 | null | the post-check failed or timed out | `reconciliation-incomplete` |
 
@@ -250,8 +250,8 @@ A target that does not enter the stage takes its record from its own stage:
 | `removed`, `removal-ceiling`, branch present | `retained`, `removal-ceiling` |
 | `removed`, `removal-ceiling`, branch absent | `not-attempted`, `branch-missing` |
 | `refused`, `failed` or `unknown` | `not-attempted`, `target-not-removed` |
-| `not-attempted`, the run stopped at an earlier branch stage | `not-attempted`, `branch-retention-stop` |
-| `not-attempted`, any other cause | `not-attempted`, `target-not-removed` |
+| `not-attempted`, the run stopped at an earlier target that was `removed` | `not-attempted`, `branch-retention-stop` |
+| `not-attempted`, the run stopped at or before a target that was not `removed` | `not-attempted`, `target-not-removed` |
 
 `reconciliation` stays the rescan that decided the removal, so a retired
 target shows `branch_present: true` there and `retired` here; the record's two
@@ -284,8 +284,10 @@ The batch stops after the first target whose removal is not a plain `removed`
 or whose `branch_retirement` is not `retired` with reason null. Later targets
 are `not-attempted` with change 1's reason (`batch-stopped`, or `interrupted`
 or `deadline-exceeded` when a signal or the deadline stopped the run), their
-`branch_retirement` `not-attempted` with `branch-retention-stop` when the stop
-came at a branch stage. The exit status is change 1's first matching row, this
+`branch_retirement` `not-attempted` with `branch-retention-stop` when the run
+stopped at a target that was `removed` (its branch retained, missing or not
+established) and with `target-not-removed` when it stopped at or before a
+target that was not. The exit status is change 1's first matching row, this
 change's additions marked "(flag)":
 
 | Exit | First matching row |
