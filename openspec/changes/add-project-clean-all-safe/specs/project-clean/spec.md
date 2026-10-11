@@ -817,7 +817,8 @@ single-target removal the limit SHALL count P alone, because `not-requested`
 precedes it.
 
 Plans and apply results SHALL report `probes: {estimated, performed}` and
-`operations: {estimated, performed}`, every Git child counted; `limits`
+`operations: {estimated, performed}`, every Git child counted once, a removal
+under `operations` and every other child under `probes`; `limits`
 (`worktree_rows`, the row cap of the plan's mode, `targets`, `ignored_entries`,
 `status_records` and `ignored_samples`); and `budget` (`probe_timeout_seconds`
 5, `invocation_timeout_seconds` 60, `reconciliation_reserve_seconds` 10,
@@ -865,7 +866,8 @@ recompute the full report, and the final rescan at most three.
 - **THEN** every target's revalidation spawns at most five children, the final
   rescan spawns three, three removals run, no merged-set listing and no status
   probe of a non-selected worktree runs after confirmation, and the record's
-  `probes.performed` equals the wrapper's count
+  `probes.performed` equals the wrapper's count of children other than the three
+  removals, and its `operations.performed` is 3
 - **AND** every `status` and `ls-files` child names its own worktree as its
   directory, and every other child after resolution, the removals included,
   names the command directory

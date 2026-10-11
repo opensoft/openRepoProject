@@ -256,7 +256,8 @@ Scope).
   deferred row, and the human report says why. The `target-cap`
   refusal is retired; the code survives only as `add-project-overview`'s
   limiting gate reason (Decisions). Plans and results report `probes` and
-  `operations` as `{estimated, performed}` (`BA:816-830`). The caps were
+  `operations` as `{estimated, performed}`, a removal counted under `operations`
+  and every other Git child under `probes`, once (`BA:816-830`). The caps were
   measured by governance task 2.1 and stand (Decisions, OQ-4).
 - **Git-first resolution in every `clean` mode.** The read-only report,
   `--json`, `--all-safe` and every `--apply --action` resolve their argument
