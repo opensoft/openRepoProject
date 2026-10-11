@@ -388,11 +388,12 @@ Decisions where the sources and the rulings are silent:
   saves at most 63 fast failures but makes which rows are answered depend on
   completion order, against APO/ov:244-246.
 - **gh's own traffic off.** Each `gh` child runs with telemetry, update
-  notices and prompts disabled through gh's documented environment
+  notices, prompts and colour disabled through gh's documented environment
   (`GH_TELEMETRY=false`, `GH_NO_UPDATE_NOTIFIER`,
-  `GH_NO_EXTENSION_UPDATE_NOTIFIER`, `GH_PROMPT_DISABLED`; gh 2.96.0's
-  `gh help environment`), and without `GH_DEBUG`, `DEBUG`, `GH_HOST` or
-  `GH_REPO`, so that it sends nothing but the query and logs nothing. An
+  `GH_NO_EXTENSION_UPDATE_NOTIFIER`, `GH_PROMPT_DISABLED`, `NO_COLOR`;
+  gh 2.96.0's `gh help environment`), and without `GH_DEBUG`, `DEBUG`,
+  `GH_HOST`, `GH_REPO`, `GH_FORCE_TTY` or `CLICOLOR_FORCE`, so that it
+  sends nothing but the query, logs nothing and prints plain output. An
   addition: without it a `gh` child could send data other than the query,
   against DI:1038-1039's read-only boundary.
 
