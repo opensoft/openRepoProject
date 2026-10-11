@@ -73,7 +73,9 @@ paths and two environment scrubs, or refactor code this change owns.
   `terminate_group()` (TERM, the 2 s grace, then KILL) and `reap()`, bounded
   as N1 states;
 - a one-wide driver of that handle (N1's loop with one child), the serial
-  path every `clean`, `status`, `doctor` and `update` call uses;
+  path every `clean`, `status`, `doctor` and `update` call uses but the push
+  child of `clean --action push`, which runs as before this change (design.md
+  D11, the push-child exception);
 - the status, registry (`worktree list --porcelain -z`) and ref
   (`for-each-ref`) parsers as pure incremental byte parsers: fed chunks,
   doing no I/O, and reporting when a record bound is reached so that the
