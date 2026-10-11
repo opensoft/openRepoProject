@@ -561,8 +561,9 @@ of in how many worktrees. A run that stops at a target whose cache stage ended
 `refused` or `partial` SHALL print, before its stop block, one line naming that
 target and saying that nothing was deleted, or how many of its cache paths were
 removed and which remain, with the command that shows a fresh plan for the
-rest. The residual-window line of the confirmation and of the result SHALL also
-name caches recreated after a cache stage.
+rest. When the plan selects a target with listed caches, the residual-window
+line of the confirmation and of the result SHALL also name caches recreated
+after a cache stage; otherwise it SHALL stay as it is.
 
 #### Scenario: A merged worktree whose only ignored files are caches
 
