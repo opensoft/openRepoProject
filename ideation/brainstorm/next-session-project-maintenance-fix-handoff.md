@@ -317,10 +317,12 @@ byte-identical through `da33d92`.
   2026-10-08 by change 1 council V3), in both documents. All Git output is
   parsed NUL-delimited. Lane openRepoProject-2 ruling R-23 (2026-10-09) adds
   `-c protocol.allow=never` to every Git child of `clean`, `status`, `doctor`,
-  `update`, and the overview, beside those pins, so a lazy fetch in a partial
-  clone fails locally and its row is `inspection-error`, because Git 2.43 lacks
-  `GIT_NO_LAZY_FETCH` (change 1 at `8aad1e8`, change 2 at `1cc936e`). Ruling
-  R-25 adds `protocol.<name>.allow=never` for `file`, `ssh`, `git`, `http`,
+  `update`, and the overview (the push child of `clean --action push` excepted
+  if Brett Heap accepts draft PR #19; see Batch "Identity"), beside those pins,
+  so a lazy fetch in a partial clone fails locally and its row is
+  `inspection-error`, because Git 2.43 lacks `GIT_NO_LAZY_FETCH` (change 1 at
+  `8aad1e8`, change 2 at `1cc936e`). Ruling R-25 adds
+  `protocol.<name>.allow=never` for `file`, `ssh`, `git`, `http`,
   `https`, and `ext`, and the seventeenth scrubbed name, `GIT_ALLOW_PROTOCOL`,
   because `protocol.allow` is only the default policy (change 1 at `251978d`,
   change 2 at `a8f710d`). The command spellings in the five documents show the
@@ -405,7 +407,8 @@ the Git floor departure of change 1 lead ruling R-21 are marked ratified, as
 Brett Heap ratified both proposals on 2026-10-09 ("ratify, merge #11 and run the
 runbook", to lane openRepoProject-2) with every proposal decision, and PRs #11
 and #12 merged as `0050f3e` and `961c405`. Only the second question for Brett
-Heap remains open. The [packet overview](project-maintenance-overview.md)
+Heap remains open; the push-child exception in draft PR #19 is also before him
+(see Batch "Identity"). The [packet overview](project-maintenance-overview.md)
 carries the entries that were open and names the decided ones in one paragraph.
 
 - The measured per-child and per-removal costs and the overview's listing
@@ -553,7 +556,7 @@ departed from some packet decisions, each bullet saying so; this revision keeps
 the record accurate and re-decides nothing. Brett Heap ratified both proposals
 on 2026-10-09 ("ratify, merge #11 and run the runbook", his words to lane
 openRepoProject-2), so each decision and departure below is ratified 2026-10-09
-with the merge (PR #11 as `0050f3e`, PR #12 as `961c405`).
+with the merges (PR #11 as `0050f3e`, PR #12 as `961c405`).
 A ruling is lane openRepoProject-2's of 2026-10-08 unless marked as lane
 openRepoProject-3's. Where a decision changes a packet sentence, the
 sentence now states the decision, and its bullet names the passages under
@@ -1327,8 +1330,8 @@ rulings R-24 and R-25 (final head `df75ef6`, merged on `main` as `0050f3e`).
   constants and reports them in its `limits`: `batch_row_cap` (128),
   `report_row_cap` (256), and `target_limit` (16), which ruling R-14 renames
   `targets` at `fa9f0be` to match `clean`'s plan. Overview "Attention
-  categories", the synthesis's bounds row, and the "Caps at 150 ms" bullet above
-  carry it.
+  categories" and its envelope table and fixture, the synthesis's bounds row,
+  and the "Caps at 150 ms" bullet above carry it.
 - Change 1's final content is `251978d`, its final head `df75ef6`, and its merge
   on `main` `0050f3e` (PR #11, squash-merged 2026-10-09): read at `0b3c33d`, fix
   round at `d6aaa9a`, wordings at `6792e06`, R-15 at `9eeac52`, R-17 at
@@ -1375,11 +1378,12 @@ openRepoProject-2 ruling R-4, 2026-10-09".
 - R-9, path validity flags: every nested JSON path value carries a validity flag
   beside it, and `ignored_samples` entries become objects
   `{path, path_valid_utf8}` in both changes, where the packet has an array of
-  strings. Overview "Worktree-specific probes", its worktree-row table, and its
-  "Representation rules", and Batch "Bounded ignored-file inspection", its plan
-  envelope's `worktrees` row, and its "Representation rules" carry it; the
-  fixtures of both documents keep the packet's shape, with a one-line note
-  beside each. Change 1 at `0b3c33d` names the keys:
+  strings. Overview "Worktree-specific probes", its project-row, worktree-row,
+  and finding tables, its error shape, its "Path encoding", its "Representation
+  rules", and its fixture, and Batch "Bounded ignored-file inspection", its plan
+  envelope's `worktrees`, `repository`, `selected`, and `refusals` rows, its
+  apply result's `targets`, its "Representation rules", and both its fixtures
+  carry it. Change 1 at `0b3c33d` names the keys:
   `repository.root_valid_utf8`, which also covers the envelope's `root`, and
   `common_dir_valid_utf8`, both always true in `clean`; `path_valid_utf8` on
   refusals, row errors, and apply targets; and the same flag added, additively,
@@ -1637,7 +1641,9 @@ the Speckit handoff.
   Context, the later-rulings list, and task 1.2 name "R-11 to R-15, R-17 and
   R-19", R-16 and R-18 binding change 2 only. At `7e2589f` change 1 has 97
   delta scenarios and passes `openspec validate --all --strict` for 7 of 7
-  items.
+  items. Batch "Fresh plan and plan digest", "Cap arithmetic", "Representation
+  rules", and "Plan envelope" carry the band above 128 rows with R-11 (c),
+  R-15, and R-17.
 - R-16 (change 2, landed at `ef288fe`): a reflog read that does not finish
   leaves the row unprobed, and the repository's `inspection-incomplete` gate
   withholds the suggestion, so that gate's remedy becomes "repair the
@@ -1691,9 +1697,10 @@ the Speckit handoff.
   resolution; the scrub list of the `project-command` evidence model and
   design D6; task 2.2, which is ticked; and the proposal's departures list,
   which records a departure from task 2.2's literal rule, raising the floor to
-  the lowest version verified, here 2.40, because 2.40 would exclude Debian 12's
-  Git 2.39, a departure ratified 2026-10-09 with the merge. The design's opening
-  and the proposal's later-rulings list name R-21. No scenario changed at
+  the lowest version verified, here 2.40; the departure, made because 2.40
+  would exclude Debian 12's Git 2.39, was ratified 2026-10-09 with the merge.
+  The design's opening and the proposal's later-rulings list name R-21. No
+  scenario changed at
   `c873c81`, so change 1 kept 97 delta scenarios there, and `b772195` adds one,
   for the sixteenth name, 98 in all; change 2 states no count or list of the
   scrubbed variables and is untouched there. Ruling R-25 below adds a
@@ -1720,10 +1727,12 @@ the Speckit handoff.
   `1cc936e`; lane openRepoProject-2, 2026-10-09) comes from change 2's OQ-4
   measurement: Git 2.43 lacks `GIT_NO_LAZY_FETCH`, so a read-only probe in a
   partial (promisor) clone could fetch a missing object from the network. Every
-  Git child of `clean`, `status`, `doctor`, `update`, and the overview runs with
-  `-c protocol.allow=never` beside the existing pins, so a lazy fetch fails
-  locally, the probe fails, and its row is `inspection-error`, never a network
-  call. Change 1's shared evidence model, in its `project-command` delta, states
+  Git child of `clean`, `status`, `doctor`, `update`, and the overview (the push
+  child of `clean --action push` excepted if Brett Heap accepts draft PR #19;
+  see the R-25 bullet below) runs with `-c protocol.allow=never` beside the
+  existing pins, so a lazy fetch fails locally, the probe fails, and its row is
+  `inspection-error`, never a network call. Change 1's shared evidence model, in
+  its `project-command` delta, states
   it with one scenario, "A lazy fetch in a partial clone is refused locally", so
   that delta has 17 scenarios and change 1 has 100 in all (65, 18, and 17); the
   overview carries it by citation plus the literal pin, records the failed probe
@@ -1747,9 +1756,9 @@ the Speckit handoff.
   packed, 240 ms and 838 ms loose; the merged set 17-48 ms; and a 20,000-file
   worktree removal 0.66 s and 0.72 s, 14.1 s at worst under CPU saturation. At
   128 rows the worst case spawns the 16th removal at 23.6 s with 26.4 s left and
-  ends at 24.3 s, or 32.6 s with 20,000-file removals; 256 report rows take
-  19.9 s; the final rescan uses 0.16 s of the 10 s reserve; and the largest
-  probe child took 3.8 s. The survey covers 355 repositories, 296 resolving,
+  ends at 24.3 s; 256 report rows take 19.9 s; the final rescan uses 0.16 s of
+  the 10 s reserve; and the largest probe child took 3.8 s. The survey covers
+  355 repositories, 296 resolving,
   with 561 rows, and selects 17 (13 before Brett Heap's ruling), none excluded
   as `reflog-unavailable` or `unstarted-branch`. The fit's rejections are
   degraded cases recorded as risks, not cap changes: rows of 100,000-entry
@@ -1782,7 +1791,16 @@ the Speckit handoff.
   "Identity", Overview "Probe model and deadline", the packet overview's
   evidence-model paragraph, the synthesis's evidence model, the "Shared probes"
   and "Git 2.36 floor (C12)" bullets above, and the R-21 departure in the open
-  lists carry it.
+  lists carry it. Lane openRepoProject-2 later found that these pins also stop
+  the one Git child that reaches a remote, the kept push child of
+  `clean --action push`: Git refuses a pinned push over every protocol, so a
+  push to a local-path origin fails with "transport 'file' not allowed". The
+  push-child exception, which exempts that child from the seven pins, is
+  proposed as an amendment to add-project-clean-all-safe in draft PR #19 for
+  Brett Heap's word; until he rules, the landed text pins every Git child
+  (lane 2's LQ-3). The same draft records, as wording ruling R-27, that
+  `probes.performed` counts every Git child except the removals, which
+  `operations.performed` counts.
 - Change 2 at `996a181` also landed R-2, the submodule test first in every
   repository at no extra child, with the outcomes recorded in "Change 2 phase 6
   records — 2026-10-09" above; R-3, the UTF-8 check of `common_dir`; R-5, the

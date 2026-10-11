@@ -159,14 +159,16 @@ worktree row, the main one included, gets exactly one combined bounded probe,
 `git status --porcelain=v1 -z --untracked-files=normal --ignored=matching`,
 run with `-c core.untrackedCache=false -c core.fsmonitor=false`, which stops
 reading at a 65th ignored record or a 4,097th record of any kind.
-Every Git child of both features, and of `status`, `doctor`, and `update`, also
-runs with `-c protocol.allow=never` (lane openRepoProject-2 ruling R-23,
-2026-10-09; change 1 at `8aad1e8`, change 2 at `1cc936e`), because Git 2.43
-lacks `GIT_NO_LAZY_FETCH`, so a lazy fetch in a partial clone fails locally and
-its row is `inspection-error`. Ruling R-25 (change 1 at `251978d`, change 2 at
-`a8f710d`) adds the six per-protocol `allow=never` pins and `GIT_ALLOW_PROTOCOL`
-to the environment scrub, because `protocol.allow` is only the default policy.
-Worktree-specific probes run as `git -C <worktree path>` against that worktree's
+Every Git child of both features, and of `status`, `doctor`, and `update` (the
+push child of `clean --action push` excepted if Brett Heap accepts draft PR #19;
+see Batch "Identity"), also runs with `-c protocol.allow=never` (lane
+openRepoProject-2 ruling R-23, 2026-10-09; change 1 at `8aad1e8`, change 2 at
+`1cc936e`), because Git 2.43 lacks `GIT_NO_LAZY_FETCH`, so a lazy fetch in a
+partial clone fails locally and its row is `inspection-error`. Ruling R-25
+(change 1 at `251978d`, change 2 at `a8f710d`) adds the six per-protocol
+`allow=never` pins and `GIT_ALLOW_PROTOCOL` to the environment scrub, because
+`protocol.allow` is only the default policy. Worktree-specific probes run as
+`git -C <worktree path>` against that worktree's
 own index, only after its identity is verified; repository-wide probes run as
 `git -C <repository.root>` (`common_dir` for a bare repository), except the
 identity probe, which runs in the candidate. When a linked worktree is reached
@@ -431,7 +433,8 @@ are design recommendations, not recorded user approvals of every detail.
 
 The proposal decisions that were open, consolidated from both feature documents'
 "Alternatives and open decisions" sections, all closed now except the second
-question for Brett Heap: the measured costs by measurement (ruling D-Q), the
+question for Brett Heap (the push-child exception in draft PR #19 is also before
+him; see Batch "Identity"): the measured costs by measurement (ruling D-Q), the
 first question by his ruling, and the departures by his ratification of both
 proposals on 2026-10-09 ("ratify, merge #11 and run the runbook", to lane
 openRepoProject-2), with PRs #11 and #12 merged as `0050f3e` and `961c405`:
@@ -498,7 +501,7 @@ openRepoProject-2), with PRs #11 and #12 merged as `0050f3e` and `961c405`:
   2.40 (Debian 12 ships 2.39): departure, ratified 2026-10-09 with the merge.
 
 Every other decision this list carried is now a proposal decision, ratified
-2026-10-09 with the merge, recorded in the [design-fix
+2026-10-09 with the merges, recorded in the [design-fix
 handoff](next-session-project-maintenance-fix-handoff.md) under
 "Decisions taken by the proposals — 2026-10-08": four-way concurrency, with
 the serial fallback of 32 candidates and 128 worktree rows if design rejects

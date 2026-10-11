@@ -365,12 +365,14 @@ unconditionally. Every overview child is a read-only probe, so each also runs
 with `GIT_OPTIONAL_LOCKS=0`, as the baseline `probe` helper already sets, and
 `status` never rewrites the index. Under lane openRepoProject-2 ruling R-23
 (2026-10-09; change 2 at `1cc936e`), every overview child, as every Git child of
-`clean`, `status`, `doctor`, and `update`, also runs with
-`-c protocol.allow=never` beside the status probe's pins, because Git 2.43 lacks
-`GIT_NO_LAZY_FETCH`: a read-only probe in a partial clone could otherwise fetch
-a missing object from the network, and with the pin the fetch fails locally, the
-probe is recorded `probe-failed`, and a failed status probe leaves its worktree
-`inspection-error`. R-25 adds `protocol.<name>.allow=never` for `file`, `ssh`,
+`clean`, `status`, `doctor`, and `update` (the push child of
+`clean --action push` excepted if Brett Heap accepts draft PR #19; see Batch
+"Identity"), also runs with `-c protocol.allow=never` beside the status probe's
+pins, because Git 2.43 lacks `GIT_NO_LAZY_FETCH`: a read-only probe in a partial
+clone could otherwise fetch a missing object from the network, and with the pin
+the fetch fails locally, the probe is recorded `probe-failed`, and a failed
+status probe leaves its worktree `inspection-error`. R-25 adds
+`protocol.<name>.allow=never` for `file`, `ssh`,
 `git`, `http`, `https`, and `ext`, because `protocol.allow` is only the default
 policy. Standard input is closed and output is read as bytes. The overview uses
 local refs only: it never fetches, pulls, resets, bootstraps, runs validators,
@@ -471,8 +473,9 @@ the same rule for a repository with a root.
    mismatch skips the status probe.
 2. Status: one streamed
    `git status --porcelain=v1 -z --untracked-files=normal --ignored=matching`,
-   run with `-c core.untrackedCache=false -c core.fsmonitor=false`, gives
-   both the dirty and the ignored state. The explicit
+   run with `-c core.untrackedCache=false -c core.fsmonitor=false` (and the
+   protocol pins of rulings R-23 and R-25; see "Probe model and deadline"),
+   gives both the dirty and the ignored state. The explicit
    `--untracked-files=normal` is required: without it, a user's
    `status.showUntrackedFiles=no` makes Git refuse the `--ignored`
    combination with “Unsupported combination of ignored and untracked-files
@@ -661,8 +664,10 @@ failed or timed-out child or call records its code, and each nulls only the
 fields it and its dependants would have established. Each error is
 `{code, message, path?}`: `message` has at most 200 characters (for a failed
 probe, the first line of Git's standard error), and `path` names the file or
-directory involved. Evidence gathered before a failure is kept, and every
-field not established stays null. A result whose `errors` is non-empty has
+directory involved, with `path_valid_utf8` beside it whenever it is present
+(under lane openRepoProject-2 ruling R-9 (2026-10-09), a departure from the
+packet). Evidence gathered before a failure is kept, and every field not
+established stays null. A result whose `errors` is non-empty has
 `status: "error"`; otherwise its status is `ok`. The wrapper never catches
 `KeyboardInterrupt` or `SystemExit`.
 
@@ -947,7 +952,7 @@ clean report's field names and meanings wherever it carries the same fact.
 | `schema_version` | integer | `1` |
 | `observed_at` | string | collection start, RFC 3339 UTC |
 | `roots` | array of root objects | canonical byte order |
-| `limits` | object of integers | `roots` 32, `candidates` 128, `worktree_rows` 512, `root_entries` 4096, `ignored_entries` 64, `status_records` 4096, `ignored_samples` 8 |
+| `limits` | object of integers | `roots` 32, `candidates` 128, `worktree_rows` 512, `root_entries` 4096, `ignored_entries` 64, `status_records` 4096, `ignored_samples` 8, and `batch_row_cap` 128, `report_row_cap` 256, and `targets` 16, the last three read at run time from `clean`'s shared constants, never from a clean plan, and enforced by no overview cap (lane openRepoProject-2 ruling R-7, change 2 at `996a181`; `targets` so named by ruling R-14 at `fa9f0be`) |
 | `budget` | object of integers | `probe_timeout_seconds` 5, `invocation_timeout_seconds` 60, `probe_concurrency` 4 |
 | `probes` | object of integers | `estimated`, `performed` |
 | `projects` | array of project rows | sorted by the bytes of `path` |
@@ -967,9 +972,9 @@ directory entries read, or null when the root was not listed.
 | --- | --- | --- |
 | `name` | string | manifest `name`, else the directory name |
 | `path` | string | canonical project directory: `repository.root` for a Git row (the candidate when `root` is null), the holder for a family holder, else the candidate |
-| `path_valid_utf8` | boolean | false when `path`, `repository.root`, or `repository.common_dir` is not valid UTF-8 |
+| `path_valid_utf8` | boolean | false when `path`, `repository.root`, or `repository.common_dir` is not valid UTF-8; under lane openRepoProject-2 ruling R-9 (2026-10-09), a departure from the packet, false exactly when `path` is not valid UTF-8, `repository` carrying its own two flags |
 | `kind` | string enum or null | `single`, `project-manifest`, or `family-holder`; null when the marker checks failed |
-| `repository` | object or null | `{root, common_dir, dev, ino}`; `root` is null for a bare main entry |
+| `repository` | object or null | `{root, common_dir, dev, ino}`; `root` is null for a bare main entry; under lane openRepoProject-2 ruling R-9 (2026-10-09), a departure from the packet, also `root_valid_utf8` and `common_dir_valid_utf8`, booleans, each false exactly when its path is not valid UTF-8 and null only beside a null path |
 | `merge_target` | object or null | `{name, source, sha}` |
 | `git` | object or null | the checkout at `path`, typed below |
 | `worktrees` | array or null | worktree rows, main worktree first, then by path bytes |
@@ -1033,7 +1038,7 @@ repository gate does not apply; otherwise the read-only
 | `code` | string enum | a code from the attention table |
 | `category` | string enum | `repair`, `preserve`, `housekeeping`, or `informational` |
 | `severity` | string enum | `error`, `warning`, or `info` |
-| `checkout` | object or null | `{path, dev, ino, admin_id}` of the worktree, or null for a repository-level finding |
+| `checkout` | object or null | `{path, dev, ino, admin_id}` of the worktree, `{path, path_valid_utf8, dev, ino, admin_id}` under lane openRepoProject-2 ruling R-9 (2026-10-09), a departure from the packet; or null for a repository-level finding |
 | `evidence_source` | string enum | `worktree-status`, `worktree-registry`, `local-refs`, `manifest`, or `filesystem` |
 | `message` | string | the classifier's recommendation text, or a fixed sentence for other codes |
 | `observed_at` | string | RFC 3339 UTC time at which the deciding probe completed |
@@ -1043,9 +1048,10 @@ repository gate does not apply; otherwise the read-only
 
 ### Representation rules
 
-- Every field listed above is always present. Only an error object's `path` is
-  optional, and only `scan-limit` and `deadline-exceeded` errors add `limit`
-  (a key of `limits`) and `omitted` (`{count, exactness}`).
+- Every field listed above is always present. Only an error object's `path`,
+  with the `path_valid_utf8` beside it, is optional, and only `scan-limit` and
+  `deadline-exceeded` errors add `limit` (a key of `limits`) and `omitted`
+  (`{count, exactness}`).
 - Integers are JSON integers, never strings. Object ids are full lowercase
   hexadecimal (40 characters in a SHA-1 repository). Times are RFC 3339 UTC
   with a `Z` suffix. Durations are integer seconds in fields ending in
@@ -1066,14 +1072,20 @@ repository gate does not apply; otherwise the read-only
   worktree) and an absent default root (expanded but unresolved). Under lane
   openRepoProject-2 ruling R-9 (2026-10-09), a departure from the packet, every
   nested JSON path value carries a validity flag beside it, and an
-  `ignored_samples` entry is an object `{path, path_valid_utf8}`.
+  `ignored_samples` entry is an object `{path, path_valid_utf8}`:
+  `path_valid_utf8` beside each `path`, a finding's `checkout` and an error
+  object's included, each speaking for its own path alone, and
+  `root_valid_utf8` and `common_dir_valid_utf8` in `repository`, each false
+  exactly when that path is not valid UTF-8 and null only beside a null path
+  (change 2 at `996a181`); the tables above list them.
 - Output size is bounded by the caps: at most 128 project rows, 512 worktree
   rows, eight samples per worktree row, and 200-character messages.
 
 ### Repository identity and the clean handoff
 
-Every Git row carries `repository: {root, common_dir, dev, ino}`, where `dev`
-and `ino` identify `common_dir`. A clean suggestion is exactly
+Every Git row carries `repository: {root, common_dir, dev, ino}` (plus
+`root_valid_utf8` and `common_dir_valid_utf8` under ruling R-9), where `dev` and
+`ino` identify `common_dir`. A clean suggestion is exactly
 `["project", "clean", "<repository.root>", "--all-safe"]` or
 `["project", "clean", "<repository.root>"]` with the absolute canonical root. It
 is emitted for a cleanup opportunity whenever `repository.root` is non-null; a
@@ -1134,9 +1146,12 @@ every control, bidirectional, and format code point, so the document never
 carries one raw. A path that is not valid UTF-8 is
 emitted in escaped form: each undecodable byte becomes the four characters
 `\xHH` (lowercase hexadecimal), each literal backslash is doubled, and the
-owning object carries `path_valid_utf8: false`. That row or worktree gets an
-`unsupported-path-bytes` finding, never contributes to a clean suggestion,
-and is excluded from batch apply with reason `unsupported-path-bytes`.
+owning object carries `path_valid_utf8: false`, except that `repository.root`
+and `common_dir` carry their own flags, `root_valid_utf8` and
+`common_dir_valid_utf8`, in `repository` (ruling R-9). That row or worktree
+gets an `unsupported-path-bytes` finding, never contributes to a clean
+suggestion, and is excluded from batch apply with reason
+`unsupported-path-bytes`.
 
 In human output, a path that contains no control character (U+0000 to U+001F
 or U+007F to U+009F), no bidirectional or format character (U+200E, U+200F,
@@ -1181,7 +1196,8 @@ identity probe.
   ],
   "limits": {"roots": 32, "candidates": 128, "worktree_rows": 512,
              "root_entries": 4096, "ignored_entries": 64,
-             "status_records": 4096, "ignored_samples": 8},
+             "status_records": 4096, "ignored_samples": 8,
+             "batch_row_cap": 128, "report_row_cap": 256, "targets": 16},
   "budget": {"probe_timeout_seconds": 5, "invocation_timeout_seconds": 60,
              "probe_concurrency": 4},
   "probes": {"estimated": 11, "performed": 8},
@@ -1190,7 +1206,8 @@ identity probe.
      "path_valid_utf8": true, "kind": "single",
      "repository": {"root": "/home/user/projects/atlas",
                     "common_dir": "/home/user/projects/atlas/.git",
-                    "dev": 2049, "ino": 1310722},
+                    "dev": 2049, "ino": 1310722,
+                    "root_valid_utf8": true, "common_dir_valid_utf8": true},
      "merge_target": {"name": "main", "source": "origin-head",
                       "sha": "9f3b2c4d5e6f708192a3b4c5d6e7f8091a2b3c4d"},
      "git": {"branch": "main",
@@ -1208,7 +1225,8 @@ identity probe.
         "ahead": 0, "behind": 0, "remote_present": true,
         "merged_into_target": true, "dirty": false, "ignored_files": 2,
         "ignored_files_truncated": false,
-        "ignored_samples": [".venv/", "build/"],
+        "ignored_samples": [{"path": ".venv/", "path_valid_utf8": true},
+                            {"path": "build/", "path_valid_utf8": true}],
         "classification": "protected-default"},
        {"path": "/home/user/worktrees/atlas-export", "path_valid_utf8": true,
         "dev": 2049, "ino": 1442817, "admin_id": "atlas-export",
@@ -1226,6 +1244,7 @@ identity probe.
        {"code": "merged-removable", "category": "housekeeping",
         "severity": "info",
         "checkout": {"path": "/home/user/worktrees/atlas-export",
+                     "path_valid_utf8": true,
                      "dev": 2049, "ino": 1442817, "admin_id": "atlas-export"},
         "evidence_source": "local-refs",
         "message":
@@ -1242,14 +1261,16 @@ identity probe.
      "path_valid_utf8": true, "kind": "project-manifest",
      "repository": {"root": "/home/user/projects/ledger",
                     "common_dir": "/home/user/projects/ledger/.git",
-                    "dev": 2049, "ino": 1572866},
+                    "dev": 2049, "ino": 1572866,
+                    "root_valid_utf8": true, "common_dir_valid_utf8": true},
      "merge_target": null, "git": null, "worktrees": null, "findings": [],
      "suggested_command": null, "status": "error",
      "errors": [
        {"code": "manifest-invalid",
         "message":
           "Unexpected kind in /home/user/projects/ledger/project.yaml; expected project-manifest",
-        "path": "/home/user/projects/ledger/project.yaml"}
+        "path": "/home/user/projects/ledger/project.yaml",
+        "path_valid_utf8": true}
      ]}
   ],
   "relationships": [],
@@ -1260,12 +1281,13 @@ identity probe.
   "scan_errors": [
     {"code": "root-unreadable",
      "message": "[Errno 13] Permission denied: '/home/user/archive'",
-     "path": "/home/user/archive"}
+     "path": "/home/user/archive", "path_valid_utf8": true}
   ]
 }
 ```
 
-This fixture keeps the packet's path shape, which ruling R-9 departs from.
+This fixture carries ruling R-7's three `limits` keys and ruling R-9's
+validity flags, a departure from the packet's path shape.
 
 `performed` is 8: one version check; for `atlas`, four repository-wide
 children (identity, registry, ref listing, and merged set; its target came
@@ -1768,7 +1790,7 @@ The caps and the deadline were reconciled by measurement on 2026-10-09 (change 2
 task 2.1, ruling D-Q, closed): the caps stand as measured, at 48.3 s of the 60 s
 deadline in their worst case, as "Caps and their arithmetic" records.
 The proposals took this section's other former open items as proposal decisions,
-ratified 2026-10-09 with the merge, as the [fix
+ratified 2026-10-09 with the merges, as the [fix
 handoff](next-session-project-maintenance-fix-handoff.md) records under
 "Decisions taken by the proposals — 2026-10-08": bounded concurrency of
 four children across repositories, with the serial fallback of 32

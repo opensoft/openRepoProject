@@ -121,7 +121,8 @@ handled by hand (change 1 at `0669a20`). Plain read-only `project clean`, with
 or without `--json`, runs as `mode: "report"` under the same deadline, with the
 same completeness fields, `completeness` and `omitted`, but caps its worktree
 rows at 256, because it spawns no revalidation and no removal (see "Cap
-arithmetic"); above 256 rows the report is incomplete.
+arithmetic"); above 256 rows the report is incomplete; from 129 rows its
+`selected` is `null` ("Cap arithmetic").
 
 It does not mean all projects in a folder, family members, mounted spec/code
 legs, pinned member copies, or independent clones. Inspection from a family or
@@ -359,9 +360,17 @@ the network, and with the pin the fetch fails locally, the probe fails, and its
 row is `inspection-error`. Because `protocol.allow` is only the default policy,
 which a per-protocol setting or `GIT_ALLOW_PROTOCOL` would override, ruling R-25
 (change 1 at `251978d`) also pins `protocol.<name>.allow=never` for `file`,
-`ssh`, `git`, `http`, `https`, and `ext`, and scrubs `GIT_ALLOW_PROTOCOL`. The
-command spellings in this document show the earlier pins only; the proposal's
-text carries the protocol pins.
+`ssh`, `git`, `http`, `https`, and `ext`, and scrubs `GIT_ALLOW_PROTOCOL`. Lane
+openRepoProject-2 later found that these pins also stop the one Git child that
+reaches a remote, the kept push child of `clean --action push`: Git refuses a
+pinned push over every protocol, so a push to a local-path origin fails with
+"transport 'file' not allowed". The push-child exception, which exempts that
+child from the seven pins, is proposed as an amendment to
+add-project-clean-all-safe in draft PR #19 for Brett Heap's word; until he
+rules, the landed text pins every Git child. The same draft records, as wording
+ruling R-27, that `probes.performed` counts every Git child except the removals,
+which `operations.performed` counts. The command spellings in this document show
+the earlier pins only; the proposal's text carries the protocol pins.
 
 ### The narrow guarantee
 
@@ -490,6 +499,15 @@ observation time, so a change to an excluded worktree does not invalidate a
 preview. `dev` and `ino` are host-local, so a remount or reboot that
 renumbers them changes the digest and fails closed. `--expect-plan` stays
 optional with `--yes`.
+
+In `mode: "report"` above 128 worktree rows `selected` is `null`, and the
+digest input carries `"selected": null`; `--expect-plan` never consumes that
+digest, because an apply there is an incomplete plan, refused before the
+digest is compared. At most 128 rows, a report's digest equals the
+`--all-safe` preview's for the same repository identity, merge target, and
+selection, since the mode is not in the digest (rulings R-17, R-19, and R-20,
+change 1 at `4f2162b`, `7e2589f`, and `8973762`). The validity flags of ruling
+R-9 are not in the digest input.
 
 ### One mutation seam
 
@@ -987,7 +1005,19 @@ children, about 41.85 s at 150 ms, inside the 50 s work deadline, while 512
 rows would need 535, about 80.25 s. Its `limits.worktree_rows` is therefore
 256, and "Inspection order and omitted work" applies to it with 256 in place
 of 128; the `--all-safe` and single-target `remove` plans keep 128 rows and
-16 targets.
+16 targets. A report's `apply_allowed` is always false (OQ-29), and its
+`selected` is what `--all-safe` would select, the per-run deferral applied,
+only for a repository of at most 128 worktree rows. From 129 to 256 rows,
+where `--all-safe` itself would be incomplete with `inspect-cap`, the
+report's `selected` is `null`, its `notes` carries an `inspect-cap` entry
+whose `rows` is the count of registered worktree rows, and its human line
+reads `--all-safe would be incomplete (inspect-cap)`; that note alone leaves
+the report complete (ruling R-11 (c) at `d6aaa9a` and ruling R-15 at
+`9eeac52`, change 1). The gates still run for every inspected row, so
+`excluded` lists every inspected row a gate excludes, with its `reason`, and
+only the selection step is withheld (ruling R-17, change 1 at `4f2162b`); the
+`plan_digest` is computed over the `null` selection and never consumed by
+`--expect-plan`, as "Fresh plan and plan digest" states (ruling R-19).
 
 The proposal measured these caps warm and cold on 2026-10-09 (change 1 task 2.1,
 lane openRepoProject-2 ruling R-24, `251978d`), and they stand as measured: the
@@ -1056,14 +1086,15 @@ The plan reports `probes: {estimated, performed}` and
 result record. `probes.estimated` is the upper bound F + W + E + 5T + 3 for
 an `--apply` run of this plan, using the F of this invocation's argument
 form, and `probes.performed` counts every Git child this invocation spawned,
-`discover`'s included. In the apply result record, `probes.performed` equals
-the plan's count plus each target's `probes_performed` plus the final rescan,
-which is 3 when the rescan after the last spawned target counted toward no
-later target, and 0 otherwise.
-`operations.estimated` is T, one removal per selected target, and
-`operations.performed` counts removals spawned, which is 0 in a preview.
-Together with `limits` and `budget` they show why a plan is incomplete or
-close to its deadline.
+`discover`'s included, except the removals, which `operations.performed` counts
+(draft PR #19's wording ruling R-27 says so in change 1). In the apply result
+record, `probes.performed` equals the plan's count plus each target's
+`probes_performed` plus the final rescan, which is 3 when the rescan after the
+last spawned target counted toward no later target, and 0 otherwise.
+`operations.estimated` is T, one removal per
+selected target, and `operations.performed` counts removals spawned, which is 0
+in a preview. Together with `limits` and `budget` they show why a plan is
+incomplete or close to its deadline.
 
 ## Repository and JSON contract
 
@@ -1137,27 +1168,39 @@ result.
   entries, which are relative to their worktree, and a bare repository's
   `null` root. Under lane openRepoProject-2 ruling R-9 (2026-10-09), a departure
   from the packet, every nested JSON path value carries a validity flag beside
-  it, and an `ignored_samples` entry is an object `{path, path_valid_utf8}`.
+  it, and an `ignored_samples` entry is an object `{path, path_valid_utf8}`:
+  `path_valid_utf8` beside each `path` (worktree rows; `selected`, `excluded`,
+  and apply-result `targets` entries; refusals and row errors, where it is
+  present exactly when `path` is), and `root_valid_utf8`, which also covers the
+  envelope's `root`, and `common_dir_valid_utf8` in `repository`, both always
+  true in `clean`, which refuses a root or common directory that is not valid
+  UTF-8 (change 1 at `0b3c33d`); the field tables below list them.
   Object names are full lowercase hexadecimal: 40 characters, or 64 in a SHA-256
   repository. Times are RFC 3339 UTC with second precision and a `Z` suffix.
   Durations are integer seconds in fields ending in `_seconds`.
-- Identity: a `repository` is identified by all four of its fields together,
-  and a selected worktree by `path`, `dev`, `ino`, and `admin_id` together; a
-  path or project name alone is never an identity.
+- Identity: a `repository` is identified by its four identity fields, `root`,
+  `common_dir`, `dev`, and `ino`, together, never by its validity flags, and a
+  selected worktree by `path`, `dev`, `ino`, and `admin_id` together; a path
+  or project name alone is never an identity.
 - Enums are closed within a schema version; this document lists every value.
-  The plan's `notes` codes are `merge-target-conflict`, and a target's `notes`
-  codes are `orphaned-directory` and `partially-removed`.
+  The plan's `notes` codes are `merge-target-conflict`; in `mode: "single"`,
+  the non-blocking omissions `inspection-incomplete`, `inspect-cap`, and
+  `deadline-exceeded` (change 1 council V4); and in `mode: "report"` above
+  128 worktree rows, `inspect-cap` with `rows` (ruling R-15). A target's
+  `notes` codes are `orphaned-directory` and `partially-removed`, and a
+  worktree row's `notes` code is `partially-removed`.
 - `null` means unknown or not established, never a default `false` or `0`.
   The rule binds every field this design adds; baseline row fields keep their
   baseline meaning (a row's `upstream: null`, for example, means none was
   resolved).
-- Errors and refusals are `{code, message, path?, reason?}` objects: `code`
-  is a stable kebab-case string, `message` is human text that may change,
-  `path` appears only when one path is at fault, and `reason` appears only on
-  `target-excluded`. A row's `errors` use the same shape with the codes
-  `os-error`, `probe-failed`, `probe-timeout` (one probe or filesystem call
-  reached its own limit), and `deadline-exceeded` (the global deadline was the
-  limit).
+- Errors and refusals are `{code, message, path?, path_valid_utf8?, reason?}`
+  objects: `code` is a stable kebab-case string, `message` is human text that
+  may change, `path` appears only when one path is at fault, with
+  `path_valid_utf8` beside it exactly when it does (ruling R-9), and `reason`
+  appears only on `target-excluded`. A row's `errors` use the same shape with
+  the codes `os-error`, `probe-failed`, `probe-timeout` (one probe or
+  filesystem call reached its own limit), and `deadline-exceeded` (the global
+  deadline was the limit).
 - `completeness` is `complete` or `incomplete`. A plan is complete when every
   worktree row within the cap was inspected within the deadline, every
   repository-wide probe succeeded, and no row is `inspection-error`; in
@@ -1223,19 +1266,19 @@ records read, all listed under "Baseline behavior changes".
 | `root` | string | baseline key; the command directory: `repository.root`, or `common_dir` for a bare repository |
 | `target_branch` | string | baseline; equals `merge_target.name` |
 | `tracking_freshness` | string | baseline, unchanged text |
-| `worktrees` | array | baseline rows plus `locked` (boolean, never `null`), `ignored_files_truncated` (boolean, or `null` when the status probe did not run or failed), `ignored_samples` (array of at most 8 strings, or `null` likewise; objects `{path, path_valid_utf8}` under lane openRepoProject-2 ruling R-9 (2026-10-09), a departure from the packet), `path_valid_utf8` (boolean), and `errors` (array of `{code, message, path?}`); `present` may be `null` |
-| `repository` | object | `root` (string, or `null` for a bare repository); `common_dir` (string); `dev`, `ino` (integers) |
+| `worktrees` | array | baseline rows plus `locked` (boolean, never `null`), `ignored_files_truncated` (boolean, or `null` when the status probe did not run or failed), `ignored_samples` (array of at most 8 strings, or `null` likewise; objects `{path, path_valid_utf8}` under lane openRepoProject-2 ruling R-9 (2026-10-09), a departure from the packet), `path_valid_utf8` (boolean), `errors` (array of `{code, message, path?, path_valid_utf8?}`), and `notes` (array of codes, `partially-removed` the only one; change 1's N4); `present` may be `null` |
+| `repository` | object | `root` (string, or `null` for a bare repository); `common_dir` (string); `dev`, `ino` (integers); `root_valid_utf8`, which also covers the envelope's `root`, and `common_dir_valid_utf8` (booleans, always true in `clean`; lane openRepoProject-2 ruling R-9 (2026-10-09), a departure from the packet) |
 | `merge_target` | object | `name`, `source`, `sha` (strings); `source` is `manifest`, `origin-head`, `main`, or `master` |
 | `limits` | object | `worktree_rows` (128, or 256 in `mode: "report"`), `targets` (16), `ignored_entries` (64), `status_records` (4096), `ignored_samples` (8) |
 | `budget` | object | `probe_timeout_seconds` (5), `invocation_timeout_seconds` (60), `reconciliation_reserve_seconds` (10), `removal_floor_seconds` (5), `removal_ceiling_seconds` (300; change 1 phase 6 (`90854a3`), lane openRepoProject-2, 2026-10-09), `probe_concurrency` (1) |
 | `probes`, `operations` | object | `estimated`, `performed` (integers) |
-| `selected` | array | `path`, `branch`, `head`, `upstream`, `upstream_oid` (strings); `ahead`, `behind`, `dev`, `ino` (integers); `admin_id` (string); `operation` (`{kind: "worktree-remove", argv}`, with `argv` the exact argument vector) |
+| `selected` | array, or `null` in `mode: "report"` above 128 worktree rows (rulings R-11 (c) and R-15) | `path`, `branch`, `head`, `upstream`, `upstream_oid` (strings); `path_valid_utf8` (boolean; lane openRepoProject-2 ruling R-9 (2026-10-09), a departure from the packet); `ahead`, `behind`, `dev`, `ino` (integers); `admin_id` (string); `operation` (`{kind: "worktree-remove", argv}`, with `argv` the exact argument vector) |
 | `excluded` | array | `path` (string); `path_valid_utf8` (boolean); `branch` (string or `null`); `classification` (string, or `null` if never classified); `reason` (string) |
 | `omitted` | object | `count` (integer); `exactness` (always `exact` in a plan; see "Inspection order and omitted work") |
-| `notes` | array | informational `{code, message}` objects; never affect `apply_allowed` |
+| `notes` | array | informational `{code, message}` objects, a report's `inspect-cap` entry adding `rows` (integer), the count of registered worktree rows (ruling R-15); never affect `apply_allowed`, and the report's `inspect-cap` note alone leaves the report complete |
 | `completeness` | string | `complete` or `incomplete` |
-| `apply_allowed` | boolean | true only for a complete plan within both caps with no refusal; in `mode: "single"`, only P's own row and the repository-wide probes count (change 1 council V4) |
-| `refusals` | array | `{code, message, path?, reason?}` objects |
+| `apply_allowed` | boolean | true only for a complete plan within both caps with no refusal; in `mode: "single"`, only P's own row and the repository-wide probes count (change 1 council V4); always false in `mode: "report"` (OQ-29) |
+| `refusals` | array | `{code, message, path?, path_valid_utf8?, reason?}` objects |
 | `plan_digest` | string | 64 lowercase hexadecimal characters |
 
 When no plan can be built, `--json` prints the baseline error object
@@ -1294,7 +1337,9 @@ text.
 | `completeness` | string | `complete` or `incomplete` |
 
 Each `targets` entry has `path`, `branch`, and `planned_sha` (strings);
-`stage` and `reason` from the stage table, where `reason` may be `null`;
+`path_valid_utf8`, a boolean beside `path` (lane openRepoProject-2 ruling
+R-9, 2026-10-09, a departure from the packet); `stage` and `reason` from the
+stage table, where `reason` may be `null`;
 `notes`, an array of codes; `command`, the planned argument vector, present
 even when nothing ran; `exit_status`, an integer or `null`, which is `null`
 unless a child was spawned and reaped and is 128 plus the signal number when
@@ -1307,10 +1352,10 @@ revalidated); and `reconciliation`, an object or `null`.
 ### Fixtures
 
 Both fixtures are illustrative and use fake paths; each `plan_digest` is the
-real digest of its own `repository`, `merge_target`, and selection, and each
-probe count follows the estimate formula for an absolute-path argument
-(F = 5). This plan has three worktree rows, selects one worktree, and
-excludes two:
+real digest of its own `repository` identity fields, `merge_target`, and
+selection, and each probe count follows the estimate formula for an
+absolute-path argument (F = 5). This plan has three worktree rows, selects
+one worktree, and excludes two:
 
 ```json
 {
@@ -1322,7 +1367,8 @@ excludes two:
   "tracking_freshness": "local refs only; remote information is as of the last fetch; no fetch performed",
   "repository": {"root": "/home/user/projects/Atlas",
                  "common_dir": "/home/user/projects/Atlas/.git",
-                 "dev": 66306, "ino": 3407873},
+                 "dev": 66306, "ino": 3407873,
+                 "root_valid_utf8": true, "common_dir_valid_utf8": true},
   "merge_target": {"name": "main", "source": "origin-head",
                    "sha": "39f33f71eba7ca23d258c75ebcc8b9a0ec9995d9"},
   "limits": {"worktree_rows": 128, "targets": 16, "ignored_entries": 64,
@@ -1342,7 +1388,7 @@ excludes two:
      "classification": "protected-default",
      "recommendation": "Keep the default branch; use the repository's normal push or PR process.",
      "locked": false, "ignored_files_truncated": false,
-     "ignored_samples": [], "path_valid_utf8": true, "errors": []},
+     "ignored_samples": [], "path_valid_utf8": true, "errors": [], "notes": []},
     {"path": "/home/user/projects/Atlas-worktrees/feature-login",
      "present": true, "head": "635e8931ebd09939ab00fb1598598f6e43fdaf41",
      "branch": "feature/login", "dirty": false, "ignored_files": 0,
@@ -1351,7 +1397,7 @@ excludes two:
      "remote_present": true, "classification": "merged-removable",
      "recommendation": "This clean, merged, non-current worktree may be removed explicitly.",
      "locked": false, "ignored_files_truncated": false,
-     "ignored_samples": [], "path_valid_utf8": true, "errors": []},
+     "ignored_samples": [], "path_valid_utf8": true, "errors": [], "notes": []},
     {"path": "/home/user/projects/Atlas-worktrees/feature-report",
      "present": true, "head": "fc2afa49af6ee0111f0de91e16b6e651af506f2a",
      "branch": "feature/report", "dirty": true, "ignored_files": 0,
@@ -1360,11 +1406,11 @@ excludes two:
      "remote_present": true, "classification": "dirty",
      "recommendation": "Preserve or commit the working changes before cleanup.",
      "locked": false, "ignored_files_truncated": false,
-     "ignored_samples": [], "path_valid_utf8": true, "errors": []}
+     "ignored_samples": [], "path_valid_utf8": true, "errors": [], "notes": []}
   ],
   "selected": [
     {"path": "/home/user/projects/Atlas-worktrees/feature-login",
-     "branch": "feature/login",
+     "path_valid_utf8": true, "branch": "feature/login",
      "head": "635e8931ebd09939ab00fb1598598f6e43fdaf41",
      "upstream": "origin/feature/login",
      "upstream_oid": "635e8931ebd09939ab00fb1598598f6e43fdaf41",
@@ -1395,7 +1441,8 @@ excludes two:
 }
 ```
 
-This fixture keeps the packet's path shape, which ruling R-9 departs from.
+This fixture carries ruling R-9's validity flags, a departure from the
+packet's path shape.
 
 This apply result comes from a different run whose plan had four worktree
 rows and selected three worktrees. The first was removed; the second target's
@@ -1409,7 +1456,8 @@ the last spawned target was reconciled by the second target's revalidation.
   "observed_at": "2026-10-07T14:05:47Z",
   "repository": {"root": "/home/user/projects/Atlas",
                  "common_dir": "/home/user/projects/Atlas/.git",
-                 "dev": 66306, "ino": 3407873},
+                 "dev": 66306, "ino": 3407873,
+                 "root_valid_utf8": true, "common_dir_valid_utf8": true},
   "merge_target": {"name": "main", "source": "origin-head",
                    "sha": "39f33f71eba7ca23d258c75ebcc8b9a0ec9995d9"},
   "plan_digest": "cf2d0bea641d01e4fc1acb2abe6aef545f7ea38295ccd11c141bd801e0b55c98",
@@ -1417,7 +1465,7 @@ the last spawned target was reconciled by the second target's revalidation.
   "operations": {"estimated": 3, "performed": 1},
   "targets": [
     {"path": "/home/user/projects/Atlas-worktrees/feature-login",
-     "branch": "feature/login",
+     "path_valid_utf8": true, "branch": "feature/login",
      "planned_sha": "635e8931ebd09939ab00fb1598598f6e43fdaf41",
      "stage": "removed", "reason": null, "notes": [],
      "command": ["git", "-c", "status.showUntrackedFiles=normal",
@@ -1431,7 +1479,7 @@ the last spawned target was reconciled by the second target's revalidation.
                         "branch_sha": "635e8931ebd09939ab00fb1598598f6e43fdaf41",
                         "reconciled": true}},
     {"path": "/home/user/projects/Atlas-worktrees/feature-search",
-     "branch": "feature/search",
+     "path_valid_utf8": true, "branch": "feature/search",
      "planned_sha": "368a133b9d8f342efb77df84a4c37ca69283f999",
      "stage": "refused", "reason": "branch-changed", "notes": [],
      "command": ["git", "-c", "status.showUntrackedFiles=normal",
@@ -1445,7 +1493,7 @@ the last spawned target was reconciled by the second target's revalidation.
                         "branch_sha": "c7b81a093423d9b1be2e8619471834a5cbcbe0d7",
                         "reconciled": true}},
     {"path": "/home/user/projects/Atlas-worktrees/fix-typo",
-     "branch": "fix/typo",
+     "path_valid_utf8": true, "branch": "fix/typo",
      "planned_sha": "72e5554760d7cea17ea436028406d94f0f3f48e8",
      "stage": "not-attempted", "reason": "batch-stopped", "notes": [],
      "command": ["git", "-c", "status.showUntrackedFiles=normal",
@@ -1460,7 +1508,8 @@ the last spawned target was reconciled by the second target's revalidation.
 }
 ```
 
-This fixture keeps the packet's path shape, which ruling R-9 departs from.
+This fixture carries ruling R-9's validity flags, a departure from the
+packet's path shape.
 
 ### Machine-readable apply results
 
@@ -2050,7 +2099,8 @@ refusals is what the MVP can actually deliver, and a later design may add a
 handoff on top of the same seam.
 
 Proposal decisions that were open, now closed except the second question for
-Brett Heap: the measured costs by measurement (ruling D-Q), the first question
+Brett Heap (the push-child exception in draft PR #19 is also before him; see
+"Identity"): the measured costs by measurement (ruling D-Q), the first question
 by his ruling, and the departures by his ratification of both proposals on
 2026-10-09 ("ratify, merge #11 and run the runbook", to lane openRepoProject-2),
 with PRs #11 and #12 merged as `0050f3e` and `961c405`:
@@ -2110,7 +2160,7 @@ with PRs #11 and #12 merged as `0050f3e` and `961c405`:
   2.40 (Debian 12 ships 2.39): departure, ratified 2026-10-09 with the merge.
 
 Every other open decision this document listed is decided: the 2026-10-08
-proposals took them as proposal decisions, ratified 2026-10-09 with the merge,
+proposals took them as proposal decisions, ratified 2026-10-09 with the merges,
 as the [fix handoff](next-session-project-maintenance-fix-handoff.md) records
 under "Decisions taken by the proposals — 2026-10-08".
 

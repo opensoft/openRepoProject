@@ -48,7 +48,7 @@ can compare an overview row with a cleanup plan field by field.
 | merge target | `{name, source, sha}` | `source` is `manifest`, `origin-head`, `main`, or `master`; the manifest is read at `repository.root`; the first candidate that exists as a local branch in the ref listing wins, and `sha` is its tip; a manifest that conflicts with `origin/HEAD` wins with an informational `merge-target-conflict`; a manifest that cannot be read or has the wrong kind is `manifest-invalid`; no candidate at all is `no-merge-target`, a batch refusal and an overview repair finding |
 | bounds | `limits`, `budget` | `worktree_rows` counts every registry entry, the main worktree included (overview 512, batch 128, and 256 for the plain read-only `clean` report); a `clean` plan's `worktree_rows` holds only its own mode's cap, and the overview reads the batch's 128 and the report's 256 from the shared constants (lane openRepoProject-2 ruling R-7, landed in change 2 at `996a181`, 2026-10-09, the overview's `limits` reporting them as `batch_row_cap` and `report_row_cap` beside the batch's target limit, `targets` 16 since ruling R-14); `ignored_entries` 64, `status_records` 4096, and `ignored_samples` 8 in both; the overview adds `roots` 32, `candidates` 128, and `root_entries` 4096, and the batch adds `targets` 16; `probe_timeout_seconds` 5, `invocation_timeout_seconds` 60, and `probe_concurrency` (overview 4, batch 1) in both, and the batch adds `reconciliation_reserve_seconds` 10, `removal_floor_seconds` 5, and `removal_ceiling_seconds` 300 (change 1 phase 6 (`90854a3`), lane openRepoProject-2, 2026-10-09) |
 | work accounting | `probes`, `omitted` | `probes: {estimated, performed}` counts Git probe children, timed-out and stopped ones included (the batch counts removals separately in `operations`); `omitted: {count, exactness}`, with `exactness` `exact`, `lower-bound`, or `unknown`, reports work a cap or the deadline dropped |
-| errors | `{code, message, path?}` | row codes `os-error`, `probe-failed`, `probe-timeout` (one probe or filesystem call reached its own 5 s limit), and `deadline-exceeded` (the global deadline was the limit); `git-too-old` (Git older than 2.36) and `git-unavailable` (a missing `git`, or a failed, timed-out, or unparseable `git --version`) refuse with exit 2 before any repository probe; under `--json` an exit-2 refusal prints the baseline error object with a `code` added, `{"error", "code"}`, which batch cleanup extends with its plan fields, and an argument error prints no JSON; `null` means unknown, never `false` or `0` |
+| errors | `{code, message, path?, path_valid_utf8?}` | `path_valid_utf8` beside `path` whenever it is present (lane openRepoProject-2 ruling R-9, 2026-10-09, a departure from the packet); row codes `os-error`, `probe-failed`, `probe-timeout` (one probe or filesystem call reached its own 5 s limit), and `deadline-exceeded` (the global deadline was the limit); `git-too-old` (Git older than 2.36) and `git-unavailable` (a missing `git`, or a failed, timed-out, or unparseable `git --version`) refuse with exit 2 before any repository probe; under `--json` an exit-2 refusal prints the baseline error object with a `code` added, `{"error", "code"}`, which batch cleanup extends with its plan fields, and an argument error prints no JSON; `null` means unknown, never `false` or `0` |
 
 ### The Git-first handoff
 
@@ -109,15 +109,16 @@ path is missing, unreadable, or fails the two-way registration check gets
 none, and an unreadable or registration-mismatched row, or one whose status
 probe failed, timed out, or was cut by the deadline, is set to
 `inspection-error` directly, so none of them on the merge-target branch reads
-as `protected-default`. Every Git child, in `status`, `doctor`, and `update`
-too, also runs with `-c protocol.allow=never` beside the status probe's
-pins (lane openRepoProject-2 ruling R-23, 2026-10-09; change 1 at `8aad1e8`,
-change 2 at `1cc936e`), because Git 2.43 lacks `GIT_NO_LAZY_FETCH`:
-a lazy fetch in a partial clone then fails locally and its row is
-`inspection-error`; ruling R-25 (change 1 at `251978d`, change 2 at `a8f710d`)
-adds the six per-protocol `allow=never` pins, because `protocol.allow`
-is only the default policy. Every worktree-specific probe runs as
-`git -C <worktree path>` against that worktree's own index, only after its
+as `protected-default`. Every Git child, in `status`, `doctor`, and `update` too
+(the push child of `clean --action push` excepted if Brett Heap accepts draft
+PR #19; see Batch "Identity"), also runs with `-c protocol.allow=never` beside
+the status probe's pins (lane openRepoProject-2 ruling R-23, 2026-10-09; change
+1 at `8aad1e8`, change 2 at `1cc936e`), because Git 2.43 lacks
+`GIT_NO_LAZY_FETCH`: a lazy fetch in a partial clone then fails locally and its
+row is `inspection-error`; ruling R-25 (change 1 at `251978d`, change 2 at
+`a8f710d`) adds the six per-protocol `allow=never` pins, because
+`protocol.allow` is only the default policy. Every worktree-specific probe runs
+as `git -C <worktree path>` against that worktree's own index, only after its
 identity is verified, because each linked worktree has its own index;
 repository-wide probes run as `git -C <repository.root>` (`common_dir` for a
 bare repository), except the identity probe, which runs in the candidate. When a
@@ -302,13 +303,14 @@ Group Git probes by `common_dir`, while preserving one combined status result
 for each worktree row, including external paths reported by Git. Both features
 require Git 2.36 or newer for `worktree list --porcelain -z` and read every path
 NUL-delimited; a path that is not valid UTF-8 is reported escaped with
-`path_valid_utf8: false` and is never a removal operand. Both print a path that
-holds a control, bidirectional, or format character, or an undecodable byte, in
-the same `$'…'` form: each undecodable byte as `\xHH`, each decoded control,
-bidirectional, or format code point as `\uXXXX` (a newline is `\u000a`), both in
-lowercase hexadecimal, and each backslash doubled. JSON escapes every such code
-point, so neither document carries one raw, and pasting the `\uXXXX` form into
-bash or zsh needs a UTF-8 locale.
+`path_valid_utf8: false` (`root_valid_utf8` or `common_dir_valid_utf8` for a
+repository's root or common directory) and is never a removal operand. Both
+print a path that holds a control, bidirectional, or format character, or an
+undecodable byte, in the same `$'…'` form: each undecodable byte as `\xHH`,
+each decoded control, bidirectional, or format code point as `\uXXXX` (a newline
+is `\u000a`), both in lowercase hexadecimal, and each backslash doubled. JSON
+escapes every such code point, so neither document carries one raw, and pasting
+the `\uXXXX` form into bash or zsh needs a UTF-8 locale.
 
 Each feature bounds its own work under one monotonic 60 s invocation deadline
 with 5 s per inspection Git child, and both derive their caps at 150 ms per Git
@@ -341,11 +343,12 @@ overview keeps an invocation-local memo and cross-repository concurrency;
 cleanup takes fresh probes serially and revalidates each target. The overview's
 caps survived measurement on 2026-10-09, at 48.3 s of the 60 s deadline in their
 worst case, and a default root of 219 candidates, as on the measured
-workstation, ends incomplete by design (change 2 task 2.1, ruling D-Q). If the
-proposal rejects concurrency, the fallback is 32 candidates and 128 worktree
-rows run serially (257 children, about 38.6 s at 150 ms, or about 44.6 s with
-the listing estimate). And because one repository's children always run
-serially, a single repository with more than about 355 worktree rows cannot
+workstation, ends incomplete by design (change 2 task 2.1, ruling D-Q). If
+design rejects concurrency (OQ-6), the fallback is 32 candidates and 128
+worktree rows run serially (257 children, about 38.6 s at 150 ms, or about
+44.6 s with the listing estimate). And because one repository's children
+always run serially, a single repository with more than about 355 worktree
+rows cannot
 complete at that rate; the proposals cap no rows per repository, so such a
 repository ends visibly incomplete.
 
@@ -403,8 +406,8 @@ remote-tracking ref no longer exists is tested for local ancestry before the
 `remote-gone` rung, so a merged row is `merged-removable` (`merged-current` when
 it is the current worktree) and only an unmerged row is `remote-gone`. The
 proposals took the other decisions this synthesis once listed as proposal
-decisions, ratified 2026-10-09 with the merge, and the packet overview holds the
-consolidated list. Keep each extension bounded and preserve explicit ownership
-and recovery semantics.
+decisions, ratified 2026-10-09 with the merges, and the packet overview holds
+the consolidated list. Keep each extension bounded and preserve explicit
+ownership and recovery semantics.
 
 Return to the [packet overview](project-maintenance-overview.md).
