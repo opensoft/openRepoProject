@@ -431,10 +431,11 @@ Nothing migrates: without `--remote` no output, flag or exit changes.
 
 1. Ratification by Brett Heap's word on the pull request the lane opens for
    this change.
-2. After feature 005 has landed, `/speckit.specify`, from a `main` synced to
-   `origin/main`, creates the one feature under the next free number, 006 or
-   later; it is recorded once in `tasks.md` under "Speckit Handoff", and
-   `/opsx:apply` runs only then.
+2. After feature 005 has landed and change 2 is archived, with this change's
+   MODIFIED block re-read against the archived text, `/speckit.specify`,
+   from a `main` synced to `origin/main`, creates the one feature under the
+   next free number, 006 or later; it is recorded once in `tasks.md` under
+   "Speckit Handoff", and `/opsx:apply` runs only then.
 3. The realization PR merges with green checks on all four CI jobs (Ubuntu
    and macOS, Python 3.10 and 3.12) and closes issue #25.
 4. The change is archived after that merge and after change 2's archive,

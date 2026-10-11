@@ -234,8 +234,9 @@ scenarios (2 and 11), nothing else.
   tests run with `python3 -m unittest discover -s tests -v`, as CI runs them
   on Ubuntu and macOS with Python 3.10 and 3.12.
 - **Speckit handoff**: exactly one feature, created by `/speckit.specify`
-  after ratification and after feature 005 lands, under the next free number,
-  006 or later, from a local `main` synced to `origin/main` (L-7).
+  after ratification, after feature 005 lands and after change 2 is
+  archived, under the next free number, 006 or later, from a local `main`
+  synced to `origin/main` (L-7).
 - **Expected conflicts**: features 004 and 005, the realizations of
   `add-project-clean-branch-retirement` and `add-project-clean-cache-disposal`,
   and lane openRepoProject-1's PR #21 (`new()` only) edit `project`,
