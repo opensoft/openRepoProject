@@ -889,8 +889,12 @@ Council decisions, with the packet text each replaces or extends:
   could still fetch; the probe then succeeds rather than fails, and no unsafe
   removal follows (design Context, D11, Risks). The push-child exception: the
   push child of `clean --action push` reaches a remote, which the pins would
-  refuse over every protocol, so it keeps the scrub and its own process group
-  and carries none of the pins, and no evidence comes from it (Open Questions).
+  refuse over every protocol, so it keeps the scrub, runs unbounded in
+  `project`'s process group as `execute` runs it today, carries none of the
+  pins, and no evidence comes from it (Open Questions). Accepted residual of the
+  exception: the push child follows the configuration as `git push` would, an
+  `ext::` origin that `protocol.ext.allow=always` allows included, and takes no
+  protocol restriction or `-c` from the caller's environment (design Risks).
 - **A branch with no commit of its own is preserved** (V2 as amended, M3, M4;
   extends the gates of `BA:152-160`; R-12, R-15): the reflog, read from its
   anchor, the last entry whose old object is all zeros (a creation, whatever

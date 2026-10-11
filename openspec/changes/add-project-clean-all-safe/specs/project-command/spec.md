@@ -95,9 +95,10 @@ a repository with a Git older than 2.36 (`git-too-old`) or with a `git` that is
 missing, fails, times out or prints an unparseable version (`git-unavailable`);
 whether the subcommand then refuses or reports is its own requirement's rule.
 
-Environment: every Git child SHALL run in its own process group, with these
-seventeen variables removed from its environment, unconditionally and before any
-Git call, from a fixed list that is never queried from Git: the fifteen that
+Environment: every Git child but the push child of `clean --action push` SHALL
+run in its own process group, and every Git child SHALL have these seventeen
+variables removed from its environment, unconditionally and before any Git call,
+from a fixed list that is never queried from Git: the fifteen that
 `git rev-parse --local-env-vars` prints on Git 2.40 and later
 (`GIT_ALTERNATE_OBJECT_DIRECTORIES`, `GIT_CONFIG`, `GIT_CONFIG_PARAMETERS`,
 `GIT_CONFIG_COUNT`, `GIT_OBJECT_DIRECTORY`, `GIT_DIR`, `GIT_WORK_TREE`,
@@ -121,10 +122,13 @@ the default policy, which a `protocol.<name>.allow` setting in the repository's
 configuration overrides and a `-c` on the command line outranks; with the pins
 the fetch fails locally, the probe fails, and its row is `inspection-error`,
 never a network call. The push child is the one Git child whose purpose is to
-reach a remote: it SHALL run in its own process group with the seventeen names
-removed from its environment, and SHALL carry none of the seven protocol pins,
-so that the remote it publishes to stays reachable over any protocol; no row's
-evidence comes from it.
+reach a remote: it SHALL run with the seventeen names removed from its
+environment, so that it acts on the repository the run inspected, and with none
+of the seven protocol pins, so that the remote it publishes to stays reachable
+over any protocol; it SHALL run as `execute` runs it before this change, in
+`project`'s own process group, and so in the terminal's foreground whenever
+`project` is, and unbounded, so that a credential prompt can read the terminal
+and an interrupt from the terminal reaches it; no row's evidence comes from it.
 
 Directory: a worktree probe SHALL run with `-C <worktree path>`, against that
 worktree's own index, and only after that worktree's identity has been verified
@@ -238,4 +242,5 @@ requirement states a change.
 #### Scenario: The push child reaches its remote
 - **WHEN** `project clean <root> --apply --action push --branch B --yes` runs, with `<root>` the absolute path of the main worktree, for a clean feature branch B that the push action accepts (B is not the default branch, its upstream `origin/B` exists and lacks a commit that B holds, and no other worktree row is `inspection-error`), whose `origin` is a local path (the `file` protocol)
 - **THEN** a counting `git` wrapper records the push child with none of the seven protocol pins and with the seventeen names removed from its environment, and records all seven pins on every other Git child of the run
+- **AND** the wrapper records that the push child shares `project`'s process group, where every other Git child of the run has a process group of its own
 - **AND** the push exits 0 and `origin` holds B at the commit it has locally

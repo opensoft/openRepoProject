@@ -561,8 +561,10 @@ protocol.http.allow=never -c protocol.https.allow=never -c
 protocol.ext.allow=never` (R-23, R-25), `git --version` and the removal
 included. The push child of `clean --action push` is the one exception, because
 its purpose is to reach a remote and the pins would refuse every transport, the
-`file` one included: it keeps the scrub and its own process group, carries none
-of the pins, and no evidence comes from it (Open Questions).
+`file` one included: it keeps the scrub, runs unbounded in `project`'s own
+process group as `execute` runs it today, so that a credential prompt can read
+the terminal and an interrupt reaches it, carries none of the pins, and no
+evidence comes from it (Open Questions).
 
 Git 2.43 has no `GIT_NO_LAZY_FETCH` or
 other switch against lazy fetches, so a read-only probe in a partial (promisor)
@@ -922,6 +924,15 @@ under revalidation.
   is scrubbed rather than pinned] -> Accepted as rare: such a helper could still
   fetch for a probe in a partial clone, the probe would then succeed rather than
   fail, and no unsafe removal follows (D11, R-25).
+- [The push child carries no protocol pin and follows the configuration as `git
+  push` would, an `ext::` origin that `protocol.ext.allow=always` allows, a
+  pre-push hook and a credential helper included; and the scrub removes a
+  caller's `GIT_ALLOW_PROTOCOL`, `GIT_CONFIG_PARAMETERS` and `GIT_CONFIG_COUNT`,
+  so a protocol restriction or a `-c` given through the environment does not
+  reach it] -> Accepted: the push is the person's explicit act on the remote
+  they configured, as the baseline push is; the scrub makes it act on the
+  repository the run inspected; every inspection child stays pinned, so no
+  evidence comes from such a configuration (D11, the push-child exception).
 - [Squash-merged branches never prove ancestry, so squash-merging
   repositories select little] -> Before Brett Heap (Open Questions).
 - [A merged worktree whose upstream was deleted is removed on local ancestry
