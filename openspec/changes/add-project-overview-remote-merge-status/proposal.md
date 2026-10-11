@@ -61,7 +61,8 @@ the revalidation signature and added ladder classes.
   was deleted is queried by its head like any other (C-6). Every other row
   carries `remote: null`.
 - **Where the identity comes from.** After collection, for each repository
-  with a queried row, two counted, pinned, read-only Git children read the
+  with a queried row, two pinned, read-only Git children, counted in the
+  `remote` object and never in the envelope's `probes`, read the
   merge-target branch's `branch.<target>.remote` and `branch.<target>.merge`
   and that remote's URL as Git expands it, never a worktree row's upstream
   (C-3). Only a valid GitHub `owner/repository` on host `github.com`, as PRS:32
@@ -100,13 +101,20 @@ the revalidation signature and added ladder classes.
   since); never retired on this evidence"; one summary line gives the requests
   sent, the counts by state and the sentence "Remote evidence was queried live
   from github.com and may already be stale; it never authorizes cleanup."
-  Under `--json` the envelope gains a `remote` object with its limits, budget,
-  request counts, state counts, freshness and its own completeness, all only
-  in a `--remote` run.
-- **One carve-out in "Overview is local and read-only".** Its network clause
-  admits, under `--remote` only, the `gh` children of the ADDED requirement;
-  the `project` process still opens no connection, no Git child reaches the
-  network, and every other sentence holds (C-7).
+  Under `--json` the envelope gains a `remote` object with its limits, its
+  budget, its own counts of remote-target reads (`probes`) and of `gh`
+  requests (`requests`), the counts by state, the freshness sentence and its
+  own completeness, all only in a `--remote` run: without `--remote` the
+  `remote` keys are absent, not null, and the envelope's `probes` is change
+  2's exact count in every run.
+- **One carve-out in "Overview is local and read-only"**, in lane
+  openRepoProject-4's wording. Without `--remote` the requirement holds as
+  written. With it, the network clause still binds the `project` process and
+  every Git child and does not bind the `gh` children of the ADDED
+  requirement; every other sentence holds; and the credential clause splits:
+  the `project` process reads no credential file, a `gh` child authenticates
+  by the GitHub client's own means, and the overview reads, tests, prints and
+  forwards no credential value (C-7).
 
 ## Rules This Change Keeps
 
@@ -158,14 +166,18 @@ Line numbers are APO/ov's at `961c405`.
   has no canonical spec until change 2 archives):
   - MODIFIED (`:709`):
     `### Requirement: Overview is local and read-only`.
-    The whole block and its one scenario stay; a second paragraph confines
-    the network clause's exception to the `gh` children of the ADDED
-    requirement under `--remote`, keeps the `project` process and every Git
-    child off the network, keeps every other sentence (no mutation, no
-    credential file read by `project`, no state kept), and labels remote
-    evidence as live. Added scenario: a `--remote` run with a fake `gh`
-    leaves the zero-mutation snapshots identical, opens no connection from
-    `project`, and sends only the fixed query, again on a second run.
+    Change 2's whole block and its one scenario stay untouched; a second
+    paragraph, in lane openRepoProject-4's wording, says that without
+    `--remote` the requirement holds as written, and that with it the network
+    clause still binds the `project` process and every Git child and does not
+    bind the `gh` children of the ADDED requirement, every other sentence
+    holding (no fetch, mutation or file write; nothing kept), the credential
+    clause split three ways, and remote evidence labelled as live. Added
+    scenario: a `--remote` run with a fake `gh` leaves the zero-mutation
+    snapshots identical, opens no connection from `project`, sends only the
+    fixed query, again on a second run, and every recorded `gh` environment
+    sets `GH_NO_UPDATE_NOTIFIER=1`, `GH_NO_EXTENSION_UPDATE_NOTIFIER=1` and
+    `GH_PROMPT_DISABLED=1`.
   - ADDED:
     `### Requirement: Overview reports remote merge evidence on request`.
     The opt-in; the query set; the remote target from the merge target's
@@ -182,8 +194,8 @@ Line numbers are APO/ov's at `961c405`.
     `### Requirement: Overview groups worktrees by repository identity`
   - Untouched (`:166`):
     `### Requirement: Overview bounds its work and reports what it omitted`
-    (read, not changed: the remote phase runs inside its deadline, and the
-    ADDED requirement adds a `--remote` term to `probes.estimated`; Decisions)
+    (read, not changed: the remote phase runs inside its deadline, and
+    `probes` keeps its exact count in every run; Decisions)
   - Untouched (`:317`):
     `### Requirement: Overview isolates one candidate's failure`
   - Untouched (`:358`):
@@ -195,8 +207,8 @@ Line numbers are APO/ov's at `961c405`.
     `### Requirement: Overview suggests only gated clean commands`
   - Untouched (`:606`):
     `### Requirement: Overview prints a versioned JSON envelope`
-    (fields added in a `--remote` run only, under its "additive" sentence;
-    Decisions, Open Questions)
+    (fields added in a `--remote` run only, absent, not null, without it,
+    under its "additive" sentence; Decisions, Open Questions)
   - Untouched (`:724`):
     `### Requirement: Overview reports default-branch health`
   - Untouched (`:761`):
@@ -340,13 +352,19 @@ Packet open decisions taken, each citing the text that leaves it open:
   repository and exact head; every queried row asked by its head, a row whose
   upstream was deleted included; expiry cancels what is unsent and aborts
   what is in flight, each `unknown`.
-- **The two blocks, C-7** (APO/ov:710 forbids every network connection, and
-  no change 2 requirement has room for remote evidence): MODIFIED "Overview
-  is local and read-only" with the opt-in carve-out and nothing else
-  loosened, and ADDED "Overview reports remote merge evidence on request",
-  as agreed with lane openRepoProject-4, the owner of change 2 and feature
-  005; the delta file is committed after lane openRepoProject-4 has read the
-  two headers and the MODIFIED block's difference from change 2's text.
+- **The two blocks, C-7** (APO/ov:710 forbids every network connection, and no
+  change 2 requirement has room for remote evidence): MODIFIED "Overview is
+  local and read-only" with the opt-in carve-out and nothing else loosened,
+  and ADDED "Overview reports remote merge evidence on request". Lane
+  openRepoProject-4, the owner of change 2 and feature 005, read the two
+  headers and the MODIFIED block's difference from change 2's text and agreed
+  them on three edits (2026-10-11), applied before the delta file was
+  committed: its own wording of the carve-out, with the credential clause
+  split; the envelope's `probes` unchanged in every run, the remote phase's
+  counts reported in the `remote` object; and `gh`'s update-notifier and
+  prompt switches set and asserted from the fake `gh`'s recorded environment.
+  The `remote` keys are absent, not null, without `--remote`, the condition
+  for reading them as additive.
 - **Tests, C-8**: offline, with a fake `gh` on `PATH`.
 
 Decisions where the sources and the rulings are silent:
@@ -372,14 +390,15 @@ Decisions where the sources and the rulings are silent:
   request. Rejected: interleaving requests with collection, which would need
   a hook in feature 005's scheduler and make dispatch depend on completion
   order.
-- **Two Git children per repository for the remote target**, counted in
-  `probes`. Rejected: parsing `<common_dir>/config`, which includes and
-  `insteadOf` would make disagree with Git, as change 2's design rejected for
-  `core.worktree` (APO design.md:218-219); listing the whole configuration,
-  which would read values such as `http.<url>.extraHeader` that may hold a
-  token.
-- **Fields only in a `--remote` run.** Rejected: `remote: null` on every row
-  of every run, which would change the default document feature 005 builds.
+- **Two Git children per repository for the remote target**, counted in the
+  `remote` object's own `probes`, never in the envelope's. Rejected: parsing
+  `<common_dir>/config`, which includes and `insteadOf` would make disagree
+  with Git, as change 2's design rejected for `core.worktree` (APO
+  design.md:218-219); listing the whole configuration, which would read values
+  such as `http.<url>.extraHeader` that may hold a token.
+- **Fields only in a `--remote` run**, absent, not null, without it.
+  Rejected: `remote: null` on every row of every run, which would change the
+  default document feature 005 builds.
 - **No effect on `completeness` or the exit.** The `remote` object carries its
   own `completeness`. Rejected: an `unknown` result making the run incomplete,
   which contradicts APO/ov:654-655, unmodified here, and would make every
@@ -388,15 +407,17 @@ Decisions where the sources and the rulings are silent:
   each key is answered on its own. Rejected: stopping at the first, which
   saves at most 63 fast failures but makes which rows are answered depend on
   completion order, against APO/ov:244-246.
-- **gh's own traffic off.** Each `gh` child runs with telemetry, update
-  notices, prompts and colour disabled through gh's documented environment
-  (`GH_TELEMETRY=false`, `GH_NO_UPDATE_NOTIFIER`,
-  `GH_NO_EXTENSION_UPDATE_NOTIFIER`, `GH_PROMPT_DISABLED`, `NO_COLOR`;
-  gh 2.96.0's `gh help environment`), and without `GH_DEBUG`, `DEBUG`,
-  `GH_HOST`, `GH_REPO`, `GH_FORCE_TTY` or `CLICOLOR_FORCE`, so that it
-  sends nothing but the query, logs nothing and prints plain output. An
-  addition: without it a `gh` child could send data other than the query,
-  against DI:1038-1039's read-only boundary.
+- **gh's own traffic off.** Each `gh` child runs with
+  `GH_NO_UPDATE_NOTIFIER=1`, `GH_NO_EXTENSION_UPDATE_NOTIFIER=1`,
+  `GH_PROMPT_DISABLED=1`, `GH_TELEMETRY=false` and `NO_COLOR=1` (gh 2.96.0's
+  `gh help environment`), and without `GH_DEBUG`, `DEBUG`, `GH_HOST`,
+  `GH_REPO`, `GH_FORCE_TTY` or `CLICOLOR_FORCE`, so that it sends nothing but
+  the query, checks for no update and writes none of the state it keeps for
+  that check, prompts for nothing, logs nothing and prints plain output; the
+  MODIFIED block's new scenario asserts the first three. An addition: without
+  it a `gh` child could send data other than the query, against DI:1038-1039's
+  read-only boundary, or write a file, against the MODIFIED block's "no ...
+  file write".
 
 Departures, each naming what it departs from:
 
@@ -407,14 +428,19 @@ Departures, each naming what it departs from:
   "merged on GitHub as pull request #N; local ancestry does not prove it (a
   squash or rebase merge, or a merge target not fetched since); never retired
   on this evidence".
-- **`probes.estimated` in a `--remote` run** (APO/ov:248-254 sums the Git
-  children of a run without `--remote`): the ADDED requirement adds 2 per
-  repository with a queried row; change 2's sum keeps governing every run
-  without `--remote`, and no sentence of it is modified.
+- **`probes` in a `--remote` run** (APO/ov:248-254, where "`performed` counts
+  every Git child started" and `estimated` is the exact count paired with it):
+  the envelope's `probes` keeps that count in every run, and the remote
+  phase's two Git reads per repository are counted in the `remote` object's
+  own `probes`, so "every Git child" is read as every Git child of collection,
+  the only ones change 2 defines. This is lane openRepoProject-4's edit (b): a
+  `--remote` term in `probes.estimated`, as the first draft had, would change
+  the field's meaning and force a `schema_version` bump.
 - **"exactly these fields"** (APO/ov:607-608) and the human layout
   (APO/ov:802-813) in a `--remote` run: read with APO/ov:655-658, "adding a
   field or an enum value is additive"; the fields and lines appear only in a
-  `--remote` run (L-4).
+  `--remote` run, and without it the `remote` keys are absent, not null
+  (L-4).
 
 Readings of packet text:
 
@@ -455,12 +481,10 @@ lane openRepoProject-4 first.
    `project-command` unmodified.
 3. **Seams in feature 005 (to lane openRepoProject-4).** None is needed. The
    `--remote` flag is an argument error in feature 005 until this change's
-   realization adds it; the `remote` fields, the remote phase after
-   collection, the `gh` child's handle and the `probes.estimated` term are all
-   added by that realization, after 005 lands. Recommendation: feature 005
-   reserves no flag, field or hook; lane openRepoProject-4 confirms that the
-   `probes.estimated` term and the `remote` fields may live in this change's
-   ADDED requirement rather than in a MODIFIED form of its requirements.
+   realization adds it; the `remote` fields, the remote phase after collection
+   and the `gh` child's handle are all added by that realization, after 005
+   lands, and the envelope's `probes` is untouched. Recommendation: feature
+   005 reserves no flag, field or hook.
 
 ## Questions Resolved by the Alignment Review
 

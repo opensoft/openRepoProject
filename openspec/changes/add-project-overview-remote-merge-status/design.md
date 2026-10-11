@@ -151,9 +151,16 @@ Any other failure, a budget reached or a stop at the deadline gives
 message, because Git may echo the remote's name or URL there. The URL lives
 in memory only for D3's judgement.
 
-`probes.performed` counts each child started, as [B] counts every Git child;
-`probes.estimated` adds 2 per repository with a queried row, though the
-second child does not run when the first decides.
+The two reads are counted in the `remote` object's own `probes`: `estimated`
+is 1 per repository with a queried row plus 1 per repository whose first
+read named a usable remote, and `performed` the reads started, so the two
+agree in an uncut run. The envelope's `probes` keeps [B]'s exact count in
+every run, so a run with `--remote` and the same run without it report the
+same `probes`: lane openRepoProject-4's condition, since adding a `--remote`
+term to `probes.estimated` would change that field's meaning and force a
+`schema_version` bump. [B]'s "`performed` counts every Git child started"
+is read as the Git children of collection, the only ones change 2 defines
+(`proposal.md`, Decisions).
 
 Rejected: parsing `<common_dir>/config` (includes, conditional includes and
 `insteadOf` in other files would disagree with Git, as change 2's design
@@ -235,8 +242,12 @@ caller's, less `GH_DEBUG`, `DEBUG`, `GH_HOST`, `GH_REPO`, `GH_FORCE_TTY` and
 `CLICOLOR_FORCE`, plus `GH_PROMPT_DISABLED=1`, `GH_NO_UPDATE_NOTIFIER=1`,
 `GH_NO_EXTENSION_UPDATE_NOTIFIER=1`, `GH_TELEMETRY=false` and `NO_COLOR=1`.
 `GH_TOKEN`, `GITHUB_TOKEN`, `GH_CONFIG_DIR` and the proxy variables pass
-unread: that is gh's own authentication path (DI:1056-1057). [E]'s Git scrub
-does not apply; this is not a Git child.
+unread: that is gh's own authentication path (DI:1056-1057). The two update
+notifier switches keep `gh` from its update check, once every 24 hours by
+its own help text, and from the state it writes for it, so the MODIFIED
+block's "no ... file write" holds for the `gh` children too; the fake
+`gh` of D11 records the values, and the MODIFIED block's new scenario
+asserts them. [E]'s Git scrub does not apply; this is not a Git child.
 
 `gh` is looked up once per run, by one bounded filesystem task as [B]
 requires of every filesystem call; when it is missing, every keyed row is
@@ -316,8 +327,14 @@ In a `--remote` run only:
   defines;
 - the envelope gains `remote` after `scan_errors`: `host`, `observed_at` (RFC
   3339 UTC with `Z`, null when no request started), `freshness`, `limits`,
-  `budget`, `requests`, `counts` (the six states as keys, each an integer,
-  zeros included) and `completeness`.
+  `budget`, `probes` (the remote-target reads, D2), `requests` (the `gh`
+  children, D5), `counts` (the six states as keys, each an integer, zeros
+  included) and `completeness`.
+
+Without `--remote` both `remote` keys are absent, not null, so a document
+of a run without `--remote` is exactly [J]'s, which is the condition for
+reading the keys as additive. The envelope's `probes` is [J]'s in every run
+(D2).
 
 Integers are JSON integers and the `_seconds` fields integers, as [J]
 requires. No existing key, enum or value changes, and `schema_version` stays 1
@@ -344,11 +361,11 @@ as one line. Under `--attention` only shown findings' worktrees get a
 The remote phase starts after classification, findings, gates, suggestions,
 summary counts and completeness are computed, and it writes only into the
 `remote` slots. Nothing it records is a row error, a scan error or a finding,
-so [X]'s exit status and [J]'s `completeness` are what they are without
-`--remote`. Nothing is written to disk or kept past the run, `gh` never gets
-`--cache`, and `project clean` has neither the option nor a reader of these
-fields, so remote evidence never reaches an eligibility gate, a `plan_digest`
-or a revalidation (SY:129-130; DI:1059-1060).
+so [X]'s exit status, [J]'s `completeness` and the envelope's `probes` are
+what they are without `--remote`. Nothing is written to disk or kept past the
+run, `gh` never gets `--cache`, and `project clean` has neither the option nor
+a reader of these fields, so remote evidence never reaches an eligibility
+gate, a `plan_digest` or a revalidation (SY:129-130; DI:1059-1060).
 
 ### D11. Test seams and the scenario map
 
@@ -359,8 +376,10 @@ or a revalidation (SY:129-130; DI:1059-1060).
   output, send 1 MiB and one byte of body, set `hasNextPage`, answer 401, 403,
   a rate limit or 502, or name pull requests with any head, base and state.
   It appends one JSON record per run: the argv, the names of the environment
-  variables set, whether `GH_TOKEN` equals the caller's, the working
-  directory, and its start and end times.
+  variables set, the values of `GH_NO_UPDATE_NOTIFIER`,
+  `GH_NO_EXTENSION_UPDATE_NOTIFIER`, `GH_PROMPT_DISABLED`, `GH_TELEMETRY` and
+  `NO_COLOR`, whether `GH_TOKEN` equals the caller's, the working directory,
+  and its start and end times.
 - No real network: in-process runs install an audit hook that fails
   `socket.connect` (APO design.md, D13); subprocess runs set `HTTPS_PROXY`
   and `HTTP_PROXY` to a closed local port, so even a real `gh` reached by
