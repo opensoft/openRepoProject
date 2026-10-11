@@ -22,13 +22,14 @@ duplicate them.
 
 ## 3. Speckit handoff
 
-- [ ] 3.1 Exactly one Speckit feature owns the implementation, `005-project-overview`, created by `/speckit.specify` after 1.6, 2.1 and 2.2 and after feature 004 (change 1's) merges, from the `main` of that day; verified when "Speckit Handoff" below records it as created, filled in once.
+- [x] 3.1 Exactly one Speckit feature owns the implementation, `005-project-overview`, created by `/speckit.specify` after 1.6, 2.1 and 2.2 and after feature 004 (change 1's) merges, from the `main` of that day; verified when "Speckit Handoff" below records it as created, filled in once. Created: feature 005-project-overview on branch 005-project-overview (worktree ../openRepoProject-worktrees/005-project-overview, cut from main at 961c405; 005 was the next free number on 2026-10-11, `004-project-clean-all-safe` existing as a branch), spec at specs/005-project-overview/spec.md, by lane openRepoProject-4. It was created before feature 004 merges on Brett Heap's word, typed in lane openRepoProject-4's pane at 2026-10-11T16:14:21Z, "lane 4 specifies 005 now", which moves this task's order for the specify step only; the plan and the implementation still wait for feature 004's code and for his word.
 - [ ] 3.2 `/opsx:apply` is not run until "Speckit Handoff" names exactly one created feature; verified by reading that section before the first `/opsx:apply`.
 
 ## Speckit Handoff
 
-Implementation is tracked exclusively in one Speckit feature, to be created by
-`/speckit.specify` after ratification and after feature 004 merges. The
+Implementation is tracked exclusively in one Speckit feature, created by
+`/speckit.specify` after ratification and, on Brett Heap's word, before
+feature 004 merges (the `Created:` line below). The
 feature covers the `project overview` subcommand of `specs/project-overview/spec.md`,
 the `project-review-safety` carve-out, the README section and the tests of
 `design.md` D13.
@@ -38,8 +39,9 @@ Numbering: after `002-triad-first-project-new` (merged by PR #8),
 `004-project-clean-all-safe` is change 1's, so this change's feature is
 `005-project-overview`.
 
-- Feature identifier: 005-project-overview (to be created by `/speckit.specify`)
-- Branch: 005-project-overview
+- Feature identifier: 005-project-overview
+- Branch: 005-project-overview (worktree ../openRepoProject-worktrees/005-project-overview, cut from main at 961c405)
 - Tasks: specs/005-project-overview/tasks.md (reserved; created by `/speckit.tasks`)
+- Created: 2026-10-11 by lane openRepoProject-4, before feature 004 merges, on Brett Heap's word typed in that lane's pane at 2026-10-11T16:14:21Z, "lane 4 specifies 005 now"; that word moves the order for the specify step only, and the plan and the implementation still wait for feature 004's code and for his word.
 
 `/opsx:apply` is not run until this section names exactly one created feature.
