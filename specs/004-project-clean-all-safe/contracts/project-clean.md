@@ -43,6 +43,13 @@ where the baseline refused it for every action (`project:671-672`). An
 argument-parser usage error prints the parser's message, exits 2 and prints
 no JSON document, as before.
 
+Flags this table does not refuse keep the baseline's handling: without
+`--apply`, `--yes`, `--action`, `--branch` and `--worktree` are ignored,
+and an unused `--branch` or `--worktree` is ignored. `--worktree P` is
+expanded, joined to the working directory and realpath'd by one bounded
+call; it names the one registry row whose path equals it, or else whose
+realpath does (`worktree-not-found` otherwise).
+
 ## Order of a run
 
 1. Argument checks.
@@ -50,9 +57,9 @@ no JSON document, as before.
    2, before any repository is probed.
 3. Resolution (below), then `unsupported-path-bytes` for a `root` or
    `common_dir` that is not valid UTF-8.
-4. The manifest read at `root` and the merge target: `manifest-invalid`,
-   `no-merge-target`.
-5. Planning under the deadline (rows 6 and 7, then each row in order; in
+4. The manifest read at `root`, row 6, and the merge target over row 6's
+   listing: `manifest-invalid`, `no-merge-target`.
+5. Planning under the deadline (row 7, then each row in order; in
    single mode P is matched first, `worktree-not-found` if absent, and
    probed first), the gates and the deferral, then `plan_digest`.
 6. Plan checks, in this order: an incomplete plan (a preview or report exits
@@ -76,8 +83,8 @@ no JSON document, as before.
 | Argument (after `expanduser`) | Resolves to | Refusal |
 | --- | --- | --- |
 | absolute path | itself, when its realpath equals the toplevel Git reports there and that toplevel is the main worktree | `target-not-repository-root` |
-| relative path, `.`, `..`, any argument with `/`, or none | the repository Git finds at that directory joined to the working directory; `root` is its main worktree | `target-not-repository-root` where Git finds no worktree |
-| bare name: one component, not `.` or `..` (research.md R13) | `discover()`'s name lookup, its one Git child counted and bounded, then the directory it returns resolved as a worktree toplevel | `ambiguous-name`, `repository-not-found` |
+| relative path: any relative argument containing a `/` (`./x`, `x/`), `.`, `..`, or none | the repository Git finds at that directory joined to the working directory; `root` is its main worktree | `target-not-repository-root` where Git finds no worktree |
+| bare name: a relative argument with no `/`, not `.` or `..` (research.md R13) | `discover()`'s name lookup, its one Git child counted and bounded, then the directory it returns resolved as a worktree toplevel | `ambiguous-name`, `repository-not-found` |
 
 Then, in this order (M6): a submodule checkout (row 3 prints a third line)
 is refused; a first registry record that is `bare` is refused; a first
@@ -113,12 +120,21 @@ use it, is unchanged, and so are its signals (research.md R4).
 | report or preview, `--json` | one JSON document: the plan envelope, or the extended error object | `Cancelled.` |
 | `--apply` (removal) | the plan, the question, progress, "D18 wait line", the result | `REFUSED: ...`, `Cancelled.` |
 | `--apply --json` (removal) | one JSON document: the plan envelope or the extended error object when the run stops before the apply phase, otherwise the apply result record | the plan, the question, progress, "D18 wait line", the result text, `Cancelled.` |
-| push, delete-branch | `Cleanup action: ...`, the plan, `Type yes` and the delegate's own output, as today | `REFUSED: ...`, `Cancelled.`, the delegate's own |
+| push, delete-branch | `Cleanup action: ...`, the plan (`Working directory:` and the command, through the path-escaping printer below), `Type yes` and the delegate's own output, as today | `REFUSED: ...`, `Cancelled.`, the delegate's own |
 
 Under `--json` a refusal is a JSON document on standard output, never a
 `REFUSED:` line. Three cases print no JSON document: a parser usage error;
 SIGINT, SIGTERM or SIGHUP before the apply phase; and end of input at the
 question.
+
+`invalid-arguments`, `internal-error` and every resolve refusal print the
+extended error object; `worktree-not-found`, `target-excluded`, the plan
+codes, `plan-digest-mismatch`, `confirmation-required` and `cancelled`
+print the plan envelope with `apply_allowed: false` and the refusal in
+`refusals`. Every document is `json.dumps(doc, indent=2,
+ensure_ascii=True)` and one newline, keys in the order tabled here. Row and
+target `notes` are arrays of code strings; plan `notes` are `{code,
+message}` objects, an `inspect-cap` note adding `rows`.
 
 ## Human output (D18, D14)
 
@@ -132,10 +148,35 @@ question.
 | "D18 next steps" | the next step for each reason |
 | "D18 residual-window line" | the confirmation and the result |
 | "D18 empty line" | `No eligible worktrees` |
-| "D18 question", "D18 wait line" | above; the wait line at most once |
+| "D18 question", "D18 wait line" | above; the wait line once, at the first signal or deadline during a removal (D9) |
 | "D18 success line", "D18 stop block" | the result; the stop block names the retained branches and the residual window |
 | "D18 partial-removal note" | under the `dirty` advice of a row, or on a `partially-removed` target |
 | "D18 refusal messages", "D18 remedies" | `target-excluded` (the current-worktree and class messages kept), gates, and the plan-blocking remedies |
+
+Lines D18 leaves open are fixed here before tasks: the `Report:` and
+`--all-safe would ...` lines follow `Freshness:`; `Excluded` groups follow
+the gate order, classes in ladder order; one progress line per target,
+`  STAGE PATH` or `  STAGE PATH (REASON)`; the retained-branch line
+`Branches kept: B1, B2.`; a plan-blocking refusal prints the plan, then
+`REFUSED: MESSAGE`; each code with no baseline message gets one here:
+
+| Code | Message |
+| --- | --- |
+| `invalid-arguments` | `--all-safe cannot be combined with --action, --branch or --worktree.`; `--expect-plan requires --all-safe and --apply.`; `--expect-plan takes 64 lowercase hexadecimal characters.`; the baseline messages for the baseline cases |
+| `internal-error` | `Internal error: TYPE: TEXT`, the exception's class and text |
+| `git-unavailable` | `Git is unavailable (DETAIL); clean needs Git 2.36 or later.`, DETAIL one of `not found`, `exit N`, `timed out`, `unparseable version` |
+| `git-too-old` | `Git VERSION is older than 2.36; clean needs Git 2.36 or later.` |
+| `target-not-repository-root` | `Not the main worktree of a repository: PATH; pass the repository root.` |
+| `unsupported-path-bytes` | `The repository path is not valid UTF-8: PATH` |
+| `manifest-invalid` | `Manifest PATH is larger than 1 MiB.`; the baseline `Cannot read PATH: ...` and `Unexpected kind in PATH; expected project-manifest` otherwise |
+| `inspection-incomplete`, `inspect-cap`, `deadline-exceeded` | `The plan is incomplete (CODE): REMEDY.`, REMEDY being "D18 remedies" |
+| `plan-digest-mismatch` | `The fresh plan's digest DIGEST differs from --expect-plan EXPECTED; nothing was changed.` |
+| `confirmation-required` | `Standard input is not a terminal; pass --yes to apply this plan.` (the removal question; `confirm()` keeps its own) |
+| push, `remote-gone` | `Cannot push BRANCH; its upstream UPSTREAM was deleted (remote-gone); review it before it is republished.` |
+
+`repository-not-found`, `ambiguous-name`, `no-merge-target`,
+`worktree-not-found` and `cancelled` keep the baseline's messages, and
+`target-excluded` is "D18 refusal messages".
 
 All new text is ASCII. A path prints verbatim in prose and shell-quoted in
 commands, unless it holds a code point of general category Cc, Cf, Zl or Zp
@@ -167,7 +208,7 @@ are closed within the version.
 | `merge_target` | `name`, `source`, `sha` |
 | `limits` | `worktree_rows` (the mode's cap, 128 or 256), `targets` (16), `ignored_entries` (64), `status_records` (4096), `ignored_samples` (8), the values in force |
 | `budget` | `probe_timeout_seconds` (5), `invocation_timeout_seconds` (60), `reconciliation_reserve_seconds` (10), `removal_floor_seconds` (5), `removal_ceiling_seconds` (300), `probe_concurrency` (1), the values in force |
-| `probes`, `operations` | `{estimated, performed}` integers: `probes` counts every Git child other than a removal, `operations` the removals, each child once (lead ruling R-27; research.md R8) |
+| `probes`, `operations` | `{estimated, performed}` integers: `probes` counts every Git child other than a removal, `operations` the removals, each child once (lead ruling R-27); `estimated` is the upper bound for an `--apply` run of this plan in every mode, previews included: F + W + E + 5T + 3 and T (research.md R8) |
 | `selected` | array in canonical order, or null in a report above 128 rows; each entry: `path`, `path_valid_utf8`, `branch`, `head`, `upstream`, `upstream_oid`, `ahead`, `behind`, `dev`, `ino`, `admin_id`, `locked`, the baseline signature fields (`present`, `dirty`, `ignored_files`, `remote_present`, `merged_into_target`, `current`, `classification`), and `operation` (`{kind: "worktree-remove", argv}`, the exact argument vector) |
 | `excluded` | array in canonical order: `path`, `path_valid_utf8`, `branch` (or null), `classification` (or null when never classified), `reason` |
 | `omitted` | `{count, exactness: "exact"}` |
@@ -239,7 +280,9 @@ it equals one of `project`'s own), 2 (any refusal, a `refused` target, a
 branch-after-removal reason, `spawn-error`), 0. A preview or report: 2 for a
 refusal before a plan is built, 1 incomplete, 0 otherwise, and the signal
 exits. The baseline exited 0 for every printed report; it now exits 1 when
-the report is incomplete (FR-005).
+the report is incomplete (FR-005). Push and delete-branch exit 130, 143 or
+129 when a signal was recorded, otherwise with the child's status, and 2
+for a refusal.
 
 ## Git children
 
@@ -300,7 +343,11 @@ record bound or on a signal gets SIGTERM to its group, SIGKILL 2 s later, and
 a reap wait of at most 2 s more, then is abandoned as `probe-timeout`. The
 removal is spawned only while 5 s of the work deadline remains, is never
 signalled before its 300 s ceiling, and is waited for. Push and branch
-deletion stay unbounded: no budget and no deadline. Probing is serial.
+deletion stay unbounded: no budget and no deadline. A signal recorded while
+the push or `git branch -d` child runs is not passed on: `project` never
+signals either child, waits for it, and then exits by D19's first row
+(data-model.md, "Exit statuses"). Probing is serial; termination never
+blocks (data-model.md, "Child handle").
 Revalidation spawns at most five Git children per target, the final rescan
 at most three.
 
