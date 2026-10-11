@@ -422,7 +422,7 @@ call: a manifest whose `st_size`, taken before the read, exceeds 1 MiB is
 `manifest-invalid` without being read, the read itself never exceeds 1 MiB, and
 a wrong kind is `manifest-invalid` too (`project:280`). `no-merge-target` keeps
 the baseline message, "Cannot determine the default branch from the manifest,
-origin/HEAD, main, or master." (`project:401`), which the existing test reads
+origin/HEAD, main, or master." (`project:403`), which the existing test reads
 (Migration Plan).
 
 The 1 MiB cap binds only the merge-target resolution. `status`, `doctor` and

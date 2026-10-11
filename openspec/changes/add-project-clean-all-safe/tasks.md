@@ -66,34 +66,35 @@ duplicate them, and nothing here is an implementation step.
   and 100,000 entries and about 1,000 branches; the removal of a 20,000-file
   worktree timed against the 5 s floor and the 300 s ceiling; drvfs measured the
   same way and recorded as a degraded case, never used for the fit; the fit of
-  BA:729-735 reapplied with the measured costs; and, for every repository under
-  the projects directories of this workstation, the rows per gate outcome beside
-  the timings, among them the rows excluded only for `reflog-unavailable`.
-  Verified by the numbers posted on PR #11 and summarised here; a cap the fit
-  rejects is lowered in the deltas before the handoff, otherwise the deltas'
-  caps stand as measured. Done: measured 2026-10-09 in the `py-bench` dev
-  container on WSL2 (Git 2.43.0, Python 3.12.3; fixtures on the container's
-  overlayfs, the real repositories on ext4), the cold cache by `sync` and
-  per-file eviction (`posix_fadvise`, the mechanism of `vmtouch -e`) confirmed
-  with `mincore`, since `drop_caches` is impossible in the container, and drvfs
-  not available, so unmeasured. Medians, warm / cold: the status probe 42-49 /
-  38-63 ms at 10,000 entries and 215-232 / 244-248 ms at 100,000; `for-each-ref`
-  at 1,000 branches 108-112 / 121 ms packed and 240 / 838 ms loose; the merged
-  set 17-48 ms; the 20,000-file removal 0.66 / 0.72 s, at worst 14.1 s under CPU
-  saturation (low load leaves 3.6 to 4.3 s under the 5 s floor, and the worst
-  case is 21 times under the 300 s ceiling). The fit of BA:729-735 rejects no
-  cap: at 128 rows and 16 targets the 16th removal spawns at 23.6 s with 26.4 s
-  left and the worst case ends at 24.3 s; 256 report rows take 19.9 s; and the
-  64 s run bound, the 15 s per child, `min(5 s, remaining)`, the 5 s floor and
-  the 300 s ceiling all hold. Two degraded cases are recorded as risks in
-  `design.md`, not as cap changes: rows of 100,000-entry indexes (the rule would
-  give 64 rows) and CPU saturation at load 165 (a 128-row plan takes 77 s); a
-  plan then goes incomplete, never unsafe. The survey covers 355 repositories,
-  296 resolving, with 561 rows, and selects 17; per gate: main-worktree 296,
-  locked-worktree 1, stale-worktree 7, dirty 25, ignored-local-files 102,
-  detached 11, unpublished 23, remote-gone 2 (unmerged), remote-ahead 5,
-  unpushed 1, pushed-unmerged 51, deferred-target-cap 4, contains-submodule 16,
-  and 0 for unsupported-path-bytes, registration-mismatch, protected-default,
+  BA:729-735 at da33d92 reapplied with the measured costs; and, for every
+  repository under the projects directories of this workstation, the rows per
+  gate outcome beside the timings, among them the rows excluded only for
+  `reflog-unavailable`. Verified by the numbers posted on PR #11 and summarised
+  here; a cap the fit rejects is lowered in the deltas before the handoff,
+  otherwise the deltas' caps stand as measured. Done: measured 2026-10-09 in the
+  `py-bench` dev container on WSL2 (Git 2.43.0, Python 3.12.3; fixtures on the
+  container's overlayfs, the real repositories on ext4), the cold cache by
+  `sync` and per-file eviction (`posix_fadvise`, the mechanism of `vmtouch -e`)
+  confirmed with `mincore`, since `drop_caches` is impossible in the container,
+  and drvfs not available, so unmeasured. Medians, warm / cold: the status probe
+  42-49 / 38-63 ms at 10,000 entries and 215-232 / 244-248 ms at 100,000;
+  `for-each-ref` at 1,000 branches 108-112 / 121 ms packed and 240 / 838 ms
+  loose; the merged set 17-48 ms; the 20,000-file removal 0.66 / 0.72 s, at
+  worst 14.1 s under CPU saturation (low load leaves 3.6 to 4.3 s under the 5 s
+  floor, and the worst case is 21 times under the 300 s ceiling). The fit of
+  BA:729-735 at da33d92 rejects no cap: at 128 rows and 16 targets the 16th
+  removal spawns at 23.6 s with 26.4 s left and the worst case ends at 24.3 s;
+  256 report rows take 19.9 s; and the 64 s run bound, the 15 s per child,
+  `min(5 s, remaining)`, the 5 s floor and the 300 s ceiling all hold. Two
+  degraded cases are recorded as risks in `design.md`, not as cap changes: rows
+  of 100,000-entry indexes (the rule would give 64 rows) and CPU saturation at
+  load 165 (a 128-row plan takes 77 s); a plan then goes incomplete, never
+  unsafe. The survey covers 355 repositories, 296 resolving, with 561 rows, and
+  selects 17; per gate: main-worktree 296, locked-worktree 1, stale-worktree 7,
+  dirty 25, ignored-local-files 102, detached 11, unpublished 23, remote-gone 2
+  (unmerged), remote-ahead 5, unpushed 1, pushed-unmerged 51,
+  deferred-target-cap 4, contains-submodule 16, and 0 for
+  unsupported-path-bytes, registration-mismatch, protected-default,
   inspection-error, review-required, diverged, merged-current,
   hidden-local-state, `unstarted-branch` and `reflog-unavailable` (all 37 rows
   that reach the reflog gate show a movement). In Opensoft-Tenant, the V5
