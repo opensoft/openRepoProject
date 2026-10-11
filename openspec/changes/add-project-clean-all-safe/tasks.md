@@ -125,8 +125,7 @@ Implementation is tracked exclusively in one Speckit feature, to be created by
 #8, and `003-parent-obstacle-wording` is lane openRepoProject-1's feature, PR
 #17, so this change's feature is the next free number, 004.
 
-- Feature identifier: 004-project-clean-all-safe (to be created by
-  /speckit.specify after ratification)
+- Feature identifier: 004-project-clean-all-safe
 - Branch: 004-project-clean-all-safe
 - Tasks: specs/004-project-clean-all-safe/tasks.md (reserved; created by
   /speckit.tasks)
