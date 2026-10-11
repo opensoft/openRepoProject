@@ -3,7 +3,7 @@ Lane: openRepoProject-1
 # Proposal: refuse-non-directory-parent-early
 
 Status: draft; alignment review and council resolved (see draft PR #21);
-design, spec delta and governance tasks follow in the same pull request;
+design, spec delta and governance tasks are in the same pull request;
 nothing here is ratified. Governing issue: opensoft/openRepoProject#20,
 claimed by lane openRepoProject-1. Proposed on Brett Heap's word "propose the
 non-directory parent follow-up as a new change" (2026-10-11).
@@ -195,24 +195,24 @@ None.
 `project-command`: one ADDED and four MODIFIED requirements. Each MODIFIED
 block changes only the statements this change makes false (listed below);
 every statement that stays true keeps its wording, relative forms included.
-Scenario titles are provisional; the ADDED ones take a stem distinct from the
-existing titles at `openspec/specs/project-command/spec.md:127`, `:136`,
-`:240`, `:251`.
+The ADDED scenarios take a stem distinct from the existing titles at
+`openspec/specs/project-command/spec.md:127`, `:136`, `:240`, `:251`.
 
 - ADDED: "A parent blocked by a non-directory is refused before the
   single-repository path's steps". It owns the refusal as the first step of
   the single-repository path however that path was chosen (by flag, not
   asked, or by an answer `2`): the term, the fresh read, the refusal's text,
   place and exit status, the dry run's refusal, and the permission boundary.
-  Scenarios: "A flag-chosen single repository with a parent that is not a
-  directory"; "A flag-chosen single repository below a path that is not a
-  directory"; "A single-repository dry run with a parent blocked by a
-  non-directory"; "A single repository taken at the question with a parent
-  blocked by a non-directory"; "A parent repaired or broken while the question
-  waits"; "A single repository with a parent that is not blocked"; "A parent
-  the person cannot write still fails only at creation"; "The parent refusal
-  comes after the earlier refusals and before generator selection"; "The
-  shape branch's parent refusal is unchanged".
+  Scenarios, as in the delta: "A flag-chosen single repository with a parent
+  that is not a directory"; "A flag-chosen single repository below a path
+  that is not a directory"; "A single-repository dry run with a parent
+  blocked by a non-directory"; "A single repository taken at the question
+  with a parent blocked by a non-directory"; "A parent repaired or broken
+  while the question waits"; "A single repository with a parent that is not
+  blocked"; "A parent the person cannot write still fails only at creation";
+  "The parent refusal comes after the earlier refusals"; "The parent refusal
+  comes before generator selection"; "The shape branch's parent refusal is
+  unchanged".
 - MODIFIED: "Delegate project creation" (`spec.md:7-42`): only "Preview"
   (`:25-28`), its WHEN qualified, such as "a creation path is chosen and no
   refusal precedes its plan", which also covers the precedent's Triad dry-run
@@ -285,9 +285,9 @@ missing" (`:236-238`), "A Triad answer with a known obstacle" (`:245-249`) and
 - **`tests/test_project.py`**: that one test keeps its comparison form: the
   asked `2` run and the `--type test` run exit 2 with the same `REFUSED:`
   line, and neither prints `Create:`. New cases, each asserting the tree
-  unchanged and `FILE` intact, per the acceptance criteria below; case (b) as new rows of
-  `known_obstacle_cases()`, existing rows unchanged; a test pinning the late
-  permission refusal, skipped when `os.geteuid() == 0`.
+  unchanged and `FILE` intact, per the acceptance criteria below; case (b) as
+  new rows of `known_obstacle_cases()`, existing rows unchanged; a test
+  pinning the late permission refusal, skipped when `os.geteuid() == 0`.
 - **`README.md`** lines 57-64, 75-77, 79-82 and 92-98; the spec at archive.
 - **Feature records** stay unedited. The new feature's spec states that, for
   a parent blocked by a non-directory, it supersedes the statements this
