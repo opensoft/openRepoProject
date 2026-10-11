@@ -90,7 +90,9 @@ unconditionally: the fifteen that `git rev-parse --local-env-vars` prints on
 Git 2.40 and later plus `GIT_INTERNAL_SUPER_PREFIX`, which Git 2.36 through 2.39
 also print, as verified on Git 2.36.6, 2.40.4, and 2.43.0 (change 1 ruling R-21,
 lane 2, 2026-10-09, `c873c81`), and `GIT_ALLOW_PROTOCOL`, added by ruling R-25
-(lane 2, 2026-10-09). Read-only children also set
+(lane 2, 2026-10-09), which the push child of `clean --action push` keeps if
+Brett Heap accepts draft PR #19 (lane 2's ruling R-28; see Batch "Identity").
+Read-only children also set
 `GIT_OPTIONAL_LOCKS=0`. One `git --version` child runs per invocation. Each
 repository then costs the same four repository-wide children, memoized per
 `common_dir` and fanned out to every row: identity; the registry listing,

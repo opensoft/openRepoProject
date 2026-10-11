@@ -364,12 +364,16 @@ which a per-protocol setting or `GIT_ALLOW_PROTOCOL` would override, ruling R-25
 openRepoProject-2 later found that these pins also stop the one Git child that
 reaches a remote, the kept push child of `clean --action push`: Git refuses a
 pinned push over every protocol, so a push to a local-path origin fails with
-"transport 'file' not allowed". The push-child exception, which exempts that
-child from the seven pins, is proposed as an amendment to
-add-project-clean-all-safe in draft PR #19 for Brett Heap's word; until he
-rules, the landed text pins every Git child. The same draft records, as wording
-ruling R-27, that `probes.performed` counts every Git child except the removals,
-which `operations.performed` counts. The command spellings in this document show
+"transport 'file' not allowed". The push-child exception is proposed as an
+amendment to add-project-clean-all-safe in draft PR #19 (`5ce23d7`) for
+Brett Heap's word: that child carries none of the seven pins and, under
+lane 2's ruling R-28, keeps a caller's `GIT_ALLOW_PROTOCOL`, the other
+sixteen names still scrubbed; it runs through `execute()`, not the bounded
+runner, unbounded and in `project`'s own process group, with `project`'s own
+standard streams, and `project` never signals it. Until he rules, the landed
+text pins every Git child. The same draft records, as wording ruling R-27,
+that `probes.performed` counts every Git child except the removals, which
+`operations.performed` counts. The command spellings in this document show
 the earlier pins only; the proposal's text carries the protocol pins.
 
 ### The narrow guarantee
@@ -607,7 +611,9 @@ values it would have produced become `null`. A deadline that passes while the
 plan is being built makes the plan incomplete (refusal `deadline-exceeded`), so
 no removal starts. The deadline bounds the inspection children and the batch's
 removal children only: the `push` and `delete-branch` children, run through
-`execute()`, stay without a timeout, as at `a040790`.
+`execute()`, stay without a timeout, as at `a040790`; draft PR #19 (`5ce23d7`)
+runs only the push child through `execute()`, the delete-branch child in its
+own process group, pinned.
 
 Every filesystem call (`lstat`, `realpath`, and the `.git` and `gitdir`
 reads) runs in a daemon thread and is abandoned after
@@ -1845,10 +1851,11 @@ are skipped elsewhere with a reason.
   3, three removals run, no `for-each-ref --merged` and no status probe of a
   non-selected worktree runs, the post-confirmation probe total is at most
   5T + 3 whatever the row count, and the record's `probes.performed` equals
-  the wrapper's count. The wrapper also records each child's `-C` directory:
-  every `status` and `ls-files` child names its own worktree, and every other
-  child after resolution, the removals included, names the command
-  directory.
+  the wrapper's count of children other than the three removals, and its
+  `operations.performed` is 3 (draft PR #19's wording ruling R-27). The
+  wrapper also records each child's `-C` directory: every `status` and
+  `ls-files` child names its own worktree, and every other child after
+  resolution, the removals included, names the command directory.
 - **Paths and empty plans.** Space-containing paths, missing external paths,
   empty plans, locked worktrees, and incomplete inspection keep the same
   safety rules as the single-target command.

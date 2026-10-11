@@ -1795,12 +1795,16 @@ the Speckit handoff.
   the one Git child that reaches a remote, the kept push child of
   `clean --action push`: Git refuses a pinned push over every protocol, so a
   push to a local-path origin fails with "transport 'file' not allowed". The
-  push-child exception, which exempts that child from the seven pins, is
-  proposed as an amendment to add-project-clean-all-safe in draft PR #19 for
-  Brett Heap's word; until he rules, the landed text pins every Git child
-  (lane 2's LQ-3). The same draft records, as wording ruling R-27, that
-  `probes.performed` counts every Git child except the removals, which
-  `operations.performed` counts.
+  push-child exception is proposed as an amendment to
+  add-project-clean-all-safe in draft PR #19 (`5ce23d7`) for Brett Heap's
+  word: that child carries none of the seven pins and, under lane 2's
+  ruling R-28, keeps a caller's `GIT_ALLOW_PROTOCOL`, the other sixteen names
+  still scrubbed; it runs through `execute()`, not the bounded runner,
+  unbounded and in `project`'s own process group, with `project`'s own
+  standard streams, and `project` never signals it. Until he rules, the
+  landed text pins every Git child (lane 2's LQ-3). The same draft records,
+  as wording ruling R-27, that `probes.performed` counts every Git child
+  except the removals, which `operations.performed` counts.
 - Change 2 at `996a181` also landed R-2, the submodule test first in every
   repository at no extra child, with the outcomes recorded in "Change 2 phase 6
   records — 2026-10-09" above; R-3, the UTF-8 check of `common_dir`; R-5, the
@@ -1967,7 +1971,9 @@ the Speckit handoff.
   `0050f3e`; then change 2's ratified Status line and task 1.6 (`ea04e30`), its
   departures stated as ratified (`33054f9`), a merge of `main` at `0050f3e`
   (`c563f16`), and the squash-merge of PR #12 as `961c405`. The Speckit
-  feature 004-project-clean-all-safe follows the merge, created from `0050f3e`;
-  005-project-overview follows after feature 004 merges; and each change is
-  archived only after its feature lands. PR #16, this packet revision, awaits
-  Brett Heap's separate word.
+  feature 004-project-clean-all-safe follows the merge, created from `961c405`;
+  005-project-overview, which change 2 orders after feature 004 merges, is
+  being specified on Brett Heap's word "lane 4 specifies 005 now" (2026-10-11,
+  recorded by lane openRepoProject-4); and each change is archived only
+  after its feature lands. PR #16, this packet revision, awaits Brett Heap's
+  separate word.
