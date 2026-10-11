@@ -75,6 +75,159 @@ MODIFIES is `project-review-safety`, not change 1's
 structured refusals", from the archived change `resolve-pr-review-findings`,
 which had no Speckit feature.
 
+## Clarifications
+
+Each entry settles a point from the change's own text, cited; none
+re-decides what the change decided. `DI:N` is line N of the packet's
+discovery document at `da33d92`, as the change cites it. The questions that
+text leaves genuinely open are in `clarify-questions.md`, for Brett Heap,
+unanswered; when he answers, his answers join this section as a later
+session.
+
+### Session 2026-10-11
+
+- **C-1** Q: Is a root itself a candidate, or only its immediate entries? ->
+  A: The root itself too. Discovery "SHALL examine each root and its
+  immediate entries only" (POD:18-19), the marker table deciding for the
+  root as for any entry, and the README's check of one project is `project
+  overview --root <dir>` (proposal, Impact, README). A root on which no
+  marker holds is still listed and adds no row. Where applied: US1 s8;
+  FR-002.
+- **C-2** Q: Does a Git child that the overview stops at a record bound
+  count as a failed or timed-out probe? -> A: Not when it is reaped. A probe
+  stopped at its bound is a complete outcome, never `probe-failed` ([E],
+  "Combined probe"; design D1, "a deliberate early stop that records
+  nothing"; change 1's design D2, `complete-at-bound`), and its end through
+  the overview's own SIGTERM is not "a Git child exits nonzero" (POD:333).
+  The stopped child still gets SIGTERM to its group and SIGKILL 2 s later,
+  and one not reaped within the further 2 s is abandoned and recorded
+  `probe-timeout` (POD:172-176; [E], "Termination"); that row's
+  classification is then the one `project clean` gives the same row
+  (POD:383-386). Where applied: EC-019; FR-011.
+- **C-3** Q: What does `PROJECTS_DIR` hold, and is an empty value a root? ->
+  A: One directory, read as the command's existing projects-directory rule
+  reads it, an empty value counting as unset so that the defaults apply
+  (proposal, What Changes, "Discovery is bounded and local"; DI:103-104,
+  "exactly as" that rule selects them). A set `PROJECTS_DIR` naming a
+  missing directory is an `environment` root reported `unreadable`
+  (POD:43-45). Where applied: FR-001.
+- **C-4** Q: Does a candidate with no `.git` entry (a manifest-only project,
+  or a directory marked by `.project.json` or `.devcontainer`) get Git
+  probes or an error? -> A: Neither. `probes.estimated` counts an identity
+  probe only per Git candidate (POD:250); a family holder gets Git probes
+  only when its own directory is a Git toplevel, and otherwise null Git
+  fields, status `ok` and no error (POD:38-39, :66; DI:284-287); the
+  manifest of a row without Git is read at the candidate (POD:319-321); and
+  the absorption table rules that "no Git checkout" gives a row with null
+  `repository` and `git` and no finding (proposal, "Absorbing Doctor
+  Repository Health from the Closed PR #2"). Where applied: FR-004.
+- **C-5** Q: Is any Git child of the overview exempt from the protocol pins
+  or the environment scrub, as `clean`'s push child is? -> A: No. Every Git
+  child carries the seven protocol pins and runs with the seventeen names
+  removed, `GIT_ALLOW_PROTOCOL` included (POD:200-215; R-23, R-25). Feature
+  004's exception (lead ruling R-28; LQ-3, draft PR #19) covers `clean`'s
+  push child alone, and the overview starts no push (feature 004,
+  `contracts/project-clean.md`, "Git children"). Where applied: FR-016;
+  US10.
+- **C-6** Q: May a test rely on a running filesystem monitor to hold a
+  status probe, as the packet's fixtures did? -> A: No. [E] pins
+  `core.fsmonitor=false` and `core.untrackedCache=false` on every status
+  probe (change 1's D11), so the packet's fixtures at DI:1233-1237 (the
+  probe timeout) and DI:1249-1254 (bounded concurrency) hold nothing; design
+  D13's fixture rewrite holds the status probe with the counting `git`
+  wrapper instead. Where applied: FR-049; US6 s4 and s9.
+- **C-7** Q: Which capability does this feature modify, and in what order do
+  the two changes archive? -> A: `project-review-safety`, one MODIFIED
+  requirement ("YAML decoding errors are structured refusals"), not change
+  1's `project-clean-review-safety`; and change 2 archives after change 1
+  (proposal, Capabilities; design, Migration Plan step 5). Where applied:
+  FR-023; Dependencies.
+- **C-8** Q: Does a squash-merged branch count as merged? -> A: Not in this
+  feature. A squash merge never puts the tip into the merge target's
+  ancestry; change 1's open question 2 (the lead's LQ-2, a local
+  patch-equivalence proof) is deferred to a follow-on change, and the
+  overview would inherit its ruling through [L] (design, Open Questions;
+  proposal, Open Questions). Where applied: EC-013.
+- **C-9** Q: What does a `scan-limit` error's `limit` hold for each cap, and
+  how is the root cap reported? -> A: The cap's `limits` key, as the
+  scenarios spell three of them (`candidates`, `root_entries` and
+  `worktree_rows`; POD:258, :263, :269), so `roots` for the root cap, whose
+  dropped roots have state `omitted` and an exact count (POD:268, :623).
+  Where applied: FR-017.
+- **C-10** Q: Is a merge-target checkout whose status probe failed
+  `protected-default`, or `inspection-error`? -> A: `inspection-error`, set
+  directly as [L] defines it on that branch too, with that code's repair
+  finding of severity error and none of the default-branch findings
+  (POD:739-742; proposal, Corrections, "A failed status probe on the
+  merge-target branch"; design D4). Where applied: FR-041; US9 s4.
+- **C-11** Q: How does a gated finding's message carry its own text and the
+  remedy within 200 characters, and what does `<repository parent>` name? ->
+  A: Its own text, then `; `, then the remedy; when both do not fit, the own
+  text is shortened with `...` and the remedy kept whole. N and M are read
+  from the repository's row count and from `limits` when the message is
+  built, and `<repository parent>` is the parent directory of
+  `repository.root`, printed by [P]'s rules (design D5). Where applied:
+  FR-035.
+- **C-12** Q: What time does a finding's `observed_at` hold? -> A: The time
+  at which its deciding probe completed, RFC 3339 UTC; the envelope's
+  `observed_at` is the collection start (POD:610; proposal, What Changes,
+  adopting DI:724-819's fields and types; DI:727, :818). Both are
+  timestamps, which the comparison across concurrency excludes
+  (POD:244-246). Where applied: FR-037.
+- **C-13** Q: Where do the project row's `git` values come from? -> A: From
+  the evidence already held for the checkout at the row's `path`, with no
+  probe of its own (POD:630-631; the probe count of POD:129 and :248-254 has
+  no term for it), null where nothing was established. Where applied:
+  FR-036.
+- **C-14** Q: When a row's findings are gated differently, which gate does
+  the human `next` line name, and which remedy shows over both row caps? ->
+  A: The first code, in the gate table's order, among the findings whose
+  suggestion fed the row's command or would have; it reads `withheld` for a
+  withholding code and `limited` for `target-cap` and for `inspect-cap` over
+  the report's row cap; a repository over both caps shows the batch remedy
+  as withheld, and its read-only findings carry the report remedy in their
+  own messages (design D10). Where applied: FR-045.
+- **C-15** Q: For the `unpublished` default-branch finding, which remote
+  holds "a remote copy of the merge target"? -> A: Any: a
+  `refs/remotes/<remote>/<name>` record for the merge target's name, with at
+  least one path component as `<remote>`, or the `origin/HEAD` symref's own
+  target when the merge target came from it; a remote whose name contains
+  `/` can set the flag for another remote's branch, erring toward a warning
+  (design D9; EC-011). Where applied: FR-015, FR-041.
+- **C-16** Q: The packet allows 62 s for a run cut by the deadline; which
+  bound holds? -> A: 64 s plus rendering: the 60 s deadline, then up to 2 s
+  from SIGTERM to SIGKILL and up to 2 s of reap wait before abandonment
+  (design D13 and D1; P6-1). Where applied: FR-011; US6 s8.
+- **C-17** Q: Is the JSON independent of timing in every run? -> A: Only in
+  a run in which no child, task or root listing reaches its budget and the
+  deadline does not expire; a cut run reports each cut with `omitted` and
+  its exactness, and what it selected may depend on timing (POD:243-246;
+  proposal, Decisions, "Determinism scoped"). Where applied: FR-019; SC-007.
+- **C-18** Q: Does Brett Heap's ruling of 2026-10-09, that local ancestry
+  outranks `remote-gone`, change the merge-target checkout's `remote-gone`
+  finding? -> A: No. That finding reads the checkout's own upstream, not the
+  ladder, and stays a preserve warning (proposal, Decisions, "Local ancestry
+  outranks a deleted upstream"; design D4). Where applied: FR-028, FR-041.
+- **C-19** Q: When several candidates reach one repository, which gives the
+  row its `path`, `kind` and `name`? -> A: `path` is `repository.root`, or
+  the candidate when that is null; `kind` is that of the candidate whose
+  path equals `path`, else of the canonically first candidate that reached
+  the repository; `name` is the manifest name at `path`, else its directory
+  name (POD:625; design D7). Where applied: FR-010.
+- **C-20** Q: Does `--attention` show a row whose only finding is
+  informational but suggests the read-only command, such as
+  `locked-worktree`? -> A: No. It shows a row only for a scan error, an
+  error status or a repair, preserve or housekeeping finding, and hides
+  informational findings (POD:466-469); `locked-worktree` is informational
+  (POD:448). The JSON, the summary and the exit are unchanged (POD:469-471).
+  Where applied: FR-030.
+- **C-21** Q: May this feature be specified before feature 004 merges? -> A:
+  The specify step only, on Brett Heap's word typed at 2026-10-11T16:14:21Z,
+  "lane 4 specifies 005 now"; the plan and the implementation still wait for
+  feature 004's code and for his word (header; change `tasks.md` 3.1 and
+  Speckit Handoff). This one rests on his word, not on the change's text.
+  Where applied: Dependencies.
+
 ## User Scenarios & Testing *(mandatory)*
 
 ### User Story 1 - See every local project in one report (Priority: P1)
