@@ -235,6 +235,22 @@ informal check on a three-worktree scratch repository measured medians of 3
 to 10 ms per child and a 77 ms 95th percentile for `git status`; that is not
 the proposal's measurement, which must use a realistic estate.
 
+The proposal measured the caps on 2026-10-09 (change 2 task 2.1, `1cc936e`;
+ruling D-Q), warm and cold on Linux file-system paths, and they stand as
+measured: at their worst case the 128 candidates and 512 worktree rows take
+48.3 s of the 60 s deadline. The one 4,096-directory root lists in 0.36 s warm
+and 2.6 s projected cold, inside the 5 s per-root bound, and the status probe's
+median at four children at once is 124 ms warm and 147 ms cold at 10,000 index
+entries, within the 150 ms margin rate. Cases outside the worst case fail safe
+as incomplete: `for-each-ref` over 10,000 loose refs took 8.65 s cold, over the
+5 s child bound, which gives a `probe-timeout` and an incomplete run, never a
+wrong one. The measured workstation's default root holds 219 candidates, so a
+default-root overview there is incomplete, with a `scan-limit` error on
+`candidates` and 91 omitted: a recorded consequence of the 128-candidate cap, by
+design and not a defect, and no cap moves for it. The same measurement found
+that Git 2.43 lacks `GIT_NO_LAZY_FETCH`, which ruling R-23 answers ("Probe model
+and deadline").
+
 ### Repositories and linked worktrees
 
 Identity uses the packet's shared vocabulary. A repository is
@@ -342,16 +358,26 @@ hard-coded, because obtaining it would cost a child:
 `GIT_SHALLOW_FILE`, and `GIT_COMMON_DIR`, the fifteen that Git 2.40 and later
 print. The list adds a sixteenth name, `GIT_INTERNAL_SUPER_PREFIX`, which Git
 2.36 through 2.39 also print and which makes every command on those versions
-fail when it is set, and all sixteen are unset unconditionally, as change 1
-ruling R-21 (lane 2, 2026-10-09, `c873c81`) fixed the shared scrub. Every
-overview child is a read-only probe, so each also runs with
-`GIT_OPTIONAL_LOCKS=0`, as the baseline `probe` helper already sets, and
-`status` never rewrites the index. Standard input is closed and output is
-read as bytes. The overview uses local refs only: it never fetches, pulls,
-resets, bootstraps, runs validators, writes files, or contacts the network.
-Ahead, behind, and merge status are observations as of the last fetch, and
-both outputs say so. It reads no credential files or unrelated profile data.
-The memo is invocation-local; there is no persistent cache.
+fail when it is set, as change 1 ruling R-21 (lane 2, 2026-10-09, `c873c81`)
+fixed the shared scrub, and ruling R-25 (lane 2, 2026-10-09; change 2 at
+`a8f710d`) adds a seventeenth, `GIT_ALLOW_PROTOCOL`; all seventeen are unset
+unconditionally. Every overview child is a read-only probe, so each also runs
+with `GIT_OPTIONAL_LOCKS=0`, as the baseline `probe` helper already sets, and
+`status` never rewrites the index. Under lane openRepoProject-2 ruling R-23
+(2026-10-09; change 2 at `1cc936e`), every overview child, as every Git child of
+`clean`, `status`, `doctor`, and `update`, also runs with
+`-c protocol.allow=never` beside the status probe's pins, because Git 2.43 lacks
+`GIT_NO_LAZY_FETCH`: a read-only probe in a partial clone could otherwise fetch
+a missing object from the network, and with the pin the fetch fails locally, the
+probe is recorded `probe-failed`, and a failed status probe leaves its worktree
+`inspection-error`. R-25 adds `protocol.<name>.allow=never` for `file`, `ssh`,
+`git`, `http`, `https`, and `ext`, because `protocol.allow` is only the default
+policy. Standard input is closed and output is read as bytes. The overview uses
+local refs only: it never fetches, pulls, resets, bootstraps, runs validators,
+writes files, or contacts the network. Ahead, behind, and merge status are
+observations as of the last fetch, and both outputs say so. It reads no
+credential files or unrelated profile data. The memo is invocation-local; there
+is no persistent cache.
 
 ### Git version check
 
@@ -809,7 +835,7 @@ says the batch takes 16 per run, so re-running drains the backlog.
 Each `suggestion_gate` code has a fixed remedy, carried in the finding's message
 and in the human `next` line as "(withheld: ...)" or "(limited: ...)", as change
 2 states them (lane openRepoProject-2, 2026-10-09; read at `996a181`, and at
-`4495ae7` (R-20; unchanged at `cc43860`)): `target-not-repository-root`, "run
+`4495ae7` (R-20; unchanged at `c563f16`)): `target-not-repository-root`, "run
 project clean from the main worktree root"; `unsupported-path-bytes`, "rename
 the path to valid UTF-8"; `inspection-incomplete`, "repair the inspection-error
 rows, or re-run for the rows left unprobed, first", since lane openRepoProject-2
@@ -1062,7 +1088,7 @@ suggests only the read-only form, with `suggestion_gate: "unstarted-branch"`,
 and so does one whose reflog cannot decide, with
 `suggestion_gate: "reflog-unavailable"` (rulings N-5 and P6-5, with the reflog
 read of the D10 amendment and ruling R-12, change 1 at `0b3c33d` and `4f2162b`,
-mirrored in change 2 at `4495ae7` (R-20; unchanged at `cc43860`); see "Attention
+mirrored in change 2 at `4495ae7` (R-20; unchanged at `c563f16`); see "Attention
 categories"). A suggestion never names a project by bare name and never includes
 `--apply` or `--yes`. A root that is not valid UTF-8 cannot be carried exactly
 in a JSON argv array, so such a row gets the `unsupported-path-bytes` finding
@@ -1324,15 +1350,16 @@ lists the same shared items plus its batch-only items: those in the last
 item below, and also the resolution of relative paths and the no-argument
 default, the meaning of the plan's `root`, the refusal of bare repositories,
 `push`'s refusal of a `remote-gone` branch (on the deleted upstream itself,
-whatever the row's class, since the ruling applied at `b772195`), the gitfile
-and submodule checkout rules, the plain report's 256-row cap, `--apply --json`,
-the `unstarted-branch` gate, single-target `remove` included, where `a040790`
-removes a fresh merged worktree named with `--worktree`, and the single-target
-refusal, with reason `reflog-unavailable`, of a merged worktree whose reflog
-keeps no decisive entry. The deferred target cap is listed there too, though it
-is not a change to `a040790`, which has no target cap, but change 1 council V5's
-departure from this packet's `target-cap` refusal. Each observation of `a040790`
-below was confirmed in the 2026-10-07 scratch checks.
+whatever the row's class, since Brett Heap's ruling of 2026-10-09 applied at
+`b772195`), the gitfile and submodule checkout rules, the plain report's 256-row
+cap, `--apply --json`, the `unstarted-branch` gate, single-target `remove`
+included, where `a040790` removes a fresh merged worktree named with
+`--worktree`, and the single-target refusal, with reason `reflog-unavailable`,
+of a merged worktree whose reflog keeps no decisive entry. The deferred target
+cap is listed there too, though it is not a change to `a040790`, which has no
+target cap, but change 1 council V5's departure from this packet's `target-cap`
+refusal. Each observation of `a040790` below was confirmed in the 2026-10-07
+scratch checks.
 
 - Git-first resolution: every `project clean` invocation whose target is an
   absolute path (the read-only report, `--json`, `--all-safe`, and
@@ -1357,7 +1384,8 @@ below was confirmed in the 2026-10-07 scratch checks.
     `remote-gone`, and doctor reads the same evidence. Both are preserve states,
     so nothing becomes removable, except that a merged row with a deleted
     upstream is, by Brett Heap's ruling of 2026-10-09 (applied at `b772195` and
-    `cc43860`), tested for local ancestry first and reads `merged-removable`.
+    `cc43860`), tested for local ancestry before the `remote-gone` rung and
+    reads `merged-removable` (`merged-current` when current).
   - Status configuration: the baseline ignored-file probe omits
     `--untracked-files=normal`, so under `status.showUntrackedFiles=no` Git
     refuses it, `ignored_files` becomes null, and `a040790` classifies every
@@ -1736,13 +1764,12 @@ An arbitrary-depth recursive scan would find more nested repositories but
 would be slower and prone to discovering dependency/vendor trees. Prefer
 bounded discovery with explicit additional roots for the first version.
 
-The caps and the deadline must still be reconciled by measurement: the caps
-are provisional until the proposal measures them, and if measured warm
-children average more than about 210 ms even with concurrency, the caps must
-fall or very large estates end incomplete. The proposals took this
-section's other former open items as proposal decisions, open to
-ratification, as the
-[fix handoff](next-session-project-maintenance-fix-handoff.md) records under
+The caps and the deadline were reconciled by measurement on 2026-10-09 (change 2
+task 2.1, ruling D-Q, closed): the caps stand as measured, at 48.3 s of the 60 s
+deadline in their worst case, as "Caps and their arithmetic" records.
+The proposals took this section's other former open items as proposal decisions,
+ratified 2026-10-09 with the merge, as the [fix
+handoff](next-session-project-maintenance-fix-handoff.md) records under
 "Decisions taken by the proposals — 2026-10-08": bounded concurrency of
 four children across repositories, with the serial fallback of 32
 candidates and 128 worktree rows (1 + 32 × 4 + 128 × 1 = 257 children, about
@@ -1780,12 +1807,14 @@ and `cc43860`, the second open:
   change 1, `push` refuses on the deleted upstream itself, whatever the row's
   class; revalidation does not count a value null in the plan and null again as
   a difference; and `--worktree` removes a merged worktree whose upstream was
-  deleted, where `a040790` refuses it as `unpublished`, which is the fifth
-  user-visible change; the scenario "A merged worktree whose upstream was
-  deleted" keeps its title and gains an AND clause for `--worktree`. In change
-  2, requirement 6 and its scenario mirror the ladder, the departures bullet
-  quotes Brett Heap's words and records that the ruling supersedes R-6, and
-  requirement 10's default-branch finding is untouched.
+  deleted, when its gates pass, keeping its branch, where `a040790` refuses it
+  as `unpublished`, which is the fifth user-visible change; the scenario "A
+  merged worktree whose upstream was deleted" is replaced under its title
+  (`merged-removable`, selected by `--all-safe`) with AND clauses for
+  `--worktree` removal and for an unmerged row staying `remote-gone`. In
+  change 2, requirement 6 and its scenario mirror the ladder, the departures
+  bullet quotes Brett Heap's words and records that the ruling supersedes R-6,
+  and requirement 10's default-branch finding is untouched.
 - For Brett Heap: squash merges never satisfy the ancestry proof, so the MVP
   selects little in a squash-merge repository. The recommendation is a local
   patch-equivalence proof (`git cherry` or patch-id against the merge

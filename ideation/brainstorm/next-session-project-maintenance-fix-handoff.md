@@ -215,7 +215,7 @@ byte-identical through `da33d92`.
 | Finding | Decision | Contract | Proving scenarios |
 | --- | --- | --- | --- |
 | 1. Define the batch safety boundary | The guarantee is narrowed: concurrent writers are outside the safe contract, and a removal child is spawned only when the repository identity `{root, common_dir, dev, ino}`, the worktree identity `{path, dev, ino, admin_id}` with two-way admin registration, the branch evidence, every baseline signature field, the `locked` flag, the absence of submodules (a gitlink or an admin `modules` entry) and of hidden local state (an index entry flagged assume-unchanged or skip-worktree), read by a bounded `git -C <worktree path> ls-files -v --stage -z` inside the target worktree under the probe directory rule, the manifest's `tracking_branch`, and the merge target `{name, source, sha}`, re-resolved from a fresh manifest read, still equal the confirmed plan at revalidation; otherwise the target is `refused` (`identity-changed`, `branch-changed`, `state-changed`, `contains-submodule`, or `hidden-local-state`), no later target is attempted, and the exit is 2. A repository replaced after a removal makes that target `unknown` with `unconfirmed-removal`, and the exit is 1. The removal runs as `git -c status.showUntrackedFiles=normal -c core.untrackedCache=false -c core.fsmonitor=false -C <command directory> worktree remove <path>`, the last two pins added on 2026-10-08 by change 1 council V3, so Git's own non-force check sees untracked files whatever the user's configuration; ignored files created and index flags set after revalidation are the documented residual window. A branch change seen only after removal is `removed` with `branch-advanced-after-removal` (or `branch-missing-after-removal`), exit 2, and the branch retained. | Batch, "Eligibility and merge-target terminology"; "Safety boundary": "Identity", "The narrow guarantee", "Changes after confirmation", "Residual window", "Branch race"; "Probe accounting and limits": "Probe directory rule", "Worktree-specific probes", "Preflight and targeted revalidation" | Batch: **Hidden local state.**, **Submodules.**, **Target directory replaced.**, **Admin registration changed.**, **Parent directory swapped.**, **Repository replaced mid-batch.**, **New worktree and pre-removal changes.**, **State changes before revalidation.**, **Changed later target.**, **Untracked file under `status.showUntrackedFiles=no`.**, **Untracked cache.**, **Ignored file in the residual window.**, **Branch advances before removal.**, **Branch advances after removal.** |
-| 2. Make execution and interruption reconcilable | `--apply` always recomputes, prints, and confirms a fresh plan carrying `plan_digest`, and an optional `--expect-plan` refuses a differing one with `plan-digest-mismatch`. Single-target `remove` is strictly a one-item batch on the shared `retire_worktree` seam (revalidate, spawn, reap, reconcile): the same full plan (`mode: "single"`) under the same caps, the refusals `worktree-not-found` and `target-excluded`, and `inspection-incomplete` when any row is `inspection-error`; amended on 2026-10-08 by change 1 council V4, a departure open to Brett Heap's ratification, its completeness is the repository-wide evidence plus its own row, other rows' `inspection-error`, `inspect-cap`, and unprobed states being non-blocking omissions, while its own revalidation stays fully strict. One monotonic 60 s deadline holds back a 10 s reconciliation reserve, so work stops at 50 s, with 5 s per probe and every filesystem call in a worker thread; SIGINT or expiry terminates and reaps the child's process group before a rescan (amended on 2026-10-08 by change 1 council V1: a probe child's only, since a spawned removal child is never signaled; SIGINT, SIGTERM, SIGHUP, and the deadline wait for it to exit, a 300 s hard ceiling kills its group, and a child that exits nonzero on its own stays `failed`, even after a signal, while after a ceiling kill or an exit that could not be observed the rescan decides the stage, `removed` when the registry entry and the path are both gone and `unknown` with the `partially-removed` note when either remains, reason `removal-ceiling` naming a ceiling kill, with which a `removed` target exits 1 (lane openRepoProject-2 ruling M1, 2026-10-09, confirmed 2026-10-09; change 1's text at `0669a20` said always `unknown`, corrected in its phase 6 at `90854a3`), so a run, not counting time blocked at the confirmation question (ruling R-11), is bounded at 64 s, the 50 s of work, the 10 s reserve, and up to 4 s of termination, plus up to 300 s for a removal in flight), and no removal is spawned with less than `removal_floor_seconds` (5 s) of the work deadline left: that target and every later one are `not-attempted` with `deadline-exceeded`, and the exit is 1. Every target ends in the stage enum `pending`, `removed`, `refused`, `failed`, `unknown`, or `not-attempted`, and every `removed`, `refused`, `failed`, or `unknown` target carries a reconciliation record (`registry_entry_present`, `path_present`, `branch_present`, `branch_sha`, `reconciled`); `removed` needs rescan evidence and `reconciled: true`; an unproven outcome, or an exception after the apply phase begins, is `unknown` with exit 1; and a `failed` target (`git-refused` for exit 128, `git-failed` for any other status such as 255 with an `orphaned-directory` note, or `spawn-error`) exits with Git's own status, or 2 for `spawn-error`. | Batch, "Execution model": "Fresh plan and plan digest", "One mutation seam", "Deadline and budgets", "Interruption and expiry", "Stages and reconciliation", "Exit codes"; "Repository and JSON contract": "Apply result record"; "Baseline behavior changes"; "Partial completion and recovery" | Batch: **Deadline expiry mid-batch.**, **Hard ceiling.**, **Exit 0 without evidence.**, **SIGINT.**, **Git leaves an orphaned directory.**, **Git refuses the removal.**, **Unreadable path after removal.**, **Exception after the apply phase begins.**, **Single target equals a one-item batch.**, **Preview is advisory.**, **Plan digest mismatch.** |
+| 2. Make execution and interruption reconcilable | `--apply` always recomputes, prints, and confirms a fresh plan carrying `plan_digest`, and an optional `--expect-plan` refuses a differing one with `plan-digest-mismatch`. Single-target `remove` is strictly a one-item batch on the shared `retire_worktree` seam (revalidate, spawn, reap, reconcile): the same full plan (`mode: "single"`) under the same caps, the refusals `worktree-not-found` and `target-excluded`, and `inspection-incomplete` when any row is `inspection-error`; amended on 2026-10-08 by change 1 council V4, a departure ratified 2026-10-09 with the merge, its completeness is the repository-wide evidence plus its own row, other rows' `inspection-error`, `inspect-cap`, and unprobed states being non-blocking omissions, while its own revalidation stays fully strict. One monotonic 60 s deadline holds back a 10 s reconciliation reserve, so work stops at 50 s, with 5 s per probe and every filesystem call in a worker thread; SIGINT or expiry terminates and reaps the child's process group before a rescan (amended on 2026-10-08 by change 1 council V1: a probe child's only, since a spawned removal child is never signaled; SIGINT, SIGTERM, SIGHUP, and the deadline wait for it to exit, a 300 s hard ceiling kills its group, and a child that exits nonzero on its own stays `failed`, even after a signal, while after a ceiling kill or an exit that could not be observed the rescan decides the stage, `removed` when the registry entry and the path are both gone and `unknown` with the `partially-removed` note when either remains, reason `removal-ceiling` naming a ceiling kill, with which a `removed` target exits 1 (lane openRepoProject-2 ruling M1, 2026-10-09, confirmed 2026-10-09; change 1's text at `0669a20` said always `unknown`, corrected in its phase 6 at `90854a3`), so a run, not counting time blocked at the confirmation question (ruling R-11), is bounded at 64 s, the 50 s of work, the 10 s reserve, and up to 4 s of termination, plus up to 300 s for a removal in flight), and no removal is spawned with less than `removal_floor_seconds` (5 s) of the work deadline left: that target and every later one are `not-attempted` with `deadline-exceeded`, and the exit is 1. Every target ends in the stage enum `pending`, `removed`, `refused`, `failed`, `unknown`, or `not-attempted`, and every `removed`, `refused`, `failed`, or `unknown` target carries a reconciliation record (`registry_entry_present`, `path_present`, `branch_present`, `branch_sha`, `reconciled`); `removed` needs rescan evidence and `reconciled: true`; an unproven outcome, or an exception after the apply phase begins, is `unknown` with exit 1; and a `failed` target (`git-refused` for exit 128, `git-failed` for any other status such as 255 with an `orphaned-directory` note, or `spawn-error`) exits with Git's own status, or 2 for `spawn-error`. | Batch, "Execution model": "Fresh plan and plan digest", "One mutation seam", "Deadline and budgets", "Interruption and expiry", "Stages and reconciliation", "Exit codes"; "Repository and JSON contract": "Apply result record"; "Baseline behavior changes"; "Partial completion and recovery" | Batch: **Deadline expiry mid-batch.**, **Hard ceiling.**, **Exit 0 without evidence.**, **SIGINT.**, **Git leaves an orphaned directory.**, **Git refuses the removal.**, **Unreadable path after removal.**, **Exception after the apply phase begins.**, **Single target equals a one-item batch.**, **Preview is advisory.**, **Plan digest mismatch.** |
 | 3. Bound and share the expensive work | Both documents use one probe set: one `git --version` per invocation; per repository, memoized by `common_dir` and fanned out, the same four repository-wide children (identity, registry listing, ref listing in one shared NUL-separated `for-each-ref` format, and merged set); and per present, registration-verified worktree row, the main worktree included, one combined status probe that stops at a 65th ignored record or a 4,097th record. Every worktree-specific probe runs as `git -C <worktree path>` against that worktree's own index after its identity is verified, and repository-wide probes run as `git -C <repository.root>` (`common_dir` for a bare repository), except the identity probe, which runs in the candidate; when a linked worktree is reached first, the registry listing also runs in the candidate, because the main worktree's path comes from that listing, which changes which directory the command runs in, never which index a probe reads. Batch revalidation is a targeted check of at most five children plus a manifest re-read and a `modules` check, and `probes` and `operations` (`{estimated, performed}`) appear in both the plan and the apply result record. Candidates and registry entries are sorted before any cap, and dropped work is reported as `omitted: {count, exactness}`. Both derive their caps at 150 ms per Git child, a 1.5× margin over the assumed 100 ms. The batch probes serially and uses one fit test, a worst case that completes within the 50 s work deadline and spawns its last removal with at least `removal_floor_seconds` (5 s) left: its row cap is the largest power of two for which at least 16 targets fit, and its target cap the largest multiple of 8 that fits with it, so it inspects at most 128 worktree rows (`limits.worktree_rows`, the main worktree included) and selects at most 16 targets, with a worst case of about 39.9 s. The overview takes at most 32 roots, 128 candidates, and 512 worktree rows with four concurrent children across repositories, after a listing phase estimated at about 6 s, one worker task per root bounded at 5 s, which leaves about 54 s for Git work. A cap hit or deadline gives an incomplete result (`inspect-cap`, `inspection-incomplete`, or `deadline-exceeded` in the batch; `scan-limit`, `probe-timeout`, or `deadline-exceeded` in the overview). | Batch, "Execution model": "Deadline and budgets"; "Probe accounting and limits": "Probe directory rule", "Repository-wide probes", "Worktree-specific probes", "Preflight and targeted revalidation", "Cap arithmetic", "Inspection order and omitted work", "Bounded ignored-file inspection", "Probe and operation estimates". Overview, "Discovery scope and ordering": "Ordering, truncation, and omitted counts", "Caps and their arithmetic"; "Probe model and deadline": "Git version check", "Repository-wide probes", "Worktree-specific probes", "Scheduling and concurrency", "Deadline and timeouts", "Probe accounting"; "Deferred remote inspection boundary" | Overview: **One probe set per repository.**, **Candidate cap after sorting, exact count.**, **Candidate cap with an incomplete listing.**, **Root and worktree-row caps.**, **Probe timeout.**, **Hung filesystem call.**, **Invocation deadline.**, **Bounded concurrency.**, **Bounded ignored files.**, **User status configuration.**, **Git version refusal.**, and the remote item under "Deferred validation scenarios". Batch: **Row cap and planning failures.**, **Target cap.**, **Ignored-file bound.**, **Bounded revalidation work.** |
 | 4. Make the repository and JSON contracts explicit | The command directory is the canonical, identity-checked `repository.root` (or `common_dir` for a bare repository) with no merge-target worktree requirement. Every `project clean` mode resolves an absolute path Git-first and refuses `target-not-repository-root` with exit 2 unless it is exactly a main worktree root; a relative path or no argument resolves to the repository Git finds there; only a bare name keeps the `discover` lookup, its Git child counted and bounded; and the report's `root` always names the command directory. The overview prints a new `schema_version: 1` envelope with typed project-row, worktree-row, finding, and `summary` fields; the batch plan is an additive superset of the baseline clean report with `limits`, `budget`, `probes`, and `operations`; the apply result record is defined and rendered as human text; both documents state representation rules with fixtures; a non-UTF-8 `repository.root` or `common_dir` refuses with `unsupported-path-bytes`; an unreadable or wrong-kind manifest is `manifest-invalid`; under `--json` an overview exit 2 prints the baseline error object with a `code` added, `{"error", "code"}`, which batch cleanup extends with its plan fields when no plan can be built, and an argument error prints no JSON; `suggested_command` is `null` unless a finding supplies one, and otherwise a JSON argv array naming the canonical root; and both documents list their baseline behavior changes. | Batch, "Repository and JSON contract": "Command directory and repository resolution", "Representation rules", "Plan envelope", "Refusal codes", "Apply result record", "Fixtures", "Machine-readable apply results"; "Baseline behavior changes". Overview, "JSON contract": "Envelope", "Project row", "Finding object", "Representation rules", "Repository identity and the clean handoff", "Path encoding", "Fixture"; "Result semantics"; "Baseline behavior changes" | Batch: **Overview handoff keeps identity.**, **Absolute path that is not a repository root.**, **Non-UTF-8 repository root.**, **Merge target missing, invalid, or conflicting.** Overview: **Canonical identity through the handoff.**, **Independent clones and aliases.** |
 | 5. Close discovery scope and acceptance gaps | A `family.yaml` holder is one `family-holder` row counted once, with `relationships: []` and Git probes only when its own directory is the toplevel. A marker check that fails with anything but `ENOENT` or `ENOTDIR` makes an error row with `kind: null`; `collect(candidate) -> result` turns helper exceptions (such as `manifest-invalid`, `os-error`, or `internal-error`) and failed or timed-out probes into error rows while the scan continues, and path candidates never pass through `discover`. An unreadable or registration-mismatched worktree row is set to `inspection-error` directly, bypassing the ladder. A missing merge target becomes `merge_target: null` with a `no-merge-target` finding and no `cleanup_report` call. A `merged-removable` worktree yields the housekeeping finding and the `--all-safe` suggestion only after the batch's main-worktree, path-byte, registration, and lock gates, and otherwise the first failing gate's finding (`main-worktree`, `unsupported-path-bytes`, `registration-mismatch`, or `locked-worktree`, the batch's own exclusion reasons); a fifth gate withholds every `--all-safe` suggestion for a repository while any of its worktree rows is `inspection-error` or it has more than 128 worktree rows, because the batch plan would be refused as `inspection-incomplete` or `inspect-cap`, so its housekeeping findings and the row suggest only the read-only `project clean <root>`; the batch may still exclude a suggested worktree as `hidden-local-state` or `contains-submodule`, which only its own index probe and admin-directory check see. `review-required` is covered by a classifier test on an injected row; paths are read NUL-delimited; a path holding a control, bidirectional, or format code point or an undecodable byte prints in `$'…'` form with `\uXXXX` and `\xHH` escapes in lowercase hexadecimal (pasting the `\uXXXX` form needs a UTF-8 locale), JSON escapes every such code point, and a non-UTF-8 path is escaped and excluded as `unsupported-path-bytes`; and every acceptance scenario the finding listed is written. | Overview, "Discovery scope and ordering": "Candidates", "Repositories and linked worktrees", "Family holders"; "Collector boundary and error isolation"; "Merge target and classification reuse"; "Attention categories"; "JSON contract": "Path encoding"; "MVP validation scenarios". Batch, "Eligibility and merge-target terminology" | Overview: **Family holder count, relationships, and probe ownership.**, **Unreadable candidate directory.**, **One helper failure is isolated.**, **Manifest target.**, **`origin/HEAD` target.**, **`main` target.**, **`master` target.**, **Conflicting targets.**, **Missing target.**, **Every protected classifier.**, **Gated merged worktrees.**, **Attention filter per category.**, **Present eligible external worktree.**, **Missing external worktree.**, **Unreadable external worktree.**, **Control and format characters in paths.**, **Non-UTF-8 path.**, **Canonical identity through the handoff.**, **Local and read-only.** Batch: **Stable order and preserved work.**, **Every protected classifier.**, **Paths and empty plans.**, **Control-character and non-UTF-8 paths.**, **Merge target missing, invalid, or conflicting.** |
@@ -282,7 +282,7 @@ byte-identical through `da33d92`.
 - One mutation seam: single-target removal is strictly a one-item batch on
   `retire_worktree`, so an inspection error anywhere in the repository
   refuses it as it refuses a batch. Amended on 2026-10-08 by change 1
-  council V4, a departure open to Brett Heap's ratification: the
+  council V4, a departure ratified 2026-10-09 with the merge: the
   single-target plan's completeness is the repository-wide evidence plus the
   named target's own row, so other rows' inspection errors, cap omissions,
   and unprobed states are non-blocking omissions, while the target's own
@@ -303,7 +303,7 @@ byte-identical through `da33d92`.
   (rulings N-5 and P6-5 on change 1 council V2's gate), and a merged worktree
   whose reflog cannot decide keeps it with only the read-only suggestion and
   `suggestion_gate: "reflog-unavailable"` (change 2, read at `996a181`, and at
-  `4495ae7` (R-20; unchanged at `cc43860`)), the overview reading the branch's
+  `4495ae7` (R-20; unchanged at `c563f16`)), the overview reading the branch's
   reflog as the batch does (the D10 amendment and ruling R-12, change 1 at
   `0b3c33d` and `4f2162b`). The batch may still exclude a suggested worktree as
   `hidden-local-state` or `contains-submodule`, which only its own index probe
@@ -315,7 +315,16 @@ byte-identical through `da33d92`.
   `git status --porcelain=v1 -z --untracked-files=normal --ignored=matching`,
   run with `-c core.untrackedCache=false -c core.fsmonitor=false` (added on
   2026-10-08 by change 1 council V3), in both documents. All Git output is
-  parsed NUL-delimited.
+  parsed NUL-delimited. Lane openRepoProject-2 ruling R-23 (2026-10-09) adds
+  `-c protocol.allow=never` to every Git child of `clean`, `status`, `doctor`,
+  `update`, and the overview, beside those pins, so a lazy fetch in a partial
+  clone fails locally and its row is `inspection-error`, because Git 2.43 lacks
+  `GIT_NO_LAZY_FETCH` (change 1 at `8aad1e8`, change 2 at `1cc936e`). Ruling
+  R-25 adds `protocol.<name>.allow=never` for `file`, `ssh`, `git`, `http`,
+  `https`, and `ext`, and the seventeenth scrubbed name, `GIT_ALLOW_PROTOCOL`,
+  because `protocol.allow` is only the default policy (change 1 at `251978d`,
+  change 2 at `a8f710d`). The command spellings in the five documents show the
+  earlier pins only; the proposals' text carries the protocol pins.
 - Caps at 150 ms per Git child, a 1.5× margin over an assumed 100 ms that
   the proposal must measure: the batch inspects 128 worktree rows, the main
   worktree included, and selects 16 targets (Batch "Cap arithmetic"); the
@@ -328,7 +337,8 @@ byte-identical through `da33d92`.
   `limits` as `batch_row_cap` and `report_row_cap`, beside the batch's target
   limit (lane openRepoProject-2 ruling R-7, landed in change 2 at `996a181`,
   2026-10-09). They replace the earlier 1,024/100 and 256/1,024 figures, which
-  could not meet the deadline.
+  could not meet the deadline. Both proposals measured them on 2026-10-09, and
+  the caps stand as measured (ruling D-Q; see "Open proposal decisions" below).
 - Batch cap decision: 16 targets, not 24. A cap pair fits when its worst
   case completes within the 50 s work deadline and spawns its last removal
   with at least `removal_floor_seconds` (5 s) left. The row cap is the
@@ -356,7 +366,8 @@ byte-identical through `da33d92`.
   overview and clean both classify it `remote-gone` where `a040790` reports
   `unpublished`; both are preserve states, except that a merged row is, by Brett
   Heap's ruling of 2026-10-09 (applied at `b772195` and `cc43860`), tested for
-  local ancestry first and reads `merged-removable`. Doctor never classifies a
+  local ancestry before the `remote-gone` rung and reads `merged-removable`
+  (`merged-current` when current). Doctor never classifies a
   deleted upstream; its only worktree classification is `repo_state`'s
   `stale-worktree`, shown under `--json`.
 - `ignored_files` keeps its baseline name and type but counts the ignored
@@ -384,21 +395,26 @@ byte-identical through `da33d92`.
 
 These were the open decisions when PR #7 merged, followed by the entries added
 on 2026-10-08. The entries marked decided were taken on 2026-10-08 by the
-proposals as proposal decisions, open to ratification, under lane
-openRepoProject-2's OQ numbers (see "Decisions taken by the proposals —
-2026-10-08"), and the first question for Brett Heap is marked ruled and applied,
-as he ruled it on 2026-10-09 and both proposals applied it (`b772195`,
-`cc43860`); the others remain open: the measured costs, the second question for
-Brett Heap, the four change 1 council rulings this record labels departures, V1,
-V4, V5, and V10, and the Git floor departure of change 1 lead ruling R-21, which
-await his ratification. The [packet overview](project-maintenance-overview.md)
-carries the open entries and names the decided ones in one paragraph.
+proposals as proposal decisions under lane openRepoProject-2's OQ numbers (see
+"Decisions taken by the proposals — 2026-10-08"); the measured costs were
+closed by both proposals' measurements on 2026-10-09 (ruling D-Q); the first
+question for Brett Heap is marked ruled and applied, as he ruled it on
+2026-10-09 and both proposals applied it (`b772195`, `cc43860`); and the four
+change 1 council rulings this record labels departures, V1, V4, V5, and V10, and
+the Git floor departure of change 1 lead ruling R-21 are marked ratified, as
+Brett Heap ratified both proposals on 2026-10-09 ("ratify, merge #11 and run the
+runbook", to lane openRepoProject-2) with every proposal decision, and PRs #11
+and #12 merged as `0050f3e` and `961c405`. Only the second question for Brett
+Heap remains open. The [packet overview](project-maintenance-overview.md)
+carries the entries that were open and names the decided ones in one paragraph.
 
 - The measured per-child and per-removal costs and the overview's listing
   time, and therefore the final caps; the batch reapplies the same rule and
   fit test, which lowers the target cap in steps of 8 and keeps the row cap
-  as large as it can. Open (OQ-4): the caps stay provisional until measured
-  (ruling D-Q).
+  as large as it can. Decided 2026-10-09 (OQ-4, ruling D-Q): both changes
+  measured their caps warm and cold on Linux file-system paths, and the caps
+  stand as measured; the "Both changes, measurement (ruling D-Q)" bullet below
+  records the numbers.
 - Caps versus concurrency: if the overview's four-way concurrency is
   rejected, its fallback is 32 candidates and 128 worktree rows (257
   children, about 38.6 s at 150 ms, or about 44.6 s with the listing
@@ -448,7 +464,7 @@ carries the open entries and names the decided ones in one paragraph.
   ("yes, local ancestry proof outranks remote-gone"; to lane openRepoProject-2,
   "yes, local ancestry proof outranks remote-gone, apply it"), and both
   proposals applied it: change 1 at `b772195`, change 2 at `cc43860`; see
-  "Rulings R-11 to R-21 and Brett Heap's ruling — 2026-10-09". Lane
+  "Rulings R-11 to R-25 and Brett Heap's ruling — 2026-10-09". Lane
   openRepoProject-3 raised it on 2026-10-08, recommending yes, and lane
   openRepoProject-2 carried it in both proposals. The packet's own ladder tests
   remote presence before merge state, as the baseline does, and the packet
@@ -467,10 +483,12 @@ carries the open entries and names the decided ones in one paragraph.
   gone from the seven places that carried it. In change 1, `push` refuses on the
   deleted upstream itself, whatever the row's class; revalidation does not count
   a value null in the plan and null again as a difference; and `--worktree`
-  removes a merged worktree whose upstream was deleted, where `a040790` refuses
-  it as `unpublished`, which is the fifth user-visible change; the scenario "A
-  merged worktree whose upstream was deleted" keeps its title and gains an AND
-  clause for `--worktree`. In change 2, requirement 6 and its scenario mirror
+  removes a merged worktree whose upstream was deleted, when its gates pass,
+  keeping its branch, where `a040790` refuses it as `unpublished`, which is the
+  fifth user-visible change; the scenario "A merged worktree whose upstream was
+  deleted" is replaced under its title (`merged-removable`, selected by
+  `--all-safe`) with AND clauses for `--worktree` removal and for an unmerged
+  row staying `remote-gone`. In change 2, requirement 6 and its scenario mirror
   the ladder, the departures bullet quotes Brett Heap's words and records that
   the ruling supersedes R-6, and requirement 10's default-branch finding is
   untouched.
@@ -480,20 +498,20 @@ carries the open entries and names the decided ones in one paragraph.
   patch-id against the merge target), designed as a follow-on change, not in
   the MVP.
 - Change 1 council V4, single-target `remove` completeness (other rows'
-  inspection errors no longer block it): departure, open to Brett Heap's
-  ratification.
+  inspection errors no longer block it): departure, ratified 2026-10-09 with the
+  merge.
 - Change 1 council V5, the deferred target cap (more than 16 eligible rows
-  are drained 16 per run instead of refused): departure, open to Brett
-  Heap's ratification.
+  are drained 16 per run instead of refused): departure, ratified 2026-10-09
+  with the merge.
 - Change 1 council V1, the removal child (never signaled once spawned,
-  only a 300 s hard ceiling ending it): departure, open to Brett Heap's
-  ratification.
+  only a 300 s hard ceiling ending it): departure, ratified 2026-10-09 with the
+  merge.
 - Change 1 council V10, the per-child budget (`status`, `doctor`, and
-  `update` keep 15 s per Git child): departure, open to Brett Heap's
-  ratification.
-- Change 1 R-21: the Git floor stays 2.36 with a sixteen-name scrub instead of
-  task 2.2's rule to raise it to 2.40 (Debian 12 ships 2.39); open to Brett
-  Heap at ratification.
+  `update` keep 15 s per Git child): departure, ratified 2026-10-09 with the
+  merge.
+- Change 1 R-21: the Git floor stays 2.36 with a fixed scrub, sixteen names
+  under R-21 and seventeen since R-25, instead of task 2.2's rule to raise it to
+  2.40 (Debian 12 ships 2.39): departure, ratified 2026-10-09 with the merge.
 
 ### Checks
 
@@ -527,12 +545,15 @@ follow-up above, writing paired retirement as a MODIFIED requirement on
 ### Decisions taken by the proposals — 2026-10-08
 
 The packet is a non-normative design record (packet overview, "Status and
-motivation"). Lane openRepoProject-2 is proposing the two OpenSpec changes
-it feeds, `add-project-clean-all-safe` (issue #9, draft PR #11) and
-`add-project-overview` (issue #10, draft PR #12), and those proposals are
-the governing text. They took the open items below as proposal decisions,
-open to ratification, and departed from some packet decisions, each bullet
-saying so; this revision keeps the record accurate and re-decides nothing.
+motivation"). Lane openRepoProject-2 proposed the two OpenSpec changes it
+feeds, `add-project-clean-all-safe` (issue #9, PR #11) and
+`add-project-overview` (issue #10, PR #12), and those proposals are
+the governing text. They took the open items below as proposal decisions and
+departed from some packet decisions, each bullet saying so; this revision keeps
+the record accurate and re-decides nothing. Brett Heap ratified both proposals
+on 2026-10-09 ("ratify, merge #11 and run the runbook", his words to lane
+openRepoProject-2), so each decision and departure below is ratified 2026-10-09
+with the merge (PR #11 as `0050f3e`, PR #12 as `961c405`).
 A ruling is lane openRepoProject-2's of 2026-10-08 unless marked as lane
 openRepoProject-3's. Where a decision changes a packet sentence, the
 sentence now states the decision, and its bullet names the passages under
@@ -682,9 +703,20 @@ sentence now states the decision, and its bullet names the passages under
   Change 1 council V10, which amends rulings D-B and D-M, withdrew the 5 s
   per Git child they gave `status`, `doctor`, and `update`, which keep 15 s;
   the timeout items of "Baseline behavior changes" say so.
-- Both changes, measurement (ruling D-Q): the caps stay provisional in the
-  spec deltas, and `tasks.md` carries a warm- and cold-cache measurement on
-  a Linux file-system path, never `/mnt/c`, before the Speckit handoff.
+- Both changes, measurement (ruling D-Q): the caps stayed provisional in the
+  spec deltas until `tasks.md` recorded a warm- and cold-cache measurement on a
+  Linux file-system path, never `/mnt/c`, before the Speckit handoff. Both
+  measurements landed on 2026-10-09, so D-Q is closed and the caps stand as
+  measured. Change 2's task 2.1 (`1cc936e`): the 128 candidates and 512 worktree
+  rows take 48.3 s of the 60 s deadline at their worst case, and cases outside
+  it fail safe as incomplete; the measured workstation's default root holds
+  219 candidates, so a default-root overview there is incomplete with
+  91 omitted, a recorded consequence of the 128-candidate cap and not a defect;
+  and the measurement gave ruling R-23. Change 1's task 2.1 (`251978d`, ruling
+  R-24): 128 rows for `--all-safe` and single-target `remove`, 256 for the
+  report, and 16 targets stand, the 16th removal spawning at 23.6 s with 26.4 s
+  left at worst. Overview "Caps and their arithmetic", Batch "Cap arithmetic",
+  and the R-24 bullet below record the numbers.
 - `add-project-clean-all-safe`, `update --apply` (ruling D-R): it refuses
   unless the root's and every child's `dirty` is exactly `false`.
 - `add-project-clean-all-safe`, `doctor` and `status` on unknown state
@@ -700,9 +732,9 @@ sentence now states the decision, and its bullet names the passages under
   `classification: "inspection-error"` with `errors` beside it, on the root and
   leg dicts.
 - `add-project-clean-all-safe`, the packet's remaining open items
-  (verification finding H1), each a proposal decision open to ratification,
-  numbered in lane openRepoProject-2's list: OQ-8, no configurable limit,
-  the fixed values reported in `limits` and `budget`; OQ-10 (ruling D-C),
+  (verification finding H1), each a proposal decision, ratified 2026-10-09 with
+  the merge, numbered in lane openRepoProject-2's list: OQ-8, no configurable
+  limit, the fixed values reported in `limits` and `budget`; OQ-10 (ruling D-C),
   `--apply --json` accepted for `--all-safe` and `--action remove` only;
   OQ-11, `--expect-plan` optional with `--yes`; OQ-12, a relative path or no
   argument resolving to the repository Git finds there; OQ-13, a sparse
@@ -715,8 +747,8 @@ sentence now states the decision, and its bullet names the passages under
   above, and the open lists of Batch, the packet overview, and the
   synthesis, which keep only the open entries.
 - `add-project-overview`, the packet's remaining open items (verification
-  finding H1), each a proposal decision open to ratification: OQ-6, four
-  concurrent children across distinct repositories, with the serial
+  finding H1), each a proposal decision, ratified 2026-10-09 with the merge:
+  OQ-6, four concurrent children across distinct repositories, with the serial
   fallback of 32 candidates and 128 worktree rows if design rejects
   concurrency; OQ-7, no per-repository row cap, so a repository with more
   than about 355 worktree rows ends at the deadline, visibly incomplete;
@@ -792,10 +824,11 @@ checked against `project` at `a040790`, and the packet text now carries it.
   2.40.4 were built and compared with 2.43.0 on 75 captures, and only the
   scrub list differed, by `GIT_INTERNAL_SUPER_PREFIX`, which Git 2.36 through
   2.39 print. The floor stays 2.36 with a fixed sixteen-name scrub, unset
-  unconditionally, a departure from task 2.2's rule (raise the floor to 2.40)
-  that is open to Brett Heap at ratification, since 2.40 would exclude Debian
-  12's Git 2.39. The R-21 bullet of "Rulings R-11 to R-21 and Brett Heap's
-  ruling — 2026-10-09" below records it.
+  unconditionally, a departure from task 2.2's rule (raise the floor to 2.40),
+  made since 2.40 would exclude Debian 12's Git 2.39 and ratified 2026-10-09
+  with the merge; ruling R-25 later adds a seventeenth name,
+  `GIT_ALLOW_PROTOCOL`. The R-21 and R-25 bullets of "Rulings R-11 to R-25 and
+  Brett Heap's ruling — 2026-10-09" below record them.
 - Platform-bound scenarios (C13): the non-UTF-8 path scenarios, the
   overview's **Gated merged worktrees.** and **Non-UTF-8 path.** among
   them, cannot be built on macOS APFS; raw-byte order differs from
@@ -811,19 +844,20 @@ checked against `project` at `a040790`, and the packet text now carries it.
 The councils of both proposals (lane openRepoProject-2, 2026-10-08) ruled on
 the proposals' reviews. Each bullet names the change and ruling, quotes the
 mechanism closely, and names the packet passages that now carry it. The
-council's own departure labels are kept, and a departure is open to Brett
-Heap's ratification. Change 1's post-council commit is `0669a20`: the
-council verdicts were applied at `ea9c73b`, followed by clarifications, the
-merge of `7a9134b`, and a restatement. The writer adjustments made with the
-verdicts, which lane openRepoProject-2 accepted, are recorded with the
-ruling each refines, and so are lane openRepoProject-2's rulings of
-2026-10-09 for change 1's phase 6, which settled the items lane
-openRepoProject-3 raised in its delta read of change 1 at those commits.
+council's own departure labels are kept; a departure was open to Brett Heap's
+ratification, and each was ratified 2026-10-09 with the merge. Change 1's
+post-council commit is `0669a20`: the council verdicts were applied at
+`ea9c73b`, followed by clarifications, the merge of `7a9134b`, and a
+restatement. The writer adjustments made with the verdicts, which lane
+openRepoProject-2 accepted, are recorded with the ruling each refines, and so
+are lane openRepoProject-2's rulings of 2026-10-09 for change 1's phase 6, which
+settled the items lane openRepoProject-3 raised in its delta read of change 1 at
+those commits.
 
 Change 1, `add-project-clean-all-safe`:
 
-- Change 1 council V1, the removal child, a departure, open to Brett Heap's
-  ratification, from Batch "Interruption and expiry", where SIGINT or expiry
+- Change 1 council V1, the removal child, a departure, ratified 2026-10-09 with
+  the merge, from Batch "Interruption and expiry", where SIGINT or expiry
   terminated and reaped the removal child's process group, and from this
   record's own finding 2 row (line 208 at `da33d92`), "SIGINT or expiry
   terminates and reaps the child's process group": "Once the removal child is
@@ -901,7 +935,7 @@ Change 1, `add-project-clean-all-safe`:
   all zeros, so a head at the merge-target SHA with a movement recorded is
   merged, the fast-forward case, and a reflog that cannot decide is
   `reflog-unavailable`. The overview mirrors the read (change 2, read at
-  `996a181`, and at `4495ae7` (R-20; unchanged at `cc43860`)): a merged row
+  `996a181`, and at `4495ae7` (R-20; unchanged at `c563f16`)): a merged row
   whose reflog cannot decide keeps its `merged-removable` finding with only the
   read-only suggestion and `suggestion_gate: "reflog-unavailable"`. Batch
   "Eligibility and merge-target terminology" and its batch-only baseline change,
@@ -923,8 +957,8 @@ Change 1, `add-project-clean-all-safe`:
   a probe. Batch gains the **Untracked cache.** scenario, and the overview's
   two fsmonitor-held fixtures are marked for feature 005 to rewrite with an
   injected slow `git`.
-- Change 1 council V4, single-target `remove`, a departure, open to Brett Heap's
-  ratification, from the packet's strict one-item batch, under which "an
+- Change 1 council V4, single-target `remove`, a departure, ratified 2026-10-09
+  with the merge, from the packet's strict one-item batch, under which "an
   inspection error anywhere in the repository makes its plan incomplete and
   refuses it too": Batch lines 188-192 (its preserve paragraph), 419-420 ("One
   mutation seam"), 1268-1272 (its single-target baseline change), and 1562-1563
@@ -941,9 +975,9 @@ Change 1, `add-project-clean-all-safe`:
   overview, Overview's batch-only item, finding 2's row, and the "One mutation
   seam" bullet above carry it.
 - Change 1 council V5, the deferred target cap, a departure from Batch "User
-  interface and selection" and the packet's `target-cap` refusal, open to Brett
-  Heap's ratification: "When more than 16 rows pass the pre-index gates, the
-  plan selects the first 16 in canonical order, lists the rest as excluded
+  interface and selection" and the packet's `target-cap` refusal, ratified
+  2026-10-09 with the merge: "When more than 16 rows pass the pre-index gates,
+  the plan selects the first 16 in canonical order, lists the rest as excluded
   `deferred-target-cap` with the next command, and apply is allowed; re-running
   drains the backlog 16 at a time"; the `target-cap` refusal is retired, and the
   code survives only as the overview's limiting gate reason, "limited to 16 per
@@ -973,7 +1007,7 @@ Change 1, `add-project-clean-all-safe`:
   auto-delete on 2 of 21 repositories. The question in the open lists of Batch,
   Overview, the packet overview, and this record carries both. Brett Heap ruled
   the question on 2026-10-09, and change 1 applied the ruling at `b772195`,
-  which removed the text (see "Rulings R-11 to R-21 and Brett Heap's ruling —
+  which removed the text (see "Rulings R-11 to R-25 and Brett Heap's ruling —
   2026-10-09").
 - Change 1 council V8, what the person sees: the preview lists the selected
   rows, then the excluded rows grouped by reason with each next step; the
@@ -997,8 +1031,8 @@ Change 1, `add-project-clean-all-safe`:
   now say so. Lane openRepoProject-2 ruling M7 (2026-10-09) states that
   termination rule in change 1's own requirement instead of citing an
   overview requirement that did not yet exist.
-- Change 1 council V10, the per-child budget, a departure, open to Brett Heap's
-  ratification, from the packet's shared baseline item that the per-probe
+- Change 1 council V10, the per-child budget, a departure, ratified 2026-10-09
+  with the merge, from the packet's shared baseline item that the per-probe
   timeout drops from 15 s to 5 s (the timeout item of "Baseline behavior
   changes" in Batch, Overview, and the packet overview, the last at lines
   228-230 at `da33d92`): `status`, `doctor`, and `update` keep 15 s per Git
@@ -1134,7 +1168,7 @@ or under its ruling label.
   and the ruling D-P bullet above adds the code. The D10 amendment, landed in
   change 1 at `0b3c33d`, replaces the head test and retires the residual part:
   the overview mirrors the batch's reflog read (change 2, read at `996a181`, and
-  at `4495ae7` (R-20; unchanged at `cc43860`)), as the change 1 council V2
+  at `4495ae7` (R-20; unchanged at `c563f16`)), as the change 1 council V2
   bullet above records.
 - `main-worktree-missing` replaces the `stale-worktree` finding on the main
   worktree's row. Overview "Repositories and linked worktrees" carries it.
@@ -1170,16 +1204,24 @@ or under its ruling label.
   anchor-based reflog test with R-15's all-zeros anchor and adopts the R-12,
   R-14, and R-15 remedy texts; `ef288fe` adds ruling R-16, `fd4b05a` ruling
   R-18, `568c477` copies change 1's movement wording, `4495ae7` adds ruling
-  R-20, and `cc43860`, change 2's final text at the time of this record, applies
-  Brett Heap's ruling on the first open question. "Rulings R-11 to R-21 and
+  R-20, `cc43860` applies Brett Heap's ruling on the first open question,
+  `6c28227` and `894b429` land lane openRepoProject-3's two LOW wording items on
+  it, `1cc936e` ticks task 2.1 and adds ruling R-23, `a8f710d` adds ruling R-25,
+  `ea04e30` and `33054f9` record Brett Heap's ratification, and `c563f16`,
+  change 2's final head, merges `main` at `0050f3e`. "Rulings R-11 to R-25 and
   Brett Heap's ruling — 2026-10-09" below records their items.
-- Change 2's final text is `cc43860`: read at `996a181`, fix round at `fa9f0be`,
-  R-16 at `ef288fe`, R-18 at `fd4b05a` and `568c477`, R-20 at `4495ae7`, and
-  Brett Heap's ruling applied at `cc43860` (PR #12 head at the time of this
-  record); lane openRepoProject-3 read `568c477` clean on 2026-10-09, lane
-  openRepoProject-2 landed that read's two LOW findings as ruling R-20, and
-  PR #12 was marked ready for review at `4495ae7` the same day, ratification
-  remaining Brett Heap's, as "Rulings R-11 to R-21 and Brett Heap's ruling —
+- Change 2's final head is `c563f16`, merged on `main` as `961c405` (PR #12,
+  squash-merged 2026-10-09): read at `996a181`, fix round at `fa9f0be`, R-16 at
+  `ef288fe`, R-18 at `fd4b05a` and `568c477`, R-20 at `4495ae7`, Brett Heap's
+  ruling applied at `cc43860`, lane openRepoProject-3's two LOW wording items at
+  `6c28227` and `894b429`, a merge of `main` at `f401e06` (`74acb47`), task 2.1
+  and R-23 at `1cc936e`, R-25 at `a8f710d`, the ratified Status line and
+  task 1.6 at `ea04e30`, the departures stated as ratified at `33054f9`, and a
+  merge of `main` at `0050f3e` (`c563f16`); neither merge changed anything in
+  the change. Lane openRepoProject-3 read `568c477` clean on 2026-10-09, lane
+  openRepoProject-2 landed that read's two LOW findings as ruling R-20, PR #12
+  was marked ready for review at `4495ae7` the same day, and Brett Heap ratified
+  the change on 2026-10-09, as "Rulings R-11 to R-25 and Brett Heap's ruling —
   2026-10-09" below records.
 
 ### Change 1 phase 6 records — 2026-10-09
@@ -1190,12 +1232,14 @@ below. Each is recorded at its passage as "change 1 phase 6 (`90854a3`), lane
 openRepoProject-2, 2026-10-09", under its ruling label, or, for change 2's
 reconciliation, as landed in change 2 at `996a181`. Change 1's phase 6 text
 ended at `0b3c33d`, after `9ea2f02`, where the D10 amendment landed and where
-lane openRepoProject-3 made its re-verification read; "Rulings R-11 to R-21 and
+lane openRepoProject-3 made its re-verification read; "Rulings R-11 to R-25 and
 Brett Heap's ruling — 2026-10-09" below records the fix round at `d6aaa9a`,
 the wordings at `6792e06`, ruling R-15 at `9eeac52`, ruling R-17 at `4f2162b`,
 ruling R-19 at `7e2589f`, ruling R-20 at `8973762`, ruling R-21 at `c873c81`,
-and change 1's final text at `b772195`, which applies Brett Heap's ruling on the
-first open question.
+Brett Heap's ruling on the first open question at `b772195`, lane
+openRepoProject-3's LOW wording item at `81ec2cb`, ruling R-22 at `03f0550`,
+ruling R-23 at `8aad1e8`, and change 1's final content at `251978d`, which adds
+rulings R-24 and R-25 (final head `df75ef6`, merged on `main` as `0050f3e`).
 
 - Ruling M1 confirmed: lane openRepoProject-3's reading stands. A removal child
   that exits nonzero on its own, with or without a signal, is `failed` with
@@ -1285,21 +1329,26 @@ first open question.
   `targets` at `fa9f0be` to match `clean`'s plan. Overview "Attention
   categories", the synthesis's bounds row, and the "Caps at 150 ms" bullet above
   carry it.
-- Change 1's final text is `b772195`: read at `0b3c33d`, fix round at `d6aaa9a`,
-  wordings at `6792e06`, R-15 at `9eeac52`, R-17 at `4f2162b`, R-19 at
-  `7e2589f`, R-20 at `8973762`, R-21 at `c873c81`, and Brett Heap's ruling
-  applied at `b772195` (PR #11 head at the time of this record); lane
-  openRepoProject-3 read `7e2589f` clean on 2026-10-09, lane openRepoProject-2
-  landed that read's LOW finding and the change 1 proposal phrase noted in the
-  `568c477` read, as ruling R-20, and PR #11 was marked ready for review at
-  `8973762` the same day, ratification remaining Brett Heap's. Lane
+- Change 1's final content is `251978d`, its final head `df75ef6`, and its merge
+  on `main` `0050f3e` (PR #11, squash-merged 2026-10-09): read at `0b3c33d`, fix
+  round at `d6aaa9a`, wordings at `6792e06`, R-15 at `9eeac52`, R-17 at
+  `4f2162b`, R-19 at `7e2589f`, R-20 at `8973762`, R-21 at `c873c81`, Brett
+  Heap's ruling applied at `b772195`, lane openRepoProject-3's LOW wording item
+  at `81ec2cb`, a merge of `main` at `f401e06` (`f2b40f9`) that changed nothing
+  in the change, R-22 at `03f0550`, R-23 at `8aad1e8`, and task 2.1, R-24, R-25,
+  and task 1.6 at `251978d`; `df75ef6` adds the proposal's Status line,
+  "ratified by Brett Heap on 2026-10-09". Lane openRepoProject-3 read `7e2589f`
+  clean on 2026-10-09, lane openRepoProject-2 landed that read's LOW finding and
+  the change 1 proposal phrase noted in the `568c477` read, as ruling R-20, and
+  PR #11 was marked ready for review at `8973762` the same day. Lane
   openRepoProject-2 then landed R-21, task 2.2's Git 2.36 floor result, at
   `c873c81`, on top of the numbering-only `cab78d8`; it changes the scrubbed
   variable list and no scenario. Brett Heap's ruling on the first open question
   was applied at `b772195`, which adds the fifth user-visible change and one
-  scenario, for the sixteenth scrubbed name (R-21), 98 scenarios in all.
-  "Rulings R-11 to R-21 and Brett Heap's ruling — 2026-10-09" below records
-  these.
+  scenario, for the sixteenth scrubbed name (R-21), 98 scenarios in all; R-22
+  adds one, 99, and R-23 one, 100 (65, 18, and 17), which R-25 keeps. Brett Heap
+  ratified the change on 2026-10-09. "Rulings R-11 to R-25 and Brett Heap's
+  ruling — 2026-10-09" below records these.
 
 ### Rulings R-4, R-8, and R-9 — 2026-10-09
 
@@ -1345,7 +1394,7 @@ openRepoProject-2 ruling R-4, 2026-10-09".
   items of Batch, Overview, and the packet overview, and the change 2 council V7
   bullet above carry it.
 
-### Rulings R-11 to R-21 and Brett Heap's ruling — 2026-10-09
+### Rulings R-11 to R-25 and Brett Heap's ruling — 2026-10-09
 
 Lane openRepoProject-3 re-verified change 1 at `0b3c33d` and change 2 at
 `996a181` on 2026-10-09, and lane openRepoProject-2 ruled on the findings the
@@ -1362,23 +1411,32 @@ report's excluded list and digest hold above 128 rows (R-17)"); ruling R-19 at
 R-17 (R-19)"); `8973762` adds ruling R-20 ("Name the digest's full scope in the
 report band and align one movement phrase (R-20)"); `c873c81` adds ruling R-21
 ("Scrub GIT_INTERNAL_SUPER_PREFIX and tick task 2.2 with the Git 2.36 floor
-results (R-21)"); and `b772195`, change 1's final text at the time of this
-record, applies Brett Heap's ruling on the first open question ("Apply Brett
-Heap's ruling: local ancestry proof outranks remote-gone"). Change 2 was read at
-`996a181`; its fix round, carrying R-13 (b), R-14, the R-12 mirror, and R-15,
-landed at `fa9f0be` (followed by a merge of `main` at `26a5668`, `12febc0`, that
-changed nothing in the change); `ef288fe` adds ruling R-16, takes requirement
-7's anchor wording into design D5, adds the fetch-created case to the proposal's
-scenario list and D13's map, drops the "decision 11" phrase from its R-8 bullet,
-and cites change 1 at `4f2162b` in task 2.2, D12, D5, and the later-rulings
-paragraph, which also records R-16; `fd4b05a` adds ruling R-18; `568c477` copies
-change 1's movement wording into all four places and lists R-18 in the
-later-rulings list and task 2.2; `4495ae7` adds ruling R-20 ("Credit selected:
-null to R-15 and complete D12's ruling record (R-20)"); and `cc43860`, change
-2's final text at the time of this record, applies the same ruling ("Apply Brett
-Heap's ruling: local ancestry proof outranks remote-gone"). Change 1's delta
-scenarios number 95 at `0b3c33d`, 96 at `d6aaa9a` and `6792e06`, and 97 from
-`9eeac52` to `c873c81`, 65 in `project-clean`, 17 in
+results (R-21)"); `b772195` applies Brett Heap's ruling on the first open
+question ("Apply Brett Heap's ruling: local ancestry proof outranks
+remote-gone"); `81ec2cb` narrows the `remote-gone` scenario to an unmerged
+branch; `03f0550` adds ruling R-22 ("Add the reappearing-upstream revalidation
+scenario (R-22)"); `8aad1e8` adds ruling R-23 ("Pin protocol.allow=never on
+every Git child against lazy fetches (R-23)"); and `251978d`, change 1's final
+content, adds rulings R-24 and R-25 ("Tick task 2.1 with the OQ-4 measurement
+and close the lazy-fetch gap (R-24, R-25)"), PR #11 merging as `0050f3e`.
+Change 2 was read at `996a181`; its fix round, carrying R-13 (b), R-14, the R-12
+mirror, and R-15, landed at `fa9f0be` (followed by a merge of `main` at
+`26a5668`, `12febc0`, that changed nothing in the change); `ef288fe` adds ruling
+R-16, takes requirement 7's anchor wording into design D5, adds the
+fetch-created case to the proposal's scenario list and D13's map, drops the
+"decision 11" phrase from its R-8 bullet, and cites change 1 at `4f2162b` in
+task 2.2, D12, D5, and the later-rulings paragraph, which also records R-16;
+`fd4b05a` adds ruling R-18; `568c477` copies change 1's movement wording into
+all four places and lists R-18 in the later-rulings list and task 2.2; `4495ae7`
+adds ruling R-20 ("Credit selected: null to R-15 and complete D12's ruling
+record (R-20)"); `cc43860` applies the same ruling ("Apply Brett Heap's ruling:
+local ancestry proof outranks remote-gone"); `6c28227` and `894b429` land lane
+openRepoProject-3's two LOW wording items; `1cc936e` ticks task 2.1 and adds
+ruling R-23 ("Tick task 2.1 with the OQ-4 measurement and pin
+protocol.allow=never (R-23)"); and `a8f710d` adds ruling R-25 ("Pin every
+transport and name GIT_ALLOW_PROTOCOL in the scrub (R-25)"), PR #12 merging as
+`961c405`. Change 1's delta scenarios number 95 at `0b3c33d`, 96 at `d6aaa9a`
+and `6792e06`, and 97 from `9eeac52` to `c873c81`, 65 in `project-clean`, 17 in
 `project-clean-review-safety`, and 15 in `project-command`: "A branch reset to
 the merge target's tip stays unstarted" is new at `d6aaa9a`, where the material
 of finding M4 landed as AND clauses inside existing scenarios and two scenarios
@@ -1388,9 +1446,14 @@ fetched at the merge target's tip stays unstarted", with AND clauses for
 `update-ref` and `push .`. At `b772195` change 1 has 98, 65 in `project-clean`,
 17 in `project-clean-review-safety`, and 16 in `project-command`: "The sixteenth
 scrubbed name on Git 2.36" is new, for R-21, and the ruling replaces "A merged
-worktree whose upstream was deleted" under its title, with an AND clause for
-`--worktree`. Change 2's `project-overview` delta has 61 scenarios at `fa9f0be`
-and after, `cc43860` included, where the scenario "A merged worktree whose
+worktree whose upstream was deleted" under its title (`merged-removable`,
+selected by `--all-safe`), with AND clauses for `--worktree` removal and for an
+unmerged row staying `remote-gone`. R-22 adds "Deleted upstream reappears before
+revalidation" to `project-clean-review-safety`, 99 at `03f0550` (65, 18, and
+16), and R-23 adds "A lazy fetch in a partial clone is refused locally" to
+`project-command`, 100 at `8aad1e8` and at `251978d` (65, 18, and 17).
+Change 2's `project-overview` delta has 61 scenarios at `fa9f0be` and after,
+`cc43860` and `c563f16` included, where the scenario "A merged worktree whose
 upstream was deleted" is replaced under its title. At `996a181` change 2 agreed
 with change 1 at `0b3c33d` on every shared value, and lane openRepoProject-2's
 re-check of `fa9f0be` found its remedies byte-identical with change 1's. Lane
@@ -1400,11 +1463,13 @@ openRepoProject-3's delta reads found every R-11 to R-14 item applied in change
 at `7e2589f` and `568c477`; lane openRepoProject-2 landed the three LOW findings
 of those reads and a phrase they noted as ruling R-20, at `8973762` and
 `4495ae7`, and marked PRs #11 and #12 ready for review at those commits on
-2026-10-09, ratification remaining Brett Heap's. Brett Heap's ruling on the
-first open question reached both changes afterwards, at `b772195` and `cc43860`.
-At `4f2162b` and `7e2589f` and in change 2 at `ef288fe` and after
-`openspec validate --all --strict` passes 7 of 7 items. Change 2's task 2.1, the
-OQ-4 cap measurement, is still open and gates the Speckit handoff.
+2026-10-09, ratification then remaining Brett Heap's until he gave it later that
+day. Brett Heap's ruling on the first open question reached both changes
+afterward, at `b772195` and `cc43860`. At `4f2162b` and `7e2589f` and in
+change 2 at `ef288fe` and after `openspec validate --all --strict` passes
+7 of 7 items. Change 2's task 2.1, the OQ-4 cap measurement, was ticked at
+`1cc936e` and change 1's at `251978d`, which meets ruling D-Q's condition for
+the Speckit handoff.
 
 - R-11 (change 1, landed at `d6aaa9a`), the eight internal contradictions that
   change 1's re-verification found: (a) once a plan is built, an incomplete plan
@@ -1611,7 +1676,7 @@ OQ-4 cap measurement, is still open and gates the Speckit handoff.
   commit subjects, not in either change's later-rulings list or tasks; change 1
   keeps 97 delta scenarios and change 2's `project-overview` delta 61. Lane
   openRepoProject-2 marked PR #11 ready for review at `8973762` and PR #12 at
-  `4495ae7` on 2026-10-09; ratification remains Brett Heap's.
+  `4495ae7` on 2026-10-09; Brett Heap ratified both later that day.
 - R-21 (change 1, landed at `c873c81`; lane openRepoProject-2, 2026-10-09)
   records task 2.2's result. Task 2.2 built Git 2.36.6 and 2.40.4 from
   kernel.org tarballs and compared them with 2.43.0 on 75 captures: design D17
@@ -1626,14 +1691,98 @@ OQ-4 cap measurement, is still open and gates the Speckit handoff.
   resolution; the scrub list of the `project-command` evidence model and
   design D6; task 2.2, which is ticked; and the proposal's departures list,
   which records a departure from task 2.2's literal rule, raising the floor to
-  the lowest version verified, here 2.40, open to Brett Heap at ratification
-  because 2.40 would exclude Debian 12's Git 2.39. The design's opening and the
-  proposal's later-rulings list name R-21. No scenario changed at `c873c81`, so
-  change 1 kept 97 delta scenarios there, and `b772195` adds one, for the
-  sixteenth name, 98 in all; change 2 states no count or list of the scrubbed
-  variables and is untouched. Batch "Identity" and "Repository-wide probes",
-  Overview "Probe model and deadline", and the "Git 2.36 floor (C12)" bullet
-  above carry it.
+  the lowest version verified, here 2.40, because 2.40 would exclude Debian 12's
+  Git 2.39, a departure ratified 2026-10-09 with the merge. The design's opening
+  and the proposal's later-rulings list name R-21. No scenario changed at
+  `c873c81`, so change 1 kept 97 delta scenarios there, and `b772195` adds one,
+  for the sixteenth name, 98 in all; change 2 states no count or list of the
+  scrubbed variables and is untouched there. Ruling R-25 below adds a
+  seventeenth name, `GIT_ALLOW_PROTOCOL`. Batch "Identity" and "Repository-wide
+  probes", Overview "Probe model and deadline", and the "Git 2.36 floor (C12)"
+  bullet above carry it.
+- R-22 (change 1, landed at `03f0550`; lane openRepoProject-2, 2026-10-09)
+  states the other side of the revalidation rule that a value null
+  in the plan and null at revalidation is no difference, in the
+  scenario "Deleted upstream reappears before revalidation" under
+  `Cleanup revalidates destructive actions`, with two cases. When a `git fetch`
+  recreates the deleted upstream of the first of two selected `merged-removable`
+  rows before apply, that row's `upstream_oid` is non-null at revalidation where
+  the plan recorded null, so it is `refused` with `state-changed`: no child is
+  spawned, the later target is `not-attempted`, nothing is removed, and the exit
+  status is 2. When the fetch instead recreates the second row's upstream after
+  the first row's removal child exits 0 and before the rescan that follows it,
+  the first row, null in the plan and null at revalidation, is `removed`, and
+  the second is `refused` with `state-changed`, exit 2, the batch stopping
+  there. `project-clean-review-safety` then has 18 scenarios, 99 in all (65, 18,
+  and 16), and R-22 joins the proposal's later-rulings list, tasks 1.2 and 1.4,
+  design Context, and D20's trace paragraph.
+- R-23 (both changes; landed in change 1 at `8aad1e8` and in change 2 at
+  `1cc936e`; lane openRepoProject-2, 2026-10-09) comes from change 2's OQ-4
+  measurement: Git 2.43 lacks `GIT_NO_LAZY_FETCH`, so a read-only probe in a
+  partial (promisor) clone could fetch a missing object from the network. Every
+  Git child of `clean`, `status`, `doctor`, `update`, and the overview runs with
+  `-c protocol.allow=never` beside the existing pins, so a lazy fetch fails
+  locally, the probe fails, and its row is `inspection-error`, never a network
+  call. Change 1's shared evidence model, in its `project-command` delta, states
+  it with one scenario, "A lazy fetch in a partial clone is refused locally", so
+  that delta has 17 scenarios and change 1 has 100 in all (65, 18, and 17); the
+  overview carries it by citation plus the literal pin, records the failed probe
+  as `probe-failed`, and keeps 61 scenarios. Change 1's commit checked it on
+  Git 2.43.0 in a clone made with `--no-checkout --filter=tree:0` whose
+  upload-pack is a logging script: unpinned, the status probe fetches and the
+  script runs; pinned, Git exits 128 and the script never runs. Batch
+  "Identity", Overview "Probe model and deadline", the packet overview's
+  evidence-model paragraph, the synthesis's evidence model, and the
+  "Shared probes" bullet above carry it.
+- R-24 (change 1, landed at `251978d`; lane openRepoProject-2, 2026-10-09) ticks
+  task 2.1 with the clean OQ-4 measurement, and the deltas' caps stand as
+  measured: 128 rows for `--all-safe` and single-target `remove`, 256 for the
+  report, 16 targets, the 64 s run bound, 15 s per Git child outside the
+  deadline and `min(5 s, remaining)` under it, the 5 s removal floor, and the
+  300 s ceiling. It was measured in py-bench on Git 2.43.0 on a loaded host,
+  warm and cold, the cold cache made by `sync` and per-file eviction confirmed
+  with `mincore`, with drvfs unavailable. Warm and cold medians: the status
+  probe 42-49 ms and 38-63 ms at 10,000 index entries and 215-232 ms and
+  244-248 ms at 100,000; `for-each-ref` at 1,000 branches 108-112 ms and 121 ms
+  packed, 240 ms and 838 ms loose; the merged set 17-48 ms; and a 20,000-file
+  worktree removal 0.66 s and 0.72 s, 14.1 s at worst under CPU saturation. At
+  128 rows the worst case spawns the 16th removal at 23.6 s with 26.4 s left and
+  ends at 24.3 s, or 32.6 s with 20,000-file removals; 256 report rows take
+  19.9 s; the final rescan uses 0.16 s of the 10 s reserve; and the largest
+  probe child took 3.8 s. The survey covers 355 repositories, 296 resolving,
+  with 561 rows, and selects 17 (13 before Brett Heap's ruling), none excluded
+  as `reflog-unavailable` or `unstarted-branch`. The fit's rejections are
+  degraded cases recorded as risks, not cap changes: rows of 100,000-entry
+  indexes, for which the rule would give 64 rows, and CPU saturation at
+  load 165, under which a 128-row plan takes 77 s and the rule would give
+  16 rows and 8 targets; both only make a plan incomplete. A residual is
+  recorded too: a repository whose every worktree carries a gitlink removes no
+  row in any run, because `contains-submodule` is an index gate after
+  `deferred-target-cap`, so its deferred count never drains; the gate order
+  stays, and the report says why. With change 2's measurement, ruling D-Q's
+  condition, a warm and cold measurement before the Speckit handoff, is met for
+  both changes. Batch "Cap arithmetic", the "Both changes, measurement
+  (ruling D-Q)" bullet above, and the open lists carry it.
+- R-25 (both changes; landed in change 2 at `a8f710d` and in change 1 at
+  `251978d`; lane openRepoProject-2, 2026-10-09) closes a gap in change 1's
+  application of R-23 at `8aad1e8`: `protocol.allow` is only the default policy,
+  which a per-protocol `allow=always` in a configuration file or
+  `GIT_ALLOW_PROTOCOL` in the caller's environment would override. Every Git
+  child therefore also pins `protocol.<name>.allow=never` for `file`, `ssh`,
+  `git`, `http`, `https`, and `ext`, and `GIT_ALLOW_PROTOCOL` joins the fixed
+  scrub list as its seventeenth name, R-21's sixteen plus that one. Change 1
+  checked it on Git 2.36.6, 2.40.4, and 2.43.0: `protocol.file.allow=always` in
+  the repository's configuration defeats `protocol.allow=never` alone but not
+  the six pins, and `GIT_ALLOW_PROTOCOL=file` defeats every pin, so only the
+  scrub stops it; the scenario "A lazy fetch in a partial clone is refused
+  locally" gains an AND clause for both, and change 1 keeps 100 scenarios. Both
+  changes' Risks accept a residual: a remote-helper protocol of another name
+  with its own `allow=always` in the repository's configuration could still
+  fetch, and the probe then succeeds, so nothing unsafe follows. Batch
+  "Identity", Overview "Probe model and deadline", the packet overview's
+  evidence-model paragraph, the synthesis's evidence model, the "Shared probes"
+  and "Git 2.36 floor (C12)" bullets above, and the R-21 departure in the open
+  lists carry it.
 - Change 2 at `996a181` also landed R-2, the submodule test first in every
   repository at no extra child, with the outcomes recorded in "Change 2 phase 6
   records — 2026-10-09" above; R-3, the UTF-8 check of `common_dir`; R-5, the
@@ -1717,17 +1866,17 @@ OQ-4 cap measurement, is still open and gates the Speckit handoff.
 - Lane openRepoProject-2 marked PR #11 ready for review at `8973762` and PR #12
   at `4495ae7` on 2026-10-09, after lane openRepoProject-3's word that both
   changes read clean and the two R-20 commits, and reported both ready to Brett
-  Heap; ratification remains Brett Heap's. The PR heads later moved, PR #11 to
-  `cab78d8` and PR #12 to `704eaa9`, by numbering-only commits that renumbered
-  the Speckit handoffs to features 004-project-clean-all-safe and
+  Heap, whose ratification followed later that day. The PR heads later moved,
+  PR #11 to `cab78d8` and PR #12 to `704eaa9`, by numbering-only commits that
+  renumbered the Speckit handoffs to features 004-project-clean-all-safe and
   005-project-overview after lane openRepoProject-1's PR #17 took 003; those
   commits change no content, and `8973762` and `4495ae7` remain the shas at
   which that content was read (lane 2, 2026-10-09). PR #11's head then moved to
   `c873c81`, which does change content, the scrub list of R-21, recorded in the
-  R-21 bullet above. At the time of this record PR #11's head is `b772195` and
-  PR #12's is `cc43860`, the commits that apply Brett Heap's ruling; lane
-  openRepoProject-2's read-only cross-check of the two texts was still running,
-  and an edit it forces would move a head.
+  R-21 bullet above. The heads then moved to `b772195` and `cc43860`, the
+  commits that apply Brett Heap's ruling, and on through the commits recorded
+  above, ending at `df75ef6` for PR #11, squash-merged on `main` as `0050f3e`,
+  and `c563f16` for PR #12, squash-merged as `961c405`, both on 2026-10-09.
 - Brett Heap's ruling on the packet's first open question (Brett Heap,
   2026-10-09): "yes, local ancestry proof outranks remote-gone", delivered
   verbatim through lane openRepoProject-3's resume prompt as a preserved draft
@@ -1738,8 +1887,8 @@ OQ-4 cap measurement, is still open and gates the Speckit handoff.
   only as the answer to that question, designing no mechanism and changing no
   gate text. Lane openRepoProject-2 then applied it in both proposals, one
   commit per change titled "Apply Brett Heap's ruling: local ancestry proof
-  outranks remote-gone": change 1 at `b772195` and change 2 at `cc43860`, the PR
-  #11 and PR #12 heads at the time of this record. The proposals now test a
+  outranks remote-gone": change 1 at `b772195` and change 2 at `cc43860`, the
+  PR #11 and PR #12 heads at that time. The proposals now test a
   branch whose configured upstream's remote-tracking ref no longer exists for
   local ancestry before the `remote-gone` rung: when it is merged into the
   target the row is `merged-removable` (`merged-current` when it is the current
@@ -1756,23 +1905,51 @@ OQ-4 cap measurement, is still open and gates the Speckit handoff.
   upstream removed by `--worktree` is the fifth user-visible change, where
   `a040790` refuses it as `unpublished`, so change 1's README section opens with
   five, not four; (e) change 1's scenario "A merged worktree whose upstream was
-  deleted" keeps its title and gains an AND clause for `--worktree`, and one
-  scenario is added for the sixteenth scrubbed name (R-21), 98 in all, 65 in
-  `project-clean`, 17 in `project-clean-review-safety`, and 16 in
-  `project-command`; (f) change 2's requirement 6 and its scenario of the same
-  title mirror the ladder, its departures bullet quotes Brett Heap's words and
-  records that the ruling supersedes R-6, and its requirement 10 default-branch
-  finding, which reads the checkout's own upstream, is untouched; it has 61
-  scenarios in its `project-overview` delta. The second question, patch
-  equivalence for squash merges, stays open.
+  deleted" is replaced under its title (`merged-removable`, selected by
+  `--all-safe`) with AND clauses for `--worktree` removal and for an unmerged
+  row staying `remote-gone`, and one scenario is added for the sixteenth
+  scrubbed name (R-21), 98 in all, 65 in `project-clean`, 17 in
+  `project-clean-review-safety`, and 16 in `project-command`; (f) change 2's
+  requirement 6 and its scenario of the same title mirror the ladder, its
+  departures bullet quotes Brett Heap's words and records that the ruling
+  supersedes R-6, and its requirement 10 default-branch finding, which reads the
+  checkout's own upstream, is untouched; it has 61 scenarios in its
+  `project-overview` delta. The second question, patch equivalence for squash
+  merges, stays open.
 - Lane openRepoProject-3's read-only check of `b772195` and `cc43860`
   (2026-10-09) found every element of the ruling applied: 98 scenarios in change
   1 (65, 17, and 16) and 61 in change 2's `project-overview` delta, with 2 in
   its review-safety delta; question 1 closed and question 2 open in both
-  changes. It sent three LOW wording items to lane openRepoProject-2, pending at
-  this record: change 1's scenario "A deleted upstream is remote-gone" is not
-  narrowed to unmerged rows (spec lines 149-155 against 117-122); change 2's
-  requirement 6 outcome list does not say that the earlier rungs still come
-  first (spec lines 437-440); and change 2's proposal line 483 still calls
+  changes. It sent three LOW wording items to lane openRepoProject-2, and all
+  three landed on 2026-10-09. Change 1's scenario "A deleted upstream is
+  remote-gone" was not narrowed to unmerged rows (spec lines 149-155 against
+  117-122); at `81ec2cb` its WHEN reads "one linked worktree's branch, not
+  merged into the merge target, has a configured upstream whose remote-tracking
+  ref was deleted". Change 2's requirement 6 outcome list did not say that the
+  earlier rungs still come first (spec lines 437-440); at `6c28227` it begins "A
+  worktree that reaches the `remote-gone` rung, its upstream's remote-tracking
+  ref gone, and whose branch tip ...". Change 2's proposal line 483 called
   change 1's modification "the ladder's names and order", though change 1's
-  ladder now has one ancestry exception.
+  ladder has one ancestry exception; at `894b429` it names change 1's keeping of
+  the ladder's names and order "with one ancestry exception". `6c28227` also
+  ends the PA-1 council row with "; superseded by Brett Heap's ruling of
+  2026-10-09" and names `f401e06` under Dependencies and Sequencing. Change 1's
+  head `f2b40f9` and change 2's `74acb47` then merged `main` at `f401e06`, lane
+  openRepoProject-1's feature 003 (PR #17), changing nothing in either change;
+  change 1 kept 98 scenarios and 96 tests, and change 2 61 scenarios.
+- Brett Heap ratified both proposals on 2026-10-09, in his words to lane
+  openRepoProject-2, "ratify, merge #11 and run the runbook", RULED in lane
+  openRepoProject-2's log. Every departure this record held open to his
+  ratification, change 1 council V1, V4, V5, and V10 and the Git floor departure
+  of R-21, and every proposal decision open to ratification, is ratified
+  2026-10-09 with the merges of PR #11 and PR #12. Lane openRepoProject-2 ran
+  the runbook the same day: change 1's last content commit (`251978d`: task 2.1
+  with the clean OQ-4 numbers, R-24, R-25, and task 1.6 with his words) and the
+  ratified Status line (`df75ef6`), then the squash-merge of PR #11 as
+  `0050f3e`; then change 2's ratified Status line and task 1.6 (`ea04e30`), its
+  departures stated as ratified (`33054f9`), a merge of `main` at `0050f3e`
+  (`c563f16`), and the squash-merge of PR #12 as `961c405`. The Speckit
+  feature 004-project-clean-all-safe follows the merge, created from `0050f3e`;
+  005-project-overview follows after feature 004 merges; and each change is
+  archived only after its feature lands. PR #16, this packet revision, awaits
+  Brett Heap's separate word.

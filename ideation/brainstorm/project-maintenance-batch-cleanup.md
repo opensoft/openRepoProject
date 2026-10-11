@@ -227,7 +227,7 @@ commit was made on this branch here since it was created; review, then git
 worktree remove yourself" for `unstarted-branch`, and "the branch's reflog is
 missing, expired or undecidable; review, then git worktree remove yourself" for
 `reflog-unavailable`. The overview mirrors the read (change 2, read at
-`996a181`, and at `4495ae7` (R-20; unchanged at `cc43860`)), and R-15 landed in
+`996a181`, and at `4495ae7` (R-20; unchanged at `c563f16`)), and R-15 landed in
 change 1 at `9eeac52`. Single-target `remove` applies the gate too: a fresh
 merged worktree named with `--worktree` is refused with `target-excluded`, where
 `a040790` removes it, and so is a merged worktree whose reflog keeps no decisive
@@ -330,7 +330,7 @@ failure, such as `EACCES`, gives `present: null`, an `os-error` in the row's
 `errors`, and classification `inspection-error`, and no probe runs in that
 path.
 
-Every Git child runs with sixteen variables removed from its environment,
+Every Git child runs with seventeen variables removed from its environment,
 unconditionally and before any Git call, from a fixed list that is hard-coded
 rather than queried with another child. Fifteen are the variables that
 `git rev-parse --local-env-vars` prints on Git 2.40 and later:
@@ -340,16 +340,28 @@ rather than queried with another child. Fifteen are the variables that
 `GIT_NO_REPLACE_OBJECTS`, `GIT_REPLACE_REF_BASE`, `GIT_PREFIX`,
 `GIT_SHALLOW_FILE`, and `GIT_COMMON_DIR`. The sixteenth is
 `GIT_INTERNAL_SUPER_PREFIX`, which Git 2.36 through 2.39 also print and which
-makes every command on those versions fail when it is set. The list was
-verified on Git 2.36.6, 2.40.4, and 2.43.0, as change 1 ruling R-21 (lane 2,
-2026-10-09, `c873c81`) records. `-C <directory>` alone therefore
-selects the repository, and also the worktree whose index a probe reads,
-which is why "Probe directory rule" fixes each child's directory. Read-only
-probes also set `GIT_OPTIONAL_LOCKS=0`; the removal child does not. The scrub
-does not cover `GIT_CONFIG_GLOBAL` or `GIT_CONFIG_SYSTEM`, so the settings a
-result depends on are pinned with `-c` instead, which no configuration file
-overrides: every status probe and the removal child carry
-`-c core.untrackedCache=false -c core.fsmonitor=false`.
+makes every command on those versions fail when it is set. The list was verified
+on Git 2.36.6, 2.40.4, and 2.43.0, as change 1 ruling R-21 (lane 2, 2026-10-09,
+`c873c81`) records. The seventeenth, `GIT_ALLOW_PROTOCOL`, which Git does not
+print, joins under ruling R-25 (lane 2, 2026-10-09) with the transport pins
+below. `-C <directory>` alone therefore selects the repository, and also the
+worktree whose index a probe reads, which is why "Probe directory rule" fixes
+each child's directory. Read-only probes also set `GIT_OPTIONAL_LOCKS=0`; the
+removal child does not. The scrub does not cover `GIT_CONFIG_GLOBAL` or
+`GIT_CONFIG_SYSTEM`, so the settings a result depends on are pinned with `-c`
+instead, which no configuration file overrides: every status probe and the
+removal child carry `-c core.untrackedCache=false -c core.fsmonitor=false`.
+Under lane openRepoProject-2 ruling R-23 (2026-10-09; change 1 at `8aad1e8`),
+every Git child of `clean`, `status`, `doctor`, `update`, and the overview also
+carries `-c protocol.allow=never`, because Git 2.43 lacks `GIT_NO_LAZY_FETCH`: a
+read-only probe in a partial clone could otherwise fetch a missing object from
+the network, and with the pin the fetch fails locally, the probe fails, and its
+row is `inspection-error`. Because `protocol.allow` is only the default policy,
+which a per-protocol setting or `GIT_ALLOW_PROTOCOL` would override, ruling R-25
+(change 1 at `251978d`) also pins `protocol.<name>.allow=never` for `file`,
+`ssh`, `git`, `http`, `https`, and `ext`, and scrubs `GIT_ALLOW_PROTOCOL`. The
+command spellings in this document show the earlier pins only; the proposal's
+text carries the protocol pins.
 
 ### The narrow guarantee
 
@@ -777,9 +789,9 @@ variable list, and the removal refusals, run on Git 2.36.6 and 2.40.4 against
 `GIT_INTERNAL_SUPER_PREFIX`, which Git 2.36 through 2.39 print and which the
 scrub in "Identity" now unsets. The floor stays Git 2.36, as change 1 ruling
 R-21 (lane 2, 2026-10-09, `c873c81`) decided. That departs from task 2.2's
-rule, which applied here would raise the floor to 2.40, and the departure is
-open to Brett Heap at ratification, because 2.40 would exclude Debian 12's Git
-2.39.
+rule, which applied here would raise the floor to 2.40, and the departure, made
+because 2.40 would exclude Debian 12's Git 2.39, was ratified 2026-10-09 with
+the merge.
 
 Row 6 passes this format string, identical in both packet documents, to
 `--format=`; fields are NUL-separated and each record ends in a line feed,
@@ -805,10 +817,11 @@ replaces the separate dirty and ignored `status` calls. Overview, doctor, and
 clean share this one evidence model, and the proposal proves value parity
 with the baseline through fixture tests, except for the changes listed under
 "Baseline behavior changes", of which the visible one is that a deleted upstream
-reports `remote-gone`, except that a merged one reads `merged-removable` by
-Brett Heap's ruling of 2026-10-09, applied at `b772195` and `cc43860`. A failed
-repository-wide probe leaves every row's classification `null` and makes the
-plan incomplete (`inspection-incomplete`).
+reports `remote-gone`, except that a merged one, tested for local ancestry
+before the `remote-gone` rung, reads `merged-removable` (`merged-current` when
+current) by Brett Heap's ruling of 2026-10-09, applied at `b772195` and
+`cc43860`. A failed repository-wide probe leaves every row's classification
+`null` and makes the plan incomplete (`inspection-incomplete`).
 
 ### Worktree-specific probes
 
@@ -975,6 +988,20 @@ rows would need 535, about 80.25 s. Its `limits.worktree_rows` is therefore
 256, and "Inspection order and omitted work" applies to it with 256 in place
 of 128; the `--all-safe` and single-target `remove` plans keep 128 rows and
 16 targets.
+
+The proposal measured these caps warm and cold on 2026-10-09 (change 1 task 2.1,
+lane openRepoProject-2 ruling R-24, `251978d`), and they stand as measured: the
+status probe took 42-49 ms warm and 38-63 ms cold at 10,000 index entries, a
+20,000-file worktree removal 0.66 s warm and 0.72 s cold, and at 128 rows the
+worst case spawns the 16th removal at 23.6 s with 26.4 s left and ends at
+24.3 s; 256 report rows take 19.9 s. Its degraded cases, indexes of
+100,000 entries and CPU saturation at load 165, are recorded as risks that only
+make a plan incomplete, not as cap changes, and so is a residual: a repository
+whose every worktree carries a gitlink removes no row in any run, because
+`contains-submodule` follows `deferred-target-cap`, so its deferred rows never
+drain; the gate order stays, and the report says why. The [fix
+handoff](next-session-project-maintenance-fix-handoff.md) records the numbers
+under ruling R-24.
 
 ### Inspection order and omitted work
 
@@ -1475,10 +1502,10 @@ Shared with the overview:
   `repo_state`'s `stale-worktree`, shown under `--json`. Both are preserve
   states. A merged row with a deleted upstream is not `remote-gone`: by Brett
   Heap's ruling of 2026-10-09, applied at `b772195` and `cc43860`, it is tested
-  for local ancestry first and reads `merged-removable` (`merged-current` when
-  current). The promise that baseline row fields are unchanged covers field
-  names and types (with `present` gaining `null`), not the probe that fills
-  them.
+  for local ancestry before the `remote-gone` rung and reads `merged-removable`
+  (`merged-current` when current). The promise that baseline row fields are
+  unchanged covers field names and types (with `present` gaining `null`), not
+  the probe that fills them.
 - Git output is parsed NUL-delimited, so a newline path is no longer misread
   and a non-UTF-8 path no longer ends the run with an uncaught exception.
 - One combined status probe with explicit `--untracked-files=normal`, run
@@ -2022,11 +2049,16 @@ workstation honors such a lock today; the narrow guarantee plus Git's own
 refusals is what the MVP can actually deliver, and a later design may add a
 handoff on top of the same seam.
 
-Open proposal decisions, with the first question for Brett Heap now ruled and
-applied:
+Proposal decisions that were open, now closed except the second question for
+Brett Heap: the measured costs by measurement (ruling D-Q), the first question
+by his ruling, and the departures by his ratification of both proposals on
+2026-10-09 ("ratify, merge #11 and run the runbook", to lane openRepoProject-2),
+with PRs #11 and #12 merged as `0050f3e` and `961c405`:
 
 - The measured per-child and per-removal costs, and therefore the final caps
-  under the stated rule; the caps stay provisional until measured.
+  under the stated rule: measured warm and cold on 2026-10-09, and the caps
+  stand as measured, 128 rows, 256 for the report, and 16 targets (ruling D-Q,
+  closed by change 1's task 2.1 and ruling R-24; see "Cap arithmetic").
 - For Brett Heap, ruled and applied: whether a local ancestry proof should
   outrank `remote-gone` for worktree rows. Brett Heap ruled yes on 2026-10-09
   ("yes, local ancestry proof outranks remote-gone"; to lane openRepoProject-2,
@@ -2049,36 +2081,38 @@ applied:
   change 1, `push` refuses on the deleted upstream itself, whatever the row's
   class; revalidation does not count a value null in the plan and null again as
   a difference; and `--worktree` removes a merged worktree whose upstream was
-  deleted, where `a040790` refuses it as `unpublished`, which is the fifth
-  user-visible change; the scenario "A merged worktree whose upstream was
-  deleted" keeps its title and gains an AND clause for `--worktree`. In change
-  2, requirement 6 and its scenario mirror the ladder, the departures bullet
-  quotes Brett Heap's words and records that the ruling supersedes R-6, and
-  requirement 10's default-branch finding is untouched.
+  deleted, when its gates pass, keeping its branch, where `a040790` refuses it
+  as `unpublished`, which is the fifth user-visible change; the scenario "A
+  merged worktree whose upstream was deleted" is replaced under its title
+  (`merged-removable`, selected by `--all-safe`) with AND clauses for
+  `--worktree` removal and for an unmerged row staying `remote-gone`. In
+  change 2, requirement 6 and its scenario mirror the ladder, the departures
+  bullet quotes Brett Heap's words and records that the ruling supersedes R-6,
+  and requirement 10's default-branch finding is untouched.
 - For Brett Heap: squash merges never satisfy the ancestry proof, so the MVP
   selects little in a squash-merge repository. The recommendation is a local
   patch-equivalence proof (`git cherry` or patch-id against the merge
   target), designed as a follow-on change, not in the MVP.
 - Change 1 council V4, single-target `remove` completeness (other rows'
-  inspection errors no longer block it): departure, open to Brett Heap's
-  ratification.
+  inspection errors no longer block it): departure, ratified 2026-10-09 with the
+  merge.
 - Change 1 council V5, the deferred target cap (more than 16 eligible rows
-  are drained 16 per run instead of refused): departure, open to Brett
-  Heap's ratification.
+  are drained 16 per run instead of refused): departure, ratified 2026-10-09
+  with the merge.
 - Change 1 council V1, the removal child (never signaled once spawned,
-  only a 300 s hard ceiling ending it): departure, open to Brett Heap's
-  ratification.
+  only a 300 s hard ceiling ending it): departure, ratified 2026-10-09 with the
+  merge.
 - Change 1 council V10, the per-child budget (`status`, `doctor`, and
-  `update` keep 15 s per Git child): departure, open to Brett Heap's
-  ratification.
-- Change 1 R-21: the Git floor stays 2.36 with a sixteen-name scrub instead of
-  task 2.2's rule to raise it to 2.40 (Debian 12 ships 2.39); open to Brett
-  Heap at ratification.
+  `update` keep 15 s per Git child): departure, ratified 2026-10-09 with the
+  merge.
+- Change 1 R-21: the Git floor stays 2.36 with a fixed scrub, sixteen names
+  under R-21 and seventeen since R-25, instead of task 2.2's rule to raise it to
+  2.40 (Debian 12 ships 2.39): departure, ratified 2026-10-09 with the merge.
 
 Every other open decision this document listed is decided: the 2026-10-08
-proposals took them as proposal decisions, open to ratification, as the
-[fix handoff](next-session-project-maintenance-fix-handoff.md) records under
-"Decisions taken by the proposals — 2026-10-08".
+proposals took them as proposal decisions, ratified 2026-10-09 with the merge,
+as the [fix handoff](next-session-project-maintenance-fix-handoff.md) records
+under "Decisions taken by the proposals — 2026-10-08".
 
 ## Relationships
 

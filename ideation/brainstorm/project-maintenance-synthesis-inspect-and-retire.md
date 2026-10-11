@@ -64,7 +64,7 @@ suggests when its reflog cannot decide, with
 `suggestion_gate: "reflog-unavailable"` (rulings N-5 and P6-5, with the reflog
 read of the D10 amendment and lane openRepoProject-2 ruling R-12, change 1 at
 `0b3c33d` and `4f2162b`; change 2, read at `996a181`, and at `4495ae7` (R-20;
-unchanged at `cc43860`)). It is never a shell string or a bare name, it never
+unchanged at `c563f16`)). It is never a shell string or a bare name, it never
 carries `--apply` or `--yes`, and a row whose `root` is `null` or not valid
 UTF-8 gets no clean suggestion.
 
@@ -85,11 +85,12 @@ apply to one preview.
 ### One evidence model; permission is not shared
 
 Overview, doctor, and clean read one evidence model. Every Git child runs with
-a fixed, hard-coded list of sixteen variables removed from its environment,
+a fixed, hard-coded list of seventeen variables removed from its environment,
 unconditionally: the fifteen that `git rev-parse --local-env-vars` prints on
 Git 2.40 and later plus `GIT_INTERNAL_SUPER_PREFIX`, which Git 2.36 through 2.39
 also print, as verified on Git 2.36.6, 2.40.4, and 2.43.0 (change 1 ruling R-21,
-lane 2, 2026-10-09, `c873c81`). Read-only children also set
+lane 2, 2026-10-09, `c873c81`), and `GIT_ALLOW_PROTOCOL`, added by ruling R-25
+(lane 2, 2026-10-09). Read-only children also set
 `GIT_OPTIONAL_LOCKS=0`. One `git --version` child runs per invocation. Each
 repository then costs the same four repository-wide children, memoized per
 `common_dir` and fanned out to every row: identity; the registry listing,
@@ -108,7 +109,14 @@ path is missing, unreadable, or fails the two-way registration check gets
 none, and an unreadable or registration-mismatched row, or one whose status
 probe failed, timed out, or was cut by the deadline, is set to
 `inspection-error` directly, so none of them on the merge-target branch reads
-as `protected-default`. Every worktree-specific probe runs as
+as `protected-default`. Every Git child, in `status`, `doctor`, and `update`
+too, also runs with `-c protocol.allow=never` beside the status probe's
+pins (lane openRepoProject-2 ruling R-23, 2026-10-09; change 1 at `8aad1e8`,
+change 2 at `1cc936e`), because Git 2.43 lacks `GIT_NO_LAZY_FETCH`:
+a lazy fetch in a partial clone then fails locally and its row is
+`inspection-error`; ruling R-25 (change 1 at `251978d`, change 2 at `a8f710d`)
+adds the six per-protocol `allow=never` pins, because `protocol.allow`
+is only the default policy. Every worktree-specific probe runs as
 `git -C <worktree path>` against that worktree's own index, only after its
 identity is verified, because each linked worktree has its own index;
 repository-wide probes run as `git -C <repository.root>` (`common_dir` for a
@@ -136,7 +144,8 @@ with `main-worktree-missing`. Because they share the ref listing, overview
 and clean both classify a deleted upstream `remote-gone`, where the baseline
 reports `unpublished`; both are preserve states, except that a merged row is, by
 Brett Heap's ruling of 2026-10-09 (applied at `b772195` and `cc43860`), tested
-for local ancestry first and reads `merged-removable`. Doctor never classifies a
+for local ancestry before the `remote-gone` rung and reads `merged-removable`
+(`merged-current` when current). Doctor never classifies a
 deleted upstream; its only worktree classification is `repo_state`'s
 `stale-worktree`, shown under `--json`.
 
@@ -329,14 +338,16 @@ a time.
 
 The broad view benefits from speed while cleanup needs exact fresh evidence. The
 overview keeps an invocation-local memo and cross-repository concurrency;
-cleanup takes fresh probes serially and revalidates each target. Whether the
-overview's caps survive measurement is open. If the proposal rejects
-concurrency, the fallback is 32 candidates and 128 worktree rows run serially
-(257 children, about 38.6 s at 150 ms, or about 44.6 s with the listing
-estimate). And because one repository's children always run serially, a single
-repository with more than about 355 worktree rows cannot complete at that rate;
-the proposals cap no rows per repository, so such a repository ends visibly
-incomplete.
+cleanup takes fresh probes serially and revalidates each target. The overview's
+caps survived measurement on 2026-10-09, at 48.3 s of the 60 s deadline in their
+worst case, and a default root of 219 candidates, as on the measured
+workstation, ends incomplete by design (change 2 task 2.1, ruling D-Q). If the
+proposal rejects concurrency, the fallback is 32 candidates and 128 worktree
+rows run serially (257 children, about 38.6 s at 150 ms, or about 44.6 s with
+the listing estimate). And because one repository's children always run
+serially, a single repository with more than about 355 worktree rows cannot
+complete at that rate; the proposals cap no rows per repository, so such a
+repository ends visibly incomplete.
 
 The overview's `--all-safe` suggestion follows the batch's own gates. A worktree
 the ladder classifies `merged-removable` yields the housekeeping finding and the
@@ -368,7 +379,7 @@ merge-target SHA with a movement recorded is merged, the fast-forward case. A
 reflog that is missing, empty, read to its 64 KiB bound, or undecidable gives
 `reflog-unavailable`, which the batch excludes and for which the overview gives
 only the read-only suggestion, with `suggestion_gate: "reflog-unavailable"`
-(change 2, read at `996a181`, and at `4495ae7` (R-20; unchanged at `cc43860`),
+(change 2, read at `996a181`, and at `4495ae7` (R-20; unchanged at `c563f16`),
 which also carries ruling R-15's all-zeros anchor). The gates the overview
 cannot apply are the batch's two index gates, read through its
 `git -C <worktree path> ls-files -v --stage -z` probe and an `lstat` of its
@@ -379,18 +390,21 @@ lists that exclusion, and the suggestion is advisory either way.
 “Attention” should not make normal ongoing work look broken; keep housekeeping
 opportunities distinct from warnings and errors.
 
-Before the proposals are ratified, the measured costs, and therefore the final
-caps, remain open, with the second of the two questions for Brett Heap that the
-packet overview lists, how squash-merged branches can be retired. He ruled the
-first on 2026-10-09: a local ancestry proof outranks `remote-gone` for worktree
-rows (Brett Heap, 2026-10-09), and both proposals applied it, change 1 at
-`b772195` and change 2 at `cc43860`: a branch whose configured upstream's
+The measured costs, and therefore the final caps, closed on 2026-10-09, when
+both proposals' measurements kept their caps (ruling D-Q), and Brett Heap
+ratified both proposals the same day ("ratify, merge #11 and run the runbook",
+to lane openRepoProject-2), with PRs #11 and #12 merged as `0050f3e` and
+`961c405`. The second of the two questions for Brett Heap that the packet
+overview lists, how squash-merged branches can be retired, stays open. He ruled
+the first on 2026-10-09: a local ancestry proof outranks `remote-gone` for
+worktree rows (Brett Heap, 2026-10-09), and both proposals applied it, change 1
+at `b772195` and change 2 at `cc43860`: a branch whose configured upstream's
 remote-tracking ref no longer exists is tested for local ancestry before the
 `remote-gone` rung, so a merged row is `merged-removable` (`merged-current` when
 it is the current worktree) and only an unmerged row is `remote-gone`. The
 proposals took the other decisions this synthesis once listed as proposal
-decisions, open to ratification, and the packet overview holds the consolidated
-list. Keep each extension bounded and preserve explicit ownership and recovery
-semantics.
+decisions, ratified 2026-10-09 with the merge, and the packet overview holds the
+consolidated list. Keep each extension bounded and preserve explicit ownership
+and recovery semantics.
 
 Return to the [packet overview](project-maintenance-overview.md).
