@@ -58,15 +58,15 @@ prints; their exit status stays 2.
 **Raised by:** council NOTED list (with V1 and V6; observed by the writer as
 uid 1000 on Python 3.12.3)
 **Concern:** The term must not promise more than the reads decide. A missing
-parent below a directory of mode 555 passes `--dry-run` (exit 0) and is
-refused after `Create:` and the plan with `REFUSED: [Errno 13] Permission
+parent directly below a directory of mode 555 passes `--dry-run` (exit 0) and
+is refused after `Create:` and the plan with `REFUSED: [Errno 13] Permission
 denied: 'PARENT'`, exit 2. An existing parent of mode 555 passes
 `parent.mkdir(exist_ok=True)`, and the generator fails with its own error and
 exit status (1 with the test generator). The superuser bypasses mode bits.
 **Design impact:** No permission is read; the boundary is stated in the ADDED
-requirement and the README, and a test pins the late refusal below an
-unwritable directory, skipped when `os.geteuid() == 0`. The backstop's text is
-unchanged, and only the early refusal says `Nothing was created.`.
+requirement and the README, and a test pins the late refusal directly below
+an unwritable directory, skipped when `os.geteuid() == 0`. The backstop's text
+is unchanged, and only the early refusal says `Nothing was created.`.
 
 ### N5. No caller depends on the dry run's exit status
 **Raised by:** council NOTED list

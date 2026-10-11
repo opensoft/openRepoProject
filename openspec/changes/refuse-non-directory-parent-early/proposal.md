@@ -78,9 +78,9 @@ their own sentences before `Create:`, exit 2; a workspace name, not asked
 `is_dir()` is False in every row and `exists()` True only in the first three;
 the nearest existing path above the parent is `FILE` for `FILE/sub`,
 `FILE/a/b` and that link, and a directory for the last two. As uid 1000, a
-missing parent below a directory of mode 555 passes `--dry-run` (exit 0) and
-is refused after `Create:` and the plan with `REFUSED: [Errno 13] Permission
-denied: 'PARENT'`, exit 2; an existing parent of mode 555 passes
+missing parent directly below a directory of mode 555 passes `--dry-run`
+(exit 0) and is refused after `Create:` and the plan with `REFUSED: [Errno 13]
+Permission denied: 'PARENT'`, exit 2; an existing parent of mode 555 passes
 `parent.mkdir`, and the generator fails with its own error and status.
 
 ## What Changes
@@ -138,31 +138,33 @@ denied: 'PARENT'`, exit 2; an existing parent of mode 555 passes
     `--dry-run`. For `FILE`: `REFUSED: The parent FILE exists but is not a
     directory; choose a parent that is a directory. Nothing was created.`
 - **The permission boundary is stated, not checked**: `--dry-run` reads no
-  permissions; a parent that is a directory the person cannot write, or a
-  missing parent whose nearest existing path above it is such a directory,
-  still passes the dry run and fails at creation, as before (for such a missing
-  parent, `parent.mkdir` is refused with the system's error; in such a
-  directory, the generator's own error and exit status pass through).
+  permissions; a parent that is a directory the person cannot write still
+  passes the dry run and fails at creation, as before, and so, for a single
+  repository, does a missing parent whose nearest existing path above it is
+  such a directory (for such a missing parent, `parent.mkdir` is refused with
+  the system's error; in such a directory, the generator's own error and exit
+  status pass through).
 - **The late refusal stays as the backstop**: `parent.mkdir` (`project:398`)
-  and `main()`'s `OSError` handler are unchanged. A parent changed after the
-  head read, or a missing parent whose nearest existing path above it is a
-  directory that cannot be written, on a read-only mount or on a full disk, is
-  refused there with the raw errno and exit 2; an existing parent that cannot
-  be written passes `parent.mkdir`, and the generator's own error and exit
-  status pass through. Only the early refusal says `Nothing was created.`;
-  nothing is added to the backstop.
+  and `main()`'s `OSError` handler are unchanged. A parent that becomes
+  blocked by a non-directory after the head read, or a missing parent whose
+  nearest existing path above it is a directory that cannot be written, on a
+  read-only mount or on a full disk, is refused there with the raw errno and
+  exit 2; an existing parent that cannot be written passes `parent.mkdir`, and
+  the generator's own error and exit status pass through. Only the early
+  refusal says `Nothing was created.`; nothing is added to the backstop.
 - **`README.md`** (texts fixed by the design, checked by a grep): lines 57-64
   say that a parent blocked by a non-directory blocks both answers, that
   neither answer can create anything in such a parent, and that it is refused
-  at once on either, while an answer `2` still creates a missing parent below
-  a directory; lines 92-98, that it is refused before the plan, `--dry-run`
-  included, and the permission boundary sentence above; lines 75-77 take the
-  relative form, the flag path being "exactly as it would be without the
-  question" (today "those `project new` had before the question existed",
-  which this refusal makes false); lines 79-82 ("a dry run at a terminal asks
-  too, then prints the plan of the path its answer chose and writes nothing")
-  gain "unless a refusal comes first", after "chose" and before "and writes
-  nothing", as the delta's "A dry run asks too" says.
+  at once on either, while an answer `2` still creates a missing parent whose
+  nearest existing path above it is a directory; lines 92-98, that it is
+  refused before the plan, `--dry-run` included, and the permission boundary
+  sentence above; lines 75-77 take the relative form, the flag path being
+  "exactly as it would be without the question" (today "those `project new`
+  had before the question existed", which this refusal makes false); lines
+  79-82 ("a dry run at a terminal asks too, then prints the plan of the path
+  its answer chose and writes nothing") gain "unless a refusal comes first",
+  after "chose" and before "and writes nothing", as the delta's "A dry run
+  asks too" says.
   Lines 53-55 need nothing.
 
 ### Alternatives
@@ -299,15 +301,30 @@ known obstacle" (`:245-249`) and "A dry run with a known obstacle"
 - **`README.md`** lines 57-64, 75-77, 79-82 and 92-98; the spec at archive.
 - **Feature records** stay unedited. The new feature's spec states that, for
   a parent blocked by a non-directory, it supersedes the statements this
-  change makes false: in `specs/003-parent-obstacle-wording/`, spec.md EC-002
-  and EC-003 (`:130-138`), User Story 3's intro (`:94-97`) and its acceptance
-  scenario 4 (`:116-122`), FR-008's "it continues with its generator
-  selection, plan and `yes` confirmation" (`:180-183`), the Assumptions
-  baseline (`:249-252`), and quickstart.md `:116-125` (the late refusal and
-  the dry run exiting 0); in `specs/002-triad-first-project-new/`, spec.md
-  User Story 3 scenario 6 (`:163-165`) and FR-004 (`:317-320`). Statements
-  that stay true (003 SC-005; 002 FR-008's end, FR-011, FR-013) are not
-  listed.
+  change makes false: in `specs/003-parent-obstacle-wording/`, spec.md's
+  Supersession note where it names a parent that does not exist with the
+  unchanged sentence (`:25-26`), User Story 3's title and intro (`:94-97`),
+  its acceptance scenario 1 (`:106-110`) and scenario 4's clause "the path
+  continues with its generator selection, plan and `yes` confirmation"
+  (`:118-119`), EC-002 (`:130-134`), EC-003 (`:135-138`) but its `--shape`
+  clause (`:137-138`), FR-002's "whether that same path exists MUST then
+  choose its sentence" (`:157-158`), FR-003 (`:159-161`), FR-008's "it
+  continues with its generator selection, plan and `yes` confirmation"
+  (`:180-181`), SC-002 (`:207-208`), the Assumptions baseline's "so both runs
+  reach the same `yes` confirmation" (`:250-251`), and quickstart.md
+  `:53-54`, `:113` and `:116-125` (the late refusal and the dry run exiting
+  0); in `specs/002-triad-first-project-new/`, spec.md User Story 1 scenario
+  3's single-repository clause (`:59-61`) and scenario 7's single-repository
+  clause (`:77-78`), User Story 3 scenario 6 (`:163-165`), User Story 4
+  scenario 7 (`:214-217`), EC-003 (`:267-269`), FR-004 (`:317-320`), FR-008's
+  "an invocation that is not asked MUST keep its existing order of refusals"
+  (`:342-343`), FR-011's "a single-repository answer into the existing
+  single-repository path with its generator selection, plan and `yes`
+  confirmation" (`:360-362`), and contracts/project-new.md step 7 (`:55-58`)
+  and its sentence "A run that is not asked keeps today's order exactly"
+  (`:60`). Feature 003's README check (quickstart.md `:86`; spec.md
+  `:60-62`) is superseded by the new feature's README check. Statements that
+  stay true (003 SC-005; 002 FR-013) are not listed.
 - **Traceability, for the realization**: feature 003's traceability.md row 7
   (`:25`) points at the test being rewritten; the new feature's traceability
   maps that test to the ADDED single-repository scenario, and keeps
@@ -358,10 +375,10 @@ On Python 3.10 and 3.12 (CI), each by a test:
    directory before answering `2` and `yes`, the repository is created, exit
    0; mirrored, with a directory parent replaced by a regular file before
    answering `2`, the head refusal (a), exit 2, nothing created.
-9. The permission boundary is pinned: a missing parent below a directory of
-   mode 555 passes `--dry-run` (exit 0) and, with `--yes`, is refused after
-   `Create:` and the plan with `REFUSED: [Errno 13] Permission denied`, exit
-   2; skipped when `os.geteuid() == 0`.
+9. The permission boundary is pinned: a missing parent directly below a
+   directory of mode 555 passes `--dry-run` (exit 0) and, with `--yes`, is
+   refused after `Create:` and the plan with `REFUSED: [Errno 13] Permission
+   denied`, exit 2; skipped when `os.geteuid() == 0`.
 
 ## Risks
 
@@ -370,8 +387,8 @@ On Python 3.10 and 3.12 (CI), each by a test:
   single repository is blocked too (W3 would not ask; rejected above).
 - Two-fault invocations name the parent first (exit status unchanged).
 - The question's line and the head refusal can differ when the parent changed
-  during the wait (intended); a parent changed after the head read meets the
-  `parent.mkdir` backstop, as today.
+  during the wait (intended); a parent that becomes blocked by a non-directory
+  after the head read meets the `parent.mkdir` backstop, as today.
 - A parent the person cannot write still passes the dry run (stated in the
   requirement and the README); the files shared with lane openRepoProject-2
   need main merged in.

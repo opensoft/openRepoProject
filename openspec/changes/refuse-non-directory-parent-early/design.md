@@ -166,7 +166,7 @@ rewrapped to the README's line width:
   the paragraph's end, become:
 
   ```
-  or a parent that is missing or is blocked by a non-directory. A single-repository answer creates a missing parent below a directory. A parent blocked by a non-directory (it, or the nearest existing path above it, exists and is not a directory) blocks both answers: neither answer can create anything in such a parent, and either is refused at once with exit 2, so choose another parent. The Triad stays first and the default. A Triad answer with an obstacle is refused at once with exit 2, before any further prompt; a single-repository answer is unaffected by the name and openRepoShape obstacles.
+  or a parent that is missing or is blocked by a non-directory. A single-repository answer creates a missing parent whose nearest existing path above it is a directory. A parent blocked by a non-directory (it, or the nearest existing path above it, exists and is not a directory) blocks both answers: neither answer can create anything in such a parent, and either is refused at once with exit 2, so choose another parent. The Triad stays first and the default. A Triad answer with an obstacle is refused at once with exit 2, before any further prompt; a single-repository answer is unaffected by the name and openRepoShape obstacles.
   ```
 
 - Lines 75-77, the sentence "A choosing flag restores the path without the
@@ -187,7 +187,7 @@ rewrapped to the README's line width:
 - Lines 95-96, after "Existing destinations refuse.", insert:
 
   ```
-  A parent blocked by a non-directory is refused before the plan and the `yes` confirmation, with exit 2, `--dry-run` included. For a single repository, `--dry-run` reads no permissions: a parent that is a directory the person cannot write, or a missing parent whose nearest existing path above it is such a directory, still passes the dry run and fails at creation, as before.
+  A parent blocked by a non-directory is refused before the plan and the `yes` confirmation, with exit 2, `--dry-run` included. `--dry-run` reads no permissions: a parent that is a directory the person cannot write still passes the dry run and fails at creation, as before, and so, for a single repository, does a missing parent whose nearest existing path above it is such a directory.
   ```
 
 Lines 53-55 are unchanged. The ASCII check covers the changed strings and the
@@ -270,16 +270,31 @@ assertion stays as it is, except the one test of item 6 (N3).
 are not edited. The new feature's `spec.md` carries this statement, in
 substance: "For a parent blocked by a non-directory, this feature supersedes
 the statements that change refuse-non-directory-parent-early makes false: in
-feature 003, spec.md EC-002 and EC-003 (:130-138), User Story 3's intro
-(:94-97) and its acceptance scenario 4 (:116-122), FR-008's 'it continues
-with its generator selection, plan and yes confirmation' (:180-183), the
-Assumptions baseline (:249-252), and quickstart.md :116-125; in feature 002,
-spec.md User Story 3 scenario 6 (:163-165) and FR-004 (:317-320). Their other
-statements stay true." Its `traceability.md` maps each delta scenario to its
-tests, the rewritten test (D3 item 6) to "A single repository taken at the
-question with a parent blocked by a non-directory", and keeps
-`test_pty_single_answer_is_unaffected_by_obstacles` for "A single-repository
-answer is unaffected" (feature 003's `traceability.md:25`).
+feature 003, spec.md's Supersession note where it names a parent that does
+not exist with the unchanged sentence (:25-26), User Story 3's title and
+intro (:94-97), its acceptance scenario 1 (:106-110) and scenario 4's clause
+'the path continues with its generator selection, plan and yes confirmation'
+(:118-119), EC-002 (:130-134), EC-003 (:135-138) but its `--shape` clause
+(:137-138), FR-002's 'whether that same path exists MUST then choose its
+sentence' (:157-158), FR-003 (:159-161), FR-008's 'it continues with its
+generator selection, plan and yes confirmation' (:180-181), SC-002
+(:207-208), the Assumptions baseline's 'so both runs reach the same yes
+confirmation' (:250-251), and quickstart.md :53-54, :113 and :116-125; in
+feature 002, spec.md User Story 1 scenario 3's single-repository clause
+(:59-61) and scenario 7's single-repository clause (:77-78), User Story 3
+scenario 6 (:163-165), User Story 4 scenario 7 (:214-217), EC-003
+(:267-269), FR-004 (:317-320), FR-008's 'an invocation that is not asked MUST
+keep its existing order of refusals' (:342-343), FR-011's 'a
+single-repository answer into the existing single-repository path with its
+generator selection, plan and yes confirmation' (:360-362), and
+contracts/project-new.md step 7 (:55-58) and its sentence 'A run that is not
+asked keeps today's order exactly' (:60). Feature 003's README check
+(quickstart.md:86 and spec.md:60-62) is superseded by this feature's README
+check. Their other statements stay true." Its `traceability.md` maps each
+delta scenario to its tests, the rewritten test (D3 item 6) to "A single
+repository taken at the question with a parent blocked by a non-directory",
+and keeps `test_pty_single_answer_is_unaffected_by_obstacles` for "A
+single-repository answer is unaffected" (feature 003's `traceability.md:25`).
 
 ### D5. Handoffs after landing
 
@@ -296,12 +311,12 @@ alternative pin target that carries the early refusal, as archived D5 did. If
 - The shape branch's refusal, "Shape creation requires an existing --into
   parent directory." (`project:371-372`), already early and true.
 - The backstop: `parent.mkdir` (`project:398`) and `main()`'s handlers. A
-  parent changed after the head read, or a missing parent whose nearest
-  existing path above it is a directory the person cannot write, on a
-  read-only mount or on a full disk, is refused there with the raw errno, exit
-  2; an existing parent the person cannot write passes `parent.mkdir` and the
-  generator's own error and status pass through (N4). Rewording that backstop
-  is a possible follow-up.
+  parent that becomes blocked by a non-directory after the head read, or a
+  missing parent whose nearest existing path above it is a directory the
+  person cannot write, on a read-only mount or on a full disk, is refused
+  there with the raw errno, exit 2; an existing parent the person cannot write
+  passes `parent.mkdir` and the generator's own error and status pass through
+  (N4). Rewording that backstop is a possible follow-up.
 - No permission is read; no line is added under entry 2 (N6).
 - The archived N1 residuals (the 3.13 and later symbolic-link loop, the 3.14
   unsearchable ancestor): versions CI does not run; by that record they read
