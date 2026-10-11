@@ -2,11 +2,11 @@ Lane: openRepoProject-1
 
 # Proposal: refuse-non-directory-parent-early
 
-Status: draft; alignment review applied (draft PR #21); council, design, spec
-delta and governance tasks follow; nothing is ratified. Governing issue:
-opensoft/openRepoProject#20, claimed by lane openRepoProject-1. Proposed on
-Brett Heap's word "propose the non-directory parent follow-up as a new
-change" (2026-10-11).
+Status: draft; alignment review and council round 1 applied (draft PR #21);
+the rest of the council, design, spec delta and governance tasks follow;
+nothing is ratified. Governing issue: opensoft/openRepoProject#20, claimed by
+lane openRepoProject-1. Proposed on Brett Heap's word "propose the
+non-directory parent follow-up as a new change" (2026-10-11).
 
 Source: `openspec/changes/archive/2026-10-09-fix-parent-obstacle-wording/`
 left two limitations to their own change: its design D6 ("An earlier refusal
@@ -18,7 +18,7 @@ change is that earlier refusal.
 ## Why
 
 `project new` resolves the parent once (`project:322`), but only the Triad
-paths ask whether it can hold the new repository: the question names it
+paths check whether it is a directory: the question names it
 (`known_obstacles()`, `project:235-254`) and the shape branch refuses it
 (`project:371-372`). The single-repository path prints `Create:` and the plan
 (`project:392-393`), returns 0 on `--dry-run` (`project:394-395`), asks for
@@ -29,6 +29,11 @@ confirms a plan that cannot run, a dry run reports success for a run that
 cannot succeed, and for a missing parent below a file the question says only
 "does not exist" while the README says that a single-repository answer
 creates a missing parent (`README.md:60-61`).
+
+This change covers only what the existing pathlib reads decide with
+certainty: a parent blocked by a non-directory. A parent the person cannot
+write keeps today's late failure and a dry run that exits 0; rewording that
+backstop's raw error is a possible follow-up, not part of this change.
 
 ### Observed
 
@@ -72,25 +77,33 @@ their own sentences before `Create:`, exit 2; a workspace name, not asked
 (`alice-wip --into FILE --dry-run`), prints the plan and exits 0.
 `is_dir()` is False in every row and `exists()` True only in the first three;
 the nearest existing path above the parent is `FILE` for `FILE/sub`,
-`FILE/a/b` and that link, and a directory for the last two.
+`FILE/a/b` and that link, and a directory for the last two. As uid 1000, a
+missing parent below a directory of mode 555 passes `--dry-run` (exit 0) and
+is refused after `Create:` and the plan with `REFUSED: [Errno 13] Permission
+denied: 'PARENT'`, exit 2; an existing parent of mode 555 passes
+`parent.mkdir`, and the generator fails with its own error and status.
 
 ## What Changes
 
-- **Which parents cannot hold the repository** (recommended; Alternatives
-  below): those whose nearest existing path, at or above the resolved parent,
-  is not a directory. (a) The parent exists and is not a directory: a regular
-  file, a symbolic link to one, a FIFO, a socket, a device, `FILE/`. (b) The
-  parent does not exist and the nearest existing path above it is not a
-  directory: `FILE/sub`, `FILE/a/b`, a symbolic link to such a path. The read
-  stays pathlib and local: `is_dir()`, then `exists()`, then `exists()` up
-  `parent.parents` to the first that exists, then its `is_dir()`; no network,
-  subprocess or new import. A missing parent whose nearest existing path above
-  is a directory (a dangling link's target included) is created by
-  `parent.mkdir` and not refused (observed: C). Permissions are not read.
-- **The case is read once per invocation**, as archived D1 kept the refusal
-  from reading the parent again: an asked invocation reuses its question's
-  read, for the Triad refusal as today and the head refusal on an answer `2`;
-  one not asked reads it at the head. The design fixes the mechanism.
+- **The term** (recommended; Alternatives below): a parent blocked by a
+  non-directory is one where the resolved parent, or the nearest existing
+  path above it, exists and is not a directory. Case (a), the parent itself:
+  a regular file, a symbolic link to one, a FIFO, a socket, a device, `FILE/`.
+  Case (b), the nearest existing path above a missing parent: `FILE/sub`,
+  `FILE/a/b`, a symbolic link to such a path. The read stays pathlib and
+  local: `is_dir()`, then `exists()`, then `exists()` up `parent.parents` to
+  the first that exists, then its `is_dir()`; no network, subprocess or new
+  import. A missing parent whose nearest existing path above is a directory
+  (a dangling link's target included) is not blocked (observed: C). No
+  permission is read.
+- **Reads.** The question and the Triad refusal keep one read, as today
+  (archived D1: the refusal composes the sentence the question printed, so
+  the two cannot diverge). The head refusal below reads the parent afresh
+  when it is reached, on every path, by flag or by an answer `2`: a parent
+  repaired while the question waits is then created, as today, and one broken
+  during the wait is refused at the head. The question's line and the head
+  refusal can therefore differ when the parent changed during the wait; that
+  is intended, as the refusal reflects the parent at the decision.
 - **One refusal at the head of the single-repository path**, after the
   check refusing shape-only flags (`project:383-384`) and before generator
   selection (`choose()`, `project:385`): before the late `--workflow` check
@@ -107,10 +120,10 @@ the nearest existing path above the parent is `FILE` for `FILE/sub`,
 - **The shape branch is unchanged**: its refusal (`project:371-372`) already
   comes before `Create:` and the dry run's return (observed: S), and the
   precedent kept it as an explicit non-change (archived design D6).
-- **The question is still asked** when the parent blocks both answers. For
-  (a) its line under entry 1 stays the precedent's, byte for byte; for (b) it
-  names the parent with the new sentence instead of the missing sentence,
-  which stays byte for byte for a missing parent that can be created. The
+- **The question is still asked** for a parent blocked by a non-directory.
+  For (a) its line under entry 1 stays the precedent's, byte for byte; for (b)
+  it names the parent with the new sentence instead of the missing sentence,
+  which stays byte for byte for a missing parent that is not blocked. The
   Triad answer's composed refusal and its dry run carry the sentence the
   question printed, as today; an answer `2` is refused at the head of its path.
 - **Fixed sentences**, ASCII; PARENT and ANCESTOR are resolved paths:
@@ -124,31 +137,39 @@ the nearest existing path above the parent is `FILE` for `FILE/sub`,
     like every `Refused`; one text by flag or by answer, with or without
     `--dry-run`. For `FILE`: `REFUSED: The parent FILE exists but is not a
     directory; choose a parent that is a directory. Nothing was created.`
+- **The permission boundary is stated, not checked**: `--dry-run` reads no
+  permissions; a parent that is, or lies below, a directory it cannot write
+  still passes the dry run and fails at creation, as before (below such a
+  directory, `parent.mkdir` is refused with the system's error; in it, the
+  generator's own error and exit status pass through).
 - **The late refusal stays as the backstop**: `parent.mkdir` (`project:398`)
   and `main()`'s `OSError` handler are unchanged, for a parent changed after
-  the one read (say while a prompt waits) or not writable; nothing is added.
+  the head read, one that cannot be written, a read-only mount or a full disk;
+  nothing is added.
 - **`README.md`** (texts fixed by the design, checked by a grep): lines 57-64
-  say that such a parent blocks both answers and is refused at once on
-  either, while an answer `2` still creates a missing parent below a
-  directory; lines 92-98, that it is refused before the plan, `--dry-run`
-  included; lines 75-77 (a choosing flag restores "exactly" the path of
-  before the question) gain a clause for this new refusal; lines 79-82 ("a dry
-  run at a terminal asks too, then prints the plan of the path its answer
-  chose and writes nothing") gain "unless the parent cannot hold the
-  repository, which is refused". Lines 53-55 need nothing.
+  say that a parent blocked by a non-directory blocks both answers, that
+  neither answer can create anything in such a parent, and that it is refused
+  at once on either, while an answer `2` still creates a missing parent below
+  a directory; lines 92-98, that it is refused before the plan, `--dry-run`
+  included, and the permission boundary sentence above; lines 75-77 (a
+  choosing flag restores "exactly" the path of before the question) gain a
+  clause for this new refusal; lines 79-82 ("a dry run at a terminal asks
+  too, then prints the plan of the path its answer chose and writes nothing")
+  gain "unless the parent is blocked by a non-directory, which is refused".
+  Lines 53-55 need nothing.
 
 ### Alternatives
 
 - **Where.** (W1) The head of the single-repository path: recommended; no
-  prompt is spent on a run that cannot succeed, and the ratified question line
-  stays. (W2) Just before `Create:` (`project:392`): every existing refusal
-  keeps its outcome, but an answer `2` can still meet the generator list and
-  its prompt first. (W3) Before the question, after the existing-destination
+  prompt after the question, and the ratified question line stays reachable.
+  (W2) Just before `Create:` (`project:392`): every existing refusal keeps
+  its outcome, but an answer `2` can still meet the generator list and its
+  prompt first. (W3) Before the question, after the existing-destination
   refusal (`project:328-329`), for every path: no question whose two answers
-  both fail, one check for all paths; but the ratified (a) line and its
-  composed refusal become unreachable, the shape-by-flag text changes for (a)
-  and (b), path argument refusals (such as `--shape` without `--org`) give way
-  to it, and the spec's list of refusals before the question changes.
+  both fail, one check for all paths; rejected, since the ratified (a) line
+  and its Triad refusal become unreachable, the shape-by-flag text changes for
+  (a) and (b), path argument refusals (such as `--shape` without `--org`) give
+  way to it, and the spec's list of refusals before the question changes.
 - **The (b) wording.** Sentence (a) naming ANCESTOR is false of the parent
   given; keeping the missing sentence in the question would imply a creation
   that the answer `2` then refuses.
@@ -167,50 +188,58 @@ None.
 
 ### Modified Capabilities
 
-- `project-command` (scenario titles provisional; the ADDED ones take a stem
-  distinct from the existing titles at `spec.md:127`, `:136`, `:240`, `:251`):
-  - ADDED: "A parent that cannot hold the repository is refused before the
-    single-repository path's steps". Its text states that this refusal comes
-    first on that path however it is chosen, so the statements marked
-    "overridden" in the list below hold for a parent that can hold it.
-    Scenarios: "A flag-chosen single repository with a parent that is not a
-    directory"; "A flag-chosen single repository below a path that is not a
-    directory"; "A single-repository dry run with a parent that cannot hold
-    the repository"; "A single repository taken at the question with a parent
-    that cannot hold the repository"; "A single repository with a parent that
-    can be created"; "The parent refusal comes after the earlier refusals and
-    before generator selection"; "The shape branch's parent refusal is
-    unchanged".
-  - MODIFIED: "Creation question is asked only of a person choosing at the
-    terminal" (`openspec/specs/project-command/spec.md:70-138`). Its
-    statements of an unchanged path for an invocation not asked gain the
-    exception for a parent that cannot hold the repository, refused at the
-    head of the single-repository path after the shape-only flag check and
-    before generator selection, the late `--workflow` check, `Create:`, the
-    plan, `yes` and any dry-run return (the list below).
-  - MODIFIED: "Known Triad obstacles are named before the question and
-    refused on a Triad answer" (`spec.md:200-263`). The parent fact gains case
-    (b) and its read; "A single-repository answer SHALL be unaffected by these
-    facts" narrows to the name and openRepoShape facts and a missing parent
-    that can be created, citing the ADDED requirement; "These checks SHALL
-    predict only refusals openRepoShape is certain to make" (`:224-225`) is
-    scoped to their Triad use, since the head refusal predicts `parent.mkdir`.
-    "The parent directory is missing" keeps its title, its WHEN narrowed to a
-    parent whose nearest existing path above is a directory; "The parent
-    exists but is not a directory" and "No known obstacle" stay; "The parent
-    would be created below a path that is not a directory" is new; "A Triad
-    answer with a known obstacle" and "A dry run with a known obstacle" gain
-    case (b); "A single-repository answer is unaffected" keeps its title, its
-    WHEN narrowed to obstacles that do not block a single repository.
+`project-command`: one ADDED and four MODIFIED requirements. Scenario titles
+are provisional; the ADDED ones take a stem distinct from the existing titles
+at `openspec/specs/project-command/spec.md:127`, `:136`, `:240`, `:251`.
+
+- ADDED: "A parent blocked by a non-directory is refused before the
+  single-repository path's steps". Its text defines the term, reads the
+  parent afresh at the head, and states the permission boundary sentence
+  above. Scenarios: "A flag-chosen single repository with a parent that is
+  not a directory"; "A flag-chosen single repository below a path that is not
+  a directory"; "A single-repository dry run with a parent blocked by a
+  non-directory"; "A single repository taken at the question with a parent
+  blocked by a non-directory"; "A parent repaired or broken while the question
+  waits"; "A single repository with a parent that is not blocked"; "A parent
+  the person cannot write still fails only at creation"; "The parent refusal
+  comes after the earlier refusals and before generator selection"; "The
+  shape branch's parent refusal is unchanged".
+- MODIFIED: "Delegate project creation" (`spec.md:7-42`): "Preview"
+  (`:25-28`) gets a qualified WHEN, such as "a creation path is chosen and no
+  refusal precedes its plan", which also covers the precedent's Triad dry-run
+  exception without changing behaviour; the design fixes the wording.
+- MODIFIED: "Creation question is asked only of a person choosing at the
+  terminal" (`spec.md:70-138`): its statements of an unchanged path for an
+  invocation not asked gain the exception for a parent blocked by a
+  non-directory, refused at the head of the single-repository path after the
+  shape-only flag check and before generator selection, the late `--workflow`
+  check, `Create:`, the plan, `yes` and any dry-run return.
+- MODIFIED: "Creation question offers the Triad first" (`spec.md:140-198`):
+  its prose (`:160-163`) and "Answers that take a single repository"
+  (`:174-177`) are qualified for a parent that is not blocked by a
+  non-directory.
+- MODIFIED: "Known Triad obstacles are named before the question and refused
+  on a Triad answer" (`spec.md:200-263`). The parent fact gains case (b) and
+  its read; "A single-repository answer SHALL be unaffected by these facts"
+  narrows to the name and openRepoShape facts and a missing parent that is not
+  blocked, citing the ADDED requirement; "These checks SHALL predict only
+  refusals openRepoShape is certain to make" (`:224-225`) is scoped to their
+  Triad use, since the head refusal predicts `parent.mkdir`. "The parent
+  directory is missing" keeps its title, its WHEN narrowed to a parent whose
+  nearest existing path above is a directory; "The parent exists but is not a
+  directory" and "No known obstacle" stay; "The parent would be created below
+  a path that is not a directory" is new; "A Triad answer with a known
+  obstacle" and "A dry run with a known obstacle" gain case (b); "A
+  single-repository answer is unaffected" keeps its title, its WHEN narrowed
+  to obstacles that do not block a single repository.
 
 ### Statements this change makes false, and their treatment
 
-In `openspec/specs/project-command/spec.md`, each for a parent that cannot
-hold the repository:
+In `openspec/specs/project-command/spec.md`, each for a parent blocked by a
+non-directory; every one is MODIFIED, none left to an override:
 
-- "Delegate project creation", scenario "Preview" (`:25-28`): overridden;
-  the ADDED requirement states the exception, as the precedent did for a
-  Triad dry run.
+- "Delegate project creation", scenario "Preview" (`:25-28`): MODIFIED, its
+  WHEN qualified.
 - "Creation question is asked only of a person choosing at the terminal",
   prose "Every invocation that is not asked the question SHALL keep its
   existing order of refusals" (`:94-95`): MODIFIED.
@@ -219,31 +248,32 @@ hold the repository:
   (`:122-125`) and "The refusal order of an invocation not asked the question
   is unchanged" (`:136-138`): MODIFIED.
 - "Creation question offers the Triad first", prose (`:160-163`) and scenario
-  "Answers that take a single repository" (`:174-177`): overridden by the
-  ADDED requirement; they describe the path's steps, which a head refusal
-  precedes as the existing-destination refusal already does.
+  "Answers that take a single repository" (`:174-177`): MODIFIED, qualified
+  with the term.
 - "Known Triad obstacles are named before the question and refused on a
   Triad answer", prose (`:223-225`) and scenario "A single-repository answer
-  is unaffected" (`:256-259`): MODIFIED (above).
+  is unaffected" (`:256-259`): MODIFIED.
 
 ## Impact
 
-- **`project`**: one helper reading the parent's case once per invocation
-  (`known_obstacles()`, `project:247-253`, for an asked invocation, its result
-  reused on an answer `2`; the head of the bench branch, `project:382-385`,
-  otherwise), and one new sentence. Unchanged: `main()`, the shape branch,
-  `parent.mkdir`, `choose()`, the question's printing and prompts, everything
-  from `discover` (`project:433`) down; nothing new imported.
+- **`project`**: one helper reading whether the parent is blocked by a
+  non-directory, called by `known_obstacles()` (`project:247-253`), whose one
+  read feeds the question and the Triad refusal, and afresh at the head of
+  the bench branch (`project:382-385`) on every path; one new sentence.
+  Unchanged: `main()`, the shape branch, `parent.mkdir`, `choose()`, the
+  question's printing and prompts, everything from `discover`
+  (`project:433`) down; nothing new imported.
 - **Feasibility, observed** on a scratch copy at `961c405`, not committed:
   W1 printed the sentences above in every (a) and (b) row, refused both dry
-  runs with exit 2, left the creatable rows as they are, and failed only
+  runs with exit 2, left the unblocked rows as they are, and failed only
   `test_pty_single_answer_with_a_file_parent_ends_as_the_flag_chosen_path`,
   which pins today's late refusal (and a `.specify/` test the copy lacks).
-  The copy read the parent twice; no observed row can tell that from one read.
+  The copy read the parent at the question and again at the head, as above.
 - **`tests/test_project.py`**: that one test is rewritten to the early
   refusal. New cases, each asserting the tree unchanged and `FILE` intact,
   per the acceptance criteria below; case (b) as new rows of
-  `known_obstacle_cases()`, existing rows unchanged.
+  `known_obstacle_cases()`, existing rows unchanged; a test pinning the late
+  permission refusal, skipped when `os.geteuid() == 0`.
 - **`README.md`** lines 57-64, 75-77, 79-82 and 92-98; the spec at archive.
 - **Feature records** stay unedited; the new feature's spec states that, for
   the two cases, it supersedes: in `specs/003-parent-obstacle-wording/`,
@@ -293,19 +323,32 @@ On Python 3.10 and 3.12 (CI), each by a test:
    added line is ASCII; every existing test passes unchanged but
    `test_pty_single_answer_with_a_file_parent_ends_as_the_flag_chosen_path`,
    which is rewritten to the early refusal.
-6. With a blocked parent, `--type nomatch` and `--workflow` without
-   `setup-openspeckit` exit 2 with the parent refusal; `--org` without
-   `--shape` keeps its own sentence.
+6. With a parent blocked by a non-directory, `--type nomatch` and
+   `--workflow` without `setup-openspeckit` exit 2 with the parent refusal;
+   `--org` without `--shape` keeps its own sentence.
 7. The README edits are checked by a grep of their fixed text, as feature
    003's quickstart did.
+8. In process, with the answer prompt patched to replace `FILE` by a
+   directory before answering `2` and `yes`, the repository is created, exit
+   0; mirrored, with a directory parent replaced by a regular file before
+   answering `2`, the head refusal (a), exit 2, nothing created.
+9. The permission boundary is pinned: a missing parent below a directory of
+   mode 555 passes `--dry-run` (exit 0) and, with `--yes`, is refused after
+   `Create:` and the plan with `REFUSED: [Errno 13] Permission denied`, exit
+   2; skipped when `os.geteuid() == 0`.
 
 ## Risks
 
-- Two-fault invocations name the parent first (exit status unchanged); an
-  asked person may still answer `2` and be refused at once (W3 would not ask);
-  a parent changed after the one read (while the question or a prompt waits)
-  meets the `parent.mkdir` backstop, as today; the files shared with lane
-  openRepoProject-2 need main merged in.
+- For a parent blocked by a non-directory no answer to the question can
+  succeed: one answer is wasted, and the Triad refusal does not say that the
+  single repository is blocked too (W3 would not ask; rejected above).
+- Two-fault invocations name the parent first (exit status unchanged).
+- The question's line and the head refusal can differ when the parent changed
+  during the wait (intended); a parent changed after the head read meets the
+  `parent.mkdir` backstop, as today.
+- A parent the person cannot write still passes the dry run (stated in the
+  requirement and the README); the files shared with lane openRepoProject-2
+  need main merged in.
 
 ## Out of Scope
 
@@ -315,12 +358,14 @@ On Python 3.10 and 3.12 (CI), each by a test:
 - The Triad answer's refusal text and composition: only the (b) sentence
   enters, as a parent sentence.
 - The shape branch's sentence: already early and true (archived D6).
-- Permissions: a writability read predicts refusals the system may not make
-  (root, ACLs, read-only mounts), and an unsearchable ancestor is already
-  refused at `destination.exists()` (`project:328`) on 3.10 and 3.12.
+- Permissions, read-only mounts and a full disk: a writability read predicts
+  refusals the system may not make (root, ACLs), so they keep today's late
+  failure, stated as the boundary above; rewording the backstop's raw error
+  is a possible follow-up. An unsearchable ancestor is already refused at
+  `destination.exists()` (`project:328`) on 3.10 and 3.12.
 - The archived N1 residuals (3.13 and later loop, 3.14 unsearchable
   ancestor): versions CI does not run; by that record (not run here) the new
-  read classes them as creatable, so they behave as today.
+  read classes them as not blocked, so they behave as today.
 - The CI matrix (3.10 and 3.12, Linux and macOS) and "Python 3.10+": the
   realization's tests run on both as the matrix stands.
 - Everything from `discover` down and every subcommand but `new`: lane
