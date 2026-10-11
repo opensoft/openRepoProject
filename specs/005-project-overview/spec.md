@@ -1137,7 +1137,7 @@ and [P] are change 1's requirements as the header names them.
   an `os-error`, `inspection-error` set directly); registration disagrees in
   either direction (no status probe, `inspection-error` set directly, a
   `registration-mismatch` finding and no error); otherwise one status probe
-  in that worktree. No probe MUST run in a path the overview could not
+  in that worktree. A probe MUST NOT run in a path the overview could not
   `lstat` (POD:89-95).
 - **FR-008**: Every repository MUST first take [R]'s submodule test: when
   Git reports a superproject working tree for a candidate that reached the
@@ -1185,7 +1185,7 @@ and [P] are change 1's requirements as the header names them.
   run MUST end within 64 s of its start plus rendering, except while a
   filesystem call stuck in the kernel is outstanding (EC-001) (POD:167-176;
   design D1 and D13).
-- **FR-012**: On deadline expiry no further child MUST start, every
+- **FR-012**: On deadline expiry a further child MUST NOT start, every
   in-flight child MUST be terminated together in the same way and recorded
   `deadline-exceeded`, each candidate whose collection never started MUST
   still be a row carrying only filesystem facts, status `error` and a
@@ -1204,8 +1204,8 @@ and [P] are change 1's requirements as the header names them.
   repository gate of FR-034 (POD:183-192, :781; clarifications N2; design D2
   and D8).
 - **FR-014**: A manifest whose size, taken before the read, exceeds [E]'s
-  1 MiB MUST be `manifest-invalid` on its row without being read, and no
-  manifest read MUST exceed 1 MiB (POD:192-196; design D8).
+  1 MiB MUST be `manifest-invalid` on its row without being read, and a
+  manifest read MUST NOT exceed 1 MiB (POD:192-196; design D8).
 - **FR-015**: The ref listing MUST be consumed as it streams, keeping only
   the local heads, `origin/HEAD`, the remote refs named as upstreams and one
   flag recording whether a remote copy of the merge target exists, so that
@@ -1519,7 +1519,7 @@ and [P] are change 1's requirements as the header names them.
   one still unreaped 2 s after SIGKILL, print no result document, print
   `Cancelled.` to standard error on a best-effort basis, and exit with that
   signal's status, which takes precedence over 1; a signal MUST never become
-  a row error, and no Git child MUST outlive the run except under EC-002
+  a row error, and a Git child MUST NOT outlive the run, except under EC-002
   (POD:776-781; clarifications N1; design D1).
 
 **Human report**
@@ -1577,7 +1577,7 @@ and [P] are change 1's requirements as the header names them.
   hold a chosen status probe, and MUST assert that no argument vector
   fetches, pulls, pushes or reaches a remote, that every one carries the
   seven protocol pins, and that none of the seventeen scrubbed names reaches
-  a child. No test MUST need a running filesystem monitor: the packet's
+  a child. A test MUST NOT need a running filesystem monitor: the packet's
   fixtures that held the status probe through a `core.fsmonitor` hook (its
   probe-timeout and bounded-concurrency fixtures) MUST hold it through the
   wrapper instead, since [E] pins `core.fsmonitor=false` on every status
@@ -1586,7 +1586,12 @@ and [P] are change 1's requirements as the header names them.
   in-process with its ratio to the per-child budget kept; non-UTF-8 path
   tests MUST run on Linux and be skipped on macOS with that reason, the
   `$'...'` form asserted as a string; the signal tests MUST assert that
-  every child's process group is gone; and every existing test on `main`
+  every child's process group is gone; every functional requirement, or part
+  of one, that no delta scenario exercises (among them FR-004's candidates
+  that are not family holders, FR-010, FR-020's `estimated` count, FR-021's
+  `refused` and `undecodable-output` codes, FR-022's message bound and
+  FR-037's order) MUST be covered by at least one test as well, the
+  feature's traceability record naming it; and every existing test on `main`
   when the feature is implemented MUST keep passing unchanged (proposal,
   Impact; design D13; Clarifications, C-6).
 
@@ -1666,9 +1671,9 @@ and [P] are change 1's requirements as the header names them.
   bare name; 0 rows with a null root, or a root or common directory that is
   not valid UTF-8, carry a clean suggestion; and in every fixture, each
   worktree whose finding carries the `--all-safe` form with no withholding
-  gate is, in the preview that suggestion runs, either selected or excluded
-  only as `deferred-target-cap`, `contains-submodule` or
-  `hidden-local-state`.
+  gate is, in the preview that suggestion runs when that preview's own
+  deadline does not cut it, either selected or excluded only as
+  `deferred-target-cap`, `contains-submodule` or `hidden-local-state`.
 - **SC-005**: Every run ends within 64 s of its start plus rendering, except
   while a filesystem call stuck in the kernel is outstanding; no Git child
   is waited for more than 4 s past its budget; and the process table never
