@@ -379,34 +379,38 @@ directory, never in the repository.
 
 ## R10. Time-bound tests and the harness (lead rulings R-26, R-29, R-31)
 
-- **Decision** (ruled by the lead as R-26 and R-29, recorded here as
-  decided): every timing constant of `project` lives in one module-level
-  table, `TIMING`: the 60 s invocation deadline, the 10 s reserve, the 5 s
-  probe budget, the 5 s removal floor, the 300 s removal ceiling, the 15 s
-  budget of `status`, `doctor` and `update`, the 2 s TERM-to-KILL grace, the
-  2 s reap wait and the 100 ms selector tick. Tests replace that table
-  through a launcher under `tests/` (`tests/launch_project.py`, a name
-  unittest discovery does not import) that loads `project` as a module, as
-  the test module does, registers it in `sys.modules`, replaces entries of
-  `TIMING` from a leading `--timing=JSON` argument (an unknown key is an
-  error), sets `sys.argv` and `sys.path[0]` as `python3 project` would, and
-  calls `main()` in its own process, so signals and process groups behave as
-  in a real run; tests in which no child matters call `main()` in process.
-  No single factor serves every test (R-29): each time-bound test names its
-  own factor or table for what it asserts. Ceiling and deadline tests use a
-  factor of about 0.03 to 0.05 with no Python wrapper; counting tests use
-  the `sh` counting wrapper (about 14 ms a call) or the real table. `budget`
-  and `limits` report the values in force, so under the launcher the JSON
-  shows the replaced values and a test asserts them as such. Timing tests
-  assert ratios and ordering (which child was cut, which stage was omitted),
-  never raw wall-clock values; the SIGTERM-to-SIGKILL gap, measured from the
-  child, is asserted at 0.9 of the grace in force or more. No environment
-  variable, flag or file read by `project` scales time.
-  No timing value is bound at import or definition time: the handle's
-  termination reads the grace and the reap wait from `TIMING` when it
-  starts (D2's `grace=2.0` is the table's value, not a default argument),
-  and no constant is derived from the table at import, so the launcher's
-  replacement reaches every call (R14).
+- **Decision** (ruled by the lead as R-26 and R-29, recorded here as decided):
+  every timing constant of `project` lives in one module-level table, `TIMING`:
+  the 60 s invocation deadline, the 10 s reserve, the 5 s probe budget, the 5 s
+  removal floor, the 300 s removal ceiling, the 15 s budget of `status`,
+  `doctor` and `update`, the 2 s TERM-to-KILL grace, the 2 s reap wait and the
+  100 ms selector tick. Tests replace that table through a launcher under
+  `tests/` (`tests/launch_project.py`, a name unittest discovery does not
+  import) that loads `project` as a module, as the test module does, registers
+  it in `sys.modules`, replaces entries of `TIMING` from a leading
+  `--timing=JSON` argument (an unknown key is an error), sets `sys.argv` and
+  `sys.path[0]` as `python3 project` would, and calls `main()` in its own
+  process, so signals and process groups behave as in a real run; tests in
+  which no child matters call `main()` in process. No single factor serves
+  every test (R-29): each time-bound test names its own factor or table for
+  what it asserts. Ceiling and deadline tests use a factor of about 0.03 to
+  0.05 with real Git children and no Python wrapper, or a table that shortens
+  only what they assert; counting tests use the `sh` counting wrapper (about 14
+  ms a call) or the real table. `budget` and `limits` report the values in
+  force, so under the launcher the JSON shows the replaced values and a test
+  asserts them as such. Timing tests assert ratios and ordering (which child
+  was cut, which stage was omitted), never raw wall-clock values; the
+  SIGTERM-to-SIGKILL gap, measured from the child, is asserted at 0.9 of the
+  grace in force or more. No environment variable, flag or file read by
+  `project` scales time. No timing value is bound at import or definition time,
+  and none is a parameter: under R-30 `terminate_group()` reads the grace from
+  `TIMING` when it is called and `advance()` the reap wait when it sends
+  SIGKILL (D2's `grace=2.0` is the table's value, not a default argument), and
+  no constant is derived from the table at import, so the launcher's
+  replacement reaches every call (R14). Each time-bound test names its factor
+  or table in its body and records the probe budget it yields (plan review U1);
+  R-29's factors replace U1's proposal that a probe budget under 1 s run only
+  fake Gits, and macOS headroom stays a risk (plan.md).
 - **Harness rules** (the harness spike at `aadd709`; R-29, R-31):
   - The test module's loader (`tests/test_project.py:23-26`) registers
     `sys.modules[name]` before it executes `project`, as the launcher does:
@@ -428,10 +432,9 @@ directory, never in the repository.
     or resets the log before the CLI run; and a `doctor` test under the
     wrapper expects the wrapper's path in doctor's `git` row.
   - A fake `git` matches its subcommand anywhere in its arguments, the pins
-    coming first; one that must observe its own SIGTERM uses
-    `signal.sigtimedwait` where it exists and a handler on macOS, which
-    lacks it; a helper that must outlive a kill of a fake's group confirms
-    its `setsid()` before the fake goes on.
+    coming first; no fake relies on `signal.sigtimedwait`, which macOS
+    lacks; a helper that must outlive a kill of a fake's group confirms its
+    `setsid()` before the fake goes on.
   - The push-child terminal tests run `project` under a pty made its
     controlling terminal (`fcntl.ioctl(0, termios.TIOCSCTTY, 0)` after
     `setsid`, an opt-in on `run_pty` or a new helper); without it even a
@@ -556,25 +559,26 @@ directory, never in the repository.
 
 ## R14. Termination without blocking, reaping by `Popen` (lead ruling R-30)
 
-- **Decision** (the termination ruled by the lead as R-30): D2's child
-  handle terminates without blocking. `terminate_group()` keeps its name but
-  only starts the sequence: SIGTERM to the group with `os.killpg()`, and the
-  handle's own kill deadline, the grace read from `TIMING` at that moment.
-  The driver loop advances every terminating handle on each tick (the
-  spike's `advance_terminations()`): at its kill deadline, or at once when
-  its leader has exited, SIGKILL to the group (which also sweeps a group
-  whose leader is gone) and a reap deadline, the reap wait read then; the
-  handle is reaped when `Popen.poll()` returns its status, and abandoned at
-  its reap deadline. The selector's timeout also counts these deadlines. A
-  `finally` cleanup starts the sequence on every live probe handle at once
-  and ticks until each is reaped or abandoned, so it takes at most the grace
-  plus the reap wait (4 s) however many handles run. A removal handle starts
-  it only at its ceiling (D9), and a delete-branch handle never (R4). The
-  child is observed only through `Popen.poll()`, never a raw
-  `os.waitpid()`; an abandoned handle records `probe-timeout`, is never
-  waited on again (D2), and stays registered, so its group is killed again
-  on exit. This keeps D2's SIGTERM, 2 s grace, SIGKILL and reap; only who
-  waits changes. The states are tabled in data-model.md ("Child handle").
+- **Decision** (the termination ruled by the lead as R-30): D2's child handle
+  terminates without blocking. `terminate_group()` keeps its name but only
+  starts the sequence and returns at once: SIGTERM to the group with
+  `os.killpg()`, and the handle's own kill deadline, the grace read from
+  `TIMING` at that call. The driver loop calls the handle's `advance(now)` on
+  every tick (the spike's `advance_terminations()` is the shape): at its kill
+  deadline, or at once when its leader has exited, SIGKILL to the group (which
+  also sweeps a group whose leader is gone) and a reap deadline, the reap wait
+  read then; the handle is reaped when `Popen.poll()` returns its status, and
+  abandoned at its reap deadline. The selector's timeout also counts these
+  deadlines. A `finally` cleanup starts the sequence on every live probe handle
+  at once and ticks until each is reaped or abandoned, so it takes at most the
+  grace plus the reap wait (4 s) however many handles run. A removal handle
+  starts it only at its ceiling (D9), and a delegate (`git branch -d`) handle
+  never (R4). The child is observed only through `Popen.poll()` and
+  `Popen.wait(timeout)`, never a raw `os.waitpid()`; an abandoned handle
+  records `probe-timeout`, is never waited on again (D2), and stays registered,
+  so its group is killed again on exit. This keeps D2's SIGTERM, 2 s grace,
+  SIGKILL and reap; only who waits changes. The states are tabled in
+  data-model.md ("Child handle").
 - **Rationale**: a blocking `terminate_group()` per handle stacks graces
   once several handles run. The harness spike drove six fake Gits from one
   selector (probe budget 1 s, grace 0.4 s): with blocking termination the

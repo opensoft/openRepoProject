@@ -153,12 +153,14 @@ that passed gates 1 to 8; at most 16 rows reach them. A row an index gate
 excludes keeps its place among the 16.
 
 A gate whose own read cannot finish decides nothing: a reflog read error
-other than `ENOENT` or `ENOTDIR`, a reflog read past its budget (the delta's
-unprobed row), or a failed or timed-out `modules` read or hidden-state probe
-makes the row `inspection-error` (classification and `reason`), its
-`errors` naming `os-error`, `probe-failed`, `probe-timeout` or
-`deadline-exceeded`, and the plan incomplete (`inspection-incomplete`); a
-null flag never passes a gate.
+other than `ENOENT` or `ENOTDIR`, or a failed or timed-out `modules` read or
+hidden-state probe, makes the row `inspection-error` (classification and
+`reason`), its `errors` naming `os-error`, `probe-failed`, `probe-timeout`
+or `deadline-exceeded`, and the plan incomplete (`inspection-incomplete`); a
+null flag never passes a gate. A reflog read not finished within the
+filesystem budget follows the `project-clean` delta's reflog outcome rule
+instead: the row is left unprobed, never selected, and the plan incomplete
+with `inspection-incomplete`.
 
 ### Reflog anchor and movement (D10; FR-021, FR-022)
 
@@ -175,7 +177,7 @@ filesystem call (never a Git child). Each line is `<old> <new> <identity>
 | --- | --- |
 | `reflog-unavailable` | missing (`ENOENT`, `ENOTDIR`), 0 bytes, or over 65,536 bytes |
 | `inspection-error` | any other error on the read |
-| unprobed: `inspection-error` with `probe-timeout` or `deadline-exceeded`, the plan `inspection-incomplete` (see Gate) | the read did not finish within the filesystem budget |
+| unprobed (`inspection-incomplete`) | the read did not finish within the filesystem budget |
 | `reflog-unavailable` | the last entry's new object is not the head |
 | pass | a movement survives |
 | `unstarted-branch` | an anchor survives with no movement after it, its new object the head |
@@ -316,12 +318,14 @@ name with `ahead` and `behind` null.
 
 ### Child handle (D2; lead ruling R-30, research.md R14)
 
-One spawned Git child other than the push child. It records its kind
-(`probe`, read-only with `GIT_OPTIONAL_LOCKS=0`; `removal`; or
-`delete-branch`), its process ID, which is also its process group ID, its
-start time, its budget end (none for a removal or delete-branch handle), a
-removal's 300 s ceiling, its kill and reap deadlines once set, and the first
-4 KiB of its standard error. Termination never blocks:
+One spawned Git child other than the push child. It records its kind (`probe`,
+read-only with `GIT_OPTIONAL_LOCKS=0`; `removal`; or `delegate`, the
+`git branch -d` child), its process ID, which is also its process group ID, its
+start time, its budget end (none for a removal or delegate handle), a removal's
+300 s ceiling, its kill and reap deadlines once set, and the first 4 KiB of its
+standard error. Termination never blocks: `terminate_group()` sends SIGTERM,
+sets the kill deadline and returns at once, and the handle's `advance(now)`,
+called by the driver loop on every tick, takes it on:
 
 | State | Entered when | Leaves |
 | --- | --- | --- |
@@ -331,14 +335,15 @@ removal's 300 s ceiling, its kill and reap deadlines once set, and the first
 | `reaped` | its status was observed | final; it leaves the registry |
 | `abandoned` | the reap deadline passed | final; `probe-timeout` recorded; never waited on again; it stays registered, so its group is killed again on exit |
 
-The driver advances every `terminating` and `killing` handle on each tick,
-and the selector's timeout counts their deadlines, so no handle's grace
-delays another's. The grace and the reap wait (2 s each in the real table)
-are read from `TIMING` when each step starts. A `finally` cleanup moves
-every live probe handle to `terminating` at once and ticks until each is
-`reaped` or `abandoned`, at most grace plus reap wait (4 s) however many
-handles run. A removal handle reaches `terminating` only at its ceiling, a
-delete-branch handle never, and the signal slot moves neither.
+The driver calls `advance()` on every `terminating` and `killing` handle on
+each tick, and the selector's timeout counts their deadlines, so no handle's
+grace delays another's. The grace and the reap wait (2 s each in the real
+table) are read from `TIMING` when each step starts, never passed as an
+argument. A `finally` cleanup moves every live probe handle to `terminating` at
+once and ticks until each is `reaped` or `abandoned`, at most grace plus reap
+wait (4 s) however many handles run. A removal handle reaches `terminating`
+only at its ceiling, a delegate handle never, and the signal slot moves
+neither.
 
 ### Driver outcome (D2)
 

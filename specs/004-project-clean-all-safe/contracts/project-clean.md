@@ -163,7 +163,7 @@ the gate order, classes in ladder order; one progress line per target,
 | Code | Message |
 | --- | --- |
 | `invalid-arguments` | `--all-safe cannot be combined with --action, --branch or --worktree.`; `--expect-plan requires --all-safe and --apply.`; `--expect-plan takes 64 lowercase hexadecimal characters.`; the baseline messages for the baseline cases |
-| `internal-error` | `Internal error: TYPE: TEXT`, the exception's class and text |
+| `internal-error` | `TYPE: TEXT`, the exception's class and text, so `REFUSED: RuntimeError: boom` (research.md R6) |
 | `git-unavailable` | `Git is unavailable (DETAIL); clean needs Git 2.36 or later.`, DETAIL one of `not found`, `exit N`, `timed out`, `unparseable version` |
 | `git-too-old` | `Git VERSION is older than 2.36; clean needs Git 2.36 or later.` |
 | `target-not-repository-root` | `Not the main worktree of a repository: PATH; pass the repository root.` |
