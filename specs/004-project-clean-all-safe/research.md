@@ -12,8 +12,12 @@ implementation:
   text, each resolved inside that text (the push-child exception, LQ-3 in
   R1, waits on Brett Heap's word);
 - R7: the reviewed spec the plan cites;
-- R8 to R15: the unknowns of counting, ordering, timing, test runtime and CI,
-  the digest's bytes, the bare-name test, reaping and the existing tests.
+- R8 to R15: the unknowns of counting, ordering, timing and the test
+  harness, test runtime and CI, the digest's bytes, the bare-name test,
+  termination and reaping, and the existing tests.
+
+The plan review of `dd923ee` and the lead's rulings R-29 to R-31, from the
+harness spike at `aadd709`, are applied in place.
 
 Each entry gives a Decision, its Rationale and the Alternatives considered;
 R1 to R6 also name the scenarios they satisfy (delta scenario titles in
@@ -72,10 +76,18 @@ directory, never in the repository.
   incomplete inspection" (US3-8), "A lazy fetch in a partial clone is refused
   locally" (US9-9); FR-010, FR-054; SC-003, whose counting wrapper runs over
   inspection and removal runs, where every child carries the pins, while the
-  push tests assert that the push child carries none. Once PR #19 lands, its
-  scenario "The push child reaches its remote" joins them, with its case of
-  a pre-push hook that sleeps 7 s: the push still exits 0, `origin` holds
-  the branch, and no signal reaches the push child.
+  push tests assert that the push child carries none. PR #19's scenario "The
+  push child reaches its remote" joins them, tested whether or not PR #19
+  has landed, with its case of a pre-push hook that sleeps 7 s: the push
+  still exits 0, `origin` holds the branch, and no signal reaches the push
+  child. The counting wrapper records the push child's process group equal
+  to `project`'s and every other child's its own (R10). A push test that
+  needs the terminal runs `project` under a pty made its controlling
+  terminal (R10, R-31): the harness spike found that without it even a
+  same-group push child gets `ENXIO` on `/dev/tty`, while with it the child
+  opens `/dev/tty`, Git's prompts are answered there, the terminal's
+  foreground group is the push child's, and a `^C` typed at the prompt
+  stops the push, nothing pushed, `project` exiting 130.
 - **Cost**: until the word, the plan departs from the delta's literal text
   for one child.
 - **Alternatives considered**: (a) amend the unarchived change in place by
@@ -156,7 +168,7 @@ directory, never in the repository.
   a signal can interrupt; `sys.stdin.readline()`, rejected because it loses
   line editing and `EOFError`.
 
-## R4. Signal handlers are scoped to inspection and the apply phase
+## R4. Signal handlers: `clean`'s whole run, the other subcommands' inspection
 
 - **Finding**: D1 installs handlers that only record SIGINT, SIGTERM and
   SIGHUP, and says that "`status`, `doctor` and `update` install the same
@@ -167,22 +179,31 @@ directory, never in the repository.
   after SIGINT and then accepted `yes`, so Ctrl-C at `Type yes to run this
   plan:` would do nothing, while the design's Non-Goals keep `confirm()` as
   those callers use it.
-- **Decision**: one context manager installs D1's record-only handlers and
-  the wakeup descriptor for exactly the spans that need them: inspection
-  (planning, re-inspection, revalidation, rescans) and the apply phase. The
-  removal question swaps in raising handlers for its own duration (SIGINT
-  raises `KeyboardInterrupt`; SIGTERM and SIGHUP raise a private exception
-  that `main()` maps to 143 and 129), as D1 and D15 say. Before `confirm()`
-  (`new`, `update`, push, delete-branch) and before `update`'s owner-tool
-  delegates, the handlers the process started with are restored, so those
-  prompts and delegates behave as they do today. The push child is the
-  exception (R1): the record-only handlers stay installed while it runs, so
-  `project` never signals it and waits for it; a Ctrl-C at the terminal
-  reaches the push itself, which is in the foreground, and the push's own
-  status passes through (FR-010). The delete-branch child runs through the
-  driver like any child, with no budget (R5). `status`, `doctor` and
-  `update` still install the handlers around their inspection, so SIGTERM
-  and SIGHUP there unwind through the same cleanup and exit 143 and 129.
+- **Decision**: for `clean`, D1's record-only handlers and the wakeup
+  descriptor are installed from the argument checks to the last write,
+  except at the removal question (raising handlers) and at `confirm()` for
+  push and delete-branch (the process's own handlers). The slot is read
+  after planning, before the question and before the apply phase begins; a
+  signal recorded before the apply phase ends the run by FR-036 (probe
+  groups reaped, `Cancelled.`, 130, 143 or 129, no document written). One
+  recorded while a preview or report is being written is read once more
+  before the run exits, which then exits 130, 143 or 129 with `Cancelled.`.
+  `status`, `doctor` and `update` install them around their inspection, so
+  SIGTERM and SIGHUP there unwind through the same cleanup and exit 143 and
+  129. One context manager makes each swap. The removal question's raising
+  handlers last for its own duration (SIGINT raises `KeyboardInterrupt`;
+  SIGTERM and SIGHUP raise a private exception that `main()` maps to 143 and
+  129), as D1 and D15 say. Before `confirm()` (`new`, `update`, push,
+  delete-branch) and before `update`'s owner-tool delegates, the handlers
+  the process started with are restored, so those prompts and delegates
+  behave as they do today. The push and delete-branch children are the
+  exception (R1, R5): the record-only handlers stay installed while either
+  runs, `project` never signals it and waits for it, and a Ctrl-C at the
+  terminal reaches the push itself, which is in the foreground. The run then
+  exits by D19's first row: 130, 143 or 129 when a signal was recorded,
+  otherwise the child's own status (data-model.md, "Exit statuses"). The
+  delete-branch child runs through the driver like any child, with no
+  budget, and a set slot does not stop it (R5).
 - **Scenarios**: "SIGTERM before the apply phase" (US5-2), "A signal during a
   removal" (US5-1, SIGINT at the question exits 130); FR-036, FR-058, FR-064
   (every confirmation other than FR-026's unchanged).
@@ -193,8 +214,12 @@ directory, never in the repository.
   (checked: given SIGINT, a parent in `subprocess.run()` exited 0.26 s later,
   and its child, which ignored SIGINT, never finished its work); for the push
   child that kill no longer happens, as R1 requires.
-- **Alternatives considered**: handlers for the whole subcommand, rejected
-  (Ctrl-C at `confirm()` ignored); default handlers throughout, rejected
+- **Alternatives considered**: record-only handlers at `confirm()` too,
+  rejected (Ctrl-C there ignored); handlers around inspection and the apply
+  phase only, rejected by the plan review (SIGTERM or SIGHUP while the plan
+  prints, the digest is checked or a preview is written would take the
+  default action, and a signal recorded after the last probe would go
+  unread until the apply phase); default handlers throughout, rejected
   (SIGTERM would kill `project` with probe groups running, exit -15, not
   143).
 
@@ -220,15 +245,16 @@ directory, never in the repository.
     (`:68-74`) keep their names and place but call the runner, so no Git
     child bypasses it.
   - The two delegates stay unbounded (D-W: "Push and delete-branch children
-    SHALL stay unbounded, as before this change") and keep today's exit
-    mapping (128 plus the signal number). The delete-branch child
-    `git branch -d` becomes a D2 handle run by the driver: its own process
-    group, the seventeen-name scrub and the seven pins, with no budget, its
-    output relayed to `project`'s own streams. The push child stays on
-    `execute()` as R1 describes: `project`'s process group and streams,
+    SHALL stay unbounded, as before this change") and keep today's exit mapping
+    (128 plus the signal number) unless a signal was recorded meanwhile, when
+    the run exits 130, 143 or 129 (R4). The delete-branch child `git branch -d`
+    becomes a D2 handle run by the driver: its own process group, the
+    seventeen-name scrub and the seven pins, with no budget and never signalled
+    (R4), its output relayed to `project`'s own streams. The push child stays
+    on `execute()` as R1 describes: `project`'s process group and streams,
     sixteen names scrubbed (`GIT_ALLOW_PROTOCOL` kept, R-28), no pin, never
-    signalled. `execute()` gains only an optional environment argument,
-    and is unchanged for non-Git delegates.
+    signalled. `execute()` gains only an optional environment argument, and is
+    unchanged for non-Git delegates.
 - **Scenarios**: "Bounded revalidation work" (US6-6, `probes.performed` equal
   to the wrapper's count of children other than removals, R8), "A caller's Git
   environment is ignored" and "A lazy fetch in a partial clone is refused
@@ -237,8 +263,11 @@ directory, never in the repository.
 - **Cost**: a child in its own session has no controlling terminal. Checked
   from a pseudo-terminal session: a child started with
   `start_new_session=True` failed `cannot create /dev/tty: No such device or
-  address`, where the same child in the caller's session wrote to it. No
-  child given its own session needs the terminal: `git branch -d` asks
+  address`, where the same child in the caller's session wrote to it. The
+  harness spike refined that check: the same-session child opens
+  `/dev/tty` only when the pty is the caller's controlling terminal, and
+  gets `ENXIO` otherwise, so the push-child tests make it so (R10, R-31).
+  No child given its own session needs the terminal: `git branch -d` asks
   nothing, and the push, which may ask for a credential or a passphrase,
   keeps the caller's terminal (R1).
 - **Alternatives considered**: leaving these children on `probe()` and
@@ -254,17 +283,20 @@ directory, never in the repository.
   `project clean` with a traceback and exit 1, where the delta wants
   `internal-error` and exit 2 before the apply phase; and a default SIGTERM
   ends a child with return code -15, not 143.
-- **Decision**: `clean()` runs inside a guard. Before the apply phase, any
-  `Exception` that is not a `Refused` becomes the refusal `internal-error`,
-  exit 2, printed as the extended error object under `--json` and as
-  `REFUSED: ` with the exception's type and text otherwise. After the apply
-  phase begins, `retire_worktree()` catches an exception per target: that
-  target is `unknown` with `internal-error`, later targets are
-  `not-attempted`, reconciliation runs and the record is printed, exit 1
-  (D19). `KeyboardInterrupt`, `EOFError` and the signal exception are not
-  caught there, so they keep their 130, 143 and 129 paths. The guard is
-  `clean`'s only: no requirement gives `status`, `doctor` or `update` an
-  `internal-error` code, and their handling stays as it is.
+- **Decision**: `clean()` runs inside a guard. The guard passes `Refused`,
+  D1's `Interrupted`, the question's signal exception, `KeyboardInterrupt`
+  and `EOFError` through unchanged, so they keep their 2, 130, 143 and 129
+  paths. Before the apply phase, any other `Exception` becomes the refusal
+  `internal-error`, exit 2, printed as the extended error object under
+  `--json` and as `REFUSED: ` with the exception's type and text otherwise.
+  After the apply phase begins, any other exception, in a target, its
+  rescan, the final rescan or the record's rendering, first waits for an
+  in-flight removal (D1), then makes the target being handled `unknown`
+  with `internal-error` (fields not established null) and later targets
+  `not-attempted`; the record is printed and the run exits by D19 (1, or
+  the signal status). The guard is `clean`'s only: no requirement gives
+  `status`, `doctor` or `update` an `internal-error` code, and their
+  handling stays as it is.
 - **Scenarios**: "Exception after the apply phase begins" (US5-7), "SIGTERM
   before the apply phase" (US5-2, 143 rather than -15); FR-036, FR-037.
 - **Cost**: a broad catch can present a programming error as a refusal; the
@@ -297,24 +329,30 @@ directory, never in the repository.
   other than a removal child: the version check, a bare name's lookup, the
   identity, registry, `core.worktree`, ref and merged-set children, status and
   hidden-state probes, `remote get-url`, and every revalidation and rescan
-  child. `operations` counts removal children. `estimated` is computed from the
-  plan before any child it counts runs: D6's repository-wide children, one
-  status probe per present and registration-verified row, one hidden-state
-  probe per row that reaches the index gates, and, for an apply, five per
-  selected target and three for the final rescan (`probes`), and one per
-  selected target (`operations`). `performed` counts the children actually
-  spawned. Tests compare `probes.performed` with the counting wrapper's count
-  of children other than `worktree remove`, and `operations.performed` with its
-  count of `worktree remove`.
-- **Rationale**: each Git child is counted once across the two, which is
-  what the delta's "every Git child counted" means; the proposal adopts this
-  accounting by citing the packet (`BA:816-830`). The delta scenario
-  "Bounded revalidation work" says that `probes.performed` "equals the
-  wrapper's count", which read literally includes the removals; PR #19
-  clarifies that wording before the archive, and US6 scenario 6 and SC-006
-  of the reviewed spec already read it this way.
+  child. `operations` counts removal children. `estimated` is the packet's
+  upper bound for an `--apply` run of this plan (`BA:816-830` at `da33d92`,
+  where `BA` is `ideation/brainstorm/project-maintenance-batch-cleanup.md` at
+  `da33d92`, as the change's `proposal.md:25` keys it), in every mode, previews
+  included: `probes` is F + W + E + 5T + 3, F the repository-wide children this
+  invocation ran (rows 1 to 7, with 2, 4b, 5 or a row 3 repeat when they ran),
+  W the status probes, E the hidden-state probes, T the selected targets;
+  `operations` is T. `performed` counts the children actually spawned. Tests
+  compare `probes.performed` with the counting wrapper's count of children
+  other than `worktree remove`, and `operations.performed` with its count of
+  `worktree remove`.
+- **Rationale**: each Git child is counted once across the two, which is what
+  the delta's "every Git child counted" means; the proposal adopts this
+  accounting by citing the packet (`BA:816-830` at `da33d92`), whose own
+  preview fixture reports `"probes": {"estimated": 17, ...}` and
+  `"operations": {"estimated": 1, "performed": 0}` (`BA:1070-1071`), the apply
+  bound in a preview. The delta scenario "Bounded revalidation work" says that
+  `probes.performed` "equals the wrapper's count", which read literally
+  includes the removals; PR #19 clarifies that wording before the archive, and
+  US6 scenario 6 and SC-006 of the reviewed spec already read it this way.
 - **Alternatives considered**: counting removals in `probes` too, rejected
-  (then `operations` would duplicate a subset of `probes`).
+  (then `operations` would duplicate a subset of `probes`); adding 5T + 3
+  and T only for an apply, rejected by the plan review (a preview's
+  estimates would then differ from the packet's fixture).
 
 ## R9. Switching the evidence model: `cleanup_report()` first
 
@@ -339,24 +377,74 @@ directory, never in the repository.
   FR-053 and D6); golden JSON files, rejected (paths, SHAs and `observed_at`
   differ per run, while literals over the stable fields suffice).
 
-## R10. Time-bound tests: one timing table and a launcher (lead ruling R-26)
+## R10. Time-bound tests and the harness (lead rulings R-26, R-29, R-31)
 
-- **Decision** (ruled by the lead as R-26, recorded here as decided): every
-  timing constant of `project` lives in one module-level table: the 60 s
-  invocation deadline, the 10 s reserve, the 5 s probe budget, the 5 s removal
-  floor, the 300 s removal ceiling, the 15 s budget of `status`, `doctor` and
-  `update`, the 2 s TERM-to-KILL grace, the 2 s reap wait and the 100 ms
-  selector tick. Tests replace that table through a launcher under `tests/`
-  (`tests/launch_project.py`, a name unittest discovery does not import) that
-  loads `project` as a module, as the test module does, replaces the table with
-  its values shortened together by one factor (FR-066's test-only time scale)
-  and calls `main()` in its own process, so signals and process groups behave
-  as in a real run; tests in which no child matters call `main()` in process.
-  `budget` and `limits` report the values in force, so under the launcher the
-  JSON shows the scaled values. Timing tests assert ratios and ordering (which
-  child was cut, which stage was omitted, that SIGKILL followed SIGTERM by at
-  least the grace in force), never raw wall-clock values. No environment
+- **Decision** (ruled by the lead as R-26 and R-29, recorded here as
+  decided): every timing constant of `project` lives in one module-level
+  table, `TIMING`: the 60 s invocation deadline, the 10 s reserve, the 5 s
+  probe budget, the 5 s removal floor, the 300 s removal ceiling, the 15 s
+  budget of `status`, `doctor` and `update`, the 2 s TERM-to-KILL grace, the
+  2 s reap wait and the 100 ms selector tick. Tests replace that table
+  through a launcher under `tests/` (`tests/launch_project.py`, a name
+  unittest discovery does not import) that loads `project` as a module, as
+  the test module does, registers it in `sys.modules`, replaces entries of
+  `TIMING` from a leading `--timing=JSON` argument (an unknown key is an
+  error), sets `sys.argv` and `sys.path[0]` as `python3 project` would, and
+  calls `main()` in its own process, so signals and process groups behave as
+  in a real run; tests in which no child matters call `main()` in process.
+  No single factor serves every test (R-29): each time-bound test names its
+  own factor or table for what it asserts. Ceiling and deadline tests use a
+  factor of about 0.03 to 0.05 with no Python wrapper; counting tests use
+  the `sh` counting wrapper (about 14 ms a call) or the real table. `budget`
+  and `limits` report the values in force, so under the launcher the JSON
+  shows the replaced values and a test asserts them as such. Timing tests
+  assert ratios and ordering (which child was cut, which stage was omitted),
+  never raw wall-clock values; the SIGTERM-to-SIGKILL gap, measured from the
+  child, is asserted at 0.9 of the grace in force or more. No environment
   variable, flag or file read by `project` scales time.
+  No timing value is bound at import or definition time: the handle's
+  termination reads the grace and the reap wait from `TIMING` when it
+  starts (D2's `grace=2.0` is the table's value, not a default argument),
+  and no constant is derived from the table at import, so the launcher's
+  replacement reaches every call (R14).
+- **Harness rules** (the harness spike at `aadd709`; R-29, R-31):
+  - The test module's loader (`tests/test_project.py:23-26`) registers
+    `sys.modules[name]` before it executes `project`, as the launcher does:
+    without it a `@dataclass` under `from __future__ import annotations`
+    fails to load.
+  - The counting wrapper is the POSIX `sh` script of plan slice 1, never a
+    Python script: under load a Python wrapper cost about 100 ms a call
+    against 14 ms, timed out probes the `sh` wrapper did not, and stretched
+    a push scenario to 13 to 18 s. It writes one record per child (pid,
+    parent pid, process group, working directory, the scrubbed names set,
+    the arguments) before it `exec`s Git. The spike proved those fields with
+    its Python wrapper, which records them the same way: for `status`,
+    `doctor` and `clean`, every child's parent was `project` and each child
+    had a process group of its own, and `GIT_DIR` and
+    `GIT_CONFIG_PARAMETERS` showed removed at the one scrubbed call site and
+    present elsewhere; its `sh` wrapper records the same argument vectors,
+    directories and scrub names, and was timed. A test reads only
+    complete records; fixture setup calls the real `git` by absolute path,
+    or resets the log before the CLI run; and a `doctor` test under the
+    wrapper expects the wrapper's path in doctor's `git` row.
+  - A fake `git` matches its subcommand anywhere in its arguments, the pins
+    coming first; one that must observe its own SIGTERM uses
+    `signal.sigtimedwait` where it exists and a handler on macOS, which
+    lacks it; a helper that must outlive a kill of a fake's group confirms
+    its `setsid()` before the fake goes on.
+  - The push-child terminal tests run `project` under a pty made its
+    controlling terminal (`fcntl.ioctl(0, termios.TIOCSCTTY, 0)` after
+    `setsid`, an opt-in on `run_pty` or a new helper); without it even a
+    push child in `project`'s group gets `ENXIO` on `/dev/tty`, and a child
+    in a new session gets it either way. `TIOCSCTTY` on macOS is untested
+    (plan.md, Risks).
+- **Evidence** (the harness spike, Python 3.12.3, Git 2.43.0, load 86 to
+  200 on 32 cores): through the launcher the exit status, standard output
+  and standard error equal a plain run's in 11 cases, SIGINT and SIGTERM
+  give 130 and 143 with `Cancelled.` and the probe's group gone, and the 96
+  tests pass with every CLI run launched; at factors 0.05 and 0.1 each fake
+  `git` was cut as expected, and the SIGTERM-to-SIGKILL gap read 0.97 to
+  1.08 graces.
 - **Rationale**: the proposal's OQ-8 fixes the limits ("none; fixed values
   are reported in `limits` and `budget`"), and the time-bound scenarios
   ("A removal past the hard ceiling", "Deadline expiry mid-batch", "Row cap
@@ -366,8 +454,11 @@ directory, never in the repository.
   without a product hook.
 - **Alternatives considered**: an environment variable that scales time,
   rejected by R-26 and FR-066 because `project` would read a test setting in
-  production; minutes-long tests at the real values, rejected; raising
-  `run_cli`'s timeout, rejected (it still leaves 300 s).
+  production; one factor for every test, rejected by R-29 (at factor f the
+  ceiling is 300f and the probe budget 5f; Python-wrapped probes time out
+  below f = 0.1 under load, while the ceiling must fit `run_cli`'s 20 s);
+  minutes-long tests at the real values, rejected; raising `run_cli`'s
+  timeout, rejected (it still leaves 300 s).
 
 ## R11. Test runtime, fixture sizes and the CI matrix
 
@@ -387,21 +478,23 @@ directory, never in the repository.
     scaled (R10).
   - Budget: each test ends inside `run_cli`'s 20 s; the whole suite stays
     under 8 minutes in the bench container and under 6 minutes per CI job.
-  - Names: every test of a `clean`, `status`, `doctor` or `update` scenario
-    starts `test_clean_`, `test_status_`, `test_doctor_` or `test_update_`,
-    followed by the delta scenario's title in snake case.
-  - CI: the four existing jobs (`ubuntu-latest` and `macos-latest`, Python
-    3.10 and 3.12) run the whole suite unchanged. One job is added,
-    `git-floor`, on `ubuntu-latest` with Python 3.10: it builds Git 2.36.6
+  - Names: every test starts `test_clean_`, `test_status_`, `test_doctor_`
+    or `test_update_`, then the scenario's title in snake case; a
+    `project-command` evidence-model scenario that names no subcommand,
+    "The sixteenth scrubbed name on Git 2.36" included, uses `test_status_`
+    so that the floor job's `-k` selection runs it.
+  - CI: the four existing jobs (`ubuntu-latest` and `macos-latest`, Python 3.10
+    and 3.12) run the whole suite unchanged. One job is added, `git-floor`, on
+    `ubuntu-latest` with Python 3.10: it checks out, sets up Python and
+    installs `requirements.txt` as the four jobs do, then builds Git 2.36.6
     from `git-2.36.6.tar.xz` on kernel.org, checking the sha256 that task 2.2
-    recorded (quickstart.md, "The Git 2.36 floor run"), with `make
-    NO_GETTEXT=1 NO_TCLTK=1 NO_PERL=1 NO_PYTHON=1 NO_CURL=1 NO_OPENSSL=1
-    prefix=<cache dir> install`, cached by `actions/cache` on the version
-    and runner OS; puts it first on PATH; fails unless `git --version`
-    prints `git version 2.36.6`; and runs `python -m unittest discover -s
-    tests -v -k test_clean_ -k test_status_ -k test_doctor_`. Checked at
-    `961c405` with task 2.2's build first on PATH: that selection ran 15
-    tests, OK, in 7.7 s.
+    recorded (quickstart.md, "The Git 2.36 floor run"), with `make NO_GETTEXT=1
+    NO_TCLTK=1 NO_PERL=1 NO_PYTHON=1 NO_CURL=1 NO_OPENSSL=1 prefix=<cache dir>
+    install`, cached by `actions/cache` on the version and runner OS; puts it
+    first on PATH; fails unless `git --version` prints `git version 2.36.6`;
+    and runs `python -m unittest discover -s tests -v -k test_clean_ -k
+    test_status_ -k test_doctor_`. Checked at `961c405` with task 2.2's build
+    first on PATH: that selection ran 15 tests, OK, in 7.7 s.
   - Skips, each with its reason: non-UTF-8 path tests on macOS (FR-066);
     permission tests when the effective uid is 0; and "The sixteenth
     scrubbed name on Git 2.36" unless the `git` on PATH is 2.36 to 2.39, so
@@ -420,18 +513,19 @@ directory, never in the repository.
 ## R12. The canonical text of `plan_digest`
 
 - **Decision**: the text the proposal adopts from the packet
-  (`ideation/brainstorm/project-maintenance-batch-cleanup.md:345-379`, the
-  proposal's `BA:345-379`): the lowercase hexadecimal SHA-256 of the UTF-8
-  encoding of `json.dumps(value, sort_keys=True, separators=(",", ":"),
-  ensure_ascii=False)`, where `value` holds exactly `repository` (`root`,
-  `common_dir`, `dev`, `ino`), `merge_target` (`name`, `sha`) and
-  `selected`, a list of `[path, branch, head]` in canonical order, or null
-  where the report withholds the selection (FR-004, D14). `ensure_ascii` is
-  false for this input only, never for the emitted document; `mode`,
-  `observed_at`, validity flags, `excluded` and `notes` are not in it. A
-  unit test pins the digest with the packet's own fixture values (its lines
-  1052 to 1130), whose `plan_digest` this text reproduces: checked, both
-  give `7495756d199ba217f41ed4d648c241c95608b4f353c46952e9a7f4cddc17f3bc`.
+  (`ideation/brainstorm/project-maintenance-batch-cleanup.md:345-379` at
+  `da33d92`, the proposal's `BA:345-379`, "Fresh plan and plan digest"): the
+  lowercase hexadecimal SHA-256 of the UTF-8 encoding of `json.dumps(value,
+  sort_keys=True, separators=(",", ":"), ensure_ascii=False)`, where `value`
+  holds exactly `repository` (`root`, `common_dir`, `dev`, `ino`),
+  `merge_target` (`name`, `sha`) and `selected`, a list of
+  `[path, branch, head]` in canonical order, or null where the report withholds
+  the selection (FR-004, D14). `ensure_ascii` is false for this input only,
+  never for the emitted document; `mode`, `observed_at`, validity flags,
+  `excluded` and `notes` are not in it. A unit test pins the digest with the
+  packet's own fixture values (its lines 1052 to 1130 at `da33d92`), whose
+  `plan_digest` this text reproduces: checked, both give
+  `7495756d199ba217f41ed4d648c241c95608b4f353c46952e9a7f4cddc17f3bc`.
 - **Rationale**: FR-025 names the fields but not the bytes; the packet's
   text does, the proposal adopts it, and `add-project-overview` reads the
   same packet, so one serialization keeps the digest equal across both
@@ -446,48 +540,83 @@ directory, never in the repository.
 ## R13. Which argument is a bare name
 
 - **Decision**: after `expanduser()`, an absolute argument follows the
-  absolute-path rule; a relative argument of exactly one path component that
-  is neither `.` nor `..` is a bare name and goes through `discover()`'s
-  name lookup (FR-016, D8); every other relative argument, `.`, `..` and
-  anything with a `/` included, is a relative path, resolved against the
-  working directory.
-- **Rationale**: `Path("..").parts` has one component and `Path(".").parts`
-  none, so "one path component" alone would send `..` to the name lookup;
+  absolute-path rule; a relative argument that contains no `/` and is
+  neither `.` nor `..` is a bare name and goes through `discover()`'s name
+  lookup (FR-016, D8); every other relative argument (`./x`, `x/`, `.`,
+  `..`) is a relative path, resolved against the working directory.
+- **Rationale**: the test reads the argument's text, so one rule decides
+  every spelling. `Path("..").parts` has one component and `Path(".").parts`
+  none, so "one path component" alone would send `..` to the name lookup,
+  and `Path("./x").parts` and `Path("x/").parts` are both `('x',)`, so a
+  component count would send them there too while they contain a `/`;
   today `discover()` ends up treating an existing `..` as a path, and this
   keeps that.
 - **Alternatives considered**: `len(Path(arg).parts) == 1` alone, rejected
-  (`..` becomes a name).
+  (`..`, `./x` and `x/` become names).
 
-## R14. The runner reaps through `Popen`, never a raw `waitpid`
+## R14. Termination without blocking, reaping by `Popen` (lead ruling R-30)
 
-- **Decision**: `terminate_group()` signals the group with `os.killpg()`
-  and observes the child only through `Popen.poll()` and
-  `Popen.wait(timeout)`; an abandoned handle is never waited on again (D2)
-  but stays registered, so its group is still killed on exit.
-- **Rationale**: D2's "polls `waitpid(WNOHANG)`" is what `Popen.poll()`
-  does. A raw `os.waitpid()` on a `Popen`'s child reaps it behind `Popen`'s
-  back. Checked: after a raw `waitpid` of a child that exited 3,
-  `Popen.poll()` returned 0. A removal that failed would then read as exit
-  0, and its target would become `unknown` instead of `failed` with Git's
-  status.
-- **Alternatives considered**: `os.waitpid()` as D2 words it, rejected for
-  that reason.
+- **Decision** (the termination ruled by the lead as R-30): D2's child
+  handle terminates without blocking. `terminate_group()` keeps its name but
+  only starts the sequence: SIGTERM to the group with `os.killpg()`, and the
+  handle's own kill deadline, the grace read from `TIMING` at that moment.
+  The driver loop advances every terminating handle on each tick (the
+  spike's `advance_terminations()`): at its kill deadline, or at once when
+  its leader has exited, SIGKILL to the group (which also sweeps a group
+  whose leader is gone) and a reap deadline, the reap wait read then; the
+  handle is reaped when `Popen.poll()` returns its status, and abandoned at
+  its reap deadline. The selector's timeout also counts these deadlines. A
+  `finally` cleanup starts the sequence on every live probe handle at once
+  and ticks until each is reaped or abandoned, so it takes at most the grace
+  plus the reap wait (4 s) however many handles run. A removal handle starts
+  it only at its ceiling (D9), and a delete-branch handle never (R4). The
+  child is observed only through `Popen.poll()`, never a raw
+  `os.waitpid()`; an abandoned handle records `probe-timeout`, is never
+  waited on again (D2), and stays registered, so its group is killed again
+  on exit. This keeps D2's SIGTERM, 2 s grace, SIGKILL and reap; only who
+  waits changes. The states are tabled in data-model.md ("Child handle").
+- **Rationale**: a blocking `terminate_group()` per handle stacks graces
+  once several handles run. The harness spike drove six fake Gits from one
+  selector (probe budget 1 s, grace 0.4 s): with blocking termination the
+  second SIGTERM-ignoring child died 2.01 to 2.03 graces past its own
+  budget and the sleeping one 2.01 to 2.06;
+  with each handle's own deadlines advanced in the loop, each
+  SIGTERM-ignoring child died 1.01 graces past its own budget and the
+  sleeping one 0.01 to 0.02. At the real values a second SIGTERM-ignoring
+  child would wait about 8 s past its budget, past SC-004's 4 s. Feature
+  004's driver is one-wide, but `add-project-overview` drives four handles
+  at once (its clarification N2) and inherits this handle unchanged. D2's
+  "polls `waitpid(WNOHANG)`" is what `Popen.poll()` does; a raw
+  `os.waitpid()` on a `Popen`'s child reaps it behind `Popen`'s back.
+  Checked: after a raw `waitpid` of a child that exited 3, `Popen.poll()`
+  returned 0. A removal that failed would then read as exit 0, and its
+  target would become `unknown` instead of `failed` with Git's status.
+- **Alternatives considered**: D2's blocking `terminate_group()`, rejected
+  by R-30 (it stacks graces); terminating together the handles due in one
+  loop iteration, rejected (the spike's "phased" run still stacked when due
+  times fell in different ticks: 2.05 graces late); `os.waitpid()` as D2
+  words it, rejected for the reason above.
 
 ## R15. The existing tests stay as they are
 
 - **Decision**: no existing test is edited except
   `test_clean_revalidates_a_worktree_after_confirmation`
-  (`tests/test_project.py:1020`), which moves to the result record: it
-  patches the removal question in process (`confirm()` is no longer called
-  for a removal), makes the worktree dirty in that hook, and expects a
-  `refused` target with `state-changed` and exit 2. The new helpers (a
-  merged, published worktree with a commit of its own; bulk registrations;
-  the counting `git` wrapper; the fake Gits; the launcher) are added beside
-  the existing ones, and the recipe that four existing tests repeat inline
-  (`:857`, `:880`, `:949`, `:1020`) is not extracted from them. The three
-  message tests (`:839`, `:880`, `:972`) pass unchanged because
-  `target-excluded` and `no-merge-target` keep the baseline wording (D8,
-  D18), and the other 92 pass unchanged.
+  (`tests/test_project.py:1020`), which moves to the result record: it sets
+  `yes=False`, `all_safe=False` and `expect_plan=None`, patches
+  `sys.stdin.isatty` to true and the removal question in process (with
+  `yes=True` the question is skipped, and without a terminal
+  `confirmation-required` refuses first; `confirm()` is no longer called for a
+  removal), makes the worktree dirty in that hook, and expects a `refused`
+  target with `state-changed` and exit 2. The test module's loader (`:23-26`)
+  gains `sys.modules` registration (R10, R-29), a setup line that edits no
+  test. The new helpers (a merged, published worktree with a commit of its own;
+  bulk registrations; the counting `git` wrapper; the fake Gits; the
+  controlling-terminal pty helper; the launcher) are added beside the existing
+  ones, and the recipe that four existing tests repeat inline (`:857`, `:880`,
+  `:949`, `:1020`) is not extracted from them. The three message tests (`:839`,
+  `:880`, `:972`) pass unchanged because `target-excluded` and
+  `no-merge-target` keep the baseline wording (D8, D18), and the other 92 pass
+  unchanged.
 - **Rationale**: FR-066 and SC-012. Three existing tests guard the switch
   of `repo_state()`: `:736` asserts the exact set of doctor error rows, so a
   new error row would break it; `:586` reads `status` of a linked worktree

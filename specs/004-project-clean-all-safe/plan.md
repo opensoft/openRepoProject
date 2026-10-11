@@ -34,32 +34,44 @@ the CI workflow.
 
 Implementation slices, in dependency order; each leaves the suite green:
 
-1. **Baseline and test scaffolding** (research.md R10, R11, R15). The 96
-   tests pass at `aadd709`. New helpers beside the existing ones, editing no
-   existing test: a merged, published worktree with a commit of its own; bulk
+1. **Baseline and test scaffolding** (research.md R10, R11, R15). The 96 tests
+   pass at `aadd709`. New helpers beside the existing ones, editing no existing
+   test: a merged, published worktree with a commit of its own; bulk
    registrations written directly; a counting `git` wrapper (a POSIX `sh`
-   script that logs each child's arguments and directory and `exec`s the real
-   `git` by absolute path); the fake Gits of D1 and of the result scenarios
-   (standard-error flood, SIGTERM ignored, 5,000 `!!` records, version
-   2.35.0, exit 0 without removing, a slow removal); and
-   `tests/launch_project.py`, the launcher of R10.
+   script that logs, per child, its arguments, directory, pid, parent pid,
+   process group (`/proc/$$/stat` on Linux, `ps -o pgid= -p $$` elsewhere) and
+   which of the seventeen scrubbed names are set, runs an optional pre-hook,
+   runs the real `git` by absolute path, runs an optional post-hook after
+   `worktree remove`, and exits with Git's status; with no hook set it `exec`s
+   Git, so the record is the child's own; a wrapper of the harness spike
+   recorded each child's scrub names, pid, process group and parent before it
+   `exec`ed Git, R10); the fake Gits of D1 and of the result scenarios
+   (standard-error flood, SIGTERM ignored, 5,000 `!!` records, version 2.35.0,
+   exit 0 without removing, a slow removal), each matching its subcommand
+   anywhere in its arguments, since the seven pins come first; a pty helper
+   that makes the pty the controlling terminal (`TIOCSCTTY` after `setsid`) for
+   the push-child tests (R-31); and `tests/launch_project.py`, the launcher of
+   R10. The test module's loader (`tests/test_project.py:23-26`) gains
+   `sys.modules` registration, a setup line and not a test (R-29).
 2. **Runner, parsers and the timing table** (D1, D2, D11, C4; R4, R10, R14).
-   The module-level timing table; the child handle (`start`,
-   `terminate_group`, `reap`, the registry of live probe handles); the
-   one-wide driver `run_bounded` (one selector over both pipes and a wakeup
-   pipe, the 100 ms tick, a 4 KiB standard-error head); the scoped signal
-   handlers; the five incremental parsers; filesystem calls on daemon threads
-   under `min(5 s, work remaining)`; the seventeen-name scrub and the pins
-   (R1); the memoized version check; path escaping. Tests: each parser fed
-   byte by byte and whole (FR-062); two handles driven at once through the
-   shared scrub, termination path and parsers (SC-012); the three fake Gits
-   of D1; the escaping rules.
-3. **Evidence pipeline and ladder** (D4, D6, D10, D11; R9). Rows 1 to 7
-   memoized per common directory; identity and two-way registration; the
-   combined status probe and its bounds; the ladder as a pure function with
-   its one reorder; the partial-removal note; the reflog read. Switch
-   `cleanup_report()` only; `repo_state()` keeps today's reader. Parity is
-   asserted as literal values.
+   The module-level timing table, read at call time only (R-29); the child
+   handle (`start`, termination without blocking: SIGTERM, then the handle's
+   own kill and reap deadlines, advanced by the driver each tick (R-30);
+   `reap`; the registry of live probe handles); the one-wide driver
+   `run_bounded` (one selector over both pipes and a wakeup pipe, the 100 ms
+   tick, a 4 KiB standard-error head); the scoped signal handlers; the five
+   incremental parsers; filesystem calls on daemon threads under
+   `min(5 s, work remaining)`; the seventeen-name scrub and the pins (R1); the
+   memoized version check; path escaping. Tests: each parser fed byte by byte
+   and whole (FR-062); two handles driven at once through the shared scrub,
+   termination path and parsers (SC-012); the three fake Gits of D1; the
+   escaping rules.
+3. **Evidence pipeline and ladder** (D4, D6, D10, D11; R9). Row 1 once per
+   invocation; rows 3 to 7 memoized per common directory; identity and two-way
+   registration; the combined status probe and its bounds; the ladder as a pure
+   function with its one reorder; the partial-removal note; the reflog read.
+   Switch `cleanup_report()` only; `repo_state()` keeps today's reader. Parity
+   is asserted as literal values.
 4. **Resolution and the report** (D8, D14; R2, R6, R12, R13). Git-first
    resolution, the gitfile, bare and submodule rules and the bare-name test;
    the merge target and the 1 MiB manifest cap; report mode (256 rows, the
@@ -74,9 +86,12 @@ Implementation slices, in dependency order; each leaves the suite green:
    floor, 300 s ceiling, never signalled, the wait line), the rescan and
    reconciliation, stages, the exit table, the stop block, `--apply --json`,
    `probes` and `operations`. Push and delete-branch: Git-first resolution,
-   single mode's caps, the full re-inspection with its incompleteness
-   refusals, the `remote-gone` push refusal, their children through the
-   runner (R5), and the push child under the push-child exception (R1).
+   single mode's row cap and bounds with the batch's completeness (any
+   `inspection-error` row refuses them), the full re-inspection with its
+   incompleteness refusals, the `remote-gone` push refusal, their children
+   through the runner (R5), never signalled, a signal recorded meanwhile
+   deciding the exit status (data-model.md), and the push child under the
+   push-child exception (R1).
    `test_clean_revalidates_a_worktree_after_confirmation` moves to the result
    record (R15).
 7. **Status, doctor and update** (D16, D-R; R2, R4, R5, R9). `repo_state()`
@@ -92,27 +107,33 @@ Implementation slices, in dependency order; each leaves the suite green:
    corrected; Install (`README.md:17-19`) states Git 2.36; the exit-code line
    (`README.md:284-286`) gains `clean`'s 1, 143, 129 and Git's status passing
    through. The `git-floor` CI job.
-9. **Verification**. The whole suite; `traceability.md` naming a test for
-   each of the 100 delta scenarios (and for PR #19's scenarios if it lands
-   first); `openspec validate --all --strict`; the ASCII check of added
-   lines; the diff scope; the floor run (quickstart.md).
+9. **Verification**. The whole suite; `traceability.md` naming a test for each
+   of the 100 delta scenarios and for PR #19's "The push child reaches its
+   remote", which R1 implements; `openspec validate --all --strict`; the ASCII
+   check of added lines; the diff scope; the floor run (quickstart.md).
 
 Code touched, and what stays. In `project`: `Refused` gains a code, path and
-reason; `git()` and `git_text()` (`:68-74`) keep their names and place and
-call the runner; `execute()` (`:157-162`) gains only an optional environment
-argument (R5); `discover()`, `repo_state()`, `cleanup_report()`,
-`print_clean_report()`, `require_unchanged_cleanup_state()`, `clean()`,
-`handoff()`, `snapshot()`, `check_rows()`, `print_report()`,
-`inspect_project()`, `update()`, `parser()` and `main()` change;
-`default_branch()` and `ancestor()` retire. The new block sits after
-`discover()` and before `repo_state()`, so the code above it, which features
-002 and 003 cite, moves only by what `Refused`, `git()` and `execute()` gain,
-and its names avoid those taken (`registry`, `profile`, `manifest`,
-`snapshot`, `probe`, `git`). Unchanged: `probe()` for
-non-Git children (`:863`, `:965`), `ask()`, `confirm()`, `choose()`,
-`show_plan()`, `manifest()` (the merge target reads through a bounded
-variant; `snapshot()` keeps `manifest()`), `new()` and its helpers, and
-`benches`.
+reason; `git()` and `git_text()` (`:68-74`) keep their names and place and call
+the runner; outside a subcommand (as `tests/test_project.py:878` calls
+`git_text()`) they run one probe with the 15 s budget and no handlers. The
+version and common-directory memos live in a per-`main()` context, reset on
+every call, and once the version check fails no Git child is spawned: `git()`
+returns a failed result, so `handoff()` and `update()` run none (FR-053).
+`execute()` (`:157-162`) gains only an optional environment argument (R5);
+`discover()`, `repo_state()`, `cleanup_report()`, `print_clean_report()`,
+`require_unchanged_cleanup_state()`, `clean()`, `handoff()`, `snapshot()`,
+`check_rows()`, `print_report()`, `inspect_project()`, `update()`, `parser()`
+and `main()` change; `default_branch()` and `ancestor()` retire. The new block
+sits after `discover()` and before `repo_state()`, so the code above it, which
+features 002 and 003 cite, moves only by what `Refused`, `git()` and
+`execute()` gain, and its names avoid those taken (`registry`, `profile`,
+`manifest`, `snapshot`, `probe`, `git`). Unchanged: `probe()` for non-Git
+children (`:863`, `:965`), `ask()`, `confirm()`, `choose()`, `manifest()` (the
+merge target reads through a bounded variant; `snapshot()` keeps `manifest()`),
+`new()` and its helpers, and `benches`. `show_plan()` stays as it is for `new`
+and `update`; `clean`'s push and delete-branch print `Working directory:` and
+their command through the path-escaping printer, so a root holding a Cc, Cf, Zl
+or Zp code point prints in the `$'...'` form (FR-041, SC-010).
 
 ## Citations
 
@@ -139,7 +160,11 @@ for `project`, `tests/` and `README.md`:
   6) is 92 at `961c405`, which PR #17 brought to 96 tests.
 - One citation is off at its source: D8's `project:401` names the line two
   above the `no-merge-target` message, which is `da33d92:403`, now
-  `project:551`.
+  `project:551`; PR #19 corrects D8 to `project:403`.
+- Packet citations (`BA:N`) are at `da33d92`, the proposal's key; research.md
+  R12 names that commit beside the packet's full path.
+
+Table rows may exceed 79 columns, as in features 002 and 003.
 
 ## Technical Context
 
@@ -161,7 +186,9 @@ helpers.
 **Testing**: `python3 -m unittest discover -s tests -v`, on disposable
 repositories, with the counting wrapper, the fake Gits and the launcher
 (R10). At `aadd709`, 96 tests ran OK in 17.5 s in `py-bench` (the plan
-research measured 48 to 52 s on another host).
+research measured 48 to 52 s on another host; the harness spike measured
+120.3 s at load 126 to 136, and 91.4 s for its copy of `project` with every
+CLI run through the launcher).
 
 **Target Platform**: Linux and macOS, at a terminal and in scripts.
 Non-UTF-8 path scenarios run on Linux only.
@@ -179,10 +206,11 @@ removal spawns at 23.6 s with 26.4 s left, and 256 report rows take 19.9 s.
 **Constraints**: local evidence only and no network (the pins, R1); ASCII in
 all added text; no flag outside `clean`, no configurable limit, and no time
 scale read from the environment, a flag or a file (R10); Python 3.10
-compatibility (`start_new_session=True`, never `process_group=0` or
-`preexec_fn`; daemon threads, never a `concurrent.futures` pool; C4); one
-executable file; every existing test passing unchanged but one (R15); the
-four CI jobs and the floor job green (SC-012).
+compatibility in `project` (`start_new_session=True`, never `process_group=0`
+or `preexec_fn`; daemon threads, never a `concurrent.futures` pool; C4; the
+tests' pty helper may use `preexec_fn` for `TIOCSCTTY`); one executable file;
+every existing test passing unchanged but one (R15); the four CI jobs and the
+floor job green (SC-012).
 
 **Scale/Scope**: `clean` rebuilt in three modes; `status`, `doctor` and
 `update` moved onto the evidence model; 67 FRs and 100 delta scenarios (65,
@@ -197,15 +225,16 @@ tests of the parsers, ladder, gates, digest, escaping and exit table.
 | status-bound fixture | 4,097 untracked files: 4.3 s to create |
 | partial-deletion fixture | about 8,000 tracked files, one commit per test class (20,000 took 20.2 s to create and commit) |
 | caps | never scaled: 128 and 256 rows, 16 targets, 64 and 4,096 records run at their real sizes |
-| time | every timing constant in one table, shortened together by the launcher; timing tests assert ratios and ordering, never wall-clock values |
+| time | every timing constant in one table, read at call time and replaced by the launcher; each time-bound test names its own factor or table (R-29): about 0.03 to 0.05 for the ceiling and deadline tests, with no Python wrapper, and the `sh` wrapper or the real table for counting tests; timing tests assert ratios and ordering, the SIGTERM-to-SIGKILL gap at 0.9 grace or more, never wall-clock values |
 | one test | under `run_cli`'s 20 s timeout |
 | whole suite | under 8 minutes in the bench, under 6 minutes per CI job |
 
 **CI shape** (R11): the four existing jobs (`ubuntu-latest` and
 `macos-latest`, Python 3.10 and 3.12) run the whole suite unchanged; one new
-job, `git-floor`, on `ubuntu-latest` with Python 3.10, builds Git 2.36.6
-from kernel.org's tarball (sha256 checked), caches it by version and runner
-OS, puts it first on PATH, checks `git --version`, and runs
+job, `git-floor`, on `ubuntu-latest` with Python 3.10, checks out, sets up
+Python and installs `requirements.txt` as the four jobs do, then builds Git
+2.36.6 from kernel.org's tarball (sha256 checked), caches it by version and
+runner OS, puts it first on PATH, checks `git --version`, and runs
 `-k test_clean_ -k test_status_ -k test_doctor_`. At `961c405` that
 selection ran 15 tests, OK, in 7.7 s on task 2.2's build.
 
@@ -225,8 +254,9 @@ constitution gates. What governs instead: the ratified change
 never rebases, no work outside this worktree). Pre-research: pass, nothing to
 evaluate. Post-design: pass; the Phase 1 artifacts cite the design and depart
 from its text only where research.md records why: the push-child exception
-(R1, awaiting Brett Heap's word on PR #19) and the lead's rulings R-26 to
-R-28 (R10, R8, R1).
+(R1, awaiting Brett Heap's word on PR #19), the lead's rulings R-26 to R-31
+(R10, R8, R1, R10, R14, R10), D1's handler span (R4) and D2's `waitpid`
+wording (R14).
 
 ## Project Structure
 
@@ -275,8 +305,24 @@ no Speckit plan markers, and feature 002's plan edited none.
   review fixes) for Brett Heap's word; if he rules a follow-up change
   instead, only the push child's treatment moves (R1). The delete-branch
   child carries the pins either way (R5).
-- **Scenario count**: PR #19 adds scenarios to the change if it lands; each
-  then needs its test in `traceability.md`.
+- **Scenario count**: PR #19 adds one scenario, "The push child reaches its
+  remote"; its test is written whether or not PR #19 has landed, and
+  `traceability.md` names it (slice 9).
+- **macOS timing headroom (plan review U1, unverified)**: R-29's factors
+  were measured on Linux only. The harness spike, at load 124 to 134 on 32
+  cores, counted spurious timeouts in 5 runs per child budget: bare `git`
+  1/5 at 0.025 s and 0.05 s and 0/5 at 0.1 s, 0.25 s and 0.5 s; the `sh`
+  wrapper 5/5 at 0.1 s and below and 0/5 at 0.25 s and 0.5 s; the Python
+  wrapper 5/5 up to 0.25 s and 3/5 at 0.5 s. At the factors R-29 names for
+  the ceiling and deadline tests (about 0.03 to 0.05) the probe budget is
+  0.15 to 0.25 s. The plan review measured real Git children at 10 to 20 ms
+  median and 50 to 119 ms at worst on a loaded host. `macos-latest` was not
+  measured, so a time-bound test there may time out a real probe. Not
+  resolved here.
+- **`TIOCSCTTY` on macOS (R-31)**: the push-child terminal tests need the
+  pty as the controlling terminal; `fcntl.ioctl(0, termios.TIOCSCTTY, 0)`
+  after `setsid` was proven on Linux only, and is untested on the
+  `macos-latest` jobs: a CI risk for tasks to state.
 - **Existing tests that guard the switch**: `tests/test_project.py:736`
   asserts the exact set of doctor error rows, `:586` reads `status` of a
   linked worktree and expects that worktree's branch, and `:916` keys rows by

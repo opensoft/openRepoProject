@@ -33,13 +33,16 @@ python3 -m unittest discover -s tests -v -k test_status_ -k test_doctor_
 Expected: every test passes; at `961c405` there are 96, and all but
 `test_clean_revalidates_a_worktree_after_confirmation` pass unchanged
 (research.md R15). Test names start `test_clean_`, `test_status_`,
-`test_doctor_` or `test_update_` followed by the delta scenario's title.
+`test_doctor_` or `test_update_` followed by the delta scenario's title; an
+evidence-model scenario that names no subcommand uses `test_status_`
+(research.md R11).
 Skips, each printing its reason: non-UTF-8 path tests on macOS, permission
 tests when run as root, and "The sixteenth scrubbed name on Git 2.36" unless
 the `git` on PATH is 2.36 to 2.39. Time-bound tests run through
-`tests/launch_project.py`, which loads `project`, replaces its timing table
-and calls `main()` in a child process (research.md R10); nothing in the
-environment scales `project`'s time.
+`tests/launch_project.py`, which loads `project`, replaces entries of its
+timing table with the factor or values each test names, and calls `main()`
+in a child process (research.md R10); nothing in the environment scales
+`project`'s time.
 
 ## The Git 2.36 floor run
 
@@ -47,7 +50,7 @@ The CI job `git-floor` does this with a cached build (research.md R11). By
 hand, in a scratch directory outside the repository:
 
 ```bash
-F=$(mktemp -d); cd "$F"
+REPO=$PWD; F=$(mktemp -d); cd "$F"
 U=https://mirrors.edge.kernel.org/pub/software/scm/git
 SUM=3a54356dd0a6b23d7d0742952d5c86958ad8f797cbe41bd1952bc83ec429ea94
 curl -fsSLO "$U/git-2.36.6.tar.xz"
@@ -55,7 +58,7 @@ echo "$SUM  git-2.36.6.tar.xz" | sha256sum -c
 tar -xJf git-2.36.6.tar.xz && cd git-2.36.6
 make -j"$(nproc)" NO_GETTEXT=1 NO_TCLTK=1 NO_PERL=1 NO_PYTHON=1 \
     NO_CURL=1 NO_OPENSSL=1 prefix="$F/install" install >"$F/build.log"
-cd - >/dev/null
+cd "$REPO"
 PATH="$F/install/bin:$PATH" git --version
 PATH="$F/install/bin:$PATH" python3 -m unittest discover -s tests -v \
     -k test_clean_ -k test_status_ -k test_doctor_
@@ -107,7 +110,7 @@ and `locked-worktree`. Rebuild the fixture (a new `T`) before each story.
 
 | Run | Expected |
 | --- | --- |
-| `p clean "$R" --all-safe` | "D18 preview layout": `Selected (3):` with `$W/a`, `$W/b`, `$W/c`; `Excluded (6):` grouped by reason (`main-worktree`, `dirty`, `ignored-local-files` with `1 ignored; first: x.cache`, `locked-worktree`, `pushed-unmerged`, `unstarted-branch`), each with "D18 next steps"; "D18 residual-window line"; `exit=0`; nothing changes |
+| `p clean "$R" --all-safe` | "D18 preview layout": `Selected (3):` with `$W/a`, `$W/b`, `$W/c`; `Excluded (6):` grouped by reason in gate order, classes in ladder order (`main-worktree`, `locked-worktree`, `dirty`, `ignored-local-files` with `1 ignored; first: x.cache`, `pushed-unmerged`, `unstarted-branch`), each with "D18 next steps"; "D18 residual-window line"; `exit=0`; nothing changes |
 | `p clean "$R" --all-safe --json \| python3 -m json.tool` | one document, `mode: "all-safe"`, `apply_allowed: true`, three `selected`, a `plan_digest` |
 | `p clean "$R" --all-safe --apply`, answering `y` | "D18 question" `Remove 3 worktrees, keeping 3 branches? [yes/N]`; `cancelled`, `exit=2`; nothing removed |
 | the same, answering `yes` | `$W/a`, `$W/b`, `$W/c` removed in that order; "D18 success line" naming `a, b, c`; `exit=0`; `git -C "$R" branch --list a b c` lists all three |
@@ -164,7 +167,7 @@ hooks between steps and are covered by their tests.
 
 | Run | Expected |
 | --- | --- |
-| `mkdir "$W/c/sub" && echo s > "$W/c/sub/s.txt" && git -C "$W/c" add sub && git -C "$W/c" commit -qm sub && git -C "$R" merge -q --no-ff -m m c && chmod a-w "$W/c/sub"`, then `p clean "$R" --all-safe --apply --yes --json` | `$W/c` `failed`, `git-failed`, `exit_status: 255`, `notes: ["orphaned-directory"]`, reconciliation `registry_entry_present: false`, `path_present: true`; `exit=255`; the directory stays (`chmod -R u+w "$W/c"` before cleaning up) |
+| `mkdir "$W/c/sub" && echo s > "$W/c/sub/s.txt" && git -C "$W/c" add sub && git -C "$W/c" commit -qm sub && git -C "$W/c" push -q && git -C "$R" merge -q --no-ff -m m c && chmod a-w "$W/c/sub"`, then `p clean "$R" --all-safe --apply --yes --json` | `$W/a`, `$W/b` `removed`; then `$W/c` `failed`, `git-failed`, `exit_status: 255`, `notes: ["orphaned-directory"]`, reconciliation `registry_entry_present: false`, `path_present: true`; `exit=255`; the directory stays (`chmod -R u+w "$W/c"` before cleaning up) |
 | Ctrl-C at the question | `Cancelled.`, `exit=130`, nothing removed |
 | Ctrl-D at the question | `Cancelled.`, `exit=130` |
 
@@ -183,10 +186,10 @@ p clean "$R" --all-safe
 ```
 
 Expected: `report complete` with `worktree_rows: 256` and the budget values
-of the contract; then a preview selecting 16 of the `m` rows with the "D18
-deferral line" for four more (and `a`, `b`, `c` among the deferred, by
-path order), `exit=0`. `--apply --yes` removes the first 16; a second run
-removes the rest. Row caps, the deadline and the ignored-file bounds are
+of the contract; then a preview selecting 16 rows (`a`, `b`, `c` and `m01`
+to `m13`, by path order) with the "D18 deferral line" for the other seven
+(`m14` to `m20`), `exit=0`. `--apply --yes` removes those 16; a second run
+removes the seven. Row caps, the deadline and the ignored-file bounds are
 covered by "Row cap and planning failures", "Deadline expiry mid-batch" and
 "Ignored-file bound".
 
@@ -220,7 +223,7 @@ of the apply parses as exactly one JSON document.
 mkdir -p "$T/old"
 cat > "$T/old/git" <<FAKE
 #!/bin/sh
-[ "\$1" = --version ] && { echo "git version 2.35.0"; exit 0; }
+case " \$* " in *" --version "*) echo "git version 2.35.0"; exit 0;; esac
 exec $(command -v git) "\$@"
 FAKE
 chmod +x "$T/old/git"
