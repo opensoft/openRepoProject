@@ -713,7 +713,8 @@ Headers are quoted verbatim, one per line; ADDED headers are proposed text.
 
 ## Decisions Taken by This Proposal
 
-Each is a proposal decision, open to ratification; OQ numbers are the lane's
+Each is a proposal decision, ratified with the merge of PR #11; the departures
+from packet decisions are ratified as recorded. OQ numbers are the lane's
 decision list. Packet open decisions taken, each citing the packet text that
 leaves it open:
 
@@ -772,15 +773,15 @@ Departures from packet decisions, each citing the decision departed from:
   it set every command on 2.36 fails closed. Applying the rule would raise the
   floor to 2.40; the lead kept 2.36 and added the name to the scrub, sixteen
   names then and seventeen with R-25's `GIT_ALLOW_PROTOCOL`, because raising
-  would exclude Debian 12's Git 2.39 for a one-name difference. Open to Brett
-  Heap at ratification.
+  would exclude Debian 12's Git 2.39 for a one-name difference. Ratified with
+  the merge of PR #11.
 - **OQ-24, JSON compatibility** (`BA:949-953`; `HO:210`): one
   `schema_version: 1` envelope for every `clean --json`, not an "additive
   superset" (R7). Baseline keys keep their names and types, the scope the
   packet's phrase meant; `root`, the meaning of `ignored_files` and a `null`
   `present` are the listed baseline changes.
 - **OQ-5, the target cap's refusal** (`BA:96-101`, `BA:1004`,
-  `BA:1367-1371`), open to Brett Heap's ratification: retired for the
+  `BA:1367-1371`), ratified with the merge of PR #11: retired for the
   deferral (What Changes), the council's survey having found about 20 such
   rows in Opensoft-Tenant. Rows an index gate then excludes keep their
   places, so 16 of them ahead of a backlog stop it until handled by hand.

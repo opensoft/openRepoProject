@@ -103,8 +103,8 @@ duplicate them, and nothing here is an implementation step.
   before the handoff. Done: Git 2.36.6, 2.40.4 and 2.43.0 compared on 75
   captures; rows 1 to 6 identical; row 7's extra variable,
   `GIT_INTERNAL_SUPER_PREFIX`, scrubbed under R-21, the floor kept at 2.36
-  rather than raised to 2.40 (a departure listed in `proposal.md`, open to
-  Brett Heap at ratification); results posted on PR #11 on 2026-10-09.
+  rather than raised to 2.40 (a departure listed in `proposal.md`, ratified with
+  the merge of PR #11); results posted on PR #11 on 2026-10-09.
 - [ ] 2.3 Dependent change noted: `add-project-overview` (issue #10, PR #12)
   depends on this change and reconciles its deltas against this change's final
   requirement headers after this change lands, then is ratified after it;

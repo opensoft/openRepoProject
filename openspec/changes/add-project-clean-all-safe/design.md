@@ -588,8 +588,8 @@ of a backlog, stop it until a person handles them; when every one of the 16 is
 revalidates afresh, draining 16 at a time. `plan_digest` covers only `selected`,
 so a deferred row's change leaves a preview valid, and the report mode defers
 alike. The `target-cap` refusal (BA:96-101, BA:1004, BA:1367-1371) is retired, a
-departure open to Brett Heap; the code survives only as the overview's limiting
-gate.
+departure ratified with the merge of PR #11; the code survives only as the
+overview's limiting gate.
 
 ### D13. Single-mode completeness (V4)
 
@@ -725,7 +725,7 @@ change before the handoff. Task 2.2 ran it on Git 2.36.6, 2.40.4 and 2.43.0
 table records. By the rule above the floor would rise to 2.40; R-21 keeps 2.36
 and adds the one name to the scrub, because raising the floor would exclude
 Debian 12's Git 2.39 for a one-name difference. That departs from the rule and
-is open to Brett Heap at ratification (proposal, Decisions). Feature 004 adds a
+was ratified with the merge of PR #11 (proposal, Decisions). Feature 004 adds a
 CI job that builds the floor version, cached, and runs the `clean`, `status` and
 `doctor` tests with it first on PATH.
 
@@ -897,7 +897,7 @@ model; D-D under push; D-R under maintenance; R-22 under revalidation.
   probes to 16 (D12); the human report says why the deferred rows will not drain
   when every one of the 16 rows past the cap is `contains-submodule` (D18); 16
   rows that any index gate excludes ahead of a backlog stall it alike; V5's
-  caveat is before Brett Heap.
+  caveat was ratified with the deferral at the merge of PR #11.
 - [Rows of 100,000-entry indexes: the fit of BA:729-735 would give 64 rows, 16
   targets and a report cap of 128, since the plan term alone for 128 such rows
   is 46.6 s] -> The caps measured at 10,000 entries stand; a plan over such rows
@@ -994,16 +994,14 @@ downstream.
 ## Open Questions
 
 Each is before Brett Heap with a recommendation; the deltas implement the
-reading stated, and a different ruling edits the deltas before ratification.
+reading stated, and a different ruling edits the deltas before the archive.
 
 - Squash-merged branches never put their tip into the target's ancestry
   (BA:195-199). Recommendation: a local patch-equivalence proof (`git cherry` or
   patch IDs against the target) as a follow-on change, not in the MVP.
-- The V5 deferral (D12) replaces the packet's `target-cap` refusal with 16
-  removals per run and `deferred-target-cap` for the rest: a departure from a
-  packet decision, on the council's survey (about 20 eligible rows in
-  Opensoft-Tenant), standing only on Brett Heap's ratification.
 
 Ruled on 2026-10-09: a merged worktree whose remote branch was deleted is
 `merged-removable`, Brett Heap having ruled that a local ancestry proof
-outranks `remote-gone` for worktree rows (D6; `proposal.md` Decisions).
+outranks `remote-gone` for worktree rows (D6; `proposal.md` Decisions). The V5
+deferral (D12) and the other departures were ratified with the merge of PR #11
+(Brett Heap: "ratify, merge #11 and run the runbook").
