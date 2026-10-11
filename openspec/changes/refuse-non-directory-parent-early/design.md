@@ -181,13 +181,13 @@ rewrapped to the README's line width:
   nothing." becomes:
 
   ```
-  then prints the plan of the path its answer chose and writes nothing, unless the parent is blocked by a non-directory, which is refused.
+  then prints the plan of the path its answer chose, unless a refusal comes first, and writes nothing.
   ```
 
 - Lines 95-96, after "Existing destinations refuse.", insert:
 
   ```
-  A parent blocked by a non-directory is refused before the plan and the `yes` confirmation, with exit 2, `--dry-run` included. `--dry-run` reads no permissions: a parent that is, or lies below, a directory it cannot write still passes the dry run and fails at creation, as before.
+  A parent blocked by a non-directory is refused before the plan and the `yes` confirmation, with exit 2, `--dry-run` included. For a single repository, `--dry-run` reads no permissions: a parent that is a directory the person cannot write, or a missing parent whose nearest existing path above it is such a directory, still passes the dry run and fails at creation, as before.
   ```
 
 Lines 53-55 are unchanged. The ASCII check covers the changed strings and the
@@ -296,11 +296,12 @@ alternative pin target that carries the early refusal, as archived D5 did. If
 - The shape branch's refusal, "Shape creation requires an existing --into
   parent directory." (`project:371-372`), already early and true.
 - The backstop: `parent.mkdir` (`project:398`) and `main()`'s handlers. A
-  parent changed after the head read, or a missing parent below a directory
-  the person cannot write, on a read-only mount or on a full disk, is refused
-  there with the raw errno, exit 2; an existing parent the person cannot write
-  passes `parent.mkdir` and the generator's own error and status pass through
-  (N4). Rewording that backstop is a possible follow-up.
+  parent changed after the head read, or a missing parent whose nearest
+  existing path above it is a directory the person cannot write, on a
+  read-only mount or on a full disk, is refused there with the raw errno, exit
+  2; an existing parent the person cannot write passes `parent.mkdir` and the
+  generator's own error and status pass through (N4). Rewording that backstop
+  is a possible follow-up.
 - No permission is read; no line is added under entry 2 (N6).
 - The archived N1 residuals (the 3.13 and later symbolic-link loop, the 3.14
   unsearchable ancestor): versions CI does not run; by that record they read

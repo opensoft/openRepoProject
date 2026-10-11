@@ -35,11 +35,12 @@ that is a directory. In either case it SHALL state that nothing was created.
 A missing parent whose nearest existing path above it is a directory SHALL NOT
 be refused by this step. The shape path SHALL keep its own refusal of a parent
 that is not an existing directory. The step SHALL read no permission:
-`--dry-run` reads no permissions, and a parent that is, or lies below, a
-directory the person cannot write still passes the dry run and fails at
-creation, as before: below such a directory the creation of the parent is
-refused with the system's error and exit status 2, and in it the generator's
-own error and exit status pass through.
+`--dry-run` reads no permissions, and a parent that is a directory the person
+cannot write, or a missing parent whose nearest existing path above it is such
+a directory, still passes the dry run and fails at creation, as before: the
+creation of such a missing parent is refused with the system's error and exit
+status 2, and in such a directory the generator's own error and exit status
+pass through.
 
 #### Scenario: A flag-chosen single repository with a parent that is not a directory
 - **WHEN** the single repository is chosen by flag, such as `--type`, or by an invocation that is not asked the creation question, and the parent, given by `--into`, by the positional parent, by `PROJECTS_DIR` or as the default projects directory, exists but is not a directory, such as a regular file, a symbolic link to one or a FIFO
@@ -67,7 +68,7 @@ own error and exit status pass through.
 
 #### Scenario: A single repository with a parent that is not blocked
 - **WHEN** the single-repository path is chosen and the parent is an existing directory, or does not exist and the nearest existing path above it is a directory, including a dangling symbolic link to such a path
-- **THEN** the path continues with its generator selection, plan and `yes` confirmation as before; a dry run prints the plan and exits with status 0, and a confirmed creation creates a missing parent
+- **THEN** this step refuses nothing, and the path continues with its generator selection, plan and `yes` confirmation as before
 
 #### Scenario: A parent the person cannot write still fails only at creation
 - **WHEN** the parent does not exist, the nearest existing path above it is a directory the person cannot write, and the person is not the superuser
@@ -150,7 +151,8 @@ is chosen: an invalid name, a positional parent together with `--into`, and an
 existing destination. For an invocation that will be asked the question, the
 refusal of `--workflow` without `setup-openspeckit` on PATH SHALL also come
 before the question. Every invocation that is not asked the question SHALL keep
-its existing order of refusals. The question SHALL come before the chosen
+its existing order of refusals, except that a parent blocked by a non-directory
+is refused before generator selection. The question SHALL come before the chosen
 path's own steps, prompts and confirmation.
 
 #### Scenario: A person at the terminal without a choosing flag
@@ -217,8 +219,9 @@ question SHALL print `Cancelled.` and exit with status 130.
 
 The question SHALL create nothing. A Triad answer SHALL continue into the Triad
 path and a single-repository answer into the existing single-repository path,
-with its generator selection, plan and `yes` confirmation; a creation that went
-through the question SHALL be followed by no creation advisory.
+with its generator selection, plan and `yes` confirmation where the parent is
+not blocked by a non-directory; a creation that went through the question SHALL
+be followed by no creation advisory.
 
 #### Scenario: The question's entries
 - **WHEN** the creation question is asked

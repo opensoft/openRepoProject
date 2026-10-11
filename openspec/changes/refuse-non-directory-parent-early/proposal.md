@@ -138,17 +138,19 @@ denied: 'PARENT'`, exit 2; an existing parent of mode 555 passes
     `--dry-run`. For `FILE`: `REFUSED: The parent FILE exists but is not a
     directory; choose a parent that is a directory. Nothing was created.`
 - **The permission boundary is stated, not checked**: `--dry-run` reads no
-  permissions; a parent that is, or lies below, a directory it cannot write
-  still passes the dry run and fails at creation, as before (below such a
-  directory, `parent.mkdir` is refused with the system's error; in it, the
-  generator's own error and exit status pass through).
+  permissions; a parent that is a directory the person cannot write, or a
+  missing parent whose nearest existing path above it is such a directory,
+  still passes the dry run and fails at creation, as before (for such a missing
+  parent, `parent.mkdir` is refused with the system's error; in such a
+  directory, the generator's own error and exit status pass through).
 - **The late refusal stays as the backstop**: `parent.mkdir` (`project:398`)
   and `main()`'s `OSError` handler are unchanged. A parent changed after the
-  head read, or a missing parent below a directory that cannot be written, on
-  a read-only mount or on a full disk, is refused there with the raw errno and
-  exit 2; an existing parent that cannot be written passes `parent.mkdir`, and
-  the generator's own error and exit status pass through. Only the early
-  refusal says `Nothing was created.`; nothing is added to the backstop.
+  head read, or a missing parent whose nearest existing path above it is a
+  directory that cannot be written, on a read-only mount or on a full disk, is
+  refused there with the raw errno and exit 2; an existing parent that cannot
+  be written passes `parent.mkdir`, and the generator's own error and exit
+  status pass through. Only the early refusal says `Nothing was created.`;
+  nothing is added to the backstop.
 - **`README.md`** (texts fixed by the design, checked by a grep): lines 57-64
   say that a parent blocked by a non-directory blocks both answers, that
   neither answer can create anything in such a parent, and that it is refused
@@ -159,7 +161,8 @@ denied: 'PARENT'`, exit 2; an existing parent of mode 555 passes
   question" (today "those `project new` had before the question existed",
   which this refusal makes false); lines 79-82 ("a dry run at a terminal asks
   too, then prints the plan of the path its answer chose and writes nothing")
-  gain "unless the parent is blocked by a non-directory, which is refused".
+  gain "unless a refusal comes first", after "chose" and before "and writes
+  nothing", as the delta's "A dry run asks too" says.
   Lines 53-55 need nothing.
 
 ### Alternatives
@@ -218,11 +221,13 @@ The ADDED scenarios take a stem distinct from the existing titles at
   refusal precedes its plan", which also covers the precedent's Triad dry-run
   refusal without changing behaviour.
 - MODIFIED: "Creation question is asked only of a person choosing at the
-  terminal" (`spec.md:70-138`): only "A dry run asks too" (`:122-125`) and
-  "The refusal order of an invocation not asked the question is unchanged"
-  (`:136-138`).
+  terminal" (`spec.md:70-138`): only the sentence "Every invocation that is
+  not asked the question SHALL keep its existing order of refusals" (`:94-95`),
+  "A dry run asks too" (`:122-125`) and "The refusal order of an invocation not
+  asked the question is unchanged" (`:136-138`).
 - MODIFIED: "Creation question offers the Triad first" (`spec.md:140-198`):
-  only "Answers that take a single repository" (`:174-177`).
+  only the continuation clause of its body (`:160-163`) and "Answers that take
+  a single repository" (`:174-177`).
 - MODIFIED: "Known Triad obstacles are named before the question and refused
   on a Triad answer" (`spec.md:200-263`). It owns the question's one read and
   its sentences: the parent read gains the nearest existing path above a
@@ -247,25 +252,28 @@ by a non-directory, each MODIFIED:
 - Same requirement, "The refusal order of an invocation not asked the
   question is unchanged" (`:136-138`): such a parent is refused before the
   generator that does not match.
+- Same requirement, its body (`:94-95`, "keep its existing order of
+  refusals"): such a parent is refused before generator selection and the late
+  `--workflow` check.
 - "Creation question offers the Triad first", "Answers that take a single
   repository" (`:174-177`): the path no longer continues with its generator
   selection, plan and `yes` confirmation.
+- Same requirement, its body (`:160-163`): the same continuation clause, "with
+  its generator selection, plan and `yes` confirmation".
 - "Known Triad obstacles are named before the question and refused on a
   Triad answer": the parent read (`:205-208`), which no longer describes the
   whole read, and "A single-repository answer is unaffected" (`:256-259`), for
   the same continuation clause.
 
 Kept, true under their own wording, since the refusal is a step of the
-single-repository path that the ADDED requirement owns: `:94-95` ("keep its
-existing order of refusals"), `:103-106` ("its existing prompts and
-refusals"), `:117-120` ("exactly as it would without this requirement"),
-`:160-163` (the answer continues into that path, "with its generator
-selection, plan and `yes` confirmation" naming the path), `:223-225` (the
-answer is unaffected by the question's facts, since the head reads afresh and
-the answer ends as the flag path ends; the head refusal is not one of the
-checks that predict openRepoShape's refusals), and "The parent directory is
-missing" (`:236-238`), "A Triad answer with a known obstacle" (`:245-249`) and
-"A dry run with a known obstacle" (`:251-254`), true with sentence (b).
+single-repository path that the ADDED requirement owns: `:103-106` ("its
+existing prompts and refusals"), `:117-120` ("exactly as it would without this
+requirement"), `:223-225` (the answer is unaffected by the question's facts,
+since the head reads afresh and the answer ends as the flag path ends; the
+head refusal is not one of the checks that predict openRepoShape's refusals),
+and "The parent directory is missing" (`:236-238`), "A Triad answer with a
+known obstacle" (`:245-249`) and "A dry run with a known obstacle"
+(`:251-254`), true with sentence (b).
 
 ## Impact
 
