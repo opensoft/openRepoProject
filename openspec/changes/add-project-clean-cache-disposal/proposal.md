@@ -360,9 +360,10 @@ also names the delta text it is written on.
   text (`c462d87`, spec text equal to the `5ce23d7` the rulings name), and PR
   #19 is a dependency: if it merges, change 1's text equals both blocks' bases;
   if it closes unmerged, or changes either requirement again, the blocks are
-  rewritten on the text of that day before this change is ratified. `validate --strict` passes while change 1 is
-  unarchived; the archive is the gate (it fails "MODIFIED failed ... - not
-  found" until change 1 is archived).
+  rewritten on the text of that day before this change is ratified.
+  `validate --strict` passes while change 1 is unarchived; the archive is the
+  gate (it fails "MODIFIED failed ... - not found" until change 1 is
+  archived).
 - **Archive order (L-5).** This change archives after change 1's archive,
   which follows feature 004's merge, and after PR #19 has landed or closed.
   `add-project-clean-branch-retirement` (#23) archives after this change and
@@ -375,9 +376,9 @@ also names the delta text it is written on.
   (`004-project-clean-all-safe`): its removal sequence, runner, parsers, ladder
   function and envelope. It never alters feature 004's or feature 005's order
   and does not wait for feature 005, but the overview question under Open
-  Questions is settled before its realization merges. Whichever realization
-  merges second merges `main` in; never rebase, since the organisation ruleset
-  refuses force pushes.
+  Questions is settled before its Speckit handoff (`tasks.md` 2.2). Whichever
+  realization merges second merges `main` in; never rebase, since the
+  organisation ruleset refuses force pushes.
 - **Change 2.** This change adds no delta to `project-overview`. Its ladder
   change reaches the overview only through evidence the overview does not
   collect, which runs into APO/ov:381-386 (Open Questions).
@@ -405,10 +406,11 @@ each citing the packet or change text that left it open:
 
 - **L-1, the base text.** Drafted on change 1 and change 2 at `961c405`, and
   "Clean bounds its Git work and reports omitted work" on PR #19 (Dependencies
-  and Sequencing). The six requirements lane openRepoProject-2 said PR #19 does
-  not move are the six the three extensions modify besides the bounds; "Cleanup
-  revalidates destructive actions", which CD-4 adds, is not among them and PR #19
-  rewords its last clause, so its block is written on PR #19's text by the same
+  and Sequencing). This proposal reads the six requirements that lane
+  openRepoProject-2 said PR #19 does not move as the six that the three
+  extensions' ruled lists modify besides the bounds; "Cleanup revalidates
+  destructive actions", which CD-4 adds, is not among them and PR #19 rewords
+  its last clause, so its block is written on PR #19's text by the same
   logic. PR #19's head moved from the ruled `5ce23d7` to `c462d87`
   after the rulings; `git diff 5ce23d7 c462d87` touches only its `design.md`
   and `tasks.md`, so the spec text the block is written on is the ruled one.

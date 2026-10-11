@@ -246,8 +246,8 @@ probe already established its state.
 `disposable` and `blocking` count Git records, which for a directory record is
 one `__pycache__` tree; they can exceed `ignored_files`, which change 1 caps at
 64. Both are 0 for a row with no ignored record and `null` whenever the
-enumeration did not finish, which is the `1789ad9` thread APO proposal.md:804-809
-hands to this change: unknown is never printed as 0.
+enumeration did not finish, which is the `1789ad9` thread that APO
+proposal.md:804-809 hands to this change: unknown is never printed as 0.
 
 `status` and `doctor` keep their evidence; doctor classifies no worktree.
 `project overview` feeds the same ladder from evidence that has no cache proof,
@@ -263,8 +263,8 @@ unaffected either way.
 
 Descriptor chains. Every directory is reached from the worktree root by a chain
 of `os.open(component, O_RDONLY | O_DIRECTORY | O_NOFOLLOW | O_CLOEXEC,
-dir_fd=parent)`, each opened descriptor checked by `os.fstat` against its planned
-`dev` and `ino`. The root itself is opened by its recorded path with
+dir_fd=parent)`, each opened descriptor checked by `os.fstat` against its
+planned `dev` and `ino`. The root itself is opened by its recorded path with
 `O_DIRECTORY | O_NOFOLLOW` and checked against the target's worktree identity;
 the root's own ancestors are change 1's concern, checked at revalidation through
 the realpath and identity comparison. The stage handles one listed cache at a
@@ -298,14 +298,14 @@ deletion and no child process is used.
 ### D8. The partial phase and the target's result
 
 After the first removal, any failure (an `OSError` from an unlink, a removal or
-a chain open, `ENOENT` included, since something else is changing the
-worktree), a call past its budget, or the removal floor reached ends the
-removals. The stage then rescans each listed cache: it opens the chain to the
-cache's parent as in D7 and `lstat`s the cache's name relative to it with
+a chain open, `ENOENT` included, since something else is changing the worktree),
+a call past its budget, or the removal floor reached ends the removals. The
+stage then rescans each listed cache: it opens the chain to the cache's parent
+as in D7 and `lstat`s the cache's name relative to it with
 `follow_symlinks=False`; absent is `removed: true`, present `removed: false`,
 and a chain that no longer opens, or a call past its budget, `removed: null`.
-Its `cache_disposal` is `partial` with `cache-partial`, the planned `entries` and
-the `entries_removed` counted as they succeeded.
+Its `cache_disposal` is `partial` with `cache-partial`, the planned `entries`
+and the `entries_removed` counted as they succeeded.
 
 | Stage outcome | `cache_disposal` | Target | Later targets | Exit (first matching row of change 1's table) |
 | --- | --- | --- | --- | --- |
