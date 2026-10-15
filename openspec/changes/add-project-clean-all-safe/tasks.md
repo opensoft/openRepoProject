@@ -37,10 +37,11 @@ duplicate them, and nothing here is an implementation step.
   five requirements and adds six (65 scenarios),
   `specs/project-clean-review-safety/spec.md` modifies two and adds one (18
   scenarios, the last added under R-22), and `specs/project-command/spec.md`
-  modifies two and adds one (17 scenarios, the last added under R-23), every
-  canonical scenario of each modified requirement kept; `design.md` holds D1 to
-  D20, mapping the packet's 35 validation scenarios to the deltas (D20);
-  verified by the scenario counts in the commit that adds them.
+  modifies two and adds one (18 scenarios, the last added under the push-child
+  exception), every canonical scenario of each modified requirement kept;
+  `design.md` holds D1 to D20, mapping the packet's 35 validation scenarios to
+  the deltas (D20); verified by the scenario counts in the commit that adds
+  them.
 - [x] 1.5 Validation passes: `openspec validate add-project-clean-all-safe
   --strict` reports the change valid, `openspec validate --all --strict` passes
   every item, and `openspec status --change add-project-clean-all-safe` shows
@@ -51,6 +52,11 @@ duplicate them, and nothing here is an implementation step.
   verified by that quote. No implementation starts before it. Done: his word to
   lane openRepoProject-2 on 2026-10-09, verbatim: "ratify, merge #11 and run the
   runbook".
+- [ ] 1.7 The push-child exception ratified by Brett Heap's word on the pull
+  request that amends this change, quoted with its link here, the `design.md`
+  Open Questions entry before him; verified by that quote. Feature 004 plans
+  under the exception, and a different ruling edits this amendment and that
+  plan. To fill when he rules: his words, verbatim, and the link to them.
 
 ## 2. Before the Speckit handoff
 
@@ -60,34 +66,35 @@ duplicate them, and nothing here is an implementation step.
   and 100,000 entries and about 1,000 branches; the removal of a 20,000-file
   worktree timed against the 5 s floor and the 300 s ceiling; drvfs measured the
   same way and recorded as a degraded case, never used for the fit; the fit of
-  BA:729-735 reapplied with the measured costs; and, for every repository under
-  the projects directories of this workstation, the rows per gate outcome beside
-  the timings, among them the rows excluded only for `reflog-unavailable`.
-  Verified by the numbers posted on PR #11 and summarised here; a cap the fit
-  rejects is lowered in the deltas before the handoff, otherwise the deltas'
-  caps stand as measured. Done: measured 2026-10-09 in the `py-bench` dev
-  container on WSL2 (Git 2.43.0, Python 3.12.3; fixtures on the container's
-  overlayfs, the real repositories on ext4), the cold cache by `sync` and
-  per-file eviction (`posix_fadvise`, the mechanism of `vmtouch -e`) confirmed
-  with `mincore`, since `drop_caches` is impossible in the container, and drvfs
-  not available, so unmeasured. Medians, warm / cold: the status probe 42-49 /
-  38-63 ms at 10,000 entries and 215-232 / 244-248 ms at 100,000; `for-each-ref`
-  at 1,000 branches 108-112 / 121 ms packed and 240 / 838 ms loose; the merged
-  set 17-48 ms; the 20,000-file removal 0.66 / 0.72 s, at worst 14.1 s under CPU
-  saturation (low load leaves 3.6 to 4.3 s under the 5 s floor, and the worst
-  case is 21 times under the 300 s ceiling). The fit of BA:729-735 rejects no
-  cap: at 128 rows and 16 targets the 16th removal spawns at 23.6 s with 26.4 s
-  left and the worst case ends at 24.3 s; 256 report rows take 19.9 s; and the
-  64 s run bound, the 15 s per child, `min(5 s, remaining)`, the 5 s floor and
-  the 300 s ceiling all hold. Two degraded cases are recorded as risks in
-  `design.md`, not as cap changes: rows of 100,000-entry indexes (the rule would
-  give 64 rows) and CPU saturation at load 165 (a 128-row plan takes 77 s); a
-  plan then goes incomplete, never unsafe. The survey covers 355 repositories,
-  296 resolving, with 561 rows, and selects 17; per gate: main-worktree 296,
-  locked-worktree 1, stale-worktree 7, dirty 25, ignored-local-files 102,
-  detached 11, unpublished 23, remote-gone 2 (unmerged), remote-ahead 5,
-  unpushed 1, pushed-unmerged 51, deferred-target-cap 4, contains-submodule 16,
-  and 0 for unsupported-path-bytes, registration-mismatch, protected-default,
+  BA:729-735 at da33d92 reapplied with the measured costs; and, for every
+  repository under the projects directories of this workstation, the rows per
+  gate outcome beside the timings, among them the rows excluded only for
+  `reflog-unavailable`. Verified by the numbers posted on PR #11 and summarised
+  here; a cap the fit rejects is lowered in the deltas before the handoff,
+  otherwise the deltas' caps stand as measured. Done: measured 2026-10-09 in the
+  `py-bench` dev container on WSL2 (Git 2.43.0, Python 3.12.3; fixtures on the
+  container's overlayfs, the real repositories on ext4), the cold cache by
+  `sync` and per-file eviction (`posix_fadvise`, the mechanism of `vmtouch -e`)
+  confirmed with `mincore`, since `drop_caches` is impossible in the container,
+  and drvfs not available, so unmeasured. Medians, warm / cold: the status probe
+  42-49 / 38-63 ms at 10,000 entries and 215-232 / 244-248 ms at 100,000;
+  `for-each-ref` at 1,000 branches 108-112 / 121 ms packed and 240 / 838 ms
+  loose; the merged set 17-48 ms; the 20,000-file removal 0.66 / 0.72 s, at
+  worst 14.1 s under CPU saturation (low load leaves 3.6 to 4.3 s under the 5 s
+  floor, and the worst case is 21 times under the 300 s ceiling). The fit of
+  BA:729-735 at da33d92 rejects no cap: at 128 rows and 16 targets the 16th
+  removal spawns at 23.6 s with 26.4 s left and the worst case ends at 24.3 s;
+  256 report rows take 19.9 s; and the 64 s run bound, the 15 s per child,
+  `min(5 s, remaining)`, the 5 s floor and the 300 s ceiling all hold. Two
+  degraded cases are recorded as risks in `design.md`, not as cap changes: rows
+  of 100,000-entry indexes (the rule would give 64 rows) and CPU saturation at
+  load 165 (a 128-row plan takes 77 s); a plan then goes incomplete, never
+  unsafe. The survey covers 355 repositories, 296 resolving, with 561 rows, and
+  selects 17; per gate: main-worktree 296, locked-worktree 1, stale-worktree 7,
+  dirty 25, ignored-local-files 102, detached 11, unpublished 23, remote-gone 2
+  (unmerged), remote-ahead 5, unpushed 1, pushed-unmerged 51,
+  deferred-target-cap 4, contains-submodule 16, and 0 for
+  unsupported-path-bytes, registration-mismatch, protected-default,
   inspection-error, review-required, diverged, merged-current,
   hidden-local-state, `unstarted-branch` and `reflog-unavailable` (all 37 rows
   that reach the reflog gate show a movement). In Opensoft-Tenant, the V5
@@ -103,8 +110,8 @@ duplicate them, and nothing here is an implementation step.
   before the handoff. Done: Git 2.36.6, 2.40.4 and 2.43.0 compared on 75
   captures; rows 1 to 6 identical; row 7's extra variable,
   `GIT_INTERNAL_SUPER_PREFIX`, scrubbed under R-21, the floor kept at 2.36
-  rather than raised to 2.40 (a departure listed in `proposal.md`, open to
-  Brett Heap at ratification); results posted on PR #11 on 2026-10-09.
+  rather than raised to 2.40 (a departure listed in `proposal.md`, ratified with
+  the merge of PR #11); results posted on PR #11 on 2026-10-09.
 - [ ] 2.3 Dependent change noted: `add-project-overview` (issue #10, PR #12)
   depends on this change and reconciles its deltas against this change's final
   requirement headers after this change lands, then is ratified after it;

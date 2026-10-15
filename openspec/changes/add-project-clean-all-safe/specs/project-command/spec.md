@@ -95,9 +95,11 @@ a repository with a Git older than 2.36 (`git-too-old`) or with a `git` that is
 missing, fails, times out or prints an unparseable version (`git-unavailable`);
 whether the subcommand then refuses or reports is its own requirement's rule.
 
-Environment: every Git child SHALL run in its own process group, with these
-seventeen variables removed from its environment, unconditionally and before any
-Git call, from a fixed list that is never queried from Git: the fifteen that
+Environment: every Git child but the push child of `clean --action push` SHALL
+run in its own process group, and every Git child SHALL have these seventeen
+variables removed from its environment, `GIT_ALLOW_PROTOCOL` excepted for the
+push child, unconditionally and before any Git call, from a fixed list that is
+never queried from Git: the fifteen that
 `git rev-parse --local-env-vars` prints on Git 2.40 and later
 (`GIT_ALTERNATE_OBJECT_DIRECTORIES`, `GIT_CONFIG`, `GIT_CONFIG_PARAMETERS`,
 `GIT_CONFIG_COUNT`, `GIT_OBJECT_DIRECTORY`, `GIT_DIR`, `GIT_WORK_TREE`,
@@ -111,15 +113,25 @@ would allow the fetch that the pins below refuse. Read-only probes SHALL also
 set `GIT_OPTIONAL_LOCKS=0`. Every status probe SHALL pass `-c
 core.untrackedCache=false -c core.fsmonitor=false`, which also override
 `GIT_CONFIG_GLOBAL` and `GIT_CONFIG_SYSTEM`. Every Git child, of every kind,
-SHALL also pass `-c protocol.allow=never -c protocol.file.allow=never -c
-protocol.ssh.allow=never -c protocol.git.allow=never -c
-protocol.http.allow=never -c protocol.https.allow=never -c
-protocol.ext.allow=never`, because Git 2.43 has no switch against lazy fetches,
-a probe in a partial (promisor) clone could otherwise fetch a missing object
-from the network, and `protocol.allow` is only the default policy, which a
-`protocol.<name>.allow` setting in the repository's configuration overrides and
-a `-c` on the command line outranks; with the pins the fetch fails locally, the
-probe fails, and its row is `inspection-error`, never a network call.
+except the push child of `clean --action push`, SHALL also pass `-c
+protocol.allow=never -c protocol.file.allow=never -c protocol.ssh.allow=never -c
+protocol.git.allow=never -c protocol.http.allow=never -c
+protocol.https.allow=never -c protocol.ext.allow=never`, because Git 2.43 has no
+switch against lazy fetches, a probe in a partial (promisor) clone could
+otherwise fetch a missing object from the network, and `protocol.allow` is only
+the default policy, which a `protocol.<name>.allow` setting in the repository's
+configuration overrides and a `-c` on the command line outranks; with the pins
+the fetch fails locally, the probe fails, and its row is `inspection-error`,
+never a network call. The push child is the one Git child whose purpose is to
+reach a remote: it SHALL run with the seventeen names but `GIT_ALLOW_PROTOCOL`
+removed from its environment, so that it acts on the repository the run
+inspected while a protocol list the caller set still binds it, as it binds the
+push before this change, and with none of the seven protocol pins, so that the
+remote it publishes to stays reachable over any protocol that list and the
+configuration allow; it SHALL run as the push ran before this change, in the
+process group of `project` itself, and so in the terminal's foreground whenever
+`project` is, and unbounded, so that a credential prompt can read the terminal
+and an interrupt from the terminal reaches it; no row's evidence comes from it.
 
 Directory: a worktree probe SHALL run with `-C <worktree path>`, against that
 worktree's own index, and only after that worktree's identity has been verified
@@ -180,13 +192,18 @@ wait at most a further 2 s, after which the child SHALL be abandoned and its row
 recorded `probe-timeout`. On every exit path, exceptions and signals included, a
 subcommand SHALL kill the process groups of the probe children it started. A
 removal child SHALL instead be waited for, and SHALL NOT be signalled before its
-300 s ceiling.
+300 s ceiling. The push child of `clean --action push` is outside this
+paragraph: its standard input, output and error SHALL be `project`'s own, never
+read or capped by `project`, and `project` SHALL NOT signal it and SHALL wait
+for it to exit.
 
 Budgets: under an invocation deadline, as `project clean` has, each Git child
-SHALL get `min(5 s, work remaining)`. Without one, as in status, doctor and
-update, each Git child SHALL get 15 s, and those subcommands SHALL have no
-invocation deadline and no row cap; a row whose probe is unreadable or times out
-SHALL show as `inspection-error`. Children other than Git SHALL keep 15 s.
+SHALL get `min(5 s, work remaining)`, except the push and delete-branch
+children of `clean`, which SHALL stay unbounded, as "Clean bounds its Git work
+and reports omitted work" states. Without one, as in status, doctor and update,
+each Git child SHALL get 15 s, and those subcommands SHALL have no invocation
+deadline and no row cap; a row whose probe is unreadable or times out SHALL
+show as `inspection-error`. Children other than Git SHALL keep 15 s.
 
 Manifest: every subcommand that resolves a merge target from a project manifest
 SHALL read at most 1 MiB of it, and a larger manifest SHALL be
@@ -229,3 +246,10 @@ requirement states a change.
 - **THEN** a counting `git` wrapper records `-c protocol.allow=never` and the six per-protocol pins on the child, Git refuses the fetch of the missing object locally and exits nonzero, the probe is recorded `probe-failed`, and the row is `inspection-error`
 - **AND** the logging script never runs, so no connection to the remote is attempted
 - **AND** with `GIT_ALLOW_PROTOCOL=file` in the caller's environment and `protocol.file.allow=always` in the repository's configuration, the pinned probe is still refused and the logging script still never runs
+
+#### Scenario: The push child reaches its remote
+- **WHEN** `project clean <root> --apply --action push --branch B --yes` runs, with `<root>` the absolute path of the main worktree and, in the caller's environment, `GIT_DIR` naming another repository and `GIT_CONFIG_PARAMETERS` set, for a clean feature branch B that the push action accepts (B is not the default branch, its upstream `origin/B` exists, lacks a commit that B holds and holds none that B lacks, and no other worktree row is `inspection-error`), whose `origin` is a local path (the `file` protocol)
+- **THEN** a counting `git` wrapper records the push child with none of the seven protocol pins and with the seventeen names but `GIT_ALLOW_PROTOCOL` removed from its environment, and records all seven pins on every other Git child of the run
+- **AND** the wrapper records that the push child shares `project`'s process group, where every other Git child of the run has a process group of its own
+- **AND** the push exits 0 and `origin` holds B at the commit it has locally
+- **AND** with a `pre-push` hook that sleeps 7 s, the push still exits 0 and `origin` holds B, no signal having reached the push child

@@ -15,7 +15,8 @@ D18, D19, Risks and the Migration Plan here; R-17 edited Context and D14, and
 R-19 edited Context, D14 and D19; R-21 edited Context, D6 and D17; R-22 edited
 Context and D20; R-23 edited Context, D6, D9, D11 and D20; R-24 edited D5, D9,
 D11, D12, D18, Risks and the Migration Plan; R-25 edited Context, D6, D9, D11,
-D20 and Risks. Brett Heap's ruling
+D20 and Risks; the push-child exception, before Brett Heap, edits D6, D11, D20,
+Risks and Open Questions. Brett Heap's ruling
 of 2026-10-09 on open question 1, that a local ancestry proof outranks
 `remote-gone` for worktree rows, is in `proposal.md` Decisions and edited
 Context, D6, D7, D20, Risks, the Migration Plan and Open Questions here.
@@ -95,7 +96,9 @@ unstarted branch):
 
 ### D1. The runner's loop (N1)
 
-Every Git child runs through one loop, the one-wide driver of D2.
+Every Git child but the push child of `clean --action push` runs through one
+loop, the one-wide driver of D2; the push child runs through `execute()`, with
+D6's scrubbed environment but for `GIT_ALLOW_PROTOCOL`, as D11 states.
 
 Both pipes in one selector. The driver registers the child's standard output and
 standard error, both non-blocking, and the read end of a wakeup pipe in one
@@ -159,7 +162,8 @@ The one-wide driver. `run_bounded(spec, parser, budget)` starts one handle, runs
 D1's loop, feeds standard output to the parser, and returns `complete`,
 `complete-at-bound`, `failed`, `timeout`, `deadline` or `interrupted`, with the
 parser's result, the exit status and the standard-error head. Every serial call
-in `clean`, `status`, `doctor` and `update` uses it.
+in `clean`, `status`, `doctor` and `update` uses it, but for the push child
+(D11).
 
 Pure incremental parsers. Each takes byte chunks through `feed()`, does no I/O,
 holds at most one partial record, exposes `bound_reached`, and on `finish()`
@@ -325,7 +329,8 @@ and stay; D11's `-c` pins override them.
 
 Every child in the table, `git --version` and D9's removal child included, also
 runs with `-c protocol.allow=never` and the six per-protocol pins (D11, R-23,
-R-25).
+R-25); the push child, which is not in the table, is the exception D11 states,
+and its environment keeps a caller's `GIT_ALLOW_PROTOCOL`.
 
 `repo_state()` and `cleanup_report()` become thin readers of this pipeline, and
 the ladder becomes a pure function of a row's evidence (OQ-28). Its one
@@ -417,7 +422,7 @@ call: a manifest whose `st_size`, taken before the read, exceeds 1 MiB is
 `manifest-invalid` without being read, the read itself never exceeds 1 MiB, and
 a wrong kind is `manifest-invalid` too (`project:280`). `no-merge-target` keeps
 the baseline message, "Cannot determine the default branch from the manifest,
-origin/HEAD, main, or master." (`project:401`), which the existing test reads
+origin/HEAD, main, or master." (`project:403`), which the existing test reads
 (Migration Plan).
 
 The 1 MiB cap binds only the merge-target resolution. `status`, `doctor` and
@@ -460,7 +465,8 @@ ends within 64 s of its start, not counting the time blocked at the confirmation
 question: 50 s of work, the 10 s reserve, and up to 4 s to stop a probe child
 (SIGTERM, the 2 s grace, SIGKILL, a reap wait of up to 2 s), the figure the
 overview states; a removal in flight adds up to 300 s (M5). A call stuck in the
-kernel is the one exception.
+kernel, and the push and delete-branch children that D-W leaves unbounded
+(D11), are the exceptions.
 
 ### D10. `unstarted-branch` from the reflog (V2 as amended, M3, M4, R-12, R-15)
 
@@ -554,11 +560,19 @@ entries and 215 to 232 ms for 100,000. One consequence crosses changes: feature
 005's fixtures that rely on a running fsmonitor (DI:1233-1237, DI:1249-1254)
 must be rewritten, as the lead's ruling records.
 
-Every Git child, of every kind, also carries `-c protocol.allow=never -c
-protocol.file.allow=never -c protocol.ssh.allow=never -c
-protocol.git.allow=never -c protocol.http.allow=never -c
-protocol.https.allow=never -c protocol.ext.allow=never` (R-23, R-25),
-`git --version` and the removal included. Git 2.43 has no `GIT_NO_LAZY_FETCH` or
+Every Git child, of every kind, except the push child of `clean --action push`,
+also carries `-c protocol.allow=never -c protocol.file.allow=never -c
+protocol.ssh.allow=never -c protocol.git.allow=never -c
+protocol.http.allow=never -c protocol.https.allow=never -c
+protocol.ext.allow=never` (R-23, R-25), `git --version` and the removal
+included. The push child of `clean --action push` is the one exception, because
+its purpose is to reach a remote and the pins would refuse every transport, the
+`file` one included: it keeps the scrub but for `GIT_ALLOW_PROTOCOL`, runs
+unbounded in `project`'s own process group as `execute` runs it today, so that
+a credential prompt can read the terminal and an interrupt reaches it, carries
+none of the pins, and no evidence comes from it (Open Questions).
+
+Git 2.43 has no `GIT_NO_LAZY_FETCH` or
 other switch against lazy fetches, so a read-only probe in a partial (promisor)
 clone that needs an object the clone does not hold can fetch it from the
 network. `protocol.allow` is only the default policy: a `protocol.<name>.allow`
@@ -588,8 +602,8 @@ of a backlog, stop it until a person handles them; when every one of the 16 is
 revalidates afresh, draining 16 at a time. `plan_digest` covers only `selected`,
 so a deferred row's change leaves a preview valid, and the report mode defers
 alike. The `target-cap` refusal (BA:96-101, BA:1004, BA:1367-1371) is retired, a
-departure open to Brett Heap; the code survives only as the overview's limiting
-gate.
+departure ratified with the merge of PR #11; the code survives only as the
+overview's limiting gate.
 
 ### D13. Single-mode completeness (V4)
 
@@ -725,7 +739,7 @@ change before the handoff. Task 2.2 ran it on Git 2.36.6, 2.40.4 and 2.43.0
 table records. By the rule above the floor would rise to 2.40; R-21 keeps 2.36
 and adds the one name to the scrub, because raising the floor would exclude
 Debian 12's Git 2.39 for a one-name difference. That departs from the rule and
-is open to Brett Heap at ratification (proposal, Decisions). Feature 004 adds a
+was ratified with the merge of PR #11 (proposal, Decisions). Feature 004 adds a
 CI job that builds the floor version, cached, and runs the `clean`, `status` and
 `doctor` tests with it first on PATH.
 
@@ -854,8 +868,9 @@ requirements: R1, R2, R6, D-N and OQ-29 under the reports; R9 and C3 under the
 classification and "Inspect and diagnose", and the ruling on open question 1
 under the classification; R10, R11, D-T and the manifest cap
 under Git-first resolution; V1 to V4, M3 and M4 under retirement; OQ-10, OQ-16
-and M1 under the JSON and the result; V9, R-23 and R-25 under the evidence
-model; D-D under push; D-R under maintenance; R-22 under revalidation.
+and M1 under the JSON and the result; V9, R-23, R-25 and the push-child
+exception under the evidence model; D-D under push; D-R under maintenance; R-22
+under revalidation.
 
 ## Risks / Trade-offs
 
@@ -897,7 +912,7 @@ model; D-D under push; D-R under maintenance; R-22 under revalidation.
   probes to 16 (D12); the human report says why the deferred rows will not drain
   when every one of the 16 rows past the cap is `contains-submodule` (D18); 16
   rows that any index gate excludes ahead of a backlog stall it alike; V5's
-  caveat is before Brett Heap.
+  caveat was ratified with the deferral at the merge of PR #11.
 - [Rows of 100,000-entry indexes: the fit of BA:729-735 would give 64 rows, 16
   targets and a report cap of 128, since the plan term alone for 128 such rows
   is 46.6 s] -> The caps measured at 10,000 entries stand; a plan over such rows
@@ -915,6 +930,19 @@ model; D-D under push; D-R under maintenance; R-22 under revalidation.
   is scrubbed rather than pinned] -> Accepted as rare: such a helper could still
   fetch for a probe in a partial clone, the probe would then succeed rather than
   fail, and no unsafe removal follows (D11, R-25).
+- [The push child carries no protocol pin and follows the configuration as `git
+  push` would: an `ext::` origin that `protocol.ext.allow=always` allows, a
+  `pushurl`, `url.<base>.pushInsteadOf`, `remote.<name>.receivepack`,
+  `core.sshCommand` or remote helper that sends it elsewhere or runs a command,
+  a pre-push hook and a credential helper included, while the confirmation
+  names only the remote; and the scrub removes a caller's
+  `GIT_CONFIG_PARAMETERS` and `GIT_CONFIG_COUNT`, so a `-c` given through the
+  environment does not reach it] -> Accepted: the push is the person's
+  explicit act on the remote they configured, as the baseline push is, and a
+  `GIT_ALLOW_PROTOCOL` list the caller set still binds it; the scrub makes it
+  act on the repository and configuration the run inspected; every inspection
+  child stays pinned, so no evidence comes from such a configuration (D11, the
+  push-child exception).
 - [Squash-merged branches never prove ancestry, so squash-merging
   repositories select little] -> Before Brett Heap (Open Questions).
 - [A merged worktree whose upstream was deleted is removed on local ancestry
@@ -949,8 +977,10 @@ worktree whose upstream was deleted, as `merged-removable` when its gates pass,
 its branch kept, where `a040790` refuses it as `unpublished` (D6, Brett Heap's
 ruling on open question 1). The README's clean section states them first.
 
-1. Ratification by Brett Heap's word on PR #11 (`tasks.md` 1.6), with the V5
-   deferral and the squash-merge open question before him.
+1. Ratification by Brett Heap's word on PR #11 (`tasks.md` 1.6), which
+   ratified the V5 deferral and left the squash-merge question before him; the
+   push-child exception waits for his word on the pull request that amends
+   this change (`tasks.md` 1.7).
 2. Governance tasks 2.1 (measurement) and 2.2 (the Git floor) ran before the
    handoff, and neither forced a change to a cap or the floor: the caps stand as
    measured, and the floor stays 2.36 with a scrub of one more name (R-21).
@@ -994,16 +1024,23 @@ downstream.
 ## Open Questions
 
 Each is before Brett Heap with a recommendation; the deltas implement the
-reading stated, and a different ruling edits the deltas before ratification.
+reading stated, and a different ruling edits the deltas before the archive.
 
 - Squash-merged branches never put their tip into the target's ancestry
   (BA:195-199). Recommendation: a local patch-equivalence proof (`git cherry` or
   patch IDs against the target) as a follow-on change, not in the MVP.
-- The V5 deferral (D12) replaces the packet's `target-cap` refusal with 16
-  removals per run and `deferred-target-cap` for the rest: a departure from a
-  packet decision, on the council's survey (about 20 eligible rows in
-  Opensoft-Tenant), standing only on Brett Heap's ratification.
+- The push-child exception: the pins on every Git child (D11, R-23, R-25) refuse
+  a push over every protocol (a local-path `origin` fails with `fatal: transport
+  'file' not allowed`, exit 128), yet the change keeps the explicit push of
+  `clean --action push`, whose child must reach its remote. Recommendation:
+  amend the change in place before its archive, as this draft does, so that the
+  push child is the one Git child without the pins. The alternative is a
+  follow-up change after the archive, as `fix-parent-obstacle-wording` followed
+  `prefer-triad-in-project-new`, which costs a second archive and leaves the
+  archived spec wrong in between.
 
 Ruled on 2026-10-09: a merged worktree whose remote branch was deleted is
 `merged-removable`, Brett Heap having ruled that a local ancestry proof
-outranks `remote-gone` for worktree rows (D6; `proposal.md` Decisions).
+outranks `remote-gone` for worktree rows (D6; `proposal.md` Decisions). The V5
+deferral (D12) and the other departures were ratified with the merge of PR #11
+(Brett Heap: "ratify, merge #11 and run the runbook").
