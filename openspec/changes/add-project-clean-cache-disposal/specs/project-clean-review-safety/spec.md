@@ -107,8 +107,9 @@ or registration difference or a missing registry entry, `branch-changed` for a
 different branch name or head, `state-changed` for any other signature, lock,
 manifest, merge-target or listed-cache difference and for a cache stage that
 ends `refused` or `partial` as "Cache disposal never follows a symlink or leaves
-its worktree" states, `contains-submodule` for a new gitlink or
-`modules` entry, and `hidden-local-state` for a newly flagged index entry. A
+its worktree" states, whose exit status is the one "Clean disposes of listed
+caches before a worktree removal" gives, `contains-submodule` for a new gitlink
+or `modules` entry, and `hidden-local-state` for a newly flagged index entry. A
 value that was null in the plan and is null at revalidation, such as the
 `upstream_oid`, `ahead` and `behind` of a selected row whose upstream was
 deleted, SHALL NOT count as a difference; a value that cannot be re-read, a
@@ -221,6 +222,80 @@ part of that defense.
   `state-changed`, no cache entry is deleted and no child is spawned, later
   targets are `not-attempted`, and the exit status is 2
 
+### Requirement: Cleanup states a narrow guarantee and its residual window
+
+Concurrent writers (editors, other agents, other `project` invocations, and Git
+commands run by anyone else) SHALL be outside the safe contract, and cleanup
+SHALL claim no lock, lease or writer-quiescence handoff. Its one guarantee for a
+worktree removal SHALL be that a removal child is spawned only if, at the
+revalidation performed immediately before spawning it, or, for a target whose
+plan lists caches, immediately before its cache stage, the repository identity,
+the target's worktree identity and branch evidence, every baseline signature
+field of the target, its `locked` flag, the absence of submodules and of hidden
+local state in its own index (read inside the target worktree), the manifest's
+`tracking_branch`, and the merge target's name, source and SHA all equal the
+values in the confirmed plan. A cache stage SHALL carry the one guarantee for
+the cache entries it removes that "Cache disposal never follows a symlink or
+leaves its worktree" states, and nothing SHALL run between that stage and the
+spawn but the removal floor and signal checks.
+
+Ignored files created, and index flags set, after that revalidation, and any
+change made after Git's own check, SHALL be outside the contract; the
+confirmation and the result SHALL each state this residual window in one line.
+For a target whose plan lists caches, that window SHALL include a cache
+recreated after its cache stage, which Git's non-force removal deletes with the
+worktree, and when the plan selects such a target the residual-window line SHALL
+also name caches recreated after a cache stage. Cleanup SHALL never delete a
+branch, so that a branch race cannot lose commits: a branch change seen at
+revalidation SHALL refuse the target with `branch-changed`, and one seen only by
+the rescan after Git removed the worktree
+SHALL leave the target `removed` with `branch-advanced-after-removal`, the
+branch present at a different SHA, or `branch-missing-after-removal`, stop the
+run, and exit 2. A repository found replaced by the rescan after a removal SHALL
+make that target `unknown` with `unconfirmed-removal`, every reconciliation
+field null and `reconciled` false, and SHALL stop the run with exit status 1.
+
+#### Scenario: Ignored file in the residual window
+
+- **WHEN** a test hook creates an ignored file in a target after its
+  revalidation and before its removal child starts
+- **THEN** Git removes the worktree with exit 0, the target is `removed`, the
+  file is gone, and the result text carries the residual-window line, which the
+  confirmation also carried; this documents the boundary rather than a guarantee
+
+#### Scenario: Branch advances after removal
+
+- **WHEN** a test hook advances a target's branch after Git removed the worktree
+  and before the rescan
+- **THEN** the target is `removed` with `branch-advanced-after-removal`, its
+  reconciliation has `registry_entry_present: false`, `path_present: false`,
+  `branch_present: true` and a `branch_sha` that differs from `planned_sha`,
+  later targets are `not-attempted`, no commit is lost, and the exit status is 2
+- **AND** a hook that deletes the branch instead yields
+  `branch-missing-after-removal` with `branch_present: false` and exit 2
+
+#### Scenario: Repository replaced mid-batch
+
+- **WHEN** in a three-target plan, after the first target's removal child exits
+  0 and before the rescan that follows it, the repository root is renamed and
+  another clone is moved into its path, or the root's parent directory is
+  replaced by a symlink to a copy
+- **THEN** the rescan's identity probe finds a different repository, the first
+  target is `unknown` with `unconfirmed-removal`, every reconciliation field
+  null and `reconciled: false`, the second and third are `not-attempted` with
+  `batch-stopped`, and the exit status is 1
+- **AND** when the same replacement happens before the first target's
+  revalidation, the first target is `refused` with `identity-changed`, the later
+  targets are `not-attempted`, nothing is removed, and the exit status is 2
+
+#### Scenario: A cache recreated after the cache stage
+
+- **WHEN** a test hook recreates `src/pkg/__pycache__/a.cpython-312.pyc` after a
+  target's cache stage and before its removal child starts
+- **THEN** Git removes the worktree with exit 0, the target is `removed`, the
+  file is gone, and the confirmation and the result carry the residual-window
+  line that names it; this documents the boundary rather than a guarantee
+
 ## ADDED Requirements
 
 ### Requirement: Cache disposal never follows a symlink or leaves its worktree
@@ -251,8 +326,9 @@ attempted SHALL be left in place, with that entry untouched.
 Before its first removal the stage SHALL run a whole-list preflight: it SHALL
 open and check every directory that the target's `cache_disposal.directories`
 lists; re-list every listed cache directory, requiring each entry to have the
-allowlisted shape, each nested directory to carry its planned identity, and the
-target's cache entries and bytes to stay within the per-worktree caps; require
+allowlisted shape, each nested directory to carry its planned identity, each
+listed cache's entries to number exactly the `entries` that the plan recorded
+for it, and the target's bytes to stay within the per-worktree cap; require
 every listed file to be a regular file; and fix the names it will remove. A
 difference, an error, or a filesystem call that runs out of its budget SHALL end
 the stage `refused` with `cache-changed`, nothing deleted.
@@ -276,15 +352,13 @@ with `cache_disposal.reason` `cache-unsupported-platform`, and no cache stage
 SHALL run.
 
 The stage's guarantee SHALL be that it removes an entry only if, at its
-whole-list preflight, the entry had the allowlisted shape and its directory and
-every directory above it, up to the worktree root, carried the identity that the
-confirmed plan recorded. For a target whose plan lists caches, the revalidation
-that "Cleanup states a narrow guarantee and its residual window" names SHALL be
-the one performed immediately before its cache stage, and nothing SHALL run
-between the stage and the spawn but the removal floor and signal checks. A cache
-recreated after the stage, like any ignored file created after that
-revalidation, SHALL be outside the contract: Git's non-force removal deletes it
-with the worktree, and the residual-window line SHALL say so.
+whole-list preflight, the entry had the allowlisted shape, its listed cache held
+exactly the number of entries that the confirmed plan recorded, and its
+directory and every directory above it, up to the worktree root, carried the
+identity that the confirmed plan recorded. The revalidation that the narrow
+guarantee names for a target whose plan lists caches, and the residual window
+it leaves, SHALL be as "Cleanup states a narrow guarantee and its residual
+window" states.
 
 #### Scenario: A symlink named like a cache is never disposable
 
@@ -297,6 +371,11 @@ with the worktree, and the residual-window line SHALL say so.
 - **AND** a symbolic link `link.pyc` ignored by the rule `*.pyc`, and a
   `__pycache__` directory holding a symbolic link `x.pyc` or a file `notes.txt`,
   are blocking the same way
+- **AND** a `__pycache__` directory whose parent's `lstat`, stubbed, reports a
+  device other than the worktree root's is blocking the same way, and on Linux a
+  `__pycache__` directory under a directory whose name holds the byte 0xFF
+  fails the sample test, its row `not-candidate` with that path in
+  `blocking_samples`; both are untouched
 
 #### Scenario: An ancestor swapped for a symlink before the stage
 
@@ -313,11 +392,18 @@ with the worktree, and the residual-window line SHALL say so.
 #### Scenario: The whole list is checked before the first removal
 
 - **WHEN** a selected target lists two caches and a test hook, after its
-  revalidation and before its cache stage, replaces the second listed
-  `__pycache__` directory by a new directory of the same name and content
+  revalidation and before its cache stage, moves the second listed
+  `__pycache__` directory out of the worktree and makes a new directory of the
+  same name and content in its place
 - **THEN** the stage refuses with `cache-changed` before removing anything, the
   first listed cache is intact as well as the second, the target is `refused`
   with `state-changed`, and the exit status is 2
+- **AND** when the hook instead writes `c.cpython-312.pyc` into the first listed
+  `__pycache__` directory before the target's revalidation, the revalidation's
+  status child prints the planned records, the preflight finds one entry more
+  than the plan recorded and refuses with `cache-changed`, nothing is deleted,
+  `c.cpython-312.pyc` survives, the target is `refused` with `state-changed`,
+  and the exit status is 2
 
 #### Scenario: A file placed in a cache directory during the stage
 
@@ -335,11 +421,3 @@ with the worktree, and the residual-window line SHALL say so.
 - **THEN** no cache enumeration runs, the first is `ignored-local-files` with
   `cache_disposal.reason: "cache-unsupported-platform"` and its caches are
   untouched, the second is selected and removed, and the exit status is 0
-
-#### Scenario: A cache recreated after the cache stage
-
-- **WHEN** a test hook recreates `src/pkg/__pycache__/a.cpython-312.pyc` after a
-  target's cache stage and before its removal child starts
-- **THEN** Git removes the worktree with exit 0, the target is `removed`, the
-  file is gone, and the confirmation and the result carry the residual-window
-  line that names it; this documents the boundary rather than a guarantee

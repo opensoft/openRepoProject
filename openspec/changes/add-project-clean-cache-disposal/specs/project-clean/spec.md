@@ -10,10 +10,11 @@ classes, by a ladder tested in this order: `stale-worktree`,
 `pushed-unmerged`. The ladder SHALL be a function of the row's evidence alone,
 and its names SHALL NOT change; its order SHALL NOT change except by the one
 ancestry test stated here. A row whose evidence could not be established (a
-path that cannot be read, a registration that disagrees, or a status probe that
-failed or timed out) SHALL be classified `inspection-error` directly, whatever
-its branch. A branch with no configured upstream SHALL be `unpublished`. A
-branch whose configured upstream's remote-tracking ref no longer exists SHALL be
+path that cannot be read, a registration that disagrees, or a combined status
+probe that failed or timed out) SHALL be classified `inspection-error` directly,
+whatever its branch. A branch with no configured upstream SHALL be
+`unpublished`. A branch whose configured upstream's remote-tracking ref no
+longer exists SHALL be
 tested for local ancestry before the `remote-gone` rung: when its
 `merged_into_target` is true, the row SHALL be `merged-removable`, or
 `merged-current` when it is the current worktree, and otherwise it SHALL be
@@ -23,11 +24,13 @@ model reaches.
 
 The `ignored-local-files` rung SHALL apply to a row that holds a blocking
 ignored path: one that "Clean disposes of listed caches before a worktree
-removal" does not prove, in the same invocation, to be a listed cache. A row
-whose every ignored path that requirement proves a listed cache SHALL pass that
-rung and be classified by the rungs below it. A cache enumeration that fails or
-times out SHALL leave the row's ignored paths unproven, and SHALL NOT make the
-row `inspection-error`.
+removal" does not prove, in the same invocation and within its caps, to be a
+listed cache. A row whose every ignored path that requirement proves a listed
+cache within its caps SHALL pass that rung and be classified by the rungs below
+it. A cache enumeration that fails or times out SHALL leave the row's ignored
+paths unproven, and SHALL NOT make the row `inspection-error`. A row's cache
+proof SHALL count as its evidence, though the invocation's cache caps, applied
+in canonical order, can withhold it.
 
 Every class other than `merged-removable` SHALL be preserved. Dirty, detached,
 unpublished, remote-gone, and unmerged work SHALL be preserved and SHALL include
@@ -278,6 +281,228 @@ It MUST never use a force removal, reset, or deletion of unmerged work.
   `registration-mismatch` with classification `inspection-error`, a named manual
   remedy and no partial-removal note
 
+### Requirement: Clean previews and applies a batch of eligible worktree removals in one repository
+
+`project clean <root> --all-safe [--json] [--apply [--yes] [--expect-plan D]]`
+SHALL plan every eligible linked worktree of one resolved repository, and never
+of a sibling, a family member, a mounted leg, a pinned member copy or an
+independent clone. `--all-safe` SHALL NOT be combined with `--action`,
+`--branch` or `--worktree`; `--expect-plan` SHALL require `--all-safe --apply`
+and a value of 64 lowercase hexadecimal characters; any violation SHALL refuse
+with `invalid-arguments` and exit status 2.
+
+A worktree row SHALL be selected only when it passes every gate. Each excluded
+row SHALL carry one `reason`, its first failing gate in this order:
+`main-worktree`; `unsupported-path-bytes`; `registration-mismatch`;
+`locked-worktree`; the row's classification when it is not `merged-removable`;
+`not-requested`, for an eligible row other than the named one in a single-target
+removal; `unstarted-branch`, or `reflog-unavailable` where the reflog cannot
+decide it; `deferred-target-cap`; `contains-submodule`; and
+`hidden-local-state`. A head equal to the merge target's SHA SHALL NOT by itself
+prove a branch unstarted, because a branch fast-forward merged into the target
+sits at the target's tip, so the gate SHALL read the branch's reflog,
+`logs/refs/heads/<branch>` in the common directory, for every row it checks,
+from the filesystem, at most 64 KiB, counted in the filesystem budget and never
+by a Git child. The reflog's anchor SHALL be its last surviving entry whose old
+object is all zeros, as every entry that creates the branch has, whatever
+command wrote it (`git fetch <remote> <ref>:<branch>`, `git update-ref` and
+`git push .` among them), or whose message begins `branch: Created from` or
+`branch: Reset to`; an entry whose old object is all zeros SHALL NOT be a
+movement. A movement SHALL be an entry after the anchor, or any entry when no
+anchor survives, whose old and new objects are non-zero and differ; an entry
+whose old and new objects are equal, as a rename writes, SHALL NOT be a
+movement. A branch whose last reflog entry's new object differs from its
+current head SHALL be `reflog-unavailable`; otherwise a branch with a movement
+SHALL pass the gate, its head equal to the merge target's SHA or not, and a
+branch whose anchor survives with no movement after it, the anchor's new object
+equal to its current head, SHALL be `unstarted-branch`. One
+outcome rule SHALL govern the read: a reflog that is missing (`ENOENT` or
+`ENOTDIR`), empty (0 bytes) or read to its 64 KiB bound, or whose surviving
+entries cannot decide, no anchor and no movement surviving included, SHALL make
+that row `reflog-unavailable`, at the gate's place in this order; any other
+error on the read SHALL make that row `inspection-error`, as any failed row
+probe does; and a read not finished within the filesystem budget SHALL leave
+the row unprobed and the plan incomplete with `inspection-incomplete`, as for
+every other filesystem read. A row SHALL be excluded as `contains-submodule`
+when its index holds any gitlink or its worktree administrative directory holds
+a `modules` entry, and as
+`hidden-local-state` when its index flags any entry assume-unchanged or
+skip-worktree, sparse checkouts included; the index SHALL be read inside the
+row's own worktree, and both gates SHALL be checked only for rows that pass
+every earlier gate.
+
+`selected` and `excluded` SHALL be in canonical order, by raw path bytes, and
+that order SHALL be the execution order. Once a plan is built, these checks
+SHALL run in this order: an incomplete plan SHALL be refused first, a preview or
+report exiting 1 and a run with `--apply` refusing with exit status 2 before any
+question; an `--expect-plan` mismatch SHALL then refuse with
+`plan-digest-mismatch` and exit status 2; and only then SHALL a complete
+`--all-safe` plan whose selection is empty print "No eligible worktrees" and
+exit 0 without asking. In `mode: "single"`, a P that a gate excludes SHALL
+refuse with `target-excluded` and exit status 2, as below, and SHALL NOT be
+treated as an empty selection.
+
+`--apply` SHALL always build, print and confirm its own fresh plan; a preview
+SHALL be advisory and SHALL never be stored or reused. The plan SHALL carry
+`plan_digest`, the lowercase hexadecimal SHA-256 of a canonical JSON text of the
+repository's four identity fields, the merge target's name and SHA, and the
+selected `[path, branch, head]` triples in canonical order, so that a change to
+an excluded row leaves it unchanged. After the triple of each selected target
+whose plan lists caches, as "Clean disposes of listed caches before a worktree
+removal" states, the canonical text SHALL carry that target's listed cache paths
+as `[path, kind]` pairs and its planned cache directories as `[path, dev, ino]`
+triples, each in canonical order, so that a listed cache that appears,
+disappears or changes kind, or a cache directory with another identity, changes
+the digest; the canonical text of a plan that selects no such target SHALL
+carry no such pair or triple. `--expect-plan D` SHALL refuse with
+`plan-digest-mismatch` and exit status 2, before any question and any mutation,
+when the fresh digest differs from D, and SHALL still print the fresh plan. The
+confirmation SHALL be one default-No question naming the count of worktrees to
+remove and of branches kept, ending `[yes/N]`; only `yes`, surrounding
+whitespace ignored, SHALL accept it, and any other answer SHALL refuse with
+`cancelled` and exit status 2. This question SHALL replace `Type yes to run this
+plan:` for `clean`'s removal apply only, and `--yes` SHALL accept the fresh plan
+without asking.
+
+A single-target removal, `--apply --action remove --worktree P`, SHALL keep its
+flags and SHALL be a one-item batch: it SHALL build the same plan with `mode:
+"single"`, select only P, list every other eligible row as `not-requested`, and
+share the batch's sequence, refusal codes, stages and exit codes. A P that
+matches no registry entry SHALL refuse with `worktree-not-found`, and a P that a
+gate excludes SHALL refuse with `target-excluded`, whose `reason` carries the
+exclusion reason and whose message keeps the existing wording for the current
+worktree and for a class that is not removable. Every refusal that blocks a
+plan, in either mode, SHALL name a manual remedy: `git worktree prune`, `git
+worktree repair`, or removing the offending row by hand, as the cause fits.
+
+The human preview SHALL list the selected rows, then the excluded rows grouped
+by reason, each group with its next step; an `ignored-local-files` exclusion
+SHALL show its bounded count and the first ignored path observed. A successful
+apply SHALL print `Removed N; branches kept: ` followed by the branches kept.
+
+#### Scenario: Stable order and preserved work
+
+- **WHEN** several eligible linked worktrees exist beside current, merge-target,
+  dirty, locked, remote-ahead and unmerged ones, and `--all-safe --apply --yes`
+  runs
+- **THEN** the eligible worktrees are removed in canonical path order, the
+  others remain, every retained local branch is reported, and no push, fetch,
+  force option, branch deletion or remote deletion occurs
+- **AND** the same holds when the merge-target branch is checked out in no
+  worktree, the main worktree being on another branch: every removal runs from
+  the command directory and succeeds
+
+#### Scenario: Every protected classifier
+
+- **WHEN** one repository's linked worktrees are stale, detached, dirty, holding
+  ignored files, unpublished, remote-gone, diverged, remote-ahead, unpushed,
+  pushed-unmerged, merged but current, merged but locked, merged with a
+  non-UTF-8 path, merged with an initialized submodule, and merged with an
+  assume-unchanged entry, beside the main worktree on the merge target and
+  exactly one plain merged, clean, published worktree with a commit of its own,
+  and the batch previews and applies
+- **THEN** only that last worktree is selected and removed, every other row is
+  excluded with the reason the gate order gives, and the exit status is 0
+- **AND** a copy that adds one unreadable worktree, or one with a broken
+  administrative registration, yields `inspection-error`, an incomplete plan,
+  and exit 2 under `--apply` with nothing removed
+
+#### Scenario: Hidden local state
+
+- **WHEN** otherwise eligible worktrees hold an edit to a file flagged
+  assume-unchanged and a file flagged skip-worktree, each flag set only in that
+  worktree's own index while the main worktree's index flags nothing, and the
+  batch previews
+- **THEN** both are excluded as `hidden-local-state`, because their own indexes
+  were read, and the edits survive
+- **AND** when such a flag is set on a selected target after confirmation and
+  before its revalidation, that target is `refused` with `hidden-local-state`,
+  later targets are `not-attempted`, and the exit status is 2
+
+#### Scenario: Submodules
+
+- **WHEN** otherwise eligible worktrees hold an initialized submodule, a
+  submodule initialized and then deinitialized, a gitlink never initialized, and
+  an administrative `modules` entry left after the gitlink was removed, beside
+  one plain eligible worktree, and the batch previews and applies
+- **THEN** the first four are excluded as `contains-submodule` and only the
+  plain worktree is removed
+- **AND** when a `modules` directory is created in a selected target's
+  administrative directory before its revalidation, that target is `refused`
+  with `contains-submodule`, later targets are `not-attempted`, and the exit
+  status is 2
+
+#### Scenario: Paths and empty plans
+
+- **WHEN** worktree paths contain spaces, an external worktree's path is
+  missing, a worktree is locked, inspection is incomplete, or no row is eligible
+- **THEN** the batch keeps the safety rules of the single-target command, and a
+  complete plan whose selection is empty prints "No eligible worktrees" and
+  exits 0 without asking
+- **AND** an incomplete plan that selects nothing is refused, not reported as
+  empty: its preview exits 1, and with `--apply` it refuses with exit 2 before
+  asking
+
+#### Scenario: Preview is advisory
+
+- **WHEN** a preview selects only P1 and P1 becomes dirty before `--all-safe
+  --apply --yes` runs without `--expect-plan`
+- **THEN** the fresh plan excludes P1 as `dirty`, prints "No eligible
+  worktrees", and exits 0 without asking
+- **AND** with `--expect-plan` naming the preview's digest, the same run refuses
+  with `plan-digest-mismatch` and exit 2 instead, because a digest mismatch is
+  refused before an empty selection is reported
+
+#### Scenario: Plan digest mismatch
+
+- **WHEN** a preview with digest D selects P1, and a second merged worktree
+  becomes eligible or P1's branch advances before `--all-safe --apply --yes
+  --expect-plan D` runs
+- **THEN** the fresh plan is printed with a different digest, the run refuses
+  with `plan-digest-mismatch` and exit 2 before any question or removal, and
+  nothing changes
+- **AND** when only an excluded worktree changed, the digest is still D and the
+  apply proceeds
+
+#### Scenario: Invalid argument combinations
+
+- **WHEN** `--all-safe` is given with `--action`, `--branch` or `--worktree`, or
+  `--expect-plan` is given without `--all-safe --apply`, or its value is not 64
+  lowercase hexadecimal characters
+- **THEN** the command refuses with `invalid-arguments` and exit 2, and runs
+  nothing
+
+#### Scenario: Only yes confirms
+
+- **WHEN** `--all-safe --apply` asks its question at a terminal and the answer
+  is `y`, an empty line or `no`
+- **THEN** the run refuses with `cancelled` and exit 2, and nothing is removed
+- **AND** the question reads like `Remove 7 worktrees, keeping 7 branches?
+  [yes/N]`, and the answer `yes` begins the apply phase
+
+#### Scenario: The preview says what keeps each row
+
+- **WHEN** a preview selects two rows and excludes one row as
+  `ignored-local-files` and two as `dirty`
+- **THEN** the selected rows are listed first, then the excluded rows grouped by
+  reason, each group with its next step
+- **AND** the `ignored-local-files` row shows its bounded ignored count and its
+  first ignored path
+
+#### Scenario: Cache paths are part of the plan digest
+
+- **WHEN** a preview with digest D selects a target with listed caches, and
+  before `--all-safe --apply --yes --expect-plan D` runs a new ignored
+  `__pycache__` directory holding one `.pyc` file appears in it, or its listed
+  cache directory is moved out of the worktree and a new directory of the same
+  name and content is made in its place
+- **THEN** the fresh plan has another digest, the run refuses with
+  `plan-digest-mismatch` and exit 2 before any question, and no cache entry is
+  deleted
+- **AND** for a repository whose selected targets list no cache, the canonical
+  text holds no cache pair or triple, and the digest is the one it was before
+  this change
+
 ### Requirement: Clean bounds its Git work and reports omitted work
 
 Each `project clean` invocation SHALL set one monotonic deadline 60 s after it
@@ -285,9 +510,9 @@ starts and SHALL hold back a 10 s reconciliation reserve, so that work stops 50
 s after start; time spent blocked at the confirmation question SHALL NOT count,
 both deadlines moving later by the time spent waiting. Each Git child SHALL get
 `min(5 s, work remaining)`, and each filesystem call (`lstat`, `realpath`, the
-reads of `.git`, `gitdir`, reflog and manifest files, and the directory listings
-of the cache walk) SHALL be abandoned
-after the same budget, recording `probe-timeout`, or `deadline-exceeded` where
+reads of `.git`, `gitdir`, reflog and manifest files, and the directory opens,
+listings and `lstat` calls of the cache walk) SHALL be abandoned after the same
+budget, recording `probe-timeout`, or `deadline-exceeded` where
 the deadline was the limit, and leaving its values null. Probing SHALL be
 serial. Reconciliation probes SHALL get `min(5 s, reserve remaining)`.
 
@@ -344,9 +569,10 @@ precedes it.
 The cache enumerations SHALL count in the fit that sets the row and target
 caps: with 128 worktree rows, 16 cache enumerations and 16 targets, planning,
 revalidation and the final rescan spawn at most 250 Git children besides the 16
-removals, so that at 150 ms per child and 0.3 s per removal the run's worst
-case is about 42.3 s and the 16th target reaches its cache stage and its spawn
-with more than the removal floor of the work deadline left.
+removals, about 42.3 s at 150 ms per child and 0.3 s per removal, the cache
+stages' filesystem calls not counted; a target whose cache stage or spawn
+cannot start under the removal floor SHALL be `not-attempted` with
+`deadline-exceeded`, as for every removal.
 
 Plans and apply results SHALL report `probes: {estimated, performed}` and
 `operations: {estimated, performed}`, every Git child counted once, a removal
@@ -433,6 +659,157 @@ recompute the full report, and the final rescan at most three.
 - **AND** the apply record's `operations.performed` is 4, three cache entries
   and one removal
 
+### Requirement: Clean records a reconcilable result for every removal target
+
+The apply phase SHALL begin when the question is answered `yes` or `--yes` is
+accepted. Each selected target SHALL end in one stage with one reason:
+
+- `removed`: the child exited 0, was killed at the hard ceiling, or ended with
+  an exit that could not be observed, and the rescan shows its registry entry
+  and its path both absent, with `reconciled` true; reason null,
+  `branch-advanced-after-removal`, `branch-missing-after-removal` or
+  `removal-ceiling`;
+- `refused`: revalidation found a difference, or a cache stage ended `refused`
+  or `partial`, and nothing was spawned; `identity-changed`, `branch-changed`,
+  `state-changed`, `contains-submodule` or `hidden-local-state`;
+- `failed`: the child exited nonzero on its own, whether or not a signal reached
+  `project`, or could not be spawned; `git-refused` for exit status 128,
+  `git-failed` for any other status (128 plus the signal number when a signal
+  that `project` did not send ended the child), or `spawn-error`;
+- `unknown`: a child ran, or an exception interrupted the target, and removal is
+  not proven; `unconfirmed-removal`, `reconciliation-incomplete`,
+  `internal-error` or `removal-ceiling`;
+- `not-attempted`: the run stopped before reaching the target, or before
+  spawning its removal because less than the removal floor remained;
+  `batch-stopped`, `interrupted` or `deadline-exceeded`.
+
+A removal child that exits nonzero on its own SHALL be `failed` with Git's
+status, `git-refused` for 128 and `git-failed` otherwise, whether or not a
+signal reached `project`. Only for a child that `project` killed at the ceiling,
+or whose exit could not be observed, SHALL the rescan decide between `removed`
+and `unknown` with the note `partially-removed`; `removal-ceiling` SHALL name
+the ceiling cause. `pending` SHALL appear only in the printed plan and progress.
+Every `removed`, `refused`, `failed` or `unknown` target SHALL carry a
+`reconciliation` object (`registry_entry_present`, `path_present`,
+`branch_present`, `branch_sha`, `reconciled`), and a `not-attempted` target
+SHALL carry null. The child's exit status alone SHALL never prove a removal. The
+rescan SHALL first re-establish the repository identity, and where it differs
+every reconciliation field SHALL be null and `reconciled` false. A target's
+`notes` SHALL list `orphaned-directory` when its registry entry is absent and
+its path present, and `partially-removed` when its removal child was killed at
+the ceiling, or its exit could not be observed, and the rescan shows its
+registry entry or its path remaining; a `partially-removed` target SHALL show
+the recovery text "inspect, then `git worktree remove --force <path>` by hand".
+
+Before the apply phase, SIGINT, SIGTERM or SIGHUP SHALL terminate and reap every
+probe child, print "Cancelled." on standard error and no JSON document, and exit
+130, 143 or 129 with nothing mutated, and end of input at the question SHALL
+exit 130 the same way. During the apply phase, the first of
+those signals received SHALL set the exit status and stop scheduling, so that no
+further probe or removal starts. A removal in flight SHALL be waited for, and
+its target SHALL end by the stage rule above. Targets not yet started SHALL be
+`not-attempted` with `interrupted`. `project` SHALL then reconcile within the
+reserve and print the result record; a second SIGINT during reconciliation SHALL
+abandon the remaining rescans, leaving their fields null; after SIGHUP the
+record SHALL be printed on a best-effort basis. An exception while handling a
+target after the apply phase began SHALL make that target `unknown` with
+`internal-error` and later targets `not-attempted`; an unexpected exception
+before the apply phase SHALL refuse with `internal-error` and exit status 2. No
+`unknown` or `failed` target SHALL be retried automatically, and `project` SHALL
+never force a removal or delete a directory itself, with one exception: a cache
+stage's descriptor-relative deletion of its target's listed cache paths, the
+cache directories it has emptied included, as "Clean disposes of listed caches
+before a worktree removal" states.
+
+The exit status of a run with `--apply` SHALL be the first row that matches:
+
+1. 130, 143 or 129: a signal was received, the first one received deciding, or
+   input ended at the question (130);
+2. 1: the deadline stopped work after the apply phase began, any target is
+   `unknown`, or any target's reason is `removal-ceiling`;
+3. Git's own status, passed through unchanged: a target is `failed` with
+   `git-refused` or `git-failed`;
+4. 2: any refusal; a `refused` target; a `removed` target with a
+   branch-after-removal reason; a `failed` target with `spawn-error`;
+5. 0: every selected target is `removed` with reason null, or nothing is
+   eligible.
+
+A preview or report SHALL exit 2 only for a refusal raised before a plan is
+built, 1 for an incomplete plan, and 0 otherwise, the signal exits above
+excepted.
+
+A run that stops SHALL end its human result with `Stopped at P (reason). Removed
+k of n. Not attempted: ... Next: ` followed by the command that shows a fresh
+read-only plan, and SHALL name every retained branch.
+
+#### Scenario: Exit 0 without evidence
+
+- **WHEN** a test Git exits 0 without removing anything
+- **THEN** the target is `unknown` with `unconfirmed-removal`, later targets are
+  `not-attempted`, and the exit status is 1
+
+#### Scenario: A signal during a removal
+
+- **WHEN** SIGINT arrives while the second of three removals is in flight
+- **THEN** the removal child is not signalled and is waited for; the second
+  target is `removed` when the child exits 0 and the rescan shows its registry
+  entry and path gone, and `failed` with Git's status when the child exits
+  nonzero on its own; the third is `not-attempted` with `interrupted`; and the
+  exit status is 130
+- **AND** SIGTERM in the same place exits 143, and SIGHUP 129
+- **AND** SIGINT or end of input at the confirmation question exits 130 with
+  nothing removed
+
+#### Scenario: SIGTERM before the apply phase
+
+- **WHEN** SIGTERM arrives while the plan is being built and a probe child of a
+  fake `git` that ignores SIGTERM is running
+- **THEN** the probe child's process group is killed 2 s after the SIGTERM and
+  reaped, no process of that group remains, nothing is mutated, and the exit
+  status is 143
+- **AND** under `--json` standard error carries `Cancelled.` and standard output
+  holds no JSON document
+
+#### Scenario: Git leaves an orphaned directory
+
+- **WHEN** a target contains a subdirectory without write permission, and Git
+  unregisters the worktree but fails to delete its directory and exits 255
+- **THEN** the target is `failed` with `git-failed` and `exit_status: 255`, its
+  reconciliation shows `registry_entry_present: false`, `path_present: true` and
+  the retained branch with its SHA, its `notes` is `["orphaned-directory"]`,
+  later targets are `not-attempted`, and the exit status is 255
+- **AND** no later plan lists the directory, and nothing deletes it
+
+#### Scenario: Git refuses the removal
+
+- **WHEN** a lock is added to a target after its revalidation
+- **THEN** Git refuses with exit status 128, the target is `failed` with
+  `git-refused`, the record holds the command, the exit status 128 and a
+  reconciliation with the registry entry and path present, later targets are
+  `not-attempted`, every retained branch is reported, and the exit status is 128
+
+#### Scenario: Unreadable path after removal
+
+- **WHEN** a test hook makes the target's parent directory unreadable after Git
+  exits 0
+- **THEN** the rescan's `lstat` fails, `path_present` is null, `reconciled` is
+  false, the target is `unknown` with `reconciliation-incomplete`, the record is
+  printed, and the exit status is 1
+
+#### Scenario: Exception after the apply phase begins
+
+- **WHEN** a fault is injected into the first target's reconciliation
+- **THEN** that target is `unknown` with `internal-error`, later targets are
+  `not-attempted`, the result record is printed, and the exit status is 1
+
+#### Scenario: The stop block
+
+- **WHEN** a batch of three stops at its second target, refused with
+  `branch-changed`
+- **THEN** the human result reads `Stopped at <second path> (branch-changed).
+  Removed 1 of 3. Not attempted: <third path>. Next: ` followed by the command
+  for a fresh read-only plan, and names every retained branch
+
 ## ADDED Requirements
 
 ### Requirement: Clean disposes of listed caches before a worktree removal
@@ -449,27 +826,34 @@ listed path included, and a listed cache's bytes SHALL be the sum of the
 `lstat` sizes of its regular files.
 
 A candidate SHALL be a linked worktree row whose combined status probe
-established `dirty` false after reading at least one ignored record, and which,
-its ignored records disregarded, the ladder would classify `merged-removable`
-and every gate that precedes `deferred-target-cap` would pass; in
-`mode: "single"` only P can be a candidate, and `--action push` and
-`--action delete-branch` have none. For the candidates in canonical order, at
-most 16 per invocation (`limits.cache_rows`), `project clean` SHALL run one
-cache enumeration each, after the row's identity is verified: one Git child in
-the row's own worktree, `status --porcelain=v2 -z --untracked-files=normal
---ignored=matching`, carrying the status pins `-c core.untrackedCache=false -c
+established `dirty` false after reading at least one ignored record, which
+passes the sample test, and which, its ignored records disregarded, the ladder
+would classify `merged-removable` and every gate that precedes
+`deferred-target-cap` would pass; in `mode: "single"` only P can be a
+candidate, and `--action push` and `--action delete-branch` have none. The
+sample test SHALL read the row's `ignored_samples` and spawn no child: a row
+fails it when any sample is a path that is not valid UTF-8, or whose last
+component, a trailing `/` disregarded, is neither exactly `__pycache__` nor a
+name ending exactly `.pyc` or `.pyo`, since such a path is blocking whatever it
+holds. For the candidates in canonical order, at most 16 per invocation
+(`limits.cache_rows`), `project clean` SHALL run one cache enumeration each,
+after the row's identity is verified: one Git child in the row's own worktree,
+`status --porcelain=v2 -z --untracked-files=normal --ignored=matching`,
+carrying the status pins `-c core.untrackedCache=false -c
 core.fsmonitor=false`, the protocol pins, the scrubbed environment and
 `GIT_OPTIONAL_LOCKS=0` that every read-only Git child carries, under the
 per-child budget and counted in `probes`; then a walk of each listed directory
 that opens every directory relative to its parent's descriptor without
-following a symbolic link, each directory listing one filesystem call under the
-per-call budget. The child SHALL stop at its 513th record, so that 512 records
-(`limits.cache_entries`) is its bound.
+following a symbolic link, each directory open, listing and `lstat` one
+filesystem call under the per-call budget. The child SHALL stop at its 513th
+record, so that 512 records (`limits.cache_entries`) is its bound.
 
 A row SHALL stay at the `ignored-local-files` rung, with `cache_disposal.reason`
-naming why, when its ignored paths are not all proven listed caches:
+naming why, when its ignored paths are not all proven listed caches within the
+caps:
 
-- `not-candidate`: it holds ignored records but is not a candidate;
+- `not-candidate`: it holds ignored records but is not a candidate, the sample
+  test included;
 - `cache-cap`: it is a candidate past the 16th; its child reached its record
   bound; its cache entries exceed 512 or its bytes 256 MiB (268,435,456,
   `limits.cache_bytes`); or, every ignored path being a listed cache, its
@@ -482,19 +866,36 @@ naming why, when its ignored paths are not all proven listed caches:
 - `cache-unsupported-platform`, as "Cache disposal never follows a symlink or
   leaves its worktree" states.
 
-A cache cap reached SHALL NOT make the plan incomplete, and a later run SHALL
-take the rows the caps left. A deadline that passes during an enumeration SHALL
-make the plan incomplete with `deadline-exceeded`, as it does during any probe.
-A row whose enumeration finished with no cap reached SHALL have `reason` null,
-and its ignored records SHALL be counted as `disposable`, those that are listed
-caches, and `blocking`, the rest; such a row with `blocking` 0 SHALL pass the
-`ignored-local-files` rung.
+A cache cap reached SHALL NOT make the plan incomplete. A candidate whose
+enumeration leaves it at the `ignored-local-files` rung SHALL keep its place
+among the 16 enumerations. The sample test keeps out of them a row whose
+samples show a blocking name, but not a row whose samples all have cache names
+while it holds a blocking path beyond its 8 samples, a path with a cache name
+that is blocking by its type, its contents or its device, more cache entries
+or bytes than a per-worktree cap allows, or an enumeration that fails each
+time. When each of the first 16 candidates in canonical order is such a row, no
+re-run enumerates a later candidate, and the human report SHALL say why the
+rows left with `cache-cap` will not drain; otherwise a later run SHALL take the
+rows the caps left. A deadline that passes during an enumeration SHALL make the
+plan incomplete with `deadline-exceeded`, as it does during any probe. A row
+whose enumeration finished with no cap reached SHALL have `reason` null, and its
+ignored records SHALL be counted as `disposable`, those that are listed caches,
+and `blocking`, the rest; such a row with `blocking` 0 SHALL pass the
+`ignored-local-files` rung. A row left at the rung with `not-candidate`,
+`cache-cap`, `cache-unverified` or `cache-unsupported-platform` SHALL have
+`disposable`, `blocking`, `entries`, `bytes`, `paths`, `directories` and
+`blocking_samples` null, except a row left only by the invocation's totals,
+whose enumeration finished and which keeps them, and a row that only the sample
+test keeps from being a candidate, whose `blocking_samples` SHALL hold the
+samples that test rejects.
 
-Every worktree row and every `selected` entry SHALL carry `cache_disposal`,
-null when the row's `ignored_files` is null and otherwise an object of:
+`cache_disposal` SHALL be present on a worktree row exactly when its
+`ignored_files` is above 0, and on a `selected` entry exactly when the plan
+lists at least one cache for it; it SHALL be absent otherwise, never null. It
+SHALL be an object of:
 
-- `disposable` and `blocking`: integers, both 0 for a row with no ignored
-  record, and null, never 0, when not established;
+- `disposable` and `blocking`: integers, or null, never 0, when not
+  established;
 - `reason`: null or one of the codes above;
 - `entries` and `bytes`: the totals of the row's listed caches, or null when
   not established;
@@ -508,15 +909,12 @@ null when the row's `ignored_files` is null and otherwise an object of:
 - `blocking_samples`: at most 8 (`limits.ignored_samples`) blocking paths as
   `{path, path_valid_utf8}`, or null when not established.
 
-The canonical text of `plan_digest` SHALL carry, after the `[path, branch,
-head]` triple of each selected target whose `cache_disposal.paths` is not empty,
-that target's `paths` as `[path, kind]` pairs and its `directories` as `[path,
-dev, ino]` triples, each in canonical order, so that a listed cache that
-appears, disappears or changes kind, or a directory with another identity,
-changes the digest. For a plan that selects no such target the canonical text
-and the digest SHALL be those that "Clean previews and applies a batch of
-eligible worktree removals in one repository" defines. `operations.estimated`
-SHALL count each selected target's cache entries besides its removal.
+The listed cache paths and planned cache directories that `plan_digest` covers,
+as "Clean previews and applies a batch of eligible worktree removals in one
+repository" states, SHALL be a selected target's `paths` as `[path, kind]`
+pairs and its `directories` as `[path, dev, ino]` triples.
+`operations.estimated` SHALL count each selected target's cache entries besides
+its removal.
 
 For a selected target whose `cache_disposal.paths` is not empty, the removal
 sequence SHALL run its cache stage after the target's revalidation passes and
@@ -524,8 +922,10 @@ before its removal child is spawned, under the same deadline. The stage SHALL
 start only while more than the 5 s removal floor of the work deadline remains
 and no signal has been received; otherwise the target and every later one SHALL
 be `not-attempted` with `deadline-exceeded`, or with `interrupted`, and nothing
-SHALL be deleted. Each of its filesystem calls SHALL run on a daemon thread and
-get `min(5 s, work remaining less the removal floor)`. It SHALL dispose of
+SHALL be deleted. The same two checks SHALL run again after the whole-list
+preflight and before the first removal, with the same outcome. Each of its
+filesystem calls SHALL run on a daemon thread and get `min(5 s, work remaining
+less the removal floor)`. It SHALL dispose of
 exactly the target's listed caches, as "Cache disposal never follows a symlink
 or leaves its worktree" states. Once it has removed its first entry it SHALL run
 to its end, a signal received meanwhile being only recorded, and the removal
@@ -536,13 +936,16 @@ as "Cleanup revalidates destructive actions" states: no removal child is
 spawned, the target carries its reconciliation, no later target is attempted,
 and the exit status is the first matching row of the table that "Clean records
 a reconcilable result for every removal target" defines, 2 unless a signal or
-the deadline decides it.
+the deadline decides it. When the removal floor ends a stage after its first
+removal, every later target SHALL be `not-attempted` with `deadline-exceeded`,
+and the exit status SHALL be 1.
 
-Every apply-result target SHALL carry `cache_disposal`, null when its plan
-listed no cache and otherwise `{stage, reason, paths, entries,
-entries_removed}`: `stage` and `reason` SHALL be `disposed` with null,
-`refused` with `cache-changed`, `partial` with `cache-partial`, or
-`not-attempted` with `target-stopped` when the target's revalidation refused it,
+An apply-result target SHALL carry `cache_disposal` exactly when its plan
+listed at least one cache for it, and SHALL carry no such key otherwise, never
+null. It SHALL be `{stage, reason, paths, entries, entries_removed}`: `stage`
+and `reason` SHALL be `disposed` with null, `refused` with `cache-changed`,
+`partial` with `cache-partial`, or `not-attempted` with `target-stopped` when
+the target's revalidation refused it,
 or the run stopped, was interrupted or reached the deadline, before its stage
 started; `paths` SHALL list each listed cache as `{path, path_valid_utf8, kind,
 removed}`, `removed` being true when the stage removed it or its rescan found it
@@ -561,9 +964,8 @@ of in how many worktrees. A run that stops at a target whose cache stage ended
 `refused` or `partial` SHALL print, before its stop block, one line naming that
 target and saying that nothing was deleted, or how many of its cache paths were
 removed and which remain, with the command that shows a fresh plan for the
-rest. When the plan selects a target with listed caches, the residual-window
-line of the confirmation and of the result SHALL also name caches recreated
-after a cache stage; otherwise it SHALL stay as it is.
+rest. The residual-window line SHALL be the one that "Cleanup states a narrow
+guarantee and its residual window" states.
 
 #### Scenario: A merged worktree whose only ignored files are caches
 
@@ -579,21 +981,29 @@ after a cache stage; otherwise it SHALL stay as it is.
 - **AND** `--all-safe --apply --yes --json` removes the four entries and then
   the worktree, the target is `removed` with `cache_disposal.stage:
   "disposed"`, its branch remains at its planned SHA, `operations.performed` is
-  5, and the exit status is 0
+  5, the exit status is 0, and the human result adds `Caches disposed: 2 paths
+  in 1 worktree.`
 - **AND** on a copy, `--apply --action remove --worktree` naming it with `--yes`
   does the same, where before this change it refused with `target-excluded`,
   reason `ignored-local-files`
 
 #### Scenario: Caches beside a blocking ignored file
 
-- **WHEN** the same worktree also holds the ignored file `local.env`
-- **THEN** it is classified `ignored-local-files`, its `cache_disposal` has
-  `disposable: 2`, `blocking: 1` and `blocking_samples` naming `local.env`, the
-  preview shows both counts and `local.env` as the first blocking path, and
-  nothing is deleted
+- **WHEN** the same worktree also holds the ignored file `local.env`, which its
+  combined status probe samples
+- **THEN** it is classified `ignored-local-files`, it fails the sample test and
+  no cache enumeration runs in it, its `cache_disposal` has `reason:
+  "not-candidate"`, `disposable` and `blocking` null and `blocking_samples`
+  naming `local.env`, the preview shows both counts as `unknown` and
+  `local.env` as the first blocking path, and nothing is deleted
 - **AND** `--apply --action remove --worktree` naming it refuses with
   `target-excluded`, reason `ignored-local-files`, and exit 2, and every cache
   and `local.env` survive
+- **AND** when it holds, instead of `local.env`, eight ignored loose files
+  `a0.pyc` to `a7.pyc`, which fill its 8 samples, and an ignored `zz.env`,
+  which Git prints after them, it is a candidate and is enumerated, and its
+  `cache_disposal` has `reason: null`, `disposable: 10`, `blocking: 1` and
+  `blocking_samples` naming `zz.env`
 
 #### Scenario: Unknown counts are null, never zero
 
@@ -603,9 +1013,8 @@ after a cache stage; otherwise it SHALL stay as it is.
 - **THEN** the first has `cache_disposal.reason: "not-candidate"` with
   `disposable`, `blocking`, `entries`, `bytes`, `paths`, `directories` and
   `blocking_samples` null, and the human report prints its counts as `unknown`
-- **AND** the second has `disposable: 0`, `blocking: 0`, `reason: null`,
-  `entries: 0`, `bytes: 0` and empty lists
-- **AND** the third has `cache_disposal: null`
+- **AND** neither the second, whose `ignored_files` is 0, nor the third, whose
+  `ignored_files` is null, carries a `cache_disposal` key
 
 #### Scenario: Cache caps
 
@@ -614,14 +1023,24 @@ after a cache stage; otherwise it SHALL stay as it is.
   256 MiB
 - **THEN** both are `ignored-local-files` with `cache_disposal.reason:
   "cache-cap"`, the first's enumeration child having stopped at its 513th
-  record, nothing is deleted, the plan is complete, and apply is allowed
+  record, nothing is deleted, the plan is complete, and apply is allowed, with
+  `disposable` and `blocking` null
 - **AND** when seventeen candidates each hold one small cache directory, the
   first sixteen in canonical order are enumerated and selected, the seventeenth
   stays `ignored-local-files` with `cache-cap`, `--all-safe --apply --yes`
   removes sixteen, and a second run removes the seventeenth
 - **AND** when nine candidates each hold caches of 500 entries, the first eight
   are selected and the ninth stays `ignored-local-files` with `cache-cap`, its
-  entries not counted toward the 4,096
+  entries not counted toward the 4,096, and its `disposable` and `entries` are
+  established and `blocking` is 0
+- **AND** when sixteen candidates each hold, beside a cache directory, eight
+  ignored loose `.pyc` files that fill their samples and an ignored `zz.env`
+  beyond them, and a seventeenth, later in canonical order, holds only caches,
+  every run enumerates the sixteen, each stays `ignored-local-files` with
+  `blocking: 1`, the seventeenth stays `ignored-local-files` with `cache-cap`,
+  and the human report says why it will not drain
+- **AND** when the sixteen instead hold `local.env` among their samples, none
+  of them is enumerated, and the seventeenth is enumerated and selected
 
 #### Scenario: The cache enumeration runs under the pins
 
@@ -636,17 +1055,16 @@ after a cache stage; otherwise it SHALL stay as it is.
 - **AND** no such child runs for a row that is not a candidate, nor for
   `--apply --action push`
 
-#### Scenario: Cache paths are part of the plan digest
+#### Scenario: A failed cache enumeration preserves the row, not the plan
 
-- **WHEN** a preview with digest D selects a target with listed caches, and
-  before `--all-safe --apply --yes --expect-plan D` runs a new ignored
-  `__pycache__` directory holding one `.pyc` file appears in it, or its listed
-  cache directory is replaced by a new directory of the same name and content
-- **THEN** the fresh plan has another digest, the run refuses with
-  `plan-digest-mismatch` and exit 2 before any question, and no cache entry is
-  deleted
-- **AND** for a repository whose selected targets list no cache, the digest
-  equals the one that the batch requirement's canonical text alone gives
+- **WHEN** a merged, clean, published worktree holds only caches and a second
+  plain merged worktree is eligible, and a fake `git` makes the first
+  worktree's cache enumeration child exit 128, or print an untracked record
+  before its ignored ones
+- **THEN** the first is `ignored-local-files` with `cache_disposal.reason:
+  "cache-unverified"` and null counts, not `inspection-error`, the plan is
+  complete, `--all-safe --apply --yes` removes only the second, the first's
+  caches are untouched, and the exit status is 0
 
 #### Scenario: A partial cache phase
 
@@ -673,12 +1091,23 @@ after a cache stage; otherwise it SHALL stay as it is.
   `cache_disposal` is `not-attempted` with `target-stopped`, and the exit status
   is 1
 
+#### Scenario: The removal floor reached during a cache stage
+
+- **WHEN** a selected target lists two caches, a later target is selected, and
+  a test hook holds the stage's call after the first cache's removal until no
+  more than the 5 s removal floor of the work deadline remains
+- **THEN** the stage ends `partial` with `cache-partial`, the first cache stays
+  removed and the second remains, the target is `refused` with `state-changed`
+  and carries its reconciliation, no removal child is spawned, the later target
+  is `not-attempted` with `deadline-exceeded`, and the exit status is 1
+
 #### Scenario: A signal during a cache stage
 
 - **WHEN** SIGINT arrives after a cache stage has removed its first entry
 - **THEN** the stage removes the rest of its listed caches and records
   `disposed`, no removal child is spawned for that target, the target and every
   later one are `not-attempted` with `interrupted`, and the exit status is 130
-- **AND** SIGINT before the stage's first removal leaves every cache in place,
-  and the target is `not-attempted` with `interrupted` and its `cache_disposal`
-  `not-attempted` with `target-stopped`
+- **AND** SIGINT before the stage's first removal, during its whole-list
+  preflight included, leaves every cache in place, and the target is
+  `not-attempted` with `interrupted` and its `cache_disposal` `not-attempted`
+  with `target-stopped`
