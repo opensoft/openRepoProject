@@ -682,7 +682,8 @@ preview, `--action push` and `--action delete-branch` among them, it SHALL
 refuse with `invalid-arguments` and exit status 2 before any plan is built, and
 SHALL run nothing. The flag SHALL never be the default: without it every
 branch remains, as "Clean can explicitly retire verified worktrees" states, and
-no target carries the record below. `--apply --json` SHALL be accepted with the
+the record below SHALL be absent from every target, never null, because null
+means unknown or not established. `--apply --json` SHALL be accepted with the
 flag exactly where "Clean plans and refusals are versioned JSON" accepts it
 without the flag. The flag SHALL change no gate, no selection, no `plan_digest`
 and no `--expect-plan` comparison.
@@ -747,14 +748,15 @@ reason:
   `interrupted`, `spawn-error`, `git-refused` (the child exited nonzero),
   `unconfirmed-retirement` (the child exited 0), `probe-timeout`, or
   `removal-ceiling` (the target's own reason, no stage having run);
-- `not-attempted`: no stage ran, because no branch remained to retire, the
-  target's worktree was not removed, or the run stopped before the target;
-  `branch-missing` (the rescan or the re-read found no branch, the target
-  `removed` with `branch-missing-after-removal` included),
-  `target-not-removed` (the target is `refused`, `failed` or `unknown`, or it
-  is `not-attempted` and the run stopped at or before a target that was not
-  `removed`), or `branch-retention-stop` (the target is `not-attempted` and the
-  run stopped at an earlier target that was `removed`);
+- `not-attempted`: no branch remained to retire, or no stage ran for the
+  target; `branch-missing` (the rescan or the re-read found no branch, the
+  target `removed` with `branch-missing-after-removal` included),
+  `branch-retention-stop` (the target is `not-attempted` because the run
+  stopped after an earlier target that was `removed` and whose
+  `branch_retirement` was not `retired` with reason null), or
+  `target-not-removed` (every other target that no stage reached: one that is
+  `refused`, `failed` or `unknown`, or `not-attempted` for any other cause, a
+  signal or the deadline after an earlier plain retirement included);
 - null, with reason `reconciliation-incomplete`, only when the post-check
   failed or timed out, so that whether the branch exists is not established.
 
@@ -776,19 +778,21 @@ deadline or a null `stage` decides first.
 
 The re-read and the post-check SHALL be counted under `probes` and in the
 target's `probes_performed`, and the branch child under `operations`, so that
-under the flag `operations.estimated` SHALL be twice the number of selected
-targets and `probes.estimated` SHALL add two per selected target. The stage
-SHALL spawn at most three Git children per target, one of them a branch child,
-so that `limits.targets` caps the branch children of a run and
-`budget.probe_timeout_seconds` bounds each; no `limits` or `budget` member is
-added. A run with no removal in flight SHALL still end within 64 s of its
-start, not counting the time blocked at the confirmation question.
+under the flag `operations.estimated` SHALL add one per selected target and
+`probes.estimated` two per selected target. The stage SHALL spawn at most three
+Git children per target, one of them a branch child, so that `limits.targets`
+caps the branch children of a run and `budget.probe_timeout_seconds` bounds
+each; no `limits` or `budget` member is added. A run with no removal in flight
+SHALL still end within 64 s of its start, not counting the time blocked at the
+confirmation question.
 
 Under the flag the printed plan SHALL mark each selected row's branch as one to
 retire. The confirmation SHALL be the one default-No question that "Clean
 previews and applies a batch of eligible worktree removals in one repository"
-states, reading `Remove N worktrees and retire their N local branches?
-[yes/N]`, or `Remove 1 worktree and retire its local branch? [yes/N]` for one.
+states, reading `Remove N worktrees and retire their M local branches?
+[yes/N]`, M being the number of distinct branches of the selected rows and
+`branch` singular when M is 1, or `Remove 1 worktree and retire its local
+branch? [yes/N]` for one.
 Every apply result SHALL print `Removed N; branches retired: R; retained: K`,
 then each retained branch with the command `project clean <root> --apply
 --action delete-branch --branch <branch>`, the explicit retry path, whose
@@ -847,6 +851,8 @@ that stage's reason with the branch named.
 - **AND** the result names the surviving branch with `project clean <root>
   --apply --action delete-branch --branch <branch>`, and that command run with
   `--yes` deletes the branch and exits 0
+- **AND** the result prints `Removed 1; branches retired: 0; retained: 1`
+  before the stop block
 - **AND** when the hook instead moves the branch after the removal and before
   the rescan, the target is `removed` with `branch-advanced-after-removal`,
   its `branch_retirement` is `retained` with `branch-changed`, no re-read or
@@ -869,6 +875,8 @@ that stage's reason with the branch named.
   `branch_retirement` is `retained` with `branch-in-use`, no branch child is
   spawned, the second is `not-attempted`, the branch and the second worktree
   remain, and the exit status is 2
+- **AND** run without `--yes` at a terminal, its question reads `Remove 2
+  worktrees and retire their 1 local branch? [yes/N]`
 
 #### Scenario: Git refuses the branch deletion
 
@@ -900,7 +908,10 @@ that stage's reason with the branch named.
   the exit status is 130
 - **AND** when SIGTERM arrives while a branch child is running, that child is
   not signalled and is waited for, the post-check decides its stage, later
-  targets are `not-attempted` with `interrupted`, and the exit status is 143
+  targets are `not-attempted` with `interrupted`, their `branch_retirement`
+  `not-attempted` with `target-not-removed` when the target's own is `retired`
+  with reason null and with `branch-retention-stop` otherwise, and the exit
+  status is 143
 
 #### Scenario: Exit 0 without retirement
 
@@ -909,6 +920,22 @@ that stage's reason with the branch named.
 - **THEN** the post-check shows the branch present, its `branch_retirement` is
   `retained` with `unconfirmed-retirement` and `exit_status: 0`, later targets
   are `not-attempted`, and the exit status is 2
+
+#### Scenario: A removal that does not end removed under the flag
+
+- **WHEN** under the flag a lock is added to the first of two targets after its
+  revalidation, so that Git refuses its removal
+- **THEN** the first target is `failed` with `git-refused` and its
+  `branch_retirement` is `not-attempted` with `target-not-removed`, no branch
+  command runs, the second target is `not-attempted` with `batch-stopped` and
+  its `branch_retirement` `not-attempted` with `target-not-removed`, both
+  branches remain, and the exit status is 128
+- **AND** when a test hook instead deletes the first target's branch after its
+  rescan and before its re-read, the first target is `removed` with reason
+  null, its `branch_retirement` is `not-attempted` with `branch-missing` and
+  `observed_sha` null, no branch child is spawned, the second target's
+  `branch_retirement` is `not-attempted` with `branch-retention-stop`, and the
+  exit status is 2
 
 #### Scenario: A branch child past its budget
 

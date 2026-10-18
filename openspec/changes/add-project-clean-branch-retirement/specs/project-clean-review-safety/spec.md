@@ -12,8 +12,9 @@ identity and branch evidence, every baseline signature field of the target, its
 index (read inside the target worktree), the manifest's `tracking_branch`, and
 the merge target's name, source and SHA all equal the values in the confirmed
 plan. Under `--retire-branches` the guarantee SHALL extend to the branch child:
-it is spawned only if, at the re-read performed immediately before spawning it,
-the branch's head equals the reconciliation record's `branch_sha`, the merge
+it is spawned only if the rescan that proved the removal re-established the
+repository identity and, at the re-read performed immediately before spawning
+it, the branch's head equals the reconciliation record's `branch_sha`, the merge
 target's name, source and SHA equal the values in the confirmed plan, and no
 registered worktree had the branch checked out at the rescan, as "Clean retires
 a removed worktree's branch only on fresh head and ancestry evidence" states.
@@ -32,9 +33,10 @@ branch SHALL never be deleted; a branch change seen by the re-read SHALL retain
 the branch with `branch-changed`, stop the run, and exit 2; and a branch change
 after that re-read SHALL be outside the contract, guarded only by Git's own
 non-force check on the value Git reads, so that the residual-window line under
-the flag SHALL also name a branch changed after its last check. A repository found replaced by the rescan after a removal SHALL
-make that target `unknown` with `unconfirmed-removal`, every reconciliation
-field null and `reconciled` false, and SHALL stop the run with exit status 1.
+the flag SHALL also name a branch changed after its last check. A repository
+found replaced by the rescan after a removal SHALL make that target `unknown`
+with `unconfirmed-removal`, every reconciliation field null and `reconciled`
+false, and SHALL stop the run with exit status 1.
 
 #### Scenario: Ignored file in the residual window
 
