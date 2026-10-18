@@ -14,32 +14,42 @@ duplicate them.
   verified by its Capabilities section accounting for every canonical
   requirement of `project-clean` and `project-clean-review-safety` and every
   requirement change 1 adds to them.
-- [ ] 1.2 Alignment resolved: the stack-architect and qa-lead findings on this
-  draft are applied, MISMATCH and DRIFT at once and each GAP put to Brett
-  Heap; verified by the table "Questions Resolved by the Alignment Review" in
-  `proposal.md` and the alignment comment on the pull request.
+- [x] 1.2 Alignment resolved: the stack-architect and qa-lead findings on
+  `e7f3e65` (SA-1 to SA-5, QA-1 to QA-4) are applied, MISMATCH and DRIFT at
+  once and qa-lead's GAP (QA-3) by its own scenario text, and the review's
+  GAPs for the lane are settled by the lane's rulings of 2026-10-18 (A-5
+  amended, L-10, A-9 to A-13), the two that need Brett Heap's word (A-9, A-10)
+  put to him as Open Questions; applied by `0f89873`, `8227772`, `7689028` and
+  the commit that ticks this task; verified by the table "Questions Resolved by
+  the Alignment Review" in `proposal.md`, one row per finding id with its
+  severity, the ruling and the section edited, and by the lane's alignment
+  comment on PR #26.
 - [ ] 1.3 Council resolved: each product-advocate, systems-architect and
   adversary-engineer concern on the aligned proposal is VALID (applied to
   `proposal.md`), NOTED (recorded in a `clarifications.md` that `design.md`
   then answers) or DISMISSED; verified by "Council Verdicts" in `proposal.md`
   and the council comment on the pull request.
 - [x] 1.4 Spec deltas and design written: `specs/project-clean/spec.md`
-  modifies four requirements and adds one (52 scenarios: 37 carried unchanged
-  from change 1 and PR #19, 15 added), and
+  modifies four requirements and adds one (53 scenarios: 37 carried unchanged
+  from change 1 and PR #19, 16 added), and
   `specs/project-clean-review-safety/spec.md` modifies one (4 scenarios: 3
   carried, 1 added), every scenario of each modified requirement's source text
   kept byte for byte; `design.md` holds D1 to D10 (`8341954`, `d0b33ce`, and
-  the commit titled 'Settle which later targets carry branch-retention-stop');
-  verified by `grep -c '^#### Scenario:'` on each spec file.
+  the commit titled 'Settle which later targets carry branch-retention-stop'),
+  revised by the alignment fix round (1.2); verified by
+  `grep -c '^#### Scenario:'` on each spec file and by a scenario-carry script
+  run after the fix round, every source scenario present byte for byte and in
+  order.
 - [x] 1.5 Validation passes: `/usr/bin/openspec validate
   add-project-clean-branch-retirement --strict` reports the change valid,
   `/usr/bin/openspec validate --all --strict` reports 8 passed, 0 failed, and
   `/usr/bin/openspec status --change add-project-clean-branch-retirement
   --json` shows every artifact done; verified by running the three on this
-  branch after 1.4 (build 1.13.1, which notes only as INFO that archive would
-  refuse the MODIFIED blocks whose base still sits in change 1).
+  branch after 1.4 and again after the alignment fix round (build 1.13.1, which
+  notes only as INFO that archive would refuse the MODIFIED blocks whose base
+  still sits in change 1).
 - [ ] 1.6 Ratified by Brett Heap's word on the pull request, quoted with its
-  link here, the proposal's three Open Questions before him; verified by that
+  link here, the proposal's five Open Questions before him; verified by that
   quote. No implementation starts before it.
 
 ## 2. Before the Speckit handoff
@@ -57,22 +67,32 @@ duplicate them.
   that text moved past `c462d87`; when it closes unmerged, the block is
   re-based on change 1's text; verified by a diff of the block's carried text
   against the canonical requirement.
-- [ ] 2.3 `add-project-clean-cache-disposal` (issue #24) checked: every
-  requirement both changes MODIFY is listed here with the cache change's
-  state, and if it has archived, this change's blocks are re-based on its
-  archived text now, otherwise 3.2 holds the re-base; verified by
-  `/usr/bin/openspec validate --all --strict` passing after any re-base.
+- [ ] 2.3 `add-project-clean-cache-disposal` (issue #24) checked: the five
+  requirements both changes MODIFY under the lane's rulings B-10 and A-13
+  ("Clean can explicitly retire verified worktrees", one cache clause; "Clean
+  previews and applies a batch of eligible worktree removals in one
+  repository", the cache digest; "Clean bounds its Git work and reports
+  omitted work", the counting sentence merged and the cache fit sentence
+  scoped to runs without the flag; "Clean records a reconcilable result for
+  every removal target", the cache-deletion exception; "Cleanup states a
+  narrow guarantee and its residual window", the cache target's revalidation)
+  are listed here with the cache change's state, and if it has archived, this
+  change's five blocks are re-based on its archived text now, otherwise 3.2
+  holds the re-base (L-11); verified by `/usr/bin/openspec validate --all
+  --strict` passing after any re-base.
 
 ## 3. Landing and archive readiness
 
-- [ ] 3.1 The realization PR is merged with green checks on all four CI jobs
-  (`ubuntu-latest` and `macos-latest`, Python 3.10 and 3.12) and closes issue
-  #23; verified by citing its merge sha here, from `gh pr view <number> --json
-  mergeCommit,statusCheckRollup`.
+- [ ] 3.1 The realization PR is merged with green checks on every job of
+  `.github/workflows/tests.yml` at its merge (at `origin/main` `e9d6711`, the
+  `test` job on `ubuntu-latest` for Python 3.10 and 3.12; feature 004 adds
+  `git-floor`) and closes issue #23; verified by citing its merge sha here,
+  from `gh pr view <number> --json mergeCommit,statusCheckRollup`.
 - [ ] 3.2 `add-project-clean-cache-disposal` is archived before this change,
-  and this change's shared MODIFIED blocks carry its archived text (L-5);
-  verified by `/usr/bin/openspec validate add-project-clean-branch-retirement
-  --strict` passing against the main specs that archive left.
+  and all five of this change's MODIFIED blocks, each shared with it, carry
+  its archived text (L-5, L-11, A-13); verified by `/usr/bin/openspec validate
+  add-project-clean-branch-retirement --strict` passing against the main specs
+  that archive left.
 - [ ] 3.3 The change is archived with `/opsx:archive` only after 3.1 and 3.2;
   verified by `/usr/bin/openspec validate --all --strict` passing after the
   archive.
