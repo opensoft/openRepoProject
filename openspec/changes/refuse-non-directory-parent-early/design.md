@@ -36,8 +36,8 @@ What in `project` shapes the approach (unchanged on this branch from main
   fixture is at `:58-62`; `known_obstacle_cases()` at `:394`, the parent
   fixtures at `:419-444`, the dry-run obstacle test at `:1477`, the test this
   change rewrites at `:1526`. `self.base` is already resolved. CI runs
-  `ubuntu-latest` and `macos-latest` on Python 3.10 and 3.12
-  (`.github/workflows/tests.yml:9-10`).
+  `ubuntu-latest` only, on Python 3.10 and 3.12
+  (`.github/workflows/tests.yml:9-10` at `e9d6711`, since #32).
 
 ## Goals / Non-Goals
 
@@ -352,8 +352,9 @@ flag or stream changes; a dry run for a blocked parent now exits 2.
 2. `/speckit.specify`, from a main synced to origin, creates the one feature
    under the next free number; it is recorded once in `tasks.md` under
    "Speckit Handoff", and `/opsx:apply` runs only then.
-3. The realization PR merges with green checks on all four CI jobs and
-   closes issue #20.
+3. The realization PR merges with green checks on every job of
+   `.github/workflows/tests.yml` (since #32, two: `ubuntu-latest` on Python
+   3.10 and 3.12) and closes issue #20.
 4. The workBenches#145 comment of D5, if that issue is still open.
 5. The change is archived after the merge.
 

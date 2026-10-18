@@ -22,7 +22,7 @@ duplicate them.
 
 ## 3. Landing and archive readiness
 
-- [ ] 3.1 The realization PR, whose body says "Closes #20", is merged with green checks on all four CI jobs (`ubuntu-latest` and `macos-latest`, Python 3.10 and 3.12) and closes issue #20; verified by citing its merge sha here, from `gh pr view <number> --json mergeCommit,statusCheckRollup`.
+- [ ] 3.1 The realization PR, whose body says "Closes #20", is merged with green checks on every job of `.github/workflows/tests.yml` (since #32, two: `ubuntu-latest` on Python 3.10 and 3.12) and closes issue #20; verified by citing its merge sha here, from `gh pr view <number> --json mergeCommit,statusCheckRollup`.
 - [ ] 3.2 If workBenches#145 is still open when the realization merges, one comment is posted on it naming the merge sha and the sha256 of `project` at that sha as an alternative pin target that carries the early refusal, and no new issue is opened (design D5); verified by the comment's URL, or, where nothing is posted, by #145's closed state at the merge.
 - [ ] 3.3 The change is archived with `/opsx:archive` only after 3.1 and 3.2; verified by `openspec validate --all --strict` passing after the archive.
 

@@ -350,7 +350,7 @@ On Python 3.10 and 3.12 (CI), each by a test:
 
 1. Kinds: (a) a regular file, a symbolic link to a file, a FIFO and `FILE/`
    (a socket and `/dev/null` optional: an AF_UNIX path can be too long on
-   macOS CI), given by `--into`, the positional parent, `PROJECTS_DIR` and
+   macOS), given by `--into`, the positional parent, `PROJECTS_DIR` and
    the default `~/projects`; (b) `FILE/sub` and `FILE/a/b` by `--into`. Each
    with `--type test` (with `--yes`, at a pty without it, and with
    `--dry-run`), and not asked without a choosing flag (`CI=true`, a
@@ -412,8 +412,8 @@ On Python 3.10 and 3.12 (CI), each by a test:
 - The archived N1 residuals (3.13 and later loop, 3.14 unsearchable
   ancestor): versions CI does not run; by that record (not run here) the new
   read classes them as not blocked, so they behave as today.
-- The CI matrix (3.10 and 3.12, Linux and macOS) and "Python 3.10+": the
-  realization's tests run on both as the matrix stands.
+- The CI matrix (Python 3.10 and 3.12, Linux only since #32) and "Python
+  3.10+": the realization's tests run on both versions as the matrix stands.
 - Everything from `discover` down and every subcommand but `new`: lane
   openRepoProject-2's surface, or untouched.
 - workBenches, openRepoShape, setup-openspeckit and the archived changes:
