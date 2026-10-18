@@ -2,14 +2,13 @@ Lane: openRepoProject-5
 
 # Proposal: add-project-clean-branch-retirement
 
-Status: draft; alignment review and council pending (lane openRepoProject-5
-runs them on this draft); nothing here is ratified. Governing issue:
-opensoft/openRepoProject#23, claimed by lane openRepoProject-5 (comment
-6111211798); refs #6, the record of the project maintenance design packet.
-Proposed on Brett Heap's word "usage reset, resume all. read handoff and resume
-and fan out wide and do as much as possible in parallel" (2026-10-11), read by
-lanes openRepoProject-4 and openRepoProject-5 as a go for the candidate list
-they put to him.
+Status: draft; alignment review resolved on PR #26; council pending; nothing
+here is ratified. Governing issue: opensoft/openRepoProject#23, claimed by lane
+openRepoProject-5 (comment 6111211798); refs #6, the record of the project
+maintenance design packet. Proposed on Brett Heap's word "usage reset, resume
+all. read handoff and resume and fan out wide and do as much as possible in
+parallel" (2026-10-11), read by lanes openRepoProject-4 and openRepoProject-5
+as a go for the candidate list they put to him.
 
 Citations are `file:line` at `da33d92`, which equals `961c405` for
 `ideation/`. `BA`, `OV`, `SY` and `HO` are the packet's
@@ -23,12 +22,16 @@ change `openspec/changes/add-project-clean-all-safe/` ("change 1") at
 `openspec/changes/add-project-overview/` ("change 2"), `APO/ov` its
 `specs/project-overview/spec.md`. "PR #19's text" is `CAS/pc` on draft PR #19's
 branch `change/amend-clean-all-safe-push-pins` at `c462d87`, whose spec files
-equal those at `5ce23d7`, the head the lane's ruling L-1 names. `project:N`
-and `tests:N` are `project` and `tests/test_project.py` at `961c405`.
-Canonical requirements are cited as `project-clean/spec.md:N` and
-`project-clean-review-safety/spec.md:N` under `openspec/specs/`. The lane
-lead's rulings of 2026-10-11, L-1 to L-9 and A-1 to A-7, bind this draft and
-are applied under Decisions.
+equal those at `5ce23d7`, the head the lane's ruling L-1 names; PR #19 is
+still a draft at `c462d87` (2026-10-18). `project:N` and `tests:N` are
+`project` and `tests/test_project.py` at `961c405`. Main is now `e9d6711`,
+whose `openspec/` and `ideation/` equal `961c405`'s and whose `project`,
+`tests/test_project.py` and `README.md:178-200` are unchanged from it, so every
+citation at `961c405` holds at main (L-15). Canonical requirements are cited as
+`project-clean/spec.md:N` and `project-clean-review-safety/spec.md:N` under
+`openspec/specs/`. The lane lead's rulings of 2026-10-11, L-1 to L-9 and A-1 to
+A-7, and its addendum of 2026-10-18, L-10 to L-15, A-5 as amended and A-9 to
+A-13, bind this draft and are applied under Decisions.
 
 ## Why
 
@@ -77,9 +80,10 @@ confirmed run, on fresh evidence, with nothing changed for a run without it.
   `plan_digest` and no `--expect-plan` comparison.
 - **A branch stage after each proven removal** (`BA:1318-1322`,
   `BA:1339-1345`; A-2). Inside the removal seam that feature 004 builds
-  (`retire_worktree`), once a target's rescan proves it `removed` with reason
-  null, so that its reconciliation record shows the branch present at the
-  planned head, the stage runs before the next target is revalidated:
+  (`retire_worktree`, CAS `proposal.md:189`), once a target's rescan proves it
+  `removed` with reason null, so that its reconciliation record shows the
+  branch present at the planned head, the stage runs before the next target is
+  revalidated:
   1. it re-reads the manifest and, in one ref listing narrowed as change 1's
      revalidation listing is, the branch and the merge-target candidates;
   2. it checks, stopping at the first failure, that the branch exists, that
@@ -102,11 +106,13 @@ confirmed run, on fresh evidence, with nothing changed for a run without it.
   ruling of 2026-10-09, "yes, local ancestry proof outranks remote-gone, apply
   it"). Rows gated `unstarted-branch` or `reflog-unavailable` never reach
   `removed`, so they never reach the stage.
-- **A per-target sub-record** (A-4, L-4). Under the flag every target of the
-  apply result record carries `branch_retirement` `{stage, reason, branch,
+- **A per-target sub-record** (A-4, L-4, L-10). Under the flag every target of
+  the apply result record carries `branch_retirement` `{stage, reason, branch,
   planned_sha, observed_sha, command, exit_status}`; `stage` is `retired`,
   `retained` or `not-attempted`, or null when the post-check could not
-  establish it, and the ADDED requirement lists each reason. The target's
+  establish it, and the ADDED requirement lists each reason. Without the flag
+  the key is absent from every target, never null, since null keeps change 1's
+  meaning, unknown or not established (`CAS/pc:1128-1129`). The target's
   `stage`, its reasons, the fifteen ladder classes, the gates, the refusal
   codes and the note codes gain no value.
 - **The stop rule and the exit status** (A-4; `BA:1341-1343`). The run stops
@@ -122,18 +128,19 @@ confirmed run, on fresh evidence, with nothing changed for a run without it.
   a branch child in flight is waited for within its budget when a signal
   arrives and stopped like a probe past it. The branch child counts under
   `operations` and the two listings under `probes`, so `operations.estimated`
-  is twice the targets and `probes.estimated` gains two per target. A run with
-  no removal in flight still ends within 64 s of its start. The explicit
+  gains one per target and `probes.estimated` two. A run with no removal in
+  flight still ends within 64 s of its start. The explicit
   `delete-branch` action's child stays unbounded, as change 1 says of it.
 - **What the person sees** (A-6, A-7). The plan marks each selected branch for
-  retirement; the question reads `Remove N worktrees and retire their N local
-  branches? [yes/N]`; every apply result prints `Removed N; branches retired:
-  R; retained: K`, then each retained branch with its retry command, `project
-  clean <root> --apply --action delete-branch --branch <b>` (`BA:1281-1293`); a
-  stop ends with change 1's stop block, the branch's reason in it; and the
-  residual-window line names a branch changed after its last check. The
-  overview never suggests the flag: its suggestion is exactly one of two
-  argument vectors and never carries `--apply` (`APO/ov:484-487`).
+  retirement; the question reads `Remove N worktrees and retire their M local
+  branches? [yes/N]`, M counting distinct branches; every apply result prints
+  `Removed N; branches retired: R; retained: K`, then each retained branch
+  with its retry command, `project clean <root> --apply --action delete-branch
+  --branch <b>` (`BA:1281-1293`); a stop ends with change 1's stop block, the
+  branch's reason in it; and the residual-window line names a branch changed
+  after its last check. The overview never suggests the flag: its suggestion
+  is exactly one of two argument vectors and never carries `--apply`
+  (`APO/ov:484-487`).
 - **The narrow guarantee under the flag** (MODIFIED review-safety). Change 1's
   "Cleanup SHALL never delete a branch" stays true without the flag. With it,
   the guarantee extends to the branch child, the branch race keeps change 1's
@@ -262,7 +269,7 @@ their `CAS` line.
     branch child and post-check; never force, never remote, never a retry;
     the `branch_retirement` sub-record and its reasons; the stop rule; the
     bound and the counts; the question, summary line, stop block and retry
-    command. Fifteen scenarios.
+    command. Sixteen scenarios.
 - `project-clean-review-safety` (all four canonical requirements and change
   1's one ADDED one accounted for):
   - Untouched (`:9`): `### Requirement: Cleanup protects the process worktree`.
@@ -276,7 +283,10 @@ their `CAS` line.
     deletion" and its MUST a refusal on any difference from the reviewed plan;
     the stage's re-read is that re-inspection, retaining the branch on a
     difference, and the ADDED requirement states it, so nothing here is
-    contradicted (Decisions).
+    contradicted (Decisions). Its sentence "Push and delete-branch SHALL keep
+    the full re-inspection" (`CAS/rs:96-98`) names the explicit actions; the
+    flag's stage is neither, and its targeted re-read is the ADDED
+    requirement's.
   - MODIFIED (`CAS/rs:194`):
     `### Requirement: Cleanup states a narrow guarantee and its residual window`.
     "Cleanup SHALL never delete a branch, so that a branch race cannot lose
@@ -295,8 +305,9 @@ their `CAS` line.
 
 - **`project`**: inside the seam feature 004 builds (slice 6 of
   `specs/004-project-clean-all-safe/plan.md` on branch
-  `004-project-clean-all-safe` at `dd923ee`), the
-  flag, its argument rules, the branch stage after the rescan, the
+  `004-project-clean-all-safe`, re-checked at `66d60b6`, where its tasks build
+  it as `apply_removals(plan, run)`; `design.md` Context), the flag, its
+  argument rules, the branch stage after the rescan, the
   `branch_retirement` sub-record, the three exit rows, the question, the
   summary line, the stop block's branch reason and the residual-window line;
   the parser's `clean` flags (`project:1109-1117` today) gain
@@ -313,28 +324,66 @@ their `CAS` line.
   whose `branch -d` ignores SIGTERM, test hooks after the rescan and after the
   re-read, and change 1's counting wrapper recording the branch child's pins,
   directory and arguments. Tests run as change 1 runs them, `python3 -m
-  unittest discover -s tests -v`, on the four CI jobs.
+  unittest discover -s tests -v`, on the CI workflow's jobs: since PR #32,
+  one `test` job on `ubuntu-latest` for Python 3.10 and 3.12
+  (`.github/workflows/tests.yml` at `origin/main` `e9d6711`), and feature
+  004's `git-floor` job once it lands (L-12).
 - **Speckit handoff**: one feature, numbered when `/speckit.specify` runs
   after ratification, 006 or later (L-7).
 
 ### Dependencies and Sequencing
 
-- **On change 1** (L-1). Written on change 1's ratified text at `961c405`.
-  Four of the five blocks this change MODIFIES (batch, bounds, reconcilable
-  result, narrow guarantee) are change 1's ADDED requirements, so this change
-  cannot archive before change 1 does (`openspec archive` fails a MODIFIED
-  block whose header is not in the main spec); `validate --strict` passes
-  meanwhile. Change 1 archives after feature 004 merges.
-- **On PR #19** (L-1). "Clean bounds its Git work and reports omitted work" is
-  written on PR #19's text; its other blocks are byte-identical on `main` and
-  PR #19. If PR #19 lands, this block is its text plus this change; if PR #19
-  changes or closes first, the block is re-based before ratification.
-- **Archive order** (L-5). Change 1, then `add-project-clean-cache-disposal`
-  (issue #24, lane openRepoProject-5), then this change, which carries the
-  cache change's archived block of "Clean can explicitly retire verified
-  worktrees" and of every other requirement both changes MODIFY ("Clean bounds
-  its Git work and reports omitted work" at least). `add-project-overview-remote-merge-status`
-  (issue #25) archives after change 2 and touches neither capability here.
+- **On change 1** (L-1, L-15). Written on change 1's ratified text at
+  `961c405`, which main `e9d6711` keeps unchanged; change 1 is still
+  unarchived (2026-10-18). Four of the five blocks this change MODIFIES
+  (batch, bounds, reconcilable result, narrow guarantee) are change 1's ADDED
+  requirements, so this change cannot archive before change 1 does (`openspec
+  archive` fails a MODIFIED block whose header is not in the main spec);
+  `validate --strict` passes meanwhile. Change 1 archives after feature 004
+  merges. Change 1 lists the apply result's `completeness` (`CAS/pc:1138`)
+  without saying when it is incomplete: this change states its own trigger, a
+  null `branch_retirement` `stage`, inside its ADDED requirement, and when
+  change 1's own result is incomplete is lane openRepoProject-2's text to
+  settle in change 1 (A-11). It does not block this change.
+- **On PR #19** (L-1, L-15). "Clean bounds its Git work and reports omitted
+  work" is written on PR #19's text, still a draft at `c462d87`; its other
+  blocks are byte-identical on `main` and PR #19. If PR #19 lands, this block
+  is its text plus this change; if PR #19 changes or closes first, the block
+  is re-based before ratification.
+- **Archive order** (L-5, L-11, A-13). Change 1, then
+  `add-project-clean-cache-disposal` (issue #24, lane openRepoProject-5), then
+  this change. Under the lane's ruling B-10 the cache change MODIFIES every
+  requirement this change MODIFIES, so this change carries the cache change's
+  archived block of each of the five and re-bases each on it before it
+  archives:
+  - "Clean can explicitly retire verified worktrees": the cache change adds one
+    clause to the removal sequence, before the spawn, that no edit here
+    touches.
+  - "Clean previews and applies a batch of eligible worktree removals in one
+    repository": the cache change extends `plan_digest` for a plan that
+    selects a cache target (B-10); this change's two sentences, the question
+    and the summary line, are elsewhere in the block.
+  - "Clean bounds its Git work and reports omitted work": both rewrite the
+    counting sentence, merged as "a removal, or a branch child of
+    `--retire-branches`, under `operations`, every other child, a cache
+    enumeration included, under `probes`, and each cache entry that a cache
+    stage removes counted once under `operations`"; and where the cache
+    change's fit sentence says that the 16th target reaches its spawn with
+    more than the removal floor left, which the flag makes false at the
+    packet's costs, the re-based block scopes it to runs without
+    `--retire-branches` (`design.md` D7).
+  - "Clean records a reconcilable result for every removal target": the cache
+    change makes its descriptor-relative deletion of listed cache paths the one
+    exception to "`project` SHALL never force a removal or delete a directory
+    itself" (B-10); this change's edits are exit rows 2, 4 and 5.
+  - "Cleanup states a narrow guarantee and its residual window": the cache
+    change names the revalidation its guarantee means for a cache target
+    (B-10); this change extends the guarantee to the branch child, and the
+    residual-window line of a flagged run whose plan also selects a cache
+    target names both (`design.md` D8).
+
+  `add-project-overview-remote-merge-status` (issue #25) archives after change
+  2 and touches neither capability here.
 - **Implementation.** The stage lives in feature 004's seam, so this change's
   feature is specified after feature 004 merges and change 1 archives; it
   never alters the order of feature 004 or feature 005. Whichever of this
@@ -385,7 +434,11 @@ open:
   Upstream live or deleted, by Brett Heap's ruling of 2026-10-09.
 - **A sub-record, not new stage values** (A-4, L-4; `BA:1319-1321` "stage
   values of its own"). Read as satisfied by the sub-record's own `stage`;
-  change 1's enum is untouched.
+  change 1's enum is untouched. The sub-record is present only under the flag
+  and absent without it, never null for "not applicable" (L-10), because null
+  keeps change 1's meaning, unknown or not established (`CAS/pc:1128-1129`);
+  the alternative, the key on every target and null without the flag, is
+  rejected for that reason.
 - **Exit 2 for a retained branch** (A-4; the packet says only "stops later
   targets"), ordered inside change 1's exit table.
 - **No new `limits` or `budget` member** (A-5; `BA:1321-1322` "its bounds in
@@ -393,6 +446,17 @@ open:
   `limits.targets` (16) caps branch children, and
   `budget.probe_timeout_seconds` bounds each; a `limits.branch_retirements`
   member is rejected as always equal to `limits.targets`.
+- **The target cap of a flagged run stays 16** (A-9; the packet's fit rule,
+  `BA:729-735`, leaves the caps to measurement, `BA:766-771`). With the cache
+  change archived first, a flagged run at the packet's 150 ms per child brings
+  only 13 of its 16 targets to their stage before the removal floor; change
+  1's own deadline rule makes the rest `not-attempted` with
+  `deadline-exceeded`, exit 1, taken by the next run and never unsafe
+  (`BA:772-774`); at change 1's measured costs all 16 fit (`design.md` D7).
+  The alternative, a lower target cap under the flag (8 by the packet's rule),
+  is rejected: the cap is applied by the `deferred-target-cap` gate, so the
+  flag would change the selection, the digest and `--expect-plan`'s
+  comparison. Put to Brett Heap (Open Questions).
 - **The plan digest ignores the flag.** The flag changes no selection, so an
   `--expect-plan` digest taken from a preview, which cannot carry the flag,
   matches an apply with it; the question names the branches to retire. No
@@ -411,12 +475,31 @@ departs:
   (CAS `design.md` D7). A merge target that moved, even forward, retains the
   branch with `state-changed`. This is narrower than A-2's text, which would
   retire a branch whose target moved forward.
-- **Three children per target, a departure from A-5's "up to 16 more
-  children".** The stage spawns the re-read that A-2 requires, the branch
-  child, and a post-check that change 1's evidence rule requires ("The
-  child's exit status alone SHALL never prove a removal", `CAS/pc:919`; null
-  for what is not established, `CAS/pc:1128-1129`): up to 48 more children,
-  16 under `operations` and 32 under `probes`. `design.md` restates the fit.
+- **The re-read's values.** It compares the branch's head, the merge target's
+  name, source and SHA, and the checked-out state, as the explicit action's
+  re-check compares head, target and ancestry (`project:658-663`), not the
+  upstream evidence or the manifest's `tracking_branch` that change 1's
+  removal revalidation compares (`CAS/rs:77-82`): a head unchanged and an
+  ancestor of an unchanged merge target loses no commit when deleted
+  (`BA:1339-1341`). The repository identity is the one the rescan
+  re-established, which a target `removed` with reason null requires
+  (`CAS/pc:919-921`).
+- **Three children per target, as A-5 amended records.** The stage spawns the
+  re-read that A-2 requires, the branch child, and a post-check that change
+  1's evidence rule requires ("The child's exit status alone SHALL never prove
+  a removal", `CAS/pc:919`; null for what is not established,
+  `CAS/pc:1128-1129`): up to 48 more children, 16 under `operations` and 32
+  under `probes`. A-5's first text said "up to 16 more children"; the lane
+  amended it to this count on 2026-10-18, and the departure from its first
+  text stands as recorded. `design.md` restates the fit. At the packet's
+  assumed 150 ms per child its fit rule (`BA:729-735`) fails for a flagged run
+  of 16 targets: the 16th removal would spawn at 45.9 s, 0.9 s inside the 5 s
+  floor. The caps stay on change 1's measured fit (CAS `tasks.md` 2.1: the
+  16th removal at 23.6 s; about 30.4 s with the 45 stage children before it at
+  150 ms each), as change 1 kept them on its measurement; a slower repository
+  leaves its last targets `not-attempted` with `deadline-exceeded`, exit 1,
+  never unsafe (`BA:772-774`). This departs from the packet's rule for flagged
+  runs; the joint fit with the cache change is A-9's decision above.
 - **A-4's three stage values, and null.** When the post-check cannot decide,
   `stage` is null with reason `reconciliation-incomplete`, by change 1's null
   rule; a fourth value `unknown` is rejected to keep A-4's list.
@@ -429,9 +512,18 @@ departs:
   every branch retired, so `retained` is 0 there and counts only on a stop;
   the line replaces `Removed N; branches kept: ` and precedes the stop block,
   which ends the result (`CAS/pc:962-964`).
+- **A-6's question counts distinct branches.** A-6 words it "Remove N
+  worktrees and retire their N local branches?", but two selected worktrees
+  can hold one branch (the second added with `git worktree add --force`), so
+  the question reads `Remove N worktrees and retire their M local branches?
+  [yes/N]`, M being the number of distinct branches of the selected rows and
+  `branch` singular when M is 1. Change 1's `keeping N branches` has the same
+  shape and is lane openRepoProject-2's to settle in change 1.
 - **A-1's `--json`** is read as `--apply --json` accepted with the flag in
-  both forms change 1 accepts. Change 1's push requirement keeps its scenario
-  "Push and branch deletion stay human-only", which tests the explicit
+  both forms change 1 accepts, as change 1's OQ-10 allows it "for removal
+  only" and keeps it refused "with `--action push` or `delete-branch`" (CAS
+  `proposal.md:735-737`). Change 1's push requirement keeps its scenario "Push
+  and branch deletion stay human-only", which tests the explicit
   `delete-branch` action with `--json`; that refusal stays and the requirement
   is untouched.
 - **A branch child is waited for on a signal.** Within its budget, as a
@@ -448,7 +540,14 @@ The lane's rulings, where each lands: L-1 (drafted on change 1 and PR #19;
 Dependencies), L-2 (citations), L-3 (Capabilities), L-4 (sub-record; Open
 Questions), L-5 (archive order), L-6 (Status; issue #23), L-7 (Speckit
 numbering), L-8 (draft only; the review tables below), L-9 (no host path);
-A-1 to A-7 as above.
+A-1 to A-7 as above. The addendum of 2026-10-18: L-10 (sub-record absent
+without the flag; What Changes, Decisions, the ADDED requirement, `design.md`
+D5), L-11 (placement; Dependencies), L-12 (CI; Impact, `design.md` D9 and the
+Migration Plan, `tasks.md` 3.1), L-13 (commit trailers), L-14 (Status;
+`tasks.md` 1.2), L-15 (base text; the citation key and Dependencies); A-5 as
+amended and A-9 (Decisions; Open Questions; `design.md` D7), A-10 (Open
+Questions), A-11 (Dependencies; `design.md` D5), A-12 (Impact; `design.md`
+Context) and A-13 (Dependencies; `tasks.md` 2.3 and 3.2).
 
 ## Corrections to the Packet
 
@@ -482,11 +581,57 @@ recommendation, and a different ruling edits them before ratification.
   Git's checked-out refusal and merge test and leaves the `branch.<b>`
   section, which reads as the force deletion `BA:1344-1345` forbids.
   Recommendation: (a).
+- **The target cap of a flagged run** (A-9). With
+  `add-project-clean-cache-disposal` archived first, a run with
+  `--retire-branches` whose plan also selects cache targets reaches the removal
+  floor at its 14th target under the packet's 150 ms per child: 13 of its 16
+  targets reach their stage, and change 1's deadline rule leaves the rest
+  `not-attempted` with `deadline-exceeded`, exit 1, for the next run, never
+  unsafe; at change 1's measured costs all 16 fit, the 16th spawning near
+  32.8 s (`design.md` D7). Options: (a) keep `limits.targets` 16 for every run;
+  (b) a lower cap under the flag, 8 by the packet's rule (`BA:729-735`), which
+  would make the flag change the selection, the digest and `--expect-plan`'s
+  comparison. Recommendation: (a), keep 16.
+- **Merge-target candidates** (A-10). Under the flag the stage can retire a
+  merged local branch named `main` or `master`, or one that a
+  `refs/remotes/<r>/HEAD` names, when it is not the plan's merge target:
+  `protected-default` covers only the merge-target branch (`project:569-570`),
+  and the explicit `delete-branch` action protects only that branch too
+  (`project:727-728`). No commit can be lost, because the branch is merged
+  into the merge target and its remote copy is untouched. Options: (a) no rule
+  now; (b) retain such a branch, with a reason of the sub-record's own enum, so
+  that no target enum changes (L-4). Recommendation: (a), no rule.
 
 ## Questions Resolved by the Alignment Review
 
+Stack-architect and qa-lead findings on `e7f3e65` (2026-10-11); the lane's
+rulings of 2026-10-18 bind where they differ. The last seven rows are the
+rulings that answered the review's GAPs and its joint-fit and carry findings.
+
 | Findings | Severity | Ruling | Section edited |
 | --- | --- | --- | --- |
+| SA-1: the re-read's compared values, the identity it rests on, and the reach of "Push and delete-branch SHALL keep the full re-inspection" were unstated | DRIFT | applied; its optional widening of step 2 (`tracking_branch`, `upstream`, `upstream_oid`) not taken, since no ruling asks for it and the re-read follows the explicit action's re-check (`project:658-663`) | Capabilities (review-safety `:49`); Decisions, readings ("The re-read's values"); review-safety delta (narrow guarantee); `design.md` D4 |
+| SA-2: the carry of the cache change was understated, and the joint fit and the residual-window line of a flagged cache run were unstated | DRIFT | applied with change: under B-10 and A-13 the two changes share five MODIFIED requirements, not two, each named with its re-base; the cache change's fit sentence is scoped only where it says the 16th target clears the floor, since that change's own fix round may reword it | Dependencies and Sequencing; `design.md` D7, D8, Migration Plan; `tasks.md` 2.3, 3.2 |
+| SA-3: the departure from the packet's fit rule (`BA:729-735`) was not named in Decisions | DRIFT | applied, beside A-5 as amended | Decisions, readings ("Three children per target") |
+| SA-4: `retire_worktree` was attributed to feature 004's plan, which never names it | DRIFT | applied; the attach points re-checked at feature 004's head `66d60b6` (A-12) | What Changes (branch stage); Impact (`project`); `design.md` Context |
+| SA-5: one review-safety spec line ran to 127 characters | DRIFT | applied | review-safety delta |
+| QA-1: `branch-retention-stop` and `target-not-removed` overlapped, and neither covered a signal or deadline stop after a plain retirement | MISMATCH | applied with change: `branch-retention-stop` needs the earlier target to be `removed`, because the review's text would give it to every target after a `refused`, `failed` or `unknown` one, whose own sub-record is not a plain retirement, against QA-3's new scenario; the `not-attempted` lead-in reads "no branch remained to retire, or no stage ran", since `branch-missing` can follow the re-read; the SIGTERM AND also pins `branch-retention-stop` otherwise | project-clean delta (ADDED: the `not-attempted` reasons; "A signal around the branch child"); `design.md` D5, D6 |
+| QA-2: "`operations.estimated` twice the selected targets" stops being true once the cache change archives first | MISMATCH | applied, in the lane's words ("the flag adds one per target") | project-clean delta (ADDED); What Changes ("Bounded like a probe"); `design.md` D7 |
+| QA-3: no scenario for `target-not-removed`, for `branch-missing` at the re-read, or for the summary line with K above 0 | GAP | applied as given: one scenario added ("A removal that does not end removed under the flag") and one AND, 53 scenarios; the finding's other cases (`retained` with `spawn-error` or `removal-ceiling`, `retired` with a reason) carry no replacement text and stay without a scenario of their own | project-clean delta (ADDED); Capabilities (ADDED, sixteen scenarios); `tasks.md` 1.4 |
+| QA-4: the question counted N branches for N worktrees, wrong when two worktrees hold one branch | MISMATCH | applied with change: the pinned question is an AND run without `--yes`, because the scenario runs with `--yes`, which asks nothing | project-clean delta (ADDED; "A branch another worktree holds is retained"); What Changes; Decisions, readings; `design.md` D8 |
+| A-5 amended (GAP: A-5's "up to 16 more children" against the draft's 48) | GAP | ruling: the flag adds up to 48 children per run, 16 under `operations` and 32 under `probes`, and the departure stands | Decisions, readings; `design.md` D7 |
+| L-10 (GAP: the sibling convention for result sub-records) | GAP | ruling: a sub-record is present only where its extension acts and absent otherwise, never null for "not applicable" | What Changes; Decisions; project-clean delta (ADDED); `design.md` D5 |
+| A-10 (GAP: merge-target candidates under the flag) | GAP | ruling: no rule now; put to Brett Heap, recommendation "no rule", with the alternative | Open Questions |
+| A-11 (GAP: change 1 does not say when its apply result is incomplete) | GAP | ruling: this change keeps its own trigger, a null `stage`, in its ADDED requirement; change 1's triggers are lane openRepoProject-2's to settle | Dependencies and Sequencing; `design.md` D5 |
+| A-12 (GAP: feature 004 moved past `dd923ee`) | GAP | ruling: re-check the attach points at the branch's current head; done at `66d60b6` | Impact; `design.md` Context |
+| A-9 (SA-2, SA-3; the cache change's review, G3) | DRIFT | ruling: state the joint fit (13 of 16 at the packet's costs, all 16 at change 1's measured costs), keep `limits.targets` 16, and put it to Brett Heap, recommendation "keep 16" | Decisions; Open Questions; `design.md` D7 |
+| A-13 (SA-2) | DRIFT | ruling: name every requirement shared with the cache change and re-base each on its archived block before archiving (L-11) | Dependencies and Sequencing; `design.md` Migration Plan; `tasks.md` 2.3, 3.2 |
+
+The review agreed with the writer's eight flagged items, the changes it asked
+for being the findings above; its optional citation for item (5), CAS
+`proposal.md:735-737`, is added to the A-1 reading, and item (8), the commit
+trailer, stands. The common rulings L-11 to L-15 are applied where the
+Decisions list says.
 
 ### Council Verdicts
 
