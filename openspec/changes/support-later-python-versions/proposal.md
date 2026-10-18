@@ -3,8 +3,9 @@ Lane: openRepoProject-4
 # Proposal: support-later-python-versions
 
 Status: draft, opened as a draft pull request; the alignment review is applied
-(Review resolution, at the end); the council, design, spec delta and
-governance tasks follow; nothing is ratified. Governing issue:
+(Review resolution, at the end); main is merged in at `e9d6711`, so CI is
+Linux only (#32), and #21 is cited at its head `1b84a94`; the council, design,
+spec delta and governance tasks follow; nothing is ratified. Governing issue:
 opensoft/openRepoProject#22, claimed by lane openRepoProject-4. Taken up under
 Brett Heap's word of 2026-10-11 (about 15:55Z), "usage reset, resume all. read
 handoff and resume and fan out wide and do as much as possible in parallel",
@@ -19,22 +20,23 @@ and in its design's version table and D6 (`design.md:78-93`, `:222-224`), and
 kept the CI matrix and the README's "Python 3.10+" out of that change (N5,
 `clarifications.md:82-94`; D6, `design.md:225`), "the residual is on a version
 CI does not run" (`design.md:100-101`). Issue #20 and its proposal PR #21
-(lane openRepoProject-1, head `a43e7d2`) put both residuals and the CI matrix
-out of scope too (that proposal's Out of Scope, lines 392-396). This change is
+(lane openRepoProject-1, head `1b84a94`) put both residuals and the CI matrix
+out of scope too (that proposal's Out of Scope, lines 412-416). This change is
 where they go.
 
 ## Why
 
 `README.md:17-18` says "Python 3.10+ is required", and `AGENTS.md:19` says the
-same. CI (`.github/workflows/tests.yml:6-18`) runs the suite on
-`ubuntu-latest` and `macos-latest` with Python 3.10 and 3.12 only (`:9-10`).
-So 3.11, 3.13, 3.14 and 3.15 are claimed and never run; 3.15.0 is released
-(setup-python's version manifest lists it as stable; Observed).
+same. CI (`.github/workflows/tests.yml:6-17`) runs the suite on
+`ubuntu-latest` only (`:10`; #32, by Brett Heap's decision of 2026-10-15)
+with Python 3.10 and 3.12 only (`:9`). So 3.11, 3.13, 3.14 and 3.15 are
+claimed and never run; 3.15.0 is released (setup-python's version manifest
+lists it as stable; Observed).
 
 Some parents of `project new` change their answer with the interpreter (line
-numbers at this branch's base `961c405`, where the archived record's
-`project:315` and `project:321`, at its base `7a9134b`, are `project:322` and
-`project:328`):
+numbers at this branch's first base `961c405`, unchanged at main `e9d6711`,
+where the archived record's `project:315` and `project:321`, at its base
+`7a9134b`, are `project:322` and `project:328`):
 
 - **A parent that is a symbolic-link loop.** On 3.10 to 3.12 the parent's
   `Path.resolve()` (`project:322`) raises `RuntimeError` before the question,
@@ -152,19 +154,20 @@ process, `main()`'s handlers bypassed, so that an exception keeps its frame.
 - Availability: `actions/python-versions`' `versions-manifest.json`, from
   which `actions/setup-python` resolves a version, read on 2026-10-11, lists
   stable 3.13.16, 3.14.8 and 3.15.0 for Linux (22.04, 24.04, 26.04; x64 and
-  arm64) and macOS (arm64 and x64). Read, not run in Actions.
-- Not run: macOS, GitHub Actions, free-threaded builds, 3.15.0 final, and a
-  single-repository answer followed by `yes` at a pseudo-terminal.
+  arm64). Read, not run in Actions.
+- Not run: GitHub Actions, free-threaded builds, 3.15.0 final, and a
+  single-repository answer followed by `yes` at a pseudo-terminal. Every run
+  here is on Linux (the macOS residual is under Risks).
 
 ## What Changes
 
 - **The supported range** (recommended; Alternatives below): CPython 3.10 to
   3.15, a closed range. `README.md` states it, says that CI tests each version
-  in it on Linux and macOS, and says that later versions are untested. The
-  `test` job's matrix (`tests.yml:9-10`) runs the full suite on 3.10, 3.11,
-  3.12, 3.13, 3.14 and 3.15, on `ubuntu-latest` and `macos-latest`: twelve
-  jobs where there are four. A later minor version joins at its final release
-  by one pull request that adds it to the matrix and to the README's range,
+  in it on Linux, and says that later versions are untested. The `test` job's
+  matrix (`tests.yml:9`) runs the full suite on 3.10, 3.11, 3.12, 3.13, 3.14
+  and 3.15, on `ubuntu-latest` (`:10`), the one runner since #32: six jobs
+  where there are two. A later minor version joins at its final release by
+  one pull request that adds it to the matrix and to the README's range,
   under the first ADDED requirement below; until then the README calls it
   untested. Who opens that pull request is a decision for Brett Heap
   (Decisions, 3). No pre-release runs in CI. The floor stays 3.10, so
@@ -237,7 +240,7 @@ process, `main()`'s handlers bypassed, so that an exception keeps its frame.
   behaviour, strings and a third case beyond the wording follow-up"
   (`clarifications.md:88-92`). N3 chose `exists()` because it "has the same
   error handling as `is_dir()` on every version" (`:63-65`), and #21 keeps
-  that for its own read (its Out of Scope, line 381). Here the behaviour is
+  that for its own read (its Out of Scope, line 401). Here the behaviour is
   the change's purpose, the recommended answers add no string, and the third
   case, (L), is its subject. N3's premise holds only within a version:
   `exists()` and `is_dir()` share one error handling, and that handling is
@@ -248,7 +251,7 @@ process, `main()`'s handlers bypassed, so that an exception keeps its frame.
   else keeps the 3.10 to 3.13 path.
 - **Tests** (recommended; Alternatives below): a module of its own,
   `tests/test_parent_reads.py` (name provisional), found by the existing
-  `python -m unittest discover -s tests -v` (`tests.yml:18`). It borrows
+  `python -m unittest discover -s tests -v` (`tests.yml:17`). It borrows
   `tests/test_project.py`'s harness (`setUp`, `run_pty`, `run_inproc`, the
   parent fixtures) by composition: it imports the module and creates
   `test_project.ProjectTests(methodName)` instances, calling their `setUp()`
@@ -258,24 +261,24 @@ process, `main()`'s handlers bypassed, so that an exception keeps its frame.
   existing test twice. No line of `tests/test_project.py` changes.
 - **`README.md`** (texts fixed by the design, checked by a test): in Install
   (lines 17-18), the Python sentence states the closed range, for example
-  "Python 3.10 to 3.15 is supported; CI tests each of those versions on Linux
-  and macOS, and later versions are untested." It stays a sentence of its own,
+  "Python 3.10 to 3.15 is supported; CI tests each of those versions on
+  Linux, and later versions are untested." It stays a sentence of its own,
   apart from the Git 2.36 sentence that feature 004 adds to the same
-  paragraph. Lines 281-282 ("CI covers Linux and macOS.") gain the range.
-- **`.github/workflows/tests.yml`**: the `test` job's `python` list (`:10`)
-  only. Its `os` list, its steps, its strategy keys and every other job are
-  unchanged.
+  paragraph. Lines 281-282 ("CI covers Linux only.", #32's wording) gain the
+  range and keep "Linux only".
+- **`.github/workflows/tests.yml`**: the `test` job's `python` list (`:9`)
+  only. Its `runs-on: ubuntu-latest` (`:10`), its steps, its strategy keys
+  and every other job are unchanged; no `os` axis returns.
 
 ### Alternatives
 
-- **Versions.** (R1) Every released minor version from 3.10 to 3.15 on both
-  systems, twelve jobs: recommended. (R2) The floor, 3.12 and the newest
-  (3.10, 3.12, 3.15; six jobs): cheaper, but 3.11, 3.13 and 3.14 stay claimed
-  and unrun, the gap this change closes. (R3) macOS on the floor and the
-  newest only (eight jobs): not recommended, since both cases are POSIX
-  symbolic-link and permission semantics where macOS differs (`ELOOP` is 62
-  there and 40 on Linux; a temporary directory under `/var` resolves to
-  `/private/var`, archived N2). (R4) Raise the floor to 3.11, as upstream
+- **Versions.** (R1) Every released minor version from 3.10 to 3.15 on
+  `ubuntu-latest`, six jobs: recommended. (R2) The floor, 3.12 and the newest
+  (3.10, 3.12, 3.15; three jobs): cheaper, but 3.11, 3.13 and 3.14 stay
+  claimed and unrun, the gap this change closes. (R3) Withdrawn: a macOS
+  entry. Since #32, CI runs on Linux only, by Brett Heap's decision of
+  2026-10-15, and this change proposes no macOS job (the residual is under
+  Risks). (R4) Raise the floor to 3.11, as upstream
   security support for 3.10 ends in October 2026 (PEP 619): not recommended in
   this change. Ubuntu 22.04's `python3` is 3.10; lane openRepoProject-2's
   `add-project-overview` starts Git children with `start_new_session=True`
@@ -285,7 +288,7 @@ process, `main()`'s handlers bypassed, so that an exception keeps its frame.
   rules are `non_fast_forward`, `deletion` and `pull_request`), so the added
   jobs cost no paid minutes and gate nothing by rule; the landing practice
   reads every job (archived `tasks.md` 3.1, "green checks on all four CI
-  jobs").
+  jobs", the matrix before #32).
 - **The range's form.** (C1) A closed range, "3.10 to 3.15", with later
   versions called untested: recommended; the README claims only what CI runs.
   (C2) An open range, "3.10 or newer": it claims every later version as soon
@@ -309,16 +312,17 @@ process, `main()`'s handlers bypassed, so that an exception keeps its frame.
   setup step, a job-level `continue-on-error`), so lane 2's assent. A failing
   `continue-on-error` job still reports a failed check run while the workflow
   run passes, so the governance landing task must exempt that entry from
-  "green on all jobs". Its check name carries the version (`test
-  (ubuntu-latest, 3.16)`), so a future required-check rule would need editing
-  at each release. `allow-prereleases` has no effect once a stable release
-  matches. (P3) A scheduled or manually dispatched pre-release job: a new
+  "green on all jobs". Its check name carries the version (`test (3.16)`,
+  the matrix having only the `python` axis since #32), so a future
+  required-check rule would need editing at each release.
+  `allow-prereleases` has no effect once a stable release matches. (P3) A
+  scheduled or manually dispatched pre-release job: a new
   trigger and job in the shared file, beyond the agreement; rejected for this
   change.
 - **(L)'s answer.** (L1) The system's `ELOOP` refusal through `main()`:
   recommended; no new string, the same handler and form as (U). (L2) A fixed
   sentence, such as `The parent PARENT is a symbolic link loop; choose a
-  parent that is a directory.`: the same on both systems and states a
+  parent that is a directory.`: the same on every system and states a
   repair, but a new string for the design to fix. (L3) The 3.10 to 3.12
   traceback on every version: an uncaught exception exiting 1, a status the
   README gives to doctor findings (`README.md:284-286`); rejected. (L4) Name
@@ -383,15 +387,15 @@ provisional and distinct from every existing title, from #21's ADDED title and
 from lane openRepoProject-2's ADDED "Repository inspection requires Git 2.36
 and shares one evidence model". Each MODIFIED block is written against #21's
 delta text (`openspec/changes/refuse-non-directory-parent-early/specs/
-project-command/spec.md` at `a43e7d2`, or #21's head when the design is
-written) and changes only the statements listed below; every other statement
-keeps its wording.
+project-command/spec.md` at `1b84a94`, byte-identical to its text at
+`a43e7d2`, or #21's head when the design is written) and changes only the
+statements listed below; every other statement keeps its wording.
 
 - ADDED: "Supported Python versions are stated and tested". `README.md`
   names the supported range, from its lowest to its highest minor version,
-  and calls later versions untested; CI runs the full suite on Linux and
-  macOS on every minor version in that range. Scenarios: "Every version in
-  the README's range is tested on both systems"; "The lowest supported
+  and calls later versions untested; CI runs the full suite on Linux
+  (`ubuntu-latest`) on every minor version in that range. Scenarios: "Every
+  version in the README's range is tested on Linux"; "The lowest supported
   version is 3.10"; "A version above the range is called untested".
 - ADDED: "A parent that is a symbolic-link loop is refused before the
   question". It defines (L), states its answer, PARENT and its place, and
@@ -476,9 +480,9 @@ creation question's and (L) and (U) are this change's own.
   copy gave the answers above on 3.10 to 3.15rc2, with every other row
   unchanged.
 - **Tests**: the new module per the acceptance criteria below; no existing
-  test is edited, and every one runs on all twelve jobs.
+  test is edited, and every one runs on all six jobs.
 - **`README.md`** lines 17-18 and 281-282; **`.github/workflows/tests.yml`**
-  line 10; the spec at archive. `AGENTS.md:19` ("Python 3.10+") states the
+  line 9; the spec at archive. `AGENTS.md:19` ("Python 3.10+") states the
   floor and is not edited.
 - **Feature records** stay unedited. The new feature's spec states that, for
   these cases, it supersedes feature 003's EC-004
@@ -540,13 +544,17 @@ and 3.15.0rc2:
   refused the `--family` loop with `[Errno 40]` on all six versions; hence
   E1's errno set.
 - Not run: the existing suite against the patched copy (the realization runs
-  it), macOS, and Actions.
+  it), and Actions. Linux only, as Observed.
 
 ## Ordering and shared files
 
+- **#32 (CI on Linux only, on main at `e9d6711`).** Merged into this branch.
+  This change builds on its `tests.yml` (one `python` axis, `runs-on:
+  ubuntu-latest`) and its README sentence ("CI covers Linux only.",
+  `README.md:281-282`), keeps both, and adds no `os` axis.
 - **#21 (`refuse-non-directory-parent-early`, lane openRepoProject-1).**
   - Spec: this change's two MODIFIED blocks are written against #21's delta
-    text at `a43e7d2` (or #21's head when the design is written), and it
+    text at `1b84a94` (or #21's head when the design is written), and it
     relies on #21's MODIFIED "Preview" WHEN, so it archives after
     `refuse-non-directory-parent-early`.
   - Realization: it lands after #21's realization and merges main in first,
@@ -555,15 +563,22 @@ and 3.15.0rc2:
     `known_obstacles()` (`project:235-254`).
   - S1 and S2 run before #21's head refusal and its question read, so on every
     version a looped or unreadable parent never reaches #21's read, and its
-    Out of Scope note on N1 (its proposal, lines 392-394) stays true.
+    Out of Scope note on N1 (its proposal, lines 412-414) stays true.
   - #21's surface, the early non-directory refusal and its sentences, is not
     touched. Its tests run on six versions once this matrix lands; a failure
     of one of them on an added version is reported to lane 1, not fixed here.
+  - #21 at `1b84a94` still names the four-job matrix from before #32 (its
+    design, `:39-40`; its proposal, lines 352-353 and 415; its landing task
+    3.1, "green checks on all four CI jobs"). Updating that text is lane 1's;
+    this change does not depend on it.
 - **Feature 004 (`add-project-clean-all-safe`, lane openRepoProject-2).**
   - `.github/workflows/tests.yml`: this change edits only the `test` job's
-    matrix (`:10`); feature 004 adds a separate `git-floor` job and leaves
-    the four jobs unchanged (`specs/004-project-clean-all-safe/plan.md`, "CI
-    shape", on lane 2's branch `004-project-clean-all-safe` at `5a71f83`).
+    `python` list (`:9`); feature 004 adds a separate `git-floor` job on
+    `ubuntu-latest` and leaves the `test` job unchanged
+    (`specs/004-project-clean-all-safe/plan.md`, "CI shape", on lane 2's
+    branch `004-project-clean-all-safe` at `5a71f83`, unchanged at its head
+    `66d60b6`). That plan still names the four jobs from before #32, and
+    that branch has not merged `e9d6711`; both are lane 2's.
   - `tests/test_project.py`: this change adds no line to it (M1); feature
     004 edits its clean tests. Under M2 this change's tests would go in the
     `new`-path section only.
@@ -582,7 +597,7 @@ and 3.15.0rc2:
     for `README.md:17-19` as above.
   - The widened matrix runs feature 004's whole suite on 3.11, 3.13, 3.14
     and 3.15 in either order. If this change lands first, feature 004 must
-    be green on twelve jobs; if feature 004 lands first, this realization
+    be green on six jobs; if feature 004 lands first, this realization
     must be. A failure of a feature 004 test on an added version is reported
     to lane 2, not fixed here.
 - **`add-project-overview` (lane openRepoProject-2)** keeps 3.10
@@ -592,9 +607,9 @@ and 3.15.0rc2:
 
 ## Acceptance criteria
 
-On every version of the new matrix, on both systems, each by a test:
+On every version of the new matrix, on `ubuntu-latest`, each by a test:
 
-1. The full suite passes on all twelve jobs, with no existing test edited;
+1. The full suite passes on all six jobs, with no existing test edited;
    discovery's "Ran N" equals main's count at merge plus the new module's.
 2. (L): a symbolic link to itself, two links to each other and `LOOP/sub`,
    each by `--into`, and the first also by the positional parent,
@@ -638,25 +653,27 @@ On every version of the new matrix, on both systems, each by a test:
 
 ## Risks
 
-- Four jobs become twelve. `on: [push, pull_request]` runs each twice for a
-  pull request from a branch of this repository: 24 job runs per push, 12 on
-  macOS, which queues under a lower concurrency. Feature 004's suite runs in
-  each job.
+- Two jobs become six. `on: [push, pull_request]` runs each twice for a pull
+  request from a branch of this repository: 12 job runs per push, all on
+  `ubuntu-latest`. Feature 004's suite runs in each job.
 - `tests.yml` sets no `fail-fast`, so the default (true) cancels sibling jobs
   at the first failure, hiding which versions also fail; `fail-fast: false`
   is a strategy key outside `matrix:` and needs lane 2's assent (Decisions,
   11).
-- By the manifest (read, not run), `macos-latest` (arm64) resolves 3.10,
-  3.11 and 3.12 to 3.10.11, 3.11.9 and 3.12.10, and Linux 24.04 to 3.10.22,
-  3.11.17 and 3.12.15; both resolve 3.13.16, 3.14.8 and 3.15.0. The landing
-  task cites each job's resolved version from setup-python's log.
+- By the manifest (read on 2026-10-11, not run), Linux 24.04 resolves 3.10
+  to 3.15 to 3.10.22, 3.11.17, 3.12.15, 3.13.16, 3.14.8 and 3.15.0. The
+  landing task cites each job's resolved version from setup-python's log.
 - The 3.15 evidence here is from 3.15.0rc2; the realization's CI run is the
   first on 3.15.0.
 - A test outside this change's surface that fails on an added version blocks
   the widened matrix until its owner fixes it.
-- The (L) line differs by system (`ELOOP` is 40 on Linux, 62 on macOS, with
-  each system's text); the tests build it from `errno.ELOOP` and
-  `os.strerror()`. The (U) lines differ the same way.
+- NOTED residual, macOS: the README excludes only native Windows
+  (`README.md:282`), so `project` may still be run on macOS, but since #32 no
+  CI job runs there, and every run in this proposal is on Linux. The (L) and
+  (U) lines carry the system's errno number and text, and the tests build
+  them from `errno` and `os.strerror()`, not from Linux's numbers; whether
+  this change's answers hold on macOS is unproven. This change adds no macOS
+  job: Brett Heap decided on 2026-10-15 that CI runs on Linux only.
 - (L) changes 3.10 to 3.12: a traceback exiting 1 becomes a refusal exiting
   2. S2 changes a destination linked into a directory without search
   permission on 3.10 to 3.13 from `[Errno 13]` to `Destination already
@@ -686,8 +703,9 @@ On every version of the new matrix, on both systems, each by a test:
 - Any new sentence, flag, environment variable or configuration file.
 - Raising the floor (R4); a pre-release job (P2, P3) or a scheduled release
   check (A2) unless Brett Heap chooses one; `fail-fast` or any other key
-  outside the matrix unless he chooses it with lane 2's assent; Windows,
-  where the README directs Bash generators to WSL2 (`README.md:282`).
+  outside the matrix unless he chooses it with lane 2's assent; a macOS or
+  Windows job, since CI runs on Linux only by his decision of 2026-10-15
+  (#32), and the README directs Windows to WSL2 (`README.md:282`).
 - workBenches, openRepoShape, setup-openspeckit, the archived changes and
   the feature records: other owners' code, or immutable records.
 
@@ -695,8 +713,8 @@ On every version of the new matrix, on both systems, each by a test:
 
 Each has a recommendation above unless marked open; none is taken.
 
-1. The versions: R1, every released minor version from 3.10 to 3.15 on both
-   systems, twelve jobs.
+1. The versions: R1, every released minor version from 3.10 to 3.15 on
+   `ubuntu-latest`, six jobs.
 2. The range's form: C1, closed, with later versions called untested.
 3. Who adds each new release (open): A1, an issue and a pull request at each
    CPython final release by the lane that owns `project`, or A2, a scheduled
@@ -775,3 +793,25 @@ QA-9; 2 BLOCKER, 9 MAJOR, 9 MINOR). Applied unless marked otherwise:
   Questions". #21, the house template, has neither section; issue #22 and
   lane 2's acknowledgement name "Ordering and shared files"; and "Decisions
   for Brett Heap" says whose decisions they are.
+
+Update, not a review round: main merged in at `e9d6711`, and #21 re-pinned
+to `1b84a94`. SA-1's twelve jobs are now six, and SA-3's pin is now
+`1b84a94`.
+
+- #32, CI on Linux only (Brett Heap, 2026-10-15): the matrix is
+  `ubuntu-latest` x 3.10-3.15, six jobs (What Changes, R1, R2, the first
+  ADDED requirement, AC1, Risks, Decision 1). R3, the macOS entry, is
+  withdrawn but keeps its number. The macOS errno, fixture and runner-patch
+  notes are gone. One NOTED macOS residual sits under Risks, and Out of
+  Scope names the macOS and Windows jobs. The README example and
+  `README.md:281-282` keep #32's "Linux only". The `tests.yml` citations
+  follow its lines (`:6-17`, `:9`, `:10`, `:17`), and P2's check name is
+  `test (3.16)`. "Ordering and shared files" gains #32 and notes that #21
+  and feature 004 still name four jobs.
+- #21 at `1b84a94`: its delta is byte-identical to `a43e7d2`'s, so every
+  delta line cited here (5-88, 16-20, 36-37, 86-88, 111, 129-198, 148-151,
+  153-155, 163-166, 177-180, 187-190) and every quoted base text still match.
+  Its proposal grew 20 lines above its Out of Scope with the same text there,
+  so line 381 is now 401, lines 392-396 are 412-416, and lines 392-394 are
+  412-414. Its first risk, and its reason against a writability read, are
+  unchanged.
