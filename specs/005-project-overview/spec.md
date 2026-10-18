@@ -39,16 +39,20 @@ reports omitted work"; [R] "Clean resolves its target Git-first"; and [P]
 "Clean reports every path exactly or excludes it" (all project-clean).
 Feature 004's names for the same concepts (classifications, gate reasons,
 refusal and row error codes, `omitted`, `schema_version`, exit statuses) are
-used unchanged, cited from `specs/004-project-clean-all-safe/` (`spec.md`,
-`data-model.md`, `contracts/project-clean.md`) at `5a71f83` on branch
-`004-project-clean-all-safe`, which carries its reviewed plan and its tasks
-but no code yet, with two exceptions the delta makes: `omitted` keeps 004's
+used unchanged, with two exceptions the delta makes: `omitted` keeps 004's
 `{count, exactness}` shape with the exactness enum extended to `lower-bound`
 and `unknown` (POD:224-229), and `limits.worktree_rows` is the overview's
 own 512-row cap, the batch's caps being `batch_row_cap`, `report_row_cap`
-and `targets` (POD:610-617). The change pins its code citations at
-`da33d92`; this spec cites no line of `project`, and the plan re-pins them
-against the `main` of its day (proposal, "Dependencies and Sequencing").
+and `targets` (POD:610-617). They are cited from
+`specs/004-project-clean-all-safe/` (`spec.md`, `data-model.md`,
+`contracts/project-clean.md`) at `66d60b6` on branch
+`004-project-clean-all-safe`, which carries its reviewed plan and its tasks
+and, of its code, only the empty regions and imports of its first
+implementation step, so nothing the overview reads from it is built yet.
+The change pins its code citations at `da33d92`; this spec cites no line of
+`project`, `README.md` or `.github/workflows/tests.yml`, and the plan
+re-pins them against the `main` of its day (proposal, "Dependencies and
+Sequencing").
 
 **Created before feature 004 merges**: The change creates this feature only
 after feature 004 merges (proposal, Status and "Dependencies and
@@ -230,6 +234,22 @@ session.
   feature 004's code and for his word (header; change `tasks.md` 3.1 and
   Speckit Handoff). This one rests on his word, not on the change's text.
   Where applied: Dependencies.
+
+### Session 2026-10-18
+
+Settled at the merge of `main` at `e9d6711` and the re-pin of feature 004
+to `66d60b6`. It answers no question of `clarify-questions.md`; those stay
+open for Brett Heap.
+
+- **C-22** Q: What does a branch reflog read decide at its two bounds? ->
+  A: A read not finished within the filesystem budget leaves its row
+  unprobed for the gate, recording `probe-timeout` or `deadline-exceeded`,
+  and never makes it `inspection-error` (POD:521-524), as feature 004's data
+  model also reads it at `66d60b6` (its plan review, M5). A read that
+  returns 65,536 bytes has reached the 64 KiB bound (POD:516-517), so a
+  reflog of 65,536 bytes or more is `reflog-unavailable` and one of 65,535
+  bytes is decided by its entries, the read never taking more than 65,536
+  bytes (ruling R-33). Where applied: FR-033; FR-049; EC-009.
 
 ## User Scenarios & Testing *(mandatory)*
 
@@ -1019,9 +1039,11 @@ path"; "Non-UTF-8 common directory".
   expired after `gc.reflogExpire`, give every merged row
   `reflog-unavailable`, failing closed with the read-only suggestion
   (design, Risks).
-- **EC-009**: A reflog over 64 KiB (about 300 entries) is
-  `reflog-unavailable` even when it records movement, because the bound
-  ends the read (design, Risks; R-18).
+- **EC-009**: A reflog of 64 KiB or more (65,536 bytes or more, about 300
+  entries) is `reflog-unavailable` even when it records movement, because
+  the bound ends the read: a read that returns 65,536 bytes has reached it,
+  while a reflog of 65,535 bytes is decided by its entries (design, Risks;
+  R-18; Clarifications, C-22).
 - **EC-010**: A branch created from a remote branch that already had
   commits, then merged elsewhere and never moved here, reads
   `unstarted-branch` and fails closed (design, Risks).
@@ -1055,7 +1077,9 @@ path"; "Non-UTF-8 common directory".
   (proposal, Decisions, "Suggestion display string").
 - **EC-017**: Non-UTF-8 path scenarios cannot run on macOS, whose
   filesystems reject such names, and are skipped there with that reason
-  (proposal, Impact; design D13).
+  (proposal, Impact; design D13). CI runs on Linux only (README,
+  Development), so every CI job runs them, and the skip serves only a local
+  run on macOS.
 - **EC-018**: Two spellings of one directory, such as a bind mount or
   `~/projects` and `~/Projects` on a case-insensitive filesystem, count
   once, and the canonically first spelling wins (POD:14-16, :85-87; design
@@ -1381,22 +1405,25 @@ and [P] are change 1's requirements as the header names them.
   exclusions only the batch applies (POD:494-502, :525-526; design D5).
 - **FR-033**: For every row that gate checks, the branch's reflog,
   `logs/refs/heads/<branch>` under `common_dir`, MUST be read by one bounded
-  filesystem read of at most 64 KiB, never by a Git child, and decided as
-  [G] decides it: the anchor is the last surviving entry whose old object is
-  all zeros or whose message begins `branch: Created from` or `branch: Reset
-  to`; a movement is an entry after the anchor, or any entry when no anchor
-  survives, whose old and new objects are non-zero and differ; a branch
-  whose last entry's new object differs from its head is
+  filesystem read of at most 64 KiB (65,536 bytes), never by a Git child, and
+  decided as [G] decides it: the anchor is the last surviving entry whose old
+  object is all zeros or whose message begins `branch: Created from` or
+  `branch: Reset to`; a movement is an entry after the anchor, or any entry
+  when no anchor survives, whose old and new objects are non-zero and differ;
+  a branch whose last entry's new object differs from its head is
   `reflog-unavailable`, this test first; otherwise a branch with a movement
   passes, and one whose anchor survives with no movement after it, the
-  anchor's new object equal to its head, is `unstarted-branch`. A reflog
-  that is missing (`ENOENT` or `ENOTDIR`), empty (0 bytes), read to its
-  64 KiB bound, or undecidable MUST make that row `reflog-unavailable`; any
-  other operating-system error MUST record an `os-error` and make the row
-  `inspection-error`; and a read not finished within the filesystem budget
-  MUST leave the row unprobed for the gate, recording `probe-timeout` or
-  `deadline-exceeded`. Either reflog code MUST keep the `merged-removable`
-  finding with the read-only suggestion (POD:502-525; design D5).
+  anchor's new object equal to its head, is `unstarted-branch`. A reflog that
+  is missing (`ENOENT` or `ENOTDIR`), empty (0 bytes), read to its 64 KiB
+  bound, or undecidable MUST make that row `reflog-unavailable`, a read that
+  returns 65,536 bytes having reached the bound, so that a reflog of 65,536
+  bytes or more is `reflog-unavailable` and one of 65,535 bytes is decided by
+  its entries; any other operating-system error MUST record an `os-error` and
+  make the row `inspection-error`; and a read not finished within the
+  filesystem budget MUST leave the row unprobed for the gate, recording
+  `probe-timeout` or `deadline-exceeded`, never making it `inspection-error`.
+  Either reflog code MUST keep the `merged-removable` finding with the
+  read-only suggestion (POD:502-525; design D5; Clarifications, C-22).
 - **FR-034**: The `--all-safe` form MUST also be withheld for every worktree
   of a repository whose batch plan [G] would refuse as
   `inspection-incomplete` (any worktree row `inspection-error`, or unprobed
@@ -1590,12 +1617,13 @@ and [P] are change 1's requirements as the header names them.
   probe. A hung filesystem call MUST be injected where no FUSE mount can be
   made, or that case skipped with its reason; the deadline MUST be shortened
   in-process with its ratio to the per-child budget kept; non-UTF-8 path
-  tests MUST run on Linux and be skipped on macOS with that reason, the
-  `$'...'` form asserted as a string; the signal tests MUST assert that
-  every child's process group is gone; every functional requirement, or part
-  of one, that no delta scenario exercises (among them FR-004's candidates
-  that are not family holders, FR-010, FR-020's `estimated` count, FR-021's
-  `refused` and `undecodable-output` codes, FR-022's message bound and
+  tests MUST run on Linux, where every CI job runs, and be skipped on macOS
+  with that reason, the `$'...'` form asserted as a string; the signal tests
+  MUST assert that every child's process group is gone; every functional
+  requirement, or part of one, that no delta scenario exercises (among them
+  FR-004's candidates that are not family holders, FR-010, FR-020's
+  `estimated` count, FR-021's `refused` and `undecodable-output` codes,
+  FR-022's message bound, FR-033's reflogs of 65,535 and 65,536 bytes and
   FR-037's order) MUST be covered by at least one test as well, the
   feature's traceability record naming it; and every existing test on `main`
   when the feature is implemented MUST keep passing unchanged (proposal,
@@ -1741,17 +1769,21 @@ and [P] are change 1's requirements as the header names them.
   Linux filesystem; a Windows drive mounted into WSL2 was not measured
   (proposal, OQ-4; design, Risks).
 - The change pins its code citations at `da33d92`. Features 003 and 004
-  change `project` and the tests after it, so this spec cites no line of
-  `project`, and the plan re-pins every citation against the `main` of its
-  day (proposal, "Dependencies and Sequencing").
+  change `project` and the tests after it, and the CI change of `e9d6711`
+  (#32) moved the two workflow lines the change cites,
+  `.github/workflows/tests.yml:10` and `:18`, to lines 9 and 17, so this
+  spec cites no line of `project`, `README.md` or the workflow, and the plan
+  re-pins every citation against the `main` of its day (proposal,
+  "Dependencies and Sequencing").
 - Feature 004's names (classifications, gate and refusal codes, row error
   codes, `schema_version`, exit statuses, the shared constants) are taken
-  from its spec, data model and contract at `5a71f83`, which carries its
-  reviewed plan and tasks but no code yet; where the change and feature 004
-  differ for the overview, the change governs, and the plan reconciles
-  against feature 004's merged text.
+  from its spec, data model and contract at `66d60b6`, which carries its
+  reviewed plan and tasks and, of its code, only empty regions and imports;
+  where the change and feature 004 differ for the overview, the change
+  governs, and the plan reconciles against feature 004's merged text.
 - "Every existing test" means the suite on `main` when the feature is
-  implemented: 96 tests at `961c405`, plus feature 004's.
+  implemented: 96 tests at `961c405`, still 96 at `e9d6711`, plus feature
+  004's.
 - Exact human text is fixed in design D3, D4, D5 and D10 and in the delta's
   gate table, and is cited, never restated in another form; the texts quoted
   here are verbatim from the deltas or the design.
@@ -1781,12 +1813,14 @@ and [P] are change 1's requirements as the header names them.
   up to four handles from its own loop (this change's clarification N1); and
   the pure incremental parsers of the status, registry and ref listings, fed
   chunks, doing no I/O and reporting a reached record bound. Feature 004's
-  data model at `5a71f83` records that handle as its "Child handle" entity,
-  with the states `running`, `terminating`, `killing`, `reaped` and
-  `abandoned`, the kinds `probe`, `removal` and `delete-branch`, and a
-  termination that never blocks (lead ruling R-30), and its contract fixes a
-  human message for each refusal code that had none, which the plan may
-  reuse for `git-too-old` and `git-unavailable`. It also reads feature 004's
+  data model at `66d60b6` records that handle, plan-stage detail for this
+  feature, as its "Child handle" entity, with the states `running`,
+  `terminating`, `killing`, `reaped` and `abandoned`, the kinds `probe`,
+  `removal` and `delegate` (the `git branch -d` child), of which the
+  overview starts only `probe` handles, and a termination that never blocks
+  (lead ruling R-30); its contract fixes a human message for each refusal
+  code that had none, which the plan may reuse for `git-too-old` and
+  `git-unavailable`. It also reads feature 004's
   evidence model [E] with the version check, the seventeen-name scrub and
   the pins, the ladder [L] as a pure function of a row's evidence, the gates
   and refusal codes [G] with the shared constants (`batch_row_cap` 128,
@@ -1798,17 +1832,6 @@ and [P] are change 1's requirements as the header names them.
   feature realizes change 2's MODIFIED `project-review-safety` requirement,
   not change 1's `project-clean-review-safety` (proposal, Capabilities;
   design, Migration Plan step 5).
-- **Readings to reconcile in the plan**: feature 004's data model at
-  `5a71f83` reads two of [G]'s reflog outcomes more narrowly than change 1's
-  and change 2's words. A reflog read past its budget makes the row
-  `inspection-error` there, where both changes leave the row unprobed for
-  the gate, the overview keeping its `merged-removable` finding with the
-  read-only suggestion (change 1, [G]; POD:521-525); and
-  `reflog-unavailable` holds there for a reflog over 65,536 bytes, where the
-  deltas say one read to its 64 KiB bound, the overview's reading being the
-  one that withholds. Change 2 governs the overview (Assumptions), and the
-  plan reconciles both readings with feature 004's merged text, so that
-  FR-026's parity and SC-004 hold.
 - **Open items elsewhere that do not block this spec**: change 1's open
   question 2 (the lane's LQ-2: squash merges and a local patch-equivalence
   proof) is still before Brett Heap and deferred, on the lead's
@@ -1824,8 +1847,13 @@ and [P] are change 1's requirements as the header names them.
   ticked with its `Created:` record; 3.2 (`/opsx:apply` only once the
   handoff names one feature) stays open.
 - **Runtime and CI**: Git 2.36 or later; the runtime versions the README
-  supports and CI runs (Linux and macOS, two versions each); the existing
-  YAML requirement for manifests.
+  supports (Python 3.10 or newer) and CI runs, on Linux only since `e9d6711`
+  (#32): Python 3.10 and 3.12 on `ubuntu-latest`, the README's Development
+  section saying that CI covers Linux only (change 2's design, Context,
+  written before it, still names Ubuntu and macOS); feature 004's Git 2.36
+  floor job (its FR-067), which the overview's tests join or not as question
+  Q3 of `clarify-questions.md` decides; and the existing YAML requirement for
+  manifests.
 
 ## Out of Scope
 

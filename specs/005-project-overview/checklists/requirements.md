@@ -95,5 +95,19 @@ Lane: openRepoProject-4
   already in the overview's worktree row. The new "Child handle" entity is
   named under Dependencies only, and the two reflog outcomes feature 004 now
   reads more narrowly than the changes are recorded there for the plan to
-  reconcile.
+  reconcile (both removed at the re-pin to `66d60b6`, next note).
+- 2026-10-18: `main` at `e9d6711` merged into the branch (#31,
+  `single-repository.yaml`; #32, CI on Linux only), and feature 004's
+  citations re-pinned from `5a71f83` to `66d60b6` after diffing its
+  `spec.md`, `data-model.md`, `contracts/project-clean.md` and `tasks.md`
+  between them. The CI change reaches the spec's Runtime and CI dependency,
+  EC-017, FR-049 and the citation notes of its header and Assumptions; no
+  line of `README.md` or the workflow is cited. On lane openRepoProject-2's ruling that both
+  reflog readings are feature 004's to settle, the "Readings to reconcile"
+  dependency is gone, FR-033 and EC-009 follow the delta with the 65,536-byte
+  boundary of ruling R-33, recorded as C-22 in a session that answers none of
+  `clarify-questions.md`, and FR-049 names a test for that boundary. The
+  child-handle kinds read `probe`, `removal` and `delegate`. Re-validation:
+  16 of 16 items pass, with the checks of iteration 2 re-run by script on the
+  edited spec.
 - Items marked incomplete require spec updates before `/speckit-clarify` or `/speckit-plan`
