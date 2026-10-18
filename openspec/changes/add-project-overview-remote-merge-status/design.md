@@ -5,17 +5,20 @@ Lane: openRepoProject-5
 ## Context
 
 See `proposal.md` for why and what, and the deltas under `specs/` for the
-requirements. `specs/project-overview/spec.md` modifies "Overview is local
-and read-only" (two scenarios, one of them new) and adds "Overview reports
-remote merge evidence on request" (eleven scenarios). The council has not run
-yet, so there is no `clarifications.md`; its noted constraints, once the lane
-runs it, are answered here by decisions added for them.
+requirements. `specs/project-overview/spec.md` modifies "Overview bounds its
+work and reports what it omitted" (fourteen scenarios, one of them new) and
+"Overview is local and read-only" (two scenarios, one of them new), and adds
+"Overview reports remote merge evidence on request" (eleven scenarios). The
+council has not run yet, so there is no `clarifications.md`; its noted
+constraints, once the lane runs it, are answered here by decisions added for
+them.
 
 Citations follow `proposal.md`: the packet at `da33d92`; APO, CAS, PRS and
 `project:N` at main `961c405`, which main `e9d6711` holds unchanged for them
 (L-15). Change 2's requirements are cited by header
 under these labels: [B] `Overview bounds its work and reports what it
-omitted`, [J] `Overview prints a versioned JSON envelope`, [H] `Overview
+omitted`, which this change modifies for the probe count (C-9), [J]
+`Overview prints a versioned JSON envelope`, [H] `Overview
 renders a readable human report` and [X] `Overview exits by completeness and
 severity`; change 1's evidence model is [E], and the ADDED requirement is
 [R].
@@ -32,6 +35,9 @@ The rulings and the packet's boundary map to the decisions:
 | C-6; DI:1051-1053: expiry cancels and aborts | D7 |
 | SY:129-130; BA:195-199; DI:1059-1060: evidence, never permission | D10 |
 | C-8: offline tests with a fake `gh` | D11 |
+| C-9; APO/ov:248-254: the remote-target reads in the envelope's `probes` | D2, D7, D8 |
+| L-10: `remote` present only where this change acts, never null | D8 |
+| C-10, L-12: CI on Linux only | Migration Plan |
 
 What in `project` shapes the approach (at `961c405`; features 004 and 005
 move these lines, and this change's feature re-pins them):
@@ -152,23 +158,30 @@ Any other failure, a budget reached or a stop at the deadline gives
 message, because Git may echo the remote's name or URL there. The URL lives
 in memory only for D3's judgement.
 
-The two reads are counted in the `remote` object's own `probes`: `estimated`
-is 1 per repository with a queried row plus 1 per repository whose first
-read named a usable remote, and `performed` the reads started, so the two
-agree in an uncut run. The envelope's `probes` keeps [B]'s exact count in
-every run, so a run with `--remote` and the same run without it report the
-same `probes`: lane openRepoProject-4's condition, since adding a `--remote`
-term to `probes.estimated` would change that field's meaning and force a
-`schema_version` bump. [B]'s "`performed` counts every Git child started"
-is read as the Git children of collection, the only ones change 2 defines
-(`proposal.md`, Decisions).
+The two reads are counted in the envelope's `probes`, as lane
+openRepoProject-4's fourth option has it (C-9): they are Git children, so
+[B]'s `performed`, "every Git child started", counts them unchanged, and
+[B]'s added paragraph gives `estimated` 1 per repository with a queried row
+and 1 more per such repository whose first read named a usable remote, so
+the two agree in an uncut run. A run without `--remote` counts exactly as
+[B] does at `961c405`. The `remote` object has no `probes` of its own, and
+the `gh` children, which are not Git children, are counted only in
+`remote.requests` (D5). A read that reaches its budget, overruns its output
+cap or is stopped at the deadline is `remote-target-unread` on its rows'
+`remote` and never a row error or a scan error, the exception [B]'s added
+paragraph states (D7, D10).
 
 Rejected: parsing `<common_dir>/config` (includes, conditional includes and
 `insteadOf` in other files would disagree with Git, as change 2's design
 found for `core.worktree`); `git config --list` (it would read every value,
 an `http.<url>.extraHeader` token included); falling back to `origin` when
 the merge target has no remote (C-3 names the merge target's configuration
-alone, and a guess could ask the wrong repository).
+alone, and a guess could ask the wrong repository); counting the reads in a
+`remote.probes` of their own beside an envelope `probes` kept at
+collection's count (the first draft, which left a run two counts of Git
+children and read [B]'s "every Git child" as collection's alone); and a flat
+2 reads per repository in `estimated`, which a merge target that names no
+remote, read once, would leave above `performed` in an uncut run.
 
 ### D3. Judging the URL
 
@@ -245,10 +258,11 @@ caller's, less `GH_DEBUG`, `DEBUG`, `GH_HOST`, `GH_REPO`, `GH_FORCE_TTY` and
 `GH_TOKEN`, `GITHUB_TOKEN`, `GH_CONFIG_DIR` and the proxy variables pass
 unread: that is gh's own authentication path (DI:1056-1057). The two update
 notifier switches keep `gh` from its update check, once every 24 hours by
-its own help text, and from the state it writes for it, so the MODIFIED
-block's "no ... file write" holds for the `gh` children too; the fake
-`gh` of D11 records the values, and the MODIFIED block's new scenario
-asserts them. [E]'s Git scrub does not apply; this is not a Git child.
+its own help text, and from the state it writes for it, so the "no ...
+file write" of "Overview is local and read-only" holds for the `gh`
+children too; the fake `gh` of D11 records the values, and that block's
+new scenario asserts them. [E]'s Git scrub does not apply; this is not a
+Git child.
 
 `gh` is looked up once per run, by one bounded filesystem task as [B]
 requires of every filesystem call; when it is missing, every keyed row is
@@ -307,6 +321,9 @@ When the remote budget ends or the deadline passes, no child starts; every
 key not yet sent, and every row whose remote-target read never started, is
 `cancelled`; every request in flight is stopped as above and `aborted`; and a
 remote-target read in flight is stopped and its rows `remote-target-unread`.
+None of these is a row error or a scan error, and none is [B]'s
+`probe-timeout` or `deadline-exceeded` on a row: [B], as this change
+modifies it, records them in the rows' `remote` (D2, D10).
 Everything starts inside the 60 s deadline and the last stop adds at most
 2 s + 2 s, so [B]'s 64 s bound holds; rendering follows.
 
@@ -323,23 +340,26 @@ rows hold which answer never depends on completion order.
 
 In a `--remote` run only:
 
-- each worktree row gains `remote` after `classification`: null outside the
-  query set, otherwise `{state, number, url, head_sha, reason}` as [R]
-  defines;
+- each queried worktree row gains `remote` after `classification`,
+  `{state, number, url, head_sha, reason}` as [R] defines; a row outside the
+  query set gains no key (L-10);
 - the envelope gains `remote` after `scan_errors`: `host`, `observed_at` (RFC
   3339 UTC with `Z`, null when no request started), `freshness`, `limits`,
-  `budget`, `probes` (the remote-target reads, D2), `requests` (the `gh`
-  children, D5), `counts` (the six states as keys, each an integer, zeros
-  included) and `completeness`.
+  `budget`, `requests` (the `gh` children, D5), `counts` (the six states as
+  keys, each an integer, zeros included) and `completeness`; it has no
+  `probes`, the remote-target reads being in the envelope's (D2).
 
 Without `--remote` both `remote` keys are absent, not null, so a document
 of a run without `--remote` is exactly [J]'s, which is the condition for
-reading the keys as additive. The envelope's `probes` is [J]'s in every run
-(D2).
+reading the keys as additive; in a `--remote` run a row outside the query
+set has no `remote` key either, never a null one, since null means unknown
+or not established (CAS/pc:1128-1129) and such a row was not asked. The
+envelope's `probes` gains D2's reads in a `--remote` run only.
 
 Integers are JSON integers and the `_seconds` fields integers, as [J]
-requires. No existing key, enum or value changes, and `schema_version` stays 1
-(`proposal.md`, Open Questions 1).
+requires. No existing key or enum changes, `probes` counts as [B], as
+modified, states, and `schema_version` stays 1 (`proposal.md`, Decisions
+C-9, Open Questions 1).
 
 ### D9. The human lines
 
@@ -362,11 +382,13 @@ as one line. Under `--attention` only shown findings' worktrees get a
 The remote phase starts after classification, findings, gates, suggestions,
 summary counts and completeness are computed, and it writes only into the
 `remote` slots. Nothing it records is a row error, a scan error or a finding,
-so [X]'s exit status, [J]'s `completeness` and the envelope's `probes` are
-what they are without `--remote`. Nothing is written to disk or kept past the
-run, `gh` never gets `--cache`, and `project clean` has neither the option nor
-a reader of these fields, so remote evidence never reaches an eligibility
-gate, a `plan_digest` or a revalidation (SY:129-130; DI:1059-1060).
+[B]'s added paragraph saying so for its stopped children, so [X]'s exit
+status and [J]'s `completeness` are what they are without `--remote`, and
+the envelope's `probes` differs only by D2's reads. Nothing is written to
+disk or kept past the run, `gh` never gets `--cache`, and `project clean`
+has neither the option nor a reader of these fields, so remote evidence
+never reaches an eligibility gate, a `plan_digest` or a revalidation
+(SY:129-130; DI:1059-1060).
 
 ### D11. Test seams and the scenario map
 
@@ -397,8 +419,10 @@ gate, a `plan_digest` or a revalidation (SY:129-130; DI:1059-1060).
 
 | Scenario | Requirement |
 | --- | --- |
-| Local and read-only (kept) | MODIFIED |
-| A remote run stays read-only apart from its queries | MODIFIED |
+| [B]'s thirteen scenarios (kept) | MODIFIED [B] |
+| Probe counts in a remote run | MODIFIED [B] |
+| Local and read-only (kept) | MODIFIED, local and read-only |
+| A remote run stays read-only apart from its queries | MODIFIED, local and read-only |
 | A squash-merged branch is explained and kept | [R] |
 | A merged branch whose upstream was deleted | [R] |
 | The remote target comes from the merge target's branch configuration | [R] |
@@ -446,6 +470,9 @@ requests".
   unchecked string is never printed.
 - [Two clones of one repository with different merge targets share a key] ->
   Each row is matched with its own base branch (D4, D6).
+- [A tool compares `probes` between a run with `--remote` and one without]
+  -> The difference is exactly D2's reads, stated in [B]'s added paragraph
+  and pinned by its new scenario; without `--remote` nothing differs.
 
 ## Migration Plan
 
@@ -454,7 +481,7 @@ Nothing migrates: without `--remote` no output, flag or exit changes.
 1. Ratification by Brett Heap's word on the pull request the lane opens for
    this change.
 2. After feature 005 has landed and change 2 is archived, with this change's
-   MODIFIED block re-read against the archived text, `/speckit.specify`,
+   MODIFIED blocks re-read against the archived text, `/speckit.specify`,
    from a `main` synced to `origin/main`, creates the one feature under the
    next free number, 006 or later; it is recorded once in `tasks.md` under
    "Speckit Handoff", and `/opsx:apply` runs only then.
