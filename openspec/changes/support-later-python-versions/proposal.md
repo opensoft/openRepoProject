@@ -2,16 +2,17 @@ Lane: openRepoProject-4
 
 # Proposal: support-later-python-versions
 
-Status: draft, opened as a draft pull request; the alignment review is applied
-(Review resolution, at the end); main is merged in at `e9d6711`, so CI is
-Linux only (#32), and #21 is cited at its head `1b84a94`; the council, design,
-spec delta and governance tasks follow; nothing is ratified. Governing issue:
+Status: draft, opened as a draft pull request; the alignment review and the
+council are applied (Review resolution, at the end); main is merged in at
+`e9d6711`, so CI is Linux only (#32), and #21 is cited at its head
+`1b84a94`; `clarifications.md`, the spec delta, `design.md` and `tasks.md`
+complete the proposal stage; nothing is ratified. Governing issue:
 opensoft/openRepoProject#22, claimed by lane openRepoProject-4. Taken up under
 Brett Heap's word of 2026-10-11 (about 15:55Z), "usage reset, resume all. read
 handoff and resume and fan out wide and do as much as possible in parallel",
 which named no item; lanes openRepoProject-4 and -5 split the open candidates
-and this one fell to lane 4 (issue #22, Authority). It lands only on his word
-ratifying this pull request.
+and this one fell to lane 4 (issue #22, Authority). It lands only on Brett
+Heap's word ratifying #28.
 
 Source: the archived change
 `openspec/changes/archive/2026-10-09-fix-parent-obstacle-wording/` recorded
@@ -155,6 +156,11 @@ process, `main()`'s handlers bypassed, so that an exception keeps its frame.
   which `actions/setup-python` resolves a version, read on 2026-10-11, lists
   stable 3.13.16, 3.14.8 and 3.15.0 for Linux (22.04, 24.04, 26.04; x64 and
   arm64). Read, not run in Actions.
+- PyYAML on 3.15: PyYAML 6.0.3, the newest release (PyPI, read 2026-10-18),
+  has no `cp315` wheel, so on 3.15 `pip install -r requirements.txt` builds
+  it from the sdist, pure Python without libyaml (`yaml.__with_libyaml__`
+  False). Shown with pip 26.2.1 on 3.15.0rc2 on Linux (exit 0, about 13 s),
+  not in Actions.
 - Not run: GitHub Actions, free-threaded builds, 3.15.0 final, and a
   single-repository answer followed by `yes` at a pseudo-terminal. Every run
   here is on Linux (the macOS residual is under Risks).
@@ -181,12 +187,15 @@ process, `main()`'s handlers bypassed, so that an exception keeps its frame.
     to each other, a missing path below a loop (`LOOP/sub`), and a loop below
     a linked directory.
   - (U) **an unreadable destination**: reading the destination
-    (`PARENT/NAME`) fails for a reason other than its absence. The measured
-    reasons are `EACCES`, for a parent beneath a directory without search
-    permission (existing or not) or a parent that is such a directory, and
-    `ENAMETOOLONG`, for a parent with a component longer than the system's
-    limit. The command cannot tell whether such a parent exists, and does not
-    guess.
+    (`PARENT/NAME`, or `PARENT/FAMILY/NAME` with `--shape --family`) fails
+    for a reason other than its absence. The measured reasons are `EACCES`,
+    for a parent beneath a directory without search permission (existing or
+    not) or a parent that is such a directory, and `ENAMETOOLONG`, for any
+    component of that path longer than the system's name limit (a parent
+    component, NAME, or the `--family` folder; neither name pattern,
+    `project:318` and `:323`, caps the length), or for the whole path longer
+    than the system's path limit. The command cannot tell whether such a
+    destination exists, and does not guess.
 - **The answers**, the same on every supported version, before the question
   and before any path's steps, for every route and form: by flag, not asked
   (`CI` set, no terminal, a workspace name), at a terminal with no choosing
@@ -204,9 +213,16 @@ process, `main()`'s handlers bypassed, so that an exception keeps its frame.
     changes 3.10 to 3.12 too: their traceback becomes a refusal.
   - (U): today's 3.10 to 3.13 answer, byte for byte, at the
     existing-destination check, where it is today:
-    `REFUSED: [Errno 13] Permission denied: 'PARENT/NAME'` or
-    `REFUSED: [Errno 36] File name too long: 'PARENT/NAME'` (each system's
-    number and text), exit 2.
+    `REFUSED: [Errno 13] Permission denied: 'DESTINATION'` or
+    `REFUSED: [Errno 36] File name too long: 'DESTINATION'` (each system's
+    number and text), exit 2. DESTINATION is the destination built on the
+    resolved parent (`PARENT/NAME`, or `PARENT/FAMILY/NAME`), where PARENT is
+    the resolved parent, as `new()` computes it and as the missing and
+    not-a-directory sentences name it.
+  - The two name different prefixes under a linked prefix: (L) names the
+    parent as given, (U) the resolved destination (council cases J and I).
+    Both are true; (L) keeps the given form because it is the same string on
+    every version and route, and (U) keeps today's 3.10 to 3.13 text.
 - **The reads, by site** (recommended technique at each; Alternatives below):
   - S1, the parent's resolution (`project:322`, which reaches
     `projects_dirs()` at `project:79` when the parent is `PROJECTS_DIR`):
@@ -288,12 +304,19 @@ process, `main()`'s handlers bypassed, so that an exception keeps its frame.
   rules are `non_fast_forward`, `deletion` and `pull_request`), so the added
   jobs cost no paid minutes and gate nothing by rule; the landing practice
   reads every job (archived `tasks.md` 3.1, "green checks on all four CI
-  jobs", the matrix before #32).
+  jobs"; two jobs at `e9d6711`, six after this change).
 - **The range's form.** (C1) A closed range, "3.10 to 3.15", with later
   versions called untested: recommended; the README claims only what CI runs.
   (C2) An open range, "3.10 or newer": it claims every later version as soon
   as it is released, before any job runs it, which is today's gap again;
   rejected.
+- **The range's home.** (H1) The first ADDED requirement, which AC6's test
+  enforces against `tests.yml` and the README: recommended. A drift between
+  the README and the matrix fails a test, and since the requirement names
+  versions, not systems, a decision about systems such as #32's needs no
+  spec change. (H2) `README.md` and CI only, with no requirement: lighter,
+  but AC6 then enforces no spec statement, and the range can change without
+  a delta.
 - **Who adds a new release.** (A1) At each CPython final release, an issue
   and one pull request that adds the version to the matrix and to the
   README's range, opened by the lane that owns `project` at the time: no new
@@ -393,43 +416,54 @@ statements listed below; every other statement keeps its wording.
 
 - ADDED: "Supported Python versions are stated and tested". `README.md`
   names the supported range, from its lowest to its highest minor version,
-  and calls later versions untested; CI runs the full suite on Linux
-  (`ubuntu-latest`) on every minor version in that range. Scenarios: "Every
-  version in the README's range is tested on Linux"; "The lowest supported
-  version is 3.10"; "A version above the range is called untested".
+  and calls later versions untested; CI runs the full suite on every minor
+  version in that range and on no other. It names versions, not systems
+  (H1). Scenarios: "Every version in the README's range is tested in CI";
+  "The lowest supported version is 3.10"; "A version above the range is
+  called untested".
 - ADDED: "A parent that is a symbolic-link loop is refused before the
-  question". It defines (L), states its answer, PARENT and its place, and
-  says that it holds on every supported version. Scenarios: "A looped parent
-  by each route"; "A missing path below a loop"; "A loop below a linked
-  directory is named as given"; "A looped parent's dry run"; "A looped
-  parent with the shape chosen by flag"; "A looped parent at the terminal is
-  not asked"; "A looped parent with a family that is not a single folder
-  name".
+  question". It defines (L) by its read, states its answer, PARENT (the
+  parent as given) and its place, and says that it holds on every supported
+  version. Scenarios: "A looped parent by each route"; "A missing path below
+  a loop"; "A loop below a linked directory is named as given"; "A relative
+  looped parent is named from the working directory"; "A looped parent's dry
+  run"; "A looped parent with the shape chosen by flag"; "A looped parent at
+  the terminal is not asked"; "A looped parent with a family that is not a
+  single folder name".
 - ADDED: "A destination that cannot be read is refused before the question".
-  It defines (U) and states that the existing-destination check refuses it
-  with the system's error, exit 2, on every supported version, and that a
-  destination that exists, a symbolic link included, is refused as existing.
-  Scenarios: "An existing directory beneath a directory without search
-  permission"; "A missing path beneath one"; "A parent without search
-  permission"; "A parent with a component longer than the system allows";
-  "An unreadable destination's dry run"; "An unreadable destination with the
-  shape chosen by flag"; "An unreadable destination at the terminal is not
-  asked"; "An existing destination is refused as before".
+  It defines (U), names DESTINATION as built on the resolved parent, and
+  states that the existing-destination check refuses it with the system's
+  error, exit 2, on every supported version, and that a destination that
+  exists, a symbolic link included, is refused as existing. Scenarios: "An
+  existing directory beneath a directory without search permission"; "A
+  missing path beneath one"; "A parent without search permission"; "A
+  parent with a component longer than the system allows"; "An over-long
+  name, family or path"; "An unreadable destination's dry run"; "An
+  unreadable destination with the shape chosen by flag"; "An unreadable
+  destination at the terminal is not asked"; "An existing destination is
+  refused as before"; "A destination below a looping folder is read as
+  absent".
 - MODIFIED: "Creation question is asked only of a person choosing at the
   terminal", as #21's delta states it (lines 129-198). Its list of refusals
   made before a path is chosen (lines 148-151) gains a looped parent and a
   destination that cannot be read. Its exception for invocations that are
   not asked (lines 153-155) gains both, ahead of every refusal after the
   existing-destination check. Its scenario "Refusals before a path is chosen
-  come first" (lines 187-190) gains both in its WHEN.
+  come first" (lines 187-190) gains both in its WHEN, and its scenario "The
+  refusal order of an invocation not asked the question is unchanged" (lines
+  196-198) gains both in the carve-out its WHEN already makes for a parent
+  blocked by a non-directory.
 - MODIFIED: #21's ADDED "A parent blocked by a non-directory is refused
   before the single-repository path's steps", as #21's delta states it
   (lines 5-88). Its list of earlier refusals (lines 16-20) gains the two
   refusals. Its sentence "The shape path SHALL keep its own refusal of a
   parent that is not an existing directory" (lines 36-37), and its scenario
   "The shape branch's parent refusal is unchanged" (lines 86-88), are scoped
-  to a parent that passes those earlier refusals. This block drops if lane
-  openRepoProject-1 scopes them in #21 before it is ratified (Decisions, 12).
+  to a parent that passes those earlier refusals. Its permission sentence
+  (lines 37-43) and its scenario "A parent the person cannot write still
+  fails only at creation" (lines 73-76) are scoped to "a directory the person
+  can search but cannot write". This block drops if lane openRepoProject-1
+  scopes them in #21 before it is ratified (Decisions, 12).
 
 ### Statements this change makes false, and their treatment
 
@@ -444,13 +478,37 @@ destination:
   153-155), since on 3.13 and later a looped parent has no early refusal
   today and (L) now precedes `--org` without `--shape` (`project:383-384`),
   `choose()` (`:385`) and the late `--workflow` check (`:388-390`), and on
-  3.14 and later (U) does the same; and the scenario "Refusals before a path
-  is chosen come first" (lines 187-190). MODIFIED.
+  3.14 and later (U) does the same; the scenario "Refusals before a path is
+  chosen come first" (lines 187-190); and the scenario "The refusal order of
+  an invocation not asked the question is unchanged" (lines 196-198), whose
+  WHEN admits a looped or unreadable parent that is not blocked by a
+  non-directory and whose THEN, the generator refusal, (L) and (U) now
+  precede. MODIFIED.
 - #21's ADDED requirement: its list of earlier refusals (lines 16-20); its
   shape sentence (lines 36-37) and scenario (lines 86-88), since a looped or
   unreadable parent with `--shape` by flag now gets (L) or (U), not the shape
   refusal (on 3.13 and later for (L), on 3.14 and later for (U); on 3.10 to
   3.12 a loop is a traceback today). MODIFIED, or scoped by lane 1.
+- #21's ADDED requirement, its permission sentence (lines 37-43, "a parent
+  that is a directory the person cannot write, or a missing parent whose
+  nearest existing path above it is such a directory, still passes the dry
+  run and fails at creation") and its scenario "A parent the person cannot
+  write still fails only at creation" (lines 73-76). For a directory the
+  person cannot search (mode 000 or 600), (U) refuses the dry run with
+  `[Errno 13]` naming the destination on every version. On 3.10 to 3.13 that
+  is today's answer already, so the sentence is false there before this
+  change (and disagrees with #21's own Out of Scope, its proposal lines
+  410-411); on 3.14 and later this change makes it false. A directory the
+  person can search but not write (mode 555, #21's acceptance criterion 9)
+  is unchanged on every version (council evidence 1). MODIFIED, scoped to "a
+  directory the person can search but cannot write", or scoped by lane 1.
+- #21's README sentence (its `design.md:187-191`, inserted after "Existing
+  destinations refuse.", `README.md:96`): "`--dry-run` reads no permissions:
+  a parent that is a directory the person cannot write still passes the dry
+  run and fails at creation, as before, and so, for a single repository,
+  does a missing parent whose nearest existing path above it is such a
+  directory." The same claim, false in the same cases. This realization,
+  landing after #21's, scopes it with the same clause (Decision 12).
 - "Delegate project creation", scenario "Preview" (main spec `:25-28`): a
   looped dry run on 3.13 and later, and an unreadable one on 3.14 and later,
   no longer print the plan. #21's MODIFIED WHEN, "and no refusal precedes
@@ -466,7 +524,12 @@ delta, lines 163-166), since (L) and (U) come before any path and the path's
 own prompts and refusals are unchanged for a parent that reaches it; and "the
 creation runs exactly as it would without this requirement" (main spec
 `:117-120`; #21's delta, lines 177-180), since that requirement is the
-creation question's and (L) and (U) are this change's own.
+creation question's and (L) and (U) are this change's own. Also kept: #21's
+scenarios "A person at the terminal without a choosing flag" (its delta,
+lines 158-161) and "A single repository with a parent that is not blocked"
+(lines 69-71). Each presupposes the refusals its requirement places first,
+as each already does for an existing destination, and the MODIFIED lists
+above now include (L) and (U) among them.
 
 ## Impact
 
@@ -481,9 +544,10 @@ creation question's and (L) and (U) are this change's own.
   unchanged.
 - **Tests**: the new module per the acceptance criteria below; no existing
   test is edited, and every one runs on all six jobs.
-- **`README.md`** lines 17-18 and 281-282; **`.github/workflows/tests.yml`**
-  line 9; the spec at archive. `AGENTS.md:19` ("Python 3.10+") states the
-  floor and is not edited.
+- **`README.md`** lines 17-18 and 281-282, and #21's README permission
+  sentence once #21's realization has added it, scoped as Decision 12 says;
+  **`.github/workflows/tests.yml`** line 9; the spec at archive.
+  `AGENTS.md:19` ("Python 3.10+") states the floor and is not edited.
 - **Feature records** stay unedited. The new feature's spec states that, for
   these cases, it supersedes feature 003's EC-004
   (`specs/003-parent-obstacle-wording/spec.md:139-142`: on CI's versions a
@@ -495,8 +559,8 @@ creation question's and (L) and (U) are this change's own.
   from a main synced to origin (the next free number; none hard-coded).
 - **Handoffs after landing**: no new issue but the release practice of
   Decisions, 3. The realization reaches `onp` when workBenches next moves its
-  pin, on its owner's act; whether a comment on a workBenches pin issue names
-  it, as archived D5 did, is the design's.
+  pin, on its owner's act; a comment on a workBenches pin issue, as archived
+  D5 did, is design D9's.
 
 ### Feasibility
 
@@ -543,6 +607,22 @@ and 3.15.0rc2:
 - An earlier copy that read only `ENOENT` and `ENOTDIR` as absent at S2 (E3)
   refused the `--family` loop with `[Errno 40]` on all six versions; hence
   E1's errno set.
+- The council's runs of the same two copies, not asked, add these rows (its
+  cases E, F and G, and its evidence 1):
+  - an over-long NAME (256 characters, `PC_NAME_MAX` + 1), an over-long
+    `--family` under `--shape`, and a parent of 4550 bytes, longer than
+    `PC_PATH_MAX` (4096), made of short components: `[Errno 36]` naming the
+    destination, exit 2, on 3.10 to 3.13 unpatched and on every version
+    patched; unpatched 3.14 and 3.15rc2 print the plan and exit 0. That is
+    (U) on every version (AD-1);
+  - a missing parent below a directory of mode 555 (search, no write): the
+    plan, exit 0, with `--dry-run`, and with `--yes` the plan then `[Errno
+    13]` at `parent.mkdir`, exit 2, unpatched and patched, on 3.10.21,
+    3.12.3, 3.13.15, 3.14.7 and 3.15.0rc2: unchanged, as #21's acceptance
+    criterion 9 expects. Below a directory of mode 000 (no search): `[Errno
+    13]` naming `D/missing/MyApp`, no `Create:`, exit 2, unpatched on 3.10
+    to 3.13 and patched on all five; unpatched 3.14 and 3.15rc2 print the
+    plan. That is (U) (AR-1).
 - Not run: the existing suite against the patched copy (the realization runs
   it), and Actions. Linux only, as Observed.
 
@@ -577,8 +657,15 @@ and 3.15.0rc2:
     `ubuntu-latest` and leaves the `test` job unchanged
     (`specs/004-project-clean-all-safe/plan.md`, "CI shape", on lane 2's
     branch `004-project-clean-all-safe` at `5a71f83`, unchanged at its head
-    `66d60b6`). That plan still names the four jobs from before #32, and
-    that branch has not merged `e9d6711`; both are lane 2's.
+    `66d60b6`; the job itself is on lane 2's branch `impl/004-t003-git-floor`
+    at `2ec938b`, written before #32). That plan and that job's comment
+    still name the four jobs from before #32, and those branches have not
+    merged `e9d6711`; both are lane 2's.
+  - `project`'s import block: feature 004 adds `import errno` there (with
+    other standard modules, at `66d60b6`), the import S1 and S2 need. A
+    three-way merge of the feasibility copy with feature 004's `project` over
+    `961c405` is clean and keeps one `import errno` (council evidence 4).
+    The realization adds the import only if main lacks it (design D7).
   - `tests/test_project.py`: this change adds no line to it (M1); feature
     004 edits its clean tests. Under M2 this change's tests would go in the
     `new`-path section only.
@@ -621,19 +708,28 @@ On every version of the new matrix, on `ubuntu-latest`, each by a test:
    `REFUSED: [Errno {errno.ELOOP}] {os.strerror(errno.ELOOP)}: 'PARENT'`,
    PARENT as given (`LINK/loop` for the linked one), no question line, no
    `Create:`, and nothing changed (the `rglob` snapshot of archived N2). A
-   loop with `--shape --family 1bad`: the family refusal.
+   loop with `--shape --family 1bad`: the family refusal. A relative
+   `--into loop`, run from a working directory reached through a symbolic
+   link: PARENT has the physical prefix that `os.getcwd()` reports (N7).
 3. (U): an existing directory beneath a directory of mode 000 and beneath
    one of mode 600, a missing path beneath the mode 600 one, a parent of mode
    600 and one of mode 000, and a parent with one component of
    `os.pathconf(base, "PC_NAME_MAX") + 1` characters, each by `--into`, with
-   the forms of 2: exit 2,
-   `REFUSED: [Errno {e}] {os.strerror(e)}: 'PARENT/MyApp'` with `e` the
-   `EACCES` or `ENAMETOOLONG` of the system, no question line, nothing
-   changed. Both snapshots are taken with modes restored, and modes are
-   restored before cleanup. A permission row is skipped only when, in
-   `setUp`, `os.lstat()` of the locked directory's child succeeds (root,
-   capabilities, ACLs), and no (U) test is skipped on any CI job (read from
-   the `-v` output).
+   the forms of 2; and three more sources of `ENAMETOOLONG` (AD-1): a NAME of
+   that length into an existing directory, `--shape --org example
+   --visibility private --family` with a family of that length, and a parent
+   longer than `os.pathconf(base, "PC_PATH_MAX")` made of 200-character
+   components. Each: exit 2,
+   `REFUSED: [Errno {e}] {os.strerror(e)}: 'DESTINATION'` with `e` the
+   `EACCES` or `ENAMETOOLONG` of the system, no question line, no
+   `Create:`, nothing changed. DESTINATION is the destination built on the
+   resolved parent, as `new()` computes it (`PARENT/MyApp`, or
+   `PARENT/FAMILY/MyApp` for the family row), never the parent as given
+   (AD-2). Both snapshots are taken with modes restored, and modes are
+   restored before cleanup. For each permission row `setUp` creates a child
+   of the locked directory before the chmod, and the row is skipped only when
+   `os.lstat()` of that existing child succeeds (root, capabilities, ACLs;
+   N10); no (U) test is skipped on any CI job (read from the `-v` output).
 4. S2's success branch: a destination that is an existing directory, a
    regular file, a dangling symbolic link, a self-loop link and a link into a
    directory of mode 000 is refused with `REFUSED: Destination already
@@ -645,9 +741,10 @@ On every version of the new matrix, on `ubuntu-latest`, each by a test:
    answers after the question are main's at merge, #21's included, as main's
    own tests pin them.
 6. A test in the new module reads `.github/workflows/tests.yml` with PyYAML
-   (already in `requirements.txt`) and the README's range sentence, and
-   asserts that the `test` job's `python` list is every minor version from
-   the README's lowest to its highest, and that the lowest is 3.10.
+   (already in `requirements.txt`) and the README's two range sentences
+   (Install and Development, design D1), and asserts that both name the same
+   range, that the `test` job's `python` list is every minor version from the
+   README's lowest to its highest and no other, and that the lowest is 3.10.
 7. Every added line is ASCII (archived N4's scope: added lines, not the
    whole of `project`).
 
@@ -661,23 +758,31 @@ On every version of the new matrix, on `ubuntu-latest`, each by a test:
   is a strategy key outside `matrix:` and needs lane 2's assent (Decisions,
   11).
 - By the manifest (read on 2026-10-11, not run), Linux 24.04 resolves 3.10
-  to 3.15 to 3.10.22, 3.11.17, 3.12.15, 3.13.16, 3.14.8 and 3.15.0. The
-  landing task cites each job's resolved version from setup-python's log.
+  to 3.15 to 3.10.22, 3.11.17, 3.12.15, 3.13.16, 3.14.8 and 3.15.0; 22.04
+  and 26.04 list the same. The landing task cites each job's resolved
+  version from setup-python's log.
 - The 3.15 evidence here is from 3.15.0rc2; the realization's CI run is the
   first on 3.15.0.
+- The 3.15 job builds PyYAML from source until a `cp315` wheel exists
+  (Observed); a build failure there fails the job, not the code. The landing
+  task cites the 3.15 job's pip log.
 - A test outside this change's surface that fails on an added version blocks
   the widened matrix until its owner fixes it.
 - NOTED residual, macOS: the README excludes only native Windows
   (`README.md:282`), so `project` may still be run on macOS, but since #32 no
   CI job runs there, and every run in this proposal is on Linux. The (L) and
-  (U) lines carry the system's errno number and text, and the tests build
-  them from `errno` and `os.strerror()`, not from Linux's numbers; whether
-  this change's answers hold on macOS is unproven. This change adds no macOS
-  job: Brett Heap decided on 2026-10-15 that CI runs on Linux only.
+  (U) lines carry the system's errno number and text; the tests build every
+  line from `errno` and `os.strerror()`, size names from `os.pathconf()` and
+  take paths under the resolved base, so they are written to hold there, but
+  no job runs them and whether this change's answers hold on macOS is
+  unproven (N12). This change adds no macOS job: Brett Heap decided on
+  2026-10-15 that CI runs on Linux only.
 - (L) changes 3.10 to 3.12: a traceback exiting 1 becomes a refusal exiting
   2. S2 changes a destination linked into a directory without search
   permission on 3.10 to 3.13 from `[Errno 13]` to `Destination already
-  exists`. No caller relying on either is known.
+  exists`. (U) changes 3.14 and later for an unsearchable parent and for an
+  over-long NAME, family or path: a plan exiting 0 becomes the 3.10 to 3.13
+  refusal. No caller relying on any of these is known.
 - A later minor version may move pathlib again: S1 and S2 no longer depend on
   it; `known_obstacles()` still does, for parents whose answers agree today
   (Observed). The matrix catches a change only once the version is added,
@@ -688,7 +793,7 @@ On every version of the new matrix, on `ubuntu-latest`, each by a test:
 ## Out of Scope
 
 - #21's surface: the early non-directory refusal, its sentences, and the
-  writability follow-up it names.
+  writability follow-up it names, except the scoping of Decision 12.
 - Everything from `discover` down: lane openRepoProject-2's changes
   `add-project-clean-all-safe` and `add-project-overview` (feature 004), and
   feature 004's `git-floor` job.
@@ -699,7 +804,11 @@ On every version of the new matrix, on `ubuntu-latest`, each by a test:
   at `projects_dirs()` (`project:79`), reached through `workbenches()`
   (`:90`) on the bench path when `WORKBENCHES_ROOT` and `--workbenches` are
   unset; 3.13 and later refuse with "Cannot find workBenches". A follow-up,
-  not this change.
+  not this change. A second residual at the same line: a parent with an
+  unknown `~user`, such as `--into ~nosuchuser/x`, ends in `RuntimeError:
+  Could not determine home directory.`, exit 1, on every version, unpatched
+  and patched (council case H), raised by `expanduser()`, which S1's mapping
+  does not cover (N9).
 - Any new sentence, flag, environment variable or configuration file.
 - Raising the floor (R4); a pre-release job (P2, P3) or a scheduled release
   check (A2) unless Brett Heap chooses one; `fail-fast` or any other key
@@ -711,7 +820,10 @@ On every version of the new matrix, on `ubuntu-latest`, each by a test:
 
 ## Decisions for Brett Heap
 
-Each has a recommendation above unless marked open; none is taken.
+Each has a recommendation above unless marked open; none is taken. Two stay
+open for Brett Heap: 3 (SA-7), which has no recommendation, and 12 (SA-2),
+which has one but turns on lane 1's text. The design and the delta follow
+every recommendation, and say what changes under each alternative.
 
 1. The versions: R1, every released minor version from 3.10 to 3.15 on
    `ubuntu-latest`, six jobs.
@@ -728,14 +840,15 @@ Each has a recommendation above unless marked open; none is taken.
 8. The techniques: T2 at S1 and E1 at S2, accepting the narrow errno reads
    that archived N5 rejected for its own change.
 9. The tests: M1, a module of their own.
-10. Whether the supported range is a spec requirement (the first ADDED
-    requirement) or stated only in `README.md` and CI.
+10. The range's home: H1, the first ADDED requirement, enforced by AC6's
+    test (or H2, `README.md` and CI only).
 11. `fail-fast`: unchanged (recommended, as the matrix-only agreement
     stands), or `false`, with lane 2's assent.
-12. #21's shape sentence and scenario: this change MODIFIES #21's ADDED
-    requirement (recommended, as it needs nothing from lane 1), or lane 1
-    scopes them in #21 before ratification, and the second MODIFIED block
-    drops.
+12. #21's shape sentence and scenario, and its permission sentence, its
+    permission scenario and its README permission sentence (open, SA-2):
+    this change MODIFIES and scopes them (recommended, as it needs nothing
+    from lane 1), or lane 1 scopes them in #21 before ratification, and the
+    second MODIFIED block and the README clause drop (design D6).
 
 ## Review resolution
 
@@ -799,8 +912,8 @@ to `1b84a94`. SA-1's twelve jobs are now six, and SA-3's pin is now
 `1b84a94`.
 
 - #32, CI on Linux only (Brett Heap, 2026-10-15): the matrix is
-  `ubuntu-latest` x 3.10-3.15, six jobs (What Changes, R1, R2, the first
-  ADDED requirement, AC1, Risks, Decision 1). R3, the macOS entry, is
+  `ubuntu-latest` x 3.10-3.15, six jobs (What Changes, R1, R2, AC1, Risks,
+  Decision 1). R3, the macOS entry, is
   withdrawn but keeps its number. The macOS errno, fixture and runner-patch
   notes are gone. One NOTED macOS residual sits under Risks, and Out of
   Scope names the macOS and Windows jobs. The README example and
@@ -815,3 +928,47 @@ to `1b84a94`. SA-1's twelve jobs are now six, and SA-3's pin is now
   so line 381 is now 401, lines 392-396 are 412-416, and lines 392-394 are
   412-414. Its first risk, and its reason against a writability read, are
   unchanged.
+
+Council of `461a010`, re-judged against main `e9d6711` and #21 at `1b84a94`
+(product-advocate PO-1 to PO-5, systems-architect AR-1 to AR-7,
+adversary-engineer AD-1 to AD-7; 19 concerns: VALID 7, NOTED 12, DISMISSED
+0; results comment on PR #28, issuecomment-6254996548). Every VALID fix is
+applied, and none is declined. The NOTED concerns are N1 to N12 in
+`clarifications.md`, each answered by a decision in `design.md`.
+
+- PO-5 (macOS re-added against #32): applied in the update above and checked
+  against the council's #32 table row by row. Two of its wordings are taken
+  as well: the first ADDED requirement and its scenario name versions, not
+  systems ("tested in CI"), and the archived "four CI jobs" quote gains "two
+  jobs at `e9d6711`, six after this change". QA-6's macOS facts no longer
+  apply.
+- AR-6 (`tests.yml` lines and shape after #32): applied in the update above,
+  plus the `git-floor` job's own branch (`impl/004-t003-git-floor` at
+  `2ec938b`) in "Ordering and shared files".
+- AR-1 (#21's permission statements): its permission sentence (delta lines
+  37-43), its scenario (lines 73-76) and its README sentence (its
+  `design.md:187-191`) join "Statements this change makes false". The second
+  MODIFIED block scopes them to "a directory the person can search but cannot
+  write", Decision 12 covers them, and Impact, Out of Scope and Feasibility
+  follow.
+- AD-1 (every `ENAMETOOLONG` source): (U) names an over-long parent
+  component, NAME and `--family` folder, and a whole path past the path
+  limit. The third ADDED requirement gains "An over-long name, family or
+  path", AC3 gains three rows, and Feasibility and Risks follow.
+- AD-2 (PARENT in (U)): (U) names DESTINATION, built on the resolved parent.
+  What Changes says that (L) names the parent as given and (U) the resolved
+  destination, and AC3 defines DESTINATION.
+- PO-1 (Decision 10): Alternatives gains "The range's home" (H1 recommended,
+  H2), and Decision 10 cites it.
+- AR-4 (PyYAML on 3.15): Observed and Risks say that the 3.15 job builds
+  PyYAML 6.0.3 from source (no `cp315` wheel; PyPI read 2026-10-18), and the
+  landing task cites its pip log.
+
+Found while writing the delta, not raised by the council: #21's scenario
+"The refusal order of an invocation not asked the question is unchanged"
+(its delta, lines 196-198) carves out a parent blocked by a non-directory in
+its WHEN. A looped or unreadable parent satisfies that WHEN and now gets (L)
+or (U), not the generator refusal its THEN names. It joins the statements
+record, and the first MODIFIED block's WHEN gains both in the same
+carve-out. Two scenarios that presuppose their requirement's earlier
+refusals (its delta, lines 69-71 and 158-161) are recorded as kept.
