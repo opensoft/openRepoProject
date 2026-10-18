@@ -279,7 +279,7 @@ python3 -m unittest discover -s tests -v
 
 Run development commands in the Python workBench. Tests create disposable local
 repositories and fake generators, never real GitHub projects. CI covers Linux
-and macOS. On Windows, use WSL2 for Bash generators and estate commands.
+only. On Windows, use WSL2 for Bash generators and estate commands.
 
 Exit codes: 0 success; 1 doctor findings (warnings only with `--strict`);
 2 invalid input/missing prerequisite; 130 cancellation. Delegated failures
