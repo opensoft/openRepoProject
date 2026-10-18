@@ -16,12 +16,17 @@ force-push" to D3. The seam rule (`BA:1318-1322`: inside `retire_worktree`,
 under the same deadline, stage values of its own, mutations counted in
 `operations`) maps to D2, D5 and D7. The lane's rulings map as follows: A-1 to
 D1; A-2 to D3, with D4 reading its ancestry clause; A-3 to D4; A-4 to D5 and
-D6; A-5 to D7; A-6 to D8; A-7 to D9; L-4 to D5 and D10; L-1, L-5 and L-7 to
-the Migration Plan. No alignment review or council has run yet, so no NOTED
-constraint exists for a decision to answer.
+D6; A-5, as amended on 2026-10-18, to D7; A-6 to D8; A-7 to D9; L-4 to D5 and
+D10; L-1, L-5 and L-7 to the Migration Plan. The addendum of 2026-10-18 maps:
+L-10 and A-11 to D5; A-9 to D7; A-12 to this Context; L-12 to D9 and the
+Migration Plan; L-11 and A-13 to the Migration Plan; A-10 to the proposal's
+Open Questions. The alignment review of PR #26 is resolved (`proposal.md`,
+"Questions Resolved by the Alignment Review"); the council has not run, so no
+NOTED constraint exists for a decision to answer.
 
 Citations follow `proposal.md`: packet files at `da33d92`, `CAS` for change 1,
-`APO` for change 2, `project:N` and `tests:N` at `961c405`.
+`APO` for change 2, `project:N` and `tests:N` at `961c405`, all unchanged at
+main `e9d6711`.
 
 What in `project` shapes the approach:
 
@@ -42,12 +47,20 @@ What in `project` shapes the approach:
 - `probe()` (`project:60-65`) sets `GIT_OPTIONAL_LOCKS=0` for read-only
   children; the branch child writes, so it is not one of those.
 - The parser's `clean` flags (`project:1109-1117`) gain `--retire-branches`.
-- Feature 004 (its `plan.md` on branch `004-project-clean-all-safe` at
-  `dd923ee`, slices 2 and 6) builds what the stage stands on: the child handle
-  (`start`, `terminate_group`, `reap`), `run_bounded`, the scrub and the pins,
-  the narrowed ref listing of revalidation and rescan, the seam
-  `retire_worktree(plan, target)` and the result record. The stage is a tail
-  of that seam.
+- Feature 004 (its `plan.md`, slices 2 and 6, and its `tasks.md`, on branch
+  `004-project-clean-all-safe`, re-checked at `66d60b6`) builds what the stage
+  stands on: the child handle `ChildHandle` (`start`, `terminate_group()`,
+  `advance()` and the reap deadline; task T022), `run_bounded()` (T024), the
+  scrub and the pins of `git_env(kind)` and `git_argv(kind, args)` (T013, whose
+  kinds T012 lists), the narrowed ref listing of revalidation and rescan
+  (`narrowed_ref_patterns(plan)`, T084), the removal seam that change 1 names
+  `retire_worktree(plan, target)` (CAS `proposal.md:189`; `BA:1319`), which
+  slice 6 builds without that name, as `apply_removals(plan, run)` over
+  `revalidate()`, `run_removal()`, `rescan()` and `decide_stage()` (T055 to
+  T057), and the result record (`result_document()`, `print_result()` and
+  `apply_exit_status()`, T057). The stage is a tail of that seam, after
+  `decide_stage()`; its branch child is one more kind for `git_env` and
+  `git_argv`.
 - `tests:857-878`, `test_clean_removes_only_merged_worktree_and_keeps_branch`,
   removes a worktree, sees its branch kept, then deletes it with
   `delete-branch`: the default path and the retry path in one test, kept
@@ -206,11 +219,22 @@ reviewed plan" (`project-clean-review-safety/spec.md:51-53`) already retains
 the branch there, so the child is never needed. This is narrower than A-2's
 text: a branch whose merge target moved forward is retained, not retired.
 
-The re-read runs no identity probe. The values it compares make a deletion
-lossless wherever it lands: a repository replaced after the rescan that holds
-the same branch at the same head, merged into a merge target at the same SHA,
-loses no commit by the deletion, and one whose values differ retains the
-branch. Concurrent writers are outside the contract in any case.
+The re-read compares the branch's head, the merge target's name, source and
+SHA, and the checked-out state, as the explicit action's re-check compares
+head, target and ancestry (`project:658-663`); it does not compare the upstream
+evidence or the manifest's `tracking_branch`, which change 1's removal
+revalidation compares (`CAS/rs:77-82`), because a head unchanged and an
+ancestor of an unchanged merge target loses no commit when deleted
+(`BA:1339-1341`). The manifest is re-read only to re-resolve the merge target.
+
+The re-read runs no identity probe. The repository identity is the one the
+rescan re-established, which a target `removed` with reason null requires
+(`CAS/pc:919-921`), and the narrow guarantee names it. The values the re-read
+compares make a deletion lossless wherever it lands: a repository replaced
+after the rescan that holds the same branch at the same head, merged into a
+merge target at the same SHA, loses no commit by the deletion, and one whose
+values differ retains the branch. Concurrent writers are outside the contract
+in any case.
 
 Every target the run removes with reason null qualifies, whether its upstream
 lives (its remote branch and remote-tracking ref stay) or its remote-tracking
@@ -221,8 +245,11 @@ never reaches the stage; the flag widens no gate.
 ### D5. The `branch_retirement` sub-record (A-4, L-4)
 
 Each target object of the apply result record gains `branch_retirement` beside
-`reconciliation`, under the flag only; without it the key is absent, so a run
-without the flag prints change 1's record byte for byte.
+`reconciliation`, under the flag only; without it the key is absent, never
+null, so a run without the flag prints change 1's record byte for byte. That is
+the lane's ruling L-10 for every extension's sub-record: present only where the
+extension acts, absent otherwise, because null keeps change 1's meaning,
+unknown or not established (`CAS/pc:1128-1129`).
 
 | Field | Value |
 | --- | --- |
@@ -238,7 +265,7 @@ without the flag prints change 1's record byte for byte.
 | --- | --- | --- |
 | `retired` | the post-check shows the branch absent after the branch child ran | null (exit 0); `git-failed` (nonzero exit); `probe-timeout`, `deadline-exceeded` (`project` stopped the child past its budget, the latter when the work deadline was the limit) |
 | `retained` | the target is `removed` and its branch is present when the stage ends | `branch-changed`, `state-changed`, `branch-in-use`, `deadline-exceeded` (the work deadline left no time to start, or stopped, the re-read or the branch child), `interrupted`, `spawn-error`, `git-refused` (nonzero exit), `unconfirmed-retirement` (exit 0), `probe-timeout`, `removal-ceiling` |
-| `not-attempted` | no stage ran | `branch-missing`, `target-not-removed`, `branch-retention-stop` |
+| `not-attempted` | no branch remained to retire, or no stage ran | `branch-missing`, `branch-retention-stop`, `target-not-removed` |
 | null | the post-check failed or timed out | `reconciliation-incomplete` |
 
 A target that does not enter the stage takes its record from its own stage:
@@ -250,13 +277,17 @@ A target that does not enter the stage takes its record from its own stage:
 | `removed`, `removal-ceiling`, branch present | `retained`, `removal-ceiling` |
 | `removed`, `removal-ceiling`, branch absent | `not-attempted`, `branch-missing` |
 | `refused`, `failed` or `unknown` | `not-attempted`, `target-not-removed` |
-| `not-attempted`, the run stopped at an earlier target that was `removed` | `not-attempted`, `branch-retention-stop` |
-| `not-attempted`, the run stopped at or before a target that was not `removed` | `not-attempted`, `target-not-removed` |
+| `not-attempted`, the run stopped after an earlier target that was `removed` and whose `branch_retirement` was not `retired` with reason null | `not-attempted`, `branch-retention-stop` |
+| `not-attempted`, any other cause | `not-attempted`, `target-not-removed` |
 
 `reconciliation` stays the rescan that decided the removal, so a retired
 target shows `branch_present: true` there and `retired` here; the record's two
 objects are two moments, and the sub-record is the later. A null `stage` makes
-the result's `completeness` incomplete. The sub-record's own `stage` reads
+the result's `completeness` incomplete. Change 1 lists `completeness` in the
+apply result record (`CAS/pc:1138`) without saying when it is incomplete, so
+this trigger is this change's own, stated in its ADDED requirement, and change
+1's own triggers are lane openRepoProject-2's text to settle (A-11; proposal,
+Dependencies and Sequencing). The sub-record's own `stage` reads
 `BA:1319-1321`'s "stage values of its own"; change 1's target `stage`, its
 reasons and its notes are untouched (L-4). Null rather than a fourth value
 `unknown` keeps A-4's three values and follows change 1's rule that null means
@@ -285,10 +316,12 @@ or whose `branch_retirement` is not `retired` with reason null. Later targets
 are `not-attempted` with change 1's reason (`batch-stopped`, or `interrupted`
 or `deadline-exceeded` when a signal or the deadline stopped the run), their
 `branch_retirement` `not-attempted` with `branch-retention-stop` when the run
-stopped at a target that was `removed` (its branch retained, missing or not
-established) and with `target-not-removed` when it stopped at or before a
-target that was not. The exit status is change 1's first matching row, this
-change's additions marked "(flag)":
+stopped after a target that was `removed` and whose `branch_retirement` was not
+`retired` with reason null (its branch retained, missing or not established),
+and with `target-not-removed` otherwise: after a target that was not `removed`,
+or after a plain retirement when a signal or the deadline stopped the run. The
+exit status is change 1's first matching row, this change's additions marked
+"(flag)":
 
 | Exit | First matching row |
 | --- | --- |
@@ -329,32 +362,63 @@ deadline and reaped within 4 s more; the post-check and the final rescan run
 in the reserve up to 60 s, and a reserve child stopped there is reaped within 4
 s, as change 1 counts.
 
-Counts: `operations.estimated` is 2T; `probes.estimated` is change 1's F + W +
-E + 5T + 3 (`BA:820`) plus 2T. No `limits` or `budget` member is added: the
-stage spawns one branch child per target, so `limits.targets` (16) caps them,
-and `budget.probe_timeout_seconds` (5) bounds each.
+Counts: under the flag `operations.estimated` gains T, one branch child per
+target, so that it is 2T when no cache is listed
+(`add-project-clean-cache-disposal` also counts each listed cache entry there);
+`probes.estimated` is change 1's F + W + E + 5T + 3 (`BA:820`) plus 2T. No
+`limits` or `budget` member is added: the stage spawns one branch child per
+target, so `limits.targets` (16) caps them, and `budget.probe_timeout_seconds`
+(5) bounds each.
 
 The fit of `BA:729-760` gains three children per target before the next
-removal. At the packet's assumed costs (150 ms per child, 0.3 s per removal,
-T = 16), target k's removal spawns after 7 + 128 + 16 + 5k probes, k - 1
-removals and 3(k - 1) stage children, at 21.9 + 1.5k s: the 15th at 44.4 s
-with 5.6 s left, the 16th at 45.9 s with 4.1 s left, inside the 5 s floor by
-0.9 s. At change 1's measured costs (CAS `tasks.md` 2.1: the 16th removal
-spawning at 23.6 s with 26.4 s left), the 45 added children, even at 150 ms
-each, move the 16th to about 30.4 s with about 19.6 s left. Change 1 kept its
-caps on its measured fit, and this design does the same: no cap changes.
-Where the assumed costs do hold, the 16th target is `not-attempted` with
-`deadline-exceeded` and the run exits 1; the next run takes it (Risks).
+removal, up to 48 more children per run, 16 under `operations` and 32 under
+`probes` (A-5 as amended). At the packet's assumed costs (150 ms per child,
+0.3 s per removal, T = 16), target k's removal spawns after 7 + 128 + 16 + 5k
+probes, k - 1 removals and 3(k - 1) stage children, at 21.9 + 1.5k s: the 15th
+at 44.4 s with 5.6 s left, the 16th at 45.9 s with 4.1 s left, inside the 5 s
+floor by 0.9 s. At change 1's measured costs (CAS `tasks.md` 2.1: the 16th
+removal spawning at 23.6 s with 26.4 s left), the 45 added children, even at
+150 ms each, move the 16th to about 30.4 s with about 19.6 s left. Change 1
+kept its caps on its measured fit, and this design does the same: no cap
+changes. Where the assumed costs do hold, the 16th target is `not-attempted`
+with `deadline-exceeded` and the run exits 1; the next run takes it (Risks).
+
+With `add-project-clean-cache-disposal` archived first (L-5), its 16 cache
+enumerations join the plan: target k's removal spawns after 7 + 128 + 16 + 16 +
+5k probes, k - 1 removals and 3(k - 1) stage children, at 24.3 + 1.5k s at the
+packet's costs, cache-stage filesystem time excluded: the 13th at 43.8 s with
+6.2 s left, the 14th at 45.3 s, inside the floor. At change 1's measured costs
+the 16th spawns near 32.8 s. Where the cache change's archived fit sentence
+says that the 16th target reaches its spawn with more than the removal floor
+left, that claim is therefore scoped to runs without the flag when this change
+re-bases on it.
+
+So at the packet's 150 ms model a flagged run with cache disposal brings only
+13 of its 16 targets to their stage before the removal floor; change 1's own
+deadline rule makes the 14th to the 16th `not-attempted` with
+`deadline-exceeded`, the run exits 1, and the next run takes them, never unsafe
+(`BA:772-774`). At change 1's measured costs all 16 fit. `limits.targets` stays
+16 (A-9). The alternative, a lower target cap under the flag, would be 8 by the
+packet's rule (`BA:729-735`), since the last of T such targets spawns at
+19.5 + 1.8T s; it is rejected because the cap is applied by the
+`deferred-target-cap` gate, so the flag would change the selection, the
+`plan_digest` and the `--expect-plan` comparison, which D1 keeps free of the
+flag, and because a smaller cap only splits across runs the work that the
+deadline already splits safely. The proposal puts the choice to Brett Heap
+(Open Questions).
 
 ### D8. What the person sees (A-6, A-7)
 
-All new text is ASCII, with `ROOT`, `PATH`, `BRANCH`, `N`, `R`, `K` and
+All new text is ASCII, with `ROOT`, `PATH`, `BRANCH`, `N`, `M`, `R`, `K` and
 `REASON` substituted (paths by change 1's escaping rule), and the tests pin it.
 
 - Plan, under the flag: each selected row reads `  remove PATH and retire
   BRANCH` where change 1 prints `  remove PATH [BRANCH]`.
-- Question: `Remove N worktrees and retire their N local branches? [yes/N]`;
-  for one, `Remove 1 worktree and retire its local branch? [yes/N]`.
+- Question: `Remove N worktrees and retire their M local branches? [yes/N]`,
+  M being the number of distinct branches of the selected rows and `branch`
+  singular when M is 1, so that two worktrees on one branch read `Remove 2
+  worktrees and retire their 1 local branch? [yes/N]`; for one, `Remove 1
+  worktree and retire its local branch? [yes/N]`.
 - Summary, on every apply result under the flag: `Removed N; branches
   retired: R; retained: K.`, then one line per retained branch, `Retained
   BRANCH (REASON); retry: project clean ROOT --apply --action delete-branch
@@ -364,6 +428,10 @@ All new text is ASCII, with `ROOT`, `PATH`, `BRANCH`, `N`, `R`, `K` and
   clean ROOT --all-safe`.
 - Residual-window line, under the flag: `Not protected: ignored files created
   or index flags set after the last check, a branch changed after its last
+  check, and any change after Git's own check.` When the plan also selects a
+  cache target (`add-project-clean-cache-disposal`), the line is: `Not
+  protected: ignored files created or index flags set after the last check,
+  caches recreated after the cache stage, a branch changed after its last
   check, and any change after Git's own check.`
 
 The retry command names `delete-branch`, the explicit action, unchanged
@@ -381,9 +449,12 @@ directory and environment (no `GIT_ALLOW_PROTOCOL`, no `GIT_OPTIONAL_LOCKS`);
 test hooks after the rescan and after the re-read; and two fake `git`s, one
 whose `branch -d` exits 0 without deleting and one whose `branch -d` ignores
 SIGTERM. The Context table's facts become fixtures run on change 1's CI floor
-job (its D17) at Git 2.36 as well as on the four test jobs (`ubuntu-latest`
-and `macos-latest`, Python 3.10 and 3.12), run as `python3 -m unittest
-discover -s tests -v`.
+job at Git 2.36 (its D17; feature 004's `git-floor` job, task T003 at
+`66d60b6`, not yet on `main`) as well as on the CI workflow's test jobs, which
+since PR #32 are Linux only: one `test` job on `ubuntu-latest` for Python 3.10
+and 3.12 (`.github/workflows/tests.yml` at `origin/main` `e9d6711`), run as
+`python3 -m unittest discover -s tests -v`. No CI job runs these tests on
+macOS, so nothing here is verified by CI there.
 
 ### D10. JSON and the enum question (L-4)
 
@@ -421,8 +492,10 @@ Heap with L-4's recommendation.
   `delete-branch` today] -> Its time counts in the child's 5 s budget, and the
   post-check decides; the hook is the repository owner's code.
 - [At the packet's assumed costs the 16th removal would start 0.9 s inside the
-  5 s floor] -> Change 1's measured fit governs (D7); the degraded case is a
-  `not-attempted` target with `deadline-exceeded`, exit 1, never unsafe.
+  5 s floor, and with the cache change's enumerations only 13 of 16 targets
+  reach their stage] -> Change 1's measured fit governs (D7, A-9); the degraded
+  case is a `not-attempted` target with `deadline-exceeded`, exit 1, never
+  unsafe, and the next run takes it.
 - [The re-read runs no identity probe] -> The compared head and merge-target
   SHA make any deletion lossless (D4); concurrent writers are outside the
   contract.
@@ -434,14 +507,14 @@ Heap with L-4's recommendation.
   unattended] -> Opt-in only, never suggested by the overview, and every
   deletion listed in the record.
 - [The facts of D3 were checked on Git 2.43 only] -> D9 runs them on change 1's
-  CI floor job at Git 2.36.
+  CI floor job at Git 2.36, once feature 004 adds it.
 
 ## Migration Plan
 
 Without the flag nothing changes: every run behaves as change 1 specifies.
 
 1. Ratification by Brett Heap's word on the pull request the lane opens for
-   this change, with the proposal's three Open Questions before him
+   this change, with the proposal's five Open Questions before him
    (`tasks.md` 1.6).
 2. Before the handoff (`tasks.md` section 2): feature 004 merges and change 1
    archives, PR #19 is resolved and "Clean bounds its Git work and reports
@@ -455,11 +528,15 @@ Without the flag nothing changes: every run behaves as change 1 specifies.
    deleted-upstream case of Risks) and the tests of D9, merging `main` into its
    branch as `main` moves, the cache-disposal feature included when it lands
    first, and never rebasing.
-5. The realization PR merges with green checks on all four CI jobs and closes
-   issue #23.
+5. The realization PR merges with green checks on every job that
+   `.github/workflows/tests.yml` then runs (at `origin/main` `e9d6711`, the
+   `test` job on `ubuntu-latest` for Python 3.10 and 3.12; feature 004 adds
+   `git-floor`) and closes issue #23.
 6. The change is archived after that merge and after the archives of change 1
-   and `add-project-clean-cache-disposal`, its shared MODIFIED blocks re-based
-   on the cache change's archived text first (L-5).
+   and `add-project-clean-cache-disposal`. Every requirement this change
+   MODIFIES is one the cache change also modifies (the lane's ruling B-10), so
+   all five blocks are re-based on the cache change's archived blocks first
+   (L-5, L-11, A-13; proposal, Dependencies and Sequencing).
 
 Rollback: revert the realization commit on `main`. The flag is opt-in, so the
 revert removes only it; branches it retired can be recreated from the SHAs
@@ -468,7 +545,8 @@ revert before the pin moves reaches nobody downstream.
 
 ## Open Questions
 
-The proposal's three Open Questions (enum closure, the flag's spelling, and
-the deletion primitive) are before Brett Heap, each with a recommendation the
-deltas implement; a ruling against a recommendation edits the deltas and D1,
-D3 or D10 before ratification. No other question changes what is built.
+The proposal's five Open Questions (enum closure, the flag's spelling, the
+deletion primitive, the target cap of a flagged run, and merge-target
+candidates) are before Brett Heap, each with a recommendation the deltas
+implement; a ruling against a recommendation edits the deltas and D1, D3, D4,
+D7 or D10 before ratification. No other question changes what is built.
