@@ -457,8 +457,9 @@ Nothing migrates: without `--remote` no output, flag or exit changes.
    from a `main` synced to `origin/main`, creates the one feature under the
    next free number, 006 or later; it is recorded once in `tasks.md` under
    "Speckit Handoff", and `/opsx:apply` runs only then.
-3. The realization PR merges with green checks on all four CI jobs (Ubuntu
-   and macOS, Python 3.10 and 3.12) and closes issue #25.
+3. The realization PR merges with green checks on both CI jobs of the
+   `tests` workflow, `test (3.10)` and `test (3.12)` on `ubuntu-latest`
+   (Linux only since PR #32; L-12), and closes issue #25.
 4. The change is archived after that merge and after change 2's archive,
    which itself follows change 1's archive and feature 005's merge.
 

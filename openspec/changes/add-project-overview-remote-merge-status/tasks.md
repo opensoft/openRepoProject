@@ -25,7 +25,7 @@ duplicate them.
 
 - [ ] 3.1 Exactly one Speckit feature owns the implementation: `specs/NNN-<slug>/`, created by `/speckit.specify` after 1.6 and section 2, from a local `main` synced to `origin/main`, where NNN is the next number free that day (006 or later); verified when "Speckit Handoff" below names its feature identifier, branch and repo-relative `tasks.md` path, filled in once.
 - [ ] 3.2 `/opsx:apply` is not run until "Speckit Handoff" names exactly one feature; verified by reading that section before the first `/opsx:apply`.
-- [ ] 3.3 The realization PR is merged with green checks on all four CI jobs (`ubuntu-latest` and `macos-latest`, Python 3.10 and 3.12) and closes issue #25; verified by citing its merge sha here, from `gh pr view <number> --json mergeCommit,statusCheckRollup`.
+- [ ] 3.3 The realization PR is merged with green checks on both CI jobs of the `tests` workflow, `test (3.10)` and `test (3.12)` on `ubuntu-latest` (Linux only since PR #32, `.github/workflows/tests.yml` at `origin/main`), and closes issue #25; verified by citing its merge sha here, from `gh pr view <number> --json mergeCommit,statusCheckRollup`.
 - [ ] 3.4 The change is archived with `/opsx:archive` only after 3.3 and after change 2's archive (2.2); verified by `/usr/bin/openspec validate --all --strict` passing after the archive.
 
 ## Speckit Handoff

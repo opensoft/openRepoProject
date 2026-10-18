@@ -244,7 +244,9 @@ scenarios (2 and 11), nothing else.
   disabled for the `project` process as change 2's design does (APO
   design.md, D13); no test runs a real `gh` or reaches the network (C-8). The
   tests run with `python3 -m unittest discover -s tests -v`, as CI runs them
-  on Ubuntu and macOS with Python 3.10 and 3.12.
+  on Linux only since PR #32: the `tests` workflow's two jobs, `test (3.10)`
+  and `test (3.12)`, on `ubuntu-latest` (`.github/workflows/tests.yml` at
+  main `e9d6711`; L-12).
 - **Speckit handoff**: exactly one feature, created by `/speckit.specify`
   after ratification, after feature 005 lands and after change 2 is
   archived, under the next free number, 006 or later, from a local `main`
