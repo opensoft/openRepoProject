@@ -441,8 +441,9 @@ statements listed below; every other statement keeps its wording.
   name, family or path"; "An unreadable destination's dry run"; "An
   unreadable destination with the shape chosen by flag"; "An unreadable
   destination at the terminal is not asked"; "An existing destination is
-  refused as before"; "A destination below a looping folder is read as
-  absent".
+  refused as before"; "A destination that is a symbolic link is refused as
+  existing" (S2's intended deviation); "A destination below a looping folder
+  is read as absent".
 - MODIFIED: "Creation question is asked only of a person choosing at the
   terminal", as #21's delta states it (lines 129-198). Its list of refusals
   made before a path is chosen (lines 148-151) gains a looped parent and a
