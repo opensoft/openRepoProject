@@ -16,17 +16,18 @@ Citations are `file:line`. The packet is cited at `da33d92`, equal to main
 `project-maintenance-` files `project-discovery.md`,
 `synthesis-inspect-and-retire.md`, `batch-cleanup.md` and `overview.md`, and
 `HO` is `next-session-project-maintenance-fix-handoff.md`. Everything else is
-cited at main `961c405`: `APO` is `openspec/changes/add-project-overview/`
-(change 2, ratified and unarchived) and `APO/ov` its
-`specs/project-overview/spec.md`, the text this change's deltas are written
-on; `CAS` is `openspec/changes/add-project-clean-all-safe/` (change 1), with
-`CAS/pc` and `CAS/cmd` its `specs/project-clean/spec.md` and
+cited at main `961c405`, whose `openspec/`, `ideation/`, `project` and
+`tests/` main still holds unchanged at `e9d6711` (L-15): `APO` is
+`openspec/changes/add-project-overview/` (change 2, ratified and unarchived)
+and `APO/ov` its `specs/project-overview/spec.md`, the text this change's
+deltas are written on; `CAS` is `openspec/changes/add-project-clean-all-safe/`
+(change 1), with `CAS/pc` and `CAS/cmd` its `specs/project-clean/spec.md` and
 `specs/project-command/spec.md`; `PRS` is
 `openspec/specs/project-review-safety/spec.md`; and `project:N` is the
 executable. Change 1's evidence model,
 `Repository inspection requires Git 2.36 and shares one evidence model`
-(CAS/cmd:90), is [E]. The lane's rulings of 2026-10-11 are cited as L-1 to
-L-9 and C-1 to C-8.
+(CAS/cmd:90), is [E]. The lane's rulings are cited as L-1 to L-9 and C-1 to
+C-8 (2026-10-11), and L-10 to L-15, B-14, C-9 and C-10 (2026-10-18).
 
 ## Why
 
@@ -200,6 +201,8 @@ Line numbers are APO/ov's at `961c405`.
     `### Requirement: Overview isolates one candidate's failure`
   - Untouched (`:358`):
     `### Requirement: Overview reuses the cleanup classifier and merge target`
+    (`add-project-clean-cache-disposal` carries a MODIFIED block of it under
+    ruling B-14; this change does not)
   - Untouched (`:420`):
     `### Requirement: Overview reports findings by attention category`
     (no finding code is added)
@@ -276,11 +279,13 @@ scenarios (2 and 11), nothing else.
   under Open Questions, addressed to lane openRepoProject-4, never stated
   here as a fact.
 - **Beside its two siblings (L-5).** `add-project-clean-cache-disposal`
-  (issue #24) archives after change 1, and
-  `add-project-clean-branch-retirement` (issue #23) after it. This change
-  shares no requirement with either, depends on neither, and never alters
-  feature 004's or 005's order.
-- **PR #19 is not a dependency.** At its head `c462d87` it keeps "Children
+  (issue #24) archives after change 1 and, since it carries a MODIFIED block
+  of change 2's "Overview reuses the cleanup classifier and merge target"
+  (B-14), after change 2 as well; `add-project-clean-branch-retirement`
+  (issue #23) archives after it. This change shares no requirement with
+  either, depends on neither, and never alters feature 004's or 005's order.
+- **PR #19 is not a dependency.** At its head `c462d87`, still a draft on
+  2026-10-18 (L-15), it keeps "Children
   other than Git SHALL keep 15 s." and exempts only `clean`'s push child from
   the protocol pins; neither moves what this change reads.
 - **Harvest.** `09af8c8` is reference only: none of its `clean` or `doctor`

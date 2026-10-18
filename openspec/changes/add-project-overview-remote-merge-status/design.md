@@ -12,7 +12,8 @@ yet, so there is no `clarifications.md`; its noted constraints, once the lane
 runs it, are answered here by decisions added for them.
 
 Citations follow `proposal.md`: the packet at `da33d92`; APO, CAS, PRS and
-`project:N` at main `961c405`. Change 2's requirements are cited by header
+`project:N` at main `961c405`, which main `e9d6711` holds unchanged for them
+(L-15). Change 2's requirements are cited by header
 under these labels: [B] `Overview bounds its work and reports what it
 omitted`, [J] `Overview prints a versioned JSON envelope`, [H] `Overview
 renders a readable human report` and [X] `Overview exits by completeness and
