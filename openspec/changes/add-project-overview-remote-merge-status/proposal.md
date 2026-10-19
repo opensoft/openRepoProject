@@ -142,8 +142,8 @@ the revalidation signature and added ladder classes.
   a row's `probe-timeout`, and a `gh` child gets the ADDED requirement's
   limit, `min(5 s, remote budget remaining)`, in place of the 15 s that [E]
   keeps for children other than Git. Lane openRepoProject-2, the owner of
-  change 1 and PR #19, reads the block's difference from PR #19's text before
-  it is committed.
+  change 1 and PR #19, agreed the block on 2026-10-19 with one fix to the
+  Termination sentence, and it is committed.
 - **One paragraph in "Overview prints a versioned JSON envelope"** (C-12,
   L-11). In a run with `--remote`, the envelope's `remote`, after
   `scan_errors`, and each queried row's `remote`, after `classification`, are
@@ -378,8 +378,8 @@ scenarios (14, 2, 7 and 13), and one MODIFIED requirement in `project-command`,
   change 1 and PR #19, did not widen PR #19 before Brett Heap rules on it and
   holds the two clauses as its LQ-6 (2026-10-19); if Brett Heap has PR #19
   absorb them, this block is dropped and PR #19 stays a dependency. Lane
-  openRepoProject-2 reads the block's difference from PR #19's text before it
-  is committed.
+  openRepoProject-2 agreed the block on 2026-10-19 with one fix to the
+  Termination sentence, and it is committed.
 - **Lane openRepoProject-4's agreement gated the spec text (C-7, C-9).**
   "Overview is local and read-only" and the ADDED requirement were committed
   after lane openRepoProject-4 read them (2026-10-11). Lane
@@ -387,19 +387,20 @@ scenarios (14, 2, 7 and 13), and one MODIFIED requirement in `project-command`,
   what it omitted", its new scenario, and the ADDED requirement's edits for
   C-9 and L-10 on 2026-10-19, and they are committed with its fixes applied
   (Decisions, "Lane openRepoProject-4's check").
-- **Two spec files are held for their owners (C-11 to C-13, L-17).** This
-  proposal and `design.md` describe the spec text as the alignment review of
-  2026-10-19 left it, which is written but not committed:
+- **One spec file is held for its owner (C-12, C-13); the other is agreed and
+  committed (C-11, L-17).** This proposal and `design.md` describe the spec
+  text as the alignment review of 2026-10-19 left it.
   `specs/project-command/spec.md`, the MODIFIED block of change 1's evidence
-  model, held for lane openRepoProject-2 to read against PR #19's text; and the
-  revised `specs/project-overview/spec.md`, with the MODIFIED block of
-  "Overview prints a versioned JSON envelope" (C-12), the review's edits to the
-  sentences lane openRepoProject-4 agreed (C-13) and its other spec edits, held
-  for lane openRepoProject-4 to read against change 2's text and its own
-  agreement. Until each lane agrees its diff, the committed
+  model, was agreed by lane openRepoProject-2 on 2026-10-19 with one fix to its
+  Termination sentence, and is committed. The revised
+  `specs/project-overview/spec.md`, with the MODIFIED block of "Overview prints
+  a versioned JSON envelope" (C-12), the review's edits to the sentences lane
+  openRepoProject-4 agreed (C-13) and its other spec edits, is written but not
+  committed, held for lane openRepoProject-4 to read against change 2's text
+  and its own agreement. Until it agrees its diff, the committed
   `specs/project-overview/spec.md` is the text lane openRepoProject-4 agreed on
-  2026-10-19 and no `specs/project-command/spec.md` is committed; a part lane
-  openRepoProject-4 declines takes the review's Outcomes B to D (C-12, C-13).
+  2026-10-19; a part lane openRepoProject-4 declines takes the review's
+  Outcomes B to D (C-12, C-13).
 - **Archives after change 2 (L-5).** Change 2 archives after change 1 and
   after feature 005 merges (APO design.md, Migration Plan 5); this change
   archives after change 2 archives. Its block of change 1's evidence model
@@ -494,7 +495,8 @@ written on PR #19's text, and this change archives after PR #19's amendment of
 change 1 lands), **L-17** (change 1's evidence model, which this change and
 `add-project-clean-branch-retirement` both modify: whichever archives second
 re-bases its block on the other's archived block, and each block is held until
-lane openRepoProject-2 has checked its diff), and **C-11** to **C-14** below.
+lane openRepoProject-2 has checked its diff, which it did for this change's
+block on 2026-10-19, with one fix), and **C-11** to **C-14** below.
 
 Packet open decisions taken, each citing the text that leaves it open:
 
@@ -587,7 +589,13 @@ Packet open decisions taken, each citing the text that leaves it open:
   openRepoProject-2 for PR #19 (a child whose output is no row's local
   evidence recorded where its requirement says; children whose requirement
   sets a shorter limit), which lane openRepoProject-2 holds as LQ-6 for Brett
-  Heap; if he has PR #19 absorb them, this block is dropped.
+  Heap; if he has PR #19 absorb them, this block is dropped. Lane
+  openRepoProject-2 agreed the block on 2026-10-19 with one fix: in the added
+  Termination sentence, "as a probe child past its budget is above" replaces
+  "in the same way", which, coming right after the push-child sentence, would
+  read as the push child's treatment, and the push child is never signalled.
+  The Budgets clause and the added scenario stand as written, and the block is
+  committed.
 - **Lane openRepoProject-4's check, 2026-10-19** (its check of the held spec
   against change 2's text at `961c405`, which found that the carve-out's
   "every other sentence" still bound a `gh` child to read no credential
@@ -787,16 +795,16 @@ The alignment review (stack-architect and qa-lead) ran on `563d19d`
 (2026-10-19); the lane's rulings of 2026-10-19 bind where they differ, and
 the last five rows are the rulings that answered its five GAPs. Its
 judgements of the writer's items (i) to (iv) are carried by SA-1, SA-6, SA-7
-and QA-9. The spec edits are held for their owners' check: the
-`project-command` delta for lane openRepoProject-2 and the `project-overview`
-delta for lane openRepoProject-4 (Dependencies and Sequencing).
+and QA-9. The `project-command` delta was agreed by lane openRepoProject-2 on
+2026-10-19 with one fix and is committed; the `project-overview` delta is held
+for lane openRepoProject-4's check (Dependencies and Sequencing).
 
 | Findings | Severity | Ruling | Section edited |
 | --- | --- | --- | --- |
 | SA-1: "local ancestry stays the only removal proof" presumes change 1's open question on squash-merged branches | MISMATCH | applied under C-13, as Appendix C carries it, with the final pass's HO:167 | held `project-overview` delta (Isolation); Rules This Change Keeps |
 | SA-2: the `remote` keys outside [J]'s "exactly these fields" recorded as a departure, against L-11 | MISMATCH | applied with change under C-12: Appendix B and the final pass's corrections; the [H] reading moved to Readings; the Capabilities entry and a What Changes bullet for [J] are worded in this round | held `project-overview` delta (MODIFIED [J]); What Changes, Capabilities, Dependencies, Decisions (L-3, C-7), Departures, Readings; `design.md` Context, D8, D11 |
 | SA-3: an abandoned remote-target read contradicts [E]'s Termination sentence | MISMATCH | overtaken by C-11: the interim bullet is not added, and SA-13 and SA-14 carry the ruling | as SA-13 and SA-14 |
-| SA-4: the `gh` child's 5 s overrides [E]'s "Children other than Git SHALL keep 15 s." from an ADDED requirement | MISMATCH | overtaken by C-11: carried in the MODIFIED block of [E] (SA-13); Open Questions 2 replaced as Appendix D (f) gives | held `project-command` delta; Open Questions 2 |
+| SA-4: the `gh` child's 5 s overrides [E]'s "Children other than Git SHALL keep 15 s." from an ADDED requirement | MISMATCH | overtaken by C-11: carried in the MODIFIED block of [E] (SA-13); Open Questions 2 replaced as Appendix D (f) gives | `project-command` delta; Open Questions 2 |
 | SA-5: an internal exception in the remote phase exits 2, against the Isolation paragraph's exit status | MISMATCH | applied with change under C-14 (option A): Appendix C, the proposal sentence and the D10 edit; the proposal names "Overview exits by completeness and severity" where the review wrote [X], a label only `design.md` defines | held `project-overview` delta (Isolation); Decisions ("No effect on `completeness` or the exit"); `design.md` D10 |
 | SA-6: the notwithstanding list names "Overview isolates one candidate's failure", whose table ends at classification | DRIFT | applied with change: Appendix C; the proposal cites `design.md`, D1 where the review wrote D1 | held `project-overview` delta (Isolation); Decisions ("Lane openRepoProject-4's check") |
 | SA-7: the three departures lane openRepoProject-4 agreed are not named | DRIFT | applied with change: departure (2) as the final pass words it under C-11; the list follows the sentence that holds the quote, so that sentence stays whole | Decisions ("Lane openRepoProject-4's check", "Fields only in a `--remote` run") |
@@ -805,7 +813,7 @@ delta for lane openRepoProject-4 (Dependencies and Sequencing).
 | SA-10: the query set's ruling is not cited, and a scenario title nearly repeats change 2's | DRIFT | applied, with the final pass's citation of CAS proposal.md:811-813 | Decisions (query set); held `project-overview` delta (scenario renamed); `design.md` D11 |
 | SA-11: the credential clause drops the packet's "infers" | DRIFT | applied under C-13 | held `project-overview` delta ([L] paragraph); What Changes; Rules This Change Keeps |
 | SA-12: three imprecise ranges and two wording drifts | DRIFT | applied | Why; Impact; Decisions (C-1, "No early stop"); `design.md` Context |
-| SA-13: [E]'s Termination and Budgets sentences contradict this change, and L-11 needs a MODIFIED block | MISMATCH | applied under C-11: Appendix A exactly, with its added scenario; held for lane openRepoProject-2 | held `project-command` delta |
+| SA-13: [E]'s Termination and Budgets sentences contradict this change, and L-11 needs a MODIFIED block | MISMATCH | applied under C-11: Appendix A, with its added scenario and, on lane openRepoProject-2's agreement of 2026-10-19, one fix to the Termination sentence; committed | `project-command` delta |
 | SA-14: the proposal, design and tasks say `project-command` is untouched and PR #19 no dependency | DRIFT | applied with change: Appendix D (a) to (l) with G2 taken, 46 scenarios; 1.4 unticked as D (j) says, and 1.5 with it, since its two INFO lines need the held files; the citation key and the rulings paragraph also name L-11, L-14, L-16, L-17 and C-12 to C-14; C-4's bullet and tasks 2.2 and 2.3 follow C-11 and C-12 | citation key; What Changes; Capabilities; Dependencies and Sequencing; Decisions; Open Questions 2; `design.md` Context, D2, D7, D11; `tasks.md` 1.4, 1.5, 2.2 to 2.4, 3.4 |
 | SA-15: [B]'s added paragraph departs from its own first paragraph without saying so | DRIFT | applied under C-13 | held `project-overview` delta ([B] paragraph) |
 | SA-16: the design lists the identity pattern's forms incompletely | DRIFT | applied | `design.md` Context |
@@ -838,7 +846,7 @@ delta for lane openRepoProject-4 (Dependencies and Sequencing).
 | QA-27: D6's "stopped" entry also covers the body and header stops | MISMATCH | applied | `design.md` D6 |
 | QA-28: the Risk's fallback changes [B]'s count | MISMATCH | applied | `design.md` Risks |
 | QA-29: the central case had no recorded check | GAP | applied (Appendix E), recording G4 | `design.md` Context, Risks |
-| C-11 (G1; SA-3, SA-4): change 1's evidence model | GAP | ruling: MODIFY it whole on PR #19's text with two clauses and one scenario (Appendix A), held for lane openRepoProject-2; this change archives after PR #19's amendment of change 1 lands (L-16) and re-bases on `add-project-clean-branch-retirement`'s archived block if that change archives first (L-17) | held `project-command` delta; What Changes; Capabilities; Dependencies and Sequencing; Decisions; Open Questions 2; `design.md`; `tasks.md` 1.4, 2.4, 3.4 |
+| C-11 (G1; SA-3, SA-4): change 1's evidence model | GAP | ruling: MODIFY it whole on PR #19's text with two clauses and one scenario (Appendix A), agreed by lane openRepoProject-2 on 2026-10-19 with one fix, and committed; this change archives after PR #19's amendment of change 1 lands (L-16) and re-bases on `add-project-clean-branch-retirement`'s archived block if that change archives first (L-17) | `project-command` delta; What Changes; Capabilities; Dependencies and Sequencing; Decisions; Open Questions 2; `design.md`; `tasks.md` 1.4, 2.4, 3.4 |
 | C-12 (G2; SA-2): "exactly these fields" | GAP | ruling: MODIFY change 2's "Overview prints a versioned JSON envelope" (Appendix B), held for lane openRepoProject-4; if it declines, the review's Outcome B | held `project-overview` delta; as SA-2 |
 | C-13 (G3): the sentences lane openRepoProject-4 agreed | GAP | ruling: QA-1 and SA-11 at spec.md:13-27, SA-15 at :129-142 and Appendix C at :328-342 applied and sent to lane openRepoProject-4 in one diff with C-12's block; if it declines a part, the review's Outcomes B to D, and SA-1 to Brett Heap | held `project-overview` delta; Dependencies and Sequencing |
 | G4 (lane openRepoProject-3's L4): the association for a squash-merged head | GAP | ruling: answered live on #31 and #17 and recorded with its limits (QA-29); D5's query and the scope of Open Questions 2 stand | `design.md` Context, Risks |
