@@ -28,7 +28,35 @@ import unicodedata
 
 
 class Refused(Exception):
-    pass
+    """A refusal: exit status 2, nothing changed. str() is the message alone.
+
+    A refusal of `project clean` also carries keyword fields (data-model.md,
+    "Refusal"; contracts/project-clean.md, "Codes"): `code`, one of
+    REFUSAL_CODES, or None for a baseline refusal no task has coded yet and for
+    push's `remote-gone` (lead ruling R-45 (5)); `path`, the path it names, as
+    bytes or str, escaped only when written; `reason`, the gate of a
+    `target-excluded` refusal or push's `remote-gone`; and `context`, the
+    repository and merge target once established, as {"repository": OBJECT,
+    "merge_target": OBJECT}, each the object the plan envelope writes, which
+    the extended error object carries (error_document())."""
+
+    def __init__(self, message, *, code=None, path=None, reason=None, context=None):
+        super().__init__(message)
+        self.code = code
+        self.path = path
+        self.reason = reason
+        self.context = context
+
+    def as_object(self):
+        """The refusal object {code, message, path?, path_valid_utf8?, reason?}:
+        the path through json_path() with its flag beside it, both present
+        exactly when a path is, and the reason only when there is one."""
+        result = {"code": self.code, "message": str(self)}
+        if self.path is not None:
+            result["path"], result["path_valid_utf8"] = json_path(self.path)
+        if self.reason is not None:
+            result["reason"] = self.reason
+        return result
 
 
 def read_json(path):
@@ -1527,6 +1555,99 @@ def human_path(raw, command=False):
 # endregion evidence
 
 # region guard
+# The `internal-error` guard of `project clean` and the one writer of its JSON
+# documents (research.md R6; contracts/project-clean.md, "Streams" and
+# "Extended error object"; plan review M2, M6 and m12; lead rulings R-38, R-44
+# and R-45). main() routes `clean` through run_clean() and prints a refusal of
+# `clean --json` as error_document().
+
+
+def clean_mode(args):
+    """The plan mode of a `clean` invocation (data-model.md, "Plan"):
+    `all-safe` for --all-safe, preview or apply; `single` for --apply with
+    --action, since push and delete-branch take single mode's row cap and
+    bounds; `report` otherwise. Arguments are read with getattr, so this holds
+    before and after T047 adds --all-safe to parser()."""
+    if getattr(args, "all_safe", False):
+        return "all-safe"
+    if getattr(args, "apply", False) and getattr(args, "action", None):
+        return "single"
+    return "report"
+
+
+def observed_at():
+    """Now, as RFC 3339 UTC to the second with `Z`, from time.gmtime()."""
+    return time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
+
+
+def internal_error(exc):
+    """The refusal `internal-error` for an unexpected exception: its class
+    name and its text, `TYPE: TEXT` (contracts/project-clean.md)."""
+    return Refused(TEXT["internal_error"].format(TYPE=type(exc).__name__, TEXT=exc), code="internal-error")
+
+
+def run_clean(args):
+    """Run `clean` inside its guard (research.md R6; plan review M2, m12).
+    Before the apply phase, any Exception but Refused becomes the refusal
+    `internal-error`, which main() prints and ends with exit status 2.
+    Refused, Interrupted, Terminated, KeyboardInterrupt and EOFError pass
+    through unchanged, the same object, to keep their 2, 130, 143 and 129
+    paths. Once the invocation main() entered is out of phase `planning`, the
+    apply phase decides a failing target itself (T093) and the guard converts
+    nothing, so the phase is read on that invocation (lead ruling R-44)."""
+    invocation = current_invocation()
+    try:
+        return clean(args)
+    except (Refused, EOFError):
+        raise
+    except Exception as exc:
+        if invocation.phase != "planning":
+            raise
+        raise internal_error(exc) from exc
+
+
+def _contract_object(value, keys):
+    """value, an object of the contract, in the order of its key tuple; None
+    while it is not established."""
+    return None if value is None else {key: value[key] for key in keys}
+
+
+def error_document(exc, args):
+    """The extended error object of a refusal under `clean --json`
+    (contracts/project-clean.md, "Extended error object"; plan review M6): the
+    baseline {"error": MESSAGE} extended with `code`, `schema_version`,
+    `observed_at`, `mode`, `repository` and `merge_target` (null unless the
+    refusal's context establishes them), `completeness: "incomplete"`,
+    `apply_allowed: false` and `refusals`, in EXTENDED_ERROR_KEYS's order. It
+    is the document of `invalid-arguments`, `internal-error` and every resolve
+    refusal; a plan, select or confirm refusal prints the plan envelope
+    instead (T051, T053). An exception that is not a Refused is written as
+    `internal-error`."""
+    refusal = exc if isinstance(exc, Refused) else internal_error(exc)
+    context = refusal.context or {}
+    values = {
+        "error": str(refusal),
+        "code": refusal.code,
+        "schema_version": 1,
+        "observed_at": observed_at(),
+        "mode": clean_mode(args),
+        "repository": _contract_object(context.get("repository"), REPOSITORY_KEYS),
+        "merge_target": _contract_object(context.get("merge_target"), MERGE_TARGET_KEYS),
+        "completeness": "incomplete",
+        "apply_allowed": False,
+        "refusals": [refusal.as_object()],
+    }
+    return {key: values[key] for key in EXTENDED_ERROR_KEYS}
+
+
+def write_document(doc):
+    """Write doc to standard output as the one JSON document of a `clean
+    --json` run: json.dumps(doc, indent=2, ensure_ascii=True) and one newline
+    (plan review M6). ensure_ascii stays True, so every code point outside
+    ASCII is written as an escape; research.md R12 keeps ensure_ascii=False for
+    the digest's input alone (lead ruling R-38)."""
+    sys.stdout.write(json.dumps(doc, indent=2, ensure_ascii=True) + "\n")
+    sys.stdout.flush()
 # endregion guard
 
 # region dispatcher
@@ -2217,31 +2338,38 @@ def parser():
 
 def main(argv=None):
     args = parser().parse_args(argv)
-    try:
-        if args.command == "new":
-            return new(args)
-        if args.command == "benches":
-            rows = registry(workbenches(args.workbenches))
-            if args.json:
-                print(json.dumps(rows, indent=2))
+    with Invocation(args.command) as invocation:  # fresh per call (lead ruling R-44 (1))
+        try:
+            if args.command == "new":
+                return new(args)
+            if args.command == "benches":
+                rows = registry(workbenches(args.workbenches))
+                if args.json:
+                    print(json.dumps(rows, indent=2))
+                else:
+                    for row in rows:
+                        print(f"{row['bench']}:{row['type']} — {'available' if row['available'] else 'missing'} — {row['description']}")
+                return 0
+            if args.command == "update":
+                return update(args)
+            if args.command == "clean":
+                return run_clean(args)
+            return inspect_project(args)
+        except (Refused, OSError) as exc:
+            if args.command == "clean" and args.json:
+                write_document(error_document(exc, args))
+            elif getattr(args, "json", False):
+                print(json.dumps({"error": str(exc)}))
             else:
-                for row in rows:
-                    print(f"{row['bench']}:{row['type']} — {'available' if row['available'] else 'missing'} — {row['description']}")
-            return 0
-        if args.command == "update":
-            return update(args)
-        if args.command == "clean":
-            return clean(args)
-        return inspect_project(args)
-    except (Refused, OSError) as exc:
-        if getattr(args, "json", False):
-            print(json.dumps({"error": str(exc)}))
-        else:
-            print(f"REFUSED: {exc}", file=sys.stderr)
-        return 2
-    except (KeyboardInterrupt, EOFError):
-        print("Cancelled.", file=sys.stderr)
-        return 130
+                print(f"REFUSED: {exc}", file=sys.stderr)
+            return 2
+        except (Interrupted, Terminated) as exc:
+            # The first signal decides the status, 128 plus its number (FR-036, R-45 (6)).
+            print("Cancelled.", file=sys.stderr)
+            return 128 + int(exc.signum or invocation.signal or signal.SIGINT)
+        except (KeyboardInterrupt, EOFError):
+            print("Cancelled.", file=sys.stderr)
+            return 130
 
 
 if __name__ == "__main__":
