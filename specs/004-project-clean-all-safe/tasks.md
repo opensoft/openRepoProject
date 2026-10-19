@@ -133,7 +133,11 @@ child's scrubbed names and process group before it `exec`s Git (M4).
    Python 3.12: `-k test_clean_` ran a method of a module named
    `test_clean_parsers` whose own name lacks the prefix). A module with another
    prefix would need its own `-k` or a selection by module. Each module has one
-   writer, its lane's.
+   writer, its lane's, with three exceptions: T047 retargets T034's fault
+   patches in `tests/test_clean_guard.py` (analyze H3); T127 normalizes the
+   other lanes' modules to rule 3's import idiom (lead ruling R-38); and a
+   lane that adds a `TEXT` or `NEXT_STEPS` key adds its fixture key to
+   `tests/clean_support.py` (R-45) (lead ruling R-48).
 3. Helpers come from `tests/clean_support.py` only, imported by a plain
    `import clean_support`, the one idiom; a module runs alone through
    discovery, `python3 -m unittest discover -s tests -p
@@ -588,20 +592,29 @@ T033), when B, D, E and F are; H, guard (T034, T035), when T023 is, beside G
   sends SIGTERM to every live group at once and advances them together until
   each is reaped or abandoned. No default argument holds a timing value (plan
   review M16).
-- [x] T023 [P] Add `signal_scope`, `raising_signals` and `default_signals`,
-  each a class with `__enter__` and `__exit__`, since T004 owns the imports
-  and `project` imports no `contextlib` (lead ruling R-44), the signal slot,
-  `Interrupted(BaseException)` and `Terminated(BaseException)` to region
-  `runner`.
-- [ ] T024 [P] Add to region `runner`: `Invocation`, a context manager (a
-  class with `__enter__` and `__exit__`) that T035's one wiring line in
-  `main()` enters fresh for each call (the budget, the clock, the counters and
-  the memos, the version check's result among them, and its phase:
-  `planning` by default, `apply` once T057 begins the apply phase,
-  `reconciling` once T093 reconciles; lead ruling R-44);
-  `current_invocation()`, for Git callers outside `clean`, which outside any
-  scope returns a fresh default with the 15 s budget and no handler (plan
-  review M10, R-44); `run_bounded(spec, parser, run)` with D1's loop
+- [x] T023 [P] Add to region `runner`: the `Invocation` shell with its final
+  constructor signature, `Invocation(command=None)`, a context manager
+  carrying the phase and the signal slot (`signal`, the first SIGINT, SIGTERM
+  or SIGHUP recorded, and `second_interrupt`, a later SIGINT while
+  reconciling, through `record_signal()` and `interrupting()`), here because
+  the slot records with the phase, and `current_invocation()` (lead ruling
+  R-47); `signal_scope`, `raising_signals` and `default_signals`, each a class
+  with `__enter__` and `__exit__`, since T004 owns the imports and `project`
+  imports no `contextlib` (R-44): `signal_scope` entered with no `Invocation`
+  in force enters a default one for its own span, so that its handler and
+  the driver read one slot; `raising_signals` raises at once when the slot
+  already holds a signal as it is entered, closing the window between
+  reading the slot and installing its handlers; and `default_signals`
+  restores the handlers in force before the outermost scope was entered
+  (R-47); and `Interrupted(BaseException)` and `Terminated(BaseException)`.
+- [ ] T024 [P] Add to region `runner`: to T023's `Invocation`, which T035's
+  one wiring line in `main()` enters fresh for each call, the budget, the
+  clock, the counters and the memos, the version check's result among them
+  (lead ruling R-47); its phase, from T023, is `planning` by default, `apply`
+  once T057 begins the apply phase and `reconciling` once T093 reconciles
+  (R-44); `current_invocation()`'s default, for Git callers outside `clean`
+  and outside any scope, gets the 15 s budget and no handler (plan review
+  M10, R-44); `run_bounded(spec, parser, run)` with D1's loop
   (one selector over both pipes and the wakeup pipe, the tick, the 4 KiB head,
   and `advance()` of every terminating handle on every tick, R-30) and its six
   outcomes, each mapped to its row error (M17), the slot read set giving
@@ -2166,7 +2179,12 @@ every clean story; the `clean` tests of T114 and T116 also need US1.
   absent `present: false` with no Git child; then the version check; an old,
   missing or unusable Git, or a failed or timed-out status probe, gives
   `classification: "inspection-error"` and `errors`, with `present` null when
-  the version check failed and every unestablished value null; 15 s per Git
+  the version check failed and every unestablished value null, a
+  `git-too-old` or `git-unavailable` entry carrying the contract's
+  command-neutral message, never `clean`'s refusal text, from the two `TEXT`
+  keys this task adds as a lead-approved contracts edit with their fixtures
+  in `tests/clean_support.py`, which it also touches (lead rulings R-45 and
+  R-48); 15 s per Git
   child and per filesystem call (plan review m8), no deadline, no row cap;
   `path_valid_utf8` beside every `path`, `root_valid_utf8` beside the top-level
   `root` and each nested member's, and `ignored_samples` as objects; a deleted
@@ -2181,7 +2199,8 @@ every clean story; the `clean` tests of T114 and T116 also need US1.
   `tests/test_project.py:641` passes.
 - [ ] T119 [US9] Update `check_rows()` (`project:876-906`: the `git` row
   reports the version check, `ok` with the version or `error` with
-  `git-too-old` or `git-unavailable`; an `error` row for each null `present`,
+  `git-too-old` or `git-unavailable` and T117's command-neutral text (lead
+  ruling R-48); an `error` row for each null `present`,
   each `dirty` left null by a failed or timed-out probe and each
   `inspection-error` row, and none for a null that means "none"),
   `print_report()` (`project:909-933`: `Git: inspection-error (CODES)` in place
