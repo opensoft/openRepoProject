@@ -179,7 +179,7 @@ regions and contracts every lane writes against.
 - [x] T001 Confirm the baseline in this worktree: `python3 -m unittest discover
   -s tests -v` runs 96 tests, OK, and `git diff --stat 961c405 -- project tests
   README.md .github` prints nothing.
-- [ ] T002 [P] Create `specs/004-project-clean-all-safe/traceability.md`, lane
+- [x] T002 [P] Create `specs/004-project-clean-all-safe/traceability.md`, lane
   line first: one row per delta scenario, 101 rows (the 100 of the three delta
   files on `main`, and PR #19's "The push child reaches its remote", marked as
   PR #19's draft), with columns for the delta, the requirement, the exact
