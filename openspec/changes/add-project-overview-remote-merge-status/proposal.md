@@ -36,10 +36,10 @@ C-11 to C-14 (2026-10-19). `PR19/cmd` is draft PR #19's
 
 The overview change 2 defines, like `project clean`, judges merges by local
 ancestry as of the last fetch (APO/ov:709-717; CAS/pc:5-9). A branch merged on
-GitHub by squash never enters the merge target's local ancestry (BA:195-199),
-so its worktree reads `pushed-unmerged`, or `remote-gone` once GitHub deleted
-its branch, and nothing in either output says why it is kept. The person has
-to open GitHub to learn that the work is merged.
+GitHub by squash generally does not put the branch tip into the merge target's
+local ancestry (BA:195-199), so its worktree reads `pushed-unmerged`, or
+`remote-gone` once GitHub deleted its branch, and nothing in either output says
+why it is kept. The person has to open GitHub to learn that the work is merged.
 
 The packet names the interface, `project overview --remote` (DI:72-75), and
 fixes its boundary (DI:1036-1060): opt-in and read-only, a validated canonical
@@ -130,10 +130,10 @@ the revalidation signature and added ladder classes.
   reads are Git children, so `probes.performed` counts them as it counts every
   Git child started, and in a `--remote` run `probes.estimated` gains 1 per
   repository with a queried row and 1 more per such repository whose merge
-  target names a usable remote, so that the two stay equal in a complete run.
-  A remote-phase child that exits nonzero, reaches its limit or is stopped at
-  the deadline is recorded in its rows' `remote`, never as a row or scan
-  error. Without `--remote` both counts are change 2's, byte for byte; the
+  target names a usable remote, so that the reads add the same number to both
+  counts. A remote-phase child that exits nonzero, reaches its limit or is
+  stopped at the deadline is recorded in its rows' `remote`, never as a row or
+  scan error. Without `--remote` both counts are change 2's, byte for byte; the
   `gh` requests are counted in `remote.requests` alone, and the `remote`
   object keeps no `probes` of its own, so a run has one count of Git
   children.
@@ -338,7 +338,8 @@ scenarios (14, 2, 7 and 13), and one MODIFIED requirement in `project-command`,
   records each argv, environment and working directory, and with networking
   disabled for the `project` process as change 2's design does (APO
   design.md, D13); no test runs a real `gh` or reaches the network (C-8). The
-  tests run with `python3 -m unittest discover -s tests -v`, as CI runs them
+  tests run with `python3 -m unittest discover -s tests -v`, and CI runs
+  `python -m unittest discover -s tests -v` (`.github/workflows/tests.yml:17`)
   on Linux only since PR #32: the `tests` workflow's two jobs, `test (3.10)`
   and `test (3.12)`, on `ubuntu-latest` (`.github/workflows/tests.yml` at
   main `e9d6711`; L-12).
@@ -431,7 +432,11 @@ scenarios (14, 2, 7 and 13), and one MODIFIED requirement in `project-command`,
   remote target "only from a checked-out target worktree" (3989411802) by
   C-3, and remote evidence "bypassed when the feature's own upstream was
   deleted" (3989411854) by C-6; doctor's non-goal thread (3989411958) is moot,
-  doctor staying local.
+  doctor staying local. OV:179-180's "Each extension needs its own proposal
+  that updates the governing cleanup specification first" does not bind here:
+  `09af8c8`'s lookup moves out of `clean` into `project overview --remote`, and
+  no cleanup specification changes, since `clean`, `status` and `doctor` stay
+  local (C-1; CAS proposal.md:756-757, OQ-27).
 
 ## Out of Scope
 
@@ -495,11 +500,11 @@ lane openRepoProject-2 has checked its diff), and **C-11** to **C-14** below.
 Packet open decisions taken, each citing the text that leaves it open:
 
 - **Scope, C-1** (DI:72-75 calls `project overview --remote` a possible later
-  interface; DI:1484-1486, OV:357-358 and HO:47-50 leave the remote
-  integration to its own decision, and nothing says whether `clean` or doctor
-  gets it): `project overview --remote` only. Rejected: `09af8c8`'s queries
-  from plain `clean` and `doctor`, against CAS/pc:5-9 and change 1's OQ-22
-  (CAS proposal.md:844-847).
+  interface; DI:1483-1485, OV:357-358 and HO:47-50 leave the remote integration
+  to its own decision, and nothing says whether `clean` or doctor gets it):
+  `project overview --remote` only. Rejected: `09af8c8`'s queries from plain
+  `clean` and `doctor`, against CAS/pc:5-9 and change 1's OQ-22 (CAS
+  proposal.md:844-847).
 - **The remote-tracking comparison, C-2** (not addressed by the packet): Out
   of Scope, recommended as its own change.
 - **The remote target, C-3** (DI:1039-1042 asks for "a validated canonical
@@ -593,22 +598,34 @@ Packet open decisions taken, each citing the text that leaves it open:
   agreed on 2026-10-19 with "YES to all three departures" and "Commit H with
   these fixes in place of c8a9f30's spec. That needs no further round with
   me: your bounds block and the three departures stand as agreed", and its
-  fixes are applied in its wording. Its credential fix: in "Overview is
-  local and read-only", every other clause holds in a `--remote` run, its
-  credential clause excepted, and in place of that clause the `project`
-  process reads no credential file and no profile data the scan does not
-  need, a `gh` child reads what the GitHub client reads, and the caller's
-  environment, `GH_TOKEN` included, passes to a `gh` child unread rather
-  than counting as a forwarded credential value. Its three isolation fixes:
-  the ADDED requirement's isolation sentence makes the failure, cut or stop
-  of a remote-target read or of a `gh` child never a row error, a scan error
-  or a finding, `probe-failed`, `probe-timeout` and `deadline-exceeded`
-  notwithstanding, leaving every local result as it is without `--remote`;
-  the block of "Overview bounds its work and reports what it omitted" names
-  a child that exits nonzero beside one that reaches its limit or is
-  stopped; and the ADDED requirement gains the scenario "A failed or held
-  remote-target read stays unknown", its twelfth. Its two optional
-  tightenings of "Probe counts in a remote run" are taken: the first
+  fixes are applied in its wording. The three departures are: (1)
+  `probes.estimated` counts 1 configuration read per repository with a queried
+  row, plus 1 URL read only where that read names a usable remote, in place of
+  C-9's sample "2 per distinct repository whose merge target's remote is read"
+  (Decisions, C-9); (2) a remote-phase child that exits nonzero, reaches its
+  limit or is stopped is recorded in its rows' `remote`, never as a row or scan
+  error, departing from APO/ov:176-178's "its row recorded `probe-timeout`" and
+  "recorded `deadline-exceeded`", which the MODIFIED block of "Overview bounds
+  its work and reports what it omitted" now states, and from [E]'s Termination
+  sentence (CAS/cmd:177-180; PR19/cmd:189-192), which this change's MODIFIED
+  block of [E] now carries (C-11); and (3) in a `--remote` run a worktree row
+  outside the query set carries no `remote` key, departing from L-10's C clause
+  read alone, because L-10 also forbids null for "not applicable" (Decisions,
+  "Fields only in a `--remote` run"). Its credential fix: in "Overview is local
+  and read-only", every other clause holds in a `--remote` run, its credential
+  clause excepted, and in place of that clause the `project` process reads no
+  credential file and no profile data the scan does not need, a `gh` child
+  reads what the GitHub client reads, and the caller's environment, `GH_TOKEN`
+  included, passes to a `gh` child unread rather than counting as a forwarded
+  credential value. Its three isolation fixes: the ADDED requirement's
+  isolation sentence makes the failure, cut or stop of a remote-target read or
+  of a `gh` child never a row error, a scan error or a finding, `probe-failed`,
+  `probe-timeout` and `deadline-exceeded` notwithstanding, leaving every local
+  result as it is without `--remote`; the block of "Overview bounds its work
+  and reports what it omitted" names a child that exits nonzero beside one that
+  reaches its limit or is stopped; and the ADDED requirement gains the scenario
+  "A failed or held remote-target read stays unknown", its twelfth. Its two
+  optional tightenings of "Probe counts in a remote run" are taken: the first
   repository's merge target tracks `refs/heads/main`, and the `--remote` run
   is one in which `remote.completeness` and the envelope's `completeness`
   are both `complete`. The isolation sentence's last clause, that a remote
@@ -629,7 +646,11 @@ Decisions where the sources and the rulings are silent:
   known head and `merged_into_target` false. Rejected: every row (spends
   requests on rows local ancestry already proves); only `pushed-unmerged` and
   `remote-gone` rows (misses a dirty or unpublished worktree whose branch was
-  squash-merged).
+  squash-merged). A row that local ancestry proves merged is `merged-removable`
+  even when its upstream was deleted, under Brett Heap's ruling "yes, local
+  ancestry proof outranks remote-gone, apply it" (2026-10-09; CAS
+  proposal.md:811-813; APO proposal.md:896-900), so it is never queried; a
+  `remote-gone` row is one that local ancestry does not prove.
 - **The request**: a GraphQL commit lookup of associated pull requests, which
   answers an unknown commit with a null object (`not-found`) and states a
   further page in the body. Rejected: REST `commits/{sha}/pulls`, which
@@ -653,14 +674,22 @@ Decisions where the sources and the rulings are silent:
   with Git, as change 2's design rejected for `core.worktree` (APO
   design.md:218-219); listing the whole configuration, which would read values
   such as `http.<url>.extraHeader` that may hold a token.
+- **`unavailable` beyond DI:1041-1042.** The packet makes a credential-bearing,
+  malformed or non-GitHub remote `unavailable` with no request; this change
+  gives the same state where no answer can come for want of a target or a
+  client: `no-remote-target`, `gh-unavailable`, and `gh-unauthenticated` (sent,
+  but gh's exit 4 says nothing can be answered without a login). Rejected:
+  `unknown` for these, which would make `remote.completeness` `incomplete` on a
+  machine without `gh` though nothing was cut.
 - **Fields only in a `--remote` run, and the row's only on a queried row**;
-  absent, never null, elsewhere. L-10 settles the first half; the second is
-  this proposal's reading of it, since L-10 forbids null for "not
-  applicable" and a row outside the query set was not asked. Rejected:
-  `remote: null` on every row of every run, which would change the default
-  document feature 005 builds; in a `--remote` run, `remote: null` outside
-  the query set, as the first draft had, which would say "unknown" where
-  nothing was asked (null keeps change 1's meaning, unknown or not
+  absent, never null, elsewhere. L-10 settles the first half; the second
+  departs from L-10's C clause read alone, as lane openRepoProject-4 agreed on
+  2026-10-19 (departure 3 of "Lane openRepoProject-4's check"), since L-10
+  forbids null for "not applicable" and a row outside the query set was not
+  asked. Rejected: `remote: null` on every row of every run, which would change
+  the default document feature 005 builds; in a `--remote` run, `remote: null`
+  outside the query set, as the first draft had, which would say "unknown"
+  where nothing was asked (null keeps change 1's meaning, unknown or not
   established, CAS/pc:1128-1129); and a seventh state such as `not-queried`
   on every row, which would only restate the row's own `branch`, `head` and
   `merged_into_target`.
@@ -678,7 +707,7 @@ Decisions where the sources and the rulings are silent:
 - **No early stop** after a rate limit or a `gh` that needs authentication:
   each key is answered on its own. Rejected: stopping at the first, which
   saves at most 63 fast failures but makes which rows are answered depend on
-  completion order, against APO/ov:244-246.
+  completion order, against APO/ov:243-246.
 - **gh's own traffic off.** Each `gh` child runs with
   `GH_NO_UPDATE_NOTIFIER=1`, `GH_NO_EXTENSION_UPDATE_NOTIFIER=1`,
   `GH_PROMPT_DISABLED=1`, `GH_TELEMETRY=false` and `NO_COLOR=1` (gh 2.96.0's

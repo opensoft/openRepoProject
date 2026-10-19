@@ -57,20 +57,21 @@ move these lines, and this change's feature re-pins them):
   together with the overview's other children.
 - `github_repository_identity()` (`project:759-763`) accepts an `owner` and a
   `repository` by one pattern each, and `remote_repository_identity()`
-  (`project:766-769`) accepts the `https://github.com/`, `http://github.com/`,
-  `ssh://git@github.com/`, `git@github.com:` and `github.com:` forms, strips
-  `.git`, and matches no other user, so `https://user@github.com/...` never
-  yields an identity. Together they are the rule PRS:32 states for status and
-  doctor, where `handoff()` (`project:772-783`) takes the identity from `git
-  remote get-url origin`. D3 reuses both and adds the reason that tells a
-  credential-bearing URL from a foreign host or a malformed path.
+  (`project:766-769`) accepts `https://github.com/` and `http://github.com/`,
+  and `github.com` followed by `:` or `/` with an optional `ssh://` and an
+  optional `git@` before it, strips `.git`, and matches no other user, so
+  `https://user@github.com/...` never yields an identity. Together they are the
+  rule PRS:32 states for status and doctor, where `handoff()`
+  (`project:772-783`) takes the identity from `git remote get-url origin`. D3
+  reuses both and adds the reason that tells a credential-bearing URL from a
+  foreign host or a malformed path.
 - `cleanup_report()` (`project:544-622`) is where `09af8c8` attached its
   lookup and its three extra classes; this change touches nothing of `clean`.
 - The parser (`project:1074`) has no `overview` yet. Feature 005 adds the
   subcommand; this change's feature adds `--remote` to it.
 - The tests' fakes: `fake_bin()` (tests:148) is the temporary bin directory,
   `write_fake()` (tests:172) writes a fake tool into it, and `question_env()`
-  (tests:154-165) builds a `PATH` of that directory and the directories of
+  (tests:154-170) builds a `PATH` of that directory and the directories of
   `bash`, `git` and the interpreter, dropping `GH_TOKEN` and `GITHUB_TOKEN`.
   D11 builds on all three.
 - After features 004 and 005: the overview's control loop on the main thread
@@ -170,12 +171,12 @@ The two reads are counted in the envelope's `probes`, as lane
 openRepoProject-4's fourth option has it (C-9): they are Git children, so
 [B]'s `performed`, "every Git child started", counts them unchanged, and
 [B]'s added paragraph gives `estimated` 1 per repository with a queried row
-and 1 more per such repository whose first read named a usable remote, so
-the two agree in an uncut run. A run without `--remote` counts exactly as
-[B] does at `961c405`. The `remote` object has no `probes` of its own, and
-the `gh` children, which are not Git children, are counted only in
-`remote.requests` (D5). A read that exits nonzero, reaches its budget,
-overruns its output cap or is stopped at the deadline is
+and 1 more per such repository whose first read named a usable remote, so the
+reads add the same number to both counts in an uncut remote phase. A run
+without `--remote` counts exactly as [B] does at `961c405`. The `remote` object
+has no `probes` of its own, and the `gh` children, which are not Git children,
+are counted only in `remote.requests` (D5). A read that exits nonzero, reaches
+its budget, overruns its output cap or is stopped at the deadline is
 `remote-target-unread` on its rows' `remote` and never a row error or a scan
 error, the exception that [B]'s added paragraph and [E]'s added Termination
 sentence state (D7, D10).
@@ -441,7 +442,7 @@ DI:1059-1060).
 | Local and read-only (kept) | MODIFIED, local and read-only |
 | A remote run stays read-only apart from its queries | MODIFIED, local and read-only |
 | A squash-merged branch is explained and kept | [R] |
-| A merged branch whose upstream was deleted | [R] |
+| A squash-merged branch whose upstream was deleted | [R] |
 | The remote target comes from the merge target's branch configuration | [R] |
 | One request per exact head | [R] |
 | The chosen pull request and a rejected answer | [R] |
