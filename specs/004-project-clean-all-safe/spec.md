@@ -1623,8 +1623,8 @@ configuration"; "A lazy fetch in a partial clone is refused locally";
   unchanged except the one moved to the result record; a test drives two
   Git child handles at once through the shared scrub, termination path and
   parsers (FR-062); no subcommand but `clean` gains a flag and the
-  requirements file gains no dependency (FR-064); and the two `test` jobs and
-  the Git floor job stay green.
+  requirements file gains no dependency (FR-064); and every job of the `test`
+  matrix and the Git floor job stay green.
 - **SC-013**: `status`, `doctor` and the `update` report exit 2 in 0 runs
   because of Git's version or a repository they cannot inspect; doctor
   exits 1 on its error row; a fresh project with no remote still passes
@@ -1749,9 +1749,9 @@ configuration"; "A lazy fetch in a partial clone is refused locally";
   and the task 1.7 it adds to the change's `tasks.md`; it awaits Brett Heap's
   word, and this feature's plan builds on it until he rules (Assumptions).
 - **Runtime and CI**: Git 2.36 or later where `project` inspects a
-  repository; a Git 2.36 build for the CI floor job; the existing `test` job,
-  two jobs (Python 3.10 and 3.12 on Linux only since Brett Heap's decision of
-  2026-10-15, #32).
+  repository; a Git 2.36 build for the CI floor job; every job of the
+  existing `test` matrix, on Linux only since Brett Heap's decision of
+  2026-10-15 (#32).
 
 ## Out of Scope
 

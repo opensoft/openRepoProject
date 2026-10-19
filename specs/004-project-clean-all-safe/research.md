@@ -491,9 +491,9 @@ scratch directory, never in the repository.
     `project-command` evidence-model scenario that names no subcommand,
     "The sixteenth scrubbed name on Git 2.36" included, uses `test_status_`
     so that the floor job's `-k` selection runs it.
-  - CI: the existing `test` job, two jobs (Python 3.10 and 3.12 on
-    `ubuntu-latest` only since Brett Heap's decision of 2026-10-15, #32,
-    `e9d6711`; lead ruling R-35), runs the whole suite unchanged. One job is
+  - CI: every job of the existing `test` matrix (`ubuntu-latest` only since
+    Brett Heap's decision of 2026-10-15, #32, `e9d6711`; lead rulings R-35
+    and R-46) runs the whole suite unchanged. One job is
     added, `git-floor`, on `ubuntu-latest` with Python 3.10: it checks out,
     sets up Python and installs `requirements.txt` as the `test` job does, then
     builds Git 2.36.6
@@ -509,9 +509,9 @@ scratch directory, never in the repository.
     run, since no CI job runs macOS); permission tests when the effective uid
     is 0; and "The sixteenth scrubbed name on Git 2.36" unless the `git` on
     PATH is 2.36 to 2.39, so it runs in the floor job only (FR-067).
-- **Rationale**: FR-066 and FR-067; SC-012 (the two `test` jobs and the floor
-  job green). The measured fixture costs set the sizes, and a cached build
-  keeps the floor job to the test run itself.
+- **Rationale**: FR-066 and FR-067; SC-012 (every job of the `test` matrix
+  and the floor job green). The measured fixture costs set the sizes, and a
+  cached build keeps the floor job to the test run itself.
 - **Alternatives considered**: building Git on every run, rejected (minutes
   per run); a distribution package, rejected (Ubuntu 22.04 ships 2.34 and
   24.04 ships 2.43, neither 2.36); a macOS floor job, rejected (FR-067 asks

@@ -180,9 +180,9 @@ Table rows may exceed 79 columns, as in features 002 and 003.
 
 ## Technical Context
 
-**Language/Version**: Python 3.10+ (the README's requirement); CI runs 3.10
-and 3.12 on `ubuntu-latest` only (Brett Heap's decision of 2026-10-15, #32;
-lead ruling R-35). Git 2.36 or later wherever a
+**Language/Version**: Python 3.10+ (the README's requirement); CI runs every
+job of the `test` matrix on `ubuntu-latest` only (Brett Heap's decision of
+2026-10-15, #32; lead rulings R-35 and R-46). Git 2.36 or later wherever a
 repository is inspected: 2.43.0 in the benches, 2.36.6 in the floor job.
 Local runs use Python 3.12.3 in the `py-bench` container.
 
@@ -225,8 +225,8 @@ scale read from the environment, a flag or a file (R10); Python 3.10
 compatibility in `project` (`start_new_session=True`, never `process_group=0`
 or `preexec_fn`; daemon threads, never a `concurrent.futures` pool; C4; the
 tests' pty helper may use `preexec_fn` for `TIOCSCTTY`); one executable file;
-every existing test passing unchanged but one (R15); the two `test` jobs and
-the floor job green (SC-012).
+every existing test passing unchanged but one (R15); every job of the `test`
+matrix and the floor job green (SC-012; lead ruling R-46).
 
 **Scale/Scope**: `clean` rebuilt in three modes; `status`, `doctor` and
 `update` moved onto the evidence model; 67 FRs and 100 delta scenarios (65,
@@ -245,8 +245,8 @@ tests of the parsers, ladder, gates, digest, escaping and exit table.
 | one test | under `run_cli`'s 20 s timeout |
 | whole suite | under 8 minutes in the bench, under 6 minutes per CI job |
 
-**CI shape** (R11): the `test` job, two jobs (Python 3.10 and 3.12 on
-`ubuntu-latest`, Linux only since #32; R-35), runs the whole suite unchanged;
+**CI shape** (R11): every job of the `test` matrix (`ubuntu-latest`, Linux
+only since #32; R-35, R-46) runs the whole suite unchanged;
 one new job, `git-floor`, on `ubuntu-latest` with Python 3.10, checks out, sets
 up Python and installs `requirements.txt` as the `test` job does, then builds
 Git 2.36.6 from kernel.org's tarball (sha256 checked), caches it by version and
@@ -346,10 +346,11 @@ the `OPENSPEC-SPECKIT-GLOBAL` block.
   job's place in Setup is no departure: design D17 and Migration Plan step 4
   put the job in feature 004 and name no slice.
 - **CI runs Linux only (lead ruling R-35)**: since Brett Heap's decision of
-  2026-10-15 (#32, `e9d6711`), the `test` job runs Python 3.10 and 3.12 on
-  `ubuntu-latest` and no CI job runs macOS, where the proposal's Impact says
-  the suite runs "on Linux and macOS ... as CI runs". The OpenSpec text stays
-  as written, and the feature PR body notes the difference.
+  2026-10-15 (#32, `e9d6711`), every job of the `test` matrix runs on
+  `ubuntu-latest` (R-46) and no CI job runs macOS, where the proposal's
+  Impact says the suite runs "on Linux and macOS ... as CI runs". The
+  OpenSpec text stays as written, and the feature PR body notes the
+  difference.
 - **Scenario count**: PR #19 adds one scenario, "The push child reaches its
   remote"; its test is written whether or not PR #19 has landed, and
   `traceability.md` names it (slice 9).

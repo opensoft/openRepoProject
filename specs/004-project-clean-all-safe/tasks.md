@@ -50,7 +50,8 @@ file on both:
 One difference is Brett Heap's own decision, so the PR body only notes it (lead
 ruling R-35): the proposal's Impact says the suite runs "on Linux and macOS
 with Python 3.10 and 3.12, as CI runs", and since his decision of 2026-10-15
-(#32, `e9d6711`) the `test` job runs 3.10 and 3.12 on `ubuntu-latest` only. The
+(#32, `e9d6711`) every job of the `test` matrix runs on `ubuntu-latest` only
+(lead ruling R-46). The
 OpenSpec text stays as written; the macOS skips stay in the tests for a local
 run, and no task adds a macOS job.
 
@@ -233,9 +234,13 @@ regions and contracts every lane writes against.
   unittest discover -s tests -v -k test_clean_ -k test_status_ -k
   test_doctor_`, which takes every new module whole by its name (rule 2). Add
   `timeout-minutes: 30` to the new job only (impl-slicing-004 section 8). The
-  patch's comment opens "The four jobs above"; it says "The `test` job above"
-  instead, since #32 (`e9d6711`) left that job on Python 3.10 and 3.12 on
-  `ubuntu-latest` only, with no CI job on macOS (lead ruling R-35). The `test`
+  patch's comment opens "The four jobs above"; it reads "The test jobs above
+  (ubuntu-latest, every Python of the matrix) run on whichever Git their
+  runner ships" instead, since #32 (`e9d6711`) left every job of the `test`
+  matrix on `ubuntu-latest` only, with no CI job on macOS (lead ruling R-35),
+  and counts neither the jobs nor their Python versions, so that it holds
+  whether #28's wider matrix lands before this feature or after it (lead
+  ruling R-46). The `test`
   job is untouched; lane openRepoProject-4's issue #22 edits only that job's
   matrix, and whichever change lands second merges `main` in. Check that
   the file parses as YAML, that `actionlint` is clean where it is installed,
