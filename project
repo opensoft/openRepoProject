@@ -478,6 +478,196 @@ def discover(target=None):
 # endregion timing
 
 # region contracts
+# The contracts of `project clean` that later regions read (T004): its caps,
+# the Git floor, the key order of each JSON object, the closed code sets and
+# the human text. Sources: specs/004-project-clean-all-safe/data-model.md and
+# contracts/project-clean.md, and design.md D14 and D18 of
+# openspec/changes/add-project-clean-all-safe/, whose spec deltas govern where
+# they differ. Nothing here reads TIMING (lead ruling R-29); a time that D18
+# prints is its literal text. A change to a key or a code goes through the lead.
+
+# Caps and bounds, never scaled by a test. `worktree_rows` is the row cap of
+# each plan mode; the first five keys are the plan's `limits` object.
+LIMITS = {
+    "worktree_rows": {"report": 256, "all-safe": 128, "single": 128},
+    "targets": 16,
+    "ignored_entries": 64,
+    "status_records": 4096,
+    "ignored_samples": 8,
+    "reflog_bytes": 65536,  # 64 KiB
+    "manifest_bytes": 1048576,  # 1 MiB
+    "revalidation_children": 5,
+    "rescan_children": 3,
+}
+
+GIT_FLOOR = (2, 36)
+
+# Key tuples, in the order each document writes them.
+# A worktree row (data-model.md, "Worktree row"): the baseline keys, then the
+# six this change adds. `prunable` is present only when the registry record
+# says `prunable` (plan review M11).
+WORKTREE_ROW_KEYS = (
+    "path", "present", "branch", "head", "upstream", "remote_present", "ahead", "behind",
+    "dirty", "ignored_files", "current", "merged_into_target", "classification",
+    "recommendation", "prunable",
+    "locked", "ignored_files_truncated", "ignored_samples", "path_valid_utf8", "errors", "notes",
+)
+REPOSITORY_KEYS = ("root", "common_dir", "dev", "ino", "root_valid_utf8", "common_dir_valid_utf8")
+MERGE_TARGET_KEYS = ("name", "source", "sha")
+PLAN_ENVELOPE_KEYS = (
+    "schema_version", "observed_at", "mode", "root", "target_branch", "tracking_freshness",
+    "worktrees", "repository", "merge_target", "limits", "budget", "probes", "operations",
+    "selected", "excluded", "omitted", "notes", "completeness", "apply_allowed", "refusals",
+    "plan_digest",
+)
+SELECTED_KEYS = (
+    "path", "path_valid_utf8", "branch", "head", "upstream", "upstream_oid", "ahead", "behind",
+    "dev", "ino", "admin_id", "locked",
+    "present", "dirty", "ignored_files", "remote_present", "merged_into_target", "current",
+    "classification", "operation",
+)
+EXCLUDED_KEYS = ("path", "path_valid_utf8", "branch", "classification", "reason")
+EXTENDED_ERROR_KEYS = (
+    "error", "code", "schema_version", "observed_at", "mode", "repository", "merge_target",
+    "completeness", "apply_allowed", "refusals",
+)
+TARGET_RESULT_KEYS = (
+    "path", "path_valid_utf8", "branch", "planned_sha", "stage", "reason", "notes", "command",
+    "exit_status", "probes_performed", "reconciliation",
+)
+RECONCILIATION_KEYS = ("registry_entry_present", "path_present", "branch_present", "branch_sha", "reconciled")
+APPLY_RESULT_KEYS = (
+    "schema_version", "observed_at", "repository", "merge_target", "plan_digest", "probes",
+    "operations", "targets", "exit_code", "completeness",
+)
+
+# The eighteen refusal codes, in the order of the contract's "Codes" table.
+REFUSAL_CODES = (
+    "invalid-arguments", "internal-error", "git-unavailable", "git-too-old",
+    "repository-not-found", "ambiguous-name", "target-not-repository-root",
+    "unsupported-path-bytes", "manifest-invalid", "no-merge-target",
+    "inspection-incomplete", "inspect-cap", "deadline-exceeded",
+    "worktree-not-found", "target-excluded", "plan-digest-mismatch",
+    "confirmation-required", "cancelled",
+)
+
+# Each final target stage and its reasons (data-model.md, "Target stages");
+# None is the plain `removed`. `pending` is printed only and is no final stage.
+STAGE_REASONS = {
+    "removed": (None, "branch-advanced-after-removal", "branch-missing-after-removal", "removal-ceiling"),
+    "refused": ("identity-changed", "branch-changed", "state-changed", "contains-submodule",
+                "hidden-local-state"),
+    "failed": ("git-refused", "git-failed", "spawn-error"),
+    "unknown": ("unconfirmed-removal", "reconciliation-incomplete", "internal-error", "removal-ceiling"),
+    "not-attempted": ("batch-stopped", "interrupted", "deadline-exceeded"),
+}
+
+# The note codes of a plan, a target and a worktree row.
+NOTE_CODES = {
+    "plan": ("merge-target-conflict", "inspection-incomplete", "inspect-cap", "deadline-exceeded"),
+    "target": ("orphaned-directory", "partially-removed"),
+    "row": ("partially-removed",),
+}
+
+# Human text: every new line of design.md D14 and D18, the lines the contract
+# fixes beyond D18 (plan review M8), and three baseline texts kept. Each
+# placeholder is a str.format field named as the docs spell it, so a line with
+# every field replaced by its own name reads as the docs print it, except
+# three fields that stand for a phrase or a list: {NEXT_STEP} is NEXT STEP,
+# {BRANCHES} is B1, B2 and {NOT_ATTEMPTED} is P1, P2. Two lines are derived
+# from D18's words rather than quoted: `question_one`, the question "in the
+# singular for one", and `ignored_suffix_truncated`, its "`at least N` when
+# truncated". Paths are passed in already escaped.
+TEXT = {
+    # D14: the report.
+    "completeness_line_complete": "Report: complete",
+    "completeness_line_incomplete": "Report: incomplete ({CODES})",
+    "selection_line": "--all-safe would select {N}",
+    "selection_line_above_cap": "--all-safe would be incomplete (inspect-cap)",
+    # D18: the preview.
+    "merge_target_line": "Merge target: {NAME} ({SOURCE})",
+    "selected_heading": "Selected ({N}):",
+    "selected_row": "  remove {PATH} [{BRANCH}]",
+    "excluded_heading": "Excluded ({M}):",
+    "excluded_group": "  {REASON} ({K}): {NEXT_STEP}",
+    "excluded_row": "    {PATH} [{BRANCH}]",
+    "ignored_suffix": ": {N} ignored; first: {SAMPLE}",
+    "ignored_suffix_truncated": ": at least {N} ignored; first: {SAMPLE}",
+    "deferral_line":
+        "  deferred-target-cap ({K}): this run removes up to 16; run again: project clean {ROOT} --all-safe --apply",
+    "non_drain_line":
+        "  these deferred rows will not drain while the 16 rows ahead of them are contains-submodule; "
+        "review those worktrees, then remove them yourself",
+    "residual_window_line":
+        "Not protected: ignored files created or index flags set after the last check, "
+        "and any change after Git's own check.",
+    "empty_line": "No eligible worktrees",
+    # D18: the question, the wait, the result.
+    "question": "Remove {N} worktrees, keeping {N} branches? [yes/N]",
+    "question_one": "Remove 1 worktree, keeping 1 branch? [yes/N]",
+    "wait_line":
+        "Waiting for git worktree remove {PATH} to finish; a started removal is never interrupted (at most 300 s).",
+    "success_line": "Removed {N}; branches kept: {BRANCHES}.",
+    "stop_block":
+        "Stopped at {PATH} ({REASON}). Removed {K} of {N}. Not attempted: {NOT_ATTEMPTED}. "
+        "Next: project clean {ROOT} --all-safe",
+    "partial_removal_note": "Probable partial removal: inspect, then git worktree remove --force {PATH} by hand.",
+    # D18: the gate refusal and the remedies of the plan-blocking refusals.
+    "target_excluded_gate": "Worktree is excluded: {REASON}; {NEXT_STEP}",
+    "remedy_inspection_incomplete":
+        "repair or remove the inspection-error rows first: git worktree repair, git worktree prune, "
+        "or remove the row by hand after review",
+    "remedy_inspect_cap":
+        "{N} rows exceed the row cap of {M}; remove worktrees explicitly, or prune stale entries by hand",
+    "remedy_deadline_exceeded": "the run ran out of time; remove worktrees explicitly or re-run",
+    # The contract beyond D18 (plan review M8): progress, kept branches and the
+    # message of each refusal code that has no baseline message.
+    "progress_line": "  {STAGE} {PATH}",
+    "progress_line_reason": "  {STAGE} {PATH} ({REASON})",
+    "branches_kept_line": "Branches kept: {BRANCHES}.",
+    "invalid_arguments_all_safe": "--all-safe cannot be combined with --action, --branch or --worktree.",
+    "invalid_arguments_expect_plan": "--expect-plan requires --all-safe and --apply.",
+    "invalid_arguments_expect_plan_value": "--expect-plan takes 64 lowercase hexadecimal characters.",
+    "internal_error": "{TYPE}: {TEXT}",
+    "git_unavailable": "Git is unavailable ({DETAIL}); clean needs Git 2.36 or later.",
+    "git_unavailable_not_found": "not found",
+    "git_unavailable_exit": "exit {N}",
+    "git_unavailable_timed_out": "timed out",
+    "git_unavailable_unparseable_version": "unparseable version",
+    "git_too_old": "Git {VERSION} is older than 2.36; clean needs Git 2.36 or later.",
+    "target_not_repository_root": "Not the main worktree of a repository: {PATH}; pass the repository root.",
+    "unsupported_path_bytes": "The repository path is not valid UTF-8: {PATH}",
+    "manifest_invalid_size": "Manifest {PATH} is larger than 1 MiB.",
+    "plan_incomplete": "The plan is incomplete ({CODE}): {REMEDY}.",
+    "plan_digest_mismatch":
+        "The fresh plan's digest {DIGEST} differs from --expect-plan {EXPECTED}; nothing was changed.",
+    "confirmation_required": "Standard input is not a terminal; pass --yes to apply this plan.",
+    "push_remote_gone":
+        "Cannot push {BRANCH}; its upstream {UPSTREAM} was deleted (remote-gone); "
+        "review it before it is republished.",
+    # Baseline texts kept: `target-excluded` for the current worktree and for a
+    # class (D18), and `no-merge-target` (project:551 at 961c405).
+    "target_excluded_current": "Cannot remove the current worktree.",
+    "target_excluded_class": "Worktree is {CLASS}; only clean merged worktrees may be removed.",
+    "no_merge_target": "Cannot determine the default branch from the manifest, origin/HEAD, main, or master.",
+}
+
+# D18's next step by exclusion reason; every other class takes its
+# recommendation, and `deferred-target-cap` has its own line in TEXT. D18 gives
+# none for `main-worktree`, `unsupported-path-bytes` or `not-requested`.
+NEXT_STEPS = {
+    "dirty": "commit or preserve the changes",
+    "ignored-local-files": "move or delete the ignored files by hand",
+    "unstarted-branch":
+        "no commit was made on this branch here since it was created; review, then git worktree remove yourself",
+    "reflog-unavailable":
+        "the branch's reflog is missing, expired or undecidable; review, then git worktree remove yourself",
+    "contains-submodule": "review, then remove the worktree yourself",
+    "hidden-local-state": "review, then remove the worktree yourself",
+    "registration-mismatch": "review, then git worktree repair or git worktree prune, or remove the row by hand",
+    "inspection-error": "review, then git worktree repair or git worktree prune, or remove the row by hand",
+    "locked-worktree": "unlock it yourself if it should go",
+}
 # endregion contracts
 
 # region git environment
