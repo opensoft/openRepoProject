@@ -24,33 +24,51 @@ duplicate them.
   the Alignment Review" in `proposal.md`, one row per finding id with its
   severity, the ruling and the section edited, and by the lane's alignment
   comment on PR #26.
-- [ ] 1.3 Council resolved: each product-advocate, systems-architect and
-  adversary-engineer concern on the aligned proposal is VALID (applied to
-  `proposal.md`), NOTED (recorded in a `clarifications.md` that `design.md`
-  then answers) or DISMISSED; verified by "Council Verdicts" in `proposal.md`
-  and the council comment on the pull request.
+- [x] 1.3 Council resolved: each product-advocate, systems-architect and
+  adversary-engineer concern on the aligned proposal at `874d1ad` (P-1 to P-4,
+  S-1 to S-4, AE-1 to AE-4) is VALID (applied to `proposal.md` and, where its
+  contract requires, the deltas and `design.md`), NOTED (S-4, recorded in
+  `clarifications.md`, which `design.md` D2 answers) or DISMISSED (none), under
+  the lane lead's verdicts of 2026-10-19 (A-16 to A-20, A-1, A-4 and A-5 as
+  amended, P-2, P-4), with lane openRepoProject-3's packet-fidelity findings on
+  `874d1ad` (H1, M1 to M6, L1 to L12) and council B's three refinements applied
+  in the same round; applied by `79a71ec`, `909425b`, `f93073b`, `6d237fe`,
+  `36f3eef`, `15cf7ed`, `e012757` and the commit that ticks this task, the
+  project-command block held uncommitted (ruling A-20); verified by "Council
+  Verdicts" in `proposal.md`, one row per council concern id and per lane 3
+  id, by `clarifications.md`, and by the council comment on the pull request.
 - [x] 1.4 Spec deltas and design written: `specs/project-clean/spec.md`
-  modifies four requirements and adds one (53 scenarios: 37 carried unchanged
-  from change 1 and PR #19, 16 added), and
+  modifies five requirements and adds one (66 scenarios: 43 carried unchanged
+  from change 1 and PR #19, 6, 14, 10, 5 and 8 by block, and 23 added),
   `specs/project-clean-review-safety/spec.md` modifies one (4 scenarios: 3
-  carried, 1 added), every scenario of each modified requirement's source text
-  kept byte for byte; `design.md` holds D1 to D10 (`8341954`, `d0b33ce`, and
-  the commit titled 'Settle which later targets carry branch-retention-stop'),
-  revised by the alignment fix round (1.2); verified by
-  `grep -c '^#### Scenario:'` on each spec file and by a scenario-carry script
-  run after the fix round, every source scenario present byte for byte and in
-  order.
+  carried, 1 added), and `specs/project-command/spec.md` modifies one on PR
+  #19's text (9 scenarios carried, none added; written and HELD uncommitted
+  until lane openRepoProject-2 checks its diff, ruling A-20), every scenario of
+  each modified requirement's source text kept byte for byte; `design.md`
+  holds D1 to D10 (`8341954`, `d0b33ce`, and the commit titled 'Settle which
+  later targets carry branch-retention-stop'), revised by the alignment fix
+  round (1.2) and the council round (1.3); verified by `grep -c '^####
+  Scenario:'` on each spec file and by a scenario-carry script run after the
+  council round over all seven MODIFIED blocks, every source scenario present
+  byte for byte and in order.
 - [x] 1.5 Validation passes: `/usr/bin/openspec validate
   add-project-clean-branch-retirement --strict` reports the change valid,
   `/usr/bin/openspec validate --all --strict` reports 8 passed, 0 failed, and
   `/usr/bin/openspec status --change add-project-clean-branch-retirement
   --json` shows every artifact done; verified by running the three on this
-  branch after 1.4 and again after the alignment fix round (build 1.13.1, which
-  notes only as INFO that archive would refuse the MODIFIED blocks whose base
-  still sits in change 1).
+  branch after 1.4, after the alignment fix round and after the council round
+  (build 1.13.1, which notes only as INFO that archive would refuse the
+  MODIFIED blocks whose base still sits in change 1).
 - [ ] 1.6 Ratified by Brett Heap's word on the pull request, quoted with its
-  link here, the proposal's five Open Questions before him; verified by that
-  quote. No implementation starts before it.
+  link here, the proposal's six Open Questions before him, after the held
+  project-command block is committed on lane openRepoProject-2's check of its
+  diff, or dropped if PR #19 absorbs the clause (lane openRepoProject-2's
+  LQ-6). Ratifying this change ratifies the two blocks written on PR #19's
+  text, "Clean bounds its Git work and reports omitted work" and "Repository
+  inspection requires Git 2.36 and shares one evidence model", only as written
+  there at `c462d87`, never PR #19's own sentences, and 2.2 then re-reads them
+  before the handoff (lane openRepoProject-3's M1); verified by that quote. No
+  implementation starts before it.
 
 ## 2. Before the Speckit handoff
 
@@ -62,11 +80,13 @@ duplicate them.
   canonical and the seam this change attaches to is on `main`; verified by
   those headers in `openspec/specs/` and by `/usr/bin/openspec validate
   add-project-clean-branch-retirement --strict` passing with no archive notice.
-- [ ] 2.2 PR #19 resolved: when it lands, "Clean bounds its Git work and
-  reports omitted work" is compared with the text that landed and re-based if
-  that text moved past `c462d87`; when it closes unmerged, the block is
-  re-based on change 1's text; verified by a diff of the block's carried text
-  against the canonical requirement.
+- [ ] 2.2 PR #19 resolved: when it lands, the two blocks written on its text,
+  "Clean bounds its Git work and reports omitted work" and "Repository
+  inspection requires Git 2.36 and shares one evidence model", are re-read
+  against the text that landed and re-based if that text moved past
+  `c462d87`; when it closes unmerged, both are re-based on change 1's archived
+  text; verified by a diff of each block's carried text against the canonical
+  requirement.
 - [ ] 2.3 `add-project-clean-cache-disposal` (issue #24) checked: the five
   requirements both changes MODIFY under the lane's rulings B-10 and A-13
   ("Clean can explicitly retire verified worktrees", one cache clause; "Clean
@@ -78,7 +98,16 @@ duplicate them.
   narrow guarantee and its residual window", the cache target's revalidation)
   are listed here with the cache change's state, and if it has archived, this
   change's five blocks are re-based on its archived text now, otherwise 3.2
-  holds the re-base (L-11); verified by `/usr/bin/openspec validate --all
+  holds the re-base (L-11). At the re-base the flagless digest becomes
+  byte-identical to the cache change's, `retire` follows its per-target cache
+  data, and the two stage sentences after the removal floor sit side by side.
+  If PR #27 is not ratified, the five blocks re-base on change 1's archived
+  text instead and A-9's joint fit is moot; verified by `/usr/bin/openspec
+  validate --all --strict` passing after any re-base.
+- [ ] 2.4 `add-project-overview-remote-merge-status` (issue #25, PR #29)
+  checked: by L-11, whichever of it and this change archives second re-bases
+  "Repository inspection requires Git 2.36 and shares one evidence model" on
+  the other's archived block; verified by `/usr/bin/openspec validate --all
   --strict` passing after any re-base.
 
 ## 3. Landing and archive readiness
@@ -93,7 +122,8 @@ duplicate them.
   its archived text (L-5, L-11, A-13); verified by `/usr/bin/openspec validate
   add-project-clean-branch-retirement --strict` passing against the main specs
   that archive left.
-- [ ] 3.3 The change is archived with `/opsx:archive` only after 3.1 and 3.2;
+- [ ] 3.3 The change is archived with `/opsx:archive` only after 3.1 and 3.2,
+  and after PR #19's amendment of change 1 has landed (2.2, 2.4);
   verified by `/usr/bin/openspec validate --all --strict` passing after the
   archive.
 
