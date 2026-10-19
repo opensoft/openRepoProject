@@ -23,11 +23,13 @@ tested for local ancestry before the `remote-gone` rung: when its
 model reaches.
 
 The `ignored-local-files` rung SHALL apply to a row that holds a blocking
-ignored path: one that "Clean disposes of listed caches before a worktree
+ignored path, one that "Clean disposes of listed caches before a worktree
 removal" does not prove, in the same invocation and within its caps, to be a
-listed cache. A row whose every ignored path that requirement proves a listed
-cache within its caps SHALL pass that rung and be classified by the rungs below
-it. A cache enumeration that fails or times out SHALL leave the row's ignored
+listed cache, or a listed cache in a directory that the access check of that
+requirement finds the running user cannot change. A row whose every ignored
+path that requirement proves a listed cache within its caps, and passes that
+check, SHALL pass that rung and be classified by the rungs below it. A cache
+enumeration that fails or times out SHALL leave the row's ignored
 paths unproven, and SHALL NOT make the row `inspection-error`. A row's cache
 proof SHALL count as its evidence, though the invocation's cache caps, applied
 in canonical order, can withhold it.
@@ -395,8 +397,9 @@ apply SHALL print `Removed N; branches kept: ` followed by the branches kept.
 #### Scenario: Every protected classifier
 
 - **WHEN** one repository's linked worktrees are stale, detached, dirty, holding
-  ignored files, unpublished, remote-gone, diverged, remote-ahead, unpushed,
-  pushed-unmerged, merged but current, merged but locked, merged with a
+  ignored files that are not Python bytecode caches, unpublished, remote-gone,
+  diverged, remote-ahead, unpushed, pushed-unmerged, merged but current, merged
+  but locked, merged with a
   non-UTF-8 path, merged with an initialized submodule, and merged with an
   assume-unchanged entry, beside the main worktree on the merge target and
   exactly one plain merged, clean, published worktree with a commit of its own,
@@ -511,8 +514,8 @@ s after start; time spent blocked at the confirmation question SHALL NOT count,
 both deadlines moving later by the time spent waiting. Each Git child SHALL get
 `min(5 s, work remaining)`, and each filesystem call (`lstat`, `realpath`, the
 reads of `.git`, `gitdir`, reflog and manifest files, and the directory opens,
-listings and `lstat` calls of the cache walk) SHALL be abandoned after the same
-budget, recording `probe-timeout`, or `deadline-exceeded` where
+listings, `lstat` calls and access checks of the cache walk) SHALL be abandoned
+after the same budget, recording `probe-timeout`, or `deadline-exceeded` where
 the deadline was the limit, and leaving its values null. Probing SHALL be
 serial. Reconciliation probes SHALL get `min(5 s, reserve remaining)`.
 
@@ -521,9 +524,15 @@ a removal child SHALL be spawned only while at least the 5 s removal floor of
 the work deadline remains, and otherwise that target and every later one SHALL
 be `not-attempted` with `deadline-exceeded`. A cache stage, as "Clean disposes
 of listed caches before a worktree removal" states, SHALL start only while more
-than that floor remains, under the same rule, and each of its filesystem calls
-SHALL get `min(5 s, work remaining less the removal floor)`, so that the floor
-is left for the spawn. A removal child still running at
+than that floor remains, under the same rule, and each of its reads SHALL get
+`min(5 s, work remaining less the removal floor)`, so that the floor is left for
+the spawn. A cache stage SHALL hand an unlink or a directory removal to its
+worker only while more than that floor remains. A removal handed over SHALL be
+waited for until it returns, never abandoned at the per-call budget, and SHALL
+count as a removal in flight; only the 300 s removal ceiling, counted from the
+hand-off, SHALL end that wait, the listed cache that the removal belongs to
+then being `removed: null`, and the reconciliation reserve SHALL count from its
+return or from that ceiling. A removal child still running at
 the deadline SHALL be waited for, up to its 300 s hard ceiling, and the
 reconciliation reserve SHALL count from its exit. A run with no removal in
 flight SHALL therefore end within 64 s of its start, not counting the time
@@ -570,9 +579,11 @@ The cache enumerations SHALL count in the fit that sets the row and target
 caps: with 128 worktree rows, 16 cache enumerations and 16 targets, planning,
 revalidation and the final rescan spawn at most 250 Git children besides the 16
 removals, about 42.3 s at 150 ms per child and 0.3 s per removal, the cache
-stages' filesystem calls not counted; a target whose cache stage or spawn
-cannot start under the removal floor SHALL be `not-attempted` with
-`deadline-exceeded`, as for every removal.
+walk's and the cache stages' filesystem calls not counted; a target whose cache
+stage or spawn cannot start under the removal floor SHALL be `not-attempted`
+with `deadline-exceeded`, as for every removal, and a cache stage's removal
+that does not return SHALL hold the run only as a removal in flight does, up to
+the removal ceiling.
 
 Plans and apply results SHALL report `probes: {estimated, performed}` and
 `operations: {estimated, performed}`, every Git child counted once, a removal
@@ -680,8 +691,10 @@ accepted. Each selected target SHALL end in one stage with one reason:
   not proven; `unconfirmed-removal`, `reconciliation-incomplete`,
   `internal-error` or `removal-ceiling`;
 - `not-attempted`: the run stopped before reaching the target, or before
-  spawning its removal because less than the removal floor remained;
-  `batch-stopped`, `interrupted` or `deadline-exceeded`.
+  spawning its removal because less than the removal floor remained, or, for a
+  target whose cache stage ran, before its removal was spawned because a signal
+  had been received or less than the removal floor remained; `batch-stopped`,
+  `interrupted` or `deadline-exceeded`.
 
 A removal child that exits nonzero on its own SHALL be `failed` with Git's
 status, `git-refused` for 128 and `git-failed` otherwise, whether or not a
@@ -692,7 +705,9 @@ the ceiling cause. `pending` SHALL appear only in the printed plan and progress.
 Every `removed`, `refused`, `failed` or `unknown` target SHALL carry a
 `reconciliation` object (`registry_entry_present`, `path_present`,
 `branch_present`, `branch_sha`, `reconciled`), and a `not-attempted` target
-SHALL carry null. The child's exit status alone SHALL never prove a removal. The
+SHALL carry null, except one whose cache stage removed at least one entry, which
+SHALL carry its reconciliation. The child's exit status alone SHALL never prove
+a removal. The
 rescan SHALL first re-establish the repository identity, and where it differs
 every reconciliation field SHALL be null and `reconciled` false. A target's
 `notes` SHALL list `orphaned-directory` when its registry entry is absent and
@@ -706,7 +721,9 @@ probe child, print "Cancelled." on standard error and no JSON document, and exit
 130, 143 or 129 with nothing mutated, and end of input at the question SHALL
 exit 130 the same way. During the apply phase, the first of
 those signals received SHALL set the exit status and stop scheduling, so that no
-further probe or removal starts. A removal in flight SHALL be waited for, and
+further probe or removal starts, a started cache stage running to its end as
+"Clean disposes of listed caches before a worktree removal" states. A removal
+in flight SHALL be waited for, and
 its target SHALL end by the stage rule above. Targets not yet started SHALL be
 `not-attempted` with `interrupted`. `project` SHALL then reconcile within the
 reserve and print the result record; a second SIGINT during reconciliation SHALL
@@ -845,49 +862,78 @@ core.fsmonitor=false`, the protocol pins, the scrubbed environment and
 per-child budget and counted in `probes`; then a walk of each listed directory
 that opens every directory relative to its parent's descriptor without
 following a symbolic link, each directory open, listing and `lstat` one
-filesystem call under the per-call budget. The child SHALL stop at its 513th
-record, so that 512 records (`limits.cache_entries`) is its bound.
+filesystem call under the per-call budget. The walk SHALL also check, for each
+directory that a cache stage would change (each listed cache directory, each
+nested `__pycache__` directory and the parent of each listed path), that the
+running user may remove entries from it: one descriptor-relative access check
+with effective ids, following no symbolic link, a filesystem call under the
+per-call budget. The child SHALL stop at its 513th record, so that 512 records
+(`limits.cache_entries`) is its bound.
 
 A row SHALL stay at the `ignored-local-files` rung, with `cache_disposal.reason`
 naming why, when its ignored paths are not all proven listed caches within the
-caps:
+caps, or when its cache stage could not remove them:
 
 - `not-candidate`: it holds ignored records but is not a candidate, the sample
   test included;
 - `cache-cap`: it is a candidate past the 16th; its child reached its record
   bound; its cache entries exceed 512 or its bytes 256 MiB (268,435,456,
-  `limits.cache_bytes`); or, every ignored path being a listed cache, its
-  entries or bytes would take the invocation's totals, summed in canonical
-  order over such rows, past 4,096 entries (`limits.cache_entries_total`) or
-  1 GiB (1,073,741,824, `limits.cache_bytes_total`), its own then not counted;
+  `limits.cache_bytes`); or, every ignored path being a listed cache that
+  passes the access check, its entries or bytes would take the invocation's
+  totals, summed in canonical order over such rows, past 4,096 entries
+  (`limits.cache_entries_total`) or 1 GiB (1,073,741,824,
+  `limits.cache_bytes_total`), its own then not counted;
 - `cache-unverified`: its child failed or timed out, read a record that is not
   an ignored one, or read no ignored record, or a filesystem call of its walk
   failed or timed out;
+- `cache-unwritable`: every ignored path being a listed cache within the
+  per-worktree caps, a directory that its cache stage would change failed the
+  access check;
 - `cache-unsupported-platform`, as "Cache disposal never follows a symlink or
   leaves its worktree" states.
 
-A cache cap reached SHALL NOT make the plan incomplete. A candidate whose
-enumeration leaves it at the `ignored-local-files` rung SHALL keep its place
-among the 16 enumerations. The sample test keeps out of them a row whose
-samples show a blocking name, but not a row whose samples all have cache names
-while it holds a blocking path beyond its 8 samples, a path with a cache name
-that is blocking by its type, its contents or its device, more cache entries
-or bytes than a per-worktree cap allows, or an enumeration that fails each
-time. When each of the first 16 candidates in canonical order is such a row, no
-re-run enumerates a later candidate, and the human report SHALL say why the
-rows left with `cache-cap` will not drain; otherwise a later run SHALL take the
-rows the caps left. A deadline that passes during an enumeration SHALL make the
-plan incomplete with `deadline-exceeded`, as it does during any probe. A row
-whose enumeration finished with no cap reached SHALL have `reason` null, and its
-ignored records SHALL be counted as `disposable`, those that are listed caches,
-and `blocking`, the rest; such a row with `blocking` 0 SHALL pass the
-`ignored-local-files` rung. A row left at the rung with `not-candidate`,
-`cache-cap`, `cache-unverified` or `cache-unsupported-platform` SHALL have
-`disposable`, `blocking`, `entries`, `bytes`, `paths`, `directories` and
-`blocking_samples` null, except a row left only by the invocation's totals,
-whose enumeration finished and which keeps them, and a row that only the sample
-test keeps from being a candidate, whose `blocking_samples` SHALL hold the
-samples that test rejects.
+A cache cap reached, or an access check failed, SHALL NOT make the plan
+incomplete, and a row left with `cache-unwritable` SHALL NOT be selected and
+SHALL NOT stop the run. A candidate whose enumeration leaves it at the
+`ignored-local-files` rung SHALL keep its place among the 16 enumerations. The
+sample test keeps out of them a row whose samples show a blocking name, but not
+a row whose samples all have cache names while it holds a blocking path beyond
+its 8 samples, a path with a cache name that is blocking by its type, its
+contents or its device, more cache entries or bytes than a per-worktree cap
+allows, an enumeration that fails, or a cache directory that the running user
+cannot change. When each of the first 16 candidates in canonical order is left
+with `blocking` above 0, by a per-worktree cap, with `cache-unverified` or with
+`cache-unwritable`, no later candidate is enumerated, and a re-run enumerates
+the same 16 first; the human report SHALL then, and only then, say why the rows
+left with `cache-cap` will not drain, naming from those 16 rows' reasons how
+many hold ignored files that are not caches, how many exceed a per-worktree
+cache cap, how many could not be enumerated and how many hold a cache directory
+that the running user cannot change, each with its next step, and SHALL never
+tell the person to remove by hand a worktree whose state was not established;
+otherwise a later run SHALL take the rows the caps left. A deadline that passes
+during an enumeration SHALL make the plan incomplete with `deadline-exceeded`,
+as it does during any probe. A row whose enumeration finished with no cap
+reached SHALL have its ignored records counted as `disposable`, those that are
+listed caches, and `blocking`, the rest, and SHALL have `reason` null, except
+that such a row with `blocking` 0 of which a directory failed the access check
+SHALL have `cache-unwritable`; a row with `reason` null and `blocking` 0 SHALL
+pass the `ignored-local-files` rung. A row left at the rung with
+`not-candidate`, `cache-cap`, `cache-unverified` or
+`cache-unsupported-platform` SHALL have `disposable`, `blocking`, `entries`,
+`bytes`, `paths`, `directories` and `blocking_samples` null, except a row left
+only by the invocation's totals, whose enumeration finished and which keeps
+them, and a row that only the sample test keeps from being a candidate, whose
+`blocking_samples` SHALL hold the samples that test rejects; a row left with
+`cache-unwritable` SHALL keep them, its enumeration having finished.
+
+A row whose `cache_disposal.reason` is `not-candidate` and whose samples pass
+the sample test SHALL carry `candidate_block`: the class the ladder gives it
+with the `ignored-local-files` rung skipped, when that class is not
+`merged-removable`, or else the first gate before `deferred-target-cap` that it
+fails, so that its value is one of the existing class names or gate reasons.
+Every other row, and every row of a plan of `--action push` or `--action
+delete-branch`, SHALL carry `candidate_block` null. Computing it SHALL spawn no
+Git child.
 
 `cache_disposal` SHALL be present on a worktree row exactly when its
 `ignored_files` is above 0, and on a `selected` entry exactly when the plan
@@ -897,6 +943,7 @@ SHALL be an object of:
 - `disposable` and `blocking`: integers, or null, never 0, when not
   established;
 - `reason`: null or one of the codes above;
+- `candidate_block`: null, or the class or gate reason above;
 - `entries` and `bytes`: the totals of the row's listed caches, or null when
   not established;
 - `paths`: the listed caches in canonical order, each `{path, path_valid_utf8,
@@ -922,23 +969,33 @@ before its removal child is spawned, under the same deadline. The stage SHALL
 start only while more than the 5 s removal floor of the work deadline remains
 and no signal has been received; otherwise the target and every later one SHALL
 be `not-attempted` with `deadline-exceeded`, or with `interrupted`, and nothing
-SHALL be deleted. The same two checks SHALL run again after the whole-list
-preflight and before the first removal, with the same outcome. Each of its
-filesystem calls SHALL run on a daemon thread and get `min(5 s, work remaining
-less the removal floor)`. It SHALL dispose of
-exactly the target's listed caches, as "Cache disposal never follows a symlink
-or leaves its worktree" states. Once it has removed its first entry it SHALL run
-to its end, a signal received meanwhile being only recorded, and the removal
-child SHALL then be spawned, or not, by the sequence's own checks. A stage that
-removes every listed cache SHALL let the sequence go on to the spawn. A stage
-that ends `refused` or `partial` SHALL refuse the target with `state-changed`,
-as "Cleanup revalidates destructive actions" states: no removal child is
-spawned, the target carries its reconciliation, no later target is attempted,
-and the exit status is the first matching row of the table that "Clean records
-a reconcilable result for every removal target" defines, 2 unless a signal or
-the deadline decides it. When the removal floor ends a stage after its first
-removal, every later target SHALL be `not-attempted` with `deadline-exceeded`,
-and the exit status SHALL be 1.
+SHALL be deleted. The same two checks SHALL run again immediately before the
+stage hands its first removal to its worker, after the whole-list preflight and
+once the first listed cache's chain is reopened, with the same outcome; a
+signal recorded after that check SHALL be handled as one received during the
+removals. That hand-off SHALL be the stage's first removal for every rule of
+this requirement and of "Cache disposal never follows a symlink or leaves its
+worktree". Each of its filesystem calls SHALL run on a daemon thread; each read
+SHALL get `min(5 s, work remaining less the removal floor)`, and each unlink and
+directory removal SHALL be handed over and waited for as "Clean bounds its Git
+work and reports omitted work" states. It SHALL dispose of exactly the target's
+listed caches, as "Cache disposal never follows a symlink or leaves its
+worktree" states. Once it has handed over its first removal it SHALL run to its
+end, a signal received meanwhile being only recorded, and the removal child
+SHALL then be spawned, or not, by the sequence's own checks. A stage that
+removes every listed cache SHALL let the sequence go on to the spawn, and a
+target whose removal child those checks then do not spawn, because a signal had
+been received or less than the removal floor remained, SHALL be `not-attempted`
+with `interrupted` or `deadline-exceeded` and SHALL carry its reconciliation. A
+stage that ends `refused` or `partial` SHALL refuse the target with
+`state-changed`, as "Cleanup revalidates destructive actions" states: no
+removal child is spawned, the target carries its reconciliation, no later
+target is attempted, and the exit status is the first matching row of the table
+that "Clean records a reconcilable result for every removal target" defines, 2
+unless a signal or the deadline decides it. When the removal floor ends a stage
+after its first removal, or the removal ceiling ends the wait for one of its
+removals, every later target SHALL be `not-attempted` with
+`deadline-exceeded`, and the exit status SHALL be 1.
 
 An apply-result target SHALL carry `cache_disposal` exactly when its plan
 listed at least one cache for it, and SHALL carry no such key otherwise, never
@@ -947,24 +1004,35 @@ and `reason` SHALL be `disposed` with null, `refused` with `cache-changed`,
 `partial` with `cache-partial`, or `not-attempted` with `target-stopped` when
 the target's revalidation refused it,
 or the run stopped, was interrupted or reached the deadline, before its stage
-started; `paths` SHALL list each listed cache as `{path, path_valid_utf8, kind,
-removed}`, `removed` being true when the stage removed it or its rescan found it
-absent, false when it remains, and null when that is not established; `entries`
-SHALL be the planned count and `entries_removed` the entries removed.
-`operations.performed` SHALL count each entry removed.
+started or before the hand-off of its first removal; `paths` SHALL list each
+listed cache as `{path, path_valid_utf8, kind, removed}`, `removed` being true
+when the stage removed it or its rescan found it absent, false when it remains,
+and null when that is not established or when a removal of it is still
+outstanding, whatever its rescan finds; `entries` SHALL be the planned count and
+`entries_removed` the number of removals that returned having removed their
+entry. `operations.performed` SHALL count each such removal once, and a removal
+still outstanding SHALL count in neither.
 
 The human preview SHALL list under each selected target with listed caches the
 number of its cache paths, entries and bytes and its first cache path. An
 `ignored-local-files` exclusion SHALL add its `disposable` and `blocking`
-counts, each printed `unknown` with the reason when null, and its first blocking
-path when established. The confirmation question SHALL stay as "Clean previews
-and applies a batch of eligible worktree removals in one repository" states it.
-A successful apply SHALL add one line naming how many cache paths were disposed
-of in how many worktrees. A run that stops at a target whose cache stage ended
-`refused` or `partial` SHALL print, before its stop block, one line naming that
-target and saying that nothing was deleted, or how many of its cache paths were
-removed and which remain, with the command that shows a fresh plan for the
-rest. The residual-window line SHALL be the one that "Cleanup states a narrow
+counts, each printed `unknown` with the reason when null, its first blocking
+path when established, its `candidate_block` with that class's or gate's next
+step when it has one, and, for `cache-unwritable`, the next step to fix the
+ownership or mode of its caches and re-run. The confirmation question SHALL
+stay as "Clean previews and applies a batch of eligible worktree removals in
+one repository" states it. A successful apply SHALL add one line naming how
+many cache paths were disposed of in how many worktrees. A run that stops at a
+target whose cache stage ended `refused` or `partial` SHALL print, before its
+stop block, one line naming that target and saying that nothing was deleted,
+only when no entry was removed and no removal is outstanding, or else how many
+of its cache paths were removed, which remain and which a removal still
+outstanding may still remove, naming the work deadline as the cause, and not a
+change of state, when the deadline ended the stage, with the command that shows
+a fresh plan for the rest. A run that stops after a target's cache stage ended
+`disposed` and before its removal child was spawned SHALL print `Cache disposal
+at PATH: removed N cache paths; the worktree was not removed.` before its stop
+block. The residual-window line SHALL be the one that "Cleanup states a narrow
 guarantee and its residual window" states.
 
 #### Scenario: A merged worktree whose only ignored files are caches
@@ -986,6 +1054,9 @@ guarantee and its residual window" states.
 - **AND** on a copy, `--apply --action remove --worktree` naming it with `--yes`
   does the same, where before this change it refused with `target-excluded`,
   reason `ignored-local-files`
+- **AND** on a copy whose branch's upstream remote-tracking ref was deleted, the
+  branch still merged, the row is still a candidate and `merged-removable`, its
+  caches are disposed of, and the worktree is removed, its branch kept
 
 #### Scenario: Caches beside a blocking ignored file
 
@@ -1007,14 +1078,18 @@ guarantee and its residual window" states.
 
 #### Scenario: Unknown counts are null, never zero
 
-- **WHEN** one linked worktree holds ignored caches and its branch is not
-  merged, a second, merged one holds no ignored file, and a third's status probe
-  fails
+- **WHEN** one linked worktree holds ignored caches and its branch, pushed and
+  level with its upstream, is not merged, a second, merged one holds no ignored
+  file, and a third's status probe fails
 - **THEN** the first has `cache_disposal.reason: "not-candidate"` with
   `disposable`, `blocking`, `entries`, `bytes`, `paths`, `directories` and
   `blocking_samples` null, and the human report prints its counts as `unknown`
 - **AND** neither the second, whose `ignored_files` is 0, nor the third, whose
   `ignored_files` is null, carries a `cache_disposal` key
+- **AND** the first's `cache_disposal.candidate_block` is `pushed-unmerged`,
+  and its preview line names that class and its next step, not the advice to
+  delete ignored files; a detached worktree holding only caches names
+  `detached`
 
 #### Scenario: Cache caps
 
@@ -1031,14 +1106,23 @@ guarantee and its residual window" states.
   removes sixteen, and a second run removes the seventeenth
 - **AND** when nine candidates each hold caches of 500 entries, the first eight
   are selected and the ninth stays `ignored-local-files` with `cache-cap`, its
-  entries not counted toward the 4,096, and its `disposable` and `entries` are
-  established and `blocking` is 0
+  entries not counted toward the 4,096, its `disposable` and `entries` are
+  established and `blocking` is 0, and no stall line is printed, since it drains
+- **AND** when five candidates each hold caches whose regular files total
+  250 MiB, the first four are selected and the fifth stays
+  `ignored-local-files` with `cache-cap`, its bytes not counted toward the
+  1 GiB
 - **AND** when sixteen candidates each hold, beside a cache directory, eight
   ignored loose `.pyc` files that fill their samples and an ignored `zz.env`
   beyond them, and a seventeenth, later in canonical order, holds only caches,
   every run enumerates the sixteen, each stays `ignored-local-files` with
   `blocking: 1`, the seventeenth stays `ignored-local-files` with `cache-cap`,
-  and the human report says why it will not drain
+  and the human report's line says that the 16 ahead of it hold ignored files
+  that are not caches, with that next step
+- **AND** when the sixteen instead each hold one `__pycache__` directory of 600
+  entries, each stays `ignored-local-files` with `cache-cap`, and the line
+  names the per-worktree cache cap with its next step, to delete their caches
+  and re-run
 - **AND** when the sixteen instead hold `local.env` among their samples, none
   of them is enumerated, and the seventeenth is enumerated and selected
 
@@ -1065,6 +1149,11 @@ guarantee and its residual window" states.
   "cache-unverified"` and null counts, not `inspection-error`, the plan is
   complete, `--all-safe --apply --yes` removes only the second, the first's
   caches are untouched, and the exit status is 0
+- **AND** the same holds when the child prints no ignored record, or when a
+  test hook makes a filesystem call of the walk fail or outlive its budget
+- **AND** when the work deadline passes while that cache enumeration child
+  runs, the plan is incomplete with `deadline-exceeded`, the preview exits 1,
+  and `--apply` refuses with exit 2 before any mutation
 
 #### Scenario: A partial cache phase
 
@@ -1090,24 +1179,59 @@ guarantee and its residual window" states.
   every later target are `not-attempted` with `deadline-exceeded`, its
   `cache_disposal` is `not-attempted` with `target-stopped`, and the exit status
   is 1
+- **AND** when more than the floor remains as the stage starts but no more than
+  the floor remains at the check before the hand-off of its first removal,
+  after its whole-list preflight, nothing is deleted, its `cache_disposal` is
+  `not-attempted` with `target-stopped`, it and every later target are
+  `not-attempted` with `deadline-exceeded` and `reconciliation: null`, and the
+  exit status is 1
 
 #### Scenario: The removal floor reached during a cache stage
 
 - **WHEN** a selected target lists two caches, a later target is selected, and
-  a test hook holds the stage's call after the first cache's removal until no
-  more than the 5 s removal floor of the work deadline remains
+  a test hook delays the stage after the first cache's removal and before it
+  hands over the second cache's first removal, until no more than the 5 s
+  removal floor of the work deadline remains
 - **THEN** the stage ends `partial` with `cache-partial`, the first cache stays
-  removed and the second remains, the target is `refused` with `state-changed`
-  and carries its reconciliation, no removal child is spawned, the later target
-  is `not-attempted` with `deadline-exceeded`, and the exit status is 1
+  removed and the second remains, its rescan establishing `removed: false`
+  within the reconciliation reserve, the target is `refused` with
+  `state-changed` and carries its reconciliation, no removal child is spawned,
+  the later target is `not-attempted` with `deadline-exceeded`, and the exit
+  status is 1
+- **AND** before the stop block the human result says that the work deadline
+  ended the stage after removing 1 of 2 cache paths, names the one that
+  remains and gives the command for a fresh plan, and does not say that the
+  worktree's state changed
 
 #### Scenario: A signal during a cache stage
 
-- **WHEN** SIGINT arrives after a cache stage has removed its first entry
+- **WHEN** SIGINT arrives after a cache stage has handed over its first removal
 - **THEN** the stage removes the rest of its listed caches and records
   `disposed`, no removal child is spawned for that target, the target and every
-  later one are `not-attempted` with `interrupted`, and the exit status is 130
-- **AND** SIGINT before the stage's first removal, during its whole-list
-  preflight included, leaves every cache in place, and the target is
-  `not-attempted` with `interrupted` and its `cache_disposal` `not-attempted`
-  with `target-stopped`
+  later one are `not-attempted` with `interrupted`, the target carrying its
+  reconciliation and every later one `reconciliation: null`, and the exit
+  status is 130
+- **AND** before the stop block the human result says that the target's caches
+  were removed and its worktree was not
+- **AND** SIGINT before that check, the one immediately before the hand-off of
+  the stage's first removal, during its whole-list preflight and while the
+  first listed cache's chain is reopened included, leaves every cache in place,
+  and the target is `not-attempted` with `interrupted` and its
+  `cache_disposal` `not-attempted` with `target-stopped`
+
+#### Scenario: An unwritable cache directory is kept, not a stop
+
+- **WHEN** a merged, clean, published linked worktree's only ignored files are
+  caches and its `__pycache__` directory is mode 0555, beside a later plain
+  eligible worktree, and `--all-safe --apply --yes` runs as a user other than
+  root
+- **THEN** the first is `ignored-local-files` with `cache_disposal.reason:
+  "cache-unwritable"`, its `disposable` and `entries` established and
+  `blocking` 0, it is not selected, nothing in it is deleted, the second is
+  removed, and the exit status is 0
+- **AND** its preview line names `cache-unwritable` with the next step to fix
+  the ownership or mode of its caches and re-run, and a re-run plans the same
+- **AND** when the access check passes but a test hook makes the stage's first
+  unlink fail with `EACCES` or `EROFS`, the stage ends `refused` with
+  `cache-changed` and nothing deleted, the target is `refused` with
+  `state-changed`, and the exit status is 2

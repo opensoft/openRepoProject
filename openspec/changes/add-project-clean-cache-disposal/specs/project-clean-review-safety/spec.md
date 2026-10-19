@@ -244,8 +244,11 @@ change made after Git's own check, SHALL be outside the contract; the
 confirmation and the result SHALL each state this residual window in one line.
 For a target whose plan lists caches, that window SHALL include a cache
 recreated after its cache stage, which Git's non-force removal deletes with the
-worktree, and when the plan selects such a target the residual-window line SHALL
-also name caches recreated after a cache stage. Cleanup SHALL never delete a
+worktree, and ignored files created during its cache stage outside the listed
+caches, which Git's non-force removal deletes with the worktree; when the plan
+selects such a target, the residual-window line SHALL also name ignored files
+created during a cache stage and caches recreated after it. Cleanup SHALL never
+delete a
 branch, so that a branch race cannot lose commits: a branch change seen at
 revalidation SHALL refuse the target with `branch-changed`, and one seen only by
 the rescan after Git removed the worktree
@@ -295,6 +298,9 @@ field null and `reconciled` false, and SHALL stop the run with exit status 1.
 - **THEN** Git removes the worktree with exit 0, the target is `removed`, the
   file is gone, and the confirmation and the result carry the residual-window
   line that names it; this documents the boundary rather than a guarantee
+- **AND** when the hook instead creates an ignored `local.env` at the worktree
+  root during the cache stage, the same holds for that file, and the line also
+  names ignored files created during a cache stage
 
 ## ADDED Requirements
 
@@ -321,7 +327,11 @@ descriptor, and a directory by a removal relative to its parent's descriptor
 only after removing every entry it listed there. It SHALL NOT use a recursive
 deletion, a check by path name followed by a deletion by path name, `git clean`,
 or any child process. A directory that still holds an entry when its removal is
-attempted SHALL be left in place, with that entry untouched.
+attempted SHALL be left in place, with that entry untouched. A worker with a
+call still outstanding (a read abandoned at its budget, or a removal whose wait
+the removal ceiling ended) SHALL be given no further call, and no descriptor
+given to a call still outstanding SHALL be closed before `project` exits, so
+that no later open receives its number.
 
 Before its first removal the stage SHALL run a whole-list preflight: it SHALL
 open and check every directory that the target's `cache_disposal.directories`
@@ -333,20 +343,33 @@ every listed file to be a regular file; and fix the names it will remove. A
 difference, an error, or a filesystem call that runs out of its budget SHALL end
 the stage `refused` with `cache-changed`, nothing deleted.
 
-After its first removal, a removal that fails, a filesystem call that runs out
-of its budget, or the removal floor reached SHALL end the stage. The entries
-already removed SHALL stay removed, recorded as permanent partial cache
-completion. The stage SHALL then rescan every listed cache with an `lstat`
-relative to the worktree root's descriptor that follows no symbolic link, record
-each as removed, remaining or not established, and end `partial` with
-`cache-partial`; the person SHALL be told to re-run for a fresh plan, which
-lists the caches that remain. A stage that ends `refused` or `partial` SHALL be
-followed by no worktree removal and no branch change for that target.
+After its first removal, a removal that fails, a read that runs out of its
+budget, a removal whose wait the removal ceiling ends, or the removal floor
+reached at a hand-off SHALL end the stage. A stage that has handed over its
+first removal SHALL end `disposed` or `partial`, never `refused`, except that a
+stage every one of whose handed-over removals returned without removing its
+entry SHALL end `refused` with `cache-changed`, nothing deleted, as a removal
+refused for a sticky directory or a read-only filesystem, which the plan's
+access check cannot see, ends it. Otherwise the entries already removed SHALL
+stay removed, recorded as permanent partial cache completion. The stage SHALL
+then rescan every listed cache: it SHALL open the chain to the cache's parent
+as its removals do, checking every identity, and `lstat` the cache's name
+relative to that parent without following a symbolic link; a chain that does
+not open, or whose identity differs, SHALL leave that cache `removed: null`;
+the rescan SHALL run as a reconciliation probe, each call on a thread of its
+own, never on the stage's worker, and getting `min(5 s, reserve remaining)`,
+and its first call past its budget SHALL leave that cache and every later one
+`removed: null`. The stage SHALL record each listed cache as removed, remaining
+or not established, and end `partial` with `cache-partial`; the person SHALL be
+told to re-run for a fresh plan, which lists the caches that remain. A stage
+that ends `refused` or `partial` SHALL be followed by no worktree removal and no
+branch change for that target.
 
 Once per invocation, before any cache enumeration, `project clean` SHALL check
 that the running platform provides `O_NOFOLLOW`, `O_DIRECTORY`, and the
-descriptor-relative open, `lstat`, directory listing, unlink and directory
-removal. Where it does not, no row SHALL get a cache plan: no cache enumeration
+descriptor-relative open, `lstat`, directory listing, unlink, directory removal
+and access check with effective ids that follows no symbolic link. Where it
+does not, no row SHALL get a cache plan: no cache enumeration
 SHALL run, every row that holds ignored records SHALL stay `ignored-local-files`
 with `cache_disposal.reason` `cache-unsupported-platform`, and no cache stage
 SHALL run.
@@ -404,6 +427,8 @@ window" states.
   than the plan recorded and refuses with `cache-changed`, nothing is deleted,
   `c.cpython-312.pyc` survives, the target is `refused` with `state-changed`,
   and the exit status is 2
+- **AND** in both cases, before the stop block, the human result reads `Cache
+  disposal at PATH refused (cache-changed); nothing was deleted.`
 
 #### Scenario: A file placed in a cache directory during the stage
 
@@ -421,3 +446,22 @@ window" states.
 - **THEN** no cache enumeration runs, the first is `ignored-local-files` with
   `cache_disposal.reason: "cache-unsupported-platform"` and its caches are
   untouched, the second is selected and removed, and the exit status is 0
+
+#### Scenario: A removal call that outlives its wait
+
+- **WHEN** a selected target lists two caches and a test hook holds the first
+  unlink of the second listed cache in the stage's worker until the 300 s
+  removal ceiling, counted from its hand-off, has passed, and releases it after
+  the result record is written
+- **THEN** the stage waits for that call rather than abandoning it at the
+  per-call budget, and ends `partial` with `cache-partial`; the second cache is
+  `removed: null` whatever its rescan finds, the held entry is counted in
+  neither `entries_removed` nor `operations.performed`, no further call is
+  given to that worker, no descriptor number the held call received is returned
+  by a later `os.open`, and no entry outside the listed caches is removed
+- **AND** before the stop block the human result names the second cache as one
+  that may still be removed, and does not say that nothing was deleted
+- **AND** when the held call is instead the stage's first removal, the stage
+  still ends `partial` and never `refused`
+- **AND** when the hook holds the second cache's first unlink for 6 s and then
+  lets it return, the stage waits for it, counts its entry and goes on
