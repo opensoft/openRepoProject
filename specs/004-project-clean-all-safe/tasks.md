@@ -513,7 +513,7 @@ T033), when B, D, E and F are; H, guard (T034, T035), when T023 is, beside G
 
 ### Lane F: the child handle, the driver and the runner
 
-- [ ] T018 [P] Add `tests/test_clean_runner.py`, its signal cases run in a
+- [x] T018 [P] Add `tests/test_clean_runner.py`, its signal cases run in a
   child interpreter that loads `project` as the launcher does, each with its
   own timing table (R-29): `test_clean_child_handle_runs_in_its_own_group` (a
   handle runs in its own session and process group with standard input from
@@ -537,7 +537,7 @@ T033), when B, D, E and F are; H, guard (T034, T035), when T023 is, beside G
   that reaping goes through `Popen.poll()` or `Popen.wait(timeout)`, as T022
   allows; a patched `os.waitpid` cannot be the check, because
   `Popen.wait(timeout)` calls it itself; R14, lead ruling R-40).
-- [ ] T019 [P] Add `test_clean_signal_scopes` to `tests/test_clean_runner.py`:
+- [x] T019 [P] Add `test_clean_signal_scopes` to `tests/test_clean_runner.py`:
   `signal_scope()` installs record-only handlers for SIGINT, SIGTERM and SIGHUP
   and a non-blocking wakeup descriptor with `warn_on_full_buffer=False`,
   records only the first signal, and restores the previous handlers and
@@ -547,7 +547,7 @@ T033), when B, D, E and F are; H, guard (T034, T035), when T023 is, beside G
   exception inside a scope, `BaseException` included, kills and reaps every
   live probe group; `Interrupted` and `Terminated` are not `Exception`
   subclasses.
-- [ ] T020 [P] Add to `tests/test_clean_runner.py`:
+- [x] T020 [P] Add to `tests/test_clean_runner.py`:
   `test_clean_filesystem_calls_are_bounded` (`fs_call(fn, *args, budget=...)`
   returns the value, or re-raises the `OSError`, from a daemon thread, and
   returns a timeout outcome at its budget while the thread stays blocked; never
@@ -564,7 +564,7 @@ T033), when B, D, E and F are; H, guard (T034, T035), when T023 is, beside G
   check's result and the common-directory memos included, and its phase,
   `planning` by default; plan review M10, lead ruling R-44: until T035's
   wiring line lands, the test enters `Invocation` directly).
-- [ ] T021 [P] Add `test_clean_git_and_git_text_run_through_the_driver` to
+- [x] T021 [P] Add `test_clean_git_and_git_text_run_through_the_driver` to
   `tests/test_clean_runner.py`: `git()` and `git_text()` run through the
   driver, scrubbed (a `GIT_DIR` naming another repository is ignored), pinned
   and counted, and return what they return today: a `CompletedProcess` with
@@ -607,7 +607,7 @@ T033), when B, D, E and F are; H, guard (T034, T035), when T023 is, beside G
   reading the slot and installing its handlers; and `default_signals`
   restores the handlers in force before the outermost scope was entered
   (R-47); and `Interrupted(BaseException)` and `Terminated(BaseException)`.
-- [ ] T024 [P] Add to region `runner`: to T023's `Invocation`, which T035's
+- [x] T024 [P] Add to region `runner`: to T023's `Invocation`, which T035's
   one wiring line in `main()` enters fresh for each call, the budget, the
   clock, the counters and the memos, the version check's result among them
   (lead ruling R-47); its phase, from T023, is `planning` by default, `apply`
@@ -623,13 +623,13 @@ T033), when B, D, E and F are; H, guard (T034, T035), when T023 is, beside G
   truncated last record or a malformed one, giving `failed` and
   `probe-failed`; `fs_call()`; and `git_version()`. Every timing
   value is read from `TIMING` when called (R-29). T018 to T020 pass.
-- [ ] T025 [P] Reroute `git()` and `git_text()` (`project:68-74`) through
+- [x] T025 [P] Reroute `git()` and `git_text()` (`project:68-74`) through
   `run_bounded()` with `git_argv("probe", ...)`, keeping their names, place,
   signatures and return values; after a failed version check in the invocation
   they spawn nothing and return a failed `CompletedProcess` and `None` (M10);
   `probe()` stays for the children that are not Git. T021 and the 96 tests
   pass.
-- [ ] T026 [P] Add `test_clean_two_handles_share_scrub_termination_and_parsers`
+- [x] T026 [P] Add `test_clean_two_handles_share_scrub_termination_and_parsers`
   to `tests/test_clean_runner.py` (SC-004, SC-012, FR-062, N2, R-30), once T015
   has landed, with the spike's table (probe budget 1 s, grace 0.4 s): handles
   started at once and driven from the test's own selector loop, which calls
