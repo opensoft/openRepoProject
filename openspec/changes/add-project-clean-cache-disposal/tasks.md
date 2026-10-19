@@ -32,7 +32,8 @@ duplicate them, and nothing here is an implementation step.
   lane openRepoProject-3's packet-fidelity findings on `3c08613` and `9ebe9f0`
   (M1 to M5, LOW 1 to LOW 17) applied in the same round; applied by `47242d1`,
   `b6653c0`, `e0a0ad0` and the commit that ticks this task, the
-  `project-overview` delta's B-22 edit held uncommitted (2.2); verified by
+  `project-overview` delta's B-22 edit then held uncommitted, and committed as
+  `9f30fb9` once lane openRepoProject-4 agreed it (2.2); verified by
   "Council Verdicts" in `proposal.md`, one row per council concern id, per
   Codex finding and per lane 3 id, by `clarifications.md`, and by the council
   comment on the pull request.
@@ -47,8 +48,9 @@ duplicate them, and nothing here is an implementation step.
   change 2's "Every protected classifier" in the overview block (proposal,
   Capabilities); `specs/project-overview/spec.md` modifies one requirement of
   change 2 (8 scenarios: 6 byte-exact, 1 edited and 1 added), committed as
-  `b4d3e12` and its B-22 edit held uncommitted until lane openRepoProject-4
-  agrees it (2.2); `design.md` holds D1 to D14 and `clarifications.md` the
+  `b4d3e12`, and its B-22 edit agreed by lane openRepoProject-4 on 2026-10-19
+  and committed as `9f30fb9` (2.2); `design.md` holds D1 to D14 and
+  `clarifications.md` the
   NOTED S-4; verified by `grep -c '^#### Scenario'` on each delta, by a script
   run after the council round that compares every scenario of each of the
   nine MODIFIED blocks with its source text, and by `design.md`'s headings.
@@ -57,8 +59,9 @@ duplicate them, and nothing here is an implementation step.
   `/usr/bin/openspec validate --all --strict` passes every item, and
   `/usr/bin/openspec status --change add-project-clean-cache-disposal --json`
   shows every artifact done; verified by running the three commands on this
-  branch after 1.4, after the alignment fix round and after the council round
-  (the last with the held `project-overview` edit in the worktree). The INFO
+  branch after 1.4, after the alignment fix round, after the council round
+  (the last with the B-22 `project-overview` edit not yet committed) and again
+  after lane 4's agreement and that edit's commit. The INFO
   lines, that the archive would refuse a delta
   whose MODIFIED requirement change 1 or change 2 adds until that change is
   archived, are the expected state for blocks written on sister changes.
@@ -80,25 +83,29 @@ duplicate them, and nothing here is an implementation step.
   this change modifies, and by `/usr/bin/openspec validate
   add-project-clean-cache-disposal --strict` reporting no archive refusal for
   those two deltas.
-- [ ] 2.2 The overview exception agreed (B-14, B-22): lane openRepoProject-4,
+- [x] 2.2 The overview exception agreed (B-14, B-22): lane openRepoProject-4,
   owner of change 2 and feature 005, agrees the diff of
   `specs/project-overview/spec.md`, which carries change 2's "Overview reuses
   the cleanup classifier and merge target" (APO/ov:358) whole with two
   sentences appended to its equality clause, lane 4's precision in its carried
   "Every protected classifier" and one added scenario, and the delta is then
   committed on this branch; verified by lane 4's agreement, cited here, and by
-  the commit's sha. Lane 4 agreed the first diff on 2026-10-19 (lane
+  the commits' shas. Lane 4 agreed the first diff on 2026-10-19 (lane
   openRepoProject-5's log, NOTED of 2026-10-19T22:11:58Z): "#24, the
   classifier block: YES, commit it. It is additions only, my two sentences
   are verbatim, and the new scenario pins the pair and the no-enumeration
-  wrapper." That delta was committed as `b4d3e12`. The council's B-22 reopens
+  wrapper." That delta was committed as `b4d3e12`. The council's B-22 reopened
   this task: its rewording of the two sentences, the third worktree in the
   new scenario's fixture and lane 4's precision in "Every protected
-  classifier" are written in the worktree and held uncommitted until lane 4
-  agrees their diff, which a new NOTED line of the lane's log will record
-  after B-22's diff round. Both agreements are cited by the lane's log
-  records in place of a link, since lane 4 gave them by lane message and not
-  on the pull request (lane 3's LOW 16).
+  classifier" were written in the worktree and held uncommitted until lane 4
+  agreed their diff. Lane 4 agreed it on 2026-10-19, by cross-session message
+  to lane openRepoProject-5, recorded in lane openRepoProject-5's log: "yes,
+  lane 4 agrees to all three edits in held-B2 against b4d3e12, as written".
+  Its one optional point, that "because its cache enumeration proved" could
+  read "because clean's cache enumeration proved", is applied in the delta as
+  committed. That delta was committed as `9f30fb9`. Both agreements are cited
+  by the lane's log records in place of a link, since lane 4 gave them by lane
+  message and not on the pull request (lane 3's LOW 16).
 - [ ] 2.3 Enumeration, walk and stage measured (Open Questions, the caps;
   S-4): the cache enumeration's child, the plan-time walk with its access
   checks, and the cache stage timed warm and cold by change 1's protocol (its

@@ -247,8 +247,8 @@ through `getattr(os, "O_NOFOLLOW", 0)` instead of failing closed.
   Lane openRepoProject-4 agreed the first wording on 2026-10-19 and it was
   committed as `b4d3e12`; B-22's rewording, a third worktree in the new
   scenario's fixture and lane 4's precision in the carried "Every protected
-  classifier" are held uncommitted until lane 4 agrees their diff (`tasks.md`
-  2.2).
+  classifier" were agreed by lane 4 on 2026-10-19 and committed as `9f30fb9`
+  (`tasks.md` 2.2).
 
 ## Rules This Change Keeps
 
@@ -428,8 +428,8 @@ also names the delta text it is written on.
   - Untouched (`:38`): `### Requirement: Cleanup respects configured upstream mappings`.
 - `project-overview` (change 2's twelve ADDED requirements accounted for; no
   canonical spec yet), B-14 and B-22, its first delta agreed by lane
-  openRepoProject-4 on 2026-10-19 and committed as `b4d3e12`, B-22's edit held
-  uncommitted for lane 4's agreement (`tasks.md` 2.2):
+  openRepoProject-4 on 2026-10-19 and committed as `b4d3e12`, B-22's edit
+  agreed by lane 4 on 2026-10-19 and committed as `9f30fb9` (`tasks.md` 2.2):
   - MODIFIED (change 2 ADDED; written on APO/ov:358):
     `### Requirement: Overview reuses the cleanup classifier and merge target`.
     Two sentences are appended to the equality clause: the exception for a
@@ -538,14 +538,18 @@ also names the delta text it is written on.
   on which #23's line for a flagged run with a cache target re-bases (B-16,
   B-19, S-4). `add-project-overview-remote-merge-status` (#25)
   modifies none of this change's requirements (its `project-overview` blocks
-  are "Overview is local and read-only" and "Overview bounds its work and
-  reports what it omitted") and archives after change 2.
+  are "Overview is local and read-only", "Overview bounds its work and reports
+  what it omitted" and "Overview prints a versioned JSON envelope", and its
+  `project-command` block is "Repository inspection requires Git 2.36 and
+  shares one evidence model", which #23 also modifies) and archives after
+  change 2 and after PR #19's amendment of change 1.
 - **Implementation order.** This change's feature builds on feature 004
   (`004-project-clean-all-safe`): its removal sequence, runner, parsers, ladder
   function and envelope. It never alters feature 004's or feature 005's order
   and does not wait for feature 005, but lane openRepoProject-4's agreement on
-  the `project-overview` delta, given on 2026-10-19 for `b4d3e12` and needed
-  again for B-22's held edit, precedes its Speckit handoff (`tasks.md` 2.2).
+  the `project-overview` delta, given on 2026-10-19 for `b4d3e12` and again
+  for B-22's edit, which is committed as `9f30fb9`, precedes its Speckit
+  handoff (`tasks.md` 2.2).
   Whichever realization merges second merges `main` in; never rebase, since
   the organisation ruleset refuses force pushes.
 - **Change 2.** This change modifies one requirement of change 2, "Overview
@@ -777,9 +781,11 @@ NOTED; the table "Council Verdicts" below):
   worktree holding an initialized submodule, which the overview classifies
   `ignored-local-files` and `project clean` classifies `merged-removable` and
   excludes as `contains-submodule`. Both carried "Every protected classifier"
-  scenarios name their ignored file as not a Python bytecode cache. The
-  `project-overview` edit is held uncommitted until lane openRepoProject-4
-  agrees its diff (`tasks.md` 2.2); the `project-clean` edit is committed.
+  scenarios name their ignored file as not a Python bytecode cache. Lane
+  openRepoProject-4 agreed the `project-overview` edit on 2026-10-19, with one
+  optional point, "clean's" for "its" before "cache enumeration", which the
+  committed text takes (`9f30fb9`; `tasks.md` 2.2); the `project-clean` edit
+  is committed.
 - **B-23, `.pytest_cache` and the benefit claimed** (P-1). Why gives the
   measured numbers, and "Behaviour users will notice" says "(measured
   2026-10-19: 13 of 37 such rows)", naming no repository and no host path. The
@@ -968,9 +974,10 @@ Lane additions, with no packet or ruling text behind them:
   `project-overview` delta, were agreed by lane 4 on 2026-10-19 and committed
   as `b4d3e12`. B-22 rewords them to cover every cache-proven row, those that
   `project clean` then excludes included, and to state the second at the
-  classification level, and that edit is held for lane 4's agreement
-  (`tasks.md` 2.2). The alternative, the overview collecting the same
-  evidence, costs its budget and is out of this change's scope.
+  classification level, and that edit was agreed by lane 4 on 2026-10-19 and
+  committed as `9f30fb9` (`tasks.md` 2.2). The alternative, the overview
+  collecting the same evidence, costs its budget and is out of this change's
+  scope.
 - **CD-18, an explicit stage rather than letting Git delete.** Git's non-force
   removal deletes ignored files with the worktree (`BA:319-321`), so proving
   the caches at revalidation and leaving the deletion to Git would be simpler.
@@ -1086,7 +1093,7 @@ openRepoProject-4's precision is the last row.
 | P-1: the evidence counts `.pytest_cache` as a cache, which the allowlist does not, so the change admits about a third of the rows it is sold on | HIGH | VALID (B-23): Why gives the measured 13 of the 20 and 13 of 37; "Behaviour users will notice" says "(measured 2026-10-19: 13 of 37 such rows)", naming no repository; the Open Question is split, `.pytest_cache` going to Brett Heap with the recommendation to admit it here; the third form is not added this round | Why; What Changes; Out of Scope; Decisions; Open Questions; `design.md` Non-Goals, Risks, Open Questions |
 | P-2: a cache-only row that is not a candidate is told to delete its ignored files, though deleting its caches would not make it removable | MEDIUM | VALID (B-24): `candidate_block`, from the existing class and gate enums, printed with its next step; it needs no Git child, so no gap is recorded | What Changes; Decisions; CD-7, CD-13, CD-16; project-clean delta (ADDED, "Unknown counts are null, never zero"); `design.md` D2, D11 |
 | P-3: what the person reads after a stage stops does not match what was deleted or what fixes it | MEDIUM | VALID (B-16, B-17, B-21): the stall line by cause; the line after a `disposed` stage; the deadline-ended partial line; "nothing was deleted" only when nothing was and no removal is outstanding | project-clean delta (ADDED); review-safety delta (ADDED); What Changes; `design.md` D11 |
-| P-4: the overview exception is false for rows that exist today, and the carried "Every protected classifier" scenarios hold only by a design note | MEDIUM | VALID (B-22): the two sentences reworded, a third, submodule-holding worktree in the fixture, lane 4's precision in both carried scenarios, the overview edit HELD for lane 4; "Behaviour users will notice" names the overview's report | project-overview delta (held); project-clean delta (batch block); What Changes; Capabilities; Decisions; CD-17; `design.md` D6, D14; `tasks.md` 1.4, 2.2 |
+| P-4: the overview exception is false for rows that exist today, and the carried "Every protected classifier" scenarios hold only by a design note | MEDIUM | VALID (B-22): the two sentences reworded, a third, submodule-holding worktree in the fixture, lane 4's precision in both carried scenarios, the overview edit agreed by lane 4 on 2026-10-19 and committed; "Behaviour users will notice" names the overview's report | project-overview delta; project-clean delta (batch block); What Changes; Capabilities; Decisions; CD-17; `design.md` D6, D14; `tasks.md` 1.4, 2.2 |
 | S-1: the stage abandons its unlinks at a budget that shrinks to nothing near the floor, and ties its outcomes to the first removal completed | HIGH | VALID (B-16): removals waited for as change 1 waits for its removal child, up to the 300 s ceiling; the hand-off as the one commit point; the second check moved before it (B-17) | bounds and reconcilable-result blocks; both ADDED requirements; What Changes; Rules; Decisions; CD-10, CD-11; `design.md` D1, D4, D7, D8, D12 |
 | S-2: the partial rescan establishes nothing at the floor, and its root-relative `lstat` follows a swapped ancestor | MEDIUM | VALID (B-18): S-2's text; the rescan never on the stage's worker | review-safety delta (ADDED); What Changes; `design.md` D8, D12 |
 | S-3: the residual window widens over the cache stage | MEDIUM | VALID (B-19) as its stated form: the window stated and bounded as measured; the post-stage status probe rejected and recorded | narrow-guarantee block and its scenario; CD-18; Decisions; `design.md` D13, Risks |
@@ -1102,8 +1109,8 @@ openRepoProject-4's precision is the last row.
 | M1: the residual window is silently widened by the cache stage | MEDIUM | applied (B-19) | as S-3 |
 | M2: the signal case contradicts the reconcilable-result block it says it keeps | MEDIUM | applied (B-17) | as AE-3 |
 | M3: the overview delta was missing while the change counted it | MEDIUM | resolved by `b4d3e12` | `specs/project-overview/spec.md` |
-| M4: the overview exception does not cover every case where the two classifications differ | MEDIUM | applied (B-22), held for lane 4 | project-overview delta (held); CD-17 |
-| M5: the second sentence conflicts with change 2's gate rules read at the gate level | MEDIUM | applied (B-22), held for lane 4 | project-overview delta (held); CD-17 |
+| M4: the overview exception does not cover every case where the two classifications differ | MEDIUM | applied (B-22), agreed by lane 4 and committed | project-overview delta; CD-17 |
+| M5: the second sentence conflicts with change 2's gate rules read at the gate level | MEDIUM | applied (B-22), agreed by lane 4 and committed | project-overview delta; CD-17 |
 | LOW 1: "stage values of its own" not acknowledged | LOW | applied: `BA:1319-1320` read as `cache_disposal.stage`'s values | CD-16 |
 | LOW 2: "rescans the worktree" narrowed without saying so | LOW | applied: named as this change's reading | Decisions (B-6); `design.md` D8 |
 | LOW 3: "any ancestor" narrowed to the directories below the root | LOW | applied: named as this change's reading | Rules; `design.md` D7 |
@@ -1114,11 +1121,11 @@ openRepoProject-4's precision is the last row.
 | LOW 8: no cache scenario exercises question 1 | LOW | applied: an upstream-gone, merged, cache-only row, as an AND | project-clean delta (ADDED, "A merged worktree whose only ignored files are caches") |
 | LOW 9: two passages use PR #19's wording without saying it is pending | LOW | applied under L-16 | What Changes (Caps); CD-12, CD-16; Dependencies and Sequencing |
 | LOW 10: the versioned-JSON requirement is called untouched though its lists grow | LOW | applied with change: one CD-16 sentence, the lists read as additive, no MODIFIED block | CD-16 |
-| LOW 11: "Every protected classifier" keeps an unpinned fixture | LOW | applied (B-22), in both carried copies | batch block; project-overview delta (held); `design.md` D14; `tasks.md` 1.4 |
+| LOW 11: "Every protected classifier" keeps an unpinned fixture | LOW | applied (B-22), in both carried copies | batch block; project-overview delta; `design.md` D14; `tasks.md` 1.4 |
 | LOW 12: some rules have no scenario | LOW | applied: one AND each, for the check before the first hand-off, `cache_bytes_total`, a deadline during an enumeration, `cache-unverified` for no ignored record and for a walk call, and the `refused` human line | project-clean delta (ADDED); review-safety delta (ADDED) |
 | LOW 13: D11 says `path_valid_utf8` is always true | LOW | applied: limited to `paths` and `directories` | `design.md` D11 |
 | LOW 14: a floor-ended partial stage is reported as `state-changed` | LOW | declined: QA-3 settled the mapping; the human line names the deadline instead (B-21) | CD-2; project-clean delta (ADDED, "The removal floor reached during a cache stage") |
 | LOW 15: DI:618-624 is not named as departed from | LOW | applied | CD-17 |
 | LOW 16: the task 2.2 tick weakens its own verification | LOW | applied: 2.2 reopened and citing lane 4's agreement by the lane's log records, in place of a link | `tasks.md` 2.2 |
-| LOW 17: three wording issues in the overview delta | LOW | applied (B-22): SHALL wording and the third worktree; the paraphrase in What Changes aligned | project-overview delta (held); What Changes |
+| LOW 17: three wording issues in the overview delta | LOW | applied (B-22): SHALL wording and the third worktree; the paraphrase in What Changes aligned | project-overview delta; What Changes |
 | Lane openRepoProject-4's optional precision on "Every protected classifier" | LOW | applied (B-22), in both carried copies, the overview one a departure from B-14's "plus one scenario" | as LOW 11; Decisions |

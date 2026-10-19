@@ -425,9 +425,11 @@ a gate finding replaces the housekeeping finding "while the classification
 stays" (M5): the exception now covers a worktree that `project clean`
 classifies `merged-removable` because its cache enumeration proved every
 ignored path a listed cache, and the overview SHALL NOT classify a worktree
-`merged-removable` where `project clean` classifies it otherwise. The edit is
-held uncommitted until lane 4 agrees its diff (`tasks.md` 2.2). The council
-measured 3 such submodule rows on this workstation on 2026-10-19.
+`merged-removable` where `project clean` classifies it otherwise. Lane 4
+agreed the edit on 2026-10-19, with one optional point that the committed
+text takes, "clean's" for "its" before "cache enumeration", and it is
+committed as `9f30fb9` (`tasks.md` 2.2). The council measured 3 such
+submodule rows on this workstation on 2026-10-19.
 Feature 005's spec (`specs/005-project-overview/spec.md` on
 `origin/005-project-overview` at `33a1214`, User Story 3 scenario 6) names the
 `ignored-local-files` row of its "Every protected classifier" fixture by its
@@ -740,8 +742,8 @@ ignored local files", as before, and, under B-22 and lane openRepoProject-4's
 precision, change 1's "Every protected classifier" in the batch block and
 change 2's "Every protected classifier" in the overview block, whose THEN
 would otherwise fail on a fixture whose ignored files are caches (lane 3's
-LOW 11). The overview edit departs from B-14's "plus one scenario" and is held
-for lane 4's agreement with the rest of B-22. The new tests' names begin
+LOW 11). The overview edit departs from B-14's "plus one scenario", and lane 4
+agreed it on 2026-10-19 with the rest of B-22. The new tests' names begin
 `test_clean_`, so that feature 004's `git-floor` job, which runs `-k
 test_clean_ -k test_status_ -k test_doctor_` with Git 2.36.6 first on PATH,
 runs them (S-4, `clarifications.md`). The deferred
@@ -817,8 +819,8 @@ cache phase" and "A file placed in a cache directory during the stage".
   `project clean` reads it `merged-removable`, whether or not `project clean`
   then excludes it] -> The safe direction: its suggestion is the read-only
   report, which shows the row's state, and change 2's equality clause states
-  the exception as B-22 words it, the edit held for lane openRepoProject-4's
-  agreement (B-14, B-22; `tasks.md` 2.2).
+  the exception as B-22 words it, the edit agreed by lane openRepoProject-4
+  (B-14, B-22; `tasks.md` 2.2).
 - [A filesystem call stuck in the kernel during the stage] -> A read is
   abandoned after its budget and ends the stage `refused` or `partial`; a
   removal is waited for up to the 300 s removal ceiling, as a removal child is,
@@ -854,8 +856,9 @@ cache phase" and "A file placed in a cache directory during the stage".
    feature 004 merges, with PR #19's amendment of change 1 landed (L-16), or
    PR #19 closed, and the two blocks written on its text re-checked; lane
    openRepoProject-4's agreement on the `project-overview` delta's diff, given
-   on 2026-10-19 for `b4d3e12`, and again on B-22's held diff before its commit
-   (B-14, B-22); the enumeration, the walk and the stage measured (task 2.3).
+   on 2026-10-19 for `b4d3e12`, and again on B-22's diff before its commit as
+   `9f30fb9` (B-14, B-22); the enumeration, the walk and the stage measured
+   (task 2.3).
 3. Local `main` is synced to `origin/main`, then `/speckit.specify` creates the
    one feature under the next free number, 006 or later, recorded once in
    `tasks.md` under "Speckit Handoff"; `/opsx:apply` runs only then.
