@@ -9,15 +9,22 @@ without warranties or conditions of any kind, express or implied.
 from __future__ import annotations
 
 import argparse
+import errno
 import hashlib
 import json
 import os
 from pathlib import Path
 import re
+import selectors
 import shlex
 import shutil
+import signal
+import stat
 import subprocess
 import sys
+import threading
+import time
+import unicodedata
 
 
 class Refused(Exception):
@@ -465,6 +472,61 @@ def discover(target=None):
     if (path / ".project.json").is_file() or (path / ".devcontainer").is_dir():
         return path
     raise Refused(f"No project found at {path}; supply a path or name.")
+
+
+# region timing
+# endregion timing
+
+# region contracts
+# endregion contracts
+
+# region git environment
+# endregion git environment
+
+# region runner
+# endregion runner
+
+# region parsers
+# endregion parsers
+
+# region escaping
+# endregion escaping
+
+# region evidence
+# endregion evidence
+
+# region guard
+# endregion guard
+
+# region dispatcher
+# endregion dispatcher
+
+# region resolution
+# endregion resolution
+
+# region plan
+# endregion plan
+
+# region gates
+# endregion gates
+
+# region reflog
+# endregion reflog
+
+# region index
+# endregion index
+
+# region preview
+# endregion preview
+
+# region apply
+# endregion apply
+
+# region result
+# endregion result
+
+# region push
+# endregion push
 
 
 def repo_state(root):
