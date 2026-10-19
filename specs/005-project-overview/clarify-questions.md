@@ -8,11 +8,13 @@ Lane: openRepoProject-4
 openRepoProject-4 for feature `005-project-overview` on 2026-10-11, after the
 spec's specify step. Each question is one the ratified change
 (`openspec/changes/add-project-overview/`) and feature 004 leave genuinely
-open; what their text settles is in `spec.md`, Clarifications, C-1 to C-21.
+open; what their text settles is in `spec.md`, Clarifications, C-1 to C-36.
 No requirement changes until an answer is given; answers join the spec's
-Clarifications as a later session.
+Clarifications as a later session. Q6 to Q13 were added on 2026-10-19 from
+three read-only reviews of the spec at `3d28710`.
 
-Five questions, in one block.
+Thirteen questions, in one block: Q1 to Q5 asked on 2026-10-11, Q6 to Q13
+added on 2026-10-19.
 
 ---
 
@@ -49,10 +51,10 @@ no cost now, and a later change can relax it once real runs show the need.
 (proposal, Status; `tasks.md` 3.1). Brett Heap's word of
 2026-10-11T16:14:21Z moved the specify step only, and the record says the
 plan and the implementation "still wait for feature 004's code and for his
-word". Feature 004 carries its reviewed plan and its tasks (`5a71f83`), with
-no code yet. The overview drives feature 004's child handle, driver and
-parsers (spec, Dependencies), and the plan re-pins every code citation
-against `main`.
+word". Feature 004 carries its reviewed plan and its tasks at `66d60b6` on
+its branch, and its `project` holds only empty regions and imports. The
+overview drives feature 004's child handle, driver and parsers (spec,
+Dependencies), and the plan re-pins every code citation against `main`.
 
 **Question**: Which state of feature 004 must exist before the plan starts?
 
@@ -144,8 +146,237 @@ open later without a schema change, a new field being additive
 
 ---
 
+## Q6. What `limit` and `omitted` hold on `deadline-exceeded` errors
+
+**Context**: The error object adds `limit` and `omitted` on `scan-limit`
+and `deadline-exceeded` errors (POD:646-648), and the packet defines
+`limit` as "a key of `limits`" (DI:824-825). The change fixes only the
+deadline scan error's count, the candidates not started (POD:181), and
+its exactness (spec C-30). No `limits` key names the deadline, which
+`budget` reports as `invocation_timeout_seconds`, and row-level
+`deadline-exceeded` errors (an in-flight child cut, an unstarted
+candidate's row) are error objects too, with nothing defined for either
+field (fidelity review F-19).
+
+**Question**: What do `limit` and `omitted` hold on `deadline-exceeded`
+errors?
+
+**Recommended:** Option A - It keeps the one count the change defines,
+gives a consumer one fixed key to read, and drops two fields that would
+hold nothing on a row error.
+
+| Option | Description |
+|--------|-------------|
+| A | Amend change 2: only the one `deadline-exceeded` scan error carries them, `limit` being `"invocation_timeout_seconds"` (the `budget` key) and `omitted` the candidates not started; row-level `deadline-exceeded` errors carry neither. |
+| B | Build as written: every `deadline-exceeded` error carries both, `limit` being `"invocation_timeout_seconds"` and a row error's `omitted` being `{"count": null, "exactness": "unknown"}`. |
+| C | Leave both values to the plan, fixed once and recorded in the feature's traceability record. |
+
+---
+
+## Q7. A working directory the overview cannot resolve
+
+**Context**: `current` decides `merged-current` from `merged-removable`
+(change 1's [L]) and means that the overview's working directory lies
+inside the worktree (spec C-25). Design D8 takes the working directory's
+realpath in one bounded task at start. When that task fails (a working
+directory deleted after the shell entered it) or is cut (a hung mount),
+the change names no error and no rule for `current`. A null read as false
+would make the worktree the person stands in `merged-removable` with
+`--all-safe`, which the batch then excludes as current (adversarial
+review A-4).
+
+**Question**: What happens when the working directory's realpath cannot
+be established?
+
+**Recommended:** Option A - It needs no new code or field: the scan error
+makes the run incomplete, and `inspection-incomplete`, a gate the table
+already has, withholds `--all-safe`, in line with [L]'s rule for evidence
+that could not be established.
+
+| Option | Description |
+|--------|-------------|
+| A | Amend change 2: one scan error records it (`os-error`, `probe-timeout` or `deadline-exceeded`, naming the working directory as given), every `current` is null, and each row the ladder would classify `merged-removable` or `merged-current` is `inspection-error` instead, so `inspection-incomplete` withholds `--all-safe` for its repository. |
+| B | As A, but those rows keep a null classification, and their repository's `--all-safe` is withheld under a new gate code added to the gate table (additive within schema 1). |
+| C | Amend change 2's exit rule: the run refuses with exit 2 and `os-error` before listing any root, as for a Git refusal. |
+
+---
+
+## Q8. Strings that are not paths: names, branch names and Git's error text
+
+**Context**: The path rules escape a path's control, format and separator
+code points and its undecodable bytes, and flag it (POD:660-675; spec
+FR-038, FR-045). The change gives no rule for the other strings the report
+takes from the filesystem, a manifest or Git: a row's `name` (a directory
+name, which can hold byte `0xE9` or a newline), a manifest `name` holding
+U+202E, branch names in `branch`, `upstream`, `merge_target.name` and the
+`merge-target-conflict` message (Git allows such bytes and characters in
+them), and the first line of Git's standard error in an error `message`
+and on the `Incomplete:` line. A raw newline there can forge report lines,
+a bidirectional control can reorder them, and an undecodable byte can fail
+the JSON encoding, an exception outside the collector that ends the run
+with exit 2 (adversarial review A-6).
+
+**Question**: How should the overview decode and print strings that are
+not paths?
+
+**Recommended:** Option A - It reuses the path rule the change already
+ratified, so a hostile name stays inside its row and no field is added;
+a validity flag can follow later, additively within schema 1.
+
+| Option | Description |
+|--------|-------------|
+| A | Amend change 2: every such string follows [P]'s path rule, decoded as a path is, each undecodable byte written `\xHH`, each Cc, Cf, Zl or Zp code point escaped by JSON and written `\uXXXX` in human output; no new field. |
+| B | As A, plus a validity flag beside each such field (`name_valid_utf8`, `branch_valid_utf8` and the like), additive within schema 1. |
+| C | Build as written and leave the rule to the plan. |
+
+---
+
+## Q9. Read-only and no-network claims beyond what the pins and the scrub prove
+
+**Context**: The change promises no file write and no network connection
+(POD:710-717; spec FR-040). What change 1's evidence model guarantees is
+narrower: seven protocol pins, seventeen scrubbed names and
+`GIT_OPTIONAL_LOCKS=0` (CMD:98-122). Git still reads the user's and the
+system's configuration and the variables outside the seventeen
+(`GIT_CONFIG_GLOBAL`, `GIT_CONFIG_SYSTEM`, `GIT_CONFIG_NOSYSTEM`, `HOME`,
+`XDG_CONFIG_HOME`, `GIT_CEILING_DIRECTORIES`); it honours trace targets
+(`GIT_TRACE`, `GIT_TRACE2_EVENT`, `trace2.*` settings), which append to
+files; and the status probe runs the clean and process filters a
+repository's attributes name (git-lfs, git-crypt) when it re-hashes a
+tracked file. Such a program can write files or open connections outside
+the pins (spec EC-022; adversarial review A-7). EC-006 records one
+residual only. The user's configuration also carries settings such as
+`status.showUntrackedFiles`, which change 1's scenario "User status
+configuration" expects Git to read, so emptying the configuration
+wholesale would break that scenario.
+
+**Question**: How should the feature treat these residuals?
+
+**Recommended:** Option B - Trace output is a pure side effect and its
+variables are cheap to scrub for every subcommand at once; filters and
+the configuration files cannot be switched off in general, so they are
+recorded honestly beside EC-006 and the read-only wording says what is
+proved.
+
+| Option | Description |
+|--------|-------------|
+| A | Accept every one as a recorded residual beside EC-006 (spec EC-022), and amend change 2's read-only wording to claim only what the pins and the scrub prove. |
+| B | As A for filters and the configuration files; and amend change 1 to add the trace variables (`GIT_TRACE`, `GIT_TRACE2`, `GIT_TRACE2_EVENT`, `GIT_TRACE2_PERF` and the other `GIT_TRACE_*` names) to [E]'s scrub, which `clean`, `status` and `doctor` then share. |
+| C | Amend change 1 to run every Git child with no global or system configuration (`GIT_CONFIG_GLOBAL=/dev/null`, `GIT_CONFIG_NOSYSTEM=1`), which also drops user settings that change 1's scenarios read and changes `clean`'s results. |
+
+---
+
+## Q10. Two layouts the marker table leaves unreported
+
+**Context**: The first matching marker decides a candidate (POD:24-31).
+Two layouts leave a repository out of a complete run (spec EC-025;
+adversarial review A-24): (1) a Git repository `D` whose holder directory
+`D/<name of D>`, holding `family.yaml`, has no `.git`: the holder is the
+candidate, a row with no Git child (spec FR-004), and `D`'s own repository
+is never inspected; (2) a directory whose only marker would be a `.git`
+that is a dangling symbolic link, which "exists as a file or a directory"
+only when the link resolves, so the directory has no marker at all.
+
+**Question**: Should the overview report these repositories?
+
+**Recommended:** Option A - Both layouts are rare, and the marker table
+mirrors the order in which `discover` and `manifest` look (DI:126-128), so
+changing it touches how families are found; recording them costs nothing
+now, and a later change can widen the table once a real case appears.
+
+| Option | Description |
+|--------|-------------|
+| A | No: build the ratified table and keep both layouts as recorded edge cases (spec EC-025). |
+| B | Amend change 2: a `D/.git` beside the holder marker makes `D` a candidate as well (kind `single`), and a `.git` entry that exists as any file type, a dangling link included, is a marker, the probe then failing visibly on that row. |
+| C | Amend change 2 for layout (1) only, keeping a dangling `.git` link as a recorded edge case. |
+
+---
+
+## Q11. A candidate's `.git` that Git does not accept
+
+**Context**: A directory is a `single` candidate when `D/.git` exists as a
+file or a directory (POD:29). When that `.git` is not a repository Git
+accepts (a directory without `HEAD`, a half-deleted clone), Git's
+discovery skips it and walks upward, so the identity probe in `D` can
+report an ancestor's toplevel and common directory, such as a dotfiles
+repository in the home directory above `--root ~/mono/packages`. Nothing
+in change 2 ties the probe's answer to the candidate, so `D` would create
+or join a row for a repository outside every root, with its worktrees,
+its merge target and possibly `project clean <ancestor> --all-safe`, and
+`D`'s broken state would vanish from the report. That breaks "within
+configured roots only" (POD:10) and "Unknown is never healthy"
+(adversarial review A-2).
+
+**Question**: What should the overview do when a candidate's identity
+probe reports a toplevel other than the candidate itself?
+
+**Recommended:** Option A - It keeps discovery inside the roots and shows
+the broken checkout as an error on its own row, with a code the collector
+table already has.
+
+| Option | Description |
+|--------|-------------|
+| A | Amend change 2: such a candidate is an error row (`refused`, its message naming the toplevel Git found) and creates or joins no repository row. |
+| B | Build as written: the candidate joins the repository Git reports, even one outside every root. |
+| C | Record it as an edge case only, with no change to the behaviour. |
+
+---
+
+## Q12. Output failures, the output encoding and the exit-2 codes outside the collector
+
+**Context**: Change 2 does not cover a failed write to standard output
+(`project overview --json | head -c 100` gives `EPIPE`; a full disk gives
+`ENOSPC`) or human output under a locale that cannot encode a printable
+non-ASCII path (`LANG=en_US.ISO-8859-1`). Either raises outside the
+collector, where the change maps every exception to `internal-error` with
+exit 2 (POD:705-707), possibly after part of the output was written. The
+same requirement lists `refused` and `os-error` as exit-2 codes under
+`--json` (POD:675-679), but never says when either applies instead of
+`internal-error` (adversarial review A-19).
+
+**Question**: How should these cases end?
+
+**Recommended:** Option A - Rendering before writing avoids a partial
+document, UTF-8 output keeps paths exact whatever the locale, and the
+mapping gives each listed code a meaning.
+
+| Option | Description |
+|--------|-------------|
+| A | Amend change 2: the whole document or report is rendered before its first byte is written, as UTF-8 whatever the locale; a failed write ends the run with exit 2, no traceback and no retry, every child already reaped; outside the collector a refusal maps to `refused`, an `OSError` to `os-error` and any other exception to `internal-error`. |
+| B | As A for the codes and the failed write, but human output follows the locale's encoding, writing what it cannot encode as `\uXXXX`. |
+| C | Build as written: every such case is `internal-error` with exit 2, and the plan decides rendering and encoding. |
+
+---
+
+## Q13. A root whose canonicalisation is cut
+
+**Context**: Roots are canonicalised, deduplicated by canonical path and
+by device and inode, sorted by their canonical bytes and capped at 32
+(POD:14-16, :217-222). "A root on a hung mount" cuts a root whose
+canonicalisation or listing takes too long and reports it `truncated`
+with a `probe-timeout` scan error (POD:303-306). When canonicalisation
+itself is cut, the root has no canonical path, so its root object's
+`path`, its place in canonical order, its deduplication and its count
+under the root cap are all undefined, while the report's order must be
+fixed (adversarial review A-21).
+
+**Question**: How is such a root reported?
+
+**Recommended:** Option A - It uses the only path the overview holds,
+keeps the order total and stable, and errs toward reporting a root twice
+rather than hiding one.
+
+| Option | Description |
+|--------|-------------|
+| A | Its `path` is the expanded path as given; it sorts by those bytes among the canonical paths, is never deduplicated, and counts toward the 32-root cap. |
+| B | As A, but it sorts after every canonical root and does not count toward the cap. |
+| C | Leave it to the plan, fixed once and recorded in the feature's traceability record. |
+
+---
+
 You can reply with the option letter for each question (e.g., "Q1 A, Q2 A,
-Q3 B, Q4 C, Q5 A"), accept every recommendation by saying "yes" or
-"recommended", or give your own short answer for any of them.
+Q3 B, Q4 C, Q5 A, Q6 A, Q7 A, Q8 A, Q9 B, Q10 A, Q11 A, Q12 A, Q13 A"),
+accept every recommendation by saying "yes" or "recommended", or give your
+own short answer for any of them.
 
 **Path**: `specs/005-project-overview/clarify-questions.md`

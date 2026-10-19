@@ -110,4 +110,16 @@ Lane: openRepoProject-4
   child-handle kinds read `probe`, `removal` and `delegate`. Re-validation:
   16 of 16 items pass, with the checks of iteration 2 re-run by script on the
   edited spec.
+- 2026-10-19: three read-only reviews of `3d28710` (fidelity to change 2,
+  F-1 to F-20; consistency with feature 004, C-1 to C-13; adversarial, A-1
+  to A-25) were applied. Points the change's text, or change 1's shared
+  evidence model, settles are recorded as C-23 to C-36 and folded into the
+  requirements, stories, edge cases (EC-022 to EC-025) and criteria; C-22
+  now rests on change 2's own text, with R-33 cited only as concurring for
+  feature 004. Points the change leaves open are Q6 to Q13 of
+  `clarify-questions.md`, unanswered, each recorded as an open edge case or
+  a cited question where the spec meets it. Re-validation: 16 of 16 items
+  pass; "Requirements are testable and unambiguous" and "Success criteria
+  are measurable" were re-read against the review findings (SC-009,
+  SC-012 and SC-013 rewritten, FR-049's test rules made exact).
 - Items marked incomplete require spec updates before `/speckit-clarify` or `/speckit-plan`
