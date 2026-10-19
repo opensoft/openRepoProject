@@ -11,6 +11,7 @@ load_project() loads `project` under its own module name, `project_clean`,
 separate from the `project_cli` that tests/test_project.py loads, so a test
 patches the module object it calls.
 """
+import collections
 import contextlib
 import errno
 import fcntl
@@ -50,11 +51,12 @@ def _which_git():
 REAL_GIT = _which_git()
 
 # The seventeen names every Git child of `project` runs without, in the order of
-# the Environment requirement (openspec/changes/add-project-clean-all-safe/specs/
-# project-command/spec.md:98-110), and the one name read-only probes set. These
-# are this harness's own transcription: the counting wrapper records them, and
-# CleanCase removes them from the base environment so a child sees only what the
-# test sets.
+# specs/004-project-clean-all-safe/contracts/project-clean.md, "Git children"
+# (:297-301), and the one name read-only probes set. This is the harness's own
+# literal transcription, never imported from project's GIT_SCRUB (lead ruling
+# R-42); test_clean_counting_wrapper_records_and_execs asserts the two equal, in
+# order. The counting wrapper records these names, and CleanCase removes them
+# from the base environment so a child sees only what the test sets.
 SCRUBBED_NAMES = (
     "GIT_ALTERNATE_OBJECT_DIRECTORIES", "GIT_CONFIG", "GIT_CONFIG_PARAMETERS",
     "GIT_CONFIG_COUNT", "GIT_OBJECT_DIRECTORY", "GIT_DIR", "GIT_WORK_TREE",
@@ -191,6 +193,447 @@ def transcript(result):
             f"\n--- stderr ---\n{_text(result.stderr)}")
 
 
+# The counting wrapper (T011; plan review M4; lead rulings R-29 and R-31).
+
+
+def _sh_quote(value):
+    """value (str, bytes or a path) as one single-quoted sh word, as bytes."""
+    data = value if isinstance(value, bytes) else os.fsencode(value)
+    return b"'" + data.replace(b"'", b"'\\''") + b"'"
+
+
+def _write_script(path, text):
+    path = Path(os.fsdecode(path))
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_bytes(text)
+    path.chmod(0o755)
+    return path
+
+
+COUNTED_NAMES = (*SCRUBBED_NAMES, OPTIONAL_LOCKS)  # in this order in each record
+
+_WRAPPER = b"""#!/bin/sh
+# Counting git wrapper (tests/clean_support.py): one record per child, written
+# by one printf before Git runs; fields NUL-terminated: pid, parent pid,
+# process group, working directory, the counted names set, the value of
+# GIT_OPTIONAL_LOCKS, the argument count, each argument, then "end".
+log=@LOG@
+real=@REAL@
+if [ -r @PROC@/$$/stat ]; then
+  read -r s < @PROC@/$$/stat
+  s=${s##*) }; s=${s#* }; s=${s#* }; pgid=${s%% *}
+else
+  pgid=$(ps -o pgid= -p $$); pgid=${pgid##* }
+fi
+cwd=$(pwd -P; printf x); cwd=${cwd%x}; cwd=${cwd%?}
+names=
+@NAMES@
+printf '%s\\0' "$$" "$PPID" "$pgid" "$cwd" "${names# }" "${GIT_OPTIONAL_LOCKS-}" "$#" "$@" end >> "$log"
+@HOOKS@
+exec "$real" "$@"
+"""
+
+_HOOKS = b"""case " $* " in
+*" worktree remove "*)
+  target=; prev=
+  for a in "$@"; do [ "x$prev" = "xremove" ] && target=$a; prev=$a; done
+  status=
+  ( @PRE@
+  )
+  "$real" "$@"
+  status=$?
+  ( @POST@
+  )
+  exit $status;;
+esac
+"""
+
+
+def install_counting_git(bin_dir, log, real=REAL_GIT, hooks=None, proc="/proc"):
+    """Write bin_dir/git, a POSIX sh counting wrapper after the harness spike's
+    SH_WRAPPER (plan review M4, lead ruling R-29), and return its path. Before
+    Git runs it appends to log, with one printf, one record for the child, its
+    fields NUL-terminated and the record ended by an argument count and a final
+    `end` field: the pid, the parent pid, the process group (from
+    /proc/$$/stat, else `ps -o pgid= -p $$`), the working directory (`pwd -P`),
+    which of the seventeen scrubbed names and GIT_OPTIONAL_LOCKS are set (each
+    tested as ${NAME+x}), GIT_OPTIONAL_LOCKS's value, and the argument vector.
+    With no hook it then execs real by absolute path, so the record's pid and
+    process group are Git's own. hooks, a dict with "pre" and/or "post", applies
+    to `worktree remove` only: the wrapper runs the pre-hook, real as its child
+    and the post-hook, then exits with Git's status (128 plus N when Git died
+    of signal N, as sh reports it). Each hook is sh text run in a subshell with
+    Git's arguments as "$@", the worktree being removed as $target and, for the
+    post-hook, Git's status as $status; its output goes to the child's streams,
+    and a hook that needs Git calls REAL_GIT, since PATH still holds this
+    wrapper. real may be a fake (install_fake_git). proc is the procfs root: a
+    test passes a missing directory to take the ps branch."""
+    names = b"\n".join(b'[ -n "${%s+x}" ] && names="$names %s"' % (n.encode(), n.encode())
+                       for n in COUNTED_NAMES)
+    hook_text = b""
+    if hooks:
+        unknown = sorted(set(hooks) - {"pre", "post"})
+        if unknown:
+            raise KeyError(f"install_counting_git: unknown hooks {unknown}")
+        hook_text = (_HOOKS.replace(b"@PRE@", os.fsencode(hooks.get("pre") or ":"))
+                     .replace(b"@POST@", os.fsencode(hooks.get("post") or ":")))
+    text = (_WRAPPER.replace(b"@LOG@", _sh_quote(log)).replace(b"@REAL@", _sh_quote(real))
+            .replace(b"@PROC@", _sh_quote(proc)).replace(b"@NAMES@", names)
+            .replace(b"@HOOKS@", hook_text))
+    Path(os.fsdecode(log)).touch()
+    return _write_script(Path(os.fsdecode(bin_dir)) / "git", text)
+
+
+ChildRecord = collections.namedtuple(
+    "ChildRecord", "pid ppid pgid cwd names optional_locks argv argv_bytes")
+ChildRecord.__doc__ = """One counting-wrapper record: pid, ppid and pgid as ints; cwd as str
+(os.fsencode gives back its bytes); names, the counted names that were set,
+in COUNTED_NAMES order; optional_locks, GIT_OPTIONAL_LOCKS's value or None
+when unset; argv as str (surrogateescape) and argv_bytes as raw bytes."""
+
+
+def child_log(log):
+    """The records of log in the order the children started (the order of their
+    appends), complete records only (lead ruling R-31): a trailing record still
+    being written is left out. A record cut short in the middle of the log means
+    two writers interleaved, and fails loudly."""
+    data = Path(os.fsdecode(log)).read_bytes()
+    fields = data.split(b"\0")[:-1]  # the last piece is after the final NUL
+    records, at = [], 0
+    while at < len(fields):
+        if at + 7 > len(fields):
+            break
+        pid, ppid, pgid, cwd, names, locks, count = fields[at:at + 7]
+        end = at + 7 + int(count)
+        if end >= len(fields):
+            break
+        if fields[end] != b"end":
+            raise AssertionError(f"child_log: malformed record at field {at} of {log}")
+        names = tuple(names.decode().split())
+        argv = fields[at + 7:end]
+        records.append(ChildRecord(
+            int(pid), int(ppid), int(pgid), os.fsdecode(cwd), names,
+            locks.decode() if OPTIONAL_LOCKS in names else None,
+            [os.fsdecode(arg) for arg in argv], argv))
+        at = end + 1
+    return records
+
+
+def reset_child_log(log):
+    """Empty the log, so that only the command under test is counted."""
+    Path(os.fsdecode(log)).write_bytes(b"")
+
+
+# The fake Gits (T011; plan review M21; harness spike item 3). Each is an sh
+# script at bin_dir/git that acts on the commands of its kind and execs real for
+# every other; it can stand behind the counting wrapper as its real. A command is
+# matched by its words anywhere in the argument vector, since the seven protocol
+# pins come first. Events of the Python-backed fakes go to bin_dir/fake-events.jsonl.
+
+FAKE_EVENTS = "fake-events.jsonl"
+
+_FAKE_HEAD = b"""#!/bin/sh
+# Fake git (tests/clean_support.py), kind @KIND@.
+real=@REAL@
+python=@PYTHON@
+events=@EVENTS@
+in_dir() {
+  want=$1; shift; prev=
+  for a in "$@"; do
+    if [ "x$prev" = "x-C" ] && [ "x$a" = "x$want" ]; then return 0; fi
+    prev=$a
+  done
+  return 1
+}
+"""
+
+_FAKE_PY_PRELUDE = r'''
+import json, os, signal, sys, time
+
+
+def log(**fields):
+    fields.setdefault("pid", os.getpid())
+    fields.setdefault("t", time.monotonic())
+    data = (json.dumps(fields) + "\n").encode()
+    fd = os.open(EVENTS, os.O_WRONLY | os.O_APPEND | os.O_CREAT, 0o644)
+    try:
+        os.write(fd, data)
+    finally:
+        os.close(fd)
+
+
+def death_watch():
+    """A helper in its own session, so a kill of the fake's group spares it, that
+    logs the fake's death: the pipe's last write end closes when the fake dies.
+    It confirms its setsid() before the fake goes on (harness spike, item 3)."""
+    fake = os.getpid()
+    r, w = os.pipe()
+    ack_r, ack_w = os.pipe()
+    if os.fork() == 0:
+        os.setsid()
+        os.write(ack_w, b"x")
+        null = os.open(os.devnull, os.O_RDWR)
+        for fd in (0, 1, 2):
+            os.dup2(null, fd)
+        os.close(w)
+        os.read(r, 1)
+        log(event="death", pid=fake)
+        os._exit(0)
+    os.read(ack_r, 1)
+    for fd in (ack_r, ack_w, r):
+        os.close(fd)
+    return w
+'''
+
+_IGNORE_SIGTERM = _FAKE_PY_PRELUDE + r'''
+EVENTS, LIFETIME = sys.argv[1], float(sys.argv[2])
+watch = death_watch()
+signal.signal(signal.SIGTERM, lambda signum, frame: log(event="term"))
+start = time.monotonic()
+log(event="ready", pgid=os.getpgrp(), sid=os.getsid(0), ppid=os.getppid(),
+    sigterm_was_ignored=True)
+while time.monotonic() - start < LIFETIME:
+    time.sleep(max(0.0, LIFETIME - (time.monotonic() - start)))
+log(event="lifetime-ended")
+'''
+
+_TTY_CREDENTIAL = _FAKE_PY_PRELUDE + r'''
+import subprocess
+REAL, EVENTS, ARGV = sys.argv[1], sys.argv[2], sys.argv[3:]
+try:
+    fd = os.open("/dev/tty", os.O_RDWR)
+    foreground = os.tcgetpgrp(fd)
+    os.close(fd)
+    tty, error = "opened", None
+except OSError as exc:
+    tty, error, foreground = "failed", exc.errno, None
+env = {key: value for key, value in os.environ.items()
+       if key not in ("GIT_ASKPASS", "SSH_ASKPASS", "GIT_TERMINAL_PROMPT")}
+fill = subprocess.run([REAL, "-c", "credential.helper=", "-c", "core.askPass=", "credential", "fill"],
+                      input=b"protocol=https\nhost=example.invalid\n\n", capture_output=True, env=env)
+answers = dict(line.split("=", 1) for line in fill.stdout.decode("utf-8", "replace").splitlines() if "=" in line)
+log(event="tty", tty=tty, errno=error, foreground=foreground, pgid=os.getpgrp(),
+    fill_status=fill.returncode, username=answers.get("username"), password=answers.get("password"),
+    fill_stderr=fill.stderr.decode("utf-8", "replace").strip())
+os.execv(REAL, [REAL, *ARGV])
+'''
+
+FAKE_KINDS = (
+    "flood-stderr", "ignore-sigterm", "ignored-5000", "version-2.35.0", "remove-noop",
+    "remove-slow", "remove-exit", "status-fails-in", "status-hangs-in",
+    "ls-files-fails-in", "ls-files-hangs-in", "signal-parent-in", "slow-after-remove",
+    "tty-credential",
+)
+
+
+def install_fake_git(bin_dir, kind, real=REAL_GIT, **options):
+    """Write the fake Git of kind at bin_dir/git and return its path. Every
+    command the kind does not act on is passed to real by exec. The kinds and
+    their options (defaults in brackets):
+
+    flood-stderr [kib=70]: on `status`, kib KiB of "E" on standard error, then
+      the real status.
+    ignore-sigterm [lifetime=30]: on `status`, ignores TERM from its first
+      instruction, logs `ready` (its pgid, sid and ppid), `term` at each SIGTERM
+      and `death` from a helper in its own session, and sleeps until lifetime
+      seconds have passed, past any budget. Python behind an sh prelude.
+    ignored-5000 [count=5000]: on `status`, count NUL-terminated `!! NAME`
+      records, exit 0.
+    version-2.35.0: prints `git version 2.35.0` when --version stands anywhere
+      in the argument vector, behind the seven pins included.
+    remove-noop: on `worktree remove`, exits 0 without removing.
+    remove-slow [seconds=3]: on `worktree remove`, sleeps, then removes for real.
+    remove-exit [status=1]: on `worktree remove`, exits status.
+    status-fails-in, ls-files-fails-in (path) [status=128]: on `status` or
+      `ls-files` with -C path, prints a fatal line on standard error and exits
+      status.
+    status-hangs-in, ls-files-hangs-in (path) [lifetime=30]: the same command
+      sleeps lifetime seconds instead (TERM ends it).
+    signal-parent-in (path) [signal="TERM"]: on `status` with -C path, sends the
+      signal to its parent, project, then runs the real status.
+    slow-after-remove [lifetime=30]: once a `worktree remove` has run, every
+      `worktree list` and `for-each-ref` sleeps lifetime seconds.
+    tty-credential: on `push`, opens /dev/tty, runs the real `git credential
+      fill` for https://example.invalid so that Git prompts there (no helper,
+      no askpass), logs `tty` (whether /dev/tty opened, its errno, the
+      terminal's foreground group, its own group, the answers read), then runs
+      the real push. Python behind an sh prelude.
+
+    No fake relies on signal.sigtimedwait, which macOS lacks."""
+    if kind not in FAKE_KINDS:
+        raise KeyError(f"install_fake_git: unknown kind {kind!r}")
+    bin_dir = Path(os.fsdecode(bin_dir))
+    events = bin_dir / FAKE_EVENTS
+    allowed = {"flood-stderr": {"kib"}, "ignore-sigterm": {"lifetime"}, "ignored-5000": {"count"},
+               "remove-slow": {"seconds"}, "remove-exit": {"status"},
+               "status-fails-in": {"path", "status"}, "ls-files-fails-in": {"path", "status"},
+               "status-hangs-in": {"path", "lifetime"}, "ls-files-hangs-in": {"path", "lifetime"},
+               "signal-parent-in": {"path", "signal"}, "slow-after-remove": {"lifetime"}}
+    unknown = sorted(set(options) - allowed.get(kind, set()))
+    if unknown:
+        raise KeyError(f"install_fake_git: {kind} takes no option {unknown}")
+    if kind.endswith("-in") and "path" not in options:
+        raise KeyError(f"install_fake_git: {kind} needs path")
+    path = _sh_quote(options["path"]) if "path" in options else b""
+    lifetime = str(float(options.get("lifetime", 30))).encode()
+    if kind == "flood-stderr":
+        body = (b'case " $* " in *" status "*)\n'
+                b"  dd if=/dev/zero bs=1024 count=%d 2>/dev/null | tr '\\000' E >&2;;\nesac\n"
+                % int(options.get("kib", 70)))
+    elif kind == "ignore-sigterm":
+        body = (b'case " $* " in *" status "*)\n'
+                b"  trap '' TERM\n"
+                b'  exec "$python" -I -S -c %s "$events" %s;;\nesac\n'
+                % (_sh_quote(_IGNORE_SIGTERM), lifetime))
+    elif kind == "ignored-5000":
+        body = (b'case " $* " in *" status "*)\n'
+                b"  i=0\n"
+                b"  while [ $i -lt %d ]; do printf '!! ignored-%%05d\\0' \"$i\"; i=$((i + 1)); done\n"
+                b"  exit 0;;\nesac\n" % int(options.get("count", 5000)))
+    elif kind == "version-2.35.0":
+        body = b'case " $* " in *" --version "*) echo "git version 2.35.0"; exit 0;; esac\n'
+    elif kind == "remove-noop":
+        body = b'case " $* " in *" worktree remove "*) exit 0;; esac\n'
+    elif kind == "remove-slow":
+        body = (b'case " $* " in *" worktree remove "*) sleep %s; exec "$real" "$@";; esac\n'
+                % str(float(options.get("seconds", 3))).encode())
+    elif kind == "remove-exit":
+        body = (b'case " $* " in *" worktree remove "*) exit %d;; esac\n'
+                % int(options.get("status", 1)))
+    elif kind in ("status-fails-in", "ls-files-fails-in"):
+        word = kind.split("-fails-in")[0].encode()
+        body = (b'if in_dir %s "$@"; then case " $* " in *" %s "*)\n'
+                b'  echo "fatal: %s failed (fake %s)" >&2; exit %d;;\nesac; fi\n'
+                % (path, word, word, kind.encode(), int(options.get("status", 128))))
+    elif kind in ("status-hangs-in", "ls-files-hangs-in"):
+        word = kind.split("-hangs-in")[0].encode()
+        body = (b'if in_dir %s "$@"; then case " $* " in *" %s "*) exec sleep %s;; esac; fi\n'
+                % (path, word, lifetime))
+    elif kind == "signal-parent-in":
+        name = str(options.get("signal", "TERM")).upper().replace("SIG", "", 1).encode()
+        body = (b'if in_dir %s "$@"; then case " $* " in *" status "*) kill -s %s "$PPID";; esac; fi\n'
+                % (path, name))
+    elif kind == "slow-after-remove":
+        body = (b"marker=%s\n"
+                b'case " $* " in\n'
+                b'*" worktree remove "*) "$real" "$@"; status=$?; : > "$marker"; exit $status;;\n'
+                b'*" worktree list "*|*" for-each-ref "*) [ -e "$marker" ] && exec sleep %s;;\nesac\n'
+                % (_sh_quote(bin_dir / "slow-after-remove.marker"), lifetime))
+    else:  # tty-credential
+        body = (b'case " $* " in *" push "*)\n'
+                b'  exec "$python" -I -S -c %s "$real" "$events" "$@";;\nesac\n'
+                % _sh_quote(_TTY_CREDENTIAL))
+    head = (_FAKE_HEAD.replace(b"@KIND@", kind.encode()).replace(b"@REAL@", _sh_quote(real))
+            .replace(b"@PYTHON@", _sh_quote(sys.executable)).replace(b"@EVENTS@", _sh_quote(events)))
+    return _write_script(bin_dir / "git", head + body + b'exec "$real" "$@"\n')
+
+
+def fake_events(bin_dir):
+    """The events the Python-backed fakes logged in bin_dir, complete lines only."""
+    path = Path(os.fsdecode(bin_dir)) / FAKE_EVENTS
+    if not path.exists():
+        return []
+    return [json.loads(line) for line in path.read_bytes().split(b"\n")[:-1] if line]
+
+
+def wait_for_event(bin_dir, event, pid=None, timeout=TIMEOUT):
+    """The first event named event (of pid, when given), polled until it is
+    logged, or None after timeout seconds: the death helper logs on its own
+    time, possibly after project has exited."""
+    deadline = time.monotonic() + timeout
+    while True:
+        for entry in fake_events(bin_dir):
+            if entry["event"] == event and (pid is None or entry["pid"] == pid):
+                return entry
+        if time.monotonic() > deadline:
+            return None
+        time.sleep(0.01)
+
+
+# The D18 and D14 literals (T011; plan review M8), character for character from
+# openspec/changes/add-project-clean-all-safe/design.md D14 (:624-628) and D18
+# (:732-780), the lines specs/004-project-clean-all-safe/contracts/project-clean.md
+# fixes beyond D18 (:156-180), and three baseline texts kept (project at
+# 961c405, :551, :716, :718). This is the tests' own transcription, keyed as
+# TEXT and NEXT_STEPS of project are; test_clean_text_fixtures_equal_the_contract_table
+# checks the two against each other (rule 8). Each placeholder is a str.format
+# field named as the docs spell it ({ROOT}, {PATH}, {BRANCH}, {N}, {K}, {M},
+# {REASON}, ...), except three that stand for a phrase or a list: {NEXT_STEP}
+# for NEXT STEP, {BRANCHES} for B1, B2 and {NOT_ATTEMPTED} for P1, P2. Every
+# other character is literal; [yes/N] is literal text.
+TEXT_FIXTURES = {
+    # D14: the report.
+    "completeness_line_complete": "Report: complete",
+    "completeness_line_incomplete": "Report: incomplete ({CODES})",
+    "selection_line": "--all-safe would select {N}",
+    "selection_line_above_cap": "--all-safe would be incomplete (inspect-cap)",
+    # D18: the preview.
+    "merge_target_line": "Merge target: {NAME} ({SOURCE})",
+    "selected_heading": "Selected ({N}):",
+    "selected_row": "  remove {PATH} [{BRANCH}]",
+    "excluded_heading": "Excluded ({M}):",
+    "excluded_group": "  {REASON} ({K}): {NEXT_STEP}",
+    "excluded_row": "    {PATH} [{BRANCH}]",
+    "ignored_suffix": ": {N} ignored; first: {SAMPLE}",
+    "ignored_suffix_truncated": ": at least {N} ignored; first: {SAMPLE}",
+    "deferral_line": "  deferred-target-cap ({K}): this run removes up to 16; run again: project clean {ROOT} --all-safe --apply",
+    "non_drain_line": "  these deferred rows will not drain while the 16 rows ahead of them are contains-submodule; review those worktrees, then remove them yourself",
+    "residual_window_line": "Not protected: ignored files created or index flags set after the last check, and any change after Git's own check.",
+    "empty_line": "No eligible worktrees",
+    # D18: the question, the wait, the result.
+    "question": "Remove {N} worktrees, keeping {N} branches? [yes/N]",
+    "question_one": "Remove {N} worktree, keeping {N} branch? [yes/N]",
+    "wait_line": "Waiting for git worktree remove {PATH} to finish; a started removal is never interrupted (at most 300 s).",
+    "success_line": "Removed {N}; branches kept: {BRANCHES}.",
+    "stop_block": "Stopped at {PATH} ({REASON}). Removed {K} of {N}. Not attempted: {NOT_ATTEMPTED}. Next: project clean {ROOT} --all-safe",
+    "partial_removal_note": "Probable partial removal: inspect, then git worktree remove --force {PATH} by hand.",
+    # D18: refusal messages and remedies.
+    "target_excluded_gate": "Worktree is excluded: {REASON}; {NEXT_STEP}",
+    "remedy_inspection_incomplete": "repair or remove the inspection-error rows first: git worktree repair, git worktree prune, or remove the row by hand after review",
+    "remedy_inspect_cap": "{N} rows exceed the row cap of {M}; remove worktrees explicitly, or prune stale entries by hand",
+    "remedy_deadline_exceeded": "the run ran out of time; remove worktrees explicitly or re-run",
+    # The contract, beyond D18.
+    "progress_line": "  {STAGE} {PATH}",
+    "progress_line_reason": "  {STAGE} {PATH} ({REASON})",
+    "branches_kept_line": "Branches kept: {BRANCHES}.",
+    "invalid_arguments_all_safe": "--all-safe cannot be combined with --action, --branch or --worktree.",
+    "invalid_arguments_expect_plan": "--expect-plan requires --all-safe and --apply.",
+    "invalid_arguments_expect_plan_value": "--expect-plan takes 64 lowercase hexadecimal characters.",
+    "internal_error": "{TYPE}: {TEXT}",
+    "git_unavailable": "Git is unavailable ({DETAIL}); clean needs Git 2.36 or later.",
+    "git_unavailable_not_found": "not found",
+    "git_unavailable_exit": "exit {N}",
+    "git_unavailable_timed_out": "timed out",
+    "git_unavailable_unparseable_version": "unparseable version",
+    "git_too_old": "Git {VERSION} is older than 2.36; clean needs Git 2.36 or later.",
+    "target_not_repository_root": "Not the main worktree of a repository: {PATH}; pass the repository root.",
+    "unsupported_path_bytes": "The repository path is not valid UTF-8: {PATH}",
+    "manifest_invalid_size": "Manifest {PATH} is larger than 1 MiB.",
+    "plan_incomplete": "The plan is incomplete ({CODE}): {REMEDY}.",
+    "plan_digest_mismatch": "The fresh plan's digest {DIGEST} differs from --expect-plan {EXPECTED}; nothing was changed.",
+    "confirmation_required": "Standard input is not a terminal; pass --yes to apply this plan.",
+    "push_remote_gone": "Cannot push {BRANCH}; its upstream {UPSTREAM} was deleted (remote-gone); review it before it is republished.",
+    # Baseline texts kept (project at 961c405).
+    "target_excluded_current": "Cannot remove the current worktree.",
+    "target_excluded_class": "Worktree is {CLASS}; only clean merged worktrees may be removed.",
+    "no_merge_target": "Cannot determine the default branch from the manifest, origin/HEAD, main, or master.",
+}
+
+# D18's next step by reason (design.md:756-765); every other class keeps its
+# baseline recommendation.
+NEXT_STEP_FIXTURES = {
+    "dirty": "commit or preserve the changes",
+    "ignored-local-files": "move or delete the ignored files by hand",
+    "unstarted-branch": "no commit was made on this branch here since it was created; review, then git worktree remove yourself",
+    "reflog-unavailable": "the branch's reflog is missing, expired or undecidable; review, then git worktree remove yourself",
+    "contains-submodule": "review, then remove the worktree yourself",
+    "hidden-local-state": "review, then remove the worktree yourself",
+    "registration-mismatch": "review, then git worktree repair or git worktree prune, or remove the row by hand",
+    "inspection-error": "review, then git worktree repair or git worktree prune, or remove the row by hand",
+    "locked-worktree": "unlock it yourself if it should go",
+}
+
+
 class CleanCase(unittest.TestCase):
     """The base of the clean test classes. It has no test methods, so a module
     that binds it runs nothing extra. setUp builds what ProjectTests.setUp
@@ -275,6 +718,42 @@ class CleanCase(unittest.TestCase):
     def assert_status(self, result, code):
         self.assertEqual(result.returncode, code, "\n" + transcript(result))
 
+    def path_first(self, bin_dir, env=None):
+        """A copy of env (self.env by default) with bin_dir first on PATH, for a
+        counting wrapper or a fake Git."""
+        env = dict(self.env if env is None else env)
+        env["PATH"] = os.pathsep.join([os.fsdecode(bin_dir), env.get("PATH", "")])
+        return env
+
+    def path_without_git(self, env=None):
+        """A PATH under which no `git` is found: one new directory holding a
+        symbolic link to the first executable of every other name on env's PATH
+        (self.env's by default), so every other tool stays where `project` looks
+        for it."""
+        env = self.env if env is None else env
+        farm = self.base / "path-without-git"
+        farm.mkdir(exist_ok=True)
+        for directory in env.get("PATH", "").split(os.pathsep):
+            if not directory or not os.path.isdir(directory):
+                continue
+            try:
+                entries = list(os.scandir(directory))
+            except OSError:
+                continue  # an unreadable PATH directory offers nothing
+            for entry in entries:
+                link = farm / entry.name
+                if entry.name == "git" or os.path.lexists(link):
+                    continue
+                try:
+                    runnable = entry.is_file() and os.access(entry.path, os.X_OK)
+                except OSError:
+                    continue  # an entry this user cannot stat cannot be run either
+                if runnable:
+                    link.symlink_to(os.path.join(os.path.abspath(directory), entry.name))
+        path = str(farm)
+        self.assertIsNone(shutil.which("git", path=path), "path_without_git() still finds git")
+        return path
+
     def git(self, path, *args, env=None, input=None, check=True):
         """The real git (REAL_GIT, by absolute path; lead ruling R-31) run as
         `git -C PATH ARGS...` in self.env; fails the test on a nonzero exit unless
@@ -334,15 +813,16 @@ class CleanCase(unittest.TestCase):
 
     def merged_worktree(self, branch, path=None, root=None, setup=None):
         """tests/test_project.py:857's recipe, copied: `worktree add -b BRANCH PATH`,
-        a file `work` committed as the branch's own commit, `push -u origin BRANCH`,
-        then `merge --no-ff BRANCH` into root's checked-out branch, the merge
-        target. setup(tree), when given, runs before that commit, so what it
+        a file committed as the branch's own commit, `push -u origin BRANCH`, then
+        `merge --no-ff BRANCH` into root's checked-out branch, the merge target.
+        The file is `work-BRANCH` ("/" read as "-"), not the recipe's `work`, so
+        that every branch has a commit of its own and two never conflict. setup(tree), when given, runs before that commit, so what it
         stages (a gitlink, a submodule) is committed and merged too. Needs an
         origin (bare_remote()). Returns the worktree's path."""
         root = self._root(root)
         tree = self._tree(branch, path)
         self.git(root, "worktree", "add", "-b", branch, tree)
-        (tree / "work").write_text("done")
+        (tree / ("work-" + branch.replace("/", "-"))).write_text("done")
         if setup is not None:
             setup(tree)
         self.commit(tree)
