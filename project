@@ -750,6 +750,182 @@ def git_argv(kind, args):
 # endregion git environment
 
 # region runner
+# Every Git child but the push child runs as a D2 child handle: design D1 and D2
+# as lead ruling R-30 amends them (research.md R4, R5 and R14; data-model.md,
+# "Child handle"). A handle never blocks: terminate_group() sends SIGTERM and
+# returns, and whoever drives the handle calls advance() on every tick, which
+# sends SIGKILL at the kill deadline and then reaps or abandons the child. A
+# child is observed only through Popen.poll() (R14). The grace and the reap wait
+# are read from TIMING when each step starts, never passed in (R-29, M16).
+
+# Every live handle of a read-only kind, so that kill_live_probes() reaches it
+# on any exit path (D1). A removal or delegate handle is never here, since
+# nothing signals it before its ceiling (D9; research.md R4). A reaped handle
+# leaves; an abandoned one stays, so its group is killed again on exit.
+LIVE_PROBES = set()
+
+# The head of a child's standard error kept for its row's message (D1); the
+# rest is counted and dropped.
+STDERR_HEAD_BYTES = 4096
+
+
+class ChildHandle:
+    """One spawned Git child other than the push child (D2; data-model.md,
+    "Child handle"). It holds the Popen, its kind (a key of GIT_KINDS), its
+    process ID, which is also its process group ID, its start time, its budget
+    end and a removal's ceiling end (set by whoever drives it; None for none),
+    its kill and reap deadlines once set, and the first 4 KiB of its standard
+    error. It reads nothing itself: the driver reads both descriptors.
+
+    States: `running` from start(); `terminating` once SIGTERM went to its
+    group; `killing` once SIGKILL went to its group; then `reaped` when
+    Popen.poll() returns a status, or `abandoned` at the reap deadline, which
+    records `probe-timeout` and is never waited on again."""
+
+    def __init__(self, process, kind):
+        self.process = process
+        self.kind = kind
+        self.probe = GIT_KINDS[kind][0]  # read-only: a probe handle (D2)
+        self.pid = process.pid  # also its process group ID (start_new_session)
+        self.started = time.monotonic()
+        self.state = "running"
+        self.budget_end = None
+        self.ceiling_end = None
+        self.kill_at = None
+        self.reap_at = None
+        self.error = None
+        self.stderr_head = bytearray()
+        self.stderr_bytes = 0
+
+    @classmethod
+    def start(cls, argv, cwd, kind):
+        """Spawn argv in cwd as a Git child of kind (D2): standard input from
+        /dev/null, both outputs piped and non-blocking, close_fds, a new session
+        and so a process group of its own (start_new_session, never
+        process_group=0 or preexec_fn; C4), and git_env(kind), which sets
+        GIT_OPTIONAL_LOCKS=0 for the read-only kinds only. A probe handle is
+        registered in LIVE_PROBES. Raises OSError when argv cannot be spawned."""
+        if kind == "push":
+            raise ValueError("the push child runs through execute(), never as a handle (R1)")
+        process = subprocess.Popen(argv, cwd=cwd, env=git_env(kind), stdin=subprocess.DEVNULL,
+                                   stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+                                   close_fds=True, start_new_session=True)
+        handle = cls(process, kind)
+        for stream in (process.stdout, process.stderr):
+            os.set_blocking(stream.fileno(), False)
+        if handle.probe:
+            LIVE_PROBES.add(handle)
+        return handle
+
+    @property
+    def finished(self):
+        return self.state in ("reaped", "abandoned")
+
+    def keep_stderr(self, chunk):
+        """Keep the first 4 KiB of standard error and count every byte (D1)."""
+        room = STDERR_HEAD_BYTES - len(self.stderr_head)
+        if room > 0:
+            self.stderr_head += chunk[:room]
+        self.stderr_bytes += len(chunk)
+
+    def due(self):
+        """The next time this handle needs its driver: the kill deadline while
+        terminating, the reap deadline while killing, else the earlier of its
+        budget end and ceiling end; None when nothing is due."""
+        if self.state == "terminating":
+            return self.kill_at
+        if self.state == "killing":
+            return self.reap_at
+        if self.state == "running":
+            ends = [end for end in (self.budget_end, self.ceiling_end) if end is not None]
+            return min(ends) if ends else None
+        return None
+
+    def reap(self):
+        """The child's exit status, observed without blocking (Popen.poll(),
+        R14), or None while it runs. A running child that has exited is reaped
+        here; a terminating or killing one only through advance(); an abandoned
+        one is never polled again."""
+        if self.state == "abandoned":
+            return None
+        if self.state == "reaped":
+            return self.process.returncode
+        status = self.process.poll()
+        if status is not None and self.state == "running":
+            self._finish("reaped")
+        return status
+
+    def terminate_group(self):
+        """Send SIGTERM to the child's process group, set the kill deadline from
+        TIMING["term_grace"] as it stands now, and return at once (R-30). Only a
+        running handle starts the sequence; a later state is left as it is."""
+        if self.state != "running":
+            return
+        self._signal(signal.SIGTERM)
+        self.state = "terminating"
+        self.kill_at = time.monotonic() + TIMING["term_grace"]
+
+    def advance(self, now):
+        """Take a terminating or killing handle one step on; the driver loop
+        calls it on every tick (R-30). At the kill deadline, or as soon as the
+        leader has exited, SIGKILL goes to the group, which also sweeps any member
+        left, and the reap deadline is set from TIMING["reap_wait"]; the handle is
+        reaped when Popen.poll() returns a status, and abandoned at the reap
+        deadline. Returns True once the handle is reaped or abandoned."""
+        if self.state == "terminating" and (now >= self.kill_at or self.process.poll() is not None):
+            self._signal(signal.SIGKILL)
+            self.state = "killing"
+            self.reap_at = now + TIMING["reap_wait"]
+        if self.state == "killing":
+            if self.process.poll() is not None:
+                self._finish("reaped")
+            elif now >= self.reap_at:
+                self._finish("abandoned")
+        return self.finished
+
+    def close(self):
+        """Close both pipes; the driver unregisters them from its selector first."""
+        for stream in (self.process.stdout, self.process.stderr):
+            if stream is not None:
+                try:
+                    stream.close()
+                except OSError:
+                    pass
+
+    def _signal(self, signum):
+        try:
+            os.killpg(self.pid, signum)
+        except (ProcessLookupError, PermissionError):
+            pass  # the group is gone, or holds only processes past signalling
+
+    def _finish(self, state):
+        self.state = state
+        if state == "reaped":
+            LIVE_PROBES.discard(self)
+        else:
+            self.error = "probe-timeout"  # abandoned: it stays in LIVE_PROBES
+
+
+def kill_live_probes():
+    """Stop every live probe group at once, on any exit path (D1, R-30):
+    SIGTERM to each running group and SIGKILL again to each abandoned one, then
+    all of them advanced together on the tick until each is reaped or abandoned.
+    The whole stop takes at most the grace plus the reap wait in force, however
+    many handles run. Each handle stopped here has its pipes closed."""
+    handles = list(LIVE_PROBES)
+    for handle in handles:
+        if handle.state == "abandoned":
+            handle._signal(signal.SIGKILL)  # killed again, never waited on
+        else:
+            handle.terminate_group()
+    pending = [handle for handle in handles if not handle.finished]
+    while pending:
+        pending = [handle for handle in pending if not handle.advance(time.monotonic())]
+        if pending:
+            due = min(handle.due() for handle in pending)
+            time.sleep(max(0.0, min(TIMING["selector_tick"], due - time.monotonic())))
+    for handle in handles:
+        handle.close()
 # endregion runner
 
 # region parsers
