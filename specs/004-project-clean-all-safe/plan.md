@@ -147,7 +147,8 @@ in the `$'...'` form (FR-041, SC-010).
 ## Citations
 
 The change pins its `project`, test and README citations at `da33d92`
-(proposal, "Dependencies and Sequencing"; `design.md:25-27`), leaving the
+(proposal, "Dependencies and Sequencing"; `design.md:25-27` at `0050f3e`),
+leaving the
 re-pin to this feature. The rule at `961c405`, stated once here; every other
 artifact of this feature cites `961c405`, read with `git show
 961c405:<file>`, since from T004 (`a0368ac`) this branch's `project` differs
@@ -214,7 +215,9 @@ start, not counting time at the question (SC-004); a removal in flight adds
 at most 300 s; each probe child gets `min(5 s, work remaining)` (SC-005);
 each revalidation spawns at most 5 Git children and the final rescan 3
 (SC-006). Task 2.1's fit holds them: at 128 rows and 16 targets the 16th
-removal spawns at 23.6 s with 26.4 s left, and 256 report rows take 19.9 s.
+removal spawns at 23.6 s with 26.4 s left, and 256 report rows take 19.9 s
+(task 2.1's measured medians; D14's model at BA's 150 ms per child gives
+39.15 s and 41.85 s).
 
 **Constraints**: local evidence only and no network (the pins, R1); ASCII in
 all added text; no flag outside `clean`, no configurable limit, and no time

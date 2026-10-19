@@ -334,7 +334,8 @@ scratch directory, never in the repository.
   child. `operations` counts removal children. `estimated` is the packet's
   upper bound for an `--apply` run of this plan (`BA:816-830` at `da33d92`,
   where `BA` is `ideation/brainstorm/project-maintenance-batch-cleanup.md` at
-  `da33d92`, as the change's `proposal.md:25` keys it), in every mode, previews
+  `da33d92`, as the change's `proposal.md:25` at `0050f3e` keys it), in every
+  mode, previews
   included: `probes` is F + W + E + 5T + 3, F the repository-wide children this
   invocation ran (rows 1 to 7, with 2, 4b, 5 or a row 3 repeat when they ran),
   W the status probes, E the hidden-state probes, T the selected targets;

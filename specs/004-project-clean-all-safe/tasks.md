@@ -98,7 +98,8 @@ child's scrubbed names and process group before it `exec`s Git (M4).
 - `tests/test_project.py`: one method rewritten (T046) and one line added to
   its loader (T009).
 - `README.md`, `AGENTS.md` and `.github/workflows/tests.yml`;
-  `specs/004-project-clean-all-safe/` (this file and `traceability.md`); and
+  `specs/004-project-clean-all-safe/` (the feature's documents and
+  `traceability.md`; analyze L8); and
   `openspec/changes/add-project-clean-all-safe/tasks.md`: the four hunks this
   branch already carries there from `4e4b00f` and `dd923ee` (PR #11's
   governance links for tasks 1.6, 2.1 and 2.2, and the Speckit Handoff's
@@ -121,7 +122,10 @@ child's scrubbed names and process group before it `exec`s Git (M4).
    whatever subcommand drives it: "The sixteenth scrubbed name on Git 2.36" and
    the other seven, from "A git that floods standard error" to "A lazy fetch in
    a partial clone is refused locally", so that the floor job's `-k` selection
-   runs them (plan review M14). Unit tests start `test_clean_` as well.
+   runs them (plan review M14). PR #19's "The push child reaches its remote",
+   a scenario of that requirement too, takes `test_clean_`, since `clean
+   --action push` drives it (T074; analyze L2). Unit tests start
+   `test_clean_` as well.
 2. Modules: unittest matches `-k` against `module.Class.method`, so every
    module named `test_clean_*` or `test_status_*` falls wholly inside the floor
    job's `-k test_clean_ -k test_status_ -k test_doctor_` (checked here on
@@ -273,9 +277,10 @@ the `internal-error` guard (R6).
 
 **Lanes**: A, timing (T005 to T007); B, harness (T008 to T011); C, environment
 (T012, T013); D, parsers (T014, T015); and E, escaping (T016, T017) start
-together. F, runner (T018 to T026), starts when A and C are done; G, evidence
-(T027 to T033), when D and F are; H, guard (T034, T035), when T023 is, beside
-G. Landing order: A to E, then F, G and H.
+together. F, runner (T018 to T026), starts when A, B and C are done, T018's
+`complete-at-bound` case and T026 once T015 has landed; G, evidence (T027 to
+T033), when B, D, E and F are; H, guard (T034, T035), when T023 is, beside G
+(analyze L6). Landing order: A to E, then F, G and H.
 
 ### Lane A: the timing table and the launcher
 
@@ -332,8 +337,10 @@ G. Landing order: A to E, then F, G and H.
   recorded pid and process group are Git's own, and the exit status and output
   are the real `git`'s; with hooks, `worktree remove` runs the pre-hook, the
   real `git` as a child and the post-hook in that order and exits with Git's
-  status; a record still being written is never parsed; plan review M4, lead
-  ruling R-31); `test_clean_fake_gits_behave_as_named` (each fake of T011,
+  status; a record still being written is never parsed; the wrapper's
+  seventeen names equal `project`'s `GIT_SCRUB` (analyze L7, lead ruling
+  R-42); plan review M4, lead ruling R-31);
+  `test_clean_fake_gits_behave_as_named` (each fake of T011,
   `version-2.35.0` answering `--version` behind the seven pins);
   `test_clean_register_worktrees_writes_valid_rows` (257 rows written directly
   list back through `git worktree list --porcelain -z`);
@@ -392,7 +399,9 @@ G. Landing order: A to E, then F, G and H.
   NUL-separated and the record terminated: the pid, the parent pid, the process
   group (from `/proc/$$/stat`, else `ps -o pgid= -p $$`), the working directory
   (`pwd -P`), which of the seventeen scrubbed names and `GIT_OPTIONAL_LOCKS`
-  are set (each tested as `${NAME+x}`), and the argument vector. With no hook
+  are set (each tested as `${NAME+x}`; the names a literal transcribed from
+  contracts/project-clean.md, "Git children", never imported from `project`,
+  analyze L7), and the argument vector. With no hook
   it then `exec`s `real` by absolute path, so the record's pid and process
   group are Git's own; for `worktree remove` with hooks set it runs the
   pre-hook, `real` as a child and the post-hook, and exits with Git's status.
@@ -871,8 +880,8 @@ tuples.
   review M12).
 - [ ] T046 [P] [US1] Rewrite
   `test_clean_revalidates_a_worktree_after_confirmation` in
-  `tests/test_project.py` (`:1020-1040`, the only edit to that file;
-  research.md R15): the Namespace gains `all_safe=False` and
+  `tests/test_project.py` (`:1020-1040`; with T009's loader line, the only
+  edits to that file; research.md R15): the Namespace gains `all_safe=False` and
   `expect_plan=None`, with `json=True` and `yes=False`; standard input reads as
   a terminal; the patched removal question (`ask_removal`) dirties the worktree
   and answers `yes`; `clean(args)` returns 2, the one document's target is
@@ -2197,7 +2206,10 @@ verification.
   and passed rather than skipped, so that the floor job's `-k` selection
   catches it (plan review M14).
 - [ ] T130 Run `/usr/bin/openspec validate --all --strict` (1.6.0 or later;
-  plan.md, "Risks and Notes") and confirm every item passes.
+  plan.md, "Risks and Notes") and confirm every item passes; and confirm by
+  script that each of the 10 canonical scenarios the modified requirements
+  keep is byte-identical between the change's deltas and `openspec/specs/`
+  (SC-011; analyze L4).
 - [ ] T131 Run quickstart.md's "Checks on the realization": every added line of
   `project`, `tests`, `README.md`, `AGENTS.md` and `.github` is ASCII; `git
   diff --stat main...HEAD` lists only the files of "Path Conventions"; every
@@ -2224,8 +2236,9 @@ verification.
 ### Phase Dependencies
 
 - **Setup (Phase 1)**: T001, then T002, T003 and T004 at once.
-- **Foundational (Phase 2)**: after T004. Lanes A to E at once; F after A and
-  C; G after D and F; H after T023, beside G. Landing order as the brief sets
+- **Foundational (Phase 2)**: after T004. Lanes A to E at once; F after A, B
+  and C (T018's `complete-at-bound` case and T026 after T015); G after B, D, E
+  and F; H after T023, beside G (analyze L6). Landing order as the brief sets
   it: timing, harness, environment, runner with the parsers and escaping,
   evidence, guard. Blocks every story.
 - **US1 (Phase 3)**: after Phase 2.
@@ -2246,8 +2259,8 @@ verification.
 
 ### Critical Path
 
-Setup, then lanes A and C, F, G, then US1 (T047, then its two lanes), US2, US4,
-the US5 text lane, the US5 removal lane, US6, US8 and Polish.
+Setup, then lanes A, B and C, F, G, then US1 (T047, then its two lanes), US2,
+US4, the US5 text lane, the US5 removal lane, US6, US8 and Polish.
 
 ### Within Each Phase
 
