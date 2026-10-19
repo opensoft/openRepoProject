@@ -570,7 +570,7 @@ T033), when B, D, E and F are; H, guard (T034, T035), when T023 is, beside G
   invocation's version check has failed, `git()` returns a failed
   `CompletedProcess` and `git_text()` `None` without spawning, as the counting
   log shows (FR-053, plan review M10).
-- [ ] T022 [P] Add `ChildHandle`, `LIVE_PROBES` and `kill_live_probes()` to
+- [x] T022 [P] Add `ChildHandle`, `LIVE_PROBES` and `kill_live_probes()` to
   region `runner` of `project`, D2 as lead ruling R-30 amends it: `start`;
   `terminate_group()`, which sends SIGTERM to the group, sets the handle's kill
   deadline from `TIMING["term_grace"]`, read at that call, and returns at once;
@@ -588,7 +588,7 @@ T033), when B, D, E and F are; H, guard (T034, T035), when T023 is, beside G
   sends SIGTERM to every live group at once and advances them together until
   each is reaped or abandoned. No default argument holds a timing value (plan
   review M16).
-- [ ] T023 [P] Add `signal_scope`, `raising_signals` and `default_signals`,
+- [x] T023 [P] Add `signal_scope`, `raising_signals` and `default_signals`,
   each a class with `__enter__` and `__exit__`, since T004 owns the imports
   and `project` imports no `contextlib` (lead ruling R-44), the signal slot,
   `Interrupted(BaseException)` and `Terminated(BaseException)` to region
