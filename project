@@ -101,7 +101,9 @@ def probe(argv, cwd=None):
 
 
 def git(root, *args):
-    return probe(["git", "-C", str(root), *args])
+    run = current_invocation()
+    return git_refusal(run) or run_bounded(("probe", ["-C", str(root), *args], None), None,
+                                           run).completed_process()
 
 
 def git_text(root, *args):
@@ -993,16 +995,91 @@ class Invocation:
     """The state of one run of project (lead ruling R-44 (1)): made fresh by
     each main() call and entered around its dispatch, so that nothing carries
     from one in-process main() call to the next. command is the subcommand's
-    name. It carries the phase, `planning` by default, then `apply`, then
-    `reconciling` (R-44 (3)), and the signal slot: `signal`, the first SIGINT,
-    SIGTERM or SIGHUP recorded, and `second_interrupt`, a later SIGINT
-    received while reconciling."""
+    name. It carries:
+
+    - the phase, `planning` by default, then `apply`, then `reconciling`
+      (R-44 (3)), and the signal slot: `signal`, the first SIGINT, SIGTERM or
+      SIGHUP recorded, and `second_interrupt`, a later SIGINT received while
+      reconciling;
+    - the clock: under `clean`, `work_end` 50 s and `reserve_end` 60 s after
+      the start in the real table (both None for any other command), paused
+      while the removal question waits (pause() and resume());
+    - the per-child budget (child_budget()): 5 s under `clean`, within the
+      time left, and 15 s otherwise (plan review M10);
+    - the counters: `probes`, every Git child other than a removal, and
+      `operations`, the removals (research.md R8; lead ruling R-27);
+    - the memos: `version`, the version check's result, and `common_dirs`,
+      the evidence memoized per common directory.
+
+    Every timing value is read from TIMING when the invocation is made or a
+    method is called (R-29)."""
 
     def __init__(self, command=None):
         self.command = command
         self.phase = "planning"
         self.signal = None
         self.second_interrupt = False
+        self.started = time.monotonic()
+        self.work_end = self.reserve_end = None
+        if command == "clean":
+            self.reserve_end = self.started + TIMING["invocation_deadline"]
+            self.work_end = self.reserve_end - TIMING["reconciliation_reserve"]
+        self._paused_at = None
+        self.probes = 0
+        self.operations = 0
+        self.version = None
+        self.common_dirs = {}
+
+    def now(self):
+        """The clock's time: monotonic, held still while paused."""
+        return time.monotonic() if self._paused_at is None else self._paused_at
+
+    def pause(self):
+        """Stop the clock while the removal question waits: that time does not
+        count, and both deadlines move later by it (FR-031's question; D15)."""
+        if self._paused_at is None:
+            self._paused_at = time.monotonic()
+
+    def resume(self):
+        if self._paused_at is not None:
+            waited = time.monotonic() - self._paused_at
+            self._paused_at = None
+            if self.work_end is not None:
+                self.work_end += waited
+                self.reserve_end += waited
+
+    def work_remaining(self):
+        """Seconds of work left before the work deadline; None without one."""
+        return None if self.work_end is None else self.work_end - self.now()
+
+    def reserve_remaining(self):
+        """Seconds left before the reserve ends; None without a deadline."""
+        return None if self.reserve_end is None else self.reserve_end - self.now()
+
+    def child_budget(self, kind):
+        """(seconds, limit) for the next Git child of kind, or a filesystem call
+        (kind "probe"): under a deadline, min(probe budget, work remaining), or
+        min(probe budget, reserve remaining) while reconciling, with limit
+        `deadline` when the time left is the smaller, else `timeout`; without
+        one, the 15 s budget. A removal or delegate child gets no budget (None):
+        a removal has its own ceiling (D9), and a delegate is unbounded (D-W)."""
+        if kind in ("removal", "delegate"):
+            return None, "timeout"
+        if self.work_end is None:
+            return TIMING["inspect_budget"], "timeout"
+        left = self.reserve_remaining() if self.phase == "reconciling" else self.work_remaining()
+        budget = TIMING["probe_budget"]
+        if left < budget:
+            return max(0.0, left), "deadline"
+        return budget, "timeout"
+
+    def count_child(self, kind):
+        """Count one spawned Git child: a removal in `operations`, any other in
+        `probes` (research.md R8)."""
+        if kind == "removal":
+            self.operations += 1
+        else:
+            self.probes += 1
 
     def __enter__(self):
         _invocations.append(self)
@@ -1031,8 +1108,9 @@ class Invocation:
 
 
 def current_invocation():
-    """The invocation in force; outside any, a fresh default, which no signal
-    handler records into (plan review M10; lead ruling R-44 (1))."""
+    """The invocation in force; outside any, a fresh default: the 15 s budget
+    per Git child, no deadline, and no signal handler recording into it (plan
+    review M10; lead ruling R-44 (1))."""
     return _invocations[-1] if _invocations else Invocation()
 
 
@@ -1204,6 +1282,340 @@ class default_signals:
         _restore_handlers(self._saved)
         self._saved = {}
         return False
+
+
+def signal_wakeup():
+    """The read end of the innermost scope's wakeup pipe, or None when that
+    scope records nothing (raising or default handlers) or none is in force."""
+    return _signal_frames[-1].wake if _signal_frames else None
+
+
+# The one-wide driver (design D1 and D2; data-model.md, "Driver outcome").
+
+# The row error of each outcome (plan review M17); `interrupted` raises
+# Interrupted instead of returning.
+OUTCOME_ERRORS = {
+    "complete": None,
+    "complete-at-bound": None,
+    "failed": "probe-failed",
+    "timeout": "probe-timeout",
+    "deadline": "deadline-exceeded",
+}
+
+
+class RawOutput:
+    """The parser of a child read whole, as probe() reads it: no format and no
+    bound. finish() returns the bytes."""
+
+    bound_reached = False
+
+    def __init__(self):
+        self.data = bytearray()
+
+    def feed(self, chunk):
+        self.data += chunk
+
+    def finish(self):
+        return bytes(self.data)
+
+
+class DriverOutcome:
+    """What run_bounded() returns for one child: `name`, one of `complete`,
+    `complete-at-bound`, `failed`, `timeout` and `deadline`; the parser's
+    `result` (None when the child was cut or its stream did not parse); the
+    exit `status` (None when none was observed); the first 4 KiB of standard
+    error and `stderr_bytes`, the whole count; the child's `pid`; the argument
+    vector; and `detail`, why it failed when no exit status says so. `error` is
+    the outcome's row error (OUTCOME_ERRORS)."""
+
+    def __init__(self, argv, name, result=None, status=None, stderr=b"", stderr_bytes=0,
+                 pid=None, detail=None):
+        self.argv = argv
+        self.name = name
+        self.result = result
+        self.status = status
+        self.stderr = bytes(stderr)
+        self.stderr_bytes = stderr_bytes
+        self.pid = pid
+        self.detail = detail
+
+    @property
+    def error(self):
+        return OUTCOME_ERRORS[self.name]
+
+    def completed_process(self):
+        """The outcome as git() returned it before the driver: a CompletedProcess
+        with text streams decoded as subprocess's text mode decodes them (UTF-8,
+        newlines translated; an undecodable byte kept by surrogateescape), its
+        standard error the 4 KiB head. A child cut at its budget or deadline, one
+        abandoned, or one never spawned gives status 2 and a message, as
+        probe() gives for a timeout or an OSError."""
+        if self.name in ("timeout", "deadline") or self.status is None:
+            message = self.detail or f"git was stopped ({self.error})"
+            return subprocess.CompletedProcess(self.argv, 2, "", message)
+        return subprocess.CompletedProcess(self.argv, self.status, _process_text(self.result or b""),
+                                           _process_text(self.stderr))
+
+    def __repr__(self):
+        return f"DriverOutcome({self.name!r}, status={self.status!r}, detail={self.detail!r})"
+
+
+def _process_text(data):
+    return data.decode("utf-8", "surrogateescape").replace("\r\n", "\n").replace("\r", "\n")
+
+
+def git_refusal(run):
+    """After the invocation's version check failed, the CompletedProcess that
+    git() returns without spawning anything (FR-053, plan review M10), or None
+    while Git may run."""
+    version = run.version
+    if version is None or version.code is None:
+        return None
+    if version.code == "git-too-old":
+        message = TEXT["git_too_old"].format(VERSION=version.text)
+    else:
+        message = TEXT["git_unavailable"].format(DETAIL=version.detail)
+    return subprocess.CompletedProcess(["git"], 2, "", message)
+
+
+def _drain(fd):
+    while True:
+        try:
+            if not os.read(fd, 4096):
+                return
+        except (BlockingIOError, InterruptedError):
+            return
+
+
+def _settle(handle):
+    """After an exception in the driver: a probe handle is stopped now; a
+    removal or delegate handle is waited for, never signalled before a removal's
+    ceiling (D1, D9; research.md R4). Either way it ends reaped or abandoned."""
+    if handle.probe:
+        handle.terminate_group()
+    while not handle.finished:
+        now = time.monotonic()
+        if handle.state == "running":
+            if handle.ceiling_end is not None and now >= handle.ceiling_end:
+                handle.terminate_group()
+            elif handle.reap() is None:
+                try:
+                    handle.process.wait(TIMING["selector_tick"])
+                except subprocess.TimeoutExpired:
+                    pass
+            continue
+        if not handle.advance(now):
+            time.sleep(max(0.0, min(TIMING["selector_tick"], handle.due() - time.monotonic())))
+
+
+def run_bounded(spec, parser, run):
+    """Run one Git child through D1's loop and return its DriverOutcome.
+
+    spec is (kind, args, cwd): the child is git_argv(kind, args) in cwd, a
+    ChildHandle of that kind. parser is an incremental parser of standard
+    output (feed(), finish(), bound_reached), or None to read it whole. run is
+    the Invocation, which gives the budget (child_budget()), counts the child
+    and holds the signal slot.
+
+    One selector holds both pipes, non-blocking, and the read end of the
+    innermost signal scope's wakeup pipe; its timeout is the least of the tick
+    and the handle's next due time. Standard error is drained whenever readable
+    and its first 4 KiB kept. On every tick a terminating or killing handle is
+    advanced (R-30). The outcomes: `complete` when the child exits 0, its
+    streams end and its stream parses; `failed` when it exits nonzero or by a
+    signal, cannot be spawned, or its stream does not parse (a truncated or
+    malformed last record, ParseError); `complete-at-bound` when the parser
+    reaches its bound, the child then stopped; `timeout` when its budget, or a
+    removal's ceiling, passes, or the handle is abandoned; `deadline` when the
+    time left was the budget's limit, or none was left to spawn it. A probe
+    child is stopped, and Interrupted raised, when the slot says so
+    (Invocation.interrupting()); a removal or delegate child never is. On any
+    exception a probe child is stopped and a removal or delegate child waited
+    for before the exception goes on."""
+    kind, args, cwd = spec
+    argv = git_argv(kind, args)
+    probe = GIT_KINDS[kind][0]
+    if probe and run.interrupting():
+        raise Interrupted(run.signal)
+    budget, limit = run.child_budget(kind)
+    if budget is not None and budget <= 0:
+        return DriverOutcome(argv, "deadline", detail="no time was left to start it")
+    if parser is None:
+        parser = RawOutput()
+    try:
+        handle = ChildHandle.start(argv, cwd, kind)
+    except OSError as exc:
+        return DriverOutcome(argv, "failed", detail=f"cannot run {argv[0]}: {exc}")
+    run.count_child(kind)
+    if budget is not None:
+        handle.budget_end = handle.started + budget
+    if kind == "removal":
+        handle.ceiling_end = handle.started + TIMING["removal_ceiling"]
+    out, err = handle.process.stdout.fileno(), handle.process.stderr.fileno()
+    selector = selectors.DefaultSelector()
+    streams = {out, err}
+    for fd in streams:
+        selector.register(fd, selectors.EVENT_READ)
+    wake = signal_wakeup()
+    if wake is not None:
+        selector.register(wake, selectors.EVENT_READ)
+    name = None
+    try:
+        while not handle.finished:
+            now = time.monotonic()
+            if handle.advance(now):
+                break
+            if name is None:
+                due = handle.due()
+                if probe and run.interrupting():
+                    name = "interrupted"
+                elif due is not None and now >= due:
+                    name = limit if handle.budget_end is not None and now >= handle.budget_end else "timeout"
+                elif not streams and handle.reap() is not None:
+                    break
+                if name is not None:
+                    handle.terminate_group()
+                    continue
+            due = handle.due()
+            timeout = TIMING["selector_tick"] if due is None else min(TIMING["selector_tick"], due - now)
+            timeout = max(0.0, timeout)
+            if not streams:
+                try:
+                    handle.process.wait(timeout)
+                except subprocess.TimeoutExpired:
+                    pass
+                continue
+            for key, _ in selector.select(timeout):
+                if key.fd == wake:
+                    _drain(wake)
+                    continue
+                try:
+                    chunk = os.read(key.fd, 65536)
+                except (BlockingIOError, InterruptedError):
+                    continue
+                except OSError:
+                    chunk = b""
+                if not chunk:
+                    selector.unregister(key.fd)
+                    streams.discard(key.fd)
+                elif key.fd == err:
+                    handle.keep_stderr(chunk)
+                elif name is None:
+                    parser.feed(chunk)
+                    if parser.bound_reached:
+                        name = "complete-at-bound"
+                        selector.unregister(out)
+                        streams.discard(out)
+                        handle.terminate_group()
+    except BaseException:
+        _settle(handle)
+        raise
+    finally:
+        selector.close()
+        handle.close()
+    if name == "interrupted":
+        raise Interrupted(run.signal)
+    status = handle.process.returncode if handle.state == "reaped" else None
+    result = detail = None
+    if handle.state == "abandoned":
+        name, detail = "timeout", "the child did not end after SIGKILL"
+    elif name is None or name == "complete-at-bound":
+        try:
+            result = parser.finish()
+        except ParseError as exc:
+            name, detail = "failed", str(exc)
+        else:
+            if name is None:
+                name = "complete" if status == 0 else "failed"
+    return DriverOutcome(argv, name, result, status, handle.stderr_head, handle.stderr_bytes,
+                         handle.pid, detail)
+
+
+def fs_call(fn, *args, budget=None):
+    """Call fn(*args), a filesystem call (lstat, realpath, a read of `.git`,
+    `gitdir`, a reflog or the manifest), on a daemon thread, abandoned at its
+    budget (design D6; the project-clean delta's bounds): return its value,
+    re-raise what it raised, an OSError among them, or, at the budget, return a
+    DriverOutcome `timeout` (or `deadline` when the time left was the limit)
+    while the thread stays blocked. budget defaults to the invocation's
+    per-child budget. Never a concurrent.futures pool, whose shutdown waits for
+    a stuck thread. A probe's interruption rule applies while it waits."""
+    run = current_invocation()
+    limit = "timeout"
+    if budget is None:
+        budget, limit = run.child_budget("probe")
+    if budget <= 0:
+        return DriverOutcome(None, limit, detail="no time was left to start it")
+    box = []
+    done = threading.Event()
+
+    def call():
+        try:
+            box.append((True, fn(*args)))
+        except BaseException as exc:
+            box.append((False, exc))
+        finally:
+            done.set()
+
+    threading.Thread(target=call, name="project fs_call", daemon=True).start()
+    end = time.monotonic() + budget
+    while not done.wait(max(0.0, min(TIMING["selector_tick"], end - time.monotonic()))):
+        if run.interrupting():
+            raise Interrupted(run.signal)
+        if time.monotonic() >= end:
+            return DriverOutcome(None, limit, detail=f"no answer within {budget:g} s")
+    returned, value = box[0]
+    if returned:
+        return value
+    raise value
+
+
+class GitVersion:
+    """The version check's result (FR-053; data-model.md, "Driver outcome"):
+    `code`, None, `git-too-old` or `git-unavailable`; `version`, the numbers
+    read, as (major, minor, patch); `text`, what followed `git version `; and
+    `detail`, the git-unavailable detail as TEXT words it."""
+
+    def __init__(self, code, version=None, text=None, detail=None):
+        self.code = code
+        self.version = version
+        self.text = text
+        self.detail = detail
+
+    def __repr__(self):
+        return f"GitVersion({self.code!r}, {self.text!r}, detail={self.detail!r})"
+
+
+GIT_VERSION_LINE = re.compile(r"git version ((\d+)\.(\d+)(?:\.(\d+))?.*)")
+
+
+def git_version(run):
+    """`git --version` once per invocation, memoized on run (FR-053, D17):
+    `git-too-old` below GIT_FLOOR, `git-unavailable` for no git, a nonzero exit
+    or a death by signal, a timeout, or a line it cannot parse; any outcome but
+    `complete` is `git-unavailable`. The child is a probe, scrubbed and
+    pinned."""
+    if run.version is None:
+        outcome = run_bounded(("probe", ["--version"], None), None, run)
+        run.version = _read_git_version(outcome)
+    return run.version
+
+
+def _read_git_version(outcome):
+    if outcome.name in ("timeout", "deadline"):
+        return GitVersion("git-unavailable", detail=TEXT["git_unavailable_timed_out"])
+    if outcome.status is None:
+        return GitVersion("git-unavailable", detail=TEXT["git_unavailable_not_found"])
+    if outcome.name != "complete":
+        status = outcome.status if outcome.status >= 0 else 128 - outcome.status
+        return GitVersion("git-unavailable", detail=TEXT["git_unavailable_exit"].format(N=status))
+    lines = outcome.result.decode("utf-8", "replace").splitlines()
+    match = GIT_VERSION_LINE.match(lines[0].strip()) if lines else None
+    if not match:
+        return GitVersion("git-unavailable", detail=TEXT["git_unavailable_unparseable_version"])
+    version = (int(match[2]), int(match[3]), int(match[4] or 0))
+    code = "git-too-old" if version[:2] < GIT_FLOOR else None
+    return GitVersion(code, version, match[1].strip())
 # endregion runner
 
 # region parsers
