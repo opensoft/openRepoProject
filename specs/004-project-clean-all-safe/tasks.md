@@ -221,7 +221,7 @@ regions and contracts every lane writes against.
   matrix, and whichever change lands second merges `main` in. Check that
   the file parses as YAML, that `actionlint` is clean where it is installed,
   and that the selection runs 15 tests at this commit.
-- [ ] T004 [P] Add the regions and contracts to `project`, one writer, nothing
+- [x] T004 [P] Add the regions and contracts to `project`, one writer, nothing
   reading them yet. Imports: `errno`, `selectors`, `signal`, `stat`,
   `threading`, `time` and `unicodedata`, all at once. After `discover()` and
   before `repo_state()`, the empty regions `timing`, `contracts`, `git
