@@ -112,21 +112,24 @@ the revalidation signature and added ladder classes.
   openRepoProject-4's wording. Without `--remote` the requirement holds as
   written. With it, the network clause still binds the `project` process and
   every Git child and does not bind the `gh` children of the ADDED
-  requirement; every other sentence holds; and the credential clause splits:
-  the `project` process reads no credential file, a `gh` child authenticates
-  by the GitHub client's own means, and the overview reads, tests, prints and
-  forwards no credential value (C-7).
+  requirement; every other clause holds, its credential clause excepted; and
+  in place of that clause the `project` process reads no credential file and
+  no profile data the scan does not need, a `gh` child authenticates by the
+  GitHub client's own means, reading what that client reads, and the overview
+  reads, tests, prints and forwards no credential value, the caller's
+  environment excepted, which it passes to a `gh` child unread (C-7).
 - **One addition to "Overview bounds its work and reports what it
   omitted"**, lane openRepoProject-4's fourth option (C-9). The remote-target
   reads are Git children, so `probes.performed` counts them as it counts every
   Git child started, and in a `--remote` run `probes.estimated` gains 1 per
   repository with a queried row and 1 more per such repository whose merge
   target names a usable remote, so that the two stay equal in a complete run.
-  A remote-phase child that reaches its limit or is stopped at the deadline
-  is recorded in its rows' `remote`, never as a row or scan error. Without
-  `--remote` both counts are change 2's, byte for byte; the `gh` requests are
-  counted in `remote.requests` alone, and the `remote` object keeps no
-  `probes` of its own, so a run has one count of Git children.
+  A remote-phase child that exits nonzero, reaches its limit or is stopped at
+  the deadline is recorded in its rows' `remote`, never as a row or scan
+  error. Without `--remote` both counts are change 2's, byte for byte; the
+  `gh` requests are counted in `remote.requests` alone, and the `remote`
+  object keeps no `probes` of its own, so a run has one count of Git
+  children.
 
 ## Rules This Change Keeps
 
@@ -138,8 +141,10 @@ the revalidation signature and added ladder classes.
   nothing, mutates nothing and keeps nothing (DI:1060, "Persistent remote
   caching is deferred").
 - **Credentials are never touched** (DI:1056-1058). The `project` process
-  reads, tests, prints and forwards no credential value; `gh` authenticates by
-  its own path, and a URL with embedded credentials is refused unprinted.
+  reads, tests, prints and forwards no credential value, the caller's
+  environment excepted, which it passes to a `gh` child unread; `gh`
+  authenticates by its own path, and a URL with embedded credentials is
+  refused unprinted.
 - **Unknown is explicit** (DI:1049-1056). Every failure is `unknown` or
   `unavailable` with a reason, never a guess and never `not-found`.
 - **Bounded, inside the overview's run bound.** The remote phase sits inside
@@ -183,27 +188,28 @@ Line numbers are APO/ov's at `961c405`.
     Git children that `probes.performed` counts, `probes.estimated` gains 1
     per repository with a queried row and 1 more per such repository whose
     merge target names a usable remote, the `gh` children are counted in
-    neither, and a remote-phase child stopped at its limit or at the deadline
-    is recorded in its rows' `remote`, never as a row or scan error; without
-    `--remote` both counts stay as change 2 states them. Added scenario: in a
-    complete run `estimated` equals `performed` with and without `--remote`,
-    the `--remote` run's counts exceeding the other's by exactly the
-    remote-target reads, and the `gh` request counted only in
-    `remote.requests`.
+    neither, and a remote-phase child that exits nonzero or is stopped at its
+    limit or at the deadline is recorded in its rows' `remote`, never as a row
+    or scan error; without `--remote` both counts stay as change 2 states
+    them. Added scenario: in a complete run `estimated` equals `performed`
+    with and without `--remote`, the `--remote` run's counts exceeding the
+    other's by exactly the remote-target reads, and the `gh` request counted
+    only in `remote.requests`.
   - MODIFIED (`:709`):
     `### Requirement: Overview is local and read-only`.
     Change 2's whole block and its one scenario stay untouched; a second
     paragraph, in lane openRepoProject-4's wording, says that without
     `--remote` the requirement holds as written, and that with it the network
     clause still binds the `project` process and every Git child and does not
-    bind the `gh` children of the ADDED requirement, every other sentence
-    holding (no fetch, mutation or file write; nothing kept), the credential
-    clause split three ways, and remote evidence labelled as live. Added
-    scenario: a `--remote` run with a fake `gh` leaves the zero-mutation
-    snapshots identical, opens no connection from `project`, sends only the
-    fixed query, again on a second run, and every recorded `gh` environment
-    sets `GH_NO_UPDATE_NOTIFIER=1`, `GH_NO_EXTENSION_UPDATE_NOTIFIER=1` and
-    `GH_PROMPT_DISABLED=1`.
+    bind the `gh` children of the ADDED requirement, every other clause
+    holding (no fetch, mutation or file write; nothing kept) but the
+    credential clause, which is replaced by three clauses that pass the
+    caller's environment to a `gh` child unread, and remote evidence labelled
+    as live. Added scenario: a `--remote` run with a fake `gh` leaves the
+    zero-mutation snapshots identical, opens no connection from `project`,
+    sends only the fixed query, again on a second run, and every recorded
+    `gh` environment sets `GH_NO_UPDATE_NOTIFIER=1`,
+    `GH_NO_EXTENSION_UPDATE_NOTIFIER=1` and `GH_PROMPT_DISABLED=1`.
   - ADDED:
     `### Requirement: Overview reports remote merge evidence on request`.
     The opt-in; the query set; the remote target from the merge target's
@@ -213,8 +219,9 @@ Line numbers are APO/ov's at `961c405`.
     `unavailable` results with their reasons; cancellation on expiry; the row
     `remote` sub-record, on queried rows only, and the envelope `remote`
     object, each absent, never null, where it does not apply (L-10); the
-    freshness sentence; isolation from every local result and from `project
-    clean`; and the human lines. Eleven scenarios.
+    freshness sentence; isolation from every local result, a failed, cut or
+    stopped remote-target read or `gh` child included, and from `project
+    clean`; and the human lines. Twelve scenarios.
   - Untouched (`:10`):
     `### Requirement: Overview discovers projects within configured roots only`
   - Untouched (`:74`):
@@ -246,8 +253,8 @@ Line numbers are APO/ov's at `961c405`.
   structured refusals" included) and `speckit-extension-integration`:
   untouched.
 
-In sum: two MODIFIED and one ADDED requirement in `project-overview`, 27
-scenarios (14, 2 and 11), nothing else.
+In sum: two MODIFIED and one ADDED requirement in `project-overview`, 28
+scenarios (14, 2 and 12), nothing else.
 
 ## Impact
 
@@ -295,12 +302,13 @@ scenarios (14, 2 and 11), nothing else.
   for the MODIFIED base. If change 2's text moves before it archives, these
   blocks re-align before this change is ratified, and any sentence lane
   openRepoProject-4 asks for comes as a follow-up commit.
-- **Lane openRepoProject-4's agreement gates the spec text (C-7, C-9).**
+- **Lane openRepoProject-4's agreement gated the spec text (C-7, C-9).**
   "Overview is local and read-only" and the ADDED requirement were committed
-  after lane openRepoProject-4 read them (2026-10-11). The block of
-  "Overview bounds its work and reports what it omitted", its new scenario,
-  and the ADDED requirement's edits for C-9 and L-10 are committed only
-  after lane openRepoProject-4 agrees their diff.
+  after lane openRepoProject-4 read them (2026-10-11). Lane
+  openRepoProject-4 agreed the block of "Overview bounds its work and reports
+  what it omitted", its new scenario, and the ADDED requirement's edits for
+  C-9 and L-10 on 2026-10-19, and they are committed with its fixes applied
+  (Decisions, "Lane openRepoProject-4's check").
 - **Archives after change 2 (L-5).** Change 2 archives after change 1 and
   after feature 005 merges (APO design.md, Migration Plan 5); this change
   archives after change 2 archives.
@@ -435,23 +443,58 @@ Packet open decisions taken, each citing the text that leaves it open:
   without `--remote` reports what change 2 defines byte for byte, and
   `estimated` keeps its meaning, the Git children the run needs, paired with
   the Git children it started. Two readings of the ruling, both in the block
-  lane openRepoProject-4 is to agree: its sample sentence, "2 per distinct
-  repository whose merge target's remote is read", is written as 1 per
+  lane openRepoProject-4 agreed on 2026-10-19: its sample sentence, "2 per
+  distinct repository whose merge target's remote is read", is written as 1 per
   repository with a queried row plus 1 more where that first read names a
   usable remote, because a merge target that names no remote takes one read,
   not two, and a flat 2 would leave `estimated` above `performed` in a
   complete run, which the pinning scenario forbids; and the block also says
-  that a remote-phase child that reaches its limit or is stopped at the
-  deadline is recorded in its rows' `remote`, never as a row or scan error,
-  because once the reads are counted as that requirement's Git children its
-  "its row recorded `probe-timeout`" and "recorded `deadline-exceeded`"
-  (APO/ov:176-178) would otherwise make them row errors, against the ADDED
-  requirement's isolation clause, and L-3 settles such a contradiction in the
-  MODIFIED block, not from the ADDED one. Rejected: the first draft's own
-  `remote.probes` beside the envelope's (two counts of Git children, and
-  change 2's "every Git child" read as collection's alone).
+  that a remote-phase child that exits nonzero, reaches its limit or is
+  stopped at the deadline is recorded in its rows' `remote`, never as a row
+  or scan error, because once the reads are counted as that requirement's Git
+  children its "its row recorded `probe-timeout`" and "recorded
+  `deadline-exceeded`" (APO/ov:176-178) would otherwise make them row errors,
+  against the ADDED requirement's isolation clause, and L-3 settles such a
+  contradiction in the MODIFIED block, not from the ADDED one. Rejected: the
+  first draft's own `remote.probes` beside the envelope's (two counts of Git
+  children, and change 2's "every Git child" read as collection's alone).
 - **CI, C-10**: L-12 applied to the proposal, design and tasks; every CI
   statement names the current matrix.
+- **Lane openRepoProject-4's check, 2026-10-19** (its check of the held spec
+  against change 2's text at `961c405`, which found that the carve-out's
+  "every other sentence" still bound a `gh` child to read no credential
+  file, that "forward no credential value" conflicted with the environment
+  passed to `gh`, and that a failed, cut or stopped remote-target read was
+  only implied to leave the local result unchanged): lane openRepoProject-4
+  agreed on 2026-10-19 with "YES to all three departures" and "Commit H with
+  these fixes in place of c8a9f30's spec. That needs no further round with
+  me: your bounds block and the three departures stand as agreed", and its
+  fixes are applied in its wording. Its credential fix: in "Overview is
+  local and read-only", every other clause holds in a `--remote` run, its
+  credential clause excepted, and in place of that clause the `project`
+  process reads no credential file and no profile data the scan does not
+  need, a `gh` child reads what the GitHub client reads, and the caller's
+  environment, `GH_TOKEN` included, passes to a `gh` child unread rather
+  than counting as a forwarded credential value. Its three isolation fixes:
+  the ADDED requirement's isolation sentence makes the failure, cut or stop
+  of a remote-target read or of a `gh` child never a row error, a scan error
+  or a finding, `probe-failed`, `probe-timeout` and `deadline-exceeded`
+  notwithstanding, leaving every local result as it is without `--remote`;
+  the block of "Overview bounds its work and reports what it omitted" names
+  a child that exits nonzero beside one that reaches its limit or is
+  stopped; and the ADDED requirement gains the scenario "A failed or held
+  remote-target read stays unknown", its twelfth. Its two optional
+  tightenings of "Probe counts in a remote run" are taken: the first
+  repository's merge target tracks `refs/heads/main`, and the `--remote` run
+  is one in which `remote.completeness` and the envelope's `completeness`
+  are both `complete`. The isolation sentence's last clause, that a remote
+  result is kept nowhere beyond the invocation and so is never a `project
+  clean` input, stays, as a sentence of its own after lane
+  openRepoProject-4's. The `probe-failed` of "Overview isolates one
+  candidate's failure" (APO/ov:333) is named there and not modified, as L-3
+  allows: that requirement's table covers what is "Raised or observed while
+  collecting one candidate" inside the per-candidate boundary
+  (APO/ov:318-326), and the remote-target reads run after collection.
 
 Decisions where the sources and the rulings are silent:
 
@@ -495,9 +538,11 @@ Decisions where the sources and the rulings are silent:
   on every row, which would only restate the row's own `branch`, `head` and
   `merged_into_target`.
 - **No effect on `completeness` or the exit.** The `remote` object carries its
-  own `completeness`. Rejected: an `unknown` result making the run incomplete,
-  which contradicts APO/ov:654-655, unmodified here, and would make every
-  rate-limited `--remote` run exit 1.
+  own `completeness`, and a remote result, or a failed, cut or stopped
+  remote-target read or `gh` child, leaves the envelope's `completeness` and
+  the exit status as they are without `--remote`. Rejected: an `unknown`
+  result making the run incomplete, which contradicts APO/ov:654-655,
+  unmodified here, and would make every rate-limited `--remote` run exit 1.
 - **No early stop** after a rate limit or a `gh` that needs authentication:
   each key is answered on its own. Rejected: stopping at the first, which
   saves at most 63 fast failures but makes which rows are answered depend on

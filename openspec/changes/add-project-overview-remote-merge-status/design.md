@@ -8,7 +8,7 @@ See `proposal.md` for why and what, and the deltas under `specs/` for the
 requirements. `specs/project-overview/spec.md` modifies "Overview bounds its
 work and reports what it omitted" (fourteen scenarios, one of them new) and
 "Overview is local and read-only" (two scenarios, one of them new), and adds
-"Overview reports remote merge evidence on request" (eleven scenarios). The
+"Overview reports remote merge evidence on request" (twelve scenarios). The
 council has not run yet, so there is no `clarifications.md`; its noted
 constraints, once the lane runs it, are answered here by decisions added for
 them.
@@ -166,10 +166,10 @@ and 1 more per such repository whose first read named a usable remote, so
 the two agree in an uncut run. A run without `--remote` counts exactly as
 [B] does at `961c405`. The `remote` object has no `probes` of its own, and
 the `gh` children, which are not Git children, are counted only in
-`remote.requests` (D5). A read that reaches its budget, overruns its output
-cap or is stopped at the deadline is `remote-target-unread` on its rows'
-`remote` and never a row error or a scan error, the exception [B]'s added
-paragraph states (D7, D10).
+`remote.requests` (D5). A read that exits nonzero, reaches its budget,
+overruns its output cap or is stopped at the deadline is
+`remote-target-unread` on its rows' `remote` and never a row error or a scan
+error, the exception [B]'s added paragraph states (D7, D10).
 
 Rejected: parsing `<common_dir>/config` (includes, conditional includes and
 `insteadOf` in other files would disagree with Git, as change 2's design
@@ -382,13 +382,16 @@ as one line. Under `--attention` only shown findings' worktrees get a
 The remote phase starts after classification, findings, gates, suggestions,
 summary counts and completeness are computed, and it writes only into the
 `remote` slots. Nothing it records is a row error, a scan error or a finding,
-[B]'s added paragraph saying so for its stopped children, so [X]'s exit
-status and [J]'s `completeness` are what they are without `--remote`, and
-the envelope's `probes` differs only by D2's reads. Nothing is written to
-disk or kept past the run, `gh` never gets `--cache`, and `project clean`
-has neither the option nor a reader of these fields, so remote evidence
-never reaches an eligibility gate, a `plan_digest` or a revalidation
-(SY:129-130; DI:1059-1060).
+[B]'s added paragraph saying so for its children that exit nonzero or are
+stopped, and [R]'s isolation clause for every failure, cut or stop of a
+remote-target read or a `gh` child, `probe-failed`, `probe-timeout` and
+`deadline-exceeded` notwithstanding, so [X]'s exit status and [J]'s
+`completeness` are what they are without `--remote`, and the envelope's
+`probes` differs only by D2's reads. Nothing is written to disk or kept past
+the run, `gh` never gets `--cache`, and `project clean` has neither the
+option nor a reader of these fields, so remote evidence never reaches an
+eligibility gate, a `plan_digest` or a revalidation (SY:129-130;
+DI:1059-1060).
 
 ### D11. Test seams and the scenario map
 
@@ -430,6 +433,7 @@ never reaches an eligibility gate, a `plan_digest` or a revalidation
 | Remotes that give no request | [R] |
 | No gh, or a gh without authentication | [R] |
 | API failures stay unknown | [R] |
+| A failed or held remote-target read stays unknown | [R] |
 | The request bounds | [R] |
 | Expiry cancels queued and in-flight requests | [R] |
 | Remote evidence changes nothing local | [R] |
