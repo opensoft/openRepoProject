@@ -195,8 +195,8 @@ through `getattr(os, "O_NOFOLLOW", 0)` instead of failing closed.
   sentences: the overview, which collects no cache evidence, classifies a
   worktree whose only ignored files are caches `ignored-local-files` where
   `project clean` classifies it `merged-removable`, and never classifies as
-  removable a worktree that `project clean` would refuse. That delta is
-  committed once lane openRepoProject-4 agrees its diff (`tasks.md` 2.2).
+  removable a worktree that `project clean` would refuse. That delta was
+  agreed by lane openRepoProject-4 on 2026-10-19 and committed (`tasks.md` 2.2).
 
 ## Rules This Change Keeps
 
@@ -356,8 +356,8 @@ also names the delta text it is written on.
   - Untouched (`:9`): `### Requirement: Cleanup protects the process worktree`.
   - Untouched (`:38`): `### Requirement: Cleanup respects configured upstream mappings`.
 - `project-overview` (change 2's twelve ADDED requirements accounted for; no
-  canonical spec yet), B-14, its delta committed once lane openRepoProject-4
-  agrees its diff (`tasks.md` 2.2):
+  canonical spec yet), B-14, its delta agreed by lane openRepoProject-4 on
+  2026-10-19 and committed (`tasks.md` 2.2):
   - MODIFIED (change 2 ADDED; written on APO/ov:358):
     `### Requirement: Overview reuses the cleanup classifier and merge target`.
     Lane openRepoProject-4's two sentences are appended verbatim to the
@@ -455,9 +455,9 @@ also names the delta text it is written on.
   (`004-project-clean-all-safe`): its removal sequence, runner, parsers, ladder
   function and envelope. It never alters feature 004's or feature 005's order
   and does not wait for feature 005, but lane openRepoProject-4's agreement on
-  the `project-overview` delta comes before its Speckit handoff (`tasks.md`
-  2.2). Whichever realization merges second merges `main` in; never rebase,
-  since the organisation ruleset refuses force pushes.
+  the `project-overview` delta, given on 2026-10-19, precedes its Speckit
+  handoff (`tasks.md` 2.2). Whichever realization merges second merges `main`
+  in; never rebase, since the organisation ruleset refuses force pushes.
 - **Change 2.** This change modifies one requirement of change 2, "Overview
   reuses the cleanup classifier and merge target", with lane
   openRepoProject-4's two sentences and one scenario (B-14). The overview's
@@ -703,7 +703,7 @@ Lane additions, with no packet or ruling text behind them:
   break of the equality as written. Lane openRepoProject-4 asked on 2026-10-11
   that the exception ride in this change, and its two sentences are appended
   verbatim to the equality clause in this change's `project-overview` delta,
-  which is committed once lane 4 agrees its diff (`tasks.md` 2.2). The
+  which was agreed by lane 4 on 2026-10-19 and committed (`tasks.md` 2.2). The
   alternative, the overview collecting the same evidence, costs its budget and
   is out of this change's scope.
 - **CD-18, an explicit stage rather than letting Git delete.** Git's non-force
@@ -776,7 +776,7 @@ rulings of 2026-10-18 answered its five GAPs, recorded as the last five rows.
 | QA-10: no scenario for CD-8's two blocking rules | GAP | applied with change: under B-12 the 0xFF path fails the sample test, so the scenario says so | rs ADDED "A symlink named like a cache is never disposable" |
 | QA-11: no scenario for the success line, which said "1 worktrees" | GAP | applied with change: singular for a path as well as a worktree | pc ADDED "A merged worktree whose only ignored files are caches"; design D11 |
 | B-10 (G1): one placement for the digest, the narrow guarantee and the deletion exception | GAP | ruling: MODIFY all three, each block whole | pc MODIFIED batch and reconcilable result; rs MODIFIED narrow guarantee; proposal Capabilities, Decisions; design D5, D13 |
-| B-14 (G2): change 2's equality clause | GAP | ruling: the exception rides in this change as a `project-overview` delta, committed once lane openRepoProject-4 agrees its diff; this change archives after change 2 | `specs/project-overview/spec.md` (held); proposal What Changes, Capabilities, Dependencies, CD-17, Open Questions; design D6, D14; tasks 2.2, 3.2 |
+| B-14 (G2): change 2's equality clause | GAP | ruling: the exception rides in this change as a `project-overview` delta, agreed by lane openRepoProject-4 on 2026-10-19 and committed; this change archives after change 2 | `specs/project-overview/spec.md`; proposal What Changes, Capabilities, Dependencies, CD-17, Open Questions; design D6, D14; tasks 2.2, 3.2 |
 | A-9 (G3): the joint fit of branch retirement and cache disposal | GAP | ruling: #23, which archives second, states it | proposal Dependencies; design D4 |
 | B-11 (G4): B-6 against L-4 and change 1's stop rule | GAP | ruling: CD-1 to CD-3 accepted, B-6 amended to match | proposal Decisions |
 | B-12 (G5): the candidate pre-filter | GAP | ruling: take the sample test, state what still stalls | pc ADDED; proposal CD-6, CD-7; design D2, D4 |

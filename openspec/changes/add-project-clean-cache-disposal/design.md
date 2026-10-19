@@ -312,8 +312,8 @@ form, whose report shows the row selectable, so no suggestion becomes unsafe.
 B-14 settles the clause in this change: its `project-overview` delta appends
 lane openRepoProject-4's two sentences, which except that case and forbid the
 overview to classify as removable a worktree that `project clean` would refuse,
-and it is committed once lane 4 agrees its diff (`tasks.md` 2.2). Feature
-005's spec (`specs/005-project-overview/spec.md` on
+and it was agreed by lane 4 on 2026-10-19 and committed (`tasks.md` 2.2).
+Feature 005's spec (`specs/005-project-overview/spec.md` on
 `origin/005-project-overview` at `33a1214`, User Story 3 scenario 6) names the
 `ignored-local-files` row of its "Every protected classifier" fixture by its
 class only, and feature 005 has no plan or test yet. Once feature 005 has
@@ -589,8 +589,8 @@ cache phase" and "A file placed in a cache directory during the stage".
 2. Before the Speckit handoff (`tasks.md` section 2): change 1 archived after
    feature 004 merges, with PR #19 landed or closed and the two blocks written
    on its text re-checked; lane openRepoProject-4's agreement on the
-   `project-overview` delta's diff, which is then committed (B-14); the
-   enumeration and the stage measured (task 2.3).
+   `project-overview` delta's diff, given on 2026-10-19 and followed by its
+   commit (B-14); the enumeration and the stage measured (task 2.3).
 3. Local `main` is synced to `origin/main`, then `/speckit.specify` creates the
    one feature under the next free number, 006 or later, recorded once in
    `tasks.md` under "Speckit Handoff"; `/opsx:apply` runs only then.

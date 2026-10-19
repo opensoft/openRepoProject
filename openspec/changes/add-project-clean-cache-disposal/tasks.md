@@ -35,8 +35,8 @@ duplicate them, and nothing here is an implementation step.
   bound" and "A merged worktree has ignored local files", whose ignored files
   are now named as not caches (proposal, Capabilities);
   `specs/project-overview/spec.md` modifies one requirement of change 2 (8
-  scenarios: its 7 byte-exact and 1 added) and is committed once lane
-  openRepoProject-4 agrees its diff (2.2); `design.md` holds D1 to D14;
+  scenarios: its 7 byte-exact and 1 added) and is committed, agreed by lane
+  openRepoProject-4 on 2026-10-19 (2.2); `design.md` holds D1 to D14;
   verified by `grep -c '^#### Scenario'` on each delta, by a script that
   compares every scenario of each MODIFIED block with its source text, and by
   `design.md`'s headings.
@@ -65,13 +65,16 @@ duplicate them, and nothing here is an implementation step.
   this change modifies, and by `/usr/bin/openspec validate
   add-project-clean-cache-disposal --strict` reporting no archive refusal for
   those two deltas.
-- [ ] 2.2 The overview exception agreed (B-14): lane openRepoProject-4, owner
+- [x] 2.2 The overview exception agreed (B-14): lane openRepoProject-4, owner
   of change 2 and feature 005, agrees the diff of
   `specs/project-overview/spec.md`, which carries change 2's "Overview reuses
   the cleanup classifier and merge target" (APO/ov:358) whole with lane 4's two
   sentences appended to its equality clause and one scenario, and the delta is
   then committed on this branch; verified by lane 4's agreement quoted here
-  with its link and by the commit's sha.
+  and by the commit's sha. Lane 4 wrote on 2026-10-19: "#24, the classifier
+  block: YES, commit it. It is additions only, my two sentences are verbatim,
+  and the new scenario pins the pair and the no-enumeration wrapper." The delta
+  is committed as `b4d3e12`.
 - [ ] 2.3 Enumeration and stage measured (Open Questions, the caps): the cache
   enumeration's child and the cache stage timed warm and cold by change 1's
   protocol (its design D5) on a Linux filesystem path, at 512 entries per
