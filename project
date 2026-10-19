@@ -926,6 +926,256 @@ def kill_live_probes():
             time.sleep(max(0.0, min(TIMING["selector_tick"], due - time.monotonic())))
     for handle in handles:
         handle.close()
+
+
+# Signals (design D1 and D15; research.md R4; data-model.md, "Signal slot").
+# The first of these a run receives decides its exit status, 128 plus its
+# number: 130, 143 and 129.
+SCOPED_SIGNALS = (signal.SIGINT, signal.SIGTERM, signal.SIGHUP)
+
+
+class Interrupted(BaseException):
+    """A recorded signal stopped the work: the slot read set while planning, or
+    a second SIGINT while reconciling (D1, D15; lead ruling R-44). Not an
+    Exception, so no `except Exception` catches it (plan review M2). signum is
+    the first signal recorded, which decides the exit status."""
+
+    def __init__(self, signum=None):
+        super().__init__(signum)
+        self.signum = signum
+
+
+class Terminated(BaseException):
+    """SIGTERM or SIGHUP under raising_signals(), as SIGINT raises
+    KeyboardInterrupt there (D1; research.md R4): main() maps it to 143 or 129.
+    Not an Exception (plan review M2)."""
+
+    def __init__(self, signum):
+        super().__init__(signum)
+        self.signum = signum
+
+
+# Module state, innermost last: the invocations in force, and the signal scopes
+# in force (signal_scope, raising_signals and default_signals frames).
+_invocations = []
+_signal_frames = []
+
+
+class Invocation:
+    """The state of one run of project (lead ruling R-44 (1)): made fresh by
+    each main() call and entered around its dispatch, so that nothing carries
+    from one in-process main() call to the next. command is the subcommand's
+    name. It carries the phase, `planning` by default, then `apply`, then
+    `reconciling` (R-44 (3)), and the signal slot: `signal`, the first SIGINT,
+    SIGTERM or SIGHUP recorded, and `second_interrupt`, a later SIGINT
+    received while reconciling."""
+
+    def __init__(self, command=None):
+        self.command = command
+        self.phase = "planning"
+        self.signal = None
+        self.second_interrupt = False
+
+    def __enter__(self):
+        _invocations.append(self)
+        return self
+
+    def __exit__(self, *exc_info):
+        _invocations.remove(self)
+        return False
+
+    def record_signal(self, signum):
+        """The slot (data-model.md, "Signal slot"): the first signal is kept and
+        decides the exit status; a later SIGINT counts only while reconciling."""
+        if self.signal is None:
+            self.signal = signum
+        elif signum == signal.SIGINT and self.phase == "reconciling":
+            self.second_interrupt = True
+
+    def interrupting(self):
+        """Whether a driver stops its probe and raises Interrupted now: the slot
+        set while planning, or a second SIGINT while reconciling (R-44 (3);
+        data-model.md, "Signal slot"). In the apply phase only the seams read
+        the slot, before each revalidation and each spawn (D15)."""
+        if self.phase == "planning":
+            return self.signal is not None
+        return self.phase == "reconciling" and self.second_interrupt
+
+
+def current_invocation():
+    """The invocation in force; outside any, a fresh default, which no signal
+    handler records into (plan review M10; lead ruling R-44 (1))."""
+    return _invocations[-1] if _invocations else Invocation()
+
+
+def _install_handlers(handlers):
+    """Install {signum: handler} and return the handlers replaced; a handler not
+    installed from Python (None) is kept as SIG_DFL. On failure, what was
+    installed is put back."""
+    saved = {}
+    try:
+        for signum, handler in handlers.items():
+            previous = signal.signal(signum, handler)
+            saved[signum] = signal.SIG_DFL if previous is None else previous
+    except BaseException:
+        _restore_handlers(saved)
+        raise
+    return saved
+
+
+def _restore_handlers(saved):
+    for signum, handler in saved.items():
+        signal.signal(signum, handler)
+
+
+def _in_main_thread():
+    """Handlers and the wakeup descriptor can change only in the main thread."""
+    return threading.current_thread() is threading.main_thread()
+
+
+class signal_scope:
+    """D1's record-only handlers (research.md R4): for SIGINT, SIGTERM and
+    SIGHUP a handler that stores the signal in the slot of the invocation in
+    force when the scope is entered (one entered for the scope's own span when
+    none is), and does nothing else; and a non-blocking wakeup pipe, set with
+    warn_on_full_buffer=False, so that a signal wakes the driver's select() at
+    once; `wake` is its read end. On every exit, BaseException included, every
+    live probe group is first killed and reaped (kill_live_probes()), and then
+    the handlers and wakeup descriptor in force when entered are restored."""
+
+    def __init__(self):
+        self.wake = None
+        self.invocation = None
+        self._own = False
+        self._saved = {}
+        self._pipe = None
+        self._previous_wakeup = None
+
+    def __enter__(self):
+        self._own = not _invocations
+        self.invocation = current_invocation()
+        if self._own:
+            self.invocation.__enter__()
+        try:
+            if _in_main_thread():
+                self._pipe = os.pipe()
+                for fd in self._pipe:
+                    os.set_blocking(fd, False)
+                record = self.invocation.record_signal
+
+                def handler(signum, frame):
+                    record(signum)
+
+                self._saved = _install_handlers({signum: handler for signum in SCOPED_SIGNALS})
+                self._previous_wakeup = signal.set_wakeup_fd(self._pipe[1], warn_on_full_buffer=False)
+                self.wake = self._pipe[0]
+        except BaseException:
+            self._release()
+            raise
+        _signal_frames.append(self)
+        return self
+
+    def __exit__(self, *exc_info):
+        try:
+            kill_live_probes()
+        finally:
+            _signal_frames.remove(self)
+            self._release()
+        return False
+
+    def _release(self):
+        if self._previous_wakeup is not None:
+            signal.set_wakeup_fd(self._previous_wakeup)
+            self._previous_wakeup = None
+        _restore_handlers(self._saved)
+        self._saved = {}
+        if self._pipe is not None:
+            for fd in self._pipe:
+                os.close(fd)
+            self._pipe = self.wake = None
+        if self._own:
+            self._own = False
+            self.invocation.__exit__(None, None, None)
+
+
+def _raised(signum):
+    return KeyboardInterrupt() if signum == signal.SIGINT else Terminated(signum)
+
+
+class raising_signals:
+    """The handlers of the removal question (D1, D15; research.md R4), for its
+    own span: SIGINT raises KeyboardInterrupt, and SIGTERM or SIGHUP raises
+    Terminated, each after recording the signal in the slot, so that input()
+    is not resumed after a Ctrl-C. A signal already in the slot when the scope
+    is entered raises at once. The handlers in force when entered are restored
+    on every exit; the wakeup descriptor is left as it stands. No child runs
+    under these handlers."""
+
+    wake = None
+
+    def __init__(self):
+        self._saved = {}
+
+    def __enter__(self):
+        invocation = current_invocation()
+
+        def handler(signum, frame):
+            invocation.record_signal(signum)
+            raise _raised(signum)
+
+        if _in_main_thread():
+            self._saved = _install_handlers({signum: handler for signum in SCOPED_SIGNALS})
+        _signal_frames.append(self)
+        if invocation.signal is not None:
+            self.__exit__(None, None, None)
+            raise _raised(invocation.signal)
+        return self
+
+    def __exit__(self, *exc_info):
+        _signal_frames.remove(self)
+        _restore_handlers(self._saved)
+        self._saved = {}
+        return False
+
+
+class default_signals:
+    """The handlers the process started with (research.md R4), around confirm()
+    for push and delete-branch and before update's confirm() and delegates, so
+    that they behave as before this change: the handlers, and the wakeup
+    descriptor, in force before the outermost scope in force was entered (as
+    they stand, when no scope is in force). The handlers and descriptor in
+    force when entered are restored on every exit."""
+
+    wake = None
+
+    def __init__(self):
+        self._saved = {}
+        self._previous_wakeup = None
+
+    def __enter__(self):
+        if _signal_frames and _in_main_thread():
+            first = _signal_frames[0]
+            scope = next((frame for frame in _signal_frames
+                          if isinstance(frame, signal_scope) and frame._previous_wakeup is not None), None)
+            self._saved = _install_handlers(dict(first._saved))
+            if scope is not None:
+                try:
+                    self._previous_wakeup = signal.set_wakeup_fd(scope._previous_wakeup)
+                except BaseException:
+                    _restore_handlers(self._saved)
+                    self._saved = {}
+                    raise
+        _signal_frames.append(self)
+        return self
+
+    def __exit__(self, *exc_info):
+        _signal_frames.remove(self)
+        if self._previous_wakeup is not None:
+            signal.set_wakeup_fd(self._previous_wakeup, warn_on_full_buffer=False)
+            self._previous_wakeup = None
+        _restore_handlers(self._saved)
+        self._saved = {}
+        return False
 # endregion runner
 
 # region parsers
