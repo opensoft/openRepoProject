@@ -428,7 +428,7 @@ G. Landing order: A to E, then F, G and H.
 
 ### Lane D: the parsers
 
-- [ ] T014 [P] Add `tests/test_clean_parsers.py` (FR-062, D2): for
+- [x] T014 [P] Add `tests/test_clean_parsers.py` (FR-062, D2): for
   `StatusParser`, `WorktreeListParser`, `RefParser`, `MergedSetParser` and
   `HiddenStateParser`, recorded streams written as byte literals give equal
   records and the same `bound_reached` fed one byte at a time and whole. The
@@ -442,7 +442,7 @@ G. Landing order: A to E, then F, G and H.
   4,097th record; `dirty`, the ignored count, 8 raw samples and the deletion
   flag follow D2 and D4; a truncated last record fails at `finish()`; and no
   parser does I/O (`open`, `os.read` and `subprocess.Popen` patched to fail).
-- [ ] T015 [P] Add the five parsers to region `parsers` of `project`. T014
+- [x] T015 [P] Add the five parsers to region `parsers` of `project`. T014
   passes.
 
 ### Lane E: path escaping
