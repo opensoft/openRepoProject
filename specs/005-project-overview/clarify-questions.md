@@ -16,7 +16,9 @@ day, from the evaluation of the spec against the checklists of the
 no-argument `/speckit.checklist` run.
 
 Fifteen questions, in one block: Q1 to Q5 asked on 2026-10-11, Q6 to Q15
-added on 2026-10-19.
+added on 2026-10-19. The same day, after feature 004's doc rounds 3 and 4
+(`5a02c1a`), Q4, Q8 and Q15 each gained an option D, and the recommendations
+of Q4 and Q8 moved to D.
 
 ---
 
@@ -122,15 +124,19 @@ Brett Heap's word (lead ruling R-32).
 suggestion is advice to review, and that applying it needs the person's
 word?
 
-**Recommended:** Option C - The guidance matters for agent safety, but it
-also concerns feature 004's `--apply --yes`, so one governed change can say
-it for both while feature 005 stays within its ratified scope.
+**Recommended:** Option D - Feature 004's T123 already adds an `AGENTS.md`
+section that forbids answering the removal question or passing `--yes` on a
+person's behalf, as a departure awaiting Brett Heap's word (its R-32); one
+sentence there saying that an overview suggestion is advice to review keeps
+the agent guidance in one place. If that departure is declined, option C
+carries the guidance for both commands.
 
 | Option | Description |
 |--------|-------------|
 | A | No `AGENTS.md` change: the README section carries the rule, as the change scopes it. |
 | B | Add one `AGENTS.md` paragraph in feature 005, recorded as a departure from change 2's Impact on Brett Heap's word. |
 | C | A separate small OpenSpec change for agent guidance on the overview and the batch apply, after feature 005. |
+| D | After feature 004 lands, add one sentence on the overview to the `AGENTS.md` section that feature 004's T123 adds ("Cleaning up worktrees for a person"), recorded as a departure from change 2's Impact on Brett Heap's word, as feature 004 records its own (its R-32). |
 
 ---
 
@@ -228,20 +234,28 @@ them), and the first line of Git's standard error in an error `message`
 and on the `Incomplete:` line. A raw newline there can forge report lines,
 a bidirectional control can reorder them, and an undecodable byte can fail
 the JSON encoding, an exception outside the collector that ends the run
-with exit 2 (adversarial review A-6).
+with exit 2 (adversarial review A-6). Feature 004's contract fixes one
+message per row-error code (lead ruling R-45); its `probe-failed` message
+is `OPERATION failed: DETAIL`, DETAIL being `exit N`, `signal N`, `cannot
+spawn (STRERROR)` or `unparseable output`, so no text of Git's standard
+error reaches it.
 
 **Question**: How should the overview decode and print strings that are
 not paths?
 
-**Recommended:** Option A - It reuses the path rule the change already
-ratified, so a hostile name stays inside its row and no field is added;
-a validity flag can follow later, additively within schema 1.
+**Recommended:** Option D - It removes Git's text at its source rather than
+escaping it, and gives the overview the fixed row-error texts of the
+evidence model it shares with feature 004 (R-45), so the plan needs no
+override of them; names and branch names take the path rule the change
+already ratified, as in A, and a validity flag can still follow later,
+additively within schema 1.
 
 | Option | Description |
 |--------|-------------|
 | A | Amend change 2: every such string follows [P]'s path rule, decoded as a path is, each undecodable byte written `\xHH`, each Cc, Cf, Zl or Zp code point escaped by JSON and written `\uXXXX` in human output; no new field. |
 | B | As A, plus a validity flag beside each such field (`name_valid_utf8`, `branch_valid_utf8` and the like), additive within schema 1. |
 | C | Build as written and leave the rule to the plan. |
+| D | Amend change 2 so that a row error's message is feature 004's fixed text for its code (its contract, lead ruling R-45), so no text from Git's standard error reaches a message or the `Incomplete:` line; names and branch names follow [P]'s path rule as in A. Git's own reason is then not shown: the person re-runs the Git command to see it. |
 
 ---
 
@@ -350,7 +364,10 @@ same requirement lists `refused` and `os-error` as exit-2 codes under
 write open for `project clean` too: none of its documents at `5a02c1a` names
 `EPIPE`, and its guard, built at `fe91f2c` (its T035; research.md R6), turns
 any `Exception` but `Refused` raised before the apply phase, a
-`BrokenPipeError` included, into `internal-error` with exit 2.
+`BrokenPipeError` included, into `internal-error` with exit 2. Feature 004
+writes each `clean --json` document with `ensure_ascii=True` (its T035, lead
+ruling R-38), so its JSON is ASCII whatever the locale; its human output
+takes no position on the locale.
 
 **Question**: How should these cases end?
 
@@ -430,12 +447,12 @@ in a work tree" (reproduced on Git 2.43.0 for this question).
 
 **Recommended:** Option A - It reuses design D3's ratified treatment of a
 record that has no work tree, needs no amendment, counts every registry
-entry as `project clean` counts rows, and leaves the `.bare` layout recorded
-until a real run shows the need.
+entry toward the caps, as D3 counts an unnamed gitfile record, and leaves
+the `.bare` layout recorded until a real run shows the need.
 
 | Option | Description |
 |--------|-------------|
-| A | The bare record is the main worktree row, as D3 keeps an unnamed gitfile record: its path the common directory, `present` from `lstat`, no status probe, null status fields and classification, no finding of its own, and counted toward the caps and the row count. The `.bare` layout stays a `probe-failed` error row, recorded as EC-030. |
+| A | The bare record is the main worktree row, as D3 keeps an unnamed gitfile record: its path the common directory, `present` from `lstat`, no status probe, null status fields and classification, no finding of its own, and counted toward the caps and the row count. The `.bare` layout stays a `probe-failed` error row, recorded as EC-030. This follows design D3, as for the unnamed gitfile record; feature 004's model never makes the common directory a worktree row, and its `clean` refuses a bare repository. |
 | B | As A, and amend change 2 so that a candidate whose identity probe fails for want of a work tree takes one more counted child asking for its common directory alone, and joins that repository's row as a linked worktree of a bare repository does, listing its worktrees with `target-not-repository-root` on every clean suggestion. |
 | C | The bare record is no worktree row: `worktrees` lists the linked worktrees only, and the record counts toward no cap. The `.bare` layout as in A. |
 
@@ -470,21 +487,26 @@ does not cover a signal.
 **Question**: What should a signal that arrives while the result is being
 written do?
 
-**Recommended:** Option A - It keeps Ctrl-C responsive and keeps one rule
-for consumers, that an exit of 129, 130 or 143 carries no result, at no
-cost; rendering before writing, as Q12's option A has it, narrows the window
-to the write itself.
+**Recommended:** Option A - It keeps Ctrl-C answered even when a reader
+stalls, and keeps one rule for consumers, that an exit of 129, 130 or 143
+carries no result; its one mechanism, a raising span around the write, is
+feature 004's `raising_signals` (R-47). Feature 004 writes its report in
+full (option D) because that report records removals already made; the
+overview's result records nothing a re-run cannot read again, so stopping
+its write loses nothing. Rendering before writing, as Q12's option A has it,
+narrows the window to the write itself.
 
 | Option | Description |
 |--------|-------------|
 | A | Record it as a residual beside EC-015: the write stops at the signal, `Cancelled.` follows on standard error, and the run exits with the signal's status; standard output may then hold part of a result, which an exit of 129, 130 or 143 marks as no result. |
 | B | Block the three signals from the first byte of the result to the last, then exit 0 or 1 as the result says, dropping the signal; a consumer that stops reading the pipe then leaves the run unstoppable by Ctrl-C until it reads. |
 | C | Leave it to the plan, fixed once and recorded in the feature's traceability record. |
+| D | Follow feature 004's rule for `project clean` (its research.md R4): the handlers stay record-only through the write, so the result is written in full; the slot, read once more before the run exits, gives `Cancelled.` on standard error and the signal's status, 130, 143 or 129. Amend change 2's "print no result document" to "start no result document once the signal is read". A reader that stops reading leaves the signal unanswered until the write completes or fails. |
 
 ---
 
 You can reply with the option letter for each question (e.g., "Q1 A, Q2 A,
-Q3 B, Q4 C, Q5 A, Q6 A, Q7 A, Q8 A, Q9 B, Q10 A, Q11 A, Q12 A, Q13 A,
+Q3 B, Q4 D, Q5 A, Q6 A, Q7 A, Q8 D, Q9 B, Q10 A, Q11 A, Q12 A, Q13 A,
 Q14 A, Q15 A"),
 accept every recommendation by saying "yes" or "recommended", or give your
 own short answer for any of them.
