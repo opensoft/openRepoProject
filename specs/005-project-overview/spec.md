@@ -28,7 +28,10 @@ D3, D4, D5 and D10, and is cited, never restated in another form.
 
 **Citations**: `POD:N` is line N of the change's
 `specs/project-overview/spec.md`, and `PRSD:N` line N of its
-`specs/project-review-safety/spec.md`, both at `961c405`; requirement and
+`specs/project-review-safety/spec.md`, both at `961c405`; `CMD:N` and
+`CLN:N` are line N of change 1's `specs/project-command/spec.md` and
+`specs/project-clean/spec.md`, at the same commit, where change 1 stands as
+`0050f3e` (PR #11) landed it (Clarifications, C-37); requirement and
 scenario names are the deltas' headers. Change 1,
 `add-project-clean-all-safe`, is cited by requirement header under the
 change's labels: [E] "Repository inspection requires Git 2.36 and shares one
@@ -380,6 +383,148 @@ open are added there as Q6 to Q13, for Brett Heap, unanswered.
   after the version check and before listing (design D10), and
   canonicalisation and deduplication happen inside each root's listing task
   (design D2). Where applied: FR-046.
+
+### Session 2026-10-19, checklist run
+
+Settled from the change's text, and change 1's shared evidence model, while
+evaluating this spec against the checklists of the no-argument
+`/speckit.checklist` run (`checklists/`). It answers no question of
+`clarify-questions.md`; the points the run found the change leaves open are
+added there as Q14 and Q15, for Brett Heap, unanswered.
+
+- **C-37** Q: What do `CMD:N` and `CLN:N` cite? -> A: Line N of change 1's
+  spec deltas: `CMD` its `specs/project-command/spec.md`, which holds [E],
+  and `CLN` its `specs/project-clean/spec.md`, which holds [L], [G], [R]
+  and [P]. They are read at `961c405`, as `POD:N` is, where change 1 stands
+  as its squash merge `0050f3e` (PR #11) landed it, no later commit having
+  touched it. Where applied: header, Citations.
+- **C-38** Q: What does the 5 s filesystem budget bound: one call, or one
+  task? -> A: One bounded task. Every filesystem call "SHALL run in a
+  bounded task", whose miss is recorded "for its root or row"
+  (POD:183-189); the proposal fixes "5 s per child and per root listing"
+  (Decisions, OQ-9); and design D2 and D8 make a root's canonicalisation,
+  deduplication `stat`, listing and marker and holder checks one task, each
+  worktree row's `lstat` and registration reads one task, and each manifest
+  read, branch reflog read and the working directory's realpath a task of
+  its own. A root is therefore cut at 5 s as a whole, as "A root on a hung
+  mount" reads (POD:303-306). Where applied: FR-013.
+- **C-39** Q: What are the main worktree's `admin_id` and registration
+  check? -> A: `admin_id` is null, and the main worktree has no
+  administrative registration to check. The two-way check is a linked
+  worktree's, whose `.git` file names `<common_dir>/worktrees/<admin_id>`
+  (CMD:139-144), and the packet the proposal adopts for rows and fields says
+  "The main worktree has `admin_id: null`" (DI:241-246, :775; proposal, What
+  Changes, adopting DI:230-274 and DI:724-819). The main worktree's identity
+  is its `dev` and `ino` from `lstat` (DI:382-384), so FR-007's two
+  registration cases apply to linked worktrees only. Where applied: FR-006;
+  FR-007.
+- **C-40** Q: What do the `summary` counts hold, and when is each row field
+  null? -> A: What the packet's JSON contract says, which the proposal adopts
+  with its fields and types (What Changes, "A versioned JSON envelope",
+  DI:724-819), except where the delta, design D11 or this section changes
+  it (the validity flags, `ignored_samples` objects, `omitted`'s exactness,
+  a cut task, C-23, and rows past the cap, C-35). `projects` counts project
+  rows, error rows included; `repositories` the distinct repositories whose
+  identity was established; `worktrees` the worktree rows of every project
+  row, main worktrees included; `errors` row errors plus scan errors; and
+  `findings` the findings keyed `repair`, `preserve`, `housekeeping` and
+  `informational` (DI:792-800). Each worktree-row field is null exactly in
+  the case its "Null when" column names (DI:770-790), and the `git` object's
+  fields follow the same rules for the checkout at `path` (DI:760-763). The
+  nulls that mean none, an observation and not an error, are those the
+  proposal names: `upstream`, `ahead` and `behind` with no upstream
+  configured, and `merged_into_target` on a detached head (proposal, Rules
+  This Change Keeps, "Unknown is never healthy"). Where applied: FR-036;
+  FR-037; Key Entities, Summary.
+- **C-41** Q: Which codes may a row error or a scan error carry in schema
+  version 1? -> A: The collector table's eight (`manifest-invalid`,
+  `refused`, `os-error`, `undecodable-output`, `internal-error`,
+  `probe-failed`, `probe-timeout` and `deadline-exceeded`; POD:326-335),
+  `scan-limit` on a row or scan error (POD:222-224, :233-234) and
+  `root-unreadable` on a scan error (POD:43-45), as the packet lists them
+  (DI:838-839); the delta names no other, and its enums are closed within a
+  version (POD:655-656). The exit-2 error object's codes are FR-039's.
+  Where applied: FR-022.
+- **C-42** Q: Which manifest states let merge-target resolution go past
+  the manifest? -> A: A manifest shown absent, and one read with no
+  `tracking_branch` or with one that names no local branch. [R] takes "the
+  first of these candidates that exists as a local branch" (CLN:482-485),
+  the manifest's `tracking_branch` being only the first candidate, and the
+  delta resolves "in the order that" [R] "defines" (POD:359-360). Only a
+  read that failed, was refused, timed out or was cut stops resolution
+  (C-24). Where applied: FR-025.
+- **C-43** Q: In what order does the human report print rows, findings,
+  row errors and `Incomplete:` lines? -> A: In the JSON document's order
+  (FR-037): output "is rendered after collection in canonical order"
+  (design D6), and the `Incomplete:` lines follow "in the JSON's order"
+  (design D10). Where applied: FR-045.
+- **C-44** Q: When does a row print a `next` line? -> A: Only "when the row
+  has a suggested command or a gate decided it", the line reading `none`
+  where a gate left no command (design D10). A row with neither, such as one
+  whose root `unsupported-layout` or `main-worktree-missing` left null with
+  no gate code (FR-035), prints none. Where applied: FR-045.
+- **C-45** Q: Over what does `target-cap` count? -> A: One repository. The
+  gates are computed "Per repository" (design D5), `target-cap` applies
+  "when more `merged-removable` findings still carry `--all-safe` than
+  `limits.targets`" there (design D5), the batch's target limit being per
+  run of one repository's plan (CLN:791-793, :807-811), and the scenario
+  builds it in "one repository" (POD:579). Where applied: FR-034.
+- **C-46** Q: Which rows count toward `inspect-cap` and
+  `suggestion_gate_rows`? -> A: Every registry entry of the repository, the
+  main worktree and the rows with `present: false` included, within the
+  overview's 512-row cap or past it: design D5 counts "the registered rows,
+  `present: false` included" and makes `suggestion_gate_rows` "the
+  repository's registered row count", as [G] counts "every registry entry
+  ..., the main worktree and missing rows included" (CLN:791-794). Where
+  applied: FR-034; FR-035.
+- **C-47** Q: What does "best-effort" mean for `Cancelled.`, the scanning
+  notice and the other human writes to standard error? -> A: The write is
+  attempted once and an `OSError` from it is swallowed, changing neither
+  the output nor the exit status: `Cancelled.` "is written to stderr with
+  any `OSError` swallowed" (design D1), and "Every human write to stderr
+  swallows `OSError`" (design D10). Where applied: FR-044; FR-046.
+- **C-48** Q: From when does SC-005's 64 s bound count? -> A: From the
+  moment the deadline is set, as FR-011 states: the 60 s deadline is "set
+  before any root is listed" (POD:167-168), and the bound is that deadline,
+  2 s from SIGTERM to SIGKILL and 2 s of reap wait (design D13; C-16), so the
+  time a process spends starting before then lies outside it. Where
+  applied: SC-005.
+- **C-49** Q: What migrates, and how is the feature rolled back? -> A:
+  "Nothing migrates for users", `project overview` being new and no other
+  subcommand changing; and rollback is a revert of feature 005's merge, "no
+  data, configuration or other subcommand" depending on the overview
+  (design, Migration Plan). Where applied: Assumptions.
+- **C-50** Q: What does default-branch health report when no worktree has
+  the merge-target branch checked out? -> A: Nothing for that branch. Its
+  findings are added "For a checkout that" [L] "classifies
+  `protected-default`" (POD:725-727), and with no such checkout none is,
+  while the row's `git` object describes the checkout at the row's `path`
+  (FR-036). Where applied: EC-026.
+- **C-51** Q: Can `dev` or `ino` exceed what every JSON consumer reads
+  exactly? -> A: Yes. They are JSON integers (POD:650), exact in the
+  document, and some filesystems report values above 2^53, which a consumer
+  that reads JSON numbers as IEEE 754 doubles rounds. The overview keys its
+  rows on the exact values. Where applied: EC-027.
+- **C-52** Q: Does a worktree row's `branch` tell a detached head from a
+  branch named `detached`? -> A: No. `branch` is `"detached"` for a
+  detached head (POD:633-634), the meaning of the clean report at `a040790`
+  that the packet keeps (DI:765-766), and Git accepts `detached` as a branch
+  name. Where applied: EC-028.
+- **C-53** Q: What does a repository with thousands of loose refs do to a
+  run? -> A: Its ref listing can pass the 5 s per-child budget: governance
+  task 2.1 measured `for-each-ref` over 10,000 loose refs at 8.65 s on a
+  cold cache, "a `probe-timeout` and an incomplete run, never a wrong one"
+  (change `tasks.md` 2.1). Where applied: EC-029.
+- **C-54** Q: What becomes of a candidate whose `.git` file names a bare
+  repository, as in the layout that keeps one in a `.bare` directory beside
+  its linked worktrees? -> A: Its identity probe fails. The probe asks Git
+  for the toplevel (design D3, citing change 1's identity probe,
+  `--show-toplevel`), which a bare repository has none of: on Git 2.43.0
+  the probe exits 128 with "this operation must be run in a work tree",
+  reproduced for this record. "A Git child exits nonzero" is `probe-failed`
+  on the candidate's row (POD:333), and the repository's worktrees are not
+  listed. Whether to report such a repository otherwise is question Q14 of
+  `clarify-questions.md`. Where applied: EC-030.
 
 ## User Scenarios & Testing *(mandatory)*
 
@@ -1269,6 +1414,32 @@ path"; "Non-UTF-8 common directory".
   whose only marker would be a `.git` that is a dangling symbolic link,
   which exists as neither a file nor a directory. Whether to report them is
   question Q10 of `clarify-questions.md`.
+- **EC-026**: A merge-target branch that no worktree has checked out gets no
+  default-branch finding, its unpushed or unpublished local commits
+  included: those findings attach to a checkout [L] classifies
+  `protected-default` (POD:725-727), and the row's `git` object describes
+  the checkout at the row's `path` (Clarifications, C-50).
+- **EC-027**: `dev` and `ino` are exact JSON integers (FR-037), and some
+  filesystems report values above 2^53, which a consumer that reads JSON
+  numbers as IEEE 754 doubles rounds, so that two identities can compare
+  equal there; the overview's own grouping uses the exact values
+  (Clarifications, C-51).
+- **EC-028**: A worktree row's `branch` does not tell a detached head from a
+  branch named `detached`, reading `"detached"` for a detached head as the
+  clean report always has (POD:633-634; DI:765-766); the row's
+  classification is the one [L] gives it, as for every row (FR-026;
+  Clarifications, C-52).
+- **EC-029**: A repository with about 10,000 loose refs can pass the 5 s
+  per-child budget with its ref listing on a cold cache (8.65 s measured by
+  governance task 2.1), giving `probe-timeout` and an incomplete run, never
+  a wrong one (Clarifications, C-53).
+- **EC-030**: A candidate whose `.git` file names a bare repository, as in
+  the layout that keeps one in a `.bare` directory beside its linked
+  worktrees, fails its identity probe, which asks for a toplevel a bare
+  repository lacks: it is an error row with `probe-failed`, and its
+  repository's worktrees are not listed (Clarifications, C-54). Whether to
+  report such a repository otherwise, and how a bare repository's own first
+  registry record is reported, is question Q14 of `clarify-questions.md`.
 
 ## Requirements *(mandatory)*
 
@@ -1335,10 +1506,11 @@ and [P] are change 1's requirements as the header names them.
   into its repository's row, independent clones MUST stay distinct, and
   every registered worktree, those outside every root included, MUST be
   listed under its repository, main worktree first and then by path bytes,
-  each with the worktree identity `{path, dev, ino, admin_id}` and [E]'s
-  two-way registration check. "The candidate that reached a repository
-  first" MUST mean the first in canonical candidate order (POD:75-87; design
-  D7).
+  each with the worktree identity `{path, dev, ino, admin_id}`; a linked
+  worktree's registration MUST take [E]'s two-way check, while the main
+  worktree has `admin_id: null` and no administrative registration to check
+  (Clarifications, C-39). "The candidate that reached a repository first"
+  MUST mean the first in canonical candidate order (POD:75-87; design D7).
 - **FR-007**: Each registered path MUST fall into exactly one case: `lstat`
   fails with "no such entry" or "not a directory" (`present: false`, no
   status probe); `lstat` fails otherwise, or does not finish within its
@@ -1351,17 +1523,20 @@ and [P] are change 1's requirements as the header names them.
   registration disagrees in either direction (no status probe,
   `inspection-error` set directly with its `inspection-error` finding, a
   `registration-mismatch` finding beside it and no error); otherwise one
-  status probe in that worktree. A probe MUST NOT run in a path the
-  overview could not `lstat`, nor a status probe in a worktree whose
-  registration it could not verify (POD:89-95; CMD:124-126; CLN:114-116;
-  Clarifications, C-23, C-26 and C-33).
+  status probe in that worktree. The two registration cases apply to linked
+  worktrees only (C-39). A probe MUST NOT run in a path the overview could
+  not `lstat`, nor a status probe in a worktree whose registration it could
+  not verify (POD:89-95; CMD:124-126; CLN:114-116; Clarifications, C-23,
+  C-26, C-33 and C-39).
 - **FR-008**: Every repository MUST first take [R]'s submodule test: when
   Git reports a superproject working tree for a candidate that reached the
   repository, `repository.root` MUST be null with an `unsupported-layout`
   repair finding of severity error, whose message (design D3, item 1) names
   a submodule checkout, with no suggestion and no read of `core.worktree`.
   Otherwise a bare main entry MUST leave `repository.root` null, its
-  repository-wide probes running in the common directory; and where the
+  repository-wide probes running in the common directory (how that entry is
+  itself reported among the worktree rows is question Q14 of
+  `clarify-questions.md`); and where the
   first registry record's path equals `common_dir`, `repository.root` MUST
   be the realpath of `core.worktree` (a relative value resolved against the
   git directory), else the toplevel of a candidate whose identity probe
@@ -1413,11 +1588,14 @@ and [P] are change 1's requirements as the header names them.
   when every root listing completed, as in "Invocation deadline", and
   `lower-bound` when a root listing was cut (POD:176-181, :224-229, :283;
   design D6; Clarifications, C-30).
-- **FR-013**: Every filesystem call (root canonicalisation and
-  deduplication, marker and holder checks, each worktree row's `lstat` and
-  registration reads, manifest reads, branch reflog reads of at most 64 KiB,
-  never by a Git child, and the one realpath of the working directory taken
-  at start) MUST be waited for at most `min(5 s, deadline - now)`; one that
+- **FR-013**: Every filesystem call MUST run in a bounded task waited for
+  at most `min(5 s, deadline - now)`, the tasks being those change 2 groups
+  the calls into (Clarifications, C-38): one per root, enclosing its
+  canonicalisation, deduplication `stat`, listing and marker and holder
+  checks, so that a root's whole listing has one budget; one per worktree
+  row, enclosing its `lstat` and registration reads; one per manifest read;
+  one per branch reflog read of at most 64 KiB, never by a Git child; and
+  one for the realpath of the working directory taken at start. A task that
   does not finish MUST record `probe-timeout`, or `deadline-exceeded` where
   the deadline was the smaller limit, on its root or row, and the overview
   MUST move on without blocking on it. A root cut this way MUST count as
@@ -1426,7 +1604,7 @@ and [P] are change 1's requirements as the header names them.
   repository gate of FR-034, and a worktree row's `lstat` or registration
   read cut this way MUST make that row `inspection-error` as FR-007 states
   (POD:183-192, :781; clarifications N2; design D2 and D8; Clarifications,
-  C-23 and C-25).
+  C-23, C-25 and C-38).
 - **FR-014**: A manifest whose size, taken before the read, exceeds [E]'s
   1 MiB MUST be `manifest-invalid` on its row without being read, and a
   manifest read MUST NOT exceed 1 MiB (POD:192-196; design D8).
@@ -1513,14 +1691,17 @@ and [P] are change 1's requirements as the header names them.
   :344-345; clarifications N1; design D1).
 - **FR-022**: Each error MUST be `{code, message, path?}`, with
   `path_valid_utf8` beside a present `path` and a message of at most 200
-  characters (for a failed probe, the first line of Git's standard error).
+  characters (for a failed probe, the first line of Git's standard error),
+  its `code` one of schema version 1's closed set: the collector table's
+  eight, `scan-limit` and `root-unreadable` (Clarifications, C-41).
   Evidence gathered before a failure MUST be kept and every field not
   established MUST stay null; a row whose `errors` is non-empty MUST have
   status `error`, else `ok`; and every candidate entering collection MUST
   yield exactly one row or merge into exactly one existing repository row.
   Without the YAML library the manifest reader needs, each row whose
   directory holds a manifest MUST carry a `manifest-invalid` error naming
-  that cause, and the run MUST continue (POD:337-347).
+  that cause, and the run MUST continue (POD:337-347; Clarifications,
+  C-41).
 - **FR-023**: In `project overview` alone, a project or family manifest
   with an invalid text encoding MUST be a `manifest-invalid` error on its
   candidate's row, in human and JSON mode alike, never a traceback; the
@@ -1551,9 +1732,11 @@ and [P] are change 1's requirements as the header names them.
   failed, was refused, timed out or was cut by the deadline, resolution
   MUST NOT fall back to `origin/HEAD`, `main` or `master`: `merge_target`
   MUST be null with no `no-merge-target` finding, the ladder MUST NOT run,
-  and the row MUST carry that error; only a manifest shown absent lets
-  resolution continue (POD:318-324, :368-373, :652-653; Clarifications,
-  C-24).
+  and the row MUST carry that error. Only a manifest shown absent, or one
+  read with no `tracking_branch` or with one that names no local branch,
+  lets resolution continue to `origin/HEAD`, `main` and `master`
+  (POD:318-324, :359-360, :368-373, :652-653; Clarifications, C-24 and
+  C-42).
 - **FR-026**: Each worktree row MUST be classified by [L]'s ladder, with its
   names, order and recommendation text, fed from the overview's collected
   evidence and spawning no probe of its own; the ladder MUST run on a row
@@ -1651,11 +1834,15 @@ and [P] are change 1's requirements as the header names them.
   worktree rows than the batch's row cap), each computed from the overview's
   own evidence, and of a repository with any row the overview's own cap or
   deadline left unclassified; those findings MUST suggest the read-only
-  form. A repository with more worktree rows than the report's row cap MUST
-  have its read-only suggestions limited by `inspect-cap`; and when more
-  `merged-removable` worktrees keep the `--all-safe` form than the batch's
-  target limit, each MUST keep it, limited by `target-cap`. `project clean`
-  MUST remain free to recompute, show and confirm its own plan and to
+  form. A repository's worktree rows, for both row caps, MUST be every
+  registry entry of the repository, the main worktree and the rows with
+  `present: false` included, within the overview's 512-row cap or past it
+  (Clarifications, C-46). A repository with more worktree rows than the
+  report's row cap MUST have its read-only suggestions limited by
+  `inspect-cap`; and when more of one repository's `merged-removable`
+  worktrees keep the `--all-safe` form than the batch's target limit, each
+  MUST keep it, limited by `target-cap` (Clarifications, C-45). `project
+  clean` MUST remain free to recompute, show and confirm its own plan and to
   exclude a suggested worktree (POD:526-537, :563-564; design D5).
 - **FR-035**: Each finding MUST carry `suggestion_gate`, null unless a gate
   withheld or limited its own suggestion, else the first applicable code in
@@ -1663,8 +1850,8 @@ and [P] are change 1's requirements as the header names them.
   `unsupported-path-bytes`, `inspection-incomplete`, `inspect-cap`,
   `scan-limit`, `deadline-exceeded`, `unstarted-branch`,
   `reflog-unavailable`, `target-cap`), and `suggestion_gate_rows`, the
-  repository's worktree-row count when that code is `inspect-cap`, else
-  null. The finding's `message` and the human text MUST carry the code's
+  repository's worktree-row count as FR-034 counts it when that code is
+  `inspect-cap`, else null. The finding's `message` and the human text MUST carry the code's
   fixed remedy from that table, its numbers (the batch's row cap, the
   report's row cap and the batch's target limit) taken at run time from the
   shared constants that [G]'s "Clean bounds its Git work and reports
@@ -1672,7 +1859,7 @@ and [P] are change 1's requirements as the header names them.
   and the `--root <repository parent>` remedy naming the parent
   directory of `repository.root`. A root left null by `unsupported-layout`
   or `main-worktree-missing` MUST carry no gate code (POD:539-562; design
-  D5; Clarifications, C-11).
+  D5; Clarifications, C-11 and C-46).
 
 **JSON document**
 
@@ -1690,12 +1877,16 @@ and [P] are change 1's requirements as the header names them.
   `invocation_timeout_seconds` and `probe_concurrency`. The `git` object
   MUST come from the evidence already held for the checkout at `path`, with
   no probe of its own, and its `tracking_freshness` MUST be the text `local
-  refs only; no fetch` (POD:607-648; design D11; Clarifications, C-13 and
-  C-32).
+  refs only; no fetch`. Each field's type and the condition under which it
+  is null, and what each `summary` count counts, MUST be those of the
+  packet's JSON contract that the proposal adopts, except where the delta,
+  design D11 or these clarifications change them (POD:607-648; design D11;
+  Clarifications, C-13, C-32 and C-40).
 - **FR-037**: Integers MUST be JSON integers, object ids full lowercase
   hexadecimal, times RFC 3339 UTC with a `Z` suffix, and durations integer
   seconds in fields ending `_seconds`. `null` MUST mean unknown or not
-  established and never stand for `false`, `0` or an empty list, an empty
+  established, apart from the nulls that mean none (Clarifications, C-40),
+  and never stand for `false`, `0` or an empty list, an empty
   `findings` on an error row meaning that no finding was computed;
   `completeness` MUST be `incomplete` exactly when `scan_errors` is
   non-empty or any row has status `error`; the envelope's `observed_at` MUST
@@ -1706,7 +1897,7 @@ and [P] are change 1's requirements as the header names them.
   Projects MUST be ordered by the bytes of `path`, worktrees main first and
   then by path bytes, findings by checkout path and then code, row errors in
   their candidate's step order, and scan errors in canonical collection
-  order (POD:619-621, :650-658; design D6; Clarifications, C-12).
+  order (POD:619-621, :650-658; design D6; Clarifications, C-12 and C-40).
 - **FR-038**: Every path MUST be parsed and emitted as [E] and [P] define:
   exactly when it is valid UTF-8, with every code point of Unicode general
   category Cc, Cf, Zl or Zp, as the running interpreter's Unicode database
@@ -1777,23 +1968,29 @@ and [P] are change 1's requirements as the header names them.
 - **FR-044**: On SIGINT, SIGTERM or SIGHUP the overview MUST stop
   scheduling, terminate and reap every child as FR-011 states, abandoning
   one still unreaped 2 s after SIGKILL, print no result document, print
-  `Cancelled.` to standard error on a best-effort basis, and exit with that
-  signal's status, which takes precedence over 1; a signal MUST never become
-  a row error, and a Git child MUST NOT outlive the run, except one
-  abandoned while still unreaped 2 s after SIGKILL (EC-001) and under EC-002
-  (POD:776-781; clarifications N1; design D1).
+  `Cancelled.` to standard error on a best-effort basis (Clarifications,
+  C-47), and exit with that signal's status, which takes precedence over 1;
+  a signal MUST never become a row error, and a Git child MUST NOT outlive
+  the run, except one abandoned while still unreaped 2 s after SIGKILL
+  (EC-001) and under EC-002. A signal that arrives while the result is
+  being written is question Q15 of `clarify-questions.md` (POD:776-781;
+  clarifications N1; design D1).
 
 **Human report**
 
 - **FR-045**: Without `--json`, the overview MUST print to standard output,
   for each shown row, one header line with the name and the absolute path;
   one line per shown finding with its category, code and message, followed
-  by the worktree path for a worktree's finding; and one `next` line
-  carrying the row's suggested command, shell-quoted or in the `$'...'`
-  form, followed by `(withheld: <remedy>)` when a gate removed the
-  `--all-safe` form or every clean suggestion, or by `(limited: <remedy>)`
-  when a suggestion is given but capped, the deciding gate chosen as design
-  D10 states. Row errors MUST display in the repair category; one
+  by the worktree path for a worktree's finding; and, when the row has a
+  suggested command or a gate decided it, one `next` line carrying that
+  command, shell-quoted or in the `$'...'` form, or `none` where a gate left
+  no command (Clarifications, C-44), followed by `(withheld: <remedy>)` when
+  a gate removed the `--all-safe` form or every clean suggestion, or by
+  `(limited: <remedy>)` when a suggestion is given but capped, the deciding
+  gate chosen as design D10 states. Rows, the findings and row errors within
+  a row, and the `Incomplete:` lines MUST follow the JSON document's order
+  (FR-037; Clarifications, C-43). Row errors MUST display in the repair
+  category; one
   `Incomplete:` line MUST follow per scan error; and the summary line MUST
   always be printed, giving the counts of projects, errors and findings by
   category and stating that findings reflect local refs as of the last
@@ -1803,13 +2000,13 @@ and [P] are change 1's requirements as the header names them.
   written `\uXXXX`, or `\UXXXXXXXX` above U+FFFF. The layout and fixed lines
   MUST read as design D10 fixes them, their fixed text in ASCII, while
   interpolated names, paths and numbers follow FR-038 and [P] (POD:672-675,
-  :802-817; design D4 and D10).
+  :802-817; design D4, D6 and D10; Clarifications, C-43 and C-44).
 - **FR-046**: When standard error is a terminal, and only then, the overview
   MUST write one `Scanning N roots...` line to standard error before
   listing, N being the number of roots given, or of the defaults, before
   canonicalisation, standard output being identical either way, and every
   human write to standard error MUST be best-effort (POD:817-819; design D2
-  and D10; Clarifications, C-36).
+  and D10; Clarifications, C-36 and C-47).
 
 **Scope, documentation and tests**
 
@@ -1929,9 +2126,11 @@ and [P] are change 1's requirements as the header names them.
 - **Envelope**: the one versioned document: `schema_version`, `observed_at`,
   `roots`, `limits`, `budget`, `probes`, `projects`, `relationships`,
   `summary`, `completeness` and `scan_errors`.
-- **Summary**: the counts of projects, repositories, worktrees, errors and
-  findings by category over the whole collection, whatever `--attention`
-  shows.
+- **Summary**: the counts of project rows, error rows included; of the
+  distinct repositories whose identity was established; of worktree rows,
+  main worktrees included; of row errors plus scan errors; and of findings
+  by category; over the whole collection, whatever `--attention` shows
+  (Clarifications, C-40).
 - **Bounds**: the 60 s deadline, the 5 s budget per Git child and per
   filesystem call, the four caps and four-wide concurrency, reported as the
   values in force in `limits` and `budget`.
@@ -1966,8 +2165,9 @@ and [P] are change 1's requirements as the header names them.
   `deferred-target-cap`, `contains-submodule` or `hidden-local-state`, or,
   when that preview's own index-gate read fails or times out, made
   `inspection-error` in a preview that is then incomplete (CLN:800-803).
-- **SC-005**: Every run ends within 64 s of its start plus rendering, except
-  while a filesystem call stuck in the kernel is outstanding; no Git child
+- **SC-005**: Every run ends within 64 s of the moment its deadline is set,
+  plus rendering (Clarifications, C-48), except while a filesystem call
+  stuck in the kernel is outstanding; no Git child
   is waited for more than 4 s past its budget; and the counting wrapper's
   interval log never shows more than four of the overview's Git children at
   once, nor two in one repository (Clarifications, C-34).
@@ -2058,6 +2258,10 @@ and [P] are change 1's requirements as the header names them.
 - Where a repository-level finding (a null `checkout`) sorts among a row's
   findings, which FR-037's order leaves open, is fixed once by the plan,
   since the determinism of FR-019 needs only that it be fixed.
+- Nothing migrates for users: `project overview` is new and no other
+  subcommand changes. Rollback is a revert of feature 005's merge, no data,
+  configuration or other subcommand depending on the overview (design,
+  Migration Plan; Clarifications, C-49).
 - The order departure is recorded with its time: this feature was created
   before feature 004 merges on Brett Heap's word of 2026-10-11T16:14:21Z,
   for the specify step only (header; change `tasks.md` 3.1 and Speckit
@@ -2167,15 +2371,15 @@ the tasks, in the feature's `traceability.md`, as feature 003 records them.
 | # | Delta requirement | Source | FRs | Stories | Edge cases |
 | --- | --- | --- | --- | --- | --- |
 | 1 | Overview discovers projects within configured roots only | POD:10 | FR-001 to FR-005 | US1, US7 | EC-003, EC-014, EC-018, EC-025 |
-| 2 | Overview groups worktrees by repository identity | POD:74 | FR-006 to FR-010 | US1, US7, US8 | EC-012, EC-018 |
-| 3 | Overview bounds its work and reports what it omitted | POD:166 | FR-011 to FR-020 | US6, US10 | EC-001 to EC-006, EC-019, EC-023 |
+| 2 | Overview groups worktrees by repository identity | POD:74 | FR-006 to FR-010 | US1, US7, US8 | EC-012, EC-018, EC-030 |
+| 3 | Overview bounds its work and reports what it omitted | POD:166 | FR-011 to FR-020 | US6, US10 | EC-001 to EC-006, EC-019, EC-023, EC-029 |
 | 4 | Overview isolates one candidate's failure | POD:317 | FR-021, FR-022 | US7 | none |
 | 5 | Overview reuses the cleanup classifier and merge target | POD:358 | FR-024 to FR-026 | US3 | EC-013 |
 | 6 | Overview reports findings by attention category | POD:420 | FR-027 to FR-030 | US2 | EC-024 |
 | 7 | Overview suggests only gated clean commands | POD:483 | FR-031 to FR-035 | US4, US6 | EC-007 to EC-010, EC-020 |
-| 8 | Overview prints a versioned JSON envelope | POD:606 | FR-036 to FR-039 | US5, US11 | EC-016, EC-017 |
+| 8 | Overview prints a versioned JSON envelope | POD:606 | FR-036 to FR-039 | US5, US11 | EC-016, EC-017, EC-027, EC-028 |
 | 9 | Overview is local and read-only | POD:709 | FR-040, FR-016 | US10 | EC-006, EC-022 |
-| 10 | Overview reports default-branch health | POD:724 | FR-041 | US9 | EC-011, EC-021 |
+| 10 | Overview reports default-branch health | POD:724 | FR-041 | US9 | EC-011, EC-021, EC-026 |
 | 11 | Overview exits by completeness and severity | POD:761 | FR-042 to FR-044 | US10 | EC-002, EC-015 |
 | 12 | Overview renders a readable human report | POD:801 | FR-045, FR-046 | US1, US2, US4 | EC-016 |
 | PRS | YAML decoding errors are structured refusals (MODIFIED) | PRSD:3 | FR-023 | US7 | none |

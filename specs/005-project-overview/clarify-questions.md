@@ -8,12 +8,14 @@ Lane: openRepoProject-4
 openRepoProject-4 for feature `005-project-overview` on 2026-10-11, after the
 spec's specify step. Each question is one the ratified change
 (`openspec/changes/add-project-overview/`) and feature 004 leave genuinely
-open; what their text settles is in `spec.md`, Clarifications, C-1 to C-36.
+open; what their text settles is in `spec.md`, Clarifications, C-1 to C-54.
 No requirement changes until an answer is given; answers join the spec's
 Clarifications as a later session. Q6 to Q13 were added on 2026-10-19 from
-three read-only reviews of the spec at `3d28710`.
+three read-only reviews of the spec at `3d28710`, and Q14 and Q15 the same
+day, from the evaluation of the spec against the checklists of the
+no-argument `/speckit.checklist` run.
 
-Thirteen questions, in one block: Q1 to Q5 asked on 2026-10-11, Q6 to Q13
+Fifteen questions, in one block: Q1 to Q5 asked on 2026-10-11, Q6 to Q15
 added on 2026-10-19.
 
 ---
@@ -374,8 +376,74 @@ rather than hiding one.
 
 ---
 
+## Q14. A bare repository's own record, and the `.bare` layout
+
+**Context**: A bare repository's registry lists the repository itself
+first, marked `bare`, at its common directory, and on Git 2.43.0 `git
+status` there fails with "this operation must be run in a work tree"
+(reproduced for this question). Change 2 leaves `repository.root` null for
+"a bare main entry" (POD:102-104) and withholds every clean suggestion with
+`target-not-repository-root` (design D3, item 2), but says nothing of that
+record as a worktree row: whether it is listed, whether it is status-probed,
+what its classification is, and whether it counts toward the 512-row cap and
+the row count of `inspect-cap` and `suggestion_gate_rows` (spec C-46). For
+the submodule and the unnamed gitfile records, design D3 (items 1 and 3)
+keeps the main worktree row with the record's path, its `present` from
+`lstat`, and null status fields and classification. Probing the bare record
+would make every bare repository with linked worktrees `inspection-error`,
+an error finding, and exit 1 on every run. Separately, a candidate whose
+`.git` file names a bare repository (the layout that keeps it in `.bare`
+beside its worktrees) fails its identity probe as written, since the probe
+asks for a toplevel, so the repository appears only as a `probe-failed`
+error row with none of its worktrees (spec EC-030, C-54).
+
+**Question**: How should a bare repository be reported?
+
+**Recommended:** Option A - It reuses design D3's ratified treatment of a
+record that has no work tree, needs no amendment, counts every registry
+entry as `project clean` counts rows, and leaves the `.bare` layout recorded
+until a real run shows the need.
+
+| Option | Description |
+|--------|-------------|
+| A | The bare record is the main worktree row, as D3 keeps an unnamed gitfile record: its path the common directory, `present` from `lstat`, no status probe, null status fields and classification, no finding of its own, and counted toward the caps and the row count. The `.bare` layout stays a `probe-failed` error row, recorded as EC-030. |
+| B | As A, and amend change 2 so that a candidate whose identity probe fails for want of a work tree takes one more counted child asking for its common directory alone, and joins that repository's row as a linked worktree of a bare repository does, listing its worktrees with `target-not-repository-root` on every clean suggestion. |
+| C | The bare record is no worktree row: `worktrees` lists the linked worktrees only, and the record counts toward no cap. The `.bare` layout as in A. |
+
+---
+
+## Q15. A signal while the result is being written
+
+**Context**: On SIGINT, SIGTERM or SIGHUP the overview prints no result
+document and exits with that signal's status, which takes precedence over 1
+(POD:776-780; spec FR-044), and on exit 0 or 1 it prints the full result
+(POD:767). The change's scenarios send the signal during collection
+(POD:792-799), and design D1 handles signals around the collection loop,
+while rendering follows that loop (design D6). A signal that arrives after
+the first byte of the result reaches standard output, and before the last,
+cannot meet both rules: the bytes written cannot be withdrawn, and exiting 0
+or 1 would ignore the signal. Question Q12 asks how output failures end; it
+does not cover a signal.
+
+**Question**: What should a signal that arrives while the result is being
+written do?
+
+**Recommended:** Option A - It keeps Ctrl-C responsive and keeps one rule
+for consumers, that an exit of 129, 130 or 143 carries no result, at no
+cost; rendering before writing, as Q12's option A has it, narrows the window
+to the write itself.
+
+| Option | Description |
+|--------|-------------|
+| A | Record it as a residual beside EC-015: the write stops at the signal, `Cancelled.` follows on standard error, and the run exits with the signal's status; standard output may then hold part of a result, which an exit of 129, 130 or 143 marks as no result. |
+| B | Block the three signals from the first byte of the result to the last, then exit 0 or 1 as the result says, dropping the signal; a consumer that stops reading the pipe then leaves the run unstoppable by Ctrl-C until it reads. |
+| C | Leave it to the plan, fixed once and recorded in the feature's traceability record. |
+
+---
+
 You can reply with the option letter for each question (e.g., "Q1 A, Q2 A,
-Q3 B, Q4 C, Q5 A, Q6 A, Q7 A, Q8 A, Q9 B, Q10 A, Q11 A, Q12 A, Q13 A"),
+Q3 B, Q4 C, Q5 A, Q6 A, Q7 A, Q8 A, Q9 B, Q10 A, Q11 A, Q12 A, Q13 A,
+Q14 A, Q15 A"),
 accept every recommendation by saying "yes" or "recommended", or give your
 own short answer for any of them.
 
