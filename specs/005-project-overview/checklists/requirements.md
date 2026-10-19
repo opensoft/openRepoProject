@@ -110,6 +110,22 @@ Lane: openRepoProject-4
   child-handle kinds read `probe`, `removal` and `delegate`. Re-validation:
   16 of 16 items pass, with the checks of iteration 2 re-run by script on the
   edited spec.
+- 2026-10-19: feature 004's citations re-pinned from `66d60b6` to `d1e7c56`
+  (lane openRepoProject-2's doc round, rulings R-32 to R-36) after diffing
+  its `spec.md`, `plan.md`, `data-model.md`, `research.md` and
+  `contracts/project-clean.md` between them. Here, C-22 now records that
+  feature 004's data model carries R-33's 65,536-byte boundary while its
+  EC-005 still reads "over 64 KiB", for lane openRepoProject-2 to align; C-33
+  now records that feature 004 reads `ENOENT` or `ENOTDIR` for `present:
+  false` and resolves a relative `core.worktree` against the git directory
+  (R-36), so neither is a difference on its side; the header and Assumptions
+  say what its branch holds (code at `c4ed704` for T001 to T017, T022 and
+  T023, among them its five incremental parsers and its child handle, but not
+  yet the driver, and none of it on `main`) in place of "only empty regions
+  and imports"; and the Runtime and CI dependency names its two `test` jobs
+  and `git-floor` as its plan's "CI shape" does (R-35). The other citations
+  read the same at both pins. Re-validation: 16 of 16 items pass, with the
+  checks of iteration 2 re-run by script on the edited spec.
 - 2026-10-19: three read-only reviews of `3d28710` (fidelity to change 2,
   F-1 to F-20; consistency with feature 004, C-1 to C-13; adversarial, A-1
   to A-25) were applied. Points the change's text, or change 1's shared

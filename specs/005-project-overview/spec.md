@@ -50,10 +50,13 @@ and `deadline-exceeded` errors (POD:224-229, :646-648), and
 own 512-row cap, the batch's caps being `batch_row_cap`, `report_row_cap`
 and `targets` (POD:610-617). They are cited from
 `specs/004-project-clean-all-safe/` (`spec.md`, `data-model.md`,
-`contracts/project-clean.md`) at `66d60b6` on branch
-`004-project-clean-all-safe`, which carries its reviewed plan and its tasks
-and, of its code, only the empty regions and imports of its first
-implementation step, so nothing the overview reads from it is built yet.
+`contracts/project-clean.md`) at `d1e7c56`, where lane openRepoProject-2's
+doc round (rulings R-32 to R-36) merged them on branch
+`004-project-clean-all-safe`. That branch's head, `c4ed704`, holds code for
+its tasks T001 to T017, T022 and T023, among them its five incremental
+parsers, four of which the overview drives (Dependencies), and its child
+handle; its driver, tasks T024 and T025, is not built yet, and none of it is
+on `main`.
 The change pins its code citations at `da33d92`; this spec cites no line of
 `project`, `README.md` or `.github/workflows/tests.yml`, and the plan
 re-pins them against the `main` of its day (proposal, "Dependencies and
@@ -255,17 +258,20 @@ open for Brett Heap.
   filesystem budget leaves its row unprobed for the gate, recording
   `probe-timeout` or `deadline-exceeded`, and never makes it
   `inspection-error` (POD:521-524; design D5), as feature 004's data model
-  also reads it at `66d60b6` (its plan review, M5). The read asks for at
+  also reads it at `d1e7c56` (its plan review, M5). The read asks for at
   most 64 KiB (POD:503-504), and a reflog "read to its 64 KiB bound" is
   `reflog-unavailable` (POD:516-517; design D5, "the 64 KiB bound reached",
   and D8, a "bound-reaching file"): a read that returns 65,536 bytes has
   reached that bound, so a reflog of 65,536 bytes or more is
   `reflog-unavailable` and one of 65,535 bytes is decided by its entries.
-  Lane openRepoProject-2's ruling R-33 concurs for feature 004, but it is in
-  no pushed ref, and feature 004's text at `66d60b6` still decides a reflog
-  of exactly 65,536 bytes by its entries (its data model, "Reflog anchor and
-  movement"; its tasks T059 and T066; plan review m10). Where applied:
-  FR-033; FR-049; EC-009.
+  Lane openRepoProject-2's ruling R-33 concurs for feature 004: its data
+  model at `d1e7c56`, "Reflog anchor and movement", carries it in its text
+  and in its table of outcomes, which reads `reflog-unavailable` where the
+  read reached its 64 KiB bound (65,536 bytes read). Its task T059 names
+  R-33 in place of plan review m10, and its T066 reads the bound as R-33
+  does. Its EC-005 still reads "A reflog over 64 KiB (about 300 entries)",
+  which is lane openRepoProject-2's to align. Where applied: FR-033;
+  FR-049; EC-009.
 
 ### Session 2026-10-19
 
@@ -357,11 +363,11 @@ open are added there as Q6 to Q13, for Brett Heap, unanswered.
   A: `present: false` (POD:89-91; design D3, item 4; DI:776), change 1's
   "does not exist" (CMD:144-146) reading the same; and against the git
   directory (POD:105-106; design D3, item 3). Feature 004's text at
-  `66d60b6` reads `ENOENT` alone for `present: false` (its data model,
-  "Worktree row") and says only "the realpath of `core.worktree`" (its
-  FR-017). Those are differences on feature 004's side, for lane
-  openRepoProject-2; FR-026's parity stands as ratified. Where applied:
-  FR-007; FR-008.
+  `d1e7c56` reads the same, under lane openRepoProject-2's ruling R-36: its
+  data model, "Worktree row", gives `present: false` for `ENOENT` or
+  `ENOTDIR`, and its FR-017 resolves a relative `core.worktree` against the
+  git directory. FR-026's parity stands as ratified. Where applied: FR-007;
+  FR-008.
 - **C-34** Q: What counts as one of the overview's Git children? -> A: A
   process the overview starts, each in its own process group (CMD:98;
   design D1's registry; design D13's wrapper first on `PATH`). Processes
@@ -2239,11 +2245,13 @@ and [P] are change 1's requirements as the header names them.
   "Dependencies and Sequencing").
 - Feature 004's names (classifications, gate and refusal codes, row error
   codes, `schema_version`, exit statuses, the shared constants) are taken
-  from its spec, data model and contract at `66d60b6`, which carries its
-  reviewed plan and tasks and, of its code, only empty regions and imports;
-  where the change and feature 004 differ for the overview, the change
-  governs, and the plan reconciles against feature 004's text at the state
-  that question Q2 of `clarify-questions.md` settles.
+  from its spec, data model and contract at `d1e7c56`; its branch's head,
+  `c4ed704`, holds code for its tasks T001 to T017, T022 and T023, among
+  them its five incremental parsers and its child handle, but not yet its
+  driver (tasks T024 and T025), and none of it is on `main`; where the
+  change and feature 004 differ for the overview, the change governs, and
+  the plan reconciles against feature 004's text at the state that question
+  Q2 of `clarify-questions.md` settles.
 - "Every existing test" means the suite on `main` when the feature is
   implemented: 96 tests at `961c405`, still 96 at `e9d6711`, plus feature
   004's. Two test conditions are this spec's own, not the change's: a test
@@ -2288,7 +2296,7 @@ and [P] are change 1's requirements as the header names them.
   overview drives up to four handles from its own loop (this change's
   clarification N1); and the pure incremental parsers of the status,
   registry, ref-listing and merged-set outputs, fed chunks, doing no I/O and
-  reporting a reached record bound. Feature 004's data model at `66d60b6`
+  reporting a reached record bound. Feature 004's data model at `d1e7c56`
   records that handle, plan-stage detail for this feature, as its "Child
   handle" entity, with the states `running`, `terminating`, `killing`,
   `reaped` and `abandoned`, the kinds `probe`, `removal` and `delegate` (the
@@ -2325,12 +2333,14 @@ and [P] are change 1's requirements as the header names them.
   handoff names one feature) stays open.
 - **Runtime and CI**: Git 2.36 or later; the runtime versions the README
   supports (Python 3.10 or newer) and CI runs, on Linux only since `e9d6711`
-  (#32): Python 3.10 and 3.12 on `ubuntu-latest`, the README's Development
-  section saying that CI covers Linux only (change 2's design, Context,
-  written before it, still names Ubuntu and macOS); feature 004's Git 2.36
-  floor job (its FR-067), which the overview's tests join or not as question
-  Q3 of `clarify-questions.md` decides; and the existing YAML requirement
-  for manifests.
+  (#32): Python 3.10 and 3.12 on `ubuntu-latest`, two `test` jobs, the
+  README's Development section saying that CI covers Linux only (change 2's
+  design, Context, written before it, still names Ubuntu and macOS);
+  feature 004's Git 2.36 floor job (its FR-067), `git-floor` on
+  `ubuntu-latest` with Python 3.10 beside those two (its plan, "CI shape",
+  at `d1e7c56`), which the overview's tests join or not as question Q3 of
+  `clarify-questions.md` decides; and the existing YAML requirement for
+  manifests.
 
 ## Out of Scope
 
