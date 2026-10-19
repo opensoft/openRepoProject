@@ -623,12 +623,15 @@ abandoned pool thread would block it; an abandoned call records
 `probe-timeout`, or `deadline-exceeded` when the global deadline was the
 limit that cut it short, and leaves its values `null`. A call stuck inside the
 kernel on an unresponsive mount cannot be interrupted from user space, and a
-removal child is never signaled, so a run is bounded at 64 s of wall time, not
-counting time blocked at the confirmation question (lane openRepoProject-2
-ruling R-11, 2026-10-09): the 50 s of work, the 10 s reconciliation reserve, and
-up to 4 s of termination (SIGTERM, a 2 s grace, SIGKILL, and a reap wait of up
-to 2 s), plus up to 300 s for a removal still in flight at the work deadline,
-after whose exit the reserve counts, except while such a call is outstanding.
+removal child is never signaled. Change 1 at `0050f3e` therefore bounds a run
+with no removal in flight at 64 s of wall time, not counting time blocked at
+the confirmation question (lane openRepoProject-2 ruling R-11, 2026-10-09):
+the 50 s of work, the 10 s reconciliation reserve, and up to 4 s of
+termination (SIGTERM, a 2 s grace, SIGKILL, and a reap wait of up to 2 s).
+A removal still in flight at the work deadline adds at most 300 s, its hard
+ceiling, the reserve counting from the removal's exit, so such a run ends
+within 364 s. Neither bound holds while a call stuck in the kernel is
+outstanding.
 Both changes use the same runner, and the overview's bound is the same 64 s
 (lane openRepoProject-2, 2026-10-09).
 
