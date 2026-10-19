@@ -14,7 +14,9 @@ implementation:
 - R7: the reviewed spec the plan cites;
 - R8 to R15: the unknowns of counting, ordering, timing and the test
   harness, test runtime and CI, the digest's bytes, the bare-name test,
-  termination and reaping, and the existing tests.
+  termination and reaping, and the existing tests;
+- R16: the preflight's scope, a lead ruling listed for Brett Heap's
+  confirmation (LQ-4).
 
 The plan review of `dd923ee` and the lead's rulings R-29 to R-31, from the
 harness spike at `aadd709`, are applied in place.
@@ -579,7 +581,11 @@ directory, never in the repository.
   grace plus the reap wait (4 s) however many handles run. A removal handle
   starts it only at its ceiling (D9), and a delegate (`git branch -d`) handle
   never (R4). The child is observed only through `Popen.poll()` and
-  `Popen.wait(timeout)`, never a raw `os.waitpid()`; an abandoned handle
+  `Popen.wait(timeout)`, never a raw `os.waitpid()`, which T018 checks by
+  `ast` over `project` (no `waitpid`, `wait3` or `wait4` name), since
+  `Popen.wait(timeout)` itself calls `os.waitpid` (12 calls for one
+  `wait(timeout=2)` on Python 3.12.3) and a patched `os.waitpid` cannot tell
+  the two apart (lead ruling R-40); an abandoned handle
   records `probe-timeout`, is never waited on again (D2), and stays registered,
   so its group is killed again on exit. This keeps D2's SIGTERM, 2 s grace,
   SIGKILL and reap; only who waits changes. The states are tabled in
@@ -643,3 +649,55 @@ directory, never in the repository.
   `tests/test_project.py`, rejected by R-32 (each lane's module has one writer,
   and parallel lanes would otherwise share one file), and the fallback if Brett
   Heap declines.
+
+## R16. The preflight's scope (lead ruling R-41; LQ-4)
+
+- **Finding**: the `project-clean-review-safety` delta says that "the first
+  target's repository-wide checks SHALL serve as the preflight of every
+  selected target, so that a difference found there removes nothing at all",
+  and its scenario "New worktree and pre-removal changes" that "a changed
+  merge-target SHA, feature branch tip, upstream object, lock, ignored-file
+  state, or classification of any target before the first removal causes no
+  mutation and exit 2 with the matching reason". The packet's preflight listing
+  "names every selected branch", so that it revalidates "every target's
+  repository-wide evidence, lock, and filesystem identity" (`BA:709-711` at
+  `da33d92`). Neither says which target is recorded `refused` when the
+  difference is on another one, and a target's ignored-file state and
+  classification come from a status probe inside its own worktree, which the
+  first target's revalidation does not run (D7: at most five Git children per
+  target).
+- **Decision** (ruled by the lead as R-41, amended): the first target's
+  revalidation is the preflight of every selected target. Its registry
+  listing, its narrowed ref listing (which names every selected branch and its
+  upstream) and its filesystem reads compare every selected target's
+  registration, lock and filesystem identity, branch tip and upstream object,
+  beside the merge-target SHA. A difference on any target refuses the first
+  target with the matching reason and nothing more: the refusal does not name
+  the differing target, since a target result has no message field and the
+  stop block no message slot (the delta's apply result record; contract,
+  "Apply result record"), and the delta does not require it. Nothing is
+  removed, and later targets are `not-attempted` with `batch-stopped`.
+  Ignored-file state and classification are per-worktree evidence: the first
+  target's are checked in its own revalidation before the first removal, and a
+  later target's in its own revalidation before its own removal, where the
+  stop rule refuses it and stops the batch. The scenario is read that way, and
+  T079 makes the branch-tip, upstream-object and lock changes on the second of
+  two selected targets and the ignored-file and classification changes on the
+  first (T084, data-model.md "Revalidation step").
+- **Rationale**: the listings the first revalidation already runs carry every
+  selected target's registration, lock, branch and upstream, so the
+  comparison costs no Git child; and the first target is the one being
+  revalidated when the difference is found, so it carries the refusal, as in
+  "Repository replaced mid-batch", where a replacement at the question refuses
+  the first target.
+- **Open (LQ-4)**: listed for Brett Heap's confirmation in the feature PR
+  body. The scenario's "of any target" could also be read to cover a later
+  target's per-worktree evidence before the first removal, which the design's
+  child budgets do not provide.
+- **Alternatives considered**: refusing the differing target and recording
+  the first `not-attempted`, rejected (a `not-attempted` target would precede
+  the refused one in canonical order, against the stop rule); a status and a
+  hidden-state probe in every selected worktree at the preflight, rejected
+  (D7's five children per target); naming the differing path in the first
+  target's refusal, withdrawn by R-41's amendment (no message field carries
+  it).

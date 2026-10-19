@@ -15,7 +15,7 @@ Questions), `clarifications.md` (N1 to N5) and the three spec deltas
 `project-command`, 17), ratified by Brett Heap on 2026-10-09 ("ratify, merge
 #11 and run the runbook") and landed on main as `0050f3e` (PR #11). This plan
 sequences that design by decision number and decides only what the change
-leaves to the implementation ([research.md](research.md), R1 to R15). Where
+leaves to the implementation ([research.md](research.md), R1 to R16). Where
 the plan and the change differ, the change governs; where the design and a
 delta scenario differ, the scenario governs.
 

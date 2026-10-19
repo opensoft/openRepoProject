@@ -156,7 +156,7 @@ the repository from a second shell, then answer `yes`:
 | Change at the question | Expected |
 | --- | --- |
 | `echo new > "$W/a/new"` | `$W/a` `refused` with `state-changed`; `$W/b`, `$W/c` `not-attempted`; "D18 stop block" `Stopped at $W/a (state-changed). Removed 0 of 3. ...`; `exit=2` |
-| a commit on `b` | `$W/a` removed; `$W/b` `refused` with `branch-changed`; `$W/c` not attempted; `exit=2` |
+| a commit on `b` | `$W/a` `refused` with `branch-changed` at the preflight; nothing removed; `$W/b`, `$W/c` `not-attempted` with `batch-stopped`; `exit=2` (research.md R16) |
 | a commit on `main` | the first target refused with `state-changed` at the preflight; nothing removed; `exit=2` |
 
 The residual window, the branch race and a repository replaced mid-batch need

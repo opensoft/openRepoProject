@@ -5,7 +5,7 @@ Lane: openRepoProject-2
 **Input**: Design documents from `specs/004-project-clean-all-safe/`
 
 **Prerequisites**: plan.md, spec.md (as reviewed, `aadd709`), research.md (R1
-to R15), data-model.md, contracts/project-clean.md and quickstart.md. The
+to R16), data-model.md, contracts/project-clean.md and quickstart.md. The
 technical design is the ratified change
 `openspec/changes/add-project-clean-all-safe/`: design.md D1 to D20 and its
 Migration Plan, clarifications.md N1 to N5, and the three spec deltas. It
@@ -481,8 +481,11 @@ G. Landing order: A to E, then F, G and H.
   SIGKILL and the reap come from the driver loop's `advance()` calls; lead
   ruling R-30); `test_clean_a_flooding_child_never_times_out` (the
   `flood-stderr` fake completes, with a head of exactly 4,096 bytes and the
-  rest counted); and `test_clean_reaping_uses_popen_only` (a patched
-  `os.waitpid` is never called; R14).
+  rest counted); and `test_clean_reaping_uses_popen_only` (by `ast` over
+  `project`: no `waitpid`, `wait3` or `wait4` name or attribute anywhere, so
+  that reaping goes through `Popen.poll()` or `Popen.wait(timeout)`, as T022
+  allows; a patched `os.waitpid` cannot be the check, because
+  `Popen.wait(timeout)` calls it itself; R14, lead ruling R-40).
 - [ ] T019 [P] Add `test_clean_signal_scopes` to `tests/test_clean_runner.py`:
   `signal_scope()` installs record-only handlers for SIGINT, SIGTERM and SIGHUP
   and a non-blocking wakeup descriptor with `warn_on_full_buffer=False`,
@@ -646,10 +649,14 @@ G. Landing order: A to E, then F, G and H.
 - [ ] T031 [P] Add to region `evidence` of `project`: `identity_probe()` (row
   3, repeated one option per child when a value holds a line feed);
   `main_worktree(identity, records, run)`, whose body here takes the first
-  registry record (T107 gives it D8's order); `inspect_repository(directory,
-  run)` (rows 3, 4, 4b, 5, 6 and 7 through `run_bounded()` and the parsers,
-  memoized per common directory on the `Invocation`, returning the identity
-  `{root, common_dir, dev, ino}` with the rows' evidence);
+  registry record (T107 gives it D8's order), and which returns the main
+  worktree's path, or `None` with its cause, and never raises (FR-055; analyze
+  H4, lead ruling R-42); `inspect_repository(directory, run)` (rows 3, 4, 4b,
+  5, 6 and 7 through `run_bounded()` and the parsers, memoized per common
+  directory on the `Invocation`, returning the identity `{root, common_dir,
+  dev, ino}` with the rows' evidence; where `main_worktree()` gives `None`,
+  `root` is null and rows 4 to 7 run in the common directory for a bare
+  repository, and otherwise where row 3 ran, FR-055);
   `verify_registration()` and the presence `lstat`, both through `fs_call()`
   (`present` false on `ENOENT` or `ENOTDIR`, null with an `os-error` on any
   other failure, lead ruling R-36); `status_probe()`; and `worktree_rows()`
@@ -683,6 +690,10 @@ G. Landing order: A to E, then F, G and H.
   `cleanup_report()` with SIGTERM or SIGHUP in the slot returns 143 or 129,
   never `internal-error`; a `RuntimeError` in `snapshot()` under `status` is
   not caught (R6); and `str()` of a `Refused` with a code is its message alone.
+  T047 retargets the two fault patches to the frozen stages, `build_plan` for
+  `cleanup_report` and `resolve_clean_target` for `discover`, since after T049
+  and T107 `clean` reaches neither old function for a path argument (analyze
+  H3, lead ruling R-42).
 - [ ] T035 [P] Give `Refused` (`project:23-24`) the keyword fields `code`,
   `path`, `reason` and `context` (the repository and merge target once
   established) and `as_object()`; add to region `guard` `clean_mode(args)`;
@@ -880,7 +891,11 @@ tuples.
   `require_git` and `check_plan` (region `dispatcher`) keep the baseline
   checks. Arguments are read with `getattr(args, name, default)`. `parser()`
   (`project:1074-1122`) gains `--all-safe` and `--expect-plan D`, its only
-  edit. The 96 tests pass, the one T046 rewrites aside.
+  edit. In `tests/test_clean_guard.py`, lane H's module, T047 alone retargets
+  T034's fault patches: `build_plan` in place of `cleanup_report` (the
+  `RuntimeError` case, and `Interrupted` with SIGTERM or SIGHUP in the slot)
+  and `resolve_clean_target` in place of `discover` (analyze H3, lead ruling
+  R-42). The 96 tests pass, the one T046 rewrites aside, and so does T034.
 - [ ] T048 [P] [US1] Fill `check_clean_arguments(args)` (the contract's
   "Argument checks": `invalid-arguments` with the baseline messages kept;
   `--apply --json` accepted only with `--all-safe` or `--action remove`; every
@@ -1345,10 +1360,14 @@ text lane, US3, US7 and US9.
   `test_clean_worktree_changes_while_confirmation_is_pending` (the question
   hook dirties the selected worktree: `refused`, `state-changed`, exit 2, the
   worktree preserved); `test_clean_new_worktree_and_pre_removal_changes` (a
-  linked worktree registered at the question is not selected; and in turn a
-  changed merge-target SHA, feature branch tip, upstream object, lock,
-  ignored-file state or classification of a target before the first removal: no
-  mutation, exit 2, the matching reason); and `test_clean_changed_later_target`
+  linked worktree registered at the question is not selected; and in turn,
+  with two targets selected, a changed merge-target SHA, and a changed feature
+  branch tip, upstream object or lock of the second target, each found by the
+  first target's preflight, and a changed ignored-file state or classification
+  of the first target, found in its own revalidation: the first target
+  `refused` with the matching reason, the second `not-attempted` with
+  `batch-stopped`, no mutation, exit 2; research.md R16, lead ruling R-41); and
+  `test_clean_changed_later_target`
   (target 2 changed by the counting wrapper's post-remove hook on target 1: the
   run stops at target 2, and the record shows target 1 `removed` and every
   retained branch). Scenarios: "Worktree changes while confirmation is
@@ -1446,9 +1465,16 @@ text lane, US3, US7 and US9.
   head), `state-changed` (any other signature field, the lock, the manifest,
   the merge target, an `upstream_oid` that reappears), `contains-submodule` and
   `hidden-local-state`. A value null in the plan and null again is no
-  difference, and one that cannot be re-read is one; the first target's three
-  repository children are the preflight of every target; at most five Git
-  children per target. A refused target's reconciliation comes from the
+  difference, and one that cannot be re-read is one. The first target's
+  revalidation is the preflight of every selected target: its registry
+  listing, its narrowed ref listing and its filesystem reads compare every
+  selected target's registration, lock and filesystem identity, branch tip and
+  upstream object, beside the merge-target SHA, and a difference on any target
+  refuses the first target with the matching reason (its message names no
+  other target), nothing is removed, and later targets are `not-attempted`
+  with `batch-stopped`; each target's ignored-file state and classification
+  are checked in its own revalidation (research.md R16, lead ruling R-41 as
+  amended; `BA:709-711` at `da33d92`). At most five Git children per target. A refused target's reconciliation comes from the
   revalidation that refused it, plus an `lstat` of the planned path when that
   revalidation stopped before its own; a field whose listing did not run is
   null (plan review M13).
@@ -1841,14 +1867,20 @@ region `evidence`. It starts at US1's checkpoint, beside US2, US3 and US9.
   the main worktree; a relative path, or none, joined to the working directory
   and resolved by row 3 there; a bare name through `discover()`, then resolved
   as a worktree toplevel; the family-holder and manifest-ancestor redirections
-  never for a path. Fill `main_worktree()` (region `evidence`) with M6's order:
-  row 3's third line, a submodule checkout, refused; a first registry record
-  that is `bare` refused; a first record equal to the common directory resolved
-  by the realpath of `core.worktree` (row 4b; a relative value resolved against
-  the git directory, as Git documents and project-overview's spec states, lead
-  ruling R-36) or the candidate toplevel whose `.git` file names it, else
-  refused; otherwise the first record's realpath. Every refusal is
-  `target-not-repository-root`, exit 2, before any plan.
+  never for a path. Fill `main_worktree()` (region `evidence`) with M6's
+  order, returning `None` with its cause and never raising, as T031 states: a
+  first registry record that is `bare` gives `None`; a first record equal to
+  the common directory resolves by the realpath of `core.worktree` (row 4b; a
+  relative value resolved against the git directory, as Git documents and
+  project-overview's spec states, lead ruling R-36) or the candidate toplevel
+  whose `.git` file names it, else `None`; otherwise the first record's
+  realpath. `resolve_clean_target()` refuses, in M6's order, a submodule
+  checkout (row 3's third line) and then a `None` main worktree, each with
+  `target-not-repository-root`, exit 2, before any plan; the refusal lives in
+  region `resolution`, never in `main_worktree()`, so that `status` and
+  `doctor`, which reach `main_worktree()` after T117, report such a
+  repository and never exit 2 for it (FR-050, FR-055, FR-061; analyze H4, lead
+  ruling R-42).
 - [ ] T108 [US7] Fill `declared_tracking_branch(root)` (region `evidence`; D8,
   FR-018, FR-060) with a bounded read: an `st_size` over 1 MiB is
   `manifest-invalid` without a read, the read never passes 1 MiB, and an
@@ -1989,7 +2021,11 @@ every clean story; the `clean` tests of T114 and T116 also need US1.
   null); and `test_update_a_leg_s_probe_times_out` (launcher, with a table that
   shortens the 15 s inspection budget (R-29); `status-hangs-in` a leg: `update
   --apply --component shape` refuses with exit 2, and the fake `openRepoShape`
-  records no run). Scenarios: "A failed root status is reported"; "Not
+  records no run); and `test_status_a_submodule_checkout_is_reported` (a
+  submodule's checkout, and a linked worktree of a bare repository: `status`
+  exits 0 and `doctor` 0 or 1, never 2, each value written into the test as a
+  literal (R9); FR-055, analyze H4, lead ruling R-42). Scenarios: "A failed
+  root status is reported"; "Not
   established is an error, none is not"; "A deleted upstream in status and
   doctor"; "A leg's probe times out".
 - [ ] T116 [US9] Add to `tests/test_status_doctor_update.py`:
@@ -2286,7 +2322,8 @@ included (T074). By requirement:
 | FR-050 to FR-052 | T117, T118, T119, T120, T114 to T116 |
 | FR-053 | T024, T025, T048, T118, T021, T114 |
 | FR-054 | T013, T012, T030, T077, T074 |
-| FR-055 to FR-057 | T031, T015, T029, T030, T097 |
+| FR-055 | T031, T107, T029, T030, T115 |
+| FR-056, FR-057 | T031, T015, T029, T030, T097 |
 | FR-058 | T022, T023, T024, T018, T030 |
 | FR-059 | T024, T117, T115 |
 | FR-060 | T108, T106 |

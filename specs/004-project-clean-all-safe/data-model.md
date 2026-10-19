@@ -279,7 +279,14 @@ target:
 At most five Git children (steps 1, 3, 4, 6 and 7). A value null in the plan
 and null again is no difference; a value that cannot be re-read, a
 timed-out call included, is a difference, with its step's reason. The first
-target's steps 1 to 4 are the preflight of every target. After target k's
+target's revalidation is the preflight of every selected target: its steps 3
+and 4 and its filesystem reads compare every selected target's registration,
+`locked` and filesystem identity, branch tip and upstream object, beside the
+merge-target SHA, and a difference on any target refuses the first target
+with that step's reason, nothing removed and later targets `not-attempted`
+with `batch-stopped`; each target's steps 6 and 7 (its ignored-file state and
+classification among them) run only in its own revalidation (research.md
+R16, lead ruling R-41). After target k's
 removal child is reaped, its rescan runs steps 1 to 4 again (three Git
 children); when k ends as a plain `removed` they are target k+1's steps 1 to
 4, and otherwise, or after the last spawned target, they are the final

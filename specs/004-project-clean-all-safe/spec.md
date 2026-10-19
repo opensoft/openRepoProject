@@ -1310,7 +1310,8 @@ configuration"; "A lazy fetch in a partial clone is refused locally";
   value null in the plan and null at revalidation MUST NOT count as a
   difference, and a value that cannot be re-read, a timed-out filesystem call
   included, MUST. The first target's repository-wide checks MUST serve as the
-  preflight of every target. Push and branch deletion MUST keep the full
+  preflight of every selected target, so that a difference found there
+  removes nothing at all. Push and branch deletion MUST keep the full
   re-inspection and refuse with `inspection-incomplete`, `inspect-cap` or
   `deadline-exceeded`, exit 2, when it is incomplete. Git's own non-force check
   MUST be the last defense only on the removal command's pinned status
