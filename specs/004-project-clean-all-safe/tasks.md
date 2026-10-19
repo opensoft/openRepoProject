@@ -754,7 +754,7 @@ T033), when B, D, E and F are; H, guard (T034, T035), when T023 is, beside G
 
 ### Lane H: the `internal-error` guard
 
-- [ ] T034 [P] Add `tests/test_clean_guard.py`, in process: with
+- [x] T034 [P] Add `tests/test_clean_guard.py`, in process: with
   `cleanup_report` patched to raise `RuntimeError("boom")`, and in a second
   case with `discover` patched the same way under `clean`, `main(["clean",
   ROOT])` returns 2 and prints `REFUSED: RuntimeError: boom`, and with `--json`
@@ -773,7 +773,7 @@ T033), when B, D, E and F are; H, guard (T034, T035), when T023 is, beside G
   `cleanup_report` and `resolve_clean_target` for `discover`, since after T049
   and T107 `clean` reaches neither old function for a path argument (analyze
   H3, lead ruling R-42).
-- [ ] T035 [P] Give `Refused` (`project:23-24`) the keyword fields `code`,
+- [x] T035 [P] Give `Refused` (`project:23-24`) the keyword fields `code`,
   `path`, `reason` and `context` (the repository and merge target once
   established) and `as_object()`; add to region `guard` `clean_mode(args)`;
   `run_clean(args)` (before the apply phase, any `Exception` but `Refused`
