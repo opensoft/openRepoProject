@@ -487,6 +487,272 @@ def discover(target=None):
 # endregion runner
 
 # region parsers
+class ParseError(ValueError):
+    """A Git output stream that ended inside a record, or held one that is not
+    in its format: the driver's outcome is then `failed` (design D2)."""
+
+
+OBJECT_NAME = re.compile(rb"[0-9a-f]{40}|[0-9a-f]{64}")
+UPSTREAM_TRACK = re.compile(rb"(?:ahead ([0-9]+))?(, )?(?:behind ([0-9]+))?")
+INDEX_ENTRY = re.compile(rb"([A-Za-z]) ([0-7]{6}) ([0-9a-f]{40}|[0-9a-f]{64}) ([0-3])\t(.+)",
+                         re.DOTALL)
+
+
+def object_name(value):
+    if not OBJECT_NAME.fullmatch(value):
+        raise ParseError(f"not an object name: {value[:80]!r}")
+    return value.decode("ascii")
+
+
+class RecordStream:
+    """The incremental parser of design D2: byte chunks go in through feed(),
+    are split at `terminator` and handed to _take() one record at a time. It
+    does no I/O, holds at most one partial record and exposes `bound_reached`.
+    feed() never raises: a record not in the format becomes the failure that
+    finish() raises, and every byte after it, or after the bound, is ignored.
+    finish() returns the records, or raises ParseError for a truncated last
+    record, unless the bound was reached first."""
+
+    terminator = b"\0"
+
+    def __init__(self):
+        self.bound_reached = False
+        self._partial = bytearray()
+        self._failure = None
+
+    def feed(self, chunk):
+        if self.bound_reached or self._failure is not None:
+            return
+        buffer = self._partial
+        scanned = len(buffer)
+        buffer += chunk
+        start = 0
+        while (end := buffer.find(self.terminator, max(start, scanned))) >= 0:
+            try:
+                self._take(bytes(buffer[start:end]))
+            except ParseError as exc:
+                self._failure = exc
+            start = end + 1
+            if self.bound_reached or self._failure is not None:
+                self._partial = bytearray()
+                return
+        del buffer[:start]
+
+    def finish(self):
+        if self._failure is not None:
+            raise self._failure
+        if not self.bound_reached and (self._partial or self._open()):
+            raise ParseError(f"{type(self).__name__}: the last record is truncated")
+        return self._result()
+
+    def _open(self):
+        return False
+
+
+class StatusParser(RecordStream):
+    """`status --porcelain=v1 -z`: two status letters, a space and a path, NUL
+    terminated; a rename or copy (R or C in either column) is followed by its
+    source path, which is not counted (design D2). `dirty` is true once a
+    record other than an ignored one (`!!`) arrives, and false once an ignored
+    record arrives first or the stream ends with none. The bound is the 65th
+    ignored record or the 4,097th record of any kind, from LIMITS when the
+    parser is made; the record that reaches it is not read. The first 8
+    ignored paths are kept as raw bytes. `deletions_only` is D4's flag: true
+    when every record read other than an ignored one is a tracked file deleted
+    in the working tree (` D`), and at least one was read.
+
+    finish() returns {dirty, ignored_files, ignored_files_truncated,
+    ignored_samples, records, deletions_only}; `ignored_files` is null when
+    the bound came before any ignored record (FR-056, D2, D4)."""
+
+    LETTERS = b" MTADRCU?!"
+
+    def __init__(self):
+        super().__init__()
+        self._ignored_bound = LIMITS["ignored_entries"]
+        self._record_bound = LIMITS["status_records"]
+        self._sample_bound = LIMITS["ignored_samples"]
+        self.records = 0
+        self.ignored = 0
+        self.samples = []
+        self.dirty = None
+        self._deleted = None
+        self._source_due = None
+
+    def _take(self, field):
+        if self._source_due is not None:
+            if not field:
+                raise ParseError("a rename or copy record has an empty source path")
+            status, self._source_due = self._source_due, None
+            self._read(status, None)
+        elif (len(field) < 4 or field[2:3] != b" " or field[0] not in self.LETTERS
+                or field[1] not in self.LETTERS):
+            raise ParseError(f"not a status record: {field[:80]!r}")
+        elif field[0] in b"RC" or field[1] in b"RC":
+            self._source_due = field[:2]
+        else:
+            self._read(field[:2], field[3:])
+
+    def _read(self, status, path):
+        ignored = status == b"!!"
+        if self.records >= self._record_bound or (ignored and self.ignored >= self._ignored_bound):
+            self.bound_reached = True
+            return
+        self.records += 1
+        if ignored:
+            self.ignored += 1
+            if self.dirty is None:
+                self.dirty = False
+            if len(self.samples) < self._sample_bound:
+                self.samples.append(path)
+        else:
+            self.dirty = True
+            self._deleted = self._deleted is not False and status == b" D"
+
+    def _open(self):
+        return self._source_due is not None
+
+    def _result(self):
+        return {"dirty": False if self.dirty is None and not self.bound_reached else self.dirty,
+                "ignored_files": None if self.bound_reached and not self.ignored else self.ignored,
+                "ignored_files_truncated": self.bound_reached,
+                "ignored_samples": list(self.samples),
+                "records": self.records,
+                "deletions_only": self._deleted is True}
+
+
+class WorktreeListParser(RecordStream):
+    """`worktree list --porcelain -z`: NUL-terminated attributes, an empty one
+    ending each entry (design D2). finish() returns one dict per entry, in
+    order: `path` (bytes); `head` (hex text, None for a bare entry); `branch`
+    (the full refname as bytes, or None); `bare`, `detached`, `locked` and
+    `prunable`; and `locked_reason` and `prunable_reason` (bytes, or None when
+    Git printed no reason). An attribute it does not know is skipped, as Git
+    may add some. No bound."""
+
+    def __init__(self):
+        super().__init__()
+        self.entries = []
+        self._entry = None
+
+    def _take(self, field):
+        entry = self._entry
+        if entry is None:
+            if not field.startswith(b"worktree ") or len(field) == 9:
+                raise ParseError(f"a registry entry must start with its path: {field[:80]!r}")
+            self._entry = {"path": field[9:], "head": None, "branch": None, "bare": False,
+                           "detached": False, "locked": False, "locked_reason": None,
+                           "prunable": False, "prunable_reason": None}
+            return
+        name, space, value = field.partition(b" ")
+        if not field:
+            self.entries.append(entry)
+            self._entry = None
+        elif field in (b"bare", b"detached"):
+            entry[field.decode()] = True
+        elif name == b"HEAD":
+            entry["head"] = object_name(value)
+        elif name == b"branch":
+            if not value:
+                raise ParseError("a registry entry names an empty branch")
+            entry["branch"] = value
+        elif name in (b"locked", b"prunable"):
+            entry[name.decode()] = True
+            entry[name.decode() + "_reason"] = value if space else None
+
+    def _open(self):
+        return self._entry is not None
+
+    def _result(self):
+        return list(self.entries)
+
+
+class RefParser(RecordStream):
+    """Design D6 row 6: `%(refname)`, `%(objectname)`, `%(symref)`,
+    `%(upstream)`, `%(upstream:short)` and `%(upstream:track,nobracket)`,
+    NUL-separated, a line feed ending each record. finish() returns one dict
+    per ref, in order: `refname`, `symref`, `upstream` and `upstream_short`
+    (bytes, None when empty); `objectname` (hex text); and from the track,
+    `remote_present` (None without an upstream, false when it is `gone`) and
+    `ahead` and `behind` (ints; None without an upstream or when it is gone).
+    No bound."""
+
+    terminator = b"\n"
+
+    def __init__(self):
+        super().__init__()
+        self.refs = []
+
+    def _take(self, line):
+        fields = line.split(b"\0")
+        if len(fields) != 6 or not fields[0]:
+            raise ParseError(f"not a ref record: {line[:160]!r}")
+        refname, objectname, symref, upstream, short, track = fields
+        if bool(upstream) != bool(short) or (track and not upstream):
+            raise ParseError(f"an upstream without its short name or track: {line[:160]!r}")
+        present = ahead = behind = None
+        if upstream:
+            present = track != b"gone"
+            if present:
+                match = UPSTREAM_TRACK.fullmatch(track)
+                if not match or bool(match[2]) != bool(match[1] and match[3]):
+                    raise ParseError(f"not an upstream track: {track[:80]!r}")
+                ahead, behind = int(match[1] or 0), int(match[3] or 0)
+        self.refs.append({"refname": refname, "objectname": object_name(objectname),
+                          "symref": symref or None, "upstream": upstream or None,
+                          "upstream_short": short or None, "remote_present": present,
+                          "ahead": ahead, "behind": behind})
+
+    def _result(self):
+        return list(self.refs)
+
+
+class MergedSetParser(RecordStream):
+    """Design D6 row 7: one refname per line, the local branches merged into the
+    merge target. finish() returns them as a frozenset of bytes. No bound."""
+
+    terminator = b"\n"
+
+    def __init__(self):
+        super().__init__()
+        self.refnames = set()
+
+    def _take(self, line):
+        if not line:
+            raise ParseError("an empty refname in the merged set")
+        self.refnames.add(line)
+
+    def _result(self):
+        return frozenset(self.refnames)
+
+
+class HiddenStateParser(RecordStream):
+    """`ls-files -v --stage -z`: a tag letter, a space, the mode, the object
+    name and the stage, a tab and the path, NUL-terminated (design D2). The
+    bound is the first entry of mode 160000, a gitlink, which sets `gitlink`;
+    before it, a lowercase tag (assume-unchanged) or `S` (skip-worktree) sets
+    `hidden`. finish() returns {gitlink, hidden, entries}, `entries` counting
+    the entries read before the bound."""
+
+    def __init__(self):
+        super().__init__()
+        self.entries = 0
+        self.gitlink = False
+        self.hidden = False
+
+    def _take(self, field):
+        match = INDEX_ENTRY.fullmatch(field)
+        if not match:
+            raise ParseError(f"not an index entry: {field[:160]!r}")
+        if match[2] == b"160000":
+            self.gitlink = self.bound_reached = True
+            return
+        self.entries += 1
+        if match[1].islower() or match[1] == b"S":
+            self.hidden = True
+
+    def _result(self):
+        return {"gitlink": self.gitlink, "hidden": self.hidden, "entries": self.entries}
 # endregion parsers
 
 # region escaping
