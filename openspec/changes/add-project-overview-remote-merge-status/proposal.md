@@ -114,13 +114,17 @@ the revalidation signature and added ladder classes.
 - **One carve-out in "Overview is local and read-only"**, in lane
   openRepoProject-4's wording. Without `--remote` the requirement holds as
   written. With it, the network clause still binds the `project` process and
-  every Git child and does not bind the `gh` children of the ADDED
-  requirement; every other clause holds, its credential clause excepted; and
-  in place of that clause the `project` process reads no credential file and
-  no profile data the scan does not need, a `gh` child authenticates by the
-  GitHub client's own means, reading what that client reads, and the overview
-  reads, tests, prints and forwards no credential value, the caller's
-  environment excepted, which it passes to a `gh` child unread (C-7).
+  every Git child and does not bind the `gh` children of the ADDED requirement,
+  which are started only with its argv and environment, what a `gh` child does
+  beyond them being the GitHub client's own; every other clause holds for the
+  `project` process and every Git child, its credential clause excepted; and in
+  place of that clause the `project` process reads no credential file and no
+  profile data the scan does not need, a `gh` child authenticates by the GitHub
+  client's own means, reading what that client reads, and the overview reads,
+  tests, infers, prints and forwards no credential value, the caller's
+  environment excepted, which it passes to a `gh` child unread (C-7). The
+  alignment review narrows the `gh` clause to what `project` starts and
+  restores the packet's "infers" (QA-1, SA-11; C-13).
 - **One addition to "Overview bounds its work and reports what it
   omitted"**, lane openRepoProject-4's fourth option (C-9). The remote-target
   reads are Git children, so `probes.performed` counts them as it counts every
@@ -151,15 +155,21 @@ the revalidation signature and added ladder classes.
 
 ## Rules This Change Keeps
 
-- **Local ancestry is the only removal proof** (BA:195-199; SY:224-226;
-  DI:1059-1060). A merged pull request explains a kept row; it never makes it
-  removable, and `project clean` never sees it.
+- **Remote evidence is never a removal proof** (DI:1059-1060; SY:224-225;
+  HO:167). Local ancestry stays the cleanup gate: a merged pull request
+  explains a kept row, never makes it removable, and `project clean` never sees
+  it. Whether a local patch-equivalence proof may join local ancestry is change
+  1's open question on squash-merged branches (CAS proposal.md:1001-1005),
+  which the overview would inherit (APO proposal.md:901-902) and which this
+  change neither decides nor forecloses.
 - **Opt-in and read-only** (DI:1038-1039). A default overview opens no
-  connection (APO/ov:710); a `--remote` run sends only the fixed query, writes
-  nothing, mutates nothing and keeps nothing (DI:1060, "Persistent remote
-  caching is deferred").
+  connection (APO/ov:710); a `--remote` run starts `gh` only with the fixed
+  query and the switches that turn off its update check, prompts and telemetry,
+  and `project` writes, mutates and keeps nothing (DI:1060, "Persistent remote
+  caching is deferred"); what `gh` does beyond its documented switches is
+  GitHub's (What This Repository Does Not Own).
 - **Credentials are never touched** (DI:1056-1058). The `project` process
-  reads, tests, prints and forwards no credential value, the caller's
+  reads, tests, infers, prints and forwards no credential value, the caller's
   environment excepted, which it passes to a `gh` child unread; `gh`
   authenticates by its own path, and a URL with embedded credentials is
   refused unprinted.
@@ -180,6 +190,8 @@ the revalidation signature and added ladder classes.
   the moment of the query.
 - **Authentication**: the GitHub CLI's own credential store and environment
   (`gh auth login`, `GH_TOKEN`); `project` reads none of it.
+- **What a `gh` child reads, writes or sends beyond its argv and the switches
+  `project` sets**: the GitHub client's own (`design.md`, Risks).
 - **Which pull requests a commit is associated with**: GitHub's API, whose
   scope this change reports and does not redefine.
 - **Remote and URL configuration**: Git, including `url.<base>.insteadOf`,
@@ -231,12 +243,13 @@ its one modified requirement and those of
     paragraph, in lane openRepoProject-4's wording, says that without
     `--remote` the requirement holds as written, and that with it the network
     clause still binds the `project` process and every Git child and does not
-    bind the `gh` children of the ADDED requirement, every other clause
-    holding (no fetch, mutation or file write; nothing kept) but the
-    credential clause, which is replaced by three clauses that pass the
-    caller's environment to a `gh` child unread, and remote evidence labelled
-    as live. Added scenario: a `--remote` run with a fake `gh` leaves the
-    zero-mutation snapshots identical, opens no connection from `project`,
+    bind the `gh` children of the ADDED requirement, which are started only
+    with its argv and environment, every other clause holding for the `project`
+    process and every Git child (no fetch, mutation or file write; nothing
+    kept) but the credential clause, which is replaced by three clauses that
+    pass the caller's environment to a `gh` child unread, and remote evidence
+    labelled as live. Added scenario: a `--remote` run with a fake `gh` leaves
+    the zero-mutation snapshots identical, opens no connection from `project`,
     sends only the fixed query, again on a second run, and every recorded
     `gh` environment sets `GH_NO_UPDATE_NOTIFIER=1`,
     `GH_NO_EXTENSION_UPDATE_NOTIFIER=1` and `GH_PROMPT_DISABLED=1`.
@@ -600,12 +613,15 @@ Packet open decisions taken, each citing the text that leaves it open:
   is one in which `remote.completeness` and the envelope's `completeness`
   are both `complete`. The isolation sentence's last clause, that a remote
   result is kept nowhere beyond the invocation and so is never a `project
-  clean` input, stays, as a sentence of its own after lane
-  openRepoProject-4's. The `probe-failed` of "Overview isolates one
-  candidate's failure" (APO/ov:333) is named there and not modified, as L-3
-  allows: that requirement's table covers what is "Raised or observed while
-  collecting one candidate" inside the per-candidate boundary
-  (APO/ov:318-326), and the remote-target reads run after collection.
+  clean` input, stays, as a sentence of its own after lane openRepoProject-4's.
+  That sentence names only "Overview bounds its work and reports what it
+  omitted", which this change modifies. "Overview isolates one candidate's
+  failure" is neither named nor modified: its table covers what is "Raised or
+  observed while collecting one candidate" inside a boundary that ends at
+  classification (APO/ov:318-326), and the remote-target reads run after
+  collection (`design.md`, D1), so naming it would read as an ADDED requirement
+  overriding a requirement of change 2 (L-11); lane openRepoProject-4 agreed to
+  drop it on 2026-10-19.
 
 Decisions where the sources and the rulings are silent:
 
@@ -653,7 +669,12 @@ Decisions where the sources and the rulings are silent:
   remote-target read or `gh` child, leaves the envelope's `completeness` and
   the exit status as they are without `--remote`. Rejected: an `unknown`
   result making the run incomplete, which contradicts APO/ov:654-655,
-  unmodified here, and would make every rate-limited `--remote` run exit 1.
+  unmodified here, and would make every rate-limited `--remote` run exit 1. An
+  internal exception in the remote phase, which no reason records, exits 2, as
+  change 2's "Overview exits by completeness and severity" (APO/ov:765-766)
+  gives any exception outside the per-candidate boundary (C-14). Rejected:
+  catching every exception as `api-error`, which contradicts that sentence of
+  change 2 and would need a MODIFIED block (L-11).
 - **No early stop** after a rate limit or a `gh` that needs authentication:
   each key is answered on its own. Rejected: stopping at the first, which
   saves at most 63 fast failures but makes which rows are answered depend on

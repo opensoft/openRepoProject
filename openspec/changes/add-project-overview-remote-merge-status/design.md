@@ -266,12 +266,12 @@ caller's, less `GH_DEBUG`, `DEBUG`, `GH_HOST`, `GH_REPO`, `GH_FORCE_TTY` and
 `GH_NO_EXTENSION_UPDATE_NOTIFIER=1`, `GH_TELEMETRY=false` and `NO_COLOR=1`.
 `GH_TOKEN`, `GITHUB_TOKEN`, `GH_CONFIG_DIR` and the proxy variables pass
 unread: that is gh's own authentication path (DI:1056-1057). The two update
-notifier switches keep `gh` from its update check, once every 24 hours by
-its own help text, and from the state it writes for it, so the "no ...
-file write" of "Overview is local and read-only" holds for the `gh`
-children too; the fake `gh` of D11 records the values, and that block's
-new scenario asserts them. [E]'s Git scrub does not apply; this is not a
-Git child.
+notifier switches keep `gh` from its update check, once every 24 hours by its
+own help text, and from the state it writes for it, as far as gh documents
+them; "Overview is local and read-only" binds `project` and its Git children,
+and gh's behaviour beyond its switches is the client's; the fake `gh` of D11
+records the values, and that block's new scenario asserts them. [E]'s Git scrub
+does not apply; this is not a Git child.
 
 `gh` is looked up once per run, by one bounded filesystem task as [B]
 requires of every filesystem call; when it is missing, every keyed row is
@@ -396,7 +396,9 @@ summary counts and completeness are computed, and it writes only into the
 stopped, and [R]'s isolation clause for every failure, cut or stop of a
 remote-target read or a `gh` child, `probe-failed`, `probe-timeout` and
 `deadline-exceeded` notwithstanding, so [X]'s exit status and [J]'s
-`completeness` are what they are without `--remote`, and the envelope's
+`completeness` are what they are without `--remote`, unless the remote phase
+raises an exception that [R] records as none of its reasons, which exits 2 as
+[X] gives any exception outside the per-candidate boundary, and the envelope's
 `probes` differs only by D2's reads. Nothing is written to disk or kept past
 the run, `gh` never gets `--cache`, and `project clean` has neither the
 option nor a reader of these fields, so remote evidence never reaches an
