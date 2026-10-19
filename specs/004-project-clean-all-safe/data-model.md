@@ -323,7 +323,9 @@ inspected (an old, missing or unusable Git, a failed or timed-out status
 probe) adds `classification: "inspection-error"` and `errors` (`git-too-old`,
 `git-unavailable`, `probe-failed`, `probe-timeout` or `os-error`), with
 `present` null when the version check failed and every value not established
-null; an inspected dict has neither field. Every `path` gains
+null; an inspected dict has neither field. A `git-too-old` or
+`git-unavailable` entry carries the contract's command-neutral message, never
+`clean`'s refusal text (lead ruling R-48). Every `path` gains
 `path_valid_utf8`, every `root` gains `root_valid_utf8`, and
 `ignored_samples` entries are objects. A deleted upstream shows its short
 name with `ahead` and `behind` null.
@@ -384,7 +386,12 @@ paused while a question waits), the probe and removal counters, the
 per-invocation memos (the version check's result, the common-directory
 evidence), and the phase: `planning` by default, then `apply` once the apply
 phase begins, then `reconciling`. Outside any scope, `current_invocation()`
-returns a fresh default: the 15 s budget and no signal handler.
+returns a fresh default: the 15 s budget and no signal handler. Its shell,
+`Invocation(command=None)` with the phase and the signal slot, is T023's,
+since the slot records with the phase; its budget, clock, counters and memos
+are T024's (lead ruling R-47). A `signal_scope` entered with no `Invocation`
+in force enters a default one for its own span, so that its handler and the
+driver read one slot (R-47).
 
 ### Signal slot (D1, D15)
 
@@ -399,6 +406,8 @@ The driver reads the slot by the `Invocation`'s phase: it raises
 | the slot read set in phase `planning` (after each wake of the driver) | the child is terminated and `Interrupted` raised: cancelled |
 | the slot read set at a seam of phase `apply` (before each revalidation and each spawn) | that target and every later one `not-attempted` with `interrupted`; reconciling follows |
 | a second SIGINT while a rescan runs in phase `reconciling` | the remaining rescans are abandoned: the running group is terminated, fields not established stay null, and the target is `unknown` with `reconciliation-incomplete` |
+| `raising_signals` entered with the slot already set | it raises at once, `KeyboardInterrupt` for SIGINT and `Terminated` for SIGTERM or SIGHUP, so no signal falls between reading the slot and installing its handlers (lead ruling R-47) |
+| `default_signals` entered | the handlers in force before the outermost scope was entered are restored for its span (R-47) |
 | a signal while a removal, push or `git branch -d` child runs | recorded only; the child is never signalled and is waited for |
 
 ## States of a `project clean` run

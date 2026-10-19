@@ -167,8 +167,8 @@ line per target,
 | --- | --- |
 | `invalid-arguments` | `--all-safe cannot be combined with --action, --branch or --worktree.`; `--expect-plan requires --all-safe and --apply.`; `--expect-plan takes 64 lowercase hexadecimal characters.`; the baseline messages for the baseline cases |
 | `internal-error` | `TYPE: TEXT`, the exception's class and text, so `REFUSED: RuntimeError: boom` (research.md R6) |
-| `git-unavailable` | `Git is unavailable (DETAIL); clean needs Git 2.36 or later.`, DETAIL one of `not found`, `exit N`, `timed out`, `unparseable version` |
-| `git-too-old` | `Git VERSION is older than 2.36; clean needs Git 2.36 or later.` |
+| `git-unavailable` | `Git is unavailable (DETAIL); clean needs Git 2.36 or later.`, DETAIL one of `not found`, `exit N`, `timed out`, `unparseable version`; clean's refusal only, a status or doctor row taking the command-neutral text in "Codes" (lead ruling R-48) |
+| `git-too-old` | `Git VERSION is older than 2.36; clean needs Git 2.36 or later.`; clean's refusal only, as above (R-48) |
 | `target-not-repository-root` | `Not the main worktree of a repository: PATH; pass the repository root.` |
 | `unsupported-path-bytes` | `The repository path is not valid UTF-8: PATH` |
 | `manifest-invalid` | `Manifest PATH is larger than 1 MiB.`; the baseline `Cannot read PATH: ...` and `Unexpected kind in PATH; expected project-manifest` otherwise |
@@ -282,7 +282,10 @@ OPERATION names what was cut: `git SUBCOMMAND` for a Git child, or the
 filesystem call (`lstat`, `realpath` or `read`). The lane that first prints
 each adds its `TEXT` key as a lead-approved contracts edit, with its fixture
 in `tests/clean_support.py`: the plan notes the plan lane (T049, T051), the
-row errors lane G (T031, T032).
+row errors lane G (T031, T032), and the two status and doctor texts the US9
+lane (T117, T119). Those two are command-neutral: they never say "clean
+needs", and clean's own refusals keep their messages above (lead ruling
+R-48).
 
 | Code | Kind | Message |
 | --- | --- | --- |
@@ -295,6 +298,8 @@ row errors lane G (T031, T032).
 | `probe-failed` | row error | `OPERATION failed: DETAIL`, DETAIL one of `exit N`, `signal N`, `cannot spawn (STRERROR)`, `unparseable output` |
 | `probe-timeout` | row error | `OPERATION timed out after S s`, S the budget in force |
 | `deadline-exceeded` | row error | `OPERATION stopped at the work deadline` |
+| `git-too-old` | status or doctor row error, and doctor's `git` row | `Git VERSION is older than 2.36; repository inspection needs Git 2.36 or later.` |
+| `git-unavailable` | status or doctor row error, and doctor's `git` row | `Git is unavailable (DETAIL); repository inspection needs Git 2.36 or later.`, DETAIL as for clean's refusal |
 
 Push and delete-branch also refuse with `inspection-incomplete`,
 `inspect-cap` or `deadline-exceeded` when their full inspection, before or
@@ -393,7 +398,7 @@ at most three.
 | Git check | `git --version` once per invocation, only when a repository is inspected; never a refusal |
 | No `.git` | `present: false`, no Git child, as today |
 | Uninspectable root, leg or worktree | `classification: "inspection-error"`, `errors`, unestablished values null; status exits 0 |
-| Doctor's `git` row | `ok` with the version, or `error` naming `git-too-old` or `git-unavailable` |
+| Doctor's `git` row | `ok` with the version, or `error` naming `git-too-old` or `git-unavailable` with its command-neutral text ("Codes"; lead ruling R-48) |
 | Doctor's error rows | one per null `present`, null `dirty` from a failed or timed-out probe, and `inspection-error` row; none for a null that means "none" |
 | Human `status` and `doctor` | `Git: inspection-error (CODES)` in place of the branch line |
 | Deleted upstream | `upstream` is the configured short name; `ahead`, `behind` null |
