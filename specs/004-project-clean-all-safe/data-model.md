@@ -429,7 +429,7 @@ version, to `git-unavailable`.
 | (start), resolving | an argument check; a resolve refusal | refused (exit 2) |
 | resolving | resolved | planning: the full inspection under single mode's row cap and bounds, with the batch's completeness |
 | planning | incomplete; `remote-gone` (push); a baseline refusal | refused (exit 2, no delegate) |
-| planning | accepted | confirming: `Cleanup action:` and the plan printed, then `confirm()` with the process's own handlers |
+| planning | accepted | confirming: `Cleanup action:` and the plan printed, then `confirm()` with the process's own handlers and the clock paused |
 | confirming | `yes` or `--yes` | re-inspecting: the full re-inspection |
 | confirming | another answer; no terminal and no `--yes`; Ctrl-C or end of input | refused (`confirm()`'s baseline messages, exit 2); cancelled (130) |
 | re-inspecting | incomplete, or the state changed | refused (exit 2, no delegate) |

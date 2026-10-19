@@ -1503,11 +1503,11 @@ configuration"; "A lazy fetch in a partial clone is refused locally";
   delta scenario with at least one test named after it, using a counting `git`
   wrapper that records each child's arguments and directory, the fake Gits of
   `design.md` D1, hooks for the residual window, the branch race, deadline
-  expiry, the removal ceiling and signals, a test-only time scale that shortens
-  the 60 s deadline, the 10 s reserve, the 5 s and 15 s budgets and the 300 s
-  ceiling together, replaced in-process by the test launcher, never read from
-  the environment or a user setting, and reported as the values in force in
-  `budget`, the parser feeds of FR-062, and value-parity checks against the
+  expiry, the removal ceiling and signals, a test-only timing table that the
+  launcher replaces in-process per test with that test's own factor or values
+  (lead ruling R-29), never read from the environment or a user setting,
+  reported as the values in force in `budget`, the parser feeds of FR-062, and
+  value-parity checks against the
   baseline. Every existing test MUST keep passing unchanged except
   `test_clean_revalidates_a_worktree_after_confirmation`, which moves to the
   result record (a `refused` target with `state-changed`, exit 2). Non-UTF-8

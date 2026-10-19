@@ -24,10 +24,10 @@ harness spike at `aadd709`, are applied in place.
 Each entry gives a Decision, its Rationale and the Alternatives considered;
 R1 to R6 also name the scenarios they satisfy (delta scenario titles in
 quotes, spec ids beside them) and what they cost. Line citations are
-`project:<line>` and `tests/test_project.py:<line>` at `961c405`, unchanged on
-this branch (plan.md, "Citations"). The checks quoted below were run on Git
-2.43.0 and Python 3.12.3 with their fixtures and scripts in a scratch
-directory, never in the repository.
+`project:<line>` and `tests/test_project.py:<line>` at `961c405`, read with
+`git show 961c405:<file>` (plan.md, "Citations"). The checks quoted below
+were run on Git 2.43.0 and Python 3.12.3 with their fixtures and scripts in a
+scratch directory, never in the repository.
 
 ## R1. The push-child exception (LQ-3, awaiting Brett Heap's word)
 

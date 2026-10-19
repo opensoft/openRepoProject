@@ -149,8 +149,10 @@ in the `$'...'` form (FR-041, SC-010).
 The change pins its `project`, test and README citations at `da33d92`
 (proposal, "Dependencies and Sequencing"; `design.md:25-27`), leaving the
 re-pin to this feature. The rule at `961c405`, stated once here; every other
-artifact of this feature cites `961c405`, which this branch leaves unchanged
-for `project`, `tests/` and `README.md`:
+artifact of this feature cites `961c405`, read with `git show
+961c405:<file>`, since from T004 (`a0368ac`) this branch's `project` differs
+from it, and so do `tests/` from T009 and one line of `README.md` from #32
+(`e9d6711`), a line no citation names:
 
 - `project`: lines 1 to 203 are identical; a citation at line 274 or later
   (`manifest()` onward) is N + 148 (141 lines from PR #8, 7 more from PR #17
@@ -307,8 +309,12 @@ AGENTS.md                    Git 2.36, the clean tests and a section on
                              `test` job unchanged
 openspec/changes/add-project-clean-all-safe/
                              the ratified change; read, not changed by the
-                             implementation (this phase tidies one line of
-                             its tasks.md, the Speckit handoff)
+                             implementation, except its tasks.md: four
+                             hunks from the specify and plan commits (PR
+                             #11's governance links, the Speckit Handoff's
+                             feature lines) and T133's Tasks line; a merge
+                             resolves their conflict with PR #19 when main
+                             gains it (analyze M8)
 ```
 
 **Structure Decision**: one executable; its new tests in modules of their own,

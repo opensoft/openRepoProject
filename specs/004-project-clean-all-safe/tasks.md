@@ -85,8 +85,10 @@ child's scrubbed names and process group before it `exec`s Git (M4).
 
 - `project`, at the repository root, is one file. New code goes only inside the
   region its task names, between the markers T004 adds after `discover()` and
-  before `repo_state()`. Existing functions are cited at `961c405`, which this
-  branch leaves unchanged for `project`, `tests/` and `README.md` (plan.md,
+  before `repo_state()`. Existing functions are cited at `961c405` and read
+  with `git show 961c405:<file>`: from T004 (`a0368ac`) this branch's
+  `project` differs from it, and so do `tests/` from T009 and one line of
+  `README.md` from #32 (`e9d6711`), a line no citation names (plan.md,
   "Citations").
 - New test modules are `tests/test_clean_<lane>.py` and
   `tests/test_status_doctor_update.py`; helpers are `tests/clean_support.py`,
@@ -97,8 +99,12 @@ child's scrubbed names and process group before it `exec`s Git (M4).
   its loader (T009).
 - `README.md`, `AGENTS.md` and `.github/workflows/tests.yml`;
   `specs/004-project-clean-all-safe/` (this file and `traceability.md`); and
-  one line of `openspec/changes/add-project-clean-all-safe/tasks.md` (T133). No
-  other file changes.
+  `openspec/changes/add-project-clean-all-safe/tasks.md`: the four hunks this
+  branch already carries there from `4e4b00f` and `dd923ee` (PR #11's
+  governance links for tasks 1.6, 2.1 and 2.2, and the Speckit Handoff's
+  feature lines), which stay, and T133's Tasks line. No other file changes.
+  When `main` gains PR #19, whose own edits to that file conflict with these
+  hunks, a merge resolves the conflict (analyze M8, lead ruling R-42).
 
 ## Rules for every new test
 
@@ -201,7 +207,8 @@ regions and contracts every lane writes against.
 - [x] T003 [P] Add the `git-floor` job to `.github/workflows/tests.yml`
   (FR-067, research.md R11), starting from the lead's ci-spike `workflow.patch`
   (48 added lines, applied with `git apply -p1`; its NOTES.md records the
-  build, cache and timing checks): `ubuntu-latest`, Python 3.10,
+  build, cache and timing checks; a reference the lead supplies, the task
+  completable from its own text; analyze M9): `ubuntu-latest`, Python 3.10,
   `actions/checkout@v4` and `actions/setup-python@v5` as the `test` job pins
   them, `pip install -r requirements.txt`; Git 2.36.6 from kernel.org's
   `git-2.36.6.tar.xz`, checked against sha256
@@ -298,7 +305,9 @@ G. Landing order: A to E, then F, G and H.
   constant derived at import (plan review M16, R-29). The first two tests of
   T005 pass.
 - [x] T007 [P] Add `tests/launch_project.py`, after the lead's harness spike
-  `harness-spike/launch.py` with `parents[1]` for the repository root: load
+  `harness-spike/launch.py` (a reference the lead supplies, the task
+  completable from its own text; analyze M9) with `parents[1]` for the
+  repository root: load
   `project` with `SourceFileLoader` and `spec_from_loader` under the module
   name `project_cli`, registered in `sys.modules` before `exec_module`, since a
   `@dataclass` under postponed annotations fails without it; when its first
@@ -369,12 +378,16 @@ G. Landing order: A to E, then F, G and H.
   and with an opt-in controlling terminal: a `preexec_fn` calling
   `fcntl.ioctl(0, termios.TIOCSCTTY, 0)`, which runs after
   `start_new_session`'s `setsid()` (R-31; the spike's
-  `harness-spike/prove4_pty.py`). That `preexec_fn` is the test's own;
+  `harness-spike/prove4_pty.py`, a reference the lead supplies, the task
+  completable from its own text; analyze M9). That `preexec_fn` is the test's
+  own;
   `project` never uses one (C4).
 - [x] T011 [P] Add the counting wrapper, the fake Gits and the text fixtures to
   `tests/clean_support.py`. `install_counting_git(bin_dir, log, real=REAL_GIT,
   hooks=None)` writes a POSIX `sh` script after `SH_WRAPPER` in the lead's
-  `harness-spike/spike_lib.py` (plan review M4, R-29): before Git runs, it
+  `harness-spike/spike_lib.py` (a reference the lead supplies, the task
+  completable from its own text; analyze M9; plan review M4, R-29): before Git
+  runs, it
   appends to `log`, with one `printf`, one record for the child, its fields
   NUL-separated and the record terminated: the pid, the parent pid, the process
   group (from `/proc/$$/stat`, else `ps -o pgid= -p $$`), the working directory
@@ -533,7 +546,9 @@ G. Landing order: A to E, then F, G and H.
   `Popen.wait(timeout)` only (R14). Never a blocking `terminate_group()` per
   handle, which stacks graces once several handles run (the spike measured 1.79
   to 2.08 graces late; its `advance_terminations()` in
-  `harness-spike/concurrent_driver.py` is the shape). `kill_live_probes()`
+  `harness-spike/concurrent_driver.py`, a reference the lead supplies, is the
+  shape, and the task is completable from its own text; analyze M9).
+  `kill_live_probes()`
   sends SIGTERM to every live group at once and advances them together until
   each is reaped or abandoned. No default argument holds a timing value (plan
   review M16).
@@ -662,7 +677,9 @@ G. Landing order: A to E, then F, G and H.
   other failure, lead ruling R-36); `status_probe()`; and `worktree_rows()`
   (the baseline keys, `prunable` among them where the record says so (M11), and
   the six added fields), each failed driver outcome becoming the row's `errors`
-  entry by T024's map (M17).
+  entry by T024's map (M17), and each row carrying an unprobed marker, never
+  serialized and unset here, which a read not finished within its filesystem
+  budget sets (T066; analyze M6).
 - [ ] T032 [P] Add to region `evidence`: `classify()` (pure, with its one
   reorder; `RECOMMENDATIONS` from `project:566-616`); `partial_removal_note()`;
   `declared_tracking_branch(root)` (today's `manifest()` read, bounded by
@@ -909,8 +926,9 @@ tuples.
   target and its notes from `resolve_merge_target()`; `gate_rows()`;
   `select_entry()` (the identity objects, the branch evidence, the signature
   fields, `locked`, `operation.argv`); `plan_completeness()`
-  (`inspection-incomplete` for an `inspection-error` row or a failed
-  repository-wide probe); `apply_allowed`; `refusals`; `limits` and `budget` as
+  (`inspection-incomplete` for an `inspection-error` row, a row carrying
+  T031's unprobed marker, or a failed repository-wide probe; analyze M6);
+  `apply_allowed`; `refusals`; `limits` and `budget` as
   the values in force; `probes` and `operations`, `estimated` as the upper
   bound for an `--apply` run of this plan in every mode, `probes` F + W + E +
   5T + 3 (F the repository-wide children this invocation ran, W the status
@@ -1141,9 +1159,11 @@ carrying the reason the gate order gives.
   entry when none survives, whose old and new objects are non-zero and differ),
   the head test and the outcome rule; it runs for every row that reaches gate
   7, in every mode. A read error other than `ENOENT` or `ENOTDIR` makes the row
-  `inspection-error` with `os-error`, and a timeout leaves it unprobed, the
-  plan incomplete with `inspection-incomplete` either way (plan review M5, as
-  the delta words it). T059 and T060 pass.
+  `inspection-error` with `os-error`, and a timeout leaves it unprobed by
+  setting T031's unprobed marker, the plan incomplete with
+  `inspection-incomplete` either way through T049's `plan_completeness()`,
+  which this task leaves as it is (plan review M5, as the delta words it;
+  analyze M6). T059 and T060 pass.
 - [ ] T067 [P] [US2] Fill in region `index`: `registration_gate`, gate 3, from
   the row's two-way registration result; and `index_gates`, gates 9 and 10, for
   rows that passed gates 1 to 8 only: `contains-submodule` from
@@ -1307,8 +1327,11 @@ US2, US7 and US9.
   `human_path()`, so that a root holding a Cc, Cf, Zl or Zp code point prints
   in the `$'...'` form (B2), while `show_plan()` stays as it is for `new` and
   `update`; `confirm()` stays as it is, under `default_signals()` alone (R4,
-  M1); push refuses a branch whose configured upstream's remote-tracking ref is
-  gone, whatever its class, naming the reason `remote-gone`; delete-branch
+  M1) and with the `Invocation`'s clock paused around it, as T054 pauses it
+  for the removal question, since time at the question does not count
+  (analyze M3); push refuses a branch whose configured upstream's
+  remote-tracking ref is gone, whatever its class, naming the reason
+  `remote-gone`; delete-branch
   reads the branch head from row 6 and merged-ness from row 7 instead of
   calling `ancestor()`; `remote get-url origin` runs through the driver; and
   the run exits by D19's first row: 130, 143 or 129 when a signal was recorded
@@ -1350,9 +1373,9 @@ registration, its branch, the merge target, the manifest or the repository, and
 check each target's stage, reason and reconciliation and the exit status.
 
 **Lanes**: one, `tests/test_clean_revalidation.py` and region `apply`
-(`revalidate()`, `rescan()`, `decide_stage()`). It starts after US2, whose
-`modules_check()` and `hidden_state_probe()` revalidation calls, beside US5's
-text lane, US3, US7 and US9.
+(`revalidate()`, `rescan()`, `decide_stage()`). It starts after US2, because
+revalidation calls US2's `modules_check()` and `hidden_state_probe()`, beside
+US3, US7 and US9; US5's text lane follows it (analyze M2 and L9).
 
 ### Tests for User Story 4
 
@@ -1474,8 +1497,9 @@ text lane, US3, US7 and US9.
   other target), nothing is removed, and later targets are `not-attempted`
   with `batch-stopped`; each target's ignored-file state and classification
   are checked in its own revalidation (research.md R16, lead ruling R-41 as
-  amended; `BA:709-711` at `da33d92`). At most five Git children per target. A refused target's reconciliation comes from the
-  revalidation that refused it, plus an `lstat` of the planned path when that
+  amended; `BA:709-711` at `da33d92`). At most five Git children per target.
+  A refused target's reconciliation comes from the revalidation that refused
+  it, plus an `lstat` of the planned path when that
   revalidation stopped before its own; a field whose listing did not run is
   null (plan review M13).
 - [ ] T085 [US4] In `rescan()` and `decide_stage()` (region `apply`; D7,
@@ -1510,10 +1534,12 @@ ceiling, SIGINT, SIGTERM and SIGHUP, an injected exception, an unreadable
 parent) and check each target's stage, reason, notes and reconciliation, the
 stop block and the exit status.
 
-**Lanes**: removal (T087 to T090, T092, T093: `tests/test_clean_result.py`,
-region `apply`), after US4, since both edit `rescan()` and `decide_stage()`;
-and text (T091, T094: `tests/test_clean_stop.py`, regions `preview` and
-`result`), which may start after US2, beside US4.
+**Lanes**: text (T091, T094: `tests/test_clean_stop.py`, regions `preview`
+and `result`), after US4, since T091's stop block expects `branch-changed`,
+which only US4's T084 produces; then removal (T087 to T090, T092, T093:
+`tests/test_clean_result.py`, region `apply`), after US4, since both edit
+`rescan()` and `decide_stage()`, and after the text lane, since T089 asserts
+the recovery text that T094 prints (analyze M2).
 
 ### Tests for User Story 5
 
@@ -1738,7 +1764,11 @@ statuses, the child counts and the order of what was cut.
   `test_clean_push_refuses_an_incomplete_inspection_deadline` (the deadline
   passing during a push's re-inspection after confirmation, through
   `status-hangs-in` under the launcher with its own table: `deadline-exceeded`,
-  exit 2, no push child); and `test_clean_budget_reports_the_values_in_force`
+  exit 2, no push child; and, at a pseudo-terminal with `controlling_tty=True`
+  under the launcher with a table that shortens the deadline, `Type yes`
+  answered only after that deadline has passed: the clock was paused at the
+  question, so the re-inspection is complete and the push runs, exit 0;
+  analyze M3); and `test_clean_budget_reports_the_values_in_force`
   (unscaled, `budget` holds 5, 60, 10, 5, 300 and 1, and `limits` 128 or 256,
   16, 64, 4096 and 8; under the launcher, `budget` shows the values of the
   test's own table). Scenarios: "Bounded revalidation work"; "Deadline expiry
@@ -2016,7 +2046,17 @@ every clean story; the `clean` tests of T114 and T116 also need US1.
   wrapper, so that its `git` row names the wrapper's path, rule 13; a fresh
   project with no remote: its null `upstream`, `ahead` and `behind` raise no
   error, and doctor passes; a leg whose status probe fails: an `error` row,
-  exit 1); `test_status_a_deleted_upstream_in_status_and_doctor` (`upstream` is
+  exit 1; a leg whose parent denies search, `not_root`: `present` null, an
+  `error` row, exit 1; analyze M4);
+  `test_status_json_paths_carry_their_flags` (`status --json` and `doctor
+  --json`: `path_valid_utf8` beside every `path`, `root_valid_utf8` beside the
+  top-level `root` and each nested family member's `root`, and
+  `ignored_samples` entries as `{path, path_valid_utf8}` objects; FR-051,
+  analyze M4); `test_status_sigterm_during_inspection` (launcher, the
+  `ignore-sigterm` fake as a status probe: SIGTERM to `project` gives 143 and
+  `Cancelled.`, the probe's group killed and reaped, `os.killpg(pgid, 0)`
+  raising `ProcessLookupError`; SIGHUP gives 129; FR-058, analyze M5);
+  `test_status_a_deleted_upstream_in_status_and_doctor` (`upstream` is
   the configured short name, `origin/<branch>`, with `ahead` and `behind`
   null); and `test_update_a_leg_s_probe_times_out` (launcher, with a table that
   shortens the 15 s inspection budget (R-29); `status-hangs-in` a leg: `update
@@ -2171,10 +2211,11 @@ verification.
 - [ ] T133 In `openspec/changes/add-project-clean-all-safe/tasks.md`, under
   "Speckit Handoff", change the Tasks line to `Tasks:
   specs/004-project-clean-all-safe/tasks.md (created by /speckit.tasks)`, as
-  lane openRepoProject-1's archived changes record theirs. Tick no box there
-  for this implementation: the landing, the archive and PR #19's ruling belong
-  to the change's own governance record, not to this feature. `openspec
-  validate --all --strict` still passes.
+  lane openRepoProject-1's archived changes record theirs; the branch's four
+  earlier hunks in that file stay as they are (Path Conventions). Tick no box
+  there for this implementation: the landing, the archive and PR #19's ruling
+  belong to the change's own governance record, not to this feature.
+  `openspec validate --all --strict` still passes.
 
 ---
 
@@ -2192,9 +2233,11 @@ verification.
   beside each other.
 - **US4 (Phase 6)**: after US2, since revalidation calls `modules_check()` and
   `hidden_state_probe()`.
-- **US5 (Phase 7)**: the removal lane after US4, since both edit `rescan()` and
-  `decide_stage()`; the text lane after US2, whose `registration-mismatch` row
-  one of its tests reads, beside US4.
+- **US5 (Phase 7)**: the text lane after US4, whose `branch-changed` its stop
+  block test expects (US2's `registration-mismatch` row, which another of its
+  tests reads, lands before US4); the removal lane after US4, since both edit
+  `rescan()` and `decide_stage()`, and after the text lane, whose recovery
+  text T089 asserts (analyze M2).
 - **US6 (Phase 8)**: after US3, US4 and US5.
 - **US8 (Phase 10)**: after US6 and US7.
 - **US9 (Phase 11)**: after Phase 2, beside every clean story; T114's and
@@ -2204,7 +2247,7 @@ verification.
 ### Critical Path
 
 Setup, then lanes A and C, F, G, then US1 (T047, then its two lanes), US2, US4,
-the US5 removal lane, US6, US8 and Polish.
+the US5 text lane, the US5 removal lane, US6, US8 and Polish.
 
 ### Within Each Phase
 
@@ -2226,7 +2269,8 @@ the US5 removal lane, US6, US8 and Polish.
 | Phase 2 end | 2: G, H | G `identity_probe`, `main_worktree`, `inspect_repository`, `verify_registration`, `status_probe`, `worktree_rows`, `classify`, `partial_removal_note`, `declared_tracking_branch`, `resolve_merge_target`, `cleanup_report`; H `Refused`, `clean_mode`, `run_clean`, `error_document`, `write_document`, `main` |
 | US1 | 3: plan, apply, US9 | plan `check_clean_arguments`, `require_git`, `build_plan`, `select_entry`, `plan_completeness`, `gate_rows`, `plan_digest`, `plan_document`, `print_plan`, `check_plan`; apply `ask_removal`, `confirm_removal`, `revalidate`, `run_removal`, `rescan`, `decide_stage`, `apply_removals`, `apply_exit_status`, `result_document`, `print_result`; US9 below |
 | After US1 | 6: US2 reflog, US2 index, US3 single, US3 push, US7, US9 | `reflog_gate`; `registration_gate`, `index_gates`, `modules_check`, `hidden_state_probe`; `build_plan`; `push_or_delete`, `show_push_plan`, `require_unchanged_cleanup_state`, `execute`; `resolve_clean_target`, `is_bare_name`, `main_worktree`, `declared_tracking_branch`, `resolve_merge_target`; `repo_state`, `discover`, `snapshot`, `check_rows`, `print_report`, `inspect_project`, `update` |
-| After US2 | 2: US4, US5 text (plus US3, US7, US9 if running) | `revalidate`, `narrowed_ref_patterns`, `rescan`, `decide_stage`; `print_plan`, `print_result` |
+| After US2 | 1: US4 (plus US3, US7, US9 if running) | `revalidate`, `narrowed_ref_patterns`, `rescan`, `decide_stage` |
+| After US4 | 1: US5 text, then the US5 removal lane (plus US3, US7, US9 if running) | `print_plan`, `print_result`; then `run_removal`, `apply_removals`, `rescan`, `decide_stage` |
 
 The widest window is the one after US1: six lanes, each with its own test
 module and a disjoint set of `project` functions.
@@ -2324,7 +2368,7 @@ included (T074). By requirement:
 | FR-054 | T013, T012, T030, T077, T074 |
 | FR-055 | T031, T107, T029, T030, T115 |
 | FR-056, FR-057 | T031, T015, T029, T030, T097 |
-| FR-058 | T022, T023, T024, T018, T030 |
+| FR-058 | T022, T023, T024, T018, T030, T115 |
 | FR-059 | T024, T117, T115 |
 | FR-060 | T108, T106 |
 | FR-061 | T033, T027 |
@@ -2359,4 +2403,5 @@ T124.
   T008, T072 and T074 are a note for a local run there, no CI job running macOS
   (R-35); a failure on macOS goes to the lead before any skip is added.
 - No task edits workBenches, openRepoShape, setup-openspeckit, `CLAUDE.md`,
-  `requirements.txt`, or the change's files beyond T133's line.
+  `requirements.txt`, or the change's files beyond the `tasks.md` hunks that
+  Path Conventions names.
