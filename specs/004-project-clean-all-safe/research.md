@@ -410,7 +410,8 @@ directory, never in the repository.
   replacement reaches every call (R14). Each time-bound test names its factor
   or table in its body and records the probe budget it yields (plan review U1);
   R-29's factors replace U1's proposal that a probe budget under 1 s run only
-  fake Gits, and macOS headroom stays a risk (plan.md).
+  fake Gits, and macOS headroom is a note for a local run there, no CI job
+  running macOS (plan.md, Risks; lead ruling R-35).
 - **Harness rules** (the harness spike at `aadd709`; R-29, R-31):
   - The test module's loader (`tests/test_project.py:23-26`) registers
     `sys.modules[name]` before it executes `project`, as the launcher does:
@@ -439,8 +440,9 @@ directory, never in the repository.
     controlling terminal (`fcntl.ioctl(0, termios.TIOCSCTTY, 0)` after
     `setsid`, an opt-in on `run_pty` or a new helper); without it even a
     push child in `project`'s group gets `ENXIO` on `/dev/tty`, and a child
-    in a new session gets it either way. `TIOCSCTTY` on macOS is untested
-    (plan.md, Risks).
+    in a new session gets it either way. `TIOCSCTTY` on macOS is untested, a
+    note for a local run there, no CI job running macOS (plan.md, Risks; lead
+    ruling R-35).
 - **Evidence** (the harness spike, Python 3.12.3, Git 2.43.0, load 86 to
   200 on 32 cores): through the launcher the exit status, standard output
   and standard error equal a plain run's in 11 cases, SIGINT and SIGTERM
@@ -486,10 +488,12 @@ directory, never in the repository.
     `project-command` evidence-model scenario that names no subcommand,
     "The sixteenth scrubbed name on Git 2.36" included, uses `test_status_`
     so that the floor job's `-k` selection runs it.
-  - CI: the four existing jobs (`ubuntu-latest` and `macos-latest`, Python 3.10
-    and 3.12) run the whole suite unchanged. One job is added, `git-floor`, on
-    `ubuntu-latest` with Python 3.10: it checks out, sets up Python and
-    installs `requirements.txt` as the four jobs do, then builds Git 2.36.6
+  - CI: the existing `test` job, two jobs (Python 3.10 and 3.12 on
+    `ubuntu-latest` only since Brett Heap's decision of 2026-10-15, #32,
+    `e9d6711`; lead ruling R-35), runs the whole suite unchanged. One job is
+    added, `git-floor`, on `ubuntu-latest` with Python 3.10: it checks out,
+    sets up Python and installs `requirements.txt` as the `test` job does, then
+    builds Git 2.36.6
     from `git-2.36.6.tar.xz` on kernel.org, checking the sha256 that task 2.2
     recorded (quickstart.md, "The Git 2.36 floor run"), with `make NO_GETTEXT=1
     NO_TCLTK=1 NO_PERL=1 NO_PYTHON=1 NO_CURL=1 NO_OPENSSL=1 prefix=<cache dir>
@@ -498,17 +502,18 @@ directory, never in the repository.
     and runs `python -m unittest discover -s tests -v -k test_clean_ -k
     test_status_ -k test_doctor_`. Checked at `961c405` with task 2.2's build
     first on PATH: that selection ran 15 tests, OK, in 7.7 s.
-  - Skips, each with its reason: non-UTF-8 path tests on macOS (FR-066);
-    permission tests when the effective uid is 0; and "The sixteenth
-    scrubbed name on Git 2.36" unless the `git` on PATH is 2.36 to 2.39, so
-    it runs in the floor job only (FR-067).
-- **Rationale**: FR-066 and FR-067; SC-012 (four jobs and the floor job
-  green). The measured fixture costs set the sizes, and a cached build keeps
-  the floor job to the test run itself.
+  - Skips, each with its reason: non-UTF-8 path tests on macOS (FR-066; a local
+    run, since no CI job runs macOS); permission tests when the effective uid
+    is 0; and "The sixteenth scrubbed name on Git 2.36" unless the `git` on
+    PATH is 2.36 to 2.39, so it runs in the floor job only (FR-067).
+- **Rationale**: FR-066 and FR-067; SC-012 (the two `test` jobs and the floor
+  job green). The measured fixture costs set the sizes, and a cached build
+  keeps the floor job to the test run itself.
 - **Alternatives considered**: building Git on every run, rejected (minutes
   per run); a distribution package, rejected (Ubuntu 22.04 ships 2.34 and
   24.04 ships 2.43, neither 2.36); a macOS floor job, rejected (FR-067 asks
-  for one job, and Git's behaviour does not depend on the runner's OS); the
+  for one job, Git's behaviour does not depend on the runner's OS, and no CI
+  job runs macOS since #32); the
   whole suite in the floor job, rejected (the `new` and `benches` tests do
   not depend on Git's version); scaling the caps, rejected (the scenarios
   name the real caps).
@@ -613,18 +618,28 @@ directory, never in the repository.
   removal), makes the worktree dirty in that hook, and expects a `refused`
   target with `state-changed` and exit 2. The test module's loader (`:23-26`)
   gains `sys.modules` registration (R10, R-29), a setup line that edits no
-  test. The new helpers (a merged, published worktree with a commit of its own;
-  bulk registrations; the counting `git` wrapper; the fake Gits; the
-  controlling-terminal pty helper; the launcher) are added beside the existing
-  ones, and the recipe that four existing tests repeat inline (`:857`, `:880`,
-  `:949`, `:1020`) is not extracted from them. The three message tests (`:839`,
-  `:880`, `:972`) pass unchanged because `target-excluded` and
-  `no-merge-target` keep the baseline wording (D8, D18), and the other 92 pass
-  unchanged.
+  test. The new tests go in new modules, one per lane
+  (`tests/test_clean_<lane>.py`, `tests/test_status_doctor_update.py`), so
+  `tests/test_project.py` changes only that method and the loader line (lead
+  ruling R-32). This departs from the design's Migration Plan step 6 and the
+  proposal's Impact, which name `tests/test_project.py`: the feature PR body
+  states it for Brett Heap's word, and if he declines, the new modules fold
+  into `tests/test_project.py` before the merge. The new helpers (a merged,
+  published worktree with a commit of its own; bulk registrations; the counting
+  `git` wrapper; the fake Gits; the controlling-terminal pty helper) go in
+  `tests/clean_support.py` and the launcher in `tests/launch_project.py`, and
+  the recipe that four existing tests repeat inline (`:857`, `:880`, `:949`,
+  `:1020`) is copied into the helpers, not extracted from them. The three
+  message tests (`:839`, `:880`, `:972`) pass unchanged because
+  `target-excluded` and `no-merge-target` keep the baseline wording (D8, D18),
+  and the other 92 pass unchanged.
 - **Rationale**: FR-066 and SC-012. Three existing tests guard the switch
   of `repo_state()`: `:736` asserts the exact set of doctor error rows, so a
   new error row would break it; `:586` reads `status` of a linked worktree
   and expects that worktree's branch; `:916` keys rows by branch, with
   `detached` kept.
 - **Alternatives considered**: extracting the shared recipe from the four
-  tests, rejected (it edits tests FR-066 keeps unchanged).
+  tests, rejected (it edits tests FR-066 keeps unchanged); the new tests in
+  `tests/test_project.py`, rejected by R-32 (each lane's module has one writer,
+  and parallel lanes would otherwise share one file), and the fallback if Brett
+  Heap declines.

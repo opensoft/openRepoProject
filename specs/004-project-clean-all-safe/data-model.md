@@ -54,7 +54,7 @@ names and types; the last six are added.
 | Field | Value | Null means |
 | --- | --- | --- |
 | `path` | the registered path, from the NUL-delimited registry | never null |
-| `present` | true; false when `lstat` fails with `ENOENT` | any other `lstat` failure (with an `os-error`) |
+| `present` | true; false when `lstat` fails with `ENOENT` or `ENOTDIR` | any other `lstat` failure (with an `os-error`) |
 | `branch` | short name, or `detached` | (baseline) |
 | `head` | full object name | not established |
 | `upstream` | configured short name, also when its remote-tracking ref is gone | none configured |
@@ -165,8 +165,11 @@ with `inspection-incomplete`.
 ### Reflog anchor and movement (D10; FR-021, FR-022)
 
 Read from `logs/refs/heads/<branch>` under `common_dir`, at most 64 KiB, by a
-filesystem call (never a Git child). Each line is `<old> <new> <identity>
-<time> <zone>`, then a tab and a message when there is one.
+filesystem call (never a Git child). The read asks for no more than 65,536
+bytes and needs no `fstat`: a read that returns 65,536 bytes has reached the
+bound, and one that returns 65,535 is decided by its entries (lead ruling
+R-33). Each line is `<old> <new> <identity> <time> <zone>`, then a tab and a
+message when there is one.
 
 - Anchor: the last surviving entry whose old object is all zeros, or whose
   message begins `branch: Created from` or `branch: Reset to`.
@@ -175,7 +178,7 @@ filesystem call (never a Git child). Each line is `<old> <new> <identity>
 
 | Outcome | When (first that holds) |
 | --- | --- |
-| `reflog-unavailable` | missing (`ENOENT`, `ENOTDIR`), 0 bytes, or over 65,536 bytes |
+| `reflog-unavailable` | missing (`ENOENT`, `ENOTDIR`), 0 bytes, or the read reached its 64 KiB bound (65,536 bytes read) |
 | `inspection-error` | any other error on the read |
 | unprobed (`inspection-incomplete`) | the read did not finish within the filesystem budget |
 | `reflog-unavailable` | the last entry's new object is not the head |
