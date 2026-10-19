@@ -263,9 +263,16 @@ regions and contracts every lane writes against.
   each refusal code that has no baseline message), and the kept baseline texts
   `Cannot remove the current worktree.`, `Worktree is CLASS; only clean merged
   worktrees may be removed.` and the `no-merge-target` message at
-  `project:551`; and `NEXT_STEPS`, D18's next step by reason. Only this task
-  edits the imports and `contracts`; later lanes read them, and a key change
-  goes through the lead. Nothing in `contracts` reads a timing value (R-29).
+  `project:551`; and `NEXT_STEPS`, D18's next step by reason. Four texts stay
+  outside `TEXT`, each its owner task's: D16's `Git: inspection-error
+  (CODES)` line (T119), the baseline `invalid-arguments` messages (T048), the
+  baseline `manifest-invalid` messages (T108) and `Cancelled.` (T035) (lead
+  ruling R-45). Only this task edits the imports and `contracts`; later lanes
+  read them, and a key change goes through the lead; a lead-approved key
+  addition also adds its fixture in `tests/clean_support.py`
+  (`TEXT_FIXTURES` or `NEXT_STEP_FIXTURES`), since T008's
+  `test_clean_text_fixtures_equal_the_contract_table` fails on a key found on
+  one side only (R-45). Nothing in `contracts` reads a timing value (R-29).
   The 96 tests still pass.
 
 ---
@@ -545,7 +552,9 @@ T033), when B, D, E and F are; H, guard (T034, T035), when T023 is, beside G
   s otherwise, the clock with its work deadline and reserve, paused while a
   question waits, the probe and removal counters, and the per-invocation memos,
   so nothing carries from one in-process `main()` call to the next, the version
-  check's result and the common-directory memos included; plan review M10).
+  check's result and the common-directory memos included, and its phase,
+  `planning` by default; plan review M10, lead ruling R-44: until T035's
+  wiring line lands, the test enters `Invocation` directly).
 - [ ] T021 [P] Add `test_clean_git_and_git_text_run_through_the_driver` to
   `tests/test_clean_runner.py`: `git()` and `git_text()` run through the
   driver, scrubbed (a `GIT_DIR` naming another repository is ignored), pinned
@@ -574,19 +583,27 @@ T033), when B, D, E and F are; H, guard (T034, T035), when T023 is, beside G
   sends SIGTERM to every live group at once and advances them together until
   each is reaped or abandoned. No default argument holds a timing value (plan
   review M16).
-- [ ] T023 [P] Add `signal_scope()`, `raising_signals()`, `default_signals()`,
-  the signal slot, `Interrupted(BaseException)` and `Terminated(BaseException)`
-  to region `runner`.
-- [ ] T024 [P] Add to region `runner`: `Invocation`, made fresh by each
-  `main()` call (the budget, the clock, the counters and the memos, the version
-  check's result among them); `current_invocation()`, for Git callers outside
-  `clean`, which outside any subcommand gives the 15 s budget and installs no
-  handler (plan review M10); `run_bounded(spec, parser, run)` with D1's loop
+- [ ] T023 [P] Add `signal_scope`, `raising_signals` and `default_signals`,
+  each a class with `__enter__` and `__exit__`, since T004 owns the imports
+  and `project` imports no `contextlib` (lead ruling R-44), the signal slot,
+  `Interrupted(BaseException)` and `Terminated(BaseException)` to region
+  `runner`.
+- [ ] T024 [P] Add to region `runner`: `Invocation`, a context manager (a
+  class with `__enter__` and `__exit__`) that T035's one wiring line in
+  `main()` enters fresh for each call (the budget, the clock, the counters and
+  the memos, the version check's result among them, and its phase:
+  `planning` by default, `apply` once T057 begins the apply phase,
+  `reconciling` once T093 reconciles; lead ruling R-44);
+  `current_invocation()`, for Git callers outside `clean`, which outside any
+  scope returns a fresh default with the 15 s budget and no handler (plan
+  review M10, R-44); `run_bounded(spec, parser, run)` with D1's loop
   (one selector over both pipes and the wakeup pipe, the tick, the 4 KiB head,
   and `advance()` of every terminating handle on every tick, R-30) and its six
-  outcomes, each mapped to its row error (M17), any `ParseError` from a
-  parser's `finish()`, a truncated last record or a malformed one, giving
-  `failed` and `probe-failed`; `fs_call()`; and `git_version()`. Every timing
+  outcomes, each mapped to its row error (M17), the slot read set giving
+  `interrupted` only in phase `planning`, or on a second SIGINT in phase
+  `reconciling` (R-44), any `ParseError` from a parser's `finish()`, a
+  truncated last record or a malformed one, giving `failed` and
+  `probe-failed`; `fs_call()`; and `git_version()`. Every timing
   value is read from `TIMING` when called (R-29). T018 to T020 pass.
 - [ ] T025 [P] Reroute `git()` and `git_text()` (`project:68-74`) through
   `run_bounded()` with `git_argv("probe", ...)`, keeping their names, place,
@@ -702,13 +719,17 @@ T033), when B, D, E and F are; H, guard (T034, T035), when T023 is, beside G
   the six added fields), each failed driver outcome becoming the row's `errors`
   entry by T024's map (M17), and each row carrying an unprobed marker, never
   serialized and unset here, which a read not finished within its filesystem
-  budget sets (T066; analyze M6).
+  budget sets (T066; analyze M6). Each row error's `message` is the
+  contract's text for its code, from a `TEXT` key this lane adds as a
+  lead-approved contracts edit, with the same key in `TEXT_FIXTURES` of
+  `tests/clean_support.py`, which this task also touches (lead ruling R-45).
 - [ ] T032 [P] Add to region `evidence`: `classify()` (pure, with its one
   reorder; `RECOMMENDATIONS` from `project:566-616`); `partial_removal_note()`;
   `declared_tracking_branch(root)` (today's `manifest()` read, bounded by
   T108); and `resolve_merge_target(refs, declared)` (`{name, source, sha,
   notes}` in D8's order over row 6; no candidate raises the baseline message of
-  `project:551`).
+  `project:551`). A `TEXT` key this task adds for a row error goes in with its
+  fixture in `tests/clean_support.py`, as T031's do (lead ruling R-45).
 - [ ] T033 [P] Switch `cleanup_report()` (`project:544-622`) onto T031 and
   T032, leaving `repo_state()` alone (R9) and `default_branch()` and
   `ancestor()` in place until T125. T027 to T030 and the 96 tests pass.
@@ -750,8 +771,10 @@ T033), when B, D, E and F are; H, guard (T034, T035), when T023 is, beside G
   `main()` (`project:1125-1151`), route `clean` through `run_clean()`, print
   `error_document()` for a `clean --json` refusal and `{"error": ...}` for
   every other subcommand as today, and map `Interrupted` and `Terminated` to
-  `Cancelled.` on standard error with 130, 143 or 129 and no document. Only
-  this task edits `Refused` and `main()`. T034 and the 96 tests pass.
+  `Cancelled.` on standard error with 130, 143 or 129 and no document; and
+  add `main()`'s one wiring line around dispatch, which enters a fresh
+  T024 `Invocation` for each call (lead ruling R-44). Only this task edits
+  `Refused` and `main()`. T034 and the 96 tests pass.
 
 **Checkpoint**: One runner, one evidence model behind `clean`, and the guard;
 the 96 tests and every Phase 2 module pass. US1 and US9 can begin.
@@ -785,11 +808,13 @@ tuples.
 
 - [ ] T036 [P] [US1] Add `test_clean_the_preview_says_what_keeps_each_row` to
   `tests/test_clean_batch.py`: with two rows selected, one excluded as
-  `ignored-local-files` and two as `dirty`, the human preview equals the D18
-  layout: `Selected (2):` with its `  remove PATH [BRANCH]` lines first, then
-  `Excluded (3):` grouped by reason, the groups in gate order and the classes
-  in ladder order (plan review M8), each group's `  REASON (K): NEXT STEP` line
-  over its `    PATH [BRANCH]` rows, the ignored row adding `: 1 ignored;
+  `ignored-local-files` and two as `dirty`, beside the main worktree, the human
+  preview equals the D18 layout: `Selected (2):` with its `  remove PATH
+  [BRANCH]` lines first, then `Excluded (4):` grouped by reason, the groups in
+  gate order and the classes in ladder order (plan review M8), each group's
+  `  REASON (K): NEXT STEP` line over its `    PATH [BRANCH]` rows, the main
+  worktree's group `  main-worktree (1):` with no next step (lead ruling
+  R-45), the ignored row adding `: 1 ignored;
   first: SAMPLE`; the rows of each list and group in raw path byte order; the
   residual-window line; and the registry, the branches and the files are
   unchanged. Scenario: "The preview says what keeps each row".
@@ -940,7 +965,8 @@ tuples.
   and `resolve_clean_target` in place of `discover` (analyze H3, lead ruling
   R-42). The 96 tests pass, the one T046 rewrites aside, and so does T034.
 - [ ] T048 [P] [US1] Fill `check_clean_arguments(args)` (the contract's
-  "Argument checks": `invalid-arguments` with the baseline messages kept;
+  "Argument checks": `invalid-arguments` with the baseline messages kept,
+  this task owning them outside `TEXT` (lead ruling R-45);
   `--apply --json` accepted only with `--all-safe` or `--action remove`; every
   flag the table does not refuse keeps the baseline's handling, ignored without
   `--apply` and when unused (plan review M9); all before any Git child) and
@@ -949,7 +975,8 @@ tuples.
   passes.
 - [ ] T049 [P] [US1] Fill `build_plan(repo, run)` in region `plan`: the rows of
   `worktree_rows()`, the main worktree first, then by raw path bytes; the merge
-  target and its notes from `resolve_merge_target()`; `gate_rows()`;
+  target and its notes from `resolve_merge_target()`, each plan note's
+  message from T051's `TEXT` keys (lead ruling R-45); `gate_rows()`;
   `select_entry()` (the identity objects, the branch evidence, the signature
   fields, `locked`, `operation.argv`); `plan_completeness()`
   (`inspection-incomplete` for an `inspection-error` row, a row carrying
@@ -981,14 +1008,22 @@ tuples.
   and row `notes` as code strings, written by T035's `write_document()` with
   `ensure_ascii=True`, `ensure_ascii=False` serving only `plan_digest()`'s
   canonical text (R12, lead ruling R-38); plan review M6) in region `plan`.
-  The canonical-text test of T037 and the second and third tests of T040
-  pass.
+  Each plan note's `message` is the contract's text for its code: this task
+  adds the five `TEXT` keys as a lead-approved contracts edit, with the same
+  keys in `TEXT_FIXTURES` of `tests/clean_support.py`, which it also touches,
+  since T008's `test_clean_text_fixtures_equal_the_contract_table` fails on a
+  key found on one side only (lead ruling R-45). The canonical-text test of
+  T037 and the second and third tests of T040 pass.
 - [ ] T052 [P] [US1] Fill `print_plan(plan, run)` in region `preview`: the
   baseline report layout for modes report and single; the D18 preview layout
   for mode all-safe (the groups in gate order and the classes in ladder order,
   the next steps, the ignored count and first sample, the residual-window line,
   `No eligible worktrees`), and the single-mode layout the contract fixes (plan
-  review M8); every path through `human_path()`; and `plan_document()` under
+  review M8); a group whose reason has no D18 next step (`main-worktree`,
+  `unsupported-path-bytes`, `not-requested`) printed `  REASON (K):` alone,
+  from a `TEXT` key this task adds as a lead-approved contracts edit, with its
+  fixture in `tests/clean_support.py`, which it also touches (lead ruling
+  R-45); every path through `human_path()`; and `plan_document()` under
   `--json`, which under `--apply --json` prints only when the run stops before
   the apply phase.
 - [ ] T053 [P] [US1] Fill `check_plan(plan, run)` in region `dispatcher`, in
@@ -1023,7 +1058,8 @@ tuples.
   and path are gone, `unknown` with `unconfirmed-removal` when it exited 0
   otherwise, and `failed` with `git-refused` (128), `git-failed` (any other
   status) or `spawn-error`; `exit_status` as T045 states it (plan review M12).
-- [ ] T057 [P] [US1] Fill `apply_removals(plan, run)` in region `apply` (per
+- [ ] T057 [P] [US1] Fill `apply_removals(plan, run)` in region `apply` (the
+  `Invocation`'s phase set to `apply` as it begins, lead ruling R-44; per
   target in canonical order: revalidate, spawn, wait, rescan; stop after the
   first target that is not a plain `removed`, later targets `not-attempted`
   with `batch-stopped` and `reconciliation: null`), and add
@@ -1359,7 +1395,9 @@ US2, US7 and US9.
   for the removal question, since time at the question does not count
   (analyze M3); push refuses a branch whose configured upstream's
   remote-tracking ref is gone, whatever its class, naming the reason
-  `remote-gone`; delete-branch
+  `remote-gone`: a `Refused` with no code and `reason="remote-gone"`, its
+  message the contract's, never a nineteenth code (lead ruling R-45);
+  delete-branch
   reads the branch head from row 6 and merged-ness from row 7 instead of
   calling `ancestor()`; `remote get-url origin` runs through the driver; and
   the run exits by D19's first row: 130, 143 or 129 when a signal was recorded
@@ -1682,8 +1720,9 @@ the recovery text that T094 prints (analyze M2).
 - [ ] T093 [P] [US5] In `apply_removals()`, `rescan()` and `decide_stage()`
   (region `apply`; D15, FR-034 to FR-036): read the signal slot before each
   revalidation and each spawn, a set slot making that target and every later
-  one `not-attempted` with `interrupted`; reconcile within the reserve, each
-  rescan child getting `min(5 s, reserve remaining)`; a second SIGINT during
+  one `not-attempted` with `interrupted`; reconcile within the reserve, the
+  `Invocation`'s phase set to `reconciling` (R-44), each rescan child getting
+  `min(5 s, reserve remaining)`; a second SIGINT during
   reconciliation abandons the remaining rescans, their fields null and the
   target `unknown` with `reconciliation-incomplete` (M17); an exception after
   the apply phase begins, in a target, its rescan, the final rescan or the
@@ -1946,7 +1985,10 @@ region `evidence`. It starts at US1's checkpoint, beside US2, US3 and US9.
 - [ ] T108 [US7] Fill `declared_tracking_branch(root)` (region `evidence`; D8,
   FR-018, FR-060) with a bounded read: an `st_size` over 1 MiB is
   `manifest-invalid` without a read, the read never passes 1 MiB, and an
-  unreadable file, a parse error or a wrong kind is `manifest-invalid`; in
+  unreadable file, a parse error or a wrong kind is `manifest-invalid`, with
+  the baseline messages of `manifest()` (`Cannot read PATH: ...` and the
+  wrong-kind message), which this task owns outside `TEXT` (lead ruling
+  R-45); in
   `resolve_merge_target()`, add the `merge-target-conflict` note when the
   manifest and `origin/HEAD` name different existing branches, the manifest
   winning; every refusal carries the established repository and merge target in

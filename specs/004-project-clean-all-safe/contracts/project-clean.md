@@ -155,7 +155,10 @@ message}` objects, an `inspect-cap` note adding `rows`.
 
 Lines D18 leaves open are fixed here before tasks: the `Report:` and
 `--all-safe would ...` lines follow `Freshness:`; `Excluded` groups follow
-the gate order, classes in ladder order; one progress line per target,
+the gate order, classes in ladder order; a group whose reason D18 gives no
+next step (`main-worktree`, `unsupported-path-bytes`, `not-requested`)
+prints `  REASON (K):` with no next step (lead ruling R-45); one progress
+line per target,
 `  STAGE PATH` or `  STAGE PATH (REASON)`; the retained-branch line
 `Branches kept: B1, B2.`; a plan-blocking refusal prints the plan, then
 `REFUSED: MESSAGE`; each code with no baseline message gets one here:
@@ -176,7 +179,17 @@ the gate order, classes in ladder order; one progress line per target,
 
 `repository-not-found`, `ambiguous-name`, `no-merge-target`,
 `worktree-not-found` and `cancelled` keep the baseline's messages, and
-`target-excluded` is "D18 refusal messages".
+`target-excluded` is "D18 refusal messages". `remote-gone` is a reason, not
+a nineteenth code, since the delta closes the eighteen: push, which prints
+no JSON, refuses with no code and the reason `remote-gone`, printing
+`REFUSED: ` and the message above (lead ruling R-45).
+
+The delta's rule that every plan-blocking refusal names `git worktree
+prune`, `git worktree repair` or removing the offending row by hand, "as the
+cause fits", is read to let a cause that no repair fixes name its own remedy:
+D18's `deadline-exceeded` remedy, "the run ran out of time; remove worktrees
+explicitly or re-run", names none of the three and stands (lead ruling R-45;
+LQ-5, listed for Brett Heap in the feature PR body).
 
 All new text is ASCII. A path prints verbatim in prose and shell-quoted in
 commands, unless it holds a code point of general category Cc, Cf, Zl or Zp
@@ -263,6 +276,25 @@ values in data-model.md).
 `os-error`, `probe-failed`, `probe-timeout`, `deadline-exceeded`. Row note:
 `partially-removed`. Target notes: `orphaned-directory`,
 `partially-removed`. Stage and reason codes: data-model.md.
+
+Each plan note and row error carries one fixed message (lead ruling R-45).
+OPERATION names what was cut: `git SUBCOMMAND` for a Git child, or the
+filesystem call (`lstat`, `realpath` or `read`). The lane that first prints
+each adds its `TEXT` key as a lead-approved contracts edit, with its fixture
+in `tests/clean_support.py`: the plan notes the plan lane (T049, T051), the
+row errors lane G (T031, T032).
+
+| Code | Kind | Message |
+| --- | --- | --- |
+| `merge-target-conflict` | plan note | `The manifest names NAME and origin/HEAD names OTHER; NAME is the merge target.` |
+| `inspection-incomplete` | plan note, single mode | `K other rows are inspection-error or were left unprobed; they do not block PATH.` |
+| `inspect-cap` | plan note, single mode | `K rows past the row cap of M were not inspected; they do not block PATH.` |
+| `deadline-exceeded` | plan note, single mode | `K rows were left unprobed at the work deadline; they do not block PATH.` |
+| `inspect-cap` | plan note, report above 128 rows, beside `rows` | `N rows exceed the --all-safe row cap of M; --all-safe would be incomplete (inspect-cap).` |
+| `os-error` | row error | `OPERATION failed: STRERROR`, STRERROR the error number's text |
+| `probe-failed` | row error | `OPERATION failed: DETAIL`, DETAIL one of `exit N`, `signal N`, `cannot spawn (STRERROR)`, `unparseable output` |
+| `probe-timeout` | row error | `OPERATION timed out after S s`, S the budget in force |
+| `deadline-exceeded` | row error | `OPERATION stopped at the work deadline` |
 
 Push and delete-branch also refuse with `inspection-incomplete`,
 `inspect-cap` or `deadline-exceeded` when their full inspection, before or

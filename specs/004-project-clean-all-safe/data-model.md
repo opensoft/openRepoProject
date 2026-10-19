@@ -375,15 +375,30 @@ A handle abandoned at its reap deadline records `probe-timeout` (D2). The
 version check maps any outcome but `complete`, and an unparseable
 version, to `git-unavailable`.
 
+### Invocation (D1; lead ruling R-44)
+
+The per-run state of one `main()` call, a context manager in region `runner`
+that `main()` enters fresh for every call: the per-child budget (5 s under
+`clean`, 15 s otherwise), the clock (the work deadline and the reserve,
+paused while a question waits), the probe and removal counters, the
+per-invocation memos (the version check's result, the common-directory
+evidence), and the phase: `planning` by default, then `apply` once the apply
+phase begins, then `reconciling`. Outside any scope, `current_invocation()`
+returns a fresh default: the 15 s budget and no signal handler.
+
 ### Signal slot (D1, D15)
+
+The driver reads the slot by the `Invocation`'s phase: it raises
+`Interrupted` only in `planning`, or on a second SIGINT in `reconciling`
+(lead ruling R-44).
 
 | Event | Effect |
 | --- | --- |
 | the first SIGINT, SIGTERM or SIGHUP | the handler stores its number and does nothing else; it decides the exit status (130, 143, 129) |
-| a later signal | the slot keeps the first; a later SIGINT counts only while reconciling |
-| the slot read set while planning (after each wake of the driver) | the child is terminated and `Interrupted` raised: cancelled |
-| the slot read set at a seam of the apply phase (before each revalidation and each spawn) | that target and every later one `not-attempted` with `interrupted`; reconciling follows |
-| a second SIGINT while a rescan runs | the remaining rescans are abandoned: the running group is terminated, fields not established stay null, and the target is `unknown` with `reconciliation-incomplete` |
+| a later signal | the slot keeps the first; a later SIGINT counts only in phase `reconciling` |
+| the slot read set in phase `planning` (after each wake of the driver) | the child is terminated and `Interrupted` raised: cancelled |
+| the slot read set at a seam of phase `apply` (before each revalidation and each spawn) | that target and every later one `not-attempted` with `interrupted`; reconciling follows |
+| a second SIGINT while a rescan runs in phase `reconciling` | the remaining rescans are abandoned: the running group is terminated, fields not established stay null, and the target is `unknown` with `reconciliation-incomplete` |
 | a signal while a removal, push or `git branch -d` child runs | recorded only; the child is never signalled and is waited for |
 
 ## States of a `project clean` run
