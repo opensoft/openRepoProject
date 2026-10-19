@@ -822,3 +822,108 @@ class RunnerTests(CleanCase):
             self.assertIn("older than 2.36", refused.stderr)
             self.assertIsNone(project.git_text(repo, "rev-parse", "HEAD"))
             self.assertEqual((len(child_log(old_log)), run.probes), (1, 1), "no child after a failed check")
+
+    # T026.
+
+    def test_clean_two_handles_share_scrub_termination_and_parsers(self):
+        # SC-004, SC-012, FR-062, N2 and lead ruling R-30, with the spike's table:
+        # probe budget 1 s, grace 0.4 s (reap wait 2 s, tick 0.1 s). Three handles
+        # start at once and the test's own selector loop drives them, calling
+        # advance() on every tick, as feature 005's overview will: a status probe of
+        # a real worktree, the ignore-sigterm fake, and a second ignore-sigterm fake
+        # whose budget falls due 0.35 s later, on a later tick.
+        grace = 0.4
+        table = timing_table(probe_budget=1, term_grace=grace)
+        repo = self.worktree()
+        other = self.repo("other", branch="elsewhere")
+        fake = self.fake_dir("ignore-sigterm", lifetime=15)
+        real_log, fake_log = self.base / "real.log", self.base / "fake.log"
+        real_git = install_counting_git(self.base / "counting-real", real_log)
+        fake_git = install_counting_git(self.base / "counting-fake", fake_log, real=fake / "git")
+        caller = {"GIT_DIR": str(other / ".git"), "GIT_INDEX_FILE": str(other / ".git" / "index"),
+                  "GIT_CONFIG_PARAMETERS": "'core.bare'='true'"}
+        fields, _ = self.run_child(table, """
+            import selectors
+            args = ["-C", ARGS["repo"], "status", "--porcelain=v1", "-z",
+                    "--untracked-files=normal", "--ignored=matching"]
+            handles, parsers = [], []
+            selector = selectors.DefaultSelector()
+            for index, git in enumerate((ARGS["real"], ARGS["fake"], ARGS["fake"])):
+                argv = project.git_argv("status", args)
+                handle = project.ChildHandle.start([git, *argv[1:]], None, "status")
+                handle.budget_end = handle.started + TABLE["probe_budget"] + (0.35 if index == 2 else 0)
+                handles.append(handle)
+                parsers.append(project.StatusParser())
+                for stream in (handle.process.stdout, handle.process.stderr):
+                    selector.register(stream.fileno(), selectors.EVENT_READ,
+                                      (index, stream is handle.process.stdout))
+            open_streams = [2, 2, 2]
+            terminated = {}
+            while not all(handle.finished for handle in handles):
+                now = time.monotonic()
+                for index, handle in enumerate(handles):
+                    if handle.state == "running":
+                        if open_streams[index] == 0 and handle.reap() is not None:
+                            continue
+                        if now >= handle.budget_end:
+                            handle.terminate_group()
+                            terminated[index] = time.monotonic()
+                    else:
+                        handle.advance(now)
+                dues = [handle.due() for handle in handles if not handle.finished and handle.due() is not None]
+                timeout = max(0.0, min([TABLE["selector_tick"], *(due - time.monotonic() for due in dues)]))
+                for key, _ in selector.select(timeout):
+                    index, is_out = key.data
+                    try:
+                        chunk = os.read(key.fd, 65536)
+                    except BlockingIOError:
+                        continue
+                    if not chunk:
+                        selector.unregister(key.fd)
+                        open_streams[index] -= 1
+                    elif is_out:
+                        parsers[index].feed(chunk)
+                    else:
+                        handles[index].keep_stderr(chunk)
+            for handle in handles:
+                handle.close()
+            first = parsers[0].finish()
+            one_wide = project.run_bounded(status_spec(ARGS["repo"]), project.StatusParser(),
+                                           project.Invocation("status"))
+            emit(pids=[handle.pid for handle in handles], states=[handle.state for handle in handles],
+                 status=[handle.process.returncode for handle in handles],
+                 terminated=sorted(terminated), same=first == one_wide.result,
+                 first=[first["dirty"], first["ignored_files"], [os.fsdecode(s) for s in first["ignored_samples"]]],
+                 one_wide_name=one_wide.name, live=len(project.LIVE_PROBES))
+        """, env=self.env_with(**caller), repo=str(repo), real=str(real_git), fake=str(fake_git))
+        self.assertEqual(fields["states"], ["reaped"] * 3)
+        self.assertEqual(fields["status"], [0, -signal.SIGKILL, -signal.SIGKILL])
+        self.assertEqual(fields["terminated"], [1, 2], "only the slow ones were stopped")
+        self.assertEqual(fields["live"], 0)
+        # The same parser gives the first one's records as the one-wide driver does.
+        self.assertEqual(fields["one_wide_name"], "complete")
+        self.assertTrue(fields["same"])
+        self.assertEqual(fields["first"], [True, 1, ["kept.log"]])
+        # All three scrubbed and pinned, each in a group of its own.
+        records = child_log(real_log)[:1] + child_log(fake_log)
+        self.assertEqual(len(records), 3)
+        for record in records:
+            self.assertEqual(record.argv, [*STATUS_PINS, *PINS, "-C", str(repo), *STATUS])
+            self.assertEqual([name for name in record.names if name in SCRUBBED_NAMES], [])
+            self.assertEqual(record.optional_locks, "0")
+            self.assertEqual(record.pgid, record.pid)
+        # Each slow one got SIGKILL 0.9 to 1.5 graces after its own SIGTERM,
+        # measured from the child, its group gone; the second's SIGTERM came on a
+        # later tick, and its grace did not wait on the first's.
+        terms = []
+        for pid in fields["pids"][1:]:
+            death = wait_for_event(fake, "death", pid)
+            term = first_event(fake_events(fake), "term", pid)
+            self.assertIsNotNone(term)
+            self.assertIsNotNone(death)
+            gap = (death["t"] - term["t"]) / grace
+            self.assertGreaterEqual(gap, 0.9)
+            self.assertLess(gap, 1.5, "a blocking termination per handle measured 1.79 to 2.08")
+            self.assertTrue(group_gone(pid))
+            terms.append(term["t"])
+        self.assertGreaterEqual(terms[1] - terms[0], 0.2)
