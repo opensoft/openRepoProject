@@ -35,8 +35,8 @@ duplicate them.
   in the same round; applied by `79a71ec`, `909425b`, `f93073b`, `6d237fe`,
   `36f3eef`, `15cf7ed`, `e012757`, the commit that ticks this task and the
   commit titled 'Name old reflog objects in the proof (A-16 as amended) and move
-  branch_plan onto each selected entry', the project-command block held
-  uncommitted (ruling A-20); verified by "Council
+  branch_plan onto each selected entry', and `16051d1`, the project-command
+  block lane openRepoProject-2 agreed (ruling A-20); verified by "Council
   Verdicts" in `proposal.md`, one row per council concern id and per lane 3
   id, by `clarifications.md`, and by the council comment on the pull request.
 - [x] 1.4 Spec deltas and design written: `specs/project-clean/spec.md`
@@ -44,8 +44,9 @@ duplicate them.
   from change 1 and PR #19, 6, 14, 10, 5 and 8 by block, and 23 added),
   `specs/project-clean-review-safety/spec.md` modifies one (4 scenarios: 3
   carried, 1 added), and `specs/project-command/spec.md` modifies one on PR
-  #19's text (9 scenarios carried, none added; written and HELD uncommitted
-  until lane openRepoProject-2 checks its diff, ruling A-20), every scenario of
+  #19's text (9 scenarios carried, none added; agreed by lane
+  openRepoProject-2 on 2026-10-19 and committed in `16051d1`, ruling A-20),
+  every scenario of
   each modified requirement's source text kept byte for byte; `design.md`
   holds D1 to D10 (`8341954`, `d0b33ce`, and the commit titled 'Settle which
   later targets carry branch-retention-stop'), revised by the alignment fix
@@ -62,15 +63,15 @@ duplicate them.
   (build 1.13.1, which notes only as INFO that archive would refuse the
   MODIFIED blocks whose base still sits in change 1).
 - [ ] 1.6 Ratified by Brett Heap's word on the pull request, quoted with its
-  link here, the proposal's six Open Questions before him, after the held
-  project-command block is committed on lane openRepoProject-2's check of its
-  diff, or dropped if PR #19 absorbs the clause (lane openRepoProject-2's
-  LQ-6). Ratifying this change ratifies the two blocks written on PR #19's
-  text, "Clean bounds its Git work and reports omitted work" and "Repository
-  inspection requires Git 2.36 and shares one evidence model", only as written
-  there at `c462d87`, never PR #19's own sentences, and 2.2 then re-reads them
-  before the handoff (lane openRepoProject-3's M1); verified by that quote. No
-  implementation starts before it.
+  link here, the proposal's six Open Questions before him, the project-command
+  block that lane openRepoProject-2 agreed being dropped if PR #19 absorbs its
+  clauses (lane openRepoProject-2's LQ-6). Ratifying this change ratifies the
+  two blocks written on PR #19's text, "Clean bounds its Git work and reports
+  omitted work" and "Repository inspection requires Git 2.36 and shares one
+  evidence model", only as written there at `c462d87`, never PR #19's own
+  sentences, and 2.2 then re-reads them before the handoff (lane
+  openRepoProject-3's M1); verified by that quote. No implementation starts
+  before it.
 
 ## 2. Before the Speckit handoff
 

@@ -191,13 +191,13 @@ confirmed run, on fresh evidence, with nothing changed for a run without it.
   check read (verified for this proposal: its `reference-transaction` hook
   receives an all-zeros old value), so that window ends inside Git (Decisions;
   Open Questions).
-- **The evidence model names the branch child** (MODIFIED project-command,
-  held). Change 1's Termination paragraph names only probe children, killed on
+- **The evidence model names the branch child** (MODIFIED project-command).
+  Change 1's Termination paragraph names only probe children, killed on
   every exit path, and removal children, waited for; one sentence names the
   branch child beside them, waited for within its budget, and one clause of
   Budgets gives the re-read its narrower budget. The block is written on PR
-  #19's text and held uncommitted until lane openRepoProject-2 checks its diff
-  (ruling A-20; Dependencies and Sequencing).
+  #19's text, and lane openRepoProject-2 agreed it on 2026-10-19 (ruling A-20;
+  Dependencies and Sequencing).
 
 ## Rules This Change Keeps
 
@@ -384,9 +384,8 @@ their `CAS` line.
   ADDED, accounted for; every other canonical requirement untouched):
   - Untouched (`CAS/cmd:3` and `CAS/cmd:64`): `### Requirement: Inspect and
     diagnose` and `### Requirement: Explicit maintenance`.
-  - MODIFIED (`CAS/cmd:90`, on PR #19's text; HELD, written in the worktree
-    and not committed until lane openRepoProject-2 checks its diff, ruling
-    A-20):
+  - MODIFIED (`CAS/cmd:90`, on PR #19's text; agreed by lane
+    openRepoProject-2 on 2026-10-19, ruling A-20):
     `### Requirement: Repository inspection requires Git 2.36 and shares one evidence model`.
     One sentence in Termination, in the form of PR #19's own push-child
     carve-out: the branch child of `clean --retire-branches` is waited for on
@@ -454,7 +453,7 @@ their `CAS` line.
   settle in change 1 (A-11). It does not block this change.
 - **On PR #19** (L-1, L-15, L-16). Two blocks are written on PR #19's text,
   still a draft at `c462d87`: "Clean bounds its Git work and reports omitted
-  work", and the held project-command block "Repository inspection requires
+  work", and the project-command block "Repository inspection requires
   Git 2.36 and shares one evidence model" (ruling A-20); this change's other
   blocks are byte-identical on `main` and PR #19. Ratifying this change ratifies
   those two blocks only as written on PR #19's text at `c462d87`, not PR #19's
@@ -462,7 +461,7 @@ their `CAS` line.
   before the Speckit handoff, `tasks.md` 2.2 re-reads both against PR #19's
   merged text, or against change 1's archived text if PR #19 closes unmerged.
   This change therefore archives after PR #19's amendment of change 1 lands.
-- **The project-command block, held** (ruling A-20). Change 1's Termination
+- **The project-command block** (ruling A-20). Change 1's Termination
   paragraph names probe children, killed on every exit path, and removal
   children, waited for; the branch child, waited for on a signal and stopped
   only past its budget, is neither, so lane openRepoProject-3's M2 asked for a
@@ -474,11 +473,17 @@ their `CAS` line.
     the same requirement, its block pending in that change's own fix round, and
     by L-11 whichever of the two archives second re-bases on the first's
     archived block;
-  - lane openRepoProject-2 checks the block's diff against PR #19's block
-    before it is committed; until then it is written in the worktree and not
-    committed;
-  - if Brett Heap has PR #19 absorb the clause (lane openRepoProject-2's LQ-6),
-    this block is dropped and this change cites PR #19 instead.
+  - lane openRepoProject-2 checked the block's diff against PR #19's block and
+    agreed it on 2026-10-19, in its words "Yes, with one fix": a verbatim
+    slice of `c462d87` with all nine scenarios carried, ASCII, one hunk; the
+    fix makes the Budgets clause name "Clean retires a removed worktree's
+    branch only on fresh head and ancestry evidence" where it read "that
+    requirement", which would have read as the nearer "Clean bounds its Git
+    work and reports omitted work". The block is committed with that fix;
+  - if PR #19's text moves before it merges, this block re-bases on the text
+    that lands (`tasks.md` 2.2);
+  - if Brett Heap has PR #19 absorb the clauses (lane openRepoProject-2's
+    LQ-6), this block is dropped and this change cites PR #19 instead.
 - **Archive order** (L-5, L-11, A-13). Change 1, then
   `add-project-clean-cache-disposal` (issue #24, draft PR #27, lane
   openRepoProject-5), then this change. PR #27 is an unratified draft (its
@@ -933,18 +938,18 @@ to L12) was applied in the same round; its rows follow the council's.
 | P-3: the human result names no retired branch or SHA | MEDIUM | VALID (A-19): one line per branch, `Retired BRANCH (was SHA); restore: git branch BRANCH SHA`; Rollback cites the SHAs both results print | project-clean delta (ADDED); `design.md` D8, Rollback |
 | P-4: Why never says who benefits | LOW | VALID: Why names merge-commit and fast-forward repositories, with counts measured 2026-10-19 and no names, and the squash and rebase cases; Out of Scope and the README line name branches whose worktree is already gone | Why; Out of Scope; Impact (README) |
 | S-1: an upstream-gone branch is judged against the command directory's `HEAD` and the batch stops | HIGH | VALID (A-17): plan-time keep `head-not-merge-target`, no child, no stop; the restated scenario is "A branch Git would judge against another HEAD is kept", and "Git refuses the branch deletion" now uses a fake `git` | project-clean delta (ADDED); `design.md` D3, D4, Risks |
-| S-2: the branch child has no spawn floor | MEDIUM | VALID (A-5 as amended): the re-read and branch child start only while more than the 5 s removal floor remains, the strict test council B on PR #27 asked for, the re-read under `min(5 s, work remaining less the removal floor)`; the deadline scenario gains the AND; `retired` with `deadline-exceeded` dropped as unreachable | What Changes; Capabilities (bounds); project-clean delta; held project-command block; `design.md` D3, D5, D7 |
+| S-2: the branch child has no spawn floor | MEDIUM | VALID (A-5 as amended): the re-read and branch child start only while more than the 5 s removal floor remains, the strict test council B on PR #27 asked for, the re-read under `min(5 s, work remaining less the removal floor)`; the deadline scenario gains the AND; `retired` with `deadline-exceeded` dropped as unreachable | What Changes; Capabilities (bounds); project-clean delta; project-command block; `design.md` D3, D5, D7 |
 | S-3: a branch two worktrees hold stops the batch | LOW | VALID (A-18): `branch-shared` for earlier holders, the stage at the last; `branch-in-use` at plan time for a holder outside the selection; a holder found only at the stage still stops | project-clean delta (ADDED); `design.md` D4, Risks |
 | S-4: D2's reuse of the post-check listing is in no requirement and collides with T085 | LOW | NOTED: D2's substitution deleted; the next target's own re-read catches a moved merge target; T085 untouched | `clarifications.md`; `design.md` D2 |
 | AE-1: retiring a branch deletes its reflog, the last reference to amended-away work | HIGH | VALID (A-16, amended 2026-10-19 to name each entry's non-zero old object as well as its new one, the oldest surviving entry's old object included, with no extra child): the plan's reflog proof keeps such a branch (`reflog-unmerged`); the "loses no commit" and "lossless" claims now say what is proven; Risks names the `branch.<b>` keys; new Open Question on patch equivalence | What Changes; Rules; Decisions; Open Questions; both deltas; `design.md` D4, Risks |
 | AE-2: the digest ignores the flag, so a flagless approval authorizes deletions | MEDIUM | VALID (A-1 as amended): the flagged preview exists, the digest carries `retire` under the flag, and a flagless digest refuses a flagged apply; the Out of Scope bullet on previews is deleted; "Clean reports local worktree state" MODIFIED for its digest sentence (L-11); a JSON preview shows each row's planned action in a `branch_plan` sub-record on its `selected` entry, the plan envelope, a listed set of fields in change 1, gaining no key | What Changes; Capabilities; Decisions; Out of Scope; project-clean delta; `design.md` D1, D10 |
 | AE-3: two foreseeable retentions stop the batch every run | MEDIUM | VALID (A-17, A-18, A-4 as amended): plan-time keeps never stop the run; applied with change: no `merge-base --is-ancestor` child at plan time, the ruling taking the SHA test instead | Decisions; project-clean delta; `design.md` D4, D6 |
 | AE-4: the human result keeps no record of what it deleted | LOW | VALID (A-19): as P-3 | project-clean delta (ADDED); `design.md` D8, Rollback |
-| A-20 (the lead's ruling on lane 3's M2, after lane openRepoProject-2's answer) | ruling | applied: the project-command block is MODIFIED on PR #19's text and HELD uncommitted for lane openRepoProject-2's check, with the five Dependencies points | Capabilities (project-command); Dependencies and Sequencing; `design.md` D3, Migration Plan |
+| A-20 (the lead's ruling on lane 3's M2, after lane openRepoProject-2's answer) | ruling | applied: the project-command block is MODIFIED on PR #19's text, agreed by lane openRepoProject-2 on 2026-10-19 with one fix and committed, with the Dependencies points | Capabilities (project-command); Dependencies and Sequencing; `design.md` D3, Migration Plan |
 | Council B's refinements for this change (the lead, 2026-10-19, from council B on PR #27) | ruling | applied: the re-read and the branch child start only while more than the floor remains, the branch child never abandoned at its budget; the flagless invariant and `retire`'s place stated against the base text, with the re-base note; one AND for a flagged plan with a cache target | What Changes; Capabilities (bounds); Decisions; Dependencies and Sequencing; project-clean delta; `design.md` D3, D7, D10 |
 | H1: the re-read applies the revalidation MUST selectively | HIGH | applied (A-14): the re-read compares `upstream`, `upstream_oid`, `ahead`, `behind` and `tracking_branch` as well, retaining with `state-changed`; `ahead` and `behind` beyond A-14's list, from the same listing | Capabilities (review-safety `:49`); Decisions; both deltas; `design.md` D4 |
 | M1: ratifying #26 would ratify PR #19's pending text | MEDIUM | applied: the two blocks on PR #19's text are ratified only as written there, and 2.2 re-reads them before the handoff | Dependencies and Sequencing; `tasks.md` 1.6, 2.2; `design.md` Migration Plan |
-| M2: project-command's child rules do not account for the branch child | MEDIUM | applied with change, per A-20: change 1's Termination paragraph is exhaustive about the two kinds it names, so the requirement is MODIFIED, on PR #19's text, held | Capabilities (project-command); Dependencies and Sequencing |
+| M2: project-command's child rules do not account for the branch child | MEDIUM | applied with change, per A-20: change 1's Termination paragraph is exhaustive about the two kinds it names, so the requirement is MODIFIED, on PR #19's text, agreed by lane openRepoProject-2 | Capabilities (project-command); Dependencies and Sequencing |
 | M3: question 2 would be decided by default | MEDIUM | applied with change, per the verdicts: a Dependency, no new behaviour now; lane 3's fix of qualifying only `merged_into_target` rows is not taken | Dependencies and Sequencing |
 | M4: PR #27 relied on without being called a draft | MEDIUM | applied: PR #27 named as an unratified draft, with what changes if it is not ratified | Dependencies and Sequencing |
 | M5: the printed retry is known to fail | MEDIUM | settled by A-17 and A-19 | as P-1 |

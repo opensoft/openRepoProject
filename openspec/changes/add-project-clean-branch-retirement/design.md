@@ -227,9 +227,18 @@ reaped, and the post-check decides (ruling A-20). Change 1's project-command
 Termination paragraph names only probe children, killed on every exit path, and
 removal children, waited for, so that paragraph is MODIFIED to name the branch
 child beside the removal child, and its Budgets sentence to give the re-read its
-narrower budget. That block is written on PR #19's text and held uncommitted
-until lane openRepoProject-2 checks its diff (ruling A-20; proposal,
-Dependencies and Sequencing).
+narrower budget. That block is written on PR #19's text, and lane
+openRepoProject-2 agreed it on 2026-10-19 (ruling A-20; proposal, Dependencies
+and Sequencing).
+
+Realization note for feature 006, from lane openRepoProject-2 (2026-10-19):
+feature 004's runner registers every probe handle in `LIVE_PROBES` and kills
+every live group in it on an exception path (`kill_live_probes()`; `project`
+on branch `004-project-clean-all-safe` at `5a02c1a`). The branch child must
+stay out of that registry, as the removal child does: its `GIT_KINDS` row is a
+non-probe one, as the `removal` and `delegate` rows are, so `ChildHandle.start`
+never adds it, and its past-budget termination is driven by the driver's
+`advance()`, never by `kill_live_probes()`.
 
 The compare is the re-read: the head it lists must equal the reconciliation
 record's `branch_sha`, with the other values of D4. The delete is Git's
@@ -756,7 +765,7 @@ Without the flag nothing changes: every run behaves as change 1 specifies.
    there (`tasks.md` 1.6 and 2.2).
 2. Before the handoff (`tasks.md` section 2): feature 004 merges and change 1
    archives; PR #19 is resolved and the two blocks on its text, "Clean bounds
-   its Git work and reports omitted work" and the held project-command block
+   its Git work and reports omitted work" and the project-command block
    "Repository inspection requires Git 2.36 and shares one evidence model",
    re-read against the text that landed, or change 1's archived text; and
    this change validates again.
