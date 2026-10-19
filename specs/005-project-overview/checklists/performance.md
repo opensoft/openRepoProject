@@ -13,42 +13,66 @@ Lane: openRepoProject-4
 
 ## Requirement Completeness
 
-- [ ] CHK001 Are the deadline, the per-child budget, the grace and the reap wait quantified? [Completeness, Spec FR-011]
-- [ ] CHK002 Is the unit the 5 s filesystem budget bounds specified: one call, or one bounded task such as a root's whole listing? [Completeness, Ambiguity, Spec FR-013]
-- [ ] CHK003 Are the caps quantified, with the order in which each applies? [Completeness, Spec FR-017]
-- [ ] CHK004 Is the concurrency limit quantified, with one repository's children serial? [Completeness, Spec FR-019]
-- [ ] CHK005 Are the status probe's record bounds quantified? [Completeness, Spec FR-015]
-- [ ] CHK006 Is the cost basis of the caps recorded (worst case 48.3 s of 60 s, warm and cold, on a Linux filesystem)? [Completeness, Assumption, Spec Assumptions]
-- [ ] CHK007 Is the measured degradation of a repository with many loose refs recorded (10,000 loose refs listed in 8.65 s on a cold cache, past the 5 s child budget)? [Completeness, Edge Case, Gap]
-- [ ] CHK008 Is the ceiling of worktree rows one repository can finish within the deadline recorded at the measured index sizes? [Completeness, Spec EC-004]
+- [x] CHK001 Are the deadline, the per-child budget, the grace and the reap wait quantified? [Completeness, Spec FR-011]
+  - Result: pass. 60 s; `min(5 s, deadline - now)`; 2 s; 2 s.
+- [x] CHK002 Is the unit the 5 s filesystem budget bounds specified: one call, or one bounded task such as a root's whole listing? [Completeness, Ambiguity, Spec FR-013]
+  - Result: fixed in spec.md, C-38. FR-013 gave each call its own budget; change 2 bounds a root's listing as one task ("5 s per child and per root listing", proposal OQ-9) and design D8 groups the other calls by row and read.
+- [x] CHK003 Are the caps quantified, with the order in which each applies? [Completeness, Spec FR-017]
+  - Result: pass.
+- [x] CHK004 Is the concurrency limit quantified, with one repository's children serial? [Completeness, Spec FR-019]
+  - Result: pass.
+- [x] CHK005 Are the status probe's record bounds quantified? [Completeness, Spec FR-015]
+  - Result: pass. 64 ignored entries, 4,096 records, 8 samples.
+- [x] CHK006 Is the cost basis of the caps recorded (worst case 48.3 s of 60 s, warm and cold, on a Linux filesystem)? [Completeness, Assumption, Spec Assumptions]
+  - Result: pass.
+- [x] CHK007 Is the measured degradation of a repository with many loose refs recorded (10,000 loose refs listed in 8.65 s on a cold cache, past the 5 s child budget)? [Completeness, Edge Case, Gap]
+  - Result: fixed in spec.md, C-53 and EC-029, from governance task 2.1's record.
+- [x] CHK008 Is the ceiling of worktree rows one repository can finish within the deadline recorded at the measured index sizes? [Completeness, Spec EC-004]
+  - Result: pass.
 - [ ] CHK009 Is the number of abandoned filesystem workers (threads) bounded? [Completeness, Gap, Spec FR-013]
-- [ ] CHK010 Is what each parser keeps bounded (the ref listing by the heads; the status stream by its record bounds; standard error by 200 characters)? [Completeness, Spec FR-015, FR-022]
+  - Result: plan note PN-10.
+- [x] CHK010 Is what each parser keeps bounded (the ref listing by the heads; the status stream by its record bounds; standard error by 200 characters)? [Completeness, Spec FR-015, FR-022]
+  - Result: pass.
 
 ## Requirement Clarity
 
-- [ ] CHK011 Is "plus rendering" in the run bound an explicit exclusion whose size is itself bounded? [Clarity, Spec FR-011, SC-005]
-- [ ] CHK012 Is "about 2 s rather than 8 s" given an objective threshold? [Clarity, Measurability, Spec US6 s9]
-- [ ] CHK013 Is the per-child budget's formula under the overview's deadline, with no reserve, explicit? [Clarity, Spec FR-011]
+- [x] CHK011 Is "plus rendering" in the run bound an explicit exclusion whose size is itself bounded? [Clarity, Spec FR-011, SC-005]
+  - Result: pass. Rendering follows collection, and the caps bound what it renders.
+- [x] CHK012 Is "about 2 s rather than 8 s" given an objective threshold? [Clarity, Measurability, Spec US6 s9]
+  - Result: pass. The last held probe ends less than 4 s after the first starts.
+- [x] CHK013 Is the per-child budget's formula under the overview's deadline, with no reserve, explicit? [Clarity, Spec FR-011]
+  - Result: pass.
 
 ## Requirement Consistency
 
-- [ ] CHK014 Is the 64 s run bound counted from the same moment in FR-011, FR-049, US6 s8 and SC-005? [Consistency, Conflict, Spec FR-011, SC-005]
-- [ ] CHK015 Are the overview's 60 s with no reserve and `clean`'s 50 + 10 + 4 kept apart? [Consistency, Spec Clarifications C-16]
+- [x] CHK014 Is the 64 s run bound counted from the same moment in FR-011, FR-049, US6 s8 and SC-005? [Consistency, Conflict, Spec FR-011, SC-005]
+  - Result: fixed in spec.md, C-48. SC-005 counted from "its start", FR-011 and FR-049 from the moment the deadline is set.
+- [x] CHK015 Are the overview's 60 s with no reserve and `clean`'s 50 + 10 + 4 kept apart? [Consistency, Spec Clarifications C-16]
+  - Result: pass.
 
 ## Acceptance Criteria Quality
 
-- [ ] CHK016 Can the concurrency limit be measured from the counting wrapper's interval log? [Measurability, Spec SC-005, US6 s9]
-- [ ] CHK017 Can the run bound be tested without a full 60 s wait? [Measurability, Spec FR-049]
+- [x] CHK016 Can the concurrency limit be measured from the counting wrapper's interval log? [Measurability, Spec SC-005, US6 s9]
+  - Result: pass.
+- [x] CHK017 Can the run bound be tested without a full 60 s wait? [Measurability, Spec FR-049]
+  - Result: pass. Only the deadline scenario shortens the deadline and budget, keeping their ratio.
 
 ## Scenario Coverage
 
-- [ ] CHK018 Primary: does an estate within the caps finish complete? [Coverage, Spec SC-006, US1]
-- [ ] CHK019 Alternate: is a default root above the candidate cap addressed (219 candidates measured)? [Coverage, Spec EC-003]
-- [ ] CHK020 Exception: are a held probe, a hung filesystem call, a hung root, a hung repository root and the deadline covered? [Coverage, Spec US6 s4 to s8]
-- [ ] CHK021 Recovery: is the remedy for a cut repository specified? [Recovery, Spec FR-035]
-- [ ] CHK022 Non-functional: was the measurement made on a loaded host, warm and cold? [Coverage, Spec Assumptions]
-- [ ] CHK023 Edge: are a Windows drive mounted into WSL2 and a call stuck in the kernel addressed? [Edge Case, Spec EC-001, EC-005]
-- [ ] CHK024 Edge: is the clock's behaviour stated for a run that is suspended (Ctrl-Z) past its deadline? [Edge Case, Spec FR-011]
+- [x] CHK018 Primary: does an estate within the caps finish complete? [Coverage, Spec SC-006, US1]
+  - Result: pass.
+- [x] CHK019 Alternate: is a default root above the candidate cap addressed (219 candidates measured)? [Coverage, Spec EC-003]
+  - Result: pass.
+- [x] CHK020 Exception: are a held probe, a hung filesystem call, a hung root, a hung repository root and the deadline covered? [Coverage, Spec US6 s4 to s8]
+  - Result: pass.
+- [x] CHK021 Recovery: is the remedy for a cut repository specified? [Recovery, Spec FR-035]
+  - Result: pass. "re-run with --root <repository parent>".
+- [x] CHK022 Non-functional: was the measurement made on a loaded host, warm and cold? [Coverage, Spec Assumptions]
+  - Result: pass. Governance task 2.1, as the Assumptions cite it.
+- [x] CHK023 Edge: are a Windows drive mounted into WSL2 and a call stuck in the kernel addressed? [Edge Case, Spec EC-001, EC-005]
+  - Result: pass.
+- [x] CHK024 Edge: is the clock's behaviour stated for a run that is suspended (Ctrl-Z) past its deadline? [Edge Case, Spec FR-011]
+  - Result: pass. The deadline runs on a monotonic clock, so a run resumed past it ends by FR-012's deadline rules, incomplete.
 
 ## Notes
 
@@ -59,3 +83,12 @@ Lane: openRepoProject-4
 - Add comments or findings inline
 - Link to relevant resources or documentation
 - Items are numbered sequentially for easy reference
+
+## Evaluation
+
+Evaluated on 2026-10-19 against `spec.md` at `8f433f7`. 24 items: 20 pass, 3
+fixed in the spec, 0 open, 1 plan notes, 0 new questions. An open item waits
+on the question or residual its result names; a plan note is for the plan, not
+the spec; a new question is asked in `clarify-questions.md`.
+
+Plan notes: PN-10 (CHK009).

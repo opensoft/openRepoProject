@@ -13,49 +13,80 @@ Lane: openRepoProject-4
 
 ## Requirement Completeness
 
-- [ ] CHK001 Is the command's synopsis specified, with every flag and which one repeats? [Completeness, Spec FR-001]
-- [ ] CHK002 Is every field of the envelope, root object, project row, `repository`, `git`, worktree row, finding, `summary` and error object listed with its type? [Completeness, Spec FR-036, FR-037]
-- [ ] CHK003 Is the condition under which each worktree-row and `git` field is null specified, with the nulls that mean "none" told apart from those that mean "not established"? [Completeness, Gap, Spec FR-036, FR-037]
-- [ ] CHK004 Are the `summary` counts defined: what `projects`, `repositories`, `worktrees`, `errors` and `findings` each count? [Completeness, Gap, Spec Key Entities, FR-036]
-- [ ] CHK005 Is the closed set of row and scan error codes for schema version 1 enumerated? [Completeness, Gap, Spec FR-021, FR-022, FR-037]
+- [x] CHK001 Is the command's synopsis specified, with every flag and which one repeats? [Completeness, Spec FR-001]
+  - Result: pass. `project overview [--root D]... [--attention] [--json] [--strict]`, `--root` repeatable.
+- [x] CHK002 Is every field of the envelope, root object, project row, `repository`, `git`, worktree row, finding, `summary` and error object listed with its type? [Completeness, Spec FR-036, FR-037]
+  - Result: pass. FR-036 takes exactly the delta's field lists (POD:607-648) and FR-037 the representation rules.
+- [x] CHK003 Is the condition under which each worktree-row and `git` field is null specified, with the nulls that mean "none" told apart from those that mean "not established"? [Completeness, Gap, Spec FR-036, FR-037]
+  - Result: fixed in spec.md, C-40. The null conditions are DI:770-790's, adopted with the fields and types; the nulls that mean none are the proposal's list in "Unknown is never healthy".
+- [x] CHK004 Are the `summary` counts defined: what `projects`, `repositories`, `worktrees`, `errors` and `findings` each count? [Completeness, Gap, Spec Key Entities, FR-036]
+  - Result: fixed in spec.md, C-40 (DI:792-800).
+- [x] CHK005 Is the closed set of row and scan error codes for schema version 1 enumerated? [Completeness, Gap, Spec FR-021, FR-022, FR-037]
+  - Result: fixed in spec.md, C-41.
 - [ ] CHK006 Is it specified when the exit-2 codes `refused` and `os-error` apply under `--json`, rather than `internal-error`? [Completeness, Spec FR-039]
+  - Result: open on existing question Q12.
 - [ ] CHK007 Is the content of `limit` and `omitted` on `deadline-exceeded` errors specified, for the scan error and for row errors? [Completeness, Spec FR-036, Clarifications C-30]
-- [ ] CHK008 Is the content of `limit` and `omitted` on a project row's `scan-limit` error specified? [Completeness, Spec FR-017, FR-018]
-- [ ] CHK009 Is an argument error under `--json` specified (no JSON, the usage message on standard error, exit 2)? [Completeness, Spec FR-039, US5 s2]
+  - Result: open on existing question Q6.
+- [x] CHK008 Is the content of `limit` and `omitted` on a project row's `scan-limit` error specified? [Completeness, Spec FR-017, FR-018]
+  - Result: pass. FR-017's rule covers every `scan-limit` error: `limit` names the cap's `limits` key and `omitted` carries the count that error dropped, `exact` for a registry read whole.
+- [x] CHK009 Is an argument error under `--json` specified (no JSON, the usage message on standard error, exit 2)? [Completeness, Spec FR-039, US5 s2]
+  - Result: pass.
 - [ ] CHK010 Is the JSON text's form (indentation, key order, a final newline, which code points beyond Cc, Cf, Zl and Zp are escaped) specified or named as the plan's? [Completeness, Gap, Spec FR-036, FR-038, SC-007]
+  - Result: plan note PN-6.
 - [ ] CHK011 Is a finding's `observed_at` defined for a finding that no probe decided (a filesystem read, a manifest) or that two evidence sources decided? [Completeness, Gap, Spec FR-037, Clarifications C-12]
+  - Result: plan note PN-7.
 
 ## Requirement Clarity
 
-- [ ] CHK012 Is each enum's value set stated (root `source` and `state`, `kind`, `status`, `completeness`, category, severity, evidence source, exactness, classification, finding codes, gate codes)? [Clarity, Spec FR-027, FR-035, Key Entities]
-- [ ] CHK013 Is the form of `suggested_command` exact (an argv array of one of two shapes, naming the absolute canonical root)? [Clarity, Spec FR-031]
-- [ ] CHK014 Is the meaning of an empty `findings` on an error row stated? [Clarity, Spec FR-037]
-- [ ] CHK015 Can a consumer tell a worktree on a branch named `detached` from a detached head? [Clarity, Ambiguity, Spec FR-036]
-- [ ] CHK016 Are `dev` and `ino` values above 2^53 addressed for consumers that read JSON numbers as IEEE 754 doubles? [Clarity, Edge Case, Spec FR-037]
-- [ ] CHK017 Is the value of `git.tracking_freshness` fixed? [Clarity, Spec FR-036, Clarifications C-32]
-- [ ] CHK018 Is it clear that `batch_row_cap`, `report_row_cap` and `targets` are reported from the shared constants and drive the gates, while the overview's own caps are the other `limits` keys? [Clarity, Spec FR-017, FR-034, FR-036]
+- [x] CHK012 Is each enum's value set stated (root `source` and `state`, `kind`, `status`, `completeness`, category, severity, evidence source, exactness, classification, finding codes, gate codes)? [Clarity, Spec FR-027, FR-035, Key Entities]
+  - Result: pass. Key Entities, FR-027 (22 codes), FR-035 (gate codes) and the delta's field lists close every enum.
+- [x] CHK013 Is the form of `suggested_command` exact (an argv array of one of two shapes, naming the absolute canonical root)? [Clarity, Spec FR-031]
+  - Result: pass.
+- [x] CHK014 Is the meaning of an empty `findings` on an error row stated? [Clarity, Spec FR-037]
+  - Result: pass. No finding was computed.
+- [x] CHK015 Can a consumer tell a worktree on a branch named `detached` from a detached head? [Clarity, Ambiguity, Spec FR-036]
+  - Result: fixed in spec.md, C-52 and EC-028. The value is the clean report's, inherited; the spec now records that `branch` alone does not tell them apart.
+- [x] CHK016 Are `dev` and `ino` values above 2^53 addressed for consumers that read JSON numbers as IEEE 754 doubles? [Clarity, Edge Case, Spec FR-037]
+  - Result: fixed in spec.md, C-51 and EC-027. The integers stay exact JSON integers, as ratified; the consumer-side rounding is recorded as a residual.
+- [x] CHK017 Is the value of `git.tracking_freshness` fixed? [Clarity, Spec FR-036, Clarifications C-32]
+  - Result: pass. `local refs only; no fetch`.
+- [x] CHK018 Is it clear that `batch_row_cap`, `report_row_cap` and `targets` are reported from the shared constants and drive the gates, while the overview's own caps are the other `limits` keys? [Clarity, Spec FR-017, FR-034, FR-036]
+  - Result: pass.
 
 ## Requirement Consistency
 
-- [ ] CHK019 Do field names agree with change 1's JSON wherever both describe the same thing (`repository`, `merge_target`, the path flags, `ignored_samples` objects, `limits.targets`)? [Consistency, Spec FR-036, header]
-- [ ] CHK020 Is the order of every array specified (roots, projects, worktrees, findings, row errors, scan errors)? [Consistency, Spec FR-001, FR-037]
-- [ ] CHK021 Is the schema-evolution rule (additive within version 1, a rename, removal or change of type or meaning incrementing `schema_version`) consistent with the closed enums? [Consistency, Spec FR-037]
-- [ ] CHK022 Are the exit statuses consistent between FR-042, FR-039 and the stories, so that a script can rely on them? [Consistency, Spec FR-042, US2, US10]
+- [x] CHK019 Do field names agree with change 1's JSON wherever both describe the same thing (`repository`, `merge_target`, the path flags, `ignored_samples` objects, `limits.targets`)? [Consistency, Spec FR-036, header]
+  - Result: pass. The header records feature 004's names as used unchanged, with the two exceptions the delta makes.
+- [x] CHK020 Is the order of every array specified (roots, projects, worktrees, findings, row errors, scan errors)? [Consistency, Spec FR-001, FR-037]
+  - Result: pass. Roots by canonical bytes (FR-001, POD:610-611); the rest by FR-037. The position of a repository-level finding is left to the plan (Assumptions), and a tie between two rows with one `path` is plan note PN-8 (data-model.md).
+- [x] CHK021 Is the schema-evolution rule (additive within version 1, a rename, removal or change of type or meaning incrementing `schema_version`) consistent with the closed enums? [Consistency, Spec FR-037]
+  - Result: pass.
+- [x] CHK022 Are the exit statuses consistent between FR-042, FR-039 and the stories, so that a script can rely on them? [Consistency, Spec FR-042, US2, US10]
+  - Result: pass.
 
 ## Acceptance Criteria Quality
 
-- [ ] CHK023 Can the presence and type of every field be checked by a test? [Measurability, Spec SC-009, US5 s1]
-- [ ] CHK024 Is "byte-identical apart from timestamps and `budget.probe_concurrency`" exact about which fields are timestamps? [Measurability, Spec SC-007, Clarifications C-12]
+- [x] CHK023 Can the presence and type of every field be checked by a test? [Measurability, Spec SC-009, US5 s1]
+  - Result: pass.
+- [x] CHK024 Is "byte-identical apart from timestamps and `budget.probe_concurrency`" exact about which fields are timestamps? [Measurability, Spec SC-007, Clarifications C-12]
+  - Result: pass. The envelope's and each finding's `observed_at` (C-12).
 
 ## Scenario Coverage
 
-- [ ] CHK025 Primary: is a complete run's document specified field by field? [Coverage, Spec US5 s1]
-- [ ] CHK026 Alternate: does `--attention --json` print the full envelope, unchanged by the filter? [Coverage, Spec FR-030]
-- [ ] CHK027 Exception: are the argument error, the version refusal and an exception outside the boundary each specified under `--json`? [Coverage, Spec FR-039, US5 s2, US5 s3, US10 s2]
-- [ ] CHK028 Recovery: can a consumer tell a complete result from an incomplete one and find each cut with what it omitted? [Coverage, Spec FR-037, FR-017, SC-006]
-- [ ] CHK029 Non-functional: is the document's size bounded? [Coverage, Spec FR-015, FR-017, FR-022]
-- [ ] CHK030 Interface: is the behaviour for an unknown option or a positional argument specified (usage, exit 2)? [Coverage, Spec FR-039, FR-042]
-- [ ] CHK031 Interface: is the stability promise to consumers stated, that a new field or enum value is additive within version 1? [Completeness, Spec FR-037]
+- [x] CHK025 Primary: is a complete run's document specified field by field? [Coverage, Spec US5 s1]
+  - Result: pass.
+- [x] CHK026 Alternate: does `--attention --json` print the full envelope, unchanged by the filter? [Coverage, Spec FR-030]
+  - Result: pass.
+- [x] CHK027 Exception: are the argument error, the version refusal and an exception outside the boundary each specified under `--json`? [Coverage, Spec FR-039, US5 s2, US5 s3, US10 s2]
+  - Result: pass.
+- [x] CHK028 Recovery: can a consumer tell a complete result from an incomplete one and find each cut with what it omitted? [Coverage, Spec FR-037, FR-017, SC-006]
+  - Result: pass.
+- [x] CHK029 Non-functional: is the document's size bounded? [Coverage, Spec FR-015, FR-017, FR-022]
+  - Result: pass. The caps, the record and sample bounds and the 200-character messages bound it.
+- [x] CHK030 Interface: is the behaviour for an unknown option or a positional argument specified (usage, exit 2)? [Coverage, Spec FR-039, FR-042]
+  - Result: pass. Both are invalid invocations.
+- [x] CHK031 Interface: is the stability promise to consumers stated, that a new field or enum value is additive within version 1? [Completeness, Spec FR-037]
+  - Result: pass.
 
 ## Notes
 
@@ -66,3 +97,12 @@ Lane: openRepoProject-4
 - Add comments or findings inline
 - Link to relevant resources or documentation
 - Items are numbered sequentially for easy reference
+
+## Evaluation
+
+Evaluated on 2026-10-19 against `spec.md` at `8f433f7`. 31 items: 22 pass, 5
+fixed in the spec, 2 open, 2 plan notes, 0 new questions. An open item waits
+on the question or residual its result names; a plan note is for the plan, not
+the spec; a new question is asked in `clarify-questions.md`.
+
+Plan notes: PN-6 (CHK010), PN-7 (CHK011), PN-8 (CHK020).

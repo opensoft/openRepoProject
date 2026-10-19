@@ -13,47 +13,76 @@ Lane: openRepoProject-4
 
 ## Requirement Completeness
 
-- [ ] CHK001 Are both suggestion forms specified, with the row-level choice between them? [Completeness, Spec FR-031]
-- [ ] CHK002 Is every condition that gives no clean suggestion specified (a null root, a root or common directory that is not valid UTF-8, a code the table marks none, the merge-target checkout)? [Completeness, Spec FR-031, FR-041]
-- [ ] CHK003 Are the per-worktree gates and their order specified, with the finding that replaces the housekeeping finding? [Completeness, Spec FR-032]
-- [ ] CHK004 Is the reflog decision complete: anchor, movement, the head test first, and the outcomes for a missing, empty, bound-reaching or undecidable reflog, any other OS error and a cut read? [Completeness, Spec FR-033]
-- [ ] CHK005 Are the repository gates specified (`inspection-incomplete`, `inspect-cap`, `scan-limit`, `deadline-exceeded`) with their causes? [Completeness, Spec FR-034]
-- [ ] CHK006 Is the population over which `target-cap` counts explicit? [Clarity, Gap, Spec FR-034]
-- [ ] CHK007 Are the gate table's order and the choice of `suggestion_gate` (the first applicable code) specified? [Completeness, Spec FR-035]
-- [ ] CHK008 Is it specified that a gate is recorded only on a finding whose own suggestion it changed? [Completeness, Spec FR-035]
-- [ ] CHK009 Is `suggestion_gate_rows` defined? [Completeness, Spec FR-035]
-- [ ] CHK010 Are the fixed remedies cited, with N and M taken from the shared constants at run time? [Completeness, Spec FR-035]
-- [ ] CHK011 Is the path the `--root <repository parent>` remedy names defined? [Completeness, Spec FR-035, Clarifications C-11]
-- [ ] CHK012 Is it specified which gates the overview leaves to the batch (`contains-submodule`, `hidden-local-state`)? [Completeness, Spec FR-032]
+- [x] CHK001 Are both suggestion forms specified, with the row-level choice between them? [Completeness, Spec FR-031]
+  - Result: pass.
+- [x] CHK002 Is every condition that gives no clean suggestion specified (a null root, a root or common directory that is not valid UTF-8, a code the table marks none, the merge-target checkout)? [Completeness, Spec FR-031, FR-041]
+  - Result: pass.
+- [x] CHK003 Are the per-worktree gates and their order specified, with the finding that replaces the housekeeping finding? [Completeness, Spec FR-032]
+  - Result: pass.
+- [x] CHK004 Is the reflog decision complete: anchor, movement, the head test first, and the outcomes for a missing, empty, bound-reaching or undecidable reflog, any other OS error and a cut read? [Completeness, Spec FR-033]
+  - Result: pass.
+- [x] CHK005 Are the repository gates specified (`inspection-incomplete`, `inspect-cap`, `scan-limit`, `deadline-exceeded`) with their causes? [Completeness, Spec FR-034]
+  - Result: pass; what `inspect-cap` counts is data-model.md CHK008 (C-46).
+- [x] CHK006 Is the population over which `target-cap` counts explicit? [Clarity, Gap, Spec FR-034]
+  - Result: fixed in spec.md, C-45. One repository, as design D5 computes it.
+- [x] CHK007 Are the gate table's order and the choice of `suggestion_gate` (the first applicable code) specified? [Completeness, Spec FR-035]
+  - Result: pass.
+- [x] CHK008 Is it specified that a gate is recorded only on a finding whose own suggestion it changed? [Completeness, Spec FR-035]
+  - Result: pass. "Null unless a gate withheld or limited its own suggestion".
+- [x] CHK009 Is `suggestion_gate_rows` defined? [Completeness, Spec FR-035]
+  - Result: pass, the row count being C-46's.
+- [x] CHK010 Are the fixed remedies cited, with N and M taken from the shared constants at run time? [Completeness, Spec FR-035]
+  - Result: pass.
+- [x] CHK011 Is the path the `--root <repository parent>` remedy names defined? [Completeness, Spec FR-035, Clarifications C-11]
+  - Result: pass.
+- [x] CHK012 Is it specified which gates the overview leaves to the batch (`contains-submodule`, `hidden-local-state`)? [Completeness, Spec FR-032]
+  - Result: pass.
 
 ## Requirement Clarity
 
-- [ ] CHK013 Is "gate-passing" defined? [Clarity, Spec FR-032]
-- [ ] CHK014 Is the difference between "withheld" and "limited" defined? [Clarity, Spec FR-045, Clarifications C-14]
-- [ ] CHK015 Is the reflog file's location defined for a branch name that holds `/`? [Clarity, Spec FR-033]
-- [ ] CHK016 Is the 64 KiB boundary exact? [Clarity, Spec FR-033, Clarifications C-22]
+- [x] CHK013 Is "gate-passing" defined? [Clarity, Spec FR-032]
+  - Result: pass. A `merged-removable` worktree that passes the gates the overview can evaluate from its own evidence.
+- [x] CHK014 Is the difference between "withheld" and "limited" defined? [Clarity, Spec FR-045, Clarifications C-14]
+  - Result: pass.
+- [x] CHK015 Is the reflog file's location defined for a branch name that holds `/`? [Clarity, Spec FR-033]
+  - Result: pass. `logs/refs/heads/<branch>` under the common directory, each `/` a directory level (design D5).
+- [x] CHK016 Is the 64 KiB boundary exact? [Clarity, Spec FR-033, Clarifications C-22]
+  - Result: pass. 65,535 bytes are decided by their entries; 65,536 or more are `reflog-unavailable`.
 
 ## Requirement Consistency
 
-- [ ] CHK017 Do the gates mirror [G]'s order and outcomes, so that a suggestion never points at what `project clean` refuses? [Consistency, Spec FR-032, FR-034, US4 s2]
-- [ ] CHK018 Are the causes of `inspection-incomplete` consistent across FR-007, FR-013, FR-033 and FR-034 (failed or cut presence, registration and reflog reads)? [Consistency, Spec Clarifications C-23]
-- [ ] CHK019 Is the merge-target checkout kept out of suggestions both on its findings and on the row? [Consistency, Spec FR-041]
+- [x] CHK017 Do the gates mirror [G]'s order and outcomes, so that a suggestion never points at what `project clean` refuses? [Consistency, Spec FR-032, FR-034, US4 s2]
+  - Result: pass.
+- [x] CHK018 Are the causes of `inspection-incomplete` consistent across FR-007, FR-013, FR-033 and FR-034 (failed or cut presence, registration and reflog reads)? [Consistency, Spec Clarifications C-23]
+  - Result: pass.
+- [x] CHK019 Is the merge-target checkout kept out of suggestions both on its findings and on the row? [Consistency, Spec FR-041]
+  - Result: pass.
 
 ## Acceptance Criteria Quality
 
-- [ ] CHK020 Is SC-004 measurable, the batch preview's own deadline and index-gate read failures included? [Measurability, Spec SC-004]
+- [x] CHK020 Is SC-004 measurable, the batch preview's own deadline and index-gate read failures included? [Measurability, Spec SC-004]
+  - Result: pass.
 
 ## Scenario Coverage
 
-- [ ] CHK021 Primary: does one eligible worktree get `--all-safe`? [Coverage, Spec US1 s4]
-- [ ] CHK022 Alternate: are `target-cap`, the two `inspect-cap` bands and every reflog outcome covered? [Coverage, Spec US4 s3 to s6]
-- [ ] CHK023 Exception: are `inspection-error` rows, an unreadable reflog and unprobed rows covered? [Coverage, Spec US4 s1, US4 s6, US6 s3]
-- [ ] CHK024 Recovery: does the suggestion return after a repair, and does a re-run drain a backlog? [Recovery, Spec US4 s1, FR-035]
-- [ ] CHK025 Non-functional: do the gates need no Git child beyond design D3's and one bounded read per gated row? [Coverage, Spec FR-032, FR-033]
-- [ ] CHK026 Edge: is a repository over both row caps covered? [Edge Case, Spec Clarifications C-14]
-- [ ] CHK027 Edge: are `target-cap` rows the batch's index gates may still exclude addressed? [Edge Case, Spec EC-007]
-- [ ] CHK028 Edge: are repositories without file reflogs, a reflog of 64 KiB or more and a branch created from a remote branch that had commits addressed? [Edge Case, Spec EC-008, EC-009, EC-010]
-- [ ] CHK029 Edge: is an informational finding that feeds a shown row's command under `--attention` addressed? [Edge Case, Spec EC-024]
+- [x] CHK021 Primary: does one eligible worktree get `--all-safe`? [Coverage, Spec US1 s4]
+  - Result: pass.
+- [x] CHK022 Alternate: are `target-cap`, the two `inspect-cap` bands and every reflog outcome covered? [Coverage, Spec US4 s3 to s6]
+  - Result: pass.
+- [x] CHK023 Exception: are `inspection-error` rows, an unreadable reflog and unprobed rows covered? [Coverage, Spec US4 s1, US4 s6, US6 s3]
+  - Result: pass.
+- [x] CHK024 Recovery: does the suggestion return after a repair, and does a re-run drain a backlog? [Recovery, Spec US4 s1, FR-035]
+  - Result: pass.
+- [x] CHK025 Non-functional: do the gates need no Git child beyond design D3's and one bounded read per gated row? [Coverage, Spec FR-032, FR-033]
+  - Result: pass.
+- [x] CHK026 Edge: is a repository over both row caps covered? [Edge Case, Spec Clarifications C-14]
+  - Result: pass.
+- [x] CHK027 Edge: are `target-cap` rows the batch's index gates may still exclude addressed? [Edge Case, Spec EC-007]
+  - Result: pass.
+- [x] CHK028 Edge: are repositories without file reflogs, a reflog of 64 KiB or more and a branch created from a remote branch that had commits addressed? [Edge Case, Spec EC-008, EC-009, EC-010]
+  - Result: pass.
+- [x] CHK029 Edge: is an informational finding that feeds a shown row's command under `--attention` addressed? [Edge Case, Spec EC-024]
+  - Result: pass.
 
 ## Notes
 
@@ -64,3 +93,12 @@ Lane: openRepoProject-4
 - Add comments or findings inline
 - Link to relevant resources or documentation
 - Items are numbered sequentially for easy reference
+
+## Evaluation
+
+Evaluated on 2026-10-19 against `spec.md` at `8f433f7`. 29 items: 28 pass, 1
+fixed in the spec, 0 open, 0 plan notes, 0 new questions. An open item waits
+on the question or residual its result names; a plan note is for the plan, not
+the spec; a new question is asked in `clarify-questions.md`.
+
+Plan notes: none.

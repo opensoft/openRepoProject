@@ -13,52 +13,86 @@ Lane: openRepoProject-4
 
 ## Requirement Completeness
 
-- [ ] CHK001 Are the contents of every human line type specified: the row header, the finding line, the worktree path line, the `next` line, the `Incomplete:` line, the absent-roots line and the summary line? [Completeness, Spec FR-045, FR-005]
-- [ ] CHK002 Is it specified when a row prints a `next` line and when it prints none? [Completeness, Gap, Spec FR-045]
-- [ ] CHK003 Is the order of rows, of findings and row errors within a row, and of `Incomplete:` lines specified for the human report? [Completeness, Gap, Spec FR-045, FR-037]
+- [x] CHK001 Are the contents of every human line type specified: the row header, the finding line, the worktree path line, the `next` line, the `Incomplete:` line, the absent-roots line and the summary line? [Completeness, Spec FR-045, FR-005]
+  - Result: pass. FR-045 names each line and cites design D10 for its layout; FR-005 fixes the absent-roots line.
+- [x] CHK002 Is it specified when a row prints a `next` line and when it prints none? [Completeness, Gap, Spec FR-045]
+  - Result: fixed in spec.md, C-44. FR-045 read as one `next` line for every shown row; design D10 prints it only when the row has a suggested command or a gate decided it, reading `none` where a gate left no command.
+- [x] CHK003 Is the order of rows, of findings and row errors within a row, and of `Incomplete:` lines specified for the human report? [Completeness, Gap, Spec FR-045, FR-037]
+  - Result: fixed in spec.md, C-43. FR-037 ordered the JSON only; design D6 and D10 render the human report in the same canonical order.
 - [ ] CHK004 Is the full fixed sentence specified for every finding code whose message is not the ladder's recommendation (`main-worktree`, `locked-worktree`, `registration-mismatch`, `unsupported-path-bytes`, `no-merge-target`, `merge-target-conflict`, and the gitfile `unsupported-layout` and `main-worktree-missing` around their fixed remedies)? [Completeness, Gap, Spec FR-028, SC-010]
-- [ ] CHK005 Is the message of a gated finding specified: its own text, then `; `, then the remedy, within 200 characters, the own text shortened with `...` when both do not fit? [Completeness, Spec FR-035, Clarifications C-11]
+  - Result: plan note PN-1.
+- [x] CHK005 Is the message of a gated finding specified: its own text, then `; `, then the remedy, within 200 characters, the own text shortened with `...` when both do not fit? [Completeness, Spec FR-035, Clarifications C-11]
+  - Result: pass. C-11 cites design D5 for the composition and the shortening rule.
 - [ ] CHK006 Are the human text of an exit-2 refusal without `--json` (`git-too-old`, `git-unavailable`, an internal error) and the stream it is written to specified? [Completeness, Gap, Spec FR-039, FR-043]
-- [ ] CHK007 Is the summary line's text specified for the usual case and for `--attention` with no row shown? [Completeness, Spec FR-045]
-- [ ] CHK008 Is the human output specified for a complete scan that lists its roots and finds no project? [Completeness, Edge Case, Spec US10 s1, FR-045]
-- [ ] CHK009 Is the `Scanning N roots...` notice specified as to stream, condition, the meaning of N and its moment? [Completeness, Spec FR-046, Clarifications C-36]
-- [ ] CHK010 Is the `Cancelled.` line specified as to stream and condition? [Completeness, Spec FR-044]
+  - Result: plan note PN-2.
+- [x] CHK007 Is the summary line's text specified for the usual case and for `--attention` with no row shown? [Completeness, Spec FR-045]
+  - Result: pass. FR-045 requires the summary on every run and the nothing-needs-attention form, citing design D10's fixed text.
+- [x] CHK008 Is the human output specified for a complete scan that lists its roots and finds no project? [Completeness, Edge Case, Spec US10 s1, FR-045]
+  - Result: pass. The always-printed summary line says so with its counts ("0 projects"); design D10 adds a fixed line only for the case where every root is absent (FR-005).
+- [x] CHK009 Is the `Scanning N roots...` notice specified as to stream, condition, the meaning of N and its moment? [Completeness, Spec FR-046, Clarifications C-36]
+  - Result: pass. FR-046 fixes standard error, a terminal only, N before canonicalisation (C-36), before listing.
+- [x] CHK010 Is the `Cancelled.` line specified as to stream and condition? [Completeness, Spec FR-044]
+  - Result: pass. FR-044 writes it to standard error on SIGINT, SIGTERM or SIGHUP, best-effort (C-47).
 - [ ] CHK011 Is the `--help` text of `project overview` specified? [Completeness, Gap]
+  - Result: plan note PN-3.
 - [ ] CHK012 Is the display of a row error under the repair category specified, including where its `path` prints? [Completeness, Spec FR-045, design D10]
+  - Result: plan note PN-4.
 
 ## Requirement Clarity
 
-- [ ] CHK013 Is the column layout (two-space indent, category padded to 14 columns, worktree path indented to the message column) fixed by citation so that it can be tested character for character? [Clarity, Measurability, Spec FR-045, SC-010]
-- [ ] CHK014 Is it clear which gate a `next` line names when a row's findings are gated differently, and whether it reads `withheld` or `limited`? [Clarity, Spec FR-045, Clarifications C-14]
-- [ ] CHK015 Is it clear how a command is quoted on the `next` line? [Clarity, Spec FR-045, US11 s1]
+- [x] CHK013 Is the column layout (two-space indent, category padded to 14 columns, worktree path indented to the message column) fixed by citation so that it can be tested character for character? [Clarity, Measurability, Spec FR-045, SC-010]
+  - Result: pass. FR-045 requires the layout design D10 fixes; SC-010 compares it character for character.
+- [x] CHK014 Is it clear which gate a `next` line names when a row's findings are gated differently, and whether it reads `withheld` or `limited`? [Clarity, Spec FR-045, Clarifications C-14]
+  - Result: pass. C-14 gives the first code in the gate table's order among the findings that fed the row's command, and the word for each code.
+- [x] CHK015 Is it clear how a command is quoted on the `next` line? [Clarity, Spec FR-045, US11 s1]
+  - Result: pass. POSIX shell quoting, or the `$'...'` form for a path that holds a code point to escape or an undecodable byte.
 - [ ] CHK016 Are the count nouns of the fixed lines specified for a count of one (`1 projects`, `Scanning 1 roots...`)? [Clarity, Gap, Spec FR-045, FR-046]
-- [ ] CHK017 Is it clear that `--attention` hides informational findings but keeps a shown row's `next` command even when an informational finding fed it? [Clarity, Spec EC-024, Clarifications C-20]
-- [ ] CHK018 Is the "absolute path" of a header line defined for a row whose `repository.root` is null? [Clarity, Spec FR-010, FR-045]
+  - Result: plan note PN-5.
+- [x] CHK017 Is it clear that `--attention` hides informational findings but keeps a shown row's `next` command even when an informational finding fed it? [Clarity, Spec EC-024, Clarifications C-20]
+  - Result: pass. C-20 and EC-024 state both, and that the exit is unaffected.
+- [x] CHK018 Is the "absolute path" of a header line defined for a row whose `repository.root` is null? [Clarity, Spec FR-010, FR-045]
+  - Result: pass. The header prints the row's `path`, which FR-010 makes the candidate when the root is null.
 
 ## Requirement Consistency
 
-- [ ] CHK019 Does the human report carry the same rows, findings, suggestions and gates as the JSON document, differing only in what `--attention` hides? [Consistency, Spec FR-030, FR-045]
-- [ ] CHK020 Are the remedy texts the same in the JSON `message` and in the human text? [Consistency, Spec FR-035]
-- [ ] CHK021 Is standard output required to be identical whether or not standard error is a terminal? [Consistency, Spec FR-046, US1 s7]
-- [ ] CHK022 Do the fixed texts follow one character rule, ASCII, with interpolated names, paths and numbers following FR-038? [Consistency, Spec FR-045, SC-010]
+- [x] CHK019 Does the human report carry the same rows, findings, suggestions and gates as the JSON document, differing only in what `--attention` hides? [Consistency, Spec FR-030, FR-045]
+  - Result: pass. FR-030 limits `--attention` to the display; FR-045 prints the collected rows and findings.
+- [x] CHK020 Are the remedy texts the same in the JSON `message` and in the human text? [Consistency, Spec FR-035]
+  - Result: pass. FR-035 requires the code's fixed remedy in both.
+- [x] CHK021 Is standard output required to be identical whether or not standard error is a terminal? [Consistency, Spec FR-046, US1 s7]
+  - Result: pass.
+- [x] CHK022 Do the fixed texts follow one character rule, ASCII, with interpolated names, paths and numbers following FR-038? [Consistency, Spec FR-045, SC-010]
+  - Result: pass.
 
 ## Acceptance Criteria Quality
 
-- [ ] CHK023 Can every fixed human line be verified character for character against its source? [Measurability, Spec SC-010]
-- [ ] CHK024 Is the absence of raw control, format and separator characters, and of undecodable bytes, in human output measurable? [Measurability, Spec SC-010]
-- [ ] CHK025 Is the README's coverage measurable by a review checklist with one line per FR-048 item? [Measurability, Spec SC-013]
+- [x] CHK023 Can every fixed human line be verified character for character against its source? [Measurability, Spec SC-010]
+  - Result: pass for every text the change fixes; the sentences it leaves to the plan are PN-1.
+- [x] CHK024 Is the absence of raw control, format and separator characters, and of undecodable bytes, in human output measurable? [Measurability, Spec SC-010]
+  - Result: pass.
+- [x] CHK025 Is the README's coverage measurable by a review checklist with one line per FR-048 item? [Measurability, Spec SC-013]
+  - Result: pass.
 
 ## Scenario Coverage
 
-- [ ] CHK026 Primary: are requirements defined for the full report of a healthy estate (one header per row, its findings and `next` line, the summary)? [Coverage, Spec US1, FR-045]
-- [ ] CHK027 Alternate: are `--attention`, `--strict` and their combination specified for the human report? [Coverage, Spec US2, FR-029, FR-030]
-- [ ] CHK028 Exception: is the human output specified for an unreadable root, an error row and a cut run? [Coverage, Spec FR-045, US7 s1]
-- [ ] CHK029 Recovery: does every withheld or limited suggestion tell the person what to do next, and do both outputs say that the evidence is as of the last fetch? [Coverage, Spec FR-035, FR-040, FR-045, FR-048]
-- [ ] CHK030 Non-functional: is the human report free of colour, prompts and pagers, so that it reads the same on any terminal or pipe? [Coverage, Spec FR-045, FR-046]
-- [ ] CHK031 Edge: is the rendering specified for paths that need the `$'...'` form, code points above U+FFFF included? [Edge Case, Spec FR-045, US11 s1]
-- [ ] CHK032 Edge: is the absent-roots line specified for every run in which every root is absent, `--attention` included? [Edge Case, Spec FR-005]
-- [ ] CHK033 Edge: is the display specified for a row whose root is null with no gate code (a submodule, an unnamed gitfile checkout, a missing main worktree)? [Edge Case, Spec FR-035, FR-045]
-- [ ] CHK034 Accessibility: is every fact the human report shows also available in a machine-readable form, and does the report rely on no colour or visual cue? [Coverage, Non-Functional, Spec FR-036, FR-045]
+- [x] CHK026 Primary: are requirements defined for the full report of a healthy estate (one header per row, its findings and `next` line, the summary)? [Coverage, Spec US1, FR-045]
+  - Result: pass.
+- [x] CHK027 Alternate: are `--attention`, `--strict` and their combination specified for the human report? [Coverage, Spec US2, FR-029, FR-030]
+  - Result: pass.
+- [x] CHK028 Exception: is the human output specified for an unreadable root, an error row and a cut run? [Coverage, Spec FR-045, US7 s1]
+  - Result: pass. Row errors display in the repair category, and one `Incomplete:` line follows per scan error.
+- [x] CHK029 Recovery: does every withheld or limited suggestion tell the person what to do next, and do both outputs say that the evidence is as of the last fetch? [Coverage, Spec FR-035, FR-040, FR-045, FR-048]
+  - Result: pass. Each gate carries its fixed remedy; the summary states the freshness; the README says that `git fetch` refreshes it.
+- [x] CHK030 Non-functional: is the human report free of colour, prompts and pagers, so that it reads the same on any terminal or pipe? [Coverage, Spec FR-045, FR-046]
+  - Result: pass. FR-045 requires the layout design D10 fixes, which has no colour; the overview asks nothing, being read-only; standard output does not depend on a terminal (FR-046).
+- [x] CHK031 Edge: is the rendering specified for paths that need the `$'...'` form, code points above U+FFFF included? [Edge Case, Spec FR-045, US11 s1]
+  - Result: pass. `\uXXXX`, or `\UXXXXXXXX` above U+FFFF.
+- [x] CHK032 Edge: is the absent-roots line specified for every run in which every root is absent, `--attention` included? [Edge Case, Spec FR-005]
+  - Result: pass. FR-005 requires it unconditionally.
+- [x] CHK033 Edge: is the display specified for a row whose root is null with no gate code (a submodule, an unnamed gitfile checkout, a missing main worktree)? [Edge Case, Spec FR-035, FR-045]
+  - Result: pass with C-44. The finding's message carries the remedy (FR-035), and no `next` line prints, no command or gate deciding it.
+- [x] CHK034 Accessibility: is every fact the human report shows also available in a machine-readable form, and does the report rely on no colour or visual cue? [Coverage, Non-Functional, Spec FR-036, FR-045]
+  - Result: pass. `--json` carries the full collection (FR-030, FR-036); the human layout is plain ASCII text.
 
 ## Notes
 
@@ -69,3 +103,13 @@ Lane: openRepoProject-4
 - Add comments or findings inline
 - Link to relevant resources or documentation
 - Items are numbered sequentially for easy reference
+
+## Evaluation
+
+Evaluated on 2026-10-19 against `spec.md` at `8f433f7`. 34 items: 27 pass, 2
+fixed in the spec, 0 open, 5 plan notes, 0 new questions. An open item waits
+on the question or residual its result names; a plan note is for the plan, not
+the spec; a new question is asked in `clarify-questions.md`.
+
+Plan notes: PN-1 (CHK004, CHK023), PN-2 (CHK006), PN-3 (CHK011), PN-4
+(CHK012), PN-5 (CHK016).

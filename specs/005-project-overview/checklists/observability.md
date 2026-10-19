@@ -13,36 +13,54 @@ Lane: openRepoProject-4
 
 ## Requirement Completeness
 
-- [ ] CHK001 Is completeness reported with an exact rule? [Completeness, Spec FR-037]
-- [ ] CHK002 Is every cut reported with what it omitted and how exactly that is known? [Completeness, Spec FR-012, FR-017, SC-006]
-- [ ] CHK003 Is the probe accounting specified (`performed` counts every child; `estimated`'s terms)? [Completeness, Spec FR-020]
+- [x] CHK001 Is completeness reported with an exact rule? [Completeness, Spec FR-037]
+  - Result: pass.
+- [x] CHK002 Is every cut reported with what it omitted and how exactly that is known? [Completeness, Spec FR-012, FR-017, SC-006]
+  - Result: pass.
+- [x] CHK003 Is the probe accounting specified (`performed` counts every child; `estimated`'s terms)? [Completeness, Spec FR-020]
+  - Result: pass.
 - [ ] CHK004 Is it specified whether `probes.estimated` counts a worktree row that never takes a status probe, such as a git-directory record? [Clarity, Gap, Spec FR-020]
-- [ ] CHK005 Are the limits and budgets in force reported? [Completeness, Spec FR-036, FR-047]
-- [ ] CHK006 Are evidence times reported (the collection start; each finding's deciding probe)? [Completeness, Spec FR-037, Clarifications C-12]
-- [ ] CHK007 Is the evidence's freshness stated in both outputs? [Completeness, Spec FR-036, FR-040, FR-045]
-- [ ] CHK008 Are errors diagnosable (code, a message of at most 200 characters carrying Git's first line of standard error, the path with its flag)? [Completeness, Spec FR-022]
-- [ ] CHK009 Is the source of each finding's evidence reported? [Completeness, Spec FR-027]
-- [ ] CHK010 Is a progress signal specified for an interactive run? [Completeness, Spec FR-046]
+  - Result: plan note PN-12.
+- [x] CHK005 Are the limits and budgets in force reported? [Completeness, Spec FR-036, FR-047]
+  - Result: pass.
+- [x] CHK006 Are evidence times reported (the collection start; each finding's deciding probe)? [Completeness, Spec FR-037, Clarifications C-12]
+  - Result: pass; a finding no probe decided is plan note PN-7 (api.md).
+- [x] CHK007 Is the evidence's freshness stated in both outputs? [Completeness, Spec FR-036, FR-040, FR-045]
+  - Result: pass.
+- [x] CHK008 Are errors diagnosable (code, a message of at most 200 characters carrying Git's first line of standard error, the path with its flag)? [Completeness, Spec FR-022]
+  - Result: pass.
+- [x] CHK009 Is the source of each finding's evidence reported? [Completeness, Spec FR-027]
+  - Result: pass. `evidence_source`.
+- [x] CHK010 Is a progress signal specified for an interactive run? [Completeness, Spec FR-046]
+  - Result: pass. The one `Scanning N roots...` line on a terminal.
 
 ## Requirement Clarity
 
-- [ ] CHK011 Is the `Incomplete:` line's content tied to its scan error's message and code? [Clarity, Spec FR-045]
+- [x] CHK011 Is the `Incomplete:` line's content tied to its scan error's message and code? [Clarity, Spec FR-045]
+  - Result: pass. Design D10's `Incomplete: <message> (<code>).`
 
 ## Requirement Consistency
 
-- [ ] CHK012 Do the human `Incomplete:` lines and the JSON scan errors match one to one, in one order? [Consistency, Spec FR-045, Clarifications C-43]
-- [ ] CHK013 Are the summary counts defined so that they agree with the rows and findings of the document? [Consistency, Spec Clarifications C-40]
+- [x] CHK012 Do the human `Incomplete:` lines and the JSON scan errors match one to one, in one order? [Consistency, Spec FR-045, Clarifications C-43]
+  - Result: pass with C-43.
+- [x] CHK013 Are the summary counts defined so that they agree with the rows and findings of the document? [Consistency, Spec Clarifications C-40]
+  - Result: pass with C-40.
 
 ## Acceptance Criteria Quality
 
-- [ ] CHK014 Is SC-006 measurable for every kind of cut? [Measurability, Spec SC-006]
+- [x] CHK014 Is SC-006 measurable for every kind of cut? [Measurability, Spec SC-006]
+  - Result: pass.
 
 ## Scenario Coverage
 
-- [ ] CHK015 Primary: does a complete run report `complete` with no error? [Coverage, Spec FR-037]
-- [ ] CHK016 Exception: does each kind of cut report a distinct code, and a cap its `limit`? [Coverage, Spec FR-012, FR-013, FR-017]
-- [ ] CHK017 Recovery: does the report say what to re-run for a cut repository? [Recovery, Spec FR-035]
-- [ ] CHK018 Non-functional: is the reporting itself bounded? [Coverage, Spec FR-015, FR-022]
+- [x] CHK015 Primary: does a complete run report `complete` with no error? [Coverage, Spec FR-037]
+  - Result: pass.
+- [x] CHK016 Exception: does each kind of cut report a distinct code, and a cap its `limit`? [Coverage, Spec FR-012, FR-013, FR-017]
+  - Result: pass.
+- [x] CHK017 Recovery: does the report say what to re-run for a cut repository? [Recovery, Spec FR-035]
+  - Result: pass.
+- [x] CHK018 Non-functional: is the reporting itself bounded? [Coverage, Spec FR-015, FR-022]
+  - Result: pass. Messages of 200 characters; eight samples per row.
 
 ## Notes
 
@@ -53,3 +71,12 @@ Lane: openRepoProject-4
 - Add comments or findings inline
 - Link to relevant resources or documentation
 - Items are numbered sequentially for easy reference
+
+## Evaluation
+
+Evaluated on 2026-10-19 against `spec.md` at `8f433f7`. 18 items: 17 pass, 0
+fixed in the spec, 0 open, 1 plan notes, 0 new questions. An open item waits
+on the question or residual its result names; a plan note is for the plan, not
+the spec; a new question is asked in `clarify-questions.md`.
+
+Plan notes: PN-7 (CHK006), PN-12 (CHK004).

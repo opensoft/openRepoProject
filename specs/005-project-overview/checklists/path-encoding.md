@@ -13,39 +13,60 @@ Lane: openRepoProject-4
 
 ## Requirement Completeness
 
-- [ ] CHK001 Is the JSON rule specified for a valid UTF-8 path holding code points of category Cc, Cf, Zl or Zp? [Completeness, Spec FR-038]
-- [ ] CHK002 Is the rule specified for bytes that are not UTF-8 (`\xHH`, a doubled backslash)? [Completeness, Spec FR-038]
-- [ ] CHK003 Does every serialized path carry its own validity flag? [Completeness, Spec FR-038]
-- [ ] CHK004 Is the human `$'...'` rule specified, with `\UXXXXXXXX` above U+FFFF? [Completeness, Spec FR-045]
+- [x] CHK001 Is the JSON rule specified for a valid UTF-8 path holding code points of category Cc, Cf, Zl or Zp? [Completeness, Spec FR-038]
+  - Result: pass.
+- [x] CHK002 Is the rule specified for bytes that are not UTF-8 (`\xHH`, a doubled backslash)? [Completeness, Spec FR-038]
+  - Result: pass, by citation of [E] and [P].
+- [x] CHK003 Does every serialized path carry its own validity flag? [Completeness, Spec FR-038]
+  - Result: pass.
+- [x] CHK004 Is the human `$'...'` rule specified, with `\UXXXXXXXX` above U+FFFF? [Completeness, Spec FR-045]
+  - Result: pass.
 - [ ] CHK005 Are strings that are not paths covered by an encoding rule? [Completeness, Spec FR-038]
-- [ ] CHK006 Is a root or common directory that is not valid UTF-8 barred from every suggestion? [Completeness, Spec FR-031]
-- [ ] CHK007 Is a worktree path that is not valid UTF-8 kept out of the `--all-safe` suggestion? [Completeness, Spec FR-032, FR-038]
-- [ ] CHK008 Are ignored-sample paths flagged and escaped like any other path? [Completeness, Spec US11 s2]
+  - Result: open on existing question Q8.
+- [x] CHK006 Is a root or common directory that is not valid UTF-8 barred from every suggestion? [Completeness, Spec FR-031]
+  - Result: pass.
+- [x] CHK007 Is a worktree path that is not valid UTF-8 kept out of the `--all-safe` suggestion? [Completeness, Spec FR-032, FR-038]
+  - Result: pass.
+- [x] CHK008 Are ignored-sample paths flagged and escaped like any other path? [Completeness, Spec US11 s2]
+  - Result: pass.
 
 ## Requirement Clarity
 
-- [ ] CHK009 Is the source of the general categories stated (the running interpreter's Unicode database)? [Clarity, Spec FR-038]
-- [ ] CHK010 Is the shell the `$'...'` form assumes stated? [Clarity, Spec EC-016]
+- [x] CHK009 Is the source of the general categories stated (the running interpreter's Unicode database)? [Clarity, Spec FR-038]
+  - Result: pass.
+- [x] CHK010 Is the shell the `$'...'` form assumes stated? [Clarity, Spec EC-016]
+  - Result: pass. Bash 4.2 or newer, or zsh.
 
 ## Requirement Consistency
 
-- [ ] CHK011 Do the JSON and human rules escape the same set of code points? [Consistency, Spec FR-038, FR-045]
-- [ ] CHK012 Do the flags' null rules agree (null only beside a null path)? [Consistency, Spec FR-038]
+- [x] CHK011 Do the JSON and human rules escape the same set of code points? [Consistency, Spec FR-038, FR-045]
+  - Result: pass.
+- [x] CHK012 Do the flags' null rules agree (null only beside a null path)? [Consistency, Spec FR-038]
+  - Result: pass.
 
 ## Acceptance Criteria Quality
 
-- [ ] CHK013 Is round-tripping measurable (every valid UTF-8 path exact; every other path flagged false)? [Measurability, Spec SC-009]
-- [ ] CHK014 Is the absence of raw controls in human output measurable? [Measurability, Spec SC-010]
+- [x] CHK013 Is round-tripping measurable (every valid UTF-8 path exact; every other path flagged false)? [Measurability, Spec SC-009]
+  - Result: pass.
+- [x] CHK014 Is the absence of raw controls in human output measurable? [Measurability, Spec SC-010]
+  - Result: pass.
 
 ## Scenario Coverage
 
-- [ ] CHK015 Primary: do ordinary paths print verbatim, shell-quoted in commands? [Coverage, Spec FR-045]
-- [ ] CHK016 Alternate: are a newline, a tab, U+0007, U+202E and U+200B covered? [Coverage, Spec US11 s1]
-- [ ] CHK017 Exception: are a worktree path and a common directory that are not valid UTF-8 covered? [Coverage, Spec US11 s2, US11 s3]
-- [ ] CHK018 Recovery: is the remedy for a root that is not valid UTF-8 given? [Recovery, Spec FR-035]
-- [ ] CHK019 Non-functional: is the platform limit addressed (no such names on macOS)? [Coverage, Spec EC-017]
-- [ ] CHK020 Edge: are a single quote and a backslash inside the `$'...'` form covered? [Edge Case, Spec FR-045]
+- [x] CHK015 Primary: do ordinary paths print verbatim, shell-quoted in commands? [Coverage, Spec FR-045]
+  - Result: pass.
+- [x] CHK016 Alternate: are a newline, a tab, U+0007, U+202E and U+200B covered? [Coverage, Spec US11 s1]
+  - Result: pass.
+- [x] CHK017 Exception: are a worktree path and a common directory that are not valid UTF-8 covered? [Coverage, Spec US11 s2, US11 s3]
+  - Result: pass.
+- [x] CHK018 Recovery: is the remedy for a root that is not valid UTF-8 given? [Recovery, Spec FR-035]
+  - Result: pass. "rename the path to valid UTF-8".
+- [x] CHK019 Non-functional: is the platform limit addressed (no such names on macOS)? [Coverage, Spec EC-017]
+  - Result: pass.
+- [x] CHK020 Edge: are a single quote and a backslash inside the `$'...'` form covered? [Edge Case, Spec FR-045]
+  - Result: pass, by citation of [P] (each backslash doubled, each single quote as `\'`).
 - [ ] CHK021 Edge: is output under a locale that cannot encode a printable path specified? [Edge Case, Spec FR-045]
+  - Result: open on existing question Q12.
 
 ## Notes
 
@@ -56,3 +77,12 @@ Lane: openRepoProject-4
 - Add comments or findings inline
 - Link to relevant resources or documentation
 - Items are numbered sequentially for easy reference
+
+## Evaluation
+
+Evaluated on 2026-10-19 against `spec.md` at `8f433f7`. 21 items: 19 pass, 0
+fixed in the spec, 2 open, 0 plan notes, 0 new questions. An open item waits
+on the question or residual its result names; a plan note is for the plan, not
+the spec; a new question is asked in `clarify-questions.md`.
+
+Plan notes: none.

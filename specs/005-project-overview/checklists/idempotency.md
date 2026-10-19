@@ -13,35 +13,52 @@ Lane: openRepoProject-4
 
 ## Requirement Completeness
 
-- [ ] CHK001 Is zero mutation specified with a measurable before-and-after snapshot? [Completeness, Spec FR-040, SC-002]
-- [ ] CHK002 Is the snapshot's content listed (refs, the worktree registry, each checkout's status, each index file's modification time, the directory tree under every root)? [Completeness, Spec US10 s1]
-- [ ] CHK003 Is it specified that no state persists between invocations? [Completeness, Spec FR-040]
-- [ ] CHK004 Is determinism specified with its scope (an uncut run over an estate no other process changes)? [Completeness, Spec FR-019, EC-023]
-- [ ] CHK005 Is the document independent of the order of the `--root` options and of directory listing order? [Completeness, Spec FR-001, FR-003, US6 s1]
-- [ ] CHK006 Is a total order defined for every array, so that equal inputs give equal bytes? [Completeness, Spec FR-037]
-- [ ] CHK007 Do repeated follow-up runs converge (a `target-cap` backlog drains by re-runs)? [Completeness, Spec FR-034, FR-035]
-- [ ] CHK008 Is zero mutation protected against Git's optional writes (index refresh, untracked cache, fsmonitor)? [Completeness, Spec FR-016]
+- [x] CHK001 Is zero mutation specified with a measurable before-and-after snapshot? [Completeness, Spec FR-040, SC-002]
+  - Result: pass.
+- [x] CHK002 Is the snapshot's content listed (refs, the worktree registry, each checkout's status, each index file's modification time, the directory tree under every root)? [Completeness, Spec US10 s1]
+  - Result: pass.
+- [x] CHK003 Is it specified that no state persists between invocations? [Completeness, Spec FR-040]
+  - Result: pass.
+- [x] CHK004 Is determinism specified with its scope (an uncut run over an estate no other process changes)? [Completeness, Spec FR-019, EC-023]
+  - Result: pass.
+- [x] CHK005 Is the document independent of the order of the `--root` options and of directory listing order? [Completeness, Spec FR-001, FR-003, US6 s1]
+  - Result: pass.
+- [x] CHK006 Is a total order defined for every array, so that equal inputs give equal bytes? [Completeness, Spec FR-037]
+  - Result: pass, apart from two points left to the plan: the place of a repository-level finding (Assumptions) and a tie between two rows with one `path` (PN-8, data-model.md).
+- [x] CHK007 Do repeated follow-up runs converge (a `target-cap` backlog drains by re-runs)? [Completeness, Spec FR-034, FR-035]
+  - Result: pass.
+- [x] CHK008 Is zero mutation protected against Git's optional writes (index refresh, untracked cache, fsmonitor)? [Completeness, Spec FR-016]
+  - Result: pass. `GIT_OPTIONAL_LOCKS=0` and the two status pins.
 
 ## Requirement Clarity
 
-- [ ] CHK009 Is "apart from timestamps" defined? [Clarity, Spec Clarifications C-12]
+- [x] CHK009 Is "apart from timestamps" defined? [Clarity, Spec Clarifications C-12]
+  - Result: pass.
 
 ## Requirement Consistency
 
-- [ ] CHK010 Do FR-019, SC-007 and US6 s10 agree on what may differ between runs? [Consistency, Spec FR-019, SC-007]
+- [x] CHK010 Do FR-019, SC-007 and US6 s10 agree on what may differ between runs? [Consistency, Spec FR-019, SC-007]
+  - Result: pass.
 
 ## Acceptance Criteria Quality
 
-- [ ] CHK011 Is SC-007 measurable as a byte comparison at concurrency 1 and 4? [Measurability, Spec SC-007]
+- [x] CHK011 Is SC-007 measurable as a byte comparison at concurrency 1 and 4? [Measurability, Spec SC-007]
+  - Result: pass.
 
 ## Scenario Coverage
 
-- [ ] CHK012 Primary: do two uncut runs over one fixture give the same document? [Coverage, Spec SC-007]
-- [ ] CHK013 Alternate: is a fixture over the worktree-row cap covered? [Coverage, Spec US6 s10]
-- [ ] CHK014 Exception: is it stated that a cut run may differ? [Coverage, Spec Clarifications C-17]
-- [ ] CHK015 Recovery: does a run ended by a signal leave nothing to undo? [Recovery, Spec FR-040, FR-044]
+- [x] CHK012 Primary: do two uncut runs over one fixture give the same document? [Coverage, Spec SC-007]
+  - Result: pass.
+- [x] CHK013 Alternate: is a fixture over the worktree-row cap covered? [Coverage, Spec US6 s10]
+  - Result: pass.
+- [x] CHK014 Exception: is it stated that a cut run may differ? [Coverage, Spec Clarifications C-17]
+  - Result: pass.
+- [x] CHK015 Recovery: does a run ended by a signal leave nothing to undo? [Recovery, Spec FR-040, FR-044]
+  - Result: pass.
 - [ ] CHK016 Non-functional: does the directory-tree snapshot exclude access times, which reads update on most mounts? [Coverage, Gap, Spec US10 s1, SC-002]
-- [ ] CHK017 Edge: are changes by other processes during the run addressed? [Edge Case, Spec EC-023]
+  - Result: plan note PN-14.
+- [x] CHK017 Edge: are changes by other processes during the run addressed? [Edge Case, Spec EC-023]
+  - Result: pass.
 
 ## Notes
 
@@ -52,3 +69,12 @@ Lane: openRepoProject-4
 - Add comments or findings inline
 - Link to relevant resources or documentation
 - Items are numbered sequentially for easy reference
+
+## Evaluation
+
+Evaluated on 2026-10-19 against `spec.md` at `8f433f7`. 17 items: 16 pass, 0
+fixed in the spec, 0 open, 1 plan notes, 0 new questions. An open item waits
+on the question or residual its result names; a plan note is for the plan, not
+the spec; a new question is asked in `clarify-questions.md`.
+
+Plan notes: PN-8 (CHK006), PN-14 (CHK016).

@@ -13,47 +13,76 @@ Lane: openRepoProject-4
 
 ## Requirement Completeness
 
-- [ ] CHK001 Is the root precedence specified (`--root`, else `PROJECTS_DIR`, else the two defaults)? [Completeness, Spec FR-001]
-- [ ] CHK002 Is what `PROJECTS_DIR` holds, and an empty value, specified? [Completeness, Spec Clarifications C-3]
-- [ ] CHK003 Is the marker table cited with its order, its candidates and its kinds? [Completeness, Spec FR-002]
-- [ ] CHK004 Is it specified that a root is itself a candidate? [Completeness, Spec FR-002, Clarifications C-1]
-- [ ] CHK005 Are symbolic-link entries, entries that resolve to files and dangling links specified? [Completeness, Spec FR-002, Clarifications C-35]
-- [ ] CHK006 Is deduplication specified for roots and candidates, by canonical path and by device and inode, with the canonically first spelling winning? [Completeness, Spec FR-001, FR-003, EC-018]
-- [ ] CHK007 Is a family holder's treatment specified (one row, no member read, Git probes only at a Git toplevel)? [Completeness, Spec FR-003]
-- [ ] CHK008 Is a candidate without a `.git` entry specified (no Git child, null Git fields, no finding)? [Completeness, Spec FR-004, Clarifications C-4]
-- [ ] CHK009 Are the rules naming the main checkout specified for every layout: ordinary, reached by a linked worktree first, gitfile with and without `core.worktree`, submodule, bare and missing main worktree? [Completeness, Spec FR-008, FR-009]
-- [ ] CHK010 Is the outcome recorded for a candidate whose `.git` file names a bare repository, where the identity probe asks for a toplevel that Git cannot give? [Completeness, Edge Case, Gap]
+- [x] CHK001 Is the root precedence specified (`--root`, else `PROJECTS_DIR`, else the two defaults)? [Completeness, Spec FR-001]
+  - Result: pass.
+- [x] CHK002 Is what `PROJECTS_DIR` holds, and an empty value, specified? [Completeness, Spec Clarifications C-3]
+  - Result: pass. One directory; empty counts as unset.
+- [x] CHK003 Is the marker table cited with its order, its candidates and its kinds? [Completeness, Spec FR-002]
+  - Result: pass.
+- [x] CHK004 Is it specified that a root is itself a candidate? [Completeness, Spec FR-002, Clarifications C-1]
+  - Result: pass.
+- [x] CHK005 Are symbolic-link entries, entries that resolve to files and dangling links specified? [Completeness, Spec FR-002, Clarifications C-35]
+  - Result: pass.
+- [x] CHK006 Is deduplication specified for roots and candidates, by canonical path and by device and inode, with the canonically first spelling winning? [Completeness, Spec FR-001, FR-003, EC-018]
+  - Result: pass.
+- [x] CHK007 Is a family holder's treatment specified (one row, no member read, Git probes only at a Git toplevel)? [Completeness, Spec FR-003]
+  - Result: pass.
+- [x] CHK008 Is a candidate without a `.git` entry specified (no Git child, null Git fields, no finding)? [Completeness, Spec FR-004, Clarifications C-4]
+  - Result: pass.
+- [x] CHK009 Are the rules naming the main checkout specified for every layout: ordinary, reached by a linked worktree first, gitfile with and without `core.worktree`, submodule, bare and missing main worktree? [Completeness, Spec FR-008, FR-009]
+  - Result: pass for `repository.root`; the bare record's own row is Q14 (data-model.md CHK004).
+- [x] CHK010 Is the outcome recorded for a candidate whose `.git` file names a bare repository, where the identity probe asks for a toplevel that Git cannot give? [Completeness, Edge Case, Gap]
+  - Result: fixed in spec.md, C-54 and EC-030, the outcome as written (a `probe-failed` error row); whether to report such a repository otherwise is in new question Q14.
 - [ ] CHK011 Is a candidate whose `.git` Git does not accept, so that Git finds an ancestor repository, specified? [Completeness, Spec Clarifications]
-- [ ] CHK012 Is the resolution of a relative `core.worktree` specified? [Completeness, Spec FR-008, Clarifications C-33]
-- [ ] CHK013 Is an `lstat` that fails with "not a directory" specified? [Completeness, Spec FR-007, Clarifications C-33]
+  - Result: open on existing question Q11.
+- [x] CHK012 Is the resolution of a relative `core.worktree` specified? [Completeness, Spec FR-008, Clarifications C-33]
+  - Result: pass. Against the git directory.
+- [x] CHK013 Is an `lstat` that fails with "not a directory" specified? [Completeness, Spec FR-007, Clarifications C-33]
+  - Result: pass. `present: false`.
 
 ## Requirement Clarity
 
-- [ ] CHK014 Is "immediate entries" unambiguous: every entry of a root, hidden entries included, never recursing? [Clarity, Spec FR-002]
-- [ ] CHK015 Is "canonicalise" clear enough to decide a dangling link, a relative path and two spellings of one directory? [Clarity, Spec FR-001, Clarifications C-27, EC-018]
-- [ ] CHK016 Is "registration disagrees" told apart from a registration read that cannot complete? [Clarity, Spec FR-007, Clarifications C-23]
+- [x] CHK014 Is "immediate entries" unambiguous: every entry of a root, hidden entries included, never recursing? [Clarity, Spec FR-002]
+  - Result: pass. "Each root itself and its immediate entries only, never recursing" admits no exception.
+- [x] CHK015 Is "canonicalise" clear enough to decide a dangling link, a relative path and two spellings of one directory? [Clarity, Spec FR-001, Clarifications C-27, EC-018]
+  - Result: pass. C-27 (a dangling link names a path that does not exist) and EC-018 (two spellings count once).
+- [x] CHK016 Is "registration disagrees" told apart from a registration read that cannot complete? [Clarity, Spec FR-007, Clarifications C-23]
+  - Result: pass.
 
 ## Requirement Consistency
 
-- [ ] CHK017 Are the directories each probe runs in consistent across layouts ([E]'s Directory rule, FR-008, FR-009, US8)? [Consistency, Spec FR-008, FR-009]
-- [ ] CHK018 Is canonical candidate order used consistently for the repository rank, the merging of rows and the worktree-row cap? [Consistency, Spec FR-006, FR-018, FR-019]
-- [ ] CHK019 Do FR-005 and C-27 cover every root source with every failure (missing, not a directory, not listable)? [Consistency, Spec FR-005]
+- [x] CHK017 Are the directories each probe runs in consistent across layouts ([E]'s Directory rule, FR-008, FR-009, US8)? [Consistency, Spec FR-008, FR-009]
+  - Result: pass.
+- [x] CHK018 Is canonical candidate order used consistently for the repository rank, the merging of rows and the worktree-row cap? [Consistency, Spec FR-006, FR-018, FR-019]
+  - Result: pass.
+- [x] CHK019 Do FR-005 and C-27 cover every root source with every failure (missing, not a directory, not listable)? [Consistency, Spec FR-005]
+  - Result: pass.
 
 ## Acceptance Criteria Quality
 
-- [ ] CHK020 Can "one row per repository" be verified on a fixture with aliases and external worktrees? [Measurability, Spec SC-001, US1 s1, US1 s3]
+- [x] CHK020 Can "one row per repository" be verified on a fixture with aliases and external worktrees? [Measurability, Spec SC-001, US1 s1, US1 s3]
+  - Result: pass.
 
 ## Scenario Coverage
 
-- [ ] CHK021 Primary: are the default roots, one `--root` and several `--root` options covered? [Coverage, Spec US1]
-- [ ] CHK022 Alternate: are a root naming one project's own directory, an assembly root and a Triad assembly covered? [Coverage, Spec US1 s8, US4 s2, EC-014]
-- [ ] CHK023 Exception: are an unreadable candidate, an unreadable root and a marker check that fails covered? [Coverage, Spec US7 s1, FR-005]
+- [x] CHK021 Primary: are the default roots, one `--root` and several `--root` options covered? [Coverage, Spec US1]
+  - Result: pass.
+- [x] CHK022 Alternate: are a root naming one project's own directory, an assembly root and a Triad assembly covered? [Coverage, Spec US1 s8, US4 s2, EC-014]
+  - Result: pass. The Triad's outcome is recorded (EC-014) with existing question Q1.
+- [x] CHK023 Exception: are an unreadable candidate, an unreadable root and a marker check that fails covered? [Coverage, Spec US7 s1, FR-005]
+  - Result: pass.
 - [ ] CHK024 Exception: is a root whose listing fails partway specified (its state, and whether the candidates read before the failure are kept)? [Coverage, Edge Case, Gap, Spec FR-005, FR-017]
-- [ ] CHK025 Recovery: is it specified how a person brings an unnamed gitfile checkout or a missing main worktree back into the report? [Recovery, Spec EC-012, FR-009]
-- [ ] CHK026 Non-functional: are discovery's own costs bounded (no recursion, the entry cap, the root listing's budget)? [Coverage, Spec FR-002, FR-013, FR-017]
-- [ ] CHK027 Edge: are overlapping roots (one root an immediate entry of another) covered? [Edge Case, Spec FR-003, Clarifications C-1]
-- [ ] CHK028 Edge: are the layouts the marker table cannot see recorded? [Edge Case, Spec EC-025]
+  - Result: plan note PN-9.
+- [x] CHK025 Recovery: is it specified how a person brings an unnamed gitfile checkout or a missing main worktree back into the report? [Recovery, Spec EC-012, FR-009]
+  - Result: pass. Add the checkout's parent with `--root`; restore or prune the main worktree by hand.
+- [x] CHK026 Non-functional: are discovery's own costs bounded (no recursion, the entry cap, the root listing's budget)? [Coverage, Spec FR-002, FR-013, FR-017]
+  - Result: pass.
+- [x] CHK027 Edge: are overlapping roots (one root an immediate entry of another) covered? [Edge Case, Spec FR-003, Clarifications C-1]
+  - Result: pass. Candidates are deduplicated across the run.
+- [x] CHK028 Edge: are the layouts the marker table cannot see recorded? [Edge Case, Spec EC-025]
+  - Result: pass. Recorded, with existing question Q10.
 - [ ] CHK029 Edge: is a root whose canonicalisation is cut specified (its path, order, deduplication and count under the cap)? [Edge Case, Spec FR-013]
+  - Result: open on existing question Q13.
 
 ## Notes
 
@@ -64,3 +93,12 @@ Lane: openRepoProject-4
 - Add comments or findings inline
 - Link to relevant resources or documentation
 - Items are numbered sequentially for easy reference
+
+## Evaluation
+
+Evaluated on 2026-10-19 against `spec.md` at `8f433f7`. 29 items: 25 pass, 1
+fixed in the spec, 2 open, 1 plan notes, 0 new questions. An open item waits
+on the question or residual its result names; a plan note is for the plan, not
+the spec; a new question is asked in `clarify-questions.md`.
+
+Plan notes: PN-9 (CHK024).

@@ -13,33 +13,51 @@ Lane: openRepoProject-4
 
 ## Requirement Completeness
 
-- [ ] CHK001 Is every input that changes a run's result specified (the flags, `PROJECTS_DIR`, the defaults, the working directory, the user's Git configuration)? [Completeness, Spec FR-001, FR-026, US6 s12]
-- [ ] CHK002 Is it specified that no limit or time can be configured? [Completeness, Spec FR-047]
-- [ ] CHK003 Is the effect of the user's Git configuration specified where it matters (`status.showUntrackedFiles` read; `core.fsmonitor` and `core.untrackedCache` pinned off)? [Completeness, Spec FR-016, US6 s12]
-- [ ] CHK004 Is the caller's environment that Git children never see specified? [Completeness, Spec FR-016]
+- [x] CHK001 Is every input that changes a run's result specified (the flags, `PROJECTS_DIR`, the defaults, the working directory, the user's Git configuration)? [Completeness, Spec FR-001, FR-026, US6 s12]
+  - Result: pass.
+- [x] CHK002 Is it specified that no limit or time can be configured? [Completeness, Spec FR-047]
+  - Result: pass.
+- [x] CHK003 Is the effect of the user's Git configuration specified where it matters (`status.showUntrackedFiles` read; `core.fsmonitor` and `core.untrackedCache` pinned off)? [Completeness, Spec FR-016, US6 s12]
+  - Result: pass.
+- [x] CHK004 Is the caller's environment that Git children never see specified? [Completeness, Spec FR-016]
+  - Result: pass.
 - [ ] CHK005 Is an empty `--root` value's treatment specified? [Completeness, Edge Case, Gap, Spec FR-001]
-- [ ] CHK006 Is a relative `--root` or `PROJECTS_DIR` resolved, and against what? [Completeness, Spec FR-001]
-- [ ] CHK007 Is a `PROJECTS_DIR` that names a file or a missing directory specified? [Completeness, Spec FR-005, Clarifications C-3]
-- [ ] CHK008 Is the precedence specified when `--root` and `PROJECTS_DIR` are both given? [Completeness, Spec FR-001]
+  - Result: plan note PN-13.
+- [x] CHK006 Is a relative `--root` or `PROJECTS_DIR` resolved, and against what? [Completeness, Spec FR-001]
+  - Result: pass. Canonicalisation resolves it against the working directory.
+- [x] CHK007 Is a `PROJECTS_DIR` that names a file or a missing directory specified? [Completeness, Spec FR-005, Clarifications C-3]
+  - Result: pass. An `environment` root reported `unreadable`.
+- [x] CHK008 Is the precedence specified when `--root` and `PROJECTS_DIR` are both given? [Completeness, Spec FR-001]
+  - Result: pass. `--root` wins.
 - [ ] CHK009 Is the locale's effect on output specified? [Completeness, Spec FR-045]
-- [ ] CHK010 Are the default roots' expansion rules specified? [Completeness, Spec FR-001, Clarifications C-3]
+  - Result: open on existing question Q12.
+- [x] CHK010 Are the default roots' expansion rules specified? [Completeness, Spec FR-001, Clarifications C-3]
+  - Result: pass. The command's existing projects-directory rule.
 
 ## Requirement Clarity
 
-- [ ] CHK011 Is "the values in force" in `limits` and `budget` defined? [Clarity, Spec FR-047]
+- [x] CHK011 Is "the values in force" in `limits` and `budget` defined? [Clarity, Spec FR-047]
+  - Result: pass. The fixed values, there being no setting.
 
 ## Requirement Consistency
 
-- [ ] CHK012 Are all flag combinations valid and independent of one another? [Consistency, Spec FR-030, FR-042]
+- [x] CHK012 Are all flag combinations valid and independent of one another? [Consistency, Spec FR-030, FR-042]
+  - Result: pass. `--attention` changes only the display, `--strict` only the exit, `--json` only the form.
 
 ## Scenario Coverage
 
-- [ ] CHK013 Primary: are the defaults covered? [Coverage, Spec US1 s6]
-- [ ] CHK014 Alternate: are `PROJECTS_DIR` and a repeated `--root` covered? [Coverage, Spec FR-001, US1 s1]
-- [ ] CHK015 Exception: are a `--root` naming a file and one naming a missing directory covered? [Coverage, Spec FR-005]
-- [ ] CHK016 Recovery: does the absent-roots message name `--root` and `PROJECTS_DIR`? [Recovery, Spec FR-005]
-- [ ] CHK017 Non-functional: is it required that the feature adds no environment variable, file or setting? [Coverage, Spec FR-047]
-- [ ] CHK018 Edge: are the test-only knobs (the concurrency constant, the shortened deadline) kept out of the user's interface? [Edge Case, Spec FR-047, FR-049]
+- [x] CHK013 Primary: are the defaults covered? [Coverage, Spec US1 s6]
+  - Result: pass.
+- [x] CHK014 Alternate: are `PROJECTS_DIR` and a repeated `--root` covered? [Coverage, Spec FR-001, US1 s1]
+  - Result: pass.
+- [x] CHK015 Exception: are a `--root` naming a file and one naming a missing directory covered? [Coverage, Spec FR-005]
+  - Result: pass.
+- [x] CHK016 Recovery: does the absent-roots message name `--root` and `PROJECTS_DIR`? [Recovery, Spec FR-005]
+  - Result: pass.
+- [x] CHK017 Non-functional: is it required that the feature adds no environment variable, file or setting? [Coverage, Spec FR-047]
+  - Result: pass.
+- [x] CHK018 Edge: are the test-only knobs (the concurrency constant, the shortened deadline) kept out of the user's interface? [Edge Case, Spec FR-047, FR-049]
+  - Result: pass. They are set in-process by the tests only.
 
 ## Notes
 
@@ -50,3 +68,12 @@ Lane: openRepoProject-4
 - Add comments or findings inline
 - Link to relevant resources or documentation
 - Items are numbered sequentially for easy reference
+
+## Evaluation
+
+Evaluated on 2026-10-19 against `spec.md` at `8f433f7`. 18 items: 16 pass, 0
+fixed in the spec, 1 open, 1 plan notes, 0 new questions. An open item waits
+on the question or residual its result names; a plan note is for the plan, not
+the spec; a new question is asked in `clarify-questions.md`.
+
+Plan notes: PN-13 (CHK005).

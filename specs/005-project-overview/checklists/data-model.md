@@ -13,42 +13,66 @@ Lane: openRepoProject-4
 
 ## Requirement Completeness
 
-- [ ] CHK001 Is every entity the requirements use defined under Key Entities with its fields? [Completeness, Spec Key Entities]
-- [ ] CHK002 Is each root state (`listed`, `truncated`, `absent`, `unreadable`, `omitted`) tied to the condition that produces it? [Completeness, Spec FR-005, FR-013, FR-017, Clarifications C-9, C-27]
-- [ ] CHK003 Is the worktree identity defined for the main worktree, which has no administrative registration to check? [Completeness, Gap, Spec FR-006, FR-007]
+- [x] CHK001 Is every entity the requirements use defined under Key Entities with its fields? [Completeness, Spec Key Entities]
+  - Result: pass.
+- [x] CHK002 Is each root state (`listed`, `truncated`, `absent`, `unreadable`, `omitted`) tied to the condition that produces it? [Completeness, Spec FR-005, FR-013, FR-017, Clarifications C-9, C-27]
+  - Result: pass.
+- [x] CHK003 Is the worktree identity defined for the main worktree, which has no administrative registration to check? [Completeness, Gap, Spec FR-006, FR-007]
+  - Result: fixed in spec.md, C-39. FR-007's registration cases read as if the main worktree's directory `.git` failed the two-way check; DI:241-246 gives it `admin_id: null` and no such check.
 - [ ] CHK004 Is it specified whether a bare repository's first registry record (the `bare` main entry) is a worktree row, with which values, status probe and classification, and whether it counts toward the caps? [Completeness, Gap, Spec FR-006, FR-008, US8 s4]
-- [ ] CHK005 Is the list of layouts that leave `repository.root` null complete (bare, submodule, unnamed gitfile checkout, missing main worktree)? [Completeness, Spec Key Entities, FR-008, FR-009]
-- [ ] CHK006 Are a row's `path`, `kind` and `name` defined when several candidates reach one repository? [Completeness, Spec FR-010, Clarifications C-19]
-- [ ] CHK007 Is the relation between classifications and findings specified: each classified row yields its class's finding except `protected-default`, and which codes arise outside classification? [Completeness, Spec FR-028, FR-032, FR-038, FR-041, Clarifications C-26]
-- [ ] CHK008 Is the worktree-row count that `inspect-cap` and `suggestion_gate_rows` use defined, with which registry entries count? [Completeness, Gap, Spec FR-034, FR-035]
-- [ ] CHK009 Are the reflog anchor and movement defined, with the head test's precedence? [Completeness, Spec FR-033, Key Entities]
+  - Result: new question Q14.
+- [x] CHK005 Is the list of layouts that leave `repository.root` null complete (bare, submodule, unnamed gitfile checkout, missing main worktree)? [Completeness, Spec Key Entities, FR-008, FR-009]
+  - Result: pass.
+- [x] CHK006 Are a row's `path`, `kind` and `name` defined when several candidates reach one repository? [Completeness, Spec FR-010, Clarifications C-19]
+  - Result: pass.
+- [x] CHK007 Is the relation between classifications and findings specified: each classified row yields its class's finding except `protected-default`, and which codes arise outside classification? [Completeness, Spec FR-028, FR-032, FR-038, FR-041, Clarifications C-26]
+  - Result: pass. C-26 states the per-class finding; FR-032 (gate findings), FR-038 (path bytes), FR-007 (registration), FR-008 and FR-009 (layouts), FR-024 and FR-025 (merge target) and FR-041 (default branch) name the rest.
+- [x] CHK008 Is the worktree-row count that `inspect-cap` and `suggestion_gate_rows` use defined, with which registry entries count? [Completeness, Gap, Spec FR-034, FR-035]
+  - Result: fixed in spec.md, C-46. Every registry entry, the main worktree and missing rows included, as design D5 and [G] count them.
+- [x] CHK009 Are the reflog anchor and movement defined, with the head test's precedence? [Completeness, Spec FR-033, Key Entities]
+  - Result: pass.
 
 ## Requirement Clarity
 
-- [ ] CHK010 Is `present: null` told apart from `present: false`? [Clarity, Spec FR-007]
-- [ ] CHK011 Is `current` defined, including a working directory inside two nested worktrees? [Clarity, Spec FR-026, Clarifications C-25]
-- [ ] CHK012 Is the identity comparison defined (all four fields together; `dev` and `ino` from the no-follow `lstat` of the common directory)? [Clarity, Spec FR-006, Clarifications C-29]
-- [ ] CHK013 Are the `kind` and `name` of an error row and of a candidate the deadline left unstarted defined? [Clarity, Spec FR-005, FR-012]
+- [x] CHK010 Is `present: null` told apart from `present: false`? [Clarity, Spec FR-007]
+  - Result: pass. False for "no such entry" or "not a directory"; null for any other failure or a cut call.
+- [x] CHK011 Is `current` defined, including a working directory inside two nested worktrees? [Clarity, Spec FR-026, Clarifications C-25]
+  - Result: pass. True exactly when the working directory lies inside the worktree, so both nested worktrees, the baseline meaning that FR-026's parity needs; an unresolvable working directory is Q7.
+- [x] CHK012 Is the identity comparison defined (all four fields together; `dev` and `ino` from the no-follow `lstat` of the common directory)? [Clarity, Spec FR-006, Clarifications C-29]
+  - Result: pass.
+- [x] CHK013 Are the `kind` and `name` of an error row and of a candidate the deadline left unstarted defined? [Clarity, Spec FR-005, FR-012]
+  - Result: pass. An error row has `kind` null and the directory name; an unstarted candidate carries only filesystem facts, its marker's kind and its directory name among them.
 
 ## Requirement Consistency
 
-- [ ] CHK014 Is `classification` null exactly when the ladder did not run, except for rows set to `inspection-error` directly? [Consistency, Spec FR-018, FR-026]
-- [ ] CHK015 Are the fifteen classes and the twenty-two finding codes used consistently across Key Entities, FR-027 and the stories? [Consistency, Spec FR-027, Key Entities]
-- [ ] CHK016 Are the ordering keys consistent between FR-006 (worktrees), FR-037 and design D6? [Consistency, Spec FR-006, FR-037]
+- [x] CHK014 Is `classification` null exactly when the ladder did not run, except for rows set to `inspection-error` directly? [Consistency, Spec FR-018, FR-026]
+  - Result: pass.
+- [x] CHK015 Are the fifteen classes and the twenty-two finding codes used consistently across Key Entities, FR-027 and the stories? [Consistency, Spec FR-027, Key Entities]
+  - Result: pass.
+- [x] CHK016 Are the ordering keys consistent between FR-006 (worktrees), FR-037 and design D6? [Consistency, Spec FR-006, FR-037]
+  - Result: pass.
 
 ## Acceptance Criteria Quality
 
-- [ ] CHK017 Is "each candidate one row, each repository once, each worktree once" measurable over fixtures? [Measurability, Spec SC-001]
+- [x] CHK017 Is "each candidate one row, each repository once, each worktree once" measurable over fixtures? [Measurability, Spec SC-001]
+  - Result: pass.
 
 ## Scenario Coverage
 
-- [ ] CHK018 Primary: is the ordinary repository with linked worktrees modelled completely? [Coverage, Spec US1 s3]
-- [ ] CHK019 Alternate: are the gitfile, submodule, bare and missing-main layouts modelled? [Coverage, Spec US8]
-- [ ] CHK020 Exception: does a row keep the evidence established before a failure and null the rest? [Coverage, Spec FR-022]
-- [ ] CHK021 Recovery: are the states after a repair modelled (a registration repaired, a worktree pruned)? [Coverage, Spec US4 s1, US1 s5]
+- [x] CHK018 Primary: is the ordinary repository with linked worktrees modelled completely? [Coverage, Spec US1 s3]
+  - Result: pass.
+- [x] CHK019 Alternate: are the gitfile, submodule, bare and missing-main layouts modelled? [Coverage, Spec US8]
+  - Result: pass for the repository and its findings; the bare record's own row is CHK004.
+- [x] CHK020 Exception: does a row keep the evidence established before a failure and null the rest? [Coverage, Spec FR-022]
+  - Result: pass.
+- [x] CHK021 Recovery: are the states after a repair modelled (a registration repaired, a worktree pruned)? [Coverage, Spec US4 s1, US1 s5]
+  - Result: pass.
 - [ ] CHK022 Edge: is a tiebreak defined for two project rows with one `path`, as when `core.worktree` names a candidate that has no `.git` of its own? [Edge Case, Gap, Spec FR-037]
-- [ ] CHK023 Edge: is a common directory recreated during the scan addressed? [Edge Case, Spec EC-023]
-- [ ] CHK024 Edge: does a candidate whose identity cannot be established yield its own row rather than merge? [Edge Case, Spec FR-021, FR-022]
+  - Result: plan note PN-8.
+- [x] CHK023 Edge: is a common directory recreated during the scan addressed? [Edge Case, Spec EC-023]
+  - Result: pass. Recorded; FR-019's independence holds only for an estate no other process changes.
+- [x] CHK024 Edge: does a candidate whose identity cannot be established yield its own row rather than merge? [Edge Case, Spec FR-021, FR-022]
+  - Result: pass. Every candidate entering collection yields exactly one row or merges into exactly one; without an identity it has nothing to merge on.
 
 ## Notes
 
@@ -59,3 +83,12 @@ Lane: openRepoProject-4
 - Add comments or findings inline
 - Link to relevant resources or documentation
 - Items are numbered sequentially for easy reference
+
+## Evaluation
+
+Evaluated on 2026-10-19 against `spec.md` at `8f433f7`. 24 items: 20 pass, 2
+fixed in the spec, 0 open, 1 plan notes, 1 new questions. An open item waits
+on the question or residual its result names; a plan note is for the plan, not
+the spec; a new question is asked in `clarify-questions.md`.
+
+Plan notes: PN-8 (CHK022).

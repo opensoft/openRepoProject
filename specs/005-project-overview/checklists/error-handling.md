@@ -13,48 +13,78 @@ Lane: openRepoProject-4
 
 ## Requirement Completeness
 
-- [ ] CHK001 Is the per-candidate boundary's extent specified, step by step in order? [Completeness, Spec FR-021]
-- [ ] CHK002 Is the code for every failure inside the boundary specified? [Completeness, Spec FR-021]
-- [ ] CHK003 Is a failure outside the boundary specified (`internal-error`, exit 2, no traceback)? [Completeness, Spec FR-039, FR-042]
+- [x] CHK001 Is the per-candidate boundary's extent specified, step by step in order? [Completeness, Spec FR-021]
+  - Result: pass.
+- [x] CHK002 Is the code for every failure inside the boundary specified? [Completeness, Spec FR-021]
+  - Result: pass. The delta's collector table.
+- [x] CHK003 Is a failure outside the boundary specified (`internal-error`, exit 2, no traceback)? [Completeness, Spec FR-039, FR-042]
+  - Result: pass.
 - [ ] CHK004 Is it specified when `refused` and `os-error` apply outside the boundary? [Completeness, Spec FR-039]
-- [ ] CHK005 Is the evidence kept after a failure specified (what was established stays; the rest is null)? [Completeness, Spec FR-022]
+  - Result: open on existing question Q12.
+- [x] CHK005 Is the evidence kept after a failure specified (what was established stays; the rest is null)? [Completeness, Spec FR-022]
+  - Result: pass.
 - [ ] CHK006 Is the error message specified for a failed probe whose standard error is empty? [Completeness, Gap, Spec FR-022]
-- [ ] CHK007 Is a missing YAML library specified? [Completeness, Spec FR-022]
-- [ ] CHK008 Is the invalid-encoding carve-out specified, with every other command's rule kept? [Completeness, Spec FR-023]
-- [ ] CHK009 Are signal outcomes specified (stop scheduling, terminate, reap or abandon, no result document, `Cancelled.`, the status's precedence)? [Completeness, Spec FR-044]
+  - Result: plan note PN-11.
+- [x] CHK007 Is a missing YAML library specified? [Completeness, Spec FR-022]
+  - Result: pass.
+- [x] CHK008 Is the invalid-encoding carve-out specified, with every other command's rule kept? [Completeness, Spec FR-023]
+  - Result: pass.
+- [x] CHK009 Are signal outcomes specified (stop scheduling, terminate, reap or abandon, no result document, `Cancelled.`, the status's precedence)? [Completeness, Spec FR-044]
+  - Result: pass.
 - [ ] CHK010 Is a signal that arrives while the result is being written specified? [Completeness, Gap, Spec FR-042, FR-044]
-- [ ] CHK011 Is it specified that the boundary never catches an interrupt or an exit request? [Completeness, Spec FR-021]
+  - Result: new question Q15.
+- [x] CHK011 Is it specified that the boundary never catches an interrupt or an exit request? [Completeness, Spec FR-021]
+  - Result: pass.
 - [ ] CHK012 Are output failures (a closed pipe, a full disk) and output a locale cannot encode specified? [Completeness, Spec FR-039, FR-042]
-- [ ] CHK013 Is it specified that a root problem never causes exit status 2? [Completeness, Spec FR-005, FR-042]
-- [ ] CHK014 Is a Git child killed by a signal the overview did not send (an out-of-memory kill) covered? [Completeness, Spec FR-021]
-- [ ] CHK015 Is a child that cannot be started (no process slot, no memory, no descriptor) covered? [Completeness, Spec FR-021, FR-043]
+  - Result: open on existing question Q12.
+- [x] CHK013 Is it specified that a root problem never causes exit status 2? [Completeness, Spec FR-005, FR-042]
+  - Result: pass.
+- [x] CHK014 Is a Git child killed by a signal the overview did not send (an out-of-memory kill) covered? [Completeness, Spec FR-021]
+  - Result: pass. A child that does not exit 0 records `probe-failed`.
+- [x] CHK015 Is a child that cannot be started (no process slot, no memory, no descriptor) covered? [Completeness, Spec FR-021, FR-043]
+  - Result: pass. An operating-system error is `os-error` on its row; for the version child it is `git-unavailable`.
 
 ## Requirement Clarity
 
-- [ ] CHK016 Is "best-effort" defined for the writes it qualifies? [Clarity, Ambiguity, Spec FR-044, FR-046, EC-015]
-- [ ] CHK017 Is a probe stopped at its record bound (complete) told apart from one cut at its budget (`probe-timeout`)? [Clarity, Spec Clarifications C-2, C-31]
-- [ ] CHK018 Is the precedence among exit statuses clear? [Clarity, Spec FR-042, FR-044]
+- [x] CHK016 Is "best-effort" defined for the writes it qualifies? [Clarity, Ambiguity, Spec FR-044, FR-046, EC-015]
+  - Result: fixed in spec.md, C-47. Attempted once, an `OSError` swallowed, output and exit status unchanged (design D1, D10).
+- [x] CHK017 Is a probe stopped at its record bound (complete) told apart from one cut at its budget (`probe-timeout`)? [Clarity, Spec Clarifications C-2, C-31]
+  - Result: pass.
+- [x] CHK018 Is the precedence among exit statuses clear? [Clarity, Spec FR-042, FR-044]
+  - Result: pass. A signal's status over 1; 2 for an invalid invocation, an exception outside the boundary or a Git refusal.
 
 ## Requirement Consistency
 
-- [ ] CHK019 Are row errors kept out of findings and counted in `summary.errors`? [Consistency, Spec FR-028, Clarifications C-40]
-- [ ] CHK020 Is completeness consistent with errors (incomplete exactly when a scan error or an error row exists)? [Consistency, Spec FR-037]
-- [ ] CHK021 Is a registration-mismatch row consistent with that rule (no row error, so complete, yet exit 1 by its error-severity finding)? [Consistency, Spec Clarifications C-26]
+- [x] CHK019 Are row errors kept out of findings and counted in `summary.errors`? [Consistency, Spec FR-028, Clarifications C-40]
+  - Result: pass.
+- [x] CHK020 Is completeness consistent with errors (incomplete exactly when a scan error or an error row exists)? [Consistency, Spec FR-037]
+  - Result: pass.
+- [x] CHK021 Is a registration-mismatch row consistent with that rule (no row error, so complete, yet exit 1 by its error-severity finding)? [Consistency, Spec Clarifications C-26]
+  - Result: pass.
 
 ## Acceptance Criteria Quality
 
-- [ ] CHK022 Is isolation measurable (every other row's JSON unchanged by one failing candidate)? [Measurability, Spec SC-008]
-- [ ] CHK023 Is "no traceback" measurable over every failure fixture? [Measurability, Spec SC-008]
+- [x] CHK022 Is isolation measurable (every other row's JSON unchanged by one failing candidate)? [Measurability, Spec SC-008]
+  - Result: pass.
+- [x] CHK023 Is "no traceback" measurable over every failure fixture? [Measurability, Spec SC-008]
+  - Result: pass.
 
 ## Scenario Coverage
 
-- [ ] CHK024 Primary: is one failing candidate among healthy ones covered? [Coverage, Spec US7]
-- [ ] CHK025 Alternate: are failures at each step covered (marker, identity, manifest, repository probes, status, reflog)? [Coverage, Spec FR-021, US7, US4 s6]
-- [ ] CHK026 Exception: are failures outside the boundary covered? [Coverage, Spec US5 s3]
-- [ ] CHK027 Recovery: does every error name its code and, where one is involved, its path, so that the person can act on it? [Recovery, Spec FR-022, FR-045]
-- [ ] CHK028 Recovery: is a re-run after an interrupted run safe, with nothing left to clean up? [Recovery, Spec FR-040, FR-044]
-- [ ] CHK029 Non-functional: can any failure cost more than its budget, by a retry or otherwise? [Coverage, Spec FR-011, FR-013]
-- [ ] CHK030 Edge: are SIGINT before the handlers are installed, unhandled signals and SIGKILL addressed? [Edge Case, Spec EC-002]
+- [x] CHK024 Primary: is one failing candidate among healthy ones covered? [Coverage, Spec US7]
+  - Result: pass.
+- [x] CHK025 Alternate: are failures at each step covered (marker, identity, manifest, repository probes, status, reflog)? [Coverage, Spec FR-021, US7, US4 s6]
+  - Result: pass.
+- [x] CHK026 Exception: are failures outside the boundary covered? [Coverage, Spec US5 s3]
+  - Result: pass for an exception; output failures are Q12.
+- [x] CHK027 Recovery: does every error name its code and, where one is involved, its path, so that the person can act on it? [Recovery, Spec FR-022, FR-045]
+  - Result: pass.
+- [x] CHK028 Recovery: is a re-run after an interrupted run safe, with nothing left to clean up? [Recovery, Spec FR-040, FR-044]
+  - Result: pass. No state is kept, and no child outlives the run beyond EC-001 and EC-002.
+- [x] CHK029 Non-functional: can any failure cost more than its budget, by a retry or otherwise? [Coverage, Spec FR-011, FR-013]
+  - Result: pass. No requirement retries; each child and task has one budget.
+- [x] CHK030 Edge: are SIGINT before the handlers are installed, unhandled signals and SIGKILL addressed? [Edge Case, Spec EC-002]
+  - Result: pass.
 
 ## Notes
 
@@ -65,3 +95,12 @@ Lane: openRepoProject-4
 - Add comments or findings inline
 - Link to relevant resources or documentation
 - Items are numbered sequentially for easy reference
+
+## Evaluation
+
+Evaluated on 2026-10-19 against `spec.md` at `8f433f7`. 30 items: 25 pass, 1
+fixed in the spec, 2 open, 1 plan notes, 1 new questions. An open item waits
+on the question or residual its result names; a plan note is for the plan, not
+the spec; a new question is asked in `clarify-questions.md`.
+
+Plan notes: PN-11 (CHK006).

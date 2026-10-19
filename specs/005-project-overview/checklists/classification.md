@@ -13,44 +13,70 @@ Lane: openRepoProject-4
 
 ## Requirement Completeness
 
-- [ ] CHK001 Is the merge-target order specified, with both `origin/` strips? [Completeness, Spec FR-024]
-- [ ] CHK002 Is the outcome specified for each manifest state: absent, present with no `tracking_branch`, naming a branch that does not exist locally, unreadable, refused, over its bound, timed out or cut? [Completeness, Ambiguity, Spec FR-024, FR-025]
-- [ ] CHK003 Is `merge-target-conflict` defined (both branches exist locally, the manifest wins, one informational finding names both)? [Completeness, Spec FR-024]
-- [ ] CHK004 Is the ladder cited with its names, order and recommendation text, fed only from collected evidence? [Completeness, Spec FR-026]
-- [ ] CHK005 Are the conditions under which the ladder runs specified, and the null classification otherwise? [Completeness, Spec FR-026]
-- [ ] CHK006 Is a deleted upstream's rule specified (local ancestry tested before the `remote-gone` rung)? [Completeness, Spec FR-028]
-- [ ] CHK007 Is the attention table cited as the complete list of twenty-two codes with category, severity and evidence source? [Completeness, Spec FR-027]
-- [ ] CHK008 Are the merge-target checkout's findings specified with their order, conditions, messages and the rule that none suggests a command? [Completeness, Spec FR-041]
-- [ ] CHK009 Is the outcome recorded for a merge-target branch that no worktree has checked out? [Completeness, Edge Case, Gap, Spec FR-041]
-- [ ] CHK010 Is parity with `project clean` stated with its scope (the rows clean inspects, the same working directory, the same refs)? [Completeness, Spec FR-026, SC-003]
+- [x] CHK001 Is the merge-target order specified, with both `origin/` strips? [Completeness, Spec FR-024]
+  - Result: pass.
+- [x] CHK002 Is the outcome specified for each manifest state: absent, present with no `tracking_branch`, naming a branch that does not exist locally, unreadable, refused, over its bound, timed out or cut? [Completeness, Ambiguity, Spec FR-024, FR-025]
+  - Result: fixed in spec.md, C-42. FR-025's "only a manifest shown absent lets resolution continue" could be read to stop at a manifest naming no local branch; [R] takes the first candidate that exists, so such a manifest falls through.
+- [x] CHK003 Is `merge-target-conflict` defined (both branches exist locally, the manifest wins, one informational finding names both)? [Completeness, Spec FR-024]
+  - Result: pass.
+- [x] CHK004 Is the ladder cited with its names, order and recommendation text, fed only from collected evidence? [Completeness, Spec FR-026]
+  - Result: pass.
+- [x] CHK005 Are the conditions under which the ladder runs specified, and the null classification otherwise? [Completeness, Spec FR-026]
+  - Result: pass.
+- [x] CHK006 Is a deleted upstream's rule specified (local ancestry tested before the `remote-gone` rung)? [Completeness, Spec FR-028]
+  - Result: pass, with Brett Heap's ruling of 2026-10-09 cited.
+- [x] CHK007 Is the attention table cited as the complete list of twenty-two codes with category, severity and evidence source? [Completeness, Spec FR-027]
+  - Result: pass.
+- [x] CHK008 Are the merge-target checkout's findings specified with their order, conditions, messages and the rule that none suggests a command? [Completeness, Spec FR-041]
+  - Result: pass. Messages from design D4.
+- [x] CHK009 Is the outcome recorded for a merge-target branch that no worktree has checked out? [Completeness, Edge Case, Gap, Spec FR-041]
+  - Result: fixed in spec.md, C-50 and EC-026. No default-branch finding can fire for it.
+- [x] CHK010 Is parity with `project clean` stated with its scope (the rows clean inspects, the same working directory, the same refs)? [Completeness, Spec FR-026, SC-003]
+  - Result: pass.
 
 ## Requirement Clarity
 
-- [ ] CHK011 Is "a remote copy of the merge target", which `unpublished` needs, defined? [Clarity, Spec FR-015, Clarifications C-15]
-- [ ] CHK012 Is the role of `current` in `merged-current` versus `merged-removable` defined? [Clarity, Spec FR-026, Clarifications C-25]
-- [ ] CHK013 Is a failed status probe on the merge-target branch unambiguous (`inspection-error`, not `protected-default`)? [Clarity, Spec FR-041, Clarifications C-10]
-- [ ] CHK014 Is each default-branch finding's evidence source stated? [Clarity, Spec FR-027, FR-041]
+- [x] CHK011 Is "a remote copy of the merge target", which `unpublished` needs, defined? [Clarity, Spec FR-015, Clarifications C-15]
+  - Result: pass.
+- [x] CHK012 Is the role of `current` in `merged-current` versus `merged-removable` defined? [Clarity, Spec FR-026, Clarifications C-25]
+  - Result: pass; a working directory that cannot be resolved is existing question Q7.
+- [x] CHK013 Is a failed status probe on the merge-target branch unambiguous (`inspection-error`, not `protected-default`)? [Clarity, Spec FR-041, Clarifications C-10]
+  - Result: pass.
+- [x] CHK014 Is each default-branch finding's evidence source stated? [Clarity, Spec FR-027, FR-041]
+  - Result: pass. The attention table's sources, as design D4 assigns them.
 
 ## Requirement Consistency
 
-- [ ] CHK015 Is the default-branch `remote-gone` finding kept apart from the ladder's `remote-gone` class and Brett Heap's ruling on it? [Consistency, Spec Clarifications C-18]
-- [ ] CHK016 Are the severities consistent with the exit rule (error exits 1; warning only under `--strict`; info never)? [Consistency, Spec FR-029, FR-042]
-- [ ] CHK017 Is `no-merge-target` treated consistently: a finding with exit 1 in the overview, a refusal with exit 2 in `project clean`? [Consistency, Spec US3 s5, FR-025]
+- [x] CHK015 Is the default-branch `remote-gone` finding kept apart from the ladder's `remote-gone` class and Brett Heap's ruling on it? [Consistency, Spec Clarifications C-18]
+  - Result: pass.
+- [x] CHK016 Are the severities consistent with the exit rule (error exits 1; warning only under `--strict`; info never)? [Consistency, Spec FR-029, FR-042]
+  - Result: pass.
+- [x] CHK017 Is `no-merge-target` treated consistently: a finding with exit 1 in the overview, a refusal with exit 2 in `project clean`? [Consistency, Spec US3 s5, FR-025]
+  - Result: pass.
 
 ## Acceptance Criteria Quality
 
-- [ ] CHK018 Is classification parity measurable as 100% of the rows clean inspects? [Measurability, Spec SC-003]
+- [x] CHK018 Is classification parity measurable as 100% of the rows clean inspects? [Measurability, Spec SC-003]
+  - Result: pass.
 
 ## Scenario Coverage
 
-- [ ] CHK019 Primary: is each merge-target source covered (manifest, `origin/HEAD`, `main`, `master`)? [Coverage, Spec US3 s1 to s3]
-- [ ] CHK020 Alternate: are conflicting targets and deleted upstreams, merged and unmerged, covered? [Coverage, Spec US3 s4, US2 s2]
-- [ ] CHK021 Exception: are no candidate branch, a failed ref listing and a failed manifest read covered? [Coverage, Spec FR-025, Clarifications C-24]
-- [ ] CHK022 Exception: is a failed merged-set query covered? [Coverage, Spec FR-026]
-- [ ] CHK023 Recovery: is it stated how merge evidence is refreshed, and that findings are as of the last fetch? [Recovery, Spec FR-040, FR-048]
-- [ ] CHK024 Non-functional: is it required that classification and the default-branch findings spawn no probe of their own? [Coverage, Spec FR-026, FR-041]
-- [ ] CHK025 Edge: are squash merges addressed? [Edge Case, Spec EC-013]
-- [ ] CHK026 Edge: are ignored files on the merge-target checkout and a repository with no remote addressed? [Edge Case, Spec EC-021, US9 s2]
+- [x] CHK019 Primary: is each merge-target source covered (manifest, `origin/HEAD`, `main`, `master`)? [Coverage, Spec US3 s1 to s3]
+  - Result: pass.
+- [x] CHK020 Alternate: are conflicting targets and deleted upstreams, merged and unmerged, covered? [Coverage, Spec US3 s4, US2 s2]
+  - Result: pass.
+- [x] CHK021 Exception: are no candidate branch, a failed ref listing and a failed manifest read covered? [Coverage, Spec FR-025, Clarifications C-24]
+  - Result: pass.
+- [x] CHK022 Exception: is a failed merged-set query covered? [Coverage, Spec FR-026]
+  - Result: pass. The ladder does not run and the row records the error.
+- [x] CHK023 Recovery: is it stated how merge evidence is refreshed, and that findings are as of the last fetch? [Recovery, Spec FR-040, FR-048]
+  - Result: pass.
+- [x] CHK024 Non-functional: is it required that classification and the default-branch findings spawn no probe of their own? [Coverage, Spec FR-026, FR-041]
+  - Result: pass.
+- [x] CHK025 Edge: are squash merges addressed? [Edge Case, Spec EC-013]
+  - Result: pass. Recorded; change 1's open question 2 stays with Brett Heap.
+- [x] CHK026 Edge: are ignored files on the merge-target checkout and a repository with no remote addressed? [Edge Case, Spec EC-021, US9 s2]
+  - Result: pass.
 
 ## Notes
 
@@ -61,3 +87,12 @@ Lane: openRepoProject-4
 - Add comments or findings inline
 - Link to relevant resources or documentation
 - Items are numbered sequentially for easy reference
+
+## Evaluation
+
+Evaluated on 2026-10-19 against `spec.md` at `8f433f7`. 26 items: 24 pass, 2
+fixed in the spec, 0 open, 0 plan notes, 0 new questions. An open item waits
+on the question or residual its result names; a plan note is for the plan, not
+the spec; a new question is asked in `clarify-questions.md`.
+
+Plan notes: none.

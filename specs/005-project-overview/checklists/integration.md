@@ -13,42 +13,66 @@ Lane: openRepoProject-4
 
 ## Requirement Completeness
 
-- [ ] CHK001 Is each reused requirement of change 1 named by its header ([E], [L], [G], [R], [P])? [Completeness, Spec header]
-- [ ] CHK002 Is the runner interface the overview needs from feature 004 named (the child handle, the one-wide driver beside the overview's own loop, the pure incremental parsers)? [Completeness, Dependency, Spec Dependencies]
-- [ ] CHK003 Are the shared constants the overview reads at run time named, with their `limits` keys? [Completeness, Spec FR-036, Dependencies]
-- [ ] CHK004 Is the parity contract with `project clean` stated, for classification and the merge target? [Completeness, Spec FR-026, SC-003]
-- [ ] CHK005 Is the handoff contract stated: a suggestion resolves Git-first to the row's repository and merge target? [Completeness, Spec US4 s2]
-- [ ] CHK006 Is the MODIFIED `project-review-safety` requirement's scope stated (the overview only), with every other command's behaviour kept? [Completeness, Spec FR-023, SC-014]
-- [ ] CHK007 Is it stated that no other subcommand's output, flags or exits change? [Completeness, Spec FR-047, SC-012]
-- [ ] CHK008 Is it stated which text governs where change 2 and feature 004 differ? [Completeness, Spec Assumptions, Clarifications C-33]
-- [ ] CHK009 Is the overview's own timing of the version check stated (before any root is listed)? [Completeness, Spec FR-043]
-- [ ] CHK010 Is the README section specified item by item? [Completeness, Spec FR-048]
+- [x] CHK001 Is each reused requirement of change 1 named by its header ([E], [L], [G], [R], [P])? [Completeness, Spec header]
+  - Result: pass.
+- [x] CHK002 Is the runner interface the overview needs from feature 004 named (the child handle, the one-wide driver beside the overview's own loop, the pure incremental parsers)? [Completeness, Dependency, Spec Dependencies]
+  - Result: pass.
+- [x] CHK003 Are the shared constants the overview reads at run time named, with their `limits` keys? [Completeness, Spec FR-036, Dependencies]
+  - Result: pass.
+- [x] CHK004 Is the parity contract with `project clean` stated, for classification and the merge target? [Completeness, Spec FR-026, SC-003]
+  - Result: pass.
+- [x] CHK005 Is the handoff contract stated: a suggestion resolves Git-first to the row's repository and merge target? [Completeness, Spec US4 s2]
+  - Result: pass.
+- [x] CHK006 Is the MODIFIED `project-review-safety` requirement's scope stated (the overview only), with every other command's behaviour kept? [Completeness, Spec FR-023, SC-014]
+  - Result: pass.
+- [x] CHK007 Is it stated that no other subcommand's output, flags or exits change? [Completeness, Spec FR-047, SC-012]
+  - Result: pass.
+- [x] CHK008 Is it stated which text governs where change 2 and feature 004 differ? [Completeness, Spec Assumptions, Clarifications C-33]
+  - Result: pass. The change.
+- [x] CHK009 Is the overview's own timing of the version check stated (before any root is listed)? [Completeness, Spec FR-043]
+  - Result: pass.
+- [x] CHK010 Is the README section specified item by item? [Completeness, Spec FR-048]
+  - Result: pass.
 - [ ] CHK011 Is the guidance to agents in `AGENTS.md` decided? [Completeness, Spec FR-048]
+  - Result: open on existing question Q4.
 - [ ] CHK012 Is the overview's place in feature 004's Git 2.36 floor job decided? [Completeness, Dependency, Spec Dependencies]
+  - Result: open on existing question Q3.
 - [ ] CHK013 Is the state of feature 004 that must exist before the plan decided? [Completeness, Dependency, Spec Dependencies]
+  - Result: open on existing question Q2.
 
 ## Requirement Clarity
 
-- [ ] CHK014 Are feature 004's names used unchanged, with the two exceptions the delta makes named? [Clarity, Spec header]
-- [ ] CHK015 Is it clear which of feature 004's child-handle kinds the overview starts? [Clarity, Spec Dependencies]
+- [x] CHK014 Are feature 004's names used unchanged, with the two exceptions the delta makes named? [Clarity, Spec header]
+  - Result: pass. `omitted`'s exactness and `limits.worktree_rows`.
+- [x] CHK015 Is it clear which of feature 004's child-handle kinds the overview starts? [Clarity, Spec Dependencies]
+  - Result: pass. `probe` handles only.
 
 ## Requirement Consistency
 
-- [ ] CHK016 Are the citations of change 1 pinned to one commit? [Consistency, Traceability, Spec header]
-- [ ] CHK017 Is the overview's `limits.worktree_rows` (512) kept apart from a clean plan's? [Consistency, Spec header, FR-036]
+- [x] CHK016 Are the citations of change 1 pinned to one commit? [Consistency, Traceability, Spec header]
+  - Result: pass with C-37, which defines `CMD:N` and `CLN:N` at `961c405`, change 1 being unchanged there since `0050f3e`.
+- [x] CHK017 Is the overview's `limits.worktree_rows` (512) kept apart from a clean plan's? [Consistency, Spec header, FR-036]
+  - Result: pass.
 
 ## Acceptance Criteria Quality
 
-- [ ] CHK018 Is parity measurable from the same directory at the same commit? [Measurability, Spec SC-003, US3]
+- [x] CHK018 Is parity measurable from the same directory at the same commit? [Measurability, Spec SC-003, US3]
+  - Result: pass.
 
 ## Scenario Coverage
 
-- [ ] CHK019 Primary: is the path from an overview suggestion to clean's plan covered? [Coverage, Spec US4 s2]
-- [ ] CHK020 Alternate: is clean excluding a suggested worktree (index gates, deferral) covered? [Coverage, Spec SC-004, FR-034]
-- [ ] CHK021 Exception: is clean refusing a path that is not a main worktree root covered? [Coverage, Spec US4 s2]
-- [ ] CHK022 Recovery: does a constant that feature 004 moves reach the overview without an edit? [Recovery, Spec FR-035, FR-036]
-- [ ] CHK023 Non-functional: does the overview add no dependency? [Coverage, Spec FR-047]
-- [ ] CHK024 Edge: are installed copies elsewhere (workBenches' `onp`) addressed? [Edge Case, Spec Assumptions]
+- [x] CHK019 Primary: is the path from an overview suggestion to clean's plan covered? [Coverage, Spec US4 s2]
+  - Result: pass.
+- [x] CHK020 Alternate: is clean excluding a suggested worktree (index gates, deferral) covered? [Coverage, Spec SC-004, FR-034]
+  - Result: pass.
+- [x] CHK021 Exception: is clean refusing a path that is not a main worktree root covered? [Coverage, Spec US4 s2]
+  - Result: pass.
+- [x] CHK022 Recovery: does a constant that feature 004 moves reach the overview without an edit? [Recovery, Spec FR-035, FR-036]
+  - Result: pass. Read at run time, never copied.
+- [x] CHK023 Non-functional: does the overview add no dependency? [Coverage, Spec FR-047]
+  - Result: pass.
+- [x] CHK024 Edge: are installed copies elsewhere (workBenches' `onp`) addressed? [Edge Case, Spec Assumptions]
+  - Result: pass.
 
 ## Notes
 
@@ -59,3 +83,12 @@ Lane: openRepoProject-4
 - Add comments or findings inline
 - Link to relevant resources or documentation
 - Items are numbered sequentially for easy reference
+
+## Evaluation
+
+Evaluated on 2026-10-19 against `spec.md` at `8f433f7`. 24 items: 21 pass, 0
+fixed in the spec, 3 open, 0 plan notes, 0 new questions. An open item waits
+on the question or residual its result names; a plan note is for the plan, not
+the spec; a new question is asked in `clarify-questions.md`.
+
+Plan notes: none.

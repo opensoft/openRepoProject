@@ -13,42 +13,66 @@ Lane: openRepoProject-4
 
 ## Requirement Completeness
 
-- [ ] CHK001 Must every delta scenario have a running test named after it? [Completeness, Spec FR-049, SC-012]
-- [ ] CHK002 Must every requirement part no delta scenario exercises have a test, named in the traceability record? [Completeness, Spec FR-049]
-- [ ] CHK003 Is the harness specified (a scratch home directory, `PROJECTS_DIR` set or unset explicitly, networking disabled, the snapshots)? [Completeness, Spec FR-049]
-- [ ] CHK004 Are the counting wrapper's records and assertions specified? [Completeness, Spec FR-049]
-- [ ] CHK005 Is the hung-filesystem seam specified (an injected slow call always; a FUSE fixture in addition where one can be made)? [Completeness, Spec FR-049]
-- [ ] CHK006 Is the device-and-inode seam specified (an injected file-status call)? [Completeness, Spec FR-049]
-- [ ] CHK007 Is shortening the deadline confined to one scenario, with the ratio kept? [Completeness, Spec FR-049]
-- [ ] CHK008 Are the skip rules specified with their reasons (as root, macOS, no FUSE), and is it stated that a skipped test does not count? [Completeness, Spec FR-049]
-- [ ] CHK009 Must a cap or concurrency fixture fail, never skip, when its run is cut? [Completeness, Spec FR-049]
-- [ ] CHK010 Is the regression guard specified (every test on `main` keeps passing unchanged)? [Completeness, Spec FR-049, SC-012]
-- [ ] CHK011 Are this spec's clarified points (C-22 to C-54) covered by tests, through FR-049's rule for parts no delta scenario exercises? [Completeness, Spec FR-049]
-- [ ] CHK012 Is the scanning notice's terminal condition testable? [Completeness, Spec US1 s7, FR-046]
-- [ ] CHK013 Is the parity oracle defined (`project clean <root> --json` from the same directory at the same commit)? [Completeness, Spec US3]
-- [ ] CHK014 Is the tests' CI scope stated (Linux only, Python 3.10 and 3.12)? [Completeness, Spec Dependencies, EC-017]
-- [ ] CHK015 Are the signal tests' assertions specified (exit status, no result document, every process group gone apart from abandoned children)? [Completeness, Spec FR-049, US10 s3, US10 s4]
-- [ ] CHK016 Are the bound claims tested without long waits, with the full-length measurement kept to governance task 2.1? [Completeness, Spec FR-049, Assumptions]
+- [x] CHK001 Must every delta scenario have a running test named after it? [Completeness, Spec FR-049, SC-012]
+  - Result: pass.
+- [x] CHK002 Must every requirement part no delta scenario exercises have a test, named in the traceability record? [Completeness, Spec FR-049]
+  - Result: pass.
+- [x] CHK003 Is the harness specified (a scratch home directory, `PROJECTS_DIR` set or unset explicitly, networking disabled, the snapshots)? [Completeness, Spec FR-049]
+  - Result: pass.
+- [x] CHK004 Are the counting wrapper's records and assertions specified? [Completeness, Spec FR-049]
+  - Result: pass.
+- [x] CHK005 Is the hung-filesystem seam specified (an injected slow call always; a FUSE fixture in addition where one can be made)? [Completeness, Spec FR-049]
+  - Result: pass.
+- [x] CHK006 Is the device-and-inode seam specified (an injected file-status call)? [Completeness, Spec FR-049]
+  - Result: pass.
+- [x] CHK007 Is shortening the deadline confined to one scenario, with the ratio kept? [Completeness, Spec FR-049]
+  - Result: pass.
+- [x] CHK008 Are the skip rules specified with their reasons (as root, macOS, no FUSE), and is it stated that a skipped test does not count? [Completeness, Spec FR-049]
+  - Result: pass.
+- [x] CHK009 Must a cap or concurrency fixture fail, never skip, when its run is cut? [Completeness, Spec FR-049]
+  - Result: pass.
+- [x] CHK010 Is the regression guard specified (every test on `main` keeps passing unchanged)? [Completeness, Spec FR-049, SC-012]
+  - Result: pass.
+- [x] CHK011 Are this spec's clarified points (C-22 to C-54) covered by tests, through FR-049's rule for parts no delta scenario exercises? [Completeness, Spec FR-049]
+  - Result: pass.
+- [x] CHK012 Is the scanning notice's terminal condition testable? [Completeness, Spec US1 s7, FR-046]
+  - Result: pass. Standard error on a terminal and on a pipe are both observable; the seam is the plan's.
+- [x] CHK013 Is the parity oracle defined (`project clean <root> --json` from the same directory at the same commit)? [Completeness, Spec US3]
+  - Result: pass.
+- [x] CHK014 Is the tests' CI scope stated (Linux only, Python 3.10 and 3.12)? [Completeness, Spec Dependencies, EC-017]
+  - Result: pass; the floor job is existing question Q3.
+- [x] CHK015 Are the signal tests' assertions specified (exit status, no result document, every process group gone apart from abandoned children)? [Completeness, Spec FR-049, US10 s3, US10 s4]
+  - Result: pass.
+- [x] CHK016 Are the bound claims tested without long waits, with the full-length measurement kept to governance task 2.1? [Completeness, Spec FR-049, Assumptions]
+  - Result: pass.
 
 ## Requirement Clarity
 
-- [ ] CHK017 Is "named after it" checkable? [Clarity, Spec FR-049]
-- [ ] CHK018 Is "networking disabled" defined operationally? [Clarity, Spec FR-049]
+- [x] CHK017 Is "named after it" checkable? [Clarity, Spec FR-049]
+  - Result: pass. The feature's traceability record maps each scenario to its test.
+- [x] CHK018 Is "networking disabled" defined operationally? [Clarity, Spec FR-049]
+  - Result: pass.
 
 ## Requirement Consistency
 
-- [ ] CHK019 Are the fixture rules consistent with [E]'s status pins (no test relies on a running filesystem monitor)? [Consistency, Spec FR-049, Clarifications C-6]
-- [ ] CHK020 Are the stories' Independent Tests consistent with FR-049's harness rules? [Consistency, Spec US1 to US11]
+- [x] CHK019 Are the fixture rules consistent with [E]'s status pins (no test relies on a running filesystem monitor)? [Consistency, Spec FR-049, Clarifications C-6]
+  - Result: pass.
+- [x] CHK020 Are the stories' Independent Tests consistent with FR-049's harness rules? [Consistency, Spec US1 to US11]
+  - Result: pass.
 
 ## Acceptance Criteria Quality
 
-- [ ] CHK021 Is SC-012 verifiable by a script over the test names and the traceability record? [Measurability, Spec SC-012]
+- [x] CHK021 Is SC-012 verifiable by a script over the test names and the traceability record? [Measurability, Spec SC-012]
+  - Result: pass.
 
 ## Scenario Coverage
 
-- [ ] CHK022 Do the stories' tests together cover the primary, alternate, exception, recovery and non-functional classes? [Coverage, Spec US1 to US11]
-- [ ] CHK023 Edge: are permission-dependent fixtures skipped as root? [Edge Case, Spec FR-049]
-- [ ] CHK024 Edge: do tests wait for the open questions rather than assume an answer? [Edge Case, Spec Assumptions]
+- [x] CHK022 Do the stories' tests together cover the primary, alternate, exception, recovery and non-functional classes? [Coverage, Spec US1 to US11]
+  - Result: pass.
+- [x] CHK023 Edge: are permission-dependent fixtures skipped as root? [Edge Case, Spec FR-049]
+  - Result: pass.
+- [x] CHK024 Edge: do tests wait for the open questions rather than assume an answer? [Edge Case, Spec Assumptions]
+  - Result: pass. No open question alters a requirement until Brett Heap answers it.
 
 ## Notes
 
@@ -59,3 +83,12 @@ Lane: openRepoProject-4
 - Add comments or findings inline
 - Link to relevant resources or documentation
 - Items are numbered sequentially for easy reference
+
+## Evaluation
+
+Evaluated on 2026-10-19 against `spec.md` at `8f433f7`. 24 items: 24 pass, 0
+fixed in the spec, 0 open, 0 plan notes, 0 new questions. An open item waits
+on the question or residual its result names; a plan note is for the plan, not
+the spec; a new question is asked in `clarify-questions.md`.
+
+Plan notes: none.

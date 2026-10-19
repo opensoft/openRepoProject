@@ -13,43 +13,68 @@ Lane: openRepoProject-4
 
 ## Requirement Completeness
 
-- [ ] CHK001 Is the read-only guarantee enumerated (no fetch, pull, reset, bootstrap, validator run or file write; no worktree created, pruned, repaired, locked or unlocked; no index rewritten)? [Completeness, Spec FR-040]
-- [ ] CHK002 Is the no-network guarantee backed by mechanism requirements (seven protocol pins, the seventeen-name scrub, `GIT_OPTIONAL_LOCKS=0`, the status pins)? [Completeness, Spec FR-016]
-- [ ] CHK003 Are the residuals beyond the pins and the scrub recorded (remote-helper protocols, configuration files, trace targets, attribute filters)? [Completeness, Spec EC-006, EC-022]
+- [x] CHK001 Is the read-only guarantee enumerated (no fetch, pull, reset, bootstrap, validator run or file write; no worktree created, pruned, repaired, locked or unlocked; no index rewritten)? [Completeness, Spec FR-040]
+  - Result: pass.
+- [x] CHK002 Is the no-network guarantee backed by mechanism requirements (seven protocol pins, the seventeen-name scrub, `GIT_OPTIONAL_LOCKS=0`, the status pins)? [Completeness, Spec FR-016]
+  - Result: pass.
+- [x] CHK003 Are the residuals beyond the pins and the scrub recorded (remote-helper protocols, configuration files, trace targets, attribute filters)? [Completeness, Spec EC-006, EC-022]
+  - Result: pass.
 - [ ] CHK004 Is the treatment of those residuals decided (accept, scrub the trace variables, or drop the user's configuration)? [Completeness, Spec EC-022]
+  - Result: open on existing question Q9.
 - [ ] CHK005 Is the threat model the requirements assume stated: the user's own local repositories, some of which may hold hostile names, configuration, attributes or manifests? [Completeness, Gap, Traceability]
-- [ ] CHK006 Is access to credentials and profile data restricted? [Completeness, Spec FR-040]
-- [ ] CHK007 Are path bytes kept from forging report lines or reaching the terminal as controls? [Completeness, Spec FR-038, FR-045, SC-010]
+  - Result: plan note PN-15.
+- [x] CHK006 Is access to credentials and profile data restricted? [Completeness, Spec FR-040]
+  - Result: pass.
+- [x] CHK007 Are path bytes kept from forging report lines or reaching the terminal as controls? [Completeness, Spec FR-038, FR-045, SC-010]
+  - Result: pass.
 - [ ] CHK008 Are strings that are not paths (names, branch names, Git's error text) kept from forging lines or failing the encoding? [Completeness, Spec FR-038]
-- [ ] CHK009 Is a suggestion barred from carrying permission (`--apply`, `--yes`) or naming a project by bare name? [Completeness, Spec FR-031, SC-004]
+  - Result: open on existing question Q8.
+- [x] CHK009 Is a suggestion barred from carrying permission (`--apply`, `--yes`) or naming a project by bare name? [Completeness, Spec FR-031, SC-004]
+  - Result: pass.
 - [ ] CHK010 Are agents told that a suggestion is advice and that applying it needs the person's word? [Completeness, Spec FR-048]
-- [ ] CHK011 Is untrusted manifest content bounded (its size judged before the read, the read capped at 1 MiB, the read and parse inside a bounded task)? [Completeness, Spec FR-013, FR-014]
-- [ ] CHK012 Is the reflog path built only from ref names Git lists, so that it cannot leave `logs/refs/heads/`? [Completeness, Spec FR-033]
-- [ ] CHK013 Is every Git child isolated from the caller's repository-selecting variables (`GIT_DIR`, `GIT_WORK_TREE`, `GIT_INDEX_FILE` and the rest)? [Completeness, Spec FR-016]
-- [ ] CHK014 Are repositories Git itself refuses as unsafe (`safe.directory`, dubious ownership) covered? [Completeness, Spec FR-021]
+  - Result: open on existing question Q4.
+- [x] CHK011 Is untrusted manifest content bounded (its size judged before the read, the read capped at 1 MiB, the read and parse inside a bounded task)? [Completeness, Spec FR-013, FR-014]
+  - Result: pass, the task's extent per C-38.
+- [x] CHK012 Is the reflog path built only from ref names Git lists, so that it cannot leave `logs/refs/heads/`? [Completeness, Spec FR-033]
+  - Result: pass. The branch comes from the ref listing, and Git's ref-name rules admit no `..` component.
+- [x] CHK013 Is every Git child isolated from the caller's repository-selecting variables (`GIT_DIR`, `GIT_WORK_TREE`, `GIT_INDEX_FILE` and the rest)? [Completeness, Spec FR-016]
+  - Result: pass. [E]'s seventeen-name scrub.
+- [x] CHK014 Are repositories Git itself refuses as unsafe (`safe.directory`, dubious ownership) covered? [Completeness, Spec FR-021]
+  - Result: pass. A Git child that exits nonzero records `probe-failed` on its row.
 - [ ] CHK015 Is a candidate whose broken `.git` sends Git to an ancestor repository kept from widening the scan beyond the roots? [Completeness, Spec FR-002]
-- [ ] CHK016 Is the overview kept from running repository-configured programs the pins cover (`core.fsmonitor`), with those they cannot cover recorded? [Completeness, Spec FR-016, EC-022]
+  - Result: open on existing question Q11.
+- [x] CHK016 Is the overview kept from running repository-configured programs the pins cover (`core.fsmonitor`), with those they cannot cover recorded? [Completeness, Spec FR-016, EC-022]
+  - Result: pass.
 
 ## Requirement Clarity
 
-- [ ] CHK017 Is "opens no network connection" made measurable? [Clarity, Measurability, Spec FR-049, SC-002]
-- [ ] CHK018 Is the extent of "no file write" clear about files Git may write under the caller's own configuration? [Clarity, Spec EC-022]
+- [x] CHK017 Is "opens no network connection" made measurable? [Clarity, Measurability, Spec FR-049, SC-002]
+  - Result: pass. Audit hook on `socket.connect`, the logging `uploadpack` and the wrapper's checks.
+- [x] CHK018 Is the extent of "no file write" clear about files Git may write under the caller's own configuration? [Clarity, Spec EC-022]
+  - Result: pass. Recorded as a residual; the wording question is Q9.
 
 ## Requirement Consistency
 
-- [ ] CHK019 Do the pins in FR-016 match [E]'s and design D13's lists character for character? [Consistency, Spec FR-016]
-- [ ] CHK020 Does no requirement exempt any Git child of the overview from the pins or the scrub? [Consistency, Spec FR-016, Clarifications C-5]
+- [x] CHK019 Do the pins in FR-016 match [E]'s and design D13's lists character for character? [Consistency, Spec FR-016]
+  - Result: pass. The seven `-c protocol.*` pins agree in all three texts.
+- [x] CHK020 Does no requirement exempt any Git child of the overview from the pins or the scrub? [Consistency, Spec FR-016, Clarifications C-5]
+  - Result: pass.
 
 ## Acceptance Criteria Quality
 
-- [ ] CHK021 Are the security criteria measurable as counts (100% of children pinned; 0 connections, scrubbed names and remote-reaching argument vectors)? [Measurability, Spec SC-002]
+- [x] CHK021 Are the security criteria measurable as counts (100% of children pinned; 0 connections, scrubbed names and remote-reaching argument vectors)? [Measurability, Spec SC-002]
+  - Result: pass.
 
 ## Scenario Coverage
 
-- [ ] CHK022 Primary: is a run over ordinary fixtures with networking disabled covered? [Coverage, Spec US10 s1]
-- [ ] CHK023 Exception: are a partial clone's lazy fetch and a caller's `GIT_ALLOW_PROTOCOL` covered? [Coverage, Spec FR-016]
-- [ ] CHK024 Recovery: is the outcome of SIGKILL of `project` recorded (read-only children run on, untimed)? [Recovery, Spec EC-002]
-- [ ] CHK025 Non-functional: is the local data the report discloses bounded (eight ignored samples per row; standard output only; no state kept)? [Coverage, Spec FR-015, FR-040]
+- [x] CHK022 Primary: is a run over ordinary fixtures with networking disabled covered? [Coverage, Spec US10 s1]
+  - Result: pass.
+- [x] CHK023 Exception: are a partial clone's lazy fetch and a caller's `GIT_ALLOW_PROTOCOL` covered? [Coverage, Spec FR-016]
+  - Result: pass.
+- [x] CHK024 Recovery: is the outcome of SIGKILL of `project` recorded (read-only children run on, untimed)? [Recovery, Spec EC-002]
+  - Result: pass.
+- [x] CHK025 Non-functional: is the local data the report discloses bounded (eight ignored samples per row; standard output only; no state kept)? [Coverage, Spec FR-015, FR-040]
+  - Result: pass.
 
 ## Notes
 
@@ -60,3 +85,12 @@ Lane: openRepoProject-4
 - Add comments or findings inline
 - Link to relevant resources or documentation
 - Items are numbered sequentially for easy reference
+
+## Evaluation
+
+Evaluated on 2026-10-19 against `spec.md` at `8f433f7`. 25 items: 20 pass, 0
+fixed in the spec, 4 open, 1 plan notes, 0 new questions. An open item waits
+on the question or residual its result names; a plan note is for the plan, not
+the spec; a new question is asked in `clarify-questions.md`.
+
+Plan notes: PN-15 (CHK005).

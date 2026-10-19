@@ -13,21 +13,33 @@ Lane: openRepoProject-4
 
 ## Requirement Completeness
 
-- [ ] CHK001 Is the sequencing specified (the plan and the implementation after feature 004's code and Brett Heap's word)? [Completeness, Dependency, Spec Dependencies, Clarifications C-21]
-- [ ] CHK002 Are migration and rollback specified? [Completeness, Gap]
-- [ ] CHK003 Is the archive order of the two changes stated? [Completeness, Spec Dependencies, Clarifications C-7]
-- [ ] CHK004 Are the runtime prerequisites stated (Git 2.36 or later, the supported Python versions, the YAML library)? [Completeness, Spec Dependencies, FR-043, FR-047]
-- [ ] CHK005 Is the CI scope stated (Linux only, Python 3.10 and 3.12)? [Completeness, Spec Dependencies]
+- [x] CHK001 Is the sequencing specified (the plan and the implementation after feature 004's code and Brett Heap's word)? [Completeness, Dependency, Spec Dependencies, Clarifications C-21]
+  - Result: pass; which state of feature 004 is existing question Q2.
+- [x] CHK002 Are migration and rollback specified? [Completeness, Gap]
+  - Result: fixed in spec.md, C-49. Nothing migrates, and rollback is a revert of feature 005's merge (design, Migration Plan).
+- [x] CHK003 Is the archive order of the two changes stated? [Completeness, Spec Dependencies, Clarifications C-7]
+  - Result: pass.
+- [x] CHK004 Are the runtime prerequisites stated (Git 2.36 or later, the supported Python versions, the YAML library)? [Completeness, Spec Dependencies, FR-043, FR-047]
+  - Result: pass.
+- [x] CHK005 Is the CI scope stated (Linux only, Python 3.10 and 3.12)? [Completeness, Spec Dependencies]
+  - Result: pass.
 - [ ] CHK006 Is the overview's place in the Git 2.36 floor job decided? [Completeness, Spec Dependencies]
-- [ ] CHK007 Is distribution to installed copies stated as out of scope? [Completeness, Spec Assumptions, Out of Scope]
-- [ ] CHK008 Is the governance state of change 2's tasks stated (3.2 open until the handoff names one feature)? [Completeness, Spec Dependencies]
+  - Result: open on existing question Q3.
+- [x] CHK007 Is distribution to installed copies stated as out of scope? [Completeness, Spec Assumptions, Out of Scope]
+  - Result: pass.
+- [x] CHK008 Is the governance state of change 2's tasks stated (3.2 open until the handoff names one feature)? [Completeness, Spec Dependencies]
+  - Result: pass.
 
 ## Scenario Coverage
 
-- [ ] CHK009 Primary: does a normal merge need nothing beyond the code, the README section and the tests? [Coverage, Spec FR-047, FR-048, FR-049]
-- [ ] CHK010 Recovery: is the effect of a revert on other subcommands stated? [Recovery, Spec FR-047]
-- [ ] CHK011 Non-functional: does the feature add no dependency, file or setting to ship? [Coverage, Spec FR-047]
-- [ ] CHK012 Edge: does a later move of one of change 1's constants reach the overview without a release of its own? [Edge Case, Spec FR-035, FR-036]
+- [x] CHK009 Primary: does a normal merge need nothing beyond the code, the README section and the tests? [Coverage, Spec FR-047, FR-048, FR-049]
+  - Result: pass.
+- [x] CHK010 Recovery: is the effect of a revert on other subcommands stated? [Recovery, Spec FR-047]
+  - Result: pass with C-49. No data, configuration or other subcommand depends on the overview.
+- [x] CHK011 Non-functional: does the feature add no dependency, file or setting to ship? [Coverage, Spec FR-047]
+  - Result: pass.
+- [x] CHK012 Edge: does a later move of one of change 1's constants reach the overview without a release of its own? [Edge Case, Spec FR-035, FR-036]
+  - Result: pass.
 
 ## Notes
 
@@ -38,3 +50,12 @@ Lane: openRepoProject-4
 - Add comments or findings inline
 - Link to relevant resources or documentation
 - Items are numbered sequentially for easy reference
+
+## Evaluation
+
+Evaluated on 2026-10-19 against `spec.md` at `8f433f7`. 12 items: 10 pass, 1
+fixed in the spec, 1 open, 0 plan notes, 0 new questions. An open item waits
+on the question or residual its result names; a plan note is for the plan, not
+the spec; a new question is asked in `clarify-questions.md`.
+
+Plan notes: none.
