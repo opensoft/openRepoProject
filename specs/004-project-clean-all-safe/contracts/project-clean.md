@@ -140,7 +140,7 @@ message}` objects, an `inspect-cap` note adding `rows`.
 
 | Label | Where |
 | --- | --- |
-| baseline header | `Cleanup plan for ROOT`, `Merge target: NAME (SOURCE)`, `Freshness:` |
+| baseline header | `Cleanup plan for ROOT` and `Freshness:` as the baseline prints them, around `Merge target: NAME (SOURCE)`, which is new text: the baseline prints `Merge target: NAME` (`project:630`), though D18 names the line among the baseline's |
 | "D14 completeness line" | report: `Report: complete` or `Report: incomplete (CODES)` |
 | "D14 selection line" | report at 128 rows or fewer: `--all-safe would select N`; above: `--all-safe would be incomplete (inspect-cap)` |
 | "D18 preview layout" | `Selected (N):` with one `  remove PATH [BRANCH]` per row; `Excluded (M):` with one `  REASON (K): NEXT STEP` group per reason and `    PATH [BRANCH]` rows; an `ignored-local-files` row adds its count and first sample |
@@ -302,7 +302,10 @@ GIT_INTERNAL_SUPER_PREFIX GIT_ALLOW_PROTOCOL
 ```
 
 `GIT_CONFIG_GLOBAL` and `GIT_CONFIG_SYSTEM` stay. Read-only probes add
-`GIT_OPTIONAL_LOCKS=0`; the removal and the delegates do not.
+`GIT_OPTIONAL_LOCKS=0`; the removal and the delegates add none, and a value
+the caller set reaches them unchanged, as every child received it before this
+change (`GIT_OPTIONAL_LOCKS` is not among the seventeen; D2 sets it for probes
+only).
 
 The protocol pins, on every Git child except the push child (the push-child
 exception, LQ-3, awaiting Brett Heap's word on draft PR #19; research.md
@@ -318,7 +321,7 @@ R1):
 The status pins, on every status probe, the hidden-state probe and the
 removal: `-c core.untrackedCache=false -c core.fsmonitor=false`.
 
-| Child | Argument vector after `git` and its pins | Directory |
+| Child | Argument vector after `git` and its pins (its status pins first, then the protocol pins; D9, D11) | Directory |
 | --- | --- | --- |
 | row 1 | `--version` | the working directory |
 | row 2 | `-C DIR rev-parse --show-toplevel` | the name lookup's directory (bare name only) |
@@ -328,8 +331,8 @@ removal: `-c core.untrackedCache=false -c core.fsmonitor=false`.
 | row 5 | row 3 again | `root`, only when row 3 ran elsewhere |
 | row 6 | `-C ROOT for-each-ref --format=%(refname)%00%(objectname)%00%(symref)%00%(upstream)%00%(upstream:short)%00%(upstream:track,nobracket) refs/heads refs/remotes` | `root` |
 | row 7 | `-C ROOT for-each-ref --merged=SHA --format=%(refname) refs/heads` | `root` |
-| status | `-c core.untrackedCache=false -c core.fsmonitor=false -C WORKTREE status --porcelain=v1 -z --untracked-files=normal --ignored=matching` | the row's worktree |
-| hidden state | `-c core.untrackedCache=false -c core.fsmonitor=false -C WORKTREE ls-files -v --stage -z` | the target's worktree |
+| status | `-c core.untrackedCache=false -c core.fsmonitor=false` + protocol pins + `-C WORKTREE status --porcelain=v1 -z --untracked-files=normal --ignored=matching` | the row's worktree |
+| hidden state | `-c core.untrackedCache=false -c core.fsmonitor=false` + protocol pins + `-C WORKTREE ls-files -v --stage -z` | the target's worktree |
 | narrowed ref listing (revalidation) | row 6's format with patterns naming the merge target, the manifest's candidate, the branch `origin/HEAD` named, `main`, `master`, `refs/remotes/origin/HEAD`, and the selected branches and their upstreams | `root` |
 | remote URL | `-C ROOT remote get-url origin` | `root` (push; `handoff()` in `status` and `doctor`) |
 | removal | `-c status.showUntrackedFiles=normal -c core.untrackedCache=false -c core.fsmonitor=false` + protocol pins + `-C ROOT worktree remove PATH` | `root`; PATH the registry's raw bytes, one argument, never `--force` |

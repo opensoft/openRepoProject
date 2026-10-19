@@ -133,7 +133,12 @@ child's scrubbed names and process group before it `exec`s Git (M4).
    `test_clean_parsers` whose own name lacks the prefix). A module with another
    prefix would need its own `-k` or a selection by module. Each module has one
    writer, its lane's.
-3. Helpers come from `tests/clean_support.py` only. No module binds
+3. Helpers come from `tests/clean_support.py` only, imported by a plain
+   `import clean_support`, the one idiom; a module runs alone through
+   discovery, `python3 -m unittest discover -s tests -p
+   'test_clean_<lane>.py'`, never by its dotted path, which would load a
+   second `clean_support` with its own `load_project()` cache (lead ruling
+   R-38). No module binds
    `ProjectTests` in its namespace or uses `import *`, since
    `loadTestsFromModule` would run the 96 tests again. A test patches the
    `project` module object it calls: `tests/clean_support.py` loads its own,
@@ -201,7 +206,10 @@ regions and contracts every lane writes against.
 
 - [x] T001 Confirm the baseline in this worktree: `python3 -m unittest discover
   -s tests -v` runs 96 tests, OK, and `git diff --stat 961c405 -- project tests
-  README.md .github` prints nothing.
+  README.md .github` prints nothing. That check held through `fa81449`; #32
+  (merged at `45584a3`) and the tasks from T003 on change those paths by
+  design, so it is not re-run, and citations are read with `git show
+  961c405:<file>` (Path Conventions).
 - [x] T002 [P] Create `specs/004-project-clean-all-safe/traceability.md`, lane
   line first: one row per delta scenario, 101 rows (the 100 of the three delta
   files on `main`, and PR #19's "The push child reaches its remote", marked as
@@ -295,12 +303,15 @@ T033), when B, D, E and F are; H, guard (T034, T035), when T023 is, beside G
   is read only inside function bodies, never in a default argument, a class
   attribute or a module-level assignment other than its own, and no default
   argument named `grace`, `budget`, `timeout`, `tick` or `wait` holds a number;
-  after `TIMING` is replaced on a loaded module, `budget` reports the new
-  values; plan review M16, lead ruling R-29); and
+  plan review M16, lead ruling R-29; that `budget` reports a replaced table is
+  T098's `test_clean_budget_reports_the_values_in_force`, since `budget` is
+  built only from T049 on, lead ruling R-39); and
   `test_clean_launcher_replaces_the_table` (imported as a module,
   `tests/launch_project.py` given `--timing=JSON` replaces exactly the keys the
-  object names and leaves `LIMITS` alone, an unknown key exits nonzero naming
-  it, and without `--timing` the real table stands; run as a script with
+  object names and leaves `LIMITS` and every other plain-data upper-case
+  constant of `project` but `TIMING` alone (26 at `d92221d`), an unknown key
+  exits nonzero naming it, and without `--timing` the real table stands; run
+  as a script with
   `--help` it exits 0 and prints the usage of `project`; the launched process
   is `project`'s own, with its pid, process group, signal handlers, streams and
   exit status).
@@ -478,7 +489,9 @@ T033), when B, D, E and F are; H, guard (T034, T035), when T023 is, beside G
   prose and `shlex.quote`d in a command, and in the `$'...'` form in both when
   it holds an undecodable byte or a code point whose `unicodedata.category` is
   Cc, Cf, Zl or Zp: `\xHH`, `\uXXXX` and `\UXXXXXXXX` in lower case, each
-  backslash doubled, each single quote written `\'`.
+  backslash doubled, each single quote written `\'`. The delta's examples
+  start at U+0000, which no path can hold, since a NUL ends each
+  NUL-delimited record, so no test sends it.
 - [x] T017 [P] Add `json_path()` and `human_path()` to region `escaping` of
   `project`. T016 passes.
 
@@ -571,9 +584,10 @@ T033), when B, D, E and F are; H, guard (T034, T035), when T023 is, beside G
   handler (plan review M10); `run_bounded(spec, parser, run)` with D1's loop
   (one selector over both pipes and the wakeup pipe, the tick, the 4 KiB head,
   and `advance()` of every terminating handle on every tick, R-30) and its six
-  outcomes, each mapped to its row error (M17); `fs_call()`; and
-  `git_version()`. Every timing value is read from `TIMING` when called (R-29).
-  T018 to T020 pass.
+  outcomes, each mapped to its row error (M17), any `ParseError` from a
+  parser's `finish()`, a truncated last record or a malformed one, giving
+  `failed` and `probe-failed`; `fs_call()`; and `git_version()`. Every timing
+  value is read from `TIMING` when called (R-29). T018 to T020 pass.
 - [ ] T025 [P] Reroute `git()` and `git_text()` (`project:68-74`) through
   `run_bounded()` with `git_argv("probe", ...)`, keeping their names, place,
   signatures and return values; after a failed version check in the invocation
@@ -729,7 +743,10 @@ T033), when B, D, E and F are; H, guard (T034, T035), when T023 is, beside G
   review M2); `error_document(exc, args)`, the extended error object for
   `invalid-arguments`, `internal-error` and every resolve refusal (M6); and
   `write_document(doc)`, the one writer of every `clean --json` document:
-  `json.dumps(doc, indent=2, ensure_ascii=True)` and one newline (M6). In
+  `json.dumps(doc, indent=2, ensure_ascii=True)` and one newline (M6), never
+  `ensure_ascii=False`, which research.md R12 keeps for the digest's input
+  alone, since it would write seven of T016's ten code points raw (lead
+  ruling R-38). In
   `main()` (`project:1125-1151`), route `clean` through `run_clean()`, print
   `error_document()` for a `clean --json` refusal and `{"error": ...}` for
   every other subcommand as today, and map `Interrupted` and `Terminated` to
@@ -961,9 +978,11 @@ tuples.
   `plan_document(plan)` (the envelope with the baseline keys kept, in the
   contract's key order, every path through `json_path()` beside its flag,
   `observed_at` from `time.gmtime()`, plan `notes` as `{code, message}` objects
-  and row `notes` as code strings, written by T035's `write_document()`; plan
-  review M6) in region `plan`. The canonical-text test of T037 and the second
-  and third tests of T040 pass.
+  and row `notes` as code strings, written by T035's `write_document()` with
+  `ensure_ascii=True`, `ensure_ascii=False` serving only `plan_digest()`'s
+  canonical text (R12, lead ruling R-38); plan review M6) in region `plan`.
+  The canonical-text test of T037 and the second and third tests of T040
+  pass.
 - [ ] T052 [P] [US1] Fill `print_plan(plan, run)` in region `preview`: the
   baseline report layout for modes report and single; the D18 preview layout
   for mode all-safe (the groups in gate order and the classes in ladder order,
@@ -1347,8 +1366,10 @@ US2, US7 and US9.
   while the child ran, otherwise the child's status, 128 plus the signal number
   for a signal death, and 2 for a refusal (M3).
 - [ ] T077 [P] [US3] `execute()` (`project:157-162`) gains only an optional
-  `env` argument. The push child runs as `execute(["git", "-C", ROOT, "push",
-  ...], env=git_env("push"))`: no pins, `project`'s own streams and process
+  `env` argument. The push child runs as `execute(git_argv("push", ["-C",
+  ROOT, "push", ...]), env=git_env("push"))`, built through `git_argv()` so
+  that an LQ-3 ruling stays a one-row change to the kinds table: no pins,
+  `project`'s own streams and process
   group, never signalled, unbounded, under `signal_scope()`, so that a signal
   reaching `project` is only recorded while the push, in the terminal's
   foreground, takes the terminal's own (R1, R4, PR #19). The delete-branch
@@ -1552,8 +1573,9 @@ the recovery text that T094 prints (analyze M2).
 
 ### Tests for User Story 5
 
-- [ ] T087 [P] [US5] Add to `tests/test_clean_result.py`, each launched run
-  with its own table (R-29): `test_clean_a_signal_during_a_removal` (launcher;
+- [ ] T087 [P] [US5] Add to `tests/test_clean_result.py`, each run through
+  the launcher with its own table (R-29), and the slot-read test in process:
+  `test_clean_a_signal_during_a_removal` (launcher;
   three targets, the second removed by the `remove-slow` fake: SIGINT to
   `project` while it runs leaves the child unsignalled, as the fake records,
   and waited for; the second target is `removed` when the child exits 0 and the
@@ -1780,7 +1802,8 @@ statuses, the child counts and the order of what was cut.
   analyze M3); and `test_clean_budget_reports_the_values_in_force`
   (unscaled, `budget` holds 5, 60, 10, 5, 300 and 1, and `limits` 128 or 256,
   16, 64, 4096 and 8; under the launcher, `budget` shows the values of the
-  test's own table). Scenarios: "Bounded revalidation work"; "Deadline expiry
+  test's own table, the clause T005 leaves to this test, lead ruling R-39).
+  Scenarios: "Bounded revalidation work"; "Deadline expiry
   mid-batch"; "Push refuses an incomplete inspection", its deadline clause.
 
 ### Implementation for User Story 6
@@ -2190,7 +2213,15 @@ verification.
   `tests/clean_support.py`, its placeholders substituted, equals a line or
   quoted string of design.md D18 or D14 character for character, and that every
   D18 and D14 string has a literal (SC-010); `TEXT` in `project` equals the
-  literals (T008).
+  literals (T008). Then normalize the test modules to rule 3's one import
+  idiom (lead ruling R-38), as this task's writer, the lanes being done:
+  `tests/test_clean_scrub.py` drops its `from tests import clean_support`
+  fallback, and `tests/test_clean_escaping.py` and `tests/test_clean_parsers.py`
+  their `sys.path` inserts; `tests/test_clean_timing.py`'s own `sh` fake `git`
+  and `timing_repo()` move onto T010's and T011's helpers; a script confirms
+  that every `tests/test_clean_*.py` and `tests/test_status_doctor_update.py`
+  imports `clean_support` by that one line and none inserts into `sys.path`,
+  and each module passes when run alone through discovery.
 - [ ] T128 Run the whole suite in this worktree: `python3 -m unittest discover
   -s tests -v` passes; record the test count and the elapsed time, under 8
   minutes in `py-bench` (R11); run it under Python 3.10 too where an

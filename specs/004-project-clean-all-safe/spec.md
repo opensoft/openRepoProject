@@ -770,9 +770,10 @@ configuration"; "A lazy fetch in a partial clone is refused locally";
   `git gc` runs, has expired its entries, and is then `reflog-unavailable`
   in both modes, never removable by `project`; its remedy names `git
   worktree remove` (design D10 and D18).
-- **EC-005**: A reflog over 64 KiB (about 300 entries) is
-  `reflog-unavailable` even when it records movement, because the bound ends
-  the read; a reflog whose last entry's new object is not the branch head is
+- **EC-005**: A reflog of 64 KiB (65,536 bytes) or more, about 300 entries,
+  is `reflog-unavailable` even when it records movement, because a read that
+  reaches the bound ends there (lead ruling R-33); a reflog whose last entry's
+  new object is not the branch head is
   `reflog-unavailable` too (design D10, Risks).
 - **EC-006**: A branch created from a remote branch that already had commits,
   then merged elsewhere and never moved here, reads `unstarted-branch` and

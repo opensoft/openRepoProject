@@ -196,14 +196,16 @@ What one invocation would do in one repository. Built fresh by every run.
 | `all-safe` | `--all-safe`, preview or `--apply` | 128 | every row passing every gate, at most 16 |
 | `single` | `--apply --action remove --worktree P` | 128, P exempt and probed first | P alone |
 
-Fields: identity, merge target, `worktrees`, `selected`, `excluded`,
-`omitted` (`{count, exactness: "exact"}`), `notes`, `completeness`,
-`apply_allowed`, `refusals`, `plan_digest` (R12 in research.md), `limits`,
-`budget`, `probes` and `operations`. `probes` counts every Git child other
-than a removal and `operations` the removals, each child once (lead ruling
-R-27; research.md R8). Rows are ordered main worktree first, then by raw path
-bytes; `selected`, `excluded` and the execution order are by raw path
-bytes.
+Fields, in the delta's envelope order: `schema_version`, `observed_at`,
+`mode`, the baseline `root`, `target_branch` and `tracking_freshness`,
+`worktrees`, the identity (`repository`), the merge target, `limits`,
+`budget`, `probes`, `operations`, `selected`, `excluded`, `omitted`
+(`{count, exactness: "exact"}`), `notes`, `completeness`, `apply_allowed`,
+`refusals` and `plan_digest` (R12 in research.md).
+`probes` counts every Git child other than a removal and `operations` the
+removals, each child once (lead ruling R-27; research.md R8). Rows are ordered
+main worktree first, then by raw path bytes; `selected`, `excluded` and the
+execution order are by raw path bytes.
 
 Completeness: a plan is `incomplete` when the row cap is exceeded
 (`inspect-cap`), a repository-wide probe failed or a row is
@@ -364,7 +366,7 @@ result, the exit status and the standard-error head:
 | --- | --- | --- |
 | `complete` | the child exited 0 and its streams ended | none |
 | `complete-at-bound` | its parser reached its bound and the handle was terminated | none; never `probe-failed` |
-| `failed` | it exited nonzero or by a signal, could not be spawned, or its last record was truncated | `probe-failed` |
+| `failed` | it exited nonzero or by a signal, could not be spawned, or its parser's `finish()` raised `ParseError` (a truncated last record, or a record not in its format) | `probe-failed` |
 | `timeout` | its budget passed | `probe-timeout` |
 | `deadline` | the work deadline was the limit | `deadline-exceeded` |
 | `interrupted` | the slot was read set while planning | none: D1's `Interrupted` is raised |
@@ -491,7 +493,7 @@ check row, its rule unchanged; `update --apply --component shape` or
 | removal floor, ceiling | 5 s of work deadline left; 300 s after spawn |
 | row caps | 128 (`all-safe`, `single`), 256 (`report`) |
 | targets per run | 16 |
-| ignored entries, status records, samples | 64, 4,096, 8 |
+| `ignored_entries`, `status_records`, `ignored_samples` | 64, 4,096, 8 |
 | reflog read, manifest read | 64 KiB, 1 MiB |
 | revalidation, final rescan | at most 5 and 3 Git children |
 
