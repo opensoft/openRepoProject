@@ -353,7 +353,7 @@ G. Landing order: A to E, then F, G and H.
   line, `sys.modules[loader.name] = module` before `exec_module`, so that a
   `@dataclass` in `project` loads there too (R-29): it is that file's only edit
   outside T046, and no test there changes.
-- [ ] T010 [P] Add the fixture builders to `tests/clean_support.py`: `repo()`;
+- [x] T010 [P] Add the fixture builders to `tests/clean_support.py`: `repo()`;
   `bare_remote()`; `merged_worktree(branch, path=None)`, the recipe of
   `tests/test_project.py:857` copied, not extracted (`worktree add -b`, a
   commit of its own, `push -u`, `merge --no-ff` into the merge target);
@@ -371,7 +371,7 @@ G. Landing order: A to E, then F, G and H.
   `start_new_session`'s `setsid()` (R-31; the spike's
   `harness-spike/prove4_pty.py`). That `preexec_fn` is the test's own;
   `project` never uses one (C4).
-- [ ] T011 [P] Add the counting wrapper, the fake Gits and the text fixtures to
+- [x] T011 [P] Add the counting wrapper, the fake Gits and the text fixtures to
   `tests/clean_support.py`. `install_counting_git(bin_dir, log, real=REAL_GIT,
   hooks=None)` writes a POSIX `sh` script after `SH_WRAPPER` in the lead's
   `harness-spike/spike_lib.py` (plan review M4, R-29): before Git runs, it
