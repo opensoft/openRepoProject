@@ -141,8 +141,9 @@ confirmed run, on fresh evidence, with nothing changed for a run without it.
   the apply result record carries `branch_retirement` `{stage, reason, branch,
   planned_sha, observed_sha, command, exit_status, probes_performed}`; `stage`
   is `retired`, `retained` or `not-attempted`, or null when the post-check
-  could not establish it, and the ADDED requirement lists each reason. The
-  plan envelope carries `branch_plan`, each selected row's planned action.
+  could not establish it, and the ADDED requirement lists each reason. Each
+  entry of the plan's `selected` carries `branch_plan`, its planned action,
+  and the plan envelope gains no key.
   Without the flag both keys are absent, never null, since null keeps change
   1's meaning, unknown or not established (`CAS/pc:1128-1129`). The target's
   `stage`, its reasons, the fifteen ladder classes, the gates, the refusal
@@ -329,9 +330,12 @@ their `CAS` line.
     `### Requirement: Clean reports every path exactly or excludes it`.
   - Untouched (`CAS/pc:1091`):
     `### Requirement: Clean plans and refusals are versioned JSON`.
-    The plan key `branch_plan` and the target key `branch_retirement` are
-    stated in the ADDED requirement (L-4), which says that they extend this
-    requirement's lists of envelope and target keys under the flag only (lane
+    Its plan envelope is a listed set of fields ("When a plan is built it SHALL
+    be the plan envelope: ...", `CAS/pc:1094-1100`), so the envelope gains no
+    key; the two per-target sub-records, `branch_plan` on each `selected` entry
+    and `branch_retirement` on each target, follow L-10's pattern and are stated
+    in the ADDED requirement (L-4), which says that they extend this
+    requirement's keys for those objects under the flag only (lane
     openRepoProject-3's L10); a new key is not "a rename, removal, type change
     or change of meaning" (`CAS/pc:1129-1131`), no enum value, refusal code or
     note code is added, and `--apply --json` stays accepted with `--all-safe`
@@ -339,7 +343,8 @@ their `CAS` line.
   - ADDED:
     `### Requirement: Clean retires a removed worktree's branch only on fresh head and ancestry evidence`.
     The flag and its argument rules; the plan's keeps and the reflog proof;
-    the flagged plan lines, `branch_plan` and the digest's `retire` member;
+    the flagged plan lines, the `branch_plan` sub-record of each `selected`
+    entry and the digest's `retire` member;
     the branch stage, its re-read, checks, branch child and post-check; never
     force, never remote, never a retry; the `branch_retirement` sub-record and
     its reasons; the stop rule; the bound and the counts; the question,
@@ -403,11 +408,11 @@ their `CAS` line.
   `specs/004-project-clean-all-safe/plan.md` on branch
   `004-project-clean-all-safe`, re-checked at `4e3af0a`, where its tasks build
   it as `apply_removals(plan, run)`; `design.md` Context), the flag, its
-  argument rules, the plan's keeps and the reflog proof, `branch_plan` and the
-  digest's `retire` member, the branch stage after the rescan, the
-  `branch_retirement` sub-record, the three exit rows, the question, the
-  summary and branch lines, the next commands, the stop block's branch reason
-  and the residual-window line; the parser's `clean` flags
+  argument rules, the plan's keeps and the reflog proof, the `branch_plan`
+  sub-record and the digest's `retire` member, the branch stage after the
+  rescan, the `branch_retirement` sub-record, the three exit rows, the question,
+  the summary and branch lines, the next commands, the stop block's branch
+  reason and the residual-window line; the parser's `clean` flags
   (`project:1109-1117` today) gain `--retire-branches`. The explicit
   `delete-branch` path (`project:723-735`) is unchanged. No new dependency, no
   network.
@@ -641,8 +646,10 @@ open:
   the flag the digest's canonical text also carries `retire`, the branches the
   plan retires with their planned SHAs, so a flagless preview's digest, which
   a reviewer approved with every branch kept, never authorizes a flagged
-  apply; without the flag the text and value are change 1's. The plan envelope
-  carries `branch_plan`, so that a JSON preview shows what the digest binds.
+  apply; without the flag the text and value are change 1's. Each `selected`
+  entry carries a `branch_plan` sub-record, so that a JSON preview shows what
+  the digest binds; the plan envelope, a listed set of fields in change 1
+  (`CAS/pc:1094-1100`), gains no key.
   The rejected alternatives: a digest that ignores the flag, the draft's first
   choice, which let a flagless approval delete up to 16 branches under `--yes`;
   and refusing `--expect-plan` with the flag, which would leave every scripted
@@ -680,11 +687,14 @@ departs:
   `branch.<b>` section goes with it (`design.md` Risks). The repository
   identity is the one the rescan re-established, which a target `removed` with
   reason null requires (`CAS/pc:919-921`).
-- **A-16's reflog proof, as worded.** A commit is named when it is the new
-  object of a reflog entry, as the ruling defines it; the proof is the
-  ruling's form, one child per repository and one per row only when it prints
-  a commit. A failure or timeout of the repository's child fails every row's
-  proof, so every selected branch is kept.
+- **A-16's reflog proof, as amended on 2026-10-19.** A commit is named when it
+  is the new object or the non-zero old object of a reflog entry, the oldest
+  surviving entry's old object included, so that a commit that `git reflog
+  expire` has left named only as an old object is proven merged too; the first
+  text named new objects only, and the writer's report raised the gap. The proof
+  is the ruling's form, with no extra child, one child per repository and one
+  per row only when it prints a commit. A failure or timeout of the repository's
+  child fails every row's proof, so every selected branch is kept.
 - **The plan's keep order.** `reflog-unmerged`, then `branch-in-use`, then
   `head-not-merge-target`, then `branch-shared`, so that the next step printed
   for a kept branch never leads to deleting work only its reflog holds: the
@@ -926,8 +936,8 @@ to L12) was applied in the same round; its rows follow the council's.
 | S-2: the branch child has no spawn floor | MEDIUM | VALID (A-5 as amended): the re-read and branch child start only while more than the 5 s removal floor remains, the strict test council B on PR #27 asked for, the re-read under `min(5 s, work remaining less the removal floor)`; the deadline scenario gains the AND; `retired` with `deadline-exceeded` dropped as unreachable | What Changes; Capabilities (bounds); project-clean delta; held project-command block; `design.md` D3, D5, D7 |
 | S-3: a branch two worktrees hold stops the batch | LOW | VALID (A-18): `branch-shared` for earlier holders, the stage at the last; `branch-in-use` at plan time for a holder outside the selection; a holder found only at the stage still stops | project-clean delta (ADDED); `design.md` D4, Risks |
 | S-4: D2's reuse of the post-check listing is in no requirement and collides with T085 | LOW | NOTED: D2's substitution deleted; the next target's own re-read catches a moved merge target; T085 untouched | `clarifications.md`; `design.md` D2 |
-| AE-1: retiring a branch deletes its reflog, the last reference to amended-away work | HIGH | VALID (A-16): the plan's reflog proof keeps such a branch (`reflog-unmerged`); the "loses no commit" and "lossless" claims now say what is proven; Risks names the `branch.<b>` keys; new Open Question on patch equivalence | What Changes; Rules; Decisions; Open Questions; both deltas; `design.md` D4, Risks |
-| AE-2: the digest ignores the flag, so a flagless approval authorizes deletions | MEDIUM | VALID (A-1 as amended): the flagged preview exists, the digest carries `retire` under the flag, and a flagless digest refuses a flagged apply; the Out of Scope bullet on previews is deleted; "Clean reports local worktree state" MODIFIED for its digest sentence (L-11) | What Changes; Capabilities; Decisions; Out of Scope; project-clean delta; `design.md` D1, D10 |
+| AE-1: retiring a branch deletes its reflog, the last reference to amended-away work | HIGH | VALID (A-16, amended 2026-10-19 to name each entry's non-zero old object as well as its new one, the oldest surviving entry's old object included, with no extra child): the plan's reflog proof keeps such a branch (`reflog-unmerged`); the "loses no commit" and "lossless" claims now say what is proven; Risks names the `branch.<b>` keys; new Open Question on patch equivalence | What Changes; Rules; Decisions; Open Questions; both deltas; `design.md` D4, Risks |
+| AE-2: the digest ignores the flag, so a flagless approval authorizes deletions | MEDIUM | VALID (A-1 as amended): the flagged preview exists, the digest carries `retire` under the flag, and a flagless digest refuses a flagged apply; the Out of Scope bullet on previews is deleted; "Clean reports local worktree state" MODIFIED for its digest sentence (L-11); a JSON preview shows each row's planned action in a `branch_plan` sub-record on its `selected` entry, the plan envelope, a listed set of fields in change 1, gaining no key | What Changes; Capabilities; Decisions; Out of Scope; project-clean delta; `design.md` D1, D10 |
 | AE-3: two foreseeable retentions stop the batch every run | MEDIUM | VALID (A-17, A-18, A-4 as amended): plan-time keeps never stop the run; applied with change: no `merge-base --is-ancestor` child at plan time, the ruling taking the SHA test instead | Decisions; project-clean delta; `design.md` D4, D6 |
 | AE-4: the human result keeps no record of what it deleted | LOW | VALID (A-19): as P-3 | project-clean delta (ADDED); `design.md` D8, Rollback |
 | A-20 (the lead's ruling on lane 3's M2, after lane openRepoProject-2's answer) | ruling | applied: the project-command block is MODIFIED on PR #19's text and HELD uncommitted for lane openRepoProject-2's check, with the five Dependencies points | Capabilities (project-command); Dependencies and Sequencing; `design.md` D3, Migration Plan |

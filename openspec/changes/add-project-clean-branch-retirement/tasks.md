@@ -33,8 +33,10 @@ duplicate them.
   amended, P-2, P-4), with lane openRepoProject-3's packet-fidelity findings on
   `874d1ad` (H1, M1 to M6, L1 to L12) and council B's three refinements applied
   in the same round; applied by `79a71ec`, `909425b`, `f93073b`, `6d237fe`,
-  `36f3eef`, `15cf7ed`, `e012757` and the commit that ticks this task, the
-  project-command block held uncommitted (ruling A-20); verified by "Council
+  `36f3eef`, `15cf7ed`, `e012757`, the commit that ticks this task and the
+  commit titled 'Name old reflog objects in the proof (A-16 as amended) and move
+  branch_plan onto each selected entry', the project-command block held
+  uncommitted (ruling A-20); verified by "Council
   Verdicts" in `proposal.md`, one row per council concern id and per lane 3
   id, by `clarifications.md`, and by the council comment on the pull request.
 - [x] 1.4 Spec deltas and design written: `specs/project-clean/spec.md`

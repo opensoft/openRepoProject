@@ -802,9 +802,11 @@ as "Clean can explicitly retire verified worktrees" states, and every key this
 requirement adds to a plan or a result SHALL be absent, never null, because
 null means unknown or not established. `--json` SHALL be accepted with the flag
 exactly where "Clean plans and refusals are versioned JSON" accepts it without
-the flag, and the keys this requirement adds SHALL extend, under the flag only,
-that requirement's lists of plan envelope keys and of target keys. The flag
-SHALL change no gate and no selection.
+the flag, and the two per-target sub-records this requirement adds,
+`branch_plan` on each entry of a plan's `selected` and `branch_retirement` on
+each target of an apply result record, SHALL extend, under the flag only, the
+keys that requirement lists for those objects; the plan envelope SHALL gain no
+key. The flag SHALL change no gate and no selection.
 
 Under the flag the plan SHALL decide, for each selected row, whether its branch
 is retired or kept, and SHALL keep it for the first of these reasons that
@@ -812,14 +814,15 @@ holds:
 
 1. `reflog-unmerged`: a commit that the branch's reflog names is not proven an
    ancestor of the merge target's SHA, a commit being named when it is the new
-   object of an entry of `logs/refs/heads/<branch>` as the `unstarted-branch`
-   gate read it. The proof SHALL be one Git child per repository, `rev-list
-   --max-count=1 --stdin`, given the named commits of every selected row and
-   then `--not` and the merge target's SHA, and, only when that child prints a
-   commit, one such child per selected row over that row's named commits. A
-   row whose child prints a commit, or whose proof fails or times out, a
-   failure or timeout of the repository's child failing every row's proof,
-   SHALL keep its branch.
+   object of an entry of `logs/refs/heads/<branch>`, as the `unstarted-branch`
+   gate read it, or the non-zero old object of one, the oldest surviving entry's
+   old object included. The proof SHALL be one Git child per repository,
+   `rev-list --max-count=1 --stdin`, given the named commits of every selected
+   row and then `--not` and the merge target's SHA, and, only when that child
+   prints a commit, one such child per selected row over that row's named
+   commits. A row whose child prints a commit, or whose proof fails or times
+   out, a failure or timeout of the repository's child failing every row's
+   proof, SHALL keep its branch.
 2. `branch-in-use`: a registered worktree that is not selected, the main
    worktree included, has the branch checked out in the plan's registry
    listing.
@@ -837,18 +840,17 @@ branch it retires, `  remove PATH; keep BRANCH (REASON)` for one whose branch
 it keeps, `REASON` reading `checked out at PATH2` for `branch-in-use`, and
 `  remove PATH; BRANCH is decided at PATH2` for an earlier holder of a shared
 branch, `PATH2` being its last holder, where a plan without the flag prints
-`  remove PATH [BRANCH]`. The plan envelope SHALL carry `branch_plan`, one
-object `{path, branch, planned_sha, action, reason}` per selected row in
-canonical order, `action` being `retire` or `keep` and `reason` null or the
-keep's reason. The canonical text of `plan_digest` SHALL also carry, as its
-last member, after the selected triples, `retire`, the `[branch, planned_sha]`
-pairs of the branches the plan retires, in canonical order and present when
-empty, so that `--expect-plan` binds a flagged
-apply only to a flagged preview: a digest taken without the flag SHALL refuse a
-flagged apply with `plan-digest-mismatch` and exit status 2, before any
-question or mutation, as any mismatch does. Without the flag nothing SHALL be
-added to the canonical text, so that the digest is the one a run without this
-requirement computes.
+`  remove PATH [BRANCH]`. Each entry of the plan's `selected` SHALL carry
+`branch_plan`, an object `{action, reason}`, `action` being `retire` or `keep`
+and `reason` null or the keep's reason. The canonical text of `plan_digest`
+SHALL also carry, as its last member, after the selected triples, `retire`, the
+`[branch, planned_sha]` pairs of the branches the plan retires, in canonical
+order and present when empty, so that `--expect-plan` binds a flagged apply only
+to a flagged preview: a digest taken without the flag SHALL refuse a flagged
+apply with `plan-digest-mismatch` and exit status 2, before any question or
+mutation, as any mismatch does. Without the flag nothing SHALL be added to the
+canonical text, so that the digest is the one a run without this requirement
+computes.
 
 Under the flag, and only for a target whose rescan proves it `removed` with
 reason null and whose branch the confirmed plan retires, the run SHALL retire
@@ -1042,8 +1044,8 @@ branch stage stopped the run, SHALL read `branch BRANCH: REASON`, and whose
 - **THEN** both worktrees are removed, both branches remain at their planned
   SHAs, the result prints `Removed 2; branches kept: ` with both branches, the
   counting wrapper records no `branch` child and no reflog child, no target
-  carries `branch_retirement`, the plan carries no `branch_plan`, and the exit
-  status is 0
+  carries `branch_retirement`, no `selected` entry carries `branch_plan`, and
+  the exit status is 0
 
 #### Scenario: A single target with the flag equals a one-item batch
 
@@ -1269,6 +1271,10 @@ branch stage stopped the run, SHALL read `branch BRANCH: REASON`, and whose
 - **AND** when a test `git` makes the repository's reflog child exit nonzero,
   both branches are kept with `reflog-unmerged`, both worktrees are removed,
   and the exit status is 0
+- **AND** when `git reflog expire` has left of an eligible branch b3's reflog
+  only a reset entry whose old object is a commit the merge target lacks, so
+  that the commit is named only as that entry's old object, b3 is kept with
+  `reflog-unmerged` too and the commit stays reachable from b3's reflog
 
 #### Scenario: A flagged run's next commands keep the flag
 
@@ -1294,7 +1300,8 @@ branch stage stopped the run, SHALL read `branch BRANCH: REASON`, and whose
   the human plan and progress on standard error, and `--apply --action remove
   --worktree P --yes --json --retire-branches` does the same for P
 - **AND** `project clean <root> --all-safe --json --retire-branches` prints the
-  plan envelope with `branch_plan`, which the envelope without the flag lacks
+  plan envelope, whose every `selected` entry carries `branch_plan` and which
+  has no key that the envelope without the flag lacks
 
 #### Scenario: The question names the branches to retire
 

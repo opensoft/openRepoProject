@@ -139,16 +139,17 @@ refusal, exit 2, with the extended error object under `--json`. Change 1 has no
 single-target preview, so the flagged preview is `--all-safe` only.
 
 Under the flag the plan decides each selected row's branch (D4), prints the
-flagged plan lines (D8), carries `branch_plan` and adds `retire` to the digest
-input (D10), and counts the stage in `operations.estimated` and
-`probes.estimated` (D7). The digest input under the flag therefore differs
-from every flagless one, even when it retires nothing, so `--expect-plan`
-binds a flagged apply only to a flagged preview; a flagless digest given to a
-flagged apply refuses with `plan-digest-mismatch`, exit 2, before any question
-or mutation, as change 1 refuses any mismatch. Without the flag the digest
-input and value are change 1's byte for byte, and so is the report's equality
-with the `--all-safe` preview that "Clean reports local worktree state" states;
-that requirement is MODIFIED only to say a flagged plan's digest is its own.
+flagged plan lines (D8), gives each `selected` entry a `branch_plan` sub-record
+and adds `retire` to the digest input (D10), and counts the stage in
+`operations.estimated` and `probes.estimated` (D7). The digest input under the
+flag therefore differs from every flagless one, even when it retires nothing, so
+`--expect-plan` binds a flagged apply only to a flagged preview; a flagless
+digest given to a flagged apply refuses with `plan-digest-mismatch`, exit 2,
+before any question or mutation, as change 1 refuses any mismatch. Without the
+flag the digest input and value are change 1's byte for byte, and so is the
+report's equality with the `--all-safe` preview that "Clean reports local
+worktree state" states; that requirement is MODIFIED only to say a flagged
+plan's digest is its own.
 
 Alternatives rejected: deletion by default for `remove`, as `5fc2b51` did,
 because the packet keeps "implicit local branch deletion" a non-goal
@@ -264,9 +265,11 @@ whether the run retires its branch, and keeps it for the first of these
 reasons that holds, in this order so that the printed advice never leads to
 deleting work only the reflog holds:
 
-1. `reflog-unmerged` (A-16): a commit the branch's reflog names, the new object
-   of an entry of `logs/refs/heads/<branch>` as the `unstarted-branch` gate
-   read it, is not proven an ancestor of the merge target's SHA. One `rev-list
+1. `reflog-unmerged` (A-16, as amended): a commit the branch's reflog names,
+   the new object or the non-zero old object of an entry of
+   `logs/refs/heads/<branch>` as the `unstarted-branch` gate read it, the
+   oldest surviving entry's old object included, is not proven an ancestor of
+   the merge target's SHA. One `rev-list
    --max-count=1 --stdin` child per repository is given every selected row's
    named commits, then `--not` and the merge target's SHA; it prints nothing
    when every named commit is merged. Only when it prints a commit does one
@@ -661,9 +664,13 @@ nothing here is verified by CI there.
 ### D10. JSON and the enum question (L-4, A-1 as amended)
 
 `branch_retirement` is one new key on a target object, with enums of its own,
-and `branch_plan` one new key on the plan envelope, under the flag only: `{path,
-branch, planned_sha, action, reason}` per selected row in canonical order,
-`action` `retire` or `keep`. The canonical text of `plan_digest` gains a
+and `branch_plan` one new key on each entry of a plan's `selected`, `{action,
+reason}`, `action` `retire` or `keep`, both under the flag only. The plan
+envelope gains no key: "Clean plans and refusals are versioned JSON" defines it
+as a listed set of fields ("When a plan is built it SHALL be the plan envelope:
+...", `CAS/pc:1094-1100`), so a new envelope key would need a MODIFIED block of
+that requirement (L-11), and the per-target sub-record of L-10's pattern needs
+none. The canonical text of `plan_digest` gains a
 `retire` member under the flag only, its last member, after the selected
 triples: the `[branch, planned_sha]` pairs of the branches the plan retires in
 canonical order, present when empty; without the flag the text is change 1's
@@ -702,11 +709,11 @@ proposal puts it before Brett Heap with L-4's recommendation.
   (`description`, `pushRemote`, any tool's keys) are deleted and not
   restored; `git branch BRANCH SHA` recreates the branch from the SHA both
   results print and `git branch -u` its upstream, nothing else.
-- [The reflog proof names only each entry's new object, as ruling A-16
-  defines it] -> After `git reflog expire` has dropped earlier entries, the
-  old object of the oldest surviving entry is held by the reflog but is not
-  checked, and is lost with it when it is not merged. The ruling binds; the
-  proposal reports the point to the lead for a ruling.
+- [After `git reflog expire` has dropped earlier entries, a commit can be
+  named only as the old object of the oldest surviving entry] -> Closed by
+  A-16 as amended on 2026-10-19: the proof's input is every non-zero object a
+  reflog entry names, new and old, so that commit is proven merged or the
+  branch is kept, with no extra child.
 - [A rebased or amended branch whose old commits the merge target lacks is
   kept, never retired] -> By design (A-16); `delete-branch` stays its explicit
   path after the person inspects `git reflog BRANCH`, and the patch-equivalence
