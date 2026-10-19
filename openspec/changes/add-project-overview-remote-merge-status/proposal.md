@@ -26,8 +26,11 @@ deltas are written on; `CAS` is `openspec/changes/add-project-clean-all-safe/`
 `openspec/specs/project-review-safety/spec.md`; and `project:N` is the
 executable. Change 1's evidence model,
 `Repository inspection requires Git 2.36 and shares one evidence model`
-(CAS/cmd:90), is [E]. The lane's rulings are cited as L-1 to L-9 and C-1 to
-C-8 (2026-10-11), and L-10 to L-15, B-14, C-9 and C-10 (2026-10-18).
+(CAS/cmd:90), is [E]. The lane's rulings are cited as L-1 to L-9 and C-1 to C-8
+(2026-10-11), L-10 to L-15, B-14, C-9 and C-10 (2026-10-18), and L-16, L-17 and
+C-11 to C-14 (2026-10-19). `PR19/cmd` is draft PR #19's
+`openspec/changes/add-project-clean-all-safe/specs/project-command/spec.md` at
+`c462d87`.
 
 ## Why
 
@@ -130,6 +133,21 @@ the revalidation signature and added ladder classes.
   `gh` requests are counted in `remote.requests` alone, and the `remote`
   object keeps no `probes` of its own, so a run has one count of Git
   children.
+- **One sentence each in the Termination and Budgets paragraphs of change 1's
+  evidence model**, on draft PR #19's text (C-11). A remote-target read that
+  is stopped, reaped or abandoned is recorded in its rows' `remote`, never as
+  a row's `probe-timeout`, and a `gh` child gets the ADDED requirement's
+  limit, `min(5 s, remote budget remaining)`, in place of the 15 s that [E]
+  keeps for children other than Git. Lane openRepoProject-2, the owner of
+  change 1 and PR #19, reads the block's difference from PR #19's text before
+  it is committed.
+- **One paragraph in "Overview prints a versioned JSON envelope"** (C-12,
+  L-11). In a run with `--remote`, the envelope's `remote`, after
+  `scan_errors`, and each queried row's `remote`, after `classification`, are
+  the only exceptions to its "exactly these fields, every one always present"
+  (APO/ov:607-608); without `--remote` the document holds exactly change 2's
+  fields. Lane openRepoProject-4, the owner of change 2, reads the block's
+  difference from change 2's text before it is committed.
 
 ## Rules This Change Keeps
 
@@ -177,7 +195,9 @@ writes its deltas on change 2's text (L-1, L-3).
 ### Modified Capabilities
 
 Headers are quoted verbatim, one per line; the ADDED header is proposed text.
-Line numbers are APO/ov's at `961c405`.
+Line numbers are APO/ov's at `961c405`; for `project-command`, PR19/cmd's for
+its one modified requirement and those of
+`openspec/specs/project-command/spec.md` at `961c405` for the rest.
 
 - `project-overview` (all twelve of change 2's requirements accounted for; it
   has no canonical spec until change 2 archives):
@@ -195,6 +215,16 @@ Line numbers are APO/ov's at `961c405`.
     with and without `--remote`, the `--remote` run's counts exceeding the
     other's by exactly the remote-target reads, and the `gh` request counted
     only in `remote.requests`.
+  - MODIFIED (`:606`):
+    `### Requirement: Overview prints a versioned JSON envelope`.
+    Change 2's whole block and its six scenarios stay untouched; one paragraph
+    is added (C-12, L-11): in a run with `--remote` the envelope also carries
+    `remote`, after `scan_errors`, and each worktree row the ADDED requirement
+    queries carries `remote`, after `classification`, the only exceptions to
+    "exactly these fields, every one always present"; without `--remote` the
+    document holds exactly the fields listed. Added scenario: a `--remote`
+    run's document carries exactly the listed fields plus those two keys in
+    those positions, and no other row has a `remote` key.
   - MODIFIED (`:709`):
     `### Requirement: Overview is local and read-only`.
     Change 2's whole block and its one scenario stay untouched; a second
@@ -221,7 +251,7 @@ Line numbers are APO/ov's at `961c405`.
     object, each absent, never null, where it does not apply (L-10); the
     freshness sentence; isolation from every local result, a failed, cut or
     stopped remote-target read or `gh` child included, and from `project
-    clean`; and the human lines. Twelve scenarios.
+    clean`; and the human lines. Thirteen scenarios.
   - Untouched (`:10`):
     `### Requirement: Overview discovers projects within configured roots only`
   - Untouched (`:74`):
@@ -237,10 +267,6 @@ Line numbers are APO/ov's at `961c405`.
     (no finding code is added)
   - Untouched (`:483`):
     `### Requirement: Overview suggests only gated clean commands`
-  - Untouched (`:606`):
-    `### Requirement: Overview prints a versioned JSON envelope`
-    (fields added in a `--remote` run only, absent, not null, without it,
-    under its "additive" sentence; Decisions, Open Questions)
   - Untouched (`:724`):
     `### Requirement: Overview reports default-branch health`
   - Untouched (`:761`):
@@ -248,13 +274,36 @@ Line numbers are APO/ov's at `961c405`.
   - Untouched (`:801`):
     `### Requirement: Overview renders a readable human report`
     (a `remote` line and a summary line added in a `--remote` run only)
-- `project-clean`, `project-clean-review-safety`, `project-command`,
-  `project-review-safety` (change 2's MODIFIED "YAML decoding errors are
-  structured refusals" included) and `speckit-extension-integration`:
-  untouched.
+- `project-command` (change 1's delta, unarchived, on canonical
+  `openspec/specs/project-command/spec.md`):
+  - MODIFIED (change 1's ADDED requirement, PR19/cmd `:90`):
+    `### Requirement: Repository inspection requires Git 2.36 and shares one evidence model`.
+    PR #19's whole block and its nine scenarios stay untouched; one sentence
+    is added to Termination, so that a remote-target read stopped, reaped or
+    abandoned is recorded in its rows' `remote`, never as a row's
+    `probe-timeout`, and one to Budgets, so that a `gh` child gets the limit
+    the ADDED requirement of `project-overview` gives it in place of the 15 s
+    of "Children other than Git" (C-11). Added scenario: a held remote-target
+    read records no `probe-timeout`, and a held `gh` child is stopped at 5 s,
+    not 15 s.
+  - Untouched (`:7`): `### Requirement: Delegate project creation`
+  - Untouched (`:44`): `### Requirement: Inspect and diagnose` (change 1
+    modifies it; this change does not)
+  - Untouched (`:53`): `### Requirement: Explicit maintenance` (likewise)
+  - Untouched (`:62`): `### Requirement: Distribution and compatibility`
+  - Untouched (`:70`): `### Requirement: Creation question is asked only of a person choosing at the terminal`
+  - Untouched (`:140`): `### Requirement: Creation question offers the Triad first`
+  - Untouched (`:200`): `### Requirement: Known Triad obstacles are named before the question and refused on a Triad answer`
+  - Untouched (`:265`): `### Requirement: A Triad answer asks for the organization and the visibility`
+  - Untouched (`:324`): `### Requirement: Creation advisory follows a single repository created without the question`
+  - Untouched (`:381`): `### Requirement: Creation offer precedes the workflow follow-up`
+- `project-clean`, `project-clean-review-safety`, `project-review-safety`
+  (change 2's MODIFIED "YAML decoding errors are structured refusals"
+  included) and `speckit-extension-integration`: untouched.
 
-In sum: two MODIFIED and one ADDED requirement in `project-overview`, 28
-scenarios (14, 2 and 12), nothing else.
+In sum: three MODIFIED and one ADDED requirement in `project-overview`, 36
+scenarios (14, 2, 7 and 13), and one MODIFIED requirement in `project-command`,
+10 scenarios; 46 in all, nothing else.
 
 ## Impact
 
@@ -292,9 +341,10 @@ scenarios (14, 2 and 12), nothing else.
 
 ### Dependencies and Sequencing
 
-- **Written on change 2's text (L-1, L-15).** The two MODIFIED blocks are
-  change 2's "Overview bounds its work and reports what it omitted"
-  (APO/ov:166-315) and "Overview is local and read-only" (APO/ov:709-722) as
+- **Written on change 2's text (L-1, L-15).** The three `project-overview`
+  MODIFIED blocks are change 2's "Overview bounds its work and reports what it
+  omitted" (APO/ov:166-315), "Overview prints a versioned JSON envelope"
+  (APO/ov:606-707) and "Overview is local and read-only" (APO/ov:709-722) as
   merged at `961c405`, which main still holds at `e9d6711` with change 2
   unarchived (2026-10-18), not `openspec/specs/`, which has no
   `project-overview` yet; main is not merged into this branch. `openspec
@@ -302,6 +352,21 @@ scenarios (14, 2 and 12), nothing else.
   for the MODIFIED base. If change 2's text moves before it archives, these
   blocks re-align before this change is ratified, and any sentence lane
   openRepoProject-4 asks for comes as a follow-up commit.
+- **Written on PR #19's text for change 1's evidence model (C-11, L-11).**
+  The MODIFIED block of "Repository inspection requires Git 2.36 and shares
+  one evidence model" in `specs/project-command/spec.md` carries that
+  requirement whole as draft PR #19 (`c462d87`) rewrites it in change 1's
+  `specs/project-command/spec.md` (PR19/cmd:90-255), with its nine scenarios,
+  and adds one sentence to its Termination paragraph, one to its Budgets
+  paragraph and one scenario. PR #19 is therefore a dependency: this change
+  archives after change 1 archives with PR #19's text in it, and if PR #19
+  closes unmerged, the block is re-based on change 1's text at main
+  (CAS/cmd:90-214) before ratification. Lane openRepoProject-2, the owner of
+  change 1 and PR #19, did not widen PR #19 before Brett Heap rules on it and
+  holds the two clauses as its LQ-6 (2026-10-19); if Brett Heap has PR #19
+  absorb them, this block is dropped and PR #19 stays a dependency. Lane
+  openRepoProject-2 reads the block's difference from PR #19's text before it
+  is committed.
 - **Lane openRepoProject-4's agreement gated the spec text (C-7, C-9).**
   "Overview is local and read-only" and the ADDED requirement were committed
   after lane openRepoProject-4 read them (2026-10-11). Lane
@@ -309,9 +374,24 @@ scenarios (14, 2 and 12), nothing else.
   what it omitted", its new scenario, and the ADDED requirement's edits for
   C-9 and L-10 on 2026-10-19, and they are committed with its fixes applied
   (Decisions, "Lane openRepoProject-4's check").
+- **Two spec files are held for their owners (C-11 to C-13, L-17).** This
+  proposal and `design.md` describe the spec text as the alignment review of
+  2026-10-19 left it, which is written but not committed:
+  `specs/project-command/spec.md`, the MODIFIED block of change 1's evidence
+  model, held for lane openRepoProject-2 to read against PR #19's text; and the
+  revised `specs/project-overview/spec.md`, with the MODIFIED block of
+  "Overview prints a versioned JSON envelope" (C-12), the review's edits to the
+  sentences lane openRepoProject-4 agreed (C-13) and its other spec edits, held
+  for lane openRepoProject-4 to read against change 2's text and its own
+  agreement. Until each lane agrees its diff, the committed
+  `specs/project-overview/spec.md` is the text lane openRepoProject-4 agreed on
+  2026-10-19 and no `specs/project-command/spec.md` is committed; a part lane
+  openRepoProject-4 declines takes the review's Outcomes B to D (C-12, C-13).
 - **Archives after change 2 (L-5).** Change 2 archives after change 1 and
   after feature 005 merges (APO design.md, Migration Plan 5); this change
-  archives after change 2 archives.
+  archives after change 2 archives. Its block of change 1's evidence model
+  archives after change 1, which change 2 already follows, and after PR #19's
+  text is in change 1.
 - **Realized after feature 005 (lane openRepoProject-4's terms).** Feature 005
   is specified from change 2 as ratified, local only, with no `--remote`, and
   does not anticipate this change. This change edits none of change 2's files
@@ -322,12 +402,17 @@ scenarios (14, 2 and 12), nothing else.
   (issue #24) archives after change 1 and, since it carries a MODIFIED block
   of change 2's "Overview reuses the cleanup classifier and merge target"
   (B-14), after change 2 as well; `add-project-clean-branch-retirement`
-  (issue #23) archives after it. This change shares no requirement with
-  either, depends on neither, and never alters feature 004's or 005's order.
-- **PR #19 is not a dependency.** At its head `c462d87`, still a draft on
-  2026-10-18 (L-15), it keeps "Children
-  other than Git SHALL keep 15 s." and exempts only `clean`'s push child from
-  the protocol pins; neither moves what this change reads.
+  (issue #23) archives after it. This change shares one requirement with
+  `add-project-clean-branch-retirement`, change 1's evidence model, which both
+  modify on PR #19's text; by L-11, whichever of the two archives second
+  re-bases its block on the other's archived block before it archives. It
+  shares no requirement with `add-project-clean-cache-disposal`, depends on
+  neither sibling, and never alters feature 004's or 005's order.
+- **PR #19's other text.** At `c462d87`, still a draft on 2026-10-19, PR #19
+  also exempts `clean`'s push child from [E]'s process groups, from its scrub
+  of `GIT_ALLOW_PROTOCOL` and from its protocol pins, and keeps `clean`'s push
+  and delete-branch children unbounded; this change's block carries that text
+  unchanged and adds nothing about those children.
 - **Harvest.** `09af8c8` is reference only: none of its `clean` or `doctor`
   behaviour returns. Its two open Copilot threads are answered here: the
   remote target "only from a checked-out target worktree" (3989411802) by
@@ -362,26 +447,37 @@ The lane's common rulings: **L-1** (drafted on change 2's ratified text at
 `961c405`, unarchived until feature 005 merges, APO design.md, Migration
 Plan 5; archives after it), **L-2** (packet cited at `da33d92`; nothing
 under `ideation/brainstorm/` edited), **L-3** (stays in `project-overview`;
-PR #2's `project-clean-remote-merge-status` capability is not reused; only
-the two texts the opt-in contradicts are MODIFIED, "Overview is local and
-read-only" and, for the probe count, "Overview bounds its work and reports
-what it omitted" (C-9), and the new contract is ADDED under a name no change
-2 requirement has), **L-4** (a row sub-record and an envelope object stated
-in the ADDED requirement; no stage, ladder or finding value;
-CAS/pc:1129-1131 and APO/ov:655-658 disagree on enums; Open Questions), **L-5**
-(archive order), **L-6** (issue #25 and the Status line), **L-7** (the
-feature number at `/speckit.specify`), **L-8** (the flow: draft here,
-reviews by the lane) and **L-9** (no host-absolute path; the bidi check).
+PR #2's `project-clean-remote-merge-status` capability is not reused; only the
+texts the opt-in contradicts are MODIFIED: "Overview is local and read-only",
+"Overview bounds its work and reports what it omitted" for the probe count
+(C-9), "Overview prints a versioned JSON envelope" for the two `remote` keys,
+and change 1's "Repository inspection requires Git 2.36 and shares one evidence
+model" for a stopped remote-target read and the `gh` child's limit (C-11), and
+the new contract is ADDED under a name no change 2 requirement has), **L-4** (a
+row sub-record and an envelope object stated in the ADDED requirement; no
+stage, ladder or finding value; CAS/pc:1129-1131 and APO/ov:655-658 disagree on
+enums; Open Questions), **L-5** (archive order), **L-6** (issue #25 and the
+Status line), **L-7** (the feature number at `/speckit.specify`), **L-8** (the
+flow: draft here, reviews by the lane) and **L-9** (no host-absolute path; the
+bidi check).
 
 From the addendum of 2026-10-18: **L-10** (the row `remote` and the envelope
 `remote` are present only in a `--remote` run and absent, never null,
-otherwise; the row's only on a queried row, Decisions below), **L-12** (CI is
-Linux only since PR #32: the `tests` workflow's `test (3.10)` and `test
-(3.12)` on `ubuntu-latest`; no statement here rested on macOS CI alone),
-**L-13** (commit trailers), **L-15** (written on change 2's text at main
-`e9d6711`, whose `openspec/` equals `961c405`'s; main is not merged into this
-branch), and **C-9** and **C-10** below. L-14 waits for this change's first
-alignment review.
+otherwise; the row's only on a queried row, Decisions below), **L-11** (a
+contradiction of change 1's or change 2's text is settled in a MODIFIED block
+of that requirement, never from the ADDED one or as a departure: C-9, C-11 and
+C-12), **L-12** (CI is Linux only since PR #32: the `tests` workflow's `test
+(3.10)` and `test (3.12)` on `ubuntu-latest`; no statement here rested on macOS
+CI alone), **L-13** (commit trailers), **L-14** (the Status paragraph and tasks
+1.2, after this change's first alignment review), **L-15** (written on change
+2's text at main `e9d6711`, whose `openspec/` equals `961c405`'s; main is not
+merged into this branch), and **C-9** and **C-10** below. From the addendum of
+2026-10-19: **L-16** (a block of a requirement that draft PR #19 also amends is
+written on PR #19's text, and this change archives after PR #19's amendment of
+change 1 lands), **L-17** (change 1's evidence model, which this change and
+`add-project-clean-branch-retirement` both modify: whichever archives second
+re-bases its block on the other's archived block, and each block is held until
+lane openRepoProject-2 has checked its diff), and **C-11** to **C-14** below.
 
 Packet open decisions taken, each citing the text that leaves it open:
 
@@ -399,9 +495,10 @@ Packet open decisions taken, each citing the text that leaves it open:
   checked-out target worktree; the identity accepted by PRS:32's rule.
 - **The client and bounds, C-4** (DI:1056-1057, "Use the normal GitHub
   client authentication path", names no client): `gh api`, one child per
-  request, under the packet's bounds verbatim; the 5 s is this child kind's
-  own limit within the overview, beside CAS/cmd:189's "Children other than
-  Git SHALL keep 15 s." (Open Questions).
+  request, under the packet's bounds verbatim; the 5 s is this child kind's own
+  limit within the overview, which this change's MODIFIED block of [E] gives a
+  `gh` child in place of CAS/cmd:189's "Children other than Git SHALL keep 15
+  s." (C-11; Open Questions 2).
 - **The evidence fields, C-5** (DI:1036-1060 names no output form;
   APO/ov:421-422 closes the finding table for schema version 1): the row
   sub-record `remote {state, number, url, head_sha, reason}`, an envelope
@@ -423,8 +520,6 @@ Packet open decisions taken, each citing the text that leaves it open:
   out of the envelope's `probes`, its fourth option has since replaced:
   C-9); and `gh`'s update-notifier and prompt switches set and asserted from
   the fake `gh`'s recorded environment.
-  The `remote` keys are absent, not null, without `--remote`, the condition
-  for reading them as additive.
 - **Tests, C-8**: offline, with a fake `gh` on `PATH`.
 - **The probe count, C-9** (lane openRepoProject-4's fourth option,
   2026-10-11, in place of the remote-target half of its edit (b);
@@ -460,6 +555,22 @@ Packet open decisions taken, each citing the text that leaves it open:
   children, and change 2's "every Git child" read as collection's alone).
 - **CI, C-10**: L-12 applied to the proposal, design and tasks; every CI
   statement names the current matrix.
+- **Change 1's evidence model, C-11** (the lane's ruling of 2026-10-19, after
+  lane openRepoProject-2 declined to widen draft PR #19 before Brett Heap
+  rules on it and recorded the two clauses as its LQ-6; L-11): the
+  remote-target reads are [E]'s Git children, so [E]'s Termination sentence,
+  "after which the child SHALL be abandoned and its row recorded
+  `probe-timeout`" (PR19/cmd:189-192; CAS/cmd:177-180), and its Budgets
+  sentence, "Children other than Git SHALL keep 15 s." (PR19/cmd:206;
+  CAS/cmd:189), contradict this change, and L-11 settles each in a MODIFIED
+  block of [E], not from the ADDED requirement. The block carries [E] whole on
+  PR #19's text, with its nine scenarios, adds one sentence to each paragraph
+  and one scenario, and lifts the extension brief's "no change to
+  project-command" (C-11). Rejected: the general clauses put to lane
+  openRepoProject-2 for PR #19 (a child whose output is no row's local
+  evidence recorded where its requirement says; children whose requirement
+  sets a shorter limit), which lane openRepoProject-2 holds as LQ-6 for Brett
+  Heap; if he has PR #19 absorb them, this block is dropped.
 - **Lane openRepoProject-4's check, 2026-10-19** (its check of the held spec
   against change 2's text at `961c405`, which found that the carve-out's
   "every other sentence" still bound a `gh` child to read no credential
@@ -568,14 +679,8 @@ Departures, each naming what it departs from:
   "merged on GitHub as pull request #N; local ancestry does not prove it (a
   squash or rebase merge, or a merge target not fetched since); never retired
   on this evidence".
-- **"exactly these fields"** (APO/ov:607-608) and the human layout
-  (APO/ov:802-813) in a `--remote` run: read with APO/ov:655-658, "adding a
-  field or an enum value is additive"; the fields and lines appear only in a
-  `--remote` run, and without it the `remote` keys are absent, not null
-  (L-4, L-10). The first draft's departure on `probes` (APO/ov:248-254) is
-  gone: C-9 modifies that requirement instead.
 
-Readings of packet text:
+Readings of packet and ratified text:
 
 - **"It reads no credential files"** (DI:310) and "Use the normal GitHub
   client authentication path" (DI:1056-1057): under `--remote` the `gh`
@@ -584,6 +689,10 @@ Readings of packet text:
 - **"each is recorded as unknown"** (DI:1053): as the row's
   `remote.state`, never as a row error or scan error, so change 2's completeness
   and exit rules stay as written.
+- **The human layout** (APO/ov:802-813) lists what each shown row prints and
+  never says that no other line may be printed; the `remote` line and the
+  summary's `Remote:` line, printed only in a `--remote` run, add to it without
+  contradicting it, so it is not modified.
 
 ## Corrections to the Packet
 
@@ -609,9 +718,11 @@ lane openRepoProject-4 first.
    DI:1057-1058.
    And CAS/cmd:189 gives "Children other than Git" 15 s, where the packet
    gives each request 5 s: recommendation, the 5 s stands as the `gh` child's
-   own limit within the overview, stated in this change's ADDED requirement,
-   and change 1's 15 s stays the default for every other non-Git child, with
-   `project-command` unmodified.
+   own limit, stated in this change's ADDED requirement and carried into
+   change 1's evidence model by this change's MODIFIED block of it (C-11,
+   L-11), and change 1's 15 s stays the default for every other non-Git child.
+   Lane openRepoProject-2 holds a general form of that clause for PR #19 as
+   its LQ-6.
 3. **Seams in feature 005 (to lane openRepoProject-4).** None is needed. The
    `--remote` flag is an argument error in feature 005 until this change's
    realization adds it; the `remote` fields, the remote phase after collection

@@ -6,22 +6,27 @@ Lane: openRepoProject-5
 
 See `proposal.md` for why and what, and the deltas under `specs/` for the
 requirements. `specs/project-overview/spec.md` modifies "Overview bounds its
-work and reports what it omitted" (fourteen scenarios, one of them new) and
-"Overview is local and read-only" (two scenarios, one of them new), and adds
-"Overview reports remote merge evidence on request" (twelve scenarios). The
-council has not run yet, so there is no `clarifications.md`; its noted
-constraints, once the lane runs it, are answered here by decisions added for
-them.
+work and reports what it omitted" (fourteen scenarios, one of them new),
+"Overview prints a versioned JSON envelope" (seven scenarios, one of them new)
+and "Overview is local and read-only" (two scenarios, one of them new), and
+adds "Overview reports remote merge evidence on request" (thirteen scenarios);
+`specs/project-command/spec.md` modifies change 1's "Repository inspection
+requires Git 2.36 and shares one evidence model" on draft PR #19's text (ten
+scenarios, one of them new; C-11). The council has not run yet, so there is no
+`clarifications.md`; its noted constraints, once the lane runs it, are answered
+here by decisions added for them.
 
 Citations follow `proposal.md`: the packet at `da33d92`; APO, CAS, PRS and
 `project:N` at main `961c405`, which main `e9d6711` holds unchanged for them
-(L-15). Change 2's requirements are cited by header
-under these labels: [B] `Overview bounds its work and reports what it
-omitted`, which this change modifies for the probe count (C-9), [J]
-`Overview prints a versioned JSON envelope`, [H] `Overview
+(L-15). [E] is cited on PR #19's `specs/project-command/spec.md` at `c462d87`
+(C-11). Change 2's requirements are cited by header under these labels: [B]
+`Overview bounds its work and reports what it omitted`, which this change
+modifies for the probe count (C-9), [J] `Overview prints a versioned JSON
+envelope`, which this change modifies for the two `remote` keys, [H] `Overview
 renders a readable human report` and [X] `Overview exits by completeness and
-severity`; change 1's evidence model is [E], and the ADDED requirement is
-[R].
+severity`; change 1's evidence model is [E], which this change modifies on
+PR #19's text for a stopped remote-target read and the `gh` child's limit
+(C-11), and the ADDED requirement is [R].
 
 The rulings and the packet's boundary map to the decisions:
 
@@ -37,6 +42,9 @@ The rulings and the packet's boundary map to the decisions:
 | C-8: offline tests with a fake `gh` | D11 |
 | C-9; APO/ov:248-254: the remote-target reads in the envelope's `probes` | D2, D7, D8 |
 | L-10: `remote` present only where this change acts, never null | D8 |
+| C-11; L-11: [E]'s Termination and Budgets sentences | D2, D7 |
+| C-12; L-11: [J]'s two `remote` keys | D8 |
+| C-14; APO/ov:765-766: an exception the remote phase records as none of its reasons exits 2 | D10 |
 | C-10, L-12: CI on Linux only | Migration Plan |
 
 What in `project` shapes the approach (at `961c405`; features 004 and 005
@@ -169,7 +177,8 @@ the `gh` children, which are not Git children, are counted only in
 `remote.requests` (D5). A read that exits nonzero, reaches its budget,
 overruns its output cap or is stopped at the deadline is
 `remote-target-unread` on its rows' `remote` and never a row error or a scan
-error, the exception [B]'s added paragraph states (D7, D10).
+error, the exception that [B]'s added paragraph and [E]'s added Termination
+sentence state (D7, D10).
 
 Rejected: parsing `<common_dir>/config` (includes, conditional includes and
 `insteadOf` in other files would disagree with Git, as change 2's design
@@ -310,22 +319,23 @@ drained, capped and discarded.
 
 ### D7. Limits, cancellation and the run bound
 
-At most four `gh` children run at once. Each child's limit ends at
-`min(its start + 5 s, the remote budget's end)`. At its limit the loop sends
-SIGTERM to its group, SIGKILL 2 s later, and waits 2 s more for the reap
-before abandoning it, as [E] and [B] stop a Git child; the key is `timeout`
-when the child's own 5 s ended first and `aborted` when the budget or the
-deadline did.
+At most four `gh` children run at once. Each child's limit ends at `min(its
+start + 5 s, the remote budget's end)`. This is the shorter limit that [E]'s
+Budgets paragraph, as this change modifies it, gives a `gh` child in place of
+15 s. At its limit the loop sends SIGTERM to its group, SIGKILL 2 s later, and
+waits 2 s more for the reap before abandoning it, as [E] and [B] stop a Git
+child; the key is `timeout` when the child's own 5 s ended first and `aborted`
+when the budget or the deadline did.
 
 When the remote budget ends or the deadline passes, no child starts; every
 key not yet sent, and every row whose remote-target read never started, is
 `cancelled`; every request in flight is stopped as above and `aborted`; and a
 remote-target read in flight is stopped and its rows `remote-target-unread`.
-None of these is a row error or a scan error, and none is [B]'s
-`probe-timeout` or `deadline-exceeded` on a row: [B], as this change
-modifies it, records them in the rows' `remote` (D2, D10).
-Everything starts inside the 60 s deadline and the last stop adds at most
-2 s + 2 s, so [B]'s 64 s bound holds; rendering follows.
+None of these is a row error or a scan error, and none is [B]'s `probe-timeout`
+or `deadline-exceeded` on a row: [B] and [E], as this change modifies them,
+record them in the rows' `remote` (D2, D10). Everything starts inside the 60 s
+deadline and the last stop adds at most 2 s + 2 s, so [B]'s 64 s bound holds;
+rendering follows.
 
 Each `gh` child enters the in-flight registry while SIGINT, SIGTERM and SIGHUP
 are blocked, as a Git child does (APO design.md, D1), so a signal terminates
@@ -349,12 +359,12 @@ In a `--remote` run only:
   keys, each an integer, zeros included) and `completeness`; it has no
   `probes`, the remote-target reads being in the envelope's (D2).
 
-Without `--remote` both `remote` keys are absent, not null, so a document
-of a run without `--remote` is exactly [J]'s, which is the condition for
-reading the keys as additive; in a `--remote` run a row outside the query
-set has no `remote` key either, never a null one, since null means unknown
-or not established (CAS/pc:1128-1129) and such a row was not asked. The
-envelope's `probes` gains D2's reads in a `--remote` run only.
+Without `--remote` both `remote` keys are absent, not null, so a document of a
+run without `--remote` is exactly [J]'s, as [J], as this change modifies it,
+states; in a `--remote` run a row outside the query set has no `remote` key
+either, never a null one, since null means unknown or not established
+(CAS/pc:1128-1129) and such a row was not asked. The envelope's `probes` gains
+D2's reads in a `--remote` run only.
 
 Integers are JSON integers and the `_seconds` fields integers, as [J]
 requires. No existing key or enum changes, `probes` counts as [B], as
@@ -424,12 +434,15 @@ DI:1059-1060).
 | --- | --- |
 | [B]'s thirteen scenarios (kept) | MODIFIED [B] |
 | Probe counts in a remote run | MODIFIED [B] |
+| [J]'s six scenarios (kept) | MODIFIED [J] |
+| The remote keys of a --remote run | MODIFIED [J] |
 | Local and read-only (kept) | MODIFIED, local and read-only |
 | A remote run stays read-only apart from its queries | MODIFIED, local and read-only |
 | A squash-merged branch is explained and kept | [R] |
 | A merged branch whose upstream was deleted | [R] |
 | The remote target comes from the merge target's branch configuration | [R] |
 | One request per exact head | [R] |
+| The chosen pull request and a rejected answer | [R] |
 | Remotes that give no request | [R] |
 | No gh, or a gh without authentication | [R] |
 | API failures stay unknown | [R] |
@@ -438,6 +451,8 @@ DI:1059-1060).
 | Expiry cancels queued and in-flight requests | [R] |
 | Remote evidence changes nothing local | [R] |
 | A signal while requests run | [R] |
+| [E]'s nine scenarios (kept, PR #19's text) | MODIFIED [E] |
+| The overview's remote-phase children | MODIFIED [E] |
 
 Each has a test named after it; the packet's deferred scenario (DI:1450-1454)
 is covered by "One request per exact head", "Remotes that give no request",
