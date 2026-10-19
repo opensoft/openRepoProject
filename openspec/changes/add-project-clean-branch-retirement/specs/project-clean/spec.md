@@ -521,12 +521,11 @@ a removal child SHALL be spawned only while at least the 5 s removal floor of
 the work deadline remains, and otherwise that target and every later one SHALL
 be `not-attempted` with `deadline-exceeded`. A branch stage of
 `--retire-branches`, as "Clean retires a removed worktree's branch only on
-fresh head and ancestry evidence" states, SHALL start its re-read only while
-more than that floor remains and its branch child only while at least that
-floor remains, under the same rule, and the
-re-read's manifest read and ref listing SHALL get `min(5 s, work remaining less
-the removal floor)`, so that the floor is left for the branch child. A removal
-child still running at
+fresh head and ancestry evidence" states, SHALL start its re-read and its
+branch child only while more than that floor remains, under the same rule, and
+the re-read's manifest read and ref listing SHALL get `min(5 s, work remaining
+less the removal floor)`, so that the floor is left for the branch child. A
+removal child still running at
 the deadline SHALL be waited for, up to its 300 s hard ceiling, and the
 reconciliation reserve SHALL count from its exit. A run with no removal in
 flight SHALL therefore end within 64 s of its start, not counting the time
@@ -841,9 +840,10 @@ branch, `PATH2` being its last holder, where a plan without the flag prints
 `  remove PATH [BRANCH]`. The plan envelope SHALL carry `branch_plan`, one
 object `{path, branch, planned_sha, action, reason}` per selected row in
 canonical order, `action` being `retire` or `keep` and `reason` null or the
-keep's reason. The canonical text of `plan_digest` SHALL also carry `retire`,
-the `[branch, planned_sha]` pairs of the branches the plan retires, in
-canonical order and present when empty, so that `--expect-plan` binds a flagged
+keep's reason. The canonical text of `plan_digest` SHALL also carry, as its
+last member, after the selected triples, `retire`, the `[branch, planned_sha]`
+pairs of the branches the plan retires, in canonical order and present when
+empty, so that `--expect-plan` binds a flagged
 apply only to a flagged preview: a digest taken without the flag SHALL refuse a
 flagged apply with `plan-digest-mismatch` and exit status 2, before any
 question or mutation, as any mismatch does. Without the flag nothing SHALL be
@@ -886,10 +886,11 @@ precedes any later target's revalidation, in this order:
    post-check. The branch child's exit status alone SHALL never prove a
    retirement.
 
-The re-read SHALL start only while more than the 5 s removal floor of the work
-deadline remains, and the branch child only while at least that floor remains,
-so that the deadline never stops a branch child that had its whole budget;
-neither SHALL start after a signal has been received. A stage that cannot start
+The re-read and the branch child SHALL each start only while more than the 5 s
+removal floor of the work deadline remains, so that a branch child always has
+its whole budget and the deadline never stops it; the branch child, a
+mutation, SHALL never be abandoned at its budget, and neither SHALL start after
+a signal has been received. A stage that cannot start
 its re-read or its branch child for either cause SHALL spawn nothing more and
 SHALL retain the branch with `deadline-exceeded` or `interrupted`. The stage
 SHALL never pass `-D`, `--force` or `-f`, never spawn a second branch child for
@@ -1331,3 +1332,9 @@ branch stage stopped the run, SHALL read `branch BRANCH: REASON`, and whose
   the apply, as when the main worktree leaves the merge target before a row
   whose upstream ref is absent is planned, the fresh digest differs from D and
   the flagged apply refuses with `plan-digest-mismatch` and exit 2
+- **AND** when the flagged plan also selects a target whose plan lists caches,
+  as "Clean disposes of listed caches before a worktree removal" states, the
+  canonical text carries that target's cache data after its triple and
+  `retire` after both, so that a change to one of its listed caches, or to a
+  branch the plan retires, gives another digest and the flagged apply refuses
+  with `plan-digest-mismatch` and exit 2
