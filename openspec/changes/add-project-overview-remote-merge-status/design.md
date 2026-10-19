@@ -84,14 +84,27 @@ move these lines, and this change's feature re-pins them):
 - Tool facts checked for this design: Git 2.43.0 answers
   `for-each-ref --format='%(upstream:remotename)%00%(upstream:remoteref)'`
   from `branch.<name>.remote` and `.merge` with no remote-tracking ref
-  present, prints `.` for a local remote and empty fields for a remote given
-  as a URL, and `git remote get-url <name>` expands `url.<base>.insteadOf` and
-  exits 2 for a remote that is not configured. `gh` 2.96.0 documents exit
-  status 4 for a command that "requires authentication" (`gh help
-  exit-codes`) and the environment switches D5 sets (`gh help environment`);
-  with no token, an empty configuration directory and its proxy pointed at a
-  closed local port, `gh api` exited 4 with nothing on standard output instead
-  of failing on the unreachable proxy.
+  present, prints `.` for a local remote and empty fields for a remote given as
+  a URL or for a branch with either key unset, and `git remote get-url <name>`
+  expands `url.<base>.insteadOf` and exits 2 for a remote that is not
+  configured. `gh` 2.96.0 documents exit status 4 for a command that "requires
+  authentication" (`gh help exit-codes`) and the environment switches D5 sets
+  (`gh help environment`); with no token, an empty configuration directory and
+  its proxy pointed at a closed local port, `gh api` exited 4 with nothing on
+  standard output instead of failing on the unreachable proxy.
+  `Commit.associatedPullRequests` was checked live on 2026-10-19 by two
+  read-only GraphQL queries of D5's shape against `opensoft/openRepoProject`:
+  for the head commit of the squash-merged pull request #31 (`e3ad3cc`, one
+  commit, its branch still present, outside `main`'s ancestry, squashed as
+  `63dd4ad`) and of #17 (`0764624`, five commits, its head branch deleted,
+  outside `main`'s ancestry, squashed as `f401e06`), each answer held exactly
+  that pull request, with `state` `MERGED`, `headRefOid` equal to the commit,
+  `baseRefName` `main`, `baseRepository.nameWithOwner`
+  `opensoft/openRepoProject` and `hasNextPage` false. Offline, with empty
+  configuration, state and cache directories and its proxy at a closed port,
+  `gh` 2.96.0 under D5's switches wrote no file, both when it exited 4 for want
+  of a token and when it exited 1 on the refused connection with nothing on
+  standard output.
 
 ## Goals / Non-Goals
 
@@ -153,9 +166,9 @@ protocol pins:
 
 1. `git for-each-ref --format=%(upstream:remotename)%00%(upstream:remoteref)%00 refs/heads/<target>`,
    where `<target>` is `merge_target.name`. An empty remote name (no
-   `branch.<target>.remote`, or a remote given as a URL), a remote of `.`, or
-   a merge ref outside `refs/heads/` gives `no-remote-target`, and the second
-   child does not run.
+   `branch.<target>.remote` or no `branch.<target>.merge`, or a remote given as
+   a URL), a remote of `.`, or a merge ref outside `refs/heads/` gives
+   `no-remote-target`, and the second child does not run.
 2. `git remote get-url <remote name>`, which prints the URL as Git expands
    `url.<base>.insteadOf`. Exit 2 ("No such remote") gives `no-remote-target`.
    The name is passed as Git printed it; a name Git would read as an option
@@ -291,7 +304,9 @@ past which the key is `api-error`, and at most 1 MiB of body; at the next byte
 it stops reading, stops the child (D7) and records `truncated`.
 
 - Exit 4 with nothing on standard output: `gh-unauthenticated`.
-- A child the loop stopped: `timeout` or `aborted` (D7).
+- A child the loop stopped at its limit, at the remote budget's end or at the
+  deadline: `timeout` or `aborted` (D7); one stopped for a body past 1 MiB is
+  `truncated`, and one whose status and headers passed 64 KiB is `api-error`.
 - Otherwise the status line decides, whatever the exit status, since `gh`
   exits 1 on HTTP errors and on GraphQL errors: 401 gives `unauthorized`; 429,
   or 403 with `X-RateLimit-Remaining: 0` or a `Retry-After` header, gives
@@ -413,12 +428,23 @@ DI:1059-1060).
   beside it, and writes `HTTP/2.0 <code> <text>`, headers, a blank line and a
   body. Per key the table can hold the child for N seconds, exit 4 with no
   output, send 1 MiB and one byte of body, set `hasNextPage`, answer 401, 403,
-  a rate limit or 502, or name pull requests with any head, base and state.
-  It appends one JSON record per run: the argv, the names of the environment
+  429, a 403 with `X-RateLimit-Remaining: 0`, a 200 body with an `errors` entry
+  of a given type, a null `data.repository`, a status and header block over
+  64 KiB, or 502, or name pull requests with any head, base and state. It
+  appends one JSON record per run: the argv, the names of the environment
   variables set, the values of `GH_NO_UPDATE_NOTIFIER`,
   `GH_NO_EXTENSION_UPDATE_NOTIFIER`, `GH_PROMPT_DISABLED`, `GH_TELEMETRY` and
   `NO_COLOR`, whether `GH_TOKEN` equals the caller's, the working directory,
   and its start and end times.
+- The counting `git` wrapper of change 2's design (APO design.md, D13), which
+  can hold a chosen argv, gains one fixture control: for a chosen argv in a
+  chosen repository it exits with a given status and a fixed line on standard
+  error, without running Git, or, for a chosen argv, ignores SIGTERM and holds
+  past its budget. "A failed or held remote-target read stays unknown" uses it
+  to make the first remote-target read exit 128 in one repository and to hold
+  it past 10 s in another, and "The overview's remote-phase children" to hold
+  one past its budget while it ignores SIGTERM; this extends the test file
+  only, never change 2's text.
 - No real network: in-process runs install an audit hook that fails
   `socket.connect` (APO design.md, D13); subprocess runs set `HTTPS_PROXY`
   and `HTTP_PROXY` to a closed local port, so even a real `gh` reached by
@@ -468,6 +494,10 @@ requests".
   unmerged pull request for a commit outside the default branch] -> The
   `not-found` text says that no pull request matched, never that none exists;
   `closed` is reported whenever the answer holds one.
+- [The association was checked live only for squash merges in one repository,
+  not for a rebase merge, a pull request from a fork or a commit that two pull
+  requests share] -> The `not-found` text says that no pull request matched,
+  never that none exists, and no answer ever makes a row removable.
 - [A merge-commit merge not yet fetched reads like a squash merge] -> The
   merged line names both causes, and a `git fetch` lets local ancestry decide.
 - [Rate limits on a large estate] -> At most 64 requests a run; each limited
@@ -487,7 +517,9 @@ requests".
   `cancelled` or `aborted`, and `remote.completeness` says `incomplete`.
 - [The `for-each-ref` atoms on the Git 2.36 floor] -> Checked on 2.43 here;
   the realization checks them on 2.36 as change 1 checked its probes, or
-  reads the two keys with `git config --get`, at one more child.
+  reads the two keys with `git config --get`, at one more child. That fallback
+  changes the count that [B]'s added paragraph states, so it needs a spec
+  change before the Speckit handoff.
 - [A response's `url` in an unexpected form] -> The key is `api-error`; an
   unchecked string is never printed.
 - [Two clones of one repository with different merge targets share a key] ->
