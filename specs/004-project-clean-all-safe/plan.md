@@ -29,16 +29,18 @@ targeted revalidation before each removal, a removal child that is never
 interrupted, and a reconcilable record for every target. Single-target
 `--apply --action remove --worktree P` becomes a one-item batch. Every
 `clean --json` prints one versioned document. The work is confined to
-`project`, `tests/` (the test module and one new launcher), `README.md` and
-the CI workflow.
+`project`, `tests/` (new test modules, one per lane, with their helpers and one
+launcher), `README.md`, `AGENTS.md` and the CI workflow.
 
 Implementation slices, in dependency order; each leaves the suite green:
 
 1. **Baseline and test scaffolding** (research.md R10, R11, R15). The 96 tests
-   pass at `aadd709`. New helpers beside the existing ones, editing no existing
-   test: a merged, published worktree with a commit of its own; bulk
-   registrations written directly; a counting `git` wrapper (a POSIX `sh`
-   script that logs, per child, its arguments, directory, pid, parent pid,
+   pass at `aadd709`. The new tests go in modules of their own, one per lane
+   (`tests/test_clean_<lane>.py`, `tests/test_status_doctor_update.py`),
+   editing no existing test (lead ruling R-32). Their helpers, in
+   `tests/clean_support.py`: a merged, published worktree with a commit of its
+   own; bulk registrations written directly; a counting `git` wrapper (a POSIX
+   `sh` script that logs, per child, its arguments, directory, pid, parent pid,
    process group (`/proc/$$/stat` on Linux, `ps -o pgid= -p $$` elsewhere) and
    which of the seventeen scrubbed names are set, runs an optional pre-hook,
    runs the real `git` by absolute path, runs an optional post-hook after
@@ -48,11 +50,13 @@ Implementation slices, in dependency order; each leaves the suite green:
    `exec`ed Git, R10); the fake Gits of D1 and of the result scenarios
    (standard-error flood, SIGTERM ignored, 5,000 `!!` records, version 2.35.0,
    exit 0 without removing, a slow removal), each matching its subcommand
-   anywhere in its arguments, since the seven pins come first; a pty helper
+   anywhere in its arguments, since the seven pins come first; and a pty helper
    that makes the pty the controlling terminal (`TIOCSCTTY` after `setsid`) for
-   the push-child tests (R-31); and `tests/launch_project.py`, the launcher of
-   R10. The test module's loader (`tests/test_project.py:23-26`) gains
-   `sys.modules` registration, a setup line and not a test (R-29).
+   the push-child tests (R-31). The launcher of R10 is
+   `tests/launch_project.py`. The test module's loader
+   (`tests/test_project.py:23-26`) gains `sys.modules` registration, a setup
+   line and not a test (R-29). The `git-floor` CI job (FR-067, D17, R11) lands
+   here too, so that every push runs the floor.
 2. **Runner, parsers and the timing table** (D1, D2, D11, C4; R4, R10, R14).
    The module-level timing table, read at call time only (R-29); the child
    handle (`start`, termination without blocking: SIGTERM, then the handle's
@@ -99,14 +103,16 @@ Implementation slices, in dependency order; each leaves the suite green:
    and error rows; `Git: inspection-error (CODES)`; the JSON additions;
    `update`'s `dirty is not False` and `origin/HEAD` from row 6;
    `handoff()`'s `remote get-url` through the runner.
-8. **README and CI** (FR-065, FR-067; D17; R11). The "Clean up Git
+8. **README and AGENTS.md** (FR-065; D17). The "Clean up Git
    worktrees" section opens with the five behaviour changes, then the preview
    and apply, `--expect-plan`, the gates, the deferral, the narrow guarantee
    and residual window, the result record and recovery, and the advice to
    close sessions before a batch apply; the sentence at `README.md:195` is
    corrected; Install (`README.md:17-19`) states Git 2.36; the exit-code line
    (`README.md:284-286`) gains `clean`'s 1, 143, 129 and Git's status passing
-   through. The `git-floor` CI job.
+   through. `AGENTS.md` gains the Git 2.36 requirement and the clean tests with
+   their commands under "Runtime and verification", and a short section on
+   cleaning up worktrees for a person (lead ruling R-32).
 9. **Verification**. The whole suite; `traceability.md` naming a test for each
    of the 100 delta scenarios and for PR #19's "The push child reaches its
    remote", which R1 implements; `openspec validate --all --strict`; the ASCII
@@ -123,17 +129,20 @@ returns a failed result, so `handoff()` and `update()` run none (FR-053).
 `discover()`, `repo_state()`, `cleanup_report()`, `print_clean_report()`,
 `require_unchanged_cleanup_state()`, `clean()`, `handoff()`, `snapshot()`,
 `check_rows()`, `print_report()`, `inspect_project()`, `update()`, `parser()`
-and `main()` change; `default_branch()` and `ancestor()` retire. The new block
-sits after `discover()` and before `repo_state()`, so the code above it, which
-features 002 and 003 cite, moves only by what `Refused`, `git()` and
-`execute()` gain, and its names avoid those taken (`registry`, `profile`,
-`manifest`, `snapshot`, `probe`, `git`). Unchanged: `probe()` for non-Git
-children (`:863`, `:965`), `ask()`, `confirm()`, `choose()`, `manifest()` (the
-merge target reads through a bounded variant; `snapshot()` keeps `manifest()`),
-`new()` and its helpers, and `benches`. `show_plan()` stays as it is for `new`
-and `update`; `clean`'s push and delete-branch print `Working directory:` and
-their command through the path-escaping printer, so a root holding a Cc, Cf, Zl
-or Zp code point prints in the `$'...'` form (FR-041, SC-010).
+and `main()` change; `default_branch()` and `ancestor()` retire, and so do
+`print_clean_report()`, `matching_worktree()` and `cleanup_report()` once
+`grep` over `project` and `tests/` finds no caller after `clean()` is rewritten
+(lead ruling R-34). The new block sits after `discover()` and before
+`repo_state()`, so the code above it, which features 002 and 003 cite, moves
+only by what `Refused`, `git()` and `execute()` gain, and its names avoid those
+taken (`registry`, `profile`, `manifest`, `snapshot`, `probe`, `git`).
+Unchanged: `probe()` for non-Git children (`:863`, `:965`), `ask()`,
+`confirm()`, `choose()`, `manifest()` (the merge target reads through a bounded
+variant; `snapshot()` keeps `manifest()`), `new()` and its helpers, and
+`benches`. `show_plan()` stays as it is for `new` and `update`; `clean`'s push
+and delete-branch print `Working directory:` and their command through the
+path-escaping printer, so a root holding a Cc, Cf, Zl or Zp code point prints
+in the `$'...'` form (FR-041, SC-010).
 
 ## Citations
 
@@ -169,7 +178,8 @@ Table rows may exceed 79 columns, as in features 002 and 003.
 ## Technical Context
 
 **Language/Version**: Python 3.10+ (the README's requirement); CI runs 3.10
-and 3.12 on `ubuntu-latest` and `macos-latest`. Git 2.36 or later wherever a
+and 3.12 on `ubuntu-latest` only (Brett Heap's decision of 2026-10-15, #32;
+lead ruling R-35). Git 2.36 or later wherever a
 repository is inspected: 2.43.0 in the benches, 2.36.6 in the floor job.
 Local runs use Python 3.12.3 in the `py-bench` container.
 
@@ -190,8 +200,9 @@ research measured 48 to 52 s on another host; the harness spike measured
 120.3 s at load 126 to 136, and 91.4 s for its copy of `project` with every
 CLI run through the launcher).
 
-**Target Platform**: Linux and macOS, at a terminal and in scripts.
-Non-UTF-8 path scenarios run on Linux only.
+**Target Platform**: Linux and macOS, at a terminal and in scripts; CI runs
+Linux only (R-35). Non-UTF-8 path scenarios run on Linux only, and are skipped
+with their reason on macOS, as a person's local run may do.
 
 **Project Type**: CLI, one executable file (`project`).
 
@@ -209,8 +220,8 @@ scale read from the environment, a flag or a file (R10); Python 3.10
 compatibility in `project` (`start_new_session=True`, never `process_group=0`
 or `preexec_fn`; daemon threads, never a `concurrent.futures` pool; C4; the
 tests' pty helper may use `preexec_fn` for `TIOCSCTTY`); one executable file;
-every existing test passing unchanged but one (R15); the four CI jobs and the
-floor job green (SC-012).
+every existing test passing unchanged but one (R15); the two `test` jobs and
+the floor job green (SC-012).
 
 **Scale/Scope**: `clean` rebuilt in three modes; `status`, `doctor` and
 `update` moved onto the evidence model; 67 FRs and 100 delta scenarios (65,
@@ -229,14 +240,14 @@ tests of the parsers, ladder, gates, digest, escaping and exit table.
 | one test | under `run_cli`'s 20 s timeout |
 | whole suite | under 8 minutes in the bench, under 6 minutes per CI job |
 
-**CI shape** (R11): the four existing jobs (`ubuntu-latest` and
-`macos-latest`, Python 3.10 and 3.12) run the whole suite unchanged; one new
-job, `git-floor`, on `ubuntu-latest` with Python 3.10, checks out, sets up
-Python and installs `requirements.txt` as the four jobs do, then builds Git
-2.36.6 from kernel.org's tarball (sha256 checked), caches it by version and
-runner OS, puts it first on PATH, checks `git --version`, and runs
-`-k test_clean_ -k test_status_ -k test_doctor_`. At `961c405` that
-selection ran 15 tests, OK, in 7.7 s on task 2.2's build.
+**CI shape** (R11): the `test` job, two jobs (Python 3.10 and 3.12 on
+`ubuntu-latest`, Linux only since #32; R-35), runs the whole suite unchanged;
+one new job, `git-floor`, on `ubuntu-latest` with Python 3.10, checks out, sets
+up Python and installs `requirements.txt` as the `test` job does, then builds
+Git 2.36.6 from kernel.org's tarball (sha256 checked), caches it by version and
+runner OS, puts it first on PATH, checks `git --version`, and runs `-k
+test_clean_ -k test_status_ -k test_doctor_`. At `961c405` that selection ran
+15 tests, OK, in 7.7 s on task 2.2's build.
 
 No NEEDS CLARIFICATION remains: the change decides every technical question
 but those [research.md](research.md) settles, and its one open item, the
@@ -254,9 +265,9 @@ constitution gates. What governs instead: the ratified change
 never rebases, no work outside this worktree). Pre-research: pass, nothing to
 evaluate. Post-design: pass; the Phase 1 artifacts cite the design and depart
 from its text only where research.md records why: the push-child exception
-(R1, awaiting Brett Heap's word on PR #19), the lead's rulings R-26 to R-31
-(R10, R8, R1, R10, R14, R10), D1's handler span (R4) and D2's `waitpid`
-wording (R14).
+(R1, awaiting Brett Heap's word on PR #19), the lead's rulings R-26 to R-32
+(R10, R8, R1, R10, R14, R10, R15) and R-35 (R11), D1's handler span (R4) and
+D2's `waitpid` wording (R14).
 
 ## Project Structure
 
@@ -280,24 +291,35 @@ specs/004-project-clean-all-safe/
 ```text
 project                      the single executable: clean rebuilt; status,
                              doctor and update on the evidence model
-tests/test_project.py        the one test module: new tests and helpers
+tests/test_clean_<lane>.py   new: one test module per lane (R-32)
+tests/test_status_doctor_update.py
+                             new: the status, doctor and update tests
+tests/clean_support.py       new: the helpers every new module imports; not
+                             collected by discovery
 tests/launch_project.py      new: loads project, replaces its timing table,
                              calls main() in a child process (R10)
+tests/test_project.py        one method rewritten (R15) and one loader line
+                             added (R-29); nothing else
 README.md                    "Clean up Git worktrees", Install, exit codes
-AGENTS.md                    read; not edited
-.github/workflows/tests.yml  the git-floor job added; the four jobs unchanged
+AGENTS.md                    Git 2.36, the clean tests and a section on
+                             cleaning up worktrees for a person
+.github/workflows/tests.yml  the git-floor job added in the first slice; the
+                             `test` job unchanged
 openspec/changes/add-project-clean-all-safe/
                              the ratified change; read, not changed by the
                              implementation (this phase tidies one line of
                              its tasks.md, the Speckit handoff)
 ```
 
-**Structure Decision**: one executable with one test module. The feature
-adds `tests/launch_project.py` and the files under
-`specs/004-project-clean-all-safe/`, and edits `project`,
-`tests/test_project.py`, `README.md` and `.github/workflows/tests.yml`.
-`CLAUDE.md` and the other agent files at the root are not edited: they hold
-no Speckit plan markers, and feature 002's plan edited none.
+**Structure Decision**: one executable; its new tests in modules of their own,
+one per lane, with the helpers in `tests/clean_support.py` and the launcher in
+`tests/launch_project.py` (lead ruling R-32). The feature adds those files and
+the files under `specs/004-project-clean-all-safe/`, and edits `project`,
+`tests/test_project.py` (one method and one loader line only), `README.md`,
+`AGENTS.md` and `.github/workflows/tests.yml`. `CLAUDE.md` and the other agent
+files at the root are not edited: they hold no Speckit plan markers, and
+feature 002's plan edited none; `AGENTS.md` gains its sections by hand, outside
+the `OPENSPEC-SPECKIT-GLOBAL` block.
 
 ## Risks and Notes
 
@@ -305,24 +327,40 @@ no Speckit plan markers, and feature 002's plan edited none.
   review fixes) for Brett Heap's word; if he rules a follow-up change
   instead, only the push child's treatment moves (R1). The delete-branch
   child carries the pins either way (R5).
+- **Test layout (lead ruling R-32)**: the new tests live in new modules, not
+  in `tests/test_project.py`, which departs from design Migration Plan step 6
+  and the proposal's Impact; the feature PR body states it for Brett Heap's
+  word, and if he declines, the new modules fold into `tests/test_project.py`
+  before the merge (R15). `AGENTS.md` (T123) is outside the proposal's
+  Impact list too, which names `project`, `README.md` and
+  `tests/test_project.py`, so the PR body states it as well. The `git-floor`
+  job's place in Setup is no departure: design D17 and Migration Plan step 4
+  put the job in feature 004 and name no slice.
+- **CI runs Linux only (lead ruling R-35)**: since Brett Heap's decision of
+  2026-10-15 (#32, `e9d6711`), the `test` job runs Python 3.10 and 3.12 on
+  `ubuntu-latest` and no CI job runs macOS, where the proposal's Impact says
+  the suite runs "on Linux and macOS ... as CI runs". The OpenSpec text stays
+  as written, and the feature PR body notes the difference.
 - **Scenario count**: PR #19 adds one scenario, "The push child reaches its
   remote"; its test is written whether or not PR #19 has landed, and
   `traceability.md` names it (slice 9).
-- **macOS timing headroom (plan review U1, unverified)**: R-29's factors
-  were measured on Linux only. The harness spike, at load 124 to 134 on 32
-  cores, counted spurious timeouts in 5 runs per child budget: bare `git`
-  1/5 at 0.025 s and 0.05 s and 0/5 at 0.1 s, 0.25 s and 0.5 s; the `sh`
+- **macOS timing headroom, a local-run note (plan review U1, unverified)**:
+  R-29's factors were measured on Linux only. The harness spike, at load 124 to
+  134 on 32 cores, counted spurious timeouts in 5 runs per child budget: bare
+  `git` 1/5 at 0.025 s and 0.05 s and 0/5 at 0.1 s, 0.25 s and 0.5 s; the `sh`
   wrapper 5/5 at 0.1 s and below and 0/5 at 0.25 s and 0.5 s; the Python
-  wrapper 5/5 up to 0.25 s and 3/5 at 0.5 s. At the factors R-29 names for
-  the ceiling and deadline tests (about 0.03 to 0.05) the probe budget is
-  0.15 to 0.25 s. The plan review measured real Git children at 10 to 20 ms
-  median and 50 to 119 ms at worst on a loaded host. `macos-latest` was not
-  measured, so a time-bound test there may time out a real probe. Not
+  wrapper 5/5 up to 0.25 s and 3/5 at 0.5 s. At the factors R-29 names for the
+  ceiling and deadline tests (about 0.03 to 0.05) the probe budget is 0.15 to
+  0.25 s. The plan review measured real Git children at 10 to 20 ms median and
+  50 to 119 ms at worst on a loaded host. macOS was not measured, so a
+  time-bound test run there may time out a real probe; no CI job runs macOS
+  (R-35), so this is a note for a person's local run, not a CI risk. Not
   resolved here.
-- **`TIOCSCTTY` on macOS (R-31)**: the push-child terminal tests need the
-  pty as the controlling terminal; `fcntl.ioctl(0, termios.TIOCSCTTY, 0)`
-  after `setsid` was proven on Linux only, and is untested on the
-  `macos-latest` jobs: a CI risk for tasks to state.
+- **`TIOCSCTTY` on macOS, a local-run note (R-31)**: the push-child terminal
+  tests need the pty as the controlling terminal; `fcntl.ioctl(0,
+  termios.TIOCSCTTY, 0)` after `setsid` was proven on Linux only, and is
+  untested on macOS, where no CI job runs (R-35): a note for a local run, for
+  tasks to state.
 - **Existing tests that guard the switch**: `tests/test_project.py:736`
   asserts the exact set of doctor error rows, `:586` reads `status` of a
   linked worktree and expects that worktree's branch, and `:916` keys rows by

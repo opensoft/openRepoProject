@@ -86,16 +86,16 @@ realpath does (`worktree-not-found` otherwise).
 | relative path: any relative argument containing a `/` (`./x`, `x/`), `.`, `..`, or none | the repository Git finds at that directory joined to the working directory; `root` is its main worktree | `target-not-repository-root` where Git finds no worktree |
 | bare name: a relative argument with no `/`, not `.` or `..` (research.md R13) | `discover()`'s name lookup, its one Git child counted and bounded, then the directory it returns resolved as a worktree toplevel | `ambiguous-name`, `repository-not-found` |
 
-Then, in this order (M6): a submodule checkout (row 3 prints a third line)
-is refused; a first registry record that is `bare` is refused; a first
-record equal to `common_dir` takes `core.worktree` (row 4b) or else the
-candidate toplevel whose `.git` file names `common_dir`, and is refused when
-neither names it; otherwise the first record is the main worktree. Every
-refusal here is `target-not-repository-root`, exit 2, before any plan. The
-family-holder and manifest-ancestor redirections (`project:455-461`) never
-apply to a path argument. The command directory is `root`: every
-repository-wide Git child after resolution, every removal and the manifest
-read use it.
+Then, in this order (M6): a submodule checkout (row 3 prints a third line) is
+refused; a first registry record that is `bare` is refused; a first record
+equal to `common_dir` takes the realpath of `core.worktree` (row 4b; a relative
+value resolves against the git directory) or else the candidate toplevel whose
+`.git` file names `common_dir`, and is refused when neither names it; otherwise
+the first record is the main worktree. Every refusal here is
+`target-not-repository-root`, exit 2, before any plan. The family-holder and
+manifest-ancestor redirections (`project:455-461`) never apply to a path
+argument. The command directory is `root`: every repository-wide Git child
+after resolution, every removal and the manifest read use it.
 
 ## The removal question (FR-026; research.md R3)
 

@@ -33,31 +33,43 @@ spec.md's priority order (US1 to US9), then Polish. Phases start in the order
 "Dependencies & Execution Order" gives, which lets US7 and US9 run beside the
 other stories.
 
-**Departures from plan.md**, on the lead's brief and the merge rules of the
-lead's implementation slicing (impl-slicing-004):
+**Departures from the change's proposal and design**, each stated in the
+feature PR body for Brett Heap's word (lead ruling R-32); plan.md follows this
+file on both:
 
 - New tests go in new modules, one per foundational lane or story lane, with
-  shared helpers in `tests/clean_support.py`; plan.md's Project Structure and
-  design Migration Plan step 6 name `tests/test_project.py`. That file changes
+  shared helpers in `tests/clean_support.py`; the design's Migration Plan step
+  6 and the proposal's Impact name `tests/test_project.py`. That file changes
   in one method (T046, research.md R15) and in one line of its loader (T009,
-  lead ruling R-29).
-- `AGENTS.md` gains a clean section (T123); plan.md says it is read, not
-  edited.
-- The `git-floor` CI job lands in Setup (T003), so every push of this branch
-  runs the floor; plan.md puts it in slice 8.
-- `project` first gets named regions and contract constants (T004), and
-  `clean()` is rewritten once as a fixed pipeline (T047), so parallel writers
-  add code in disjoint regions and functions and their merges do not conflict.
-- The plan review and rulings R-29 to R-31 change these behaviours from the
-  plan as written at `dd923ee`, among others: the timing table replaced per
-  test by the test's own factor or table, not by one scale factor (R-29); a
-  child handle that terminates without blocking, advanced by the driver loop
-  (R-30); a pseudo-terminal made the push child's controlling terminal for its
-  terminal tests (R-31); push and delete-branch refusing beside any
-  `inspection-error` row (B1) and printing their paths through the escaping
-  printer (B2); one signal scope over the whole `clean` run (M1); and a
-  counting wrapper that records each child's scrubbed names and process group
-  before it `exec`s Git (M4).
+  lead ruling R-29). If Brett Heap declines, the new modules fold into
+  `tests/test_project.py` before the merge.
+- `AGENTS.md` gains a clean section (T123); the proposal's Impact lists
+  `project`, `README.md` and `tests/test_project.py`, and nothing in the change
+  names `AGENTS.md`.
+
+One difference is Brett Heap's own decision, so the PR body only notes it (lead
+ruling R-35): the proposal's Impact says the suite runs "on Linux and macOS
+with Python 3.10 and 3.12, as CI runs", and since his decision of 2026-10-15
+(#32, `e9d6711`) the `test` job runs 3.10 and 3.12 on `ubuntu-latest` only. The
+OpenSpec text stays as written; the macOS skips stay in the tests for a local
+run, and no task adds a macOS job.
+
+Three arrangements of this file are not departures, because the change leaves
+them open: the `git-floor` job's place in Setup (T003; design D17 and Migration
+Plan step 4 put the job in feature 004 and name no slice), the named regions
+and contract constants of `project` (T004), and `clean()` rewritten once as a
+fixed pipeline (T047), so that parallel writers add code in disjoint regions
+and functions and their merges do not conflict.
+
+The plan review and rulings R-29 to R-31 change behaviours of the plan as
+written at `dd923ee`, among others: the timing table replaced per test by the
+test's own factor or table, not by one scale factor (R-29); a child handle that
+terminates without blocking, advanced by the driver loop (R-30); a
+pseudo-terminal made the push child's controlling terminal for its terminal
+tests (R-31); push and delete-branch refusing beside any `inspection-error` row
+(B1) and printing their paths through the escaping printer (B2); one signal
+scope over the whole `clean` run (M1); and a counting wrapper that records each
+child's scrubbed names and process group before it `exec`s Git (M4).
 
 ## Format: `[ID] [P?] [Story] Description`
 
@@ -141,7 +153,8 @@ lead's implementation slicing (impl-slicing-004):
    and wakeup descriptor even when it raises.
 8. Expected human text comes from the D18 and D14 literals of
    `tests/clean_support.py` (T011), never from the design at test time.
-9. Skips print their reason: non-UTF-8 paths on macOS; permission fixtures when
+9. Skips print their reason: non-UTF-8 paths on macOS (a person's local run, as
+   no CI job runs macOS, lead ruling R-35); permission fixtures when
    `os.geteuid() == 0`; and "The sixteenth scrubbed name on Git 2.36" unless
    the `git` on PATH is 2.36 to 2.39.
 10. Standard output under `--json` is parsed by one `json.loads`, so it must
@@ -164,8 +177,8 @@ lead's implementation slicing (impl-slicing-004):
     controlling terminal (`run_pty_steps(..., controlling_tty=True)`:
     `TIOCSCTTY` after `setsid`), since without one even a child in `project`'s
     own process group cannot open `/dev/tty` (ENXIO). `TIOCSCTTY` is untested
-    on macOS: a CI risk, and a failure on `macos-latest` goes to the lead
-    before any skip is added (R-31).
+    on macOS, where no CI job runs: a note for a local run there, and a failure
+    on macOS goes to the lead before any skip is added (R-31, R-35).
 
 ---
 
@@ -201,11 +214,14 @@ regions and contracts every lane writes against.
   unittest discover -s tests -v -k test_clean_ -k test_status_ -k
   test_doctor_`, which takes every new module whole by its name (rule 2). Add
   `timeout-minutes: 30` to the new job only (impl-slicing-004 section 8). The
-  `test` job is untouched; lane openRepoProject-4's issue #22 edits only that
-  job's matrix, and whichever change lands second merges `main` in. Check that
+  patch's comment opens "The four jobs above"; it says "The `test` job above"
+  instead, since #32 (`e9d6711`) left that job on Python 3.10 and 3.12 on
+  `ubuntu-latest` only, with no CI job on macOS (lead ruling R-35). The `test`
+  job is untouched; lane openRepoProject-4's issue #22 edits only that job's
+  matrix, and whichever change lands second merges `main` in. Check that
   the file parses as YAML, that `actionlint` is clean where it is installed,
   and that the selection runs 15 tests at this commit.
-- [ ] T004 [P] Add the regions and contracts to `project`, one writer, nothing
+- [x] T004 [P] Add the regions and contracts to `project`, one writer, nothing
   reading them yet. Imports: `errno`, `selectors`, `signal`, `stat`,
   `threading`, `time` and `unicodedata`, all at once. After `discover()` and
   before `repo_state()`, the empty regions `timing`, `contracts`, `git
@@ -395,7 +411,7 @@ G. Landing order: A to E, then F, G and H.
 
 ### Lane C: the scrubbed environment and the pins
 
-- [ ] T012 [P] Add `tests/test_clean_scrub.py`:
+- [x] T012 [P] Add `tests/test_clean_scrub.py`:
   `test_clean_scrub_removes_the_seventeen_names` (`GIT_SCRUB` is the contract's
   list in its order; from an environment holding all seventeen and
   `GIT_CONFIG_GLOBAL` and `GIT_CONFIG_SYSTEM`, `git_env("probe")` keeps those
@@ -406,7 +422,7 @@ G. Landing order: A to E, then F, G and H.
   (`git_argv(kind, args)` puts the seven protocol pins on every kind but
   `push`, the two status pins on `status`, `hidden` and `removal`, and builds
   the removal vector exactly as D9 spells it; `push` carries no pin, PR #19).
-- [ ] T013 [P] Add `GIT_SCRUB`, `PROTOCOL_PINS`, `STATUS_PINS`, `git_env(kind)`
+- [x] T013 [P] Add `GIT_SCRUB`, `PROTOCOL_PINS`, `STATUS_PINS`, `git_env(kind)`
   and `git_argv(kind, args)` to region `git environment` of `project`. T012
   passes.
 
@@ -584,9 +600,10 @@ G. Landing order: A to E, then F, G and H.
   `test_clean_evidence_checks_registration_both_ways` (a rewritten `.git` file,
   and a changed admin `gitdir` file, each give that row `inspection-error` and
   no status probe); `test_clean_evidence_reads_presence` (`ENOENT` gives
-  `present: false`; a parent without search permission gives `present: null`,
-  an `os-error` and `inspection-error`; `not_root`); and
-  `test_clean_evidence_row_fields` (every row carries `locked`,
+  `present: false`, and so does `ENOTDIR`, a registered path whose parent has
+  become a regular file; a parent without search permission gives `present:
+  null`, an `os-error` and `inspection-error`; `not_root`; lead ruling R-36);
+  and `test_clean_evidence_row_fields` (every row carries `locked`,
   `ignored_files_truncated`, `ignored_samples` as `{path, path_valid_utf8}`
   objects, `path_valid_utf8`, `errors` as `{code, message, path?,
   path_valid_utf8?, reason?}` objects and `notes` as an array of code strings
@@ -633,10 +650,12 @@ G. Landing order: A to E, then F, G and H.
   run)` (rows 3, 4, 4b, 5, 6 and 7 through `run_bounded()` and the parsers,
   memoized per common directory on the `Invocation`, returning the identity
   `{root, common_dir, dev, ino}` with the rows' evidence);
-  `verify_registration()` and the presence `lstat`, both through `fs_call()`;
-  `status_probe()`; and `worktree_rows()` (the baseline keys, `prunable` among
-  them where the record says so (M11), and the six added fields), each failed
-  driver outcome becoming the row's `errors` entry by T024's map (M17).
+  `verify_registration()` and the presence `lstat`, both through `fs_call()`
+  (`present` false on `ENOENT` or `ENOTDIR`, null with an `os-error` on any
+  other failure, lead ruling R-36); `status_probe()`; and `worktree_rows()`
+  (the baseline keys, `prunable` among them where the record says so (M11), and
+  the six added fields), each failed driver outcome becoming the row's `errors`
+  entry by T024's map (M17).
 - [ ] T032 [P] Add to region `evidence`: `classify()` (pure, with its one
   reorder; `RECOMMENDATIONS` from `project:566-616`); `partial_removal_note()`;
   `declared_tracking_branch(root)` (today's `manifest()` read, bounded by
@@ -728,10 +747,12 @@ tuples.
   nothing and runs no `worktree remove`; when only an excluded row changes, the
   digest is still D and the apply proceeds, exit 0) and
   `test_clean_plan_digest_canonical_text` (`plan_digest()` of the fixture
-  values at
-  `ideation/brainstorm/project-maintenance-batch-cleanup.md:1052-1130` is
+  values of
+  `ideation/brainstorm/project-maintenance-batch-cleanup.md:1052-1130` at
+  `da33d92`, which the test embeds as literals, is
   `7495756d199ba217f41ed4d648c241c95608b4f353c46952e9a7f4cddc17f3bc`; the mode,
-  `observed_at`, `excluded` and the notes leave it unchanged; R12). Scenario:
+  `observed_at`, `excluded` and the notes leave it unchanged; R12, lead ruling
+  R-34). Scenario:
   "Plan digest mismatch".
 - [ ] T038 [P] [US1] Add to `tests/test_clean_batch.py`:
   `test_clean_preview_is_advisory` (a preview selects only P1; P1 becomes
@@ -845,8 +866,11 @@ tuples.
   question alone, and then `apply_removals()`. The slot is read after planning,
   again before the question and again before the apply phase begins; a signal
   recorded before the apply phase ends the run by FR-036 (probe groups reaped,
-  `Cancelled.`, 130, 143 or 129, no document). Each stage is a function in its
-  region whose first body is the baseline code moved verbatim:
+  `Cancelled.`, 130, 143 or 129, no document). It is read once more before a
+  preview or report exits, so that a signal recorded while it is written exits
+  130, 143 or 129 with `Cancelled.` (research.md R4, plan review M1, lead
+  ruling R-34). Each stage is a function in its region whose first body is the
+  baseline code moved verbatim:
   `resolve_clean_target` (region `resolution`) wraps `discover()`; `build_plan`
   (region `plan`) wraps `cleanup_report()`; `print_plan` (region `preview`)
   calls `print_clean_report()`; `confirm_removal` (region `apply`) calls
@@ -983,14 +1007,14 @@ carrying the reason the gate order gives.
   origin feat:f1: storing head`; an `update-ref` entry with no message; `push`)
   gives D10's outcome for each, pass, `unstarted-branch` or
   `reflog-unavailable`, and a last entry whose new object is not the head gives
-  `reflog-unavailable`; `ENOENT`, `ENOTDIR`, 0 bytes and a file over 65,536
-  bytes give `reflog-unavailable`, while one of exactly 65,536 bytes is decided
-  by its entries (plan review m10); another `OSError` gives the row
-  `inspection-error` with an `os-error` in its `errors`, and the plan
-  incomplete with `inspection-incomplete` (M5); an `fs_call()` timeout leaves
-  the row unprobed and the plan incomplete with `inspection-incomplete`, as the
-  delta's outcome rule says (M5's replacement text would make that row
-  `inspection-error`; the delta governs).
+  `reflog-unavailable`; `ENOENT`, `ENOTDIR`, 0 bytes and a file of 65,536 bytes
+  or more give `reflog-unavailable`, while one of 65,535 bytes is decided by
+  its entries (lead ruling R-33, in place of plan review m10); another
+  `OSError` gives the row `inspection-error` with an `os-error` in its
+  `errors`, and the plan incomplete with `inspection-incomplete` (M5); an
+  `fs_call()` timeout leaves the row unprobed and the plan incomplete with
+  `inspection-incomplete`, as the delta's outcome rule says (M5's replacement
+  text would make that row `inspection-error`; the delta governs).
 - [ ] T060 [P] [US2] Add the reflog scenarios to `tests/test_clean_reflog.py`:
   `test_clean_a_published_branch_with_no_commit_of_its_own` (`worktree add -b
   x`, `push -u`, no commit: `--all-safe` excludes it as `unstarted-branch`;
@@ -1094,13 +1118,14 @@ carrying the reason the gate order gives.
 - [ ] T066 [P] [US2] Fill `reflog_gate(common_dir, branch, head, run)` in
   region `reflog` (D10, FR-021, FR-022): one `fs_call()` read of
   `logs/refs/heads/<branch>` under the common directory, each `/` of the branch
-  name a directory level, at most 64 KiB, a file over 65,536 bytes reaching the
-  bound (m10), and never by a Git child; the anchor (the last entry whose old
-  object is all zeros, or whose message begins `branch: Created from` or
-  `branch: Reset to`), the movement (an entry after the anchor, or any entry
-  when none survives, whose old and new objects are non-zero and differ), the
-  head test and the outcome rule; it runs for every row that reaches gate 7, in
-  every mode. A read error other than `ENOENT` or `ENOTDIR` makes the row
+  name a directory level, at most 64 KiB (the read asks for no more than 65,536
+  bytes, so it needs no `fstat`), a read that returns 65,536 bytes having
+  reached the bound (R-33), and never by a Git child; the anchor (the last
+  entry whose old object is all zeros, or whose message begins `branch: Created
+  from` or `branch: Reset to`), the movement (an entry after the anchor, or any
+  entry when none survives, whose old and new objects are non-zero and differ),
+  the head test and the outcome rule; it runs for every row that reaches gate
+  7, in every mode. A read error other than `ENOENT` or `ENOTDIR` makes the row
   `inspection-error` with `os-error`, and a timeout leaves it unprobed, the
   plan incomplete with `inspection-incomplete` either way (plan review M5, as
   the delta words it). T059 and T060 pass.
@@ -1485,7 +1510,12 @@ and text (T091, T094: `tests/test_clean_stop.py`, regions `preview` and
   `signal-parent-in` fake sends SIGTERM, and in turn SIGHUP, to `project` from
   the last status probe, which then completes: with `--yes`, and at a
   pseudo-terminal before the question, `Cancelled.`, 143 or 129, no question
-  asked, nothing removed and no document; plan review M1; it pins T047); and
+  asked, nothing removed and no document; plan review M1; it pins T047);
+  `test_clean_sigterm_before_the_apply_phase_while_the_plan_is_written` (in
+  process, `print_plan` patched to record SIGTERM in the slot as it returns, in
+  turn SIGHUP and SIGINT: a report and an `--all-safe` preview each exit 143,
+  129 and 130 with `Cancelled.` on standard error, and nothing is mutated;
+  research.md R4, lead ruling R-34; it pins T047); and
   `test_clean_a_second_sigint_abandons_reconciliation` (the `slow-after-remove`
   fake: SIGINT while the first removal runs, then a second SIGINT while its
   rescan waits: the remaining rescans are abandoned, the target is `unknown`
@@ -1774,8 +1804,14 @@ region `evidence`. It starts at US1's checkpoint, beside US2, US3 and US9.
   `target-not-repository-root`, exit 2); `test_clean_a_separate_git_directory`
   (a repository made by `git init --separate-git-dir`, passed by its checkout's
   absolute path: it resolves, `repository.root` is the checkout, and the git
-  directory is no worktree row); and `test_clean_a_submodule_checkout` (a
-  submodule's checkout: `target-not-repository-root`, exit 2). Scenarios: "A
+  directory is no worktree row);
+  `test_clean_a_separate_git_directory_with_a_relative_core_worktree` (the same
+  layout with `core.worktree` set by `git config` to the relative value
+  `../CHECKOUT`, the checkout a sibling of the git directory, `project` run
+  from another directory: it resolves against the git directory, as Git
+  documents and project-overview's spec states, so `repository.root` is the
+  checkout's realpath; lead ruling R-36); and `test_clean_a_submodule_checkout`
+  (a submodule's checkout: `target-not-repository-root`, exit 2). Scenarios: "A
   bare repository reached from a linked worktree"; "A separate git directory";
   "A submodule checkout".
 - [ ] T106 [US7] Add to `tests/test_clean_resolution.py`:
@@ -1808,8 +1844,10 @@ region `evidence`. It starts at US1's checkpoint, beside US2, US3 and US9.
   never for a path. Fill `main_worktree()` (region `evidence`) with M6's order:
   row 3's third line, a submodule checkout, refused; a first registry record
   that is `bare` refused; a first record equal to the common directory resolved
-  by `core.worktree` (row 4b) or the candidate toplevel whose `.git` file names
-  it, else refused; otherwise the first record's realpath. Every refusal is
+  by the realpath of `core.worktree` (row 4b; a relative value resolved against
+  the git directory, as Git documents and project-overview's spec states, lead
+  ruling R-36) or the candidate toplevel whose `.git` file names it, else
+  refused; otherwise the first record's realpath. Every refusal is
   `target-not-repository-root`, exit 2, before any plan.
 - [ ] T108 [US7] Fill `declared_tracking_branch(root)` (region `evidence`; D8,
   FR-018, FR-060) with a bounded read: an `st_size` over 1 MiB is
@@ -2054,9 +2092,9 @@ verification.
 - [ ] T125 Retire `default_branch()` and `ancestor()` (`project:524-541`), and
   any baseline helper no caller still reaches (`print_clean_report()`,
   `matching_worktree()`, and `cleanup_report()` if no stage calls it), each
-  checked by `grep` over `project` and `tests/`; plan.md: "`default_branch()`
-  and `ancestor()` retire". No deletion happens before this task. The whole
-  suite passes.
+  checked by `grep` over `project` and `tests/`; plan.md's "Code touched, and
+  what stays" names the same list (lead ruling R-34). No deletion happens
+  before this task. The whole suite passes.
 - [ ] T126 Complete `specs/004-project-clean-all-safe/traceability.md`: every
   one of the 101 rows names at least one test, and a script confirms each named
   test is defined as `def NAME` in a `tests/test_*.py` module and starts with
@@ -2281,7 +2319,7 @@ T124.
   and T073 (research.md R1). The delete-branch child keeps the pins either way
   (R5).
 - R-31: `TIOCSCTTY` is untested on macOS, so the controlling-terminal tests of
-  T008, T072 and T074 are a CI risk on `macos-latest`; a failure there goes to
-  the lead before any skip is added.
+  T008, T072 and T074 are a note for a local run there, no CI job running macOS
+  (R-35); a failure on macOS goes to the lead before any skip is added.
 - No task edits workBenches, openRepoShape, setup-openspeckit, `CLAUDE.md`,
   `requirements.txt`, or the change's files beyond T133's line.
