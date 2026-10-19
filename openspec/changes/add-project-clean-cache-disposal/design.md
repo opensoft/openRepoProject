@@ -10,11 +10,12 @@ requirements. Citations follow the proposal's key: the packet at `da33d92`
 change 2 (`APO`, `APO/ov`) at `961c405`, draft PR #19 at `c462d87` (`PR19/pc`,
 `PR19/rs`), and `project:N` at `961c405`; main is now `e9d6711`, with the same
 `openspec/`, `ideation/` and `project` (L-15). The lane's rulings are L-1 to
-L-15 and B-1 to B-15, and A-9 for #23; this change's own decisions are CD-1 to
+L-17 and B-1 to B-24, and A-9 for #23; this change's own decisions are CD-1 to
 CD-18 in `proposal.md`, and the alignment review's findings (SA-n, QA-n, G1 to
-G5) are resolved in its table. No council has run yet, so there is no
-`clarifications.md` and no NOTED item to answer; the lane adds one if the
-council notes any.
+G5) are resolved in its table. The council (P-n, S-n and AE-n) read `9ebe9f0`;
+its VALID verdicts, ruled as B-16 to B-24, are applied below and in the deltas,
+and its one NOTED item, S-4, is in `clarifications.md`, which D4, D14, the
+Migration Plan and `tasks.md` 2.3 and 3.1 answer.
 
 How the packet's contract and the rulings map to the decisions below:
 
@@ -35,8 +36,17 @@ How the packet's contract and the rulings map to the decisions below:
 | CD-4 | revalidating a cache target | D10 |
 | B-10, L-11 | the digest, the narrow guarantee and the deletion exception in MODIFIED blocks | D5, D8, D13 |
 | B-12 | the sample test before any enumeration, and the stall stated | D2, D4 |
-| B-14 | the overview's equality clause excepts the cache case | D6, D14 |
+| B-14, B-22 | the overview's equality clause excepts the cache-proven case, and the carried "Every protected classifier" scenarios name a non-cache ignored file | D6, D14 |
 | L-12, B-15 | CI on Linux only; macOS not verified by CI | D9, D14 |
+| B-16 | the stage's removals waited for as change 1 waits for its removal child; the hand-off of the first removal as the commit point | D1, D4, D8, D12 |
+| B-17 | the second check immediately before that hand-off; a target whose stage ran and whose removal was not spawned | D1, D8, D11, D12 |
+| B-18 | the partial-stage rescan by the descriptor chain, under the reserve | D8, D12 |
+| B-19 | the residual window widened by the cache stage, stated and bounded | D13 |
+| B-20 | a cache directory the user cannot change kept at plan time | D2, D3, D9, D11 |
+| B-21 | the stall and deadline lines name their cause | D4, D11 |
+| B-23 | `.pytest_cache` before Brett Heap; the measured benefit | Non-Goals, Open Questions |
+| B-24 | `candidate_block` names what really keeps a cache-only row | D2, D11 |
+| S-4 (NOTED) | measured dispatch cost; the gates of task 2.3 and 3.1 | `clarifications.md`, D4, D14, Migration Plan |
 
 What in `project` shapes the approach:
 
@@ -77,6 +87,7 @@ Facts checked here, on Git 2.43.0 and Linux 6.18, with Python 3.10.21 and
 | `os.rmdir(name, dir_fd=fd)` on a directory still holding a file | fails with `ENOTEMPTY`; the file is intact |
 | `O_NOFOLLOW`, `O_DIRECTORY`; `open`, `stat`, `unlink`, `rmdir` in `os.supports_dir_fd`; `stat` in `os.supports_follow_symlinks`; `listdir`, `scandir` in `os.supports_fd` | all present on both Pythons on Linux; macOS was not checked here and is not verified by CI, whose jobs `test (3.10)` and `test (3.12)` run on `ubuntu-latest` only (D9) |
 | `status --porcelain=v1 -z --untracked-files=normal --ignored=matching` with eight ignored `a0.pyc` to `a7.pyc`, an ignored `__pycache__/` and an ignored `zz.env` | ignored records in path order, so the first eight, the combined probe's samples, are the `.pyc` files and `zz.env` comes after them |
+| `os.access` in `os.supports_dir_fd`, `os.supports_effective_ids` and `os.supports_follow_symlinks`; `os.access("__pycache__", os.W_OK \| os.X_OK, dir_fd=fd, effective_ids=True, follow_symlinks=False)` on a `__pycache__` of mode 0555, as a user other than root | all three present; the check returns false, and an `os.unlink` of an entry relative to that directory fails with `EACCES` (errno 13); checked on Python 3.12.3 only, on 2026-10-19 (B-20) |
 
 ## Goals / Non-Goals
 
@@ -93,8 +104,9 @@ Facts checked here, on Git 2.43.0 and Linux 6.18, with Python 3.10.21 and
 
 **Non-Goals:**
 
-- Any cache kind but `__pycache__`, `.pyc` and `.pyo`; any disposal without the
-  worktree's removal; any change to `status`, `doctor` or what `project
+- Any cache kind but `__pycache__`, `.pyc` and `.pyo` (`.pytest_cache` is
+  before Brett Heap, B-23, and is added only on his answer); any disposal
+  without the worktree's removal; any change to `status`, `doctor` or what `project
   overview` collects (only its equality clause gains the cache exception, D6);
   configurable caps or allowlists; continuing past a failed target.
 
@@ -111,11 +123,19 @@ For a selected target whose `cache_disposal.paths` is not empty,
    condition: more than `removal_floor_seconds` of the work deadline left;
    otherwise the target and every later one are `not-attempted` with
    `interrupted` or `deadline-exceeded`, and nothing is deleted;
-3. the whole-list preflight (D7);
-3a. the floor and slot checks of step 2 again, with the same outcome;
-4. the removals (D7), then, on any failure, the rescan (D8);
+3. the whole-list preflight (D7), then the reopening of the first listed
+   cache's chain;
+3a. immediately before the hand-off of the first removal, the floor and slot
+   checks of step 2 again, with the same outcome; a signal recorded after this
+   check is handled as one received during the removals (B-17), and the
+   hand-off that follows is the stage's first removal for every rule of the
+   two ADDED requirements (B-16);
+4. the removals (D7), each handed over only while more than the floor remains
+   and waited for until it returns (D12), then, on any failure, the rescan
+   (D8);
 5. change 1's floor and slot checks, then the spawn, the wait and the
-   reconciliation, unchanged.
+   reconciliation, unchanged; a target whose stage ended `disposed` and whose
+   spawn these checks refuse is `not-attempted`, with its reconciliation (D8).
 
 A target with no listed cache skips steps 2 to 4, so its sequence is change 1's
 exactly. The one clause inserted into "Clean can explicitly retire verified
@@ -163,6 +183,22 @@ candidate. It stays `ignored-local-files` with `not-candidate`, its counts
 the path that keeps it. The test spends no child and no filesystem call, and it
 keeps every row with a sampled `local.env` out of the 16 enumerations (D4).
 
+A row that holds ignored records and passes the sample test but is still not a
+candidate carries `candidate_block` (B-24): the class the pure ladder gives it
+with the ignored-files rung skipped, when that class is not `merged-removable`,
+or else the first gate before `deferred-target-cap` that it fails. The candidate
+test already computes both: the ladder's inputs are the repository-wide ref
+listing and merged set and the row's own combined probe, and the gates before
+`deferred-target-cap` read the registry, the lock, the path's bytes and the
+reflog file, which the candidate test reads for exactly the rows whose answer
+depends on it. So `candidate_block` spawns no Git child, and there is no gap to
+record. Its values are existing class names and gate reasons (L-4, CD-16). The
+preview prints it after the unknown counts (D11), so that a detached,
+unpublished or unmerged row whose sampled ignored files are all caches is told
+what really keeps it rather than to delete its caches; squash-merged worktrees
+are among those rows while question 2 is open. Every other row carries
+`candidate_block` null.
+
 A record is blocking when it is not a listed cache. A directory record stops its
 walk at the first entry that is not allowed, and counts once as blocking. Up to
 8 blocking records are kept, in the order Git prints them, as
@@ -193,6 +229,22 @@ relative to it, and descend into each entry named `__pycache__` that is a
 directory, counting entries and summing the regular files' `st_size`, stopping
 at the first entry outside the shape or at the per-worktree caps.
 
+For a row whose walk finished with `blocking` 0 and within the per-worktree
+caps, the walk then checks each directory that its stage would change, each
+listed cache directory, each nested `__pycache__` and the parent of each listed
+path, with `os.access(name, os.W_OK | os.X_OK, dir_fd=parent,
+effective_ids=True, follow_symlinks=False)`, one filesystem call under the
+per-call budget (B-20). A false result leaves the row `ignored-local-files`
+with `cache-unwritable`, its counts, paths and directories established; it is
+not selected, its entries are not counted toward the invocation's totals, and
+it stops nothing, by the principle of A-17 for a refusal the plan can see. A
+`__pycache__` that a root-run container or `sudo python` wrote is the usual
+cause; none was found on this workstation (the council's measurement of
+2026-10-19). A check that times out leaves the row `cache-unverified`, as any
+walk call does. What the check cannot see, a sticky directory or a read-only
+filesystem, fails the stage's first removal instead, which then ends the stage
+`refused` with `cache-changed` and nothing deleted (D8).
+
 ### D4. The caps and the fit
 
 | Limit | Value | Scope | Reached |
@@ -206,15 +258,20 @@ at the first entry outside the shape or at the per-worktree caps.
 A cap reached keeps the row `ignored-local-files` and the plan complete, so the
 batch removes everything else, and a later run takes the rest unless each of
 the 16 enumerated candidates stays at the rung. A candidate left at the rung
-keeps its place among the 16, as change 1's index gates keep theirs, so a run
-whose 16 enumerations all stay at the rung is a stall that every re-run
-repeats, and the human report names it as change 1 names the index-gate stall.
-The sample test (D2) keeps out every row whose samples show a blocking name;
-what can still stall is a candidate whose samples all have cache names while it
+keeps its place among the 16, as change 1's index gates keep theirs. The sample
+test (D2) keeps out every row whose samples show a blocking name; what can
+still hold a place is a candidate whose samples all have cache names while it
 holds a blocking path beyond its 8 samples, a cache-named path that is blocking
 by its type, contents or device (a symbolic link named `__pycache__`, a
 `__pycache__` holding `notes.txt`, a mount), more than a per-worktree cap
-allows, or an enumeration that fails each time. Bytes are the apparent sizes
+allows, an enumeration that failed, or a directory the user cannot change
+(B-20). The stall line (B-21, D11) is printed only when each of the first 16
+candidates in canonical order is left with `blocking` above 0, by a
+per-worktree cap, `cache-unverified` or `cache-unwritable`; a row left only by
+the invocation's totals drains on the next run and prints none. One run cannot
+tell that an enumeration "fails each time", so a `cache-unverified` row is
+named as one to re-run and, if it repeats, to inspect, never as one to remove
+by hand. Bytes are the apparent sizes
 that `lstat` reports at plan time; a sparse file counts at its apparent size,
 which only errs toward a cap.
 
@@ -223,7 +280,7 @@ The fit is change 1's (CAS design D14; `BA:729-735`) at 150 ms per Git child and
 
 | Mode | Children | Time | Fits the 50 s work deadline |
 | --- | --- | --- | --- |
-| all-safe, 128 rows, 16 enumerations, 16 targets | 7 + 128 + 16 + 16 + 80 + 3 = 250, and 16 removals | 37.5 s + about 4.8 s = 42.3 s | yes; the 16th target reaches its cache stage after 247 children and 15 removals, at about 41.55 s, with 8.45 s left |
+| all-safe, 128 rows, 16 enumerations, 16 targets | 7 + 128 + 16 + 16 + 80 + 3 = 250, and 16 removals | 37.5 s + about 4.8 s = 42.3 s | yes; the 16th target reaches its cache stage after 247 children and 15 removals, at about 41.55 s, with 8.45 s left before the walk's and the stages' filesystem time, which the fit below adds |
 | report, 256 rows | 7 + 256 + 16 + 16 = 295 | 44.25 s | yes |
 | single, 128 rows plus P | 7 + 129 + 1 + 1 + 5 + 3 = 146, and 1 removal | 21.9 s + about 0.3 s | yes |
 | all-safe, one enumeration per candidate (no `cache_rows`) | 7 + 128 + 127 + 16 + 80 + 3 = 361 | 54.15 s + 4.8 s | no |
@@ -233,23 +290,71 @@ The last two rows are why CD-6 adds `cache_rows`. A cache stage spawns no child;
 its filesystem calls are about two per cache entry (a listing or `lstat` at the
 preflight, an unlink or directory removal after it) plus the directory opens,
 so at most about 1,100 calls for 512 entries and about 8,500 for the 4,096 of a
-run. Through one daemon worker per stage (D12), whose hand-off costs tens of
-microseconds a call, that is tenths of a second in a run, inside the margin the
-table leaves. Governance task 2.3 measures the enumeration and the stage before
-the handoff, as change 1's task 2.1 measured its probes; a measured cost that
-breaks the fit lowers `cache_rows` in steps of 4 and the entry caps in powers of
-two before the feature starts. The fit sentence of the bounds block counts the
-Git children and states the stage's filesystem calls as outside it, and a
-target whose stage or spawn cannot start under the floor is `not-attempted`
-with `deadline-exceeded` as for every removal (QA-5), so the 8.45 s margin of
-the first row is design arithmetic, not a promise of the spec.
+run. The plan-time walk makes one call per directory open, per listing and per
+entry `lstat`, about 4,500 for 4,096 entries, and B-20's access checks add at
+most one per planned directory. Through one daemon worker per stage (D12), the
+hand-off measured 169-224 us a call at load 30 to 37 on this workstation, and
+393-622 us for a thread per call, the shape of feature 004's `fs_call`
+(`clarifications.md`, S-4): about 2 s for 8,500 stage calls and 1 s for the
+plan-time walk's 4,500, or about 5.3 s and 2.8 s at a thread per call. A
+512-entry stage took about 0.25 s here (AE-4's 1,248 calls in 236 to 273 ms).
+
+The fit, restated with those costs and with the stage's removals waited for
+(B-16). At the packet's 150 ms model, with the run's 4,096 cache entries, the
+16th target reaches its cache stage at about 41.55 s plus about 1 s of walk and
+at most 2 s of earlier stages, about 44.6 s at most, with about 5.4 s left; at
+a thread per call, at most about 49.65 s, under the floor, so that it
+and any target after the floor is reached are `not-attempted` with
+`deadline-exceeded`, exit 1, and the next run takes them, never unsafe. At change
+1's measured costs (CAS `tasks.md` 2.1: the 16th removal spawning at 23.6 s with
+26.4 s left), the 16 enumerations add at most about 3.7 s and the walk and
+stages at most about 8 s, and all 16 fit. A removal is handed over only while
+more than the floor remains and is waited for until it returns, as change 1
+waits for its removal child; an unlink returns in microseconds, so in the
+normal case this costs nothing, and the floor stays for the spawn. A hung
+mount costs what a hung removal child costs: up to the 300 s removal ceiling,
+counted from the hand-off, after which that cache is `removed: null`, the
+stage ends `partial`, the later targets are `not-attempted` with
+`deadline-exceeded`, and the run reconciles in its reserve, counted from the
+return or the ceiling; the 64 s run bound keeps its two exceptions, a removal
+in flight and a filesystem call stuck in the kernel. B-19 adds no Git child,
+B-20 only filesystem calls, and B-24 none.
+
+Governance task 2.3 measures the enumeration, the walk and the stage before
+the handoff, through `fs_call`, idle and at the workstation's usual load, as
+change 1's task 2.1 measured its probes; a measured cost that breaks the fit
+lowers `cache_rows` in steps of 4 and the entry caps in powers of two before
+the feature starts. The fit sentence of the bounds block counts the Git
+children and states the walk's and the stages' filesystem calls as outside
+it, and a target whose stage or spawn cannot start under the floor is
+`not-attempted` with `deadline-exceeded` as for every removal (QA-5), so the
+margins above are design arithmetic, not a promise of the spec.
 
 With `--retire-branches` (#23) a run spawns branch children too. At the
 packet's 150 ms model only 13 of 16 targets then reach their stage before the
-removal floor, and change 1's deadline rule defers the rest to the next run
-(exit 1, never unsafe); at change 1's measured costs all 16 fit. #23, which
-archives after this change, states that joint fit (A-9, the alignment review's
-G3).
+removal floor, cache-stage filesystem time excluded, and change 1's deadline
+rule defers the rest to the next run (exit 1, never unsafe); at change 1's
+measured costs all 16 fit. #23, which archives after this change, states that
+joint fit (A-9, the alignment review's G3). The inputs it needs from this
+change, as of the council round:
+
+- Git children: 16 cache enumerations per invocation under `probes`, 2.4 s at
+  the model; none added at revalidation, where the enumeration's child takes
+  the combined probe's place (CD-4); and no status probe after a `disposed`
+  stage, which B-19 rejected.
+- Plan-time filesystem calls: the walk's about 4,500 and the access checks, at
+  most one per planned directory; about 1 s through one worker, up to about
+  2.8 s at a thread per call.
+- Stage filesystem calls: at most about 1,100 per target and 8,500 per run;
+  about 0.25 s for a 512-entry stage, about 2 s per run through one worker, up
+  to about 5.3 s at a thread per call.
+- Start and hand-off: a stage starts, and hands over each removal, only while
+  more than the 5 s floor remains; a removal handed over is waited for up to
+  the 300 s ceiling and counts as a removal in flight.
+- Counts: `operations.estimated` and `performed` gain one per cache entry, the
+  latter only for removals that returned.
+- The residual-window line of a run that selects a cache target is D13's, so a
+  flagged run with a cache target re-bases its line on it.
 
 ### D5. Planned identities and the digest
 
@@ -272,7 +377,7 @@ refuses, while a `.pyc` recompiled in place keeps the count and passes. A file
 renamed within a listed directory keeps the count too; it is an allowlisted
 cache either way, so the stage still removes nothing but caches.
 
-The canonical text of `plan_digest` is change 1's (CAS design D7, D14): the four
+The canonical text of `plan_digest` is change 1's (CAS/pc:629-632): the four
 repository identity fields, the merge target's name and SHA, and the selected
 `[path, branch, head]` triples. For a selected target with listed caches, its
 triple is followed by its `paths` as `[path, kind]` and its `directories` as
@@ -310,9 +415,19 @@ reads it `merged-removable`, against change 2's equality clause
 (APO/ov:381-386). The overview's suggestion for that row is then the read-only
 form, whose report shows the row selectable, so no suggestion becomes unsafe.
 B-14 settles the clause in this change: its `project-overview` delta appends
-lane openRepoProject-4's two sentences, which except that case and forbid the
-overview to classify as removable a worktree that `project clean` would refuse,
-and it was agreed by lane 4 on 2026-10-19 and committed (`tasks.md` 2.2).
+two sentences to the equality clause, agreed by lane openRepoProject-4 on
+2026-10-19 and committed as `b4d3e12`. B-22 rewords them, since lane 3 found
+cache-proven rows that `project clean` classifies `merged-removable` and then
+excludes (as `contains-submodule`, `deferred-target-cap` or
+`hidden-local-state`), which the first wording missed (M4), and a second
+sentence that read at the gate level contradicted change 2's carried rule that
+a gate finding replaces the housekeeping finding "while the classification
+stays" (M5): the exception now covers a worktree that `project clean`
+classifies `merged-removable` because its cache enumeration proved every
+ignored path a listed cache, and the overview SHALL NOT classify a worktree
+`merged-removable` where `project clean` classifies it otherwise. The edit is
+held uncommitted until lane 4 agrees its diff (`tasks.md` 2.2). The council
+measured 3 such submodule rows on this workstation on 2026-10-19.
 Feature 005's spec (`specs/005-project-overview/spec.md` on
 `origin/005-project-overview` at `33a1214`, User Story 3 scenario 6) names the
 `ignored-local-files` row of its "Every protected classifier" fixture by its
@@ -329,10 +444,13 @@ dir_fd=parent)`, each opened descriptor checked by `os.fstat` against its
 planned `dev` and `ino`. The root itself is opened by its recorded path with
 `O_DIRECTORY | O_NOFOLLOW` and checked against the target's worktree identity;
 the root's own ancestors are change 1's concern, checked at revalidation through
-the realpath and identity comparison. The stage handles one listed cache at a
-time and closes its chain before the next, so at most the path's depth plus two
-descriptors are open at once, far below any platform's default descriptor
-limit.
+the realpath and identity comparison, so `BA:1324-1325`'s "any ancestor" is read
+as any directory between the worktree root and the cache (lane 3's LOW 3). The
+stage handles one listed cache at a time and closes its chain before the next,
+except a descriptor given to a call still outstanding, which stays open until
+`project` exits (D12), so at most the path's depth plus two descriptors, and
+those of an outstanding call, are open at once, far below any platform's default
+descriptor limit.
 
 The preflight, before any removal: for each listed cache in canonical order,
 open its chain, checking every identity; for a directory, list it and `lstat`
@@ -356,29 +474,53 @@ by `os.rmdir` relative to its parent; a listed file by `os.unlink` relative to
 its parent. Nothing listed after the preflight is removed, and `rmdir` refuses a
 directory that holds anything else, so a file placed in a cache directory at any
 time before that directory's removal survives (Context, `ENOTEMPTY`) and ends
-the stage `partial`. No recursive deletion, no `shutil.rmtree`, no path-name
+the stage `partial`, or `refused` when no entry had yet been removed (D8). Each
+unlink and directory removal is handed to the worker
+only while more than the removal floor remains and is waited for until it
+returns (D12). No recursive deletion, no `shutil.rmtree`, no path-name
 deletion and no child process is used.
 
 ### D8. The partial phase and the target's result
 
-After the first removal, any failure (an `OSError` from an unlink, a removal or
-a chain open, `ENOENT` included, since something else is changing the worktree),
-a call past its budget, or the removal floor reached ends the removals. The
-stage then rescans each listed cache: it opens the chain to the cache's parent
-as in D7 and `lstat`s the cache's name relative to it with
+The stage's first removal is the hand-off of its first unlink or directory
+removal to the worker, not the first one completed (B-16). After it, any
+failure (an `OSError` from an unlink, a removal or a chain open, `ENOENT`
+included, since something else is changing the worktree), a read past its
+budget, a removal still outstanding when the 300 s removal ceiling, counted
+from its hand-off, ends its wait, or the removal floor reached at the next
+hand-off ends the removals. A stage that has handed over a removal ends
+`disposed` or `partial`, never `refused`, with one exception: when every
+removal handed over has returned and none removed its entry, as when the first
+unlink meets a sticky directory or a read-only filesystem that the plan's
+access check cannot see (B-20), it ends `refused` with `cache-changed`, nothing
+deleted. Otherwise the stage then rescans each listed cache (B-18): on threads
+of its own, never the stage's worker, each call a reconciliation probe under
+`min(5 s, reserve remaining)`, it opens the chain to the cache's parent as in D7,
+checking every identity, and `lstat`s the cache's name relative to it with
 `follow_symlinks=False`; absent is `removed: true`, present `removed: false`,
-and a chain that no longer opens, or a call past its budget, `removed: null`.
-Its `cache_disposal` is `partial` with `cache-partial`, the planned `entries`
-and the `entries_removed` counted as they succeeded.
+and a chain that no longer opens or carries another identity is `removed:
+null`, while the first call past its budget leaves that cache and every later
+one `removed: null`. A cache with a removal still outstanding is `removed:
+null` whatever the rescan finds, since that call can still complete. Its
+`cache_disposal` is `partial` with `cache-partial`, the planned `entries`, and
+`entries_removed` counting the removals that returned having removed their
+entry, as `operations.performed` does; an outstanding removal counts in
+neither. The rescan of the listed paths, beside the target's reconciliation,
+is this change's reading of `BA:1334`'s "the report rescans the worktree"
+(lane 3's LOW 2): a status of the worktree would add a Git child and would not
+say which listed path remains.
 
 | Stage outcome | `cache_disposal` | Target | Later targets | Exit (first matching row of change 1's table) |
 | --- | --- | --- | --- | --- |
 | every listed cache removed | `disposed`, null | the sequence goes on to the spawn | as change 1 | as change 1 |
 | preflight difference | `refused`, `cache-changed`; each `removed` false where the preflight found the path, null where it did not | `refused`, `state-changed`, reconciliation, nothing spawned | `not-attempted`, `batch-stopped` | 2 |
-| failure after the first removal | `partial`, `cache-partial` | likewise | likewise | 2 |
-| the floor reached after the first removal | `partial`, `cache-partial` | likewise | `not-attempted`, `deadline-exceeded` | 1 (the deadline stopped work) |
-| a signal, then a finished stage | `disposed`, null | `not-attempted`, `interrupted` | `not-attempted`, `interrupted` | 130, 143 or 129 |
-| no start (floor or signal) | `not-attempted`, `target-stopped` | `not-attempted`, `deadline-exceeded` or `interrupted` | likewise | 1, or the signal's |
+| every removal handed over returned and none removed its entry (B-20) | `refused`, `cache-changed`; each `removed` false | likewise | likewise | 2 |
+| failure after an entry was removed | `partial`, `cache-partial` | likewise | likewise | 2 |
+| the floor reached at a hand-off after the first removal | `partial`, `cache-partial` | likewise | `not-attempted`, `deadline-exceeded` | 1 (the deadline stopped work) |
+| a removal still outstanding at the 300 s removal ceiling (B-16) | `partial`, `cache-partial`; that cache `removed: null` | likewise | `not-attempted`, `deadline-exceeded` | 1 |
+| a signal after the first hand-off, then a finished stage | `disposed`, null | `not-attempted`, `interrupted`, with its reconciliation (B-17) | `not-attempted`, `interrupted`, `reconciliation: null` | 130, 143 or 129 |
+| a finished stage, then less than the floor at the spawn check | `disposed`, null | `not-attempted`, `deadline-exceeded`, with its reconciliation (B-17) | `not-attempted`, `deadline-exceeded` | 1 |
+| no start, or the check before the first hand-off fails (floor or signal) | `not-attempted`, `target-stopped` | `not-attempted`, `deadline-exceeded` or `interrupted`, `reconciliation: null` | likewise | 1, or the signal's |
 | target refused at revalidation, or never reached | `not-attempted`, `target-stopped` | as change 1 | as change 1 | as change 1 |
 
 Mapping a cache failure onto the target's `refused` with `state-changed`, rather
@@ -386,7 +528,14 @@ than new reasons, is CD-2, and the MODIFIED "Clean records a reconcilable result
 for every removal target" widens its `refused` stage to name a cache stage that
 ended `refused` or `partial` and gives the stage's deletions as the one
 exception to "never ... delete a directory itself" (B-10); stopping the run is
-CD-1. The retry is a re-run: the
+CD-1. The same block's `not-attempted` stage now names a target whose cache
+stage ran and whose removal was not spawned, for a signal or the floor, and
+such a target carries its reconciliation once its stage removed an entry
+(B-17, lane 3's M2), so the carried rule "a `not-attempted` target SHALL carry
+null" no longer contradicts the ADDED requirement. The ceiling row is this
+design's reading of B-16: past 300 s the work deadline has passed, so the
+later targets meet the floor, and the run exits 1 as change 1's
+`removal-ceiling` does. The retry is a re-run: the
 fresh plan enumerates the caches that remain, the revalidation and preflight run
 again, and a persistent failure stops at the same target each time, which the
 human line says (D11).
@@ -395,8 +544,9 @@ human line says (D11).
 
 Once per invocation, before any enumeration, a pure function checks
 `hasattr(os, "O_NOFOLLOW")` and `hasattr(os, "O_DIRECTORY")`; `os.open`,
-`os.stat`, `os.unlink` and `os.rmdir` in `os.supports_dir_fd`; `os.stat` in
-`os.supports_follow_symlinks`; and `os.listdir` in `os.supports_fd`. False makes
+`os.stat`, `os.unlink`, `os.rmdir` and `os.access` in `os.supports_dir_fd`;
+`os.stat` and `os.access` in `os.supports_follow_symlinks`; `os.access` in
+`os.supports_effective_ids` (B-20); and `os.listdir` in `os.supports_fd`. False makes
 every row holding ignored records `cache-unsupported-platform` with null counts,
 runs no enumeration, and leaves the batch as change 1's (CD-3). The check never
 falls back to a flag of 0, as `bb91a49` did. Tests stub it to false; CI runs
@@ -425,57 +575,119 @@ only where this change acts and absent otherwise, never `null` (L-10, B-13): on
 a worktree row whose `ignored_files` is above 0, and on a `selected` entry and
 an apply-result target whose plan lists at least one cache; the codes
 are the sub-records' own: `reason` in the plan `not-candidate`, `cache-cap`,
-`cache-unverified` or `cache-unsupported-platform`; `stage` in the record
-`disposed`, `refused`, `partial` or `not-attempted`, with `reason` null,
-`cache-changed`, `cache-partial` or `target-stopped`. Every path is written by
-change 1's escaping rule with `path_valid_utf8` beside it (always true, since a
-cache path that is not valid UTF-8 is blocking). `limits` gains the five keys of
-D4. No existing enum gains a value and `schema_version` stays 1 (CD-16).
+`cache-unverified`, `cache-unwritable` (B-20) or `cache-unsupported-platform`;
+`candidate_block` in the plan null or an existing class name or gate reason
+(B-24); `stage` in the record `disposed`, `refused`, `partial` or
+`not-attempted`, with `reason` null, `cache-changed`, `cache-partial` or
+`target-stopped`. Every path is written by change 1's escaping rule with
+`path_valid_utf8` beside it, which is always true in `paths` and `directories`,
+since a cache path that is not valid UTF-8 is blocking, and can be false in
+`blocking_samples`, as for the 0xFF path of "A symlink named like a cache is
+never disposable" (lane 3's LOW 13). `limits` gains the five keys of D4. No
+existing enum gains a value and `schema_version` stays 1 (CD-16).
 
 The text is ASCII, pinned by the tests, with `PATH`, `CPATH`, `BPATH`, `ROOT`,
-`N`, `E`, `B`, `D`, `K` and `REASON` substituted:
+`N`, `E`, `B`, `D`, `K`, `C`, `U`, `W`, `CLASS`, `NEXT STEP` and `REASON`
+substituted:
 
 - Preview, under `  remove PATH [BRANCH]`: `    caches: N paths, E entries, B
   bytes; first: CPATH`.
 - Preview, an `ignored-local-files` row, after change 1's `: N ignored; first:
   SAMPLE`: `; disposable D, blocking K; first blocking: BPATH` when the counts
   are established and `blocking` is above 0; `; disposable D, blocking 0; not
-  disposed: REASON` for a row the invocation's totals left; `; disposable
-  unknown, blocking unknown (REASON)` when they are null, followed by `; first
-  blocking: BPATH` when the sample test rejected a sample (D2).
+  disposed: REASON` for a row the invocation's totals left, and, for
+  `cache-unwritable`, `; disposable D, blocking 0; not disposed:
+  cache-unwritable; fix the ownership or mode of PATH, then re-run`, `PATH`
+  being the worktree's (B-20); `; disposable unknown, blocking unknown
+  (REASON)` when they are null, followed by `; first blocking: BPATH` when the
+  sample test rejected a sample (D2), or by `; kept as CLASS: NEXT STEP` when
+  the row has a `candidate_block`, `NEXT STEP` being change 1's next step for
+  that class or gate (CAS design.md:751-760), so that the line names what
+  really keeps the row and not the advice to delete its ignored files (B-24).
 - The plain report, a row holding ignored records: one more line, `  caches:
   disposable D, blocking K` or `  caches: disposable unknown, blocking unknown
-  (REASON)`.
+  (REASON)`, with the same `; kept as CLASS: NEXT STEP` ending.
 - Success, after `Removed N; branches kept: B1, B2.`: `Caches disposed: N paths
   in K worktrees.` (`1 path` when N is 1, `1 worktree` when K is 1).
-- When each of the 16 enumerated candidates stayed at the rung, under the
-  `ignored-local-files` group: `  these cache-cap rows will not drain while the
-  16 rows ahead of them keep ignored files that are not caches; review those
-  worktrees, then remove them yourself`, in the form of change 1's index-gate
-  line (CAS design.md:743-746).
+- The stall line (B-21), printed under the `ignored-local-files` group only
+  when each of the first 16 candidates in canonical order is left with
+  `blocking` above 0, by a per-worktree cap, `cache-unverified` or
+  `cache-unwritable`, and built from those rows' reasons with every zero count
+  left out: `  these cache-cap rows will not drain while the 16 candidates
+  ahead of them stay kept: K hold ignored files that are not caches (review
+  them), C exceed a per-worktree cache cap (delete their caches, then re-run),
+  U could not be enumerated (re-run; if it repeats, inspect them), W cannot be
+  changed by this user (fix their ownership or mode, then re-run)`, in the form
+  of change 1's index-gate line (CAS design.md:743-746). It never tells the
+  person to remove by hand a worktree whose state was not established. The `W`
+  part is this design's completion of B-21 for B-20's reason, since 16
+  `cache-unwritable` rows stall the same way.
 - A stop at a cache stage, before the stop block: `Cache disposal at PATH
-  refused (cache-changed); nothing was deleted.` or `Cache disposal at PATH
-  partial (cache-partial): removed K of N cache paths; remaining: C1, C2. A
-  fresh plan lists the rest: project clean ROOT --all-safe`.
+  refused (cache-changed); nothing was deleted.`, printed only when no entry
+  was removed and no removal is outstanding; or `Cache disposal at PATH partial
+  (cache-partial): removed K of N cache paths; remaining: C1, C2. A fresh plan
+  lists the rest: project clean ROOT --all-safe`, with `; may still be
+  removed: C3` after the remaining paths for a cache whose removal is still
+  outstanding (B-16); or, when the work deadline ended the stage, `Cache
+  disposal at PATH partial (cache-partial): the work deadline ended it after
+  removing K of N cache paths; remaining: C1, C2. A fresh plan lists the rest:
+  project clean ROOT --all-safe` (B-21), so that a deadline does not read as a
+  change of state. The stop block that follows is change 1's, its reason the
+  target's.
+- A stop after a stage that ended `disposed` and before the spawn, before the
+  stop block: `Cache disposal at PATH: removed N cache paths; the worktree was
+  not removed.` (B-17).
 - The question is change 1's, unchanged (CD-15).
 
 ### D12. Time, threads and signals in the stage
 
 The stage starts only while more than `removal_floor_seconds` of the work
 deadline remains (D1). It runs its calls through one daemon worker thread per
-stage, fed one call at a time, each waited for by the main thread with
-`min(5 s, work remaining - removal_floor_seconds)`: a call past that wait
-abandons the worker, as change 1 abandons a filesystem call stuck in the kernel,
-and ends the stage, `refused` before the first removal and `partial` after it.
-The floor is therefore always left for the spawn, and the run bound of 64 s
-keeps its one exception, a call stuck in the kernel.
+stage, fed one call at a time, and treats the two kinds of call as change 1
+does (B-16): its reads, as change 1 treats its identity reads (CAS
+design.md:304-306), and its unlinks and directory removals, as change 1 treats
+its removal child.
+
+- A read (an open, a listing, an `lstat`) is waited for by the main thread with
+  `min(5 s, work remaining - removal_floor_seconds)`. A read past that wait
+  abandons the worker and ends the stage, `refused` before the first removal
+  and `partial` after it.
+- A removal is handed to the worker only while more than the floor remains,
+  and the hand-off of the first one is the stage's first removal for every rule
+  of the two ADDED requirements. A removal handed over is waited for until it
+  returns, never abandoned at the per-call budget, and counts as a removal in
+  flight for the run bound and for signals. Only the 300 s removal ceiling,
+  counted from the hand-off, ends that wait; its cache is then `removed: null`
+  and the stage ends `partial`, never `refused`. The reconciliation reserve
+  counts from the return or from that ceiling.
+- A worker with a call still outstanding gets no further call, and no
+  descriptor given to an outstanding call is closed before `project` exits, so
+  that `os.open`, which returns the lowest free number, never hands that number
+  to a later chain or to the rescan. Without that rule a late `unlinkat`
+  against a reused number could remove a same-named entry in a directory the
+  plan never checked, as AE-1 reproduced.
+- The rescan of a partial stage (D8) never runs on the stage's worker: each of
+  its calls runs on a thread of its own, as a reconciliation probe under
+  `min(5 s, reserve remaining)` (B-18).
+
+The floor is therefore left for the spawn whenever every removal returns in
+time, and the 64 s run bound keeps change 1's two exceptions, a removal in
+flight, up to its ceiling, and a filesystem call stuck in the kernel. The
+earlier design abandoned removals as well as reads; Codex's P1 on `3c08613`,
+S-1 and AE-1 showed that an abandoned unlink could finish after the record had
+said "nothing was deleted".
 
 Signals keep change 1's handlers, which only record. The stage reads the slot
-before its preflight and again before its first removal (D1, steps 2 and 3a),
-and not again until the spawn check, so a signal during the preflight stops the
-target with nothing deleted, and a signal during the removals lets them finish
-and then stops the target before its spawn (CD-11): its caches are either
-untouched or all removed.
+before its preflight and again immediately before the hand-off of its first
+removal, after the preflight and once the first listed cache's chain is
+reopened (D1, steps 2 and 3a, B-17), and not again until the spawn check. A
+signal recorded before that second check stops the target with nothing
+deleted; one recorded after it is handled as one received during the removals,
+which finish, and then stops the target before its spawn (CD-11): its caches
+are either untouched or all removed, and a target whose caches were removed is
+`not-attempted` with its reconciliation. Every check-then-act has a window like
+this; masking signals around the check would only move it, since Python runs
+handlers in the main thread between bytecodes.
 
 ### D13. The guarantee and the residual window
 
@@ -489,22 +701,50 @@ the stage: Git's non-force removal deletes it with the worktree
 (`BA:319-323`). The MODIFIED "Cleanup states a narrow guarantee and its
 residual window" states both, and gives the stage's guarantee as the one for
 the cache entries it removes, beside the one for a worktree removal (B-10,
-SA-2). When the plan selects a cache target, change 1's
-residual-window line becomes `Not protected: ignored files created or index
-flags set after the last check, caches recreated after the cache stage, and any
-change after Git's own check.`; otherwise it is change 1's line, unchanged.
+SA-2).
+
+For a cache target the window is wider than change 1's (B-19, lane 3's M1,
+S-3, AE-4). The last check that covers ignored files outside the listed caches
+is that revalidation, before the stage, so an ignored file created during the
+stage outside the listed caches, a `local.env` at the worktree root or an
+editor's swap file, is deleted with the worktree by Git's non-force removal,
+which deletes ignored files and refuses only untracked or modified ones
+(`BA:319-321`). The packet's window is "one child start-up plus Git's own
+status check, typically well under a second" (`BA:323-324`); a cache target's
+adds the stage, which took about 0.25 s for 512 entries on this workstation
+(AE-4's measurement, 2026-10-19), and which task 2.3 re-measures. A file placed
+in a listed cache directory is still protected, since `rmdir` refuses a
+directory that holds it (D7), which is the sense in which CD-18 calls the stage
+safer. The window is stated, not closed: one combined status probe after each
+`disposed` stage would close it at one Git child per cache target, 266
+children and about 44.7 s at the packet's model, and under #23's flag about
+one target fewer, 12 of 16, for a window that concurrent writers, outside the
+contract, alone can use (B-19; proposal, Decisions).
+
+When the plan selects a cache target, change 1's residual-window line becomes
+`Not protected: ignored files created or index flags set after the last check
+or during a cache stage, caches recreated after it, and any change after Git's
+own check.`; otherwise it is change 1's line, unchanged.
 
 ### D14. Tests
 
-The deltas hold 54 scenarios in `project-clean` (5 classification, 14 retire,
-11 batch, 6 bounds, 8 reconcilable result and 10 ADDED), 26 in
+The deltas hold 55 scenarios in `project-clean` (5 classification, 14 retire,
+11 batch, 6 bounds, 8 reconcilable result and 11 ADDED), 27 in
 `project-clean-review-safety` (6 preservation, 11 revalidation, 4 narrow
-guarantee and 5 ADDED) and 8 in `project-overview` (the one MODIFIED block of
-B-14). The new ones, 1 + 1 + 1 + 10 + 1 + 1 + 1 + 5 + 1 = 22, each get a test
-named after it; the carried ones keep the tests of features 004 and 005, the
-14 retire, 10 batch, 8 reconcilable result, 3 narrow guarantee and 7 overview
-scenarios all byte-exact; and the two edited ones are the ignored-file
-scenarios whose files are named as not caches. The deferred
+guarantee and 6 ADDED) and 8 in `project-overview` (the one MODIFIED block of
+B-14). The new ones, 1 + 1 + 1 + 11 + 1 + 1 + 1 + 6 + 1 = 24, each get a test
+named after it. Of the 66 carried ones, which keep the tests of features 004
+and 005, 62 are byte-exact and four are edited, each to name its ignored file
+as not a Python bytecode cache: "Ignored-file bound" and "A merged worktree has
+ignored local files", as before, and, under B-22 and lane openRepoProject-4's
+precision, change 1's "Every protected classifier" in the batch block and
+change 2's "Every protected classifier" in the overview block, whose THEN
+would otherwise fail on a fixture whose ignored files are caches (lane 3's
+LOW 11). The overview edit departs from B-14's "plus one scenario" and is held
+for lane 4's agreement with the rest of B-22. The new tests' names begin
+`test_clean_`, so that feature 004's `git-floor` job, which runs `-k
+test_clean_ -k test_status_ -k test_doctor_` with Git 2.36.6 first on PATH,
+runs them (S-4, `clarifications.md`). The deferred
 scenario of `BA:1632-1634` is covered by "A symlink named like a cache is never
 disposable", "An ancestor swapped for a symlink before the stage", "A partial
 cache phase" and "A file placed in a cache directory during the stage".
@@ -513,24 +753,29 @@ cache phase" and "A file placed in a cache directory during the stage".
   explicit ignore rules (`__pycache__/` with `*.py[co]`, or `*.pyc` alone, or
   `__pycache__` for the symlink case) in the worktree's `.gitignore` or
   `info/exclude`; the 256 MiB cap uses sparse files made by `os.truncate`.
-- Hooks: between the revalidation and the stage, after the preflight, and on
-  the n-th unlink, through `patch.object` on the stage's call table; the
-  platform check stubbed to false; the counting `git` wrapper of change 1 for
-  the enumeration's argument vector, directory and count.
+- Hooks: between the revalidation and the stage, after the preflight, while
+  the first listed cache's chain is reopened, before the n-th hand-off, and on
+  the n-th unlink, holding it or making it fail, through `patch.object` on the
+  stage's call table, the removal ceiling patched short; `os.close` stubbed to
+  record the numbers the stage closes, so that a test can assert that no
+  number given to an outstanding call is reused; the access check stubbed to
+  false where the runner is root; the platform check stubbed to false; the
+  counting `git` wrapper of change 1 for the enumeration's argument vector,
+  directory and count.
 - Every existing test keeps passing, among them
   `test_clean_preserves_ignored_files_in_an_otherwise_merged_worktree`
   (tests:949, `local.env`) and feature 004's tests, whose fixtures hold no
   cache; a feature 004 test whose fixture holds a cache, should one exist when
   this feature starts, is listed in its plan and its fixture changes to a
-  non-cache ignored file, since change 1's "Every protected classifier"
-  (CAS/pc:670-683), carried byte-exact in this change's MODIFIED batch block,
-  holds only for one.
+  non-cache ignored file, as change 1's "Every protected classifier"
+  (CAS/pc:670-683), edited in this change's MODIFIED batch block, now says.
 - Once feature 005 has landed, any of its tests asserting that the overview
   and `project clean` classify identically, "Every protected classifier"
   among them, gets the cache case excluded in this change's realization (its
-  `ignored-local-files` fixture row given a non-cache ignored file, or a
-  cache-only row left out of the equality check), never in feature 005 (B-14);
-  the new overview scenario pins the exception itself.
+  `ignored-local-files` fixture row given a non-cache ignored file, as the
+  edited overview scenario now says, or a cache-only row left out of the
+  equality check), never in feature 005 (B-14); the new overview scenario pins
+  the exception itself.
 - `python3 -m unittest discover -s tests -v`, which CI runs as `test (3.10)`
   and `test (3.12)` on `ubuntu-latest`; macOS is not verified by CI (L-12).
 
@@ -552,24 +797,42 @@ cache phase" and "A file placed in a cache directory during the stage".
 - [Sixteen candidates that each keep a blocking path the samples did not show
   sort first, so no run enumerates a later cache-only candidate] -> The sample
   test keeps out every row whose samples show a blocking name (D2); the rest is
-  a stall the human report names, as change 1 names its index-gate stall, and
-  the person keeps or removes those rows by hand (D4).
+  a stall the human report names, as change 1 names its index-gate stall, with
+  how many of the 16 stay for each cause and each cause's next step (B-21),
+  never advising the person to remove by hand a worktree whose state was not
+  established (D4, D11).
 - [A partial phase leaves some caches removed and the worktree in place] ->
-  Caches are regenerable, each path is reported removed or remaining, and a
-  re-run finishes the job or stops at the same place with the same report.
-- [A persistent cache failure, such as a `__pycache__` the user cannot write,
-  stops every run at that target, holding back the targets after it] -> The
-  human line names it each time; the person fixes the permission or removes the
-  worktree by hand, as change 1's stalled index gates require.
-- [The overview reads a cache-only candidate as `ignored-local-files` where
-  `project clean` reads it `merged-removable`] -> The safe direction: its
-  suggestion is the read-only report, which shows the row selectable, and
-  change 2's equality clause states the exception, as lane openRepoProject-4
-  asked (B-14; `tasks.md` 2.2).
-- [A filesystem call stuck in the kernel during the stage] -> Its worker is
-  abandoned after its budget and the stage ends `refused` or `partial`; the
-  rescan records `removed: null` where it cannot tell, as change 1 records a
-  stuck call.
+  `__pycache__` entries are regenerable; a loose `.pyc` may be sourceless,
+  since Python 3 writes bytecode only into `__pycache__/` and a loose one is
+  what Python 2 or `compileall -b` left, imported when its source is absent.
+  Each path is reported removed, remaining or not established, and a re-run
+  finishes the job or stops at the same place with the same report.
+- [A `__pycache__` the user cannot change, such as one a root-run container
+  wrote] -> The plan's access check keeps the row `cache-unwritable`, not
+  selected and stopping nothing, its line saying to fix the ownership or mode
+  and re-run (B-20). Only a failure the check cannot see, a sticky directory
+  or a read-only filesystem, stops the run at that target, `refused` with
+  `cache-changed` and nothing deleted, and the human line names it each time.
+- [The overview reads a cache-proven row as `ignored-local-files` where
+  `project clean` reads it `merged-removable`, whether or not `project clean`
+  then excludes it] -> The safe direction: its suggestion is the read-only
+  report, which shows the row's state, and change 2's equality clause states
+  the exception as B-22 words it, the edit held for lane openRepoProject-4's
+  agreement (B-14, B-22; `tasks.md` 2.2).
+- [A filesystem call stuck in the kernel during the stage] -> A read is
+  abandoned after its budget and ends the stage `refused` or `partial`; a
+  removal is waited for up to the 300 s removal ceiling, as a removal child is,
+  its cache then `removed: null`; the worker gets no further call and its
+  descriptors stay open until `project` exits, and the rescan, on threads of
+  its own, records `removed: null` where it cannot tell (D12).
+- [An ignored file created outside the listed caches during a cache stage is
+  deleted with the worktree] -> The residual-window line names it; the stage
+  took about 0.25 s for 512 entries here, and concurrent writers are outside
+  the contract (D13, B-19).
+- [The change frees fewer rows than its first evidence suggested: of the 37
+  merged, clean, published rows kept for ignored files measured on 2026-10-19,
+  13] -> `.pytest_cache`, which alone keeps 16 more, is before Brett Heap with
+  a recommendation to admit it here (B-23; proposal, Open Questions).
 - [Bind mounts and other devices inside a worktree] -> A cache path or a
   directory above it on another device is blocking (CD-8), so disposal never
   reaches a mounted tree.
@@ -585,12 +848,14 @@ cache phase" and "A file placed in a cache directory during the stage".
 ## Migration Plan
 
 1. Ratification by Brett Heap's word on this change's pull request (`tasks.md`
-   1.6), with the three Open Questions of `proposal.md` before him.
+   1.6), with the four Open Questions of `proposal.md` before him; an answer
+   admitting `.pytest_cache` adds it to the deltas before ratification (B-23).
 2. Before the Speckit handoff (`tasks.md` section 2): change 1 archived after
-   feature 004 merges, with PR #19 landed or closed and the two blocks written
-   on its text re-checked; lane openRepoProject-4's agreement on the
-   `project-overview` delta's diff, given on 2026-10-19 and followed by its
-   commit (B-14); the enumeration and the stage measured (task 2.3).
+   feature 004 merges, with PR #19's amendment of change 1 landed (L-16), or
+   PR #19 closed, and the two blocks written on its text re-checked; lane
+   openRepoProject-4's agreement on the `project-overview` delta's diff, given
+   on 2026-10-19 for `b4d3e12`, and again on B-22's held diff before its commit
+   (B-14, B-22); the enumeration, the walk and the stage measured (task 2.3).
 3. Local `main` is synced to `origin/main`, then `/speckit.specify` creates the
    one feature under the next free number, 006 or later, recorded once in
    `tasks.md` under "Speckit Handoff"; `/opsx:apply` runs only then.
@@ -601,22 +866,26 @@ cache phase" and "A file placed in a cache directory during the stage".
    phase and its re-run.
 6. Tests per D14, the feature 005 exclusion included once feature 005 has
    landed.
-7. The realization PR merges with green checks on CI's two jobs, `test (3.10)`
-   and `test (3.12)` on `ubuntu-latest`, and closes issue #24.
+7. The realization PR merges with green checks on every job of the workflow on
+   its base, feature 004's `git-floor` job included beside `test (3.10)` and
+   `test (3.12)` on `ubuntu-latest`, and closes issue #24 (S-4).
 8. The change is archived after that merge and after the archives of change 1
    and change 2; `add-project-clean-branch-retirement` archives after this
    change, writing its blocks of the five requirements both changes modify on
    this change's archived text.
 
-Rollback: revert the realization commit on `main`. Caches already disposed of
-are written again by Python on the next import, and a worktree already removed
-stays removed as under change 1, its branch kept; installed `project` artifacts
-follow workBenches' pin.
+Rollback: revert the realization commit on `main`. `__pycache__` entries
+already disposed of are written again by Python on the next import; a loose
+`.pyc` already disposed of may have been sourceless and is not written again
+(B-17). A worktree already removed stays removed as under change 1, its branch
+kept; installed `project` artifacts follow workBenches' pin.
 
 ## Open Questions
 
-The three questions of `proposal.md` are before Brett Heap: enum closure and
-`schema_version`, other cache kinds, and the caps. Change 2's equality clause,
-the fourth in the draft, is settled by B-14. The deltas implement each
-recommendation, and a different ruling edits the deltas before ratification.
-No other question changes what is built.
+The four questions of `proposal.md` are before Brett Heap: enum closure and
+`schema_version`, `.pytest_cache`, the other cache kinds, and the caps. Change
+2's equality clause, the fourth in the draft, is settled by B-14 and B-22. The
+deltas implement each recommendation but the one for `.pytest_cache`, which
+recommends admitting it in this change and is added only on his answer (B-23);
+a different ruling edits the deltas before ratification. No other question
+changes what is built.
