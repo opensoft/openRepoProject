@@ -149,8 +149,9 @@ the revalidation signature and added ladder classes.
   `scan_errors`, and each queried row's `remote`, after `classification`, are
   the only exceptions to its "exactly these fields, every one always present"
   (APO/ov:607-608); without `--remote` the document holds exactly change 2's
-  fields. Lane openRepoProject-4, the owner of change 2, reads the block's
-  difference from change 2's text before it is committed.
+  fields. Lane openRepoProject-4, the owner of change 2, agreed the block on
+  2026-10-19 with two wording fixes in the Isolation passage of the ADDED
+  requirement, and it is committed.
 
 ## Rules This Change Keeps
 
@@ -387,20 +388,18 @@ scenarios (14, 2, 7 and 13), and one MODIFIED requirement in `project-command`,
   what it omitted", its new scenario, and the ADDED requirement's edits for
   C-9 and L-10 on 2026-10-19, and they are committed with its fixes applied
   (Decisions, "Lane openRepoProject-4's check").
-- **One spec file is held for its owner (C-12, C-13); the other is agreed and
-  committed (C-11, L-17).** This proposal and `design.md` describe the spec
-  text as the alignment review of 2026-10-19 left it.
+- **Both spec files are agreed by their owners and committed (C-11 to C-13,
+  L-17).** This proposal and `design.md` describe the spec text as the
+  alignment review of 2026-10-19 left it, with the two owners' fixes.
   `specs/project-command/spec.md`, the MODIFIED block of change 1's evidence
   model, was agreed by lane openRepoProject-2 on 2026-10-19 with one fix to its
-  Termination sentence, and is committed. The revised
-  `specs/project-overview/spec.md`, with the MODIFIED block of "Overview prints
-  a versioned JSON envelope" (C-12), the review's edits to the sentences lane
-  openRepoProject-4 agreed (C-13) and its other spec edits, is written but not
-  committed, held for lane openRepoProject-4 to read against change 2's text
-  and its own agreement. Until it agrees its diff, the committed
-  `specs/project-overview/spec.md` is the text lane openRepoProject-4 agreed on
-  2026-10-19; a part lane openRepoProject-4 declines takes the review's
-  Outcomes B to D (C-12, C-13).
+  Termination sentence. The revised `specs/project-overview/spec.md`, with the
+  MODIFIED block of "Overview prints a versioned JSON envelope" (C-12), the
+  review's edits to the sentences lane openRepoProject-4 agreed (C-13) and its
+  other spec edits, was agreed by lane openRepoProject-4 on 2026-10-19 with two
+  wording fixes in the Isolation passage of the ADDED requirement. Both files
+  are committed, and no part was declined, so the review's Outcomes B to D are
+  not taken (C-12, C-13).
 - **Archives after change 2 (L-5).** Change 2 archives after change 1 and
   after feature 005 merges (APO design.md, Migration Plan 5); this change
   archives after change 2 archives. Its block of change 1's evidence model
@@ -645,7 +644,18 @@ Packet open decisions taken, each citing the text that leaves it open:
   classification (APO/ov:318-326), and the remote-target reads run after
   collection (`design.md`, D1), so naming it would read as an ADDED requirement
   overriding a requirement of change 2 (L-11); lane openRepoProject-4 agreed to
-  drop it on 2026-10-19.
+  drop it on 2026-10-19. Lane openRepoProject-4 then agreed the revised
+  `project-overview` file as a whole, C-12's block and C-13's edits, on
+  2026-10-19, answering "yes ... (C-12 and C-13), with two wording fixes in the
+  Isolation passage", and the file is committed with both fixes: the carve-out
+  for an exception that the remote phase raises and this requirement records as
+  none of its reasons now opens the first isolation sentence ("Unless the
+  remote phase raises an exception that this requirement records as none of its
+  reasons, a `--remote` run and the same run without it SHALL agree ...") in
+  place of closing it with "except when", and the last sentence is two: "A
+  remote result SHALL be kept nowhere beyond the invocation, so it can never be
+  a `project clean` eligibility, `plan_digest` or revalidation input" and
+  "Remote evidence SHALL never be a removal proof".
 
 Decisions where the sources and the rulings are silent:
 
@@ -795,60 +805,61 @@ The alignment review (stack-architect and qa-lead) ran on `563d19d`
 (2026-10-19); the lane's rulings of 2026-10-19 bind where they differ, and
 the last five rows are the rulings that answered its five GAPs. Its
 judgements of the writer's items (i) to (iv) are carried by SA-1, SA-6, SA-7
-and QA-9. The `project-command` delta was agreed by lane openRepoProject-2 on
-2026-10-19 with one fix and is committed; the `project-overview` delta is held
-for lane openRepoProject-4's check (Dependencies and Sequencing).
+and QA-9. Both spec deltas are agreed by their owners and committed: the
+`project-command` delta by lane openRepoProject-2 on 2026-10-19 with one fix,
+and the `project-overview` delta by lane openRepoProject-4 on 2026-10-19 with
+two wording fixes in its Isolation passage (Dependencies and Sequencing).
 
 | Findings | Severity | Ruling | Section edited |
 | --- | --- | --- | --- |
-| SA-1: "local ancestry stays the only removal proof" presumes change 1's open question on squash-merged branches | MISMATCH | applied under C-13, as Appendix C carries it, with the final pass's HO:167 | held `project-overview` delta (Isolation); Rules This Change Keeps |
-| SA-2: the `remote` keys outside [J]'s "exactly these fields" recorded as a departure, against L-11 | MISMATCH | applied with change under C-12: Appendix B and the final pass's corrections; the [H] reading moved to Readings; the Capabilities entry and a What Changes bullet for [J] are worded in this round | held `project-overview` delta (MODIFIED [J]); What Changes, Capabilities, Dependencies, Decisions (L-3, C-7), Departures, Readings; `design.md` Context, D8, D11 |
+| SA-1: "local ancestry stays the only removal proof" presumes change 1's open question on squash-merged branches | MISMATCH | applied under C-13, as Appendix C carries it, with the final pass's HO:167 | `project-overview` delta (Isolation); Rules This Change Keeps |
+| SA-2: the `remote` keys outside [J]'s "exactly these fields" recorded as a departure, against L-11 | MISMATCH | applied with change under C-12: Appendix B and the final pass's corrections; the [H] reading moved to Readings; the Capabilities entry and a What Changes bullet for [J] are worded in this round | `project-overview` delta (MODIFIED [J]); What Changes, Capabilities, Dependencies, Decisions (L-3, C-7), Departures, Readings; `design.md` Context, D8, D11 |
 | SA-3: an abandoned remote-target read contradicts [E]'s Termination sentence | MISMATCH | overtaken by C-11: the interim bullet is not added, and SA-13 and SA-14 carry the ruling | as SA-13 and SA-14 |
 | SA-4: the `gh` child's 5 s overrides [E]'s "Children other than Git SHALL keep 15 s." from an ADDED requirement | MISMATCH | overtaken by C-11: carried in the MODIFIED block of [E] (SA-13); Open Questions 2 replaced as Appendix D (f) gives | `project-command` delta; Open Questions 2 |
-| SA-5: an internal exception in the remote phase exits 2, against the Isolation paragraph's exit status | MISMATCH | applied with change under C-14 (option A): Appendix C, the proposal sentence and the D10 edit; the proposal names "Overview exits by completeness and severity" where the review wrote [X], a label only `design.md` defines | held `project-overview` delta (Isolation); Decisions ("No effect on `completeness` or the exit"); `design.md` D10 |
-| SA-6: the notwithstanding list names "Overview isolates one candidate's failure", whose table ends at classification | DRIFT | applied with change: Appendix C; the proposal cites `design.md`, D1 where the review wrote D1 | held `project-overview` delta (Isolation); Decisions ("Lane openRepoProject-4's check") |
+| SA-5: an internal exception in the remote phase exits 2, against the Isolation paragraph's exit status | MISMATCH | applied with change under C-14 (option A): Appendix C, the proposal sentence and the D10 edit; the proposal names "Overview exits by completeness and severity" where the review wrote [X], a label only `design.md` defines | `project-overview` delta (Isolation); Decisions ("No effect on `completeness` or the exit"); `design.md` D10 |
+| SA-6: the notwithstanding list names "Overview isolates one candidate's failure", whose table ends at classification | DRIFT | applied with change: Appendix C; the proposal cites `design.md`, D1 where the review wrote D1 | `project-overview` delta (Isolation); Decisions ("Lane openRepoProject-4's check") |
 | SA-7: the three departures lane openRepoProject-4 agreed are not named | DRIFT | applied with change: departure (2) as the final pass words it under C-11; the list follows the sentence that holds the quote, so that sentence stays whole | Decisions ("Lane openRepoProject-4's check", "Fields only in a `--remote` run") |
 | SA-8: OV:179-180's harvest rule is not addressed | DRIFT | applied | Dependencies and Sequencing (Harvest) |
 | SA-9: `unavailable` reasons beyond DI:1041-1042 have no decision | DRIFT | applied | Decisions ("`unavailable` beyond DI:1041-1042") |
-| SA-10: the query set's ruling is not cited, and a scenario title nearly repeats change 2's | DRIFT | applied, with the final pass's citation of CAS proposal.md:811-813 | Decisions (query set); held `project-overview` delta (scenario renamed); `design.md` D11 |
-| SA-11: the credential clause drops the packet's "infers" | DRIFT | applied under C-13 | held `project-overview` delta ([L] paragraph); What Changes; Rules This Change Keeps |
+| SA-10: the query set's ruling is not cited, and a scenario title nearly repeats change 2's | DRIFT | applied, with the final pass's citation of CAS proposal.md:811-813 | Decisions (query set); `project-overview` delta (scenario renamed); `design.md` D11 |
+| SA-11: the credential clause drops the packet's "infers" | DRIFT | applied under C-13 | `project-overview` delta ([L] paragraph); What Changes; Rules This Change Keeps |
 | SA-12: three imprecise ranges and two wording drifts | DRIFT | applied | Why; Impact; Decisions (C-1, "No early stop"); `design.md` Context |
 | SA-13: [E]'s Termination and Budgets sentences contradict this change, and L-11 needs a MODIFIED block | MISMATCH | applied under C-11: Appendix A, with its added scenario and, on lane openRepoProject-2's agreement of 2026-10-19, one fix to the Termination sentence; committed | `project-command` delta |
-| SA-14: the proposal, design and tasks say `project-command` is untouched and PR #19 no dependency | DRIFT | applied with change: Appendix D (a) to (l) with G2 taken, 46 scenarios; 1.4 unticked as D (j) says, and 1.5 with it, since its two INFO lines need the held files; the citation key and the rulings paragraph also name L-11, L-14, L-16, L-17 and C-12 to C-14; C-4's bullet and tasks 2.2 and 2.3 follow C-11 and C-12 | citation key; What Changes; Capabilities; Dependencies and Sequencing; Decisions; Open Questions 2; `design.md` Context, D2, D7, D11; `tasks.md` 1.4, 1.5, 2.2 to 2.4, 3.4 |
-| SA-15: [B]'s added paragraph departs from its own first paragraph without saying so | DRIFT | applied under C-13 | held `project-overview` delta ([B] paragraph) |
+| SA-14: the proposal, design and tasks say `project-command` is untouched and PR #19 no dependency | DRIFT | applied with change: Appendix D (a) to (l) with G2 taken, 46 scenarios; 1.4 unticked as D (j) says, and 1.5 with it, since its two INFO lines needed the then-held files, both ticked once the last held file was committed (2026-10-19); the citation key and the rulings paragraph also name L-11, L-14, L-16, L-17 and C-12 to C-14; C-4's bullet and tasks 2.2 and 2.3 follow C-11 and C-12 | citation key; What Changes; Capabilities; Dependencies and Sequencing; Decisions; Open Questions 2; `design.md` Context, D2, D7, D11; `tasks.md` 1.4, 1.5, 2.2 to 2.4, 3.4 |
+| SA-15: [B]'s added paragraph departs from its own first paragraph without saying so | DRIFT | applied under C-13 | `project-overview` delta ([B] paragraph) |
 | SA-16: the design lists the identity pattern's forms incompletely | DRIFT | applied | `design.md` Context |
-| QA-1: SHALLs bind the `gh` client's own behaviour, which no fake can observe | MISMATCH | applied with change under C-13: spec and design as written; the proposal keeps DI:1060 on the clause it supports; What Changes and Capabilities describe the narrowed clause, and What This Repository Does Not Own gains the entry the Rules sentence points to | held `project-overview` delta ([L] paragraph and scenario); What Changes; Rules; What This Repository Does Not Own; Capabilities; `design.md` D5 |
-| QA-2: "No part of a response body" against the row's `number` and `url` | MISMATCH | applied, with the final pass's "No remote's URL" | held `project-overview` delta (Results, Remote target) |
-| QA-3: `gh-unauthenticated` for any exit 4, against D6 | MISMATCH | applied | held `project-overview` delta (Results) |
-| QA-4: "standard input closed" against D5's null device | MISMATCH | applied | held `project-overview` delta (Requests) |
-| QA-5: no scenario for the precedence, the `url` check or the other human lines | GAP | applied, with the final pass's sixth row | held `project-overview` delta ("The chosen pull request and a rejected answer"); Capabilities; `design.md` D11 |
-| QA-6: `observed_at` null is not pinned | GAP | applied; its optional half is carried by QA-13 and QA-14, as the final pass says | held `project-overview` delta ("No gh, or a gh without authentication") |
-| QA-7: `reason` and `counts` are not closed | GAP | applied | held `project-overview` delta (Fields) |
-| QA-8: the determinism sentence covers a timestamp | MISMATCH | applied | held `project-overview` delta (Results) |
+| QA-1: SHALLs bind the `gh` client's own behaviour, which no fake can observe | MISMATCH | applied with change under C-13: spec and design as written; the proposal keeps DI:1060 on the clause it supports; What Changes and Capabilities describe the narrowed clause, and What This Repository Does Not Own gains the entry the Rules sentence points to | `project-overview` delta ([L] paragraph and scenario); What Changes; Rules; What This Repository Does Not Own; Capabilities; `design.md` D5 |
+| QA-2: "No part of a response body" against the row's `number` and `url` | MISMATCH | applied, with the final pass's "No remote's URL" | `project-overview` delta (Results, Remote target) |
+| QA-3: `gh-unauthenticated` for any exit 4, against D6 | MISMATCH | applied | `project-overview` delta (Results) |
+| QA-4: "standard input closed" against D5's null device | MISMATCH | applied | `project-overview` delta (Requests) |
+| QA-5: no scenario for the precedence, the `url` check or the other human lines | GAP | applied, with the final pass's sixth row | `project-overview` delta ("The chosen pull request and a rejected answer"); Capabilities; `design.md` D11 |
+| QA-6: `observed_at` null is not pinned | GAP | applied; its optional half is carried by QA-13 and QA-14, as the final pass says | `project-overview` delta ("No gh, or a gh without authentication") |
+| QA-7: `reason` and `counts` are not closed | GAP | applied | `project-overview` delta (Fields) |
+| QA-8: the determinism sentence covers a timestamp | MISMATCH | applied | `project-overview` delta (Results) |
 | QA-9: no test seam fails a remote-target read | GAP | applied, with the final pass's extension for SA-13's scenario | `design.md` D11 |
-| QA-10: `head_sha` for rows never asked | MISMATCH | applied | held `project-overview` delta (Fields) |
+| QA-10: `head_sha` for rows never asked | MISMATCH | applied | `project-overview` delta (Fields) |
 | QA-11: "stay equal in a complete run" claims more than change 2 gives | MISMATCH | applied | What Changes; `design.md` D2 |
-| QA-12: a merge target without `branch.<target>.merge` has no upstream | MISMATCH | applied with change: the scenario's added clause follows the URL clause, so that "whose URL" still names `upstream`'s | held `project-overview` delta (Remote target; "The remote target comes from the merge target's branch configuration"); `design.md` Context, D2 |
-| QA-13: the line between `rate-limited` and `forbidden` is left to D6 | GAP | applied (Appendix E) | held `project-overview` delta (Results; "API failures stay unknown"); `design.md` D11 |
-| QA-14: the response rules live in D6 alone | GAP | applied (Appendix E) | held `project-overview` delta (Results; "API failures stay unknown") |
-| QA-15: the forbidden switches and "read-only" are not named | GAP | applied | held `project-overview` delta (Requests; "The request bounds") |
-| QA-16: no scenario stops a read at the deadline or cancels an unread target | GAP | applied | held `project-overview` delta ("Expiry cancels queued and in-flight requests") |
-| QA-17: "Every queried row ... SHALL be `unavailable`" reads unconditionally | MISMATCH | applied | held `project-overview` delta (Remote target) |
-| QA-18: two kinds of URL refusal are unnamed | MISMATCH | applied | held `project-overview` delta (Remote target) |
-| QA-19: `"detached"` and a null `merged_into_target` | GAP | applied | held `project-overview` delta (Query set; "One request per exact head") |
-| QA-20: `schema_version` and the key positions | GAP | applied, its first sentence only, since C-12 takes G2 | held `project-overview` delta (Fields) |
-| QA-21: the `Remote:` line and where the `remote` line goes | GAP | applied (Appendix E) | held `project-overview` delta (Human report) |
-| QA-22: the reads' directory, caps and "no fallback to `origin`" are in the design only | GAP | applied (Appendix E) | held `project-overview` delta (Remote target; "Remotes that give no request") |
-| QA-23: no `PATH` lookup and the `oid` check are in the design only | GAP | applied (Appendix E) | held `project-overview` delta (opening paragraph; Requests) |
-| QA-24: whose merge ref, and the case of the base repository | GAP | applied, its optional AND taken | held `project-overview` delta (Results; "One request per exact head") |
-| QA-25: no scenario for the determinism sentence (optional) | GAP | applied with change: QA-8's "`remote.observed_at` apart" added, since `observed_at` is a timestamp and differs between the two runs | held `project-overview` delta ("The request bounds") |
-| QA-26: `--remote` with `--attention` is not exercised (optional) | GAP | applied | held `project-overview` delta ("A squash-merged branch is explained and kept") |
+| QA-12: a merge target without `branch.<target>.merge` has no upstream | MISMATCH | applied with change: the scenario's added clause follows the URL clause, so that "whose URL" still names `upstream`'s | `project-overview` delta (Remote target; "The remote target comes from the merge target's branch configuration"); `design.md` Context, D2 |
+| QA-13: the line between `rate-limited` and `forbidden` is left to D6 | GAP | applied (Appendix E) | `project-overview` delta (Results; "API failures stay unknown"); `design.md` D11 |
+| QA-14: the response rules live in D6 alone | GAP | applied (Appendix E) | `project-overview` delta (Results; "API failures stay unknown") |
+| QA-15: the forbidden switches and "read-only" are not named | GAP | applied | `project-overview` delta (Requests; "The request bounds") |
+| QA-16: no scenario stops a read at the deadline or cancels an unread target | GAP | applied | `project-overview` delta ("Expiry cancels queued and in-flight requests") |
+| QA-17: "Every queried row ... SHALL be `unavailable`" reads unconditionally | MISMATCH | applied | `project-overview` delta (Remote target) |
+| QA-18: two kinds of URL refusal are unnamed | MISMATCH | applied | `project-overview` delta (Remote target) |
+| QA-19: `"detached"` and a null `merged_into_target` | GAP | applied | `project-overview` delta (Query set; "One request per exact head") |
+| QA-20: `schema_version` and the key positions | GAP | applied, its first sentence only, since C-12 takes G2 | `project-overview` delta (Fields) |
+| QA-21: the `Remote:` line and where the `remote` line goes | GAP | applied (Appendix E) | `project-overview` delta (Human report) |
+| QA-22: the reads' directory, caps and "no fallback to `origin`" are in the design only | GAP | applied (Appendix E) | `project-overview` delta (Remote target; "Remotes that give no request") |
+| QA-23: no `PATH` lookup and the `oid` check are in the design only | GAP | applied (Appendix E) | `project-overview` delta (opening paragraph; Requests) |
+| QA-24: whose merge ref, and the case of the base repository | GAP | applied, its optional AND taken | `project-overview` delta (Results; "One request per exact head") |
+| QA-25: no scenario for the determinism sentence (optional) | GAP | applied with change: QA-8's "`remote.observed_at` apart" added, since `observed_at` is a timestamp and differs between the two runs | `project-overview` delta ("The request bounds") |
+| QA-26: `--remote` with `--attention` is not exercised (optional) | GAP | applied | `project-overview` delta ("A squash-merged branch is explained and kept") |
 | QA-27: D6's "stopped" entry also covers the body and header stops | MISMATCH | applied | `design.md` D6 |
 | QA-28: the Risk's fallback changes [B]'s count | MISMATCH | applied | `design.md` Risks |
 | QA-29: the central case had no recorded check | GAP | applied (Appendix E), recording G4 | `design.md` Context, Risks |
 | C-11 (G1; SA-3, SA-4): change 1's evidence model | GAP | ruling: MODIFY it whole on PR #19's text with two clauses and one scenario (Appendix A), agreed by lane openRepoProject-2 on 2026-10-19 with one fix, and committed; this change archives after PR #19's amendment of change 1 lands (L-16) and re-bases on `add-project-clean-branch-retirement`'s archived block if that change archives first (L-17) | `project-command` delta; What Changes; Capabilities; Dependencies and Sequencing; Decisions; Open Questions 2; `design.md`; `tasks.md` 1.4, 2.4, 3.4 |
-| C-12 (G2; SA-2): "exactly these fields" | GAP | ruling: MODIFY change 2's "Overview prints a versioned JSON envelope" (Appendix B), held for lane openRepoProject-4; if it declines, the review's Outcome B | held `project-overview` delta; as SA-2 |
-| C-13 (G3): the sentences lane openRepoProject-4 agreed | GAP | ruling: QA-1 and SA-11 at spec.md:13-27, SA-15 at :129-142 and Appendix C at :328-342 applied and sent to lane openRepoProject-4 in one diff with C-12's block; if it declines a part, the review's Outcomes B to D, and SA-1 to Brett Heap | held `project-overview` delta; Dependencies and Sequencing |
+| C-12 (G2; SA-2): "exactly these fields" | GAP | ruling: MODIFY change 2's "Overview prints a versioned JSON envelope" (Appendix B), agreed by lane openRepoProject-4 on 2026-10-19 with two wording fixes in the Isolation passage, and committed, so the review's Outcome B, for a decline, is not taken | `project-overview` delta; as SA-2 |
+| C-13 (G3): the sentences lane openRepoProject-4 agreed | GAP | ruling: QA-1 and SA-11 at spec.md:13-27, SA-15 at :129-142 and Appendix C at :328-342 applied and sent to lane openRepoProject-4 in one diff with C-12's block, which agreed it on 2026-10-19 with two wording fixes in the Isolation passage, and committed; the review's Outcomes B to D, and SA-1 to Brett Heap, were for a decline and are not taken | `project-overview` delta; Dependencies and Sequencing |
 | G4 (lane openRepoProject-3's L4): the association for a squash-merged head | GAP | ruling: answered live on #31 and #17 and recorded with its limits (QA-29); D5's query and the scope of Open Questions 2 stand | `design.md` Context, Risks |
 | C-14 (G5; SA-5): the exit status of an internal remote-phase exception | GAP | ruling: option A, Appendix C, with no MODIFIED block of "Overview exits by completeness and severity" | as SA-5 |
 
