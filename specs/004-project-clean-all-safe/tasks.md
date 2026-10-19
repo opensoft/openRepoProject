@@ -176,7 +176,7 @@ regions and contracts every lane writes against.
 
 **Lanes**: T001 first; then T002, T003 and T004, one writer each.
 
-- [ ] T001 Confirm the baseline in this worktree: `python3 -m unittest discover
+- [x] T001 Confirm the baseline in this worktree: `python3 -m unittest discover
   -s tests -v` runs 96 tests, OK, and `git diff --stat 961c405 -- project tests
   README.md .github` prints nothing.
 - [ ] T002 [P] Create `specs/004-project-clean-all-safe/traceability.md`, lane
