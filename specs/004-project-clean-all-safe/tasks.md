@@ -5,7 +5,7 @@ Lane: openRepoProject-2
 **Input**: Design documents from `specs/004-project-clean-all-safe/`
 
 **Prerequisites**: plan.md, spec.md (as reviewed, `aadd709`), research.md (R1
-to R15), data-model.md, contracts/project-clean.md and quickstart.md. The
+to R16), data-model.md, contracts/project-clean.md and quickstart.md. The
 technical design is the ratified change
 `openspec/changes/add-project-clean-all-safe/`: design.md D1 to D20 and its
 Migration Plan, clarifications.md N1 to N5, and the three spec deltas. It
@@ -50,7 +50,8 @@ file on both:
 One difference is Brett Heap's own decision, so the PR body only notes it (lead
 ruling R-35): the proposal's Impact says the suite runs "on Linux and macOS
 with Python 3.10 and 3.12, as CI runs", and since his decision of 2026-10-15
-(#32, `e9d6711`) the `test` job runs 3.10 and 3.12 on `ubuntu-latest` only. The
+(#32, `e9d6711`) every job of the `test` matrix runs on `ubuntu-latest` only
+(lead ruling R-46). The
 OpenSpec text stays as written; the macOS skips stay in the tests for a local
 run, and no task adds a macOS job.
 
@@ -85,8 +86,10 @@ child's scrubbed names and process group before it `exec`s Git (M4).
 
 - `project`, at the repository root, is one file. New code goes only inside the
   region its task names, between the markers T004 adds after `discover()` and
-  before `repo_state()`. Existing functions are cited at `961c405`, which this
-  branch leaves unchanged for `project`, `tests/` and `README.md` (plan.md,
+  before `repo_state()`. Existing functions are cited at `961c405` and read
+  with `git show 961c405:<file>`: from T004 (`a0368ac`) this branch's
+  `project` differs from it, and so do `tests/` from T009 and one line of
+  `README.md` from #32 (`e9d6711`), a line no citation names (plan.md,
   "Citations").
 - New test modules are `tests/test_clean_<lane>.py` and
   `tests/test_status_doctor_update.py`; helpers are `tests/clean_support.py`,
@@ -96,9 +99,14 @@ child's scrubbed names and process group before it `exec`s Git (M4).
 - `tests/test_project.py`: one method rewritten (T046) and one line added to
   its loader (T009).
 - `README.md`, `AGENTS.md` and `.github/workflows/tests.yml`;
-  `specs/004-project-clean-all-safe/` (this file and `traceability.md`); and
-  one line of `openspec/changes/add-project-clean-all-safe/tasks.md` (T133). No
-  other file changes.
+  `specs/004-project-clean-all-safe/` (the feature's documents and
+  `traceability.md`; analyze L8); and
+  `openspec/changes/add-project-clean-all-safe/tasks.md`: the four hunks this
+  branch already carries there from `4e4b00f` and `dd923ee` (PR #11's
+  governance links for tasks 1.6, 2.1 and 2.2, and the Speckit Handoff's
+  feature lines), which stay, and T133's Tasks line. No other file changes.
+  When `main` gains PR #19, whose own edits to that file conflict with these
+  hunks, a merge resolves the conflict (analyze M8, lead ruling R-42).
 
 ## Rules for every new test
 
@@ -115,7 +123,10 @@ child's scrubbed names and process group before it `exec`s Git (M4).
    whatever subcommand drives it: "The sixteenth scrubbed name on Git 2.36" and
    the other seven, from "A git that floods standard error" to "A lazy fetch in
    a partial clone is refused locally", so that the floor job's `-k` selection
-   runs them (plan review M14). Unit tests start `test_clean_` as well.
+   runs them (plan review M14). PR #19's "The push child reaches its remote",
+   a scenario of that requirement too, takes `test_clean_`, since `clean
+   --action push` drives it (T074; analyze L2). Unit tests start
+   `test_clean_` as well.
 2. Modules: unittest matches `-k` against `module.Class.method`, so every
    module named `test_clean_*` or `test_status_*` falls wholly inside the floor
    job's `-k test_clean_ -k test_status_ -k test_doctor_` (checked here on
@@ -123,7 +134,12 @@ child's scrubbed names and process group before it `exec`s Git (M4).
    `test_clean_parsers` whose own name lacks the prefix). A module with another
    prefix would need its own `-k` or a selection by module. Each module has one
    writer, its lane's.
-3. Helpers come from `tests/clean_support.py` only. No module binds
+3. Helpers come from `tests/clean_support.py` only, imported by a plain
+   `import clean_support`, the one idiom; a module runs alone through
+   discovery, `python3 -m unittest discover -s tests -p
+   'test_clean_<lane>.py'`, never by its dotted path, which would load a
+   second `clean_support` with its own `load_project()` cache (lead ruling
+   R-38). No module binds
    `ProjectTests` in its namespace or uses `import *`, since
    `loadTestsFromModule` would run the 96 tests again. A test patches the
    `project` module object it calls: `tests/clean_support.py` loads its own,
@@ -191,7 +207,10 @@ regions and contracts every lane writes against.
 
 - [x] T001 Confirm the baseline in this worktree: `python3 -m unittest discover
   -s tests -v` runs 96 tests, OK, and `git diff --stat 961c405 -- project tests
-  README.md .github` prints nothing.
+  README.md .github` prints nothing. That check held through `fa81449`; #32
+  (merged at `45584a3`) and the tasks from T003 on change those paths by
+  design, so it is not re-run, and citations are read with `git show
+  961c405:<file>` (Path Conventions).
 - [x] T002 [P] Create `specs/004-project-clean-all-safe/traceability.md`, lane
   line first: one row per delta scenario, 101 rows (the 100 of the three delta
   files on `main`, and PR #19's "The push child reaches its remote", marked as
@@ -201,7 +220,8 @@ regions and contracts every lane writes against.
 - [x] T003 [P] Add the `git-floor` job to `.github/workflows/tests.yml`
   (FR-067, research.md R11), starting from the lead's ci-spike `workflow.patch`
   (48 added lines, applied with `git apply -p1`; its NOTES.md records the
-  build, cache and timing checks): `ubuntu-latest`, Python 3.10,
+  build, cache and timing checks; a reference the lead supplies, the task
+  completable from its own text; analyze M9): `ubuntu-latest`, Python 3.10,
   `actions/checkout@v4` and `actions/setup-python@v5` as the `test` job pins
   them, `pip install -r requirements.txt`; Git 2.36.6 from kernel.org's
   `git-2.36.6.tar.xz`, checked against sha256
@@ -214,9 +234,13 @@ regions and contracts every lane writes against.
   unittest discover -s tests -v -k test_clean_ -k test_status_ -k
   test_doctor_`, which takes every new module whole by its name (rule 2). Add
   `timeout-minutes: 30` to the new job only (impl-slicing-004 section 8). The
-  patch's comment opens "The four jobs above"; it says "The `test` job above"
-  instead, since #32 (`e9d6711`) left that job on Python 3.10 and 3.12 on
-  `ubuntu-latest` only, with no CI job on macOS (lead ruling R-35). The `test`
+  patch's comment opens "The four jobs above"; it reads "The test jobs above
+  (ubuntu-latest, every Python of the matrix) run on whichever Git their
+  runner ships" instead, since #32 (`e9d6711`) left every job of the `test`
+  matrix on `ubuntu-latest` only, with no CI job on macOS (lead ruling R-35),
+  and counts neither the jobs nor their Python versions, so that it holds
+  whether #28's wider matrix lands before this feature or after it (lead
+  ruling R-46). The `test`
   job is untouched; lane openRepoProject-4's issue #22 edits only that job's
   matrix, and whichever change lands second merges `main` in. Check that
   the file parses as YAML, that `actionlint` is clean where it is installed,
@@ -244,9 +268,16 @@ regions and contracts every lane writes against.
   each refusal code that has no baseline message), and the kept baseline texts
   `Cannot remove the current worktree.`, `Worktree is CLASS; only clean merged
   worktrees may be removed.` and the `no-merge-target` message at
-  `project:551`; and `NEXT_STEPS`, D18's next step by reason. Only this task
-  edits the imports and `contracts`; later lanes read them, and a key change
-  goes through the lead. Nothing in `contracts` reads a timing value (R-29).
+  `project:551`; and `NEXT_STEPS`, D18's next step by reason. Four texts stay
+  outside `TEXT`, each its owner task's: D16's `Git: inspection-error
+  (CODES)` line (T119), the baseline `invalid-arguments` messages (T048), the
+  baseline `manifest-invalid` messages (T108) and `Cancelled.` (T035) (lead
+  ruling R-45). Only this task edits the imports and `contracts`; later lanes
+  read them, and a key change goes through the lead; a lead-approved key
+  addition also adds its fixture in `tests/clean_support.py`
+  (`TEXT_FIXTURES` or `NEXT_STEP_FIXTURES`), since T008's
+  `test_clean_text_fixtures_equal_the_contract_table` fails on a key found on
+  one side only (R-45). Nothing in `contracts` reads a timing value (R-29).
   The 96 tests still pass.
 
 ---
@@ -266,9 +297,10 @@ the `internal-error` guard (R6).
 
 **Lanes**: A, timing (T005 to T007); B, harness (T008 to T011); C, environment
 (T012, T013); D, parsers (T014, T015); and E, escaping (T016, T017) start
-together. F, runner (T018 to T026), starts when A and C are done; G, evidence
-(T027 to T033), when D and F are; H, guard (T034, T035), when T023 is, beside
-G. Landing order: A to E, then F, G and H.
+together. F, runner (T018 to T026), starts when A, B and C are done, T018's
+`complete-at-bound` case and T026 once T015 has landed; G, evidence (T027 to
+T033), when B, D, E and F are; H, guard (T034, T035), when T023 is, beside G
+(analyze L6). Landing order: A to E, then F, G and H.
 
 ### Lane A: the timing table and the launcher
 
@@ -283,12 +315,15 @@ G. Landing order: A to E, then F, G and H.
   is read only inside function bodies, never in a default argument, a class
   attribute or a module-level assignment other than its own, and no default
   argument named `grace`, `budget`, `timeout`, `tick` or `wait` holds a number;
-  after `TIMING` is replaced on a loaded module, `budget` reports the new
-  values; plan review M16, lead ruling R-29); and
+  plan review M16, lead ruling R-29; that `budget` reports a replaced table is
+  T098's `test_clean_budget_reports_the_values_in_force`, since `budget` is
+  built only from T049 on, lead ruling R-39); and
   `test_clean_launcher_replaces_the_table` (imported as a module,
   `tests/launch_project.py` given `--timing=JSON` replaces exactly the keys the
-  object names and leaves `LIMITS` alone, an unknown key exits nonzero naming
-  it, and without `--timing` the real table stands; run as a script with
+  object names and leaves `LIMITS` and every other plain-data upper-case
+  constant of `project` but `TIMING` alone (26 at `d92221d`), an unknown key
+  exits nonzero naming it, and without `--timing` the real table stands; run
+  as a script with
   `--help` it exits 0 and prints the usage of `project`; the launched process
   is `project`'s own, with its pid, process group, signal handlers, streams and
   exit status).
@@ -298,7 +333,9 @@ G. Landing order: A to E, then F, G and H.
   constant derived at import (plan review M16, R-29). The first two tests of
   T005 pass.
 - [x] T007 [P] Add `tests/launch_project.py`, after the lead's harness spike
-  `harness-spike/launch.py` with `parents[1]` for the repository root: load
+  `harness-spike/launch.py` (a reference the lead supplies, the task
+  completable from its own text; analyze M9) with `parents[1]` for the
+  repository root: load
   `project` with `SourceFileLoader` and `spec_from_loader` under the module
   name `project_cli`, registered in `sys.modules` before `exec_module`, since a
   `@dataclass` under postponed annotations fails without it; when its first
@@ -323,8 +360,10 @@ G. Landing order: A to E, then F, G and H.
   recorded pid and process group are Git's own, and the exit status and output
   are the real `git`'s; with hooks, `worktree remove` runs the pre-hook, the
   real `git` as a child and the post-hook in that order and exits with Git's
-  status; a record still being written is never parsed; plan review M4, lead
-  ruling R-31); `test_clean_fake_gits_behave_as_named` (each fake of T011,
+  status; a record still being written is never parsed; the wrapper's
+  seventeen names equal `project`'s `GIT_SCRUB` (analyze L7, lead ruling
+  R-42); plan review M4, lead ruling R-31);
+  `test_clean_fake_gits_behave_as_named` (each fake of T011,
   `version-2.35.0` answering `--version` behind the seven pins);
   `test_clean_register_worktrees_writes_valid_rows` (257 rows written directly
   list back through `git worktree list --porcelain -z`);
@@ -369,17 +408,23 @@ G. Landing order: A to E, then F, G and H.
   and with an opt-in controlling terminal: a `preexec_fn` calling
   `fcntl.ioctl(0, termios.TIOCSCTTY, 0)`, which runs after
   `start_new_session`'s `setsid()` (R-31; the spike's
-  `harness-spike/prove4_pty.py`). That `preexec_fn` is the test's own;
+  `harness-spike/prove4_pty.py`, a reference the lead supplies, the task
+  completable from its own text; analyze M9). That `preexec_fn` is the test's
+  own;
   `project` never uses one (C4).
 - [x] T011 [P] Add the counting wrapper, the fake Gits and the text fixtures to
   `tests/clean_support.py`. `install_counting_git(bin_dir, log, real=REAL_GIT,
   hooks=None)` writes a POSIX `sh` script after `SH_WRAPPER` in the lead's
-  `harness-spike/spike_lib.py` (plan review M4, R-29): before Git runs, it
+  `harness-spike/spike_lib.py` (a reference the lead supplies, the task
+  completable from its own text; analyze M9; plan review M4, R-29): before Git
+  runs, it
   appends to `log`, with one `printf`, one record for the child, its fields
   NUL-separated and the record terminated: the pid, the parent pid, the process
   group (from `/proc/$$/stat`, else `ps -o pgid= -p $$`), the working directory
   (`pwd -P`), which of the seventeen scrubbed names and `GIT_OPTIONAL_LOCKS`
-  are set (each tested as `${NAME+x}`), and the argument vector. With no hook
+  are set (each tested as `${NAME+x}`; the names a literal transcribed from
+  contracts/project-clean.md, "Git children", never imported from `project`,
+  analyze L7), and the argument vector. With no hook
   it then `exec`s `real` by absolute path, so the record's pid and process
   group are Git's own; for `worktree remove` with hooks set it runs the
   pre-hook, `real` as a child and the post-hook, and exits with Git's status.
@@ -456,7 +501,9 @@ G. Landing order: A to E, then F, G and H.
   prose and `shlex.quote`d in a command, and in the `$'...'` form in both when
   it holds an undecodable byte or a code point whose `unicodedata.category` is
   Cc, Cf, Zl or Zp: `\xHH`, `\uXXXX` and `\UXXXXXXXX` in lower case, each
-  backslash doubled, each single quote written `\'`.
+  backslash doubled, each single quote written `\'`. The delta's examples
+  start at U+0000, which no path can hold, since a NUL ends each
+  NUL-delimited record, so no test sends it.
 - [x] T017 [P] Add `json_path()` and `human_path()` to region `escaping` of
   `project`. T016 passes.
 
@@ -481,8 +528,11 @@ G. Landing order: A to E, then F, G and H.
   SIGKILL and the reap come from the driver loop's `advance()` calls; lead
   ruling R-30); `test_clean_a_flooding_child_never_times_out` (the
   `flood-stderr` fake completes, with a head of exactly 4,096 bytes and the
-  rest counted); and `test_clean_reaping_uses_popen_only` (a patched
-  `os.waitpid` is never called; R14).
+  rest counted); and `test_clean_reaping_uses_popen_only` (by `ast` over
+  `project`: no `waitpid`, `wait3` or `wait4` name or attribute anywhere, so
+  that reaping goes through `Popen.poll()` or `Popen.wait(timeout)`, as T022
+  allows; a patched `os.waitpid` cannot be the check, because
+  `Popen.wait(timeout)` calls it itself; R14, lead ruling R-40).
 - [ ] T019 [P] Add `test_clean_signal_scopes` to `tests/test_clean_runner.py`:
   `signal_scope()` installs record-only handlers for SIGINT, SIGTERM and SIGHUP
   and a non-blocking wakeup descriptor with `warn_on_full_buffer=False`,
@@ -507,7 +557,9 @@ G. Landing order: A to E, then F, G and H.
   s otherwise, the clock with its work deadline and reserve, paused while a
   question waits, the probe and removal counters, and the per-invocation memos,
   so nothing carries from one in-process `main()` call to the next, the version
-  check's result and the common-directory memos included; plan review M10).
+  check's result and the common-directory memos included, and its phase,
+  `planning` by default; plan review M10, lead ruling R-44: until T035's
+  wiring line lands, the test enters `Invocation` directly).
 - [ ] T021 [P] Add `test_clean_git_and_git_text_run_through_the_driver` to
   `tests/test_clean_runner.py`: `git()` and `git_text()` run through the
   driver, scrubbed (a `GIT_DIR` naming another repository is ignored), pinned
@@ -530,23 +582,34 @@ G. Landing order: A to E, then F, G and H.
   `Popen.wait(timeout)` only (R14). Never a blocking `terminate_group()` per
   handle, which stacks graces once several handles run (the spike measured 1.79
   to 2.08 graces late; its `advance_terminations()` in
-  `harness-spike/concurrent_driver.py` is the shape). `kill_live_probes()`
+  `harness-spike/concurrent_driver.py`, a reference the lead supplies, is the
+  shape, and the task is completable from its own text; analyze M9).
+  `kill_live_probes()`
   sends SIGTERM to every live group at once and advances them together until
   each is reaped or abandoned. No default argument holds a timing value (plan
   review M16).
-- [x] T023 [P] Add `signal_scope()`, `raising_signals()`, `default_signals()`,
-  the signal slot, `Interrupted(BaseException)` and `Terminated(BaseException)`
-  to region `runner`.
-- [ ] T024 [P] Add to region `runner`: `Invocation`, made fresh by each
-  `main()` call (the budget, the clock, the counters and the memos, the version
-  check's result among them); `current_invocation()`, for Git callers outside
-  `clean`, which outside any subcommand gives the 15 s budget and installs no
-  handler (plan review M10); `run_bounded(spec, parser, run)` with D1's loop
+- [x] T023 [P] Add `signal_scope`, `raising_signals` and `default_signals`,
+  each a class with `__enter__` and `__exit__`, since T004 owns the imports
+  and `project` imports no `contextlib` (lead ruling R-44), the signal slot,
+  `Interrupted(BaseException)` and `Terminated(BaseException)` to region
+  `runner`.
+- [ ] T024 [P] Add to region `runner`: `Invocation`, a context manager (a
+  class with `__enter__` and `__exit__`) that T035's one wiring line in
+  `main()` enters fresh for each call (the budget, the clock, the counters and
+  the memos, the version check's result among them, and its phase:
+  `planning` by default, `apply` once T057 begins the apply phase,
+  `reconciling` once T093 reconciles; lead ruling R-44);
+  `current_invocation()`, for Git callers outside `clean`, which outside any
+  scope returns a fresh default with the 15 s budget and no handler (plan
+  review M10, R-44); `run_bounded(spec, parser, run)` with D1's loop
   (one selector over both pipes and the wakeup pipe, the tick, the 4 KiB head,
   and `advance()` of every terminating handle on every tick, R-30) and its six
-  outcomes, each mapped to its row error (M17); `fs_call()`; and
-  `git_version()`. Every timing value is read from `TIMING` when called (R-29).
-  T018 to T020 pass.
+  outcomes, each mapped to its row error (M17), the slot read set giving
+  `interrupted` only in phase `planning`, or on a second SIGINT in phase
+  `reconciling` (R-44), any `ParseError` from a parser's `finish()`, a
+  truncated last record or a malformed one, giving `failed` and
+  `probe-failed`; `fs_call()`; and `git_version()`. Every timing
+  value is read from `TIMING` when called (R-29). T018 to T020 pass.
 - [ ] T025 [P] Reroute `git()` and `git_text()` (`project:68-74`) through
   `run_bounded()` with `git_argv("probe", ...)`, keeping their names, place,
   signatures and return values; after a failed version check in the invocation
@@ -646,22 +709,32 @@ G. Landing order: A to E, then F, G and H.
 - [ ] T031 [P] Add to region `evidence` of `project`: `identity_probe()` (row
   3, repeated one option per child when a value holds a line feed);
   `main_worktree(identity, records, run)`, whose body here takes the first
-  registry record (T107 gives it D8's order); `inspect_repository(directory,
-  run)` (rows 3, 4, 4b, 5, 6 and 7 through `run_bounded()` and the parsers,
-  memoized per common directory on the `Invocation`, returning the identity
-  `{root, common_dir, dev, ino}` with the rows' evidence);
+  registry record (T107 gives it D8's order), and which returns the main
+  worktree's path, or `None` with its cause, and never raises (FR-055; analyze
+  H4, lead ruling R-42); `inspect_repository(directory, run)` (rows 3, 4, 4b,
+  5, 6 and 7 through `run_bounded()` and the parsers, memoized per common
+  directory on the `Invocation`, returning the identity `{root, common_dir,
+  dev, ino}` with the rows' evidence; where `main_worktree()` gives `None`,
+  `root` is null and rows 4 to 7 run in the common directory for a bare
+  repository, and otherwise where row 3 ran, FR-055);
   `verify_registration()` and the presence `lstat`, both through `fs_call()`
   (`present` false on `ENOENT` or `ENOTDIR`, null with an `os-error` on any
   other failure, lead ruling R-36); `status_probe()`; and `worktree_rows()`
   (the baseline keys, `prunable` among them where the record says so (M11), and
   the six added fields), each failed driver outcome becoming the row's `errors`
-  entry by T024's map (M17).
+  entry by T024's map (M17), and each row carrying an unprobed marker, never
+  serialized and unset here, which a read not finished within its filesystem
+  budget sets (T066; analyze M6). Each row error's `message` is the
+  contract's text for its code, from a `TEXT` key this lane adds as a
+  lead-approved contracts edit, with the same key in `TEXT_FIXTURES` of
+  `tests/clean_support.py`, which this task also touches (lead ruling R-45).
 - [ ] T032 [P] Add to region `evidence`: `classify()` (pure, with its one
   reorder; `RECOMMENDATIONS` from `project:566-616`); `partial_removal_note()`;
   `declared_tracking_branch(root)` (today's `manifest()` read, bounded by
   T108); and `resolve_merge_target(refs, declared)` (`{name, source, sha,
   notes}` in D8's order over row 6; no candidate raises the baseline message of
-  `project:551`).
+  `project:551`). A `TEXT` key this task adds for a row error goes in with its
+  fixture in `tests/clean_support.py`, as T031's do (lead ruling R-45).
 - [ ] T033 [P] Switch `cleanup_report()` (`project:544-622`) onto T031 and
   T032, leaving `repo_state()` alone (R9) and `default_branch()` and
   `ancestor()` in place until T125. T027 to T030 and the 96 tests pass.
@@ -683,6 +756,10 @@ G. Landing order: A to E, then F, G and H.
   `cleanup_report()` with SIGTERM or SIGHUP in the slot returns 143 or 129,
   never `internal-error`; a `RuntimeError` in `snapshot()` under `status` is
   not caught (R6); and `str()` of a `Refused` with a code is its message alone.
+  T047 retargets the two fault patches to the frozen stages, `build_plan` for
+  `cleanup_report` and `resolve_clean_target` for `discover`, since after T049
+  and T107 `clean` reaches neither old function for a path argument (analyze
+  H3, lead ruling R-42).
 - [ ] T035 [P] Give `Refused` (`project:23-24`) the keyword fields `code`,
   `path`, `reason` and `context` (the repository and merge target once
   established) and `as_object()`; add to region `guard` `clean_mode(args)`;
@@ -692,12 +769,17 @@ G. Landing order: A to E, then F, G and H.
   review M2); `error_document(exc, args)`, the extended error object for
   `invalid-arguments`, `internal-error` and every resolve refusal (M6); and
   `write_document(doc)`, the one writer of every `clean --json` document:
-  `json.dumps(doc, indent=2, ensure_ascii=True)` and one newline (M6). In
+  `json.dumps(doc, indent=2, ensure_ascii=True)` and one newline (M6), never
+  `ensure_ascii=False`, which research.md R12 keeps for the digest's input
+  alone, since it would write seven of T016's ten code points raw (lead
+  ruling R-38). In
   `main()` (`project:1125-1151`), route `clean` through `run_clean()`, print
   `error_document()` for a `clean --json` refusal and `{"error": ...}` for
   every other subcommand as today, and map `Interrupted` and `Terminated` to
-  `Cancelled.` on standard error with 130, 143 or 129 and no document. Only
-  this task edits `Refused` and `main()`. T034 and the 96 tests pass.
+  `Cancelled.` on standard error with 130, 143 or 129 and no document; and
+  add `main()`'s one wiring line around dispatch, which enters a fresh
+  T024 `Invocation` for each call (lead ruling R-44). Only this task edits
+  `Refused` and `main()`. T034 and the 96 tests pass.
 
 **Checkpoint**: One runner, one evidence model behind `clean`, and the guard;
 the 96 tests and every Phase 2 module pass. US1 and US9 can begin.
@@ -731,11 +813,13 @@ tuples.
 
 - [ ] T036 [P] [US1] Add `test_clean_the_preview_says_what_keeps_each_row` to
   `tests/test_clean_batch.py`: with two rows selected, one excluded as
-  `ignored-local-files` and two as `dirty`, the human preview equals the D18
-  layout: `Selected (2):` with its `  remove PATH [BRANCH]` lines first, then
-  `Excluded (3):` grouped by reason, the groups in gate order and the classes
-  in ladder order (plan review M8), each group's `  REASON (K): NEXT STEP` line
-  over its `    PATH [BRANCH]` rows, the ignored row adding `: 1 ignored;
+  `ignored-local-files` and two as `dirty`, beside the main worktree, the human
+  preview equals the D18 layout: `Selected (2):` with its `  remove PATH
+  [BRANCH]` lines first, then `Excluded (4):` grouped by reason, the groups in
+  gate order and the classes in ladder order (plan review M8), each group's
+  `  REASON (K): NEXT STEP` line over its `    PATH [BRANCH]` rows, the main
+  worktree's group `  main-worktree (1):` with no next step (lead ruling
+  R-45), the ignored row adding `: 1 ignored;
   first: SAMPLE`; the rows of each list and group in raw path byte order; the
   residual-window line; and the registry, the branches and the files are
   unchanged. Scenario: "The preview says what keeps each row".
@@ -843,8 +927,8 @@ tuples.
   review M12).
 - [ ] T046 [P] [US1] Rewrite
   `test_clean_revalidates_a_worktree_after_confirmation` in
-  `tests/test_project.py` (`:1020-1040`, the only edit to that file;
-  research.md R15): the Namespace gains `all_safe=False` and
+  `tests/test_project.py` (`:1020-1040`; with T009's loader line, the only
+  edits to that file; research.md R15): the Namespace gains `all_safe=False` and
   `expect_plan=None`, with `json=True` and `yes=False`; standard input reads as
   a terminal; the patched removal question (`ask_removal`) dirties the worktree
   and answers `yes`; `clean(args)` returns 2, the one document's target is
@@ -880,9 +964,14 @@ tuples.
   `require_git` and `check_plan` (region `dispatcher`) keep the baseline
   checks. Arguments are read with `getattr(args, name, default)`. `parser()`
   (`project:1074-1122`) gains `--all-safe` and `--expect-plan D`, its only
-  edit. The 96 tests pass, the one T046 rewrites aside.
+  edit. In `tests/test_clean_guard.py`, lane H's module, T047 alone retargets
+  T034's fault patches: `build_plan` in place of `cleanup_report` (the
+  `RuntimeError` case, and `Interrupted` with SIGTERM or SIGHUP in the slot)
+  and `resolve_clean_target` in place of `discover` (analyze H3, lead ruling
+  R-42). The 96 tests pass, the one T046 rewrites aside, and so does T034.
 - [ ] T048 [P] [US1] Fill `check_clean_arguments(args)` (the contract's
-  "Argument checks": `invalid-arguments` with the baseline messages kept;
+  "Argument checks": `invalid-arguments` with the baseline messages kept,
+  this task owning them outside `TEXT` (lead ruling R-45);
   `--apply --json` accepted only with `--all-safe` or `--action remove`; every
   flag the table does not refuse keeps the baseline's handling, ignored without
   `--apply` and when unused (plan review M9); all before any Git child) and
@@ -891,11 +980,13 @@ tuples.
   passes.
 - [ ] T049 [P] [US1] Fill `build_plan(repo, run)` in region `plan`: the rows of
   `worktree_rows()`, the main worktree first, then by raw path bytes; the merge
-  target and its notes from `resolve_merge_target()`; `gate_rows()`;
+  target and its notes from `resolve_merge_target()`, each plan note's
+  message from T051's `TEXT` keys (lead ruling R-45); `gate_rows()`;
   `select_entry()` (the identity objects, the branch evidence, the signature
   fields, `locked`, `operation.argv`); `plan_completeness()`
-  (`inspection-incomplete` for an `inspection-error` row or a failed
-  repository-wide probe); `apply_allowed`; `refusals`; `limits` and `budget` as
+  (`inspection-incomplete` for an `inspection-error` row, a row carrying
+  T031's unprobed marker, or a failed repository-wide probe; analyze M6);
+  `apply_allowed`; `refusals`; `limits` and `budget` as
   the values in force; `probes` and `operations`, `estimated` as the upper
   bound for an `--apply` run of this plan in every mode, `probes` F + W + E +
   5T + 3 (F the repository-wide children this invocation ran, W the status
@@ -919,15 +1010,25 @@ tuples.
   `plan_document(plan)` (the envelope with the baseline keys kept, in the
   contract's key order, every path through `json_path()` beside its flag,
   `observed_at` from `time.gmtime()`, plan `notes` as `{code, message}` objects
-  and row `notes` as code strings, written by T035's `write_document()`; plan
-  review M6) in region `plan`. The canonical-text test of T037 and the second
-  and third tests of T040 pass.
+  and row `notes` as code strings, written by T035's `write_document()` with
+  `ensure_ascii=True`, `ensure_ascii=False` serving only `plan_digest()`'s
+  canonical text (R12, lead ruling R-38); plan review M6) in region `plan`.
+  Each plan note's `message` is the contract's text for its code: this task
+  adds the five `TEXT` keys as a lead-approved contracts edit, with the same
+  keys in `TEXT_FIXTURES` of `tests/clean_support.py`, which it also touches,
+  since T008's `test_clean_text_fixtures_equal_the_contract_table` fails on a
+  key found on one side only (lead ruling R-45). The canonical-text test of
+  T037 and the second and third tests of T040 pass.
 - [ ] T052 [P] [US1] Fill `print_plan(plan, run)` in region `preview`: the
   baseline report layout for modes report and single; the D18 preview layout
   for mode all-safe (the groups in gate order and the classes in ladder order,
   the next steps, the ignored count and first sample, the residual-window line,
   `No eligible worktrees`), and the single-mode layout the contract fixes (plan
-  review M8); every path through `human_path()`; and `plan_document()` under
+  review M8); a group whose reason has no D18 next step (`main-worktree`,
+  `unsupported-path-bytes`, `not-requested`) printed `  REASON (K):` alone,
+  from a `TEXT` key this task adds as a lead-approved contracts edit, with its
+  fixture in `tests/clean_support.py`, which it also touches (lead ruling
+  R-45); every path through `human_path()`; and `plan_document()` under
   `--json`, which under `--apply --json` prints only when the run stops before
   the apply phase.
 - [ ] T053 [P] [US1] Fill `check_plan(plan, run)` in region `dispatcher`, in
@@ -962,7 +1063,8 @@ tuples.
   and path are gone, `unknown` with `unconfirmed-removal` when it exited 0
   otherwise, and `failed` with `git-refused` (128), `git-failed` (any other
   status) or `spawn-error`; `exit_status` as T045 states it (plan review M12).
-- [ ] T057 [P] [US1] Fill `apply_removals(plan, run)` in region `apply` (per
+- [ ] T057 [P] [US1] Fill `apply_removals(plan, run)` in region `apply` (the
+  `Invocation`'s phase set to `apply` as it begins, lead ruling R-44; per
   target in canonical order: revalidate, spawn, wait, rescan; stop after the
   first target that is not a plain `removed`, later targets `not-attempted`
   with `batch-stopped` and `reconciliation: null`), and add
@@ -1126,9 +1228,11 @@ carrying the reason the gate order gives.
   entry when none survives, whose old and new objects are non-zero and differ),
   the head test and the outcome rule; it runs for every row that reaches gate
   7, in every mode. A read error other than `ENOENT` or `ENOTDIR` makes the row
-  `inspection-error` with `os-error`, and a timeout leaves it unprobed, the
-  plan incomplete with `inspection-incomplete` either way (plan review M5, as
-  the delta words it). T059 and T060 pass.
+  `inspection-error` with `os-error`, and a timeout leaves it unprobed by
+  setting T031's unprobed marker, the plan incomplete with
+  `inspection-incomplete` either way through T049's `plan_completeness()`,
+  which this task leaves as it is (plan review M5, as the delta words it;
+  analyze M6). T059 and T060 pass.
 - [ ] T067 [P] [US2] Fill in region `index`: `registration_gate`, gate 3, from
   the row's two-way registration result; and `index_gates`, gates 9 and 10, for
   rows that passed gates 1 to 8 only: `contains-submodule` from
@@ -1292,16 +1396,23 @@ US2, US7 and US9.
   `human_path()`, so that a root holding a Cc, Cf, Zl or Zp code point prints
   in the `$'...'` form (B2), while `show_plan()` stays as it is for `new` and
   `update`; `confirm()` stays as it is, under `default_signals()` alone (R4,
-  M1); push refuses a branch whose configured upstream's remote-tracking ref is
-  gone, whatever its class, naming the reason `remote-gone`; delete-branch
+  M1) and with the `Invocation`'s clock paused around it, as T054 pauses it
+  for the removal question, since time at the question does not count
+  (analyze M3); push refuses a branch whose configured upstream's
+  remote-tracking ref is gone, whatever its class, naming the reason
+  `remote-gone`: a `Refused` with no code and `reason="remote-gone"`, its
+  message the contract's, never a nineteenth code (lead ruling R-45);
+  delete-branch
   reads the branch head from row 6 and merged-ness from row 7 instead of
   calling `ancestor()`; `remote get-url origin` runs through the driver; and
   the run exits by D19's first row: 130, 143 or 129 when a signal was recorded
   while the child ran, otherwise the child's status, 128 plus the signal number
   for a signal death, and 2 for a refusal (M3).
 - [ ] T077 [P] [US3] `execute()` (`project:157-162`) gains only an optional
-  `env` argument. The push child runs as `execute(["git", "-C", ROOT, "push",
-  ...], env=git_env("push"))`: no pins, `project`'s own streams and process
+  `env` argument. The push child runs as `execute(git_argv("push", ["-C",
+  ROOT, "push", ...]), env=git_env("push"))`, built through `git_argv()` so
+  that an LQ-3 ruling stays a one-row change to the kinds table: no pins,
+  `project`'s own streams and process
   group, never signalled, unbounded, under `signal_scope()`, so that a signal
   reaching `project` is only recorded while the push, in the terminal's
   foreground, takes the terminal's own (R1, R4, PR #19). The delete-branch
@@ -1335,9 +1446,9 @@ registration, its branch, the merge target, the manifest or the repository, and
 check each target's stage, reason and reconciliation and the exit status.
 
 **Lanes**: one, `tests/test_clean_revalidation.py` and region `apply`
-(`revalidate()`, `rescan()`, `decide_stage()`). It starts after US2, whose
-`modules_check()` and `hidden_state_probe()` revalidation calls, beside US5's
-text lane, US3, US7 and US9.
+(`revalidate()`, `rescan()`, `decide_stage()`). It starts after US2, because
+revalidation calls US2's `modules_check()` and `hidden_state_probe()`, beside
+US3, US7 and US9; US5's text lane follows it (analyze M2 and L9).
 
 ### Tests for User Story 4
 
@@ -1345,10 +1456,14 @@ text lane, US3, US7 and US9.
   `test_clean_worktree_changes_while_confirmation_is_pending` (the question
   hook dirties the selected worktree: `refused`, `state-changed`, exit 2, the
   worktree preserved); `test_clean_new_worktree_and_pre_removal_changes` (a
-  linked worktree registered at the question is not selected; and in turn a
-  changed merge-target SHA, feature branch tip, upstream object, lock,
-  ignored-file state or classification of a target before the first removal: no
-  mutation, exit 2, the matching reason); and `test_clean_changed_later_target`
+  linked worktree registered at the question is not selected; and in turn,
+  with two targets selected, a changed merge-target SHA, and a changed feature
+  branch tip, upstream object or lock of the second target, each found by the
+  first target's preflight, and a changed ignored-file state or classification
+  of the first target, found in its own revalidation: the first target
+  `refused` with the matching reason, the second `not-attempted` with
+  `batch-stopped`, no mutation, exit 2; research.md R16, lead ruling R-41); and
+  `test_clean_changed_later_target`
   (target 2 changed by the counting wrapper's post-remove hook on target 1: the
   run stops at target 2, and the record shows target 1 `removed` and every
   retained branch). Scenarios: "Worktree changes while confirmation is
@@ -1446,10 +1561,18 @@ text lane, US3, US7 and US9.
   head), `state-changed` (any other signature field, the lock, the manifest,
   the merge target, an `upstream_oid` that reappears), `contains-submodule` and
   `hidden-local-state`. A value null in the plan and null again is no
-  difference, and one that cannot be re-read is one; the first target's three
-  repository children are the preflight of every target; at most five Git
-  children per target. A refused target's reconciliation comes from the
-  revalidation that refused it, plus an `lstat` of the planned path when that
+  difference, and one that cannot be re-read is one. The first target's
+  revalidation is the preflight of every selected target: its registry
+  listing, its narrowed ref listing and its filesystem reads compare every
+  selected target's registration, lock and filesystem identity, branch tip and
+  upstream object, beside the merge-target SHA, and a difference on any target
+  refuses the first target with the matching reason (its message names no
+  other target), nothing is removed, and later targets are `not-attempted`
+  with `batch-stopped`; each target's ignored-file state and classification
+  are checked in its own revalidation (research.md R16, lead ruling R-41 as
+  amended; `BA:709-711` at `da33d92`). At most five Git children per target.
+  A refused target's reconciliation comes from the revalidation that refused
+  it, plus an `lstat` of the planned path when that
   revalidation stopped before its own; a field whose listing did not run is
   null (plan review M13).
 - [ ] T085 [US4] In `rescan()` and `decide_stage()` (region `apply`; D7,
@@ -1484,15 +1607,18 @@ ceiling, SIGINT, SIGTERM and SIGHUP, an injected exception, an unreadable
 parent) and check each target's stage, reason, notes and reconciliation, the
 stop block and the exit status.
 
-**Lanes**: removal (T087 to T090, T092, T093: `tests/test_clean_result.py`,
-region `apply`), after US4, since both edit `rescan()` and `decide_stage()`;
-and text (T091, T094: `tests/test_clean_stop.py`, regions `preview` and
-`result`), which may start after US2, beside US4.
+**Lanes**: text (T091, T094: `tests/test_clean_stop.py`, regions `preview`
+and `result`), after US4, since T091's stop block expects `branch-changed`,
+which only US4's T084 produces; then removal (T087 to T090, T092, T093:
+`tests/test_clean_result.py`, region `apply`), after US4, since both edit
+`rescan()` and `decide_stage()`, and after the text lane, since T089 asserts
+the recovery text that T094 prints (analyze M2).
 
 ### Tests for User Story 5
 
-- [ ] T087 [P] [US5] Add to `tests/test_clean_result.py`, each launched run
-  with its own table (R-29): `test_clean_a_signal_during_a_removal` (launcher;
+- [ ] T087 [P] [US5] Add to `tests/test_clean_result.py`, each run through
+  the launcher with its own table (R-29), and the slot-read test in process:
+  `test_clean_a_signal_during_a_removal` (launcher;
   three targets, the second removed by the `remove-slow` fake: SIGINT to
   `project` while it runs leaves the child unsignalled, as the fake records,
   and waited for; the second target is `removed` when the child exits 0 and the
@@ -1599,8 +1725,9 @@ and text (T091, T094: `tests/test_clean_stop.py`, regions `preview` and
 - [ ] T093 [P] [US5] In `apply_removals()`, `rescan()` and `decide_stage()`
   (region `apply`; D15, FR-034 to FR-036): read the signal slot before each
   revalidation and each spawn, a set slot making that target and every later
-  one `not-attempted` with `interrupted`; reconcile within the reserve, each
-  rescan child getting `min(5 s, reserve remaining)`; a second SIGINT during
+  one `not-attempted` with `interrupted`; reconcile within the reserve, the
+  `Invocation`'s phase set to `reconciling` (R-44), each rescan child getting
+  `min(5 s, reserve remaining)`; a second SIGINT during
   reconciliation abandons the remaining rescans, their fields null and the
   target `unknown` with `reconciliation-incomplete` (M17); an exception after
   the apply phase begins, in a target, its rescan, the final rescan or the
@@ -1712,10 +1839,15 @@ statuses, the child counts and the order of what was cut.
   `test_clean_push_refuses_an_incomplete_inspection_deadline` (the deadline
   passing during a push's re-inspection after confirmation, through
   `status-hangs-in` under the launcher with its own table: `deadline-exceeded`,
-  exit 2, no push child); and `test_clean_budget_reports_the_values_in_force`
+  exit 2, no push child; and, at a pseudo-terminal with `controlling_tty=True`
+  under the launcher with a table that shortens the deadline, `Type yes`
+  answered only after that deadline has passed: the clock was paused at the
+  question, so the re-inspection is complete and the push runs, exit 0;
+  analyze M3); and `test_clean_budget_reports_the_values_in_force`
   (unscaled, `budget` holds 5, 60, 10, 5, 300 and 1, and `limits` 128 or 256,
   16, 64, 4096 and 8; under the launcher, `budget` shows the values of the
-  test's own table). Scenarios: "Bounded revalidation work"; "Deadline expiry
+  test's own table, the clause T005 leaves to this test, lead ruling R-39).
+  Scenarios: "Bounded revalidation work"; "Deadline expiry
   mid-batch"; "Push refuses an incomplete inspection", its deadline clause.
 
 ### Implementation for User Story 6
@@ -1841,18 +1973,27 @@ region `evidence`. It starts at US1's checkpoint, beside US2, US3 and US9.
   the main worktree; a relative path, or none, joined to the working directory
   and resolved by row 3 there; a bare name through `discover()`, then resolved
   as a worktree toplevel; the family-holder and manifest-ancestor redirections
-  never for a path. Fill `main_worktree()` (region `evidence`) with M6's order:
-  row 3's third line, a submodule checkout, refused; a first registry record
-  that is `bare` refused; a first record equal to the common directory resolved
-  by the realpath of `core.worktree` (row 4b; a relative value resolved against
-  the git directory, as Git documents and project-overview's spec states, lead
-  ruling R-36) or the candidate toplevel whose `.git` file names it, else
-  refused; otherwise the first record's realpath. Every refusal is
-  `target-not-repository-root`, exit 2, before any plan.
+  never for a path. Fill `main_worktree()` (region `evidence`) with M6's
+  order, returning `None` with its cause and never raising, as T031 states: a
+  first registry record that is `bare` gives `None`; a first record equal to
+  the common directory resolves by the realpath of `core.worktree` (row 4b; a
+  relative value resolved against the git directory, as Git documents and
+  project-overview's spec states, lead ruling R-36) or the candidate toplevel
+  whose `.git` file names it, else `None`; otherwise the first record's
+  realpath. `resolve_clean_target()` refuses, in M6's order, a submodule
+  checkout (row 3's third line) and then a `None` main worktree, each with
+  `target-not-repository-root`, exit 2, before any plan; the refusal lives in
+  region `resolution`, never in `main_worktree()`, so that `status` and
+  `doctor`, which reach `main_worktree()` after T117, report such a
+  repository and never exit 2 for it (FR-050, FR-055, FR-061; analyze H4, lead
+  ruling R-42).
 - [ ] T108 [US7] Fill `declared_tracking_branch(root)` (region `evidence`; D8,
   FR-018, FR-060) with a bounded read: an `st_size` over 1 MiB is
   `manifest-invalid` without a read, the read never passes 1 MiB, and an
-  unreadable file, a parse error or a wrong kind is `manifest-invalid`; in
+  unreadable file, a parse error or a wrong kind is `manifest-invalid`, with
+  the baseline messages of `manifest()` (`Cannot read PATH: ...` and the
+  wrong-kind message), which this task owns outside `TEXT` (lead ruling
+  R-45); in
   `resolve_merge_target()`, add the `merge-target-conflict` note when the
   manifest and `origin/HEAD` name different existing branches, the manifest
   winning; every refusal carries the established repository and merge target in
@@ -1984,12 +2125,26 @@ every clean story; the `clean` tests of T114 and T116 also need US1.
   wrapper, so that its `git` row names the wrapper's path, rule 13; a fresh
   project with no remote: its null `upstream`, `ahead` and `behind` raise no
   error, and doctor passes; a leg whose status probe fails: an `error` row,
-  exit 1); `test_status_a_deleted_upstream_in_status_and_doctor` (`upstream` is
+  exit 1; a leg whose parent denies search, `not_root`: `present` null, an
+  `error` row, exit 1; analyze M4);
+  `test_status_json_paths_carry_their_flags` (`status --json` and `doctor
+  --json`: `path_valid_utf8` beside every `path`, `root_valid_utf8` beside the
+  top-level `root` and each nested family member's `root`, and
+  `ignored_samples` entries as `{path, path_valid_utf8}` objects; FR-051,
+  analyze M4); `test_status_sigterm_during_inspection` (launcher, the
+  `ignore-sigterm` fake as a status probe: SIGTERM to `project` gives 143 and
+  `Cancelled.`, the probe's group killed and reaped, `os.killpg(pgid, 0)`
+  raising `ProcessLookupError`; SIGHUP gives 129; FR-058, analyze M5);
+  `test_status_a_deleted_upstream_in_status_and_doctor` (`upstream` is
   the configured short name, `origin/<branch>`, with `ahead` and `behind`
   null); and `test_update_a_leg_s_probe_times_out` (launcher, with a table that
   shortens the 15 s inspection budget (R-29); `status-hangs-in` a leg: `update
   --apply --component shape` refuses with exit 2, and the fake `openRepoShape`
-  records no run). Scenarios: "A failed root status is reported"; "Not
+  records no run); and `test_status_a_submodule_checkout_is_reported` (a
+  submodule's checkout, and a linked worktree of a bare repository: `status`
+  exits 0 and `doctor` 0 or 1, never 2, each value written into the test as a
+  literal (R9); FR-055, analyze H4, lead ruling R-42). Scenarios: "A failed
+  root status is reported"; "Not
   established is an error, none is not"; "A deleted upstream in status and
   doctor"; "A leg's probe times out".
 - [ ] T116 [US9] Add to `tests/test_status_doctor_update.py`:
@@ -2105,7 +2260,15 @@ verification.
   `tests/clean_support.py`, its placeholders substituted, equals a line or
   quoted string of design.md D18 or D14 character for character, and that every
   D18 and D14 string has a literal (SC-010); `TEXT` in `project` equals the
-  literals (T008).
+  literals (T008). Then normalize the test modules to rule 3's one import
+  idiom (lead ruling R-38), as this task's writer, the lanes being done:
+  `tests/test_clean_scrub.py` drops its `from tests import clean_support`
+  fallback, and `tests/test_clean_escaping.py` and `tests/test_clean_parsers.py`
+  their `sys.path` inserts; `tests/test_clean_timing.py`'s own `sh` fake `git`
+  and `timing_repo()` move onto T010's and T011's helpers; a script confirms
+  that every `tests/test_clean_*.py` and `tests/test_status_doctor_update.py`
+  imports `clean_support` by that one line and none inserts into `sys.path`,
+  and each module passes when run alone through discovery.
 - [ ] T128 Run the whole suite in this worktree: `python3 -m unittest discover
   -s tests -v` passes; record the test count and the elapsed time, under 8
   minutes in `py-bench` (R11); run it under Python 3.10 too where an
@@ -2121,7 +2284,10 @@ verification.
   and passed rather than skipped, so that the floor job's `-k` selection
   catches it (plan review M14).
 - [ ] T130 Run `/usr/bin/openspec validate --all --strict` (1.6.0 or later;
-  plan.md, "Risks and Notes") and confirm every item passes.
+  plan.md, "Risks and Notes") and confirm every item passes; and confirm by
+  script that each of the 10 canonical scenarios the modified requirements
+  keep is byte-identical between the change's deltas and `openspec/specs/`
+  (SC-011; analyze L4).
 - [ ] T131 Run quickstart.md's "Checks on the realization": every added line of
   `project`, `tests`, `README.md`, `AGENTS.md` and `.github` is ASCII; `git
   diff --stat main...HEAD` lists only the files of "Path Conventions"; every
@@ -2135,10 +2301,11 @@ verification.
 - [ ] T133 In `openspec/changes/add-project-clean-all-safe/tasks.md`, under
   "Speckit Handoff", change the Tasks line to `Tasks:
   specs/004-project-clean-all-safe/tasks.md (created by /speckit.tasks)`, as
-  lane openRepoProject-1's archived changes record theirs. Tick no box there
-  for this implementation: the landing, the archive and PR #19's ruling belong
-  to the change's own governance record, not to this feature. `openspec
-  validate --all --strict` still passes.
+  lane openRepoProject-1's archived changes record theirs; the branch's four
+  earlier hunks in that file stay as they are (Path Conventions). Tick no box
+  there for this implementation: the landing, the archive and PR #19's ruling
+  belong to the change's own governance record, not to this feature.
+  `openspec validate --all --strict` still passes.
 
 ---
 
@@ -2147,8 +2314,9 @@ verification.
 ### Phase Dependencies
 
 - **Setup (Phase 1)**: T001, then T002, T003 and T004 at once.
-- **Foundational (Phase 2)**: after T004. Lanes A to E at once; F after A and
-  C; G after D and F; H after T023, beside G. Landing order as the brief sets
+- **Foundational (Phase 2)**: after T004. Lanes A to E at once; F after A, B
+  and C (T018's `complete-at-bound` case and T026 after T015); G after B, D, E
+  and F; H after T023, beside G (analyze L6). Landing order as the brief sets
   it: timing, harness, environment, runner with the parsers and escaping,
   evidence, guard. Blocks every story.
 - **US1 (Phase 3)**: after Phase 2.
@@ -2156,9 +2324,11 @@ verification.
   beside each other.
 - **US4 (Phase 6)**: after US2, since revalidation calls `modules_check()` and
   `hidden_state_probe()`.
-- **US5 (Phase 7)**: the removal lane after US4, since both edit `rescan()` and
-  `decide_stage()`; the text lane after US2, whose `registration-mismatch` row
-  one of its tests reads, beside US4.
+- **US5 (Phase 7)**: the text lane after US4, whose `branch-changed` its stop
+  block test expects (US2's `registration-mismatch` row, which another of its
+  tests reads, lands before US4); the removal lane after US4, since both edit
+  `rescan()` and `decide_stage()`, and after the text lane, whose recovery
+  text T089 asserts (analyze M2).
 - **US6 (Phase 8)**: after US3, US4 and US5.
 - **US8 (Phase 10)**: after US6 and US7.
 - **US9 (Phase 11)**: after Phase 2, beside every clean story; T114's and
@@ -2167,8 +2337,8 @@ verification.
 
 ### Critical Path
 
-Setup, then lanes A and C, F, G, then US1 (T047, then its two lanes), US2, US4,
-the US5 removal lane, US6, US8 and Polish.
+Setup, then lanes A, B and C, F, G, then US1 (T047, then its two lanes), US2,
+US4, the US5 text lane, the US5 removal lane, US6, US8 and Polish.
 
 ### Within Each Phase
 
@@ -2190,7 +2360,8 @@ the US5 removal lane, US6, US8 and Polish.
 | Phase 2 end | 2: G, H | G `identity_probe`, `main_worktree`, `inspect_repository`, `verify_registration`, `status_probe`, `worktree_rows`, `classify`, `partial_removal_note`, `declared_tracking_branch`, `resolve_merge_target`, `cleanup_report`; H `Refused`, `clean_mode`, `run_clean`, `error_document`, `write_document`, `main` |
 | US1 | 3: plan, apply, US9 | plan `check_clean_arguments`, `require_git`, `build_plan`, `select_entry`, `plan_completeness`, `gate_rows`, `plan_digest`, `plan_document`, `print_plan`, `check_plan`; apply `ask_removal`, `confirm_removal`, `revalidate`, `run_removal`, `rescan`, `decide_stage`, `apply_removals`, `apply_exit_status`, `result_document`, `print_result`; US9 below |
 | After US1 | 6: US2 reflog, US2 index, US3 single, US3 push, US7, US9 | `reflog_gate`; `registration_gate`, `index_gates`, `modules_check`, `hidden_state_probe`; `build_plan`; `push_or_delete`, `show_push_plan`, `require_unchanged_cleanup_state`, `execute`; `resolve_clean_target`, `is_bare_name`, `main_worktree`, `declared_tracking_branch`, `resolve_merge_target`; `repo_state`, `discover`, `snapshot`, `check_rows`, `print_report`, `inspect_project`, `update` |
-| After US2 | 2: US4, US5 text (plus US3, US7, US9 if running) | `revalidate`, `narrowed_ref_patterns`, `rescan`, `decide_stage`; `print_plan`, `print_result` |
+| After US2 | 1: US4 (plus US3, US7, US9 if running) | `revalidate`, `narrowed_ref_patterns`, `rescan`, `decide_stage` |
+| After US4 | 1: US5 text, then the US5 removal lane (plus US3, US7, US9 if running) | `print_plan`, `print_result`; then `run_removal`, `apply_removals`, `rescan`, `decide_stage` |
 
 The widest window is the one after US1: six lanes, each with its own test
 module and a disjoint set of `project` functions.
@@ -2286,8 +2457,9 @@ included (T074). By requirement:
 | FR-050 to FR-052 | T117, T118, T119, T120, T114 to T116 |
 | FR-053 | T024, T025, T048, T118, T021, T114 |
 | FR-054 | T013, T012, T030, T077, T074 |
-| FR-055 to FR-057 | T031, T015, T029, T030, T097 |
-| FR-058 | T022, T023, T024, T018, T030 |
+| FR-055 | T031, T107, T029, T030, T115 |
+| FR-056, FR-057 | T031, T015, T029, T030, T097 |
+| FR-058 | T022, T023, T024, T018, T030, T115 |
 | FR-059 | T024, T117, T115 |
 | FR-060 | T108, T106 |
 | FR-061 | T033, T027 |
@@ -2322,4 +2494,5 @@ T124.
   T008, T072 and T074 are a note for a local run there, no CI job running macOS
   (R-35); a failure on macOS goes to the lead before any skip is added.
 - No task edits workBenches, openRepoShape, setup-openspeckit, `CLAUDE.md`,
-  `requirements.txt`, or the change's files beyond T133's line.
+  `requirements.txt`, or the change's files beyond the `tasks.md` hunks that
+  Path Conventions names.

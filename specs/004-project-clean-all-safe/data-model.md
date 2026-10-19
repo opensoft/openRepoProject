@@ -196,14 +196,16 @@ What one invocation would do in one repository. Built fresh by every run.
 | `all-safe` | `--all-safe`, preview or `--apply` | 128 | every row passing every gate, at most 16 |
 | `single` | `--apply --action remove --worktree P` | 128, P exempt and probed first | P alone |
 
-Fields: identity, merge target, `worktrees`, `selected`, `excluded`,
-`omitted` (`{count, exactness: "exact"}`), `notes`, `completeness`,
-`apply_allowed`, `refusals`, `plan_digest` (R12 in research.md), `limits`,
-`budget`, `probes` and `operations`. `probes` counts every Git child other
-than a removal and `operations` the removals, each child once (lead ruling
-R-27; research.md R8). Rows are ordered main worktree first, then by raw path
-bytes; `selected`, `excluded` and the execution order are by raw path
-bytes.
+Fields, in the delta's envelope order: `schema_version`, `observed_at`,
+`mode`, the baseline `root`, `target_branch` and `tracking_freshness`,
+`worktrees`, the identity (`repository`), the merge target, `limits`,
+`budget`, `probes`, `operations`, `selected`, `excluded`, `omitted`
+(`{count, exactness: "exact"}`), `notes`, `completeness`, `apply_allowed`,
+`refusals` and `plan_digest` (R12 in research.md).
+`probes` counts every Git child other than a removal and `operations` the
+removals, each child once (lead ruling R-27; research.md R8). Rows are ordered
+main worktree first, then by raw path bytes; `selected`, `excluded` and the
+execution order are by raw path bytes.
 
 Completeness: a plan is `incomplete` when the row cap is exceeded
 (`inspect-cap`), a repository-wide probe failed or a row is
@@ -279,7 +281,14 @@ target:
 At most five Git children (steps 1, 3, 4, 6 and 7). A value null in the plan
 and null again is no difference; a value that cannot be re-read, a
 timed-out call included, is a difference, with its step's reason. The first
-target's steps 1 to 4 are the preflight of every target. After target k's
+target's revalidation is the preflight of every selected target: its steps 3
+and 4 and its filesystem reads compare every selected target's registration,
+`locked` and filesystem identity, branch tip and upstream object, beside the
+merge-target SHA, and a difference on any target refuses the first target
+with that step's reason, nothing removed and later targets `not-attempted`
+with `batch-stopped`; each target's steps 6 and 7 (its ignored-file state and
+classification among them) run only in its own revalidation (research.md
+R16, lead ruling R-41). After target k's
 removal child is reaped, its rescan runs steps 1 to 4 again (three Git
 children); when k ends as a plain `removed` they are target k+1's steps 1 to
 4, and otherwise, or after the last spawned target, they are the final
@@ -357,7 +366,7 @@ result, the exit status and the standard-error head:
 | --- | --- | --- |
 | `complete` | the child exited 0 and its streams ended | none |
 | `complete-at-bound` | its parser reached its bound and the handle was terminated | none; never `probe-failed` |
-| `failed` | it exited nonzero or by a signal, could not be spawned, or its last record was truncated | `probe-failed` |
+| `failed` | it exited nonzero or by a signal, could not be spawned, or its parser's `finish()` raised `ParseError` (a truncated last record, or a record not in its format) | `probe-failed` |
 | `timeout` | its budget passed | `probe-timeout` |
 | `deadline` | the work deadline was the limit | `deadline-exceeded` |
 | `interrupted` | the slot was read set while planning | none: D1's `Interrupted` is raised |
@@ -366,15 +375,30 @@ A handle abandoned at its reap deadline records `probe-timeout` (D2). The
 version check maps any outcome but `complete`, and an unparseable
 version, to `git-unavailable`.
 
+### Invocation (D1; lead ruling R-44)
+
+The per-run state of one `main()` call, a context manager in region `runner`
+that `main()` enters fresh for every call: the per-child budget (5 s under
+`clean`, 15 s otherwise), the clock (the work deadline and the reserve,
+paused while a question waits), the probe and removal counters, the
+per-invocation memos (the version check's result, the common-directory
+evidence), and the phase: `planning` by default, then `apply` once the apply
+phase begins, then `reconciling`. Outside any scope, `current_invocation()`
+returns a fresh default: the 15 s budget and no signal handler.
+
 ### Signal slot (D1, D15)
+
+The driver reads the slot by the `Invocation`'s phase: it raises
+`Interrupted` only in `planning`, or on a second SIGINT in `reconciling`
+(lead ruling R-44).
 
 | Event | Effect |
 | --- | --- |
 | the first SIGINT, SIGTERM or SIGHUP | the handler stores its number and does nothing else; it decides the exit status (130, 143, 129) |
-| a later signal | the slot keeps the first; a later SIGINT counts only while reconciling |
-| the slot read set while planning (after each wake of the driver) | the child is terminated and `Interrupted` raised: cancelled |
-| the slot read set at a seam of the apply phase (before each revalidation and each spawn) | that target and every later one `not-attempted` with `interrupted`; reconciling follows |
-| a second SIGINT while a rescan runs | the remaining rescans are abandoned: the running group is terminated, fields not established stay null, and the target is `unknown` with `reconciliation-incomplete` |
+| a later signal | the slot keeps the first; a later SIGINT counts only in phase `reconciling` |
+| the slot read set in phase `planning` (after each wake of the driver) | the child is terminated and `Interrupted` raised: cancelled |
+| the slot read set at a seam of phase `apply` (before each revalidation and each spawn) | that target and every later one `not-attempted` with `interrupted`; reconciling follows |
+| a second SIGINT while a rescan runs in phase `reconciling` | the remaining rescans are abandoned: the running group is terminated, fields not established stay null, and the target is `unknown` with `reconciliation-incomplete` |
 | a signal while a removal, push or `git branch -d` child runs | recorded only; the child is never signalled and is waited for |
 
 ## States of a `project clean` run
@@ -422,7 +446,7 @@ version, to `git-unavailable`.
 | (start), resolving | an argument check; a resolve refusal | refused (exit 2) |
 | resolving | resolved | planning: the full inspection under single mode's row cap and bounds, with the batch's completeness |
 | planning | incomplete; `remote-gone` (push); a baseline refusal | refused (exit 2, no delegate) |
-| planning | accepted | confirming: `Cleanup action:` and the plan printed, then `confirm()` with the process's own handlers |
+| planning | accepted | confirming: `Cleanup action:` and the plan printed, then `confirm()` with the process's own handlers and the clock paused |
 | confirming | `yes` or `--yes` | re-inspecting: the full re-inspection |
 | confirming | another answer; no terminal and no `--yes`; Ctrl-C or end of input | refused (`confirm()`'s baseline messages, exit 2); cancelled (130) |
 | re-inspecting | incomplete, or the state changed | refused (exit 2, no delegate) |
@@ -484,7 +508,7 @@ check row, its rule unchanged; `update --apply --component shape` or
 | removal floor, ceiling | 5 s of work deadline left; 300 s after spawn |
 | row caps | 128 (`all-safe`, `single`), 256 (`report`) |
 | targets per run | 16 |
-| ignored entries, status records, samples | 64, 4,096, 8 |
+| `ignored_entries`, `status_records`, `ignored_samples` | 64, 4,096, 8 |
 | reflog read, manifest read | 64 KiB, 1 MiB |
 | revalidation, final rescan | at most 5 and 3 Git children |
 

@@ -109,7 +109,7 @@ and `locked-worktree`. Rebuild the fixture (a new `T`) before each story.
 
 | Run | Expected |
 | --- | --- |
-| `p clean "$R" --all-safe` | "D18 preview layout": `Selected (3):` with `$W/a`, `$W/b`, `$W/c`; `Excluded (6):` grouped by reason in gate order, classes in ladder order (`main-worktree`, `locked-worktree`, `dirty`, `ignored-local-files` with `1 ignored; first: x.cache`, `pushed-unmerged`, `unstarted-branch`), each with "D18 next steps"; "D18 residual-window line"; `exit=0`; nothing changes |
+| `p clean "$R" --all-safe` | "D18 preview layout": `Selected (3):` with `$W/a`, `$W/b`, `$W/c`; `Excluded (6):` grouped by reason in gate order, classes in ladder order (`main-worktree`, `locked-worktree`, `dirty`, `ignored-local-files` with `1 ignored; first: x.cache`, `pushed-unmerged`, `unstarted-branch`), each with "D18 next steps" where D18 gives one (`main-worktree` prints `  main-worktree (1):` alone); "D18 residual-window line"; `exit=0`; nothing changes |
 | `p clean "$R" --all-safe --json \| python3 -m json.tool` | one document, `mode: "all-safe"`, `apply_allowed: true`, three `selected`, a `plan_digest` |
 | `p clean "$R" --all-safe --apply`, answering `y` | "D18 question" `Remove 3 worktrees, keeping 3 branches? [yes/N]`; `cancelled`, `exit=2`; nothing removed |
 | the same, answering `yes` | `$W/a`, `$W/b`, `$W/c` removed in that order; "D18 success line" naming `a, b, c`; `exit=0`; `git -C "$R" branch --list a b c` lists all three |
@@ -156,7 +156,7 @@ the repository from a second shell, then answer `yes`:
 | Change at the question | Expected |
 | --- | --- |
 | `echo new > "$W/a/new"` | `$W/a` `refused` with `state-changed`; `$W/b`, `$W/c` `not-attempted`; "D18 stop block" `Stopped at $W/a (state-changed). Removed 0 of 3. ...`; `exit=2` |
-| a commit on `b` | `$W/a` removed; `$W/b` `refused` with `branch-changed`; `$W/c` not attempted; `exit=2` |
+| a commit on `b` | `$W/a` `refused` with `branch-changed` at the preflight; nothing removed; `$W/b`, `$W/c` `not-attempted` with `batch-stopped`; `exit=2` (research.md R16) |
 | a commit on `main` | the first target refused with `state-changed` at the preflight; nothing removed; `exit=2` |
 
 The residual window, the branch race and a repository replaced mid-batch need

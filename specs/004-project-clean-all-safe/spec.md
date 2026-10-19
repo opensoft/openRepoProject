@@ -770,9 +770,10 @@ configuration"; "A lazy fetch in a partial clone is refused locally";
   `git gc` runs, has expired its entries, and is then `reflog-unavailable`
   in both modes, never removable by `project`; its remedy names `git
   worktree remove` (design D10 and D18).
-- **EC-005**: A reflog over 64 KiB (about 300 entries) is
-  `reflog-unavailable` even when it records movement, because the bound ends
-  the read; a reflog whose last entry's new object is not the branch head is
+- **EC-005**: A reflog of 64 KiB (65,536 bytes) or more, about 300 entries,
+  is `reflog-unavailable` even when it records movement, because a read that
+  reaches the bound ends there (lead ruling R-33); a reflog whose last entry's
+  new object is not the branch head is
   `reflog-unavailable` too (design D10, Risks).
 - **EC-006**: A branch created from a remote branch that already had commits,
   then merged elsewhere and never moved here, reads `unstarted-branch` and
@@ -1310,7 +1311,8 @@ configuration"; "A lazy fetch in a partial clone is refused locally";
   value null in the plan and null at revalidation MUST NOT count as a
   difference, and a value that cannot be re-read, a timed-out filesystem call
   included, MUST. The first target's repository-wide checks MUST serve as the
-  preflight of every target. Push and branch deletion MUST keep the full
+  preflight of every selected target, so that a difference found there
+  removes nothing at all. Push and branch deletion MUST keep the full
   re-inspection and refuse with `inspection-incomplete`, `inspect-cap` or
   `deadline-exceeded`, exit 2, when it is incomplete. Git's own non-force check
   MUST be the last defense only on the removal command's pinned status
@@ -1502,11 +1504,11 @@ configuration"; "A lazy fetch in a partial clone is refused locally";
   delta scenario with at least one test named after it, using a counting `git`
   wrapper that records each child's arguments and directory, the fake Gits of
   `design.md` D1, hooks for the residual window, the branch race, deadline
-  expiry, the removal ceiling and signals, a test-only time scale that shortens
-  the 60 s deadline, the 10 s reserve, the 5 s and 15 s budgets and the 300 s
-  ceiling together, replaced in-process by the test launcher, never read from
-  the environment or a user setting, and reported as the values in force in
-  `budget`, the parser feeds of FR-062, and value-parity checks against the
+  expiry, the removal ceiling and signals, a test-only timing table that the
+  launcher replaces in-process per test with that test's own factor or values
+  (lead ruling R-29), never read from the environment or a user setting,
+  reported as the values in force in `budget`, the parser feeds of FR-062, and
+  value-parity checks against the
   baseline. Every existing test MUST keep passing unchanged except
   `test_clean_revalidates_a_worktree_after_confirmation`, which moves to the
   result record (a `refused` target with `state-changed`, exit 2). Non-UTF-8
@@ -1621,8 +1623,8 @@ configuration"; "A lazy fetch in a partial clone is refused locally";
   unchanged except the one moved to the result record; a test drives two
   Git child handles at once through the shared scrub, termination path and
   parsers (FR-062); no subcommand but `clean` gains a flag and the
-  requirements file gains no dependency (FR-064); and the two `test` jobs and
-  the Git floor job stay green.
+  requirements file gains no dependency (FR-064); and every job of the `test`
+  matrix and the Git floor job stay green.
 - **SC-013**: `status`, `doctor` and the `update` report exit 2 in 0 runs
   because of Git's version or a repository they cannot inspect; doctor
   exits 1 on its error row; a fresh project with no remote still passes
@@ -1747,9 +1749,9 @@ configuration"; "A lazy fetch in a partial clone is refused locally";
   and the task 1.7 it adds to the change's `tasks.md`; it awaits Brett Heap's
   word, and this feature's plan builds on it until he rules (Assumptions).
 - **Runtime and CI**: Git 2.36 or later where `project` inspects a
-  repository; a Git 2.36 build for the CI floor job; the existing `test` job,
-  two jobs (Python 3.10 and 3.12 on Linux only since Brett Heap's decision of
-  2026-10-15, #32).
+  repository; a Git 2.36 build for the CI floor job; every job of the
+  existing `test` matrix, on Linux only since Brett Heap's decision of
+  2026-10-15 (#32).
 
 ## Out of Scope
 

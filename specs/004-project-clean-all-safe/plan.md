@@ -15,7 +15,7 @@ Questions), `clarifications.md` (N1 to N5) and the three spec deltas
 `project-command`, 17), ratified by Brett Heap on 2026-10-09 ("ratify, merge
 #11 and run the runbook") and landed on main as `0050f3e` (PR #11). This plan
 sequences that design by decision number and decides only what the change
-leaves to the implementation ([research.md](research.md), R1 to R15). Where
+leaves to the implementation ([research.md](research.md), R1 to R16). Where
 the plan and the change differ, the change governs; where the design and a
 delta scenario differ, the scenario governs.
 
@@ -147,10 +147,13 @@ in the `$'...'` form (FR-041, SC-010).
 ## Citations
 
 The change pins its `project`, test and README citations at `da33d92`
-(proposal, "Dependencies and Sequencing"; `design.md:25-27`), leaving the
+(proposal, "Dependencies and Sequencing"; `design.md:25-27` at `0050f3e`),
+leaving the
 re-pin to this feature. The rule at `961c405`, stated once here; every other
-artifact of this feature cites `961c405`, which this branch leaves unchanged
-for `project`, `tests/` and `README.md`:
+artifact of this feature cites `961c405`, read with `git show
+961c405:<file>`, since from T004 (`a0368ac`) this branch's `project` differs
+from it, and so do `tests/` from T009 and one line of `README.md` from #32
+(`e9d6711`), a line no citation names:
 
 - `project`: lines 1 to 203 are identical; a citation at line 274 or later
   (`manifest()` onward) is N + 148 (141 lines from PR #8, 7 more from PR #17
@@ -177,9 +180,9 @@ Table rows may exceed 79 columns, as in features 002 and 003.
 
 ## Technical Context
 
-**Language/Version**: Python 3.10+ (the README's requirement); CI runs 3.10
-and 3.12 on `ubuntu-latest` only (Brett Heap's decision of 2026-10-15, #32;
-lead ruling R-35). Git 2.36 or later wherever a
+**Language/Version**: Python 3.10+ (the README's requirement); CI runs every
+job of the `test` matrix on `ubuntu-latest` only (Brett Heap's decision of
+2026-10-15, #32; lead rulings R-35 and R-46). Git 2.36 or later wherever a
 repository is inspected: 2.43.0 in the benches, 2.36.6 in the floor job.
 Local runs use Python 3.12.3 in the `py-bench` container.
 
@@ -212,7 +215,9 @@ start, not counting time at the question (SC-004); a removal in flight adds
 at most 300 s; each probe child gets `min(5 s, work remaining)` (SC-005);
 each revalidation spawns at most 5 Git children and the final rescan 3
 (SC-006). Task 2.1's fit holds them: at 128 rows and 16 targets the 16th
-removal spawns at 23.6 s with 26.4 s left, and 256 report rows take 19.9 s.
+removal spawns at 23.6 s with 26.4 s left, and 256 report rows take 19.9 s
+(task 2.1's measured medians; D14's model at BA's 150 ms per child gives
+39.15 s and 41.85 s).
 
 **Constraints**: local evidence only and no network (the pins, R1); ASCII in
 all added text; no flag outside `clean`, no configurable limit, and no time
@@ -220,8 +225,8 @@ scale read from the environment, a flag or a file (R10); Python 3.10
 compatibility in `project` (`start_new_session=True`, never `process_group=0`
 or `preexec_fn`; daemon threads, never a `concurrent.futures` pool; C4; the
 tests' pty helper may use `preexec_fn` for `TIOCSCTTY`); one executable file;
-every existing test passing unchanged but one (R15); the two `test` jobs and
-the floor job green (SC-012).
+every existing test passing unchanged but one (R15); every job of the `test`
+matrix and the floor job green (SC-012; lead ruling R-46).
 
 **Scale/Scope**: `clean` rebuilt in three modes; `status`, `doctor` and
 `update` moved onto the evidence model; 67 FRs and 100 delta scenarios (65,
@@ -240,8 +245,8 @@ tests of the parsers, ladder, gates, digest, escaping and exit table.
 | one test | under `run_cli`'s 20 s timeout |
 | whole suite | under 8 minutes in the bench, under 6 minutes per CI job |
 
-**CI shape** (R11): the `test` job, two jobs (Python 3.10 and 3.12 on
-`ubuntu-latest`, Linux only since #32; R-35), runs the whole suite unchanged;
+**CI shape** (R11): every job of the `test` matrix (`ubuntu-latest`, Linux
+only since #32; R-35, R-46) runs the whole suite unchanged;
 one new job, `git-floor`, on `ubuntu-latest` with Python 3.10, checks out, sets
 up Python and installs `requirements.txt` as the `test` job does, then builds
 Git 2.36.6 from kernel.org's tarball (sha256 checked), caches it by version and
@@ -307,8 +312,12 @@ AGENTS.md                    Git 2.36, the clean tests and a section on
                              `test` job unchanged
 openspec/changes/add-project-clean-all-safe/
                              the ratified change; read, not changed by the
-                             implementation (this phase tidies one line of
-                             its tasks.md, the Speckit handoff)
+                             implementation, except its tasks.md: four
+                             hunks from the specify and plan commits (PR
+                             #11's governance links, the Speckit Handoff's
+                             feature lines) and T133's Tasks line; a merge
+                             resolves their conflict with PR #19 when main
+                             gains it (analyze M8)
 ```
 
 **Structure Decision**: one executable; its new tests in modules of their own,
@@ -337,10 +346,11 @@ the `OPENSPEC-SPECKIT-GLOBAL` block.
   job's place in Setup is no departure: design D17 and Migration Plan step 4
   put the job in feature 004 and name no slice.
 - **CI runs Linux only (lead ruling R-35)**: since Brett Heap's decision of
-  2026-10-15 (#32, `e9d6711`), the `test` job runs Python 3.10 and 3.12 on
-  `ubuntu-latest` and no CI job runs macOS, where the proposal's Impact says
-  the suite runs "on Linux and macOS ... as CI runs". The OpenSpec text stays
-  as written, and the feature PR body notes the difference.
+  2026-10-15 (#32, `e9d6711`), every job of the `test` matrix runs on
+  `ubuntu-latest` (R-46) and no CI job runs macOS, where the proposal's
+  Impact says the suite runs "on Linux and macOS ... as CI runs". The
+  OpenSpec text stays as written, and the feature PR body notes the
+  difference.
 - **Scenario count**: PR #19 adds one scenario, "The push child reaches its
   remote"; its test is written whether or not PR #19 has landed, and
   `traceability.md` names it (slice 9).

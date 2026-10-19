@@ -140,7 +140,7 @@ message}` objects, an `inspect-cap` note adding `rows`.
 
 | Label | Where |
 | --- | --- |
-| baseline header | `Cleanup plan for ROOT`, `Merge target: NAME (SOURCE)`, `Freshness:` |
+| baseline header | `Cleanup plan for ROOT` and `Freshness:` as the baseline prints them, around `Merge target: NAME (SOURCE)`, which is new text: the baseline prints `Merge target: NAME` (`project:630`), though D18 names the line among the baseline's |
 | "D14 completeness line" | report: `Report: complete` or `Report: incomplete (CODES)` |
 | "D14 selection line" | report at 128 rows or fewer: `--all-safe would select N`; above: `--all-safe would be incomplete (inspect-cap)` |
 | "D18 preview layout" | `Selected (N):` with one `  remove PATH [BRANCH]` per row; `Excluded (M):` with one `  REASON (K): NEXT STEP` group per reason and `    PATH [BRANCH]` rows; an `ignored-local-files` row adds its count and first sample |
@@ -155,7 +155,10 @@ message}` objects, an `inspect-cap` note adding `rows`.
 
 Lines D18 leaves open are fixed here before tasks: the `Report:` and
 `--all-safe would ...` lines follow `Freshness:`; `Excluded` groups follow
-the gate order, classes in ladder order; one progress line per target,
+the gate order, classes in ladder order; a group whose reason D18 gives no
+next step (`main-worktree`, `unsupported-path-bytes`, `not-requested`)
+prints `  REASON (K):` with no next step (lead ruling R-45); one progress
+line per target,
 `  STAGE PATH` or `  STAGE PATH (REASON)`; the retained-branch line
 `Branches kept: B1, B2.`; a plan-blocking refusal prints the plan, then
 `REFUSED: MESSAGE`; each code with no baseline message gets one here:
@@ -176,7 +179,17 @@ the gate order, classes in ladder order; one progress line per target,
 
 `repository-not-found`, `ambiguous-name`, `no-merge-target`,
 `worktree-not-found` and `cancelled` keep the baseline's messages, and
-`target-excluded` is "D18 refusal messages".
+`target-excluded` is "D18 refusal messages". `remote-gone` is a reason, not
+a nineteenth code, since the delta closes the eighteen: push, which prints
+no JSON, refuses with no code and the reason `remote-gone`, printing
+`REFUSED: ` and the message above (lead ruling R-45).
+
+The delta's rule that every plan-blocking refusal names `git worktree
+prune`, `git worktree repair` or removing the offending row by hand, "as the
+cause fits", is read to let a cause that no repair fixes name its own remedy:
+D18's `deadline-exceeded` remedy, "the run ran out of time; remove worktrees
+explicitly or re-run", names none of the three and stands (lead ruling R-45;
+LQ-5, listed for Brett Heap in the feature PR body).
 
 All new text is ASCII. A path prints verbatim in prose and shell-quoted in
 commands, unless it holds a code point of general category Cc, Cf, Zl or Zp
@@ -264,6 +277,25 @@ values in data-model.md).
 `partially-removed`. Target notes: `orphaned-directory`,
 `partially-removed`. Stage and reason codes: data-model.md.
 
+Each plan note and row error carries one fixed message (lead ruling R-45).
+OPERATION names what was cut: `git SUBCOMMAND` for a Git child, or the
+filesystem call (`lstat`, `realpath` or `read`). The lane that first prints
+each adds its `TEXT` key as a lead-approved contracts edit, with its fixture
+in `tests/clean_support.py`: the plan notes the plan lane (T049, T051), the
+row errors lane G (T031, T032).
+
+| Code | Kind | Message |
+| --- | --- | --- |
+| `merge-target-conflict` | plan note | `The manifest names NAME and origin/HEAD names OTHER; NAME is the merge target.` |
+| `inspection-incomplete` | plan note, single mode | `K other rows are inspection-error or were left unprobed; they do not block PATH.` |
+| `inspect-cap` | plan note, single mode | `K rows past the row cap of M were not inspected; they do not block PATH.` |
+| `deadline-exceeded` | plan note, single mode | `K rows were left unprobed at the work deadline; they do not block PATH.` |
+| `inspect-cap` | plan note, report above 128 rows, beside `rows` | `N rows exceed the --all-safe row cap of M; --all-safe would be incomplete (inspect-cap).` |
+| `os-error` | row error | `OPERATION failed: STRERROR`, STRERROR the error number's text |
+| `probe-failed` | row error | `OPERATION failed: DETAIL`, DETAIL one of `exit N`, `signal N`, `cannot spawn (STRERROR)`, `unparseable output` |
+| `probe-timeout` | row error | `OPERATION timed out after S s`, S the budget in force |
+| `deadline-exceeded` | row error | `OPERATION stopped at the work deadline` |
+
 Push and delete-branch also refuse with `inspection-incomplete`,
 `inspect-cap` or `deadline-exceeded` when their full inspection, before or
 after confirmation, is incomplete, and push with the reason `remote-gone`
@@ -302,7 +334,10 @@ GIT_INTERNAL_SUPER_PREFIX GIT_ALLOW_PROTOCOL
 ```
 
 `GIT_CONFIG_GLOBAL` and `GIT_CONFIG_SYSTEM` stay. Read-only probes add
-`GIT_OPTIONAL_LOCKS=0`; the removal and the delegates do not.
+`GIT_OPTIONAL_LOCKS=0`; the removal and the delegates add none, and a value
+the caller set reaches them unchanged, as every child received it before this
+change (`GIT_OPTIONAL_LOCKS` is not among the seventeen; D2 sets it for probes
+only).
 
 The protocol pins, on every Git child except the push child (the push-child
 exception, LQ-3, awaiting Brett Heap's word on draft PR #19; research.md
@@ -318,7 +353,7 @@ R1):
 The status pins, on every status probe, the hidden-state probe and the
 removal: `-c core.untrackedCache=false -c core.fsmonitor=false`.
 
-| Child | Argument vector after `git` and its pins | Directory |
+| Child | Argument vector after `git` and its pins (its status pins first, then the protocol pins; D9, D11) | Directory |
 | --- | --- | --- |
 | row 1 | `--version` | the working directory |
 | row 2 | `-C DIR rev-parse --show-toplevel` | the name lookup's directory (bare name only) |
@@ -328,8 +363,8 @@ removal: `-c core.untrackedCache=false -c core.fsmonitor=false`.
 | row 5 | row 3 again | `root`, only when row 3 ran elsewhere |
 | row 6 | `-C ROOT for-each-ref --format=%(refname)%00%(objectname)%00%(symref)%00%(upstream)%00%(upstream:short)%00%(upstream:track,nobracket) refs/heads refs/remotes` | `root` |
 | row 7 | `-C ROOT for-each-ref --merged=SHA --format=%(refname) refs/heads` | `root` |
-| status | `-c core.untrackedCache=false -c core.fsmonitor=false -C WORKTREE status --porcelain=v1 -z --untracked-files=normal --ignored=matching` | the row's worktree |
-| hidden state | `-c core.untrackedCache=false -c core.fsmonitor=false -C WORKTREE ls-files -v --stage -z` | the target's worktree |
+| status | `-c core.untrackedCache=false -c core.fsmonitor=false` + protocol pins + `-C WORKTREE status --porcelain=v1 -z --untracked-files=normal --ignored=matching` | the row's worktree |
+| hidden state | `-c core.untrackedCache=false -c core.fsmonitor=false` + protocol pins + `-C WORKTREE ls-files -v --stage -z` | the target's worktree |
 | narrowed ref listing (revalidation) | row 6's format with patterns naming the merge target, the manifest's candidate, the branch `origin/HEAD` named, `main`, `master`, `refs/remotes/origin/HEAD`, and the selected branches and their upstreams | `root` |
 | remote URL | `-C ROOT remote get-url origin` | `root` (push; `handoff()` in `status` and `doctor`) |
 | removal | `-c status.showUntrackedFiles=normal -c core.untrackedCache=false -c core.fsmonitor=false` + protocol pins + `-C ROOT worktree remove PATH` | `root`; PATH the registry's raw bytes, one argument, never `--force` |
