@@ -518,7 +518,7 @@ G. Landing order: A to E, then F, G and H.
   invocation's version check has failed, `git()` returns a failed
   `CompletedProcess` and `git_text()` `None` without spawning, as the counting
   log shows (FR-053, plan review M10).
-- [ ] T022 [P] Add `ChildHandle`, `LIVE_PROBES` and `kill_live_probes()` to
+- [x] T022 [P] Add `ChildHandle`, `LIVE_PROBES` and `kill_live_probes()` to
   region `runner` of `project`, D2 as lead ruling R-30 amends it: `start`;
   `terminate_group()`, which sends SIGTERM to the group, sets the handle's kill
   deadline from `TIMING["term_grace"]`, read at that call, and returns at once;
@@ -534,7 +534,7 @@ G. Landing order: A to E, then F, G and H.
   sends SIGTERM to every live group at once and advances them together until
   each is reaped or abandoned. No default argument holds a timing value (plan
   review M16).
-- [ ] T023 [P] Add `signal_scope()`, `raising_signals()`, `default_signals()`,
+- [x] T023 [P] Add `signal_scope()`, `raising_signals()`, `default_signals()`,
   the signal slot, `Interrupted(BaseException)` and `Terminated(BaseException)`
   to region `runner`.
 - [ ] T024 [P] Add to region `runner`: `Invocation`, made fresh by each
