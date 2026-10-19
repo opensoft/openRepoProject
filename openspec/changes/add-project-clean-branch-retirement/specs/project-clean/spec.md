@@ -1028,7 +1028,9 @@ branch stage stopped the run, SHALL read `branch BRANCH: REASON`, and whose
   per-protocol pins, `-C <command directory>` and `branch -d -- <branch>`, the
   seventeen scrubbed names and `GIT_OPTIONAL_LOCKS` absent from its
   environment and a process group of its own, and none with `-D`, `--force` or
-  `-f`; the record's `operations.estimated` and `operations.performed` are 4,
+  `-f`, and each re-read and post-check listing with `-C <command directory>`
+  and the revalidation's narrowed ref patterns; the record's
+  `operations.estimated` and `operations.performed` are 4,
   its `probes.performed` equals the wrapper's count of the other children, and
   its `probes.estimated` exceeds that of the same run without the flag by 5
 
