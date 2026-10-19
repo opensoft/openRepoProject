@@ -11,8 +11,9 @@ import sys
 import time
 
 from clean_support import (
-    COUNTED_NAMES, OPTIONAL_LOCKS, REAL_GIT, SCRUBBED_NAMES, TIMEOUT, CleanCase, child_log,
-    fake_events, install_counting_git, install_fake_git, load_project, reset_child_log,
+    COUNTED_NAMES, NEXT_STEP_FIXTURES, OPTIONAL_LOCKS, REAL_GIT, SCRUBBED_NAMES,
+    TEXT_FIXTURES, TIMEOUT, CleanCase, child_log, fake_events,
+    install_counting_git, install_fake_git, load_project, reset_child_log,
     wait_for_event,
 )
 
@@ -417,3 +418,17 @@ class CleanHarnessTests(CleanCase):
                                          ("", "later")])
             self.assertEqual(calls, [None])
             self.assertIn("REPLY later", result.stdout)
+
+    def test_clean_text_fixtures_equal_the_contract_table(self):
+        # Two transcriptions of design.md D14 and D18 and the contract's lines
+        # beyond D18 checked against each other (rule 8): clean_support's fixtures
+        # and project's TEXT and NEXT_STEPS, key by key, so a failure names its key.
+        project = load_project()
+        for name, fixtures, table in (("TEXT", TEXT_FIXTURES, project.TEXT),
+                                      ("NEXT_STEPS", NEXT_STEP_FIXTURES, project.NEXT_STEPS)):
+            self.assertEqual((sorted(set(fixtures) - set(table)), sorted(set(table) - set(fixtures))),
+                             ([], []), f"keys only in the fixtures, keys only in {name}")
+            for key, line in fixtures.items():
+                with self.subTest(table=name, key=key):
+                    self.assertEqual(line, table[key])
+                    self.assertTrue(line.isascii(), "all new text is ASCII (D18)")

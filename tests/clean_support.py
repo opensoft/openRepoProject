@@ -560,7 +560,9 @@ def wait_for_event(bin_dir, event, pid=None, timeout=TIMEOUT):
 # field named as the docs spell it ({ROOT}, {PATH}, {BRANCH}, {N}, {K}, {M},
 # {REASON}, ...), except three that stand for a phrase or a list: {NEXT_STEP}
 # for NEXT STEP, {BRANCHES} for B1, B2 and {NOT_ATTEMPTED} for P1, P2. Every
-# other character is literal; [yes/N] is literal text.
+# other character is literal; [yes/N] is literal text. `question_one` is D18's
+# question "in the singular for one", used only for one, so it holds the
+# literal 1 and no placeholder (lead ruling R-43).
 TEXT_FIXTURES = {
     # D14: the report.
     "completeness_line_complete": "Report: complete",
@@ -582,7 +584,7 @@ TEXT_FIXTURES = {
     "empty_line": "No eligible worktrees",
     # D18: the question, the wait, the result.
     "question": "Remove {N} worktrees, keeping {N} branches? [yes/N]",
-    "question_one": "Remove {N} worktree, keeping {N} branch? [yes/N]",
+    "question_one": "Remove 1 worktree, keeping 1 branch? [yes/N]",
     "wait_line": "Waiting for git worktree remove {PATH} to finish; a started removal is never interrupted (at most 300 s).",
     "success_line": "Removed {N}; branches kept: {BRANCHES}.",
     "stop_block": "Stopped at {PATH} ({REASON}). Removed {K} of {N}. Not attempted: {NOT_ATTEMPTED}. Next: project clean {ROOT} --all-safe",
