@@ -318,7 +318,7 @@ G. Landing order: A to E, then F, G and H.
   `test_clean_text_fixtures_equal_the_contract_table` (the D18 and D14 literals
   of T011 equal the `TEXT` of `project`: two transcriptions checked against
   each other).
-- [ ] T009 [P] Create `tests/clean_support.py`: `load_project()`, which loads
+- [x] T009 [P] Create `tests/clean_support.py`: `load_project()`, which loads
   `project` as `tests/test_project.py` does but under its own name,
   `project_clean`, registered in `sys.modules` before `exec_module` (R-29), and
   returns that module object; `REAL_GIT`, the absolute path of the real `git`,
