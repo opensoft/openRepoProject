@@ -198,7 +198,7 @@ regions and contracts every lane writes against.
   PR #19's draft), with columns for the delta, the requirement, the exact
   title, the story and the test names. Each test task fills its rows as its
   tests land.
-- [ ] T003 [P] Add the `git-floor` job to `.github/workflows/tests.yml`
+- [x] T003 [P] Add the `git-floor` job to `.github/workflows/tests.yml`
   (FR-067, research.md R11), starting from the lead's ci-spike `workflow.patch`
   (48 added lines, applied with `git apply -p1`; its NOTES.md records the
   build, cache and timing checks): `ubuntu-latest`, Python 3.10,
