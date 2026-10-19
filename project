@@ -481,6 +481,66 @@ def discover(target=None):
 # endregion contracts
 
 # region git environment
+# The environment and the argument vector of every Git child (design D6, D9 and
+# D11; contracts/project-clean.md, "Git children"; FR-054).
+
+# Removed from every Git child's environment, never from project's own, in the
+# contract's order: the fifteen names `git rev-parse --local-env-vars` prints on
+# Git 2.40 and later; GIT_INTERNAL_SUPER_PREFIX, which Git 2.36 to 2.39 also
+# print (lead ruling R-21); and GIT_ALLOW_PROTOCOL, which Git consults before
+# any -c pin (R-25). A fixed list, never queried from Git.
+GIT_SCRUB = (
+    "GIT_ALTERNATE_OBJECT_DIRECTORIES", "GIT_CONFIG", "GIT_CONFIG_PARAMETERS",
+    "GIT_CONFIG_COUNT", "GIT_OBJECT_DIRECTORY", "GIT_DIR", "GIT_WORK_TREE",
+    "GIT_IMPLICIT_WORK_TREE", "GIT_GRAFT_FILE", "GIT_INDEX_FILE",
+    "GIT_NO_REPLACE_OBJECTS", "GIT_REPLACE_REF_BASE", "GIT_PREFIX",
+    "GIT_SHALLOW_FILE", "GIT_COMMON_DIR", "GIT_INTERNAL_SUPER_PREFIX",
+    "GIT_ALLOW_PROTOCOL",
+)
+
+# The seven protocol pins, so that a lazy fetch is refused locally (D11; lead
+# rulings R-23 and R-25).
+PROTOCOL_PINS = (
+    "-c", "protocol.allow=never", "-c", "protocol.file.allow=never",
+    "-c", "protocol.ssh.allow=never", "-c", "protocol.git.allow=never",
+    "-c", "protocol.http.allow=never", "-c", "protocol.https.allow=never",
+    "-c", "protocol.ext.allow=never",
+)
+
+# The two status pins, on the status and hidden-state probes and the removal.
+STATUS_PINS = ("-c", "core.untrackedCache=false", "-c", "core.fsmonitor=false")
+
+# Per kind of Git child: whether it is a read-only probe, which sets
+# GIT_OPTIONAL_LOCKS=0; the -c pins it carries before the protocol pins;
+# whether it carries the protocol pins; and the scrubbed names it keeps.
+GIT_KINDS = {
+    "probe": (True, (), True, ()),
+    "status": (True, STATUS_PINS, True, ()),
+    "hidden": (True, STATUS_PINS, True, ()),
+    "removal": (False, ("-c", "status.showUntrackedFiles=normal", *STATUS_PINS), True, ()),
+    "delegate": (False, (), True, ()),
+    # The push child of `clean --action push` follows draft PR #19 and lead
+    # ruling R-28: no protocol pin, and the caller's GIT_ALLOW_PROTOCOL kept.
+    # That is LQ-3's assumption until Brett Heap's word; a ruling either way
+    # edits this one row.
+    "push": (False, (), False, ("GIT_ALLOW_PROTOCOL",)),
+}
+
+
+def git_env(kind):
+    """A copy of project's environment, scrubbed for a Git child of KIND."""
+    read_only, _, _, kept = GIT_KINDS[kind]
+    env = {name: value for name, value in os.environ.items()
+           if name not in GIT_SCRUB or name in kept}
+    if read_only:
+        env["GIT_OPTIONAL_LOCKS"] = "0"
+    return env
+
+
+def git_argv(kind, args):
+    """The argument vector of a Git child of KIND; ARGS pass through unchanged."""
+    _, pins, pinned, _ = GIT_KINDS[kind]
+    return ["git", *pins, *(PROTOCOL_PINS if pinned else ()), *args]
 # endregion git environment
 
 # region runner
