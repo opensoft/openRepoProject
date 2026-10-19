@@ -210,22 +210,25 @@ with `-`, which `git branch` cannot create but a hand-written ref can hold, from
 being read as an option. The status pins of the removal command are not added:
 `branch -d` runs no status.
 
-It spawns only while at least change 1's 5 s removal floor of the work
-deadline remains, as a removal does, and its budget is then `min(5 s, work
-remaining)`, which is the whole 5 s; so the work deadline never stops a branch
-child part-way, and the only stop past its budget is one of a child that ran
-its full 5 s, a hung one. The re-read before it gets `min(5 s, work remaining
-less the removal floor)`, as the cache change words its cache stage, so that
-the floor is left for the spawn. A branch child is not signalled on a signal
-or an exception and is waited for within its budget, as a removal child is
-waited for, because a ref transaction killed part-way can leave a `.lock` file
-to clear by hand. Change 1's project-command Termination paragraph names only
-probe children, killed on every exit path, and removal children, waited for,
-so that paragraph is MODIFIED to name the branch child beside the removal
-child, and its Budgets sentence to give the re-read its narrower budget. That
-block is written on PR #19's text and held uncommitted until lane
-openRepoProject-2 checks its diff (ruling A-20; proposal, Dependencies and
-Sequencing).
+It spawns only while more than change 1's 5 s removal floor of the work deadline
+remains, as the cache change starts its cache stage, and its budget is then
+`min(5 s, work remaining)`, which is the whole 5 s; so the work deadline never
+stops a branch child part-way, and the only stop past its budget is one of a
+child that ran its full 5 s, a hung one. The re-read before it gets `min(5 s,
+work remaining less the removal floor)`, as the cache change words its cache
+stage, so that the floor is left for the spawn. A branch child is not signalled
+on a signal or an exception and is waited for within its budget, as a removal
+child is waited for, because a ref transaction killed part-way can leave a
+`.lock` file to clear by hand. Unlike the cache stage's filesystem calls, which
+are abandoned at their budget, a branch child is a mutation and is never
+abandoned at its budget: past it, it gets change 1's probe termination and is
+reaped, and the post-check decides (ruling A-20). Change 1's project-command
+Termination paragraph names only probe children, killed on every exit path, and
+removal children, waited for, so that paragraph is MODIFIED to name the branch
+child beside the removal child, and its Budgets sentence to give the re-read its
+narrower budget. That block is written on PR #19's text and held uncommitted
+until lane openRepoProject-2 checks its diff (ruling A-20; proposal,
+Dependencies and Sequencing).
 
 The compare is the re-read: the head it lists must equal the reconciliation
 record's `branch_sha`, with the other values of D4. The delete is Git's
@@ -476,7 +479,7 @@ after `removed` with `removal-ceiling`.
 | --- | --- | --- |
 | reflog proof, at plan time (one per repository, and one per selected row only when the first prints a commit) | `min(5 s, work remaining)` | `probes` |
 | re-read listing (and the manifest read, a filesystem call) | `min(5 s, work remaining less the removal floor)`, started only while more than the floor remains | `probes`, the sub-record's `probes_performed` |
-| branch child | `min(5 s, work remaining)`, spawned only while at least the 5 s removal floor remains | `operations` |
+| branch child | `min(5 s, work remaining)`, spawned only while more than the 5 s removal floor remains | `operations` |
 | post-check listing, only after a branch child | `min(5 s, reserve remaining)` | `probes`, the sub-record's `probes_performed` |
 
 The reflog proof is planning, like the merged set. The re-read gates a
@@ -493,7 +496,7 @@ within its budget; past the budget it gets change 1's probe termination
 signal the post-check runs in the reserve, as change 1 reconciles after a
 signal.
 
-The 64 s bound holds: a branch child spawns with at least 5 s of work left, so
+The 64 s bound holds: a branch child spawns with more than 5 s of work left, so
 it ends or is stopped by the 50 s work deadline and is reaped within 4 s more;
 the post-check and the final rescan run in the reserve up to 60 s, and a
 reserve child stopped there is reaped within 4 s, as change 1 counts.
@@ -519,7 +522,9 @@ cache change and with one reflog child, target k's removal spawns after 7 +
 rescan children and the re-read), at 22.95 + 1.5k s. The spawn floor needs
 each at or before 45 s: removals 1 to 15 spawn (the 15th at 44.55 s), branch
 children 1 to 14 spawn (the 14th at 43.95 s), and the 15th branch child, due at
-45.45 s, cannot start. So at the packet's costs a flagged run of 16 removes 15
+45.45 s, cannot start; no spawn falls on the 45 s boundary, so the strict test
+for the branch child and change 1's inclusive one for a removal give the same
+counts here. So at the packet's costs a flagged run of 16 removes 15
 worktrees and retires 14 branches; the 15th branch is `retained` with
 `deadline-exceeded`, the 16th target is `not-attempted` with
 `deadline-exceeded`, and the run exits 1, never unsafe (`BA:772-774`). In the
@@ -656,22 +661,26 @@ nothing here is verified by CI there.
 ### D10. JSON and the enum question (L-4, A-1 as amended)
 
 `branch_retirement` is one new key on a target object, with enums of its own,
-and `branch_plan` one new key on the plan envelope, under the flag only:
-`{path, branch, planned_sha, action, reason}` per selected row in canonical
-order, `action` `retire` or `keep`. The canonical text of `plan_digest` gains a
-`retire` member under the flag only, the `[branch, planned_sha]` pairs of the
-branches the plan retires in canonical order, present when empty; without the
-flag the text is change 1's byte for byte. Change 1 versions "a rename,
-removal, type change or change of meaning" (`CAS/pc:1129-1131`), and a new key
-is none of those; change 2 calls "adding a field" additive
-(`APO/ov:656-657`). The ADDED requirement says that its keys extend, under the
-flag only, the lists that "Clean plans and refusals are versioned JSON"
-enumerates (lane openRepoProject-3's L10), so that requirement is not
-modified. No existing enum gains a value: the target's `stage` and `reason`,
-the refusal codes, the notes and the ladder are as change 1 leaves them. The
-disagreement between the two changes about adding an enum value therefore does
-not bind this change; the proposal puts it before Brett Heap with L-4's
-recommendation.
+and `branch_plan` one new key on the plan envelope, under the flag only: `{path,
+branch, planned_sha, action, reason}` per selected row in canonical order,
+`action` `retire` or `keep`. The canonical text of `plan_digest` gains a
+`retire` member under the flag only, its last member, after the selected
+triples: the `[branch, planned_sha]` pairs of the branches the plan retires in
+canonical order, present when empty; without the flag the text is change 1's
+byte for byte. Both statements are made against the base text this change is
+written on. When this change re-bases on the cache change's archived block
+(L-11), the flagless invariant becomes byte-identical to the cache change's
+text, and `retire` follows the last selected triple and that change's per-target
+cache data, which sits after each triple. Change 1 versions "a rename, removal,
+type change or change of meaning" (`CAS/pc:1129-1131`), and a new key is none of
+those; change 2 calls "adding a field" additive (`APO/ov:656-657`). The ADDED
+requirement says that its keys extend, under the flag only, the lists that
+"Clean plans and refusals are versioned JSON" enumerates (lane
+openRepoProject-3's L10), so that requirement is not modified. No existing enum
+gains a value: the target's `stage` and `reason`, the refusal codes, the notes
+and the ladder are as change 1 leaves them. The disagreement between the two
+changes about adding an enum value therefore does not bind this change; the
+proposal puts it before Brett Heap with L-4's recommendation.
 
 ## Risks / Trade-offs
 
