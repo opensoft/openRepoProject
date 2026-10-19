@@ -329,7 +329,7 @@ T033), when B, D, E and F are; H, guard (T034, T035), when T023 is, beside G
 
 ### Lane B: the counting wrapper, the fake Gits and the helpers
 
-- [ ] T008 [P] Add `tests/test_clean_harness.py`:
+- [x] T008 [P] Add `tests/test_clean_harness.py`:
   `test_clean_counting_wrapper_records_and_execs` (per child the wrapper
   records, before Git runs, the argument vector as raw bytes, the working
   directory, the pid, the parent pid, the process group, and which of the
