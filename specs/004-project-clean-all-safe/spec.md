@@ -822,6 +822,8 @@ configuration"; "A lazy fetch in a partial clone is refused locally";
   `project`'s own codes; the result record tells them apart (design D19).
 - **EC-019**: Non-UTF-8 path scenarios cannot run on macOS, whose filesystems
   reject such names, and are skipped there with that reason (design, Risks).
+  No CI job runs macOS since Brett Heap's decision of 2026-10-15 (#32), so the
+  skip serves a person's local run.
 
 ## Requirements *(mandatory)*
 
@@ -975,12 +977,13 @@ configuration"; "A lazy fetch in a partial clone is refused locally";
 - **FR-017**: A bare repository MUST be refused in every mode with
   `target-not-repository-root`, also from a relative path, no argument or a
   bare name inside one of its linked worktrees. A submodule checkout MUST be
-  tested first and refused the same way. Where the first registry record is
-  the common directory itself, the main worktree MUST be the realpath of
-  `core.worktree` or, where that is unset, the candidate toplevel whose
-  `.git` file names the common directory; the common directory MUST never be
-  a worktree row, and a linked worktree whose main checkout cannot be named
-  MUST be refused. Traces: "Clean resolves its target Git-first"; design D8.
+  tested first and refused the same way. Where the first registry record is the
+  common directory itself, the main worktree MUST be the realpath of
+  `core.worktree`, a relative value resolved against the git directory, or,
+  where that is unset, the candidate toplevel whose `.git` file names the
+  common directory; the common directory MUST never be a worktree row, and a
+  linked worktree whose main checkout cannot be named MUST be refused. Traces:
+  "Clean resolves its target Git-first"; design D8.
 - **FR-018**: The merge target MUST be the first candidate that exists as a
   local branch: the manifest's `tracking_branch` less any leading `origin/`;
   the branch that `refs/remotes/origin/HEAD` points to, less
@@ -1406,9 +1409,10 @@ configuration"; "A lazy fetch in a partial clone is refused locally";
   MUST name `<path>/.git`, relative values resolved against the directory
   holding the file; a row whose registration disagrees MUST get no status probe
   and be `inspection-error`; an `lstat` that fails because the path does not
-  exist MUST give `present: false`, and any other failure `present: null`, an
-  `os-error`, `inspection-error` and no probe. Traces: "Repository inspection
-  requires Git 2.36 and shares one evidence model"; design D6 and D7.
+  exist (`ENOENT` or `ENOTDIR`) MUST give `present: false`, and any other
+  failure `present: null`, an `os-error`, `inspection-error` and no probe.
+  Traces: "Repository inspection requires Git 2.36 and shares one evidence
+  model"; design D6 and D7.
 - **FR-056**: Once per common directory, the model MUST run the identity
   probe, the registry listing, one ref listing over local and
   remote-tracking refs carrying each ref's name, object, symref, upstream,
@@ -1506,9 +1510,10 @@ configuration"; "A lazy fetch in a partial clone is refused locally";
   baseline. Every existing test MUST keep passing unchanged except
   `test_clean_revalidates_a_worktree_after_confirmation`, which moves to the
   result record (a `refused` target with `state-changed`, exit 2). Non-UTF-8
-  path tests MUST run on Linux and be skipped on macOS with that reason, and
-  ordering tests MUST use names that differ by more than case. Traces:
-  proposal, "Impact" (tests); design D20 and "Migration Plan".
+  path tests MUST run on Linux and be skipped on macOS with that reason (no CI
+  job runs macOS since #32), and ordering tests MUST use names that differ by
+  more than case. Traces: proposal, "Impact" (tests); design D20 and "Migration
+  Plan".
 - **FR-067**: CI MUST gain a job that builds the floor Git version, 2.36,
   cached, and runs the `clean`, `status` and `doctor` tests with it first on
   PATH, beside the existing jobs; a test that needs Git 2.36 itself, such
@@ -1616,7 +1621,7 @@ configuration"; "A lazy fetch in a partial clone is refused locally";
   unchanged except the one moved to the result record; a test drives two
   Git child handles at once through the shared scrub, termination path and
   parsers (FR-062); no subcommand but `clean` gains a flag and the
-  requirements file gains no dependency (FR-064); and the four CI jobs and
+  requirements file gains no dependency (FR-064); and the two `test` jobs and
   the Git floor job stay green.
 - **SC-013**: `status`, `doctor` and the `update` report exit 2 in 0 runs
   because of Git's version or a repository they cannot inspect; doctor
@@ -1742,8 +1747,9 @@ configuration"; "A lazy fetch in a partial clone is refused locally";
   and the task 1.7 it adds to the change's `tasks.md`; it awaits Brett Heap's
   word, and this feature's plan builds on it until he rules (Assumptions).
 - **Runtime and CI**: Git 2.36 or later where `project` inspects a
-  repository; a Git 2.36 build for the CI floor job; the existing four CI
-  jobs (Linux and macOS, two runtime versions each).
+  repository; a Git 2.36 build for the CI floor job; the existing `test` job,
+  two jobs (Python 3.10 and 3.12 on Linux only since Brett Heap's decision of
+  2026-10-15, #32).
 
 ## Out of Scope
 

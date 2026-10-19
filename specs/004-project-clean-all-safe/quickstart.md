@@ -35,14 +35,13 @@ Expected: every test passes; at `961c405` there are 96, and all but
 (research.md R15). Test names start `test_clean_`, `test_status_`,
 `test_doctor_` or `test_update_` followed by the delta scenario's title; an
 evidence-model scenario that names no subcommand uses `test_status_`
-(research.md R11).
-Skips, each printing its reason: non-UTF-8 path tests on macOS, permission
-tests when run as root, and "The sixteenth scrubbed name on Git 2.36" unless
-the `git` on PATH is 2.36 to 2.39. Time-bound tests run through
-`tests/launch_project.py`, which loads `project`, replaces entries of its
-timing table with the factor or values each test names, and calls `main()`
-in a child process (research.md R10); nothing in the environment scales
-`project`'s time.
+(research.md R11). Skips, each printing its reason: non-UTF-8 path tests on
+macOS (a local run; no CI job runs macOS), permission tests when run as root,
+and "The sixteenth scrubbed name on Git 2.36" unless the `git` on PATH is 2.36
+to 2.39. Time-bound tests run through `tests/launch_project.py`, which loads
+`project`, replaces entries of its timing table with the factor or values each
+test names, and calls `main()` in a child process (research.md R10); nothing in
+the environment scales `project`'s time.
 
 ## The Git 2.36 floor run
 
@@ -245,9 +244,12 @@ by their tests.
 
 ```bash
 # Added lines are ASCII; expect no output.
-git diff -U0 main...HEAD -- project tests README.md .github |
+git diff -U0 main...HEAD -- project tests README.md AGENTS.md .github |
     grep '^+' | grep -nP '[^\x00-\x7F]'
-# Expect only project, tests/, README.md, .github/workflows/tests.yml,
+# Expect only project; under tests/, the new modules tests/test_clean_*.py and
+# tests/test_status_doctor_update.py, tests/clean_support.py,
+# tests/launch_project.py, and tests/test_project.py (one method and one loader
+# line, T046 and T009); README.md; AGENTS.md; .github/workflows/tests.yml;
 # specs/004-project-clean-all-safe/ and the change's tasks.md.
 git diff --stat main...HEAD
 # 1.6.0 or later; the openspec first on some PATHs is 1.2.0.
