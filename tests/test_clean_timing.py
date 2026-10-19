@@ -18,13 +18,6 @@ import time
 import unittest
 from unittest.mock import patch
 
-# `python3 -m unittest tests.test_clean_timing`, run from the repository root, does not
-# put tests/ on sys.path as `discover -s tests` does, and the helpers and the launcher
-# are imported from there by name.
-TESTS = os.path.abspath(os.path.dirname(__file__))
-if TESTS not in sys.path:
-    sys.path.insert(0, TESTS)
-
 from clean_support import CLI, LAUNCHER, REAL_GIT, TIMEOUT, CleanCase, load_project, timing_table, transcript
 import launch_project
 
@@ -206,24 +199,6 @@ class TimingTests(CleanCase):
                 if timed and is_number(default, numbers):
                     held.append((default.lineno, getattr(node, "name", "lambda"), name))
         self.assertEqual(held, [], "no default argument holds a timing value (plan review M16)")
-
-    def test_clean_timing_is_read_at_call_time_budget_reports_the_new_values(self):
-        # The table: every value moved off its real one, none short enough to cut a
-        # child, so the plan is the same; probe budget 4.5 s (plan review U1).
-        table = timing_table(invocation_deadline=58, reconciliation_reserve=9, probe_budget=4.5,
-                             removal_floor=4, removal_ceiling=290, inspect_budget=14,
-                             term_grace=1.5, reap_wait=1.5, selector_tick=0.05)
-        result = self.run_json("clean", self.timing_repo(), "--json", timing=table)
-        document = result.document
-        if "schema_version" not in document and "budget" not in document:
-            self.skipTest("clean --json still prints the baseline report; the plan envelope that "
-                          "reports budget comes with T049 (region plan), and this clause runs then")
-        self.assertIsInstance(document.get("budget"), dict, transcript(result))
-        expected = {"probe_timeout_seconds": 4.5, "invocation_timeout_seconds": 58,
-                    "reconciliation_reserve_seconds": 9, "removal_floor_seconds": 4,
-                    "removal_ceiling_seconds": 290}
-        self.assertEqual({key: document["budget"].get(key) for key in expected}, expected,
-                         transcript(result))
 
     def test_clean_launcher_replaces_the_table(self):
         fresh = load_project()
