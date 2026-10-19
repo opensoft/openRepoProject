@@ -16,10 +16,11 @@ jobs:
       - run: python -m pip install -r requirements.txt
       - run: python -m unittest discover -s tests -v
 
-  # The Git 2.36 floor (feature 004: FR-067, research.md R11). The four jobs
-  # above run on whichever Git their runner ships. This one builds Git 2.36.6
-  # from kernel.org's tarball, caches the install by version and runner OS,
-  # and runs the clean, status and doctor tests with that Git first on PATH.
+  # The Git 2.36 floor (feature 004: FR-067, research.md R11). The two test
+  # jobs above (ubuntu-latest, Python 3.10 and 3.12) run on whichever Git
+  # their runner ships. This one builds Git 2.36.6 from kernel.org's tarball,
+  # caches the install by version and runner OS, and runs the clean, status
+  # and doctor tests with that Git first on PATH.
   # It is the only job that runs "The sixteenth scrubbed name on Git 2.36".
   git-floor:
     runs-on: ubuntu-latest
