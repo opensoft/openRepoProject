@@ -50,13 +50,15 @@ and `deadline-exceeded` errors (POD:224-229, :646-648), and
 own 512-row cap, the batch's caps being `batch_row_cap`, `report_row_cap`
 and `targets` (POD:610-617). They are cited from
 `specs/004-project-clean-all-safe/` (`spec.md`, `data-model.md`,
-`contracts/project-clean.md`) at `d1e7c56`, where lane openRepoProject-2's
-doc round (rulings R-32 to R-36) merged them on branch
-`004-project-clean-all-safe`. That branch's head, `c4ed704`, holds code for
-its tasks T001 to T017, T022 and T023, among them its five incremental
-parsers, four of which the overview drives (Dependencies), and its child
-handle; its driver, tasks T024 and T025, is not built yet, and none of it is
-on `main`.
+`contracts/project-clean.md`) at `5a02c1a`, where lane openRepoProject-2's
+doc rounds 3 and 4 (rulings R-39 to R-48) merged them on branch
+`004-project-clean-all-safe`, as `acc822e` and `5a02c1a`. That branch's
+head, `fe91f2c`, changes only task ticks in those documents and holds code
+for its tasks T001 to T026, T034 and T035, among them its five incremental
+parsers, four of which the overview drives (Dependencies), its child handle
+and its one-wide driver, with the state, phase and signal slot of its
+"Invocation" entity; its evidence model, tasks T027 to T033, is not built
+yet, and none of it is on `main`.
 The change pins its code citations at `da33d92`; this spec cites no line of
 `project`, `README.md` or `.github/workflows/tests.yml`, and the plan
 re-pins them against the `main` of its day (proposal, "Dependencies and
@@ -258,20 +260,20 @@ open for Brett Heap.
   filesystem budget leaves its row unprobed for the gate, recording
   `probe-timeout` or `deadline-exceeded`, and never makes it
   `inspection-error` (POD:521-524; design D5), as feature 004's data model
-  also reads it at `d1e7c56` (its plan review, M5). The read asks for at
+  also reads it at `5a02c1a` (its plan review, M5). The read asks for at
   most 64 KiB (POD:503-504), and a reflog "read to its 64 KiB bound" is
   `reflog-unavailable` (POD:516-517; design D5, "the 64 KiB bound reached",
   and D8, a "bound-reaching file"): a read that returns 65,536 bytes has
   reached that bound, so a reflog of 65,536 bytes or more is
   `reflog-unavailable` and one of 65,535 bytes is decided by its entries.
   Lane openRepoProject-2's ruling R-33 concurs for feature 004: its data
-  model at `d1e7c56`, "Reflog anchor and movement", carries it in its text
+  model at `5a02c1a`, "Reflog anchor and movement", carries it in its text
   and in its table of outcomes, which reads `reflog-unavailable` where the
   read reached its 64 KiB bound (65,536 bytes read). Its task T059 names
   R-33 in place of plan review m10, and its T066 reads the bound as R-33
-  does. Its EC-005 still reads "A reflog over 64 KiB (about 300 entries)",
-  which is lane openRepoProject-2's to align. Where applied: FR-033;
-  FR-049; EC-009.
+  does. Its EC-005 now reads the same: "A reflog of 64 KiB (65,536 bytes)
+  or more, about 300 entries, is `reflog-unavailable`" (R-33). Where
+  applied: FR-033; FR-049; EC-009.
 
 ### Session 2026-10-19
 
@@ -363,7 +365,7 @@ open are added there as Q6 to Q13, for Brett Heap, unanswered.
   A: `present: false` (POD:89-91; design D3, item 4; DI:776), change 1's
   "does not exist" (CMD:144-146) reading the same; and against the git
   directory (POD:105-106; design D3, item 3). Feature 004's text at
-  `d1e7c56` reads the same, under lane openRepoProject-2's ruling R-36: its
+  `5a02c1a` reads the same, under lane openRepoProject-2's ruling R-36: its
   data model, "Worktree row", gives `present: false` for `ENOENT` or
   `ENOTDIR`, and its FR-017 resolves a relative `core.worktree` against the
   git directory. FR-026's parity stands as ratified. Where applied: FR-007;
@@ -2245,13 +2247,14 @@ and [P] are change 1's requirements as the header names them.
   "Dependencies and Sequencing").
 - Feature 004's names (classifications, gate and refusal codes, row error
   codes, `schema_version`, exit statuses, the shared constants) are taken
-  from its spec, data model and contract at `d1e7c56`; its branch's head,
-  `c4ed704`, holds code for its tasks T001 to T017, T022 and T023, among
-  them its five incremental parsers and its child handle, but not yet its
-  driver (tasks T024 and T025), and none of it is on `main`; where the
-  change and feature 004 differ for the overview, the change governs, and
-  the plan reconciles against feature 004's text at the state that question
-  Q2 of `clarify-questions.md` settles.
+  from its spec, data model and contract at `5a02c1a`; its branch's head,
+  `fe91f2c`, which changes only task ticks in them, holds code for its tasks
+  T001 to T026, T034 and T035, among them its five incremental parsers, its
+  child handle and its driver, but not yet its evidence model (tasks T027 to
+  T033), and none of it is on `main`; where the change and feature 004
+  differ for the overview, the change governs, and the plan reconciles
+  against feature 004's text at the state that question Q2 of
+  `clarify-questions.md` settles.
 - "Every existing test" means the suite on `main` when the feature is
   implemented: 96 tests at `961c405`, still 96 at `e9d6711`, plus feature
   004's. Two test conditions are this spec's own, not the change's: a test
@@ -2296,16 +2299,29 @@ and [P] are change 1's requirements as the header names them.
   overview drives up to four handles from its own loop (this change's
   clarification N1); and the pure incremental parsers of the status,
   registry, ref-listing and merged-set outputs, fed chunks, doing no I/O and
-  reporting a reached record bound. Feature 004's data model at `d1e7c56`
+  reporting a reached record bound. Feature 004's data model at `5a02c1a`
   records that handle, plan-stage detail for this feature, as its "Child
   handle" entity, with the states `running`, `terminating`, `killing`,
   `reaped` and `abandoned`, the kinds `probe`, `removal` and `delegate` (the
   `git branch -d` child), of which the overview starts only `probe` handles,
-  and a termination that never blocks (lead ruling R-30); its contract fixes
-  a human message for each refusal code that had none, which the plan may
-  adapt for `git-too-old` and `git-unavailable`, naming `overview` where it
-  names `clean`. It also reads feature 004's evidence model [E] with the
-  version check, the seventeen-name scrub and the pins, the ladder [L] as a
+  and a termination that never blocks (lead ruling R-30); and, as its
+  "Invocation" entity, the state of one run of `project`: the per-child
+  budget (5 s under `clean`, 15 s otherwise), the clock, the counters, the
+  memos, and the phase by which the driver reads the signal slot, raising
+  `Interrupted` only in phase `planning` or on a second SIGINT in phase
+  `reconciling` (lead rulings R-44 and R-47). Its contract fixes a human
+  message for each refusal code that had none, which the plan may adapt for
+  `git-too-old` and `git-unavailable`, naming `overview` where it names
+  `clean`; beside `clean`'s two texts it gives command-neutral ones for a
+  `status` or `doctor` row, "Git VERSION is older than 2.36; repository
+  inspection needs Git 2.36 or later." for `git-too-old` and its counterpart
+  for `git-unavailable` (lead ruling R-48). It also fixes one message per
+  row-error code (lead ruling R-45), the `probe-failed` one being `OPERATION
+  failed: DETAIL`, DETAIL one of `exit N`, `signal N`, `cannot spawn
+  (STRERROR)` and `unparseable output`, with no line of Git's standard
+  error, which FR-022 takes from change 2 (POD:337-338). It also reads
+  feature 004's evidence model [E] with the version check, the
+  seventeen-name scrub and the pins, the ladder [L] as a
   pure function of a row's evidence, the gates and refusal codes [G] with
   the shared constants (the 128-row and 256-row caps and the 16-target
   limit, which feature 004 keeps in its own constants table and the overview
@@ -2337,8 +2353,9 @@ and [P] are change 1's requirements as the header names them.
   README's Development section saying that CI covers Linux only (change 2's
   design, Context, written before it, still names Ubuntu and macOS);
   feature 004's Git 2.36 floor job (its FR-067), `git-floor` on
-  `ubuntu-latest` with Python 3.10 beside those two (its plan, "CI shape",
-  at `d1e7c56`), which the overview's tests join or not as question Q3 of
+  `ubuntu-latest` with Python 3.10 beside every job of the `test` matrix
+  (its plan, "CI shape", at `5a02c1a`, which no longer counts those jobs,
+  lead ruling R-46), which the overview's tests join or not as question Q3 of
   `clarify-questions.md` decides; and the existing YAML requirement for
   manifests.
 

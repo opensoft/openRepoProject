@@ -138,6 +138,33 @@ Lane: openRepoProject-4
   pass; "Requirements are testable and unambiguous" and "Success criteria
   are measurable" were re-read against the review findings (SC-009,
   SC-012 and SC-013 rewritten, FR-049's test rules made exact).
+- 2026-10-19: feature 004 re-pinned from `d1e7c56` to `acc822e` (doc round
+  3, rulings R-39 to R-47) and then to `5a02c1a` (doc round 4, R-47 and
+  R-48), after diffing its `spec.md`, `plan.md`, `data-model.md`,
+  `research.md`, `contracts/project-clean.md`, `quickstart.md` and
+  `tasks.md` between them; its branch's head, `fe91f2c`, changes only task
+  ticks in them. Here, C-22 now records that feature 004's EC-005 reads
+  R-33's 65,536-byte boundary too, so nothing is left there for lane
+  openRepoProject-2 to align; the header and Assumptions say what that head
+  holds (code for T001 to T026, T034 and T035, the driver and the
+  `Invocation` state among them, and not yet the evidence model, none of it
+  on `main`); the
+  Dependencies name its `Invocation` entity (R-44, R-47), its command-neutral
+  `git-too-old` and `git-unavailable` texts for `status` and `doctor` rows
+  (R-48) and its one message per row-error code (R-45), whose `probe-failed`
+  text carries no line of Git's standard error where FR-022 takes the first,
+  a difference in which the change governs (Assumptions); and the Runtime
+  and CI dependency names `git-floor` beside every job of the `test` matrix,
+  as its plan's "CI shape" now reads (R-46). Its `main_worktree()` now
+  returns no main worktree, with its cause, instead of refusing (analyze H4,
+  R-42), as FR-008 already reads for a bare repository; no requirement,
+  story, edge case or Clarification answer changes. In
+  `clarify-questions.md`, the Contexts of Q2, Q3, Q4, Q12, Q14 and Q15 state
+  feature 004's facts at `5a02c1a`, and its code state at `fe91f2c`; no
+  Question line, option or recommendation changed. The other citations read
+  the same at both pins.
+  Re-validation: 16 of 16 items pass, with the checks of iteration 2 re-run
+  by script on the edited spec.
 - Items marked incomplete require spec updates before `/speckit-clarify` or `/speckit-plan`
 
 ## Cross-cutting Requirements Quality (no-argument `/speckit.checklist`, 2026-10-19)

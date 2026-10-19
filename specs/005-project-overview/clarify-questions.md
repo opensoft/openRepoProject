@@ -53,12 +53,14 @@ no cost now, and a later change can relax it once real runs show the need.
 (proposal, Status; `tasks.md` 3.1). Brett Heap's word of
 2026-10-11T16:14:21Z moved the specify step only, and the record says the
 plan and the implementation "still wait for feature 004's code and for his
-word". Feature 004's documents stand at `d1e7c56` on its branch, whose head,
-`c4ed704`, holds code for its tasks T001 to T017, T022 and T023, among them
-its five incremental parsers and its child handle; its driver and its
-evidence model are not built yet, and none of it is on `main`. The
-overview drives feature 004's child handle, driver and parsers (spec,
-Dependencies), and the plan re-pins every code citation against `main`.
+word". Feature 004's documents stand at `5a02c1a`, after lane
+openRepoProject-2's doc rounds 3 and 4; its branch's head, `fe91f2c`,
+changes only their task ticks and holds code for its tasks T001 to T026,
+T034 and T035, among them its five incremental parsers, its child handle,
+its driver and its `Invocation` state with the signal slot; its evidence
+model is not built yet, and none of it is on `main`. The overview drives
+feature 004's child handle, driver and parsers (spec, Dependencies), and the
+plan re-pins every code citation against `main`.
 
 **Question**: Which state of feature 004 must exist before the plan starts?
 
@@ -79,9 +81,12 @@ order the change already sets.
 
 **Context**: Feature 004 adds a CI job that builds Git 2.36 and runs the
 `clean`, `status` and `doctor` tests with it first on PATH (feature 004
-FR-067; change 1's design D17). The overview refuses a Git older than 2.36
-and so claims to work at 2.36 (spec FR-043), but change 2's Impact lists
-only `project`, the README and the tests, and no CI change.
+FR-067; change 1's design D17). Its task T003, ticked at `fe91f2c`, put that
+job, `git-floor`, in its branch's workflow beside every job of the `test`
+matrix, selecting `-k test_clean_ -k test_status_ -k test_doctor_`; it is not
+on `main`. The overview refuses a Git older than 2.36 and so claims to work
+at 2.36 (spec FR-043), but change 2's Impact lists only `project`, the
+README and the tests, and no CI change.
 
 **Question**: Should the overview's tests also run in the Git 2.36 floor
 job?
@@ -106,7 +111,12 @@ README (spec FR-048). Agents working in this repository read `AGENTS.md`,
 which covers `project new` (feature 002) and says nothing of the overview;
 change 2's Impact names no `AGENTS.md` change. An agent reading `project
 overview --json` could run a suggested `project clean <root> --all-safe`
-with `--apply --yes` on its own.
+with `--apply --yes` on its own. Feature 004's task T123, open at
+`fe91f2c`, adds to `AGENTS.md` a short section, "Cleaning up worktrees for a
+person", which says never to answer the removal question, or pass `--yes`,
+on a person's behalf unless they asked for that run; its tasks list that
+edit among its departures from change 1, stated in its feature PR body for
+Brett Heap's word (lead ruling R-32).
 
 **Question**: Should agents be told in `AGENTS.md` that an overview
 suggestion is advice to review, and that applying it needs the person's
@@ -336,7 +346,11 @@ collector, where the change maps every exception to `internal-error` with
 exit 2 (POD:705-707), possibly after part of the output was written. The
 same requirement lists `refused` and `os-error` as exit-2 codes under
 `--json` (POD:675-679), but never says when either applies instead of
-`internal-error` (adversarial review A-19).
+`internal-error` (adversarial review A-19). Feature 004 leaves a failed
+write open for `project clean` too: none of its documents at `5a02c1a` names
+`EPIPE`, and its guard, built at `fe91f2c` (its T035; research.md R6), turns
+any `Exception` but `Refused` raised before the apply phase, a
+`BrokenPipeError` included, into `internal-error` with exit 2.
 
 **Question**: How should these cases end?
 
@@ -397,7 +411,20 @@ an error finding, and exit 1 on every run. Separately, a candidate whose
 `.git` file names a bare repository (the layout that keeps it in `.bare`
 beside its worktrees) fails its identity probe as written, since the probe
 asks for a toplevel, so the repository appears only as a `probe-failed`
-error row with none of its worktrees (spec EC-030, C-54).
+error row with none of its worktrees (spec EC-030, C-54). Feature 004 at
+`5a02c1a` reads a bare first record the same way for its own subcommands:
+its `main_worktree()` returns no main worktree, with its cause, and never
+raises, so `root` is null and rows 4 to 7 run in the common directory (its
+T031, T107 and FR-055; analyze H4, lead ruling R-42); `clean` alone refuses
+such a repository, with `target-not-repository-root`, while `status` and
+`doctor` report a linked worktree of a bare repository and never exit 2 for
+it (its T115). Its data model, "Repository identity", says the common
+directory is "never a worktree row", as its FR-017 does for a first record
+equal to it, and no document of feature 004 says more of how `status` or
+`doctor` lists that record. H4 leaves the `.bare` layout as it was: feature
+004's identity probe (its contract, row 3) runs before `main_worktree()`,
+and in the holder directory it exits 128 with "this operation must be run
+in a work tree" (reproduced on Git 2.43.0 for this question).
 
 **Question**: How should a bare repository be reported?
 
@@ -424,7 +451,20 @@ document and exits with that signal's status, which takes precedence over 1
 while rendering follows that loop (design D6). A signal that arrives after
 the first byte of the result reaches standard output, and before the last,
 cannot meet both rules: the bytes written cannot be withdrawn, and exiting 0
-or 1 would ignore the signal. Question Q12 asks how output failures end; it
+or 1 would ignore the signal. Feature 004 decides this moment for `project
+clean` at `5a02c1a`: its record-only handlers stay installed "from the
+argument checks to the last write", so a signal recorded while a preview or
+report is being written does not stop the write, and the slot, read once
+more before the run exits, gives `Cancelled.` and 130, 143 or 129 (its
+research.md R4, Decision; data-model.md, the transition from `reported`).
+Its signal slot stores the first signal, which decides that status, and its
+driver raises `Interrupted` from it only in phase `planning` or on a second
+SIGINT in phase `reconciling` (lead ruling R-44). Feature 004 has not
+decided a reader that stops reading or closes the pipe: under a handler that
+only records, Python resumes a write blocked on a stalled reader once the
+handler returns (PEP 475), so the signal goes unanswered until the write
+completes or fails (checked on Python 3.12.3 for this question), and none of
+its documents names `EPIPE`. Question Q12 asks how output failures end; it
 does not cover a signal.
 
 **Question**: What should a signal that arrives while the result is being
