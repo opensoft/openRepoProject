@@ -1,5 +1,110 @@
 ## MODIFIED Requirements
 
+### Requirement: Clean reports local worktree state
+
+`project clean` SHALL inspect the target repository and every linked worktree
+using local Git state only. It SHALL report each worktree's path, branch or
+detached state, cleanliness, upstream, ahead/behind counts as of the last
+fetch, and whether its commits are merged into the target's tracking branch.
+Human and JSON reports SHALL describe that remote information may be stale.
+
+The report SHALL be built from the evidence that "Repository inspection requires
+Git 2.36 and shares one evidence model" defines, within the bounds that "Clean
+bounds its Git work and reports omitted work" sets. `project clean` SHALL run
+its Git version check before any other Git child, and SHALL refuse a Git older
+than 2.36 with `git-too-old`, and a `git` that is missing or unusable with
+`git-unavailable`, with exit status 2, before any repository is probed; under
+`--json` it SHALL print the extended error object that "Clean plans and refusals
+are versioned JSON" defines, carrying that code.
+
+The plain report (neither `--all-safe` nor `--apply`) SHALL be the plan that a
+batch preview builds, in `mode: "report"`, under a cap of 256 worktree rows. It
+SHALL carry every plan field: `selected` SHALL be what `--all-safe` would
+select, the per-run deferral applied, for a repository of at most 128 worktree
+rows. Above 128, `selected` SHALL be null and the plan's `notes` SHALL carry an
+`inspect-cap` entry with `rows`, the count of registered worktree rows, beside
+the human line saying that `--all-safe` itself would be incomplete with
+`inspect-cap`; that note alone SHALL NOT make the report incomplete. Above 128
+the gates SHALL still run for every inspected row, so `excluded` SHALL list
+every inspected row that a gate excludes with its `reason`, as in any report,
+and only the selection step is withheld. Above 128 the `plan_digest` SHALL be
+computed over the same canonical text as any plan, which covers only the
+repository's identity fields, the merge target and `selected`, with `selected`
+null, and `--expect-plan` SHALL never consume it, because an apply there is an
+incomplete plan and is refused before the digest is compared. At most 128 rows,
+a report's `plan_digest` SHALL equal the `--all-safe` preview's for the same
+repository identity, merge target and selection, since the mode is not in the
+digest, and an `--expect-plan` carrying it SHALL match, which is intended,
+except that a plan under `--retire-branches` has a digest of its own, as "Clean
+retires a removed worktree's branch only on fresh head and ancestry evidence"
+states, which no report's digest matches; the
+digest also covers the merge target's name and SHA, so a target that advances
+between the report and the preview gives `plan-digest-mismatch`, which is safe.
+`apply_allowed` SHALL be false. It SHALL exit 0 when the report is complete, 1
+when it is incomplete (`inspect-cap`, `inspection-incomplete` or
+`deadline-exceeded`), and 2 when no report can be built, and its human output
+SHALL say when and why it is incomplete.
+
+A worktree whose registered path cannot be read, for any reason other than its
+absence, SHALL be one row with `present: null`, an `os-error` in its `errors`
+and classification `inspection-error`, and SHALL NOT refuse the repository. A
+status probe that fails or times out in any row, the main worktree's and the
+merge-target checkout's included, SHALL leave that row's `dirty` null and
+classify the row `inspection-error`. A row's `ignored_files` SHALL count the
+ignored entries observed, a lower bound when `ignored_files_truncated` is true.
+The report's `root` SHALL name the command directory, the main worktree of the
+resolved repository.
+
+#### Scenario: Audit a repository with a feature worktree
+
+- **WHEN** `project clean` is run without an apply action
+- **THEN** it prints a cleanup plan for the main checkout and each linked
+  worktree without fetching, committing, pushing, resetting, stashing, or
+  removing anything
+
+#### Scenario: The plain report exits by completeness
+
+- **WHEN** plain `project clean` runs on a repository with more than 256
+  registered worktree rows
+- **THEN** it prints an incomplete report carrying `inspect-cap` and `omitted`,
+  and exits 1, where before this change it exited 0 whenever it printed
+- **AND** on a repository with 200 rows the plain report is complete, says that
+  `--all-safe` itself would be incomplete with `inspect-cap`, and exits 0, its
+  JSON carrying `selected: null` and a `notes` entry `inspect-cap` with
+  `rows: 200`, while `project clean <root> --all-safe` on the same repository
+  is incomplete with `inspect-cap` and exits 1
+
+#### Scenario: An unreadable worktree is one row
+
+- **WHEN** a linked worktree's path cannot be read because its parent directory
+  denies search permission, and plain `project clean` runs
+- **THEN** that row has `present: null`, an `os-error` and classification
+  `inspection-error`, every other row is reported, and the report is incomplete
+  and exits 1, where before this change the whole command refused with exit 2
+
+#### Scenario: A failed status probe on the merge-target checkout
+
+- **WHEN** the status probe of the worktree checked out on the merge-target
+  branch fails or times out
+- **THEN** that row is classified `inspection-error`, never `protected-default`,
+  its `dirty` is null, and the report is incomplete with `inspection-incomplete`
+  and exits 1
+
+#### Scenario: A failed status in the repository root
+
+- **WHEN** the main worktree's status probe fails
+- **THEN** plain `project clean` reports the main worktree's row as
+  `inspection-error` and exits 1 with an incomplete report, where before this
+  change it refused the repository with exit 2
+
+#### Scenario: Git older than 2.36
+
+- **WHEN** `project clean` runs in any mode with Git 2.35 first on PATH
+- **THEN** it refuses with `git-too-old` and exit 2 before any repository probe,
+  and under `--json` it prints the extended error object with `code:
+  "git-too-old"`
+- **AND** with no `git` on PATH it refuses with `git-unavailable` and exit 2
+
 ### Requirement: Clean can explicitly retire verified worktrees
 
 An apply operation SHALL be able to remove one named linked worktree, or the set
@@ -18,12 +123,13 @@ protocol.ext.allow=never -C <command directory> worktree remove <path>` in its
 own process group; wait for it; and reconcile by rescan as
 "Clean records a reconcilable result for every removal target" states. Under
 `--retire-branches`, and only for a target that this rescan proves `removed`
-with reason null, the sequence SHALL then retire the target's branch as "Clean
-retires a removed worktree's branch only on fresh head and ancestry evidence"
-states, before any later target is revalidated. Removal SHALL stop after the
-first target whose result is not a plain `removed`, or, under
-`--retire-branches`, whose `branch_retirement` is not `retired` with reason
-null, with no continuation, rollback or automatic retry.
+with reason null and whose branch the confirmed plan retires, the sequence
+SHALL then retire the target's branch as "Clean retires a removed worktree's
+branch only on fresh head and ancestry evidence" states, before any later target
+is revalidated. Removal SHALL stop after the first target whose result is not a
+plain `removed`, or, under `--retire-branches`, whose `branch_retirement` is not
+plain as that requirement defines it, a keep that the confirmed plan names being
+plain, with no continuation, rollback or automatic retry.
 
 Once a removal child is spawned, `project` SHALL NOT signal it on SIGINT,
 SIGTERM, SIGHUP or the work deadline, and SHALL wait for it to exit. Only a hard
@@ -256,12 +362,15 @@ SHALL be advisory and SHALL never be stored or reused. The plan SHALL carry
 `plan_digest`, the lowercase hexadecimal SHA-256 of a canonical JSON text of the
 repository's four identity fields, the merge target's name and SHA, and the
 selected `[path, branch, head]` triples in canonical order, so that a change to
-an excluded row leaves it unchanged. `--expect-plan D` SHALL refuse with
+an excluded row leaves it unchanged; under `--retire-branches` that text SHALL
+also carry the branches the plan retires, as "Clean retires a removed
+worktree's branch only on fresh head and ancestry evidence" states, and without
+the flag it SHALL carry nothing more. `--expect-plan D` SHALL refuse with
 `plan-digest-mismatch` and exit status 2, before any question and any mutation,
 when the fresh digest differs from D, and SHALL still print the fresh plan. The
 confirmation SHALL be one default-No question naming the count of worktrees to
 remove and of branches kept, or, under `--retire-branches`, of branches to
-retire, ending `[yes/N]`; only `yes`, surrounding
+retire and to keep, ending `[yes/N]`; only `yes`, surrounding
 whitespace ignored, SHALL accept it, and any other answer SHALL refuse with
 `cancelled` and exit status 2. This question SHALL replace `Type yes to run this
 plan:` for `clean`'s removal apply only, and `--yes` SHALL accept the fresh plan
@@ -283,8 +392,8 @@ by reason, each group with its next step; an `ignored-local-files` exclusion
 SHALL show its bounded count and the first ignored path observed. A successful
 apply SHALL print `Removed N; branches kept: ` followed by the branches kept,
 except that under `--retire-branches` every apply result SHALL print instead the
-summary line that "Clean retires a removed worktree's branch only on fresh head
-and ancestry evidence" states.
+summary line and the branch lines that "Clean retires a removed worktree's
+branch only on fresh head and ancestry evidence" states.
 
 #### Scenario: Stable order and preserved work
 
@@ -410,7 +519,14 @@ serial. Reconciliation probes SHALL get `min(5 s, reserve remaining)`.
 The deadline SHALL bound inspection and SHALL gate only the start of a removal:
 a removal child SHALL be spawned only while at least the 5 s removal floor of
 the work deadline remains, and otherwise that target and every later one SHALL
-be `not-attempted` with `deadline-exceeded`. A removal child still running at
+be `not-attempted` with `deadline-exceeded`. A branch stage of
+`--retire-branches`, as "Clean retires a removed worktree's branch only on
+fresh head and ancestry evidence" states, SHALL start its re-read only while
+more than that floor remains and its branch child only while at least that
+floor remains, under the same rule, and the
+re-read's manifest read and ref listing SHALL get `min(5 s, work remaining less
+the removal floor)`, so that the floor is left for the branch child. A removal
+child still running at
 the deadline SHALL be waited for, up to its 300 s hard ceiling, and the
 reconciliation reserve SHALL count from its exit. A run with no removal in
 flight SHALL therefore end within 64 s of its start, not counting the time
@@ -591,10 +707,11 @@ The exit status of a run with `--apply` SHALL be the first row that matches:
 4. 2: any refusal; a `refused` target; a `removed` target with a
    branch-after-removal reason; a `failed` target with `spawn-error`; under
    `--retire-branches`, a target `removed` with reason null whose
-   `branch_retirement` is not `retired` with reason null;
+   `branch_retirement` is not plain, as "Clean retires a removed worktree's
+   branch only on fresh head and ancestry evidence" defines it;
 5. 0: every selected target is `removed` with reason null and, under
-   `--retire-branches`, its `branch_retirement` is `retired` with reason null;
-   or nothing is eligible.
+   `--retire-branches`, its `branch_retirement` is plain, a keep that the
+   confirmed plan names included; or nothing is eligible.
 
 A preview or report SHALL exit 2 only for a refusal raised before a plan is
 built, 1 for an incomplete plan, and 0 otherwise, the signal exits above
@@ -676,149 +793,244 @@ read-only plan, and SHALL name every retained branch.
 
 ### Requirement: Clean retires a removed worktree's branch only on fresh head and ancestry evidence
 
-`project clean` SHALL accept `--retire-branches` only with `--apply` and either
-`--all-safe` or `--action remove --worktree P`. With any other combination, a
-preview, `--action push` and `--action delete-branch` among them, it SHALL
-refuse with `invalid-arguments` and exit status 2 before any plan is built, and
-SHALL run nothing. The flag SHALL never be the default: without it every
-branch remains, as "Clean can explicitly retire verified worktrees" states, and
-the record below SHALL be absent from every target, never null, because null
-means unknown or not established. `--apply --json` SHALL be accepted with the
-flag exactly where "Clean plans and refusals are versioned JSON" accepts it
-without the flag. The flag SHALL change no gate, no selection, no `plan_digest`
-and no `--expect-plan` comparison.
+`project clean` SHALL accept `--retire-branches` only with `--all-safe`, as a
+read-only preview or with `--apply`, and with `--apply --action remove
+--worktree P`. With any other combination, the plain report, `--action push`
+and `--action delete-branch` among them, it SHALL refuse with
+`invalid-arguments` and exit status 2 before any plan is built, and SHALL run
+nothing. The flag SHALL never be the default: without it every branch remains,
+as "Clean can explicitly retire verified worktrees" states, and every key this
+requirement adds to a plan or a result SHALL be absent, never null, because
+null means unknown or not established. `--json` SHALL be accepted with the flag
+exactly where "Clean plans and refusals are versioned JSON" accepts it without
+the flag, and the keys this requirement adds SHALL extend, under the flag only,
+that requirement's lists of plan envelope keys and of target keys. The flag
+SHALL change no gate and no selection.
+
+Under the flag the plan SHALL decide, for each selected row, whether its branch
+is retired or kept, and SHALL keep it for the first of these reasons that
+holds:
+
+1. `reflog-unmerged`: a commit that the branch's reflog names is not proven an
+   ancestor of the merge target's SHA, a commit being named when it is the new
+   object of an entry of `logs/refs/heads/<branch>` as the `unstarted-branch`
+   gate read it. The proof SHALL be one Git child per repository, `rev-list
+   --max-count=1 --stdin`, given the named commits of every selected row and
+   then `--not` and the merge target's SHA, and, only when that child prints a
+   commit, one such child per selected row over that row's named commits. A
+   row whose child prints a commit, or whose proof fails or times out, a
+   failure or timeout of the repository's child failing every row's proof,
+   SHALL keep its branch.
+2. `branch-in-use`: a registered worktree that is not selected, the main
+   worktree included, has the branch checked out in the plan's registry
+   listing.
+3. `head-not-merge-target`: the branch's configured upstream's remote-tracking
+   ref is absent, so that Git's own non-force check judges the branch against
+   the command directory's `HEAD`, and that `HEAD`, as the main worktree's row
+   of the registry listing gives it, is not the merge target's SHA. This test
+   MAY keep a branch that Git would accept, which is the safe direction.
+4. `branch-shared`: another selected row later in canonical order holds the
+   same branch, which is then decided at the last of its holders, the only one
+   whose branch stage can run.
+
+The printed plan SHALL read `  remove PATH and retire BRANCH` for a row whose
+branch it retires, `  remove PATH; keep BRANCH (REASON)` for one whose branch
+it keeps, `REASON` reading `checked out at PATH2` for `branch-in-use`, and
+`  remove PATH; BRANCH is decided at PATH2` for an earlier holder of a shared
+branch, `PATH2` being its last holder, where a plan without the flag prints
+`  remove PATH [BRANCH]`. The plan envelope SHALL carry `branch_plan`, one
+object `{path, branch, planned_sha, action, reason}` per selected row in
+canonical order, `action` being `retire` or `keep` and `reason` null or the
+keep's reason. The canonical text of `plan_digest` SHALL also carry `retire`,
+the `[branch, planned_sha]` pairs of the branches the plan retires, in
+canonical order and present when empty, so that `--expect-plan` binds a flagged
+apply only to a flagged preview: a digest taken without the flag SHALL refuse a
+flagged apply with `plan-digest-mismatch` and exit status 2, before any
+question or mutation, as any mismatch does. Without the flag nothing SHALL be
+added to the canonical text, so that the digest is the one a run without this
+requirement computes.
 
 Under the flag, and only for a target whose rescan proves it `removed` with
-reason null, the run SHALL retire the target's local branch in a branch stage
-that follows that rescan and precedes any later target's revalidation, in this
-order:
+reason null and whose branch the confirmed plan retires, the run SHALL retire
+the target's local branch in a branch stage that follows that rescan and
+precedes any later target's revalidation, in this order:
 
-1. Re-read, while work remains, the manifest by a filesystem read and the
-   branch with one ref listing in the command directory, narrowed as the
-   revalidation's ref listing is, each under `min(5 s, work remaining)`.
+1. Re-read the manifest by a filesystem read and the branch with one ref
+   listing in the command directory, narrowed as the revalidation's ref listing
+   is, each under `min(5 s, work remaining less the removal floor)`.
 2. Check, stopping at the first check that fails: the branch exists; its head
-   equals the reconciliation record's `branch_sha`; the merge target,
-   re-resolved from that manifest read and that listing, has the plan's
-   `name`, `source` and `sha`, so that the plan's proof that the head is an
-   ancestor of the merge target is the ancestry at the target's current tip,
-   and no Git child computes it again; and no registered worktree, the main
-   worktree included, has the branch checked out in the registry listing of
-   that rescan. A value the re-read cannot establish, a read that fails or
-   times out included, SHALL count as a difference.
-3. Spawn, while work remains, the non-force command `git -c
-   protocol.allow=never -c protocol.file.allow=never -c
-   protocol.ssh.allow=never -c protocol.git.allow=never -c
-   protocol.http.allow=never -c protocol.https.allow=never -c
-   protocol.ext.allow=never -C <command directory> branch -d -- <branch>`, in
-   its own process group, with the seventeen variables that "Repository
-   inspection requires Git 2.36 and shares one evidence model" lists removed
-   from its environment, under `min(5 s, work remaining)`. The branch child
+   equals the reconciliation record's `branch_sha`; its `upstream`,
+   `upstream_oid`, `ahead` and `behind` and the manifest's `tracking_branch`
+   equal the plan's, a value null in the plan and null at the re-read not
+   counting as a difference; the merge target, re-resolved from that manifest
+   read and that listing, has the plan's `name`, `source` and `sha`, so that
+   the plan's proofs that the head and every commit its reflog names are
+   ancestors of the merge target hold at the target's current tip, and no Git
+   child computes them again; and no registered worktree, the main worktree
+   included, has the branch checked out in the registry listing of that
+   rescan. A value the re-read cannot establish, a read that fails or times
+   out included, SHALL count as a difference.
+3. Spawn the non-force command `git -c protocol.allow=never -c
+   protocol.file.allow=never -c protocol.ssh.allow=never -c
+   protocol.git.allow=never -c protocol.http.allow=never -c
+   protocol.https.allow=never -c protocol.ext.allow=never -C <command
+   directory> branch -d -- <branch>`, in its own process group, with the
+   seventeen variables that "Repository inspection requires Git 2.36 and
+   shares one evidence model" lists removed from its environment and no
+   `GIT_OPTIONAL_LOCKS`, under `min(5 s, work remaining)`. The branch child
    SHALL NOT be signalled on SIGINT, SIGTERM or SIGHUP, and SHALL be waited for
    within that budget; past it, its process group SHALL receive SIGTERM and,
    2 s later, SIGKILL, and its reap SHALL wait at most a further 2 s.
-4. Re-read the branch with one more such listing, under `min(5 s, reserve
-   remaining)`, and decide the stage by that post-check. The branch child's
-   exit status alone SHALL never prove a retirement.
+4. Once a branch child was spawned, re-read the branch with one more such
+   listing, under `min(5 s, reserve remaining)`, and decide the stage by that
+   post-check. The branch child's exit status alone SHALL never prove a
+   retirement.
 
-A signal received before the re-read or the branch child starts SHALL start
-neither, and neither SHALL be spawned when no work remains. The stage SHALL
-never pass `-D`, `--force` or `-f`, never spawn a second branch child for a
-target, never retry, and never delete, push or fetch a remote branch or change
-a remote-tracking ref. Git's own refusal SHALL retain the branch.
+The re-read SHALL start only while more than the 5 s removal floor of the work
+deadline remains, and the branch child only while at least that floor remains,
+so that the deadline never stops a branch child that had its whole budget;
+neither SHALL start after a signal has been received. A stage that cannot start
+its re-read or its branch child for either cause SHALL spawn nothing more and
+SHALL retain the branch with `deadline-exceeded` or `interrupted`. The stage
+SHALL never pass `-D`, `--force` or `-f`, never spawn a second branch child for
+a target, never retry, and never delete, push or fetch a remote branch or
+change a remote-tracking ref. Git's own refusal SHALL retain the branch.
 
 Under the flag every target of the apply result record SHALL carry
 `branch_retirement`, an object `{stage, reason, branch, planned_sha,
-observed_sha, command, exit_status}`: `branch` and `planned_sha` are the
-target's; `observed_sha` is the head the re-read found, null when it found none
-or did not run; `command` is the branch child's argument vector, null when none
-was spawned; and `exit_status` is its exit status, null when none was spawned
-or its exit could not be observed. `stage` SHALL be one of these, with one
-reason:
+observed_sha, command, exit_status, probes_performed}`: `branch` and
+`planned_sha` are the target's; `observed_sha` is the head the re-read found,
+null when it found none or did not run; `command` is the branch child's
+argument vector, null when none was spawned; `exit_status` is its exit status,
+null when none was spawned or its exit could not be observed; and
+`probes_performed` counts the stage's re-read and post-check children, 0, 1 or
+2, while the target's own `probes_performed` keeps counting the Git children
+of its revalidation. `stage` SHALL be one of these, with one reason, the
+sub-record's `git-refused` and `git-failed` naming the branch child's outcomes
+below and not the target's split of exit statuses at 128:
 
 - `retired`: the post-check shows the branch absent after its branch child
   ran; reason null when the child exited 0, `git-failed` when it exited
-  nonzero, and `probe-timeout` or `deadline-exceeded` when `project` stopped it
-  past its budget, the latter when the work deadline was the limit;
+  nonzero, and `probe-timeout` when `project` stopped it past its budget;
 - `retained`: the target is `removed` and its branch is present when the stage
   ends; `branch-changed` (the re-read found another head, or the target is
   `removed` with `branch-advanced-after-removal` and no stage ran),
-  `state-changed` (the merge target differs from the plan, or the re-read
-  could not establish a value), `branch-in-use`, `deadline-exceeded` (the work
-  deadline left no time to start, or stopped, the re-read or the branch child),
-  `interrupted`, `spawn-error`, `git-refused` (the child exited nonzero),
-  `unconfirmed-retirement` (the child exited 0), `probe-timeout`, or
-  `removal-ceiling` (the target's own reason, no stage having run);
-- `not-attempted`: no branch remained to retire, or no stage ran for the
-  target; `branch-missing` (the rescan or the re-read found no branch, the
-  target `removed` with `branch-missing-after-removal` included),
-  `branch-retention-stop` (the target is `not-attempted` because the run
-  stopped after an earlier target that was `removed` and whose
-  `branch_retirement` was not `retired` with reason null), or
+  `state-changed` (the re-read found an upstream value, the manifest's
+  `tracking_branch` or the merge target different from the plan, or could not
+  establish a value), `branch-in-use` (the rescan's registry listing shows a
+  worktree holding the branch), `deadline-exceeded` (too little of the work
+  deadline remained to start the re-read or the branch child, or the deadline
+  stopped the re-read), `interrupted`, `spawn-error`, `git-refused` (the child
+  exited nonzero), `unconfirmed-retirement` (the child exited 0),
+  `probe-timeout`, or `removal-ceiling` (the target's own reason, no stage
+  having run);
+- `not-attempted`: the plan kept the branch, no branch remained to retire, or
+  no stage ran for the target; `reflog-unmerged`, `branch-in-use`,
+  `head-not-merge-target` or `branch-shared` (the plan's keep, which a row the
+  plan keeps SHALL carry whatever its own stage), `branch-missing` (the rescan
+  or the re-read found no branch, the target `removed` with
+  `branch-missing-after-removal` included), `branch-retention-stop` (the
+  target is `not-attempted` because the run stopped after an earlier target
+  that was `removed` and whose `branch_retirement` was not plain), or
   `target-not-removed` (every other target that no stage reached: one that is
   `refused`, `failed` or `unknown`, or `not-attempted` for any other cause, a
-  signal or the deadline after an earlier plain retirement included);
+  signal or the deadline after an earlier plain outcome included);
 - null, with reason `reconciliation-incomplete`, only when the post-check
   failed or timed out, so that whether the branch exists is not established.
 
-The target's `reconciliation` SHALL remain the rescan that decided its removal;
-the branch stage's evidence SHALL be in `branch_retirement` alone. A null
-`stage` SHALL make the apply result's `completeness` incomplete. The record
-SHALL add no value to the target's `stage` or `reason` enums, to the ladder, to
-the gates, or to the refusal and note codes.
+A `branch_retirement` SHALL be plain when it is `retired` with reason null or
+`not-attempted` with one of the plan's four keep reasons. The target's
+`reconciliation` SHALL remain the rescan that decided its removal; the branch
+stage's evidence SHALL be in `branch_retirement` alone. A null `stage` SHALL
+make the apply result's `completeness` incomplete. The record SHALL add no
+value to the target's `stage` or `reason` enums, to the ladder, to the gates,
+or to the refusal and note codes.
 
 Removal SHALL stop after the first target that is `removed` and whose
-`branch_retirement` is not `retired` with reason null, as it stops after the
-first target that is not a plain `removed`. Every target after it SHALL be
-`not-attempted` with reason `batch-stopped`, or `interrupted` or
-`deadline-exceeded` where a signal or the deadline stopped the run, and SHALL
-carry `branch_retirement` `not-attempted` with reason `branch-retention-stop`.
-The exit status SHALL be the one that "Clean records a reconcilable result for
-every removal target" orders: a retained branch exits 2 unless a signal, the
-deadline or a null `stage` decides first.
+`branch_retirement` is not plain, as it stops after the first target that is
+not a plain `removed`. A keep that the confirmed plan names SHALL neither stop
+the run nor by itself raise the exit status: that row exits as it would in a
+run without the flag. Every target after such a stop SHALL be `not-attempted`
+with reason `batch-stopped`, or `interrupted` or `deadline-exceeded` where a
+signal or the deadline stopped the run, and, unless the plan keeps its branch,
+SHALL carry `branch_retirement` `not-attempted` with reason
+`branch-retention-stop`. The exit status SHALL be the one that "Clean records a
+reconcilable result for every removal target" orders: a branch that the stage
+retains exits 2 unless a signal, the deadline or a null `stage` decides first.
 
-The re-read and the post-check SHALL be counted under `probes` and in the
-target's `probes_performed`, and the branch child under `operations`, so that
-under the flag `operations.estimated` SHALL add one per selected target and
-`probes.estimated` two per selected target. The stage SHALL spawn at most three
-Git children per target, one of them a branch child, so that `limits.targets`
-caps the branch children of a run and `budget.probe_timeout_seconds` bounds
-each; no `limits` or `budget` member is added. A run with no removal in flight
-SHALL still end within 64 s of its start, not counting the time blocked at the
-confirmation question.
+The plan's reflog children, the re-read and the post-check SHALL be counted
+under `probes`, and the branch child under `operations`, so that under the flag
+`operations.estimated` SHALL add one per branch the plan retires and
+`probes.estimated` two per branch the plan retires and the reflog children the
+plan spawned. The plan SHALL spawn at most one reflog child per repository and
+one per selected row, and the stage at most three Git children per target, one
+of them a branch child, so that `limits.targets` caps the branch children of a
+run and `budget.probe_timeout_seconds` bounds each; no `limits` or `budget`
+member is added. A run with no removal in flight SHALL still end within 64 s of
+its start, not counting the time blocked at the confirmation question.
 
-Under the flag the printed plan SHALL mark each selected row's branch as one to
-retire. The confirmation SHALL be the one default-No question that "Clean
-previews and applies a batch of eligible worktree removals in one repository"
-states, reading `Remove N worktrees and retire their M local branches?
-[yes/N]`, M being the number of distinct branches of the selected rows and
-`branch` singular when M is 1, or `Remove 1 worktree and retire its local
-branch? [yes/N]` for one.
-Every apply result SHALL print `Removed N; branches retired: R; retained: K`,
-then each retained branch with the command `project clean <root> --apply
---action delete-branch --branch <branch>`, the explicit retry path, whose
-behaviour this requirement does not change. A run that stops SHALL then end
-with the stop block that "Clean records a reconcilable result for every removal
-target" states, whose reason, when a branch stage stopped the run, SHALL be
-that stage's reason with the branch named.
+The confirmation SHALL be the one default-No question that "Clean previews and
+applies a batch of eligible worktree removals in one repository" states,
+reading `Remove N worktrees and retire their M local branches? [yes/N]` when
+the plan keeps no branch and `Remove N worktrees, retire M local branches and
+keep K? [yes/N]` when it keeps K, M and K counting distinct branches, a shared
+branch at its last holder, and `worktree` and `branch` singular for a count of
+1, or `Remove 1 worktree and retire its local branch? [yes/N]` for one worktree
+whose branch the plan retires. Every apply result SHALL print `Removed N;
+branches retired: R; retained: K`, followed by `; already gone: G` when G is
+above 0, R, K and G counting the distinct branches of the removed targets that
+were retired, that remain and that were already gone, so that they add up to
+those branches; then one line per such branch, in canonical order:
+
+- `Retired BRANCH (was SHA); restore: git branch BRANCH SHA`;
+- `BRANCH was already gone` for `branch-missing`;
+- `Kept BRANCH (REASON)` and its next step: for `head-not-merge-target`, and
+  for `git-refused` when the branch's upstream remote-tracking ref is absent,
+  `; next: check out MERGE_TARGET in the main worktree, then: project clean
+  ROOT --apply --action delete-branch --branch BRANCH`; for `branch-in-use`,
+  and for a branch whose later holder the run did not remove, `; next: BRANCH
+  is checked out at PATH2; remove that worktree first`; for `branch-changed`,
+  `; now at SHA2; inspect it before retrying: project clean ROOT --apply
+  --action delete-branch --branch BRANCH`; for `reflog-unmerged`, `; its
+  reflog names commits MERGE_TARGET lacks; inspect git reflog BRANCH before
+  any delete-branch`; and otherwise `; retry: project clean ROOT --apply
+  --action delete-branch --branch BRANCH`, the explicit retry path, whose
+  behaviour this requirement does not change.
+
+A `branch-shared` holder SHALL get no line of its own, and no line SHALL name
+`-D` or any force. Every command that the plan or the result prints for the
+person to run next SHALL carry `--retire-branches`: the deferral line SHALL
+read `run again: project clean ROOT --all-safe --apply --retire-branches`. A run
+that stops SHALL then end with the stop block that "Clean records a
+reconcilable result for every removal target" states, whose reason, when a
+branch stage stopped the run, SHALL read `branch BRANCH: REASON`, and whose
+`Next:` command SHALL be the flagged preview `project clean ROOT --all-safe
+--retire-branches`.
 
 #### Scenario: Retire the branches of a batch
 
-- **WHEN** two eligible linked worktrees P1 and P2, each merged, clean and
-  published with a commit of its own, P1's upstream's remote-tracking ref
-  present and P2's deleted, sit beside the main worktree on the merge target,
-  and `project clean <root> --all-safe --apply --yes --retire-branches` runs
-- **THEN** P1 is removed and its branch then deleted, then P2 the same, in
+- **WHEN** two eligible linked worktrees P1 and P2, on branches b1 and b2, each
+  merged, clean and published with a commit of its own, P1's upstream's
+  remote-tracking ref present and P2's deleted, sit beside the main worktree on
+  the merge target, and `project clean <root> --all-safe --apply --yes
+  --retire-branches` runs
+- **THEN** the plan lists `  remove <P1> and retire b1` and `  remove <P2> and
+  retire b2`, P1 is removed and b1 then deleted, then P2 the same, in
   canonical path order, each target `removed` with reason null and its
   `branch_retirement` `retired` with reason null, `observed_sha` equal to
-  `planned_sha` and `exit_status` 0
+  `planned_sha`, `exit_status` 0 and `probes_performed` 2
 - **AND** P1's remote branch and its remote-tracking ref remain, nothing is
   fetched or pushed, the result prints `Removed 2; branches retired: 2;
-  retained: 0`, and the exit status is 0
-- **AND** a counting `git` wrapper on PATH records each branch child with `-c
-  protocol.allow=never`, the six per-protocol pins, `-C <command directory>`
-  and `branch -d -- <branch>`, and none with `-D`, `--force` or `-f`; the
-  record's `operations.performed` is 4 and its `probes.performed` equals the
-  wrapper's count of the other children
+  retained: 0`, then `Retired b1 (was <b1's planned_sha>); restore: git branch
+  b1 <b1's planned_sha>` and the same line for b2, and the exit status is 0
+- **AND** a counting `git` wrapper on PATH records one reflog child before the
+  question, and each branch child with `-c protocol.allow=never`, the six
+  per-protocol pins, `-C <command directory>` and `branch -d -- <branch>`, the
+  seventeen scrubbed names and `GIT_OPTIONAL_LOCKS` absent from its
+  environment and a process group of its own, and none with `-D`, `--force` or
+  `-f`; the record's `operations.estimated` and `operations.performed` are 4,
+  its `probes.performed` equals the wrapper's count of the other children, and
+  its `probes.estimated` exceeds that of the same run without the flag by 5
 
 #### Scenario: Without the flag every branch remains
 
@@ -826,8 +1038,9 @@ that stage's reason with the branch named.
   --yes`
 - **THEN** both worktrees are removed, both branches remain at their planned
   SHAs, the result prints `Removed 2; branches kept: ` with both branches, the
-  counting wrapper records no `branch` child, no target carries
-  `branch_retirement`, and the exit status is 0
+  counting wrapper records no `branch` child and no reflog child, no target
+  carries `branch_retirement`, the plan carries no `branch_plan`, and the exit
+  status is 0
 
 #### Scenario: A single target with the flag equals a one-item batch
 
@@ -837,6 +1050,8 @@ that stage's reason with the branch named.
   with `project clean <root> --all-safe --apply --yes --retire-branches`
 - **THEN** both remove P, both run the same branch child argument vector, both
   end with `branch_retirement` `retired` with reason null, and both exit 0
+- **AND** run without `--yes` at a terminal, the single-target form asks
+  `Remove 1 worktree and retire its local branch? [yes/N]`
 
 #### Scenario: A branch moved after removal is retained and can be retried
 
@@ -848,47 +1063,90 @@ that stage's reason with the branch named.
   the parent commit, no branch child is spawned, the second target is
   `not-attempted` with `batch-stopped` and its `branch_retirement`
   `not-attempted` with `branch-retention-stop`, and the exit status is 2
-- **AND** the result names the surviving branch with `project clean <root>
-  --apply --action delete-branch --branch <branch>`, and that command run with
-  `--yes` deletes the branch and exits 0
-- **AND** the result prints `Removed 1; branches retired: 0; retained: 1`
-  before the stop block
+- **AND** the result prints `Removed 1; branches retired: 0; retained: 1`, then
+  `Kept <branch> (branch-changed); now at <parent>; inspect it before
+  retrying: project clean <root> --apply --action delete-branch --branch
+  <branch>`, then the stop block `Stopped at <first path> (branch <branch>:
+  branch-changed). Removed 1 of 2. Not attempted: <second path>. Next: project
+  clean <root> --all-safe --retire-branches`
+- **AND** the printed `delete-branch` command, run with `--yes`, deletes the
+  branch and exits 0
 - **AND** when the hook instead moves the branch after the removal and before
   the rescan, the target is `removed` with `branch-advanced-after-removal`,
   its `branch_retirement` is `retained` with `branch-changed`, no re-read or
-  branch child runs, and the exit status is 2
+  branch child runs, and the exit status is 2; and when it deletes the branch
+  there, the target is `removed` with `branch-missing-after-removal`, its
+  `branch_retirement` is `not-attempted` with `branch-missing`, the result
+  prints `<branch> was already gone`, and the exit status is 2
 
 #### Scenario: The merge target moves before the branch stage
 
 - **WHEN** under the flag a test hook commits to the merge target after the
   first of two targets' rescan and before its re-read
 - **THEN** that target's `branch_retirement` is `retained` with
-  `state-changed`, no branch child is spawned, the second target is
-  `not-attempted`, and the exit status is 2
+  `state-changed`, its `command` and `exit_status` null, no branch child is
+  spawned, the second target is `not-attempted`, and the exit status is 2
+- **AND** the same holds when the hook instead recreates by `git fetch` the
+  deleted upstream of a target whose plan recorded `upstream_oid` null, edits
+  the manifest's `tracking_branch` to name another existing branch, or injects
+  a fault into the re-read's ref listing
 
 #### Scenario: A branch another worktree holds is retained
 
 - **WHEN** two linked worktrees have one merged branch checked out, the second
   added with `git worktree add --force`, both are eligible, and `--all-safe
   --apply --yes --retire-branches` runs
-- **THEN** the first in canonical order is removed and its
-  `branch_retirement` is `retained` with `branch-in-use`, no branch child is
-  spawned, the second is `not-attempted`, the branch and the second worktree
-  remain, and the exit status is 2
+- **THEN** the plan lists `  remove <first path>; <branch> is decided at
+  <second path>` and `  remove <second path> and retire <branch>`, both
+  worktrees are removed, the first target's `branch_retirement` is
+  `not-attempted` with `branch-shared` and the second's `retired` with reason
+  null, one branch child runs, and the exit status is 0
 - **AND** run without `--yes` at a terminal, its question reads `Remove 2
   worktrees and retire their 1 local branch? [yes/N]`
+- **AND** when a dirty linked worktree, or the main worktree, also has the
+  branch checked out, the plan lists `  remove <second path>; keep <branch>
+  (checked out at <holder path>)`, no branch child runs, the second target's
+  `branch_retirement` is `not-attempted` with `branch-in-use`, the result
+  prints `Kept <branch> (branch-in-use); next: <branch> is checked out at
+  <holder path>; remove that worktree first`, the holder and the branch
+  remain, and the exit status is 0
+- **AND** when instead a test hook checks the branch out in a new worktree
+  after the second removal and before its rescan, the second target's
+  `branch_retirement` is `retained` with `branch-in-use`, no branch child
+  runs, and the exit status is 2
+
+#### Scenario: A branch Git would judge against another HEAD is kept
+
+- **WHEN** under the flag the main worktree is on a branch whose head is not
+  the merge target's SHA, the merge target being checked out in no worktree,
+  and the first of two eligible targets has an upstream whose remote-tracking
+  ref was deleted, so that Git's own check would judge its branch against the
+  command directory's `HEAD`, while the second's upstream ref is present
+- **THEN** the plan lists `  remove <first path>; keep <branch>
+  (head-not-merge-target)`, the question counts that branch as kept, both
+  worktrees are removed, no branch child runs for the first, its
+  `branch_retirement` is `not-attempted` with `head-not-merge-target`, the
+  second's branch is retired, and the exit status is 0
+- **AND** the result prints `Kept <branch> (head-not-merge-target); next: check
+  out <merge target> in the main worktree, then: project clean <root> --apply
+  --action delete-branch --branch <branch>`, and running those two steps
+  deletes the branch with exit 0
+- **AND** with the main worktree on the merge target, the same rows are both
+  retired and the exit status is 0
 
 #### Scenario: Git refuses the branch deletion
 
-- **WHEN** under the flag the main worktree is on a branch that does not
-  contain the target's commits, the merge target being checked out in no
-  worktree, and the target's upstream's remote-tracking ref was deleted, so
-  that Git's own check judges the branch against the command directory's
-  `HEAD`
-- **THEN** Git refuses with exit status 1, the post-check shows the branch
-  present, the target's `branch_retirement` is `retained` with `git-refused`
-  and `exit_status: 1`, no other branch command runs for it, later targets are
-  `not-attempted`, and the exit status is 2
+- **WHEN** under the flag a test `git` that runs the real Git for every other
+  command, and whose `branch -d` prints Git's refusal and exits 1 without
+  deleting, is first on PATH for the first of two targets whose branches the
+  plan retires
+- **THEN** the post-check shows the branch present, the target's
+  `branch_retirement` is `retained` with `git-refused` and `exit_status: 1`, no
+  other branch command runs for it, the second target is `not-attempted` with
+  `batch-stopped` and its `branch_retirement` `not-attempted` with
+  `branch-retention-stop`, and the exit status is 2
+- **AND** the result prints `Kept <branch> (git-refused); retry: project clean
+  <root> --apply --action delete-branch --branch <branch>`
 
 #### Scenario: The deadline before the branch stage
 
@@ -898,6 +1156,10 @@ that stage's reason with the branch named.
 - **THEN** no re-read or branch child is spawned, its `branch_retirement` is
   `retained` with `deadline-exceeded`, the second target is `not-attempted`
   with `deadline-exceeded`, and the exit status is 1
+- **AND** when the first target's rescan ends with less than 5 s of the work
+  deadline left, no re-read or branch child is spawned, its
+  `branch_retirement` is `retained` with `deadline-exceeded`, and the exit
+  status is 1
 
 #### Scenario: A signal around the branch child
 
@@ -906,7 +1168,8 @@ that stage's reason with the branch named.
 - **THEN** no branch child is spawned, its `branch_retirement` is `retained`
   with `interrupted`, later targets are `not-attempted` with `interrupted`, and
   the exit status is 130
-- **AND** when SIGTERM arrives while a branch child is running, that child is
+- **AND** when SIGTERM arrives while the branch child of a test `git` whose
+  `branch -d` sleeps 2 s before running Git's own is running, that child is
   not signalled and is waited for, the post-check decides its stage, later
   targets are `not-attempted` with `interrupted`, their `branch_retirement`
   `not-attempted` with `target-not-removed` when the target's own is `retired`
@@ -920,6 +1183,38 @@ that stage's reason with the branch named.
 - **THEN** the post-check shows the branch present, its `branch_retirement` is
   `retained` with `unconfirmed-retirement` and `exit_status: 0`, later targets
   are `not-attempted`, and the exit status is 2
+
+#### Scenario: A retirement with a reason
+
+- **WHEN** under the flag a test `git` whose `branch -d` runs Git's own
+  deletion and then exits 1 is first on PATH, for the first of two targets
+- **THEN** the post-check shows the branch absent, its `branch_retirement` is
+  `retired` with `git-failed` and `exit_status: 1`, the second target is
+  `not-attempted` and its `branch_retirement` `not-attempted` with
+  `branch-retention-stop`, and the exit status is 2
+- **AND** with a test `git` whose `branch -d` runs Git's own deletion, then
+  ignores SIGTERM and never exits, its process group receives SIGTERM when its
+  5 s budget ends and SIGKILL 2 s later, the post-check shows the branch
+  absent, its `branch_retirement` is `retired` with `probe-timeout`, and the
+  exit status is 2
+
+#### Scenario: A branch child that cannot be spawned
+
+- **WHEN** under the flag a fault injected after a target's re-read makes the
+  spawn of its branch child fail
+- **THEN** no post-check runs, its `branch_retirement` is `retained` with
+  `spawn-error`, `command` and `exit_status` null and `probes_performed` 1, the
+  branch remains, later targets are `not-attempted`, and the exit status is 2
+
+#### Scenario: A removal past the hard ceiling under the flag
+
+- **WHEN** under the flag a target's removal child is killed at its hard
+  ceiling after Git removed the worktree, and the rescan finds its registry
+  entry and path gone and its branch present
+- **THEN** the target is `removed` with `removal-ceiling`, its
+  `branch_retirement` is `retained` with `removal-ceiling`, no re-read or
+  branch child runs, the branch remains, later targets are `not-attempted`,
+  and the exit status is 1
 
 #### Scenario: A removal that does not end removed under the flag
 
@@ -955,30 +1250,82 @@ that stage's reason with the branch named.
   `reconciliation-incomplete`, the result's `completeness` is incomplete,
   later targets are `not-attempted`, and the exit status is 1
 
+#### Scenario: A branch whose reflog holds amended-away work keeps it
+
+- **WHEN** under the flag an eligible branch b1's first commit was amended
+  before it merged, so that the draft commit is named only by b1's reflog,
+  beside a second eligible branch b2 with a plain history
+- **THEN** the repository's reflog child prints a commit and one more child per
+  row runs, the plan lists `  remove <P1>; keep b1 (reflog-unmerged)`, P1 is
+  removed, b1 and its reflog remain, its `branch_retirement` is
+  `not-attempted` with `reflog-unmerged`, P2 is removed and b2 retired, the
+  draft is still reachable from b1's reflog, and the exit status is 0
+- **AND** the result prints `Kept b1 (reflog-unmerged); its reflog names
+  commits <merge target> lacks; inspect git reflog b1 before any
+  delete-branch`
+- **AND** when a test `git` makes the repository's reflog child exit nonzero,
+  both branches are kept with `reflog-unmerged`, both worktrees are removed,
+  and the exit status is 0
+
+#### Scenario: A flagged run's next commands keep the flag
+
+- **WHEN** under the flag twenty rows pass every gate before
+  `deferred-target-cap`, none of them holding a submodule or hidden local
+  state, and `--all-safe --apply --yes --retire-branches` runs
+- **THEN** sixteen worktrees are removed and their branches retired, the
+  deferral line reads `run again: project clean <root> --all-safe --apply
+  --retire-branches`, and the exit status is 0
+- **AND** running the printed command removes the other four and retires their
+  branches
+
 #### Scenario: The flag's argument rules
 
-- **WHEN** `--retire-branches` is given to plain `project clean`, to
-  `--all-safe` without `--apply`, or with `--apply --action push` or `--apply
-  --action delete-branch`
+- **WHEN** `--retire-branches` is given to plain `project clean`, to `--action
+  remove --worktree P` without `--apply`, or with `--apply --action push` or
+  `--apply --action delete-branch`
 - **THEN** the command refuses with `invalid-arguments` and exit 2, and runs
   nothing
 - **AND** `project clean <root> --all-safe --apply --yes --json
   --retire-branches` prints exactly one JSON document on standard output, the
   apply result record, whose every target carries `branch_retirement`, with
-  the human plan and progress on standard error
+  the human plan and progress on standard error, and `--apply --action remove
+  --worktree P --yes --json --retire-branches` does the same for P
+- **AND** `project clean <root> --all-safe --json --retire-branches` prints the
+  plan envelope with `branch_plan`, which the envelope without the flag lacks
 
 #### Scenario: The question names the branches to retire
 
 - **WHEN** `--all-safe --apply --retire-branches` asks its question at a
-  terminal for two selected rows
-- **THEN** the plan marks both branches for retirement, the question reads
-  `Remove 2 worktrees and retire their 2 local branches? [yes/N]`, and the
-  answer `y` refuses with `cancelled` and exit 2, nothing removed or deleted
+  terminal for two selected rows whose branches the plan retires
+- **THEN** the plan lists `  remove <P1> and retire <b1>` and `  remove <P2>
+  and retire <b2>`, the question reads `Remove 2 worktrees and retire their 2
+  local branches? [yes/N]`, and the answer `y` refuses with `cancelled` and
+  exit 2, nothing removed or deleted
+- **AND** when the plan keeps one of the two branches, the question reads
+  `Remove 2 worktrees, retire 1 local branch and keep 1? [yes/N]`
 
-#### Scenario: The plan digest ignores the flag
+#### Scenario: A flagless digest does not bind a flagged apply
 
 - **WHEN** a preview `project clean <root> --all-safe` prints digest D, and
   `project clean <root> --all-safe --apply --yes --expect-plan D
   --retire-branches` runs with nothing changed
-- **THEN** the fresh digest equals D, the apply proceeds, and every selected
-  worktree is removed and its branch retired
+- **THEN** the fresh plan is printed with a different digest, the run refuses
+  with `plan-digest-mismatch` and exit 2 before any question or mutation, and
+  every worktree and branch remains
+- **AND** the same holds for the digest that plain `project clean <root>`
+  prints
+
+#### Scenario: A flagged preview's digest binds the flagged apply
+
+- **WHEN** `project clean <root> --all-safe --retire-branches` previews two
+  rows, printing `  remove <P1> and retire <b1>`, `  remove <P2> and retire
+  <b2>` and digest D, and `project clean <root> --all-safe --apply --yes
+  --expect-plan D --retire-branches` runs with nothing changed
+- **THEN** the fresh digest equals D, the apply proceeds, both worktrees are
+  removed and both branches retired, and the exit status is 0
+- **AND** `project clean <root> --all-safe --apply --yes --expect-plan D`,
+  without the flag, refuses with `plan-digest-mismatch` and exit 2
+- **AND** when the plan's decision for a branch changes between the preview and
+  the apply, as when the main worktree leaves the merge target before a row
+  whose upstream ref is absent is planned, the fresh digest differs from D and
+  the flagged apply refuses with `plan-digest-mismatch` and exit 2

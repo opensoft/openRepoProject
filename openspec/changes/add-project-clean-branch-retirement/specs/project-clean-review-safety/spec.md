@@ -12,12 +12,15 @@ identity and branch evidence, every baseline signature field of the target, its
 index (read inside the target worktree), the manifest's `tracking_branch`, and
 the merge target's name, source and SHA all equal the values in the confirmed
 plan. Under `--retire-branches` the guarantee SHALL extend to the branch child:
-it is spawned only if the rescan that proved the removal re-established the
-repository identity and, at the re-read performed immediately before spawning
-it, the branch's head equals the reconciliation record's `branch_sha`, the merge
-target's name, source and SHA equal the values in the confirmed plan, and no
-registered worktree had the branch checked out at the rescan, as "Clean retires
-a removed worktree's branch only on fresh head and ancestry evidence" states.
+it is spawned only if the confirmed plan proved every commit that the branch's
+reflog names an ancestor of the merge target's SHA, the rescan that proved the
+removal re-established the repository identity, and, at the re-read performed
+immediately before spawning it, the branch's head equals the reconciliation
+record's `branch_sha`, its `upstream`, `upstream_oid`, `ahead` and `behind`, the
+manifest's `tracking_branch`, and the merge target's name, source and SHA equal
+the values in the confirmed plan, and no registered worktree had the branch
+checked out at the rescan, as "Clean retires a removed worktree's branch only
+on fresh head and ancestry evidence" states.
 
 Ignored files created, and index flags set, after that revalidation, and any
 change made after Git's own check, SHALL be outside the contract; the
