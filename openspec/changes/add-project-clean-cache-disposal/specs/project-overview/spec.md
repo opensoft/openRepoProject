@@ -28,11 +28,11 @@ the report of `project clean <repository.root> --json` inspects, from the same
 working directory and the same refs, the row's classification SHALL equal what
 that report gives it; that report leaves the rows beyond its own row cap
 uninspected, while the overview classifies rows up to its own worktree-row cap
-per run. Except: the overview collects no cache evidence, so a worktree whose
-only ignored files are caches that `project clean` would dispose of is
-classified `ignored-local-files` by the overview and `merged-removable` by
-`project clean`. The overview SHALL NOT classify as removable any worktree that
-`project clean` would refuse.
+per run. Except: the overview collects no cache evidence, so a worktree that
+`project clean` classifies `merged-removable` because clean's cache enumeration
+proved every ignored path a listed cache SHALL be classified
+`ignored-local-files` by the overview. The overview SHALL NOT classify a
+worktree `merged-removable` where `project clean` classifies it otherwise.
 
 #### Scenario: Manifest target
 - **WHEN** a `project.yaml` sets `tracking_branch: origin/develop`, a local `develop` exists, and there is no `origin/HEAD`
@@ -62,11 +62,12 @@ classified `ignored-local-files` by the overview and `merged-removable` by
 - **AND** on the same fixture `project clean <root> --all-safe` refuses with exit status 2 before any mutation
 
 #### Scenario: Every protected classifier
-- **WHEN** one repository's worktrees are classified `protected-default`, `dirty`, `ignored-local-files`, `detached`, `unpublished`, `remote-gone`, `diverged`, `remote-ahead`, `unpushed`, `merged-current` and `pushed-unmerged`, plus one gate-passing `merged-removable`, a second repository holds an `inspection-error` worktree whose corrupted index makes its status probe fail, and the overview runs from inside the `merged-current` worktree
+- **WHEN** one repository's worktrees are classified `protected-default`, `dirty`, `ignored-local-files` (its ignored file not a Python bytecode cache), `detached`, `unpublished`, `remote-gone`, `diverged`, `remote-ahead`, `unpushed`, `merged-current` and `pushed-unmerged`, plus one gate-passing `merged-removable`, a second repository holds an `inspection-error` worktree whose corrupted index makes its status probe fail, and the overview runs from inside the `merged-current` worktree
 - **THEN** every classification equals what `project clean <root> --json` reports from the same directory, and each finding has the category and severity of the attention table
 - **AND** the only housekeeping finding and the only `--all-safe` suggestion belong to the `merged-removable` worktree, and no other worktree appears in the `selected` list of the batch preview that suggestion runs
 
 #### Scenario: Caches that only project clean proves disposable
-- **WHEN** one repository holds a merged, clean, published linked worktree whose only ignored files are Python bytecode caches that `project clean` would dispose of, and a second such worktree that also holds an ignored `local.env`, and the overview and `project clean <root> --json` run from the same directory at the same commit
+- **WHEN** one repository holds a merged, clean, published linked worktree whose only ignored files are Python bytecode caches that `project clean` would dispose of, a second such worktree that also holds an ignored `local.env`, and a third cache-only, merged, clean, published worktree holding an initialized submodule, and the overview and `project clean <root> --json` run from the same directory at the same commit
 - **THEN** the overview classifies the first `ignored-local-files`, with the preserve finding and the read-only clean suggestion of that class, where `project clean` classifies it `merged-removable`, and a counting `git` wrapper on PATH records no cache enumeration child from the overview
-- **AND** both classify the second `ignored-local-files`, and no worktree that `project clean` refuses is classified `merged-removable` by the overview
+- **AND** the overview classifies the third `ignored-local-files`, where `project clean` classifies it `merged-removable` and excludes it as `contains-submodule`
+- **AND** both classify the second `ignored-local-files`, and no worktree is classified `merged-removable` by the overview where `project clean` classifies it otherwise
