@@ -167,7 +167,8 @@ into a separate design. If the detailed constraints remain in the packet,
 require canonical GitHub identity, rejection of credential-bearing remotes,
 bounded deduplicated requests, response-size/page limits, redaction, and
 explicit unknown results for 401, 403, rate-limit, timeout, and truncation.
-Remote evidence remains explanatory and never authorizes cleanup.
+Remote evidence remains explanatory and never authorizes cleanup. Draft PR #29
+(`563d19d`) proposes remote inspection, pending.
 
 ## Suggested work order
 
@@ -199,8 +200,8 @@ headings that hold its contract, and the validation scenarios that prove it.
 "Batch" is [batch cleanup](project-maintenance-batch-cleanup.md) and "Overview"
 is [project overview and attention](project-maintenance-project-discovery.md);
 headings read `section: subsections`. The design contract baseline is still
-`a040790`. `origin/main` is now `7a9134b`, which merged PR #13 (lane
-openRepoProject-1's archive of the `prefer-triad-in-project-new` OpenSpec
+`a040790`. `origin/main` became `7a9134b`, which merged PR #13
+(lane openRepoProject-1's archive of the `prefer-triad-in-project-new` OpenSpec
 change, `openspec/` only) after `d7f6b0e` merged PR #8 (feature 002, "offer the
 Triad first in `project new`") on 2026-10-08. Before them, `da33d92` merged
 PR #7 (this packet) on 2026-10-07, PR #4 archived the completed OpenSpec changes
@@ -543,7 +544,8 @@ high finding has a written contract and scenario, and the design-only PR #7
 was reviewed and merged on 2026-10-07 as `da33d92`. No OpenSpec proposal was
 to be written until that PR was reviewed and merged, and the remaining
 follow-up above, writing paired retirement as a MODIFIED requirement on
-`project-clean` if it is proposed, is for the next revision.
+`project-clean` if it is proposed, is for the next revision. Draft PR #26
+(`874d1ad`) proposes paired retirement, pending.
 
 ### Decisions taken by the proposals — 2026-10-08
 
@@ -773,7 +775,7 @@ checked against `project` at `a040790`, and the packet text now carries it.
 
 - Baseline (C1): `origin/main` was `da33d92`, which merged PR #7 on
   2026-10-07, so the `origin/main` commit the packet named was stale and
-  PR #7 is merged, not open. It has since moved to `d7f6b0e` (PR #8,
+  PR #7 is merged, not open. It had since moved to `d7f6b0e` (PR #8,
   feature 002, 2026-10-08) and then to `7a9134b` (PR #13, `openspec/`
   only); every `project` line citation stays pinned at `a040790`, whose
   `project` is byte-identical through `da33d92` (change 1 council V12), as
@@ -1049,7 +1051,7 @@ Change 1, `add-project-clean-all-safe`:
   `new()`, and 1,163 lines to `tests/test_project.py`. The cleanup, status,
   doctor, and update paths are unchanged in content but sit about 141 lines
   lower, so every `project` line citation stays pinned at `a040790`, whose
-  `project` is byte-identical through `da33d92`. `origin/main` has since moved
+  `project` is byte-identical through `da33d92`. `origin/main` had since moved
   to `7a9134b`, PR #13, which touched `openspec/` only. "Focus and baseline" of
   Batch and Overview, the packet overview's baseline paragraph, and this
   record's baseline sentence say so.

@@ -25,7 +25,7 @@ This revision, made on 2026-10-07, resolves the overview-side findings of the
 bounded and shared probes (finding 3), the overview JSON and repository
 handoff contract (finding 4), and discovery scope and acceptance (finding 5).
 
-The design contract baseline is `a040790`. `origin/main` is now `7a9134b`, which
+The design contract baseline is `a040790`. `origin/main` became `7a9134b`, which
 merged PR #13 (lane openRepoProject-1's archive of the
 `prefer-triad-in-project-new` OpenSpec change, `openspec/` only) after `d7f6b0e`
 merged PR #8 (feature 002, "offer the Triad first in `project new`") on
@@ -1303,6 +1303,7 @@ read-only. Derive the query identity from a validated canonical GitHub remote
 (`github.com/owner/repository`); strip an optional `.git` suffix and never
 print or forward URL-embedded credentials. A credential-bearing, malformed,
 or non-GitHub remote produces `remote status unavailable` without a request.
+Draft PR #29 (`563d19d`) proposes such a `--remote`, pending.
 
 Deduplicate requests by `(host, owner/repository, exact feature-head SHA)`.
 Use at most 64 requests per invocation, at most four concurrently, a 5 s
@@ -1313,7 +1314,10 @@ read exactly one page per query, never following pagination. Read at most
 body cut at 1 MiB, yields an explicit unknown result rather than a partial
 answer. When the remote budget or the global deadline expires, queued
 requests are cancelled before they are sent and in-flight requests are
-aborted; each is recorded as unknown.
+aborted; each is recorded as unknown. Change 1, ratified since, keeps 15 s
+for every child other than Git (its `project-command` delta at `0050f3e`,
+`spec.md:189`), so this 5 s per request is open; draft PR #29 (`563d19d`)
+puts it to Brett Heap as its second open question, pending.
 
 A rate limit, 401, 403, timeout, truncation, or other API failure produces an
 explicit unknown result and no private metadata in output. Use the normal

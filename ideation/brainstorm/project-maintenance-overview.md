@@ -183,8 +183,9 @@ openRepoProject-2 ruling R-13, R-13a in its messages, 2026-10-09; change 1 at
 `4f2162b`).
 
 Family/member relationships, working siblings, mounted spec/code legs,
-parked-work records, bench and container status, GitHub merge queries, and
-cache disposal remain documented extension points. They are not hidden v1
+parked-work records, bench and container status, GitHub merge queries, cache
+disposal, and paired branch retirement remain documented extension points
+(OQ-27, change 1's `proposal.md:756-757` at `0050f3e`). They are not hidden v1
 requirements. Each extension must preserve the ownership boundary of the
 tool that already owns that data or operation. The batch removes only
 worktrees with no ignored files, so caches such as `__pycache__` keep a
@@ -206,7 +207,7 @@ is not a third feature in this packet.
 ## System fit and evidence
 
 The design contract baseline is `a040790`, the commit both feature documents
-measure against. `origin/main` has since advanced to `7a9134b`, which merged
+measure against. `origin/main` had since advanced to `7a9134b`, which merged
 PR #13 (lane openRepoProject-1's archive of the `prefer-triad-in-project-new`
 OpenSpec change, `openspec/` only) after `d7f6b0e` merged PR #8 (feature 002,
 "offer the Triad first in `project new`") on 2026-10-08. Before them, `da33d92`

@@ -27,7 +27,7 @@ recorded: the safety boundary, reconcilable execution and interruption,
 bounded and shared probe work, the repository and JSON contracts, and the
 batch acceptance scenarios.
 
-The design contract baseline is `a040790`. `origin/main` is now `7a9134b`, which
+The design contract baseline is `a040790`. `origin/main` became `7a9134b`, which
 merged PR #13 (lane openRepoProject-1's archive of the
 `prefer-triad-in-project-new` OpenSpec change, `openspec/` only) after `d7f6b0e`
 merged PR #8 (feature 002, "offer the Triad first in `project new`") on
@@ -1754,7 +1754,8 @@ fails, earlier removals remain recorded as permanent partial cache completion;
 the report rescans the worktree, marks the cache phase partial, and gives
 retry guidance. It must stop before worktree or branch mutation when cache
 preflight fails. A proposal must also set hard limits for cache entries and
-bytes and include them in the plan estimate.
+bytes and include them in the plan estimate. Draft PR #27 (`9ebe9f0`)
+proposes cache disposal, pending.
 
 If paired retirement is proposed later, branch deletion remains a separate
 post-removal stage with an immediate branch-head and local-ancestry check that
@@ -1762,7 +1763,8 @@ uses the reconciliation record's `branch_sha` as the expected head. A changed
 head or a Git refusal retains the branch, stops later targets, and reports the
 already removed worktree plus the surviving branch. The existing explicit
 `delete-branch` command remains the retry path. No future composite operation
-may force-delete or force-push.
+may force-delete or force-push. Draft PR #26 (`874d1ad`) proposes paired
+retirement, pending.
 
 ## Validation scenarios
 
