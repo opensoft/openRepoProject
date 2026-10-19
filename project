@@ -1006,6 +1006,79 @@ class HiddenStateParser(RecordStream):
 # endregion parsers
 
 # region escaping
+# FR-039 to FR-041. A code point of these general categories, as this
+# interpreter's unicodedata reports them, never reaches a terminal or a JSON
+# document raw. The escaping_ and ESCAPING_ names are this region's helpers.
+ESCAPING_CATEGORIES = frozenset(("Cc", "Cf", "Zl", "Zp"))
+
+
+def escaping_decode(raw):
+    """Return (text, valid): raw decoded as strict UTF-8 and True, or, when
+    raw is not valid UTF-8, decoded with each undecodable byte as one lone
+    surrogate U+DC80 to U+DCFF (surrogateescape) and False. raw is the path's
+    bytes; a str or path object is taken as os.fsencode() gives its bytes."""
+    if isinstance(raw, (bytes, bytearray, memoryview)):
+        raw = bytes(raw)
+    else:
+        raw = os.fsencode(raw)
+    try:
+        return raw.decode("utf-8"), True
+    except UnicodeDecodeError:
+        return raw.decode("utf-8", "surrogateescape"), False
+
+
+def escaping_byte(char):
+    """The undecodable byte that surrogateescape held as char, as \\xHH."""
+    return f"\\x{ord(char) - 0xDC00:02x}"
+
+
+def json_path(raw):
+    """Return (text, path_valid_utf8) for a path in a JSON document.
+
+    Valid UTF-8 gives the exact text, which json.dumps, with its default
+    ensure_ascii, writes with every Cc, Cf, Zl and Zp code point as an escape.
+    Any other path gives each undecodable byte as the four characters \\xHH
+    in lower case and each literal backslash doubled, so the text maps back
+    to the bytes and holds no surrogate; its flag is False."""
+    text, valid = escaping_decode(raw)
+    if valid:
+        return text, True
+    out = []
+    for char in text:
+        if 0xDC80 <= ord(char) <= 0xDCFF:
+            out.append(escaping_byte(char))
+        elif char == "\\":
+            out.append("\\\\")
+        else:
+            out.append(char)
+    return "".join(out), False
+
+
+def human_path(raw, command=False):
+    """Return a path as human output prints it.
+
+    A valid UTF-8 path with no Cc, Cf, Zl or Zp code point prints verbatim
+    in prose and shlex.quote()d in a command. Any other path prints in the
+    $'...' form in both: \\xHH for an undecodable byte, \\uXXXX, or
+    \\UXXXXXXXX above U+FFFF, for a code point to escape, all in lower case;
+    each backslash doubled and each single quote written \\'."""
+    text, valid = escaping_decode(raw)
+    if valid and not any(unicodedata.category(char) in ESCAPING_CATEGORIES for char in text):
+        return shlex.quote(text) if command else text
+    out = []
+    for char in text:
+        point = ord(char)
+        if not valid and 0xDC80 <= point <= 0xDCFF:
+            out.append(escaping_byte(char))
+        elif char == "\\":
+            out.append("\\\\")
+        elif char == "'":
+            out.append("\\'")
+        elif unicodedata.category(char) in ESCAPING_CATEGORIES:
+            out.append(f"\\u{point:04x}" if point <= 0xFFFF else f"\\U{point:08x}")
+        else:
+            out.append(char)
+    return "$'" + "".join(out) + "'"
 # endregion escaping
 
 # region evidence

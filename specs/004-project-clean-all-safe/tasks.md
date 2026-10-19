@@ -198,7 +198,7 @@ regions and contracts every lane writes against.
   PR #19's draft), with columns for the delta, the requirement, the exact
   title, the story and the test names. Each test task fills its rows as its
   tests land.
-- [ ] T003 [P] Add the `git-floor` job to `.github/workflows/tests.yml`
+- [x] T003 [P] Add the `git-floor` job to `.github/workflows/tests.yml`
   (FR-067, research.md R11), starting from the lead's ci-spike `workflow.patch`
   (48 added lines, applied with `git apply -p1`; its NOTES.md records the
   build, cache and timing checks): `ubuntu-latest`, Python 3.10,
@@ -447,7 +447,7 @@ G. Landing order: A to E, then F, G and H.
 
 ### Lane E: path escaping
 
-- [ ] T016 [P] Add `tests/test_clean_escaping.py` (FR-039 to FR-041):
+- [x] T016 [P] Add `tests/test_clean_escaping.py` (FR-039 to FR-041):
   `json_path(raw)` returns the text and `True` for valid UTF-8, and through
   `json.dumps` a line feed, a tab, U+0001, U+007F, U+0085, U+200E, U+2028,
   U+202E, U+FEFF and U+E0020 are written as escapes, never raw; an undecodable
@@ -457,7 +457,7 @@ G. Landing order: A to E, then F, G and H.
   it holds an undecodable byte or a code point whose `unicodedata.category` is
   Cc, Cf, Zl or Zp: `\xHH`, `\uXXXX` and `\UXXXXXXXX` in lower case, each
   backslash doubled, each single quote written `\'`.
-- [ ] T017 [P] Add `json_path()` and `human_path()` to region `escaping` of
+- [x] T017 [P] Add `json_path()` and `human_path()` to region `escaping` of
   `project`. T016 passes.
 
 ### Lane F: the child handle, the driver and the runner
