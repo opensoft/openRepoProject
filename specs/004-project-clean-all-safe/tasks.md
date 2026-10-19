@@ -411,7 +411,7 @@ G. Landing order: A to E, then F, G and H.
 
 ### Lane C: the scrubbed environment and the pins
 
-- [ ] T012 [P] Add `tests/test_clean_scrub.py`:
+- [x] T012 [P] Add `tests/test_clean_scrub.py`:
   `test_clean_scrub_removes_the_seventeen_names` (`GIT_SCRUB` is the contract's
   list in its order; from an environment holding all seventeen and
   `GIT_CONFIG_GLOBAL` and `GIT_CONFIG_SYSTEM`, `git_env("probe")` keeps those
@@ -422,7 +422,7 @@ G. Landing order: A to E, then F, G and H.
   (`git_argv(kind, args)` puts the seven protocol pins on every kind but
   `push`, the two status pins on `status`, `hidden` and `removal`, and builds
   the removal vector exactly as D9 spells it; `push` carries no pin, PR #19).
-- [ ] T013 [P] Add `GIT_SCRUB`, `PROTOCOL_PINS`, `STATUS_PINS`, `git_env(kind)`
+- [x] T013 [P] Add `GIT_SCRUB`, `PROTOCOL_PINS`, `STATUS_PINS`, `git_env(kind)`
   and `git_argv(kind, args)` to region `git environment` of `project`. T012
   passes.
 
