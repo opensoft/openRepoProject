@@ -512,19 +512,22 @@ class RunnerTests(CleanCase):
                     time.sleep(0.01)
                 out["slot"] = [scope.invocation.signal, scope.invocation.second_interrupt]
                 out["woken"] = len(os.read(scope.wake, 64)) > 0
-                # A full wakeup pipe: warn_on_full_buffer=False keeps standard error quiet.
-                for size in (4096, 1):
-                    try:
-                        while True:
-                            os.write(fd, b"x" * size)
-                    except BlockingIOError:
-                        pass
-                os.kill(os.getpid(), signal.SIGTERM)
-                time.sleep(0.01)
                 with project.default_signals():
                     out["default"] = (handlers(), wakeup()) == start
                 out["default_back"] = handlers() != start[0] and wakeup() == fd
             out["restored"] = (handlers(), wakeup()) == start
+            # A full wakeup pipe: with warn_on_full_buffer=False a signal leaves
+            # standard error quiet. The scope's own write end is filled (its
+            # private _pipe), since reading the descriptor back would reset the flag.
+            with project.signal_scope() as scope:
+                for size in (4096, 1):
+                    try:
+                        while True:
+                            os.write(scope._pipe[1], b"x" * size)
+                    except BlockingIOError:
+                        pass
+                os.kill(os.getpid(), signal.SIGTERM)
+                time.sleep(0.05)
             with project.signal_scope():
                 inside = handlers()
                 with project.raising_signals():
@@ -742,3 +745,80 @@ class RunnerTests(CleanCase):
         self.assertIsNot(outside, other)
         self.assertIsNot(outside, project.current_invocation(), "a fresh default at each call")
         self.assertEqual((outside.version, outside.probes, outside.common_dirs), (None, 0, {}))
+
+    # T021.
+
+    def test_clean_git_and_git_text_run_through_the_driver(self):
+        project = self.project
+        repo = self.worktree()
+        other = self.repo("other", branch="elsewhere")
+        log = self.base / "git.log"
+        bin_dir = self.base / "counting"
+        install_counting_git(bin_dir, log)
+        # A caller's Git environment naming another repository is ignored.
+        caller = {"GIT_DIR": str(other / ".git"), "GIT_WORK_TREE": str(other),
+                  "GIT_INDEX_FILE": str(other / ".git" / "index")}
+        spawned = []
+        real_start = project.ChildHandle.start.__func__
+
+        def start(cls, argv, cwd, kind):
+            handle = real_start(cls, argv, cwd, kind)
+            wakeup = signal.set_wakeup_fd(-1)
+            signal.set_wakeup_fd(wakeup)
+            spawned.append((handle, [signal.getsignal(number) for number in project.SCOPED_SIGNALS], wakeup))
+            return handle
+
+        before = ([signal.getsignal(number) for number in project.SCOPED_SIGNALS], signal.set_wakeup_fd(-1))
+        signal.set_wakeup_fd(before[1])
+        with self.in_process_env(bin_dir, **caller), \
+                mock.patch.object(project.ChildHandle, "start", classmethod(start)):
+            # Outside a subcommand: what they return today (tests/test_project.py:878
+            # reads git_text() in process), one probe each with the 15 s budget, and
+            # no signal handler installed.
+            top = project.git(repo, "rev-parse", "--show-toplevel")
+            self.assertIsInstance(top, subprocess.CompletedProcess)
+            self.assertEqual((top.returncode, top.stdout, top.stderr), (0, f"{repo}\n", ""))
+            self.assertEqual(project.git_text(repo, "symbolic-ref", "--short", "HEAD"), "main")
+            self.assertIsNone(project.git_text(repo, "show-ref", "--verify", "--quiet", "refs/heads/none"))
+            missing = project.git(self.base / "missing", "status")
+            self.assertEqual(missing.returncode, 128)
+            self.assertIn("fatal:", missing.stderr)
+            self.assertEqual(len(spawned), 4)
+            for handle, handlers, wakeup in spawned:
+                self.assertEqual(handle.budget_end - handle.started, project.TIMING["inspect_budget"])
+                self.assertEqual((handlers, wakeup), before, "no handler installed")
+                self.assertEqual(handle.state, "reaped")
+            # Inside an invocation each child is counted.
+            with project.Invocation("status") as run:
+                project.git_text(repo, "rev-parse", "HEAD")
+                project.git(repo, "status", "--porcelain")
+            self.assertEqual(run.probes, 2)
+        records = child_log(log)
+        self.assertEqual(len(records), 6)
+        for record, args in zip(records, (
+                ["-C", str(repo), "rev-parse", "--show-toplevel"],
+                ["-C", str(repo), "symbolic-ref", "--short", "HEAD"],
+                ["-C", str(repo), "show-ref", "--verify", "--quiet", "refs/heads/none"],
+                ["-C", str(self.base / "missing"), "status"],
+                ["-C", str(repo), "rev-parse", "HEAD"],
+                ["-C", str(repo), "status", "--porcelain"])):
+            # Scrubbed, pinned and in a process group of its own.
+            self.assertEqual(record.argv, [*PINS, *args])
+            self.assertEqual([name for name in record.names if name in SCRUBBED_NAMES], [])
+            self.assertEqual(record.optional_locks, "0")
+            self.assertEqual((record.ppid, record.pgid), (os.getpid(), record.pid))
+
+        # Once the invocation's version check has failed, nothing is spawned:
+        # git() returns a failed CompletedProcess and git_text() None.
+        old_log = self.base / "old.log"
+        old_bin = self.base / "counting-old"
+        install_counting_git(old_bin, old_log, real=self.fake_dir("version-2.35.0") / "git")
+        with self.in_process_env(old_bin), project.Invocation("status") as run:
+            self.assertEqual(project.git_version(run).code, "git-too-old")
+            self.assertEqual(len(child_log(old_log)), 1)
+            refused = project.git(repo, "rev-parse", "HEAD")
+            self.assertIsInstance(refused, subprocess.CompletedProcess)
+            self.assertNotEqual(refused.returncode, 0)
+            self.assertIn("older than 2.36", refused.stderr)
+            self.assertIsNone(project.git_text(repo, "rev-parse", "HEAD"))
+            self.assertEqual((len(child_log(old_log)), run.probes), (1, 1), "no child after a failed check")
