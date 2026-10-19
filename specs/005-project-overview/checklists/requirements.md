@@ -123,3 +123,51 @@ Lane: openRepoProject-4
   are measurable" were re-read against the review findings (SC-009,
   SC-012 and SC-013 rewritten, FR-049's test rules made exact).
 - Items marked incomplete require spec updates before `/speckit-clarify` or `/speckit-plan`
+
+## Cross-cutting Requirements Quality (no-argument `/speckit.checklist`, 2026-10-19)
+
+**Purpose**: The cross-cutting dimensions that the user-global `speckit-checklist` skill adds to this file on a no-argument run: completeness, clarity, consistency, acceptance criteria quality, dependencies and assumptions, and ambiguities and conflicts. The domain checklists of the same run sit beside this file. The 16 items above and their notes are unchanged; the items below are numbered from CHK001 because the items above carry no ids.
+**Review Ownership**: These items are reviewer-owned, as in the domain checklists: `[x]` means the requirements-quality criterion is satisfied, never that implementation work is complete.
+
+### Requirement Completeness
+
+- [ ] CHK001 Does every ADDED and MODIFIED requirement of change 2's deltas map to at least one functional requirement? [Completeness, Traceability, Spec Appendix Requirements]
+- [ ] CHK002 Does every delta scenario map to at least one functional requirement and exactly one story scenario? [Completeness, Traceability, Spec Appendix Scenarios]
+- [ ] CHK003 Does each of FR-001 to FR-046 realize at least one row of the traceability tables, with FR-047 to FR-049 traced to the proposal's Impact and design D13? [Traceability, Spec Appendix Coverage]
+- [ ] CHK004 Are requirements present for every scenario class the feature has: primary (a healthy estate), alternate (layouts, `--attention`, `--strict`), exception (one row's failure, a failure outside the boundary), recovery (remedies, repair, re-runs) and non-functional (bounds, read-only, determinism)? [Coverage, Spec US1 to US11, FR-011 to FR-022, FR-040]
+- [ ] CHK005 Are the points the delta leaves to design D1 to D13 cited to the decision rather than restated in another form? [Completeness, Spec Requirements preamble, Assumptions]
+- [ ] CHK006 Is every citation key the spec uses (`POD`, `PRSD`, `DI`, `CMD`, `CLN`, [E], [L], [G], [R], [P]) defined with the file and the commit it points at? [Traceability, Gap, Spec header]
+- [ ] CHK007 Are the points the change leaves open recorded as questions for Brett Heap rather than settled in the spec? [Completeness, Spec Assumptions]
+- [ ] CHK008 Is each clarification applied where its "Where applied" line says? [Consistency, Traceability, Spec Clarifications]
+
+### Requirement Clarity
+
+- [ ] CHK009 Are the bounds stated as numbers with units rather than adjectives? [Clarity, Spec FR-011 to FR-018, FR-033]
+- [ ] CHK010 Are approximate quantities ("about 300 entries", "about 355 rows", "about 2 s") confined to edge cases, assumptions and scenarios that give an exact threshold beside them? [Clarity, Spec EC-004, EC-009, US6 s9]
+- [ ] CHK011 Is every obligation written with MUST or MUST NOT, never as "no X MUST"? [Clarity, Spec Functional Requirements]
+- [ ] CHK012 Does the spec say what and why, naming no function, module or file of the implementation? [Clarity, Spec Assumptions]
+
+### Requirement Consistency
+
+- [ ] CHK013 Are codes, classifications and field names spelled identically across stories, requirements, entities and criteria? [Consistency]
+- [ ] CHK014 Do the stories' acceptance scenarios agree with the delta scenarios they realize? [Consistency, Spec Appendix Scenarios]
+- [ ] CHK015 Are the exit rules consistent across FR-029, FR-042, FR-043, FR-044 and the stories? [Consistency, Spec FR-042]
+
+### Acceptance Criteria Quality
+
+- [ ] CHK016 Is each success criterion objectively measurable (a count, a percentage, a byte comparison or a time bound)? [Measurability, Spec SC-001 to SC-014]
+- [ ] CHK017 Does each success criterion measure requirements that exist, by citation or by content? [Traceability, Spec SC-001 to SC-014]
+- [ ] CHK018 Is every success criterion achievable, none requiring what a run cannot meet? [Measurability, Spec SC-004, SC-005]
+
+### Dependencies and Assumptions
+
+- [ ] CHK019 Is the dependency on feature 004 stated with the commit it is read at, and is the open choice of its state before the plan recorded? [Dependency, Spec Dependencies]
+- [ ] CHK020 Are the measured assumptions stated with their source and date (48.3 s, 219 candidates, 96 tests)? [Assumption, Spec Assumptions]
+- [ ] CHK021 Is the assumption that no other process changes the estate stated where determinism depends on it? [Assumption, Spec FR-019, EC-023]
+- [ ] CHK022 Is the departure from the change's order (specify before feature 004 merges) recorded with its authority and its limit? [Assumption, Spec header, Clarifications C-21]
+
+### Ambiguities and Conflicts
+
+- [ ] CHK023 Is every point left to the plan named as such? [Ambiguity, Spec Assumptions]
+- [ ] CHK024 Are the differences between change 2 and feature 004 recorded with which text governs? [Conflict, Spec Assumptions, Clarifications C-33]
+- [ ] CHK025 Are the recorded residuals (EC-001, EC-002, EC-006, EC-022, EC-025 to EC-030) kept apart from requirements, so that none reads as a promise? [Ambiguity, Spec Edge Cases]
