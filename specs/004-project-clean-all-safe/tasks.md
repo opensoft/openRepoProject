@@ -272,7 +272,7 @@ G. Landing order: A to E, then F, G and H.
 
 ### Lane A: the timing table and the launcher
 
-- [ ] T005 [P] Add `tests/test_clean_timing.py`:
+- [x] T005 [P] Add `tests/test_clean_timing.py`:
   `test_clean_timing_table_holds_every_time_constant` (`TIMING` equals
   `{"invocation_deadline": 60, "reconciliation_reserve": 10, "probe_budget": 5,
   "removal_floor": 5, "removal_ceiling": 300, "inspect_budget": 15,
@@ -292,12 +292,12 @@ G. Landing order: A to E, then F, G and H.
   `--help` it exits 0 and prints the usage of `project`; the launched process
   is `project`'s own, with its pid, process group, signal handlers, streams and
   exit status).
-- [ ] T006 [P] Add `TIMING` to region `timing` of `project`, the values of T005
+- [x] T006 [P] Add `TIMING` to region `timing` of `project`, the values of T005
   in seconds (data-model.md, "Constants"). Every later reader reads
   `TIMING[...]` when it is called, never through a default argument or a
   constant derived at import (plan review M16, R-29). The first two tests of
   T005 pass.
-- [ ] T007 [P] Add `tests/launch_project.py`, after the lead's harness spike
+- [x] T007 [P] Add `tests/launch_project.py`, after the lead's harness spike
   `harness-spike/launch.py` with `parents[1]` for the repository root: load
   `project` with `SourceFileLoader` and `spec_from_loader` under the module
   name `project_cli`, registered in `sys.modules` before `exec_module`, since a
