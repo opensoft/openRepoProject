@@ -10,8 +10,8 @@ Sources are pinned as in `proposal.md`: `project`, `tests/test_project.py`,
 `961c405`, byte-identical at `e9d6711`; `README.md` and
 `.github/workflows/tests.yml` at `e9d6711`; #21's delta
 `openspec/changes/refuse-non-directory-parent-early/specs/project-command/spec.md`
-at `1b84a94` (byte-identical to `a43e7d2`). The constraints are numbered N1 to
-N12 in file order.
+at `8f3ca2d` (byte-identical to its text at `1b84a94` and `a43e7d2`). The
+constraints are numbered N1 to N12 in file order.
 
 ## Council-Identified Constraints
 
@@ -128,7 +128,7 @@ skipped on any CI job" stands.
 ### N11. `import errno` is shared with feature 004
 **Raised by:** systems-architect
 **Concern:** Feature 004's realization adds `import errno` to `project`'s
-import block (`004-project-clean-all-safe` at `66d60b6`), the import S1 and
+import block (`004-project-clean-all-safe` at `0d3e0f7`), the import S1 and
 S2 need, and "Ordering and shared files" does not name `project`. A three-way
 merge of the feasibility copy with feature 004's `project` over `961c405` is
 clean and keeps one `import errno`.

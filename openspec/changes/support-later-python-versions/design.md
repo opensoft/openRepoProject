@@ -8,7 +8,7 @@ See `proposal.md` for why and what, and `specs/project-command/spec.md` for the
 requirements this design builds: three ADDED, "Supported Python versions are
 stated and tested", "A parent that is a symbolic-link loop is refused before
 the question" and "A destination that cannot be read is refused before the
-question", and two MODIFIED, written against #21's delta at `1b84a94`, each
+question", and two MODIFIED, written against #21's delta at `8f3ca2d`, each
 changing only the statements this change makes false. The council's noted
 constraints are N1 to N12 in `clarifications.md`, each answered below: N1 D1,
 N2 D4, N3 D1 and D10, N4 D6, N5 D6, N6 D2, N7 D2, N8 D2, N9 D2 and D10, N10
@@ -333,12 +333,16 @@ discover -s tests -v`; no new dependency (PyYAML is already in
 ### D6. The spec delta, #21 and the archive order
 
 - **Against #21 (N4).** Both MODIFIED blocks are #21's delta text at
-  `1b84a94` (byte-identical to `a43e7d2`), lines 129-198 and 5-88, with
-  only the statements the proposal records as false changed. They were
-  built by exact, asserted replacements, and a diff against #21's text shows
-  those changes only. Every #21 citation in this change is to `1b84a94`; if
-  #21's head moves before this change is ratified, the citations and the
-  blocks are re-checked against the new head.
+  `8f3ca2d` (byte-identical to its text at `1b84a94` and `a43e7d2`), lines
+  129-198 and 5-88, with only the statements the proposal records as false
+  changed. They were built by exact, asserted replacements, and a diff
+  against #21's text shows those changes only. Every #21 citation in this
+  change is to `8f3ca2d`; if #21's head moves before this change is
+  ratified, the citations and the blocks are re-checked against the new
+  head. On 2026-10-19 #21's head was `8f3ca2d` (`b8e9be5` merged main
+  `e9d6711`, and `8f3ca2d` aligned its CI statements with Linux-only CI,
+  #32): its delta is byte-identical to `1b84a94`'s, so both MODIFIED blocks
+  stand, and the citations were re-pinned with no cited line moved.
 - **Archive order (N5).** This change archives after
   `refuse-non-directory-parent-early`. openspec 1.13.1 validates the second
   block with only `[INFO] ... Archive would refuse this delta ... not found`,
@@ -358,17 +362,20 @@ discover -s tests -v`; no new dependency (PyYAML is already in
 
 ### D7. Shared files
 
-- **`project`'s import block (N11).** Feature 004 adds `import errno` there
-  (`004-project-clean-all-safe` at `66d60b6`). The realization adds `import
-  errno`, in the block's alphabetical place after `argparse`, only if main
-  lacks it then. A three-way merge of the two is clean (council evidence 4).
+- **`project`'s import block (N11).** Feature 004 adds `import errno` there,
+  after `argparse` (`project:11-12` on `004-project-clean-all-safe` at
+  `0d3e0f7`). The realization adds `import errno`, in the block's
+  alphabetical place after `argparse`, only if main lacks it then. A
+  three-way merge of the two is clean (council evidence 4).
 - **`project` `new()`.** #21's realization lands first and edits other lines
   (`:235-254`, `:383-385`); this realization merges main in first and edits
   `:322-329` only.
 - **`README.md:17-19`.** Shared with feature 004's Git 2.36 sentence; the
   second to merge keeps both sentences, Python's first.
 - **`.github/workflows/tests.yml`.** This change edits line 9; feature 004
-  appends its `git-floor` job. Whichever lands second merges main in.
+  appends its `git-floor` job. Whichever lands second merges main in. Lane 2
+  agreed on 2026-10-19 (its ruling R-46) that the job's comment names no job
+  count, so this change needs no edit on 004's account in either order.
 - **`tests/test_project.py`.** Untouched here (M1).
 
 No rebase and no force push: merges only.

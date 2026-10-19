@@ -5,7 +5,7 @@ Lane: openRepoProject-4
 Status: draft, opened as a draft pull request; the alignment review and the
 council are applied (Review resolution, at the end); main is merged in at
 `e9d6711`, so CI is Linux only (#32), and #21 is cited at its head
-`1b84a94`; `clarifications.md`, the spec delta, `design.md` and `tasks.md`
+`8f3ca2d`; `clarifications.md`, the spec delta, `design.md` and `tasks.md`
 complete the proposal stage; nothing is ratified. Governing issue:
 opensoft/openRepoProject#22, claimed by lane openRepoProject-4. Taken up under
 Brett Heap's word of 2026-10-11 (about 15:55Z), "usage reset, resume all. read
@@ -21,7 +21,7 @@ and in its design's version table and D6 (`design.md:78-93`, `:222-224`), and
 kept the CI matrix and the README's "Python 3.10+" out of that change (N5,
 `clarifications.md:82-94`; D6, `design.md:225`), "the residual is on a version
 CI does not run" (`design.md:100-101`). Issue #20 and its proposal PR #21
-(lane openRepoProject-1, head `1b84a94`) put both residuals and the CI matrix
+(lane openRepoProject-1, head `8f3ca2d`) put both residuals and the CI matrix
 out of scope too (that proposal's Out of Scope, lines 412-416). This change is
 where they go.
 
@@ -410,9 +410,10 @@ provisional and distinct from every existing title, from #21's ADDED title and
 from lane openRepoProject-2's ADDED "Repository inspection requires Git 2.36
 and shares one evidence model". Each MODIFIED block is written against #21's
 delta text (`openspec/changes/refuse-non-directory-parent-early/specs/
-project-command/spec.md` at `1b84a94`, byte-identical to its text at
-`a43e7d2`, or #21's head when the design is written) and changes only the
-statements listed below; every other statement keeps its wording.
+project-command/spec.md` at `8f3ca2d`, byte-identical to its text at
+`1b84a94` and `a43e7d2`, or #21's head when the design is written) and
+changes only the statements listed below; every other statement keeps its
+wording.
 
 - ADDED: "Supported Python versions are stated and tested". `README.md`
   names the supported range, from its lowest to its highest minor version,
@@ -635,7 +636,7 @@ and 3.15.0rc2:
   `README.md:281-282`), keeps both, and adds no `os` axis.
 - **#21 (`refuse-non-directory-parent-early`, lane openRepoProject-1).**
   - Spec: this change's two MODIFIED blocks are written against #21's delta
-    text at `1b84a94` (or #21's head when the design is written), and it
+    text at `8f3ca2d` (or #21's head when the design is written), and it
     relies on #21's MODIFIED "Preview" WHEN, so it archives after
     `refuse-non-directory-parent-early`.
   - Realization: it lands after #21's realization and merges main in first,
@@ -648,22 +649,36 @@ and 3.15.0rc2:
   - #21's surface, the early non-directory refusal and its sentences, is not
     touched. Its tests run on six versions once this matrix lands; a failure
     of one of them on an added version is reported to lane 1, not fixed here.
-  - #21 at `1b84a94` still names the four-job matrix from before #32 (its
-    design, `:39-40`; its proposal, lines 352-353 and 415; its landing task
-    3.1, "green checks on all four CI jobs"). Updating that text is lane 1's;
-    this change does not depend on it.
+  - #21 at `8f3ca2d` has lane 1's alignment with Linux-only CI (#32): its
+    design (`:39-40`, `:355-357`), its proposal (lines 353 and 415-416) and
+    its landing task 3.1 no longer name the four-job matrix or macOS CI; they
+    name `ubuntu-latest` on Python 3.10 and 3.12. Task 3.1 reads "green
+    checks on every job of `.github/workflows/tests.yml`", which still holds
+    once this change widens the matrix; its "since #32, two" count is lane
+    1's to update. This change does not depend on it.
 - **Feature 004 (`add-project-clean-all-safe`, lane openRepoProject-2).**
   - `.github/workflows/tests.yml`: this change edits only the `test` job's
     `python` list (`:9`); feature 004 adds a separate `git-floor` job on
     `ubuntu-latest` and leaves the `test` job unchanged
     (`specs/004-project-clean-all-safe/plan.md`, "CI shape", on lane 2's
-    branch `004-project-clean-all-safe` at `5a71f83`, unchanged at its head
-    `66d60b6`; the job itself is on lane 2's branch `impl/004-t003-git-floor`
-    at `2ec938b`, written before #32). That plan and that job's comment
-    still name the four jobs from before #32, and those branches have not
-    merged `e9d6711`; both are lane 2's.
+    branch `004-project-clean-all-safe` at `d1e7c56`, unchanged at its head
+    `0d3e0f7`: the `test` job, "two jobs (Python 3.10 and 3.12 on
+    `ubuntu-latest`, Linux only since #32; R-35)", runs the whole suite
+    unchanged). The job itself is merged into that branch (`4baec61`, from
+    `impl/004-t003-git-floor` at `339b309`) and adds lines after `:17` only,
+    so the `test` job and its `python` list (`:9`) are as on main; the
+    branch has merged `e9d6711`.
+  - The job's comment first read "The two test jobs above (ubuntu-latest,
+    Python 3.10 and 3.12)", which goes stale when this matrix widens. Lane
+    openRepoProject-2 agreed on 2026-10-19 (its ruling R-46) to a comment
+    that names no job count, now on that branch at `f9a639a`: "The test jobs
+    above (ubuntu-latest, every Python of the matrix) run on whichever Git
+    their runner ships". Its plan, research and spec still say "two jobs" at
+    `0d3e0f7`; R-46 has them and its quickstart say "every job of the `test`
+    matrix" in lane 2's doc round 3. This change needs no edit on 004's
+    account, whichever of the two lands first.
   - `project`'s import block: feature 004 adds `import errno` there (with
-    other standard modules, at `66d60b6`), the import S1 and S2 need. A
+    other standard modules, at `0d3e0f7`), the import S1 and S2 need. A
     three-way merge of the feasibility copy with feature 004's `project` over
     `961c405` is clean and keeps one `import errno` (council evidence 4).
     The realization adds the import only if main lacks it (design D7).
