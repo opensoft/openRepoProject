@@ -475,6 +475,22 @@ def discover(target=None):
 
 
 # region timing
+# Every time constant of project, in seconds (data-model.md "Constants"; research.md R10). One
+# table of literals: no environment variable, flag or file feeds it (lead ruling R-26). Read
+# TIMING[...] when the reader is called, never in a default argument, a class attribute or a
+# constant derived at import, so that tests/launch_project.py, which replaces this table before
+# main() runs, reaches every reader (lead ruling R-29, plan review M16).
+TIMING = {
+    "invocation_deadline": 60,
+    "reconciliation_reserve": 10,
+    "probe_budget": 5,
+    "removal_floor": 5,
+    "removal_ceiling": 300,
+    "inspect_budget": 15,
+    "term_grace": 2,
+    "reap_wait": 2,
+    "selector_tick": 0.1,
+}
 # endregion timing
 
 # region contracts
