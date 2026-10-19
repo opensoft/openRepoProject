@@ -23,6 +23,7 @@ CLI = ROOT / "project"
 loader = importlib.machinery.SourceFileLoader("project_cli", str(CLI))
 spec = importlib.util.spec_from_loader(loader.name, loader)
 module = importlib.util.module_from_spec(spec)
+sys.modules[loader.name] = module
 loader.exec_module(module)
 
 # Fixed text of design.md D13, character for character. NAME, ORG, VIS and
