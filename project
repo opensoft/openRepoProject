@@ -73,7 +73,9 @@ def probe(argv, cwd=None):
 
 
 def git(root, *args):
-    return probe(["git", "-C", str(root), *args])
+    run = current_invocation()
+    return git_refusal(run) or run_bounded(("probe", ["-C", str(root), *args], None), None,
+                                           run).completed_process()
 
 
 def git_text(root, *args):
@@ -1313,8 +1315,39 @@ class DriverOutcome:
     def error(self):
         return OUTCOME_ERRORS[self.name]
 
+    def completed_process(self):
+        """The outcome as git() returned it before the driver: a CompletedProcess
+        with text streams decoded as subprocess's text mode decodes them (UTF-8,
+        newlines translated; an undecodable byte kept by surrogateescape), its
+        standard error the 4 KiB head. A child cut at its budget or deadline, one
+        abandoned, or one never spawned gives status 2 and a message, as
+        probe() gives for a timeout or an OSError."""
+        if self.name in ("timeout", "deadline") or self.status is None:
+            message = self.detail or f"git was stopped ({self.error})"
+            return subprocess.CompletedProcess(self.argv, 2, "", message)
+        return subprocess.CompletedProcess(self.argv, self.status, _process_text(self.result or b""),
+                                           _process_text(self.stderr))
+
     def __repr__(self):
         return f"DriverOutcome({self.name!r}, status={self.status!r}, detail={self.detail!r})"
+
+
+def _process_text(data):
+    return data.decode("utf-8", "surrogateescape").replace("\r\n", "\n").replace("\r", "\n")
+
+
+def git_refusal(run):
+    """After the invocation's version check failed, the CompletedProcess that
+    git() returns without spawning anything (FR-053, plan review M10), or None
+    while Git may run."""
+    version = run.version
+    if version is None or version.code is None:
+        return None
+    if version.code == "git-too-old":
+        message = TEXT["git_too_old"].format(VERSION=version.text)
+    else:
+        message = TEXT["git_unavailable"].format(DETAIL=version.detail)
+    return subprocess.CompletedProcess(["git"], 2, "", message)
 
 
 def _drain(fd):
