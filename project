@@ -3393,6 +3393,109 @@ def revalidate(plan, target, run):
                                                   branch_sha)
 
 
+def removal_exit_status(outcome):
+    """A removal's `exit_status` (T045, T056; data-model.md, "Target result and
+    reconciliation record"; plan review M12) from its DriverOutcome: None
+    unless the child was spawned and reaped; Git's own status when it exited;
+    and 128 plus the signal number when a signal ended it, whoever sent it
+    (128 minus Popen's negative return code), so 137 for a child killed at the
+    ceiling, as execute() reports a delegate's."""
+    status = outcome.status
+    if status is None:
+        return None
+    return status if status >= 0 else 128 - status
+
+
+def run_removal(target, run):
+    """Spawn target's removal and wait for it (T056; design D2 and D9,
+    FR-012): a ChildHandle of kind `removal` running git_argv("removal",
+    target.removal_args), the plan's own argument vector, `-C ROOT worktree
+    remove PATH` with PATH the registry's raw bytes and never --force, from
+    the command directory, through run_bounded(), which counts it among
+    `operations`, gives it no budget, never signals it before its ceiling,
+    and waits for it. Sets target["exit_status"] (removal_exit_status()) and
+    returns the DriverOutcome; one that could not be spawned is outcome
+    `failed` with no status."""
+    outcome = run_bounded(("removal", target.removal_args, target.root), None, run)
+    target["exit_status"] = removal_exit_status(outcome)
+    return outcome
+
+
+def rescan(target, run):
+    """The rescan after target's removal child is reaped (T056; design D7;
+    data-model.md, "Revalidation step and probes_performed"): it first
+    re-establishes the repository identity, the identity probe (row 3) in the
+    command directory and the realpath and lstat of the common directory it
+    names, compared with the plan's {root, common_dir, dev, ino}; then the
+    registry listing (row 4, WorktreeListParser), the ref listing (row 6,
+    RefParser) and an lstat of the planned path, each through run_bounded()
+    or fs_call(). Returns the reconciliation record: whether the registry
+    still lists the planned path, whether the path is present, and the
+    branch's presence and SHA, a value not established null. Where the
+    identity cannot be re-established or differs, every field is null and
+    `reconciled` false (T085 decides the stage of such a target)."""
+    unknown = reconciliation_record(None, None, None, None)
+    root = os.fsencode(target.root)
+    values, error = identity_probe(root, run)
+    planned = target.identity
+    if error is not None or planned is None:
+        return unknown
+    try:
+        found = [fs_call(os.path.realpath, values[0]), fs_call(os.path.realpath, values[1])]
+        if not isinstance(found[1], DriverOutcome):
+            found.append(fs_call(os.lstat, found[1]))
+    except OSError:
+        return unknown
+    if any(isinstance(value, DriverOutcome) for value in found):
+        return unknown
+    toplevel, common_dir, common = found
+    if (toplevel, common_dir, common.st_dev, common.st_ino) != tuple(planned[key] for key in IDENTITY_FIELDS):
+        return unknown
+    listing = run_bounded(("probe", ["-C", root, "worktree", "list", "--porcelain", "-z"], None),
+                          WorktreeListParser(), run)
+    registry_entry_present = None
+    if listing.name == "complete":
+        registry_entry_present = any(record["path"] == target["path"] for record in listing.result)
+    refs = run_bounded(("probe", ["-C", root, "for-each-ref", "--format=" + REF_FORMAT, "refs/heads",
+                                  "refs/remotes"], None), RefParser(), run)
+    branch_present, branch_sha = _branch_evidence(target, refs.result if refs.name == "complete" else None)
+    return reconciliation_record(registry_entry_present, path_presence(target["path"]), branch_present,
+                                 branch_sha)
+
+
+def decide_stage(target, outcome, reconciliation):
+    """The final stage of a spawned target (T056; design D9, D15 and D19;
+    data-model.md, "Target stages"), a pure function of its removal's
+    DriverOutcome and the rescan's reconciliation record; returns (stage,
+    reason, notes). target is the Target, whose planned branch and head the
+    branch-after-removal reasons read (T085).
+
+    - Not spawned (outcome `failed` with no status): `failed`, `spawn-error`.
+    - Exited on its own, signal or not: nonzero is `failed`, `git-refused` for
+      128 and `git-failed` for any other status, whatever the slot holds; 0
+      is `removed` with reason null when the registry entry and the path are
+      both gone, and otherwise `unknown` with `unconfirmed-removal`.
+    - Cut at its ceiling, or its exit not observed (outcome `timeout`, design
+      D9): the rescan alone decides, `removed` when the entry and the path are
+      both gone, otherwise `unknown`, each with `removal-ceiling`, and the
+      note `partially-removed` while the entry or the path remains. T092
+      adds the wait around it; this function is total over the outcomes
+      run_bounded() gives a removal handle."""
+    gone = reconciliation["registry_entry_present"] is False and reconciliation["path_present"] is False
+    if outcome.name == "timeout":
+        if gone:
+            return "removed", "removal-ceiling", []
+        remains = reconciliation["registry_entry_present"] or reconciliation["path_present"]
+        return "unknown", "removal-ceiling", ["partially-removed"] if remains else []
+    if outcome.status is None:
+        return "failed", "spawn-error", []
+    if outcome.status != 0:
+        return "failed", "git-refused" if outcome.status == 128 else "git-failed", []
+    if gone:
+        return "removed", None, []
+    return "unknown", "unconfirmed-removal", []
+
+
 def apply_removals(plan, run):
     """Remove the plan's selected worktrees (T057 fills): called in phase
     `apply`, which the pipeline sets, never this function (lead ruling R-56);

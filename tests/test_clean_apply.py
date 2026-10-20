@@ -17,6 +17,7 @@ import io
 import os
 from pathlib import Path
 import re
+import shlex
 import signal
 import time
 import types
@@ -299,6 +300,147 @@ class ApplyTests(clean_support.CleanCase):
             self.git(root, "commit", "-q", "--allow-empty", "-m", "advance the merge target")
             self.assertEqual(project.revalidate(plan, entry, run),
                              ("state-changed", record(True, True, True, heads["004-identity"])))
+
+    # T056: the removal child, the rescan and the stage.
+
+    def test_clean_run_removal_spawns_the_planned_vector_from_the_command_directory(self):
+        root, trees = self.merged_repository("001-a")
+        tree = trees["001-a"]
+        planned = self.head(tree)
+        bin_dir, log = self.base / "counting-bin", self.base / "children.log"
+        clean_support.install_counting_git(bin_dir, log)
+        with self.in_process(self.path_first(bin_dir)) as run:
+            plan = self.plan_of(root, run, [tree])
+            entry = project.make_target(plan, plan.selected[0])
+            self.assertEqual(entry["command"], ["git", *REMOVAL_PINS, "-C", os.fsencode(root), "worktree", "remove",
+                                                os.fsencode(tree)])
+            probes = run.probes
+            clean_support.reset_child_log(log)
+            outcome = project.run_removal(entry, run)
+            self.assertEqual((outcome.name, outcome.status, entry["exit_status"]), ("complete", 0, 0))
+            self.assertEqual((run.operations, run.probes), (1, probes))
+            reconciliation = project.rescan(entry, run)
+            self.assertEqual(run.probes, probes + 3)
+        removal, *rescans = clean_support.child_log(log)
+        pins, rest = strip_pins(removal.argv)
+        self.assertEqual(pins, REMOVAL_PINS)
+        self.assertEqual(rest, ["-C", str(root), "worktree", "remove", str(tree)])
+        self.assertNotIn("--force", removal.argv)
+        self.assertEqual(removal.cwd, str(root))  # the command directory (design D9)
+        self.assertEqual(removal.pgid, removal.pid)  # a process group of its own (D2)
+        self.assertEqual(removal.names, ())  # scrubbed, and no GIT_OPTIONAL_LOCKS (R-48 (a))
+        # The rescan: rows 3, 4 and 6 in the command directory, read-only probes.
+        self.assertEqual([strip_pins(child.argv) for child in rescans],
+                         [(PROTOCOL_PINS, ["-C", str(root), *ROW_3]), (PROTOCOL_PINS, ["-C", str(root), *ROW_4]),
+                          (PROTOCOL_PINS, ["-C", str(root), *ROW_6])])
+        self.assertTrue(all(child.optional_locks == "0" for child in rescans))
+        self.assertEqual(reconciliation, record(False, False, True, planned))
+        self.assertEqual(project.decide_stage(entry, outcome, reconciliation), ("removed", None, []))
+        self.assertFalse(tree.exists())
+        self.assertEqual(self.head(root, "refs/heads/001-a"), planned)  # every branch is kept
+
+    def test_clean_run_removal_decides_what_git_did(self):
+        root, trees = self.merged_repository("001-noop", "002-refused", "003-failed", "004-killed", "005-spawn")
+        bin_dir = self.base / "fake-bin"
+        # Each fake exits as Git might without removing anything; the rescan
+        # finds the entry, the path and the branch at its planned SHA.
+        cases = {
+            "001-noop": ("remove-noop", {}, ("complete", 0), ("unknown", "unconfirmed-removal", [])),
+            "002-refused": ("remove-exit", {"status": 128}, ("failed", 128), ("failed", "git-refused", [])),
+            "003-failed": ("remove-exit", {"status": 255}, ("failed", 255), ("failed", "git-failed", [])),
+        }
+        with self.in_process() as run:
+            plan = self.plan_of(root, run, trees.values())
+            entries = {Path(os.fsdecode(row.raw_path)).name: project.make_target(plan, row) for row in plan.selected}
+        for name, (kind, options, (outcome_name, status), stage) in cases.items():
+            with self.subTest(name):
+                fake_dir = bin_dir / name
+                clean_support.install_fake_git(fake_dir, kind, **options)
+                entry = entries[name + "-tree"]
+                with self.in_process(self.path_first(fake_dir)) as run:
+                    outcome = project.run_removal(entry, run)
+                    reconciliation = project.rescan(entry, run)
+                self.assertEqual((outcome.name, outcome.status, entry["exit_status"]), (outcome_name, status, status))
+                self.assertEqual(reconciliation, record(True, True, True, self.head(trees[name])))
+                self.assertEqual(project.decide_stage(entry, outcome, reconciliation), stage)
+                self.assertTrue(trees[name].is_dir())
+
+        # A removal child killed by a signal, whoever sent it, exited on its own:
+        # `failed`, its exit status 128 plus the signal number (D15, M12).
+        killer = self.base / "killer-bin"
+        killer.mkdir()
+        script = killer / "git"
+        script.write_text('#!/bin/sh\ncase " $* " in *" worktree remove "*) kill -9 $$;; esac\n'
+                          f'exec {shlex.quote(clean_support.REAL_GIT)} "$@"\n')
+        script.chmod(0o755)
+        entry = entries["004-killed-tree"]
+        with self.in_process(self.path_first(killer)) as run:
+            outcome = project.run_removal(entry, run)
+            reconciliation = project.rescan(entry, run)
+        self.assertEqual((outcome.name, outcome.status, entry["exit_status"]), ("failed", -9, 137))
+        self.assertEqual(project.decide_stage(entry, outcome, reconciliation), ("failed", "git-failed", []))
+
+        # No git to spawn: `failed` with `spawn-error`, no exit status, and no
+        # removal counted, since no child ran.
+        empty = self.base / "empty-bin"
+        empty.mkdir()
+        entry = entries["005-spawn-tree"]
+        with self.in_process(dict(self.env, PATH=str(empty))) as run:
+            outcome = project.run_removal(entry, run)
+            self.assertEqual(run.operations, 0)
+        self.assertEqual((outcome.name, outcome.status, entry["exit_status"]), ("failed", None, None))
+        self.assertEqual(project.decide_stage(entry, outcome, record(True, True, True, SHA_A)),
+                         ("failed", "spawn-error", []))
+        self.assertTrue(trees["005-spawn"].is_dir())
+
+    def test_clean_rescan_reestablishes_the_repository_identity_first(self):
+        root, trees = self.merged_repository("001-a")
+        tree = trees["001-a"]
+        with self.in_process() as run:
+            plan = self.plan_of(root, run, [tree])
+            entry = project.make_target(plan, plan.selected[0])
+            self.assertEqual(project.rescan(entry, run), record(True, True, True, self.head(tree)))
+            for key, value in (("dev", -1), ("ino", -1), ("common_dir", b"/elsewhere/.git"), ("root", b"/elsewhere")):
+                with self.subTest(key):
+                    entry.identity = dict(plan.evidence["identity"], **{key: value})
+                    unknown = project.rescan(entry, run)
+                    self.assertEqual(unknown, record(None, None, None, None))
+                    self.assertIs(unknown["reconciled"], False)
+            # The branch deleted after the removal: present false, its SHA null.
+            entry.identity = plan.evidence["identity"]
+            self.git(root, "worktree", "remove", tree)
+            self.git(root, "branch", "-D", "001-a")
+            self.assertEqual(project.rescan(entry, run), record(False, False, False, None))
+
+    def test_clean_decide_stage_on_literal_outcomes(self):
+        outcome = project.DriverOutcome
+        gone, kept = record(False, False, True, SHA_A), record(True, True, True, SHA_A)
+        cases = [
+            (outcome(["git"], "complete", status=0), gone, ("removed", None, [])),
+            (outcome(["git"], "complete", status=0), kept, ("unknown", "unconfirmed-removal", [])),
+            (outcome(["git"], "complete", status=0), record(False, True, True, SHA_A),
+             ("unknown", "unconfirmed-removal", [])),
+            (outcome(["git"], "complete", status=0), record(None, None, None, None),
+             ("unknown", "unconfirmed-removal", [])),
+            (outcome(["git"], "failed", status=128), kept, ("failed", "git-refused", [])),
+            (outcome(["git"], "failed", status=1), kept, ("failed", "git-failed", [])),
+            (outcome(["git"], "failed", status=255), record(False, True, True, SHA_A), ("failed", "git-failed", [])),
+            (outcome(["git"], "failed", status=-signal.SIGTERM), gone, ("failed", "git-failed", [])),
+            (outcome(["git"], "failed", detail="cannot run git"), kept, ("failed", "spawn-error", [])),
+            # Cut at the ceiling, or its exit not observed: the rescan decides (D9).
+            (outcome(["git"], "timeout", status=-signal.SIGKILL), gone, ("removed", "removal-ceiling", [])),
+            (outcome(["git"], "timeout", status=-signal.SIGKILL), kept,
+             ("unknown", "removal-ceiling", ["partially-removed"])),
+            (outcome(["git"], "timeout"), record(False, True, True, SHA_A),
+             ("unknown", "removal-ceiling", ["partially-removed"])),
+            (outcome(["git"], "timeout"), record(None, None, None, None), ("unknown", "removal-ceiling", [])),
+        ]
+        stages = project.STAGE_REASONS
+        for given, reconciliation, expected in cases:
+            with self.subTest(outcome=given, reconciliation=reconciliation):
+                decided = project.decide_stage(target("pending"), given, reconciliation)
+                self.assertEqual(decided, expected)
+                self.assertIn(decided[1], stages[decided[0]])
 
 
 if __name__ == "__main__":
