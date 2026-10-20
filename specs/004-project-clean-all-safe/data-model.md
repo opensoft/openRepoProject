@@ -416,7 +416,9 @@ returns a fresh default: the 15 s budget and no signal handler. Its shell,
 since the slot records with the phase; its budget, clock, counters and memos
 are T024's (lead ruling R-47). A `signal_scope` entered with no `Invocation`
 in force enters a default one for its own span, so that its handler and the
-driver read one slot (R-47).
+driver read one slot (R-47). So a direct `clean()` call, which only tests
+make, runs on that scope's own default `Invocation`, whose command is None:
+15 s per Git child and no 60 s deadline (lead ruling R-63 (e)).
 
 ### Signal slot (D1, D15)
 

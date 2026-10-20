@@ -1134,8 +1134,10 @@ These run inside their lanes, after T047 (Lanes, above).
   the human stream (standard error under `--apply --json`) set on it; no new
   `Invocation` and no subclass (lead rulings R-49 and R-56). For both US1
   lanes, region `dispatcher` declares the plan's shape, `refuse(plan,
-  refusal, run)`, which T053 fills, and `say(run, text)`, the one writer of
-  human lines; `confirm_removal(plan, run)` and `push_or_delete(repo, run)`
+  refusal, run)`, which T053 fills, and `say(run, text, stream=None)`, the
+  one writer of human lines, `stream` defaulting to the run's human stream,
+  through which `REFUSED:` goes to standard error (lead ruling R-63 (c));
+  `confirm_removal(plan, run)` and `push_or_delete(repo, run)`
   are declared with those signatures (R-56). Run `check_clean_arguments()`,
   `require_git()`, `resolve_clean_target()`, `build_plan()` and
   `check_plan()`: `check_plan()`, `build_plan()` (for `worktree-not-found`)
@@ -1143,11 +1145,20 @@ These run inside their lanes, after T047 (Lanes, above).
   `refuse()`; `build_plan()` records on the plan it returns, never 2, and
   `check_plan()` then returns 2 for it, as it and `confirm_removal()` do for
   their own (lead ruling R-59 D4), while a resolve refusal still raises to
-  `main()`;
-  then `print_plan()` prints the plan once, after the decision (plain
-  `--json`: the envelope with the refusal in it; `--apply --json`: the
-  envelope only where the run stops; human output: the plan, then `REFUSED:`
-  on standard error), as the contract's "Order of a run" requires. Then
+  `main()`. `check_plan()` returns an exit status, or None when the run goes
+  on, and the pipeline holds two safeguards: None with a refusal recorded on
+  the plan becomes 2, and None without `--apply` becomes 0 (lead ruling R-63
+  (f));
+  then `print_plan()` is called once after `check_plan()`'s decision and
+  once more where a removal run stops at the question: the human plan
+  prints on the first call only (`plan.printed`), and under `--json` the
+  envelope prints on the call where the run stops before the apply phase
+  (plain `--json`: the envelope with the refusal in it; `--apply --json`:
+  the envelope only where the run stops), so one human plan and one
+  document print, which is "the plan prints once" as the contract's "Order
+  of a run" means it, and T043's envelope after a cancel needs the second
+  call (lead ruling R-63 (a)); in human output `REFUSED:` follows the plan
+  on standard error. Then
   either `push_or_delete()`, which swaps in `default_signals()` around
   `confirm()` alone and stays in phase `planning`, or `confirm_removal()`,
   which swaps in `raising_signals()` around the question alone (or takes
@@ -1170,18 +1181,31 @@ These run inside their lanes, after T047 (Lanes, above).
   region `guard`, and makes `main()`'s `REFUSED:` and `Cancelled.` prints
   best-effort, a failed write of an advisory line never changing the exit
   status (R-54 X-3), with X-3's test in `tests/test_clean_guard.py`:
-  `test_clean_sighup_on_a_closed_terminal_exits_129` (`project` at a
-  pseudo-terminal whose master side is closed, then SIGHUP: exit 129, no
-  traceback). Each stage is a function in its region whose first body is the
-  baseline code moved verbatim:
+  `test_clean_sighup_on_a_closed_terminal_exits_129` (`project` in a new
+  session, so with no controlling terminal, its standard input and standard
+  error on a pseudo-terminal whose master side is closed before it writes,
+  its standard output a pipe; the `signal-parent-in` fake sends SIGHUP from
+  a status probe during planning: exit 129 and nothing on standard output,
+  the status being the evidence, since a traceback would give 1 and an
+  unflushed line 120; with the best-effort print reverted it gives 120; the
+  deterministic form of "a pty whose master side is closed, then SIGHUP",
+  lead ruling R-63 (d)). Each stage is a function in its region whose first
+  body is the baseline code moved verbatim:
   `resolve_clean_target` (region `resolution`) wraps `discover()`; `build_plan`
   (region `plan`) wraps `cleanup_report()`; `print_plan` (region `preview`)
   calls `print_clean_report()`; `confirm_removal` (region `apply`) calls
   `show_plan()` and `confirm()`; `apply_removals` (region `apply`) calls
   `require_unchanged_cleanup_state()` and `execute()`; `push_or_delete` (region
-  `push`) holds `project:680-706` and `:723-743`; and `check_clean_arguments`,
-  `require_git` and `check_plan` (region `dispatcher`) keep the baseline
-  checks. Arguments are read with `getattr(args, name, default)`. `parser()`
+  `push`) holds `project:680-706` and `:723-743` less their three
+  required-flag checks; and `check_clean_arguments`, `require_git` and
+  `check_plan` (region `dispatcher`) keep the baseline checks,
+  `check_clean_arguments()` taking the three (push and delete-branch without
+  `--branch`, remove without `--worktree`) with "`--apply` with neither
+  `--all-safe` nor `--action`", the contract's "Argument checks" rows, to
+  which T048 gives `invalid-arguments` (lead ruling R-63 (b)); until T048
+  they refuse with code None, `require_git()` checks nothing and `--apply
+  --json` is still refused (R-63 (g)). Arguments are read with
+  `getattr(args, name, default)`. `parser()`
   (`project:1074-1122`) gains `--all-safe` and `--expect-plan D`, its only
   edit. In `tests/test_clean_guard.py`, lane H's module, T047 alone retargets
   T034's fault patches: `build_plan` in place of `cleanup_report` (the
@@ -1300,7 +1324,11 @@ These run inside their lanes, after T047 (Lanes, above).
   withdrawing R-45(3)); every path goes through `human_path()`; and
   `plan_document()` under
   `--json`, which under `--apply --json` prints only when the run stops before
-  the apply phase. Add `test_clean_a_reader_that_closes_standard_output` to
+  the apply phase. `print_plan()` takes T047's two calls, after
+  `check_plan()`'s decision and where a removal run stops at the question:
+  it prints the human plan on the first only, setting `plan.printed`, and
+  the envelope on the call where the run stops (lead ruling R-63 (a)). Add
+  `test_clean_a_reader_that_closes_standard_output` to
   `tests/test_clean_batch.py` (standard output a pipe whose read end is
   closed, as `tests/test_project.py`'s
   `test_advisory_with_stderr_on_a_closed_pipe` closes one: `--all-safe` and
@@ -1344,9 +1372,13 @@ These run inside their lanes, after T047 (Lanes, above).
   refusal, run)`, which
   T047 declares and this task fills (`apply_allowed: false`, the refusal in
   `refusals`), and returns 2 without raising to `main()` (lead rulings R-49
-  and R-56); T047's pipeline then prints once: under `--json` the plan
-  envelope, and otherwise the printed plan, then `REFUSED: MESSAGE` through
-  `say()` (plan review M6, M8). T036 to T040 pass.
+  and R-56), or, for an incomplete preview, 1; it returns None when the run
+  goes on, to the question, to `--yes` or to push and delete-branch, and
+  T047's two safeguards then make None 2 when a refusal is recorded and 0
+  without `--apply` (lead ruling R-63 (f)); T047's pipeline then prints
+  once: under `--json` the plan envelope, and otherwise the printed plan,
+  then `REFUSED: MESSAGE` through `say()` (plan review M6, M8). T036 to T040
+  pass.
   — files: `project`
   — verify: `python3 -m unittest discover -s tests -p 'test_clean_batch.py'`
 - [ ] T054 [P] [US1] [O] Add `ask_removal(plan, run)` and fill `confirm_removal()`
