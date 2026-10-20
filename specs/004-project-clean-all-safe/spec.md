@@ -1747,9 +1747,11 @@ configuration"; "A lazy fetch in a partial clone is refused locally";
 - **Governance**: tasks 1.1 to 1.6, 2.1 and 2.2 of the change are done; the
   Speckit handoff in its `tasks.md` names this feature.
 - **Draft PR #19** (`change/amend-clean-all-safe-push-pins`): the push-child
-  exception with its scenario, the clarified `probes` and `operations` count
-  and the task 1.7 it adds to the change's `tasks.md`; it awaits Brett Heap's
-  word, and this feature's plan builds on it until he rules (Assumptions).
+  exception with its scenario, the "Also" commit on the `probes` and
+  `operations` count, a reading that departs from the delta's literal text
+  (Assumptions), and the task 1.7 it adds to the change's `tasks.md`; it
+  awaits Brett Heap's word, and this feature's plan builds on it until he
+  rules (Assumptions).
 - **Runtime and CI**: Git 2.36 or later where `project` inspects a
   repository; a Git 2.36 build for the CI floor job; every job of the
   existing `test` matrix, on Linux only since Brett Heap's decision of

@@ -160,14 +160,16 @@ the gate order, classes in ladder order; the three reasons D18 gives no next
 step take one each, in D18's form: `main-worktree` "never removed by project
 clean", `unsupported-path-bytes` "rename the path to valid UTF-8" (P6-2), and
 `not-requested` "eligible too; name it with --worktree to remove it", so that
-every group and every gate's `target-excluded` message carries a next step
-(lead ruling R-57, withdrawing R-45(3)); a report prints the baseline layout,
-each null as `unknown`; an `--all-safe` plan, and a single-mode
-`--action remove` plan, print "D18 preview layout", the single-mode one with
-`Selected (1):` and the `not-requested` group among the excluded ones, then
-"D18 residual-window line"; push and delete-branch print no plan layout,
-only their `Cleanup action:` output as today (lead ruling R-56 Q-11); rows
-left unprobed print in a group of their own, its heading T052's (R-56);
+every group carries a next step, and so does every gate's `target-excluded`
+message but the class gate's, which keeps its message with none (lead
+rulings R-57, withdrawing R-45(3), and R-59 D9); a report prints the
+baseline layout, each null as `unknown`; an `--all-safe` plan, and a
+single-mode `--action remove` plan, print "D18 preview layout", the
+single-mode one with `Selected (1):` and the `not-requested` group among the
+excluded ones, then "D18 residual-window line"; push and delete-branch print
+no plan layout, only their `Cleanup action:` output as today (lead ruling
+R-56 Q-11); rows left unprobed print in a group of their own, its heading
+T052's (R-56);
 one progress line per target, printed at its final stage, `  STAGE PATH` or
 `  STAGE PATH (REASON)`, `pending` never printed (R-56 Q-10); "D18 success
 line" followed by "D18 residual-window line", as the stop block is (R-56
@@ -335,8 +337,12 @@ phase began, an `unknown` target, or `removal-ceiling`), Git's own status (a
 it equals one of `project`'s own), 2 (any refusal, a `refused` target, a
 branch-after-removal reason, `spawn-error`), 0. A preview or report: 2 for a
 refusal before a plan is built, 1 incomplete, 0 otherwise, and the signal
-exits. The baseline exited 0 for every printed report; it now exits 1 when
-the report is incomplete (FR-005). Push and delete-branch exit 130, 143 or
+exits; a write that fails after its plan is built is `internal-error`, exit
+2, by the delta's rule for an unexpected exception before the apply phase,
+which conflicts with its preview rule there (research.md R4; lead rulings
+R-55 and R-59; LQ-7, listed for Brett Heap in the feature PR body). The
+baseline exited 0 for every printed report; it now exits 1 when the report
+is incomplete (FR-005). Push and delete-branch exit 130, 143 or
 129 when a signal was recorded, otherwise with the child's status, and 2
 for a refusal.
 

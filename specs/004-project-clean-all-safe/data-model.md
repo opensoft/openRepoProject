@@ -84,14 +84,16 @@ so, which doctor never reports as an error (FR-051).
 registration holds in both directions between realpaths: `<path>/.git` is a
 regular file whose `gitdir:` line names `<common_dir>/worktrees/<admin_id>`,
 and that directory's `gitdir` file names `<path>/.git`, relative values
-resolved against the directory holding the file. A row whose registration
-disagrees gets no status probe and is `inspection-error`, excluded as
-`registration-mismatch`. Two registry entries naming one path fail closed:
-each is `registration-mismatch`, since the porcelain listing does not name
-the admin directory, so the two-way check alone cannot tell them apart (lead
-ruling R-57, withdrawing R-51(c)'s known limit). A row with `present: false`
-gets no registration check and no probe; its reason is its class,
-`stale-worktree` (R-57).
+resolved against the directory holding the file. A row with `present:
+false` is decided first: it gets no registration check, no shared-path
+check and no probe, and its reason is its class, `stale-worktree` (lead
+rulings R-57 and R-59 D5). Otherwise a row whose registration disagrees
+gets no status probe and is `inspection-error`, excluded as
+`registration-mismatch`. Two registry entries naming one path, compared by
+the registry records' raw path bytes as listed, fail closed: each is
+`registration-mismatch`, since the porcelain listing does not name the admin
+directory, so the two-way check alone cannot tell them apart (lead rulings
+R-57, withdrawing R-51(c)'s known limit, and R-59 D5).
 
 ### Branch evidence (D6, D7)
 
@@ -147,7 +149,7 @@ settling R-53's P-3):
 | --- | --- | --- |
 | 1 | `main-worktree` | the row is the main worktree |
 | 2 | `unsupported-path-bytes` | the path is not valid UTF-8 |
-| 3 | `registration-mismatch` | the two-way registration disagrees |
+| 3 | `registration-mismatch` | the two-way registration was read and disagrees (`registered is False`); a row whose registration was never read, a `present: false` one among them, passes and is excluded at gate 5 by its class (lead ruling R-53 P-16) |
 | 4 | `locked-worktree` | `locked` is true |
 | 5 | the classification | the class is not `merged-removable` |
 | 6 | `not-requested` | single mode, an eligible row other than P |
@@ -165,10 +167,11 @@ other than `ENOENT` or `ENOTDIR`, or a failed or timed-out `modules` read or
 hidden-state probe, makes the row `inspection-error` (classification and
 `reason`), its `errors` naming `os-error`, `probe-failed`, `probe-timeout`
 or `deadline-exceeded`, and the plan incomplete (`inspection-incomplete`); a
-null flag never passes a gate. A reflog read not finished within the
-filesystem budget follows the `project-clean` delta's reflog outcome rule
-instead: the row is left unprobed, never selected, and the plan incomplete
-with `inspection-incomplete`.
+null flag never passes gate 9 or 10, while gate 3 fails only on a
+registration read and found to disagree (R-53 P-16). A reflog read not
+finished within the filesystem budget follows the `project-clean` delta's
+reflog outcome rule instead: the row is left unprobed, never selected, and
+the plan incomplete with `inspection-incomplete`.
 
 ### Reflog anchor and movement (D10; FR-021, FR-022)
 
@@ -189,6 +192,7 @@ message when there is one.
 | `reflog-unavailable` | missing (`ENOENT`, `ENOTDIR`), 0 bytes, or the read reached its 64 KiB bound (65,536 bytes read) |
 | `inspection-error` | any other error on the read |
 | unprobed (`inspection-incomplete`) | the read did not finish within the filesystem budget |
+| `reflog-unavailable` | a line that is not `<old> <new> ...`, a truncated last line included: the entries cannot decide, never `inspection-error` (lead ruling R-53 P-22) |
 | `reflog-unavailable` | the last entry's new object is not the head |
 | pass | a movement survives |
 | `unstarted-branch` | an anchor survives with no movement after it, its new object the head |
@@ -513,7 +517,9 @@ A run with `--apply`, first matching row (FR-037, D19):
 | 0 | every selected target `removed` with reason null, or nothing eligible |
 
 A preview or report: 2 only for a refusal raised before a plan is built, 1 for
-an incomplete plan, 0 otherwise, and 130, 143 or 129 when a signal ends it.
+an incomplete plan, 0 otherwise, and 130, 143 or 129 when a signal ends it;
+a write that fails after its plan is built is `internal-error`, exit 2
+(research.md R4; lead rulings R-55 and R-59; LQ-7).
 A signal recorded while the push or `git branch -d` child runs is not
 passed on: `project` never signals either child and waits for it. The run
 then exits by D19's first row: 130, 143 or 129 when a signal was recorded,

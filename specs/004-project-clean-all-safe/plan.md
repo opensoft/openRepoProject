@@ -383,6 +383,23 @@ the `OPENSPEC-SPECKIT-GLOBAL` block.
   specs.
 - **Ordering**: never rebase; merge `main` into this branch as it moves.
 
+### Open questions for Brett Heap
+
+The feature PR body lists these for his word:
+
+- **LQ-7, the delta's two exit rules** (lead ruling R-59): a write that
+  fails in a preview or report after its plan is built exits 2 as
+  `internal-error` (R-55), by the `project-clean` delta's rule for an
+  unexpected exception before the apply phase, while the delta's preview
+  rule gives exit 2 only to a refusal raised before a plan is built; and a
+  reader that stalls can hold a run past the delta's 64 s bound, which does
+  not cover a write blocked by its reader. R-55 stands until he rules
+  (research.md R4; contract, "Exit statuses").
+
+The others are recorded where they apply: LQ-3, the push-child exception
+(R1); LQ-4, the preflight's scope (R16); and LQ-5, the remedy reading
+(contract, "Human output").
+
 ## Complexity Tracking
 
 None. There is no constitution gate, so there is nothing to justify.

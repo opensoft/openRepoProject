@@ -148,6 +148,7 @@ tests "Submodules", "Hidden local state" and "Every protected classifier".
 | Run | Expected |
 | --- | --- |
 | `p clean "$R" --apply --action remove --worktree "$W/a" --yes --json` | one document: the apply result record, one `removed` target whose `command` is the pinned removal vector of the contract, `exit_code: 0`; the plan on standard error; branch `a` kept |
+| `p clean "$R" --apply --action remove --worktree "$W/a" < /dev/null` | the plan: `Selected (1):` with `$W/a`; among the excluded groups `  not-requested (3): eligible too; name it with --worktree to remove it` over `$W/b`, `$W/c` and `$W/f` (gate 6 comes before the reflog gate); "D18 residual-window line"; then `confirmation-required`, `exit=2`; nothing removed (lead ruling R-59 D8) |
 | `p clean "$R" --apply --action remove --worktree "$T/nowhere" --yes` | `worktree-not-found`, `exit=2` |
 | `p clean "$R" --apply --action remove --worktree "$W/d" --yes` | `target-excluded`, reason `dirty`, `exit=2` |
 | `cd "$W/b"; p clean "$R" --apply --action remove --worktree "$W/b" --yes` | `Cannot remove the current worktree.`, `exit=2` |
@@ -218,9 +219,11 @@ p clean "$R" --all-safe --apply --yes --json 2>/dev/null | python3 -m json.tool
 ```
 
 Expected: the tab path printed as `$'.../tab\u0009here'` and selected; the
-`\377` path shown with `\xff`, excluded as `unsupported-path-bytes` with
-`path_valid_utf8: false`, and still present after the apply; standard output
-of the apply parses as exactly one JSON document.
+`\377` path shown with `\xff`, excluded as `unsupported-path-bytes` under the
+group line `  unsupported-path-bytes (1): rename the path to valid UTF-8`
+(lead ruling R-59 D8), with `path_valid_utf8: false` in the JSON, and still
+present after the apply; standard output of the apply parses as exactly one
+JSON document.
 
 ## User Story 9: status, doctor and update share the evidence
 
