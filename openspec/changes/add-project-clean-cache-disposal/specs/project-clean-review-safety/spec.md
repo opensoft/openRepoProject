@@ -349,8 +349,17 @@ the bytes that this preflight measures and that the preflight of every earlier
 target whose cache stage passed its preflight in this run measured, and
 require it to stay within the invocation's 1 GiB (1,073,741,824 bytes,
 `limits.cache_bytes_total`); and fix the names it will remove. A difference, an
-error, a byte total past either cap, or a filesystem call that runs out of its
-budget SHALL end the stage `refused` with `cache-changed`, nothing deleted.
+error, a byte total past either cap, or a filesystem call that outlives its 5 s
+per-call budget (`probe-timeout`) SHALL end the stage `refused` with
+`cache-changed`, nothing deleted. A read of the preflight, or of the reopening
+of the first listed cache's chain that follows it, that the removal floor or the
+work deadline stops SHALL delete nothing and SHALL NOT be a change of state: a
+read that cannot start because no more than the floor remains, or that outlives
+the shorter budget that the deadline set, `work remaining less the removal
+floor` (`deadline-exceeded`, as "Clean bounds its Git work and reports omitted
+work" states), SHALL end the stage `not-attempted` with `target-stopped`, and
+the target and every later one SHALL be `not-attempted` with
+`deadline-exceeded`, never `refused` with `cache-changed`.
 
 After its first removal, a removal that fails, a read that runs out of its
 budget, a removal whose wait the removal ceiling ends, or the removal floor
@@ -379,9 +388,14 @@ that the running platform provides `O_NOFOLLOW`, `O_DIRECTORY`, and the
 descriptor-relative open, `lstat`, directory listing, unlink, directory removal
 and access check with effective ids that follows no symbolic link. Where it
 does not, no row SHALL get a cache plan: no cache enumeration
-SHALL run, every row that holds ignored records SHALL stay `ignored-local-files`
-with `cache_disposal.reason` `cache-unsupported-platform`, and no cache stage
-SHALL run.
+SHALL run, every row that reaches the `ignored-local-files` rung holding
+ignored records SHALL stay `ignored-local-files` with `cache_disposal.reason`
+`cache-unsupported-platform`, and no cache stage SHALL run. A row that an
+earlier rung classifies (`stale-worktree`, `protected-default`,
+`inspection-error` or `dirty`) SHALL keep that classification, with
+`cache_disposal.reason` `not-candidate` where it holds ignored records, as
+where the calls exist: the platform withholds the cache proof and SHALL NOT
+change what an earlier rung of the ladder established.
 
 The stage's guarantee SHALL be that it removes an entry only if, at its
 whole-list preflight, the entry had the allowlisted shape, its listed cache held
@@ -455,6 +469,11 @@ window" states.
 - **THEN** no cache enumeration runs, the first is `ignored-local-files` with
   `cache_disposal.reason: "cache-unsupported-platform"` and its caches are
   untouched, the second is selected and removed, and the exit status is 0
+- **AND** when the repository also holds a dirty linked worktree with an
+  ignored `local.env`, a preview classifies it `dirty`, with the dirty advice,
+  and not `ignored-local-files`; its `cache_disposal.reason` is
+  `not-candidate`, as where the calls exist, and not
+  `cache-unsupported-platform`; and it is excluded as `dirty` and untouched
 
 #### Scenario: A removal call that outlives its wait
 

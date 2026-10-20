@@ -992,7 +992,9 @@ and no signal has been received; otherwise the target and every later one SHALL
 be `not-attempted` with `deadline-exceeded`, or with `interrupted`, and nothing
 SHALL be deleted. The same two checks SHALL run again immediately before the
 stage hands its first removal to its worker, after the whole-list preflight and
-once the first listed cache's chain is reopened, with the same outcome; a
+once the first listed cache's chain is reopened, with the same outcome, which
+the removal floor or the deadline stopping a read of that preflight has too, as
+"Cache disposal never follows a symlink or leaves its worktree" states; a
 signal recorded after that check SHALL be handled as one received during the
 removals. That hand-off SHALL be the stage's first removal for every rule of
 this requirement and of "Cache disposal never follows a symlink or leaves its
@@ -1054,8 +1056,12 @@ change of state, when the deadline ended the stage, with the command that shows
 a fresh plan for the rest. A run that stops after a target's cache stage ended
 `disposed` and before its removal child was spawned SHALL print `Cache disposal
 at PATH: removed N cache paths; the worktree was not removed.` before its stop
-block. The residual-window line SHALL be the one that "Cleanup states a narrow
-guarantee and its residual window" states.
+block. A run that stops at a target whose cache stage the removal floor or the
+work deadline stopped in a read before its first removal SHALL print `Cache
+disposal at PATH not attempted (deadline-exceeded); nothing was deleted.` before
+its stop block, naming the deadline and not a change of state. The
+residual-window line SHALL be the one that "Cleanup states a narrow guarantee
+and its residual window" states.
 
 #### Scenario: A merged worktree whose only ignored files are caches
 
@@ -1221,6 +1227,19 @@ guarantee and its residual window" states.
   `not-attempted` with `target-stopped`, it and every later target are
   `not-attempted` with `deadline-exceeded` and `reconciliation: null`, and the
   exit status is 1
+- **AND** when more than the floor remains as the stage starts and a test hook
+  holds a read of its whole-list preflight until the budget that the deadline
+  sets, `work remaining less the removal floor` being under 5 s, is spent, or
+  until no more than the floor remains for the next read to start, the listed
+  caches being unchanged, nothing is deleted, its `cache_disposal` is
+  `not-attempted` with `target-stopped`, it and every later target are
+  `not-attempted` with `deadline-exceeded` and `reconciliation: null`, the exit
+  status is 1, and before the stop block the human result reads `Cache disposal
+  at PATH not attempted (deadline-exceeded); nothing was deleted.`, never
+  `cache-changed`; where the hook instead holds the read past its 5 s per-call
+  budget with more than 5 s of work remaining, or the preflight finds a changed
+  entry, the stage ends `refused` with `cache-changed`, nothing deleted, the
+  target is `refused` with `state-changed`, and the exit status is 2
 
 #### Scenario: The removal floor reached during a cache stage
 
