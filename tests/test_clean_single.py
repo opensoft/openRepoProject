@@ -400,6 +400,43 @@ class SingleTests(clean_support.CleanCase):
         self.assert_removed(root, target, "p", head)
         self.assertTrue(all(tree.is_dir() for tree in registered))
 
+    def test_clean_single_target_p_s_own_realpath_unread_keeps_the_cap(self):
+        # Lead ruling R-73 (d): when P's own realpath read fails, P's match is
+        # undecided and no entry is exempt from the cap, so the rows inspected
+        # are the ones --all-safe's cap takes, the main worktree and the 127
+        # smallest paths; the counting log has no status probe past the cap,
+        # and the run refuses with inspection-incomplete, exit 2, before the
+        # question stage, with nothing removed.
+        root = self.repo()
+        self.bare_remote()
+        registered = self.register_worktrees(129, "r")
+        target = self.merged_worktree("p", path=self.base / "zz-p")
+        before = self.snapshot(root)
+        env, log = self.counting()
+        real_fs_call, failed = project.fs_call, []
+
+        def fs_call(fn, *args, **kwargs):
+            if fn is os.path.realpath and args[0] == os.fsencode(target) and not failed:
+                failed.append(args[0])
+                raise OSError(errno.EIO, os.strerror(errno.EIO))
+            return real_fs_call(fn, *args, **kwargs)
+
+        asked = AssertionError("the run reached the question stage")
+        status, out, err = self.main_in_process(
+            "clean", root, "--apply", "--action", "remove", "--worktree", target, "--yes", "--json", env=env,
+            fs_call=fs_call, confirm_removal=mock.Mock(side_effect=asked),
+            apply_removals=mock.Mock(side_effect=asked))
+        self.assertEqual((status, failed), (2, [os.fsencode(target)]), err)
+        document = json.loads(out)
+        inspected = [str(root)] + [str(tree) for tree in registered[:127]]
+        self.assertEqual((codes(document), document["selected"], document["completeness"], document["omitted"]),
+                         (["inspection-incomplete"], [], "incomplete", {"count": 3, "exactness": "exact"}))
+        self.assertEqual(document["notes"], [self.note("inspect-cap", target, K=3, M=128)])
+        self.assertEqual([row["path"] for row in document["worktrees"]], inspected)
+        self.assertEqual(status_paths(clean_support.child_log(log)), inspected,
+                         "no status probe past the cap: none for the last two registered rows or P")
+        self.assertEqual(self.snapshot(root), before)
+
     # T071: "Remove a merged clean worktree".
 
     def test_clean_remove_a_merged_clean_worktree(self):
