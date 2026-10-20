@@ -2251,10 +2251,10 @@ def resolve_merge_target(refs, declared):
 # where a value already decides, and a pure decider over the values read,
 # which runs no child and makes no filesystem call, so that another driver
 # (feature 005's overview) can feed it values it read itself:
-# presence_from_lstat(), registration_verdict(), main_worktree_decision() and
-# row_evidence(). The functions the other regions call, main_worktree(),
-# verify_registration(), inspect_repository() and worktree_rows(), are those
-# readers, each ending in its decider.
+# presence_from_lstat(), registration_verdict(), main_worktree_decision(),
+# shared_identities() and row_evidence(). The functions the other regions
+# call, main_worktree(), verify_registration(), inspect_repository() and
+# worktree_rows(), are those readers, each ending in its decider.
 
 # Row 3's options, in the order Git prints their values (D6).
 IDENTITY_OPTIONS = ("--show-toplevel", "--git-common-dir", "--show-superproject-working-tree")
@@ -2579,7 +2579,9 @@ def registration_verdict(main, common_dir, named, worktrees=None, back=None, dot
     (True, admin_id) when it holds, (False, None) when it disagrees.
 
     - shared: another entry of the registry names the row's path too
-      (shared_paths()): it disagrees, whatever else was read.
+      (shared_paths()), or another present row built with it has its
+      realpath or its admin id (shared_identities(); lead ruling R-67 (c)):
+      it disagrees, whatever else was read.
     - named: the realpath that `<path>/.git` names when it is a gitfile
       (_gitfile()), else None.
     - main: the main worktree has no admin directory; it holds when named,
@@ -2612,9 +2614,11 @@ def verify_registration(path, common_dir, main):
     the common directory itself, or a gitfile naming it; admin_id None. This
     check alone passes both of two registry entries naming one path, since
     the registry's porcelain output does not name an entry's admin
-    directory; worktree_rows() fails such rows closed (lead ruling R-57 L3).
-    It reads what registration_verdict() needs, in its order, and decides
-    there."""
+    directory, and both of two entries naming one worktree under two
+    spellings, with one admin id, since both read one `.git` file;
+    worktree_rows() fails both kinds closed (lead rulings R-57 L3 and R-67
+    (c)). It reads what registration_verdict() needs, in its order, and
+    decides there."""
     dotgit = os.path.join(path, b".git")
     named = _gitfile(path)
     if main:
@@ -2749,6 +2753,26 @@ def shared_paths(registry):
     return frozenset(shared)
 
 
+def shared_identities(reads):
+    """The positions in reads, the reads of the rows that one worktree_rows()
+    call builds (_read_row()), of the present rows whose realpath, or whose
+    admin id, another present row among them has too (lead ruling R-67
+    (c)): each is registration-mismatch, as a shared registry path is. Two
+    spellings of one worktree both pass the two-way check, with one admin id,
+    since both read one `.git` file. A pure function of the values read: a
+    row not present, or whose realpath was not read, is compared by neither
+    (lead ruling R-57 L2), and only a registration that held has an admin
+    id, the main worktree's being None and never compared."""
+    groups = {}
+    for at, read in enumerate(reads):
+        if read["present"] is not True or read["tree"] is None:
+            continue
+        groups.setdefault(("realpath", read["tree"]), []).append(at)
+        if read["registered"] and read["admin_id"] is not None:
+            groups.setdefault(("admin_id", read["admin_id"]), []).append(at)
+    return frozenset(at for group in groups.values() if len(group) > 1 for at in group)
+
+
 def _registry_entries(registry, records):
     """(index, record) for each registry entry worktree_rows() builds a row
     for: every entry of registry, in its order, when records is None; else
@@ -2830,14 +2854,14 @@ def row_evidence(record, raw, main, read, refs, merged, target):
     return row
 
 
-def _read_row(raw, main, common_dir, active, active_error, shared, run):
-    """The reads of one worktree row for row_evidence(), in D6's order: the
-    lstat; for a present row, its realpath, the working directory's failure
-    (active_error) if it failed, and the registration, a shared path's
-    verdict taken with nothing read (lead rulings R-57 L2 and L3); and, only
-    when the registration holds and nothing failed, the combined status
-    probe. A failed read becomes an entry of `errors`, and what follows it
-    in the same step is not read."""
+def _read_row(raw, main, common_dir, active, active_error, shared):
+    """The reads of one worktree row for row_evidence() before its status
+    probe, in D6's order: the lstat; for a present row, its realpath, the
+    working directory's failure (active_error) if it failed, and the
+    registration, a shared path's verdict taken with nothing read (lead
+    rulings R-57 L2 and L3). A failed read becomes an entry of `errors`, and
+    what follows it in the same step is not read. _read_status() runs the
+    probe once worktree_rows() has compared the rows (shared_identities())."""
     read = {"present": None, "dev": None, "ino": None, "active": active, "tree": None,
             "registered": None, "admin_id": None, "status": None, "errors": []}
     errors = read["errors"]
@@ -2858,10 +2882,17 @@ def _read_row(raw, main, common_dir, active, active_error, shared, run):
             read["registered"], read["admin_id"] = verify_registration(raw, common_dir, main)
     except EvidenceError as exc:
         errors.append(exc.error)
-    if read["registered"] and not errors:
+    return read
+
+
+def _read_status(read, raw, run):
+    """The combined status probe of the row at raw whose reads are done
+    (_read_row()), only when its registration holds and nothing failed: its
+    result in read's `status`, or its row error appended to `errors`."""
+    if read["registered"] and not read["errors"]:
         outcome, error = status_probe(raw, run)
         if error is not None:
-            errors.append(error)
+            read["errors"].append(error)
         else:
             read["status"] = outcome.result
     return read
@@ -2885,8 +2916,15 @@ def worktree_rows(repo, run, records=None):
     registration-mismatch (`registered` false) with no registration read,
     since the two-way check cannot tell such entries apart; a row not
     present gets no registration or duplicate check (lead rulings R-57 L2
-    and L3, R-59 D5). Then the branch evidence from row 6, a deleted
-    upstream keeping its short name with `ahead` and `behind` null, and a
+    and L3, R-59 D5). Among the present rows one call builds, rows with one
+    realpath, or one admin id, are registration-mismatch too, two spellings
+    of one worktree passing the two-way check with one admin id
+    (shared_identities(); lead ruling R-67 (c)). They are compared once every
+    row of the call is read and before any status probe, so that none of
+    them gets one; an entry the call does not build is never read for it,
+    so a row past the cap stays uninspected, while match_target() builds P's
+    realpath twins among P's rows. Then the branch evidence from row 6, a
+    deleted upstream keeping its short name with `ahead` and `behind` null, and a
     branch named HEAD (HEAD_BRANCH_REF) taking none: its `upstream`,
     `remote_present`, `ahead` and `behind` stay null and its row carries a
     `probe-failed` error for `git for-each-ref`, so it is inspection-error
@@ -2895,8 +2933,10 @@ def worktree_rows(repo, run, records=None):
     of the row's `errors`. A value not established is null, and a stale or
     unreadable row carries no branch evidence, as the baseline gave none.
 
-    The reader of row_evidence(): the working directory's realpath once,
-    then per row _read_row() and the assembly (lead ruling R-54 X-1)."""
+    The reader of row_evidence(): the working directory's realpath once;
+    per row _read_row(); shared_identities() over those reads; then per row,
+    in the same order, _read_status() and the assembly (lead ruling R-54
+    X-1)."""
     identity = repo["identity"]
     registry = repo["records"]
     if identity is None or not registry:
@@ -2910,7 +2950,7 @@ def worktree_rows(repo, run, records=None):
         active, active_error = _realpath(b"."), None
     except EvidenceError as exc:
         active, active_error = None, exc.error
-    rows = []
+    built = []
     for index, record in entries:
         raw = record["path"]
         if index == 0 and record["bare"]:
@@ -2919,7 +2959,15 @@ def worktree_rows(repo, run, records=None):
             if identity["root"] is None:
                 continue
             raw = identity["root"]
-        read = _read_row(raw, index == 0, common_dir, active, active_error, record["path"] in shared, run)
+        built.append((index, record, raw,
+                      _read_row(raw, index == 0, common_dir, active, active_error, record["path"] in shared)))
+    twins = shared_identities([read for _, _, _, read in built])
+    rows = []
+    for at, (index, record, raw, read) in enumerate(built):
+        if at in twins:  # registration-mismatch, as a shared path is (R-67 (c))
+            read["registered"], read["admin_id"] = registration_verdict(
+                index == 0, common_dir, None, shared=True)
+        _read_status(read, raw, run)
         rows.append(row_evidence(record, raw, index == 0, read, refs, repo["merged"], target))
     return rows
 # endregion evidence
@@ -3054,11 +3102,13 @@ class Plan:
     change to one below goes through the lead.
 
     - `repo`: what resolve_clean_target() returned, a dict whose "root" is
-      the command directory; `root`, that directory; `mode` and `action`, the
-      run's.
+      the command directory and whose "evidence" is inspect_repository()'s
+      dict, read where the argument resolved (lead ruling R-71 (b)); `root`,
+      that directory; `mode` and `action`, the run's.
     - `evidence`: inspect_repository()'s dict for the plan's repository, or
-      None until build_plan() reads it; its `identity` holds `root` and
-      `common_dir` as bytes, `dev` and `ino`.
+      None until build_plan() sets it, from repo's "evidence", or by its own
+      read for a caller that passes none (R-72 (g)); its `identity` holds
+      `root` and `common_dir` as bytes, `dev` and `ino`.
     - `repository`: the envelope's object, repository_object()'s, built from
       that identity.
     - `rows`: the WorktreeRows, main worktree first, then by raw path bytes.
@@ -3686,14 +3736,19 @@ def plan_document(plan):
 def build_plan(repo, run):
     """Build the run's Plan for repo, resolve_clean_target()'s dict, and return
     it, never a status (T049; data-model.md, "Plan"; lead rulings R-56 and R-59
-    D4). It reads lane G's evidence directly, inspect_repository() and
+    D4). It reads lane G's evidence directly, inspect_repository()'s dict and
     worktree_rows(), never cleanup_report(), so that a failed repository-wide
     probe gives a plan incomplete with inspection-incomplete rather than a
-    refusal. Still raised, as the repository as a whole cannot be planned: the
-    baseline's `Cannot inspect Git repository at ROOT` where row 3 failed, ROOT
-    is no worktree toplevel, or no main worktree is named with no probe failed
-    (T107 codes these at resolution); and the merge target's own refusal
-    (`no-merge-target`, a manifest's), with the repository in its context.
+    refusal. That dict is repo's "evidence", the resolution's, so that row 3
+    runs once (lead ruling R-71 (b)). Only for a caller that passes no
+    evidence does build_plan() read it itself and raise the baseline's
+    `Cannot inspect Git repository at ROOT` where row 3 failed, ROOT is no
+    worktree toplevel, or no main worktree is named with no probe failed. On
+    clean's path that raise is unreachable, because the evidence comes from
+    the resolution, which refuses those repositories itself (T107; lead
+    ruling R-72 (g)). Still raised, as the repository as a whole cannot be
+    planned: the merge target's own refusal (`no-merge-target`, a
+    manifest's), with the repository in its context.
 
     The plan holds: `evidence`; `repository`, the envelope's object;
     `merge_target` {name, source, sha}, its resolution's notes moved to the
@@ -3720,9 +3775,11 @@ def build_plan(repo, run):
     F + W + E of the estimate (research.md R8); and `report`, the baseline
     report built from the same rows, which the first bodies of
     confirm_removal(), apply_removals() and push_or_delete() read until the
-    apply and push lanes replace them. Interim until T066 (lead ruling R-56
-    Q-17): an unstarted branch is selectable. A report above 128 rows is
-    T101's, and the limit of 16 counting P alone T100's."""
+    apply and push lanes replace them. gate_rows() runs gate 7, T066's
+    reflog_gate(), on every row that passes gates 1 to 6, so an unstarted
+    branch is excluded as `unstarted-branch`, and one whose reflog cannot
+    decide it as `reflog-unavailable` (lead ruling R-78 (c)). A report above
+    128 rows is T101's, and the limit of 16 counting P alone T100's."""
     plan = Plan(repo, run)
     root = repo["root"]
     evidence = plan.evidence = repo.get("evidence")  # the resolution's: row 3 runs once (R-71 (b))
