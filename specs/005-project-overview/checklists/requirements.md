@@ -230,21 +230,23 @@ Lane: openRepoProject-4
   head, `b0243e5`, whose code is unchanged since `a32d20b` and whose
   documents changed after `d81b3d9` only by the tier tags, file and verify
   fields and ticks of `tasks.md`, one line of `plan.md` and the first part of
-  its doc round 6 (R-55 to R-57); the R-54 sentence is worded as lane
-  openRepoProject-2 told it, since feature 004's `tasks.md` names R-54 only
-  as the X-3 of its T047 (line 1113) and records no decider split. D9 to D11:
-  the amendment note of Dependencies names #24's block of requirement 5
-  beside #25's blocks, FR-011's first clause says "where the 5 s limit was
-  the smaller", and trace row 37 gains FR-007. D12: the count of reviews in
-  the note above now reads four. D8: `clarify-questions.md`, untouched by
-  that fold, carried its own items in the questions pass of `4ba9faa`: Q2
-  names feature 004's head `b0243e5` and its code since `a32d20b`, so that
-  option B's precondition is met; Q12 takes the mapping of exceptions to
-  codes as FR-039 states it and records ruling R-55 for a failed write, as
-  Q15 records R-55's stalled-reader residual; the dated readings left in Q3,
-  Q4, Q14 and Q15 (`fe91f2c`, `5a02c1a`) were not moved; Q16 and Q17 were
-  added. The totals below were recounted by script: PN-2's return moves one
-  item from fixed to plan note. Re-validation: 16 of 16 items pass, with the
+  its doc round 6 (R-55 to R-57, with R-53's P-16 and P-22 and R-54's X-3);
+  the R-54 sentence is worded as lane openRepoProject-2 told it, since
+  feature 004's `tasks.md` names R-54 only as the X-3 of its T047 (line 1113)
+  and records no decider split. D9 to D11: the amendment note of Dependencies
+  names #24's block of requirement 5 beside #25's blocks, FR-011's first
+  clause says "where the 5 s limit was the smaller", and trace row 37 gains
+  FR-007. D12: the count of reviews in the note above now reads four. D8:
+  `clarify-questions.md`, untouched by that fold, carried its own items in
+  the questions pass of `4ba9faa`: Q2 names feature 004's head `b0243e5` and
+  its code since `a32d20b`, so that option B's precondition is met; Q12 takes
+  the mapping of exceptions to codes as FR-039 states it and records ruling
+  R-55 for a failed write, as Q15 records R-55's stalled-reader residual; the
+  dated readings of Q3 (T003) and Q4 (T123), at `fe91f2c`, and of Q14 and
+  Q15, at `5a02c1a`, were left in that pass and moved to `b0243e5` by
+  `fdbcebb`, each cited text reading the same there; Q16 and Q17 were added.
+  The totals below were recounted by script: PN-2's return moves one item
+  from fixed to plan note. Re-validation: 16 of 16 items pass, with the
   checks of iteration 2 re-run by script on the edited spec.
 - Items marked incomplete require spec updates before `/speckit-clarify` or `/speckit-plan`
 

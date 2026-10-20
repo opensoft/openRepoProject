@@ -65,10 +65,11 @@ T001 to T035, all ticked, so that its Phase 1 and Phase 2 are complete: the
 runner (its child handle and driver, with the `Invocation` state and the
 signal slot), its five incremental parsers and its evidence model (T027 to
 T033, merged as `cce8dbd`); its head, `b0243e5`, adds only documents, the
-first part of doc round 6 (rulings R-55 to R-57). Option B's precondition
-is therefore met, and none of it is on `main`. The overview drives feature
-004's child handle, driver and parsers (spec, Dependencies), and the plan
-re-pins every code citation against `main`.
+first part of doc round 6 (rulings R-55 to R-57, with R-53's P-16 and P-22
+and R-54's X-3). Option B's precondition is therefore met, and none of it is
+on `main`. The overview drives feature 004's child handle, driver and
+parsers (spec, Dependencies), and the plan re-pins every code citation
+against `main`.
 
 **Question**: Which state of feature 004 must exist before the plan starts?
 
@@ -608,7 +609,7 @@ caches `merged-removable`, on evidence the overview does not collect, and
 MODIFIES change 2's "Overview reuses the cleanup classifier and merge
 target" with the two sentences lane openRepoProject-4 agreed at `9f30fb9` (the
 words "for the same working directory and refs" agreed at `4d5855a`, unchanged
-at `e1049b2`): the overview classifies such a row `ignored-local-files`, and
+at `fffc194`): the overview classifies such a row `ignored-local-files`, and
 never classifies a row `merged-removable` where `project clean` classifies it
 otherwise for the same working directory and refs. It also names the
 ignored file of "Every protected classifier" as not a Python bytecode
@@ -633,10 +634,10 @@ spec.md's Out of Scope names both.
 if they are ratified before its plan, or leave them to their own features?
 
 **Recommended:** Option A - It is the order #25 sets (its tasks 2.1 and
-2.2, `tasks.md:20-21` at `e198548`), and #24 allows it: #24 does not wait
-for feature 005 (its `proposal.md:588-589` at `e1049b2`) and says its
+2.2, `tasks.md:20-21` at `67e43ae`), and #24 allows it: #24 does not wait
+for feature 005 (its `proposal.md:601-602` at `fffc194`) and says its
 overview part is done in its own feature, never in feature 005
-(`proposal.md:532-535`). It costs nothing now: the overview's code is the
+(`proposal.md:545-548`). It costs nothing now: the overview's code is the
 same, and fixtures with an ignored `local.env` keep feature 005's parity
 tests true in every order, so the plan is the same whichever realization
 merges first and no second plan is needed. Its one cost is that departure,
@@ -645,10 +646,10 @@ lane openRepoProject-5 to re-sequence #24.
 
 | Option | Description |
 |--------|-------------|
-| A | Leave both to their own features in every order, as #25 sets and as #24 states for its overview part ("never in feature 005"). Feature 005 builds change 2 as ratified and as the other answers amend it, reserves no flag, field or hook for `--remote`, and gives every fixture it compares with `project clean` that has an ignored file one such as `local.env`, which no cache rule #24 proposes admits. If #24's realization merges first, a cache-only worktree is `ignored-local-files` in the overview and `merged-removable` in `project clean`: a departure, on Brett Heap's word, from change 2's equality clause (POD:381-386, on DI:620-621), which #24's own design calls "against change 2's equality clause" (its `design.md:574-577` at `e1049b2`), until #24's overview block is archived, after which that block records the same divergence as a lasting exception. It is the cautious direction, and no feature 005 test depends on it. |
+| A | Leave both to their own features in every order, as #25 sets and as #24 states for its overview part ("never in feature 005"). Feature 005 builds change 2 as ratified and as the other answers amend it, reserves no flag, field or hook for `--remote`, and gives every fixture it compares with `project clean` that has an ignored file one such as `local.env`, which no cache rule #24 proposes admits. If #24's realization merges first, a cache-only worktree is `ignored-local-files` in the overview and `merged-removable` in `project clean`: a departure, on Brett Heap's word, from change 2's equality clause (POD:381-386, on DI:620-624), which #24's own design calls "against change 2's equality clause" (its `design.md:592-595` at `fffc194`), until #24's overview block is archived, after which that block records the same divergence as a lasting exception. It is the cautious direction, and no feature 005 test depends on it. |
 | B | As A, and ask lane openRepoProject-5 to amend #24 so that its realization merges after feature 005, its proposal and tasks saying so. |
 | C | Realize #24's block in feature 005 whenever #24 is ratified before feature 005's plan, whatever order the realizations merge in: a departure from #24's order, from OQ-27 and from change 2's Out of Scope, on Brett Heap's word. Feature 005 then cannot merge until #24's code is on `main`, since the added scenario's test cannot pass before it and FR-049 counts no skipped test. #25 stays its own feature. |
-| D | Realize both in feature 005 if they are ratified before its plan, departing from the order of both, from OQ-27 and from change 2's Out of Scope on Brett Heap's word: `--remote` joins this feature, adding one requirement and 16 scenarios to the overview, and #25's `project-command` block, which MODIFIES [E] on draft PR #19's text (10 scenarios, one added). Feature 005 then inherits #25's dependency on PR #19 and on feature 004's runner (`proposal.md:304-315`, `:337-340` and `:399-407` at `e198548`), and amends spec 005's Out of Scope and Dependencies, which reverses "`--remote` stays an invalid invocation here", and the two requirements that sentence cites: FR-039 (an argument error prints usage and no JSON) and FR-042 (exit status 2 for an invalid invocation). |
+| D | Realize both in feature 005 if they are ratified before its plan, departing from the order of both, from OQ-27 and from change 2's Out of Scope on Brett Heap's word: `--remote` joins this feature, adding one requirement and 16 scenarios to the overview, and #25's `project-command` block, which MODIFIES [E] on draft PR #19's text (10 scenarios, one added). Feature 005 then inherits #25's dependency on PR #19 and on feature 004's runner (`proposal.md:311-322`, `:344-347` and `:407-415` at `67e43ae`), and amends spec 005's Out of Scope and Dependencies, which reverses "`--remote` stays an invalid invocation here", and the two requirements that sentence cites: FR-039 (an argument error prints usage and no JSON) and FR-042 (exit status 2 for an invalid invocation). It also gives a `--remote` exception to the no-network claims of FR-040 (no network connection) and SC-002 (the audit hook records 0 connections), since `--remote` runs `gh` children that make network requests. |
 
 ---
 

@@ -56,12 +56,13 @@ doc rounds 3 to 5 (rulings R-39 to R-51) merged them on branch
 EC-031, which cites the branch's head. That head, `b0243e5`, changes the
 documents after `d81b3d9` only by the tier tags, file and verify fields and
 ticks of `tasks.md`, one line of `plan.md` and the first part of its doc
-round 6 (rulings R-55 to R-57); its code, unchanged since `a32d20b`, has its
-tasks T001 to T035 built, among them its five incremental parsers, four of
-which the overview drives (Dependencies), its child handle and its
-one-wide driver, with the state, phase and signal slot of its "Invocation"
-entity, and its evidence model (tasks T027 to T033), merged into that branch
-as `cce8dbd`; none of it is on `main`.
+round 6 (rulings R-55 to R-57, with R-53's P-16 and P-22 and R-54's X-3);
+its code, unchanged since `a32d20b`, has its tasks T001 to T035 built, among
+them its five incremental parsers, four of which the overview drives
+(Dependencies), its child handle and its one-wide driver, with the state,
+phase and signal slot of its "Invocation" entity, and its evidence model
+(tasks T027 to T033), merged into that branch as `cce8dbd`; none of it is on
+`main`.
 The change pins its code citations at `da33d92`; this spec cites no line of
 `project`, `README.md` or `.github/workflows/tests.yml`, and the plan
 re-pins them against the `main` of its day (proposal, "Dependencies and
@@ -1474,10 +1475,15 @@ path"; "Non-UTF-8 common directory".
   `inspection-error` set directly, a `registration-mismatch` finding in
   place of that class's `inspection-error` finding, and no error). Feature
   004's evidence model, which the overview shares, fails them the same way
-  (its data model at `b0243e5`, "Worktree identity and registration"; lead
-  ruling R-57, withdrawing R-51(c)'s known limit), as the packet's rule for
-  a registration that disagrees requires (DI:259, :267-270). The rows keep
-  the registry's order, so the output stays deterministic.
+  in its data model at `b0243e5`, "Worktree identity and registration" (lead
+  ruling R-57, withdrawing R-51(c)'s known limit); its code at that head
+  still passes them (R-51(c)), and its `tasks.md` at `b0243e5` (:746-747)
+  has lane G's follow-up build the refusal. The packet's rule sets a
+  registration that disagrees in either direction to `inspection-error`
+  directly, with a `registration-mismatch` finding and no status probe
+  (DI:259, :267-270); it names no case of two entries for one path, to which
+  R-57 gives the same outcome. The rows keep the registry's order, so the
+  output stays deterministic.
 - **EC-032**: When a value of the identity probe holds a line feed, as the
   name of a repository directory can (US11 s1), the probe is repeated, one
   child per option, each counted (change 1's design D6, row 3), so that for
@@ -2339,13 +2345,13 @@ and [P] are change 1's requirements as the header names them.
   which reads its branch's head, `b0243e5`; that head's documents change
   after `d81b3d9` only by the tier tags, file and verify fields and ticks of
   `tasks.md`, one line of `plan.md` and the first part of its doc round 6
-  (rulings R-55 to R-57), and its code, unchanged since `a32d20b`, has its
-  tasks T001 to T035 built, among them its five incremental parsers, its
-  child handle, its driver and its evidence model (merged as `cce8dbd`), and
-  none of it is on `main`; where the change and feature 004 differ for the
-  overview, the change governs, and the plan reconciles against feature
-  004's text at the state that question Q2 of `clarify-questions.md`
-  settles.
+  (rulings R-55 to R-57, with R-53's P-16 and P-22 and R-54's X-3), and its
+  code, unchanged since `a32d20b`, has its tasks T001 to T035 built, among
+  them its five incremental parsers, its child handle, its driver and its
+  evidence model (merged as `cce8dbd`), and none of it is on `main`; where
+  the change and feature 004 differ for the overview, the change governs,
+  and the plan reconciles against feature 004's text at the state that
+  question Q2 of `clarify-questions.md` settles.
 - "Every existing test" means the suite on `main` when the feature is
   implemented: 96 tests at `961c405`, still 96 at `e9d6711`, plus feature
   004's. Two test conditions are this spec's own, not the change's: a test
@@ -2449,7 +2455,7 @@ and [P] are change 1's requirements as the header names them.
     5), appending to its equality clause two sentences that lane
     openRepoProject-4 agreed at `9f30fb9` (the words "for the same
     working directory and refs" agreed at `4d5855a`, unchanged at
-    `e1049b2`): a worktree that `project clean` classifies
+    `fffc194`): a worktree that `project clean` classifies
     `merged-removable` because its cache enumeration proved every ignored
     path a listed cache is `ignored-local-files` in the overview, which
     collects no cache evidence, and the overview never classifies a
@@ -2485,17 +2491,18 @@ and [P] are change 1's requirements as the header names them.
     of requirement 5, where an answer to Q7 amends the ladder's run rule
     (POD:378-381), and #25's blocks; #25 re-aligns its blocks to such an
     amendment (its proposal, "Dependencies and Sequencing"; its `tasks.md`
-    2.3 and 2.4). An answer to Q16 that amends change 2's design D1 and
-    clarifications N1 reaches #25 as well: if that amendment lands
-    before #25 archives, #25's task 2.3 re-read picks it up, the spawning
-    sentence of #25's design D7 and its scenario "Expiry cancels queued and
-    in-flight requests" included (its proposal, "Dependencies and
-    Sequencing"; its `tasks.md` 2.3). Before its `/opsx:archive`, #24
-    re-reads its block of requirement 5 against the text of that requirement
-    on `main` and re-copies the block from that text, keeping every
-    amendment along with its own additions, so that an answer that amends
-    requirement 5, such as Q7 A, is not dropped by its archive (its
-    proposal, "Dependencies and Sequencing"; its `tasks.md` 3.2).
+    2.3 and 2.4). An answer to Q16 that amends, or records a departure from,
+    change 2's design D1 or clarifications N1 reaches #25 as well: if the
+    amendment or the recorded departure comes before change 2 archives,
+    #25's task 2.3 re-read picks it up, the spawning sentence of #25's
+    design D7 and its scenario "Expiry cancels queued and in-flight
+    requests" included (its proposal, "Dependencies and Sequencing"; its
+    `tasks.md` 2.3). Before its `/opsx:archive`, #24 re-reads its block of
+    requirement 5 against the text of that requirement on `main` and
+    re-copies the block from that text, keeping every amendment along with
+    its own additions, so that an answer that amends requirement 5, such as
+    Q7 A, is not dropped by its archive (its proposal, "Dependencies and
+    Sequencing"; its `tasks.md` 3.2).
 - **Features 001 to 003** (`specs/001-project-command/`,
   `specs/002-triad-first-project-new/`,
   `specs/003-parent-obstacle-wording/`): untouched; their tests join the
