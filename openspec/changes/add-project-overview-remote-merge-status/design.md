@@ -43,7 +43,15 @@ it edits no spec text either. Round C9 then applies Codex's P2 on `05a424a`
 (C-39) and the lead's point found in applying it (C-40): D6's parse rejects
 the constants `NaN`, `Infinity` and `-Infinity` with a `parse_constant` hook,
 and decodes the body's bytes as strict UTF-8 itself, never giving `json.loads`
-bytes, and D11 tests both with one test; they edit no spec text either.
+bytes, and D11 tests both with one test; they edit no spec text either. Round
+C10 then applies Codex's P2 on `f34dfe2` (C-41) and lane openRepoProject-3's
+confirm read of round C9 (C-42, its MEDIUM-1, and C-43, its four LOWs): C-41 is
+declined as a design change and kept as a residual, which D5 and Risks record,
+since the spec has the `gh` child run in the filesystem root with every other
+variable passed on unread; D6 states the check of `number` by type and inside
+the parse's boundary, and what a float literal and an escape of a lone surrogate
+do; D2 decodes a remote-target read's output as strict UTF-8; and D11 tests
+C-41's decision and C-42; they edit no spec text either.
 
 Citations follow `proposal.md`: the packet at `da33d92`; APO, CAS, PRS and
 `project:N` at main `961c405`, which main `e9d6711` holds unchanged for them
@@ -97,6 +105,9 @@ The rulings and the packet's boundary map to the decisions:
 | C-38: lane openRepoProject-3's confirm read of C7: D5's shell runs on the skipped errors and the twelve errors named, D6's source for Python's integer-string limit, D11's `number` of 2,147,483,647 | D5, D6, D11 |
 | C-39: Codex's P2 on `05a424a` at design.md:484: the constants `NaN`, `Infinity` and `-Infinity` are no JSON, so a `parse_constant` hook rejects them wherever they stand, on every supported Python | D6, D11 |
 | C-40: the lead's point found in applying C-39: the parse decodes the body's bytes as strict UTF-8 itself and gives `json.loads` the string, so that UTF-16, UTF-32, an encoded surrogate and a UTF-8 byte order mark are `api-error` | D6, D11 |
+| C-41: Codex's P2 on `f34dfe2` at design.md:381: a relative `GH_CONFIG_DIR`, `XDG_CONFIG_HOME` or `HOME` is kept unread, as the spec requires, and resolves against `/`: a residual (Risks) | D5, D11, Risks |
+| C-42: lane openRepoProject-3's MEDIUM-1 on round C9: a node's `number` is accepted only when its parsed type is exactly `int`, and every check on the parsed answer runs inside the parse's catch-everything boundary | D6, D11 |
+| C-43: lane openRepoProject-3's four LOWs on round C9: no `parse_float` hook, by decision; the escape of a lone surrogate; each remote-target read's output decoded as strict UTF-8; and three wordings | D2, D6, D11 |
 | C-10, L-12: CI on Linux only | Migration Plan |
 
 What in `project` shapes the approach (at `961c405`; features 004 and 005
@@ -249,9 +260,15 @@ Any other failure, a budget reached or a stop at the deadline gives
 an output of exactly 64 KiB from a longer one, which fails the read (C-29),
 and its standard error is drained and discarded unexamined, never read for a
 reason or kept for a message, because Git may echo the remote's name or URL,
-user information included, there (C-31). The URL that standard output carries
-is the only credential-bearing text the overview inspects: it lives in memory
-only while D3 derives the `owner/repository` and detects the URL's user
+user information included, there (C-31). The loop decodes each read's standard
+output itself, as strict UTF-8 (`bytes.decode("utf-8")`, its default `strict`
+error handler), never with `surrogateescape`; an output that does not decode
+fails the read and gives `remote-target-unread`, as an output past 64 KiB does
+(C-29), which is the spec's "fails for any other cause"
+(`specs/project-overview/spec.md:387-388`), so a `baseRefName` (D6) can equal
+only a merge ref that is valid UTF-8 text (C-43). The URL that standard output
+carries is the only credential-bearing text the overview inspects: it lives in
+memory only while D3 derives the `owner/repository` and detects the URL's user
 information; after that no part of the user information is retained or
 compared, none is ever printed, logged, sent or used to authenticate, and the
 URL is never forwarded with it (C-30).
@@ -392,6 +409,50 @@ and gh's behaviour beyond its switches is the client's; the fake `gh` of D11
 records the values, and that block's new scenario asserts them. [E]'s Git scrub
 does not apply; this is not a Git child.
 
+The child starts in `/`, and the variables that name where `gh` keeps its
+configuration pass on unread with the rest, as
+`specs/project-overview/spec.md:404-411` has it. So a relative `GH_CONFIG_DIR`
+or `XDG_CONFIG_HOME`, or a relative or empty `HOME`, which are the three that
+`gh help environment` names for the configuration directory (`GH_CONFIG_DIR`,
+else `$XDG_CONFIG_HOME/gh`, else on Windows only `$AppData/GitHub CLI`, else
+`$HOME/.config/gh`), resolves against `/` and not against the caller's working
+directory. Normally that names no configuration, so the keyed rows are
+`unavailable` with reason `gh-unauthenticated`; if the resolved path exists,
+`gh` reads the configuration there. An absolute path works. `gh` treats an empty
+`GH_CONFIG_DIR` or `XDG_CONFIG_HOME` as unset, and an empty `HOME` makes it read
+`.config/gh` from its working directory, here `/.config/gh`. This is kept by
+decision (C-41): anchoring the three values to the caller's working directory
+would have the overview read and rewrite variables that the spec passes on
+unread, and needs a spec edit that is not made; and the root keeps the caller's
+working directory, which may lie inside a scanned repository, from supplying
+`gh`'s configuration, and from receiving what `gh` writes there.
+
+Lane openRepoProject-4 checked offline on `gh` 2.96.0 on 2026-10-20, with fake
+tokens, `env -i` plus D5's five switches and `gh auth token -h github.com`, and
+found that an empty `HOME` makes `gh` read `./.config/gh` relative to its own
+working directory, which found a planted token from the caller's directory and
+none from `/`; that `gh` treats an empty `GH_CONFIG_DIR` or `XDG_CONFIG_HOME` as
+unset, from either directory, and falls through to `HOME`; and that `gh` writes
+to the configuration directory it uses on first use, rewriting `hosts.yml` into
+its multi-account form and creating `config.yml`.
+
+The writer ran `gh` 2.96.0 too on 2026-10-20, offline, with a fake token in each
+probe configuration file, `GH_TOKEN`, `GITHUB_TOKEN`, `GH_ENTERPRISE_TOKEN` and
+`GITHUB_ENTERPRISE_TOKEN` unset under `env -i`, `GH_NO_UPDATE_NOTIFIER=1`,
+`GH_PROMPT_DISABLED=1` and `GH_TELEMETRY=false` set, and
+`gh auth token --hostname github.com`, printing only whether the probe token was
+found: a relative `GH_CONFIG_DIR`, a relative `XDG_CONFIG_HOME` and a relative
+`HOME` were each found when run in the directory they were relative to and
+missed when run in `/`, each of the same three values made absolute was found
+when run in `/`, and with no variable naming the probe none was found; an empty
+`HOME` with a probe file at `./.config/gh` was found from the directory that
+held it and missed from `/`; and an empty `GH_CONFIG_DIR`, or an empty
+`XDG_CONFIG_HOME`, with an absolute `HOME` that held the probe, was found from
+either directory. Those runs did not record `gh api`'s output under D5's argv
+(task 2.5). The README's next step for `gh-unauthenticated` names both causes:
+run `gh auth login`, or make a relative `GH_CONFIG_DIR`, `XDG_CONFIG_HOME` or
+`HOME` absolute.
+
 `gh` is looked up once per run, by one bounded filesystem task as [B]
 requires of every filesystem call, in the absolute directories of `PATH`
 only: an empty or relative entry, which names the caller's working directory
@@ -502,10 +563,15 @@ the loop stops reading, stops the child (D7) and records `truncated`.
   BOM"); each such body is `api-error` by the rule above. RFC 8259 section 8.1
   requires UTF-8 for JSON exchanged outside a closed ecosystem, and lets a
   parser treat a byte order mark as an error, which one at the start of a body
-  is here.
-  The parse passes `json.loads` a `parse_int` hook, which receives the text of
-  each integer literal of the body, wherever it stands, and raises before
-  converting it when the text has more than 10 digits, a sign not counted.
+  is here. A JSON escape of a lone surrogate, a backslash, `u` and D800, six
+  ASCII characters, is another matter: it is ASCII, XX, which concerns the
+  body's bytes and not its strings, leaves it. No field the row keeps can hold
+  one: `state`, `number`, `url` and `head_sha` are closed forms (below and D9),
+  and the two open fields, `baseRefName` and `errors[].type`, are compared and
+  never kept (C-43). The parse passes `json.loads` a `parse_int` hook, which
+  receives the text of each integer literal of the body, wherever it stands, and
+  raises before converting it when the text has more than 10 digits, a sign not
+  counted.
   GraphQL's `Int`, which `number` is, is a signed 32-bit integer, at most
   2,147,483,647, which has 10 digits. The parse then fails, and the key is
   `api-error` by the rule above, whatever the interpreter's own limit on
@@ -541,21 +607,29 @@ the loop stops reading, stops the child (D7) and records `truncated`.
   `extensions` object of a GraphQL response may, would parse, and its key could
   be answered. With the hook such a body fails the parse, wherever the constant
   stands, and its key is `api-error` by the rule above, on every supported
-  Python. Checked on the five interpreters above: `json.loads` called the hook
-  with exactly `NaN`, `Infinity` and `-Infinity`; an exception raised there left
-  `json.loads` as raised, never wrapped in `JSONDecodeError`; the hook was not
-  called for a string (the strings "NaN" and "Infinity" included), `true`,
+  Python. Checked on Python 3.10.21, 3.11.16, 3.12.3, 3.13.15 and 3.14.7:
+  `json.loads` called the hook with exactly `NaN`, `Infinity` and `-Infinity`;
+  an exception raised there left `json.loads` as raised, never wrapped in
+  `JSONDecodeError`; the hook was not called for a string (the strings "NaN" and
+  "Infinity" included), `true`,
   `false`, `null` or a number, `1e999` (which parses as `inf`) included; `NaNx`
   called it on its `NaN` prefix; and `nan`, `-NaN`, `infinity`, `+Infinity` and
   `Inf` failed `json.loads` itself with `JSONDecodeError`. A float literal needs
-  no bound: no field the parse reads is a float, and a literal of 1,048,560
-  bytes, in its fraction, its integer part or before an exponent, parsed in
-  under 10 ms on each interpreter, the slowest 9.8 ms (3.10.21, its fraction;
-  worst of seven runs). A prototype of this parse and of D6's checks on a node,
-  run on the five interpreters, answered `merged` for each of these bodies when
-  `json.loads` was given its bytes with the `parse_int` hook alone, and
-  `api-error` under this parse: a valid answer with `NaN`, `Infinity` or
-  `-Infinity` as the value of a key of its `extensions` object; that answer in
+  no bound: no field the parse reads may hold a float, since `number` is checked
+  by type (C-42), and a literal of 1,048,560 bytes, in its fraction, its integer
+  part or before an exponent, parsed in under 10 ms on each interpreter, the
+  slowest 9.8 ms (3.10.21, its fraction; worst of seven runs). There is no
+  `parse_float` hook, by decision: a float literal outside the range of a
+  double, such as `1e999` or `-1e999`, is grammatical JSON, since RFC 8259
+  section 6 leaves range to the implementation, unlike `NaN`, `Infinity` and
+  `-Infinity`, and parses as `inf` or `-inf`; in a field the parse never reads
+  the key is still answered, and as a node's `number` it fails the type check
+  below (C-43). A prototype of D6's parse and of the node checks its fixtures
+  need, run on Python 3.10.21, 3.11.16, 3.12.3, 3.13.15 and 3.14.7, answered
+  `merged` for each of these bodies when `json.loads` was given its bytes with
+  the `parse_int` hook alone, and `api-error` under this parse: a valid answer
+  with `NaN`, `Infinity` or `-Infinity` as the value of a key of its
+  `extensions` object; that answer in
   each of the six UTF-16 and UTF-32 forms above; and that answer with ED A0 80
   in a string of its `extensions` object, or with a UTF-8 byte order mark before
   it. The answer in plain UTF-8 was `merged` under both.
@@ -569,14 +643,30 @@ the loop stops reading, stops the child (D7) and records `truncated`.
   `pageInfo.hasNextPage`, which when true gives `further-page`, and a list of
   at most 100 `nodes`, more being `api-error` (AE-5's suggested text, taken by
   C-22).
-- Each node must have a positive integer `number` of at most 2,147,483,647,
+- Each node must have a `number` whose parsed type is exactly `int`
+  (`type(number) is int`): never a `bool`, so not `true` or `false`, and never a
+  `float`, so not `1.0` or `1e999`. The spec already says "a positive integer
+  `number`" (`specs/project-overview/spec.md:466`), and C-42 reads that as a
+  JSON integer literal. It must also be at least 1 and at most 2,147,483,647,
   the largest GraphQL `Int` (the hook above bounds the literal's text, this
   bounds its value, C-37); a `state` of `OPEN`, `CLOSED` or `MERGED`; a
   `headRefOid` of 40 or 64 hexadecimal digits; a string `baseRefName`; a
   `baseRepository.nameWithOwner` that passes D3's pattern; and a `url`
   exactly `https://github.com/` plus that `nameWithOwner`, `/pull/` and the
   number. One invalid node makes the whole key `api-error`, never a partial
-  answer.
+  answer. Every check this section makes on the parsed answer, these included,
+  runs inside the same catch-everything boundary as the parse, so a check that
+  raises, an `OverflowError` for instance, is `api-error` too, never an
+  exception that reaches C-14's exit 2 (C-42). A prototype of the checks on
+  `number`, run on Python 3.10.21, 3.11.16, 3.12.3, 3.13.15 and 3.14.7, answered
+  `api-error` for a `number` of `true`, `false`, `1.0`, `1e999` and
+  2,147,483,648, each with a `url` that a check by value would accept, and
+  `merged` for 2,147,483,647 and for 7; a check written
+  `isinstance(number, int)` answered `merged` for `true`, and one written
+  `number == int(number)` answered `merged` for `true` and for `1.0` and,
+  outside the boundary, raised `OverflowError` on `1e999`, which would exit 2
+  (D10); and `1e999` and `-1e999`, and an escape of a lone surrogate, in a field
+  the parse never reads gave `merged` (C-42, C-43).
 
 Per row: the nodes whose `headRefOid` equals the row's `head`, whose
 `baseRefName` equals the row's merge ref less `refs/heads/`, and whose
@@ -713,11 +803,12 @@ of these fields, so remote evidence never reaches an eligibility gate, a
   401, 403, 429, a 403 with `X-RateLimit-Remaining: 0` or with a
   `Retry-After` header, a 200 body with an `errors` entry of a given type, a
   null `data.repository`, a status and header block of exactly 64 KiB,
-  answered as any other, or over 64 KiB, a body of
-  1 MiB of `[` or with a `number` of 5,000 digits (C-22), one that carries
-  `NaN`, `Infinity` or `-Infinity` in its `extensions` object (C-39), one
-  written in UTF-16 or UTF-32, one that holds the bytes ED A0 80 in a string or
-  one that begins with a UTF-8 byte order mark (C-40), or 502, give the
+  answered as any other, or over 64 KiB, a body of 1 MiB of `[` or with a
+  `number` of 5,000 digits (C-22), one whose `number` is `true`, `1.0` or
+  `1e999` (C-42), one that carries `NaN`, `Infinity` or `-Infinity` in its
+  `extensions` object (C-39), one written in UTF-16 or UTF-32, one that holds
+  the bytes ED A0 80 in a string or one that begins with a UTF-8 byte order mark
+  (C-40), or 502, give the
   queried repository's `nameWithOwner` as the owner and name asked or, to
   stand for a renamed repository, as another, as the last AND of "The chosen
   pull request and a rejected answer" does (lane openRepoProject-3's delta
@@ -730,8 +821,8 @@ of these fields, so remote evidence never reaches an eligibility gate, a
   appends one JSON record per run: the argv, the names of the environment
   variables set, the values of `GH_NO_UPDATE_NOTIFIER`,
   `GH_NO_EXTENSION_UPDATE_NOTIFIER`, `GH_PROMPT_DISABLED`, `GH_TELEMETRY` and
-  `NO_COLOR`, whether `GH_TOKEN` equals the caller's, the working directory,
-  and its start and end times.
+  `NO_COLOR`, the value of `GH_CONFIG_DIR` (C-41), whether `GH_TOKEN` equals the
+  caller's, the working directory, and its start and end times.
 - One test sets the interpreter's limit on converting a string to an integer to
   0, with `sys.set_int_max_str_digits(0)` where the interpreter has it, and
   restores it after; that emulates Python 3.10.0 to 3.10.6, which have no such
@@ -746,18 +837,29 @@ of these fields, so remote evidence never reaches an eligibility gate, a
   and gives its row, a matched pull request with that number and not
   `api-error`, so that the node check's `<=` edge is pinned and a check written
   `<` fails the test (C-38); and 2,147,483,648, whose key is `api-error` by the
-  node check. It tests the parse and is no scenario: "API failures stay unknown"
-  already requires the 5,000-digit outcome.
+  node check. The same test serves `true`, `1.0` and `1e999` as `number`, which
+  the hook never sees, each with a `url` ending `/pull/1`, which a check by
+  value accepts for `true` and `1.0`, so that the type is the only fault, and
+  each gives `api-error` for its key's rows (C-42): a check written
+  `isinstance(number, int)` gives `merged` for `true`, and one written
+  `number == int(number)` gives `merged` for `true` and for `1.0` and, outside
+  the parse's boundary, raises `OverflowError` on `1e999`, which would exit 2
+  (D10), so each by-value writing fails the test. It tests the parse and the
+  node checks and is no scenario: "API failures stay unknown" already requires
+  the 5,000-digit outcome, and the added requirement's "a positive integer
+  `number`" (`specs/project-overview/spec.md:466`) the others.
 - One test serves 200 answers that D6's parse refuses though each is otherwise
   valid (C-39, C-40). Each is a matched, merged pull request that would give
   its key's rows `merged` if it parsed, and each gives `api-error` with D6's
   parse: the answer with `NaN`, `Infinity` or `-Infinity` as the value of a key
   of an `extensions` object that the parse never reads (three fixtures); the
   answer encoded in UTF-16 and in UTF-32, each little-endian without a byte
-  order mark and with one (four); the answer with the bytes ED A0 80 in a
-  string of that object (one); and the answer with a UTF-8 byte order mark
-  before its first byte (one). The same answer in plain UTF-8 is served too and
-  gives `merged`, so that each failure comes from the rule and from no other
+  order mark and with one (four, chosen from D6's six forms: little-endian,
+  without and with a byte order mark, for each of the two encodings); the answer
+  with the bytes ED A0 80 in a string of that object (one); and the answer with
+  a UTF-8 byte order mark before its first byte (one). The same answer in plain
+  UTF-8 is served too and gives `merged`, so that each failure comes from the
+  rule and from no other
   fault of the answer. The test checks the parse and is no scenario: the added
   requirement's "A 200 body SHALL be UTF-8 JSON"
   (`specs/project-overview/spec.md:461-462`), and its `api-error` for a
@@ -771,6 +873,16 @@ of these fields, so remote evidence never reaches an eligibility gate, a
   lookup's filesystem task takes the injected slow call that change 2's
   design patches into its filesystem tasks (APO design.md, D13), on a chosen
   `PATH` directory, so that the lookup is cut at 5 s (C-26).
+- One short test pins C-41's decision. With `GH_CONFIG_DIR=.gh-config`, a
+  relative value, in the caller's environment, and in a second run with
+  `GH_CONFIG_DIR` empty, the fake `gh` records the child's working directory as
+  `/` and `GH_CONFIG_DIR` set to the value the caller gave, byte for byte: the
+  relative value in the first run, the empty one in the second. The value is
+  passed unread and never rewritten. It is no scenario: "The request bounds"
+  requires the root working directory, and the added requirement every other
+  variable passed on unread (`specs/project-overview/spec.md:404-411` and :618).
+  The residual that remains, a `gh` that resolves such a value against `/`, is a
+  real `gh`'s behaviour, and no test here runs one (Risks).
 - Two `PATH` fixtures, built in the test's temporary tree, test the lookup's
   per-directory rule (C-35). A directory of mode 000 placed before the
   directory that holds the fake `gh` is skipped, and the lookup finds that
@@ -874,6 +986,26 @@ requests".
 - [`GH_TOKEN` reaches the child] -> It is the normal authentication path;
   `project` never reads it, and no output or message carries an environment
   value.
+- [A relative `GH_CONFIG_DIR` or `XDG_CONFIG_HOME`, or a relative or empty
+  `HOME`, in the caller's environment is kept unread and resolved by `gh`,
+  started in `/`, against `/`; `SSL_CERT_FILE` and `SSL_CERT_DIR`, which `gh` or
+  Go's runtime may read as relative paths, are the same kind of case] ->
+  Normally the resolved path names no configuration, and the keyed rows are
+  `unavailable` with reason `gh-unauthenticated` (or, for a certificate path,
+  `unknown`). If the resolved path exists, `gh` reads the configuration there.
+  From `/`, a relative value lands in a root-owned tree, except a world-writable
+  one, such as `tmp`, `var/tmp` or `dev/shm` under `/`, where another local user
+  could plant a `gh` configuration. The lead's check on `gh` 2.96.0 on
+  2026-10-20, with a fake token, the token variables unset and D5's five
+  switches set, found that a configuration whose `config.yml` held
+  `http_unix_socket` made `gh api` send its request as plain HTTP over that
+  socket, with no TLS and the token in the clear; so such a configuration could
+  capture the token `gh` sends and serve a wrong answer. Remote evidence never
+  reaches an eligibility gate (D10), so a wrong answer authorizes nothing. The
+  remedy is to make the path absolute, which the README's next step for
+  `gh-unauthenticated` says. Starting `gh` in `/` keeps the caller's working
+  directory, which may lie inside a scanned repository, from supplying `gh`'s
+  configuration (D5; C-41).
 - [Collection used most of the 60 s] -> The requests end at the deadline as
   `cancelled` or `aborted`, and `remote.completeness` says `incomplete`.
 - [A `PATH` directory on an unreachable mount ahead of the one holding `gh`]
