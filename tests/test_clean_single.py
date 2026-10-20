@@ -19,10 +19,15 @@ A plan is read without removing anything as `--apply --action remove
 terminal: the run stops at `confirmation-required`, exit 2, and prints the
 plan envelope with its selection, notes and `omitted`.
 """
+import contextlib
+import errno
+import io
+import json
 import os
 from pathlib import Path
 import shutil
 import unittest
+from unittest import mock
 
 import clean_support
 
@@ -275,6 +280,56 @@ class SingleTests(clean_support.CleanCase):
         self.assertEqual((batch.document["completeness"], batch.document["omitted"], codes(batch.document)),
                          ("incomplete", {"count": 3, "exactness": "exact"}, ["inspect-cap"]))
         self.assertEqual([row["path"] for row in batch.document["worktrees"]], inspected[:-1])
+        self.assertEqual(self.snapshot(root), before)
+
+
+    # Lead ruling R-72 (c): a rule match_target() has (R-67 (b), R-69 (2)).
+
+    def test_clean_single_target_a_failed_realpath_read_counts_as_a_match(self):
+        # The realpath read of another entry, Q, fails once, during P's match
+        # only: Q counts as a match, failing closed, so P's match is undecided,
+        # plan.target is None and nothing is selected; the run refuses with
+        # inspection-incomplete, exit 2, before the question stage (which
+        # would raise here), with nothing removed. Q's own row read (a second
+        # realpath call) is not failed, so Q's row stays merged-removable.
+        root = self.repo()
+        self.bare_remote()
+        target = self.merged_worktree("001-p")
+        other = self.merged_worktree("002-q")
+        before = self.snapshot(root)
+        real_fs_call, failed = project.fs_call, []
+
+        def fs_call(fn, *args, **kwargs):
+            if fn is os.path.realpath and args[0] == os.fsencode(other) and not failed:
+                failed.append(args[0])
+                raise OSError(errno.EIO, os.strerror(errno.EIO))
+            return real_fs_call(fn, *args, **kwargs)
+
+        out, err = io.StringIO(), io.StringIO()
+        asked = AssertionError("the run reached the question stage")
+        with contextlib.ExitStack() as stack:
+            stack.enter_context(mock.patch.dict(os.environ, self.env, clear=True))
+            stack.enter_context(mock.patch.object(project, "fs_call", fs_call))
+            stack.enter_context(mock.patch.object(project, "confirm_removal", side_effect=asked))
+            stack.enter_context(mock.patch.object(project, "apply_removals", side_effect=asked))
+            stack.enter_context(contextlib.redirect_stdout(out))
+            stack.enter_context(contextlib.redirect_stderr(err))
+            status = project.main(["clean", str(root), "--apply", "--action", "remove", "--worktree", str(target),
+                                   "--yes", "--json"])
+        self.assertEqual((status, failed), (2, [os.fsencode(other)]))
+        # Under --apply --json the human plan goes to standard error (contract,
+        # "Streams"): P is not selected there either, and nothing is asked.
+        self.assertNotIn(TEXT["selected_heading"].format(N=1), err.getvalue())
+        self.assertNotIn("[yes/N]", err.getvalue())
+        document = json.loads(out.getvalue())
+        self.assertEqual((document["mode"], codes(document), document["selected"], document["completeness"],
+                          document["apply_allowed"]),
+                         ("single", ["inspection-incomplete"], [], "incomplete", False))
+        rows = {row["path"]: row["classification"] for row in document["worktrees"]}
+        self.assertEqual(rows[str(other)], "merged-removable")
+        self.assertEqual(sorted((entry["path"], entry["reason"]) for entry in document["excluded"]),
+                         [(str(target), "not-requested"), (str(other), "not-requested"),
+                          (str(root), "main-worktree")])
         self.assertEqual(self.snapshot(root), before)
 
 
