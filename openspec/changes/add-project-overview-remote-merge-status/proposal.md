@@ -4,7 +4,10 @@ Lane: openRepoProject-5
 
 Status: draft; alignment review and council resolved on PR #29, round C4's
 spec edits committed on lane openRepoProject-4's agreement of 2026-10-20;
-ratification by Brett Heap pending; nothing here is ratified. Governing issue:
+round C5's edits for lane openRepoProject-3's delta read and Codex's findings
+on `e198548` (C-24 to C-27) applied, their `project-overview` spec edits held
+for lane openRepoProject-4; ratification by Brett Heap pending; nothing here
+is ratified. Governing issue:
 opensoft/openRepoProject#25, claimed by lane openRepoProject-5 (comment
 6111242617); refs #6, the record of the project
 maintenance design packet. Proposed on Brett Heap's word "usage reset, resume
@@ -29,7 +32,7 @@ executable. Change 1's evidence model,
 `Repository inspection requires Git 2.36 and shares one evidence model`
 (CAS/cmd:90), is [E]. The lane's rulings are cited as L-1 to L-9 and C-1 to C-8
 (2026-10-11), L-10 to L-15, B-14, C-9 and C-10 (2026-10-18), L-16, L-17 and
-C-11 to C-14 (2026-10-19), and F-3 and C-15 to C-23 (2026-10-20, C-16 to C-22
+C-11 to C-14 (2026-10-19), and F-3 and C-15 to C-27 (2026-10-20, C-16 to C-22
 being the council's verdicts). `PR19/cmd` is draft PR #19's
 `openspec/changes/add-project-clean-all-safe/specs/project-command/spec.md` at
 `c462d87`.
@@ -85,7 +88,8 @@ put the answer inside the revalidation signature and added ladder classes.
   paginated or cached. At most 64 requests, four at once, each `min(5 s,
   remote time remaining)`, inside a 30 s remote budget, counted from the
   first request after collection, that is part of the 60 s deadline, not
-  added to it; at most 1 MiB of each body (DI:1045-1051; C-4). On expiry,
+  added to it; at most 1 MiB of each body kept, one byte more read to tell a
+  longer body (DI:1045-1051; C-4, C-27). On expiry,
   requests not sent are `unknown` with `cancelled` and requests in flight are
   stopped and `unknown` with `aborted` (DI:1051-1053).
 - **Explicit results.** A row's `remote` is `{state, number, url, head_sha,
@@ -99,8 +103,10 @@ put the answer inside the revalidation signature and added ladder classes.
   401, a 403, a rate limit, a body that cannot be parsed or any other failure
   is `unknown` with its reason, never a partial answer, and no other response
   text, `gh` error output or credential appears in either output
-  (DI:1055-1058). No `gh` in an absolute directory of `PATH`, or a `gh` that
-  needs authentication, is `unavailable`.
+  (DI:1055-1058). No `gh` in an absolute directory of `PATH`, a lookup of it
+  that fails or runs out of time, or a `gh` that needs authentication, is
+  `unavailable`, and when no request can be sent or answered for one of
+  these, so are the keys past the 64th, never `request-cap` (C-25, C-26).
 - **Evidence, never permission.** Remote evidence changes no classification,
   finding, suggestion, gate, row status, summary count, `completeness` or exit
   status, and is kept nowhere beyond the invocation, so it can never feed a
@@ -352,7 +358,8 @@ scenarios (14, 2, 7 and 13), and one MODIFIED requirement in `project-command`,
   decides a merge-commit merge; a squash-merged row stays kept, and whether a
   local patch-equivalence proof may ever retire it is change 1's open question
   on squash-merged branches (CAS proposal.md:1001-1005); for `gh-unavailable`,
-  install `gh`; for `gh-unauthenticated`, run `gh auth login`; for
+  install `gh`, or check that `PATH`'s directories are reachable (C-26); for
+  `gh-unauthenticated`, run `gh auth login`; for
   `no-remote-target`, give the merge target an upstream (for example
   `git branch --set-upstream-to=origin/main main`); for
   `credential-bearing-remote`, take the credential out of the remote's URL;
@@ -445,6 +452,24 @@ scenarios (14, 2, 7 and 13), and one MODIFIED requirement in `project-command`,
   [E]'s Termination paragraph binds Git children, so the ADDED requirement,
   which starts the `gh` children, says that they are stopped on every exit
   path (LOW-6), and nothing was held for lane openRepoProject-2.
+- **Round C5's spec edits are held for lane openRepoProject-4 (C-24 to
+  C-27).** This proposal and `design.md` describe
+  `specs/project-overview/spec.md` as round C5 leaves it, which is written but
+  not committed: one sentence added to the added paragraph of "Overview bounds
+  its work and reports what it omitted", naming the lookup of `gh` beside the
+  remote-target reads and the `gh` children (C-26, L-11); in the ADDED
+  requirement, the request cap's precedence (C-25), the lookup that fails or
+  runs out of time (C-26), the sentinel byte past 1 MiB of body and past
+  64 KiB of status and headers (C-27), and the lookup in the isolation clause
+  (C-26); and four ANDs, which change no count: two on "No gh, or a gh
+  without authentication" (lane openRepoProject-3's F3; C-26), one on "The
+  chosen pull request and a rejected answer" (F4) and one on "The request
+  bounds" (C-25). They are held in one file for lane openRepoProject-4 to read
+  against its agreement of 2026-10-20. Until it agrees, the committed
+  `specs/project-overview/spec.md` is the text it agreed then (`d73d25d`), and
+  a part it declines is ruled by the lane's lead.
+  `specs/project-command/spec.md` is unchanged in this round, and nothing is
+  held for lane openRepoProject-2.
 - **Archives after change 2 (L-5).** Change 2 archives after change 1 and
   after feature 005 merges (APO design.md, Migration Plan 5); this change
   archives after change 2 archives. Its block of change 1's evidence model
@@ -464,11 +489,14 @@ scenarios (14, 2, 7 and 13), and one MODIFIED requirement in `project-command`,
   clarifications N1 start each child with SIGINT, SIGTERM and SIGHUP blocked
   (APO design.md:115-119; APO clarifications.md:45-46), and its
   recommendation B amends both to start children unblocked under handlers
-  that only record the signal; `gh` children follow whatever D1 and N1 say,
-  and if that amendment lands before this change archives, task 2.3's re-read
-  picks it up, `design.md` D7's spawning sentence and the scenario "Expiry
-  cancels queued and in-flight requests", whose process exits within 64 s,
-  included.
+  that only record the signal, where its option A would instead record a
+  departure from them on Brett Heap's word; `gh` children follow whatever D1
+  and N1 say, or the departure from them that feature 005 records, and if
+  feature 005's Q16 amends, or records a departure from, change 2's design D1
+  or clarifications N1 before change 2 archives, task 2.3's re-read picks it
+  up, `design.md` D7's spawning sentence and the scenario "Expiry cancels
+  queued and in-flight requests", whose process exits within 64 s, included
+  (lane openRepoProject-3's delta read, F2; C-24).
 - **Beside its two siblings (L-5).** `add-project-clean-cache-disposal`
   (issue #24) archives after change 1 and, since it carries a MODIFIED block
   of change 2's "Overview reuses the cleanup classifier and merge target"
@@ -563,7 +591,10 @@ block on 2026-10-19, with one fix), and **C-11** to **C-14** below. From the
 rulings and council verdicts of 2026-10-20: **F-3** (the lead's live check
 that GitHub's commit association returns no pull request closed without
 merging), **C-15** (the council's inputs), **C-16** to **C-22** (the council's
-verdicts, below) and **C-23** (Open Questions 3).
+verdicts, below), **C-23** (Open Questions 3) and **C-24** to **C-27** (round
+C5: lane openRepoProject-3's delta read of `e198548` and Codex's three findings
+on it; Decisions and Readings below, and "Re-read and Codex Findings (round
+C5)").
 
 Packet open decisions taken, each citing the text that leaves it open:
 
@@ -724,10 +755,10 @@ Packet open decisions taken, each citing the text that leaves it open:
   remote result SHALL be kept nowhere beyond the invocation, so it can never be
   a `project clean` eligibility, `plan_digest` or revalidation input" and
   "Remote evidence SHALL never be a removal proof".
-- **Closed pull requests, C-16** (DI:1036-1060 names no states; C-5 listed
-  `closed`): `closed` is dropped, a departure named under Departures ("No
-  `closed` state"), and the head-branch lookup that S-1 proposed is a
-  follow-on (Out of Scope).
+- **Closed pull requests, C-16** (DI:1036-1060 names "a merged pull request"
+  (DI:1059-1060) and no other state; C-5 listed `closed`): `closed` is
+  dropped, a departure named under Departures ("No `closed` state"), and the
+  head-branch lookup that S-1 proposed is a follow-on (Out of Scope).
 - **The freshness sentence and the count, C-17** (C-5 asks for a staleness
   sentence; the packet gives no wording): `freshness` stays one constant,
   "Remote evidence, where GitHub answered, was read live from github.com and
@@ -765,6 +796,21 @@ Packet open decisions taken, each citing the text that leaves it open:
   `gh` planted in the caller's working directory never receives the caller's
   `GH_TOKEN` (the council's adversary-engineer showed both by offline
   fixtures; `design.md`, D5 and D6).
+- **Run-wide unavailability, C-25 and C-26** (DI:1045 caps the requests at 64
+  and DI:1041-1042 makes an unusable remote `unavailable`, and neither says
+  which a key past the cap takes when no request can be sent; DI:1055-1056
+  names no outcome for a lookup of the client that fails): `request-cap`
+  applies only when requests can be sent and the cap stops them, so with no
+  `gh` found, or when each request that the cap allows ends in exit 4 with
+  nothing on standard output, every keyed row, past the 64th key included, is
+  `unavailable` with that reason (C-25); and a lookup of `gh` that fails or
+  reaches its 5 s limit, as on an unreachable `PATH` directory, gives what one
+  that finds none gives, `gh-unavailable`, never a row or scan error, while
+  one that the deadline stops first leaves its rows `cancelled`, as an expiry
+  does (C-26). Rejected: `request-cap` for those keys, which would make
+  `remote.completeness` `incomplete` in a run where nothing was cut (Codex's
+  P1 on `e198548`), and a row or scan error for the lookup, which the
+  isolation clause forbids (Codex's P2 on `e198548`).
 
 Decisions where the sources and the rulings are silent:
 
@@ -822,7 +868,7 @@ Decisions where the sources and the rulings are silent:
   the default document feature 005 builds; in a `--remote` run, `remote: null`
   outside the query set, as the first draft had, which would say "unknown"
   where nothing was asked (null keeps change 1's meaning, unknown or not
-  established, CAS/pc:1128-1129); and a seventh state such as `not-queried`
+  established, CAS/pc:1128-1129); and a sixth state such as `not-queried`
   on every row, which would only restate the row's own `branch`, `head` and
   `merged_into_target`.
 - **No effect on `completeness` or the exit.** The `remote` object carries its
@@ -901,6 +947,12 @@ Readings of packet and ratified text:
   block of "Overview prints a versioned JSON envelope" states for change 2's
   own "every one always present" (C-12; lane openRepoProject-3's re-read,
   LOW-7).
+- **"Read at most 1 MiB of each response body"** (DI:1048-1049) and "a body
+  cut at 1 MiB" (DI:1049-1050): a body cut at 1 MiB can be told from one of
+  exactly 1 MiB only by the byte past it, so the reader reads that one byte
+  more and keeps at most 1 MiB, nothing past it entering a result, and such a
+  body is `truncated` (C-27); the 64 KiB bound on status and headers, this
+  change's own, is read the same way.
 
 ## Corrections to the Packet
 
@@ -1027,13 +1079,13 @@ by lane openRepoProject-4 on 2026-10-20, nothing declined, and are committed
 | P-3: the `merged` line's remedy, "a merge target not fetched since", does not work, since a fetch moves only the remote-tracking ref, and the README gives no next step | MEDIUM | C-18 (VALID): applied with change: P-3's texts as written, and the README's next steps also name `malformed-remote` and `not-github`, since C-18 asks for each `unavailable` reason | `project-overview` delta (Human report; "A squash-merged branch is explained and kept"); What Changes; Impact (`README.md`); Decisions (C-18 and C-20); Departures ("The merged-row wording"); `design.md` Risks |
 | P-4: only `MERGED` and the absence of `CLOSED` were checked live, and no task waits for a live answer per state | MEDIUM | C-19 (VALID): applied: task 2.5 with the cases C-19 and C-21 list, and the Risk list gains a base other than the default branch | `tasks.md` 2.5; Decisions (C-19 and C-21); `design.md` Context (tool facts), D11, Risks, Migration Plan |
 | S-1: as P-1, with a head-branch lookup added to the same request as its fix | HIGH | C-16 (VALID as a defect): the fix not taken, for AE-1's reasons (it re-keys DI:1044 or needs aliased name lookups, reverses the rejection of a by-name lookup, needs a published name that an `unpublished` row lacks, and a further page on its list would hide the `merged` answer); recorded as a follow-on | Departures ("No `closed` state"); Out of Scope; Decisions ("The request") |
-| S-2: the response rules rest on unobserved details of `gh api --include`: the case of header names, and the base repository of a renamed remote | MEDIUM | C-19 (VALID): applied: header names compared without case; the base repository matched against the `nameWithOwner` that the answer gives for the queried repository, added to D5's query; task 2.5 records the status line and the header names, and D11's fixture table uses the recorded forms | `project-overview` delta (Requests, Results); Decisions ("Matching", C-19 and C-21); `design.md` D5, D6, D11; `tasks.md` 2.5 |
+| S-2: the response rules rest on unobserved details of `gh api --include`: the case of header names, and the base repository of a renamed remote | MEDIUM | C-19 (VALID): applied: header names compared without case; the base repository matched against the `nameWithOwner` that the answer gives for the queried repository, added to D5's query; task 2.5 records the status line and the header names, and D11's fixture table uses the recorded forms; a `data.repository.nameWithOwner` that is not a valid GitHub `owner/repository` makes the key `api-error`, the field validated as each node's `baseRepository.nameWithOwner` is, cited in `design.md` D6 in round C5 (C-24) | `project-overview` delta (Requests, Results); Decisions ("Matching", C-19 and C-21); `design.md` D5, D6, D11; `tasks.md` 2.5 |
 | S-3: the freshness sentence is false in runs that sent no request | MEDIUM | C-17 (VALID): applied with change: AE-4's constant in place of S-3's second sentence for a null `observed_at`, which a `gh` that exits 4 after `observed_at` is set would leave false | as P-2 |
 | AE-1: `closed` is unreachable; the options attacked; drop it | HIGH | C-16 (VALID): applied with change: edits 1 to 7 as written, except that edit 4's placeholders are re-lettered `<a>` to `<e>`, with no gap, on the lead's follow-up to round C4, and edit 5's THEN keeps "and null `number` and `url`" | as P-1 |
 | AE-2: the `merged` line reads as an all-clear under a row kept for its files | MEDIUM | C-20 (VALID): applied with change: the line as C-20 gives it; the AND names the dirty worktree's branch as one that local ancestry does not prove merged, so that the row is in the query set | `project-overview` delta (Human report; "A squash-merged branch is explained and kept"; "Remote evidence changes nothing local"); What Changes; Departures ("The merged-row wording"); `design.md` D9 |
 | AE-3: `merged` was checked only for squash merges into the default branch; a base other than the default branch, a rebase merge and a merge target that tracks the person's fork are not covered | MEDIUM | C-21 (VALID): applied with change: task 2.5 holds its two cases and its rule for an answer with no `MERGED` node; its two Risks cite the ADDED requirement's base-repository rule, not spec line numbers, which move; the README says the fork case; its question sentence reads "that question" for "change 1's question 2", since the bullet names change 1's open question just before and this proposal's Open Questions 2 is another question | `tasks.md` 2.5; `design.md` Risks; Rules This Change Keeps; Impact (`README.md`) |
 | AE-4: the freshness sentence and the `Remote:` count claim a query to github.com in runs where none reached it, a `gh` that exits 4 included | MEDIUM | C-17 (VALID): applied: its sentence, its count wording and its AND | `project-overview` delta (Fields, Human report; "No gh, or a gh without authentication"); What Changes; Decisions (C-17); `design.md` D9 |
-| AE-5: a body that Python's parser rejects with an error other than `JSONDecodeError` exits 2 and drops the local overview, and the `gh` lookup can start a `gh` planted in the caller's directory | LOW | C-22 (VALID): applied with change: the spec text and AND as given; `design.md` records the two points in D5 (the lookup) and D6 (the parse), D6 being where a response is parsed, where the verdict names D2, which parses no body; AE-5's fixtures are cited by their results, not their scratch paths (L-9) | `project-overview` delta (opening paragraph, Results; "API failures stay unknown"); What Changes; Impact (`project`); Decisions (C-22); `design.md` D5, D6, D10, D11 |
+| AE-5: a body that Python's parser rejects with an error other than `JSONDecodeError` exits 2 and drops the local overview, and the `gh` lookup can start a `gh` planted in the caller's directory | LOW | C-22 (VALID): applied with change: the spec text and AND as given; `design.md` records the two points in D5 (the lookup) and D6 (the parse), D6 being where a response is parsed, where the verdict names D2, which parses no body; AE-5's fixtures are cited by their results, not their scratch paths (L-9); its suggested Results text also carries the rule that a response holding more than 100 pull requests is `api-error`, cited in `design.md` D6 in round C5 (C-24) | `project-overview` delta (opening paragraph, Results; "API failures stay unknown"); What Changes; Impact (`project`); Decisions (C-22); `design.md` D5, D6, D10, D11 |
 | Codex 1 (P1, on `1229e79`): `closed` is unreachable through `Commit.associatedPullRequests` | P1 | holds (F-3): C-16 | as P-1 |
 | Codex 2 (P1, on `1229e79`): no part of a body may appear in either output, against the row's `number` and `url` | P1 | does not hold at `c928cb2`, QA-2's edit having landed in `621715a`; its optional tightening applied: "no other response text" | What Changes ("Explicit results") |
 | Codex 3 (P2, on `1229e79`): the freshness text claims a live query when none ran | P2 | holds: C-17 | as P-2 |
@@ -1063,3 +1115,28 @@ committed.
 | LOW-8: 1.5 ties both INFO lines to change 2, and 1.1 lists the rulings only to C-10 | LOW | C-15: applied with change: 1.1 lists the rulings through C-23, where the verdicts say C-19, since this round also applies C-20 to C-23 | `tasks.md` 1.1, 1.5 |
 | LOW-9: [E]'s pins sentence, "its row is `inspection-error`", is not carved out for the remote-target reads | LOW | C-15: applied: G1 note (c) recorded in D2 as reasoning, not a test | `design.md` D2 |
 | LOW-10: no scenario sends a 403 with `Retry-After` | LOW | C-15: applied: a tenth key in "API failures stay unknown", its header name written as `gh` prints it (C-19) | `project-overview` delta ("API failures stay unknown"); `design.md` D11 |
+
+### Re-read and Codex Findings (round C5)
+
+Lane openRepoProject-3's read-only verifier read the delta `c928cb2..e198548`
+on 2026-10-20, a partial read at the lead's order (shared meter 92%), and found
+no HIGH and no MEDIUM, all eleven of its earlier items applied (LOW-6 and LOW-8
+with changes it judged sound) and seven LOWs; Codex re-reviewed `e198548` on
+2026-10-20 (comments 4324567339, 4324567350 and 4324567356) with one P1 and two
+P2s. The lane's lead accepted all ten (C-24 to C-27, the rulings of
+2026-10-20); C-24's items 3 and 4 and C-25 to C-27 edit
+`specs/project-overview/spec.md`, which is held for lane openRepoProject-4
+(Dependencies and Sequencing), and the rest are committed.
+
+| Finding | Severity | Ruling | Section edited |
+| --- | --- | --- | --- |
+| F1: "a seventh state such as `not-queried`", where C-16 leaves five states | LOW | C-24: applied: "a sixth state" | Decisions ("Fields only in a `--remote` run") |
+| F2: Q16's option A, a departure from D1 and N1, would trigger no re-read, and D7 states D1's mask as fact | LOW | C-24: applied with change: the trigger reads "amends, or records a departure from, change 2's design D1 or clarifications N1 before change 2 archives", with "or" between D1 and N1 as C-24 words it, where lane openRepoProject-3's fix has "and", so that a change to either fires it; the Dependencies sentence also names option A and says that `gh` children follow a recorded departure as they follow D1 and N1, which it would otherwise misstate; D7's pointer, in lane openRepoProject-3's words, sits inside the parenthesis that cites D1 | Dependencies and Sequencing ("Realized after feature 005"); `tasks.md` 2.3; `design.md` D7 |
+| F3: the absolute-`PATH` lookup (C-22) has no AND and no D11 seam | LOW | C-24: applied: lane openRepoProject-3's AND, a planted `gh` in the working directory behind an empty entry and `.`, held, and the planted `gh` in D11 | held `project-overview` delta ("No gh, or a gh without authentication"); `design.md` D11 |
+| F4: the renamed-repository rule has a D11 seam and no scenario | LOW | C-24: applied: an AND, held, in which the answer gives `acme/gizmo` as the queried repository's `nameWithOwner`, so that the open node whose base repository carries that name matches and the merged node carrying the name asked does not; D11's seam names it | held `project-overview` delta ("The chosen pull request and a rejected answer"); `design.md` D11 |
+| F5: task 2.5's "one of them" has no antecedent | LOW | C-24: applied, in lane openRepoProject-3's words | `tasks.md` 2.5 |
+| F6: "DI:1036-1060 names no states", where the packet names "a merged pull request" | LOW | C-24: applied as C-24 words it: the decision now says that DI:1036-1060 names "a merged pull request" (DI:1059-1060) and no other state, in place of lane openRepoProject-3's "names no `closed` state, and gives no state set"; the phrase spans DI:1059-1060, where C-24 cites DI:1059 | Decisions ("Closed pull requests, C-16") |
+| F7: two `api-error` rules trace to no ruling: more than 100 pull requests, and a `data.repository.nameWithOwner` that is not a valid `owner/repository` | LOW | C-24: applied: the first is AE-5's suggested Results text, taken by C-22; the second comes with the `nameWithOwner` field that S-2 adds and C-19 takes, validated as each node's `baseRepository.nameWithOwner` is, S-2's text adding the field without stating the check in words; both are cited in `design.md` D6, where the design states them, and in the AE-5 and S-2 rows above, the spec carrying no citations | `design.md` D6; Council Verdicts (AE-5, S-2) |
+| Codex 4 (P1, on `e198548`, spec.md:453): with more than 64 keys and no `gh`, the rows past the 64th key are both `gh-unavailable` and `request-cap` | P1 | C-25: applied with change, held: `request-cap` applies only when requests can be sent and the cap stops them; with no `gh` found, or when each of the 64 requests that the cap allows ends in exit 4 with nothing on standard output, every keyed row, past the 64th key included, is `unavailable` with that reason; the AND on "The request bounds" covers no `gh` and also the exit-4 case, which C-25 names beside it | held `project-overview` delta (Requests, Results; "The request bounds"); What Changes ("Explicit results"); Decisions ("Run-wide unavailability, C-25 and C-26"); `design.md` D4, D5, D6 |
+| Codex 5 (P2, on `e198548`, spec.md:342): a lookup of `gh` that fails or times out has no remote outcome | P2 | C-26: applied with change, held: such a lookup gives every keyed row `gh-unavailable`, never a row or scan error, the AND cutting it at 5 s on a slow `PATH` directory, and the README's next step reads "install `gh`, or check that `PATH`'s directories are reachable"; [B]'s added paragraph names the lookup beside the remote-target reads and the `gh` children, since [B]'s bounded-task rule would otherwise record its `probe-timeout` and L-11 settles that in the MODIFIED block; and a lookup that the deadline stops before its 5 s end leaves its rows `cancelled`, as an expiry does, so that `gh-unavailable` and `cancelled` never both apply | held `project-overview` delta ([B] paragraph; Results, Isolation; "No gh, or a gh without authentication"); What Changes; Impact (`README.md`); Decisions ("Run-wide unavailability, C-25 and C-26"); `design.md` D5, D10, D11, Risks |
+| Codex 6 (P2, on `e198548`, spec.md:416): reading at most 1 MiB cannot tell a body of exactly 1 MiB from a longer one, nor 64 KiB of status and headers from more | P2 | C-27: applied, held: at most 1 MiB and one byte of the body is read and at most 1 MiB kept, a longer body being `truncated`, and likewise 64 KiB and one byte of status and headers, more being `api-error`; recorded as a reading of DI:1048-1050 | held `project-overview` delta (Results); What Changes ("One bounded request per exact head"); Readings; `design.md` D6 |
