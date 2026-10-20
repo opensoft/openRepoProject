@@ -28,14 +28,12 @@ four identity fields go into the plan and its digest, and are compared at
 every revalidation and first in every rescan; `dev` and `ino` are host-local,
 so a remount that renumbers them fails closed.
 
-Where `root` is null, rows 6 and 7 run in the common directory for a bare
-repository and otherwise where row 3 ran. Row 4, the registry listing, runs
-where row 3 ran in every layout, since the main worktree is not yet known
-when it runs. For a bare repository that is equivalent to running it in the
-common directory: `git worktree list --porcelain -z` reads the same registry
-from a linked worktree and from the common directory and prints the same
-bytes (checked on Git 2.43.0), so the code keeps row 4 where row 3 ran
-(lead ruling R-68, lane 4's note; evidence follow-up 2 may move it).
+Row 4, the registry listing, runs in the directory the argument resolves to,
+where row 3 ran, in every layout, "while the main worktree is not yet
+known", as the `project-command` delta says (its `spec.md:124-133`). Rows 6
+and 7 run in the main worktree where it is known; where `root` is null, in
+the common directory for a bare repository only, and otherwise where row 3
+ran (lead ruling R-75 (j)).
 
 ### Merge target (D8; FR-018, FR-060)
 
@@ -48,12 +46,15 @@ bytes (checked on Git 2.43.0), so the code keeps row 4 where row 3 ran
 Candidates, in order: the manifest's `tracking_branch` less a leading
 `origin/`; the symref of `refs/remotes/origin/HEAD` less
 `refs/remotes/origin/`; `main`; `master`. The manifest is read at `root` by
-one bounded filesystem call: an `st_size` over 1 MiB is `manifest-invalid`
-without a read, and an unreadable manifest or a wrong kind is
-`manifest-invalid` too. No candidate refuses with `no-merge-target` and its
-baseline message (`project:551`). A manifest and `origin/HEAD` naming
-different existing branches: the manifest wins, with the plan note
-`merge-target-conflict`.
+one bounded filesystem call per candidate file: `project.yaml`, then
+`family.yaml` when there is no `project.yaml`, by `Path.is_file()`'s test,
+as `manifest()` picks it (lead ruling R-73 (e)). An `st_size` over 1 MiB is
+`manifest-invalid` without a read, and an unreadable manifest, one that is
+not a mapping or has the wrong kind, and a missing PyYAML are
+`manifest-invalid` too, with the contract's messages. No candidate refuses
+with `no-merge-target` and its baseline message (`project:551`). A manifest
+and `origin/HEAD` naming different existing branches: the manifest wins,
+with the plan note `merge-target-conflict`.
 
 ### Worktree row (FR-006, FR-042, FR-056, FR-057)
 
@@ -103,11 +104,12 @@ the registry records' raw path bytes as listed, fail closed: each is
 `registration-mismatch`, since the porcelain listing does not name the admin
 directory, so the two-way check alone cannot tell them apart (lead rulings
 R-57, withdrawing R-51(c)'s known limit, and R-59 D5). The rule extends to
-two present entries spelled differently with one realpath, or with one
-admin id, which both pass the two-way check: each is `registration-mismatch`
-too. Evidence follow-up 2 builds that extension in region `evidence`; until
-then T049's single-mode match fails closed for P, its realpath matching both
-(lead ruling R-67 (c), lane 3's L-4).
+present rows spelled differently with the same realpath, or with the same
+admin id, which both pass the two-way check: each is
+`registration-mismatch` too, in `--all-safe` and in single mode (lead
+ruling R-67 (c), lane 3's L-4). Until region `evidence` builds that
+extension, T049's single-mode match fails closed for P, its realpath
+matching both.
 
 ### Branch evidence (D6, D7)
 
@@ -218,7 +220,7 @@ message when there is one.
 | --- | --- |
 | `reflog-unavailable` | missing (`ENOENT`, `ENOTDIR`), 0 bytes, or the read reached its 64 KiB bound (65,536 bytes read) |
 | `inspection-error` | any other error on the read |
-| `reflog-unavailable`, the row left unprobed (its marker set; the plan `inspection-incomplete`; R-67 (a)) | the read did not finish within the filesystem budget |
+| `reflog-unavailable`, the row left unprobed (its marker set, its class kept, `probe-timeout` or `deadline-exceeded` in its `errors`; the plan `inspection-incomplete`; R-67 (a), R-73 (c)) | the read did not finish within the filesystem budget |
 | `reflog-unavailable` | a line that is not `<old> <new> ...`, a truncated last line included: the entries cannot decide, never `inspection-error` (lead ruling R-53 P-22) |
 | `reflog-unavailable` | the last entry's new object is not the head |
 | pass | a movement survives |
@@ -227,17 +229,34 @@ message when there is one.
 
 ### Plan (FR-003, FR-019, FR-024, FR-025, FR-031, FR-032; D12 to D14)
 
-What one invocation would do in one repository. Built fresh by every run.
+What one invocation would do in one repository. Built fresh by every run,
+from the resolution's evidence: `resolve_clean_target()` returns `root` and
+`evidence`, `inspect_repository()`'s dict, and `build_plan()` reuses that
+evidence, so that row 3 runs once, where the argument resolves (contract,
+"Git children"). A caller that passes no evidence gets that read and its
+check as before, and the baseline's `Cannot inspect Git repository at ROOT`
+remains only for such a caller (lead rulings R-71 (b) and R-72 (g)).
 
 | Mode | Spelled | Row cap | Selection |
 | --- | --- | --- | --- |
 | `report` | every other invocation without `--all-safe`: plain `project clean`, with or without `--json`, and flags without `--apply` | 256 | what `--all-safe` would select at 128 rows or fewer; null above 128, with the note `inspect-cap` and `rows` |
 | `all-safe` | `--all-safe`, preview or `--apply` | 128 | every row passing every gate, at most 16 |
-| `single` | `--apply --action remove --worktree P` | 128, P exempt and probed first | P alone |
+| `single` | `--apply --action remove --worktree P` | 128, P exempt and probed first, unless P's own realpath cannot be read (below) | P alone |
 | `single`, push and delete-branch | `--apply --action push` or `--action delete-branch`, which take single mode's cap and bounds only (below) | 128, no exemption | the named branch; completeness the batch's |
 
 `clean_mode(args)` (T035) decides the mode as this table spells it: `single`
 for `--apply` with any `--action` (lead rulings R-49 and R-57).
+
+The row cap counts the registry entries that become rows, the main worktree
+and missing rows included: a bare repository's `bare` entry, and a first
+record equal to `common_dir` with no main worktree named, are no rows (D8),
+so neither counts (lead ruling R-73 (d), a fill of the delta's "every
+registry entry counting"). In mode single, when P's own realpath cannot be
+read, P's match is undecided: no entry is exempt from the cap, the rows
+inspected are the main worktree and the 127 linked worktrees with the
+smallest paths, as the delta's scenario "Row cap and planning failures"
+takes them, and the plan refuses with `inspection-incomplete` (lead rulings
+R-73 (d) and R-74 (a)).
 
 Fields, in the delta's envelope order: `schema_version`, `observed_at`,
 `mode`, the baseline `root`, `target_branch` and `tracking_freshness`,
@@ -251,8 +270,11 @@ main worktree first, then by raw path bytes; `selected`, `excluded` and the
 execution order are by raw path bytes.
 
 Completeness: a plan is `incomplete` when the row cap is exceeded
-(`inspect-cap`), a repository-wide probe failed or a row is
-`inspection-error` (`inspection-incomplete`), or the deadline passed while
+(`inspect-cap`), a repository-wide probe failed, a row is
+`inspection-error`, or, in mode single, P matches several entries or its
+match is undecided, its own realpath unread among them
+(`inspection-incomplete`; lead rulings R-67 (b), R-73 (d) and R-75 (b)),
+or the deadline passed while
 planning (`deadline-exceeded`), each row it stopped being `inspection-error`
 with a `deadline-exceeded` row error, never left unprobed (lead rulings R-67
 (a) and R-69; T099). In single mode those three are non-blocking
@@ -306,7 +328,13 @@ that did not run is null (`BA:1163-1174` at `da33d92` shows a ref-listing
 refusal with `path_present: true`). A spawned target's values come from the
 rescan after the child is reaped. Target notes: `orphaned-directory` (entry
 gone, path present) and `partially-removed` (a child killed at the ceiling,
-or whose exit was not observed, left its entry or path).
+or whose exit was not observed, left its entry or path). The
+`partially-removed` note appears only when the rescan shows the entry or the
+path remaining (the `project-clean` delta's `spec.md:922-925`), which is how
+its `spec.md:253-256`, "otherwise `unknown` with the note
+`partially-removed`", is read: a ceiling target whose rescan established
+nothing is `unknown` with `removal-ceiling` and no note, failing safe (lead
+ruling R-76 (c)).
 
 ### Revalidation step and `probes_performed` (D7; FR-046, FR-047)
 
