@@ -10,7 +10,7 @@ requirements. Citations follow the proposal's key: the packet at `da33d92`
 change 2 (`APO`, `APO/ov`) at `961c405`, draft PR #19 at `c462d87` (`PR19/pc`,
 `PR19/rs`), and `project:N` at `961c405`; main is now `e9d6711`, with the same
 `openspec/`, `ideation/` and `project` (L-15). The lane's rulings are L-1 to
-L-17 and B-1 to B-42, and A-9, A-23 and A-24 for #23; this change's own
+L-17 and B-1 to B-45, and A-9, A-23 and A-24 for #23; this change's own
 decisions are CD-1 to CD-18 in `proposal.md`, and the alignment review's
 findings (SA-n, QA-n, G1 to G5) are resolved in its table. The council (P-n,
 S-n and AE-n) read `9ebe9f0`; its VALID verdicts, ruled as B-16 to B-24, are
@@ -29,7 +29,10 @@ and B-36 (D4's account of #26 at `9ff8202`; `tasks.md` 2.2 ticked again on lane
 `fffc194`, ruled as B-38 and B-39, the last two LOWs of lane 3's read, ruled as
 B-40, the lead's B-41 on this round's own signal sentence and B-42 on D4's
 account of #26 are applied in round B6 (proposal, "Re-read and Codex Findings
-(round B6)").
+(round B6)"). Lane 3's three optional LOWs from its confirm read of round B6 at
+`e399309`, ruled as B-43, and Codex's two findings on `e399309`, ruled as B-44
+and B-45, are applied in round B7 (proposal, "Re-read and Codex Findings
+(round B7)").
 
 How the packet's contract and the rulings map to the decisions below:
 
@@ -79,6 +82,9 @@ How the packet's contract and the rulings map to the decisions below:
 | B-40 | lane 3's last two LOWs on `fffc194`: B-30's row cites the SHALL NOT sentence's end at `spec.md:35-36`; the quotations of #26's `ca96701` ("13 of its 16 targets ... 11 in the worst case") and of B-19 ("13 at `ca96701`") are verbatim | D4 |
 | B-41 | a signal received before the stage classifies any outcome of its preflight, a difference, an error, a byte total past either cap, a `probe-timeout` or a floor or deadline stop, takes the signal's outcome: the stage `not-attempted` with `target-stopped`, nothing deleted, the target and every later one `not-attempted` with `interrupted`, the exit status the signal's; the lead's ruling on this round's own sentence that left a found difference `refused`, which B-39 widened | D1, D7, D8, D11, D12, D14, Risks |
 | B-42 | D4 restates #26 at `9b67e8c` exactly, in #26's own words for its counts: 9 of 16 through their stage, 8 in the worst case of the reflog proof, through one worker; at least 5, or 3, at a thread per call, 6, or 5, in the worst order a run can take; all 16 fit through a worker at change 1's measured costs, and at a thread per call at least the 16th target is deferred, where D4 had quoted #26's counts from before its round A5 ("5 and 5, or 4 and 3") | D4 |
+| B-43 | lane 3's confirm read of round B6 at `e399309`: "work remaining" in the proposal's 10 s threshold, the floor stop named in the signal AND of "A signal during a cache stage", and the signal exception at D4's run byte total | D4 |
+| B-44 | the walk and the whole-list preflight enumerate a directory by `os.scandir` on its descriptor, lazily, one entry at a time, closed as soon as the cap decides, never holding a whole directory's listing; one bounded enumeration is one call under the per-call budget, as a listing was, so no call count or fit moves; D9 checks `os.scandir` in `os.supports_fd` (Codex's P2 at `specs/project-clean/spec.md:873` on `e399309`) | Context, D3, D4, D7, D9, D12, D14, Risks |
+| B-45 | the stall line also needs at least one later candidate left with `cache-cap` by the 16-enumeration cap; with exactly 16 candidates, each held for a persistent reason, each row prints its own reason and next step and no stall line prints (Codex's P2 at `specs/project-clean/spec.md:928` on `e399309`) | D4, D11, D14, Risks |
 
 What in `project` shapes the approach:
 
@@ -120,6 +126,7 @@ Facts checked here, on Git 2.43.0 and Linux 6.18, with Python 3.10.21 and
 | `O_NOFOLLOW`, `O_DIRECTORY`; `open`, `stat`, `unlink`, `rmdir` in `os.supports_dir_fd`; `stat` in `os.supports_follow_symlinks`; `listdir`, `scandir` in `os.supports_fd` | all present on both Pythons on Linux; macOS was not checked here and is not verified by CI, whose jobs `test (3.10)` and `test (3.12)` run on `ubuntu-latest` only (D9) |
 | `status --porcelain=v1 -z --untracked-files=normal --ignored=matching` with eight ignored `a0.pyc` to `a7.pyc`, an ignored `__pycache__/` and an ignored `zz.env` | ignored records in path order, so the first eight, the combined probe's samples, are the `.pyc` files and `zz.env` comes after them |
 | `os.access` in `os.supports_dir_fd`, `os.supports_effective_ids` and `os.supports_follow_symlinks`; `os.access("__pycache__", os.W_OK \| os.X_OK, dir_fd=fd, effective_ids=True, follow_symlinks=False)` on a `__pycache__` of mode 0555, as a user other than root | all three present; the check returns false, and an `os.unlink` of an entry relative to that directory fails with `EACCES` (errno 13); checked on Python 3.12.3 only, on 2026-10-19 (B-20) |
+| `os.scandir(fd)` on the descriptor of a `__pycache__` holding 100,000 empty files on ext4, taken one entry at a time to the 513th and closed (B-44) | one descriptor more while it is open, a duplicate, and none after its close; while it is open the duplicate shares the descriptor's offset, and its close rewinds it, so the descriptor then reads offset 0, `fstat`s to the same device and inode and gives a second enumeration all 100,000 entries; the Python-traced memory of the stopped enumeration peaked at about 1 KB, against 7.2 to 8.0 MB for `os.listdir(fd)` on the same directory; checked on Python 3.10.21, 3.12.3 and 3.13.15 on 2026-10-20 |
 
 ## Goals / Non-Goals
 
@@ -265,14 +272,30 @@ The walk then takes the records in canonical order, depth-first: it opens each
 directory it records once, from the worktree root down, relative to its
 parent's descriptor and checking that it is a non-symlink directory on the
 root's device, keeping open only the directories above the current record; it
-`lstat`s each listed file relative to its parent, lists each listed cache
-directory, `lstat`s each entry relative to it and descends into each entry
-named `__pycache__` that is a directory, counting every object it records,
-entries and directories alike, toward the per-worktree cap of 512 (B-33),
-summing the regular files' `st_size`, and stopping at the first entry outside
-the shape or at a per-worktree cap. Opening each recorded directory once keeps
-the walk's opens within its recorded objects, where a chain per record would
-cost depth times records (D4).
+`lstat`s each listed file relative to its parent, enumerates each listed cache
+directory (below), `lstat`s each entry relative to it and descends into each
+entry named `__pycache__` that is a directory, counting every object it
+records, entries and directories alike, toward the per-worktree cap of 512
+(B-33), summing the regular files' `st_size`, and stopping at the first entry
+outside the shape or at a per-worktree cap. Opening each recorded directory
+once keeps the walk's opens within its recorded objects, where a chain per
+record would cost depth times records (D4).
+
+A directory is enumerated by `os.scandir` on its descriptor, iterated lazily,
+one entry at a time, and closed as soon as the cap decides, at the row's 513th
+recorded object, and never by `os.listdir`, which builds the whole directory's
+listing before the cap can act, so that a `__pycache__` of millions of entries
+could take unbounded memory, which a timeout, abandoning the worker, cannot
+reclaim (B-44, Codex's P2 at `specs/project-clean/spec.md:873` on `e399309`).
+Each bounded enumeration is one call on the worker under the per-call budget,
+as a listing was: it takes entries until the directory ends or the cap decides
+and closes the iterator before it returns. No enumeration holds a whole
+directory's listing, so a row's walk holds at most 513 entries whatever a
+directory holds, and a call abandoned at its budget holds no more, since the
+cap still closes it. CPython's `os.scandir` of a descriptor works on a
+duplicate of it and rewinds it on close, so the walk's own descriptor stays
+usable for the `lstat` calls and the descent that follow (Context). The
+whole-list preflight enumerates the same way (D7).
 
 For a row whose walk finished with `blocking` 0 and within the per-worktree
 caps, the walk then checks each directory that its stage would change, each
@@ -298,7 +321,7 @@ filesystem, fails the stage's first removal instead, which then ends the stage
 | `cache_entries` | 512 | Git records, and recorded objects, the cache entries and every directory the plan records (B-33), per worktree | `cache-cap` |
 | `cache_bytes` | 268,435,456 (256 MiB) | `lstat` sizes of regular files per worktree | `cache-cap` |
 | `cache_entries_total` | 4,096 | cache entries over the invocation's cache-only rows | that row `cache-cap`, its entries uncounted |
-| `cache_bytes_total` | 1,073,741,824 (1 GiB) | bytes, likewise, and at each cache stage's preflight the bytes it measures (B-26) | likewise; at a preflight, that target `refused` with `cache-changed` |
+| `cache_bytes_total` | 1,073,741,824 (1 GiB) | bytes, likewise, and at each cache stage's preflight the bytes it measures (B-26) | likewise; at a preflight, that target `refused` with `cache-changed`, where no signal was received first (B-41) |
 
 A cap reached keeps the row `ignored-local-files` and the plan complete, so the
 batch removes everything else, and a later run takes the rest unless each of
@@ -313,7 +336,12 @@ allows, an enumeration that failed, or a directory the user cannot change
 (B-20). The stall line (B-21, D11) is printed only when each of the first 16
 candidates in canonical order is held at the rung for a persistent reason, any
 one of these: `blocking` above 0; `cache-cap` from a per-worktree cap;
-`cache-unverified`; or `cache-unwritable` (B-32). The test reads those reasons
+`cache-unverified`; or `cache-unwritable` (B-32), and when, besides those 16,
+at least one later candidate is left with `cache-cap` by the 16-enumeration
+cap, a row the line can name as held back (B-45, Codex's P2 at
+`specs/project-clean/spec.md:928` on `e399309`). With exactly 16 candidates,
+each held so, no row waits behind them: each row's own reason and next step
+print as usual, and no stall line prints. The test reads those reasons
 and never `blocking` alone, which is null for `cache-cap` and
 `cache-unverified` and 0 for `cache-unwritable`, so that sixteen rows held by
 those three print the line too (Codex's P2 at `specs/project-clean/spec.md:910`
@@ -342,7 +370,12 @@ every earlier target whose stage passed its preflight in this run, and a
 target whose bytes would take that total past 1 GiB ends `refused` with
 `cache-changed`, nothing deleted, as one past the per-worktree cap at its
 preflight does; the run then stops at that target (CD-1), exit 2, and the
-earlier targets keep their results. Entries need no running total, since the
+earlier targets keep their results. Where a signal was received before the
+stage classified that outcome, the signal decides instead, as for every
+outcome of the preflight (B-41, D7): the stage is `not-attempted` with
+`target-stopped`, nothing deleted, the target and every later one
+`not-attempted` with `interrupted`, and the exit status the signal's (B-43,
+lane 3's LOW 3). Entries need no running total, since the
 preflight requires each listed cache's entries to equal the plan's, whose sum
 the plan already capped at 4,096. The check adds no filesystem call: the
 preflight already `lstat`s every entry it re-lists.
@@ -365,22 +398,28 @@ path and each directory below it down to that one, each open checking its
 identity, and then the listed caches in that directory from its descriptor.
 Beyond the chains it makes two calls per cache entry that is a file (its
 `lstat` at the preflight, its unlink after it) and five per one that is a
-directory (its `lstat`, open and listing at the preflight, its open and removal
-after it). For an ordinary tree, `__pycache__` directories of `.pyc` files
-under package directories a few levels deep, that is about 1,100 calls for 512
-entries and about 8,500 for the 4,096 of a run. The plan-time walk makes one
-call per directory open, per listing and per entry `lstat`, and one access
-check per directory a stage would change (B-20); it opens each directory it
-records once and counts every directory it records toward the per-worktree cap
-with the entries (D3, B-33). It walks more than the stages remove: each of the
-16 enumerated rows can be walked to its per-worktree cap of 512 recorded
-objects before the invocation's totals reject it, and a row that the totals
-reject is uncounted from the 4,096 but was walked (B-25, Codex's P2 at
-`design.md:294` on `90d18ee`). The walk's bound is therefore 16 x 512 = 8,192
-recorded objects: about 9,000 calls for ordinary trees, whose objects are
+directory (its `lstat`, open and bounded enumeration at the preflight, its open
+and removal after it). For an ordinary tree, `__pycache__` directories of
+`.pyc` files under package directories a few levels deep, that is about 1,100
+calls for 512 entries and about 8,500 for the 4,096 of a run. The plan-time
+walk makes one call per directory open, per bounded enumeration and per entry
+`lstat`, and one access check per directory a stage would change (B-20); it
+opens each directory it records once and counts every directory it records
+toward the per-worktree cap with the entries (D3, B-33). It walks more than
+the stages remove: each of the 16 enumerated rows can be walked to its
+per-worktree cap of 512 recorded objects before the invocation's totals reject
+it, and a row that the totals reject is uncounted from the 4,096 but was walked
+(B-25, Codex's P2 at `design.md:294` on `90d18ee`). The walk's bound is
+therefore 16 x 512 = 8,192 recorded objects: about 9,000 calls for ordinary
+trees, whose objects are
 mostly files, and at most four calls an object, a nested `__pycache__`
-directory's `lstat`, open, listing and access check, about 32,800 where every
-object is a directory.
+directory's `lstat`, open, bounded enumeration and access check, about 32,800
+where every object is a directory. A directory's streaming enumeration, closed
+when the cap decides (B-44, D3), counts as one call under the per-call budget,
+as its listing did, so no call count, time or fit of this section moves: the
+stages' 1,100 and 8,500 calls, the walk's 9,000 and 32,800, the 683 calls a
+row and the 43,947 opens a pass of B-33's chains are as before, and so are
+A-9's and B-3's fits.
 Through one daemon worker per stage (D12), the hand-off measured 169-224 us a
 call at load 30 to 37 on this workstation, and 393-622 us for a thread per
 call, the shape of feature 004's `fs_call` (`clarifications.md`, S-4): at
@@ -675,8 +714,14 @@ removals (D4).
 
 The preflight, before any removal: for each directory holding a listed path, in
 canonical order, open its chain once, checking every identity; then for each
-listed cache in it: for a directory, list it and `lstat` each entry relative to
-it, require the allowlisted shape, require each nested `__pycache__` to carry
+listed cache in it: for a directory, enumerate it by `os.scandir` on its
+descriptor, iterated lazily, one entry at a time, as the walk does (D3), and
+close the enumeration as soon as it yields the first entry beyond the number
+the plan recorded for that listed cache, which is a difference, so that no
+enumeration holds a whole directory's listing (B-44); the duplicate descriptor
+that CPython's `os.scandir` works on is rewound and closed with it, so the
+directory's own descriptor stays usable; `lstat` each entry relative to it,
+require the allowlisted shape, require each nested `__pycache__` to carry
 its planned identity, require the cache to hold exactly its planned number of
 entries, and record the names to remove; for a file, `lstat` it relative to
 that directory and require a regular file with an allowed suffix; keep the
@@ -816,7 +861,9 @@ Once per invocation, before any enumeration, a pure function checks
 `hasattr(os, "O_NOFOLLOW")` and `hasattr(os, "O_DIRECTORY")`; `os.open`,
 `os.stat`, `os.unlink`, `os.rmdir` and `os.access` in `os.supports_dir_fd`;
 `os.stat` and `os.access` in `os.supports_follow_symlinks`; `os.access` in
-`os.supports_effective_ids` (B-20); and `os.listdir` in `os.supports_fd`. False
+`os.supports_effective_ids` (B-20); and `os.scandir` in `os.supports_fd`, the
+streaming enumeration of D3 and D7, in place of `os.listdir` (B-44; the
+Context table lists both). False
 makes every row that reaches the `ignored-local-files` rung holding ignored
 records `cache-unsupported-platform` with null counts, runs no enumeration, and
 leaves the batch as change 1's (CD-3). A row that an earlier rung classified
@@ -892,7 +939,9 @@ substituted:
   when each of the first 16 candidates in canonical order is held at the rung
   for a persistent reason, any one of `blocking` above 0, `cache-cap` from a
   per-worktree cap, `cache-unverified` or `cache-unwritable`, the test never
-  on `blocking` alone (B-32, D4), and built from those rows' reasons with
+  on `blocking` alone (B-32, D4), and only when at least one later candidate
+  is left with `cache-cap` by the 16-enumeration cap, the rows the line names
+  (B-45), and built from those rows' reasons with
   every zero count left out, a `cache-cap` row counting as one past a
   per-worktree cap when its counts are null: `  these cache-cap rows will not
   drain while the 16 candidates
@@ -903,7 +952,9 @@ substituted:
   of change 1's index-gate line (CAS design.md:743-746). It never tells the
   person to remove by hand a worktree whose state was not established. The `W`
   part is this design's completion of B-21 for B-20's reason, since 16
-  `cache-unwritable` rows stall the same way.
+  `cache-unwritable` rows stall the same way. With exactly 16 candidates, each
+  held for a persistent reason, no row waits behind them, so each row's own
+  reason and next step print as usual and no stall line prints (B-45).
 - A stop at a cache stage, before the stop block: `Cache disposal at PATH
   refused (cache-changed); nothing was deleted.`, printed only when no entry was
   removed and no removal is outstanding and, for a stage that ended before its
@@ -937,9 +988,10 @@ does (B-16): its reads, as change 1 treats its identity reads (CAS
 design.md:304-306), and its unlinks and directory removals, as change 1 treats
 its removal child.
 
-- A read (an open, a listing, an `lstat`) is waited for by the main thread with
-  `min(5 s, work remaining - removal_floor_seconds)`. A read past that wait
-  abandons the worker and ends the stage: `partial` after the first removal;
+- A read (an open, a bounded enumeration, an `lstat`) is waited for by the
+  main thread with `min(5 s, work remaining - removal_floor_seconds)`. A read
+  past that wait abandons the worker and ends the stage: `partial` after the
+  first removal;
   before it, the slot is read first (B-39, B-41), and a signal recorded by then
   ends the stage `not-attempted` with the target `interrupted`, whichever wait
   it was; otherwise `refused` when 5 s was the wait, which holds when at least
@@ -1084,6 +1136,19 @@ cache phase" and "A file placed in a cache directory during the stage".
   B-41); the access check stubbed to false where the runner is root; the
   platform check stubbed to false; the counting `git` wrapper of change 1 for
   the enumeration's argument vector, directory and count.
+- The streaming enumeration (B-44): a test hook on the walk's call table counts
+  the entries taken from the enumeration of a `__pycache__` holding 100,000
+  entries, under the ignore rule `__pycache__/`, and sees at most 513, the row
+  `cache-cap` and nothing deleted, as the AND of "Cache caps" says; the same
+  hook on the preflight sees, for a listed cache that gained entries after the
+  plan, at most one entry beyond the number the plan recorded before the stage
+  ends `refused` with `cache-changed`; and after each enumeration is closed the
+  directory's descriptor still `fstat`s to its identity and a second
+  enumeration from it starts at its first entry, as the Context's check found.
+- The stall line's held-back row (B-45): with exactly 16 candidates, each held
+  for a persistent reason, the human report prints each row's own reason and
+  next step and no stall line, as the AND of "Cache caps" says, and with a
+  seventeenth candidate added it prints the line.
 - Every existing test keeps passing, among them
   `test_clean_preserves_ignored_files_in_an_otherwise_merged_worktree`
   (tests:949, `local.env`) and feature 004's tests, whose fixtures hold no
@@ -1111,6 +1176,11 @@ cache phase" and "A file placed in a cache directory during the stage".
 - [A worktree with more than 512 recorded cache objects, or 256 MiB, is never
   disposed of by `project`] -> It is preserved as change 1 preserves it, and
   its preview says `cache-cap`; the person deletes the caches and re-runs.
+- [A cache directory holding far more entries than the cap, such as millions in
+  one `__pycache__`] -> The walk and the preflight enumerate it one entry at a
+  time and close the enumeration when the cap decides, so a row's walk holds at
+  most 513 entries and a call abandoned at its budget holds no more; the row
+  stays `cache-cap` (B-44, D3).
 - [A cache tree that is deep and spread over many directories] -> Every
   directory the plan records counts toward the 512 objects, the walk opens each
   once, and the stage opens one chain per directory with removals in each pass
@@ -1131,6 +1201,7 @@ cache phase" and "A file placed in a cache directory during the stage".
   test keeps out every row whose samples show a blocking name (D2); the rest is
   a stall the human report names, as change 1 names its index-gate stall, with
   how many of the 16 stay for each cause and each cause's next step (B-21),
+  whenever a later candidate waits behind them (B-45),
   never advising the person to remove by hand a worktree whose state was not
   established (D4, D11).
 - [A partial phase leaves some caches removed and the worktree in place] ->
