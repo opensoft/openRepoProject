@@ -6,24 +6,24 @@ Status: draft; alignment review and council resolved on PR #29, round C4's
 spec edits committed on lane openRepoProject-4's agreement of 2026-10-20;
 round C5's edits for lane openRepoProject-3's delta read and Codex's findings
 on `e198548` (C-24 to C-29) applied, their `project-overview` spec edits
-committed on lane openRepoProject-4's agreement of 2026-10-20; round C6's
-edits for Codex's finding on `67e43ae`, three points found in applying it
-and lane openRepoProject-3's folded read of `e198548..67e43ae` (C-30 to C-34)
-applied, their `project-overview` spec edits committed on lane
-openRepoProject-4's agreement of 2026-10-20, and C-35, lane
-openRepoProject-3's narrowing of the per-directory rule of the lookup of
-`gh`, applied in `design.md` alone, with no spec edit; round C7's edits for
-lane openRepoProject-3's confirm read of round C6c (C-36, D5's rationale
-reworded to what was observed) and Codex's finding on `1c32667` (C-37, a
-`parse_int` hook that bounds an integer literal at parse time on every
-supported Python) applied in `design.md` alone, with no spec edit;
-ratification by Brett Heap pending; nothing here is ratified. Governing issue:
-opensoft/openRepoProject#25, claimed by lane openRepoProject-5 (comment
-6111242617); refs #6, the record of the project
-maintenance design packet. Proposed on Brett Heap's word "usage reset, resume
-all. read handoff and resume and fan out wide and do as much as possible in
-parallel" (2026-10-11), read by lanes openRepoProject-4 and openRepoProject-5
-as a go for the candidate list they put to him.
+committed on lane openRepoProject-4's agreement of 2026-10-20; round C6's edits
+for Codex's finding on `67e43ae`, three points found in applying it and lane
+openRepoProject-3's folded read of `e198548..67e43ae` (C-30 to C-34) applied,
+their `project-overview` spec edits committed on lane openRepoProject-4's
+agreement of 2026-10-20, and C-35, lane openRepoProject-3's narrowing of the
+per-directory rule of the lookup of `gh`, applied in `design.md` alone, with no
+spec edit; round C7's edits for lane openRepoProject-3's confirm read of round
+C6c (C-36, D5's rationale reworded to what was observed) and Codex's finding on
+`1c32667` (C-37, a `parse_int` hook that bounds an integer literal at parse time
+on every supported Python) applied in `design.md` alone, with no spec edit;
+round C8's edits for lane openRepoProject-3's confirm read of round C7 (C-38)
+applied in `design.md` alone, with no spec edit; ratification by Brett Heap
+pending; nothing here is ratified. Governing issue: opensoft/openRepoProject#25,
+claimed by lane openRepoProject-5 (comment 6111242617); refs #6, the record of
+the project maintenance design packet. Proposed on Brett Heap's word "usage
+reset, resume all. read handoff and resume and fan out wide and do as much as
+possible in parallel" (2026-10-11), read by lanes openRepoProject-4 and
+openRepoProject-5 as a go for the candidate list they put to him.
 
 Citations are `file:line`. The packet is cited at `da33d92`, equal to main
 `961c405` for `ideation/`: `DI`, `SY`, `BA` and `OV` are its
@@ -42,7 +42,7 @@ executable. Change 1's evidence model,
 `Repository inspection requires Git 2.36 and shares one evidence model`
 (CAS/cmd:90), is [E]. The lane's rulings are cited as L-1 to L-9 and C-1 to C-8
 (2026-10-11), L-10 to L-15, B-14, C-9 and C-10 (2026-10-18), L-16, L-17 and
-C-11 to C-14 (2026-10-19), and F-3 and C-15 to C-37 (2026-10-20, C-16 to C-22
+C-11 to C-14 (2026-10-19), and F-3 and C-15 to C-38 (2026-10-20, C-16 to C-22
 being the council's verdicts). `PR19/cmd` is draft PR #19's
 `openspec/changes/add-project-clean-all-safe/specs/project-command/spec.md` at
 `c462d87`.
@@ -660,22 +660,22 @@ change 1 lands), **L-17** (change 1's evidence model, which this change and
 re-bases its block on the other's archived block, and each block is held until
 lane openRepoProject-2 has checked its diff, which it did for this change's
 block on 2026-10-19, with one fix), and **C-11** to **C-14** below. From the
-rulings and council verdicts of 2026-10-20: **F-3** (the lead's live check
-that GitHub's commit association returns no pull request closed without
-merging), **C-15** (the council's inputs), **C-16** to **C-22** (the council's
-verdicts, below), **C-23** (Open Questions 3), **C-24** to **C-29** (round
-C5: lane openRepoProject-3's delta read of `e198548`, Codex's three findings
-on it and two points found in applying them; Decisions and Readings below,
-and "Re-read and Codex Findings (round C5)"), **C-30** to **C-34** (round
-C6: Codex's finding on `67e43ae`, the bounded inspection of a remote's URL,
-three points found in applying it, and lane openRepoProject-3's folded read
-of `e198548..67e43ae`; Decisions and Readings below, and "Re-read and Codex
-Findings (round C6)"), **C-35** (the lookup of `gh`'s per-directory rule,
-lane openRepoProject-3's narrowing, applied in `design.md` alone; "Re-read and
-Codex Findings (round C6)"), **C-36** (D5's rationale for that rule reworded
-to what was observed) and **C-37** (Codex's P2 on `1c32667`: a `parse_int`
-hook bounds an integer literal at parse time); both are applied in `design.md`
-alone ("Re-read and Codex Findings (round C7)").
+rulings and council verdicts of 2026-10-20: **F-3** (the lead's live check that
+GitHub's commit association returns no pull request closed without merging),
+**C-15** (the council's inputs), **C-16** to **C-22** (the council's verdicts,
+below), **C-23** (Open Questions 3), **C-24** to **C-29** (round C5: lane
+openRepoProject-3's delta read of `e198548`, Codex's three findings on it and
+two points found in applying them; Decisions and Readings below, and "Re-read
+and Codex Findings (round C5)"), **C-30** to **C-34** (round C6: Codex's finding
+on `67e43ae`, the bounded inspection of a remote's URL, three points found in
+applying it, and lane openRepoProject-3's folded read of `e198548..67e43ae`;
+Decisions and Readings below, and "Re-read and Codex Findings (round C6)"),
+**C-35** (the lookup of `gh`'s per-directory rule, lane openRepoProject-3's
+narrowing, applied in `design.md` alone; "Re-read and Codex Findings (round
+C6)"), **C-36** (D5's rationale for that rule reworded to what was observed),
+**C-37** (Codex's P2 on `1c32667`: a `parse_int` hook bounds an integer literal
+at parse time) and **C-38** (lane openRepoProject-3's four LOWs on C7); all are
+applied in `design.md` alone ("Re-read and Codex Findings (rounds C7 and C8)").
 
 Packet open decisions taken, each citing the text that leaves it open:
 
@@ -1279,7 +1279,7 @@ spec text is unchanged.
 | L4: "`request-cap` applies only when requests can be sent and the cap stops them" is false for a lookup that the deadline cuts, which leaves the keys past the 64th `request-cap` | LOW | C-34: applied, by dropping the gloss, as C-34 prefers, since the Requests paragraph's expiry sentence and the Results paragraph then state the whole order alone: the run-wide `unavailable`, then `request-cap`, then `cancelled`; the copies follow: `design.md` D4 makes the rest `request-cap` unless the run-wide `unavailable` applies, a lookup the deadline cuts being no such case, and the Decisions bullet states the order; the round C5 row for Codex 4 keeps the gloss as that round's record | `project-overview` delta (Requests); Decisions ("Run-wide unavailability, C-25 and C-26"); Dependencies and Sequencing; `design.md` D4 |
 | L5: "and no other state", where the packet also names unavailable and unknown results | LOW | C-34: applied: "and no other pull-request state" | Decisions ("Closed pull requests, C-16") |
 | L6: the rejected `request-cap` alternative credits Codex's P1 on `e198548` with the completeness reason, which that P1 does not give | LOW | C-34: applied: the P1 is cited for the conflict it found, the two outcomes both applying, and the reason is the proposal's own, the one "`unavailable` beyond DI:1041-1042" gives, with C-25 | Decisions ("Run-wide unavailability, C-25 and C-26") |
-| L3, the rest: a `PATH` directory that gives an error, for which the lookup of `gh` states no rule, a missing directory being common | LOW | C-35, as amended by lane openRepoProject-3's narrowing, which the lead adopted before any edit in place of C-35's first wording (a directory skipped for any reason): applied, design only: the lookup skips a directory where `gh` is absent, as POSIX `execvp`'s search and a shell's own search skip it (ENOENT, ENOTDIR or EACCES on the directory or on its `gh` entry, or an entry that is not a regular file with execute permission), so that the `gh` found is the one the person's shell would run; any other error from a directory or its entry, such as EIO, ELOOP or ESTALE, fails the lookup, and every queried row with a key is then `unavailable` with `gh-unavailable`, as the spec's "fails" already states; the 5 s limit and the deadline stay the only cuts of the lookup as a whole; the spec's "finds none, fails, or reaches its 5 s limit" speaks of the lookup as a whole, so the rule fills D5 and changes no spec text; D11 gains two tests, a mode-000 directory before the real `gh`'s directory, which finds `gh`, and a directory whose `gh` is an ELOOP symlink, before it, which gives `gh-unavailable`; the writer checked both cases on 2026-10-20 with a prototype of the rule (the mode-000 directory is skipped and `gh` found; the ELOOP symlink fails the lookup), and recorded in D5 what glibc 2.39's `execvp` does with each injected error and what bash 5.2.21, zsh 5.9 and dash do with an ELOOP `gh`, so that its rationale rests on what was observed (round C7 rewords that rationale, C-36) | `design.md` D5, D11 |
+| L3, the rest: a `PATH` directory that gives an error, for which the lookup of `gh` states no rule, a missing directory being common | LOW | C-35, as amended by lane openRepoProject-3's narrowing, which the lead adopted before any edit in place of C-35's first wording (a directory skipped for any reason): applied, design only: the lookup skips a directory where `gh` is absent, as POSIX `execvp`'s search and a shell's own search skip it (ENOENT, ENOTDIR or EACCES on the directory or on its `gh` entry, or an entry that is not a regular file with execute permission), so that the `gh` found is the one the person's shell would run; any other error from a directory or its entry, such as EIO, ELOOP or ESTALE, fails the lookup, and every queried row with a key is then `unavailable` with `gh-unavailable`, as the spec's "fails" already states; the 5 s limit and the deadline stay the only cuts of the lookup as a whole; the spec's "finds none, fails, or reaches its 5 s limit" speaks of the lookup as a whole, so the rule fills D5 and changes no spec text; D11 gains two tests, a mode-000 directory before the real `gh`'s directory, which finds `gh`, and a directory whose `gh` is an ELOOP symlink, before it, which gives `gh-unavailable`; the writer checked both cases on 2026-10-20 with a prototype of the rule (the mode-000 directory is skipped and `gh` found; the ELOOP symlink fails the lookup), and recorded in D5 what glibc 2.39's `execvp` does with each of twelve injected errors and what bash 5.2.21, zsh 5.9 and dash do with an ELOOP `gh`, so that its rationale rests on what was observed (round C7 rewords that rationale, C-36; round C8 names the twelve errors, ENOEXEC among them, and adds the shells' runs on the three errors the lookup skips, C-38) | `design.md` D5, D11 |
 
 ### Re-read and Codex Findings (round C7)
 
@@ -1295,5 +1295,21 @@ still the file lane openRepoProject-4 agreed, sha256
 
 | Finding | Severity | Ruling | Section edited |
 | --- | --- | --- | --- |
-| LOW-1 (lane openRepoProject-3's confirm read, `design.md` D5 and the round C6 table's C-35 row): D5 says the lookup "does not choose between searches that disagree, and so is stricter than glibc's on ESTALE, ENODEV and ETIMEDOUT too", but the shells were run on ELOOP only, so no disagreement was seen on those three; "too" has no antecedent; the glibc list omits ENAMETOOLONG, ENOMEM and E2BIG; and the row's "what glibc, bash, zsh and dash do with each error" says more than was run | LOW | C-36: applied: the rule is unchanged; D5 now says that the lookup skips only what every search checked skips, and that an error that not every search was seen to skip fails it; that glibc 2.39's `execvp` stops on ELOOP, EIO, ENAMETOOLONG, ENOMEM and E2BIG and goes on past ENOENT, EACCES, ENOTDIR, ESTALE, ENODEV and ETIMEDOUT; that bash 5.2.21, zsh 5.9 and dash were recorded for ELOOP only, which each of them skips, going on to the later `gh`, where glibc stops; and that ESTALE, ENODEV and ETIMEDOUT, which glibc goes on past and the shells were not run on, are not known to be skipped by every search, and so fail the lookup with the rest; the C-35 row above now says what glibc does with each injected error and what the shells do with an ELOOP `gh`; no other copy of the sentence stands in the three files | `design.md` D5; the C-35 row of round C6 |
-| Codex 8 (P2, on `1c32667`, `design.md:457`, 2026-10-20T21:12:35Z): D6 relies on `json.loads` raising `ValueError` for a `number` of 5,000 digits, which is Python's limit of 4,300 digits on converting a string to an integer, present only from 3.10.7 and 3.11 while AGENTS.md says Python 3.10+, so on 3.10.0 to 3.10.6 such a body parses, its `number` passes the positive-integer check and a matching `url` passes too, against "API failures stay unknown", which makes it `api-error` | P2 | C-37: applied, design only, since the spec already requires the outcome: the parse passes `json.loads` a `parse_int` hook that receives each integer literal's text and raises, before converting it, when the text has more than 10 digits, a sign not counted (GraphQL's `Int`, which `number` is, is a signed 32-bit integer, at most 2,147,483,647, which has 10 digits); the parse then fails and the key is `api-error` by D6's rule that the parse catches every exception, so the outcome no longer depends on the interpreter's limit, and the cost of converting an integer literal within the 1 MiB body is bounded where it is quadratic; the node check also requires a `number` of at most 2,147,483,647; D6's account of the council's measurement is reworded as evidence, with the check of this round (the hook receives the literal's text, an exception raised there propagates unwrapped, a plain `json.loads` of 5,000 digits returns after `sys.set_int_max_str_digits(0)` and the hook raises, on Python 3.10.21, 3.11.16, 3.12.3, 3.13.15 and 3.15.0rc2); D11 gains the one test the ruling names, with the limit set to 0 where the interpreter has it, standing for 3.10.0 to 3.10.6, the 5,000-digit body giving `api-error` and the hook rejecting the literal before converting it, and the same test also pins the bound's edges (an upper bound of 2,147,483,647 passes, an 11-digit text and a `number` of 2,147,483,648 do not), which the ruling does not name; the spec's "positive integer `number`" is not edited, and the design's upper bound is stricter than it only for a number that GraphQL's `Int` cannot hold | `design.md` D6, D11 |
+| LOW-1 (lane openRepoProject-3's confirm read, `design.md` D5 and the round C6 table's C-35 row): D5 says the lookup "does not choose between searches that disagree, and so is stricter than glibc's on ESTALE, ENODEV and ETIMEDOUT too", but the shells were run on ELOOP only, so no disagreement was seen on those three; "too" has no antecedent; the glibc list omits ENAMETOOLONG, ENOMEM and E2BIG; and the row's "what glibc, bash, zsh and dash do with each error" says more than was run | LOW | C-36: applied: the rule is unchanged; D5 now says that the lookup skips only what every search checked skips, and that an error that not every search was seen to skip fails it; that glibc 2.39's `execvp` stops on ELOOP, EIO, ENAMETOOLONG, ENOMEM and E2BIG and goes on past ENOENT, EACCES, ENOTDIR, ESTALE, ENODEV and ETIMEDOUT (eleven of the twelve errors injected; ENOEXEC, the twelfth, is named in round C8, C-38); that bash 5.2.21, zsh 5.9 and dash were recorded for ELOOP only, which each of them skips, going on to the later `gh`, where glibc stops; and that ESTALE, ENODEV and ETIMEDOUT, which glibc goes on past and the shells were not run on, are not known to be skipped by every search, and so fail the lookup with the rest; the C-35 row above now says what glibc does with each of twelve injected errors and what the shells do with an ELOOP `gh`; no other copy of the sentence stands in the three files; round C8 completes the record in D5 (the twelve errors and the shells' runs on the errors the lookup skips, C-38) | `design.md` D5; the C-35 row of round C6 |
+| Codex 8 (P2, on `1c32667`, `design.md:457`, 2026-10-20T21:12:35Z): D6 relies on `json.loads` raising `ValueError` for a `number` of 5,000 digits, which is Python's limit of 4,300 digits on converting a string to an integer, present only from 3.10.7 and 3.11 while AGENTS.md says Python 3.10+, so on 3.10.0 to 3.10.6 such a body parses, its `number` passes the positive-integer check and a matching `url` passes too, against "API failures stay unknown", which makes it `api-error` | P2 | C-37: applied, design only, since the spec already requires the outcome: the parse passes `json.loads` a `parse_int` hook that receives each integer literal's text and raises, before converting it, when the text has more than 10 digits, a sign not counted (GraphQL's `Int`, which `number` is, is a signed 32-bit integer, at most 2,147,483,647, which has 10 digits); the parse then fails and the key is `api-error` by D6's rule that the parse catches every exception, so the outcome no longer depends on the interpreter's limit, and the cost of converting an integer literal within the 1 MiB body is bounded where it is quadratic; the node check also requires a `number` of at most 2,147,483,647; D6's account of the council's measurement is reworded as evidence, with the check of this round (the hook receives the literal's text, an exception raised there propagates unwrapped, a plain `json.loads` of 5,000 digits returns after `sys.set_int_max_str_digits(0)` and the hook raises, on Python 3.10.21, 3.11.16, 3.12.3, 3.13.15 and 3.15.0rc2); D11 gains the one test the ruling names, with the limit set to 0 where the interpreter has it, standing for 3.10.0 to 3.10.6, the 5,000-digit body giving `api-error` and the hook rejecting the literal before converting it, and the same test also pins the bound's edges (the hook accepts the texts 2147483647 and -2147483648 and rejects an 11-digit text, and a `number` of 2,147,483,648 fails the node check; round C8 adds the node check's accept edge, a `number` of 2,147,483,647, C-38), which the ruling does not name; the spec's "positive integer `number`" is not edited, and the design's upper bound is stricter than it only for a number that GraphQL's `Int` cannot hold | `design.md` D6, D11 |
+
+### Re-read and Codex Findings (round C8)
+
+Lane openRepoProject-3's read-only verifier read the delta `1c32667..129a4e2` on
+2026-10-20 (its confirm read of round C7, `confirm-c7-findings.md`, brett-wip
+7fd7b2cd6) and found no HIGH, no MEDIUM and four LOWs on this change, which the
+lead accepted together (C-38). Codex has no new finding: it declined its request
+on `129a4e2`, its usage limit being reached. The four edit `design.md` and this
+file only: no spec file changed, `specs/project-overview/spec.md` is still the
+file lane openRepoProject-4 agreed, sha256
+`2ecd3d72b7cd32595d12f66206b7dd3c71df2cdfb9430122dd1ab0414ff1fe3e`, and
+`specs/project-command/spec.md` is unchanged.
+
+| Finding | Severity | Ruling | Section edited |
+| --- | --- | --- | --- |
+| Lane openRepoProject-3's confirm read of round C7, four LOWs. LOW-1 (`design.md` D5): the rule skips ENOENT, ENOTDIR and EACCES, but D5 records the shells for ELOOP only, so those three skips rest on POSIX alone, although lane openRepoProject-3 reproduced bash, zsh and dash skipping all three. LOW-2 (D5, and the C-35 and C-36 rows): "each error" and "each injected error" are said where twelve were injected and D5 names eleven, ENOEXEC being unnamed. LOW-3 (D6 and D11): "only since 3.10.7 and 3.11" is said flatly, with no source, and 3.10.0 to 3.10.6 were not run. LOW-4 (D11): the test serves a `number` of 2,147,483,648 but none of 2,147,483,647, so a node check written `<` in place of `<=` passes it | LOW (four) | C-38: all four applied, design only, with no rule changed and no spec text. LOW-1: D5 records, crediting lane openRepoProject-3's reproduction (as a user other than root; bash 5.2.21, zsh 5.9, dash 0.5.12; `PATH=d1:d2`, the real `gh` in d2), that each shell, like glibc's `execvp`, ran d2's `gh` past a mode-000 directory (EACCES), a regular file where the entry's directory should be (ENOTDIR), a dangling link and a missing directory (ENOENT), and past a `gh` that is a directory or a regular file without execute permission, so that the skips of ENOENT, ENOTDIR and EACCES no longer rest on POSIX alone, and "recorded for ELOOP only" is reworded: the shells were run on ELOOP too, where each skips and glibc stops, and not on the other errors that fail the lookup; the writer re-ran this lane's round C6c prototype on 2026-10-20 and got the same results (the ruled lookup and each shell's `command -v gh` name d2's `gh` past each of those cases). LOW-2: D5 says that twelve errors were injected, one at a time, into the first `execve` of glibc 2.39's `execvp`, and names them as `inject-results.txt` of round C6c lists them: it stopped on ELOOP, EIO, ENAMETOOLONG, ENOMEM and E2BIG, went on past ENOENT, EACCES, ENOTDIR, ESTALE, ENODEV and ETIMEDOUT, and for ENOEXEC ran the first `gh` through its `sh` fallback, which is no stop; and D5 says what the lookup does with ENOEXEC: it never executes an entry, so an entry that is a regular file with execute permission is found, and whether it then runs is the child's matter, never the lookup's; the C-35 and C-36 rows above say twelve in place of each. LOW-3: D6 attributes the limit to Python's documentation, as Python's integer-string conversion length limit, added in 3.11 as a mitigation for CVE-2020-10735 and backported to 3.10.7 (read on 2026-10-20: the standard types page, "Added in version 3.11" and "added in security patch releases in versions before 3.12"; the 3.10 changelog, "Python 3.10.7 final", Security, gh-95778, "a mitigation for CVE-2020-10735"), and says that 3.10.0 to 3.10.6 were not run here, only emulated with `sys.set_int_max_str_digits(0)`; D6's check sentence and D11 say "emulates" in place of "stands for". LOW-4: D11's test also serves a `number` of 2,147,483,647, which passes the hook and the node check and gives a matched row, not `api-error`, so that the node check's `<=` edge is pinned; the writer ran a prototype of the hook and the node check's `number` clause on Python 3.10.21, 3.11.16, 3.12.3 and 3.13.15 (12 of 12 checks on each): D11's test as round C7 left it does not tell `<` from `<=`, since 2,147,483,648 gives `api-error` under both, and the added case does, since 2,147,483,647 gives `api-error` under `<`; the C-37 row above now says what its test pinned | `design.md` Context and its table, D5, D6, D11; the C-35 row of round C6 and the C-36 and C-37 rows of round C7 |
