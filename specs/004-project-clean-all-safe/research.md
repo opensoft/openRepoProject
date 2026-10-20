@@ -209,7 +209,22 @@ scratch directory, never in the repository.
 - **Scenarios**: "SIGTERM before the apply phase" (US5-2), "A signal during a
   removal" (US5-1, SIGINT at the question exits 130); FR-036, FR-058, FR-064
   (every confirmation other than FR-026's unchanged).
-- **Cost**: a swap at each boundary; SIGTERM at `update`'s `Type yes` ends
+- **Writes and a closed reader** (lead ruling R-55, from the US1 pre-flight,
+  which reproduced the baseline's exits: 120 with `Exception ignored ...
+  BrokenPipeError` under `--json`, 2 for human output): every human line goes
+  through one writer, and the first failed write to a stream points that
+  stream at `/dev/null` (`os.dup2`) and records the error on the run, so there
+  is no second traceback and no exit 120. Before the apply phase the error is
+  `internal-error`, exit 2, nothing mutated, as R6 decides, unless a recorded
+  signal outranks it (130, 143 or 129 with `Cancelled.`); after the apply
+  phase begins, writes are best-effort and D19 decides the exit. A failed
+  write of an advisory line, `Cancelled.` or `REFUSED:`, never changes the
+  exit status (T047).
+- **Cost**: a stalled reader, one that neither reads nor closes its end,
+  blocks a write, and a SIGTERM sent to `project` alone then waits for the
+  reader to drain or exit: the residual R-55 records, with the design
+  working as written. A swap at each boundary; SIGTERM at `update`'s `Type
+  yes` ends
   the process with the default action, as today, rather than 143 (no probe
   child runs there: inspection's `finally` has reaped them). Today
   `subprocess.run()` kills a delegate soon after a Ctrl-C reaches `project`

@@ -135,7 +135,8 @@ child's scrubbed names and process group before it `exec`s Git (M4).
    `test_clean_parsers` whose own name lacks the prefix). A module with another
    prefix would need its own `-k` or a selection by module. Each module has one
    writer, its lane's, with three exceptions: T047 retargets T034's fault
-   patches in `tests/test_clean_guard.py` (analyze H3); T127 normalizes the
+   patches in `tests/test_clean_guard.py` (analyze H3) and adds X-3's SIGHUP
+   test there (lead ruling R-55); T127 normalizes the
    other lanes' modules to rule 3's import idiom (lead ruling R-38); and a
    lane that adds a `TEXT` or `NEXT_STEPS` key adds its fixture key to
    `tests/clean_support.py` (R-45) (lead ruling R-48).
@@ -666,8 +667,9 @@ T033), when B, D, E and F are; H, guard (T034, T035), when T023 is, beside G
   one wiring line in `main()` enters fresh for each call, the budget, the
   clock, the counters and the memos, the version check's result among them
   (lead ruling R-47); its phase, from T023, is `planning` by default, `apply`
-  once T057 begins the apply phase and `reconciling` once T093 reconciles
-  (R-44); `current_invocation()`'s default, for Git callers outside `clean`
+  once T047's pipeline begins the apply phase (lead ruling R-56) and
+  `reconciling` once T093 reconciles (R-44); `current_invocation()`'s
+  default, for Git callers outside `clean`
   and outside any scope, gets the 15 s budget and no handler (plan review
   M10, R-44); `run_bounded(spec, parser, run)` with D1's loop
   (one selector over both pipes and the wakeup pipe, the tick, the 4 KiB head,
@@ -1066,25 +1068,52 @@ tuples.
 ### Implementation for User Story 1
 
 - [ ] T047 [US1] [O] Rewrite `clean()` (`project:669-743`) once as the fixed
-  pipeline, frozen afterwards: later tasks fill stages and never reorder them.
-  Build a `CleanRun`, an `Invocation` carrying the arguments, the mode, the
-  action (`remove`, `push` or `delete-branch`) and the human stream (standard
-  error under `--apply --json`); the run sets the phase on the `Invocation`
-  that `main()` entered (`current_invocation()`), never on a nested one (lead
-  ruling R-49). One `signal_scope()` covers the whole run,
-  from the argument checks to its last write (plan review M1): run
-  `check_clean_arguments()`, `require_git()`, `resolve_clean_target()`,
-  `build_plan()`, `check_plan()` and `print_plan()`, the plan printed before
-  any check refuses, as the contract's "Order of a run" requires; then either
-  `push_or_delete()`, which swaps in `default_signals()` around `confirm()`
-  alone, or `confirm_removal()`, which swaps in `raising_signals()` around the
-  question alone, and then `apply_removals()`. The slot is read after planning,
-  again before the question and again before the apply phase begins; a signal
-  recorded before the apply phase ends the run by FR-036 (probe groups reaped,
-  `Cancelled.`, 130, 143 or 129, no document). It is read once more before a
-  preview or report exits, so that a signal recorded while it is written exits
-  130, 143 or 129 with `Cancelled.` (research.md R4, plan review M1, lead
-  ruling R-34). Each stage is a function in its region whose first body is the
+  pipeline, frozen afterwards: later tasks fill stages and never reorder them,
+  so the slot reads and the write handling are built here. `clean()` enters
+  `with signal_scope() as scope:` first, covering the run from the argument
+  checks to its last write (plan review M1), and its `CleanRun` is that
+  scope's `Invocation` (`scope.invocation`: under `main()` the one `main()`
+  entered, and the scope's own when T046 calls `clean()` directly), with the
+  arguments, the mode, the action (`remove`, `push` or `delete-branch`) and
+  the human stream (standard error under `--apply --json`) set on it; no new
+  `Invocation` and no subclass (lead rulings R-49 and R-56). For both US1
+  lanes, region `dispatcher` declares the plan's shape, `refuse(plan,
+  refusal, run)`, which T053 fills, and `say(run, text)`, the one writer of
+  human lines; `confirm_removal(plan, run)` and `push_or_delete(repo, run)`
+  are declared with those signatures (R-56). Run `check_clean_arguments()`,
+  `require_git()`, `resolve_clean_target()`, `build_plan()` and
+  `check_plan()`: `check_plan()`, `build_plan()` (for `worktree-not-found`)
+  and `confirm_removal()` (for `cancelled`) never raise, but record through
+  `refuse()` and return 2, while a resolve refusal still raises to `main()`;
+  then `print_plan()` prints the plan once, after the decision (plain
+  `--json`: the envelope with the refusal in it; `--apply --json`: the
+  envelope only where the run stops; human output: the plan, then `REFUSED:`
+  on standard error), as the contract's "Order of a run" requires. Then
+  either `push_or_delete()`, which swaps in `default_signals()` around
+  `confirm()` alone and stays in phase `planning`, or `confirm_removal()`,
+  which swaps in `raising_signals()` around the question alone (or takes
+  `--yes`), then the slot read, `run.phase = "apply"` and `apply_removals()`,
+  with nothing in between; T057 sets no phase, and T093 sets `reconciling`
+  (R-56). The slot is read after `build_plan()`, before the question, before
+  the phase change, and after the scope ends while still in `planning`: a
+  signal recorded before the apply phase ends the run by FR-036 (probe groups
+  reaped, `Cancelled.`, 130, 143 or 129, no document), one recorded while a
+  preview or report is written exits the same way, and an exception that
+  leaves the scope with the slot set becomes `Interrupted` (research.md R4,
+  plan review M1, lead ruling R-34). Writes (research.md R4, lead ruling
+  R-55): the first failed write to a stream, in `say()` or in the check after
+  printing, points that stream at `/dev/null` (`os.dup2`) and records the
+  error on the run, so there is no second traceback and no exit 120; before
+  the apply phase that error is `internal-error`, exit 2, nothing mutated,
+  unless a recorded signal outranks it (130, 143 or 129 with `Cancelled.`);
+  after the apply phase begins, writes are best-effort and D19 decides the
+  exit. For this T047 makes one lead-approved edit to `write_document()` in
+  region `guard`, and makes `main()`'s `REFUSED:` and `Cancelled.` prints
+  best-effort, a failed write of an advisory line never changing the exit
+  status (R-54 X-3), with X-3's test in `tests/test_clean_guard.py`:
+  `test_clean_sighup_on_a_closed_terminal_exits_129` (`project` at a
+  pseudo-terminal whose master side is closed, then SIGHUP: exit 129, no
+  traceback). Each stage is a function in its region whose first body is the
   baseline code moved verbatim:
   `resolve_clean_target` (region `resolution`) wraps `discover()`; `build_plan`
   (region `plan`) wraps `cleanup_report()`; `print_plan` (region `preview`)
@@ -1103,7 +1132,7 @@ tuples.
   `RESOLVING_STAGE` constants (R-49). The 96 tests pass, the one T046
   rewrites aside, and so does T034.
   — files: `project`, `tests/test_clean_guard.py`
-  — verify: `python3 -c "import sys,re;t=open('project').read();A=sys.argv[1:];c=lambda r:t.split('# region '+r+'\n')[1].split('# endregion '+r+'\n')[0];M=[a for a in A if not ((a.split('%',1)[1] not in c(a.split('%',1)[0])) if '%' in a else (a.split('~',1)[1] in c(a.split('~',1)[0])) if '~' in a else re.search(r'^[a-z]*\s?'+re.escape(a.split(':',1)[1])+r'\b',c(a.split(':',1)[0]),re.M))];[print('region check failed:',m) for m in M];sys.exit(1 if M or not A else 0)" 'resolution:resolve_clean_target' 'plan:build_plan' 'preview:print_plan' 'apply:confirm_removal' 'apply:apply_removals' 'push:push_or_delete' 'dispatcher:check_clean_arguments' 'dispatcher:require_git' 'dispatcher:check_plan' && python3 -c "import ast,sys;t=open(sys.argv[1]).read();F=[n for n in ast.walk(ast.parse(t)) if isinstance(n,ast.FunctionDef) and n.name==sys.argv[2]];s=ast.get_source_segment(t,F[0]) if F else '';M=[k for k in sys.argv[3:] if k not in s];[print('absent from',sys.argv[2]+':',m) for m in M];sys.exit(1 if M or not F or len(sys.argv)<4 else 0)" project clean 'signal_scope' 'check_clean_arguments' 'require_git' 'resolve_clean_target' 'build_plan' 'check_plan' 'print_plan' 'push_or_delete' 'confirm_removal' 'apply_removals' && python3 -c "import subprocess as s,sys;o=s.run([sys.executable,'project','clean','--help'],capture_output=True,text=True).stdout;M=[k for k in ('--all-safe','--expect-plan') if k not in o];print('clean --help lacks:',M);sys.exit(1 if M else 0)" && python3 -c "import sys,unittest as u;g=lambda s:[x for t in s for x in (g(t) if isinstance(t,u.TestSuite) else [t])];T=[t for t in g(u.defaultTestLoader.discover('tests',pattern='test_project.py')) if not t.id().endswith('.test_clean_revalidates_a_worktree_after_confirmation')];r=u.TextTestRunner().run(u.TestSuite(T));print(len(T),'tests');sys.exit(0 if len(T)==95 and r.wasSuccessful() else 1)" && python3 -c "import ast,sys;t=ast.parse(open('tests/test_clean_guard.py').read());A={n.targets[0].id:n.value.value for n in t.body if isinstance(n,ast.Assign) and len(n.targets)==1 and isinstance(n.targets[0],ast.Name) and isinstance(n.value,ast.Constant)};W={'RESOLVING_STAGE':'resolve_clean_target','PLANNING_STAGE':'build_plan'};M=[k+' = '+repr(A.get(k)) for k in W if not A.get(k)==W[k]];print('stage constants not retargeted:',M);sys.exit(1 if M else 0)" && python3 -m unittest discover -s tests -p 'test_clean_guard.py'`
+  — verify: `python3 -c "import sys,re;t=open('project').read();A=sys.argv[1:];c=lambda r:t.split('# region '+r+'\n')[1].split('# endregion '+r+'\n')[0];M=[a for a in A if not ((a.split('%',1)[1] not in c(a.split('%',1)[0])) if '%' in a else (a.split('~',1)[1] in c(a.split('~',1)[0])) if '~' in a else re.search(r'^[a-z]*\s?'+re.escape(a.split(':',1)[1])+r'\b',c(a.split(':',1)[0]),re.M))];[print('region check failed:',m) for m in M];sys.exit(1 if M or not A else 0)" 'resolution:resolve_clean_target' 'plan:build_plan' 'preview:print_plan' 'apply:confirm_removal' 'apply:apply_removals' 'push:push_or_delete' 'dispatcher:check_clean_arguments' 'dispatcher:require_git' 'dispatcher:check_plan' 'dispatcher:say' 'dispatcher:refuse' && python3 -c "import ast,sys;t=open(sys.argv[1]).read();F=[n for n in ast.walk(ast.parse(t)) if isinstance(n,ast.FunctionDef) and n.name==sys.argv[2]];s=ast.get_source_segment(t,F[0]) if F else '';M=[k for k in sys.argv[3:] if k not in s];[print('absent from',sys.argv[2]+':',m) for m in M];sys.exit(1 if M or not F or len(sys.argv)<4 else 0)" project clean 'signal_scope' 'phase' 'check_clean_arguments' 'require_git' 'resolve_clean_target' 'build_plan' 'check_plan' 'print_plan' 'push_or_delete' 'confirm_removal' 'apply_removals' && python3 -c "import subprocess as s,sys;o=s.run([sys.executable,'project','clean','--help'],capture_output=True,text=True).stdout;M=[k for k in ('--all-safe','--expect-plan') if k not in o];print('clean --help lacks:',M);sys.exit(1 if M else 0)" && python3 -c "import sys,unittest as u;g=lambda s:[x for t in s for x in (g(t) if isinstance(t,u.TestSuite) else [t])];T=[t for t in g(u.defaultTestLoader.discover('tests',pattern='test_project.py')) if not t.id().endswith('.test_clean_revalidates_a_worktree_after_confirmation')];r=u.TextTestRunner().run(u.TestSuite(T));print(len(T),'tests');sys.exit(0 if len(T)==95 and r.wasSuccessful() else 1)" && python3 -c "import ast,sys;t=ast.parse(open('tests/test_clean_guard.py').read());A={n.targets[0].id:n.value.value for n in t.body if isinstance(n,ast.Assign) and len(n.targets)==1 and isinstance(n.targets[0],ast.Name) and isinstance(n.value,ast.Constant)};W={'RESOLVING_STAGE':'resolve_clean_target','PLANNING_STAGE':'build_plan'};M=[k+' = '+repr(A.get(k)) for k in W if not A.get(k)==W[k]];print('stage constants not retargeted:',M);sys.exit(1 if M else 0)" && python3 -m unittest discover -s tests -p 'test_clean_guard.py'`
 - [ ] T048 [P] [US1] [O] Fill `check_clean_arguments(args)` (the contract's
   "Argument checks": `invalid-arguments` with the baseline messages kept,
   this task owning them outside `TEXT` (lead ruling R-45);
@@ -1132,7 +1161,9 @@ tuples.
   `omitted` as `{count: 0, exactness: "exact"}` until T075. In mode single, P,
   expanded, joined to the working directory and realpath'd by one bounded call,
   names the one registry row whose path equals it, or else the one whose
-  realpath does, and otherwise refuses with `worktree-not-found` (M9); it is
+  realpath does, and otherwise records `worktree-not-found` through T047's
+  `refuse()` and returns 2, never raising, so that the plan envelope, not the
+  extended error object, carries it (M9; lead ruling R-56); P is
   selected alone, and every other eligible row is `not-requested`; in mode
   report the plan is the same, with `apply_allowed: false`.
   — files: `project`
@@ -1176,9 +1207,14 @@ tuples.
   withdrawing R-45(3)); every path through `human_path()`; and
   `plan_document()` under
   `--json`, which under `--apply --json` prints only when the run stops before
-  the apply phase.
-  — files: `project`, `tests/clean_support.py`
-  — verify: `python3 -c "import sys,re;t=open('project').read();A=sys.argv[1:];c=lambda r:t.split('# region '+r+'\n')[1].split('# endregion '+r+'\n')[0];M=[a for a in A if not ((a.split('%',1)[1] not in c(a.split('%',1)[0])) if '%' in a else (a.split('~',1)[1] in c(a.split('~',1)[0])) if '~' in a else re.search(r'^[a-z]*\s?'+re.escape(a.split(':',1)[1])+r'\b',c(a.split(':',1)[0]),re.M))];[print('region check failed:',m) for m in M];sys.exit(1 if M or not A else 0)" 'preview~human_path' 'preview~selected_heading' 'preview~excluded_group' 'contracts~"main-worktree":' 'contracts~"unsupported-path-bytes":' 'contracts~"not-requested":' && python3 project clean --help >/dev/null && python3 -m unittest discover -s tests -p 'test_clean_harness.py' -k '*.test_clean_text_fixtures_equal_the_contract_table'`
+  the apply phase. Add `test_clean_a_reader_that_closes_standard_output` to
+  `tests/test_clean_batch.py` (standard output a pipe whose read end is
+  closed, as `tests/test_project.py`'s
+  `test_advisory_with_stderr_on_a_closed_pipe` closes one: `--all-safe` and
+  `--all-safe --json` each exit 2 as `internal-error`, nothing mutated, no
+  traceback on standard error, and never exit 120; lead ruling R-55).
+  — files: `project`, `tests/clean_support.py`, `tests/test_clean_batch.py`
+  — verify: `python3 -c "import sys,re;t=open('project').read();A=sys.argv[1:];c=lambda r:t.split('# region '+r+'\n')[1].split('# endregion '+r+'\n')[0];M=[a for a in A if not ((a.split('%',1)[1] not in c(a.split('%',1)[0])) if '%' in a else (a.split('~',1)[1] in c(a.split('~',1)[0])) if '~' in a else re.search(r'^[a-z]*\s?'+re.escape(a.split(':',1)[1])+r'\b',c(a.split(':',1)[0]),re.M))];[print('region check failed:',m) for m in M];sys.exit(1 if M or not A else 0)" 'preview~human_path' 'preview~selected_heading' 'preview~excluded_group' 'contracts~"main-worktree":' 'contracts~"unsupported-path-bytes":' 'contracts~"not-requested":' && python3 project clean --help >/dev/null && python3 -m unittest discover -s tests -p 'test_clean_harness.py' -k '*.test_clean_text_fixtures_equal_the_contract_table' && python3 -m unittest discover -s tests -p 'test_clean_batch.py' -k '*.test_clean_a_reader_that_closes_standard_output'`
 - [ ] T053 [P] [US1] [O] Fill `check_plan(plan, run)` in region `dispatcher`, in
   FR-024's order: an incomplete plan (an all-safe preview exits 1; `--apply`
   refuses with exit 2 and the plan's code before any question; a report still
@@ -1190,19 +1226,24 @@ tuples.
   excluded: REASON; NEXT STEP`, since R-57 gives each reason a next step, so
   the pre-flight's bare gate message is not added); then
   `confirmation-required` for `--apply` on a standard input that is not a
-  terminal, without `--yes`. A plan, select or confirm refusal prints, under
-  `--json`, the plan envelope with `apply_allowed: false` and the refusal in
-  `refusals`, and otherwise the printed plan, then `REFUSED: MESSAGE` (plan
-  review M6, M8), and returns 2 without raising to `main()` (lead ruling
-  R-49). T036 to T040 pass.
+  terminal, without `--yes`. `check_plan()` only decides: it records each
+  plan, select or confirm refusal through `refuse(plan, refusal, run)`, which
+  T047 declares and this task fills (`apply_allowed: false`, the refusal in
+  `refusals`), and returns 2 without raising to `main()` (lead rulings R-49
+  and R-56); T047's pipeline then prints once: under `--json` the plan
+  envelope, and otherwise the printed plan, then `REFUSED: MESSAGE` through
+  `say()` (plan review M6, M8). T036 to T040 pass.
   — files: `project`
   — verify: `python3 -m unittest discover -s tests -p 'test_clean_batch.py'`
 - [ ] T054 [P] [US1] [O] Add `ask_removal(plan, run)` and fill `confirm_removal()`
   in region `apply` (R3, FR-026): under `raising_signals()` and with the clock
   paused, write the D18 question, singular for one, to the human stream and
-  flush it; read one line by `input()` with no prompt; accept only `yes` with
-  its surrounding whitespace stripped, and otherwise refuse with `cancelled`;
-  `--yes` accepts the fresh plan without asking.
+  flush it; read one line by `input()` with no prompt; `ask_removal()`
+  returns that line, and `confirm_removal()` accepts only `yes` with its
+  surrounding whitespace stripped, any other answer recording `cancelled`
+  through T047's `refuse()` and returning 2, never raising (lead ruling
+  R-56); `confirm_removal()` looks `ask_removal` up by its global name, since
+  T046 patches it there; `--yes` accepts the fresh plan without asking.
   — files: `project`
   — verify: `python3 -c "import sys,re;t=open('project').read();A=sys.argv[1:];c=lambda r:t.split('# region '+r+'\n')[1].split('# endregion '+r+'\n')[0];M=[a for a in A if not ((a.split('%',1)[1] not in c(a.split('%',1)[0])) if '%' in a else (a.split('~',1)[1] in c(a.split('~',1)[0])) if '~' in a else re.search(r'^[a-z]*\s?'+re.escape(a.split(':',1)[1])+r'\b',c(a.split(':',1)[0]),re.M))];[print('region check failed:',m) for m in M];sys.exit(1 if M or not A else 0)" 'apply:ask_removal' 'apply~raising_signals' && python3 project clean --help >/dev/null`
 - [ ] T055 [P] [US1] [O] Add `revalidate(plan, target, run)` to region `apply`,
@@ -1223,9 +1264,11 @@ tuples.
   status) or `spawn-error`; `exit_status` as T045 states it (plan review M12).
   — files: `project`
   — verify: `python3 -c "import sys,re;t=open('project').read();A=sys.argv[1:];c=lambda r:t.split('# region '+r+'\n')[1].split('# endregion '+r+'\n')[0];M=[a for a in A if not ((a.split('%',1)[1] not in c(a.split('%',1)[0])) if '%' in a else (a.split('~',1)[1] in c(a.split('~',1)[0])) if '~' in a else re.search(r'^[a-z]*\s?'+re.escape(a.split(':',1)[1])+r'\b',c(a.split(':',1)[0]),re.M))];[print('region check failed:',m) for m in M];sys.exit(1 if M or not A else 0)" 'apply:run_removal' 'apply:rescan' 'apply:decide_stage' && python3 project clean --help >/dev/null`
-- [ ] T057 [P] [US1] [O] Fill `apply_removals(plan, run)` in region `apply` (the
-  `Invocation`'s phase set to `apply` as it begins, lead ruling R-44; per
-  target in canonical order: revalidate, spawn, wait, rescan; stop after the
+- [ ] T057 [P] [US1] [O] Fill `apply_removals(plan, run)` in region `apply`
+  (called
+  in phase `apply`, which T047's pipeline sets, never this task, lead ruling
+  R-56; per target in canonical order: revalidate, spawn, wait, rescan;
+  stop after the
   first target that is not a plain `removed`, later targets `not-attempted`
   with `batch-stopped` and `reconciliation: null`), and add
   `apply_exit_status()` (D19's table), `result_document()` and `print_result()`
