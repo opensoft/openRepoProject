@@ -20,7 +20,13 @@ record's `branch_sha`, its `upstream`, `upstream_oid`, `ahead` and `behind`, the
 manifest's `tracking_branch`, and the merge target's name, source and SHA equal
 the values in the confirmed plan, and no registered worktree had the branch
 checked out at the rescan, as "Clean retires a removed worktree's branch only
-on fresh head and ancestry evidence" states.
+on fresh head and ancestry evidence" states. Under `--retire-branches`, when a
+target's revalidation takes its repository-wide values from the previous
+target's rescan, those values SHALL be the ones read before that previous
+target's branch stage, so that a change to them during that stage is outside
+the contract for the target's removal; the target's branch evidence and the
+merge target SHALL be compared again by its own re-read before any branch
+child.
 
 Ignored files created, and index flags set, after that revalidation, and any
 change made after Git's own check, SHALL be outside the contract; the
@@ -36,7 +42,10 @@ branch SHALL never be deleted; a branch change seen by the re-read SHALL retain
 the branch with `branch-changed`, stop the run, and exit 2; and a branch change
 after that re-read SHALL be outside the contract, guarded only by Git's own
 non-force check on the value Git reads, so that the residual-window line under
-the flag SHALL also name a branch changed after its last check. A repository
+the flag SHALL also name a branch changed after its last check, after every
+other clause the run's line names, those for a cache stage included when the
+plan also selects a cache target, and before its last clause, any change after
+Git's own check. A repository
 found replaced by the rescan after a removal SHALL make that target `unknown`
 with `unconfirmed-removal`, every reconciliation field null and `reconciled`
 false, and SHALL stop the run with exit status 1.
@@ -84,4 +93,6 @@ false, and SHALL stop the run with exit status 1.
   with `git-refused`, later targets are `not-attempted`, no commit is lost, and
   the exit status is 2
 - **AND** the confirmation and the result carry the residual-window line, which
-  under the flag also names a branch changed after its last check
+  under the flag reads `Not protected: ignored files created or index flags set
+  after the last check, a branch changed after its last check, and any change
+  after Git's own check.`
