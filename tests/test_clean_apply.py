@@ -246,6 +246,60 @@ class ApplyTests(clean_support.CleanCase):
                 self.assertEqual(project.ask_removal(types.SimpleNamespace(selected=[1]), run), "")
             self.assertIsInstance(run.write_error, BrokenPipeError)
 
+    # T055: revalidation reads afresh.
+
+    def test_clean_revalidate_passes_an_unchanged_target(self):
+        root, trees = self.merged_repository("001-a", "002-b")
+        with self.in_process() as run:
+            plan = self.plan_of(root, run, trees.values())
+            before = self.snapshot(root, trees.values())
+            for row in plan.selected:
+                with self.subTest(path=row["path"]):
+                    entry = project.make_target(plan, row)
+                    self.assertIsNone(project.revalidate(plan, entry, run))
+                    # Rows 3, 4, 6 and 7 again, never the memo, and the target's status.
+                    self.assertEqual(entry["probes_performed"], 5)
+            self.assertEqual(self.snapshot(root, trees.values()), before)
+
+    def test_clean_revalidate_refuses_a_changed_target_with_state_changed(self):
+        # Lead ruling R-56 Q-13: the memo would hand back the planned evidence,
+        # so each change below is seen only by a fresh read.
+        names = ("001-dirty", "002-locked", "003-gone", "004-identity")
+        root, trees = self.merged_repository(*names)
+        with self.in_process() as run:
+            plan = self.plan_of(root, run, trees.values())
+            entries = {Path(os.fsdecode(row.raw_path)).name: project.make_target(plan, row)
+                       for row in plan.selected}
+            heads = {name: self.head(trees[name]) for name in names}
+
+            (trees["001-dirty"] / "late-change").write_text("preserve")
+            self.git(root, "worktree", "lock", trees["002-locked"])
+            self.git(root, "worktree", "remove", trees["003-gone"])
+            expected = {
+                "001-dirty-tree": record(True, True, True, heads["001-dirty"]),
+                "002-locked-tree": record(True, True, True, heads["002-locked"]),
+                "003-gone-tree": record(False, False, True, heads["003-gone"]),
+            }
+            for name, reconciliation in expected.items():
+                with self.subTest(name):
+                    self.assertEqual(project.revalidate(plan, entries[name], run),
+                                     ("state-changed", reconciliation))
+            self.assertTrue((trees["001-dirty"] / "late-change").is_file())
+
+            # Another repository identity: the listings are not this repository's,
+            # so only the path's own lstat is read.
+            entry = entries["004-identity-tree"]
+            moved = dict(plan.evidence, identity=dict(plan.evidence["identity"], ino=-1))
+            with mock.patch.object(plan, "evidence", moved):
+                self.assertEqual(project.revalidate(plan, entry, run),
+                                 ("state-changed", record(None, True, None, None)))
+            self.assertIsNone(project.revalidate(plan, entry, run))
+
+            # The merge target advances: every target differs.
+            self.git(root, "commit", "-q", "--allow-empty", "-m", "advance the merge target")
+            self.assertEqual(project.revalidate(plan, entry, run),
+                             ("state-changed", record(True, True, True, heads["004-identity"])))
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -3270,6 +3270,129 @@ def ask_removal(plan, run):
         run.resume()
 
 
+class Target(dict):
+    """One selected target of the apply phase (data-model.md, "Target result
+    and reconciliation record"): as a dict, the target result's values in
+    TARGET_RESULT_KEYS's order as project keeps them, `path_valid_utf8` aside,
+    which result_document() derives: `path`, the registry's raw path bytes;
+    `branch` and `planned_sha`, the planned row's branch and head; `stage`,
+    `pending` until it is final, and its `reason`; `notes`, codes; `command`,
+    the planned argument vector, git_argv("removal", removal_args), held
+    whether or not anything ran; `exit_status`; `probes_performed`; and
+    `reconciliation`, the record, or None while none was read. As attributes,
+    what no document writes: `row`, the plan's selected WorktreeRow;
+    `removal_args`, its removal's arguments (region dispatcher, Plan); `root`,
+    the command directory; and `identity`, the plan's repository identity
+    {root, common_dir, dev, ino}, which the rescan re-establishes first."""
+
+    row = removal_args = root = identity = None
+
+
+def make_target(plan, row):
+    """The pending Target of row, one of plan.selected (T056; design D9): its
+    command is the plan's own argument vector, git_argv("removal",
+    row.removal_args), the vector operation.argv shows (lead ruling R-56)."""
+    target = Target(path=row.raw_path, branch=row["branch"], planned_sha=row["head"], stage="pending",
+                    reason=None, notes=[], command=git_argv("removal", row.removal_args), exit_status=None,
+                    probes_performed=0, reconciliation=None)
+    target.row, target.removal_args, target.root = row, list(row.removal_args), plan.root
+    target.identity = None if plan.evidence is None else plan.evidence["identity"]
+    return target
+
+
+# The planned values revalidate() compares on the re-read row (T055): the
+# baseline signature fields (cleanup_signature(), project:494-497 at 961c405)
+# and `locked` (design D7).
+REVALIDATED_FIELDS = ("path", "branch", "head", "present", "dirty", "ignored_files", "upstream", "ahead",
+                      "behind", "remote_present", "merged_into_target", "current", "classification",
+                      "locked")
+IDENTITY_FIELDS = ("root", "common_dir", "dev", "ino")
+
+
+def reconciliation_record(registry_entry_present, path_present, branch_present, branch_sha):
+    """A reconciliation record in RECONCILIATION_KEYS's order (data-model.md,
+    "Target result and reconciliation record"): each value true, false or
+    null, null meaning not established; `reconciled` is true only when the
+    three presence fields are non-null and `branch_sha` is non-null whenever
+    `branch_present` is true. A pure function."""
+    reconciled = (None not in (registry_entry_present, path_present, branch_present)
+                  and (branch_sha is not None or not branch_present))
+    return {"registry_entry_present": registry_entry_present, "path_present": path_present,
+            "branch_present": branch_present, "branch_sha": branch_sha, "reconciled": reconciled}
+
+
+def path_presence(raw):
+    """Whether the planned path is present, by one lstat through fs_call()
+    (design D6; data-model.md, "Target result and reconciliation record"):
+    true when it succeeds, false only on ENOENT or ENOTDIR, and null on any
+    other error or when the call is cut at its budget."""
+    try:
+        found = fs_call(os.lstat, raw)
+    except OSError as exc:
+        found = exc
+    if isinstance(found, DriverOutcome):
+        return None
+    return presence_from_lstat(found)[0]
+
+
+def _branch_ref(target):
+    return b"refs/heads/" + target["branch"].encode("utf-8", "surrogateescape")
+
+
+def _branch_evidence(target, refs):
+    """(branch_present, branch_sha) of target's branch in refs, RefParser's
+    records, or (None, None) when the listing did not run or failed."""
+    if refs is None:
+        return None, None
+    for ref in refs:
+        if ref["refname"] == _branch_ref(target):
+            return True, ref["objectname"]
+    return False, None
+
+
+def revalidate(plan, target, run):
+    """Revalidate target after the confirmation, before its removal (T055,
+    this phase's body; design D7, FR-046; lead ruling R-56 Q-13): read the
+    repository afresh through the evidence model, inspect_repository(root,
+    run, refresh=True), never its memo, which would hand back the planned
+    evidence, and rebuild the target's row by worktree_rows(); then compare
+    the repository identity, the merge target {name, source, sha} and the
+    row's REVALIDATED_FIELDS with the plan's. A re-read that fails, a row that
+    is gone, and any difference refuse the target with `state-changed`. T084
+    replaces this body with D7's targeted check and its other reasons.
+
+    Sets target["probes_performed"], the Git children this revalidation ran,
+    and returns None when nothing differs, or (reason, reconciliation): the
+    record from that same re-read, its registry and branch fields null where
+    the listing did not run or the repository identity differs, and the
+    path's presence the re-read row's, or one lstat of the planned path where
+    no row was rebuilt."""
+    before = run.probes
+    raw = target["path"]
+    repo = inspect_repository(plan.root, run, refresh=True)
+    planned = None if plan.evidence is None else plan.evidence["identity"]
+    identity = repo["identity"]
+    same_repository = (identity is not None and planned is not None
+                       and all(identity[key] == planned[key] for key in IDENTITY_FIELDS))
+    records = repo["records"] if same_repository else None
+    matches = [record for record in records or () if record["path"] == raw]
+    rows = worktree_rows(repo, run, records=matches[:1]) if matches else []
+    row = rows[0] if rows else None
+    merge_target = repo["merge_target"]
+    changed = (not same_repository or bool(repo["errors"]) or repo["merge_target_refusal"] is not None
+               or merge_target is None or plan.merge_target is None
+               or any(merge_target[key] != plan.merge_target[key] for key in MERGE_TARGET_KEYS)
+               or row is None or any(row.get(field) != target.row.get(field) for field in REVALIDATED_FIELDS))
+    target["probes_performed"] = run.probes - before
+    if not changed:
+        return None
+    registry_entry_present = None if records is None else bool(matches)
+    path_present = row["present"] if row is not None else path_presence(raw)
+    branch_present, branch_sha = _branch_evidence(target, repo["refs"] if same_repository else None)
+    return "state-changed", reconciliation_record(registry_entry_present, path_present, branch_present,
+                                                  branch_sha)
+
+
 def apply_removals(plan, run):
     """Remove the plan's selected worktrees (T057 fills): called in phase
     `apply`, which the pipeline sets, never this function (lead ruling R-56);
