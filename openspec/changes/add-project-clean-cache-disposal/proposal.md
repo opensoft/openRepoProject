@@ -10,7 +10,7 @@ re-align step and wording, lane 3's delta read and Codex's re-review of
 `e1049b2` with the lead's rulings of 2026-10-20 resolved in round B5 (B-34 to
 B-37), lane 4's byte check of B-30's overview commit recorded in `tasks.md`
 2.2, and lane 3's folded read of `cf57956..fffc194` with Codex's finding on
-`fffc194` resolved in round B6 (B-38, B-39); nothing here is ratified.
+`fffc194` resolved in round B6 (B-38 to B-40); nothing here is ratified.
 Governing issue:
 opensoft/openRepoProject#24, claimed by lane
 openRepoProject-5 (comment 6111257933); refs #6, the record of the project
@@ -37,7 +37,7 @@ named), and `PR19/rs` is `CAS/rs` as PR #19 amends it at that head.
 for the three extensions and for this one: L-1 to L-9 and B-1 to B-9 of
 2026-10-11, L-10 to L-15 and B-10 to B-15 of 2026-10-18, L-16 and L-17 of
 2026-10-19 with B-16 to B-24, the lead's council verdicts of that date, and
-B-25 to B-39 of 2026-10-20; A-n are the rulings for #23 that this proposal
+B-25 to B-40 of 2026-10-20; A-n are the rulings for #23 that this proposal
 cites. SA-n, QA-n and G1 to G5 are the alignment review's findings on this
 draft at `7290100`. P-n, S-n and AE-n are the council's concerns
 (product-advocate, systems-architect, adversary-engineer) on `9ebe9f0`, and M1
@@ -1035,15 +1035,16 @@ to B-37 (the table "Re-read and Codex Findings (round B5)" below):
   a cache stage" pins both outcomes; design D1, D7, D8, D11, D12, D14 and Risks
   follow.
 - **B-35, the two drafts describe each other at today's heads** (A-25 for
-  #26). Design D4 described #23's joint fit at `ca96701`, "13 of 16, 11 in its
-  worst case", with the cache-stage filesystem time excluded. It now describes
+  #26). Design D4 described #23's joint fit at `ca96701`, "13 of its 16
+  targets ... 11 in the worst case", with the cache-stage filesystem time
+  excluded. It now describes
   #26 at `9ff8202`, under A-23 and A-24: a flagged run adds at most 81 children,
   64 for the stage and 17 reflog children, and at the packet's 150 ms model,
   with this change's walk and earlier stages added whole, 10 of 16 targets are
   removed and 9 branches retired through one worker per stage, 8 and 8 in the
   worst case of 17 reflog children. Every figure is #26's, read at `9ff8202`
   and checked against its stated arithmetic; none is recomputed here from other
-  inputs. The copies in design D13 and in B-19 above say "13 of 16 at
+  inputs. Design D13 says "13 of 16 at `ca96701`", and B-19 above "13 at
   `ca96701`". A-25 has #26's own D7 add this change's worst-case shapes at
   `e1049b2`.
 - **B-36, `tasks.md` 2.2 ticked again.** Lane openRepoProject-4 agreed B-30 as
@@ -1065,8 +1066,8 @@ to B-37 (the table "Re-read and Codex Findings (round B5)" below):
   descriptor-relative calls on this platform" adds a dirty worktree that holds
   an ignored `local.env`; CD-3 and design D9 follow.
 
-The findings of 2026-10-20 that followed round B5, ruled by the lead as B-38 and
-B-39 (the table "Re-read and Codex Findings (round B6)" below):
+The findings of 2026-10-20 that followed round B5, ruled by the lead as B-38 to
+B-40 (the table "Re-read and Codex Findings (round B6)" below):
 
 - **B-38, lane 3's folded read of `cf57956..fffc194`** (no HIGH, one MEDIUM and
   three LOWs, all accepted; lane 3 confirmed that every B4 and B5 ruling holds
@@ -1108,6 +1109,18 @@ B-39 (the table "Re-read and Codex Findings (round B6)" below):
   (deadline-exceeded)` is printed only where no signal was received. One AND of
   "A signal during a cache stage" pins the outcome and no scenario is added;
   design D1, D7, D8, D11, D12, D14 and Risks, and CD-11, follow.
+- **B-40, lane 3's last two LOWs on `fffc194`** (its citation pass resolved 111
+  tokens and 25 more that its regex missed, each at the ref it names, and its
+  ASCII and bidi grep of all 8 files found nothing; the figures are right). LOW
+  1: B-30's row in the round B4 table put the end of the SHALL NOT sentence at
+  `spec.md:35`, where it runs :34-36 with the added words on :35-36, so it now
+  says `spec.md:35-36`, as `specs/project-overview/spec.md` stands and as lane
+  4's byte check and `tasks.md` 2.2 give it; that file is not edited. LOW 2: the
+  quotations are made verbatim. #26's draft at `ca96701` reads "13 of its 16
+  targets ... 11 in the worst case" in its design.md, so that is what D4 and
+  B-35 quote, and B-19 reads "13 at `ca96701`", while design D13 reads "13 of 16
+  at `ca96701`", so B-35 says each. Lane 3 also notes that A-25 resolves only at
+  #26's `9b67e8c`, where D4's figures hold; nothing was edited for it.
 
 Departures from the rulings as first written, each naming what it departs
 from. B-11 accepted CD-1 to CD-3 as the consistent reading of B-6 and amended
@@ -1519,7 +1532,7 @@ Questions).
 | Finding | Severity | Ruling | Section edited |
 | --- | --- | --- | --- |
 | lane 4 (2026-10-20) F2: no step re-aligns the `project-overview` block with change 2's text before this change archives, so an amendment of change 2 landing first would be dropped | LOW to MEDIUM | B-29: applied: `tasks.md` 3.2, modeled on #29's 2.3, re-reads the block against main's text before `/opsx:archive` and re-copies it, keeping every amendment, verified by a `diff -u` showing additions only and by the validation passing again; the archive becomes 3.3, and the B-14 row above points to it | `tasks.md` 3.2, 3.3; Dependencies and Sequencing (Archive order, Change 2); Decisions (B-29); `design.md` Migration Plan step 8 |
-| lane 4 (2026-10-20) F4: "The overview SHALL NOT classify a worktree `merged-removable` where `project clean` classifies it otherwise" carries no scope, so read alone it binds runs from different directories | LOW | B-30: applied, in lane 4's words, verbatim: the sentence ends "for the same working directory and refs" at spec.md:35, the added scenario's AND following; committed alone as `4d5855a` for lane 4's byte check, and `tasks.md` 2.2 reopened until that check is cited | `specs/project-overview/spec.md` (`4d5855a`); What Changes; Capabilities; Dependencies (Implementation order, Change 2); Decisions (B-22, B-30); CD-17; `design.md` D6; `tasks.md` 1.4, 2.2 |
+| lane 4 (2026-10-20) F4: "The overview SHALL NOT classify a worktree `merged-removable` where `project clean` classifies it otherwise" carries no scope, so read alone it binds runs from different directories | LOW | B-30: applied, in lane 4's words, verbatim: the sentence ends "for the same working directory and refs" at spec.md:35-36, the added scenario's AND following; committed alone as `4d5855a` for lane 4's byte check, and `tasks.md` 2.2 reopened until that check is cited | `specs/project-overview/spec.md` (`4d5855a`); What Changes; Capabilities; Dependencies (Implementation order, Change 2); Decisions (B-22, B-30); CD-17; `design.md` D6; `tasks.md` 1.4, 2.2 |
 | lane 3 delta read (cf57956) LOW (1): the stage's exit sentence names a signal and the deadline but not the removal ceiling, and its "SHALL be 1" leaves out the signal row | LOW | B-31: applied: "2 unless a signal, the deadline or the removal ceiling decides it" and "SHALL be 1 unless a signal decides it", as the exit table's rows 1 and 2 order them | project-clean delta (ADDED "Clean disposes of listed caches before a worktree removal"); `design.md` D8 |
 | lane 3 delta read (cf57956) LOW (2): the B-27 decision says every item was applied as worded, while the round B3 table applies LOW 3 with a change | LOW | B-31: applied | Decisions (B-27) |
 | lane 3 delta read (cf57956) LOW (3): in D4's case the 16th target lists no cache, so the floor refuses its removal's spawn, not a cache stage | LOW | B-31: applied | What Changes (Caps); Decisions (B-25); `design.md` D4 |
@@ -1541,20 +1554,21 @@ rulings on Codex's two findings, each recorded as one item with its ruling.
 | Finding | Severity | Ruling | Section edited |
 | --- | --- | --- | --- |
 | Codex (e1049b2) P2 at `specs/project-clean-review-safety/spec.md:353`, and the lead's B-34, found in round B4, the same item: a preflight read whose limiting budget is the deadline, or that the removal floor stops before the first removal, ends the stage `refused` with `cache-changed`, a state-change diagnosis, where the bounds rule records `deadline-exceeded` and makes every target whose removal cannot start `not-attempted` | P2 | B-34: applied: a read that cannot start because no more than the floor remains, or that outlives the budget that the deadline set, ends the stage `not-attempted` with `target-stopped` and the target `not-attempted` with `deadline-exceeded`, `reconciliation: null`, exit 1, and the human result prints `Cache disposal at PATH not attempted (deadline-exceeded); nothing was deleted.` before its stop block; a real difference, an error and a read past its own 5 s budget stay `refused` with `cache-changed`, exit 2; one AND of "No time for a cache stage" pins both outcomes | review-safety delta (ADDED preflight paragraph); project-clean delta (ADDED stage paragraph and human lines; "No time for a cache stage"); `design.md` D1, D4, D7, D8, D11, D12, D14, Risks; What Changes (Failure and recovery, What the person sees); Capabilities; Decisions (B-34) |
-| lead B-35 (A-25 for #26): D4 still describes #23's joint fit at `ca96701`, "13 of 16, 11 in its worst case", with the cache-stage filesystem time excluded | not graded | B-35: applied: D4 describes #26 at `9ff8202` under A-23 and A-24: at most 81 children, and at the packet's model with cache disposal 10 of 16 targets removed and 9 branches retired through one worker, 8 and 8 in the worst case of 17 reflog children; every figure is #26's, checked against its own arithmetic; no cap changed, `limits.targets` 16 and A-9 still Brett Heap's; the copies in D13 and in the B-19 decision read "13 of 16 at `ca96701`" | `design.md` Context, D4, D13; Decisions (B-19, B-35) |
+| lead B-35 (A-25 for #26): D4 still describes #23's joint fit at `ca96701`, "13 of its 16 targets ... 11 in the worst case", with the cache-stage filesystem time excluded | not graded | B-35: applied: D4 describes #26 at `9ff8202` under A-23 and A-24: at most 81 children, and at the packet's model with cache disposal 10 of 16 targets removed and 9 branches retired through one worker, 8 and 8 in the worst case of 17 reflog children; every figure is #26's, checked against its own arithmetic; no cap changed, `limits.targets` 16 and A-9 still Brett Heap's; D13 reads "13 of 16 at `ca96701`" and the B-19 decision "13 at `ca96701`" | `design.md` Context, D4, D13; Decisions (B-19, B-35) |
 | lead B-36: `tasks.md` 2.2 stands reopened until lane openRepoProject-4's byte check of B-30's commit is cited | not graded | B-36: applied: ticked again, citing lane 4's NOTED at line 64 of `lanes/log/openRepoProject-4.md` (2026-10-20T11:50:06Z, brett-wip `fab1e721d`, an ancestor of the register's `origin/main` at `fa9800bad`), quoted exactly: the overview delta differs from the agreed `9f30fb9` only by "for the same working directory and refs", on :35-36 and :74, +3/-2, unchanged through `e1049b2`; `specs/project-overview/spec.md` is not edited this round | `tasks.md` 2.2; Status; What Changes; Dependencies (Implementation order); Decisions (B-30, B-36); `design.md` D6, Migration Plan |
 | Codex (e1049b2) P2 at `specs/project-clean-review-safety/spec.md:383`, and the lead's B-37: on a platform without the descriptor-relative calls, "every row that holds ignored records" is forced to `ignored-local-files`, so a dirty worktree that also holds an ignored file loses the `dirty` classification, which the ladder tests first, and its actionable diagnosis | P2 | B-37: applied: `cache-unsupported-platform` applies only to a row that reaches the `ignored-local-files` rung; a row classified by `stale-worktree`, `protected-default`, `inspection-error` or `dirty` keeps that classification and, where it holds ignored records, its `not-candidate` sub-record as where the calls exist; one AND of "No descriptor-relative calls on this platform" adds a dirty worktree that holds an ignored `local.env` | review-safety delta (ADDED platform paragraph; "No descriptor-relative calls on this platform"); `design.md` D9; What Changes (Fail closed per platform); Capabilities; Decisions (B-37), CD-3 |
 
 ### Re-read and Codex Findings (round B6)
 
 Lane openRepoProject-3's folded read of this change over `cf57956..fffc194`,
-sent by message on 2026-10-20 at about 16:3xZ, and Codex's inline finding on
-`fffc194` (comment 4327345826, 2026-10-20T16:16:38Z), were ruled by the lead on
-2026-10-20 as B-38 and B-39, for a short round after the 20:50Z reset. Lane 3
-found no HIGH and confirmed that every B4 and B5 ruling holds, recomputing
-B-33's figures by brute force; of the 5 items here, 5 are applied, none with
-change and none declined. `specs/project-overview/spec.md` is not edited: none
-of the rulings needs it, and its block is lane openRepoProject-4's.
+sent by message on 2026-10-20 at about 16:3xZ, with its two last checks, the
+citation pass and the ASCII grep, and Codex's inline finding on `fffc194`
+(comment 4327345826, 2026-10-20T16:16:38Z), were ruled by the lead on 2026-10-20
+as B-38, B-39 and B-40, for a short round after the 20:50Z reset. Lane 3 found
+no HIGH and confirmed that every B4 and B5 ruling holds, recomputing B-33's
+figures by brute force; of the 7 items here, 7 are applied, none with change and
+none declined. `specs/project-overview/spec.md` is not edited: none of the
+rulings needs it, and its block is lane openRepoProject-4's.
 
 | Finding | Severity | Ruling | Section edited |
 | --- | --- | --- | --- |
@@ -1563,3 +1577,5 @@ of the rulings needs it, and its block is lane openRepoProject-4's.
 | lane 3 folded read (fffc194) LOW 2: the caps' Open Question cites `BA:729-735` alone for the rule that lowers the target cap, where `BA:766-771` states its reapplication under a higher measured cost | LOW | B-38: applied: both cited, the second for the steps of 8 | Open Questions (the caps); Decisions (B-38) |
 | lane 3 folded read (fffc194) LOW 3: design D4's 28.3 s for the first deep-tree target is stated without the walk's call count | LOW | B-38: applied: 683 calls a row (341 directory opens, 171 file `lstat` calls and 171 access checks), 10,928 for 16 rows, 2.45 s at 224 us, added to the 25.8 s of the 172 Git children before the target; the worktree root's own open is a 684th call a row, named in D4, which moves nothing at this precision (16 x 684 x 224 us is also 2.45 s) | `design.md` D4; Decisions (B-38) |
 | Codex (fffc194) P2 at `specs/project-clean-review-safety/spec.md:354`, and the lead's B-39: a call past its 5 s budget is unconditionally `refused` with `cache-changed`, which contradicts the signal scenario when SIGINT arrived while the read was held | P2 | B-39: applied: the stage reads the slot before it classifies the stop of any preflight read, a `probe-timeout`, the floor or the deadline alike; where a signal has been received the stage is `not-attempted` with `target-stopped`, nothing deleted, the target and every later one `not-attempted` with `interrupted`, and the exit status the signal's, never `refused` with `cache-changed`; a difference or an error that the preflight did find stays `refused`; the deadline line is printed only where no signal was received; one AND of "A signal during a cache stage", so no scenario is added and the counts stay 55, 28 and 8 | review-safety delta (ADDED preflight paragraph); project-clean delta (ADDED stage paragraph and human lines; "A signal during a cache stage"); `design.md` D1, D7, D8, D11, D12, D14, Risks; What Changes (Failure and recovery, What the person sees); Capabilities; Decisions (B-34, B-39); CD-11 |
+| lane 3's last checks (fffc194) LOW 1: B-30's row in the round B4 table says the SHALL NOT sentence ends "for the same working directory and refs" at `spec.md:35`, where it runs :34-36, the added words on :35-36 | LOW | B-40: applied: `spec.md:35-36`, re-checked against `specs/project-overview/spec.md` as it stands (the sentence on :34-36, "for" ending :35 and "the same working directory and refs." on :36); that file is not edited | the round B4 table (B-30's row); Decisions (B-40) |
+| lane 3's last checks (fffc194) LOW 2: the quotations are not verbatim: D4 and the proposal quote #26's `ca96701` as "13 of 16, 11 in its worst case", where its design.md:573 reads "13 of its 16 targets ... 11 in the worst case", and say B-19 reads "13 of 16 at `ca96701`", where B-19 reads "13 at `ca96701`" and only design D13 reads "13 of 16 at `ca96701`" | LOW | B-40: applied: #26's words quoted as "13 of its 16 targets ... 11 in the worst case" in design D4, in B-35 and in the round B5 table's B-35 row, and B-35 now says that D13 reads "13 of 16 at `ca96701`" and B-19 "13 at `ca96701`"; the figures were right and none changes; the ca96701 text was read with `git show ca96701:openspec/changes/add-project-clean-branch-retirement/design.md` | `design.md` D4; Decisions (B-35, B-40); the round B5 table (B-35's row) |

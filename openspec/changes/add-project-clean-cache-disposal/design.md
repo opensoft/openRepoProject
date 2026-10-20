@@ -10,7 +10,7 @@ requirements. Citations follow the proposal's key: the packet at `da33d92`
 change 2 (`APO`, `APO/ov`) at `961c405`, draft PR #19 at `c462d87` (`PR19/pc`,
 `PR19/rs`), and `project:N` at `961c405`; main is now `e9d6711`, with the same
 `openspec/`, `ideation/` and `project` (L-15). The lane's rulings are L-1 to
-L-17 and B-1 to B-39, and A-9, A-23 and A-24 for #23; this change's own
+L-17 and B-1 to B-40, and A-9, A-23 and A-24 for #23; this change's own
 decisions are CD-1 to CD-18 in `proposal.md`, and the alignment review's
 findings (SA-n, QA-n, G1 to G5) are resolved in its table. The council (P-n,
 S-n and AE-n) read `9ebe9f0`; its VALID verdicts, ruled as B-16 to B-24, are
@@ -26,8 +26,9 @@ Codex's two findings on `e1049b2`, ruled as B-34 and B-37, and the lead's B-35
 and B-36 (D4's account of #26 at `9ff8202`; `tasks.md` 2.2 ticked again on lane
 4's byte check) are applied in round B5 (proposal, "Re-read and Codex Findings
 (round B5)"). Lane 3's folded read of `cf57956..fffc194` and Codex's finding on
-`fffc194`, ruled as B-38 and B-39, are applied in round B6 (proposal, "Re-read
-and Codex Findings (round B6)").
+`fffc194`, ruled as B-38 and B-39, and the last two LOWs of lane 3's read, ruled
+as B-40, are applied in round B6 (proposal, "Re-read and Codex Findings (round
+B6)").
 
 How the packet's contract and the rulings map to the decisions below:
 
@@ -74,6 +75,7 @@ How the packet's contract and the rulings map to the decisions below:
 | B-37 | an unsupported platform withholds the cache proof only from a row that reaches the `ignored-local-files` rung; a row that an earlier rung classified, a `dirty` one among them, keeps its classification (Codex's P2 at `specs/project-clean-review-safety/spec.md:383` on `e1049b2`) | D9 |
 | B-38 | lane 3's folded read of `cf57956..fffc194`: the last AND of "No time for a cache stage" reads "at least 10 s of work remaining", the complement of the first half's budget under 5 s; "no difference was found"; the packet's reapplication rule cited beside its fit rule; the walk's call count behind D4's 28.3 s | D4, D7, D14 |
 | B-39 | a signal received before a preflight read's stop is classified outranks it: a read that reaches its own 5 s budget, or the floor or the deadline, after a signal ends the stage `not-attempted` with `target-stopped` and the target `not-attempted` with `interrupted`, never `refused` with `cache-changed`; Codex's P2 at `specs/project-clean-review-safety/spec.md:354` on `fffc194` | D1, D7, D8, D11, D12, D14, Risks |
+| B-40 | lane 3's last two LOWs on `fffc194`: B-30's row cites the SHALL NOT sentence's end at `spec.md:35-36`; the quotations of #26's `ca96701` ("13 of its 16 targets ... 11 in the worst case") and of B-19 ("13 at `ca96701`") are verbatim | D4 |
 
 What in `project` shapes the approach:
 
@@ -508,10 +510,11 @@ stage, 10 of 16 targets are removed and 9 branches retired before the removal
 floor, and 8 and 8 in its worst case of 17 reflog children; at a thread per
 call 5 and 5, or 4 and 3. It finds that change 1's deadline rule defers the
 rest to the next run (exit 1, never unsafe), and that at change 1's measured
-costs all 16 fit through a worker. Its draft at `ca96701` read "13 of 16, 11 in
-its worst case" and left the cache-stage filesystem time out. #26, which
-archives after this change, states that joint fit (A-9, the alignment review's
-G3), which stays Brett Heap's question, `limits.targets` staying 16. The inputs
+costs all 16 fit through a worker. Its draft at `ca96701` read "13 of its 16
+targets ... 11 in the worst case" and left the cache-stage filesystem time out.
+#26, which archives after this change, states that joint fit (A-9, the alignment
+review's G3), which stays Brett Heap's question, `limits.targets` staying 16.
+The inputs
 it needs from this change, as rounds B3 and B4 restate them:
 
 - Git children: 16 cache enumerations per invocation under `probes`, 2.4 s at
