@@ -32,7 +32,8 @@ per run. Except: the overview collects no cache evidence, so a worktree that
 `project clean` classifies `merged-removable` because clean's cache enumeration
 proved every ignored path a listed cache SHALL be classified
 `ignored-local-files` by the overview. The overview SHALL NOT classify a
-worktree `merged-removable` where `project clean` classifies it otherwise.
+worktree `merged-removable` where `project clean` classifies it otherwise for
+the same working directory and refs.
 
 #### Scenario: Manifest target
 - **WHEN** a `project.yaml` sets `tracking_branch: origin/develop`, a local `develop` exists, and there is no `origin/HEAD`
@@ -70,4 +71,4 @@ worktree `merged-removable` where `project clean` classifies it otherwise.
 - **WHEN** one repository holds a merged, clean, published linked worktree whose only ignored files are Python bytecode caches that `project clean` would dispose of, a second such worktree that also holds an ignored `local.env`, and a third cache-only, merged, clean, published worktree holding an initialized submodule, and the overview and `project clean <root> --json` run from the same directory at the same commit
 - **THEN** the overview classifies the first `ignored-local-files`, with the preserve finding and the read-only clean suggestion of that class, where `project clean` classifies it `merged-removable`, and a counting `git` wrapper on PATH records no cache enumeration child from the overview
 - **AND** the overview classifies the third `ignored-local-files`, where `project clean` classifies it `merged-removable` and excludes it as `contains-submodule`
-- **AND** both classify the second `ignored-local-files`, and no worktree is classified `merged-removable` by the overview where `project clean` classifies it otherwise
+- **AND** both classify the second `ignored-local-files`, and no worktree is classified `merged-removable` by the overview where `project clean` classifies it otherwise for the same working directory and refs
