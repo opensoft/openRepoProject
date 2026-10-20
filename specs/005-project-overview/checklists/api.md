@@ -23,8 +23,8 @@ Lane: openRepoProject-4
   - Result: fixed in spec.md, C-40 (DI:792-800).
 - [x] CHK005 Is the closed set of row and scan error codes for schema version 1 enumerated? [Completeness, Gap, Spec FR-021, FR-022, FR-037]
   - Result: fixed in spec.md, C-41.
-- [ ] CHK006 Is it specified when the exit-2 codes `refused` and `os-error` apply under `--json`, rather than `internal-error`? [Completeness, Spec FR-039]
-  - Result: open on existing question Q12.
+- [x] CHK006 Is it specified when the exit-2 codes `refused` and `os-error` apply under `--json`, rather than `internal-error`? [Completeness, Spec FR-039]
+  - Result: fixed in spec.md, FR-039 (2026-10-20, after lane openRepoProject-3's packet-fidelity read): the code follows the exception's kind (DI:1083-1089; POD:675-679, :705-707), a refusal giving `refused`, an operating-system error `os-error` and any other exception `internal-error`. A failed write and the output's encoding stay in question Q12.
 - [ ] CHK007 Is the content of `limit` and `omitted` on `deadline-exceeded` errors specified, for the scan error and for row errors? [Completeness, Spec FR-036, Clarifications C-30]
   - Result: open on existing question Q6.
 - [x] CHK008 Is the content of `limit` and `omitted` on a project row's `scan-limit` error specified? [Completeness, Spec FR-017, FR-018]
@@ -100,9 +100,10 @@ Lane: openRepoProject-4
 
 ## Evaluation
 
-Evaluated on 2026-10-19 against `spec.md` at `8f433f7`. 31 items: 22 pass, 5
-fixed in the spec, 2 open, 2 plan notes, 0 new questions. An open item waits
-on the question or residual its result names; a plan note is for the plan, not
-the spec; a new question is asked in `clarify-questions.md`.
+Evaluated on 2026-10-19 against `spec.md` at `8f433f7`; CHK006 re-evaluated
+on 2026-10-20 after lane openRepoProject-3's packet-fidelity read. 31 items:
+22 pass, 6 fixed in the spec, 1 open, 2 plan notes, 0 new questions. An open
+item waits on the question or residual its result names; a plan note is for
+the plan, not the spec; a new question is asked in `clarify-questions.md`.
 
 Plan notes: PN-6 (CHK010), PN-7 (CHK011), PN-8 (CHK020).

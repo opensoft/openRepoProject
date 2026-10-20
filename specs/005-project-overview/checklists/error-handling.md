@@ -19,8 +19,8 @@ Lane: openRepoProject-4
   - Result: pass. The delta's collector table.
 - [x] CHK003 Is a failure outside the boundary specified (`internal-error`, exit 2, no traceback)? [Completeness, Spec FR-039, FR-042]
   - Result: pass.
-- [ ] CHK004 Is it specified when `refused` and `os-error` apply outside the boundary? [Completeness, Spec FR-039]
-  - Result: open on existing question Q12.
+- [x] CHK004 Is it specified when `refused` and `os-error` apply outside the boundary? [Completeness, Spec FR-039]
+  - Result: fixed in spec.md, FR-039 (2026-10-20, after lane openRepoProject-3's packet-fidelity read). An exception outside the boundary maps by its kind, as DI:1083-1089 says: a refusal gives `refused`, an operating-system error `os-error`, any other exception `internal-error`, each with exit 2; POD:705-707 is the scenario for the last. A failed write and the output's encoding stay in question Q12 (CHK012).
 - [x] CHK005 Is the evidence kept after a failure specified (what was established stays; the rest is null)? [Completeness, Spec FR-022]
   - Result: pass.
 - [ ] CHK006 Is the error message specified for a failed probe whose standard error is empty? [Completeness, Gap, Spec FR-022]
@@ -59,8 +59,8 @@ Lane: openRepoProject-4
   - Result: pass.
 - [x] CHK020 Is completeness consistent with errors (incomplete exactly when a scan error or an error row exists)? [Consistency, Spec FR-037]
   - Result: pass.
-- [x] CHK021 Is a registration-mismatch row consistent with that rule (no row error, so complete, yet exit 1 by its error-severity finding)? [Consistency, Spec Clarifications C-26]
-  - Result: pass.
+- [x] CHK021 Is a registration-mismatch row consistent with that rule (no row error, so complete, with one repair warning that gives exit 0, or 1 under `--strict`)? [Consistency, Spec Clarifications C-26]
+  - Result: fixed in spec.md, C-26 (2026-10-20, after lane openRepoProject-3's packet-fidelity read). C-26 had added an error-severity `inspection-error` finding beside the warning, so that the row exited 1; DI:270-273 has the `registration-mismatch` warning replace that finding and add no error, leaving completeness unaffected.
 
 ## Acceptance Criteria Quality
 
@@ -98,9 +98,11 @@ Lane: openRepoProject-4
 
 ## Evaluation
 
-Evaluated on 2026-10-19 against `spec.md` at `8f433f7`. 30 items: 25 pass, 1
-fixed in the spec, 2 open, 1 plan notes, 1 new questions. An open item waits
-on the question or residual its result names; a plan note is for the plan, not
-the spec; a new question is asked in `clarify-questions.md`.
+Evaluated on 2026-10-19 against `spec.md` at `8f433f7`; CHK004 and CHK021
+re-evaluated on 2026-10-20 after lane openRepoProject-3's packet-fidelity
+read. 30 items: 24 pass, 3 fixed in the spec, 1 open, 1 plan notes, 1 new
+questions. An open item waits on the question or residual its result names; a
+plan note is for the plan, not the spec; a new question is asked in
+`clarify-questions.md`.
 
 Plan notes: PN-11 (CHK006).

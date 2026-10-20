@@ -165,6 +165,44 @@ Lane: openRepoProject-4
   the same at both pins.
   Re-validation: 16 of 16 items pass, with the checks of iteration 2 re-run
   by script on the edited spec.
+- 2026-10-20: three read-only reviews were folded into the spec, as stage 1
+  of their findings, and feature 004 was re-pinned. Lane openRepoProject-3's
+  fidelity read of `9899eae` against the packet and change 2: the
+  `registration-mismatch` warning replaces the `inspection-error` finding of
+  a row whose registration disagrees and adds no error, so that row no
+  longer exits 1 by itself (H1; C-26, FR-007, US4 s1); an exception outside
+  the per-candidate boundary maps to `refused`, `os-error` or
+  `internal-error` by its kind, and the exit-2 text is cited (H2, L9;
+  FR-039, FR-043, US5 s3); a holder whose probe reports another toplevel
+  has null Git fields and no error (M2; FR-003); a child the deadline cuts
+  is `deadline-exceeded` (L1; FR-011); a missing or non-regular `<path>/.git`
+  is a registration disagreement (L2; FR-007); unreached worktree probes keep
+  their repository's evidence (L3; FR-012); a complete scan that finds no
+  project says so (L4; FR-045); FR-001, FR-003, FR-006, FR-013, FR-022,
+  FR-036, FR-038, FR-039 and FR-048 cite their open questions (L5); C-29 and
+  US1 s1 cite DI:1190-1191 (L6); FR-036 names C-23 and C-35 (L7); FR-019's
+  estate condition is marked a reading (L8). Lane openRepoProject-4's
+  cross-check of feature 004's runtime: EC-002 now says a SIGINT before the
+  handlers are installed ends the run with `Cancelled.` and status 130
+  (X-13), and EC-031 and EC-032 record feature 004's duplicate-registry-path
+  limit and the repeated identity probe's effect on `probes.performed`
+  (X-14, X-16). Feature 004's citations moved from `5a02c1a` to `d81b3d9`
+  (doc round 5, rulings R-49 to R-51) after checking that every passage the
+  spec cites reads the same there: round 5 changed only `data-model.md`
+  (the registration limit and the mode table, neither cited before) and
+  `tasks.md`; the header, Assumptions and Dependencies say that its branch's
+  head, `a32d20b`, has T001 to T035 built, the evidence model merged as
+  `cce8dbd`, and none of it on `main`, and Dependencies record lane
+  openRepoProject-2's ruling R-54. Dependencies and Out of Scope also name
+  the three open changes of lane openRepoProject-5 (issues #23 to #25) and
+  their order against this feature, which reserves no flag, field or hook
+  for `--remote`. In this folder, CHK006 of `ux.md` (its plan note PN-2
+  withdrawn), CHK004 and CHK021 of `error-handling.md` and CHK006 of
+  `api.md` now read as fixed in the spec, and the totals below were
+  recounted by script. No requirement was added or removed; the tables'
+  edge-case cells gain EC-031 and EC-032 and scenario 50 gains FR-045.
+  Re-validation: 16 of 16 items pass, with the checks of iteration 2 re-run
+  by script on the edited spec.
 - Items marked incomplete require spec updates before `/speckit-clarify` or `/speckit-plan`
 
 ## Cross-cutting Requirements Quality (no-argument `/speckit.checklist`, 2026-10-19)
@@ -234,10 +272,10 @@ Lane: openRepoProject-4
 ### Ambiguities and Conflicts
 
 - [x] CHK023 Is every point left to the plan named as such? [Ambiguity, Spec Assumptions]
-  - Result: pass. The spec names its one; this run's plan notes PN-1 to PN-15 are listed in the domain checklists' Evaluation sections.
+  - Result: pass. The spec names its one; this run's plan notes PN-1 to PN-15, PN-2 withdrawn on 2026-10-20, are listed in the domain checklists' Evaluation sections.
 - [x] CHK024 Are the differences between change 2 and feature 004 recorded with which text governs? [Conflict, Spec Assumptions, Clarifications C-33]
   - Result: pass.
-- [x] CHK025 Are the recorded residuals (EC-001, EC-002, EC-006, EC-022, EC-025 to EC-030) kept apart from requirements, so that none reads as a promise? [Ambiguity, Spec Edge Cases]
+- [x] CHK025 Are the recorded residuals (EC-001, EC-002, EC-006, EC-022, EC-025 to EC-032) kept apart from requirements, so that none reads as a promise? [Ambiguity, Spec Edge Cases]
   - Result: pass.
 
 ## Evaluation
@@ -251,5 +289,6 @@ before it carry no ids and are not counted.
 
 Plan notes: none.
 
-All 17 checklists: 411 items: 358 pass, 19 fixed in the spec, 17 open, 15 plan
-notes (PN-1 to PN-15), 2 new questions.
+All 17 checklists: 411 items: 357 pass, 23 fixed in the spec, 15 open, 14 plan
+notes (PN-1 and PN-3 to PN-15; PN-2 is withdrawn), 2 new questions. Recounted
+by script on 2026-10-20.

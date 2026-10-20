@@ -23,12 +23,12 @@ Lane: openRepoProject-4
   - Result: plan note PN-1.
 - [x] CHK005 Is the message of a gated finding specified: its own text, then `; `, then the remedy, within 200 characters, the own text shortened with `...` when both do not fit? [Completeness, Spec FR-035, Clarifications C-11]
   - Result: pass. C-11 cites design D5 for the composition and the shortening rule.
-- [ ] CHK006 Are the human text of an exit-2 refusal without `--json` (`git-too-old`, `git-unavailable`, an internal error) and the stream it is written to specified? [Completeness, Gap, Spec FR-039, FR-043]
-  - Result: plan note PN-2.
+- [x] CHK006 Are the human text of an exit-2 refusal without `--json` (`git-too-old`, `git-unavailable`, an internal error) and the stream it is written to specified? [Completeness, Gap, Spec FR-039, FR-043]
+  - Result: fixed in spec.md, FR-039 and FR-043 (2026-10-20, after lane openRepoProject-3's packet-fidelity read). The packet settles it: DI:1083-1085 keeps the baseline behaviour for a refusal or an operating-system error, `REFUSED: <message>` on standard error (`project:995-999` at `da33d92`), and exit 2 for any other exception, never the interpreter's default 1, with no further human line for that case; DI:322-323 gives the Git refusal's message, such as "project overview needs Git 2.36 or newer; found 2.34.1". Plan note PN-2 is withdrawn.
 - [x] CHK007 Is the summary line's text specified for the usual case and for `--attention` with no row shown? [Completeness, Spec FR-045]
   - Result: pass. FR-045 requires the summary on every run and the nothing-needs-attention form, citing design D10's fixed text.
 - [x] CHK008 Is the human output specified for a complete scan that lists its roots and finds no project? [Completeness, Edge Case, Spec US10 s1, FR-045]
-  - Result: pass. The always-printed summary line says so with its counts ("0 projects"); design D10 adds a fixed line only for the case where every root is absent (FR-005).
+  - Result: pass. The always-printed summary line says so with its counts ("0 projects"); design D10 adds a fixed line only for the case where every root is absent (FR-005). FR-045 states it since 2026-10-20 (POD:722; DI:1097-1098).
 - [x] CHK009 Is the `Scanning N roots...` notice specified as to stream, condition, the meaning of N and its moment? [Completeness, Spec FR-046, Clarifications C-36]
   - Result: pass. FR-046 fixes standard error, a terminal only, N before canonicalisation (C-36), before listing.
 - [x] CHK010 Is the `Cancelled.` line specified as to stream and condition? [Completeness, Spec FR-044]
@@ -106,10 +106,11 @@ Lane: openRepoProject-4
 
 ## Evaluation
 
-Evaluated on 2026-10-19 against `spec.md` at `8f433f7`. 34 items: 27 pass, 2
-fixed in the spec, 0 open, 5 plan notes, 0 new questions. An open item waits
-on the question or residual its result names; a plan note is for the plan, not
-the spec; a new question is asked in `clarify-questions.md`.
+Evaluated on 2026-10-19 against `spec.md` at `8f433f7`; CHK006 re-evaluated
+on 2026-10-20 after lane openRepoProject-3's packet-fidelity read. 34 items:
+27 pass, 3 fixed in the spec, 0 open, 4 plan notes, 0 new questions. An open
+item waits on the question or residual its result names; a plan note is for
+the plan, not the spec; a new question is asked in `clarify-questions.md`.
 
-Plan notes: PN-1 (CHK004, CHK023), PN-2 (CHK006), PN-3 (CHK011), PN-4
-(CHK012), PN-5 (CHK016).
+Plan notes: PN-1 (CHK004, CHK023), PN-3 (CHK011), PN-4 (CHK012), PN-5
+(CHK016); PN-2 (CHK006) is withdrawn, the packet settling it.
