@@ -479,14 +479,14 @@ class ApplyTests(clean_support.CleanCase):
             self.git(root, "worktree", "lock", trees["002-locked"])
             self.git(root, "worktree", "remove", trees["003-gone"])
             expected = {
-                "001-dirty-tree": record(True, True, True, heads["001-dirty"]),
-                "002-locked-tree": record(True, True, True, heads["002-locked"]),
-                "003-gone-tree": record(False, False, True, heads["003-gone"]),
+                "001-dirty-tree": ("state-changed", record(True, True, None, None)),
+                "002-locked-tree": ("state-changed", record(True, True, None, None)),
+                "003-gone-tree": ("identity-changed", record(False, False, None, None)),
             }
             for name, reconciliation in expected.items():
                 with self.subTest(name):
                     self.assertEqual(project.revalidate(plan, entries[name], run),
-                                     ("state-changed", reconciliation))
+                                     reconciliation)
             self.assertTrue((trees["001-dirty"] / "late-change").is_file())
 
             # Another repository identity: the listings are not this repository's,
@@ -495,7 +495,7 @@ class ApplyTests(clean_support.CleanCase):
             moved = dict(plan.evidence, identity=dict(plan.evidence["identity"], ino=-1))
             with mock.patch.object(plan, "evidence", moved):
                 self.assertEqual(project.revalidate(plan, entry, run),
-                                 ("state-changed", record(None, True, None, None)))
+                                 ("identity-changed", record(None, True, None, None)))
             self.assertIsNone(project.revalidate(plan, entry, run))
 
             # The merge target advances: every target differs.
