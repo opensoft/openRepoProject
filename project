@@ -468,27 +468,41 @@ def manifest(root):
 
 
 def discover(target=None):
+    """The project directory of target, a path or a bare name, or of the
+    working directory: a family holder, then the nearest manifest, then the
+    repository's toplevel, then a `.project.json` or `.devcontainer` there.
+
+    Before its Git step it runs the version check, memoized on the invocation
+    (T118; research.md R2, FR-053, plan review M10): with Git 2.36 or later,
+    `rev-parse --show-toplevel` runs through the driver; otherwise no Git child
+    runs, and the nearest of the path and its ancestors holding a `.git` entry,
+    by lstat, names the toplevel. A bare name's refusals carry their codes,
+    `ambiguous-name` and `repository-not-found` (lead ruling R-53, P-10); the
+    messages are the baseline's."""
+    bare = False
     if target:
         path = Path(target).expanduser()
         # Named estates prefer family holders over similarly named roots.
         if not path.is_absolute() and len(path.parts) == 1:
+            bare = path.name not in (".", "..")
             families = [base / target / target for base in projects_dirs()
                         if (base / target / target / "family.yaml").is_file()]
             if len(families) > 1:
-                raise Refused("Ambiguous project name; supply a path.")
+                raise Refused("Ambiguous project name; supply a path.", code="ambiguous-name")
             if families:
                 return families[0].resolve()
             if not path.exists():
                 matches = [p / target for p in projects_dirs() if (p / target).is_dir()]
                 if len(matches) > 1:
-                    raise Refused("Ambiguous project name; supply a path.")
+                    raise Refused("Ambiguous project name; supply a path.", code="ambiguous-name")
                 if matches:
                     path = matches[0]
         path = path.resolve()
     else:
         path = Path.cwd().resolve()
+    not_found = "repository-not-found" if bare else None
     if not path.is_dir():
-        raise Refused(f"Directory does not exist: {path}")
+        raise Refused(f"Directory does not exist: {path}", code=not_found)
     holder = path / path.name
     if (holder / "family.yaml").is_file():
         return holder
@@ -496,12 +510,22 @@ def discover(target=None):
     for candidate in ancestors:
         if (candidate / "project.yaml").is_file() or (candidate / "family.yaml").is_file():
             return candidate
-    root = git_text(path, "rev-parse", "--show-toplevel")
-    if root:
-        return Path(root)
+    if git_version(current_invocation()).code is None:
+        root = git_text(path, "rev-parse", "--show-toplevel")
+        if root:
+            return Path(root)
+    else:
+        for candidate in ancestors:
+            try:
+                found = fs_call(os.lstat, candidate / ".git")
+            except OSError:
+                continue  # no `.git` entry here
+            if isinstance(found, DriverOutcome):
+                break  # the lstat did not answer within its budget: name no toplevel
+            return candidate
     if (path / ".project.json").is_file() or (path / ".devcontainer").is_dir():
         return path
-    raise Refused(f"No project found at {path}; supply a path or name.")
+    raise Refused(f"No project found at {path}; supply a path or name.", code=not_found)
 
 
 # region timing
