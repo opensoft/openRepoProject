@@ -30,11 +30,16 @@ points found in applying it, and lane openRepoProject-3's folded read of
 agreed by lane openRepoProject-4 on 2026-10-20, are committed (`233df0b`;
 `proposal.md`, Dependencies and Sequencing). After that agreement, C-35, as
 lane openRepoProject-3's narrowing amends it, fills D5 with the lookup's
-per-directory rule and D11 with two tests, and edits no spec text. Round C7
-then applies lane openRepoProject-3's confirm read of round C6c (C-36), which
-rewords D5's rationale to what was observed, and Codex's P2 on `1c32667`
-(C-37), which has D6 bound an integer literal at parse time and D11 test it
-with one test; neither edits spec text.
+per-directory rule and D11 with two tests, and edits no spec text. Round C7 then
+applies lane openRepoProject-3's confirm read of round C6c (C-36), which rewords
+D5's rationale to what was observed, and Codex's P2 on `1c32667` (C-37), which
+has D6 bound an integer literal at parse time and D11 test it with one test;
+neither edits spec text. Round C8 then applies lane openRepoProject-3's confirm
+read of round C7 (C-38), four LOWs: D5 records the shells' runs on the errors
+the lookup skips and names the twelve errors injected, D6 and D11 give the
+source of Python's limit on integer-string conversion and say that 3.10.0 to
+3.10.6 were emulated, not run, and D11 serves a `number` of 2,147,483,647 too;
+it edits no spec text either.
 
 Citations follow `proposal.md`: the packet at `da33d92`; APO, CAS, PRS and
 `project:N` at main `961c405`, which main `e9d6711` holds unchanged for them
@@ -85,6 +90,7 @@ The rulings and the packet's boundary map to the decisions:
 | C-35: lane openRepoProject-3's narrowing of the lookup's per-directory rule: a directory where `gh` is absent is skipped, any other error fails the lookup | D5, D11 |
 | C-36: lane openRepoProject-3's confirm read of C6c: D5's rationale claims only what was observed | D5 |
 | C-37: Codex's P2 on `1c32667` at design.md:457: integer literals bounded at parse time by a `parse_int` hook, on every supported Python | D6, D11 |
+| C-38: lane openRepoProject-3's confirm read of C7: D5's shell runs on the skipped errors and the twelve errors named, D6's source for Python's integer-string limit, D11's `number` of 2,147,483,647 | D5, D6, D11 |
 | C-10, L-12: CI on Linux only | Migration Plan |
 
 What in `project` shapes the approach (at `961c405`; features 004 and 005
@@ -403,17 +409,30 @@ lookup, which then gives what one that fails gives, below. Skipping such a
 directory could run a later `gh` that one of the searches would not pick, so
 the lookup skips only what every search checked skips, and an error that not
 every search was seen to skip fails it. Checked on 2026-10-20 by injecting
-each error under glibc 2.39's `execvp`: it stopped on ELOOP, EIO,
+twelve errors, one at a time, into the first `execve` that glibc 2.39's `execvp`
+made for `gh`, with a second `gh` later on `PATH`: it stopped on ELOOP, EIO,
 ENAMETOOLONG, ENOMEM and E2BIG, and went on past ENOENT, EACCES, ENOTDIR,
-ESTALE, ENODEV and ETIMEDOUT. bash 5.2.21, zsh 5.9 and dash were recorded for
-ELOOP only: each skipped a `gh` that is a symbolic link to itself and went on
-to the later one, where glibc stops. The shells were not run on the other
-errors, so ESTALE, ENODEV and ETIMEDOUT, which glibc goes on past, are not
-known to be skipped by every search, and fail the lookup with the rest. The
-5 s limit and the deadline stay the only cuts of the lookup as a whole, and
-the spec's "finds none, fails, or reaches its 5 s limit" speaks of the lookup
-as a whole, so this per-directory rule fills D5 and is no change to the spec
-(C-35; its rationale reworded to what was observed, C-36).
+ESTALE, ENODEV and ETIMEDOUT; for ENOEXEC it ran the first `gh` through its `sh`
+fallback, which is no stop. The lookup never executes an entry, so it has no
+ENOEXEC to meet: an entry that is a regular file with execute permission is
+found, and whether it then runs is the child's matter, never the lookup's. Lane
+openRepoProject-3 reproduced the shells on 2026-10-20, in its confirm read of
+round C6c, as a user other than root: with `PATH=d1:d2` and the real `gh` in d2,
+bash 5.2.21, zsh 5.9 and dash 0.5.12 each ran d2's `gh`, as glibc's `execvp`
+did, past a mode-000 directory (EACCES), a regular file where the entry's
+directory should be (ENOTDIR), a dangling symbolic link `gh` and a missing
+directory (ENOENT), and past a `gh` that is a directory or a regular file
+without execute permission, so that the skips of ENOENT, ENOTDIR and EACCES rest
+on those runs and no longer on POSIX alone. For ELOOP, each shell skipped a `gh`
+that is a symbolic link to itself and went on to the later one, where glibc
+stops. The shells were not run on the other errors that fail the lookup, so
+ESTALE, ENODEV and ETIMEDOUT, which glibc goes on past, are not known to be
+skipped by every search, and fail the lookup with the rest. The 5 s limit and
+the deadline stay the only cuts of the lookup as a whole, and the spec's "finds
+none, fails, or reaches its 5 s limit" speaks of the lookup as a whole, so this
+per-directory rule fills D5 and is no change to the spec (C-35; its rationale
+reworded to what was observed, C-36, and its record of the twelve errors and of
+the shells completed, C-38).
 
 A lookup that fails, or that reaches its 5 s limit, as on an unreachable
 `PATH` directory, gives what one that finds none gives: every keyed row,
@@ -472,16 +491,20 @@ the loop stops reading, stops the child (D7) and records `truncated`.
   two failures that are not `JSONDecodeError` on Python 3.12.3 on 2026-10-20,
   a body under 1 MiB nested in `[`, which raised `RecursionError`, and a
   `number` of 5,000 digits, which raised a plain `ValueError` ("Exceeds the
-  limit (4300 digits) for integer string conversion"). That is the
-  interpreter's limit, which Python has had only since 3.10.7 and 3.11, while
-  AGENTS.md says Python 3.10+, and CI's Python 3.10 was not checked; so the
-  limit is no mechanism of this rule, and on 3.10.0 to 3.10.6, which have
-  none, that body would parse without the hook. Checked on 2026-10-20 on
-  Python 3.10.21, 3.11.16, 3.12.3, 3.13.15 and 3.15.0rc2: `json.loads` calls
+  limit (4300 digits) for integer string conversion"). That is Python's
+  integer-string conversion length limit, added in 3.11 as a mitigation for
+  CVE-2020-10735 and backported to 3.10.7, as Python's documentation states (its
+  standard types page and its 3.10 changelog, gh-95778, read on 2026-10-20),
+  while AGENTS.md says Python 3.10+, and CI's Python 3.10 was not checked.
+  Python 3.10.0 to 3.10.6, which have no such limit, were not run here, only
+  emulated with `sys.set_int_max_str_digits(0)`; so the limit is no mechanism of
+  this rule, and on those versions that body would parse without the hook.
+  Checked on 2026-10-20 on Python 3.10.21, 3.11.16, 3.12.3, 3.13.15 and
+  3.15.0rc2: `json.loads` calls
   the hook with each integer literal's text, its sign included, and with no
   float or string, and an exception raised there leaves `json.loads` as
   raised, never wrapped in `JSONDecodeError`; with
-  `sys.set_int_max_str_digits(0)`, which stands for 3.10.0 to 3.10.6, a plain
+  `sys.set_int_max_str_digits(0)`, which emulates 3.10.0 to 3.10.6, a plain
   `json.loads` of the 5,000-digit body returns, and with the hook it raises;
   and with that setting a literal of 1,000,000 digits took 5.2 s to convert
   on 3.10.21 and 4.5 s on 3.11.16, about 0.6 s on 3.12.3 and later, and under
@@ -653,19 +676,22 @@ of these fields, so remote evidence never reaches an eligibility gate, a
   `GH_NO_EXTENSION_UPDATE_NOTIFIER`, `GH_PROMPT_DISABLED`, `GH_TELEMETRY` and
   `NO_COLOR`, whether `GH_TOKEN` equals the caller's, the working directory,
   and its start and end times.
-- One test sets the interpreter's limit on converting a string to an integer
-  to 0, with `sys.set_int_max_str_digits(0)` where the interpreter has it, and
-  restores it after; that stands for Python 3.10.0 to 3.10.6, which have no
-  limit (C-37). With the limit at 0 the body whose `number` has 5,000 digits
-  still gives `api-error` for its key's rows, and the hook, called on that
-  literal's text with the conversion it would otherwise make replaced by a
-  stand-in that fails the test if called, raises, which shows that the hook
-  rejects the literal before converting it. The same test passes the hook
-  `2147483647` and `-2147483648`, which it accepts, and an 11-digit text,
-  which it rejects, and serves a `number` of 2,147,483,648, which has 10
-  digits and passes the hook, whose key is `api-error` by the node check. It
-  tests the parse and is no scenario: "API failures stay unknown" already
-  requires the 5,000-digit outcome.
+- One test sets the interpreter's limit on converting a string to an integer to
+  0, with `sys.set_int_max_str_digits(0)` where the interpreter has it, and
+  restores it after; that emulates Python 3.10.0 to 3.10.6, which have no such
+  limit (D6) and were not run here (C-37, C-38). With the limit at 0 the body
+  whose `number` has 5,000 digits still gives `api-error` for its key's rows,
+  and the hook, called on that literal's text with the conversion it would
+  otherwise make replaced by a stand-in that fails the test if called, raises,
+  which shows that the hook rejects the literal before converting it. The same
+  test passes the hook `2147483647` and `-2147483648`, which it accepts, and an
+  11-digit text, which it rejects, and serves two values of `number`, each of 10
+  digits, which pass the hook: 2,147,483,647, which passes the node check too
+  and gives its row, a matched pull request with that number and not
+  `api-error`, so that the node check's `<=` edge is pinned and a check written
+  `<` fails the test (C-38); and 2,147,483,648, whose key is `api-error` by the
+  node check. It tests the parse and is no scenario: "API failures stay unknown"
+  already requires the 5,000-digit outcome.
 - A planted `gh`, a second fake that records each run, sits in the working
   directory of a run whose `PATH` begins with an empty entry and `.`, so that
   "No gh, or a gh without authentication" shows it never runs, and the fake
