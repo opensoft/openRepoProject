@@ -255,7 +255,11 @@ Lane: openRepoProject-4
   the R-54 sentence read it, moves the dated readings of Q2, Q3, Q4, Q12, Q14
   and Q15 there, each cited claim holding (Q8's option D keeps its `b0243e5`
   citation of the contract, now at `:331`), and applies lane
-  openRepoProject-3's R6-1 to R6-3.
+  openRepoProject-3's R6-1 to R6-3. After it, EC-033 records a present
+  worktree on a branch named `HEAD` as a fill of the inspection-error rule
+  (feature 004's lead ruling R-61(b)), the header, the Assumptions and
+  requirement rows 4 and 5 of the traceability table name it, and CHK025
+  below reads EC-025 to EC-033; no requirement changes.
 - Items marked incomplete require spec updates before `/speckit-clarify` or `/speckit-plan`
 
 ## Cross-cutting Requirements Quality (no-argument `/speckit.checklist`, 2026-10-19)
@@ -328,7 +332,7 @@ Lane: openRepoProject-4
   - Result: pass. The spec names its one; this run's plan notes PN-1 to PN-15, PN-2 narrowed on 2026-10-20 to an exception of any other kind in human mode, are listed in the domain checklists' Evaluation sections.
 - [x] CHK024 Are the differences between change 2 and feature 004 recorded with which text governs? [Conflict, Spec Assumptions, Clarifications C-33]
   - Result: pass.
-- [x] CHK025 Are the recorded residuals (EC-001, EC-002, EC-006, EC-022, EC-025 to EC-032) kept apart from requirements, so that none reads as a promise? [Ambiguity, Spec Edge Cases]
+- [x] CHK025 Are the recorded residuals (EC-001, EC-002, EC-006, EC-022, EC-025 to EC-033) kept apart from requirements, so that none reads as a promise? [Ambiguity, Spec Edge Cases]
   - Result: pass.
 
 ## Evaluation

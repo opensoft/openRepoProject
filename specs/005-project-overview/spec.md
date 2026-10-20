@@ -53,12 +53,12 @@ and `targets` (POD:610-617). They are cited from
 `contracts/project-clean.md`) at `d81b3d9`, where lane openRepoProject-2's
 doc rounds 3 to 5 (rulings R-39 to R-51) merged them on branch
 `004-project-clean-all-safe`, as `acc822e`, `5a02c1a` and `d81b3d9`, except
-EC-031, which cites the branch's head, and EC-002 and the Dependencies,
-which cite its `project` there. That head, `6ae927f`, changes the
-documents after `d81b3d9` by the tier tags, file and verify fields and
-ticks of `tasks.md`, two additions to `plan.md` and its doc round 6
-(rulings R-55 to R-57 and R-59 to R-62, with the items of R-53 and R-54
-that they settle); its code, which changed after `a32d20b` by its T047
+EC-031 and EC-033, which cite the branch's head, and EC-002 and the
+Dependencies, which cite its `project` there. That head, `6ae927f`,
+changes the documents after `d81b3d9` by the tier tags, file and verify
+fields and ticks of `tasks.md`, two additions to `plan.md` and its doc
+round 6 (rulings R-55 to R-57 and R-59 to R-62, with the items of R-53 and
+R-54 that they settle); its code, which changed after `a32d20b` by its T047
 (`clean` as the frozen pipeline, merged as `6fb0fb7`) and by lane G's
 follow-up to its evidence model (the merge that is the head), has its
 tasks T001 to T035 and T047 built, among them its five incremental
@@ -68,9 +68,9 @@ its "Invocation" entity, and its evidence model (tasks T027 to T033),
 merged into that branch as `cce8dbd`; none of it is on `main`.
 The change pins its code citations at `da33d92`; this spec cites no line of
 `project`, `README.md` or `.github/workflows/tests.yml` as `main` has them,
-its only lines of feature 004's `project` being those of EC-031 and the
-Dependencies at `6ae927f`, and the plan re-pins every citation against the
-`main` of its day (proposal, "Dependencies and Sequencing").
+its only lines of feature 004's `project` being those of EC-031, EC-033
+and the Dependencies at `6ae927f`, and the plan re-pins every citation
+against the `main` of its day (proposal, "Dependencies and Sequencing").
 
 **Created before feature 004 merges**: The change creates this feature only
 after feature 004 merges (proposal, Status and "Dependencies and
@@ -1501,6 +1501,44 @@ path"; "Non-UTF-8 common directory".
   such a path `probes.performed` exceeds `probes.estimated`, which counts 1
   identity probe per Git candidate (FR-020; POD:248-254). No scenario
   asserts the two equal there, and FR-020 stands as ratified.
+- **EC-033**: A present worktree on a branch named `HEAD`
+  (`refs/heads/HEAD`) fails closed. Its `branch` and `head` come rightly
+  from the registry, its `merged_into_target` from the merged set and its
+  status from its own probe, but its `upstream`, `upstream_oid`,
+  `remote_present`, `ahead` and `behind` come from the ref listing
+  (DI:423-425; CMD:149-153), which for that ref prints the upstream and
+  track of the branch that `HEAD` names where the listing runs, whatever
+  `branch.HEAD.*` says. Reproduced for this record on Git 2.43.0 with the
+  fixture of feature 004's `8bea203`: run at `repository.root`, whose
+  checkout is on `main`, the listing credits `refs/heads/HEAD` with
+  `origin/main`, and with `ahead 1` once `main` is a commit ahead while that
+  ref stays at `origin/main`, so that the worktree reads as pushed and
+  merged and, as feature 004 found, `merged-removable`. Those five fields
+  are therefore not established: they stay null, and the row is
+  `inspection-error` set directly (POD:340-342, :378-381; CLN:114-116), as
+  `project clean` classifies it (POD:381-384). That is a fill of change 2's
+  rule, not a departure, as feature 004's lead ruling R-61(b) fills [L]'s
+  for `project clean` (`8bea203`, merged by `6ae927f`; its data model,
+  "Branch evidence", and its contract at `6ae927f`). The project row carries
+  a `probe-failed` error and status `error` (the collector table's code for
+  a Git child that exits nonzero, POD:333, which feature 004 also gives one
+  whose output yields no usable value, `unparseable output`; Dependencies),
+  the worktree's finding is `inspection-error` (repair, error, no
+  suggestion; POD:428), the run is incomplete and exits 1, and
+  `inspection-incomplete` withholds `--all-safe` for the repository
+  (FR-034); where the checkout at the row's `path` is on that branch, the
+  `git` object's `upstream`, `ahead` and `behind` are null too (C-13).
+  Feature 004's guard sits in its row decider, not in the listing or its
+  parser: `row_evidence` (`project:2641`) tests `HEAD_BRANCH_REF`
+  (:2146-2150) before it reads any upstream, and adds the error (:2679-2682)
+  that the ladder's first test reads (:2027-2029). The overview inherits
+  that guard only where its rows are built by that decider (Dependencies,
+  R-54); a row built from its own parse of the listing (FR-015; design D9)
+  is not covered by it, and the same fill applies there. Git writes nothing
+  to standard error for the listing, so FR-022's message, the first line of
+  that stream, has no line to take; feature 004's text is `git for-each-ref
+  failed: unparseable output`, and which text the overview prints falls
+  under question Q8 of `clarify-questions.md`, whose option D adopts it.
 
 ## Requirements *(mandatory)*
 
@@ -2348,23 +2386,24 @@ and [P] are change 1's requirements as the header names them.
   (#32) moved the two workflow lines the change cites,
   `.github/workflows/tests.yml:10` and `:18`, to lines 9 and 17, so this
   spec cites no line of `project`, `README.md` or the workflow as `main` has
-  them, its only lines of feature 004's `project` being those of EC-031 and
-  the Dependencies at `6ae927f`, and the plan re-pins every citation against
-  the `main` of its day (proposal, "Dependencies and Sequencing").
+  them, its only lines of feature 004's `project` being those of EC-031,
+  EC-033 and the Dependencies at `6ae927f`, and the plan re-pins every
+  citation against the `main` of its day (proposal, "Dependencies and
+  Sequencing").
 - Feature 004's names (classifications, gate and refusal codes, row error
   codes, `schema_version`, exit statuses, the shared constants) are taken
-  from its spec, data model and contract at `d81b3d9`, apart from EC-031,
-  which reads its branch's head, `6ae927f`; that head's documents change
-  after `d81b3d9` by the tier tags, file and verify fields and ticks of
-  `tasks.md`, two additions to `plan.md` and its doc round 6 (rulings R-55
-  to R-57 and R-59 to R-62, with the items of R-53 and R-54 that they
+  from its spec, data model and contract at `d81b3d9`, apart from EC-031
+  and EC-033, which read its branch's head, `6ae927f`; that head's documents
+  change after `d81b3d9` by the tier tags, file and verify fields and ticks
+  of `tasks.md`, two additions to `plan.md` and its doc round 6 (rulings
+  R-55 to R-57 and R-59 to R-62, with the items of R-53 and R-54 that they
   settle), and its code, which changed after `a32d20b` by its T047 and by
   lane G's follow-up to its evidence model, has its tasks T001 to T035 and
-  T047 built, among them its five incremental parsers, its child handle,
-  its driver and its evidence model (merged as `cce8dbd`), and none of it
-  is on `main`; where the change and feature 004 differ for the overview,
-  the change governs, and the plan reconciles against feature 004's text at
-  the state that question Q2 of `clarify-questions.md` settles.
+  T047 built, among them its five incremental parsers, its child handle, its
+  driver and its evidence model (merged as `cce8dbd`), and none of it is on
+  `main`; where the change and feature 004 differ for the overview, the
+  change governs, and the plan reconciles against feature 004's text at the
+  state that question Q2 of `clarify-questions.md` settles.
 - "Every existing test" means the suite on `main` when the feature is
   implemented: 96 tests at `961c405`, still 96 at `e9d6711`, plus feature
   004's. Two test conditions are this spec's own, not the change's: a test
@@ -2596,8 +2635,8 @@ the tasks, in the feature's `traceability.md`, as feature 003 records them.
 | 1 | Overview discovers projects within configured roots only | POD:10 | FR-001 to FR-005 | US1, US7 | EC-003, EC-014, EC-018, EC-025 |
 | 2 | Overview groups worktrees by repository identity | POD:74 | FR-006 to FR-010 | US1, US7, US8 | EC-012, EC-018, EC-030, EC-031 |
 | 3 | Overview bounds its work and reports what it omitted | POD:166 | FR-011 to FR-020 | US6, US10 | EC-001 to EC-006, EC-019, EC-023, EC-029, EC-032 |
-| 4 | Overview isolates one candidate's failure | POD:317 | FR-021, FR-022 | US7 | none |
-| 5 | Overview reuses the cleanup classifier and merge target | POD:358 | FR-024 to FR-026 | US3 | EC-013 |
+| 4 | Overview isolates one candidate's failure | POD:317 | FR-021, FR-022 | US7 | EC-033 |
+| 5 | Overview reuses the cleanup classifier and merge target | POD:358 | FR-024 to FR-026 | US3 | EC-013, EC-033 |
 | 6 | Overview reports findings by attention category | POD:420 | FR-027 to FR-030 | US2 | EC-024 |
 | 7 | Overview suggests only gated clean commands | POD:483 | FR-031 to FR-035 | US4, US6 | EC-007 to EC-010, EC-020 |
 | 8 | Overview prints a versioned JSON envelope | POD:606 | FR-036 to FR-039 | US5, US11 | EC-016, EC-017, EC-027, EC-028 |
