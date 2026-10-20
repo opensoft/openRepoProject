@@ -9,6 +9,9 @@ rulings R-55 and R-56).
 The unit tests call project's functions in process, on literal values or on a
 disposable repository, with os.environ replaced by CleanCase's environment and
 an Invocation entered; no signal is ever sent to the test process (rule 7).
+The command-line tests (T041 to T044, Q-5's two moved clauses and R-59 D2's
+apply side) run `project clean` as a child, under the counting wrapper where
+they count children, at a pseudo-terminal where they answer the question.
 Expected human text comes from clean_support's fixtures (rule 8), and the
 contract's key tuples are written here as literals.
 """
@@ -20,6 +23,7 @@ from pathlib import Path
 import re
 import shlex
 import signal
+import subprocess
 import time
 import types
 import unittest
@@ -58,6 +62,10 @@ ROW_6 = ["for-each-ref", "--format=%(refname)%00%(objectname)%00%(symref)%00%(up
 
 SCOPED_SIGNALS = (signal.SIGINT, signal.SIGTERM, signal.SIGHUP)
 SHA_A, SHA_B, SHA_C = "a" * 40, "b" * 40, "c" * 40
+FRESHNESS = "local refs only; remote information is as of the last fetch; no fetch performed"
+# The baseline's message of a refused confirmation, kept for `cancelled`
+# (contracts/project-clean.md, "Codes"; lead ruling R-68 (a)).
+CANCELLED = "Cancelled; no command was run."
 
 
 def strip_pins(argv):
@@ -67,6 +75,17 @@ def strip_pins(argv):
     while at + 1 < len(argv) and argv[at] == "-c":
         at += 2
     return list(argv[:at]), list(argv[at:])
+
+
+def subcommand(record):
+    """A counted child's words after its pins and its `-C DIR`, if any."""
+    words = strip_pins(record.argv)[1]
+    return words[2:] if words[:1] == ["-C"] else words
+
+
+def removals(records):
+    """The counted `worktree remove` children, in the order they started."""
+    return [record for record in records if subcommand(record)[:2] == ["worktree", "remove"]]
 
 
 def signal_state():
@@ -162,6 +181,64 @@ class ApplyTests(clean_support.CleanCase):
 
     def head(self, path, ref="HEAD"):
         return self.git(path, "rev-parse", ref).strip()
+
+    # The command-line tests' fixtures and helpers (inline fixtures, lead
+    # ruling R-56).
+
+    def remote_ahead_worktree(self, branch):
+        """A merged, clean worktree whose upstream holds one commit more than
+        its branch: a second commit pushed, then the branch reset to the first,
+        so `behind` is 1 and `ahead` 0 (class `remote-ahead`)."""
+        tree = self.merged_worktree(branch)
+        (tree / "later").write_text("later")
+        self.commit(tree)
+        self.git(tree, "push", "origin", branch)
+        self.git(tree, "reset", "-q", "--hard", "HEAD~1")
+        return tree
+
+    def unmerged_worktree(self, branch):
+        """A clean worktree whose branch has a commit of its own, published and
+        never merged (class `pushed-unmerged`)."""
+        tree = self._tree(branch, None)
+        self.git(self.root, "worktree", "add", "-b", branch, tree)
+        (tree / ("work-" + branch)).write_text("review")
+        self.commit(tree)
+        self.git(tree, "push", "-u", "origin", branch)
+        return tree
+
+    def counting(self, env=None):
+        """The counting wrapper first on PATH, in front of the real git: the
+        environment to run with and the log, emptied."""
+        bin_dir, log = self.base / "counting-bin", self.base / "children.log"
+        clean_support.install_counting_git(bin_dir, log)
+        clean_support.reset_child_log(log)
+        return self.path_first(bin_dir, env), log
+
+    def branches(self, root):
+        """Every local branch with its object, as one text."""
+        return self.git(root, "for-each-ref", "--format=%(refname) %(objectname)", "refs/heads")
+
+    def plan_lines(self, root, selected, excluded=()):
+        """D18's printed plan of an --all-safe run: the baseline header, the
+        selected rows (path, branch), the excluded groups (reason, [(path,
+        branch)]) with the main worktree's first, and the residual-window line."""
+        steps = clean_support.NEXT_STEP_FIXTURES
+        groups = [("main-worktree", [(root, "main")]), *excluded]
+        lines = [f"Cleanup plan for {root}", TEXT["merge_target_line"].format(NAME="main", SOURCE="main"),
+                 f"Freshness: {FRESHNESS}", TEXT["selected_heading"].format(N=len(selected))]
+        lines += [TEXT["selected_row"].format(PATH=path, BRANCH=branch) for path, branch in selected]
+        lines.append(TEXT["excluded_heading"].format(M=sum(len(rows) for _, rows in groups)))
+        for reason, rows in groups:
+            lines.append(TEXT["excluded_group"].format(REASON=reason, K=len(rows), NEXT_STEP=steps[reason]))
+            lines += [TEXT["excluded_row"].format(PATH=path, BRANCH=branch) for path, branch in rows]
+        return lines + [TEXT["residual_window_line"]]
+
+    def result_lines(self, selected):
+        """The result of a batch that removed every selected (path, branch):
+        one progress line each, the success line and the residual-window line."""
+        lines = [TEXT["progress_line"].format(STAGE="removed", PATH=path) for path, _ in selected]
+        return lines + [TEXT["success_line"].format(N=len(selected), BRANCHES=", ".join(b for _, b in selected)),
+                        TEXT["residual_window_line"]]
 
     # T045: D19's exit table and the apply result record.
 
@@ -615,6 +692,257 @@ class ApplyTests(clean_support.CleanCase):
         project.print_progress(stopped[1], run)
         project.print_result(plan, stopped, run)
         self.assertIsInstance(run.write_error, BrokenPipeError)
+
+    # T041: "Stable order and preserved work", and the apply clauses of "Plan
+    # digest mismatch" and "Paths and empty plans" (lead ruling R-56 Q-5).
+
+    def test_clean_stable_order_and_preserved_work(self):
+        root = self.repo()
+        self.bare_remote()
+        # Three eligible worktrees, created in an order other than raw path byte
+        # order, their names differing by more than case ("Alpha" < "mid" <
+        # "zeta" as bytes).
+        eligible = {"001-zeta": self.merged_worktree("001-zeta", path=self.base / "zeta"),
+                    "002-alpha": self.merged_worktree("002-alpha", path=self.base / "Alpha"),
+                    "003-mid": self.merged_worktree("003-mid", path=self.base / "mid")}
+        current = self.merged_worktree("004-current")
+        dirty = [self.merged_worktree("005-dirty"), self.merged_worktree("006-dirty")]
+        for tree in dirty:
+            (tree / "uncommitted").write_text("preserve")
+        locked = self.merged_worktree("007-locked")
+        self.git(root, "worktree", "lock", locked)
+        ahead = self.remote_ahead_worktree("008-ahead")
+        unmerged = self.unmerged_worktree("009-unmerged")
+        kept = {current: "merged-current", dirty[0]: "dirty", dirty[1]: "dirty", locked: "locked-worktree",
+                ahead: "remote-ahead", unmerged: "pushed-unmerged", root: "main-worktree"}
+        # The run's working directory is a linked worktree, the current one.
+        preview = self.run_json("clean", root, "--all-safe", "--json", cwd=current).document
+        self.assertEqual({entry["path"]: entry["reason"] for entry in preview["excluded"]},
+                         {str(tree): reason for tree, reason in kept.items()})
+        order = sorted(eligible.items(), key=lambda item: os.fsencode(item[1]))
+        self.assertEqual([entry["path"] for entry in preview["selected"]], [str(tree) for _, tree in order])
+        branches = self.branches(root)
+
+        env, log = self.counting()
+        result = self.run_cli("clean", root, "--all-safe", "--apply", "--yes", cwd=current, env=env)
+        self.assert_status(result, 0)
+        records = clean_support.child_log(log)
+        # Removed in raw path order, each by its own child.
+        self.assertEqual([subcommand(record)[2:] for record in removals(records)],
+                         [[str(tree)] for _, tree in order])
+        registry = self.git(root, "worktree", "list", "--porcelain").splitlines()
+        for name, tree in eligible.items():
+            self.assertFalse(tree.exists(), name)
+            self.assertNotIn(f"worktree {tree}", registry)
+        for tree in kept:
+            self.assertTrue(tree.is_dir(), tree)
+            self.assertIn(f"worktree {tree}", registry)
+        self.assertEqual(self.branches(root), branches, "every branch is kept at its head")
+        self.assertTrue((dirty[0] / "uncommitted").is_file())
+        # The result names every retained branch, in canonical order.
+        self.assertEqual(result.stdout.splitlines()[-2:], [
+            TEXT["success_line"].format(N=3, BRANCHES="002-alpha, 003-mid, 001-zeta"), TEXT["residual_window_line"]])
+        # Nothing pushed, fetched, forced, deleted, pruned, repaired, locked or unlocked.
+        for record in records:
+            words = subcommand(record)
+            with self.subTest(argv=record.argv):
+                self.assertNotIn("--force", record.argv)
+                self.assertNotIn(words[:1], (["push"], ["fetch"]))
+                self.assertFalse(words[:1] == ["branch"] and {"-d", "-D", "--delete"} & set(words))
+                self.assertFalse(words[:1] == ["remote"] and {"remove", "rm", "prune", "set-url"} & set(words))
+                self.assertNotIn(words[:2], (["worktree", "prune"], ["worktree", "repair"], ["worktree", "lock"],
+                                             ["worktree", "unlock"]))
+
+    def test_clean_stable_order_and_preserved_work_target_not_checked_out(self):
+        root = self.repo()
+        self.bare_remote()
+        trees = [self.merged_worktree("001-a"), self.merged_worktree("002-b")]
+        # The main worktree moves to another branch: the merge-target branch is
+        # checked out nowhere, and every removal still names the command
+        # directory (design D9).
+        self.git(root, "checkout", "-q", "-b", "003-elsewhere")
+        self.assertNotIn("branch refs/heads/main", self.git(root, "worktree", "list", "--porcelain"))
+        branches = self.branches(root)
+        env, log = self.counting()
+        result = self.run_cli("clean", root, "--all-safe", "--apply", "--yes", env=env)
+        self.assert_status(result, 0)
+        children = removals(clean_support.child_log(log))
+        self.assertEqual([strip_pins(record.argv)[1] for record in children],
+                         [["-C", str(root), "worktree", "remove", str(tree)] for tree in trees])
+        self.assertEqual([record.cwd for record in children], [str(root)] * 2)
+        self.assertFalse(any(tree.exists() for tree in trees))
+        self.assertEqual(self.branches(root), branches)
+
+    def test_clean_plan_digest_mismatch_unchanged_digest_applies(self):
+        root = self.repo()
+        self.bare_remote()
+        first = self.merged_worktree("001-p1")
+        second = self.merged_worktree("002-p2")
+        (second / "uncommitted").write_text("preserve")
+        preview = self.run_json("clean", root, "--all-safe", "--json").document
+        digest = preview["plan_digest"]
+        self.assertEqual([entry["path"] for entry in preview["selected"]], [str(first)])
+        # Only the excluded row changes: P2 gains a commit and stays dirty.
+        (second / "later").write_text("later")
+        self.git(second, "add", "later")
+        self.git(second, "commit", "-q", "-m", "later")
+        again = self.run_json("clean", root, "--all-safe", "--json").document
+        heads = [{row["path"]: row["head"] for row in document["worktrees"]} for document in (preview, again)]
+        self.assertNotEqual(heads[0][str(second)], heads[1][str(second)])
+        self.assertEqual([entry["path"] for entry in again["excluded"] if entry["reason"] == "dirty"], [str(second)])
+        self.assertEqual(again["plan_digest"], digest, "the digest covers only what is selected")
+        result = self.run_cli("clean", root, "--all-safe", "--apply", "--yes", "--expect-plan", digest)
+        self.assert_status(result, 0)
+        self.assertFalse(first.exists())
+        self.assertTrue((second / "uncommitted").is_file())
+        self.assertEqual(self.head(root, "refs/heads/001-p1"), heads[0][str(first)])
+
+    def test_clean_paths_and_empty_plans_paths_with_spaces_are_removed(self):
+        root = self.repo()
+        self.bare_remote()
+        spaced = [self.merged_worktree("001-spaced", path=self.base / "with spaces" / "a tree"),
+                  self.merged_worktree("002-spaced", path=self.base / "with spaces" / "b  tree")]
+        branches = self.branches(root)
+        env, log = self.counting()
+        result = self.run_cli("clean", root, "--all-safe", "--apply", "--yes", env=env)
+        self.assert_status(result, 0)
+        # Each path is one exact argument of its removal, and prints verbatim in
+        # prose (FR-041).
+        self.assertEqual([subcommand(record)[2:] for record in removals(clean_support.child_log(log))],
+                         [[str(tree)] for tree in spaced])
+        selected = [(spaced[0], "001-spaced"), (spaced[1], "002-spaced")]
+        self.assertEqual(result.stdout.splitlines()[-4:], self.result_lines(selected))
+        self.assertFalse(any(tree.exists() for tree in spaced))
+        self.assertEqual(self.branches(root), branches)
+
+    # T042: "Every branch remains after a batch".
+
+    def test_clean_every_branch_remains_after_a_batch(self):
+        root = self.repo()
+        self.bare_remote()
+        trees = {"001-a": self.merged_worktree("001-a"), "002-b": self.merged_worktree("002-b")}
+        preview = self.run_json("clean", root, "--all-safe", "--json").document
+        planned = {entry["branch"]: entry["head"] for entry in preview["selected"]}
+        self.assertEqual(sorted(planned), sorted(trees))
+        result = self.run_cli("clean", root, "--all-safe", "--apply", "--yes")
+        self.assert_status(result, 0)
+        for branch, head in planned.items():
+            with self.subTest(branch=branch):
+                self.assertEqual(self.head(root, f"refs/heads/{branch}"), head)
+                self.assertFalse(trees[branch].exists())
+        selected = [(trees["001-a"], "001-a"), (trees["002-b"], "002-b")]
+        self.assertEqual((result.stdout, result.stderr),
+                         ("\n".join(self.plan_lines(root, selected) + self.result_lines(selected)) + "\n", ""))
+        self.assertEqual(TEXT["success_line"].format(N=2, BRANCHES="001-a, 002-b"),
+                         "Removed 2; branches kept: 001-a, 002-b.")
+
+    # T043: "Only yes confirms".
+
+    def test_clean_only_yes_confirms(self):
+        root = self.repo()
+        self.bare_remote()
+        trees = [self.merged_worktree(f"00{number}-t") for number in range(1, 8)]
+        question = TEXT["question"].format(N=7)
+        self.assertEqual(question, "Remove 7 worktrees, keeping 7 branches? [yes/N]")
+        before = self.snapshot(root, trees)
+        argv = clean_support.cli_argv("clean", root, "--all-safe", "--apply")
+        for answer in ("y", "", "no"):
+            with self.subTest(answer=answer):
+                result = self.run_pty_steps(argv, [(question, answer)])
+                self.assert_status(result, 2)
+                self.assertIn(question, result.stdout.splitlines())
+                self.assertEqual(result.stderr, f"REFUSED: {CANCELLED}\n")
+                self.assertNotIn(TEXT["progress_line"].format(STAGE="removed", PATH=trees[0]), result.stdout)
+                self.assertEqual(self.snapshot(root, trees), before, "nothing removed")
+
+        # Under --json, with standard input at the terminal and standard output
+        # on a pipe (R-56 Q-14): the question on standard error, and standard
+        # output one document, the plan envelope refused as `cancelled`.
+        result = self.run_pty_steps([*argv, "--json"], [(question, "no")], stdout_pipe=True)
+        self.assert_status(result, 2)
+        self.assertIn(question, result.stderr.splitlines())
+        self.assertNotIn(question, result.stdout)
+        document = self.load_json(result)
+        self.assertEqual((document["apply_allowed"], document["refusals"]),
+                         (False, [{"code": "cancelled", "message": CANCELLED}]))
+        self.assertEqual([entry["path"] for entry in document["selected"]], [str(tree) for tree in trees])
+        self.assertNotIn("REFUSED", result.stderr)
+        self.assertEqual(self.snapshot(root, trees), before, "nothing removed")
+
+        # The singular form for one, and ` yes ` begins the apply phase.
+        one = self.repo("one-repo")
+        self.bare_remote(one, "one-remote.git")
+        tree = self.merged_worktree("011-one", root=one)
+        self.assertEqual(TEXT["question_one"], "Remove 1 worktree, keeping 1 branch? [yes/N]")
+        result = self.run_pty_steps(clean_support.cli_argv("clean", one, "--all-safe", "--apply"),
+                                    [(TEXT["question_one"], " yes ")])
+        self.assert_status(result, 0)
+        lines = result.stdout.splitlines()
+        self.assertIn(TEXT["question_one"], lines)
+        self.assertEqual(lines[-3:], self.result_lines([(tree, "011-one")]))
+        self.assertFalse(tree.exists())
+        self.assertEqual(self.head(one, "refs/heads/011-one"), self.head(one, "011-one"))
+
+    # T044: "A noninteractive batch needs --yes".
+
+    def test_clean_a_noninteractive_batch_needs_yes(self):
+        root = self.repo()
+        self.bare_remote()
+        trees = [self.merged_worktree("001-a"), self.merged_worktree("002-b")]
+        before = self.snapshot(root, trees)
+        env, log = self.counting()
+        # Standard input not a terminal (run_cli's is an empty pipe), no --yes.
+        result = self.run_cli("clean", root, "--all-safe", "--apply", env=env)
+        self.assert_status(result, 2)
+        selected = [(trees[0], "001-a"), (trees[1], "002-b")]
+        self.assertEqual((result.stdout, result.stderr), ("\n".join(self.plan_lines(root, selected)) + "\n",
+                                                          "REFUSED: " + TEXT["confirmation_required"] + "\n"))
+        self.assertEqual(removals(clean_support.child_log(log)), [])
+        self.assertEqual(self.snapshot(root, trees), before)
+        # Under --json: the plan envelope with that refusal, and no question.
+        result = self.run_json("clean", root, "--all-safe", "--apply", "--json", env=env)
+        self.assert_status(result, 2)
+        self.assertEqual((result.document["apply_allowed"], result.document["refusals"]),
+                         (False, [{"code": "confirmation-required", "message": TEXT["confirmation_required"]}]))
+        self.assertEqual(result.stderr, "\n".join(self.plan_lines(root, selected)) + "\n")
+        self.assertEqual(self.snapshot(root, trees), before)
+        # With --yes the fresh plan's selection is removed with no question.
+        clean_support.reset_child_log(log)
+        result = self.run_cli("clean", root, "--all-safe", "--apply", "--yes", env=env)
+        self.assert_status(result, 0)
+        self.assertNotIn("[yes/N]", result.stdout + result.stderr)
+        self.assertEqual(len(removals(clean_support.child_log(log))), 2)
+        self.assertFalse(any(tree.exists() for tree in trees))
+
+    # T057's apply side of the closed reader (lead rulings R-55 and R-59 D2).
+
+    def test_clean_a_reader_that_closes_standard_output_under_apply_json(self):
+        # --all-safe --apply --yes --json with standard output a pipe whose read
+        # end is closed: the plan and the progress go to standard error, the
+        # removals proceed, the failed write of the result record is
+        # best-effort, and the run exits by D19, 0 when every target is removed,
+        # with no traceback and never 120.
+        root = self.repo()
+        self.bare_remote()
+        trees = [self.merged_worktree("001-a"), self.merged_worktree("002-b")]
+        branches = self.branches(root)
+        env, log = self.counting()
+        read_end, write_end = os.pipe()
+        os.close(read_end)
+        try:
+            result = subprocess.run(clean_support.cli_argv("clean", root, "--all-safe", "--apply", "--yes", "--json"),
+                                    cwd=self.base, env=env, stdin=subprocess.DEVNULL, stdout=write_end,
+                                    stderr=subprocess.PIPE, text=True, timeout=clean_support.TIMEOUT)
+        finally:
+            os.close(write_end)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertNotIn("Traceback", result.stderr)
+        self.assertNotIn("Exception ignored", result.stderr)
+        selected = [(trees[0], "001-a"), (trees[1], "002-b")]
+        self.assertEqual(result.stderr, "\n".join(self.plan_lines(root, selected) + self.result_lines(selected)) + "\n")
+        self.assertEqual(len(removals(clean_support.child_log(log))), 2)
+        self.assertFalse(any(tree.exists() for tree in trees))
+        self.assertEqual(self.branches(root), branches)
 
 
 if __name__ == "__main__":
