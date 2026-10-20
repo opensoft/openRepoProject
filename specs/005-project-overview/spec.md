@@ -2447,10 +2447,12 @@ and [P] are change 1's requirements as the header names them.
   - `add-project-clean-cache-disposal` (issue #24, draft PR #27) MODIFIES
     "Overview reuses the cleanup classifier and merge target" (requirement
     5), appending to its equality clause two sentences that lane
-    openRepoProject-4 agreed (`e1049b2`): a worktree that `project clean`
-    classifies `merged-removable` because its cache enumeration proved every
-    ignored path a listed cache is `ignored-local-files` in the overview,
-    which collects no cache evidence, and the overview never classifies a
+    openRepoProject-4 agreed at `9f30fb9` (the words "for the same
+    working directory and refs" agreed at `4d5855a`, unchanged at
+    `e1049b2`): a worktree that `project clean` classifies
+    `merged-removable` because its cache enumeration proved every ignored
+    path a listed cache is `ignored-local-files` in the overview, which
+    collects no cache evidence, and the overview never classifies a
     worktree `merged-removable` where `project clean` classifies it
     otherwise for the same working directory and refs. It also names the
     ignored file of "Every protected classifier" as not a Python bytecode
