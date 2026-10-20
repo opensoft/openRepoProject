@@ -475,6 +475,64 @@ class GatesTests(clean_support.CleanCase):
                 self.assertEqual(self.snapshot(root), before, "nothing removed")
                 self.assertTrue(tree.is_dir())
 
+    # T063: "Submodules" (its after-confirmation clause is T083's); "A worktree
+    # holding a submodule is never offered".
+
+    def test_clean_submodules(self):
+        root = self.repo()
+        self.bare_remote()
+        # The plain row and the modules-only row first: a worktree added after a
+        # gitlink reaches the merge target's tree holds that gitlink too.
+        plain = self.merged_worktree("001-plain", path=self.base / "plain")
+
+        def added_then_removed(tree):
+            self.submodule(tree, "sub-removed")
+            self.commit(tree, "add sub-removed")
+            self.git(tree, "rm", "-q", "sub-removed")
+
+        left = self.merged_worktree("002-modules-left", path=self.base / "modules-left", setup=added_then_removed)
+        populated = self.merged_worktree("003-populated", path=self.base / "populated",
+                                         setup=lambda tree: self.submodule(tree, "sub-populated"))
+        deinitialized = self.merged_worktree("004-deinitialized", path=self.base / "deinitialized",
+                                             setup=lambda tree: self.submodule(tree, "sub-deinitialized"))
+        self.git(deinitialized, "submodule", "deinit", "-q", "-f", "sub-deinitialized")
+        never = self.merged_worktree("005-never-initialized", path=self.base / "never-initialized",
+                                     setup=lambda tree: self.gitlink(tree, "vendored"))
+        # What each holds: the modules-only row no gitlink but its admin
+        # directory's `modules` entry; the others a gitlink in their own index.
+        admin = self.common_dir(root) / "worktrees"
+        self.assertNotIn("160000", self.git(left, "ls-files", "--stage"))
+        self.assertTrue((admin / left.name / "modules" / "sub-removed").is_dir())
+        self.assertFalse((admin / plain.name / "modules").exists())
+        self.assertFalse((deinitialized / "sub-deinitialized" / ".git").exists(), "deinitialized")
+        self.assertFalse((admin / never.name / "modules").exists(), "never initialized")
+        for tree in (populated, deinitialized, never):
+            self.assertIn("160000", self.git(tree, "ls-files", "--stage"), tree)
+        before = self.snapshot(root)
+        result = self.preview(root)
+        self.assert_status(result, 0)
+        document = result.document
+        self.assertEqual([entry["path"] for entry in document["selected"]], [str(plain)])
+        self.assertEqual(by_path(document), {
+            str(root): "main-worktree", str(left): "contains-submodule", str(populated): "contains-submodule",
+            str(deinitialized): "contains-submodule", str(never): "contains-submodule"})
+        self.assertEqual(self.snapshot(root), before)
+
+    def test_clean_a_worktree_holding_a_submodule_is_never_offered(self):
+        root = self.repo()
+        self.bare_remote()
+        tree = self.merged_worktree("001-populated", path=self.base / "populated", setup=self.submodule)
+        self.assertTrue((tree / "sub" / ".git").exists(), "the submodule is populated")
+        before = self.snapshot(root)
+        message = TEXT["target_excluded_gate"].format(REASON="contains-submodule", NEXT_STEP=STEPS["contains-submodule"])
+        result, records = self.run_counted("clean", root, "--apply", "--action", "remove", "--worktree", tree, "--yes")
+        self.assert_status(result, 2)
+        self.assertEqual(result.stderr, f"REFUSED: {message}\n")
+        self.assertEqual(removals(records), [], "the counting log holds no worktree remove")
+        result = self.run_json("clean", root, "--apply", "--action", "remove", "--worktree", tree, "--yes", "--json")
+        self.assert_refused_target(result, tree, "contains-submodule", message)
+        self.assertEqual(self.snapshot(root), before)
+
     # T064: "A merged worktree whose upstream was deleted"; "A deleted upstream
     # is remote-gone". They pin T032, T049 and T057.
 
