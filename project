@@ -3827,6 +3827,106 @@ def target_refusal(row, reason):
 # endregion gates
 
 # region reflog
+# Gate 7 from the branch's reflog (T066; design D10; data-model.md, "Reflog
+# anchor and movement"; FR-021, FR-022; lead rulings R-33, R-53 P-22, R-54 X-1,
+# R-56 Q-6 and R-67 (a)). read_reflog() makes the one bounded filesystem call;
+# reflog_outcome() decides from the bytes read and does no I/O.
+
+# One reflog line: `<old> <new> <identity> <time> <zone>`, then a tab and the
+# message when the command wrote one; `git update-ref` without -m writes neither
+# (D10). The identity ends at its first `>`, as Git's own reader takes it.
+REFLOG_LINE = re.compile(
+    rb"(?P<old>[0-9a-f]{40}|[0-9a-f]{64}) (?P<new>[0-9a-f]{40}|[0-9a-f]{64}) "
+    rb"[^\n]*?> [0-9]+ [+-][0-9]{4}(?:\t(?P<message>[^\n]*))?")
+# The messages that anchor a reflog besides an all-zeros old object (D10):
+# `worktree add -b`, `branch` and `checkout -b` write the first; `worktree add
+# -B`, `branch -f` and `checkout -B` on an existing branch the second.
+REFLOG_ANCHOR_MESSAGES = (b"branch: Created from", b"branch: Reset to")
+
+
+def reflog_path(common_dir, branch):
+    """The branch's reflog, logs/refs/heads/<branch> under common_dir, as
+    bytes: common_dir the common directory's bytes, branch the row's short
+    name, whose text encodes back to its bytes with surrogateescape; each `/`
+    of the name is a directory level."""
+    name = branch.encode("utf-8", "surrogateescape") if isinstance(branch, str) else branch
+    return os.path.join(common_dir, b"logs", b"refs", b"heads") + b"/" + name
+
+
+def _null_object(name):
+    return not name.strip(b"0")
+
+
+def reflog_outcome(data, head):
+    """Gate 7's decision from the bytes a reflog read gave, a pure decider
+    (lead ruling R-54 X-1; D10; data-model.md, "Reflog anchor and movement"):
+    `reflog-unavailable`, `unstarted-branch`, or None when the gate passes.
+    data is what the read returned, at most LIMITS["reflog_bytes"]; head the
+    row's head, its object name as text or bytes, or None.
+
+    Empty data, data that reached the 64 KiB bound (65,536 bytes read, R-33),
+    a line that is not `<old> <new> ...` (a truncated last line, one with no
+    line feed, included: lead ruling R-53 P-22), or a last entry whose new
+    object is not the head: `reflog-unavailable`, since the entries cannot
+    decide or do not describe the branch. Otherwise the anchor is the last
+    entry whose old object is all zeros or whose message begins `branch:
+    Created from` or `branch: Reset to`; a movement is an entry after the
+    anchor, or any entry when none survives, whose old and new objects are
+    non-zero and differ (a rename's are equal). A movement passes (None); an
+    anchor with no movement after it, its new object the head, is
+    `unstarted-branch`; anything else, no anchor and no movement included, is
+    `reflog-unavailable`."""
+    if isinstance(head, str):
+        head = head.encode("utf-8", "surrogateescape")
+    if (head is None or not data or len(data) >= LIMITS["reflog_bytes"]
+            or not data.endswith(b"\n")):
+        return "reflog-unavailable"
+    entries = []
+    for line in data[:-1].split(b"\n"):
+        match = REFLOG_LINE.fullmatch(line)
+        if match is None or not len(match["old"]) == len(match["new"]) == len(head):
+            return "reflog-unavailable"
+        entries.append((match["old"], match["new"], match["message"] or b""))
+    if entries[-1][1] != head:
+        return "reflog-unavailable"
+    anchor = None
+    for index, (old, new, message) in enumerate(entries):
+        if _null_object(old) or message.startswith(REFLOG_ANCHOR_MESSAGES):
+            anchor = index
+    later = entries if anchor is None else entries[anchor + 1:]
+    if any(not _null_object(old) and not _null_object(new) and old != new for old, new, _ in later):
+        return None
+    if anchor is not None and entries[anchor][1] == head:
+        return "unstarted-branch"
+    return "reflog-unavailable"
+
+
+def read_reflog(common_dir, branch, head, run):
+    """Read the branch's reflog (reflog_path()) by one fs_call() of at most
+    LIMITS["reflog_bytes"] (64 KiB) and decide gate 7 from it (D10, the
+    project-clean delta's outcome rule; lead ruling R-56 Q-6): (reason, error),
+    error a row error or None. The read asks for no more than 65,536 bytes and
+    needs no fstat (R-33); it is never a Git child. ENOENT or ENOTDIR is
+    (`reflog-unavailable`, None); any other OSError (`inspection-error`, its
+    `os-error` for OPERATION read); a call cut at its budget or the deadline
+    (`reflog-unavailable`, its `probe-timeout` or `deadline-exceeded`), the
+    row to be left unprobed; and bytes read, (reflog_outcome(data, head),
+    None). run is the invocation in force, whose per-child budget fs_call()
+    gives the read and the timeout message names, as _fs() does; Interrupted
+    passes up."""
+    path = reflog_path(common_dir, branch)
+    budget, _ = current_invocation().child_budget("probe")
+    try:
+        data = fs_call(_read_head, path, LIMITS["reflog_bytes"])
+    except OSError as exc:
+        if exc.errno in (errno.ENOENT, errno.ENOTDIR):
+            return "reflog-unavailable", None
+        return "inspection-error", os_error("read", exc)
+    if isinstance(data, DriverOutcome):
+        return "reflog-unavailable", probe_error(data, "read", budget)
+    return reflog_outcome(data, head), None
+
+
 def reflog_gate(row, plan, run):
     """Gate 7, `unstarted-branch` or `reflog-unavailable` (T066 fills; D10,
     FR-021, FR-022; lead rulings R-56 Q-6 and R-67 (a)).
@@ -3846,8 +3946,20 @@ def reflog_gate(row, plan, run):
     error; and None when a movement survives. A read not finished within the
     filesystem budget returns `reflog-unavailable` AND sets row.unprobed, the
     marker's only setter, which plan_completeness() reads as
-    inspection-incomplete. This stub passes every row."""
-    return None
+    inspection-incomplete; its `probe-timeout` or `deadline-exceeded` goes in
+    row["errors"], as the delta records for every filesystem call cut at its
+    budget. The inspection-error row also takes that class's
+    recommendation, as classify() pairs them."""
+    common_dir = plan.evidence["identity"]["common_dir"]
+    reason, error = read_reflog(common_dir, row["branch"], row["head"], run)
+    if error is not None:
+        row["errors"].append(error)
+        if reason == "inspection-error":
+            row["classification"] = "inspection-error"
+            row["recommendation"] = RECOMMENDATIONS["inspection-error"]
+        else:
+            row.unprobed = True
+    return reason
 # endregion reflog
 
 # region index
