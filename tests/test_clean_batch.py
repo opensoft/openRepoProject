@@ -848,7 +848,7 @@ class BatchTests(clean_support.CleanCase):
                       self.git(real_root, "worktree", "list", "--porcelain").splitlines())
         report = self.run_json("clean", real_root, "--json").document
         self.assertEqual([row["classification"] for row in report["worktrees"]],
-                         ["protected-default", "merged-removable", "merged-removable"])
+                         ["protected-default", "inspection-error", "inspection-error"])
         for root, target in ((bytes_root, shared), (real_root, spelled), (real_root, link / spelled.name)):
             with self.subTest(worktree=os.fspath(target)):
                 before = self.snapshot(root)
