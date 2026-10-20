@@ -346,8 +346,9 @@ beyond the `entries` that the plan recorded for its listed cache, which is a
 difference, so that no enumeration holds a whole directory's listing, requiring
 each entry to have the allowlisted shape, each nested directory to carry its
 planned identity, each listed cache's entries to number exactly the `entries`
-that the plan recorded for it, and the target's bytes to stay within the per-worktree cap; require
-every listed file to be a regular file; keep the run's byte total, the sum of
+that the plan recorded for it, and the target's bytes to stay within the
+per-worktree cap; require every listed file to be a regular file; keep the
+run's byte total, the sum of
 the bytes that this preflight measures and that the preflight of every earlier
 target whose cache stage passed its preflight in this run measured, and
 require it to stay within the invocation's 1 GiB (1,073,741,824 bytes,
