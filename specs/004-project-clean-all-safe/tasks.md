@@ -1168,16 +1168,22 @@ tuples.
   report the plan is the same, with `apply_allowed: false`.
   — files: `project`
   — verify: `python3 -c "import sys,re;t=open('project').read();A=sys.argv[1:];c=lambda r:t.split('# region '+r+'\n')[1].split('# endregion '+r+'\n')[0];M=[a for a in A if not ((a.split('%',1)[1] not in c(a.split('%',1)[0])) if '%' in a else (a.split('~',1)[1] in c(a.split('~',1)[0])) if '~' in a else re.search(r'^[a-z]*\s?'+re.escape(a.split(':',1)[1])+r'\b',c(a.split(':',1)[0]),re.M))];[print('region check failed:',m) for m in M];sys.exit(1 if M or not A else 0)" 'plan:select_entry' 'plan:plan_completeness' && python3 project clean --help >/dev/null`
-- [ ] T050 [P] [US1] [O] Fill `gate_rows(rows, plan)` in region `gates`: the ten
-  gates of FR-020 as one ordered tuple of gate functions. This task writes
-  `main-worktree`, `unsupported-path-bytes`, `locked-worktree`, the class gate
-  and `not-requested`, and declares, each in its owner's region with a body
-  that passes every row, `registration_gate` and `index_gates` (region `index`,
-  filled by T067), `reflog_gate` (region `reflog`, T066) and `deferral_gate`
-  (region `gates`, T100). The next steps come from `NEXT_STEPS`, and every
+- [ ] T050 [P] [US1] [O] Fill `gate_rows(rows, plan, run)` in region `gates`:
+  the ten gates of FR-020 as one ordered tuple of gate functions, the per-row
+  gates 1 to 7 each `gate(row, plan, run)`, returning its reason or None, and
+  each free to set the row's `errors`, set its class to `inspection-error` or
+  set its unprobed marker. This task writes `main-worktree`,
+  `unsupported-path-bytes`, `locked-worktree`, the class gate and
+  `not-requested`, and declares, each in its owner's region with a body that
+  passes every row and a docstring fixing its signature and return contract,
+  `registration_gate(row, plan, run)` and `index_gates(row, plan, run)`
+  (region `index`, filled by T067), `reflog_gate(row, plan, run)` (region
+  `reflog`, T066) and `deferral_gate(candidates, plan)`, returning `(taken,
+  deferred)` (region `gates`, T100) (lead ruling R-56 Q-6, settling R-53's
+  P-2). The next steps come from `NEXT_STEPS`, and every
   other class's from its recommendation. The first test of T040 passes.
   — files: `project`
-  — verify: `python3 -c "import sys,re;t=open('project').read();A=sys.argv[1:];c=lambda r:t.split('# region '+r+'\n')[1].split('# endregion '+r+'\n')[0];M=[a for a in A if not ((a.split('%',1)[1] not in c(a.split('%',1)[0])) if '%' in a else (a.split('~',1)[1] in c(a.split('~',1)[0])) if '~' in a else re.search(r'^[a-z]*\s?'+re.escape(a.split(':',1)[1])+r'\b',c(a.split(':',1)[0]),re.M))];[print('region check failed:',m) for m in M];sys.exit(1 if M or not A else 0)" 'gates:gate_rows' 'index:registration_gate' 'index:index_gates' 'reflog:reflog_gate' 'gates:deferral_gate' && python3 -m unittest discover -s tests -p 'test_clean_batch.py' -k '*.test_clean_first_gates_in_order'`
+  — verify: `python3 -c "import sys,re;t=open('project').read();A=sys.argv[1:];c=lambda r:t.split('# region '+r+'\n')[1].split('# endregion '+r+'\n')[0];M=[a for a in A if not ((a.split('%',1)[1] not in c(a.split('%',1)[0])) if '%' in a else (a.split('~',1)[1] in c(a.split('~',1)[0])) if '~' in a else re.search(r'^[a-z]*\s?'+re.escape(a.split(':',1)[1])+r'\b',c(a.split(':',1)[0]),re.M))];[print('region check failed:',m) for m in M];sys.exit(1 if M or not A else 0)" 'gates:gate_rows' 'index:registration_gate' 'index:index_gates' 'reflog:reflog_gate' 'gates:deferral_gate' 'index~def registration_gate(row, plan, run)' 'index~def index_gates(row, plan, run)' 'reflog~def reflog_gate(row, plan, run)' 'gates~def deferral_gate(candidates, plan)' && python3 -m unittest discover -s tests -p 'test_clean_batch.py' -k '*.test_clean_first_gates_in_order'`
 - [ ] T051 [P] [US1] [O] Fill `plan_digest(plan)` (R12's canonical text) and
   `plan_document(plan)` (the envelope with the baseline keys kept, in the
   contract's key order, every path through `json_path()` beside its flag,
@@ -1438,8 +1444,11 @@ carrying the reason the gate order gives.
 
 ### Implementation for User Story 2
 
-- [ ] T066 [P] [US2] [O] Fill `reflog_gate(common_dir, branch, head, run)` in
-  region `reflog` (D10, FR-021, FR-022): one `fs_call()` read of
+- [ ] T066 [P] [US2] [O] Fill `reflog_gate(row, plan, run)`, T050's stub, in
+  region `reflog` (D10, FR-021, FR-022): it reads the common directory from
+  the plan and the branch and head from the row, so that it can mark the row,
+  and wraps `read_reflog(common_dir, branch, head, run)` (lead ruling R-56
+  Q-6): one `fs_call()` read of
   `logs/refs/heads/<branch>` under the common directory, each `/` of the branch
   name a directory level, at most 64 KiB (the read asks for no more than 65,536
   bytes, so it needs no `fstat`), a read that returns 65,536 bytes having
@@ -1447,18 +1456,27 @@ carrying the reason the gate order gives.
   entry whose old object is all zeros, or whose message begins `branch: Created
   from` or `branch: Reset to`), the movement (an entry after the anchor, or any
   entry when none survives, whose old and new objects are non-zero and differ),
-  the head test and the outcome rule; it runs for every row that reaches gate
-  7, in every mode. A read error other than `ENOENT` or `ENOTDIR` makes the row
-  `inspection-error` with `os-error`, and a timeout leaves it unprobed by
+  the head test and the outcome rule, a line that is not `<old> <new> ...`, a
+  truncated last line included, meaning the entries cannot decide:
+  `reflog-unavailable`, never `inspection-error` (R-53 P-22); it runs for
+  every row that reaches gate 7, in every mode. A read error other than
+  `ENOENT` or `ENOTDIR` makes the row `inspection-error` with `os-error`, and
+  a timeout leaves it unprobed by
   setting T031's unprobed marker, the plan incomplete with
   `inspection-incomplete` either way through T049's `plan_completeness()`,
   which this task leaves as it is (plan review M5, as the delta words it;
   analyze M6). T059 and T060 pass.
   — files: `project`
-  — verify: `python3 -c "import sys,re;t=open('project').read();A=sys.argv[1:];c=lambda r:t.split('# region '+r+'\n')[1].split('# endregion '+r+'\n')[0];M=[a for a in A if not ((a.split('%',1)[1] not in c(a.split('%',1)[0])) if '%' in a else (a.split('~',1)[1] in c(a.split('~',1)[0])) if '~' in a else re.search(r'^[a-z]*\s?'+re.escape(a.split(':',1)[1])+r'\b',c(a.split(':',1)[0]),re.M))];[print('region check failed:',m) for m in M];sys.exit(1 if M or not A else 0)" 'reflog~fs_call' && python3 -m unittest discover -s tests -p 'test_clean_reflog.py'`
-- [ ] T067 [P] [US2] [O] Fill in region `index`: `registration_gate`, gate 3, from
-  the row's two-way registration result; and `index_gates`, gates 9 and 10, for
-  rows that passed gates 1 to 8 only: `contains-submodule` from
+  — verify: `python3 -c "import sys,re;t=open('project').read();A=sys.argv[1:];c=lambda r:t.split('# region '+r+'\n')[1].split('# endregion '+r+'\n')[0];M=[a for a in A if not ((a.split('%',1)[1] not in c(a.split('%',1)[0])) if '%' in a else (a.split('~',1)[1] in c(a.split('~',1)[0])) if '~' in a else re.search(r'^[a-z]*\s?'+re.escape(a.split(':',1)[1])+r'\b',c(a.split(':',1)[0]),re.M))];[print('region check failed:',m) for m in M];sys.exit(1 if M or not A else 0)" 'reflog~fs_call' 'reflog:read_reflog' && python3 -m unittest discover -s tests -p 'test_clean_reflog.py'`
+- [ ] T067 [P] [US2] [O] Fill in region `index`: `registration_gate`, gate 3,
+  from the row's two-way registration result, failing only when
+  `registered is False`: a row whose registration was never read is already
+  excluded by its class at gate 5, and the null rule below holds for gates 9
+  and 10 (lead ruling R-53 P-16); and `index_gates(row, plan, run)`, gates 9
+  and 10, for rows that passed gates 1 to 8 only, through the per-target
+  helpers `modules_check(common_dir, admin_id, run)` and
+  `hidden_state_probe(path, run)`, each returning `(result, row_error)` so
+  that T084 reuses them for one target (R-56 Q-6): `contains-submodule` from
   `modules_check()` (an `fs_call()` on
   `<common_dir>/worktrees/<admin_id>/modules`) and from a gitlink among
   `hidden_state_probe()`'s records, and `hidden-local-state` from an entry
@@ -1471,7 +1489,7 @@ carrying the reason the gate order gives.
   `inspection-incomplete`; a null flag never passes a gate (plan review M5).
   T061 to T065 pass.
   — files: `project`
-  — verify: `python3 -c "import sys,re;t=open('project').read();A=sys.argv[1:];c=lambda r:t.split('# region '+r+'\n')[1].split('# endregion '+r+'\n')[0];M=[a for a in A if not ((a.split('%',1)[1] not in c(a.split('%',1)[0])) if '%' in a else (a.split('~',1)[1] in c(a.split('~',1)[0])) if '~' in a else re.search(r'^[a-z]*\s?'+re.escape(a.split(':',1)[1])+r'\b',c(a.split(':',1)[0]),re.M))];[print('region check failed:',m) for m in M];sys.exit(1 if M or not A else 0)" 'index:modules_check' 'index:hidden_state_probe' && python3 -m unittest discover -s tests -p 'test_clean_gates.py'`
+  — verify: `python3 -c "import sys,re;t=open('project').read();A=sys.argv[1:];c=lambda r:t.split('# region '+r+'\n')[1].split('# endregion '+r+'\n')[0];M=[a for a in A if not ((a.split('%',1)[1] not in c(a.split('%',1)[0])) if '%' in a else (a.split('~',1)[1] in c(a.split('~',1)[0])) if '~' in a else re.search(r'^[a-z]*\s?'+re.escape(a.split(':',1)[1])+r'\b',c(a.split(':',1)[0]),re.M))];[print('region check failed:',m) for m in M];sys.exit(1 if M or not A else 0)" 'index:modules_check' 'index:hidden_state_probe' 'index~def modules_check(common_dir, admin_id, run)' 'index~def hidden_state_probe(path, run)' && python3 -m unittest discover -s tests -p 'test_clean_gates.py'`
 - [ ] T068 [US2] [S] Run the US2 modules, every earlier module and the 96 tests:
   all pass.
   — files: (none)
