@@ -51,7 +51,17 @@ since the spec has the `gh` child run in the filesystem root with every other
 variable passed on unread; D6 states the check of `number` by type and inside
 the parse's boundary, and what a float literal and an escape of a lone surrogate
 do; D2 decodes a remote-target read's output as strict UTF-8; and D11 tests
-C-41's decision and C-42; they edit no spec text either.
+C-41's decision and C-42; they edit no spec text either. Round C11 then applies
+C-44, the lead's ruling on lane openRepoProject-3's and lane openRepoProject-4's
+planted-configuration point, refined on lane openRepoProject-3's six points,
+which replaces C-41's residual with a refusal: the lookup of `gh` counts as
+failing when any of `GH_CONFIG_DIR`, `XDG_CONFIG_HOME` and `HOME` is set to a
+non-empty value whose first byte is not `/`, so that every keyed row is
+`gh-unavailable` and no child starts. D4, D5, D11 and Risks record it, and its
+edit to `specs/project-overview/spec.md`, one sentence in the Requests
+paragraph, a clause in the Results paragraph and one AND on an existing
+scenario, is HELD for lane openRepoProject-4 until it agrees, so that the
+committed spec file still says that every other variable passes on unread.
 
 Citations follow `proposal.md`: the packet at `da33d92`; APO, CAS, PRS and
 `project:N` at main `961c405`, which main `e9d6711` holds unchanged for them
@@ -105,9 +115,10 @@ The rulings and the packet's boundary map to the decisions:
 | C-38: lane openRepoProject-3's confirm read of C7: D5's shell runs on the skipped errors and the twelve errors named, D6's source for Python's integer-string limit, D11's `number` of 2,147,483,647 | D5, D6, D11 |
 | C-39: Codex's P2 on `05a424a` at design.md:484: the constants `NaN`, `Infinity` and `-Infinity` are no JSON, so a `parse_constant` hook rejects them wherever they stand, on every supported Python | D6, D11 |
 | C-40: the lead's point found in applying C-39: the parse decodes the body's bytes as strict UTF-8 itself and gives `json.loads` the string, so that UTF-16, UTF-32, an encoded surrogate and a UTF-8 byte order mark are `api-error` | D6, D11 |
-| C-41: Codex's P2 on `f34dfe2` at design.md:381: a relative `GH_CONFIG_DIR`, `XDG_CONFIG_HOME` or `HOME` is kept unread, as the spec requires, and resolves against `/`: a residual (Risks) | D5, D11, Risks |
+| C-41: Codex's P2 on `f34dfe2` at design.md:381: a relative `GH_CONFIG_DIR`, `XDG_CONFIG_HOME` or `HOME` resolves against `/` when the child starts there; declined as an anchoring and kept in round C10 as a residual, which C-44 replaced | D5, D11, Risks |
 | C-42: lane openRepoProject-3's MEDIUM-1 on round C9: a node's `number` is accepted only when its parsed type is exactly `int`, and every check on the parsed answer runs inside the parse's catch-everything boundary | D6, D11 |
 | C-43: lane openRepoProject-3's four LOWs on round C9: no `parse_float` hook, by decision; the escape of a lone surrogate; each remote-target read's output decoded as strict UTF-8; and three wordings | D2, D6, D11 |
+| C-44: the lead's ruling on lane openRepoProject-3's and lane openRepoProject-4's planted-configuration point, refined on lane openRepoProject-3's six points: the lookup of `gh` counts as failing when any of `GH_CONFIG_DIR`, `XDG_CONFIG_HOME` and `HOME` is set to a non-empty value whose first byte is not `/`, so every keyed row is `gh-unavailable` and no child starts; other relative paths that `/` re-anchors stay residuals (Risks); its spec sentence is HELD for lane openRepoProject-4 | D4, D5, D11, Risks |
 | C-10, L-12: CI on Linux only | Migration Plan |
 
 What in `project` shapes the approach (at `961c405`; features 004 and 005
@@ -345,11 +356,12 @@ Keys are `(github.com, lowercased owner/repository, head)`. They are
 collected in canonical order, repositories by rank (APO design.md, D6) and
 then rows in row order (main worktree first, then path bytes), each key at
 its first appearance. The first 64 are sent; the rest are `request-cap`,
-unless the run-wide `unavailable` of D5 and D6 applies: with no `gh` found
-(D5), or when each of the 64 requests sent exits 4 with nothing on standard
-output (D6), they are `gh-unavailable` or `gh-unauthenticated`, as every other
-key is (C-25). A lookup that the deadline cuts is no such case, and leaves
-them `request-cap` (D1; lane openRepoProject-3's folded read, L4; C-34).
+unless the run-wide `unavailable` of D5 and D6 applies: with no `gh` found, or a
+lookup that fails, as it does for a relative `GH_CONFIG_DIR`, `XDG_CONFIG_HOME`
+or `HOME` (D5; C-44), or when each of the 64 requests sent exits 4 with nothing
+on standard output (D6), they are `gh-unavailable` or `gh-unauthenticated`, as
+every other key is (C-25). A lookup that the deadline cuts is no such case, and
+leaves them `request-cap` (D1; lane openRepoProject-3's folded read, L4; C-34).
 The cap decides before any request whether a key is sent, so a key past the
 64th stays `request-cap` when the remote budget or the deadline expires, and
 only keys within the cap are `cancelled` or `aborted` (D7; C-28).
@@ -400,8 +412,10 @@ output and standard error read as bytes by the loop. Its environment is the
 caller's, less `GH_DEBUG`, `DEBUG`, `GH_HOST`, `GH_REPO`, `GH_FORCE_TTY` and
 `CLICOLOR_FORCE`, plus `GH_PROMPT_DISABLED=1`, `GH_NO_UPDATE_NOTIFIER=1`,
 `GH_NO_EXTENSION_UPDATE_NOTIFIER=1`, `GH_TELEMETRY=false` and `NO_COLOR=1`.
-`GH_TOKEN`, `GITHUB_TOKEN`, `GH_CONFIG_DIR` and the proxy variables pass
-unread: that is gh's own authentication path (DI:1056-1057). The two update
+`GH_TOKEN`, `GITHUB_TOKEN` and the proxy variables pass unread: that is gh's
+own authentication path (DI:1056-1057). `GH_CONFIG_DIR`, `XDG_CONFIG_HOME` and
+`HOME` hold no credential value and are read only for the test below (C-44);
+every variable a child gets passes unchanged. The two update
 notifier switches keep `gh` from its update check, once every 24 hours by its
 own help text, and from the state it writes for it, as far as gh documents
 them; "Overview is local and read-only" binds `project` and its Git children,
@@ -409,49 +423,93 @@ and gh's behaviour beyond its switches is the client's; the fake `gh` of D11
 records the values, and that block's new scenario asserts them. [E]'s Git scrub
 does not apply; this is not a Git child.
 
-The child starts in `/`, and the variables that name where `gh` keeps its
-configuration pass on unread with the rest, as
-`specs/project-overview/spec.md:404-411` has it. So a relative `GH_CONFIG_DIR`
-or `XDG_CONFIG_HOME`, or a relative or empty `HOME`, which are the three that
-`gh help environment` names for the configuration directory (`GH_CONFIG_DIR`,
-else `$XDG_CONFIG_HOME/gh`, else on Windows only `$AppData/GitHub CLI`, else
-`$HOME/.config/gh`), resolves against `/` and not against the caller's working
-directory. Normally that names no configuration, so the keyed rows are
-`unavailable` with reason `gh-unauthenticated`; if the resolved path exists,
-`gh` reads the configuration there. An absolute path works. `gh` treats an empty
-`GH_CONFIG_DIR` or `XDG_CONFIG_HOME` as unset, and an empty `HOME` makes it read
-`.config/gh` from its working directory, here `/.config/gh`. This is kept by
-decision (C-41): anchoring the three values to the caller's working directory
-would have the overview read and rewrite variables that the spec passes on
-unread, and needs a spec edit that is not made; and the root keeps the caller's
-working directory, which may lie inside a scanned repository, from supplying
-`gh`'s configuration, and from receiving what `gh` writes there.
+The child starts in `/`, which re-anchors every relative path in its
+environment. So the lookup of `gh` counts as failing when any of
+`GH_CONFIG_DIR`, `XDG_CONFIG_HOME` and `HOME` is set to a non-empty value whose
+first byte is not `/` (C-44). Those are the three that `gh help environment`
+names for the configuration directory (`GH_CONFIG_DIR`, else
+`$XDG_CONFIG_HOME/gh`, else on Windows only `$AppData/GitHub CLI`, else
+`$HOME/.config/gh`), and `gh`, started in `/`, resolves a relative one against
+`/` and not against the caller's working directory. Normally that names no
+configuration; but if the resolved path exists, `gh` reads the configuration
+there, and a tree under `/` that any local user can write, such as `tmp`,
+`var/tmp` or `dev/shm`, would let another user plant one, which can capture the
+token `gh` sends (the lead's check, below). A failed lookup gives what one
+already gives, below: every keyed row, whether or not its key is past the 64th,
+is `unavailable` with reason `gh-unavailable`, and no child starts. The reason
+stays `gh-unavailable`, which already covers more than one cause: a distinct
+reason would cost an enum value for a cause that the README's next step makes
+discoverable.
 
-Lane openRepoProject-4 checked offline on `gh` 2.96.0 on 2026-10-20, with fake
-tokens, `env -i` plus D5's five switches and `gh auth token -h github.com`, and
+The test is made on the raw bytes of each value, by design: ` /x`, `~/x` and `.`
+are all refused, and so is a value whose first byte is not UTF-8, while a value
+that is `/` alone is not. It does not follow `gh`'s order of precedence and
+holds whichever of the three `gh` would use, so a relative `XDG_CONFIG_HOME` or
+`HOME` beside an absolute `GH_CONFIG_DIR` is refused too: that over-refusal is
+deliberate, fail-safe, and independent of `gh` keeping its order. An empty or
+unset value is not refused. `gh` treats an empty `GH_CONFIG_DIR` or
+`XDG_CONFIG_HOME` as unset, and when all three are empty or unset it reads
+`.config/gh` from its working directory, here `/.config/gh`, which only root can
+create on a normal system. The test needs no filesystem call and is the lookup's
+first step, before the search of `PATH`, so that a refused value gives
+`gh-unavailable` whether or not a `gh` lies on `PATH`. The three hold no
+credential value: the overview reads them only for this test, opens nothing they
+name, and never prints, logs or compares them otherwise, and every variable a
+child gets, these three included, is passed unchanged, as the Requests paragraph
+of `specs/project-overview/spec.md` says in the edit that is HELD for lane
+openRepoProject-4; the committed spec still says "unread" there. A prototype of
+the test, written once on `os.environb` and once on `os.environ` (a `startswith`
+of `/` on the string, whose decoding leaves a first byte that is not UTF-8 as no
+`/`), agreed with the rule on 18 cases on Python 3.10.21, 3.11.16, 3.12.3,
+3.13.15 and 3.14.7: each of the three alone and relative, a relative
+`XDG_CONFIG_HOME` or `HOME` beside an absolute `GH_CONFIG_DIR`, ` /x`, `~/x`,
+`.`, a first byte of FF and one of EF, which are refused, and `/` alone, empty,
+unset and all three absolute, which are not.
+
+The evidence was observed offline on `gh` 2.96.0 on 2026-10-20 with fake tokens,
+and none of it is a test of this change. The lead's check, with the token
+variables unset and D5's five switches set, found that a configuration directory
+whose `config.yml` held `http_unix_socket` made `gh api` send its request as
+plain HTTP over that socket, with no TLS handshake and the token in the clear,
+and exit 1 when the server closed: a configuration that someone else can write
+can capture the token `gh` sends and serve the answer. Lane openRepoProject-4's
+check, with `env -i` plus D5's five switches and `gh auth token -h github.com`,
 found that an empty `HOME` makes `gh` read `./.config/gh` relative to its own
 working directory, which found a planted token from the caller's directory and
 none from `/`; that `gh` treats an empty `GH_CONFIG_DIR` or `XDG_CONFIG_HOME` as
 unset, from either directory, and falls through to `HOME`; and that `gh` writes
 to the configuration directory it uses on first use, rewriting `hosts.yml` into
-its multi-account form and creating `config.yml`.
+its multi-account form and creating `config.yml`, so that a configuration
+directory anchored to the working directory would let a scanned repository both
+supply `gh`'s configuration and receive what `gh` writes.
+
+Lane openRepoProject-4's check of extensions, on `gh` 2.96.0 on 2026-10-20 with
+a fake token, asked whether a relative `HOME` beside an absolute
+`GH_CONFIG_DIR`, which the rule refuses, can do harm through `gh`'s data
+directory, where extensions live. Run in `/` under a relative `HOME`, `gh`
+listed planted `gh-api` and `gh-zzz` extensions and ran `gh zzz` by its own
+name, but `gh api --help` and a `gh api` request ran `gh`'s own command and
+client, not the planted `gh-api`, and `gh` wrote no file under that `HOME`. So
+D5's argv, which always begins with `api`, never runs an extension, and the
+rule's refusal of that case is deliberate over-refusal, not a fix for a
+demonstrated hole.
 
 The writer ran `gh` 2.96.0 too on 2026-10-20, offline, with a fake token in each
 probe configuration file, `GH_TOKEN`, `GITHUB_TOKEN`, `GH_ENTERPRISE_TOKEN` and
 `GITHUB_ENTERPRISE_TOKEN` unset under `env -i`, `GH_NO_UPDATE_NOTIFIER=1`,
-`GH_PROMPT_DISABLED=1` and `GH_TELEMETRY=false` set, and
-`gh auth token --hostname github.com`, printing only whether the probe token was
-found: a relative `GH_CONFIG_DIR`, a relative `XDG_CONFIG_HOME` and a relative
-`HOME` were each found when run in the directory they were relative to and
-missed when run in `/`, each of the same three values made absolute was found
-when run in `/`, and with no variable naming the probe none was found; an empty
-`HOME` with a probe file at `./.config/gh` was found from the directory that
-held it and missed from `/`; and an empty `GH_CONFIG_DIR`, or an empty
-`XDG_CONFIG_HOME`, with an absolute `HOME` that held the probe, was found from
-either directory. Those runs did not record `gh api`'s output under D5's argv
-(task 2.5). The README's next step for `gh-unauthenticated` names both causes:
-run `gh auth login`, or make a relative `GH_CONFIG_DIR`, `XDG_CONFIG_HOME` or
-`HOME` absolute.
+`GH_PROMPT_DISABLED=1` and `GH_TELEMETRY=false` set, and `gh auth token
+--hostname github.com`, printing only whether the probe token was found: a
+relative `GH_CONFIG_DIR`, a relative `XDG_CONFIG_HOME` and a relative `HOME`
+were each found when run in the directory they were relative to and missed when
+run in `/`, each of the same three values made absolute was found when run in
+`/`, and with no variable naming the probe none was found; an empty `HOME` with
+a probe file at `./.config/gh` was found from the directory that held it and
+missed from `/`; and an empty `GH_CONFIG_DIR`, or an empty `XDG_CONFIG_HOME`,
+with an absolute `HOME` that held the probe, was found from either directory. A
+second run of the same kind in round C11, with all three variables unset and
+then with all three empty, found the probe at `./.config/gh` from the directory
+that held it and missed it from `/`, where no `/.config` exists. Those runs did
+not record `gh api`'s output under D5's argv (task 2.5).
 
 `gh` is looked up once per run, by one bounded filesystem task as [B]
 requires of every filesystem call, in the absolute directories of `PATH`
@@ -501,23 +559,31 @@ per-directory rule fills D5 and is no change to the spec (C-35; its rationale
 reworded to what was observed, C-36, and its record of the twelve errors and of
 the shells completed, C-38).
 
-A lookup that fails, or that reaches its 5 s limit, as on an unreachable
-`PATH` directory, gives what one that finds none gives: every keyed row,
-whether or not its key is past the 64th, is `gh-unavailable`, and no child
-starts (C-25, C-26). [B]'s bounded-task rule would otherwise record
+A lookup that fails, on the test of the three configuration variables above or
+on an error from a `PATH` directory, or that reaches its 5 s limit, as on an
+unreachable `PATH` directory, gives what one that finds none gives: every keyed
+row, whether or not its key is past the 64th, is `gh-unavailable`, and no child
+starts (C-25, C-26, C-44). [B]'s bounded-task rule would otherwise record
 `probe-timeout`; [B]'s added paragraph and [R]'s isolation clause record the
 lookup's failure or cut only in the rows' `remote`, never as a row or scan
 error (D10). A lookup that the deadline stops before its 5 s end leaves its
 rows as an expiry does (D7), `cancelled` within the cap and `request-cap` past
 it (C-28), just as [B] tells `deadline-exceeded` from `probe-timeout` and D7
 tells `aborted` from `timeout`. The README's next step for `gh-unavailable`
-names both causes: install `gh`, or check that `PATH`'s directories are
-reachable.
+names all three causes: install `gh`, check that `PATH`'s directories are
+reachable, or make a relative `GH_CONFIG_DIR`, `XDG_CONFIG_HOME` or `HOME`
+absolute, so that a person with a relative `HOME` does not go looking for `gh`
+on `PATH` (C-26, C-44); its next step for `gh-unauthenticated` is `gh auth
+login` alone.
 
 Rejected: REST `commits/{sha}/pulls` (an unknown commit is HTTP 422, an
 `unknown` under DI:1055-1056, and a further page shows only in a `Link`
 header); `gh pr list` (by branch name, page information hidden, 30 items by
-default); direct HTTPS from `project` (`proposal.md`, Open Questions 2).
+default); direct HTTPS from `project` (`proposal.md`, Open Questions 2); and
+anchoring a relative `GH_CONFIG_DIR`, `XDG_CONFIG_HOME` or `HOME` to the
+caller's working directory, which would have the overview rewrite variables that
+the spec passes on and, for an empty one, let a scanned repository supply `gh`'s
+configuration and receive what `gh` writes (C-41, C-44; the checks above).
 
 ### D6. Reading a response
 
@@ -821,8 +887,9 @@ of these fields, so remote evidence never reaches an eligibility gate, a
   appends one JSON record per run: the argv, the names of the environment
   variables set, the values of `GH_NO_UPDATE_NOTIFIER`,
   `GH_NO_EXTENSION_UPDATE_NOTIFIER`, `GH_PROMPT_DISABLED`, `GH_TELEMETRY` and
-  `NO_COLOR`, the value of `GH_CONFIG_DIR` (C-41), whether `GH_TOKEN` equals the
-  caller's, the working directory, and its start and end times.
+  `NO_COLOR`, whether each of `GH_CONFIG_DIR`, `XDG_CONFIG_HOME` and `HOME` is
+  set and its value (C-44), whether `GH_TOKEN` equals the caller's, the working
+  directory, and its start and end times.
 - One test sets the interpreter's limit on converting a string to an integer to
   0, with `sys.set_int_max_str_digits(0)` where the interpreter has it, and
   restores it after; that emulates Python 3.10.0 to 3.10.6, which have no such
@@ -873,16 +940,33 @@ of these fields, so remote evidence never reaches an eligibility gate, a
   lookup's filesystem task takes the injected slow call that change 2's
   design patches into its filesystem tasks (APO design.md, D13), on a chosen
   `PATH` directory, so that the lookup is cut at 5 s (C-26).
-- One short test pins C-41's decision. With `GH_CONFIG_DIR=.gh-config`, a
-  relative value, in the caller's environment, and in a second run with
-  `GH_CONFIG_DIR` empty, the fake `gh` records the child's working directory as
-  `/` and `GH_CONFIG_DIR` set to the value the caller gave, byte for byte: the
-  relative value in the first run, the empty one in the second. The value is
-  passed unread and never rewritten. It is no scenario: "The request bounds"
-  requires the root working directory, and the added requirement every other
-  variable passed on unread (`specs/project-overview/spec.md:404-411` and :618).
-  The residual that remains, a `gh` that resolves such a value against `/`, is a
-  real `gh`'s behaviour, and no test here runs one (Risks).
+- One test pins C-44's rule, with the fake `gh` first on `PATH` and two queried
+  rows with distinct heads, each case its own run that changes only the three
+  variables, the rest of the caller's environment being the same:
+  - Refused: `GH_CONFIG_DIR=.gh-config`; `XDG_CONFIG_HOME=cfg`; `HOME=h`; a
+    relative `XDG_CONFIG_HOME` or `HOME` beside an absolute `GH_CONFIG_DIR`,
+    since the rule holds whichever of the three `gh` would use and does not
+    depend on its order; each of the three relative beside the other two
+    absolute; and, for `GH_CONFIG_DIR`, the values ` /x` (a leading space),
+    `~/x` and `.`, since the test is on the raw bytes. Each gives both rows
+    `unavailable` with reason `gh-unavailable`, `remote.requests.performed` 0,
+    `remote.observed_at` null, the fake `gh`'s record empty although it lies
+    first on `PATH`, and the exit status and every local field those of the run
+    without `--remote`.
+  - Not refused: an absolute `GH_CONFIG_DIR`; an empty `GH_CONFIG_DIR`; an empty
+    `XDG_CONFIG_HOME` and an empty `HOME`; all three unset; and all three
+    absolute. Each starts the `gh` children, answers both rows, and has the fake
+    `gh` record each of the three as set or unset and, when set, byte for byte
+    as the caller set it, with `/` as the working directory: nothing is
+    rewritten.
+  - With 70 distinct keys and a relative `GH_CONFIG_DIR`, all 70 keys are
+    `gh-unavailable`, none `request-cap`, as with no `gh` on `PATH`.
+  - The AND of "No gh, or a gh without authentication" takes the first two
+    refused cases and the absolute and the empty `GH_CONFIG_DIR`; the rest tests
+    the sentence of the Requests paragraph and the Results paragraph's clause,
+    which the scenario does not enumerate. A refused case starts no `gh` child,
+    so no test runs a real `gh` for it; the checks of D5 are evidence and no
+    test.
 - Two `PATH` fixtures, built in the test's temporary tree, test the lookup's
   per-directory rule (C-35). A directory of mode 000 placed before the
   directory that holds the fake `gh` is skipped, and the lookup finds that
@@ -986,26 +1070,45 @@ requests".
 - [`GH_TOKEN` reaches the child] -> It is the normal authentication path;
   `project` never reads it, and no output or message carries an environment
   value.
-- [A relative `GH_CONFIG_DIR` or `XDG_CONFIG_HOME`, or a relative or empty
-  `HOME`, in the caller's environment is kept unread and resolved by `gh`,
-  started in `/`, against `/`; `SSL_CERT_FILE` and `SSL_CERT_DIR`, which `gh` or
-  Go's runtime may read as relative paths, are the same kind of case] ->
-  Normally the resolved path names no configuration, and the keyed rows are
-  `unavailable` with reason `gh-unauthenticated` (or, for a certificate path,
-  `unknown`). If the resolved path exists, `gh` reads the configuration there.
-  From `/`, a relative value lands in a root-owned tree, except a world-writable
-  one, such as `tmp`, `var/tmp` or `dev/shm` under `/`, where another local user
-  could plant a `gh` configuration. The lead's check on `gh` 2.96.0 on
-  2026-10-20, with a fake token, the token variables unset and D5's five
-  switches set, found that a configuration whose `config.yml` held
-  `http_unix_socket` made `gh api` send its request as plain HTTP over that
-  socket, with no TLS and the token in the clear; so such a configuration could
-  capture the token `gh` sends and serve a wrong answer. Remote evidence never
-  reaches an eligibility gate (D10), so a wrong answer authorizes nothing. The
-  remedy is to make the path absolute, which the README's next step for
-  `gh-unauthenticated` says. Starting `gh` in `/` keeps the caller's working
-  directory, which may lie inside a scanned repository, from supplying `gh`'s
-  configuration (D5; C-41).
+- [A `GH_CONFIG_DIR`, `XDG_CONFIG_HOME` or `HOME` set to a non-empty value that
+  does not begin with `/` makes every keyed row `gh-unavailable` and starts no
+  child (C-44)] -> A caller whose configuration sits under a relative path gets
+  no remote evidence, which fails closed and is never a wrong answer, and the
+  README's next step for `gh-unavailable` says to make the path absolute, so
+  that a person with a relative `HOME` does not go looking for `gh` on `PATH`.
+  The refusal holds whichever of the three `gh` would use, on the raw bytes, and
+  so covers a relative `HOME` beside an absolute `GH_CONFIG_DIR`, which lane
+  openRepoProject-4's check of extensions found harmless today, since the argv
+  begins with `api` (D5): that is deliberate over-refusal, not the fix of a
+  demonstrated hole. The reason for refusing at all is the lead's check on `gh`
+  2.96.0 (D5): from `/`, a relative value lands in a root-owned tree except a
+  tree that any local user can write, such as `tmp`, `var/tmp` or `dev/shm`
+  under `/`, where another local user could plant a `gh` configuration, and a
+  configuration that held `http_unix_socket` made `gh api` send its request as
+  plain HTTP over that socket with the token in the clear. Remote evidence never
+  reaches an eligibility gate (D10), so a wrong answer would authorize nothing;
+  the refusal protects the token.
+- [`gh`, started in `/`, resolves every relative path in the caller's
+  environment against `/`, not only the three that name its configuration; the
+  rule leaves out `SSL_CERT_FILE`, `SSL_CERT_DIR` and `LD_LIBRARY_PATH`] -> Each
+  is left out because it is not `gh`'s documented configuration, each for its
+  own reason below, and the remedy for each is the same, an absolute path. The
+  README's next steps do not name them.
+  - `SSL_CERT_FILE`, and each element of `SSL_CERT_DIR`, which Go's
+    `crypto/x509` splits on `:`: a relative value resolves against `/`, so a CA
+    planted in a tree that any local user can write, such as `tmp`, `var/tmp` or
+    `dev/shm` under `/`, could let TLS be intercepted and the token exposed, but
+    a planted CA is of use only to a party that also holds a network position
+    from which to intercept, so the case is left as a residual. Lane
+    openRepoProject-4 read this from Go's source; it is no test of `gh`.
+  - `LD_LIBRARY_PATH`, as lane openRepoProject-3 corrected the reason: a library
+    planted where a relative entry resolves under `/` runs inside a dynamically
+    linked `gh` and needs nothing more. It is left out because it is not `gh`'s
+    configuration, and because a relative entry is already the caller's own
+    hazard in every directory they run anything from: running in `/` only fixes
+    where it resolves. Release builds of `gh` are static, so the case needs a
+    distribution build that links dynamically; the `gh` 2.96.0 binary checked
+    here is a static executable, `ldd` printing "not a dynamic executable".
 - [Collection used most of the 60 s] -> The requests end at the deadline as
   `cancelled` or `aborted`, and `remote.completeness` says `incomplete`.
 - [A `PATH` directory on an unreachable mount ahead of the one holding `gh`]
