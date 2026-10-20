@@ -39,7 +39,11 @@ read of round C7 (C-38), four LOWs: D5 records the shells' runs on the errors
 the lookup skips and names the twelve errors injected, D6 and D11 give the
 source of Python's limit on integer-string conversion and say that 3.10.0 to
 3.10.6 were emulated, not run, and D11 serves a `number` of 2,147,483,647 too;
-it edits no spec text either.
+it edits no spec text either. Round C9 then applies Codex's P2 on `05a424a`
+(C-39) and the lead's point found in applying it (C-40): D6's parse rejects
+the constants `NaN`, `Infinity` and `-Infinity` with a `parse_constant` hook,
+and decodes the body's bytes as strict UTF-8 itself, never giving `json.loads`
+bytes, and D11 tests both with one test; they edit no spec text either.
 
 Citations follow `proposal.md`: the packet at `da33d92`; APO, CAS, PRS and
 `project:N` at main `961c405`, which main `e9d6711` holds unchanged for them
@@ -91,6 +95,8 @@ The rulings and the packet's boundary map to the decisions:
 | C-36: lane openRepoProject-3's confirm read of C6c: D5's rationale claims only what was observed | D5 |
 | C-37: Codex's P2 on `1c32667` at design.md:457: integer literals bounded at parse time by a `parse_int` hook, on every supported Python | D6, D11 |
 | C-38: lane openRepoProject-3's confirm read of C7: D5's shell runs on the skipped errors and the twelve errors named, D6's source for Python's integer-string limit, D11's `number` of 2,147,483,647 | D5, D6, D11 |
+| C-39: Codex's P2 on `05a424a` at design.md:484: the constants `NaN`, `Infinity` and `-Infinity` are no JSON, so a `parse_constant` hook rejects them wherever they stand, on every supported Python | D6, D11 |
+| C-40: the lead's point found in applying C-39: the parse decodes the body's bytes as strict UTF-8 itself and gives `json.loads` the string, so that UTF-16, UTF-32, an encoded surrogate and a UTF-8 byte order mark are `api-error` | D6, D11 |
 | C-10, L-12: CI on Linux only | Migration Plan |
 
 What in `project` shapes the approach (at `961c405`; features 004 and 005
@@ -479,6 +485,24 @@ the loop stops reading, stops the child (D7) and records `truncated`.
 - A 200 body must be UTF-8 JSON, and a body that cannot be decoded or parsed,
   for any cause, is `api-error`: the parse catches every exception it raises,
   not only `JSONDecodeError`, so no such body reaches C-14's exit 2 (C-22).
+  The parse decodes the body's bytes itself, with Python's UTF-8 codec
+  (`bytes.decode("utf-8")`) and its default `strict` error handler, and passes
+  `json.loads` that string, never the bytes (C-40). Given bytes, `json.loads`
+  picks the encoding itself, detecting UTF-8, UTF-16 and UTF-32, and decodes
+  with the `surrogatepass` error handler, so a body that is not UTF-8 would
+  parse. Checked on 2026-10-20 on Python 3.10.21, 3.11.16, 3.12.3, 3.13.15 and
+  3.14.7, on each of which `json.loads` of bytes parsed a JSON body encoded in
+  UTF-16 and in UTF-32, each little-endian, big-endian and with a byte order
+  mark; a body with a string that held the bytes ED A0 80, an encoded surrogate;
+  and a body that began with a UTF-8 byte order mark. The strict decode raised
+  `UnicodeDecodeError` for the UTF-16 and UTF-32 bodies with a byte order mark
+  and for ED A0 80, and accepted the other four UTF-16 and UTF-32 bodies, whose
+  NUL bytes are valid UTF-8, which `json.loads` of the string then refused with
+  `JSONDecodeError`, as it did the UTF-8 byte order mark ("Unexpected UTF-8
+  BOM"); each such body is `api-error` by the rule above. RFC 8259 section 8.1
+  requires UTF-8 for JSON exchanged outside a closed ecosystem, and lets a
+  parser treat a byte order mark as an error, which one at the start of a body
+  is here.
   The parse passes `json.loads` a `parse_int` hook, which receives the text of
   each integer literal of the body, wherever it stands, and raises before
   converting it when the text has more than 10 digits, a sign not counted.
@@ -508,7 +532,34 @@ the loop stops reading, stops the child (D7) and records `truncated`.
   `json.loads` of the 5,000-digit body returns, and with the hook it raises;
   and with that setting a literal of 1,000,000 digits took 5.2 s to convert
   on 3.10.21 and 4.5 s on 3.11.16, about 0.6 s on 3.12.3 and later, and under
-  3 ms for the hook to reject. An `errors` entry of type `RATE_LIMITED` gives
+  3 ms for the hook to reject.
+  The parse also passes `json.loads` a `parse_constant` hook that raises for
+  every text it is given (C-39). By default `json.loads` accepts `NaN`,
+  `Infinity` and `-Infinity` and returns `nan` and `inf`, though RFC 8259
+  section 6 permits no numeric value that its grammar cannot represent, such as
+  those; a body that holds one in a field the parse never reads, as the
+  `extensions` object of a GraphQL response may, would parse, and its key could
+  be answered. With the hook such a body fails the parse, wherever the constant
+  stands, and its key is `api-error` by the rule above, on every supported
+  Python. Checked on the five interpreters above: `json.loads` called the hook
+  with exactly `NaN`, `Infinity` and `-Infinity`; an exception raised there left
+  `json.loads` as raised, never wrapped in `JSONDecodeError`; the hook was not
+  called for a string (the strings "NaN" and "Infinity" included), `true`,
+  `false`, `null` or a number, `1e999` (which parses as `inf`) included; `NaNx`
+  called it on its `NaN` prefix; and `nan`, `-NaN`, `infinity`, `+Infinity` and
+  `Inf` failed `json.loads` itself with `JSONDecodeError`. A float literal needs
+  no bound: no field the parse reads is a float, and a literal of 1,048,560
+  bytes, in its fraction, its integer part or before an exponent, parsed in
+  under 10 ms on each interpreter, the slowest 9.8 ms (3.10.21, its fraction;
+  worst of seven runs). A prototype of this parse and of D6's checks on a node,
+  run on the five interpreters, answered `merged` for each of these bodies when
+  `json.loads` was given its bytes with the `parse_int` hook alone, and
+  `api-error` under this parse: a valid answer with `NaN`, `Infinity` or
+  `-Infinity` as the value of a key of its `extensions` object; that answer in
+  each of the six UTF-16 and UTF-32 forms above; and that answer with ED A0 80
+  in a string of its `extensions` object, or with a UTF-8 byte order mark before
+  it. The answer in plain UTF-8 was `merged` under both.
+  An `errors` entry of type `RATE_LIMITED` gives
   `rate-limited`, and any other `errors` entry, a null
   `data.repository`, or a `data.repository.nameWithOwner` that fails D3's
   pattern (the field S-2 adds and C-19 takes, validated as each node's
@@ -654,14 +705,19 @@ of these fields, so remote evidence never reaches an eligibility gate, a
   reads its argv, takes the `oid` field, looks it up in a JSON answer table
   beside it, and writes a status line, headers, a blank line and a body, the
   status line and the header names in the forms that task 2.5 records `gh`
-  printing (C-19). Per key the table can hold the child for N seconds, exit 4
+  printing (C-19); it writes the body as bytes, which the table gives as a
+  text and an encoding or in hexadecimal digits (C-40). Per key the table can
+  hold the child for N seconds, exit 4
   with no output, send exactly 1 MiB of body, answered from its nodes, or
   1 MiB and one byte, set `hasNextPage`, answer
   401, 403, 429, a 403 with `X-RateLimit-Remaining: 0` or with a
   `Retry-After` header, a 200 body with an `errors` entry of a given type, a
   null `data.repository`, a status and header block of exactly 64 KiB,
   answered as any other, or over 64 KiB, a body of
-  1 MiB of `[` or with a `number` of 5,000 digits (C-22), or 502, give the
+  1 MiB of `[` or with a `number` of 5,000 digits (C-22), one that carries
+  `NaN`, `Infinity` or `-Infinity` in its `extensions` object (C-39), one
+  written in UTF-16 or UTF-32, one that holds the bytes ED A0 80 in a string or
+  one that begins with a UTF-8 byte order mark (C-40), or 502, give the
   queried repository's `nameWithOwner` as the owner and name asked or, to
   stand for a renamed repository, as another, as the last AND of "The chosen
   pull request and a rejected answer" does (lane openRepoProject-3's delta
@@ -692,6 +748,21 @@ of these fields, so remote evidence never reaches an eligibility gate, a
   `<` fails the test (C-38); and 2,147,483,648, whose key is `api-error` by the
   node check. It tests the parse and is no scenario: "API failures stay unknown"
   already requires the 5,000-digit outcome.
+- One test serves 200 answers that D6's parse refuses though each is otherwise
+  valid (C-39, C-40). Each is a matched, merged pull request that would give
+  its key's rows `merged` if it parsed, and each gives `api-error` with D6's
+  parse: the answer with `NaN`, `Infinity` or `-Infinity` as the value of a key
+  of an `extensions` object that the parse never reads (three fixtures); the
+  answer encoded in UTF-16 and in UTF-32, each little-endian without a byte
+  order mark and with one (four); the answer with the bytes ED A0 80 in a
+  string of that object (one); and the answer with a UTF-8 byte order mark
+  before its first byte (one). The same answer in plain UTF-8 is served too and
+  gives `merged`, so that each failure comes from the rule and from no other
+  fault of the answer. The test checks the parse and is no scenario: the added
+  requirement's "A 200 body SHALL be UTF-8 JSON"
+  (`specs/project-overview/spec.md:461-462`), and its `api-error` for a
+  response "that cannot be decoded or parsed for any cause" (:453-454),
+  already require each outcome.
 - A planted `gh`, a second fake that records each run, sits in the working
   directory of a run whose `PATH` begins with an empty entry and `.`, so that
   "No gh, or a gh without authentication" shows it never runs, and the fake
