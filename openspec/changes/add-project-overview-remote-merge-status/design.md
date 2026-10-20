@@ -20,10 +20,10 @@ verdicts, and round C4's edits to `specs/project-overview/spec.md`, agreed
 by lane openRepoProject-4 on 2026-10-20, are committed (`proposal.md`,
 Dependencies and Sequencing). Round C5 applies lane openRepoProject-3's delta
 read of `e198548` and Codex's three findings on it (C-24 to C-27), with the
-lead's C-28 and C-29 on two points found in applying them; this design
-describes `specs/project-overview/spec.md` as round C5 leaves it, written but
-held for lane openRepoProject-4 and not committed, and until it agrees the
-committed file is the one it agreed in round C4 (`d73d25d`).
+lead's C-28 and C-29 on two points found in applying them; its edits to
+`specs/project-overview/spec.md`, agreed by lane openRepoProject-4 on
+2026-10-20, are committed (`6fe8a5e`; `proposal.md`, Dependencies and
+Sequencing).
 
 Citations follow `proposal.md`: the packet at `da33d92`; APO, CAS, PRS and
 `project:N` at main `961c405`, which main `e9d6711` holds unchanged for them

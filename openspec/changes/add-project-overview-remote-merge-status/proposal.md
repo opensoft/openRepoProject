@@ -5,9 +5,9 @@ Lane: openRepoProject-5
 Status: draft; alignment review and council resolved on PR #29, round C4's
 spec edits committed on lane openRepoProject-4's agreement of 2026-10-20;
 round C5's edits for lane openRepoProject-3's delta read and Codex's findings
-on `e198548` (C-24 to C-29) applied, their `project-overview` spec edits held
-for lane openRepoProject-4; ratification by Brett Heap pending; nothing here
-is ratified. Governing issue:
+on `e198548` (C-24 to C-29) applied, their `project-overview` spec edits
+committed on lane openRepoProject-4's agreement of 2026-10-20; ratification
+by Brett Heap pending; nothing here is ratified. Governing issue:
 opensoft/openRepoProject#25, claimed by lane openRepoProject-5 (comment
 6111242617); refs #6, the record of the project
 maintenance design packet. Proposed on Brett Heap's word "usage reset, resume
@@ -453,26 +453,27 @@ scenarios (14, 2, 7 and 13), and one MODIFIED requirement in `project-command`,
   [E]'s Termination paragraph binds Git children, so the ADDED requirement,
   which starts the `gh` children, says that they are stopped on every exit
   path (LOW-6), and nothing was held for lane openRepoProject-2.
-- **Round C5's spec edits are held for lane openRepoProject-4 (C-24 to
-  C-29).** This proposal and `design.md` describe
-  `specs/project-overview/spec.md` as round C5 leaves it, which is written but
-  not committed: one sentence added to the added paragraph of "Overview bounds
-  its work and reports what it omitted", naming the lookup of `gh` beside the
-  remote-target reads and the `gh` children (C-26, L-11); in the ADDED
-  requirement, the request cap's precedence (C-25) and its hold at an expiry
-  (C-28), the lookup that fails or runs out of time (C-26), the sentinel byte
-  past 1 MiB of body and past 64 KiB of status and headers (C-27) and past
-  64 KiB of each remote-target read's output (C-29), and the lookup in the
-  isolation clause (C-26); and five ANDs, which change no count: two on "No
-  gh, or a gh without authentication" (lane openRepoProject-3's F3; C-26), one
-  on "The chosen pull request and a rejected answer" (F4), one on "The
-  request bounds" (C-25) and one on "Expiry cancels queued and in-flight
-  requests" (C-28). They are held in one file for lane openRepoProject-4 to read
-  against its agreement of 2026-10-20. Until it agrees, the committed
-  `specs/project-overview/spec.md` is the text it agreed then (`d73d25d`), and
-  a part it declines is ruled by the lane's lead.
-  `specs/project-command/spec.md` is unchanged in this round, and nothing is
-  held for lane openRepoProject-2.
+- **Round C5's spec edits were agreed by lane openRepoProject-4 and are
+  committed (C-24 to C-29).** One sentence added to the added paragraph of
+  "Overview bounds its work and reports what it omitted", naming the lookup of
+  `gh` beside the remote-target reads and the `gh` children (C-26, L-11); in
+  the ADDED requirement, the request cap's precedence (C-25) and its hold at
+  an expiry (C-28), the lookup that fails or runs out of time (C-26), the
+  sentinel byte past 1 MiB of body and past 64 KiB of status and headers
+  (C-27) and past 64 KiB of each remote-target read's output (C-29), and the
+  lookup in the isolation clause (C-26); and five ANDs, which change no count:
+  two on "No gh, or a gh without authentication" (lane openRepoProject-3's F3;
+  C-26), one on "The chosen pull request and a rejected answer" (F4), one on
+  "The request bounds" (C-25) and one on "Expiry cancels queued and in-flight
+  requests" (C-28). They were held in one file for lane openRepoProject-4,
+  which answered on 2026-10-20: "YES to #29's round C5 held overview spec
+  (sha256 3b4a7b0e39b19c74205df9631a7a404475f6bc436aa3675570695b2990796251).
+  Nothing is declined." Its NOTED, `lanes/log/openRepoProject-4.md:70` on the
+  register's `origin/main` (`4fc780a0f`), added in `7835b98be`, records that it
+  byte-checked [J] and [L] as identical to the C4 text it agreed and found
+  that [B] adds only the one C-26 sentence, and the file is committed exactly
+  as held (`6fe8a5e`). `specs/project-command/spec.md` is unchanged in this
+  round, and nothing was held for lane openRepoProject-2.
 - **Archives after change 2 (L-5).** Change 2 archives after change 1 and
   after feature 005 merges (APO design.md, Migration Plan 5); this change
   archives after change 2 archives. Its block of change 1's evidence model
@@ -1135,20 +1136,21 @@ with changes it judged sound) and seven LOWs; Codex re-reviewed `e198548` on
 P2s. The lane's lead accepted all ten (C-24 to C-27, the rulings of
 2026-10-20) and ruled on two points the writer found in applying them (C-28,
 C-29), the last two rows; C-24's items 3 and 4 and C-25 to C-29 edit
-`specs/project-overview/spec.md`, which is held for lane openRepoProject-4
-(Dependencies and Sequencing), and the rest are committed.
+`specs/project-overview/spec.md`; lane openRepoProject-4 agreed those edits on
+2026-10-20 with nothing declined, and they are committed with the rest
+(Dependencies and Sequencing).
 
 | Finding | Severity | Ruling | Section edited |
 | --- | --- | --- | --- |
 | F1: "a seventh state such as `not-queried`", where C-16 leaves five states | LOW | C-24: applied: "a sixth state" | Decisions ("Fields only in a `--remote` run") |
 | F2: Q16's option A, a departure from D1 and N1, would trigger no re-read, and D7 states D1's mask as fact | LOW | C-24: applied with change: the trigger reads "amends, or records a departure from, change 2's design D1 or clarifications N1 before change 2 archives", with "or" between D1 and N1 as C-24 words it, where lane openRepoProject-3's fix has "and", so that a change to either fires it; the Dependencies sentence also names option A and says that `gh` children follow a recorded departure as they follow D1 and N1, which it would otherwise misstate; D7's pointer, in lane openRepoProject-3's words, sits inside the parenthesis that cites D1 | Dependencies and Sequencing ("Realized after feature 005"); `tasks.md` 2.3; `design.md` D7 |
-| F3: the absolute-`PATH` lookup (C-22) has no AND and no D11 seam | LOW | C-24: applied: lane openRepoProject-3's AND, a planted `gh` in the working directory behind an empty entry and `.`, held, and the planted `gh` in D11 | held `project-overview` delta ("No gh, or a gh without authentication"); `design.md` D11 |
-| F4: the renamed-repository rule has a D11 seam and no scenario | LOW | C-24: applied: an AND, held, in which the answer gives `acme/gizmo` as the queried repository's `nameWithOwner`, so that the open node whose base repository carries that name matches and the merged node carrying the name asked does not; D11's seam names it | held `project-overview` delta ("The chosen pull request and a rejected answer"); `design.md` D11 |
+| F3: the absolute-`PATH` lookup (C-22) has no AND and no D11 seam | LOW | C-24: applied: lane openRepoProject-3's AND, a planted `gh` in the working directory behind an empty entry and `.`, and the planted `gh` in D11 | `project-overview` delta ("No gh, or a gh without authentication"); `design.md` D11 |
+| F4: the renamed-repository rule has a D11 seam and no scenario | LOW | C-24: applied: an AND in which the answer gives `acme/gizmo` as the queried repository's `nameWithOwner`, so that the open node whose base repository carries that name matches and the merged node carrying the name asked does not; D11's seam names it | `project-overview` delta ("The chosen pull request and a rejected answer"); `design.md` D11 |
 | F5: task 2.5's "one of them" has no antecedent | LOW | C-24: applied, in lane openRepoProject-3's words | `tasks.md` 2.5 |
 | F6: "DI:1036-1060 names no states", where the packet names "a merged pull request" | LOW | C-24: applied as C-24 words it: the decision now says that DI:1036-1060 names "a merged pull request" (DI:1059-1060) and no other state, in place of lane openRepoProject-3's "names no `closed` state, and gives no state set"; the phrase spans DI:1059-1060, where C-24 cites DI:1059 | Decisions ("Closed pull requests, C-16") |
 | F7: two `api-error` rules trace to no ruling: more than 100 pull requests, and a `data.repository.nameWithOwner` that is not a valid `owner/repository` | LOW | C-24: applied: the first is AE-5's suggested Results text, taken by C-22; the second comes with the `nameWithOwner` field that S-2 adds and C-19 takes, validated as each node's `baseRepository.nameWithOwner` is, S-2's text adding the field without stating the check in words; both are cited in `design.md` D6, where the design states them, and in the AE-5 and S-2 rows above, the spec carrying no citations | `design.md` D6; Council Verdicts (AE-5, S-2) |
-| Codex 4 (P1, on `e198548`, spec.md:453): with more than 64 keys and no `gh`, the rows past the 64th key are both `gh-unavailable` and `request-cap` | P1 | C-25: applied with change, held: `request-cap` applies only when requests can be sent and the cap stops them; with no `gh` found, or when each of the 64 requests that the cap allows ends in exit 4 with nothing on standard output, every keyed row, past the 64th key included, is `unavailable` with that reason; the AND on "The request bounds" covers no `gh` and also the exit-4 case, which C-25 names beside it | held `project-overview` delta (Requests, Results; "The request bounds"); What Changes ("Explicit results"); Decisions ("Run-wide unavailability, C-25 and C-26"); `design.md` D4, D5, D6 |
-| Codex 5 (P2, on `e198548`, spec.md:342): a lookup of `gh` that fails or times out has no remote outcome | P2 | C-26: applied with change, held: such a lookup gives every keyed row `gh-unavailable`, never a row or scan error, the AND cutting it at 5 s on a slow `PATH` directory, and the README's next step reads "install `gh`, or check that `PATH`'s directories are reachable"; [B]'s added paragraph names the lookup beside the remote-target reads and the `gh` children, since [B]'s bounded-task rule would otherwise record its `probe-timeout` and L-11 settles that in the MODIFIED block; and a lookup that the deadline stops before its 5 s end leaves its rows as an expiry does, `cancelled` within the cap and, by C-28 below, `request-cap` past it, so that `gh-unavailable` and `cancelled` never both apply | held `project-overview` delta ([B] paragraph; Results, Isolation; "No gh, or a gh without authentication"); What Changes; Impact (`README.md`); Decisions ("Run-wide unavailability, C-25 and C-26"); `design.md` D5, D10, D11, Risks |
-| Codex 6 (P2, on `e198548`, spec.md:416): reading at most 1 MiB cannot tell a body of exactly 1 MiB from a longer one, nor 64 KiB of status and headers from more | P2 | C-27: applied, held: at most 1 MiB and one byte of the body is read and at most 1 MiB kept, a longer body being `truncated`, and likewise 64 KiB and one byte of status and headers, more being `api-error`; recorded as a reading of DI:1048-1050 | held `project-overview` delta (Results); What Changes ("One bounded request per exact head"); Readings; `design.md` D6 |
-| C-28: at an expiry, the rows of a key past the 64th could read as `request-cap` or as `cancelled`, a point older than this round (found by the writer) | ruling | C-28: applied, held: the expiry sentence gives `cancelled` only to a key within the cap not yet sent, keeps `aborted` for a request in flight, and says that the rows of a key past the 64th stay `request-cap` whether or not the remote budget or the deadline expires, the run-wide `unavailable` outranking both; a lookup that the deadline stops leaves its rows to that rule; one AND, with 70 keys, on "Expiry cancels queued and in-flight requests"; the ruling's "queued or in flight" is read as the expiry's two outcomes, `cancelled` for a queued key and `aborted` for one in flight, as DI:1051-1053 and the spec have them, not as `cancelled` for a request in flight | held `project-overview` delta (Requests, Results; "Expiry cancels queued and in-flight requests"); What Changes ("One bounded request per exact head"); Decisions (C-6, "Run-wide unavailability, C-25 and C-26"); `design.md` D4, D5, D7 |
-| C-29: the remote-target reads' 64 KiB output cap cannot tell exactly 64 KiB from more (found by the writer) | ruling | C-29: applied, held: at most 64 KiB and one byte of each read's standard output is read and at most 64 KiB kept, a longer output failing the read, which is `remote-target-unread`, as C-27 has it for a response | held `project-overview` delta (Remote target); Readings; `design.md` D2 |
+| Codex 4 (P1, on `e198548`, spec.md:453): with more than 64 keys and no `gh`, the rows past the 64th key are both `gh-unavailable` and `request-cap` | P1 | C-25: applied with change: `request-cap` applies only when requests can be sent and the cap stops them; with no `gh` found, or when each of the 64 requests that the cap allows ends in exit 4 with nothing on standard output, every keyed row, past the 64th key included, is `unavailable` with that reason; the AND on "The request bounds" covers no `gh` and also the exit-4 case, which C-25 names beside it | `project-overview` delta (Requests, Results; "The request bounds"); What Changes ("Explicit results"); Decisions ("Run-wide unavailability, C-25 and C-26"); `design.md` D4, D5, D6 |
+| Codex 5 (P2, on `e198548`, spec.md:342): a lookup of `gh` that fails or times out has no remote outcome | P2 | C-26: applied with change: such a lookup gives every keyed row `gh-unavailable`, never a row or scan error, the AND cutting it at 5 s on a slow `PATH` directory, and the README's next step reads "install `gh`, or check that `PATH`'s directories are reachable"; [B]'s added paragraph names the lookup beside the remote-target reads and the `gh` children, since [B]'s bounded-task rule would otherwise record its `probe-timeout` and L-11 settles that in the MODIFIED block; and a lookup that the deadline stops before its 5 s end leaves its rows as an expiry does, `cancelled` within the cap and, by C-28 below, `request-cap` past it, so that `gh-unavailable` and `cancelled` never both apply | `project-overview` delta ([B] paragraph; Results, Isolation; "No gh, or a gh without authentication"); What Changes; Impact (`README.md`); Decisions ("Run-wide unavailability, C-25 and C-26"); `design.md` D5, D10, D11, Risks |
+| Codex 6 (P2, on `e198548`, spec.md:416): reading at most 1 MiB cannot tell a body of exactly 1 MiB from a longer one, nor 64 KiB of status and headers from more | P2 | C-27: applied: at most 1 MiB and one byte of the body is read and at most 1 MiB kept, a longer body being `truncated`, and likewise 64 KiB and one byte of status and headers, more being `api-error`; recorded as a reading of DI:1048-1050 | `project-overview` delta (Results); What Changes ("One bounded request per exact head"); Readings; `design.md` D6 |
+| C-28: at an expiry, the rows of a key past the 64th could read as `request-cap` or as `cancelled`, a point older than this round (found by the writer) | ruling | C-28: applied: the expiry sentence gives `cancelled` only to a key within the cap not yet sent, keeps `aborted` for a request in flight, and says that the rows of a key past the 64th stay `request-cap` whether or not the remote budget or the deadline expires, the run-wide `unavailable` outranking both; a lookup that the deadline stops leaves its rows to that rule; one AND, with 70 keys, on "Expiry cancels queued and in-flight requests"; the ruling's "queued or in flight" is read as the expiry's two outcomes, `cancelled` for a queued key and `aborted` for one in flight, as DI:1051-1053 and the spec have them, not as `cancelled` for a request in flight | `project-overview` delta (Requests, Results; "Expiry cancels queued and in-flight requests"); What Changes ("One bounded request per exact head"); Decisions (C-6, "Run-wide unavailability, C-25 and C-26"); `design.md` D4, D5, D7 |
+| C-29: the remote-target reads' 64 KiB output cap cannot tell exactly 64 KiB from more (found by the writer) | ruling | C-29: applied: at most 64 KiB and one byte of each read's standard output is read and at most 64 KiB kept, a longer output failing the read, which is `remote-target-unread`, as C-27 has it for a response | `project-overview` delta (Remote target); Readings; `design.md` D2 |
