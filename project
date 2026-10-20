@@ -3445,39 +3445,46 @@ def _bounded_realpath(path):
     return None if isinstance(found, DriverOutcome) else found
 
 
-def match_target(plan, run):
-    """P of a named removal, `--apply --action remove --worktree P` (D13; contracts/project-clean.md,
-    "Argument checks"; lead rulings R-56 and R-67 (b) as corrected): --worktree
-    expanded and realpath'd, which joins it to the working directory, by one
-    bounded call, matched against every row: a row matches when its raw path
-    bytes equal P's, or else when its own realpath, one bounded call each, does;
-    a realpath that cannot be read counts as a match, failing closed, and so
-    does every row when P's own cannot. Sets plan.target_rows, the rows P may
-    name, and plan.target, the one row when exactly one matched and was
-    decided, else None. No match records `worktree-not-found` through refuse()
-    with the baseline message, never raised (R-59 D4); several matches, or one
-    not decided, leave plan.target None, so that nothing is selected for P and
-    check_plan() refuses with inspection-incomplete."""
+def match_target(plan, run, entries):
+    """P of a named removal, `--apply --action remove --worktree P` (D13;
+    contracts/project-clean.md, "Argument checks" and "Order of a run"; lead
+    rulings R-53 P-15, R-56 and R-67 (b) as corrected), matched against the
+    whole registry before any row is inspected. entries are the registry
+    entries that are rows, (raw, record) in canonical order, raw the path the
+    row carries. --worktree is expanded and realpath'd, which joins it to the
+    working directory, by one bounded call; an entry matches when raw equals
+    P's bytes, or else when its own realpath, one bounded call each, does; a
+    realpath that cannot be read counts as a match, failing closed, and so does
+    every entry when P's own cannot. The entries matched are P's rows:
+    worktree_rows() inspects them before any other row, so that P's status
+    probe is the run's first, and build_plan() exempts them from the row cap.
+    Sets plan.target_rows, those rows, and plan.target, the one row when
+    exactly one entry matched and was decided, else None. No match records
+    `worktree-not-found` through refuse() with the baseline message, never
+    raised (R-59 D4); several matches, or one not decided, leave plan.target
+    None, so that nothing is selected for P and check_plan() refuses with
+    inspection-incomplete. Returns (matched, path): the entries matched, and
+    P's realpath, or the expanded argument where that cannot be read, the PATH
+    of the single-mode notes while no row is P's."""
     wanted = os.path.expanduser(os.fsencode(run.args.worktree))
     found = _bounded_realpath(wanted)
     matches, decided = [], found is not None
-    for row in plan.rows:
-        if found is None:
-            matches.append(row)
-        elif row.raw_path == found:
-            matches.append(row)
+    for raw, record in entries:
+        if found is None or raw == found:
+            matches.append((raw, record))
         else:
-            real = _bounded_realpath(row.raw_path)
+            real = _bounded_realpath(raw)
             if real is None or real == found:
-                matches.append(row)
+                matches.append((raw, record))
                 decided = decided and real is not None
-    plan.target_rows = matches
-    if len(matches) == 1 and decided:
-        plan.target = matches[0]
+    path = found if found is not None else wanted
+    plan.target_rows = worktree_rows(plan.evidence, run, records=[record for _, record in matches]) if matches else []
+    if len(matches) == 1 and decided and len(plan.target_rows) == 1:
+        plan.target = plan.target_rows[0]
     elif not matches:
-        path = found if found is not None else wanted
         refuse(plan, Refused(f"No unique linked worktree found at {human_path(path)}",
                              code="worktree-not-found", path=path), run)
+    return matches, path
 
 
 def row_incomplete(row):
@@ -3488,21 +3495,31 @@ def row_incomplete(row):
 
 def plan_completeness(plan, exclude=()):
     """The codes that make plan incomplete, in REFUSAL_CODES order (FR-024,
-    FR-031; data-model.md, "Plan"; analyze M6): `inspection-incomplete` when a
-    repository-wide probe failed (plan.evidence's errors), when a row of
-    plan.rows not in exclude is `inspection-error` or unprobed, or when P's
-    rows are not excluded and P names no single established row (plan.target
-    None while plan.target_rows holds rows). T075 and T099 add `inspect-cap`
-    and `deadline-exceeded`, and make another row's state a non-blocking note in
-    mode single for --action remove; until T075 every row counts in every mode
-    (lead ruling R-56 Q-17)."""
+    FR-031; data-model.md, "Plan"; analyze M6; T075): `inspection-incomplete`
+    when a repository-wide probe failed (plan.evidence's errors), when a
+    counted row of plan.rows not in exclude is `inspection-error` or unprobed,
+    or when P's rows are not excluded and P names no single established row
+    (plan.target None while plan.target_rows holds rows); `inspect-cap` when
+    rows were left past the row cap (plan.omitted's count). In mode single for
+    --action remove only P's own rows count and the cap is no code: another
+    row's state and the rows past the cap are non-blocking notes, which
+    build_plan() records, while P's own evidence stays strict (the delta's
+    "Clean can explicitly retire verified worktrees"). Every other plan, push
+    and delete-branch included, counts every row and the cap (plan review
+    B1). check_plan() passes P's rows as exclude, so that its own step 3 judges
+    them. T099 adds `deadline-exceeded`."""
     skip = {id(row) for row in exclude}
     target_rows = getattr(plan, "target_rows", [])
-    incomplete = (bool(plan.evidence and plan.evidence["errors"])
-                  or any(row_incomplete(row) for row in plan.rows if id(row) not in skip)
-                  or (plan.target is None and bool(target_rows)
-                      and not any(id(row) in skip for row in target_rows)))
-    return ["inspection-incomplete"] if incomplete else []
+    named = plan.mode == "single" and plan.action == "remove"
+    own = {id(row) for row in target_rows}
+    counted = [row for row in plan.rows if id(row) not in skip and (id(row) in own or not named)]
+    codes = []
+    if ((plan.evidence and plan.evidence["errors"]) or any(row_incomplete(row) for row in counted)
+            or (plan.target is None and bool(target_rows) and not any(id(row) in skip for row in target_rows))):
+        codes.append("inspection-incomplete")
+    if not named and (getattr(plan, "omitted", None) or {}).get("count"):
+        codes.append("inspect-cap")
+    return codes
 
 
 def incomplete_refusal(plan, code):
@@ -3644,20 +3661,31 @@ def build_plan(repo, run):
     The plan holds: `evidence`; `repository`, the envelope's object;
     `merge_target` {name, source, sha}, its resolution's notes moved to the
     plan's `notes` as {code, message} objects (P-13); `rows`, the main worktree
-    first, then by raw path bytes; in mode single for --action remove, P's
-    match (match_target(): `target_rows` and `target`, `worktree-not-found`
-    recorded through refuse()); `selected` and `excluded` from gate_rows(),
-    each selected row given `removal_args`, ["-C", ROOT, "worktree",
-    "remove", PATH] with ROOT the command directory and PATH the registry's
-    raw bytes (design D9); `completeness` and `apply_allowed` (false for every
-    report); `digest` (plan_digest()); `planning_probes`, the Git children
-    other than removals that this invocation ran to build it, the F + W + E of
-    the estimate (research.md R8); and `report`, the baseline report built from the same rows, which the
-    first bodies of confirm_removal(), apply_removals() and push_or_delete()
-    read until the apply and push lanes replace them. `omitted` stays
-    {count: 0, exactness: "exact"} until T075. Interim until T066 and T075
-    (lead ruling R-56 Q-17): an unstarted branch is selectable, and in mode
-    single another row's inspection-error makes the plan incomplete."""
+    first, then by raw path bytes, read within the row cap (T075; FR-013,
+    FR-031, D13): the registry, row 4, is read whole before any cap, and of
+    its entries that are rows, in that order, the first LIMITS["worktree_rows"]
+    of the mode (128, or 256 in a report) are inspected, the main worktree and
+    missing rows counting; the rest are not inspected, in neither `rows` nor
+    `excluded`, and counted in `omitted`, {count, exactness: "exact"}. In mode
+    single for --action remove, P is matched against the whole registry first
+    and inspected first (match_target(): `target_rows` and `target`,
+    `worktree-not-found` recorded through refuse()), exempt from the cap, so
+    that the rows inspected are P's and the first 128 others (lead ruling R-53
+    P-15); another row's inspection-error or unprobed marker, and the rows
+    past the cap, are its non-blocking notes `inspection-incomplete` and
+    `inspect-cap`. Push and delete-branch take the cap with no exemption and
+    the batch's completeness (plan_completeness()). Then `selected` and
+    `excluded` from gate_rows(), each selected row given `removal_args`, ["-C",
+    ROOT, "worktree", "remove", PATH] with ROOT the command directory and PATH
+    the registry's raw bytes (design D9); `completeness` and `apply_allowed`
+    (false for every report); `digest` (plan_digest()); `planning_probes`, the
+    Git children other than removals that this invocation ran to build it, the
+    F + W + E of the estimate (research.md R8); and `report`, the baseline
+    report built from the same rows, which the first bodies of
+    confirm_removal(), apply_removals() and push_or_delete() read until the
+    apply and push lanes replace them. Interim until T066 (lead ruling R-56
+    Q-17): an unstarted branch is selectable. A report above 128 rows is
+    T101's, and the limit of 16 counting P alone T100's."""
     plan = Plan(repo, run)
     root = repo["root"]
     evidence = plan.evidence = repo.get("evidence")  # the resolution's: row 3 runs once (R-71 (b))
@@ -3681,14 +3709,40 @@ def build_plan(repo, run):
     if target is not None:
         plan.merge_target = {key: target[key] for key in MERGE_TARGET_KEYS}
         plan.notes.extend(target.get("notes") or ())
-    plan.rows = sorted(worktree_rows(evidence, run), key=lambda row: (not row.main, row.raw_path))
-    plan.target_rows = []
-    if plan.mode == "single" and plan.action == "remove":
-        match_target(plan, run)
+    # The registry's entries that are rows, as worktree_rows() builds them
+    # (D8), in canonical order: the main worktree first, then raw path bytes.
+    registry, common_first, entries = evidence["records"] or [], evidence["first_is_common_dir"], []
+    for index, record in enumerate(registry):
+        if index == 0 and (record["bare"] or (common_first and identity["root"] is None)):
+            continue
+        entries.append((identity["root"] if index == 0 and common_first else record["path"], record))
+    entries.sort(key=lambda entry: (entry[1] is not registry[0], entry[0]))
+    cap = LIMITS["worktree_rows"][plan.mode]
+    named = plan.mode == "single" and plan.action == "remove"
+    plan.target_rows, matched, path = [], (), None
+    if named:
+        matched, path = match_target(plan, run, entries)
+    own = {id(record) for _, record in matched}
+    others = [record for _, record in entries if id(record) not in own]
+    rows = list(plan.target_rows)
+    if others[:cap]:
+        rows += worktree_rows(evidence, run, records=others[:cap])
+    plan.omitted = {"count": max(0, len(others) - cap), "exactness": "exact"}
+    plan.rows = sorted(rows, key=lambda row: (not row.main, row.raw_path))
     plan.selected, plan.excluded = gate_rows(plan.rows, plan, run)
     command_dir = identity["root"] if identity["root"] is not None else os.fsencode(root)
     for row in plan.selected:
         row.removal_args = ["-C", command_dir, "worktree", "remove", row.raw_path]
+    if named:
+        shown = human_path(plan.target.raw_path if plan.target is not None else path)
+        own = {id(row) for row in plan.target_rows}
+        unread = sum(1 for row in plan.rows if id(row) not in own and row_incomplete(row))
+        if unread:
+            plan.notes.append({"code": "inspection-incomplete",
+                               "message": TEXT["note_inspection_incomplete"].format(K=unread, PATH=shown)})
+        if plan.omitted["count"]:
+            plan.notes.append({"code": "inspect-cap", "message": TEXT["note_inspect_cap"].format(
+                K=plan.omitted["count"], M=cap, PATH=shown)})
     codes = plan_completeness(plan)
     plan.completeness = "incomplete" if codes else "complete"
     plan.apply_allowed = plan.mode != "report" and not codes and not plan.refusals
