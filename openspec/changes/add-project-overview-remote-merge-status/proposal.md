@@ -7,8 +7,9 @@ spec edits committed on lane openRepoProject-4's agreement of 2026-10-20;
 round C5's edits for lane openRepoProject-3's delta read and Codex's findings
 on `e198548` (C-24 to C-29) applied, their `project-overview` spec edits
 committed on lane openRepoProject-4's agreement of 2026-10-20; round C6's
-edits for Codex's finding on `67e43ae` and two points found in applying it
-(C-30 to C-32) applied, their `project-overview` spec edits held for lane
+edits for Codex's finding on `67e43ae`, three points found in applying it
+and lane openRepoProject-3's folded read of `e198548..67e43ae` (C-30 to C-34)
+applied, their `project-overview` spec edits held for lane
 openRepoProject-4; ratification
 by Brett Heap pending; nothing here is ratified. Governing issue:
 opensoft/openRepoProject#25, claimed by lane openRepoProject-5 (comment
@@ -35,7 +36,7 @@ executable. Change 1's evidence model,
 `Repository inspection requires Git 2.36 and shares one evidence model`
 (CAS/cmd:90), is [E]. The lane's rulings are cited as L-1 to L-9 and C-1 to C-8
 (2026-10-11), L-10 to L-15, B-14, C-9 and C-10 (2026-10-18), L-16, L-17 and
-C-11 to C-14 (2026-10-19), and F-3 and C-15 to C-32 (2026-10-20, C-16 to C-22
+C-11 to C-14 (2026-10-19), and F-3 and C-15 to C-34 (2026-10-20, C-16 to C-22
 being the council's verdicts). `PR19/cmd` is draft PR #19's
 `openspec/changes/add-project-clean-all-safe/specs/project-command/spec.md` at
 `c462d87`.
@@ -482,16 +483,20 @@ scenarios (14, 2, 7 and 13), and one MODIFIED requirement in `project-command`,
   C-26), one on "The chosen pull request and a rejected answer" (F4), one on
   "The request bounds" (C-25) and one on "Expiry cancels queued and in-flight
   requests" (C-28). They were held in one file for lane openRepoProject-4,
-  which answered on 2026-10-20: "YES to #29's round C5 held overview spec
-  (sha256 3b4a7b0e39b19c74205df9631a7a404475f6bc436aa3675570695b2990796251).
-  Nothing is declined." Its NOTED, `lanes/log/openRepoProject-4.md:70` on the
-  register's `origin/main` (`4fc780a0f`), added in `7835b98be`, records that it
-  byte-checked [J] and [L] as identical to the C4 text it agreed and found
-  that [B] adds only the one C-26 sentence, and the file is committed exactly
-  as held (`6fe8a5e`). `specs/project-command/spec.md` is unchanged in this
-  round, and nothing was held for lane openRepoProject-2.
+  which agreed on 2026-10-20. Its NOTED, `lanes/log/openRepoProject-4.md:70`
+  on the register's `origin/main`, added in `7835b98be` and unchanged at
+  `85f9c2648`, reads "YES to lane 5's held C5 overview spec for #29
+  (opensoft/openRepoProject#25), sha256 3b4a7b0e39b19c74 (#29 at 8fed841;
+  register copy 8d1209cb9 byte-equal). Byte-checked: [J] and [L] identical to
+  the C4 text lane 4 agreed (d73d25d, 6deab04e); [B] adds one sentence inside
+  its --remote paragraph" and, further on, "Nothing declined." The held file's
+  full sha256, lane openRepoProject-5's own record, is
+  3b4a7b0e39b19c74205df9631a7a404475f6bc436aa3675570695b2990796251, and the
+  file is committed exactly as held (`6fe8a5e`).
+  `specs/project-command/spec.md` is unchanged in this round, and nothing was
+  held for lane openRepoProject-2.
 - **Round C6's spec edits are held for lane openRepoProject-4 (C-30 to
-  C-32).** This proposal and `design.md` describe
+  C-34).** This proposal and `design.md` describe
   `specs/project-overview/spec.md` as round C6 leaves it, which is written but
   not committed. In the second paragraph of "Overview is local and
   read-only", the clause that replaces the credential clause names a remote's
@@ -505,9 +510,14 @@ scenarios (14, 2, 7 and 13), and one MODIFIED requirement in `project-command`,
   printed, logged, sent or used to authenticate, and the URL is never
   forwarded with it (C-30); and the read's standard error is drained and
   discarded unexamined (C-31). In the ADDED requirement, the Remote target
-  paragraph says "drained and discarded unexamined" too (C-31), and the AND
-  of "Remotes that give no request" names `alice`, the URL's user part, beside
-  `s3cr3t` (C-32). No scenario is added and no count changes. The second
+  paragraph says "drained and discarded unexamined" too (C-31); the AND of
+  "Remotes that give no request" names the URL's user part beside `s3cr3t`
+  (C-32), that part being the token `u9zq-kx7w` in its WHEN and its AND
+  (C-33); and the Requests paragraph drops the gloss "`request-cap` applies
+  only when requests can be sent and the cap stops them", false for a lookup
+  that the deadline cuts, since its expiry sentence and the Results paragraph
+  state the whole order alone (lane openRepoProject-3's folded read, L4;
+  C-34). No scenario is added and no count changes. The second
   paragraph is in the block lane openRepoProject-4 agreed, so the whole file
   is held for it to read against its agreement of 2026-10-20. Until it agrees,
   the committed `specs/project-overview/spec.md` is the text it agreed then
@@ -638,9 +648,10 @@ merging), **C-15** (the council's inputs), **C-16** to **C-22** (the council's
 verdicts, below), **C-23** (Open Questions 3), **C-24** to **C-29** (round
 C5: lane openRepoProject-3's delta read of `e198548`, Codex's three findings
 on it and two points found in applying them; Decisions and Readings below,
-and "Re-read and Codex Findings (round C5)") and **C-30** to **C-32** (round
+and "Re-read and Codex Findings (round C5)") and **C-30** to **C-34** (round
 C6: Codex's finding on `67e43ae`, the bounded inspection of a remote's URL,
-and two points found in applying it; Readings below, and "Re-read and Codex
+three points found in applying it, and lane openRepoProject-3's folded read
+of `e198548..67e43ae`; Decisions and Readings below, and "Re-read and Codex
 Findings (round C6)").
 
 Packet open decisions taken, each citing the text that leaves it open:
@@ -806,7 +817,8 @@ Packet open decisions taken, each citing the text that leaves it open:
   a `project clean` eligibility, `plan_digest` or revalidation input" and
   "Remote evidence SHALL never be a removal proof".
 - **Closed pull requests, C-16** (DI:1036-1060 names "a merged pull request"
-  (DI:1059-1060) and no other state; C-5 listed `closed`): `closed` is
+  (DI:1059-1060) and no other pull-request state; C-5 listed `closed`):
+  `closed` is
   dropped, a departure named under Departures ("No `closed` state"), and the
   head-branch lookup that S-1 proposed is a follow-on (Out of Scope).
 - **The freshness sentence and the count, C-17** (C-5 asks for a staleness
@@ -849,20 +861,22 @@ Packet open decisions taken, each citing the text that leaves it open:
 - **Run-wide unavailability, C-25 and C-26** (DI:1045 caps the requests at 64
   and DI:1041-1042 makes an unusable remote `unavailable`, and neither says
   which a key past the cap takes when no request can be sent; DI:1055-1056
-  names no outcome for a lookup of the client that fails): `request-cap`
-  applies only when requests can be sent and the cap stops them, so with no
-  `gh` found, or when each request that the cap allows ends in exit 4 with
-  nothing on standard output, every keyed row, past the 64th key included, is
-  `unavailable` with that reason, which outranks both `request-cap` and an
-  expiry's `cancelled` (C-25, C-28); and a lookup of `gh` that fails or
+  names no outcome for a lookup of the client that fails): with no `gh`
+  found, or when each request that the cap allows ends in exit 4 with nothing
+  on standard output, every keyed row, past the 64th key included, is
+  `unavailable` with that reason, so that the order is the run-wide
+  `unavailable`, then `request-cap`, then an expiry's `cancelled` (C-25,
+  C-28, C-34); and a lookup of `gh` that fails or
   reaches its 5 s limit, as on an unreachable `PATH` directory, gives what one
   that finds none gives, `gh-unavailable`, never a row or scan error, while
   one that the deadline stops first leaves its rows as an expiry does,
   `cancelled` within the cap and `request-cap` past it (C-26, C-28).
-  Rejected: `request-cap` for those keys, which would make
-  `remote.completeness` `incomplete` in a run where nothing was cut (Codex's
-  P1 on `e198548`), and a row or scan error for the lookup, which the
-  isolation clause forbids (Codex's P2 on `e198548`).
+  Rejected: `request-cap` for those keys, one of the two outcomes that
+  Codex's P1 on `e198548` found both applying, because it would make
+  `remote.completeness` `incomplete` in a run where nothing was cut, the
+  reason "`unavailable` beyond DI:1041-1042" below gives for `unknown` (C-25);
+  and a row or scan error for the lookup, which the isolation clause forbids
+  (Codex's P2 on `e198548`).
 
 Decisions where the sources and the rulings are silent:
 
@@ -1216,14 +1230,25 @@ C-29), the last two rows; C-24's items 3 and 4 and C-25 to C-29 edit
 
 Codex's inline finding on `67e43ae` (comment 4327505442, 2026-10-20) is one
 P2, and the lane's lead accepted it (C-30, the rulings of 2026-10-20) and
-ruled on two points the writer found in applying it (C-31, C-32), the last
-two rows. All three edit `specs/project-overview/spec.md`, C-30 and C-31 in
-"Overview is local and read-only", the block lane openRepoProject-4 agreed,
-so that file is held for lane openRepoProject-4 (Dependencies and
-Sequencing), and the rest is committed.
+ruled on three points the writer found in applying it (C-31 to C-33). Lane
+openRepoProject-3's read-only verifier then read the delta
+`e198548..67e43ae` on 2026-10-20, folded with round C4's open items, and
+found no HIGH, no MEDIUM and six LOWs (L1 to L6, its lines at `67e43ae`),
+which the lead accepted (C-34), the last six rows. C-30 to C-33 and L4 edit
+`specs/project-overview/spec.md`, C-30 and C-31 in "Overview is local and
+read-only", the block lane openRepoProject-4 agreed, so that file is held
+for lane openRepoProject-4 (Dependencies and Sequencing), and the rest is
+committed.
 
 | Finding | Severity | Ruling | Section edited |
 | --- | --- | --- | --- |
 | Codex 7 (P2, on `67e43ae`, spec.md:27): the overview must read and test a remote's URL to derive the identity and give `credential-bearing-remote`, which the unconditional "read, test, infer, print and forward no credential value" forbids, so no implementation can satisfy both | P2 | C-30: applied with change, held: in the second paragraph of "Overview is local and read-only", a remote's URL is the replacement clause's second exception, beside the caller's environment, held in memory only while the overview derives the `owner/repository` and detects its user information, which it tests only as the ADDED requirement's `credential-bearing-remote` and `malformed-remote` reasons state; after that no part of the user information is retained or compared, none is ever printed, logged, sent or used to authenticate, and the URL is never forwarded with it. Two changes to the ruling's words: "compared" joins "retained" under "after that" rather than "ever", because deriving the identity, which the ruling's first bullet allows, compares the user with `git` (`malformed-remote`; `design.md` D3, step 3); and "the identity" is written "the GitHub `owner/repository`", since change 2's "repository identity" is `{root, common_dir, dev, ino}`. The `project` process's other credential clauses are unchanged: it reads no credential file and no profile data the scan does not need, a `gh` child authenticates by the GitHub client's own means, and the caller's environment passes to it unread. No AND is added: the AND of "Remotes that give no request" already says that neither output, no argv and no message contains `s3cr3t` or the credential-bearing URL, and what the process keeps in memory after the derivation is not observable from outside it; C-32 below extends that AND to the user part on its own. The copies follow, the Rules entry retitled from "never touched", since `project` now reads such a URL, and DI:1057-1058 gains a Reading | held `project-overview` delta ("Overview is local and read-only", second paragraph); What Changes ("One carve-out"); Capabilities; Dependencies and Sequencing; Rules This Change Keeps; Readings; `design.md` Context, Goals, D2, D3 |
 | Writer C6's point 1: Git may echo a remote's URL, user information included, on a remote-target read's standard error, which the ADDED requirement drains and discards, text that C-30's bounds did not cover | ruling | C-31: applied, held, after the check it asks for: no classification reads that standard error, since `no-remote-target` for a remote that is not configured comes from the exit status 2 of `git remote get-url` (checked again on Git 2.43.0 in this round: exit 2 with "error: No such remote" on standard error alone, and a credential-bearing URL on standard output alone, nothing on standard error), and every other reason comes from standard output, the exit status or a limit; the Remote target paragraph of the ADDED requirement reads "drained and discarded unexamined", and the exception in "Overview is local and read-only" names the URL a read "prints on standard output" and ends "Such a read's standard error SHALL be drained and discarded unexamined", so that URL stays the only credential-bearing text the overview inspects; `design.md` D2 says the exit status decides, never Git's message | held `project-overview` delta ("Overview is local and read-only", second paragraph; Remote target); What Changes ("One carve-out"); Capabilities; Dependencies and Sequencing; Rules This Change Keeps; Readings; `design.md` Context, D2 |
-| Writer C6's point 2: the AND of "Remotes that give no request" checks `s3cr3t` and the whole URLs, not the user part on its own, which C-30 also forbids | ruling | C-32: applied, held: the AND reads "neither output, no argv and no message contains `alice`, `s3cr3t` or any of those URLs"; in that scenario `alice` appears only in the credential-bearing URL of its WHEN, so the URL is unchanged; its other use, the fork `alice/widget`, is in "The remote target comes from the merge target's branch configuration", another fixture | held `project-overview` delta ("Remotes that give no request"); Dependencies and Sequencing; `design.md` Context, D3 |
+| Writer C6's point 2: the AND of "Remotes that give no request" checks `s3cr3t` and the whole URLs, not the user part on its own, which C-30 also forbids | ruling | C-32: applied, held: the AND reads "neither output, no argv and no message contains `alice`, `s3cr3t` or any of those URLs"; in that scenario `alice` appears only in the credential-bearing URL of its WHEN, so the URL is unchanged; its other use, the fork `alice/widget`, is in "The remote target comes from the merge target's branch configuration", another fixture; C-33 below replaces `alice` with a token | held `project-overview` delta ("Remotes that give no request"); Dependencies and Sequencing; `design.md` Context, D3 |
+| Writer C6's point 3: `alice` would fail C-32's AND in a test run under a path or user name that holds it, such as pytest's per-user temporary directory, `pytest-of-<user>` | ruling | C-33: applied, held: the user part of the credential-bearing URL in the WHEN of "Remotes that give no request" is now `u9zq-kx7w`, and the AND reads "neither output, no argv and no message contains `u9zq-kx7w`, `s3cr3t` or any of those URLs"; the token is a valid user part, its hyphen and its letters outside hexadecimal keep it out of every object id and every `tempfile` name, and it occurs nowhere else in the repository | held `project-overview` delta ("Remotes that give no request"); Dependencies and Sequencing; `design.md` D3 |
+| L1: the Dependencies sentence quotes lane openRepoProject-4's agreement of round C5 in words that its NOTED at `lanes/log/openRepoProject-4.md:70` does not hold | LOW | C-34: applied: the sentence quotes the NOTED exactly, read at `7835b98be` and on the register's `origin/main` at `85f9c2648`, where line 70 is unchanged, as B-27 LOW 3 did; the full sha256 stays as lane openRepoProject-5's own record | Dependencies and Sequencing ("Round C5's spec edits were agreed") |
+| L2: nothing tests a part of exactly 1 MiB of body, 64 KiB of status and headers or 64 KiB of a remote-target read's output, the off-by-one the byte past each bound guards against | LOW | C-34: applied, design only as C-34 rules: D11's fake `gh` can send exactly 1 MiB of body and a status and header block of exactly 64 KiB, and the bounded reader is unit-tested at N-1, N and N+1 bytes for the three bounds; no spec AND | `design.md` D11 |
+| L3: D1 does not place the lookup of `gh`, which the rule for a lookup that the deadline cuts presumes comes after the remote-target reads | LOW | C-34: applied: D1 runs the lookup once, between its two steps, after the reads or the deadline and before the first request, so that every key exists when it ends | `design.md` D1 |
+| L4: "`request-cap` applies only when requests can be sent and the cap stops them" is false for a lookup that the deadline cuts, which leaves the keys past the 64th `request-cap` | LOW | C-34: applied, held, by dropping the gloss, as C-34 prefers, since the Requests paragraph's expiry sentence and the Results paragraph then state the whole order alone: the run-wide `unavailable`, then `request-cap`, then `cancelled`; the copies follow: `design.md` D4 makes the rest `request-cap` unless the run-wide `unavailable` applies, a lookup the deadline cuts being no such case, and the Decisions bullet states the order; the round C5 row for Codex 4 keeps the gloss as that round's record | held `project-overview` delta (Requests); Decisions ("Run-wide unavailability, C-25 and C-26"); Dependencies and Sequencing; `design.md` D4 |
+| L5: "and no other state", where the packet also names unavailable and unknown results | LOW | C-34: applied: "and no other pull-request state" | Decisions ("Closed pull requests, C-16") |
+| L6: the rejected `request-cap` alternative credits Codex's P1 on `e198548` with the completeness reason, which that P1 does not give | LOW | C-34: applied: the P1 is cited for the conflict it found, the two outcomes both applying, and the reason is the proposal's own, the one "`unavailable` beyond DI:1041-1042" gives, with C-25 | Decisions ("Run-wide unavailability, C-25 and C-26") |

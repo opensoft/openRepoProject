@@ -24,8 +24,9 @@ lead's C-28 and C-29 on two points found in applying them; its edits to
 `specs/project-overview/spec.md`, agreed by lane openRepoProject-4 on
 2026-10-20, are committed (`6fe8a5e`; `proposal.md`, Dependencies and
 Sequencing). Round C6 applies Codex's finding on `67e43ae` (C-30), the
-bounded inspection of a remote's URL, with the lead's C-31 and C-32 on two
-points found in applying it; this design describes
+bounded inspection of a remote's URL, with the lead's C-31 to C-33 on three
+points found in applying it, and lane openRepoProject-3's folded read of
+`e198548..67e43ae` (C-34); this design describes
 `specs/project-overview/spec.md` as round C6 leaves it, written but held for
 lane openRepoProject-4 and not committed, and until it agrees the committed
 file is the one it agreed in round C5 (`6fe8a5e`).
@@ -74,6 +75,8 @@ The rulings and the packet's boundary map to the decisions:
 | C-30: a remote's URL held in memory only to derive the `owner/repository` and detect its user information | D2, D3 |
 | C-31: a remote-target read's standard error drained and discarded unexamined | D2 |
 | C-32: the user part of a credential-bearing URL checked on its own in the outputs | D3 |
+| C-33: that user part a token no path, user or test name plausibly holds | D3 |
+| C-34: lane openRepoProject-3's folded read of `e198548..67e43ae`: the lookup's place, the request cap's precedence and the exact-size tests | D1, D4, D11 |
 | C-10, L-12: CI on Linux only | Migration Plan |
 
 What in `project` shapes the approach (at `961c405`; features 004 and 005
@@ -187,6 +190,13 @@ is classified and gated. It has two steps:
    the deadline has passed. The remote budget ends at
    `min(start of the first request + 30 s, deadline)`.
 
+The lookup of `gh` (D5) runs once, between the two steps: after step 1 has
+finished for every such repository or the deadline has passed, and before the
+first request, under `min(5 s, deadline - now)`. Every key therefore exists
+when it ends, as the rule for a lookup that the deadline cuts presumes: such
+a lookup leaves its keys `cancelled` within the cap and `request-cap` past it
+(C-26, C-28; lane openRepoProject-3's folded read, L3; C-34).
+
 The loop's wait already takes the nearest of every child's limit end and the
 deadline (APO design.md, D1); the remote budget's end joins that set.
 
@@ -281,7 +291,10 @@ presence, for a `:` and for a user other than `git`, and it is dropped with
 the URL once the judgement is made, whatever its outcome; the comparison with
 `git` is part of deriving the identity, never made after it (C-30). "Remotes
 that give no request" checks that no output, argv or message holds the user
-part on its own, beside the password and the whole URL (C-32).
+part on its own, beside the password and the whole URL (C-32); that part is
+`u9zq-kx7w`, a token no path, user or test name plausibly holds, so that a
+run under a directory or user name that a common name would match cannot fail
+the check (C-33).
 
 ### D4. The query set, the keys and their order
 
@@ -294,13 +307,15 @@ head (C-6; Copilot 3989411854).
 Keys are `(github.com, lowercased owner/repository, head)`. They are
 collected in canonical order, repositories by rank (APO design.md, D6) and
 then rows in row order (main worktree first, then path bytes), each key at
-its first appearance. The first 64 are sent; the rest are `request-cap` only
-when requests can be sent and the cap stops them: with no `gh` found (D5), or
-when each of the 64 requests sent exits 4 with nothing on standard output (D6),
-they are `gh-unavailable` or `gh-unauthenticated`, as every other key is
-(C-25). The cap decides before any request whether a key is sent, so a key
-past the 64th stays `request-cap` when the remote budget or the deadline
-expires, and only keys within the cap are `cancelled` or `aborted` (D7; C-28).
+its first appearance. The first 64 are sent; the rest are `request-cap`,
+unless the run-wide `unavailable` of D5 and D6 applies: with no `gh` found
+(D5), or when each of the 64 requests sent exits 4 with nothing on standard
+output (D6), they are `gh-unavailable` or `gh-unauthenticated`, as every other
+key is (C-25). A lookup that the deadline cuts is no such case, and leaves
+them `request-cap` (D1; lane openRepoProject-3's folded read, L4; C-34).
+The cap decides before any request whether a key is sent, so a key past the
+64th stays `request-cap` when the remote budget or the deadline expires, and
+only keys within the cap are `cancelled` or `aborted` (D7; C-28).
 `requests.estimated` is the number of distinct keys. Rows sharing a
 key share the response, and each row is matched against it with its own
 repository's base branch (D6), since two clones of one repository can have
@@ -563,10 +578,12 @@ of these fields, so remote evidence never reaches an eligibility gate, a
   beside it, and writes a status line, headers, a blank line and a body, the
   status line and the header names in the forms that task 2.5 records `gh`
   printing (C-19). Per key the table can hold the child for N seconds, exit 4
-  with no output, send 1 MiB and one byte of body, set `hasNextPage`, answer
+  with no output, send exactly 1 MiB of body, answered from its nodes, or
+  1 MiB and one byte, set `hasNextPage`, answer
   401, 403, 429, a 403 with `X-RateLimit-Remaining: 0` or with a
   `Retry-After` header, a 200 body with an `errors` entry of a given type, a
-  null `data.repository`, a status and header block over 64 KiB, a body of
+  null `data.repository`, a status and header block of exactly 64 KiB,
+  answered as any other, or over 64 KiB, a body of
   1 MiB of `[` or with a `number` of 5,000 digits (C-22), or 502, give the
   queried repository's `nameWithOwner` as the owner and name asked or, to
   stand for a renamed repository, as another, as the last AND of "The chosen
@@ -599,6 +616,13 @@ of these fields, so remote evidence never reaches an eligibility gate, a
   it past 10 s in another, and "The overview's remote-phase children" to hold
   one past its budget while it ignores SIGTERM; this extends the test file
   only, never change 2's text.
+- The bounded reader is unit-tested at N-1, N and N+1 bytes for each of its
+  three bounds: the 1 MiB body, the 64 KiB of status and headers, and the
+  64 KiB of a remote-target read's standard output. At N-1 and N the part is
+  read whole and kept; at N+1 it is cut, giving `truncated`, `api-error` or a
+  failed read, `remote-target-unread`. With the fake `gh`'s exact-size answers
+  above, these pin the byte past each bound (C-27, C-29); they are tests only,
+  and no scenario changes (lane openRepoProject-3's folded read, L2; C-34).
 - No real network: in-process runs install an audit hook that fails
   `socket.connect` (APO design.md, D13); subprocess runs set `HTTPS_PROXY`
   and `HTTP_PROXY` to a closed local port, so even a real `gh` reached by
