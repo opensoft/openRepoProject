@@ -48,11 +48,16 @@ duplicate them.
   `3150af3` (the spec deltas), `a54c56e` (the design), `3e875e2` (the
   proposal's body) and the commit that records the round's table and updates
   this task; verified by "Re-read and Codex Findings (round A3)" in
-  `proposal.md`, one row per item.
+  `proposal.md`, one row per item. Round A4, on `abad010`, applied Codex's
+  finding on that head (ruling A-24: the reflog proved again before the branch
+  child), by `392cb30` (the spec deltas), `2351183` (the design), `a50468a`
+  (the proposal's body) and the commit that records the round's table and
+  updates this task; verified by "Re-read and Codex Findings (round A4)" in
+  `proposal.md`.
 - [x] 1.4 Spec deltas and design written: `specs/project-clean/spec.md`
-  modifies five requirements and adds one (67 scenarios: 43 carried unchanged
-  from change 1 and PR #19, 6, 14, 10, 5 and 8 by block, and 24 added, the
-  24th in round A3),
+  modifies five requirements and adds one (68 scenarios: 43 carried unchanged
+  from change 1 and PR #19, 6, 14, 10, 5 and 8 by block, and 25 added, the
+  24th in round A3 and the 25th in round A4),
   `specs/project-clean-review-safety/spec.md` modifies one (4 scenarios: 3
   carried, 1 added), and `specs/project-command/spec.md` modifies one on PR
   #19's text (9 scenarios carried, none added; agreed by lane
@@ -61,17 +66,17 @@ duplicate them.
   each modified requirement's source text kept byte for byte; `design.md`
   holds D1 to D10 (`8341954`, `d0b33ce`, and the commit titled 'Settle which
   later targets carry branch-retention-stop'), revised by the alignment fix
-  round (1.2), the council round (1.3) and round A3; verified by `grep -c
-  '^#### Scenario:'` on each spec file and by a scenario-carry script run
-  after the council round and again after round A3 over all seven MODIFIED
-  blocks, every source scenario present byte for byte and in order.
+  round (1.2), the council round (1.3) and rounds A3 and A4; verified by
+  `grep -c '^#### Scenario:'` on each spec file and by a scenario-carry script
+  run after the council round and again after rounds A3 and A4 over all seven
+  MODIFIED blocks, every source scenario present byte for byte and in order.
 - [x] 1.5 Validation passes: `/usr/bin/openspec validate
   add-project-clean-branch-retirement --strict` reports the change valid,
   `/usr/bin/openspec validate --all --strict` reports 8 passed, 0 failed, and
   `/usr/bin/openspec status --change add-project-clean-branch-retirement
   --json` shows every artifact done; verified by running the three on this
   branch after 1.4, after the alignment fix round, after the council round
-  and after round A3
+  and after rounds A3 and A4
   (build 1.13.1, which notes only as INFO that archive would refuse the
   MODIFIED blocks whose base still sits in change 1).
 - [ ] 1.6 Ratified by Brett Heap's word on the pull request, quoted with its
