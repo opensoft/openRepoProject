@@ -93,7 +93,12 @@ gets no status probe and is `inspection-error`, excluded as
 the registry records' raw path bytes as listed, fail closed: each is
 `registration-mismatch`, since the porcelain listing does not name the admin
 directory, so the two-way check alone cannot tell them apart (lead rulings
-R-57, withdrawing R-51(c)'s known limit, and R-59 D5).
+R-57, withdrawing R-51(c)'s known limit, and R-59 D5). The rule extends to
+two present entries spelled differently with one realpath, or with one
+admin id, which both pass the two-way check: each is `registration-mismatch`
+too. Evidence follow-up 2 builds that extension in region `evidence`; until
+then T049's single-mode match fails closed for P, its realpath matching both
+(lead ruling R-67 (c), lane 3's L-4).
 
 ### Branch evidence (D6, D7)
 
@@ -538,8 +543,10 @@ A run with `--apply`, first matching row (FR-037, D19):
 
 A preview or report: 2 only for a refusal raised before a plan is built, 1 for
 an incomplete plan, 0 otherwise, and 130, 143 or 129 when a signal ends it;
-a write that fails after its plan is built is `internal-error`, exit 2
-(research.md R4; lead rulings R-55 and R-59; LQ-7).
+a write that fails after its plan is built is `internal-error`, exit 2, by
+the delta's rule for an unexpected exception before the apply phase, which
+conflicts with the preview rule above (research.md R4; lead rulings R-55 and
+R-59; LQ-7).
 A signal recorded while the push or `git branch -d` child runs is not
 passed on: `project` never signals either child and waits for it. The run
 then exits by D19's first row: 130, 143 or 129 when a signal was recorded,

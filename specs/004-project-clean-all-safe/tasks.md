@@ -26,7 +26,10 @@ named after each of the 100 delta scenarios: 65 in `project-clean`, 18 in
 lists its tests first: write them, see them fail, then implement. Every
 scenario test task names its scenario by its exact title. A test that pins what
 an earlier task built says "pins" and that task's ID; it may pass on arrival,
-as feature 002's T054, T055 and T058 did.
+as feature 002's T054, T055 and T058 did. So may T041 to T044 and T046,
+which the apply lane writes after the plan lane is merged in and which land
+with its implementation, passing at once (lead ruling R-56 Q-5; lane 3's
+L-8).
 
 **Organization**: Setup, Foundational, then one phase per user story in
 spec.md's priority order (US1 to US9), then Polish. Phases start in the order
@@ -866,7 +869,9 @@ T033), when B, D, E and F are; H, guard (T034, T035), when T023 is, beside G
   and gets no registration check, no shared-path check and no probe; then
   two registry entries naming one path, by the records' raw path bytes, are
   each `registration-mismatch`, lead rulings R-57 and R-59 D5, a rule lane
-  G's follow-up builds, R-59 D6); `status_probe()`; and
+  G's follow-up builds, R-59 D6; its extension to present entries with one
+  realpath or one admin id, each `registration-mismatch` too, is built by
+  evidence follow-up 2, lead ruling R-67 (c)); `status_probe()`; and
   `worktree_rows(repo, run, records=None)`, `records` the registry records
   to build rows for, in the order given, None the whole registry (lead
   ruling R-53 (d))
@@ -986,7 +991,10 @@ US2's gates keep them eligible (R-56).
 
 ### Tests for User Story 1
 
-These run inside their lanes, after T047 (Lanes, above).
+These run inside their lanes, after T047 (Lanes, above). T041 to T044 and
+T046 land with the apply lane's implementation, after the plan lane is
+merged in, and pass at once, so they are not seen to fail first (lane 3's
+L-8).
 
 - [x] T036 [P] [US1] [S] Add `test_clean_the_preview_says_what_keeps_each_row` to
   `tests/test_clean_batch.py`: with two rows selected, one excluded as
@@ -1055,9 +1063,13 @@ These run inside their lanes, after T047 (Lanes, above).
   — files: `tests/test_clean_batch.py`
   — verify: `python3 -c "import sys,unittest as u;L=u.defaultTestLoader;f=lambda s:[i for t in s for i in (f(t) if isinstance(t,u.TestSuite) else [t.id()])];I=[i for i in f(L.discover('tests',pattern=sys.argv[1])) if not i.startswith('unittest.')];A=sys.argv[2:];M=[a for a in A if not any(a in ('*',i.split('.')[-1]) for i in I)];[print('not collected:',m) for m in M];[print(e) for e in L.errors];sys.exit(1 if M or L.errors or not A else 0)" test_clean_batch.py 'test_clean_invalid_argument_combinations' 'test_clean_invalid_argument_combinations_unrefused_flags'`
 - [x] T040 [P] [US1] [O] Add to `tests/test_clean_batch.py`:
-  `test_clean_first_gates_in_order` (`gate_rows()` on literal rows, each a
-  lane G `WorktreeRow` with `main`, `raw_path` and `registered` set (lead
-  ruling R-56): `main-worktree` before every other gate,
+  `test_clean_first_gates_in_order` (`gate_rows(rows, plan, run)` on literal
+  rows, each a lane G `WorktreeRow` with `main`, `raw_path` and `registered`
+  set (lead ruling R-56), with a literal `Plan` whose run namespace carries
+  `mode` (and `action`), P its `target` in mode single, and `run` None,
+  every Git child and filesystem call patched to fail (lane 3's L-9); a
+  `registered=None` row passes gate 3 and is excluded at gate 5 by its class
+  (lead ruling R-67 (e), R-53 P-16): `main-worktree` before every other gate,
   `unsupported-path-bytes` before
   `locked-worktree`, `locked-worktree` before the class, `not-requested` only
   in mode single; the first failing gate is the `reason`);
@@ -1408,15 +1420,25 @@ These run inside their lanes, after T047 (Lanes, above).
   exits 0 until T101); an `--expect-plan` mismatch (`plan-digest-mismatch`); a
   complete all-safe plan selecting nothing (`No eligible worktrees`, exit 0);
   in mode single, P excluded by a gate (`target-excluded` with its `reason`,
-  and the kept messages for the current worktree and for a class; every gate,
-  `main-worktree` and `unsupported-path-bytes` included, takes `Worktree is
-  excluded: REASON; NEXT STEP`, since R-57 gives each reason a next step, so
-  the pre-flight's bare gate message is not added); then
+  and the kept messages for the current worktree and for a class, the class
+  gate's having no next step; every other gate, `main-worktree` and
+  `unsupported-path-bytes` included, takes `Worktree is excluded: REASON;
+  NEXT STEP`, since R-57 gives each such reason a next step, so the
+  pre-flight's bare gate message is not added; lead ruling R-59 D9); then
   `confirmation-required` for `--apply` on a standard input that is not a
   terminal, without `--yes`. In mode single that order reads: a
   repository-wide incomplete plan, then `worktree-not-found` (recorded on
   the plan by T049, its 2 returned here), then P's own incompleteness, then
-  `target-excluded`, then `confirmation-required`. A `target-excluded`
+  `target-excluded`, then `confirmation-required`. So the reasons a
+  single-mode P's `target-excluded` can carry are `main-worktree`,
+  `unsupported-path-bytes`, `locked-worktree`, a class other than
+  `inspection-error`, `unstarted-branch`, `reflog-unavailable`,
+  `contains-submodule` and `hidden-local-state`: `registration-mismatch` is
+  unreachable there, since such a row is `inspection-error` and P's own
+  incompleteness refuses with `inspection-incomplete` first, as it does for
+  any P row that is `inspection-error` or unprobed, and `not-requested` and
+  `deferred-target-cap` never fall on P (lane 3's L-3, lead ruling R-67
+  (f)). A `target-excluded`
   message is the current worktree's when P is current, else the class's
   when P's class is not `merged-removable`, else its gate's, as the baseline
   orders them. With several incompleteness codes, `refusals` holds one object
@@ -1535,7 +1557,10 @@ carrying the reason the gate order gives.
 ### Tests for User Story 2
 
 - [ ] T059 [P] [US2] [O] Add `test_clean_reflog_gate_outcomes` to
-  `tests/test_clean_reflog.py`: `reflog_gate()` on byte literals of the entries
+  `tests/test_clean_reflog.py`: `reflog_gate(row, plan, run)` on byte
+  literals written to `logs/refs/heads/<branch>` under a temporary common
+  directory that the plan names, the row carrying that branch and its head
+  (lane 3's L-9), the literals being the entries
   D10's Context records (a `worktree add -b` creation; that creation, then a
   `commit:` entry; a rename with equal objects; `branch: Reset to`; `fetch
   origin feat:f1: storing head`; an `update-ref` entry with no message; `push`)
@@ -1596,9 +1621,10 @@ carrying the reason the gate order gives.
   adding a second registry entry that names a present worktree's path, both
   entries then `registration-mismatch` (lead rulings R-57 and R-59 D6):
   `inspection-error`, an incomplete plan, exit 2 under `--apply`, nothing
-  removed; naming one of the two entries with `--apply --action remove
+  removed; naming the shared path with `--apply --action remove
   --worktree` refuses with `inspection-incomplete`, exit 2, and nothing is
-  removed, lead ruling R-62). Scenario: "Every protected classifier".
+  removed, lead rulings R-62 and R-67 (b)). Scenario: "Every protected
+  classifier".
   — files: `tests/test_clean_gates.py`
   — verify: `python3 -c "import sys,unittest as u;L=u.defaultTestLoader;f=lambda s:[i for t in s for i in (f(t) if isinstance(t,u.TestSuite) else [t.id()])];I=[i for i in f(L.discover('tests',pattern=sys.argv[1])) if not i.startswith('unittest.')];A=sys.argv[2:];M=[a for a in A if not any(a in ('*',i.split('.')[-1]) for i in I)];[print('not collected:',m) for m in M];[print(e) for e in L.errors];sys.exit(1 if M or L.errors or not A else 0)" test_clean_gates.py 'test_clean_every_protected_classifier' 'test_clean_every_protected_classifier_incomplete_copy'`
 - [ ] T062 [P] [US2] [O] Add to `tests/test_clean_gates.py`:
@@ -3025,9 +3051,10 @@ US4, the US5 text lane, the US5 removal lane, US6, US8 and Polish.
 
 ### Within Each Phase
 
-- Tests first, failing, except those marked as pins; then the implementation
-  tasks, each ending with its tests passing; each phase ends by running the
-  whole suite.
+- Tests first, failing, except those marked as pins and US1's T041 to T044
+  and T046, which land with the apply lane's implementation and pass at once
+  (Phase 3); then the implementation tasks, each ending with its tests
+  passing; each phase ends by running the whole suite.
 - A lane's writer owns its test module and its regions and functions; a
   conflict anywhere else is an ownership breach, stopped and reported to the
   lead (impl-slicing-004 section 7).
@@ -3166,7 +3193,9 @@ T124.
 - [P] marks a lane that runs beside another lane of its phase; [Story] maps a
   task to its user story; `traceability.md` maps each delta scenario to its
   tests.
-- Verify that tests fail before implementing, except the ones marked as pins.
+- Verify that tests fail before implementing, except the ones marked as pins
+  and T041 to T044 and T046, which land with the apply lane's implementation
+  and pass at once (Phase 3).
 - Commit after each lane or phase at least, with `Lane: openRepoProject-2` in
   each commit body.
 - LQ-3: if Brett Heap rules a follow-up change instead of PR #19 (option (b)),

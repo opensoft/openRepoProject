@@ -223,11 +223,11 @@ scratch directory, never in the repository.
 - **The delta's two exit rules (LQ-7)**: a write that fails in a preview or
   report after its plan is built meets two sentences of the `project-clean`
   delta. The first, "an unexpected exception before the apply phase SHALL
-  refuse with `internal-error` and exit status 2", gives it exit 2, as R-55
-  reads it; the second, "A preview or report SHALL exit 2 only for a refusal
-  raised before a plan is built, 1 for an incomplete plan, and 0
-  otherwise", which FR-037 repeats, gives it 0 or 1. The delta conflicts
-  with itself there. R-55's
+  refuse with `internal-error` and exit status 2", which FR-036 repeats,
+  gives it exit 2, as R-55 reads it; the second, "A preview or report SHALL
+  exit 2 only for a refusal raised before a plan is built, 1 for an
+  incomplete plan, and 0 otherwise", which FR-037 repeats, gives it 0 or 1.
+  The delta conflicts with itself there. R-55's
   reading, exit 2, stands until Brett Heap rules: LQ-7, listed for him in
   the feature PR body (lead ruling R-59, from lane openRepoProject-3's delta
   read of this round's first part).
@@ -383,10 +383,10 @@ scratch directory, never in the repository.
   bound in a preview. The delta scenario "Bounded revalidation work" says that
   `probes.performed` "equals the wrapper's count", which read literally
   includes the removals, so this reading departs from that literal text; it
-  awaits Brett Heap's word through draft PR #19's "Also" commit, as the
-  push-child exception beside it does, and US6 scenario 6 and SC-006 of the
-  reviewed spec read it this way until then (lead rulings R-57 L4 and R-59
-  D10).
+  awaits Brett Heap's word through draft PR #19's commit `cecb4fc`, "State
+  which count holds the removals", as the push-child exception beside it
+  does, and US6 scenario 6 and SC-006 of the reviewed spec read it this way
+  until then (lead rulings R-57 L4 and R-59 D10).
 - **Alternatives considered**: counting removals in `probes` too, rejected
   (then `operations` would duplicate a subset of `probes`); adding 5T + 3
   and T only for an apply, rejected by the plan review (a preview's

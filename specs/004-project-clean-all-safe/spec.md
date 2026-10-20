@@ -1683,9 +1683,10 @@ configuration"; "A lazy fetch in a partial clone is refused locally";
   removal is an operation and not a probe. Read literally, the delta's "the
   record's `probes.performed` equals the wrapper's count" includes the
   removals, which the wrapper counts, so this reading departs from its
-  literal text; it awaits Brett Heap's word through draft PR #19's "Also"
-  commit, as the push-child exception beside it does, and FR-033, User Story
-  6 scenario 6 and SC-006 read it so until then.
+  literal text; it awaits Brett Heap's word through draft PR #19's commit
+  `cecb4fc`, "State which count holds the removals", as the push-child
+  exception beside it does, and FR-033, User Story 6 scenario 6 and SC-006
+  read it so until then.
 - The caps and budgets stand as measured by governance task 2.1, and the
   2.36 floor as verified by task 2.2 on Git 2.36.6, 2.40.4 and 2.43.0. Their
   results are posted on PR #11, task 2.1 at
@@ -1747,8 +1748,9 @@ configuration"; "A lazy fetch in a partial clone is refused locally";
 - **Governance**: tasks 1.1 to 1.6, 2.1 and 2.2 of the change are done; the
   Speckit handoff in its `tasks.md` names this feature.
 - **Draft PR #19** (`change/amend-clean-all-safe-push-pins`): the push-child
-  exception with its scenario, the "Also" commit on the `probes` and
-  `operations` count, a reading that departs from the delta's literal text
+  exception with its scenario, commit `cecb4fc`, "State which count holds
+  the removals", on the `probes` and `operations` count, a reading that
+  departs from the delta's literal text
   (Assumptions), and the task 1.7 it adds to the change's `tasks.md`; it
   awaits Brett Heap's word, and this feature's plan builds on it until he
   rules (Assumptions).
