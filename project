@@ -191,9 +191,9 @@ def confirm(yes):
         raise Refused("Cancelled; no command was run.")
 
 
-def execute(argv, cwd=None):
+def execute(argv, cwd=None, env=None):
     try:
-        result = subprocess.run(argv, cwd=cwd)
+        result = subprocess.run(argv, cwd=cwd, env=env)
     except OSError as exc:
         raise Refused(f"Cannot run {argv[0]}: {exc}") from exc
     return result.returncode if result.returncode >= 0 else 128 - result.returncode
@@ -1527,6 +1527,8 @@ def run_bounded(spec, parser, run):
                     streams.discard(key.fd)
                 elif key.fd == err:
                     handle.keep_stderr(chunk)
+                    if hasattr(parser, "feed_stderr"):
+                        parser.feed_stderr(chunk)
                 elif name is None:
                     parser.feed(chunk)
                     if parser.bound_reached:
@@ -4729,7 +4731,7 @@ def print_result(plan, targets, run):
 
 # region push
 def push_or_delete(repo, run):
-    """Push a branch, or delete a merged one (T076; FR-010, FR-041, FR-046,
+    """Push a branch, or delete a merged one (T076, T077; FR-010, FR-041, FR-046,
     FR-047; research.md R1, R4 and R5; data-model.md, "States of push and
     delete-branch"; lead rulings R-45 (5), R-53 and R-74 (c)). Called in phase
     `planning`, which it keeps, with run.plan the run's own plan: its full
@@ -4762,7 +4764,18 @@ def push_or_delete(repo, run):
     slot raising Interrupted (P-7). The run so exits 130, 143 or 129 when a
     signal was recorded before or while the child ran, otherwise with the
     child's status, 128 plus the signal number for a signal death (D19's
-    first row; plan review M3)."""
+    first row; plan review M3).
+
+    The push child runs through execute() with git_env("push") (R1, PR #19):
+    project's own streams and process group, so that it is in the terminal's
+    foreground when project is; no pin; the caller's GIT_ALLOW_PROTOCOL kept
+    and the other sixteen names removed (R-28). The `git branch -d` child is a
+    `delegate` handle on the driver: its own process group, the seventeen
+    names removed and the seven pins, no budget, its output relayed to
+    project's streams by RelayParser (R5, P-1); one that cannot be spawned is
+    the baseline's `Cannot run git: ...` refusal. Neither is ever signalled:
+    signal_scope()'s handlers only record a signal that reaches project
+    meanwhile, and the child is waited for."""
     args, plan = run.args, run.plan
     root, report, branch = repo["root"], plan.report, args.branch
     rows, target, shown = report["worktrees"], report["target_branch"], human_path(branch)
@@ -4803,7 +4816,8 @@ def push_or_delete(repo, run):
         listed = any(ref["refname"] == refname for ref in evidence["refs"] or ())
         if not listed or evidence["merged"] is None or refname not in evidence["merged"]:
             raise Refused(f"Branch {shown} is not verified as merged into {human_path(target)}.")
-        argv = git_argv("delegate", ["-C", str(root), "branch", "-d", branch])
+        delegate = ["-C", str(root), "branch", "-d", branch]
+        argv = git_argv("delegate", delegate)
         action = f"delete verified merged local branch {shown}"
     say(run, f"Cleanup action: {action}")
     show_push_plan(run, argv, root)
@@ -4816,7 +4830,14 @@ def push_or_delete(repo, run):
         run.resume()
     require_unchanged_cleanup_state(repo, run, args.action, branch)
     read_slot(run)
-    status = execute(argv)
+    if args.action == "push":
+        status = execute(argv, env=git_env("push"))
+    else:
+        outcome = run_bounded(("delegate", delegate, None), RelayParser(), run)
+        if outcome.status is None:  # it could not be spawned: the baseline's refusal
+            detail = outcome.detail or "git was not run"
+            raise Refused(detail[:1].upper() + detail[1:])
+        status = outcome.status if outcome.status >= 0 else 128 - outcome.status
     read_slot(run)
     return status
 
@@ -4832,6 +4853,46 @@ def show_push_plan(run, argv, cwd):
     byte. show_plan() stays as it is for `new` and `update`."""
     say(run, f"Working directory: {human_path(cwd)}")
     say(run, "  " + " ".join(human_path(word, command=True) for word in argv))
+
+
+class RelayParser:
+    """The parser of the `git branch -d` delegate (T077; research.md R5; lead
+    rulings R-50 (e) and R-53 P-1). It gathers no evidence: feed() writes each
+    chunk of the child's standard output to project's own standard output,
+    and feed_stderr(), which run_bounded() calls beside keep_stderr(), each
+    chunk of its standard error to project's own standard error, both whole,
+    as bytes, and flushed, so that the person sees the child's output as
+    execute() gave it before this change. It never reaches a bound, and
+    finish() returns b"". A failed write diverts that stream and is recorded
+    as say() records one (write_failed(); R-55), never raised, so that the
+    delegate is still read to its end and waited for."""
+
+    bound_reached = False
+
+    def feed(self, chunk):
+        self._relay(sys.stdout, chunk)
+
+    def feed_stderr(self, chunk):
+        self._relay(sys.stderr, chunk)
+
+    def finish(self):
+        return b""
+
+    @staticmethod
+    def _relay(stream, chunk):
+        if stream is None:
+            return
+        try:
+            stream.flush()  # what project wrote first stays first
+            buffer = getattr(stream, "buffer", None)
+            if buffer is None:
+                stream.write(chunk.decode("utf-8", "surrogateescape"))
+                stream.flush()
+            else:
+                buffer.write(chunk)
+                buffer.flush()
+        except OSError as exc:
+            write_failed(current_invocation(), stream, exc)
 # endregion push
 
 
