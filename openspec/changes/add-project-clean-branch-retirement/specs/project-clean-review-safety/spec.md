@@ -18,9 +18,11 @@ removal re-established the repository identity, and, at the re-read performed
 immediately before spawning it, the branch's head equals the reconciliation
 record's `branch_sha`, its `upstream`, `upstream_oid`, `ahead` and `behind`, the
 manifest's `tracking_branch`, and the merge target's name, source and SHA equal
-the values in the confirmed plan, and no registered worktree had the branch
-checked out at the rescan, as "Clean retires a removed worktree's branch only
-on fresh head and ancestry evidence" states. Under `--retire-branches`, when a
+the values in the confirmed plan, no registered worktree had the branch checked
+out at the rescan, and the re-read's last step, its re-proof, proved every
+commit that the branch's reflog then names an ancestor of that SHA again, as
+"Clean retires a removed worktree's branch only on fresh head and ancestry
+evidence" states. Under `--retire-branches`, when a
 target's revalidation takes its repository-wide values from the previous
 target's rescan, those values SHALL be the ones read before that previous
 target's branch stage, so that a change to them during that stage is outside
@@ -39,10 +41,13 @@ Git removed the worktree SHALL leave the target `removed` with
 `branch-missing-after-removal`, stop the run, and exit 2. Under
 `--retire-branches` those outcomes SHALL hold unchanged and such a target's
 branch SHALL never be deleted; a branch change seen by the re-read SHALL retain
-the branch with `branch-changed`, stop the run, and exit 2; and a branch change
-after that re-read SHALL be outside the contract, guarded only by Git's own
-non-force check on the value Git reads, so that the residual-window line under
-the flag SHALL also name a branch changed after its last check, after every
+the branch with `branch-changed`, and a reflog its re-proof does not prove, as
+when the branch moved to a commit the merge target lacks and back after the
+plan, SHALL retain it with `reflog-unmerged`, each stopping the run with exit
+2; and a branch change after the re-proof, that re-read's last check, SHALL be
+outside the contract, guarded only by Git's own non-force check on the value
+Git reads, so that the residual-window line under the flag SHALL also name a
+branch changed after its last check, after every
 other clause the run's line names, those for a cache stage included when the
 plan also selects a cache target, and before its last clause, any change after
 Git's own check. A repository
@@ -87,7 +92,8 @@ false, and SHALL stop the run with exit status 1.
 
 - **WHEN** under `--retire-branches` a test hook moves a target's branch to a
   new commit, merged into neither the merge target nor the branch's upstream,
-  after the target's re-read and before its branch child starts
+  after the target's re-read, its re-proof included, and before its branch
+  child starts
 - **THEN** Git's own check refuses the deletion with exit status 1, the branch
   survives at the new commit, the target's `branch_retirement` is `retained`
   with `git-refused`, later targets are `not-attempted`, no commit is lost, and
