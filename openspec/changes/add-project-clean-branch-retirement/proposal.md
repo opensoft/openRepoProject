@@ -8,7 +8,9 @@ by Brett Heap pending; round A3 applied lane openRepoProject-3's re-read of
 round A4 applied Codex's finding on `abad010` under the lane's ruling A-24;
 round A5 applied lane openRepoProject-3's delta read of `9ff8202`, Codex's two
 findings on `9ff8202` and the cache change's worst shapes at `e1049b2` under
-the lane's rulings A-25 to A-28; nothing here is ratified. Governing issue:
+the lane's rulings A-25 to A-28; round A6 applied lane openRepoProject-3's
+folded read of `9b67e8c`, four LOW wording items, under the lane's ruling A-29;
+nothing here is ratified. Governing issue:
 opensoft/openRepoProject#23, claimed by lane openRepoProject-5 (comment
 6111211798); refs #6, the record of the project maintenance design packet.
 Proposed on Brett Heap's word "usage reset, resume all. read handoff and
@@ -38,14 +40,16 @@ citation at `961c405` holds at main (L-15). Canonical requirements are cited as
 `openspec/specs/`. The lane lead's rulings of 2026-10-11, L-1 to L-9 and A-1 to
 A-7, its addendum of 2026-10-18, L-10 to L-15, A-5 as amended and A-9 to A-15,
 its council verdicts and addendum of 2026-10-19, A-16 to A-21, A-1, A-4 and
-A-5 as amended, and L-16, and its rulings of 2026-10-20, A-22 to A-28, bind
+A-5 as amended, and L-16, and its rulings of 2026-10-20, A-22 to A-29, bind
 this draft and are applied under Decisions and
 in the round tables. Lane records are cited on the lane register's
 `origin/main`, read at `4383a6f45`: the lane logs `lanes/log/<lane>.md:N`,
 which are append-only, and the lanes' handoffs under `handoffs/openRepoProject/`
 at the register commit named; lane openRepoProject-3's delta read of `9ff8202`
 is `attachments/lane-openRepoProject-3/delta-26-a3-findings.md` there, read at
-`653112ca8`.
+`653112ca8`, and its folded read of `9b67e8c` is
+`attachments/lane-openRepoProject-3/delta-26-a5-findings.md`, read at
+`196e1c1b3`.
 
 ## Why
 
@@ -480,10 +484,10 @@ their `CAS` line.
   command printed in the `$'...'` form needs a shell that implements the form
   (bash, zsh, ksh93 or a POSIX.1-2024 shell), in a UTF-8 locale for its
   code-point escapes, which dash, Ubuntu's `/bin/sh`, lacks, a limitation
-  change 1's path rule shares (ruling A-28 as amended); the note follows
-  change 1's command form as ratified, whether that form changes being lane
-  openRepoProject-2's LQ-8, with Brett Heap, on which this change takes no
-  side (ruling A-29).
+  change 1's path rule shares (ruling A-28 as amended); the note, the README
+  text and the quoting scenario's literal follow change 1's command form as
+  ratified, whether that form changes being lane openRepoProject-2's LQ-8,
+  with Brett Heap, on which this change takes no side (ruling A-29).
 - **`tests/test_project.py`**: the default path's test,
   `test_clean_removes_only_merged_worktree_and_keeps_branch` (`tests:857`),
   stays unchanged; each scenario this change adds gets a test named after it
@@ -1211,8 +1215,9 @@ re-reviewed `9ff8202` and found two P2s, which the rulings A-27 and A-28 as
 amended answer, and the ruling A-25 has this change name the cache change's
 worst shapes at `e1049b2`. Lane openRepoProject-2's reading of A-24's
 placement answers lane 3's first open item, so `specs/project-command/spec.md`
-is unchanged. Of the 16 rows below, 14 are applied, 2 are applied with change
-(lane 3's D11 and Codex's P2 at line 1050), and none is declined; the
+is unchanged. Of the 16 rows below, 13 are applied, 2 are applied with change
+(lane 3's D11 and Codex's P2 at line 1050), 1 is a ruling with no edit (lane
+openRepoProject-2's reading, the last row), and none is declined; the
 scenarios stay 68, 4 and 9, round A5 adding ANDs only. Git facts were checked
 on Git 2.43.0 in a scratch repository (`design.md` Context).
 
@@ -1234,3 +1239,28 @@ on Git 2.43.0 in a scratch repository (`design.md` Context).
 | Codex (9ff8202) P2 at spec.md:1022 (comment 4324517974): `git branch` refuses to recreate a branch named `HEAD`, so its restore line fails | P2 | A-27: applied: the `update-ref` restore line for every name that `git branch` refuses to create, one that begins with `-` or equals `HEAD`, every other name keeping `git -C ROOT branch BRANCH SHA`, and the quoting scenario's AND extended with `refs/heads/HEAD`; checked: `git branch HEAD <sha>` refuses, "'HEAD' is not a valid branch name", exit 128, a worktree holds `refs/heads/HEAD`, `branch -d -- HEAD` deletes it, and `git -C '<root>' update-ref refs/heads/HEAD <sha> ''`, run by dash from another directory, recreates it and refuses when it exists | project-clean delta (ADDED: the restore line; "A branch name in a printed command is quoted for the shell"); `design.md` Context, D8, D9, Risks; What Changes; Decisions |
 | Codex (9ff8202) P2 at spec.md:1050 (comment 4324517988): the `$'...'` form in a command specified as POSIX-shell-compatible, which dash does not implement | P2 | A-28 as amended: applied with change: no runtime text, the printed lines staying in change 1's form; `design.md` D8 and the README text that `tasks.md` names record that a command in that form needs bash, zsh, ksh93 or a POSIX.1-2024 shell, that dash, Ubuntu's `/bin/sh`, lacks it, and that change 1's path rule shares the limitation (lane openRepoProject-2's R-60); the change: the note also names the UTF-8 locale that its `\u` and `\U` escapes need, because with `LC_ALL=C` bash 5.2.21 passes `\u202e` as text and zsh 5.9 refuses it, and both drop a `\U` escape, which names another branch, while with `LC_ALL=C.UTF-8` both recreate the branch; ksh93 was not available to check | `design.md` Context, D8, D9, Migration Plan; Impact (README); What Changes; Decisions; `tasks.md` Speckit Handoff |
 | lane 3 delta read (9ff8202), its first open item, and A-26's question to lane openRepoProject-2: whether the Budgets clause's "re-read of a branch stage" covers the re-proof | ruling | lane openRepoProject-2's reading, in the lead's rulings of 2026-10-20: every evidence read the stage makes before `branch -d` counts, on the condition that this change's own requirement makes the re-proof the re-read's last step under the same budget, which the ADDED step 3 and the bounds block do; nothing is held, and `specs/project-command/spec.md` is unchanged (blob `e7665dda`) | none |
+
+### Re-read and Codex Findings (round A6)
+
+Lane openRepoProject-3 read round A5, `9ff8202..9b67e8c`
+(`delta-26-a5-findings.md` at the register's `196e1c1b3`): no HIGH and no
+MEDIUM, four LOW wording items (L1 to L4) and one cross-PR note (N1), and it
+found no round needed. The lead's ruling A-29 takes the four LOWs in a short
+round, on lines at `9b67e8c`; lane 3 confirms that A-25 to A-28 and lane
+openRepoProject-2's condition hold, that the `project-command` blob is
+unchanged and that no line presumes Brett Heap's answer to lane
+openRepoProject-2's LQ-8. Of the 5 rows below, 4 are applied and 1 is a
+ruling with no edit; none is applied with change and none is declined. Round
+A6 edits no spec file, so the scenarios stay 68, 4 and 9, and the quoting
+scenario's literal stays as it is. Lane 3 could not check whether
+POSIX.1-2024's `$'...'` form accepts the code-point escapes, nor ksh93, which
+was not installed; the shells list is the lead's own (ruling A-28 as amended),
+and this round adds no claim about either.
+
+| Finding | Severity | Ruling | Section edited |
+| --- | --- | --- | --- |
+| lane 3 delta read (9b67e8c) L1 (A-29): Decisions says the kept branch's next step "never prints a retry the plan knows will fail", with no exception for a name that begins with `-`, which What Changes and `design.md` D8 have | LOW | A-29: applied: the sentence reads "the retry of a name that begins with `-` excepted while change 1's action passes no `--`", as What Changes and D8 word it, so Decisions alone no longer reads as contradicting the Dependency on change 1's `delete-branch` | Decisions (the result names every branch) |
+| lane 3 delta read (9b67e8c) L2 (A-29): the `$'...'` note's UTF-8 locale clause, the README text and the quoting scenario's literal would go stale, with nothing saying so, if Brett Heap rules lane openRepoProject-2's LQ-8 on change 1's command form | LOW | A-29: applied: one clause each in `design.md` D8, Impact (README) and `tasks.md`'s Speckit Handoff: the note, the README text and the quoting scenario's literal follow change 1's command form as ratified, whether that form changes being lane openRepoProject-2's LQ-8, with Brett Heap; this change takes no side on it and reads no answer into it; the spec scenario at `specs/project-clean/spec.md:1499-1504` is not edited, because it is correct as it stands against change 1's form as ratified (`CAS/pc:1061-1066`), so nothing is held | `design.md` D8 and its Context map; Impact (README); `tasks.md` Speckit Handoff |
+| lane 3 delta read (9b67e8c) L3 (A-29): the README text that `tasks.md` and Impact prescribe omits the shells list, which only D8 names | LOW | A-29: applied: both name it as D8 does, bash, zsh, ksh93 or a POSIX.1-2024 shell, beside the UTF-8 locale and dash's lack of the form | Impact (README); `tasks.md` Speckit Handoff |
+| lane 3 delta read (9b67e8c) L4 (A-29): round A5's prose says "14 are applied", which counts its last row, lane openRepoProject-2's reading, a ruling with no edit | LOW | A-29: applied: the 16 rows of the round A5 table recounted by their Ruling cells, 13 applied, 2 applied with change (lane 3's D11 and Codex's P2 at line 1050) and 1 ruling with no edit, the count lane 3 found; the prose reads so and names that row; round A5's last commit message keeps the earlier count, which a later commit does not change | Re-read and Codex Findings (round A5), its opening prose |
+| lane 3 delta read (9b67e8c) N1, a note on PR #27: its `design.md` D4 gives this change's thread-per-call counts as they stood before round A5, "5 and 5, or 4 and 3", where this change now says "at least" 5, or 3, with 6, or 5, as the worst order a run can take | note | the lead's B-42: no edit here: the restatement is PR #27's, taken in its round B6 against this change at `9b67e8c`, and round A6 changes none of these figures | none |
