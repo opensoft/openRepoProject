@@ -608,6 +608,8 @@ TEXT_FIXTURES = {
     "git_unavailable_timed_out": "timed out",
     "git_unavailable_unparseable_version": "unparseable version",
     "git_too_old": "Git {VERSION} is older than 2.36; clean needs Git 2.36 or later.",
+    "inspection_git_too_old": "Git {VERSION} is older than 2.36; repository inspection needs Git 2.36 or later.",
+    "inspection_git_unavailable": "Git is unavailable ({DETAIL}); repository inspection needs Git 2.36 or later.",
     "target_not_repository_root": "Not the main worktree of a repository: {PATH}; pass the repository root.",
     "unsupported_path_bytes": "The repository path is not valid UTF-8: {PATH}",
     "manifest_invalid_size": "Manifest {PATH} is larger than 1 MiB.",
@@ -686,8 +688,8 @@ class CleanCase(unittest.TestCase):
         env = {**os.environ, "WORKBENCHES_ROOT": str(self.wb),
                "HOME": str(self.base / "home"), "SPECKIT_WORKSPACE_PATH": "",
                "PROJECTS_DIR": str(self.base), "GIT_CONFIG_NOSYSTEM": "1",
-               "GIT_CONFIG_GLOBAL": os.devnull, **AUTHOR}
-        for name in (*SCRUBBED_NAMES, OPTIONAL_LOCKS):
+               "GIT_CONFIG_GLOBAL": os.devnull, "NO_COLOR": "1", **AUTHOR}
+        for name in (*SCRUBBED_NAMES, OPTIONAL_LOCKS, "FORCE_COLOR", "PYTHON_COLORS"):
             env.pop(name, None)
         self.env = env
         self.root = None  # the first repository repo() makes; the builders' default

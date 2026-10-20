@@ -2692,7 +2692,7 @@ checkpoint, beside US2, US3 and US9.
   missing key (lead ruling R-49). T104 to T106 pass.
   — files: `project`
   — verify: `python3 -m unittest discover -s tests -p 'test_clean_resolution.py'`
-- [ ] T109 [US7] [S] Run the US7 module, every earlier module and the 96 tests: all
+- [x] T109 [US7] [S] Run the US7 module, every earlier module and the 96 tests: all
   pass.
   — files: (none)
   — verify: `python3 -m unittest discover -s tests -p 'test_clean_timing.py' && python3 -m unittest discover -s tests -p 'test_clean_harness.py' && python3 -m unittest discover -s tests -p 'test_clean_scrub.py' && python3 -m unittest discover -s tests -p 'test_clean_parsers.py' && python3 -m unittest discover -s tests -p 'test_clean_escaping.py' && python3 -m unittest discover -s tests -p 'test_clean_runner.py' && python3 -m unittest discover -s tests -p 'test_clean_evidence.py' && python3 -m unittest discover -s tests -p 'test_clean_guard.py' && python3 -m unittest discover -s tests -p 'test_clean_batch.py' && python3 -m unittest discover -s tests -p 'test_clean_apply.py' && python3 -m unittest discover -s tests -p 'test_clean_resolution.py' && python3 -m unittest discover -s tests -p 'test_project.py'`
@@ -2810,7 +2810,7 @@ test and T116's removal-child clause held back (lead ruling R-56 Q-5).
 
 ### Tests for User Story 9
 
-- [ ] T114 [US9] [S] Add to `tests/test_status_doctor_update.py`:
+- [x] T114 [US9] [S] Add to `tests/test_status_doctor_update.py`:
   `test_clean_git_older_than_2_36` (the `version-2.35.0` fake first on PATH:
   every `clean` mode refuses with `git-too-old`, exit 2, its only child `git
   --version`; `--json` prints the extended error object with `code:
@@ -2834,7 +2834,7 @@ test and T116's removal-child clause held back (lead ruling R-56 Q-5).
   need no Git".
   — files: `tests/test_status_doctor_update.py`
   — verify: `python3 -c "import sys,unittest as u;L=u.defaultTestLoader;f=lambda s:[i for t in s for i in (f(t) if isinstance(t,u.TestSuite) else [t.id()])];I=[i for i in f(L.discover('tests',pattern=sys.argv[1])) if not i.startswith('unittest.')];A=sys.argv[2:];M=[a for a in A if not any(a in ('*',i.split('.')[-1]) for i in I)];[print('not collected:',m) for m in M];[print(e) for e in L.errors];sys.exit(1 if M or L.errors or not A else 0)" test_status_doctor_update.py 'test_clean_git_older_than_2_36' 'test_status_git_older_than_2_36_in_status_and_doctor' 'test_doctor_no_git_on_path' 'test_update_tools_and_workflow_need_no_git'`
-- [ ] T115 [US9] [O] Add to `tests/test_status_doctor_update.py`:
+- [x] T115 [US9] [O] Add to `tests/test_status_doctor_update.py`:
   `test_status_a_failed_root_status_is_reported` (`status-fails-in` the root:
   status and doctor report it with `classification: "inspection-error"`, its
   `errors` and a null `dirty`, and neither exits 2; doctor exits 1);
@@ -2870,7 +2870,7 @@ test and T116's removal-child clause held back (lead ruling R-56 Q-5).
   doctor"; "A leg's probe times out".
   — files: `tests/test_status_doctor_update.py`
   — verify: `python3 -c "import sys,unittest as u;L=u.defaultTestLoader;f=lambda s:[i for t in s for i in (f(t) if isinstance(t,u.TestSuite) else [t.id()])];I=[i for i in f(L.discover('tests',pattern=sys.argv[1])) if not i.startswith('unittest.')];A=sys.argv[2:];M=[a for a in A if not any(a in ('*',i.split('.')[-1]) for i in I)];[print('not collected:',m) for m in M];[print(e) for e in L.errors];sys.exit(1 if M or L.errors or not A else 0)" test_status_doctor_update.py 'test_status_a_failed_root_status_is_reported' 'test_doctor_not_established_is_an_error_none_is_not' 'test_status_a_deleted_upstream_in_status_and_doctor' 'test_update_a_leg_s_probe_times_out' 'test_status_json_paths_carry_their_flags' 'test_status_sigterm_during_inspection' 'test_status_a_submodule_checkout_is_reported'`
-- [ ] T116 [US9] [O] Add to `tests/test_status_doctor_update.py`:
+- [x] T116 [US9] [O] Add to `tests/test_status_doctor_update.py`:
   `test_status_the_pinned_status_configuration` (rule 1, plan review M14;
   `core.untrackedCache` and `core.fsmonitor` true in the `GIT_CONFIG_GLOBAL`
   file: the counting log shows `-c core.untrackedCache=false -c
@@ -2886,7 +2886,7 @@ test and T116's removal-child clause held back (lead ruling R-56 Q-5).
 
 ### Implementation for User Story 9
 
-- [ ] T117 [US9] [O] Move `repo_state()` (`project:470-521`) onto the evidence
+- [x] T117 [US9] [O] Move `repo_state()` (`project:470-521`) onto the evidence
   model (D16, FR-050, FR-051, FR-059): `lstat` of `<path>/.git` first, and when
   absent `present: false` with no Git child; then the version check; an old,
   missing or unusable Git, or a failed or timed-out status probe, gives
@@ -2916,7 +2916,7 @@ test and T116's removal-child clause held back (lead ruling R-56 Q-5).
   and `:916` pass.
   — files: `project`, `tests/clean_support.py`
   — verify: `python3 -c "import importlib.machinery as m,importlib.util as iu,sys;l=m.SourceFileLoader('pv','project');s=iu.spec_from_loader('pv',l);p=iu.module_from_spec(s);sys.modules['pv']=p;l.exec_module(p);import os,tempfile;from pathlib import Path;d=tempfile.mkdtemp();r=p.repo_state(Path(d));os.rmdir(d);print('repo_state of a directory with no .git:',r);sys.exit(0 if isinstance(r,dict) and r.get('present') is False and r.get('path_valid_utf8') is True else 1)" && python3 -m unittest discover -s tests -p 'test_clean_harness.py' -k '*.test_clean_text_fixtures_equal_the_contract_table' && python3 -m unittest discover -s tests -p 'test_project.py' -k '*.test_status_from_nested_path_and_feature_worktree_is_read_only' -k '*.test_human_reports_render_present_project_leg_state' -k '*.test_clean_reports_dirty_detached_and_pushed_unmerged_states'`
-- [ ] T118 [US9] [O] In `discover()` (`project:433-467`; research.md R2, FR-053):
+- [x] T118 [US9] [O] In `discover()` (`project:433-467`; research.md R2, FR-053):
   before its Git step, the version check memoized on that `main()` call's
   `Invocation` (plan review M10); with Git 2.36 or later, `rev-parse
   --show-toplevel` through the driver as now; otherwise no Git child: the
@@ -2925,7 +2925,7 @@ test and T116's removal-child clause held back (lead ruling R-56 Q-5).
   `tests/test_project.py:641` passes.
   — files: `project`
   — verify: `python3 -c "import importlib.machinery as m,importlib.util as iu,sys;l=m.SourceFileLoader('pv','project');s=iu.spec_from_loader('pv',l);p=iu.module_from_spec(s);sys.modules['pv']=p;l.exec_module(p);import os,tempfile;from pathlib import Path;d=Path(tempfile.mkdtemp()).resolve();(d/'.git').mkdir();q=d/'sub';q.mkdir();os.environ['PATH']=tempfile.mkdtemp();exec('try: r=p.discover(str(q))\nexcept BaseException as x: r=x');print('discover() inside a .git directory, no git on PATH:',repr(r));sys.exit(0 if isinstance(r,(str,os.PathLike)) and Path(r).resolve()==d else 1)" && python3 -m unittest discover -s tests -p 'test_project.py' -k '*.test_family_name_refuses_ambiguous_default_project_roots'`
-- [ ] T119 [US9] [O] Update `check_rows()` (`project:876-906`: the `git` row
+- [x] T119 [US9] [O] Update `check_rows()` (`project:876-906`: the `git` row
   reports the version check, which doctor runs itself, memoized, when no
   repository was inspected, while `status` never runs it for nothing (lead
   ruling R-56), `ok` with the detail `PATH (git version X)` or
@@ -2946,7 +2946,7 @@ test and T116's removal-child clause held back (lead ruling R-56 Q-5).
   root, R-56). `tests/test_project.py:736` passes with its exact error rows.
   — files: `project`
   — verify: `python3 -c "import ast,sys;t=open(sys.argv[1]).read();F=[n for n in ast.walk(ast.parse(t)) if isinstance(n,ast.FunctionDef) and n.name==sys.argv[2]];s=ast.get_source_segment(t,F[0]) if F else '';M=[k for k in sys.argv[3:] if k not in s];[print('absent from',sys.argv[2]+':',m) for m in M];sys.exit(1 if M or not F or len(sys.argv)<4 else 0)" project inspect_project 'signal_scope' && python3 -c "import ast,sys;t=open(sys.argv[1]).read();F=[n for n in ast.walk(ast.parse(t)) if isinstance(n,ast.FunctionDef) and n.name==sys.argv[2]];s=ast.get_source_segment(t,F[0]) if F else '';M=[k for k in sys.argv[3:] if k not in s];[print('absent from',sys.argv[2]+':',m) for m in M];sys.exit(1 if M or not F or len(sys.argv)<4 else 0)" project snapshot 'root_valid_utf8' && python3 -m unittest discover -s tests -p 'test_project.py' -k '*.test_doctor_validate_reports_missing_owner_scripts'`
-- [ ] T120 [US9] [O] Update `update()` (`project:992-1071`; D-R, FR-052): `dirty is
+- [x] T120 [US9] [O] Update `update()` (`project:992-1071`; D-R, FR-052): `dirty is
   not False` refuses for the root and every child (`:1011`, `:1017`);
   `origin/HEAD` is read from row 6's symref, lane G's `repo["refs"]`, whose
   keys are therefore a contract between lanes (lead ruling R-56), instead of
@@ -2961,7 +2961,7 @@ test and T116's removal-child clause held back (lead ruling R-56 Q-5).
   T116.
   — files: `project`
   — verify: `python3 -m unittest discover -s tests -p 'test_status_doctor_update.py' && python3 -m unittest discover -s tests -p 'test_project.py' -k '*.test_update_default_and_dry_run_do_not_execute' -k '*.test_update_refuses_dirty_and_feature_branch' -k '*.test_update_refuses_missing_child_and_retains_shape_owner_prompt' -k '*.test_update_refuses_a_dirty_family_member'`
-- [ ] T121 [US9] [S] Run the US9 module, every earlier module and the 96 tests: all
+- [x] T121 [US9] [S] Run the US9 module, every earlier module and the 96 tests: all
   pass.
   — files: (none)
   — verify: `python3 -m unittest discover -s tests -p 'test_clean_timing.py' && python3 -m unittest discover -s tests -p 'test_clean_harness.py' && python3 -m unittest discover -s tests -p 'test_clean_scrub.py' && python3 -m unittest discover -s tests -p 'test_clean_parsers.py' && python3 -m unittest discover -s tests -p 'test_clean_escaping.py' && python3 -m unittest discover -s tests -p 'test_clean_runner.py' && python3 -m unittest discover -s tests -p 'test_clean_evidence.py' && python3 -m unittest discover -s tests -p 'test_clean_guard.py' && python3 -m unittest discover -s tests -p 'test_clean_batch.py' && python3 -m unittest discover -s tests -p 'test_clean_apply.py' && python3 -m unittest discover -s tests -p 'test_status_doctor_update.py' && python3 -m unittest discover -s tests -p 'test_project.py'`
