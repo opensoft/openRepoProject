@@ -1097,7 +1097,7 @@ L-8).
   R-56).
   — files: `tests/test_clean_batch.py`
   — verify: `python3 -c "import sys,unittest as u;L=u.defaultTestLoader;f=lambda s:[i for t in s for i in (f(t) if isinstance(t,u.TestSuite) else [t.id()])];I=[i for i in f(L.discover('tests',pattern=sys.argv[1])) if not i.startswith('unittest.')];A=sys.argv[2:];M=[a for a in A if not any(a in ('*',i.split('.')[-1]) for i in I)];[print('not collected:',m) for m in M];[print(e) for e in L.errors];sys.exit(1 if M or L.errors or not A else 0)" test_clean_batch.py 'test_clean_first_gates_in_order' 'test_clean_plan_document_keys' 'test_clean_plan_document_bytes' 'test_clean_estimates_are_the_apply_upper_bound'`
-- [ ] T041 [P] [US1] [S] Add to `tests/test_clean_apply.py`:
+- [x] T041 [P] [US1] [S] Add to `tests/test_clean_apply.py`:
   `test_clean_stable_order_and_preserved_work` (three eligible worktrees whose
   raw path order differs from their creation order and whose names differ by
   more than case, beside the current worktree, the merge-target checkout, two
@@ -1120,14 +1120,14 @@ L-8).
   of "Plan digest mismatch" and "Paths and empty plans".
   — files: `tests/test_clean_apply.py`
   — verify: `python3 -c "import sys,unittest as u;L=u.defaultTestLoader;f=lambda s:[i for t in s for i in (f(t) if isinstance(t,u.TestSuite) else [t.id()])];I=[i for i in f(L.discover('tests',pattern=sys.argv[1])) if not i.startswith('unittest.')];A=sys.argv[2:];M=[a for a in A if not any(a in ('*',i.split('.')[-1]) for i in I)];[print('not collected:',m) for m in M];[print(e) for e in L.errors];sys.exit(1 if M or L.errors or not A else 0)" test_clean_apply.py 'test_clean_stable_order_and_preserved_work' 'test_clean_stable_order_and_preserved_work_target_not_checked_out' 'test_clean_plan_digest_mismatch_unchanged_digest_applies' 'test_clean_paths_and_empty_plans_paths_with_spaces_are_removed'`
-- [ ] T042 [P] [US1] [S] Add `test_clean_every_branch_remains_after_a_batch` to
+- [x] T042 [P] [US1] [S] Add `test_clean_every_branch_remains_after_a_batch` to
   `tests/test_clean_apply.py`: after `--all-safe --apply --yes`, each selected
   branch is at the SHA the preview's JSON planned, the result reads `Removed N;
   branches kept: B1, B2.`, and the exit status is 0. Scenario: "Every branch
   remains after a batch".
   — files: `tests/test_clean_apply.py`
   — verify: `python3 -c "import sys,unittest as u;L=u.defaultTestLoader;f=lambda s:[i for t in s for i in (f(t) if isinstance(t,u.TestSuite) else [t.id()])];I=[i for i in f(L.discover('tests',pattern=sys.argv[1])) if not i.startswith('unittest.')];A=sys.argv[2:];M=[a for a in A if not any(a in ('*',i.split('.')[-1]) for i in I)];[print('not collected:',m) for m in M];[print(e) for e in L.errors];sys.exit(1 if M or L.errors or not A else 0)" test_clean_apply.py 'test_clean_every_branch_remains_after_a_batch'`
-- [ ] T043 [P] [US1] [S] Add `test_clean_only_yes_confirms` to
+- [x] T043 [P] [US1] [S] Add `test_clean_only_yes_confirms` to
   `tests/test_clean_apply.py`, through `run_pty_steps`: the answers `y`, an
   empty line and `no` (subtests) each refuse with `cancelled` and exit 2 and
   remove nothing; the question equals `Remove 7 worktrees, keeping 7 branches?
@@ -1142,7 +1142,7 @@ L-8).
   yes confirms".
   — files: `tests/test_clean_apply.py`, `tests/clean_support.py`
   — verify: `python3 -c "import sys,unittest as u;L=u.defaultTestLoader;f=lambda s:[i for t in s for i in (f(t) if isinstance(t,u.TestSuite) else [t.id()])];I=[i for i in f(L.discover('tests',pattern=sys.argv[1])) if not i.startswith('unittest.')];A=sys.argv[2:];M=[a for a in A if not any(a in ('*',i.split('.')[-1]) for i in I)];[print('not collected:',m) for m in M];[print(e) for e in L.errors];sys.exit(1 if M or L.errors or not A else 0)" test_clean_apply.py 'test_clean_only_yes_confirms' && python3 -c "import inspect,sys;sys.path.insert(0,'tests');import clean_support as c;r=getattr(c.CleanCase,'run_pty_steps',None) or getattr(c,'run_pty_steps',None);ok=bool(r) and 'stdout_pipe' in inspect.signature(r).parameters;print('run_pty_steps has stdout_pipe:',ok);sys.exit(0 if ok else 1)" && python3 -m unittest discover -s tests -p 'test_clean_harness.py' -k '*.test_clean_pty_runner_gives_a_controlling_terminal'`
-- [ ] T044 [P] [US1] [S] Add `test_clean_a_noninteractive_batch_needs_yes` to
+- [x] T044 [P] [US1] [S] Add `test_clean_a_noninteractive_batch_needs_yes` to
   `tests/test_clean_apply.py`: with standard input not a terminal and no
   `--yes`, `--all-safe --apply` refuses with `confirmation-required` and exit
   2, removes nothing and prints no question, and under `--json` prints the plan
@@ -1158,7 +1158,7 @@ L-8).
   traceback and never 120; lead rulings R-55 and R-59 D2).
   — files: `tests/test_clean_apply.py`
   — verify: `python3 -c "import sys,unittest as u;L=u.defaultTestLoader;f=lambda s:[i for t in s for i in (f(t) if isinstance(t,u.TestSuite) else [t.id()])];I=[i for i in f(L.discover('tests',pattern=sys.argv[1])) if not i.startswith('unittest.')];A=sys.argv[2:];M=[a for a in A if not any(a in ('*',i.split('.')[-1]) for i in I)];[print('not collected:',m) for m in M];[print(e) for e in L.errors];sys.exit(1 if M or L.errors or not A else 0)" test_clean_apply.py 'test_clean_a_noninteractive_batch_needs_yes' 'test_clean_a_reader_that_closes_standard_output_under_apply_json'`
-- [ ] T045 [P] [US1] [O] Add to `tests/test_clean_apply.py`:
+- [x] T045 [P] [US1] [O] Add to `tests/test_clean_apply.py`:
   `test_clean_apply_exit_table` (`apply_exit_status(targets, signum)` on
   literal target lists, `signum` the slot's signal or None, gives each D19
   row in its order, the signal row first, since D19's first row needs the
@@ -1172,7 +1172,7 @@ L-8).
   lead ruling R-68 (b)).
   — files: `tests/test_clean_apply.py`
   — verify: `python3 -c "import sys,unittest as u;L=u.defaultTestLoader;f=lambda s:[i for t in s for i in (f(t) if isinstance(t,u.TestSuite) else [t.id()])];I=[i for i in f(L.discover('tests',pattern=sys.argv[1])) if not i.startswith('unittest.')];A=sys.argv[2:];M=[a for a in A if not any(a in ('*',i.split('.')[-1]) for i in I)];[print('not collected:',m) for m in M];[print(e) for e in L.errors];sys.exit(1 if M or L.errors or not A else 0)" test_clean_apply.py 'test_clean_apply_exit_table' 'test_clean_result_document_keys'`
-- [ ] T046 [P] [US1] [O] Rewrite
+- [x] T046 [P] [US1] [O] Rewrite
   `test_clean_revalidates_a_worktree_after_confirmation` in
   `tests/test_project.py` (`:1020-1040`; with T009's loader line, the only
   edits to that file; research.md R15): the Namespace holds `target`,
@@ -1469,7 +1469,7 @@ L-8).
   pass.
   — files: `project`
   — verify: `python3 -m unittest discover -s tests -p 'test_clean_batch.py'`
-- [ ] T054 [P] [US1] [O] Add `ask_removal(plan, run)` and fill `confirm_removal()`
+- [x] T054 [P] [US1] [O] Add `ask_removal(plan, run)` and fill `confirm_removal()`
   in region `apply` (R3, FR-026): under `raising_signals()` and with the clock
   paused, write the D18 question, singular for one, to the human stream and
   flush it; read one line by `input()` with no prompt; `ask_removal()`
@@ -1480,7 +1480,7 @@ L-8).
   T046 patches it there; `--yes` accepts the fresh plan without asking.
   — files: `project`
   — verify: `python3 -c "import sys,re;t=open('project').read();A=sys.argv[1:];c=lambda r:t.split('# region '+r+'\n')[1].split('# endregion '+r+'\n')[0];M=[a for a in A if not ((a.split('%',1)[1] not in c(a.split('%',1)[0])) if '%' in a else (a.split('~',1)[1] in c(a.split('~',1)[0])) if '~' in a else re.search(r'^[a-z]*\s?'+re.escape(a.split(':',1)[1])+r'\b',c(a.split(':',1)[0]),re.M))];[print('region check failed:',m) for m in M];sys.exit(1 if M or not A else 0)" 'apply:ask_removal' 'apply~raising_signals' && python3 project clean --help >/dev/null`
-- [ ] T055 [P] [US1] [O] Add `revalidate(plan, target, run)` to region `apply`,
+- [x] T055 [P] [US1] [O] Add `revalidate(plan, target, run)` to region `apply`,
   with this phase's body: recompute the target's row through the evidence model
   with `inspect_repository(root, run, refresh=True)`, never the memo, which
   would hand back the planned evidence and let T046's dirtied worktree pass
@@ -1490,7 +1490,7 @@ L-8).
   same re-read. T084 replaces the body with D7's targeted check.
   — files: `project`
   — verify: `python3 -c "import sys,re;t=open('project').read();A=sys.argv[1:];c=lambda r:t.split('# region '+r+'\n')[1].split('# endregion '+r+'\n')[0];M=[a for a in A if not ((a.split('%',1)[1] not in c(a.split('%',1)[0])) if '%' in a else (a.split('~',1)[1] in c(a.split('~',1)[0])) if '~' in a else re.search(r'^[a-z]*\s?'+re.escape(a.split(':',1)[1])+r'\b',c(a.split(':',1)[0]),re.M))];[print('region check failed:',m) for m in M];sys.exit(1 if M or not A else 0)" 'apply:revalidate' && python3 project clean --help >/dev/null`
-- [ ] T056 [P] [US1] [O] Add `run_removal(target, run)`, `rescan(target, run)` and
+- [x] T056 [P] [US1] [O] Add `run_removal(target, run)`, `rescan(target, run)` and
   `decide_stage()` to region `apply`: the removal child is a `ChildHandle` of
   kind `removal` running the target's planned argument vector from the command
   directory, waited for with no budget; the rescan (identity probe, registry
@@ -1508,7 +1508,7 @@ L-8).
   private (lead ruling R-56).
   — files: `project`
   — verify: `python3 -c "import sys,re;t=open('project').read();A=sys.argv[1:];c=lambda r:t.split('# region '+r+'\n')[1].split('# endregion '+r+'\n')[0];M=[a for a in A if not ((a.split('%',1)[1] not in c(a.split('%',1)[0])) if '%' in a else (a.split('~',1)[1] in c(a.split('~',1)[0])) if '~' in a else re.search(r'^[a-z]*\s?'+re.escape(a.split(':',1)[1])+r'\b',c(a.split(':',1)[0]),re.M))];[print('region check failed:',m) for m in M];sys.exit(1 if M or not A else 0)" 'apply:run_removal' 'apply:rescan' 'apply:decide_stage' && python3 project clean --help >/dev/null`
-- [ ] T057 [P] [US1] [O] Fill `apply_removals(plan, run)` in region `apply`
+- [x] T057 [P] [US1] [O] Fill `apply_removals(plan, run)` in region `apply`
   (called
   in phase `apply`, which T047's pipeline sets, never this task, lead ruling
   R-56; per target in canonical order: revalidate, spawn, wait, rescan;
@@ -1532,7 +1532,7 @@ L-8).
   closed-pipe test among them in T044 (lead ruling R-67 (d)).
   — files: `project`
   — verify: `python3 -c "import sys,re;t=open('project').read();A=sys.argv[1:];c=lambda r:t.split('# region '+r+'\n')[1].split('# endregion '+r+'\n')[0];M=[a for a in A if not ((a.split('%',1)[1] not in c(a.split('%',1)[0])) if '%' in a else (a.split('~',1)[1] in c(a.split('~',1)[0])) if '~' in a else re.search(r'^[a-z]*\s?'+re.escape(a.split(':',1)[1])+r'\b',c(a.split(':',1)[0]),re.M))];[print('region check failed:',m) for m in M];sys.exit(1 if M or not A else 0)" 'result:apply_exit_status' 'result:result_document' 'result:print_result' 'result~def apply_exit_status(targets, signum)' && python3 -m unittest discover -s tests -p 'test_clean_apply.py' && python3 -m unittest discover -s tests -p 'test_project.py'`
-- [ ] T058 [US1] [S] Run T036 to T046, every Phase 2 module and the 96 tests (95
+- [x] T058 [US1] [S] Run T036 to T046, every Phase 2 module and the 96 tests (95
   unchanged and the one rewritten): all pass.
   — files: (none)
   — verify: `python3 -m unittest discover -s tests -p 'test_clean_timing.py' && python3 -m unittest discover -s tests -p 'test_clean_harness.py' && python3 -m unittest discover -s tests -p 'test_clean_scrub.py' && python3 -m unittest discover -s tests -p 'test_clean_parsers.py' && python3 -m unittest discover -s tests -p 'test_clean_escaping.py' && python3 -m unittest discover -s tests -p 'test_clean_runner.py' && python3 -m unittest discover -s tests -p 'test_clean_evidence.py' && python3 -m unittest discover -s tests -p 'test_clean_guard.py' && python3 -m unittest discover -s tests -p 'test_clean_batch.py' && python3 -m unittest discover -s tests -p 'test_clean_apply.py' && python3 -m unittest discover -s tests -p 'test_project.py'`
