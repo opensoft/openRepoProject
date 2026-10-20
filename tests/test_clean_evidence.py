@@ -447,6 +447,46 @@ class EvidenceTests(clean_support.CleanCase):
         self.assertEqual(rows[other.name]["classification"], "merged-removable")
         self.assertEqual(self.status_dirs(records), sorted(map(str, (root, other))))
 
+        with self.subTest("two registry entries naming one path (lead rulings R-57 L2 and L3, R-59 D5)"):
+            # A copied admin directory: the registry then lists one path twice,
+            # and the two-way check alone passes both entries.
+            shared_root = self.repo("shared-repo")
+            self.bare_remote(shared_root, "shared-remote.git")
+            shared = self.merged_worktree("011-shared", root=shared_root)
+            gone = self.merged_worktree("012-gone", root=shared_root)
+            control = self.merged_worktree("013-control", root=shared_root)
+            admin = self.common_dir(shared_root) / "worktrees"
+            for tree in (shared, gone):
+                shutil.copytree(admin / tree.name, admin / f"{tree.name}-copy")
+            shutil.rmtree(gone)
+            result, records = self.report(shared_root)
+            listed = result.document["worktrees"]
+            self.assertEqual([row["path"] for row in listed].count(str(shared)), 2)
+            for row in (row for row in listed if row["path"] == str(shared)):
+                self.assertEqual((row["present"], row["dirty"], row["errors"], row["classification"]),
+                                 (True, None, [], "inspection-error"))
+                self.assertNotIn("prunable", row)
+            # L2 first: a path not present is stale, with no duplicate check.
+            self.assertEqual([(row["present"], row["classification"], row.get("prunable"), row["errors"])
+                              for row in listed if row["path"] == str(gone)],
+                             [(False, "stale-worktree", True, [])] * 2)
+            self.assertEqual(by_name(result.document)[control.name]["classification"], "merged-removable")
+            self.assertEqual(self.status_dirs(records), sorted(map(str, (shared_root, control))),
+                             "no status probe in the shared path")
+            # In process: `registered` is false (gate 3), and the duplicate check
+            # covers the whole registry when rows are built for one entry alone.
+            with mock.patch.dict(os.environ, self.env, clear=True):
+                run = project.Invocation()
+                repo = project.inspect_repository(os.fsencode(shared_root), run)
+                every = project.worktree_rows(repo, run)
+                twins = [record for record in repo["records"] if record["path"] == os.fsencode(shared)]
+                alone = project.worktree_rows(repo, run, records=twins[1:])
+            self.assertEqual([(row.registered, row.admin_id) for row in every if row.raw_path == os.fsencode(shared)],
+                             [(False, None)] * 2)
+            self.assertEqual([row.registered for row in every if row.raw_path == os.fsencode(gone)], [None] * 2)
+            self.assertEqual([(row.raw_path, row.registered, row["classification"]) for row in alone],
+                             [(os.fsencode(shared), False, "inspection-error")])
+
     def test_clean_evidence_reads_presence(self):
         # Lead ruling R-36, FR-055: an lstat failing with ENOENT, or with ENOTDIR
         # where the parent of a registered path became a regular file, is

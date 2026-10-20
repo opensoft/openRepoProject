@@ -2347,9 +2347,10 @@ def verify_registration(path, common_dir, main):
     `<common_dir>/worktrees/<admin_id>`, and that directory's `gitdir` file
     names `<path>/.git`, relative values resolved against the directory
     holding the file. The main worktree has no admin directory: its `.git` is
-    the common directory itself, or a gitfile naming it; admin_id None. Two
-    registry entries naming one path both pass (lead ruling R-51 (c)): the
-    registry's porcelain output does not name an entry's admin directory."""
+    the common directory itself, or a gitfile naming it; admin_id None. This
+    check alone passes both of two registry entries naming one path, since
+    the registry's porcelain output does not name an entry's admin
+    directory; worktree_rows() fails such rows closed (lead ruling R-57 L3)."""
     dotgit = os.path.join(path, b".git")
     named = _gitfile(path)
     if main:
@@ -2470,6 +2471,16 @@ def inspect_repository(directory, run, refresh=False):
     return repo
 
 
+def shared_paths(registry):
+    """The registry paths that more than one entry of registry names, as the
+    raw bytes listed (lead rulings R-57 L3 and R-59 D5): a pure function of
+    row 4's records."""
+    seen, shared = set(), set()
+    for record in registry:
+        (shared if record["path"] in seen else seen).add(record["path"])
+    return frozenset(shared)
+
+
 def _registry_entries(registry, records):
     """(index, record) for each registry entry worktree_rows() builds a row
     for: every entry of registry, in its order, when records is None; else
@@ -2495,7 +2506,12 @@ def worktree_rows(repo, run, records=None):
     ENOENT or ENOTDIR and null with an `os-error` on any other failure (lead
     ruling R-36); for a present row, `current` (the working directory is
     inside it, as the baseline reads it), the two-way registration and, only
-    when it holds, the combined status probe in that worktree; the branch
+    when it holds, the combined status probe in that worktree; a row whose
+    registry path another entry of the whole registry names too is
+    registration-mismatch (`registered` false) with no registration read,
+    since the two-way check cannot tell such entries apart, while a row not
+    present gets no registration or duplicate check (lead rulings R-57 L2
+    and L3, R-59 D5); the branch
     evidence from row 6, a deleted upstream keeping its short name with
     `ahead` and `behind` null; `merged_into_target` from row 7; then classify()
     and partial_removal_note(). Each failed outcome or call becomes an entry of
@@ -2509,6 +2525,7 @@ def worktree_rows(repo, run, records=None):
     target = repo["merge_target"]["name"] if repo["merge_target"] else None
     refs = {ref["refname"]: ref for ref in repo["refs"] or ()}
     merged_set = repo["merged"]
+    shared = shared_paths(registry)
     entries = _registry_entries(registry, records)
     try:
         active, active_error = _realpath(b"."), None
@@ -2543,7 +2560,10 @@ def worktree_rows(repo, run, records=None):
                     errors.append(active_error)
                 else:
                     current = active == tree or tree == b"/" or active.startswith(tree + b"/")
-                row.registered, row.admin_id = verify_registration(raw, common_dir, row.main)
+                if record["path"] in shared:
+                    row.registered, row.admin_id = False, None
+                else:
+                    row.registered, row.admin_id = verify_registration(raw, common_dir, row.main)
             except EvidenceError as exc:
                 errors.append(exc.error)
             if row.registered and not errors:
