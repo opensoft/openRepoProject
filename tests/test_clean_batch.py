@@ -18,6 +18,7 @@ import json
 import os
 from pathlib import Path
 import re
+import shutil
 import subprocess
 import types
 import unittest
@@ -150,6 +151,16 @@ class BatchTests(clean_support.CleanCase):
         return [f"Cleanup plan for {root}", TEXT["merge_target_line"].format(NAME=name, SOURCE=source),
                 f"Freshness: {FRESHNESS}"]
 
+    def preview_digest(self, root):
+        """The plan_digest of `clean ROOT --all-safe --json`, and its selection."""
+        document = self.run_json("clean", root, "--all-safe", "--json").document
+        return document["plan_digest"], [entry["path"] for entry in document["selected"]]
+
+    def assert_nothing_asked_or_removed(self, result, records):
+        """No question was printed and no `worktree remove` child ran."""
+        self.assertNotIn("[yes/N]", result.stdout + result.stderr)
+        self.assertEqual([record for record in records if argv_words(record)[2:4] == ["worktree", "remove"]], [])
+
     def counting(self, env=None):
         """The counting wrapper first on PATH (in front of the real git): returns
         the environment to run with and the log, emptied."""
@@ -205,6 +216,175 @@ class BatchTests(clean_support.CleanCase):
         ]
         self.assertEqual((result.stdout, result.stderr), ("\n".join(expected) + "\n", ""))
         self.assertEqual(self.snapshot(root), before, "the registry, the branches and the files are unchanged")
+
+    # T037: "Plan digest mismatch" (its apply clause is T041's, R-56 Q-5).
+
+    def test_clean_plan_digest_mismatch(self):
+        root = self.repo()
+        self.bare_remote()
+        first = self.merged_worktree("001-p1")
+        second = self.merged_worktree("002-p2")
+        (second / "uncommitted").write_text("preserve")
+        digest, selected = self.preview_digest(root)
+        self.assertEqual(selected, [str(first)])
+
+        def second_becomes_eligible():
+            (second / "uncommitted").unlink()
+
+        def first_advances():
+            (second / "uncommitted").write_text("preserve")
+            self.assertEqual(self.preview_digest(root), (digest, [str(first)]), "the same plan as the preview")
+            (first / "later").write_text("later")
+            self.commit(first)
+            self.git(first, "push", "origin", "001-p1")
+            self.git(root, "merge", "--no-ff", "001-p1", "-m", "merge 001-p1 again")
+
+        for label, change in (("a second merged worktree becomes eligible", second_becomes_eligible),
+                              ("P1's branch advances", first_advances)):
+            with self.subTest(label):
+                change()
+                before = self.snapshot(root)
+                words = ("clean", root, "--all-safe", "--apply", "--yes", "--expect-plan", digest)
+                result, records = self.run_counted(*words, "--json")
+                self.assert_status(result, 2)
+                document = self.load_json(result)
+                fresh = document["plan_digest"]
+                self.assertNotEqual(fresh, digest)
+                message = TEXT["plan_digest_mismatch"].format(DIGEST=fresh, EXPECTED=digest)
+                self.assertEqual((document["apply_allowed"], document["refusals"]),
+                                 (False, [{"code": "plan-digest-mismatch", "message": message}]))
+                self.assertIn(str(first), [entry["path"] for entry in document["selected"]])
+                self.assert_nothing_asked_or_removed(result, records)
+                # Human output: the fresh plan, then REFUSED: with its digest.
+                result, records = self.run_counted(*words)
+                self.assert_status(result, 2)
+                self.assertTrue(result.stdout.startswith("\n".join(self.plan_header(root))), result.stdout)
+                self.assertIn(TEXT["selected_row"].format(PATH=first, BRANCH="001-p1"), result.stdout.splitlines())
+                self.assertEqual(result.stderr, f"REFUSED: {message}\n")
+                self.assert_nothing_asked_or_removed(result, records)
+                self.assertEqual(self.snapshot(root), before, "nothing changes")
+
+    # T038: "Preview is advisory"; "Paths and empty plans".
+
+    def test_clean_preview_is_advisory(self):
+        root = self.repo()
+        self.bare_remote()
+        first = self.merged_worktree("001-p1")
+        digest, selected = self.preview_digest(root)
+        self.assertEqual(selected, [str(first)])
+        (first / "uncommitted").write_text("preserve")
+        before = self.snapshot(root)
+        result, records = self.run_counted("clean", root, "--all-safe", "--apply", "--yes")
+        self.assert_status(result, 0)
+        steps = clean_support.NEXT_STEP_FIXTURES
+        self.assertEqual((result.stdout, result.stderr), ("\n".join(self.plan_header(root) + [
+            TEXT["excluded_heading"].format(M=2),
+            TEXT["excluded_group"].format(REASON="main-worktree", K=1, NEXT_STEP=steps["main-worktree"]),
+            TEXT["excluded_row"].format(PATH=root, BRANCH="main"),
+            TEXT["excluded_group"].format(REASON="dirty", K=1, NEXT_STEP=steps["dirty"]),
+            TEXT["excluded_row"].format(PATH=first, BRANCH="001-p1"),
+            TEXT["empty_line"]]) + "\n", ""))
+        self.assert_nothing_asked_or_removed(result, records)
+        # With --expect-plan naming the preview's digest, the mismatch is refused
+        # before the empty selection is reported.
+        fresh, selected = self.preview_digest(root)
+        self.assertEqual(selected, [])
+        result, records = self.run_counted("clean", root, "--all-safe", "--apply", "--yes", "--expect-plan", digest)
+        self.assert_status(result, 2)
+        self.assertNotIn(TEXT["empty_line"], result.stdout)
+        self.assertEqual(result.stderr,
+                         "REFUSED: " + TEXT["plan_digest_mismatch"].format(DIGEST=fresh, EXPECTED=digest) + "\n")
+        self.assert_nothing_asked_or_removed(result, records)
+        self.assertEqual(self.snapshot(root), before)
+
+    def test_clean_paths_and_empty_plans(self):
+        steps = clean_support.NEXT_STEP_FIXTURES
+        root = self.repo()
+        self.bare_remote()
+        spaced = self.merged_worktree("001-spaced", path=self.base / "with spaces" / "a tree")
+        stale = self.base / "external" / "stale tree"
+        self.git(root, "worktree", "add", "-b", "002-stale", stale)
+        shutil.rmtree(stale)
+        locked = self.merged_worktree("003-locked")
+        self.git(root, "worktree", "lock", locked)
+        with self.subTest("spaces, a missing external path and a lock"):
+            before = self.snapshot(root)
+            result = self.run_cli("clean", root, "--all-safe")
+            self.assert_status(result, 0)
+            self.assertEqual(result.stdout, "\n".join(self.plan_header(root) + [
+                TEXT["selected_heading"].format(N=1),
+                TEXT["selected_row"].format(PATH=spaced, BRANCH="001-spaced"),
+                TEXT["excluded_heading"].format(M=3),
+                TEXT["excluded_group"].format(REASON="main-worktree", K=1, NEXT_STEP=steps["main-worktree"]),
+                TEXT["excluded_row"].format(PATH=root, BRANCH="main"),
+                TEXT["excluded_group"].format(REASON="locked-worktree", K=1, NEXT_STEP=steps["locked-worktree"]),
+                TEXT["excluded_row"].format(PATH=locked, BRANCH="003-locked"),
+                TEXT["excluded_group"].format(REASON="stale-worktree", K=1,
+                                              NEXT_STEP=project.RECOMMENDATIONS["stale-worktree"]),
+                TEXT["excluded_row"].format(PATH=stale, BRANCH="002-stale"),
+                TEXT["residual_window_line"]]) + "\n")
+            document = self.run_json("clean", root, "--all-safe", "--json").document
+            self.assertEqual([(entry["path"], entry["reason"]) for entry in document["excluded"]],
+                             [(str(locked), "locked-worktree"), (str(stale), "stale-worktree"),
+                              (str(root), "main-worktree")])
+            # The path with spaces is one argument of its removal, exact, and a
+            # command prints it shell-quoted (FR-041); in prose it is verbatim.
+            [entry] = document["selected"]
+            self.assertEqual(entry["operation"]["argv"][-3:], ["worktree", "remove", str(spaced)])
+            self.assertEqual(project.human_path(os.fsencode(spaced), command=True), f"'{spaced}'")
+            self.assertEqual(self.snapshot(root), before)
+        with self.subTest("a complete plan that selects nothing"):
+            empty = self.repo("empty-repo")
+            self.bare_remote(empty, "empty-remote.git")
+            dirty = self.merged_worktree("011-dirty", root=empty)
+            (dirty / "uncommitted").write_text("preserve")
+            before = self.snapshot(empty)
+            expected = "\n".join(self.plan_header(empty) + [
+                TEXT["excluded_heading"].format(M=2),
+                TEXT["excluded_group"].format(REASON="main-worktree", K=1, NEXT_STEP=steps["main-worktree"]),
+                TEXT["excluded_row"].format(PATH=empty, BRANCH="main"),
+                TEXT["excluded_group"].format(REASON="dirty", K=1, NEXT_STEP=steps["dirty"]),
+                TEXT["excluded_row"].format(PATH=dirty, BRANCH="011-dirty"),
+                TEXT["empty_line"]]) + "\n"
+            # As a preview, and under --apply without --yes on a standard input
+            # that is not a terminal: no question and no confirmation-required.
+            for words in (("--all-safe",), ("--all-safe", "--apply")):
+                with self.subTest(arguments=words):
+                    result, records = self.run_counted("clean", empty, *words)
+                    self.assert_status(result, 0)
+                    self.assertEqual((result.stdout, result.stderr), (expected, ""))
+                    self.assert_nothing_asked_or_removed(result, records)
+            self.assertEqual(self.snapshot(empty), before)
+        with self.subTest("an incomplete plan that selects nothing"):
+            if hasattr(os, "geteuid") and os.geteuid() == 0:
+                self.skipTest("permission fixtures do not bind the superuser (effective uid 0)")
+            unreadable = self.repo("unreadable-repo")
+            hidden = self.base / "hidden"
+            hidden.mkdir()
+            self.git(unreadable, "worktree", "add", "-b", "021-hidden", hidden / "tree")
+            hidden.chmod(0o600)
+            self.addCleanup(hidden.chmod, 0o700)
+            refused = "REFUSED: " + TEXT["plan_incomplete"].format(
+                CODE="inspection-incomplete", REMEDY=TEXT["remedy_inspection_incomplete"]) + "\n"
+            # The preview exits 1 and, as the plan is refused (FR-024), names the
+            # refusal and its remedy too.
+            preview = self.run_cli("clean", unreadable, "--all-safe")
+            self.assert_status(preview, 1)
+            self.assertEqual(preview.stderr, refused)
+            self.assertNotIn(TEXT["empty_line"], preview.stdout, "never reported as empty")
+            self.assertIn(TEXT["excluded_group"].format(REASON="inspection-error", K=1,
+                                                        NEXT_STEP=steps["inspection-error"]),
+                          preview.stdout.splitlines())
+            for words in (("--all-safe", "--apply"), ("--all-safe", "--apply", "--yes")):
+                with self.subTest(arguments=words):
+                    result, records = self.run_counted("clean", unreadable, *words)
+                    self.assert_status(result, 2)
+                    self.assertEqual((result.stdout, result.stderr), (preview.stdout, refused))
+                    self.assert_nothing_asked_or_removed(result, records)
+            document = self.run_json("clean", unreadable, "--all-safe", "--apply", "--json").document
+            self.assertEqual((document["completeness"], document["apply_allowed"], document["selected"],
+                              [refusal["code"] for refusal in document["refusals"]]),
+                             ("incomplete", False, [], ["inspection-incomplete"]))
 
     # T039: "Invalid argument combinations".
 
@@ -483,6 +663,39 @@ class BatchTests(clean_support.CleanCase):
         self.assertEqual(out, json.dumps(noted, indent=2, ensure_ascii=True) + "\n")
         self.assertEqual((noted["notes"], noted["merge_target"]), ([note], document["merge_target"]))
 
+    def test_clean_estimates_are_the_apply_upper_bound(self):
+        # Plan review M7, research.md R8, lead rulings R-27 and R-56: in every
+        # mode, previews and reports included, probes.estimated is F + W + E +
+        # 5T + 3 and operations.estimated is T, so that a run's estimate is its
+        # counted children plus 5T + 3. F, W and E come from the counting log:
+        # W the status probes, E the hidden-state probes (`ls-files`), never
+        # assumed zero, F every other child; no removal runs.
+        root = self.repo()
+        self.bare_remote()
+        target = self.merged_worktree("001-merged")
+        self.merged_worktree("002-merged")
+        dirty = self.merged_worktree("003-dirty")
+        (dirty / "uncommitted").write_text("preserve")
+        runs = (("report", ("--json",), 0, 2), ("all-safe", ("--all-safe", "--json"), 0, 2),
+                ("single", ("--apply", "--action", "remove", "--worktree", target, "--json"), 2, 1))
+        for mode, words, status, targets in runs:
+            with self.subTest(mode=mode):
+                result, records = self.run_counted("clean", root, *words)
+                self.assert_status(result, status)
+                document = self.load_json(result)
+                self.assertEqual((document["mode"], len(document["selected"])), (mode, targets))
+                kinds = [argv_words(record)[2:3] for record in records]
+                self.assertEqual([record for record in records if argv_words(record)[2:4] == ["worktree", "remove"]],
+                                 [])
+                self.assertIn(["--version"], [argv_words(record) for record in records], "F counts row 1")
+                status_children, hidden = kinds.count(["status"]), kinds.count(["ls-files"])
+                repository_wide = len(records) - status_children - hidden
+                self.assertEqual(status_children, 4, "one status probe per present, verified row")
+                self.assertEqual(document["probes"], {
+                    "estimated": repository_wide + status_children + hidden + 5 * targets + 3,
+                    "performed": len(records)})
+                self.assertEqual(document["operations"], {"estimated": targets, "performed": 0})
+
     def test_clean_plan_digest_canonical_text(self):
         # Research.md R12, lead ruling R-34: the packet's own fixture values give
         # its own digest, and the mode, observed_at, excluded and the notes
@@ -593,9 +806,60 @@ class BatchTests(clean_support.CleanCase):
             TEXT["excluded_row"].format(PATH=others[1], BRANCH="003-r"),
             TEXT["residual_window_line"],
         ]
-        self.assertTrue(result.stdout.startswith("\n".join(expected) + "\n"), clean_support.transcript(result))
-        self.assertTrue(result.stderr.startswith("REFUSED: "), clean_support.transcript(result))
+        # T053's confirmation-required refuses, before the baseline question.
+        self.assertEqual((result.stdout, result.stderr),
+                         ("\n".join(expected) + "\n", "REFUSED: " + TEXT["confirmation_required"] + "\n"))
         self.assertEqual(self.snapshot(root), before, "nothing removed")
+
+    def test_clean_the_preview_says_what_keeps_each_row_single_mode_shared_path(self):
+        # Lead rulings R-62 (a) and R-67 (b) as corrected: a P that more than
+        # one registry entry names, by raw bytes or by realpath, is P's own
+        # evidence incomplete: nothing is selected for it, no
+        # worktree-not-found, and the run refuses with inspection-incomplete,
+        # exit 2, before any target-excluded; nothing is removed.
+        refused = "REFUSED: " + TEXT["plan_incomplete"].format(
+            CODE="inspection-incomplete", REMEDY=TEXT["remedy_inspection_incomplete"]) + "\n"
+        # Raw bytes: a copied admin directory lists the same path twice (lane G's
+        # fixture), and both rows are inspection-error (registration-mismatch).
+        bytes_root = self.repo("bytes-repo")
+        self.bare_remote(bytes_root, "bytes-remote.git")
+        shared = self.merged_worktree("001-shared", root=bytes_root)
+        admin = self.common_dir(bytes_root) / "worktrees"
+        shutil.copytree(admin / shared.name, admin / f"{shared.name}-copy")
+        self.assertEqual(self.git(bytes_root, "worktree", "list", "--porcelain").splitlines().count(
+            f"worktree {shared}"), 2)
+        # Realpath: a second entry naming the same worktree through a symbolic
+        # link, which the two-way check passes (R-67 (c), a later evidence fix),
+        # in a repository with no inspection-error row, so that P's own match,
+        # not another row, is what refuses (check 3 of the single-mode order).
+        real_root = self.repo("realpath-repo")
+        self.bare_remote(real_root, "realpath-remote.git")
+        spelled = self.merged_worktree("002-spelled", root=real_root)
+        link = self.base / "link"
+        link.symlink_to(self.base)
+        admin = self.common_dir(real_root) / "worktrees"
+        shutil.copytree(admin / spelled.name, admin / f"{spelled.name}-copy")
+        (admin / f"{spelled.name}-copy" / "gitdir").write_text(f"{link / spelled.name / '.git'}\n")
+        self.assertIn(f"worktree {link / spelled.name}",
+                      self.git(real_root, "worktree", "list", "--porcelain").splitlines())
+        report = self.run_json("clean", real_root, "--json").document
+        self.assertEqual([row["classification"] for row in report["worktrees"]],
+                         ["protected-default", "merged-removable", "merged-removable"])
+        for root, target in ((bytes_root, shared), (real_root, spelled), (real_root, link / spelled.name)):
+            with self.subTest(worktree=os.fspath(target)):
+                before = self.snapshot(root)
+                result, records = self.run_counted("clean", root, "--apply", "--action", "remove",
+                                                   "--worktree", target, "--yes")
+                self.assert_status(result, 2)
+                self.assertEqual(result.stderr, refused)
+                self.assertNotIn(TEXT["selected_heading"].format(N=1), result.stdout)
+                self.assert_nothing_asked_or_removed(result, records)
+                document = self.run_json("clean", root, "--apply", "--action", "remove", "--worktree", target,
+                                         "--yes", "--json").document
+                self.assertEqual(([refusal["code"] for refusal in document["refusals"]], document["selected"],
+                                  document["completeness"], document["apply_allowed"]),
+                                 (["inspection-incomplete"], [], "incomplete", False))
+                self.assertEqual(self.snapshot(root), before)
 
 
 if __name__ == "__main__":

@@ -3112,10 +3112,15 @@ def refuse(plan, refusal, run):
     (`cancelled`) record through it and never raise, so that the plan
     envelope, not the extended error object, carries the refusal, and the
     pipeline prints the plan once, then, in human output, `REFUSED: MESSAGE`
-    naming plan.refusals[0]. T053 fills it (the envelope's `apply_allowed:
-    false` and `refusals`, one object per code in REFUSAL_CODES order); this
-    first body records the refusal and withdraws apply_allowed."""
-    plan.refusals.append(refusal)
+    naming plan.refusals[0]. T053: the envelope's `apply_allowed` becomes
+    false, and `refusals` holds one object per code, kept in REFUSAL_CODES
+    order (a refusal with no code last, in the order recorded), so that the
+    first is the first check that refused, FR-024's order and REFUSAL_CODES's
+    being the same; a second refusal of a code already held is not added."""
+    if refusal.code is None or all(item.code != refusal.code for item in plan.refusals):
+        plan.refusals.append(refusal)
+        plan.refusals.sort(key=lambda item: REFUSAL_CODES.index(item.code)
+                           if item.code in REFUSAL_CODES else len(REFUSAL_CODES))
     plan.apply_allowed = False
     return 2
 
@@ -3175,24 +3180,65 @@ def require_git(run):
 
 
 def check_plan(plan, run):
-    """Decide where the run goes after the plan is built (T053 fills, in
-    FR-024's order): return the exit status the run stops at, or None when it
-    goes on to the question or --yes (or to push or delete-branch). It only
-    decides: each plan, select or confirm refusal is recorded through
-    refuse(), never raised, and a plan that already carries one stops with 2.
-    First body: a run without --apply is a report, exit 0; a named removal
-    keeps the baseline checks (project:715-718 at 961c405)."""
+    """Decide where the run goes after the plan is built (T053; FR-024;
+    contracts/project-clean.md, "Order of a run"; lead rulings R-56, R-59 D4,
+    R-62 (a) and R-67 (b)): return the exit status the run stops at, or None
+    when it goes on to the question or --yes (or to push or delete-branch). It
+    only decides: each plan, select or confirm refusal is recorded through
+    refuse() and 2 returned, never raised to main(); the pipeline prints once.
+
+    The checks, in this order, the first that refuses ending them:
+    1. an incomplete plan (plan_completeness(); in mode single for --action
+       remove, P's own rows apart): one refusal per code; a preview exits 1,
+       a run with --apply 2, before any question;
+    2. single, `worktree-not-found`, which build_plan() recorded;
+    3. single, P's own incompleteness: P names no single row (several
+       matched, or one not decided), or its row is inspection-error or
+       unprobed: inspection-incomplete;
+    4. all-safe, an --expect-plan digest that differs (`plan-digest-mismatch`);
+    5. all-safe, a complete plan selecting nothing: exit 0, no question;
+    6. single, P excluded by a gate (`target-excluded`, target_refusal());
+    7. `confirmation-required` for --apply without --yes on a standard input
+       that is not a terminal, isatty() read now, since T046 patches it.
+    A report exits 0 until T101 exits an incomplete one 1; push and
+    delete-branch go on after check 1, to their own checks; a preview that
+    passes every check exits 0."""
+    args = run.args
+    apply = getattr(args, "apply", False)
+    if plan.mode == "report":
+        return 2 if plan.refusals else 0
+    single, removing = plan.mode == "single", plan.action == "remove"
+    target_rows = getattr(plan, "target_rows", [])
+    codes = plan_completeness(plan, target_rows if single and removing else ())
+    if codes:
+        for code in codes:
+            refuse(plan, incomplete_refusal(plan, code), run)
+        return 2 if apply else 1
     if plan.refusals:
         return 2
-    if not getattr(run.args, "apply", False):
-        return 0
-    row = plan.target
-    if row is not None:
-        if row.get("current"):
-            return refuse(plan, Refused("Cannot remove the current worktree."), run)
-        if row.get("classification") != "merged-removable":
-            return refuse(plan, Refused(f"Worktree is {row.get('classification')}; "
-                                        "only clean merged worktrees may be removed."), run)
+    if single and not removing:
+        return None
+    if single:
+        target = plan.target
+        if target is None or row_incomplete(target):
+            return refuse(plan, incomplete_refusal(plan, "inspection-incomplete"), run)
+        reason = next((reason for row, reason in plan.excluded if row is target), None)
+        if reason is not None:
+            return refuse(plan, target_refusal(target, reason), run)
+    else:
+        expected = getattr(args, "expect_plan", None)
+        if apply and expected is not None and expected != plan.digest:
+            return refuse(plan, Refused(TEXT["plan_digest_mismatch"].format(DIGEST=plan.digest, EXPECTED=expected),
+                                        code="plan-digest-mismatch"), run)
+        if not plan.selected or not apply:
+            return 0
+    if not getattr(args, "yes", False):
+        try:
+            terminal = sys.stdin is not None and sys.stdin.isatty()
+        except (AttributeError, OSError, ValueError):
+            terminal = False
+        if not terminal:
+            return refuse(plan, Refused(TEXT["confirmation_required"], code="confirmation-required"), run)
     return None
 # endregion dispatcher
 
@@ -3292,6 +3338,19 @@ def plan_completeness(plan, exclude=()):
                   or (plan.target is None and bool(target_rows)
                       and not any(id(row) in skip for row in target_rows)))
     return ["inspection-incomplete"] if incomplete else []
+
+
+def incomplete_refusal(plan, code):
+    """The refusal of a plan incomplete with code (FR-024, FR-031; design D18):
+    `The plan is incomplete (CODE): REMEDY.`, REMEDY D18's for the code."""
+    if code == "inspect-cap":
+        registry = (plan.evidence or {}).get("records") or ()
+        remedy = TEXT["remedy_inspect_cap"].format(N=len(registry), M=LIMITS["worktree_rows"][plan.mode])
+    elif code == "deadline-exceeded":
+        remedy = TEXT["remedy_deadline_exceeded"]
+    else:
+        remedy = TEXT["remedy_inspection_incomplete"]
+    return Refused(TEXT["plan_incomplete"].format(CODE=code, REMEDY=remedy), code=code)
 
 
 def json_argument(argument):
@@ -3581,6 +3640,22 @@ def next_step(reason):
     """D18's next step for an exclusion reason: NEXT_STEPS's, else the class's
     recommendation (RECOMMENDATIONS); None for a reason with neither."""
     return NEXT_STEPS.get(reason) or RECOMMENDATIONS.get(reason)
+
+
+def target_refusal(row, reason):
+    """The `target-excluded` refusal of P's row, excluded by reason (FR-013;
+    design D18; lead rulings R-58 (a) and R-59 D9), its message in the
+    baseline's precedence (project:715-718 at 961c405): the current worktree's
+    when P is current, else the class's when P's class is not
+    merged-removable, which keeps its wording and has no next step, else the
+    gate's, `Worktree is excluded: REASON; NEXT STEP`."""
+    if row.get("current"):
+        message = TEXT["target_excluded_current"]
+    elif row["classification"] != "merged-removable":
+        message = TEXT["target_excluded_class"].format(CLASS=row["classification"])
+    else:
+        message = TEXT["target_excluded_gate"].format(REASON=reason, NEXT_STEP=next_step(reason) or "")
+    return Refused(message, code="target-excluded", path=row.raw_path, reason=reason)
 # endregion gates
 
 # region reflog
