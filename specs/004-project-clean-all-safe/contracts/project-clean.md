@@ -49,7 +49,10 @@ and an unused `--branch` or `--worktree` is ignored. `--worktree P` is
 expanded, joined to the working directory and realpath'd by one bounded
 call; it names the one registry row whose path equals it, or else whose
 realpath does (`worktree-not-found` otherwise); a path two entries share is
-`registration-mismatch`, so `target-excluded` (lead ruling R-57).
+`registration-mismatch`, an `inspection-error` row, so the run refuses with
+`inspection-incomplete`, exit 2, before any `target-excluded`, because P's
+own evidence is strict and an incomplete plan is refused first (lead
+rulings R-57 and R-62).
 
 ## Order of a run
 
@@ -159,10 +162,10 @@ Lines D18 leaves open are fixed here before tasks: the `Report:` and
 the gate order, classes in ladder order; the three reasons D18 gives no next
 step take one each, in D18's form: `main-worktree` "never removed by project
 clean", `unsupported-path-bytes` "rename the path to valid UTF-8" (P6-2), and
-`not-requested` "eligible too; name it with --worktree to remove it", so that
+`not-requested` "name it with --worktree to plan its removal", so that
 every group carries a next step, and so does every gate's `target-excluded`
 message but the class gate's, which keeps its message with none (lead
-rulings R-57, withdrawing R-45(3), and R-59 D9); a report prints the
+rulings R-57, withdrawing R-45(3), R-59 D9 and R-62); a report prints the
 baseline layout, each null as `unknown`; an `--all-safe` plan, and a
 single-mode `--action remove` plan, print "D18 preview layout", the
 single-mode one with `Selected (1):` and the `not-requested` group among the

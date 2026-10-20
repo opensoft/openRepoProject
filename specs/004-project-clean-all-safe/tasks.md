@@ -1312,8 +1312,8 @@ These run inside their lanes, after T047 (Lanes, above).
   Add `test_clean_the_preview_says_what_keeps_each_row_single_mode` there
   too (`--apply --action remove --worktree P`, standard input not a terminal
   and no `--yes`, beside other eligible rows: the plan prints `Selected
-  (1):` with P, the excluded groups with `  not-requested (K): eligible too;
-  name it with --worktree to remove it` over the other eligible rows, and the
+  (1):` with P, the excluded groups with `  not-requested (K): name it
+  with --worktree to plan its removal` over the other eligible rows, and the
   residual-window line; exit 2 and nothing removed, whichever of T047's
   baseline confirmation and T053's `confirmation-required` refuses; lead
   ruling R-59 D8).
@@ -1512,7 +1512,9 @@ carrying the reason the gate order gives.
   adding a second registry entry that names a present worktree's path, both
   entries then `registration-mismatch` (lead rulings R-57 and R-59 D6):
   `inspection-error`, an incomplete plan, exit 2 under `--apply`, nothing
-  removed). Scenario: "Every protected classifier".
+  removed; naming one of the two entries with `--apply --action remove
+  --worktree` refuses with `inspection-incomplete`, exit 2, and nothing is
+  removed, lead ruling R-62). Scenario: "Every protected classifier".
   — files: `tests/test_clean_gates.py`
   — verify: `python3 -c "import sys,unittest as u;L=u.defaultTestLoader;f=lambda s:[i for t in s for i in (f(t) if isinstance(t,u.TestSuite) else [t.id()])];I=[i for i in f(L.discover('tests',pattern=sys.argv[1])) if not i.startswith('unittest.')];A=sys.argv[2:];M=[a for a in A if not any(a in ('*',i.split('.')[-1]) for i in I)];[print('not collected:',m) for m in M];[print(e) for e in L.errors];sys.exit(1 if M or L.errors or not A else 0)" test_clean_gates.py 'test_clean_every_protected_classifier' 'test_clean_every_protected_classifier_incomplete_copy'`
 - [ ] T062 [P] [US2] [O] Add to `tests/test_clean_gates.py`:

@@ -148,7 +148,7 @@ tests "Submodules", "Hidden local state" and "Every protected classifier".
 | Run | Expected |
 | --- | --- |
 | `p clean "$R" --apply --action remove --worktree "$W/a" --yes --json` | one document: the apply result record, one `removed` target whose `command` is the pinned removal vector of the contract, `exit_code: 0`; the plan on standard error; branch `a` kept |
-| `p clean "$R" --apply --action remove --worktree "$W/a" < /dev/null` | the plan: `Selected (1):` with `$W/a`; among the excluded groups `  not-requested (3): eligible too; name it with --worktree to remove it` over `$W/b`, `$W/c` and `$W/f` (gate 6 comes before the reflog gate); "D18 residual-window line"; then `confirmation-required`, `exit=2`; nothing removed (lead ruling R-59 D8) |
+| `p clean "$R" --apply --action remove --worktree "$W/a" < /dev/null` | the plan: `Selected (1):` with `$W/a`; among the excluded groups `  not-requested (3): name it with --worktree to plan its removal` over `$W/b`, `$W/c` and `$W/f` (gate 6 comes before the reflog gate); "D18 residual-window line"; then `confirmation-required`, `exit=2`; nothing removed (lead ruling R-59 D8) |
 | `p clean "$R" --apply --action remove --worktree "$T/nowhere" --yes` | `worktree-not-found`, `exit=2` |
 | `p clean "$R" --apply --action remove --worktree "$W/d" --yes` | `target-excluded`, reason `dirty`, `exit=2` |
 | `cd "$W/b"; p clean "$R" --apply --action remove --worktree "$W/b" --yes` | `Cannot remove the current worktree.`, `exit=2` |
