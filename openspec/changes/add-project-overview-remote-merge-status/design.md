@@ -23,7 +23,11 @@ read of `e198548` and Codex's three findings on it (C-24 to C-27), with the
 lead's C-28 and C-29 on two points found in applying them; its edits to
 `specs/project-overview/spec.md`, agreed by lane openRepoProject-4 on
 2026-10-20, are committed (`6fe8a5e`; `proposal.md`, Dependencies and
-Sequencing).
+Sequencing). Round C6 applies Codex's finding on `67e43ae` (C-30), the
+bounded inspection of a remote's URL; this design describes
+`specs/project-overview/spec.md` as round C6 leaves it, written but held for
+lane openRepoProject-4 and not committed, and until it agrees the committed
+file is the one it agreed in round C5 (`6fe8a5e`).
 
 Citations follow `proposal.md`: the packet at `da33d92`; APO, CAS, PRS and
 `project:N` at main `961c405`, which main `e9d6711` holds unchanged for them
@@ -66,6 +70,7 @@ The rulings and the packet's boundary map to the decisions:
 | C-27: one sentinel byte past each read bound | D6 |
 | C-28: a key past the 64th stays `request-cap` at an expiry | D4, D5, D7 |
 | C-29: one sentinel byte past each remote-target read's 64 KiB | D2 |
+| C-30: a remote's URL held in memory only to derive the `owner/repository` and detect its user information | D2, D3 |
 | C-10, L-12: CI on Linux only | Migration Plan |
 
 What in `project` shapes the approach (at `961c405`; features 004 and 005
@@ -142,8 +147,10 @@ move these lines, and this change's feature re-pins them):
   pull request for exactly its head, within the overview's 64 s bound.
 - Give every failure one explicit reason, and let nothing remote reach a
   local result.
-- Keep `project` away from every credential, and let `project` start `gh`
-  only with the fixed query and its switches.
+- Let `project` keep, show and use no credential, inspecting a remote's URL
+  in memory only to derive the `owner/repository` and detect its user
+  information (C-30), and let `project` start `gh` only with the fixed query
+  and its switches.
 - Make an uncut `--remote` run's `remote` fields a function of the answers
   alone.
 
@@ -208,7 +215,10 @@ Any other failure, a budget reached or a stop at the deadline gives
 an output of exactly 64 KiB from a longer one, which fails the read (C-29),
 and its standard error is drained and discarded, never kept for a message,
 because Git may echo the remote's name or URL there. The URL lives in memory
-only for D3's judgement.
+only while D3 derives the `owner/repository` and detects the URL's user
+information; after that no part of the user information is retained or
+compared, none is ever printed, logged, sent or used to authenticate, and the
+URL is never forwarded with it (C-30).
 
 The two reads are counted in the envelope's `probes`, as lane
 openRepoProject-4's fourth option has it (C-9): they are Git children, so
@@ -260,7 +270,10 @@ In this order, the first that applies deciding:
 
 What passes is `owner/repository`, the only part of the URL kept. The dedupe
 key compares it without case. No reason carries the URL, and nothing of the
-URL is logged.
+URL is logged. The user information is tested only by steps 1 and 3, for its
+presence, for a `:` and for a user other than `git`, and it is dropped with
+the URL once the judgement is made, whatever its outcome; the comparison with
+`git` is part of deriving the identity, never made after it (C-30).
 
 ### D4. The query set, the keys and their order
 
