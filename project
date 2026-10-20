@@ -2725,6 +2725,7 @@ def inspect_repository(directory, run, refresh=False, *, repeat_identity_at_root
     refs = repo["refs"] = outcome.result
     try:
         declared = None if root is None else declared_tracking_branch(root)
+        repo["declared"] = declared  # the manifest's raw tracking_branch, None for none: revalidated as written (R-77)
         target = repo["merge_target"] = resolve_merge_target(refs, declared)
     except Refused as exc:
         repo["merge_target_refusal"] = exc
@@ -4384,13 +4385,13 @@ def make_target(plan, row):
     return target
 
 
-# The planned values revalidate() compares on the re-read row (T055): the
-# baseline signature fields (cleanup_signature(), project:494-497 at 961c405)
-# and `locked` (design D7).
-REVALIDATED_FIELDS = ("path", "branch", "head", "present", "dirty", "ignored_files", "upstream", "ahead",
-                      "behind", "remote_present", "merged_into_target", "current", "classification",
-                      "locked")
+# The repository identity's fields, compared at every revalidation and first
+# in every rescan (design D7; data-model.md, "Repository identity").
 IDENTITY_FIELDS = ("root", "common_dir", "dev", "ino")
+ORIGIN_REFS = b"refs/remotes/origin/"
+ORIGIN_HEAD_REF = ORIGIN_REFS + b"HEAD"
+# A manifest that could not be re-read: never equal to any planned value.
+UNREADABLE = object()
 
 
 def reconciliation_record(registry_entry_present, path_present, branch_present, branch_sha):
@@ -4434,47 +4435,286 @@ def _branch_evidence(target, refs):
     return False, None
 
 
-def revalidate(plan, target, run):
-    """Revalidate target after the confirmation, before its removal (T055,
-    this phase's body; design D7, FR-046; lead ruling R-56 Q-13): read the
-    repository afresh through the evidence model, inspect_repository(root,
-    run, refresh=True), never its memo, which would hand back the planned
-    evidence, and rebuild the target's row by worktree_rows(); then compare
-    the repository identity, the merge target {name, source, sha} and the
-    row's REVALIDATED_FIELDS with the plan's. A re-read that fails, a row that
-    is gone, and any difference refuse the target with `state-changed`. T084
-    replaces this body with D7's targeted check and its other reasons.
+def _row_ref(row):
+    """The full refname of a selected row's branch, as bytes."""
+    return b"refs/heads/" + row["branch"].encode("utf-8", "surrogateescape")
 
-    Sets target["probes_performed"], the Git children this revalidation ran,
-    and returns None when nothing differs, or (reason, reconciliation): the
-    record from that same re-read, its registry and branch fields null where
-    the listing did not run or the repository identity differs, and the
-    path's presence the re-read row's, or one lstat of the planned path where
-    no row was rebuilt."""
-    before = run.probes
-    raw = target["path"]
-    repo = inspect_repository(plan.root, run, refresh=True)
-    planned = None if plan.evidence is None else plan.evidence["identity"]
-    identity = repo["identity"]
-    same_repository = (identity is not None and planned is not None
-                       and all(identity[key] == planned[key] for key in IDENTITY_FIELDS))
-    records = repo["records"] if same_repository else None
-    matches = [record for record in records or () if record["path"] == raw]
-    rows = worktree_rows(repo, run, records=matches[:1]) if matches else []
-    row = rows[0] if rows else None
-    merge_target = repo["merge_target"]
-    changed = (not same_repository or bool(repo["errors"]) or repo["merge_target_refusal"] is not None
-               or merge_target is None or plan.merge_target is None
-               or any(merge_target[key] != plan.merge_target[key] for key in MERGE_TARGET_KEYS)
-               or row is None or any(row.get(field) != target.row.get(field) for field in REVALIDATED_FIELDS))
-    target["probes_performed"] = run.probes - before
-    if not changed:
+
+def narrowed_ref_patterns(plan, declared=None):
+    """The patterns of revalidation's one ref listing (T084; design D7;
+    BA:686-693 at da33d92; contracts/project-clean.md, "Git children", the
+    narrowed ref listing), full refnames as bytes, each once, in this order:
+    under refs/heads/, the merge target, the manifest's candidate less a
+    leading `origin/` (the plan's, and declared, the fresh read's, when it
+    differs), the branch the plan's `origin/HEAD` named, `main` and `master`;
+    then refs/remotes/origin/HEAD; then each selected branch and the
+    upstream refname row 6 gave it when the plan was built, a deleted one
+    included. `for-each-ref` matches a pattern literally, as a whole refname
+    or a leading part up to a slash, and a ref name holds no glob character,
+    so the listing holds at least these refs. A pure function of the plan."""
+    evidence = plan.evidence or {}
+    planned = {ref["refname"]: ref for ref in evidence.get("refs") or ()}
+    names = [plan.merge_target["name"].encode("utf-8", "surrogateescape")] if plan.merge_target else []
+    for value in (evidence.get("declared"), declared):
+        if isinstance(value, str):
+            names.append(value.removeprefix("origin/").encode("utf-8", "surrogateescape"))
+    origin_head = planned.get(ORIGIN_HEAD_REF)
+    if origin_head is not None and (origin_head["symref"] or b"").startswith(ORIGIN_REFS):
+        names.append(origin_head["symref"][len(ORIGIN_REFS):])
+    patterns = [b"refs/heads/" + name for name in (*names, b"main", b"master")] + [ORIGIN_HEAD_REF]
+    for row in plan.selected or ():
+        patterns.append(_row_ref(row))
+        upstream = (planned.get(_row_ref(row)) or {}).get("upstream")
+        if upstream:
+            patterns.append(upstream)
+    return list(dict.fromkeys(patterns))
+
+
+def repository_identity(root, run):
+    """The repository identity at root, the command directory (design D7):
+    the identity probe (row 3, one Git child, or one per option where its
+    output needs it), then the realpaths of the toplevel and the common
+    directory and the lstat of that directory, by filesystem calls. Returns
+    {root, common_dir, dev, ino, superproject}, or None when the probe failed
+    or a call gave no value."""
+    values, error = identity_probe(root, run)
+    if error is not None:
         return None
-    registry_entry_present = None if records is None else bool(matches)
-    path_present = row["present"] if row is not None else path_presence(raw)
-    branch_present, branch_sha = _branch_evidence(target, repo["refs"] if same_repository else None)
-    return "state-changed", reconciliation_record(registry_entry_present, path_present, branch_present,
-                                                  branch_sha)
+    try:
+        common_dir = _realpath(values[1])
+        found = _fs("lstat", os.lstat, common_dir)
+        toplevel = _realpath(values[0])
+    except EvidenceError:
+        return None
+    return {"root": toplevel, "common_dir": common_dir, "dev": found.st_dev, "ino": found.st_ino,
+            "superproject": values[2]}
+
+
+def same_repository(found, planned):
+    """Whether found, repository_identity()'s value, is the planned identity:
+    every one of IDENTITY_FIELDS equal, and no superproject."""
+    return (found is not None and planned is not None and found["superproject"] is None
+            and all(found[key] == planned[key] for key in IDENTITY_FIELDS))
+
+
+def reread_manifest(root):
+    """The manifest's raw `tracking_branch` at root, re-read as the plan read
+    it (declared_tracking_branch(), one bounded filesystem call), or
+    UNREADABLE when it refuses: unparseable, over 1 MiB, a wrong kind or a
+    read cut at its budget."""
+    try:
+        return declared_tracking_branch(root)
+    except Refused:
+        return UNREADABLE
+
+
+def _listing(run, root, args, subcommand, parser):
+    """One read-only Git child at root through _git(): its parser's result,
+    or None when it failed, timed out or met the deadline."""
+    outcome, error = _git(run, root, args, subcommand, parser)
+    return None if error is not None else outcome.result
+
+
+def _upstream_evidence(ref, refs):
+    """(upstream, remote_present, ahead, behind, upstream_oid) of a branch's
+    record in refs, a {refname: record} map, as row_evidence() derives them
+    from row 6, so that a null in the plan and a null again compare equal."""
+    if ref["upstream_short"] is None:
+        return None, None, None, None, None
+    tracked = refs.get(ref["upstream"])
+    oid = tracked["objectname"] if ref["remote_present"] and tracked else None
+    return _evidence_text(ref["upstream_short"]), ref["remote_present"], ref["ahead"], ref["behind"], oid
+
+
+def _same_merge_target(plan, refs, declared, patterns):
+    """Whether the merge target re-resolved over refs, the fresh listing, with
+    declared, the fresh manifest value, is the plan's {name, source, sha}; and,
+    where the listing was narrowed to patterns, whether an `origin/HEAD` that
+    names a branch outside it is ruled out, since the listing cannot show that
+    branch's existence (BA:690-693 at da33d92; lead ruling R-77 (c))."""
+    if plan.merge_target is None:
+        return False
+    try:
+        fresh = resolve_merge_target(refs, declared)
+    except Refused:
+        return False
+    if any(fresh[key] != plan.merge_target[key] for key in MERGE_TARGET_KEYS):
+        return False
+    if patterns is not None:
+        for ref in refs:
+            symref = ref["symref"] or b""
+            if (ref["refname"] == ORIGIN_HEAD_REF and symref.startswith(ORIGIN_REFS)
+                    and b"refs/heads/" + symref[len(ORIGIN_REFS):] not in patterns):
+                return False
+    return True
+
+
+def take_rescan_part(plan, target, run):
+    """The repository part a rescan left on run for this target (T085), or
+    None: the identity, the manifest value, the registry listing and the ref
+    listing of the rescan that followed the previous selected target's
+    removal, taken once, and only when that target is the selected row just
+    before this one in this run, which then ended a plain `removed` (lead
+    ruling R-77 (b)). Any part left is dropped."""
+    part = getattr(run, "rescan_part", None)
+    run.rescan_part = None
+    selected = list(plan.selected or ())
+    index = next((at for at, row in enumerate(selected) if row is target.row), None)
+    if part is None or not index or part["after"] is not selected[index - 1]:
+        return None
+    return part
+
+
+def revalidation_difference(plan, target, run, part, seen):
+    """The first difference of target's revalidation, its reason, or None
+    (T084; design D7; the project-clean-review-safety delta, rs:66-96;
+    data-model.md, "Revalidation step and probes_performed"). Steps 1 to 4
+    come from part, the previous target's rescan, when there is one (T085),
+    and are read here otherwise. seen receives what the steps read for the
+    reconciliation: the registry listing, the ref listing, and the target's
+    own lstat.
+
+    1. The repository identity at the command directory equals the plan's,
+       else `identity-changed`.
+    2. The manifest's `tracking_branch`, re-read, equals the plan's as
+       written, its absence included (lead ruling R-77), else
+       `state-changed`.
+    3. The registry listing names each checked row's path once, else
+       `identity-changed`, with its `locked` as planned, else
+       `state-changed`.
+    4. The narrowed ref listing (narrowed_ref_patterns()): each checked
+       row's registry branch and head and its branch's tip as planned, else
+       `branch-changed`; its upstream, `remote_present`, `ahead`, `behind` and
+       upstream object as planned, else `state-changed`; then the merge
+       target re-resolved as planned, else `state-changed`.
+    5. By filesystem reads, each checked row's path present with its planned
+       `dev` and `ino`, and its two-way registration holding with its planned
+       `admin_id` (verify_registration()), else `identity-changed`; then the
+       target's `modules` check, else `contains-submodule`.
+    6. The combined status probe in the target, which must print no record,
+       else `state-changed`.
+    7. The hidden-state probe in the target: its own reason
+       (`contains-submodule` or `hidden-local-state`).
+
+    The checked rows are the target's own, or for the first selected target
+    every selected row: its revalidation is the preflight of every selected
+    target in steps 3 to 5, so that a difference on any of them refuses the
+    first target and nothing is removed (research.md R16, lead ruling R-41,
+    LQ-4); steps 6 and 7, the ignored-file state and the classification
+    among them, run in each target's own revalidation. A value null in the
+    plan and null again is no difference; a value that cannot be re-read is
+    one, with its step's reason: a failed registry listing `identity-changed`,
+    a failed ref listing `state-changed`, a failed `modules` check
+    `contains-submodule`, a failed hidden-state probe `hidden-local-state`."""
+    evidence = plan.evidence or {}
+    planned = evidence.get("identity")
+    root = os.fsencode(target.root)
+    selected = list(plan.selected or ())
+    rows = selected if selected and target.row is selected[0] else [target.row]
+
+    found = part["identity"] if part else repository_identity(root, run)
+    if not same_repository(found, planned):
+        return "identity-changed"
+
+    declared = part["declared"] if part else reread_manifest(root)
+    expected = evidence.get("declared", UNREADABLE)
+    if declared is UNREADABLE or type(declared) is not type(expected) or declared != expected:
+        return "state-changed"
+
+    records = seen["records"] = (part["records"] if part else _listing(
+        run, root, ["worktree", "list", "--porcelain", "-z"], "worktree list", WorktreeListParser()))
+    if records is None:
+        return "identity-changed"
+    entries = []
+    for row in rows:
+        matches = [record for record in records if record["path"] == row.raw_path]
+        if len(matches) != 1:
+            return "identity-changed"
+        if matches[0]["locked"] != row["locked"]:
+            return "state-changed"
+        entries.append((row, matches[0]))
+
+    if part:
+        refs, patterns = part["refs"], None
+    else:
+        patterns = narrowed_ref_patterns(plan, declared)
+        refs = _listing(run, root, ["for-each-ref", "--format=" + REF_FORMAT, *patterns], "for-each-ref",
+                        RefParser())
+    seen["refs"] = refs
+    if refs is None:
+        return "state-changed"
+    by_name = {ref["refname"]: ref for ref in refs}
+    for row, entry in entries:
+        ref = by_name.get(_row_ref(row))
+        if (entry["branch"] != _row_ref(row) or entry["head"] != row["head"] or ref is None
+                or ref["objectname"] != row["head"]):
+            return "branch-changed"
+    for row, _ in entries:
+        if _upstream_evidence(by_name[_row_ref(row)], by_name) != (
+                row["upstream"], row["remote_present"], row["ahead"], row["behind"], row.upstream_oid):
+            return "state-changed"
+    if not _same_merge_target(plan, refs, declared, patterns):
+        return "state-changed"
+
+    common_dir = planned["common_dir"]
+    for row in rows:
+        result = _lstat(row.raw_path)
+        present = presence_from_lstat(result)[0]
+        if row is target.row:
+            seen["path_present"] = present
+        if not present or (result.st_dev, result.st_ino) != (row.dev, row.ino):
+            return "identity-changed"
+        try:
+            registered, admin_id = verify_registration(row.raw_path, common_dir, False)
+        except EvidenceError:
+            return "identity-changed"
+        if not registered or admin_id != row.admin_id:
+            return "identity-changed"
+    reason, error = modules_check(common_dir, target.row.admin_id, run)
+    if reason is not None or error is not None:
+        return "contains-submodule"
+
+    outcome, error = status_probe(target.row.raw_path, run)
+    status = None if error is not None else outcome.result
+    if (status is None or status["records"] or status["ignored_files_truncated"] or status["dirty"] is not False
+            or status["ignored_files"] != 0):
+        return "state-changed"
+
+    reason, error = hidden_state_probe(target.row.raw_path, run)
+    if reason is not None:
+        return reason
+    return "hidden-local-state" if error is not None else None
+
+
+def revalidate(plan, target, run):
+    """Revalidate target after the confirmation, before its removal (T084;
+    design D7, FR-046, FR-047; lead rulings R-22, R-41 and R-77): D7's
+    targeted check, revalidation_difference(), at most five Git children,
+    never the full report and never the memo. Its repository part (the
+    identity probe, the manifest, the registry listing and the ref listing)
+    is the previous target's rescan when take_rescan_part() hands one over
+    (T085), and is read here otherwise.
+
+    Sets target["probes_performed"], the Git children of this revalidation,
+    a shared rescan's included, and returns None when nothing differs, or
+    (reason, reconciliation): the record from the reads that refused it
+    (plan review M13), its registry field from the registry listing and its
+    branch fields from the ref listing, each null where its listing did not
+    run, and the path's presence from the target's own lstat, or from one
+    lstat of the planned path where the revalidation stopped before it."""
+    before = run.probes
+    part = take_rescan_part(plan, target, run)
+    seen = {"records": None, "refs": None, "path_present": UNREADABLE}
+    reason = revalidation_difference(plan, target, run, part, seen)
+    target["probes_performed"] = run.probes - before + (part["children"] if part else 0)
+    if reason is None:
+        return None
+    raw = target["path"]
+    registry_entry_present = None if seen["records"] is None else any(
+        record["path"] == raw for record in seen["records"])
+    path_present = path_presence(raw) if seen["path_present"] is UNREADABLE else seen["path_present"]
+    branch_present, branch_sha = _branch_evidence(target, seen["refs"])
+    return reason, reconciliation_record(registry_entry_present, path_present, branch_present, branch_sha)
 
 
 def removal_exit_status(outcome):

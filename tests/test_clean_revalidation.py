@@ -718,6 +718,60 @@ class RevalidationTests(clean_support.CleanCase):
         self.assertEqual([record for record in clean_support.child_log(log) if is_removal(record)], [])
         self.assertTrue(all(tree.is_dir() for tree in trees))
 
+    # D7's bound, by the counting wrapper (lead rulings R-68 (d) and R-73 (f)).
+
+    def test_clean_revalidation_spawns_at_most_five_children(self):
+        # Five rows: the main worktree, three selected targets, and a merged
+        # worktree made dirty, which is not selected. The log is emptied at the
+        # question, so it holds exactly the children after confirmation.
+        root, trees = self.batch("bound", count=3)
+        dirty = self.merged_worktree("004-s", path=self.base / "bound" / "trees" / "004-s", root=root)
+        (dirty / "uncommitted").write_text("keep")
+        env, log = self.counting()
+        result = self.apply(root, env=env, log=log)
+        self.assertEqual(self.stages(result), [(str(tree), "removed", None) for tree in trees])
+        self.assertEqual(result.status, 0, result.stderr)
+        records = clean_support.child_log(log)
+        at = [index for index, child in enumerate(records) if is_removal(child)]
+        self.assertEqual(len(at), 3)
+        segments = [records[:at[0]], records[at[0] + 1:at[1]], records[at[1] + 1:at[2]], records[at[2] + 1:]]
+        words = [[subcommand(child)[0] for child in segment] for segment in segments]
+        # The first revalidation: the identity probe, the registry listing, one
+        # narrowed ref listing, the status probe and the hidden-state probe.
+        self.assertEqual(words[0], ["rev-parse", "worktree", "for-each-ref", "status", "ls-files"])
+        narrowed = subcommand(segments[0][2])
+        self.assertEqual(narrowed[2:], ["refs/heads/main", "refs/heads/master", "refs/remotes/origin/HEAD",
+                                        "refs/heads/001-p", "refs/remotes/origin/001-p",
+                                        "refs/heads/002-q", "refs/remotes/origin/002-q",
+                                        "refs/heads/003-r", "refs/remotes/origin/003-r"])
+        # Interim until T085: each later target's revalidation runs its own five
+        # children after the previous target's three-child rescan.
+        rescan = ["rev-parse", "worktree", "for-each-ref"]
+        self.assertEqual(words[1], rescan + words[0])
+        self.assertEqual(words[2], rescan + words[0])
+        self.assertEqual(words[3], rescan, "the final rescan spawns three")
+        self.assertEqual([target["probes_performed"] for target in result.document["targets"]], [5, 5, 5])
+        # No merged-set listing, and no status probe of a row not selected; each
+        # status and ls-files child names its own target, every other child the
+        # command directory.
+        after = [child for child in records if not is_removal(child)]
+        self.assertFalse(any(any(word.startswith("--merged") for word in subcommand(child)) for child in after))
+        targets_of = {str(tree) for tree in trees}
+        for child in after:
+            with self.subTest(argv=child.argv):
+                if subcommand(child)[0] in ("status", "ls-files"):
+                    self.assertIn(directory(child), targets_of)
+                else:
+                    self.assertEqual(directory(child), str(root))
+        for child in records:
+            if is_removal(child):
+                self.assertEqual(directory(child), str(root))
+        # The record counts every child once: probes the planning's and these.
+        probes, operations = result.document["probes"], result.document["operations"]
+        planning = probes["estimated"] - 5 * 3 - 3
+        self.assertEqual(probes["performed"], planning + len(after))
+        self.assertEqual(operations, {"estimated": 3, "performed": 3})
+
 
 if __name__ == "__main__":
     unittest.main()
