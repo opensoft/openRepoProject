@@ -592,6 +592,15 @@ class GatesTests(clean_support.CleanCase):
         self.assert_refused_target(result, unmerged, "remote-gone",
                                    TEXT["target_excluded_class"].format(CLASS="remote-gone"))
         self.assertEqual(self.snapshot(root), before, "the unmerged one is preserved")
+        # --worktree naming the merged one with --yes removes it and keeps its branch.
+        head = self.git(merged, "rev-parse", "HEAD").strip()
+        result, records = self.run_counted("clean", root, "--apply", "--action", "remove", "--worktree", merged,
+                                           "--yes")
+        self.assert_status(result, 0)
+        self.assertEqual([argv_words(record)[-1] for record in removals(records)], [str(merged)])
+        self.assertFalse(merged.exists())
+        self.assertEqual(self.git(root, "rev-parse", "refs/heads/001-merged").strip(), head, "the branch is kept")
+        self.assertTrue(unmerged.is_dir(), "the unmerged one is preserved")
 
     def test_clean_a_deleted_upstream_is_remote_gone(self):
         root = self.repo()
