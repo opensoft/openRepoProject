@@ -2110,7 +2110,7 @@ US3, US7 and US9; US5's text lane follows it (analyze M2 and L9).
 
 ### Tests for User Story 4
 
-- [ ] T079 [US4] [S] Add to `tests/test_clean_revalidation.py`:
+- [x] T079 [US4] [S] Add to `tests/test_clean_revalidation.py`:
   `test_clean_worktree_changes_while_confirmation_is_pending` (the question
   hook dirties the selected worktree: `refused`, `state-changed`, exit 2, the
   worktree preserved); `test_clean_new_worktree_and_pre_removal_changes` (a
@@ -2128,7 +2128,7 @@ US3, US7 and US9; US5's text lane follows it (analyze M2 and L9).
   pending"; "New worktree and pre-removal changes"; "Changed later target".
   — files: `tests/test_clean_revalidation.py`
   — verify: `python3 -c "import sys,unittest as u;L=u.defaultTestLoader;f=lambda s:[i for t in s for i in (f(t) if isinstance(t,u.TestSuite) else [t.id()])];I=[i for i in f(L.discover('tests',pattern=sys.argv[1])) if not i.startswith('unittest.')];A=sys.argv[2:];M=[a for a in A if not any(a in ('*',i.split('.')[-1]) for i in I)];[print('not collected:',m) for m in M];[print(e) for e in L.errors];sys.exit(1 if M or L.errors or not A else 0)" test_clean_revalidation.py 'test_clean_worktree_changes_while_confirmation_is_pending' 'test_clean_new_worktree_and_pre_removal_changes' 'test_clean_changed_later_target'`
-- [ ] T080 [US4] [O] Add to `tests/test_clean_revalidation.py`:
+- [x] T080 [US4] [O] Add to `tests/test_clean_revalidation.py`:
   `test_clean_target_directory_replaced` (at the question, the first target
   moved aside and a new directory put at its path, and in a second run a
   symlink: `refused` with `identity-changed`, no child spawned, later targets
@@ -2142,7 +2142,7 @@ US3, US7 and US9; US5's text lane follows it (analyze M2 and L9).
   registration changed"; "Parent directory swapped".
   — files: `tests/test_clean_revalidation.py`
   — verify: `python3 -c "import sys,unittest as u;L=u.defaultTestLoader;f=lambda s:[i for t in s for i in (f(t) if isinstance(t,u.TestSuite) else [t.id()])];I=[i for i in f(L.discover('tests',pattern=sys.argv[1])) if not i.startswith('unittest.')];A=sys.argv[2:];M=[a for a in A if not any(a in ('*',i.split('.')[-1]) for i in I)];[print('not collected:',m) for m in M];[print(e) for e in L.errors];sys.exit(1 if M or L.errors or not A else 0)" test_clean_revalidation.py 'test_clean_target_directory_replaced' 'test_clean_admin_registration_changed' 'test_clean_parent_directory_swapped'`
-- [ ] T081 [US4] [S] Add to `tests/test_clean_revalidation.py`:
+- [x] T081 [US4] [S] Add to `tests/test_clean_revalidation.py`:
   `test_clean_state_changes_before_revalidation` (at the question, in turn: an
   ignored file created in the target, a commit on the merge target, the
   manifest's `tracking_branch` edited to another existing branch, the manifest
@@ -2168,7 +2168,7 @@ US3, US7 and US9; US5's text lane follows it (analyze M2 and L9).
   removal"; "Deleted upstream reappears before revalidation".
   — files: `tests/test_clean_revalidation.py`
   — verify: `python3 -c "import sys,unittest as u;L=u.defaultTestLoader;f=lambda s:[i for t in s for i in (f(t) if isinstance(t,u.TestSuite) else [t.id()])];I=[i for i in f(L.discover('tests',pattern=sys.argv[1])) if not i.startswith('unittest.')];A=sys.argv[2:];M=[a for a in A if not any(a in ('*',i.split('.')[-1]) for i in I)];[print('not collected:',m) for m in M];[print(e) for e in L.errors];sys.exit(1 if M or L.errors or not A else 0)" test_clean_revalidation.py 'test_clean_state_changes_before_revalidation' 'test_clean_branch_advances_before_removal' 'test_clean_deleted_upstream_reappears_before_revalidation'`
-- [ ] T082 [US4] [O] Add to `tests/test_clean_revalidation.py`:
+- [x] T082 [US4] [O] Add to `tests/test_clean_revalidation.py`:
   `test_clean_untracked_file_under_status_showuntrackedfiles_no`
   (`status.showUntrackedFiles=no` in the `GIT_CONFIG_GLOBAL` file, and an
   untracked file created by the pre-remove hook: Git refuses with 128, the
@@ -2186,7 +2186,7 @@ US3, US7 and US9; US5's text lane follows it (analyze M2 and L9).
   configuration"; "Ignored file in the residual window".
   — files: `tests/test_clean_revalidation.py`
   — verify: `python3 -c "import sys,unittest as u;L=u.defaultTestLoader;f=lambda s:[i for t in s for i in (f(t) if isinstance(t,u.TestSuite) else [t.id()])];I=[i for i in f(L.discover('tests',pattern=sys.argv[1])) if not i.startswith('unittest.')];A=sys.argv[2:];M=[a for a in A if not any(a in ('*',i.split('.')[-1]) for i in I)];[print('not collected:',m) for m in M];[print(e) for e in L.errors];sys.exit(1 if M or L.errors or not A else 0)" test_clean_revalidation.py 'test_clean_untracked_file_under_status_showuntrackedfiles_no' 'test_clean_git_s_own_check_runs_on_the_pinned_configuration' 'test_clean_ignored_file_in_the_residual_window'`
-- [ ] T083 [US4] [O] Add to `tests/test_clean_revalidation.py`:
+- [x] T083 [US4] [O] Add to `tests/test_clean_revalidation.py`:
   `test_clean_branch_advances_after_removal` (the post-remove hook advances the
   target's branch: `removed` with `branch-advanced-after-removal`,
   reconciliation `registry_entry_present: false`, `path_present: false`,
@@ -2213,7 +2213,7 @@ US3, US7 and US9; US5's text lane follows it (analyze M2 and L9).
 
 ### Implementation for User Story 4
 
-- [ ] T084 [US4] [O] Replace the body of `revalidate()` (region `apply`; D7,
+- [x] T084 [US4] [O] Replace the body of `revalidate()` (region `apply`; D7,
   FR-046, FR-047, R-22) with the targeted check, in this order and stopping at
   the first difference: the identity probe in the command directory; the
   manifest re-read through `declared_tracking_branch()` and the merge target
@@ -2245,7 +2245,7 @@ US3, US7 and US9; US5's text lane follows it (analyze M2 and L9).
   null (plan review M13).
   — files: `project`
   — verify: `python3 -c "import sys,re;t=open('project').read();A=sys.argv[1:];c=lambda r:t.split('# region '+r+'\n')[1].split('# endregion '+r+'\n')[0];M=[a for a in A if not ((a.split('%',1)[1] not in c(a.split('%',1)[0])) if '%' in a else (a.split('~',1)[1] in c(a.split('~',1)[0])) if '~' in a else re.search(r'^[a-z]*\s?'+re.escape(a.split(':',1)[1])+r'\b',c(a.split(':',1)[0]),re.M))];[print('region check failed:',m) for m in M];sys.exit(1 if M or not A else 0)" 'apply:narrowed_ref_patterns' && python3 project clean --help >/dev/null`
-- [ ] T085 [US4] [O] In `rescan()` and `decide_stage()` (region `apply`; D7,
+- [x] T085 [US4] [O] In `rescan()` and `decide_stage()` (region `apply`; D7,
   FR-035, FR-049): the rescan re-establishes the repository identity first, and
   where it differs every reconciliation field is null, `reconciled` is false,
   the target is `unknown` with `unconfirmed-removal`, and later targets are
@@ -2272,7 +2272,7 @@ US3, US7 and US9; US5's text lane follows it (analyze M2 and L9).
   T079 to T083 pass.
   — files: `project`, `tests/test_clean_revalidation.py`
   — verify: `python3 -c "import sys,unittest as u;L=u.defaultTestLoader;f=lambda s:[i for t in s for i in (f(t) if isinstance(t,u.TestSuite) else [t.id()])];I=[i for i in f(L.discover('tests',pattern=sys.argv[1])) if not i.startswith('unittest.')];A=sys.argv[2:];M=[a for a in A if not any(a in ('*',i.split('.')[-1]) for i in I)];[print('not collected:',m) for m in M];[print(e) for e in L.errors];sys.exit(1 if M or L.errors or not A else 0)" test_clean_revalidation.py 'test_clean_decide_stage_removed_needs_reconciled' 'test_clean_a_failed_rescan_ref_listing_is_not_removed' && python3 -m unittest discover -s tests -p 'test_clean_revalidation.py'`
-- [ ] T086 [US4] [S] Run the US4 module, every earlier module and the 96 tests: all
+- [x] T086 [US4] [S] Run the US4 module, every earlier module and the 96 tests: all
   pass.
   — files: (none)
   — verify: `python3 -m unittest discover -s tests -p 'test_clean_timing.py' && python3 -m unittest discover -s tests -p 'test_clean_harness.py' && python3 -m unittest discover -s tests -p 'test_clean_scrub.py' && python3 -m unittest discover -s tests -p 'test_clean_parsers.py' && python3 -m unittest discover -s tests -p 'test_clean_escaping.py' && python3 -m unittest discover -s tests -p 'test_clean_runner.py' && python3 -m unittest discover -s tests -p 'test_clean_evidence.py' && python3 -m unittest discover -s tests -p 'test_clean_guard.py' && python3 -m unittest discover -s tests -p 'test_clean_batch.py' && python3 -m unittest discover -s tests -p 'test_clean_apply.py' && python3 -m unittest discover -s tests -p 'test_clean_reflog.py' && python3 -m unittest discover -s tests -p 'test_clean_gates.py' && python3 -m unittest discover -s tests -p 'test_clean_revalidation.py' && python3 -m unittest discover -s tests -p 'test_project.py'`
