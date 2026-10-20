@@ -779,18 +779,17 @@ class RevalidationTests(clean_support.CleanCase):
     # T085: the rescan and the stage (lead rulings R-76 (a) and R-78 (e);
     # lane 3's H-1 and E1).
 
-    def after_remove_git(self, bin_dir, action):
-        """bin_dir/git: the real git, except that once a `worktree remove` has
-        run, every later child whose argument vector holds a word of action's
-        first element (every child when it is None) runs action's second
-        element, sh text, instead. Returns the environment with it first on
-        PATH."""
-        words, text = action
+    def after_remove_git(self, bin_dir, words=(), text=":", post=None):
+        """bin_dir/git: the real git, except that `worktree remove` runs post,
+        sh text, after the real removal when given, and that once a removal
+        has run every later child whose argument vector holds one of words (a
+        word or words, matched with spaces around them) runs text, sh text,
+        instead. Returns the environment with it first on PATH."""
         marker = Path(bin_dir) / "removed.marker"
-        test = "true" if words is None else " || ".join(
-            f'case " $* " in *" {word} "*) true;; *) false;; esac' for word in words)
+        test = " || ".join(f'case " $* " in *" {word} "*) true;; *) false;; esac' for word in words) or "false"
         script = (f"#!/bin/sh\nreal={shlex.quote(REAL_GIT)}\nmarker={shlex.quote(str(marker))}\n"
-                  'case " $* " in *" worktree remove "*) "$real" "$@"; status=$?; : > "$marker"; exit $status;; esac\n'
+                  'case " $* " in *" worktree remove "*)\n'
+                  f'  "$real" "$@"; status=$?; {post or ":"}; : > "$marker"; exit $status;;\nesac\n'
                   f'if [ -e "$marker" ] && {{ {test}; }}; then\n{text}\nfi\nexec "$real" "$@"\n')
         Path(bin_dir).mkdir(parents=True, exist_ok=True)
         path = Path(bin_dir) / "git"
@@ -805,20 +804,30 @@ class RevalidationTests(clean_support.CleanCase):
         outcome = project.DriverOutcome
         exited, ceiling = outcome(["git"], "complete", status=0), outcome(["git"], "timeout", status=-9)
         target = {"planned_sha": "a" * 40}
+
+        def unfinished(*values):
+            return project.UnfinishedRescan(record(*values))
+
         gone_unread = record(False, False, None, None)
         self.assertIs(gone_unread["reconciled"], False)
         cases = [
             (exited, gone_unread, ("unknown", "reconciliation-incomplete", [])),
             (ceiling, gone_unread, ("unknown", "removal-ceiling", [])),
-            # A failed registry listing, or a failed lstat, after exit 0.
-            (exited, record(None, False, True, "a" * 40), ("unknown", "reconciliation-incomplete", [])),
-            (exited, record(False, None, True, "a" * 40), ("unknown", "reconciliation-incomplete", [])),
-            # Lead ruling R-78 (e): every field null means the identity was found
-            # changed or lost, unless the rescan could not read it at all.
+            # Lead ruling R-78 (e), second amendment: a rescan read that failed or
+            # was cut marks the record (UnfinishedRescan), and a marked record
+            # is reconciliation-incomplete: a failed registry listing, lstat or
+            # ref listing, or an identity that could not be read.
+            (exited, unfinished(None, False, True, "a" * 40), ("unknown", "reconciliation-incomplete", [])),
+            (exited, unfinished(False, None, True, "a" * 40), ("unknown", "reconciliation-incomplete", [])),
+            (exited, unfinished(True, True, None, None), ("unknown", "reconciliation-incomplete", [])),
+            (exited, unfinished(None, None, None, None), ("unknown", "reconciliation-incomplete", [])),
+            (ceiling, unfinished(None, None, None, None), ("unknown", "removal-ceiling", [])),
+            # Unmarked: the reads gave values showing the removal not done, or
+            # the identity found lost or another one (every field null).
             (exited, record(None, None, None, None), ("unknown", "unconfirmed-removal", [])),
-            (exited, project.UnreadIdentity(record(None, None, None, None)),
-             ("unknown", "reconciliation-incomplete", [])),
-            (ceiling, project.UnreadIdentity(record(None, None, None, None)), ("unknown", "removal-ceiling", [])),
+            (exited, record(True, True, True, "a" * 40), ("unknown", "unconfirmed-removal", [])),
+            # A repository replaced or lost at the ceiling (LOW, pinned as built).
+            (ceiling, record(None, None, None, None), ("unknown", "removal-ceiling", [])),
             # The branch race after removal (T085; rs:210-214).
             (exited, record(False, False, True, "a" * 40), ("removed", None, [])),
             (exited, record(False, False, True, "b" * 40), ("removed", "branch-advanced-after-removal", [])),
@@ -827,13 +836,13 @@ class RevalidationTests(clean_support.CleanCase):
         ]
         for given, reconciliation, expected in cases:
             with self.subTest(outcome=given.name, reconciliation=reconciliation,
-                              unread=isinstance(reconciliation, project.UnreadIdentity)):
+                              marked=isinstance(reconciliation, project.UnfinishedRescan)):
                 decided = project.decide_stage(target, given, reconciliation)
                 self.assertEqual(decided, expected)
                 self.assertIn(decided[1], project.STAGE_REASONS[decided[0]])
         # The mark is the record's class alone: it compares and is written as
         # the plain record, so it never reaches a document.
-        marked = project.UnreadIdentity(record(None, None, None, None))
+        marked = unfinished(None, None, None, None)
         self.assertEqual(marked, record(None, None, None, None))
         self.assertEqual(json.dumps(marked, indent=2), json.dumps(record(None, None, None, None), indent=2))
         documents = [project.target_document(dict(
@@ -848,8 +857,8 @@ class RevalidationTests(clean_support.CleanCase):
         # removal has run, so the rescan cannot read the branch back.
         root, (tree,) = self.batch("ref-listing", count=1)
         planned = self.head(tree)
-        env = self.after_remove_git(self.base / "refs-fail-bin",
-                                    (["for-each-ref"], 'echo "fatal: fake for-each-ref failure" >&2; exit 1'))
+        env = self.after_remove_git(self.base / "refs-fail-bin", ["for-each-ref"],
+                                    'echo "fatal: fake for-each-ref failure" >&2; exit 1')
         result = self.run_json("clean", root, "--all-safe", "--apply", "--yes", "--json", env=env)
         self.assert_status(result, 1)
         [target] = result.document["targets"]
@@ -861,9 +870,10 @@ class RevalidationTests(clean_support.CleanCase):
         self.assertFalse(tree.exists())
         self.assertEqual(self.head(root, "refs/heads/001-p"), planned, "the branch is kept")
 
-    def test_clean_rescan_tells_a_lost_identity_from_an_unread_one(self):
-        # Lead ruling R-78 (e), as amended. The root moved away after the
-        # removal: the identity is lost, and the target is unconfirmed-removal.
+    def test_clean_rescan_marks_every_failed_read(self):
+        # Lead ruling R-78 (e), second amendment. The root moved away after the
+        # removal: the identity is found lost, the reads that ran gave values,
+        # and the target is unconfirmed-removal.
         root, (tree,) = self.batch("lost", count=1)
         env, log = self.counting({"post": when_target(tree, f"mv {shlex.quote(str(root))} "
                                                           f"{shlex.quote(str(root) + '.away')}")})
@@ -873,19 +883,42 @@ class RevalidationTests(clean_support.CleanCase):
         self.assertEqual(target["reconciliation"], record(None, None, None, None))
         self.assertEqual((result.status, result.document["exit_code"]), (1, 1))
 
-        # A git that kills itself in every child after the removal: no rescan
-        # read gives a value while the repository is still there, so the target
-        # is reconciliation-incomplete.
-        root, (tree,) = self.batch("unread", count=1)
-        env = self.after_remove_git(self.base / "killed-bin", (None, "kill -9 $$"))
-        result = self.apply(root, env=env)
-        [target] = result.document["targets"]
-        self.assertEqual((target["stage"], target["reason"], target["exit_status"]),
-                         ("unknown", "reconciliation-incomplete", 0))
-        self.assertEqual(target["reconciliation"], record(None, None, None, None))
-        self.assertEqual((result.status, result.document["exit_code"]), (1, 1))
-        self.assertFalse(tree.exists())
-
+        # Each rescan read failing alone after the removal child exits 0, then
+        # the registry listing, the ref listing and the lstat together after an
+        # established identity: the target is reconciliation-incomplete, exit 1.
+        # A Git child is killed by SIGKILL (`kill -9 $$` in a fake git); the
+        # lstat fails with EACCES once the directory holding the target is made
+        # unsearchable.
+        kill = "kill -9 $$"
+        cases = [
+            ("identity probe", ["rev-parse"], False, lambda sha: (None, None, None, None)),
+            ("registry listing", ["worktree list"], False, lambda sha: (None, False, True, sha)),
+            ("ref listing", ["for-each-ref"], False, lambda sha: (False, False, None, None)),
+            ("lstat", [], True, lambda sha: (False, None, True, sha)),
+            ("all but the identity", ["worktree list", "for-each-ref"], True, lambda sha: (None, None, None, None)),
+        ]
+        for case, words, unsearchable, values in cases:
+            with self.subTest(case):
+                if unsearchable and hasattr(os, "geteuid") and os.geteuid() == 0:
+                    self.skipTest("permission fixtures do not bind the superuser (effective uid 0)")
+                root, (tree,) = self.batch(case.replace(" ", "-"), count=1)
+                planned = self.head(tree)
+                holder = tree.parent
+                post = f"chmod 000 {shlex.quote(str(holder))}" if unsearchable else None
+                if unsearchable:
+                    self.addCleanup(os.chmod, holder, 0o755)
+                env = self.after_remove_git(self.base / f"{case.replace(' ', '-')}-bin", words, kill, post)
+                result = self.apply(root, env=env)
+                if unsearchable:
+                    os.chmod(holder, 0o755)
+                [target] = result.document["targets"]
+                self.assertEqual((target["stage"], target["reason"], target["exit_status"]),
+                                 ("unknown", "reconciliation-incomplete", 0))
+                self.assertEqual(target["reconciliation"], record(*values(planned)))
+                self.assertIs(target["reconciliation"]["reconciled"], False)
+                self.assertEqual((result.status, result.document["exit_code"]), (1, 1))
+                self.assertFalse(tree.exists())
+                self.assertEqual(self.head(root, "refs/heads/001-p"), planned)
 
 if __name__ == "__main__":
     unittest.main()
