@@ -418,6 +418,32 @@ class EvidenceTests(clean_support.CleanCase):
             self.assertEqual([(row["path"], row["classification"]) for row in result.document["worktrees"]],
                              [(str(feed), "protected-default")])
 
+    def test_clean_evidence_a_bare_repository_s_registry_listing_runs_where_the_argument_resolves(self):
+        """The project-command delta, pc:124-133 (lead ruling R-75 (j)): the
+        identity probe and the registry listing run in the directory the
+        argument resolves to, row 4 there because the main worktree is not
+        yet known; root being null for a bare repository, the repository-wide
+        probes after them run in its common directory. A bare repository is
+        reached through a linked worktree, since row 3 fails in its own
+        directory, and `clean` then refuses it, before any status probe."""
+        source = self.repo("source")
+        bare = self.base / "bare.git"
+        self.git(self.base, "clone", "-q", "--bare", source, bare)
+        tree = self.base / "bare-tree"
+        self.git(bare, "worktree", "add", "-q", tree, "main")
+        head = self.git(bare, "rev-parse", "refs/heads/main").strip()
+        common = os.path.realpath(bare)
+        result, records = self.counted("clean", tree)
+        self.assert_status(result, 2)
+        self.assertEqual((result.stdout, result.stderr),
+                         ("", "REFUSED: " + TEXT["target_not_repository_root"].format(PATH=tree) + "\n"))
+        self.assertEqual([command(record)[1:] for record in records if command(record)[:1] == ["-C"]],
+                         [[str(tree), *ROW_3], [str(tree), *ROW_4], [common, *ROW_6],
+                          [common, "for-each-ref", f"--merged={head}", "--format=%(refname)", "refs/heads"]],
+                         "rows 3 and 4 where the argument resolves; rows 6 and 7 in the common directory")
+        self.assertEqual(self.status_dirs(records), [])
+        self.assert_pinned(records)
+
     def test_clean_evidence_checks_registration_both_ways(self):
         # D7, FR-055: `<path>/.git` names `<common_dir>/worktrees/<id>`, whose
         # `gitdir` file names `<path>/.git`; a row whose registration disagrees
