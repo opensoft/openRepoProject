@@ -10,7 +10,7 @@ re-align step and wording, lane 3's delta read and Codex's re-review of
 `e1049b2` with the lead's rulings of 2026-10-20 resolved in round B5 (B-34 to
 B-37), lane 4's byte check of B-30's overview commit recorded in `tasks.md`
 2.2, and lane 3's folded read of `cf57956..fffc194` with Codex's finding on
-`fffc194` resolved in round B6 (B-38 to B-41); nothing here is ratified.
+`fffc194` resolved in round B6 (B-38 to B-42); nothing here is ratified.
 Governing issue:
 opensoft/openRepoProject#24, claimed by lane
 openRepoProject-5 (comment 6111257933); refs #6, the record of the project
@@ -37,7 +37,7 @@ named), and `PR19/rs` is `CAS/rs` as PR #19 amends it at that head.
 for the three extensions and for this one: L-1 to L-9 and B-1 to B-9 of
 2026-10-11, L-10 to L-15 and B-10 to B-15 of 2026-10-18, L-16 and L-17 of
 2026-10-19 with B-16 to B-24, the lead's council verdicts of that date, and
-B-25 to B-41 of 2026-10-20; A-n are the rulings for #23 that this proposal
+B-25 to B-42 of 2026-10-20; A-n are the rulings for #23 that this proposal
 cites. SA-n, QA-n and G1 to G5 are the alignment review's findings on this
 draft at `7290100`. P-n, S-n and AE-n are the council's concerns
 (product-advocate, systems-architect, adversary-engineer) on `9ebe9f0`, and M1
@@ -1038,19 +1038,21 @@ to B-37 (the table "Re-read and Codex Findings (round B5)" below):
   concern a stage that has removed an entry, and stand. One AND of "No time for
   a cache stage" pins both outcomes; design D1, D7, D8, D11, D12, D14 and Risks
   follow.
-- **B-35, the two drafts describe each other at today's heads** (A-25 for
-  #26). Design D4 described #23's joint fit at `ca96701`, "13 of its 16
-  targets ... 11 in the worst case", with the cache-stage filesystem time
-  excluded. It now describes
-  #26 at `9ff8202`, under A-23 and A-24: a flagged run adds at most 81 children,
-  64 for the stage and 17 reflog children, and at the packet's 150 ms model,
-  with this change's walk and earlier stages added whole, 10 of 16 targets are
-  removed and 9 branches retired through one worker per stage, 8 and 8 in the
-  worst case of 17 reflog children. Every figure is #26's, read at `9ff8202`
-  and checked against its stated arithmetic; none is recomputed here from other
-  inputs. Design D13 says "13 of 16 at `ca96701`", and B-19 above "13 at
-  `ca96701`". A-25 has #26's own D7 add this change's worst-case shapes at
-  `e1049b2`.
+- **B-35, the two drafts describe each other at today's heads** (A-25 for #26).
+  Design D4 described #23's joint fit at `ca96701`, "13 of its 16 targets ... 11
+  in the worst case", with the cache-stage filesystem time excluded. It first
+  described #26 at `9ff8202`, under A-23 and A-24, and B-42 restated it at
+  `9b67e8c`: a flagged run adds at most 81 children, 64 for the stage and 17
+  reflog children, and at the packet's 150 ms model, with this change's walk and
+  earlier stages added whole, 9 of 16 targets come through their stage before
+  the floor through one worker per stage (10 removals and 9 branch children), 8
+  in the worst case of 17 reflog children, and at least 5, or 3, at a thread per
+  call, 6, or 5, in the worst order a run can take; at change 1's measured costs
+  all 16 fit through a worker, and at a thread per call at least the 16th target
+  is deferred. Every figure is #26's, read at `9b67e8c` and checked against its
+  stated arithmetic; none is recomputed here from other inputs. Design D13 says
+  "13 of 16 at `ca96701`", and B-19 above "13 at `ca96701`". A-25 has #26's own
+  D7 add this change's worst-case shapes at `e1049b2`.
 - **B-36, `tasks.md` 2.2 ticked again.** Lane openRepoProject-4 agreed B-30 as
   committed in `4d5855a`, and its byte check found the overview delta differs
   from the agreed `9f30fb9` only by "for the same working directory and refs",
@@ -1071,7 +1073,7 @@ to B-37 (the table "Re-read and Codex Findings (round B5)" below):
   an ignored `local.env`; CD-3 and design D9 follow.
 
 The findings of 2026-10-20 that followed round B5, ruled by the lead as B-38 to
-B-41 (the table "Re-read and Codex Findings (round B6)" below):
+B-42 (the table "Re-read and Codex Findings (round B6)" below):
 
 - **B-38, lane 3's folded read of `cf57956..fffc194`** (no HIGH, one MEDIUM and
   three LOWs, all accepted; lane 3 confirmed that every B4 and B5 ruling holds
@@ -1143,6 +1145,18 @@ B-41 (the table "Re-read and Codex Findings (round B6)" below):
   line for a stage that ended `refused` before its first removal is printed only
   where no signal had been received by then, as the deadline line is; design D1,
   D7, D8's `target-stopped` row, D11, D12 and D14 follow.
+- **B-42, D4 quotes #26's counts from before its round A5** (lane 3, with its
+  read of #26). D4 said that at a thread per call #26 finds "5 and 5, or 4 and
+  3", the counts of its first two bullets before A5 added the worst order a run
+  can take. #26 at `9b67e8c` (its design.md D7, lines 724-731) says: "at least
+  5, or 3, at a thread per call, 6, or 5, in the worst order a run can take",
+  and "at a thread per call at least the 16th target is deferred", with "all 16
+  fit through a worker" at change 1's measured costs. D4 now restates #26 at
+  `9b67e8c` in those words, with the removals and branch children of its bullets
+  beside them, and names that head. #26's round A6 changes none of these
+  figures, so `9b67e8c` is cited. The B-35 decision above, and design's source
+  table row for B-35, say the same; the round B5 row of B-35 stays as it was, as
+  history.
 
 Departures from the rulings as first written, each naming what it departs
 from. B-11 accepted CD-1 to CD-3 as the consistent reading of B-6 and amended
@@ -1587,11 +1601,12 @@ sent by message on 2026-10-20 at about 16:3xZ, with its two last checks, the
 citation pass and the ASCII grep, and Codex's inline finding on `fffc194`
 (comment 4327345826, 2026-10-20T16:16:38Z), were ruled by the lead on 2026-10-20
 as B-38, B-39 and B-40, for a short round after the 20:50Z reset; the lead then
-ruled as B-41 on this round's own B-39 sentence. Lane 3 found no HIGH and
-confirmed that every B4 and B5 ruling holds, recomputing B-33's figures by brute
-force; of the 8 items here, 8 are applied, none with change and none declined.
-`specs/project-overview/spec.md` is not edited: none of the rulings needs it,
-and its block is lane openRepoProject-4's.
+ruled as B-41 on this round's own B-39 sentence, and as B-42 on D4's account of
+#26, which lane 3 found quoting #26's counts from before its round A5. Lane 3
+found no HIGH and confirmed that every B4 and B5 ruling holds, recomputing
+B-33's figures by brute force; of the 9 items here, 9 are applied, none with
+change and none declined. `specs/project-overview/spec.md` is not edited: none
+of the rulings needs it, and its block is lane openRepoProject-4's.
 
 | Finding | Severity | Ruling | Section edited |
 | --- | --- | --- | --- |
@@ -1603,3 +1618,4 @@ and its block is lane openRepoProject-4's.
 | lane 3's last checks (fffc194) LOW 1: B-30's row in the round B4 table says the SHALL NOT sentence ends "for the same working directory and refs" at `spec.md:35`, where it runs :34-36, the added words on :35-36 | LOW | B-40: applied: `spec.md:35-36`, re-checked against `specs/project-overview/spec.md` as it stands (the sentence on :34-36, "for" ending :35 and "the same working directory and refs." on :36); that file is not edited | the round B4 table (B-30's row); Decisions (B-40) |
 | lane 3's last checks (fffc194) LOW 2: the quotations are not verbatim: D4 and the proposal quote #26's `ca96701` as "13 of 16, 11 in its worst case", where its design.md:573 reads "13 of its 16 targets ... 11 in the worst case", and say B-19 reads "13 of 16 at `ca96701`", where B-19 reads "13 at `ca96701`" and only design D13 reads "13 of 16 at `ca96701`" | LOW | B-40: applied: #26's words quoted as "13 of its 16 targets ... 11 in the worst case" in design D4, in B-35 and in the round B5 table's B-35 row, and B-35 now says that D13 reads "13 of 16 at `ca96701`" and B-19 "13 at `ca96701`"; the figures were right and none changes; the ca96701 text was read with `git show ca96701:openspec/changes/add-project-clean-branch-retirement/design.md` | `design.md` D4; Decisions (B-35, B-40); the round B5 table (B-35's row) |
 | lead B-41, a ruling on this round's own B-39 sentence (found in round B6): design D7 said that a difference or an error that the preflight found stays `refused` when a signal was received first, which contradicts the AND of "A signal during a cache stage" (SIGINT during the whole-list preflight leaves the target `not-attempted` with `interrupted` and the stage `not-attempted` with `target-stopped`) and left D8 without a row, and so the later targets without a reason | not graded | B-41: applied: the stage reads the signal slot before it classifies any outcome of its preflight or of the reopening of the first listed cache's chain, a difference, an error, a byte total past either cap, a `probe-timeout` or a floor or deadline stop; where a signal was received the stage is `not-attempted` with `target-stopped`, nothing deleted, the target and every later one `not-attempted` with `interrupted`, the exit status the signal's; the review-safety paragraph states the rule once; the B-39 AND adds the changed-entry case; the `refused` human line gets "no signal having been received by then", as the deadline line has; D8's `target-stopped` row names "any preflight outcome after a signal was received"; the `refused` row keeps "with no signal received"; the 683 count and B-38's threshold are unchanged | review-safety delta (ADDED preflight paragraph); project-clean delta (ADDED stage paragraph and human lines; "A signal during a cache stage"); `design.md` D1, D7, D8, D11, D12, D14; What Changes (Failure and recovery, What the person sees); Capabilities; Decisions (B-34, B-39, B-41); CD-11 |
+| lead B-42 (lane 3, with its read of #26): D4 quotes #26's counts from before its round A5, "at a thread per call 5 and 5, or 4 and 3", where #26 at `9b67e8c` (design.md:724-731) says "at least 5, or 3, at a thread per call, 6, or 5, in the worst order a run can take", and "at a thread per call at least the 16th target is deferred" | not graded | B-42: applied: D4 restates #26 at `9b67e8c`, naming that head: its sentence on the joint fit quoted whole (checked verbatim against `git show 9b67e8c:openspec/changes/add-project-clean-branch-retirement/design.md`), with the removals and branch children of its bullets beside it (10 and 9, 8 and 8; 5 and 5, 4 and 3; 6 and 6, 5 and 5 in the worst order) and its A-25 scope for ordinary trees; every other restatement of #26's counts or of its "all 16 fit" sentence was checked, and the live ones corrected (the B-35 decision and design's source table row for B-35); this change's own fit sentences are about #27's fit and stay; the round B5 row of B-35 stays as history; #26's round A6 changes none of these figures | `design.md` D4, the source table (B-35, B-42), Context; Decisions (B-35, B-42) |
