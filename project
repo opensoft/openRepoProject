@@ -3073,11 +3073,13 @@ class Plan:
     change to one below goes through the lead.
 
     - `repo`: what resolve_clean_target() returned, a dict whose "root" is
-      the command directory; `root`, that directory; `mode` and `action`, the
-      run's.
+      the command directory and whose "evidence" is inspect_repository()'s
+      dict, read where the argument resolved (lead ruling R-71 (b)); `root`,
+      that directory; `mode` and `action`, the run's.
     - `evidence`: inspect_repository()'s dict for the plan's repository, or
-      None until build_plan() reads it; its `identity` holds `root` and
-      `common_dir` as bytes, `dev` and `ino`.
+      None until build_plan() sets it, from repo's "evidence", or by its own
+      read for a caller that passes none (R-72 (g)); its `identity` holds
+      `root` and `common_dir` as bytes, `dev` and `ino`.
     - `repository`: the envelope's object, repository_object()'s, built from
       that identity.
     - `rows`: the WorktreeRows, main worktree first, then by raw path bytes.
@@ -3705,14 +3707,19 @@ def plan_document(plan):
 def build_plan(repo, run):
     """Build the run's Plan for repo, resolve_clean_target()'s dict, and return
     it, never a status (T049; data-model.md, "Plan"; lead rulings R-56 and R-59
-    D4). It reads lane G's evidence directly, inspect_repository() and
+    D4). It reads lane G's evidence directly, inspect_repository()'s dict and
     worktree_rows(), never cleanup_report(), so that a failed repository-wide
     probe gives a plan incomplete with inspection-incomplete rather than a
-    refusal. Still raised, as the repository as a whole cannot be planned: the
-    baseline's `Cannot inspect Git repository at ROOT` where row 3 failed, ROOT
-    is no worktree toplevel, or no main worktree is named with no probe failed
-    (T107 codes these at resolution); and the merge target's own refusal
-    (`no-merge-target`, a manifest's), with the repository in its context.
+    refusal. That dict is repo's "evidence", the resolution's, so that row 3
+    runs once (lead ruling R-71 (b)). Only for a caller that passes no
+    evidence does build_plan() read it itself and raise the baseline's
+    `Cannot inspect Git repository at ROOT` where row 3 failed, ROOT is no
+    worktree toplevel, or no main worktree is named with no probe failed. On
+    clean's path that raise is unreachable, because the evidence comes from
+    the resolution, which refuses those repositories itself (T107; lead
+    ruling R-72 (g)). Still raised, as the repository as a whole cannot be
+    planned: the merge target's own refusal (`no-merge-target`, a
+    manifest's), with the repository in its context.
 
     The plan holds: `evidence`; `repository`, the envelope's object;
     `merge_target` {name, source, sha}, its resolution's notes moved to the
