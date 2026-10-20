@@ -10,7 +10,7 @@ requirements. Citations follow the proposal's key: the packet at `da33d92`
 change 2 (`APO`, `APO/ov`) at `961c405`, draft PR #19 at `c462d87` (`PR19/pc`,
 `PR19/rs`), and `project:N` at `961c405`; main is now `e9d6711`, with the same
 `openspec/`, `ideation/` and `project` (L-15). The lane's rulings are L-1 to
-L-17 and B-1 to B-28, and A-9 and A-23 for #23; this change's own decisions are
+L-17 and B-1 to B-33, and A-9 and A-23 for #23; this change's own decisions are
 CD-1 to CD-18 in `proposal.md`, and the alignment review's findings (SA-n, QA-n,
 G1 to G5) are resolved in its table. The council (P-n, S-n and AE-n) read
 `9ebe9f0`; its VALID verdicts, ruled as B-16 to B-24, are applied below and in
@@ -18,7 +18,10 @@ the deltas, and its one NOTED item, S-4, is in `clarifications.md`, which D4,
 D14, the Migration Plan and `tasks.md` 2.3 and 3.1 answer. Codex's two findings
 on `90d18ee` and lane openRepoProject-3's re-read of `e906c2f`, ruled as B-25
 to B-27, and the lead's B-28 are applied in round B3 (proposal, "Re-read and
-Codex Findings (round B3)").
+Codex Findings (round B3)"). Lane openRepoProject-4's re-align step and wording
+of 2026-10-20, lane 3's delta read of `cf57956` and Codex's two findings on
+`cf57956`, ruled as B-29 to B-33, are applied in round B4 (proposal, "Re-read
+and Codex Findings (round B4)").
 
 How the packet's contract and the rulings map to the decisions below:
 
@@ -54,6 +57,11 @@ How the packet's contract and the rulings map to the decisions below:
 | B-26 | the preflight keeps the run's byte total of the bytes it measures and refuses a target that would take it past 1 GiB | D1, D4, D5, D7, D8 |
 | B-27 | lane 3's re-read of `e906c2f`: the ceiling in the exit table, the `not-attempted` stage of a `disposed` stage, the signal paragraph, one relative clause, the citations of `tasks.md` 2.2 | D8 |
 | B-28 | "because clean's cache enumeration proved", as the committed `project-overview` delta reads | D6 |
+| B-29 | lane openRepoProject-4's re-align step: before `/opsx:archive`, the `project-overview` block re-read against main's text of its requirement and re-copied, keeping any amendment | Migration Plan |
+| B-30 | the overview's SHALL NOT holds for the same working directory and refs, in lane 4's words | D6 |
+| B-31 | lane 3's delta read of `cf57956`: the removal ceiling beside a signal and the deadline in the stage's exit sentence; the 16th target of D4's case listing no cache | D4, D8 |
+| B-32 | the stall test on persistent reasons, never on `blocking` alone; a per-worktree cap told from the totals by the row's counts | D4, D11 |
+| B-33 | every recorded directory counts toward the per-worktree cap of 512; the walk opens each recorded directory once, and the stage one chain per directory with removals in each pass; the worst case, depth times those directories, and its limit put to Brett Heap | D3, D4, D5, D7, D14, Risks, Open Questions |
 
 What in `project` shapes the approach:
 
@@ -230,11 +238,18 @@ most one partial record, and is fed byte by byte and whole in its tests, as
 change 1's parsers are. Git prints changed and untracked entries before ignored
 ones, so a non-ignored record arrives first when there is one.
 
-The walk then runs per directory record, top-down: open the record's directory
-by a descriptor chain from the worktree root (D7), list it, `lstat` each entry
-relative to it, and descend into each entry named `__pycache__` that is a
-directory, counting entries and summing the regular files' `st_size`, stopping
-at the first entry outside the shape or at the per-worktree caps.
+The walk then takes the records in canonical order, depth-first: it opens each
+directory it records once, from the worktree root down, relative to its
+parent's descriptor and checking that it is a non-symlink directory on the
+root's device, keeping open only the directories above the current record; it
+`lstat`s each listed file relative to its parent, lists each listed cache
+directory, `lstat`s each entry relative to it and descends into each entry
+named `__pycache__` that is a directory, counting every object it records,
+entries and directories alike, toward the per-worktree cap of 512 (B-33),
+summing the regular files' `st_size`, and stopping at the first entry outside
+the shape or at a per-worktree cap. Opening each recorded directory once keeps
+the walk's opens within its recorded objects, where a chain per record would
+cost depth times records (D4).
 
 For a row whose walk finished with `blocking` 0 and within the per-worktree
 caps, the walk then checks each directory that its stage would change, each
@@ -257,7 +272,7 @@ filesystem, fails the stage's first removal instead, which then ends the stage
 | Limit | Value | Scope | Reached |
 | --- | --- | --- | --- |
 | `cache_rows` | 16 | enumerations per invocation | later candidates `cache-cap` |
-| `cache_entries` | 512 | Git records, and cache entries, per worktree | `cache-cap` |
+| `cache_entries` | 512 | Git records, and recorded objects, the cache entries and every directory the plan records (B-33), per worktree | `cache-cap` |
 | `cache_bytes` | 268,435,456 (256 MiB) | `lstat` sizes of regular files per worktree | `cache-cap` |
 | `cache_entries_total` | 4,096 | cache entries over the invocation's cache-only rows | that row `cache-cap`, its entries uncounted |
 | `cache_bytes_total` | 1,073,741,824 (1 GiB) | bytes, likewise, and at each cache stage's preflight the bytes it measures (B-26) | likewise; at a preflight, that target `refused` with `cache-changed` |
@@ -273,9 +288,17 @@ by its type, contents or device (a symbolic link named `__pycache__`, a
 `__pycache__` holding `notes.txt`, a mount), more than a per-worktree cap
 allows, an enumeration that failed, or a directory the user cannot change
 (B-20). The stall line (B-21, D11) is printed only when each of the first 16
-candidates in canonical order is left with `blocking` above 0, by a
-per-worktree cap, `cache-unverified` or `cache-unwritable`; a row left only by
-the invocation's totals drains on the next run and prints none. One run cannot
+candidates in canonical order is held at the rung for a persistent reason, any
+one of these: `blocking` above 0; `cache-cap` from a per-worktree cap;
+`cache-unverified`; or `cache-unwritable` (B-32). The test reads those reasons
+and never `blocking` alone, which is null for `cache-cap` and
+`cache-unverified` and 0 for `cache-unwritable`, so that sixteen rows held by
+those three print the line too (Codex's P2 at `specs/project-clean/spec.md:910`
+on `cf57956`). The report tells a per-worktree cap from the invocation's totals
+by the counts the row already carries: a per-worktree cap stops the enumeration
+and leaves them null, while a row left only by the totals keeps them
+established, `blocking` 0, and drains on the next run, printing none; the
+16-enumeration cap leaves only candidates past the 16th. One run cannot
 tell that an enumeration "fails each time", so a `cache-unverified` row is
 named as one to re-run and, if it repeats, to inspect, never as one to remove
 by hand. Bytes are the apparent sizes
@@ -306,23 +329,35 @@ The fit is change 1's (CAS design D14; `BA:729-735`) at 150 ms per Git child and
 
 | Mode | Children | Time | Fits the 50 s work deadline |
 | --- | --- | --- | --- |
-| all-safe, 128 rows, 16 enumerations, 16 targets | 7 + 128 + 16 + 16 + 80 + 3 = 250, and 16 removals | 37.5 s + about 4.8 s = 42.3 s | yes for the Git children and removals: the 16th target reaches its cache stage after 247 children and 15 removals, at about 41.55 s, with 8.45 s left before the walk's and the stages' filesystem time; with that time at B-25's bound, no at the top of the measured cost, 15 of 16 targets reaching their stage (below) |
-| report, 256 rows | 7 + 256 + 16 + 16 = 295 | 44.25 s, plus the walk's about 2.0 s (B-25): about 46.3 s, and 44.25 + 5.6 = about 49.85 s at a thread per call | yes, by about 0.15 s at a thread per call |
+| all-safe, 128 rows, 16 enumerations, 16 targets | 7 + 128 + 16 + 16 + 80 + 3 = 250, and 16 removals | 37.5 s + about 4.8 s = 42.3 s | yes for the Git children and removals: the 16th target reaches its cache stage or spawn after 247 children and 15 removals, at about 41.55 s, with 8.45 s left before the walk's and the stages' filesystem time; with that time at B-25's bound, no at the top of the measured cost, 15 of 16 targets reaching their stage (below); in B-33's worst shapes fewer, or none at a thread per call (below) |
+| report, 256 rows | 7 + 256 + 16 + 16 = 295 | 44.25 s, plus the walk's about 2.0 s (B-25): about 46.3 s, and 44.25 + 5.6 = about 49.85 s at a thread per call | yes for ordinary trees, by about 0.15 s at a thread per call; in B-33's directory shape only at 169 us (below) |
 | single, 128 rows plus P | 7 + 129 + 1 + 1 + 5 + 3 = 146, and 1 removal | 21.9 s + about 0.3 s | yes |
 | all-safe, one enumeration per candidate (no `cache_rows`) | 7 + 128 + 127 + 16 + 80 + 3 = 361 | 54.15 s + 4.8 s | no |
 | report, likewise | 7 + 256 + 255 + 16 = 534 | 80.1 s | no |
 
-The last two rows are why CD-6 adds `cache_rows`. A cache stage spawns no child;
-its filesystem calls are about two per cache entry (a listing or `lstat` at the
-preflight, an unlink or directory removal after it) plus the directory opens,
-so at most about 1,100 calls for 512 entries and about 8,500 for the 4,096 of a
-run. The plan-time walk makes one call per directory open, per listing and per
-entry `lstat`, and it walks more entries than the stages remove: each of the 16
-enumerated rows can be walked to its per-worktree cap of 512 entries before the
-invocation's totals reject it, and a row that the totals reject is uncounted
-from the 4,096 but was walked (B-25, Codex's P2 at `design.md:294` on
-`90d18ee`). The walk's bound is therefore 16 x 512 = 8,192 entries, about
-9,000 calls, and B-20's access checks add at most one per planned directory.
+The last two rows are why CD-6 adds `cache_rows`. A cache stage spawns no
+child. In each of its two passes, the preflight and the removals, it opens one
+chain per directory that holds a listed path (B-33): the worktree root by its
+path and each directory below it down to that one, each open checking its
+identity, and then the listed caches in that directory from its descriptor.
+Beyond the chains it makes two calls per cache entry that is a file (its
+`lstat` at the preflight, its unlink after it) and five per one that is a
+directory (its `lstat`, open and listing at the preflight, its open and removal
+after it). For an ordinary tree, `__pycache__` directories of `.pyc` files
+under package directories a few levels deep, that is about 1,100 calls for 512
+entries and about 8,500 for the 4,096 of a run. The plan-time walk makes one
+call per directory open, per listing and per entry `lstat`, and one access
+check per directory a stage would change (B-20); it opens each directory it
+records once and counts every directory it records toward the per-worktree cap
+with the entries (D3, B-33). It walks more than the stages remove: each of the
+16 enumerated rows can be walked to its per-worktree cap of 512 recorded
+objects before the invocation's totals reject it, and a row that the totals
+reject is uncounted from the 4,096 but was walked (B-25, Codex's P2 at
+`design.md:294` on `90d18ee`). The walk's bound is therefore 16 x 512 = 8,192
+recorded objects: about 9,000 calls for ordinary trees, whose objects are
+mostly files, and at most four calls an object, a nested `__pycache__`
+directory's `lstat`, open, listing and access check, about 32,800 where every
+object is a directory.
 Through one daemon worker per stage (D12), the hand-off measured 169-224 us a
 call at load 30 to 37 on this workstation, and 393-622 us for a thread per
 call, the shape of feature 004's `fs_call` (`clarifications.md`, S-4): at
@@ -330,8 +365,9 @@ call, the shape of feature 004's `fs_call` (`clarifications.md`, S-4): at
 2 s each; at 622 us, a thread per call, 5.3 s and 5.6 s. A 512-entry stage
 took about 0.25 s here (AE-4's 1,248 calls in 236 to 273 ms).
 
-The fit, restated with those costs, with the walk's bound of B-25 and with the
-stage's removals waited for (B-16). At the packet's 150 ms model, target k
+The fit for ordinary trees, restated with those costs, with the walk's bound of
+B-25 and with the stage's removals waited for (B-16); B-33's worst case follows
+it. At the packet's 150 ms model, target k
 reaches its cache stage, or its spawn when it lists no cache, after the 167
 planning children (7 + 128 + 16 + 16), the 5k revalidation children of it and
 the targets before it, and k - 1 removals: at 0.15 x (167 + 5k) + 0.3 x (k - 1)
@@ -340,10 +376,12 @@ while more than the 5 s floor remains, and a removal child is spawned only
 while at least that floor remains, so each must come by about 45 s.
 The walk's bound and the stages' come together: of the 16 enumerated rows, 8
 of 512 entries fill the run's 4,096 and are selected, and 8 more are walked to
-512 entries and kept by a cap, so 8 cache targets share the 16 targets with 8
-that list no cache. Through one worker at 224 us a call, the 16th target then
-arrives at 41.55 + 2.0 + 1.9 = about 45.5 s, with about 4.5 s left, under the
-floor, while the 15th arrives at 40.5 + 2.0 + 1.9 = 44.4 s, with 5.6 s left:
+the 512 recorded objects of their cap and kept by it, so 8 cache targets share
+the 16 targets with 8 that list no cache. Through one worker at 224 us a call,
+the 16th target, which lists no cache once the 8 stages come before it, then
+arrives at its spawn at 41.55 + 2.0 + 1.9 = about 45.5 s, with about 4.5 s
+left, under the floor, while the 15th arrives at 40.5 + 2.0 + 1.9 = 44.4 s,
+with 5.6 s left:
 15 of 16 targets reach their stage, and the 16th is `not-attempted` with
 `deadline-exceeded`, exit 1, and the next run takes it, never unsafe. At
 169 us a call (1.5 s of walk, 1.4 s of stages) the 16th arrives at about
@@ -355,9 +393,10 @@ with them last, 12 of 16. Before B-25 these figures read about 44.6 s with
 about 5.4 s left (41.55 + 1 + 2, the walk counted only over the 4,096 entries
 the totals admit) and about 49.65 s at a thread per call (41.55 + 2.8 + 5.3).
 So at B-25's bound the all-safe mode no longer fits at the top of the measured
-cost: through one worker the 16th target's stage cannot start at the packet's
-model, and at a thread per call as few as 8 targets reach theirs, the rest
-deferred to the next run with exit 1. No cap changes (B-25): B-3 and CD-6 stay
+cost: through one worker the floor refuses the spawn of the 16th target, which
+lists no cache, at the packet's model (B-31, lane 3's delta read), and at a
+thread per call as few as 8 targets reach their stage, the rest deferred to the
+next run with exit 1. No cap changes (B-25): B-3 and CD-6 stay
 Brett Heap's question (proposal, Open Questions), and task 2.3's measurement
 decides under the rule below. At change 1's measured costs (CAS `tasks.md`
 2.1: the 16th removal spawning at 23.6 s with 26.4 s left), the 16
@@ -375,10 +414,60 @@ return or the ceiling; the 64 s run bound keeps its two exceptions, a removal
 in flight and a filesystem call stuck in the kernel. B-19 adds no Git child,
 B-20 only filesystem calls, and B-24 none.
 
+The worst case of B-33. Counting every recorded directory toward the 512
+bounds a row's depth and its number of directories with removals, but the
+stage opens one chain per such directory in each pass, so a pass costs the sum,
+over those directories, of one plus each one's depth below the worktree root:
+depth times directories at worst (Codex's P2 at `design.md:323` on `cf57956`).
+Under the 512-object cap that sum is largest for a chain of 341 directories
+whose deepest 171 each hold one loose `.pyc` (341 + 171 = 512 objects): 172 +
+173 + ... + 342 = 43,947 opens per pass, and 88,236 calls for the target with
+the files' `lstat` calls and unlinks, about 14.9 s at 169 us, 19.8 s at 224 us
+and 54.9 s at 622 us. Sixteen such targets list 2,736 entries, within the
+run's 4,096, and would need about 1.41 million calls, 239 to 878 s. Nothing is
+unsafe, but no fit holds that: at 224 us the first such target reaches its
+stage at about 28.3 s, its preflight takes about 9.9 s, and the floor ends its
+removals about 7 s later, `partial`, exit 1, so each run removes part of its
+caches and no worktree while it comes first; at 169 us one such target is
+removed in a run, and at a thread per call its preflight alone runs into the
+floor, which ends the stage before its first removal with nothing deleted. So
+the fit cannot hold without a new limit. A limit on depth alone would not do:
+a row 8 levels deep still holds 252 directories with removals, 2,268 opens per
+pass, and 16 such targets need 72,576 opens in their two passes. The proposal
+therefore puts a limit on the chains to Brett Heap beside B-3 and CD-6
+(proposal, Open Questions). It recommends `limits.cache_opens`, 512 opens per
+pass per worktree, the sum above as the walk computes it, past which a row
+stays `ignored-local-files` with `cache-cap` from a per-worktree cap, so that a
+run's chains are at most 16 x 2 x 512 = 16,384 opens, about 3.7 s at 224 us and
+10.2 s at 622 us. The deltas do not add it, and no cap changes (B-33).
+
+The other worst shape is every recorded object a directory, as in 16 rows each
+holding 512 nested `__pycache__` directories, whose chains stay short. The walk
+then makes four calls an object, about 32,800 calls, 5.5 s at 169 us, 7.3 s at
+224 us and 20.4 s at 622 us, and the 8 targets that the totals select make
+five calls an entry, about 20,500 calls, 3.5 s to 12.7 s. With those 8 targets
+first, through one worker, 10 of 16 targets reach their stage or spawn at
+169 us and 8 at 224 us, the 9th arriving at about 46.1 s; at a thread per call
+the walk ends planning at about 45.5 s, so none does, and the report mode,
+44.25 s of Git children and the walk, exceeds the work deadline, about 51.6 s
+at 224 us and 64.7 s at 622 us, its plan incomplete with `deadline-exceeded`,
+fitting only at 169 us, about 49.8 s. With the recommended limit as well, a
+run makes at most about 69,700 filesystem calls (the walk's 32,800, the
+chains' 16,384 and the stages' other 20,480), about 11.8 s at 169 us and 15.6 s
+at 224 us, and through one worker at least 9 of 16 targets reach their stage
+or spawn at 169 us and at least 7 at 224 us. At change 1's measured costs that
+worst case adds at most about 15.6 s through one worker at 224 us, the 16th
+removal then spawning by about 42.9 s, so all 16 fit, while at a thread per
+call the walk alone, about 20.4 s, takes the 16th past the floor. This shape
+is within the existing caps, so its remedy is B-3 and CD-6's rule below, which
+task 2.3's deep-tree measurement applies; no cap changes now, and the modes of
+the table above fit as it says for ordinary trees only.
+
 Governance task 2.3 measures the enumeration, the walk at 16 rows of 512
-entries with the invocation's totals reached (8,192 walked, 4,096 counted;
-B-25) and the stage before the handoff, through `fs_call`, idle and at the
-workstation's usual load, as
+recorded objects with the invocation's totals reached (8,192 walked, 4,096
+counted; B-25), the deep-tree worst case of B-33 (the chain of 341 directories
+and the rows of nested `__pycache__` directories) and the stage before the
+handoff, through `fs_call`, idle and at the workstation's usual load, as
 change 1's task 2.1 measured its probes; a measured cost that breaks the fit
 lowers `cache_rows` in steps of 4 and the entry caps in powers of two before
 the feature starts. The fit sentence of the bounds block counts the Git
@@ -395,19 +484,26 @@ defers the rest to the next run (exit 1, never unsafe); at change 1's measured
 costs all 16 fit. #23, which archives after this change, states that joint fit
 (A-9, the alignment review's G3), and under A-23 restates it, adding this
 change's walk and earlier stages as B-25 gives them. The inputs it needs from
-this change, as round B3 restates them:
+this change, as rounds B3 and B4 restate them:
 
 - Git children: 16 cache enumerations per invocation under `probes`, 2.4 s at
   the model; none added at revalidation, where the enumeration's child takes
   the combined probe's place (CD-4); and no status probe after a `disposed`
   stage, which B-19 rejected.
-- Plan-time filesystem calls: the walk's at most 8,192 entries, 16 rows of 512
-  with the rows the invocation's totals reject included, about 9,000 calls,
-  and the access checks, at most one per planned directory; about 2 s through
-  one worker per stage, up to about 5.6 s at a thread per call (B-25).
-- Stage filesystem calls: at most about 1,100 per target and 8,500 per run;
-  about 0.25 s for a 512-entry stage, about 2 s per run through one worker, up
-  to about 5.3 s at a thread per call.
+- Plan-time filesystem calls: the walk's at most 8,192 recorded objects, 16
+  rows of 512 with the rows the invocation's totals reject included and every
+  directory it records counted, each opened once (B-33), and the access
+  checks, at most one per planned directory: for ordinary trees about 9,000
+  calls, about 2 s through one worker per stage and up to about 5.6 s at a
+  thread per call (B-25); at most four calls an object, about 32,800 calls,
+  7.3 s and 20.4 s, where every object is a directory.
+- Stage filesystem calls: for ordinary trees about 1,100 per target and 8,500
+  per run, about 0.25 s for a 512-entry stage, about 2 s per run through one
+  worker, up to about 5.3 s at a thread per call; at worst one chain per
+  directory with removals in each pass, up to 43,947 opens a pass for one
+  target under the 512-object cap, which the Open Question's limit would hold
+  to 512 (16,384 for a run's two passes), and five calls an entry, 20,480 for a
+  run (B-33).
 - Start and hand-off: a stage starts, and hands over each removal, only while
   more than the 5 s floor remains; a removal handed over is waited for up to
   the 300 s ceiling and counts as a removal in flight.
@@ -423,7 +519,11 @@ directory the stage will open below the worktree root: each directory on the way
 down to a listed cache, each listed cache directory and each nested
 `__pycache__` directory, as `{path, path_valid_utf8, dev, ino}`, the device and
 inode from an `lstat` that follows no symbolic link. The worktree root's own
-identity is change 1's `{path, dev, ino, admin_id}` of the selected entry.
+identity is change 1's `{path, dev, ino, admin_id}` of the selected entry. Each
+of those directories counts toward the per-worktree cap of 512 recorded objects
+with the cache entries, once however many listed paths lie below it (B-33), so
+the depth of a listed path and the number of directories above the caches are
+bounded with the entries.
 
 Files carry no identity. Unlinking a name inside a directory whose identity was
 just checked can only remove that name: a file replaced by a symbolic link loses
@@ -487,11 +587,16 @@ a gate finding replaces the housekeeping finding "while the classification
 stays" (M5): the exception now covers a worktree that `project clean`
 classifies `merged-removable` because clean's cache enumeration proved every
 ignored path a listed cache, and the overview SHALL NOT classify a worktree
-`merged-removable` where `project clean` classifies it otherwise. Lane 4
-agreed the edit on 2026-10-19, with one optional point that the committed
-text takes, "clean's" for "its" before "cache enumeration", and it is
-committed as `9f30fb9` (`tasks.md` 2.2). The council measured 3 such
-submodule rows on this workstation on 2026-10-19.
+`merged-removable` where `project clean` classifies it otherwise for the same
+working directory and refs. Lane 4 agreed the edit on 2026-10-19, with one
+optional point that the committed text takes, "clean's" for "its" before
+"cache enumeration", and it is committed as `9f30fb9` (`tasks.md` 2.2). B-30
+adds "for the same working directory and refs", lane 4's own words of
+2026-10-20, since read alone the sentence bound runs from different
+directories, where the current worktree decides `merged-current` against
+`merged-removable`; it is committed as `4d5855a`, the added scenario's AND
+following it. The council measured 3 such submodule rows on this workstation
+on 2026-10-19.
 Feature 005's spec (`specs/005-project-overview/spec.md` on
 `origin/005-project-overview` at `33a1214`, User Story 3 scenario 6) names the
 `ignored-local-files` row of its "Every protected classifier" fixture by its
@@ -510,19 +615,27 @@ planned `dev` and `ino`. The root itself is opened by its recorded path with
 the root's own ancestors are change 1's concern, checked at revalidation through
 the realpath and identity comparison, so `BA:1324-1325`'s "any ancestor" is read
 as any directory between the worktree root and the cache (lane 3's LOW 3). The
-stage handles one listed cache at a time and closes its chain before the next,
-except a descriptor given to a call still outstanding, which stays open until
-`project` exits (D12), so at most the path's depth plus two descriptors, and
-those of an outstanding call, are open at once, far below any platform's default
-descriptor limit.
+stage handles one directory holding a listed path at a time (B-33): in each
+pass it opens the chain to that directory once, checking every identity on it,
+deals with every listed path in it, reaching a listed cache directory and its
+nested ones from that directory's descriptor, and closes the chain before the
+next, except a descriptor given to a call still outstanding, which stays open
+until `project` exits (D12). So at most that chain's descriptors and those of
+the nesting below it, and those of an outstanding call, are open at once, a
+number the 512-object cap bounds and an ordinary tree keeps far below any
+platform's default descriptor limit; an open that fails, `EMFILE` included, is
+an error like any other (D8). One chain per directory, rather than one per
+listed path, is what bounds the stage's opens by depth times directories with
+removals (D4).
 
-The preflight, before any removal: for each listed cache in canonical order,
-open its chain, checking every identity; for a directory, list it and `lstat`
-each entry relative to it, require the allowlisted shape, require each nested
-`__pycache__` to carry its planned identity, require the cache to hold exactly
-its planned number of entries, and record the names to remove; for a file,
-`lstat` it relative to its parent and require a regular file with an allowed
-suffix; keep the target's running byte total within the per-worktree cap; and
+The preflight, before any removal: for each directory holding a listed path, in
+canonical order, open its chain once, checking every identity; then for each
+listed cache in it: for a directory, list it and `lstat` each entry relative to
+it, require the allowlisted shape, require each nested `__pycache__` to carry
+its planned identity, require the cache to hold exactly its planned number of
+entries, and record the names to remove; for a file, `lstat` it relative to
+that directory and require a regular file with an allowed suffix; keep the
+target's running byte total within the per-worktree cap; and
 keep the run's byte total, this target's measured bytes added to those
 measured at the preflight of every earlier target whose stage passed it in
 this run, within the invocation's 1 GiB (B-26, D4). Any `OSError` (`ENOTDIR`
@@ -532,12 +645,13 @@ ends the stage `refused` with `cache-changed`. This is the
 whole-list check that PR #2's open thread 3989548481 asked for: no path is
 removed until every path has passed.
 
-The removals: for each listed cache in canonical order, open its chain again,
-checking every identity again; remove the names fixed at the preflight,
-depth-first, files by `os.unlink(name, dir_fd=directory)` and each emptied
-nested directory by `os.rmdir(name, dir_fd=parent)`, then the listed directory
-by `os.rmdir` relative to its parent; a listed file by `os.unlink` relative to
-its parent. Nothing listed after the preflight is removed, and `rmdir` refuses a
+The removals: for each directory holding a listed path, in canonical order,
+open its chain again, once, checking every identity again; then for each listed
+cache in it, remove the names fixed at the preflight, depth-first, files by
+`os.unlink(name, dir_fd=directory)` and each emptied nested directory by
+`os.rmdir(name, dir_fd=parent)`, then the listed directory by `os.rmdir`
+relative to that directory; a listed file by `os.unlink` relative to it.
+Nothing listed after the preflight is removed, and `rmdir` refuses a
 directory that holds anything else, so a file placed in a cache directory at any
 time before that directory's removal survives (Context, `ENOTEMPTY`) and ends
 the stage `partial`, or `refused` when no entry had yet been removed (D8). Each
@@ -609,7 +723,10 @@ exits 1 as change 1's `removal-ceiling` does. The target itself is `refused`
 with `state-changed`, not `removal-ceiling`, so the same block's exit table
 names the case in its row 2, "a cache stage's removal reached the removal
 ceiling", and an only or last target also exits 1 (lane 3's re-read MEDIUM 1,
-B-27). The retry is a re-run: the
+B-27). The ADDED requirement's exit sentence says the same: 2 unless a signal,
+the deadline or the removal ceiling decides it, and 1 when the floor or the
+ceiling ended the stage unless a signal decides it, as the table's first two
+rows order them (B-31, lane 3's delta read). The retry is a re-run: the
 fresh plan enumerates the caches that remain, the revalidation and preflight run
 again, and a persistent failure stops at the same target each time, which the
 human line says (D11).
@@ -684,10 +801,13 @@ substituted:
 - Success, after `Removed N; branches kept: B1, B2.`: `Caches disposed: N paths
   in K worktrees.` (`1 path` when N is 1, `1 worktree` when K is 1).
 - The stall line (B-21), printed under the `ignored-local-files` group only
-  when each of the first 16 candidates in canonical order is left with
-  `blocking` above 0, by a per-worktree cap, `cache-unverified` or
-  `cache-unwritable`, and built from those rows' reasons with every zero count
-  left out: `  these cache-cap rows will not drain while the 16 candidates
+  when each of the first 16 candidates in canonical order is held at the rung
+  for a persistent reason, any one of `blocking` above 0, `cache-cap` from a
+  per-worktree cap, `cache-unverified` or `cache-unwritable`, the test never
+  on `blocking` alone (B-32, D4), and built from those rows' reasons with
+  every zero count left out, a `cache-cap` row counting as one past a
+  per-worktree cap when its counts are null: `  these cache-cap rows will not
+  drain while the 16 candidates
   ahead of them stay kept: K hold ignored files that are not caches (review
   them), C exceed a per-worktree cache cap (delete their caches, then re-run),
   U could not be enumerated (re-run; if it repeats, inspect them), W cannot be
@@ -844,7 +964,10 @@ cache phase" and "A file placed in a cache directory during the stage".
   the n-th unlink, holding it or making it fail, through `patch.object` on the
   stage's call table, the removal ceiling patched short; `os.close` stubbed to
   record the numbers the stage closes, so that a test can assert that no
-  number given to an outstanding call is reused; the access check stubbed to
+  number given to an outstanding call is reused; the stage's and the walk's
+  call tables counting their opens, so that a test asserts one chain per
+  directory holding a listed path in each pass and one open per recorded
+  directory in the walk (B-33); the access check stubbed to
   false where the runner is root; the platform check stubbed to false; the
   counting `git` wrapper of change 1 for the enumeration's argument vector,
   directory and count.
@@ -872,9 +995,17 @@ cache phase" and "A file placed in a cache directory during the stage".
   stays `ignored-local-files` with `cache-cap` and the plan stays complete; the
   stage leaves empty `__pycache__` directories for Git's removal to delete with
   the worktree.
-- [A worktree with more than 512 cache entries, or 256 MiB, is never disposed of
-  by `project`] -> It is preserved as change 1 preserves it, and its preview
-  says `cache-cap`; the person deletes the caches and re-runs.
+- [A worktree with more than 512 recorded cache objects, or 256 MiB, is never
+  disposed of by `project`] -> It is preserved as change 1 preserves it, and
+  its preview says `cache-cap`; the person deletes the caches and re-runs.
+- [A cache tree that is deep and spread over many directories] -> Every
+  directory the plan records counts toward the 512 objects, the walk opens each
+  once, and the stage opens one chain per directory with removals in each pass
+  (B-33), so the work is bounded; but depth times those directories can reach
+  43,947 opens a pass for one target, which no fit holds, so until Brett Heap
+  answers the Open Question on a limit for them, such a target takes its run
+  to the floor and ends `partial`, exit 1, never unsafe, each run removing
+  part of its caches (D4).
 - [Python running in the worktree between the plan and the stage rewrites
   caches] -> A new cache refuses at revalidation, a replaced directory at the
   preflight, a new file in a listed directory refuses at the preflight, or
@@ -936,8 +1067,9 @@ cache phase" and "A file placed in a cache directory during the stage".
 ## Migration Plan
 
 1. Ratification by Brett Heap's word on this change's pull request (`tasks.md`
-   1.6), with the four Open Questions of `proposal.md` before him; an answer
-   admitting `.pytest_cache` adds it to the deltas before ratification (B-23).
+   1.6), with the five Open Questions of `proposal.md` before him; an answer
+   admitting `.pytest_cache` adds it to the deltas before ratification (B-23),
+   and so does one adopting the limit on the stage's directory opens (B-33).
 2. Before the Speckit handoff (`tasks.md` section 2): change 1 archived after
    feature 004 merges, with PR #19's amendment of change 1 landed (L-16), or
    PR #19 closed, and the two blocks written on its text re-checked; lane
@@ -959,9 +1091,16 @@ cache phase" and "A file placed in a cache directory during the stage".
    its base, feature 004's `git-floor` job included beside `test (3.10)` and
    `test (3.12)` on `ubuntu-latest`, and closes issue #24 (S-4).
 8. The change is archived after that merge and after the archives of change 1
-   and change 2; `add-project-clean-branch-retirement` archives after this
-   change, writing its blocks of the five requirements both changes modify on
-   this change's archived text.
+   and change 2. Before `/opsx:archive`, its `project-overview` block is
+   re-read against main's text of "Overview reuses the cleanup classifier and
+   merge target" and re-copied from it, keeping any amendment of change 2 that
+   landed there meanwhile, such as lane openRepoProject-4's planned one for
+   feature 005's open Q7 A, which the archive would otherwise drop silently,
+   since a MODIFIED block replaces its requirement whole; a `diff -u` of main's
+   block against this change's shows additions only, and the validation passes
+   again (B-29, `tasks.md` 3.2). `add-project-clean-branch-retirement` archives
+   after this change, writing its blocks of the five requirements both changes
+   modify on this change's archived text.
 
 Rollback: revert the realization commit on `main`. `__pycache__` entries
 already disposed of are written again by Python on the next import; a loose
@@ -971,10 +1110,12 @@ kept; installed `project` artifacts follow workBenches' pin.
 
 ## Open Questions
 
-The four questions of `proposal.md` are before Brett Heap: enum closure and
-`schema_version`, `.pytest_cache`, the other cache kinds, and the caps. Change
-2's equality clause, the fourth in the draft, is settled by B-14 and B-22. The
-deltas implement each recommendation but the one for `.pytest_cache`, which
-recommends admitting it in this change and is added only on his answer (B-23);
-a different ruling edits the deltas before ratification. No other question
+The five questions of `proposal.md` are before Brett Heap: enum closure and
+`schema_version`, `.pytest_cache`, the other cache kinds, the caps, and a limit
+on the cache stage's directory opens (B-33). Change 2's equality clause, the
+fourth in the draft, is settled by B-14 and B-22. The deltas implement each
+recommendation but two: `.pytest_cache`, which recommends admitting it in this
+change, and the opens limit, which recommends a new per-worktree cap; each is
+added only on his answer (B-23, B-33), and no cap changes before it. A
+different ruling edits the deltas before ratification. No other question
 changes what is built.
