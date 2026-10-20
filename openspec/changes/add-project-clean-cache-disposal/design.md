@@ -10,12 +10,15 @@ requirements. Citations follow the proposal's key: the packet at `da33d92`
 change 2 (`APO`, `APO/ov`) at `961c405`, draft PR #19 at `c462d87` (`PR19/pc`,
 `PR19/rs`), and `project:N` at `961c405`; main is now `e9d6711`, with the same
 `openspec/`, `ideation/` and `project` (L-15). The lane's rulings are L-1 to
-L-17 and B-1 to B-24, and A-9 for #23; this change's own decisions are CD-1 to
-CD-18 in `proposal.md`, and the alignment review's findings (SA-n, QA-n, G1 to
-G5) are resolved in its table. The council (P-n, S-n and AE-n) read `9ebe9f0`;
-its VALID verdicts, ruled as B-16 to B-24, are applied below and in the deltas,
-and its one NOTED item, S-4, is in `clarifications.md`, which D4, D14, the
-Migration Plan and `tasks.md` 2.3 and 3.1 answer.
+L-17 and B-1 to B-28, and A-9 and A-23 for #23; this change's own decisions are
+CD-1 to CD-18 in `proposal.md`, and the alignment review's findings (SA-n, QA-n,
+G1 to G5) are resolved in its table. The council (P-n, S-n and AE-n) read
+`9ebe9f0`; its VALID verdicts, ruled as B-16 to B-24, are applied below and in
+the deltas, and its one NOTED item, S-4, is in `clarifications.md`, which D4,
+D14, the Migration Plan and `tasks.md` 2.3 and 3.1 answer. Codex's two findings
+on `90d18ee` and lane openRepoProject-3's re-read of `e906c2f`, ruled as B-25
+to B-27, and the lead's B-28 are applied in round B3 (proposal, "Re-read and
+Codex Findings (round B3)").
 
 How the packet's contract and the rulings map to the decisions below:
 
@@ -39,7 +42,7 @@ How the packet's contract and the rulings map to the decisions below:
 | B-14, B-22 | the overview's equality clause excepts the cache-proven case, and the carried "Every protected classifier" scenarios name a non-cache ignored file | D6, D14 |
 | L-12, B-15 | CI on Linux only; macOS not verified by CI | D9, D14 |
 | B-16 | the stage's removals waited for as change 1 waits for its removal child; the hand-off of the first removal as the commit point | D1, D4, D8, D12 |
-| B-17 | the second check immediately before that hand-off; a target whose stage ran and whose removal was not spawned | D1, D8, D11, D12 |
+| B-17 | the second check immediately before that hand-off; a target whose stage ended `disposed` and whose removal was not spawned | D1, D8, D11, D12 |
 | B-18 | the partial-stage rescan by the descriptor chain, under the reserve | D8, D12 |
 | B-19 | the residual window widened by the cache stage, stated and bounded | D13 |
 | B-20 | a cache directory the user cannot change kept at plan time | D2, D3, D9, D11 |
@@ -47,6 +50,10 @@ How the packet's contract and the rulings map to the decisions below:
 | B-23 | `.pytest_cache` before Brett Heap; the measured benefit | Non-Goals, Open Questions |
 | B-24 | `candidate_block` names what really keeps a cache-only row | D2, D11 |
 | S-4 (NOTED) | measured dispatch cost; the gates of task 2.3 and 3.1 | `clarifications.md`, D4, D14, Migration Plan |
+| B-25 | the plan-time walk bounded at 16 x 512 = 8,192 entries, the rows the invocation's totals reject included; the fit and every figure that depends on the walk restated | D4, D13 |
+| B-26 | the preflight keeps the run's byte total of the bytes it measures and refuses a target that would take it past 1 GiB | D1, D4, D5, D7, D8 |
+| B-27 | lane 3's re-read of `e906c2f`: the ceiling in the exit table, the `not-attempted` stage of a `disposed` stage, the signal paragraph, one relative clause, the citations of `tasks.md` 2.2 | D8 |
+| B-28 | "because clean's cache enumeration proved", as the committed `project-overview` delta reads | D6 |
 
 What in `project` shapes the approach:
 
@@ -123,8 +130,8 @@ For a selected target whose `cache_disposal.paths` is not empty,
    condition: more than `removal_floor_seconds` of the work deadline left;
    otherwise the target and every later one are `not-attempted` with
    `interrupted` or `deadline-exceeded`, and nothing is deleted;
-3. the whole-list preflight (D7), then the reopening of the first listed
-   cache's chain;
+3. the whole-list preflight (D7), which also keeps the run's byte total
+   (B-26), then the reopening of the first listed cache's chain;
 3a. immediately before the hand-off of the first removal, the floor and slot
    checks of step 2 again, with the same outcome; a signal recorded after this
    check is handled as one received during the removals (B-17), and the
@@ -253,7 +260,7 @@ filesystem, fails the stage's first removal instead, which then ends the stage
 | `cache_entries` | 512 | Git records, and cache entries, per worktree | `cache-cap` |
 | `cache_bytes` | 268,435,456 (256 MiB) | `lstat` sizes of regular files per worktree | `cache-cap` |
 | `cache_entries_total` | 4,096 | cache entries over the invocation's cache-only rows | that row `cache-cap`, its entries uncounted |
-| `cache_bytes_total` | 1,073,741,824 (1 GiB) | bytes, likewise | likewise |
+| `cache_bytes_total` | 1,073,741,824 (1 GiB) | bytes, likewise, and at each cache stage's preflight the bytes it measures (B-26) | likewise; at a preflight, that target `refused` with `cache-changed` |
 
 A cap reached keeps the row `ignored-local-files` and the plan complete, so the
 batch removes everything else, and a later run takes the rest unless each of
@@ -275,13 +282,32 @@ by hand. Bytes are the apparent sizes
 that `lstat` reports at plan time; a sparse file counts at its apparent size,
 which only errs toward a cap.
 
+The invocation's byte total is applied twice. At plan time the totals count,
+in canonical order, the planned entries and bytes of the rows that pass every
+per-worktree check (the `cache-cap` rule). At each cache stage the preflight
+applies the byte total again, to the sizes it measures (B-26, Codex's P2 at
+`specs/project-clean-review-safety/spec.md:341` on `90d18ee`): a `.pyc`
+recompiled in place keeps its name, its type and its cache's number of
+entries, so it passes the revalidation and the preflight's count, but it can
+grow, and five targets planned with tiny caches could each reach the 256 MiB
+per-worktree cap, 1.25 GiB in all. So the preflight keeps the run's byte
+total, the bytes it measures for this target added to those it measured for
+every earlier target whose stage passed its preflight in this run, and a
+target whose bytes would take that total past 1 GiB ends `refused` with
+`cache-changed`, nothing deleted, as one past the per-worktree cap at its
+preflight does; the run then stops at that target (CD-1), exit 2, and the
+earlier targets keep their results. Entries need no running total, since the
+preflight requires each listed cache's entries to equal the plan's, whose sum
+the plan already capped at 4,096. The check adds no filesystem call: the
+preflight already `lstat`s every entry it re-lists.
+
 The fit is change 1's (CAS design D14; `BA:729-735`) at 150 ms per Git child and
 0.3 s per removal, with the enumerations added:
 
 | Mode | Children | Time | Fits the 50 s work deadline |
 | --- | --- | --- | --- |
-| all-safe, 128 rows, 16 enumerations, 16 targets | 7 + 128 + 16 + 16 + 80 + 3 = 250, and 16 removals | 37.5 s + about 4.8 s = 42.3 s | yes; the 16th target reaches its cache stage after 247 children and 15 removals, at about 41.55 s, with 8.45 s left before the walk's and the stages' filesystem time, which the fit below adds |
-| report, 256 rows | 7 + 256 + 16 + 16 = 295 | 44.25 s | yes |
+| all-safe, 128 rows, 16 enumerations, 16 targets | 7 + 128 + 16 + 16 + 80 + 3 = 250, and 16 removals | 37.5 s + about 4.8 s = 42.3 s | yes for the Git children and removals: the 16th target reaches its cache stage after 247 children and 15 removals, at about 41.55 s, with 8.45 s left before the walk's and the stages' filesystem time; with that time at B-25's bound, no at the top of the measured cost, 15 of 16 targets reaching their stage (below) |
+| report, 256 rows | 7 + 256 + 16 + 16 = 295 | 44.25 s, plus the walk's about 2.0 s (B-25): about 46.3 s, and 44.25 + 5.6 = about 49.85 s at a thread per call | yes, by about 0.15 s at a thread per call |
 | single, 128 rows plus P | 7 + 129 + 1 + 1 + 5 + 3 = 146, and 1 removal | 21.9 s + about 0.3 s | yes |
 | all-safe, one enumeration per candidate (no `cache_rows`) | 7 + 128 + 127 + 16 + 80 + 3 = 361 | 54.15 s + 4.8 s | no |
 | report, likewise | 7 + 256 + 255 + 16 = 534 | 80.1 s | no |
@@ -291,24 +317,53 @@ its filesystem calls are about two per cache entry (a listing or `lstat` at the
 preflight, an unlink or directory removal after it) plus the directory opens,
 so at most about 1,100 calls for 512 entries and about 8,500 for the 4,096 of a
 run. The plan-time walk makes one call per directory open, per listing and per
-entry `lstat`, about 4,500 for 4,096 entries, and B-20's access checks add at
-most one per planned directory. Through one daemon worker per stage (D12), the
-hand-off measured 169-224 us a call at load 30 to 37 on this workstation, and
-393-622 us for a thread per call, the shape of feature 004's `fs_call`
-(`clarifications.md`, S-4): about 2 s for 8,500 stage calls and 1 s for the
-plan-time walk's 4,500, or about 5.3 s and 2.8 s at a thread per call. A
-512-entry stage took about 0.25 s here (AE-4's 1,248 calls in 236 to 273 ms).
+entry `lstat`, and it walks more entries than the stages remove: each of the 16
+enumerated rows can be walked to its per-worktree cap of 512 entries before the
+invocation's totals reject it, and a row that the totals reject is uncounted
+from the 4,096 but was walked (B-25, Codex's P2 at `design.md:294` on
+`90d18ee`). The walk's bound is therefore 16 x 512 = 8,192 entries, about
+9,000 calls, and B-20's access checks add at most one per planned directory.
+Through one daemon worker per stage (D12), the hand-off measured 169-224 us a
+call at load 30 to 37 on this workstation, and 393-622 us for a thread per
+call, the shape of feature 004's `fs_call` (`clarifications.md`, S-4): at
+224 us, 8,500 stage calls take 1.9 s and the walk's 9,000 take 2.0 s, about
+2 s each; at 622 us, a thread per call, 5.3 s and 5.6 s. A 512-entry stage
+took about 0.25 s here (AE-4's 1,248 calls in 236 to 273 ms).
 
-The fit, restated with those costs and with the stage's removals waited for
-(B-16). At the packet's 150 ms model, with the run's 4,096 cache entries, the
-16th target reaches its cache stage at about 41.55 s plus about 1 s of walk and
-at most 2 s of earlier stages, about 44.6 s at most, with about 5.4 s left; at
-a thread per call, at most about 49.65 s, under the floor, so that it
-and any target after the floor is reached are `not-attempted` with
-`deadline-exceeded`, exit 1, and the next run takes them, never unsafe. At change
-1's measured costs (CAS `tasks.md` 2.1: the 16th removal spawning at 23.6 s with
-26.4 s left), the 16 enumerations add at most about 3.7 s and the walk and
-stages at most about 8 s, and all 16 fit. A removal is handed over only while
+The fit, restated with those costs, with the walk's bound of B-25 and with the
+stage's removals waited for (B-16). At the packet's 150 ms model, target k
+reaches its cache stage, or its spawn when it lists no cache, after the 167
+planning children (7 + 128 + 16 + 16), the 5k revalidation children of it and
+the targets before it, and k - 1 removals: at 0.15 x (167 + 5k) + 0.3 x (k - 1)
+= 24.75 + 1.05k s, plus the walk and the earlier stages. A stage starts only
+while more than the 5 s floor remains, and a removal child is spawned only
+while at least that floor remains, so each must come by about 45 s.
+The walk's bound and the stages' come together: of the 16 enumerated rows, 8
+of 512 entries fill the run's 4,096 and are selected, and 8 more are walked to
+512 entries and kept by a cap, so 8 cache targets share the 16 targets with 8
+that list no cache. Through one worker at 224 us a call, the 16th target then
+arrives at 41.55 + 2.0 + 1.9 = about 45.5 s, with about 4.5 s left, under the
+floor, while the 15th arrives at 40.5 + 2.0 + 1.9 = 44.4 s, with 5.6 s left:
+15 of 16 targets reach their stage, and the 16th is `not-attempted` with
+`deadline-exceeded`, exit 1, and the next run takes it, never unsafe. At
+169 us a call (1.5 s of walk, 1.4 s of stages) the 16th arrives at about
+44.5 s, with about 5.5 s left, and all 16 fit. At a thread per call the 16th
+would arrive at 41.55 + 5.6 + 5.3 = about 52.4 s, past the work deadline
+itself: with the 8 cache targets first in canonical order the 9th arrives at
+34.2 + 5.6 + 5.3 = about 45.1 s, so 8 of 16 targets reach their stage, and
+with them last, 12 of 16. Before B-25 these figures read about 44.6 s with
+about 5.4 s left (41.55 + 1 + 2, the walk counted only over the 4,096 entries
+the totals admit) and about 49.65 s at a thread per call (41.55 + 2.8 + 5.3).
+So at B-25's bound the all-safe mode no longer fits at the top of the measured
+cost: through one worker the 16th target's stage cannot start at the packet's
+model, and at a thread per call as few as 8 targets reach theirs, the rest
+deferred to the next run with exit 1. No cap changes (B-25): B-3 and CD-6 stay
+Brett Heap's question (proposal, Open Questions), and task 2.3's measurement
+decides under the rule below. At change 1's measured costs (CAS `tasks.md`
+2.1: the 16th removal spawning at 23.6 s with 26.4 s left), the 16
+enumerations add at most about 3.7 s and the walk and stages at most about
+10.9 s (5.6 + 5.3, at a thread per call), the 16th then spawning by about
+38.2 s, and all 16 fit. A removal is handed over only while
 more than the floor remains and is waited for until it returns, as change 1
 waits for its removal child; an unlink returns in microseconds, so in the
 normal case this costs nothing, and the floor stays for the spawn. A hung
@@ -320,8 +375,10 @@ return or the ceiling; the 64 s run bound keeps its two exceptions, a removal
 in flight and a filesystem call stuck in the kernel. B-19 adds no Git child,
 B-20 only filesystem calls, and B-24 none.
 
-Governance task 2.3 measures the enumeration, the walk and the stage before
-the handoff, through `fs_call`, idle and at the workstation's usual load, as
+Governance task 2.3 measures the enumeration, the walk at 16 rows of 512
+entries with the invocation's totals reached (8,192 walked, 4,096 counted;
+B-25) and the stage before the handoff, through `fs_call`, idle and at the
+workstation's usual load, as
 change 1's task 2.1 measured its probes; a measured cost that breaks the fit
 lowers `cache_rows` in steps of 4 and the entry caps in powers of two before
 the feature starts. The fit sentence of the bounds block counts the Git
@@ -330,21 +387,24 @@ it, and a target whose stage or spawn cannot start under the floor is
 `not-attempted` with `deadline-exceeded` as for every removal (QA-5), so the
 margins above are design arithmetic, not a promise of the spec.
 
-With `--retire-branches` (#23) a run spawns branch children too. At the
-packet's 150 ms model only 13 of 16 targets then reach their stage before the
-removal floor, cache-stage filesystem time excluded, and change 1's deadline
-rule defers the rest to the next run (exit 1, never unsafe); at change 1's
-measured costs all 16 fit. #23, which archives after this change, states that
-joint fit (A-9, the alignment review's G3). The inputs it needs from this
-change, as of the council round:
+With `--retire-branches` (#23) a run spawns branch children too. #23's draft
+at `ca96701` finds that at the packet's 150 ms model only 13 of 16 targets
+then reach their stage before the removal floor, 11 in its worst case, with
+the cache-stage filesystem time excluded, and that change 1's deadline rule
+defers the rest to the next run (exit 1, never unsafe); at change 1's measured
+costs all 16 fit. #23, which archives after this change, states that joint fit
+(A-9, the alignment review's G3), and under A-23 restates it, adding this
+change's walk and earlier stages as B-25 gives them. The inputs it needs from
+this change, as round B3 restates them:
 
 - Git children: 16 cache enumerations per invocation under `probes`, 2.4 s at
   the model; none added at revalidation, where the enumeration's child takes
   the combined probe's place (CD-4); and no status probe after a `disposed`
   stage, which B-19 rejected.
-- Plan-time filesystem calls: the walk's about 4,500 and the access checks, at
-  most one per planned directory; about 1 s through one worker, up to about
-  2.8 s at a thread per call.
+- Plan-time filesystem calls: the walk's at most 8,192 entries, 16 rows of 512
+  with the rows the invocation's totals reject included, about 9,000 calls,
+  and the access checks, at most one per planned directory; about 2 s through
+  one worker per stage, up to about 5.6 s at a thread per call (B-25).
 - Stage filesystem calls: at most about 1,100 per target and 8,500 per run;
   about 0.25 s for a 512-entry stage, about 2 s per run through one worker, up
   to about 5.3 s at a thread per call.
@@ -373,7 +433,9 @@ Python recompiles, and an identity in the plan would refuse `--expect-plan` and
 the preflight for no safety gain. Each listed file is instead checked for its
 type at the preflight, and each listed cache for its planned number of entries
 (D7, QA-1): a `.pyc` written into a listed directory adds an entry and
-refuses, while a `.pyc` recompiled in place keeps the count and passes. A file
+refuses, while a `.pyc` recompiled in place keeps the count and passes, its
+new size counted at the preflight toward the per-worktree cap and the run's
+byte total (D4, B-26). A file
 renamed within a listed directory keeps the count too; it is an allowlisted
 cache either way, so the stage still removes nothing but caches.
 
@@ -423,7 +485,7 @@ excludes (as `contains-submodule`, `deferred-target-cap` or
 sentence that read at the gate level contradicted change 2's carried rule that
 a gate finding replaces the housekeeping finding "while the classification
 stays" (M5): the exception now covers a worktree that `project clean`
-classifies `merged-removable` because its cache enumeration proved every
+classifies `merged-removable` because clean's cache enumeration proved every
 ignored path a listed cache, and the overview SHALL NOT classify a worktree
 `merged-removable` where `project clean` classifies it otherwise. Lane 4
 agreed the edit on 2026-10-19, with one optional point that the committed
@@ -460,11 +522,13 @@ each entry relative to it, require the allowlisted shape, require each nested
 `__pycache__` to carry its planned identity, require the cache to hold exactly
 its planned number of entries, and record the names to remove; for a file,
 `lstat` it relative to its parent and require a regular file with an allowed
-suffix; and keep the running byte total within the per-worktree cap. Any
-`OSError` (`ENOTDIR` or `ELOOP` from a swapped symlink,
-`ENOENT`, `EACCES`), any identity, shape or entry-count difference, the byte
-cap exceeded, or a call past its budget ends the stage `refused` with
-`cache-changed`. This is the
+suffix; keep the target's running byte total within the per-worktree cap; and
+keep the run's byte total, this target's measured bytes added to those
+measured at the preflight of every earlier target whose stage passed it in
+this run, within the invocation's 1 GiB (B-26, D4). Any `OSError` (`ENOTDIR`
+or `ELOOP` from a swapped symlink, `ENOENT`, `EACCES`), any identity, shape or
+entry-count difference, either byte cap exceeded, or a call past its budget
+ends the stage `refused` with `cache-changed`. This is the
 whole-list check that PR #2's open thread 3989548481 asked for: no path is
 removed until every path has passed.
 
@@ -515,7 +579,7 @@ say which listed path remains.
 | Stage outcome | `cache_disposal` | Target | Later targets | Exit (first matching row of change 1's table) |
 | --- | --- | --- | --- | --- |
 | every listed cache removed | `disposed`, null | the sequence goes on to the spawn | as change 1 | as change 1 |
-| preflight difference | `refused`, `cache-changed`; each `removed` false where the preflight found the path, null where it did not | `refused`, `state-changed`, reconciliation, nothing spawned | `not-attempted`, `batch-stopped` | 2 |
+| preflight difference, either byte cap included (B-26) | `refused`, `cache-changed`; each `removed` false where the preflight found the path, null where it did not | `refused`, `state-changed`, reconciliation, nothing spawned | `not-attempted`, `batch-stopped` | 2 |
 | every removal handed over returned and none removed its entry (B-20) | `refused`, `cache-changed`; each `removed` false | likewise | likewise | 2 |
 | failure after an entry was removed | `partial`, `cache-partial` | likewise | likewise | 2 |
 | the floor reached at a hand-off after the first removal | `partial`, `cache-partial` | likewise | `not-attempted`, `deadline-exceeded` | 1 (the deadline stopped work) |
@@ -531,13 +595,21 @@ for every removal target" widens its `refused` stage to name a cache stage that
 ended `refused` or `partial` and gives the stage's deletions as the one
 exception to "never ... delete a directory itself" (B-10); stopping the run is
 CD-1. The same block's `not-attempted` stage now names a target whose cache
-stage ran and whose removal was not spawned, for a signal or the floor, and
+stage ended `disposed` and whose removal was not spawned, for a signal or the
+floor, so that it does not also match a stage that ended `refused` or
+`partial`, which the `refused` stage names (lane 3's re-read MEDIUM 2), and
 such a target carries its reconciliation once its stage removed an entry
 (B-17, lane 3's M2), so the carried rule "a `not-attempted` target SHALL carry
-null" no longer contradicts the ADDED requirement. The ceiling row is this
-design's reading of B-16: past 300 s the work deadline has passed, so the
-later targets meet the floor, and the run exits 1 as change 1's
-`removal-ceiling` does. The retry is a re-run: the
+null" no longer contradicts the ADDED requirement. Its signal paragraph lets a
+cache stage that has handed over its first removal run to its end, since one
+that has not yet handed it over stops at the check before it (lane 3's
+re-read LOW 1). The ceiling row is this design's reading of B-16: past 300 s
+the work deadline has passed, so the later targets meet the floor, and the run
+exits 1 as change 1's `removal-ceiling` does. The target itself is `refused`
+with `state-changed`, not `removal-ceiling`, so the same block's exit table
+names the case in its row 2, "a cache stage's removal reached the removal
+ceiling", and an only or last target also exits 1 (lane 3's re-read MEDIUM 1,
+B-27). The retry is a re-run: the
 fresh plan enumerates the caches that remain, the revalidation and preflight run
 again, and a persistent failure stops at the same target each time, which the
 human line says (D11).
@@ -718,10 +790,21 @@ adds the stage, which took about 0.25 s for 512 entries on this workstation
 in a listed cache directory is still protected, since `rmdir` refuses a
 directory that holds it (D7), which is the sense in which CD-18 calls the stage
 safer. The window is stated, not closed: one combined status probe after each
-`disposed` stage would close it at one Git child per cache target, 266
-children and about 44.7 s at the packet's model, and under #23's flag about
-one target fewer, 12 of 16, for a window that concurrent writers, outside the
-contract, alone can use (B-19; proposal, Decisions).
+`disposed` stage would close it at one Git child per cache target, at most 266
+children and 16 removals, 39.9 s + 4.8 s = about 44.7 s at the packet's model
+before any filesystem time. With the walk and the stages at B-25's bound
+through one worker (D4), it costs about one target: each earlier cache target
+delays target k by 0.15 s more, and 16 cache targets and an 8,192-entry walk
+cannot come together, since 16 selected targets hold the walk to the 4,096
+entries they list. With 16 cache targets the 15th arrives at 40.5 + 2.1 + 1.0
++ 1.9 = about 45.5 s, and with 8 cache targets ahead of it and 8,192 entries
+walked at 40.5 + 1.2 + 2.0 + 1.9 = about 45.6 s, under the floor either way,
+while the 14th arrives by about 44.6 s: 14 of 16 targets reach their stage,
+against 15 of 16 without the probe. Under #23's flag B-19 put the probe's
+cost at about one target fewer than #23's 13 of 16, 12, with the cache-stage
+filesystem time excluded; #23 restates its own count under A-23. That would
+buy a window that concurrent writers, outside the contract, alone can use
+(B-19; proposal, Decisions).
 
 When the plan selects a cache target, change 1's residual-window line becomes
 `Not protected: ignored files created or index flags set after the last check
@@ -731,10 +814,11 @@ own check.`; otherwise it is change 1's line, unchanged.
 ### D14. Tests
 
 The deltas hold 55 scenarios in `project-clean` (5 classification, 14 retire,
-11 batch, 6 bounds, 8 reconcilable result and 11 ADDED), 27 in
+11 batch, 6 bounds, 8 reconcilable result and 11 ADDED), 28 in
 `project-clean-review-safety` (6 preservation, 11 revalidation, 4 narrow
-guarantee and 6 ADDED) and 8 in `project-overview` (the one MODIFIED block of
-B-14). The new ones, 1 + 1 + 1 + 11 + 1 + 1 + 1 + 6 + 1 = 24, each get a test
+guarantee and 7 ADDED, B-26's among them) and 8 in `project-overview` (the one
+MODIFIED block of B-14). The new ones, 1 + 1 + 1 + 11 + 1 + 1 + 1 + 7 + 1 = 25,
+each get a test
 named after it. Of the 66 carried ones, which keep the tests of features 004
 and 005, 62 are byte-exact and four are edited, each to name its ignored file
 as not a Python bytecode cache: "Ignored-file bound" and "A merged worktree has
@@ -795,7 +879,9 @@ cache phase" and "A file placed in a cache directory during the stage".
   caches] -> A new cache refuses at revalidation, a replaced directory at the
   preflight, a new file in a listed directory refuses at the preflight, or
   ends the stage `partial` when it arrives after it; a re-run plans afresh. A
-  `.pyc` recompiled in place changes nothing (D5).
+  `.pyc` recompiled in place changes nothing (D5), unless its growth takes the
+  target past 256 MiB or the run's byte total past 1 GiB, which its preflight
+  refuses with nothing deleted (B-26).
 - [Sixteen candidates that each keep a blocking path the samples did not show
   sort first, so no run enumerates a later cache-only candidate] -> The sample
   test keeps out every row whose samples show a blocking name (D2); the rest is
