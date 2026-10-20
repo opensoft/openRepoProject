@@ -3325,32 +3325,68 @@ def update_child_states(item):
 
 
 def update(args):
-    root = discover(args.target)
-    report = snapshot(root)
-    report["updates"] = [
-        {"component": "shape", "detail": "Use openRepoShape update-shape.py check/apply; --shape-source selects its checkout"},
-        {"component": "workflow", "detail": "Refresh through setup-openspeckit --repo PATH"},
-        {"component": "bench", "detail": "Refresh project configuration through the profile's exact registered update-TYPE generator"},
-        {"component": "tools", "detail": "Open workBenches setup for explicit tool/environment selection"},
-    ]
+    """`update`: the report, then with --apply one component's owner command.
+
+    signal_scope() holds around the inspection and the refusals that read it,
+    and the slot is read once the scope has exited, as in inspect_project();
+    the process's own handlers are back for confirm() and the owner-tool
+    delegates, and default_signals() holds around them (T120; research.md R4,
+    plan review M1). `--component shape` or `bench` refuses unless the root's
+    and every child's `dirty` is exactly false, so a `dirty` left null by a
+    failed or timed-out probe refuses as dirty work does and no owner tool runs
+    (D-R, FR-052). `origin/HEAD` is read from the ref listing's symref (row 6),
+    memoized per common directory, never from a child of its own, and only
+    after the root's state has passed, so after a failed version check update
+    spawns no Git child (plan review M10). `tools` and `workflow` need no Git."""
+    scope = signal_scope()
+    try:
+        with scope:
+            root = discover(args.target)
+            report = snapshot(root)
+            report["updates"] = [
+                {"component": "shape", "detail": "Use openRepoShape update-shape.py check/apply; --shape-source selects its checkout"},
+                {"component": "workflow", "detail": "Refresh through setup-openspeckit --repo PATH"},
+                {"component": "bench", "detail": "Refresh project configuration through the profile's exact registered update-TYPE generator"},
+                {"component": "tools", "detail": "Open workBenches setup for explicit tool/environment selection"},
+            ]
+            if args.apply and args.json:
+                raise Refused("--json is for inspection; omit it when applying updates.")
+            if args.apply and not args.component:
+                raise Refused("--apply requires --component shape|workflow|bench|tools")
+            if args.apply and args.component in ("shape", "bench"):
+                state = report["repository"]
+                if state.get("present") is not True or state.get("dirty") is not False:
+                    raise Refused("Project updates require a clean tracking checkout; preserve feature work first.")
+                tracking = report.get("tracking_branch")
+                if not tracking:
+                    tracking = "origin/main"
+                    for ref in inspect_repository(os.fsencode(root), current_invocation())["refs"] or ():
+                        if ref["refname"] == b"refs/remotes/origin/HEAD" and ref["symref"]:
+                            name = ref["symref"]  # shortened as `symbolic-ref --short` shortens it
+                            for prefix in (b"refs/heads/", b"refs/remotes/"):
+                                if name.startswith(prefix):
+                                    name = name[len(prefix):]
+                                    break
+                            tracking = name.decode("utf-8", "surrogateescape")
+                    tracking = tracking.removeprefix("origin/")
+                if state.get("branch") != tracking:
+                    raise Refused("Project updates require a clean tracking checkout; preserve feature work first.")
+                for child in update_child_states(report):
+                    if child.get("present") is False:
+                        raise Refused(f"Child checkout is missing: {child.get('path')}")
+                    expected = child.get("tracking_branch") or "main"
+                    if (child.get("dirty") is not False or child.get("branch") in (None, "detached")
+                            or child.get("branch") != expected):
+                        raise Refused(f"Child has work to preserve: {child.get('path')}")
+    except BaseException:
+        if scope.invocation is not None and scope.invocation.signal is not None:
+            raise Interrupted(scope.invocation.signal) from None
+        raise
+    if scope.invocation.signal is not None:
+        raise Interrupted(scope.invocation.signal)
     if not args.apply:
         print_report(report, args.json)
         return 0
-    if args.json:
-        raise Refused("--json is for inspection; omit it when applying updates.")
-    if not args.component:
-        raise Refused("--apply requires --component shape|workflow|bench|tools")
-    if args.component in ("shape", "bench"):
-        state = report["repository"]
-        tracking = report.get("tracking_branch") or (git_text(root, "symbolic-ref", "--short", "refs/remotes/origin/HEAD") or "origin/main").removeprefix("origin/")
-        if not state.get("present") or state.get("dirty") or state.get("branch") != tracking:
-            raise Refused("Project updates require a clean tracking checkout; preserve feature work first.")
-        for child in update_child_states(report):
-            if not child.get("present"):
-                raise Refused(f"Child checkout is missing: {child.get('path')}")
-            expected = child.get("tracking_branch") or "main"
-            if child.get("dirty") or child.get("branch") in (None, "detached") or child.get("branch") != expected:
-                raise Refused(f"Child has work to preserve: {child.get('path')}")
     if args.component == "shape":
         if report["kind"] == "single":
             raise Refused("This project has no shape manifest.")
@@ -3390,19 +3426,20 @@ def update(args):
     show_plan(commands, root)
     if args.dry_run:
         return 0
-    if args.component == "shape":
-        check = execute(commands.pop(0), cwd=root)
-        # update-shape check exits 1 when differences are available.
-        if check not in (0, 1):
-            return check
-        # The owner retains its own confirmation prompt, even if this coordinator
-        # received --yes for a different update component.
-        return execute(commands[0], cwd=root)
-    confirm(args.yes)
-    for command in commands:
-        code = execute(command, cwd=root)
-        if code:
-            return code
+    with default_signals():
+        if args.component == "shape":
+            check = execute(commands.pop(0), cwd=root)
+            # update-shape check exits 1 when differences are available.
+            if check not in (0, 1):
+                return check
+            # The owner retains its own confirmation prompt, even if this coordinator
+            # received --yes for a different update component.
+            return execute(commands[0], cwd=root)
+        confirm(args.yes)
+        for command in commands:
+            code = execute(command, cwd=root)
+            if code:
+                return code
     return 0
 
 
