@@ -137,16 +137,21 @@ child's scrubbed names and process group before it `exec`s Git (M4).
    Python 3.12: `-k test_clean_` ran a method of a module named
    `test_clean_parsers` whose own name lacks the prefix). A module with another
    prefix would need its own `-k` or a selection by module. Each module has one
-   writer, its lane's, with five exceptions: T047 retargets T034's fault
+   writer, its lane's, with six exceptions: T047 retargets T034's fault
    patches in `tests/test_clean_guard.py` (analyze H3) and adds X-3's SIGHUP
    test there (lead ruling R-55); T127 normalizes the
    other lanes' modules to rule 3's import idiom (lead ruling R-38); a
    lane that adds a `TEXT` or `NEXT_STEPS` key adds its fixture key to
    `tests/clean_support.py` (R-45) (lead ruling R-48); T043 adds
    `run_pty_steps()`'s lead-approved `stdout_pipe=True` option there (lead
-   ruling R-56 Q-14); and the plan lane (T051), once its envelope carries
-   `observed_at`, makes each comparison of two whole run documents in lane
-   G's `tests/test_clean_evidence.py` and lane H's
+   ruling R-56 Q-14); the reflog lane patches T040's
+   `test_clean_first_gates_in_order` in the plan lane's
+   `tests/test_clean_batch.py`, so that `reflog_gate` and `index_gates`
+   pass every row there and its closing loop checks `registration_gate`
+   alone, gates 7, 9 and 10 being pinned by their own lanes' tests (`c718f6d`,
+   merged as `2e36e30`; lead ruling R-71 (a)); and the plan lane (T051), once
+   its envelope carries `observed_at`, makes each comparison of two whole run
+   documents in lane G's `tests/test_clean_evidence.py` and lane H's
    `tests/test_clean_guard.py` ignore `observed_at`, one line each, named in
    its commit and report (it changed one, in lane G's module), any other
    field that differs between runs being reported, not masked (lead ruling
@@ -1075,7 +1080,10 @@ L-8).
   rows, each a lane G `WorktreeRow` with `main`, `raw_path` and `registered`
   set (lead ruling R-56), with a literal `Plan` whose run namespace carries
   `mode` (and `action`), P its `target` in mode single, and `run` None,
-  every Git child and filesystem call patched to fail (lane 3's L-9); a
+  every Git child and filesystem call patched to fail (lane 3's L-9), and
+  `reflog_gate` and `index_gates` patched to pass every row, since filled
+  they read files or run children and their own lanes' tests pin them, while
+  `registration_gate`, pure, stays real (lead ruling R-71 (a)); a
   `registered=None` row passes gate 3 and is excluded at gate 5 by its class
   (lead ruling R-67 (e), R-53 P-16): `main-worktree` before every other gate,
   `unsupported-path-bytes` before
@@ -1586,11 +1594,12 @@ carrying the reason the gate order gives.
   its entries (lead ruling R-33, in place of plan review m10); another
   `OSError` gives the row `inspection-error` with an `os-error` in its
   `errors`, and the plan incomplete with `inspection-incomplete` (M5); an
-  `fs_call()` timeout gives `reflog-unavailable` and leaves the row
-  unprobed, its marker set, and the plan incomplete with
-  `inspection-incomplete`, as the delta's outcome rule says (lead ruling R-67
-  (a); M5's replacement text would make that row `inspection-error`; the
-  delta governs).
+  `fs_call()` timeout gives `reflog-unavailable`, records `probe-timeout`, or
+  `deadline-exceeded` under the work deadline, in the row's `errors`, and
+  leaves the row unprobed, its marker set and its class kept, and the plan
+  incomplete with `inspection-incomplete`, as the delta's outcome rule says
+  (lead rulings R-67 (a) and R-73 (c); M5's replacement text would make that
+  row `inspection-error`; the delta governs).
   — files: `tests/test_clean_reflog.py`
   — verify: `python3 -c "import sys,unittest as u;L=u.defaultTestLoader;f=lambda s:[i for t in s for i in (f(t) if isinstance(t,u.TestSuite) else [t.id()])];I=[i for i in f(L.discover('tests',pattern=sys.argv[1])) if not i.startswith('unittest.')];A=sys.argv[2:];M=[a for a in A if not any(a in ('*',i.split('.')[-1]) for i in I)];[print('not collected:',m) for m in M];[print(e) for e in L.errors];sys.exit(1 if M or L.errors or not A else 0)" test_clean_reflog.py 'test_clean_reflog_gate_outcomes'`
 - [x] T060 [P] [US2] [S] Add the reflog scenarios to `tests/test_clean_reflog.py`:
@@ -1727,14 +1736,20 @@ carrying the reason the gate order gives.
   `reflog-unavailable`, never `inspection-error` (R-53 P-22); it runs for
   every row that reaches gate 7, in every mode. A read error other than
   `ENOENT` or `ENOTDIR` makes the row `inspection-error` with `os-error`, and
-  a timeout returns `reflog-unavailable` and leaves the row unprobed by
-  setting T031's unprobed marker, whose only setter this is (lead ruling
-  R-67 (a)), the plan incomplete with
+  a timeout records `probe-timeout`, or `deadline-exceeded` where the
+  deadline was the limit, in the row's `errors`, as the `project-clean`
+  delta's "Clean bounds its Git work and reports omitted work" records for
+  every filesystem call cut at its budget (its `spec.md:772-776`), returns
+  `reflog-unavailable` and leaves the row unprobed by setting T031's
+  unprobed marker, whose only setter this is, the row keeping its class
+  (lead rulings R-67 (a) and R-73 (c)), the plan incomplete with
   `inspection-incomplete` either way through T049's `plan_completeness()`,
   which this task leaves as it is (plan review M5, as the delta words it;
-  analyze M6). T059 and T060 pass.
+  analyze M6). T059 and T060 pass, and so does T040's
+  `test_clean_first_gates_in_order`, which patches this gate to pass (lead
+  rulings R-71 (a) and R-72 (a)).
   — files: `project`
-  — verify: `python3 -c "import sys,re;t=open('project').read();A=sys.argv[1:];c=lambda r:t.split('# region '+r+'\n')[1].split('# endregion '+r+'\n')[0];M=[a for a in A if not ((a.split('%',1)[1] not in c(a.split('%',1)[0])) if '%' in a else (a.split('~',1)[1] in c(a.split('~',1)[0])) if '~' in a else re.search(r'^[a-z]*\s?'+re.escape(a.split(':',1)[1])+r'\b',c(a.split(':',1)[0]),re.M))];[print('region check failed:',m) for m in M];sys.exit(1 if M or not A else 0)" 'reflog~fs_call' 'reflog:read_reflog' && python3 -m unittest discover -s tests -p 'test_clean_reflog.py'`
+  — verify: `python3 -c "import sys,re;t=open('project').read();A=sys.argv[1:];c=lambda r:t.split('# region '+r+'\n')[1].split('# endregion '+r+'\n')[0];M=[a for a in A if not ((a.split('%',1)[1] not in c(a.split('%',1)[0])) if '%' in a else (a.split('~',1)[1] in c(a.split('~',1)[0])) if '~' in a else re.search(r'^[a-z]*\s?'+re.escape(a.split(':',1)[1])+r'\b',c(a.split(':',1)[0]),re.M))];[print('region check failed:',m) for m in M];sys.exit(1 if M or not A else 0)" 'reflog~fs_call' 'reflog:read_reflog' && python3 -m unittest discover -s tests -p 'test_clean_reflog.py' && python3 -m unittest discover -s tests -p 'test_clean_batch.py' -k '*.test_clean_first_gates_in_order'`
 - [x] T067 [P] [US2] [O] Fill in region `index`: `registration_gate`, gate 3,
   from the row's two-way registration result, failing only when
   `registered is False`: a row whose registration was never read is already
@@ -1754,9 +1769,16 @@ carrying the reason the gate order gives.
   the row `inspection-error` with `os-error`, `probe-failed`, `probe-timeout`
   or `deadline-exceeded` in its `errors`, and the plan incomplete with
   `inspection-incomplete`; a null flag never passes a gate (plan review M5).
-  T061 to T065 pass.
+  Each row `index_gates()` makes `inspection-error` also takes that class's
+  recommendation text; and a row that reaches gates 9 and 10 without an
+  `admin_id` or a common directory is made `inspection-error` with no read
+  made, a defensive branch, since every row past gate 5 is a present linked
+  worktree whose registration holds (lead ruling R-73 (b), the index lane's
+  fills). T061 to T065 pass, and so does T040's
+  `test_clean_first_gates_in_order`, which patches `index_gates` to pass
+  and keeps `registration_gate` real (lead rulings R-71 (a) and R-72 (a)).
   — files: `project`
-  — verify: `python3 -c "import sys,re;t=open('project').read();A=sys.argv[1:];c=lambda r:t.split('# region '+r+'\n')[1].split('# endregion '+r+'\n')[0];M=[a for a in A if not ((a.split('%',1)[1] not in c(a.split('%',1)[0])) if '%' in a else (a.split('~',1)[1] in c(a.split('~',1)[0])) if '~' in a else re.search(r'^[a-z]*\s?'+re.escape(a.split(':',1)[1])+r'\b',c(a.split(':',1)[0]),re.M))];[print('region check failed:',m) for m in M];sys.exit(1 if M or not A else 0)" 'index:modules_check' 'index:hidden_state_probe' 'index~def modules_check(common_dir, admin_id, run)' 'index~def hidden_state_probe(path, run)' && python3 -m unittest discover -s tests -p 'test_clean_gates.py'`
+  — verify: `python3 -c "import sys,re;t=open('project').read();A=sys.argv[1:];c=lambda r:t.split('# region '+r+'\n')[1].split('# endregion '+r+'\n')[0];M=[a for a in A if not ((a.split('%',1)[1] not in c(a.split('%',1)[0])) if '%' in a else (a.split('~',1)[1] in c(a.split('~',1)[0])) if '~' in a else re.search(r'^[a-z]*\s?'+re.escape(a.split(':',1)[1])+r'\b',c(a.split(':',1)[0]),re.M))];[print('region check failed:',m) for m in M];sys.exit(1 if M or not A else 0)" 'index:modules_check' 'index:hidden_state_probe' 'index~def modules_check(common_dir, admin_id, run)' 'index~def hidden_state_probe(path, run)' && python3 -m unittest discover -s tests -p 'test_clean_gates.py' && python3 -m unittest discover -s tests -p 'test_clean_batch.py' -k '*.test_clean_first_gates_in_order'`
 - [x] T068 [US2] [S] Run the US2 modules, every earlier module and the 96 tests:
   all pass.
   — files: (none)

@@ -218,7 +218,7 @@ message when there is one.
 | --- | --- |
 | `reflog-unavailable` | missing (`ENOENT`, `ENOTDIR`), 0 bytes, or the read reached its 64 KiB bound (65,536 bytes read) |
 | `inspection-error` | any other error on the read |
-| `reflog-unavailable`, the row left unprobed (its marker set; the plan `inspection-incomplete`; R-67 (a)) | the read did not finish within the filesystem budget |
+| `reflog-unavailable`, the row left unprobed (its marker set, its class kept, `probe-timeout` or `deadline-exceeded` in its `errors`; the plan `inspection-incomplete`; R-67 (a), R-73 (c)) | the read did not finish within the filesystem budget |
 | `reflog-unavailable` | a line that is not `<old> <new> ...`, a truncated last line included: the entries cannot decide, never `inspection-error` (lead ruling R-53 P-22) |
 | `reflog-unavailable` | the last entry's new object is not the head |
 | pass | a movement survives |
