@@ -34,6 +34,12 @@ the joint fit with the cache change) to D7 and D8 (proposal, "Re-read and
 Codex Findings (round A3)"). Round A4 maps A-24 (Codex's finding on
 `abad010`: the reflog proved again before the branch child) to D2, D3, D4,
 D5, D6, D7, D9 and Risks (proposal, "Re-read and Codex Findings (round A4)").
+Round A5 maps A-25 (the cache change's worst shapes at `e1049b2`) to D7; A-26
+(lane openRepoProject-3's delta read of `9ff8202`) to Context, D4, D7, D8, D9
+and Risks; A-27 (the `update-ref` restore for a branch named `HEAD`) to
+Context, D8, D9 and Risks; and A-28 as amended (the `$'...'` note) to Context,
+D8, D9 and the Migration Plan (proposal, "Re-read and Codex Findings (round
+A5)").
 
 Citations follow `proposal.md`: packet files at `da33d92`, `CAS` for change 1,
 `APO` for change 2, `project:N` and `tests:N` at `961c405`, all unchanged at
@@ -93,12 +99,16 @@ bare remote, `GIT_CONFIG_NOSYSTEM=1` and an empty global configuration:
 | `branch -d` on a branch whose upstream's remote-tracking ref was deleted, the command directory's `HEAD` on another branch that lacks it | refused, "the branch 'd' is not fully merged", exit 1; run with `HEAD` on the merge target it deletes, exit 0 |
 | a `reference-transaction` hook during `branch -d` | runs; for a loose and for a packed ref, every line it reads carries an all-zeros old value, so Git deletes without comparing the ref to the value its own check read |
 | the same hook during `git update-ref -d refs/heads/<b> <sha>` | reads the SHA as the old value; with a wrong SHA the command refuses, "cannot lock ref ... is at X but expected Y", exit 1, and the ref stays |
-| `rev-list --max-count=1 --stdin` given named commits, then a line `^` and the merge target's SHA (round A3) | prints an amended-away draft, as the `--not` form does, and nothing for a plain history, exit 0 both times; any option on standard input, `--bogus` for one, is fatal: "invalid option '--bogus' in --stdin mode", exit 128 |
+| `rev-list --max-count=1 --stdin` given named commits, then the one line `^<merge target SHA>` (round A3) | prints an amended-away draft, as the `--not` form does, and nothing for a plain history, exit 0 both times; any option on standard input, `--bogus` for one, is fatal: "invalid option '--bogus' in --stdin mode", exit 128 |
 | `git check-ref-format --branch 'topic;id'` (round A3; the lead's F-1) | accepted; `git branch -d -- 'topic;id'` deletes it, and the restore line `git -C '<root>' branch 'topic;id' <sha>`, run by `dash` from another directory with a space in the root, recreates it and runs nothing else; the same line unquoted runs `id` |
 | a hand-written `refs/heads/-f` (round A3; F-1) | `git update-ref` writes it, `git symbolic-ref HEAD refs/heads/-f` checks it out in a worktree, and it commits, publishes with `git push -u origin refs/heads/-f` and merges; `git branch -- -f <sha>` refuses, "'-f' is not a valid branch name", exit 128; `git branch -f <sha>` exits 0 after creating a branch named after the SHA; `git -C '<root>' update-ref refs/heads/-f <sha> ''` recreates the ref, and refuses, "reference already exists", exit 128, when it exists |
 | a branch named `expire` (round A3; F-1) | `git reflog expire` runs the subcommand and prints nothing; `git reflog show refs/heads/expire` shows the branch's reflog |
 | a branch whose upstream's remote-tracking ref was deleted, the merge target checked out in a linked worktree, the main worktree on another branch (round A3) | `git checkout <merge target>` in the main worktree refuses, "already used by worktree", exit 128; `git switch --detach <merge target SHA>` there succeeds, and `branch -d` then deletes the branch, exit 0 |
 | a merged, published branch given, after the plan, a commit its merge target lacks in its worktree and reset to its planned SHA by `git reset --hard` (round A4; ruling A-24, Codex's P1 on `abad010`) | its head, `origin/<b>`, ahead and behind (0 and 0), the merge target and the worktree's status all equal the plan's, and its reflog names the commit as the new object of a `commit:` entry and the old object of the `reset:` entry after it; the plan's proof printed nothing before the move, and the same proof over the reflog as it then reads, after `worktree remove`, prints the commit, exit 0; without it `branch -d -- <b>` deletes the branch and its reflog, exit 0, and `git fsck --unreachable` then names the commit; a move to such a commit and back by `git update-ref` after the removal is caught the same way |
+| a hand-written `refs/heads/HEAD` (round A5; ruling A-27, Codex's P2 on `9ff8202`) | `git check-ref-format --branch HEAD`, `git branch HEAD <sha>` and `git branch -- HEAD <sha>` refuse, "'HEAD' is not a valid branch name", exit 128; `git update-ref` writes the ref, `git symbolic-ref HEAD refs/heads/HEAD` checks it out in a worktree, which `worktree list --porcelain` lists as `branch refs/heads/HEAD`, and, in a repository whose `refs/remotes/origin/HEAD` is not a symbolic ref, it commits, publishes with `git push -u origin refs/heads/HEAD:refs/heads/HEAD` and merges; after `worktree remove`, `branch -d -- HEAD` with the seven pins deletes it and its reflog, exit 0, and so does `branch -d HEAD`, change 1's `delete-branch` form; `git -C '<root>' update-ref refs/heads/HEAD <sha> ''`, run by `dash` from `/` with a space in the root, recreates it, exit 0, and refuses, "reference already exists", exit 128, when it exists; `git reflog show refs/heads/HEAD` shows the branch's reflog and `git reflog show HEAD` the main worktree's; `for-each-ref` reports its upstream as `refs/remotes/origin/main`, the current branch's, where its configuration names `refs/heads/HEAD` on `origin` |
+| the merge target's exclusion on `rev-list --max-count=1 --stdin` (round A5; lane openRepoProject-3's delta read, D8) | after a branch's named commits, the one line `^<merge target SHA>` prints an amended-away draft, and nothing for a plain history, exit 0; a line `^` with the SHA on the next line fails, "bad revision '^'", exit 128, and so does a line `^ <sha>`, "bad revision '^ <sha>'" |
+| change 1's `delete-branch` for a hand-written `refs/heads/-f` (round A5; lane openRepoProject-3's delta read, D5) | `project` builds `git -C <root> branch -d <branch>` with no `--` (`project:734`), so `--branch=-f` gives `git branch -d -f`, which fails, "branch name required", exit 128, and leaves the ref; `branch -d -- -f`, the branch child's form, deletes it, exit 0 |
+| a branch named `topic`, U+202E and `x`, restored by a line in the `$'...'` form (round A5; ruling A-28, Codex's P2 on `9ff8202`) | `git check-ref-format --branch` accepts the name; `git -C '<root>' branch $'topic\u202ex' <sha>`, run from `/` with `LC_ALL=C.UTF-8`, recreates it under bash 5.2.21 and zsh 5.9, exit 0; with `LC_ALL=C` bash passes the text `topic\u202Ex`, which Git refuses as not a valid branch name, exit 128, and zsh refuses the line, "character not in range", exit 1, while both drop the escape from `$'a\U000e0041b'`, passing `ab`, another name; `\xHH` gives its byte in either locale; dash 0.5.12, Ubuntu's `/bin/sh`, passes every such word as text, `$topic\u202ex` for the first, which Git refuses, exit 128; ksh93 was not available here |
 
 The council's adversary engineer added, on Git 2.43.0 (council finding AE-1):
 a commit reset or amended away on a branch stays reachable through that
@@ -113,11 +123,19 @@ Git's advice to run `git branch -D` through to the person (council finding
 P-1). Lane openRepoProject-3 reads Git's history as accepting a pseudo-option
 such as `--not` on `rev-list`'s standard input only from Git 2.42 (its
 re-read's MEDIUM-3, unverified on 2.36), so the proof gives the merge target's
-exclusion as a `^` line, a revision rather than an option, which the round A3
-row above checks on 2.43.
+exclusion as the one line `^<merge target SHA>`, a revision rather than an
+option, which the round A3 row above checks on 2.43.
 
 The Git 2.36 floor was not available for these checks here, nor for rounds
-A3's and A4's; D9 puts them on change 1's CI floor job.
+A3's, A4's and A5's; D9 puts them on change 1's CI floor job. Lane
+openRepoProject-3, running rows of this table on Git 2.36.6, 2.40.4 and 2.43.0
+(its delta read of `9ff8202`, D10), found the same exit statuses and outcomes
+on all three and three messages that differ, so the messages the table quotes
+are 2.43.0's: on 2.36.6 and 2.40.4 an option on `rev-list`'s standard input
+reads "options not supported in --stdin mode", the refused checkout "is
+already checked out at", and the refused `branch -d` "The branch '<b>' is not
+fully merged.", capitalised and with a full stop. D9's fixtures assert exit
+statuses and outcomes, never Git's wording.
 
 ## Goals / Non-Goals
 
@@ -312,13 +330,15 @@ deleting work only the reflog holds:
    oldest surviving entry's old object included, is not proven an ancestor of
    the merge target's SHA. One `rev-list
    --max-count=1 --stdin` child per repository is given on its standard input
-   every selected row's named commits, one per line, then the line `^` and the
-   merge target's SHA, a revision and not the pseudo-option `--not`, which
-   Git takes on standard input only from 2.42 by lane openRepoProject-3's
-   reading (its re-read's MEDIUM-3); it prints nothing when every named commit
-   is merged. Only when it prints a commit does one such child per selected
-   row run, over that row's commits and the same `^` line, to say which rows
-   fail. A failed child, or one timed out at its own 5 s budget, fails the
+   every selected row's named commits, one per line, then the one line
+   `^<merge target SHA>`, `^` immediately followed by the SHA, a revision and
+   not the pseudo-option `--not`, which Git takes on standard input only from
+   2.42 by lane openRepoProject-3's reading (its re-read's MEDIUM-3); a line
+   `^` with the SHA on the next line is fatal (Context; lane
+   openRepoProject-3's delta read, D8). It prints nothing when every named
+   commit is merged. Only when it prints a commit does one such child per
+   selected row run, over that row's commits and the same line, to say which
+   rows fail. A failed child, or one timed out at its own 5 s budget, fails the
    proof of every row it covers, so those branches are kept and the plan stays
    complete: the proof decides only which branches retire, never whether the
    plan is whole. Only the deadline passing during the proof makes the plan
@@ -358,8 +378,8 @@ first failure:
 6. The re-proof, the re-read's last step (ruling A-24): the branch's reflog,
    read again as the `unstarted-branch` gate reads it, names no commit that
    one `rev-list --max-count=1 --stdin` child prints, given every named commit
-   and then the line `^` with the merge target's SHA, as the plan's proof is
-   given; else `retained`, `reflog-unmerged`.
+   and then the one line `^<merge target SHA>`, as the plan's proof is given;
+   else `retained`, `reflog-unmerged`.
 
 A value the re-read's manifest read or listing cannot establish, a listing that
 fails or times out or a manifest read that does, is `retained` with
@@ -387,7 +407,9 @@ One Git child computes ancestry at the stage, the re-proof. The plan proved
 the planned head an ancestor of the merge target's SHA through its merged set;
 checks 2 to 4 find the head, its upstream evidence and the merge target
 unchanged, so that proof holds at the target's current tip, as change 1's
-revalidation reasons (CAS `design.md` D7), and no child repeats it. The plan's
+revalidation reasons (CAS `design.md` D7), and no child repeats it but the
+re-proof, whose input names the head among the reflog's commits (lane
+openRepoProject-3's delta read, D12). The plan's
 reflog proof does not carry over so: a branch given a commit the merge target
 lacks and reset to its planned SHA between the plan and the stage passes
 checks 1 to 5, its head, upstream evidence and merge target all as planned,
@@ -641,14 +663,15 @@ With `add-project-clean-cache-disposal` archived first (L-5), its 16 cache
 enumerations join the plan, and every time moves 2.4 s later again: target k's
 removal would spawn at 24.3 + 1.65k s with one reflog child. The cache change's
 filesystem time is added on top, with the inputs of the lane's ruling B-25 as
-ruling A-23 gives them, unchanged at that change's `cf57956`: the plan-time
-walk, at most 8,192 entries and about
-9,000 calls, about 2 s through one worker per stage and about 5.6 s at a
-thread per call; and the cache stages, at most about 8,500 calls in a run,
-about 2 s through a worker and about 5.3 s at a thread per call. Both are taken
-whole before the first removal, the worst order, since a run's stages can
-spend their total on its first targets: 4 s through a worker, 10.9 s at a
-thread per call.
+ruling A-23 gives them, unchanged for ordinary trees at that change's
+`e1049b2`: the plan-time walk, at most 8,192 recorded objects and about 9,000
+calls, about 2 s through one worker per stage and about 5.6 s at a thread per
+call; and the cache stages, at most about 8,500 calls in a run, about 2 s
+through a worker and about 5.3 s at a thread per call. Both are taken whole
+before the first removal, 4 s through a worker and 10.9 s at a thread per
+call. That is a bound, not an order a run can take, since each cache stage
+runs just before its own target's removal (lane openRepoProject-3's delta
+read, D3(i)); the last bullet below gives the worst order a run can take.
 
 - Through one worker per stage, target k's removal spawns at 24.3 + 4 + 1.65k
   = 28.3 + 1.65k s and its branch child at 29.35 + 1.65k s with one reflog
@@ -662,27 +685,51 @@ thread per call.
   spawn (the 5th at 43.45 s) and 5 branch children (the 5th at 44.5 s); in the
   worst case, at 37.6 + 1.65k s, 4 removals (the 4th at 44.2 s) and 3 branch
   children (the 3rd at 43.6 s, the 4th due at 45.25 s).
+- The worst order a run can take puts first the 8 cache targets that the
+  cache change's totals select (its D4), each stage spending an eighth of the
+  stage time just before its own removal. At a thread per call target k's
+  removal, for k up to 8, then spawns at 24.3 + 5.6 + 1.65k + 5.3k/8 = 29.9 +
+  2.3125k s with one reflog child: 6 removals spawn (the 6th at 43.8 s) and 6
+  branch children (the 6th at 44.8 s), the 7th removal due at 46.1 s; with 17
+  reflog children, at 32.3 + 2.3125k s, 5 and 5 (the 5th removal at 43.9 s,
+  its branch child at 44.9 s). Through a worker the same order gives the counts
+  of the first bullet, since by the 8th target the stages have spent their
+  whole 2 s.
 
 At change 1's measured costs the 16th removal then spawns near 32.75 + 2.4 + 4
 = 39.15 s through a worker with one reflog child and near 41.55 s with 17, and
 all 16 fit, each branch child within about a second. At a thread per call it
 is due near 32.75 + 2.4 + 10.9 = 46.05 s with one reflog child and near 48.45
 s with 17, past the floor either way, so at least the 16th target is
-`not-attempted` with `deadline-exceeded`, exit 1. Where the cache change's fit
-sentence counts, as it reads at `e906c2f` and still at `cf57956`, "at most 250
-Git children besides the 16 removals, about 42.3 s", which the flag's up to 81
-more children make false, the re-based block scopes that sentence to runs
-without the flag, and any restatement the cache change makes of it under
-ruling B-25 is scoped the same way when this change re-bases on it.
+`not-attempted` with `deadline-exceeded`, exit 1. These figures take the 16
+enumerations at the packet's 150 ms a child, 2.4 s, as they take the stage and
+reflog children, while the cache change gives at most about 3.7 s for them at
+change 1's measured costs (its D4 at `e1049b2`); at 3.7 s each figure moves
+1.3 s later, to 40.45 s and 42.85 s through a worker, where all 16 still fit,
+and 47.35 s and 49.75 s at a thread per call, and no conclusion changes (lane
+openRepoProject-3's delta read, D2). Where the cache change's fit sentence
+counts, as it reads at `e1049b2`, "at most 250 Git children besides the 16
+removals, about 42.3 s", which the flag's up to 81 more children make false,
+the re-based block scopes that sentence to runs without the flag, and any
+restatement the cache change makes of it under ruling B-25 is scoped the same
+way when this change re-bases on it.
+
+The cache change's worst shapes at `e1049b2`, the walk where every recorded
+object is a directory (about 32,800 calls, 7.3 s through one worker and 20.4 s
+at a thread per call) and the deep chains (up to 43,947 opens a pass for one
+target), lie outside this joint fit, which takes that change's inputs for
+ordinary trees, and stay under its B-3/CD-6 question and its `cache_opens`
+Open Question before Brett Heap (ruling A-25).
 
 So at the packet's 150 ms model a flagged run with cache disposal brings 9 of
 its 16 targets through their stage before the floor, 8 in the worst case of
-the reflog proof, through one worker per stage, and 5, or 3, at a thread per
-call; change 1's own deadline rule makes the rest `not-attempted` with
-`deadline-exceeded`, the run exits 1, and the next run takes them, never unsafe
-(`BA:772-774`). At change 1's measured costs all 16 fit through a worker; at a
-thread per call at least the 16th target is deferred, with one reflog child as
-in the worst case. `limits.targets` stays 16 (A-9). The alternative, a lower
+the reflog proof, through one worker per stage, and at least 5, or 3, at a
+thread per call, 6, or 5, in the worst order a run can take; change 1's own
+deadline rule makes the rest `not-attempted` with `deadline-exceeded`, the run
+exits 1, and the next run takes them, never unsafe (`BA:772-774`). At change
+1's measured costs all 16 fit through a worker; at a thread per call at least
+the 16th target is deferred, with one reflog child as in the worst case.
+`limits.targets` stays 16 (A-9). The alternative, a lower
 target cap under the flag, would be 8 by the packet's rule (`BA:729-735`),
 since the last of T such targets then spawns at about (136 + 7T) x 0.15 +
 0.3(T - 1) + 0.6(T - 1) = 19.5 + 1.95T s before the cache change's filesystem
@@ -706,10 +753,25 @@ name that holds a code point to escape or an undecodable byte. Git accepts a
 branch named `topic;id`, so an unquoted retry would run `id` (Context). In
 every `project` command printed, a name that begins with `-` is passed as
 `--branch=BRANCH`, which argparse reads as the value where `--branch -f` reads
-as a missing one (the lead's F-2); whether change 1's `delete-branch` action
-accepts such a name is change 1's question. RETRY below is `project clean ROOT
---apply --action delete-branch --branch BRANCH`, or `--branch=BRANCH` for such
-a name. Without the flag every line is change 1's.
+as a missing one (the lead's F-2). Change 1's `delete-branch` action, as
+`project` builds it at main, passes the name to Git with no `--`, so Git reads
+such a name as an option and the retry fails (Context; lane
+openRepoProject-3's delta read, D5): whether that action passes it after `--`
+is change 1's question, carried as a Dependency (proposal, Dependencies and
+Sequencing), and this change prints the retry that action is given. RETRY
+below is `project clean ROOT --apply --action delete-branch --branch BRANCH`,
+or `--branch=BRANCH` for such a name. Without the flag every line is change 1's.
+
+A command printed in the `$'...'` form needs a shell that implements that
+form, bash, zsh, ksh93 or a POSIX.1-2024 shell, and, for its `\u` and `\U`
+escapes, a UTF-8 locale: dash, Ubuntu's `/bin/sh`, lacks the form, and in the
+C locale bash and zsh can pass such an escape as text, refuse the line, or
+drop the code point, which names another branch (Context). Change 1's path
+rule, whose form this is, shares the limitation, as feature 004 records it
+(lane openRepoProject-2's R-60). This is a documentation note, made here and
+in the README's "Clean up Git worktrees" (`tasks.md`, Speckit Handoff), and
+no printed line carries it: the lines stay in change 1's form (ruling A-28
+as amended, Codex's P2 on `9ff8202`).
 
 - Plan, preview and apply alike, under the flag: each selected row reads
   `  remove PATH and retire BRANCH` when the plan retires its branch, `  remove
@@ -730,10 +792,11 @@ a name. Without the flag every line is change 1's.
   one line per such branch, a shared branch at its last holder:
   - `Retired BRANCH (was SHA); restore: git -C ROOT branch BRANCH SHA`, so
     that the restore works from any directory (Codex's P2 on `785a45e`), or,
-    for a name that begins with `-`, `restore: git -C ROOT update-ref
-    refs/heads/BRANCH SHA ''`, because `git branch` cannot create such a name
-    and its naive line `git branch -f SHA` creates a branch named after the
-    SHA (Context);
+    for a name that `git branch` refuses to create, one that begins with `-`
+    or that equals `HEAD` (ruling A-27, Codex's P2 on `9ff8202`), `restore:
+    git -C ROOT update-ref refs/heads/BRANCH SHA ''`: the naive line for `-f`,
+    `git branch -f SHA`, creates a branch named after the SHA, and `git branch
+    HEAD SHA` refuses (Context);
   - `BRANCH was already gone`;
   - `Kept BRANCH (head-not-merge-target); next: check out MERGE_TARGET in the
     main worktree, then: RETRY`, the same next step for `git-refused` when the
@@ -750,11 +813,14 @@ a name. Without the flag every line is change 1's.
     last holder, the branch's line is that holder's;
   - `Kept BRANCH (branch-changed); now at SHA2; inspect it before retrying:
     RETRY`;
-  - `Kept BRANCH (reflog-unmerged); its reflog names commits MERGE_TARGET
-    lacks; inspect git -C ROOT reflog show refs/heads/BRANCH before any
-    delete-branch`, `show` and the full ref name because `show`, `expire`,
+  - `Kept BRANCH (reflog-unmerged); its reflog is not proven merged into
+    MERGE_TARGET; inspect git -C ROOT reflog show refs/heads/BRANCH before any
+    delete-branch`, alike for a proof that printed a commit and one that failed
+    or timed out, at the plan or at the re-proof (lane openRepoProject-3's
+    delta read, D4), `show` and the full ref name because `show`, `expire`,
     `delete` and `exists` are valid branch names and also `git reflog`
-    subcommands (Context);
+    subcommands, and `git reflog show HEAD` reads the main worktree's own
+    reflog (Context);
   - otherwise `Kept BRANCH (REASON); retry: RETRY`.
 - Stop block: change 1's, with a branch stage's stop reading `Stopped at PATH
   (branch BRANCH: REASON). Removed K of N. Not attempted: P1, P2. Next: project
@@ -763,18 +829,19 @@ a name. Without the flag every line is change 1's.
   or index flags set after the last check, a branch changed after its last
   check, and any change after Git's own check.` When the plan also selects a
   cache target (`add-project-clean-cache-disposal`), the line is the cache
-  change's line (its ruling B-19; its `design.md` D13 at `e906c2f`) with this
+  change's line (its ruling B-19; its `design.md` D13 at `e1049b2`) with this
   change's branch clause before its last clause (ruling A-23): `Not protected:
   ignored files created or index flags set after the last check or during a
   cache stage, caches recreated after it, a branch changed after its last
   check, and any change after Git's own check.` The narrow guarantee states
   that order, so its block, this section and the proposal say it alike.
 
-No line prints a retry the plan knows will fail, and none suggests `-D`: the
-branch child's output is captured like a probe's, so Git's own advice to run
-`git branch -D` never reaches the person from the batch, and the
-`head-not-merge-target` line names the checkout under which the retry succeeds
-(council finding P-1 reproduced both). The retry command names
+No line prints a retry the plan knows will fail, RETRY for a name that begins
+with `-` excepted while change 1's action passes no `--` (above), and none
+suggests `-D`: the branch child's output is captured like a probe's, so Git's
+own advice to run `git branch -D` never reaches the person from the batch, and
+the `head-not-merge-target` line names the checkout under which the retry
+succeeds (council finding P-1 reproduced both). The retry command names
 `delete-branch`, the explicit action, unchanged (`BA:1281-1293`), and never
 carries `--retire-branches`, which that action refuses (`invalid-arguments`).
 Every `project clean ROOT --all-safe` command printed for the person to run
@@ -808,12 +875,17 @@ one that refuses with exit 1; one that runs Git's deletion and then exits 1;
 one that runs it and then hangs, ignoring SIGTERM; one that ignores SIGTERM
 without deleting; one that sleeps 2 s before deleting, for the signal
 scenario; one whose reflog child exits nonzero, and one whose reflog child
-hangs past its budget, at the plan and, separately, at the stage's re-proof;
-and branches named `topic;id` and, by hand, `-f`, with a root path that holds
-a space, run through `dash` for the printed lines. The Context table's facts,
-the reflog proof's `^` line (lane openRepoProject-3's re-read, MEDIUM-3) and
-the re-proof's move and back among them, become fixtures run on change 1's CI
-floor job at Git 2.36 (its D17; feature
+hangs, past its own budget or into the work deadline, at the plan and,
+separately, at the stage's re-proof, where SIGINT also reaches it (lane
+openRepoProject-3's delta read, D7); and branches named `topic;id` and
+`topic`, U+202E and `x`, and, by hand, `-f` and `HEAD`, with a root path that
+holds a space, run through `dash` for the printed lines and through bash in a
+UTF-8 locale for the `$'...'` form. The Context table's facts, the reflog
+proof's `^<merge target SHA>` line (lane openRepoProject-3's re-read,
+MEDIUM-3) and the re-proof's move and back among them, become fixtures that
+assert exit statuses and outcomes, never Git's wording, which differs across
+versions (Context; lane openRepoProject-3's delta read, D10), run on change
+1's CI floor job at Git 2.36 (its D17; feature
 004's `git-floor` job, task T003, ticked on its branch at `4e3af0a` and not yet
 on `main`) as well as on the CI workflow's test jobs, which since PR #32 are
 Linux only: one `test` job on `ubuntu-latest` for Python 3.10 and 3.12
@@ -874,9 +946,10 @@ proposal puts it before Brett Heap with L-4's recommendation.
   lost. The section's keys
   (`description`, `pushRemote`, any tool's keys) are deleted and not
   restored; the printed restore line, `git -C ROOT branch BRANCH SHA` or, for
-  a name that begins with `-`, `git -C ROOT update-ref refs/heads/BRANCH SHA
-  ''`, recreates the branch from the SHA both results print, and `git branch
-  -u` its upstream, nothing else.
+  a name `git branch` refuses to create, one that begins with `-` or equals
+  `HEAD`, `git -C ROOT update-ref refs/heads/BRANCH SHA ''`, recreates the
+  branch from the SHA both results print, and `git branch -u` its upstream,
+  nothing else.
 - [After `git reflog expire` has dropped earlier entries, a commit can be
   named only as the old object of the oldest surviving entry] -> Closed by
   A-16 as amended on 2026-10-19: the proof's input is every non-zero object a
@@ -908,7 +981,8 @@ proposal puts it before Brett Heap with L-4's recommendation.
   post-check decides; the hook is the repository owner's code.
 - [At the packet's assumed costs a flagged run of 16 retires 13 branches; with
   the cache change and its filesystem time, 9 through one worker per stage,
-  8 in the worst case of the reflog proof, and 5, or 3, at a thread per call]
+  8 in the worst case of the reflog proof, and at least 5, or 3, at a thread
+  per call, 6, or 5, in the worst order a run can take]
   -> Change 1's measured fit governs (D7, A-9), under which all 16 fit through
   a worker and at least the 16th is deferred at a thread per call, with one
   reflog child or 17; the degraded case is a `not-attempted`
@@ -947,7 +1021,8 @@ Without the flag nothing changes: every run behaves as change 1 specifies.
    `tasks.md` under "Speckit Handoff"; `/opsx:apply` runs only then.
 4. The feature implements D1 to D10 inside feature 004's seam, the README's
    "Clean up Git worktrees" (the flag, its flagged preview, the keeps, the
-   stop, the branch lines and the retry path) and the tests of D9, merging
+   stop, the branch lines, the retry path and D8's note on the `$'...'` form)
+   and the tests of D9, merging
    `main` into its branch as `main` moves, the cache-disposal feature included
    when it lands first, and never rebasing.
 5. The realization PR merges with green checks on every job that
