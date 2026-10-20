@@ -543,6 +543,72 @@ class RevalidationTests(clean_support.CleanCase):
         self.assertTrue(trees[1].is_dir())
         self.assertEqual(sum(map(is_removal, clean_support.child_log(log))), 1)
 
+    # T082: "Untracked file under status.showUntrackedFiles=no", "Git's own
+    # check runs on the pinned configuration" and "Ignored file in the
+    # residual window". They pin T056 and T057: a change after the last
+    # revalidation is Git's own check's, or the residual window's.
+
+    def assert_git_refused_first(self, result, trees, late):
+        """Git refused the first target's removal with 128: `failed`,
+        `git-refused`, its reconciliation showing the entry and the path
+        present, the late file kept, later targets not attempted, exit 128."""
+        self.assertEqual(self.stages(result), [(str(trees[0]), "failed", "git-refused")]
+                         + [(str(tree), "not-attempted", "batch-stopped") for tree in trees[1:]])
+        first = result.document["targets"][0]
+        self.assertEqual(first["exit_status"], 128)
+        self.assertEqual((first["reconciliation"]["registry_entry_present"], first["reconciliation"]["path_present"]),
+                         (True, True))
+        self.assertIs(first["reconciliation"]["reconciled"], True)
+        self.assertTrue(late.is_file(), "the file survives")
+        self.assertEqual((result.status, result.document["exit_code"]), (128, 128))
+
+    def test_clean_untracked_file_under_status_showuntrackedfiles_no(self):
+        config = self.base / "global-gitconfig"
+        config.write_text("[status]\n\tshowUntrackedFiles = no\n")
+        self.env["GIT_CONFIG_GLOBAL"] = str(config)
+        root, trees = self.batch("untracked-no")
+        late = trees[0] / "untracked-late"
+        env, log = self.counting({"pre": when_target(trees[0], f": > {shlex.quote(str(late))}")})
+        result = self.apply(root, env=env)
+        self.assert_git_refused_first(result, trees, late)
+        removal = [record for record in clean_support.child_log(log) if is_removal(record)]
+        self.assertEqual(len(removal), 1)
+        self.assertEqual(strip_pins(removal[0].argv)[0][:2], ["-c", "status.showUntrackedFiles=normal"])
+
+    def test_clean_git_s_own_check_runs_on_the_pinned_configuration(self):
+        root, trees = self.batch("pinned")
+        self.git(root, "config", "core.untrackedCache", "true")
+        self.git(root, "config", "core.checkStat", "minimal")
+        self.git(trees[0], "status")  # an index-writing status: the untracked cache is filled
+        late = trees[0] / "created-late"
+        env, log = self.counting({"pre": when_target(trees[0], f": > {shlex.quote(str(late))}")})
+        result = self.apply(root, env=env)
+        self.assert_git_refused_first(result, trees, late)
+        [removal] = [record for record in clean_support.child_log(log) if is_removal(record)]
+        self.assertEqual(strip_pins(removal.argv)[0][:6], ["-c", "status.showUntrackedFiles=normal",
+                                                            "-c", "core.untrackedCache=false",
+                                                            "-c", "core.fsmonitor=false"])
+
+    def test_clean_ignored_file_in_the_residual_window(self):
+        root, trees = self.batch("residual")
+        common = Path(self.git(root, "rev-parse", "--path-format=absolute", "--git-common-dir").strip())
+        (common / "info").mkdir(exist_ok=True)
+        (common / "info" / "exclude").write_text("*.log\n")
+        late = trees[0] / "late.log"
+        env, log = self.counting({"pre": when_target(trees[0], f": > {shlex.quote(str(late))}")})
+        result = self.apply(root, env=env)
+        self.assertEqual(self.stages(result), [(str(tree), "removed", None) for tree in trees])
+        self.assertEqual((result.status, result.document["exit_code"]), (0, 0))
+        self.assertFalse(late.exists(), "the ignored file went with the worktree")
+        self.assertFalse(trees[0].exists())
+        # The confirmation (the printed plan) and the result each carry the
+        # residual-window line, once.
+        lines = result.stderr.splitlines()
+        self.assertEqual(lines.count(TEXT["residual_window_line"]), 2)
+        self.assertLess(lines.index(TEXT["residual_window_line"]),
+                        lines.index(TEXT["progress_line"].format(STAGE="removed", PATH=trees[0])))
+        self.assertEqual(lines[-1], TEXT["residual_window_line"])
+
 
 if __name__ == "__main__":
     unittest.main()
