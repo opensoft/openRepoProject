@@ -14,6 +14,7 @@ import json
 import os
 import re
 import signal
+import subprocess
 import unittest
 from unittest import mock
 
@@ -21,12 +22,11 @@ import clean_support
 
 project = clean_support.load_project()
 
-# Where the faults are injected: the stages `clean` calls today. T047 retargets
-# them to its frozen stages, one line each (analyze H3, lead ruling R-42):
-# RESOLVING_STAGE = "resolve_clean_target" and PLANNING_STAGE = "build_plan".
-# Every stand-in below takes any arguments, so nothing else changes then.
-RESOLVING_STAGE = "discover"
-PLANNING_STAGE = "cleanup_report"
+# Where the faults are injected: the frozen stages of T047's pipeline, which
+# T047 retargeted from discover and cleanup_report, one line each (analyze H3,
+# lead rulings R-42 and R-49). Every stand-in below takes any arguments.
+RESOLVING_STAGE = "resolve_clean_target"
+PLANNING_STAGE = "build_plan"
 
 REFUSED = "REFUSED: "
 CANCELLED = "Cancelled.\n"
@@ -289,6 +289,38 @@ class GuardTests(clean_support.CleanCase):
         self.assertEqual(out.getvalue(), json.dumps(document, indent=2, ensure_ascii=True) + "\n")
         self.assertTrue(out.getvalue().isascii())
         self.assertEqual(json.loads(out.getvalue()), document)
+
+    def test_clean_sighup_on_a_closed_terminal_exits_129(self):
+        # R-54 X-3, lead ruling R-55 (T047): project runs with standard input and
+        # standard error on a pseudo-terminal whose master side is closed before
+        # it writes anything, so a write there fails with EIO. The
+        # `signal-parent-in` fake then sends SIGHUP to project, its parent, from
+        # the linked worktree's status probe, while it plans. main() writes
+        # `Cancelled.` best-effort: the run exits 129. An uncaught exception would
+        # exit 1, and a line left unflushed at exit would print `Exception ignored
+        # ...` and exit 120; neither can show on the hung-up terminal, so the
+        # status is the evidence. The signal goes to the child only (rule 7);
+        # without a controlling terminal, closing the master signals nothing.
+        tree = self.base / "feature-tree"
+        self.git(self.root, "worktree", "add", "-q", "-b", "001-feature", tree)
+        bin_dir = self.base / "bin"
+        clean_support.install_fake_git(bin_dir, "signal-parent-in", path=tree, signal="HUP")
+        master, slave = os.openpty()
+        try:
+            child = subprocess.Popen(clean_support.cli_argv("clean", self.root), cwd=self.base,
+                                     env=self.path_first(bin_dir), stdin=slave, stdout=subprocess.PIPE,
+                                     stderr=slave, start_new_session=True)
+        finally:
+            os.close(slave)
+            os.close(master)
+        try:
+            out, _ = child.communicate(timeout=clean_support.TIMEOUT)
+        except subprocess.TimeoutExpired:
+            with contextlib.suppress(OSError):
+                os.killpg(child.pid, signal.SIGKILL)
+            child.communicate()
+            self.fail(f"project did not end within {clean_support.TIMEOUT} s")
+        self.assertEqual((child.returncode, out), (129, b""))
 
 
 if __name__ == "__main__":

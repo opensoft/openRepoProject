@@ -2660,18 +2660,299 @@ def write_document(doc):
     --json` run: json.dumps(doc, indent=2, ensure_ascii=True) and one newline
     (plan review M6). ensure_ascii stays True, so every code point outside
     ASCII is written as an escape; research.md R12 keeps ensure_ascii=False for
-    the digest's input alone (lead ruling R-38)."""
-    sys.stdout.write(json.dumps(doc, indent=2, ensure_ascii=True) + "\n")
-    sys.stdout.flush()
+    the digest's input alone (lead ruling R-38). A failed write, such as EPIPE
+    from a reader that closed the pipe, never raises: it diverts standard
+    output to /dev/null and is recorded on the invocation in force
+    (write_failed(), region dispatcher; lead ruling R-55, T047), so there is
+    no second traceback and no exit 120. Before the apply phase the
+    pipeline's check after printing makes it `internal-error`; main() writing
+    an error document keeps its own status."""
+    try:
+        sys.stdout.write(json.dumps(doc, indent=2, ensure_ascii=True) + "\n")
+        sys.stdout.flush()
+    except OSError as exc:
+        write_failed(current_invocation(), sys.stdout, exc)
 # endregion guard
 
 # region dispatcher
+# The frozen pipeline's own parts (T047; contracts/project-clean.md, "Order of
+# a run"; research.md R4 and R6; lead rulings R-55 and R-56). clean() runs the
+# stages in a fixed order, and later tasks fill the stages, never reorder them.
+# Its CleanRun is the Invocation in force (R-56 Q-1 and Q-2: no subclass and no
+# nested Invocation), which clean() gives these attributes: `args`, the parsed
+# arguments, each read with getattr; `mode` (clean_mode()); `action`
+# (clean_action()); `human`, the stream of human lines, standard error under
+# --apply --json and standard output otherwise; `plan`, the Plan build_plan()
+# returned; `status`, the exit status the run stops at, None while it goes on;
+# and `write_error`, the first failed write (R-55). This region also declares
+# the plan's shape, refuse() and say(), for the plan lane and the apply lane
+# (R-56 Q-12), and holds three stages: check_clean_arguments(), require_git()
+# and check_plan().
+
+
+class Plan:
+    """One plan of `project clean` (data-model.md, "Plan"; contracts/project-clean.md,
+    "Plan envelope"): the shape both US1 lanes write to (lead ruling R-56
+    Q-12). build_plan() returns one and never a status (R-59 D4); the plan
+    lane fills it (T049 to T053), the apply lane reads it (T054 to T057), and
+    plan_document() (T051) writes it. A later task may add an attribute; a
+    change to one below goes through the lead.
+
+    - `repo`: what resolve_clean_target() returned, a dict whose "root" is
+      the command directory; `root`, that directory; `mode` and `action`, the
+      run's.
+    - `evidence`: inspect_repository()'s dict for the plan's repository (its
+      identity, refs and merge target), or None until build_plan() reads it.
+    - `rows`: the WorktreeRows, main worktree first, then by raw path bytes.
+    - `merge_target`: {name, source, sha}, or None until established.
+    - `selected`: the selected rows in canonical order (raw path bytes), each
+      given `removal_args`, the arguments of its removal child,
+      ["-C", ROOT, "worktree", "remove", PATH] with PATH its raw path bytes
+      (design D9), so that its `operation.argv` is git_argv("removal",
+      removal_args); `excluded`: (row, reason) pairs in canonical order, the
+      reason None for an unprobed row.
+    - `target`: in mode single, P's row, or None while none matches.
+    - `notes`: the plan notes, {code, message} objects.
+    - `completeness` ("complete" or "incomplete", None until decided) and
+      `apply_allowed`.
+    - `refusals`: the Refused objects refuse() recorded, in order; the first
+      is the one a `REFUSED:` line names.
+    - `digest`: plan_digest()'s value, None until computed.
+    - `printed`: whether print_plan() has written the human plan.
+    - `report`: the baseline report, cleanup_report()'s, which the stages'
+      first bodies read; build_plan() leaves it None once T049 fills it."""
+
+    def __init__(self, repo, run):
+        self.repo = repo
+        self.root = repo["root"]
+        self.mode = run.mode
+        self.action = run.action
+        self.evidence = None
+        self.rows = []
+        self.merge_target = None
+        self.selected = []
+        self.excluded = []
+        self.target = None
+        self.notes = []
+        self.completeness = None
+        self.apply_allowed = False
+        self.refusals = []
+        self.digest = None
+        self.printed = False
+        self.report = None
+
+
+def clean_action(args):
+    """The action of a `clean` run (lead ruling R-56 Q-1): --action's value,
+    `push`, `remove` or `delete-branch`, under --apply; `remove` for
+    --all-safe, whose apply removes; None for a report, where --action is
+    ignored. Arguments are read with getattr, as clean_mode() reads them."""
+    if getattr(args, "apply", False) and getattr(args, "action", None):
+        return args.action
+    if getattr(args, "all_safe", False):
+        return "remove"
+    return None
+
+
+def divert_stream(stream):
+    """Point stream's file descriptor at /dev/null (os.dup2) after a write to it
+    failed (lead ruling R-55), so that what it still buffers, and every later
+    write, goes nowhere instead of failing again, above all when Python
+    flushes it at exit, which would print `Exception ignored ...` and exit 120.
+    A stream with no descriptor, such as a test's StringIO, is left as it is.
+    Never raises."""
+    try:
+        fd = stream.fileno()
+        null = os.open(os.devnull, os.O_WRONLY)
+    except (AttributeError, OSError, ValueError):
+        return
+    try:
+        os.dup2(null, fd)
+    except OSError:
+        return
+    finally:
+        os.close(null)
+    try:
+        stream.flush()
+    except (OSError, ValueError):
+        pass
+
+
+def write_failed(run, stream, exc):
+    """The failed write exc to stream (R-55): the stream is diverted
+    (divert_stream()), and exc recorded on run as `write_error` unless an
+    earlier one is. Before the apply phase, the pipeline's check after printing
+    (check_writes()) raises it, which ends the run as `internal-error`, exit 2,
+    nothing mutated, unless a recorded signal outranks it; after the apply
+    phase begins, writes are best-effort and D19 decides the exit."""
+    divert_stream(stream)
+    if getattr(run, "write_error", None) is None:
+        run.write_error = exc
+
+
+def say(run, text, stream=None):
+    """Write text and a line feed to stream, run.human by default, and flush it:
+    the one writer of `clean`'s human lines (R-55); `REFUSED:` goes to
+    standard error through it. A failed write is recorded (write_failed()), so
+    say() never raises OSError and a later line goes to /dev/null."""
+    stream = run.human if stream is None else stream
+    if stream is None:
+        return
+    try:
+        stream.write(text + "\n")
+        stream.flush()
+    except OSError as exc:
+        write_failed(run, stream, exc)
+
+
+def check_writes(run):
+    """The check after printing (R-55): flush standard output and standard
+    error, recording a failure as say() does; then raise the run's recorded
+    write error, if any. The pipeline calls it after the plan is printed and
+    after the question, so before the apply phase a failed write ends the run:
+    run_clean() makes the OSError `internal-error`, exit 2, and clean() makes
+    it Interrupted when a signal was recorded first."""
+    for stream in (sys.stdout, sys.stderr):
+        if stream is None:
+            continue
+        try:
+            stream.flush()
+        except OSError as exc:
+            write_failed(run, stream, exc)
+    if run.write_error is not None:
+        raise run.write_error
+
+
+def settle_streams():
+    """On leaving clean(), however it ends: flush standard output and standard
+    error, diverting one whose flush fails, so that nothing clean() left
+    buffered fails again at exit (R-55). Never raises."""
+    for stream in (sys.stdout, sys.stderr):
+        if stream is None:
+            continue
+        try:
+            stream.flush()
+        except OSError:
+            divert_stream(stream)
+        except ValueError:
+            pass  # a closed stream holds nothing to flush
+
+
+def advise(text):
+    """main()'s `REFUSED:` and `Cancelled.` lines, printed to standard error as
+    before, best-effort (R-54 X-3, R-55): a failed write, such as the EIO a
+    terminal answers after SIGHUP, diverts the stream and never changes the
+    exit status."""
+    try:
+        print(text, file=sys.stderr, flush=True)
+    except OSError:
+        divert_stream(sys.stderr if sys.stderr is not None else sys.stdout)
+
+
+def read_slot(run):
+    """The pipeline's read of the signal slot while planning (research.md R4;
+    R-56 Q-1): a signal recorded before the apply phase ends the run by FR-036,
+    so raise Interrupted with it; the scope then reaps every probe group, and
+    main() prints `Cancelled.` and exits 130, 143 or 129 with no document."""
+    if run.signal is not None:
+        raise Interrupted(run.signal)
+
+
+def refuse(plan, refusal, run):
+    """Record refusal, a Refused, on plan, and return 2, the status of a run
+    that stops at it (R-56 Q-3): check_plan() (the plan, select and confirm
+    refusals), build_plan() (`worktree-not-found`) and confirm_removal()
+    (`cancelled`) record through it and never raise, so that the plan
+    envelope, not the extended error object, carries the refusal, and the
+    pipeline prints the plan once, then, in human output, `REFUSED: MESSAGE`
+    naming plan.refusals[0]. T053 fills it (the envelope's `apply_allowed:
+    false` and `refusals`, one object per code in REFUSAL_CODES order); this
+    first body records the refusal and withdraws apply_allowed."""
+    plan.refusals.append(refusal)
+    plan.apply_allowed = False
+    return 2
+
+
+def check_clean_arguments(args):
+    """The argument checks, before any Git child (T048 fills;
+    contracts/project-clean.md, "Argument checks"). Raises a Refused to
+    main(). First body: the baseline checks (project:671-672, :677-678,
+    :681-682, :708-709 and :724-725 at 961c405) moved ahead of resolution,
+    as the contract orders them, with their messages."""
+    apply, action = getattr(args, "apply", False), getattr(args, "action", None)
+    if getattr(args, "json", False) and apply:
+        raise Refused("--json cannot be combined with --apply; use JSON for the read-only plan.")
+    if not apply:
+        return
+    if not action:
+        raise Refused("--apply requires --action push|remove|delete-branch")
+    if action == "push" and not getattr(args, "branch", None):
+        raise Refused("Push cleanup requires --branch BRANCH")
+    if action == "remove" and not getattr(args, "worktree", None):
+        raise Refused("Worktree cleanup requires --worktree PATH")
+    if action == "delete-branch" and not getattr(args, "branch", None):
+        raise Refused("Branch cleanup requires --branch BRANCH")
+
+
+def require_git(run):
+    """The version check, before resolution (T048 fills: git_version(run),
+    refusing `git-too-old` or `git-unavailable`, exit 2; FR-002). The
+    baseline checks no version, so this first body checks nothing."""
+    return None
+
+
+def check_plan(plan, run):
+    """Decide where the run goes after the plan is built (T053 fills, in
+    FR-024's order): return the exit status the run stops at, or None when it
+    goes on to the question or --yes (or to push or delete-branch). It only
+    decides: each plan, select or confirm refusal is recorded through
+    refuse(), never raised, and a plan that already carries one stops with 2.
+    First body: a run without --apply is a report, exit 0; a named removal
+    keeps the baseline checks (project:715-718 at 961c405)."""
+    if plan.refusals:
+        return 2
+    if not getattr(run.args, "apply", False):
+        return 0
+    row = plan.target
+    if row is not None:
+        if row.get("current"):
+            return refuse(plan, Refused("Cannot remove the current worktree."), run)
+        if row.get("classification") != "merged-removable":
+            return refuse(plan, Refused(f"Worktree is {row.get('classification')}; "
+                                        "only clean merged worktrees may be removed."), run)
+    return None
 # endregion dispatcher
 
 # region resolution
+def resolve_clean_target(args, run):
+    """Resolve the target argument to the repository the run acts on (T107
+    fills; contracts/project-clean.md, "Resolution"; design D8): return a
+    dict whose "root" is the command directory, a Path. A resolve refusal is
+    raised to main(), which prints the extended error object under --json.
+    First body: the baseline discover() (project:670 at 961c405)."""
+    return {"root": discover(getattr(args, "target", None))}
 # endregion resolution
 
 # region plan
+def build_plan(repo, run):
+    """Build the run's Plan for repo, resolve_clean_target()'s dict (T049
+    fills; data-model.md, "Plan"), and return it, never a status (lead ruling
+    R-59 D4): `worktree-not-found` is recorded through refuse(), never raised
+    (R-56 Q-3). A refusal of the repository as a whole (no merge target, a
+    manifest) still raises. First body: the baseline report (cleanup_report(),
+    project:673 at 961c405), and for a named removal the baseline match of
+    --worktree (:710-714)."""
+    plan = Plan(repo, run)
+    plan.report = cleanup_report(repo["root"])
+    args = run.args
+    if run.action == "remove" and getattr(args, "apply", False):
+        wanted = Path(args.worktree).expanduser().resolve()
+        matches = [row for row in plan.report["worktrees"] if Path(row["path"]).resolve() == wanted]
+        if len(matches) != 1:
+            refuse(plan, Refused(f"No unique linked worktree found at {wanted}"), run)
+        else:
+            plan.target = matches[0]
+    return plan
 # endregion plan
 
 # region gates
@@ -2684,15 +2965,122 @@ def write_document(doc):
 # endregion index
 
 # region preview
+def print_plan(plan, run):
+    """Print the plan as the run shows it (T052 fills; contracts/project-clean.md,
+    "Streams" and "Human output"; lead ruling R-56 Q-3 and Q-11). The pipeline
+    calls it once after check_plan()'s decision, with run.status the status
+    the run stops at (None while it goes on), and once more where a removal
+    run stops at the question (confirm_removal() returned 2). The human plan
+    goes to run.human through say(), on the first call only (plan.printed);
+    plain --json prints none, and push and delete-branch print nothing here,
+    keeping their `Cleanup action:` output. Under --json the plan envelope goes
+    to standard output through write_document() on the call where the run
+    stops before the apply phase, so one document is written. The pipeline
+    writes `REFUSED:` itself. First body: the baseline report of a run
+    without --apply (print_clean_report(), project:674-676 at 961c405); a run
+    with --apply printed none."""
+    if plan.printed:
+        return
+    plan.printed = True
+    if not getattr(run.args, "apply", False):
+        print_clean_report(plan.report, getattr(run.args, "json", False))
 # endregion preview
 
 # region apply
+def confirm_removal(plan, run):
+    """Accept the plan for removal (T054 fills; FR-026; research.md R3): ask
+    the question under raising_signals(), swapped in around the question
+    alone, or take --yes; return None when the plan is accepted, or record
+    `cancelled` through refuse() and return 2, never raising (lead ruling R-56
+    Q-3). The pipeline then reads the slot, sets phase `apply` and calls
+    apply_removals(). First body: the baseline (project:719-720 and :736-737 at
+    961c405), confirm() under raising_signals(), its refusal recorded."""
+    wanted = Path(run.args.worktree).expanduser().resolve()
+    command = ["git", "-C", str(plan.root), "worktree", "remove", str(wanted)]
+    print(f"Cleanup action: remove merged worktree {wanted}")
+    show_plan([command], plan.root)
+    try:
+        with raising_signals():
+            confirm(getattr(run.args, "yes", False))
+    except Refused as exc:
+        return refuse(plan, exc, run)
+    return None
+
+
+def apply_removals(plan, run):
+    """Remove the plan's selected worktrees (T057 fills): called in phase
+    `apply`, which the pipeline sets, never this function (lead ruling R-56);
+    returns the run's exit status by D19. First body: the baseline
+    revalidation and removal (project:719, :721-722 and :741-743 at
+    961c405)."""
+    wanted = Path(run.args.worktree).expanduser().resolve()
+    command = ["git", "-C", str(plan.root), "worktree", "remove", str(wanted)]
+    expected = {"target_branch": plan.report["target_branch"],
+                "signature": cleanup_signature(plan.report, plan.target)}
+    require_unchanged_cleanup_state(plan.root, "remove", expected, path=wanted)
+    return execute(command)
 # endregion apply
 
 # region result
 # endregion result
 
 # region push
+def push_or_delete(repo, run):
+    """Push a branch or delete a merged one (T076 fills; FR-010; research.md R1,
+    R4 and R5): called in phase `planning`, which it keeps, with run.plan the
+    plan the pipeline built; it swaps in default_signals() around confirm()
+    alone, and returns the run's exit status, the child's own, or raises a
+    refusal to main(). A signal recorded meanwhile ends the run by the
+    pipeline's last slot read. First body: the baseline (project:680-706 and
+    :723-743 at 961c405, the --branch checks moved to
+    check_clean_arguments())."""
+    args, root, report = run.args, repo["root"], run.plan.report
+    rows = report["worktrees"]
+    if args.action == "push":
+        matches = [row for row in rows if row.get("branch") == args.branch]
+        if len(matches) != 1:
+            raise Refused(f"No unique linked worktree found for branch {args.branch}")
+        row = matches[0]
+        if row.get("branch") == report["target_branch"]:
+            raise Refused("The default branch is protected; use its normal repository workflow.")
+        if row.get("dirty") is not False:
+            raise Refused(f"Cannot push {args.branch}; its worktree is dirty, missing, or unreadable.")
+        if row.get("branch") == "detached":
+            raise Refused("Cannot push a detached worktree; name the branch first.")
+        if row.get("classification") in ("diverged", "remote-ahead", "review-required"):
+            raise Refused(f"Cannot push {args.branch}; reconcile its remote state first.")
+        if row.get("upstream"):
+            remote, separator, remote_branch = row["upstream"].partition("/")
+            if not separator or not remote or not remote_branch:
+                raise Refused(f"Unsupported upstream mapping for {args.branch}: {row['upstream']}")
+            command = ["git", "-C", str(root), "push", remote, f"{args.branch}:{remote_branch}"]
+        else:
+            if not git_text(root, "remote", "get-url", "origin"):
+                raise Refused("Cannot publish a branch without an origin remote.")
+            command = ["git", "-C", str(root), "push", "-u", "origin", args.branch]
+        print(f"Cleanup action: push branch {args.branch}")
+        expected = {"target_branch": report["target_branch"], "signature": cleanup_signature(report, row)}
+        action_target = {"branch": args.branch}
+    else:
+        matches = [row for row in rows if row.get("branch") == args.branch]
+        if args.branch == report["target_branch"]:
+            raise Refused("The default branch is protected and cannot be deleted.")
+        if matches and any(row.get("present") and row.get("branch") == args.branch for row in matches):
+            raise Refused("Remove the linked worktree first; branch deletion is a separate action.")
+        if ancestor(root, git_text(root, "rev-parse", "--verify", f"refs/heads/{args.branch}"), report["target_branch"]) is not True:
+            raise Refused(f"Branch {args.branch} is not verified as merged into {report['target_branch']}.")
+        branch_head = git_text(root, "rev-parse", "--verify", f"refs/heads/{args.branch}")
+        command = ["git", "-C", str(root), "branch", "-d", args.branch]
+        print(f"Cleanup action: delete verified merged local branch {args.branch}")
+    show_plan([command], root)
+    with default_signals():
+        confirm(args.yes)
+    if args.action == "delete-branch":
+        require_unchanged_cleanup_state(root, args.action, {"target_branch": report["target_branch"]},
+                                        branch=args.branch, branch_head=branch_head)
+    else:
+        require_unchanged_cleanup_state(root, args.action, expected, **action_target)
+    return execute(command)
 # endregion push
 
 
@@ -2843,80 +3231,74 @@ def require_unchanged_cleanup_state(root, action, expected, *, branch=None, path
 
 
 def clean(args):
-    root = discover(args.target)
-    if args.json and args.apply:
-        raise Refused("--json cannot be combined with --apply; use JSON for the read-only plan.")
-    report = cleanup_report(root)
-    if not args.apply:
-        print_clean_report(report, args.json)
-        return 0
-    if not args.action:
-        raise Refused("--apply requires --action push|remove|delete-branch")
-    rows = report["worktrees"]
-    if args.action == "push":
-        if not args.branch:
-            raise Refused("Push cleanup requires --branch BRANCH")
-        matches = [row for row in rows if row.get("branch") == args.branch]
-        if len(matches) != 1:
-            raise Refused(f"No unique linked worktree found for branch {args.branch}")
-        row = matches[0]
-        if row.get("branch") == report["target_branch"]:
-            raise Refused("The default branch is protected; use its normal repository workflow.")
-        if row.get("dirty") is not False:
-            raise Refused(f"Cannot push {args.branch}; its worktree is dirty, missing, or unreadable.")
-        if row.get("branch") == "detached":
-            raise Refused("Cannot push a detached worktree; name the branch first.")
-        if row.get("classification") in ("diverged", "remote-ahead", "review-required"):
-            raise Refused(f"Cannot push {args.branch}; reconcile its remote state first.")
-        if row.get("upstream"):
-            remote, separator, remote_branch = row["upstream"].partition("/")
-            if not separator or not remote or not remote_branch:
-                raise Refused(f"Unsupported upstream mapping for {args.branch}: {row['upstream']}")
-            command = ["git", "-C", str(root), "push", remote, f"{args.branch}:{remote_branch}"]
-        else:
-            if not git_text(root, "remote", "get-url", "origin"):
-                raise Refused("Cannot publish a branch without an origin remote.")
-            command = ["git", "-C", str(root), "push", "-u", "origin", args.branch]
-        print(f"Cleanup action: push branch {args.branch}")
-        expected = {"target_branch": report["target_branch"], "signature": cleanup_signature(report, row)}
-        action_target = {"branch": args.branch}
-    elif args.action == "remove":
-        if not args.worktree:
-            raise Refused("Worktree cleanup requires --worktree PATH")
-        wanted = Path(args.worktree).expanduser().resolve()
-        matches = [row for row in rows if Path(row["path"]).resolve() == wanted]
-        if len(matches) != 1:
-            raise Refused(f"No unique linked worktree found at {wanted}")
-        row = matches[0]
-        if row.get("current"):
-            raise Refused("Cannot remove the current worktree.")
-        if row.get("classification") != "merged-removable":
-            raise Refused(f"Worktree is {row.get('classification')}; only clean merged worktrees may be removed.")
-        command = ["git", "-C", str(root), "worktree", "remove", str(wanted)]
-        print(f"Cleanup action: remove merged worktree {wanted}")
-        expected = {"target_branch": report["target_branch"], "signature": cleanup_signature(report, row)}
-        action_target = {"path": wanted}
-    else:
-        if not args.branch:
-            raise Refused("Branch cleanup requires --branch BRANCH")
-        matches = [row for row in rows if row.get("branch") == args.branch]
-        if args.branch == report["target_branch"]:
-            raise Refused("The default branch is protected and cannot be deleted.")
-        if matches and any(row.get("present") and row.get("branch") == args.branch for row in matches):
-            raise Refused("Remove the linked worktree first; branch deletion is a separate action.")
-        if ancestor(root, git_text(root, "rev-parse", "--verify", f"refs/heads/{args.branch}"), report["target_branch"]) is not True:
-            raise Refused(f"Branch {args.branch} is not verified as merged into {report['target_branch']}.")
-        branch_head = git_text(root, "rev-parse", "--verify", f"refs/heads/{args.branch}")
-        command = ["git", "-C", str(root), "branch", "-d", args.branch]
-        print(f"Cleanup action: delete verified merged local branch {args.branch}")
-    show_plan([command], root)
-    confirm(args.yes)
-    if args.action == "delete-branch":
-        require_unchanged_cleanup_state(root, args.action, {"target_branch": report["target_branch"]},
-                                        branch=args.branch, branch_head=branch_head)
-    else:
-        require_unchanged_cleanup_state(root, args.action, expected, **action_target)
-    return execute(command)
+    """`project clean`: the fixed pipeline (T047), frozen. Later tasks fill its
+    stages and never reorder them (contracts/project-clean.md, "Order of a
+    run"; research.md R4 and R6; lead rulings R-55 and R-56).
+
+    One signal scope covers the run from the argument checks to its last write
+    (plan review M1), and its Invocation is the CleanRun: main()'s, or the
+    scope's own when clean() is called directly (region dispatcher). The
+    stages run in order: check_clean_arguments(), require_git() and
+    resolve_clean_target(), which raise their refusals to main(); then
+    build_plan(), check_plan() and print_plan(), where a plan, select or
+    confirm refusal is recorded on the plan and the plan printed once, after
+    the decision, then `REFUSED:` on standard error in human output; then
+    push_or_delete(), in phase `planning`, or confirm_removal(), then the slot
+    read, phase `apply` and apply_removals(), with nothing in between.
+
+    The slot is read after build_plan(), before the question, before the
+    phase change, and once the scope has ended while still in `planning`: a
+    signal recorded before the apply phase ends the run by FR-036 (Interrupted:
+    probe groups reaped, `Cancelled.`, 130, 143 or 129, no document), and an
+    exception that leaves the scope with the slot set in `planning` becomes
+    Interrupted. A failed write before the apply phase ends the run as
+    `internal-error`, exit 2 (check_writes(); R-55)."""
+    run = None
+    try:
+        with signal_scope() as scope:
+            run = scope.invocation
+            json_output = getattr(args, "json", False)
+            run.args, run.mode, run.action = args, clean_mode(args), clean_action(args)
+            run.human = sys.stderr if getattr(args, "apply", False) and json_output else sys.stdout
+            run.plan = run.status = run.write_error = None
+            check_clean_arguments(args)
+            require_git(run)
+            repo = resolve_clean_target(args, run)
+            plan = run.plan = build_plan(repo, run)
+            read_slot(run)
+            run.status = check_plan(plan, run)
+            if run.status is None and plan.refusals:
+                run.status = 2  # a plan that carries a refusal never goes on
+            if run.status is None and not getattr(args, "apply", False):
+                run.status = 0  # nor does a report or a preview
+            print_plan(plan, run)
+            check_writes(run)
+            if run.status is None:
+                read_slot(run)
+                if run.action in ("push", "delete-branch"):
+                    run.status = push_or_delete(repo, run)
+                else:
+                    run.status = confirm_removal(plan, run)
+                    check_writes(run)
+                    if run.status is None:
+                        read_slot(run)
+                        run.phase = "apply"
+                        run.status = apply_removals(plan, run)
+                    else:
+                        print_plan(plan, run)  # where the run stops at the question
+                        check_writes(run)
+            if run.phase == "planning" and plan.refusals and not json_output:
+                read_slot(run)
+                say(run, f"REFUSED: {plan.refusals[0]}", sys.stderr)
+    except Exception as exc:
+        if run is not None and run.phase == "planning" and run.signal is not None:
+            raise Interrupted(run.signal) from exc
+        raise
+    finally:
+        settle_streams()
+    if run.phase == "planning":
+        read_slot(run)
+    return run.status
 
 
 def profile(root):
@@ -3291,6 +3673,10 @@ def parser():
     cleaning.add_argument("--branch", help="Branch target for push or delete-branch")
     cleaning.add_argument("--worktree", help="Worktree path target for remove")
     cleaning.add_argument("--yes", action="store_true", help="Confirm the selected cleanup action")
+    cleaning.add_argument("--all-safe", action="store_true",
+                          help="Plan every worktree that passes every gate; with --apply, remove them")
+    cleaning.add_argument("--expect-plan", metavar="D",
+                          help="With --all-safe --apply: refuse unless the fresh plan's digest is D")
     for sub in (creation, listing):
         sub.add_argument("--workbenches", help="workBenches checkout")
     creation.add_argument("--yes", action="store_true", help="Confirm bench creation; shape prompts are retained")
@@ -3323,14 +3709,14 @@ def main(argv=None):
             elif getattr(args, "json", False):
                 print(json.dumps({"error": str(exc)}))
             else:
-                print(f"REFUSED: {exc}", file=sys.stderr)
+                advise(f"REFUSED: {exc}")  # best-effort (R-54 X-3, R-55)
             return 2
         except (Interrupted, Terminated) as exc:
             # The first signal decides the status, 128 plus its number (FR-036, R-45 (6)).
-            print("Cancelled.", file=sys.stderr)
+            advise("Cancelled.")
             return 128 + int(exc.signum or invocation.signal or signal.SIGINT)
         except (KeyboardInterrupt, EOFError):
-            print("Cancelled.", file=sys.stderr)
+            advise("Cancelled.")
             return 130
 
 
