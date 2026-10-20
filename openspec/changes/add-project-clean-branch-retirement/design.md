@@ -31,7 +31,9 @@ and D2 answers it. Round A3 maps: A-21 (lane openRepoProject-3's re-read of
 `ca96701`) to D2, D4, D7, D8, D9, D10 and the Migration Plan; A-22 (Codex's
 findings on `785a45e`) to D8 and Rollback; A-23 (the residual-window line and
 the joint fit with the cache change) to D7 and D8 (proposal, "Re-read and
-Codex Findings (round A3)").
+Codex Findings (round A3)"). Round A4 maps A-24 (Codex's finding on
+`abad010`: the reflog proved again before the branch child) to D2, D3, D4,
+D5, D6, D7, D9 and Risks (proposal, "Re-read and Codex Findings (round A4)").
 
 Citations follow `proposal.md`: packet files at `da33d92`, `CAS` for change 1,
 `APO` for change 2, `project:N` and `tests:N` at `961c405`, all unchanged at
@@ -96,6 +98,7 @@ bare remote, `GIT_CONFIG_NOSYSTEM=1` and an empty global configuration:
 | a hand-written `refs/heads/-f` (round A3; F-1) | `git update-ref` writes it, `git symbolic-ref HEAD refs/heads/-f` checks it out in a worktree, and it commits, publishes with `git push -u origin refs/heads/-f` and merges; `git branch -- -f <sha>` refuses, "'-f' is not a valid branch name", exit 128; `git branch -f <sha>` exits 0 after creating a branch named after the SHA; `git -C '<root>' update-ref refs/heads/-f <sha> ''` recreates the ref, and refuses, "reference already exists", exit 128, when it exists |
 | a branch named `expire` (round A3; F-1) | `git reflog expire` runs the subcommand and prints nothing; `git reflog show refs/heads/expire` shows the branch's reflog |
 | a branch whose upstream's remote-tracking ref was deleted, the merge target checked out in a linked worktree, the main worktree on another branch (round A3) | `git checkout <merge target>` in the main worktree refuses, "already used by worktree", exit 128; `git switch --detach <merge target SHA>` there succeeds, and `branch -d` then deletes the branch, exit 0 |
+| a merged, published branch given, after the plan, a commit its merge target lacks in its worktree and reset to its planned SHA by `git reset --hard` (round A4; ruling A-24, Codex's P1 on `abad010`) | its head, `origin/<b>`, ahead and behind (0 and 0), the merge target and the worktree's status all equal the plan's, and its reflog names the commit as the new object of a `commit:` entry and the old object of the `reset:` entry after it; the plan's proof printed nothing before the move, and the same proof over the reflog as it then reads, after `worktree remove`, prints the commit, exit 0; without it `branch -d -- <b>` deletes the branch and its reflog, exit 0, and `git fsck --unreachable` then names the commit; a move to such a commit and back by `git update-ref` after the removal is caught the same way |
 
 The council's adversary engineer added, on Git 2.43.0 (council finding AE-1):
 a commit reset or amended away on a branch stays reachable through that
@@ -113,8 +116,8 @@ re-read's MEDIUM-3, unverified on 2.36), so the proof gives the merge target's
 exclusion as a `^` line, a revision rather than an option, which the round A3
 row above checks on 2.43.
 
-The Git 2.36 floor was not available for these checks here, nor for round
-A3's; D9 puts them on change 1's CI floor job.
+The Git 2.36 floor was not available for these checks here, nor for rounds
+A3's and A4's; D9 puts them on change 1's CI floor job.
 
 ## Goals / Non-Goals
 
@@ -187,8 +190,10 @@ the first target whose removal is not a plain `removed` or whose
 The stage is: the re-read (a bounded manifest read and one ref listing of the
 narrowed shape revalidation uses: the merge-target candidates,
 `refs/remotes/origin/HEAD`, and the selected branches and their upstreams); the
-checks of D4, in memory; the branch child of D3; and, once a branch child was
-spawned, the post-check, one more listing of the same shape.
+checks of D4, in memory; the re-read's last step, the re-proof of D4 (a
+bounded read of the branch's reflog and one `rev-list --stdin` child; ruling
+A-24); the branch child of D3; and, once a branch child was spawned, the
+post-check, one more listing of the same shape.
 
 The next target's revalidation keeps change 1's sourcing: after a plain
 `removed`, the rescan's three repository children serve as its repository
@@ -202,8 +207,9 @@ merge target (D4, ruling A-14), and retains that branch with `state-changed`.
 Concurrent writers are outside the contract (`clarifications.md`, S-4). The
 narrow guarantee states this sourcing: under the flag, the repository-wide
 values a revalidation takes from the previous rescan were read before that
-target's branch stage, earlier by at most the stage's three budgets and a
-branch child's reap, and a change to them during
+target's branch stage, earlier by at most the stage's own bounded run (its
+reads, its listings, its re-proof and its branch child, each under a 5 s
+budget) and a branch child's reap, and a change to them during
 the stage is outside the contract for the next removal, whose own branch
 evidence and merge target its re-read compares again (lane openRepoProject-3's
 re-read, LOW-12). Rerunning the repository part after each stage was not
@@ -237,9 +243,10 @@ It spawns only while more than change 1's 5 s removal floor of the work deadline
 remains, as the cache change starts its cache stage, and its budget is then
 `min(5 s, work remaining)`, which is the whole 5 s; so the work deadline never
 stops a branch child part-way, and the only stop past its budget is one of a
-child that ran its full 5 s, a hung one. The re-read before it gets `min(5 s,
-work remaining less the removal floor)`, as the cache change words its cache
-stage, so that the floor is left for the spawn. A branch child is not signalled
+child that ran its full 5 s, a hung one. The re-read before it, its re-proof
+included (D4), gets `min(5 s, work remaining less the removal floor)`, as the
+cache change words its cache stage, so that the floor is left for the spawn.
+A branch child is not signalled
 on a signal or an exception and is waited for within its budget, as a removal
 child is waited for, because a ref transaction killed part-way can leave a
 `.lock` file to clear by hand. Unlike the cache stage's reads, which are
@@ -251,7 +258,10 @@ removal children, waited for, so that paragraph is MODIFIED to name the branch
 child beside the removal child, and its Budgets sentence to give the re-read its
 narrower budget. That block is written on PR #19's text, and lane
 openRepoProject-2 agreed it on 2026-10-19 (ruling A-20; proposal, Dependencies
-and Sequencing).
+and Sequencing). The re-proof of ruling A-24 is a probe child, killed like one
+on every exit path, and the re-read's last step, so that the block's Budgets
+clause for "the re-read of a `clean --retire-branches` branch stage" already
+gives it the re-read's budget, and the agreed block needs no edit for it.
 
 Realization note for feature 006, from lane openRepoProject-2 (2026-10-19):
 feature 004's runner registers every probe handle in `LIVE_PROBES` and kills
@@ -289,7 +299,7 @@ and the proposal's Open Questions carry the atomic alternative, `git update-ref
 and leaves the `branch.<b>` section. `branch -D`, `--force`, `-f` and any second
 branch child are never used.
 
-### D4. The plan's keeps, the checks, and which targets qualify (A-2, A-3, A-14, A-16 to A-18)
+### D4. The plan's keeps, the checks, the re-proof, and which targets qualify (A-2, A-3, A-14, A-16 to A-18, A-24)
 
 **The plan's keeps.** Under the flag the plan decides, for each selected row,
 whether the run retires its branch, and keeps it for the first of these
@@ -345,11 +355,22 @@ first failure:
    `retained`, `state-changed`.
 5. No registered worktree, the main worktree included, has the branch checked
    out in the rescan's registry listing; else `retained`, `branch-in-use`.
+6. The re-proof, the re-read's last step (ruling A-24): the branch's reflog,
+   read again as the `unstarted-branch` gate reads it, names no commit that
+   one `rev-list --max-count=1 --stdin` child prints, given every named commit
+   and then the line `^` with the merge target's SHA, as the plan's proof is
+   given; else `retained`, `reflog-unmerged`.
 
-A value the re-read cannot establish, a listing that fails or times out or a
-manifest read that does, is `retained` with `state-changed`, as change 1's
-revalidation counts an unreadable value as a difference; a re-read the work
-deadline stopped is `retained` with `deadline-exceeded`.
+A value the re-read's manifest read or listing cannot establish, a listing that
+fails or times out or a manifest read that does, is `retained` with
+`state-changed`, as change 1's revalidation counts an unreadable value as a
+difference. A re-proof that cannot prove the reflog, its child failed or timed
+out at its own 5 s budget, or its read failed, timed out or found the reflog
+missing, empty or at its 64 KiB bound, is `retained` with `reflog-unmerged`,
+the reason a failed proof gives in the plan, so that no branch child runs on a
+reflog the stage has not proved. A re-read the work deadline stopped, its
+re-proof included, is `retained` with `deadline-exceeded`, and one a signal
+stopped is `retained` with `interrupted`.
 
 The re-read compares every value of the branch's evidence that change 1's
 removal revalidation compares (`CAS/rs:77-82`): `branch`, `head`, `upstream`,
@@ -362,32 +383,40 @@ child is added. "Cleanup revalidates destructive actions" therefore holds as
 written: the re-inspection before this local branch deletion refuses, by
 retaining the branch, whenever the branch's state no longer matches the plan.
 
-No Git child computes ancestry at the stage. The plan proved the planned head
-an ancestor of the merge target's SHA through its merged set, and every commit
-the branch's reflog names through the reflog proof; checks 2 to 4 find the
-head, its upstream evidence and the merge target unchanged, so those proofs
-hold at the target's current tip, as change 1's revalidation reasons (CAS
-`design.md` D7). A-2 asks for ancestry "at its current tip"; a moved merge
-target would need a `merge-base --is-ancestor` child, but the canonical "MUST
-refuse when the state no longer matches the reviewed plan"
-(`project-clean-review-safety/spec.md:51-53`) already retains the branch
-there, so the child is never needed. This is narrower than A-2's text: a
-branch whose merge target moved forward is retained, not retired.
+One Git child computes ancestry at the stage, the re-proof. The plan proved
+the planned head an ancestor of the merge target's SHA through its merged set;
+checks 2 to 4 find the head, its upstream evidence and the merge target
+unchanged, so that proof holds at the target's current tip, as change 1's
+revalidation reasons (CAS `design.md` D7), and no child repeats it. The plan's
+reflog proof does not carry over so: a branch given a commit the merge target
+lacks and reset to its planned SHA between the plan and the stage passes
+checks 1 to 5, its head, upstream evidence and merge target all as planned,
+while its reflog now names that commit, which `branch -d` would leave
+unreachable by deleting the reflog (Codex's P1 on `abad010`; Context). So the
+stage runs the plan's proof again over the reflog as it then reads, one child
+under the re-read's budget (ruling A-24). A-2 asks for ancestry "at its
+current tip"; a moved merge target would need a `merge-base --is-ancestor`
+child, but the canonical "MUST refuse when the state no longer matches the
+reviewed plan" (`project-clean-review-safety/spec.md:51-53`) already retains
+the branch there, so that child is never needed. This is narrower than A-2's
+text: a branch whose merge target moved forward is retained, not retired.
 
 What a deletion can lose is therefore bounded by what is proven: no commit
-that the branch's head or its reflog names is lost, because the plan proves
-them merged or keeps the branch. What a deletion does remove is the branch's
-`branch.<b>` section, including its `description`, `pushRemote` and any
-tool's keys, which nothing restores (Risks).
+that the branch's head or its reflog names at the re-proof is lost, because
+the plan proves the head merged, the re-proof proves the reflog's commits
+merged, and otherwise the branch is kept; a reflog entry written after the
+re-proof's read is in the residual window (D3). What a deletion does remove is
+the branch's `branch.<b>` section, including its `description`, `pushRemote`
+and any tool's keys, which nothing restores (Risks).
 
 The re-read runs no identity probe. The repository identity is the one the
 rescan re-established, which a target `removed` with reason null requires
 (`CAS/pc:919-921`), and the narrow guarantee names it. A repository replaced
 after the rescan that holds the same branch at the same head with the same
 upstream evidence, merged into a merge target at the same SHA, loses no commit
-the head or the plan's reflog proof names by the deletion, and one whose values
-differ retains the branch. Concurrent writers are outside the contract in any
-case.
+that the head or its reflog, proved again by the re-proof, names by the
+deletion, and one whose values differ retains the branch. Concurrent writers
+are outside the contract in any case.
 
 Every target the run removes with reason null qualifies unless the plan keeps
 its branch, whether its upstream lives (its remote branch and remote-tracking
@@ -415,12 +444,12 @@ unknown or not established (`CAS/pc:1128-1129`).
 | `observed_sha` | the head the re-read listed; null when it listed none or did not run |
 | `command` | the branch child's argument vector; null when none was spawned |
 | `exit_status` | the branch child's status; null when none was spawned or its exit was not observed |
-| `probes_performed` | the stage's re-read and post-check children, 0 to 2; the target's own `probes_performed` stays change 1's, its revalidation's children (lane openRepoProject-3's L5) |
+| `probes_performed` | the stage's re-read children, its listing and its re-proof, and its post-check child, 0 to 3; the target's own `probes_performed` stays change 1's, its revalidation's children (lane openRepoProject-3's L5) |
 
 | Stage | When | Reasons |
 | --- | --- | --- |
 | `retired` | the post-check shows the branch absent after the branch child ran | null (exit 0); `git-failed` (nonzero exit); `probe-timeout` (`project` stopped the child past its 5 s budget) |
-| `retained` | the target is `removed` and its branch is present when the stage ends | `branch-changed`, `state-changed`, `branch-in-use`, `deadline-exceeded` (too little work time to start the re-read or the branch child, or the deadline stopped the re-read), `interrupted`, `spawn-error`, `git-refused` (nonzero exit), `unconfirmed-retirement` (exit 0), `probe-timeout`, `removal-ceiling` |
+| `retained` | the target is `removed` and its branch is present when the stage ends | `branch-changed`, `state-changed`, `branch-in-use`, `reflog-unmerged` (the re-proof printed a commit, or could not prove the reflog), `deadline-exceeded` (too little work time to start the re-read, its re-proof or the branch child, or the deadline stopped the re-read), `interrupted`, `spawn-error`, `git-refused` (nonzero exit), `unconfirmed-retirement` (exit 0), `probe-timeout`, `removal-ceiling` |
 | `not-attempted` | the plan kept the branch, no branch remained to retire, or no stage ran | `reflog-unmerged`, `branch-in-use`, `head-not-merge-target`, `branch-shared` (the plan's keeps); `branch-missing`, `branch-retention-stop`, `target-not-removed` |
 | null | the post-check failed or timed out | `reconciliation-incomplete` |
 
@@ -433,6 +462,16 @@ scenario of a retirement with a reason stays, with those two. The sub-record's
 present or absent after a nonzero exit; they are not the target enum's split
 of exit statuses at 128 (lane openRepoProject-3's L8), and the ADDED
 requirement says so.
+
+`reflog-unmerged`, like `branch-in-use`, is a reason of two stages. Under
+`not-attempted` it is the plan's keep: printed, counted in the question,
+plain, and never a stop. Under `retained` it is the re-proof's finding (ruling
+A-24): the stage ran, the branch is present when it ends, and the plan did not
+foresee it, so it is a retention the stage discovers, not plain, and it stops
+the run and exits 2 (D6), while the target's removal stands, `removed` with
+reason null. That follows the ruling's outcome, the branch kept with
+`reflog-unmerged` and the worktree removed, through this table's own
+definitions of the two stages.
 
 A `branch_retirement` is plain when it is `retired` with reason null or
 `not-attempted` with one of the plan's four keeps. A target that does not
@@ -462,8 +501,9 @@ reasons and its notes are untouched (L-4). Null rather than a fourth value
 `unknown` keeps A-4's three values and follows change 1's rule that null means
 not established.
 
-Three examples of the sub-record, retired, retained after the merge target
-moved, and kept by the plan (the target's other keys are change 1's):
+Four examples of the sub-record, retired, retained after the merge target
+moved, retained by the re-proof, and kept by the plan (the target's other keys
+are change 1's):
 
 ```json
 "branch_retirement": {"stage": "retired", "reason": null, "branch": "f1",
@@ -471,11 +511,15 @@ moved, and kept by the plan (the target's other keys are change 1's):
                       "command": ["git", "-c", "protocol.allow=never", "...",
                                   "-C", "<command directory>", "branch", "-d",
                                   "--", "f1"],
-                      "exit_status": 0, "probes_performed": 2}
+                      "exit_status": 0, "probes_performed": 3}
 "branch_retirement": {"stage": "retained", "reason": "state-changed",
                       "branch": "f1", "planned_sha": "<40 hex>",
                       "observed_sha": "<40 hex>", "command": null,
                       "exit_status": null, "probes_performed": 1}
+"branch_retirement": {"stage": "retained", "reason": "reflog-unmerged",
+                      "branch": "f1", "planned_sha": "<40 hex>",
+                      "observed_sha": "<40 hex>", "command": null,
+                      "exit_status": null, "probes_performed": 2}
 "branch_retirement": {"stage": "not-attempted", "reason": "reflog-unmerged",
                       "branch": "f2", "planned_sha": "<40 hex>",
                       "observed_sha": null, "command": null,
@@ -486,8 +530,9 @@ moved, and kept by the plan (the target's other keys are change 1's):
 
 The packet's "a retention stops later targets" (`BA:1341-1342`) governs a
 retention the stage discovers: a changed head or upstream, a moved merge
-target, a Git refusal, a spawn error, a holder appearing, the deadline at the
-stage. A keep the confirmed plan names (D4) neither stops the run nor raises
+target, a reflog the re-proof does not prove (ruling A-24), a Git refusal, a
+spawn error, a holder appearing, the deadline at the stage. A keep the
+confirmed plan names (D4) neither stops the run nor raises
 the exit status by itself; that row exits as it would in a flagless run. So
 the batch stops after the first target whose removal is not a plain `removed`
 or whose `branch_retirement` is not plain. Later targets are `not-attempted`
@@ -515,28 +560,29 @@ the run is a partial success the record explains, and Git's 1 would read as
 `probe-timeout`) is not plain, stops the run and exits 2, as change 1 stops
 after `removed` with `removal-ceiling`.
 
-### D7. Bounds, counts, signals and the fit (A-5, as amended)
+### D7. Bounds, counts, signals and the fit (A-5, as amended; A-24)
 
 | Child | Budget | Counted under |
 | --- | --- | --- |
 | reflog proof, at plan time (one per repository, and one per selected row only when the first prints a commit); a failure or a timeout at its own budget keeps branches and leaves the plan complete | `min(5 s, work remaining)` | `probes` |
 | re-read listing (and the manifest read, a filesystem call) | `min(5 s, work remaining less the removal floor)`, started only while more than the floor remains | `probes`, the sub-record's `probes_performed` |
+| re-proof, the re-read's last step, after its checks pass (ruling A-24): one `rev-list --max-count=1 --stdin` child over the commits the branch's reflog then names (and the reflog read, a filesystem call); a commit printed, a failure or a timeout at its own budget retains the branch with `reflog-unmerged` | the re-read's, `min(5 s, work remaining less the removal floor)`, started only while more than the floor remains | `probes`, the sub-record's `probes_performed` |
 | branch child | `min(5 s, work remaining)`, spawned only while more than the 5 s removal floor remains | `operations` |
 | post-check listing, only after a branch child | `min(5 s, reserve remaining)` | `probes`, the sub-record's `probes_performed` |
 
-The reflog proof is planning, like the merged set. The re-read gates a
-mutation, as revalidation does, so it is work; the post-check reconciles, so
-it runs in the reserve. When too little work time remains, neither the re-read
-nor the branch child starts, the branch is `retained` with
-`deadline-exceeded`, and change 1's deadline rule makes every later target
-`not-attempted` with `deadline-exceeded`, exit 1.
+The reflog proof is planning, like the merged set. The re-read, its re-proof
+included, gates a mutation, as revalidation does, so it is work; the post-check
+reconciles, so it runs in the reserve. When too little work time remains, none
+of the re-read, its re-proof and the branch child starts, the branch is
+`retained` with `deadline-exceeded`, and change 1's deadline rule makes every
+later target `not-attempted` with `deadline-exceeded`, exit 1.
 
-Signals: the re-read listing and the reflog children are probes and are
-stopped like one; a branch child in flight is not signalled and is waited for
-within its budget; past the budget it gets change 1's probe termination
-(SIGTERM to the group, SIGKILL 2 s later, a reap of at most 2 s). After the
-signal the post-check runs in the reserve, as change 1 reconciles after a
-signal.
+Signals: the re-read listing, the re-proof and the reflog children are probes
+and are stopped like one; a branch child in flight is not signalled and is
+waited for within its budget; past the budget it gets change 1's probe
+termination (SIGTERM to the group, SIGKILL 2 s later, a reap of at most 2 s).
+After the signal the post-check runs in the reserve, as change 1 reconciles
+after a signal.
 
 The 64 s bound holds: a branch child spawns with more than 5 s of work left, so
 it ends or is stopped by the 50 s work deadline and is reaped within 4 s more;
@@ -546,40 +592,46 @@ reserve child stopped there is reaped within 4 s, as change 1 counts.
 Counts: under the flag `operations.estimated` gains one per branch the plan
 retires, so that it is 2T when no cache is listed and every branch is retired
 (`add-project-clean-cache-disposal` also counts each listed cache entry
-there); `probes.estimated` is change 1's F + W + E + 5T + 3 (`BA:820`) plus two
-per branch the plan retires plus the reflog children the plan spawned. No
-`limits` or `budget` member is added: the stage spawns one branch child per
-target, so `limits.targets` (16) caps them, and `budget.probe_timeout_seconds`
-(5) bounds each. A run adds at most 65 children: 48 for the stage, 16 under
-`operations` and 32 under `probes` (A-5 as amended), and 17 reflog children
-under `probes`, one for the repository and one per selected row. A keep the
-plan names spawns no stage child, so each kept branch lowers the count by
-three.
+there); `probes.estimated` is change 1's F + W + E + 5T + 3 (`BA:820`) plus
+three per branch the plan retires, the re-read's listing, its re-proof and the
+post-check, plus the reflog children the plan spawned. No `limits` or `budget`
+member is added: the stage spawns one branch child per target, so
+`limits.targets` (16) caps them, and `budget.probe_timeout_seconds` (5) bounds
+each. A run adds at most 81 children: 64 for the stage, 16 under `operations`
+and 48 under `probes` (A-5 as amended, with ruling A-24's re-proof, one more
+child per retired branch), and 17 reflog children under `probes`, one for the
+repository and one per selected row. A keep the plan names spawns no stage
+child, so each kept branch lowers the count by four.
 
 The fit of `BA:729-760`, at the packet's assumed costs (150 ms per child, 0.3
 s per removal, T = 16, the 50 s work deadline and the 5 s floor). Without the
 cache change and with one reflog child, target k's removal spawns after 7 +
-128 + 16 + 1 + 5k probes, k - 1 removals and 3(k - 1) stage children, at
-22.05 + 1.5k s, and its branch child 0.9 s later (the removal, the three
-rescan children and the re-read), at 22.95 + 1.5k s. The spawn floor needs
-each at or before 45 s: removals 1 to 15 spawn (the 15th at 44.55 s), branch
-children 1 to 14 spawn (the 14th at 43.95 s), and the 15th branch child, due at
-45.45 s, cannot start; no spawn falls on the 45 s boundary, so the strict test
-for the branch child and change 1's inclusive one for a removal give the same
-counts here. So at the packet's costs a flagged run of 16 removes 15
-worktrees and retires 14 branches; the 15th branch is `retained` with
-`deadline-exceeded`, the 16th target is `not-attempted` with
-`deadline-exceeded`, and the run exits 1, never unsafe (`BA:772-774`). In the
-worst case, when the repository's reflog child prints a commit and 16 per-row
-children follow, every time moves 2.4 s later, at 24.45 + 1.5k s: 13 removed
-and 13 retired (fewer where a row's proof failed, whose stage then does not
-run and which saves 0.45 s for each later row).
+128 + 16 + 1 + 5k probes, k - 1 removals and 4(k - 1) stage children, at
+(152 + 5k) x 0.15 + 0.3(k - 1) + 0.6(k - 1) = 21.9 + 1.65k s, and its branch
+child 1.05 s later (the removal, the three rescan children, the re-read's
+listing and its re-proof), at 22.95 + 1.65k s. The spawn floor needs each at
+or before 45 s: removals 1 to 14 spawn (the 14th at 45.0 s, on the boundary,
+which change 1's inclusive test for a removal admits), branch children 1 to 13
+spawn (the 13th at 44.4 s), and the 14th branch child, due at 46.05 s, cannot
+start; no branch child falls on the boundary, so the branch child's strict
+test changes no count here. So at the packet's costs a flagged run of 16
+removes 14 worktrees and retires 13 branches; the 14th branch is `retained`
+with `deadline-exceeded`, the 15th removal, due at 46.65 s, does not spawn,
+the 15th and 16th targets are `not-attempted` with `deadline-exceeded`, and
+the run exits 1, never unsafe (`BA:772-774`). In the worst case, when the
+repository's reflog child prints a commit and 16 per-row children follow,
+every time moves 2.4 s later, removals at 24.3 + 1.65k s and branch children
+at 25.35 + 1.65k s: 12 removed (the 12th at 44.1 s) and 11 retired (the 11th
+branch child at 43.5 s, the 12th due at 45.15 s), fewer where a row's proof
+failed, whose stage then does not run and which saves 0.6 s for each later
+row.
 
 At change 1's measured costs (CAS `tasks.md` 2.1: the 16th removal spawning at
-23.6 s with 26.4 s left), the 45 stage children before the 16th removal, even
-at 150 ms each, and one reflog child move it to about 30.5 s, and 17 reflog
-children to about 32.9 s; its branch child follows within about a second, far
-inside the floor. Change 1 kept its caps on its measured fit, and this design
+23.6 s with 26.4 s left), the 60 stage children before the 16th removal, four
+for each earlier target, even at 150 ms each, and one reflog child move it to
+23.6 + 9.0 + 0.15 = about 32.75 s, and 17 reflog children to about 35.15 s;
+its branch child follows within about a second, far inside the floor. Change
+1 kept its caps on its measured fit, and this design
 does the same: no cap changes. Where the assumed costs do hold, the last
 targets are `not-attempted` with `deadline-exceeded`, exit 1, and the next run
 takes their worktrees; a branch `retained` with `deadline-exceeded` keeps
@@ -587,9 +639,10 @@ takes their worktrees; a branch `retained` with `deadline-exceeded` keeps
 
 With `add-project-clean-cache-disposal` archived first (L-5), its 16 cache
 enumerations join the plan, and every time moves 2.4 s later again: target k's
-removal would spawn at 24.45 + 1.5k s with one reflog child. The cache change's
+removal would spawn at 24.3 + 1.65k s with one reflog child. The cache change's
 filesystem time is added on top, with the inputs of the lane's ruling B-25 as
-ruling A-23 gives them: the plan-time walk, at most 8,192 entries and about
+ruling A-23 gives them, unchanged at that change's `cf57956`: the plan-time
+walk, at most 8,192 entries and about
 9,000 calls, about 2 s through one worker per stage and about 5.6 s at a
 thread per call; and the cache stages, at most about 8,500 calls in a run,
 about 2 s through a worker and about 5.3 s at a thread per call. Both are taken
@@ -597,46 +650,48 @@ whole before the first removal, the worst order, since a run's stages can
 spend their total on its first targets: 4 s through a worker, 10.9 s at a
 thread per call.
 
-- Through one worker per stage, target k's removal spawns at 28.45 + 1.5k s
-  and its branch child at 29.35 + 1.5k s with one reflog child: removals 1 to
-  11 spawn (the 11th at 44.95 s, 0.05 s inside the floor) and branch children
-  1 to 10 (the 10th at 44.35 s); the 11th branch child, due at 45.85 s, cannot
-  start, so the 11th branch is `retained` with `deadline-exceeded`, and the
-  12th removal, due at 46.45 s, does not spawn. In the worst case of 17 reflog
-  children, at 30.85 + 1.5k s, 9 removals spawn (the 9th at 44.35 s) and 8
-  branch children (the 8th at 43.75 s).
-- At a thread per call, at 35.35 + 1.5k s, 6 removals spawn (the 6th at 44.35
-  s) and 5 branch children (the 5th at 43.75 s); in the worst case, at 37.75 +
-  1.5k s, 4 removals and 4 branch children (the 4th at 44.65 s).
+- Through one worker per stage, target k's removal spawns at 24.3 + 4 + 1.65k
+  = 28.3 + 1.65k s and its branch child at 29.35 + 1.65k s with one reflog
+  child: removals 1 to 10 spawn (the 10th at 44.8 s) and branch children 1 to
+  9 (the 9th at 44.2 s); the 10th branch child, due at 45.85 s, cannot start,
+  so the 10th branch is `retained` with `deadline-exceeded`, and the 11th
+  removal, due at 46.45 s, does not spawn. In the worst case of 17 reflog
+  children, at 30.7 + 1.65k s, 8 removals spawn (the 8th at 43.9 s) and 8
+  branch children (the 8th at 44.95 s, 0.05 s inside the floor).
+- At a thread per call, at 24.3 + 10.9 + 1.65k = 35.2 + 1.65k s, 5 removals
+  spawn (the 5th at 43.45 s) and 5 branch children (the 5th at 44.5 s); in the
+  worst case, at 37.6 + 1.65k s, 4 removals (the 4th at 44.2 s) and 3 branch
+  children (the 3rd at 43.6 s, the 4th due at 45.25 s).
 
-At change 1's measured costs the 16th removal then spawns near 36.9 s through
-a worker with one reflog child and near 39.3 s with 17, and all 16 fit, each
-branch child within about a second. At a thread per call it spawns near 43.8 s
-with one reflog child, its branch child within about a second at the floor's
-edge, so that branch may be `retained` with `deadline-exceeded`; with 17 reflog
-children it is due near 46.2 s, past the floor, so at least the 16th target is
+At change 1's measured costs the 16th removal then spawns near 32.75 + 2.4 + 4
+= 39.15 s through a worker with one reflog child and near 41.55 s with 17, and
+all 16 fit, each branch child within about a second. At a thread per call it
+is due near 32.75 + 2.4 + 10.9 = 46.05 s with one reflog child and near 48.45
+s with 17, past the floor either way, so at least the 16th target is
 `not-attempted` with `deadline-exceeded`, exit 1. Where the cache change's fit
-sentence counts, as it reads at `e906c2f`, "at most 250 Git children besides
-the 16 removals, about 42.3 s", which the flag's up to 65 more children make
-false, the re-based block scopes that sentence to runs without the flag, and
-any restatement the cache change makes of it under ruling B-25 is scoped the
-same way when this change re-bases on it.
+sentence counts, as it reads at `e906c2f` and still at `cf57956`, "at most 250
+Git children besides the 16 removals, about 42.3 s", which the flag's up to 81
+more children make false, the re-based block scopes that sentence to runs
+without the flag, and any restatement the cache change makes of it under
+ruling B-25 is scoped the same way when this change re-bases on it.
 
-So at the packet's 150 ms model a flagged run with cache disposal brings 10 of
+So at the packet's 150 ms model a flagged run with cache disposal brings 9 of
 its 16 targets through their stage before the floor, 8 in the worst case of
-the reflog proof, through one worker per stage, and 5, or 4, at a thread per
+the reflog proof, through one worker per stage, and 5, or 3, at a thread per
 call; change 1's own deadline rule makes the rest `not-attempted` with
 `deadline-exceeded`, the run exits 1, and the next run takes them, never unsafe
 (`BA:772-774`). At change 1's measured costs all 16 fit through a worker; at a
-thread per call all 16 removals spawn with one reflog child, and the worst case
-defers at least the 16th target. `limits.targets` stays 16 (A-9). The
-alternative, a lower target cap under the flag, would be 8 by the
-packet's rule (`BA:729-735`), since the last of T such targets then spawns at
-about 19.7 + 1.8T s; it is rejected because the cap is applied by the
-`deferred-target-cap` gate, so the flag would change the selection as well as
-the digest, and because a smaller cap only splits across runs the work that
-the deadline already splits safely. The proposal puts the choice to Brett Heap
-(Open Questions).
+thread per call at least the 16th target is deferred, with one reflog child as
+in the worst case. `limits.targets` stays 16 (A-9). The alternative, a lower
+target cap under the flag, would be 8 by the packet's rule (`BA:729-735`),
+since the last of T such targets then spawns at about (136 + 7T) x 0.15 +
+0.3(T - 1) + 0.6(T - 1) = 19.5 + 1.95T s before the cache change's filesystem
+time, 35.1 s for 8 and 50.7 s for 16; with that time, 8 still fits through one
+worker per stage (39.1 s) but not at a thread per call (46.0 s). It is
+rejected because the cap is applied by the `deferred-target-cap` gate, so the
+flag would change the selection as well as the digest, and because a smaller
+cap only splits across runs the work that the deadline already splits safely.
+The proposal puts the choice to Brett Heap (Open Questions).
 
 ### D8. What the person sees (A-6, A-7, A-19, P-2)
 
@@ -739,20 +794,25 @@ review-safety scenario this change adds, gets a test named after it, built on
 feature 004's helpers (its T010 fixture builders and T011 counting wrapper and
 fake Gits, landed on its branch at `4e3af0a`): the merged, published worktree
 with a commit of its own; a worktree whose first commit was amended before it
-merged, for the reflog proof; the counting `git` wrapper, which records the
-branch child's arguments, `-C` directory, environment (no `GIT_ALLOW_PROTOCOL`,
-no `GIT_OPTIONAL_LOCKS`) and process group, and each reflog child; test hooks
-after the rescan and after the re-read, and fault injection into the re-read,
-the branch child's spawn and the post-check; and fake `git`s that pass every
+merged, for the reflog proof; a branch given a commit its merge target lacks
+and reset to its planned SHA after the plan, and one moved to such a commit and
+back by `git update-ref` after its removal, for the re-proof (ruling A-24);
+the counting `git` wrapper, which records the branch child's arguments, `-C`
+directory, environment (no `GIT_ALLOW_PROTOCOL`, no `GIT_OPTIONAL_LOCKS`) and
+process group, and each reflog child and re-proof child with its standard
+input; test hooks after the plan is printed, after the rescan and after the
+re-read, its re-proof included, and fault injection into the re-read, the
+branch child's spawn and the post-check; and fake `git`s that pass every
 other command to the real Git: one whose `branch -d` exits 0 without deleting;
 one that refuses with exit 1; one that runs Git's deletion and then exits 1;
 one that runs it and then hangs, ignoring SIGTERM; one that ignores SIGTERM
 without deleting; one that sleeps 2 s before deleting, for the signal
 scenario; one whose reflog child exits nonzero, and one whose reflog child
-hangs past its budget; and branches named `topic;id` and, by hand, `-f`, with
-a root path that holds a space, run through `dash` for the printed lines. The
-Context table's facts, the reflog proof's `^` line among them (lane
-openRepoProject-3's re-read, MEDIUM-3), become fixtures run on change 1's CI
+hangs past its budget, at the plan and, separately, at the stage's re-proof;
+and branches named `topic;id` and, by hand, `-f`, with a root path that holds
+a space, run through `dash` for the printed lines. The Context table's facts,
+the reflog proof's `^` line (lane openRepoProject-3's re-read, MEDIUM-3) and
+the re-proof's move and back among them, become fixtures run on change 1's CI
 floor job at Git 2.36 (its D17; feature
 004's `git-floor` job, task T003, ticked on its branch at `4e3af0a` and not yet
 on `main`) as well as on the CI workflow's test jobs, which since PR #32 are
@@ -808,8 +868,10 @@ proposal puts it before Brett Heap with L-4's recommendation.
   the branch is retired. The SHA test may keep a branch Git would accept.
   PR #2's command-root workaround is not carried (proposal, Out of Scope).
 - [Retiring a branch deletes its reflog and its `branch.<b>` section] -> The
-  plan proves every commit the reflog names merged or keeps the branch
-  (`reflog-unmerged`), so no named commit is lost. The section's keys
+  plan proves every commit the reflog names merged, and the stage proves it
+  again over the reflog as it then reads, or the branch is kept
+  (`reflog-unmerged`), so no commit named when the branch child spawns is
+  lost. The section's keys
   (`description`, `pushRemote`, any tool's keys) are deleted and not
   restored; the printed restore line, `git -C ROOT branch BRANCH SHA` or, for
   a name that begins with `-`, `git -C ROOT update-ref refs/heads/BRANCH SHA
@@ -820,6 +882,14 @@ proposal puts it before Brett Heap with L-4's recommendation.
   A-16 as amended on 2026-10-19: the proof's input is every non-zero object a
   reflog entry names, new and old, so that commit is proven merged or the
   branch is kept, with no extra child.
+- [A branch moved to a commit the merge target lacks and back to its planned
+  SHA between the plan and the stage, so that its head, upstream evidence and
+  merge target all match the plan while its reflog names the commit] -> Closed
+  by ruling A-24 (Codex's P1 on `abad010`): the re-read's re-proof runs the
+  plan's proof again over the reflog as it then reads, and retains the branch
+  with `reflog-unmerged`, its worktree's removal standing and the run
+  stopping; the cost is one more child per retired branch (D7). A commit made
+  and moved away after the re-proof's read is in the residual window (D3).
 - [A rebased or amended branch whose old commits the merge target lacks is
   kept, never retired] -> By design (A-16); `delete-branch` stays its explicit
   path after the person inspects `git -C ROOT reflog show refs/heads/BRANCH`,
@@ -836,18 +906,19 @@ proposal puts it before Brett Heap with L-4's recommendation.
 - [A `reference-transaction` hook runs inside the branch child, as under
   `delete-branch` today] -> Its time counts in the child's 5 s budget, and the
   post-check decides; the hook is the repository owner's code.
-- [At the packet's assumed costs a flagged run of 16 retires 14 branches; with
-  the cache change and its filesystem time, 10 through one worker per stage,
-  8 in the worst case of the reflog proof, and 5, or 4, at a thread per call]
+- [At the packet's assumed costs a flagged run of 16 retires 13 branches; with
+  the cache change and its filesystem time, 9 through one worker per stage,
+  8 in the worst case of the reflog proof, and 5, or 3, at a thread per call]
   -> Change 1's measured fit governs (D7, A-9), under which all 16 fit through
-  a worker and at least the 16th is deferred at a thread per call in the worst
-  case; the degraded case is a `not-attempted`
+  a worker and at least the 16th is deferred at a thread per call, with one
+  reflog child or 17; the degraded case is a `not-attempted`
   target with `deadline-exceeded`, exit 1, never unsafe, and the next run
   takes it; a branch `retained` with `deadline-exceeded` is retried with
   `delete-branch`.
 - [The re-read runs no identity probe] -> The compared head, upstream evidence
-  and merge-target SHA, with the plan's reflog proof, bound what any deletion
-  can lose (D4); concurrent writers are outside the contract.
+  and merge-target SHA, with the plan's reflog proof and the stage's re-proof,
+  bound what any deletion can lose (D4); concurrent writers are outside the
+  contract.
 - [A script running `--yes --json --retire-branches` deletes branches
   unattended] -> Opt-in only, never suggested by the overview, bound by
   `--expect-plan` only to a flagged preview, and every deletion listed in the
