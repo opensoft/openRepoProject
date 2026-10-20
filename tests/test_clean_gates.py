@@ -246,6 +246,16 @@ class GatesTests(clean_support.CleanCase):
             branch = self.git(trees[name], "branch", "--show-current").strip()
             self.assertEqual(lines[group + 1], TEXT["excluded_row"].format(PATH=trees[name], BRANCH=branch))
         self.assertEqual(self.snapshot(root), before, "a preview changes nothing")
+        # The batch applies: only the plain worktree is removed, exit 0, and
+        # every other row stays, its branch included.
+        result, records = self.run_counted("clean", root, "--all-safe", "--apply", "--yes", cwd=current)
+        self.assert_status(result, 0)
+        self.assertEqual([argv_words(record)[-1] for record in removals(records)], [str(trees["plain"])])
+        self.assertFalse(trees["plain"].exists())
+        self.git(root, "rev-parse", "--verify", "-q", "refs/heads/015-plain")
+        for name, tree in trees.items():
+            if name not in ("plain", "stale"):
+                self.assertTrue(os.path.isdir(tree), name)
 
     def test_clean_every_protected_classifier_incomplete_copy(self):
         trees, reasons = self.protected_repository()
