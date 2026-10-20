@@ -99,8 +99,9 @@ child's scrubbed names and process group before it `exec`s Git (M4).
 - `tests/test_project.py`: one method rewritten (T046) and one line added to
   its loader (T009).
 - `README.md`, `AGENTS.md` and `.github/workflows/tests.yml`;
-  `specs/004-project-clean-all-safe/` (the feature's documents and
-  `traceability.md`; analyze L8); and
+  `specs/004-project-clean-all-safe/` (the feature's documents,
+  `traceability.md`, and `hand-runs.md`, T132's record, lead ruling R-50;
+  analyze L8); and
   `openspec/changes/add-project-clean-all-safe/tasks.md`: the four hunks this
   branch already carries there from `4e4b00f` and `dd923ee` (PR #11's
   governance links for tasks 1.6, 2.1 and 2.2, and the Speckit Handoff's
@@ -138,12 +139,14 @@ child's scrubbed names and process group before it `exec`s Git (M4).
    other lanes' modules to rule 3's import idiom (lead ruling R-38); and a
    lane that adds a `TEXT` or `NEXT_STEPS` key adds its fixture key to
    `tests/clean_support.py` (R-45) (lead ruling R-48).
-3. Helpers come from `tests/clean_support.py` only, imported by a plain
-   `import clean_support`, the one idiom; a module runs alone through
-   discovery, `python3 -m unittest discover -s tests -p
-   'test_clean_<lane>.py'`, never by its dotted path, which would load a
-   second `clean_support` with its own `load_project()` cache (lead ruling
-   R-38). No module binds
+3. Helpers come from `tests/clean_support.py` only, imported by its bare
+   name, `import clean_support` or `from clean_support import ...`, so that
+   every module shares one `clean_support` module object; only a
+   package-style import, such as `from tests import clean_support`, breaks
+   that. A module runs alone through discovery, `python3 -m unittest discover
+   -s tests -p 'test_clean_<lane>.py'`, never by its dotted path; either
+   would load a second `clean_support` with its own `load_project()` cache
+   (lead rulings R-38 and R-50). No module binds
    `ProjectTests` in its namespace or uses `import *`, since
    `loadTestsFromModule` would run the 96 tests again. A test patches the
    `project` module object it calls: `tests/clean_support.py` loads its own,
@@ -522,8 +525,11 @@ T033), when B, D, E and F are; H, guard (T034, T035), when T023 is, beside G
   (`complete`; `failed`, with a standard-error head; `complete-at-bound` on the
   `ignored-5000` fake, its child stopped; `timeout` on the `ignore-sigterm`
   fake: SIGTERM, then SIGKILL at least 0.9 of the grace in force later,
-  measured from the child, the child reaped, `os.killpg(pgid, 0)` raising
-  `ProcessLookupError`, and the handle abandoned and never waited on again;
+  measured from the child, the child reaped and out of the registry, and
+  `os.killpg(pgid, 0)` raising `ProcessLookupError`; an abandoned handle, a
+  child whose exit is never observed: abandoned at its reap deadline with
+  `probe-timeout`, never waited on again, still registered and killed again
+  on exit, the outcome `timeout` with no exit status (lead ruling R-50);
   `deadline`; and `interrupted`; each outcome mapped to its row error, `failed`
   to `probe-failed`, `timeout` to `probe-timeout` and `deadline` to
   `deadline-exceeded`, while `interrupted` raises `Interrupted`; plan review
@@ -569,7 +575,10 @@ T033), when B, D, E and F are; H, guard (T034, T035), when T023 is, beside G
   driver, scrubbed (a `GIT_DIR` naming another repository is ignored), pinned
   and counted, and return what they return today: a `CompletedProcess` with
   text output, and the stripped standard output or `None`, as
-  `tests/test_project.py:878` reads in process; outside a subcommand each runs
+  `tests/test_project.py:878` reads in process, except that output is decoded
+  as UTF-8 with `surrogateescape`, newlines translated, so bytes that
+  `text=True` failed on now give a value, and standard error is capped at the
+  4 KiB head (lead ruling R-50); outside a subcommand each runs
   one probe with the 15 s budget and installs no signal handler; and once an
   invocation's version check has failed, `git()` returns a failed
   `CompletedProcess` and `git_text()` `None` without spawning, as the counting
@@ -625,7 +634,8 @@ T033), when B, D, E and F are; H, guard (T034, T035), when T023 is, beside G
   value is read from `TIMING` when called (R-29). T018 to T020 pass.
 - [x] T025 [P] Reroute `git()` and `git_text()` (`project:68-74`) through
   `run_bounded()` with `git_argv("probe", ...)`, keeping their names, place,
-  signatures and return values; after a failed version check in the invocation
+  signatures and return types, their output decoded as T021 states (lead
+  ruling R-50); after a failed version check in the invocation
   they spawn nothing and return a failed `CompletedProcess` and `None` (M10);
   `probe()` stays for the children that are not Git. T021 and the 96 tests
   pass.
@@ -721,11 +731,19 @@ T033), when B, D, E and F are; H, guard (T034, T035), when T023 is, beside G
   fetch in a partial clone is refused locally".
 - [ ] T031 [P] Add to region `evidence` of `project`: `identity_probe()` (row
   3, repeated one option per child when a value holds a line feed);
-  `main_worktree(identity, records, run)`, whose body here takes the first
-  registry record (T107 gives it D8's order), and which returns the main
-  worktree's path, or `None` with its cause, and never raises (FR-055; analyze
-  H4, lead ruling R-42); `inspect_repository(directory, run)` (rows 3, 4, 4b,
-  5, 6 and 7 through `run_bounded()` and the parsers, memoized per common
+  `main_worktree(identity, records, run)`, which builds D8's whole order (M6)
+  here: a first registry record that is `bare` names none; a first record
+  equal to the common directory, the gitfile layout, resolves by the realpath
+  of `core.worktree` (row 4b; a relative value read against the git
+  directory, as Git documents and project-overview's spec states, lead ruling
+  R-36) or the candidate toplevel whose `.git` file names it, else names
+  none; a first record whose path is missing names none; otherwise the first
+  record's realpath. It returns that path, or `(None, cause)` where none is
+  named, and never raises or refuses (FR-055; analyze H4, lead rulings R-42
+  and R-51), so that a separate-git-dir checkout, which `clean` handles today
+  with exit 0, is not refused between T033 and T107;
+  `inspect_repository(directory, run)` (rows 3, 4, 4b, 5, 6 and 7 through
+  `run_bounded()` and the parsers, memoized per common
   directory on the `Invocation`, returning the identity `{root, common_dir,
   dev, ino}` with the rows' evidence; where `main_worktree()` gives `None`,
   `root` is null and rows 4 to 7 run in the common directory for a bare
@@ -953,7 +971,9 @@ tuples.
   pipeline, frozen afterwards: later tasks fill stages and never reorder them.
   Build a `CleanRun`, an `Invocation` carrying the arguments, the mode, the
   action (`remove`, `push` or `delete-branch`) and the human stream (standard
-  error under `--apply --json`). One `signal_scope()` covers the whole run,
+  error under `--apply --json`); the run sets the phase on the `Invocation`
+  that `main()` entered (`current_invocation()`), never on a nested one (lead
+  ruling R-49). One `signal_scope()` covers the whole run,
   from the argument checks to its last write (plan review M1): run
   `check_clean_arguments()`, `require_git()`, `resolve_clean_target()`,
   `build_plan()`, `check_plan()` and `print_plan()`, the plan printed before
@@ -981,7 +1001,9 @@ tuples.
   T034's fault patches: `build_plan` in place of `cleanup_report` (the
   `RuntimeError` case, and `Interrupted` with SIGTERM or SIGHUP in the slot)
   and `resolve_clean_target` in place of `discover` (analyze H3, lead ruling
-  R-42). The 96 tests pass, the one T046 rewrites aside, and so does T034.
+  R-42), one line each, through the module's `PLANNING_STAGE` and
+  `RESOLVING_STAGE` constants (R-49). The 96 tests pass, the one T046
+  rewrites aside, and so does T034.
 - [ ] T048 [P] [US1] Fill `check_clean_arguments(args)` (the contract's
   "Argument checks": `invalid-arguments` with the baseline messages kept,
   this task owning them outside `TEXT` (lead ruling R-45);
@@ -1022,7 +1044,8 @@ tuples.
 - [ ] T051 [P] [US1] Fill `plan_digest(plan)` (R12's canonical text) and
   `plan_document(plan)` (the envelope with the baseline keys kept, in the
   contract's key order, every path through `json_path()` beside its flag,
-  `observed_at` from `time.gmtime()`, plan `notes` as `{code, message}` objects
+  `observed_at` from region `guard`'s `observed_at()`, reused, which reads
+  `time.gmtime()` (lead ruling R-49), plan `notes` as `{code, message}` objects
   and row `notes` as code strings, written by T035's `write_document()` with
   `ensure_ascii=True`, `ensure_ascii=False` serving only `plan_digest()`'s
   canonical text (R12, lead ruling R-38); plan review M6) in region `plan`.
@@ -1055,7 +1078,8 @@ tuples.
   terminal, without `--yes`. A plan, select or confirm refusal prints, under
   `--json`, the plan envelope with `apply_allowed: false` and the refusal in
   `refusals`, and otherwise the printed plan, then `REFUSED: MESSAGE` (plan
-  review M6, M8). T036 to T040 pass.
+  review M6, M8), and returns 2 without raising to `main()` (lead ruling
+  R-49). T036 to T040 pass.
 - [ ] T054 [P] [US1] Add `ask_removal(plan, run)` and fill `confirm_removal()`
   in region `apply` (R3, FR-026): under `raising_signals()` and with the clock
   paused, write the D18 question, singular for one, to the human stream and
@@ -1915,8 +1939,9 @@ manifests of each kind to each `clean` mode, and check the resolved
 `repository`, `root` and `merge_target`, or the refusal.
 
 **Lanes**: one, `tests/test_clean_resolution.py`, region `resolution`, and
-`main_worktree()`, `declared_tracking_branch()` and `resolve_merge_target()` in
-region `evidence`. It starts at US1's checkpoint, beside US2, US3 and US9.
+`declared_tracking_branch()` and `resolve_merge_target()` in region
+`evidence`; `main_worktree()` is T031's (lead ruling R-51). It starts at US1's
+checkpoint, beside US2, US3 and US9.
 
 ### Tests for User Story 7
 
@@ -1986,20 +2011,17 @@ region `evidence`. It starts at US1's checkpoint, beside US2, US3 and US9.
   the main worktree; a relative path, or none, joined to the working directory
   and resolved by row 3 there; a bare name through `discover()`, then resolved
   as a worktree toplevel; the family-holder and manifest-ancestor redirections
-  never for a path. Fill `main_worktree()` (region `evidence`) with M6's
-  order, returning `None` with its cause and never raising, as T031 states: a
-  first registry record that is `bare` gives `None`; a first record equal to
-  the common directory resolves by the realpath of `core.worktree` (row 4b; a
-  relative value resolved against the git directory, as Git documents and
-  project-overview's spec states, lead ruling R-36) or the candidate toplevel
-  whose `.git` file names it, else `None`; otherwise the first record's
-  realpath. `resolve_clean_target()` refuses, in M6's order, a submodule
-  checkout (row 3's third line) and then a `None` main worktree, each with
-  `target-not-repository-root`, exit 2, before any plan; the refusal lives in
-  region `resolution`, never in `main_worktree()`, so that `status` and
-  `doctor`, which reach `main_worktree()` after T117, report such a
-  repository and never exit 2 for it (FR-050, FR-055, FR-061; analyze H4, lead
-  ruling R-42).
+  never for a path. `resolve_clean_target()` refuses, in M6's order, a
+  submodule checkout (row 3's third line) and then a main worktree that
+  T031's `main_worktree()` gives as `(None, cause)`, each with
+  `target-not-repository-root`, exit 2, before any plan. This task keeps
+  only that refusal and its tests; D8's order is T031's (lead ruling R-51).
+  The refusal lives in region `resolution`, never in `main_worktree()`, so
+  that `status` and `doctor`, which reach `main_worktree()` after T117, report
+  such a repository and never exit 2 for it (FR-050, FR-055, FR-061; analyze
+  H4, lead ruling R-42). Each refusal passes complete `context` objects, every
+  key of their contract tuples present, since `error_document()` raises
+  `KeyError` on a missing key (R-49).
 - [ ] T108 [US7] Fill `declared_tracking_branch(root)` (region `evidence`; D8,
   FR-018, FR-060) with a bounded read: an `st_size` over 1 MiB is
   `manifest-invalid` without a read, the read never passes 1 MiB, and an
@@ -2010,7 +2032,9 @@ region `evidence`. It starts at US1's checkpoint, beside US2, US3 and US9.
   `resolve_merge_target()`, add the `merge-target-conflict` note when the
   manifest and `origin/HEAD` name different existing branches, the manifest
   winning; every refusal carries the established repository and merge target in
-  `context`, so that the extended error object fills them. T104 to T106 pass.
+  `context`, so that the extended error object fills them, each a complete
+  object with every key of its contract tuple, since `error_document()`
+  raises `KeyError` on a missing key (lead ruling R-49). T104 to T106 pass.
 - [ ] T109 [US7] Run the US7 module, every earlier module and the 96 tests: all
   pass.
 
@@ -2279,15 +2303,18 @@ verification.
   `tests/clean_support.py`, its placeholders substituted, equals a line or
   quoted string of design.md D18 or D14 character for character, and that every
   D18 and D14 string has a literal (SC-010); `TEXT` in `project` equals the
-  literals (T008). Then normalize the test modules to rule 3's one import
-  idiom (lead ruling R-38), as this task's writer, the lanes being done:
+  literals (T008). Then normalize the test modules to rule 3's bare-name
+  import (lead rulings R-38 and R-50), as this task's writer, the lanes being
+  done:
   `tests/test_clean_scrub.py` drops its `from tests import clean_support`
   fallback, and `tests/test_clean_escaping.py` and `tests/test_clean_parsers.py`
   their `sys.path` inserts; `tests/test_clean_timing.py`'s own `sh` fake `git`
   and `timing_repo()` move onto T010's and T011's helpers; a script confirms
   that every `tests/test_clean_*.py` and `tests/test_status_doctor_update.py`
-  imports `clean_support` by that one line and none inserts into `sys.path`,
-  and each module passes when run alone through discovery.
+  imports `clean_support` by its bare name only (`import clean_support` or
+  `from clean_support import ...`, never a package-style import) and none
+  inserts into `sys.path`, and each module passes when run alone through
+  discovery.
 - [ ] T128 Run the whole suite in this worktree: `python3 -m unittest discover
   -s tests -v` passes; record the test count and the elapsed time, under 8
   minutes in `py-bench` (R11); run it under Python 3.10 too where an
@@ -2317,6 +2344,9 @@ verification.
 - [ ] T132 Walk quickstart.md's hand runs for User Stories 1 to 9, as plan
   review M19 to M21 correct them, at a real terminal and record any divergence
   as a defect against these tasks before the realization goes to the lead.
+  The lead runs them, through tmux, or Brett Heap does; no subagent
+  dispatches them. The record is
+  `specs/004-project-clean-all-safe/hand-runs.md` (lead ruling R-50).
 - [ ] T133 In `openspec/changes/add-project-clean-all-safe/tasks.md`, under
   "Speckit Handoff", change the Tasks line to `Tasks:
   specs/004-project-clean-all-safe/tasks.md (created by /speckit.tasks)`, as
@@ -2378,7 +2408,7 @@ US4, the US5 text lane, the US5 removal lane, US6, US8 and Polish.
 | Phase 2 start | 5: A, B, C, D, E | A `TIMING`; B none (tests, and one loader line in `tests/test_project.py`); C `GIT_SCRUB`, `PROTOCOL_PINS`, `STATUS_PINS`, `git_env`, `git_argv`; D the five parsers; E `json_path`, `human_path` |
 | Phase 2 end | 2: G, H | G `identity_probe`, `main_worktree`, `inspect_repository`, `verify_registration`, `status_probe`, `worktree_rows`, `classify`, `partial_removal_note`, `declared_tracking_branch`, `resolve_merge_target`, `cleanup_report`; H `Refused`, `clean_mode`, `run_clean`, `error_document`, `write_document`, `main` |
 | US1 | 3: plan, apply, US9 | plan `check_clean_arguments`, `require_git`, `build_plan`, `select_entry`, `plan_completeness`, `gate_rows`, `plan_digest`, `plan_document`, `print_plan`, `check_plan`; apply `ask_removal`, `confirm_removal`, `revalidate`, `run_removal`, `rescan`, `decide_stage`, `apply_removals`, `apply_exit_status`, `result_document`, `print_result`; US9 below |
-| After US1 | 6: US2 reflog, US2 index, US3 single, US3 push, US7, US9 | `reflog_gate`; `registration_gate`, `index_gates`, `modules_check`, `hidden_state_probe`; `build_plan`; `push_or_delete`, `show_push_plan`, `require_unchanged_cleanup_state`, `execute`; `resolve_clean_target`, `is_bare_name`, `main_worktree`, `declared_tracking_branch`, `resolve_merge_target`; `repo_state`, `discover`, `snapshot`, `check_rows`, `print_report`, `inspect_project`, `update` |
+| After US1 | 6: US2 reflog, US2 index, US3 single, US3 push, US7, US9 | `reflog_gate`; `registration_gate`, `index_gates`, `modules_check`, `hidden_state_probe`; `build_plan`; `push_or_delete`, `show_push_plan`, `require_unchanged_cleanup_state`, `execute`; `resolve_clean_target`, `is_bare_name`, `declared_tracking_branch`, `resolve_merge_target`; `repo_state`, `discover`, `snapshot`, `check_rows`, `print_report`, `inspect_project`, `update` |
 | After US2 | 1: US4 (plus US3, US7, US9 if running) | `revalidate`, `narrowed_ref_patterns`, `rescan`, `decide_stage` |
 | After US4 | 1: US5 text, then the US5 removal lane (plus US3, US7, US9 if running) | `print_plan`, `print_result`; then `run_removal`, `apply_removals`, `rescan`, `decide_stage` |
 
@@ -2448,7 +2478,7 @@ included (T074). By requirement:
 | FR-013 | T075, T070 |
 | FR-014 | T076, T071 |
 | FR-015 | T053, T044 |
-| FR-016, FR-017 | T107, T104, T105 |
+| FR-016, FR-017 | T107, T031, T104, T105 |
 | FR-018 | T032, T108, T106 |
 | FR-019 | T047, T048, T039 |
 | FR-020 | T050, T066, T067, T100, T040, T061 |
