@@ -3239,6 +3239,37 @@ def confirm_removal(plan, run):
     return None
 
 
+def ask_removal(plan, run):
+    """The removal question (T054; FR-026, design D18; research.md R3): write
+    D18's question for the plan's selected targets, `question_one` for one, to
+    the human stream (run.human, standard error under --apply --json) through
+    say(), which flushes it; then read one line by input() given no prompt, so
+    that standard output never carries the question; and return that line as
+    read, which confirm_removal() strips and compares with `yes`.
+
+    The question alone runs under raising_signals() (D1, D15; research.md R4)
+    with the Invocation's clock paused (run.pause(), FR-031): SIGINT raises
+    KeyboardInterrupt and SIGTERM or SIGHUP Terminated, and end of input
+    raises EOFError, each passing to main(), which prints `Cancelled.` and
+    exits 130, 143 or 129, with no JSON document. A question that could not be
+    written (say() recorded the failed write) is not answered: nothing is read
+    and "" is returned, so the plan is not accepted, and the pipeline's check
+    after the question ends the run as `internal-error` (lead ruling R-55).
+    confirm_removal() looks this function up by its global name, so a test
+    patches it there (T046; lead ruling R-56)."""
+    count = len(plan.selected)
+    question = TEXT["question_one"] if count == 1 else TEXT["question"].format(N=count)
+    run.pause()
+    try:
+        with raising_signals():
+            say(run, question)
+            if getattr(run, "write_error", None) is not None:
+                return ""
+            return input()
+    finally:
+        run.resume()
+
+
 def apply_removals(plan, run):
     """Remove the plan's selected worktrees (T057 fills): called in phase
     `apply`, which the pipeline sets, never this function (lead ruling R-56);
