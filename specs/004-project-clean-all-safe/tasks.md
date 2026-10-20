@@ -134,17 +134,24 @@ child's scrubbed names and process group before it `exec`s Git (M4).
    Python 3.12: `-k test_clean_` ran a method of a module named
    `test_clean_parsers` whose own name lacks the prefix). A module with another
    prefix would need its own `-k` or a selection by module. Each module has one
-   writer, its lane's, with four exceptions: T047 retargets T034's fault
+   writer, its lane's, with five exceptions: T047 retargets T034's fault
    patches in `tests/test_clean_guard.py` (analyze H3) and adds X-3's SIGHUP
    test there (lead ruling R-55); T127 normalizes the
    other lanes' modules to rule 3's import idiom (lead ruling R-38); a
    lane that adds a `TEXT` or `NEXT_STEPS` key adds its fixture key to
-   `tests/clean_support.py` (R-45) (lead ruling R-48); and T043 adds
+   `tests/clean_support.py` (R-45) (lead ruling R-48); T043 adds
    `run_pty_steps()`'s lead-approved `stdout_pipe=True` option there (lead
-   ruling R-56 Q-14). Each lane puts its `TEXT` keys at its own place in
-   both `TEXT` and `TEXT_FIXTURES`, so that lanes do not all append at the
-   end: the plan notes after `plan_digest_mismatch` (T051), the unprobed
-   rows' group heading after `excluded_group` (T052), US9's two keys after
+   ruling R-56 Q-14); and the plan lane (T051), once its envelope carries
+   `observed_at`, makes each comparison of two whole run documents in lane
+   G's `tests/test_clean_evidence.py` and lane H's
+   `tests/test_clean_guard.py` ignore `observed_at`, one line each, named in
+   its commit and report (it changed one, in lane G's module), any other
+   field that differs between runs being reported, not masked (lead ruling
+   R-65). Each lane puts its `TEXT` keys
+   at its own place in both `TEXT` and `TEXT_FIXTURES`, so that lanes do not
+   all append at the end: the plan notes after `plan_digest_mismatch`
+   (T051), the unprobed rows' group heading after `excluded_group` (T052),
+   US9's two keys after
    `git_too_old` (T117), and lane G's keys at the end (R-56 Q-15).
 3. Helpers come from `tests/clean_support.py` only, imported by its bare
    name, `import clean_support` or `from clean_support import ...`, so that
@@ -755,24 +762,44 @@ T033), when B, D, E and F are; H, guard (T034, T035), when T023 is, beside G
   pins and every status child the two status pins);
   `test_clean_evidence_checks_registration_both_ways` (a rewritten `.git` file,
   and a changed admin `gitdir` file, each give that row `inspection-error` and
-  no status probe; two registry entries naming one path both
+  no status probe; a subtest where two registry entries name one path, both
   `registration-mismatch`, lead ruling R-57, built by lane G's follow-up);
   `test_clean_evidence_reads_presence` (`ENOENT` gives
   `present: false`, and so does `ENOTDIR`, a registered path whose parent has
-  become a regular file; a parent without search permission gives `present:
-  null`, an `os-error` and `inspection-error`; `not_root`; lead ruling R-36);
-  and `test_clean_evidence_row_fields` (every row carries `locked`,
+  become a regular file; lead ruling R-36) and
+  `test_clean_evidence_reads_presence_without_search_permission` (a parent
+  without search permission gives `present: null`, an `os-error` and
+  `inspection-error`; `not_root`);
+  `test_clean_evidence_row_fields` (every row carries `locked`,
   `ignored_files_truncated`, `ignored_samples` as `{path, path_valid_utf8}`
   objects, `path_valid_utf8`, `errors` as `{code, message, path?,
   path_valid_utf8?, reason?}` objects and `notes` as an array of code strings
   (plan review M6, m11); a deleted upstream keeps its configured short name
-  with `ahead` and `behind` null; a worktree on a branch named `HEAD`, made
-  by `git update-ref refs/heads/HEAD SHA` and checked out there, has
-  `upstream`, `ahead` and `behind` null and is `inspection-error` with
-  `probe-failed`, `git for-each-ref failed: unparseable output`, lead ruling
-  R-61, built by lane G's follow-up).
+  with `ahead` and `behind` null); and lane G's follow-up's tests (lead
+  rulings R-53 (d), R-54 X-1, R-61 (b) and R-64):
+  `test_clean_evidence_a_branch_named_head_takes_no_upstream` (a branch
+  made by `git update-ref refs/heads/HEAD SHA`, a worktree added with
+  `--detach` at that commit, since `git worktree add` of `refs/heads/HEAD`
+  detaches anyway, then `git symbolic-ref HEAD refs/heads/HEAD` run in it,
+  so that the registry lists
+  `branch refs/heads/HEAD`: the row has `upstream`, `remote_present`,
+  `ahead` and `behind` null and is `inspection-error` with `probe-failed`,
+  `git for-each-ref failed: unparseable output`, its status probe and row 7
+  still read; lane 3's L-10);
+  `test_clean_evidence_rows_for_chosen_records_in_the_given_order`
+  (`worktree_rows(repo, run, records)` builds rows only for the records
+  given, in that order, one status probe each, None meaning the whole
+  registry); the four deciders' tests on literal inputs, with every Git
+  child and filesystem call failing the test,
+  `test_clean_presence_from_lstat_decides_on_literal_results`,
+  `test_clean_registration_verdict_decides_on_literal_realpaths`,
+  `test_clean_main_worktree_decision_decides_on_literal_values` and
+  `test_clean_row_evidence_assembles_a_row_from_literal_reads`; and
+  `test_clean_evidence_memo_by_device_and_inode_and_the_row_5_switch`
+  (another directory of one repository is a memo hit running only row 3,
+  and `repeat_identity_at_root=False` runs no row 5 and is memoized apart).
   — files: `tests/test_clean_evidence.py`
-  — verify: `python3 -c "import sys,unittest as u;L=u.defaultTestLoader;f=lambda s:[i for t in s for i in (f(t) if isinstance(t,u.TestSuite) else [t.id()])];I=[i for i in f(L.discover('tests',pattern=sys.argv[1])) if not i.startswith('unittest.')];A=sys.argv[2:];M=[a for a in A if not any(a in ('*',i.split('.')[-1]) for i in I)];[print('not collected:',m) for m in M];[print(e) for e in L.errors];sys.exit(1 if M or L.errors or not A else 0)" test_clean_evidence.py 'test_clean_evidence_probes_once_per_common_directory' 'test_clean_evidence_checks_registration_both_ways' 'test_clean_evidence_reads_presence' 'test_clean_evidence_row_fields'`
+  — verify: `python3 -c "import sys,unittest as u;L=u.defaultTestLoader;f=lambda s:[i for t in s for i in (f(t) if isinstance(t,u.TestSuite) else [t.id()])];I=[i for i in f(L.discover('tests',pattern=sys.argv[1])) if not i.startswith('unittest.')];A=sys.argv[2:];M=[a for a in A if not any(a in ('*',i.split('.')[-1]) for i in I)];[print('not collected:',m) for m in M];[print(e) for e in L.errors];sys.exit(1 if M or L.errors or not A else 0)" test_clean_evidence.py 'test_clean_evidence_probes_once_per_common_directory' 'test_clean_evidence_checks_registration_both_ways' 'test_clean_evidence_reads_presence' 'test_clean_evidence_reads_presence_without_search_permission' 'test_clean_evidence_row_fields' 'test_clean_evidence_a_branch_named_head_takes_no_upstream' 'test_clean_evidence_rows_for_chosen_records_in_the_given_order' 'test_clean_presence_from_lstat_decides_on_literal_results' 'test_clean_registration_verdict_decides_on_literal_realpaths' 'test_clean_main_worktree_decision_decides_on_literal_values' 'test_clean_row_evidence_assembles_a_row_from_literal_reads' 'test_clean_evidence_memo_by_device_and_inode_and_the_row_5_switch'`
 - [x] T030 [P] [O] Add the evidence model's scenario tests to
   `tests/test_clean_evidence.py`, each through `project clean ROOT --json` and
   the counting wrapper and each named `test_status_` by rule 1 (FR-054 to
@@ -822,10 +849,15 @@ T033), when B, D, E and F are; H, guard (T034, T035), when T023 is, beside G
   named, and never raises or refuses (FR-055; analyze H4, lead rulings R-42
   and R-51), so that a separate-git-dir checkout, which `clean` handles today
   with exit 0, is not refused between T033 and T107;
-  `inspect_repository(directory, run)` (rows 3, 4, 4b, 5, 6 and 7 through
-  `run_bounded()` and the parsers, memoized per common
-  directory on the `Invocation`, returning the identity `{root, common_dir,
-  dev, ino}` with the rows' evidence; where `main_worktree()` gives `None`,
+  `inspect_repository(directory, run, refresh=False, *,
+  repeat_identity_at_root=True)` (rows 3, 4, 4b, 5, 6 and 7 through
+  `run_bounded()` and the parsers, memoized on the `Invocation` by the
+  `(dev, ino)` of the common directory, so that another directory of one
+  repository runs only row 3; `refresh=True` reads afresh and replaces the
+  memo, and `repeat_identity_at_root=False` runs no row 5 and is memoized
+  apart; lead rulings R-54 X-1 and R-64 (b); returning the identity `{root,
+  common_dir, dev, ino}` with the rows' evidence; where `main_worktree()`
+  gives `None`,
   `root` is null and rows 4 to 7 run in the common directory for a bare
   repository, and otherwise where row 3 ran, FR-055);
   `verify_registration()` and the presence `lstat`, both through `fs_call()`
@@ -835,12 +867,15 @@ T033), when B, D, E and F are; H, guard (T034, T035), when T023 is, beside G
   two registry entries naming one path, by the records' raw path bytes, are
   each `registration-mismatch`, lead rulings R-57 and R-59 D5, a rule lane
   G's follow-up builds, R-59 D6); `status_probe()`; and
-  `worktree_rows()`
+  `worktree_rows(repo, run, records=None)`, `records` the registry records
+  to build rows for, in the order given, None the whole registry (lead
+  ruling R-53 (d))
   (the baseline keys, `prunable` among them where the record says so (M11), and
   the six added fields; a row whose branch is `refs/heads/HEAD`, whose
   upstream `git for-each-ref` misreports as the current branch's, has
-  `upstream`, `ahead` and `behind` null and is `inspection-error` with
-  `probe-failed`, lead ruling R-61, a rule lane G's follow-up builds), each
+  `upstream`, `remote_present`, `ahead` and `behind` null and is
+  `inspection-error` with `probe-failed`, lead rulings R-61 and R-64 (a), a
+  rule lane G's follow-up builds), each
   failed driver outcome becoming the row's `errors`
   entry by T024's map (M17), and each row carrying an unprobed marker, never
   serialized and unset here, which a read not finished within its filesystem
@@ -849,7 +884,7 @@ T033), when B, D, E and F are; H, guard (T034, T035), when T023 is, beside G
   lead-approved contracts edit, with the same key in `TEXT_FIXTURES` of
   `tests/clean_support.py`, which this task also touches (lead ruling R-45).
   — files: `project`, `tests/clean_support.py`
-  — verify: `python3 -c "import sys,re;t=open('project').read();A=sys.argv[1:];c=lambda r:t.split('# region '+r+'\n')[1].split('# endregion '+r+'\n')[0];M=[a for a in A if not ((a.split('%',1)[1] not in c(a.split('%',1)[0])) if '%' in a else (a.split('~',1)[1] in c(a.split('~',1)[0])) if '~' in a else re.search(r'^[a-z]*\s?'+re.escape(a.split(':',1)[1])+r'\b',c(a.split(':',1)[0]),re.M))];[print('region check failed:',m) for m in M];sys.exit(1 if M or not A else 0)" 'evidence:identity_probe' 'evidence:main_worktree' 'evidence:inspect_repository' 'evidence:verify_registration' 'evidence:status_probe' 'evidence:worktree_rows' && python3 -m unittest discover -s tests -p 'test_clean_evidence.py' -k '*.test_clean_evidence_parity_with_the_baseline_reader' && python3 -m unittest discover -s tests -p 'test_clean_harness.py' -k '*.test_clean_text_fixtures_equal_the_contract_table'`
+  — verify: `python3 -c "import sys,re;t=open('project').read();A=sys.argv[1:];c=lambda r:t.split('# region '+r+'\n')[1].split('# endregion '+r+'\n')[0];M=[a for a in A if not ((a.split('%',1)[1] not in c(a.split('%',1)[0])) if '%' in a else (a.split('~',1)[1] in c(a.split('~',1)[0])) if '~' in a else re.search(r'^[a-z]*\s?'+re.escape(a.split(':',1)[1])+r'\b',c(a.split(':',1)[0]),re.M))];[print('region check failed:',m) for m in M];sys.exit(1 if M or not A else 0)" 'evidence:identity_probe' 'evidence:main_worktree' 'evidence:inspect_repository' 'evidence:verify_registration' 'evidence:status_probe' 'evidence:worktree_rows' 'evidence~def inspect_repository(directory, run, refresh=False, *, repeat_identity_at_root=True)' 'evidence~def worktree_rows(repo, run, records=None)' && python3 -m unittest discover -s tests -p 'test_clean_evidence.py' -k '*.test_clean_evidence_parity_with_the_baseline_reader' && python3 -m unittest discover -s tests -p 'test_clean_harness.py' -k '*.test_clean_text_fixtures_equal_the_contract_table'`
 - [x] T032 [P] [O] Add to region `evidence`: `classify()` (pure, with its one
   reorder; `RECOMMENDATIONS` from `project:566-616`); `partial_removal_note()`;
   `declared_tracking_branch(root)` (today's `manifest()` read, bounded by

@@ -419,11 +419,11 @@ removal: `-c core.untrackedCache=false -c core.fsmonitor=false`.
 
 Row 6 cannot establish the upstream of a branch named `HEAD`
 (`refs/heads/HEAD`), because `git for-each-ref` reports the current branch's
-upstream for it. Such a row has `upstream`, `ahead` and `behind` null and is
-`inspection-error`, its row error `probe-failed` with `git for-each-ref
-failed: unparseable output`, filling the delta's rule that evidence not
-established is `inspection-error` (lead ruling R-61; lane G's follow-up
-builds it).
+upstream for it. Such a row has `upstream`, `remote_present`, `ahead` and
+`behind` null and is `inspection-error`, its row error `probe-failed` with
+`git for-each-ref failed: unparseable output`, filling the delta's rule that
+evidence not established is `inspection-error` (lead rulings R-61 and R-64
+(a); built by lane G's follow-up).
 
 Bounds: each probe child gets `min(5 s, work remaining)` under `clean`'s 60 s
 deadline (50 s of work, a 10 s reserve, time at the question excluded), each

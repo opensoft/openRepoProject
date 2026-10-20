@@ -71,7 +71,8 @@ Implementation slices, in dependency order; each leaves the suite green:
    termination path and parsers (SC-012); the three fake Gits of D1; the
    escaping rules.
 3. **Evidence pipeline and ladder** (D4, D6, D10, D11; R9). Row 1 once per
-   invocation; rows 3 to 7 memoized per common directory; identity and two-way
+   invocation; rows 3 to 7 memoized by the `(dev, ino)` of the common
+   directory (lead rulings R-54 X-1 and R-64); identity and two-way
    registration; the combined status probe and its bounds; the ladder as a pure
    function with its one reorder; the partial-removal note; the reflog read.
    Switch `cleanup_report()` only; `repo_state()` keeps today's reader. Parity

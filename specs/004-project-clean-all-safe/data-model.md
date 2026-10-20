@@ -57,8 +57,8 @@ names and types; the last six are added.
 | `present` | true; false when `lstat` fails with `ENOENT` or `ENOTDIR` | any other `lstat` failure (with an `os-error`) |
 | `branch` | short name, or `detached` | (baseline) |
 | `head` | full object name | not established |
-| `upstream` | configured short name, also when its remote-tracking ref is gone | none configured |
-| `remote_present` | false when the track is `gone` | none configured, or not established |
+| `upstream` | configured short name, also when its remote-tracking ref is gone | none configured; not established for a branch named `HEAD` (below) |
+| `remote_present` | false when the track is `gone` | none configured, or not established, a branch named `HEAD` among them |
 | `ahead`, `behind` | from the track field | none configured, ref gone, or not established |
 | `dirty` | from the combined probe | probe not run, failed or timed out |
 | `ignored_files` | ignored records read; a lower bound when truncated | probe not run or failed, or stopped before any ignored record |
@@ -104,15 +104,18 @@ remote-tracking ref was deleted, `upstream` is the short name and
 in the plan and null again is no difference, and one that reappears is
 `state-changed` (D7, D20). For a branch named `HEAD` (`refs/heads/HEAD`),
 `git for-each-ref` reports the current branch's upstream, so row 6 cannot
-establish its upstream: its `upstream`, `ahead` and `behind` are null, and
+establish its upstream: its `upstream`, `remote_present`, `ahead` and
+`behind` are null, meaning not established, never "none configured", and
 the row is `inspection-error` with `probe-failed`, `git for-each-ref failed:
-unparseable output` (lead ruling R-61; lane G's follow-up builds it).
+unparseable output` (lead rulings R-61 and R-64 (a); built by lane G's
+follow-up).
 
 ### Classification (D6; FR-007)
 
 First, a row whose evidence could not be established (`present` null, a
-registration that disagrees, a status probe that failed or timed out, a
-branch named `HEAD`, R-61) is
+registration that disagrees, a status probe that failed or timed out, or
+branch evidence row 6 could not establish, a branch named `HEAD` with its
+`probe-failed` row error, R-61 and R-64) is
 `inspection-error` directly, whatever its branch, so a failed probe on the
 merge-target checkout is never `protected-default`. Every other row takes the
 first rung that holds, in this order (names unchanged; the one reorder is
