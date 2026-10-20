@@ -257,24 +257,31 @@ class StatusDoctorUpdateTests(clean_support.CleanCase):
                 if name == "doctor":
                     self.assertIn("ERROR git: git-too-old: " + TOO_OLD + "\n", result.stdout)
 
-        with self.subTest("a directory with no .git needs no version check"):
-            # No workspace here: handoff() would otherwise look up the remote of
-            # a root that holds no repository, a child git() runs unchecked.
-            plain = self.base / "Plain"
-            plain.mkdir()
-            (plain / "project.yaml").write_text("kind: project-manifest\nlegs: []\n")
-            env = self.env
-            result, records = self.counted("status", plain, "--json", real=fake, env=env)
-            self.assert_status(result, 0)
-            self.assertEqual(self.assert_one_document(result)["repository"],
-                             {"path": str(plain), "path_valid_utf8": True, "present": False})
-            self.assertEqual(records, [], "status never runs the version check by itself")
-            result, records = self.counted("doctor", plain, "--json", real=fake, env=env)
-            self.assert_status(result, 1)
-            self.assertEqual(git_row(self.assert_one_document(result)),
-                             {"level": "error", "check": "git", "detail": "git-too-old: " + TOO_OLD})
-            self.assertEqual([command(record) for record in records], [["--version"]],
-                             "doctor's git row runs the memoized version check itself")
+        plain = self.base / "Plain"
+        plain.mkdir()
+        (plain / "project.yaml").write_text("kind: project-manifest\nlegs: []\n")
+        for label, real in (("2.35", fake), ("real", clean_support.REAL_GIT)):
+            with self.subTest("a directory with no .git runs no Git child", git=label):
+                # The workspace is configured (env above), so handoff() reaches
+                # its remote read, which runs only for a root whose repository
+                # was inspected (lead ruling R-66 (c)): a root with no .git
+                # spawns no `git remote get-url`, whatever the Git.
+                result, records = self.counted("status", plain, "--json", real=real, env=env)
+                self.assert_status(result, 0)
+                document = self.assert_one_document(result)
+                self.assertEqual(document["repository"],
+                                 {"path": str(plain), "path_valid_utf8": True, "present": False})
+                self.assertEqual(document["handoff"], {"state": NO_IDENTITY})
+                self.assertEqual(records, [], "no version check and no remote read")
+                result, records = self.counted("doctor", plain, "--json", real=real, env=env)
+                self.assert_status(result, 1 if real == fake else 0)
+                document = self.assert_one_document(result)
+                self.assertEqual(document["handoff"], {"state": NO_IDENTITY})
+                if real == fake:
+                    self.assertEqual(git_row(document),
+                                     {"level": "error", "check": "git", "detail": "git-too-old: " + TOO_OLD})
+                self.assertEqual([command(record) for record in records], [["--version"]],
+                                 "doctor's git row runs the memoized version check itself, and nothing else")
 
     def test_doctor_no_git_on_path(self):
         # Research.md R2: with no git, discover() finds the root by the nearest

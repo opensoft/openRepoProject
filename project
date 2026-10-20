@@ -5007,14 +5007,22 @@ def remote_repository_identity(remote):
     return github_repository_identity(match.group(1)) if match else None
 
 
-def handoff(root, data):
-    """Read only the matching workspace record; parking remains extension-owned."""
+def handoff(root, data, repository):
+    """Read only the matching workspace record; parking remains extension-owned.
+    The `git remote get-url origin` read runs only for a root whose repository
+    was inspected, `repository` being repo_state()'s state for root: present,
+    which repo_state() reports only past the version check. Any other root
+    (no .git, an old or missing Git) reads no remote and spawns no Git child,
+    with the output as before (lead ruling R-66 (c);
+    contracts/project-clean.md, "status, doctor and update")."""
     config_path = Path.home() / ".agents/workspace.yaml"
     override = os.environ.get("SPECKIT_WORKSPACE_PATH")
     if not config_path.is_file() and not override:
         return {"state": "workspace not configured"}
     config = read_yaml(config_path) if config_path.is_file() else {}
-    remote = git_text(root, "remote", "get-url", "origin") or ""
+    remote = ""
+    if repository.get("present") is True:
+        remote = git_text(root, "remote", "get-url", "origin") or ""
     repository = remote_repository_identity(remote)
     for leg in data.get("legs", []):
         if isinstance(leg, dict) and leg.get("role") == "assembly":
@@ -5104,7 +5112,7 @@ def snapshot(root, visited=None):
                 result["children"].append({"role": "member", "path": path, "path_valid_utf8": path_valid,
                                            "present": False})
     try:
-        result["handoff"] = handoff(root, data)
+        result["handoff"] = handoff(root, data, result["repository"])
     except Refused as exc:
         result["handoff"] = {"state": "unavailable", "error": str(exc)}
     container = result["profile"].get("container")
