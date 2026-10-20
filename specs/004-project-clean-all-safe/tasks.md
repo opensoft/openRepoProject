@@ -1593,7 +1593,7 @@ carrying the reason the gate order gives.
   delta governs).
   — files: `tests/test_clean_reflog.py`
   — verify: `python3 -c "import sys,unittest as u;L=u.defaultTestLoader;f=lambda s:[i for t in s for i in (f(t) if isinstance(t,u.TestSuite) else [t.id()])];I=[i for i in f(L.discover('tests',pattern=sys.argv[1])) if not i.startswith('unittest.')];A=sys.argv[2:];M=[a for a in A if not any(a in ('*',i.split('.')[-1]) for i in I)];[print('not collected:',m) for m in M];[print(e) for e in L.errors];sys.exit(1 if M or L.errors or not A else 0)" test_clean_reflog.py 'test_clean_reflog_gate_outcomes'`
-- [ ] T060 [P] [US2] [S] Add the reflog scenarios to `tests/test_clean_reflog.py`:
+- [x] T060 [P] [US2] [S] Add the reflog scenarios to `tests/test_clean_reflog.py`:
   `test_clean_a_published_branch_with_no_commit_of_its_own` (`worktree add -b
   x`, `push -u`, no commit: `--all-safe` excludes it as `unstarted-branch`;
   `--apply --action remove --worktree` refuses with `target-excluded`, reason
