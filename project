@@ -4026,8 +4026,75 @@ def registration_gate(row, plan, run):
     registration read and found to disagree, a path two registry entries share
     included; a row whose registration was never read (registered None, a
     present: false row among them) passes, and gate 5 excludes it by its class.
-    It runs no child and reads no file. This stub passes every row."""
-    return None
+    It runs no child and reads no file. Such a row is already
+    inspection-error by its evidence (classify(): no status probe ran), so
+    the gate changes nothing on it."""
+    return "registration-mismatch" if row.registered is False else None
+
+
+# The hidden-state probe of a worktree, after its `-C WORKTREE` (design D2 and
+# D11; contracts/project-clean.md, "Git children", the hidden-state row).
+HIDDEN_STATE_PROBE = ("ls-files", "-v", "--stage", "-z")
+
+
+def modules_check(common_dir, admin_id, run):
+    """Gate 9's admin-directory half for one target (T067; D12, FR-023; lead
+    rulings R-53 P-21 and R-56 Q-6), shared with US4's revalidation (T084).
+
+    Signature: modules_check(common_dir, admin_id, run) -> (result,
+    row_error). common_dir is the repository's common directory and admin_id
+    the target's admin directory name (WorktreeRow.admin_id), both bytes; run
+    is the Invocation in force, whose per-child budget bounds the call. One
+    fs_call() lstat of `<common_dir>/worktrees/<admin_id>/modules` (through
+    _fs(), OPERATION `lstat`), never a Git child:
+
+    - ENOENT or ENOTDIR, no entry: (None, None), the gate passes;
+    - an entry of any type: ("contains-submodule", None);
+    - any other error: (None, an `os-error` row error);
+    - the call cut at its budget: (None, a `probe-timeout` row error), or
+      `deadline-exceeded` where the work deadline was the limit.
+
+    A row error means the check decided nothing; the caller makes the row
+    inspection-error, since a null flag never passes."""
+    path = os.path.join(common_dir, b"worktrees", admin_id, b"modules")
+    try:
+        _fs("lstat", os.lstat, path)
+    except EvidenceError as exc:
+        if exc.errno in (errno.ENOENT, errno.ENOTDIR):
+            return None, None
+        return None, exc.error
+    return "contains-submodule", None
+
+
+def hidden_state_probe(path, run):
+    """Gates 9's index half and gate 10 for one target (T067; D2, D11, D12,
+    FR-023; lead ruling R-56 Q-6), shared with US4's revalidation (T084).
+
+    Signature: hidden_state_probe(path, run) -> (result, row_error). path is
+    the target's worktree, the row's raw path bytes; run is the Invocation
+    that bounds and counts the child. One Git child of kind `hidden`,
+    git_argv("hidden", ["-C", path, "ls-files", "-v", "--stage", "-z"]): the
+    two status pins, then the protocol pins, run through run_bounded() with
+    HiddenStateParser, so that the index read is the worktree's own:
+
+    - a gitlink (mode 160000), where the parser stops at its bound:
+      ("contains-submodule", None);
+    - else an entry flagged assume-unchanged (a lowercase tag) or
+      skip-worktree (`S`): ("hidden-local-state", None);
+    - else (None, None), the gates pass;
+    - a child that failed, timed out or met the deadline: (None, its row
+      error), `probe-failed`, `probe-timeout` or `deadline-exceeded` by T024's
+      map as built (OUTCOME_ERRORS, probe_error()), OPERATION `git ls-files`.
+
+    Interrupted passes, as from any probe."""
+    outcome, error = _git(run, path, list(HIDDEN_STATE_PROBE), "ls-files", HiddenStateParser(), kind="hidden")
+    if error is not None:
+        return None, error
+    if outcome.result["gitlink"]:
+        return "contains-submodule", None
+    if outcome.result["hidden"]:
+        return "hidden-local-state", None
+    return None, None
 
 
 def index_gates(row, plan, run):
@@ -4043,8 +4110,33 @@ def index_gates(row, plan, run):
     `inspection-error`, after putting the check's row error in row["errors"]
     and setting row["classification"] to inspection-error, for a check that
     failed, timed out or met the deadline, since a null flag never passes.
-    This stub passes every row."""
-    return None
+
+    The common directory is the plan's (plan.evidence["identity"]). The
+    `modules` check runs first, being one filesystem call; the hidden-state
+    probe runs only when it passed, so that the first check to fail or to be
+    undecided names the row's reason. A row whose admin directory or common
+    directory is not established cannot be checked and is inspection-error,
+    with no read made: a defensive branch, since every row past gate 5 is a
+    present linked worktree whose registration holds."""
+    identity = plan.evidence["identity"] if plan.evidence else None
+    common_dir = identity["common_dir"] if identity else None
+    if common_dir is None or row.admin_id is None:
+        return _index_undecided(row, None)
+    reason, error = modules_check(common_dir, row.admin_id, run)
+    if reason is None and error is None:
+        reason, error = hidden_state_probe(row.raw_path, run)
+    if error is not None:
+        return _index_undecided(row, error)
+    return reason
+
+
+def _index_undecided(row, error):
+    """Make row inspection-error for an index gate that decided nothing,
+    error its row error (None when no read was made); return that reason."""
+    if error is not None:
+        row["errors"].append(error)
+    row["classification"], row["recommendation"] = "inspection-error", RECOMMENDATIONS["inspection-error"]
+    return "inspection-error"
 # endregion index
 
 # region preview

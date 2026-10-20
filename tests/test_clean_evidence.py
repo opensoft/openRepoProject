@@ -178,7 +178,7 @@ class EvidenceTests(clean_support.CleanCase):
         for record in records:
             pins, rest = split_pins(record)
             with self.subTest(child=rest[:4]):
-                self.assertEqual(pins, STATUS_PINS + PINS if rest[2:3] == ["status"] else PINS)
+                self.assertEqual(pins, STATUS_PINS + PINS if rest[2:3] in (["status"], ["ls-files"]) else PINS)
                 self.assertEqual(record.optional_locks, "0")
                 self.assertEqual(record.names, ("GIT_OPTIONAL_LOCKS",), "only the probes' own name is set")
 
