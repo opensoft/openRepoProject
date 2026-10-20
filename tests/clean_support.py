@@ -608,6 +608,8 @@ TEXT_FIXTURES = {
     "git_unavailable_timed_out": "timed out",
     "git_unavailable_unparseable_version": "unparseable version",
     "git_too_old": "Git {VERSION} is older than 2.36; clean needs Git 2.36 or later.",
+    "inspection_git_too_old": "Git {VERSION} is older than 2.36; repository inspection needs Git 2.36 or later.",
+    "inspection_git_unavailable": "Git is unavailable ({DETAIL}); repository inspection needs Git 2.36 or later.",
     "target_not_repository_root": "Not the main worktree of a repository: {PATH}; pass the repository root.",
     "unsupported_path_bytes": "The repository path is not valid UTF-8: {PATH}",
     "manifest_invalid_size": "Manifest {PATH} is larger than 1 MiB.",

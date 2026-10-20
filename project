@@ -681,6 +681,11 @@ TEXT = {
     "git_unavailable_timed_out": "timed out",
     "git_unavailable_unparseable_version": "unparseable version",
     "git_too_old": "Git {VERSION} is older than 2.36; clean needs Git 2.36 or later.",
+    # The command-neutral texts of status's and doctor's row errors and doctor's
+    # git row (contracts/project-clean.md, "Codes"; lead rulings R-48 (b), R-56).
+    "inspection_git_too_old": "Git {VERSION} is older than 2.36; repository inspection needs Git 2.36 or later.",
+    "inspection_git_unavailable":
+        "Git is unavailable ({DETAIL}); repository inspection needs Git 2.36 or later.",
     "target_not_repository_root": "Not the main worktree of a repository: {PATH}; pass the repository root.",
     "unsupported_path_bytes": "The repository path is not valid UTF-8: {PATH}",
     "manifest_invalid_size": "Manifest {PATH} is larger than 1 MiB.",
@@ -2697,57 +2702,106 @@ def write_document(doc):
 
 
 def repo_state(root):
-    top = git_text(root, "rev-parse", "--show-toplevel")
-    if not top or Path(top).resolve() != root.resolve():
-        return {"path": str(root), "present": False}
-    status = git(root, "status", "--porcelain=v1", "--untracked-files=normal")
-    if status.returncode:
-        raise Refused(f"Cannot inspect {root}: {status.stderr.strip()}")
-    branch = git_text(root, "symbolic-ref", "--quiet", "--short", "HEAD")
-    head = git_text(root, "rev-parse", "--verify", "HEAD")
-    upstream = git_text(root, "rev-parse", "--abbrev-ref", "@{upstream}")
-    delta = git_text(root, "rev-list", "--left-right", "--count", "HEAD...@{upstream}") if upstream else None
-    ahead, behind = map(int, delta.split()) if delta else (None, None)
-    worktrees = []
-    current = {}
-    active_path = Path.cwd().resolve()
-    for line in (git_text(root, "worktree", "list", "--porcelain") or "").splitlines():
-        if line.startswith("worktree "):
-            current = {"path": line[9:], "present": Path(line[9:]).is_dir()}
-            worktrees.append(current)
-        elif line.startswith("HEAD "):
-            current["head"] = line[5:]
-        elif line.startswith("branch "):
-            current["branch"] = line[7:].removeprefix("refs/heads/")
-        elif line == "detached":
-            current["branch"] = "detached"
-        elif line.startswith("prunable "):
-            current["prunable"] = True
-    for tree in worktrees:
-        tree_path = Path(tree["path"])
-        if not tree["present"]:
+    """The state of the checkout at root, as status, doctor and update report
+    it, read through the evidence model (T117; design D16; FR-050, FR-051,
+    FR-059; data-model.md, "Root and leg state outside clean").
+
+    `lstat` of `<root>/.git` comes first: when it is absent the state is
+    `present: false` and no Git child runs. Then the version check, memoized
+    on the invocation; an old, missing or unusable Git gives `present` null.
+    Then inspect_repository() and worktree_rows(), memoized per common
+    directory, with the 15 s budget per Git child and per filesystem call that
+    the invocation gives every command but `clean`, no deadline and no row cap.
+    root's own row gives its branch, head, dirty, upstream, ahead and behind,
+    so a linked worktree reports its own (lead ruling R-56); a deleted
+    upstream keeps its configured short name with ahead and behind null.
+
+    A state that cannot be inspected never refuses: it adds `classification:
+    "inspection-error"` and `errors`, `{code, message}` objects, and every
+    value not established is null, `worktrees` among them when the listing
+    is not established; an inspected state has neither field. `git-too-old`
+    and `git-unavailable` carry the command-neutral texts (lead ruling R-48).
+    Each `path` has `path_valid_utf8` beside it. A worktree entry keeps its
+    baseline keys and adds `path_valid_utf8`, `ignored_samples` (`{path,
+    path_valid_utf8}` objects) where its probe ran, and `classification` and
+    `errors` only when it cannot be inspected; a stale entry keeps its
+    baseline class and text."""
+    run = current_invocation()
+    raw = os.fsencode(root)
+    text, valid = json_path(raw)
+    freshness = "local refs only; no fetch"
+
+    def absent():
+        return {"path": text, "path_valid_utf8": valid, "present": False}
+
+    def uninspectable(present, errors):
+        return {"path": text, "path_valid_utf8": valid, "present": present, "branch": None, "head": None,
+                "dirty": None, "upstream": None, "ahead": None, "behind": None,
+                "tracking_freshness": freshness, "worktrees": None,
+                "classification": "inspection-error", "errors": errors}
+
+    def head(value):
+        return value if value and value.strip("0") else None  # an unborn branch has none
+
+    def entry(row):
+        tree = {"path": row["path"], "path_valid_utf8": row["path_valid_utf8"], "present": row["present"],
+                "head": head(row["head"]), "branch": row["branch"]}
+        if row.get("prunable"):
+            tree["prunable"] = True
+        if row["present"] is False:
             tree["classification"] = "stale-worktree"
             tree["recommendation"] = "Review the stale worktree metadata before pruning it manually."
-            continue
-        tree_status = git(tree_path, "status", "--porcelain=v1", "--untracked-files=normal")
-        tree["dirty"] = bool(tree_status.stdout) if tree_status.returncode == 0 else None
-        ignored_status = git(tree_path, "status", "--porcelain=v1", "--ignored=matching")
-        tree["ignored_files"] = (sum(line.startswith("!! ") for line in ignored_status.stdout.splitlines())
-                                 if ignored_status.returncode == 0 else None)
-        resolved_tree = tree_path.resolve()
-        tree["current"] = active_path == resolved_tree or active_path.is_relative_to(resolved_tree)
-        tree["upstream"] = None
-        tree["ahead"] = tree["behind"] = None
-        if tree.get("branch") and tree["branch"] != "detached":
-            tree["upstream"] = git_text(tree_path, "rev-parse", "--abbrev-ref", "@{upstream}")
-            if tree["upstream"]:
-                delta = git_text(tree_path, "rev-list", "--left-right", "--count", "HEAD...@{upstream}")
-                if delta:
-                    tree["ahead"], tree["behind"] = map(int, delta.split())
-    return {"path": str(root), "present": True, "branch": branch or "detached",
-            "head": head, "dirty": bool(status.stdout), "upstream": upstream,
-            "ahead": ahead, "behind": behind, "tracking_freshness": "local refs only; no fetch",
-            "worktrees": worktrees}
+            return tree
+        tree["dirty"] = row["dirty"]
+        tree["ignored_files"] = row["ignored_files"]
+        if row.status is not None:
+            tree["ignored_samples"] = row["ignored_samples"]
+        tree.update(current=row["current"], upstream=row["upstream"], ahead=row["ahead"], behind=row["behind"])
+        if row["classification"] == "inspection-error":
+            tree["classification"] = "inspection-error"
+            tree["errors"] = row["errors"]
+        return tree
+
+    try:
+        _fs("lstat", os.lstat, os.path.join(raw, b".git"))
+    except EvidenceError as exc:
+        if exc.errno in (errno.ENOENT, errno.ENOTDIR):
+            return absent()
+        return uninspectable(None, [exc.error])
+    version = git_version(run)
+    if version.code == "git-too-old":
+        message = TEXT["inspection_git_too_old"].format(VERSION=version.text)
+    elif version.code is not None:
+        message = TEXT["inspection_git_unavailable"].format(DETAIL=version.detail)
+    if version.code is not None:
+        return uninspectable(None, [{"code": version.code, "message": message}])
+    repo = inspect_repository(raw, run)
+    rows = worktree_rows(repo, run)
+    own = next((row for row in rows if row.raw_path == raw), None)
+    if own is None and rows:
+        try:
+            real = _realpath(raw)
+        except EvidenceError as exc:
+            return uninspectable(None, [*repo["errors"], exc.error])
+        for row in rows:
+            try:
+                if row["present"] is not False and _realpath(row.raw_path) == real:
+                    own = row
+                    break
+            except EvidenceError:
+                continue
+    if repo["errors"]:  # a repository-wide probe failed: no row's evidence is established
+        return uninspectable(None if own is None else own["present"], list(repo["errors"]))
+    if own is None:  # Git names another toplevel for root, as the baseline's check did
+        return absent()
+    state = {"path": text, "path_valid_utf8": valid, "present": own["present"], "branch": own["branch"],
+             "head": head(own["head"]), "dirty": own["dirty"], "upstream": own["upstream"],
+             "ahead": own["ahead"], "behind": own["behind"], "tracking_freshness": freshness,
+             "worktrees": [entry(row) for row in rows]}
+    if own["classification"] == "inspection-error":
+        state["classification"] = "inspection-error"
+        state["errors"] = own["errors"]
+    return state
 
 
 def default_branch(root, declared=None):
