@@ -18,7 +18,11 @@ terminal its controlling terminal (rule 14).
 """
 import errno
 import os
+from pathlib import Path
+import shlex
+import signal
 import subprocess
+import time
 
 import clean_support
 
@@ -38,6 +42,29 @@ CHANGED = "Cleanup state changed after confirmation; no command was run."
 JSON_REFUSED = "--json cannot be combined with --apply; use JSON for the read-only plan."
 INCOMPLETE = "REFUSED: " + TEXT["plan_incomplete"].format(
     CODE="inspection-incomplete", REMEDY=TEXT["remedy_inspection_incomplete"]) + "\n"
+NO_TERMINAL = f"REFUSED: {CONFIRM} Supply explicit options when stdin is not a terminal.\n"
+
+# The hook of the signal tests, installed as pre-push and as
+# reference-transaction (T073). It acts only in a run whose environment names
+# its log, and once per run (on `committed` for a reference transaction), so
+# that fixture commands and the other transactions of one `git branch -d` pass
+# through it. It records every SIGINT, SIGTERM or SIGHUP that reaches it and
+# waits, at most 15 s, until the test creates the release file; with
+# HOOK_KILL set it ends its own git, its parent, with SIGKILL instead.
+HOOK = """#!/bin/sh
+[ -n "$HOOK_LOG" ] || exit 0
+cat > /dev/null
+case "$0" in *reference-transaction) [ "$1" = committed ] || exit 0;; esac
+[ -e "$HOOK_LOG" ] && exit 0
+if [ -n "$HOOK_KILL" ]; then kill -KILL "$PPID"; exit 0; fi
+trap 'echo INT >> "$HOOK_LOG"' INT
+trap 'echo TERM >> "$HOOK_LOG"' TERM
+trap 'echo HUP >> "$HOOK_LOG"' HUP
+echo started >> "$HOOK_LOG"
+i=0
+while [ ! -e "$HOOK_RELEASE" ] && [ "$i" -lt 300 ]; do sleep 0.05; i=$((i + 1)); done
+echo done >> "$HOOK_LOG"
+"""
 
 
 def words(record):
@@ -264,3 +291,127 @@ class PushTests(clean_support.CleanCase):
         self.assertEqual((result.returncode, result.stderr.decode()), (2, f"REFUSED: {broken}\n"))
         self.assertEqual(pushes(clean_support.child_log(log)), [], "no push child")
         self.assertEqual(self.refs(remote), before)
+
+    def install_hooks(self, text, *names, root=None):
+        """Write text as each named hook of the repository, executable."""
+        hooks = self.common_dir(root) / "hooks"
+        hooks.mkdir(exist_ok=True)
+        for name in names:
+            (hooks / name).write_text(text)
+            (hooks / name).chmod(0o755)
+
+    def run_signalled(self, argv, env, signum):
+        """Run argv in a session of its own and, once the hook has started,
+        send signum (unless None) to that process alone, wait 0.2 s so that it
+        is recorded while the hook still waits, then release the hook. Returns
+        the run, its streams as text, and the hook's log."""
+        log, release = Path(env["HOOK_LOG"]), Path(env["HOOK_RELEASE"])
+        for path in (log, release):
+            if path.exists():
+                path.unlink()
+        child = subprocess.Popen(argv, cwd=self.base, env=env, stdin=subprocess.DEVNULL, stdout=subprocess.PIPE,
+                                 stderr=subprocess.PIPE, start_new_session=True)
+        try:
+            deadline = time.monotonic() + clean_support.TIMEOUT
+            while child.poll() is None and not (log.exists() and "started" in log.read_text()):
+                if time.monotonic() > deadline:
+                    self.fail(f"the hook did not start within {clean_support.TIMEOUT} s")
+                time.sleep(0.01)
+            if signum is not None and child.poll() is None:
+                os.kill(child.pid, signum)
+                time.sleep(0.2)
+            release.touch()
+            out, err = child.communicate(timeout=clean_support.TIMEOUT)
+        finally:
+            if child.poll() is None:
+                os.killpg(child.pid, signal.SIGKILL)
+                child.wait()
+        result = subprocess.CompletedProcess(argv, child.returncode, out.decode("utf-8", "surrogateescape"),
+                                             err.decode("utf-8", "surrogateescape"))
+        return result, log.read_text() if log.exists() else ""
+
+    def test_clean_a_signal_during_the_push_or_branch_deletion(self):
+        # Through the launcher with the real table. A signal sent to project
+        # alone while the child's hook waits is recorded only: the hook sees
+        # none, the child completes, and project exits 128 plus the signal's
+        # number (plan review M3; data-model.md, "Exit statuses").
+        root = self.repo()
+        remote = self.bare_remote()
+        tree = self.unpushed("001-feature")
+        self.install_hooks(HOOK, "pre-push", "reference-transaction")
+        env = dict(self.env, HOOK_LOG=str(self.base / "hook.log"), HOOK_RELEASE=str(self.base / "hook.release"))
+
+        def launched(*args):
+            return clean_support.launched_argv(None, "clean", root, "--apply", *args, "--yes")
+
+        for signum in (None, signal.SIGTERM, signal.SIGINT, signal.SIGHUP):
+            name = "none" if signum is None else signum.name
+            expected = 0 if signum is None else 128 + signum
+            with self.subTest("push", signal=name):
+                head = self.advance(tree)
+                result, hook = self.run_signalled(launched("--action", "push", "--branch", "001-feature"), env, signum)
+                self.assertEqual(hook, "started\ndone\n", "no signal reached the push or its hook")
+                self.assertEqual(self.git(remote, "rev-parse", "refs/heads/001-feature").strip(), head,
+                                 "the push was waited for and completed")
+                self.assert_status(result, expected)
+                self.assertEqual(result.stderr.endswith("Cancelled.\n"), signum is not None, result.stderr)
+            with self.subTest("delete-branch", signal=name):
+                branch = "002-merged-" + name.lower()
+                self.git(root, "branch", branch)
+                result, hook = self.run_signalled(launched("--action", "delete-branch", "--branch", branch), env,
+                                                  signum)
+                self.assertEqual(hook, "started\ndone\n", "no signal reached git branch -d or its hook")
+                self.assertEqual(self.git(root, "for-each-ref", "refs/heads/" + branch), "", "the branch is gone")
+                self.assertIn(f"Deleted branch {branch} (was ", result.stdout, "the child's own output")
+                self.assert_status(result, expected)
+                self.assertEqual(result.stderr.endswith("Cancelled.\n"), signum is not None, result.stderr)
+
+        with self.subTest("a hook that ends its own git push with SIGKILL"):
+            self.advance(tree)
+            before = self.refs(remote)
+            result = self.run_launched(None, "clean", root, "--apply", "--action", "push", "--branch",
+                                       "001-feature", "--yes",
+                                       env=dict(env, HOOK_KILL="1", HOOK_LOG=str(self.base / "kill.log")))
+            self.assert_status(result, 128 + signal.SIGKILL)
+            self.assertEqual(self.refs(remote), before, "nothing pushed")
+        with self.subTest("a git branch -d that dies of SIGKILL"):
+            fake = self.base / "kill-bin" / "git"
+            fake.parent.mkdir()
+            fake.write_text('#!/bin/sh\ncase " $* " in *" branch -d "*) kill -KILL $$;; esac\n'
+                            f'exec {shlex.quote(clean_support.REAL_GIT)} "$@"\n')
+            fake.chmod(0o755)
+            self.git(root, "branch", "003-merged-killed")
+            result = self.run_launched(None, "clean", root, "--apply", "--action", "delete-branch", "--branch",
+                                       "003-merged-killed", "--yes", env=self.path_first(fake.parent))
+            self.assert_status(result, 128 + signal.SIGKILL)
+            self.assertNotEqual(self.git(root, "for-each-ref", "refs/heads/003-merged-killed"), "")
+
+    def test_clean_push_and_delete_branch_escape_their_paths(self):
+        # The root's name holds a tab (Cc) and U+202E (Cf), and so does one
+        # branch's U+202E; each is built with chr(), as is the backslash of
+        # each expected escape (rule 6). Without a terminal and --yes,
+        # confirm() refuses after the plan is shown, so nothing runs.
+        backslash = chr(92)
+        root = self.repo("re" + chr(9) + "po" + chr(0x202E) + "x")
+        self.bare_remote()
+        self.unpushed("001-feature")
+        reversed_branch = "002-merged" + chr(0x202E)
+        for branch in ("002-merged", reversed_branch):
+            self.git(root, "branch", branch)
+        escaped = f"$'{self.base}/re{backslash}u0009po{backslash}u202ex'"
+        shown = f"$'002-merged{backslash}u202e'"
+        pinned = " ".join(PINS)
+        cases = (("push", "001-feature", "push branch 001-feature",
+                  f"git -C {escaped} push origin 001-feature:001-feature"),
+                 ("delete-branch", "002-merged", "delete verified merged local branch 002-merged",
+                  f"git {pinned} -C {escaped} branch -d 002-merged"),
+                 ("delete-branch", reversed_branch, f"delete verified merged local branch {shown}",
+                  f"git {pinned} -C {escaped} branch -d {shown}"))
+        for action, branch, what, command in cases:
+            with self.subTest(action=action, branch=ascii(branch)):
+                result = self.run_cli("clean", root, "--apply", "--action", action, "--branch", branch)
+                self.assert_status(result, 2)
+                self.assertEqual(result.stdout, f"Cleanup action: {what}\nWorking directory: {escaped}\n  {command}\n")
+                self.assertEqual(result.stderr, NO_TERMINAL)
+                self.assertFalse({chr(9), chr(0x202E)} & set(result.stdout + result.stderr),
+                                 "never the raw code points")
