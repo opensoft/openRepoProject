@@ -688,8 +688,8 @@ class CleanCase(unittest.TestCase):
         env = {**os.environ, "WORKBENCHES_ROOT": str(self.wb),
                "HOME": str(self.base / "home"), "SPECKIT_WORKSPACE_PATH": "",
                "PROJECTS_DIR": str(self.base), "GIT_CONFIG_NOSYSTEM": "1",
-               "GIT_CONFIG_GLOBAL": os.devnull, **AUTHOR}
-        for name in (*SCRUBBED_NAMES, OPTIONAL_LOCKS):
+               "GIT_CONFIG_GLOBAL": os.devnull, "NO_COLOR": "1", **AUTHOR}
+        for name in (*SCRUBBED_NAMES, OPTIONAL_LOCKS, "FORCE_COLOR", "PYTHON_COLORS"):
             env.pop(name, None)
         self.env = env
         self.root = None  # the first repository repo() makes; the builders' default
