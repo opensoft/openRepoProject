@@ -290,6 +290,11 @@ Lane: openRepoProject-4
   The fold of lane openRepoProject-3's R10 findings then completed Q17 D's
   statement of #25's replacement credential clause, and no recommendation
   changed letter; no requirement changes.
+  A further pass moved #25's pin to its final head `05a424a`, every cited
+  range keeping its lines, and added to Q17's option D the bounds #25 sets
+  on its `gh` children and the clauses that still bind the `project`
+  process and every Git child (lane openRepoProject-3's R11-1); no
+  recommendation changed letter; no requirement changes.
 - Items marked incomplete require spec updates before `/speckit-clarify` or `/speckit-plan`
 
 ## Cross-cutting Requirements Quality (no-argument `/speckit.checklist`, 2026-10-19)

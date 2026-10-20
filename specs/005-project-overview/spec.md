@@ -2585,7 +2585,7 @@ and [P] are change 1's requirements as the header names them.
     POD:217-222, :303-306, :610-611 and :622-624, the root object's `path`,
     which #25 carries at its `spec.md:102-107`, `:206-209`, `:229-230` and
     `:241-243`; Q14's option B rewrites POD:238-243's phase condition, which
-    #25 carries at `:123-128`, all at `129a4e2`); #25 re-aligns its blocks
+    #25 carries at `:123-128`, all at `05a424a`); #25 re-aligns its blocks
     to such an amendment (its proposal, "Dependencies and Sequencing"; its
     `tasks.md` 2.3 and 2.4). An answer to Q16 that amends, or records a
     departure from, change 2's design D1 or clarifications N1 reaches #25 as
