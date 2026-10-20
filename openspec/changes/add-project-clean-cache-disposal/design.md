@@ -10,7 +10,7 @@ requirements. Citations follow the proposal's key: the packet at `da33d92`
 change 2 (`APO`, `APO/ov`) at `961c405`, draft PR #19 at `c462d87` (`PR19/pc`,
 `PR19/rs`), and `project:N` at `961c405`; main is now `e9d6711`, with the same
 `openspec/`, `ideation/` and `project` (L-15). The lane's rulings are L-1 to
-L-17 and B-1 to B-37, and A-9, A-23 and A-24 for #23; this change's own
+L-17 and B-1 to B-39, and A-9, A-23 and A-24 for #23; this change's own
 decisions are CD-1 to CD-18 in `proposal.md`, and the alignment review's
 findings (SA-n, QA-n, G1 to G5) are resolved in its table. The council (P-n,
 S-n and AE-n) read `9ebe9f0`; its VALID verdicts, ruled as B-16 to B-24, are
@@ -25,7 +25,9 @@ are applied in round B4 (proposal, "Re-read and Codex Findings (round B4)").
 Codex's two findings on `e1049b2`, ruled as B-34 and B-37, and the lead's B-35
 and B-36 (D4's account of #26 at `9ff8202`; `tasks.md` 2.2 ticked again on lane
 4's byte check) are applied in round B5 (proposal, "Re-read and Codex Findings
-(round B5)").
+(round B5)"). Lane 3's folded read of `cf57956..fffc194` and Codex's finding on
+`fffc194`, ruled as B-38 and B-39, are applied in round B6 (proposal, "Re-read
+and Codex Findings (round B6)").
 
 How the packet's contract and the rulings map to the decisions below:
 
@@ -66,10 +68,12 @@ How the packet's contract and the rulings map to the decisions below:
 | B-31 | lane 3's delta read of `cf57956`: the removal ceiling beside a signal and the deadline in the stage's exit sentence; the 16th target of D4's case listing no cache | D4, D8 |
 | B-32 | the stall test on persistent reasons, never on `blocking` alone; a per-worktree cap told from the totals by the row's counts | D4, D11 |
 | B-33 | every recorded directory counts toward the per-worktree cap of 512; the walk opens each recorded directory once, and the stage one chain per directory with removals in each pass; the worst case, depth times those directories, and its limit put to Brett Heap | D3, D4, D5, D7, D14, Risks, Open Questions |
-| B-34 | a read of the preflight that the removal floor or the deadline stops before the first removal deletes nothing and changes no state: the stage is `not-attempted` with `target-stopped`, the target `not-attempted` with `deadline-exceeded`, exit 1, the human line naming the deadline, never `refused` with `cache-changed`; a real difference, or a read past its own 5 s budget, stays `refused`; Codex's P2 at `specs/project-clean-review-safety/spec.md:353` on `e1049b2` is the same item | D1, D7, D8, D11, D12, D14, Risks |
+| B-34 | a read of the preflight that the removal floor or the deadline stops before the first removal deletes nothing and changes no state: the stage is `not-attempted` with `target-stopped`, the target `not-attempted` with `deadline-exceeded`, exit 1, the human line naming the deadline, never `refused` with `cache-changed`; a real difference, or a read past its own 5 s budget with no signal received (B-39), stays `refused`; Codex's P2 at `specs/project-clean-review-safety/spec.md:353` on `e1049b2` is the same item | D1, D7, D8, D11, D12, D14, Risks |
 | B-35 | D4 describes #23's joint fit as #26 states it at `9ff8202` under A-23 and A-24: 81 children, and at the packet's model with cache disposal 10 of 16 targets removed and 9 branches retired through one worker | D4, D13 |
 | B-36 | `tasks.md` 2.2 ticked again on lane openRepoProject-4's byte check of B-30's commit, quoted from its log | D6, Migration Plan |
 | B-37 | an unsupported platform withholds the cache proof only from a row that reaches the `ignored-local-files` rung; a row that an earlier rung classified, a `dirty` one among them, keeps its classification (Codex's P2 at `specs/project-clean-review-safety/spec.md:383` on `e1049b2`) | D9 |
+| B-38 | lane 3's folded read of `cf57956..fffc194`: the last AND of "No time for a cache stage" reads "at least 10 s of work remaining", the complement of the first half's budget under 5 s; "no difference was found"; the packet's reapplication rule cited beside its fit rule; the walk's call count behind D4's 28.3 s | D4, D7, D14 |
+| B-39 | a signal received before a preflight read's stop is classified outranks it: a read that reaches its own 5 s budget, or the floor or the deadline, after a signal ends the stage `not-attempted` with `target-stopped` and the target `not-attempted` with `interrupted`, never `refused` with `cache-changed`; Codex's P2 at `specs/project-clean-review-safety/spec.md:354` on `fffc194` | D1, D7, D8, D11, D12, D14, Risks |
 
 What in `project` shapes the approach:
 
@@ -149,7 +153,10 @@ For a selected target whose `cache_disposal.paths` is not empty,
 3. the whole-list preflight (D7), which also keeps the run's byte total
    (B-26), then the reopening of the first listed cache's chain; a read of
    either that the floor or the deadline stops ends the stage with step 2's
-   outcome, nothing deleted, never `refused` (B-34);
+   outcome, nothing deleted, never `refused` (B-34), and a signal recorded by
+   the time the stop of such a read is classified, whether a read past its own
+   5 s budget or one the floor or the deadline stops, is checked first and
+   gives step 2's `interrupted` outcome in its place (B-39);
 3a. immediately before the hand-off of the first removal, the floor and slot
    checks of step 2 again, with the same outcome; a signal recorded after this
    check is handled as one received during the removals (B-17), and the
@@ -435,9 +442,12 @@ whose deepest 171 each hold one loose `.pyc` (341 + 171 = 512 objects): 172 +
 the files' `lstat` calls and unlinks, about 14.9 s at 169 us, 19.8 s at 224 us
 and 54.9 s at 622 us. Sixteen such targets list 2,736 entries, within the
 run's 4,096, and would need about 1.41 million calls, 239 to 878 s. Nothing is
-unsafe, but no fit holds that: at 224 us the first such target reaches its
-stage at about 28.3 s, its preflight takes about 9.9 s, and the floor ends its
-removals about 7 s later, `partial`, exit 1, so each run removes part of its
+unsafe, but no fit holds that: at 224 us the first such target reaches its stage
+at about 28.3 s (the 172 Git children before it, 25.8 s at the packet's 150 ms,
+and the walk of those 16 rows at 683 calls a row, 10,928 calls and 2.45 s: 341
+directory opens, 171 file `lstat` calls and 171 access checks, besides the
+worktree root's own open), its preflight takes about 9.9 s, and the floor ends
+its removals about 7 s later, `partial`, exit 1, so each run removes part of its
 caches and no worktree while it comes first; at 169 us one such target is
 removed in a run, and at a thread per call its preflight alone runs into the
 floor, which ends the stage before its first removal with nothing deleted,
@@ -659,20 +669,32 @@ measured at the preflight of every earlier target whose stage passed it in
 this run, within the invocation's 1 GiB (B-26, D4). Any `OSError` (`ENOTDIR`
 or `ELOOP` from a swapped symlink, `ENOENT`, `EACCES`), any identity, shape or
 entry-count difference, either byte cap exceeded, or a call past its own 5 s
-budget (`probe-timeout`) ends the stage `refused` with `cache-changed`. A read
-of the preflight, or of the reopening of the first listed cache's chain after
-it, that the removal floor or the deadline stops is not one of these (B-34,
-Codex's P2 at `specs/project-clean-review-safety/spec.md:353` on `e1049b2`):
-the read's budget is `min(5 s, work remaining less the removal floor)`, so a
-read that outlives the second term, where it is the smaller, ran into the
-deadline, recorded `deadline-exceeded` as change 1's bounds rule records it,
-and a read that cannot start because no more than the floor remains has no
-budget at all. Neither has found a difference: nothing was deleted and nothing
-differs, so the stage ends `not-attempted` with `target-stopped`, as at the
-check before the first hand-off (D1, step 3a), and the target `not-attempted`
-with `deadline-exceeded`. Which budget ran out tells a slow run from a changed
-worktree, and a read past the 5 s budget is still a preflight error. This is
-the whole-list check that PR #2's open thread 3989548481 asked for: no path is
+budget (`probe-timeout`) ends the stage `refused` with `cache-changed`, a
+`probe-timeout` that a signal received first outranks excepted (B-39, below). A
+read of the preflight, or of the reopening of the first listed cache's chain
+after it, that the removal floor or the deadline stops is not one of these
+(B-34, Codex's P2 at `specs/project-clean-review-safety/spec.md:353` on
+`e1049b2`): the read's budget is `min(5 s, work remaining less the removal
+floor)`, so a read that outlives the second term, where it is the smaller, ran
+into the deadline, recorded `deadline-exceeded` as change 1's bounds rule
+records it, and a read that cannot start because no more than the floor remains
+has no budget at all. Neither has found a difference: nothing was deleted, and
+no difference was found before the read stopped, so the stage ends
+`not-attempted` with `target-stopped`, as at the check before the first
+hand-off (D1, step 3a), and the target `not-attempted` with
+`deadline-exceeded`. Which budget ran out tells a slow run from a changed
+worktree, and a read past the 5 s budget is still a preflight error, which
+holds only where no signal was received (B-39): the slot is read before the stop
+of any of these reads is classified, a `probe-timeout` included, and a signal
+recorded by then gives the check before the first hand-off's outcome instead,
+the stage `not-attempted` with `target-stopped`, nothing deleted, and the
+target and every later one `not-attempted` with `interrupted`, never `refused`
+with `cache-changed` and never `deadline-exceeded` (Codex's P2 at
+`specs/project-clean-review-safety/spec.md:354` on `fffc194`). A timeout is no
+finding about the worktree, so it does not outrank the signal that has already
+stopped the run; a difference or an error that the preflight did find is a
+finding, and stays `refused`, the exit status then the signal's. This is the
+whole-list check that PR #2's open thread 3989548481 asked for: no path is
 removed until every path has passed.
 
 The removals: for each directory holding a listed path, in canonical order,
@@ -723,14 +745,14 @@ say which listed path remains.
 | Stage outcome | `cache_disposal` | Target | Later targets | Exit (first matching row of change 1's table) |
 | --- | --- | --- | --- | --- |
 | every listed cache removed | `disposed`, null | the sequence goes on to the spawn | as change 1 | as change 1 |
-| preflight difference, error or call past its 5 s budget, either byte cap included (B-26) | `refused`, `cache-changed`; each `removed` false where the preflight found the path, null where it did not | `refused`, `state-changed`, reconciliation, nothing spawned | `not-attempted`, `batch-stopped` | 2 |
+| preflight difference, error or call past its 5 s budget with no signal received (B-39), either byte cap included (B-26) | `refused`, `cache-changed`; each `removed` false where the preflight found the path, null where it did not | `refused`, `state-changed`, reconciliation, nothing spawned | `not-attempted`, `batch-stopped` | 2 |
 | every removal handed over returned and none removed its entry (B-20) | `refused`, `cache-changed`; each `removed` false | likewise | likewise | 2 |
 | failure after an entry was removed | `partial`, `cache-partial` | likewise | likewise | 2 |
 | the floor reached at a hand-off after the first removal | `partial`, `cache-partial` | likewise | `not-attempted`, `deadline-exceeded` | 1 (the deadline stopped work) |
 | a removal still outstanding at the 300 s removal ceiling (B-16) | `partial`, `cache-partial`; that cache `removed: null` | likewise | `not-attempted`, `deadline-exceeded` | 1 |
 | a signal after the first hand-off, then a finished stage | `disposed`, null | `not-attempted`, `interrupted`, with its reconciliation (B-17) | `not-attempted`, `interrupted`, `reconciliation: null` | 130, 143 or 129 |
 | a finished stage, then less than the floor at the spawn check | `disposed`, null | `not-attempted`, `deadline-exceeded`, with its reconciliation (B-17) | `not-attempted`, `deadline-exceeded` | 1 |
-| no start, a preflight read that the floor or the deadline stops (B-34), or the check before the first hand-off fails (floor or signal) | `not-attempted`, `target-stopped` | `not-attempted`, `deadline-exceeded` or `interrupted`, `reconciliation: null` | likewise | 1, or the signal's |
+| no start, a preflight read that the floor or the deadline stops (B-34) or that its own 5 s budget stops after a signal was received (B-39), or the check before the first hand-off fails (floor or signal) | `not-attempted`, `target-stopped` | `not-attempted`, `deadline-exceeded` or `interrupted`, `reconciliation: null` | likewise | 1, or the signal's |
 | target refused at revalidation, or never reached | `not-attempted`, `target-stopped` | as change 1 | as change 1 | as change 1 |
 
 Mapping a cache failure onto the target's `refused` with `state-changed`, rather
@@ -764,7 +786,11 @@ before its first removal is no cache failure and is not mapped onto `refused`
 (B-34): the target is `not-attempted` with `deadline-exceeded` and
 `reconciliation: null`, as at the check before the first hand-off, the later
 targets are `not-attempted` likewise, and the exit status is 1 by the deadline
-row; the retry is the same re-run.
+row; the retry is the same re-run. Where a signal was received before the stop
+of such a read, or of a read past its own 5 s budget, was classified, the stage
+is not mapped onto `refused` either (B-39): the target is `not-attempted` with
+`interrupted` and `reconciliation: null`, the later targets likewise, and the
+exit status is the signal's, 130, 143 or 129.
 
 ### D9. The platform check
 
@@ -876,10 +902,11 @@ substituted:
   stop block: `Cache disposal at PATH: removed N cache paths; the worktree was
   not removed.` (B-17).
 - A stop at a target whose cache stage the floor or the deadline stopped in a
-  read before its first removal, before the stop block: `Cache disposal at PATH
-  not attempted (deadline-exceeded); nothing was deleted.` (B-34), so that the
-  deadline is named and a change of state is not claimed. The `refused` line
-  above is printed only for a difference or a preflight error.
+  read before its first removal, no signal having been received by then (B-39),
+  before the stop block: `Cache disposal at PATH not attempted
+  (deadline-exceeded); nothing was deleted.` (B-34), so that the deadline is
+  named and a change of state is not claimed. The `refused` line above is
+  printed only for a difference or a preflight error.
 - The question is change 1's, unchanged (CD-15).
 
 ### D12. Time, threads and signals in the stage
@@ -894,10 +921,12 @@ its removal child.
 - A read (an open, a listing, an `lstat`) is waited for by the main thread with
   `min(5 s, work remaining - removal_floor_seconds)`. A read past that wait
   abandons the worker and ends the stage: `partial` after the first removal;
-  before it, `refused` when 5 s was the wait, and `not-attempted` when the
-  wait was the smaller `work remaining - removal_floor_seconds`, which is the
-  deadline's limit, as it is when a read cannot start because no more than the
-  floor remains (B-34).
+  before it, the slot is read first (B-39), and a signal recorded by then ends
+  the stage `not-attempted` with the target `interrupted`, whichever wait it
+  was; otherwise `refused` when 5 s was the wait, which holds when at least 10 s
+  of work remained, and `not-attempted` when the wait was the smaller `work
+  remaining - removal_floor_seconds`, which is the deadline's limit, as it is
+  when a read cannot start because no more than the floor remains (B-34).
 - A removal is handed to the worker only while more than the floor remains,
   and the hand-off of the first one is the stage's first removal for every rule
   of the two ADDED requirements. A removal handed over is waited for until it
@@ -925,15 +954,20 @@ said "nothing was deleted".
 
 Signals keep change 1's handlers, which only record. The stage reads the slot
 before its preflight and again immediately before the hand-off of its first
-removal, after the preflight and once the first listed cache's chain is
-reopened (D1, steps 2 and 3a, B-17), and not again until the spawn check. A
-signal recorded before that second check stops the target with nothing
-deleted; one recorded after it is handled as one received during the removals,
-which finish, and then stops the target before its spawn (CD-11): its caches
-are either untouched or all removed, and a target whose caches were removed is
-`not-attempted` with its reconciliation. Every check-then-act has a window like
-this; masking signals around the check would only move it, since Python runs
-handlers in the main thread between bytecodes.
+removal, after the preflight and once the first listed cache's chain is reopened
+(D1, steps 2 and 3a, B-17), and not again until the spawn check, except that it
+reads the slot when a read of the preflight, or of that reopening, reaches the
+end of its wait, before it classifies the stop (B-39). The handler only records,
+so a signal received while a read is held changes nothing until then, and
+without that read the target would be reported `refused` with a change of state
+for a run that a signal had already stopped. A signal recorded before that
+second check stops the target with nothing deleted; one recorded after it is
+handled as one received during the removals, which finish, and then stops the
+target before its spawn (CD-11): its caches are either untouched or all removed,
+and a target whose caches were removed is `not-attempted` with its
+reconciliation. Every check-then-act has a window like this; masking signals
+around the check would only move it, since Python runs handlers in the main
+thread between bytecodes.
 
 ### D13. The guarantee and the residual window
 
@@ -1021,11 +1055,13 @@ cache phase" and "A file placed in a cache directory during the stage".
   directory holding a listed path in each pass and one open per recorded
   directory in the walk (B-33); a preflight read held until the budget that
   the patched clock leaves to the deadline is spent, or until no more than the
-  floor remains, against the same read held past 5 s with more than 5 s
-  remaining (B-34); the access check stubbed to
-  false where the runner is root; the platform check stubbed to false; the
-  counting `git` wrapper of change 1 for the enumeration's argument vector,
-  directory and count.
+  floor remains, against the same read held past 5 s with at least 10 s
+  remaining (B-34, B-38), and each of them again with SIGINT delivered while
+  it is held, the stage then `not-attempted`, the target `interrupted` and the
+  exit status 130, never `refused` (B-39); the access check stubbed to false
+  where the runner is root; the platform check stubbed to false; the counting
+  `git` wrapper of change 1 for the enumeration's argument vector, directory
+  and count.
 - Every existing test keeps passing, among them
   `test_clean_preserves_ignored_files_in_an_otherwise_merged_worktree`
   (tests:949, `local.env`) and feature 004's tests, whose fixtures hold no
@@ -1095,11 +1131,12 @@ cache phase" and "A file placed in a cache directory during the stage".
   (B-14, B-22; `tasks.md` 2.2).
 - [A filesystem call stuck in the kernel during the stage] -> A read is
   abandoned after its budget and ends the stage `refused` or `partial`, or
-  `not-attempted` where the deadline set the budget before any removal
-  (B-34); a removal is waited for up to the 300 s removal ceiling, as a removal
-  child is, its cache then `removed: null`; the worker gets no further call and
-  its descriptors stay open until `project` exits, and the rescan, on threads
-  of its own, records `removed: null` where it cannot tell (D12).
+  `not-attempted` where the deadline set the budget, or a signal was received,
+  before any removal (B-34, B-39); a removal is waited for up to the 300 s
+  removal ceiling, as a removal child is, its cache then `removed: null`; the
+  worker gets no further call and its descriptors stay open until `project`
+  exits, and the rescan, on threads of its own, records `removed: null` where it
+  cannot tell (D12).
 - [An ignored file created outside the listed caches during a cache stage is
   deleted with the worktree] -> The residual-window line names it; the stage
   took about 0.25 s for 512 entries here, and concurrent writers are outside
