@@ -619,6 +619,16 @@ TEXT_FIXTURES = {
     "target_excluded_current": "Cannot remove the current worktree.",
     "target_excluded_class": "Worktree is {CLASS}; only clean merged worktrees may be removed.",
     "no_merge_target": "Cannot determine the default branch from the manifest, origin/HEAD, main, or master.",
+    # The row errors (contracts/project-clean.md, "Codes"; lead ruling R-45 (4)).
+    "row_error_os_error": "{OPERATION} failed: {STRERROR}",
+    "row_error_probe_failed": "{OPERATION} failed: {DETAIL}",
+    "row_error_probe_failed_exit": "exit {N}",
+    "row_error_probe_failed_signal": "signal {N}",
+    "row_error_probe_failed_cannot_spawn": "cannot spawn ({STRERROR})",
+    "row_error_probe_failed_unparseable": "unparseable output",
+    "row_error_probe_timeout": "{OPERATION} timed out after {S} s",
+    "row_error_deadline_exceeded": "{OPERATION} stopped at the work deadline",
+    "row_error_git_operation": "git {SUBCOMMAND}",
 }
 
 # D18's next step by reason (design.md:756-765); every other class keeps its
