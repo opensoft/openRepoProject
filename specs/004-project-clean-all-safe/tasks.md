@@ -1619,7 +1619,7 @@ carrying the reason the gate order gives.
   reflog is missing, empty or expired".
   — files: `tests/test_clean_reflog.py`
   — verify: `python3 -c "import sys,unittest as u;L=u.defaultTestLoader;f=lambda s:[i for t in s for i in (f(t) if isinstance(t,u.TestSuite) else [t.id()])];I=[i for i in f(L.discover('tests',pattern=sys.argv[1])) if not i.startswith('unittest.')];A=sys.argv[2:];M=[a for a in A if not any(a in ('*',i.split('.')[-1]) for i in I)];[print('not collected:',m) for m in M];[print(e) for e in L.errors];sys.exit(1 if M or L.errors or not A else 0)" test_clean_reflog.py 'test_clean_a_published_branch_with_no_commit_of_its_own' 'test_clean_a_fast_forward_merged_branch_at_the_target_s_tip_stays_eligible' 'test_clean_a_branch_reset_to_the_merge_target_s_tip_stays_unstarted' 'test_clean_a_branch_fetched_at_the_merge_target_s_tip_stays_unstarted' 'test_clean_a_branch_whose_reflog_is_missing_empty_or_expired'`
-- [ ] T061 [P] [US2] [S] Add to `tests/test_clean_gates.py`:
+- [x] T061 [P] [US2] [S] Add to `tests/test_clean_gates.py`:
   `test_clean_every_protected_classifier` (linked worktrees that are stale,
   detached, dirty, holding ignored files, unpublished, remote-gone, diverged,
   remote-ahead, unpushed, pushed-unmerged, merged but current, merged but
@@ -1640,7 +1640,7 @@ carrying the reason the gate order gives.
   classifier".
   — files: `tests/test_clean_gates.py`
   — verify: `python3 -c "import sys,unittest as u;L=u.defaultTestLoader;f=lambda s:[i for t in s for i in (f(t) if isinstance(t,u.TestSuite) else [t.id()])];I=[i for i in f(L.discover('tests',pattern=sys.argv[1])) if not i.startswith('unittest.')];A=sys.argv[2:];M=[a for a in A if not any(a in ('*',i.split('.')[-1]) for i in I)];[print('not collected:',m) for m in M];[print(e) for e in L.errors];sys.exit(1 if M or L.errors or not A else 0)" test_clean_gates.py 'test_clean_every_protected_classifier' 'test_clean_every_protected_classifier_incomplete_copy'`
-- [ ] T062 [P] [US2] [O] Add to `tests/test_clean_gates.py`:
+- [x] T062 [P] [US2] [O] Add to `tests/test_clean_gates.py`:
   `test_clean_hidden_local_state` (two otherwise eligible worktrees, one
   holding an edit to a file flagged assume-unchanged and one a file flagged
   skip-worktree through `git sparse-checkout set`, each flag in that worktree's
@@ -1661,7 +1661,7 @@ carrying the reason the gate order gives.
   hidden by assume-unchanged survives".
   — files: `tests/test_clean_gates.py`
   — verify: `python3 -c "import sys,unittest as u;L=u.defaultTestLoader;f=lambda s:[i for t in s for i in (f(t) if isinstance(t,u.TestSuite) else [t.id()])];I=[i for i in f(L.discover('tests',pattern=sys.argv[1])) if not i.startswith('unittest.')];A=sys.argv[2:];M=[a for a in A if not any(a in ('*',i.split('.')[-1]) for i in I)];[print('not collected:',m) for m in M];[print(e) for e in L.errors];sys.exit(1 if M or L.errors or not A else 0)" test_clean_gates.py 'test_clean_hidden_local_state' 'test_clean_an_edit_hidden_by_assume_unchanged_survives' 'test_clean_index_gate_reads_that_fail'`
-- [ ] T063 [P] [US2] [S] Add to `tests/test_clean_gates.py`:
+- [x] T063 [P] [US2] [S] Add to `tests/test_clean_gates.py`:
   `test_clean_submodules` (otherwise eligible worktrees holding an initialized
   submodule, a submodule initialized then deinitialized, a gitlink never
   initialized, and an admin `modules` entry left after the gitlink was removed,
@@ -1674,7 +1674,7 @@ carrying the reason the gate order gives.
   "A worktree holding a submodule is never offered".
   — files: `tests/test_clean_gates.py`
   — verify: `python3 -c "import sys,unittest as u;L=u.defaultTestLoader;f=lambda s:[i for t in s for i in (f(t) if isinstance(t,u.TestSuite) else [t.id()])];I=[i for i in f(L.discover('tests',pattern=sys.argv[1])) if not i.startswith('unittest.')];A=sys.argv[2:];M=[a for a in A if not any(a in ('*',i.split('.')[-1]) for i in I)];[print('not collected:',m) for m in M];[print(e) for e in L.errors];sys.exit(1 if M or L.errors or not A else 0)" test_clean_gates.py 'test_clean_submodules' 'test_clean_a_worktree_holding_a_submodule_is_never_offered'`
-- [ ] T064 [P] [US2] [S] Add to `tests/test_clean_gates.py`:
+- [x] T064 [P] [US2] [S] Add to `tests/test_clean_gates.py`:
   `test_clean_a_merged_worktree_whose_upstream_was_deleted` (a clean, merged
   worktree with a commit of its own and a deleted remote-tracking upstream is
   `merged-removable` with that class's recommendation, `--all-safe` selects it,
@@ -1686,7 +1686,7 @@ carrying the reason the gate order gives.
   whose upstream was deleted"; "A deleted upstream is remote-gone".
   — files: `tests/test_clean_gates.py`
   — verify: `python3 -c "import sys,unittest as u;L=u.defaultTestLoader;f=lambda s:[i for t in s for i in (f(t) if isinstance(t,u.TestSuite) else [t.id()])];I=[i for i in f(L.discover('tests',pattern=sys.argv[1])) if not i.startswith('unittest.')];A=sys.argv[2:];M=[a for a in A if not any(a in ('*',i.split('.')[-1]) for i in I)];[print('not collected:',m) for m in M];[print(e) for e in L.errors];sys.exit(1 if M or L.errors or not A else 0)" test_clean_gates.py 'test_clean_a_merged_worktree_whose_upstream_was_deleted' 'test_clean_a_deleted_upstream_is_remote_gone'`
-- [ ] T065 [P] [US2] [S] Add to `tests/test_clean_gates.py`:
+- [x] T065 [P] [US2] [S] Add to `tests/test_clean_gates.py`:
   `test_clean_dirty_or_unmerged_work_is_preserved` (the report marks dirty and
   unmerged rows for preservation or review and proposes no destructive action);
   `test_clean_a_merged_worktree_has_ignored_local_files` (a non-current merged
@@ -1735,7 +1735,7 @@ carrying the reason the gate order gives.
   analyze M6). T059 and T060 pass.
   — files: `project`
   — verify: `python3 -c "import sys,re;t=open('project').read();A=sys.argv[1:];c=lambda r:t.split('# region '+r+'\n')[1].split('# endregion '+r+'\n')[0];M=[a for a in A if not ((a.split('%',1)[1] not in c(a.split('%',1)[0])) if '%' in a else (a.split('~',1)[1] in c(a.split('~',1)[0])) if '~' in a else re.search(r'^[a-z]*\s?'+re.escape(a.split(':',1)[1])+r'\b',c(a.split(':',1)[0]),re.M))];[print('region check failed:',m) for m in M];sys.exit(1 if M or not A else 0)" 'reflog~fs_call' 'reflog:read_reflog' && python3 -m unittest discover -s tests -p 'test_clean_reflog.py'`
-- [ ] T067 [P] [US2] [O] Fill in region `index`: `registration_gate`, gate 3,
+- [x] T067 [P] [US2] [O] Fill in region `index`: `registration_gate`, gate 3,
   from the row's two-way registration result, failing only when
   `registered is False`: a row whose registration was never read is already
   excluded by its class at gate 5, and the null rule below holds for gates 9
@@ -1792,7 +1792,7 @@ US2, US7 and US9.
 
 ### Tests for User Story 3
 
-- [ ] T069 [P] [US3] [S] Add `test_clean_single_target_equals_a_one_item_batch` to
+- [x] T069 [P] [US3] [S] Add `test_clean_single_target_equals_a_one_item_batch` to
   `tests/test_clean_single.py`: two fresh copies of a repository whose only
   eligible worktree is P, used in turn at one path: `--apply --action remove
   --worktree P --yes` and `--all-safe --apply --yes` show the same `selected`
@@ -1810,7 +1810,7 @@ US2, US7 and US9.
   "Single target equals a one-item batch".
   — files: `tests/test_clean_single.py`
   — verify: `python3 -c "import sys,unittest as u;L=u.defaultTestLoader;f=lambda s:[i for t in s for i in (f(t) if isinstance(t,u.TestSuite) else [t.id()])];I=[i for i in f(L.discover('tests',pattern=sys.argv[1])) if not i.startswith('unittest.')];A=sys.argv[2:];M=[a for a in A if not any(a in ('*',i.split('.')[-1]) for i in I)];[print('not collected:',m) for m in M];[print(e) for e in L.errors];sys.exit(1 if M or L.errors or not A else 0)" test_clean_single.py 'test_clean_single_target_equals_a_one_item_batch'`
-- [ ] T070 [P] [US3] [S] Add to `tests/test_clean_single.py`:
+- [x] T070 [P] [US3] [S] Add to `tests/test_clean_single.py`:
   `test_clean_a_named_removal_beside_another_row_s_inspection_error` (P
   removed, the other row a non-blocking `inspection-incomplete` note, exit 0);
   `test_clean_a_named_removal_among_seventeen_eligible_rows` (P removed, the
@@ -1828,7 +1828,7 @@ US2, US7 and US9.
   seventeen eligible rows"; "A named removal beyond the row cap".
   — files: `tests/test_clean_single.py`
   — verify: `python3 -c "import sys,unittest as u;L=u.defaultTestLoader;f=lambda s:[i for t in s for i in (f(t) if isinstance(t,u.TestSuite) else [t.id()])];I=[i for i in f(L.discover('tests',pattern=sys.argv[1])) if not i.startswith('unittest.')];A=sys.argv[2:];M=[a for a in A if not any(a in ('*',i.split('.')[-1]) for i in I)];[print('not collected:',m) for m in M];[print(e) for e in L.errors];sys.exit(1 if M or L.errors or not A else 0)" test_clean_single.py 'test_clean_a_named_removal_beside_another_row_s_inspection_error' 'test_clean_a_named_removal_among_seventeen_eligible_rows' 'test_clean_a_named_removal_beyond_the_row_cap'`
-- [ ] T071 [P] [US3] [S] Add `test_clean_remove_a_merged_clean_worktree` to
+- [x] T071 [P] [US3] [S] Add `test_clean_remove_a_merged_clean_worktree` to
   `tests/test_clean_single.py`: at a pseudo-terminal, the D18 question in the
   singular, then `yes`: the worktree is removed and its branch kept; only a
   separate `--action delete-branch` deletes the branch. It pins T054 and T057.
