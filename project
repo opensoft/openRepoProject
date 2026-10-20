@@ -2123,6 +2123,16 @@ def resolve_merge_target(refs, declared):
 # a failed driver outcome becomes a row error by OUTCOME_ERRORS as built (plan
 # review M17), its message the contract's text for its code (lead ruling R-45
 # (4)). Paths stay bytes until a document writes them.
+#
+# Each evidence step is split in two (lead ruling R-54 X-1): a reader, which
+# makes the step's filesystem calls and Git children in D6's order and stops
+# where a value already decides, and a pure decider over the values read,
+# which runs no child and makes no filesystem call, so that another driver
+# (feature 005's overview) can feed it values it read itself:
+# presence_from_lstat(), registration_verdict(), main_worktree_decision() and
+# row_evidence(). The functions the other regions call, main_worktree(),
+# verify_registration(), inspect_repository() and worktree_rows(), are those
+# readers, each ending in its decider.
 
 # Row 3's options, in the order Git prints their values (D6).
 IDENTITY_OPTIONS = ("--show-toplevel", "--git-common-dir", "--show-superproject-working-tree")
@@ -2219,6 +2229,13 @@ def probe_error(outcome, operation, budget):
     return {"code": code, "message": message}
 
 
+def os_error(operation, exc):
+    """The `os-error` row error {code, message} of the OSError exc that a
+    filesystem call raised; operation is OPERATION: lstat, realpath or read."""
+    return {"code": "os-error",
+            "message": TEXT["row_error_os_error"].format(OPERATION=operation, STRERROR=exc.strerror or str(exc))}
+
+
 def _fs(operation, fn, *args):
     """fn(*args) through fs_call() (D6): its value. An OSError raises
     EvidenceError with an `os-error` and the error number; a call past its
@@ -2228,11 +2245,38 @@ def _fs(operation, fn, *args):
     try:
         value = fs_call(fn, *args)
     except OSError as exc:
-        message = TEXT["row_error_os_error"].format(OPERATION=operation, STRERROR=exc.strerror or str(exc))
-        raise EvidenceError({"code": "os-error", "message": message}, exc.errno) from None
+        raise EvidenceError(os_error(operation, exc), exc.errno) from None
     if isinstance(value, DriverOutcome):
         raise EvidenceError(probe_error(value, operation, budget))
     return value
+
+
+def _lstat(path):
+    """The lstat of path through fs_call(): its value, or the EvidenceError of
+    a call that gave none, for presence_from_lstat()."""
+    try:
+        return _fs("lstat", os.lstat, path)
+    except EvidenceError as exc:
+        return exc
+
+
+def presence_from_lstat(result):
+    """The presence of a registered path (D6, FR-055; lead ruling R-36), a
+    pure decider over what its lstat gave: (present, error). result is the
+    lstat's value, or the OSError or EvidenceError of a call that gave none.
+    A value is (True, None); ENOENT or ENOTDIR, the path gone or a parent no
+    longer a directory, is (False, None); any other failure, a call cut at
+    its budget included, is (None, its row error), an OSError's being its
+    `os-error` for OPERATION lstat."""
+    if isinstance(result, EvidenceError):
+        number, error = result.errno, result.error
+    elif isinstance(result, OSError):
+        number, error = result.errno, os_error("lstat", result)
+    else:
+        return True, None
+    if number in (errno.ENOENT, errno.ENOTDIR):
+        return False, None
+    return None, error
 
 
 def _read_head(path, limit):
@@ -2281,12 +2325,21 @@ def identity_probe(directory, run):
     return tuple(values), None
 
 
+def gitdir_line(content):
+    """The value of a `.git` file's gitdir line, read as Git reads one: the
+    content, less its trailing line ends, starting `gitdir: ` with a value
+    after it; None otherwise. A pure function of the bytes read."""
+    content = content.rstrip(b"\r\n")
+    if not content.startswith(b"gitdir: ") or content == b"gitdir: ":
+        return None
+    return content[len(b"gitdir: "):]
+
+
 def _gitfile(path):
-    """The realpath that `<path>/.git` names when it is a gitfile, read as Git
-    reads one: a regular file whose content, less its trailing line ends,
-    starts `gitdir: `, a relative value resolved against path. None when
-    `.git` is missing, not a regular file, or holds no gitdir line; any other
-    failed read raises EvidenceError."""
+    """The realpath that `<path>/.git` names when it is a gitfile: a regular
+    file holding a gitdir line (gitdir_line()), a relative value resolved
+    against path. None when `.git` is missing, not a regular file, or holds no
+    gitdir line; any other failed read raises EvidenceError."""
     dotgit = os.path.join(path, b".git")
     try:
         mode = _fs("lstat", os.lstat, dotgit).st_mode
@@ -2296,10 +2349,60 @@ def _gitfile(path):
         raise
     if not stat.S_ISREG(mode):
         return None
-    content = _fs("read", _read_head, dotgit, GITFILE_BYTES).rstrip(b"\r\n")
-    if not content.startswith(b"gitdir: ") or content == b"gitdir: ":
-        return None
-    return _realpath(os.path.join(path, content[len(b"gitdir: "):]))
+    value = gitdir_line(_fs("read", _read_head, dotgit, GITFILE_BYTES))
+    return None if value is None else _realpath(os.path.join(path, value))
+
+
+def _admin_gitdir(admin):
+    """The realpath that the `gitdir` file of the admin directory admin names,
+    a relative value resolved against admin; None when that file is missing
+    or holds nothing. Any other failed read raises EvidenceError."""
+    try:
+        back = _fs("read", _read_head, os.path.join(admin, b"gitdir"), GITFILE_BYTES).rstrip()
+    except EvidenceError as exc:
+        if exc.errno in (errno.ENOENT, errno.ENOTDIR):
+            return None
+        raise
+    return _realpath(os.path.join(admin, back)) if back else None
+
+
+def main_worktree_decision(identity, records, core_worktree, candidate_gitfiles):
+    """The main worktree (D8, FR-055; analyze H4, lead rulings R-36, R-42 and
+    R-51 (a)), a pure decider over values already read: (path, None), or
+    (None, cause) where none can be named; never a refusal. records is row
+    4's. identity holds `common_dir`, row 3's realpath of the common
+    directory, and the first registry record's `first_present`
+    (presence_from_lstat()) and `first_realpath`. core_worktree is the
+    realpath that `core.worktree` names (row 4b), a relative value resolved
+    against the git directory, or None where it is unset; candidate_gitfiles
+    maps each candidate toplevel, in order, to the realpath its `.git` file
+    names, or None.
+
+    D8's order after its submodule step, which is the resolution's: no
+    record gives `missing`; a first record that is `bare`, `bare`; one not
+    present, `missing`; one whose presence is unknown, or whose realpath was
+    not read, `unreadable`; one whose realpath is not the common directory is
+    the main worktree; otherwise, the gitfile layout, core_worktree, or else
+    the first candidate whose `.git` file names the common directory, and
+    else `unnamed`. A value an earlier step decides without is not read by
+    main_worktree() and may be None here."""
+    if not records:
+        return None, "missing"
+    if records[0]["bare"]:
+        return None, "bare"
+    present, path = identity["first_present"], identity["first_realpath"]
+    if present is False:
+        return None, "missing"
+    if present is None or path is None:
+        return None, "unreadable"
+    if path != identity["common_dir"]:
+        return path, None
+    if core_worktree is not None:
+        return core_worktree, None
+    for candidate, named in candidate_gitfiles.items():
+        if named == identity["common_dir"]:
+            return candidate, None
+    return None, "unnamed"
 
 
 def main_worktree(identity, records, run):
@@ -2317,36 +2420,63 @@ def main_worktree(identity, records, run):
     against the git directory (lead ruling R-36), or where that is unset by
     the candidate toplevel whose `.git` file names the common directory, and
     else gives `unnamed`; any other first record is named by its realpath. A
-    read that fails gives `unreadable`."""
+    read that fails gives `unreadable`.
+
+    The reader of main_worktree_decision(): it reads, in that order, only
+    what the decision has not yet settled, the toplevel being the one
+    candidate, and decides there."""
+    common_dir = identity["common_dir"]
+    facts = {"common_dir": common_dir, "first_present": None, "first_realpath": None}
+    core_worktree, candidate_gitfiles = None, {}
     try:
-        if not records:
-            return None, "missing"
-        first = records[0]
-        if first["bare"]:
-            return None, "bare"
-        try:
-            _fs("lstat", os.lstat, first["path"])
-        except EvidenceError as exc:
-            if exc.errno in (errno.ENOENT, errno.ENOTDIR):
-                return None, "missing"
-            raise
-        common_dir = identity["common_dir"]
-        path = _realpath(first["path"])
-        if path != common_dir:
-            return path, None
-        outcome, error = _git(run, identity["directory"], ["config", "--get", "core.worktree"], "config")
-        if error is None:
-            value = outcome.result[:-1] if outcome.result.endswith(b"\n") else outcome.result
-            if value:
-                return _realpath(os.path.join(common_dir, value)), None
-        elif outcome.status != 1:  # 1 is `config --get`'s answer for an unset key
-            return None, "unreadable"
-        candidate = identity["toplevel"]
-        if candidate is not None and _gitfile(candidate) == common_dir:
-            return candidate, None
-        return None, "unnamed"
+        if records and not records[0]["bare"]:
+            first = records[0]["path"]
+            facts["first_present"], _ = presence_from_lstat(_lstat(first))
+            if facts["first_present"]:
+                facts["first_realpath"] = _realpath(first)
+                if facts["first_realpath"] == common_dir:
+                    outcome, error = _git(run, identity["directory"], ["config", "--get", "core.worktree"],
+                                          "config")
+                    if error is None:
+                        value = outcome.result[:-1] if outcome.result.endswith(b"\n") else outcome.result
+                        if value:
+                            core_worktree = _realpath(os.path.join(common_dir, value))
+                    elif outcome.status != 1:  # 1 is `config --get`'s answer for an unset key
+                        return None, "unreadable"
+                    candidate = identity["toplevel"]
+                    if core_worktree is None and candidate is not None:
+                        candidate_gitfiles[candidate] = _gitfile(candidate)
     except EvidenceError:
         return None, "unreadable"
+    return main_worktree_decision(facts, records, core_worktree, candidate_gitfiles)
+
+
+def registration_verdict(main, common_dir, named, worktrees=None, back=None, dotgit=None, shared=False):
+    """The two-way registration of a present worktree (D7, FR-055; lead
+    rulings R-57 L3 and R-59 D5), a pure decider over realpaths already read:
+    (True, admin_id) when it holds, (False, None) when it disagrees.
+
+    - shared: another entry of the registry names the row's path too
+      (shared_paths()): it disagrees, whatever else was read.
+    - named: the realpath that `<path>/.git` names when it is a gitfile
+      (_gitfile()), else None.
+    - main: the main worktree has no admin directory; it holds when named,
+      or else dotgit, the realpath of `<path>/.git`, is common_dir, with
+      admin_id None.
+    - Otherwise it holds when named's parent is worktrees, the realpath of
+      `<common_dir>/worktrees`, and back, the realpath that named's `gitdir`
+      file names (None when that file is missing or empty), is dotgit;
+      admin_id is named's last component.
+
+    A value the verdict does not reach may be None: verify_registration()
+    reads in this order and stops at the first value that decides."""
+    if shared:
+        return False, None
+    if main:
+        return (named if named is not None else dotgit) == common_dir, None
+    if named is None or os.path.dirname(named) != worktrees or back is None or back != dotgit:
+        return False, None
+    return True, os.path.basename(named)
 
 
 def verify_registration(path, common_dir, main):
@@ -2360,22 +2490,21 @@ def verify_registration(path, common_dir, main):
     the common directory itself, or a gitfile naming it; admin_id None. This
     check alone passes both of two registry entries naming one path, since
     the registry's porcelain output does not name an entry's admin
-    directory; worktree_rows() fails such rows closed (lead ruling R-57 L3)."""
+    directory; worktree_rows() fails such rows closed (lead ruling R-57 L3).
+    It reads what registration_verdict() needs, in its order, and decides
+    there."""
     dotgit = os.path.join(path, b".git")
     named = _gitfile(path)
     if main:
-        return (named if named is not None else _realpath(dotgit)) == common_dir, None
-    if named is None or os.path.dirname(named) != _realpath(os.path.join(common_dir, b"worktrees")):
-        return False, None
-    try:
-        back = _fs("read", _read_head, os.path.join(named, b"gitdir"), GITFILE_BYTES).rstrip()
-    except EvidenceError as exc:
-        if exc.errno in (errno.ENOENT, errno.ENOTDIR):
-            return False, None
-        raise
-    if not back or _realpath(os.path.join(named, back)) != _realpath(dotgit):
-        return False, None
-    return True, os.path.basename(named)
+        return registration_verdict(main, common_dir, named, dotgit=_realpath(dotgit) if named is None else None)
+    worktrees = back = real_dotgit = None
+    if named is not None:
+        worktrees = _realpath(os.path.join(common_dir, b"worktrees"))
+        if os.path.dirname(named) == worktrees:
+            back = _admin_gitdir(named)
+            if back is not None:
+                real_dotgit = _realpath(dotgit)
+    return registration_verdict(main, common_dir, named, worktrees, back, real_dotgit)
 
 
 def status_probe(path, run):
@@ -2387,14 +2516,19 @@ def status_probe(path, run):
     return _git(run, path, list(STATUS_PROBE), "status", StatusParser(), kind="status")
 
 
-def inspect_repository(directory, run, refresh=False):
+def inspect_repository(directory, run, refresh=False, *, repeat_identity_at_root=True):
     """The repository-wide evidence of the repository holding directory (D6,
     D8; FR-055, FR-056): rows 3, 4, 4b, 5, 6 and 7 through run_bounded() and
-    their parsers, memoized per common directory on run, the Invocation
-    (`common_dirs`), so that another directory of one repository runs only row
-    3. refresh reads afresh and replaces the memo; cleanup_report() always
-    does, since require_unchanged_cleanup_state() revalidates through it
-    (lead ruling R-51 (d)). Never refuses; Interrupted passes. Returns a dict:
+    their parsers, memoized on run, the Invocation (`common_dirs`), by the
+    device and inode of the common directory (lead ruling R-54 X-1), so that
+    another directory of one repository runs only row 3. refresh reads afresh
+    and replaces the memo; cleanup_report() always does, since
+    require_unchanged_cleanup_state() revalidates through it (lead ruling R-51
+    (d)). repeat_identity_at_root, on by default, runs row 5, row 3 again at
+    the main worktree where row 3 ran in another worktree, and names no root
+    when that common directory differs; off, row 5 is not run, and the memo
+    keeps such a result apart from the default's (R-54 X-1). Never refuses;
+    Interrupted passes. Returns a dict:
 
     - `identity`: {root, common_dir, dev, ino}, the realpaths of the main
       worktree and the common directory and the common directory's device and
@@ -2428,9 +2562,10 @@ def inspect_repository(directory, run, refresh=False):
     except EvidenceError as exc:
         repo["errors"].append(exc.error)
         return repo
-    if not refresh and common_dir in run.common_dirs:
-        return run.common_dirs[common_dir]
-    run.common_dirs[common_dir] = repo
+    key = (found.st_dev, found.st_ino) if repeat_identity_at_root else (found.st_dev, found.st_ino, "no row 5")
+    if not refresh and key in run.common_dirs:
+        return run.common_dirs[key]
+    run.common_dirs[key] = repo
     identity = {"root": None, "common_dir": common_dir, "dev": found.st_dev, "ino": found.st_ino}
     repo.update(identity=identity, toplevel=toplevel, superproject=superproject)
     outcome, error = _git(run, directory, ["worktree", "list", "--porcelain", "-z"], "worktree list",
@@ -2444,7 +2579,7 @@ def inspect_repository(directory, run, refresh=False):
     try:
         if records and not records[0]["bare"]:
             repo["first_is_common_dir"] = _realpath(records[0]["path"]) == common_dir
-        if root is not None and root != toplevel:  # row 5: row 3 ran in another worktree
+        if repeat_identity_at_root and root is not None and root != toplevel:  # row 5: row 3 ran elsewhere
             values, error = identity_probe(root, run)
             if error is not None:
                 repo["errors"].append(error)
@@ -2503,6 +2638,112 @@ def _registry_entries(registry, records):
     return [(at[id(record)] if id(record) in at else registry.index(record), record) for record in records]
 
 
+def row_evidence(record, raw, main, read, refs, merged, target):
+    """One worktree row assembled from evidence already read (D6, D7;
+    FR-006, FR-042, FR-055 to FR-057; lead ruling R-54 X-1): a pure function
+    returning the WorktreeRow, its document fields in WORKTREE_ROW_KEYS's
+    order with `prunable` only on a stale row whose record says so (M11),
+    then classify()'s class and partial_removal_note()'s notes. record is
+    the row's registry record; raw the row's path bytes; main whether it is
+    the main worktree; refs row 6's records by refname; merged row 7's set,
+    or None where row 7 did not run; target the merge target's name, or None.
+
+    read holds the row's own reads, None where a value was not read: the
+    `present` of presence_from_lstat(), with `dev` and `ino` from the lstat of
+    a present row; `active` and `tree`, the realpaths of the working directory
+    and of the row, `current` being null unless both were read (the working
+    directory inside the row, as the baseline reads it); `registered` and
+    `admin_id`, registration_verdict()'s answer; `status`, the combined
+    probe's result; and `errors`, the row errors of the reads that failed, in
+    the order read, which the row copies.
+
+    Branch evidence comes from refs for a present row only: a deleted
+    upstream keeps its short name with `ahead` and `behind` null, and a
+    branch named HEAD (HEAD_BRANCH_REF) takes none, its `upstream`,
+    `remote_present`, `ahead` and `behind` staying null while its row gains
+    a `probe-failed` error for `git for-each-ref`, so it is inspection-error
+    (lead ruling R-61 (b)); `merged_into_target` is membership of merged."""
+    row = WorktreeRow()
+    row.raw_path, row.main = raw, main
+    row.dev, row.ino = read["dev"], read["ino"]
+    row.registered, row.admin_id = read["registered"], read["admin_id"]
+    status = row.status = read["status"]
+    present = read["present"]
+    errors = list(read["errors"])
+    active, tree = read["active"], read["tree"]
+    current = None if active is None or tree is None else (
+        active == tree or tree == b"/" or active.startswith(tree + b"/"))
+    branch_ref = record["branch"]
+    branch = "detached" if branch_ref is None else _evidence_text(branch_ref.removeprefix(b"refs/heads/"))
+    upstream = remote_present = ahead = behind = merged_into_target = None
+    ref = refs.get(branch_ref) if present and branch_ref is not None else None
+    if ref is not None:
+        if branch_ref == HEAD_BRANCH_REF:
+            errors.append(unparseable_error("for-each-ref"))
+        elif ref["upstream_short"] is not None:
+            upstream = _evidence_text(ref["upstream_short"])
+            remote_present, ahead, behind = ref["remote_present"], ref["ahead"], ref["behind"]
+            tracked = refs.get(ref["upstream"])
+            row.upstream_oid = tracked["objectname"] if remote_present and tracked else None
+        if merged is not None:
+            merged_into_target = branch_ref in merged
+    text, valid = json_path(raw)
+    values = {
+        "path": text, "present": present, "branch": branch, "head": record["head"],
+        "upstream": upstream, "remote_present": remote_present, "ahead": ahead, "behind": behind,
+        "dirty": None if status is None else status["dirty"],
+        "ignored_files": None if status is None else status["ignored_files"],
+        "current": current, "merged_into_target": merged_into_target, "locked": record["locked"],
+        "ignored_files_truncated": None if status is None else status["ignored_files_truncated"],
+        "ignored_samples": None if status is None else [
+            dict(zip(("path", "path_valid_utf8"), json_path(sample))) for sample in status["ignored_samples"]],
+        "path_valid_utf8": valid, "errors": errors,
+    }
+    values["classification"], values["recommendation"] = classify(values, target)
+    values["notes"] = partial_removal_note(values, status, main)
+    if present is False and record["prunable"]:
+        values["prunable"] = True
+    row.update((key, values[key]) for key in WORKTREE_ROW_KEYS if key in values)
+    return row
+
+
+def _read_row(raw, main, common_dir, active, active_error, shared, run):
+    """The reads of one worktree row for row_evidence(), in D6's order: the
+    lstat; for a present row, its realpath, the working directory's failure
+    (active_error) if it failed, and the registration, a shared path's
+    verdict taken with nothing read (lead rulings R-57 L2 and L3); and, only
+    when the registration holds and nothing failed, the combined status
+    probe. A failed read becomes an entry of `errors`, and what follows it
+    in the same step is not read."""
+    read = {"present": None, "dev": None, "ino": None, "active": active, "tree": None,
+            "registered": None, "admin_id": None, "status": None, "errors": []}
+    errors = read["errors"]
+    found = _lstat(raw)
+    read["present"], error = presence_from_lstat(found)
+    if error is not None:
+        errors.append(error)
+    if not read["present"]:
+        return read
+    read["dev"], read["ino"] = found.st_dev, found.st_ino
+    try:
+        read["tree"] = _realpath(raw)
+        if active_error is not None:
+            errors.append(active_error)
+        if shared:
+            read["registered"], read["admin_id"] = registration_verdict(main, common_dir, None, shared=True)
+        else:
+            read["registered"], read["admin_id"] = verify_registration(raw, common_dir, main)
+    except EvidenceError as exc:
+        errors.append(exc.error)
+    if read["registered"] and not errors:
+        outcome, error = status_probe(raw, run)
+        if error is not None:
+            errors.append(error)
+        else:
+            read["status"] = outcome.result
+    return read
+
+
 def worktree_rows(repo, run, records=None):
     """One WorktreeRow per registry entry of repo (inspect_repository()), in
     the registry's order; or, when records is given, one per entry of records,
@@ -2516,21 +2757,23 @@ def worktree_rows(repo, run, records=None):
     ENOENT or ENOTDIR and null with an `os-error` on any other failure (lead
     ruling R-36); for a present row, `current` (the working directory is
     inside it, as the baseline reads it), the two-way registration and, only
-    when it holds, the combined status probe in that worktree; a row whose
+    when it holds, the combined status probe in that worktree. A row whose
     registry path another entry of the whole registry names too is
     registration-mismatch (`registered` false) with no registration read,
-    since the two-way check cannot tell such entries apart, while a row not
+    since the two-way check cannot tell such entries apart; a row not
     present gets no registration or duplicate check (lead rulings R-57 L2
-    and L3, R-59 D5); the branch
-    evidence from row 6, a deleted upstream keeping its short name with
-    `ahead` and `behind` null, and a branch named HEAD (HEAD_BRANCH_REF)
-    taking none: its `upstream`, `remote_present`, `ahead` and `behind` stay
-    null and its row carries a `probe-failed` error for `git for-each-ref`,
-    so it is inspection-error (lead ruling R-61 (b));
-    `merged_into_target` from row 7; then classify()
-    and partial_removal_note(). Each failed outcome or call becomes an entry of
-    the row's `errors`. A value not established is null, and a stale or
-    unreadable row carries no branch evidence, as the baseline gave none."""
+    and L3, R-59 D5). Then the branch evidence from row 6, a deleted
+    upstream keeping its short name with `ahead` and `behind` null, and a
+    branch named HEAD (HEAD_BRANCH_REF) taking none: its `upstream`,
+    `remote_present`, `ahead` and `behind` stay null and its row carries a
+    `probe-failed` error for `git for-each-ref`, so it is inspection-error
+    (lead ruling R-61 (b)); `merged_into_target` from row 7; then classify()
+    and partial_removal_note(). Each failed outcome or call becomes an entry
+    of the row's `errors`. A value not established is null, and a stale or
+    unreadable row carries no branch evidence, as the baseline gave none.
+
+    The reader of row_evidence(): the working directory's realpath once,
+    then per row _read_row() and the assembly (lead ruling R-54 X-1)."""
     identity = repo["identity"]
     registry = repo["records"]
     if identity is None or not registry:
@@ -2538,7 +2781,6 @@ def worktree_rows(repo, run, records=None):
     common_dir = identity["common_dir"]
     target = repo["merge_target"]["name"] if repo["merge_target"] else None
     refs = {ref["refname"]: ref for ref in repo["refs"] or ()}
-    merged_set = repo["merged"]
     shared = shared_paths(registry)
     entries = _registry_entries(registry, records)
     try:
@@ -2554,71 +2796,8 @@ def worktree_rows(repo, run, records=None):
             if identity["root"] is None:
                 continue
             raw = identity["root"]
-        row = WorktreeRow()
-        row.raw_path, row.main = raw, index == 0
-        errors = []
-        present = current = status = None
-        try:
-            found = _fs("lstat", os.lstat, raw)
-        except EvidenceError as exc:
-            if exc.errno in (errno.ENOENT, errno.ENOTDIR):
-                present = False
-            else:
-                errors.append(exc.error)
-        else:
-            present = True
-            row.dev, row.ino = found.st_dev, found.st_ino
-            try:
-                tree = _realpath(raw)
-                if active_error is not None:
-                    errors.append(active_error)
-                else:
-                    current = active == tree or tree == b"/" or active.startswith(tree + b"/")
-                if record["path"] in shared:
-                    row.registered, row.admin_id = False, None
-                else:
-                    row.registered, row.admin_id = verify_registration(raw, common_dir, row.main)
-            except EvidenceError as exc:
-                errors.append(exc.error)
-            if row.registered and not errors:
-                outcome, error = status_probe(raw, run)
-                if error is not None:
-                    errors.append(error)
-                else:
-                    status = outcome.result
-        row.status = status
-        branch_ref = record["branch"]
-        branch = "detached" if branch_ref is None else _evidence_text(branch_ref.removeprefix(b"refs/heads/"))
-        upstream = remote_present = ahead = behind = merged = None
-        ref = refs.get(branch_ref) if present and branch_ref is not None else None
-        if ref is not None:
-            if branch_ref == HEAD_BRANCH_REF:
-                errors.append(unparseable_error("for-each-ref"))
-            elif ref["upstream_short"] is not None:
-                upstream = _evidence_text(ref["upstream_short"])
-                remote_present, ahead, behind = ref["remote_present"], ref["ahead"], ref["behind"]
-                tracked = refs.get(ref["upstream"])
-                row.upstream_oid = tracked["objectname"] if remote_present and tracked else None
-            if merged_set is not None:
-                merged = branch_ref in merged_set
-        text, valid = json_path(raw)
-        values = {
-            "path": text, "present": present, "branch": branch, "head": record["head"],
-            "upstream": upstream, "remote_present": remote_present, "ahead": ahead, "behind": behind,
-            "dirty": None if status is None else status["dirty"],
-            "ignored_files": None if status is None else status["ignored_files"],
-            "current": current, "merged_into_target": merged, "locked": record["locked"],
-            "ignored_files_truncated": None if status is None else status["ignored_files_truncated"],
-            "ignored_samples": None if status is None else [
-                dict(zip(("path", "path_valid_utf8"), json_path(sample))) for sample in status["ignored_samples"]],
-            "path_valid_utf8": valid, "errors": errors,
-        }
-        values["classification"], values["recommendation"] = classify(values, target)
-        values["notes"] = partial_removal_note(values, status, row.main)
-        if present is False and record["prunable"]:
-            values["prunable"] = True
-        row.update((key, values[key]) for key in WORKTREE_ROW_KEYS if key in values)
-        rows.append(row)
+        read = _read_row(raw, index == 0, common_dir, active, active_error, record["path"] in shared, run)
+        rows.append(row_evidence(record, raw, index == 0, read, refs, repo["merged"], target))
     return rows
 # endregion evidence
 
