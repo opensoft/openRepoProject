@@ -28,7 +28,9 @@ bounded inspection of a remote's URL, with the lead's C-31 to C-33 on three
 points found in applying it, and lane openRepoProject-3's folded read of
 `e198548..67e43ae` (C-34); its edits to `specs/project-overview/spec.md`,
 agreed by lane openRepoProject-4 on 2026-10-20, are committed (`233df0b`;
-`proposal.md`, Dependencies and Sequencing).
+`proposal.md`, Dependencies and Sequencing). After that agreement, C-35, as
+lane openRepoProject-3's narrowing amends it, fills D5 with the lookup's
+per-directory rule and D11 with two tests, and edits no spec text.
 
 Citations follow `proposal.md`: the packet at `da33d92`; APO, CAS, PRS and
 `project:N` at main `961c405`, which main `e9d6711` holds unchanged for them
@@ -76,6 +78,7 @@ The rulings and the packet's boundary map to the decisions:
 | C-32: the user part of a credential-bearing URL checked on its own in the outputs | D3 |
 | C-33: that user part a token no path, user or test name plausibly holds | D3 |
 | C-34: lane openRepoProject-3's folded read of `e198548..67e43ae`: the lookup's place, the request cap's precedence and the exact-size tests | D1, D4, D11 |
+| C-35: lane openRepoProject-3's narrowing of the lookup's per-directory rule: a directory where `gh` is absent is skipped, any other error fails the lookup | D5, D11 |
 | C-10, L-12: CI on Linux only | Migration Plan |
 
 What in `project` shapes the approach (at `961c405`; features 004 and 005
@@ -383,6 +386,25 @@ path, received the caller's `GH_TOKEN`; and with `.` in `PATH` the lookup
 returned the relative `./gh`, which raised `FileNotFoundError` when started
 in `/`.
 
+Inside that lookup a directory where `gh` is absent is skipped, as POSIX
+`execvp`'s search and a shell's own search skip it: ENOENT, ENOTDIR or EACCES
+on the directory or on its `gh` entry, or an entry that is not a regular file
+with execute permission. So the `gh` found is the one the person's shell
+would run, and a `PATH` that names directories that do not exist, as many
+do, does not turn every `--remote` run into `gh-unavailable`. Any other
+error from a directory or its entry, such as EIO, ELOOP or ESTALE, fails the
+lookup, which then gives what one that fails gives, below. Skipping such a
+directory could run a later `gh` that one of the searches would not pick:
+checked on 2026-10-20 by injecting each error under glibc 2.39's `execvp`, it
+stopped on ELOOP and EIO, and went on past ENOENT, EACCES, ENOTDIR, ESTALE,
+ENODEV and ETIMEDOUT, where bash 5.2.21, zsh 5.9 and dash skipped a `gh` that
+is a symbolic link to itself (ELOOP) and went on to the later one. The lookup
+does not choose between searches that disagree, and so is stricter than glibc's
+on ESTALE, ENODEV and ETIMEDOUT too. The 5 s limit and the deadline stay
+the only cuts of the lookup as a whole, and the spec's "finds none, fails,
+or reaches its 5 s limit" speaks of the lookup as a whole, so this
+per-directory rule fills D5 and is no change to the spec (C-35).
+
 A lookup that fails, or that reaches its 5 s limit, as on an unreachable
 `PATH` directory, gives what one that finds none gives: every keyed row,
 whether or not its key is past the 64th, is `gh-unavailable`, and no child
@@ -606,6 +628,15 @@ of these fields, so remote evidence never reaches an eligibility gate, a
   lookup's filesystem task takes the injected slow call that change 2's
   design patches into its filesystem tasks (APO design.md, D13), on a chosen
   `PATH` directory, so that the lookup is cut at 5 s (C-26).
+- Two `PATH` fixtures, built in the test's temporary tree, test the lookup's
+  per-directory rule (C-35). A directory of mode 000 placed before the
+  directory that holds the fake `gh` is skipped, and the lookup finds that
+  `gh` (a mode does not bind a process running as root, so the test needs
+  another user, or is skipped). A directory whose `gh` is a symbolic link to
+  itself, an ELOOP, placed before it fails the lookup: every queried row that
+  has a key is `gh-unavailable`, and the fake `gh` after it never runs.
+  Neither is a scenario, since the spec's "fails" speaks of the lookup as a
+  whole.
 - The counting `git` wrapper of change 2's design (APO design.md, D13), which
   can hold a chosen argv, gains one fixture control: for a chosen argv in a
   chosen repository it exits with a given status and a fixed line on standard

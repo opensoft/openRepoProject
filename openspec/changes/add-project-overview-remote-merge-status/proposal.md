@@ -10,7 +10,9 @@ committed on lane openRepoProject-4's agreement of 2026-10-20; round C6's
 edits for Codex's finding on `67e43ae`, three points found in applying it
 and lane openRepoProject-3's folded read of `e198548..67e43ae` (C-30 to C-34)
 applied, their `project-overview` spec edits committed on lane
-openRepoProject-4's agreement of 2026-10-20; ratification
+openRepoProject-4's agreement of 2026-10-20, and C-35, lane
+openRepoProject-3's narrowing of the per-directory rule of the lookup of
+`gh`, applied in `design.md` alone, with no spec edit; ratification
 by Brett Heap pending; nothing here is ratified. Governing issue:
 opensoft/openRepoProject#25, claimed by lane openRepoProject-5 (comment
 6111242617); refs #6, the record of the project
@@ -36,7 +38,7 @@ executable. Change 1's evidence model,
 `Repository inspection requires Git 2.36 and shares one evidence model`
 (CAS/cmd:90), is [E]. The lane's rulings are cited as L-1 to L-9 and C-1 to C-8
 (2026-10-11), L-10 to L-15, B-14, C-9 and C-10 (2026-10-18), L-16, L-17 and
-C-11 to C-14 (2026-10-19), and F-3 and C-15 to C-34 (2026-10-20, C-16 to C-22
+C-11 to C-14 (2026-10-19), and F-3 and C-15 to C-35 (2026-10-20, C-16 to C-22
 being the council's verdicts). `PR19/cmd` is draft PR #19's
 `openspec/changes/add-project-clean-all-safe/specs/project-command/spec.md` at
 `c462d87`.
@@ -660,11 +662,13 @@ merging), **C-15** (the council's inputs), **C-16** to **C-22** (the council's
 verdicts, below), **C-23** (Open Questions 3), **C-24** to **C-29** (round
 C5: lane openRepoProject-3's delta read of `e198548`, Codex's three findings
 on it and two points found in applying them; Decisions and Readings below,
-and "Re-read and Codex Findings (round C5)") and **C-30** to **C-34** (round
+and "Re-read and Codex Findings (round C5)"), **C-30** to **C-34** (round
 C6: Codex's finding on `67e43ae`, the bounded inspection of a remote's URL,
 three points found in applying it, and lane openRepoProject-3's folded read
 of `e198548..67e43ae`; Decisions and Readings below, and "Re-read and Codex
-Findings (round C6)").
+Findings (round C6)") and **C-35** (the lookup of `gh`'s per-directory rule,
+lane openRepoProject-3's narrowing, applied in `design.md` alone; "Re-read and
+Codex Findings (round C6)").
 
 Packet open decisions taken, each citing the text that leaves it open:
 
@@ -1246,11 +1250,15 @@ ruled on three points the writer found in applying it (C-31 to C-33). Lane
 openRepoProject-3's read-only verifier then read the delta
 `e198548..67e43ae` on 2026-10-20, folded with round C4's open items, and
 found no HIGH, no MEDIUM and six LOWs (L1 to L6, its lines at `67e43ae`),
-which the lead accepted (C-34), the last six rows. C-30 to C-33 and L4 edit
+which the lead accepted (C-34), six rows. C-30 to C-33 and L4 edit
 `specs/project-overview/spec.md`, C-30 and C-31 in "Overview is local and
 read-only", the block lane openRepoProject-4 agreed; lane openRepoProject-4
 agreed those edits too on 2026-10-20 with nothing declined, and they are
-committed with the rest (Dependencies and Sequencing).
+committed with the rest (Dependencies and Sequencing). After that agreement
+the lead ruled on the rest of lane openRepoProject-3's L3, a `PATH` directory
+that gives an error (C-35, as lane openRepoProject-3's narrowing amended it
+before any edit), the last row; it edits `design.md` alone, and the agreed
+spec text is unchanged.
 
 | Finding | Severity | Ruling | Section edited |
 | --- | --- | --- | --- |
@@ -1264,3 +1272,4 @@ committed with the rest (Dependencies and Sequencing).
 | L4: "`request-cap` applies only when requests can be sent and the cap stops them" is false for a lookup that the deadline cuts, which leaves the keys past the 64th `request-cap` | LOW | C-34: applied, by dropping the gloss, as C-34 prefers, since the Requests paragraph's expiry sentence and the Results paragraph then state the whole order alone: the run-wide `unavailable`, then `request-cap`, then `cancelled`; the copies follow: `design.md` D4 makes the rest `request-cap` unless the run-wide `unavailable` applies, a lookup the deadline cuts being no such case, and the Decisions bullet states the order; the round C5 row for Codex 4 keeps the gloss as that round's record | `project-overview` delta (Requests); Decisions ("Run-wide unavailability, C-25 and C-26"); Dependencies and Sequencing; `design.md` D4 |
 | L5: "and no other state", where the packet also names unavailable and unknown results | LOW | C-34: applied: "and no other pull-request state" | Decisions ("Closed pull requests, C-16") |
 | L6: the rejected `request-cap` alternative credits Codex's P1 on `e198548` with the completeness reason, which that P1 does not give | LOW | C-34: applied: the P1 is cited for the conflict it found, the two outcomes both applying, and the reason is the proposal's own, the one "`unavailable` beyond DI:1041-1042" gives, with C-25 | Decisions ("Run-wide unavailability, C-25 and C-26") |
+| L3, the rest: a `PATH` directory that gives an error, for which the lookup of `gh` states no rule, a missing directory being common | LOW | C-35, as amended by lane openRepoProject-3's narrowing, which the lead adopted before any edit in place of C-35's first wording (a directory skipped for any reason): applied, design only: the lookup skips a directory where `gh` is absent, as POSIX `execvp`'s search and a shell's own search skip it (ENOENT, ENOTDIR or EACCES on the directory or on its `gh` entry, or an entry that is not a regular file with execute permission), so that the `gh` found is the one the person's shell would run; any other error from a directory or its entry, such as EIO, ELOOP or ESTALE, fails the lookup, and every queried row with a key is then `unavailable` with `gh-unavailable`, as the spec's "fails" already states; the 5 s limit and the deadline stay the only cuts of the lookup as a whole; the spec's "finds none, fails, or reaches its 5 s limit" speaks of the lookup as a whole, so the rule fills D5 and changes no spec text; D11 gains two tests, a mode-000 directory before the real `gh`'s directory, which finds `gh`, and a directory whose `gh` is an ELOOP symlink, before it, which gives `gh-unavailable`; the writer checked both cases on 2026-10-20 with a prototype of the rule (the mode-000 directory is skipped and `gh` found; the ELOOP symlink fails the lookup), and recorded in D5 what glibc 2.39's `execvp`, bash 5.2.21, zsh 5.9 and dash do with each error, so that its rationale rests on what was observed | `design.md` D5, D11 |
