@@ -3214,12 +3214,169 @@ def build_plan(repo, run):
 # endregion plan
 
 # region gates
+# The ten gates of FR-020 (T050; design D10, D12 and D13; data-model.md,
+# "Gate"; lead rulings R-56 Q-6 and R-67 (a)). A row is selected only when it
+# passes every gate, and an excluded row's reason is its first failing gate:
+# 1 main-worktree, 2 unsupported-path-bytes, 3 registration-mismatch (region
+# index), 4 locked-worktree, 5 the classification when it is not
+# merged-removable, 6 not-requested, 7 unstarted-branch or reflog-unavailable
+# (region reflog), 8 deferred-target-cap, 9 contains-submodule and 10
+# hidden-local-state (region index). Gates 1 to 7 are per-row functions,
+# gate(row, plan, run) returning the reason or None, each free to set the row's
+# `errors`, set its class to inspection-error or set its unprobed marker; gate 8
+# takes the rows that passed gates 1 to 7 together; gates 9 and 10 run only for
+# the rows gate 8 takes. Every excluded row carries the reason its failing gate
+# returned, never null (R-67 (a)).
+
+
+def main_worktree_gate(row, plan, run):
+    """Gate 1: `main-worktree` for the main worktree, which is never removed."""
+    return "main-worktree" if row.main else None
+
+
+def path_bytes_gate(row, plan, run):
+    """Gate 2: `unsupported-path-bytes` for a path that is not valid UTF-8."""
+    return None if row["path_valid_utf8"] else "unsupported-path-bytes"
+
+
+def locked_gate(row, plan, run):
+    """Gate 4: `locked-worktree` for a row whose registry record is locked."""
+    return "locked-worktree" if row["locked"] else None
+
+
+def class_gate(row, plan, run):
+    """Gate 5: the row's classification when it is not `merged-removable`; a
+    row whose evidence was not established is excluded here as
+    `inspection-error`, and one whose registration was never read by its class
+    (lead ruling R-53 P-16)."""
+    classification = row["classification"]
+    return None if classification == "merged-removable" else classification
+
+
+def not_requested_gate(row, plan, run):
+    """Gate 6: `not-requested` in mode single for a row other than P
+    (plan.target), which has passed gates 1 to 5. Where P names no single row
+    (plan.target None), every such row is not requested, so nothing is
+    selected."""
+    return "not-requested" if plan.mode == "single" and row is not plan.target else None
+
+
+def row_gates():
+    """The per-row gates 1 to 7 in FR-020's order, one tuple of functions,
+    each gate(row, plan, run) returning its reason or None. The tuple is made
+    when called, so that the bodies T066 and T067 give the stubs of regions
+    reflog and index are the ones run."""
+    return (main_worktree_gate, path_bytes_gate, registration_gate, locked_gate, class_gate,
+            not_requested_gate, reflog_gate)
+
+
+def deferral_gate(candidates, plan):
+    """Gate 8, `deferred-target-cap` (T100 fills; D12, FR-032): candidates
+    are the rows that passed gates 1 to 7, in canonical order. Returns (taken,
+    deferred): taken, the first LIMITS["targets"] (16) of them, which go on to
+    the index gates (9 and 10); deferred, the rest, which gate_rows() excludes
+    as `deferred-target-cap` with no index probe. A row an index gate then
+    excludes keeps its place among the 16. It runs no child. This stub takes
+    every candidate and defers none."""
+    return list(candidates), []
+
+
+def first_failing_gate(row, gates, plan, run):
+    """The reason of the first of gates that row fails, or None."""
+    for gate in gates:
+        reason = gate(row, plan, run)
+        if reason is not None:
+            return reason
+    return None
+
+
+def gate_rows(rows, plan, run):
+    """The gates of FR-020 over rows, plan's rows in canonical order (data-model.md,
+    "Gate"): gates 1 to 7 per row (row_gates()), then gate 8 over the rows that
+    passed them (deferral_gate()), then gates 9 and 10 (index_gates()) for the
+    rows gate 8 took. Returns (selected, excluded): selected, the rows that
+    passed every gate; excluded, (row, reason) pairs, reason the first failing
+    gate's, never None (R-67 (a)); both by raw path bytes."""
+    excluded, candidates = [], []
+    for row in rows:
+        reason = first_failing_gate(row, row_gates(), plan, run)
+        if reason is None:
+            candidates.append(row)
+        else:
+            excluded.append((row, reason))
+    taken, deferred = deferral_gate(candidates, plan)
+    excluded += [(row, "deferred-target-cap") for row in deferred]
+    selected = []
+    for row in taken:
+        reason = index_gates(row, plan, run)
+        if reason is None:
+            selected.append(row)
+        else:
+            excluded.append((row, reason))
+    selected.sort(key=lambda row: row.raw_path)
+    excluded.sort(key=lambda item: item[0].raw_path)
+    return selected, excluded
+
+
+def next_step(reason):
+    """D18's next step for an exclusion reason: NEXT_STEPS's, else the class's
+    recommendation (RECOMMENDATIONS); None for a reason with neither."""
+    return NEXT_STEPS.get(reason) or RECOMMENDATIONS.get(reason)
 # endregion gates
 
 # region reflog
+def reflog_gate(row, plan, run):
+    """Gate 7, `unstarted-branch` or `reflog-unavailable` (T066 fills; D10,
+    FR-021, FR-022; lead rulings R-56 Q-6 and R-67 (a)).
+
+    Contract: reflog_gate(row, plan, run) -> reason or None, for a row that
+    passed gates 1 to 6, in every mode. It reads the common directory from the
+    plan (plan.evidence["identity"]["common_dir"]) and the branch and head from
+    the row, so that it can mark the row, and wraps
+    read_reflog(common_dir, branch, head, run): one fs_call() read of
+    logs/refs/heads/<branch> under the common directory, at most 64 KiB, never
+    a Git child. It returns `unstarted-branch` when an anchor survives with no
+    movement after it, its new object the head; `reflog-unavailable` where the
+    reflog cannot decide it (missing, empty, read to its 64 KiB bound, entries
+    that cannot decide, or a last entry whose new object is not the head);
+    `inspection-error`, after putting an `os-error` in row["errors"] and
+    setting row["classification"] to inspection-error, for any other read
+    error; and None when a movement survives. A read not finished within the
+    filesystem budget returns `reflog-unavailable` AND sets row.unprobed, the
+    marker's only setter, which plan_completeness() reads as
+    inspection-incomplete. This stub passes every row."""
+    return None
 # endregion reflog
 
 # region index
+def registration_gate(row, plan, run):
+    """Gate 3, `registration-mismatch` (T067 fills; D7, FR-055; lead ruling
+    R-53 P-16).
+
+    Contract: registration_gate(row, plan, run) -> "registration-mismatch" or
+    None. It fails only when row.registered is False, the two-way
+    registration read and found to disagree, a path two registry entries share
+    included; a row whose registration was never read (registered None, a
+    present: false row among them) passes, and gate 5 excludes it by its class.
+    It runs no child and reads no file. This stub passes every row."""
+    return None
+
+
+def index_gates(row, plan, run):
+    """Gates 9 and 10, `contains-submodule` and `hidden-local-state` (T067
+    fills; D12, FR-023; lead ruling R-56 Q-6).
+
+    Contract: index_gates(row, plan, run) -> reason or None, for a row that
+    passed gates 1 to 8 only. Through the per-target helpers T067 adds,
+    modules_check(common_dir, admin_id, run) and hidden_state_probe(path, run),
+    each (result, row_error): `contains-submodule` for a `modules` entry in the
+    row's admin directory or a gitlink in its own index; `hidden-local-state`
+    for an index entry flagged assume-unchanged or skip-worktree; and
+    `inspection-error`, after putting the check's row error in row["errors"]
+    and setting row["classification"] to inspection-error, for a check that
+    failed, timed out or met the deadline, since a null flag never passes.
+    This stub passes every row."""
+    return None
 # endregion index
 
 # region preview

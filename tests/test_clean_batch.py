@@ -13,7 +13,9 @@ eligible (lead ruling R-56).
 """
 import os
 from pathlib import Path
+import types
 import unittest
+from unittest import mock
 
 import clean_support
 
@@ -30,6 +32,25 @@ def argv_words(record):
     while at + 1 < len(argv) and argv[at] == "-c":
         at += 2
     return argv[at:]
+
+
+def literal_row(name, *, main=False, valid=True, locked=False, classification="merged-removable",
+                registered=True):
+    """A lane G WorktreeRow written as a literal (lead ruling R-56): the fields
+    the gates read, and its `main`, `raw_path` and `registered` attributes."""
+    raw = b"/w/" + name.encode() + (b"" if valid else b"\xff")
+    row = project.WorktreeRow(path=project.json_path(raw)[0], branch=name, locked=locked,
+                              classification=classification, path_valid_utf8=valid)
+    row.raw_path, row.main, row.registered = raw, main, registered
+    return row
+
+
+def literal_plan(mode, target=None):
+    """A Plan of mode for the literal rows, P being target in mode single."""
+    plan = project.Plan({"root": Path("/w/main")}, types.SimpleNamespace(
+        mode=mode, action=None if mode == "report" else "remove"))
+    plan.target = target
+    return plan
 
 
 class BatchTests(clean_support.CleanCase):
@@ -149,6 +170,98 @@ class BatchTests(clean_support.CleanCase):
                                  (without.returncode, without.stdout, without.stderr))
         self.assertEqual(self.git(root, "worktree", "list", "--porcelain"), before)
         self.assertTrue((dirty / "uncommitted").is_file())
+
+    # T040: the first gates, the plan document and the estimates.
+
+    def test_clean_first_gates_in_order(self):
+        # FR-020, data-model.md "Gate": gate_rows() on literal rows, with no
+        # child and no filesystem call; the first failing gate is the reason.
+        main = literal_row("main", main=True, valid=False, locked=True, classification="protected-default")
+        rows = {
+            "bytes": literal_row("bytes", valid=False, locked=True, classification="dirty"),
+            "locked": literal_row("locked", locked=True, classification="dirty"),
+            "dirty": literal_row("dirty", classification="dirty"),
+            # Lead ruling R-53 P-16: a registration never read passes gate 3 and
+            # is excluded at gate 5 by its class, never as registration-mismatch.
+            "unread": literal_row("unread", classification="stale-worktree", registered=None),
+            "unverified": literal_row("unverified", classification="inspection-error", registered=None),
+            "p": literal_row("p"),
+            "q": literal_row("q"),
+        }
+        expected = {"main": "main-worktree", "bytes": "unsupported-path-bytes", "locked": "locked-worktree",
+                    "dirty": "dirty", "unread": "stale-worktree", "unverified": "inspection-error"}
+        order = [main, rows["q"], rows["unverified"], rows["p"], rows["dirty"], rows["unread"],
+                 rows["locked"], rows["bytes"]]
+
+        def outcome(plan, gated=None):
+            selected, excluded = project.gate_rows(gated or order, plan, None)
+            return ([row["branch"] for row in selected], [(row["branch"], reason) for row, reason in excluded])
+
+        def by_bytes(names):
+            return sorted(names, key=lambda name: ({"main": main, **rows}[name]).raw_path)
+
+        with mock.patch.object(project, "run_bounded", side_effect=AssertionError("a Git child ran")), \
+                mock.patch.object(project, "fs_call", side_effect=AssertionError("a filesystem call ran")):
+            for mode in ("all-safe", "report"):
+                with self.subTest(mode=mode):
+                    self.assertEqual(outcome(literal_plan(mode)),
+                                     (["p", "q"], [(name, expected[name]) for name in by_bytes(expected)]))
+            with self.subTest("not-requested only in mode single, for a row other than P"):
+                single = {**expected, "q": "not-requested"}
+                self.assertEqual(outcome(literal_plan("single", rows["p"])),
+                                 (["p"], [(name, single[name]) for name in by_bytes(single)]))
+                none = {**expected, "p": "not-requested", "q": "not-requested"}
+                self.assertEqual(outcome(literal_plan("single")),
+                                 ([], [(name, none[name]) for name in by_bytes(none)]), "no single P: none selected")
+            # The stubs' slots in the order: gate 3 after gate 2 and before gate 4,
+            # gate 7 after gate 6, gate 8 over the rows past gate 7, and gates 9
+            # and 10 only for the rows gate 8 takes.
+            mismatched = literal_row("mismatched", locked=True, classification="inspection-error", registered=False)
+            hidden = literal_row("bytes-mismatched", valid=False, registered=False)
+            unstarted = literal_row("r")
+            gated = [main, hidden, mismatched, rows["p"], rows["q"], unstarted]
+            seen = []
+
+            def reflog(row, plan, run):
+                if row is unstarted:
+                    row.unprobed = True  # R-67 (a): a read past its budget still names a reason
+                    return "reflog-unavailable"
+                return "unstarted-branch" if row is rows["q"] else None
+
+            def index(row, plan, run):
+                seen.append(row["branch"])
+                return "hidden-local-state" if row is rows["p"] else None
+
+            with mock.patch.object(project, "registration_gate",
+                                   side_effect=lambda row, plan, run: "registration-mismatch"
+                                   if row.registered is False else None), \
+                    mock.patch.object(project, "reflog_gate", side_effect=reflog), \
+                    mock.patch.object(project, "index_gates", side_effect=index):
+                self.assertEqual(outcome(literal_plan("all-safe"), gated), ([], sorted([
+                    ("main", "main-worktree"), ("bytes-mismatched", "unsupported-path-bytes"),
+                    ("mismatched", "registration-mismatch"), ("p", "hidden-local-state"),
+                    ("q", "unstarted-branch"), ("r", "reflog-unavailable")],
+                    key=lambda item: b"/w/" + item[0].encode() + (b"\xff" if item[0] == "bytes-mismatched" else b""))))
+                self.assertEqual(seen, ["p"])
+                seen.clear()
+                self.assertEqual(outcome(literal_plan("single", unstarted), gated)[1][-2:],
+                                 [("q", "not-requested"), ("r", "reflog-unavailable")])
+                # Gate 8 takes the first candidate and defers the rest: the
+                # deferred row gets no index gate.
+                with mock.patch.object(project, "deferral_gate",
+                                       side_effect=lambda candidates, plan: (candidates[:1], candidates[1:])), \
+                        mock.patch.object(project, "reflog_gate", return_value=None):
+                    seen.clear()
+                    self.assertEqual(outcome(literal_plan("report"), [main, rows["p"], rows["q"]]),
+                                     ([], [("main", "main-worktree"), ("p", "hidden-local-state"),
+                                           ("q", "deferred-target-cap")]))
+                    self.assertEqual(seen, ["p"])
+        # Each stub passes every row, and the deferral stub takes every candidate.
+        plan = literal_plan("all-safe")
+        for row in (main, *rows.values()):
+            self.assertEqual([gate(row, plan, None) for gate in (project.registration_gate, project.reflog_gate,
+                                                                  project.index_gates)], [None] * 3)
+        self.assertEqual(project.deferral_gate([rows["p"], rows["q"]], plan), ([rows["p"], rows["q"]], []))
 
 
 if __name__ == "__main__":
