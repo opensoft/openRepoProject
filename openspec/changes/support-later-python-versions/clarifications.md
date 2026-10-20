@@ -128,7 +128,7 @@ skipped on any CI job" stands.
 ### N11. `import errno` is shared with feature 004
 **Raised by:** systems-architect
 **Concern:** Feature 004's realization adds `import errno` to `project`'s
-import block (`004-project-clean-all-safe` at `0d3e0f7`), the import S1 and
+import block (`004-project-clean-all-safe` at `96a08d4`), the import S1 and
 S2 need, and "Ordering and shared files" does not name `project`. A three-way
 merge of the feasibility copy with feature 004's `project` over `961c405` is
 clean and keeps one `import errno`.

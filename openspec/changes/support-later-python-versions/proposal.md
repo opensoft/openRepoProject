@@ -660,27 +660,34 @@ and 3.15.0rc2:
   - `.github/workflows/tests.yml`: this change edits only the `test` job's
     `python` list (`:9`); feature 004 adds a separate `git-floor` job on
     `ubuntu-latest` and leaves the `test` job unchanged
-    (`specs/004-project-clean-all-safe/plan.md`, "CI shape", on lane 2's
-    branch `004-project-clean-all-safe` at `d1e7c56`, unchanged at its head
-    `0d3e0f7`: the `test` job, "two jobs (Python 3.10 and 3.12 on
-    `ubuntu-latest`, Linux only since #32; R-35)", runs the whole suite
-    unchanged). The job itself is merged into that branch (`4baec61`, from
-    `impl/004-t003-git-floor` at `339b309`) and adds lines after `:17` only,
-    so the `test` job and its `python` list (`:9`) are as on main; the
-    branch has merged `e9d6711`.
+    (`specs/004-project-clean-all-safe/plan.md` on lane 2's branch
+    `004-project-clean-all-safe` at `96a08d4`: "CI shape", `:248-250`, where
+    "every job of the `test` matrix (`ubuntu-latest`, Linux only since #32;
+    R-35, R-46)" runs the whole suite unchanged beside "one new job,
+    `git-floor`, on `ubuntu-latest` with Python 3.10"; and its file table,
+    `:312-313`, "the `test` job unchanged"). The job is merged into that
+    branch (`4baec61`) and, at `96a08d4`, `.github/workflows/tests.yml`
+    differs from main's by 50 added lines after `:17` only (comment
+    `:19-24`, job `:25-67`), so the `test` job and its `python` list (`:9`)
+    are as on main; the branch has merged `e9d6711`.
   - The job's comment first read "The two test jobs above (ubuntu-latest,
-    Python 3.10 and 3.12)", which goes stale when this matrix widens. Lane
-    openRepoProject-2 agreed on 2026-10-19 (its ruling R-46) to a comment
-    that names no job count, now on that branch at `f9a639a`: "The test jobs
+    Python 3.10 and 3.12)" (`tests.yml:19-20` as `4baec61` merged it), which
+    goes stale when this matrix widens. Lane openRepoProject-2 agreed on
+    2026-10-19 (its ruling R-46) to a comment that names no job count,
+    merged by `0d3e0f7` and at `tests.yml:19-21` at `96a08d4`: "The test jobs
     above (ubuntu-latest, every Python of the matrix) run on whichever Git
-    their runner ships". Its plan, research and spec still say "two jobs" at
-    `0d3e0f7`; R-46 has them and its quickstart say "every job of the `test`
-    matrix" in lane 2's doc round 3. This change needs no edit on 004's
-    account, whichever of the two lands first.
+    their runner ships". R-46 (`090dcc7`, merged by lane 2's doc round 3,
+    `acc822e`) also replaced "two jobs" with "every job of the `test`
+    matrix" in its plan, research and spec, and added it to its tasks; at
+    `96a08d4`: plan.md:228-229, :248-249, :350; research.md:529-531, :547;
+    spec.md:1626-1627, :1756-1757; tasks.md:53, :263-264. Its quickstart.md
+    names no job count. This change needs no edit on 004's account,
+    whichever of the two lands first.
   - `project`'s import block: feature 004 adds `import errno` there (with
-    other standard modules, at `0d3e0f7`), the import S1 and S2 need. A
-    three-way merge of the feasibility copy with feature 004's `project` over
-    `961c405` is clean and keeps one `import errno` (council evidence 4).
+    other standard modules, `project:11-12` at `96a08d4`), the import S1 and
+    S2 need. A three-way merge of the feasibility copy with feature 004's
+    `project` over `961c405` is clean and keeps one `import errno` (council
+    evidence 4; re-run on 2026-10-20 at `96a08d4`).
     The realization adds the import only if main lacks it (design D7).
   - `tests/test_project.py`: this change adds no line to it (M1); feature
     004 edits its clean tests. Under M2 this change's tests would go in the
@@ -688,10 +695,12 @@ and 3.15.0rc2:
   - `README.md:17-19` (Install): overlapping lines, so the second to merge
     meets a textual conflict. This change edits only the Python-version
     wording; feature 004 edits only the Git 2.36 floor statement there (its
-    plan, step 8, "README and CI"), and its clean section further down. The
-    merged paragraph keeps both as separate sentences, the Python sentence
-    first, then Git's. Lane openRepoProject-2 acknowledged these lines as a
-    shared file under the same rule on 2026-10-11 (relayed by the lead).
+    plan, step 8, "README and AGENTS.md", `plan.md:106-112` at `96a08d4`;
+    its T122 is open, so `README.md` is still main's text there), and its
+    clean section further down. The merged paragraph keeps both as separate
+    sentences, the Python sentence first, then Git's. Lane openRepoProject-2
+    acknowledged these lines as a shared file under the same rule on
+    2026-10-11 (relayed by the lead).
     This change's `:281-282` and feature 004's exit-code lines (`:284-286`)
     are adjacent paragraphs, not the same lines.
   - Whichever change lands second merges main in. Agreed with lane
@@ -793,6 +802,26 @@ On every version of the new matrix, on `ubuntu-latest`, each by a test:
   no job runs them and whether this change's answers hold on macOS is
   unproven (N12). This change adds no macOS job: Brett Heap decided on
   2026-10-15 that CI runs on Linux only.
+- NOTED residual, argparse colour on 3.14 and later: argparse colours its
+  usage and error lines when `FORCE_COLOR` or `PYTHON_COLORS=1` is set, even
+  on a pipe (`project --help` at feature 004's `96a08d4`: coloured on 3.14.7
+  and 3.15.0rc2, plain on 3.13.15). `tests.yml` sets neither variable and the
+  hosted runners do not set them by default, so the widened matrix is
+  unaffected (not run in Actions). A local run with either variable set on
+  3.14 or later fails feature 004's two "usage: project" assertions at
+  `96a08d4`, `tests/test_clean_timing.py:243` and
+  `tests/test_clean_batch.py:449`, because its children inherit the
+  variable (`tests/clean_support.py:686`); they are the only failures of its
+  suite on 3.14.7 with `FORCE_COLOR=1`. As this change's rule says of a
+  feature 004 failure on an added version, it is reported to its owner, lane
+  openRepoProject-2, which has ruled (R-70, relayed by the lead on
+  2026-10-20) that `CleanCase.setUp()` pops both variables and sets
+  `NO_COLOR=1` (`tests/clean_support.py:686-691`), not yet on 004 at
+  `96a08d4`; a scratch copy with that change passes both assertions. Main's
+  `tests/test_project.py` builds its child environment the same way
+  (`:133-136` at `e9d6711`) but asserts no argparse text, and its 96 tests
+  pass on 3.14.7 and 3.15.0rc2 with either variable set; lane 2 notes that
+  line for its T127.
 - (L) changes 3.10 to 3.12: a traceback exiting 1 becomes a refusal exiting
   2. S2 changes a destination linked into a directory without search
   permission on 3.10 to 3.13 from `[Errno 13]` to `Destination already
@@ -811,8 +840,8 @@ On every version of the new matrix, on `ubuntu-latest`, each by a test:
 - #21's surface: the early non-directory refusal, its sentences, and the
   writability follow-up it names, except the scoping of Decision 12.
 - Everything from `discover` down: lane openRepoProject-2's changes
-  `add-project-clean-all-safe` and `add-project-overview` (feature 004), and
-  feature 004's `git-floor` job.
+  `add-project-clean-all-safe` (feature 004) and `add-project-overview`
+  (feature 005), and feature 004's `git-floor` job.
 - Other `resolve()` calls and pathlib reads: `project:54` (registry paths),
   `:87`, `:94`, and everything from `discover` down. One divergence is
   observed and left as a residual: on 3.10 to 3.12, a looped `PROJECTS_DIR`
@@ -944,6 +973,15 @@ to `1b84a94`. SA-1's twelve jobs are now six, and SA-3's pin is now
   so line 381 is now 401, lines 392-396 are 412-416, and lines 392-394 are
   412-414. Its first risk, and its reason against a writability read, are
   unchanged.
+- Feature 004 at `96a08d4` (re-checked 2026-10-20; the pins were `d1e7c56`
+  and `0d3e0f7`): three misquotes are fixed (quickstart.md never said "every
+  job of the `test` matrix", plan step 8 is "README and AGENTS.md", and
+  `add-project-overview` is feature 005); R-46's wording and the merged
+  `git-floor` job are cited on 004's branch, not on `impl/004-t003-git-floor`;
+  the pins whose lines held now read `96a08d4`; and the colour residual is
+  noted under Risks. Main is at `e45155a`; #16 changed only files under
+  `ideation/brainstorm/`, none cited here, so the `e9d6711` citations (this
+  branch's merged base) stand.
 
 Council of `461a010`, re-judged against main `e9d6711` and #21 at `1b84a94`
 (product-advocate PO-1 to PO-5, systems-architect AR-1 to AR-7,
@@ -959,8 +997,8 @@ applied, and none is declined. The NOTED concerns are N1 to N12 in
   jobs at `e9d6711`, six after this change". QA-6's macOS facts no longer
   apply.
 - AR-6 (`tests.yml` lines and shape after #32): applied in the update above,
-  plus the `git-floor` job's own branch (`impl/004-t003-git-floor` at
-  `2ec938b`) in "Ordering and shared files".
+  plus the `git-floor` job on feature 004's branch (merged as `4baec61`;
+  `tests.yml` at `96a08d4`) in "Ordering and shared files".
 - AR-1 (#21's permission statements): its permission sentence (delta lines
   37-43), its scenario (lines 73-76) and its README sentence (its
   `design.md:187-191`) join "Statements this change makes false". The second

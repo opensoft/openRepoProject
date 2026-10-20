@@ -364,7 +364,7 @@ discover -s tests -v`; no new dependency (PyYAML is already in
 
 - **`project`'s import block (N11).** Feature 004 adds `import errno` there,
   after `argparse` (`project:11-12` on `004-project-clean-all-safe` at
-  `0d3e0f7`). The realization adds `import errno`, in the block's
+  `96a08d4`). The realization adds `import errno`, in the block's
   alphabetical place after `argparse`, only if main lacks it then. A
   three-way merge of the two is clean (council evidence 4).
 - **`project` `new()`.** #21's realization lands first and edits other lines
