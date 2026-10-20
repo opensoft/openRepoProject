@@ -52,11 +52,13 @@ and `targets` (POD:610-617). They are cited from
 `specs/004-project-clean-all-safe/` (`spec.md`, `data-model.md`,
 `contracts/project-clean.md`) at `d81b3d9`, where lane openRepoProject-2's
 doc rounds 3 to 5 (rulings R-39 to R-51) merged them on branch
-`004-project-clean-all-safe`, as `acc822e`, `5a02c1a` and `d81b3d9`. That
-branch's head, `a32d20b`, changes after `d81b3d9` only the tier tags, file
-and verify fields and ticks of `tasks.md` and one line of `plan.md`, and has
-its tasks T001 to T035 built, among them its five incremental parsers, four
-of which the overview drives (Dependencies), its child handle and its
+`004-project-clean-all-safe`, as `acc822e`, `5a02c1a` and `d81b3d9`, except
+EC-031, which cites the branch's head. That head, `b0243e5`, changes the
+documents after `d81b3d9` only by the tier tags, file and verify fields and
+ticks of `tasks.md`, one line of `plan.md` and the first part of its doc
+round 6 (rulings R-55 to R-57); its code, unchanged since `a32d20b`, has its
+tasks T001 to T035 built, among them its five incremental parsers, four of
+which the overview drives (Dependencies), its child handle and its
 one-wide driver, with the state, phase and signal slot of its "Invocation"
 entity, and its evidence model (tasks T027 to T033), merged into that branch
 as `cce8dbd`; none of it is on `main`.
@@ -285,14 +287,16 @@ open are added there as Q6 to Q13, for Brett Heap, unanswered.
 
 - **C-23** Q: What is a worktree row whose `lstat`, `.git` file read or
   administrative `gitdir` read fails, or does not finish within its budget
-  or before the deadline? -> A: `inspection-error`, set directly. [L] sets
-  every row "whose evidence could not be established (a path that cannot be
-  read, a registration that disagrees, or a status probe that failed or
-  timed out)" to `inspection-error` directly (CLN:114-116); a filesystem
-  call cut by its budget records `probe-timeout`, or `deadline-exceeded`,
-  and leaves its values null (POD:183-190; CLN:773-776; design D8); and no
-  status probe runs where the worktree's identity was not verified
-  (CMD:124-126; POD:94-95). The row's repository is then refused as
+  or before the deadline? -> A: `inspection-error`, set directly (a missing
+  or non-regular `.git`, and a missing administrative `gitdir` file, are a
+  disagreement and not a failed read: FR-007, C-26). [L] sets every row
+  "whose evidence could not be established (a path that cannot be read, a
+  registration that disagrees, or a status probe that failed or timed out)"
+  to `inspection-error` directly (CLN:114-116); a filesystem call cut by its
+  budget records `probe-timeout`, or `deadline-exceeded`, and leaves its
+  values null (POD:183-190; CLN:773-776; design D8); and no status probe
+  runs where the worktree's identity was not verified (CMD:124-126;
+  POD:94-95). The row's repository is then refused as
   `inspection-incomplete` by [G] (CLN:800-803), so the overview withholds
   `--all-safe` there (POD:526-529; design D5, "an unreadable path"). Where
   applied: FR-007; FR-034; US6 s5.
@@ -1463,16 +1467,17 @@ path"; "Non-UTF-8 common directory".
   repository's worktrees are not listed (Clarifications, C-54). Whether to
   report such a repository otherwise, and how a bare repository's own first
   registry record is reported, is question Q14 of `clarify-questions.md`.
-- **EC-031**: Two registry entries naming one path both pass the two-way
-  registration check, because the registry listing does not name the
-  administrative directory, so the overview lists two worktree rows with the
-  same identity `{path, dev, ino, admin_id}`, and the second row's `admin_id`
-  is not its own: it is read from the one `.git` file. Feature 004 records
-  this as a known limit with no rule added for it (its data model at
-  `d81b3d9`, "Worktree identity and registration"; lead ruling R-51), and it
-  is inherited here. The rows keep the registry's order, so the output stays
-  deterministic, but FR-006's identity and SC-001's "appears once" hold only
-  for registry entries that name distinct paths.
+- **EC-031**: Two registry entries naming one path fail closed: the registry
+  listing does not name the administrative directory, so the two-way
+  registration check alone cannot tell the two entries apart, and each is a
+  registration disagreement as FR-007 states it (no status probe,
+  `inspection-error` set directly, a `registration-mismatch` finding in
+  place of that class's `inspection-error` finding, and no error). Feature
+  004's evidence model, which the overview shares, fails them the same way
+  (its data model at `b0243e5`, "Worktree identity and registration"; lead
+  ruling R-57, withdrawing R-51(c)'s known limit), as the packet's rule for
+  a registration that disagrees requires (DI:259, :267-270). The rows keep
+  the registry's order, so the output stays deterministic.
 - **EC-032**: When a value of the identity probe holds a line feed, as the
   name of a repository directory can (US11 s1), the probe is repeated, one
   child per option, each counted (change 1's design D6, row 3), so that for
@@ -1517,10 +1522,11 @@ and [P] are change 1's requirements as the header names them.
   `relationships` MUST be `[]`, the holder MUST receive Git probes only when
   its own directory is a Git toplevel, a holder whose directory has no `.git`
   entry, or whose identity probe reports another toplevel, MUST have null
-  `repository`, `merge_target`, `git` and `worktrees` and carry no error, and
-  a member directory that is itself an immediate entry of a root MUST be an
-  ordinary candidate with its own row (POD:32-40, :85-87; DI:284-287; design
-  D7). What a candidate's identity probe that reports another toplevel does
+  `repository`, `merge_target`, `git` and `worktrees` and carry no error for
+  the Git probes it does not get, and a member directory that is itself an
+  immediate entry of a root MUST be an ordinary candidate with its own row
+  (POD:32-40, :85-87; DI:284-287; design D7). What the identity probe of a
+  candidate other than a family holder does when it reports another toplevel
   is question Q11 of `clarify-questions.md`.
 - **FR-004**: A candidate whose directory holds no `.git` entry MUST get no
   Git child: its row MUST have null `repository`, `merge_target`, `git` and
@@ -1555,10 +1561,10 @@ and [P] are change 1's requirements as the header names them.
   worktree has `admin_id: null` and no administrative registration to check
   (Clarifications, C-39). "The candidate that reached a repository first"
   MUST mean the first in canonical candidate order (POD:75-87; design D7).
-  Two registry entries that name one path share one identity, a limit
-  inherited from feature 004 (EC-031); and what a candidate whose identity
-  probe reports another toplevel creates or joins is question Q11 of
-  `clarify-questions.md`.
+  Two registry entries that name one path fail closed as a registration
+  disagreement (FR-007; EC-031); and what a candidate other than a family
+  holder, whose identity probe reports another toplevel, creates or joins is
+  question Q11 of `clarify-questions.md`.
 - **FR-007**: Each registered path MUST fall into exactly one case: `lstat`
   fails with "no such entry" or "not a directory" (`present: false`, no
   status probe); `lstat` fails otherwise, or does not finish within its
@@ -1569,15 +1575,16 @@ and [P] are change 1's requirements as the header names them.
   file failing with an error that shows no disagreement, or being cut (no
   status probe, the same codes, `inspection-error` set directly);
   registration disagrees in either direction, a `<path>/.git` that is
-  missing (`ENOENT` or `ENOTDIR`) or not a regular file being a
-  disagreement and not such an error (no status probe, `inspection-error`
-  set directly, a `registration-mismatch` finding in place of that class's
-  `inspection-error` finding, and no error); otherwise one status probe in
-  that worktree. The two registration cases apply to linked worktrees only
-  (C-39). A probe MUST NOT run in a path the overview could not `lstat`, nor
-  a status probe in a worktree whose registration it could not verify
-  (POD:89-95; CMD:124-126, :139-141; CLN:114-116; DI:267-273; Clarifications,
-  C-23, C-26, C-33 and C-39).
+  missing (`ENOENT` or `ENOTDIR`) or not a regular file, or an
+  administrative `gitdir` file that is missing (`ENOENT` or `ENOTDIR`),
+  being a disagreement and not such an error (no status probe,
+  `inspection-error` set directly, a `registration-mismatch` finding in
+  place of that class's `inspection-error` finding, and no error); otherwise
+  one status probe in that worktree. The two registration cases apply to
+  linked worktrees only (C-39). A probe MUST NOT run in a path the overview
+  could not `lstat`, nor a status probe in a worktree whose registration it
+  could not verify (POD:89-95; CMD:124-126, :139-142; CLN:114-116;
+  DI:244-245, :267-273; Clarifications, C-23, C-26, C-33 and C-39).
 - **FR-008**: Every repository MUST first take [R]'s submodule test: when
   Git reports a superproject working tree for a candidate that reached the
   repository, `repository.root` MUST be null with an `unsupported-layout`
@@ -1626,14 +1633,15 @@ and [P] are change 1's requirements as the header names them.
   Whether a child starts with SIGINT, SIGTERM and SIGHUP blocked, as design
   D1 has it, so that SIGTERM cannot stop it before SIGKILL, is question Q16
   of `clarify-questions.md`.
-  A child that reaches its budget, and any child stopped for its own budget
-  or at a record bound and then abandoned after the reap wait, MUST record
-  `probe-timeout` on its row, while a child stopped at its record bound and
-  reaped is a complete outcome, and a child the deadline cuts, reaped or
-  abandoned, records `deadline-exceeded` (FR-012; Clarifications, C-2 and
-  C-31). A run MUST end within 64 s of the moment its deadline is set, plus
-  rendering, except while a filesystem call stuck in the kernel is
-  outstanding (EC-001) (POD:167-181, :282; CMD:185-186; design D1 and D13).
+  A child that reaches its budget, where the 5 s limit was the smaller, and
+  any child stopped for its own budget or at a record bound and then
+  abandoned after the reap wait, MUST record `probe-timeout` on its row,
+  while a child stopped at its record bound and reaped is a complete
+  outcome, and a child the deadline cuts, reaped or abandoned, records
+  `deadline-exceeded` (FR-012; Clarifications, C-2 and C-31). A run MUST end
+  within 64 s of the moment its deadline is set, plus rendering, except
+  while a filesystem call stuck in the kernel is outstanding (EC-001)
+  (POD:167-181, :282; CMD:185-186; design D1 and D13).
 - **FR-012**: On deadline expiry a further child MUST NOT start, every
   in-flight child MUST be terminated together in the same way and recorded
   `deadline-exceeded`, each candidate whose collection never started MUST
@@ -1985,11 +1993,16 @@ and [P] are change 1's requirements as the header names them.
   and any other exception `internal-error` with a message naming the
   exception class, each with exit status 2 and no traceback. Without
   `--json`, a refusal or an operating-system error MUST keep the baseline
-  report, `REFUSED: <message>` on standard error, and an exception of any
-  other kind MUST also exit 2, never with the interpreter's default 1. An
-  argument error MUST print the command-line parser's usage message on
-  standard error and no JSON (POD:675-679, :705-707; DI:1083-1090). A failed
-  write to the output, and the output's encoding, are question Q12 of
+  report, `REFUSED: <message>` on standard error (feature 002,
+  `contracts/project-new.md:121`, "Streams"), and an exception of any other
+  kind MUST also exit 2, never with the interpreter's default 1. An argument
+  error MUST print the command-line parser's usage message on standard error
+  and no JSON (POD:675-679, :705-707; DI:1083-1090). POD:705-707 says only
+  "an exception" and gives `internal-error`; this feature's reading, which
+  narrows that scenario's WHEN, is an exception of the kind the collector
+  table maps to `internal-error`, the other two kinds having the outputs
+  above, and the scenario's test keeps its name. A failed write to the
+  output, and the output's encoding, are question Q12 of
   `clarify-questions.md`.
 
 **Local and read-only**
@@ -2154,11 +2167,12 @@ and [P] are change 1's requirements as the header names them.
   requirement, or part of one, that no delta scenario exercises (among them
   FR-004's candidates that are not family holders, FR-010, FR-020's
   `estimated` count, FR-021's `refused` and `undecodable-output` codes,
-  FR-022's message bound, FR-033's reflogs of 65,535 and 65,536 bytes and
-  FR-037's order) MUST be covered by at least one test as well, the
-  feature's traceability record naming it; and every existing test on `main`
-  when the feature is implemented MUST keep passing unchanged (proposal,
-  Impact; design D13; Clarifications, C-6).
+  FR-022's message bound, FR-033's reflogs of 65,535 and 65,536 bytes,
+  FR-037's order and FR-039's `refused` and `os-error` outputs) MUST be
+  covered by at least one test as well, the feature's traceability record
+  naming it; and every existing test on `main` when the feature is
+  implemented MUST keep passing unchanged (proposal, Impact; design D13;
+  Clarifications, C-6).
 
 ### Key Entities *(include if feature involves data)*
 
@@ -2223,8 +2237,8 @@ and [P] are change 1's requirements as the header names them.
 - **SC-001**: In every fixture within the caps, each candidate yields
   exactly one row or merges into exactly one repository row, each repository
   appears once however many of its worktrees are candidates, and each
-  registered worktree, external ones included, appears once under it, apart
-  from the one inherited limit of EC-031.
+  registered worktree, external ones included, appears once under it, one
+  row per registry entry (EC-031).
 - **SC-002**: In 100% of runs over the feature's fixtures with networking
   disabled as FR-049 defines it, the audit hook records 0 connections, the
   partial-clone fixture's logging script never runs, and the before and
@@ -2321,14 +2335,17 @@ and [P] are change 1's requirements as the header names them.
   "Dependencies and Sequencing").
 - Feature 004's names (classifications, gate and refusal codes, row error
   codes, `schema_version`, exit statuses, the shared constants) are taken
-  from its spec, data model and contract at `d81b3d9`; its branch's head,
-  `a32d20b`, which changes after `d81b3d9` only `tasks.md` and one line of
-  `plan.md`, has its tasks T001 to T035 built, among them its five
-  incremental parsers, its child handle, its driver and its evidence model
-  (merged as `cce8dbd`), and none of it is on `main`; where the change and
-  feature 004 differ for the overview, the change governs, and the plan
-  reconciles against feature 004's text at the state that question Q2 of
-  `clarify-questions.md` settles.
+  from its spec, data model and contract at `d81b3d9`, apart from EC-031,
+  which reads its branch's head, `b0243e5`; that head's documents change
+  after `d81b3d9` only by the tier tags, file and verify fields and ticks of
+  `tasks.md`, one line of `plan.md` and the first part of its doc round 6
+  (rulings R-55 to R-57), and its code, unchanged since `a32d20b`, has its
+  tasks T001 to T035 built, among them its five incremental parsers, its
+  child handle, its driver and its evidence model (merged as `cce8dbd`), and
+  none of it is on `main`; where the change and feature 004 differ for the
+  overview, the change governs, and the plan reconciles against feature
+  004's text at the state that question Q2 of `clarify-questions.md`
+  settles.
 - "Every existing test" means the suite on `main` when the feature is
   implemented: 96 tests at `961c405`, still 96 at `e9d6711`, plus feature
   004's. Two test conditions are this spec's own, not the change's: a test
@@ -2402,13 +2419,17 @@ and [P] are change 1's requirements as the header names them.
   reports as `batch_row_cap`, `report_row_cap` and `targets`), Git-first
   resolution [R], the path rules [P] and the 1 MiB manifest read (proposal,
   "Dependencies and Sequencing"; `add-project-clean-all-safe` clarifications
-  N2 and design D2). Lane openRepoProject-2's ruling R-54 (2026-10-20) has
-  feature 004 separate each evidence step's reads from a pure decision that
-  this feature's own loop can call, the evidence keyed by device and inode,
-  with the repeated identity probe at the root skippable; that split is a
-  follow-up still to come in that lane. The driver's start and outcome rules
-  stay inside feature 004's one-handle driver, and this feature's plan
-  factors them out, without changing behaviour, after feature 004 lands.
+  N2 and design D2). Lane openRepoProject-2's ruling R-54 (2026-10-20), as
+  that lane told lane openRepoProject-4, has feature 004 separate each
+  evidence step's reads from a pure decision that this feature's own loop
+  can call, the evidence keyed by device and inode, with the repeated
+  identity probe at the root skippable; that split is a follow-up still to
+  come in that lane, and feature 004's `tasks.md` at `b0243e5` names R-54
+  once, as the X-3 of its T047 (line 1113, the best-effort `REFUSED:` and
+  `Cancelled.` prints), and records no such split. The driver's start and
+  outcome rules stay inside feature 004's one-handle driver, and this
+  feature's plan factors them out, without changing behaviour, after
+  feature 004 lands.
 - **Change 1's archive order**: change 2 archives after change 1. This
   feature realizes change 2's MODIFIED `project-review-safety` requirement,
   not change 1's `project-clean-review-safety` (proposal, Capabilities;
@@ -2457,9 +2478,11 @@ and [P] are change 1's requirements as the header names them.
     alone, moving no gate, refusal code or shared constant that FR-032 to
     FR-036 read; no suggestion carries its flag (FR-031).
   - An answer to Q6, Q7, Q8, Q9 or Q12 that amends change 2 or [E] rewrites
-    text that these changes carry in MODIFIED blocks; #25 re-aligns its
-    blocks to such an amendment (its proposal, "Dependencies and
-    Sequencing"; its `tasks.md` 2.3 and 2.4).
+    text that these changes carry in MODIFIED blocks, among them #24's block
+    of requirement 5, where an answer to Q7 amends the ladder's run rule
+    (POD:378-381), and #25's blocks; #25 re-aligns its blocks to such an
+    amendment (its proposal, "Dependencies and Sequencing"; its `tasks.md`
+    2.3 and 2.4).
 - **Features 001 to 003** (`specs/001-project-command/`,
   `specs/002-triad-first-project-new/`,
   `specs/003-parent-obstacle-wording/`): untouched; their tests join the
@@ -2575,7 +2598,7 @@ the tasks, in the feature's `traceability.md`, as feature 003 records them.
 | 34 | 5 | Every protected classifier | FR-026, FR-027, FR-032 | US3 s6 | none |
 | 35 | 6 | Attention filter per category | FR-029, FR-030 | US2 s1 | none |
 | 36 | 6 | A merged worktree whose upstream was deleted | FR-028, FR-032 | US2 s2 | none |
-| 37 | 7 | Gated merged worktrees | FR-032, FR-034, FR-035 | US4 s1 | none |
+| 37 | 7 | Gated merged worktrees | FR-007, FR-032, FR-034, FR-035 | US4 s1 | none |
 | 38 | 7 | Canonical identity through the handoff | FR-031 | US4 s2 | none |
 | 39 | 7 | More eligible worktrees than the batch's target limit | FR-034, FR-035 | US4 s3 | EC-007 |
 | 40 | 7 | The two inspect-cap bands | FR-034, FR-035 | US4 s4 | none |

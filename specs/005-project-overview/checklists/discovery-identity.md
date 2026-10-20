@@ -26,7 +26,7 @@ Lane: openRepoProject-4
 - [x] CHK006 Is deduplication specified for roots and candidates, by canonical path and by device and inode, with the canonically first spelling winning? [Completeness, Spec FR-001, FR-003, EC-018]
   - Result: pass.
 - [x] CHK007 Is a family holder's treatment specified (one row, no member read, Git probes only at a Git toplevel)? [Completeness, Spec FR-003]
-  - Result: pass. FR-003 also states the outcome for a holder that is not that toplevel, whether it has no `.git` entry or its identity probe reports another toplevel: null `repository`, `merge_target`, `git` and `worktrees`, and no error (DI:284-287), added 2026-10-20 after lane openRepoProject-3's packet-fidelity read.
+  - Result: pass. FR-003 also states the outcome for a holder that is not that toplevel, whether it has no `.git` entry or its identity probe reports another toplevel: null `repository`, `merge_target`, `git` and `worktrees`, and no error for the Git probes it does not get, its manifest's error still recorded (DI:284-287; FR-004), added 2026-10-20 after lane openRepoProject-3's packet-fidelity read and made exact after its delta read (its finding D3); the pointer there to question Q11 now excepts a family holder (its finding D2).
 - [x] CHK008 Is a candidate without a `.git` entry specified (no Git child, null Git fields, no finding)? [Completeness, Spec FR-004, Clarifications C-4]
   - Result: pass.
 - [x] CHK009 Are the rules naming the main checkout specified for every layout: ordinary, reached by a linked worktree first, gitfile with and without `core.worktree`, submodule, bare and missing main worktree? [Completeness, Spec FR-008, FR-009]
@@ -47,7 +47,7 @@ Lane: openRepoProject-4
 - [x] CHK015 Is "canonicalise" clear enough to decide a dangling link, a relative path and two spellings of one directory? [Clarity, Spec FR-001, Clarifications C-27, EC-018]
   - Result: pass. C-27 (a dangling link names a path that does not exist) and EC-018 (two spellings count once).
 - [x] CHK016 Is "registration disagrees" told apart from a registration read that cannot complete? [Clarity, Spec FR-007, Clarifications C-23]
-  - Result: pass. FR-007 also names a `<path>/.git` that is missing (`ENOENT` or `ENOTDIR`) or not a regular file as a disagreement, not a failed read (DI:267-268; CMD:139-141), added 2026-10-20 after lane openRepoProject-3's packet-fidelity read.
+  - Result: pass. FR-007 also names a `<path>/.git` that is missing (`ENOENT` or `ENOTDIR`) or not a regular file as a disagreement, not a failed read (DI:267-268; CMD:139-141), added 2026-10-20 after lane openRepoProject-3's packet-fidelity read; after its delta read an administrative `gitdir` file that is missing (`ENOENT` or `ENOTDIR`) is one too (its finding D4; DI:244-245; CMD:141-142).
 
 ## Requirement Consistency
 
@@ -98,7 +98,8 @@ Lane: openRepoProject-4
 
 Evaluated on 2026-10-19 against `spec.md` at `8f433f7`; CHK007 and CHK016
 re-read on 2026-10-20 after lane openRepoProject-3's packet-fidelity read,
-their results unchanged. 29 items: 25 pass, 1 fixed in the spec, 2 open, 1
+their results unchanged, and again after its delta read (findings D2 to D4),
+their results still pass. 29 items: 25 pass, 1 fixed in the spec, 2 open, 1
 plan notes, 0 new questions. An open item waits on the question or residual
 its result names; a plan note is for the plan, not the spec; a new question
 is asked in `clarify-questions.md`.

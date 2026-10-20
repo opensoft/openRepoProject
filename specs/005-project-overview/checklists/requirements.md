@@ -165,19 +165,24 @@ Lane: openRepoProject-4
   the same at both pins.
   Re-validation: 16 of 16 items pass, with the checks of iteration 2 re-run
   by script on the edited spec.
-- 2026-10-20: three read-only reviews were folded into the spec, as stage 1
-  of their findings, and feature 004 was re-pinned. Lane openRepoProject-3's
-  fidelity read of `9899eae` against the packet and change 2: the
-  `registration-mismatch` warning replaces the `inspection-error` finding of
-  a row whose registration disagrees and adds no error, so that row no
-  longer exits 1 by itself (H1; C-26, FR-007, US4 s1); an exception outside
-  the per-candidate boundary maps to `refused`, `os-error` or
-  `internal-error` by its kind, and the exit-2 text is cited (H2, L9;
-  FR-039, FR-043, US5 s3); a holder whose probe reports another toplevel
-  has null Git fields and no error (M2; FR-003); a child the deadline cuts
-  is `deadline-exceeded` (L1; FR-011); a missing or non-regular `<path>/.git`
-  is a registration disagreement (L2; FR-007); unreached worktree probes keep
-  their repository's evidence (L3; FR-012); a complete scan that finds no
+- 2026-10-20: four read-only reviews were folded into the spec, as stage 1 of
+  their findings (the factual fixes; the questions followed at `4ba9faa`, as
+  the next note says), and feature 004 was re-pinned. The four are lane
+  openRepoProject-3's packet-fidelity read, lane openRepoProject-4's
+  cross-check of feature 004's built runtime, a review of the recommended
+  answers as one set, and a review of lane openRepoProject-5's #24 and #25.
+  Lane openRepoProject-3's fidelity read of `9899eae` against the packet and
+  change 2: the `registration-mismatch` warning replaces the
+  `inspection-error` finding of a row whose registration disagrees and adds
+  no error, so that row no longer exits 1 by itself (H1; C-26, FR-007,
+  US4 s1); an exception outside the per-candidate boundary maps to
+  `refused`, `os-error` or `internal-error` by its kind, and the exit-2
+  text is cited (H2, L9; FR-039, FR-043, US5 s3); a holder whose probe
+  reports another toplevel has null Git fields and no error (M2;
+  FR-003); a child the deadline cuts is `deadline-exceeded` (L1;
+  FR-011); a missing or non-regular `<path>/.git` is a registration
+  disagreement (L2; FR-007); unreached worktree probes keep their
+  repository's evidence (L3; FR-012); a complete scan that finds no
   project says so (L4; FR-045); FR-001, FR-003, FR-006, FR-013, FR-022,
   FR-036, FR-038, FR-039 and FR-048 cite their open questions (L5); C-29 and
   US1 s1 cite DI:1190-1191 (L6); FR-036 names C-23 and C-35 (L7); FR-019's
@@ -200,9 +205,47 @@ Lane: openRepoProject-4
   withdrawn), CHK004 and CHK021 of `error-handling.md` and CHK006 of
   `api.md` now read as fixed in the spec, and the totals below were
   recounted by script. No requirement was added or removed; the tables'
-  edge-case cells gain EC-031 and EC-032 and scenario 50 gains FR-045.
-  Re-validation: 16 of 16 items pass, with the checks of iteration 2 re-run
-  by script on the edited spec.
+  edge-case cells gain EC-031 and EC-032 and scenario 50 gains FR-045. The
+  next note revises the registration limit of EC-031, the code state named
+  above and CHK006 of `ux.md`. Re-validation: 16 of 16 items pass, with the
+  checks of iteration 2 re-run by script on the edited spec.
+- 2026-10-20: lane openRepoProject-3's delta read of that fold (`9899eae` to
+  `282a20e`; 1 medium and 11 low findings, D1 to D12) was applied to
+  `spec.md` and to this folder, and the questions pass that followed the fold
+  (stage 2) is recorded. Finding D1: feature 004 withdrew the limit that
+  EC-031 had recorded as inherited (lead ruling R-57, its data model at
+  `b0243e5`), so EC-031 now says that two registry entries naming one path
+  fail closed, each a registration disagreement, FR-006 points to it, SC-001
+  reads one row per registry entry, and the header and Assumptions say that
+  EC-031 reads feature 004's head. D2 and D3: FR-003's pointer to Q11 excepts
+  a family holder, as FR-006's now does, and a holder carries no error for
+  the Git probes it does not get, a manifest error still recorded (FR-004).
+  D4: a missing administrative `gitdir` file is a registration disagreement
+  too (FR-007, C-23). D5: FR-039 declares its reading of POD:705-707, and
+  FR-049 lists FR-039's `refused` and `os-error` outputs among the parts that
+  need a test. D6: FR-039 cites the `REFUSED:` literal in feature 002's
+  contract, and CHK006 of `ux.md` no longer says that no human line follows
+  an exception of any other kind, which no source says: PN-2 returns,
+  narrowed to that case. D7: the header and Assumptions name feature 004's
+  head, `b0243e5`, whose code is unchanged since `a32d20b` and whose
+  documents changed after `d81b3d9` only by the tier tags, file and verify
+  fields and ticks of `tasks.md`, one line of `plan.md` and the first part of
+  its doc round 6 (R-55 to R-57); the R-54 sentence is worded as lane
+  openRepoProject-2 told it, since feature 004's `tasks.md` names R-54 only
+  as the X-3 of its T047 (line 1113) and records no decider split. D9 to D11:
+  the amendment note of Dependencies names #24's block of requirement 5
+  beside #25's blocks, FR-011's first clause says "where the 5 s limit was
+  the smaller", and trace row 37 gains FR-007. D12: the count of reviews in
+  the note above now reads four. D8: `clarify-questions.md`, untouched by
+  that fold, carried its own items in the questions pass of `4ba9faa`: Q2
+  names feature 004's head `b0243e5` and its code since `a32d20b`, so that
+  option B's precondition is met; Q12 takes the mapping of exceptions to
+  codes as FR-039 states it and records ruling R-55 for a failed write, as
+  Q15 records R-55's stalled-reader residual; the dated readings left in Q3,
+  Q4, Q14 and Q15 (`fe91f2c`, `5a02c1a`) were not moved; Q16 and Q17 were
+  added. The totals below were recounted by script: PN-2's return moves one
+  item from fixed to plan note. Re-validation: 16 of 16 items pass, with the
+  checks of iteration 2 re-run by script on the edited spec.
 - Items marked incomplete require spec updates before `/speckit-clarify` or `/speckit-plan`
 
 ## Cross-cutting Requirements Quality (no-argument `/speckit.checklist`, 2026-10-19)
@@ -272,7 +315,7 @@ Lane: openRepoProject-4
 ### Ambiguities and Conflicts
 
 - [x] CHK023 Is every point left to the plan named as such? [Ambiguity, Spec Assumptions]
-  - Result: pass. The spec names its one; this run's plan notes PN-1 to PN-15, PN-2 withdrawn on 2026-10-20, are listed in the domain checklists' Evaluation sections.
+  - Result: pass. The spec names its one; this run's plan notes PN-1 to PN-15, PN-2 narrowed on 2026-10-20 to an exception of any other kind in human mode, are listed in the domain checklists' Evaluation sections.
 - [x] CHK024 Are the differences between change 2 and feature 004 recorded with which text governs? [Conflict, Spec Assumptions, Clarifications C-33]
   - Result: pass.
 - [x] CHK025 Are the recorded residuals (EC-001, EC-002, EC-006, EC-022, EC-025 to EC-032) kept apart from requirements, so that none reads as a promise? [Ambiguity, Spec Edge Cases]
@@ -289,6 +332,6 @@ before it carry no ids and are not counted.
 
 Plan notes: none.
 
-All 17 checklists: 411 items: 357 pass, 23 fixed in the spec, 15 open, 14 plan
-notes (PN-1 and PN-3 to PN-15; PN-2 is withdrawn), 2 new questions. Recounted
-by script on 2026-10-20.
+All 17 checklists: 411 items: 357 pass, 22 fixed in the spec, 15 open, 15 plan
+notes (PN-1 to PN-15; PN-2 narrowed to an exception of any other kind in human
+mode), 2 new questions. Recounted by script on 2026-10-20.
