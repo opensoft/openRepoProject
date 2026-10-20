@@ -331,6 +331,150 @@ class GatesTests(clean_support.CleanCase):
                              ([{"code": "inspection-incomplete", "message": refused}], []))
             self.assertEqual(self.snapshot(root), before, "nothing removed")
 
+    # T062: "Hidden local state" (its after-confirmation clause is T083's);
+    # "An edit hidden by assume-unchanged survives".
+
+    def test_clean_hidden_local_state(self):
+        root = self.repo()
+        self.bare_remote()
+        plain = self.merged_worktree("001-plain", path=self.base / "plain")
+        assumed = self.merged_worktree("002-assumed", path=self.base / "assumed")
+        self.git(assumed, "update-index", "--assume-unchanged", "work-002-assumed")
+        (assumed / "work-002-assumed").write_text("hidden edit")
+
+        def two_directories(tree):
+            for name in ("kept", "sparse"):
+                (tree / name).mkdir()
+                (tree / name / "file").write_text(name)
+
+        sparse = self.merged_worktree("003-sparse", path=self.base / "sparse", setup=two_directories)
+        self.git(sparse, "sparse-checkout", "set", "kept")
+        # Each flag is in that worktree's own index; the main worktree's
+        # index flags nothing, and neither worktree's status shows a change.
+        self.assertIn("h work-002-assumed", self.git(assumed, "ls-files", "-v").splitlines())
+        self.assertIn("S sparse/file", self.git(sparse, "ls-files", "-v").splitlines())
+        for tree in (root, plain):
+            tags = {line[:1] for line in self.git(tree, "ls-files", "-v").splitlines()}
+            self.assertEqual(tags, {"H"}, f"no flag in {tree}'s index")
+        for tree in (assumed, sparse):
+            self.assertEqual(self.git(tree, "status", "--porcelain"), "", tree)
+        before = self.snapshot(root)
+        result = self.preview(root)
+        self.assert_status(result, 0)
+        document = result.document
+        self.assertEqual([entry["path"] for entry in document["selected"]], [str(plain)])
+        self.assertEqual(by_path(document), {str(root): "main-worktree", str(assumed): "hidden-local-state",
+                                             str(sparse): "hidden-local-state"})
+        human = self.run_cli("clean", root, "--all-safe")
+        self.assert_status(human, 0)
+        lines = human.stdout.splitlines()
+        group = lines.index(TEXT["excluded_group"].format(REASON="hidden-local-state", K=2,
+                                                          NEXT_STEP=STEPS["hidden-local-state"]))
+        self.assertEqual(lines[group + 1:group + 3],
+                         [TEXT["excluded_row"].format(PATH=assumed, BRANCH="002-assumed"),
+                          TEXT["excluded_row"].format(PATH=sparse, BRANCH="003-sparse")])
+        self.assertEqual(self.snapshot(root), before)
+        self.assertEqual((assumed / "work-002-assumed").read_text(), "hidden edit", "the edit survives")
+
+    def test_clean_an_edit_hidden_by_assume_unchanged_survives(self):
+        root = self.repo()
+        self.bare_remote()
+        tree = self.merged_worktree("001-assumed", path=self.base / "assumed")
+        self.git(tree, "update-index", "--assume-unchanged", "work-001-assumed")
+        (tree / "work-001-assumed").write_text("hidden edit")
+        self.assertEqual(self.git(tree, "status", "--porcelain"), "", "the edit is hidden from status")
+        before = self.snapshot(root)
+        message = TEXT["target_excluded_gate"].format(REASON="hidden-local-state", NEXT_STEP=STEPS["hidden-local-state"])
+        result, records = self.run_counted("clean", root, "--apply", "--action", "remove", "--worktree", tree, "--yes")
+        self.assert_status(result, 2)
+        self.assertEqual(result.stderr, f"REFUSED: {message}\n")
+        self.assertEqual(removals(records), [])
+        result = self.run_json("clean", root, "--apply", "--action", "remove", "--worktree", tree, "--yes", "--json")
+        self.assert_refused_target(result, tree, "hidden-local-state", message)
+        self.assertEqual(self.snapshot(root), before)
+        self.assertEqual((tree / "work-001-assumed").read_text(), "hidden edit", "the edit survives")
+
+    def test_clean_index_gate_reads_that_fail(self):
+        # Plan review M5, data-model.md "Gate": an index gate whose read cannot
+        # finish decides nothing; the row is inspection-error, the plan
+        # incomplete with inspection-incomplete, the preview exit 1, --apply
+        # exit 2, and nothing is removed.
+        root = self.repo()
+        self.bare_remote()
+        tree = self.merged_worktree("001-target", path=self.base / "target")
+        fake_dir = self.base / "fake"
+        refused = {"code": "inspection-incomplete", "message": TEXT["plan_incomplete"].format(
+            CODE="inspection-incomplete", REMEDY=TEXT["remedy_inspection_incomplete"])}
+
+        def git_error(key, **fields):
+            return TEXT[key].format(OPERATION=TEXT["row_error_git_operation"].format(SUBCOMMAND="ls-files"), **fields)
+
+        def assert_undecided(document, error):
+            self.assertEqual((document["selected"], by_path(document)),
+                             ([], {str(root): "main-worktree", str(tree): "inspection-error"}))
+            row = row_of(document, tree)
+            self.assertEqual((row["classification"], row["recommendation"], row["errors"]),
+                             ("inspection-error", INSPECTION_ERROR_ADVICE, [error]))
+            self.assertEqual((document["completeness"], document["apply_allowed"], document["refusals"]),
+                             ("incomplete", False, [refused]))
+
+        failed = {"code": "probe-failed", "message": git_error(
+            "row_error_probe_failed", DETAIL=TEXT["row_error_probe_failed_exit"].format(N=128))}
+        # The hang runs under the launcher with its own table (R-29): a probe
+        # budget of 1 s, every other value real, so the probe budget in force
+        # is 1 s and the hidden-state probe is cut there.
+        table = clean_support.timing_table(probe_budget=1)
+        timed_out = {"code": "probe-timeout", "message": git_error("row_error_probe_timeout", S="1")}
+        for kind, timing, error in (("ls-files-fails-in", None, failed), ("ls-files-hangs-in", table, timed_out)):
+            with self.subTest(kind):
+                shutil.rmtree(fake_dir, ignore_errors=True)
+                fake = clean_support.install_fake_git(fake_dir, kind, path=tree)
+                before = self.snapshot(root)
+                result, records = self.run_counted("clean", root, "--all-safe", "--json", real=fake, timing=timing)
+                self.assert_status(result, 1)
+                assert_undecided(self.load_json(result), error)
+                hidden = [record for record in records if argv_words(record)[2:] == ["ls-files", "-v", "--stage", "-z"]]
+                self.assertEqual([argv_words(record)[:2] for record in hidden], [["-C", str(tree)]])
+                result, records = self.run_counted("clean", root, "--all-safe", "--apply", "--yes", "--json",
+                                                   real=fake, timing=timing)
+                self.assert_status(result, 2)
+                assert_undecided(self.load_json(result), error)
+                self.assertEqual(removals(records), [])
+                self.assertEqual(self.snapshot(root), before, "nothing removed")
+        # In process: modules_check()'s filesystem call, the lstat of the row's
+        # admin `modules` entry, made to raise PermissionError and then to time
+        # out; every other filesystem call runs as it is.
+        modules = os.fsencode(self.common_dir(root) / "worktrees" / tree.name / "modules")
+        real_fs_call = project.fs_call
+        denied = PermissionError(errno.EACCES, os.strerror(errno.EACCES), os.fsdecode(modules))
+        cut = project.DriverOutcome(None, "timeout", detail="no answer within 5 s")
+        os_error = {"code": "os-error", "message": TEXT["row_error_os_error"].format(
+            OPERATION="lstat", STRERROR=os.strerror(errno.EACCES))}
+        timeout = {"code": "probe-timeout", "message": TEXT["row_error_probe_timeout"].format(OPERATION="lstat", S="5")}
+        for label, answer, error in (("PermissionError", denied, os_error), ("a timeout", cut, timeout)):
+            with self.subTest(f"modules_check() meets {label}"):
+                calls = []
+
+                def fs_call(fn, *args, **options):
+                    if fn is os.lstat and args == (modules,):
+                        calls.append(args[0])
+                        if isinstance(answer, BaseException):
+                            raise answer
+                        return answer
+                    return real_fs_call(fn, *args, **options)
+
+                before = self.snapshot(root)
+                status, out, err = self.main_in_process("clean", root, "--all-safe", "--json", fs_call=fs_call)
+                self.assertEqual((status, err), (1, ""), out)
+                assert_undecided(json.loads(out), error)
+                status, out, err = self.main_in_process("clean", root, "--all-safe", "--apply", "--yes", "--json",
+                                                        fs_call=fs_call)
+                self.assertEqual(status, 2, out + err)
+                assert_undecided(json.loads(out), error)
+                self.assertEqual(calls, [modules, modules], "one modules check per run")
+                self.assertEqual(self.snapshot(root), before, "nothing removed")
+                self.assertTrue(tree.is_dir())
+
     # T064: "A merged worktree whose upstream was deleted"; "A deleted upstream
     # is remote-gone". They pin T032, T049 and T057.
 
