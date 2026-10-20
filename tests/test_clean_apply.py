@@ -14,6 +14,7 @@ contract's key tuples are written here as literals.
 """
 import contextlib
 import io
+import json
 import os
 from pathlib import Path
 import re
@@ -161,6 +162,130 @@ class ApplyTests(clean_support.CleanCase):
 
     def head(self, path, ref="HEAD"):
         return self.git(path, "rev-parse", ref).strip()
+
+    # T045: D19's exit table and the apply result record.
+
+    def test_clean_apply_exit_table(self):
+        # D19's rows in order (lead ruling R-56 Q-8): the signal row first, since
+        # it needs the slot; then 1; then Git's own status; then 2; then 0.
+        removed = target("removed", path=b"/w/a")
+        later = target("not-attempted", "batch-stopped", path=b"/w/c", branch="c")
+        cases = [
+            # 130, 143 or 129: the first signal decides, whatever the targets say.
+            ("SIGINT over a clean batch", [removed], signal.SIGINT, 130),
+            ("SIGTERM over an unknown target", [target("unknown", "unconfirmed-removal"), later],
+             signal.SIGTERM, 143),
+            ("SIGHUP over a failed target", [target("failed", "git-refused", 128), later], signal.SIGHUP, 129),
+            ("SIGINT stopping the batch", [removed, target("not-attempted", "interrupted", path=b"/w/b"),
+                                           target("not-attempted", "interrupted", path=b"/w/c")],
+             signal.SIGINT, 130),
+            # 1: the deadline after the apply phase began, an unknown target, a ceiling.
+            ("deadline", [removed, target("not-attempted", "deadline-exceeded", path=b"/w/b")], None, 1),
+            ("unknown", [removed, target("unknown", "unconfirmed-removal", 0, path=b"/w/b"), later], None, 1),
+            ("unknown before a failed status", [target("unknown", "reconciliation-incomplete", 0),
+                                                target("failed", "git-failed", 255, path=b"/w/b")], None, 1),
+            ("ceiling, removed", [target("removed", "removal-ceiling", 137), later], None, 1),
+            ("ceiling, unknown", [target("unknown", "removal-ceiling", 137, notes=["partially-removed"]), later],
+             None, 1),
+            # Git's own status, passed through even when it is one of project's.
+            ("git-refused", [removed, target("failed", "git-refused", 128, path=b"/w/b"), later], None, 128),
+            ("git-failed", [target("failed", "git-failed", 255, notes=["orphaned-directory"]), later], None, 255),
+            ("git-failed 1", [target("failed", "git-failed", 1), later], None, 1),
+            ("git-failed 2", [target("failed", "git-failed", 2), later], None, 2),
+            ("git-failed by a signal", [target("failed", "git-failed", 137), later], None, 137),
+            ("Git's status before a refusal", [target("failed", "git-failed", 3),
+                                               target("refused", "state-changed", path=b"/w/b")], None, 3),
+            # 2: a refused target, a branch-after-removal reason, spawn-error.
+            ("refused", [removed, target("refused", "state-changed", path=b"/w/b"), later], None, 2),
+            ("identity-changed", [target("refused", "identity-changed"), later], None, 2),
+            ("branch advanced", [target("removed", "branch-advanced-after-removal"), later], None, 2),
+            ("branch missing", [target("removed", "branch-missing-after-removal"), later], None, 2),
+            ("spawn-error", [target("failed", "spawn-error"), later], None, 2),
+            # 0: every target removed with reason null, or nothing eligible.
+            ("clean batch", [removed, target("removed", path=b"/w/b"), target("removed", path=b"/w/c")], None, 0),
+            ("nothing eligible", [], None, 0),
+        ]
+        for name, targets, signum, expected in cases:
+            with self.subTest(name):
+                self.assertEqual(project.apply_exit_status(targets, signum), expected)
+        # A list no row matches, which the apply phase never builds, fails closed.
+        self.assertEqual(project.apply_exit_status([target("pending")], None), 2)
+
+    def test_clean_result_document_keys(self):
+        # Plan review M12: exit_status is null unless a child was spawned and
+        # reaped, Git's own status when it exited, and 128 plus the signal
+        # number when a signal ended it, whoever sent it: 137 at the ceiling.
+        outcome = project.DriverOutcome
+        statuses = [
+            (outcome(["git"], "complete", status=0), 0),
+            (outcome(["git"], "failed", status=128), 128),
+            (outcome(["git"], "failed", status=255), 255),
+            (outcome(["git"], "failed", status=-signal.SIGINT), 130),
+            (outcome(["git"], "failed", status=-signal.SIGTERM), 143),
+            (outcome(["git"], "timeout", status=-signal.SIGKILL), 137),
+            (outcome(["git"], "failed", detail="cannot run git: [Errno 2] No such file"), None),
+            (outcome(["git"], "timeout", detail="the child did not end after SIGKILL"), None),
+        ]
+        for given, expected in statuses:
+            with self.subTest(outcome=given):
+                self.assertEqual(project.removal_exit_status(given), expected)
+
+        orphaned = record(registry_entry_present=False, path_present=True)
+        targets = [
+            target("removed", exit_status=0, path=b"/w/a"),
+            target("failed", "git-failed", 255, path=b"/w/b", branch="b", sha=SHA_B, notes=["orphaned-directory"],
+                   reconciliation=orphaned),
+            target("not-attempted", "batch-stopped", path=b"/w/c\xff", branch="c", sha=SHA_C, probes_performed=0,
+                   reconciliation=record()),
+        ]
+        repository = {"root": "/r", "common_dir": "/r/.git", "dev": 1, "ino": 2, "root_valid_utf8": True,
+                      "common_dir_valid_utf8": True}
+        merge_target = {"name": "main", "source": "main", "sha": SHA_A}
+        context = {"repository": repository, "merge_target": merge_target, "plan_digest": "d" * 64,
+                   "probes": {"estimated": 30, "performed": 21}, "operations": {"estimated": 3, "performed": 2}}
+        document = project.result_document(targets, 255, **context)
+        self.assertEqual(list(document), APPLY_RESULT_KEYS)
+        self.assertEqual(document["schema_version"], 1)
+        self.assertRegex(document["observed_at"], OBSERVED_AT)
+        for key, value in context.items():
+            self.assertEqual(document[key], value, key)
+        self.assertEqual(document["exit_code"], 255)
+        self.assertEqual(document["completeness"], "complete")
+        written = json.loads(json.dumps(document, indent=2, ensure_ascii=True))
+        self.assertEqual(written, document)
+        first, failed, skipped = document["targets"]
+        for entry in document["targets"]:
+            self.assertEqual(list(entry), TARGET_RESULT_KEYS)
+        self.assertEqual(first["path"], "/w/a")
+        self.assertIs(first["path_valid_utf8"], True)
+        self.assertEqual(first["command"], ["git", *REMOVAL_PINS, "-C", "/r", "worktree", "remove", "/w/a"])
+        self.assertEqual(first["exit_status"], 0)
+        self.assertEqual(list(first["reconciliation"]), RECONCILIATION_KEYS)
+        self.assertEqual(first["reconciliation"], {"registry_entry_present": False, "path_present": False,
+                                                   "branch_present": True, "branch_sha": SHA_A, "reconciled": True})
+        self.assertEqual((failed["stage"], failed["reason"], failed["exit_status"], failed["notes"]),
+                         ("failed", "git-failed", 255, ["orphaned-directory"]))
+        self.assertEqual(failed["reconciliation"]["path_present"], True)
+        # A not-attempted target: no reconciliation, no exit status, its path
+        # escaped with its flag beside it (FR-041).
+        self.assertIsNone(skipped["reconciliation"])
+        self.assertIsNone(skipped["exit_status"])
+        self.assertEqual((skipped["path"], skipped["path_valid_utf8"]), ("/w/c\\xff", False))
+        self.assertEqual(skipped["command"][-1], "/w/c\\xff")
+
+        # Every removed, refused, failed or unknown target carries an object;
+        # one that read nothing has every field null and is not reconciled.
+        cases = [target("refused", "state-changed", reconciliation=record(True, True, True, SHA_A)),
+                 target("unknown", "unconfirmed-removal", 0, reconciliation=record(True, None, True, SHA_A)),
+                 target("unknown", "internal-error", reconciliation=None)]
+        document = project.result_document(cases, 1, **context)
+        refused, unconfirmed, internal = document["targets"]
+        self.assertIs(refused["reconciliation"]["reconciled"], True)
+        self.assertIs(unconfirmed["reconciliation"]["reconciled"], False)
+        self.assertEqual(internal["reconciliation"], dict.fromkeys(RECONCILIATION_KEYS[:-1], None)
+                         | {"reconciled": False})
+        self.assertEqual(document["completeness"], "incomplete")
+        self.assertEqual(project.result_document([], 0, **context)["completeness"], "complete")
 
     # T054: the removal question.
 
@@ -441,6 +566,55 @@ class ApplyTests(clean_support.CleanCase):
                 decided = project.decide_stage(target("pending"), given, reconciliation)
                 self.assertEqual(decided, expected)
                 self.assertIn(decided[1], stages[decided[0]])
+
+    # T057's printers.
+
+    def test_clean_print_result_prints_the_success_line_or_the_stop_block(self):
+        plan = types.SimpleNamespace(root=Path("/r oot"))
+        removed = [target("removed", path=b"/w/a", branch="a"), target("removed", path=b"/w/b", branch="b"),
+                   target("removed", path=b"/w/c", branch="c")]
+        stopped = [removed[0], target("refused", "state-changed", path=b"/w/b", branch="b"),
+                   target("not-attempted", "batch-stopped", path=b"/w/c", branch="c")]
+        last = [removed[0], removed[1], target("failed", "git-refused", 128, path=b"/w/c", branch="c")]
+        kept = TEXT["branches_kept_line"].format(BRANCHES="a, b, c")
+        residual = TEXT["residual_window_line"]
+        cases = [
+            (removed, ["  removed /w/a", "  removed /w/b", "  removed /w/c",
+                       TEXT["success_line"].format(N=3, BRANCHES="a, b, c"), residual]),
+            (stopped, ["  removed /w/a", "  refused /w/b (state-changed)", "  not-attempted /w/c (batch-stopped)",
+                       TEXT["stop_block"].format(PATH="/w/b", REASON="state-changed", K=1, N=3,
+                                                 NOT_ATTEMPTED="/w/c", ROOT="'/r oot'"), kept, residual]),
+            # The stop at the last target leaves nothing not attempted (D18 leaves
+            # that list's empty form open; project writes `none`).
+            (last, ["  removed /w/a", "  removed /w/b", "  failed /w/c (git-refused)",
+                    TEXT["stop_block"].format(PATH="/w/c", REASON="git-refused", K=2, N=3,
+                                              NOT_ATTEMPTED="none", ROOT="'/r oot'"), kept, residual]),
+        ]
+        for targets, lines in cases:
+            with self.subTest(stages=[entry["stage"] for entry in targets]):
+                run = types.SimpleNamespace(human=io.StringIO(), write_error=None)
+                for entry in targets:
+                    project.print_progress(entry, run)
+                project.print_result(plan, targets, run)
+                self.assertEqual(run.human.getvalue(), "\n".join(lines) + "\n")
+        self.assertEqual(TEXT["success_line"].format(N=3, BRANCHES="a, b, c"), "Removed 3; branches kept: a, b, c.")
+
+        # Paths and branches print escaped (FR-041), the root in its command form.
+        odd = [target("unknown", "unconfirmed-removal", path=b"/w/a\x1bb", branch="a" + chr(0x202E) + "b")]
+        run = types.SimpleNamespace(human=io.StringIO(), write_error=None)
+        project.print_progress(odd[0], run)
+        project.print_result(types.SimpleNamespace(root=b"/r\nx"), odd, run)
+        self.assertEqual(run.human.getvalue().splitlines()[:3], [
+            "  unknown $'/w/a\\u001bb' (unconfirmed-removal)",
+            TEXT["stop_block"].format(PATH="$'/w/a\\u001bb'", REASON="unconfirmed-removal", K=0, N=1,
+                                      NOT_ATTEMPTED="none", ROOT="$'/r\\u000ax'"),
+            TEXT["branches_kept_line"].format(BRANCHES="$'a\\u202eb'")])
+
+        # Every line goes through say(): a failed write is recorded, never raised.
+        run = types.SimpleNamespace(human=RaisingStream(), write_error=None)
+        project.print_progress(stopped[1], run)
+        project.print_result(plan, stopped, run)
+        self.assertIsInstance(run.write_error, BrokenPipeError)
 
 
 if __name__ == "__main__":

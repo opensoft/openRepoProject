@@ -3511,6 +3511,130 @@ def apply_removals(plan, run):
 # endregion apply
 
 # region result
+# The end of an apply (T045, T057; design D18 and D19; data-model.md, "Target
+# stages", "Exit statuses" and "Apply result record"; contracts/project-clean.md,
+# "Human output", "Apply result record" and "Exit statuses"; lead ruling R-56
+# Q-8 to Q-10). A target is a mapping of the values a target result holds
+# (region apply, Target): these functions read it and never mutate it.
+
+# The reasons that send a run with --apply to D19's second row, exit 1: the
+# deadline stopping work after the apply phase began, and the hard ceiling.
+EXIT_ONE_REASONS = ("deadline-exceeded", "removal-ceiling")
+
+
+def apply_exit_status(targets, signum):
+    """The exit status of a run with --apply by D19's table (FR-037; lead
+    ruling R-56 Q-8), its first matching row: signum, the slot's first
+    signal, gives 128 plus its number (130, 143 or 129); then 1 when any
+    target is `unknown`, or its reason is `removal-ceiling` or, on a
+    `not-attempted` target, `deadline-exceeded`; then the status of the first
+    target `failed` with `git-refused` or `git-failed`, Git's own, passed
+    through even when it equals one of project's (OQ-25); then 2 for a
+    `refused` target, a `removed` one with a branch-after-removal reason, or
+    `failed` with `spawn-error`; then 0 when every target is `removed` with
+    reason null, or none was selected. A list no row matches, which the apply
+    phase never builds (a target still `pending`, or `not-attempted` with
+    nothing that stopped the run), fails closed with 2."""
+    if signum is not None:
+        return 128 + int(signum)
+    if any(target["stage"] == "unknown" or target["reason"] in EXIT_ONE_REASONS for target in targets):
+        return 1
+    for target in targets:
+        if (target["stage"] == "failed" and target["reason"] in ("git-refused", "git-failed")
+                and target["exit_status"] is not None):
+            return target["exit_status"]
+    if all(target["stage"] == "removed" and target["reason"] is None for target in targets):
+        return 0
+    return 2
+
+
+def json_argv(argv):
+    """An argument vector as a document writes it: each str as it is, and each
+    path (bytes or a path object) through json_path(), as text."""
+    return [arg if isinstance(arg, str) else json_path(arg)[0] for arg in argv]
+
+
+def target_document(target):
+    """One target result in TARGET_RESULT_KEYS's order (data-model.md, "Target
+    result and reconciliation record"): `path` through json_path() with
+    `path_valid_utf8` beside it, `command` through json_argv(), and
+    `reconciliation` null on a `not-attempted` target and an object in
+    RECONCILIATION_KEYS's order on every other, every field null and
+    `reconciled` false where none was read."""
+    path, valid = json_path(target["path"])
+    reconciliation = None
+    if target["stage"] != "not-attempted":
+        record = target["reconciliation"] or {key: None for key in RECONCILIATION_KEYS}
+        reconciliation = {key: record[key] for key in RECONCILIATION_KEYS}
+        reconciliation["reconciled"] = bool(reconciliation["reconciled"])
+    values = dict(target, path=path, path_valid_utf8=valid, notes=list(target["notes"]),
+                  command=json_argv(target["command"]), reconciliation=reconciliation)
+    return {key: values[key] for key in TARGET_RESULT_KEYS}
+
+
+def result_document(targets, exit_code, *, repository, merge_target, plan_digest, probes, operations):
+    """The apply result record (contracts/project-clean.md, "Apply result
+    record"; data-model.md, "Apply result record"), in APPLY_RESULT_KEYS's
+    order, written by write_document() as the one document of --apply --json
+    once the apply phase has begun: `schema_version` 1; `observed_at`, now,
+    when reconciliation finished; `repository`, `merge_target` and
+    `plan_digest`, the plan's, as its envelope writes them; `probes` and
+    `operations`, {estimated, performed}; one target_document() per target,
+    in canonical order; `exit_code`, the run's exit status (apply_exit_status());
+    and `completeness`, `complete` when every target whose reconciliation is
+    an object has `reconciled: true`, else `incomplete`."""
+    documents = [target_document(target) for target in targets]
+    complete = all(document["reconciliation"]["reconciled"] for document in documents
+                   if document["reconciliation"] is not None)
+    values = {"schema_version": 1, "observed_at": observed_at(), "repository": repository,
+              "merge_target": merge_target, "plan_digest": plan_digest, "probes": probes,
+              "operations": operations, "targets": documents, "exit_code": exit_code,
+              "completeness": "complete" if complete else "incomplete"}
+    return {key: values[key] for key in APPLY_RESULT_KEYS}
+
+
+def progress_line(target):
+    """A target's one progress line, at its final stage (lead ruling R-56
+    Q-10; `pending` is never printed): `  STAGE PATH`, or `  STAGE PATH
+    (REASON)` when it has a reason, PATH through human_path()."""
+    path = human_path(target["path"])
+    if target["reason"] is None:
+        return TEXT["progress_line"].format(STAGE=target["stage"], PATH=path)
+    return TEXT["progress_line_reason"].format(STAGE=target["stage"], PATH=path, REASON=target["reason"])
+
+
+def print_progress(target, run):
+    """Print target's progress line through say() once it is final; the apply
+    phase calls it for each target in canonical order as it ends."""
+    say(run, progress_line(target))
+
+
+def print_result(plan, targets, run):
+    """The human result of an apply (design D18; lead ruling R-56 Q-9), after
+    every target's progress line, through say(), so standard error under
+    --apply --json and a failed write recorded, never raised: when every
+    target is `removed` with reason null, `Removed N; branches kept: B1,
+    B2.`; otherwise D18's stop block at the first target that is not, its
+    `Not attempted:` naming the `not-attempted` targets (`none` when there is
+    none, a case D18 leaves open), its `Next:` command naming plan.root, then
+    `Branches kept: B1, B2.`; and in both cases the residual-window line.
+    Each list of kept branches names every selected target's branch in
+    canonical order, since the apply phase deletes no branch; paths and
+    branches print through human_path(), the command's root in its command
+    form."""
+    branches = ", ".join(human_path(target["branch"]) for target in targets)
+    stop = next((target for target in targets
+                 if not (target["stage"] == "removed" and target["reason"] is None)), None)
+    if stop is None:
+        say(run, TEXT["success_line"].format(N=len(targets), BRANCHES=branches))
+    else:
+        skipped = [human_path(target["path"]) for target in targets if target["stage"] == "not-attempted"]
+        say(run, TEXT["stop_block"].format(
+            PATH=human_path(stop["path"]), REASON=stop["reason"],
+            K=sum(target["stage"] == "removed" for target in targets), N=len(targets),
+            NOT_ATTEMPTED=", ".join(skipped) or "none", ROOT=human_path(plan.root, command=True)))
+        say(run, TEXT["branches_kept_line"].format(BRANCHES=branches))
+    say(run, TEXT["residual_window_line"])
 # endregion result
 
 # region push
