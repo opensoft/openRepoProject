@@ -10,7 +10,7 @@ duplicate them, and nothing here is an implementation step.
 
 - [x] 1.1 Proposal written: `proposal.md` adopts the packet's cache-disposal
   contract (`BA:1314-1337`) under the lane's rulings L-1 to L-17 and B-1 to
-  B-33, names three departures from B-6 as first written, which B-11 accepted,
+  B-37, names three departures from B-6 as first written, which B-11 accepted,
   and one from B's list of modified requirements (CD-1 to CD-4) with the rest
   of its own decisions (CD-5 to CD-18), and puts five Open Questions before
   Brett Heap; verified by its Capabilities section accounting for every
@@ -53,7 +53,7 @@ duplicate them, and nothing here is an implementation step.
   and committed as `9f30fb9`, and B-30's scope, lane 4's own words, committed
   as `4d5855a` (2.2); `design.md` holds D1 to D14 and `clarifications.md` the
   NOTED S-4; verified by `grep -c '^#### Scenario'` on each delta, by a script
-  run after the council round and again after rounds B3 and B4 that compares
+  run after the council round and again after rounds B3, B4 and B5 that compares
   every scenario of each of the nine MODIFIED blocks with its source text, and
   by `design.md`'s headings.
 - [x] 1.5 Validation passes: `/usr/bin/openspec validate
@@ -63,8 +63,8 @@ duplicate them, and nothing here is an implementation step.
   shows every artifact done; verified by running the three commands on this
   branch after 1.4, after the alignment fix round, after the council round
   (the last with the B-22 `project-overview` edit not yet committed), again
-  after lane 4's agreement and that edit's commit, after round B3 and after
-  round B4. The INFO
+  after lane 4's agreement and that edit's commit, after round B3, after round
+  B4 and after round B5. The INFO
   lines, that the archive would refuse a delta
   whose MODIFIED requirement change 1 or change 2 adds until that change is
   archived, are the expected state for blocks written on sister changes.
@@ -86,7 +86,7 @@ duplicate them, and nothing here is an implementation step.
   this change modifies, and by `/usr/bin/openspec validate
   add-project-clean-cache-disposal --strict` reporting no archive refusal for
   those two deltas.
-- [ ] 2.2 The overview exception agreed (B-14, B-22, B-30): lane
+- [x] 2.2 The overview exception agreed (B-14, B-22, B-30, B-36): lane
   openRepoProject-4, owner of change 2 and feature 005, agrees the diff of
   `specs/project-overview/spec.md`, which carries change 2's "Overview reuses
   the cleanup classifier and merge target" (APO/ov:358) whole with two
@@ -119,9 +119,17 @@ duplicate them, and nothing here is an implementation step.
   the same working directory and refs", and the added scenario's AND follows
   them; lane 4's handoff, line 132 on the register's `origin/main` at
   `971bc6eda`, records that B-30 takes lane 4's "for the same working
-  directory and refs", and the edit is committed alone as `4d5855a`. This task
-  is ticked again when lane 4's byte check of `4d5855a` is cited here from its
-  log.
+  directory and refs", and the edit is committed alone as `4d5855a`. Ticked
+  again in round B5 (B-36) on lane 4's byte check of `4d5855a`, which its log
+  records at line 64 (NOTED of 2026-10-20T11:50:06Z, brett-wip `fab1e721d`,
+  read on the register's `origin/main` at `fa9800bad`, where it is still line
+  64): "YES to lane 5's B-30 on #27 (opensoft/openRepoProject#24): lane 4 agrees
+  the words "for the same working directory and refs" as committed in
+  4d5855a. Byte-checked: the project-overview delta differs from the agreed
+  9f30fb9 only by those words, on the SHALL NOT sentence (now :35-36) and on
+  the cache scenario's last AND (:74), +3/-2, and it is unchanged from 4d5855a
+  to head e1049b2. Lane 5 may cite this line for tasks 2.2." Round B5 leaves
+  `specs/project-overview/spec.md` as it was at `e1049b2`.
 - [ ] 2.3 Enumeration, walk and stage measured (Open Questions, the caps and
   the opens limit; S-4): the cache enumeration's child, the plan-time walk with
   its access checks, and the cache stage timed warm and cold by change 1's
