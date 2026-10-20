@@ -340,10 +340,13 @@ that no later open receives its number.
 
 Before its first removal the stage SHALL run a whole-list preflight: it SHALL
 open and check every directory that the target's `cache_disposal.directories`
-lists; re-list every listed cache directory, requiring each entry to have the
-allowlisted shape, each nested directory to carry its planned identity, each
-listed cache's entries to number exactly the `entries` that the plan recorded
-for it, and the target's bytes to stay within the per-worktree cap; require
+lists; re-list every listed cache directory by a descriptor-relative streaming
+enumeration that yields one entry at a time and is closed at the first entry
+beyond the `entries` that the plan recorded for its listed cache, which is a
+difference, so that no enumeration holds a whole directory's listing, requiring
+each entry to have the allowlisted shape, each nested directory to carry its
+planned identity, each listed cache's entries to number exactly the `entries`
+that the plan recorded for it, and the target's bytes to stay within the per-worktree cap; require
 every listed file to be a regular file; keep the run's byte total, the sum of
 the bytes that this preflight measures and that the preflight of every earlier
 target whose cache stage passed its preflight in this run measured, and
@@ -396,8 +399,9 @@ branch change for that target.
 
 Once per invocation, before any cache enumeration, `project clean` SHALL check
 that the running platform provides `O_NOFOLLOW`, `O_DIRECTORY`, and the
-descriptor-relative open, `lstat`, directory listing, unlink, directory removal
-and access check with effective ids that follows no symbolic link. Where it
+descriptor-relative open, `lstat`, streaming directory enumeration, unlink,
+directory removal and access check with effective ids that follows no symbolic
+link. Where it
 does not, no row SHALL get a cache plan: no cache enumeration
 SHALL run, every row that reaches the `ignored-local-files` rung holding
 ignored records SHALL stay `ignored-local-files` with `cache_disposal.reason`

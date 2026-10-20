@@ -514,7 +514,8 @@ s after start; time spent blocked at the confirmation question SHALL NOT count,
 both deadlines moving later by the time spent waiting. Each Git child SHALL get
 `min(5 s, work remaining)`, and each filesystem call (`lstat`, `realpath`, the
 reads of `.git`, `gitdir`, reflog and manifest files, and the directory opens,
-listings, `lstat` calls and access checks of the cache walk) SHALL be abandoned
+bounded directory enumerations, `lstat` calls and access checks of the cache
+walk) SHALL be abandoned
 after the same budget, recording `probe-timeout`, or `deadline-exceeded` where
 the deadline was the limit, and leaving its values null. Probing SHALL be
 serial. Reconciliation probes SHALL get `min(5 s, reserve remaining)`.
@@ -868,9 +869,13 @@ core.fsmonitor=false`, the protocol pins, the scrubbed environment and
 per-child budget and counted in `probes`; then a walk that takes the records in
 canonical order, opens each directory it records once, from the worktree root
 down, relative to its parent's descriptor and without following a symbolic
-link, lists each listed or nested cache directory and `lstat`s each entry, each
-directory open, listing and `lstat` one filesystem call under the per-call
-budget, and stops at the row's 513th recorded cache object. The walk SHALL also
+link, enumerates each listed or nested cache directory by a descriptor-relative
+streaming enumeration that yields one entry at a time, and `lstat`s each entry
+it takes, each directory open, bounded enumeration and `lstat` one filesystem
+call under the per-call budget, and stops at the row's 513th recorded cache
+object, closing the enumeration in hand as soon as that cap decides. No
+enumeration SHALL hold a whole directory's listing, so that a row's walk holds
+at most 513 entries whatever a directory holds. The walk SHALL also
 check, for each
 directory that a cache stage would change (each listed cache directory, each
 nested `__pycache__` directory and the parent of each listed path), that the
@@ -924,14 +929,19 @@ held there for a persistent reason when any one of these holds:
 The test SHALL read these reasons and never `blocking` alone, which is null for
 `cache-cap` and `cache-unverified` and 0 for `cache-unwritable`. When each of
 the first 16 candidates in canonical order is held for a persistent reason, no
-later candidate is enumerated, and a re-run enumerates the same 16 first; the
-human report SHALL then, and only then, say why the rows left with `cache-cap`
-will not drain, naming from those 16 rows' reasons how many hold ignored files
-that are not caches, how many exceed a per-worktree cache cap, how many could
-not be enumerated and how many hold a cache directory that the running user
-cannot change, each with its next step, and SHALL never tell the person to
-remove by hand a worktree whose state was not established; otherwise a later
-run SHALL take the rows the caps left. A deadline that passes
+later candidate is enumerated, and a re-run enumerates the same 16 first. When
+that holds and, besides those 16, at least one later candidate is left with
+`cache-cap` by the 16-enumeration cap, the human report SHALL then, and only
+then, say why the rows left with `cache-cap` will not drain (the stall line),
+naming from those 16 rows' reasons how many hold ignored files that are not
+caches, how many exceed a per-worktree cache cap, how many could not be
+enumerated and how many hold a cache directory that the running user cannot
+change, each with its next step, and SHALL never tell the person to remove by
+hand a worktree whose state was not established. When that holds but no later
+candidate is so left, as when there are exactly 16 candidates, each row's own
+reason and next step SHALL print as usual, and no stall line SHALL print. When
+any of the first 16 is not held for a persistent reason, a later run SHALL take
+the rows the caps left. A deadline that passes
 during an enumeration SHALL make the plan incomplete with `deadline-exceeded`,
 as it does during any probe. A row whose enumeration finished with no cap
 reached SHALL have its ignored records counted as `disposable`, those that are
@@ -1136,6 +1146,12 @@ and its residual window" states.
   directories below the worktree root, it stays `ignored-local-files` with
   `cache-cap`, since the directories above that file count toward its 512
   recorded cache objects, its counts are null, and nothing is deleted
+- **AND** when a candidate's only ignored path is one `__pycache__` directory
+  holding 100,000 entries, under the ignore rule `__pycache__/`, which Git
+  prints as one record, a test hook counting the entries taken from that
+  directory's enumeration sees at most 513 taken, the row stays
+  `ignored-local-files` with `cache-cap`, its counts are null, and nothing is
+  deleted
 - **AND** when seventeen candidates each hold one small cache directory, the
   first sixteen in canonical order are enumerated and selected, the seventeenth
   stays `ignored-local-files` with `cache-cap`, `--all-safe --apply --yes`
@@ -1169,6 +1185,10 @@ and its residual window" states.
   the five that could not be enumerated and the five that this user cannot
   change, each with its next step, and no count of rows holding ignored files
   that are not caches
+- **AND** when there is no seventeenth candidate, so that exactly sixteen
+  candidates exist and each is held for a persistent reason as in any of the
+  cases above, no stall line is printed, and each row's preview line gives its
+  own reason and next step
 - **AND** when the sixteen instead hold `local.env` among their samples, none
   of them is enumerated, and the seventeenth is enumerated and selected
 
@@ -1279,8 +1299,9 @@ and its residual window" states.
   `cache_disposal` `not-attempted` with `target-stopped`
 - **AND** where SIGINT arrives while a test hook holds a read of that
   whole-list preflight, and the read then outlives its 5 s per-call budget, or
-  the shorter budget that the deadline sets, or the preflight then finds a
-  changed entry, before that check is reached, the signal is checked before
+  the shorter budget that the deadline sets, or is held until no more than the
+  removal floor remains for the next read to start, or the preflight then finds
+  a changed entry, before that check is reached, the signal is checked before
   that outcome is classified: nothing is deleted, the stage is `not-attempted`
   with `target-stopped`, the target and every later one are `not-attempted`
   with `interrupted`, never `refused` with `cache-changed` and never
