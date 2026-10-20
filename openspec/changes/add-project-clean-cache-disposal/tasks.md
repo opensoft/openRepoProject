@@ -10,7 +10,7 @@ duplicate them, and nothing here is an implementation step.
 
 - [x] 1.1 Proposal written: `proposal.md` adopts the packet's cache-disposal
   contract (`BA:1314-1337`) under the lane's rulings L-1 to L-17 and B-1 to
-  B-37, names three departures from B-6 as first written, which B-11 accepted,
+  B-40, names three departures from B-6 as first written, which B-11 accepted,
   and one from B's list of modified requirements (CD-1 to CD-4) with the rest
   of its own decisions (CD-5 to CD-18), and puts five Open Questions before
   Brett Heap; verified by its Capabilities section accounting for every
@@ -53,9 +53,9 @@ duplicate them, and nothing here is an implementation step.
   and committed as `9f30fb9`, and B-30's scope, lane 4's own words, committed
   as `4d5855a` (2.2); `design.md` holds D1 to D14 and `clarifications.md` the
   NOTED S-4; verified by `grep -c '^#### Scenario'` on each delta, by a script
-  run after the council round and again after rounds B3, B4 and B5 that compares
-  every scenario of each of the nine MODIFIED blocks with its source text, and
-  by `design.md`'s headings.
+  run after the council round and again after rounds B3, B4, B5 and B6 that
+  compares every scenario of each of the nine MODIFIED blocks with its source
+  text, and by `design.md`'s headings.
 - [x] 1.5 Validation passes: `/usr/bin/openspec validate
   add-project-clean-cache-disposal --strict` reports the change valid,
   `/usr/bin/openspec validate --all --strict` passes every item, and
@@ -64,7 +64,7 @@ duplicate them, and nothing here is an implementation step.
   branch after 1.4, after the alignment fix round, after the council round
   (the last with the B-22 `project-overview` edit not yet committed), again
   after lane 4's agreement and that edit's commit, after round B3, after round
-  B4 and after round B5. The INFO
+  B4, after round B5 and after round B6. The INFO
   lines, that the archive would refuse a delta
   whose MODIFIED requirement change 1 or change 2 adds until that change is
   archived, are the expected state for blocks written on sister changes.
@@ -129,7 +129,8 @@ duplicate them, and nothing here is an implementation step.
   9f30fb9 only by those words, on the SHALL NOT sentence (now :35-36) and on
   the cache scenario's last AND (:74), +3/-2, and it is unchanged from 4d5855a
   to head e1049b2. Lane 5 may cite this line for tasks 2.2." Round B5 leaves
-  `specs/project-overview/spec.md` as it was at `e1049b2`.
+  `specs/project-overview/spec.md` as it was at `e1049b2`, and round B6 leaves
+  it so, its blob at `fffc194` being the same.
 - [ ] 2.3 Enumeration, walk and stage measured (Open Questions, the caps and
   the opens limit; S-4): the cache enumeration's child, the plan-time walk with
   its access checks, and the cache stage timed warm and cold by change 1's
