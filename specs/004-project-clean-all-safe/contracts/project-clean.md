@@ -47,12 +47,17 @@ Flags this table does not refuse keep the baseline's handling: without
 `--apply`, `--yes`, `--action`, `--branch` and `--worktree` are ignored,
 and an unused `--branch` or `--worktree` is ignored. `--worktree P` is
 expanded, joined to the working directory and realpath'd by one bounded
-call; it names the one registry row whose path equals it, or else whose
-realpath does (`worktree-not-found` otherwise); a path two entries share is
-`registration-mismatch`, an `inspection-error` row, so the run refuses with
-`inspection-incomplete`, exit 2, before any `target-excluded`, because P's
-own evidence is strict and an incomplete plan is refused first (lead
-rulings R-57 and R-62).
+call, and matched against every registry row: a row matches when its path
+equals it, or else when its realpath, one bounded call each, does, and a
+realpath that cannot be read counts as a match, failing closed (lead ruling
+R-69). Exactly one decided match names P's row; no match is
+`worktree-not-found`; more than one match, by raw bytes or by realpath, or
+one not decided, selects nothing and leaves P's own evidence incomplete, so
+the run refuses with `inspection-incomplete`, exit 2, before any
+`target-excluded`, because P's own evidence is strict and an incomplete plan
+is refused first (lead rulings R-57, R-62 and R-67 (b)). A path two entries
+share is such a case, both entries also `registration-mismatch`,
+`inspection-error` rows.
 
 ## Order of a run
 
@@ -171,8 +176,9 @@ single-mode `--action remove` plan, print "D18 preview layout", the
 single-mode one with `Selected (1):` and the `not-requested` group among the
 excluded ones, then "D18 residual-window line"; push and delete-branch print
 no plan layout, only their `Cleanup action:` output as today (lead ruling
-R-56 Q-11); rows left unprobed print in a group of their own, its heading
-T052's (R-56);
+R-56 Q-11); a row left unprobed prints in the `reflog-unavailable` group,
+its reason, with that group's next step, and no group of its own is added
+(lead ruling R-67 (a), withdrawing R-56's);
 one progress line per target, printed at its final stage, `  STAGE PATH` or
 `  STAGE PATH (REASON)`, `pending` never printed (R-56 Q-10); "D18 success
 line" followed by "D18 residual-window line", as the stop block is (R-56
@@ -254,7 +260,7 @@ are closed within the version.
 | `budget` | `probe_timeout_seconds` (5), `invocation_timeout_seconds` (60), `reconciliation_reserve_seconds` (10), `removal_floor_seconds` (5), `removal_ceiling_seconds` (300), `probe_concurrency` (1), the values in force |
 | `probes`, `operations` | `{estimated, performed}` integers: `probes` counts every Git child other than a removal, `operations` the removals, each child once (lead ruling R-27); `estimated` is the upper bound for an `--apply` run of this plan in every mode, previews included: F + W + E + 5T + 3 and T (research.md R8) |
 | `selected` | array in canonical order, or null in a report above 128 rows; each entry: `path`, `path_valid_utf8`, `branch`, `head`, `upstream`, `upstream_oid`, `ahead`, `behind`, `dev`, `ino`, `admin_id`, `locked`, the baseline signature fields (`present`, `dirty`, `ignored_files`, `remote_present`, `merged_into_target`, `current`, `classification`), and `operation` (`{kind: "worktree-remove", argv}`, the exact argument vector) |
-| `excluded` | array in canonical order: `path`, `path_valid_utf8`, `branch` (or null), `classification` (or null when never classified), `reason` (null for a row left unprobed, which keeps its classification and makes the plan incomplete with `inspection-incomplete`; lead ruling R-56) |
+| `excluded` | array in canonical order: `path`, `path_valid_utf8`, `branch` (or null), `classification` (or null when never classified), `reason` (a string, the first failing gate, never null: a row left unprobed, its reflog read not finished within the filesystem budget, is `reflog-unavailable`, keeps its classification and makes the plan incomplete with `inspection-incomplete`; lead ruling R-67 (a), withdrawing R-56's null) |
 | `omitted` | `{count, exactness: "exact"}` |
 | `notes` | `{code, message}` objects; `merge-target-conflict`; in single mode the non-blocking `inspection-incomplete`, `inspect-cap`, `deadline-exceeded`; in a report above 128 rows `inspect-cap` with `rows` |
 | `completeness` | `complete` or `incomplete` |

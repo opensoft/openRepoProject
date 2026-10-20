@@ -147,12 +147,12 @@ child's scrubbed names and process group before it `exec`s Git (M4).
    `tests/test_clean_guard.py` ignore `observed_at`, one line each, named in
    its commit and report (it changed one, in lane G's module), any other
    field that differs between runs being reported, not masked (lead ruling
-   R-65). Each lane puts its `TEXT` keys
-   at its own place in both `TEXT` and `TEXT_FIXTURES`, so that lanes do not
-   all append at the end: the plan notes after `plan_digest_mismatch`
-   (T051), the unprobed rows' group heading after `excluded_group` (T052),
-   US9's two keys after
-   `git_too_old` (T117), and lane G's keys at the end (R-56 Q-15).
+   R-65). Each lane puts its `TEXT` keys at its own place in both `TEXT`
+   and `TEXT_FIXTURES`, so that lanes do not all append at the end: the plan
+   notes after `plan_digest_mismatch` (T051), US9's two keys after
+   `git_too_old` (T117), and lane G's keys at the end (R-56 Q-15); no key
+   is placed for unprobed rows, which have no group of their own (lead
+   ruling R-67 (a)).
 3. Helpers come from `tests/clean_support.py` only, imported by its bare
    name, `import clean_support` or `from clean_support import ...`, so that
    every module shares one `clean_support` module object; only a
@@ -878,8 +878,9 @@ T033), when B, D, E and F are; H, guard (T034, T035), when T023 is, beside G
   rule lane G's follow-up builds), each
   failed driver outcome becoming the row's `errors`
   entry by T024's map (M17), and each row carrying an unprobed marker, never
-  serialized and unset here, which a read not finished within its filesystem
-  budget sets (T066; analyze M6). Each row error's `message` is the
+  serialized and unset here, whose only setter is T066's reflog read not
+  finished within its filesystem budget (analyze M6, lead ruling R-67 (a)).
+  Each row error's `message` is the
   contract's text for its code, from a `TEXT` key this lane adds as a
   lead-approved contracts edit, with the same key in `TEXT_FIXTURES` of
   `tests/clean_support.py`, which this task also touches (lead ruling R-45).
@@ -1127,9 +1128,16 @@ These run inside their lanes, after T047 (Lanes, above).
   2, removes nothing and prints no question, and under `--json` prints the plan
   envelope with that refusal (M6); with `--yes`, the fresh plan's selection is
   removed with no question, exit 0. Scenario: "A noninteractive batch needs
-  --yes".
+  --yes". Add there too, moved from T057, since a `--all-safe --apply --yes
+  --json` run needs the plan lane (lead ruling R-67 (d)),
+  `test_clean_a_reader_that_closes_standard_output_under_apply_json`
+  (`--all-safe --apply --yes --json` with standard output a pipe whose read
+  end is closed: the plan and the progress go to standard error, the
+  removals proceed, the failed write of the result record is best-effort,
+  and the run exits by D19, 0 when every target is removed, with no
+  traceback and never 120; lead rulings R-55 and R-59 D2).
   — files: `tests/test_clean_apply.py`
-  — verify: `python3 -c "import sys,unittest as u;L=u.defaultTestLoader;f=lambda s:[i for t in s for i in (f(t) if isinstance(t,u.TestSuite) else [t.id()])];I=[i for i in f(L.discover('tests',pattern=sys.argv[1])) if not i.startswith('unittest.')];A=sys.argv[2:];M=[a for a in A if not any(a in ('*',i.split('.')[-1]) for i in I)];[print('not collected:',m) for m in M];[print(e) for e in L.errors];sys.exit(1 if M or L.errors or not A else 0)" test_clean_apply.py 'test_clean_a_noninteractive_batch_needs_yes'`
+  — verify: `python3 -c "import sys,unittest as u;L=u.defaultTestLoader;f=lambda s:[i for t in s for i in (f(t) if isinstance(t,u.TestSuite) else [t.id()])];I=[i for i in f(L.discover('tests',pattern=sys.argv[1])) if not i.startswith('unittest.')];A=sys.argv[2:];M=[a for a in A if not any(a in ('*',i.split('.')[-1]) for i in I)];[print('not collected:',m) for m in M];[print(e) for e in L.errors];sys.exit(1 if M or L.errors or not A else 0)" test_clean_apply.py 'test_clean_a_noninteractive_batch_needs_yes' 'test_clean_a_reader_that_closes_standard_output_under_apply_json'`
 - [ ] T045 [P] [US1] [O] Add to `tests/test_clean_apply.py`:
   `test_clean_apply_exit_table` (`apply_exit_status(targets, signum)` on
   literal target lists, `signum` the slot's signal or None, gives each D19
@@ -1284,11 +1292,21 @@ These run inside their lanes, after T047 (Lanes, above).
   (plan review M7), and `performed` from the counters of the `Invocation`; and
   `omitted` as `{count: 0, exactness: "exact"}` until T075. In mode single, P,
   expanded, joined to the working directory and realpath'd by one bounded call,
-  names the one registry row whose path equals it, or else the one whose
-  realpath does, and otherwise records `worktree-not-found` through T047's
+  is matched against every registry row: a row matches when its raw path
+  bytes equal it, or else when its own realpath, one bounded call each, does;
+  a realpath that cannot be read counts as a match, failing closed, and every
+  row matches when P's own cannot be read (lead ruling R-69, reading 2).
+  Exactly one decided match is P's row. No match records
+  `worktree-not-found` through T047's
   `refuse()` on the plan it returns, never raising and never returning 2,
   so that the plan envelope, not the extended error object, carries it, and
-  `check_plan()` returns its 2 (M9; lead rulings R-56 and R-59 D4); P is
+  `check_plan()` returns its 2 (M9; lead rulings R-56 and R-59 D4);
+  `worktree-not-found` is for no match only. More than one match, by raw
+  bytes or by realpath, or one not decided, leaves P with no row: nothing is
+  selected, P's own evidence is incomplete, and `check_plan()` refuses with
+  `inspection-incomplete`, never the baseline's `No unique linked worktree`
+  refusal, a twin that passes gates 1 to 5 being excluded as `not-requested`
+  (lead rulings R-62 (a), R-67 (b) and R-69). Otherwise P is
   selected alone, and every other eligible row is `not-requested`; in mode
   report the plan is the same, with `apply_allowed: false`.
   — files: `project`
@@ -1297,11 +1315,13 @@ These run inside their lanes, after T047 (Lanes, above).
   the ten gates of FR-020 as one ordered tuple of gate functions, the per-row
   gates 1 to 7 each `gate(row, plan, run)`, returning its reason or None, and
   each free to set the row's `errors`, set its class to `inspection-error` or
-  set its unprobed marker. A row left unprobed is listed in `excluded` with
-  `reason` null and its classification kept, and T049's
-  `plan_completeness()` makes the plan incomplete with
-  `inspection-incomplete`; no reason value is added (lead ruling R-56,
-  settling R-53's P-3). This task writes `main-worktree`,
+  set its unprobed marker. Every excluded row carries its first failing
+  gate's reason, never None: a row left unprobed, T066's reflog read past
+  its budget, is excluded as `reflog-unavailable` with its marker set and
+  its classification kept, and T049's `plan_completeness()` makes the plan
+  incomplete with `inspection-incomplete`; no reason value is added (lead
+  ruling R-67 (a), withdrawing R-56's null reason for R-53's P-3). This
+  task writes `main-worktree`,
   `unsupported-path-bytes`, `locked-worktree`, the class gate and
   `not-requested`, and declares, each in its owner's region with a body that
   passes every row and a docstring fixing its signature and return contract,
@@ -1348,10 +1368,10 @@ These run inside their lanes, after T047 (Lanes, above).
   nothing here and keep their `Cleanup action:` output as today; `Merge
   target: NAME (SOURCE)` prints in every mode, since no existing test reads
   the old line; and every human line goes through T047's `say()` (lead
-  ruling R-56 Q-11, settling R-53's P-6). Rows left unprobed print in a
-  group of their own, its heading a `TEXT` key this task adds after
-  `excluded_group` as a lead-approved contracts edit, with its fixture (R-56,
-  settling R-53's P-3; rule 2). The three reasons D18 gives no next step
+  ruling R-56 Q-11, settling R-53's P-6). A row left unprobed prints in the
+  `reflog-unavailable` group, its reason, and this task adds no group and no
+  `TEXT` key for it (lead ruling R-67 (a), withdrawing R-56's group). The
+  three reasons D18 gives no next step
   (`main-worktree`, `unsupported-path-bytes`, `not-requested`) print with the
   contract's next steps, from three `NEXT_STEPS` keys this task adds as a
   lead-approved contracts edit, with their fixtures in `NEXT_STEP_FIXTURES`
@@ -1472,16 +1492,11 @@ These run inside their lanes, after T047 (Lanes, above).
   target's branch in canonical order (R-56); plan review M8) to region
   `result`;
   under `--apply --json` the result document goes to standard output and every
-  human line to standard error. Add
-  `test_clean_a_reader_that_closes_standard_output_under_apply_json` to
-  `tests/test_clean_apply.py` (`--all-safe --apply --yes --json` with
-  standard output a pipe whose read end is closed: the plan and the
-  progress go to standard error, the removals proceed, the failed write of
-  the result record is best-effort, and the run exits by D19, 0 when every
-  target is removed, with no traceback and never 120; lead rulings R-55 and
-  R-59 D2). T041 to T046 pass.
-  — files: `project`, `tests/test_clean_apply.py`
-  — verify: `python3 -c "import sys,re;t=open('project').read();A=sys.argv[1:];c=lambda r:t.split('# region '+r+'\n')[1].split('# endregion '+r+'\n')[0];M=[a for a in A if not ((a.split('%',1)[1] not in c(a.split('%',1)[0])) if '%' in a else (a.split('~',1)[1] in c(a.split('~',1)[0])) if '~' in a else re.search(r'^[a-z]*\s?'+re.escape(a.split(':',1)[1])+r'\b',c(a.split(':',1)[0]),re.M))];[print('region check failed:',m) for m in M];sys.exit(1 if M or not A else 0)" 'result:apply_exit_status' 'result:result_document' 'result:print_result' 'result~def apply_exit_status(targets, signum)' && python3 -c "import sys,unittest as u;L=u.defaultTestLoader;f=lambda s:[i for t in s for i in (f(t) if isinstance(t,u.TestSuite) else [t.id()])];I=[i for i in f(L.discover('tests',pattern=sys.argv[1])) if not i.startswith('unittest.')];A=sys.argv[2:];M=[a for a in A if not any(a in ('*',i.split('.')[-1]) for i in I)];[print('not collected:',m) for m in M];[print(e) for e in L.errors];sys.exit(1 if M or L.errors or not A else 0)" test_clean_apply.py 'test_clean_a_reader_that_closes_standard_output_under_apply_json' && python3 -m unittest discover -s tests -p 'test_clean_apply.py' && python3 -m unittest discover -s tests -p 'test_project.py'`
+  human line to standard error. T045 passes; T041 to T044 and T046 are
+  written after the plan lane is merged in (Lanes, above), the apply-side
+  closed-pipe test among them in T044 (lead ruling R-67 (d)).
+  — files: `project`
+  — verify: `python3 -c "import sys,re;t=open('project').read();A=sys.argv[1:];c=lambda r:t.split('# region '+r+'\n')[1].split('# endregion '+r+'\n')[0];M=[a for a in A if not ((a.split('%',1)[1] not in c(a.split('%',1)[0])) if '%' in a else (a.split('~',1)[1] in c(a.split('~',1)[0])) if '~' in a else re.search(r'^[a-z]*\s?'+re.escape(a.split(':',1)[1])+r'\b',c(a.split(':',1)[0]),re.M))];[print('region check failed:',m) for m in M];sys.exit(1 if M or not A else 0)" 'result:apply_exit_status' 'result:result_document' 'result:print_result' 'result~def apply_exit_status(targets, signum)' && python3 -m unittest discover -s tests -p 'test_clean_apply.py' && python3 -m unittest discover -s tests -p 'test_project.py'`
 - [ ] T058 [US1] [S] Run T036 to T046, every Phase 2 module and the 96 tests (95
   unchanged and the one rewritten): all pass.
   — files: (none)
@@ -1533,9 +1548,11 @@ carrying the reason the gate order gives.
   its entries (lead ruling R-33, in place of plan review m10); another
   `OSError` gives the row `inspection-error` with an `os-error` in its
   `errors`, and the plan incomplete with `inspection-incomplete` (M5); an
-  `fs_call()` timeout leaves the row unprobed and the plan incomplete with
-  `inspection-incomplete`, as the delta's outcome rule says (M5's replacement
-  text would make that row `inspection-error`; the delta governs).
+  `fs_call()` timeout gives `reflog-unavailable` and leaves the row
+  unprobed, its marker set, and the plan incomplete with
+  `inspection-incomplete`, as the delta's outcome rule says (lead ruling R-67
+  (a); M5's replacement text would make that row `inspection-error`; the
+  delta governs).
   — files: `tests/test_clean_reflog.py`
   — verify: `python3 -c "import sys,unittest as u;L=u.defaultTestLoader;f=lambda s:[i for t in s for i in (f(t) if isinstance(t,u.TestSuite) else [t.id()])];I=[i for i in f(L.discover('tests',pattern=sys.argv[1])) if not i.startswith('unittest.')];A=sys.argv[2:];M=[a for a in A if not any(a in ('*',i.split('.')[-1]) for i in I)];[print('not collected:',m) for m in M];[print(e) for e in L.errors];sys.exit(1 if M or L.errors or not A else 0)" test_clean_reflog.py 'test_clean_reflog_gate_outcomes'`
 - [ ] T060 [P] [US2] [S] Add the reflog scenarios to `tests/test_clean_reflog.py`:
@@ -1671,8 +1688,9 @@ carrying the reason the gate order gives.
   `reflog-unavailable`, never `inspection-error` (R-53 P-22); it runs for
   every row that reaches gate 7, in every mode. A read error other than
   `ENOENT` or `ENOTDIR` makes the row `inspection-error` with `os-error`, and
-  a timeout leaves it unprobed by
-  setting T031's unprobed marker, the plan incomplete with
+  a timeout returns `reflog-unavailable` and leaves the row unprobed by
+  setting T031's unprobed marker, whose only setter this is (lead ruling
+  R-67 (a)), the plan incomplete with
   `inspection-incomplete` either way through T049's `plan_completeness()`,
   which this task leaves as it is (plan review M5, as the delta words it;
   analyze M6). T059 and T060 pass.

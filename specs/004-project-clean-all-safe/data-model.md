@@ -147,11 +147,14 @@ bound. It changes no class, rung or gate.
 
 ### Gate (FR-020 to FR-023; D10, D12, D13)
 
-A row is selected only when it passes every gate; an excluded row's `reason`
-is its first failing gate. A row left unprobed is excluded with `reason`
-null and its classification kept, the plan incomplete with
-`inspection-incomplete`; no reason value is added for it (lead ruling R-56,
-settling R-53's P-3):
+A row is selected only when it passes every gate; every excluded row
+carries one `reason`, its first failing gate, never null. A row left
+unprobed, whose reflog read did not finish within the filesystem budget
+(T066's read, the unprobed marker's only setter), is excluded as
+`reflog-unavailable` with its classification kept and its marker set, and
+the plan is incomplete with `inspection-incomplete`; no reason value and no
+group of its own are added for it (lead ruling R-67 (a), withdrawing R-56's
+null reason for R-53's P-3):
 
 | Order | Reason | Fails when |
 | --- | --- | --- |
@@ -178,8 +181,10 @@ or `deadline-exceeded`, and the plan incomplete (`inspection-incomplete`); a
 null flag never passes gate 9 or 10, while gate 3 fails only on a
 registration read and found to disagree (R-53 P-16). A reflog read not
 finished within the filesystem budget follows the `project-clean` delta's
-reflog outcome rule instead: the row is left unprobed, never selected, and
-the plan incomplete with `inspection-incomplete`.
+reflog outcome rule instead: the row is left unprobed, its marker set, and
+excluded as `reflog-unavailable`, "where the reflog cannot decide it", never
+selected, and the plan is incomplete with `inspection-incomplete` (R-67
+(a)).
 
 ### Reflog anchor and movement (D10; FR-021, FR-022)
 
@@ -199,7 +204,7 @@ message when there is one.
 | --- | --- |
 | `reflog-unavailable` | missing (`ENOENT`, `ENOTDIR`), 0 bytes, or the read reached its 64 KiB bound (65,536 bytes read) |
 | `inspection-error` | any other error on the read |
-| unprobed (`inspection-incomplete`) | the read did not finish within the filesystem budget |
+| `reflog-unavailable`, the row left unprobed (its marker set; the plan `inspection-incomplete`; R-67 (a)) | the read did not finish within the filesystem budget |
 | `reflog-unavailable` | a line that is not `<old> <new> ...`, a truncated last line included: the entries cannot decide, never `inspection-error` (lead ruling R-53 P-22) |
 | `reflog-unavailable` | the last entry's new object is not the head |
 | pass | a movement survives |
@@ -469,7 +474,7 @@ The driver reads the slot by the `Invocation`'s phase: it raises
 | planning | preview or report built | reported (exit 0 complete, 1 incomplete) |
 | planning, `--apply` | incomplete; then `--expect-plan` mismatch | refused (exit 2), in that order |
 | planning, `--apply` | complete `all-safe` plan selecting nothing | reported (`No eligible worktrees`, exit 0, no question) |
-| planning, single | P matches no entry; a gate excludes P | refused (`worktree-not-found`; `target-excluded`) |
+| planning, single | P matches no entry; P matches several, or one not decided (R-67 (b), R-69); a gate excludes P | refused (`worktree-not-found`; `inspection-incomplete`; `target-excluded`) |
 | planning, `--apply` | standard input not a terminal, no `--yes` | refused (`confirmation-required`) |
 | planning, `--apply` | `--yes` | applying |
 | planning, `--apply` | otherwise | asking |
