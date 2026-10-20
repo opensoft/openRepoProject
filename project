@@ -2099,12 +2099,74 @@ def partial_removal_note(row, status, main):
 
 
 def declared_tracking_branch(root):
-    """The merge target's first candidate (D8): the manifest's
-    `tracking_branch` at root, read as today by manifest(), which refuses a
-    wrong kind or an unreadable manifest; None without a manifest or the key.
-    T108 bounds the read (FR-060)."""
-    _, data = manifest(Path(os.fsdecode(root)))
-    return data.get("tracking_branch")
+    """The merge target's first candidate (D8, FR-018, FR-060; T108): the
+    manifest's `tracking_branch` at root, the main worktree (bytes or str), or
+    None without a manifest or the key. The manifest is the first of
+    `project.yaml` and `family.yaml` that is a regular file, as manifest()
+    picks it, and each is examined by one bounded filesystem call (fs_call()):
+    a stat, then, only for a regular file of at most LIMITS["manifest_bytes"]
+    (1 MiB) by `st_size`, a read that asks for at most 1 MiB, the size checked
+    again by fstat on the opened file (lead ruling R-4). It is parsed from the
+    bytes read; read_yaml() is never called, so it reads nothing unbounded.
+
+    Every refusal is `manifest-invalid`: over 1 MiB, TEXT
+    `manifest_invalid_size`, with nothing read; otherwise the baseline
+    messages of read_yaml() and manifest() (lead ruling R-45 (6)): `Cannot
+    read PATH: ...` for an OSError, a call cut at its budget or a parse
+    error, `Expected a mapping in PATH`, `Unexpected kind in PATH; expected
+    KIND`, and read_yaml()'s own message when PyYAML is missing. A refusal
+    carries no context; the resolution adds the repository (lead ruling
+    R-53, P-12)."""
+    limit = LIMITS["manifest_bytes"]
+    base = Path(os.fsdecode(root))
+
+    def examine(path):
+        # ("absent", None) where Path.is_file() is false, ("over", None) past
+        # the cap by st_size or fstat, else ("read", at most `limit` bytes).
+        try:
+            found = os.stat(path)
+        except OSError as exc:
+            if exc.errno in (errno.ENOENT, errno.ENOTDIR, errno.EBADF, errno.ELOOP):
+                return "absent", None
+            raise
+        if not stat.S_ISREG(found.st_mode):
+            return "absent", None
+        if found.st_size > limit:
+            return "over", None
+        with open(path, "rb") as stream:
+            if os.fstat(stream.fileno()).st_size > limit:
+                return "over", None
+            return "read", stream.read(limit)
+
+    for filename, kind in (("project.yaml", "project-manifest"), ("family.yaml", "family-manifest")):
+        path = base / filename
+        try:
+            found = fs_call(examine, str(path))
+        except OSError as exc:
+            raise Refused(f"Cannot read {path}: {exc}", code="manifest-invalid") from exc
+        if isinstance(found, DriverOutcome):
+            raise Refused(f"Cannot read {path}: {found.detail}", code="manifest-invalid")
+        state, data = found
+        if state == "absent":
+            continue
+        if state == "over":
+            raise Refused(TEXT["manifest_invalid_size"].format(PATH=human_path(os.fsencode(path))),
+                          code="manifest-invalid")
+        try:
+            import yaml
+        except ImportError as exc:
+            raise Refused("YAML inspection needs PyYAML; use a workBench with python3-yaml installed.",
+                          code="manifest-invalid") from exc
+        try:
+            value = yaml.safe_load(data.decode("utf-8"))
+        except (UnicodeError, yaml.YAMLError) as exc:
+            raise Refused(f"Cannot read {path}: {exc}", code="manifest-invalid") from exc
+        if not isinstance(value, dict):
+            raise Refused(f"Expected a mapping in {path}", code="manifest-invalid")
+        if value.get("kind") != kind:
+            raise Refused(f"Unexpected kind in {path}; expected {kind}", code="manifest-invalid")
+        return value.get("tracking_branch")
+    return None
 
 
 def resolve_merge_target(refs, declared):
@@ -2114,10 +2176,18 @@ def resolve_merge_target(refs, declared):
     leading `origin/` (source `manifest`); the symref of
     `refs/remotes/origin/HEAD`, less `refs/remotes/origin/` (`origin-head`);
     `main`; `master`. Returns {name, source, sha, notes}, sha that branch's
-    head; notes is empty here (T108 adds `merge-target-conflict`). With no
-    candidate it refuses `no-merge-target` with the baseline message
+    head. notes holds the `merge-target-conflict` note, a {code, message}
+    object from TEXT `note_merge_target_conflict`, when the manifest's
+    candidate and the `origin/HEAD` one both exist as local branches and
+    differ: the manifest wins (T108; lead ruling R-56, settling P-13), and
+    build_plan() moves the note to the plan's notes; it is empty otherwise.
+    With no candidate it refuses `no-merge-target` with the baseline message
     (project:551 at 961c405)."""
     heads = {ref["refname"]: ref["objectname"] for ref in refs}
+
+    def head(name):
+        return heads.get(b"refs/heads/" + name.encode("utf-8", "surrogateescape")) if name else None
+
     candidates = []
     if isinstance(declared, str):
         candidates.append((declared.removeprefix("origin/"), "manifest"))
@@ -2127,10 +2197,19 @@ def resolve_merge_target(refs, declared):
             candidates.append((ref["symref"][len(origin):].decode("utf-8", "surrogateescape"), "origin-head"))
     candidates += [("main", "main"), ("master", "master")]
     for name, source in candidates:
-        sha = heads.get(b"refs/heads/" + name.encode("utf-8", "surrogateescape")) if name else None
+        sha = head(name)
         if sha:
-            return {"name": name, "source": source, "sha": sha, "notes": []}
-    raise Refused(TEXT["no_merge_target"], code="no-merge-target")
+            target = {"name": name, "source": source, "sha": sha, "notes": []}
+            break
+    else:
+        raise Refused(TEXT["no_merge_target"], code="no-merge-target")
+    if target["source"] == "manifest":
+        for other, source in candidates:
+            if source == "origin-head" and other != target["name"] and head(other):
+                shown = [human_path(value.encode("utf-8", "surrogateescape")) for value in (target["name"], other)]
+                target["notes"].append({"code": "merge-target-conflict", "message": TEXT[
+                    "note_merge_target_conflict"].format(NAME=shown[0], OTHER=shown[1])})
+    return target
 
 
 # The probes (D6, D7 and D8; FR-055 to FR-057). Every Git child runs through
@@ -2948,26 +3027,37 @@ class Plan:
     - `repo`: what resolve_clean_target() returned, a dict whose "root" is
       the command directory; `root`, that directory; `mode` and `action`, the
       run's.
-    - `evidence`: inspect_repository()'s dict for the plan's repository (its
-      identity, refs and merge target), or None until build_plan() reads it.
+    - `evidence`: inspect_repository()'s dict for the plan's repository, or
+      None until build_plan() reads it; its `identity` holds `root` and
+      `common_dir` as bytes, `dev` and `ino`.
+    - `repository`: the envelope's object, repository_object()'s, built from
+      that identity.
     - `rows`: the WorktreeRows, main worktree first, then by raw path bytes.
     - `merge_target`: {name, source, sha}, or None until established.
-    - `selected`: the selected rows in canonical order (raw path bytes), each
-      given `removal_args`, the arguments of its removal child,
-      ["-C", ROOT, "worktree", "remove", PATH] with PATH its raw path bytes
-      (design D9), so that its `operation.argv` is git_argv("removal",
-      removal_args); `excluded`: (row, reason) pairs in canonical order, the
-      reason None for an unprobed row.
-    - `target`: in mode single, P's row, or None while none matches.
+    - `selected`: the selected WorktreeRows in canonical order (raw path
+      bytes), each given the attribute `removal_args`, the arguments of its
+      removal child, ["-C", ROOT, "worktree", "remove", PATH] (design D9):
+      ROOT the identity's `root` as bytes, or os.fsencode(root) while none is
+      named, and PATH the row's raw_path, bytes. Its `operation.argv` is
+      git_argv("removal", removal_args), each bytes element written through
+      json_argument().
+    - `excluded`: (row, reason) pairs in canonical order, every reason a
+      gate's, never None (lead ruling R-67 (a)).
+    - `target`: in mode single, P's row, or None while none, or more than
+      one, matches; `target_rows`, the rows P may name (empty outside mode
+      single for --action remove).
     - `notes`: the plan notes, {code, message} objects.
     - `completeness` ("complete" or "incomplete", None until decided) and
       `apply_allowed`.
-    - `refusals`: the Refused objects refuse() recorded, in order; the first
-      is the one a `REFUSED:` line names.
+    - `refusals`: the Refused objects refuse() recorded, one per code, in
+      REFUSAL_CODES order; the first is the one a `REFUSED:` line names.
     - `digest`: plan_digest()'s value, None until computed.
+    - `planning_probes`: the Git children other than removals that built the
+      plan, the F + W + E of the estimate (research.md R8).
     - `printed`: whether print_plan() has written the human plan.
-    - `report`: the baseline report, cleanup_report()'s, which the stages'
-      first bodies read; build_plan() leaves it None once T049 fills it."""
+    - `report`: a baseline-shaped dict {root, target_branch,
+      tracking_freshness, worktrees}, its worktrees the plan's rows, which
+      push_or_delete()'s first body reads; the apply stages do not."""
 
     def __init__(self, repo, run):
         self.repo = repo
@@ -3243,13 +3333,88 @@ def check_plan(plan, run):
 # endregion dispatcher
 
 # region resolution
+def is_bare_name(argument):
+    """Whether argument names a project rather than a path (research.md R13
+    as plan review M15 words it): after expanduser(), a relative argument
+    that contains no `/` and is neither `.` nor `..`. An empty argument is
+    none, as discover() reads it."""
+    text = os.path.expanduser(os.fsdecode(argument))
+    return bool(text) and not os.path.isabs(text) and "/" not in text and text not in (".", "..")
+
+
 def resolve_clean_target(args, run):
-    """Resolve the target argument to the repository the run acts on (T107
-    fills; contracts/project-clean.md, "Resolution"; design D8): return a
-    dict whose "root" is the command directory, a Path. A resolve refusal is
-    raised to main(), which prints the extended error object under --json.
-    First body: the baseline discover() (project:670 at 961c405)."""
-    return {"root": discover(getattr(args, "target", None))}
+    """Resolve the target argument Git-first to exactly one repository and
+    its main worktree (T107; D8, FR-016, FR-017; contracts/project-clean.md,
+    "Resolution"; lead rulings R-13, R-51 and R-53, P-10 to P-12 and P-20).
+    Returns {"root": the main worktree, a Path, the command directory;
+    "evidence": inspect_repository()'s dict}, which build_plan() reads
+    instead of running row 3 again (lead ruling R-71 (b)).
+
+    After expanduser(): an absolute path is probed where it names, and its
+    realpath must equal row 3's toplevel and that toplevel be the main
+    worktree; a relative path, or none, is joined to the working directory
+    and probed there; a bare name (is_bare_name()) goes through discover()'s
+    name lookup, and the directory it returns must be a worktree toplevel. A
+    relative path and a bare name resolve to their repository's main
+    worktree. discover()'s family-holder and manifest-ancestor redirections
+    never apply to a path. discover()'s bare-name refusals are coded by their
+    exact baseline messages, `ambiguous-name` for "Ambiguous project name;
+    supply a path." and `repository-not-found` for "Directory does not exist:
+    PATH" and "No project found at PATH; supply a path or name.", until US9's
+    T118 gives discover() these codes itself (P-10); a refusal that already
+    carries a code passes unchanged.
+
+    Refused `target-not-repository-root`, exit 2, before any plan and with no
+    context, in M6's order: row 3 failed (a directory outside any
+    repository, a bare repository's own directory, a timeout); a submodule
+    checkout (row 3's third line); a main worktree that main_worktree() gives
+    as (None, cause); then the absolute-path and bare-name rules above. Then
+    the merge target's own refusal (`no-merge-target`, `manifest-invalid`),
+    before any row is probed, its context the repository and a null merge
+    target. A repository-wide probe that failed after row 3 is no refusal
+    here: build_plan() makes that plan incomplete."""
+    target = getattr(args, "target", None) or ""
+    text = os.path.expanduser(target)
+    bare, absolute = is_bare_name(target), os.path.isabs(text)
+    if bare:
+        try:
+            found = discover(target)
+        except Refused as exc:
+            message = str(exc)
+            if exc.code is None and message == "Ambiguous project name; supply a path.":
+                exc.code = "ambiguous-name"
+            elif exc.code is None and (message.startswith("Directory does not exist: ") or (
+                    message.startswith("No project found at ") and message.endswith("; supply a path or name."))):
+                exc.code = "repository-not-found"
+            raise
+        directory = shown = os.fsencode(found)
+    elif absolute:
+        directory = shown = os.fsencode(text)
+    else:
+        directory = os.path.join(os.getcwdb(), os.fsencode(text)) if text else os.getcwdb()
+        shown = os.path.abspath(directory)
+
+    def refused():
+        return Refused(TEXT["target_not_repository_root"].format(PATH=human_path(shown)),
+                       code="target-not-repository-root", path=shown)
+
+    evidence = inspect_repository(directory, run)
+    identity = evidence["identity"]
+    if identity is None or evidence["superproject"] is not None or evidence["main_cause"] is not None:
+        raise refused()
+    toplevel, root = evidence["toplevel"], identity["root"]
+    if bare or absolute:  # the directory itself must be a worktree toplevel
+        try:
+            exact = _realpath(directory) == toplevel
+        except EvidenceError:
+            exact = False
+        if not exact or (absolute and root is not None and toplevel != root):
+            raise refused()
+    refusal = evidence["merge_target_refusal"]
+    if refusal is not None:
+        refusal.context = {"repository": repository_object(identity), "merge_target": None}
+        raise refusal
+    return {"root": Path(os.fsdecode(toplevel if root is None else root)), "evidence": evidence}
 # endregion resolution
 
 # region plan
@@ -3280,39 +3445,46 @@ def _bounded_realpath(path):
     return None if isinstance(found, DriverOutcome) else found
 
 
-def match_target(plan, run):
-    """P of a named removal, `--apply --action remove --worktree P` (D13; contracts/project-clean.md,
-    "Argument checks"; lead rulings R-56 and R-67 (b) as corrected): --worktree
-    expanded and realpath'd, which joins it to the working directory, by one
-    bounded call, matched against every row: a row matches when its raw path
-    bytes equal P's, or else when its own realpath, one bounded call each, does;
-    a realpath that cannot be read counts as a match, failing closed, and so
-    does every row when P's own cannot. Sets plan.target_rows, the rows P may
-    name, and plan.target, the one row when exactly one matched and was
-    decided, else None. No match records `worktree-not-found` through refuse()
-    with the baseline message, never raised (R-59 D4); several matches, or one
-    not decided, leave plan.target None, so that nothing is selected for P and
-    check_plan() refuses with inspection-incomplete."""
+def match_target(plan, run, entries):
+    """P of a named removal, `--apply --action remove --worktree P` (D13;
+    contracts/project-clean.md, "Argument checks" and "Order of a run"; lead
+    rulings R-53 P-15, R-56 and R-67 (b) as corrected), matched against the
+    whole registry before any row is inspected. entries are the registry
+    entries that are rows, (raw, record) in canonical order, raw the path the
+    row carries. --worktree is expanded and realpath'd, which joins it to the
+    working directory, by one bounded call; an entry matches when raw equals
+    P's bytes, or else when its own realpath, one bounded call each, does; a
+    realpath that cannot be read counts as a match, failing closed, and so does
+    every entry when P's own cannot. The entries matched are P's rows:
+    worktree_rows() inspects them before any other row, so that P's status
+    probe is the run's first, and build_plan() exempts them from the row cap.
+    Sets plan.target_rows, those rows, and plan.target, the one row when
+    exactly one entry matched and was decided, else None. No match records
+    `worktree-not-found` through refuse() with the baseline message, never
+    raised (R-59 D4); several matches, or one not decided, leave plan.target
+    None, so that nothing is selected for P and check_plan() refuses with
+    inspection-incomplete. Returns (matched, path): the entries matched, and
+    P's realpath, or the expanded argument where that cannot be read, the PATH
+    of the single-mode notes while no row is P's."""
     wanted = os.path.expanduser(os.fsencode(run.args.worktree))
     found = _bounded_realpath(wanted)
     matches, decided = [], found is not None
-    for row in plan.rows:
-        if found is None:
-            matches.append(row)
-        elif row.raw_path == found:
-            matches.append(row)
+    for raw, record in entries:
+        if found is None or raw == found:
+            matches.append((raw, record))
         else:
-            real = _bounded_realpath(row.raw_path)
+            real = _bounded_realpath(raw)
             if real is None or real == found:
-                matches.append(row)
+                matches.append((raw, record))
                 decided = decided and real is not None
-    plan.target_rows = matches
-    if len(matches) == 1 and decided:
-        plan.target = matches[0]
+    path = found if found is not None else wanted
+    plan.target_rows = worktree_rows(plan.evidence, run, records=[record for _, record in matches]) if matches else []
+    if len(matches) == 1 and decided and len(plan.target_rows) == 1:
+        plan.target = plan.target_rows[0]
     elif not matches:
-        path = found if found is not None else wanted
         refuse(plan, Refused(f"No unique linked worktree found at {human_path(path)}",
                              code="worktree-not-found", path=path), run)
+    return matches, path
 
 
 def row_incomplete(row):
@@ -3323,21 +3495,31 @@ def row_incomplete(row):
 
 def plan_completeness(plan, exclude=()):
     """The codes that make plan incomplete, in REFUSAL_CODES order (FR-024,
-    FR-031; data-model.md, "Plan"; analyze M6): `inspection-incomplete` when a
-    repository-wide probe failed (plan.evidence's errors), when a row of
-    plan.rows not in exclude is `inspection-error` or unprobed, or when P's
-    rows are not excluded and P names no single established row (plan.target
-    None while plan.target_rows holds rows). T075 and T099 add `inspect-cap`
-    and `deadline-exceeded`, and make another row's state a non-blocking note in
-    mode single for --action remove; until T075 every row counts in every mode
-    (lead ruling R-56 Q-17)."""
+    FR-031; data-model.md, "Plan"; analyze M6; T075): `inspection-incomplete`
+    when a repository-wide probe failed (plan.evidence's errors), when a
+    counted row of plan.rows not in exclude is `inspection-error` or unprobed,
+    or when P's rows are not excluded and P names no single established row
+    (plan.target None while plan.target_rows holds rows); `inspect-cap` when
+    rows were left past the row cap (plan.omitted's count). In mode single for
+    --action remove only P's own rows count and the cap is no code: another
+    row's state and the rows past the cap are non-blocking notes, which
+    build_plan() records, while P's own evidence stays strict (the delta's
+    "Clean can explicitly retire verified worktrees"). Every other plan, push
+    and delete-branch included, counts every row and the cap (plan review
+    B1). check_plan() passes P's rows as exclude, so that its own step 3 judges
+    them. T099 adds `deadline-exceeded`."""
     skip = {id(row) for row in exclude}
     target_rows = getattr(plan, "target_rows", [])
-    incomplete = (bool(plan.evidence and plan.evidence["errors"])
-                  or any(row_incomplete(row) for row in plan.rows if id(row) not in skip)
-                  or (plan.target is None and bool(target_rows)
-                      and not any(id(row) in skip for row in target_rows)))
-    return ["inspection-incomplete"] if incomplete else []
+    named = plan.mode == "single" and plan.action == "remove"
+    own = {id(row) for row in target_rows}
+    counted = [row for row in plan.rows if id(row) not in skip and (id(row) in own or not named)]
+    codes = []
+    if ((plan.evidence and plan.evidence["errors"]) or any(row_incomplete(row) for row in counted)
+            or (plan.target is None and bool(target_rows) and not any(id(row) in skip for row in target_rows))):
+        codes.append("inspection-incomplete")
+    if not named and (getattr(plan, "omitted", None) or {}).get("count"):
+        codes.append("inspect-cap")
+    return codes
 
 
 def incomplete_refusal(plan, code):
@@ -3479,30 +3661,44 @@ def build_plan(repo, run):
     The plan holds: `evidence`; `repository`, the envelope's object;
     `merge_target` {name, source, sha}, its resolution's notes moved to the
     plan's `notes` as {code, message} objects (P-13); `rows`, the main worktree
-    first, then by raw path bytes; in mode single for --action remove, P's
-    match (match_target(): `target_rows` and `target`, `worktree-not-found`
-    recorded through refuse()); `selected` and `excluded` from gate_rows(),
-    each selected row given `removal_args`, ["-C", ROOT, "worktree",
-    "remove", PATH] with ROOT the command directory and PATH the registry's
-    raw bytes (design D9); `completeness` and `apply_allowed` (false for every
-    report); `digest` (plan_digest()); `planning_probes`, the Git children
-    other than removals that this invocation ran to build it, the F + W + E of
-    the estimate (research.md R8); and `report`, the baseline report built from the same rows, which the
-    first bodies of confirm_removal(), apply_removals() and push_or_delete()
-    read until the apply and push lanes replace them. `omitted` stays
-    {count: 0, exactness: "exact"} until T075. Interim until T066 and T075
-    (lead ruling R-56 Q-17): an unstarted branch is selectable, and in mode
-    single another row's inspection-error makes the plan incomplete."""
+    first, then by raw path bytes, read within the row cap (T075; FR-013,
+    FR-031, D13): the registry, row 4, is read whole before any cap, and of
+    its entries that are rows, in that order, the first LIMITS["worktree_rows"]
+    of the mode (128, or 256 in a report) are inspected, the main worktree and
+    missing rows counting; the rest are not inspected, in neither `rows` nor
+    `excluded`, and counted in `omitted`, {count, exactness: "exact"}. In mode
+    single for --action remove, P is matched against the whole registry first
+    and inspected first (match_target(): `target_rows` and `target`,
+    `worktree-not-found` recorded through refuse()), exempt from the cap, so
+    that the rows inspected are P's and the first 128 others (lead ruling R-53
+    P-15); another row's inspection-error or unprobed marker, and the rows
+    past the cap, are its non-blocking notes `inspection-incomplete` and
+    `inspect-cap`. Push and delete-branch take the cap with no exemption and
+    the batch's completeness (plan_completeness()). Then `selected` and
+    `excluded` from gate_rows(), each selected row given `removal_args`, ["-C",
+    ROOT, "worktree", "remove", PATH] with ROOT the command directory and PATH
+    the registry's raw bytes (design D9); `completeness` and `apply_allowed`
+    (false for every report); `digest` (plan_digest()); `planning_probes`, the
+    Git children other than removals that this invocation ran to build it, the
+    F + W + E of the estimate (research.md R8); and `report`, the baseline
+    report built from the same rows, which the first bodies of
+    confirm_removal(), apply_removals() and push_or_delete() read until the
+    apply and push lanes replace them. Interim until T066 (lead ruling R-56
+    Q-17): an unstarted branch is selectable. A report above 128 rows is
+    T101's, and the limit of 16 counting P alone T100's."""
     plan = Plan(repo, run)
     root = repo["root"]
-    evidence = plan.evidence = inspect_repository(root, run)
+    evidence = plan.evidence = repo.get("evidence")  # the resolution's: row 3 runs once (R-71 (b))
+    if evidence is None:
+        evidence = plan.evidence = inspect_repository(root, run)
+        identity = evidence["identity"]
+        try:
+            toplevel = identity is not None and _realpath(os.fsencode(root)) == evidence["toplevel"]
+        except EvidenceError:
+            toplevel = False
+        if not toplevel or (identity["root"] is None and not evidence["errors"]):
+            raise Refused(f"Cannot inspect Git repository at {root}")
     identity = evidence["identity"]
-    try:
-        toplevel = identity is not None and _realpath(os.fsencode(root)) == evidence["toplevel"]
-    except EvidenceError:
-        toplevel = False
-    if not toplevel or (identity["root"] is None and not evidence["errors"]):
-        raise Refused(f"Cannot inspect Git repository at {root}")
     plan.repository = repository_object(identity)
     refusal = evidence["merge_target_refusal"]
     if refusal is not None:
@@ -3513,14 +3709,40 @@ def build_plan(repo, run):
     if target is not None:
         plan.merge_target = {key: target[key] for key in MERGE_TARGET_KEYS}
         plan.notes.extend(target.get("notes") or ())
-    plan.rows = sorted(worktree_rows(evidence, run), key=lambda row: (not row.main, row.raw_path))
-    plan.target_rows = []
-    if plan.mode == "single" and plan.action == "remove":
-        match_target(plan, run)
+    # The registry's entries that are rows, as worktree_rows() builds them
+    # (D8), in canonical order: the main worktree first, then raw path bytes.
+    registry, common_first, entries = evidence["records"] or [], evidence["first_is_common_dir"], []
+    for index, record in enumerate(registry):
+        if index == 0 and (record["bare"] or (common_first and identity["root"] is None)):
+            continue
+        entries.append((identity["root"] if index == 0 and common_first else record["path"], record))
+    entries.sort(key=lambda entry: (entry[1] is not registry[0], entry[0]))
+    cap = LIMITS["worktree_rows"][plan.mode]
+    named = plan.mode == "single" and plan.action == "remove"
+    plan.target_rows, matched, path = [], (), None
+    if named:
+        matched, path = match_target(plan, run, entries)
+    own = {id(record) for _, record in matched}
+    others = [record for _, record in entries if id(record) not in own]
+    rows = list(plan.target_rows)
+    if others[:cap]:
+        rows += worktree_rows(evidence, run, records=others[:cap])
+    plan.omitted = {"count": max(0, len(others) - cap), "exactness": "exact"}
+    plan.rows = sorted(rows, key=lambda row: (not row.main, row.raw_path))
     plan.selected, plan.excluded = gate_rows(plan.rows, plan, run)
     command_dir = identity["root"] if identity["root"] is not None else os.fsencode(root)
     for row in plan.selected:
         row.removal_args = ["-C", command_dir, "worktree", "remove", row.raw_path]
+    if named:
+        shown = human_path(plan.target.raw_path if plan.target is not None else path)
+        own = {id(row) for row in plan.target_rows}
+        unread = sum(1 for row in plan.rows if id(row) not in own and row_incomplete(row))
+        if unread:
+            plan.notes.append({"code": "inspection-incomplete",
+                               "message": TEXT["note_inspection_incomplete"].format(K=unread, PATH=shown)})
+        if plan.omitted["count"]:
+            plan.notes.append({"code": "inspect-cap", "message": TEXT["note_inspect_cap"].format(
+                K=plan.omitted["count"], M=cap, PATH=shown)})
     codes = plan_completeness(plan)
     plan.completeness = "incomplete" if codes else "complete"
     plan.apply_allowed = plan.mode != "report" and not codes and not plan.refusals
@@ -3659,6 +3881,106 @@ def target_refusal(row, reason):
 # endregion gates
 
 # region reflog
+# Gate 7 from the branch's reflog (T066; design D10; data-model.md, "Reflog
+# anchor and movement"; FR-021, FR-022; lead rulings R-33, R-53 P-22, R-54 X-1,
+# R-56 Q-6 and R-67 (a)). read_reflog() makes the one bounded filesystem call;
+# reflog_outcome() decides from the bytes read and does no I/O.
+
+# One reflog line: `<old> <new> <identity> <time> <zone>`, then a tab and the
+# message when the command wrote one; `git update-ref` without -m writes neither
+# (D10). The identity ends at its first `>`, as Git's own reader takes it.
+REFLOG_LINE = re.compile(
+    rb"(?P<old>[0-9a-f]{40}|[0-9a-f]{64}) (?P<new>[0-9a-f]{40}|[0-9a-f]{64}) "
+    rb"[^\n]*?> [0-9]+ [+-][0-9]{4}(?:\t(?P<message>[^\n]*))?")
+# The messages that anchor a reflog besides an all-zeros old object (D10):
+# `worktree add -b`, `branch` and `checkout -b` write the first; `worktree add
+# -B`, `branch -f` and `checkout -B` on an existing branch the second.
+REFLOG_ANCHOR_MESSAGES = (b"branch: Created from", b"branch: Reset to")
+
+
+def reflog_path(common_dir, branch):
+    """The branch's reflog, logs/refs/heads/<branch> under common_dir, as
+    bytes: common_dir the common directory's bytes, branch the row's short
+    name, whose text encodes back to its bytes with surrogateescape; each `/`
+    of the name is a directory level."""
+    name = branch.encode("utf-8", "surrogateescape") if isinstance(branch, str) else branch
+    return os.path.join(common_dir, b"logs", b"refs", b"heads") + b"/" + name
+
+
+def _null_object(name):
+    return not name.strip(b"0")
+
+
+def reflog_outcome(data, head):
+    """Gate 7's decision from the bytes a reflog read gave, a pure decider
+    (lead ruling R-54 X-1; D10; data-model.md, "Reflog anchor and movement"):
+    `reflog-unavailable`, `unstarted-branch`, or None when the gate passes.
+    data is what the read returned, at most LIMITS["reflog_bytes"]; head the
+    row's head, its object name as text or bytes, or None.
+
+    Empty data, data that reached the 64 KiB bound (65,536 bytes read, R-33),
+    a line that is not `<old> <new> ...` (a truncated last line, one with no
+    line feed, included: lead ruling R-53 P-22), or a last entry whose new
+    object is not the head: `reflog-unavailable`, since the entries cannot
+    decide or do not describe the branch. Otherwise the anchor is the last
+    entry whose old object is all zeros or whose message begins `branch:
+    Created from` or `branch: Reset to`; a movement is an entry after the
+    anchor, or any entry when none survives, whose old and new objects are
+    non-zero and differ (a rename's are equal). A movement passes (None); an
+    anchor with no movement after it, its new object the head, is
+    `unstarted-branch`; anything else, no anchor and no movement included, is
+    `reflog-unavailable`."""
+    if isinstance(head, str):
+        head = head.encode("utf-8", "surrogateescape")
+    if (head is None or not data or len(data) >= LIMITS["reflog_bytes"]
+            or not data.endswith(b"\n")):
+        return "reflog-unavailable"
+    entries = []
+    for line in data[:-1].split(b"\n"):
+        match = REFLOG_LINE.fullmatch(line)
+        if match is None or not len(match["old"]) == len(match["new"]) == len(head):
+            return "reflog-unavailable"
+        entries.append((match["old"], match["new"], match["message"] or b""))
+    if entries[-1][1] != head:
+        return "reflog-unavailable"
+    anchor = None
+    for index, (old, new, message) in enumerate(entries):
+        if _null_object(old) or message.startswith(REFLOG_ANCHOR_MESSAGES):
+            anchor = index
+    later = entries if anchor is None else entries[anchor + 1:]
+    if any(not _null_object(old) and not _null_object(new) and old != new for old, new, _ in later):
+        return None
+    if anchor is not None and entries[anchor][1] == head:
+        return "unstarted-branch"
+    return "reflog-unavailable"
+
+
+def read_reflog(common_dir, branch, head, run):
+    """Read the branch's reflog (reflog_path()) by one fs_call() of at most
+    LIMITS["reflog_bytes"] (64 KiB) and decide gate 7 from it (D10, the
+    project-clean delta's outcome rule; lead ruling R-56 Q-6): (reason, error),
+    error a row error or None. The read asks for no more than 65,536 bytes and
+    needs no fstat (R-33); it is never a Git child. ENOENT or ENOTDIR is
+    (`reflog-unavailable`, None); any other OSError (`inspection-error`, its
+    `os-error` for OPERATION read); a call cut at its budget or the deadline
+    (`reflog-unavailable`, its `probe-timeout` or `deadline-exceeded`), the
+    row to be left unprobed; and bytes read, (reflog_outcome(data, head),
+    None). run is the invocation in force, whose per-child budget fs_call()
+    gives the read and the timeout message names, as _fs() does; Interrupted
+    passes up."""
+    path = reflog_path(common_dir, branch)
+    budget, _ = current_invocation().child_budget("probe")
+    try:
+        data = fs_call(_read_head, path, LIMITS["reflog_bytes"])
+    except OSError as exc:
+        if exc.errno in (errno.ENOENT, errno.ENOTDIR):
+            return "reflog-unavailable", None
+        return "inspection-error", os_error("read", exc)
+    if isinstance(data, DriverOutcome):
+        return "reflog-unavailable", probe_error(data, "read", budget)
+    return reflog_outcome(data, head), None
+
+
 def reflog_gate(row, plan, run):
     """Gate 7, `unstarted-branch` or `reflog-unavailable` (T066 fills; D10,
     FR-021, FR-022; lead rulings R-56 Q-6 and R-67 (a)).
@@ -3678,8 +4000,20 @@ def reflog_gate(row, plan, run):
     error; and None when a movement survives. A read not finished within the
     filesystem budget returns `reflog-unavailable` AND sets row.unprobed, the
     marker's only setter, which plan_completeness() reads as
-    inspection-incomplete. This stub passes every row."""
-    return None
+    inspection-incomplete; its `probe-timeout` or `deadline-exceeded` goes in
+    row["errors"], as the delta records for every filesystem call cut at its
+    budget. The inspection-error row also takes that class's
+    recommendation, as classify() pairs them."""
+    common_dir = plan.evidence["identity"]["common_dir"]
+    reason, error = read_reflog(common_dir, row["branch"], row["head"], run)
+    if error is not None:
+        row["errors"].append(error)
+        if reason == "inspection-error":
+            row["classification"] = "inspection-error"
+            row["recommendation"] = RECOMMENDATIONS["inspection-error"]
+        else:
+            row.unprobed = True
+    return reason
 # endregion reflog
 
 # region index
@@ -3934,40 +4268,454 @@ def preview_lines(plan):
 
 # region apply
 def confirm_removal(plan, run):
-    """Accept the plan for removal (T054 fills; FR-026; research.md R3): ask
-    the question under raising_signals(), swapped in around the question
-    alone, or take --yes; return None when the plan is accepted, or record
-    `cancelled` through refuse() and return 2, never raising (lead ruling R-56
-    Q-3). The pipeline then reads the slot, sets phase `apply` and calls
-    apply_removals(). First body: the baseline (project:719-720 and :736-737 at
-    961c405), confirm() under raising_signals(), its refusal recorded."""
-    wanted = Path(run.args.worktree).expanduser().resolve()
-    command = ["git", "-C", str(plan.root), "worktree", "remove", str(wanted)]
-    print(f"Cleanup action: remove merged worktree {wanted}")
-    show_plan([command], plan.root)
+    """Accept the plan for removal (T054; FR-026; research.md R3; lead ruling
+    R-56 Q-3): --yes accepts the fresh plan without asking; otherwise
+    ask_removal(), looked up by its global name since T046 patches it there,
+    asks D18's question under raising_signals(), swapped in around the
+    question alone, with the clock paused, and only `yes`, its surrounding
+    whitespace stripped, accepts. Returns None when the plan is accepted. Any
+    other answer records `cancelled`, with the baseline's message, through
+    refuse() and returns 2, never raising. End of input and a signal at the
+    question pass to main() (EOFError, KeyboardInterrupt, Terminated). The
+    pipeline then reads the slot, sets phase `apply` and calls
+    apply_removals()."""
+    if getattr(run.args, "yes", False):
+        return None
+    if ask_removal(plan, run).strip() == "yes":
+        return None
+    return refuse(plan, Refused("Cancelled; no command was run.", code="cancelled"), run)
+
+
+def ask_removal(plan, run):
+    """The removal question (T054; FR-026, design D18; research.md R3): write
+    D18's question for the plan's selected targets, `question_one` for one, to
+    the human stream (run.human, standard error under --apply --json) through
+    say(), which flushes it; then read one line by input() given no prompt, so
+    that standard output never carries the question; and return that line as
+    read, which confirm_removal() strips and compares with `yes`.
+
+    The question alone runs under raising_signals() (D1, D15; research.md R4)
+    with the Invocation's clock paused (run.pause(), FR-031): SIGINT raises
+    KeyboardInterrupt and SIGTERM or SIGHUP Terminated, and end of input
+    raises EOFError, each passing to main(), which prints `Cancelled.` and
+    exits 130, 143 or 129, with no JSON document. A question that could not be
+    written (say() recorded the failed write) is not answered: nothing is read
+    and "" is returned, so the plan is not accepted, and the pipeline's check
+    after the question ends the run as `internal-error` (lead ruling R-55).
+    confirm_removal() looks this function up by its global name, so a test
+    patches it there (T046; lead ruling R-56)."""
+    count = len(plan.selected)
+    question = TEXT["question_one"] if count == 1 else TEXT["question"].format(N=count)
+    run.pause()
     try:
         with raising_signals():
-            confirm(getattr(run.args, "yes", False))
-    except Refused as exc:
-        return refuse(plan, exc, run)
-    return None
+            say(run, question)
+            if getattr(run, "write_error", None) is not None:
+                return ""
+            return input()
+    finally:
+        run.resume()
+
+
+class Target(dict):
+    """One selected target of the apply phase (data-model.md, "Target result
+    and reconciliation record"): as a dict, the target result's values in
+    TARGET_RESULT_KEYS's order as project keeps them, `path_valid_utf8` aside,
+    which result_document() derives: `path`, the registry's raw path bytes;
+    `branch` and `planned_sha`, the planned row's branch and head; `stage`,
+    `pending` until it is final, and its `reason`; `notes`, codes; `command`,
+    the planned argument vector, git_argv("removal", removal_args), held
+    whether or not anything ran; `exit_status`; `probes_performed`; and
+    `reconciliation`, the record, or None while none was read. As attributes,
+    what no document writes: `row`, the plan's selected WorktreeRow;
+    `removal_args`, its removal's arguments (region dispatcher, Plan); `root`,
+    the command directory; and `identity`, the plan's repository identity
+    {root, common_dir, dev, ino}, which the rescan re-establishes first."""
+
+    row = removal_args = root = identity = None
+
+
+def make_target(plan, row):
+    """The pending Target of row, one of plan.selected (T056; design D9): its
+    command is the plan's own argument vector, git_argv("removal",
+    row.removal_args), the vector operation.argv shows (lead ruling R-56)."""
+    target = Target(path=row.raw_path, branch=row["branch"], planned_sha=row["head"], stage="pending",
+                    reason=None, notes=[], command=git_argv("removal", row.removal_args), exit_status=None,
+                    probes_performed=0, reconciliation=None)
+    target.row, target.removal_args, target.root = row, list(row.removal_args), plan.root
+    target.identity = None if plan.evidence is None else plan.evidence["identity"]
+    return target
+
+
+# The planned values revalidate() compares on the re-read row (T055): the
+# baseline signature fields (cleanup_signature(), project:494-497 at 961c405)
+# and `locked` (design D7).
+REVALIDATED_FIELDS = ("path", "branch", "head", "present", "dirty", "ignored_files", "upstream", "ahead",
+                      "behind", "remote_present", "merged_into_target", "current", "classification",
+                      "locked")
+IDENTITY_FIELDS = ("root", "common_dir", "dev", "ino")
+
+
+def reconciliation_record(registry_entry_present, path_present, branch_present, branch_sha):
+    """A reconciliation record in RECONCILIATION_KEYS's order (data-model.md,
+    "Target result and reconciliation record"): each value true, false or
+    null, null meaning not established; `reconciled` is true only when the
+    three presence fields are non-null and `branch_sha` is non-null whenever
+    `branch_present` is true. A pure function."""
+    reconciled = (None not in (registry_entry_present, path_present, branch_present)
+                  and (branch_sha is not None or not branch_present))
+    return {"registry_entry_present": registry_entry_present, "path_present": path_present,
+            "branch_present": branch_present, "branch_sha": branch_sha, "reconciled": reconciled}
+
+
+def path_presence(raw):
+    """Whether the planned path is present, by one lstat through fs_call()
+    (design D6; data-model.md, "Target result and reconciliation record"):
+    true when it succeeds, false only on ENOENT or ENOTDIR, and null on any
+    other error or when the call is cut at its budget."""
+    try:
+        found = fs_call(os.lstat, raw)
+    except OSError as exc:
+        found = exc
+    if isinstance(found, DriverOutcome):
+        return None
+    return presence_from_lstat(found)[0]
+
+
+def _branch_ref(target):
+    return b"refs/heads/" + target["branch"].encode("utf-8", "surrogateescape")
+
+
+def _branch_evidence(target, refs):
+    """(branch_present, branch_sha) of target's branch in refs, RefParser's
+    records, or (None, None) when the listing did not run or failed."""
+    if refs is None:
+        return None, None
+    for ref in refs:
+        if ref["refname"] == _branch_ref(target):
+            return True, ref["objectname"]
+    return False, None
+
+
+def revalidate(plan, target, run):
+    """Revalidate target after the confirmation, before its removal (T055,
+    this phase's body; design D7, FR-046; lead ruling R-56 Q-13): read the
+    repository afresh through the evidence model, inspect_repository(root,
+    run, refresh=True), never its memo, which would hand back the planned
+    evidence, and rebuild the target's row by worktree_rows(); then compare
+    the repository identity, the merge target {name, source, sha} and the
+    row's REVALIDATED_FIELDS with the plan's. A re-read that fails, a row that
+    is gone, and any difference refuse the target with `state-changed`. T084
+    replaces this body with D7's targeted check and its other reasons.
+
+    Sets target["probes_performed"], the Git children this revalidation ran,
+    and returns None when nothing differs, or (reason, reconciliation): the
+    record from that same re-read, its registry and branch fields null where
+    the listing did not run or the repository identity differs, and the
+    path's presence the re-read row's, or one lstat of the planned path where
+    no row was rebuilt."""
+    before = run.probes
+    raw = target["path"]
+    repo = inspect_repository(plan.root, run, refresh=True)
+    planned = None if plan.evidence is None else plan.evidence["identity"]
+    identity = repo["identity"]
+    same_repository = (identity is not None and planned is not None
+                       and all(identity[key] == planned[key] for key in IDENTITY_FIELDS))
+    records = repo["records"] if same_repository else None
+    matches = [record for record in records or () if record["path"] == raw]
+    rows = worktree_rows(repo, run, records=matches[:1]) if matches else []
+    row = rows[0] if rows else None
+    merge_target = repo["merge_target"]
+    changed = (not same_repository or bool(repo["errors"]) or repo["merge_target_refusal"] is not None
+               or merge_target is None or plan.merge_target is None
+               or any(merge_target[key] != plan.merge_target[key] for key in MERGE_TARGET_KEYS)
+               or row is None or any(row.get(field) != target.row.get(field) for field in REVALIDATED_FIELDS))
+    target["probes_performed"] = run.probes - before
+    if not changed:
+        return None
+    registry_entry_present = None if records is None else bool(matches)
+    path_present = row["present"] if row is not None else path_presence(raw)
+    branch_present, branch_sha = _branch_evidence(target, repo["refs"] if same_repository else None)
+    return "state-changed", reconciliation_record(registry_entry_present, path_present, branch_present,
+                                                  branch_sha)
+
+
+def removal_exit_status(outcome):
+    """A removal's `exit_status` (T045, T056; data-model.md, "Target result and
+    reconciliation record"; plan review M12) from its DriverOutcome: None
+    unless the child was spawned and reaped; Git's own status when it exited;
+    and 128 plus the signal number when a signal ended it, whoever sent it
+    (128 minus Popen's negative return code), so 137 for a child killed at the
+    ceiling, as execute() reports a delegate's."""
+    status = outcome.status
+    if status is None:
+        return None
+    return status if status >= 0 else 128 - status
+
+
+def run_removal(target, run):
+    """Spawn target's removal and wait for it (T056; design D2 and D9,
+    FR-012): a ChildHandle of kind `removal` running git_argv("removal",
+    target.removal_args), the plan's own argument vector, `-C ROOT worktree
+    remove PATH` with PATH the registry's raw bytes and never --force, from
+    the command directory, through run_bounded(), which counts it among
+    `operations`, gives it no budget, never signals it before its ceiling,
+    and waits for it. Sets target["exit_status"] (removal_exit_status()) and
+    returns the DriverOutcome; one that could not be spawned is outcome
+    `failed` with no status."""
+    outcome = run_bounded(("removal", target.removal_args, target.root), None, run)
+    target["exit_status"] = removal_exit_status(outcome)
+    return outcome
+
+
+def rescan(target, run):
+    """The rescan after target's removal child is reaped (T056; design D7;
+    data-model.md, "Revalidation step and probes_performed"): it first
+    re-establishes the repository identity, the identity probe (row 3) in the
+    command directory and the realpath and lstat of the common directory it
+    names, compared with the plan's {root, common_dir, dev, ino}; then the
+    registry listing (row 4, WorktreeListParser), the ref listing (row 6,
+    RefParser) and an lstat of the planned path, each through run_bounded()
+    or fs_call(). Returns the reconciliation record: whether the registry
+    still lists the planned path, whether the path is present, and the
+    branch's presence and SHA, a value not established null. Where the
+    identity cannot be re-established or differs, every field is null and
+    `reconciled` false (T085 decides the stage of such a target)."""
+    unknown = reconciliation_record(None, None, None, None)
+    root = os.fsencode(target.root)
+    values, error = identity_probe(root, run)
+    planned = target.identity
+    if error is not None or planned is None:
+        return unknown
+    try:
+        found = [fs_call(os.path.realpath, values[0]), fs_call(os.path.realpath, values[1])]
+        if not isinstance(found[1], DriverOutcome):
+            found.append(fs_call(os.lstat, found[1]))
+    except OSError:
+        return unknown
+    if any(isinstance(value, DriverOutcome) for value in found):
+        return unknown
+    toplevel, common_dir, common = found
+    if (toplevel, common_dir, common.st_dev, common.st_ino) != tuple(planned[key] for key in IDENTITY_FIELDS):
+        return unknown
+    listing = run_bounded(("probe", ["-C", root, "worktree", "list", "--porcelain", "-z"], None),
+                          WorktreeListParser(), run)
+    registry_entry_present = None
+    if listing.name == "complete":
+        registry_entry_present = any(record["path"] == target["path"] for record in listing.result)
+    refs = run_bounded(("probe", ["-C", root, "for-each-ref", "--format=" + REF_FORMAT, "refs/heads",
+                                  "refs/remotes"], None), RefParser(), run)
+    branch_present, branch_sha = _branch_evidence(target, refs.result if refs.name == "complete" else None)
+    return reconciliation_record(registry_entry_present, path_presence(target["path"]), branch_present,
+                                 branch_sha)
+
+
+def decide_stage(target, outcome, reconciliation):
+    """The final stage of a spawned target (T056; design D9, D15 and D19;
+    data-model.md, "Target stages"), a pure function of its removal's
+    DriverOutcome and the rescan's reconciliation record; returns (stage,
+    reason, notes). target is the Target, whose planned branch and head the
+    branch-after-removal reasons read (T085).
+
+    - Not spawned (outcome `failed` with no status): `failed`, `spawn-error`.
+    - Exited on its own, signal or not: nonzero is `failed`, `git-refused` for
+      128 and `git-failed` for any other status, whatever the slot holds; 0
+      is `removed` with reason null when the registry entry and the path are
+      both gone, and otherwise `unknown` with `unconfirmed-removal`.
+    - Cut at its ceiling, or its exit not observed (outcome `timeout`, design
+      D9): the rescan alone decides, `removed` when the entry and the path are
+      both gone, otherwise `unknown`, each with `removal-ceiling`, and the
+      note `partially-removed` while the entry or the path remains. T092
+      adds the wait around it; this function is total over the outcomes
+      run_bounded() gives a removal handle."""
+    gone = reconciliation["registry_entry_present"] is False and reconciliation["path_present"] is False
+    if outcome.name == "timeout":
+        if gone:
+            return "removed", "removal-ceiling", []
+        remains = reconciliation["registry_entry_present"] or reconciliation["path_present"]
+        return "unknown", "removal-ceiling", ["partially-removed"] if remains else []
+    if outcome.status is None:
+        return "failed", "spawn-error", []
+    if outcome.status != 0:
+        return "failed", "git-refused" if outcome.status == 128 else "git-failed", []
+    if gone:
+        return "removed", None, []
+    return "unknown", "unconfirmed-removal", []
 
 
 def apply_removals(plan, run):
-    """Remove the plan's selected worktrees (T057 fills): called in phase
-    `apply`, which the pipeline sets, never this function (lead ruling R-56);
-    returns the run's exit status by D19. First body: the baseline
-    revalidation and removal (project:719, :721-722 and :741-743 at
-    961c405)."""
-    wanted = Path(run.args.worktree).expanduser().resolve()
-    command = ["git", "-C", str(plan.root), "worktree", "remove", str(wanted)]
-    expected = {"target_branch": plan.report["target_branch"],
-                "signature": cleanup_signature(plan.report, plan.target)}
-    require_unchanged_cleanup_state(plan.root, "remove", expected, path=wanted)
-    return execute(command)
+    """Remove the plan's selected worktrees (T057; design D7, D9 and D19;
+    contracts/project-clean.md, "Order of a run", step 8): called in phase
+    `apply`, which the pipeline sets, never this function (lead ruling R-56).
+    Per selected row, in canonical order: its Target (make_target()); its
+    revalidation (revalidate()), a difference refusing it; otherwise its
+    removal child, spawned and waited for (run_removal()), the rescan
+    (rescan()) and its stage (decide_stage()). The batch stops after the
+    first target that is not a plain `removed` (reason null), and every later
+    target is `not-attempted` with `batch-stopped` and no reconciliation.
+    Each target's progress line prints at its final stage (print_progress()),
+    then the result (print_result()), every human line through say() to
+    run.human, standard error under --apply --json; under --apply --json the
+    apply result record then goes to standard output through
+    write_document(). After the apply phase begins every write is
+    best-effort (lead ruling R-55): a failed one is recorded, never raised,
+    and never changes the exit. Returns apply_exit_status(targets,
+    run.signal), D19's table, whose first row reads the slot. T093 adds the
+    slot's seams, the reserve and the handling of an exception; T084 and T085
+    the targeted revalidation and rescan."""
+    targets = [make_target(plan, row) for row in plan.selected or ()]
+    stopped = False
+    for target in targets:
+        if stopped:
+            target.update(stage="not-attempted", reason="batch-stopped", reconciliation=None)
+        else:
+            refused = revalidate(plan, target, run)
+            if refused is not None:
+                reason, reconciliation = refused
+                target.update(stage="refused", reason=reason, reconciliation=reconciliation)
+            else:
+                outcome = run_removal(target, run)
+                reconciliation = rescan(target, run)
+                stage, reason, notes = decide_stage(target, outcome, reconciliation)
+                target.update(stage=stage, reason=reason, notes=list(notes), reconciliation=reconciliation)
+            stopped = not (target["stage"] == "removed" and target["reason"] is None)
+        print_progress(target, run)
+    status = apply_exit_status(targets, run.signal)
+    print_result(plan, targets, run)
+    if getattr(run.args, "json", False):
+        estimated = getattr(plan, "planning_probes", 0) + 5 * len(targets) + 3
+        write_document(result_document(
+            targets, status, repository=getattr(plan, "repository", None), merge_target=plan.merge_target,
+            plan_digest=plan.digest, probes={"estimated": estimated, "performed": run.probes},
+            operations={"estimated": len(targets), "performed": run.operations}))
+    return status
 # endregion apply
 
 # region result
+# The end of an apply (T045, T057; design D18 and D19; data-model.md, "Target
+# stages", "Exit statuses" and "Apply result record"; contracts/project-clean.md,
+# "Human output", "Apply result record" and "Exit statuses"; lead ruling R-56
+# Q-8 to Q-10). A target is a mapping of the values a target result holds
+# (region apply, Target): these functions read it and never mutate it.
+
+# The reasons that send a run with --apply to D19's second row, exit 1: the
+# deadline stopping work after the apply phase began, and the hard ceiling.
+EXIT_ONE_REASONS = ("deadline-exceeded", "removal-ceiling")
+
+
+def apply_exit_status(targets, signum):
+    """The exit status of a run with --apply by D19's table (FR-037; lead
+    ruling R-56 Q-8), its first matching row: signum, the slot's first
+    signal, gives 128 plus its number (130, 143 or 129); then 1 when any
+    target is `unknown`, or its reason is `removal-ceiling` or, on a
+    `not-attempted` target, `deadline-exceeded`; then the status of the first
+    target `failed` with `git-refused` or `git-failed`, Git's own, passed
+    through even when it equals one of project's (OQ-25); then 2 for a
+    `refused` target, a `removed` one with a branch-after-removal reason, or
+    `failed` with `spawn-error`; then 0 when every target is `removed` with
+    reason null, or none was selected. A list no row matches, which the apply
+    phase never builds (a target still `pending`, or `not-attempted` with
+    nothing that stopped the run), fails closed with 2."""
+    if signum is not None:
+        return 128 + int(signum)
+    if any(target["stage"] == "unknown" or target["reason"] in EXIT_ONE_REASONS for target in targets):
+        return 1
+    for target in targets:
+        if (target["stage"] == "failed" and target["reason"] in ("git-refused", "git-failed")
+                and target["exit_status"] is not None):
+            return target["exit_status"]
+    if all(target["stage"] == "removed" and target["reason"] is None for target in targets):
+        return 0
+    return 2
+
+
+def json_argv(argv):
+    """An argument vector as a document writes it: each str as it is, and each
+    path (bytes or a path object) through json_path(), as text."""
+    return [arg if isinstance(arg, str) else json_path(arg)[0] for arg in argv]
+
+
+def target_document(target):
+    """One target result in TARGET_RESULT_KEYS's order (data-model.md, "Target
+    result and reconciliation record"): `path` through json_path() with
+    `path_valid_utf8` beside it, `command` through json_argv(), and
+    `reconciliation` null on a `not-attempted` target and an object in
+    RECONCILIATION_KEYS's order on every other, every field null and
+    `reconciled` false where none was read."""
+    path, valid = json_path(target["path"])
+    reconciliation = None
+    if target["stage"] != "not-attempted":
+        record = target["reconciliation"] or {key: None for key in RECONCILIATION_KEYS}
+        reconciliation = {key: record[key] for key in RECONCILIATION_KEYS}
+        reconciliation["reconciled"] = bool(reconciliation["reconciled"])
+    values = dict(target, path=path, path_valid_utf8=valid, notes=list(target["notes"]),
+                  command=json_argv(target["command"]), reconciliation=reconciliation)
+    return {key: values[key] for key in TARGET_RESULT_KEYS}
+
+
+def result_document(targets, exit_code, *, repository, merge_target, plan_digest, probes, operations):
+    """The apply result record (contracts/project-clean.md, "Apply result
+    record"; data-model.md, "Apply result record"), in APPLY_RESULT_KEYS's
+    order, written by write_document() as the one document of --apply --json
+    once the apply phase has begun: `schema_version` 1; `observed_at`, now,
+    when reconciliation finished; `repository`, `merge_target` and
+    `plan_digest`, the plan's, as its envelope writes them; `probes` and
+    `operations`, {estimated, performed}; one target_document() per target,
+    in canonical order; `exit_code`, the run's exit status (apply_exit_status());
+    and `completeness`, `complete` when every target whose reconciliation is
+    an object has `reconciled: true`, else `incomplete`."""
+    documents = [target_document(target) for target in targets]
+    complete = all(document["reconciliation"]["reconciled"] for document in documents
+                   if document["reconciliation"] is not None)
+    values = {"schema_version": 1, "observed_at": observed_at(), "repository": repository,
+              "merge_target": merge_target, "plan_digest": plan_digest, "probes": probes,
+              "operations": operations, "targets": documents, "exit_code": exit_code,
+              "completeness": "complete" if complete else "incomplete"}
+    return {key: values[key] for key in APPLY_RESULT_KEYS}
+
+
+def progress_line(target):
+    """A target's one progress line, at its final stage (lead ruling R-56
+    Q-10; `pending` is never printed): `  STAGE PATH`, or `  STAGE PATH
+    (REASON)` when it has a reason, PATH through human_path()."""
+    path = human_path(target["path"])
+    if target["reason"] is None:
+        return TEXT["progress_line"].format(STAGE=target["stage"], PATH=path)
+    return TEXT["progress_line_reason"].format(STAGE=target["stage"], PATH=path, REASON=target["reason"])
+
+
+def print_progress(target, run):
+    """Print target's progress line through say() once it is final; the apply
+    phase calls it for each target in canonical order as it ends."""
+    say(run, progress_line(target))
+
+
+def print_result(plan, targets, run):
+    """The human result of an apply (design D18; lead ruling R-56 Q-9), after
+    every target's progress line, through say(), so standard error under
+    --apply --json and a failed write recorded, never raised: when every
+    target is `removed` with reason null, `Removed N; branches kept: B1,
+    B2.`; otherwise D18's stop block at the first target that is not, its
+    `Not attempted:` naming the `not-attempted` targets (`none` when there is
+    none, a case D18 leaves open), its `Next:` command naming plan.root, then
+    `Branches kept: B1, B2.`; and in both cases the residual-window line.
+    Each list of kept branches names every selected target's branch in
+    canonical order, since the apply phase deletes no branch; paths and
+    branches print through human_path(), the command's root in its command
+    form."""
+    branches = ", ".join(human_path(target["branch"]) for target in targets)
+    stop = next((target for target in targets
+                 if not (target["stage"] == "removed" and target["reason"] is None)), None)
+    if stop is None:
+        say(run, TEXT["success_line"].format(N=len(targets), BRANCHES=branches))
+    else:
+        skipped = [human_path(target["path"]) for target in targets if target["stage"] == "not-attempted"]
+        say(run, TEXT["stop_block"].format(
+            PATH=human_path(stop["path"]), REASON=stop["reason"],
+            K=sum(target["stage"] == "removed" for target in targets), N=len(targets),
+            NOT_ATTEMPTED=", ".join(skipped) or "none", ROOT=human_path(plan.root, command=True)))
+        say(run, TEXT["branches_kept_line"].format(BRANCHES=branches))
+    say(run, TEXT["residual_window_line"])
 # endregion result
 
 # region push

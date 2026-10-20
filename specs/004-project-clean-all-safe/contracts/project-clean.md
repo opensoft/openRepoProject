@@ -47,12 +47,17 @@ Flags this table does not refuse keep the baseline's handling: without
 `--apply`, `--yes`, `--action`, `--branch` and `--worktree` are ignored,
 and an unused `--branch` or `--worktree` is ignored. `--worktree P` is
 expanded, joined to the working directory and realpath'd by one bounded
-call; it names the one registry row whose path equals it, or else whose
-realpath does (`worktree-not-found` otherwise); a path two entries share is
-`registration-mismatch`, an `inspection-error` row, so the run refuses with
-`inspection-incomplete`, exit 2, before any `target-excluded`, because P's
-own evidence is strict and an incomplete plan is refused first (lead
-rulings R-57 and R-62).
+call, and matched against every registry row: a row matches when its path
+equals it, or else when its realpath, one bounded call each, does, and a
+realpath that cannot be read counts as a match, failing closed (lead ruling
+R-69). Exactly one decided match names P's row; no match is
+`worktree-not-found`; more than one match, by raw bytes or by realpath, or
+one not decided, selects nothing and leaves P's own evidence incomplete, so
+the run refuses with `inspection-incomplete`, exit 2, before any
+`target-excluded`, because P's own evidence is strict and an incomplete plan
+is refused first (lead rulings R-57, R-62 and R-67 (b)). A path two entries
+share is such a case, both entries also `registration-mismatch`,
+`inspection-error` rows.
 
 ## Order of a run
 
@@ -171,13 +176,17 @@ single-mode `--action remove` plan, print "D18 preview layout", the
 single-mode one with `Selected (1):` and the `not-requested` group among the
 excluded ones, then "D18 residual-window line"; push and delete-branch print
 no plan layout, only their `Cleanup action:` output as today (lead ruling
-R-56 Q-11); rows left unprobed print in a group of their own, its heading
-T052's (R-56);
+R-56 Q-11); a row left unprobed prints in the `reflog-unavailable` group,
+its reason, with that group's next step, and no group of its own is added
+(lead ruling R-67 (a), withdrawing R-56's);
 one progress line per target, printed at its final stage, `  STAGE PATH` or
 `  STAGE PATH (REASON)`, `pending` never printed (R-56 Q-10); "D18 success
 line" followed by "D18 residual-window line", as the stop block is (R-56
 Q-9); the retained-branch line `Branches kept: B1, B2.`, naming every
-selected target's branch in canonical order; a plan-blocking refusal prints
+selected target's branch in canonical order; a stop block with no target
+`not-attempted`, as when the last selected target stops the run, reads
+`Not attempted: none.`, a fill, since D18's stop block has no such form
+(lead ruling R-68 (a)); a plan-blocking refusal prints
 the plan, then `REFUSED: MESSAGE`; each code with no baseline message gets
 one here:
 
@@ -254,7 +263,7 @@ are closed within the version.
 | `budget` | `probe_timeout_seconds` (5), `invocation_timeout_seconds` (60), `reconciliation_reserve_seconds` (10), `removal_floor_seconds` (5), `removal_ceiling_seconds` (300), `probe_concurrency` (1), the values in force |
 | `probes`, `operations` | `{estimated, performed}` integers: `probes` counts every Git child other than a removal, `operations` the removals, each child once (lead ruling R-27); `estimated` is the upper bound for an `--apply` run of this plan in every mode, previews included: F + W + E + 5T + 3 and T (research.md R8) |
 | `selected` | array in canonical order, or null in a report above 128 rows; each entry: `path`, `path_valid_utf8`, `branch`, `head`, `upstream`, `upstream_oid`, `ahead`, `behind`, `dev`, `ino`, `admin_id`, `locked`, the baseline signature fields (`present`, `dirty`, `ignored_files`, `remote_present`, `merged_into_target`, `current`, `classification`), and `operation` (`{kind: "worktree-remove", argv}`, the exact argument vector) |
-| `excluded` | array in canonical order: `path`, `path_valid_utf8`, `branch` (or null), `classification` (or null when never classified), `reason` (null for a row left unprobed, which keeps its classification and makes the plan incomplete with `inspection-incomplete`; lead ruling R-56) |
+| `excluded` | array in canonical order: `path`, `path_valid_utf8`, `branch` (or null), `classification` (or null when never classified), `reason` (a string, the first failing gate, never null: a row left unprobed, its reflog read not finished within the filesystem budget, is `reflog-unavailable`, keeps its classification and makes the plan incomplete with `inspection-incomplete`; lead ruling R-67 (a), withdrawing R-56's null) |
 | `omitted` | `{count, exactness: "exact"}` |
 | `notes` | `{code, message}` objects; `merge-target-conflict`; in single mode the non-blocking `inspection-incomplete`, `inspect-cap`, `deadline-exceeded`; in a report above 128 rows `inspect-cap` with `rows` |
 | `completeness` | `complete` or `incomplete` |
@@ -331,6 +340,12 @@ R-48).
 | `deadline-exceeded` | row error | `OPERATION stopped at the work deadline` |
 | `git-too-old` | status or doctor row error, and doctor's `git` row | `Git VERSION is older than 2.36; repository inspection needs Git 2.36 or later.` |
 | `git-unavailable` | status or doctor row error, and doctor's `git` row | `Git is unavailable (DETAIL); repository inspection needs Git 2.36 or later.`, DETAIL as for clean's refusal |
+
+The rows the single-mode `deadline-exceeded` note counts are the rows the
+work deadline stopped: each is `inspection-error` with a `deadline-exceeded`
+row error, excluded with reason `inspection-error`, never a null reason and
+never carrying the unprobed marker, which only a reflog read past its
+filesystem budget sets (lead rulings R-67 (a) and R-69; T099).
 
 A doctor row (`level`, `check`, `detail`) has no code field, so doctor's `git`
 row writes its detail as `CODE: MESSAGE`, such as `git-too-old: Git 2.35.0 is
@@ -412,18 +427,18 @@ removal: `-c core.untrackedCache=false -c core.fsmonitor=false`.
 | status | `-c core.untrackedCache=false -c core.fsmonitor=false` + protocol pins + `-C WORKTREE status --porcelain=v1 -z --untracked-files=normal --ignored=matching` | the row's worktree |
 | hidden state | `-c core.untrackedCache=false -c core.fsmonitor=false` + protocol pins + `-C WORKTREE ls-files -v --stage -z` | the target's worktree |
 | narrowed ref listing (revalidation) | row 6's format with patterns naming the merge target, the manifest's candidate, the branch `origin/HEAD` named, `main`, `master`, `refs/remotes/origin/HEAD`, and the selected branches and their upstreams | `root` |
-| remote URL | `-C ROOT remote get-url origin` | `root` (push; `handoff()` in `status` and `doctor`) |
+| remote URL | `-C ROOT remote get-url origin` | `root` (push; `handoff()` in `status` and `doctor`, for an inspected repository only, R-66 (c)) |
 | removal | `-c status.showUntrackedFiles=normal -c core.untrackedCache=false -c core.fsmonitor=false` + protocol pins + `-C ROOT worktree remove PATH` | `root`; PATH the registry's raw bytes, one argument, never `--force` |
 | branch deletion | protocol pins + `-C ROOT branch -d BRANCH` | `root`; a D2 handle run by the driver with no budget, its output relayed to `project`'s streams |
 | push | `-C ROOT push REMOTE BRANCH:REMOTE_BRANCH`, or `push -u origin BRANCH`; no protocol pins | `root`; run by `execute()`, not the driver: `project`'s own streams, never read or capped; `project`'s process group, in the terminal's foreground when `project` is; never signalled, waited for, unbounded; yields no evidence |
 
 Row 6 cannot establish the upstream of a branch named `HEAD`
 (`refs/heads/HEAD`), because `git for-each-ref` reports the current branch's
-upstream for it. Such a row has `upstream`, `ahead` and `behind` null and is
-`inspection-error`, its row error `probe-failed` with `git for-each-ref
-failed: unparseable output`, filling the delta's rule that evidence not
-established is `inspection-error` (lead ruling R-61; lane G's follow-up
-builds it).
+upstream for it. Such a row has `upstream`, `remote_present`, `ahead` and
+`behind` null and is `inspection-error`, its row error `probe-failed` with
+`git for-each-ref failed: unparseable output`, filling the delta's rule that
+evidence not established is `inspection-error` (lead rulings R-61 and R-64
+(a); built by lane G's follow-up).
 
 Bounds: each probe child gets `min(5 s, work remaining)` under `clean`'s 60 s
 deadline (50 s of work, a 10 s reserve, time at the question excluded), each
@@ -445,6 +460,7 @@ at most three.
 | Aspect | Contract |
 | --- | --- |
 | Git check | `git --version` once per invocation, memoized, when a repository is inspected; doctor's `git` row runs it itself when none was, and `status` never runs it for nothing (lead ruling R-56); never a refusal |
+| `handoff()`'s remote read | `git remote get-url origin` only for a root whose repository was inspected, present and past the version check; otherwise the same no-identity state and no child (lead ruling R-66 (c)) |
 | No `.git` | `present: false`, no Git child, as today |
 | Uninspectable root, leg or worktree | `classification: "inspection-error"`, `errors`, unestablished values null, `worktrees` among them (R-56); status exits 0 |
 | Doctor's `git` row | `ok` with the detail `PATH (git version X)`, or `error` with the detail `CODE: MESSAGE`, CODE `git-too-old` or `git-unavailable` and MESSAGE its command-neutral text ("Codes"; lead rulings R-48 and R-57) |
