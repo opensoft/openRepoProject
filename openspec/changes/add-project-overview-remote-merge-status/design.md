@@ -30,7 +30,11 @@ points found in applying it, and lane openRepoProject-3's folded read of
 agreed by lane openRepoProject-4 on 2026-10-20, are committed (`233df0b`;
 `proposal.md`, Dependencies and Sequencing). After that agreement, C-35, as
 lane openRepoProject-3's narrowing amends it, fills D5 with the lookup's
-per-directory rule and D11 with two tests, and edits no spec text.
+per-directory rule and D11 with two tests, and edits no spec text. Round C7
+then applies lane openRepoProject-3's confirm read of round C6c (C-36), which
+rewords D5's rationale to what was observed, and Codex's P2 on `1c32667`
+(C-37), which has D6 bound an integer literal at parse time and D11 test it
+with one test; neither edits spec text.
 
 Citations follow `proposal.md`: the packet at `da33d92`; APO, CAS, PRS and
 `project:N` at main `961c405`, which main `e9d6711` holds unchanged for them
@@ -79,6 +83,8 @@ The rulings and the packet's boundary map to the decisions:
 | C-33: that user part a token no path, user or test name plausibly holds | D3 |
 | C-34: lane openRepoProject-3's folded read of `e198548..67e43ae`: the lookup's place, the request cap's precedence and the exact-size tests | D1, D4, D11 |
 | C-35: lane openRepoProject-3's narrowing of the lookup's per-directory rule: a directory where `gh` is absent is skipped, any other error fails the lookup | D5, D11 |
+| C-36: lane openRepoProject-3's confirm read of C6c: D5's rationale claims only what was observed | D5 |
+| C-37: Codex's P2 on `1c32667` at design.md:457: integer literals bounded at parse time by a `parse_int` hook, on every supported Python | D6, D11 |
 | C-10, L-12: CI on Linux only | Migration Plan |
 
 What in `project` shapes the approach (at `961c405`; features 004 and 005
