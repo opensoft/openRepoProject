@@ -3445,38 +3445,46 @@ def _bounded_realpath(path):
     return None if isinstance(found, DriverOutcome) else found
 
 
-def match_target(plan, run, entries):
+def match_target(plan, run, entries, cap):
     """P of a named removal, `--apply --action remove --worktree P` (D13;
     contracts/project-clean.md, "Argument checks" and "Order of a run"; lead
     rulings R-53 P-15, R-56 and R-67 (b) as corrected), matched against the
     whole registry before any row is inspected. entries are the registry
     entries that are rows, (raw, record) in canonical order, raw the path the
-    row carries. --worktree is expanded and realpath'd, which joins it to the
-    working directory, by one bounded call; an entry matches when raw equals
-    P's bytes, or else when its own realpath, one bounded call each, does; a
-    realpath that cannot be read counts as a match, failing closed, and so does
-    every entry when P's own cannot. The entries matched are P's rows:
-    worktree_rows() inspects them before any other row, so that P's status
-    probe is the run's first, and build_plan() exempts them from the row cap.
-    Sets plan.target_rows, those rows, and plan.target, the one row when
-    exactly one entry matched and was decided, else None. No match records
-    `worktree-not-found` through refuse() with the baseline message, never
-    raised (R-59 D4); several matches, or one not decided, leave plan.target
-    None, so that nothing is selected for P and check_plan() refuses with
-    inspection-incomplete. Returns (matched, path): the entries matched, and
-    P's realpath, or the expanded argument where that cannot be read, the PATH
-    of the single-mode notes while no row is P's."""
+    row carries; cap the plan's row cap. --worktree is expanded and
+    realpath'd, which joins it to the working directory, by one bounded call;
+    an entry matches when raw equals P's bytes, or else when its own realpath,
+    one bounded call each, does; a realpath that cannot be read counts as a
+    match, failing closed. The entries matched are P's rows: worktree_rows()
+    inspects them before any other row, so that P's status probe is the run's
+    first, and they are exempt from the row cap. When P's own realpath cannot
+    be read, every entry counts as a match, so P's match is undecided and no
+    entry is exempt: the entries matched are the ones the cap takes, the first
+    cap of entries, the main worktree first, and no other row is inspected
+    (lead ruling R-73 (d)). Sets plan.target_rows, the rows inspected for P,
+    and plan.target, the one row when exactly one entry matched and was
+    decided, else None. No match records `worktree-not-found` through
+    refuse() with the baseline message, never raised (R-59 D4); several
+    matches, or one not decided, leave plan.target None, so that nothing is
+    selected for P and check_plan() refuses with inspection-incomplete.
+    Returns (matched, path, exempt): the entries matched; P's realpath, or the
+    expanded argument where that cannot be read, the PATH of the single-mode
+    notes while no row is P's; and whether the entries matched are exempt from
+    the cap."""
     wanted = os.path.expanduser(os.fsencode(run.args.worktree))
     found = _bounded_realpath(wanted)
-    matches, decided = [], found is not None
-    for raw, record in entries:
-        if found is None or raw == found:
-            matches.append((raw, record))
-        else:
-            real = _bounded_realpath(raw)
-            if real is None or real == found:
+    if found is None:
+        matches, decided = list(entries[:cap]), False
+    else:
+        matches, decided = [], True
+        for raw, record in entries:
+            if raw == found:
                 matches.append((raw, record))
-                decided = decided and real is not None
+            else:
+                real = _bounded_realpath(raw)
+                if real is None or real == found:
+                    matches.append((raw, record))
+                    decided = decided and real is not None
     path = found if found is not None else wanted
     plan.target_rows = worktree_rows(plan.evidence, run, records=[record for _, record in matches]) if matches else []
     if len(matches) == 1 and decided and len(plan.target_rows) == 1:
@@ -3484,7 +3492,7 @@ def match_target(plan, run, entries):
     elif not matches:
         refuse(plan, Refused(f"No unique linked worktree found at {human_path(path)}",
                              code="worktree-not-found", path=path), run)
-    return matches, path
+    return matches, path, found is not None
 
 
 def row_incomplete(row):
@@ -3719,15 +3727,16 @@ def build_plan(repo, run):
     entries.sort(key=lambda entry: (entry[1] is not registry[0], entry[0]))
     cap = LIMITS["worktree_rows"][plan.mode]
     named = plan.mode == "single" and plan.action == "remove"
-    plan.target_rows, matched, path = [], (), None
+    plan.target_rows, matched, path, exempt = [], (), None, True
     if named:
-        matched, path = match_target(plan, run, entries)
+        matched, path, exempt = match_target(plan, run, entries, cap)
     own = {id(record) for _, record in matched}
     others = [record for _, record in entries if id(record) not in own]
+    room = cap if exempt else max(0, cap - len(matched))  # an undecided P takes its rows from the cap
     rows = list(plan.target_rows)
-    if others[:cap]:
-        rows += worktree_rows(evidence, run, records=others[:cap])
-    plan.omitted = {"count": max(0, len(others) - cap), "exactness": "exact"}
+    if others[:room]:
+        rows += worktree_rows(evidence, run, records=others[:room])
+    plan.omitted = {"count": max(0, len(others) - room), "exactness": "exact"}
     plan.rows = sorted(rows, key=lambda row: (not row.main, row.raw_path))
     plan.selected, plan.excluded = gate_rows(plan.rows, plan, run)
     command_dir = identity["root"] if identity["root"] is not None else os.fsencode(root)
