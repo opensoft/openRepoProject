@@ -706,7 +706,7 @@ T033), when B, D, E and F are; H, guard (T034, T035), when T023 is, beside G
 
 ### Lane G: the evidence model, behind `cleanup_report()` only
 
-- [ ] T027 [P] [O] Add `tests/test_clean_evidence.py` with
+- [x] T027 [P] [O] Add `tests/test_clean_evidence.py` with
   `test_clean_evidence_parity_with_the_baseline_reader` (R9, FR-061): one
   fixture holding the main worktree and an unpublished, a pushed-unmerged, an
   unpushed, a remote-ahead, a diverged, a dirty, an ignored-file, a detached, a
@@ -719,7 +719,7 @@ T033), when B, D, E and F are; H, guard (T034, T035), when T023 is, beside G
   must still pass after: it is the parity guard.
   — files: `tests/test_clean_evidence.py`
   — verify: `python3 -m unittest discover -s tests -p 'test_clean_evidence.py' -k '*.test_clean_evidence_parity_with_the_baseline_reader'`
-- [ ] T028 [P] [S] Add to `tests/test_clean_evidence.py`:
+- [x] T028 [P] [S] Add to `tests/test_clean_evidence.py`:
   `test_clean_ladder_is_a_pure_function` (`classify(row, merge_target)` on
   literal rows reaches each of the fifteen classes; an unestablished row is
   `inspection-error` before `protected-default`; the one reorder makes a merged
@@ -733,7 +733,7 @@ T033), when B, D, E and F are; H, guard (T034, T035), when T023 is, beside G
   stream stopped at its bound is judged on the records read).
   — files: `tests/test_clean_evidence.py`
   — verify: `python3 -c "import sys,unittest as u;L=u.defaultTestLoader;f=lambda s:[i for t in s for i in (f(t) if isinstance(t,u.TestSuite) else [t.id()])];I=[i for i in f(L.discover('tests',pattern=sys.argv[1])) if not i.startswith('unittest.')];A=sys.argv[2:];M=[a for a in A if not any(a in ('*',i.split('.')[-1]) for i in I)];[print('not collected:',m) for m in M];[print(e) for e in L.errors];sys.exit(1 if M or L.errors or not A else 0)" test_clean_evidence.py 'test_clean_ladder_is_a_pure_function' 'test_clean_partial_removal_note_rules'`
-- [ ] T029 [P] [O] Add to `tests/test_clean_evidence.py`:
+- [x] T029 [P] [O] Add to `tests/test_clean_evidence.py`:
   `test_clean_evidence_probes_once_per_common_directory` (under the counting
   wrapper, `project clean ROOT --json` runs rows 3, 4, 6 and 7 once each, row
   4b only in a gitfile layout, and one combined status probe per present,
@@ -753,7 +753,7 @@ T033), when B, D, E and F are; H, guard (T034, T035), when T023 is, beside G
   with `ahead` and `behind` null).
   — files: `tests/test_clean_evidence.py`
   — verify: `python3 -c "import sys,unittest as u;L=u.defaultTestLoader;f=lambda s:[i for t in s for i in (f(t) if isinstance(t,u.TestSuite) else [t.id()])];I=[i for i in f(L.discover('tests',pattern=sys.argv[1])) if not i.startswith('unittest.')];A=sys.argv[2:];M=[a for a in A if not any(a in ('*',i.split('.')[-1]) for i in I)];[print('not collected:',m) for m in M];[print(e) for e in L.errors];sys.exit(1 if M or L.errors or not A else 0)" test_clean_evidence.py 'test_clean_evidence_probes_once_per_common_directory' 'test_clean_evidence_checks_registration_both_ways' 'test_clean_evidence_reads_presence' 'test_clean_evidence_row_fields'`
-- [ ] T030 [P] [O] Add the evidence model's scenario tests to
+- [x] T030 [P] [O] Add the evidence model's scenario tests to
   `tests/test_clean_evidence.py`, each through `project clean ROOT --json` and
   the counting wrapper and each named `test_status_` by rule 1 (FR-054 to
   FR-058; the US9 scenarios that need nothing beyond this lane; plan review
@@ -789,7 +789,7 @@ T033), when B, D, E and F are; H, guard (T034, T035), when T023 is, beside G
   fetch in a partial clone is refused locally".
   — files: `tests/test_clean_evidence.py`
   — verify: `python3 -c "import sys,unittest as u;L=u.defaultTestLoader;f=lambda s:[i for t in s for i in (f(t) if isinstance(t,u.TestSuite) else [t.id()])];I=[i for i in f(L.discover('tests',pattern=sys.argv[1])) if not i.startswith('unittest.')];A=sys.argv[2:];M=[a for a in A if not any(a in ('*',i.split('.')[-1]) for i in I)];[print('not collected:',m) for m in M];[print(e) for e in L.errors];sys.exit(1 if M or L.errors or not A else 0)" test_clean_evidence.py 'test_status_a_git_that_floods_standard_error' 'test_status_a_git_that_ignores_sigterm' 'test_status_five_thousand_ignored_records' 'test_status_user_status_configuration' 'test_status_a_caller_s_git_environment_is_ignored' 'test_status_the_sixteenth_scrubbed_name_on_git_2_36' 'test_status_a_lazy_fetch_in_a_partial_clone_is_refused_locally'`
-- [ ] T031 [P] [O] Add to region `evidence` of `project`: `identity_probe()` (row
+- [x] T031 [P] [O] Add to region `evidence` of `project`: `identity_probe()` (row
   3, repeated one option per child when a value holds a line feed);
   `main_worktree(identity, records, run)`, which builds D8's whole order (M6)
   here: a first registry record that is `bare` names none; a first record
@@ -821,7 +821,7 @@ T033), when B, D, E and F are; H, guard (T034, T035), when T023 is, beside G
   `tests/clean_support.py`, which this task also touches (lead ruling R-45).
   — files: `project`, `tests/clean_support.py`
   — verify: `python3 -c "import sys,re;t=open('project').read();A=sys.argv[1:];c=lambda r:t.split('# region '+r+'\n')[1].split('# endregion '+r+'\n')[0];M=[a for a in A if not ((a.split('%',1)[1] not in c(a.split('%',1)[0])) if '%' in a else (a.split('~',1)[1] in c(a.split('~',1)[0])) if '~' in a else re.search(r'^[a-z]*\s?'+re.escape(a.split(':',1)[1])+r'\b',c(a.split(':',1)[0]),re.M))];[print('region check failed:',m) for m in M];sys.exit(1 if M or not A else 0)" 'evidence:identity_probe' 'evidence:main_worktree' 'evidence:inspect_repository' 'evidence:verify_registration' 'evidence:status_probe' 'evidence:worktree_rows' && python3 -m unittest discover -s tests -p 'test_clean_evidence.py' -k '*.test_clean_evidence_parity_with_the_baseline_reader' && python3 -m unittest discover -s tests -p 'test_clean_harness.py' -k '*.test_clean_text_fixtures_equal_the_contract_table'`
-- [ ] T032 [P] [O] Add to region `evidence`: `classify()` (pure, with its one
+- [x] T032 [P] [O] Add to region `evidence`: `classify()` (pure, with its one
   reorder; `RECOMMENDATIONS` from `project:566-616`); `partial_removal_note()`;
   `declared_tracking_branch(root)` (today's `manifest()` read, bounded by
   T108); and `resolve_merge_target(refs, declared)` (`{name, source, sha,
@@ -830,7 +830,7 @@ T033), when B, D, E and F are; H, guard (T034, T035), when T023 is, beside G
   fixture in `tests/clean_support.py`, as T031's do (lead ruling R-45).
   — files: `project`, `tests/clean_support.py`
   — verify: `python3 -c "import sys,re;t=open('project').read();A=sys.argv[1:];c=lambda r:t.split('# region '+r+'\n')[1].split('# endregion '+r+'\n')[0];M=[a for a in A if not ((a.split('%',1)[1] not in c(a.split('%',1)[0])) if '%' in a else (a.split('~',1)[1] in c(a.split('~',1)[0])) if '~' in a else re.search(r'^[a-z]*\s?'+re.escape(a.split(':',1)[1])+r'\b',c(a.split(':',1)[0]),re.M))];[print('region check failed:',m) for m in M];sys.exit(1 if M or not A else 0)" 'evidence:classify' 'evidence:RECOMMENDATIONS' 'evidence:partial_removal_note' 'evidence:declared_tracking_branch' 'evidence:resolve_merge_target' && python3 -m unittest discover -s tests -p 'test_clean_evidence.py' -k '*.test_clean_evidence_parity_with_the_baseline_reader' && python3 -m unittest discover -s tests -p 'test_clean_harness.py' -k '*.test_clean_text_fixtures_equal_the_contract_table'`
-- [ ] T033 [P] [O] Switch `cleanup_report()` (`project:544-622`) onto T031 and
+- [x] T033 [P] [O] Switch `cleanup_report()` (`project:544-622`) onto T031 and
   T032, leaving `repo_state()` alone (R9) and `default_branch()` and
   `ancestor()` in place until T125. T027 to T030 and the 96 tests pass.
   — files: `project`
