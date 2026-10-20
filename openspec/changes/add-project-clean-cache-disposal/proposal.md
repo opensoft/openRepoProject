@@ -9,8 +9,10 @@ re-align step and wording, lane 3's delta read and Codex's re-review of
 `cf57956` resolved in round B4 (B-29 to B-33), and Codex's re-review of
 `e1049b2` with the lead's rulings of 2026-10-20 resolved in round B5 (B-34 to
 B-37), lane 4's byte check of B-30's overview commit recorded in `tasks.md`
-2.2, and lane 3's folded read of `cf57956..fffc194` with Codex's finding on
-`fffc194` resolved in round B6 (B-38 to B-42); nothing here is ratified.
+2.2, lane 3's folded read of `cf57956..fffc194` with Codex's finding on
+`fffc194` resolved in round B6 (B-38 to B-42), and lane 3's confirm read of
+round B6 with Codex's two findings on `e399309` resolved in round B7 (B-43 to
+B-45); nothing here is ratified.
 Governing issue:
 opensoft/openRepoProject#24, claimed by lane
 openRepoProject-5 (comment 6111257933); refs #6, the record of the project
@@ -37,7 +39,7 @@ named), and `PR19/rs` is `CAS/rs` as PR #19 amends it at that head.
 for the three extensions and for this one: L-1 to L-9 and B-1 to B-9 of
 2026-10-11, L-10 to L-15 and B-10 to B-15 of 2026-10-18, L-16 and L-17 of
 2026-10-19 with B-16 to B-24, the lead's council verdicts of that date, and
-B-25 to B-42 of 2026-10-20; A-n are the rulings for #23 that this proposal
+B-25 to B-45 of 2026-10-20; A-n are the rulings for #23 that this proposal
 cites. SA-n, QA-n and G1 to G5 are the alignment review's findings on this
 draft at `7290100`. P-n, S-n and AE-n are the council's concerns
 (product-advocate, systems-architect, adversary-engineer) on `9ebe9f0`, and M1
@@ -139,7 +141,10 @@ through `getattr(os, "O_NOFOLLOW", 0)` instead of failing closed.
   the evidence model's scrub, protocol pins and directory rule and with the
   status pins (CD-5), reading at most 512 records, then walks the listed caches
   descriptor-relatively, opening each directory it records once and counting
-  it toward the per-worktree cap with the entries (B-33), and checking with one
+  it toward the per-worktree cap with the entries (B-33), enumerating each
+  cache directory one entry at a time and closing the enumeration as soon as
+  the cap decides, so that no directory's whole listing is held (B-44), and
+  checking with one
   descriptor-relative access check per directory the stage would change that
   the running user may remove entries from it (B-20). A row whose enumeration
   reaches a cap stays `ignored-local-files` with the reason `cache-cap`; one
@@ -170,7 +175,9 @@ through `getattr(os, "O_NOFOLLOW", 0)` instead of failing closed.
   to Brett Heap beside the caps; the caps stay before him (Open Questions).
   Rows the caps leave drain on re-run unless each of the first 16 candidates
   stays at the rung for a persistent reason (B-32), a stall the human report
-  names with each row's cause and next step (QA-2, B-21).
+  names with each row's cause and next step (QA-2, B-21) when at least one
+  later candidate is left with `cache-cap` by the 16-enumeration cap, and
+  otherwise not, each row then printing its own reason and next step (B-45).
 - **The ladder reads blocking paths (B-5).** The `ignored-local-files` rung
   keeps its name and its place and applies to a row holding an ignored path
   that is not proven, within the caps, a listed cache; a row whose every
@@ -195,10 +202,11 @@ through `getattr(os, "O_NOFOLLOW", 0)` instead of failing closed.
   chain from the worktree root per directory holding a listed path (B-33),
   checks each against its planned
   device and inode, re-lists each cache directory against the allowlist and
-  the number of entries the plan recorded for it, and keeps the run's byte
-  total, refusing a target whose measured bytes would take it past the
-  invocation's 1 GiB (B-26), all before the first unlink; then files are
-  unlinked and emptied directories removed one entry at
+  the number of entries the plan recorded for it, by the walk's streaming
+  enumeration, closed at the first entry beyond that number (B-44), and keeps
+  the run's byte total, refusing a target whose measured bytes would take it
+  past the invocation's 1 GiB (B-26), all before the first unlink; then files
+  are unlinked and emptied directories removed one entry at
   a time, never by a recursive deletion, and a directory that is no longer
   empty is never removed. The stage starts only while more than the 5 s
   removal floor remains and no signal has arrived, and checks both again
@@ -232,12 +240,12 @@ through `getattr(os, "O_NOFOLLOW", 0)` instead of failing closed.
   the floor or the work deadline stopped in a read before its first removal is
   `not-attempted` too, with nothing deleted, no difference found and no
   reconciliation, the later targets likewise and the exit status 1 (B-34); a
-  read that outlives its own 5 s budget with at least 10 s of work left stays a
-  preflight error, `refused` with `cache-changed` (B-38), unless a signal was
-  received before the stage classified that or any other outcome of the
-  preflight, a changed entry or an error included, in which case the stage is
-  `not-attempted`, the target `interrupted` and the exit status the signal's,
-  as at the check before the first hand-off (B-39, B-41).
+  read that outlives its own 5 s budget with at least 10 s of work remaining
+  stays a preflight error, `refused` with `cache-changed` (B-38, B-43), unless
+  a signal was received before the stage classified that or any other outcome
+  of the preflight, a changed entry or an error included, in which case the
+  stage is `not-attempted`, the target `interrupted` and the exit status the
+  signal's, as at the check before the first hand-off (B-39, B-41).
 - **Fail closed per platform (B-6, CD-3, B-37).** Where the running Python
   cannot provide `O_NOFOLLOW`, `O_DIRECTORY` and the descriptor-relative calls,
   no row gets a cache plan: a row that reaches the `ignored-local-files` rung
@@ -273,7 +281,8 @@ through `getattr(os, "O_NOFOLLOW", 0)` instead of failing closed.
   line names, for the
   16 rows that hold the others back, how many stay for each cause, with its
   next step, and never tells the person to remove by hand a worktree whose
-  state was not established (B-21). The residual-window line also names ignored
+  state was not established (B-21); it is printed only when a later candidate
+  waits behind them (B-45). The residual-window line also names ignored
   files created during a cache stage and a cache recreated after it, which
   Git's non-force removal deletes with the worktree (`BA:319-323`, B-19).
 - **Versioned JSON.** Worktree rows, `selected` entries and apply-result
@@ -396,7 +405,8 @@ also names the delta text it is written on.
     The cache stage's start under the removal floor and its reads' budget; its
     removals handed over only while more than the floor remains and waited for
     as removals in flight up to the 300 s ceiling (B-16); the cache walk's
-    opens, listings, `lstat` calls and access checks among the filesystem
+    opens, bounded directory enumerations (B-44), `lstat` calls and access
+    checks among the filesystem
     calls; the five cache caps in `limits`; the enumeration children in
     `probes` and in the fit, the walk's and the stages' filesystem calls
     outside it; each removed cache entry in `operations`. The scenario
@@ -419,8 +429,10 @@ also names the delta text it is written on.
     `### Requirement: Clean disposes of listed caches before a worktree removal`.
     The allowlist, the sample test, candidate rows, the enumeration with its
     caps, the per-worktree one counting recorded directories (B-33), the
-    access check, reasons and the stall on persistent reasons (B-32), the
-    plan's `cache_disposal`
+    walk's streaming enumeration of each cache directory, closed when the cap
+    decides (B-44), the access check, reasons and the stall on persistent
+    reasons (B-32), reported only beside a later candidate that the
+    16-enumeration cap left (B-45), the plan's `cache_disposal`
     with identities, counts and `candidate_block` and its presence rule, the
     cache stage's place, start, checks, commit point and budget, the result's
     `cache_disposal`, the exit statuses through change 1's table, and the human
@@ -474,14 +486,16 @@ also names the delta text it is written on.
     no-follow operations against planned identities, one chain per directory
     holding a listed path in each pass (B-33), no descriptor of an
     outstanding call reused; no recursive deletion; the whole-list preflight
-    with its entry count and the run's byte total (B-26), and its outcome when
+    with its entry count, its streaming enumeration closed at the first entry
+    beyond it (B-44), and the run's byte total (B-26), and its outcome when
     the floor or the deadline stops a read of it (B-34), and a signal received
     before any outcome of it is classified outranking each (B-39, B-41); the
     outcome once a
     removal is handed over; the
     partial-phase record, its chain rescan under the reserve, and retry; the
     per-platform fail-closed rule, which leaves a row that an earlier rung
-    classified as it is (B-37); the stage's guarantee.
+    classified as it is (B-37) and names the streaming directory enumeration
+    among the calls it checks (B-44); the stage's guarantee.
   - Untouched (`:9`): `### Requirement: Cleanup protects the process worktree`.
   - Untouched (`:38`): `### Requirement: Cleanup respects configured upstream mappings`.
 - `project-overview` (change 2's twelve ADDED requirements accounted for; no
@@ -845,7 +859,9 @@ NOTED; the table "Council Verdicts" below):
   first 16 candidates in canonical order is held at the rung for a persistent
   reason, any one of `blocking` above 0, `cache-cap` from a per-worktree cap,
   `cache-unverified` or `cache-unwritable`, never on `blocking` alone (B-32),
-  and is built from those rows' reasons, zero counts left out, each cause with
+  and at least one later candidate is left with `cache-cap` by the
+  16-enumeration cap, so that it has a row to name (B-45), and is built from
+  those rows' reasons, zero counts left out, each cause with
   its next
   step; it never tells the person to remove by hand a worktree whose state was
   not established. The `cache-unwritable` part is this proposal's completion
@@ -1028,12 +1044,13 @@ to B-37 (the table "Re-read and Codex Findings (round B5)" below):
   nothing was deleted.` before its stop block, so that the deadline is named and
   no change of state is claimed. A preflight that finds a real difference, an
   error, or a read that outlives its own 5 s budget with at least 10 s of work
-  left (B-38) stays `refused` with `cache-changed` and exit 2; the last is the
-  bounds rule's `probe-timeout`, an ordinary preflight error in Codex's words,
-  not deadline exhaustion, though a signal received before it is classified
-  outranks it (B-39, B-41). The new line is printed only for a read stopped
-  before the first removal; a stage that never starts, and the check before the
-  first hand-off, keep the stop block alone, as they did. CD-2's mapping of a
+  remaining (B-38, B-43) stays `refused` with `cache-changed` and exit 2; the
+  last is the bounds rule's `probe-timeout`, an ordinary preflight error in
+  Codex's words, not deadline exhaustion, though a signal received before it is
+  classified outranks it (B-39, B-41). The new line is printed only for a read
+  stopped before the first removal; a stage that never starts, and the check
+  before the first hand-off, keep the stop block alone, as they did. CD-2's
+  mapping of a
   floor-ended partial stage to `refused`, and the decline of lane 3's LOW 14,
   concern a stage that has removed an entry, and stand. One AND of "No time for
   a cache stage" pins both outcomes; design D1, D7, D8, D11, D12, D14 and Risks
@@ -1157,6 +1174,63 @@ B-42 (the table "Re-read and Codex Findings (round B6)" below):
   figures, so `9b67e8c` is cited. The B-35 decision above, and design's source
   table row for B-35, say the same; the round B5 row of B-35 stays as it was, as
   history.
+
+The findings of 2026-10-20 that followed round B6, ruled by the lead as B-43 to
+B-45 (the table "Re-read and Codex Findings (round B7)" below):
+
+- **B-43, lane 3's confirm read of round B6** (`e399309`; lane 3 read rounds C6
+  and A6 clean and this change at no HIGH, no MEDIUM and three optional LOWs,
+  and confirmed that B-41 leaves no target with two outcomes). LOW 1: What
+  Changes and the B-34 decision above say "at least 10 s of work remaining", as
+  M1 was ruled (B-38), where they said "work left". LOW 2: the AND of "A signal
+  during a cache stage" that B-39 and B-41 wrote names the floor stop, a read
+  held until no more than the removal floor remains for the next read to start,
+  beside the 5 s budget, the deadline's shorter budget and a changed entry, as
+  the review-safety preflight paragraph and design D14 name it. LOW 3: design
+  D4's run byte total past 1 GiB, which "ends `refused`", gains the signal
+  exception that the review-safety preflight paragraph and D7 state: where a
+  signal was received first, the signal decides, as for every outcome of the
+  preflight (B-41); D4's caps table, whose `cache_bytes_total` row says the
+  same in short, gains it too.
+- **B-44, a streaming enumeration that stops at the cap** (Codex's P2 at
+  `specs/project-clean/spec.md:873` on `e399309`). The walk listed each cache
+  directory by the descriptor-relative `os.listdir` that D9 required, which
+  builds the whole directory's listing before the walk can see the row's 513th
+  object, and a timeout abandons the worker without reclaiming that memory, so
+  a `__pycache__` of millions of entries could take unbounded memory. The walk
+  and the whole-list preflight now enumerate a directory by a
+  descriptor-relative streaming enumeration that yields one entry at a time and
+  is closed as soon as the cap decides: in the walk at the row's 513th recorded
+  cache object, and in the preflight at the first entry beyond those the plan
+  recorded, which is a difference. No enumeration holds a whole directory's
+  listing, so a row's walk holds at most 513 entries whatever a directory
+  holds. One directory's bounded enumeration counts as one filesystem call
+  under the per-call budget, as its listing did, so D4's call counts and every
+  fit, A-9's and B-3's among them, are unchanged; D4 says so, and a comparison
+  of every figure in D4 before and after this round found none changed. Design
+  D3 and D7 name the mechanism, `os.scandir` on the directory's descriptor,
+  iterated lazily and closed when the cap decides; CPython works on a
+  duplicate of the descriptor and rewinds it on close, so the walk's own
+  descriptor stays usable, which this round checked on Python 3.10.21, 3.12.3
+  and 3.13.15 (design, Context). D9's platform check names `os.scandir` in
+  `os.supports_fd` in place of `os.listdir`; the review-safety platform
+  sentence says "streaming directory enumeration" for "directory listing", and
+  the bounds block's list of the cache walk's calls "bounded directory
+  enumerations" for "listings", the one delta sentence beyond those the ruling
+  names.
+  One AND of "Cache caps" pins a `__pycache__` of 100,000 entries, of which a
+  test hook sees at most 513 taken, the row `cache-cap`; design D14 adds the
+  test in a bullet of its own.
+- **B-45, the stall report needs a held-back row** (Codex's P2 at
+  `specs/project-clean/spec.md:928` on `e399309`). With exactly 16 candidates,
+  each held for a persistent reason, no candidate is left with `cache-cap` by
+  the 16-enumeration cap, so a line saying that "these cache-cap rows will not
+  drain" would name rows that do not exist. The stall line now also requires at
+  least one later candidate left with `cache-cap` by the 16-enumeration cap;
+  otherwise each row's own reason and next step print as usual, and no stall
+  line prints. One AND of "Cache caps" pins exactly 16 such candidates and no
+  stall line; design D4, D11, D14 (in a bullet of its own) and Risks, the B-21
+  decision above, What Changes and Capabilities follow.
 
 Departures from the rulings as first written, each naming what it departs
 from. B-11 accepted CD-1 to CD-3 as the consistent reading of B-6 and amended
@@ -1619,3 +1693,28 @@ of the rulings needs it, and its block is lane openRepoProject-4's.
 | lane 3's last checks (fffc194) LOW 2: the quotations are not verbatim: D4 and the proposal quote #26's `ca96701` as "13 of 16, 11 in its worst case", where its design.md:573 reads "13 of its 16 targets ... 11 in the worst case", and say B-19 reads "13 of 16 at `ca96701`", where B-19 reads "13 at `ca96701`" and only design D13 reads "13 of 16 at `ca96701`" | LOW | B-40: applied: #26's words quoted as "13 of its 16 targets ... 11 in the worst case" in design D4, in B-35 and in the round B5 table's B-35 row, and B-35 now says that D13 reads "13 of 16 at `ca96701`" and B-19 "13 at `ca96701`"; the figures were right and none changes; the ca96701 text was read with `git show ca96701:openspec/changes/add-project-clean-branch-retirement/design.md` | `design.md` D4; Decisions (B-35, B-40); the round B5 table (B-35's row) |
 | lead B-41, a ruling on this round's own B-39 sentence (found in round B6): design D7 said that a difference or an error that the preflight found stays `refused` when a signal was received first, which contradicts the AND of "A signal during a cache stage" (SIGINT during the whole-list preflight leaves the target `not-attempted` with `interrupted` and the stage `not-attempted` with `target-stopped`) and left D8 without a row, and so the later targets without a reason | not graded | B-41: applied: the stage reads the signal slot before it classifies any outcome of its preflight or of the reopening of the first listed cache's chain, a difference, an error, a byte total past either cap, a `probe-timeout` or a floor or deadline stop; where a signal was received the stage is `not-attempted` with `target-stopped`, nothing deleted, the target and every later one `not-attempted` with `interrupted`, the exit status the signal's; the review-safety paragraph states the rule once; the B-39 AND adds the changed-entry case; the `refused` human line gets "no signal having been received by then", as the deadline line has; D8's `target-stopped` row names "any preflight outcome after a signal was received"; the `refused` row keeps "with no signal received"; the 683 count and B-38's threshold are unchanged | review-safety delta (ADDED preflight paragraph); project-clean delta (ADDED stage paragraph and human lines; "A signal during a cache stage"); `design.md` D1, D7, D8, D11, D12, D14; What Changes (Failure and recovery, What the person sees); Capabilities; Decisions (B-34, B-39, B-41); CD-11 |
 | lead B-42 (lane 3, with its read of #26): D4 quotes #26's counts from before its round A5, "at a thread per call 5 and 5, or 4 and 3", where #26 at `9b67e8c` (design.md:724-731) says "at least 5, or 3, at a thread per call, 6, or 5, in the worst order a run can take", and "at a thread per call at least the 16th target is deferred" | not graded | B-42: applied: D4 restates #26 at `9b67e8c`, naming that head: its sentence on the joint fit quoted whole (checked verbatim against `git show 9b67e8c:openspec/changes/add-project-clean-branch-retirement/design.md`), with the removals and branch children of its bullets beside it (10 and 9, 8 and 8; 5 and 5, 4 and 3; 6 and 6, 5 and 5 in the worst order) and its A-25 scope for ordinary trees; every other restatement of #26's counts or of its "all 16 fit" sentence was checked, and the live ones corrected (the B-35 decision and design's source table row for B-35); this change's own fit sentences are about #27's fit and stay; the round B5 row of B-35 stays as history; #26's round A6 changes none of these figures | `design.md` D4, the source table (B-35, B-42), Context; Decisions (B-35, B-42) |
+
+### Re-read and Codex Findings (round B7)
+
+Lane openRepoProject-3's combined confirm read of rounds C6, B6 and A6, sent by
+message at about 18:1xZ on 2026-10-20, found this change at `e399309` with no
+HIGH, no MEDIUM and three optional LOWs, and confirmed that B-41 leaves no
+target with two outcomes; the lead ruled the LOWs as B-43. Codex reviewed
+`e399309` and found two P2s (inline comments of 2026-10-20T17:56:31Z, read at
+19:00Z), which the lead ruled as B-44 and B-45, for a short round after the
+swap to team01f. Of the 5 items here, 5 are applied and none is declined;
+B-43's LOW 3 and B-44 each also edit one passage beyond the lines the ruling
+names, said in their rows. Each ruling adds an AND and no scenario, so the
+counts stay 55, 28 and 8. `specs/project-overview/spec.md` is not edited: none
+of the rulings needs it, and its block is lane openRepoProject-4's. Design
+D14's bullet on feature 005's tests, on which lane 4's spec 005 and its
+question Q17 to Brett Heap rest, keeps its words; the tests that B-44 and B-45
+add are in bullets of their own.
+
+| Finding | Severity | Ruling | Section edited |
+| --- | --- | --- | --- |
+| lane 3 confirm read (e399309) LOW 1: proposal.md:235 and :1030-1031 say "at least 10 s of work left", where M1 was ruled "work remaining" | LOW | B-43: applied: "at least 10 s of work remaining" in What Changes (Failure and recovery) and in the B-34 decision; no other "work left" in the change states the threshold | What Changes (Failure and recovery); Decisions (B-34, B-43) |
+| lane 3 confirm read (e399309) LOW 2: the AND of "A signal during a cache stage" at pc:1280-1287 names the 5 s budget, the deadline's shorter budget and a changed entry, but not the floor stop that rs:364-373 and design D14 name | LOW | B-43: applied: the AND adds "or is held until no more than the removal floor remains for the next read to start", the words of the deadline AND of "No time for a cache stage"; no scenario added | project-clean delta (ADDED, "A signal during a cache stage"); Decisions (B-43) |
+| lane 3 confirm read (e399309) LOW 3: design.md:342 says that a byte total past 1 GiB "ends `refused`" without the signal exception that the review-safety preflight paragraph and D7 state | LOW | B-43: applied: D4 adds that where a signal was received before the stage classified that outcome, the signal decides, as for every outcome of the preflight (B-41, D7): the stage `not-attempted` with `target-stopped`, nothing deleted, the target and every later one `not-attempted` with `interrupted`, the exit status the signal's; also, beyond the line named, D4's caps table row for `cache_bytes_total`, which says the same in short, gains "where no signal was received first (B-41)" | `design.md` D4 (the byte-total paragraph and the caps table); Decisions (B-43) |
+| Codex (e399309) P2 at `specs/project-clean/spec.md:873`: the descriptor-relative `os.listdir` that D9 requires builds a whole directory's listing before the walk can see the row's 513th object, and a timeout that abandons the worker cannot reclaim it, so an oversized `__pycache__` can take unbounded memory; stream the enumeration and stop at the cap, in the preflight too | P2 | B-44: applied: the walk and the whole-list preflight enumerate a directory by a descriptor-relative streaming enumeration that yields one entry at a time and is closed as soon as the cap decides, the walk at the row's 513th recorded object and the preflight at the first entry beyond those the plan recorded; one bounded enumeration is one call under the per-call budget, as a listing was, so no D4 count, time or fit moves, which D4 says and a comparison of D4's figures before and after confirmed; D3 and D7 name `os.scandir` on the descriptor, iterated lazily and closed when the cap decides, its duplicate descriptor rewound on close, checked in scratch on Python 3.10.21, 3.12.3 and 3.13.15 and recorded in the Context table; D9 checks `os.scandir` in `os.supports_fd` in place of `os.listdir`; rs's platform sentence says "streaming directory enumeration"; also, beyond the lines named, the bounds block's list of the cache walk's calls says "bounded directory enumerations" for "listings", and D12 names a bounded enumeration among the reads; one AND of "Cache caps" for a 100,000-entry `__pycache__` whose enumeration a test hook sees yield at most 513 entries, the row `cache-cap`; D14's test, with its preflight counterpart, in a bullet of its own | project-clean delta (bounds block; ADDED walk paragraph; "Cache caps"); review-safety delta (ADDED preflight and platform paragraphs); `design.md` Context, D3, D4, D7, D9, D12, D14, Risks; What Changes (detection, the cache stage); Capabilities; Decisions (B-44) |
+| Codex (e399309) P2 at `specs/project-clean/spec.md:928`: with exactly 16 candidates, each `cache-unverified` or `cache-unwritable`, the stall predicate fires though no later candidate was left by the 16-enumeration cap, so the line names `cache-cap` rows that do not exist | P2 | B-45: applied: the stall line also requires at least one later candidate left with `cache-cap` by the 16-enumeration cap; otherwise each row's own reason and next step print as usual and no stall line prints; one AND of "Cache caps" for exactly 16 candidates, each held for a persistent reason, that prints no stall line; D4 and D11 follow, D14 adds the test in a bullet of its own, and Risks names the condition | project-clean delta (ADDED stall paragraph; "Cache caps"); `design.md` D4, D11, D14, Risks; What Changes (Caps, What the person sees); Capabilities; Decisions (B-21, B-45) |
