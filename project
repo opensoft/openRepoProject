@@ -2133,6 +2133,11 @@ REF_FORMAT = ("%(refname)%00%(objectname)%00%(symref)%00%(upstream)%00%(upstream
 STATUS_PROBE = ("status", "--porcelain=v1", "-z", "--untracked-files=normal", "--ignored=matching")
 # The most read of a `.git` file or an admin `gitdir` file, each one path.
 GITFILE_BYTES = 65536
+# A branch named HEAD. For refs/heads/HEAD, row 6's `for-each-ref` prints the
+# upstream and track of the branch that HEAD names where it runs, whatever
+# `branch.HEAD.*` says (checked on Git 2.43.0), so no upstream evidence of such
+# a branch is read from row 6 (lead ruling R-61 (b)).
+HEAD_BRANCH_REF = b"refs/heads/HEAD"
 
 
 class WorktreeRow(dict):
@@ -2176,6 +2181,13 @@ def _evidence_text(raw):
 def git_operation(subcommand):
     """OPERATION of a Git child's row error: `git SUBCOMMAND`."""
     return TEXT["row_error_git_operation"].format(SUBCOMMAND=subcommand)
+
+
+def unparseable_error(subcommand):
+    """The row error {code, message} of a `git SUBCOMMAND` child whose output
+    gives no usable value: `probe-failed`, DETAIL `unparseable output`."""
+    return {"code": "probe-failed", "message": TEXT["row_error_probe_failed"].format(
+        OPERATION=git_operation(subcommand), DETAIL=TEXT["row_error_probe_failed_unparseable"])}
 
 
 def probe_error(outcome, operation, budget):
@@ -2265,9 +2277,7 @@ def identity_probe(directory, run):
         value = outcome.result
         values.append((value[:-1] if value.endswith(b"\n") else value) or None)
     if values[0] is None or values[1] is None:
-        detail = TEXT["row_error_probe_failed_unparseable"]
-        return None, {"code": "probe-failed", "message": TEXT["row_error_probe_failed"].format(
-            OPERATION=git_operation("rev-parse"), DETAIL=detail)}
+        return None, unparseable_error("rev-parse")
     return tuple(values), None
 
 
@@ -2513,7 +2523,11 @@ def worktree_rows(repo, run, records=None):
     present gets no registration or duplicate check (lead rulings R-57 L2
     and L3, R-59 D5); the branch
     evidence from row 6, a deleted upstream keeping its short name with
-    `ahead` and `behind` null; `merged_into_target` from row 7; then classify()
+    `ahead` and `behind` null, and a branch named HEAD (HEAD_BRANCH_REF)
+    taking none: its `upstream`, `remote_present`, `ahead` and `behind` stay
+    null and its row carries a `probe-failed` error for `git for-each-ref`,
+    so it is inspection-error (lead ruling R-61 (b));
+    `merged_into_target` from row 7; then classify()
     and partial_removal_note(). Each failed outcome or call becomes an entry of
     the row's `errors`. A value not established is null, and a stale or
     unreadable row carries no branch evidence, as the baseline gave none."""
@@ -2578,7 +2592,9 @@ def worktree_rows(repo, run, records=None):
         upstream = remote_present = ahead = behind = merged = None
         ref = refs.get(branch_ref) if present and branch_ref is not None else None
         if ref is not None:
-            if ref["upstream_short"] is not None:
+            if branch_ref == HEAD_BRANCH_REF:
+                errors.append(unparseable_error("for-each-ref"))
+            elif ref["upstream_short"] is not None:
                 upstream = _evidence_text(ref["upstream_short"])
                 remote_present, ahead, behind = ref["remote_present"], ref["ahead"], ref["behind"]
                 tracked = refs.get(ref["upstream"])

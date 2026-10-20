@@ -487,6 +487,40 @@ class EvidenceTests(clean_support.CleanCase):
             self.assertEqual([(row.raw_path, row.registered, row["classification"]) for row in alone],
                              [(os.fsencode(shared), False, "inspection-error")])
 
+    def test_clean_evidence_a_branch_named_head_takes_no_upstream(self):
+        # Lead ruling R-61 (b): for refs/heads/HEAD, `git for-each-ref` prints
+        # the upstream of the branch HEAD names where it runs (Git 2.43.0 credits
+        # this branch with origin/main), so the row's upstream, remote_present,
+        # ahead and behind are null, and it is inspection-error with one
+        # probe-failed error, whatever Git prints. The branch is made by
+        # update-ref and checked out by symbolic-ref in a worktree detached at
+        # its commit, plumbing every Git of the floor job accepts.
+        root = self.repo()
+        self.bare_remote()
+        merged = self.merged_worktree("001-merged")
+        self.git(root, "push", "-u", "origin", "main")
+        tip = self.git(root, "rev-parse", "HEAD").strip()
+        self.git(root, "update-ref", "refs/heads/HEAD", tip)
+        tree = self.add("head", "--detach")
+        self.git(tree, "symbolic-ref", "HEAD", "refs/heads/HEAD")
+        self.assertIn(b"\0branch refs/heads/HEAD\0",
+                      os.fsencode(self.git(root, "worktree", "list", "--porcelain", "-z")))
+        result, records = self.report(root)
+        rows = by_name(result.document)
+        error = {"code": "probe-failed", "message": git_message(
+            "for-each-ref", "row_error_probe_failed", DETAIL=TEXT["row_error_probe_failed_unparseable"])}
+        row = rows[tree.name]
+        self.assertEqual([row[key] for key in ("branch", "upstream", "remote_present", "ahead", "behind", "errors",
+                                               "classification", "recommendation")],
+                         ["HEAD", None, None, None, None, [error], "inspection-error",
+                          RECOMMENDATIONS["inspection-error"]])
+        self.assertEqual((row["present"], row["dirty"], row["merged_into_target"]), (True, False, True),
+                         "the status probe and row 7 still read it")
+        self.assertIn(str(tree), self.status_dirs(records))
+        self.assertEqual([(rows[name]["upstream"], rows[name]["errors"], rows[name]["classification"])
+                          for name in ("repo", merged.name)],
+                         [("origin/main", [], "protected-default"), ("origin/001-merged", [], "merged-removable")])
+
     def test_clean_evidence_reads_presence(self):
         # Lead ruling R-36, FR-055: an lstat failing with ENOENT, or with ENOTDIR
         # where the parent of a registered path became a regular file, is
