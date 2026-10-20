@@ -30,6 +30,7 @@ TEXT = clean_support.TEXT_FIXTURES
 # A well-formed --expect-plan value: 64 lowercase hexadecimal characters.
 DIGEST = "0" * 64
 HEX64 = re.compile("[0-9a-f]{64}")
+E_ACUTE = chr(0xE9)  # a non-ASCII code point, built so that this file stays ASCII
 
 # The keys of the plan envelope and of its objects, in the contract's order
 # (contracts/project-clean.md, "Plan envelope"), written here as literals.
@@ -388,7 +389,7 @@ class BatchTests(clean_support.CleanCase):
         # plan notes are {code, message} objects and row notes code strings.
         root = self.repo()
         self.bare_remote()
-        accented = self.merged_worktree("001-accented", path=self.base / "café-tree")
+        accented = self.merged_worktree("001-accented", path=self.base / ("caf" + E_ACUTE + "-tree"))
         gone = self.merged_worktree("002-gone")
         for path in gone.iterdir():
             if path.name != ".git":
@@ -459,12 +460,12 @@ class BatchTests(clean_support.CleanCase):
                 self.assertNotEqual(project.plan_digest(varied), PACKET_DIGEST)
         # ensure_ascii=False serves the digest's text alone: a non-ASCII branch
         # is hashed as its UTF-8 bytes, never as a \\u escape.
-        plan.selected[0]["branch"] = "feature/café"
+        plan.selected[0]["branch"] = "feature/caf" + E_ACUTE
         text = json.dumps({"merge_target": {"name": "main", "sha": PACKET_MERGE_TARGET["sha"]},
                            "repository": {key: PACKET_REPOSITORY[key] for key in ("root", "common_dir", "dev", "ino")},
-                           "selected": [[PACKET_SELECTED[0], "feature/café", PACKET_SELECTED[2]]]},
+                           "selected": [[PACKET_SELECTED[0], "feature/caf" + E_ACUTE, PACKET_SELECTED[2]]]},
                           sort_keys=True, separators=(",", ":"), ensure_ascii=False)
-        self.assertIn("café", text)
+        self.assertIn("caf" + E_ACUTE, text)
         self.assertEqual(project.plan_digest(plan), hashlib.sha256(text.encode("utf-8")).hexdigest())
 
 
