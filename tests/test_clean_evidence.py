@@ -537,6 +537,50 @@ class EvidenceTests(clean_support.CleanCase):
                           ("ignored_files_truncated", "ignored_samples", "errors")], [None, None, []])
         self.assertEqual(rows["repo"]["ignored_samples"], [])
 
+    def test_clean_evidence_rows_for_chosen_records_in_the_given_order(self):
+        # Lead ruling R-53 (d): worktree_rows(repo, run, records) builds rows
+        # only for the registry records given, in the order given, the first
+        # registry entry staying the main worktree; None means the whole
+        # registry. In process, in the fixture's environment.
+        root = self.repo()
+        self.bare_remote()
+        merged = self.merged_worktree("001-merged")
+        second = self.add("second", "-b", "002-second")
+        third = self.add("third", "-b", "003-third")
+        with mock.patch.dict(os.environ, self.env, clear=True):
+            run = project.Invocation()
+            repo = project.inspect_repository(os.fsencode(root), run)
+            registry = repo["records"]
+            record = {entry["path"]: entry for entry in registry}
+            every = project.worktree_rows(repo, run)
+            order = [os.fsencode(path) for path in (third, root, merged)]
+            with mock.patch.object(project, "run_bounded", wraps=project.run_bounded) as spy:
+                chosen = project.worktree_rows(repo, run, records=[record[path] for path in order])
+            self.assertEqual(project.worktree_rows(repo, run, records=None), every)
+            self.assertEqual(project.worktree_rows(repo, run, records=list(registry)), every)
+            self.assertEqual(project.worktree_rows(repo, run, records=[]), [])
+            copy_of_first = project.worktree_rows(repo, run, records=[dict(record[os.fsencode(root)])])
+            with self.assertRaises(ValueError):
+                project.worktree_rows(repo, run, records=[dict(registry[1], path=b"/not/registered")])
+        self.assertEqual([row.raw_path for row in every],
+                         [os.fsencode(path) for path in (root, merged, second, third)])
+        self.assertEqual([row.raw_path for row in chosen], order)
+        self.assertEqual([row.main for row in chosen], [False, True, False])
+        self.assertEqual([row["classification"] for row in chosen],
+                         ["unpublished", "protected-default", "merged-removable"])
+        rows = {row.raw_path: row for row in every}
+        for row in chosen:
+            with self.subTest(row=row["path"]):
+                self.assertEqual(row, rows[row.raw_path])
+                self.assertEqual([getattr(row, name) for name in ("registered", "admin_id", "dev", "ino")],
+                                 [getattr(rows[row.raw_path], name) for name in ("registered", "admin_id", "dev",
+                                                                                 "ino")])
+        self.assertEqual([call.args[0][0] for call in spy.call_args_list], ["status"] * 3,
+                         "one status probe per chosen row and no repository-wide child")
+        self.assertEqual([os.fsencode(call.args[0][1][1]) for call in spy.call_args_list], order)
+        self.assertEqual([(row.main, row["classification"]) for row in copy_of_first],
+                         [(True, "protected-default")])
+
     # T030: the evidence model's scenarios (rule 1: test_status_, plan review M14).
 
     def test_status_a_git_that_floods_standard_error(self):

@@ -2470,11 +2470,26 @@ def inspect_repository(directory, run, refresh=False):
     return repo
 
 
-def worktree_rows(repo, run):
+def _registry_entries(registry, records):
+    """(index, record) for each registry entry worktree_rows() builds a row
+    for: every entry of registry, in its order, when records is None; else
+    each of records, in the order given, with its index in registry, found by
+    identity or, for a copy, by value. A record that is no entry of registry
+    raises ValueError."""
+    if records is None:
+        return list(enumerate(registry))
+    at = {id(entry): index for index, entry in enumerate(registry)}
+    return [(at[id(record)] if id(record) in at else registry.index(record), record) for record in records]
+
+
+def worktree_rows(repo, run, records=None):
     """One WorktreeRow per registry entry of repo (inspect_repository()), in
-    the registry's order; the bare entry, and a first entry that is the common
-    directory when the main worktree cannot be named, are no rows (D8), and
-    where it can, that row's path is the main worktree's realpath.
+    the registry's order; or, when records is given, one per entry of records,
+    which are entries of repo's registry (`repo["records"]`), in the order
+    given (lead ruling R-53 (d)). The bare entry, and a first entry that is the
+    common directory when the main worktree cannot be named, are no rows (D8),
+    and where it can, that row's path is the main worktree's realpath; the
+    registry's first entry is the main worktree in any order given.
 
     Per row (D6, D7; FR-006, FR-055 to FR-057): presence by lstat, false on
     ENOENT or ENOTDIR and null with an `os-error` on any other failure (lead
@@ -2487,18 +2502,20 @@ def worktree_rows(repo, run):
     the row's `errors`. A value not established is null, and a stale or
     unreadable row carries no branch evidence, as the baseline gave none."""
     identity = repo["identity"]
-    if identity is None or not repo["records"]:
+    registry = repo["records"]
+    if identity is None or not registry:
         return []
     common_dir = identity["common_dir"]
     target = repo["merge_target"]["name"] if repo["merge_target"] else None
     refs = {ref["refname"]: ref for ref in repo["refs"] or ()}
     merged_set = repo["merged"]
+    entries = _registry_entries(registry, records)
     try:
         active, active_error = _realpath(b"."), None
     except EvidenceError as exc:
         active, active_error = None, exc.error
     rows = []
-    for index, record in enumerate(repo["records"]):
+    for index, record in entries:
         raw = record["path"]
         if index == 0 and record["bare"]:
             continue
