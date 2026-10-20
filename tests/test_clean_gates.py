@@ -534,6 +534,13 @@ class GatesTests(clean_support.CleanCase):
             str(root): "main-worktree", str(left): "contains-submodule", str(populated): "contains-submodule",
             str(deinitialized): "contains-submodule", str(never): "contains-submodule"})
         self.assertEqual(self.snapshot(root), before)
+        # An apply removes only the plain worktree.
+        result, records = self.run_counted("clean", root, "--all-safe", "--apply", "--yes")
+        self.assert_status(result, 0)
+        self.assertEqual([argv_words(record)[-1] for record in removals(records)], [str(plain)])
+        self.assertFalse(plain.exists())
+        for tree in (left, populated, deinitialized, never):
+            self.assertTrue(tree.is_dir(), tree)
 
     def test_clean_a_worktree_holding_a_submodule_is_never_offered(self):
         root = self.repo()
