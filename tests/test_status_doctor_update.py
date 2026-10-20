@@ -515,6 +515,73 @@ class StatusDoctorUpdateTests(clean_support.CleanCase):
                     self.assertNotIn("classification", repository)
                     self.assertEqual([tree["path"] for tree in repository["worktrees"]], trees)
 
+    # T116: the pinned status configuration, a missing leg, the default report.
+
+    def test_status_the_pinned_status_configuration(self):
+        # Rule 1, plan review M14, FR-054: core.untrackedCache and core.fsmonitor
+        # true in the GIT_CONFIG_GLOBAL file; every status child carries the two
+        # status pins before the seven protocol pins. It pins Phase 2.
+        config = self.base / "user.gitconfig"
+        config.write_text("[core]\n\tuntrackedCache = true\n\tfsmonitor = true\n")
+        root = self.repo()
+        tree = self.base / "feature-tree"
+        self.git(root, "worktree", "add", "-b", "001-feature", tree)
+        env = dict(self.env, GIT_CONFIG_GLOBAL=str(config))
+        for name in ("status", "doctor"):
+            with self.subTest(command=name):
+                result, records = self.counted(name, root, "--json", env=env)
+                self.assert_status(result, 0)
+                statuses = [record for record in records if subcommand(record) == "status"]
+                self.assertEqual(sorted(command(record)[1] for record in statuses), sorted([str(root), str(tree)]))
+                for record in statuses:
+                    self.assertEqual(split_pins(record)[0], STATUS_PINS + PINS)
+                for record in records:
+                    self.assertEqual(split_pins(record)[0][-len(PINS):], PINS)
+
+    def test_doctor_missing_leg(self):
+        # project-command "Inspect and diagnose": a declared leg with no checkout
+        # is an actionable failure with a nonzero exit.
+        root = self.project("Atlas", [("spec", "spec")])
+        leg = root / "spec"
+        result = self.run_json("doctor", root, "--json")
+        self.assert_status(result, 1)
+        self.assertEqual(result.document["children"],
+                         [{"role": "spec", "tracking_branch": "main", "path": str(leg),
+                           "path_valid_utf8": True, "present": False}])
+        self.assertIn({"level": "error", "check": str(leg), "detail": MISSING_CHECKOUT},
+                      checks(result.document, "error"))
+        result = self.run_cli("doctor", root)
+        self.assert_status(result, 1)
+        self.assertIn(f"ERROR {leg}: {MISSING_CHECKOUT}\n", result.stdout)
+
+    def test_update_default_report(self):
+        # project-command "Explicit maintenance": without --apply, update reports
+        # its plan, runs only read-only probes, and installs nothing.
+        root = self.repo()
+        bin_dir = self.fake_bin()
+        workflow = self.recording_tool(bin_dir / "setup-openspeckit")
+        shape = self.recording_tool(bin_dir / "openRepoShape")
+        tools = self.recording_tool(self.wb / "setup.sh")
+        before = self.git(root, "status", "--porcelain", "--ignored")
+        for args in ((root, "--json"), (root,), (root, "--component", "workflow", "--json")):
+            with self.subTest(args=args[1:]):
+                result, records = self.counted("update", *args, env=self.path_first(bin_dir))
+                self.assert_status(result, 0)
+                if "--json" in args:
+                    document = self.assert_one_document(result)
+                    self.assertEqual([update["component"] for update in document["updates"]],
+                                     ["shape", "workflow", "bench", "tools"])
+                    self.assertEqual(document["repository"]["dirty"], False)
+                else:
+                    self.assertIn("workflow: Refresh through setup-openspeckit --repo PATH\n", result.stdout)
+                self.assertTrue(records)
+                for record in records:
+                    self.assertIn(subcommand(record), READ_ONLY, command(record))
+                    self.assertEqual(record.optional_locks, "0", "every child is a read-only probe")
+        for record in (workflow, shape, tools):
+            self.assertFalse(record.exists(), f"{record.name}: nothing was installed or run")
+        self.assertEqual(self.git(root, "status", "--porcelain", "--ignored"), before)
+
 
 if __name__ == "__main__":
     unittest.main()
