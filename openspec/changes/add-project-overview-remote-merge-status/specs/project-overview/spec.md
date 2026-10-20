@@ -142,7 +142,9 @@ limit, whose output the overview stops reading early, or that the deadline
 stops SHALL be recorded as that requirement states, in the `remote` field of
 the rows it serves, never as a row error or a scan error, the `probe-failed`,
 `probe-timeout` and `deadline-exceeded` that this requirement records on a row
-notwithstanding. Without `--remote`, both counts stay exactly as stated above.
+notwithstanding. That requirement's lookup of `gh`, when it fails or does not
+finish in time, SHALL be recorded in the same way. Without `--remote`, both
+counts stay exactly as stated above.
 
 #### Scenario: Candidate cap after sorting, with an exact count
 - **WHEN** one root holds 130 candidate directories `p000` to `p129`, created in reverse order
@@ -356,9 +358,11 @@ checked out. These children SHALL be read-only probes run in the directory that
 `Repository inspection requires Git 2.36 and shares one evidence model` gives
 repository-wide probes, with the environment, pins and scrub it defines and the
 per-child budget that `Overview bounds its work and reports what it omitted`
-gives; at most 64 KiB of each one's standard output SHALL be read, its standard
-error SHALL be drained and discarded, and when the merge target names no usable
-remote the overview SHALL read no other remote, `origin` included. They SHALL
+gives; at most 64 KiB and one byte of each one's standard output SHALL be read
+and at most 64 KiB of it kept, so that an output of exactly 64 KiB is told from
+a longer one, which fails the read; its standard error SHALL be drained and
+discarded, and when the merge target names no usable remote the overview SHALL
+read no other remote, `origin` included. They SHALL
 be counted in the envelope's `probes` as that requirement states for a run with
 `--remote`. A repository's queried rows SHALL be `unavailable`, with no
 request, when one of these applies, the first that applies giving the reason:
@@ -396,7 +400,9 @@ sends no telemetry and prints no colour, and with `GH_DEBUG`, `DEBUG`,
 `GH_HOST`, `GH_REPO`, `GH_FORCE_TTY`
 and `CLICOLOR_FORCE` removed from it, every other variable passed on unread. At
 most 64 requests SHALL be sent per invocation; a key past the 64th SHALL NOT be
-sent, and its rows SHALL be `unknown` with reason `request-cap`. At most four
+sent, and its rows SHALL be `unknown` with reason `request-cap` unless the
+Results paragraph makes them `unavailable`: `request-cap` applies only when
+requests can be sent and the cap stops them. At most four
 `gh` children SHALL run at once. The requests SHALL start after the
 remote-target reads, under a remote budget of `min(30 s, deadline - now)` taken
 when the first request starts, part of the 60 s invocation deadline and never
@@ -407,13 +413,19 @@ other exit path, an exception included, as `Overview bounds its work and
 reports what it omitted`, `Overview exits by completeness and severity` and
 `Repository inspection requires Git 2.36 and shares one evidence model` treat
 a Git child. When the remote budget or the deadline expires, no further child
-SHALL start, every queried row whose key was not yet sent or whose
-remote-target read never started SHALL be `unknown` with reason `cancelled`,
-and every request in flight SHALL be stopped and its rows `unknown` with
-reason `aborted`.
+SHALL start, every queried row whose key is within the cap and was not yet
+sent, or whose remote-target read never started, SHALL be `unknown` with
+reason `cancelled`, and every request in flight SHALL be stopped and its rows
+`unknown` with reason `aborted`. The cap decides before any request whether a
+key is sent, so the rows of a key past the 64th SHALL stay `unknown` with
+reason `request-cap` whether or not the remote budget or the deadline
+expires; where the Results paragraph makes every keyed row `unavailable`,
+that outranks both `request-cap` and `cancelled`.
 
-Results: at most 1 MiB of each response body SHALL be read, and a key's result
-SHALL come from its whole response, never from a partial answer. For each row
+Results: at most 1 MiB and one byte of each response body SHALL be read, and
+at most 1 MiB of it kept, so that a body of exactly 1 MiB is told from a longer
+one, which is `truncated`; a key's result SHALL come from its whole response,
+never from a partial answer. For each row
 of the key, a response SHALL give `merged` or `open` from the returned pull
 requests whose head object id equals the row's `head` exactly, whose base
 branch is the branch of the merge ref of the row's own repository and whose
@@ -434,8 +446,10 @@ parsed for any cause, its nesting depth and the size of its integers included,
 one holding more than 100 pull requests, and one whose fields fail validation
 included. Apart from an
 exit 4 with nothing on standard output, the response's status line SHALL
-decide, whatever the `gh` child's exit status. At most 64 KiB of the status
-line and headers SHALL be read, past which the key is `api-error`. A 200 body
+decide, whatever the `gh` child's exit status. At most 64 KiB and one byte of
+the status line and headers SHALL be read, and at most 64 KiB of them kept, so
+that status and headers of exactly 64 KiB are told from longer ones, which make
+the key `api-error`. A 200 body
 SHALL be UTF-8 JSON; an `errors` entry of a type other than `RATE_LIMITED`, a
 null `data.repository`, or a `data.repository.nameWithOwner` that is not a
 valid GitHub `owner/repository`, SHALL give `api-error`, and a null
@@ -446,12 +460,19 @@ SHALL have a positive integer `number`, a `state` of `OPEN`, `CLOSED` or
 `owner/repository`, and a `url` exactly
 `https://github.com/<nameWithOwner>/pull/<number>`; one that fails any of these
 SHALL make its whole key `api-error`, never a partial answer. When the lookup
-of `gh` finds none, every queried row that has a key SHALL be `unavailable`
-with reason
-`gh-unavailable` and no `gh` child SHALL start; a `gh` child that exits with
-gh's authentication-required status, 4, with nothing on standard output, SHALL
-make its key's rows `unavailable` with reason `gh-unauthenticated`. Each key
-SHALL be answered on its own, a failure never stopping another key's request.
+of `gh` finds none, fails, or reaches its 5 s limit, as on an unreachable
+`PATH` directory, every queried row that has a key, whether or not its key is
+past the 64th, SHALL be `unavailable` with reason `gh-unavailable`, never a
+row error or a scan error, and no `gh` child SHALL start; a lookup that the
+deadline stops before its 5 s end leaves those rows as the Requests paragraph
+states for an expiry, `unknown` with reason `cancelled`, or `request-cap` past
+the 64th key. A `gh` child that
+exits with gh's authentication-required status, 4, with nothing on standard
+output, SHALL make its key's rows `unavailable` with reason
+`gh-unauthenticated`, and when each of the 64 requests that the cap allows was
+sent and ended so, the rows of every key past the 64th SHALL be `unavailable`
+with reason `gh-unauthenticated` too. Each key SHALL be answered on its own, a
+failure never stopping another key's request.
 Nothing of a response body but the `number` and `url` of the chosen pull
 request, validated as the Fields paragraph states, and nothing of a `gh`
 child's standard error or environment, SHALL appear in either output. In a
@@ -497,8 +518,8 @@ finding, `suggested_command`, `suggestion_gate`, row `status`, row error, scan
 error, summary count, `completeness` and exit status, and their envelopes'
 `probes` SHALL differ only by the remote-target reads that `Overview bounds its
 work and reports what it omitted` counts in a run with `--remote`. A remote
-result, and the failure, cut or stop of a remote-target read
-or of a `gh` child, SHALL never be a row error, a scan error or a finding,
+result, and the failure, cut or stop of a remote-target read, of the lookup of
+`gh` or of a `gh` child, SHALL never be a row error, a scan error or a finding,
 `probe-failed`, `probe-timeout` and `deadline-exceeded` in `Overview bounds its
 work and reports what it omitted` notwithstanding, and SHALL leave the row's
 classification, findings, suggestion, `status`, the scan's `completeness` and
@@ -554,6 +575,7 @@ by its code, never a URL, and only ASCII characters.
 - **WHEN** the fake `gh` answers one key with a closed #3, an open #5 and a merged #4, each with exactly the row's head, base branch `main` and base repository `acme/widget`, a second key with an open #8 and an open #9 of that kind, a third with only a closed #6, a fourth with no pull request, and a fifth with one such node whose `url` is `https://github.com/acme/widget/issues/2`, and a sixth worktree row, in a second repository whose merge target names no remote
 - **THEN** the rows' `remote` are `merged` #4, `open` #9, `not-found`, `not-found`, and `unknown` with reason `api-error` and null `number` and `url`
 - **AND** the human report prints "pull request #9 on GitHub is open for this exact head" under the second of those worktrees, "no merged or open pull request on GitHub was found for this exact head" under the third and the fourth, "remote status unknown (api-error)" under the fifth, and "remote status unavailable (no-remote-target)" under the sixth, whose merge target names no remote
+- **AND** when the fake `gh` instead answers the first of those keys with `acme/gizmo` as the queried repository's `nameWithOwner`, standing for a renamed repository, and with a merged #10 whose base repository is `acme/widget`, the name asked, and an open #11 whose base repository is `acme/gizmo`, each with the row's head and base branch `main`, its row's `remote` is `open` #11 with the `url` `https://github.com/acme/gizmo/pull/11`
 
 #### Scenario: Remotes that give no request
 - **WHEN** the merge targets of four repositories have as their remote's URL `https://alice:s3cr3t@github.com/acme/widget.git`, `https://evilgithub.com/acme/widget` and `https://github.com/acme`, and, for the fourth, no remote named by its merge target, though that repository has an `origin` remote whose URL is `https://github.com/acme/widget.git`
@@ -566,6 +588,8 @@ by its code, never a URL, and only ASCII characters.
 - **AND** when instead the fake `gh` exits 4 with nothing on standard output, both requests are sent, and both rows are `unavailable` with reason `gh-unauthenticated`
 - **AND** the human report's `Remote:` line reads `0 gh requests started` and, with the `gh` that exits 4, `2 gh requests started`, each followed by the freshness sentence
 - **AND** when no worktree row is queried, because every worktree is merged into its merge target, no `gh` child starts, `remote.requests` is `{"estimated": 0, "performed": 0}`, `remote.observed_at` is null, every count is 0, `remote.completeness` is `complete`, and the `Remote:` line still follows the summary line, reading `0 gh requests started` and the freshness sentence
+- **AND** when `PATH` begins with an empty entry and the entry `.`, and the working directory holds a planted `gh` that records each run, the planted `gh` never runs: with no `gh` in an absolute directory of `PATH` both rows are `unavailable` with reason `gh-unavailable`, and with the fake `gh` in one, every `gh` child is started by that fake's absolute path
+- **AND** when the lookup's filesystem call on the first absolute directory of `PATH` takes 10 s, by an injected slow call standing for an unreachable mount, and the fake `gh` lies in a later directory, the lookup is cut at 5 s, both rows are `unavailable` with reason `gh-unavailable`, no child starts, and the row errors, scan errors and exit status are those of the run without `--remote`
 
 #### Scenario: API failures stay unknown
 - **WHEN** the fake `gh` answers ten keys with an HTTP 401, an HTTP 403, an HTTP 429, an HTTP 403 with `X-RateLimit-Remaining: 0`, an HTTP 403 that carries a `Retry-After` header, its name written as `gh` prints it, a 200 body whose `errors` entry has type `RATE_LIMITED`, an HTTP 502, a page whose further-page flag is set, a body of 1 MiB and one byte, and nothing for 10 s, each failing answer exiting 1 as gh does
@@ -584,12 +608,14 @@ by its code, never a URL, and only ASCII characters.
 - **THEN** 64 `gh` children run, never more than four at once, the six keys last in canonical order are `unknown` with reason `request-cap`, and `remote.requests` is `{"estimated": 70, "performed": 64}`
 - **AND** every argv runs `gh api` for the host `github.com` with the fixed query asking for at most 100 pull requests, with none of `--paginate`, `--slurp`, `--cache` or `--method` and a query that holds no `mutation`, in the filesystem root, and every recorded environment sets `GH_NO_UPDATE_NOTIFIER=1`, `GH_NO_EXTENSION_UPDATE_NOTIFIER=1`, `GH_PROMPT_DISABLED=1`, `GH_TELEMETRY=false` and `NO_COLOR=1`, lacks `GH_DEBUG`, `DEBUG`, `GH_HOST`, `GH_REPO`, `GH_FORCE_TTY` and `CLICOLOR_FORCE`, and keeps `GH_TOKEN` as the caller set it
 - **AND** with the `gh` concurrency set to 1 in-process instead of 4, the `remote` fields of the two documents, `remote.observed_at` apart, are byte-identical
+- **AND** with no `gh` on `PATH` instead, the rows of all 70 keys are `unavailable` with reason `gh-unavailable`, none `unknown` with reason `request-cap`, no child starts, `remote.requests` is `{"estimated": 70, "performed": 0}` and `remote.completeness` is `complete`, and with a fake `gh` that exits 4 with nothing on standard output, 64 children run and the rows of all 70 keys, the six past the 64th included, are `unavailable` with reason `gh-unauthenticated`
 
 #### Scenario: Expiry cancels queued and in-flight requests
 - **WHEN** 40 distinct keys are queried and the fake `gh` holds every request 4 s, so that the 30 s remote budget expires with requests in flight and keys not yet sent
 - **THEN** no `gh` child starts after the expiry, each key not yet sent is `unknown` with reason `cancelled`, each request in flight is stopped, reaped and `unknown` with reason `aborted`, and the process exits within 64 s plus rendering
 - **AND** when collection leaves less than 30 s before the 60 s deadline, the requests end at the deadline in the same way
 - **AND** when the deadline passes while remote-target reads still run, the read in flight is stopped and reaped and its repository's queried rows are `unknown` with reason `remote-target-unread`, the queried rows of each repository whose read never started are `unknown` with reason `cancelled`, and no `gh` child starts
+- **AND** when 70 distinct keys are queried instead, the six keys last in canonical order, past the 64th, are `unknown` with reason `request-cap`, not `cancelled`, and only keys within the cap are `cancelled` or `aborted`
 
 #### Scenario: Remote evidence changes nothing local
 - **WHEN** one fixture with a `merged-removable`, a `pushed-unmerged`, a `remote-gone` and a dirty worktree runs with and without `--remote`, the fake `gh` answering `merged` for every key
