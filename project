@@ -2099,12 +2099,74 @@ def partial_removal_note(row, status, main):
 
 
 def declared_tracking_branch(root):
-    """The merge target's first candidate (D8): the manifest's
-    `tracking_branch` at root, read as today by manifest(), which refuses a
-    wrong kind or an unreadable manifest; None without a manifest or the key.
-    T108 bounds the read (FR-060)."""
-    _, data = manifest(Path(os.fsdecode(root)))
-    return data.get("tracking_branch")
+    """The merge target's first candidate (D8, FR-018, FR-060; T108): the
+    manifest's `tracking_branch` at root, the main worktree (bytes or str), or
+    None without a manifest or the key. The manifest is the first of
+    `project.yaml` and `family.yaml` that is a regular file, as manifest()
+    picks it, and each is examined by one bounded filesystem call (fs_call()):
+    a stat, then, only for a regular file of at most LIMITS["manifest_bytes"]
+    (1 MiB) by `st_size`, a read that asks for at most 1 MiB, the size checked
+    again by fstat on the opened file (lead ruling R-4). It is parsed from the
+    bytes read; read_yaml() is never called, so it reads nothing unbounded.
+
+    Every refusal is `manifest-invalid`: over 1 MiB, TEXT
+    `manifest_invalid_size`, with nothing read; otherwise the baseline
+    messages of read_yaml() and manifest() (lead ruling R-45 (6)): `Cannot
+    read PATH: ...` for an OSError, a call cut at its budget or a parse
+    error, `Expected a mapping in PATH`, `Unexpected kind in PATH; expected
+    KIND`, and read_yaml()'s own message when PyYAML is missing. A refusal
+    carries no context; the resolution adds the repository (lead ruling
+    R-53, P-12)."""
+    limit = LIMITS["manifest_bytes"]
+    base = Path(os.fsdecode(root))
+
+    def examine(path):
+        # ("absent", None) where Path.is_file() is false, ("over", None) past
+        # the cap by st_size or fstat, else ("read", at most `limit` bytes).
+        try:
+            found = os.stat(path)
+        except OSError as exc:
+            if exc.errno in (errno.ENOENT, errno.ENOTDIR, errno.EBADF, errno.ELOOP):
+                return "absent", None
+            raise
+        if not stat.S_ISREG(found.st_mode):
+            return "absent", None
+        if found.st_size > limit:
+            return "over", None
+        with open(path, "rb") as stream:
+            if os.fstat(stream.fileno()).st_size > limit:
+                return "over", None
+            return "read", stream.read(limit)
+
+    for filename, kind in (("project.yaml", "project-manifest"), ("family.yaml", "family-manifest")):
+        path = base / filename
+        try:
+            found = fs_call(examine, str(path))
+        except OSError as exc:
+            raise Refused(f"Cannot read {path}: {exc}", code="manifest-invalid") from exc
+        if isinstance(found, DriverOutcome):
+            raise Refused(f"Cannot read {path}: {found.detail}", code="manifest-invalid")
+        state, data = found
+        if state == "absent":
+            continue
+        if state == "over":
+            raise Refused(TEXT["manifest_invalid_size"].format(PATH=human_path(os.fsencode(path))),
+                          code="manifest-invalid")
+        try:
+            import yaml
+        except ImportError as exc:
+            raise Refused("YAML inspection needs PyYAML; use a workBench with python3-yaml installed.",
+                          code="manifest-invalid") from exc
+        try:
+            value = yaml.safe_load(data.decode("utf-8"))
+        except (UnicodeError, yaml.YAMLError) as exc:
+            raise Refused(f"Cannot read {path}: {exc}", code="manifest-invalid") from exc
+        if not isinstance(value, dict):
+            raise Refused(f"Expected a mapping in {path}", code="manifest-invalid")
+        if value.get("kind") != kind:
+            raise Refused(f"Unexpected kind in {path}; expected {kind}", code="manifest-invalid")
+        return value.get("tracking_branch")
+    return None
 
 
 def resolve_merge_target(refs, declared):
@@ -2114,10 +2176,18 @@ def resolve_merge_target(refs, declared):
     leading `origin/` (source `manifest`); the symref of
     `refs/remotes/origin/HEAD`, less `refs/remotes/origin/` (`origin-head`);
     `main`; `master`. Returns {name, source, sha, notes}, sha that branch's
-    head; notes is empty here (T108 adds `merge-target-conflict`). With no
-    candidate it refuses `no-merge-target` with the baseline message
+    head. notes holds the `merge-target-conflict` note, a {code, message}
+    object from TEXT `note_merge_target_conflict`, when the manifest's
+    candidate and the `origin/HEAD` one both exist as local branches and
+    differ: the manifest wins (T108; lead ruling R-56, settling P-13), and
+    build_plan() moves the note to the plan's notes; it is empty otherwise.
+    With no candidate it refuses `no-merge-target` with the baseline message
     (project:551 at 961c405)."""
     heads = {ref["refname"]: ref["objectname"] for ref in refs}
+
+    def head(name):
+        return heads.get(b"refs/heads/" + name.encode("utf-8", "surrogateescape")) if name else None
+
     candidates = []
     if isinstance(declared, str):
         candidates.append((declared.removeprefix("origin/"), "manifest"))
@@ -2127,10 +2197,19 @@ def resolve_merge_target(refs, declared):
             candidates.append((ref["symref"][len(origin):].decode("utf-8", "surrogateescape"), "origin-head"))
     candidates += [("main", "main"), ("master", "master")]
     for name, source in candidates:
-        sha = heads.get(b"refs/heads/" + name.encode("utf-8", "surrogateescape")) if name else None
+        sha = head(name)
         if sha:
-            return {"name": name, "source": source, "sha": sha, "notes": []}
-    raise Refused(TEXT["no_merge_target"], code="no-merge-target")
+            target = {"name": name, "source": source, "sha": sha, "notes": []}
+            break
+    else:
+        raise Refused(TEXT["no_merge_target"], code="no-merge-target")
+    if target["source"] == "manifest":
+        for other, source in candidates:
+            if source == "origin-head" and other != target["name"] and head(other):
+                shown = [human_path(value.encode("utf-8", "surrogateescape")) for value in (target["name"], other)]
+                target["notes"].append({"code": "merge-target-conflict", "message": TEXT[
+                    "note_merge_target_conflict"].format(NAME=shown[0], OTHER=shown[1])})
+    return target
 
 
 # The probes (D6, D7 and D8; FR-055 to FR-057). Every Git child runs through
@@ -3243,13 +3322,88 @@ def check_plan(plan, run):
 # endregion dispatcher
 
 # region resolution
+def is_bare_name(argument):
+    """Whether argument names a project rather than a path (research.md R13
+    as plan review M15 words it): after expanduser(), a relative argument
+    that contains no `/` and is neither `.` nor `..`. An empty argument is
+    none, as discover() reads it."""
+    text = os.path.expanduser(os.fsdecode(argument))
+    return bool(text) and not os.path.isabs(text) and "/" not in text and text not in (".", "..")
+
+
 def resolve_clean_target(args, run):
-    """Resolve the target argument to the repository the run acts on (T107
-    fills; contracts/project-clean.md, "Resolution"; design D8): return a
-    dict whose "root" is the command directory, a Path. A resolve refusal is
-    raised to main(), which prints the extended error object under --json.
-    First body: the baseline discover() (project:670 at 961c405)."""
-    return {"root": discover(getattr(args, "target", None))}
+    """Resolve the target argument Git-first to exactly one repository and
+    its main worktree (T107; D8, FR-016, FR-017; contracts/project-clean.md,
+    "Resolution"; lead rulings R-13, R-51 and R-53, P-10 to P-12 and P-20).
+    Returns {"root": the main worktree, a Path, the command directory;
+    "evidence": inspect_repository()'s dict}, which build_plan() reads
+    instead of running row 3 again (lead ruling R-71 (b)).
+
+    After expanduser(): an absolute path is probed where it names, and its
+    realpath must equal row 3's toplevel and that toplevel be the main
+    worktree; a relative path, or none, is joined to the working directory
+    and probed there; a bare name (is_bare_name()) goes through discover()'s
+    name lookup, and the directory it returns must be a worktree toplevel. A
+    relative path and a bare name resolve to their repository's main
+    worktree. discover()'s family-holder and manifest-ancestor redirections
+    never apply to a path. discover()'s bare-name refusals are coded by their
+    exact baseline messages, `ambiguous-name` for "Ambiguous project name;
+    supply a path." and `repository-not-found` for "Directory does not exist:
+    PATH" and "No project found at PATH; supply a path or name.", until US9's
+    T118 gives discover() these codes itself (P-10); a refusal that already
+    carries a code passes unchanged.
+
+    Refused `target-not-repository-root`, exit 2, before any plan and with no
+    context, in M6's order: row 3 failed (a directory outside any
+    repository, a bare repository's own directory, a timeout); a submodule
+    checkout (row 3's third line); a main worktree that main_worktree() gives
+    as (None, cause); then the absolute-path and bare-name rules above. Then
+    the merge target's own refusal (`no-merge-target`, `manifest-invalid`),
+    before any row is probed, its context the repository and a null merge
+    target. A repository-wide probe that failed after row 3 is no refusal
+    here: build_plan() makes that plan incomplete."""
+    target = getattr(args, "target", None) or ""
+    text = os.path.expanduser(target)
+    bare, absolute = is_bare_name(target), os.path.isabs(text)
+    if bare:
+        try:
+            found = discover(target)
+        except Refused as exc:
+            message = str(exc)
+            if exc.code is None and message == "Ambiguous project name; supply a path.":
+                exc.code = "ambiguous-name"
+            elif exc.code is None and (message.startswith("Directory does not exist: ") or (
+                    message.startswith("No project found at ") and message.endswith("; supply a path or name."))):
+                exc.code = "repository-not-found"
+            raise
+        directory = shown = os.fsencode(found)
+    elif absolute:
+        directory = shown = os.fsencode(text)
+    else:
+        directory = os.path.join(os.getcwdb(), os.fsencode(text)) if text else os.getcwdb()
+        shown = os.path.abspath(directory)
+
+    def refused():
+        return Refused(TEXT["target_not_repository_root"].format(PATH=human_path(shown)),
+                       code="target-not-repository-root", path=shown)
+
+    evidence = inspect_repository(directory, run)
+    identity = evidence["identity"]
+    if identity is None or evidence["superproject"] is not None or evidence["main_cause"] is not None:
+        raise refused()
+    toplevel, root = evidence["toplevel"], identity["root"]
+    if bare or absolute:  # the directory itself must be a worktree toplevel
+        try:
+            exact = _realpath(directory) == toplevel
+        except EvidenceError:
+            exact = False
+        if not exact or (absolute and root is not None and toplevel != root):
+            raise refused()
+    refusal = evidence["merge_target_refusal"]
+    if refusal is not None:
+        refusal.context = {"repository": repository_object(identity), "merge_target": None}
+        raise refusal
+    return {"root": Path(os.fsdecode(toplevel if root is None else root)), "evidence": evidence}
 # endregion resolution
 
 # region plan
@@ -3495,14 +3649,17 @@ def build_plan(repo, run):
     single another row's inspection-error makes the plan incomplete."""
     plan = Plan(repo, run)
     root = repo["root"]
-    evidence = plan.evidence = inspect_repository(root, run)
+    evidence = plan.evidence = repo.get("evidence")  # the resolution's: row 3 runs once (R-71 (b))
+    if evidence is None:
+        evidence = plan.evidence = inspect_repository(root, run)
+        identity = evidence["identity"]
+        try:
+            toplevel = identity is not None and _realpath(os.fsencode(root)) == evidence["toplevel"]
+        except EvidenceError:
+            toplevel = False
+        if not toplevel or (identity["root"] is None and not evidence["errors"]):
+            raise Refused(f"Cannot inspect Git repository at {root}")
     identity = evidence["identity"]
-    try:
-        toplevel = identity is not None and _realpath(os.fsencode(root)) == evidence["toplevel"]
-    except EvidenceError:
-        toplevel = False
-    if not toplevel or (identity["root"] is None and not evidence["errors"]):
-        raise Refused(f"Cannot inspect Git repository at {root}")
     plan.repository = repository_object(identity)
     refusal = evidence["merge_target_refusal"]
     if refusal is not None:
