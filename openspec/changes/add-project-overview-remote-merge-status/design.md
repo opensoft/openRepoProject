@@ -16,8 +16,9 @@ scenarios, one of them new; C-11). The council (product-advocate,
 systems-architect and adversary-engineer) read `c928cb2` on 2026-10-20, and
 the lane's lead ruled all twelve of its concerns VALID and none NOTED (C-16 to
 C-22), so there is no `clarifications.md`: the decisions below carry the
-verdicts, and round C4's edits to `specs/project-overview/spec.md` are held
-for lane openRepoProject-4 (`proposal.md`, Dependencies and Sequencing).
+verdicts, and round C4's edits to `specs/project-overview/spec.md`, agreed
+by lane openRepoProject-4 on 2026-10-20, are committed (`proposal.md`,
+Dependencies and Sequencing).
 
 Citations follow `proposal.md`: the packet at `da33d92`; APO, CAS, PRS and
 `project:N` at main `961c405`, which main `e9d6711` holds unchanged for them

@@ -2,8 +2,9 @@ Lane: openRepoProject-5
 
 # Proposal: add-project-overview-remote-merge-status
 
-Status: draft; alignment review and council resolved on PR #29; ratification
-by Brett Heap pending; nothing here is ratified. Governing issue:
+Status: draft; alignment review and council resolved on PR #29, round C4's
+spec edits committed on lane openRepoProject-4's agreement of 2026-10-20;
+ratification by Brett Heap pending; nothing here is ratified. Governing issue:
 opensoft/openRepoProject#25, claimed by lane openRepoProject-5 (comment
 6111242617); refs #6, the record of the project
 maintenance design packet. Proposed on Brett Heap's word "usage reset, resume
@@ -431,18 +432,19 @@ scenarios (14, 2, 7 and 13), and one MODIFIED requirement in `project-command`,
   openRepoProject-4 on 2026-10-19 with two wording fixes in the Isolation
   passage of the ADDED requirement. Both files are committed, and no part was
   declined, so the review's Outcomes B to D are not taken (C-12, C-13).
-- **Round C4's spec edits are held for lane openRepoProject-4 (the council
-  verdicts' "Held text").** This proposal and `design.md` describe
-  `specs/project-overview/spec.md` as round C4 left it, which is written but
-  not committed: the council's edits (C-16 to C-22) and lane
-  openRepoProject-3's LOWs 5, 6 and 10, all in the ADDED requirement, held in
-  one diff for lane openRepoProject-4 to read against its agreement of
-  2026-10-19. Until it agrees, the committed `specs/project-overview/spec.md`
-  is the text it agreed then (`621715a`), and a part it declines is ruled by
-  the lane's lead. `specs/project-command/spec.md` is unchanged in this round:
+- **Round C4's spec edits were agreed by lane openRepoProject-4 and are
+  committed (the council verdicts' "Held text").** The council's edits (C-16
+  to C-22) and lane openRepoProject-3's LOWs 5, 6 and 10, all in the ADDED
+  requirement of `specs/project-overview/spec.md`, were held in one diff for
+  lane openRepoProject-4, which answered on 2026-10-20: "yes, lane 4 agrees
+  to #29's held-C4 overview file (sha256 6deab04e399c4fe9..., the same bytes I
+  read in py-bench), with nothing declined". It byte-checked the three
+  MODIFIED blocks against `621715a` and found them equal, only the ADDED
+  requirement having changed, and the file is committed exactly as held
+  (`d73d25d`). `specs/project-command/spec.md` is unchanged in this round:
   [E]'s Termination paragraph binds Git children, so the ADDED requirement,
   which starts the `gh` children, says that they are stopped on every exit
-  path (LOW-6), and nothing is held for lane openRepoProject-2.
+  path (LOW-6), and nothing was held for lane openRepoProject-2.
 - **Archives after change 2 (L-5).** Change 2 archives after change 1 and
   after feature 005 merges (APO design.md, Migration Plan 5); this change
   archives after change 2 archives. Its block of change 1's evidence model
@@ -456,7 +458,17 @@ scenarios (14, 2, 7 and 13), and one MODIFIED requirement in `project-command`,
   Open Questions 3, which lane openRepoProject-4 answered on 2026-10-20
   (C-23): feature 005 reserves no flag, field or hook for `--remote`, as its
   spec records in its Dependencies (`specs/005-project-overview/spec.md` on
-  `005-project-overview` at `282a20e`).
+  `005-project-overview` at `282a20e`). Lane openRepoProject-4 also flagged
+  feature 005's pending Q16 (`specs/005-project-overview/clarify-questions.md`
+  on `005-project-overview` at `4ba9faa`): change 2's design D1 and
+  clarifications N1 start each child with SIGINT, SIGTERM and SIGHUP blocked
+  (APO design.md:115-119; APO clarifications.md:45-46), and its
+  recommendation B amends both to start children unblocked under handlers
+  that only record the signal; `gh` children follow whatever D1 and N1 say,
+  and if that amendment lands before this change archives, task 2.3's re-read
+  picks it up, `design.md` D7's spawning sentence and the scenario "Expiry
+  cancels queued and in-flight requests", whose process exits within 64 s,
+  included.
 - **Beside its two siblings (L-5).** `add-project-clean-cache-disposal`
   (issue #24) archives after change 1 and, since it carries a MODIFIED block
   of change 2's "Overview reuses the cleanup classifier and merge target"
@@ -1004,23 +1016,24 @@ read-only) read this change at `c928cb2` on 2026-10-20, with Codex's three
 findings on `1229e79` and the lead's live check F-3 beside it, and the lane's
 lead ruled its twelve concerns VALID, none NOTED and none DISMISSED (C-16 to
 C-22, the verdicts of 2026-10-20). The rows below are those twelve concerns,
-Codex's three findings and ruling C-23; the spec edits they bring are held for
-lane openRepoProject-4 (Dependencies and Sequencing).
+Codex's three findings and ruling C-23; the spec edits they bring were agreed
+by lane openRepoProject-4 on 2026-10-20, nothing declined, and are committed
+(Dependencies and Sequencing).
 
 | Concern | Severity | Verdict | Section changed |
 | --- | --- | --- | --- |
-| P-1: D5's commit association never returns a pull request closed without merging, so `closed` is unreachable and such a head reads a false not-found line | HIGH | C-16 (VALID): applied as AE-1's edits 1 to 7: `closed` dropped, a `CLOSED` node kept valid and never matching, and the not-found text "no merged or open pull request on GitHub was found for this exact head" | held `project-overview` delta (Results, Fields, Human report; "The chosen pull request and a rejected answer"); What Changes; Decisions (C-16, "Matching"); Departures ("No `closed` state"); Out of Scope; `design.md` Goals, D6, D8, D9, Risks |
-| P-2: the freshness sentence says "queried live" in runs that queried nothing, and a run with every worktree merged has no scenario | MEDIUM | C-17 (VALID): applied with change: AE-4's sentence in place of P-2's; P-2's AND taken, its "0 requests" written `0 gh requests started`, as C-17 counts | held `project-overview` delta (Fields, Human report; "No gh, or a gh without authentication"); What Changes; Decisions (C-17); `design.md` D9 |
-| P-3: the `merged` line's remedy, "a merge target not fetched since", does not work, since a fetch moves only the remote-tracking ref, and the README gives no next step | MEDIUM | C-18 (VALID): applied with change: P-3's texts as written, and the README's next steps also name `malformed-remote` and `not-github`, since C-18 asks for each `unavailable` reason | held `project-overview` delta (Human report; "A squash-merged branch is explained and kept"); What Changes; Impact (`README.md`); Decisions (C-18 and C-20); Departures ("The merged-row wording"); `design.md` Risks |
+| P-1: D5's commit association never returns a pull request closed without merging, so `closed` is unreachable and such a head reads a false not-found line | HIGH | C-16 (VALID): applied as AE-1's edits 1 to 7: `closed` dropped, a `CLOSED` node kept valid and never matching, and the not-found text "no merged or open pull request on GitHub was found for this exact head" | `project-overview` delta (Results, Fields, Human report; "The chosen pull request and a rejected answer"); What Changes; Decisions (C-16, "Matching"); Departures ("No `closed` state"); Out of Scope; `design.md` Goals, D6, D8, D9, Risks |
+| P-2: the freshness sentence says "queried live" in runs that queried nothing, and a run with every worktree merged has no scenario | MEDIUM | C-17 (VALID): applied with change: AE-4's sentence in place of P-2's; P-2's AND taken, its "0 requests" written `0 gh requests started`, as C-17 counts | `project-overview` delta (Fields, Human report; "No gh, or a gh without authentication"); What Changes; Decisions (C-17); `design.md` D9 |
+| P-3: the `merged` line's remedy, "a merge target not fetched since", does not work, since a fetch moves only the remote-tracking ref, and the README gives no next step | MEDIUM | C-18 (VALID): applied with change: P-3's texts as written, and the README's next steps also name `malformed-remote` and `not-github`, since C-18 asks for each `unavailable` reason | `project-overview` delta (Human report; "A squash-merged branch is explained and kept"); What Changes; Impact (`README.md`); Decisions (C-18 and C-20); Departures ("The merged-row wording"); `design.md` Risks |
 | P-4: only `MERGED` and the absence of `CLOSED` were checked live, and no task waits for a live answer per state | MEDIUM | C-19 (VALID): applied: task 2.5 with the cases C-19 and C-21 list, and the Risk list gains a base other than the default branch | `tasks.md` 2.5; Decisions (C-19 and C-21); `design.md` Context (tool facts), D11, Risks, Migration Plan |
 | S-1: as P-1, with a head-branch lookup added to the same request as its fix | HIGH | C-16 (VALID as a defect): the fix not taken, for AE-1's reasons (it re-keys DI:1044 or needs aliased name lookups, reverses the rejection of a by-name lookup, needs a published name that an `unpublished` row lacks, and a further page on its list would hide the `merged` answer); recorded as a follow-on | Departures ("No `closed` state"); Out of Scope; Decisions ("The request") |
-| S-2: the response rules rest on unobserved details of `gh api --include`: the case of header names, and the base repository of a renamed remote | MEDIUM | C-19 (VALID): applied: header names compared without case; the base repository matched against the `nameWithOwner` that the answer gives for the queried repository, added to D5's query; task 2.5 records the status line and the header names, and D11's fixture table uses the recorded forms | held `project-overview` delta (Requests, Results); Decisions ("Matching", C-19 and C-21); `design.md` D5, D6, D11; `tasks.md` 2.5 |
+| S-2: the response rules rest on unobserved details of `gh api --include`: the case of header names, and the base repository of a renamed remote | MEDIUM | C-19 (VALID): applied: header names compared without case; the base repository matched against the `nameWithOwner` that the answer gives for the queried repository, added to D5's query; task 2.5 records the status line and the header names, and D11's fixture table uses the recorded forms | `project-overview` delta (Requests, Results); Decisions ("Matching", C-19 and C-21); `design.md` D5, D6, D11; `tasks.md` 2.5 |
 | S-3: the freshness sentence is false in runs that sent no request | MEDIUM | C-17 (VALID): applied with change: AE-4's constant in place of S-3's second sentence for a null `observed_at`, which a `gh` that exits 4 after `observed_at` is set would leave false | as P-2 |
 | AE-1: `closed` is unreachable; the options attacked; drop it | HIGH | C-16 (VALID): applied with change: edits 1 to 7 as written, except that edit 4's placeholders are re-lettered `<a>` to `<e>`, with no gap, on the lead's follow-up to round C4, and edit 5's THEN keeps "and null `number` and `url`" | as P-1 |
-| AE-2: the `merged` line reads as an all-clear under a row kept for its files | MEDIUM | C-20 (VALID): applied with change: the line as C-20 gives it; the AND names the dirty worktree's branch as one that local ancestry does not prove merged, so that the row is in the query set | held `project-overview` delta (Human report; "A squash-merged branch is explained and kept"; "Remote evidence changes nothing local"); What Changes; Departures ("The merged-row wording"); `design.md` D9 |
+| AE-2: the `merged` line reads as an all-clear under a row kept for its files | MEDIUM | C-20 (VALID): applied with change: the line as C-20 gives it; the AND names the dirty worktree's branch as one that local ancestry does not prove merged, so that the row is in the query set | `project-overview` delta (Human report; "A squash-merged branch is explained and kept"; "Remote evidence changes nothing local"); What Changes; Departures ("The merged-row wording"); `design.md` D9 |
 | AE-3: `merged` was checked only for squash merges into the default branch; a base other than the default branch, a rebase merge and a merge target that tracks the person's fork are not covered | MEDIUM | C-21 (VALID): applied with change: task 2.5 holds its two cases and its rule for an answer with no `MERGED` node; its two Risks cite the ADDED requirement's base-repository rule, not spec line numbers, which move; the README says the fork case; its question sentence reads "that question" for "change 1's question 2", since the bullet names change 1's open question just before and this proposal's Open Questions 2 is another question | `tasks.md` 2.5; `design.md` Risks; Rules This Change Keeps; Impact (`README.md`) |
-| AE-4: the freshness sentence and the `Remote:` count claim a query to github.com in runs where none reached it, a `gh` that exits 4 included | MEDIUM | C-17 (VALID): applied: its sentence, its count wording and its AND | held `project-overview` delta (Fields, Human report; "No gh, or a gh without authentication"); What Changes; Decisions (C-17); `design.md` D9 |
-| AE-5: a body that Python's parser rejects with an error other than `JSONDecodeError` exits 2 and drops the local overview, and the `gh` lookup can start a `gh` planted in the caller's directory | LOW | C-22 (VALID): applied with change: the spec text and AND as given; `design.md` records the two points in D5 (the lookup) and D6 (the parse), D6 being where a response is parsed, where the verdict names D2, which parses no body; AE-5's fixtures are cited by their results, not their scratch paths (L-9) | held `project-overview` delta (opening paragraph, Results; "API failures stay unknown"); What Changes; Impact (`project`); Decisions (C-22); `design.md` D5, D6, D10, D11 |
+| AE-4: the freshness sentence and the `Remote:` count claim a query to github.com in runs where none reached it, a `gh` that exits 4 included | MEDIUM | C-17 (VALID): applied: its sentence, its count wording and its AND | `project-overview` delta (Fields, Human report; "No gh, or a gh without authentication"); What Changes; Decisions (C-17); `design.md` D9 |
+| AE-5: a body that Python's parser rejects with an error other than `JSONDecodeError` exits 2 and drops the local overview, and the `gh` lookup can start a `gh` planted in the caller's directory | LOW | C-22 (VALID): applied with change: the spec text and AND as given; `design.md` records the two points in D5 (the lookup) and D6 (the parse), D6 being where a response is parsed, where the verdict names D2, which parses no body; AE-5's fixtures are cited by their results, not their scratch paths (L-9) | `project-overview` delta (opening paragraph, Results; "API failures stay unknown"); What Changes; Impact (`project`); Decisions (C-22); `design.md` D5, D6, D10, D11 |
 | Codex 1 (P1, on `1229e79`): `closed` is unreachable through `Commit.associatedPullRequests` | P1 | holds (F-3): C-16 | as P-1 |
 | Codex 2 (P1, on `1229e79`): no part of a body may appear in either output, against the row's `number` and `url` | P1 | does not hold at `c928cb2`, QA-2's edit having landed in `621715a`; its optional tightening applied: "no other response text" | What Changes ("Explicit results") |
 | Codex 3 (P2, on `1229e79`): the freshness text claims a live query when none ran | P2 | holds: C-17 | as P-2 |
@@ -1033,19 +1046,20 @@ on 2026-10-20 against the packet at `da33d92`, change 2 at `961c405`, PR #19
 at `c462d87`, #26 at `ca96701` and #27 at `e906c2f`, and found 43 of its 44
 earlier ids FIXED and M4 PARTLY, with no HIGH, one MEDIUM and ten LOW new
 findings. The lane's lead accepted every item as lane openRepoProject-3 words
-its fix (council verdicts, C-15), and LOWs 5, 6 and 10 edit the held
-`project-overview` delta.
+its fix (council verdicts, C-15), and LOWs 5, 6 and 10 edit the
+`project-overview` delta, which lane openRepoProject-4 agreed and which is
+committed.
 
 | Finding | Severity | Ruling | Section edited |
 | --- | --- | --- | --- |
 | MEDIUM-1: ratifying this change would also ratify PR #19's pending sentences in its block of [E] | MEDIUM | C-15: applied: #26's scope sentence, in lane openRepoProject-3's wording, after the PR #19 bullet and in `tasks.md` 1.6; 2.4 returns to Brett Heap a re-base that changes the block's added text | Dependencies and Sequencing; `tasks.md` 1.6, 2.4 |
 | LOW-1: "local ancestry the only cleanup gate", where DI:1059 has no "only" | LOW | C-15: applied | Why |
-| LOW-2 (M4's residual): three passages still promise gh's own behaviour | LOW | C-15: applied | Decisions ("gh's own traffic off"); held `project-overview` delta (Requests); `design.md` Goals |
+| LOW-2 (M4's residual): three passages still promise gh's own behaviour | LOW | C-15: applied | Decisions ("gh's own traffic off"); `project-overview` delta (Requests); `design.md` Goals |
 | LOW-3: "CAS/cmd:90-214" for [E] at main, which runs to :231 | LOW | C-15: applied | Dependencies and Sequencing |
 | LOW-4: the archive waits for PR #19's text though PR #19 may close, and Migration step 4 omits 2.4 and the L-17 re-base | LOW | C-15: applied | Dependencies and Sequencing; `design.md` Migration Plan |
-| LOW-5: "whose remote target was not yet read" also covers a read in flight | LOW | C-15: applied | held `project-overview` delta (Requests) |
-| LOW-6: nothing stops in-flight `gh` children on C-14's exit 2 | LOW | C-15: applied with change: lane openRepoProject-3's words in the ADDED requirement, which starts the children, with [E] named beside [B] and [X], since [E] kills a probe child's group on every exit path; [E]'s Termination paragraph binds Git children only, so no `project-command` edit is needed and nothing is held for lane openRepoProject-2 | held `project-overview` delta (Requests); `design.md` D7 |
+| LOW-5: "whose remote target was not yet read" also covers a read in flight | LOW | C-15: applied | `project-overview` delta (Requests) |
+| LOW-6: nothing stops in-flight `gh` children on C-14's exit 2 | LOW | C-15: applied with change: lane openRepoProject-3's words in the ADDED requirement, which starts the children, with [E] named beside [B] and [X], since [E] kills a probe child's group on every exit path; [E]'s Termination paragraph binds Git children only, so no `project-command` edit is needed and nothing was held for lane openRepoProject-2 | `project-overview` delta (Requests); `design.md` D7 |
 | LOW-7: DI:823 is not named | LOW | C-15: applied | Readings |
 | LOW-8: 1.5 ties both INFO lines to change 2, and 1.1 lists the rulings only to C-10 | LOW | C-15: applied with change: 1.1 lists the rulings through C-23, where the verdicts say C-19, since this round also applies C-20 to C-23 | `tasks.md` 1.1, 1.5 |
 | LOW-9: [E]'s pins sentence, "its row is `inspection-error`", is not carved out for the remote-target reads | LOW | C-15: applied: G1 note (c) recorded in D2 as reasoning, not a test | `design.md` D2 |
-| LOW-10: no scenario sends a 403 with `Retry-After` | LOW | C-15: applied: a tenth key in "API failures stay unknown", its header name written as `gh` prints it (C-19) | held `project-overview` delta ("API failures stay unknown"); `design.md` D11 |
+| LOW-10: no scenario sends a 403 with `Retry-After` | LOW | C-15: applied: a tenth key in "API failures stay unknown", its header name written as `gh` prints it (C-19) | `project-overview` delta ("API failures stay unknown"); `design.md` D11 |
