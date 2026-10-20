@@ -192,8 +192,18 @@ step, and no group of its own is added (lead ruling R-67 (a), withdrawing
 R-56's); one progress line per target, printed at its final stage,
 `  STAGE PATH` or `  STAGE PATH (REASON)`, `pending` never printed (R-56
 Q-10); "D18 success line" followed by "D18 residual-window line", as the
-stop block is (R-56 Q-9); the retained-branch line `Branches kept: B1, B2.`,
-naming every selected target's branch in canonical order; a stop block with
+stop block is (R-56 Q-9): a stopped run's human result is the stop block,
+then `Branches kept:`, then "D18 residual-window line", D18's order
+(`design.md:765-767`), the residual window being the result's too (the
+`project-clean-review-safety` delta's `spec.md:208-209`), which is how the
+`project-clean` delta's "SHALL end its human result with `Stopped at ...`"
+(its `spec.md:962-964`) is read (lead ruling R-76 (d)); the retained-branch
+line `Branches kept: B1, B2.`, naming every selected target's branch in
+canonical order, except a branch missing after removal, or never read back,
+which it leaves out and the result names instead, in words the text lane
+fixes as a `TEXT` key (T094, a lead-approved contracts edit) and a doc
+round then records here, since D18 has none (lead ruling R-76 (f)); a stop
+block with
 no target `not-attempted`, as when the last selected target stops the run,
 reads `Not attempted: none.`, a fill, since D18's stop block has no such
 form (lead ruling R-68 (a)); the stop block's `Next: project clean ROOT

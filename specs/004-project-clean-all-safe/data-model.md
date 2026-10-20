@@ -328,7 +328,13 @@ that did not run is null (`BA:1163-1174` at `da33d92` shows a ref-listing
 refusal with `path_present: true`). A spawned target's values come from the
 rescan after the child is reaped. Target notes: `orphaned-directory` (entry
 gone, path present) and `partially-removed` (a child killed at the ceiling,
-or whose exit was not observed, left its entry or path).
+or whose exit was not observed, left its entry or path). The
+`partially-removed` note appears only when the rescan shows the entry or the
+path remaining (the `project-clean` delta's `spec.md:922-925`), which is how
+its `spec.md:253-256`, "otherwise `unknown` with the note
+`partially-removed`", is read: a ceiling target whose rescan established
+nothing is `unknown` with `removal-ceiling` and no note, failing safe (lead
+ruling R-76 (c)).
 
 ### Revalidation step and `probes_performed` (D7; FR-046, FR-047)
 

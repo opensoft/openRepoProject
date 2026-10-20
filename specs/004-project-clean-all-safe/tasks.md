@@ -1533,7 +1533,10 @@ L-8).
   directory, waited for with no budget; the rescan (identity probe, registry
   listing, ref listing, `lstat` of the path) fills the reconciliation record;
   the stage is `removed` with reason null when the child exited 0 and the entry
-  and path are gone, `unknown` with `unconfirmed-removal` when it exited 0
+  and path are gone, with `reconciled` true (FR-034; the `project-clean`
+  delta's `spec.md:891-895`; a condition T085 builds, since as ticked the
+  stage reads the entry and path alone, lead ruling R-76 (a)), `unknown`
+  with `unconfirmed-removal` when it exited 0
   otherwise, and `failed` with `git-refused` (128), `git-failed` (any other
   status) or `spawn-error`; `exit_status` as T045 states it (plan review M12),
   128 plus the signal number for a signal death (128 minus Popen's negative
@@ -1582,8 +1585,33 @@ Interim behaviour at this checkpoint (lead ruling R-56 Q-17): until T075, a
 named removal is refused when another row is `inspection-error`, since the
 non-blocking single-mode notes are T075's; and until T066, a merged branch
 with no commit of its own is still selectable, so quickstart.md's User Story
-1 preview shows `Selected (4)` here. None of this reaches `main`, since the
-feature ships as one pull request.
+1 preview shows `Selected (4)` here. The removal path carries six more, each
+assigned to its task (lead ruling R-76 (b), lane 3's M-1); the first two
+lose work:
+
+- A SIGINT, SIGTERM or SIGHUP during the apply phase does not stop
+  scheduling: later targets are still revalidated and removed, and the run
+  exits 130, 143 or 129 (T093; test T087).
+- Revalidation is T055's full re-read, with no `modules` check, no
+  hidden-state probe, no `dev`, `ino`, `admin_id` or `upstream_oid`
+  comparison and no preflight, so an assume-unchanged edit set at the
+  question, or a copy put at P, is removed with exit 0 (T084; tests T079 to
+  T083).
+- No removal floor and no reserve: a removal is spawned however little work
+  time is left, and the rescan runs on the work deadline's budget (T099 and
+  T093; test T098).
+- An exception in the apply phase propagates instead of reconciling (T093;
+  test T089).
+- The branch race after removal goes undetected, a moved or deleted branch
+  still giving `removed`; and a target is `removed` from its entry and path
+  alone, even when the rescan's ref listing failed and `reconciled` is false
+  (T085; test T083, and T085's own tests, lead ruling R-76 (a)).
+- No wait line, no `orphaned-directory` note and no recovery text on a
+  `partially-removed` target (T092, T093, T094).
+
+None of this reaches `main`, since the feature ships as one pull request,
+which opens only when every task of 004 has landed, T084, T085, T092, T093
+and T099 among them, and its body names that gate (R-76 (b)).
 
 ---
 
@@ -2225,9 +2253,25 @@ US3, US7 and US9; US5's text lane follows it (analyze M2 and L9).
   gone, is `removed` with `branch-advanced-after-removal` or
   `branch-missing-after-removal` and stops the run; after a plain `removed`,
   its rescan's three repository children serve as the next target's repository
-  part, counted in that target's `probes_performed`. T079 to T083 pass.
-  — files: `project`
-  — verify: `python3 -m unittest discover -s tests -p 'test_clean_revalidation.py'`
+  part, counted in that target's `probes_performed`. A target is `removed`
+  only when its entry and path are gone and `reconciled` is true (FR-034;
+  the `project-clean` delta's `spec.md:891-895`): an exit-0 child that is
+  gone but not reconciled is `unknown` with `reconciliation-incomplete`, as
+  is one whose rescan registry listing failed (`BA:723-730` at `e45155a`),
+  and a child killed at the ceiling that is gone but not reconciled is
+  `unknown` with `removal-ceiling`, exit 1 either way (lead ruling R-76 (a),
+  lane 3's H-1). Its tests go in `tests/test_clean_revalidation.py`:
+  `test_clean_decide_stage_removed_needs_reconciled` (`decide_stage()` on
+  literal records: entry and path gone, `branch_present` null, exit 0,
+  gives `unknown` with `reconciliation-incomplete`; at the ceiling,
+  `unknown` with `removal-ceiling`) and
+  `test_clean_a_failed_rescan_ref_listing_is_not_removed` (a wrapper `git`
+  that fails `for-each-ref` once `worktree remove` has run, one merged
+  worktree, `--all-safe --apply --yes --json`: the target `unknown` with
+  `reconciliation-incomplete`, `reconciled` false, exit 1; lane 3's E1).
+  T079 to T083 pass.
+  — files: `project`, `tests/test_clean_revalidation.py`
+  — verify: `python3 -c "import sys,unittest as u;L=u.defaultTestLoader;f=lambda s:[i for t in s for i in (f(t) if isinstance(t,u.TestSuite) else [t.id()])];I=[i for i in f(L.discover('tests',pattern=sys.argv[1])) if not i.startswith('unittest.')];A=sys.argv[2:];M=[a for a in A if not any(a in ('*',i.split('.')[-1]) for i in I)];[print('not collected:',m) for m in M];[print(e) for e in L.errors];sys.exit(1 if M or L.errors or not A else 0)" test_clean_revalidation.py 'test_clean_decide_stage_removed_needs_reconciled' 'test_clean_a_failed_rescan_ref_listing_is_not_removed' && python3 -m unittest discover -s tests -p 'test_clean_revalidation.py'`
 - [ ] T086 [US4] [S] Run the US4 module, every earlier module and the 96 tests: all
   pass.
   — files: (none)
@@ -2356,7 +2400,12 @@ the recovery text that T094 prints (analyze M2).
   form (`  STAGE PATH` or `  STAGE PATH (REASON)`), then `Stopped at P2
   (branch-changed). Removed 1 of 3. Not attempted: P3. Next: project clean ROOT
   --all-safe`, then `Branches kept: B1, B2, B3.` and the residual-window line
-  (plan review M8); it pins T057); `test_clean_only_tracked_file_deletions`
+  (plan review M8); it pins T057; and a target whose branch is missing after
+  removal (`branch-missing-after-removal`), or was never read back
+  (`branch_present` null), leaves that branch out of `Branches kept:`, the
+  result naming it instead in the words of T094's `TEXT` key, once T085
+  makes the record honest; lead ruling R-76 (f));
+  `test_clean_only_tracked_file_deletions`
   (tracked files deleted by hand in a registered worktree whose `.git` file is
   intact: classified `dirty` with the dirty advice, the line `Probable partial
   removal: inspect, then git worktree remove --force PATH by hand.` beside it,
@@ -2402,9 +2451,12 @@ the recovery text that T094 prints (analyze M2).
   record's rendering, first waits for an in-flight removal, then makes the
   target being handled `unknown` with `internal-error` (fields not established
   null) and later targets `not-attempted`, and the record is still printed, the
-  exit by D19 (plan review M2); a rescan `lstat` that fails other than with
-  `ENOENT` or `ENOTDIR`, or times out, gives `path_present: null` and
-  `reconciliation-incomplete`; add the `orphaned-directory` note; guard every
+  exit by D19 (plan review M2); any rescan read that fails or times out, the
+  registry listing, the ref listing, or an `lstat` that fails other than
+  with `ENOENT` or `ENOTDIR`, leaves the fields it reads null and gives
+  `reconciliation-incomplete`, except that a child killed at the ceiling
+  keeps `removal-ceiling` (T085's rule; lead ruling R-76 (a)); add the
+  `orphaned-directory` note; guard every
   write of the record against `OSError`, the EIO a terminal may answer after
   SIGHUP. T087 to T090 pass.
   — files: `project`
@@ -2412,8 +2464,12 @@ the recovery text that T094 prints (analyze M2).
 - [ ] T094 [P] [US5] [S] In `print_plan()` (region `preview`), print D18's
   partial-removal note on its own line under the `dirty` advice of a row noted
   `partially-removed`; in `print_result()` (region `result`), print the same
-  note with the recovery text on a `partially-removed` target. T091 passes.
-  — files: `project`
+  note with the recovery text on a `partially-removed` target, and leave a
+  branch missing after removal, or never read back, out of `Branches kept:`,
+  naming it in words this task fixes as a `TEXT` key in region `contracts`, a
+  lead-approved contracts edit, with its fixture in `tests/clean_support.py`
+  (rule 2), since D18 has none (lead ruling R-76 (f)). T091 passes.
+  — files: `project`, `tests/clean_support.py`
   — verify: `python3 -m unittest discover -s tests -p 'test_clean_stop.py'`
 - [ ] T095 [US5] [S] Run the US5 modules, every earlier module and the 96 tests:
   all pass.
