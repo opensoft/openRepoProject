@@ -336,8 +336,10 @@ an option of `project overview` alone; `project clean`, `status` and `doctor`
 stay local as their own requirements state. Without `--remote` the overview
 SHALL look up no `gh` on `PATH`, SHALL start no remote-target read and no `gh`
 child, and SHALL print no field or line that this requirement adds. With it,
-`gh` SHALL be looked up once per run, by a bounded task as `Overview bounds its
-work and reports what it omitted` requires of every filesystem call.
+`gh` SHALL be looked up once per run, in the absolute directories of `PATH`
+only, an empty or relative entry being skipped, by a bounded task as `Overview
+bounds its work and reports what it omitted` requires of every filesystem call,
+and each `gh` child SHALL be started by the absolute path found.
 
 Query set: a worktree row SHALL be queried when its `branch` is not
 `"detached"` and names a branch other than the merge target, its `head` is
@@ -380,16 +382,18 @@ order: repositories by rank, then each repository's worktree rows in row
 order. Each request SHALL be one `gh` child that runs `gh api` for the host
 `github.com` with one fixed read-only GraphQL query, the owner, repository name
 and object id passed as variables of that query and never in its text, the
-object id first checked as 40 or 64 lowercase hexadecimal digits, asking, for
-that exact commit, for at most 100 associated pull requests and whether a
-further page exists. It SHALL read one page, its argv SHALL never carry
+object id first checked as 40 or 64 lowercase hexadecimal digits, asking for
+the queried repository's `nameWithOwner` and, for that exact commit, for at
+most 100 associated pull requests and whether a further page exists. It SHALL
+read one page, its argv SHALL never carry
 `--paginate`, `--slurp`, `--cache` or `--method`, its query SHALL hold no
 `mutation`, and it SHALL run in the filesystem root with standard input from
 the null device, with `GH_NO_UPDATE_NOTIFIER=1`,
 `GH_NO_EXTENSION_UPDATE_NOTIFIER=1`, `GH_PROMPT_DISABLED=1`,
-`GH_TELEMETRY=false` and `NO_COLOR=1` set, so that gh checks for no update,
-writes no state of its own, prompts for nothing, sends no telemetry and prints
-no colour, and with `GH_DEBUG`, `DEBUG`, `GH_HOST`, `GH_REPO`, `GH_FORCE_TTY`
+`GH_TELEMETRY=false` and `NO_COLOR=1` set, so that gh checks for no update
+and writes none of the state it keeps for that check, prompts for nothing,
+sends no telemetry and prints no colour, and with `GH_DEBUG`, `DEBUG`,
+`GH_HOST`, `GH_REPO`, `GH_FORCE_TTY`
 and `CLICOLOR_FORCE` removed from it, every other variable passed on unread. At
 most 64 requests SHALL be sent per invocation; a key past the 64th SHALL NOT be
 sent, and its rows SHALL be `unknown` with reason `request-cap`. At most four
@@ -398,43 +402,52 @@ remote-target reads, under a remote budget of `min(30 s, deadline - now)` taken
 when the first request starts, part of the 60 s invocation deadline and never
 added to it. Each `gh` child SHALL get `min(5 s, remote budget remaining)`, its
 own limit as a child of the overview, and SHALL run in its own process group
-and be stopped, reaped or abandoned, and terminated on a signal, as `Overview
-bounds its work and reports what it omitted` and `Overview exits by
-completeness and severity` treat a Git child. When the remote budget or the
-deadline expires, no further child SHALL start, every queried row whose key was
-not yet sent or whose remote target was not yet read SHALL be `unknown` with
-reason `cancelled`, and every request in flight SHALL be stopped and its rows
-`unknown` with reason `aborted`.
+and be stopped, reaped or abandoned, and terminated on a signal or on any
+other exit path, an exception included, as `Overview bounds its work and
+reports what it omitted`, `Overview exits by completeness and severity` and
+`Repository inspection requires Git 2.36 and shares one evidence model` treat
+a Git child. When the remote budget or the deadline expires, no further child
+SHALL start, every queried row whose key was not yet sent or whose
+remote-target read never started SHALL be `unknown` with reason `cancelled`,
+and every request in flight SHALL be stopped and its rows `unknown` with
+reason `aborted`.
 
 Results: at most 1 MiB of each response body SHALL be read, and a key's result
 SHALL come from its whole response, never from a partial answer. For each row
-of the key, a response SHALL give `merged`, `open` or `closed` from the
-returned pull requests whose head object id equals the row's `head` exactly,
-whose base branch is the branch of the merge ref of the row's own repository
-and whose base repository is the identity, compared without case, a merged one
-before an open one before a closed one and the highest number within a state;
-and `not-found` when none matches or GitHub holds no commit with that object
-id. It SHALL give `unknown` with reason `further-page` for a response that
+of the key, a response SHALL give `merged` or `open` from the returned pull
+requests whose head object id equals the row's `head` exactly, whose base
+branch is the branch of the merge ref of the row's own repository and whose
+base repository's `nameWithOwner` equals the `nameWithOwner` that the response
+gives for the queried repository, compared without case, a merged one before
+an open one and the highest number within a state, a returned pull request of
+state `CLOSED` never matching; and `not-found` when none matches or GitHub
+holds no commit with that object id. It SHALL give `unknown` with reason
+`further-page` for a response that
 reports a further page, `truncated` for a body cut at 1 MiB, `timeout` for a
 child stopped at its 5 s limit, `unauthorized` for an HTTP 401, `rate-limited`
 for an HTTP 429, for an HTTP 403 whose `X-RateLimit-Remaining` header is 0 or
-that carries a `Retry-After` header, and for a 200 body whose `errors` holds an
-entry of type `RATE_LIMITED`, `forbidden` for any other HTTP 403, and
-`api-error` for any other failure, a response with no status line, one that
-cannot be parsed and one whose fields fail validation included. Apart from an
+that carries a `Retry-After` header, header names compared without case as
+HTTP defines them, and for a 200 body whose `errors` holds an entry of type
+`RATE_LIMITED`, `forbidden` for any other HTTP 403, and `api-error` for any
+other failure, a response with no status line, one that cannot be decoded or
+parsed for any cause, its nesting depth and the size of its integers included,
+one holding more than 100 pull requests, and one whose fields fail validation
+included. Apart from an
 exit 4 with nothing on standard output, the response's status line SHALL
 decide, whatever the `gh` child's exit status. At most 64 KiB of the status
 line and headers SHALL be read, past which the key is `api-error`. A 200 body
-SHALL be UTF-8 JSON; an `errors` entry of a type other than `RATE_LIMITED`, or
-a null `data.repository`, SHALL give `api-error`, and a null
+SHALL be UTF-8 JSON; an `errors` entry of a type other than `RATE_LIMITED`, a
+null `data.repository`, or a `data.repository.nameWithOwner` that is not a
+valid GitHub `owner/repository`, SHALL give `api-error`, and a null
 `data.repository.object` SHALL give `not-found`. Each returned pull request
 SHALL have a positive integer `number`, a `state` of `OPEN`, `CLOSED` or
 `MERGED`, a `headRefOid` of 40 or 64 hexadecimal digits, a string
 `baseRefName`, a `baseRepository.nameWithOwner` that is a valid GitHub
 `owner/repository`, and a `url` exactly
 `https://github.com/<nameWithOwner>/pull/<number>`; one that fails any of these
-SHALL make its whole key `api-error`, never a partial answer. When `gh` is not
-on `PATH`, every queried row that has a key SHALL be `unavailable` with reason
+SHALL make its whole key `api-error`, never a partial answer. When the lookup
+of `gh` finds none, every queried row that has a key SHALL be `unavailable`
+with reason
 `gh-unavailable` and no `gh` child SHALL start; a `gh` child that exits with
 gh's authentication-required status, 4, with nothing on standard output, SHALL
 make its key's rows `unavailable` with reason `gh-unauthenticated`. Each key
@@ -448,12 +461,12 @@ answers, never on concurrency or completion order.
 
 Fields: in a `--remote` run, every queried worktree row SHALL carry `remote`,
 `{state, number, url, head_sha, reason}`:
-`state` is `merged`, `open`, `closed`, `not-found`, `unavailable` or
-`unknown`, a closed enum; `number` and `url` are the chosen pull request's,
+`state` is `merged`, `open`, `not-found`, `unavailable` or `unknown`, a
+closed enum; `number` and `url` are the chosen pull request's,
 `url` accepted only as `https://github.com/<owner>/<repository>/pull/<number>`
-for that number, and both are null unless `state` is `merged`, `open` or
-`closed`; `head_sha` is the row's `head`, the commit its key names, whether or
-not a request was sent; and `reason` is null for the first four states and one
+for that number, and both are null unless `state` is `merged` or `open`;
+`head_sha` is the row's `head`, the commit its key names, whether or
+not a request was sent; and `reason` is null for the first three states and one
 of the codes above for the last two. `reason` is a closed enum: for
 `unavailable`, `no-remote-target`, `credential-bearing-remote`, `not-github`,
 `malformed-remote`, `gh-unavailable` or `gh-unauthenticated`; for `unknown`,
@@ -461,8 +474,9 @@ of the codes above for the last two. `reason` is a closed enum: for
 `further-page`, `truncated`, `unauthorized`, `rate-limited`, `forbidden` or
 `api-error`. The envelope SHALL carry `remote`: `host` (`github.com`);
 `observed_at` (when the first request started, null when none started);
-`freshness` (the sentence "Remote evidence was queried live from github.com and
-may already be stale; it never authorizes cleanup."); `limits` (`requests` 64,
+`freshness` (the sentence "Remote evidence, where GitHub answered, was read
+live from github.com and may already be stale; it never authorizes cleanup.");
+`limits` (`requests` 64,
 `concurrency` 4, `page_items` 100, `pages` 1, `response_bytes` 1048576);
 `budget` (`request_timeout_seconds` 5, `remote_budget_seconds` 30); `requests`
 (`estimated`, the distinct keys, and `performed`, the `gh` children started);
@@ -498,16 +512,17 @@ a removal proof.
 
 Human report: for each worktree whose row has a `remote` and that has a shown
 finding, a `remote` line SHALL follow the worktree path printed after its first
-shown finding, reading for `merged` "merged on GitHub as pull request #<n>;
-local ancestry does not prove it (a squash or rebase merge, or a merge target
-not fetched since); never retired on this evidence", for `open` "pull
-request #<n> on GitHub is open for this exact head", for `closed` "pull
-request #<n> on GitHub was closed without merging", for `not-found` "no pull
-request on GitHub matched this exact head", for `unavailable` "remote status
-unavailable (<reason>)" and for `unknown` "remote status unknown (<reason>)".
-In a `--remote` run one line SHALL follow the summary line: "Remote: <n>
-requests to github.com; merged <a>, open <b>, closed <c>, not found <d>,
-unavailable <e>, unknown <f>." and, after one space, the freshness sentence,
+shown finding, reading for `merged` "merged on GitHub as pull request #<n> at
+this exact head; uncommitted and ignored files here are not part of it; local
+ancestry does not prove it (a squash or rebase merge, or a local merge target
+not brought up to date since); never retired on this evidence", for `open`
+"pull request #<n> on GitHub is open for this exact head", for `not-found` "no
+merged or open pull request on GitHub was found for this exact head", for
+`unavailable` "remote status unavailable (<reason>)" and for `unknown` "remote
+status unknown (<reason>)". In a `--remote` run one line SHALL follow the
+summary line: "Remote: <n> gh requests started; merged <a>, open <b>, not
+found <c>, unavailable <d>, unknown <e>." and, after one space, the freshness
+sentence,
 `<n>` being `remote.requests.performed` and the others `remote.counts`. These
 lines SHALL print a pull request only by its validated number and a reason only
 by its code, never a URL, and only ASCII characters.
@@ -515,7 +530,7 @@ by its code, never a URL, and only ASCII characters.
 #### Scenario: A squash-merged branch is explained and kept
 - **WHEN** a linked worktree's branch `001-feature`, with a commit of its own, was pushed with `git push -u` and squash-merged into `main` on GitHub, local `main` was fast-forwarded to the squash commit, the merge target's remote is `https://github.com/acme/widget.git`, and a fake `gh` answers that merged pull request #7 into `main` of `acme/widget` has exactly the branch's head
 - **THEN** `project overview --remote --json` keeps the row `pushed-unmerged` with its informational finding and no suggestion, and its `remote` is `{"state": "merged", "number": 7, "url": "https://github.com/acme/widget/pull/7", "head_sha": "<head>", "reason": null}`
-- **AND** the human report prints under that worktree the `remote` line "merged on GitHub as pull request #7; local ancestry does not prove it (a squash or rebase merge, or a merge target not fetched since); never retired on this evidence", and after the summary line one line giving 1 request, 1 merged and the freshness sentence
+- **AND** the human report prints under that worktree the `remote` line "merged on GitHub as pull request #7 at this exact head; uncommitted and ignored files here are not part of it; local ancestry does not prove it (a squash or rebase merge, or a local merge target not brought up to date since); never retired on this evidence", and after the summary line one line giving 1 request, 1 merged and the freshness sentence
 - **AND** `project clean <root> --all-safe` on the same fixture excludes that worktree as `pushed-unmerged` and starts no `gh` child
 - **AND** under `--remote --attention` that worktree, whose only finding is informational, is not shown and gets no `remote` line, and the `Remote:` line still follows the summary line
 
@@ -537,8 +552,8 @@ by its code, never a URL, and only ASCII characters.
 
 #### Scenario: The chosen pull request and a rejected answer
 - **WHEN** the fake `gh` answers one key with a closed #3, an open #5 and a merged #4, each with exactly the row's head, base branch `main` and base repository `acme/widget`, a second key with an open #8 and an open #9 of that kind, a third with only a closed #6, a fourth with no pull request, and a fifth with one such node whose `url` is `https://github.com/acme/widget/issues/2`, and a sixth worktree row, in a second repository whose merge target names no remote
-- **THEN** the rows' `remote` are `merged` #4, `open` #9, `closed` #6, `not-found`, and `unknown` with reason `api-error` and null `number` and `url`
-- **AND** the human report prints under those worktrees "pull request #9 on GitHub is open for this exact head", "pull request #6 on GitHub was closed without merging", "no pull request on GitHub matched this exact head" and "remote status unknown (api-error)", and under a row whose merge target names no remote "remote status unavailable (no-remote-target)"
+- **THEN** the rows' `remote` are `merged` #4, `open` #9, `not-found`, `not-found`, and `unknown` with reason `api-error` and null `number` and `url`
+- **AND** the human report prints "pull request #9 on GitHub is open for this exact head" under the second of those worktrees, "no merged or open pull request on GitHub was found for this exact head" under the third and the fourth, "remote status unknown (api-error)" under the fifth, and "remote status unavailable (no-remote-target)" under the sixth, whose merge target names no remote
 
 #### Scenario: Remotes that give no request
 - **WHEN** the merge targets of four repositories have as their remote's URL `https://alice:s3cr3t@github.com/acme/widget.git`, `https://evilgithub.com/acme/widget` and `https://github.com/acme`, and, for the fourth, no remote named by its merge target, though that repository has an `origin` remote whose URL is `https://github.com/acme/widget.git`
@@ -549,12 +564,15 @@ by its code, never a URL, and only ASCII characters.
 - **WHEN** `gh` is not on `PATH` and two rows with distinct heads are queried
 - **THEN** both are `unavailable` with reason `gh-unavailable`, no child starts, `remote.requests.performed` is 0, `remote.observed_at` is null, and the exit status is the one the run has without `--remote`
 - **AND** when instead the fake `gh` exits 4 with nothing on standard output, both requests are sent, and both rows are `unavailable` with reason `gh-unauthenticated`
+- **AND** the human report's `Remote:` line reads `0 gh requests started` and, with the `gh` that exits 4, `2 gh requests started`, each followed by the freshness sentence
+- **AND** when no worktree row is queried, because every worktree is merged into its merge target, no `gh` child starts, `remote.requests` is `{"estimated": 0, "performed": 0}`, `remote.observed_at` is null, every count is 0, `remote.completeness` is `complete`, and the `Remote:` line still follows the summary line, reading `0 gh requests started` and the freshness sentence
 
 #### Scenario: API failures stay unknown
-- **WHEN** the fake `gh` answers nine keys with an HTTP 401, an HTTP 403, an HTTP 429, an HTTP 403 with `X-RateLimit-Remaining: 0`, a 200 body whose `errors` entry has type `RATE_LIMITED`, an HTTP 502, a page whose further-page flag is set, a body of 1 MiB and one byte, and nothing for 10 s, each failing answer exiting 1 as gh does
-- **THEN** those rows are `unknown` with reasons `unauthorized`, `forbidden`, `rate-limited`, `rate-limited`, `rate-limited`, `api-error`, `further-page`, `truncated` and `timeout`, none carries a number or URL, the held child is stopped at 5 s and reaped, and `remote.completeness` is `incomplete`
+- **WHEN** the fake `gh` answers ten keys with an HTTP 401, an HTTP 403, an HTTP 429, an HTTP 403 with `X-RateLimit-Remaining: 0`, an HTTP 403 that carries a `Retry-After` header, its name written as `gh` prints it, a 200 body whose `errors` entry has type `RATE_LIMITED`, an HTTP 502, a page whose further-page flag is set, a body of 1 MiB and one byte, and nothing for 10 s, each failing answer exiting 1 as gh does
+- **THEN** those rows are `unknown` with reasons `unauthorized`, `forbidden`, `rate-limited`, `rate-limited`, `rate-limited`, `rate-limited`, `api-error`, `further-page`, `truncated` and `timeout`, none carries a number or URL, the held child is stopped at 5 s and reaped, and `remote.completeness` is `incomplete`
 - **AND** no part of a response body or of `gh`'s standard error appears in either output, and the overview's findings, `completeness` and exit status equal those of the run without `--remote`
 - **AND** a 200 body with an `errors` entry of another type, a 200 body whose `data.repository` is null and a response whose status line and headers exceed 64 KiB each make their key's rows `unknown` with reason `api-error`
+- **AND** a 200 body of 1 MiB of `[`, and one whose `number` has 5,000 digits, each make their key's rows `unknown` with reason `api-error`, and the exit status equals that of the run without `--remote`
 
 #### Scenario: A failed or held remote-target read stays unknown
 - **WHEN** one root holds two repositories, each with one linked worktree whose branch is not merged into its merge target, which tracks `refs/heads/main` of a remote whose URL is `https://github.com/acme/widget.git` in the first and `https://github.com/acme/gadget.git` in the second, and the overview runs once without `--remote` and once with it, a fake `gh` first on `PATH`, the first remote-target read of the `--remote` run exiting 128 in the first repository and not finishing within 10 s in the second
@@ -577,6 +595,7 @@ by its code, never a URL, and only ASCII characters.
 - **WHEN** one fixture with a `merged-removable`, a `pushed-unmerged`, a `remote-gone` and a dirty worktree runs with and without `--remote`, the fake `gh` answering `merged` for every key
 - **THEN** the two JSON documents differ only in timestamps, in the envelope's `remote` and the queried worktree rows' `remote`, and in the envelope's `probes`, whose `estimated` and `performed` each grow by the remote-target reads alone, and every classification, finding, suggestion, `suggestion_gate`, summary count, `completeness` and exit status is equal
 - **AND** the run without `--remote` starts no `gh` child and no remote-target read, its document has no `remote` key at all, absent rather than null, and its human report no `remote` line
+- **AND** the human report prints under the dirty worktree, whose branch local ancestry does not prove merged, its `dirty` finding and the `merged` remote line, which says that uncommitted and ignored files are not part of the pull request
 
 #### Scenario: A signal while requests run
 - **WHEN** SIGTERM is sent while four `gh` children are held
