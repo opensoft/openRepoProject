@@ -454,12 +454,33 @@ the loop stops reading, stops the child (D7) and records `truncated`.
 - A 200 body must be UTF-8 JSON, and a body that cannot be decoded or parsed,
   for any cause, is `api-error`: the parse catches every exception it raises,
   not only `JSONDecodeError`, so no such body reaches C-14's exit 2 (C-22).
-  The council's adversary-engineer measured two on Python 3.12.3 on
-  2026-10-20: a body under 1 MiB nested in `[` raised `RecursionError`, and a
-  `number` of 5,000 digits raised a plain `ValueError` ("Exceeds the limit
-  (4300 digits) for integer string conversion"), a limit Python has had since
-  3.10.7 and 3.11; CI's Python 3.10 was not checked. An `errors` entry of type
-  `RATE_LIMITED` gives `rate-limited`, and any other `errors` entry, a null
+  The parse passes `json.loads` a `parse_int` hook, which receives the text of
+  each integer literal of the body, wherever it stands, and raises before
+  converting it when the text has more than 10 digits, a sign not counted.
+  GraphQL's `Int`, which `number` is, is a signed 32-bit integer, at most
+  2,147,483,647, which has 10 digits. The parse then fails, and the key is
+  `api-error` by the rule above, whatever the interpreter's own limit on
+  converting a string to an integer; and the cost of converting an integer
+  literal within the 1 MiB body is bounded, on interpreters where it is
+  quadratic (C-37). The evidence: the council's adversary-engineer measured
+  two failures that are not `JSONDecodeError` on Python 3.12.3 on 2026-10-20,
+  a body under 1 MiB nested in `[`, which raised `RecursionError`, and a
+  `number` of 5,000 digits, which raised a plain `ValueError` ("Exceeds the
+  limit (4300 digits) for integer string conversion"). That is the
+  interpreter's limit, which Python has had only since 3.10.7 and 3.11, while
+  AGENTS.md says Python 3.10+, and CI's Python 3.10 was not checked; so the
+  limit is no mechanism of this rule, and on 3.10.0 to 3.10.6, which have
+  none, that body would parse without the hook. Checked on 2026-10-20 on
+  Python 3.10.21, 3.11.16, 3.12.3, 3.13.15 and 3.15.0rc2: `json.loads` calls
+  the hook with each integer literal's text, its sign included, and with no
+  float or string, and an exception raised there leaves `json.loads` as
+  raised, never wrapped in `JSONDecodeError`; with
+  `sys.set_int_max_str_digits(0)`, which stands for 3.10.0 to 3.10.6, a plain
+  `json.loads` of the 5,000-digit body returns, and with the hook it raises;
+  and with that setting a literal of 1,000,000 digits took 5.2 s to convert
+  on 3.10.21 and 4.5 s on 3.11.16, about 0.6 s on 3.12.3 and later, and under
+  3 ms for the hook to reject. An `errors` entry of type `RATE_LIMITED` gives
+  `rate-limited`, and any other `errors` entry, a null
   `data.repository`, or a `data.repository.nameWithOwner` that fails D3's
   pattern (the field S-2 adds and C-19 takes, validated as each node's
   `baseRepository.nameWithOwner` is), gives `api-error`. A null
@@ -468,12 +489,14 @@ the loop stops reading, stops the child (D7) and records `truncated`.
   `pageInfo.hasNextPage`, which when true gives `further-page`, and a list of
   at most 100 `nodes`, more being `api-error` (AE-5's suggested text, taken by
   C-22).
-- Each node must have a positive integer `number`; a `state` of `OPEN`,
-  `CLOSED` or `MERGED`; a `headRefOid` of 40 or 64 hexadecimal digits; a
-  string `baseRefName`; a `baseRepository.nameWithOwner` that passes D3's
-  pattern; and a `url` exactly `https://github.com/` plus that
-  `nameWithOwner`, `/pull/` and the number. One invalid node makes the whole
-  key `api-error`, never a partial answer.
+- Each node must have a positive integer `number` of at most 2,147,483,647,
+  the largest GraphQL `Int` (the hook above bounds the literal's text, this
+  bounds its value, C-37); a `state` of `OPEN`, `CLOSED` or `MERGED`; a
+  `headRefOid` of 40 or 64 hexadecimal digits; a string `baseRefName`; a
+  `baseRepository.nameWithOwner` that passes D3's pattern; and a `url`
+  exactly `https://github.com/` plus that `nameWithOwner`, `/pull/` and the
+  number. One invalid node makes the whole key `api-error`, never a partial
+  answer.
 
 Per row: the nodes whose `headRefOid` equals the row's `head`, whose
 `baseRefName` equals the row's merge ref less `refs/heads/`, and whose
@@ -624,6 +647,19 @@ of these fields, so remote evidence never reaches an eligibility gate, a
   `GH_NO_EXTENSION_UPDATE_NOTIFIER`, `GH_PROMPT_DISABLED`, `GH_TELEMETRY` and
   `NO_COLOR`, whether `GH_TOKEN` equals the caller's, the working directory,
   and its start and end times.
+- One test sets the interpreter's limit on converting a string to an integer
+  to 0, with `sys.set_int_max_str_digits(0)` where the interpreter has it, and
+  restores it after; that stands for Python 3.10.0 to 3.10.6, which have no
+  limit (C-37). With the limit at 0 the body whose `number` has 5,000 digits
+  still gives `api-error` for its key's rows, and the hook, called on that
+  literal's text with the conversion it would otherwise make replaced by a
+  stand-in that fails the test if called, raises, which shows that the hook
+  rejects the literal before converting it. The same test passes the hook
+  `2147483647` and `-2147483648`, which it accepts, and an 11-digit text,
+  which it rejects, and serves a `number` of 2,147,483,648, which has 10
+  digits and passes the hook, whose key is `api-error` by the node check. It
+  tests the parse and is no scenario: "API failures stay unknown" already
+  requires the 5,000-digit outcome.
 - A planted `gh`, a second fake that records each run, sits in the working
   directory of a run whose `PATH` begins with an empty entry and `.`, so that
   "No gh, or a gh without authentication" shows it never runs, and the fake
