@@ -488,6 +488,52 @@ class EvidenceTests(clean_support.CleanCase):
             self.assertEqual([(row.raw_path, row.registered, row["classification"]) for row in alone],
                              [(os.fsencode(shared), False, "inspection-error")])
 
+        with self.subTest("two present entries with one realpath and one admin id (lead ruling R-67 (c))"):
+            # A copied admin directory whose `gitdir` file names the worktree
+            # through a symbolic link: the registry lists one worktree under two
+            # spellings, and the two-way check alone passes both, with one admin
+            # id, since both read one `.git` file. Both are registration-mismatch,
+            # as two entries naming one path are.
+            twin_root = self.repo("twin-repo")
+            self.bare_remote(twin_root, "twin-remote.git")
+            spelled = self.merged_worktree("021-spelled", root=twin_root)
+            control = self.merged_worktree("022-control", root=twin_root)
+            link = self.base / "twin-link"
+            link.symlink_to(self.base)
+            admin = self.common_dir(twin_root) / "worktrees"
+            shutil.copytree(admin / spelled.name, admin / f"{spelled.name}-copy")
+            (admin / f"{spelled.name}-copy" / "gitdir").write_text(f"{link / spelled.name / '.git'}\n")
+            spellings = sorted([str(spelled), str(link / spelled.name)])
+            result, records = self.report(twin_root)
+            listed = {row["path"]: row for row in result.document["worktrees"]}
+            for path in spellings:
+                with self.subTest(path=path):
+                    row = listed[path]
+                    self.assertEqual((row["present"], row["dirty"], row["errors"], row["classification"]),
+                                     (True, None, [], "inspection-error"))
+                    self.assertNotIn("prunable", row)
+            self.assertEqual(listed[str(control)]["classification"], "merged-removable")
+            self.assertEqual(self.status_dirs(records), sorted(map(str, (twin_root, control))),
+                             "no status probe under either spelling")
+            # In process: verify_registration() alone passes both spellings with
+            # one admin id, and worktree_rows() makes both `registered` false,
+            # building every row or the two twins together, as match_target()
+            # builds P's rows.
+            with mock.patch.dict(os.environ, self.env, clear=True):
+                run = project.Invocation()
+                repo = project.inspect_repository(os.fsencode(twin_root), run)
+                common = repo["identity"]["common_dir"]
+                verdicts = [project.verify_registration(os.fsencode(path), common, False) for path in spellings]
+                every = project.worktree_rows(repo, run)
+                twins = [record for record in repo["records"] if os.fsdecode(record["path"]) in spellings]
+                together = project.worktree_rows(repo, run, records=twins)
+            self.assertEqual(verdicts, [(True, os.fsencode(spelled.name))] * 2)
+            for label, rows in (("every row", every), ("the twins together", together)):
+                with self.subTest(label):
+                    self.assertEqual(sorted((os.fsdecode(row.raw_path), row.registered, row.admin_id, row.status)
+                                            for row in rows if os.fsdecode(row.raw_path) in spellings),
+                                     [(path, False, None, None) for path in spellings])
+
     def test_clean_evidence_a_branch_named_head_takes_no_upstream(self):
         # Lead ruling R-61 (b): for refs/heads/HEAD, `git for-each-ref` prints
         # the upstream of the branch HEAD names where it runs (Git 2.43.0 credits
@@ -598,6 +644,28 @@ class EvidenceTests(clean_support.CleanCase):
              {}, frozenset({b"/a"})),
             ("distinct paths", ([{"path": b"/a"}, {"path": b"/b"}],), {}, frozenset()),
             ("no entry", ([],), {}, frozenset()),
+        ])
+
+        # R-67 (c): among the reads of the rows built together, present rows
+        # with one realpath, or one admin id, are registration-mismatch too.
+        def read(tree, admin_id=None, registered=True, present=True):
+            return {"present": present, "tree": tree, "registered": registered, "admin_id": admin_id}
+
+        self.assert_decides(project.shared_identities, [
+            ("one realpath under two spellings",
+             ([read(b"/w/a", b"a"), read(b"/w/b", b"b"), read(b"/w/a", b"a")],), {}, frozenset({0, 2})),
+            ("one admin id, two realpaths", ([read(b"/w/a", b"x"), read(b"/w/b", b"x")],), {}, frozenset({0, 1})),
+            ("one realpath, one registration that disagreed",
+             ([read(b"/w/a", b"a"), read(b"/w/a", registered=False)],), {}, frozenset({0, 1})),
+            ("a row not present is compared by neither (L2)",
+             ([read(b"/w/a", b"a"), read(b"/w/a", b"a", registered=None, present=False)],), {}, frozenset()),
+            ("a row whose presence is unknown",
+             ([read(b"/w/a", b"a"), read(b"/w/a", b"a", registered=None, present=None)],), {}, frozenset()),
+            ("realpaths not read", ([read(None, registered=None), read(None, registered=None)],), {}, frozenset()),
+            ("null admin ids: the main worktree and disagreeing registrations",
+             ([read(b"/r"), read(b"/w/a", registered=False), read(b"/w/b", registered=False)],), {}, frozenset()),
+            ("distinct realpaths and admin ids", ([read(b"/w/a", b"a"), read(b"/w/b", b"b")],), {}, frozenset()),
+            ("no read", ([],), {}, frozenset()),
         ])
         self.assert_decides(project.gitdir_line, [
             ("a relative value", (b"gitdir: ../x\n",), {}, b"../x"),
