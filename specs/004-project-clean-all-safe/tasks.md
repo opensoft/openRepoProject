@@ -741,7 +741,9 @@ T033), when B, D, E and F are; H, guard (T034, T035), when T023 is, beside G
   pins and every status child the two status pins);
   `test_clean_evidence_checks_registration_both_ways` (a rewritten `.git` file,
   and a changed admin `gitdir` file, each give that row `inspection-error` and
-  no status probe); `test_clean_evidence_reads_presence` (`ENOENT` gives
+  no status probe; two registry entries naming one path both
+  `registration-mismatch`, lead ruling R-57, built by lane G's follow-up);
+  `test_clean_evidence_reads_presence` (`ENOENT` gives
   `present: false`, and so does `ENOTDIR`, a registered path whose parent has
   become a regular file; a parent without search permission gives `present:
   null`, an `os-error` and `inspection-error`; `not_root`; lead ruling R-36);
@@ -810,7 +812,10 @@ T033), when B, D, E and F are; H, guard (T034, T035), when T023 is, beside G
   repository, and otherwise where row 3 ran, FR-055);
   `verify_registration()` and the presence `lstat`, both through `fs_call()`
   (`present` false on `ENOENT` or `ENOTDIR`, null with an `os-error` on any
-  other failure, lead ruling R-36); `status_probe()`; and `worktree_rows()`
+  other failure, lead ruling R-36; a `present: false` row gets no
+  registration check and no probe; two registry entries naming one path are
+  each `registration-mismatch`, lead ruling R-57); `status_probe()`; and
+  `worktree_rows()`
   (the baseline keys, `prunable` among them where the record says so (M11), and
   the six added fields), each failed driver outcome becoming the row's `errors`
   entry by T024's map (M17), and each row carrying an unprobed marker, never
@@ -919,8 +924,9 @@ tuples.
   [BRANCH]` lines first, then `Excluded (4):` grouped by reason, the groups in
   gate order and the classes in ladder order (plan review M8), each group's
   `  REASON (K): NEXT STEP` line over its `    PATH [BRANCH]` rows, the main
-  worktree's group `  main-worktree (1):` with no next step (lead ruling
-  R-45), the ignored row adding `: 1 ignored;
+  worktree's group `  main-worktree (1): never removed by project clean`
+  with the contract's next step (lead ruling R-57), the ignored row adding
+  `: 1 ignored;
   first: SAMPLE`; the rows of each list and group in raw path byte order; the
   residual-window line; and the registry, the branches and the files are
   unchanged. Scenario: "The preview says what keeps each row".
@@ -1162,22 +1168,27 @@ tuples.
   for mode all-safe (the groups in gate order and the classes in ladder order,
   the next steps, the ignored count and first sample, the residual-window line,
   `No eligible worktrees`), and the single-mode layout the contract fixes (plan
-  review M8); a group whose reason has no D18 next step (`main-worktree`,
-  `unsupported-path-bytes`, `not-requested`) printed `  REASON (K):` alone,
-  from a `TEXT` key this task adds as a lead-approved contracts edit, with its
-  fixture in `tests/clean_support.py`, which it also touches (lead ruling
-  R-45); every path through `human_path()`; and `plan_document()` under
+  review M8); the three reasons D18 gives no next step (`main-worktree`,
+  `unsupported-path-bytes`, `not-requested`) printed with the contract's next
+  steps, from three `NEXT_STEPS` keys this task adds as a lead-approved
+  contracts edit, with their fixtures in `NEXT_STEP_FIXTURES` of
+  `tests/clean_support.py`, which it also touches (lead ruling R-57,
+  withdrawing R-45(3)); every path through `human_path()`; and
+  `plan_document()` under
   `--json`, which under `--apply --json` prints only when the run stops before
   the apply phase.
   — files: `project`, `tests/clean_support.py`
-  — verify: `python3 -c "import sys,re;t=open('project').read();A=sys.argv[1:];c=lambda r:t.split('# region '+r+'\n')[1].split('# endregion '+r+'\n')[0];M=[a for a in A if not ((a.split('%',1)[1] not in c(a.split('%',1)[0])) if '%' in a else (a.split('~',1)[1] in c(a.split('~',1)[0])) if '~' in a else re.search(r'^[a-z]*\s?'+re.escape(a.split(':',1)[1])+r'\b',c(a.split(':',1)[0]),re.M))];[print('region check failed:',m) for m in M];sys.exit(1 if M or not A else 0)" 'preview~human_path' 'preview~selected_heading' 'preview~excluded_group' && python3 project clean --help >/dev/null && python3 -m unittest discover -s tests -p 'test_clean_harness.py' -k '*.test_clean_text_fixtures_equal_the_contract_table'`
+  — verify: `python3 -c "import sys,re;t=open('project').read();A=sys.argv[1:];c=lambda r:t.split('# region '+r+'\n')[1].split('# endregion '+r+'\n')[0];M=[a for a in A if not ((a.split('%',1)[1] not in c(a.split('%',1)[0])) if '%' in a else (a.split('~',1)[1] in c(a.split('~',1)[0])) if '~' in a else re.search(r'^[a-z]*\s?'+re.escape(a.split(':',1)[1])+r'\b',c(a.split(':',1)[0]),re.M))];[print('region check failed:',m) for m in M];sys.exit(1 if M or not A else 0)" 'preview~human_path' 'preview~selected_heading' 'preview~excluded_group' 'contracts~"main-worktree":' 'contracts~"unsupported-path-bytes":' 'contracts~"not-requested":' && python3 project clean --help >/dev/null && python3 -m unittest discover -s tests -p 'test_clean_harness.py' -k '*.test_clean_text_fixtures_equal_the_contract_table'`
 - [ ] T053 [P] [US1] [O] Fill `check_plan(plan, run)` in region `dispatcher`, in
   FR-024's order: an incomplete plan (an all-safe preview exits 1; `--apply`
   refuses with exit 2 and the plan's code before any question; a report still
   exits 0 until T101); an `--expect-plan` mismatch (`plan-digest-mismatch`); a
   complete all-safe plan selecting nothing (`No eligible worktrees`, exit 0);
   in mode single, P excluded by a gate (`target-excluded` with its `reason`,
-  and the kept messages for the current worktree and for a class); then
+  and the kept messages for the current worktree and for a class; every gate,
+  `main-worktree` and `unsupported-path-bytes` included, takes `Worktree is
+  excluded: REASON; NEXT STEP`, since R-57 gives each reason a next step, so
+  the pre-flight's bare gate message is not added); then
   `confirmation-required` for `--apply` on a standard input that is not a
   terminal, without `--yes`. A plan, select or confirm refusal prints, under
   `--json`, the plan envelope with `apply_allowed: false` and the refusal in
@@ -2370,7 +2381,9 @@ every clean story; the `clean` tests of T114 and T116 also need US1.
   "git-too-old"`; with no `git` on PATH, `git-unavailable`, exit 2; it pins
   T048); `test_status_git_older_than_2_36_in_status_and_doctor` (status marks
   the root `inspection-error` and exits 0; doctor reports `git-too-old` as an
-  `error` check row and exits 1; neither refuses; the counting log of each
+  `error` check row whose detail begins `git-too-old: `, in human and JSON
+  output (lead ruling R-57), and exits 1; neither refuses; the counting log
+  of each
   holds `git --version` alone, `handoff()`'s `remote get-url` never spawned
   (plan review M10); a directory with no `.git` still reads `present: false`);
   `test_doctor_no_git_on_path` (`path_without_git()`: `git-unavailable` as an
@@ -2458,9 +2471,10 @@ every clean story; the `clean` tests of T114 and T116 also need US1.
   — files: `project`
   — verify: `python3 -c "import importlib.machinery as m,importlib.util as iu,sys;l=m.SourceFileLoader('pv','project');s=iu.spec_from_loader('pv',l);p=iu.module_from_spec(s);sys.modules['pv']=p;l.exec_module(p);import os,tempfile;from pathlib import Path;d=Path(tempfile.mkdtemp()).resolve();(d/'.git').mkdir();q=d/'sub';q.mkdir();os.environ['PATH']=tempfile.mkdtemp();exec('try: r=p.discover(str(q))\nexcept BaseException as x: r=x');print('discover() inside a .git directory, no git on PATH:',repr(r));sys.exit(0 if isinstance(r,(str,os.PathLike)) and Path(r).resolve()==d else 1)" && python3 -m unittest discover -s tests -p 'test_project.py' -k '*.test_family_name_refuses_ambiguous_default_project_roots'`
 - [ ] T119 [US9] [O] Update `check_rows()` (`project:876-906`: the `git` row
-  reports the version check, `ok` with the version or `error` with
-  `git-too-old` or `git-unavailable` and T117's command-neutral text (lead
-  ruling R-48); an `error` row for each null `present`,
+  reports the version check, `ok` with the detail `PATH (git version X)` or
+  `error` with the detail `CODE: MESSAGE`, CODE `git-too-old` or
+  `git-unavailable` and MESSAGE T117's command-neutral text (lead rulings
+  R-48 and R-57); an `error` row for each null `present`,
   each `dirty` left null by a failed or timed-out probe and each
   `inspection-error` row, and none for a null that means "none"),
   `print_report()` (`project:909-933`: `Git: inspection-error (CODES)` in place

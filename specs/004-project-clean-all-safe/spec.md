@@ -1680,10 +1680,12 @@ configuration"; "A lazy fetch in a partial clone is refused locally";
 - `probes` and `operations` count each Git child once: `probes.performed` every
   Git child other than a removal child, and `operations.performed` the removal
   children, as the lead ruled (R-27) from the packet's arithmetic, in which a
-  removal is an operation and not a probe. The delta's words, "every Git child
-  counted" and "equals the wrapper's count", do not say under which of the two
-  a removal falls; draft PR #19 carries the clarifying wording, and FR-033,
-  User Story 6 scenario 6 and SC-006 read it so until it lands.
+  removal is an operation and not a probe. Read literally, the delta's "the
+  record's `probes.performed` equals the wrapper's count" includes the
+  removals, which the wrapper counts, so this reading departs from its
+  literal text; it awaits Brett Heap's word through draft PR #19's "Also"
+  commit, as the push-child exception beside it does, and FR-033, User Story
+  6 scenario 6 and SC-006 read it so until then.
 - The caps and budgets stand as measured by governance task 2.1, and the
   2.36 floor as verified by task 2.2 on Git 2.36.6, 2.40.4 and 2.43.0. Their
   results are posted on PR #11, task 2.1 at

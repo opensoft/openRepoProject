@@ -48,7 +48,8 @@ Flags this table does not refuse keep the baseline's handling: without
 and an unused `--branch` or `--worktree` is ignored. `--worktree P` is
 expanded, joined to the working directory and realpath'd by one bounded
 call; it names the one registry row whose path equals it, or else whose
-realpath does (`worktree-not-found` otherwise).
+realpath does (`worktree-not-found` otherwise); a path two entries share is
+`registration-mismatch`, so `target-excluded` (lead ruling R-57).
 
 ## Order of a run
 
@@ -155,10 +156,12 @@ message}` objects, an `inspect-cap` note adding `rows`.
 
 Lines D18 leaves open are fixed here before tasks: the `Report:` and
 `--all-safe would ...` lines follow `Freshness:`; `Excluded` groups follow
-the gate order, classes in ladder order; a group whose reason D18 gives no
-next step (`main-worktree`, `unsupported-path-bytes`, `not-requested`)
-prints `  REASON (K):` with no next step (lead ruling R-45); one progress
-line per target,
+the gate order, classes in ladder order; the three reasons D18 gives no next
+step take one each, in D18's form: `main-worktree` "never removed by project
+clean", `unsupported-path-bytes` "rename the path to valid UTF-8" (P6-2), and
+`not-requested` "eligible too; name it with --worktree to remove it", so that
+every group and every gate's `target-excluded` message carries a next step
+(lead ruling R-57, withdrawing R-45(3)); one progress line per target,
 `  STAGE PATH` or `  STAGE PATH (REASON)`; the retained-branch line
 `Branches kept: B1, B2.`; a plan-blocking refusal prints the plan, then
 `REFUSED: MESSAGE`; each code with no baseline message gets one here:
@@ -301,6 +304,12 @@ R-48).
 | `git-too-old` | status or doctor row error, and doctor's `git` row | `Git VERSION is older than 2.36; repository inspection needs Git 2.36 or later.` |
 | `git-unavailable` | status or doctor row error, and doctor's `git` row | `Git is unavailable (DETAIL); repository inspection needs Git 2.36 or later.`, DETAIL as for clean's refusal |
 
+A doctor row (`level`, `check`, `detail`) has no code field, so doctor's `git`
+row writes its detail as `CODE: MESSAGE`, such as `git-too-old: Git 2.35.0 is
+older than 2.36; repository inspection needs Git 2.36 or later.`; in the ok
+case its detail is `PATH (git version X)`. A status `errors` entry keeps the
+message alone, its `code` beside it (lead ruling R-57).
+
 Push and delete-branch also refuse with `inspection-incomplete`,
 `inspect-cap` or `deadline-exceeded` when their full inspection, before or
 after confirmation, is incomplete, and push with the reason `remote-gone`
@@ -398,7 +407,7 @@ at most three.
 | Git check | `git --version` once per invocation, only when a repository is inspected; never a refusal |
 | No `.git` | `present: false`, no Git child, as today |
 | Uninspectable root, leg or worktree | `classification: "inspection-error"`, `errors`, unestablished values null; status exits 0 |
-| Doctor's `git` row | `ok` with the version, or `error` naming `git-too-old` or `git-unavailable` with its command-neutral text ("Codes"; lead ruling R-48) |
+| Doctor's `git` row | `ok` with the detail `PATH (git version X)`, or `error` with the detail `CODE: MESSAGE`, CODE `git-too-old` or `git-unavailable` and MESSAGE its command-neutral text ("Codes"; lead rulings R-48 and R-57) |
 | Doctor's error rows | one per null `present`, null `dirty` from a failed or timed-out probe, and `inspection-error` row; none for a null that means "none" |
 | Human `status` and `doctor` | `Git: inspection-error (CODES)` in place of the branch line |
 | Deleted upstream | `upstream` is the configured short name; `ahead`, `behind` null |
