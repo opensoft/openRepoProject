@@ -24,7 +24,8 @@ lead's C-28 and C-29 on two points found in applying them; its edits to
 `specs/project-overview/spec.md`, agreed by lane openRepoProject-4 on
 2026-10-20, are committed (`6fe8a5e`; `proposal.md`, Dependencies and
 Sequencing). Round C6 applies Codex's finding on `67e43ae` (C-30), the
-bounded inspection of a remote's URL; this design describes
+bounded inspection of a remote's URL, with the lead's C-31 and C-32 on two
+points found in applying it; this design describes
 `specs/project-overview/spec.md` as round C6 leaves it, written but held for
 lane openRepoProject-4 and not committed, and until it agrees the committed
 file is the one it agreed in round C5 (`6fe8a5e`).
@@ -71,6 +72,8 @@ The rulings and the packet's boundary map to the decisions:
 | C-28: a key past the 64th stays `request-cap` at an expiry | D4, D5, D7 |
 | C-29: one sentinel byte past each remote-target read's 64 KiB | D2 |
 | C-30: a remote's URL held in memory only to derive the `owner/repository` and detect its user information | D2, D3 |
+| C-31: a remote-target read's standard error drained and discarded unexamined | D2 |
+| C-32: the user part of a credential-bearing URL checked on its own in the outputs | D3 |
 | C-10, L-12: CI on Linux only | Migration Plan |
 
 What in `project` shapes the approach (at `961c405`; features 004 and 005
@@ -205,7 +208,8 @@ protocol pins:
    a URL), a remote of `.`, or a merge ref outside `refs/heads/` gives
    `no-remote-target`, and the second child does not run.
 2. `git remote get-url <remote name>`, which prints the URL as Git expands
-   `url.<base>.insteadOf`. Exit 2 ("No such remote") gives `no-remote-target`.
+   `url.<base>.insteadOf`. Exit 2, Git's status for "No such remote", gives
+   `no-remote-target`: the exit status decides, never Git's message (C-31).
    The name is passed as Git printed it; a name Git would read as an option
    only makes the child fail.
 
@@ -213,8 +217,10 @@ Any other failure, a budget reached or a stop at the deadline gives
 `remote-target-unread` (D7). Each child's standard output is read to at most
 64 KiB and one byte and kept to at most 64 KiB, the byte past the cap telling
 an output of exactly 64 KiB from a longer one, which fails the read (C-29),
-and its standard error is drained and discarded, never kept for a message,
-because Git may echo the remote's name or URL there. The URL lives in memory
+and its standard error is drained and discarded unexamined, never read for a
+reason or kept for a message, because Git may echo the remote's name or URL,
+user information included, there (C-31). The URL that standard output carries
+is the only credential-bearing text the overview inspects: it lives in memory
 only while D3 derives the `owner/repository` and detects the URL's user
 information; after that no part of the user information is retained or
 compared, none is ever printed, logged, sent or used to authenticate, and the
@@ -273,7 +279,9 @@ key compares it without case. No reason carries the URL, and nothing of the
 URL is logged. The user information is tested only by steps 1 and 3, for its
 presence, for a `:` and for a user other than `git`, and it is dropped with
 the URL once the judgement is made, whatever its outcome; the comparison with
-`git` is part of deriving the identity, never made after it (C-30).
+`git` is part of deriving the identity, never made after it (C-30). "Remotes
+that give no request" checks that no output, argv or message holds the user
+part on its own, beside the password and the whole URL (C-32).
 
 ### D4. The query set, the keys and their order
 

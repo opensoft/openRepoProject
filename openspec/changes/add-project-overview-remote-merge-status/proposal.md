@@ -7,8 +7,9 @@ spec edits committed on lane openRepoProject-4's agreement of 2026-10-20;
 round C5's edits for lane openRepoProject-3's delta read and Codex's findings
 on `e198548` (C-24 to C-29) applied, their `project-overview` spec edits
 committed on lane openRepoProject-4's agreement of 2026-10-20; round C6's
-edits for Codex's finding on `67e43ae` (C-30) applied, their
-`project-overview` spec edit held for lane openRepoProject-4; ratification
+edits for Codex's finding on `67e43ae` and two points found in applying it
+(C-30 to C-32) applied, their `project-overview` spec edits held for lane
+openRepoProject-4; ratification
 by Brett Heap pending; nothing here is ratified. Governing issue:
 opensoft/openRepoProject#25, claimed by lane openRepoProject-5 (comment
 6111242617); refs #6, the record of the project
@@ -34,7 +35,7 @@ executable. Change 1's evidence model,
 `Repository inspection requires Git 2.36 and shares one evidence model`
 (CAS/cmd:90), is [E]. The lane's rulings are cited as L-1 to L-9 and C-1 to C-8
 (2026-10-11), L-10 to L-15, B-14, C-9 and C-10 (2026-10-18), L-16, L-17 and
-C-11 to C-14 (2026-10-19), and F-3 and C-15 to C-30 (2026-10-20, C-16 to C-22
+C-11 to C-14 (2026-10-19), and F-3 and C-15 to C-32 (2026-10-20, C-16 to C-22
 being the council's verdicts). `PR19/cmd` is draft PR #19's
 `openspec/changes/add-project-clean-all-safe/specs/project-command/spec.md` at
 `c462d87`.
@@ -143,11 +144,12 @@ put the answer inside the revalidation signature and added ladder classes.
   tests, infers, prints and forwards no credential value, the caller's
   environment excepted, which it passes to a `gh` child unread (C-7), and a
   remote's URL excepted, which it holds in memory only while it derives the
-  `owner/repository` and detects the URL's user information; after that no
-  part of the user information is retained or compared, none is ever printed,
-  logged, sent or used to authenticate, and the URL is never forwarded with it
-  (C-30). The alignment review narrows the `gh` clause to what `project`
-  starts and restores the packet's "infers" (QA-1, SA-11; C-13).
+  `owner/repository` and detects the URL's user information, the read's
+  standard error being discarded unexamined; after that no part of the user
+  information is retained or compared, none is ever printed, logged, sent or
+  used to authenticate, and the URL is never forwarded with it (C-30, C-31).
+  The alignment review narrows the `gh` clause to what `project` starts and
+  restores the packet's "infers" (QA-1, SA-11; C-13).
 - **One addition to "Overview bounds its work and reports what it
   omitted"**, lane openRepoProject-4's fourth option (C-9). The remote-target
   reads are Git children, so `probes.performed` counts them as it counts every
@@ -200,10 +202,11 @@ put the answer inside the revalidation signature and added ladder classes.
   credential value, the caller's environment excepted, which it passes to a
   `gh` child unread, and a remote's URL excepted, which it holds in memory
   only while it derives the `owner/repository` and detects the URL's user
-  information, keeping and comparing no part of that information afterwards,
-  never printing, logging, sending or authenticating with any of it, and never
-  forwarding the URL with it (C-30); `gh` authenticates by its own path, and a
-  URL with embedded credentials is refused unprinted.
+  information, discarding unexamined what the read writes to standard error,
+  keeping and comparing no part of the user information afterwards, never
+  printing, logging, sending or authenticating with any of it, and never
+  forwarding the URL with it (C-30, C-31); `gh` authenticates by its own path,
+  and a URL with embedded credentials is refused unprinted.
 - **Unknown is explicit** (DI:1049-1056). Every failure is `unknown` or
   `unavailable` with a reason, never a guess and never `not-found`.
 - **Bounded, inside the overview's run bound.** The remote phase sits inside
@@ -280,8 +283,9 @@ its one modified requirement and those of
     kept) but the credential clause, which is replaced by three clauses that
     pass the caller's environment to a `gh` child unread and bound the
     in-memory inspection of a remote's URL to deriving the `owner/repository`
-    and detecting its user information (C-30), and remote evidence labelled
-    as live. Added scenario: a `--remote` run with a fake `gh` leaves
+    and detecting its user information, the read's standard error discarded
+    unexamined (C-30, C-31), and remote evidence labelled as live. Added
+    scenario: a `--remote` run with a fake `gh` leaves
     the zero-mutation snapshots identical, opens no connection from `project`,
     sends only the fixed query, again on a second run, and every recorded
     `gh` environment sets `GH_NO_UPDATE_NOTIFIER=1`,
@@ -486,18 +490,24 @@ scenarios (14, 2, 7 and 13), and one MODIFIED requirement in `project-command`,
   that [B] adds only the one C-26 sentence, and the file is committed exactly
   as held (`6fe8a5e`). `specs/project-command/spec.md` is unchanged in this
   round, and nothing was held for lane openRepoProject-2.
-- **Round C6's spec edit is held for lane openRepoProject-4 (C-30).** This
-  proposal and `design.md` describe `specs/project-overview/spec.md` as round
-  C6 leaves it, which is written but not committed. In the second paragraph
-  of "Overview is local and read-only", the clause that replaces the
-  credential clause names a remote's URL beside the caller's environment as
-  its second exception, and two sentences bound it (Codex's P2 on `67e43ae`,
-  spec.md:27): the URL is held in memory only while the overview derives the
-  `owner/repository` and detects its user information, which it tests only as
-  the ADDED requirement's `credential-bearing-remote` and `malformed-remote`
-  reasons state; after that no part of the user information is retained or
-  compared, none is ever printed, logged, sent or used to authenticate, and
-  the URL is never forwarded with it. No scenario and no count changes. The
+- **Round C6's spec edits are held for lane openRepoProject-4 (C-30 to
+  C-32).** This proposal and `design.md` describe
+  `specs/project-overview/spec.md` as round C6 leaves it, which is written but
+  not committed. In the second paragraph of "Overview is local and
+  read-only", the clause that replaces the credential clause names a remote's
+  URL beside the caller's environment as its second exception, and three
+  sentences bound it (Codex's P2 on `67e43ae`, spec.md:27): the URL a
+  remote-target read prints on standard output is held in memory only while
+  the overview derives the `owner/repository` and detects its user
+  information, which it tests only as the ADDED requirement's
+  `credential-bearing-remote` and `malformed-remote` reasons state; after that
+  no part of the user information is retained or compared, none is ever
+  printed, logged, sent or used to authenticate, and the URL is never
+  forwarded with it (C-30); and the read's standard error is drained and
+  discarded unexamined (C-31). In the ADDED requirement, the Remote target
+  paragraph says "drained and discarded unexamined" too (C-31), and the AND
+  of "Remotes that give no request" names `alice`, the URL's user part, beside
+  `s3cr3t` (C-32). No scenario is added and no count changes. The second
   paragraph is in the block lane openRepoProject-4 agreed, so the whole file
   is held for it to read against its agreement of 2026-10-20. Until it agrees,
   the committed `specs/project-overview/spec.md` is the text it agreed then
@@ -628,9 +638,10 @@ merging), **C-15** (the council's inputs), **C-16** to **C-22** (the council's
 verdicts, below), **C-23** (Open Questions 3), **C-24** to **C-29** (round
 C5: lane openRepoProject-3's delta read of `e198548`, Codex's three findings
 on it and two points found in applying them; Decisions and Readings below,
-and "Re-read and Codex Findings (round C5)") and **C-30** (round C6: Codex's
-finding on `67e43ae`, the bounded inspection of a remote's URL; Readings
-below, and "Re-read and Codex Findings (round C6)").
+and "Re-read and Codex Findings (round C5)") and **C-30** to **C-32** (round
+C6: Codex's finding on `67e43ae`, the bounded inspection of a remote's URL,
+and two points found in applying it; Readings below, and "Re-read and Codex
+Findings (round C6)").
 
 Packet open decisions taken, each citing the text that leaves it open:
 
@@ -983,9 +994,10 @@ Readings of packet and ratified text:
   The overview holds the URL in memory only while it derives the
   `owner/repository` and detects the URL's user information; after that it
   keeps and compares no part of that information, never prints, logs, sends
-  or authenticates with any of it, and never forwards the URL with it; and
-  since no URL appears in either output, in a `gh` argv or in any message,
-  nothing is left to redact (C-30; Codex's P2 on `67e43ae`).
+  or authenticates with any of it, and never forwards the URL with it; a
+  read's standard error, where Git may echo the URL, is discarded unexamined;
+  and since no URL appears in either output, in a `gh` argv or in any message,
+  nothing is left to redact (C-30, C-31; Codex's P2 on `67e43ae`).
 - **"each is recorded as unknown"** (DI:1053): as the row's
   `remote.state`, never as a row error or scan error, so change 2's completeness
   and exit rules stay as written.
@@ -1203,11 +1215,15 @@ C-29), the last two rows; C-24's items 3 and 4 and C-25 to C-29 edit
 ### Re-read and Codex Findings (round C6)
 
 Codex's inline finding on `67e43ae` (comment 4327505442, 2026-10-20) is one
-P2, and the lane's lead accepted it (C-30, the rulings of 2026-10-20). It
-edits `specs/project-overview/spec.md` in "Overview is local and read-only",
-the block lane openRepoProject-4 agreed, so that file is held for lane
-openRepoProject-4 (Dependencies and Sequencing), and the rest is committed.
+P2, and the lane's lead accepted it (C-30, the rulings of 2026-10-20) and
+ruled on two points the writer found in applying it (C-31, C-32), the last
+two rows. All three edit `specs/project-overview/spec.md`, C-30 and C-31 in
+"Overview is local and read-only", the block lane openRepoProject-4 agreed,
+so that file is held for lane openRepoProject-4 (Dependencies and
+Sequencing), and the rest is committed.
 
 | Finding | Severity | Ruling | Section edited |
 | --- | --- | --- | --- |
-| Codex 7 (P2, on `67e43ae`, spec.md:27): the overview must read and test a remote's URL to derive the identity and give `credential-bearing-remote`, which the unconditional "read, test, infer, print and forward no credential value" forbids, so no implementation can satisfy both | P2 | C-30: applied with change, held: in the second paragraph of "Overview is local and read-only", a remote's URL is the replacement clause's second exception, beside the caller's environment, held in memory only while the overview derives the `owner/repository` and detects its user information, which it tests only as the ADDED requirement's `credential-bearing-remote` and `malformed-remote` reasons state; after that no part of the user information is retained or compared, none is ever printed, logged, sent or used to authenticate, and the URL is never forwarded with it. Two changes to the ruling's words: "compared" joins "retained" under "after that" rather than "ever", because deriving the identity, which the ruling's first bullet allows, compares the user with `git` (`malformed-remote`; `design.md` D3, step 3); and "the identity" is written "the GitHub `owner/repository`", since change 2's "repository identity" is `{root, common_dir, dev, ino}`. The `project` process's other credential clauses are unchanged: it reads no credential file and no profile data the scan does not need, a `gh` child authenticates by the GitHub client's own means, and the caller's environment passes to it unread. No AND is added: the AND of "Remotes that give no request" already says that neither output, no argv and no message contains `s3cr3t` or the credential-bearing URL, and what the process keeps in memory after the derivation is not observable from outside it. The copies follow, the Rules entry retitled from "never touched", since `project` now reads such a URL, and DI:1057-1058 gains a Reading | held `project-overview` delta ("Overview is local and read-only", second paragraph); What Changes ("One carve-out"); Capabilities; Dependencies and Sequencing; Rules This Change Keeps; Readings; `design.md` Context, Goals, D2, D3 |
+| Codex 7 (P2, on `67e43ae`, spec.md:27): the overview must read and test a remote's URL to derive the identity and give `credential-bearing-remote`, which the unconditional "read, test, infer, print and forward no credential value" forbids, so no implementation can satisfy both | P2 | C-30: applied with change, held: in the second paragraph of "Overview is local and read-only", a remote's URL is the replacement clause's second exception, beside the caller's environment, held in memory only while the overview derives the `owner/repository` and detects its user information, which it tests only as the ADDED requirement's `credential-bearing-remote` and `malformed-remote` reasons state; after that no part of the user information is retained or compared, none is ever printed, logged, sent or used to authenticate, and the URL is never forwarded with it. Two changes to the ruling's words: "compared" joins "retained" under "after that" rather than "ever", because deriving the identity, which the ruling's first bullet allows, compares the user with `git` (`malformed-remote`; `design.md` D3, step 3); and "the identity" is written "the GitHub `owner/repository`", since change 2's "repository identity" is `{root, common_dir, dev, ino}`. The `project` process's other credential clauses are unchanged: it reads no credential file and no profile data the scan does not need, a `gh` child authenticates by the GitHub client's own means, and the caller's environment passes to it unread. No AND is added: the AND of "Remotes that give no request" already says that neither output, no argv and no message contains `s3cr3t` or the credential-bearing URL, and what the process keeps in memory after the derivation is not observable from outside it; C-32 below extends that AND to the user part on its own. The copies follow, the Rules entry retitled from "never touched", since `project` now reads such a URL, and DI:1057-1058 gains a Reading | held `project-overview` delta ("Overview is local and read-only", second paragraph); What Changes ("One carve-out"); Capabilities; Dependencies and Sequencing; Rules This Change Keeps; Readings; `design.md` Context, Goals, D2, D3 |
+| Writer C6's point 1: Git may echo a remote's URL, user information included, on a remote-target read's standard error, which the ADDED requirement drains and discards, text that C-30's bounds did not cover | ruling | C-31: applied, held, after the check it asks for: no classification reads that standard error, since `no-remote-target` for a remote that is not configured comes from the exit status 2 of `git remote get-url` (checked again on Git 2.43.0 in this round: exit 2 with "error: No such remote" on standard error alone, and a credential-bearing URL on standard output alone, nothing on standard error), and every other reason comes from standard output, the exit status or a limit; the Remote target paragraph of the ADDED requirement reads "drained and discarded unexamined", and the exception in "Overview is local and read-only" names the URL a read "prints on standard output" and ends "Such a read's standard error SHALL be drained and discarded unexamined", so that URL stays the only credential-bearing text the overview inspects; `design.md` D2 says the exit status decides, never Git's message | held `project-overview` delta ("Overview is local and read-only", second paragraph; Remote target); What Changes ("One carve-out"); Capabilities; Dependencies and Sequencing; Rules This Change Keeps; Readings; `design.md` Context, D2 |
+| Writer C6's point 2: the AND of "Remotes that give no request" checks `s3cr3t` and the whole URLs, not the user part on its own, which C-30 also forbids | ruling | C-32: applied, held: the AND reads "neither output, no argv and no message contains `alice`, `s3cr3t` or any of those URLs"; in that scenario `alice` appears only in the credential-bearing URL of its WHEN, so the URL is unchanged; its other use, the fork `alice/widget`, is in "The remote target comes from the merge target's branch configuration", another fixture | held `project-overview` delta ("Remotes that give no request"); Dependencies and Sequencing; `design.md` Context, D3 |
