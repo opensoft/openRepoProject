@@ -351,16 +351,23 @@ require it to stay within the invocation's 1 GiB (1,073,741,824 bytes,
 `limits.cache_bytes_total`); and fix the names it will remove. A difference, an
 error, a byte total past either cap, or a filesystem call that outlives its 5 s
 per-call budget (`probe-timeout`) SHALL end the stage `refused` with
-`cache-changed`, nothing deleted. Where the removal floor or the work deadline
-stops a read of the preflight, or of the reopening of the first listed cache's
-chain that follows it, nothing SHALL be deleted and the stop SHALL NOT be
-reported as a change of state: a read that cannot start because no more than
-the floor remains, or that outlives the shorter budget that the deadline set,
-`work remaining less the removal floor` (`deadline-exceeded`, as "Clean bounds
-its Git work and reports omitted work" states), SHALL end the stage
-`not-attempted` with `target-stopped`, and the target and every later one SHALL
-be `not-attempted` with `deadline-exceeded`, never `refused` with
-`cache-changed`.
+`cache-changed`, nothing deleted, except where a signal received before a
+`probe-timeout` is classified decides it, as stated below. Where the removal
+floor or the work deadline stops a read of the preflight, or of the reopening
+of the first listed cache's chain that follows it, nothing SHALL be deleted and
+the stop SHALL NOT be reported as a change of state: a read that cannot start
+because no more than the floor remains, or that outlives the shorter budget
+that the deadline set, `work remaining less the removal floor`
+(`deadline-exceeded`, as "Clean bounds its Git work and reports omitted work"
+states), SHALL end the stage `not-attempted` with `target-stopped`, and the
+target and every later one SHALL be `not-attempted` with `deadline-exceeded`,
+never `refused` with `cache-changed`. Before it classifies the stop of any
+such read, a `probe-timeout`, the floor or the deadline, the stage SHALL check
+whether a signal has been received, and where one has, the stop SHALL take the
+signal's outcome: the stage SHALL end `not-attempted` with `target-stopped`,
+nothing deleted, and the target and every later one SHALL be `not-attempted`
+with `interrupted`, as at the check before the hand-off of its first removal,
+never `refused` with `cache-changed` and never `deadline-exceeded`.
 
 After its first removal, a removal that fails, a read that runs out of its
 budget, a removal whose wait the removal ceiling ends, or the removal floor
