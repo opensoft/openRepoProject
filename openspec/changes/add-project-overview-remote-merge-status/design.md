@@ -18,7 +18,11 @@ the lane's lead ruled all twelve of its concerns VALID and none NOTED (C-16 to
 C-22), so there is no `clarifications.md`: the decisions below carry the
 verdicts, and round C4's edits to `specs/project-overview/spec.md`, agreed
 by lane openRepoProject-4 on 2026-10-20, are committed (`proposal.md`,
-Dependencies and Sequencing).
+Dependencies and Sequencing). Round C5 applies lane openRepoProject-3's delta
+read of `e198548` and Codex's three findings on it (C-24 to C-27); this design
+describes `specs/project-overview/spec.md` as round C5 leaves it, written but
+held for lane openRepoProject-4 and not committed, and until it agrees the
+committed file is the one it agreed in round C4 (`d73d25d`).
 
 Citations follow `proposal.md`: the packet at `da33d92`; APO, CAS, PRS and
 `project:N` at main `961c405`, which main `e9d6711` holds unchanged for them
@@ -55,6 +59,10 @@ The rulings and the packet's boundary map to the decisions:
 | C-19, C-21: the live contract check, header names without case, the resolved repository | D5, D6, D11, Risks |
 | C-22: parser failures and which `gh` runs | D5, D6, D10 |
 | Lane openRepoProject-3's re-read of `c928cb2`, LOW-6 and LOW-9 | D2, D7 |
+| C-24: lane openRepoProject-3's delta read of `e198548`: the Q16 pointer, the lookup's test seams and the sources of two `api-error` rules | D6, D7, D11 |
+| C-25: no request can be sent or answered, so `unavailable` outranks the request cap | D4, D5, D6 |
+| C-26: a lookup of `gh` that fails or runs out of time | D5, D10, D11, Risks |
+| C-27: one sentinel byte past each read bound | D6 |
 | C-10, L-12: CI on Linux only | Migration Plan |
 
 What in `project` shapes the approach (at `961c405`; features 004 and 005
@@ -260,11 +268,14 @@ head (C-6; Copilot 3989411854).
 Keys are `(github.com, lowercased owner/repository, head)`. They are
 collected in canonical order, repositories by rank (APO design.md, D6) and
 then rows in row order (main worktree first, then path bytes), each key at
-its first appearance. The first 64 are sent; the rest are `request-cap`.
-`requests.estimated` is the number of distinct keys. Rows sharing a key share
-the response, and each row is matched against it with its own repository's
-base branch (D6), since two clones of one repository can have different
-merge targets.
+its first appearance. The first 64 are sent; the rest are `request-cap` only
+when requests can be sent and the cap stops them: with no `gh` found (D5), or
+when each of the 64 requests sent exits 4 with nothing on standard output (D6),
+they are `gh-unavailable` or `gh-unauthenticated`, as every other key is
+(C-25). `requests.estimated` is the number of distinct keys. Rows sharing a
+key share the response, and each row is matched against it with its own
+repository's base branch (D6), since two clones of one repository can have
+different merge targets.
 
 ### D5. The request
 
@@ -329,6 +340,18 @@ path, received the caller's `GH_TOKEN`; and with `.` in `PATH` the lookup
 returned the relative `./gh`, which raised `FileNotFoundError` when started
 in `/`.
 
+A lookup that fails, or that reaches its 5 s limit, as on an unreachable
+`PATH` directory, gives what one that finds none gives: every keyed row,
+whether or not its key is past the 64th, is `gh-unavailable`, and no child
+starts (C-25, C-26). [B]'s bounded-task rule would otherwise record
+`probe-timeout`; [B]'s added paragraph and [R]'s isolation clause record the
+lookup's failure or cut only in the rows' `remote`, never as a row or scan
+error (D10). A lookup that the deadline stops before its 5 s end leaves its
+rows `cancelled`, as an expiry does (D7), just as [B] tells
+`deadline-exceeded` from `probe-timeout` and D7 tells `aborted` from
+`timeout`. The README's next step for `gh-unavailable` names both causes:
+install `gh`, or check that `PATH`'s directories are reachable.
+
 Rejected: REST `commits/{sha}/pulls` (an unknown commit is HTTP 422, an
 `unknown` under DI:1055-1056, and a further page shows only in a `Link`
 header); `gh pr list` (by branch name, page information hidden, 30 items by
@@ -337,11 +360,16 @@ default); direct HTTPS from `project` (`proposal.md`, Open Questions 2).
 ### D6. Reading a response
 
 With `--include`, standard output is the status line, the header lines, a
-blank line and the body. The loop reads at most 64 KiB of status and headers,
-past which the key is `api-error`, and at most 1 MiB of body; at the next byte
-it stops reading, stops the child (D7) and records `truncated`.
+blank line and the body. The loop reads at most 64 KiB and one byte of status
+and headers, keeping at most 64 KiB, and at most 1 MiB and one byte of body,
+keeping at most 1 MiB: the one byte past each bound tells a part of exactly
+that size, which is read whole, from a longer one (C-27). Status and headers
+longer than 64 KiB make the key `api-error`; at the byte past 1 MiB of body
+the loop stops reading, stops the child (D7) and records `truncated`.
 
-- Exit 4 with nothing on standard output: `gh-unauthenticated`.
+- Exit 4 with nothing on standard output: `gh-unauthenticated`; when each of
+  the 64 requests sent ends so, the keys past the 64th are `gh-unauthenticated`
+  too, never `request-cap` (D4; C-25).
 - A child the loop stopped at its limit, at the remote budget's end or at the
   deadline: `timeout` or `aborted` (D7); one stopped for a body past 1 MiB is
   `truncated`, and one whose status and headers passed 64 KiB is `api-error`.
@@ -363,11 +391,13 @@ it stops reading, stops the child (D7) and records `truncated`.
   3.10.7 and 3.11; CI's Python 3.10 was not checked. An `errors` entry of type
   `RATE_LIMITED` gives `rate-limited`, and any other `errors` entry, a null
   `data.repository`, or a `data.repository.nameWithOwner` that fails D3's
-  pattern, gives `api-error`. A null `data.repository.object` gives
-  `not-found`: GitHub holds no such commit. Otherwise
-  `associatedPullRequests` must hold a boolean `pageInfo.hasNextPage`, which
-  when true gives `further-page`, and a list of at most 100 `nodes`, more
-  being `api-error`.
+  pattern (the field S-2 adds and C-19 takes, validated as each node's
+  `baseRepository.nameWithOwner` is), gives `api-error`. A null
+  `data.repository.object` gives `not-found`: GitHub holds no such commit.
+  Otherwise `associatedPullRequests` must hold a boolean
+  `pageInfo.hasNextPage`, which when true gives `further-page`, and a list of
+  at most 100 `nodes`, more being `api-error` (AE-5's suggested text, taken by
+  C-22).
 - Each node must have a positive integer `number`; a `state` of `OPEN`,
   `CLOSED` or `MERGED`; a `headRefOid` of 40 or 64 hexadecimal digits; a
   string `baseRefName`; a `baseRepository.nameWithOwner` that passes D3's
@@ -410,11 +440,12 @@ deadline and the last stop adds at most 2 s + 2 s, so [B]'s 64 s bound holds;
 rendering follows.
 
 Each `gh` child enters the in-flight registry while SIGINT, SIGTERM and SIGHUP
-are blocked, as a Git child does (APO design.md, D1), so a signal terminates
-and reaps it with the rest, and [X]'s exits 130, 143 and 129 hold with no
-result document. On every other exit path, C-14's exit 2 included, the loop
-kills every in-flight `gh` child's group, as [E] kills a probe child's (lane
-openRepoProject-3's re-read, LOW-6).
+are blocked, as a Git child does (APO design.md, D1, as D1 reads at `961c405`;
+feature 005's Q16 may change it, and `tasks.md` 2.3 re-reads this sentence),
+so a signal terminates and reaps it with the rest, and [X]'s exits 130, 143
+and 129 hold with no result document. On every other exit path, C-14's exit 2
+included, the loop kills every in-flight `gh` child's group, as [E] kills a
+probe child's (lane openRepoProject-3's re-read, LOW-6).
 
 No key stops another (`proposal.md`, Decisions): after a rate limit or an
 exit 4, the remaining keys still run, each failing fast on its own, so which
@@ -477,19 +508,19 @@ The remote phase starts after classification, findings, gates, suggestions,
 summary counts and completeness are computed, and it writes only into the
 `remote` slots. Nothing it records is a row error, a scan error or a finding,
 [B]'s added paragraph saying so for its children that exit nonzero or are
-stopped, and [R]'s isolation clause for every failure, cut or stop of a
-remote-target read or a `gh` child, `probe-failed`, `probe-timeout` and
-`deadline-exceeded` notwithstanding, so [X]'s exit status and [J]'s
-`completeness` are what they are without `--remote`, unless the remote phase
-raises an exception that [R] records as none of its reasons, which exits 2 as
-[X] gives any exception outside the per-candidate boundary (a body that the
-parser rejects, for any cause, is `api-error`, one of [R]'s reasons, never
-such an exception: C-22), and the envelope's `probes` differs only by D2's
-reads. Nothing is written to disk or kept past
-the run, `gh` never gets `--cache`, and `project clean` has neither the
-option nor a reader of these fields, so remote evidence never reaches an
-eligibility gate, a `plan_digest` or a revalidation (SY:129-130;
-DI:1059-1060).
+stopped and for a lookup of `gh` that fails or does not finish in time
+(C-26), and [R]'s isolation clause for every failure, cut or stop of a
+remote-target read, of that lookup or of a `gh` child, `probe-failed`,
+`probe-timeout` and `deadline-exceeded` notwithstanding, so [X]'s exit status
+and [J]'s `completeness` are what they are without `--remote`, unless the
+remote phase raises an exception that [R] records as none of its reasons,
+which exits 2 as [X] gives any exception outside the per-candidate boundary
+(a body that the parser rejects, for any cause, is `api-error`, one of [R]'s
+reasons, never such an exception: C-22), and the envelope's `probes` differs
+only by D2's reads. Nothing is written to disk or kept past the run, `gh`
+never gets `--cache`, and `project clean` has neither the option nor a reader
+of these fields, so remote evidence never reaches an eligibility gate, a
+`plan_digest` or a revalidation (SY:129-130; DI:1059-1060).
 
 ### D11. Test seams and the scenario map
 
@@ -504,9 +535,11 @@ DI:1059-1060).
   null `data.repository`, a status and header block over 64 KiB, a body of
   1 MiB of `[` or with a `number` of 5,000 digits (C-22), or 502, give the
   queried repository's `nameWithOwner` as the owner and name asked or, to
-  stand for a renamed repository, as another, or name pull requests with any
-  head, base and state. It places each pull request only in the list GitHub
-  returned it in, the association, in a state that task 2.5 recorded there;
+  stand for a renamed repository, as another, as the last AND of "The chosen
+  pull request and a rejected answer" does (lane openRepoProject-3's delta
+  read, F4), or name pull requests with any head, base and state. It places
+  each pull request only in the list GitHub returned it in, the association,
+  in a state that task 2.5 recorded there;
   the `CLOSED` nodes of "The chosen pull request and a rejected answer" are
   the one exception, a defensive input that pins that such a node never
   matches (C-16, C-19). It
@@ -515,6 +548,14 @@ DI:1059-1060).
   `GH_NO_EXTENSION_UPDATE_NOTIFIER`, `GH_PROMPT_DISABLED`, `GH_TELEMETRY` and
   `NO_COLOR`, whether `GH_TOKEN` equals the caller's, the working directory,
   and its start and end times.
+- A planted `gh`, a second fake that records each run, sits in the working
+  directory of a run whose `PATH` begins with an empty entry and `.`, so that
+  "No gh, or a gh without authentication" shows it never runs, and the fake
+  `gh`'s recorded argv shows the absolute path each child was started by
+  (C-22; lane openRepoProject-3's delta read, F3). For the same scenario the
+  lookup's filesystem task takes the injected slow call that change 2's
+  design patches into its filesystem tasks (APO design.md, D13), on a chosen
+  `PATH` directory, so that the lookup is cut at 5 s (C-26).
 - The counting `git` wrapper of change 2's design (APO design.md, D13), which
   can hold a chosen argv, gains one fixture control: for a chosen argv in a
   chosen repository it exits with a given status and a fixed line on standard
@@ -604,6 +645,10 @@ requests".
   value.
 - [Collection used most of the 60 s] -> The requests end at the deadline as
   `cancelled` or `aborted`, and `remote.completeness` says `incomplete`.
+- [A `PATH` directory on an unreachable mount ahead of the one holding `gh`]
+  -> The lookup is cut at 5 s and every keyed row is `gh-unavailable`, never
+  a row or scan error, though a `gh` lies further on; the README's next step
+  says to check that `PATH`'s directories are reachable (C-26).
 - [The `for-each-ref` atoms on the Git 2.36 floor] -> Checked on 2.43 here;
   the realization checks them on 2.36 as change 1 checked its probes, or
   reads the two keys with `git config --get`, at one more child. That fallback
