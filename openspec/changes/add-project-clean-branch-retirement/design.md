@@ -39,7 +39,10 @@ Round A5 maps A-25 (the cache change's worst shapes at `e1049b2`) to D7; A-26
 and Risks; A-27 (the `update-ref` restore for a branch named `HEAD`) to
 Context, D8, D9 and Risks; and A-28 as amended (the `$'...'` note) to Context,
 D8, D9 and the Migration Plan (proposal, "Re-read and Codex Findings (round
-A5)").
+A5)"). Round A6 maps A-29 (lane openRepoProject-3's folded read of `9b67e8c`,
+four LOW wording items) to D8, which gains the one clause that has the note
+follow change 1's command form as ratified (proposal, "Re-read and Codex
+Findings (round A6)").
 
 Citations follow `proposal.md`: packet files at `da33d92`, `CAS` for change 1,
 `APO` for change 2, `project:N` and `tests:N` at `961c405`, all unchanged at
@@ -768,7 +771,11 @@ escapes, a UTF-8 locale: dash, Ubuntu's `/bin/sh`, lacks the form, and in the
 C locale bash and zsh can pass such an escape as text, refuse the line, or
 drop the code point, which names another branch (Context). Change 1's path
 rule, whose form this is, shares the limitation, as feature 004 records it
-(lane openRepoProject-2's R-60). This is a documentation note, made here and
+(lane openRepoProject-2's R-60). The note, and the literal of the quoting
+scenario in the spec delta, follow change 1's command form as ratified:
+whether that form changes is lane openRepoProject-2's LQ-8, with Brett Heap,
+and this change takes no side on it (ruling A-29, lane openRepoProject-3's
+delta read of `9b67e8c`, L2). This is a documentation note, made here and
 in the README's "Clean up Git worktrees" (`tasks.md`, Speckit Handoff), and
 no printed line carries it: the lines stay in change 1's form (ruling A-28
 as amended, Codex's P2 on `9ff8202`).
