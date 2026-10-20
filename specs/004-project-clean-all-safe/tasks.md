@@ -1123,7 +1123,7 @@ These run inside their lanes, after T047 (Lanes, above).
 
 ### Implementation for User Story 1
 
-- [ ] T047 [US1] [O] Rewrite `clean()` (`project:669-743`) once as the fixed
+- [x] T047 [US1] [O] Rewrite `clean()` (`project:669-743`) once as the fixed
   pipeline, frozen afterwards: later tasks fill stages and never reorder them,
   so the slot reads and the write handling are built here. `clean()` enters
   `with signal_scope() as scope:` first, covering the run from the argument
