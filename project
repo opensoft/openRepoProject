@@ -1964,6 +1964,146 @@ def human_path(raw, command=False):
 # endregion escaping
 
 # region evidence
+# The one evidence model of a repository (design D4, D6, D7 and D8;
+# data-model.md, "Repository identity", "Merge target", "Worktree row",
+# "Worktree identity and registration", "Branch evidence" and
+# "Classification"; FR-006, FR-007 and FR-053 to FR-061). cleanup_report()
+# reads it; repo_state() keeps its own reader until T117 (research.md R9).
+
+# The ladder's text, verbatim from cleanup_report() at 961c405 (project:566-616):
+# the recommendation of each class, and the second text of the two classes that
+# have a second rung (:580 and :613).
+RECOMMENDATIONS = {
+    "stale-worktree": "Review and prune stale worktree metadata manually.",
+    "protected-default": "Keep the default branch; use the repository's normal push or PR process.",
+    "inspection-error": "Preserve this worktree; Git could not establish its clean state.",
+    "dirty": "Preserve or commit the working changes before cleanup.",
+    "ignored-local-files": "Preserve or relocate ignored local files before cleanup.",
+    "detached": "Preserve the detached commit or attach it to a named branch before cleanup.",
+    "unpublished": "Push or otherwise preserve the branch before removing its worktree.",
+    "remote-gone": "Confirm the branch should be republished before removing local work.",
+    "review-required": "Remote tracking state could not be established from local refs; preserve it for review.",
+    "diverged": "Reconcile the diverged branch through the normal Git workflow before cleanup.",
+    "remote-ahead": "Fetch and reconcile the newer remote branch before cleanup.",
+    "unpushed": "Use an explicit clean push, then continue through the normal review process.",
+    "merged-removable": "This clean, merged, non-current worktree may be removed explicitly.",
+    "merged-current": "The branch is merged, but this is the current checkout; switch away before removal.",
+    "pushed-unmerged": "Continue through the repository's normal pull-request or merge process.",
+}
+SECOND_RECOMMENDATIONS = {
+    "inspection-error": "Preserve this worktree; Git could not establish its ignored-file state.",
+    "review-required": "Merge state could not be established from local refs; preserve it for review.",
+}
+
+
+def classify(row, merge_target):
+    """The ladder (D6, FR-007; data-model.md, "Classification"): a pure
+    function of a worktree row's fields and the merge target's name, returning
+    (classification, recommendation). It runs no child and reads no file.
+
+    First, a row whose evidence could not be established is `inspection-error`
+    whatever its branch, so that a failed probe on the merge target's checkout
+    is never `protected-default` (D-A): `present` null, any row error, or a
+    present row with no `dirty`, whose registration disagreed or whose status
+    probe failed. Then the first rung that holds, in the baseline's order with
+    its one reorder (Brett Heap's ruling on open question 1): a row whose
+    configured upstream's remote-tracking ref is gone is `merged-removable`, or
+    `merged-current` when current, if it is merged into the target, and
+    `remote-gone` otherwise. `review-required` stays a defensive rung that no
+    row of the evidence model reaches, and so does the second
+    `inspection-error` rung, for an unknown ignored-file count."""
+    present = row.get("present")
+    if present is None or row.get("errors") or (present and row.get("dirty") is None):
+        return "inspection-error", RECOMMENDATIONS["inspection-error"]
+    branch = row.get("branch", "detached")
+    merged = row.get("merged_into_target")
+    if not present:
+        name = "stale-worktree"
+    elif branch == merge_target:
+        name = "protected-default"
+    elif row.get("dirty") is None:
+        name = "inspection-error"
+    elif row.get("dirty"):
+        name = "dirty"
+    elif row.get("ignored_files") is None:
+        return "inspection-error", SECOND_RECOMMENDATIONS["inspection-error"]
+    elif row.get("ignored_files"):
+        name = "ignored-local-files"
+    elif branch == "detached":
+        name = "detached"
+    elif not row.get("upstream"):
+        name = "unpublished"
+    elif row.get("remote_present") is False:
+        if merged is True:
+            name = "merged-current" if row.get("current") else "merged-removable"
+        else:
+            name = "remote-gone"
+    elif row.get("ahead") is None or row.get("behind") is None:
+        name = "review-required"
+    elif row["ahead"] > 0 and row["behind"] > 0:
+        name = "diverged"
+    elif row["behind"] > 0:
+        name = "remote-ahead"
+    elif row["ahead"] > 0:
+        name = "unpushed"
+    elif merged is True and not row.get("current"):
+        name = "merged-removable"
+    elif merged is True:
+        name = "merged-current"
+    elif merged is None:
+        return "review-required", SECOND_RECOMMENDATIONS["review-required"]
+    else:
+        name = "pushed-unmerged"
+    return name, RECOMMENDATIONS[name]
+
+
+def partial_removal_note(row, status, main):
+    """D4's row notes, added after the ladder by this separate function (OQ-28,
+    FR-009): ["partially-removed"] for a linked worktree (main false) that is
+    present and `dirty`, whose status records read, other than ignored ones,
+    are all tracked files deleted in the working tree (` D`, StatusParser's
+    `deletions_only`), judged on the records read when the stream stopped at
+    its bound; [] otherwise. status is the combined probe's result, which only
+    a present, registration-verified row has (None otherwise). The note changes
+    no class, rung or gate."""
+    if main or status is None or row.get("present") is not True or row.get("dirty") is not True:
+        return []
+    return ["partially-removed"] if status["deletions_only"] else []
+
+
+def declared_tracking_branch(root):
+    """The merge target's first candidate (D8): the manifest's
+    `tracking_branch` at root, read as today by manifest(), which refuses a
+    wrong kind or an unreadable manifest; None without a manifest or the key.
+    T108 bounds the read (FR-060)."""
+    _, data = manifest(Path(os.fsdecode(root)))
+    return data.get("tracking_branch")
+
+
+def resolve_merge_target(refs, declared):
+    """The merge target (D8, FR-018; data-model.md, "Merge target") over row
+    6's refs (RefParser's records): the first candidate that exists as a local
+    branch, in this order: declared, the manifest's `tracking_branch`, less a
+    leading `origin/` (source `manifest`); the symref of
+    `refs/remotes/origin/HEAD`, less `refs/remotes/origin/` (`origin-head`);
+    `main`; `master`. Returns {name, source, sha, notes}, sha that branch's
+    head; notes is empty here (T108 adds `merge-target-conflict`). With no
+    candidate it refuses `no-merge-target` with the baseline message
+    (project:551 at 961c405)."""
+    heads = {ref["refname"]: ref["objectname"] for ref in refs}
+    candidates = []
+    if isinstance(declared, str):
+        candidates.append((declared.removeprefix("origin/"), "manifest"))
+    origin = b"refs/remotes/origin/"
+    for ref in refs:
+        if ref["refname"] == origin + b"HEAD" and (ref["symref"] or b"").startswith(origin):
+            candidates.append((ref["symref"][len(origin):].decode("utf-8", "surrogateescape"), "origin-head"))
+    candidates += [("main", "main"), ("master", "master")]
+    for name, source in candidates:
+        sha = heads.get(b"refs/heads/" + name.encode("utf-8", "surrogateescape")) if name else None
+        if sha:
+            return {"name": name, "source": source, "sha": sha, "notes": []}
+    raise Refused(TEXT["no_merge_target"], code="no-merge-target")
 # endregion evidence
 
 # region guard
