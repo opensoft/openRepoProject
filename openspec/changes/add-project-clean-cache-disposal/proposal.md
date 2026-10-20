@@ -10,9 +10,9 @@ re-align step and wording, lane 3's delta read and Codex's re-review of
 `e1049b2` with the lead's rulings of 2026-10-20 resolved in round B5 (B-34 to
 B-37), lane 4's byte check of B-30's overview commit recorded in `tasks.md`
 2.2, lane 3's folded read of `cf57956..fffc194` with Codex's finding on
-`fffc194` resolved in round B6 (B-38 to B-42), and lane 3's confirm read of
-round B6 with Codex's two findings on `e399309` resolved in round B7 (B-43 to
-B-45); nothing here is ratified.
+`fffc194` resolved in round B6 (B-38 to B-42), lane 3's confirm read of round
+B6 with Codex's two findings on `e399309` resolved in round B7 (B-43 to B-45),
+and lane 3's confirm read of B7 in round B8 (B-46); nothing here is ratified.
 Governing issue:
 opensoft/openRepoProject#24, claimed by lane
 openRepoProject-5 (comment 6111257933); refs #6, the record of the project
@@ -39,7 +39,7 @@ named), and `PR19/rs` is `CAS/rs` as PR #19 amends it at that head.
 for the three extensions and for this one: L-1 to L-9 and B-1 to B-9 of
 2026-10-11, L-10 to L-15 and B-10 to B-15 of 2026-10-18, L-16 and L-17 of
 2026-10-19 with B-16 to B-24, the lead's council verdicts of that date, and
-B-25 to B-45 of 2026-10-20; A-n are the rulings for #23 that this proposal
+B-25 to B-46 of 2026-10-20; A-n are the rulings for #23 that this proposal
 cites. SA-n, QA-n and G1 to G5 are the alignment review's findings on this
 draft at `7290100`. P-n, S-n and AE-n are the council's concerns
 (product-advocate, systems-architect, adversary-engineer) on `9ebe9f0`, and M1
@@ -1718,3 +1718,23 @@ keeps its words; the tests that B-44 and B-45 add are in bullets of their own.
 | lane 3 confirm read (e399309) LOW 3: design.md:342 says that a byte total past 1 GiB "ends `refused`" without the signal exception that the review-safety preflight paragraph and D7 state | LOW | B-43: applied: D4 adds that where a signal was received before the stage classified that outcome, the signal decides, as for every outcome of the preflight (B-41, D7): the stage `not-attempted` with `target-stopped`, nothing deleted, the target and every later one `not-attempted` with `interrupted`, the exit status the signal's; also, beyond the line named, D4's caps table row for `cache_bytes_total`, which says the same in short, gains "where no signal was received first (B-41)" | `design.md` D4 (the byte-total paragraph and the caps table); Decisions (B-43) |
 | Codex (e399309) P2 at `specs/project-clean/spec.md:873`: the descriptor-relative `os.listdir` that D9 requires builds a whole directory's listing before the walk can see the row's 513th object, and a timeout that abandons the worker cannot reclaim it, so an oversized `__pycache__` can take unbounded memory; stream the enumeration and stop at the cap, in the preflight too | P2 | B-44: applied: the walk and the whole-list preflight enumerate a directory by a descriptor-relative streaming enumeration that yields one entry at a time and is closed as soon as the cap decides, the walk at the row's 513th recorded object and the preflight at the first entry beyond those the plan recorded; one bounded enumeration is one call under the per-call budget, as a listing was, so no D4 count, time or fit moves, which D4 says and a comparison of D4's figures before and after confirmed; D3 and D7 name `os.scandir` on the descriptor, iterated lazily and closed when the cap decides, its duplicate descriptor rewound on close, checked in scratch on Python 3.10.21, 3.12.3 and 3.13.15 and recorded in the Context table; D9 checks `os.scandir` in `os.supports_fd` in place of `os.listdir`; rs's platform sentence says "streaming directory enumeration"; also, beyond the lines named, the bounds block's list of the cache walk's calls says "bounded directory enumerations" for "listings", and D12 names a bounded enumeration among the reads; one AND of "Cache caps" for a 100,000-entry `__pycache__` whose enumeration a test hook sees yield at most 513 entries, the row `cache-cap`; D14's test, with its preflight counterpart and a third assertion that the ruling does not name, in a bullet of its own: after each enumeration is closed the walk's descriptor still `fstat`s to its identity and a second enumeration from it starts at its first entry, the descriptor rewound to offset 0, as the Context's check found | project-clean delta (bounds block; ADDED walk paragraph; "Cache caps"); review-safety delta (ADDED preflight and platform paragraphs); `design.md` Context, D3, D4, D7, D9, D12, D14, Risks; What Changes (detection, the cache stage); Capabilities; Decisions (B-44) |
 | Codex (e399309) P2 at `specs/project-clean/spec.md:928`: with exactly 16 candidates, each `cache-unverified` or `cache-unwritable`, the stall predicate fires though no later candidate was left by the 16-enumeration cap, so the line names `cache-cap` rows that do not exist | P2 | B-45: applied: the stall line also requires at least one later candidate left with `cache-cap` by the 16-enumeration cap; otherwise each row's own reason and next step print as usual and no stall line prints; one AND of "Cache caps" for exactly 16 candidates, each held for a persistent reason, that prints no stall line; D4 and D11 follow, D14 adds the test in a bullet of its own, and Risks names the condition | project-clean delta (ADDED stall paragraph; "Cache caps"); `design.md` D4, D11, D14, Risks; What Changes (Caps, What the person sees); Capabilities; Decisions (B-21, B-45) |
+
+### Re-read and Codex Findings (round B8)
+
+Lane openRepoProject-3's confirm read of rounds C6c and B7
+(`confirm-c6c-b7-findings.md`, brett-wip `d48a20d65`), sent by message at about
+21:2xZ on 2026-10-20, found this change at `ca34644` with no HIGH, no MEDIUM
+and three LOWs, all in this file and none in a spec, and confirmed that the
+scandir claims hold on Python 3.12.3, that no D4 figure moved, that D14's
+bullet on feature 005's tests is byte-identical and that the overview blob is
+`a40458cb`; the lead accepted all three and ruled them as B-46. Codex reviewed
+`ca34644` and found no major issue (receipt 2026-10-20T21:14:37Z). The one item
+here, B-46, applies the three LOWs in `proposal.md` alone: no design or spec
+file is edited, so D14 and every line that lane openRepoProject-4's spec 005
+cites stay where they are, and the counts stay 55, 28 and 8.
+`specs/project-overview/spec.md` is not edited, and its block is lane
+openRepoProject-4's.
+
+| Finding | Severity | Ruling | Section edited |
+| --- | --- | --- | --- |
+| lane 3 confirm read of B7 (ca34644), three LOWs: LOW 1: the round B7 intro says that B-43's LOW 3 and B-44 each edit "one passage" beyond the lines the ruling names, but the B-44 row names several; LOW 2: D14's streaming bullet (`design.md`:1139-1147) carries a third assertion that no row names, that after each enumeration is closed the walk's descriptor still `fstat`s and is rewound to 0; LOW 3: the B-43 LOW 2 row says "the words of the deadline AND", but the clause also adds "removal" before "floor" | LOW | B-46: applied, in `proposal.md` alone: LOW 1: the intro says that B-43's LOW 3 also edits one passage beyond the line the ruling names and B-44 several beyond the lines its ruling names, said in their rows; LOW 2: the B-44 row names the assertion, that after each enumeration is closed the walk's descriptor still `fstat`s to its identity and a second enumeration from it starts at its first entry, the descriptor rewound to offset 0, which was checked in scratch on Python 3.10.21, 3.12.3 and 3.13.15 and by lane 3 on 3.12.3, so D14's bullet keeps its words; LOW 3: the B-43 LOW 2 row says that the clause takes the words of the deadline AND, "until no more than the floor remains for the next read to start", with "removal" added before "floor"; no scenario is added and the counts stay 55, 28 and 8 | the round B7 table (its intro, the B-43 LOW 2 row and the B-44 row); Status; the key's ruling range (B-25 to B-46); `tasks.md` 1.1, 1.4, 1.5, 2.2 |
