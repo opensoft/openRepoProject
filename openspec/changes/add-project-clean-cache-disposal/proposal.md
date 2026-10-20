@@ -9,7 +9,8 @@ re-align step and wording, lane 3's delta read and Codex's re-review of
 `cf57956` resolved in round B4 (B-29 to B-33), and Codex's re-review of
 `e1049b2` with the lead's rulings of 2026-10-20 resolved in round B5 (B-34 to
 B-37), lane 4's byte check of B-30's overview commit recorded in `tasks.md`
-2.2; nothing here is ratified.
+2.2, and lane 3's folded read of `cf57956..fffc194` with Codex's finding on
+`fffc194` resolved in round B6 (B-38, B-39); nothing here is ratified.
 Governing issue:
 opensoft/openRepoProject#24, claimed by lane
 openRepoProject-5 (comment 6111257933); refs #6, the record of the project
@@ -36,7 +37,7 @@ named), and `PR19/rs` is `CAS/rs` as PR #19 amends it at that head.
 for the three extensions and for this one: L-1 to L-9 and B-1 to B-9 of
 2026-10-11, L-10 to L-15 and B-10 to B-15 of 2026-10-18, L-16 and L-17 of
 2026-10-19 with B-16 to B-24, the lead's council verdicts of that date, and
-B-25 to B-37 of 2026-10-20; A-n are the rulings for #23 that this proposal
+B-25 to B-39 of 2026-10-20; A-n are the rulings for #23 that this proposal
 cites. SA-n, QA-n and G1 to G5 are the alignment review's findings on this
 draft at `7290100`. P-n, S-n and AE-n are the council's concerns
 (product-advocate, systems-architect, adversary-engineer) on `9ebe9f0`, and M1
@@ -231,8 +232,11 @@ through `getattr(os, "O_NOFOLLOW", 0)` instead of failing closed.
   the floor or the work deadline stopped in a read before its first removal is
   `not-attempted` too, with nothing deleted, no difference found and no
   reconciliation, the later targets likewise and the exit status 1 (B-34); a
-  read that outlives its own 5 s budget with more than 5 s of work left stays a
-  preflight error, `refused` with `cache-changed`.
+  read that outlives its own 5 s budget with at least 10 s of work left stays a
+  preflight error, `refused` with `cache-changed` (B-38), unless a signal was
+  received before the stop of a read is classified, in which case the stage is
+  `not-attempted`, the target `interrupted` and the exit status the signal's,
+  as at the check before the first hand-off (B-39).
 - **Fail closed per platform (B-6, CD-3, B-37).** Where the running Python
   cannot provide `O_NOFOLLOW`, `O_DIRECTORY` and the descriptor-relative calls,
   no row gets a cache plan: a row that reaches the `ignored-local-files` rung
@@ -261,8 +265,9 @@ through `getattr(os, "O_NOFOLLOW", 0)` instead of failing closed.
   deadline when it ended the stage (B-16, B-21); a stop after a stage that
   disposed of every cache says so and that the worktree was not removed
   (B-17); a stop at a stage that the floor or the deadline stopped in a read
-  before its first removal says that it was not attempted because of the
-  deadline and that nothing was deleted (B-34). The stall line names, for the
+  before its first removal, and with no signal received by then, says that it
+  was not attempted because of the deadline and that nothing was deleted (B-34,
+  B-39). The stall line names, for the
   16 rows that hold the others back, how many stay for each cause, with its
   next step, and never tells the person to remove by hand a worktree whose
   state was not established (B-21). The residual-window line also names ignored
@@ -467,7 +472,8 @@ also names the delta text it is written on.
     holding a listed path in each pass (B-33), no descriptor of an
     outstanding call reused; no recursive deletion; the whole-list preflight
     with its entry count and the run's byte total (B-26), and its outcome when
-    the floor or the deadline stops a read of it (B-34); the outcome once a
+    the floor or the deadline stops a read of it (B-34), or a signal received
+    first outranks the stop (B-39); the outcome once a
     removal is handed over; the
     partial-phase record, its chain rescan under the reserve, and retry; the
     per-platform fail-closed rule, which leaves a row that an earlier rung
@@ -1017,12 +1023,13 @@ to B-37 (the table "Re-read and Codex Findings (round B5)" below):
   human result prints `Cache disposal at PATH not attempted (deadline-exceeded);
   nothing was deleted.` before its stop block, so that the deadline is named and
   no change of state is claimed. A preflight that finds a real difference, an
-  error, or a read that outlives its own 5 s budget with more than 5 s of work
-  left stays `refused` with `cache-changed` and exit 2; the last is the bounds
-  rule's `probe-timeout`, an ordinary preflight error in Codex's words, not
-  deadline exhaustion. The new line is printed only for a read stopped before
-  the first removal; a stage that never starts, and the check before the first
-  hand-off, keep the stop block alone, as they did. CD-2's mapping of a
+  error, or a read that outlives its own 5 s budget with at least 10 s of work
+  left (B-38) stays `refused` with `cache-changed` and exit 2; the last is the
+  bounds rule's `probe-timeout`, an ordinary preflight error in Codex's words,
+  not deadline exhaustion, though a signal received before its stop is
+  classified outranks it (B-39). The new line is printed only for a read stopped
+  before the first removal; a stage that never starts, and the check before the
+  first hand-off, keep the stop block alone, as they did. CD-2's mapping of a
   floor-ended partial stage to `refused`, and the decline of lane 3's LOW 14,
   concern a stage that has removed an entry, and stand. One AND of "No time for
   a cache stage" pins both outcomes; design D1, D7, D8, D11, D12, D14 and Risks
@@ -1057,6 +1064,50 @@ to B-37 (the table "Re-read and Codex Findings (round B5)" below):
   `not-candidate` sub-record, as where the calls exist. One AND of "No
   descriptor-relative calls on this platform" adds a dirty worktree that holds
   an ignored `local.env`; CD-3 and design D9 follow.
+
+The findings of 2026-10-20 that followed round B5, ruled by the lead as B-38 and
+B-39 (the table "Re-read and Codex Findings (round B6)" below):
+
+- **B-38, lane 3's folded read of `cf57956..fffc194`** (no HIGH, one MEDIUM and
+  three LOWs, all accepted; lane 3 confirmed that every B4 and B5 ruling holds
+  and recomputed B-33's figures by brute force). The MEDIUM: the last AND of "No
+  time for a cache stage" gave `refused` with `cache-changed` to a read held
+  "past its 5 s per-call budget with more than 5 s of work remaining", which is
+  not the complement of the first half, whose budget `work remaining less the
+  removal floor` is under 5 s, so that with 5 to 10 s remaining both halves
+  claimed the read. The floor is 5 s, so the first half holds while less than
+  10 s of work remains and the second now reads "at least 10 s of work
+  remaining", in the delta, in What Changes, in B-34 above and in design D12 and
+  D14; no fit or arrival time cites the old threshold, so no figure moves. The
+  three LOWs: D7 says "no difference was found" where it said "nothing differs",
+  since a read that stopped has not shown that nothing differs; the caps' Open
+  Question cites the packet's reapplication rule, `BA:766-771`, which lowers the
+  target cap in steps of 8 under a higher measured cost, beside `BA:729-735`;
+  and D4 states the call count behind its 28.3 s, 683 calls a row (341 directory
+  opens, 171 file `lstat` calls and 171 access checks), 10,928 calls for 16
+  rows, 2.45 s at 224 us, added to the 25.8 s of the 172 Git children before the
+  first target's stage.
+- **B-39, a pending signal outranks a preflight timeout** (Codex's P2 at
+  `specs/project-clean-review-safety/spec.md:354` on `fffc194`). The preflight's
+  closing sentence ended the stage `refused` with `cache-changed` for "a
+  filesystem call that outlives its 5 s per-call budget" unconditionally, but
+  the signal scenario of "Clean disposes of listed caches before a worktree
+  removal" requires a signal during the whole-list preflight to leave the target
+  `not-attempted` with `interrupted`. The handler only records, so a signal
+  received while a read is held is seen only at the check before the hand-off,
+  which a stage that a timeout has ended never reaches. The delta now says that
+  the stage reads the slot before it classifies the stop of any preflight read,
+  or of the reopening of the first listed cache's chain, whether a
+  `probe-timeout`, the floor or the deadline: where a signal has been received,
+  the stage is `not-attempted` with `target-stopped`, nothing deleted, the
+  target and every later one `not-attempted` with `interrupted`, and the exit
+  status the signal's, never `refused` with `cache-changed` and never
+  `deadline-exceeded`. A difference or an error that the preflight did find
+  stays `refused`, a finding about the worktree, with the signal's exit status
+  as for any target. The line `Cache disposal at PATH not attempted
+  (deadline-exceeded)` is printed only where no signal was received. One AND of
+  "A signal during a cache stage" pins the outcome and no scenario is added;
+  design D1, D7, D8, D11, D12, D14 and Risks, and CD-11, follow.
 
 Departures from the rulings as first written, each naming what it departs
 from. B-11 accepted CD-1 to CD-3 as the consistent reading of B-6 and amended
@@ -1168,7 +1219,9 @@ Lane additions, with no packet or ruling text behind them:
   time, and no constant is added.
 - **CD-11, signals in the stage.** Before the hand-off of its first removal a
   signal stops the target as change 1's slot check does, the slot being read
-  before the preflight and again immediately before that hand-off; after it,
+  before the preflight and again immediately before that hand-off, and where a
+  preflight read's wait ends before then, before its stop is classified (B-39);
+  after it,
   the stage runs to its end and the slot is read before the spawn, so a signal
   leaves the target's caches either untouched or all removed, never half done
   (B-17).
@@ -1311,9 +1364,11 @@ answer (B-23, B-33).
   at a thread per call, the rest deferred to the next run with exit 1, while
   at change 1's measured costs all 16 fit. If the walk's and the stages'
   filesystem time counted in the fit, the packet's rule (`BA:729-735`), which
-  takes the largest multiple of 8 that fits, would lower the target cap from
-  16 to 8, as #23's A-9 names it for a flagged run; this change counts that
-  time outside the fit, as the bounds block states, and leaves change 1's
+  takes the largest multiple of 8 that fits, and its reapplication under a
+  higher measured cost (`BA:766-771`), which lowers the target cap in steps of
+  8, would lower the target cap from 16 to 8, as #23's A-9 names it for a
+  flagged run; this change counts that time outside the fit, as the bounds
+  block states, and leaves change 1's
   `limits.targets` at 16 (B-31). B-33's tree of nested `__pycache__`
   directories, within these caps, costs more (design D4: the report mode then
   fits only at 169 us, and at a thread per call no target reaches its stage),
@@ -1489,3 +1544,22 @@ rulings on Codex's two findings, each recorded as one item with its ruling.
 | lead B-35 (A-25 for #26): D4 still describes #23's joint fit at `ca96701`, "13 of 16, 11 in its worst case", with the cache-stage filesystem time excluded | not graded | B-35: applied: D4 describes #26 at `9ff8202` under A-23 and A-24: at most 81 children, and at the packet's model with cache disposal 10 of 16 targets removed and 9 branches retired through one worker, 8 and 8 in the worst case of 17 reflog children; every figure is #26's, checked against its own arithmetic; no cap changed, `limits.targets` 16 and A-9 still Brett Heap's; the copies in D13 and in the B-19 decision read "13 of 16 at `ca96701`" | `design.md` Context, D4, D13; Decisions (B-19, B-35) |
 | lead B-36: `tasks.md` 2.2 stands reopened until lane openRepoProject-4's byte check of B-30's commit is cited | not graded | B-36: applied: ticked again, citing lane 4's NOTED at line 64 of `lanes/log/openRepoProject-4.md` (2026-10-20T11:50:06Z, brett-wip `fab1e721d`, an ancestor of the register's `origin/main` at `fa9800bad`), quoted exactly: the overview delta differs from the agreed `9f30fb9` only by "for the same working directory and refs", on :35-36 and :74, +3/-2, unchanged through `e1049b2`; `specs/project-overview/spec.md` is not edited this round | `tasks.md` 2.2; Status; What Changes; Dependencies (Implementation order); Decisions (B-30, B-36); `design.md` D6, Migration Plan |
 | Codex (e1049b2) P2 at `specs/project-clean-review-safety/spec.md:383`, and the lead's B-37: on a platform without the descriptor-relative calls, "every row that holds ignored records" is forced to `ignored-local-files`, so a dirty worktree that also holds an ignored file loses the `dirty` classification, which the ladder tests first, and its actionable diagnosis | P2 | B-37: applied: `cache-unsupported-platform` applies only to a row that reaches the `ignored-local-files` rung; a row classified by `stale-worktree`, `protected-default`, `inspection-error` or `dirty` keeps that classification and, where it holds ignored records, its `not-candidate` sub-record as where the calls exist; one AND of "No descriptor-relative calls on this platform" adds a dirty worktree that holds an ignored `local.env` | review-safety delta (ADDED platform paragraph; "No descriptor-relative calls on this platform"); `design.md` D9; What Changes (Fail closed per platform); Capabilities; Decisions (B-37), CD-3 |
+
+### Re-read and Codex Findings (round B6)
+
+Lane openRepoProject-3's folded read of this change over `cf57956..fffc194`,
+sent by message on 2026-10-20 at about 16:3xZ, and Codex's inline finding on
+`fffc194` (comment 4327345826, 2026-10-20T16:16:38Z), were ruled by the lead on
+2026-10-20 as B-38 and B-39, for a short round after the 20:50Z reset. Lane 3
+found no HIGH and confirmed that every B4 and B5 ruling holds, recomputing
+B-33's figures by brute force; of the 5 items here, 5 are applied, none with
+change and none declined. `specs/project-overview/spec.md` is not edited: none
+of the rulings needs it, and its block is lane openRepoProject-4's.
+
+| Finding | Severity | Ruling | Section edited |
+| --- | --- | --- | --- |
+| lane 3 folded read (fffc194) M1: the last AND of "No time for a cache stage" says "past its 5 s per-call budget with more than 5 s of work remaining", which is not the complement of the first half's `work remaining less the removal floor` being under 5 s, so with 5 to 10 s remaining both halves claim the read | MEDIUM | B-38: applied: "at least 10 s of work remaining", the floor being 5 s, in the delta, What Changes, B-34's decision and design D12 and D14; checked that no fit or arrival time cites the old threshold, so no figure changes | project-clean delta ("No time for a cache stage"); What Changes (Failure and recovery); Decisions (B-34, B-38); `design.md` D12, D14 |
+| lane 3 folded read (fffc194) LOW 1: design D7 says "nothing differs" of a read that stopped before it finished | LOW | B-38: applied: "no difference was found before the read stopped" | `design.md` D7 |
+| lane 3 folded read (fffc194) LOW 2: the caps' Open Question cites `BA:729-735` alone for the rule that lowers the target cap, where `BA:766-771` states its reapplication under a higher measured cost | LOW | B-38: applied: both cited, the second for the steps of 8 | Open Questions (the caps); Decisions (B-38) |
+| lane 3 folded read (fffc194) LOW 3: design D4's 28.3 s for the first deep-tree target is stated without the walk's call count | LOW | B-38: applied: 683 calls a row (341 directory opens, 171 file `lstat` calls and 171 access checks), 10,928 for 16 rows, 2.45 s at 224 us, added to the 25.8 s of the 172 Git children before the target; the worktree root's own open is a 684th call a row, named in D4, which moves nothing at this precision (16 x 684 x 224 us is also 2.45 s) | `design.md` D4; Decisions (B-38) |
+| Codex (fffc194) P2 at `specs/project-clean-review-safety/spec.md:354`, and the lead's B-39: a call past its 5 s budget is unconditionally `refused` with `cache-changed`, which contradicts the signal scenario when SIGINT arrived while the read was held | P2 | B-39: applied: the stage reads the slot before it classifies the stop of any preflight read, a `probe-timeout`, the floor or the deadline alike; where a signal has been received the stage is `not-attempted` with `target-stopped`, nothing deleted, the target and every later one `not-attempted` with `interrupted`, and the exit status the signal's, never `refused` with `cache-changed`; a difference or an error that the preflight did find stays `refused`; the deadline line is printed only where no signal was received; one AND of "A signal during a cache stage", so no scenario is added and the counts stay 55, 28 and 8 | review-safety delta (ADDED preflight paragraph); project-clean delta (ADDED stage paragraph and human lines; "A signal during a cache stage"); `design.md` D1, D7, D8, D11, D12, D14, Risks; What Changes (Failure and recovery, What the person sees); Capabilities; Decisions (B-34, B-39); CD-11 |
