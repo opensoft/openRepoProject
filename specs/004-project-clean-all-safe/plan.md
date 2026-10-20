@@ -289,6 +289,7 @@ specs/004-project-clean-all-safe/
   quickstart.md              Phase 1 (/speckit-plan)
   tasks.md                   Phase 2 (/speckit-tasks)
   traceability.md            delta scenario to test name (implementation)
+  hand-runs.md               T132's hand-run record (lead ruling R-50)
 ```
 
 ### Source Code (repository root)
