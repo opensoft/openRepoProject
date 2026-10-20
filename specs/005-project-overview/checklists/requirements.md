@@ -287,6 +287,9 @@ Lane: openRepoProject-4
   and #25's from `1c32667` to `129a4e2`, each cited range keeping its lines
   but three of #25's `proposal.md` ranges, which move by 4; no requirement
   changes.
+  The fold of lane openRepoProject-3's R10 findings then completed Q17 D's
+  statement of #25's replacement credential clause, and no recommendation
+  changed letter; no requirement changes.
 - Items marked incomplete require spec updates before `/speckit-clarify` or `/speckit-plan`
 
 ## Cross-cutting Requirements Quality (no-argument `/speckit.checklist`, 2026-10-19)
