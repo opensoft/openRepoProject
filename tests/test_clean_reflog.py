@@ -426,6 +426,11 @@ class ReflogTests(clean_support.CleanCase):
                          [(True, b"branch"), (False, b"commit")], "its commit follows the creation entry")
         excluded, selected, _ = self.preview(root)
         self.assertEqual((selected, excluded), ([str(tree)], {str(root): "main-worktree"}))
+        result = self.run_cli("clean", root, "--all-safe", "--apply", "--yes")
+        self.assert_status(result, 0)
+        self.assertFalse(tree.exists(), "the worktree is removed")
+        self.assertEqual(self.git(root, "rev-parse", "ff").strip(), head, "its branch is kept at its head")
+        self.assertNotIn(f"worktree {tree}", self.git(root, "worktree", "list", "--porcelain").splitlines())
 
     def test_clean_a_branch_reset_to_the_merge_target_s_tip_stays_unstarted(self):
         root = self.repo()
