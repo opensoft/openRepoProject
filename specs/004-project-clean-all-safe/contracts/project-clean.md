@@ -161,10 +161,20 @@ step take one each, in D18's form: `main-worktree` "never removed by project
 clean", `unsupported-path-bytes` "rename the path to valid UTF-8" (P6-2), and
 `not-requested` "eligible too; name it with --worktree to remove it", so that
 every group and every gate's `target-excluded` message carries a next step
-(lead ruling R-57, withdrawing R-45(3)); one progress line per target,
-`  STAGE PATH` or `  STAGE PATH (REASON)`; the retained-branch line
-`Branches kept: B1, B2.`; a plan-blocking refusal prints the plan, then
-`REFUSED: MESSAGE`; each code with no baseline message gets one here:
+(lead ruling R-57, withdrawing R-45(3)); a report prints the baseline layout,
+each null as `unknown`; an `--all-safe` plan, and a single-mode
+`--action remove` plan, print "D18 preview layout", the single-mode one with
+`Selected (1):` and the `not-requested` group among the excluded ones, then
+"D18 residual-window line"; push and delete-branch print no plan layout,
+only their `Cleanup action:` output as today (lead ruling R-56 Q-11); rows
+left unprobed print in a group of their own, its heading T052's (R-56);
+one progress line per target, printed at its final stage, `  STAGE PATH` or
+`  STAGE PATH (REASON)`, `pending` never printed (R-56 Q-10); "D18 success
+line" followed by "D18 residual-window line", as the stop block is (R-56
+Q-9); the retained-branch line `Branches kept: B1, B2.`, naming every
+selected target's branch in canonical order; a plan-blocking refusal prints
+the plan, then `REFUSED: MESSAGE`; each code with no baseline message gets
+one here:
 
 | Code | Message |
 | --- | --- |
@@ -226,7 +236,7 @@ are closed within the version.
 | `budget` | `probe_timeout_seconds` (5), `invocation_timeout_seconds` (60), `reconciliation_reserve_seconds` (10), `removal_floor_seconds` (5), `removal_ceiling_seconds` (300), `probe_concurrency` (1), the values in force |
 | `probes`, `operations` | `{estimated, performed}` integers: `probes` counts every Git child other than a removal, `operations` the removals, each child once (lead ruling R-27); `estimated` is the upper bound for an `--apply` run of this plan in every mode, previews included: F + W + E + 5T + 3 and T (research.md R8) |
 | `selected` | array in canonical order, or null in a report above 128 rows; each entry: `path`, `path_valid_utf8`, `branch`, `head`, `upstream`, `upstream_oid`, `ahead`, `behind`, `dev`, `ino`, `admin_id`, `locked`, the baseline signature fields (`present`, `dirty`, `ignored_files`, `remote_present`, `merged_into_target`, `current`, `classification`), and `operation` (`{kind: "worktree-remove", argv}`, the exact argument vector) |
-| `excluded` | array in canonical order: `path`, `path_valid_utf8`, `branch` (or null), `classification` (or null when never classified), `reason` |
+| `excluded` | array in canonical order: `path`, `path_valid_utf8`, `branch` (or null), `classification` (or null when never classified), `reason` (null for a row left unprobed, which keeps its classification and makes the plan incomplete with `inspection-incomplete`; lead ruling R-56) |
 | `omitted` | `{count, exactness: "exact"}` |
 | `notes` | `{code, message}` objects; `merge-target-conflict`; in single mode the non-blocking `inspection-incomplete`, `inspect-cap`, `deadline-exceeded`; in a report above 128 rows `inspect-cap` with `rows` |
 | `completeness` | `complete` or `incomplete` |
@@ -404,9 +414,9 @@ at most three.
 
 | Aspect | Contract |
 | --- | --- |
-| Git check | `git --version` once per invocation, only when a repository is inspected; never a refusal |
+| Git check | `git --version` once per invocation, memoized, when a repository is inspected; doctor's `git` row runs it itself when none was, and `status` never runs it for nothing (lead ruling R-56); never a refusal |
 | No `.git` | `present: false`, no Git child, as today |
-| Uninspectable root, leg or worktree | `classification: "inspection-error"`, `errors`, unestablished values null; status exits 0 |
+| Uninspectable root, leg or worktree | `classification: "inspection-error"`, `errors`, unestablished values null, `worktrees` among them (R-56); status exits 0 |
 | Doctor's `git` row | `ok` with the detail `PATH (git version X)`, or `error` with the detail `CODE: MESSAGE`, CODE `git-too-old` or `git-unavailable` and MESSAGE its command-neutral text ("Codes"; lead rulings R-48 and R-57) |
 | Doctor's error rows | one per null `present`, null `dirty` from a failed or timed-out probe, and `inspection-error` row; none for a null that means "none" |
 | Human `status` and `doctor` | `Git: inspection-error (CODES)` in place of the branch line |

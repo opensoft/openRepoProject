@@ -138,7 +138,10 @@ bound. It changes no class, rung or gate.
 ### Gate (FR-020 to FR-023; D10, D12, D13)
 
 A row is selected only when it passes every gate; an excluded row's `reason`
-is its first failing gate:
+is its first failing gate. A row left unprobed is excluded with `reason`
+null and its classification kept, the plan incomplete with
+`inspection-incomplete`; no reason value is added for it (lead ruling R-56,
+settling R-53's P-3):
 
 | Order | Reason | Fails when |
 | --- | --- | --- |
@@ -332,12 +335,16 @@ inspected (an old, missing or unusable Git, a failed or timed-out status
 probe) adds `classification: "inspection-error"` and `errors` (`git-too-old`,
 `git-unavailable`, `probe-failed`, `probe-timeout` or `os-error`), with
 `present` null when the version check failed and every value not established
-null; an inspected dict has neither field. A `git-too-old` or
+null, `worktrees` among them; an inspected dict has neither field (lead
+ruling R-56). A `git-too-old` or
 `git-unavailable` entry carries the contract's command-neutral message, never
 `clean`'s refusal text (lead ruling R-48). Every `path` gains
 `path_valid_utf8`, every `root` gains `root_valid_utf8`, and
 `ignored_samples` entries are objects. A deleted upstream shows its short
-name with `ahead` and `behind` null.
+name with `ahead` and `behind` null. The version check runs once per
+invocation, memoized, when a repository is inspected; doctor's `git` row
+runs it itself when none was, and `status` never runs it for nothing (lead
+ruling R-56).
 
 ### Child handle (D2; lead ruling R-30, research.md R14)
 
@@ -474,7 +481,9 @@ The driver reads the slot by the `Invocation`'s phase: it raises
 
 ### Target stages
 
-`pending` (printed plan and progress only) leads to exactly one final stage:
+`pending` leads to exactly one final stage. It is never printed: the plan
+lists the selected rows, and each target's one progress line prints at its
+final stage (lead ruling R-56 Q-10).
 
 | Stage | Reasons |
 | --- | --- |

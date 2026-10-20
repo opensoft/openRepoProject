@@ -117,6 +117,12 @@ and `locked-worktree`. Rebuild the fixture (a new `T`) before each story.
 | `p clean "$R" --all-safe --apply < /dev/null` (fresh fixture) | `confirmation-required`, `exit=2` |
 | `p clean "$R" --all-safe --worktree "$W/a"`; `p clean "$R" --all-safe --apply --expect-plan abc` | `invalid-arguments`, `exit=2`, no Git child run |
 
+The table shows the finished feature. At US1's checkpoint, before T066
+builds the reflog gate, `$W/f` is still selectable: the preview shows
+`Selected (4):` with `$W/a`, `$W/b`, `$W/c` and `$W/f`, `Excluded (5):`
+with no `unstarted-branch` group, and the question reads `Remove 4
+worktrees, keeping 4 branches? [yes/N]` (lead ruling R-56 Q-17).
+
 Digest pinning on a fresh fixture: take `D` from the preview's JSON, then
 commit once more on `a` (`echo x >> "$W/a/a.txt"; git -C "$W/a" commit -qam
 x; git -C "$R" merge -q --no-ff -m m a`) and run `p clean "$R" --all-safe
