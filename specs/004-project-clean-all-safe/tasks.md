@@ -1569,7 +1569,7 @@ carrying the reason the gate order gives.
 
 ### Tests for User Story 2
 
-- [ ] T059 [P] [US2] [O] Add `test_clean_reflog_gate_outcomes` to
+- [x] T059 [P] [US2] [O] Add `test_clean_reflog_gate_outcomes` to
   `tests/test_clean_reflog.py`: `reflog_gate(row, plan, run)` on byte
   literals written to `logs/refs/heads/<branch>` under a temporary common
   directory that the plan names, the row carrying that branch and its head
@@ -1710,7 +1710,7 @@ carrying the reason the gate order gives.
 
 ### Implementation for User Story 2
 
-- [ ] T066 [P] [US2] [O] Fill `reflog_gate(row, plan, run)`, T050's stub, in
+- [x] T066 [P] [US2] [O] Fill `reflog_gate(row, plan, run)`, T050's stub, in
   region `reflog` (D10, FR-021, FR-022): it reads the common directory from
   the plan and the branch and head from the row, so that it can mark the row,
   and wraps `read_reflog(common_dir, branch, head, run)` (lead ruling R-56
@@ -1902,7 +1902,7 @@ US2, US7 and US9.
 
 ### Implementation for User Story 3
 
-- [ ] T075 [P] [US3] [O] Fill in `build_plan()` (region `plan`; FR-013, FR-031,
+- [x] T075 [P] [US3] [O] Fill in `build_plan()` (region `plan`; FR-013, FR-031,
   D13): the registry read whole in one child before any cap; the row caps (128
   in modes all-safe and single, 256 in mode report, every registry entry
   counting, the main worktree and missing rows included); rows past the cap
@@ -2525,7 +2525,7 @@ checkpoint, beside US2, US3 and US9.
 
 ### Tests for User Story 7
 
-- [ ] T104 [US7] [S] Add to `tests/test_clean_resolution.py`:
+- [x] T104 [US7] [S] Add to `tests/test_clean_resolution.py`:
   `test_clean_absolute_path_that_is_not_a_repository_root` (an absolute path to
   a subdirectory of the root, to a linked worktree, to a directory outside any
   repository and to a bare repository, each passed read-only, with `--all-safe
@@ -2550,7 +2550,7 @@ checkpoint, beside US2, US3 and US9.
   handoff keeps identity".
   — files: `tests/test_clean_resolution.py`
   — verify: `python3 -c "import sys,unittest as u;L=u.defaultTestLoader;f=lambda s:[i for t in s for i in (f(t) if isinstance(t,u.TestSuite) else [t.id()])];I=[i for i in f(L.discover('tests',pattern=sys.argv[1])) if not i.startswith('unittest.')];A=sys.argv[2:];M=[a for a in A if not any(a in ('*',i.split('.')[-1]) for i in I)];[print('not collected:',m) for m in M];[print(e) for e in L.errors];sys.exit(1 if M or L.errors or not A else 0)" test_clean_resolution.py 'test_clean_absolute_path_that_is_not_a_repository_root' 'test_clean_overview_handoff_keeps_identity' 'test_clean_bare_name_predicate'`
-- [ ] T105 [US7] [S] Add to `tests/test_clean_resolution.py`:
+- [x] T105 [US7] [S] Add to `tests/test_clean_resolution.py`:
   `test_clean_a_bare_repository_reached_from_a_linked_worktree` (a relative
   path, and no argument, inside a linked worktree of a bare repository:
   `target-not-repository-root`, exit 2); `test_clean_a_separate_git_directory`
@@ -2568,7 +2568,7 @@ checkpoint, beside US2, US3 and US9.
   "A submodule checkout".
   — files: `tests/test_clean_resolution.py`
   — verify: `python3 -c "import sys,unittest as u;L=u.defaultTestLoader;f=lambda s:[i for t in s for i in (f(t) if isinstance(t,u.TestSuite) else [t.id()])];I=[i for i in f(L.discover('tests',pattern=sys.argv[1])) if not i.startswith('unittest.')];A=sys.argv[2:];M=[a for a in A if not any(a in ('*',i.split('.')[-1]) for i in I)];[print('not collected:',m) for m in M];[print(e) for e in L.errors];sys.exit(1 if M or L.errors or not A else 0)" test_clean_resolution.py 'test_clean_a_bare_repository_reached_from_a_linked_worktree' 'test_clean_a_separate_git_directory' 'test_clean_a_separate_git_directory_with_a_relative_core_worktree' 'test_clean_a_submodule_checkout'`
-- [ ] T106 [US7] [S] Add to `tests/test_clean_resolution.py`:
+- [x] T106 [US7] [S] Add to `tests/test_clean_resolution.py`:
   `test_clean_merge_target_missing_invalid_or_conflicting` (no candidate:
   `no-merge-target` with its baseline message, exit 2, `--json` printing the
   extended error object; a manifest of the wrong kind: `manifest-invalid` the
@@ -2590,7 +2590,7 @@ checkpoint, beside US2, US3 and US9.
 
 ### Implementation for User Story 7
 
-- [ ] T107 [US7] [O] Fill `resolve_clean_target(args, run)` in region `resolution`
+- [x] T107 [US7] [O] Fill `resolve_clean_target(args, run)` in region `resolution`
   (D8, FR-016, FR-017) with `is_bare_name()` (R13 as plan review M15 words it:
   after `expanduser()`, a relative argument that contains no `/` and is neither
   `.` nor `..`): an absolute path whose realpath equals row 3's toplevel and is
@@ -2610,7 +2610,7 @@ checkpoint, beside US2, US3 and US9.
   `KeyError` on a missing key (R-49).
   — files: `project`
   — verify: `python3 -c "import sys,re;t=open('project').read();A=sys.argv[1:];c=lambda r:t.split('# region '+r+'\n')[1].split('# endregion '+r+'\n')[0];M=[a for a in A if not ((a.split('%',1)[1] not in c(a.split('%',1)[0])) if '%' in a else (a.split('~',1)[1] in c(a.split('~',1)[0])) if '~' in a else re.search(r'^[a-z]*\s?'+re.escape(a.split(':',1)[1])+r'\b',c(a.split(':',1)[0]),re.M))];[print('region check failed:',m) for m in M];sys.exit(1 if M or not A else 0)" 'resolution:is_bare_name' && python3 -m unittest discover -s tests -p 'test_clean_resolution.py' -k '*.test_clean_bare_name_predicate' -k '*.test_clean_a_submodule_checkout' -k '*.test_clean_a_bare_repository_reached_from_a_linked_worktree'`
-- [ ] T108 [US7] [O] Fill `declared_tracking_branch(root)` (region `evidence`; D8,
+- [x] T108 [US7] [O] Fill `declared_tracking_branch(root)` (region `evidence`; D8,
   FR-018, FR-060) with a bounded read: an `st_size` over 1 MiB is
   `manifest-invalid` without a read, the read never passes 1 MiB, and an
   unreadable file, a parse error or a wrong kind is `manifest-invalid`, with
