@@ -220,11 +220,28 @@ scratch directory, never in the repository.
   phase begins, writes are best-effort and D19 decides the exit. A failed
   write of an advisory line, `Cancelled.` or `REFUSED:`, never changes the
   exit status (T047).
-- **Cost**: a stalled reader, one that neither reads nor closes its end,
-  blocks a write, and a SIGTERM sent to `project` alone then waits for the
-  reader to drain or exit: the residual R-55 records, with the design
-  working as written. A swap at each boundary; SIGTERM at `update`'s `Type
-  yes` ends
+- **The delta's two exit rules (LQ-7)**: a write that fails in a preview or
+  report after its plan is built meets two sentences of the `project-clean`
+  delta. The first, "an unexpected exception before the apply phase SHALL
+  refuse with `internal-error` and exit status 2", gives it exit 2, as R-55
+  reads it; the second, "A preview or report SHALL exit 2 only for a refusal
+  raised before a plan is built, 1 for an incomplete plan, and 0
+  otherwise", which FR-037 repeats, gives it 0 or 1. The delta conflicts
+  with itself there. R-55's
+  reading, exit 2, stands until Brett Heap rules: LQ-7, listed for him in
+  the feature PR body (lead ruling R-59, from lane openRepoProject-3's delta
+  read of this round's first part).
+- **Residual (R-55)**: a stalled reader, one that neither reads nor closes
+  its end, blocks a write, and a SIGTERM sent to `project` alone then waits
+  for the reader to drain or exit. That is the design working as written:
+  the handlers only record, and PEP 475 retries the interrupted write as it
+  retries the `input()` that D1 gives as the reason only the question
+  raises. Such a reader can hold a run past the delta's 64 s bound, "A run
+  with no removal in flight SHALL therefore end within 64 s of its start,
+  not counting the time blocked at the confirmation question", since that
+  bound counts Git work and does not cover a write blocked by its reader;
+  the note goes to Brett Heap under LQ-7 (lead ruling R-59).
+- **Cost**: a swap at each boundary; SIGTERM at `update`'s `Type yes` ends
   the process with the default action, as today, rather than 143 (no probe
   child runs there: inspection's `finally` has reaped them). Today
   `subprocess.run()` kills a delegate soon after a Ctrl-C reaches `project`
@@ -365,8 +382,11 @@ scratch directory, never in the repository.
   `"operations": {"estimated": 1, "performed": 0}` (`BA:1070-1071`), the apply
   bound in a preview. The delta scenario "Bounded revalidation work" says that
   `probes.performed` "equals the wrapper's count", which read literally
-  includes the removals; PR #19 clarifies that wording before the archive, and
-  US6 scenario 6 and SC-006 of the reviewed spec already read it this way.
+  includes the removals, so this reading departs from that literal text; it
+  awaits Brett Heap's word through draft PR #19's "Also" commit, as the
+  push-child exception beside it does, and US6 scenario 6 and SC-006 of the
+  reviewed spec read it this way until then (lead rulings R-57 L4 and R-59
+  D10).
 - **Alternatives considered**: counting removals in `probes` too, rejected
   (then `operations` would duplicate a subset of `probes`); adding 5T + 3
   and T only for an apply, rejected by the plan review (a preview's

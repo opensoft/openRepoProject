@@ -49,7 +49,10 @@ and an unused `--branch` or `--worktree` is ignored. `--worktree P` is
 expanded, joined to the working directory and realpath'd by one bounded
 call; it names the one registry row whose path equals it, or else whose
 realpath does (`worktree-not-found` otherwise); a path two entries share is
-`registration-mismatch`, so `target-excluded` (lead ruling R-57).
+`registration-mismatch`, an `inspection-error` row, so the run refuses with
+`inspection-incomplete`, exit 2, before any `target-excluded`, because P's
+own evidence is strict and an incomplete plan is refused first (lead
+rulings R-57 and R-62).
 
 ## Order of a run
 
@@ -159,12 +162,24 @@ Lines D18 leaves open are fixed here before tasks: the `Report:` and
 the gate order, classes in ladder order; the three reasons D18 gives no next
 step take one each, in D18's form: `main-worktree` "never removed by project
 clean", `unsupported-path-bytes` "rename the path to valid UTF-8" (P6-2), and
-`not-requested` "eligible too; name it with --worktree to remove it", so that
-every group and every gate's `target-excluded` message carries a next step
-(lead ruling R-57, withdrawing R-45(3)); one progress line per target,
-`  STAGE PATH` or `  STAGE PATH (REASON)`; the retained-branch line
-`Branches kept: B1, B2.`; a plan-blocking refusal prints the plan, then
-`REFUSED: MESSAGE`; each code with no baseline message gets one here:
+`not-requested` "name it with --worktree to plan its removal", so that
+every group carries a next step, and so does every gate's `target-excluded`
+message but the class gate's, which keeps its message with none (lead
+rulings R-57, withdrawing R-45(3), R-59 D9 and R-62); a report prints the
+baseline layout, each null as `unknown`; an `--all-safe` plan, and a
+single-mode `--action remove` plan, print "D18 preview layout", the
+single-mode one with `Selected (1):` and the `not-requested` group among the
+excluded ones, then "D18 residual-window line"; push and delete-branch print
+no plan layout, only their `Cleanup action:` output as today (lead ruling
+R-56 Q-11); rows left unprobed print in a group of their own, its heading
+T052's (R-56);
+one progress line per target, printed at its final stage, `  STAGE PATH` or
+`  STAGE PATH (REASON)`, `pending` never printed (R-56 Q-10); "D18 success
+line" followed by "D18 residual-window line", as the stop block is (R-56
+Q-9); the retained-branch line `Branches kept: B1, B2.`, naming every
+selected target's branch in canonical order; a plan-blocking refusal prints
+the plan, then `REFUSED: MESSAGE`; each code with no baseline message gets
+one here:
 
 | Code | Message |
 | --- | --- |
@@ -200,6 +215,19 @@ or an undecodable byte; then it prints as `$'...'` with `\xHH`, `\uXXXX` or
 `\UXXXXXXXX` in lowercase hexadecimal, each backslash doubled and each single
 quote as `\'` (FR-041). The baseline report keeps its other lines.
 
+Two notes on that form, documentation only, since the delta fixes the
+printed lines and `project` adds no text about them (lead rulings R-60 and
+R-61). A command printed with `$'...'` needs a shell that implements it:
+bash, zsh, ksh93 or a POSIX.1-2024 shell; dash, Ubuntu's `/bin/sh`, does not
+yet. And a `\u` or `\U` escape needs a UTF-8 locale: under `LC_ALL=C`
+bash and zsh drop such an escape, so `$'a\U000e0041b'` reads as `ab`, a
+different valid name, and for some code points bash keeps the escape as
+text and zsh refuses the line, so a command pasted in a C locale can name a
+different path or branch. LQ-8 asks Brett Heap whether the command form
+should write non-ASCII code points as their UTF-8 bytes, `\xHH`, which every
+such shell reads alike in any locale (plan.md, "Open questions for Brett
+Heap").
+
 ## JSON (FR-039 to FR-044)
 
 Every `project clean --json` prints one document with `schema_version: 1`.
@@ -226,7 +254,7 @@ are closed within the version.
 | `budget` | `probe_timeout_seconds` (5), `invocation_timeout_seconds` (60), `reconciliation_reserve_seconds` (10), `removal_floor_seconds` (5), `removal_ceiling_seconds` (300), `probe_concurrency` (1), the values in force |
 | `probes`, `operations` | `{estimated, performed}` integers: `probes` counts every Git child other than a removal, `operations` the removals, each child once (lead ruling R-27); `estimated` is the upper bound for an `--apply` run of this plan in every mode, previews included: F + W + E + 5T + 3 and T (research.md R8) |
 | `selected` | array in canonical order, or null in a report above 128 rows; each entry: `path`, `path_valid_utf8`, `branch`, `head`, `upstream`, `upstream_oid`, `ahead`, `behind`, `dev`, `ino`, `admin_id`, `locked`, the baseline signature fields (`present`, `dirty`, `ignored_files`, `remote_present`, `merged_into_target`, `current`, `classification`), and `operation` (`{kind: "worktree-remove", argv}`, the exact argument vector) |
-| `excluded` | array in canonical order: `path`, `path_valid_utf8`, `branch` (or null), `classification` (or null when never classified), `reason` |
+| `excluded` | array in canonical order: `path`, `path_valid_utf8`, `branch` (or null), `classification` (or null when never classified), `reason` (null for a row left unprobed, which keeps its classification and makes the plan incomplete with `inspection-incomplete`; lead ruling R-56) |
 | `omitted` | `{count, exactness: "exact"}` |
 | `notes` | `{code, message}` objects; `merge-target-conflict`; in single mode the non-blocking `inspection-incomplete`, `inspect-cap`, `deadline-exceeded`; in a report above 128 rows `inspect-cap` with `rows` |
 | `completeness` | `complete` or `incomplete` |
@@ -325,8 +353,12 @@ phase began, an `unknown` target, or `removal-ceiling`), Git's own status (a
 it equals one of `project`'s own), 2 (any refusal, a `refused` target, a
 branch-after-removal reason, `spawn-error`), 0. A preview or report: 2 for a
 refusal before a plan is built, 1 incomplete, 0 otherwise, and the signal
-exits. The baseline exited 0 for every printed report; it now exits 1 when
-the report is incomplete (FR-005). Push and delete-branch exit 130, 143 or
+exits; a write that fails after its plan is built is `internal-error`, exit
+2, by the delta's rule for an unexpected exception before the apply phase,
+which conflicts with its preview rule there (research.md R4; lead rulings
+R-55 and R-59; LQ-7, listed for Brett Heap in the feature PR body). The
+baseline exited 0 for every printed report; it now exits 1 when the report
+is incomplete (FR-005). Push and delete-branch exit 130, 143 or
 129 when a signal was recorded, otherwise with the child's status, and 2
 for a refusal.
 
@@ -385,6 +417,14 @@ removal: `-c core.untrackedCache=false -c core.fsmonitor=false`.
 | branch deletion | protocol pins + `-C ROOT branch -d BRANCH` | `root`; a D2 handle run by the driver with no budget, its output relayed to `project`'s streams |
 | push | `-C ROOT push REMOTE BRANCH:REMOTE_BRANCH`, or `push -u origin BRANCH`; no protocol pins | `root`; run by `execute()`, not the driver: `project`'s own streams, never read or capped; `project`'s process group, in the terminal's foreground when `project` is; never signalled, waited for, unbounded; yields no evidence |
 
+Row 6 cannot establish the upstream of a branch named `HEAD`
+(`refs/heads/HEAD`), because `git for-each-ref` reports the current branch's
+upstream for it. Such a row has `upstream`, `ahead` and `behind` null and is
+`inspection-error`, its row error `probe-failed` with `git for-each-ref
+failed: unparseable output`, filling the delta's rule that evidence not
+established is `inspection-error` (lead ruling R-61; lane G's follow-up
+builds it).
+
 Bounds: each probe child gets `min(5 s, work remaining)` under `clean`'s 60 s
 deadline (50 s of work, a 10 s reserve, time at the question excluded), each
 rescan child `min(5 s, reserve remaining)`; a child past its budget, at its
@@ -404,9 +444,9 @@ at most three.
 
 | Aspect | Contract |
 | --- | --- |
-| Git check | `git --version` once per invocation, only when a repository is inspected; never a refusal |
+| Git check | `git --version` once per invocation, memoized, when a repository is inspected; doctor's `git` row runs it itself when none was, and `status` never runs it for nothing (lead ruling R-56); never a refusal |
 | No `.git` | `present: false`, no Git child, as today |
-| Uninspectable root, leg or worktree | `classification: "inspection-error"`, `errors`, unestablished values null; status exits 0 |
+| Uninspectable root, leg or worktree | `classification: "inspection-error"`, `errors`, unestablished values null, `worktrees` among them (R-56); status exits 0 |
 | Doctor's `git` row | `ok` with the detail `PATH (git version X)`, or `error` with the detail `CODE: MESSAGE`, CODE `git-too-old` or `git-unavailable` and MESSAGE its command-neutral text ("Codes"; lead rulings R-48 and R-57) |
 | Doctor's error rows | one per null `present`, null `dirty` from a failed or timed-out probe, and `inspection-error` row; none for a null that means "none" |
 | Human `status` and `doctor` | `Git: inspection-error (CODES)` in place of the branch line |
