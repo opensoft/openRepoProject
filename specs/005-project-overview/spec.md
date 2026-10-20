@@ -1471,19 +1471,16 @@ path"; "Non-UTF-8 common directory".
 - **EC-031**: Two registry entries naming one path fail closed: the registry
   listing does not name the administrative directory, so the two-way
   registration check alone cannot tell the two entries apart, and each is a
-  registration disagreement as FR-007 states it (no status probe,
-  `inspection-error` set directly, a `registration-mismatch` finding in
-  place of that class's `inspection-error` finding, and no error). Feature
-  004's evidence model, which the overview shares, fails them the same way
-  in its data model at `b0243e5`, "Worktree identity and registration" (lead
-  ruling R-57, withdrawing R-51(c)'s known limit); its code at that head
-  still passes them (R-51(c)), and its `tasks.md` at `b0243e5` (:746-747)
-  has lane G's follow-up build the refusal. The packet's rule sets a
-  registration that disagrees in either direction to `inspection-error`
-  directly, with a `registration-mismatch` finding and no status probe
-  (DI:259, :267-270); it names no case of two entries for one path, to which
-  R-57 gives the same outcome. The rows keep the registry's order, so the
-  output stays deterministic.
+  registration disagreement, whose outcome in either direction is no status
+  probe, `inspection-error` set directly, a `registration-mismatch` finding
+  in place of that class's `inspection-error` finding, and no error (FR-007;
+  DI:259, :267-270). The packet names no case of two entries for one path.
+  Feature 004's data model, for the evidence model the overview shares,
+  refuses them with that outcome (lead ruling R-57, withdrawing R-51(c)'s
+  known limit; "Worktree identity and registration" at `b0243e5`); its code
+  at that head still passes them (R-51(c)), and its `tasks.md` at `b0243e5`
+  (:746-747) has lane G's follow-up build the refusal. The rows keep the
+  registry's order, so the output stays deterministic.
 - **EC-032**: When a value of the identity probe holds a line feed, as the
   name of a repository directory can (US11 s1), the probe is repeated, one
   child per option, each counted (change 1's design D6, row 3), so that for
@@ -2456,9 +2453,9 @@ and [P] are change 1's requirements as the header names them.
     openRepoProject-4 agreed at `9f30fb9` (the words "for the same
     working directory and refs" agreed at `4d5855a`, unchanged at
     `fffc194`): a worktree that `project clean` classifies
-    `merged-removable` because its cache enumeration proved every ignored
-    path a listed cache is `ignored-local-files` in the overview, which
-    collects no cache evidence, and the overview never classifies a
+    `merged-removable` because clean's cache enumeration proved every
+    ignored path a listed cache is `ignored-local-files` in the overview,
+    which collects no cache evidence, and the overview never classifies a
     worktree `merged-removable` where `project clean` classifies it
     otherwise for the same working directory and refs. It also names the
     ignored file of "Every protected classifier" as not a Python bytecode
@@ -2486,16 +2483,20 @@ and [P] are change 1's requirements as the header names them.
     and other `project-clean` requirements for `clean --retire-branches`
     alone, moving no gate, refusal code or shared constant that FR-032 to
     FR-036 read; no suggestion carries its flag (FR-031).
-  - An answer to Q6, Q7, Q8, Q9 or Q12 that amends change 2 or [E] rewrites
-    text that these changes carry in MODIFIED blocks, among them #24's block
-    of requirement 5, where an answer to Q7 amends the ladder's run rule
-    (POD:378-381), and #25's blocks; #25 re-aligns its blocks to such an
-    amendment (its proposal, "Dependencies and Sequencing"; its `tasks.md`
-    2.3 and 2.4). An answer to Q16 that amends, or records a departure from,
-    change 2's design D1 or clarifications N1 reaches #25 as well: if the
-    amendment or the recorded departure comes before change 2 archives,
-    #25's task 2.3 re-read picks it up, the spawning sentence of #25's
-    design D7 and its scenario "Expiry cancels queued and in-flight
+  - An answer to Q6, Q7, Q8, Q9, Q12, Q13 or Q14 that amends change 2 or [E]
+    rewrites text that these changes carry in MODIFIED blocks, among them
+    #24's block of requirement 5, where an answer to Q7 amends the ladder's
+    run rule (POD:378-381), and #25's blocks (Q13's options A and B rewrite
+    POD:217-222, :303-306, :610-611 and :622-624, the root object's `path`,
+    which #25 carries at its `spec.md:92-97`, `:196-199`, `:219-220` and
+    `:231-233`; Q14's option B rewrites POD:238-243's phase condition, which
+    #25 carries at `:113-118`, all at `67e43ae`); #25 re-aligns its blocks to
+    such an amendment (its proposal, "Dependencies and Sequencing"; its
+    `tasks.md` 2.3 and 2.4). An answer to Q16 that amends, or records a
+    departure from, change 2's design D1 or clarifications N1 reaches #25 as
+    well: if the amendment or the recorded departure comes before change 2
+    archives, #25's task 2.3 re-read picks it up, the spawning sentence of
+    #25's design D7 and its scenario "Expiry cancels queued and in-flight
     requests" included (its proposal, "Dependencies and Sequencing"; its
     `tasks.md` 2.3). Before its `/opsx:archive`, #24 re-reads its block of
     requirement 5 against the text of that requirement on `main` and

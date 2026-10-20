@@ -244,7 +244,7 @@ Lane: openRepoProject-4
   R-55 for a failed write, as Q15 records R-55's stalled-reader residual; the
   dated readings of Q3 (T003) and Q4 (T123), at `fe91f2c`, and of Q14 and
   Q15, at `5a02c1a`, were left in that pass and moved to `b0243e5` by
-  `fdbcebb`, each cited text reading the same there; Q16 and Q17 were added.
+  `fdbcebb`, each cited claim holding there; Q16 and Q17 were added.
   The totals below were recounted by script: PN-2's return moves one item
   from fixed to plan note. Re-validation: 16 of 16 items pass, with the
   checks of iteration 2 re-run by script on the edited spec.
