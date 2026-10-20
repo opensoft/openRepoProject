@@ -197,6 +197,118 @@ class GatesTests(clean_support.CleanCase):
         self.assertEqual(removals(records), [])
         self.assertEqual(self.snapshot(root), before)
 
+    # T065: "Dirty or unmerged work is preserved"; "A merged worktree has
+    # ignored local files"; "Default branch cannot be established locally";
+    # "Pushed feature branch has an open review path"; "The main worktree and
+    # a locked worktree". They pin T050 and T053.
+
+    def test_clean_dirty_or_unmerged_work_is_preserved(self):
+        root = self.repo()
+        self.bare_remote()
+        dirty = self.merged_worktree("001-dirty", path=self.base / "dirty")
+        (dirty / "uncommitted").write_text("preserve")
+        unmerged = self.pushed_worktree("002-unmerged", self.base / "unmerged")
+        before = self.snapshot(root)
+        report = self.run_cli("clean", root)
+        self.assert_status(report, 0)
+        lines = report.stdout.splitlines()
+        for tree, branch, label, advice in ((dirty, "001-dirty", "DIRTY", DIRTY_ADVICE),
+                                            (unmerged, "002-unmerged", "PUSHED-UNMERGED", REVIEW_ADVICE)):
+            [at] = [index for index, line in enumerate(lines) if line.startswith(f"{label}: {tree} [{branch}] ")]
+            self.assertEqual(lines[at + 1], f"  {advice}")
+        self.assertNotIn("worktree remove", report.stdout, "no destructive action is proposed")
+        result = self.preview(root)
+        self.assertEqual((result.document["selected"], by_path(result.document)),
+                         ([], {str(root): "main-worktree", str(dirty): "dirty", str(unmerged): "pushed-unmerged"}))
+        result, records = self.run_counted("clean", root, "--all-safe", "--apply", "--yes")
+        self.assert_status(result, 0)
+        self.assertEqual(result.stdout.splitlines()[-1], TEXT["empty_line"])
+        self.assertEqual(removals(records), [])
+        for tree, reason in ((dirty, "dirty"), (unmerged, "pushed-unmerged")):
+            result = self.run_json("clean", root, "--apply", "--action", "remove", "--worktree", tree, "--yes",
+                                   "--json")
+            self.assert_refused_target(result, tree, reason, TEXT["target_excluded_class"].format(CLASS=reason))
+        self.assertEqual(self.snapshot(root), before)
+
+    def test_clean_a_merged_worktree_has_ignored_local_files(self):
+        root = self.repo()
+        self.bare_remote()
+        tree = self.merged_worktree("001-ignored", path=self.base / "ignored",
+                                    setup=lambda tree: (tree / ".gitignore").write_text("local.env\n"))
+        (tree / "local.env").write_text("preserve")
+        before = self.snapshot(root)
+        result = self.preview(root)
+        self.assertEqual((result.document["selected"], by_path(result.document)),
+                         ([], {str(root): "main-worktree", str(tree): "ignored-local-files"}))
+        self.assertEqual(row_of(result.document, tree)["ignored_files"], 1)
+        result, records = self.run_counted("clean", root, "--apply", "--action", "remove", "--worktree", tree, "--yes")
+        self.assert_status(result, 2)
+        message = TEXT["target_excluded_class"].format(CLASS="ignored-local-files")
+        self.assertEqual(result.stderr, f"REFUSED: {message}\n")
+        self.assertEqual(removals(records), [])
+        result = self.run_json("clean", root, "--apply", "--action", "remove", "--worktree", tree, "--yes", "--json")
+        self.assert_refused_target(result, tree, "ignored-local-files", message)
+        self.assertEqual(self.snapshot(root), before)
+        self.assertEqual((tree / "local.env").read_text(), "preserve")
+
+    def test_clean_default_branch_cannot_be_established_locally(self):
+        # No manifest tracking_branch, no origin/HEAD, neither main nor master;
+        # the current branch, trunk, is never taken as the merge target.
+        root = self.repo(branch="trunk")
+        tree = self.base / "feature"
+        self.git(root, "worktree", "add", "-q", "-b", "001-feature", tree)
+        before = self.snapshot(root)
+        for words in ((), ("--all-safe",), ("--all-safe", "--apply", "--yes"),
+                      ("--apply", "--action", "remove", "--worktree", tree, "--yes")):
+            with self.subTest(arguments=words):
+                result, records = self.run_counted("clean", root, *words)
+                self.assert_status(result, 2)
+                self.assertEqual((result.stdout, result.stderr), ("", f"REFUSED: {TEXT['no_merge_target']}\n"))
+                self.assertEqual(removals(records), [])
+                result = self.run_json("clean", root, *words, "--json")
+                self.assert_status(result, 2)
+                self.assertEqual((result.document["code"], result.document["error"], result.document["merge_target"]),
+                                 ("no-merge-target", TEXT["no_merge_target"], None))
+        self.assertEqual(self.snapshot(root), before)
+
+    def test_clean_pushed_feature_branch_has_an_open_review_path(self):
+        root = self.repo()
+        self.bare_remote()
+        tree = self.pushed_worktree("001-feature", self.base / "feature")
+        head = self.git(tree, "rev-parse", "HEAD").strip()
+        report = self.run_cli("clean", root)
+        self.assert_status(report, 0)
+        lines = report.stdout.splitlines()
+        at = lines.index(f"PUSHED-UNMERGED: {tree} [001-feature] dirty=False; upstream=origin/001-feature; "
+                         "ahead=0, behind=0; merged=False")
+        self.assertEqual(lines[at + 1], f"  {REVIEW_ADVICE}")
+        result, records = self.run_counted("clean", root, "--all-safe", "--apply", "--yes")
+        self.assert_status(result, 0)
+        self.assertEqual(removals(records), [])
+        self.assertTrue(tree.is_dir(), "the worktree remains")
+        self.assertEqual(self.git(root, "rev-parse", "refs/heads/001-feature").strip(), head, "the branch remains")
+
+    def test_clean_the_main_worktree_and_a_locked_worktree(self):
+        root = self.repo()
+        self.bare_remote()
+        locked = self.merged_worktree("001-locked", path=self.base / "locked")
+        self.git(root, "worktree", "lock", locked)
+        before = self.snapshot(root)
+        cases = ((root, "main-worktree", TEXT["target_excluded_class"].format(CLASS="protected-default")),
+                 (locked, "locked-worktree", TEXT["target_excluded_gate"].format(
+                     REASON="locked-worktree", NEXT_STEP=STEPS["locked-worktree"])))
+        for tree, reason, message in cases:
+            with self.subTest(reason):
+                result, records = self.run_counted("clean", root, "--apply", "--action", "remove", "--worktree",
+                                                   tree, "--yes")
+                self.assert_status(result, 2)
+                self.assertEqual(result.stderr, f"REFUSED: {message}\n")
+                self.assertEqual(removals(records), [])
+                result = self.run_json("clean", root, "--apply", "--action", "remove", "--worktree", tree, "--yes",
+                                       "--json")
+                self.assert_refused_target(result, tree, reason, message)
+        self.assertEqual(self.snapshot(root), before, "nothing removed")
+
 
 if __name__ == "__main__":
     unittest.main()
