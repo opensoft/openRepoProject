@@ -1928,7 +1928,7 @@ US2, US7 and US9.
   Scenario: "Remove a merged clean worktree".
   — files: `tests/test_clean_single.py`
   — verify: `python3 -c "import sys,unittest as u;L=u.defaultTestLoader;f=lambda s:[i for t in s for i in (f(t) if isinstance(t,u.TestSuite) else [t.id()])];I=[i for i in f(L.discover('tests',pattern=sys.argv[1])) if not i.startswith('unittest.')];A=sys.argv[2:];M=[a for a in A if not any(a in ('*',i.split('.')[-1]) for i in I)];[print('not collected:',m) for m in M];[print(e) for e in L.errors];sys.exit(1 if M or L.errors or not A else 0)" test_clean_single.py 'test_clean_remove_a_merged_clean_worktree'`
-- [ ] T072 [P] [US3] [O] Add to `tests/test_clean_push.py`, every pseudo-terminal
+- [x] T072 [P] [US3] [O] Add to `tests/test_clean_push.py`, every pseudo-terminal
   run with `controlling_tty=True` (rule 14):
   `test_clean_push_an_unpushed_feature_branch` (the exact push plan shown,
   confirmed through `Type yes`, pushed without `--force` by the counting log; a
@@ -1949,7 +1949,7 @@ US2, US7 and US9.
   inspection"; "Push and branch deletion stay human-only".
   — files: `tests/test_clean_push.py`
   — verify: `python3 -c "import sys,unittest as u;L=u.defaultTestLoader;f=lambda s:[i for t in s for i in (f(t) if isinstance(t,u.TestSuite) else [t.id()])];I=[i for i in f(L.discover('tests',pattern=sys.argv[1])) if not i.startswith('unittest.')];A=sys.argv[2:];M=[a for a in A if not any(a in ('*',i.split('.')[-1]) for i in I)];[print('not collected:',m) for m in M];[print(e) for e in L.errors];sys.exit(1 if M or L.errors or not A else 0)" test_clean_push.py 'test_clean_push_an_unpushed_feature_branch' 'test_clean_push_refuses_a_branch_whose_upstream_was_deleted' 'test_clean_push_refuses_an_incomplete_inspection' 'test_clean_push_and_branch_deletion_stay_human_only'`
-- [ ] T073 [P] [US3] [O] Add to `tests/test_clean_push.py`:
+- [x] T073 [P] [US3] [O] Add to `tests/test_clean_push.py`:
   `test_clean_a_signal_during_the_push_or_branch_deletion` (launcher, the real
   table: SIGTERM, and in turn SIGINT and SIGHUP, sent to `project` alone while
   a `pre-push` hook sleeps, and while a `reference-transaction` hook of `git
@@ -1967,7 +1967,7 @@ US2, US7 and US9.
   review B2, FR-041, SC-010).
   — files: `tests/test_clean_push.py`
   — verify: `python3 -c "import sys,unittest as u;L=u.defaultTestLoader;f=lambda s:[i for t in s for i in (f(t) if isinstance(t,u.TestSuite) else [t.id()])];I=[i for i in f(L.discover('tests',pattern=sys.argv[1])) if not i.startswith('unittest.')];A=sys.argv[2:];M=[a for a in A if not any(a in ('*',i.split('.')[-1]) for i in I)];[print('not collected:',m) for m in M];[print(e) for e in L.errors];sys.exit(1 if M or L.errors or not A else 0)" test_clean_push.py 'test_clean_a_signal_during_the_push_or_branch_deletion' 'test_clean_push_and_delete_branch_escape_their_paths'`
-- [ ] T074 [P] [US3] [O] Add to `tests/test_clean_push.py` (PR #19; plan.md LQ-3;
+- [x] T074 [P] [US3] [O] Add to `tests/test_clean_push.py` (PR #19; plan.md LQ-3;
   research.md R1): `test_clean_the_push_child_reaches_its_remote` (`project
   clean ROOT --apply --action push --branch B --yes`, with ROOT the main
   worktree's absolute path, run in its own session with `GIT_DIR` naming
@@ -2022,7 +2022,7 @@ US2, US7 and US9.
   (plan review B1). A report above 128 rows is T101's. T069 and T070 pass.
   — files: `project`
   — verify: `python3 -m unittest discover -s tests -p 'test_clean_single.py' -k '*.test_clean_single_target_equals_a_one_item_batch' -k '*.test_clean_single_target_a_failed_realpath_read_counts_as_a_match' -k '*.test_clean_single_target_p_s_own_realpath_unread_keeps_the_cap' -k '*.test_clean_a_named_removal_beside_another_row_s_inspection_error' -k '*.test_clean_a_named_removal_among_seventeen_eligible_rows' -k '*.test_clean_a_named_removal_beyond_the_row_cap'`
-- [ ] T076 [P] [US3] [O] Fill `push_or_delete()` in region `push` (FR-010, FR-041,
+- [x] T076 [P] [US3] [O] Fill `push_or_delete()` in region `push` (FR-010, FR-041,
   FR-046, FR-047): both actions resolve through the pipeline and plan in mode
   single for the cap and the bounds, with the batch's completeness (T075; plan
   review B1); `require_unchanged_cleanup_state()` (`project:656-666`)
@@ -2054,7 +2054,7 @@ US2, US7 and US9.
   plus the signal number for a signal death, and 2 for a refusal (M3).
   — files: `project`
   — verify: `python3 -c "import sys,re;t=open('project').read();A=sys.argv[1:];c=lambda r:t.split('# region '+r+'\n')[1].split('# endregion '+r+'\n')[0];M=[a for a in A if not ((a.split('%',1)[1] not in c(a.split('%',1)[0])) if '%' in a else (a.split('~',1)[1] in c(a.split('~',1)[0])) if '~' in a else re.search(r'^[a-z]*\s?'+re.escape(a.split(':',1)[1])+r'\b',c(a.split(':',1)[0]),re.M))];[print('region check failed:',m) for m in M];sys.exit(1 if M or not A else 0)" 'push:show_push_plan' 'push~remote-gone' && python3 -c "import ast,subprocess as s,sys;g=lambda t:{n.name:ast.dump(n) for n in ast.parse(t).body if isinstance(n,(ast.FunctionDef,ast.ClassDef))};a=g(s.run(['git','show','961c405:project'],capture_output=True,text=True,check=True).stdout);b=g(open('project').read());M=[n for n in sys.argv[1:] if n not in a or not a[n]==b.get(n)];[print('changed since 961c405:',m) for m in M];sys.exit(1 if M or not sys.argv[1:] else 0)" show_plan confirm && python3 project clean --help >/dev/null`
-- [ ] T077 [P] [US3] [O] `execute()` (`project:157-162`) gains only an optional
+- [x] T077 [P] [US3] [O] `execute()` (`project:157-162`) gains only an optional
   `env` argument. The push child runs as `execute(git_argv("push", ["-C",
   ROOT, "push", ...]), env=git_env("push"))`, built through `git_argv()` so
   that an LQ-3 ruling stays a one-row change to the kinds table: no pins,
@@ -2079,7 +2079,7 @@ US2, US7 and US9.
   `:994` pass.
   — files: `project`
   — verify: `python3 -c "import sys,re;t=open('project').read();A=sys.argv[1:];c=lambda r:t.split('# region '+r+'\n')[1].split('# endregion '+r+'\n')[0];M=[a for a in A if not ((a.split('%',1)[1] not in c(a.split('%',1)[0])) if '%' in a else (a.split('~',1)[1] in c(a.split('~',1)[0])) if '~' in a else re.search(r'^[a-z]*\s?'+re.escape(a.split(':',1)[1])+r'\b',c(a.split(':',1)[0]),re.M))];[print('region check failed:',m) for m in M];sys.exit(1 if M or not A else 0)" 'runner~feed_stderr' && python3 -c "import ast,subprocess as s,sys;g=lambda t:[n for n in ast.parse(t).body if isinstance(n,ast.FunctionDef) and n.name=='execute'][0].args;w=lambda a:[x.arg for x in a.posonlyargs+a.args+a.kwonlyargs];o=g(s.run(['git','show','961c405:project'],capture_output=True,text=True,check=True).stdout);n=g(open('project').read());print('execute() parameters at 961c405:',w(o),'now:',w(n),'wanted:',w(o)+['env']);sys.exit(0 if w(n)==w(o)+['env'] else 1)" && python3 -m unittest discover -s tests -p 'test_clean_push.py' && python3 -m unittest discover -s tests -p 'test_project.py' -k '*.test_clean_pushes_explicit_clean_feature_branch_without_force' -k '*.test_clean_pushes_to_a_differently_named_upstream_branch' -k '*.test_clean_refuses_diverged_branch_push' && python3 -m unittest discover -s tests -p 'test_clean_runner.py'`
-- [ ] T078 [US3] [S] Run the US3 modules, every earlier module and the 96 tests:
+- [x] T078 [US3] [S] Run the US3 modules, every earlier module and the 96 tests:
   all pass.
   — files: (none)
   — verify: `python3 -m unittest discover -s tests -p 'test_clean_timing.py' && python3 -m unittest discover -s tests -p 'test_clean_harness.py' && python3 -m unittest discover -s tests -p 'test_clean_scrub.py' && python3 -m unittest discover -s tests -p 'test_clean_parsers.py' && python3 -m unittest discover -s tests -p 'test_clean_escaping.py' && python3 -m unittest discover -s tests -p 'test_clean_runner.py' && python3 -m unittest discover -s tests -p 'test_clean_evidence.py' && python3 -m unittest discover -s tests -p 'test_clean_guard.py' && python3 -m unittest discover -s tests -p 'test_clean_batch.py' && python3 -m unittest discover -s tests -p 'test_clean_apply.py' && python3 -m unittest discover -s tests -p 'test_clean_single.py' && python3 -m unittest discover -s tests -p 'test_clean_push.py' && python3 -m unittest discover -s tests -p 'test_project.py'`
