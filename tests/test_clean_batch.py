@@ -18,6 +18,7 @@ import json
 import os
 from pathlib import Path
 import re
+import subprocess
 import types
 import unittest
 from unittest import mock
@@ -128,6 +129,27 @@ class BatchTests(clean_support.CleanCase):
             status = project.main([os.fspath(arg) for arg in argv])
         return status, out.getvalue(), err.getvalue()
 
+    def snapshot(self, root):
+        """What a run must leave unchanged: the registry, every ref, and every
+        file of the repository's worktrees with its content (a "nothing
+        changed" snapshot of this module's own, lead ruling R-56)."""
+        registry = self.git(root, "worktree", "list", "--porcelain")
+        trees = [Path(line[9:]) for line in registry.splitlines() if line.startswith("worktree ")]
+        files = {}
+        for tree in trees:
+            for directory, names, filenames in os.walk(tree):
+                names[:] = [name for name in names if name != ".git"]
+                for name in filenames:
+                    path = Path(directory) / name
+                    if path.name != ".git":
+                        files[str(path)] = path.read_bytes()
+        return registry, self.git(root, "for-each-ref", "--format=%(refname) %(objectname)"), files
+
+    def plan_header(self, root, name="main", source="main"):
+        """The baseline header of a human plan (D18), from the fixtures."""
+        return [f"Cleanup plan for {root}", TEXT["merge_target_line"].format(NAME=name, SOURCE=source),
+                f"Freshness: {FRESHNESS}"]
+
     def counting(self, env=None):
         """The counting wrapper first on PATH (in front of the real git): returns
         the environment to run with and the log, emptied."""
@@ -142,6 +164,47 @@ class BatchTests(clean_support.CleanCase):
         env, log = self.counting(env)
         result = self.run_cli(*args, cwd=cwd, env=env)
         return result, clean_support.child_log(log)
+
+    # T036: "The preview says what keeps each row".
+
+    def test_clean_the_preview_says_what_keeps_each_row(self):
+        # D18, plan review M8, lead ruling R-57: two rows selected, one excluded
+        # as ignored-local-files and two as dirty, beside the main worktree. Each
+        # pair is created in the order opposite to raw path byte order, which is
+        # also not case-folded order ("Keep-b" < "keep-a" as bytes).
+        root = self.repo()
+        self.bare_remote()
+        keep_a = self.merged_worktree("001-a", path=self.base / "keep-a")
+        keep_b = self.merged_worktree("002-b", path=self.base / "Keep-b")
+        ignored = self.merged_worktree("003-ignored", path=self.base / "ignored",
+                                       setup=lambda tree: (tree / ".gitignore").write_text("local.env\n"))
+        (ignored / "local.env").write_text("preserve")
+        dirty_a = self.merged_worktree("004-a", path=self.base / "dirty-a")
+        dirty_b = self.merged_worktree("005-b", path=self.base / "Dirty-b")
+        for tree in (dirty_a, dirty_b):
+            (tree / "uncommitted").write_text("preserve")
+        before = self.snapshot(root)
+        result = self.run_cli("clean", root, "--all-safe")
+        self.assert_status(result, 0)
+        steps = clean_support.NEXT_STEP_FIXTURES
+        expected = self.plan_header(root) + [
+            TEXT["selected_heading"].format(N=2),
+            TEXT["selected_row"].format(PATH=keep_b, BRANCH="002-b"),
+            TEXT["selected_row"].format(PATH=keep_a, BRANCH="001-a"),
+            TEXT["excluded_heading"].format(M=4),
+            TEXT["excluded_group"].format(REASON="main-worktree", K=1, NEXT_STEP=steps["main-worktree"]),
+            TEXT["excluded_row"].format(PATH=root, BRANCH="main"),
+            TEXT["excluded_group"].format(REASON="dirty", K=2, NEXT_STEP=steps["dirty"]),
+            TEXT["excluded_row"].format(PATH=dirty_b, BRANCH="005-b"),
+            TEXT["excluded_row"].format(PATH=dirty_a, BRANCH="004-a"),
+            TEXT["excluded_group"].format(REASON="ignored-local-files", K=1,
+                                          NEXT_STEP=steps["ignored-local-files"]),
+            TEXT["excluded_row"].format(PATH=ignored, BRANCH="003-ignored")
+            + TEXT["ignored_suffix"].format(N=1, SAMPLE="local.env"),
+            TEXT["residual_window_line"],
+        ]
+        self.assertEqual((result.stdout, result.stderr), ("\n".join(expected) + "\n", ""))
+        self.assertEqual(self.snapshot(root), before, "the registry, the branches and the files are unchanged")
 
     # T039: "Invalid argument combinations".
 
@@ -467,6 +530,72 @@ class BatchTests(clean_support.CleanCase):
                           sort_keys=True, separators=(",", ":"), ensure_ascii=False)
         self.assertIn("caf" + E_ACUTE, text)
         self.assertEqual(project.plan_digest(plan), hashlib.sha256(text.encode("utf-8")).hexdigest())
+
+    # T052: the printed plan.
+
+    def test_clean_a_reader_that_closes_standard_output(self):
+        # Lead rulings R-55 and R-59 D2: standard output a pipe whose read end
+        # is closed, as tests/test_project.py's test_advisory_with_stderr_on_a_closed_pipe
+        # closes one. Before the apply phase the failed write is internal-error,
+        # exit 2, nothing mutated, no traceback, and never exit 120.
+        root = self.repo()
+        self.bare_remote()
+        tree = self.merged_worktree("001-merged")
+        before = self.snapshot(root)
+        env, log = self.counting()
+        for words in (("--all-safe",), ("--all-safe", "--json"), ("--all-safe", "--apply", "--yes")):
+            with self.subTest(arguments=words):
+                clean_support.reset_child_log(log)
+                read_end, write_end = os.pipe()
+                os.close(read_end)
+                try:
+                    result = subprocess.run(clean_support.cli_argv("clean", root, *words), cwd=self.base, env=env,
+                                            stdin=subprocess.DEVNULL, stdout=write_end, stderr=subprocess.PIPE,
+                                            text=True, timeout=clean_support.TIMEOUT)
+                finally:
+                    os.close(write_end)
+                self.assertEqual(result.returncode, 2, result.stderr)
+                self.assertNotIn("Traceback", result.stderr)
+                self.assertNotIn("Exception ignored", result.stderr)
+                if "--json" in words:
+                    self.assertEqual(result.stderr, "", "under --json the error goes to standard output")
+                else:
+                    self.assertRegex(result.stderr, r"\AREFUSED: BrokenPipeError: [^\n]*\n\Z")
+                removals = [record for record in clean_support.child_log(log)
+                            if argv_words(record)[2:4] == ["worktree", "remove"]]
+                self.assertEqual(removals, [], "the plan failed to print before the apply phase")
+                self.assertEqual(self.snapshot(root), before)
+                self.assertTrue(tree.is_dir())
+
+    def test_clean_the_preview_says_what_keeps_each_row_single_mode(self):
+        # Lead ruling R-59 D8, R-62 (b): --apply --action remove --worktree P,
+        # standard input not a terminal and no --yes, beside other eligible rows.
+        root = self.repo()
+        self.bare_remote()
+        target = self.merged_worktree("001-p")
+        others = [self.merged_worktree("002-q"), self.merged_worktree("003-r")]
+        dirty = self.merged_worktree("004-dirty")
+        (dirty / "uncommitted").write_text("preserve")
+        before = self.snapshot(root)
+        result = self.run_cli("clean", root, "--apply", "--action", "remove", "--worktree", target)
+        self.assert_status(result, 2)
+        steps = clean_support.NEXT_STEP_FIXTURES
+        expected = self.plan_header(root) + [
+            TEXT["selected_heading"].format(N=1),
+            TEXT["selected_row"].format(PATH=target, BRANCH="001-p"),
+            TEXT["excluded_heading"].format(M=4),
+            TEXT["excluded_group"].format(REASON="main-worktree", K=1, NEXT_STEP=steps["main-worktree"]),
+            TEXT["excluded_row"].format(PATH=root, BRANCH="main"),
+            TEXT["excluded_group"].format(REASON="dirty", K=1, NEXT_STEP=steps["dirty"]),
+            TEXT["excluded_row"].format(PATH=dirty, BRANCH="004-dirty"),
+            TEXT["excluded_group"].format(REASON="not-requested", K=2, NEXT_STEP=steps["not-requested"]),
+            TEXT["excluded_row"].format(PATH=others[0], BRANCH="002-q"),
+            TEXT["excluded_row"].format(PATH=others[1], BRANCH="003-r"),
+            TEXT["residual_window_line"],
+        ]
+        self.assertTrue(result.stdout.startswith("\n".join(expected) + "\n"), clean_support.transcript(result))
+        self.assertTrue(result.stderr.startswith("REFUSED: "), clean_support.transcript(result))
+        self.assertEqual(self.snapshot(root), before, "nothing removed")
 
 
 if __name__ == "__main__":

@@ -649,6 +649,11 @@ NEXT_STEP_FIXTURES = {
     "registration-mismatch": "review, then git worktree repair or git worktree prune, or remove the row by hand",
     "inspection-error": "review, then git worktree repair or git worktree prune, or remove the row by hand",
     "locked-worktree": "unlock it yourself if it should go",
+    # The contract's next steps for the three reasons D18 gives none
+    # (contracts/project-clean.md :160-168; lead rulings R-57 H1 and R-62 (b)).
+    "main-worktree": "never removed by project clean",
+    "unsupported-path-bytes": "rename the path to valid UTF-8",
+    "not-requested": "name it with --worktree to plan its removal",
 }
 
 

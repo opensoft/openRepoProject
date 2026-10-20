@@ -735,6 +735,11 @@ NEXT_STEPS = {
     "registration-mismatch": "review, then git worktree repair or git worktree prune, or remove the row by hand",
     "inspection-error": "review, then git worktree repair or git worktree prune, or remove the row by hand",
     "locked-worktree": "unlock it yourself if it should go",
+    # The contract's next steps for the three reasons D18 gives none (T052;
+    # lead rulings R-57 H1, R-58 (b) and R-62 (b)).
+    "main-worktree": "never removed by project clean",
+    "unsupported-path-bytes": "rename the path to valid UTF-8",
+    "not-requested": "name it with --worktree to plan its removal",
 }
 # endregion contracts
 
@@ -3645,19 +3650,119 @@ def print_plan(plan, run):
     keeping their `Cleanup action:` output. Under --json the plan envelope goes
     to standard output through write_document() on the call where the run
     stops before the apply phase, so one document is written. The pipeline
-    writes `REFUSED:` itself. Interim body until T052 replaces the human
-    layout: the baseline human report of a run without --apply
-    (print_clean_report(), project:674-676 at 961c405), and under --json the
-    plan envelope (T051)."""
+    writes `REFUSED:` itself.
+
+    What prints (T052; lead rulings R-56 Q-11, R-57 H1, R-59 D2 and D8, R-62
+    (b) and R-67 (a)): a report, the baseline layout with each null shown as
+    `unknown` (report_lines()); an --all-safe plan, and a single-mode plan for
+    --action remove, D18's preview layout (preview_lines()); push and
+    delete-branch, nothing. `Merge target: NAME (SOURCE)` prints in every
+    mode, and every path and branch goes through human_path(). This replaces
+    print_clean_report() for `clean`."""
     if plan.action in ("push", "delete-branch"):
         return
     json_output, apply = getattr(run.args, "json", False), getattr(run.args, "apply", False)
     if not plan.printed:
         plan.printed = True
-        if not apply and not json_output:
-            print_clean_report(plan.report, False)
+        if apply or not json_output:
+            for line in plan_lines(plan):
+                say(run, line)
     if json_output and run.status is not None:
         write_document(plan_document(plan))
+
+
+# The order of the Excluded groups (contracts/project-clean.md, "Human
+# output"): the gates in FR-020's order, the classes of gate 5 in the ladder's
+# order (RECOMMENDATIONS's), then the later gates; a reason not listed follows.
+EXCLUDED_GROUP_ORDER = ("main-worktree", "unsupported-path-bytes", "registration-mismatch", "locked-worktree",
+                        *RECOMMENDATIONS, "not-requested", "unstarted-branch", "reflog-unavailable",
+                        "deferred-target-cap", "contains-submodule", "hidden-local-state")
+
+
+def _shown(value):
+    """A report value as the baseline prints it, null as `unknown`."""
+    return "unknown" if value is None else str(value)
+
+
+def plan_lines(plan):
+    """The human plan, one string per line: the baseline header, `Cleanup plan
+    for ROOT`, then `Merge target: NAME (SOURCE)` (`unknown` while none is
+    established) and `Freshness:`, then the report's rows or the preview."""
+    identity = plan.evidence["identity"] if plan.evidence else None
+    root = identity["root"] if identity and identity["root"] is not None else os.fsencode(plan.root)
+    target = plan.merge_target
+    lines = [f"Cleanup plan for {human_path(root)}",
+             TEXT["merge_target_line"].format(NAME=human_path(target["name"]) if target else "unknown",
+                                              SOURCE=target["source"] if target else "unknown"),
+             f"Freshness: {TRACKING_FRESHNESS}"]
+    return lines + (report_lines(plan) if plan.mode == "report" else preview_lines(plan))
+
+
+def report_lines(plan):
+    """The baseline report's rows (project:631-637 at 961c405), in canonical
+    order: `CLASS: PATH [BRANCH] dirty=D; upstream=U; DELTA; merged=M`, then
+    the recommendation; a null dirty, merge answer or count shown as
+    `unknown`, and no upstream configured as `none`, as the baseline prints it.
+    T101 adds the D14 lines."""
+    lines = []
+    for row in plan.rows:
+        upstream = human_path(row["upstream"]) if row.get("upstream") else "none"
+        ahead, behind = row.get("ahead"), row.get("behind")
+        delta = "unknown" if ahead is None or behind is None else f"ahead={ahead}, behind={behind}"
+        lines.append(f"{row['classification'].upper()}: {human_path(row.raw_path)} [{human_path(row['branch'])}] "
+                     f"dirty={_shown(row.get('dirty'))}; upstream={upstream}; {delta}; "
+                     f"merged={_shown(row.get('merged_into_target'))}")
+        lines.append(f"  {row['recommendation']}")
+    return lines
+
+
+def ignored_suffix(row):
+    """D18's `: N ignored; first: SAMPLE` of an ignored-local-files row,
+    `at least N` when the probe stopped at its bound; empty with no sample."""
+    samples = row.status["ignored_samples"] if row.status else [
+        os.fsencode(sample["path"]) for sample in row.get("ignored_samples") or ()]
+    if not samples or row.get("ignored_files") is None:
+        return ""
+    key = "ignored_suffix_truncated" if row.get("ignored_files_truncated") else "ignored_suffix"
+    return TEXT[key].format(N=row["ignored_files"], SAMPLE=human_path(samples[0]))
+
+
+def preview_lines(plan):
+    """D18's preview layout (design.md D18; contracts/project-clean.md, "Human
+    output"): `Selected (N):` and one `  remove PATH [BRANCH]` per selected row;
+    `Excluded (M):` and, per reason in EXCLUDED_GROUP_ORDER, `  REASON (K):
+    NEXT STEP` (next_step()) over one `    PATH [BRANCH]` per row, an
+    ignored-local-files row adding its count and first sample; `No eligible
+    worktrees` when a complete --all-safe plan that carries no refusal selects
+    nothing; and the residual-window line when anything is selected. Rows go
+    in raw path byte order. In mode single, P is the one selected row and the
+    other eligible rows form the `not-requested` group."""
+    lines = []
+    selected = plan.selected or []
+    if selected:
+        lines.append(TEXT["selected_heading"].format(N=len(selected)))
+        lines += [TEXT["selected_row"].format(PATH=human_path(row.raw_path), BRANCH=human_path(row["branch"]))
+                  for row in selected]
+    if plan.excluded:
+        groups = {}
+        for row, reason in plan.excluded:
+            groups.setdefault(reason, []).append(row)
+        order = [reason for reason in EXCLUDED_GROUP_ORDER if reason in groups]
+        order += [reason for reason in groups if reason not in EXCLUDED_GROUP_ORDER]
+        lines.append(TEXT["excluded_heading"].format(M=len(plan.excluded)))
+        for reason in order:
+            rows = groups[reason]
+            lines.append(TEXT["excluded_group"].format(REASON=reason, K=len(rows),
+                                                       NEXT_STEP=next_step(reason) or ""))
+            for row in rows:
+                suffix = ignored_suffix(row) if reason == "ignored-local-files" else ""
+                lines.append(TEXT["excluded_row"].format(PATH=human_path(row.raw_path),
+                                                         BRANCH=human_path(row["branch"])) + suffix)
+    if plan.mode == "all-safe" and not selected and plan.completeness == "complete" and not plan.refusals:
+        lines.append(TEXT["empty_line"])
+    if selected:
+        lines.append(TEXT["residual_window_line"])
+    return lines
 # endregion preview
 
 # region apply
