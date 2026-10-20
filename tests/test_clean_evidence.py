@@ -7,6 +7,7 @@ Parity values are literals written into the test (rule 11, research.md R9):
 once cleanup_report() reads the evidence model no baseline function remains to
 compare against.
 """
+import contextlib
 import copy
 import errno
 import json
@@ -447,6 +448,320 @@ class EvidenceTests(clean_support.CleanCase):
         self.assertEqual(rows[other.name]["classification"], "merged-removable")
         self.assertEqual(self.status_dirs(records), sorted(map(str, (root, other))))
 
+        with self.subTest("two registry entries naming one path (lead rulings R-57 L2 and L3, R-59 D5)"):
+            # A copied admin directory: the registry then lists one path twice,
+            # and the two-way check alone passes both entries.
+            shared_root = self.repo("shared-repo")
+            self.bare_remote(shared_root, "shared-remote.git")
+            shared = self.merged_worktree("011-shared", root=shared_root)
+            gone = self.merged_worktree("012-gone", root=shared_root)
+            control = self.merged_worktree("013-control", root=shared_root)
+            admin = self.common_dir(shared_root) / "worktrees"
+            for tree in (shared, gone):
+                shutil.copytree(admin / tree.name, admin / f"{tree.name}-copy")
+            shutil.rmtree(gone)
+            result, records = self.report(shared_root)
+            listed = result.document["worktrees"]
+            self.assertEqual([row["path"] for row in listed].count(str(shared)), 2)
+            for row in (row for row in listed if row["path"] == str(shared)):
+                self.assertEqual((row["present"], row["dirty"], row["errors"], row["classification"]),
+                                 (True, None, [], "inspection-error"))
+                self.assertNotIn("prunable", row)
+            # L2 first: a path not present is stale, with no duplicate check.
+            self.assertEqual([(row["present"], row["classification"], row.get("prunable"), row["errors"])
+                              for row in listed if row["path"] == str(gone)],
+                             [(False, "stale-worktree", True, [])] * 2)
+            self.assertEqual(by_name(result.document)[control.name]["classification"], "merged-removable")
+            self.assertEqual(self.status_dirs(records), sorted(map(str, (shared_root, control))),
+                             "no status probe in the shared path")
+            # In process: `registered` is false (gate 3), and the duplicate check
+            # covers the whole registry when rows are built for one entry alone.
+            with mock.patch.dict(os.environ, self.env, clear=True):
+                run = project.Invocation()
+                repo = project.inspect_repository(os.fsencode(shared_root), run)
+                every = project.worktree_rows(repo, run)
+                twins = [record for record in repo["records"] if record["path"] == os.fsencode(shared)]
+                alone = project.worktree_rows(repo, run, records=twins[1:])
+            self.assertEqual([(row.registered, row.admin_id) for row in every if row.raw_path == os.fsencode(shared)],
+                             [(False, None)] * 2)
+            self.assertEqual([row.registered for row in every if row.raw_path == os.fsencode(gone)], [None] * 2)
+            self.assertEqual([(row.raw_path, row.registered, row["classification"]) for row in alone],
+                             [(os.fsencode(shared), False, "inspection-error")])
+
+    def test_clean_evidence_a_branch_named_head_takes_no_upstream(self):
+        # Lead ruling R-61 (b): for refs/heads/HEAD, `git for-each-ref` prints
+        # the upstream of the branch HEAD names where it runs (Git 2.43.0 credits
+        # this branch with origin/main), so the row's upstream, remote_present,
+        # ahead and behind are null, and it is inspection-error with one
+        # probe-failed error, whatever Git prints. The branch is made by
+        # update-ref and checked out by symbolic-ref in a worktree detached at
+        # its commit, plumbing every Git of the floor job accepts.
+        root = self.repo()
+        self.bare_remote()
+        merged = self.merged_worktree("001-merged")
+        self.git(root, "push", "-u", "origin", "main")
+        tip = self.git(root, "rev-parse", "HEAD").strip()
+        self.git(root, "update-ref", "refs/heads/HEAD", tip)
+        tree = self.add("head", "--detach")
+        self.git(tree, "symbolic-ref", "HEAD", "refs/heads/HEAD")
+        self.assertIn(b"\0branch refs/heads/HEAD\0",
+                      os.fsencode(self.git(root, "worktree", "list", "--porcelain", "-z")))
+        result, records = self.report(root)
+        rows = by_name(result.document)
+        error = {"code": "probe-failed", "message": git_message(
+            "for-each-ref", "row_error_probe_failed", DETAIL=TEXT["row_error_probe_failed_unparseable"])}
+        row = rows[tree.name]
+        self.assertEqual([row[key] for key in ("branch", "upstream", "remote_present", "ahead", "behind", "errors",
+                                               "classification", "recommendation")],
+                         ["HEAD", None, None, None, None, [error], "inspection-error",
+                          RECOMMENDATIONS["inspection-error"]])
+        self.assertEqual((row["present"], row["dirty"], row["merged_into_target"]), (True, False, True),
+                         "the status probe and row 7 still read it")
+        self.assertIn(str(tree), self.status_dirs(records))
+        self.assertEqual([(rows[name]["upstream"], rows[name]["errors"], rows[name]["classification"])
+                          for name in ("repo", merged.name)],
+                         [("origin/main", [], "protected-default"), ("origin/001-merged", [], "merged-removable")])
+
+    # Lead ruling R-54 X-1: each evidence step's pure decider, on literal inputs,
+    # with every Git child and filesystem call failing the test.
+
+    def no_io(self):
+        stack = contextlib.ExitStack()
+        for owner, name in ((project, "run_bounded"), (project, "fs_call"), (os, "lstat"), (os, "stat"),
+                            (os.path, "realpath")):
+            stack.enter_context(mock.patch.object(owner, name, side_effect=AssertionError(f"{name} ran")))
+        return stack
+
+    def assert_decides(self, decider, cases):
+        """Each case (label, args, kwargs, expected): the answer, the same again,
+        and the inputs unchanged (an exception compared by its type, args and
+        attributes, since exceptions compare by identity)."""
+        def snapshot(value):
+            if isinstance(value, BaseException):
+                return (type(value), value.args, getattr(value, "errno", None), snapshot(getattr(value, "error", None)))
+            if isinstance(value, dict):
+                return {key: snapshot(item) for key, item in value.items()}
+            if isinstance(value, (list, tuple)):
+                return [snapshot(item) for item in value]
+            return value
+
+        with self.no_io():
+            for label, args, kwargs, expected in cases:
+                with self.subTest(label):
+                    before = snapshot((args, kwargs))
+                    self.assertEqual(decider(*args, **kwargs), expected)
+                    self.assertEqual(decider(*args, **kwargs), expected, "the same inputs, the same answer")
+                    self.assertEqual(snapshot((args, kwargs)), before, "the decider changes nothing")
+
+    def test_clean_presence_from_lstat_decides_on_literal_results(self):
+        # R-36: ENOENT and ENOTDIR are `present: false`; any other failure is
+        # null with its row error, an OSError's built as `os-error` for lstat.
+        found = os.stat_result((0o40755, 7, 3, 1, 0, 0, 4096, 0, 0, 0))
+        denied = {"code": "os-error", "message": TEXT["row_error_os_error"].format(
+            OPERATION="lstat", STRERROR=os.strerror(errno.EACCES))}
+        cut = {"code": "probe-timeout", "message": TEXT["row_error_probe_timeout"].format(OPERATION="lstat", S="5")}
+        self.assert_decides(project.presence_from_lstat, [
+            ("a value", (found,), {}, (True, None)),
+            ("ENOENT", (FileNotFoundError(errno.ENOENT, os.strerror(errno.ENOENT)),), {}, (False, None)),
+            ("ENOTDIR", (NotADirectoryError(errno.ENOTDIR, os.strerror(errno.ENOTDIR)),), {}, (False, None)),
+            ("EACCES", (PermissionError(errno.EACCES, os.strerror(errno.EACCES)),), {}, (None, denied)),
+            ("ENOENT through fs_call", (project.EvidenceError(denied, errno.ENOENT),), {}, (False, None)),
+            ("ENOTDIR through fs_call", (project.EvidenceError(denied, errno.ENOTDIR),), {}, (False, None)),
+            ("EACCES through fs_call", (project.EvidenceError(denied, errno.EACCES),), {}, (None, denied)),
+            ("cut at its budget", (project.EvidenceError(cut),), {}, (None, cut)),
+        ])
+
+    def test_clean_registration_verdict_decides_on_literal_realpaths(self):
+        # D7, FR-055; R-57 L3 and R-59 D5: the two-way check over realpaths
+        # already read, a shared registry path disagreeing whatever was read.
+        common, worktrees, admin, dotgit = b"/r/.git", b"/r/.git/worktrees", b"/r/.git/worktrees/wt", b"/w/wt/.git"
+        holds = {"worktrees": worktrees, "back": dotgit, "dotgit": dotgit}
+        self.assert_decides(project.registration_verdict, [
+            ("main, .git the common directory", (True, common, None), {"dotgit": common}, (True, None)),
+            ("main, a gitfile naming it", (True, common, common), {}, (True, None)),
+            ("main, a gitfile naming another", (True, common, b"/x/.git"), {}, (False, None)),
+            ("main, .git another directory", (True, common, None), {"dotgit": b"/w/.git"}, (False, None)),
+            ("linked, both ways", (False, common, admin), holds, (True, b"wt")),
+            ("linked, no gitfile", (False, common, None), {}, (False, None)),
+            ("linked, an admin directory outside worktrees/", (False, common, b"/x/worktrees/wt"),
+             {"worktrees": worktrees}, (False, None)),
+            ("linked, its gitdir file missing or empty", (False, common, admin), {"worktrees": worktrees},
+             (False, None)),
+            ("linked, its gitdir file naming another .git", (False, common, admin),
+             dict(holds, back=b"/w/other/.git"), (False, None)),
+            ("linked, a shared path", (False, common, admin), dict(holds, shared=True), (False, None)),
+            ("main, a shared path", (True, common, common), {"shared": True}, (False, None)),
+            ("a shared path, nothing read", (False, common, None), {"shared": True}, (False, None)),
+        ])
+        self.assert_decides(project.shared_paths, [
+            ("one path listed three times", ([{"path": b"/a"}, {"path": b"/b"}, {"path": b"/a"}, {"path": b"/a"}],),
+             {}, frozenset({b"/a"})),
+            ("distinct paths", ([{"path": b"/a"}, {"path": b"/b"}],), {}, frozenset()),
+            ("no entry", ([],), {}, frozenset()),
+        ])
+        self.assert_decides(project.gitdir_line, [
+            ("a relative value", (b"gitdir: ../x\n",), {}, b"../x"),
+            ("an absolute value and CRLF", (b"gitdir: /a/b\r\n",), {}, b"/a/b"),
+            ("no value", (b"gitdir: \n",), {}, None),
+            ("not a gitdir line", (b"ref: refs/heads/main\n",), {}, None),
+            ("empty", (b"",), {}, None),
+        ])
+
+    def test_clean_main_worktree_decision_decides_on_literal_values(self):
+        # D8, FR-055; R-36, R-42, R-51 (a): bare, missing, the first record's
+        # realpath, then core.worktree, then a candidate toplevel's gitfile.
+        common = b"/r/.git"
+        checkout, gitfile_main, bare = ({"path": b"/r", "bare": False}, {"path": common, "bare": False},
+                                        {"path": b"/r.git", "bare": True})
+
+        def identity(present, realpath):
+            return {"common_dir": common, "first_present": present, "first_realpath": realpath}
+
+        layout = identity(True, common)
+        self.assert_decides(project.main_worktree_decision, [
+            ("no record", (identity(None, None), [], None, {}), {}, (None, "missing")),
+            ("a bare first record", (identity(None, None), [bare, checkout], None, {}), {}, (None, "bare")),
+            ("a first record not present", (identity(False, None), [checkout], None, {}), {}, (None, "missing")),
+            ("its presence unknown", (identity(None, None), [checkout], None, {}), {}, (None, "unreadable")),
+            ("its realpath not read", (identity(True, None), [checkout], None, {}), {}, (None, "unreadable")),
+            ("an ordinary main worktree", (identity(True, b"/r"), [checkout], None, {b"/r": None}), {},
+             (b"/r", None)),
+            ("gitfile layout: core.worktree first", (layout, [gitfile_main], b"/checkout", {b"/top": common}), {},
+             (b"/checkout", None)),
+            ("gitfile layout: the first candidate naming it",
+             (layout, [gitfile_main], None, {b"/a": b"/x/.git", b"/top": common, b"/b": common}), {},
+             (b"/top", None)),
+            ("gitfile layout: no candidate names it", (layout, [gitfile_main], None, {b"/top": None}), {},
+             (None, "unnamed")),
+            ("gitfile layout: no candidate", (layout, [gitfile_main], None, {}), {}, (None, "unnamed")),
+        ])
+
+    def test_clean_row_evidence_assembles_a_row_from_literal_reads(self):
+        # D6, D7, FR-006, FR-042; R-61 (b): the row, its classification and its
+        # notes from a registry record, the row's reads, row 6 and row 7.
+        def record(branch=b"refs/heads/f", prunable=False):
+            return {"path": b"/w/f", "head": "a" * 40, "branch": branch, "bare": False, "detached": branch is None,
+                    "locked": False, "locked_reason": None, "prunable": prunable, "prunable_reason": None}
+
+        def ref(name, upstream=None, present=None, ahead=None, behind=None, oid="a" * 40):
+            short = upstream and upstream.removeprefix(b"refs/remotes/")
+            return {"refname": name, "objectname": oid, "symref": None, "upstream": upstream,
+                    "upstream_short": short, "remote_present": present, "ahead": ahead, "behind": behind}
+
+        parser = project.StatusParser()
+        parser.feed(b"")
+        clean = parser.finish()
+        refs = {b"refs/heads/f": ref(b"refs/heads/f", b"refs/remotes/origin/f", True, 0, 0),
+                b"refs/remotes/origin/f": ref(b"refs/remotes/origin/f", oid="b" * 40),
+                b"refs/heads/g": ref(b"refs/heads/g", b"refs/remotes/origin/g", False),
+                b"refs/heads/HEAD": ref(b"refs/heads/HEAD", b"refs/remotes/origin/main", True, 0, 0),
+                b"refs/heads/main": ref(b"refs/heads/main", b"refs/remotes/origin/main", True, 0, 0)}
+        merged = frozenset({b"refs/heads/f", b"refs/heads/g", b"refs/heads/HEAD", b"refs/heads/main"})
+        failed = {"code": "probe-failed", "message": "m"}
+        head_error = {"code": "probe-failed", "message": git_message(
+            "for-each-ref", "row_error_probe_failed", DETAIL=TEXT["row_error_probe_failed_unparseable"])}
+
+        def read(**change):
+            return {"present": True, "dev": 1, "ino": 2, "active": b"/elsewhere", "tree": b"/w/f",
+                    "registered": True, "admin_id": b"f", "status": clean, "errors": [], **change}
+
+        stale = read(present=False, dev=None, ino=None, tree=None, registered=None, admin_id=None, status=None)
+        cases = [
+            # label, record, raw, main, read, merged set, expected fields
+            ("merged, not current", record(), b"/w/f", False, read(), merged,
+             {"upstream": "origin/f", "remote_present": True, "ahead": 0, "behind": 0, "dirty": False,
+              "ignored_files": 0, "current": False, "merged_into_target": True,
+              "classification": "merged-removable", "errors": [], "notes": []}),
+            ("inside the row", record(), b"/w/f", False, read(active=b"/w/f/sub"), merged,
+             {"current": True, "classification": "merged-current"}),
+            ("the row itself", record(), b"/w/f", False, read(active=b"/w/f"), merged, {"current": True}),
+            ("a sibling sharing a prefix", record(), b"/w/f", False, read(active=b"/w/foo"), merged,
+             {"current": False}),
+            ("the root holds every directory", record(), b"/w/f", False, read(tree=b"/"), merged,
+             {"current": True}),
+            ("the working directory unread", record(), b"/w/f", False, read(active=None, errors=[failed]), merged,
+             {"current": None, "errors": [failed], "classification": "inspection-error"}),
+            ("a deleted upstream, merged", record(b"refs/heads/g"), b"/w/f", False, read(), merged,
+             {"upstream": "origin/g", "remote_present": False, "ahead": None, "behind": None,
+              "classification": "merged-removable"}),
+            ("a branch named HEAD", record(b"refs/heads/HEAD"), b"/w/f", False, read(errors=[failed]), merged,
+             {"branch": "HEAD", "upstream": None, "remote_present": None, "ahead": None, "behind": None,
+              "merged_into_target": True, "errors": [failed, head_error], "classification": "inspection-error"}),
+            ("stale", record(prunable=True), b"/w/f", False, stale, merged,
+             {"present": False, "upstream": None, "merged_into_target": None, "current": None, "dirty": None,
+              "classification": "stale-worktree", "prunable": True}),
+            ("registration disagrees", record(), b"/w/f", False,
+             read(registered=False, admin_id=None, status=None), merged,
+             {"dirty": None, "errors": [], "classification": "inspection-error"}),
+            ("row 7 not run", record(), b"/w/f", False, read(), None,
+             {"merged_into_target": None, "classification": "review-required"}),
+            ("detached", record(None), b"/w/f", False, read(), merged,
+             {"branch": "detached", "upstream": None, "merged_into_target": None, "classification": "detached"}),
+            ("the main worktree on the target", record(b"refs/heads/main"), b"/r", True, read(tree=b"/r"), merged,
+             {"path": "/r", "classification": "protected-default"}),
+            ("a path not valid UTF-8", record(), b"/w/\xff", False, read(), merged,
+             {"path": "/w/\\xff", "path_valid_utf8": False}),
+        ]
+        with self.no_io():
+            for label, entry, raw, main, reads, merged_set, expected in cases:
+                with self.subTest(label):
+                    before = copy.deepcopy((entry, reads, refs))
+                    row = project.row_evidence(entry, raw, main, reads, refs, merged_set, "main")
+                    self.assertIsInstance(row, project.WorktreeRow)
+                    keys = ROW_KEYS[:14] + (["prunable"] if "prunable" in expected else []) + ROW_KEYS[14:]
+                    self.assertEqual(list(row), keys)
+                    self.assertEqual({key: row[key] for key in expected}, expected)
+                    self.assertEqual(row["recommendation"], project.classify(row, "main")[1])
+                    self.assertEqual([getattr(row, name) for name in ("raw_path", "main", "dev", "ino", "registered",
+                                                                      "admin_id", "status")],
+                                     [raw, main, reads["dev"], reads["ino"], reads["registered"],
+                                      reads["admin_id"], reads["status"]])
+                    self.assertIsNot(row["errors"], reads["errors"])
+                    self.assertEqual((entry, reads, refs), before, "row_evidence() changes nothing")
+                    self.assertEqual(project.row_evidence(entry, raw, main, reads, refs, merged_set, "main"), row)
+            first = project.row_evidence(record(), b"/w/f", False, read(), refs, merged, "main")
+            gone = project.row_evidence(record(b"refs/heads/g"), b"/w/f", False, read(), refs, merged, "main")
+        self.assertEqual((first.upstream_oid, gone.upstream_oid), ("b" * 40, None))
+
+    def test_clean_evidence_memo_by_device_and_inode_and_the_row_5_switch(self):
+        # R-54 X-1: inspect_repository() memoizes by the common directory's
+        # (dev, ino), so another directory of the repository runs only row 3;
+        # repeat_identity_at_root=False runs no row 5 and is memoized apart.
+        root = self.repo()
+        self.bare_remote()
+        tree = self.merged_worktree("001-merged")
+        found = os.lstat(self.common_dir())
+
+        def identity_dirs(spy):
+            dirs = [os.fsdecode(call.args[0][1][1]) for call in spy.call_args_list
+                    if call.args[0][1][2:3] == ["rev-parse"]]
+            spy.reset_mock()
+            return dirs
+
+        with mock.patch.dict(os.environ, self.env, clear=True), \
+                mock.patch.object(project, "run_bounded", wraps=project.run_bounded) as spy:
+            run = project.Invocation()
+            from_tree = project.inspect_repository(os.fsencode(tree), run)
+            with_row_5 = identity_dirs(spy)
+            from_root = project.inspect_repository(os.fsencode(root), run)
+            children = len(spy.call_args_list)
+            memo_dirs = identity_dirs(spy)
+            other = project.Invocation()
+            without = project.inspect_repository(os.fsencode(tree), other, repeat_identity_at_root=False)
+            without_row_5 = identity_dirs(spy)
+            default = project.inspect_repository(os.fsencode(tree), other)
+            again = identity_dirs(spy)
+        self.assertEqual(list(run.common_dirs), [(found.st_dev, found.st_ino)])
+        self.assertIs(from_root, from_tree)
+        self.assertEqual((children, memo_dirs), (1, [str(root)]), "a memo hit runs only row 3")
+        self.assertEqual(with_row_5, [str(tree), str(root)], "row 3 in the worktree, row 5 at the root")
+        self.assertEqual(without_row_5, [str(tree)], "no row 5")
+        self.assertEqual(without["identity"]["root"], os.fsencode(root))
+        self.assertIsNot(default, without, "the two are memoized apart")
+        self.assertEqual(again, [str(tree), str(root)])
+        self.assertEqual(len(other.common_dirs), 2)
+        self.assertIn((found.st_dev, found.st_ino), other.common_dirs)
+
     def test_clean_evidence_reads_presence(self):
         # Lead ruling R-36, FR-055: an lstat failing with ENOENT, or with ENOTDIR
         # where the parent of a registered path became a regular file, is
@@ -536,6 +851,50 @@ class EvidenceTests(clean_support.CleanCase):
         self.assertEqual([rows["stale-tree"][key] for key in
                           ("ignored_files_truncated", "ignored_samples", "errors")], [None, None, []])
         self.assertEqual(rows["repo"]["ignored_samples"], [])
+
+    def test_clean_evidence_rows_for_chosen_records_in_the_given_order(self):
+        # Lead ruling R-53 (d): worktree_rows(repo, run, records) builds rows
+        # only for the registry records given, in the order given, the first
+        # registry entry staying the main worktree; None means the whole
+        # registry. In process, in the fixture's environment.
+        root = self.repo()
+        self.bare_remote()
+        merged = self.merged_worktree("001-merged")
+        second = self.add("second", "-b", "002-second")
+        third = self.add("third", "-b", "003-third")
+        with mock.patch.dict(os.environ, self.env, clear=True):
+            run = project.Invocation()
+            repo = project.inspect_repository(os.fsencode(root), run)
+            registry = repo["records"]
+            record = {entry["path"]: entry for entry in registry}
+            every = project.worktree_rows(repo, run)
+            order = [os.fsencode(path) for path in (third, root, merged)]
+            with mock.patch.object(project, "run_bounded", wraps=project.run_bounded) as spy:
+                chosen = project.worktree_rows(repo, run, records=[record[path] for path in order])
+            self.assertEqual(project.worktree_rows(repo, run, records=None), every)
+            self.assertEqual(project.worktree_rows(repo, run, records=list(registry)), every)
+            self.assertEqual(project.worktree_rows(repo, run, records=[]), [])
+            copy_of_first = project.worktree_rows(repo, run, records=[dict(record[os.fsencode(root)])])
+            with self.assertRaises(ValueError):
+                project.worktree_rows(repo, run, records=[dict(registry[1], path=b"/not/registered")])
+        self.assertEqual([row.raw_path for row in every],
+                         [os.fsencode(path) for path in (root, merged, second, third)])
+        self.assertEqual([row.raw_path for row in chosen], order)
+        self.assertEqual([row.main for row in chosen], [False, True, False])
+        self.assertEqual([row["classification"] for row in chosen],
+                         ["unpublished", "protected-default", "merged-removable"])
+        rows = {row.raw_path: row for row in every}
+        for row in chosen:
+            with self.subTest(row=row["path"]):
+                self.assertEqual(row, rows[row.raw_path])
+                self.assertEqual([getattr(row, name) for name in ("registered", "admin_id", "dev", "ino")],
+                                 [getattr(rows[row.raw_path], name) for name in ("registered", "admin_id", "dev",
+                                                                                 "ino")])
+        self.assertEqual([call.args[0][0] for call in spy.call_args_list], ["status"] * 3,
+                         "one status probe per chosen row and no repository-wide child")
+        self.assertEqual([os.fsencode(call.args[0][1][1]) for call in spy.call_args_list], order)
+        self.assertEqual([(row.main, row["classification"]) for row in copy_of_first],
+                         [(True, "protected-default")])
 
     # T030: the evidence model's scenarios (rule 1: test_status_, plan review M14).
 
