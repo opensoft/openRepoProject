@@ -537,6 +537,138 @@ class EvidenceTests(clean_support.CleanCase):
                           ("ignored_files_truncated", "ignored_samples", "errors")], [None, None, []])
         self.assertEqual(rows["repo"]["ignored_samples"], [])
 
+    # T030: the evidence model's scenarios (rule 1: test_status_, plan review M14).
+
+    def test_status_a_git_that_floods_standard_error(self):
+        root = self.repo()
+        fake_dir = self.base / "fake"
+        fake = clean_support.install_fake_git(fake_dir, "flood-stderr", kib=70)
+        result, records = self.report(root, real=fake)
+        row = by_name(result.document)["repo"]
+        self.assertEqual((row["errors"], row["dirty"], row["classification"]), ([], False, "protected-default"))
+        self.assertEqual(self.status_dirs(records), [str(root)])
+        self.assertNotIn("EEEE", result.stderr, "the child's standard error is read, never passed on")
+        # The standard error kept is capped at 4 KiB, and every byte counted.
+        with mock.patch.dict(os.environ, self.path_first(fake_dir), clear=True):
+            outcome, error = project.status_probe(os.fsencode(root), project.Invocation())
+        self.assertIsNone(error)
+        self.assertEqual((outcome.name, len(outcome.stderr), outcome.stderr_bytes),
+                         ("complete", 4096, 70 * 1024))
+        self.assertIs(outcome.result["dirty"], False)
+
+    def test_status_a_git_that_ignores_sigterm(self):
+        # Launcher, its own table (R-29): a probe budget of 1 s, a grace of 0.5 s
+        # and a reap wait of 0.5 s; every other value real.
+        table = clean_support.timing_table(probe_budget=1.0, term_grace=0.5, reap_wait=0.5)
+        root = self.repo()
+        fake_dir = self.base / "fake"
+        fake = clean_support.install_fake_git(fake_dir, "ignore-sigterm")
+        result, records = self.report(root, real=fake, timing=table)
+        row = by_name(result.document)["repo"]
+        self.assertEqual(row["errors"], [{"code": "probe-timeout",
+                                          "message": git_message("status", "row_error_probe_timeout", S="1")}])
+        self.assertEqual((row["dirty"], row["classification"]), (None, "inspection-error"))
+        ready = clean_support.wait_for_event(fake_dir, "ready")
+        self.assertIsNotNone(ready, "the fake status probe started")
+        term = clean_support.wait_for_event(fake_dir, "term", pid=ready["pid"])
+        death = clean_support.wait_for_event(fake_dir, "death", pid=ready["pid"])
+        self.assertIsNotNone(term)
+        self.assertIsNotNone(death)
+        self.assertGreaterEqual(death["t"] - term["t"], 0.9 * table["term_grace"],
+                                "SIGKILL came at least 0.9 of the grace after SIGTERM, measured from the child")
+        with self.assertRaises(ProcessLookupError):
+            os.killpg(ready["pgid"], 0)
+
+    def test_status_five_thousand_ignored_records(self):
+        root = self.repo()
+        self.bare_remote()
+        tree = self.merged_worktree("001-merged")
+        fake = clean_support.install_fake_git(self.base / "fake", "ignored-5000")
+        result, records = self.report(root, real=fake)
+        rows = by_name(result.document)
+        samples = [{"path": f"ignored-{number:05d}", "path_valid_utf8": True} for number in range(8)]
+        for name, classification in (("repo", "protected-default"), (tree.name, "ignored-local-files")):
+            with self.subTest(row=name):
+                row = rows[name]
+                self.assertEqual([row[key] for key in ("ignored_files", "ignored_files_truncated",
+                                                       "ignored_samples", "dirty", "errors", "classification")],
+                                 [64, True, samples, False, [], classification])
+        self.assertEqual(self.status_dirs(records), sorted(map(str, (root, tree))))
+
+    def test_status_user_status_configuration(self):
+        config = self.base / "user.gitconfig"
+        config.write_text("[status]\n\tshowUntrackedFiles = no\n")
+        root = self.repo()
+        self.bare_remote()
+        merged = self.merged_worktree("001-merged")
+        untracked = self.merged_worktree("002-untracked")
+        (untracked / "new").write_text("untracked")
+        result, records = self.report(root, env=dict(self.env, GIT_CONFIG_GLOBAL=str(config)))
+        rows = by_name(result.document)
+        self.assertEqual([(rows[tree.name]["classification"], rows[tree.name]["errors"])
+                          for tree in (merged, untracked)],
+                         [("merged-removable", []), ("dirty", [])])
+        self.assertEqual(self.status_dirs(records), sorted(map(str, (root, merged, untracked))))
+
+    def test_status_a_caller_s_git_environment_is_ignored(self):
+        root = self.repo()
+        self.bare_remote()
+        merged = self.merged_worktree("001-merged")
+        dirty = self.add("dirty", "-b", "002-dirty")
+        (dirty / "uncommitted").write_text("preserve")
+        other = self.repo("other")
+        (other / "other").write_text("other")
+        self.commit(other)
+        (other / "untracked").write_text("other")
+        plain, _ = self.report(root)
+        steering = {"GIT_DIR": str(other / ".git"), "GIT_WORK_TREE": str(other),
+                    "GIT_INDEX_FILE": str(other / ".git" / "index")}
+        steered, records = self.report(root, env=dict(self.env, **steering))
+        self.assertEqual(steered.document, plain.document)
+        self.assertEqual([by_name(steered.document)[name]["classification"]
+                          for name in ("repo", merged.name, dirty.name)],
+                         ["protected-default", "merged-removable", "dirty"])
+        self.assertEqual(self.status_dirs(records), sorted(map(str, (root, merged, dirty))))
+        self.assert_pinned(records)
+
+    @clean_support.git_236_to_239
+    def test_status_the_sixteenth_scrubbed_name_on_git_2_36(self):
+        root = self.repo()
+        self.bare_remote()
+        merged = self.merged_worktree("001-merged")
+        result, records = self.report(root, env=dict(self.env, GIT_INTERNAL_SUPER_PREFIX="sub/"))
+        rows = by_name(result.document)
+        self.assertEqual([rows[name]["classification"] for name in ("repo", merged.name)],
+                         ["protected-default", "merged-removable"])
+        self.assert_pinned(records)
+
+    def test_status_a_lazy_fetch_in_a_partial_clone_is_refused_locally(self):
+        source = self.repo("source")
+        (source / "tracked").write_text("needs a tree object")
+        self.commit(source)
+        self.git(source, "config", "uploadpack.allowFilter", "true")
+        clone = self.base / "clone"
+        self.git(self.base, "clone", "-q", "--no-checkout", "--filter=tree:0", f"file://{source}", clone)
+        ran = self.base / "uploadpack.log"
+        script = self.base / "uploadpack.sh"
+        script.write_text(f"#!/bin/sh\necho ran >> '{ran}'\nexec '{clean_support.REAL_GIT}' upload-pack \"$@\"\n")
+        script.chmod(0o755)
+        self.git(clone, "config", "remote.origin.uploadpack", script)
+        message = git_message("status", "row_error_probe_failed",
+                              DETAIL=TEXT["row_error_probe_failed_exit"].format(N=128))
+        for label, env in (("pinned", self.env), ("allowed by the caller and the clone",
+                                                  dict(self.env, GIT_ALLOW_PROTOCOL="file"))):
+            with self.subTest(label):
+                if env is not self.env:
+                    self.git(clone, "config", "protocol.file.allow", "always")
+                result, records = self.report(clone, env=env)
+                row = by_name(result.document)["clone"]
+                self.assertEqual((row["errors"], row["dirty"], row["classification"]),
+                                 ([{"code": "probe-failed", "message": message}], None, "inspection-error"))
+                self.assertEqual(self.status_dirs(records), [str(clone)])
+                self.assert_pinned(records)
+                self.assertFalse(ran.exists(), "the upload-pack script never ran")
+
 
 if __name__ == "__main__":
     unittest.main()
