@@ -169,6 +169,52 @@ class StatusDoctorUpdateTests(clean_support.CleanCase):
 
     # T114: Git older than 2.36, no git, and the components that need no Git.
 
+    def test_clean_git_older_than_2_36(self):
+        # FR-002, research.md R2; it pins T048 (require_git()). Every clean
+        # mode refuses with git-too-old, exit 2, before any repository probe:
+        # its only child is `git --version`, and nothing is removed.
+        root = self.repo()
+        self.bare_remote()
+        tree = self.merged_worktree("001-merged")
+        fake = clean_support.install_fake_git(self.base / "fake", "version-2.35.0")
+        refusal = TEXT["git_too_old"].format(VERSION="2.35.0")
+        modes = (
+            ("report", ()),
+            ("all-safe preview", ("--all-safe",)),
+            ("all-safe apply", ("--all-safe", "--apply", "--yes")),
+            ("single remove", ("--apply", "--action", "remove", "--worktree", tree, "--yes")),
+            ("push", ("--apply", "--action", "push", "--branch", "001-merged", "--yes")),
+            ("delete-branch", ("--apply", "--action", "delete-branch", "--branch", "001-merged", "--yes")),
+        )
+        for label, extra in modes:
+            with self.subTest(mode=label):
+                result, records = self.counted("clean", root, *extra, real=fake)
+                self.assert_status(result, 2)
+                self.assertEqual(result.stderr, "REFUSED: " + refusal + "\n")
+                self.assertEqual([command(record) for record in records], [["--version"]])
+                self.assertTrue(tree.is_dir(), "nothing was removed")
+        for label, extra in (("report", ()), ("all-safe preview", ("--all-safe",)),
+                             ("all-safe apply", ("--all-safe", "--apply", "--yes"))):
+            with self.subTest(mode=label, output="json"):
+                result, records = self.counted("clean", root, *extra, "--json", real=fake)
+                self.assert_status(result, 2)
+                document = self.assert_one_document(result)
+                self.assertEqual([document[key] for key in ("error", "code", "completeness", "apply_allowed")],
+                                 [refusal, "git-too-old", "incomplete", False])
+                self.assertEqual(document["refusals"], [{"code": "git-too-old", "message": refusal}])
+                self.assertEqual([command(record) for record in records], [["--version"]])
+        with self.subTest("no git on PATH"):
+            env = dict(self.env, PATH=self.path_without_git())
+            unavailable = TEXT["git_unavailable"].format(DETAIL=TEXT["git_unavailable_not_found"])
+            result = self.run_cli("clean", root, env=env)
+            self.assert_status(result, 2)
+            self.assertEqual(result.stderr, "REFUSED: " + unavailable + "\n")
+            result = self.run_json("clean", root, "--json", env=env)
+            self.assert_status(result, 2)
+            self.assertEqual([result.document[key] for key in ("error", "code")],
+                             [unavailable, "git-unavailable"])
+            self.assertTrue(tree.is_dir())
+
     def test_status_git_older_than_2_36_in_status_and_doctor(self):
         # FR-050, FR-053, research.md R2: the 2.35 fake behind the counting
         # wrapper. A workspace is configured, so handoff() reaches its remote
@@ -537,6 +583,23 @@ class StatusDoctorUpdateTests(clean_support.CleanCase):
                     self.assertEqual(split_pins(record)[0], STATUS_PINS + PINS)
                 for record in records:
                     self.assertEqual(split_pins(record)[0][-len(PINS):], PINS)
+
+        with self.subTest("every removal child of an apply (pins T056)"):
+            self.bare_remote()
+            merged = self.merged_worktree("002-merged")
+            result, records = self.counted("clean", root, "--all-safe", "--apply", "--yes", env=env)
+            self.assert_status(result, 0)
+            self.assertFalse(merged.exists())
+            removals = [record for record in records if command(record)[2:4] == ["worktree", "remove"]]
+            self.assertEqual([command(record)[1:] for record in removals],
+                             [[str(root), "worktree", "remove", str(merged)]])
+            for record in removals:
+                self.assertEqual(split_pins(record)[0],
+                                 ["-c", "status.showUntrackedFiles=normal"] + STATUS_PINS + PINS)
+            statuses = [record for record in records if subcommand(record) == "status"]
+            self.assertTrue(statuses)
+            for record in statuses:
+                self.assertEqual(split_pins(record)[0], STATUS_PINS + PINS)
 
     def test_doctor_missing_leg(self):
         # project-command "Inspect and diagnose": a declared leg with no checkout
