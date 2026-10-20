@@ -3192,24 +3192,178 @@ def resolve_clean_target(args, run):
 # endregion resolution
 
 # region plan
-def build_plan(repo, run):
-    """Build the run's Plan for repo, resolve_clean_target()'s dict (T049
-    fills; data-model.md, "Plan"), and return it, never a status (lead ruling
-    R-59 D4): `worktree-not-found` is recorded through refuse(), never raised
-    (R-56 Q-3). A refusal of the repository as a whole (no merge target, a
-    manifest) still raises. First body: the baseline report (cleanup_report(),
-    project:673 at 961c405), and for a named removal the baseline match of
-    --worktree (:710-714)."""
-    plan = Plan(repo, run)
-    plan.report = cleanup_report(repo["root"])
-    args = run.args
-    if run.action == "remove" and getattr(args, "apply", False):
-        wanted = Path(args.worktree).expanduser().resolve()
-        matches = [row for row in plan.report["worktrees"] if Path(row["path"]).resolve() == wanted]
-        if len(matches) != 1:
-            refuse(plan, Refused(f"No unique linked worktree found at {wanted}"), run)
+# The plan of one run (T049, T051; data-model.md, "Plan"; contracts/project-clean.md,
+# "Plan envelope"; design D12 to D14; research.md R8 and R12).
+
+# The baseline's freshness text, the envelope's `tracking_freshness`.
+TRACKING_FRESHNESS = "local refs only; remote information is as of the last fetch; no fetch performed"
+
+
+def repository_object(identity):
+    """The envelope's `repository` (REPOSITORY_KEYS's order) for inspect_repository()'s
+    identity: each path as json_path() writes it beside its flag; root and its
+    flag null while the main worktree is not named."""
+    root, root_valid = (None, None) if identity["root"] is None else json_path(identity["root"])
+    common_dir, common_valid = json_path(identity["common_dir"])
+    return {"root": root, "common_dir": common_dir, "dev": identity["dev"], "ino": identity["ino"],
+            "root_valid_utf8": root_valid, "common_dir_valid_utf8": common_valid}
+
+
+def _bounded_realpath(path):
+    """The realpath of path by one fs_call(), or None when the call raised or
+    was cut at its budget."""
+    try:
+        found = fs_call(os.path.realpath, path)
+    except OSError:
+        return None
+    return None if isinstance(found, DriverOutcome) else found
+
+
+def match_target(plan, run):
+    """P of a named removal, `--apply --action remove --worktree P` (D13; contracts/project-clean.md,
+    "Argument checks"; lead rulings R-56 and R-67 (b) as corrected): --worktree
+    expanded and realpath'd, which joins it to the working directory, by one
+    bounded call, matched against every row: a row matches when its raw path
+    bytes equal P's, or else when its own realpath, one bounded call each, does;
+    a realpath that cannot be read counts as a match, failing closed, and so
+    does every row when P's own cannot. Sets plan.target_rows, the rows P may
+    name, and plan.target, the one row when exactly one matched and was
+    decided, else None. No match records `worktree-not-found` through refuse()
+    with the baseline message, never raised (R-59 D4); several matches, or one
+    not decided, leave plan.target None, so that nothing is selected for P and
+    check_plan() refuses with inspection-incomplete."""
+    wanted = os.path.expanduser(os.fsencode(run.args.worktree))
+    found = _bounded_realpath(wanted)
+    matches, decided = [], found is not None
+    for row in plan.rows:
+        if found is None:
+            matches.append(row)
+        elif row.raw_path == found:
+            matches.append(row)
         else:
-            plan.target = matches[0]
+            real = _bounded_realpath(row.raw_path)
+            if real is None or real == found:
+                matches.append(row)
+                decided = decided and real is not None
+    plan.target_rows = matches
+    if len(matches) == 1 and decided:
+        plan.target = matches[0]
+    elif not matches:
+        path = found if found is not None else wanted
+        refuse(plan, Refused(f"No unique linked worktree found at {human_path(path)}",
+                             code="worktree-not-found", path=path), run)
+
+
+def row_incomplete(row):
+    """Whether a row's own evidence is incomplete: `inspection-error`, or
+    carrying the unprobed marker (T066's reflog read past its budget)."""
+    return bool(row.unprobed) or row["classification"] == "inspection-error"
+
+
+def plan_completeness(plan, exclude=()):
+    """The codes that make plan incomplete, in REFUSAL_CODES order (FR-024,
+    FR-031; data-model.md, "Plan"; analyze M6): `inspection-incomplete` when a
+    repository-wide probe failed (plan.evidence's errors), when a row of
+    plan.rows not in exclude is `inspection-error` or unprobed, or when P's
+    rows are not excluded and P names no single established row (plan.target
+    None while plan.target_rows holds rows). T075 and T099 add `inspect-cap`
+    and `deadline-exceeded`, and make another row's state a non-blocking note in
+    mode single for --action remove; until T075 every row counts in every mode
+    (lead ruling R-56 Q-17)."""
+    skip = {id(row) for row in exclude}
+    target_rows = getattr(plan, "target_rows", [])
+    incomplete = (bool(plan.evidence and plan.evidence["errors"])
+                  or any(row_incomplete(row) for row in plan.rows if id(row) not in skip)
+                  or (plan.target is None and bool(target_rows)
+                      and not any(id(row) in skip for row in target_rows)))
+    return ["inspection-incomplete"] if incomplete else []
+
+
+def json_argument(argument):
+    """One argument of a child's vector as a JSON document writes it."""
+    return argument if isinstance(argument, str) else json_path(argument)[0]
+
+
+def select_entry(row, plan):
+    """One `selected` entry (contracts/project-clean.md, "Plan envelope"), in
+    SELECTED_KEYS's order: the path beside its flag; the branch evidence
+    (branch, head, upstream, upstream_oid, ahead, behind); the worktree identity
+    (dev, ino, admin_id); locked; the baseline signature fields (present, dirty,
+    ignored_files, remote_present, merged_into_target, current, classification);
+    and operation, {kind: "worktree-remove", argv}, argv the exact vector of
+    the row's removal child, git_argv("removal", row.removal_args), each path
+    as json_path() writes it."""
+    values = dict(row)
+    values.update(upstream_oid=row.upstream_oid, dev=row.dev, ino=row.ino,
+                  admin_id=None if row.admin_id is None else json_path(row.admin_id)[0],
+                  operation={"kind": "worktree-remove",
+                             "argv": [json_argument(arg) for arg in git_argv("removal", row.removal_args)]})
+    return {key: values[key] for key in SELECTED_KEYS}
+
+
+def build_plan(repo, run):
+    """Build the run's Plan for repo, resolve_clean_target()'s dict, and return
+    it, never a status (T049; data-model.md, "Plan"; lead rulings R-56 and R-59
+    D4). It reads lane G's evidence directly, inspect_repository() and
+    worktree_rows(), never cleanup_report(), so that a failed repository-wide
+    probe gives a plan incomplete with inspection-incomplete rather than a
+    refusal. Still raised, as the repository as a whole cannot be planned: the
+    baseline's `Cannot inspect Git repository at ROOT` where row 3 failed, ROOT
+    is no worktree toplevel, or no main worktree is named with no probe failed
+    (T107 codes these at resolution); and the merge target's own refusal
+    (`no-merge-target`, a manifest's), with the repository in its context.
+
+    The plan holds: `evidence`; `repository`, the envelope's object;
+    `merge_target` {name, source, sha}, its resolution's notes moved to the
+    plan's `notes` as {code, message} objects (P-13); `rows`, the main worktree
+    first, then by raw path bytes; in mode single for --action remove, P's
+    match (match_target(): `target_rows` and `target`, `worktree-not-found`
+    recorded through refuse()); `selected` and `excluded` from gate_rows(),
+    each selected row given `removal_args`, ["-C", ROOT, "worktree",
+    "remove", PATH] with ROOT the command directory and PATH the registry's
+    raw bytes (design D9); `completeness` and `apply_allowed` (false for every
+    report); `planning_probes`, the Git children other than removals that this
+    invocation ran to build it, the F + W + E of the estimate (research.md
+    R8); and `report`, the baseline report built from the same rows, which the
+    first bodies of confirm_removal(), apply_removals() and push_or_delete()
+    read until the apply and push lanes replace them. `omitted` stays
+    {count: 0, exactness: "exact"} until T075. Interim until T066 and T075
+    (lead ruling R-56 Q-17): an unstarted branch is selectable, and in mode
+    single another row's inspection-error makes the plan incomplete."""
+    plan = Plan(repo, run)
+    root = repo["root"]
+    evidence = plan.evidence = inspect_repository(root, run)
+    identity = evidence["identity"]
+    try:
+        toplevel = identity is not None and _realpath(os.fsencode(root)) == evidence["toplevel"]
+    except EvidenceError:
+        toplevel = False
+    if not toplevel or (identity["root"] is None and not evidence["errors"]):
+        raise Refused(f"Cannot inspect Git repository at {root}")
+    plan.repository = repository_object(identity)
+    refusal = evidence["merge_target_refusal"]
+    if refusal is not None:
+        if refusal.context is None:
+            refusal.context = {"repository": plan.repository}
+        raise refusal
+    target = evidence["merge_target"]
+    if target is not None:
+        plan.merge_target = {key: target[key] for key in MERGE_TARGET_KEYS}
+        plan.notes.extend(target.get("notes") or ())
+    plan.rows = sorted(worktree_rows(evidence, run), key=lambda row: (not row.main, row.raw_path))
+    plan.target_rows = []
+    if plan.mode == "single" and plan.action == "remove":
+        match_target(plan, run)
+    plan.selected, plan.excluded = gate_rows(plan.rows, plan, run)
+    command_dir = identity["root"] if identity["root"] is not None else os.fsencode(root)
+    for row in plan.selected:
+        row.removal_args = ["-C", command_dir, "worktree", "remove", row.raw_path]
+    codes = plan_completeness(plan)
+    plan.completeness = "incomplete" if codes else "complete"
+    plan.apply_allowed = plan.mode != "report" and not codes and not plan.refusals
+    plan.planning_probes = run.probes
+    plan.report = {"root": str(root), "target_branch": target and target["name"],
+                   "tracking_freshness": TRACKING_FRESHNESS, "worktrees": plan.rows}
     return plan
 # endregion plan
 
