@@ -2771,84 +2771,31 @@ def ancestor(root, commit, branch):
 
 
 def cleanup_report(root):
-    state = repo_state(root)
-    if not state.get("present"):
+    """The report of `project clean ROOT` on the evidence model (T033;
+    research.md R9): the baseline document {root, target_branch,
+    tracking_freshness, worktrees}, its rows from worktree_rows() with the six
+    added fields. It reads afresh every time (refresh), since
+    require_unchanged_cleanup_state() revalidates through it. Refusals keep
+    their baseline messages: `Cannot inspect Git repository at ROOT` for a
+    ROOT that is not a worktree toplevel of a repository whose main worktree
+    can be named, or whose repository-wide probes failed; the manifest's own;
+    and `no-merge-target`."""
+    run = current_invocation()
+    repo = inspect_repository(root, run, refresh=True)
+    identity = repo["identity"]
+    try:
+        toplevel = identity is not None and _realpath(os.fsencode(root)) == repo["toplevel"]
+    except EvidenceError:
+        toplevel = False
+    if not toplevel or identity["root"] is None:
         raise Refused(f"Cannot inspect Git repository at {root}")
-    _, data = manifest(root)
-    target = default_branch(root, data.get("tracking_branch"))
-    if not target:
-        raise Refused("Cannot determine the default branch from the manifest, origin/HEAD, main, or master.")
-    active_path = Path.cwd().resolve()
-    worktrees = []
-    for source in state["worktrees"]:
-        row = dict(source)
-        if row.get("present"):
-            tree_path = Path(row["path"]).resolve()
-            row["current"] = active_path == tree_path or active_path.is_relative_to(tree_path)
-        branch = row.get("branch", "detached")
-        row["merged_into_target"] = None
-        row["remote_present"] = None
-        if row.get("present") and branch != "detached":
-            row["merged_into_target"] = ancestor(root, row.get("head"), target)
-            if row.get("upstream"):
-                row["remote_present"] = git(root, "rev-parse", "--verify", "--quiet", row["upstream"]).returncode == 0
-        if not row.get("present"):
-            classification = "stale-worktree"
-            recommendation = "Review and prune stale worktree metadata manually."
-        elif branch == target:
-            classification = "protected-default"
-            recommendation = "Keep the default branch; use the repository's normal push or PR process."
-        elif row.get("dirty") is None:
-            classification = "inspection-error"
-            recommendation = "Preserve this worktree; Git could not establish its clean state."
-        elif row.get("dirty"):
-            classification = "dirty"
-            recommendation = "Preserve or commit the working changes before cleanup."
-        elif row.get("ignored_files") is None:
-            classification = "inspection-error"
-            recommendation = "Preserve this worktree; Git could not establish its ignored-file state."
-        elif row.get("ignored_files"):
-            classification = "ignored-local-files"
-            recommendation = "Preserve or relocate ignored local files before cleanup."
-        elif branch == "detached":
-            classification = "detached"
-            recommendation = "Preserve the detached commit or attach it to a named branch before cleanup."
-        elif not row.get("upstream"):
-            classification = "unpublished"
-            recommendation = "Push or otherwise preserve the branch before removing its worktree."
-        elif row.get("remote_present") is False:
-            classification = "remote-gone"
-            recommendation = "Confirm the branch should be republished before removing local work."
-        elif row.get("ahead") is None or row.get("behind") is None:
-            classification = "review-required"
-            recommendation = "Remote tracking state could not be established from local refs; preserve it for review."
-        elif row["ahead"] > 0 and row["behind"] > 0:
-            classification = "diverged"
-            recommendation = "Reconcile the diverged branch through the normal Git workflow before cleanup."
-        elif row["behind"] > 0:
-            classification = "remote-ahead"
-            recommendation = "Fetch and reconcile the newer remote branch before cleanup."
-        elif row["ahead"] > 0:
-            classification = "unpushed"
-            recommendation = "Use an explicit clean push, then continue through the normal review process."
-        elif row.get("merged_into_target") is True and not row.get("current"):
-            classification = "merged-removable"
-            recommendation = "This clean, merged, non-current worktree may be removed explicitly."
-        elif row.get("merged_into_target") is True:
-            classification = "merged-current"
-            recommendation = "The branch is merged, but this is the current checkout; switch away before removal."
-        elif row.get("merged_into_target") is None:
-            classification = "review-required"
-            recommendation = "Merge state could not be established from local refs; preserve it for review."
-        else:
-            classification = "pushed-unmerged"
-            recommendation = "Continue through the repository's normal pull-request or merge process."
-        row["classification"] = classification
-        row["recommendation"] = recommendation
-        worktrees.append(row)
-    return {"root": str(root), "target_branch": target,
+    if repo["merge_target_refusal"] is not None:
+        raise repo["merge_target_refusal"]
+    if repo["errors"]:
+        raise Refused(f"Cannot inspect Git repository at {root}")
+    return {"root": str(root), "target_branch": repo["merge_target"]["name"],
             "tracking_freshness": "local refs only; remote information is as of the last fetch; no fetch performed",
-            "worktrees": worktrees}
+            "worktrees": worktree_rows(repo, run)}
 
 
 def print_clean_report(report, as_json):
