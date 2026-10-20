@@ -385,6 +385,13 @@ class GatesTests(clean_support.CleanCase):
                           TEXT["excluded_row"].format(PATH=sparse, BRANCH="003-sparse")])
         self.assertEqual(self.snapshot(root), before)
         self.assertEqual((assumed / "work-002-assumed").read_text(), "hidden edit", "the edit survives")
+        # The edits survive an apply of the rest.
+        result, records = self.run_counted("clean", root, "--all-safe", "--apply", "--yes")
+        self.assert_status(result, 0)
+        self.assertEqual([argv_words(record)[-1] for record in removals(records)], [str(plain)])
+        self.assertFalse(plain.exists())
+        self.assertEqual((assumed / "work-002-assumed").read_text(), "hidden edit", "the edit survives the apply")
+        self.assertIn("S sparse/file", self.git(sparse, "ls-files", "-v").splitlines())
 
     def test_clean_an_edit_hidden_by_assume_unchanged_survives(self):
         root = self.repo()
