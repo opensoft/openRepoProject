@@ -17,7 +17,9 @@ registered directly by register_worktrees() are `unpublished`.
 A plan is read without removing anything as `--apply --action remove
 --worktree P --json` run without --yes on a standard input that is not a
 terminal: the run stops at `confirmation-required`, exit 2, and prints the
-plan envelope with its selection, notes and `omitted`.
+plan envelope with its selection, notes and `omitted`. The removals run with
+--yes, at a pseudo-terminal, or in process with `ask_removal` patched as T046
+patches it (lead ruling R-53 P-14).
 """
 import contextlib
 import errno
@@ -131,6 +133,33 @@ class SingleTests(clean_support.CleanCase):
         self.addCleanup(parent.chmod, 0o700)
         return tree
 
+    def assert_removed(self, root, tree, branch, head):
+        """TREE removed: gone from the registry and from disk, while its
+        branch is kept at HEAD, its planned SHA."""
+        self.assertNotIn(f"worktree {tree}", self.git(root, "worktree", "list", "--porcelain").splitlines())
+        self.assertFalse(os.path.lexists(tree))
+        self.assertEqual(self.git(root, "rev-parse", f"refs/heads/{branch}").strip(), head)
+
+    def main_in_process(self, *argv, env=None, **patches):
+        """project's main(ARGV) in this process, in env (self.env by default),
+        standard input a stand-in terminal whose isatty() is true, as T046's,
+        and each named function of project replaced by its stand-in: (status,
+        stdout, stderr). main() restores the signal handlers it installs."""
+        class Terminal(io.StringIO):
+            def isatty(self):
+                return True
+
+        out, err = io.StringIO(), io.StringIO()
+        with contextlib.ExitStack() as stack:
+            stack.enter_context(mock.patch.dict(os.environ, self.env if env is None else env, clear=True))
+            stack.enter_context(mock.patch.object(project.sys, "stdin", Terminal()))
+            for name, stand_in in patches.items():
+                stack.enter_context(mock.patch.object(project, name, stand_in))
+            stack.enter_context(contextlib.redirect_stdout(out))
+            stack.enter_context(contextlib.redirect_stderr(err))
+            status = project.main([os.fspath(arg) for arg in argv])
+        return status, out.getvalue(), err.getvalue()
+
     # T069: "Single target equals a one-item batch".
 
     def test_clean_single_target_equals_a_one_item_batch(self):
@@ -166,6 +195,61 @@ class SingleTests(clean_support.CleanCase):
         self.assertEqual(entries["single"], entries["all-safe"], "the same entry for P apart from dev and ino")
         self.assertEqual((entries["single"]["path"], entries["single"]["classification"]),
                          (str(target), "merged-removable"))
+        single_words = ("--apply", "--action", "remove", "--worktree", target)
+        batch = ("--all-safe", "--apply")
+
+        # Both copies with --yes run the same argument vector by the counting
+        # log and end with P removed, its branch kept, and exit 0.
+        argvs = {}
+        for mode, words in (("single", single_words), ("all-safe", batch)):
+            with self.subTest(mode=mode, yes=True):
+                fresh_copy()
+                head = self.git(target, "rev-parse", "HEAD").strip()
+                result, records = self.run_counted("clean", root, *words, "--yes")
+                self.assert_status(result, 0)
+                [removal] = removals(records)
+                argvs[mode] = removal.argv
+                self.assertEqual(argv_words(removal), ["-C", str(root), "worktree", "remove", str(target)])
+                self.assert_removed(root, target, "001-p", head)
+        self.assertEqual(argvs["single"], argvs["all-safe"])
+
+        # P made dirty between confirmation and revalidation (lead ruling R-53
+        # P-14): both copies without --yes, ask_removal patched in process to
+        # dirty P and answer `yes`; the same stage, reason, exit status 2 and
+        # human result text, since both run at one path.
+        progress = TEXT["progress_line_reason"].format(STAGE="refused", PATH=target, REASON="state-changed")
+        expected = [progress,
+                    TEXT["stop_block"].format(PATH=target, REASON="state-changed", K=0, N=1, NOT_ATTEMPTED="none",
+                                              ROOT=root),
+                    TEXT["branches_kept_line"].format(BRANCHES="001-p"), TEXT["residual_window_line"]]
+
+        def dirty_p(plan, run):
+            (target / "late-change").write_text("preserve")
+            return "yes"
+
+        outcomes = {}
+        for mode, words in (("single", single_words), ("all-safe", batch)):
+            for json_output in (False, True):
+                with self.subTest(mode=mode, dirtied=True, json=json_output):
+                    fresh_copy()
+                    asked = mock.Mock(side_effect=dirty_p)
+                    status, out, err = self.main_in_process("clean", root, *words,
+                                                            *(("--json",) if json_output else ()), ask_removal=asked)
+                    self.assertEqual((status, asked.call_count), (2, 1), out + err)
+                    human = (err if json_output else out).splitlines()
+                    self.assertIn(progress, human)
+                    result_text = human[human.index(progress):]
+                    self.assertEqual(result_text, expected)
+                    if json_output:
+                        document = json.loads(out)
+                        outcomes[mode, "json"] = [(item["path"], item["stage"], item["reason"])
+                                                  for item in document["targets"]] + [document["exit_code"]]
+                    else:
+                        outcomes[mode, "human"] = (status, result_text)
+                    self.assertTrue((target / "late-change").is_file())
+        self.assertEqual(outcomes["single", "human"], outcomes["all-safe", "human"])
+        self.assertEqual(outcomes["single", "json"], outcomes["all-safe", "json"])
+        self.assertEqual(outcomes["single", "json"], [(str(target), "refused", "state-changed"), 2])
 
         with self.subTest("an unregistered path and a dirty worktree"):
             fresh_copy()
@@ -205,6 +289,11 @@ class SingleTests(clean_support.CleanCase):
             _, document, _ = self.named_plan(root, target)
             self.assert_named_plan(document, target, [self.note("inspection-incomplete", target, K=1)])
             self.assertEqual(self.snapshot(root), before)
+            head = self.git(target, "rev-parse", "HEAD").strip()
+            result, records = self.run_counted("clean", root, *single_words, "--yes")
+            self.assert_status(result, 0)
+            self.assertEqual(len(removals(records)), 1)
+            self.assert_removed(root, target, "001-p", head)
 
     # T070: a named removal beside an inspection error, among seventeen
     # eligible rows, and beyond the row cap.
@@ -226,6 +315,17 @@ class SingleTests(clean_support.CleanCase):
         batch = self.run_json("clean", root, "--all-safe", "--apply", "--yes", "--json", env=env).document
         self.assertEqual((batch["completeness"], codes(batch)), ("incomplete", ["inspection-incomplete"]))
         self.assertEqual(self.snapshot(root), before)
+        # With --yes, P is removed beside the failing row, exit 0.
+        head = self.git(target, "rev-parse", "HEAD").strip()
+        result, records = self.run_counted("clean", root, "--apply", "--action", "remove", "--worktree", target,
+                                           "--yes", "--json", real=fake)
+        self.assert_status(result, 0)
+        document = self.load_json(result)
+        self.assertEqual(([(item["path"], item["stage"], item["reason"]) for item in document["targets"]],
+                          document["exit_code"]), ([(str(target), "removed", None)], 0))
+        self.assertEqual(status_paths(records)[0], str(target))
+        self.assert_removed(root, target, "001-p", head)
+        self.assertTrue(failing.is_dir())
 
     def test_clean_a_named_removal_among_seventeen_eligible_rows(self):
         root = self.repo()
@@ -247,6 +347,15 @@ class SingleTests(clean_support.CleanCase):
                       human.stdout.splitlines())
         self.assertIn(TEXT["selected_heading"].format(N=1), human.stdout.splitlines())
         self.assertEqual(self.snapshot(root), before)
+        # With --yes, P alone is removed, the other sixteen stay, exit 0.
+        head = self.git(target, "rev-parse", "HEAD").strip()
+        result, records = self.run_counted("clean", root, "--apply", "--action", "remove", "--worktree", target,
+                                           "--yes")
+        self.assert_status(result, 0)
+        self.assertEqual([argv_words(record)[-1] for record in removals(records)], [str(target)])
+        self.assertIn(TEXT["success_line"].format(N=1, BRANCHES="009-eligible"), result.stdout.splitlines())
+        self.assert_removed(root, target, "009-eligible", head)
+        self.assertTrue(all(tree.is_dir() for tree in others))
 
     def test_clean_a_named_removal_beyond_the_row_cap(self):
         # Lead ruling R-53 P-15: the main worktree, 129 rows registered directly
@@ -281,6 +390,40 @@ class SingleTests(clean_support.CleanCase):
                          ("incomplete", {"count": 3, "exactness": "exact"}, ["inspect-cap"]))
         self.assertEqual([row["path"] for row in batch.document["worktrees"]], inspected[:-1])
         self.assertEqual(self.snapshot(root), before)
+        # With --yes, P is probed first and removed, exit 0.
+        head = self.git(target, "rev-parse", "HEAD").strip()
+        result, records = self.run_counted("clean", root, "--apply", "--action", "remove", "--worktree", target,
+                                           "--yes")
+        self.assert_status(result, 0)
+        self.assertEqual(status_paths(records)[0], str(target))
+        self.assertEqual([argv_words(record)[-1] for record in removals(records)], [str(target)])
+        self.assert_removed(root, target, "p", head)
+        self.assertTrue(all(tree.is_dir() for tree in registered))
+
+    # T071: "Remove a merged clean worktree".
+
+    def test_clean_remove_a_merged_clean_worktree(self):
+        # At a pseudo-terminal: D18's question in the singular, then `yes`. The
+        # worktree is removed and its branch kept; only a separate --action
+        # delete-branch deletes the branch. It pins T054 and T057.
+        root = self.repo()
+        self.bare_remote()
+        tree = self.merged_worktree("001-feature")
+        head = self.git(tree, "rev-parse", "HEAD").strip()
+        result = self.run_pty_steps(
+            clean_support.cli_argv("clean", root, "--apply", "--action", "remove", "--worktree", tree),
+            steps=[(TEXT["question_one"], "yes")])
+        self.assert_status(result, 0)
+        lines = result.stdout.splitlines()
+        self.assertIn(TEXT["question_one"], lines)
+        self.assertNotIn("worktrees, keeping", result.stdout)
+        self.assertIn(TEXT["progress_line"].format(STAGE="removed", PATH=tree), lines)
+        self.assertIn(TEXT["success_line"].format(N=1, BRANCHES="001-feature"), lines)
+        self.assert_removed(root, tree, "001-feature", head)
+        deleted = self.run_cli("clean", root, "--apply", "--action", "delete-branch", "--branch", "001-feature",
+                               "--yes")
+        self.assert_status(deleted, 0)
+        self.assertEqual(self.git(root, "branch", "--list", "001-feature"), "")
 
 
     # Lead ruling R-72 (c): a rule match_target() has (R-67 (b), R-69 (2)).
