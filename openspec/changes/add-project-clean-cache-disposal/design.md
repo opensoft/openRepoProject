@@ -10,7 +10,7 @@ requirements. Citations follow the proposal's key: the packet at `da33d92`
 change 2 (`APO`, `APO/ov`) at `961c405`, draft PR #19 at `c462d87` (`PR19/pc`,
 `PR19/rs`), and `project:N` at `961c405`; main is now `e9d6711`, with the same
 `openspec/`, `ideation/` and `project` (L-15). The lane's rulings are L-1 to
-L-17 and B-1 to B-41, and A-9, A-23 and A-24 for #23; this change's own
+L-17 and B-1 to B-42, and A-9, A-23 and A-24 for #23; this change's own
 decisions are CD-1 to CD-18 in `proposal.md`, and the alignment review's
 findings (SA-n, QA-n, G1 to G5) are resolved in its table. The council (P-n,
 S-n and AE-n) read `9ebe9f0`; its VALID verdicts, ruled as B-16 to B-24, are
@@ -27,8 +27,9 @@ and B-36 (D4's account of #26 at `9ff8202`; `tasks.md` 2.2 ticked again on lane
 4's byte check) are applied in round B5 (proposal, "Re-read and Codex Findings
 (round B5)"). Lane 3's folded read of `cf57956..fffc194` and Codex's finding on
 `fffc194`, ruled as B-38 and B-39, the last two LOWs of lane 3's read, ruled as
-B-40, and the lead's B-41 on this round's own signal sentence are applied in
-round B6 (proposal, "Re-read and Codex Findings (round B6)").
+B-40, the lead's B-41 on this round's own signal sentence and B-42 on D4's
+account of #26 are applied in round B6 (proposal, "Re-read and Codex Findings
+(round B6)").
 
 How the packet's contract and the rulings map to the decisions below:
 
@@ -70,13 +71,14 @@ How the packet's contract and the rulings map to the decisions below:
 | B-32 | the stall test on persistent reasons, never on `blocking` alone; a per-worktree cap told from the totals by the row's counts | D4, D11 |
 | B-33 | every recorded directory counts toward the per-worktree cap of 512; the walk opens each recorded directory once, and the stage one chain per directory with removals in each pass; the worst case, depth times those directories, and its limit put to Brett Heap | D3, D4, D5, D7, D14, Risks, Open Questions |
 | B-34 | a read of the preflight that the removal floor or the deadline stops before the first removal deletes nothing and changes no state: the stage is `not-attempted` with `target-stopped`, the target `not-attempted` with `deadline-exceeded`, exit 1, the human line naming the deadline, never `refused` with `cache-changed`; a real difference, or a read past its own 5 s budget with no signal received (B-39, B-41), stays `refused`; Codex's P2 at `specs/project-clean-review-safety/spec.md:353` on `e1049b2` is the same item | D1, D7, D8, D11, D12, D14, Risks |
-| B-35 | D4 describes #23's joint fit as #26 states it at `9ff8202` under A-23 and A-24: 81 children, and at the packet's model with cache disposal 10 of 16 targets removed and 9 branches retired through one worker | D4, D13 |
+| B-35 | D4 describes #23's joint fit as #26 states it, first at `9ff8202` and, since B-42, at `9b67e8c`, under A-23 and A-24: 81 children, and at the packet's model with cache disposal 10 of 16 targets removed and 9 branches retired through one worker | D4, D13 |
 | B-36 | `tasks.md` 2.2 ticked again on lane openRepoProject-4's byte check of B-30's commit, quoted from its log | D6, Migration Plan |
 | B-37 | an unsupported platform withholds the cache proof only from a row that reaches the `ignored-local-files` rung; a row that an earlier rung classified, a `dirty` one among them, keeps its classification (Codex's P2 at `specs/project-clean-review-safety/spec.md:383` on `e1049b2`) | D9 |
 | B-38 | lane 3's folded read of `cf57956..fffc194`: the last AND of "No time for a cache stage" reads "at least 10 s of work remaining", the complement of the first half's budget under 5 s; "no difference was found"; the packet's reapplication rule cited beside its fit rule; the walk's call count behind D4's 28.3 s | D4, D7, D14 |
 | B-39 | a signal received before a preflight read's stop is classified outranks it, and B-41 widens that to every preflight outcome: a read that reaches its own 5 s budget, or the floor or the deadline, after a signal ends the stage `not-attempted` with `target-stopped` and the target `not-attempted` with `interrupted`, never `refused` with `cache-changed`; Codex's P2 at `specs/project-clean-review-safety/spec.md:354` on `fffc194` | D1, D7, D8, D11, D12, D14, Risks |
 | B-40 | lane 3's last two LOWs on `fffc194`: B-30's row cites the SHALL NOT sentence's end at `spec.md:35-36`; the quotations of #26's `ca96701` ("13 of its 16 targets ... 11 in the worst case") and of B-19 ("13 at `ca96701`") are verbatim | D4 |
 | B-41 | a signal received before the stage classifies any outcome of its preflight, a difference, an error, a byte total past either cap, a `probe-timeout` or a floor or deadline stop, takes the signal's outcome: the stage `not-attempted` with `target-stopped`, nothing deleted, the target and every later one `not-attempted` with `interrupted`, the exit status the signal's; the lead's ruling on this round's own sentence that left a found difference `refused`, which B-39 widened | D1, D7, D8, D11, D12, D14, Risks |
+| B-42 | D4 restates #26 at `9b67e8c` exactly, in #26's own words for its counts: 9 of 16 through their stage, 8 in the worst case of the reflog proof, through one worker; at least 5, or 3, at a thread per call, 6, or 5, in the worst order a run can take; all 16 fit through a worker at change 1's measured costs, and at a thread per call at least the 16th target is deferred, where D4 had quoted #26's counts from before its round A5 ("5 and 5, or 4 and 3") | D4 |
 
 What in `project` shapes the approach:
 
@@ -501,23 +503,33 @@ it, and a target whose stage or spawn cannot start under the floor is
 `not-attempted` with `deadline-exceeded` as for every removal (QA-5), so the
 margins above are design arithmetic, not a promise of the spec.
 
-With `--retire-branches` (#23, PR #26) a run spawns branch children too, and
-#26 states the joint fit at `9ff8202`, under A-23 and A-24 (B-35). A flagged run
-adds at most 81 children: 64 for the retirement stage, four for each retired
-branch (the re-read's listing, its re-proof of the reflog, the branch child and
-the post-check), and 17 reflog children, one for the repository and one per
-selected row. With this change's walk and earlier stages added whole as B-25
-gives them, #26 finds that at the packet's 150 ms model, through one worker per
-stage, 10 of 16 targets are removed and 9 branches retired before the removal
-floor, and 8 and 8 in its worst case of 17 reflog children; at a thread per
-call 5 and 5, or 4 and 3. It finds that change 1's deadline rule defers the
-rest to the next run (exit 1, never unsafe), and that at change 1's measured
-costs all 16 fit through a worker. Its draft at `ca96701` read "13 of its 16
-targets ... 11 in the worst case" and left the cache-stage filesystem time out.
-#26, which archives after this change, states that joint fit (A-9, the alignment
-review's G3), which stays Brett Heap's question, `limits.targets` staying 16.
-The inputs
-it needs from this change, as rounds B3 and B4 restate them:
+With `--retire-branches` (#23, PR #26) a run spawns branch children too, and #26
+states the joint fit at `9b67e8c` (its design.md D7), under A-23, A-24 and A-25
+(B-35, B-42). A flagged run adds at most 81 children: 64 for the retirement
+stage, four for each retired branch (the re-read's listing, its re-proof of the
+reflog, the branch child and the post-check), and 17 reflog children, one for
+the repository and one per selected row. With this change's walk and earlier
+stages added whole as B-25 gives them, for ordinary trees, B-33's worst shapes
+staying under this change's own questions (A-25), #26 says: "So at the packet's
+150 ms model a flagged run with cache disposal brings 9 of its 16 targets
+through their stage before the floor, 8 in the worst case of the reflog proof,
+through one worker per stage, and at least 5, or 3, at a thread per call, 6, or
+5, in the worst order a run can take; change 1's own deadline rule makes the
+rest `not-attempted` with `deadline-exceeded`, the run exits 1, and the next run
+takes them, never unsafe (`BA:772-774`). At change 1's measured costs all 16 fit
+through a worker; at a thread per call at least the 16th target is deferred,
+with one reflog child as in the worst case." Its bullets give those counts as
+removals and branch children. Through one worker per stage they are 10 and 9,
+and 8 and 8 in the worst case of 17 reflog children; at a thread per call 5 and
+5, and 4 and 3; in the worst order, which puts first the 8 cache targets that
+this change's totals select, each stage spending an eighth of the stage time
+just before its own removal, 6 and 6, and 5 and 5, at a thread per call, and
+through a worker the counts of the first bullet. Its draft at `ca96701` read "13
+of its 16 targets ... 11 in the worst case" and left the cache-stage filesystem
+time out. #26, which archives after this change, states that joint fit (A-9, the
+alignment review's G3), which stays Brett Heap's question, `limits.targets`
+staying 16. The inputs it needs from this change, as rounds B3 and B4 restate
+them:
 
 - Git children: 16 cache enumerations per invocation under `probes`, 2.4 s at
   the model; none added at revalidation, where the enumeration's child takes
