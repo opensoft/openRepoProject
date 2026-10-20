@@ -17,12 +17,15 @@ only to a `project` child (rule 7), and every pseudo-terminal run makes the
 terminal its controlling terminal (rule 14).
 """
 import errno
+import io
 import os
 from pathlib import Path
 import shlex
 import signal
 import subprocess
+import sys
 import time
+from unittest import mock
 
 import clean_support
 
@@ -65,6 +68,22 @@ i=0
 while [ ! -e "$HOOK_RELEASE" ] && [ "$i" -lt 300 ]; do sleep 0.05; i=$((i + 1)); done
 echo done >> "$HOOK_LOG"
 """
+
+# PR #19's pre-push hook (T074): 7 s of sleep, unscaled, past the 5 s a probe
+# child gets, recording every signal that reaches it.
+SLEEPING_HOOK = """#!/bin/sh
+[ -n "$HOOK_LOG" ] || exit 0
+cat > /dev/null
+trap 'echo INT >> "$HOOK_LOG"' INT
+trap 'echo TERM >> "$HOOK_LOG"' TERM
+trap 'echo HUP >> "$HOOK_LOG"' HUP
+echo started >> "$HOOK_LOG"
+sleep 7
+echo done >> "$HOOK_LOG"
+"""
+
+# Git's credential prompts for the tty-credential fake's https://example.invalid.
+PROMPTS = ("Username for 'https://example.invalid': ", "Password for 'https://user@example.invalid': ")
 
 
 def words(record):
@@ -415,3 +434,139 @@ class PushTests(clean_support.CleanCase):
                 self.assertEqual(result.stderr, NO_TERMINAL)
                 self.assertFalse({chr(9), chr(0x202E)} & set(result.stdout + result.stderr),
                                  "never the raw code points")
+
+    def run_session(self, argv, env):
+        """Run argv in a session of its own, so that its process group is its
+        pid, within the 20 s limit. Returns the run, its streams as text, with
+        the attribute `pid`."""
+        child = subprocess.Popen(argv, cwd=self.base, env=env, stdin=subprocess.DEVNULL, stdout=subprocess.PIPE,
+                                 stderr=subprocess.PIPE, start_new_session=True)
+        try:
+            out, err = child.communicate(timeout=clean_support.TIMEOUT)
+        except subprocess.TimeoutExpired:
+            os.killpg(child.pid, signal.SIGKILL)
+            child.wait()
+            self.fail(f"run passed {clean_support.TIMEOUT} s")
+        result = subprocess.CompletedProcess(argv, child.returncode, out.decode("utf-8", "surrogateescape"),
+                                             err.decode("utf-8", "surrogateescape"))
+        result.pid = child.pid
+        return result
+
+    def assert_children(self, records, pid, root, branch, kept=()):
+        """The push child alone: the vector shown, no pin, project's process
+        group, the seventeen names removed but those kept; every other child:
+        the seven pins, its own process group, no scrubbed name. Returns the
+        push child's record."""
+        [push] = pushes(records)
+        self.assertEqual(push.argv, ["-C", str(root), "push", "origin", f"{branch}:{branch}"], "no pin")
+        self.assertEqual((push.ppid, push.pgid), (pid, pid), "project's own process group")
+        self.assertEqual(push.names, tuple(kept))
+        others = [record for record in records if record is not push]
+        self.assertTrue(others)
+        for record in others:
+            self.assertEqual(pins(record)[-len(PINS):], PINS, record.argv)
+            self.assertEqual((record.ppid, record.pgid), (pid, record.pid), "a process group of its own")
+            self.assertIn(record.names, ((), ("GIT_OPTIONAL_LOCKS",)), record.argv)
+        return push
+
+    def test_clean_the_push_child_reaches_its_remote(self):
+        # PR #19's scenario (LQ-3; research.md R1; lead ruling R-28): ROOT the
+        # main worktree's absolute path, project in a session of its own with
+        # GIT_DIR naming another repository and GIT_CONFIG_PARAMETERS set,
+        # here to a pin that would refuse a push to a local path; the sh
+        # counting wrapper, and the real table.
+        root = self.repo()
+        remote = self.bare_remote()
+        tree = self.unpushed("020-reach")
+        other = self.repo("other")
+        env, log = self.counting()
+        env.update(GIT_DIR=str(other / ".git"), GIT_CONFIG_PARAMETERS="'protocol.file.allow'='never'")
+        argv = clean_support.cli_argv("clean", root, "--apply", "--action", "push", "--branch", "020-reach", "--yes")
+
+        result = self.run_session(argv, env)
+        self.assert_status(result, 0)
+        self.assert_children(clean_support.child_log(log), result.pid, root, "020-reach")
+        self.assertEqual(self.git(remote, "rev-parse", "refs/heads/020-reach"), self.git(tree, "rev-parse", "HEAD"))
+
+        with self.subTest("a pre-push hook that sleeps 7 s; the caller's GIT_ALLOW_PROTOCOL kept"):
+            self.install_hooks(SLEEPING_HOOK, "pre-push")
+            head = self.advance(tree)
+            clean_support.reset_child_log(log)
+            hook = self.base / "sleeping-hook.log"
+            result = self.run_session(argv, dict(env, GIT_ALLOW_PROTOCOL="file", HOOK_LOG=str(hook)))
+            self.assert_status(result, 0)
+            self.assertEqual(hook.read_text(), "started\ndone\n", "no signal reached the push or its hook")
+            self.assert_children(clean_support.child_log(log), result.pid, root, "020-reach",
+                                 kept=("GIT_ALLOW_PROTOCOL",))
+            self.assertEqual(self.git(remote, "rev-parse", "refs/heads/020-reach").strip(), head)
+
+        with self.subTest("the caller's GIT_ALLOW_PROTOCOL is honoured (R-28)"):
+            self.advance(tree)
+            before = self.refs(remote)
+            clean_support.reset_child_log(log)
+            result = self.run_session(argv, dict(env, GIT_ALLOW_PROTOCOL="ssh"))
+            self.assert_status(result, 128)  # git push's own: transport 'file' not allowed
+            self.assertIn("transport 'file' not allowed", result.stderr)
+            self.assert_children(clean_support.child_log(log), result.pid, root, "020-reach",
+                                 kept=("GIT_ALLOW_PROTOCOL",))
+            self.assertEqual(self.refs(remote), before)
+
+    def test_clean_the_push_child_reaches_its_remote_at_a_terminal(self):
+        # PR #19's scenario at a pseudo-terminal made project's controlling
+        # terminal (R-31), with --yes: the tty-credential fake behind the
+        # counting wrapper opens /dev/tty and Git prompts there.
+        root = self.repo()
+        remote = self.bare_remote()
+        tree = self.unpushed("021-terminal")
+        fake_dir = self.base / "fake-bin"
+        env, log = self.counting(real=clean_support.install_fake_git(fake_dir, "tty-credential"))
+        argv = clean_support.cli_argv("clean", root, "--apply", "--action", "push", "--branch", "021-terminal",
+                                      "--yes")
+        result = self.run_pty_steps(argv, list(zip(PROMPTS, ("user", "secret"))), controlling_tty=True, env=env)
+        self.assert_status(result, 0)
+        [event] = [event for event in clean_support.fake_events(fake_dir) if event["event"] == "tty"]
+        [push] = pushes(clean_support.child_log(log))
+        self.assertEqual((event["tty"], event["fill_status"], event["username"], event["password"]),
+                         ("opened", 0, "user", "secret"), "Git's prompts answered at the terminal")
+        self.assertEqual(event["pid"], push.pid)
+        self.assertEqual(event["foreground"], event["pgid"], "the push child in the terminal's foreground")
+        self.assertEqual((push.pgid, push.ppid), (event["pgid"], event["pgid"]),
+                         "its group is project's, which leads the terminal's session")
+        self.assertEqual(self.git(remote, "rev-parse", "refs/heads/021-terminal"), self.git(tree, "rev-parse", "HEAD"))
+
+        with self.subTest("^C typed at the username prompt"):
+            self.advance(tree)
+            before = self.refs(remote)
+            result = self.run_pty_steps(argv, [(PROMPTS[0], chr(3))], controlling_tty=True, env=env)
+            self.assert_status(result, 130)  # D19's first row: SIGINT was recorded
+            self.assertTrue(result.stderr.endswith("Cancelled.\n"), result.stderr)
+            self.assertEqual(self.refs(remote), before, "nothing pushed")
+
+    def test_clean_the_delegate_relay_passes_both_streams_whole(self):
+        # Lead ruling R-53 P-1: the `git branch -d` delegate runs on the driver,
+        # and RelayParser writes each chunk of its standard output and of its
+        # standard error to project's own, whole: here a fake git writes every
+        # byte value, about 200 KiB to each stream, then exits 3. In process,
+        # with project's streams replaced by buffers.
+        fake_dir = self.base / "relay-bin"
+        fake_dir.mkdir()
+        source = ("import sys\n"
+                  "out, err = bytes(range(256)) * 800, bytes(reversed(range(256))) * 700\n"
+                  "for at in range(0, len(out), 4096):\n"
+                  "    for stream, data in ((sys.stdout.buffer, out), (sys.stderr.buffer, err)):\n"
+                  "        stream.write(data[at:at + 4096])\n"
+                  "        stream.flush()\n"
+                  "sys.exit(3)\n")
+        (fake_dir / "git").write_text(f"#!/bin/sh\nexec {shlex.quote(sys.executable)} -c {shlex.quote(source)}\n")
+        (fake_dir / "git").chmod(0o755)
+        stdout, stderr = io.TextIOWrapper(io.BytesIO()), io.TextIOWrapper(io.BytesIO())
+        path = os.pathsep.join([str(fake_dir), os.environ.get("PATH", "")])
+        with mock.patch.dict(os.environ, {"PATH": path}), mock.patch.object(project.sys, "stdout", stdout), \
+                mock.patch.object(project.sys, "stderr", stderr):
+            outcome = project.run_bounded(("delegate", ["-C", str(self.base), "branch", "-d", "relayed"], None),
+                                          project.RelayParser(), project.Invocation())
+        self.assertEqual((outcome.status, outcome.result), (3, b""))
+        self.assertEqual(stdout.buffer.getvalue(), bytes(range(256)) * 800)
+        self.assertEqual(stderr.buffer.getvalue(), bytes(reversed(range(256))) * 700)
+        self.assertEqual((len(outcome.stderr), outcome.stderr_bytes), (4096, 256 * 700),
+                         "the driver still keeps the standard-error head")
