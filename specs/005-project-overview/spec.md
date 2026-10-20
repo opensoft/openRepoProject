@@ -2483,7 +2483,17 @@ and [P] are change 1's requirements as the header names them.
     of requirement 5, where an answer to Q7 amends the ladder's run rule
     (POD:378-381), and #25's blocks; #25 re-aligns its blocks to such an
     amendment (its proposal, "Dependencies and Sequencing"; its `tasks.md`
-    2.3 and 2.4).
+    2.3 and 2.4). An answer to Q16 that amends change 2's design D1 and
+    clarifications N1 reaches #25 as well: if that amendment lands
+    before #25 archives, #25's task 2.3 re-read picks it up, the spawning
+    sentence of #25's design D7 and its scenario "Expiry cancels queued and
+    in-flight requests" included (its proposal, "Dependencies and
+    Sequencing"; its `tasks.md` 2.3). Before its `/opsx:archive`, #24
+    re-reads its block of requirement 5 against the text of that requirement
+    on `main` and re-copies the block from that text, keeping every
+    amendment along with its own additions, so that an answer that amends
+    requirement 5, such as Q7 A, is not dropped by its archive (its
+    proposal, "Dependencies and Sequencing"; its `tasks.md` 3.2).
 - **Features 001 to 003** (`specs/001-project-command/`,
   `specs/002-triad-first-project-new/`,
   `specs/003-parent-obstacle-wording/`): untouched; their tests join the
