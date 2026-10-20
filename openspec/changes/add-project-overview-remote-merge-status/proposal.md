@@ -2,9 +2,10 @@ Lane: openRepoProject-5
 
 # Proposal: add-project-overview-remote-merge-status
 
-Status: draft; alignment review resolved on PR #29; council pending; nothing
-here is ratified. Governing issue: opensoft/openRepoProject#25, claimed by lane
-openRepoProject-5 (comment 6111242617); refs #6, the record of the project
+Status: draft; alignment review and council resolved on PR #29; ratification
+by Brett Heap pending; nothing here is ratified. Governing issue:
+opensoft/openRepoProject#25, claimed by lane openRepoProject-5 (comment
+6111242617); refs #6, the record of the project
 maintenance design packet. Proposed on Brett Heap's word "usage reset, resume
 all. read handoff and resume and fan out wide and do as much as possible in
 parallel" (2026-10-11), read by lanes openRepoProject-4 and openRepoProject-5
@@ -26,8 +27,9 @@ deltas are written on; `CAS` is `openspec/changes/add-project-clean-all-safe/`
 executable. Change 1's evidence model,
 `Repository inspection requires Git 2.36 and shares one evidence model`
 (CAS/cmd:90), is [E]. The lane's rulings are cited as L-1 to L-9 and C-1 to C-8
-(2026-10-11), L-10 to L-15, B-14, C-9 and C-10 (2026-10-18), and L-16, L-17 and
-C-11 to C-14 (2026-10-19). `PR19/cmd` is draft PR #19's
+(2026-10-11), L-10 to L-15, B-14, C-9 and C-10 (2026-10-18), L-16, L-17 and
+C-11 to C-14 (2026-10-19), and F-3 and C-15 to C-23 (2026-10-20, C-16 to C-22
+being the council's verdicts). `PR19/cmd` is draft PR #19's
 `openspec/changes/add-project-clean-all-safe/specs/project-command/spec.md` at
 `c462d87`.
 
@@ -44,13 +46,13 @@ The packet names the interface, `project overview --remote` (DI:72-75), and
 fixes its boundary (DI:1036-1060): opt-in and read-only, a validated canonical
 GitHub identity, requests deduplicated by exact head and bounded in count,
 concurrency, time, pages, items and bytes, every failure an explicit unknown,
-and local ancestry the only cleanup gate. Change 2 leaves exactly this to "a
-remote-queries proposal" (APO proposal.md:566-568, :810-812), and the packet
-keeps remote queries a separately governed extension (HO:47-50; OV:142-146;
-CAS proposal.md:756-757, OQ-27). This is that proposal. The closed PR #2's
-`09af8c8` is the harvest source, for reference only: it queried GitHub from
-plain `clean` and `doctor` with no opt-in and no bounds, put the answer inside
-the revalidation signature and added ladder classes.
+and local ancestry the cleanup gate (DI:1059-1060). Change 2 leaves exactly
+this to "a remote-queries proposal" (APO proposal.md:566-568, :810-812), and
+the packet keeps remote queries a separately governed extension (HO:47-50;
+OV:142-146; CAS proposal.md:756-757, OQ-27). This is that proposal. The
+closed PR #2's `09af8c8` is the harvest source, for reference only: it
+queried GitHub from plain `clean` and `doctor` with no opt-in and no bounds,
+put the answer inside the revalidation signature and added ladder classes.
 
 ## What Changes
 
@@ -75,23 +77,29 @@ the revalidation signature and added ladder classes.
   forwarded (DI:1039-1042).
 - **One bounded request per exact head.** Rows share one request per
   `(host, owner/repository, head)`, in canonical order (DI:1044). Each request
-  is one `gh api` child with a fixed read-only GraphQL query for at most 100
-  pull requests associated with that commit, one page, never paginated or
-  cached. At most 64 requests, four at once, each `min(5 s, remote time
-  remaining)`, inside a 30 s remote budget, counted from the first request
-  after collection, that is part of the 60 s deadline, not added to it; at
-  most 1 MiB of each body (DI:1045-1051; C-4). On expiry, requests not sent
-  are `unknown` with `cancelled` and requests in flight are stopped and
-  `unknown` with `aborted` (DI:1051-1053).
+  is one `gh api` child, started by the absolute path that the run's one
+  lookup found in an absolute directory of `PATH` (C-22), with a fixed
+  read-only GraphQL query for the queried repository's `nameWithOwner` and at
+  most 100 pull requests associated with that commit, one page, never
+  paginated or cached. At most 64 requests, four at once, each `min(5 s,
+  remote time remaining)`, inside a 30 s remote budget, counted from the
+  first request after collection, that is part of the 60 s deadline, not
+  added to it; at most 1 MiB of each body (DI:1045-1051; C-4). On expiry,
+  requests not sent are `unknown` with `cancelled` and requests in flight are
+  stopped and `unknown` with `aborted` (DI:1051-1053).
 - **Explicit results.** A row's `remote` is `{state, number, url, head_sha,
-  reason}` with `state` `merged`, `open`, `closed`, `not-found`, `unavailable`
-  or `unknown`, from pull requests whose head is exactly the row's head and
-  whose base is the merge target's remote branch in that repository (C-5). A
-  further page, a body cut at 1 MiB, a timeout, a 401, a 403, a rate limit or
-  any other failure is `unknown` with its reason, never a partial answer, and
-  no response text, `gh` error output or credential appears in either output
-  (DI:1055-1058). No `gh` on `PATH`, or a `gh` that needs authentication, is
-  `unavailable`.
+  reason}` with `state` `merged`, `open`, `not-found`, `unavailable` or
+  `unknown`, from pull requests whose head is exactly the row's head and whose
+  base is the merge target's remote branch in the repository that GitHub
+  resolves for the identity (C-5, C-19). A pull request closed without merging
+  has no state of its own: GitHub's commit association does not return one
+  (F-3), so such a head reads `not-found`, whose text names only merged and
+  open pull requests (C-16). A further page, a body cut at 1 MiB, a timeout, a
+  401, a 403, a rate limit, a body that cannot be parsed or any other failure
+  is `unknown` with its reason, never a partial answer, and no other response
+  text, `gh` error output or credential appears in either output
+  (DI:1055-1058). No `gh` in an absolute directory of `PATH`, or a `gh` that
+  needs authentication, is `unavailable`.
 - **Evidence, never permission.** Remote evidence changes no classification,
   finding, suggestion, gate, row status, summary count, `completeness` or exit
   status, and is kept nowhere beyond the invocation, so it can never feed a
@@ -99,11 +107,13 @@ the revalidation signature and added ladder classes.
   SY:129-130; HO:167). No finding code, ladder class or stage value is added
   (L-4).
 - **What the person sees.** Under a kept worktree's finding a `remote` line
-  says, for a merged one, "merged on GitHub as pull request #N; local ancestry
-  does not prove it (a squash or rebase merge, or a merge target not fetched
-  since); never retired on this evidence"; one summary line gives the requests
-  sent, the counts by state and the sentence "Remote evidence was queried live
-  from github.com and may already be stale; it never authorizes cleanup."
+  says, for a merged one (C-18, C-20), "merged on GitHub as pull request #N at
+  this exact head; uncommitted and ignored files here are not part of it;
+  local ancestry does not prove it (a squash or rebase merge, or a local merge
+  target not brought up to date since); never retired on this evidence"; one
+  summary line gives the `gh` requests started, the counts by state and the
+  sentence (C-17) "Remote evidence, where GitHub answered, was read live from
+  github.com and may already be stale; it never authorizes cleanup."
   Under `--json` the envelope gains a `remote` object with its limits, its
   budget, its count of `gh` requests (`requests`), the counts by state, the
   freshness sentence and its own completeness, and each queried row a
@@ -161,7 +171,10 @@ the revalidation signature and added ladder classes.
   it. Whether a local patch-equivalence proof may join local ancestry is change
   1's open question on squash-merged branches (CAS proposal.md:1001-1005),
   which the overview would inherit (APO proposal.md:901-902) and which this
-  change neither decides nor forecloses.
+  change neither decides nor forecloses. This change's `merged` is explanation
+  measured only as `design.md`'s tool facts and Risks state; a ruling on that
+  question that admitted remote merge evidence would need its own
+  verification, never this change's states (C-21).
 - **Opt-in and read-only** (DI:1038-1039). A default overview opens no
   connection (APO/ov:710); a `--remote` run starts `gh` only with the fixed
   query and the switches that turn off its update check, prompts and telemetry,
@@ -324,14 +337,30 @@ scenarios (14, 2, 7 and 13), and one MODIFIED requirement in `project-command`,
   remote phase runs the remote-target reads (at most two Git children per
   repository with a queried row, through change 1's runner under [E]'s pins
   and scrub, counted in the envelope's `probes`), then up to four `gh`
-  children at once through the overview's control loop, reads their bounded
-  output, and adds the `remote` fields and lines. No other
+  children at once through the overview's control loop, each started by the
+  absolute path of the `gh` found in `PATH`'s absolute directories (C-22),
+  reads their bounded output, and adds the `remote` fields and lines. No other
   subcommand changes. No new dependency: `gh` is optional at run time, its
   absence giving `unavailable`, and nothing is imported. `probe()`
   (`project:60-65`, one child, 15 s, no process group) is not used for `gh`.
 - **`README.md`**: the overview section gains `--remote`: what it asks, that
   it needs an authenticated `gh`, its bounds, what `unknown` and `unavailable`
-  mean, that the answer is live, and that it never authorizes cleanup.
+  mean, that the answer is live, and that it never authorizes cleanup, and
+  what the person can do next: for a `merged` row, bring the local merge
+  target up to date and run the overview again, after which local ancestry
+  decides a merge-commit merge; a squash-merged row stays kept, and whether a
+  local patch-equivalence proof may ever retire it is change 1's open question
+  on squash-merged branches (CAS proposal.md:1001-1005); for `gh-unavailable`,
+  install `gh`; for `gh-unauthenticated`, run `gh auth login`; for
+  `no-remote-target`, give the merge target an upstream (for example
+  `git branch --set-upstream-to=origin/main main`); for
+  `credential-bearing-remote`, take the credential out of the remote's URL;
+  for `malformed-remote`, give the remote a URL that names an
+  `owner/repository` on `github.com`, with no user but `git` and no port; and
+  for `not-github`, nothing, since only `github.com` is queried (C-18). These
+  next steps are advice, not a `suggested_command`. It also says that a merge
+  target which tracks the person's own fork asks about the fork, so every
+  queried row reads `not-found` (C-21).
 - **`tests/test_project.py`**: one test named after each scenario, offline,
   with a fake `gh` written into the fake bin directory (`fake_bin`,
   tests:148; `write_fake`, tests:172) that answers from a fixture table and
@@ -373,14 +402,18 @@ scenarios (14, 2, 7 and 13), and one MODIFIED requirement in `project-command`,
   `specs/project-command/spec.md` (PR19/cmd:90-255), with its nine scenarios,
   and adds one sentence to its Termination paragraph, one to its Budgets
   paragraph and one scenario. PR #19 is therefore a dependency: this change
-  archives after change 1 archives with PR #19's text in it, and if PR #19
-  closes unmerged, the block is re-based on change 1's text at main
-  (CAS/cmd:90-214) before ratification. Lane openRepoProject-2, the owner of
+  archives after PR #19's amendment lands or, if PR #19 closes, after the
+  block is re-based on change 1's text (tasks 2.4); if PR #19 closes unmerged
+  before ratification, that re-base is made first, on change 1's text at main
+  (CAS/cmd:90-231). Lane openRepoProject-2, the owner of
   change 1 and PR #19, did not widen PR #19 before Brett Heap rules on it and
   holds the two clauses as its LQ-6 (2026-10-19); if Brett Heap has PR #19
   absorb them, this block is dropped and PR #19 stays a dependency. Lane
   openRepoProject-2 agreed the block on 2026-10-19 with one fix to the
-  Termination sentence, and it is committed.
+  Termination sentence, and it is committed. Ratifying this change ratifies its
+  block of [E] only for its two added sentences and its added scenario, as
+  written on PR #19's text at `c462d87`; PR #19's own sentences stay PR #19's
+  to ratify (lane openRepoProject-3's re-read, MEDIUM-1).
 - **Lane openRepoProject-4's agreement gated the spec text (C-7, C-9).**
   "Overview is local and read-only" and the ADDED requirement were committed
   after lane openRepoProject-4 read them (2026-10-11). Lane
@@ -388,29 +421,42 @@ scenarios (14, 2, 7 and 13), and one MODIFIED requirement in `project-command`,
   what it omitted", its new scenario, and the ADDED requirement's edits for
   C-9 and L-10 on 2026-10-19, and they are committed with its fixes applied
   (Decisions, "Lane openRepoProject-4's check").
-- **Both spec files are agreed by their owners and committed (C-11 to C-13,
-  L-17).** This proposal and `design.md` describe the spec text as the
-  alignment review of 2026-10-19 left it, with the two owners' fixes.
-  `specs/project-command/spec.md`, the MODIFIED block of change 1's evidence
-  model, was agreed by lane openRepoProject-2 on 2026-10-19 with one fix to its
-  Termination sentence. The revised `specs/project-overview/spec.md`, with the
-  MODIFIED block of "Overview prints a versioned JSON envelope" (C-12), the
-  review's edits to the sentences lane openRepoProject-4 agreed (C-13) and its
-  other spec edits, was agreed by lane openRepoProject-4 on 2026-10-19 with two
-  wording fixes in the Isolation passage of the ADDED requirement. Both files
-  are committed, and no part was declined, so the review's Outcomes B to D are
-  not taken (C-12, C-13).
+- **Both spec files were agreed by their owners and committed in round C3
+  (C-11 to C-13, L-17).** `specs/project-command/spec.md`, the MODIFIED block
+  of change 1's evidence model, was agreed by lane openRepoProject-2 on
+  2026-10-19 with one fix to its Termination sentence. The revised
+  `specs/project-overview/spec.md`, with the MODIFIED block of "Overview prints
+  a versioned JSON envelope" (C-12), the review's edits to the sentences lane
+  openRepoProject-4 agreed (C-13) and its other spec edits, was agreed by lane
+  openRepoProject-4 on 2026-10-19 with two wording fixes in the Isolation
+  passage of the ADDED requirement. Both files are committed, and no part was
+  declined, so the review's Outcomes B to D are not taken (C-12, C-13).
+- **Round C4's spec edits are held for lane openRepoProject-4 (the council
+  verdicts' "Held text").** This proposal and `design.md` describe
+  `specs/project-overview/spec.md` as round C4 left it, which is written but
+  not committed: the council's edits (C-16 to C-22) and lane
+  openRepoProject-3's LOWs 5, 6 and 10, all in the ADDED requirement, held in
+  one diff for lane openRepoProject-4 to read against its agreement of
+  2026-10-19. Until it agrees, the committed `specs/project-overview/spec.md`
+  is the text it agreed then (`621715a`), and a part it declines is ruled by
+  the lane's lead. `specs/project-command/spec.md` is unchanged in this round:
+  [E]'s Termination paragraph binds Git children, so the ADDED requirement,
+  which starts the `gh` children, says that they are stopped on every exit
+  path (LOW-6), and nothing is held for lane openRepoProject-2.
 - **Archives after change 2 (L-5).** Change 2 archives after change 1 and
   after feature 005 merges (APO design.md, Migration Plan 5); this change
   archives after change 2 archives. Its block of change 1's evidence model
   archives after change 1, which change 2 already follows, and after PR #19's
-  text is in change 1.
+  amendment lands or, if PR #19 closes, after the block is re-based on change
+  1's text (tasks 2.4).
 - **Realized after feature 005 (lane openRepoProject-4's terms).** Feature 005
   is specified from change 2 as ratified, local only, with no `--remote`, and
   does not anticipate this change. This change edits none of change 2's files
-  and nothing of feature 005; what its realization needs from 005's code is
-  under Open Questions, addressed to lane openRepoProject-4, never stated
-  here as a fact.
+  and nothing of feature 005; what its realization needs from 005's code was
+  Open Questions 3, which lane openRepoProject-4 answered on 2026-10-20
+  (C-23): feature 005 reserves no flag, field or hook for `--remote`, as its
+  spec records in its Dependencies (`specs/005-project-overview/spec.md` on
+  `005-project-overview` at `282a20e`).
 - **Beside its two siblings (L-5).** `add-project-clean-cache-disposal`
   (issue #24) archives after change 1 and, since it carries a MODIFIED block
   of change 2's "Overview reuses the cleanup classifier and merge target"
@@ -447,6 +493,12 @@ scenarios (14, 2, 7 and 13), and one MODIFIED requirement in `project-command`,
   classifier that changes 1 and 2 own.
 - **Squash-merge equivalence as a removal proof** (BA:195-199; SY:225-226;
   change 1's open question on squash-merged branches).
+- **Closed pull requests** (C-16): a head-branch lookup matched by exact
+  `headRefOid` (S-1's option), recommended as its own follow-on change if
+  Brett Heap wants a `closed` state, once F-3's unchecked cases are checked
+  live: a fork's pull request whose head branch name collides, a reused branch
+  name, a rebase merge, a pull request of more than one commit whose head
+  moved after it closed, and a name with more than one page of pull requests.
 - **Persistent remote caching** (DI:1060), and `gh`'s own `--cache`.
 - **Hosts other than `github.com`**, GitHub Enterprise included: such a remote
   is `unavailable`.
@@ -495,7 +547,11 @@ change 1 lands), **L-17** (change 1's evidence model, which this change and
 `add-project-clean-branch-retirement` both modify: whichever archives second
 re-bases its block on the other's archived block, and each block is held until
 lane openRepoProject-2 has checked its diff, which it did for this change's
-block on 2026-10-19, with one fix), and **C-11** to **C-14** below.
+block on 2026-10-19, with one fix), and **C-11** to **C-14** below. From the
+rulings and council verdicts of 2026-10-20: **F-3** (the lead's live check
+that GitHub's commit association returns no pull request closed without
+merging), **C-15** (the council's inputs), **C-16** to **C-22** (the council's
+verdicts, below) and **C-23** (Open Questions 3).
 
 Packet open decisions taken, each citing the text that leaves it open:
 
@@ -656,6 +712,47 @@ Packet open decisions taken, each citing the text that leaves it open:
   remote result SHALL be kept nowhere beyond the invocation, so it can never be
   a `project clean` eligibility, `plan_digest` or revalidation input" and
   "Remote evidence SHALL never be a removal proof".
+- **Closed pull requests, C-16** (DI:1036-1060 names no states; C-5 listed
+  `closed`): `closed` is dropped, a departure named under Departures ("No
+  `closed` state"), and the head-branch lookup that S-1 proposed is a
+  follow-on (Out of Scope).
+- **The freshness sentence and the count, C-17** (C-5 asks for a staleness
+  sentence; the packet gives no wording): `freshness` stays one constant,
+  "Remote evidence, where GitHub answered, was read live from github.com and
+  may already be stale; it never authorizes cleanup.", true in every run,
+  one with no `gh`, with no usable remote, with every worktree merged or with
+  a `gh` that exits 4 before it connects included; and the `Remote:` line
+  counts the `gh` requests started, which is all `project` knows. Rejected:
+  "queried live from github.com" (the first draft), false in those runs
+  (Codex's third finding); a second sentence chosen when `observed_at` is
+  null (S-3), still false for a `gh` that exits 4 after `observed_at` is set;
+  and "requests to github.com", which counts children that never reached it.
+- **The `merged` line, C-18 and C-20** (C-5's example): the line names the
+  exact head, says that the worktree's uncommitted and ignored files are not
+  part of the pull request, since a row kept for its files is queried like
+  any other, and names the remedy that works, a local merge target brought up
+  to date, since a fetch moves only its remote-tracking ref (APO/ov:358-365);
+  the README gives the next steps (Impact). See Departures, "The merged-row
+  wording".
+- **The live contract check and the resolved repository, C-19 and C-21** (G4
+  and F-3 checked answers, not `gh`'s output under D5's argv): `tasks.md` 2.5
+  runs D5's exact argv once by hand before the Speckit handoff and records in
+  `design.md`'s tool facts the status line, the header names as `gh` prints
+  them and an answer for each state and case it names, and a state or case
+  with no live answer is dropped or re-specified first; header names compare
+  without case, as HTTP defines them; and a pull request's base repository is
+  matched against the `nameWithOwner` that the same answer gives for the
+  queried repository, the repository GitHub resolved, so a renamed remote
+  gets its real answer (Decisions, "Matching").
+- **Parser failures and which `gh` runs, C-22** (DI:1055-1056: any "other API
+  failure" is an explicit unknown): a body that cannot be decoded or parsed,
+  for any cause, its nesting depth and the size of its integers included, is
+  `api-error`, so it never reaches C-14's exit 2; and `gh` is looked up once
+  per run in the absolute directories of `PATH` only, an empty or relative
+  entry skipped, and each child is started by the absolute path found, so a
+  `gh` planted in the caller's working directory never receives the caller's
+  `GH_TOKEN` (the council's adversary-engineer showed both by offline
+  fixtures; `design.md`, D5 and D6).
 
 Decisions where the sources and the rulings are silent:
 
@@ -668,18 +765,24 @@ Decisions where the sources and the rulings are silent:
   ancestry proof outranks remote-gone, apply it" (2026-10-09; CAS
   proposal.md:811-813; APO proposal.md:896-900), so it is never queried; a
   `remote-gone` row is one that local ancestry does not prove.
-- **The request**: a GraphQL commit lookup of associated pull requests, which
+- **The request**: a GraphQL commit lookup of associated pull requests, with
+  the queried repository's `nameWithOwner` in the same answer (C-19), which
   answers an unknown commit with a null object (`not-found`) and states a
   further page in the body. Rejected: REST `commits/{sha}/pulls`, which
   answers an unknown commit with HTTP 422, an `unknown` under DI:1055-1056, and
   signals a further page only in a header; `gh pr list` (`09af8c8`), which
   looks up by branch name, hides the page information and stops at gh's
-  default of 30.
+  default of 30; and a head-branch lookup beside the association in the same
+  request (S-1), weighed under Departures ("No `closed` state").
 - **Matching**: the head object id exactly the row's head, the base branch
-  the merge ref's branch and the base repository the identity; then `merged`
-  before `open` before `closed`, the highest number within a state. Rejected:
-  the highest number first, as `09af8c8` chose, which a suppressed Copilot
-  finding faulted for picking before checking the state.
+  the merge ref's branch and the base repository the one GitHub resolved for
+  the identity, its `nameWithOwner` from the same answer (C-19); then
+  `merged` before `open`, the highest number within a state, a closed pull
+  request never matching (C-16). Rejected: the highest number first, as
+  `09af8c8` chose, which a suppressed Copilot finding faulted for picking
+  before checking the state; and the identity read from the URL as the base
+  to match, which would read every queried row of a renamed repository
+  `not-found` (S-2).
 - **A remote phase after collection**, its 30 s starting with the first
   request. Rejected: interleaving requests with collection, which would need
   a hook in feature 005's scheduler and make dispatch depend on completion
@@ -729,23 +832,41 @@ Decisions where the sources and the rulings are silent:
   `GH_NO_UPDATE_NOTIFIER=1`, `GH_NO_EXTENSION_UPDATE_NOTIFIER=1`,
   `GH_PROMPT_DISABLED=1`, `GH_TELEMETRY=false` and `NO_COLOR=1` (gh 2.96.0's
   `gh help environment`), and without `GH_DEBUG`, `DEBUG`, `GH_HOST`,
-  `GH_REPO`, `GH_FORCE_TTY` or `CLICOLOR_FORCE`, so that it sends nothing but
-  the query, checks for no update and writes none of the state it keeps for
-  that check, prompts for nothing, logs nothing and prints plain output; the
-  new scenario of "Overview is local and read-only" asserts the first three.
-  An addition: without it a `gh` child could send data other than the query,
-  against DI:1038-1039's read-only boundary, or write a file, against that
-  block's "no ... file write".
+  `GH_REPO`, `GH_FORCE_TTY` or `CLICOLOR_FORCE`, so that it checks for no
+  update and writes none of the state it keeps for that check, prompts for
+  nothing, logs nothing and prints plain output; the new scenario of "Overview
+  is local and read-only" asserts the first three. An addition, made against
+  DI:1038-1039; what gh does beyond its documented switches is the client's
+  (What This Repository Does Not Own).
 
 Departures, each naming what it departs from:
 
 - **The merged-row wording** (C-5's example, "merged on GitHub by squash;
   local ancestry does not prove it; never retired"): GitHub's answer does not
-  say how a pull request was merged, and a merge-commit merge not yet fetched
-  gives the same picture, so the line names both causes and the number:
-  "merged on GitHub as pull request #N; local ancestry does not prove it (a
-  squash or rebase merge, or a merge target not fetched since); never retired
-  on this evidence".
+  say how a pull request was merged, and a merge-commit merge that the local
+  merge target does not hold yet gives the same picture, so the line names
+  both causes and the number, and, since a row kept for its uncommitted or
+  ignored files is queried too, says that those files are not part of the
+  pull request (C-18, C-20): "merged on GitHub as pull request #N at this
+  exact head; uncommitted and ignored files here are not part of it; local
+  ancestry does not prove it (a squash or rebase merge, or a local merge
+  target not brought up to date since); never retired on this evidence".
+- **No `closed` state** (C-5 lists `closed`; C-16): GitHub's commit
+  association returns no pull request closed without merging (ruling F-3: PR
+  #2's head `bb91a49`, `totalCount` 0), so D5's query cannot produce it; a
+  returned `CLOSED` node stays valid and never matches, and the not-found text
+  names only merged and open pull requests. Rejected: a head-branch lookup,
+  which needs the head branch name, re-keys DI:1044's exact-head dedupe and
+  lets same-named fork pull requests fill the page. S-1's form of it, a
+  `pullRequests(headRefName:)` lookup added to the same request and matched
+  by exact `headRefOid`, is rejected with it: the name it needs is an
+  upstream's published name, which an `unpublished` row lacks; rows sharing a
+  head under two names need two requests or aliased lookups; it reverses the
+  rejection of a by-name lookup (Decisions, "The request"); and under
+  DI:1049-1051 a further page on its list makes the key `unknown`, so
+  same-named fork pull requests could hide the `merged` answer. It is a
+  follow-on change if Brett Heap wants `closed` (Out of Scope), after F-3's
+  unchecked cases are checked live.
 
 Readings of packet and ratified text:
 
@@ -760,6 +881,14 @@ Readings of packet and ratified text:
   never says that no other line may be printed; the `remote` line and the
   summary's `Remote:` line, printed only in a `--remote` run, add to it without
   contradicting it, so it is not modified.
+- **"Every field listed above is always present"** (DI:823): the rule covers
+  the fields the packet lists; the two `remote` keys are fields added under
+  DI:834-835 ("Adding a field or an enum value is additive within version 1,
+  and consumers ignore fields they do not know"), present only in a
+  `--remote` run and absent, never null, otherwise (L-10), as the MODIFIED
+  block of "Overview prints a versioned JSON envelope" states for change 2's
+  own "every one always present" (C-12; lane openRepoProject-3's re-read,
+  LOW-7).
 
 ## Corrections to the Packet
 
@@ -767,8 +896,8 @@ None.
 
 ## Open Questions
 
-Each is before Brett Heap with a recommendation; the third is addressed to
-lane openRepoProject-4 first.
+The first two are before Brett Heap with a recommendation; the third, put to
+lane openRepoProject-4 first, is resolved by its answer (C-23).
 
 1. **Enum closure (L-4).** Change 1 says "Enums SHALL be closed within a
    schema version" (CAS/pc:1129-1131); change 2 says "adding a field or an
@@ -790,14 +919,19 @@ lane openRepoProject-4 first.
    L-11), and change 1's 15 s stays the default for every other non-Git child.
    Lane openRepoProject-2 holds a general form of that clause for PR #19 as
    its LQ-6.
-3. **Seams in feature 005 (to lane openRepoProject-4).** None is needed. The
-   `--remote` flag is an argument error in feature 005 until this change's
-   realization adds it; the `remote` fields, the remote phase after collection
-   and the `gh` child's handle are all added by that realization, after 005
-   lands; so is the `--remote` term of `probes.estimated`, while the
-   remote-target reads enter `probes.performed` through the count feature
-   005 already keeps of every Git child started. Recommendation: feature 005
-   reserves no flag, field or hook.
+3. **Seams in feature 005 (to lane openRepoProject-4): resolved (C-23).**
+   None is needed. The `--remote` flag is an argument error in feature 005
+   until this change's realization adds it; the `remote` fields, the remote
+   phase after collection and the `gh` child's handle are all added by that
+   realization, after 005 lands; so is the `--remote` term of
+   `probes.estimated`, while the remote-target reads enter `probes.performed`
+   through the count feature 005 already keeps of every Git child started.
+   Recommendation: feature 005 reserves no flag, field or hook. Lane
+   openRepoProject-4 answered on 2026-10-20, by message to lane
+   openRepoProject-5: feature 005 reserves no flag, field or hook for
+   `--remote`, and its spec records this in its Dependencies, in lane
+   openRepoProject-4's fold pass (`specs/005-project-overview/spec.md` on
+   `005-project-overview` at `282a20e`).
 
 ## Questions Resolved by the Alignment Review
 
@@ -865,5 +999,53 @@ two wording fixes in its Isolation passage (Dependencies and Sequencing).
 
 ### Council Verdicts
 
+The council (product-advocate, systems-architect and adversary-engineer, each
+read-only) read this change at `c928cb2` on 2026-10-20, with Codex's three
+findings on `1229e79` and the lead's live check F-3 beside it, and the lane's
+lead ruled its twelve concerns VALID, none NOTED and none DISMISSED (C-16 to
+C-22, the verdicts of 2026-10-20). The rows below are those twelve concerns,
+Codex's three findings and ruling C-23; the spec edits they bring are held for
+lane openRepoProject-4 (Dependencies and Sequencing).
+
 | Concern | Severity | Verdict | Section changed |
 | --- | --- | --- | --- |
+| P-1: D5's commit association never returns a pull request closed without merging, so `closed` is unreachable and such a head reads a false not-found line | HIGH | C-16 (VALID): applied as AE-1's edits 1 to 7: `closed` dropped, a `CLOSED` node kept valid and never matching, and the not-found text "no merged or open pull request on GitHub was found for this exact head" | held `project-overview` delta (Results, Fields, Human report; "The chosen pull request and a rejected answer"); What Changes; Decisions (C-16, "Matching"); Departures ("No `closed` state"); Out of Scope; `design.md` Goals, D6, D8, D9, Risks |
+| P-2: the freshness sentence says "queried live" in runs that queried nothing, and a run with every worktree merged has no scenario | MEDIUM | C-17 (VALID): applied with change: AE-4's sentence in place of P-2's; P-2's AND taken, its "0 requests" written `0 gh requests started`, as C-17 counts | held `project-overview` delta (Fields, Human report; "No gh, or a gh without authentication"); What Changes; Decisions (C-17); `design.md` D9 |
+| P-3: the `merged` line's remedy, "a merge target not fetched since", does not work, since a fetch moves only the remote-tracking ref, and the README gives no next step | MEDIUM | C-18 (VALID): applied with change: P-3's texts as written, and the README's next steps also name `malformed-remote` and `not-github`, since C-18 asks for each `unavailable` reason | held `project-overview` delta (Human report; "A squash-merged branch is explained and kept"); What Changes; Impact (`README.md`); Decisions (C-18 and C-20); Departures ("The merged-row wording"); `design.md` Risks |
+| P-4: only `MERGED` and the absence of `CLOSED` were checked live, and no task waits for a live answer per state | MEDIUM | C-19 (VALID): applied: task 2.5 with the cases C-19 and C-21 list, and the Risk list gains a base other than the default branch | `tasks.md` 2.5; Decisions (C-19 and C-21); `design.md` Context (tool facts), D11, Risks, Migration Plan |
+| S-1: as P-1, with a head-branch lookup added to the same request as its fix | HIGH | C-16 (VALID as a defect): the fix not taken, for AE-1's reasons (it re-keys DI:1044 or needs aliased name lookups, reverses the rejection of a by-name lookup, needs a published name that an `unpublished` row lacks, and a further page on its list would hide the `merged` answer); recorded as a follow-on | Departures ("No `closed` state"); Out of Scope; Decisions ("The request") |
+| S-2: the response rules rest on unobserved details of `gh api --include`: the case of header names, and the base repository of a renamed remote | MEDIUM | C-19 (VALID): applied: header names compared without case; the base repository matched against the `nameWithOwner` that the answer gives for the queried repository, added to D5's query; task 2.5 records the status line and the header names, and D11's fixture table uses the recorded forms | held `project-overview` delta (Requests, Results); Decisions ("Matching", C-19 and C-21); `design.md` D5, D6, D11; `tasks.md` 2.5 |
+| S-3: the freshness sentence is false in runs that sent no request | MEDIUM | C-17 (VALID): applied with change: AE-4's constant in place of S-3's second sentence for a null `observed_at`, which a `gh` that exits 4 after `observed_at` is set would leave false | as P-2 |
+| AE-1: `closed` is unreachable; the options attacked; drop it | HIGH | C-16 (VALID): applied: edits 1 to 7 as written, edit 4's placeholders kept (`<a>`, `<b>`, `<d>`, `<e>`, `<f>`) and edit 5's THEN keeping "and null `number` and `url`" | as P-1 |
+| AE-2: the `merged` line reads as an all-clear under a row kept for its files | MEDIUM | C-20 (VALID): applied with change: the line as C-20 gives it; the AND names the dirty worktree's branch as one that local ancestry does not prove merged, so that the row is in the query set | held `project-overview` delta (Human report; "A squash-merged branch is explained and kept"; "Remote evidence changes nothing local"); What Changes; Departures ("The merged-row wording"); `design.md` D9 |
+| AE-3: `merged` was checked only for squash merges into the default branch; a base other than the default branch, a rebase merge and a merge target that tracks the person's fork are not covered | MEDIUM | C-21 (VALID): applied with change: task 2.5 holds its two cases and its rule for an answer with no `MERGED` node; its two Risks cite the ADDED requirement's base-repository rule, not spec line numbers, which move; the README says the fork case; its question sentence reads "that question" for "change 1's question 2", since the bullet names change 1's open question just before and this proposal's Open Questions 2 is another question | `tasks.md` 2.5; `design.md` Risks; Rules This Change Keeps; Impact (`README.md`) |
+| AE-4: the freshness sentence and the `Remote:` count claim a query to github.com in runs where none reached it, a `gh` that exits 4 included | MEDIUM | C-17 (VALID): applied: its sentence, its count wording and its AND | held `project-overview` delta (Fields, Human report; "No gh, or a gh without authentication"); What Changes; Decisions (C-17); `design.md` D9 |
+| AE-5: a body that Python's parser rejects with an error other than `JSONDecodeError` exits 2 and drops the local overview, and the `gh` lookup can start a `gh` planted in the caller's directory | LOW | C-22 (VALID): applied with change: the spec text and AND as given; `design.md` records the two points in D5 (the lookup) and D6 (the parse), D6 being where a response is parsed, where the verdict names D2, which parses no body; AE-5's fixtures are cited by their results, not their scratch paths (L-9) | held `project-overview` delta (opening paragraph, Results; "API failures stay unknown"); What Changes; Impact (`project`); Decisions (C-22); `design.md` D5, D6, D10, D11 |
+| Codex 1 (P1, on `1229e79`): `closed` is unreachable through `Commit.associatedPullRequests` | P1 | holds (F-3): C-16 | as P-1 |
+| Codex 2 (P1, on `1229e79`): no part of a body may appear in either output, against the row's `number` and `url` | P1 | does not hold at `c928cb2`, QA-2's edit having landed in `621715a`; its optional tightening applied: "no other response text" | What Changes ("Explicit results") |
+| Codex 3 (P2, on `1229e79`): the freshness text claims a live query when none ran | P2 | holds: C-17 | as P-2 |
+| C-23: Open Questions 3, the seams in feature 005 | ruling | resolved: lane openRepoProject-4's message of 2026-10-20 says that feature 005 reserves no flag, field or hook for `--remote`, which its spec records in its Dependencies (`282a20e`) | Open Questions 3; Dependencies and Sequencing ("Realized after feature 005"); `design.md` Open Questions; `tasks.md` 1.1 |
+
+### Re-read Findings (round C4)
+
+Lane openRepoProject-3's read-only verifier re-read this change at `c928cb2`
+on 2026-10-20 against the packet at `da33d92`, change 2 at `961c405`, PR #19
+at `c462d87`, #26 at `ca96701` and #27 at `e906c2f`, and found 43 of its 44
+earlier ids FIXED and M4 PARTLY, with no HIGH, one MEDIUM and ten LOW new
+findings. The lane's lead accepted every item as lane openRepoProject-3 words
+its fix (council verdicts, C-15), and LOWs 5, 6 and 10 edit the held
+`project-overview` delta.
+
+| Finding | Severity | Ruling | Section edited |
+| --- | --- | --- | --- |
+| MEDIUM-1: ratifying this change would also ratify PR #19's pending sentences in its block of [E] | MEDIUM | C-15: applied: #26's scope sentence, in lane openRepoProject-3's wording, after the PR #19 bullet and in `tasks.md` 1.6; 2.4 returns to Brett Heap a re-base that changes the block's added text | Dependencies and Sequencing; `tasks.md` 1.6, 2.4 |
+| LOW-1: "local ancestry the only cleanup gate", where DI:1059 has no "only" | LOW | C-15: applied | Why |
+| LOW-2 (M4's residual): three passages still promise gh's own behaviour | LOW | C-15: applied | Decisions ("gh's own traffic off"); held `project-overview` delta (Requests); `design.md` Goals |
+| LOW-3: "CAS/cmd:90-214" for [E] at main, which runs to :231 | LOW | C-15: applied | Dependencies and Sequencing |
+| LOW-4: the archive waits for PR #19's text though PR #19 may close, and Migration step 4 omits 2.4 and the L-17 re-base | LOW | C-15: applied | Dependencies and Sequencing; `design.md` Migration Plan |
+| LOW-5: "whose remote target was not yet read" also covers a read in flight | LOW | C-15: applied | held `project-overview` delta (Requests) |
+| LOW-6: nothing stops in-flight `gh` children on C-14's exit 2 | LOW | C-15: applied with change: lane openRepoProject-3's words in the ADDED requirement, which starts the children, with [E] named beside [B] and [X], since [E] kills a probe child's group on every exit path; [E]'s Termination paragraph binds Git children only, so no `project-command` edit is needed and nothing is held for lane openRepoProject-2 | held `project-overview` delta (Requests); `design.md` D7 |
+| LOW-7: DI:823 is not named | LOW | C-15: applied | Readings |
+| LOW-8: 1.5 ties both INFO lines to change 2, and 1.1 lists the rulings only to C-10 | LOW | C-15: applied with change: 1.1 lists the rulings through C-23, where the verdicts say C-19, since this round also applies C-20 to C-23 | `tasks.md` 1.1, 1.5 |
+| LOW-9: [E]'s pins sentence, "its row is `inspection-error`", is not carved out for the remote-target reads | LOW | C-15: applied: G1 note (c) recorded in D2 as reasoning, not a test | `design.md` D2 |
+| LOW-10: no scenario sends a 403 with `Retry-After` | LOW | C-15: applied: a tenth key in "API failures stay unknown", its header name written as `gh` prints it (C-19) | held `project-overview` delta ("API failures stay unknown"); `design.md` D11 |
