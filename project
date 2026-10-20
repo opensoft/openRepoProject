@@ -468,27 +468,41 @@ def manifest(root):
 
 
 def discover(target=None):
+    """The project directory of target, a path or a bare name, or of the
+    working directory: a family holder, then the nearest manifest, then the
+    repository's toplevel, then a `.project.json` or `.devcontainer` there.
+
+    Before its Git step it runs the version check, memoized on the invocation
+    (T118; research.md R2, FR-053, plan review M10): with Git 2.36 or later,
+    `rev-parse --show-toplevel` runs through the driver; otherwise no Git child
+    runs, and the nearest of the path and its ancestors holding a `.git` entry,
+    by lstat, names the toplevel. A bare name's refusals carry their codes,
+    `ambiguous-name` and `repository-not-found` (lead ruling R-53, P-10); the
+    messages are the baseline's."""
+    bare = False
     if target:
         path = Path(target).expanduser()
         # Named estates prefer family holders over similarly named roots.
         if not path.is_absolute() and len(path.parts) == 1:
+            bare = path.name not in (".", "..")
             families = [base / target / target for base in projects_dirs()
                         if (base / target / target / "family.yaml").is_file()]
             if len(families) > 1:
-                raise Refused("Ambiguous project name; supply a path.")
+                raise Refused("Ambiguous project name; supply a path.", code="ambiguous-name")
             if families:
                 return families[0].resolve()
             if not path.exists():
                 matches = [p / target for p in projects_dirs() if (p / target).is_dir()]
                 if len(matches) > 1:
-                    raise Refused("Ambiguous project name; supply a path.")
+                    raise Refused("Ambiguous project name; supply a path.", code="ambiguous-name")
                 if matches:
                     path = matches[0]
         path = path.resolve()
     else:
         path = Path.cwd().resolve()
+    not_found = "repository-not-found" if bare else None
     if not path.is_dir():
-        raise Refused(f"Directory does not exist: {path}")
+        raise Refused(f"Directory does not exist: {path}", code=not_found)
     holder = path / path.name
     if (holder / "family.yaml").is_file():
         return holder
@@ -496,12 +510,22 @@ def discover(target=None):
     for candidate in ancestors:
         if (candidate / "project.yaml").is_file() or (candidate / "family.yaml").is_file():
             return candidate
-    root = git_text(path, "rev-parse", "--show-toplevel")
-    if root:
-        return Path(root)
+    if git_version(current_invocation()).code is None:
+        root = git_text(path, "rev-parse", "--show-toplevel")
+        if root:
+            return Path(root)
+    else:
+        for candidate in ancestors:
+            try:
+                found = fs_call(os.lstat, candidate / ".git")
+            except OSError:
+                continue  # no `.git` entry here
+            if isinstance(found, DriverOutcome):
+                break  # the lstat did not answer within its budget: name no toplevel
+            return candidate
     if (path / ".project.json").is_file() or (path / ".devcontainer").is_dir():
         return path
-    raise Refused(f"No project found at {path}; supply a path or name.")
+    raise Refused(f"No project found at {path}; supply a path or name.", code=not_found)
 
 
 # region timing
@@ -681,6 +705,11 @@ TEXT = {
     "git_unavailable_timed_out": "timed out",
     "git_unavailable_unparseable_version": "unparseable version",
     "git_too_old": "Git {VERSION} is older than 2.36; clean needs Git 2.36 or later.",
+    # The command-neutral texts of status's and doctor's row errors and doctor's
+    # git row (contracts/project-clean.md, "Codes"; lead rulings R-48 (b), R-56).
+    "inspection_git_too_old": "Git {VERSION} is older than 2.36; repository inspection needs Git 2.36 or later.",
+    "inspection_git_unavailable":
+        "Git is unavailable ({DETAIL}); repository inspection needs Git 2.36 or later.",
     "target_not_repository_root": "Not the main worktree of a repository: {PATH}; pass the repository root.",
     "unsupported_path_bytes": "The repository path is not valid UTF-8: {PATH}",
     "manifest_invalid_size": "Manifest {PATH} is larger than 1 MiB.",
@@ -1996,8 +2025,7 @@ def human_path(raw, command=False):
 # The one evidence model of a repository (design D4, D6, D7 and D8;
 # data-model.md, "Repository identity", "Merge target", "Worktree row",
 # "Worktree identity and registration", "Branch evidence" and
-# "Classification"; FR-006, FR-007 and FR-053 to FR-061). cleanup_report()
-# reads it; repo_state() keeps its own reader until T117 (research.md R9).
+# "Classification"; FR-006, FR-007 and FR-053 to FR-061).
 
 # The ladder's text, verbatim from cleanup_report() at 961c405 (project:566-616):
 # the recommendation of each class, and the second text of the two classes that
@@ -4897,57 +4925,106 @@ class RelayParser:
 
 
 def repo_state(root):
-    top = git_text(root, "rev-parse", "--show-toplevel")
-    if not top or Path(top).resolve() != root.resolve():
-        return {"path": str(root), "present": False}
-    status = git(root, "status", "--porcelain=v1", "--untracked-files=normal")
-    if status.returncode:
-        raise Refused(f"Cannot inspect {root}: {status.stderr.strip()}")
-    branch = git_text(root, "symbolic-ref", "--quiet", "--short", "HEAD")
-    head = git_text(root, "rev-parse", "--verify", "HEAD")
-    upstream = git_text(root, "rev-parse", "--abbrev-ref", "@{upstream}")
-    delta = git_text(root, "rev-list", "--left-right", "--count", "HEAD...@{upstream}") if upstream else None
-    ahead, behind = map(int, delta.split()) if delta else (None, None)
-    worktrees = []
-    current = {}
-    active_path = Path.cwd().resolve()
-    for line in (git_text(root, "worktree", "list", "--porcelain") or "").splitlines():
-        if line.startswith("worktree "):
-            current = {"path": line[9:], "present": Path(line[9:]).is_dir()}
-            worktrees.append(current)
-        elif line.startswith("HEAD "):
-            current["head"] = line[5:]
-        elif line.startswith("branch "):
-            current["branch"] = line[7:].removeprefix("refs/heads/")
-        elif line == "detached":
-            current["branch"] = "detached"
-        elif line.startswith("prunable "):
-            current["prunable"] = True
-    for tree in worktrees:
-        tree_path = Path(tree["path"])
-        if not tree["present"]:
+    """The state of the checkout at root, as status, doctor and update report
+    it, read through the evidence model (T117; design D16; FR-050, FR-051,
+    FR-059; data-model.md, "Root and leg state outside clean").
+
+    `lstat` of `<root>/.git` comes first: when it is absent the state is
+    `present: false` and no Git child runs. Then the version check, memoized
+    on the invocation; an old, missing or unusable Git gives `present` null.
+    Then inspect_repository() and worktree_rows(), memoized per common
+    directory, with the 15 s budget per Git child and per filesystem call that
+    the invocation gives every command but `clean`, no deadline and no row cap.
+    root's own row gives its branch, head, dirty, upstream, ahead and behind,
+    so a linked worktree reports its own (lead ruling R-56); a deleted
+    upstream keeps its configured short name with ahead and behind null.
+
+    A state that cannot be inspected never refuses: it adds `classification:
+    "inspection-error"` and `errors`, `{code, message}` objects, and every
+    value not established is null, `worktrees` among them when the listing
+    is not established; an inspected state has neither field. `git-too-old`
+    and `git-unavailable` carry the command-neutral texts (lead ruling R-48).
+    Each `path` has `path_valid_utf8` beside it. A worktree entry keeps its
+    baseline keys and adds `path_valid_utf8`, `ignored_samples` (`{path,
+    path_valid_utf8}` objects) where its probe ran, and `classification` and
+    `errors` only when it cannot be inspected; a stale entry keeps its
+    baseline class and text."""
+    run = current_invocation()
+    raw = os.fsencode(root)
+    text, valid = json_path(raw)
+    freshness = "local refs only; no fetch"
+
+    def absent():
+        return {"path": text, "path_valid_utf8": valid, "present": False}
+
+    def uninspectable(present, errors):
+        return {"path": text, "path_valid_utf8": valid, "present": present, "branch": None, "head": None,
+                "dirty": None, "upstream": None, "ahead": None, "behind": None,
+                "tracking_freshness": freshness, "worktrees": None,
+                "classification": "inspection-error", "errors": errors}
+
+    def head(value):
+        return value if value and value.strip("0") else None  # an unborn branch has none
+
+    def entry(row):
+        tree = {"path": row["path"], "path_valid_utf8": row["path_valid_utf8"], "present": row["present"],
+                "head": head(row["head"]), "branch": row["branch"]}
+        if row.get("prunable"):
+            tree["prunable"] = True
+        if row["present"] is False:
             tree["classification"] = "stale-worktree"
             tree["recommendation"] = "Review the stale worktree metadata before pruning it manually."
-            continue
-        tree_status = git(tree_path, "status", "--porcelain=v1", "--untracked-files=normal")
-        tree["dirty"] = bool(tree_status.stdout) if tree_status.returncode == 0 else None
-        ignored_status = git(tree_path, "status", "--porcelain=v1", "--ignored=matching")
-        tree["ignored_files"] = (sum(line.startswith("!! ") for line in ignored_status.stdout.splitlines())
-                                 if ignored_status.returncode == 0 else None)
-        resolved_tree = tree_path.resolve()
-        tree["current"] = active_path == resolved_tree or active_path.is_relative_to(resolved_tree)
-        tree["upstream"] = None
-        tree["ahead"] = tree["behind"] = None
-        if tree.get("branch") and tree["branch"] != "detached":
-            tree["upstream"] = git_text(tree_path, "rev-parse", "--abbrev-ref", "@{upstream}")
-            if tree["upstream"]:
-                delta = git_text(tree_path, "rev-list", "--left-right", "--count", "HEAD...@{upstream}")
-                if delta:
-                    tree["ahead"], tree["behind"] = map(int, delta.split())
-    return {"path": str(root), "present": True, "branch": branch or "detached",
-            "head": head, "dirty": bool(status.stdout), "upstream": upstream,
-            "ahead": ahead, "behind": behind, "tracking_freshness": "local refs only; no fetch",
-            "worktrees": worktrees}
+            return tree
+        tree["dirty"] = row["dirty"]
+        tree["ignored_files"] = row["ignored_files"]
+        if row.status is not None:
+            tree["ignored_samples"] = row["ignored_samples"]
+        tree.update(current=row["current"], upstream=row["upstream"], ahead=row["ahead"], behind=row["behind"])
+        if row["classification"] == "inspection-error":
+            tree["classification"] = "inspection-error"
+            tree["errors"] = row["errors"]
+        return tree
+
+    try:
+        _fs("lstat", os.lstat, os.path.join(raw, b".git"))
+    except EvidenceError as exc:
+        if exc.errno in (errno.ENOENT, errno.ENOTDIR):
+            return absent()
+        return uninspectable(None, [exc.error])
+    version = git_version(run)
+    if version.code == "git-too-old":
+        message = TEXT["inspection_git_too_old"].format(VERSION=version.text)
+    elif version.code is not None:
+        message = TEXT["inspection_git_unavailable"].format(DETAIL=version.detail)
+    if version.code is not None:
+        return uninspectable(None, [{"code": version.code, "message": message}])
+    repo = inspect_repository(raw, run)
+    rows = worktree_rows(repo, run)
+    own = next((row for row in rows if row.raw_path == raw), None)
+    if own is None and rows:
+        try:
+            real = _realpath(raw)
+        except EvidenceError as exc:
+            return uninspectable(None, [*repo["errors"], exc.error])
+        for row in rows:
+            try:
+                if row["present"] is not False and _realpath(row.raw_path) == real:
+                    own = row
+                    break
+            except EvidenceError:
+                continue
+    if repo["errors"]:  # a repository-wide probe failed: no row's evidence is established
+        return uninspectable(None if own is None else own["present"], list(repo["errors"]))
+    if own is None:  # Git names another toplevel for root, as the baseline's check did
+        return absent()
+    state = {"path": text, "path_valid_utf8": valid, "present": own["present"], "branch": own["branch"],
+             "head": head(own["head"]), "dirty": own["dirty"], "upstream": own["upstream"],
+             "ahead": own["ahead"], "behind": own["behind"], "tracking_freshness": freshness,
+             "worktrees": [entry(row) for row in rows]}
+    if own["classification"] == "inspection-error":
+        state["classification"] = "inspection-error"
+        state["errors"] = own["errors"]
+    return state
 
 
 def default_branch(root, declared=None):
@@ -5173,14 +5250,22 @@ def remote_repository_identity(remote):
     return github_repository_identity(match.group(1)) if match else None
 
 
-def handoff(root, data):
-    """Read only the matching workspace record; parking remains extension-owned."""
+def handoff(root, data, repository):
+    """Read only the matching workspace record; parking remains extension-owned.
+    The `git remote get-url origin` read runs only for a root whose repository
+    was inspected, `repository` being repo_state()'s state for root: present,
+    which repo_state() reports only past the version check. Any other root
+    (no .git, an old or missing Git) reads no remote and spawns no Git child,
+    with the output as before (lead ruling R-66 (c);
+    contracts/project-clean.md, "status, doctor and update")."""
     config_path = Path.home() / ".agents/workspace.yaml"
     override = os.environ.get("SPECKIT_WORKSPACE_PATH")
     if not config_path.is_file() and not override:
         return {"state": "workspace not configured"}
     config = read_yaml(config_path) if config_path.is_file() else {}
-    remote = git_text(root, "remote", "get-url", "origin") or ""
+    remote = ""
+    if repository.get("present") is True:
+        remote = git_text(root, "remote", "get-url", "origin") or ""
     repository = remote_repository_identity(remote)
     for leg in data.get("legs", []):
         if isinstance(leg, dict) and leg.get("role") == "assembly":
@@ -5224,12 +5309,21 @@ def handoff(root, data):
 
 
 def snapshot(root, visited=None):
+    """The report of the project at root for status, doctor and update: its
+    manifest, its repository state and every leg's or member's, its profile,
+    handoff and container. Each repository is read by repo_state() through the
+    evidence model, whose version check and repository evidence are memoized
+    on the invocation, so one run checks Git's version once and inspects each
+    common directory once (T119; FR-053, plan review M10). The top-level
+    `root` and each nested member's carry `root_valid_utf8`, and an absent
+    member's `path` its `path_valid_utf8` (FR-051; lead ruling R-56)."""
     visited = set() if visited is None else visited
     if root.resolve() in visited:
         raise Refused(f"Cyclic estate membership at {root}")
     visited.add(root.resolve())
     kind, data = manifest(root)
-    result = {"name": data.get("name", root.name), "kind": kind, "root": str(root),
+    text, valid = json_path(os.fsencode(root))
+    result = {"name": data.get("name", root.name), "kind": kind, "root": text, "root_valid_utf8": valid,
               "repository": repo_state(root), "profile": profile(root), "children": [],
               "workflow": (root / ".specify/extensions/git").is_dir(),
               "devcontainer": (root / ".devcontainer").is_dir(),
@@ -5257,9 +5351,11 @@ def snapshot(root, visited=None):
             if child.is_dir() and (child / "project.yaml").is_file():
                 result["children"].append({"role": "member", **snapshot(child, visited)})
             else:
-                result["children"].append({"role": "member", "path": str(child), "present": False})
+                path, path_valid = json_path(os.fsencode(child))
+                result["children"].append({"role": "member", "path": path, "path_valid_utf8": path_valid,
+                                           "present": False})
     try:
-        result["handoff"] = handoff(root, data)
+        result["handoff"] = handoff(root, data, result["repository"])
     except Refused as exc:
         result["handoff"] = {"state": "unavailable", "error": str(exc)}
     container = result["profile"].get("container")
@@ -5278,13 +5374,40 @@ def nested_snapshot(item):
 
 
 def check_rows(report):
+    """doctor's check rows (T119; design D16; FR-050, FR-051). Every null that
+    means "not established" is an `error` row, never `ok`: one row for each
+    root, leg or worktree state classified `inspection-error`, a null
+    `present` or a `dirty` left null by a failed or timed-out probe among
+    them, its detail naming the codes and messages; a null that means "none"
+    (no upstream, or a deleted one) is none. A `present` that is false keeps
+    its baseline row. The `git` row reports the version check, memoized on the
+    invocation, which runs it here only when no repository was inspected:
+    `ok` with `PATH (git version X)`, or `error` with `CODE: MESSAGE`, the
+    command-neutral text (lead rulings R-48, R-56 and R-57)."""
     rows = []
     def add(level, name, detail):
         rows.append({"level": level, "check": name, "detail": detail})
+    def problem(state):
+        if state.get("classification") != "inspection-error" and not ("present" in state and state["present"] is None):
+            return None
+        errors = state.get("errors") or []
+        codes = ", ".join(dict.fromkeys(error["code"] for error in errors))
+        messages = "; ".join(dict.fromkeys(error["message"] for error in errors))
+        return "inspection-error" + (f" ({codes})" if codes else "") + (f": {messages}" if messages else "")
+    def trees(state):
+        for tree in state.get("worktrees") or []:
+            detail = problem(tree)
+            if detail and tree["path"] != state["path"]:  # the state's own entry has its own row
+                add("error", tree["path"], detail)
     def walk(item):
         state = item["repository"]
-        add("ok" if state["present"] else "warning", item["root"],
-            "Git checkout present" if state["present"] else "No Git checkout; initialize through the project workflow")
+        if state.get("present") is not None:
+            add("ok" if state["present"] else "warning", item["root"],
+                "Git checkout present" if state["present"] else "No Git checkout; initialize through the project workflow")
+        detail = problem(state)
+        if detail:
+            add("error", item["root"], detail)
+        trees(state)
         if state.get("dirty"):
             add("warning", item["root"], "Uncommitted work; preserve it before updates")
         if item["handoff"].get("error"):
@@ -5297,29 +5420,55 @@ def check_rows(report):
         for child in item["children"]:
             if nested_snapshot(child):
                 walk(child)
-            elif not child.get("present"):
+            elif child.get("present") is False:
                 add("error", child["path"], "Missing checkout; use the estate's bootstrap/siblings command")
-            elif child.get("dirty"):
-                add("warning", child["path"], "Uncommitted work in leg")
+            elif problem(child):
+                add("error", child["path"], problem(child))
+                trees(child)
+            else:
+                trees(child)
+                if child.get("dirty"):
+                    add("warning", child["path"], "Uncommitted work in leg")
         if item["container"].get("name"):
             add("ok" if item["container"]["state"] == "running" else "warning", "container", str(item["container"]))
     walk(report)
     for command in ("git", "bash", "make", "openRepoShape", "park", "resume", "setup-openspeckit", "docker"):
+        if command == "git":
+            version = git_version(current_invocation())
+            if version.code is None:
+                add("ok", command, f"{shutil.which(command) or command} (git version {version.text})")
+            elif version.code == "git-too-old":
+                add("error", command, f"{version.code}: " + TEXT["inspection_git_too_old"].format(VERSION=version.text))
+            else:
+                add("error", command, f"{version.code}: " + TEXT["inspection_git_unavailable"].format(DETAIL=version.detail))
+            continue
         found = shutil.which(command)
         add("ok" if found else "warning", command, found or "Not on PATH; install through workBenches as needed")
     return rows
 
 
 def print_report(report, as_json):
+    """Print a status, doctor or update report: the JSON document, or the
+    human lines. A state classified `inspection-error` prints D16's `Git:
+    inspection-error (CODES)` in place of its branch line, and a null
+    `worktrees` prints no worktree line (T119; lead ruling R-56)."""
     if as_json:
         print(json.dumps(report, indent=2))
         return
+    def problem(state):
+        if state.get("classification") != "inspection-error" and not ("present" in state and state["present"] is None):
+            return None
+        codes = ", ".join(dict.fromkeys(error["code"] for error in state.get("errors") or []))
+        return "Git: inspection-error" + (f" ({codes})" if codes else "")
     def walk(item, indent=""):
         state = item["repository"]
         print(f"{indent}{item['name']} ({item['kind']}) — {item['root']}")
-        print(f"{indent}  Git: {state.get('branch', 'missing')}; dirty={state.get('dirty', 'unknown')}; "
-              f"ahead={state.get('ahead')}, behind={state.get('behind')} (local refs)")
-        for tree in state.get("worktrees", []):
+        if problem(state):
+            print(f"{indent}  {problem(state)}")
+        else:
+            print(f"{indent}  Git: {state.get('branch', 'missing')}; dirty={state.get('dirty', 'unknown')}; "
+                  f"ahead={state.get('ahead')}, behind={state.get('behind')} (local refs)")
+        for tree in state.get("worktrees") or []:
             print(f"{indent}  Worktree: {tree['path']} [{tree.get('branch', 'unknown')}]")
         print(f"{indent}  Bench: {item['profile'].get('bench', 'not declared')}; container: {item['container']['state']}")
         print(f"{indent}  Handoff: {item['handoff']['state']}")
@@ -5328,6 +5477,8 @@ def print_report(report, as_json):
         for child in item["children"]:
             if nested_snapshot(child):
                 walk(child, indent + "  ")
+            elif problem(child):
+                print(f"{indent}  {child['role']}: {child['path']} \N{EM DASH} {problem(child)}")
             else:
                 print(f"{indent}  {child['role']}: {child['path']} — {child.get('branch', 'missing')}; dirty={child.get('dirty', 'unknown')}")
     walk(report)
@@ -5338,9 +5489,24 @@ def print_report(report, as_json):
 
 
 def inspect_project(args):
-    report = snapshot(discover(args.target))
+    """`status` and `doctor`. signal_scope() holds around the inspection, so a
+    SIGINT, SIGTERM or SIGHUP there stops and reaps every probe group and ends
+    the run with 130, 143 or 129 and `Cancelled.`; the slot is read once the
+    scope has exited, and an exception that leaves the scope with the slot set
+    becomes Interrupted, as `clean` does (T119; research.md R4; FR-058; lead
+    ruling R-56). The exit rule is unchanged."""
+    scope = signal_scope()
+    try:
+        with scope:
+            report = snapshot(discover(args.target))
+            checks = check_rows(report) if args.command == "doctor" else None
+    except BaseException:
+        if scope.invocation is not None and scope.invocation.signal is not None:
+            raise Interrupted(scope.invocation.signal) from None
+        raise
+    if scope.invocation.signal is not None:
+        raise Interrupted(scope.invocation.signal)
     if args.command == "doctor":
-        checks = check_rows(report)
         wb = workbenches(args.workbenches, required=False)
         checks.append({"level": "ok" if wb else "warning", "check": "workBenches", "detail": str(wb) if wb else "Not found; set WORKBENCHES_ROOT"})
         declared = report["profile"].get("bench")
@@ -5394,32 +5560,68 @@ def update_child_states(item):
 
 
 def update(args):
-    root = discover(args.target)
-    report = snapshot(root)
-    report["updates"] = [
-        {"component": "shape", "detail": "Use openRepoShape update-shape.py check/apply; --shape-source selects its checkout"},
-        {"component": "workflow", "detail": "Refresh through setup-openspeckit --repo PATH"},
-        {"component": "bench", "detail": "Refresh project configuration through the profile's exact registered update-TYPE generator"},
-        {"component": "tools", "detail": "Open workBenches setup for explicit tool/environment selection"},
-    ]
+    """`update`: the report, then with --apply one component's owner command.
+
+    signal_scope() holds around the inspection and the refusals that read it,
+    and the slot is read once the scope has exited, as in inspect_project();
+    the process's own handlers are back for confirm() and the owner-tool
+    delegates, and default_signals() holds around them (T120; research.md R4,
+    plan review M1). `--component shape` or `bench` refuses unless the root's
+    and every child's `dirty` is exactly false, so a `dirty` left null by a
+    failed or timed-out probe refuses as dirty work does and no owner tool runs
+    (D-R, FR-052). `origin/HEAD` is read from the ref listing's symref (row 6),
+    memoized per common directory, never from a child of its own, and only
+    after the root's state has passed, so after a failed version check update
+    spawns no Git child (plan review M10). `tools` and `workflow` need no Git."""
+    scope = signal_scope()
+    try:
+        with scope:
+            root = discover(args.target)
+            report = snapshot(root)
+            report["updates"] = [
+                {"component": "shape", "detail": "Use openRepoShape update-shape.py check/apply; --shape-source selects its checkout"},
+                {"component": "workflow", "detail": "Refresh through setup-openspeckit --repo PATH"},
+                {"component": "bench", "detail": "Refresh project configuration through the profile's exact registered update-TYPE generator"},
+                {"component": "tools", "detail": "Open workBenches setup for explicit tool/environment selection"},
+            ]
+            if args.apply and args.json:
+                raise Refused("--json is for inspection; omit it when applying updates.")
+            if args.apply and not args.component:
+                raise Refused("--apply requires --component shape|workflow|bench|tools")
+            if args.apply and args.component in ("shape", "bench"):
+                state = report["repository"]
+                if state.get("present") is not True or state.get("dirty") is not False:
+                    raise Refused("Project updates require a clean tracking checkout; preserve feature work first.")
+                tracking = report.get("tracking_branch")
+                if not tracking:
+                    tracking = "origin/main"
+                    for ref in inspect_repository(os.fsencode(root), current_invocation())["refs"] or ():
+                        if ref["refname"] == b"refs/remotes/origin/HEAD" and ref["symref"]:
+                            name = ref["symref"]  # shortened as `symbolic-ref --short` shortens it
+                            for prefix in (b"refs/heads/", b"refs/remotes/"):
+                                if name.startswith(prefix):
+                                    name = name[len(prefix):]
+                                    break
+                            tracking = name.decode("utf-8", "surrogateescape")
+                    tracking = tracking.removeprefix("origin/")
+                if state.get("branch") != tracking:
+                    raise Refused("Project updates require a clean tracking checkout; preserve feature work first.")
+                for child in update_child_states(report):
+                    if child.get("present") is False:
+                        raise Refused(f"Child checkout is missing: {child.get('path')}")
+                    expected = child.get("tracking_branch") or "main"
+                    if (child.get("dirty") is not False or child.get("branch") in (None, "detached")
+                            or child.get("branch") != expected):
+                        raise Refused(f"Child has work to preserve: {child.get('path')}")
+    except BaseException:
+        if scope.invocation is not None and scope.invocation.signal is not None:
+            raise Interrupted(scope.invocation.signal) from None
+        raise
+    if scope.invocation.signal is not None:
+        raise Interrupted(scope.invocation.signal)
     if not args.apply:
         print_report(report, args.json)
         return 0
-    if args.json:
-        raise Refused("--json is for inspection; omit it when applying updates.")
-    if not args.component:
-        raise Refused("--apply requires --component shape|workflow|bench|tools")
-    if args.component in ("shape", "bench"):
-        state = report["repository"]
-        tracking = report.get("tracking_branch") or (git_text(root, "symbolic-ref", "--short", "refs/remotes/origin/HEAD") or "origin/main").removeprefix("origin/")
-        if not state.get("present") or state.get("dirty") or state.get("branch") != tracking:
-            raise Refused("Project updates require a clean tracking checkout; preserve feature work first.")
-        for child in update_child_states(report):
-            if not child.get("present"):
-                raise Refused(f"Child checkout is missing: {child.get('path')}")
-            expected = child.get("tracking_branch") or "main"
-            if child.get("dirty") or child.get("branch") in (None, "detached") or child.get("branch") != expected:
-                raise Refused(f"Child has work to preserve: {child.get('path')}")
     if args.component == "shape":
         if report["kind"] == "single":
             raise Refused("This project has no shape manifest.")
@@ -5459,19 +5661,20 @@ def update(args):
     show_plan(commands, root)
     if args.dry_run:
         return 0
-    if args.component == "shape":
-        check = execute(commands.pop(0), cwd=root)
-        # update-shape check exits 1 when differences are available.
-        if check not in (0, 1):
-            return check
-        # The owner retains its own confirmation prompt, even if this coordinator
-        # received --yes for a different update component.
-        return execute(commands[0], cwd=root)
-    confirm(args.yes)
-    for command in commands:
-        code = execute(command, cwd=root)
-        if code:
-            return code
+    with default_signals():
+        if args.component == "shape":
+            check = execute(commands.pop(0), cwd=root)
+            # update-shape check exits 1 when differences are available.
+            if check not in (0, 1):
+                return check
+            # The owner retains its own confirmation prompt, even if this coordinator
+            # received --yes for a different update component.
+            return execute(commands[0], cwd=root)
+        confirm(args.yes)
+        for command in commands:
+            code = execute(command, cwd=root)
+            if code:
+                return code
     return 0
 
 
