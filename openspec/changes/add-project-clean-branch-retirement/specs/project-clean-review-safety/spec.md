@@ -47,13 +47,11 @@ plan, SHALL retain it with `reflog-unmerged`, each stopping the run with exit
 2; and a branch change after the re-proof, that re-read's last check, SHALL be
 outside the contract, guarded only by Git's own non-force check on the value
 Git reads, so that the residual-window line under the flag SHALL also name a
-branch changed after its last check, after every
-other clause the run's line names, those for a cache stage included when the
-plan also selects a cache target, and before its last clause, any change after
-Git's own check. A repository
-found replaced by the rescan after a removal SHALL make that target `unknown`
-with `unconfirmed-removal`, every reconciliation field null and `reconciled`
-false, and SHALL stop the run with exit status 1.
+branch changed after its last check, after every other clause the run's line
+names and before its last clause, any change after Git's own check. A
+repository found replaced by the rescan after a removal SHALL make that target
+`unknown` with `unconfirmed-removal`, every reconciliation field null and
+`reconciled` false, and SHALL stop the run with exit status 1.
 
 #### Scenario: Ignored file in the residual window
 

@@ -825,17 +825,18 @@ holds:
    gate read it, or the non-zero old object of one, the oldest surviving entry's
    old object included. The proof SHALL be one Git child per repository,
    `rev-list --max-count=1 --stdin`, given on its standard input the named
-   commits of every selected row, one per line, and then one line `^` followed
-   by the merge target's SHA, a revision that excludes the merge target's
-   history, never the pseudo-option `--not`, and, only when that child prints
-   a commit, one such child per selected row over that row's named commits and
-   the same `^` line. A row whose child prints a commit, or whose proof fails or
-   times out, a failure or timeout of the repository's child failing every
-   row's proof, SHALL keep its branch. Such a failure, or a timeout at a reflog
-   child's own 5 s budget, SHALL keep the branches it covers and SHALL leave the
-   plan complete; only the deadline passing during the proof SHALL make the plan
-   incomplete, with `deadline-exceeded`, as "Clean bounds its Git work and
-   reports omitted work" states for planning.
+   commits of every selected row, one per line, and then the one line
+   `^<merge target SHA>`, `^` immediately followed by the merge target's SHA
+   on that one line, never `^` on a line of its own, a revision that excludes
+   the merge target's history, never the pseudo-option `--not`, and, only when
+   that child prints a commit, one such child per selected row over that row's
+   named commits and the same line. A row whose child prints a commit, or
+   whose proof fails or times out, a failure or timeout of the repository's
+   child failing every row's proof, SHALL keep its branch. Such a failure, or
+   a timeout at a reflog child's own 5 s budget, SHALL keep the branches it
+   covers and SHALL leave the plan complete; only the deadline passing during
+   the proof SHALL make the plan incomplete, with `deadline-exceeded`, as
+   "Clean bounds its Git work and reports omitted work" states for planning.
 2. `branch-in-use`: a registered worktree that is not selected, the main
    worktree included, has the branch checked out in the plan's registry
    listing.
@@ -880,7 +881,8 @@ precedes any later target's revalidation, in this order:
    counting as a difference; the merge target, re-resolved from that manifest
    read and that listing, has the plan's `name`, `source` and `sha`, so that
    the plan's proof that the head is an ancestor of the merge target holds at
-   the target's current tip, and no Git child computes it again; and no
+   the target's current tip, and no Git child but item 3's re-proof, given the
+   head among the commits the reflog names, computes it again; and no
    registered worktree, the main worktree included, has the branch checked
    out in the registry listing of that rescan. A value that manifest read or
    that listing cannot establish, a read that fails or times out included,
@@ -892,8 +894,8 @@ precedes any later target's revalidation, in this order:
    `unstarted-branch` gate reads it, and spawn one probe child in the command
    directory, `rev-list --max-count=1 --stdin`, given on its standard input
    every commit that the reflog now names, in item 1's sense of the plan's
-   keeps, one per line, and then one line `^` followed by the merge target's
-   SHA, as the plan's proof is given. A re-proof whose child prints a commit
+   keeps, one per line, and then the one line `^<merge target SHA>`, as the
+   plan's proof is given. A re-proof whose child prints a commit
    SHALL keep the branch, and so SHALL one whose read finds the reflog missing
    or empty or reaches its 64 KiB bound, or whose read or child fails or times
    out at its own 5 s budget: the stage SHALL then spawn nothing more and SHALL
@@ -1018,8 +1020,9 @@ were retired, that remain and that were already gone, so that they add up to
 those branches; then one line per such branch, in canonical order:
 
 - `Retired BRANCH (was SHA); restore: git -C ROOT branch BRANCH SHA`, or, for
-  a name that begins with `-`, which `git branch` cannot create, `Retired
-  BRANCH (was SHA); restore: git -C ROOT update-ref refs/heads/BRANCH SHA ''`;
+  a name that `git branch` refuses to create, one that begins with `-` or that
+  equals `HEAD`, `Retired BRANCH (was SHA); restore: git -C ROOT update-ref
+  refs/heads/BRANCH SHA ''`;
 - `BRANCH was already gone` for `branch-missing`;
 - `Kept BRANCH (REASON)` and its next step: for `head-not-merge-target`, and
   for `git-refused` when the branch's upstream remote-tracking ref is absent,
@@ -1031,13 +1034,17 @@ those branches; then one line per such branch, in canonical order:
   at PATH2; remove that worktree first`; for `branch-shared`, printed only
   when the run did not remove the branch's last holder PATH2, the same next
   step; for `branch-changed`, `; now at SHA2; inspect it before retrying:
-  RETRY`; for `reflog-unmerged`, `; its reflog names commits MERGE_TARGET
-  lacks; inspect git -C ROOT reflog show refs/heads/BRANCH before any
-  delete-branch`; and otherwise `; retry: RETRY`.
+  RETRY`; for `reflog-unmerged`, whether its proof printed a commit or failed,
+  `; its reflog is not proven merged into MERGE_TARGET; inspect git -C ROOT
+  reflog show refs/heads/BRANCH before any delete-branch`; and otherwise `;
+  retry: RETRY`.
 
 RETRY is `project clean ROOT --apply --action delete-branch --branch
 BRANCH`, or `--branch=BRANCH` for a name that begins with `-`, the explicit
-retry path, whose behaviour this requirement does not change.
+retry path, whose behaviour this requirement does not change. For a name that
+begins with `-`, RETRY is the command that action is given, and that action
+deletes the branch only if it passes the name to Git after `--`, which is its
+own behaviour and not this requirement's.
 
 A `branch-shared` holder SHALL get no line of its own: its branch has one line,
 the last holder's when the run removed that holder, and otherwise the
@@ -1331,8 +1338,8 @@ branch stage stopped the run, SHALL read `branch BRANCH: REASON`, and whose
   removed, b1 and its reflog remain, its `branch_retirement` is
   `not-attempted` with `reflog-unmerged`, P2 is removed and b2 retired, the
   draft is still reachable from b1's reflog, and the exit status is 0
-- **AND** the result prints `Kept b1 (reflog-unmerged); its reflog names
-  commits <merge target> lacks; inspect git -C <root> reflog show
+- **AND** the result prints `Kept b1 (reflog-unmerged); its reflog is not
+  proven merged into <merge target>; inspect git -C <root> reflog show
   refs/heads/b1 before any delete-branch`
 - **AND** the counting `git` wrapper records each reflog child's standard input
   as the named commits, one per line, then one line `^<merge target SHA>`, and
@@ -1343,6 +1350,11 @@ branch stage stopped the run, SHALL read `branch BRANCH: REASON`, and whose
 - **AND** when a test `git` makes the repository's reflog child hang past its
   5 s budget, it is stopped, both branches are kept with `reflog-unmerged`, the
   plan stays complete, both worktrees are removed, and the exit status is 0
+- **AND** when a test `git` makes the repository's reflog child block, and it
+  starts with less than 5 s of the work deadline left, so that the deadline
+  passes while it runs, the plan is incomplete with `deadline-exceeded`, a
+  flagged preview exits 1, and `--apply` refuses with exit 2 before any
+  question or mutation
 - **AND** when `git reflog expire` has left of an eligible branch b3's reflog
   only a reset entry whose old object is a commit the merge target lacks, so
   that the commit is named only as that entry's old object, b3 is kept with
@@ -1365,9 +1377,9 @@ branch stage stopped the run, SHALL read `branch BRANCH: REASON`, and whose
   `batch-stopped` and its `branch_retirement` `not-attempted` with
   `branch-retention-stop`, and the exit status is 2
 - **AND** the result prints `Removed 1; branches retired: 0; retained: 1`, then
-  `Kept <branch> (reflog-unmerged); its reflog names commits <merge target>
-  lacks; inspect git -C <root> reflog show refs/heads/<branch> before any
-  delete-branch`, then the stop block `Stopped at <first path> (branch
+  `Kept <branch> (reflog-unmerged); its reflog is not proven merged into
+  <merge target>; inspect git -C <root> reflog show refs/heads/<branch> before
+  any delete-branch`, then the stop block `Stopped at <first path> (branch
   <branch>: reflog-unmerged). Removed 1 of 2. Not attempted: <second path>.
   Next: project clean <root> --all-safe --retire-branches`
 - **AND** the counting `git` wrapper records the re-proof's standard input as
@@ -1378,7 +1390,16 @@ branch stage stopped the run, SHALL read `branch BRANCH: REASON`, and whose
   and before its re-read
 - **AND** when a test `git` instead makes only that re-proof exit nonzero, or
   hang past its 5 s budget, with nothing moved, the branch is `retained` with
-  `reflog-unmerged`, no branch child is spawned, and the exit status is 2
+  `reflog-unmerged`, no branch child is spawned, the result prints the same
+  `Kept <branch> (reflog-unmerged)` line as above, and the exit status is 2
+- **AND** when that re-proof hangs instead, with nothing moved, and starts with
+  less than 5 s of the work deadline left above the removal floor, so that its
+  budget ends at the floor, it is stopped there, no branch child is spawned,
+  the branch is `retained` with `deadline-exceeded`, and the exit status is 1;
+  and when SIGINT arrives while it runs, it is stopped, no branch child is
+  spawned, the branch is `retained` with `interrupted`, the second target is
+  `not-attempted` with `interrupted` and its `branch_retirement`
+  `not-attempted` with `branch-retention-stop`, and the exit status is 130
 
 #### Scenario: A flagged run's next commands keep the flag
 
@@ -1458,8 +1479,26 @@ branch stage stopped the run, SHALL read `branch BRANCH: REASON`, and whose
   first on PATH, the branch's upstream remote-tracking ref present, the result
   prints `Kept topic;id (git-refused); retry: project clean '<root>' --apply
   --action delete-branch --branch 'topic;id'`
+- **AND** when instead the branch's reflog names a commit the merge target
+  lacks, the result prints `Kept topic;id (reflog-unmerged); its reflog is not
+  proven merged into <merge target>; inspect git -C '<root>' reflog show
+  'refs/heads/topic;id' before any delete-branch`, and when instead a test
+  hook resets the branch to its parent commit, which is still merged, after
+  its rescan and before its re-read, `Kept topic;id (branch-changed); now at
+  <parent>; inspect it before retrying: project clean '<root>' --apply
+  --action delete-branch --branch 'topic;id'`
 - **AND** for an eligible branch written by hand as `refs/heads/-f` and checked
   out in its worktree by `git symbolic-ref`, the result prints `Retired -f (was
   <sha>); restore: git -C '<root>' update-ref refs/heads/-f <sha> ''`, which
   run by a POSIX shell recreates the ref, and with the refusing test `git` the
-  retry it prints passes `--branch=-f`
+  retry it prints passes `--branch=-f`; and for one written by hand as
+  `refs/heads/HEAD` the same way, a name that `git branch HEAD <sha>` refuses
+  to create, the result prints `Retired HEAD (was <sha>); restore: git -C
+  '<root>' update-ref refs/heads/HEAD <sha> ''`, which run by a POSIX shell
+  recreates the ref
+- **AND** for an eligible branch whose name is `topic`, U+202E and `x`, a name
+  Git accepts that holds a code point to escape, the result prints `Retired
+  $'topic\u202ex' (was <sha>); restore: git -C '<root>' branch $'topic\u202ex'
+  <sha>`, the name in the `$'...'` form in prose and command alike, and that
+  restore line, run by bash in a UTF-8 locale from another directory,
+  recreates the branch at `<sha>`
