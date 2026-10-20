@@ -2023,8 +2023,7 @@ def human_path(raw, command=False):
 # The one evidence model of a repository (design D4, D6, D7 and D8;
 # data-model.md, "Repository identity", "Merge target", "Worktree row",
 # "Worktree identity and registration", "Branch evidence" and
-# "Classification"; FR-006, FR-007 and FR-053 to FR-061). cleanup_report()
-# reads it; repo_state() keeps its own reader until T117 (research.md R9).
+# "Classification"; FR-006, FR-007 and FR-053 to FR-061).
 
 # The ladder's text, verbatim from cleanup_report() at 961c405 (project:566-616):
 # the recommendation of each class, and the second text of the two classes that
