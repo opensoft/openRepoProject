@@ -615,6 +615,12 @@ TEXT_FIXTURES = {
     "manifest_invalid_size": "Manifest {PATH} is larger than 1 MiB.",
     "plan_incomplete": "The plan is incomplete ({CODE}): {REMEDY}.",
     "plan_digest_mismatch": "The fresh plan's digest {DIGEST} differs from --expect-plan {EXPECTED}; nothing was changed.",
+    # The plan notes (contracts/project-clean.md, "Codes"; lead ruling R-45 (4); T051).
+    "note_merge_target_conflict": "The manifest names {NAME} and origin/HEAD names {OTHER}; {NAME} is the merge target.",
+    "note_inspection_incomplete": "{K} other rows are inspection-error or were left unprobed; they do not block {PATH}.",
+    "note_inspect_cap": "{K} rows past the row cap of {M} were not inspected; they do not block {PATH}.",
+    "note_deadline_exceeded": "{K} rows were left unprobed at the work deadline; they do not block {PATH}.",
+    "note_inspect_cap_report": "{N} rows exceed the --all-safe row cap of {M}; --all-safe would be incomplete (inspect-cap).",
     "confirmation_required": "Standard input is not a terminal; pass --yes to apply this plan.",
     "push_remote_gone": "Cannot push {BRANCH}; its upstream {UPSTREAM} was deleted (remote-gone); review it before it is republished.",
     # Baseline texts kept (project at 961c405).
@@ -645,6 +651,11 @@ NEXT_STEP_FIXTURES = {
     "registration-mismatch": "review, then git worktree repair or git worktree prune, or remove the row by hand",
     "inspection-error": "review, then git worktree repair or git worktree prune, or remove the row by hand",
     "locked-worktree": "unlock it yourself if it should go",
+    # The contract's next steps for the three reasons D18 gives none
+    # (contracts/project-clean.md :160-168; lead rulings R-57 H1 and R-62 (b)).
+    "main-worktree": "never removed by project clean",
+    "unsupported-path-bytes": "rename the path to valid UTF-8",
+    "not-requested": "name it with --worktree to plan its removal",
 }
 
 
@@ -998,7 +1009,7 @@ class CleanCase(unittest.TestCase):
     pty_timeout = TIMEOUT  # seconds; a pty run that exceeds it fails with its transcript
 
     def run_pty_steps(self, argv, steps=(), controlling_tty=False, env=None, cwd=None,
-                      timeout=None):
+                      timeout=None, stdout_pipe=False):
         """Run argv (cli_argv(...) or launched_argv(...)) with stdin and stdout on one
         pseudo-terminal and stderr on a pipe, in a new session.
 
@@ -1018,6 +1029,11 @@ class CleanCase(unittest.TestCase):
         lead ruling R-31), so a child of project in its process group can open
         /dev/tty; without it that open fails with ENXIO.
 
+        stdout_pipe=True puts stdout on a pipe of its own while stdin stays on the
+        pseudo-terminal (lead ruling R-56 Q-14), as `project ... | jq` at a terminal
+        runs; steps then match on all three streams, the run's stdout is that
+        pipe's text, and its pty attribute the pty transcript (the echoed input).
+
         Returns a CompletedProcess whose stdout is the pty transcript (echoed input
         included) and stderr the pipe, both with \\r\\n read as \\n; its seen
         attribute holds, for each step, both transcripts as they stood when the
@@ -1029,7 +1045,8 @@ class CleanCase(unittest.TestCase):
         try:
             child = subprocess.Popen(argv, cwd=self.base if cwd is None else cwd,
                                      env=self.env if env is None else env, stdin=slave,
-                                     stdout=slave, stderr=subprocess.PIPE, start_new_session=True,
+                                     stdout=subprocess.PIPE if stdout_pipe else slave,
+                                     stderr=subprocess.PIPE, start_new_session=True,
                                      preexec_fn=_take_controlling_terminal if controlling_tty else None)
         except BaseException:
             os.close(master)
@@ -1037,9 +1054,11 @@ class CleanCase(unittest.TestCase):
         finally:
             os.close(slave)
         error = child.stderr.fileno()
-        received = {master: bytearray(), error: bytearray()}
-        cursor = {master: 0, error: 0}
-        reading = [master, error]
+        output = child.stdout.fileno() if stdout_pipe else None
+        streams = [master, error] + ([output] if stdout_pipe else [])
+        received = {fd: bytearray() for fd in streams}
+        cursor = {fd: 0 for fd in streams}
+        reading = list(streams)
         pending = list(steps)
         seen = []
         interrupted = exited = None
@@ -1049,10 +1068,11 @@ class CleanCase(unittest.TestCase):
 
         def transcript():
             command = " ".join(shlex.quote(os.fsdecode(arg)) for arg in argv)
-            return f"$ {command}\n--- pty ---\n{text(master)}\n--- stderr ---\n{text(error)}"
+            piped = f"\n--- stdout ---\n{text(output)}" if stdout_pipe else ""
+            return f"$ {command}\n--- pty ---\n{text(master)}{piped}\n--- stderr ---\n{text(error)}"
 
         def locate(expected):
-            for fd in (master, error):
+            for fd in streams:
                 found = text(fd).find(expected, cursor[fd])
                 if found >= 0:
                     cursor[fd] = found + len(expected)
@@ -1063,7 +1083,7 @@ class CleanCase(unittest.TestCase):
             while True:
                 if pending and locate(pending[0][0]):
                     action = pending.pop(0)[1]
-                    seen.append(text(master) + text(error))
+                    seen.append("".join(text(fd) for fd in streams))
                     if isinstance(action, signal.Signals):
                         with contextlib.suppress(ProcessLookupError):
                             child.send_signal(action)
@@ -1112,12 +1132,17 @@ class CleanCase(unittest.TestCase):
         finally:
             os.close(master)
             child.stderr.close()
+            if stdout_pipe:
+                child.stdout.close()
             if child.poll() is None:
                 with contextlib.suppress(OSError):
                     os.killpg(child.pid, signal.SIGKILL)
                 child.wait()
         if pending:
             self.fail(f"the child exited before the step waiting for {pending[0][0]!r}\n{transcript()}")
-        result = subprocess.CompletedProcess(argv, child.returncode, text(master), text(error))
+        result = subprocess.CompletedProcess(argv, child.returncode, text(output if stdout_pipe else master),
+                                             text(error))
         result.seen = seen
+        if stdout_pipe:
+            result.pty = text(master)
         return result

@@ -28,6 +28,15 @@ four identity fields go into the plan and its digest, and are compared at
 every revalidation and first in every rescan; `dev` and `ino` are host-local,
 so a remount that renumbers them fails closed.
 
+Where `root` is null, rows 6 and 7 run in the common directory for a bare
+repository and otherwise where row 3 ran. Row 4, the registry listing, runs
+where row 3 ran in every layout, since the main worktree is not yet known
+when it runs. For a bare repository that is equivalent to running it in the
+common directory: `git worktree list --porcelain -z` reads the same registry
+from a linked worktree and from the common directory and prints the same
+bytes (checked on Git 2.43.0), so the code keeps row 4 where row 3 ran
+(lead ruling R-68, lane 4's note; evidence follow-up 2 may move it).
+
 ### Merge target (D8; FR-018, FR-060)
 
 | Field | Value |
@@ -57,8 +66,8 @@ names and types; the last six are added.
 | `present` | true; false when `lstat` fails with `ENOENT` or `ENOTDIR` | any other `lstat` failure (with an `os-error`) |
 | `branch` | short name, or `detached` | (baseline) |
 | `head` | full object name | not established |
-| `upstream` | configured short name, also when its remote-tracking ref is gone | none configured |
-| `remote_present` | false when the track is `gone` | none configured, or not established |
+| `upstream` | configured short name, also when its remote-tracking ref is gone | none configured; not established for a branch named `HEAD` (below) |
+| `remote_present` | false when the track is `gone` | none configured, or not established, a branch named `HEAD` among them |
 | `ahead`, `behind` | from the track field | none configured, ref gone, or not established |
 | `dirty` | from the combined probe | probe not run, failed or timed out |
 | `ignored_files` | ignored records read; a lower bound when truncated | probe not run or failed, or stopped before any ignored record |
@@ -93,7 +102,12 @@ gets no status probe and is `inspection-error`, excluded as
 the registry records' raw path bytes as listed, fail closed: each is
 `registration-mismatch`, since the porcelain listing does not name the admin
 directory, so the two-way check alone cannot tell them apart (lead rulings
-R-57, withdrawing R-51(c)'s known limit, and R-59 D5).
+R-57, withdrawing R-51(c)'s known limit, and R-59 D5). The rule extends to
+two present entries spelled differently with one realpath, or with one
+admin id, which both pass the two-way check: each is `registration-mismatch`
+too. Evidence follow-up 2 builds that extension in region `evidence`; until
+then T049's single-mode match fails closed for P, its realpath matching both
+(lead ruling R-67 (c), lane 3's L-4).
 
 ### Branch evidence (D6, D7)
 
@@ -104,15 +118,18 @@ remote-tracking ref was deleted, `upstream` is the short name and
 in the plan and null again is no difference, and one that reappears is
 `state-changed` (D7, D20). For a branch named `HEAD` (`refs/heads/HEAD`),
 `git for-each-ref` reports the current branch's upstream, so row 6 cannot
-establish its upstream: its `upstream`, `ahead` and `behind` are null, and
+establish its upstream: its `upstream`, `remote_present`, `ahead` and
+`behind` are null, meaning not established, never "none configured", and
 the row is `inspection-error` with `probe-failed`, `git for-each-ref failed:
-unparseable output` (lead ruling R-61; lane G's follow-up builds it).
+unparseable output` (lead rulings R-61 and R-64 (a); built by lane G's
+follow-up).
 
 ### Classification (D6; FR-007)
 
 First, a row whose evidence could not be established (`present` null, a
-registration that disagrees, a status probe that failed or timed out, a
-branch named `HEAD`, R-61) is
+registration that disagrees, a status probe that failed or timed out, or
+branch evidence row 6 could not establish, a branch named `HEAD` with its
+`probe-failed` row error, R-61 and R-64) is
 `inspection-error` directly, whatever its branch, so a failed probe on the
 merge-target checkout is never `protected-default`. Every other row takes the
 first rung that holds, in this order (names unchanged; the one reorder is
@@ -144,11 +161,14 @@ bound. It changes no class, rung or gate.
 
 ### Gate (FR-020 to FR-023; D10, D12, D13)
 
-A row is selected only when it passes every gate; an excluded row's `reason`
-is its first failing gate. A row left unprobed is excluded with `reason`
-null and its classification kept, the plan incomplete with
-`inspection-incomplete`; no reason value is added for it (lead ruling R-56,
-settling R-53's P-3):
+A row is selected only when it passes every gate; every excluded row
+carries one `reason`, its first failing gate, never null. A row left
+unprobed, whose reflog read did not finish within the filesystem budget
+(T066's read, the unprobed marker's only setter), is excluded as
+`reflog-unavailable` with its classification kept and its marker set, and
+the plan is incomplete with `inspection-incomplete`; no reason value and no
+group of its own are added for it (lead ruling R-67 (a), withdrawing R-56's
+null reason for R-53's P-3):
 
 | Order | Reason | Fails when |
 | --- | --- | --- |
@@ -175,8 +195,10 @@ or `deadline-exceeded`, and the plan incomplete (`inspection-incomplete`); a
 null flag never passes gate 9 or 10, while gate 3 fails only on a
 registration read and found to disagree (R-53 P-16). A reflog read not
 finished within the filesystem budget follows the `project-clean` delta's
-reflog outcome rule instead: the row is left unprobed, never selected, and
-the plan incomplete with `inspection-incomplete`.
+reflog outcome rule instead: the row is left unprobed, its marker set, and
+excluded as `reflog-unavailable`, "where the reflog cannot decide it", never
+selected, and the plan is incomplete with `inspection-incomplete` (R-67
+(a)).
 
 ### Reflog anchor and movement (D10; FR-021, FR-022)
 
@@ -196,7 +218,7 @@ message when there is one.
 | --- | --- |
 | `reflog-unavailable` | missing (`ENOENT`, `ENOTDIR`), 0 bytes, or the read reached its 64 KiB bound (65,536 bytes read) |
 | `inspection-error` | any other error on the read |
-| unprobed (`inspection-incomplete`) | the read did not finish within the filesystem budget |
+| `reflog-unavailable`, the row left unprobed (its marker set; the plan `inspection-incomplete`; R-67 (a)) | the read did not finish within the filesystem budget |
 | `reflog-unavailable` | a line that is not `<old> <new> ...`, a truncated last line included: the entries cannot decide, never `inspection-error` (lead ruling R-53 P-22) |
 | `reflog-unavailable` | the last entry's new object is not the head |
 | pass | a movement survives |
@@ -231,7 +253,9 @@ execution order are by raw path bytes.
 Completeness: a plan is `incomplete` when the row cap is exceeded
 (`inspect-cap`), a repository-wide probe failed or a row is
 `inspection-error` (`inspection-incomplete`), or the deadline passed while
-planning (`deadline-exceeded`). In single mode those three are non-blocking
+planning (`deadline-exceeded`), each row it stopped being `inspection-error`
+with a `deadline-exceeded` row error, never left unprobed (lead rulings R-67
+(a) and R-69; T099). In single mode those three are non-blocking
 notes about other rows, and only P's own row and the repository-wide probes
 decide (D13). In report mode above 128 rows, the `inspect-cap` note alone
 does not make it incomplete. `apply_allowed` is false for every report and
@@ -259,9 +283,10 @@ argument vector, present even when nothing ran), `exit_status`,
 `probes_performed` and `reconciliation`.
 
 `exit_status` is null unless a child was spawned and reaped, and is 128
-plus the signal number when a signal ended it, whoever sent it (137 for a
-child killed at the ceiling), as `BA:1035-1039` (at `da33d92`) and
-`execute()` report it.
+plus the number of the signal that ended it, whoever sent it, as
+`BA:1035-1039` (at `da33d92`) and `execute()` report it: 143 when SIGTERM
+ends it, at the ceiling too, and 137 only for a child that outlives SIGTERM
+until SIGKILL (lead ruling R-68 (b)).
 
 `reconciliation` is an object on every `removed`, `refused`, `failed` or
 `unknown` target and null on a `not-attempted` one:
@@ -299,7 +324,9 @@ target:
 | 6. the combined status probe in the target, which must print nothing | Git child | `state-changed` |
 | 7. the hidden-state probe | Git child | `contains-submodule` (a gitlink); `hidden-local-state` |
 
-At most five Git children (steps 1, 3, 4, 6 and 7). A value null in the plan
+At most five Git children (steps 1, 3, 4, 6 and 7), from T084 on; until
+then T055's interim full re-read runs 6 or 7 where row 4b or row 5 runs,
+and T084 restores the bound (lead ruling R-68 (d)). A value null in the plan
 and null again is no difference; a value that cannot be re-read, a
 timed-out call included, is a difference, with its step's reason. The first
 target's revalidation is the preflight of every selected target: its steps 3
@@ -350,10 +377,15 @@ ruling R-56). A `git-too-old` or
 `clean`'s refusal text (lead ruling R-48). Every `path` gains
 `path_valid_utf8`, every `root` gains `root_valid_utf8`, and
 `ignored_samples` entries are objects. A deleted upstream shows its short
-name with `ahead` and `behind` null. The version check runs once per
-invocation, memoized, when a repository is inspected; doctor's `git` row
+name with `ahead` and `behind` null. `ignored_files` is the evidence model's
+bounded count, capped at 64 (`ignored_entries`), so 64 means "64 or more";
+no key is added for it (lead ruling R-66 (d)). The version check runs once
+per invocation, memoized, when a repository is inspected; doctor's `git` row
 runs it itself when none was, and `status` never runs it for nothing (lead
-ruling R-56).
+ruling R-56). `handoff()` runs its `git remote get-url origin` only for a
+root whose repository was inspected, present and past the version check;
+otherwise it returns the same no-identity state with no child (lead ruling
+R-66 (c)).
 
 ### Child handle (D2; lead ruling R-30, research.md R14)
 
@@ -416,7 +448,9 @@ returns a fresh default: the 15 s budget and no signal handler. Its shell,
 since the slot records with the phase; its budget, clock, counters and memos
 are T024's (lead ruling R-47). A `signal_scope` entered with no `Invocation`
 in force enters a default one for its own span, so that its handler and the
-driver read one slot (R-47).
+driver read one slot (R-47). So a direct `clean()` call, which only tests
+make, runs on that scope's own default `Invocation`, whose command is None:
+15 s per Git child and no 60 s deadline (lead ruling R-63 (e)).
 
 ### Signal slot (D1, D15)
 
@@ -459,7 +493,7 @@ The driver reads the slot by the `Invocation`'s phase: it raises
 | planning | preview or report built | reported (exit 0 complete, 1 incomplete) |
 | planning, `--apply` | incomplete; then `--expect-plan` mismatch | refused (exit 2), in that order |
 | planning, `--apply` | complete `all-safe` plan selecting nothing | reported (`No eligible worktrees`, exit 0, no question) |
-| planning, single | P matches no entry; a gate excludes P | refused (`worktree-not-found`; `target-excluded`) |
+| planning, single | P matches no entry; P matches several, or one not decided (R-67 (b), R-69); a gate excludes P | refused (`worktree-not-found`; `inspection-incomplete`; `target-excluded`) |
 | planning, `--apply` | standard input not a terminal, no `--yes` | refused (`confirmation-required`) |
 | planning, `--apply` | `--yes` | applying |
 | planning, `--apply` | otherwise | asking |
@@ -523,8 +557,10 @@ A run with `--apply`, first matching row (FR-037, D19):
 
 A preview or report: 2 only for a refusal raised before a plan is built, 1 for
 an incomplete plan, 0 otherwise, and 130, 143 or 129 when a signal ends it;
-a write that fails after its plan is built is `internal-error`, exit 2
-(research.md R4; lead rulings R-55 and R-59; LQ-7).
+a write that fails after its plan is built is `internal-error`, exit 2, by
+the delta's rule for an unexpected exception before the apply phase, which
+conflicts with the preview rule above (research.md R4; lead rulings R-55 and
+R-59; LQ-7).
 A signal recorded while the push or `git branch -d` child runs is not
 passed on: `project` never signals either child and waits for it. The run
 then exits by D19's first row: 130, 143 or 129 when a signal was recorded,
