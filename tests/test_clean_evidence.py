@@ -362,6 +362,181 @@ class EvidenceTests(clean_support.CleanCase):
                           for name in ("repo", "001-gone-tree", "002-mixed-tree")],
                          [("protected-default", []), ("dirty", note), ("dirty", [])])
 
+    # T029: the evidence model's probes, registration, presence and row fields.
+
+    def test_clean_evidence_probes_once_per_common_directory(self):
+        # D6, FR-055, FR-056: rows 3, 4, 6 and 7 once each, row 4b only in a
+        # gitfile layout, and one combined status probe per present, verified row,
+        # inside that worktree; every child pinned (D11).
+        root = self.repo()
+        self.bare_remote()
+        merged = self.merged_worktree("001-merged")
+        unstarted = self.unstarted_worktree("002-unstarted")
+        stale = self.add("stale", "-b", "003-stale")
+        shutil.rmtree(stale)
+        main_head = self.git(root, "rev-parse", "HEAD").strip()
+        result, records = self.report(root)
+        commands = [command(record) for record in records]
+        self.assertEqual([c[1] for c in commands if c[2:] == ROW_3], [str(root)])
+        self.assertEqual([c[1] for c in commands if c[2:] == ROW_4], [str(root)])
+        self.assertEqual([c for c in commands if c[2:] == ROW_4B], [])
+        self.assertEqual([c[1] for c in commands if c[2:] == ROW_6], [str(root)])
+        merged_set = [c for c in commands if c[2:3] == ["for-each-ref"] and c[2:] != ROW_6]
+        self.assertEqual(merged_set, [["-C", str(root), "for-each-ref", f"--merged={main_head}",
+                                       "--format=%(refname)", "refs/heads"]])
+        self.assertEqual(self.status_dirs(records), sorted(map(str, (root, merged, unstarted))),
+                         "one status probe per present, verified row; none for the stale row")
+        self.assertEqual([c[2:] for c in commands if c[2:3] == ["rev-parse"] and c[2:] != DISCOVER], [ROW_3])
+        self.assertEqual([c for c in commands if c[2:3] and c[2] in REPLACED], [],
+                         "no per-row rev-parse, rev-list, merge-base, show-ref or symbolic-ref")
+        self.assert_pinned(records)
+        rows = by_name(result.document)
+        self.assertEqual(rows["001-merged-tree"]["classification"], "merged-removable")
+
+        with self.subTest("a gitfile layout: row 4b, and the git directory is no row"):
+            checkout = self.base / "checkout"
+            gitdir = self.base / "checkout.git"
+            self.git(self.base, "init", "-q", "-b", "main", "--separate-git-dir", gitdir, checkout)
+            self.git(checkout, "commit", "-q", "--allow-empty", "-m", "initial")
+            result, records = self.report(checkout)
+            commands = [command(record) for record in records]
+            for row in (ROW_3, ROW_4, ROW_4B, ROW_6):
+                self.assertEqual([c[1] for c in commands if c[2:] == row], [str(checkout)], row)
+            self.assertEqual(self.status_dirs(records), [str(checkout)])
+            self.assertEqual([(row["path"], row["classification"]) for row in result.document["worktrees"]],
+                             [(str(checkout), "protected-default")])
+            self.assert_pinned(records)
+
+        with self.subTest("a path holding a line feed: row 3 again, one option per child"):
+            feed = self.repo("line\nfeed")
+            result, records = self.report(feed)
+            identity = [c[2:] for c in map(command, records)
+                        if c[2:3] == ["rev-parse"] and c[2:] != DISCOVER]
+            self.assertEqual(identity, [ROW_3] + [["rev-parse", "--path-format=absolute", option]
+                                                  for option in ROW_3[2:]])
+            self.assertEqual([(row["path"], row["classification"]) for row in result.document["worktrees"]],
+                             [(str(feed), "protected-default")])
+
+    def test_clean_evidence_checks_registration_both_ways(self):
+        # D7, FR-055: `<path>/.git` names `<common_dir>/worktrees/<id>`, whose
+        # `gitdir` file names `<path>/.git`; a row whose registration disagrees
+        # gets no status probe and is inspection-error.
+        root = self.repo()
+        self.bare_remote()
+        rewritten = self.merged_worktree("001-rewritten")
+        other = self.merged_worktree("002-other")
+        moved = self.merged_worktree("003-moved")
+        common = self.common_dir()
+        # A rewritten `.git` file: it names another worktree's admin directory,
+        # whose `gitdir` file names that worktree, not this one.
+        (rewritten / ".git").write_text(f"gitdir: {common / 'worktrees' / other.name}\n")
+        # A changed admin `gitdir` file: the registry now names a directory with
+        # no `.git` file of its own.
+        elsewhere = self.base / "elsewhere"
+        elsewhere.mkdir()
+        (common / "worktrees" / moved.name / "gitdir").write_text(f"{elsewhere / '.git'}\n")
+        result, records = self.report(root)
+        rows = by_name(result.document)
+        self.assertNotIn(moved.name, rows)
+        for name in (rewritten.name, elsewhere.name):
+            with self.subTest(row=name):
+                row = rows[name]
+                self.assertEqual((row["present"], row["dirty"], row["errors"], row["classification"]),
+                                 (True, None, [], "inspection-error"))
+                self.assertNotIn("prunable", row, "prunable only on a stale row (M11)")
+        self.assertEqual(rows[other.name]["classification"], "merged-removable")
+        self.assertEqual(self.status_dirs(records), sorted(map(str, (root, other))))
+
+    def test_clean_evidence_reads_presence(self):
+        # Lead ruling R-36, FR-055: an lstat failing with ENOENT, or with ENOTDIR
+        # where the parent of a registered path became a regular file, is
+        # `present: false`.
+        root = self.repo()
+        missing = self.add("missing", "-b", "001-missing")
+        shutil.rmtree(missing)
+        parent = self.base / "parent"
+        parent.mkdir()
+        self.git(root, "worktree", "add", "-b", "002-parent", parent / "tree")
+        shutil.rmtree(parent)
+        parent.write_text("now a regular file")
+        with self.assertRaises(NotADirectoryError):
+            os.lstat(parent / "tree")
+        result, records = self.report(root)
+        rows = {row["path"]: row for row in result.document["worktrees"]}
+        for path in (missing, parent / "tree"):
+            with self.subTest(path=path.name):
+                row = rows[str(path)]
+                self.assertEqual((row["present"], row["classification"], row.get("prunable"), row["errors"]),
+                                 (False, "stale-worktree", True, []))
+                self.assertEqual([row[key] for key in ("dirty", "ignored_files", "current", "upstream")],
+                                 [None] * 4)
+        self.assertEqual(self.status_dirs(records), [str(root)])
+
+    @clean_support.not_root
+    def test_clean_evidence_reads_presence_without_search_permission(self):
+        # R-36: any other lstat failure is `present: null`, an os-error and
+        # inspection-error, with no probe.
+        root = self.repo()
+        locked = self.base / "locked"
+        locked.mkdir()
+        tree = locked / "tree"
+        self.git(root, "worktree", "add", "-b", "001-locked", tree)
+        locked.chmod(0o600)
+        self.addCleanup(locked.chmod, 0o700)
+        result, records = self.report(root)
+        row = {row["path"]: row for row in result.document["worktrees"]}[str(tree)]
+        message = TEXT["row_error_os_error"].format(OPERATION="lstat", STRERROR=os.strerror(errno.EACCES))
+        self.assertEqual((row["present"], row["errors"], row["classification"], row["dirty"]),
+                         (None, [{"code": "os-error", "message": message}], "inspection-error", None))
+        self.assertNotIn("prunable", row, "Git calls it prunable, but the row is not stale (M11)")
+        self.assertEqual(self.status_dirs(records), [str(root)])
+
+    def test_clean_evidence_row_fields(self):
+        # Plan review M6 and m11; FR-042, FR-043, FR-056: the six added fields
+        # on every row, row errors as objects, and a deleted upstream.
+        root = self.repo()
+        self.bare_remote()
+        ignored = self.merged_worktree(
+            "001-ignored", setup=lambda tree: (tree / ".gitignore").write_text("local.env\n"))
+        (ignored / "local.env").write_text("preserve")
+        gone = self.add("gone", "-b", "002-gone")
+        (gone / "gone").write_text("gone")
+        self.commit(gone)
+        self.git(gone, "push", "-u", "origin", "002-gone")
+        self.git(gone, "push", "origin", "--delete", "002-gone")
+        self.add("locked", "--lock", "-b", "003-locked")
+        failing = self.add("failing", "-b", "004-failing")
+        fake = clean_support.install_fake_git(self.base / "fake", "status-fails-in", path=failing)
+        stale = self.add("stale", "-b", "005-stale")
+        shutil.rmtree(stale)
+        result, records = self.report(root, real=fake)
+        rows = by_name(result.document)
+        for name, row in rows.items():
+            with self.subTest(row=name):
+                keys = ROW_KEYS[:14] + (["prunable"] if name == "stale-tree" else []) + ROW_KEYS[14:]
+                self.assertEqual(list(row), keys)
+                self.assertIs(row["locked"], name == "locked-tree")
+                self.assertIs(row["path_valid_utf8"], True)
+                self.assertEqual(row["notes"], [])
+                for error in row["errors"]:
+                    self.assertEqual(list(error), ["code", "message"])
+        self.assertEqual([rows["001-ignored-tree"][key] for key in
+                          ("ignored_files", "ignored_files_truncated", "ignored_samples", "classification")],
+                         [1, False, [{"path": "local.env", "path_valid_utf8": True}], "ignored-local-files"])
+        self.assertEqual([rows["gone-tree"][key] for key in
+                          ("upstream", "remote_present", "ahead", "behind", "classification")],
+                         ["origin/002-gone", False, None, None, "remote-gone"])
+        message = git_message("status", "row_error_probe_failed",
+                              DETAIL=TEXT["row_error_probe_failed_exit"].format(N=128))
+        self.assertEqual([rows["failing-tree"][key] for key in
+                          ("errors", "dirty", "ignored_files", "ignored_files_truncated", "ignored_samples",
+                           "classification")],
+                         [[{"code": "probe-failed", "message": message}], None, None, None, None,
+                          "inspection-error"])
+        self.assertEqual([rows["stale-tree"][key] for key in
+                          ("ignored_files_truncated", "ignored_samples", "errors")], [None, None, []])
+        self.assertEqual(rows["repo"]["ignored_samples"], [])
+
 
 if __name__ == "__main__":
     unittest.main()
