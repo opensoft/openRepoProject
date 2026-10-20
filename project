@@ -191,9 +191,9 @@ def confirm(yes):
         raise Refused("Cancelled; no command was run.")
 
 
-def execute(argv, cwd=None):
+def execute(argv, cwd=None, env=None):
     try:
-        result = subprocess.run(argv, cwd=cwd)
+        result = subprocess.run(argv, cwd=cwd, env=env)
     except OSError as exc:
         raise Refused(f"Cannot run {argv[0]}: {exc}") from exc
     return result.returncode if result.returncode >= 0 else 128 - result.returncode
@@ -1556,6 +1556,8 @@ def run_bounded(spec, parser, run):
                     streams.discard(key.fd)
                 elif key.fd == err:
                     handle.keep_stderr(chunk)
+                    if hasattr(parser, "feed_stderr"):
+                        parser.feed_stderr(chunk)
                 elif name is None:
                     parser.feed(chunk)
                     if parser.bound_reached:
@@ -2648,9 +2650,9 @@ def inspect_repository(directory, run, refresh=False, *, repeat_identity_at_root
     their parsers, memoized on run, the Invocation (`common_dirs`), by the
     device and inode of the common directory (lead ruling R-54 X-1), so that
     another directory of one repository runs only row 3. refresh reads afresh
-    and replaces the memo; cleanup_report() always does, since
-    require_unchanged_cleanup_state() revalidates through it (lead ruling R-51
-    (d)). repeat_identity_at_root, on by default, runs row 5, row 3 again at
+    and replaces the memo; cleanup_report() always does (lead ruling R-51
+    (d)), and so does require_unchanged_cleanup_state() after confirmation
+    (T076). repeat_identity_at_root, on by default, runs row 5, row 3 again at
     the main worktree where row 3 ran in another worktree, and names no root
     when that common directory differs; off, row 5 is not run, and the memo
     keeps such a result apart from the default's (R-54 X-1). Never refuses;
@@ -5106,61 +5108,168 @@ def print_result(plan, targets, run):
 
 # region push
 def push_or_delete(repo, run):
-    """Push a branch or delete a merged one (T076 fills; FR-010; research.md R1,
-    R4 and R5): called in phase `planning`, which it keeps, with run.plan the
-    plan the pipeline built; it swaps in default_signals() around confirm()
-    alone, and returns the run's exit status, the child's own, or raises a
-    refusal to main(). A signal recorded meanwhile ends the run by the
-    pipeline's last slot read. First body: the baseline (project:680-706 and
-    :723-743 at 961c405, the --branch checks moved to
-    check_clean_arguments())."""
-    args, root, report = run.args, repo["root"], run.plan.report
-    rows = report["worktrees"]
+    """Push a branch, or delete a merged one (T076, T077; FR-010, FR-041, FR-046,
+    FR-047; research.md R1, R4 and R5; data-model.md, "States of push and
+    delete-branch"; lead rulings R-45 (5), R-53 and R-74 (c)). Called in phase
+    `planning`, which it keeps, with run.plan the run's own plan: its full
+    inspection under single mode's row cap and bounds with the batch's
+    completeness, which check_plan() has already refused when incomplete, so
+    that is the check before confirmation (plan review B1). Returns the
+    child's exit status, or raises a refusal or Interrupted to main().
+
+    The baseline's checks and messages are kept (project:680-706 and :723-743
+    at 961c405; the --branch checks are check_clean_arguments()'s), a branch
+    or path in them shown through human_path(). Push refuses a branch with no
+    unique worktree, the default branch, a worktree not exactly clean, a
+    detached one and the classes to reconcile; then a branch whose configured
+    upstream's remote-tracking ref is gone, whatever its class, with
+    TEXT["push_remote_gone"] and the reason `remote-gone`, no code (R-45 (5));
+    only then is the command built, `remote get-url origin` running through
+    the driver (git_text()). Delete-branch refuses the default branch, a
+    branch a present worktree holds, and a branch not verified as merged: its
+    head is read from row 6 and its merged-ness from row 7 of the plan's
+    evidence, never through a new child, and a branch absent from row 6 or a
+    row 7 not read refuses (P-23).
+
+    Then `Cleanup action:` and show_push_plan() through say(), and the check
+    after printing (check_writes(); R-74 (c)(3)), so that a closed standard
+    output refuses before any child; confirm(), unchanged, under
+    default_signals() with the clock paused, since time at the question does
+    not count (research.md R4; analyze M3); the full re-inspection after
+    confirmation (require_unchanged_cleanup_state()); and the child, the
+    slot read just before it is spawned and again once it is reaped, a set
+    slot raising Interrupted (P-7). The run so exits 130, 143 or 129 when a
+    signal was recorded before or while the child ran, otherwise with the
+    child's status, 128 plus the signal number for a signal death (D19's
+    first row; plan review M3).
+
+    The push child runs through execute() with git_env("push") (R1, PR #19):
+    project's own streams and process group, so that it is in the terminal's
+    foreground when project is; no pin; the caller's GIT_ALLOW_PROTOCOL kept
+    and the other sixteen names removed (R-28). The `git branch -d` child is a
+    `delegate` handle on the driver: its own process group, the seventeen
+    names removed and the seven pins, no budget, its output relayed to
+    project's streams by RelayParser (R5, P-1); one that cannot be spawned is
+    the baseline's `Cannot run git: ...` refusal. Neither is ever signalled:
+    signal_scope()'s handlers only record a signal that reaches project
+    meanwhile, and the child is waited for."""
+    args, plan = run.args, run.plan
+    root, report, branch = repo["root"], plan.report, args.branch
+    rows, target, shown = report["worktrees"], report["target_branch"], human_path(branch)
     if args.action == "push":
-        matches = [row for row in rows if row.get("branch") == args.branch]
+        matches = [row for row in rows if row.get("branch") == branch]
         if len(matches) != 1:
-            raise Refused(f"No unique linked worktree found for branch {args.branch}")
+            raise Refused(f"No unique linked worktree found for branch {shown}")
         row = matches[0]
-        if row.get("branch") == report["target_branch"]:
+        if row.get("branch") == target:
             raise Refused("The default branch is protected; use its normal repository workflow.")
         if row.get("dirty") is not False:
-            raise Refused(f"Cannot push {args.branch}; its worktree is dirty, missing, or unreadable.")
+            raise Refused(f"Cannot push {shown}; its worktree is dirty, missing, or unreadable.")
         if row.get("branch") == "detached":
             raise Refused("Cannot push a detached worktree; name the branch first.")
         if row.get("classification") in ("diverged", "remote-ahead", "review-required"):
-            raise Refused(f"Cannot push {args.branch}; reconcile its remote state first.")
-        if row.get("upstream"):
-            remote, separator, remote_branch = row["upstream"].partition("/")
+            raise Refused(f"Cannot push {shown}; reconcile its remote state first.")
+        upstream = row.get("upstream")
+        if upstream is not None and row.get("remote_present") is False:
+            raise Refused(TEXT["push_remote_gone"].format(BRANCH=shown, UPSTREAM=human_path(upstream)),
+                          reason="remote-gone")
+        if upstream:
+            remote, separator, remote_branch = upstream.partition("/")
             if not separator or not remote or not remote_branch:
-                raise Refused(f"Unsupported upstream mapping for {args.branch}: {row['upstream']}")
-            command = ["git", "-C", str(root), "push", remote, f"{args.branch}:{remote_branch}"]
+                raise Refused(f"Unsupported upstream mapping for {shown}: {human_path(upstream)}")
+            words = [remote, f"{branch}:{remote_branch}"]
         else:
             if not git_text(root, "remote", "get-url", "origin"):
                 raise Refused("Cannot publish a branch without an origin remote.")
-            command = ["git", "-C", str(root), "push", "-u", "origin", args.branch]
-        print(f"Cleanup action: push branch {args.branch}")
-        expected = {"target_branch": report["target_branch"], "signature": cleanup_signature(report, row)}
-        action_target = {"branch": args.branch}
+            words = ["-u", "origin", branch]
+        argv = git_argv("push", ["-C", str(root), "push", *words])
+        action = f"push branch {shown}"
     else:
-        matches = [row for row in rows if row.get("branch") == args.branch]
-        if args.branch == report["target_branch"]:
+        if branch == target:
             raise Refused("The default branch is protected and cannot be deleted.")
-        if matches and any(row.get("present") and row.get("branch") == args.branch for row in matches):
+        if any(row.get("present") and row.get("branch") == branch for row in rows):
             raise Refused("Remove the linked worktree first; branch deletion is a separate action.")
-        if ancestor(root, git_text(root, "rev-parse", "--verify", f"refs/heads/{args.branch}"), report["target_branch"]) is not True:
-            raise Refused(f"Branch {args.branch} is not verified as merged into {report['target_branch']}.")
-        branch_head = git_text(root, "rev-parse", "--verify", f"refs/heads/{args.branch}")
-        command = ["git", "-C", str(root), "branch", "-d", args.branch]
-        print(f"Cleanup action: delete verified merged local branch {args.branch}")
-    show_plan([command], root)
-    with default_signals():
-        confirm(args.yes)
-    if args.action == "delete-branch":
-        require_unchanged_cleanup_state(root, args.action, {"target_branch": report["target_branch"]},
-                                        branch=args.branch, branch_head=branch_head)
+        refname, evidence = os.fsencode("refs/heads/" + branch), plan.evidence
+        listed = any(ref["refname"] == refname for ref in evidence["refs"] or ())
+        if not listed or evidence["merged"] is None or refname not in evidence["merged"]:
+            raise Refused(f"Branch {shown} is not verified as merged into {human_path(target)}.")
+        delegate = ["-C", str(root), "branch", "-d", branch]
+        argv = git_argv("delegate", delegate)
+        action = f"delete verified merged local branch {shown}"
+    say(run, f"Cleanup action: {action}")
+    show_push_plan(run, argv, root)
+    check_writes(run)
+    run.pause()
+    try:
+        with default_signals():
+            confirm(args.yes)
+    finally:
+        run.resume()
+    require_unchanged_cleanup_state(repo, run, args.action, branch)
+    read_slot(run)
+    if args.action == "push":
+        status = execute(argv, env=git_env("push"))
     else:
-        require_unchanged_cleanup_state(root, args.action, expected, **action_target)
-    return execute(command)
+        outcome = run_bounded(("delegate", delegate, None), RelayParser(), run)
+        if outcome.status is None:  # it could not be spawned: the baseline's refusal
+            detail = outcome.detail or "git was not run"
+            raise Refused(detail[:1].upper() + detail[1:])
+        status = outcome.status if outcome.status >= 0 else 128 - outcome.status
+    read_slot(run)
+    return status
+
+
+def show_push_plan(run, argv, cwd):
+    """The plan of push and delete-branch (T076; FR-041; plan review B2; lead
+    rulings R-53 P-8 and R-74 (c)(1)), as show_plan() prints it, through
+    say(): `Working directory:` in the prose form, human_path(cwd), and the
+    argument vector exactly as it is spawned, the push with no pin and `git
+    branch -d` with the seven, every word through human_path(word,
+    command=True), which is shlex.quote() for an ordinary word and the $'...'
+    form for a word holding a Cc, Cf, Zl or Zp code point or an undecodable
+    byte. show_plan() stays as it is for `new` and `update`."""
+    say(run, f"Working directory: {human_path(cwd)}")
+    say(run, "  " + " ".join(human_path(word, command=True) for word in argv))
+
+
+class RelayParser:
+    """The parser of the `git branch -d` delegate (T077; research.md R5; lead
+    rulings R-50 (e) and R-53 P-1). It gathers no evidence: feed() writes each
+    chunk of the child's standard output to project's own standard output,
+    and feed_stderr(), which run_bounded() calls beside keep_stderr(), each
+    chunk of its standard error to project's own standard error, both whole,
+    as bytes, and flushed, so that the person sees the child's output as
+    execute() gave it before this change. It never reaches a bound, and
+    finish() returns b"". A failed write diverts that stream and is recorded
+    as say() records one (write_failed(); R-55), never raised, so that the
+    delegate is still read to its end and waited for."""
+
+    bound_reached = False
+
+    def feed(self, chunk):
+        self._relay(sys.stdout, chunk)
+
+    def feed_stderr(self, chunk):
+        self._relay(sys.stderr, chunk)
+
+    def finish(self):
+        return b""
+
+    @staticmethod
+    def _relay(stream, chunk):
+        if stream is None:
+            return
+        try:
+            stream.flush()  # what project wrote first stays first
+            buffer = getattr(stream, "buffer", None)
+            if buffer is None:
+                stream.write(chunk.decode("utf-8", "surrogateescape"))
+                stream.flush()
+            else:
+                buffer.write(chunk)
+                buffer.flush()
+        except OSError as exc:
+            write_failed(current_invocation(), stream, exc)
 # endregion push
 
 
@@ -5291,8 +5400,9 @@ def cleanup_report(root):
     """The report of `project clean ROOT` on the evidence model (T033;
     research.md R9): the baseline document {root, target_branch,
     tracking_freshness, worktrees}, its rows from worktree_rows() with the six
-    added fields. It reads afresh every time (refresh), since
-    require_unchanged_cleanup_state() revalidates through it. Refusals keep
+    added fields. It reads afresh every time (refresh; lead ruling R-51 (d)).
+    Since T076 nothing calls it: require_unchanged_cleanup_state() re-inspects
+    through inspect_repository() and build_plan() instead. Refusals keep
     their baseline messages: `Cannot inspect Git repository at ROOT` for a
     ROOT that is not a worktree toplevel of a repository whose main worktree
     can be named, or whose repository-wide probes failed; the manifest's own;
@@ -5346,17 +5456,50 @@ def matching_worktree(report, *, branch=None, path=None):
     return rows[0] if len(rows) == 1 else None
 
 
-def require_unchanged_cleanup_state(root, action, expected, *, branch=None, path=None, branch_head=None):
-    refreshed = cleanup_report(root)
-    if action == "delete-branch":
-        current_head = git_text(root, "rev-parse", "--verify", f"refs/heads/{branch}")
-        if (refreshed["target_branch"] != expected["target_branch"] or current_head != branch_head or
-                ancestor(root, current_head, refreshed["target_branch"]) is not True):
-            raise Refused("Cleanup state changed after confirmation; no command was run.")
-        return
-    current = matching_worktree(refreshed, branch=branch) if branch else matching_worktree(refreshed, path=path)
-    if not current or cleanup_signature(refreshed, current) != expected["signature"]:
-        raise Refused("Cleanup state changed after confirmation; no command was run.")
+def require_unchanged_cleanup_state(repo, run, action, branch):
+    """The full re-inspection of push and delete-branch after confirmation
+    (T076; FR-010, FR-046, FR-047; lead rulings R-53 P-5, P-19 and P-23, and
+    R-74 (c)(5)). The repository is inspected afresh at repo's root,
+    inspect_repository(..., refresh=True), never from the memo, and planned
+    from that evidence by build_plan() in the run's mode and action: single
+    mode's row cap and bounds with the batch's completeness. A failed
+    identity probe or repository-wide probe refuses with
+    `inspection-incomplete` before build_plan(), which needs both; the fresh
+    plan, when incomplete, refuses with its first code (`inspection-incomplete`,
+    `inspect-cap` or `deadline-exceeded`), another row's `inspection-error`
+    included; otherwise any difference between the run's own plan, the one the
+    confirmation showed, and the fresh plan refuses with the baseline
+    "Cleanup state changed after confirmation; no command was run.", and so
+    does a merge target that can no longer be resolved. The state compared is
+    the repository's identity and, for push, the branch's row by the
+    baseline's signature (cleanup_signature(), the merge target's name
+    included); for delete-branch, the merge target's name and the branch's
+    head (row 6) and merged-ness (row 7). Every refusal exits 2 and runs no
+    child; Interrupted passes."""
+    changed = "Cleanup state changed after confirmation; no command was run."
+
+    def state(plan):
+        report, evidence = plan.report, plan.evidence
+        if action == "push":
+            rows = [row for row in report["worktrees"] if row.get("branch") == branch]
+            return plan.repository, cleanup_signature(report, rows[0]) if len(rows) == 1 else None
+        refname = os.fsencode("refs/heads/" + branch)
+        heads = [ref["objectname"] for ref in evidence["refs"] or () if ref["refname"] == refname]
+        merged = evidence["merged"] is not None and refname in evidence["merged"]
+        return plan.repository, report["target_branch"], heads, merged
+
+    root = repo["root"]
+    evidence = inspect_repository(root, run, refresh=True)
+    if evidence["identity"] is None or evidence["errors"]:
+        raise incomplete_refusal(run.plan, "inspection-incomplete")
+    if evidence["merge_target_refusal"] is not None:
+        raise Refused(changed)
+    fresh = build_plan({"root": root, "evidence": evidence}, run)
+    codes = plan_completeness(fresh)
+    if codes:
+        raise incomplete_refusal(fresh, codes[0])
+    if state(fresh) != state(run.plan):
+        raise Refused(changed)
 
 
 def clean(args):
