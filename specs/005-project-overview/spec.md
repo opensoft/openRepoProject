@@ -2467,12 +2467,16 @@ and [P] are change 1's requirements as the header names them.
   65th ignored or 4,097th record); the registry parser
   (`WorktreeListParser`, `project:1783`), `RefParser` (:1829) and
   `MergedSetParser` (:1869) keep every record, each documented "No bound" at
-  `96a08d4`, which change 1's design D6, rows 6 and 7, make deliberate for
-  the last two (lead ruling R-70(b)). FR-015's keep-filter, which keeps only
-  the local heads, `origin/HEAD` and the remote refs named as upstreams
-  (POD:196-200), is therefore this feature's own to build, as R-54's X-2
-  leaves to it the factoring of `start_child` and `conclude` out of
-  `run_bounded`, and feature 004 adds no hook for it. Feature 004's data
+  `96a08d4`, which change 1's design leaves unbounded for the last two: its
+  D2 (`design.md:164-176` at `96a08d4`) gives a bound to the status parser
+  alone, and its D6 says of row 6 only that it "yields every branch's head"
+  (`design.md:291`) and of row 7 nothing (lead ruling R-70(b)). FR-015's
+  keep-filter, which keeps only the local heads, `origin/HEAD`, the remote
+  refs named as upstreams and one flag recording whether a remote copy of
+  the merge target exists (POD:196-200), is therefore this feature's own to
+  build, as R-54's X-2 leaves to it the factoring of `start_child` and
+  `conclude` out of `run_bounded`, and feature 004 adds no hook for it.
+  Feature 004's data
   model at `d81b3d9` records that handle, plan-stage detail for this
   feature, as its "Child handle" entity, with the states `running`,
   `terminating`, `killing`, `reaped` and `abandoned`, the kinds `probe`,

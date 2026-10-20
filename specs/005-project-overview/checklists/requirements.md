@@ -276,7 +276,13 @@ Lane: openRepoProject-4
   keep-filter is this feature's own to build (lead ruling R-70(b)), plan
   note PN-16 of `integration.md`; EC-033's wording follows R8, and plan note
   PN-17 of `testing-strategy.md` has the plan's test list name it; no
-  requirement changes.
+  requirement changes. The fold of lane openRepoProject-3's R9 findings then
+  added to Q17's option D what #25's replacement of the credential clause
+  allows (a remote's URL held and tested within bounds, a read's standard
+  error drained and discarded unexamined), cited change 1's design D2 and
+  D6 for the parsers' bounds, added FR-015's remote-copy flag to the
+  keep-filter's list and named R-70(b) as CHK025's cause; no requirement
+  changes.
 - Items marked incomplete require spec updates before `/speckit-clarify` or `/speckit-plan`
 
 ## Cross-cutting Requirements Quality (no-argument `/speckit.checklist`, 2026-10-19)
