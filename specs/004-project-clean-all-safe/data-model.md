@@ -86,7 +86,10 @@ regular file whose `gitdir:` line names `<common_dir>/worktrees/<admin_id>`,
 and that directory's `gitdir` file names `<path>/.git`, relative values
 resolved against the directory holding the file. A row whose registration
 disagrees gets no status probe and is `inspection-error`, excluded as
-`registration-mismatch`.
+`registration-mismatch`. A known limit, with no rule added for it: two
+registry entries naming one path both pass this two-way check, because the
+porcelain registry listing does not name the admin directory (lead ruling
+R-51).
 
 ### Branch evidence (D6, D7)
 
@@ -192,9 +195,12 @@ What one invocation would do in one repository. Built fresh by every run.
 
 | Mode | Spelled | Row cap | Selection |
 | --- | --- | --- | --- |
-| `report` | plain `project clean`, with or without `--json` | 256 | what `--all-safe` would select at 128 rows or fewer; null above 128, with the note `inspect-cap` and `rows` |
+| `report` | every other invocation without `--all-safe`: plain `project clean`, with or without `--json`, and flags without `--apply` | 256 | what `--all-safe` would select at 128 rows or fewer; null above 128, with the note `inspect-cap` and `rows` |
 | `all-safe` | `--all-safe`, preview or `--apply` | 128 | every row passing every gate, at most 16 |
-| `single` | `--apply --action remove --worktree P` | 128, P exempt and probed first | P alone |
+| `single` | `--apply` with any `--action`: `--action remove --worktree P`, and push and delete-branch, which take single mode's cap and bounds (below) | 128, P exempt and probed first | P alone |
+
+`clean_mode(args)` (T035) decides the mode as this table spells it (lead
+ruling R-49).
 
 Fields, in the delta's envelope order: `schema_version`, `observed_at`,
 `mode`, the baseline `root`, `target_branch` and `tracking_freshness`,
