@@ -3,21 +3,21 @@ Lane: openRepoProject-5
 # Proposal: add-project-overview-remote-merge-status
 
 Status: draft; alignment review and council resolved on PR #29, round C4's
-spec edits committed on lane openRepoProject-4's agreement of 2026-10-20;
-round C5's edits for lane openRepoProject-3's delta read and Codex's findings
-on `e198548` (C-24 to C-29) applied, their `project-overview` spec edits
-committed on lane openRepoProject-4's agreement of 2026-10-20; round C6's edits
-for Codex's finding on `67e43ae`, three points found in applying it and lane
+spec edits committed; round C5's edits for lane openRepoProject-3's delta read
+and Codex's findings on `e198548` (C-24 to C-29) and round C6's for Codex's
+finding on `67e43ae`, three points found in applying it and lane
 openRepoProject-3's folded read of `e198548..67e43ae` (C-30 to C-34) applied,
-their `project-overview` spec edits committed on lane openRepoProject-4's
-agreement of 2026-10-20, and C-35, lane openRepoProject-3's narrowing of the
+their `project-overview` spec edits committed, all on lane openRepoProject-4's
+agreement of 2026-10-20; and C-35, lane openRepoProject-3's narrowing of the
 per-directory rule of the lookup of `gh`, applied in `design.md` alone, with no
-spec edit; rounds C7 to C9's edits for lane openRepoProject-3's confirm reads of
-rounds C6c and C7 (C-36, D5's rationale reworded; C-38) and Codex's findings on
-`1c32667` and `05a424a` (C-37, a `parse_int` hook that bounds an integer literal
-at parse time; C-39, a `parse_constant` hook that rejects `NaN`, `Infinity` and
-`-Infinity`), with the lead's C-40 (the body decoded as strict UTF-8), applied
-in `design.md` alone, with no spec edit; ratification by Brett Heap pending;
+spec edit; rounds C7 to C10's edits for lane openRepoProject-3's confirm reads
+of rounds C6c, C7 and C9 (C-36, D5's rationale reworded; C-38; C-42, the
+`number` check by type; C-43) and Codex's findings on `1c32667`, `05a424a` and
+`f34dfe2` (C-37, a `parse_int` hook that bounds an integer literal; C-39, a
+`parse_constant` hook that rejects `NaN`, `Infinity` and `-Infinity`; C-41, a
+relative `GH_CONFIG_DIR`, `XDG_CONFIG_HOME` or `HOME` kept unread, a residual),
+with the lead's C-40 (the body decoded as strict UTF-8), applied in `design.md`,
+C-41 also in Impact, with no spec edit; ratification by Brett Heap pending;
 nothing here is ratified. Governing issue: opensoft/openRepoProject#25, claimed
 by lane openRepoProject-5 (comment 6111242617); refs #6, the record of the
 project maintenance design packet. Proposed on Brett Heap's word "usage reset,
@@ -42,7 +42,7 @@ executable. Change 1's evidence model,
 `Repository inspection requires Git 2.36 and shares one evidence model`
 (CAS/cmd:90), is [E]. The lane's rulings are cited as L-1 to L-9 and C-1 to C-8
 (2026-10-11), L-10 to L-15, B-14, C-9 and C-10 (2026-10-18), L-16, L-17 and
-C-11 to C-14 (2026-10-19), and F-3 and C-15 to C-40 (2026-10-20, C-16 to C-22
+C-11 to C-14 (2026-10-19), and F-3 and C-15 to C-43 (2026-10-20, C-16 to C-22
 being the council's verdicts). `PR19/cmd` is draft PR #19's
 `openspec/changes/add-project-clean-all-safe/specs/project-command/spec.md` at
 `c462d87`.
@@ -383,16 +383,16 @@ scenarios (14, 2, 7 and 13), and one MODIFIED requirement in `project-command`,
   local patch-equivalence proof may ever retire it is change 1's open question
   on squash-merged branches (CAS proposal.md:1001-1005); for `gh-unavailable`,
   install `gh`, or check that `PATH`'s directories are reachable (C-26); for
-  `gh-unauthenticated`, run `gh auth login`; for
-  `no-remote-target`, give the merge target an upstream (for example
+  `gh-unauthenticated`, run `gh auth login`, or make a relative `GH_CONFIG_DIR`,
+  `XDG_CONFIG_HOME` or `HOME` absolute (C-41); for `no-remote-target`, give the
+  merge target an upstream (for example
   `git branch --set-upstream-to=origin/main main`); for
-  `credential-bearing-remote`, take the credential out of the remote's URL;
-  for `malformed-remote`, give the remote a URL that names an
-  `owner/repository` on `github.com`, with no user but `git` and no port; and
-  for `not-github`, nothing, since only `github.com` is queried (C-18). These
-  next steps are advice, not a `suggested_command`. It also says that a merge
-  target which tracks the person's own fork asks about the fork, so every
-  queried row reads `not-found` (C-21).
+  `credential-bearing-remote`, take the credential out of the URL; for
+  `malformed-remote`, give the remote a URL naming an `owner/repository` on
+  `github.com`, with no user but `git` and no port; and for `not-github`,
+  nothing, as only `github.com` is queried (C-18). These next steps are advice,
+  not a `suggested_command`. It also says a merge target tracking the person's
+  fork asks about the fork, so every queried row reads `not-found` (C-21).
 - **`tests/test_project.py`**: one test named after each scenario, offline,
   with a fake `gh` written into the fake bin directory (`fake_bin`,
   tests:148; `write_fake`, tests:172) that answers from a fixture table and
@@ -665,17 +665,17 @@ GitHub's commit association returns no pull request closed without merging),
 **C-15** (the council's inputs), **C-16** to **C-22** (the council's verdicts,
 below), **C-23** (Open Questions 3), **C-24** to **C-29** (round C5: lane
 openRepoProject-3's delta read of `e198548`, Codex's three findings on it and
-two points found in applying them; Decisions and Readings below, and "Re-read
-and Codex Findings (round C5)"), **C-30** to **C-34** (round C6: Codex's finding
-on `67e43ae`, the bounded inspection of a remote's URL, three points found in
-applying it, and lane openRepoProject-3's folded read of `e198548..67e43ae`;
-Decisions and Readings below, and "Re-read and Codex Findings (round C6)"),
-**C-35** (the lookup of `gh`'s per-directory rule, lane openRepoProject-3's
-narrowing), **C-36** (D5's rationale reworded), **C-37** (Codex's P2 on
-`1c32667`: a `parse_int` hook bounds an integer literal), **C-38** (lane
-openRepoProject-3's four LOWs on C7), **C-39** (Codex's P2 on `05a424a`: a
-`parse_constant` hook) and **C-40** (a strict UTF-8 decode of the body); all are
-applied in `design.md` alone ("Re-read and Codex Findings", rounds C6 to C9).
+two points found in applying them; "Re-read and Codex Findings (round C5)"),
+**C-30** to **C-34** (round C6: Codex's finding on `67e43ae`, three points found
+in applying it and lane openRepoProject-3's folded read of `e198548..67e43ae`;
+"Re-read and Codex Findings (round C6)"), **C-35** to **C-40** (the lookup's
+per-directory rule; D5's rationale; a `parse_int` hook; lane openRepoProject-3's
+four LOWs on C7; a `parse_constant` hook; a strict UTF-8 decode of the body),
+**C-41** (Codex's P2 on `f34dfe2`: a relative `GH_CONFIG_DIR`, `XDG_CONFIG_HOME`
+or `HOME` stays unread, as the spec has it, and resolves against `/`: a
+residual), **C-42** (lane openRepoProject-3's MEDIUM-1, the `number` check by
+type) and **C-43** (its four LOWs); all are applied in `design.md`, C-41 also in
+Impact ("Re-read and Codex Findings", rounds C6 to C10).
 
 Packet open decisions taken, each citing the text that leaves it open:
 
@@ -1328,3 +1328,22 @@ openRepoProject-4 agreed, sha256
 | --- | --- | --- | --- |
 | Codex 9 (P2, on `05a424a`, `design.md:484`, 2026-10-20T22:45:56Z): D6's parse passes `json.loads` only a `parse_int` hook, and `json.loads` accepts `NaN`, `Infinity` and `-Infinity` by default, so a 200 body that carries one in an otherwise unused field, such as a GraphQL `extensions` object, parses and its row can be `merged`, `open` or `not-found`, though a non-JSON body must be `api-error`; Codex asks for a rejecting `parse_constant` hook and a fixture | P2 | C-39: applied, design only, since the spec already requires the outcome (the added requirement's "A 200 body SHALL be UTF-8 JSON", `specs/project-overview/spec.md:461-462`, and `api-error` for a response "that cannot be decoded or parsed for any cause", :453-454): the parse also passes `json.loads` a `parse_constant` hook that raises for every text it is given, so that such a body fails the parse, wherever the constant stands, and its key is `api-error` by D6's rule that the parse catches every exception, on every supported Python; the writer checked on 2026-10-20 on Python 3.10.21, 3.11.16, 3.12.3, 3.13.15 and 3.14.7 that `json.loads` calls the hook with exactly those three texts and never for a string, `true`, `false`, `null` or a number (`1e999` included), that `NaNx` calls it on its `NaN` prefix, that `nan`, `-NaN`, `infinity`, `+Infinity` and `Inf` fail `json.loads` itself, and, with a prototype of D6's parse and node checks, that a valid answer carrying one constant in its `extensions` object gives `merged` with the `parse_int` hook alone, as round C8 left the parse, and `api-error` under this one, the same answer without the constant giving `merged` under both; D11 gains one test, for this ruling and C-40 together, with one fixture per constant, as the ruling words it, each in an `extensions` object the parse never reads; D6 also says that a float literal needs no bound, as C-40's "Not ruled" has it, with the writer's timing (a literal of 1,048,560 bytes, in its fraction, its integer part or before an exponent, parsed in under 10 ms on each interpreter, the slowest 9.8 ms, where the ruling's note says under 2 ms) | `design.md` Context and its table, D6, D11 |
 | C-40 (the lead's point, found in applying C-39): D6 says that a body that cannot be decoded or parsed is `api-error` but not who decodes it; given bytes, `json.loads` detects UTF-8, UTF-16 and UTF-32 and decodes with the `surrogatepass` error handler, so a body that is not UTF-8, and so not what the spec requires, would parse and could be answered | ruling | C-40: applied, design only: the parse decodes the body's bytes itself, with Python's UTF-8 codec and its default `strict` error handler, and passes `json.loads` that string, never the bytes, so that a body in UTF-16 or UTF-32, a string holding ED A0 80 (an encoded surrogate) and a body that begins with a UTF-8 byte order mark each fail and are `api-error` (RFC 8259 section 8.1 allows a parser to treat the byte order mark as an error); the writer re-ran the lead's `probe.py` and `probe2.py` with `-I` on Python 3.10.21, 3.11.16, 3.12.3, 3.13.15 and 3.14.7, with 15 of 15 on `probe2.py` and 16 of 19 on `probe.py` on each, the three FAIL lines of `probe.py` being the probe's own expectations (`NaNx` calls the hook on its `NaN` prefix; UTF-16 and UTF-32 without a byte order mark decode as UTF-8 and then fail the string parse), and D6 records what it saw: `json.loads` of bytes parsed UTF-16 and UTF-32 (little-endian, big-endian and with a byte order mark), the ED A0 80 body and the byte order mark body, and the strict decode raised `UnicodeDecodeError` for the UTF-16 and UTF-32 bodies with a byte order mark and for ED A0 80 and accepted the other four, which `json.loads` of the string refused with `JSONDecodeError`, as it did the UTF-8 byte order mark; D11's one test serves each as an otherwise valid answer that gives `merged` without the rule and `api-error` with it: UTF-16 and UTF-32, each little-endian without a byte order mark and with one (the ruling says only "UTF-16 and in UTF-32"; the forms are the writer's choice, one for each of the decode's failure and the parse's), ED A0 80 in a string of an `extensions` object, and a UTF-8 byte order mark first; it also serves the same answer in plain UTF-8, which gives `merged` (a control the ruling does not name, so that each failure comes from the rule and no other fault of the answer), and the fake `gh` writes a body as bytes, the seam these fixtures need; the test is no scenario | `design.md` Context and its table, D6, D11 |
+
+### Re-read and Codex Findings (round C10)
+
+Codex re-reviewed `f34dfe2` on 2026-10-20 (read 23:21Z) with one P2 at
+`design.md:381` (2026-10-20T23:14:10Z), on which the lead ruled (C-41), and lane
+openRepoProject-3's read-only verifier read the delta `05a424a..f34dfe2` (its
+confirm read of round C9, `confirm-c9-findings.md`, brett-wip 1d878441d) and
+found no HIGH, one MEDIUM and four LOWs, which the lead accepted (C-42, C-43).
+They edit `design.md`, this file and `tasks.md` only: no spec file changed,
+`specs/project-overview/spec.md` is still the file lane openRepoProject-4
+agreed, sha256
+`2ecd3d72b7cd32595d12f66206b7dd3c71df2cdfb9430122dd1ab0414ff1fe3e`, and
+`specs/project-command/spec.md` is unchanged.
+
+| Finding | Severity | Ruling | Section edited |
+| --- | --- | --- | --- |
+| Codex 10 (P2, on `f34dfe2`, `design.md:381`, 2026-10-20T23:14:10Z): D5 starts the `gh` child in `/`, and `gh` resolves a relative `GH_CONFIG_DIR` against its own working directory, so a caller whose credentials sit under a relative path reads `gh-unauthenticated`; Codex confirmed it with `gh` 2.96.0 and asks to resolve the variable against the original working directory before switching directories, or otherwise to preserve its path semantics | P2 | C-41: declined as a design change, kept as a residual. The ruling as first issued had D5 join each of `GH_CONFIG_DIR`, `XDG_CONFIG_HOME` and `HOME` that is not empty and does not begin with `/` to the realpath of the working directory; the lead amended it before it was applied, on lane openRepoProject-3's finding that `specs/project-overview/spec.md:404-411`, agreed by lane openRepoProject-4, has the `gh` child run in the filesystem root with every other variable passed on unread: anchoring the three would read and rewrite them, and the spec would need an edit, which is not made. A second reason is lane openRepoProject-4's offline check on `gh` 2.96.0 on 2026-10-20, with fake tokens: starting in `/` keeps the caller's working directory, which may lie inside a scanned repository, from supplying `gh`'s configuration (an empty `HOME` makes `gh` read `./.config/gh` from its working directory, which found a planted token from the caller's directory and none from `/`; an empty `GH_CONFIG_DIR` or `XDG_CONFIG_HOME` is treated as unset) and from receiving what `gh` writes (it rewrote `hosts.yml` into its multi-account form and created `config.yml` in the directory it used). D5 now says that a relative `GH_CONFIG_DIR` or `XDG_CONFIG_HOME`, or a relative or empty `HOME`, resolves against `/`: normally that names no configuration and the rows are `unavailable` with reason `gh-unauthenticated`, and if the resolved path exists `gh` reads the configuration there; an absolute path works; the writer's own run on `gh` 2.96.0 found each of the three relative values from the directory it was relative to, missed it from `/`, and found each made absolute from `/`. Risks gains the residual, naming `SSL_CERT_FILE` and `SSL_CERT_DIR` as the same kind of case and recording the lead's check that a `gh` configuration holding `http_unix_socket` made `gh api` send its request as plain HTTP over that socket with the token in the clear, so that a configuration planted in a world-writable directory under `/` could capture the token and serve a wrong answer, which authorizes nothing (D10); D11 pins by one short test that `GH_CONFIG_DIR`, relative or empty, reaches the fake `gh` byte for byte with working directory `/`; the README bullet of Impact adds, to the next step for `gh-unauthenticated`, to make a relative `GH_CONFIG_DIR`, `XDG_CONFIG_HOME` or `HOME` absolute | `design.md` Context and its table, D5, D11, Risks; Impact (README bullet) |
+| Lane openRepoProject-3's confirm read of round C9, MEDIUM-1 (`design.md:572-578`, :550-551): D6 says "a positive integer `number`" but not by type, and C9's "no field the parse reads is a float" leans on it; a check written `isinstance(n, int)` accepts JSON `true`, which the kept row would print as a boolean `number`, and one written `n == int(n)` accepts `1.0` and `true` and raises `OverflowError` on `1e999`, outside the parse's catch, so that it reaches exit 2 | MEDIUM | C-42: applied, design only, since `specs/project-overview/spec.md:466` already says "a positive integer": `number` is accepted only when `type(number) is int`, never a `bool` and never a `float`, and from 1 to 2,147,483,647; every check D6 makes on the parsed answer runs inside the parse's catch-everything boundary, so that a check that raises is `api-error` too; D11's 2,147,483,648 test gains `true`, `1.0` and `1e999` as `number`, each with a `url` ending `/pull/1`; the writer prototyped it with `-I` on Python 3.10.21, 3.11.16, 3.12.3, 3.13.15 and 3.14.7, with identical output: by type, `api-error` for `true`, `false`, `1.0`, `1e999` and 2,147,483,648 and `merged` for 2,147,483,647 and for 7; by `isinstance(number, int)`, `true` gave `merged`; by `number == int(number)`, `true` and `1.0` gave `merged` and `1e999` raised `OverflowError` outside the boundary | `design.md` Context and its table, D6, D11 |
+| Lane openRepoProject-3's confirm read of round C9, four LOWs. LOW-1 (D6): `1e999` is named but not what a body that carries one does. LOW-2 (D6): an escape of a lone surrogate is unruled, and D6 does not say why it is harmless. LOW-3 (D2, optional): D2 does not say how its two Git children's output is decoded. LOW-4 (D6, D11 and the C-39 row of round C9): (a) "A prototype of this parse and of D6's checks on a node" says more than the prototype's `answer()` checks; (b) D6 lists six UTF-16 and UTF-32 forms and D11 serves four without saying they are chosen; (c) "the five interpreters above" is ambiguous between two lists | LOW (four) | C-43: all four applied in `design.md`, with no rule changed beyond LOW-3's and no spec text. LOW-1: D6 says there is no `parse_float` hook, by decision, since a float literal outside the range of a double, such as `1e999` or `-1e999`, is grammatical JSON (RFC 8259 section 6 leaves range to the implementation, unlike `NaN`) and parses as `inf`: in a field the parse never reads the key is still answered, and as `number` it fails C-42's type check; the writer's prototype answered `merged` for `1e999` and `-1e999` in an `extensions` object on the five interpreters. LOW-2: D6 says that the escape (a backslash, `u` and D800, written in prose here and in D6) is ASCII, valid UTF-8 JSON, and parses, that no field the row keeps can hold one, `state`, `number`, `url` and `head_sha` being closed forms and the two open fields, `baseRefName` and `errors[].type`, being compared and never kept, so that C-40 concerns the body's bytes and not its strings; the prototype answered `merged` for that escape in an `extensions` string. LOW-3: D2 decodes each remote-target read's output as strict UTF-8, never with `surrogateescape`, an output that does not decode failing the read, which is `remote-target-unread` (the spec's "fails for any other cause", `specs/project-overview/spec.md:387-388`; the ruling cites :388-389), so a `baseRefName` can equal only a merge ref that is valid UTF-8 text. LOW-4: (a) D6 says "A prototype of D6's parse and of the node checks its fixtures need"; (b) D11 says its four fixtures are chosen from D6's six forms: little-endian, without and with a byte order mark, for each; (c) D6's C-39 paragraph names Python 3.10.21, 3.11.16, 3.12.3, 3.13.15 and 3.14.7. The ruling also asks for (a) in the C-39 row of round C9 above; that row stays as written, because lane openRepoProject-4's pin keeps lines 1252 to 1330 of this file byte for byte, and this row is its correction: that row's "this parse and of D6's checks on a node" is read as D6 now words it | `design.md` Context and its table, D2, D6, D11 |
