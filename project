@@ -3106,30 +3106,56 @@ def refuse(plan, refusal, run):
 
 
 def check_clean_arguments(args):
-    """The argument checks, before any Git child (T048 fills;
-    contracts/project-clean.md, "Argument checks"). Raises a Refused to
-    main(). First body: the baseline checks (project:671-672, :677-678,
-    :681-682, :708-709 and :724-725 at 961c405) moved ahead of resolution,
-    as the contract orders them, with their messages."""
+    """The argument checks, before any Git child, `git --version` included
+    (T048; contracts/project-clean.md, "Argument checks"; FR-019). Each raises
+    a Refused with code `invalid-arguments` to main(), in the contract table's
+    order: --all-safe given with --action, --branch or --worktree; --expect-plan
+    without both --all-safe and --apply; an --expect-plan value that is not 64
+    lowercase hexadecimal characters; --apply --json with --action push or
+    delete-branch, still refused (OQ-10), while --apply --json is accepted with
+    --all-safe and with --action remove; then the baseline checks of --apply
+    (project:677-678, :681-682, :708-709 and :724-725 at 961c405), their
+    messages kept (lead ruling R-45 (6)). Every flag the table does not refuse
+    keeps the baseline's handling: without --apply, --yes, --action, --branch
+    and --worktree are ignored, and so is an unused --branch or --worktree
+    (plan review M9). Arguments are read with getattr."""
     apply, action = getattr(args, "apply", False), getattr(args, "action", None)
-    if getattr(args, "json", False) and apply:
-        raise Refused("--json cannot be combined with --apply; use JSON for the read-only plan.")
-    if not apply:
+    all_safe, expected = getattr(args, "all_safe", False), getattr(args, "expect_plan", None)
+    message = None
+    if all_safe and (action is not None or getattr(args, "branch", None) is not None
+                     or getattr(args, "worktree", None) is not None):
+        message = TEXT["invalid_arguments_all_safe"]
+    elif expected is not None and not (all_safe and apply):
+        message = TEXT["invalid_arguments_expect_plan"]
+    elif expected is not None and not re.fullmatch(r"[0-9a-f]{64}", expected):
+        message = TEXT["invalid_arguments_expect_plan_value"]
+    elif not apply or all_safe:
         return
-    if not action:
-        raise Refused("--apply requires --action push|remove|delete-branch")
-    if action == "push" and not getattr(args, "branch", None):
-        raise Refused("Push cleanup requires --branch BRANCH")
-    if action == "remove" and not getattr(args, "worktree", None):
-        raise Refused("Worktree cleanup requires --worktree PATH")
-    if action == "delete-branch" and not getattr(args, "branch", None):
-        raise Refused("Branch cleanup requires --branch BRANCH")
+    elif getattr(args, "json", False) and action in ("push", "delete-branch"):
+        message = "--json cannot be combined with --apply; use JSON for the read-only plan."
+    elif not action:
+        message = "--apply requires --action push|remove|delete-branch"
+    elif action == "push" and not getattr(args, "branch", None):
+        message = "Push cleanup requires --branch BRANCH"
+    elif action == "remove" and not getattr(args, "worktree", None):
+        message = "Worktree cleanup requires --worktree PATH"
+    elif action == "delete-branch" and not getattr(args, "branch", None):
+        message = "Branch cleanup requires --branch BRANCH"
+    if message is not None:
+        raise Refused(message, code="invalid-arguments")
 
 
 def require_git(run):
-    """The version check, before resolution (T048 fills: git_version(run),
-    refusing `git-too-old` or `git-unavailable`, exit 2; FR-002). The
-    baseline checks no version, so this first body checks nothing."""
+    """The version check, once, after the argument checks and before
+    resolution (T048; FR-002, FR-053; contracts/project-clean.md, "Order of a
+    run"): git_version(run), memoized on the run, refusing `git-too-old` or
+    `git-unavailable` with its contract message, exit 2, before any repository
+    is probed. Returns None when Git may run."""
+    version = git_version(run)
+    if version.code == "git-too-old":
+        raise Refused(TEXT["git_too_old"].format(VERSION=version.text), code="git-too-old")
+    if version.code is not None:
+        raise Refused(TEXT["git_unavailable"].format(DETAIL=version.detail), code="git-unavailable")
     return None
 
 
