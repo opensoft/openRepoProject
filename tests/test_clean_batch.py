@@ -517,7 +517,9 @@ class BatchTests(clean_support.CleanCase):
             return sorted(names, key=lambda name: ({"main": main, **rows}[name]).raw_path)
 
         with mock.patch.object(project, "run_bounded", side_effect=AssertionError("a Git child ran")), \
-                mock.patch.object(project, "fs_call", side_effect=AssertionError("a filesystem call ran")):
+                mock.patch.object(project, "fs_call", side_effect=AssertionError("a filesystem call ran")), \
+                mock.patch.object(project, "reflog_gate", return_value=None), \
+                mock.patch.object(project, "index_gates", return_value=None):
             for mode in ("all-safe", "report"):
                 with self.subTest(mode=mode):
                     self.assertEqual(outcome(literal_plan(mode)),
@@ -572,11 +574,13 @@ class BatchTests(clean_support.CleanCase):
                                      ([], [("main", "main-worktree"), ("p", "hidden-local-state"),
                                            ("q", "deferred-target-cap")]))
                     self.assertEqual(seen, ["p"])
-        # Each stub passes every row, and the deferral stub takes every candidate.
+        # Gate 3 is pure under R-53 P-16 and passes every row whose registration
+        # was not read and found to disagree; gates 7, 9 and 10 read files or
+        # run children, so their own lanes' tests pin them (lead ruling R-71).
+        # The deferral stub takes every candidate.
         plan = literal_plan("all-safe")
         for row in (main, *rows.values()):
-            self.assertEqual([gate(row, plan, None) for gate in (project.registration_gate, project.reflog_gate,
-                                                                  project.index_gates)], [None] * 3)
+            self.assertEqual([project.registration_gate(row, plan, None)], [None])
         self.assertEqual(project.deferral_gate([rows["p"], rows["q"]], plan), ([rows["p"], rows["q"]], []))
 
     def test_clean_plan_document_keys(self):
