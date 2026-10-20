@@ -283,6 +283,10 @@ Lane: openRepoProject-4
   D6 for the parsers' bounds, added FR-015's remote-copy flag to the
   keep-filter's list and named R-70(b) as CHK025's cause; no requirement
   changes.
+  A last pass moved #24's pin from `ca34644` to its final head `fe5b245`
+  and #25's from `1c32667` to `129a4e2`, each cited range keeping its lines
+  but three of #25's `proposal.md` ranges, which move by 4; no requirement
+  changes.
 - Items marked incomplete require spec updates before `/speckit-clarify` or `/speckit-plan`
 
 ## Cross-cutting Requirements Quality (no-argument `/speckit.checklist`, 2026-10-19)

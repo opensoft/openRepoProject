@@ -36,6 +36,10 @@ changes no option's text but its pins; no recommendation changed letter.
 The fold of lane openRepoProject-3's R9 findings then added to Q17's option
 D what #25's replacement of the credential clause allows, and no
 recommendation changed letter.
+A last pass moved Q17's pins to #24's final head `fe5b245` and #25's
+`129a4e2`, each cited range keeping its lines but three of #25's
+`proposal.md` ranges, which move by 4, and changed no option's text but
+those pins and ranges; no recommendation changed letter.
 
 ---
 
@@ -627,7 +631,7 @@ caches `merged-removable`, on evidence the overview does not collect, and
 MODIFIES change 2's "Overview reuses the cleanup classifier and merge
 target" with the two sentences lane openRepoProject-4 agreed at `9f30fb9` (the
 words "for the same working directory and refs" agreed at `4d5855a`, unchanged
-at `ca34644`): the overview classifies such a row `ignored-local-files`, and
+at `fe5b245`): the overview classifies such a row `ignored-local-files`, and
 never classifies a row `merged-removable` where `project clean` classifies it
 otherwise for the same working directory and refs. It also names the
 ignored file of "Every protected classifier" as not a Python bytecode
@@ -652,8 +656,8 @@ spec.md's Out of Scope names both.
 if they are ratified before its plan, or leave them to their own features?
 
 **Recommended:** Option A - It is the order #25 sets (its tasks 2.1 and
-2.2, `tasks.md:20-21` at `1c32667`), and #24 allows it: #24 does not wait
-for feature 005 (its `proposal.md:625-626` at `ca34644`) and says its
+2.2, `tasks.md:20-21` at `129a4e2`), and #24 allows it: #24 does not wait
+for feature 005 (its `proposal.md:625-626` at `fe5b245`) and says its
 overview part is done in its own feature, never in feature 005
 (`proposal.md:569-572`). It costs nothing now: the overview's code is the
 same, and fixtures with an ignored `local.env` keep feature 005's parity
@@ -662,14 +666,14 @@ merges first and no second plan is needed. Its one cost is that departure,
 in the order where #24's code merges first; option B avoids the departure,
 by asking lane openRepoProject-5 to re-sequence #24, but not the divergence,
 which #24's design makes in every order once its code is on `main`
-(`design.md:658-661` and D14, `:1159-1165`, at `ca34644`).
+(`design.md:658-661` and D14, `:1159-1165`, at `fe5b245`).
 
 | Option | Description |
 |--------|-------------|
-| A | Leave both to their own features in every order, as #25 sets and as #24 states for its overview part ("never in feature 005"). Feature 005 builds change 2 as ratified and as the other answers amend it, reserves no flag, field or hook for `--remote`, and gives every fixture it compares with `project clean` that has an ignored file one such as `local.env`, which no cache rule #24 proposes admits. If #24's realization merges first, a cache-only worktree is `ignored-local-files` in the overview and `merged-removable` in `project clean`: a departure, on Brett Heap's word, from change 2's equality clause (POD:381-386, on DI:620-624), which #24's own design calls "against change 2's equality clause" (its `design.md:658-661` at `ca34644`), until #24's overview block is archived, after which that block records the same divergence as a lasting exception. In the other order, the same divergence arrives with #24's code as #24's own change: its D14 excludes the cache case from feature 005's parity tests once feature 005 has landed. So the divergence reaches `main` in every order, and only feature 005's own departure, built against change 2 as ratified, belongs to the #24-first order; in the other order the divergence is #24's own amendment, in force until its block archives. It is the cautious direction, and no feature 005 test depends on it. |
+| A | Leave both to their own features in every order, as #25 sets and as #24 states for its overview part ("never in feature 005"). Feature 005 builds change 2 as ratified and as the other answers amend it, reserves no flag, field or hook for `--remote`, and gives every fixture it compares with `project clean` that has an ignored file one such as `local.env`, which no cache rule #24 proposes admits. If #24's realization merges first, a cache-only worktree is `ignored-local-files` in the overview and `merged-removable` in `project clean`: a departure, on Brett Heap's word, from change 2's equality clause (POD:381-386, on DI:620-624), which #24's own design calls "against change 2's equality clause" (its `design.md:658-661` at `fe5b245`), until #24's overview block is archived, after which that block records the same divergence as a lasting exception. In the other order, the same divergence arrives with #24's code as #24's own change: its D14 excludes the cache case from feature 005's parity tests once feature 005 has landed. So the divergence reaches `main` in every order, and only feature 005's own departure, built against change 2 as ratified, belongs to the #24-first order; in the other order the divergence is #24's own amendment, in force until its block archives. It is the cautious direction, and no feature 005 test depends on it. |
 | B | As A, and ask lane openRepoProject-5 to amend #24 so that its realization merges after feature 005, its proposal and tasks saying so. |
 | C | Realize #24's block in feature 005 whenever #24 is ratified before feature 005's plan, whatever order the realizations merge in: a departure from #24's order, from OQ-27 and from change 2's Out of Scope, on Brett Heap's word. Feature 005 then cannot merge until #24's code is on `main`, since the added scenario's test cannot pass before it and FR-049 counts no skipped test. #25 stays its own feature. |
-| D | Realize both in feature 005 if they are ratified before its plan, departing from the order of both, from OQ-27 and from change 2's Out of Scope on Brett Heap's word: `--remote` joins this feature, adding one requirement and 16 scenarios to the overview, and #25's `project-command` block, which MODIFIES [E] on draft PR #19's text (10 scenarios, one added). Feature 005 then inherits #25's dependency on PR #19 and on feature 004's runner (`proposal.md:330-341`, `:363-366` and `:426-434` at `1c32667`), and amends spec 005's Out of Scope and Dependencies, which reverses "`--remote` stays an invalid invocation here", and the two requirements that sentence cites: FR-039 (an argument error prints usage and no JSON) and FR-042 (exit status 2 for an invalid invocation). It also changes FR-040 as #25's remote-only paragraph of "Overview is local and read-only" has it (its `spec.md:13-39` at `1c32667`): the network clause stops binding the `gh` children that `--remote` runs, which make network requests, and only them, the `project` process and every Git child staying bound; the credential clause is replaced by one that also lets the `project` process hold and test a remote's URL for user information within bounds (in memory only while it derives the GitHub `owner/repository`; no part of the user information retained, compared, printed, logged, sent or used to authenticate; the URL never forwarded with it), and that has such a read's standard error drained and discarded unexamined (`spec.md:27-37` at `1c32667`); and both outputs gain a "queried live" label beside "as of the last fetch". SC-002 stays true: its audit hook watches the `project` process, which opens no connection in a `--remote` run (#25's scenario "A remote run stays read-only apart from its queries", `spec.md:46-49`). |
+| D | Realize both in feature 005 if they are ratified before its plan, departing from the order of both, from OQ-27 and from change 2's Out of Scope on Brett Heap's word: `--remote` joins this feature, adding one requirement and 16 scenarios to the overview, and #25's `project-command` block, which MODIFIES [E] on draft PR #19's text (10 scenarios, one added). Feature 005 then inherits #25's dependency on PR #19 and on feature 004's runner (`proposal.md:334-345`, `:367-370` and `:430-438` at `129a4e2`), and amends spec 005's Out of Scope and Dependencies, which reverses "`--remote` stays an invalid invocation here", and the two requirements that sentence cites: FR-039 (an argument error prints usage and no JSON) and FR-042 (exit status 2 for an invalid invocation). It also changes FR-040 as #25's remote-only paragraph of "Overview is local and read-only" has it (its `spec.md:13-39` at `129a4e2`): the network clause stops binding the `gh` children that `--remote` runs, which make network requests, and only them, the `project` process and every Git child staying bound; the credential clause is replaced by one that also lets the `project` process hold and test a remote's URL for user information within bounds (in memory only while it derives the GitHub `owner/repository`; no part of the user information retained, compared, printed, logged, sent or used to authenticate; the URL never forwarded with it), and that has such a read's standard error drained and discarded unexamined (`spec.md:27-37` at `129a4e2`); and both outputs gain a "queried live" label beside "as of the last fetch". SC-002 stays true: its audit hook watches the `project` process, which opens no connection in a `--remote` run (#25's scenario "A remote run stays read-only apart from its queries", `spec.md:46-49`). |
 
 ---
 
