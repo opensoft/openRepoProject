@@ -247,7 +247,15 @@ Lane: openRepoProject-4
   `fdbcebb`, each cited claim holding there; Q16 and Q17 were added.
   The totals below were recounted by script: PN-2's return moves one item
   from fixed to plan note. Re-validation: 16 of 16 items pass, with the
-  checks of iteration 2 re-run by script on the edited spec.
+  checks of iteration 2 re-run by script on the edited spec. The later folds
+  are `fdbcebb`, `3dceaec`, `d6e4ec5`, `7eb64de` and `143a0ea`, which edited
+  only `spec.md` and `clarify-questions.md`, with this file also at `7eb64de`
+  and `143a0ea`, and this one, which moves feature 004's head to `6ae927f`,
+  where its code has changed (its T047 and lane G's follow-up) and EC-031 and
+  the R-54 sentence read it, moves the dated readings of Q2, Q3, Q4, Q12, Q14
+  and Q15 there, each cited claim holding (Q8's option D keeps its `b0243e5`
+  citation of the contract, now at `:331`), and applies lane
+  openRepoProject-3's R6-1 to R6-3.
 - Items marked incomplete require spec updates before `/speckit-clarify` or `/speckit-plan`
 
 ## Cross-cutting Requirements Quality (no-argument `/speckit.checklist`, 2026-10-19)

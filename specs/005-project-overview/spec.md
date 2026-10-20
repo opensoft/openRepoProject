@@ -53,20 +53,24 @@ and `targets` (POD:610-617). They are cited from
 `contracts/project-clean.md`) at `d81b3d9`, where lane openRepoProject-2's
 doc rounds 3 to 5 (rulings R-39 to R-51) merged them on branch
 `004-project-clean-all-safe`, as `acc822e`, `5a02c1a` and `d81b3d9`, except
-EC-031, which cites the branch's head. That head, `b0243e5`, changes the
-documents after `d81b3d9` only by the tier tags, file and verify fields and
-ticks of `tasks.md`, one line of `plan.md` and the first part of its doc
-round 6 (rulings R-55 to R-57, with R-53's P-16 and P-22 and R-54's X-3);
-its code, unchanged since `a32d20b`, has its tasks T001 to T035 built, among
-them its five incremental parsers, four of which the overview drives
-(Dependencies), its child handle and its one-wide driver, with the state,
-phase and signal slot of its "Invocation" entity, and its evidence model
-(tasks T027 to T033), merged into that branch as `cce8dbd`; none of it is on
-`main`.
+EC-031, which cites the branch's head, and EC-002 and the Dependencies,
+which cite its `project` there. That head, `6ae927f`, changes the
+documents after `d81b3d9` by the tier tags, file and verify fields and
+ticks of `tasks.md`, two additions to `plan.md` and its doc round 6
+(rulings R-55 to R-57 and R-59 to R-62, with the items of R-53 and R-54
+that they settle); its code, which changed after `a32d20b` by its T047
+(`clean` as the frozen pipeline, merged as `6fb0fb7`) and by lane G's
+follow-up to its evidence model (the merge that is the head), has its
+tasks T001 to T035 and T047 built, among them its five incremental
+parsers, four of which the overview drives (Dependencies), its child
+handle and its one-wide driver, with the state, phase and signal slot of
+its "Invocation" entity, and its evidence model (tasks T027 to T033),
+merged into that branch as `cce8dbd`; none of it is on `main`.
 The change pins its code citations at `da33d92`; this spec cites no line of
-`project`, `README.md` or `.github/workflows/tests.yml`, and the plan
-re-pins them against the `main` of its day (proposal, "Dependencies and
-Sequencing").
+`project`, `README.md` or `.github/workflows/tests.yml` as `main` has them,
+its only lines of feature 004's `project` being those of EC-031 and the
+Dependencies at `6ae927f`, and the plan re-pins every citation against the
+`main` of its day (proposal, "Dependencies and Sequencing").
 
 **Created before feature 004 merges**: The change creates this feature only
 after feature 004 merges (proposal, Status and "Dependencies and
@@ -1330,7 +1334,7 @@ path"; "Non-UTF-8 common directory".
   command's own handling, `Cancelled.` on standard error and status 130, as
   for any other subcommand; only a SIGINT during interpreter start-up or
   argument parsing, before that handling is entered, gives the
-  interpreter's own report (feature 004's `project` at `a32d20b`).
+  interpreter's own report (feature 004's `project` at `6ae927f`).
 - **EC-003**: A default root holding more than 128 candidates is incomplete
   on every run by design: governance task 2.1 found 219 on the measuring
   workstation, a `scan-limit` error on `candidates` with 91 omitted, and no
@@ -1474,13 +1478,23 @@ path"; "Non-UTF-8 common directory".
   registration disagreement, whose outcome in either direction is no status
   probe, `inspection-error` set directly, a `registration-mismatch` finding
   in place of that class's `inspection-error` finding, and no error (FR-007;
-  DI:259, :267-270). The packet names no case of two entries for one path.
-  Feature 004's data model, for the evidence model the overview shares,
-  refuses them with that outcome (lead ruling R-57, withdrawing R-51(c)'s
-  known limit; "Worktree identity and registration" at `b0243e5`); its code
-  at that head still passes them (R-51(c)), and its `tasks.md` at `b0243e5`
-  (:746-747) has lane G's follow-up build the refusal. The rows keep the
-  registry's order, so the output stays deterministic.
+  DI:259, :267-272). The packet names no case of two entries for one path.
+  Feature 004, for the evidence model the overview shares, refuses them
+  too, and gives three parts of that outcome: no status probe,
+  `inspection-error` and `registration-mismatch` (its data model,
+  "Worktree identity and registration" at `6ae927f`; lead ruling R-57,
+  withdrawing R-51(c)'s known limit, and R-59 D5, which compares the
+  registry records' raw path bytes). Its code builds the refusal at that
+  head (`7880023`): `shared_paths` (`project:2619-2626`) names the raw
+  paths that more than one entry lists, `worktree_rows` (:2747-2801) tells
+  `_read_row` (:2710-2744) whether a row's path is one of them, and that
+  reader looks at presence first, so a row not present goes no further and
+  stays `stale-worktree` with no duplicate check (R-57 L2), while any other
+  row on such a path gets `registered` false with no registration read. The
+  finding in place of the class's `inspection-error` finding and the
+  absence of an error are the packet's rule (DI:267-272), not feature
+  004's. The rows keep the registry's order, so the output stays
+  deterministic.
 - **EC-032**: When a value of the identity probe holds a line feed, as the
   name of a repository directory can (US11 s1), the probe is repeated, one
   child per option, each counted (change 1's design D6, row 3), so that for
@@ -2333,22 +2347,24 @@ and [P] are change 1's requirements as the header names them.
   change `project` and the tests after it, and the CI change of `e9d6711`
   (#32) moved the two workflow lines the change cites,
   `.github/workflows/tests.yml:10` and `:18`, to lines 9 and 17, so this
-  spec cites no line of `project`, `README.md` or the workflow, and the plan
-  re-pins every citation against the `main` of its day (proposal,
-  "Dependencies and Sequencing").
+  spec cites no line of `project`, `README.md` or the workflow as `main` has
+  them, its only lines of feature 004's `project` being those of EC-031 and
+  the Dependencies at `6ae927f`, and the plan re-pins every citation against
+  the `main` of its day (proposal, "Dependencies and Sequencing").
 - Feature 004's names (classifications, gate and refusal codes, row error
   codes, `schema_version`, exit statuses, the shared constants) are taken
   from its spec, data model and contract at `d81b3d9`, apart from EC-031,
-  which reads its branch's head, `b0243e5`; that head's documents change
-  after `d81b3d9` only by the tier tags, file and verify fields and ticks of
-  `tasks.md`, one line of `plan.md` and the first part of its doc round 6
-  (rulings R-55 to R-57, with R-53's P-16 and P-22 and R-54's X-3), and its
-  code, unchanged since `a32d20b`, has its tasks T001 to T035 built, among
-  them its five incremental parsers, its child handle, its driver and its
-  evidence model (merged as `cce8dbd`), and none of it is on `main`; where
-  the change and feature 004 differ for the overview, the change governs,
-  and the plan reconciles against feature 004's text at the state that
-  question Q2 of `clarify-questions.md` settles.
+  which reads its branch's head, `6ae927f`; that head's documents change
+  after `d81b3d9` by the tier tags, file and verify fields and ticks of
+  `tasks.md`, two additions to `plan.md` and its doc round 6 (rulings R-55
+  to R-57 and R-59 to R-62, with the items of R-53 and R-54 that they
+  settle), and its code, which changed after `a32d20b` by its T047 and by
+  lane G's follow-up to its evidence model, has its tasks T001 to T035 and
+  T047 built, among them its five incremental parsers, its child handle,
+  its driver and its evidence model (merged as `cce8dbd`), and none of it
+  is on `main`; where the change and feature 004 differ for the overview,
+  the change governs, and the plan reconciles against feature 004's text at
+  the state that question Q2 of `clarify-questions.md` settles.
 - "Every existing test" means the suite on `main` when the feature is
   implemented: 96 tests at `961c405`, still 96 at `e9d6711`, plus feature
   004's. Two test conditions are this spec's own, not the change's: a test
@@ -2422,17 +2438,29 @@ and [P] are change 1's requirements as the header names them.
   reports as `batch_row_cap`, `report_row_cap` and `targets`), Git-first
   resolution [R], the path rules [P] and the 1 MiB manifest read (proposal,
   "Dependencies and Sequencing"; `add-project-clean-all-safe` clarifications
-  N2 and design D2). Lane openRepoProject-2's ruling R-54 (2026-10-20), as
-  that lane told lane openRepoProject-4, has feature 004 separate each
-  evidence step's reads from a pure decision that this feature's own loop
-  can call, the evidence keyed by device and inode, with the repeated
-  identity probe at the root skippable; that split is a follow-up still to
-  come in that lane, and feature 004's `tasks.md` at `b0243e5` names R-54
-  once, as the X-3 of its T047 (line 1113, the best-effort `REFUSED:` and
-  `Cancelled.` prints), and records no such split. The driver's start and
-  outcome rules stay inside feature 004's one-handle driver, and this
-  feature's plan factors them out, without changing behaviour, after
-  feature 004 lands.
+  N2 and design D2). Lane openRepoProject-2's ruling R-54 (2026-10-20) has
+  feature 004 separate each evidence step's reads from a pure decision that
+  this feature's own loop can call, the evidence keyed by device and inode,
+  with the repeated identity probe at the root skippable; that split is
+  built in feature 004's `project` at `6ae927f` (commit `7d70b02`, a
+  refactor with no behaviour change). The deciders run no Git child and
+  make no filesystem call: `presence_from_lstat` (`project:2263`),
+  `registration_verdict` (:2454), `main_worktree_decision` (:2369) and
+  `row_evidence` (:2641), with `gitdir_line` (:2328) and `shared_paths`
+  (:2619). The wrappers read in the evidence's order and keep their return
+  shapes: `main_worktree` (:2408), `verify_registration` (:2482),
+  `inspect_repository` (:2519) and `worktree_rows` (:2747), which also
+  takes the registry records to build rows for (`records=None`, R-53(d)),
+  its reads of one row being `_read_row` (:2710). The memo of
+  `inspect_repository` is keyed by the common directory's (dev, ino)
+  (:2565-2568), and row 5, the repeated identity probe at the main
+  worktree, sits behind the keyword `repeat_identity_at_root`, on by
+  default, a result without it being memoized apart (:2519, :2582). Feature
+  004's `tasks.md` at that head still records no such split: it names R-54
+  only as the X-2 and X-3 of its tasks (:1846, :1172). The driver's start
+  and outcome rules stay inside feature 004's one-handle driver, unchanged
+  at `6ae927f`, and this feature's plan factors them out, without changing
+  behaviour, after feature 004 lands.
 - **Change 1's archive order**: change 2 archives after change 1. This
   feature realizes change 2's MODIFIED `project-review-safety` requirement,
   not change 1's `project-clean-review-safety` (proposal, Capabilities;
