@@ -230,17 +230,34 @@ message when there is one.
 
 ### Plan (FR-003, FR-019, FR-024, FR-025, FR-031, FR-032; D12 to D14)
 
-What one invocation would do in one repository. Built fresh by every run.
+What one invocation would do in one repository. Built fresh by every run,
+from the resolution's evidence: `resolve_clean_target()` returns `root` and
+`evidence`, `inspect_repository()`'s dict, and `build_plan()` reuses that
+evidence, so that row 3 runs once, where the argument resolves (contract,
+"Git children"). A caller that passes no evidence gets that read and its
+check as before, and the baseline's `Cannot inspect Git repository at ROOT`
+remains only for such a caller (lead rulings R-71 (b) and R-72 (g)).
 
 | Mode | Spelled | Row cap | Selection |
 | --- | --- | --- | --- |
 | `report` | every other invocation without `--all-safe`: plain `project clean`, with or without `--json`, and flags without `--apply` | 256 | what `--all-safe` would select at 128 rows or fewer; null above 128, with the note `inspect-cap` and `rows` |
 | `all-safe` | `--all-safe`, preview or `--apply` | 128 | every row passing every gate, at most 16 |
-| `single` | `--apply --action remove --worktree P` | 128, P exempt and probed first | P alone |
+| `single` | `--apply --action remove --worktree P` | 128, P exempt and probed first, unless P's own realpath cannot be read (below) | P alone |
 | `single`, push and delete-branch | `--apply --action push` or `--action delete-branch`, which take single mode's cap and bounds only (below) | 128, no exemption | the named branch; completeness the batch's |
 
 `clean_mode(args)` (T035) decides the mode as this table spells it: `single`
 for `--apply` with any `--action` (lead rulings R-49 and R-57).
+
+The row cap counts the registry entries that become rows, the main worktree
+and missing rows included: a bare repository's `bare` entry, and a first
+record equal to `common_dir` with no main worktree named, are no rows (D8),
+so neither counts (lead ruling R-73 (d), a fill of the delta's "every
+registry entry counting"). In mode single, when P's own realpath cannot be
+read, P's match is undecided: no entry is exempt from the cap, the rows
+inspected are the main worktree and the 127 linked worktrees with the
+smallest paths, as the delta's scenario "Row cap and planning failures"
+takes them, and the plan refuses with `inspection-incomplete` (lead rulings
+R-73 (d) and R-74 (a)).
 
 Fields, in the delta's envelope order: `schema_version`, `observed_at`,
 `mode`, the baseline `root`, `target_branch` and `tracking_freshness`,

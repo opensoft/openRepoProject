@@ -1319,13 +1319,20 @@ L-8).
   5T + 3 (F the repository-wide children this invocation ran, W the status
   probes, E the hidden-state probes, T the selected targets) and `operations` T
   (plan review M7), and `performed` from the counters of the `Invocation`; and
-  `omitted` as `{count: 0, exactness: "exact"}` until T075. In mode single, P,
+  `omitted` as `{count: 0, exactness: "exact"}` until T075. `repo` is
+  `resolve_clean_target()`'s dict (T107), whose `evidence` `build_plan()`
+  reuses, so that row 3 runs once, where the argument resolves (the
+  contract's child table); a caller that passes no evidence gets
+  `inspect_repository(root, run)` and the check as before, and the
+  baseline's `Cannot inspect Git repository at ROOT`, with code None,
+  remains only for such a caller, T107 coding the resolution's cases (lead
+  rulings R-71 (b) and R-72 (g)). In mode single, P,
   expanded, joined to the working directory and realpath'd by one bounded call,
   is matched against every registry row: a row matches when its raw path
   bytes equal it, or else when its own realpath, one bounded call each, does;
   a realpath that cannot be read counts as a match, failing closed, and every
-  row matches when P's own cannot be read (lead ruling R-69, reading 2).
-  Exactly one decided match is P's row. No match records
+  row the row cap takes matches when P's own cannot be read (lead ruling
+  R-69, reading 2). Exactly one decided match is P's row. No match records
   `worktree-not-found` through T047's
   `refuse()` on the plan it returns, never raising and never returning 2,
   so that the plan envelope, not the extended error object, carries it, and
@@ -1335,8 +1342,15 @@ L-8).
   selected, P's own evidence is incomplete, and `check_plan()` refuses with
   `inspection-incomplete`, never the baseline's `No unique linked worktree`
   refusal, a twin that passes gates 1 to 5 being excluded as `not-requested`
-  (lead rulings R-62 (a), R-67 (b) and R-69). Otherwise P is
-  selected alone, and every other eligible row is `not-requested`; in mode
+  (lead rulings R-62 (a), R-67 (b) and R-69). When P's own realpath cannot
+  be read, P's match is undecided: no entry is exempt from the row cap, the
+  rows inspected are the ones the cap takes, the main worktree and the 127
+  linked worktrees with the smallest paths, as the `project-clean` delta's
+  scenario "Row cap and planning failures" takes them (its
+  `spec.md:828-834`), and `check_plan()` refuses with `inspection-incomplete`
+  (lead rulings R-73 (d) and R-74 (a); T069's
+  `test_clean_single_target_p_s_own_realpath_unread_keeps_the_cap`). Otherwise
+  P is selected alone, and every other eligible row is `not-requested`; in mode
   report the plan is the same, with `apply_allowed: false`.
   — files: `project`
   — verify: `python3 -c "import sys,re;t=open('project').read();A=sys.argv[1:];c=lambda r:t.split('# region '+r+'\n')[1].split('# endregion '+r+'\n')[0];M=[a for a in A if not ((a.split('%',1)[1] not in c(a.split('%',1)[0])) if '%' in a else (a.split('~',1)[1] in c(a.split('~',1)[0])) if '~' in a else re.search(r'^[a-z]*\s?'+re.escape(a.split(':',1)[1])+r'\b',c(a.split(':',1)[0]),re.M))];[print('region check failed:',m) for m in M];sys.exit(1 if M or not A else 0)" 'plan:select_entry' 'plan:plan_completeness' && python3 project clean --help >/dev/null`
@@ -1828,10 +1842,21 @@ US2, US7 and US9.
   R-53 P-14); with another worktree
   unreadable (`not_root`), the batch refuses with `inspection-incomplete` while
   the named removal removes P; an unregistered path gives `worktree-not-found`,
-  and a dirty worktree `target-excluded` with `reason: "dirty"`. Scenario:
-  "Single target equals a one-item batch".
+  and a dirty worktree `target-excluded` with `reason: "dirty"`. Two more
+  tests of the scenario, the single lane's:
+  `test_clean_single_target_a_failed_realpath_read_counts_as_a_match`
+  (another entry's realpath read fails during P's match: it counts as a
+  match, failing closed, so P's match is undecided and nothing is selected;
+  `inspection-incomplete`, exit 2, nothing asked or removed; lead ruling R-72
+  (c)) and `test_clean_single_target_p_s_own_realpath_unread_keeps_the_cap`
+  (P's own realpath read fails among 131 entries: no entry is exempt from
+  the cap, the rows inspected are the main worktree and the 127 smallest
+  paths, with no status probe past the cap, `omitted` counts 3, and the run
+  refuses with `inspection-incomplete`, exit 2, nothing removed; lead
+  rulings R-73 (d) and R-74 (a)). Scenario: "Single target equals a one-item
+  batch".
   — files: `tests/test_clean_single.py`
-  — verify: `python3 -c "import sys,unittest as u;L=u.defaultTestLoader;f=lambda s:[i for t in s for i in (f(t) if isinstance(t,u.TestSuite) else [t.id()])];I=[i for i in f(L.discover('tests',pattern=sys.argv[1])) if not i.startswith('unittest.')];A=sys.argv[2:];M=[a for a in A if not any(a in ('*',i.split('.')[-1]) for i in I)];[print('not collected:',m) for m in M];[print(e) for e in L.errors];sys.exit(1 if M or L.errors or not A else 0)" test_clean_single.py 'test_clean_single_target_equals_a_one_item_batch'`
+  — verify: `python3 -c "import sys,unittest as u;L=u.defaultTestLoader;f=lambda s:[i for t in s for i in (f(t) if isinstance(t,u.TestSuite) else [t.id()])];I=[i for i in f(L.discover('tests',pattern=sys.argv[1])) if not i.startswith('unittest.')];A=sys.argv[2:];M=[a for a in A if not any(a in ('*',i.split('.')[-1]) for i in I)];[print('not collected:',m) for m in M];[print(e) for e in L.errors];sys.exit(1 if M or L.errors or not A else 0)" test_clean_single.py 'test_clean_single_target_equals_a_one_item_batch' 'test_clean_single_target_a_failed_realpath_read_counts_as_a_match' 'test_clean_single_target_p_s_own_realpath_unread_keeps_the_cap'`
 - [x] T070 [P] [US3] [S] Add to `tests/test_clean_single.py`:
   `test_clean_a_named_removal_beside_another_row_s_inspection_error` (P
   removed, the other row a non-blocking `inspection-incomplete` note, exit 0);
@@ -1844,10 +1869,13 @@ US2, US7 and US9.
   worktree first, are inspected; P's status probe is the first status child
   in the counting log, P is removed, and `omitted` is `{count: 2,
   exactness: "exact"}`, the 2 written as a literal (R9), under a
-  non-blocking `inspect-cap` note, exit 0; lead ruling R-53 P-15).
-  Scenarios: "A named
-  removal beside another row's inspection error"; "A named removal among
-  seventeen eligible rows"; "A named removal beyond the row cap".
+  non-blocking `inspect-cap` note, exit 0; lead ruling R-53 P-15). The cap
+  counts the registry entries that become rows, all 131 here, since a bare
+  repository's `bare` entry and a first record equal to `common_dir` with no
+  main worktree are no rows (D8; lead ruling R-73 (d), a fill of the delta's
+  "every registry entry counting"). Scenarios: "A named removal beside
+  another row's inspection error"; "A named removal among seventeen eligible
+  rows"; "A named removal beyond the row cap".
   — files: `tests/test_clean_single.py`
   — verify: `python3 -c "import sys,unittest as u;L=u.defaultTestLoader;f=lambda s:[i for t in s for i in (f(t) if isinstance(t,u.TestSuite) else [t.id()])];I=[i for i in f(L.discover('tests',pattern=sys.argv[1])) if not i.startswith('unittest.')];A=sys.argv[2:];M=[a for a in A if not any(a in ('*',i.split('.')[-1]) for i in I)];[print('not collected:',m) for m in M];[print(e) for e in L.errors];sys.exit(1 if M or L.errors or not A else 0)" test_clean_single.py 'test_clean_a_named_removal_beside_another_row_s_inspection_error' 'test_clean_a_named_removal_among_seventeen_eligible_rows' 'test_clean_a_named_removal_beyond_the_row_cap'`
 - [x] T071 [P] [US3] [S] Add `test_clean_remove_a_merged_clean_worktree` to
@@ -1888,10 +1916,12 @@ US2, US7 and US9.
   own status passes through, and a hook that ends its own `git` with SIGKILL
   gives 137; plan review M3) and
   `test_clean_push_and_delete_branch_escape_their_paths` (a repository root
-  holding a tab and U+202E, written as the escape `\u202e` in the test's
-  source: `--action push` and `--action delete-branch` print `Working
-  directory:` and the command with the root in the `$'...'` form and never the
-  raw code points; plan review B2, FR-041, SC-010).
+  holding a tab and U+202E, the code point built with `chr(0x202E)` in the
+  test's source, never written there as the raw character or as a `\u`
+  escape written by an edit tool (lead ruling R-74 (c)(2)): `--action push`
+  and `--action delete-branch` print `Working directory:` and the command
+  with the root in the `$'...'` form and never the raw code points; plan
+  review B2, FR-041, SC-010).
   — files: `tests/test_clean_push.py`
   — verify: `python3 -c "import sys,unittest as u;L=u.defaultTestLoader;f=lambda s:[i for t in s for i in (f(t) if isinstance(t,u.TestSuite) else [t.id()])];I=[i for i in f(L.discover('tests',pattern=sys.argv[1])) if not i.startswith('unittest.')];A=sys.argv[2:];M=[a for a in A if not any(a in ('*',i.split('.')[-1]) for i in I)];[print('not collected:',m) for m in M];[print(e) for e in L.errors];sys.exit(1 if M or L.errors or not A else 0)" test_clean_push.py 'test_clean_a_signal_during_the_push_or_branch_deletion' 'test_clean_push_and_delete_branch_escape_their_paths'`
 - [ ] T074 [P] [US3] [O] Add to `tests/test_clean_push.py` (PR #19; plan.md LQ-3;
@@ -1927,13 +1957,19 @@ US2, US7 and US9.
 - [x] T075 [P] [US3] [O] Fill in `build_plan()` (region `plan`; FR-013, FR-031,
   D13): the registry read whole in one child before any cap; the row caps (128
   in modes all-safe and single, 256 in mode report, every registry entry
-  counting, the main worktree and missing rows included); rows past the cap
-  left uninspected and counted in `omitted` with `exactness: "exact"`; an
-  all-safe plan past its cap incomplete with `inspect-cap`; and mode single: P
+  that becomes a row counting, the main worktree and missing rows included,
+  while a bare repository's `bare` entry and a first record equal to
+  `common_dir` with no main worktree are no rows, D8; lead ruling R-73 (d));
+  rows past the cap left uninspected and counted in `omitted` with
+  `exactness: "exact"`; an all-safe plan past its cap incomplete with
+  `inspect-cap`; and mode single: P
   matched against the whole registry and inspected first, exempt from the cap,
   so that the rows inspected are P and the first 128 entries other than P,
-  the main worktree first (lead ruling R-53 P-15),
-  the limit of 16 counting P alone, and another row's `inspection-error`,
+  the main worktree first (lead ruling R-53 P-15), unless P's own realpath
+  cannot be read: P's match is then undecided, no entry is exempt, the rows
+  inspected are the first 128 entries, the main worktree first, and the plan
+  refuses with `inspection-incomplete` (T049; lead rulings R-73 (d) and R-74
+  (a)); the limit of 16 counting P alone, and another row's `inspection-error`,
   omission by the cap or being left unprobed recorded as the non-blocking notes
   `inspection-incomplete`, `inspect-cap` and `deadline-exceeded`, while P's own
   evidence stays strict. These non-blocking notes serve `--action remove`
@@ -1942,7 +1978,7 @@ US2, US7 and US9.
   another row's `inspection-error`, the cap or the deadline makes it incomplete
   (plan review B1). A report above 128 rows is T101's. T069 and T070 pass.
   — files: `project`
-  — verify: `python3 -m unittest discover -s tests -p 'test_clean_single.py' -k '*.test_clean_single_target_equals_a_one_item_batch' -k '*.test_clean_a_named_removal_beside_another_row_s_inspection_error' -k '*.test_clean_a_named_removal_among_seventeen_eligible_rows' -k '*.test_clean_a_named_removal_beyond_the_row_cap'`
+  — verify: `python3 -m unittest discover -s tests -p 'test_clean_single.py' -k '*.test_clean_single_target_equals_a_one_item_batch' -k '*.test_clean_single_target_a_failed_realpath_read_counts_as_a_match' -k '*.test_clean_single_target_p_s_own_realpath_unread_keeps_the_cap' -k '*.test_clean_a_named_removal_beside_another_row_s_inspection_error' -k '*.test_clean_a_named_removal_among_seventeen_eligible_rows' -k '*.test_clean_a_named_removal_beyond_the_row_cap'`
 - [ ] T076 [P] [US3] [O] Fill `push_or_delete()` in region `push` (FR-010, FR-041,
   FR-046, FR-047): both actions resolve through the pipeline and plan in mode
   single for the cap and the bounds, with the batch's completeness (T075; plan
@@ -1951,13 +1987,16 @@ US2, US7 and US9.
   refuses with `inspection-incomplete`, `inspect-cap` or `deadline-exceeded`,
   exit 2, when either inspection is incomplete, another row's
   `inspection-error` included; add `show_push_plan()`, which prints `Working
-  directory:` and the command as `show_plan()` does but each path through
-  `human_path()`, so that a root holding a Cc, Cf, Zl or Zp code point prints
-  in the `$'...'` form (B2), while `show_plan()` stays as it is for `new` and
-  `update`; `confirm()` stays as it is, under `default_signals()` alone (R4,
-  M1) and with the `Invocation`'s clock paused around it, as T054 pauses it
-  for the removal question, since time at the question does not count
-  (analyze M3); push refuses a branch whose configured upstream's
+  directory:` and the command as `show_plan()` does, the `Working directory:`
+  line in the prose form, `human_path(cwd)`, and every word of the command
+  line through `human_path(word, command=True)`, P-8's "each path" being the
+  paths inside the command line, so that a root holding a Cc, Cf, Zl or Zp
+  code point prints in the `$'...'` form in both (B2; lead ruling R-74
+  (c)(1)), while `show_plan()` stays as it is for `new` and `update`;
+  `confirm()` stays as it is, under `default_signals()` alone (R4, M1) and
+  with the `Invocation`'s clock paused around it, as T054 pauses it for the
+  removal question, since time at the question does not count (analyze
+  M3); push refuses a branch whose configured upstream's
   remote-tracking ref is gone, whatever its class, naming the reason
   `remote-gone`: a `Refused` with no code and `reason="remote-gone"`, its
   message the contract's, never a nineteenth code (lead ruling R-45);
@@ -2627,9 +2666,12 @@ checkpoint, beside US2, US3 and US9.
   The refusal lives in region `resolution`, never in `main_worktree()`, so
   that `status` and `doctor`, which reach `main_worktree()` after T117, report
   such a repository and never exit 2 for it (FR-050, FR-055, FR-061; analyze
-  H4, lead ruling R-42). Each refusal passes complete `context` objects, every
-  key of their contract tuples present, since `error_document()` raises
-  `KeyError` on a missing key (R-49).
+  H4, lead ruling R-42). It returns `root`, the main worktree, and
+  `evidence`, `inspect_repository()`'s dict, which `build_plan()` reuses, so
+  that row 3 runs once, where the argument resolves (the contract's child
+  table; lead ruling R-71 (b)). Each refusal passes complete `context`
+  objects, every key of their contract tuples present, since
+  `error_document()` raises `KeyError` on a missing key (R-49).
   — files: `project`
   — verify: `python3 -c "import sys,re;t=open('project').read();A=sys.argv[1:];c=lambda r:t.split('# region '+r+'\n')[1].split('# endregion '+r+'\n')[0];M=[a for a in A if not ((a.split('%',1)[1] not in c(a.split('%',1)[0])) if '%' in a else (a.split('~',1)[1] in c(a.split('~',1)[0])) if '~' in a else re.search(r'^[a-z]*\s?'+re.escape(a.split(':',1)[1])+r'\b',c(a.split(':',1)[0]),re.M))];[print('region check failed:',m) for m in M];sys.exit(1 if M or not A else 0)" 'resolution:is_bare_name' && python3 -m unittest discover -s tests -p 'test_clean_resolution.py' -k '*.test_clean_bare_name_predicate' -k '*.test_clean_a_submodule_checkout' -k '*.test_clean_a_bare_repository_reached_from_a_linked_worktree'`
 - [x] T108 [US7] [O] Fill `declared_tracking_branch(root)` (region `evidence`; D8,

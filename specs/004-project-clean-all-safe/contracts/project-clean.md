@@ -57,7 +57,12 @@ the run refuses with `inspection-incomplete`, exit 2, before any
 `target-excluded`, because P's own evidence is strict and an incomplete plan
 is refused first (lead rulings R-57, R-62 and R-67 (b)). A path two entries
 share is such a case, both entries also `registration-mismatch`,
-`inspection-error` rows.
+`inspection-error` rows. So is a P whose own realpath cannot be read: every
+entry the row cap takes counts as a match, none is exempt from the cap, so
+the rows inspected are the main worktree and the 127 linked worktrees with
+the smallest paths, as the delta's scenario "Row cap and planning failures"
+takes them, and the run refuses with `inspection-incomplete`, exit 2 (lead
+rulings R-73 (d) and R-74 (a)).
 
 ## Order of a run
 
@@ -129,7 +134,7 @@ use it, is unchanged, and so are its signals (research.md R4).
 | report or preview, `--json` | one JSON document: the plan envelope, or the extended error object | `Cancelled.` |
 | `--apply` (removal) | the plan, the question, progress, "D18 wait line", the result | `REFUSED: ...`, `Cancelled.` |
 | `--apply --json` (removal) | one JSON document: the plan envelope or the extended error object when the run stops before the apply phase, otherwise the apply result record | the plan, the question, progress, "D18 wait line", the result text, `Cancelled.` |
-| push, delete-branch | `Cleanup action: ...`, the plan (`Working directory:` and the command, through the path-escaping printer below), `Type yes` and the delegate's own output, as today | `REFUSED: ...`, `Cancelled.`, the delegate's own |
+| push, delete-branch | `Cleanup action: ...`, the plan (`Working directory:` in the path-escaping printer's prose form, and every word of the command in its command form, below; lead ruling R-74 (c)(1)), `Type yes` and the delegate's own output, as today | `REFUSED: ...`, `Cancelled.`, the delegate's own |
 
 Under `--json` a refusal is a JSON document on standard output, never a
 `REFUSED:` line. Three cases print no JSON document: a parser usage error;
@@ -311,7 +316,7 @@ values in data-model.md).
 | `manifest-invalid` | resolve | unreadable, not a mapping, wrong kind, over 1 MiB by `st_size`, or PyYAML missing |
 | `no-merge-target` | resolve | no candidate exists as a local branch |
 | `inspection-incomplete` | plan | a repository-wide probe failed, a row is `inspection-error`, or a row was left unprobed |
-| `inspect-cap` | plan | more rows than the mode's cap |
+| `inspect-cap` | plan | more rows than the mode's cap, which counts the registry entries that become rows, the main worktree and missing rows included; a bare repository's `bare` entry and a first record equal to `common_dir` with no main worktree are no rows (D8; lead ruling R-73 (d)) |
 | `deadline-exceeded` | plan | the work deadline passed while planning |
 | `worktree-not-found` | select | `--worktree` matches no registry entry |
 | `target-excluded` | select | a gate excludes P; `reason` carries the gate |
