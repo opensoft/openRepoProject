@@ -1022,8 +1022,10 @@ to B-37 (the table "Re-read and Codex Findings (round B5)" below):
   rule's `probe-timeout`, an ordinary preflight error in Codex's words, not
   deadline exhaustion. The new line is printed only for a read stopped before
   the first removal; a stage that never starts, and the check before the first
-  hand-off, keep the stop block alone, as they did. One AND of "No time for a
-  cache stage" pins both outcomes; design D1, D7, D8, D11, D12, D14 and Risks
+  hand-off, keep the stop block alone, as they did. CD-2's mapping of a
+  floor-ended partial stage to `refused`, and the decline of lane 3's LOW 14,
+  concern a stage that has removed an entry, and stand. One AND of "No time for
+  a cache stage" pins both outcomes; design D1, D7, D8, D11, D12, D14 and Risks
   follow.
 - **B-35, the two drafts describe each other at today's heads** (A-25 for
   #26). Design D4 described #23's joint fit at `ca96701`, "13 of 16, 11 in its
@@ -1035,7 +1037,8 @@ to B-37 (the table "Re-read and Codex Findings (round B5)" below):
   worst case of 17 reflog children. Every figure is #26's, read at `9ff8202`
   and checked against its stated arithmetic; none is recomputed here from other
   inputs. The copies in design D13 and in B-19 above say "13 of 16 at
-  `ca96701`". #26's own D7 adds this change's worst-case shapes under A-25.
+  `ca96701`". A-25 has #26's own D7 add this change's worst-case shapes at
+  `e1049b2`.
 - **B-36, `tasks.md` 2.2 ticked again.** Lane openRepoProject-4 agreed B-30 as
   committed in `4d5855a`, and its byte check found the overview delta differs
   from the agreed `9f30fb9` only by "for the same working directory and refs",
