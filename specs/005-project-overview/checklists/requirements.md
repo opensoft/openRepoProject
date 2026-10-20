@@ -259,7 +259,24 @@ Lane: openRepoProject-4
   worktree on a branch named `HEAD` as a fill of the inspection-error rule
   (feature 004's lead ruling R-61(b)), the header, the Assumptions and
   requirement rows 4 and 5 of the traceability table name it, and CHK025
-  below reads EC-025 to EC-033; no requirement changes.
+  below reads EC-025 to EC-033; no requirement changes. A later pass, taking
+  lane openRepoProject-3's R7 findings (R7-1 to R7-4) and its R8 findings on
+  EC-033 (L1 to L7), moves feature 004 from `6ae927f` to its head `96a08d4`,
+  where its US1 plan lane is built (tasks T001 to T040 and T047 to T053, 47
+  of 133) and no document differs but the ticks of `tasks.md`: every line of
+  its `project` that EC-031, EC-033 and the Dependencies cite moves by 15
+  with its text unchanged, each cited claim holding, and Q2, Q3, Q4, Q12,
+  Q14 and Q15 read it there. It also re-pins #24 from `fffc194` to
+  `ca34644`, whose overview delta is unchanged, and #25 from `67e43ae` to
+  `1c32667`, whose overview spec changed in its first requirement, so that
+  the cites after it moved, in Q17 and in the Dependencies; and it names
+  `e45155a` where the 96 tests of `main` are counted. The Dependencies
+  sentence that had every parser the overview drives report a reached record
+  bound now says that only the status parser does and that FR-015's
+  keep-filter is this feature's own to build (lead ruling R-70(b)), plan
+  note PN-16 of `integration.md`; EC-033's wording follows R8, and plan note
+  PN-17 of `testing-strategy.md` has the plan's test list name it; no
+  requirement changes.
 - Items marked incomplete require spec updates before `/speckit-clarify` or `/speckit-plan`
 
 ## Cross-cutting Requirements Quality (no-argument `/speckit.checklist`, 2026-10-19)
@@ -329,7 +346,7 @@ Lane: openRepoProject-4
 ### Ambiguities and Conflicts
 
 - [x] CHK023 Is every point left to the plan named as such? [Ambiguity, Spec Assumptions]
-  - Result: pass. The spec names its one; this run's plan notes PN-1 to PN-15, PN-2 narrowed on 2026-10-20 to an exception of any other kind in human mode, are listed in the domain checklists' Evaluation sections.
+  - Result: pass. The spec names its one; this run's plan notes PN-1 to PN-17, PN-2 narrowed on 2026-10-20 to an exception of any other kind in human mode, are listed in the domain checklists' Evaluation sections.
 - [x] CHK024 Are the differences between change 2 and feature 004 recorded with which text governs? [Conflict, Spec Assumptions, Clarifications C-33]
   - Result: pass.
 - [x] CHK025 Are the recorded residuals (EC-001, EC-002, EC-006, EC-022, EC-025 to EC-033) kept apart from requirements, so that none reads as a promise? [Ambiguity, Spec Edge Cases]
@@ -346,6 +363,6 @@ before it carry no ids and are not counted.
 
 Plan notes: none.
 
-All 17 checklists: 411 items: 357 pass, 22 fixed in the spec, 15 open, 15 plan
-notes (PN-1 to PN-15; PN-2 narrowed to an exception of any other kind in human
-mode), 2 new questions. Recounted by script on 2026-10-20.
+All 17 checklists: 413 items: 357 pass, 22 fixed in the spec, 15 open, 17
+plan notes (PN-1 to PN-17; PN-2 narrowed to an exception of any other kind
+in human mode), 2 new questions. Recounted by script on 2026-10-20.

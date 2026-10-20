@@ -27,7 +27,12 @@ Q16 and Q17 added; no recommendation changed letter. After lane
 openRepoProject-3's delta reads, the questions were corrected again at
 `fdbcebb`, `d6e4ec5`, `7eb64de` and in the fold of its R4 and R5 findings,
 with the pins of Q3, Q4, Q14 and Q15 moved to feature 004's `b0243e5` at
-`fdbcebb`, and no recommendation changed letter.
+`fdbcebb`; in the fold of its R6 findings (`b6f43fd`), which moved the
+readings of Q2, Q3, Q4, Q12, Q14 and Q15 to feature 004's `6ae927f` and
+reworded the last sentence of Q17's option A; and in the pass that took its
+R7 findings, which moves those readings to feature 004's `96a08d4`, corrects
+Q14's Context, moves Q17's pins to #24's `ca34644` and #25's `1c32667`, and
+changes no option's text but its pins; no recommendation changed letter.
 
 ---
 
@@ -68,13 +73,15 @@ word". Feature 004's branch holds, since `a32d20b`, the code of its tasks
 T001 to T035, all ticked, so that its Phase 1 and Phase 2 are complete: the
 runner (its child handle and driver, with the `Invocation` state and the
 signal slot), its five incremental parsers and its evidence model (T027 to
-T033, merged as `cce8dbd`); its head, `6ae927f`, adds to that code its
-T047, `clean` as the frozen pipeline (merged as `6fb0fb7`), and, as the
-merge that is the head, lane G's follow-up to the evidence model, and adds
-to its documents its doc round 6 (rulings R-55 to R-57 and R-59 to R-62).
-Option B's precondition is therefore met, and none of it is on `main`. The
-overview drives feature 004's child handle, driver and parsers (spec,
-Dependencies), and the plan re-pins every code citation against `main`.
+T033, merged as `cce8dbd`); its head, `96a08d4`, adds to that code its T047,
+`clean` as the frozen pipeline (merged as `6fb0fb7`), lane G's follow-up to
+the evidence model (merged as `6ae927f`) and its US1 plan lane (merged as
+`2733dea`), so that its tasks T001 to T040 and T047 to T053 are built (47 of
+133), and adds to its documents its doc round 6 (rulings R-55 to R-57 and
+R-59 to R-62), which `6ae927f` already held. Option B's precondition is
+therefore met, and none of it is on `main`. The overview drives feature
+004's child handle, driver and parsers (spec, Dependencies), and the plan
+re-pins every code citation against `main`.
 
 **Question**: Which state of feature 004 must exist before the plan starts?
 
@@ -95,7 +102,7 @@ order the change already sets.
 
 **Context**: Feature 004 adds a CI job that builds Git 2.36 and runs the
 `clean`, `status` and `doctor` tests with it first on PATH (feature 004
-FR-067; change 1's design D17). Its task T003, ticked at `6ae927f`, put that
+FR-067; change 1's design D17). Its task T003, ticked at `96a08d4`, put that
 job, `git-floor`, in its branch's workflow beside every job of the `test`
 matrix, selecting `-k test_clean_ -k test_status_ -k test_doctor_`; it is not
 on `main`. The overview refuses a Git older than 2.36 and so claims to work
@@ -126,7 +133,7 @@ which covers `project new` (feature 002) and says nothing of the overview;
 change 2's Impact names no `AGENTS.md` change. An agent reading `project
 overview --json` could run a suggested `project clean <root> --all-safe`
 with `--apply --yes` on its own. Feature 004's task T123, open at
-`6ae927f`, adds to `AGENTS.md` a short section, "Cleaning up worktrees for a
+`96a08d4`, adds to `AGENTS.md` a short section, "Cleaning up worktrees for a
 person", which says never to answer the removal question, or pass `--yes`,
 on a person's behalf unless they asked for that run; its tasks list that
 edit among its departures from change 1, stated in its feature PR body for
@@ -394,7 +401,7 @@ traceback and no exit 120; before the apply phase the error is
 outranks it (130, 143 or 129, with `Cancelled.`); after the apply phase
 begins, writes are best-effort and the exit table decides; and a failed
 advisory write (`Cancelled.`, `REFUSED:`) never changes the exit status
-(feature 004's research.md R4 at `6ae927f`, where its T047 builds it as
+(feature 004's research.md R4 at `96a08d4`, where its T047 builds it as
 `write_failed`, `check_writes` and `advise`). Whether R-55's exit 2 holds
 for a `project clean` preview or report once its plan is built is lane
 openRepoProject-2's LQ-7, pending with Brett Heap: change 1's
@@ -471,19 +478,21 @@ an error finding, and exit 1 on every run. Separately, a candidate whose
 beside its worktrees) fails its identity probe as written, since the probe
 asks for a toplevel, so the repository appears only as a `probe-failed`
 error row with none of its worktrees (spec EC-030, C-54). Feature 004 at
-`6ae927f` reads a bare first record the same way for its own subcommands:
+`96a08d4` reads a bare first record the same way for its own subcommands:
 its `main_worktree()` returns no main worktree, with its cause, and never
-raises, so `root` is null and rows 4 to 7 run in the common directory (its
-T031, T107 and FR-055; analyze H4, lead ruling R-42); `clean` alone refuses
-such a repository, with `target-not-repository-root`, while `status` and
-`doctor` report a linked worktree of a bare repository and never exit 2 for
-it (its T115). Its data model, "Repository identity", says the common
+raises, so `root` is null and rows 6 and 7 run in the common directory (its
+T031 says rows 4 to 7, but its code at that head runs row 4 where row 3 ran,
+`project:2586`, which reads the same registry, as lead ruling R-68 records;
+its T107 and its FR-055; analyze H4, lead ruling R-42); `clean` alone
+refuses such a repository, with `target-not-repository-root`, while `status`
+and `doctor` report a linked worktree of a bare repository and never exit 2
+for it (its T115). Its data model, "Repository identity", says the common
 directory is "never a worktree row", as its FR-017 does for a first record
 equal to it, and no document of feature 004 says more of how `status` or
 `doctor` lists that record. H4 leaves the `.bare` layout as it was: feature
 004's identity probe (its contract, row 3) runs before `main_worktree()`,
-and in the holder directory it exits 128 with "this operation must be run
-in a work tree" (reproduced on Git 2.43.0 for this question).
+and in the holder directory it exits 128 with "this operation must be run in
+a work tree" (reproduced on Git 2.43.0 for this question).
 
 **Question**: How should a bare repository be reported?
 
@@ -512,7 +521,7 @@ around the collection loop, while rendering follows that loop (design D6).
 A signal that arrives after the first byte of the result reaches standard
 output, and before the last, cannot meet both rules: the bytes written
 cannot be withdrawn, and exiting 0 or 1 would ignore the signal. Feature
-004 decides this moment for `project clean` at `6ae927f`: its record-only
+004 decides this moment for `project clean` at `96a08d4`: its record-only
 handlers stay installed "from the argument checks to the last write", so a
 signal recorded while a preview or report is being written does not stop
 the write, and the slot, read once more before the run exits, gives
@@ -615,7 +624,7 @@ caches `merged-removable`, on evidence the overview does not collect, and
 MODIFIES change 2's "Overview reuses the cleanup classifier and merge
 target" with the two sentences lane openRepoProject-4 agreed at `9f30fb9` (the
 words "for the same working directory and refs" agreed at `4d5855a`, unchanged
-at `fffc194`): the overview classifies such a row `ignored-local-files`, and
+at `ca34644`): the overview classifies such a row `ignored-local-files`, and
 never classifies a row `merged-removable` where `project clean` classifies it
 otherwise for the same working directory and refs. It also names the
 ignored file of "Every protected classifier" as not a Python bytecode
@@ -640,24 +649,24 @@ spec.md's Out of Scope names both.
 if they are ratified before its plan, or leave them to their own features?
 
 **Recommended:** Option A - It is the order #25 sets (its tasks 2.1 and
-2.2, `tasks.md:20-21` at `67e43ae`), and #24 allows it: #24 does not wait
-for feature 005 (its `proposal.md:601-602` at `fffc194`) and says its
+2.2, `tasks.md:20-21` at `1c32667`), and #24 allows it: #24 does not wait
+for feature 005 (its `proposal.md:625-626` at `ca34644`) and says its
 overview part is done in its own feature, never in feature 005
-(`proposal.md:545-548`). It costs nothing now: the overview's code is the
+(`proposal.md:569-572`). It costs nothing now: the overview's code is the
 same, and fixtures with an ignored `local.env` keep feature 005's parity
 tests true in every order, so the plan is the same whichever realization
 merges first and no second plan is needed. Its one cost is that departure,
 in the order where #24's code merges first; option B avoids the departure,
 by asking lane openRepoProject-5 to re-sequence #24, but not the divergence,
 which #24's design makes in every order once its code is on `main`
-(`design.md:592-595` and D14, `:1036-1042`, at `fffc194`).
+(`design.md:658-661` and D14, `:1159-1165`, at `ca34644`).
 
 | Option | Description |
 |--------|-------------|
-| A | Leave both to their own features in every order, as #25 sets and as #24 states for its overview part ("never in feature 005"). Feature 005 builds change 2 as ratified and as the other answers amend it, reserves no flag, field or hook for `--remote`, and gives every fixture it compares with `project clean` that has an ignored file one such as `local.env`, which no cache rule #24 proposes admits. If #24's realization merges first, a cache-only worktree is `ignored-local-files` in the overview and `merged-removable` in `project clean`: a departure, on Brett Heap's word, from change 2's equality clause (POD:381-386, on DI:620-624), which #24's own design calls "against change 2's equality clause" (its `design.md:592-595` at `fffc194`), until #24's overview block is archived, after which that block records the same divergence as a lasting exception. In the other order, the same divergence arrives with #24's code as #24's own change: its D14 excludes the cache case from feature 005's parity tests once feature 005 has landed. So the divergence reaches `main` in every order, and only feature 005's own departure, built against change 2 as ratified, belongs to the #24-first order; in the other order the divergence is #24's own amendment, in force until its block archives. It is the cautious direction, and no feature 005 test depends on it. |
+| A | Leave both to their own features in every order, as #25 sets and as #24 states for its overview part ("never in feature 005"). Feature 005 builds change 2 as ratified and as the other answers amend it, reserves no flag, field or hook for `--remote`, and gives every fixture it compares with `project clean` that has an ignored file one such as `local.env`, which no cache rule #24 proposes admits. If #24's realization merges first, a cache-only worktree is `ignored-local-files` in the overview and `merged-removable` in `project clean`: a departure, on Brett Heap's word, from change 2's equality clause (POD:381-386, on DI:620-624), which #24's own design calls "against change 2's equality clause" (its `design.md:658-661` at `ca34644`), until #24's overview block is archived, after which that block records the same divergence as a lasting exception. In the other order, the same divergence arrives with #24's code as #24's own change: its D14 excludes the cache case from feature 005's parity tests once feature 005 has landed. So the divergence reaches `main` in every order, and only feature 005's own departure, built against change 2 as ratified, belongs to the #24-first order; in the other order the divergence is #24's own amendment, in force until its block archives. It is the cautious direction, and no feature 005 test depends on it. |
 | B | As A, and ask lane openRepoProject-5 to amend #24 so that its realization merges after feature 005, its proposal and tasks saying so. |
 | C | Realize #24's block in feature 005 whenever #24 is ratified before feature 005's plan, whatever order the realizations merge in: a departure from #24's order, from OQ-27 and from change 2's Out of Scope, on Brett Heap's word. Feature 005 then cannot merge until #24's code is on `main`, since the added scenario's test cannot pass before it and FR-049 counts no skipped test. #25 stays its own feature. |
-| D | Realize both in feature 005 if they are ratified before its plan, departing from the order of both, from OQ-27 and from change 2's Out of Scope on Brett Heap's word: `--remote` joins this feature, adding one requirement and 16 scenarios to the overview, and #25's `project-command` block, which MODIFIES [E] on draft PR #19's text (10 scenarios, one added). Feature 005 then inherits #25's dependency on PR #19 and on feature 004's runner (`proposal.md:311-322`, `:344-347` and `:407-415` at `67e43ae`), and amends spec 005's Out of Scope and Dependencies, which reverses "`--remote` stays an invalid invocation here", and the two requirements that sentence cites: FR-039 (an argument error prints usage and no JSON) and FR-042 (exit status 2 for an invalid invocation). It also changes FR-040 as #25's remote-only paragraph of "Overview is local and read-only" has it (its `spec.md:13-29` at `67e43ae`): the network clause stops binding the `gh` children that `--remote` runs, which make network requests, and only them, the `project` process and every Git child staying bound; the credential clause is replaced; and both outputs gain a "queried live" label beside "as of the last fetch". SC-002 stays true: its audit hook watches the `project` process, which opens no connection in a `--remote` run (#25's scenario "A remote run stays read-only apart from its queries", `spec.md:36-39`). |
+| D | Realize both in feature 005 if they are ratified before its plan, departing from the order of both, from OQ-27 and from change 2's Out of Scope on Brett Heap's word: `--remote` joins this feature, adding one requirement and 16 scenarios to the overview, and #25's `project-command` block, which MODIFIES [E] on draft PR #19's text (10 scenarios, one added). Feature 005 then inherits #25's dependency on PR #19 and on feature 004's runner (`proposal.md:330-341`, `:363-366` and `:426-434` at `1c32667`), and amends spec 005's Out of Scope and Dependencies, which reverses "`--remote` stays an invalid invocation here", and the two requirements that sentence cites: FR-039 (an argument error prints usage and no JSON) and FR-042 (exit status 2 for an invalid invocation). It also changes FR-040 as #25's remote-only paragraph of "Overview is local and read-only" has it (its `spec.md:13-39` at `1c32667`): the network clause stops binding the `gh` children that `--remote` runs, which make network requests, and only them, the `project` process and every Git child staying bound; the credential clause is replaced; and both outputs gain a "queried live" label beside "as of the last fetch". SC-002 stays true: its audit hook watches the `project` process, which opens no connection in a `--remote` run (#25's scenario "A remote run stays read-only apart from its queries", `spec.md:46-49`). |
 
 ---
 

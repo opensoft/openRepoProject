@@ -73,6 +73,8 @@ Lane: openRepoProject-4
   - Result: pass.
 - [x] CHK024 Edge: do tests wait for the open questions rather than assume an answer? [Edge Case, Spec Assumptions]
   - Result: pass. No open question alters a requirement until Brett Heap answers it.
+- [ ] CHK025 Edge: does the plan's test list name EC-033 (a branch named `HEAD`), which no functional requirement or scenario names? [Edge Case, Traceability, Gap, Spec EC-033, FR-049]
+  - Result: plan note PN-17.
 
 ## Notes
 
@@ -86,9 +88,10 @@ Lane: openRepoProject-4
 
 ## Evaluation
 
-Evaluated on 2026-10-19 against `spec.md` at `8f433f7`. 24 items: 24 pass, 0
-fixed in the spec, 0 open, 0 plan notes, 0 new questions. An open item waits
-on the question or residual its result names; a plan note is for the plan, not
-the spec; a new question is asked in `clarify-questions.md`.
+Evaluated on 2026-10-19 against `spec.md` at `8f433f7`; CHK025 added on
+2026-10-20, after lane openRepoProject-3's R8 read of EC-033. 25 items: 24
+pass, 0 fixed in the spec, 0 open, 1 plan notes, 0 new questions. An open
+item waits on the question or residual its result names; a plan note is for
+the plan, not the spec; a new question is asked in `clarify-questions.md`.
 
-Plan notes: none.
+Plan notes: PN-17 (CHK025).

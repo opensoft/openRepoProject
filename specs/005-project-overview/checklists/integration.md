@@ -73,6 +73,8 @@ Lane: openRepoProject-4
   - Result: pass.
 - [x] CHK024 Edge: are installed copies elsewhere (workBenches' `onp`) addressed? [Edge Case, Spec Assumptions]
   - Result: pass.
+- [ ] CHK025 Edge: is the place of FR-015's keep-filter left to the plan, feature 004's `RefParser` keeping every record and offering no hook for it? [Edge Case, Dependency, Gap, Spec FR-015, Dependencies]
+  - Result: plan note PN-16.
 
 ## Notes
 
@@ -86,9 +88,11 @@ Lane: openRepoProject-4
 
 ## Evaluation
 
-Evaluated on 2026-10-19 against `spec.md` at `8f433f7`. 24 items: 21 pass, 0
-fixed in the spec, 3 open, 0 plan notes, 0 new questions. An open item waits
-on the question or residual its result names; a plan note is for the plan, not
-the spec; a new question is asked in `clarify-questions.md`.
+Evaluated on 2026-10-19 against `spec.md` at `8f433f7`; CHK025 added on
+2026-10-20, after lane openRepoProject-3's R7 read and the re-pin to feature
+004's `96a08d4`. 25 items: 21 pass, 0 fixed in the spec, 3 open, 1 plan
+notes, 0 new questions. An open item waits on the question or residual its
+result names; a plan note is for the plan, not the spec; a new question is
+asked in `clarify-questions.md`.
 
-Plan notes: none.
+Plan notes: PN-16 (CHK025).
