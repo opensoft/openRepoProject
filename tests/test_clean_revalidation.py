@@ -131,6 +131,11 @@ class RevalidationTests(clean_support.CleanCase):
                                       if path.name != ".git") if tree.exists() else None
         return self.git(root, "worktree", "list", "--porcelain"), self.branches(root), files
 
+    def registered(self, root):
+        """The registry's worktree paths, in its order."""
+        return [line for line in self.git(root, "worktree", "list", "--porcelain").splitlines()
+                if line.startswith("worktree ")]
+
     def counting(self, hooks=None, env=None):
         """The counting wrapper first on PATH, with hooks: (env, log)."""
         bin_dir, log = self.base / "counting-bin", self.base / "children.log"
@@ -412,6 +417,131 @@ class RevalidationTests(clean_support.CleanCase):
         for name in ("holder.orig", "holder.copy"):
             for tree in trees:
                 self.assertTrue((holder.with_name(name) / tree.name / f"work-{tree.name}").is_file(), (name, tree))
+
+    # T081: "State changes before revalidation", "Branch advances before
+    # removal" and "Deleted upstream reappears before revalidation".
+
+    def manifest(self, root, tracking_branch=None, text=None):
+        """Write root's project.yaml: a project manifest, with tracking_branch
+        when given, or text as it is."""
+        if text is None:
+            text = "kind: project-manifest\n"
+            if tracking_branch is not None:
+                text += f"tracking_branch: {tracking_branch}\n"
+        (Path(root) / "project.yaml").write_text(text)
+
+    def test_clean_state_changes_before_revalidation(self):
+        def common_dir(root):
+            return Path(self.git(root, "rev-parse", "--path-format=absolute", "--git-common-dir").strip())
+
+        def ignored_file(root, trees):
+            (common_dir(root) / "info").mkdir(exist_ok=True)
+            with open(common_dir(root) / "info" / "exclude", "a") as stream:
+                stream.write("*.log\n")
+            (trees[0] / "build.log").write_text("ignored")
+
+        def merge_target_commit(root, trees):
+            self.git(root, "commit", "-q", "--allow-empty", "-m", "the merge target gains a commit")
+
+        def through_manifest(root):
+            # The plan resolves the merge target from the manifest; `release`
+            # is another existing branch.
+            self.git(root, "branch", "release")
+            self.manifest(root, "main")
+
+        def through_origin_head(root):
+            # No manifest: the plan resolves the merge target through
+            # origin/HEAD, which names main; `release` exists locally and at
+            # origin, and the narrowed ref listing names neither.
+            self.git(root, "branch", "release")
+            self.git(root, "push", "-q", "origin", "main", "release")
+            self.git(root, "symbolic-ref", "refs/remotes/origin/HEAD", "refs/remotes/origin/main")
+
+        cases = [
+            ("ignored-file", None, ignored_file, "main"),
+            ("merge-target-commit", None, merge_target_commit, "main"),
+            ("manifest-edited", through_manifest, lambda root, trees: self.manifest(root, "release"), "manifest"),
+            ("manifest-unparseable", through_manifest,
+             lambda root, trees: self.manifest(root, text="kind: project-manifest\ntracking_branch: [main\n"),
+             "manifest"),
+            # Lead ruling R-77: the manifest's tracking_branch is compared as
+            # written, so a spelling that resolves the same still differs.
+            ("manifest-spelled-with-its-remote", through_manifest,
+             lambda root, trees: self.manifest(root, "origin/main"), "manifest"),
+            ("origin-head-plan-gains-manifest", through_origin_head,
+             lambda root, trees: self.manifest(root, "release"), "origin-head"),
+            ("origin-head-repointed", through_origin_head,
+             lambda root, trees: self.git(root, "symbolic-ref", "refs/remotes/origin/HEAD",
+                                          "refs/remotes/origin/release"), "origin-head"),
+        ]
+        for case, setup, change, source in cases:
+            with self.subTest(case):
+                root, trees = self.batch(case)
+                if setup is not None:
+                    setup(root)
+                preview = self.run_json("clean", root, "--all-safe", "--json").document
+                self.assertEqual((preview["merge_target"]["name"], preview["merge_target"]["source"]),
+                                 ("main", source))
+                self.assertEqual(len(preview["selected"]), 2)
+                before = self.registered(root)
+                result = self.apply(root, lambda: change(root, trees))
+                self.assert_stopped_at_first(result, trees, "state-changed")
+                self.assertEqual(self.registered(root), before, "nothing removed")
+                self.assertTrue(all(tree.is_dir() for tree in trees))
+
+    def test_clean_branch_advances_before_removal(self):
+        root, trees = self.batch("advances")
+        planned = self.head(trees[0])
+        moved = []
+        result = self.apply(root, lambda: moved.append(self.commit(trees[0], "advance", allow_empty=True)))
+        self.assert_stopped_at_first(result, trees, "branch-changed")
+        self.assertNotEqual(moved[0], planned)
+        first = result.document["targets"][0]
+        self.assertEqual(first["planned_sha"], planned)
+        # Plan review M13: the registry entry from the registry listing, the
+        # branch and its new SHA from the ref listing, the path from an lstat.
+        self.assertEqual(first["reconciliation"], record(True, True, True, moved[0]))
+        self.assertIs(first["reconciliation"]["reconciled"], True)
+        self.assertEqual(self.head(root, "refs/heads/001-p"), moved[0], "the branch is kept at the new commit")
+        self.assertTrue(all(tree.is_dir() for tree in trees))
+        self.assertIn(TEXT["stop_block"].format(PATH=trees[0], REASON="branch-changed", K=0, N=2,
+                                                NOT_ATTEMPTED=trees[1], ROOT=root), result.stderr.splitlines())
+
+    def test_clean_deleted_upstream_reappears_before_revalidation(self):
+        def deleted_upstreams(case):
+            # P and Q, each on a branch whose upstream's remote-tracking ref is
+            # deleted locally (the remote keeps the branch): `upstream` is
+            # recorded with `upstream_oid`, `ahead` and `behind` null.
+            root, trees = self.batch(case)
+            for name in NAMES[:2]:
+                self.git(root, "update-ref", "-d", f"refs/remotes/origin/{name}")
+            preview = self.run_json("clean", root, "--all-safe", "--json").document
+            self.assertEqual([(entry["upstream"], entry["upstream_oid"], entry["ahead"], entry["behind"],
+                               entry["remote_present"]) for entry in preview["selected"]],
+                             [(f"origin/{name}", None, None, None, False) for name in NAMES[:2]])
+            return root, trees
+
+        def fetch(name):
+            return ("fetch", "-q", "origin", f"refs/heads/{name}:refs/remotes/origin/{name}")
+
+        # P's upstream recreated at the question: P differs from its plan.
+        root, trees = deleted_upstreams("p-reappears")
+        before = self.snapshot(root, trees)
+        result = self.apply(root, lambda: self.git(root, *fetch("001-p")))
+        self.assert_stopped_at_first(result, trees, "state-changed")
+        self.assertEqual(self.snapshot(root, trees)[0], before[0], "nothing removed")
+
+        # Q's recreated after P's removal child exits 0 and before its rescan:
+        # P, null in the plan and null again, is removed; Q is refused.
+        root, trees = deleted_upstreams("q-reappears")
+        env, log = self.counting({"post": when_target(trees[0], sh_git("-C", root, *fetch("002-q")))})
+        result = self.apply(root, env=env)
+        self.assertEqual(self.stages(result), [(str(trees[0]), "removed", None),
+                                               (str(trees[1]), "refused", "state-changed")])
+        self.assertEqual((result.status, result.document["exit_code"]), (2, 2))
+        self.assertFalse(trees[0].exists())
+        self.assertTrue(trees[1].is_dir())
+        self.assertEqual(sum(map(is_removal, clean_support.child_log(log))), 1)
 
 
 if __name__ == "__main__":
