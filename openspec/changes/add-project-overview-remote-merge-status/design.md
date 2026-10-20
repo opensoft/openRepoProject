@@ -12,9 +12,12 @@ and "Overview is local and read-only" (two scenarios, one of them new), and
 adds "Overview reports remote merge evidence on request" (thirteen scenarios);
 `specs/project-command/spec.md` modifies change 1's "Repository inspection
 requires Git 2.36 and shares one evidence model" on draft PR #19's text (ten
-scenarios, one of them new; C-11). The council has not run yet, so there is no
-`clarifications.md`; its noted constraints, once the lane runs it, are answered
-here by decisions added for them.
+scenarios, one of them new; C-11). The council (product-advocate,
+systems-architect and adversary-engineer) read `c928cb2` on 2026-10-20, and
+the lane's lead ruled all twelve of its concerns VALID and none NOTED (C-16 to
+C-22), so there is no `clarifications.md`: the decisions below carry the
+verdicts, and round C4's edits to `specs/project-overview/spec.md` are held
+for lane openRepoProject-4 (`proposal.md`, Dependencies and Sequencing).
 
 Citations follow `proposal.md`: the packet at `da33d92`; APO, CAS, PRS and
 `project:N` at main `961c405`, which main `e9d6711` holds unchanged for them
@@ -45,6 +48,12 @@ The rulings and the packet's boundary map to the decisions:
 | C-11; L-11: [E]'s Termination and Budgets sentences | D2, D7 |
 | C-12; L-11: [J]'s two `remote` keys | D8 |
 | C-14; APO/ov:765-766: an exception the remote phase records as none of its reasons exits 2 | D10 |
+| C-16; F-3: no `closed` state, a `CLOSED` node never matching | D6, D8, D9, Risks |
+| C-17: the freshness sentence and the `gh` requests started | D9 |
+| C-18, C-20: the `merged` line | D9, Risks |
+| C-19, C-21: the live contract check, header names without case, the resolved repository | D5, D6, D11, Risks |
+| C-22: parser failures and which `gh` runs | D5, D6, D10 |
+| Lane openRepoProject-3's re-read of `c928cb2`, LOW-6 and LOW-9 | D2, D7 |
 | C-10, L-12: CI on Linux only | Migration Plan |
 
 What in `project` shapes the approach (at `961c405`; features 004 and 005
@@ -104,18 +113,25 @@ move these lines, and this change's feature re-pins them):
   configuration, state and cache directories and its proxy at a closed port,
   `gh` 2.96.0 under D5's switches wrote no file, both when it exited 4 for want
   of a token and when it exited 1 on the refused connection with nothing on
-  standard output.
+  standard output. The lane's lead checked one more case live on 2026-10-20
+  (ruling F-3): for the head commit of PR #2, closed without merging
+  (`cleanup`, `bb91a49`), `Commit.associatedPullRequests` returned
+  `totalCount` 0, so D5's query answers such a head with no node and its row
+  reads `not-found` (C-16). Neither check recorded `gh`'s output under D5's
+  exact argv, so task 2.5 runs it once by hand before the Speckit handoff and
+  records here, verbatim, the status line, the header names as `gh` prints
+  them and an answer for each state and case it names (C-19, C-21).
 
 ## Goals / Non-Goals
 
 **Goals:**
 
-- Beside each kept worktree, say whether GitHub holds a pull request for
-  exactly its head and what became of it, within the overview's 64 s bound.
+- Beside each kept worktree, say whether GitHub holds a merged or an open
+  pull request for exactly its head, within the overview's 64 s bound.
 - Give every failure one explicit reason, and let nothing remote reach a
   local result.
-- Keep `project` away from every credential, and let `gh` send nothing but
-  the query.
+- Keep `project` away from every credential, and let `project` start `gh`
+  only with the fixed query and its switches.
 - Make an uncut `--remote` run's `remote` fields a function of the answers
   alone.
 
@@ -194,6 +210,14 @@ its budget, overruns its output cap or is stopped at the deadline is
 error, the exception that [B]'s added paragraph and [E]'s added Termination
 sentence state (D7, D10).
 
+[E]'s pins sentence, "with the pins the fetch fails locally, the probe fails,
+and its row is `inspection-error`" (PR19/cmd:123-125), does not reach these
+reads: `for-each-ref` with only upstream atoms and `remote get-url` read no
+object, so no lazy fetch can arise for them, and a read that fails for any
+other cause is `remote-target-unread` on its rows' `remote`, as [B]'s added
+paragraph states. This is reasoning, not a test (the alignment review's G1
+note (c); lane openRepoProject-3's re-read, LOW-9).
+
 Rejected: parsing `<common_dir>/config` (includes, conditional includes and
 `insteadOf` in other files would disagree with Git, as change 2's design
 found for `core.worktree`); `git config --list` (it would read every value,
@@ -248,13 +272,16 @@ One `gh` child per key:
     gh api --hostname github.com --include graphql \
       -f query=<Q> -f owner=<owner> -f name=<repository> -f oid=<head>
 
-never with `--paginate`, `--slurp`, `--cache` or `--method`. `<owner>` and
-`<repository>` passed D3's pattern, and `<head>` is 40 or 64 lowercase
-hexadecimal digits, checked before the argv is built; `-f` passes each as a
-GraphQL variable, so no data enters the query text. `<Q>` is a constant:
+never with `--paginate`, `--slurp`, `--cache` or `--method`, and with `gh` the
+absolute path that the lookup below found, never the bare name (C-22).
+`<owner>` and `<repository>` passed D3's pattern, and `<head>` is 40 or 64
+lowercase hexadecimal digits, checked before the argv is built; `-f` passes
+each as a GraphQL variable, so no data enters the query text. `<Q>` is a
+constant:
 
     query($owner: String!, $name: String!, $oid: GitObjectID!) {
       repository(owner: $owner, name: $name) {
+        nameWithOwner
         object(oid: $oid) {
           ... on Commit {
             associatedPullRequests(first: 100) {
@@ -269,8 +296,10 @@ GraphQL variable, so no data enters the query text. `<Q>` is a constant:
       }
     }
 
-GraphQL carries a query in an HTTP POST; `<Q>` holds no `mutation`, and a
-test pins the argv's query to the constant.
+`nameWithOwner` names the repository GitHub resolved for `owner` and `name`,
+which D6 matches each pull request's base repository against (C-19). GraphQL
+carries a query in an HTTP POST; `<Q>` holds no `mutation`, and a test pins
+the argv's query to the constant.
 
 The child starts with `start_new_session=True`, never `preexec_fn` (change 1's
 C4), standard input from `/dev/null`, working directory `/`, and standard
@@ -288,8 +317,16 @@ records the values, and that block's new scenario asserts them. [E]'s Git scrub
 does not apply; this is not a Git child.
 
 `gh` is looked up once per run, by one bounded filesystem task as [B]
-requires of every filesystem call; when it is missing, every keyed row is
-`gh-unavailable` and no child starts.
+requires of every filesystem call, in the absolute directories of `PATH`
+only: an empty or relative entry, which names the caller's working directory
+or a path under it, is skipped, and each child is started by the absolute
+path found (C-22). When none is found, every keyed row is `gh-unavailable`
+and no child starts. The council's adversary-engineer showed both risks
+offline on 2026-10-20: with a trailing colon in `PATH`, `shutil.which` found
+a `gh` planted in the caller's directory, which, started by its absolute
+path, received the caller's `GH_TOKEN`; and with `.` in `PATH` the lookup
+returned the relative `./gh`, which raised `FileNotFoundError` when started
+in `/`.
 
 Rejected: REST `commits/{sha}/pulls` (an unknown commit is HTTP 422, an
 `unknown` under DI:1055-1056, and a further page shows only in a `Link`
@@ -311,13 +348,25 @@ it stops reading, stops the child (D7) and records `truncated`.
   exits 1 on HTTP errors and on GraphQL errors: 401 gives `unauthorized`; 429,
   or 403 with `X-RateLimit-Remaining: 0` or a `Retry-After` header, gives
   `rate-limited`; any other 403 gives `forbidden`; any status but 200, or no
-  status line, gives `api-error`.
-- A 200 body must be UTF-8 JSON. An `errors` entry of type `RATE_LIMITED`
-  gives `rate-limited`, and any other `errors` entry, or a null
-  `data.repository`, gives `api-error`. A null `data.repository.object` gives
+  status line, gives `api-error`. Header names compare without case, as HTTP
+  defines them: `gh` prints them in its own form, which task 2.5 records, and
+  Go, in which `gh` is written, canonicalises `X-RateLimit-Remaining` as
+  `X-Ratelimit-Remaining` (S-2, not observed here; C-19).
+- A 200 body must be UTF-8 JSON, and a body that cannot be decoded or parsed,
+  for any cause, is `api-error`: the parse catches every exception it raises,
+  not only `JSONDecodeError`, so no such body reaches C-14's exit 2 (C-22).
+  The council's adversary-engineer measured two on Python 3.12.3 on
+  2026-10-20: a body under 1 MiB nested in `[` raised `RecursionError`, and a
+  `number` of 5,000 digits raised a plain `ValueError` ("Exceeds the limit
+  (4300 digits) for integer string conversion"), a limit Python has had since
+  3.10.7 and 3.11; CI's Python 3.10 was not checked. An `errors` entry of type
+  `RATE_LIMITED` gives `rate-limited`, and any other `errors` entry, a null
+  `data.repository`, or a `data.repository.nameWithOwner` that fails D3's
+  pattern, gives `api-error`. A null `data.repository.object` gives
   `not-found`: GitHub holds no such commit. Otherwise
   `associatedPullRequests` must hold a boolean `pageInfo.hasNextPage`, which
-  when true gives `further-page`, and a list of at most 100 `nodes`.
+  when true gives `further-page`, and a list of at most 100 `nodes`, more
+  being `api-error`.
 - Each node must have a positive integer `number`; a `state` of `OPEN`,
   `CLOSED` or `MERGED`; a `headRefOid` of 40 or 64 hexadecimal digits; a
   string `baseRefName`; a `baseRepository.nameWithOwner` that passes D3's
@@ -327,9 +376,15 @@ it stops reading, stops the child (D7) and records `truncated`.
 
 Per row: the nodes whose `headRefOid` equals the row's `head`, whose
 `baseRefName` equals the row's merge ref less `refs/heads/`, and whose
-`nameWithOwner` equals the identity without case. A `MERGED` node wins over
-an `OPEN` one, which wins over a `CLOSED` one, and the highest `number` wins
-within a state; none gives `not-found`. The row keeps `state`, `number`,
+`baseRepository.nameWithOwner` equals, without case, the answer's
+`data.repository.nameWithOwner`, the repository GitHub resolved for the
+identity: the identity itself unless the repository was renamed or
+transferred, when a remote URL that still names the old name gets its real
+answer instead of `not-found` on every row, which task 2.5 checks if a
+renamed repository is at hand (C-19). A `MERGED` node wins over an `OPEN`
+one, a `CLOSED` node never matches (C-16; F-3 found that the association
+returns none), and the highest `number` wins within a state; none gives
+`not-found`. The row keeps `state`, `number`,
 `url` and `head_sha`; nothing else of the body is kept, and standard error is
 drained, capped and discarded.
 
@@ -356,7 +411,9 @@ rendering follows.
 Each `gh` child enters the in-flight registry while SIGINT, SIGTERM and SIGHUP
 are blocked, as a Git child does (APO design.md, D1), so a signal terminates
 and reaps it with the rest, and [X]'s exits 130, 143 and 129 hold with no
-result document.
+result document. On every other exit path, C-14's exit 2 included, the loop
+kills every in-flight `gh` child's group, as [E] kills a probe child's (lane
+openRepoProject-3's re-read, LOW-6).
 
 No key stops another (`proposal.md`, Decisions): after a rate limit or an
 exit 4, the remaining keys still run, each failing fast on its own, so which
@@ -371,7 +428,7 @@ In a `--remote` run only:
   query set gains no key (L-10);
 - the envelope gains `remote` after `scan_errors`: `host`, `observed_at` (RFC
   3339 UTC with `Z`, null when no request started), `freshness`, `limits`,
-  `budget`, `requests` (the `gh` children, D5), `counts` (the six states as
+  `budget`, `requests` (the `gh` children, D5), `counts` (the five states as
   keys, each an integer, zeros included) and `completeness`; it has no
   `probes`, the remote-target reads being in the envelope's (D2).
 
@@ -396,12 +453,22 @@ printed, never a URL, a repository name taken from a response, or a reason
 other than [R]'s codes, so every printed character is ASCII. After [H]'s
 summary line a `--remote` run prints:
 
-    Remote: N requests to github.com; merged a, open b, closed c, not found d,
-    unavailable e, unknown f. Remote evidence was queried live from github.com
-    and may already be stale; it never authorizes cleanup.
+    Remote: N gh requests started; merged a, open b, not found d,
+    unavailable e, unknown f. Remote evidence, where GitHub answered, was
+    read live from github.com and may already be stale; it never authorizes
+    cleanup.
 
 as one line. Under `--attention` only shown findings' worktrees get a
-`remote` line, and the summary's `Remote:` line always prints.
+`remote` line, and the summary's `Remote:` line always prints. The count is
+of `gh` children started, which is all `project` knows: a `gh` without a
+token is started, so `observed_at` is set, and exits 4 before it connects,
+and the freshness sentence stays true in that run and in one that starts no
+child (C-17). The `merged` text names the exact head and says that the
+worktree's uncommitted and ignored files are not part of the pull request,
+since a row kept for its files (`dirty`, `ignored-local-files`,
+`inspection-error`) is queried like any other (C-20), and its remedy is a
+local merge target brought up to date, since a fetch moves only the
+remote-tracking ref (C-18).
 
 ### D10. Isolation from the local result
 
@@ -414,8 +481,10 @@ remote-target read or a `gh` child, `probe-failed`, `probe-timeout` and
 `deadline-exceeded` notwithstanding, so [X]'s exit status and [J]'s
 `completeness` are what they are without `--remote`, unless the remote phase
 raises an exception that [R] records as none of its reasons, which exits 2 as
-[X] gives any exception outside the per-candidate boundary, and the envelope's
-`probes` differs only by D2's reads. Nothing is written to disk or kept past
+[X] gives any exception outside the per-candidate boundary (a body that the
+parser rejects, for any cause, is `api-error`, one of [R]'s reasons, never
+such an exception: C-22), and the envelope's `probes` differs only by D2's
+reads. Nothing is written to disk or kept past
 the run, `gh` never gets `--cache`, and `project clean` has neither the
 option nor a reader of these fields, so remote evidence never reaches an
 eligibility gate, a `plan_digest` or a revalidation (SY:129-130;
@@ -425,12 +494,21 @@ DI:1059-1060).
 
 - A fake `gh`, a Python script that `write_fake()` puts in `fake_bin()`,
   reads its argv, takes the `oid` field, looks it up in a JSON answer table
-  beside it, and writes `HTTP/2.0 <code> <text>`, headers, a blank line and a
-  body. Per key the table can hold the child for N seconds, exit 4 with no
-  output, send 1 MiB and one byte of body, set `hasNextPage`, answer 401, 403,
-  429, a 403 with `X-RateLimit-Remaining: 0`, a 200 body with an `errors` entry
-  of a given type, a null `data.repository`, a status and header block over
-  64 KiB, or 502, or name pull requests with any head, base and state. It
+  beside it, and writes a status line, headers, a blank line and a body, the
+  status line and the header names in the forms that task 2.5 records `gh`
+  printing (C-19). Per key the table can hold the child for N seconds, exit 4
+  with no output, send 1 MiB and one byte of body, set `hasNextPage`, answer
+  401, 403, 429, a 403 with `X-RateLimit-Remaining: 0` or with a
+  `Retry-After` header, a 200 body with an `errors` entry of a given type, a
+  null `data.repository`, a status and header block over 64 KiB, a body of
+  1 MiB of `[` or with a `number` of 5,000 digits (C-22), or 502, give the
+  queried repository's `nameWithOwner` as the owner and name asked or, to
+  stand for a renamed repository, as another, or name pull requests with any
+  head, base and state. It places each pull request only in the list GitHub
+  returned it in, the association, in a state that task 2.5 recorded there;
+  the `CLOSED` nodes of "The chosen pull request and a rejected answer" are
+  the one exception, a defensive input that pins that such a node never
+  matches (C-16, C-19). It
   appends one JSON record per run: the argv, the names of the environment
   variables set, the values of `GH_NO_UPDATE_NOTIFIER`,
   `GH_NO_EXTENSION_UPDATE_NOTIFIER`, `GH_PROMPT_DISABLED`, `GH_TELEMETRY` and
@@ -490,16 +568,26 @@ requests".
 
 ## Risks / Trade-offs
 
-- [GitHub's commit-to-pull-request association may leave out a closed,
-  unmerged pull request for a commit outside the default branch] -> The
-  `not-found` text says that no pull request matched, never that none exists;
-  `closed` is reported whenever the answer holds one.
+- [GitHub's commit association returns no pull request closed without merging
+  (F-3)] -> `closed` is not a state, and the not-found text says that no
+  merged or open pull request was found.
 - [The association was checked live only for squash merges in one repository,
-  not for a rebase merge, a pull request from a fork or a commit that two pull
-  requests share] -> The `not-found` text says that no pull request matched,
-  never that none exists, and no answer ever makes a row removable.
-- [A merge-commit merge not yet fetched reads like a squash merge] -> The
-  merged line names both causes, and a `git fetch` lets local ancestry decide.
+  not for a rebase merge, a pull request from a fork, a commit that two pull
+  requests share or a pull request whose base is not the repository's default
+  branch] -> The `not-found` text says that no merged or open pull request was
+  found, never that none exists; task 2.5 checks these cases live before the
+  Speckit handoff; and no answer ever makes a row removable.
+- [The merge target is not the repository's default branch (CAS/pc:482-485),
+  or the merge was a rebase] -> Not verified live until task 2.5; a miss
+  reads `not-found`, never `merged`.
+- [The merge target tracks the person's fork] -> The identity is the fork
+  (C-3), so a pull request into its parent never meets [R]'s base-repository
+  rule and every queried row reads `not-found`; the README's `--remote`
+  paragraph says so.
+- [A merge-commit merge that the local merge-target branch does not hold yet
+  reads like a squash merge] -> The merged line names both causes; bringing
+  that local branch up to date lets local ancestry decide, since a fetch
+  alone moves only its remote-tracking ref (APO/ov:358-365).
 - [Rate limits on a large estate] -> At most 64 requests a run; each limited
   key is `rate-limited`, and the rest of the run is unaffected.
 - [`gh` versions differ] -> The argv uses long-standing `gh api` options; a
@@ -535,22 +623,29 @@ Nothing migrates: without `--remote` no output, flag or exit changes.
 1. Ratification by Brett Heap's word on the pull request the lane opens for
    this change.
 2. After feature 005 has landed and change 2 is archived, with this change's
-   MODIFIED blocks re-read against the archived text, `/speckit.specify`,
+   MODIFIED blocks re-read against the archived text and task 2.5's live
+   contract check recorded, `/speckit.specify`,
    from a `main` synced to `origin/main`, creates the one feature under the
    next free number, 006 or later; it is recorded once in `tasks.md` under
    "Speckit Handoff", and `/opsx:apply` runs only then.
 3. The realization PR merges with green checks on both CI jobs of the
    `tests` workflow, `test (3.10)` and `test (3.12)` on `ubuntu-latest`
    (Linux only since PR #32; L-12), and closes issue #25.
-4. The change is archived after that merge and after change 2's archive,
-   which itself follows change 1's archive and feature 005's merge.
+4. The change is archived after that merge, after change 2's archive, which
+   itself follows change 1's archive and feature 005's merge, and after task
+   2.4: PR #19's amendment landed or, if PR #19 closed, the block of [E]
+   re-based on change 1's text, and that block re-based on
+   `add-project-clean-branch-retirement`'s archived block if that change
+   archives first (L-17).
 
 Rollback: revert the realization's merge; `--remote` goes away, and the
 default overview, which nothing here changed, is untouched.
 
 ## Open Questions
 
-`proposal.md` puts three questions before Brett Heap, the third to lane
-openRepoProject-4 first. Taken as recommended, none changes what is built.
+`proposal.md` puts two questions before Brett Heap; the third, put to lane
+openRepoProject-4 first, is resolved by its answer of 2026-10-20 (C-23):
+feature 005 reserves no flag, field or hook. Taken as recommended, none
+changes what is built.
 The second, if decided for direct HTTPS, would replace D5's client and part
 of D6, so it is settled before the Speckit handoff.
