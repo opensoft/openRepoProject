@@ -609,6 +609,115 @@ class RevalidationTests(clean_support.CleanCase):
                         lines.index(TEXT["progress_line"].format(STAGE="removed", PATH=trees[0])))
         self.assertEqual(lines[-1], TEXT["residual_window_line"])
 
+    # T083: "Branch advances after removal", "Repository replaced mid-batch",
+    # and the after-confirmation clauses of "Hidden local state" and
+    # "Submodules" (spec.md, US4 scenario 2).
+
+    def test_clean_branch_advances_after_removal(self):
+        # The post-remove hook advances the first target's branch to a new
+        # commit, after Git removed the worktree and before the rescan.
+        root, trees = self.batch("advanced-after")
+        planned = self.head(root, "refs/heads/001-p")
+        tree_object = self.head(root, "001-p^{tree}")
+        moved = self.git(root, "commit-tree", tree_object, "-p", planned, "-m", "after removal").strip()
+        env, log = self.counting({"post": when_target(trees[0], sh_git("-C", root, "update-ref",
+                                                                        "refs/heads/001-p", moved))})
+        result = self.apply(root, env=env)
+        self.assertEqual(self.stages(result), [(str(trees[0]), "removed", "branch-advanced-after-removal"),
+                                               (str(trees[1]), "not-attempted", "batch-stopped")])
+        first = result.document["targets"][0]
+        self.assertEqual(first["reconciliation"], record(False, False, True, moved))
+        self.assertNotEqual(first["reconciliation"]["branch_sha"], first["planned_sha"])
+        self.assertEqual((result.status, result.document["exit_code"]), (2, 2))
+        self.assertEqual(self.head(root, "refs/heads/001-p"), moved)
+        self.git(root, "merge-base", "--is-ancestor", planned, moved)  # no commit lost
+        self.assertTrue(trees[1].is_dir())
+        self.assertEqual(sum(map(is_removal, clean_support.child_log(log))), 1)
+        self.assertIn(TEXT["stop_block"].format(PATH=trees[0], REASON="branch-advanced-after-removal", K=1, N=2,
+                                                NOT_ATTEMPTED=trees[1], ROOT=root), result.stderr.splitlines())
+
+        # The hook deletes the branch instead.
+        root, trees = self.batch("missing-after")
+        env, log = self.counting({"post": when_target(trees[0], sh_git("-C", root, "update-ref", "-d",
+                                                                        "refs/heads/001-p"))})
+        result = self.apply(root, env=env)
+        self.assertEqual(self.stages(result), [(str(trees[0]), "removed", "branch-missing-after-removal"),
+                                               (str(trees[1]), "not-attempted", "batch-stopped")])
+        self.assertEqual(result.document["targets"][0]["reconciliation"], record(False, False, False, None))
+        self.assertEqual((result.status, result.document["exit_code"]), (2, 2))
+
+    def test_clean_repository_replaced_mid_batch(self):
+        # Three targets outside the directory that holds the root. After the
+        # first target's removal child exits 0 and before its rescan, the
+        # post-remove hook renames the root and moves another clone into its
+        # path; in a second run it replaces the root's parent by a symbolic
+        # link to a copy. The rescan's identity probe finds another repository.
+        def replace_by_clone(case, root):
+            other = self.base / case / "other-clone"
+            self.git(self.base, "clone", "-q", root, other)
+            return (f"mv {shlex.quote(str(root))} {shlex.quote(str(root) + '.renamed')}"
+                    f" && mv {shlex.quote(str(other))} {shlex.quote(str(root))}")
+
+        def replace_parent(case, root):
+            holder = shlex.quote(str(root.parent))
+            return (f"cp -a {holder} {holder}.copy && mv {holder} {holder}.orig"
+                    f" && ln -s {holder}.copy {holder}")
+
+        for case, replacement in (("clone", replace_by_clone), ("parent", replace_parent)):
+            with self.subTest(case):
+                root, trees = self.batch(case, count=3, holder="holder")
+                command = replacement(case, root)
+                env, log = self.counting({"post": when_target(trees[0], command)})
+                result = self.apply(root, env=env)
+                self.assertEqual(self.stages(result), [(str(trees[0]), "unknown", "unconfirmed-removal"),
+                                                       (str(trees[1]), "not-attempted", "batch-stopped"),
+                                                       (str(trees[2]), "not-attempted", "batch-stopped")])
+                first = result.document["targets"][0]
+                self.assertEqual(first["reconciliation"], dict.fromkeys(RECONCILIATION_KEYS[:-1]) | {"reconciled": False})
+                self.assertEqual(first["exit_status"], 0)
+                self.assertEqual((result.status, result.document["exit_code"]), (1, 1))
+                self.assertEqual(result.document["completeness"], "incomplete")
+                self.assertEqual(sum(map(is_removal, clean_support.child_log(log))), 1)
+                self.assertTrue(trees[1].is_dir() and trees[2].is_dir())
+
+        # The same replacement at the question: the first target is refused
+        # with identity-changed, and nothing is removed.
+        root, trees = self.batch("clone-at-question", count=3, holder="holder")
+        command = replace_by_clone("clone-at-question", root)
+        env, log = self.counting()
+        result = self.apply(root, lambda: self.assertEqual(os.system(command), 0), env=env, log=log)
+        self.assert_identity_changed_and_nothing_removed(result, trees, log)
+        self.assertTrue(all((tree / f"work-{tree.name}").is_file() for tree in trees))
+
+    def test_clean_hidden_local_state_after_confirmation(self):
+        # Lane 3's E3 (lead ruling R-76): an edit hidden by assume-unchanged,
+        # set at the question, and in a second run by skip-worktree. Git's own
+        # check would not see either; the hidden-state probe does.
+        for case, flag in (("assume-unchanged", "--assume-unchanged"), ("skip-worktree", "--skip-worktree")):
+            with self.subTest(case):
+                root, trees = self.batch(case)
+                edited = trees[0] / "work-001-p"
+
+                def hide():
+                    edited.write_text("an edit hidden from status\n")
+                    self.git(trees[0], "update-index", flag, "work-001-p")
+
+                result = self.apply(root, hide)
+                self.assert_stopped_at_first(result, trees, "hidden-local-state")
+                self.assertEqual(edited.read_text(), "an edit hidden from status\n", "the edit survives")
+                self.assertTrue(trees[1].is_dir())
+
+    def test_clean_submodules_after_confirmation(self):
+        # A `modules` directory created in the first target's admin directory at
+        # the question.
+        root, trees = self.batch("modules")
+        common = Path(self.git(root, "rev-parse", "--path-format=absolute", "--git-common-dir").strip())
+        env, log = self.counting()
+        result = self.apply(root, lambda: (common / "worktrees" / "001-p" / "modules").mkdir(), env=env, log=log)
+        self.assert_stopped_at_first(result, trees, "contains-submodule")
+        self.assertEqual([record for record in clean_support.child_log(log) if is_removal(record)], [])
+        self.assertTrue(all(tree.is_dir() for tree in trees))
+
 
 if __name__ == "__main__":
     unittest.main()
