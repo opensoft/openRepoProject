@@ -93,7 +93,7 @@ share is such a case, both entries also `registration-mismatch`,
 | --- | --- | --- |
 | absolute path | itself, when its realpath equals the toplevel Git reports there and that toplevel is the main worktree | `target-not-repository-root` |
 | relative path: any relative argument containing a `/` (`./x`, `x/`), `.`, `..`, or none | the repository Git finds at that directory joined to the working directory; `root` is its main worktree | `target-not-repository-root` where Git finds no worktree |
-| bare name: a relative argument with no `/`, not `.` or `..` (research.md R13) | `discover()`'s name lookup, its one Git child counted and bounded, then the directory it returns resolved as a worktree toplevel | `ambiguous-name`, `repository-not-found` |
+| bare name: a relative argument with no `/`, not `.` or `..`, research.md R13's reading of the `project-clean` delta's "one path component" (its `spec.md:459`), so that `..`, `./x` and `x/` are not bare names (lead ruling R-73 (e)) | `discover()`'s name lookup, its one Git child counted and bounded, then the directory it returns resolved as a worktree toplevel | `ambiguous-name`, `repository-not-found` |
 
 Then, in this order (M6): a submodule checkout (row 3 prints a third line) is
 refused; a first registry record that is `bare` is refused; a first record
@@ -171,24 +171,31 @@ clean", `unsupported-path-bytes` "rename the path to valid UTF-8" (P6-2), and
 every group carries a next step, and so does every gate's `target-excluded`
 message but the class gate's, which keeps its message with none (lead
 rulings R-57, withdrawing R-45(3), R-59 D9 and R-62); a report prints the
-baseline layout, each null as `unknown`; an `--all-safe` plan, and a
-single-mode `--action remove` plan, print "D18 preview layout", the
+baseline layout, each null as `unknown`, except a null `upstream`, which
+means none configured (data-model.md, "Worktree row") and prints `none`, as
+the baseline did, a branch named `HEAD` showing `inspection-error` by its
+class (lead rulings R-69, reading 5, and R-72 (f)); an `--all-safe` plan,
+and a single-mode `--action remove` plan, print "D18 preview layout", the
 single-mode one with `Selected (1):` and the `not-requested` group among the
-excluded ones, then "D18 residual-window line"; push and delete-branch print
-no plan layout, only their `Cleanup action:` output as today (lead ruling
-R-56 Q-11); a row left unprobed prints in the `reflog-unavailable` group,
-its reason, with that group's next step, and no group of its own is added
-(lead ruling R-67 (a), withdrawing R-56's);
-one progress line per target, printed at its final stage, `  STAGE PATH` or
-`  STAGE PATH (REASON)`, `pending` never printed (R-56 Q-10); "D18 success
-line" followed by "D18 residual-window line", as the stop block is (R-56
-Q-9); the retained-branch line `Branches kept: B1, B2.`, naming every
-selected target's branch in canonical order; a stop block with no target
-`not-attempted`, as when the last selected target stops the run, reads
-`Not attempted: none.`, a fill, since D18's stop block has no such form
-(lead ruling R-68 (a)); a plan-blocking refusal prints
-the plan, then `REFUSED: MESSAGE`; each code with no baseline message gets
-one here:
+excluded ones, then "D18 residual-window line" only when something is
+selected, since D7 prints the residual window at the confirmation and at the
+result, and a plan that selects nothing has neither (lead ruling R-72 (e), a
+fill); push and delete-branch print no plan layout, only their `Cleanup
+action:` output as today (lead ruling R-56 Q-11); a row left unprobed
+prints in the `reflog-unavailable` group, its reason, with that group's next
+step, and no group of its own is added (lead ruling R-67 (a), withdrawing
+R-56's); one progress line per target, printed at its final stage,
+`  STAGE PATH` or `  STAGE PATH (REASON)`, `pending` never printed (R-56
+Q-10); "D18 success line" followed by "D18 residual-window line", as the
+stop block is (R-56 Q-9); the retained-branch line `Branches kept: B1, B2.`,
+naming every selected target's branch in canonical order; a stop block with
+no target `not-attempted`, as when the last selected target stops the run,
+reads `Not attempted: none.`, a fill, since D18's stop block has no such
+form (lead ruling R-68 (a)); the stop block's `Next: project clean ROOT
+--all-safe` prints in single mode too, though that run named one worktree,
+since D18 fixes the line as it is (lead ruling R-73 (f)); a plan-blocking
+refusal prints the plan, then `REFUSED: MESSAGE`; each code with no baseline
+message gets one here:
 
 | Code | Message |
 | --- | --- |
@@ -198,7 +205,7 @@ one here:
 | `git-too-old` | `Git VERSION is older than 2.36; clean needs Git 2.36 or later.`; clean's refusal only, as above (R-48) |
 | `target-not-repository-root` | `Not the main worktree of a repository: PATH; pass the repository root.` |
 | `unsupported-path-bytes` | `The repository path is not valid UTF-8: PATH` |
-| `manifest-invalid` | `Manifest PATH is larger than 1 MiB.`; the baseline `Cannot read PATH: ...` and `Unexpected kind in PATH; expected project-manifest` otherwise |
+| `manifest-invalid` | `Manifest PATH is larger than 1 MiB.`; otherwise the baseline messages of `read_yaml()` and `manifest()`: `Cannot read PATH: ...` (an `OSError`, a read cut at its budget, or a parse error), `Expected a mapping in PATH`, `Unexpected kind in PATH; expected project-manifest` or `expected family-manifest`, and, where PyYAML is missing, `read_yaml()`'s own `YAML inspection needs PyYAML; use a workBench with python3-yaml installed.` (lead ruling R-73 (e)) |
 | `inspection-incomplete`, `inspect-cap`, `deadline-exceeded` | `The plan is incomplete (CODE): REMEDY.`, REMEDY being "D18 remedies" |
 | `plan-digest-mismatch` | `The fresh plan's digest DIGEST differs from --expect-plan EXPECTED; nothing was changed.` |
 | `confirmation-required` | `Standard input is not a terminal; pass --yes to apply this plan.` (the removal question; `confirm()` keeps its own) |
@@ -301,7 +308,7 @@ values in data-model.md).
 | `ambiguous-name` | resolve | a bare name matches more than one |
 | `target-not-repository-root` | resolve | the resolution rules above |
 | `unsupported-path-bytes` | resolve | `root` or `common_dir` not valid UTF-8 |
-| `manifest-invalid` | resolve | unreadable, wrong kind, or over 1 MiB by `st_size` |
+| `manifest-invalid` | resolve | unreadable, not a mapping, wrong kind, over 1 MiB by `st_size`, or PyYAML missing |
 | `no-merge-target` | resolve | no candidate exists as a local branch |
 | `inspection-incomplete` | plan | a repository-wide probe failed, a row is `inspection-error`, or a row was left unprobed |
 | `inspect-cap` | plan | more rows than the mode's cap |

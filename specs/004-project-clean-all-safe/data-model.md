@@ -48,12 +48,15 @@ bytes (checked on Git 2.43.0), so the code keeps row 4 where row 3 ran
 Candidates, in order: the manifest's `tracking_branch` less a leading
 `origin/`; the symref of `refs/remotes/origin/HEAD` less
 `refs/remotes/origin/`; `main`; `master`. The manifest is read at `root` by
-one bounded filesystem call: an `st_size` over 1 MiB is `manifest-invalid`
-without a read, and an unreadable manifest or a wrong kind is
-`manifest-invalid` too. No candidate refuses with `no-merge-target` and its
-baseline message (`project:551`). A manifest and `origin/HEAD` naming
-different existing branches: the manifest wins, with the plan note
-`merge-target-conflict`.
+one bounded filesystem call per candidate file: `project.yaml`, then
+`family.yaml` when there is no `project.yaml`, by `Path.is_file()`'s test,
+as `manifest()` picks it (lead ruling R-73 (e)). An `st_size` over 1 MiB is
+`manifest-invalid` without a read, and an unreadable manifest, one that is
+not a mapping or has the wrong kind, and a missing PyYAML are
+`manifest-invalid` too, with the contract's messages. No candidate refuses
+with `no-merge-target` and its baseline message (`project:551`). A manifest
+and `origin/HEAD` naming different existing branches: the manifest wins,
+with the plan note `merge-target-conflict`.
 
 ### Worktree row (FR-006, FR-042, FR-056, FR-057)
 
