@@ -477,10 +477,13 @@ their `CAS` line.
   stays with `delete-branch`, one branch per command; "deleting its local
   branch is a separate action" (`README.md:197-198`) names the flag as that
   separate, explicit request; and it records `design.md` D8's note that a
-  command printed in the `$'...'` form needs a shell that implements the form,
-  in a UTF-8 locale for its code-point escapes, which dash, Ubuntu's
-  `/bin/sh`, lacks, a limitation change 1's path rule shares (ruling A-28 as
-  amended).
+  command printed in the `$'...'` form needs a shell that implements the form
+  (bash, zsh, ksh93 or a POSIX.1-2024 shell), in a UTF-8 locale for its
+  code-point escapes, which dash, Ubuntu's `/bin/sh`, lacks, a limitation
+  change 1's path rule shares (ruling A-28 as amended); the note follows
+  change 1's command form as ratified, whether that form changes being lane
+  openRepoProject-2's LQ-8, with Brett Heap, on which this change takes no
+  side (ruling A-29).
 - **`tests/test_project.py`**: the default path's test,
   `test_clean_removes_only_merged_worktree_and_keeps_branch` (`tests:857`),
   stays unchanged; each scenario this change adds gets a test named after it
@@ -776,7 +779,9 @@ open:
 - **The result names every branch** (A-19, P-2). The human result prints one
   line per branch of a removed target, with the retired branch's SHA and
   restore command, or the kept branch's reason and a next step that never
-  prints a retry the plan knows will fail and never suggests `-D`; every
+  prints a retry the plan knows will fail, the retry of a name that begins
+  with `-` excepted while change 1's action passes no `--`, and never
+  suggests `-D`; every
   `project clean --all-safe` command printed for the person to run next, the
   deferral line and the stop block's `Next:`, carries the flag, so that
   following the tool's own advice never strands a branch whose worktree a
