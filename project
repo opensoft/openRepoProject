@@ -3074,12 +3074,21 @@ def handoff(root, data):
 
 
 def snapshot(root, visited=None):
+    """The report of the project at root for status, doctor and update: its
+    manifest, its repository state and every leg's or member's, its profile,
+    handoff and container. Each repository is read by repo_state() through the
+    evidence model, whose version check and repository evidence are memoized
+    on the invocation, so one run checks Git's version once and inspects each
+    common directory once (T119; FR-053, plan review M10). The top-level
+    `root` and each nested member's carry `root_valid_utf8`, and an absent
+    member's `path` its `path_valid_utf8` (FR-051; lead ruling R-56)."""
     visited = set() if visited is None else visited
     if root.resolve() in visited:
         raise Refused(f"Cyclic estate membership at {root}")
     visited.add(root.resolve())
     kind, data = manifest(root)
-    result = {"name": data.get("name", root.name), "kind": kind, "root": str(root),
+    text, valid = json_path(os.fsencode(root))
+    result = {"name": data.get("name", root.name), "kind": kind, "root": text, "root_valid_utf8": valid,
               "repository": repo_state(root), "profile": profile(root), "children": [],
               "workflow": (root / ".specify/extensions/git").is_dir(),
               "devcontainer": (root / ".devcontainer").is_dir(),
@@ -3107,7 +3116,9 @@ def snapshot(root, visited=None):
             if child.is_dir() and (child / "project.yaml").is_file():
                 result["children"].append({"role": "member", **snapshot(child, visited)})
             else:
-                result["children"].append({"role": "member", "path": str(child), "present": False})
+                path, path_valid = json_path(os.fsencode(child))
+                result["children"].append({"role": "member", "path": path, "path_valid_utf8": path_valid,
+                                           "present": False})
     try:
         result["handoff"] = handoff(root, data)
     except Refused as exc:
@@ -3128,13 +3139,40 @@ def nested_snapshot(item):
 
 
 def check_rows(report):
+    """doctor's check rows (T119; design D16; FR-050, FR-051). Every null that
+    means "not established" is an `error` row, never `ok`: one row for each
+    root, leg or worktree state classified `inspection-error`, a null
+    `present` or a `dirty` left null by a failed or timed-out probe among
+    them, its detail naming the codes and messages; a null that means "none"
+    (no upstream, or a deleted one) is none. A `present` that is false keeps
+    its baseline row. The `git` row reports the version check, memoized on the
+    invocation, which runs it here only when no repository was inspected:
+    `ok` with `PATH (git version X)`, or `error` with `CODE: MESSAGE`, the
+    command-neutral text (lead rulings R-48, R-56 and R-57)."""
     rows = []
     def add(level, name, detail):
         rows.append({"level": level, "check": name, "detail": detail})
+    def problem(state):
+        if state.get("classification") != "inspection-error" and not ("present" in state and state["present"] is None):
+            return None
+        errors = state.get("errors") or []
+        codes = ", ".join(dict.fromkeys(error["code"] for error in errors))
+        messages = "; ".join(dict.fromkeys(error["message"] for error in errors))
+        return "inspection-error" + (f" ({codes})" if codes else "") + (f": {messages}" if messages else "")
+    def trees(state):
+        for tree in state.get("worktrees") or []:
+            detail = problem(tree)
+            if detail and tree["path"] != state["path"]:  # the state's own entry has its own row
+                add("error", tree["path"], detail)
     def walk(item):
         state = item["repository"]
-        add("ok" if state["present"] else "warning", item["root"],
-            "Git checkout present" if state["present"] else "No Git checkout; initialize through the project workflow")
+        if state.get("present") is not None:
+            add("ok" if state["present"] else "warning", item["root"],
+                "Git checkout present" if state["present"] else "No Git checkout; initialize through the project workflow")
+        detail = problem(state)
+        if detail:
+            add("error", item["root"], detail)
+        trees(state)
         if state.get("dirty"):
             add("warning", item["root"], "Uncommitted work; preserve it before updates")
         if item["handoff"].get("error"):
@@ -3147,29 +3185,55 @@ def check_rows(report):
         for child in item["children"]:
             if nested_snapshot(child):
                 walk(child)
-            elif not child.get("present"):
+            elif child.get("present") is False:
                 add("error", child["path"], "Missing checkout; use the estate's bootstrap/siblings command")
-            elif child.get("dirty"):
-                add("warning", child["path"], "Uncommitted work in leg")
+            elif problem(child):
+                add("error", child["path"], problem(child))
+                trees(child)
+            else:
+                trees(child)
+                if child.get("dirty"):
+                    add("warning", child["path"], "Uncommitted work in leg")
         if item["container"].get("name"):
             add("ok" if item["container"]["state"] == "running" else "warning", "container", str(item["container"]))
     walk(report)
     for command in ("git", "bash", "make", "openRepoShape", "park", "resume", "setup-openspeckit", "docker"):
+        if command == "git":
+            version = git_version(current_invocation())
+            if version.code is None:
+                add("ok", command, f"{shutil.which(command) or command} (git version {version.text})")
+            elif version.code == "git-too-old":
+                add("error", command, f"{version.code}: " + TEXT["inspection_git_too_old"].format(VERSION=version.text))
+            else:
+                add("error", command, f"{version.code}: " + TEXT["inspection_git_unavailable"].format(DETAIL=version.detail))
+            continue
         found = shutil.which(command)
         add("ok" if found else "warning", command, found or "Not on PATH; install through workBenches as needed")
     return rows
 
 
 def print_report(report, as_json):
+    """Print a status, doctor or update report: the JSON document, or the
+    human lines. A state classified `inspection-error` prints D16's `Git:
+    inspection-error (CODES)` in place of its branch line, and a null
+    `worktrees` prints no worktree line (T119; lead ruling R-56)."""
     if as_json:
         print(json.dumps(report, indent=2))
         return
+    def problem(state):
+        if state.get("classification") != "inspection-error" and not ("present" in state and state["present"] is None):
+            return None
+        codes = ", ".join(dict.fromkeys(error["code"] for error in state.get("errors") or []))
+        return "Git: inspection-error" + (f" ({codes})" if codes else "")
     def walk(item, indent=""):
         state = item["repository"]
         print(f"{indent}{item['name']} ({item['kind']}) — {item['root']}")
-        print(f"{indent}  Git: {state.get('branch', 'missing')}; dirty={state.get('dirty', 'unknown')}; "
-              f"ahead={state.get('ahead')}, behind={state.get('behind')} (local refs)")
-        for tree in state.get("worktrees", []):
+        if problem(state):
+            print(f"{indent}  {problem(state)}")
+        else:
+            print(f"{indent}  Git: {state.get('branch', 'missing')}; dirty={state.get('dirty', 'unknown')}; "
+                  f"ahead={state.get('ahead')}, behind={state.get('behind')} (local refs)")
+        for tree in state.get("worktrees") or []:
             print(f"{indent}  Worktree: {tree['path']} [{tree.get('branch', 'unknown')}]")
         print(f"{indent}  Bench: {item['profile'].get('bench', 'not declared')}; container: {item['container']['state']}")
         print(f"{indent}  Handoff: {item['handoff']['state']}")
@@ -3178,6 +3242,8 @@ def print_report(report, as_json):
         for child in item["children"]:
             if nested_snapshot(child):
                 walk(child, indent + "  ")
+            elif problem(child):
+                print(f"{indent}  {child['role']}: {child['path']} \N{EM DASH} {problem(child)}")
             else:
                 print(f"{indent}  {child['role']}: {child['path']} — {child.get('branch', 'missing')}; dirty={child.get('dirty', 'unknown')}")
     walk(report)
@@ -3188,9 +3254,24 @@ def print_report(report, as_json):
 
 
 def inspect_project(args):
-    report = snapshot(discover(args.target))
+    """`status` and `doctor`. signal_scope() holds around the inspection, so a
+    SIGINT, SIGTERM or SIGHUP there stops and reaps every probe group and ends
+    the run with 130, 143 or 129 and `Cancelled.`; the slot is read once the
+    scope has exited, and an exception that leaves the scope with the slot set
+    becomes Interrupted, as `clean` does (T119; research.md R4; FR-058; lead
+    ruling R-56). The exit rule is unchanged."""
+    scope = signal_scope()
+    try:
+        with scope:
+            report = snapshot(discover(args.target))
+            checks = check_rows(report) if args.command == "doctor" else None
+    except BaseException:
+        if scope.invocation is not None and scope.invocation.signal is not None:
+            raise Interrupted(scope.invocation.signal) from None
+        raise
+    if scope.invocation.signal is not None:
+        raise Interrupted(scope.invocation.signal)
     if args.command == "doctor":
-        checks = check_rows(report)
         wb = workbenches(args.workbenches, required=False)
         checks.append({"level": "ok" if wb else "warning", "check": "workBenches", "detail": str(wb) if wb else "Not found; set WORKBENCHES_ROOT"})
         declared = report["profile"].get("bench")
