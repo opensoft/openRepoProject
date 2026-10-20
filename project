@@ -2948,26 +2948,37 @@ class Plan:
     - `repo`: what resolve_clean_target() returned, a dict whose "root" is
       the command directory; `root`, that directory; `mode` and `action`, the
       run's.
-    - `evidence`: inspect_repository()'s dict for the plan's repository (its
-      identity, refs and merge target), or None until build_plan() reads it.
+    - `evidence`: inspect_repository()'s dict for the plan's repository, or
+      None until build_plan() reads it; its `identity` holds `root` and
+      `common_dir` as bytes, `dev` and `ino`.
+    - `repository`: the envelope's object, repository_object()'s, built from
+      that identity.
     - `rows`: the WorktreeRows, main worktree first, then by raw path bytes.
     - `merge_target`: {name, source, sha}, or None until established.
-    - `selected`: the selected rows in canonical order (raw path bytes), each
-      given `removal_args`, the arguments of its removal child,
-      ["-C", ROOT, "worktree", "remove", PATH] with PATH its raw path bytes
-      (design D9), so that its `operation.argv` is git_argv("removal",
-      removal_args); `excluded`: (row, reason) pairs in canonical order, the
-      reason None for an unprobed row.
-    - `target`: in mode single, P's row, or None while none matches.
+    - `selected`: the selected WorktreeRows in canonical order (raw path
+      bytes), each given the attribute `removal_args`, the arguments of its
+      removal child, ["-C", ROOT, "worktree", "remove", PATH] (design D9):
+      ROOT the identity's `root` as bytes, or os.fsencode(root) while none is
+      named, and PATH the row's raw_path, bytes. Its `operation.argv` is
+      git_argv("removal", removal_args), each bytes element written through
+      json_argument().
+    - `excluded`: (row, reason) pairs in canonical order, every reason a
+      gate's, never None (lead ruling R-67 (a)).
+    - `target`: in mode single, P's row, or None while none, or more than
+      one, matches; `target_rows`, the rows P may name (empty outside mode
+      single for --action remove).
     - `notes`: the plan notes, {code, message} objects.
     - `completeness` ("complete" or "incomplete", None until decided) and
       `apply_allowed`.
-    - `refusals`: the Refused objects refuse() recorded, in order; the first
-      is the one a `REFUSED:` line names.
+    - `refusals`: the Refused objects refuse() recorded, one per code, in
+      REFUSAL_CODES order; the first is the one a `REFUSED:` line names.
     - `digest`: plan_digest()'s value, None until computed.
+    - `planning_probes`: the Git children other than removals that built the
+      plan, the F + W + E of the estimate (research.md R8).
     - `printed`: whether print_plan() has written the human plan.
-    - `report`: the baseline report, cleanup_report()'s, which the stages'
-      first bodies read; build_plan() leaves it None once T049 fills it."""
+    - `report`: a baseline-shaped dict {root, target_branch,
+      tracking_freshness, worktrees}, its worktrees the plan's rows, which
+      push_or_delete()'s first body reads; the apply stages do not."""
 
     def __init__(self, repo, run):
         self.repo = repo
@@ -3842,23 +3853,22 @@ def preview_lines(plan):
 
 # region apply
 def confirm_removal(plan, run):
-    """Accept the plan for removal (T054 fills; FR-026; research.md R3): ask
-    the question under raising_signals(), swapped in around the question
-    alone, or take --yes; return None when the plan is accepted, or record
-    `cancelled` through refuse() and return 2, never raising (lead ruling R-56
-    Q-3). The pipeline then reads the slot, sets phase `apply` and calls
-    apply_removals(). First body: the baseline (project:719-720 and :736-737 at
-    961c405), confirm() under raising_signals(), its refusal recorded."""
-    wanted = Path(run.args.worktree).expanduser().resolve()
-    command = ["git", "-C", str(plan.root), "worktree", "remove", str(wanted)]
-    print(f"Cleanup action: remove merged worktree {wanted}")
-    show_plan([command], plan.root)
-    try:
-        with raising_signals():
-            confirm(getattr(run.args, "yes", False))
-    except Refused as exc:
-        return refuse(plan, exc, run)
-    return None
+    """Accept the plan for removal (T054; FR-026; research.md R3; lead ruling
+    R-56 Q-3): --yes accepts the fresh plan without asking; otherwise
+    ask_removal(), looked up by its global name since T046 patches it there,
+    asks D18's question under raising_signals(), swapped in around the
+    question alone, with the clock paused, and only `yes`, its surrounding
+    whitespace stripped, accepts. Returns None when the plan is accepted. Any
+    other answer records `cancelled`, with the baseline's message, through
+    refuse() and returns 2, never raising. End of input and a signal at the
+    question pass to main() (EOFError, KeyboardInterrupt, Terminated). The
+    pipeline then reads the slot, sets phase `apply` and calls
+    apply_removals()."""
+    if getattr(run.args, "yes", False):
+        return None
+    if ask_removal(plan, run).strip() == "yes":
+        return None
+    return refuse(plan, Refused("Cancelled; no command was run.", code="cancelled"), run)
 
 
 def ask_removal(plan, run):
@@ -4119,17 +4129,51 @@ def decide_stage(target, outcome, reconciliation):
 
 
 def apply_removals(plan, run):
-    """Remove the plan's selected worktrees (T057 fills): called in phase
-    `apply`, which the pipeline sets, never this function (lead ruling R-56);
-    returns the run's exit status by D19. First body: the baseline
-    revalidation and removal (project:719, :721-722 and :741-743 at
-    961c405)."""
-    wanted = Path(run.args.worktree).expanduser().resolve()
-    command = ["git", "-C", str(plan.root), "worktree", "remove", str(wanted)]
-    expected = {"target_branch": plan.report["target_branch"],
-                "signature": cleanup_signature(plan.report, plan.target)}
-    require_unchanged_cleanup_state(plan.root, "remove", expected, path=wanted)
-    return execute(command)
+    """Remove the plan's selected worktrees (T057; design D7, D9 and D19;
+    contracts/project-clean.md, "Order of a run", step 8): called in phase
+    `apply`, which the pipeline sets, never this function (lead ruling R-56).
+    Per selected row, in canonical order: its Target (make_target()); its
+    revalidation (revalidate()), a difference refusing it; otherwise its
+    removal child, spawned and waited for (run_removal()), the rescan
+    (rescan()) and its stage (decide_stage()). The batch stops after the
+    first target that is not a plain `removed` (reason null), and every later
+    target is `not-attempted` with `batch-stopped` and no reconciliation.
+    Each target's progress line prints at its final stage (print_progress()),
+    then the result (print_result()), every human line through say() to
+    run.human, standard error under --apply --json; under --apply --json the
+    apply result record then goes to standard output through
+    write_document(). After the apply phase begins every write is
+    best-effort (lead ruling R-55): a failed one is recorded, never raised,
+    and never changes the exit. Returns apply_exit_status(targets,
+    run.signal), D19's table, whose first row reads the slot. T093 adds the
+    slot's seams, the reserve and the handling of an exception; T084 and T085
+    the targeted revalidation and rescan."""
+    targets = [make_target(plan, row) for row in plan.selected or ()]
+    stopped = False
+    for target in targets:
+        if stopped:
+            target.update(stage="not-attempted", reason="batch-stopped", reconciliation=None)
+        else:
+            refused = revalidate(plan, target, run)
+            if refused is not None:
+                reason, reconciliation = refused
+                target.update(stage="refused", reason=reason, reconciliation=reconciliation)
+            else:
+                outcome = run_removal(target, run)
+                reconciliation = rescan(target, run)
+                stage, reason, notes = decide_stage(target, outcome, reconciliation)
+                target.update(stage=stage, reason=reason, notes=list(notes), reconciliation=reconciliation)
+            stopped = not (target["stage"] == "removed" and target["reason"] is None)
+        print_progress(target, run)
+    status = apply_exit_status(targets, run.signal)
+    print_result(plan, targets, run)
+    if getattr(run.args, "json", False):
+        estimated = getattr(plan, "planning_probes", 0) + 5 * len(targets) + 3
+        write_document(result_document(
+            targets, status, repository=getattr(plan, "repository", None), merge_target=plan.merge_target,
+            plan_digest=plan.digest, probes={"estimated": estimated, "performed": run.probes},
+            operations={"estimated": len(targets), "performed": run.operations}))
+    return status
 # endregion apply
 
 # region result
