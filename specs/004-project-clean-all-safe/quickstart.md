@@ -225,6 +225,11 @@ group line `  unsupported-path-bytes (1): rename the path to valid UTF-8`
 present after the apply; standard output of the apply parses as exactly one
 JSON document.
 
+To run a printed command that uses `$'...'`, paste it into bash, zsh, ksh93
+or a POSIX.1-2024 shell, not dash (Ubuntu's `/bin/sh`), under a UTF-8
+locale: in a C locale a `\u` or `\U` escape can name a different path or
+branch (lead rulings R-60 and R-61).
+
 ## User Story 9: status, doctor and update share the evidence
 
 ```bash

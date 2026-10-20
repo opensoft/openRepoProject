@@ -395,6 +395,15 @@ The feature PR body lists these for his word:
   reader that stalls can hold a run past the delta's 64 s bound, which does
   not cover a write blocked by its reader. R-55 stands until he rules
   (research.md R4; contract, "Exit statuses").
+- **LQ-8, the command form's escapes** (lead ruling R-61): a printed
+  `$'...'` command holding a `\u` or `\U` escape is read differently
+  outside a UTF-8 locale, so a command pasted in a C locale can name a
+  different path or branch. The recommendation, not applied: amend change
+  1's path rule so that its command form writes non-ASCII code points as
+  their UTF-8 bytes, `\xHH`, which every shell with `$'...'` reads alike in
+  any locale, the display form keeping `\u` and `\U`. This feature
+  implements the delta as written and records the limit (contract, "Human
+  output").
 
 The others are recorded where they apply: LQ-3, the push-child exception
 (R1); LQ-4, the preflight's scope (R16); and LQ-5, the remedy reading

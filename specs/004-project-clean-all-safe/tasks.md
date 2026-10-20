@@ -766,7 +766,11 @@ T033), when B, D, E and F are; H, guard (T034, T035), when T023 is, beside G
   objects, `path_valid_utf8`, `errors` as `{code, message, path?,
   path_valid_utf8?, reason?}` objects and `notes` as an array of code strings
   (plan review M6, m11); a deleted upstream keeps its configured short name
-  with `ahead` and `behind` null).
+  with `ahead` and `behind` null; a worktree on a branch named `HEAD`, made
+  by `git update-ref refs/heads/HEAD SHA` and checked out there, has
+  `upstream`, `ahead` and `behind` null and is `inspection-error` with
+  `probe-failed`, `git for-each-ref failed: unparseable output`, lead ruling
+  R-61, built by lane G's follow-up).
   — files: `tests/test_clean_evidence.py`
   — verify: `python3 -c "import sys,unittest as u;L=u.defaultTestLoader;f=lambda s:[i for t in s for i in (f(t) if isinstance(t,u.TestSuite) else [t.id()])];I=[i for i in f(L.discover('tests',pattern=sys.argv[1])) if not i.startswith('unittest.')];A=sys.argv[2:];M=[a for a in A if not any(a in ('*',i.split('.')[-1]) for i in I)];[print('not collected:',m) for m in M];[print(e) for e in L.errors];sys.exit(1 if M or L.errors or not A else 0)" test_clean_evidence.py 'test_clean_evidence_probes_once_per_common_directory' 'test_clean_evidence_checks_registration_both_ways' 'test_clean_evidence_reads_presence' 'test_clean_evidence_row_fields'`
 - [x] T030 [P] [O] Add the evidence model's scenario tests to
@@ -833,7 +837,11 @@ T033), when B, D, E and F are; H, guard (T034, T035), when T023 is, beside G
   G's follow-up builds, R-59 D6); `status_probe()`; and
   `worktree_rows()`
   (the baseline keys, `prunable` among them where the record says so (M11), and
-  the six added fields), each failed driver outcome becoming the row's `errors`
+  the six added fields; a row whose branch is `refs/heads/HEAD`, whose
+  upstream `git for-each-ref` misreports as the current branch's, has
+  `upstream`, `ahead` and `behind` null and is `inspection-error` with
+  `probe-failed`, lead ruling R-61, a rule lane G's follow-up builds), each
+  failed driver outcome becoming the row's `errors`
   entry by T024's map (M17), and each row carrying an unprobed marker, never
   serialized and unset here, which a read not finished within its filesystem
   budget sets (T066; analyze M6). Each row error's `message` is the

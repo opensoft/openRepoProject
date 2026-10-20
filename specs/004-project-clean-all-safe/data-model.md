@@ -102,12 +102,17 @@ for each selected row. For a branch whose configured upstream's
 remote-tracking ref was deleted, `upstream` is the short name and
 `upstream_oid`, `ahead` and `behind` are null; at revalidation a value null
 in the plan and null again is no difference, and one that reappears is
-`state-changed` (D7, D20).
+`state-changed` (D7, D20). For a branch named `HEAD` (`refs/heads/HEAD`),
+`git for-each-ref` reports the current branch's upstream, so row 6 cannot
+establish its upstream: its `upstream`, `ahead` and `behind` are null, and
+the row is `inspection-error` with `probe-failed`, `git for-each-ref failed:
+unparseable output` (lead ruling R-61; lane G's follow-up builds it).
 
 ### Classification (D6; FR-007)
 
 First, a row whose evidence could not be established (`present` null, a
-registration that disagrees, a status probe that failed or timed out) is
+registration that disagrees, a status probe that failed or timed out, a
+branch named `HEAD`, R-61) is
 `inspection-error` directly, whatever its branch, so a failed probe on the
 merge-target checkout is never `protected-default`. Every other row takes the
 first rung that holds, in this order (names unchanged; the one reorder is

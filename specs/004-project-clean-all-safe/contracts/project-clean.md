@@ -212,6 +212,19 @@ or an undecodable byte; then it prints as `$'...'` with `\xHH`, `\uXXXX` or
 `\UXXXXXXXX` in lowercase hexadecimal, each backslash doubled and each single
 quote as `\'` (FR-041). The baseline report keeps its other lines.
 
+Two notes on that form, documentation only, since the delta fixes the
+printed lines and `project` adds no text about them (lead rulings R-60 and
+R-61). A command printed with `$'...'` needs a shell that implements it:
+bash, zsh, ksh93 or a POSIX.1-2024 shell; dash, Ubuntu's `/bin/sh`, does not
+yet. And a `\u` or `\U` escape needs a UTF-8 locale: under `LC_ALL=C`
+bash and zsh drop such an escape, so `$'a\U000e0041b'` reads as `ab`, a
+different valid name, and for some code points bash keeps the escape as
+text and zsh refuses the line, so a command pasted in a C locale can name a
+different path or branch. LQ-8 asks Brett Heap whether the command form
+should write non-ASCII code points as their UTF-8 bytes, `\xHH`, which every
+such shell reads alike in any locale (plan.md, "Open questions for Brett
+Heap").
+
 ## JSON (FR-039 to FR-044)
 
 Every `project clean --json` prints one document with `schema_version: 1`.
@@ -400,6 +413,14 @@ removal: `-c core.untrackedCache=false -c core.fsmonitor=false`.
 | removal | `-c status.showUntrackedFiles=normal -c core.untrackedCache=false -c core.fsmonitor=false` + protocol pins + `-C ROOT worktree remove PATH` | `root`; PATH the registry's raw bytes, one argument, never `--force` |
 | branch deletion | protocol pins + `-C ROOT branch -d BRANCH` | `root`; a D2 handle run by the driver with no budget, its output relayed to `project`'s streams |
 | push | `-C ROOT push REMOTE BRANCH:REMOTE_BRANCH`, or `push -u origin BRANCH`; no protocol pins | `root`; run by `execute()`, not the driver: `project`'s own streams, never read or capped; `project`'s process group, in the terminal's foreground when `project` is; never signalled, waited for, unbounded; yields no evidence |
+
+Row 6 cannot establish the upstream of a branch named `HEAD`
+(`refs/heads/HEAD`), because `git for-each-ref` reports the current branch's
+upstream for it. Such a row has `upstream`, `ahead` and `behind` null and is
+`inspection-error`, its row error `probe-failed` with `git for-each-ref
+failed: unparseable output`, filling the delta's rule that evidence not
+established is `inspection-error` (lead ruling R-61; lane G's follow-up
+builds it).
 
 Bounds: each probe child gets `min(5 s, work remaining)` under `clean`'s 60 s
 deadline (50 s of work, a 10 s reserve, time at the question excluded), each
