@@ -3774,9 +3774,11 @@ def build_plan(repo, run):
     F + W + E of the estimate (research.md R8); and `report`, the baseline
     report built from the same rows, which the first bodies of
     confirm_removal(), apply_removals() and push_or_delete() read until the
-    apply and push lanes replace them. Interim until T066 (lead ruling R-56
-    Q-17): an unstarted branch is selectable. A report above 128 rows is
-    T101's, and the limit of 16 counting P alone T100's."""
+    apply and push lanes replace them. gate_rows() runs gate 7, T066's
+    reflog_gate(), on every row that passes gates 1 to 6, so an unstarted
+    branch is excluded as `unstarted-branch`, and one whose reflog cannot
+    decide it as `reflog-unavailable` (lead ruling R-78 (c)). A report above
+    128 rows is T101's, and the limit of 16 counting P alone T100's."""
     plan = Plan(repo, run)
     root = repo["root"]
     evidence = plan.evidence = repo.get("evidence")  # the resolution's: row 3 runs once (R-71 (b))
