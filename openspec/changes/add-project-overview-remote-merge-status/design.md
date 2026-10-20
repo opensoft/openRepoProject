@@ -394,16 +394,20 @@ would run, and a `PATH` that names directories that do not exist, as many
 do, does not turn every `--remote` run into `gh-unavailable`. Any other
 error from a directory or its entry, such as EIO, ELOOP or ESTALE, fails the
 lookup, which then gives what one that fails gives, below. Skipping such a
-directory could run a later `gh` that one of the searches would not pick:
-checked on 2026-10-20 by injecting each error under glibc 2.39's `execvp`, it
-stopped on ELOOP and EIO, and went on past ENOENT, EACCES, ENOTDIR, ESTALE,
-ENODEV and ETIMEDOUT, where bash 5.2.21, zsh 5.9 and dash skipped a `gh` that
-is a symbolic link to itself (ELOOP) and went on to the later one. The lookup
-does not choose between searches that disagree, and so is stricter than glibc's
-on ESTALE, ENODEV and ETIMEDOUT too. The 5 s limit and the deadline stay
-the only cuts of the lookup as a whole, and the spec's "finds none, fails,
-or reaches its 5 s limit" speaks of the lookup as a whole, so this
-per-directory rule fills D5 and is no change to the spec (C-35).
+directory could run a later `gh` that one of the searches would not pick, so
+the lookup skips only what every search checked skips, and an error that not
+every search was seen to skip fails it. Checked on 2026-10-20 by injecting
+each error under glibc 2.39's `execvp`: it stopped on ELOOP, EIO,
+ENAMETOOLONG, ENOMEM and E2BIG, and went on past ENOENT, EACCES, ENOTDIR,
+ESTALE, ENODEV and ETIMEDOUT. bash 5.2.21, zsh 5.9 and dash were recorded for
+ELOOP only: each skipped a `gh` that is a symbolic link to itself and went on
+to the later one, where glibc stops. The shells were not run on the other
+errors, so ESTALE, ENODEV and ETIMEDOUT, which glibc goes on past, are not
+known to be skipped by every search, and fail the lookup with the rest. The
+5 s limit and the deadline stay the only cuts of the lookup as a whole, and
+the spec's "finds none, fails, or reaches its 5 s limit" speaks of the lookup
+as a whole, so this per-directory rule fills D5 and is no change to the spec
+(C-35; its rationale reworded to what was observed, C-36).
 
 A lookup that fails, or that reaches its 5 s limit, as on an unreachable
 `PATH` directory, gives what one that finds none gives: every keyed row,
