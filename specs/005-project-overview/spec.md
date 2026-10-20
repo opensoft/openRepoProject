@@ -1623,6 +1623,9 @@ and [P] are change 1's requirements as the header names them.
   MUST run in its own process group; a child that reaches its budget, or
   whose output the overview stops reading early, MUST receive SIGTERM to its
   group, SIGKILL 2 s later, and be reaped within a further 2 s or abandoned.
+  Whether a child starts with SIGINT, SIGTERM and SIGHUP blocked, as design
+  D1 has it, so that SIGTERM cannot stop it before SIGKILL, is question Q16
+  of `clarify-questions.md`.
   A child that reaches its budget, and any child stopped for its own budget
   or at a record bound and then abandoned after the reap wait, MUST record
   `probe-timeout` on its row, while a child stopped at its record bound and
@@ -1809,6 +1812,9 @@ and [P] are change 1's requirements as the header names them.
   working directory whose realpath cannot be established is question Q7 of
   `clarify-questions.md` (POD:375-386; DI:425-427, :778; Clarifications,
   C-25).
+  Whether this feature realizes the exception to that equality which
+  `add-project-clean-cache-disposal` (#24) proposes is question Q17 of
+  `clarify-questions.md`.
 
 **Findings and attention**
 
@@ -2044,6 +2050,8 @@ and [P] are change 1's requirements as the header names them.
   (EC-001) and under EC-002. A signal that arrives while the result is
   being written is question Q15 of `clarify-questions.md` (POD:776-781;
   clarifications N1; design D1).
+  Whether its Git children start with those three signals blocked, as
+  design D1 has it, is question Q16 of `clarify-questions.md`.
 
 **Human report**
 
@@ -2429,6 +2437,8 @@ and [P] are change 1's requirements as the header names them.
     collection and code are the same either way, and that change's own
     feature excludes the cache case from this feature's parity tests "once
     feature 005 has landed ... never in feature 005" (its proposal, Impact).
+    Which feature takes its block if its realization merges first is
+    question Q17 of `clarify-questions.md`.
   - `add-project-overview-remote-merge-status` (issue #25, draft PR #29)
     MODIFIES "Overview bounds its work and reports what it omitted",
     "Overview prints a versioned JSON envelope" and "Overview is local and
