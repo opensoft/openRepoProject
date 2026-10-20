@@ -53,11 +53,17 @@ duplicate them.
   child), by `392cb30` (the spec deltas), `2351183` (the design), `a50468a`
   (the proposal's body) and the commit that records the round's table and
   updates this task; verified by "Re-read and Codex Findings (round A4)" in
+  `proposal.md`. Round A5, on `9ff8202`, applied lane openRepoProject-3's
+  delta read of that head (ruling A-26), the cache change's worst shapes at
+  `e1049b2` (A-25) and Codex's two findings on `9ff8202` (A-27, and A-28 as
+  amended), by `6d6d9f2` (the spec deltas), `e3b8819` (the design), `a6f9fc4`
+  (the proposal's body) and the commit that records the round's table and
+  updates this task; verified by "Re-read and Codex Findings (round A5)" in
   `proposal.md`.
 - [x] 1.4 Spec deltas and design written: `specs/project-clean/spec.md`
   modifies five requirements and adds one (68 scenarios: 43 carried unchanged
   from change 1 and PR #19, 6, 14, 10, 5 and 8 by block, and 25 added, the
-  24th in round A3 and the 25th in round A4),
+  24th in round A3 and the 25th in round A4, round A5 adding ANDs only),
   `specs/project-clean-review-safety/spec.md` modifies one (4 scenarios: 3
   carried, 1 added), and `specs/project-command/spec.md` modifies one on PR
   #19's text (9 scenarios carried, none added; agreed by lane
@@ -66,17 +72,18 @@ duplicate them.
   each modified requirement's source text kept byte for byte; `design.md`
   holds D1 to D10 (`8341954`, `d0b33ce`, and the commit titled 'Settle which
   later targets carry branch-retention-stop'), revised by the alignment fix
-  round (1.2), the council round (1.3) and rounds A3 and A4; verified by
+  round (1.2), the council round (1.3) and rounds A3, A4 and A5; verified by
   `grep -c '^#### Scenario:'` on each spec file and by a scenario-carry script
-  run after the council round and again after rounds A3 and A4 over all seven
-  MODIFIED blocks, every source scenario present byte for byte and in order.
+  run after the council round and again after rounds A3, A4 and A5 over all
+  seven MODIFIED blocks, every source scenario present byte for byte and in
+  order.
 - [x] 1.5 Validation passes: `/usr/bin/openspec validate
   add-project-clean-branch-retirement --strict` reports the change valid,
   `/usr/bin/openspec validate --all --strict` reports 8 passed, 0 failed, and
   `/usr/bin/openspec status --change add-project-clean-branch-retirement
   --json` shows every artifact done; verified by running the three on this
   branch after 1.4, after the alignment fix round, after the council round
-  and after rounds A3 and A4
+  and after rounds A3, A4 and A5
   (build 1.13.1, which notes only as INFO that archive would refuse the
   MODIFIED blocks whose base still sits in change 1).
 - [ ] 1.6 Ratified by Brett Heap's word on the pull request, quoted with its
@@ -118,12 +125,15 @@ duplicate them.
   previews and applies a batch of eligible worktree removals in one
   repository", the cache digest; "Clean bounds its Git work and reports
   omitted work", the counting sentence merged, this change's incompleteness
-  clause kept, and the cache fit sentence, which at `e906c2f` counts "at most
+  clause kept, and the cache fit sentence, which at `e1049b2` counts "at most
   250 Git children besides the 16 removals, about 42.3 s", or its restatement
   under the lane's ruling B-25, scoped to runs without the flag; "Clean
   records a reconcilable result for
   every removal target", the cache-deletion exception; "Cleanup states a
-  narrow guarantee and its residual window", the cache target's revalidation)
+  narrow guarantee and its residual window", the cache target's revalidation
+  and the residual-window line, whose cache clauses then precede this
+  change's branch clause, as `design.md` D8 says (ruling A-23; lane
+  openRepoProject-3's delta read, D6))
   are listed here with the cache change's state, and if it has archived, this
   change's five blocks are re-based on its archived text now, otherwise 3.2
   holds the re-base (L-11). At the re-base the flagless digest becomes
@@ -177,7 +187,10 @@ Implementation is tracked exclusively in one Speckit feature, to be created by
 `/speckit.specify` after ratification (1.6) and section 2, from a local `main`
 synced to `origin/main`. The feature covers the flag, the branch stage and its
 record in `project` (`design.md` D1 to D8 and D10), the README's "Clean up Git
-worktrees", and the tests of D9.
+worktrees", with D8's note that a command printed in the `$'...'` form needs a
+shell that implements it, in a UTF-8 locale for its code-point escapes, which
+dash, Ubuntu's `/bin/sh`, lacks, a limitation change 1's path rule shares
+(ruling A-28 as amended), and the tests of D9.
 
 - Feature identifier: to be created by /speckit.specify after 1.6 (006 or the next free number)
 - Branch: to be created by /speckit.specify after 1.6 (006 or the next free number)
