@@ -48,3 +48,13 @@ was still walked, so the walk's bound is 16 x 512 = 8,192 entries, about
 9,000 calls, about 2 s through one worker and about 5.6 s at a thread per call
 (Codex's P2 at design.md:294 on `90d18ee`). D4 restates the fit with it, and
 task 2.3 measures the walk at 16 rows of 512 entries with the totals reached.
+
+**Restated in round B4 (B-33, 2026-10-20):** the 8,192 now counts recorded
+objects, the directories the plan records with the entries, and the walk opens
+each recorded directory once; ordinary trees stay at about 9,000 calls, and a
+tree whose every object is a directory costs at most four calls an object,
+about 32,800. The stage opens one chain from the worktree root per directory
+holding a listed path in each pass, which under the 512-object cap can reach
+43,947 opens a pass for one target, a worst case no fit holds; a limit on
+those opens is before Brett Heap (proposal, Open Questions), and task 2.3
+measures the deep-tree worst case (Codex's P2 at design.md:323 on `cf57956`).

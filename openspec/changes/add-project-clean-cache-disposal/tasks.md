@@ -10,9 +10,9 @@ duplicate them, and nothing here is an implementation step.
 
 - [x] 1.1 Proposal written: `proposal.md` adopts the packet's cache-disposal
   contract (`BA:1314-1337`) under the lane's rulings L-1 to L-17 and B-1 to
-  B-28, names three departures from B-6 as first written, which B-11 accepted,
+  B-33, names three departures from B-6 as first written, which B-11 accepted,
   and one from B's list of modified requirements (CD-1 to CD-4) with the rest
-  of its own decisions (CD-5 to CD-18), and puts four Open Questions before
+  of its own decisions (CD-5 to CD-18), and puts five Open Questions before
   Brett Heap; verified by its Capabilities section accounting for every
   requirement of `project-clean` and `project-clean-review-safety`, canonical
   and change 1's ADDED alike, and for change 2's `project-overview`.
@@ -49,13 +49,13 @@ duplicate them, and nothing here is an implementation step.
   change 2's "Every protected classifier" in the overview block (proposal,
   Capabilities); `specs/project-overview/spec.md` modifies one requirement of
   change 2 (8 scenarios: 6 byte-exact, 1 edited and 1 added), committed as
-  `b4d3e12`, and its B-22 edit agreed by lane openRepoProject-4 on 2026-10-19
-  and committed as `9f30fb9` (2.2); `design.md` holds D1 to D14 and
-  `clarifications.md` the
+  `b4d3e12`, its B-22 edit agreed by lane openRepoProject-4 on 2026-10-19
+  and committed as `9f30fb9`, and B-30's scope, lane 4's own words, committed
+  as `4d5855a` (2.2); `design.md` holds D1 to D14 and `clarifications.md` the
   NOTED S-4; verified by `grep -c '^#### Scenario'` on each delta, by a script
-  run after the council round and again after round B3 that compares every
-  scenario of each of the nine MODIFIED blocks with its source text, and by
-  `design.md`'s headings.
+  run after the council round and again after rounds B3 and B4 that compares
+  every scenario of each of the nine MODIFIED blocks with its source text, and
+  by `design.md`'s headings.
 - [x] 1.5 Validation passes: `/usr/bin/openspec validate
   add-project-clean-cache-disposal --strict` reports the change valid,
   `/usr/bin/openspec validate --all --strict` passes every item, and
@@ -63,12 +63,13 @@ duplicate them, and nothing here is an implementation step.
   shows every artifact done; verified by running the three commands on this
   branch after 1.4, after the alignment fix round, after the council round
   (the last with the B-22 `project-overview` edit not yet committed), again
-  after lane 4's agreement and that edit's commit, and after round B3. The INFO
+  after lane 4's agreement and that edit's commit, after round B3 and after
+  round B4. The INFO
   lines, that the archive would refuse a delta
   whose MODIFIED requirement change 1 or change 2 adds until that change is
   archived, are the expected state for blocks written on sister changes.
 - [ ] 1.6 Ratified by Brett Heap's word on this change's pull request, quoted
-  with its link here, with the four Open Questions of `proposal.md` before
+  with its link here, with the five Open Questions of `proposal.md` before
   him; verified by that quote. No implementation starts before it.
 
 ## 2. Before the Speckit handoff
@@ -85,8 +86,8 @@ duplicate them, and nothing here is an implementation step.
   this change modifies, and by `/usr/bin/openspec validate
   add-project-clean-cache-disposal --strict` reporting no archive refusal for
   those two deltas.
-- [x] 2.2 The overview exception agreed (B-14, B-22): lane openRepoProject-4,
-  owner of change 2 and feature 005, agrees the diff of
+- [ ] 2.2 The overview exception agreed (B-14, B-22, B-30): lane
+  openRepoProject-4, owner of change 2 and feature 005, agrees the diff of
   `specs/project-overview/spec.md`, which carries change 2's "Overview reuses
   the cleanup classifier and merge target" (APO/ov:358) whole with two
   sentences appended to its equality clause, lane 4's precision in its carried
@@ -113,20 +114,32 @@ duplicate them, and nothing here is an implementation step.
   the held-B2 file plus lane 4's readability point (line 32, "because clean's
   cache enumeration") and nothing else." Both agreements are cited by the lane
   logs in place of a link, since lane 4 gave them by lane message and not on
-  the pull request (lane 3's LOW 16 and its re-read LOW 3).
-- [ ] 2.3 Enumeration, walk and stage measured (Open Questions, the caps;
-  S-4): the cache enumeration's child, the plan-time walk with its access
-  checks, and the cache stage timed warm and cold by change 1's protocol (its
-  design D5) on a Linux filesystem path, the walk at 16 rows of 512 entries
-  with the invocation's totals reached (8,192 walked, 4,096 counted; B-25) and
-  the stage at 512 entries per worktree and 4,096 per run, through feature
-  004's `fs_call`, idle and at the workstation's
-  usual load, and the fit of `design.md` D4 reapplied; and the enumeration's
-  argument vector checked on Git 2.36.6 by change 1's D17 method (the `! `
-  record, the trailing `/` of a directory record, the untracked-files refusal
-  and the order of ignored records); verified by the numbers posted on this
-  change's pull request and summarised here; a cap the fit rejects is lowered
-  in the deltas before the handoff, otherwise the caps stand as measured.
+  the pull request (lane 3's LOW 16 and its re-read LOW 3). Reopened in round
+  B4: B-30 ends the second sentence with lane 4's own words of 2026-10-20, "for
+  the same working directory and refs", and the added scenario's AND follows
+  them; lane 4's handoff, line 132 on the register's `origin/main` at
+  `971bc6eda`, records that B-30 takes lane 4's "for the same working
+  directory and refs", and the edit is committed alone as `4d5855a`. This task
+  is ticked again when lane 4's byte check of `4d5855a` is cited here from its
+  log.
+- [ ] 2.3 Enumeration, walk and stage measured (Open Questions, the caps and
+  the opens limit; S-4): the cache enumeration's child, the plan-time walk with
+  its access checks, and the cache stage timed warm and cold by change 1's
+  protocol (its design D5) on a Linux filesystem path, the walk at 16 rows of
+  512 recorded objects with the invocation's totals reached (8,192 walked,
+  4,096 counted; B-25), the stage at 512 entries per worktree and 4,096 per
+  run, and B-33's deep-tree worst case (a chain of 341 directories whose
+  deepest 171 each hold one loose `.pyc`, walked and disposed of, and 16 rows
+  of 512 nested `__pycache__` directories, walked, the 8 that the totals
+  select disposed of), through feature 004's `fs_call`, idle and at the
+  workstation's usual load, and the fit of `design.md` D4 reapplied; and the
+  enumeration's argument vector checked on Git 2.36.6 by change 1's D17 method
+  (the `! ` record, the trailing `/` of a directory record, the untracked-files
+  refusal and the order of ignored records); verified by the numbers posted on
+  this change's pull request and summarised here; a cap the fit rejects is
+  lowered in the deltas before the handoff, otherwise the caps stand as
+  measured, and the limit on the stage's directory opens is set as Brett Heap
+  answers its Open Question.
 
 ## 3. Landing and archive readiness
 
@@ -135,10 +148,22 @@ duplicate them, and nothing here is an implementation step.
   (3.10)` and `test (3.12)` on `ubuntu-latest` (S-4), and closes issue #24;
   verified by citing its merge sha here, from `gh pr view <number> --json
   mergeCommit,statusCheckRollup`.
-- [ ] 3.2 The change is archived with `/opsx:archive` only after 3.1, 2.1 and
-  change 2's archive (B-14), and before `add-project-clean-branch-retirement`
-  (#23) archives; verified by `/usr/bin/openspec validate --all --strict`
-  passing after the archive.
+- [ ] 3.2 This change's `project-overview` block re-aligned (B-29, lane
+  openRepoProject-4's F2): before `/opsx:archive` (3.3), which follows change
+  2's archive, this change's "Overview reuses the cleanup classifier and merge
+  target" is re-read against main's text of that requirement, in
+  `openspec/specs/project-overview/spec.md` once change 2 is archived, and
+  re-copied from it, keeping every amendment that landed there after
+  `961c405`, such as lane 4's planned one for feature 005's open Q7 A, with
+  this change's two sentences, its precision in "Every protected classifier"
+  and its added scenario, and any sentence lane openRepoProject-4 asks for is
+  in; verified by a `diff -u` of main's block against this change's block
+  showing additions only, its changed lines keeping every word of main's, and
+  by the validation of 1.5 passing again.
+- [ ] 3.3 The change is archived with `/opsx:archive` only after 3.1, 2.1,
+  change 2's archive (B-14) and 3.2, and before
+  `add-project-clean-branch-retirement` (#23) archives; verified by
+  `/usr/bin/openspec validate --all --strict` passing after the archive.
 
 ## Speckit Handoff
 
