@@ -201,6 +201,82 @@ class SingleTests(clean_support.CleanCase):
             self.assert_named_plan(document, target, [self.note("inspection-incomplete", target, K=1)])
             self.assertEqual(self.snapshot(root), before)
 
+    # T070: a named removal beside an inspection error, among seventeen
+    # eligible rows, and beyond the row cap.
+
+    def test_clean_a_named_removal_beside_another_row_s_inspection_error(self):
+        root = self.repo()
+        self.bare_remote()
+        target = self.merged_worktree("001-p")
+        failing = self.merged_worktree("002-failing")
+        fake = clean_support.install_fake_git(self.base / "fake", "status-fails-in", path=failing)
+        env = self.path_first(fake.parent)
+        before = self.snapshot(root)
+        _, document, records = self.named_plan(root, target, real=fake)
+        self.assert_named_plan(document, target, [self.note("inspection-incomplete", target, K=1)])
+        rows = {row["path"]: row for row in document["worktrees"]}
+        self.assertEqual(rows[str(failing)]["classification"], "inspection-error")
+        self.assertEqual(status_paths(records)[0], str(target), "P is probed first")
+        # The same repository's batch refuses: there the row is not P's.
+        batch = self.run_json("clean", root, "--all-safe", "--apply", "--yes", "--json", env=env).document
+        self.assertEqual((batch["completeness"], codes(batch)), ("incomplete", ["inspection-incomplete"]))
+        self.assertEqual(self.snapshot(root), before)
+
+    def test_clean_a_named_removal_among_seventeen_eligible_rows(self):
+        root = self.repo()
+        self.bare_remote()
+        trees = [self.merged_worktree(f"{number:03d}-eligible") for number in range(1, 18)]
+        target = trees[8]
+        before = self.snapshot(root)
+        result, document, _ = self.named_plan(root, target)
+        self.assert_named_plan(document, target)
+        others = [tree for tree in trees if tree != target]
+        self.assertEqual(len(others), 16)
+        self.assertEqual([(entry["path"], entry["reason"]) for entry in document["excluded"]],
+                         sorted([(str(tree), "not-requested") for tree in others] + [(str(root), "main-worktree")]))
+        self.assertEqual(document["omitted"], {"count": 0, "exactness": "exact"})
+        human = self.run_cli("clean", root, "--apply", "--action", "remove", "--worktree", target)
+        self.assert_status(human, 2)
+        self.assertIn(TEXT["excluded_group"].format(REASON="not-requested", K=16,
+                                                    NEXT_STEP=clean_support.NEXT_STEP_FIXTURES["not-requested"]),
+                      human.stdout.splitlines())
+        self.assertIn(TEXT["selected_heading"].format(N=1), human.stdout.splitlines())
+        self.assertEqual(self.snapshot(root), before)
+
+    def test_clean_a_named_removal_beyond_the_row_cap(self):
+        # Lead ruling R-53 P-15: the main worktree, 129 rows registered directly
+        # (registered first, while the main worktree's head has an empty tree,
+        # so each is clean and `unpublished`), and P, a real merged worktree
+        # whose path sorts after every other: 131 entries. P and the first 128
+        # entries other than P, the main worktree first, are inspected, and the
+        # last two registered rows are not.
+        root = self.repo()
+        self.bare_remote()
+        registered = self.register_worktrees(129, "r")
+        target = self.merged_worktree("p", path=self.base / "zz-p")
+        self.assertEqual(sorted(map(os.fsencode, registered + [target]))[-1], os.fsencode(target))
+        before = self.snapshot(root)
+        _, document, records = self.named_plan(root, target)
+        self.assert_named_plan(document, target, [self.note("inspect-cap", target, K=2, M=128)])
+        self.assertEqual(document["omitted"], {"count": 2, "exactness": "exact"})
+        self.assertEqual(document["limits"]["worktree_rows"], 128)
+        inspected = [str(root)] + [str(tree) for tree in registered[:127]] + [str(target)]
+        self.assertEqual([row["path"] for row in document["worktrees"]], inspected)
+        self.assertEqual({row["classification"] for row in document["worktrees"][1:-1]}, {"unpublished"})
+        excluded = [entry["path"] for entry in document["excluded"]]
+        self.assertEqual(excluded, sorted(inspected[:-1]), "the rows past the cap are neither rows nor excluded")
+        paths = status_paths(records)
+        self.assertEqual(paths[0], str(target), "P's status probe is the first status child")
+        self.assertEqual(paths, [str(target)] + inspected[:-1])
+        # The batch of the same repository, past its cap: incomplete with
+        # inspect-cap, the main worktree and the 127 smallest paths inspected.
+        batch = self.run_json("clean", root, "--all-safe", "--json")
+        self.assert_status(batch, 1)
+        self.assertEqual((batch.document["completeness"], batch.document["omitted"], codes(batch.document)),
+                         ("incomplete", {"count": 3, "exactness": "exact"}, ["inspect-cap"]))
+        self.assertEqual([row["path"] for row in batch.document["worktrees"]], inspected[:-1])
+        self.assertEqual(self.snapshot(root), before)
+
 
 if __name__ == "__main__":
     unittest.main()
