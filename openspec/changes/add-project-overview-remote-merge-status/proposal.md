@@ -12,18 +12,18 @@ openRepoProject-3's folded read of `e198548..67e43ae` (C-30 to C-34) applied,
 their `project-overview` spec edits committed on lane openRepoProject-4's
 agreement of 2026-10-20, and C-35, lane openRepoProject-3's narrowing of the
 per-directory rule of the lookup of `gh`, applied in `design.md` alone, with no
-spec edit; round C7's edits for lane openRepoProject-3's confirm read of round
-C6c (C-36, D5's rationale reworded to what was observed) and Codex's finding on
-`1c32667` (C-37, a `parse_int` hook that bounds an integer literal at parse time
-on every supported Python) applied in `design.md` alone, with no spec edit;
-round C8's edits for lane openRepoProject-3's confirm read of round C7 (C-38)
-applied in `design.md` alone, with no spec edit; ratification by Brett Heap
-pending; nothing here is ratified. Governing issue: opensoft/openRepoProject#25,
-claimed by lane openRepoProject-5 (comment 6111242617); refs #6, the record of
-the project maintenance design packet. Proposed on Brett Heap's word "usage
-reset, resume all. read handoff and resume and fan out wide and do as much as
-possible in parallel" (2026-10-11), read by lanes openRepoProject-4 and
-openRepoProject-5 as a go for the candidate list they put to him.
+spec edit; rounds C7 to C9's edits for lane openRepoProject-3's confirm reads of
+rounds C6c and C7 (C-36, D5's rationale reworded; C-38) and Codex's findings on
+`1c32667` and `05a424a` (C-37, a `parse_int` hook that bounds an integer literal
+at parse time; C-39, a `parse_constant` hook that rejects `NaN`, `Infinity` and
+`-Infinity`), with the lead's C-40 (the body decoded as strict UTF-8), applied
+in `design.md` alone, with no spec edit; ratification by Brett Heap pending;
+nothing here is ratified. Governing issue: opensoft/openRepoProject#25, claimed
+by lane openRepoProject-5 (comment 6111242617); refs #6, the record of the
+project maintenance design packet. Proposed on Brett Heap's word "usage reset,
+resume all. read handoff and resume and fan out wide and do as much as possible
+in parallel" (2026-10-11), read by lanes openRepoProject-4 and openRepoProject-5
+as a go for the candidate list they put to him.
 
 Citations are `file:line`. The packet is cited at `da33d92`, equal to main
 `961c405` for `ideation/`: `DI`, `SY`, `BA` and `OV` are its
@@ -42,7 +42,7 @@ executable. Change 1's evidence model,
 `Repository inspection requires Git 2.36 and shares one evidence model`
 (CAS/cmd:90), is [E]. The lane's rulings are cited as L-1 to L-9 and C-1 to C-8
 (2026-10-11), L-10 to L-15, B-14, C-9 and C-10 (2026-10-18), L-16, L-17 and
-C-11 to C-14 (2026-10-19), and F-3 and C-15 to C-38 (2026-10-20, C-16 to C-22
+C-11 to C-14 (2026-10-19), and F-3 and C-15 to C-40 (2026-10-20, C-16 to C-22
 being the council's verdicts). `PR19/cmd` is draft PR #19's
 `openspec/changes/add-project-clean-all-safe/specs/project-command/spec.md` at
 `c462d87`.
@@ -671,11 +671,11 @@ on `67e43ae`, the bounded inspection of a remote's URL, three points found in
 applying it, and lane openRepoProject-3's folded read of `e198548..67e43ae`;
 Decisions and Readings below, and "Re-read and Codex Findings (round C6)"),
 **C-35** (the lookup of `gh`'s per-directory rule, lane openRepoProject-3's
-narrowing, applied in `design.md` alone; "Re-read and Codex Findings (round
-C6)"), **C-36** (D5's rationale for that rule reworded to what was observed),
-**C-37** (Codex's P2 on `1c32667`: a `parse_int` hook bounds an integer literal
-at parse time) and **C-38** (lane openRepoProject-3's four LOWs on C7); all are
-applied in `design.md` alone ("Re-read and Codex Findings (rounds C7 and C8)").
+narrowing), **C-36** (D5's rationale reworded), **C-37** (Codex's P2 on
+`1c32667`: a `parse_int` hook bounds an integer literal), **C-38** (lane
+openRepoProject-3's four LOWs on C7), **C-39** (Codex's P2 on `05a424a`: a
+`parse_constant` hook) and **C-40** (a strict UTF-8 decode of the body); all are
+applied in `design.md` alone ("Re-read and Codex Findings", rounds C6 to C9).
 
 Packet open decisions taken, each citing the text that leaves it open:
 
@@ -1313,3 +1313,18 @@ file lane openRepoProject-4 agreed, sha256
 | Finding | Severity | Ruling | Section edited |
 | --- | --- | --- | --- |
 | Lane openRepoProject-3's confirm read of round C7, four LOWs. LOW-1 (`design.md` D5): the rule skips ENOENT, ENOTDIR and EACCES, but D5 records the shells for ELOOP only, so those three skips rest on POSIX alone, although lane openRepoProject-3 reproduced bash, zsh and dash skipping all three. LOW-2 (D5, and the C-35 and C-36 rows): "each error" and "each injected error" are said where twelve were injected and D5 names eleven, ENOEXEC being unnamed. LOW-3 (D6 and D11): "only since 3.10.7 and 3.11" is said flatly, with no source, and 3.10.0 to 3.10.6 were not run. LOW-4 (D11): the test serves a `number` of 2,147,483,648 but none of 2,147,483,647, so a node check written `<` in place of `<=` passes it | LOW (four) | C-38: all four applied, design only, with no rule changed and no spec text. LOW-1: D5 records, crediting lane openRepoProject-3's reproduction (as a user other than root; bash 5.2.21, zsh 5.9, dash 0.5.12; `PATH=d1:d2`, the real `gh` in d2), that each shell, like glibc's `execvp`, ran d2's `gh` past a mode-000 directory (EACCES), a regular file where the entry's directory should be (ENOTDIR), a dangling link and a missing directory (ENOENT), and past a `gh` that is a directory or a regular file without execute permission, so that the skips of ENOENT, ENOTDIR and EACCES no longer rest on POSIX alone, and "recorded for ELOOP only" is reworded: the shells were run on ELOOP too, where each skips and glibc stops, and not on the other errors that fail the lookup; the writer re-ran this lane's round C6c prototype on 2026-10-20 and got the same results (the ruled lookup and each shell's `command -v gh` name d2's `gh` past each of those cases). LOW-2: D5 says that twelve errors were injected, one at a time, into the first `execve` of glibc 2.39's `execvp`, and names them as `inject-results.txt` of round C6c lists them: it stopped on ELOOP, EIO, ENAMETOOLONG, ENOMEM and E2BIG, went on past ENOENT, EACCES, ENOTDIR, ESTALE, ENODEV and ETIMEDOUT, and for ENOEXEC ran the first `gh` through its `sh` fallback, which is no stop; and D5 says what the lookup does with ENOEXEC: it never executes an entry, so an entry that is a regular file with execute permission is found, and whether it then runs is the child's matter, never the lookup's; the C-35 and C-36 rows above say twelve in place of each. LOW-3: D6 attributes the limit to Python's documentation, as Python's integer-string conversion length limit, added in 3.11 as a mitigation for CVE-2020-10735 and backported to 3.10.7 (read on 2026-10-20: the standard types page, "Added in version 3.11" and "added in security patch releases in versions before 3.12"; the 3.10 changelog, "Python 3.10.7 final", Security, gh-95778, "a mitigation for CVE-2020-10735"), and says that 3.10.0 to 3.10.6 were not run here, only emulated with `sys.set_int_max_str_digits(0)`; D6's check sentence and D11 say "emulates" in place of "stands for". LOW-4: D11's test also serves a `number` of 2,147,483,647, which passes the hook and the node check and gives a matched row, not `api-error`, so that the node check's `<=` edge is pinned; the writer ran a prototype of the hook and the node check's `number` clause on Python 3.10.21, 3.11.16, 3.12.3 and 3.13.15 (12 of 12 checks on each): D11's test as round C7 left it does not tell `<` from `<=`, since 2,147,483,648 gives `api-error` under both, and the added case does, since 2,147,483,647 gives `api-error` under `<`; the C-37 row above now says what its test pinned | `design.md` Context and its table, D5, D6, D11; the C-35 row of round C6 and the C-36 and C-37 rows of round C7 |
+
+### Re-read and Codex Findings (round C9)
+
+Codex re-reviewed `05a424a` on 2026-10-20 (22:45:56Z) with one P2 at
+`design.md:484`, which the lead accepted (C-39); in applying it the lead found a
+second point (C-40). Both edit `design.md` and this file only: no spec file
+changed, `specs/project-overview/spec.md` is still the file lane
+openRepoProject-4 agreed, sha256
+`2ecd3d72b7cd32595d12f66206b7dd3c71df2cdfb9430122dd1ab0414ff1fe3e`, and
+`specs/project-command/spec.md` is unchanged.
+
+| Finding | Severity | Ruling | Section edited |
+| --- | --- | --- | --- |
+| Codex 9 (P2, on `05a424a`, `design.md:484`, 2026-10-20T22:45:56Z): D6's parse passes `json.loads` only a `parse_int` hook, and `json.loads` accepts `NaN`, `Infinity` and `-Infinity` by default, so a 200 body that carries one in an otherwise unused field, such as a GraphQL `extensions` object, parses and its row can be `merged`, `open` or `not-found`, though a non-JSON body must be `api-error`; Codex asks for a rejecting `parse_constant` hook and a fixture | P2 | C-39: applied, design only, since the spec already requires the outcome (the added requirement's "A 200 body SHALL be UTF-8 JSON", `specs/project-overview/spec.md:461-462`, and `api-error` for a response "that cannot be decoded or parsed for any cause", :453-454): the parse also passes `json.loads` a `parse_constant` hook that raises for every text it is given, so that such a body fails the parse, wherever the constant stands, and its key is `api-error` by D6's rule that the parse catches every exception, on every supported Python; the writer checked on 2026-10-20 on Python 3.10.21, 3.11.16, 3.12.3, 3.13.15 and 3.14.7 that `json.loads` calls the hook with exactly those three texts and never for a string, `true`, `false`, `null` or a number (`1e999` included), that `NaNx` calls it on its `NaN` prefix, that `nan`, `-NaN`, `infinity`, `+Infinity` and `Inf` fail `json.loads` itself, and, with a prototype of D6's parse and node checks, that a valid answer carrying one constant in its `extensions` object gives `merged` with the `parse_int` hook alone, as round C8 left the parse, and `api-error` under this one, the same answer without the constant giving `merged` under both; D11 gains one test, for this ruling and C-40 together, with one fixture per constant, as the ruling words it, each in an `extensions` object the parse never reads; D6 also says that a float literal needs no bound, as C-40's "Not ruled" has it, with the writer's timing (a literal of 1,048,560 bytes, in its fraction, its integer part or before an exponent, parsed in under 10 ms on each interpreter, the slowest 9.8 ms, where the ruling's note says under 2 ms) | `design.md` Context and its table, D6, D11 |
+| C-40 (the lead's point, found in applying C-39): D6 says that a body that cannot be decoded or parsed is `api-error` but not who decodes it; given bytes, `json.loads` detects UTF-8, UTF-16 and UTF-32 and decodes with the `surrogatepass` error handler, so a body that is not UTF-8, and so not what the spec requires, would parse and could be answered | ruling | C-40: applied, design only: the parse decodes the body's bytes itself, with Python's UTF-8 codec and its default `strict` error handler, and passes `json.loads` that string, never the bytes, so that a body in UTF-16 or UTF-32, a string holding ED A0 80 (an encoded surrogate) and a body that begins with a UTF-8 byte order mark each fail and are `api-error` (RFC 8259 section 8.1 allows a parser to treat the byte order mark as an error); the writer re-ran the lead's `probe.py` and `probe2.py` with `-I` on Python 3.10.21, 3.11.16, 3.12.3, 3.13.15 and 3.14.7, with 15 of 15 on `probe2.py` and 16 of 19 on `probe.py` on each, the three FAIL lines of `probe.py` being the probe's own expectations (`NaNx` calls the hook on its `NaN` prefix; UTF-16 and UTF-32 without a byte order mark decode as UTF-8 and then fail the string parse), and D6 records what it saw: `json.loads` of bytes parsed UTF-16 and UTF-32 (little-endian, big-endian and with a byte order mark), the ED A0 80 body and the byte order mark body, and the strict decode raised `UnicodeDecodeError` for the UTF-16 and UTF-32 bodies with a byte order mark and for ED A0 80 and accepted the other four, which `json.loads` of the string refused with `JSONDecodeError`, as it did the UTF-8 byte order mark; D11's one test serves each as an otherwise valid answer that gives `merged` without the rule and `api-error` with it: UTF-16 and UTF-32, each little-endian without a byte order mark and with one (the ruling says only "UTF-16 and in UTF-32"; the forms are the writer's choice, one for each of the decode's failure and the parse's), ED A0 80 in a string of an `extensions` object, and a UTF-8 byte order mark first; it also serves the same answer in plain UTF-8, which gives `merged` (a control the ruling does not name, so that each failure comes from the rule and no other fault of the answer), and the fake `gh` writes a body as bytes, the seam these fixtures need; the test is no scenario | `design.md` Context and its table, D6, D11 |
