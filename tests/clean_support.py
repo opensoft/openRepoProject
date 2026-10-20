@@ -613,6 +613,12 @@ TEXT_FIXTURES = {
     "manifest_invalid_size": "Manifest {PATH} is larger than 1 MiB.",
     "plan_incomplete": "The plan is incomplete ({CODE}): {REMEDY}.",
     "plan_digest_mismatch": "The fresh plan's digest {DIGEST} differs from --expect-plan {EXPECTED}; nothing was changed.",
+    # The plan notes (contracts/project-clean.md, "Codes"; lead ruling R-45 (4); T051).
+    "note_merge_target_conflict": "The manifest names {NAME} and origin/HEAD names {OTHER}; {NAME} is the merge target.",
+    "note_inspection_incomplete": "{K} other rows are inspection-error or were left unprobed; they do not block {PATH}.",
+    "note_inspect_cap": "{K} rows past the row cap of {M} were not inspected; they do not block {PATH}.",
+    "note_deadline_exceeded": "{K} rows were left unprobed at the work deadline; they do not block {PATH}.",
+    "note_inspect_cap_report": "{N} rows exceed the --all-safe row cap of {M}; --all-safe would be incomplete (inspect-cap).",
     "confirmation_required": "Standard input is not a terminal; pass --yes to apply this plan.",
     "push_remote_gone": "Cannot push {BRANCH}; its upstream {UPSTREAM} was deleted (remote-gone); review it before it is republished.",
     # Baseline texts kept (project at 961c405).
@@ -643,6 +649,11 @@ NEXT_STEP_FIXTURES = {
     "registration-mismatch": "review, then git worktree repair or git worktree prune, or remove the row by hand",
     "inspection-error": "review, then git worktree repair or git worktree prune, or remove the row by hand",
     "locked-worktree": "unlock it yourself if it should go",
+    # The contract's next steps for the three reasons D18 gives none
+    # (contracts/project-clean.md :160-168; lead rulings R-57 H1 and R-62 (b)).
+    "main-worktree": "never removed by project clean",
+    "unsupported-path-bytes": "rename the path to valid UTF-8",
+    "not-requested": "name it with --worktree to plan its removal",
 }
 
 
