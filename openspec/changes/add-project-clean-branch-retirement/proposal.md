@@ -6,7 +6,9 @@ Status: draft; alignment review and council resolved on PR #26; ratification
 by Brett Heap pending; round A3 applied lane openRepoProject-3's re-read of
 `ca96701`, Codex's findings on `785a45e` and the lane's rulings A-21 to A-23;
 round A4 applied Codex's finding on `abad010` under the lane's ruling A-24;
-nothing here is ratified. Governing issue:
+round A5 applied lane openRepoProject-3's delta read of `9ff8202`, Codex's two
+findings on `9ff8202` and the cache change's worst shapes at `e1049b2` under
+the lane's rulings A-25 to A-28; nothing here is ratified. Governing issue:
 opensoft/openRepoProject#23, claimed by lane openRepoProject-5 (comment
 6111211798); refs #6, the record of the project maintenance design packet.
 Proposed on Brett Heap's word "usage reset, resume all. read handoff and
@@ -36,12 +38,14 @@ citation at `961c405` holds at main (L-15). Canonical requirements are cited as
 `openspec/specs/`. The lane lead's rulings of 2026-10-11, L-1 to L-9 and A-1 to
 A-7, its addendum of 2026-10-18, L-10 to L-15, A-5 as amended and A-9 to A-15,
 its council verdicts and addendum of 2026-10-19, A-16 to A-21, A-1, A-4 and
-A-5 as amended, and L-16, and its rulings of 2026-10-20, A-22 to A-24, bind
+A-5 as amended, and L-16, and its rulings of 2026-10-20, A-22 to A-28, bind
 this draft and are applied under Decisions and
 in the round tables. Lane records are cited on the lane register's
 `origin/main`, read at `4383a6f45`: the lane logs `lanes/log/<lane>.md:N`,
 which are append-only, and the lanes' handoffs under `handoffs/openRepoProject/`
-at the register commit named.
+at the register commit named; lane openRepoProject-3's delta read of `9ff8202`
+is `attachments/lane-openRepoProject-3/delta-26-a3-findings.md` there, read at
+`653112ca8`.
 
 ## Why
 
@@ -115,8 +119,8 @@ confirmed run, on fresh evidence, with nothing changed for a run without it.
   row holds it too (`branch-shared`, decided at the last holder). A keep the
   plan names never stops the run, and a reflog proof that fails or times out
   at its own budget keeps the branches it covers and leaves the plan complete.
-  The proof's child reads the merge target's exclusion as a `^` line on its
-  standard input, never `--not`.
+  The proof's child reads the merge target's exclusion as the one line
+  `^<merge target SHA>` on its standard input, never `--not`.
 - **A branch stage after each proven removal** (`BA:1318-1322`,
   `BA:1339-1345`; A-2, A-14, A-24). Inside the removal seam that feature 004
   builds (`retire_worktree`, CAS `proposal.md:189`), once a target's rescan
@@ -128,10 +132,10 @@ confirmed run, on fresh evidence, with nothing changed for a run without it.
      its head equals the reconciliation record's `branch_sha`, that its
      `upstream`, `upstream_oid`, `ahead` and `behind` and the manifest's
      `tracking_branch` equal the plan's, that the merge target re-resolves to
-     the plan's name, source and SHA, so that the plan's ancestry proofs hold
-     at the target's current tip, and that no registered worktree, the main
-     worktree included, had the branch checked out in the rescan's registry
-     listing;
+     the plan's name, source and SHA, so that the plan's proof that the head
+     is merged holds at the target's current tip, and that no registered
+     worktree, the main worktree included, had the branch checked out in the
+     rescan's registry listing;
   3. as the re-read's last step, it proves the branch's reflog again: the
      plan's proof over the reflog as it then reads, one `rev-list --stdin`
      child, so that a branch moved to a commit the merge target lacks and back
@@ -193,10 +197,15 @@ confirmed run, on fresh evidence, with nothing changed for a run without it.
   their M local branches? [yes/N]` when none is kept; every apply result
   prints `Removed N; branches retired: R; retained: K`, then one line per
   branch: `Retired BRANCH (was SHA)` with its restore command, `git -C ROOT
-  branch BRANCH SHA`, `Kept BRANCH (REASON)` with a next step that never
-  prints a retry the plan knows will fail and never suggests `-D`, or `BRANCH
+  branch BRANCH SHA`, or `git -C ROOT update-ref refs/heads/BRANCH SHA ''` for
+  a name `git branch` refuses to create, one that begins with `-` or equals
+  `HEAD`, `Kept BRANCH (REASON)` with a next step that never prints a retry
+  the plan knows will fail, the retry of a name that begins with `-` excepted
+  while change 1's action passes no `--`, and never suggests `-D`, or `BRANCH
   was already gone`; a branch or merge-target name inside a printed command is
-  quoted for a POSIX shell by change 1's path rule (`CAS/pc:1061-1066`); every
+  quoted for a POSIX shell by change 1's path rule (`CAS/pc:1061-1066`), whose
+  `$'...'` form needs a shell that implements it, a documentation note
+  (`design.md` D8); every
   `project clean --all-safe` command printed for the person to run next, the
   deferral line and the stop block's `Next:`, carries the flag, and the
   `delete-branch` retry does not; a stop ends with change 1's stop block, the
@@ -467,7 +476,11 @@ their `CAS` line.
   retry path, and says that a merged branch whose worktree is already gone
   stays with `delete-branch`, one branch per command; "deleting its local
   branch is a separate action" (`README.md:197-198`) names the flag as that
-  separate, explicit request.
+  separate, explicit request; and it records `design.md` D8's note that a
+  command printed in the `$'...'` form needs a shell that implements the form,
+  in a UTF-8 locale for its code-point escapes, which dash, Ubuntu's
+  `/bin/sh`, lacks, a limitation change 1's path rule shares (ruling A-28 as
+  amended).
 - **`tests/test_project.py`**: the default path's test,
   `test_clean_removes_only_merged_worktree_and_keeps_branch` (`tests:857`),
   stays unchanged; each scenario this change adds gets a test named after it
@@ -541,15 +554,16 @@ their `CAS` line.
   - if Brett Heap has PR #19 absorb the clauses (lane openRepoProject-2's
     LQ-6), this block is dropped and this change cites PR #19 instead only if
     PR #19 also absorbs a Budgets exception that covers the re-read's shorter
-    budget, such as the clause LQ-6 lists for #29, "unless the requirement
-    that starts them sets a shorter limit"; otherwise the block stays, on
-    PR #19's absorbed text, carrying the Budgets clause alone (lane
+    budget in the sentence that gives each Git child `min(5 s, work
+    remaining)`, since the re-read and its re-proof are Git children (lane
+    openRepoProject-3's delta read, D1); otherwise the block stays, on PR
+    #19's absorbed text, carrying the Budgets clause alone (lane
     openRepoProject-3's re-read, LOW-2).
 - **Archive order** (L-5, L-11, A-13). Change 1, then
   `add-project-clean-cache-disposal` (issue #24, draft PR #27, lane
   openRepoProject-5), then this change. PR #27 is an unratified draft (its
-  Status at `e906c2f`: "alignment review and council resolved on PR #27;
-  ratification by Brett Heap pending; nothing here is ratified"; lane
+  Status at `e1049b2`: "alignment review and council resolved on PR #27;
+  ratification by Brett Heap pending; ... nothing here is ratified"; lane
   openRepoProject-3's M4). Under the lane's
   ruling B-10 the cache change MODIFIES five of the requirements this change
   MODIFIES, so this change carries the cache change's archived block of each
@@ -580,7 +594,7 @@ their `CAS` line.
     after the removal floor, the cache stage's and the branch stage's, which
     sit side by side; this change's clause in the incompleteness sentence,
     which the cache change does not edit, stays; and where the cache change's
-    fit sentence counts, as it reads at `e906c2f`, "at most 250 Git children
+    fit sentence counts, as it reads at `e1049b2`, "at most 250 Git children
     besides the 16 removals, about 42.3 s", which the flag's up to 81 more
     children make false, the re-based block scopes that sentence, and any
     restatement of it under the lane's ruling B-25, to runs without
@@ -621,6 +635,16 @@ their `CAS` line.
   retired. Before this change archives, the follow-on change need only confirm
   `reflog-unmerged` as that branch's reason, or give it a reason of its own in
   the sub-record's enum. No behaviour changes now.
+- **Change 1's `delete-branch` and a name that begins with `-`** (lane
+  openRepoProject-3's delta read, D5). Change 1's explicit action runs `git -C
+  ROOT branch -d <branch>` with no `--` (`project:734`), so the retry this
+  change prints for such a name, `--branch=BRANCH`, reaches Git as an option:
+  for `-f`, `branch -d -f` fails, "branch name required", exit 128, and the
+  ref stays (`design.md` Context). The retry deletes the branch once change
+  1's action passes the name after `--`, which change 1, lane
+  openRepoProject-2's, settles; this change prints the retry that action is
+  given and changes nothing in it. A branch named `HEAD` needs no such change:
+  `branch -d HEAD` deletes it.
 - **Implementation.** The stage lives in feature 004's seam, so this change's
   feature is specified after feature 004 merges and change 1 archives; it
   never alters the order of feature 004 or feature 005. Whichever of this
@@ -726,12 +750,14 @@ open:
   re-proof, one more child per retired branch (ruling A-24), a flagged run at
   the packet's 150 ms per child brings 9 of its 16 targets through their stage
   before the removal floor through one worker per stage, 8 in the worst case of
-  17 reflog children, and 5, or 3, at a thread per call; change 1's own
-  deadline rule makes the rest `not-attempted` with `deadline-exceeded`, exit
-  1, taken by the next run and never unsafe (`BA:772-774`); at change 1's
-  measured costs all 16 fit through a worker, while at a thread per call at
-  least the 16th target is deferred, with one reflog child as in the worst
-  case (`design.md` D7).
+  17 reflog children, and at least 5, or 3, at a thread per call, 6, or 5, in
+  the worst order a run can take; change 1's own deadline rule makes the rest
+  `not-attempted` with `deadline-exceeded`, exit 1, taken by the next run and
+  never unsafe (`BA:772-774`); at change 1's measured costs all 16 fit through
+  a worker, while at a thread per call at least the 16th target is deferred,
+  with one reflog child as in the worst case. These are the cache change's
+  ordinary trees; its worst shapes lie outside this fit, under its own cap
+  questions to Brett Heap (`design.md` D7; ruling A-25).
   The alternative, a lower target cap under the flag (8 by the packet's rule),
   is rejected: the cap is applied by the `deferred-target-cap` gate, so the
   flag would change the selection. Put to Brett Heap (Open Questions).
@@ -756,11 +782,15 @@ open:
   following the tool's own advice never strands a branch whose worktree a
   flagless run removed, and the `delete-branch` retry does not, since that
   action refuses the flag (ruling A-22(a)). The restore line names the
-  repository with `git -C ROOT` and a name that begins with `-` is restored by
-  `update-ref`, and every name in a printed command is quoted for a POSIX
-  shell (ruling A-22(b) and (c)); the rejected alternative, names printed
-  verbatim in commands, lets a valid branch named `topic;id` run `id` when the
-  line is pasted (`design.md` Context).
+  repository with `git -C ROOT`, a name that `git branch` refuses to create,
+  one that begins with `-` or equals `HEAD`, is restored by `update-ref`
+  (ruling A-27, Codex's P2 on `9ff8202`), and every name in a printed command
+  is quoted for a POSIX shell (ruling A-22(b) and (c)), its `$'...'` form
+  needing a shell that implements it, which `design.md` D8 and the README
+  record and no printed line says (ruling A-28 as amended, Codex's P2 on
+  `9ff8202`); the rejected alternative, names printed verbatim in commands,
+  lets a valid branch named `topic;id` run `id` when the line is pasted
+  (`design.md` Context).
 
 Readings of the rulings against the sources, each named where it narrows or
 departs:
@@ -802,11 +832,12 @@ departs:
   fails, and the bounds block names this exception, since the proof decides
   which branches retire, never whether the plan is whole; the deadline passing
   during the proof still makes the plan incomplete (lane openRepoProject-3's
-  re-read, MEDIUM-1). Its child reads the merge target's exclusion as a `^`
-  line, a revision, because lane 3 reads `--not` on standard input as Git 2.42
-  or later, above the 2.36 floor (its MEDIUM-3; `design.md` Context, D9). The
-  stage proves the reflog again (ruling A-24, Codex's P1 on `abad010`): its
-  re-proof, the re-read's last step, gives the same child the commits the
+  re-read, MEDIUM-1). Its child reads the merge target's exclusion as the one
+  line `^<merge target SHA>`, a revision, because lane 3 reads `--not` on
+  standard input as Git 2.42 or later, above the 2.36 floor (its MEDIUM-3;
+  `design.md` Context, D9). The stage proves the reflog again (ruling A-24,
+  Codex's P1 on `abad010`): its re-proof, the re-read's last step, gives the
+  same child the commits the
   reflog names when the stage runs, because a branch moved to a commit the
   merge target lacks and back between the plan and the stage passes every
   other check while its reflog names that commit, which `branch -d` would
@@ -982,13 +1013,20 @@ recommendation, and a different ruling edits them before ratification.
   selects cache targets reaches the removal floor early under the packet's 150
   ms per child: through a worker, with the reflog proof's one child, 10 of its
   16 targets are removed and 9 branches retired, and in the worst case of 17
-  reflog children 8 removed and 8 retired; at a thread per call 5 and 5, or 4
-  and 3. Change 1's deadline rule leaves the rest `not-attempted` with
-  `deadline-exceeded`, exit 1, for the next run, never unsafe. At change 1's
-  measured costs the 16th removal spawns near 39.15 s through a worker, or
-  41.55 s in that worst case, and all 16 fit; at a thread per call it is due
-  near 46.05 s, or 48.45 s in the worst case, past the floor either way, so at
-  least the 16th target is deferred (`design.md` D7). Options: (a) keep
+  reflog children 8 removed and 8 retired; at a thread per call at least 5 and
+  5, or 4 and 3, bounds that take the cache stages whole before the first
+  removal, and 6 and 6, or 5 and 5, in the worst order a run can take. Change
+  1's deadline rule leaves the rest `not-attempted` with `deadline-exceeded`,
+  exit 1, for the next run, never unsafe. At change 1's measured costs, the
+  cache change's 16 enumerations taken at 150 ms each, the 16th removal spawns
+  near 39.15 s through a worker, or 41.55 s in that worst case, and all 16
+  fit; at a thread per call it is due near 46.05 s, or 48.45 s in the worst
+  case, past the floor either way, so at least the 16th target is deferred; at
+  the cache change's measured 3.7 s for its enumerations each figure is 1.3 s
+  later and no conclusion changes. These figures are for the cache change's
+  ordinary trees; its worst shapes, a walk of directories only and deep
+  chains, lie outside them, under its own cap questions to Brett Heap
+  (`design.md` D7; ruling A-25). Options: (a) keep
   `limits.targets` 16 for every run; (b) a lower cap under the flag, 8 by the
   packet's rule (`BA:729-735`) before the cache change's filesystem time,
   which would make the flag change the selection. Recommendation: (a), keep
@@ -1049,7 +1087,7 @@ three remaining cases have their scenarios under ruling A-15, `retired` with
 re-read's values and the fit are stated as they now stand under Decisions.
 The counts in QA-3's row, "53 scenarios" and "sixteen scenarios", and in A-9's
 row, "13 of 16", are those of their round; the ADDED requirement now holds 25
-scenarios, and the joint fit stands as round A4 restated it.
+scenarios, and the joint fit stands as rounds A4 and A5 state it.
 
 ### Council Verdicts
 
