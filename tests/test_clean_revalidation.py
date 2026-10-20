@@ -311,6 +311,108 @@ class RevalidationTests(clean_support.CleanCase):
                                                 NOT_ATTEMPTED=trees[2], ROOT=root), lines)
         self.assertIn(TEXT["branches_kept_line"].format(BRANCHES="001-p, 002-q, 003-r"), lines)
 
+    # T080: "Target directory replaced", "Admin registration changed" and
+    # "Parent directory swapped".
+
+    def assert_identity_changed_and_nothing_removed(self, result, trees, log):
+        """The first target refused with identity-changed, the later ones not
+        attempted, exit 2, and no removal child spawned."""
+        self.assert_stopped_at_first(result, trees, "identity-changed")
+        self.assertEqual([record for record in clean_support.child_log(log) if is_removal(record)], [])
+
+    def test_clean_target_directory_replaced(self):
+        # At the question the first target P is moved aside and, in turn, a
+        # new directory, a symbolic link to the moved original, or a copy of
+        # it (lane 3's E3, lead ruling R-76) is put at P. The copy carries
+        # P's `.git` file, so its registration still holds both ways; only
+        # P's recorded `dev` and `ino` tell it apart.
+        def new_directory(tree):
+            tree.rename(tree.with_name(tree.name + ".aside"))
+            tree.mkdir()
+
+        def symlink(tree):
+            aside = tree.with_name(tree.name + ".aside")
+            tree.rename(aside)
+            tree.symlink_to(aside, target_is_directory=True)
+
+        def copy(tree):
+            aside = tree.with_name(tree.name + ".aside")
+            tree.rename(aside)
+            shutil.copytree(aside, tree, symlinks=True)
+
+        for case, change in (("new-directory", new_directory), ("symlink", symlink), ("copy", copy)):
+            with self.subTest(case):
+                root, trees = self.batch(case)
+                env, log = self.counting()
+                result = self.apply(root, lambda: change(trees[0]), env=env, log=log)
+                self.assert_identity_changed_and_nothing_removed(result, trees, log)
+                aside = trees[0].with_name(trees[0].name + ".aside")
+                self.assertTrue((aside / "work-001-p").is_file(), "the moved original is untouched")
+                self.assertTrue(os.path.lexists(trees[0]), "what was put at P is untouched")
+                self.assertTrue(trees[1].is_dir())
+                if case == "copy":
+                    self.assertTrue((trees[0] / "work-001-p").is_file(), "the copy is not removed")
+
+    def test_clean_admin_registration_changed(self):
+        # The first target's `.git` file rewritten to name the second target's
+        # admin directory; then, in a second run, its admin `gitdir` file
+        # changed to name another existing directory, whose `.git` names
+        # nothing back. Each refuses with identity-changed after confirmation,
+        # and a fresh plan reports the row as registration-mismatch with
+        # classification inspection-error, and is incomplete.
+        def admin_dir(root, name):
+            common = Path(self.git(root, "rev-parse", "--path-format=absolute", "--git-common-dir").strip())
+            return common / "worktrees" / name
+
+        def rewrite_dotgit(root, trees):
+            (trees[0] / ".git").write_text(f"gitdir: {admin_dir(root, '002-q')}\n")
+            return trees[0]
+
+        def rewrite_admin_gitdir(root, trees):
+            elsewhere = trees[0].with_name("elsewhere")
+            elsewhere.mkdir()
+            (admin_dir(root, "001-p") / "gitdir").write_text(f"{elsewhere / '.git'}\n")
+            return elsewhere
+
+        for case, change in (("dotgit", rewrite_dotgit), ("admin-gitdir", rewrite_admin_gitdir)):
+            with self.subTest(case):
+                root, trees = self.batch(case)
+                env, log = self.counting()
+                changed = []
+                result = self.apply(root, lambda: changed.append(change(root, trees)), env=env, log=log)
+                self.assert_identity_changed_and_nothing_removed(result, trees, log)
+                self.assertTrue(all((tree / f"work-{tree.name}").is_file() for tree in trees))
+                fresh = self.run_json("clean", root, "--all-safe", "--json")
+                self.assert_status(fresh, 1)
+                document = fresh.document
+                self.assertEqual(document["completeness"], "incomplete")
+                row = next(row for row in document["worktrees"] if row["path"] == str(changed[0]))
+                self.assertEqual(row["classification"], "inspection-error")
+                self.assertIn({"path": str(changed[0]), "path_valid_utf8": True, "branch": "001-p",
+                               "classification": "inspection-error", "reason": "registration-mismatch"},
+                              document["excluded"])
+
+    def test_clean_parent_directory_swapped(self):
+        # The directory holding both targets is replaced at the question by a
+        # symbolic link to a copy of it: each target's realpath now names the
+        # copy, whose `dev` and `ino` differ from the plan's.
+        holder = self.base / "swapped" / "holder"
+        root, trees = self.batch("swapped", trees_dir=holder)
+        env, log = self.counting()
+
+        def swap():
+            copy = holder.with_name("holder.copy")
+            shutil.copytree(holder, copy, symlinks=True)
+            holder.rename(holder.with_name("holder.orig"))
+            holder.symlink_to(copy, target_is_directory=True)
+
+        result = self.apply(root, swap, env=env, log=log)
+        self.assertNotEqual(os.path.realpath(trees[0]), str(trees[0]))
+        self.assert_identity_changed_and_nothing_removed(result, trees, log)
+        for name in ("holder.orig", "holder.copy"):
+            for tree in trees:
+                self.assertTrue((holder.with_name(name) / tree.name / f"work-{tree.name}").is_file(), (name, tree))
+
 
 if __name__ == "__main__":
     unittest.main()
