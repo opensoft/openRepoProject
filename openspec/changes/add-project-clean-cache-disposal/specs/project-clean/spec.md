@@ -911,8 +911,8 @@ a row whose samples all have cache names while it holds a blocking path beyond
 its 8 samples, a path with a cache name that is blocking by its type, its
 contents or its device, more recorded cache objects or bytes than a
 per-worktree cap allows, an enumeration that fails, or a cache directory that
-the running user cannot change. A candidate SHALL be held at the rung for a
-persistent reason when any one of these holds:
+the running user cannot change. A candidate left at the rung SHALL count as
+held there for a persistent reason when any one of these holds:
 
 - its enumeration finished with `blocking` above 0;
 - its `reason` is `cache-cap` from a per-worktree cap, which leaves its counts
