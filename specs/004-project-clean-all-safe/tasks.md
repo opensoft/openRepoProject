@@ -864,23 +864,26 @@ T033), when B, D, E and F are; H, guard (T034, T035), when T023 is, beside G
   repository runs only row 3; `refresh=True` reads afresh and replaces the
   memo, and `repeat_identity_at_root=False` runs no row 5 and is memoized
   apart; lead rulings R-54 X-1 and R-64 (b); returning the identity `{root,
-  common_dir, dev, ino}` with the rows' evidence; where `main_worktree()`
-  gives `None`,
-  `root` is null and rows 6 and 7 run in the common directory for a bare
-  repository, and otherwise where row 3 ran, FR-055; row 4 runs where row 3
-  ran in every layout, before the main worktree is known, which for a bare
-  repository is equivalent to the common directory, since `git worktree
-  list` reads the same registry from either and prints the same bytes, as
-  data-model.md records (lead ruling R-68, lane 4's note));
+  common_dir, dev, ino}` with the rows' evidence; row 4, the registry
+  listing, runs in the directory the argument resolves to, where row 3 ran,
+  "while the main worktree is not yet known", as the `project-command`
+  delta says (its `spec.md:124-133`); rows 6 and 7 run in `probe_dir`: the
+  main worktree where `main_worktree()` names it, and where it gives `None`,
+  `root` being null, the common directory for a bare repository only, and
+  otherwise the directory where row 3 ran, the delta's order (FR-055; lead
+  ruling R-75 (j)));
   `verify_registration()` and the presence `lstat`, both through `fs_call()`
   (`present` false on `ENOENT` or `ENOTDIR`, null with an `os-error` on any
   other failure, lead ruling R-36; a `present: false` row is decided first
   and gets no registration check, no shared-path check and no probe; then
   two registry entries naming one path, by the records' raw path bytes, are
   each `registration-mismatch`, lead rulings R-57 and R-59 D5, a rule lane
-  G's follow-up builds, R-59 D6; its extension to present entries with one
-  realpath or one admin id, each `registration-mismatch` too, is built by
-  evidence follow-up 2, lead ruling R-67 (c)); `status_probe()`; and
+  G's follow-up builds, R-59 D6; and, by lead ruling R-67 (c), present rows
+  with the same realpath, or with the same admin id, are each
+  `registration-mismatch` too, in `--all-safe` and in single mode, a rule
+  not yet built at this task's tick, which compares raw path bytes only, so
+  that until it is T049's single-mode match fails closed for P);
+  `status_probe()`; and
   `worktree_rows(repo, run, records=None)`, `records` the registry records
   to build rows for, in the order given, None the whole registry (lead
   ruling R-53 (d))
@@ -1227,9 +1230,10 @@ L-8).
   envelope prints on the call where the run stops before the apply phase
   (plain `--json`: the envelope with the refusal in it; `--apply --json`:
   the envelope only where the run stops), so one human plan and one
-  document print, which is "the plan prints once" as the contract's "Order
-  of a run" means it, and T043's envelope after a cancel needs the second
-  call (lead ruling R-63 (a)); in human output `REFUSED:` follows the plan
+  document print: the plan prints once, as lead ruling R-56 Q-3 words it
+  and as steps 6 and 7 of the contract's "Order of a run" print it, and
+  T043's envelope after a cancel needs the second call (lead ruling R-63
+  (a)); in human output `REFUSED:` follows the plan
   on standard error. Then
   either `push_or_delete()`, which swaps in `default_signals()` around
   `confirm()` alone and stays in phase `planning`, or `confirm_removal()`,
@@ -1312,7 +1316,10 @@ L-8).
   `select_entry()` (the identity objects, the branch evidence, the signature
   fields, `locked`, `operation.argv`); `plan_completeness()`
   (`inspection-incomplete` for an `inspection-error` row, a row carrying
-  T031's unprobed marker, or a failed repository-wide probe; analyze M6);
+  T031's unprobed marker, a failed repository-wide probe, or, in mode
+  single, a P that matches several entries or whose match is undecided, its
+  own realpath unread among them; analyze M6, lead rulings R-67 (b), R-73
+  (d) and R-75 (b));
   `apply_allowed`; `refusals`; `limits` and `budget` as
   the values in force; `probes` and `operations`, `estimated` as the upper
   bound for an `--apply` run of this plan in every mode, `probes` F + W + E +
@@ -1332,7 +1339,15 @@ L-8).
   bytes equal it, or else when its own realpath, one bounded call each, does;
   a realpath that cannot be read counts as a match, failing closed, and every
   row the row cap takes matches when P's own cannot be read (lead ruling
-  R-69, reading 2). Exactly one decided match is P's row. No match records
+  R-69, reading 2). Each realpath read is one `fs_call()`, a bounded
+  filesystem call with the budget every filesystem call gets, `min(5 s, work
+  remaining)` under `clean`'s deadline, so that it spends the work deadline
+  as any read does, a read cut at its budget giving no realpath; one is made
+  for P and one for each registry entry whose raw bytes differ from P's, the
+  entries past the cap included, before any row is inspected; and nothing
+  counts them, as nothing counts any filesystem call, `probes` counting Git
+  children only (lead ruling R-75 (h)). Exactly one decided match is P's
+  row. No match records
   `worktree-not-found` through T047's
   `refuse()` on the plan it returns, never raising and never returning 2,
   so that the plan envelope, not the extended error object, carries it, and
@@ -2524,13 +2539,18 @@ statuses, the child counts and the order of what was cut.
   `inspection-error`, never a null reason and never T031's unprobed marker,
   which is T066's alone (lead rulings R-67 (a) and R-69), and the plan
   incomplete with `deadline-exceeded`, a non-blocking note in mode single;
+  those rows are `deadline-exceeded`'s, never unprobed, and this task
+  decides which single-mode note counts them and brings the
+  `note_deadline_exceeded` text in `TEXT` and its fixture in
+  `tests/clean_support.py` to the contract's message, `K rows were stopped
+  at the work deadline; they do not block PATH.` (lead ruling R-75 (g));
   every Git child and filesystem call gets `min(5 s, work remaining)`;
   `apply_removals()` spawns a removal only while the 5 s floor of work remains,
   else that target and every later one are `not-attempted` with
   `deadline-exceeded` and `reconciliation: null`; a removal running at the
   deadline is waited for, and the reserve counts from its exit.
-  — files: `project`
-  — verify: `python3 -c "import sys,re;t=open('project').read();A=sys.argv[1:];c=lambda r:t.split('# region '+r+'\n')[1].split('# endregion '+r+'\n')[0];M=[a for a in A if not ((a.split('%',1)[1] not in c(a.split('%',1)[0])) if '%' in a else (a.split('~',1)[1] in c(a.split('~',1)[0])) if '~' in a else re.search(r'^[a-z]*\s?'+re.escape(a.split(':',1)[1])+r'\b',c(a.split(':',1)[0]),re.M))];[print('region check failed:',m) for m in M];sys.exit(1 if M or not A else 0)" 'apply~removal_floor' && python3 project clean --help >/dev/null`
+  — files: `project`, `tests/clean_support.py`
+  — verify: `python3 -c "import sys,re;t=open('project').read();A=sys.argv[1:];c=lambda r:t.split('# region '+r+'\n')[1].split('# endregion '+r+'\n')[0];M=[a for a in A if not ((a.split('%',1)[1] not in c(a.split('%',1)[0])) if '%' in a else (a.split('~',1)[1] in c(a.split('~',1)[0])) if '~' in a else re.search(r'^[a-z]*\s?'+re.escape(a.split(':',1)[1])+r'\b',c(a.split(':',1)[0]),re.M))];[print('region check failed:',m) for m in M];sys.exit(1 if M or not A else 0)" 'apply~removal_floor' && python3 project clean --help >/dev/null && python3 -c "import sys;sys.path.insert(0,'tests');import clean_support as c;t=c.load_project().TEXT['note_deadline_exceeded'];f=c.TEXT_FIXTURES['note_deadline_exceeded'];print('note_deadline_exceeded:',t);sys.exit(1 if 'unprobed' in t+f else 0)" && python3 -m unittest discover -s tests -p 'test_clean_harness.py' -k '*.test_clean_text_fixtures_equal_the_contract_table'`
 - [ ] T100 [US6] [O] Fill `deferral_gate` (region `gates`; D12, FR-032): the first
   16 rows that pass gates 1 to 7, in canonical order, go on to the index gates,
   and the rest are excluded as `deferred-target-cap`; in `print_plan()` (region
@@ -2913,7 +2933,14 @@ test and T116's removal-child clause held back (lead ruling R-56 Q-5).
   as today, with one departure, a bare repository's registry entry no
   longer among `worktrees`, since D8's bare first record names no worktree
   row (lead ruling R-66 (f)), so that `tests/test_project.py:586`, `:615`
-  and `:916` pass.
+  and `:916` pass. The `project-command` delta keeps every value "except
+  where a requirement states a change"; lane 3 reads this one as a fill of
+  the `project-clean` delta's "the common directory SHALL never be probed as
+  a worktree row" (its `spec.md:478`), as data-model.md's `common_dir` row
+  says ("never a worktree row"), while the lead reads that sentence as part
+  of clean's gitfile-layout resolution, so whether it covers status's
+  `worktrees` is LQ-9, for Brett Heap; the code stays as built (lead ruling
+  R-75 (a)).
   — files: `project`, `tests/clean_support.py`
   — verify: `python3 -c "import importlib.machinery as m,importlib.util as iu,sys;l=m.SourceFileLoader('pv','project');s=iu.spec_from_loader('pv',l);p=iu.module_from_spec(s);sys.modules['pv']=p;l.exec_module(p);import os,tempfile;from pathlib import Path;d=tempfile.mkdtemp();r=p.repo_state(Path(d));os.rmdir(d);print('repo_state of a directory with no .git:',r);sys.exit(0 if isinstance(r,dict) and r.get('present') is False and r.get('path_valid_utf8') is True else 1)" && python3 -m unittest discover -s tests -p 'test_clean_harness.py' -k '*.test_clean_text_fixtures_equal_the_contract_table' && python3 -m unittest discover -s tests -p 'test_project.py' -k '*.test_status_from_nested_path_and_feature_worktree_is_read_only' -k '*.test_human_reports_render_present_project_leg_state' -k '*.test_clean_reports_dirty_detached_and_pushed_unmerged_states'`
 - [x] T118 [US9] [O] In `discover()` (`project:433-467`; research.md R2, FR-053):
@@ -3250,7 +3277,7 @@ included (T074). By requirement:
 | FR-038 | T057, T091 |
 | FR-039 to FR-041 | T017, T016, T076, T073, T110, T112 |
 | FR-042, FR-043 | T051, T035, T053, T040, T111 |
-| FR-044 | T052, T057, T111 |
+| FR-044 | T044, T052, T057, T111 |
 | FR-045 | T050, T067, T061 |
 | FR-046, FR-047 | T055, T084, T076, T079 to T083 |
 | FR-048, FR-049 | T057, T085, T082, T083 |

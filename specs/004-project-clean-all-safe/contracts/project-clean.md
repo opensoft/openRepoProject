@@ -315,7 +315,7 @@ values in data-model.md).
 | `unsupported-path-bytes` | resolve | `root` or `common_dir` not valid UTF-8 |
 | `manifest-invalid` | resolve | unreadable, not a mapping, wrong kind, over 1 MiB by `st_size`, or PyYAML missing |
 | `no-merge-target` | resolve | no candidate exists as a local branch |
-| `inspection-incomplete` | plan | a repository-wide probe failed, a row is `inspection-error`, or a row was left unprobed |
+| `inspection-incomplete` | plan | a repository-wide probe failed, a row is `inspection-error`, a row was left unprobed, or, in single mode, P matches several entries or its match is undecided, its own realpath unread among them (lead rulings R-67 (b), R-73 (d) and R-75 (b)) |
 | `inspect-cap` | plan | more rows than the mode's cap, which counts the registry entries that become rows, the main worktree and missing rows included; a bare repository's `bare` entry and a first record equal to `common_dir` with no main worktree are no rows (D8; lead ruling R-73 (d)) |
 | `deadline-exceeded` | plan | the work deadline passed while planning |
 | `worktree-not-found` | select | `--worktree` matches no registry entry |
@@ -344,7 +344,7 @@ R-48).
 | `merge-target-conflict` | plan note | `The manifest names NAME and origin/HEAD names OTHER; NAME is the merge target.` |
 | `inspection-incomplete` | plan note, single mode | `K other rows are inspection-error or were left unprobed; they do not block PATH.` |
 | `inspect-cap` | plan note, single mode | `K rows past the row cap of M were not inspected; they do not block PATH.` |
-| `deadline-exceeded` | plan note, single mode | `K rows were left unprobed at the work deadline; they do not block PATH.` |
+| `deadline-exceeded` | plan note, single mode | `K rows were stopped at the work deadline; they do not block PATH.` (lead ruling R-75 (g); T099) |
 | `inspect-cap` | plan note, report above 128 rows, beside `rows` | `N rows exceed the --all-safe row cap of M; --all-safe would be incomplete (inspect-cap).` |
 | `os-error` | row error | `OPERATION failed: STRERROR`, STRERROR the error number's text |
 | `probe-failed` | row error | `OPERATION failed: DETAIL`, DETAIL one of `exit N`, `signal N`, `cannot spawn (STRERROR)`, `unparseable output` |
@@ -353,11 +353,13 @@ R-48).
 | `git-too-old` | status or doctor row error, and doctor's `git` row | `Git VERSION is older than 2.36; repository inspection needs Git 2.36 or later.` |
 | `git-unavailable` | status or doctor row error, and doctor's `git` row | `Git is unavailable (DETAIL); repository inspection needs Git 2.36 or later.`, DETAIL as for clean's refusal |
 
-The rows the single-mode `deadline-exceeded` note counts are the rows the
-work deadline stopped: each is `inspection-error` with a `deadline-exceeded`
-row error, excluded with reason `inspection-error`, never a null reason and
-never carrying the unprobed marker, which only a reflog read past its
-filesystem budget sets (lead rulings R-67 (a) and R-69; T099).
+The rows the work deadline stopped are `deadline-exceeded`'s, never
+unprobed: each is `inspection-error` with a `deadline-exceeded` row error,
+excluded with reason `inspection-error`, never a null reason and never
+carrying the unprobed marker, which only T066's reflog read past its
+filesystem budget sets (lead rulings R-67 (a), R-69 and R-75 (g)). T099
+decides which single-mode note counts them, and brings the `deadline-exceeded`
+note's `TEXT` key and its fixture to the message above.
 
 A doctor row (`level`, `check`, `detail`) has no code field, so doctor's `git`
 row writes its detail as `CODE: MESSAGE`, such as `git-too-old: Git 2.35.0 is

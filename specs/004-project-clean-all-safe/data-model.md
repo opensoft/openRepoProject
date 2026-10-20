@@ -28,14 +28,12 @@ four identity fields go into the plan and its digest, and are compared at
 every revalidation and first in every rescan; `dev` and `ino` are host-local,
 so a remount that renumbers them fails closed.
 
-Where `root` is null, rows 6 and 7 run in the common directory for a bare
-repository and otherwise where row 3 ran. Row 4, the registry listing, runs
-where row 3 ran in every layout, since the main worktree is not yet known
-when it runs. For a bare repository that is equivalent to running it in the
-common directory: `git worktree list --porcelain -z` reads the same registry
-from a linked worktree and from the common directory and prints the same
-bytes (checked on Git 2.43.0), so the code keeps row 4 where row 3 ran
-(lead ruling R-68, lane 4's note; evidence follow-up 2 may move it).
+Row 4, the registry listing, runs in the directory the argument resolves to,
+where row 3 ran, in every layout, "while the main worktree is not yet
+known", as the `project-command` delta says (its `spec.md:124-133`). Rows 6
+and 7 run in the main worktree where it is known; where `root` is null, in
+the common directory for a bare repository only, and otherwise where row 3
+ran (lead ruling R-75 (j)).
 
 ### Merge target (D8; FR-018, FR-060)
 
@@ -106,11 +104,12 @@ the registry records' raw path bytes as listed, fail closed: each is
 `registration-mismatch`, since the porcelain listing does not name the admin
 directory, so the two-way check alone cannot tell them apart (lead rulings
 R-57, withdrawing R-51(c)'s known limit, and R-59 D5). The rule extends to
-two present entries spelled differently with one realpath, or with one
-admin id, which both pass the two-way check: each is `registration-mismatch`
-too. Evidence follow-up 2 builds that extension in region `evidence`; until
-then T049's single-mode match fails closed for P, its realpath matching both
-(lead ruling R-67 (c), lane 3's L-4).
+present rows spelled differently with the same realpath, or with the same
+admin id, which both pass the two-way check: each is
+`registration-mismatch` too, in `--all-safe` and in single mode (lead
+ruling R-67 (c), lane 3's L-4). Until region `evidence` builds that
+extension, T049's single-mode match fails closed for P, its realpath
+matching both.
 
 ### Branch evidence (D6, D7)
 
@@ -271,8 +270,11 @@ main worktree first, then by raw path bytes; `selected`, `excluded` and the
 execution order are by raw path bytes.
 
 Completeness: a plan is `incomplete` when the row cap is exceeded
-(`inspect-cap`), a repository-wide probe failed or a row is
-`inspection-error` (`inspection-incomplete`), or the deadline passed while
+(`inspect-cap`), a repository-wide probe failed, a row is
+`inspection-error`, or, in mode single, P matches several entries or its
+match is undecided, its own realpath unread among them
+(`inspection-incomplete`; lead rulings R-67 (b), R-73 (d) and R-75 (b)),
+or the deadline passed while
 planning (`deadline-exceeded`), each row it stopped being `inspection-error`
 with a `deadline-exceeded` row error, never left unprobed (lead rulings R-67
 (a) and R-69; T099). In single mode those three are non-blocking
