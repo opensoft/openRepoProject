@@ -11,8 +11,13 @@ fixture under the test's temporary directory (rule 4); the eligible ones are
 made by merged_worktree(), a commit of their own, so that US2's gates keep them
 eligible (lead ruling R-56).
 """
+import contextlib
+import hashlib
+import io
+import json
 import os
 from pathlib import Path
+import re
 import types
 import unittest
 from unittest import mock
@@ -24,6 +29,36 @@ TEXT = clean_support.TEXT_FIXTURES
 
 # A well-formed --expect-plan value: 64 lowercase hexadecimal characters.
 DIGEST = "0" * 64
+HEX64 = re.compile("[0-9a-f]{64}")
+
+# The keys of the plan envelope and of its objects, in the contract's order
+# (contracts/project-clean.md, "Plan envelope"), written here as literals.
+PLAN_KEYS = ["schema_version", "observed_at", "mode", "root", "target_branch", "tracking_freshness",
+             "worktrees", "repository", "merge_target", "limits", "budget", "probes", "operations",
+             "selected", "excluded", "omitted", "notes", "completeness", "apply_allowed", "refusals",
+             "plan_digest"]
+REPOSITORY_KEYS = ["root", "common_dir", "dev", "ino", "root_valid_utf8", "common_dir_valid_utf8"]
+SELECTED_KEYS = ["path", "path_valid_utf8", "branch", "head", "upstream", "upstream_oid", "ahead", "behind",
+                 "dev", "ino", "admin_id", "locked", "present", "dirty", "ignored_files", "remote_present",
+                 "merged_into_target", "current", "classification", "operation"]
+EXCLUDED_KEYS = ["path", "path_valid_utf8", "branch", "classification", "reason"]
+LIMITS = {"worktree_rows": 128, "targets": 16, "ignored_entries": 64, "status_records": 4096,
+          "ignored_samples": 8}
+BUDGET = {"probe_timeout_seconds": 5, "invocation_timeout_seconds": 60, "reconciliation_reserve_seconds": 10,
+          "removal_floor_seconds": 5, "removal_ceiling_seconds": 300, "probe_concurrency": 1}
+FRESHNESS = "local refs only; remote information is as of the last fetch; no fetch performed"
+
+# The packet's preview fixture (ideation/brainstorm/project-maintenance-batch-cleanup.md:1052-1130
+# at da33d92), the values its digest covers, and that digest (research.md R12;
+# lead ruling R-34).
+PACKET_REPOSITORY = {"root": "/home/user/projects/Atlas", "common_dir": "/home/user/projects/Atlas/.git",
+                     "dev": 66306, "ino": 3407873, "root_valid_utf8": True, "common_dir_valid_utf8": True}
+PACKET_MERGE_TARGET = {"name": "main", "source": "origin-head", "sha": "39f33f71eba7ca23d258c75ebcc8b9a0ec9995d9"}
+PACKET_SELECTED = ("/home/user/projects/Atlas-worktrees/feature-login", "feature/login",
+                   "635e8931ebd09939ab00fb1598598f6e43fdaf41")
+PACKET_EXCLUDED = ("/home/user/projects/Atlas-worktrees/feature-report", "feature/report",
+                   "fc2afa49af6ee0111f0de91e16b6e651af506f2a")
+PACKET_DIGEST = "7495756d199ba217f41ed4d648c241c95608b4f353c46952e9a7f4cddc17f3bc"
 
 
 def argv_words(record):
@@ -53,7 +88,44 @@ def literal_plan(mode, target=None):
     return plan
 
 
+def packet_row(values, **fields):
+    """One worktree row of the packet fixture, its fields as the fixture gives them."""
+    path, branch, head = values
+    row = project.WorktreeRow(
+        path=path, present=True, branch=branch, head=head, upstream=f"origin/{branch}", remote_present=True,
+        ahead=0, behind=0, dirty=False, ignored_files=0, current=False, merged_into_target=True,
+        classification="merged-removable", locked=False, path_valid_utf8=True)
+    row.update(fields)
+    row.raw_path = path.encode()
+    row.removal_args = ["-C", PACKET_REPOSITORY["root"], "worktree", "remove", path]
+    return row
+
+
+def packet_plan():
+    """A Plan holding the packet fixture's values, its digest computed."""
+    plan = literal_plan("all-safe")
+    plan.repository, plan.merge_target = dict(PACKET_REPOSITORY), dict(PACKET_MERGE_TARGET)
+    plan.selected = [packet_row(PACKET_SELECTED)]
+    plan.excluded = [(packet_row(PACKET_EXCLUDED, dirty=True, ahead=2, merged_into_target=False,
+                                 classification="dirty"), "dirty")]
+    plan.digest = project.plan_digest(plan)
+    return plan
+
+
 class BatchTests(clean_support.CleanCase):
+
+    def main_in_process(self, *argv, **patches):
+        """project's main(ARGV) in this process, in self.env, each named function
+        of project replaced by its stand-in: (status, stdout, stderr)."""
+        out, err = io.StringIO(), io.StringIO()
+        with contextlib.ExitStack() as stack:
+            stack.enter_context(mock.patch.dict(os.environ, self.env, clear=True))
+            for name, stand_in in patches.items():
+                stack.enter_context(mock.patch.object(project, name, stand_in))
+            stack.enter_context(contextlib.redirect_stdout(out))
+            stack.enter_context(contextlib.redirect_stderr(err))
+            status = project.main([os.fspath(arg) for arg in argv])
+        return status, out.getvalue(), err.getvalue()
 
     def counting(self, env=None):
         """The counting wrapper first on PATH (in front of the real git): returns
@@ -262,6 +334,138 @@ class BatchTests(clean_support.CleanCase):
             self.assertEqual([gate(row, plan, None) for gate in (project.registration_gate, project.reflog_gate,
                                                                   project.index_gates)], [None] * 3)
         self.assertEqual(project.deferral_gate([rows["p"], rows["q"]], plan), ([rows["p"], rows["q"]], []))
+
+    def test_clean_plan_document_keys(self):
+        # Plan review M6, contracts/project-clean.md "Plan envelope".
+        root = self.repo()
+        self.bare_remote()
+        trees = [self.merged_worktree("001-first"), self.merged_worktree("002-second")]
+        dirty = self.merged_worktree("003-dirty")
+        (dirty / "uncommitted").write_text("preserve")
+        common = self.common_dir()
+        found = os.lstat(common)
+        main_sha = self.git(root, "rev-parse", "main").strip()
+        for extra, mode, rows_cap in ((("--all-safe",), "all-safe", 128), ((), "report", 256)):
+            with self.subTest(mode=mode):
+                result = self.run_cli("clean", root, *extra, "--json")
+                self.assert_status(result, 0)
+                document = self.load_json(result)
+                self.assertEqual(list(document), PLAN_KEYS)
+                self.assertEqual((document["schema_version"], document["mode"], document["root"],
+                                  document["target_branch"], document["tracking_freshness"]),
+                                 (1, mode, str(root), "main", FRESHNESS))
+                self.assertEqual(list(document["repository"].items()), list(zip(REPOSITORY_KEYS, (
+                    str(root), str(common), found.st_dev, found.st_ino, True, True))))
+                self.assertEqual(document["merge_target"], {"name": "main", "source": "main", "sha": main_sha})
+                self.assertEqual(document["limits"], {**LIMITS, "worktree_rows": rows_cap})
+                self.assertEqual(list(document["limits"]), list(LIMITS))
+                self.assertEqual(list(document["budget"].items()), list(BUDGET.items()))
+                self.assertEqual((document["omitted"], document["notes"], document["completeness"],
+                                  document["apply_allowed"], document["refusals"]),
+                                 ({"count": 0, "exactness": "exact"}, [], "complete", mode == "all-safe", []))
+                self.assertRegex(document["plan_digest"], HEX64)
+                self.assertEqual([entry["path"] for entry in document["selected"]], [str(tree) for tree in trees])
+                for entry, tree in zip(document["selected"], trees):
+                    branch = tree.name.removesuffix("-tree")
+                    stat = os.lstat(tree)
+                    self.assertEqual(list(entry), SELECTED_KEYS)
+                    self.assertEqual(
+                        [entry[key] for key in SELECTED_KEYS[:-1]],
+                        [str(tree), True, branch, self.git(tree, "rev-parse", "HEAD").strip(), f"origin/{branch}",
+                         self.git(root, "rev-parse", f"refs/remotes/origin/{branch}").strip(), 0, 0,
+                         stat.st_dev, stat.st_ino, tree.name, False,
+                         True, False, 0, True, True, False, "merged-removable"])
+                    self.assertEqual(entry["operation"], {"kind": "worktree-remove", "argv": project.git_argv(
+                        "removal", ["-C", str(root), "worktree", "remove", str(tree)])})
+                self.assertEqual([list(entry) for entry in document["excluded"]], [EXCLUDED_KEYS] * 2)
+                self.assertEqual([tuple(entry.values()) for entry in document["excluded"]], [
+                    (str(dirty), True, "003-dirty", "dirty", "dirty"),
+                    (str(root), True, "main", "protected-default", "main-worktree")])
+
+    def test_clean_plan_document_bytes(self):
+        # Plan review M6: one document, json.dumps(doc, indent=2,
+        # ensure_ascii=True) and one newline, its keys in the contract's order;
+        # plan notes are {code, message} objects and row notes code strings.
+        root = self.repo()
+        self.bare_remote()
+        accented = self.merged_worktree("001-accented", path=self.base / "café-tree")
+        gone = self.merged_worktree("002-gone")
+        for path in gone.iterdir():
+            if path.name != ".git":
+                path.unlink()  # every tracked file deleted by hand: a partial removal (D4)
+        result = self.run_cli("clean", root, "--all-safe", "--json")
+        self.assert_status(result, 0)
+        document = self.load_json(result)
+        self.assertEqual(result.stdout, json.dumps(document, indent=2, ensure_ascii=True) + "\n")
+        self.assertTrue(result.stdout.isascii())
+        self.assertEqual(list(document), PLAN_KEYS)
+        self.assertEqual([entry["path"] for entry in document["selected"]], [str(accented)])
+        rows = {row["path"]: row for row in document["worktrees"]}
+        self.assertEqual(rows[str(gone)]["notes"], ["partially-removed"])
+        self.assertEqual([row["notes"] for path, row in rows.items() if path != str(gone)], [[], []])
+        # The merge target's notes move into the plan's notes (P-13), each a
+        # {code, message} object, under a stand-in that names one.
+        resolve = project.resolve_merge_target
+        note = {"code": "merge-target-conflict",
+                "message": TEXT["note_merge_target_conflict"].format(NAME="main", OTHER="develop")}
+
+        def with_note(refs, declared):
+            return {**resolve(refs, declared), "notes": [dict(note)]}
+
+        status, out, err = self.main_in_process("clean", root, "--all-safe", "--json",
+                                                resolve_merge_target=with_note)
+        self.assertEqual((status, err), (0, ""))
+        noted = json.loads(out)
+        self.assertEqual(out, json.dumps(noted, indent=2, ensure_ascii=True) + "\n")
+        self.assertEqual((noted["notes"], noted["merge_target"]), ([note], document["merge_target"]))
+
+    def test_clean_plan_digest_canonical_text(self):
+        # Research.md R12, lead ruling R-34: the packet's own fixture values give
+        # its own digest, and the mode, observed_at, excluded and the notes
+        # leave it unchanged.
+        plan = packet_plan()
+        self.assertEqual(project.plan_digest(plan), PACKET_DIGEST)
+        for change in ("mode", "excluded", "notes", "flags"):
+            with self.subTest(unchanged_by=change):
+                varied = packet_plan()
+                if change == "mode":
+                    varied.mode = "report"
+                elif change == "excluded":
+                    varied.excluded = []
+                elif change == "notes":
+                    varied.notes = [{"code": "merge-target-conflict", "message": "m"}]
+                else:
+                    varied.repository.update(root_valid_utf8=False, common_dir_valid_utf8=False)
+                    varied.merge_target["source"] = "manifest"
+                self.assertEqual(project.plan_digest(varied), PACKET_DIGEST)
+        stamps = iter(("2026-10-07T14:03:12Z", "2026-10-20T18:00:00Z"))
+        with mock.patch.object(project, "observed_at", side_effect=lambda: next(stamps)):
+            first, second = project.plan_document(packet_plan()), project.plan_document(packet_plan())
+        self.assertNotEqual(first["observed_at"], second["observed_at"])
+        self.assertEqual((first["plan_digest"], second["plan_digest"]), (PACKET_DIGEST, PACKET_DIGEST))
+        # Each covered value changes it: a selected head, the merge target's SHA,
+        # the repository's inode, and a selection withheld (null).
+        for change in ("head", "sha", "ino", "withheld"):
+            with self.subTest(changed=change):
+                varied = packet_plan()
+                if change == "head":
+                    varied.selected[0]["head"] = PACKET_EXCLUDED[2]
+                elif change == "sha":
+                    varied.merge_target["sha"] = PACKET_SELECTED[2]
+                elif change == "ino":
+                    varied.repository["ino"] += 1
+                else:
+                    varied.selected = None
+                self.assertNotEqual(project.plan_digest(varied), PACKET_DIGEST)
+        # ensure_ascii=False serves the digest's text alone: a non-ASCII branch
+        # is hashed as its UTF-8 bytes, never as a \\u escape.
+        plan.selected[0]["branch"] = "feature/café"
+        text = json.dumps({"merge_target": {"name": "main", "sha": PACKET_MERGE_TARGET["sha"]},
+                           "repository": {key: PACKET_REPOSITORY[key] for key in ("root", "common_dir", "dev", "ino")},
+                           "selected": [[PACKET_SELECTED[0], "feature/café", PACKET_SELECTED[2]]]},
+                          sort_keys=True, separators=(",", ":"), ensure_ascii=False)
+        self.assertIn("café", text)
+        self.assertEqual(project.plan_digest(plan), hashlib.sha256(text.encode("utf-8")).hexdigest())
 
 
 if __name__ == "__main__":

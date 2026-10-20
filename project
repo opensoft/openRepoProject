@@ -687,6 +687,16 @@ TEXT = {
     "plan_incomplete": "The plan is incomplete ({CODE}): {REMEDY}.",
     "plan_digest_mismatch":
         "The fresh plan's digest {DIGEST} differs from --expect-plan {EXPECTED}; nothing was changed.",
+    # The plan notes, one message per code (contracts/project-clean.md, "Codes";
+    # lead rulings R-45 (4) and R-56, P-13; T051).
+    "note_merge_target_conflict":
+        "The manifest names {NAME} and origin/HEAD names {OTHER}; {NAME} is the merge target.",
+    "note_inspection_incomplete":
+        "{K} other rows are inspection-error or were left unprobed; they do not block {PATH}.",
+    "note_inspect_cap": "{K} rows past the row cap of {M} were not inspected; they do not block {PATH}.",
+    "note_deadline_exceeded": "{K} rows were left unprobed at the work deadline; they do not block {PATH}.",
+    "note_inspect_cap_report":
+        "{N} rows exceed the --all-safe row cap of {M}; --all-safe would be incomplete (inspect-cap).",
     "confirmation_required": "Standard input is not a terminal; pass --yes to apply this plan.",
     "push_remote_gone":
         "Cannot push {BRANCH}; its upstream {UPSTREAM} was deleted (remote-gone); "
@@ -3301,6 +3311,95 @@ def select_entry(row, plan):
     return {key: values[key] for key in SELECTED_KEYS}
 
 
+def plan_digest(plan):
+    """The plan's digest (FR-025; research.md R12; T051): the lowercase hex
+    SHA-256 of the UTF-8 encoding of json.dumps(value, sort_keys=True,
+    separators=(",", ":"), ensure_ascii=False), value holding exactly the
+    repository's `root`, `common_dir`, `dev` and `ino`, the merge target's
+    `name` and `sha`, and `selected`, the [path, branch, head] of each selected
+    row in canonical order, or null where a report withholds the selection.
+    The mode, observed_at, the flags, `excluded` and the notes are not in it,
+    and ensure_ascii=False serves this text alone, never a document. Paths are
+    the text the document writes; a branch name that is not valid UTF-8 gives
+    back its own bytes (surrogateescape)."""
+    repository = plan.repository or {}
+    merge_target = plan.merge_target or {}
+    value = {
+        "repository": {key: repository.get(key) for key in ("root", "common_dir", "dev", "ino")},
+        "merge_target": {key: merge_target.get(key) for key in ("name", "sha")},
+        "selected": None if plan.selected is None else [
+            [row["path"], row["branch"], row["head"]] for row in plan.selected],
+    }
+    text = json.dumps(value, sort_keys=True, separators=(",", ":"), ensure_ascii=False)
+    return hashlib.sha256(text.encode("utf-8", "surrogateescape")).hexdigest()
+
+
+def plan_limits(mode):
+    """The envelope's `limits`: the mode's row cap and the bounds, as in force."""
+    return {"worktree_rows": LIMITS["worktree_rows"][mode], "targets": LIMITS["targets"],
+            "ignored_entries": LIMITS["ignored_entries"], "status_records": LIMITS["status_records"],
+            "ignored_samples": LIMITS["ignored_samples"]}
+
+
+def plan_budget():
+    """The envelope's `budget`: the values of TIMING in force, read now (R-29)."""
+    return {"probe_timeout_seconds": TIMING["probe_budget"],
+            "invocation_timeout_seconds": TIMING["invocation_deadline"],
+            "reconciliation_reserve_seconds": TIMING["reconciliation_reserve"],
+            "removal_floor_seconds": TIMING["removal_floor"],
+            "removal_ceiling_seconds": TIMING["removal_ceiling"],
+            "probe_concurrency": 1}
+
+
+def plan_document(plan):
+    """The plan envelope (T051; contracts/project-clean.md, "Plan envelope";
+    plan review M6; lead ruling R-56), the keys of PLAN_ENVELOPE_KEYS and no
+    other, in that order: the baseline `root`, `target_branch` and
+    `tracking_freshness` kept; `observed_at` from region guard's observed_at();
+    `worktrees`, the rows in canonical order, row `notes` code strings;
+    `probes` and `operations` (research.md R8; lead ruling R-27), `estimated`
+    the upper bound of an --apply run of this plan in every mode, F + W + E +
+    5T + 3 and T, and `performed` from the counters of the invocation in force;
+    `selected` (select_entry()), `excluded` {path, path_valid_utf8, branch,
+    classification, reason}, `omitted` ({count: 0, exactness: "exact"} until
+    T075 sets plan.omitted), the plan's `notes` as {code, message} objects,
+    `completeness`, `apply_allowed`, `refusals` as refusal objects, and
+    `plan_digest`. print_plan() writes it through write_document(), with
+    ensure_ascii=True."""
+    run = current_invocation()
+    selected = plan.selected
+    targets = 0 if selected is None else len(selected)
+    repository, merge_target = plan.repository, plan.merge_target
+    root = (repository["root"] if repository and repository["root"] is not None
+            else json_path(os.fsencode(plan.root))[0])
+    values = {
+        "schema_version": 1,
+        "observed_at": observed_at(),
+        "mode": plan.mode,
+        "root": root,
+        "target_branch": merge_target["name"] if merge_target else None,
+        "tracking_freshness": TRACKING_FRESHNESS,
+        "worktrees": [dict(row) for row in plan.rows],
+        "repository": repository,
+        "merge_target": merge_target,
+        "limits": plan_limits(plan.mode),
+        "budget": plan_budget(),
+        "probes": {"estimated": getattr(plan, "planning_probes", 0) + 5 * targets + 3, "performed": run.probes},
+        "operations": {"estimated": targets, "performed": run.operations},
+        "selected": None if selected is None else [select_entry(row, plan) for row in selected],
+        "excluded": [{"path": row["path"], "path_valid_utf8": row["path_valid_utf8"], "branch": row.get("branch"),
+                      "classification": row.get("classification"), "reason": reason}
+                     for row, reason in plan.excluded],
+        "omitted": getattr(plan, "omitted", None) or {"count": 0, "exactness": "exact"},
+        "notes": [dict(note) for note in plan.notes],
+        "completeness": plan.completeness,
+        "apply_allowed": plan.apply_allowed,
+        "refusals": [refusal.as_object() for refusal in plan.refusals],
+        "plan_digest": plan.digest,
+    }
+    return {key: values[key] for key in PLAN_ENVELOPE_KEYS}
+
+
 def build_plan(repo, run):
     """Build the run's Plan for repo, resolve_clean_target()'s dict, and return
     it, never a status (T049; data-model.md, "Plan"; lead rulings R-56 and R-59
@@ -3322,9 +3421,9 @@ def build_plan(repo, run):
     each selected row given `removal_args`, ["-C", ROOT, "worktree",
     "remove", PATH] with ROOT the command directory and PATH the registry's
     raw bytes (design D9); `completeness` and `apply_allowed` (false for every
-    report); `planning_probes`, the Git children other than removals that this
-    invocation ran to build it, the F + W + E of the estimate (research.md
-    R8); and `report`, the baseline report built from the same rows, which the
+    report); `digest` (plan_digest()); `planning_probes`, the Git children
+    other than removals that this invocation ran to build it, the F + W + E of
+    the estimate (research.md R8); and `report`, the baseline report built from the same rows, which the
     first bodies of confirm_removal(), apply_removals() and push_or_delete()
     read until the apply and push lanes replace them. `omitted` stays
     {count: 0, exactness: "exact"} until T075. Interim until T066 and T075
@@ -3361,6 +3460,7 @@ def build_plan(repo, run):
     codes = plan_completeness(plan)
     plan.completeness = "incomplete" if codes else "complete"
     plan.apply_allowed = plan.mode != "report" and not codes and not plan.refusals
+    plan.digest = plan_digest(plan)
     plan.planning_probes = run.probes
     plan.report = {"root": str(root), "target_branch": target and target["name"],
                    "tracking_freshness": TRACKING_FRESHNESS, "worktrees": plan.rows}
@@ -3545,14 +3645,19 @@ def print_plan(plan, run):
     keeping their `Cleanup action:` output. Under --json the plan envelope goes
     to standard output through write_document() on the call where the run
     stops before the apply phase, so one document is written. The pipeline
-    writes `REFUSED:` itself. First body: the baseline report of a run
-    without --apply (print_clean_report(), project:674-676 at 961c405); a run
-    with --apply printed none."""
-    if plan.printed:
+    writes `REFUSED:` itself. Interim body until T052 replaces the human
+    layout: the baseline human report of a run without --apply
+    (print_clean_report(), project:674-676 at 961c405), and under --json the
+    plan envelope (T051)."""
+    if plan.action in ("push", "delete-branch"):
         return
-    plan.printed = True
-    if not getattr(run.args, "apply", False):
-        print_clean_report(plan.report, getattr(run.args, "json", False))
+    json_output, apply = getattr(run.args, "json", False), getattr(run.args, "apply", False)
+    if not plan.printed:
+        plan.printed = True
+        if not apply and not json_output:
+            print_clean_report(plan.report, False)
+    if json_output and run.status is not None:
+        write_document(plan_document(plan))
 # endregion preview
 
 # region apply
