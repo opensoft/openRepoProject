@@ -952,7 +952,7 @@ US2's gates keep them eligible (R-56).
 
 These run inside their lanes, after T047 (Lanes, above).
 
-- [ ] T036 [P] [US1] [S] Add `test_clean_the_preview_says_what_keeps_each_row` to
+- [x] T036 [P] [US1] [S] Add `test_clean_the_preview_says_what_keeps_each_row` to
   `tests/test_clean_batch.py`: with two rows selected, one excluded as
   `ignored-local-files` and two as `dirty`, beside the main worktree, the human
   preview equals the D18 layout: `Selected (2):` with its `  remove PATH
@@ -967,7 +967,7 @@ These run inside their lanes, after T047 (Lanes, above).
   unchanged. Scenario: "The preview says what keeps each row".
   — files: `tests/test_clean_batch.py`
   — verify: `python3 -c "import sys,unittest as u;L=u.defaultTestLoader;f=lambda s:[i for t in s for i in (f(t) if isinstance(t,u.TestSuite) else [t.id()])];I=[i for i in f(L.discover('tests',pattern=sys.argv[1])) if not i.startswith('unittest.')];A=sys.argv[2:];M=[a for a in A if not any(a in ('*',i.split('.')[-1]) for i in I)];[print('not collected:',m) for m in M];[print(e) for e in L.errors];sys.exit(1 if M or L.errors or not A else 0)" test_clean_batch.py 'test_clean_the_preview_says_what_keeps_each_row'`
-- [ ] T037 [P] [US1] [O] Add to `tests/test_clean_batch.py`:
+- [x] T037 [P] [US1] [O] Add to `tests/test_clean_batch.py`:
   `test_clean_plan_digest_mismatch` (a preview with digest D selects P1; when a
   second merged worktree becomes eligible, and again when P1's branch advances,
   `--all-safe --apply --yes --expect-plan D` prints the fresh plan with a
@@ -985,7 +985,7 @@ These run inside their lanes, after T047 (Lanes, above).
   "Plan digest mismatch".
   — files: `tests/test_clean_batch.py`
   — verify: `python3 -c "import sys,unittest as u;L=u.defaultTestLoader;f=lambda s:[i for t in s for i in (f(t) if isinstance(t,u.TestSuite) else [t.id()])];I=[i for i in f(L.discover('tests',pattern=sys.argv[1])) if not i.startswith('unittest.')];A=sys.argv[2:];M=[a for a in A if not any(a in ('*',i.split('.')[-1]) for i in I)];[print('not collected:',m) for m in M];[print(e) for e in L.errors];sys.exit(1 if M or L.errors or not A else 0)" test_clean_batch.py 'test_clean_plan_digest_mismatch' 'test_clean_plan_digest_canonical_text'`
-- [ ] T038 [P] [US1] [S] Add to `tests/test_clean_batch.py`:
+- [x] T038 [P] [US1] [S] Add to `tests/test_clean_batch.py`:
   `test_clean_preview_is_advisory` (a preview selects only P1; P1 becomes
   dirty; `--all-safe --apply --yes` builds a fresh plan excluding P1 as
   `dirty`, prints `No eligible worktrees` and exits 0 without asking; with
@@ -1002,7 +1002,7 @@ These run inside their lanes, after T047 (Lanes, above).
   plan review M8). Scenarios: "Preview is advisory"; "Paths and empty plans".
   — files: `tests/test_clean_batch.py`
   — verify: `python3 -c "import sys,unittest as u;L=u.defaultTestLoader;f=lambda s:[i for t in s for i in (f(t) if isinstance(t,u.TestSuite) else [t.id()])];I=[i for i in f(L.discover('tests',pattern=sys.argv[1])) if not i.startswith('unittest.')];A=sys.argv[2:];M=[a for a in A if not any(a in ('*',i.split('.')[-1]) for i in I)];[print('not collected:',m) for m in M];[print(e) for e in L.errors];sys.exit(1 if M or L.errors or not A else 0)" test_clean_batch.py 'test_clean_preview_is_advisory' 'test_clean_paths_and_empty_plans'`
-- [ ] T039 [P] [US1] [S] Add to `tests/test_clean_batch.py`:
+- [x] T039 [P] [US1] [S] Add to `tests/test_clean_batch.py`:
   `test_clean_invalid_argument_combinations` (`--all-safe` with `--action`,
   `--branch` or `--worktree`; `--expect-plan` without `--all-safe` or without
   `--apply`; and the values `abc`, 63 and 65 hexadecimal digits, and upper-case
@@ -1018,7 +1018,7 @@ These run inside their lanes, after T047 (Lanes, above).
   review M9). Scenario: "Invalid argument combinations".
   — files: `tests/test_clean_batch.py`
   — verify: `python3 -c "import sys,unittest as u;L=u.defaultTestLoader;f=lambda s:[i for t in s for i in (f(t) if isinstance(t,u.TestSuite) else [t.id()])];I=[i for i in f(L.discover('tests',pattern=sys.argv[1])) if not i.startswith('unittest.')];A=sys.argv[2:];M=[a for a in A if not any(a in ('*',i.split('.')[-1]) for i in I)];[print('not collected:',m) for m in M];[print(e) for e in L.errors];sys.exit(1 if M or L.errors or not A else 0)" test_clean_batch.py 'test_clean_invalid_argument_combinations' 'test_clean_invalid_argument_combinations_unrefused_flags'`
-- [ ] T040 [P] [US1] [O] Add to `tests/test_clean_batch.py`:
+- [x] T040 [P] [US1] [O] Add to `tests/test_clean_batch.py`:
   `test_clean_first_gates_in_order` (`gate_rows()` on literal rows, each a
   lane G `WorktreeRow` with `main`, `raw_path` and `registered` set (lead
   ruling R-56): `main-worktree` before every other gate,
@@ -1192,7 +1192,7 @@ These run inside their lanes, after T047 (Lanes, above).
   rewrites aside, and so does T034.
   — files: `project`, `tests/test_clean_guard.py`
   — verify: `python3 -c "import sys,re;t=open('project').read();A=sys.argv[1:];c=lambda r:t.split('# region '+r+'\n')[1].split('# endregion '+r+'\n')[0];M=[a for a in A if not ((a.split('%',1)[1] not in c(a.split('%',1)[0])) if '%' in a else (a.split('~',1)[1] in c(a.split('~',1)[0])) if '~' in a else re.search(r'^[a-z]*\s?'+re.escape(a.split(':',1)[1])+r'\b',c(a.split(':',1)[0]),re.M))];[print('region check failed:',m) for m in M];sys.exit(1 if M or not A else 0)" 'resolution:resolve_clean_target' 'plan:build_plan' 'preview:print_plan' 'apply:confirm_removal' 'apply:apply_removals' 'push:push_or_delete' 'dispatcher:check_clean_arguments' 'dispatcher:require_git' 'dispatcher:check_plan' 'dispatcher:say' 'dispatcher:refuse' && python3 -c "import ast,sys;t=open(sys.argv[1]).read();F=[n for n in ast.walk(ast.parse(t)) if isinstance(n,ast.FunctionDef) and n.name==sys.argv[2]];s=ast.get_source_segment(t,F[0]) if F else '';M=[k for k in sys.argv[3:] if k not in s];[print('absent from',sys.argv[2]+':',m) for m in M];sys.exit(1 if M or not F or len(sys.argv)<4 else 0)" project clean 'signal_scope' 'phase' 'check_clean_arguments' 'require_git' 'resolve_clean_target' 'build_plan' 'check_plan' 'print_plan' 'push_or_delete' 'confirm_removal' 'apply_removals' && python3 -c "import subprocess as s,sys;o=s.run([sys.executable,'project','clean','--help'],capture_output=True,text=True).stdout;M=[k for k in ('--all-safe','--expect-plan') if k not in o];print('clean --help lacks:',M);sys.exit(1 if M else 0)" && python3 -c "import sys,unittest as u;g=lambda s:[x for t in s for x in (g(t) if isinstance(t,u.TestSuite) else [t])];T=[t for t in g(u.defaultTestLoader.discover('tests',pattern='test_project.py')) if not t.id().endswith('.test_clean_revalidates_a_worktree_after_confirmation')];r=u.TextTestRunner().run(u.TestSuite(T));print(len(T),'tests');sys.exit(0 if len(T)==95 and r.wasSuccessful() else 1)" && python3 -c "import ast,sys;t=ast.parse(open('tests/test_clean_guard.py').read());A={n.targets[0].id:n.value.value for n in t.body if isinstance(n,ast.Assign) and len(n.targets)==1 and isinstance(n.targets[0],ast.Name) and isinstance(n.value,ast.Constant)};W={'RESOLVING_STAGE':'resolve_clean_target','PLANNING_STAGE':'build_plan'};M=[k+' = '+repr(A.get(k)) for k in W if not A.get(k)==W[k]];print('stage constants not retargeted:',M);sys.exit(1 if M else 0)" && python3 -m unittest discover -s tests -p 'test_clean_guard.py'`
-- [ ] T048 [P] [US1] [O] Fill `check_clean_arguments(args)` (the contract's
+- [x] T048 [P] [US1] [O] Fill `check_clean_arguments(args)` (the contract's
   "Argument checks": `invalid-arguments` with the baseline messages kept,
   this task owning them outside `TEXT` (lead ruling R-45);
   `--apply --json` accepted only with `--all-safe` or `--action remove`; every
@@ -1203,7 +1203,7 @@ These run inside their lanes, after T047 (Lanes, above).
   passes.
   — files: `project`
   — verify: `python3 -m unittest discover -s tests -p 'test_clean_batch.py' -k '*.test_clean_invalid_argument_combinations' -k '*.test_clean_invalid_argument_combinations_unrefused_flags'`
-- [ ] T049 [P] [US1] [O] Fill `build_plan(repo, run)` in region `plan`, reading lane
+- [x] T049 [P] [US1] [O] Fill `build_plan(repo, run)` in region `plan`, reading lane
   G's `inspect_repository()` and `worktree_rows()` directly, never
   `cleanup_report()`, which raises the baseline `Refused` when a
   repository-wide probe fails, so that such a plan is built and is
@@ -1234,7 +1234,7 @@ These run inside their lanes, after T047 (Lanes, above).
   report the plan is the same, with `apply_allowed: false`.
   — files: `project`
   — verify: `python3 -c "import sys,re;t=open('project').read();A=sys.argv[1:];c=lambda r:t.split('# region '+r+'\n')[1].split('# endregion '+r+'\n')[0];M=[a for a in A if not ((a.split('%',1)[1] not in c(a.split('%',1)[0])) if '%' in a else (a.split('~',1)[1] in c(a.split('~',1)[0])) if '~' in a else re.search(r'^[a-z]*\s?'+re.escape(a.split(':',1)[1])+r'\b',c(a.split(':',1)[0]),re.M))];[print('region check failed:',m) for m in M];sys.exit(1 if M or not A else 0)" 'plan:select_entry' 'plan:plan_completeness' && python3 project clean --help >/dev/null`
-- [ ] T050 [P] [US1] [O] Fill `gate_rows(rows, plan, run)` in region `gates`:
+- [x] T050 [P] [US1] [O] Fill `gate_rows(rows, plan, run)` in region `gates`:
   the ten gates of FR-020 as one ordered tuple of gate functions, the per-row
   gates 1 to 7 each `gate(row, plan, run)`, returning its reason or None, and
   each free to set the row's `errors`, set its class to `inspection-error` or
@@ -1254,7 +1254,7 @@ These run inside their lanes, after T047 (Lanes, above).
   other class's from its recommendation. The first test of T040 passes.
   — files: `project`
   — verify: `python3 -c "import sys,re;t=open('project').read();A=sys.argv[1:];c=lambda r:t.split('# region '+r+'\n')[1].split('# endregion '+r+'\n')[0];M=[a for a in A if not ((a.split('%',1)[1] not in c(a.split('%',1)[0])) if '%' in a else (a.split('~',1)[1] in c(a.split('~',1)[0])) if '~' in a else re.search(r'^[a-z]*\s?'+re.escape(a.split(':',1)[1])+r'\b',c(a.split(':',1)[0]),re.M))];[print('region check failed:',m) for m in M];sys.exit(1 if M or not A else 0)" 'gates:gate_rows' 'index:registration_gate' 'index:index_gates' 'reflog:reflog_gate' 'gates:deferral_gate' 'index~def registration_gate(row, plan, run)' 'index~def index_gates(row, plan, run)' 'reflog~def reflog_gate(row, plan, run)' 'gates~def deferral_gate(candidates, plan)' && python3 -m unittest discover -s tests -p 'test_clean_batch.py' -k '*.test_clean_first_gates_in_order'`
-- [ ] T051 [P] [US1] [O] Fill `plan_digest(plan)` (R12's canonical text) and
+- [x] T051 [P] [US1] [O] Fill `plan_digest(plan)` (R12's canonical text) and
   `plan_document(plan)` (the envelope with the baseline keys kept, in the
   contract's key order, every path through `json_path()` beside its flag,
   `observed_at` from region `guard`'s `observed_at()`, reused, which reads
@@ -1277,7 +1277,7 @@ These run inside their lanes, after T047 (Lanes, above).
   T037 and the second and third tests of T040 pass.
   — files: `project`, `tests/clean_support.py`
   — verify: `python3 -c "import sys,re;t=open('project').read();A=sys.argv[1:];c=lambda r:t.split('# region '+r+'\n')[1].split('# endregion '+r+'\n')[0];M=[a for a in A if not ((a.split('%',1)[1] not in c(a.split('%',1)[0])) if '%' in a else (a.split('~',1)[1] in c(a.split('~',1)[0])) if '~' in a else re.search(r'^[a-z]*\s?'+re.escape(a.split(':',1)[1])+r'\b',c(a.split(':',1)[0]),re.M))];[print('region check failed:',m) for m in M];sys.exit(1 if M or not A else 0)" 'plan:plan_digest' 'plan:plan_document' && python3 -m unittest discover -s tests -p 'test_clean_batch.py' -k '*.test_clean_plan_digest_canonical_text' -k '*.test_clean_plan_document_keys' -k '*.test_clean_plan_document_bytes' && python3 -m unittest discover -s tests -p 'test_clean_harness.py' -k '*.test_clean_text_fixtures_equal_the_contract_table'`
-- [ ] T052 [P] [US1] [O] Fill `print_plan(plan, run)` in region `preview`, which
+- [x] T052 [P] [US1] [O] Fill `print_plan(plan, run)` in region `preview`, which
   replaces `print_clean_report()` for `clean`, so that R-51(b)'s interim
   `dirty=None` ends with this task, not T051: mode report prints the
   baseline report layout, each null shown as `unknown`; mode all-safe, and
@@ -1319,7 +1319,7 @@ These run inside their lanes, after T047 (Lanes, above).
   ruling R-59 D8).
   — files: `project`, `tests/clean_support.py`, `tests/test_clean_batch.py`
   — verify: `python3 -c "import sys,re;t=open('project').read();A=sys.argv[1:];c=lambda r:t.split('# region '+r+'\n')[1].split('# endregion '+r+'\n')[0];M=[a for a in A if not ((a.split('%',1)[1] not in c(a.split('%',1)[0])) if '%' in a else (a.split('~',1)[1] in c(a.split('~',1)[0])) if '~' in a else re.search(r'^[a-z]*\s?'+re.escape(a.split(':',1)[1])+r'\b',c(a.split(':',1)[0]),re.M))];[print('region check failed:',m) for m in M];sys.exit(1 if M or not A else 0)" 'preview~human_path' 'preview~selected_heading' 'preview~excluded_group' 'contracts~"main-worktree":' 'contracts~"unsupported-path-bytes":' 'contracts~"not-requested":' && python3 project clean --help >/dev/null && python3 -m unittest discover -s tests -p 'test_clean_harness.py' -k '*.test_clean_text_fixtures_equal_the_contract_table' && python3 -c "import sys,unittest as u;L=u.defaultTestLoader;f=lambda s:[i for t in s for i in (f(t) if isinstance(t,u.TestSuite) else [t.id()])];I=[i for i in f(L.discover('tests',pattern=sys.argv[1])) if not i.startswith('unittest.')];A=sys.argv[2:];M=[a for a in A if not any(a in ('*',i.split('.')[-1]) for i in I)];[print('not collected:',m) for m in M];[print(e) for e in L.errors];sys.exit(1 if M or L.errors or not A else 0)" test_clean_batch.py 'test_clean_a_reader_that_closes_standard_output' 'test_clean_the_preview_says_what_keeps_each_row_single_mode' && python3 -m unittest discover -s tests -p 'test_clean_batch.py' -k '*.test_clean_a_reader_that_closes_standard_output' -k '*.test_clean_the_preview_says_what_keeps_each_row_single_mode'`
-- [ ] T053 [P] [US1] [O] Fill `check_plan(plan, run)` in region `dispatcher`, in
+- [x] T053 [P] [US1] [O] Fill `check_plan(plan, run)` in region `dispatcher`, in
   FR-024's order: an incomplete plan (an all-safe preview exits 1; `--apply`
   refuses with exit 2 and the plan's code before any question; a report still
   exits 0 until T101); an `--expect-plan` mismatch (`plan-digest-mismatch`); a

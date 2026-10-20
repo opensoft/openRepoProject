@@ -687,6 +687,16 @@ TEXT = {
     "plan_incomplete": "The plan is incomplete ({CODE}): {REMEDY}.",
     "plan_digest_mismatch":
         "The fresh plan's digest {DIGEST} differs from --expect-plan {EXPECTED}; nothing was changed.",
+    # The plan notes, one message per code (contracts/project-clean.md, "Codes";
+    # lead rulings R-45 (4) and R-56, P-13; T051).
+    "note_merge_target_conflict":
+        "The manifest names {NAME} and origin/HEAD names {OTHER}; {NAME} is the merge target.",
+    "note_inspection_incomplete":
+        "{K} other rows are inspection-error or were left unprobed; they do not block {PATH}.",
+    "note_inspect_cap": "{K} rows past the row cap of {M} were not inspected; they do not block {PATH}.",
+    "note_deadline_exceeded": "{K} rows were left unprobed at the work deadline; they do not block {PATH}.",
+    "note_inspect_cap_report":
+        "{N} rows exceed the --all-safe row cap of {M}; --all-safe would be incomplete (inspect-cap).",
     "confirmation_required": "Standard input is not a terminal; pass --yes to apply this plan.",
     "push_remote_gone":
         "Cannot push {BRANCH}; its upstream {UPSTREAM} was deleted (remote-gone); "
@@ -725,6 +735,11 @@ NEXT_STEPS = {
     "registration-mismatch": "review, then git worktree repair or git worktree prune, or remove the row by hand",
     "inspection-error": "review, then git worktree repair or git worktree prune, or remove the row by hand",
     "locked-worktree": "unlock it yourself if it should go",
+    # The contract's next steps for the three reasons D18 gives none (T052;
+    # lead rulings R-57 H1, R-58 (b) and R-62 (b)).
+    "main-worktree": "never removed by project clean",
+    "unsupported-path-bytes": "rename the path to valid UTF-8",
+    "not-requested": "name it with --worktree to plan its removal",
 }
 # endregion contracts
 
@@ -3097,61 +3112,133 @@ def refuse(plan, refusal, run):
     (`cancelled`) record through it and never raise, so that the plan
     envelope, not the extended error object, carries the refusal, and the
     pipeline prints the plan once, then, in human output, `REFUSED: MESSAGE`
-    naming plan.refusals[0]. T053 fills it (the envelope's `apply_allowed:
-    false` and `refusals`, one object per code in REFUSAL_CODES order); this
-    first body records the refusal and withdraws apply_allowed."""
-    plan.refusals.append(refusal)
+    naming plan.refusals[0]. T053: the envelope's `apply_allowed` becomes
+    false, and `refusals` holds one object per code, kept in REFUSAL_CODES
+    order (a refusal with no code last, in the order recorded), so that the
+    first is the first check that refused, FR-024's order and REFUSAL_CODES's
+    being the same; a second refusal of a code already held is not added."""
+    if refusal.code is None or all(item.code != refusal.code for item in plan.refusals):
+        plan.refusals.append(refusal)
+        plan.refusals.sort(key=lambda item: REFUSAL_CODES.index(item.code)
+                           if item.code in REFUSAL_CODES else len(REFUSAL_CODES))
     plan.apply_allowed = False
     return 2
 
 
 def check_clean_arguments(args):
-    """The argument checks, before any Git child (T048 fills;
-    contracts/project-clean.md, "Argument checks"). Raises a Refused to
-    main(). First body: the baseline checks (project:671-672, :677-678,
-    :681-682, :708-709 and :724-725 at 961c405) moved ahead of resolution,
-    as the contract orders them, with their messages."""
+    """The argument checks, before any Git child, `git --version` included
+    (T048; contracts/project-clean.md, "Argument checks"; FR-019). Each raises
+    a Refused with code `invalid-arguments` to main(), in the contract table's
+    order: --all-safe given with --action, --branch or --worktree; --expect-plan
+    without both --all-safe and --apply; an --expect-plan value that is not 64
+    lowercase hexadecimal characters; --apply --json with --action push or
+    delete-branch, still refused (OQ-10), while --apply --json is accepted with
+    --all-safe and with --action remove; then the baseline checks of --apply
+    (project:677-678, :681-682, :708-709 and :724-725 at 961c405), their
+    messages kept (lead ruling R-45 (6)). Every flag the table does not refuse
+    keeps the baseline's handling: without --apply, --yes, --action, --branch
+    and --worktree are ignored, and so is an unused --branch or --worktree
+    (plan review M9). Arguments are read with getattr."""
     apply, action = getattr(args, "apply", False), getattr(args, "action", None)
-    if getattr(args, "json", False) and apply:
-        raise Refused("--json cannot be combined with --apply; use JSON for the read-only plan.")
-    if not apply:
+    all_safe, expected = getattr(args, "all_safe", False), getattr(args, "expect_plan", None)
+    message = None
+    if all_safe and (action is not None or getattr(args, "branch", None) is not None
+                     or getattr(args, "worktree", None) is not None):
+        message = TEXT["invalid_arguments_all_safe"]
+    elif expected is not None and not (all_safe and apply):
+        message = TEXT["invalid_arguments_expect_plan"]
+    elif expected is not None and not re.fullmatch(r"[0-9a-f]{64}", expected):
+        message = TEXT["invalid_arguments_expect_plan_value"]
+    elif not apply or all_safe:
         return
-    if not action:
-        raise Refused("--apply requires --action push|remove|delete-branch")
-    if action == "push" and not getattr(args, "branch", None):
-        raise Refused("Push cleanup requires --branch BRANCH")
-    if action == "remove" and not getattr(args, "worktree", None):
-        raise Refused("Worktree cleanup requires --worktree PATH")
-    if action == "delete-branch" and not getattr(args, "branch", None):
-        raise Refused("Branch cleanup requires --branch BRANCH")
+    elif getattr(args, "json", False) and action in ("push", "delete-branch"):
+        message = "--json cannot be combined with --apply; use JSON for the read-only plan."
+    elif not action:
+        message = "--apply requires --action push|remove|delete-branch"
+    elif action == "push" and not getattr(args, "branch", None):
+        message = "Push cleanup requires --branch BRANCH"
+    elif action == "remove" and not getattr(args, "worktree", None):
+        message = "Worktree cleanup requires --worktree PATH"
+    elif action == "delete-branch" and not getattr(args, "branch", None):
+        message = "Branch cleanup requires --branch BRANCH"
+    if message is not None:
+        raise Refused(message, code="invalid-arguments")
 
 
 def require_git(run):
-    """The version check, before resolution (T048 fills: git_version(run),
-    refusing `git-too-old` or `git-unavailable`, exit 2; FR-002). The
-    baseline checks no version, so this first body checks nothing."""
+    """The version check, once, after the argument checks and before
+    resolution (T048; FR-002, FR-053; contracts/project-clean.md, "Order of a
+    run"): git_version(run), memoized on the run, refusing `git-too-old` or
+    `git-unavailable` with its contract message, exit 2, before any repository
+    is probed. Returns None when Git may run."""
+    version = git_version(run)
+    if version.code == "git-too-old":
+        raise Refused(TEXT["git_too_old"].format(VERSION=version.text), code="git-too-old")
+    if version.code is not None:
+        raise Refused(TEXT["git_unavailable"].format(DETAIL=version.detail), code="git-unavailable")
     return None
 
 
 def check_plan(plan, run):
-    """Decide where the run goes after the plan is built (T053 fills, in
-    FR-024's order): return the exit status the run stops at, or None when it
-    goes on to the question or --yes (or to push or delete-branch). It only
-    decides: each plan, select or confirm refusal is recorded through
-    refuse(), never raised, and a plan that already carries one stops with 2.
-    First body: a run without --apply is a report, exit 0; a named removal
-    keeps the baseline checks (project:715-718 at 961c405)."""
+    """Decide where the run goes after the plan is built (T053; FR-024;
+    contracts/project-clean.md, "Order of a run"; lead rulings R-56, R-59 D4,
+    R-62 (a) and R-67 (b)): return the exit status the run stops at, or None
+    when it goes on to the question or --yes (or to push or delete-branch). It
+    only decides: each plan, select or confirm refusal is recorded through
+    refuse() and 2 returned, never raised to main(); the pipeline prints once.
+
+    The checks, in this order, the first that refuses ending them:
+    1. an incomplete plan (plan_completeness(); in mode single for --action
+       remove, P's own rows apart): one refusal per code; a preview exits 1,
+       a run with --apply 2, before any question;
+    2. single, `worktree-not-found`, which build_plan() recorded;
+    3. single, P's own incompleteness: P names no single row (several
+       matched, or one not decided), or its row is inspection-error or
+       unprobed: inspection-incomplete;
+    4. all-safe, an --expect-plan digest that differs (`plan-digest-mismatch`);
+    5. all-safe, a complete plan selecting nothing: exit 0, no question;
+    6. single, P excluded by a gate (`target-excluded`, target_refusal());
+    7. `confirmation-required` for --apply without --yes on a standard input
+       that is not a terminal, isatty() read now, since T046 patches it.
+    A report exits 0 until T101 exits an incomplete one 1; push and
+    delete-branch go on after check 1, to their own checks; a preview that
+    passes every check exits 0."""
+    args = run.args
+    apply = getattr(args, "apply", False)
+    if plan.mode == "report":
+        return 2 if plan.refusals else 0
+    single, removing = plan.mode == "single", plan.action == "remove"
+    target_rows = getattr(plan, "target_rows", [])
+    codes = plan_completeness(plan, target_rows if single and removing else ())
+    if codes:
+        for code in codes:
+            refuse(plan, incomplete_refusal(plan, code), run)
+        return 2 if apply else 1
     if plan.refusals:
         return 2
-    if not getattr(run.args, "apply", False):
-        return 0
-    row = plan.target
-    if row is not None:
-        if row.get("current"):
-            return refuse(plan, Refused("Cannot remove the current worktree."), run)
-        if row.get("classification") != "merged-removable":
-            return refuse(plan, Refused(f"Worktree is {row.get('classification')}; "
-                                        "only clean merged worktrees may be removed."), run)
+    if single and not removing:
+        return None
+    if single:
+        target = plan.target
+        if target is None or row_incomplete(target):
+            return refuse(plan, incomplete_refusal(plan, "inspection-incomplete"), run)
+        reason = next((reason for row, reason in plan.excluded if row is target), None)
+        if reason is not None:
+            return refuse(plan, target_refusal(target, reason), run)
+    else:
+        expected = getattr(args, "expect_plan", None)
+        if apply and expected is not None and expected != plan.digest:
+            return refuse(plan, Refused(TEXT["plan_digest_mismatch"].format(DIGEST=plan.digest, EXPECTED=expected),
+                                        code="plan-digest-mismatch"), run)
+        if not plan.selected or not apply:
+            return 0
+    if not getattr(args, "yes", False):
+        try:
+            terminal = sys.stdin is not None and sys.stdin.isatty()
+        except (AttributeError, OSError, ValueError):
+            terminal = False
+        if not terminal:
+            return refuse(plan, Refused(TEXT["confirmation_required"], code="confirmation-required"), run)
     return None
 # endregion dispatcher
 
@@ -3166,34 +3253,464 @@ def resolve_clean_target(args, run):
 # endregion resolution
 
 # region plan
-def build_plan(repo, run):
-    """Build the run's Plan for repo, resolve_clean_target()'s dict (T049
-    fills; data-model.md, "Plan"), and return it, never a status (lead ruling
-    R-59 D4): `worktree-not-found` is recorded through refuse(), never raised
-    (R-56 Q-3). A refusal of the repository as a whole (no merge target, a
-    manifest) still raises. First body: the baseline report (cleanup_report(),
-    project:673 at 961c405), and for a named removal the baseline match of
-    --worktree (:710-714)."""
-    plan = Plan(repo, run)
-    plan.report = cleanup_report(repo["root"])
-    args = run.args
-    if run.action == "remove" and getattr(args, "apply", False):
-        wanted = Path(args.worktree).expanduser().resolve()
-        matches = [row for row in plan.report["worktrees"] if Path(row["path"]).resolve() == wanted]
-        if len(matches) != 1:
-            refuse(plan, Refused(f"No unique linked worktree found at {wanted}"), run)
+# The plan of one run (T049, T051; data-model.md, "Plan"; contracts/project-clean.md,
+# "Plan envelope"; design D12 to D14; research.md R8 and R12).
+
+# The baseline's freshness text, the envelope's `tracking_freshness`.
+TRACKING_FRESHNESS = "local refs only; remote information is as of the last fetch; no fetch performed"
+
+
+def repository_object(identity):
+    """The envelope's `repository` (REPOSITORY_KEYS's order) for inspect_repository()'s
+    identity: each path as json_path() writes it beside its flag; root and its
+    flag null while the main worktree is not named."""
+    root, root_valid = (None, None) if identity["root"] is None else json_path(identity["root"])
+    common_dir, common_valid = json_path(identity["common_dir"])
+    return {"root": root, "common_dir": common_dir, "dev": identity["dev"], "ino": identity["ino"],
+            "root_valid_utf8": root_valid, "common_dir_valid_utf8": common_valid}
+
+
+def _bounded_realpath(path):
+    """The realpath of path by one fs_call(), or None when the call raised or
+    was cut at its budget."""
+    try:
+        found = fs_call(os.path.realpath, path)
+    except OSError:
+        return None
+    return None if isinstance(found, DriverOutcome) else found
+
+
+def match_target(plan, run):
+    """P of a named removal, `--apply --action remove --worktree P` (D13; contracts/project-clean.md,
+    "Argument checks"; lead rulings R-56 and R-67 (b) as corrected): --worktree
+    expanded and realpath'd, which joins it to the working directory, by one
+    bounded call, matched against every row: a row matches when its raw path
+    bytes equal P's, or else when its own realpath, one bounded call each, does;
+    a realpath that cannot be read counts as a match, failing closed, and so
+    does every row when P's own cannot. Sets plan.target_rows, the rows P may
+    name, and plan.target, the one row when exactly one matched and was
+    decided, else None. No match records `worktree-not-found` through refuse()
+    with the baseline message, never raised (R-59 D4); several matches, or one
+    not decided, leave plan.target None, so that nothing is selected for P and
+    check_plan() refuses with inspection-incomplete."""
+    wanted = os.path.expanduser(os.fsencode(run.args.worktree))
+    found = _bounded_realpath(wanted)
+    matches, decided = [], found is not None
+    for row in plan.rows:
+        if found is None:
+            matches.append(row)
+        elif row.raw_path == found:
+            matches.append(row)
         else:
-            plan.target = matches[0]
+            real = _bounded_realpath(row.raw_path)
+            if real is None or real == found:
+                matches.append(row)
+                decided = decided and real is not None
+    plan.target_rows = matches
+    if len(matches) == 1 and decided:
+        plan.target = matches[0]
+    elif not matches:
+        path = found if found is not None else wanted
+        refuse(plan, Refused(f"No unique linked worktree found at {human_path(path)}",
+                             code="worktree-not-found", path=path), run)
+
+
+def row_incomplete(row):
+    """Whether a row's own evidence is incomplete: `inspection-error`, or
+    carrying the unprobed marker (T066's reflog read past its budget)."""
+    return bool(row.unprobed) or row["classification"] == "inspection-error"
+
+
+def plan_completeness(plan, exclude=()):
+    """The codes that make plan incomplete, in REFUSAL_CODES order (FR-024,
+    FR-031; data-model.md, "Plan"; analyze M6): `inspection-incomplete` when a
+    repository-wide probe failed (plan.evidence's errors), when a row of
+    plan.rows not in exclude is `inspection-error` or unprobed, or when P's
+    rows are not excluded and P names no single established row (plan.target
+    None while plan.target_rows holds rows). T075 and T099 add `inspect-cap`
+    and `deadline-exceeded`, and make another row's state a non-blocking note in
+    mode single for --action remove; until T075 every row counts in every mode
+    (lead ruling R-56 Q-17)."""
+    skip = {id(row) for row in exclude}
+    target_rows = getattr(plan, "target_rows", [])
+    incomplete = (bool(plan.evidence and plan.evidence["errors"])
+                  or any(row_incomplete(row) for row in plan.rows if id(row) not in skip)
+                  or (plan.target is None and bool(target_rows)
+                      and not any(id(row) in skip for row in target_rows)))
+    return ["inspection-incomplete"] if incomplete else []
+
+
+def incomplete_refusal(plan, code):
+    """The refusal of a plan incomplete with code (FR-024, FR-031; design D18):
+    `The plan is incomplete (CODE): REMEDY.`, REMEDY D18's for the code."""
+    if code == "inspect-cap":
+        registry = (plan.evidence or {}).get("records") or ()
+        remedy = TEXT["remedy_inspect_cap"].format(N=len(registry), M=LIMITS["worktree_rows"][plan.mode])
+    elif code == "deadline-exceeded":
+        remedy = TEXT["remedy_deadline_exceeded"]
+    else:
+        remedy = TEXT["remedy_inspection_incomplete"]
+    return Refused(TEXT["plan_incomplete"].format(CODE=code, REMEDY=remedy), code=code)
+
+
+def json_argument(argument):
+    """One argument of a child's vector as a JSON document writes it."""
+    return argument if isinstance(argument, str) else json_path(argument)[0]
+
+
+def select_entry(row, plan):
+    """One `selected` entry (contracts/project-clean.md, "Plan envelope"), in
+    SELECTED_KEYS's order: the path beside its flag; the branch evidence
+    (branch, head, upstream, upstream_oid, ahead, behind); the worktree identity
+    (dev, ino, admin_id); locked; the baseline signature fields (present, dirty,
+    ignored_files, remote_present, merged_into_target, current, classification);
+    and operation, {kind: "worktree-remove", argv}, argv the exact vector of
+    the row's removal child, git_argv("removal", row.removal_args), each path
+    as json_path() writes it."""
+    values = dict(row)
+    values.update(upstream_oid=row.upstream_oid, dev=row.dev, ino=row.ino,
+                  admin_id=None if row.admin_id is None else json_path(row.admin_id)[0],
+                  operation={"kind": "worktree-remove",
+                             "argv": [json_argument(arg) for arg in git_argv("removal", row.removal_args)]})
+    return {key: values[key] for key in SELECTED_KEYS}
+
+
+def plan_digest(plan):
+    """The plan's digest (FR-025; research.md R12; T051): the lowercase hex
+    SHA-256 of the UTF-8 encoding of json.dumps(value, sort_keys=True,
+    separators=(",", ":"), ensure_ascii=False), value holding exactly the
+    repository's `root`, `common_dir`, `dev` and `ino`, the merge target's
+    `name` and `sha`, and `selected`, the [path, branch, head] of each selected
+    row in canonical order, or null where a report withholds the selection.
+    The mode, observed_at, the flags, `excluded` and the notes are not in it,
+    and ensure_ascii=False serves this text alone, never a document. Paths are
+    the text the document writes; a branch name that is not valid UTF-8 gives
+    back its own bytes (surrogateescape)."""
+    repository = plan.repository or {}
+    merge_target = plan.merge_target or {}
+    value = {
+        "repository": {key: repository.get(key) for key in ("root", "common_dir", "dev", "ino")},
+        "merge_target": {key: merge_target.get(key) for key in ("name", "sha")},
+        "selected": None if plan.selected is None else [
+            [row["path"], row["branch"], row["head"]] for row in plan.selected],
+    }
+    text = json.dumps(value, sort_keys=True, separators=(",", ":"), ensure_ascii=False)
+    return hashlib.sha256(text.encode("utf-8", "surrogateescape")).hexdigest()
+
+
+def plan_limits(mode):
+    """The envelope's `limits`: the mode's row cap and the bounds, as in force."""
+    return {"worktree_rows": LIMITS["worktree_rows"][mode], "targets": LIMITS["targets"],
+            "ignored_entries": LIMITS["ignored_entries"], "status_records": LIMITS["status_records"],
+            "ignored_samples": LIMITS["ignored_samples"]}
+
+
+def plan_budget():
+    """The envelope's `budget`: the values of TIMING in force, read now (R-29)."""
+    return {"probe_timeout_seconds": TIMING["probe_budget"],
+            "invocation_timeout_seconds": TIMING["invocation_deadline"],
+            "reconciliation_reserve_seconds": TIMING["reconciliation_reserve"],
+            "removal_floor_seconds": TIMING["removal_floor"],
+            "removal_ceiling_seconds": TIMING["removal_ceiling"],
+            "probe_concurrency": 1}
+
+
+def plan_document(plan):
+    """The plan envelope (T051; contracts/project-clean.md, "Plan envelope";
+    plan review M6; lead ruling R-56), the keys of PLAN_ENVELOPE_KEYS and no
+    other, in that order: the baseline `root`, `target_branch` and
+    `tracking_freshness` kept; `observed_at` from region guard's observed_at();
+    `worktrees`, the rows in canonical order, row `notes` code strings;
+    `probes` and `operations` (research.md R8; lead ruling R-27), `estimated`
+    the upper bound of an --apply run of this plan in every mode, F + W + E +
+    5T + 3 and T, and `performed` from the counters of the invocation in force;
+    `selected` (select_entry()), `excluded` {path, path_valid_utf8, branch,
+    classification, reason}, `omitted` ({count: 0, exactness: "exact"} until
+    T075 sets plan.omitted), the plan's `notes` as {code, message} objects,
+    `completeness`, `apply_allowed`, `refusals` as refusal objects, and
+    `plan_digest`. print_plan() writes it through write_document(), with
+    ensure_ascii=True."""
+    run = current_invocation()
+    selected = plan.selected
+    targets = 0 if selected is None else len(selected)
+    repository, merge_target = plan.repository, plan.merge_target
+    root = (repository["root"] if repository and repository["root"] is not None
+            else json_path(os.fsencode(plan.root))[0])
+    values = {
+        "schema_version": 1,
+        "observed_at": observed_at(),
+        "mode": plan.mode,
+        "root": root,
+        "target_branch": merge_target["name"] if merge_target else None,
+        "tracking_freshness": TRACKING_FRESHNESS,
+        "worktrees": [dict(row) for row in plan.rows],
+        "repository": repository,
+        "merge_target": merge_target,
+        "limits": plan_limits(plan.mode),
+        "budget": plan_budget(),
+        "probes": {"estimated": getattr(plan, "planning_probes", 0) + 5 * targets + 3, "performed": run.probes},
+        "operations": {"estimated": targets, "performed": run.operations},
+        "selected": None if selected is None else [select_entry(row, plan) for row in selected],
+        "excluded": [{"path": row["path"], "path_valid_utf8": row["path_valid_utf8"], "branch": row.get("branch"),
+                      "classification": row.get("classification"), "reason": reason}
+                     for row, reason in plan.excluded],
+        "omitted": getattr(plan, "omitted", None) or {"count": 0, "exactness": "exact"},
+        "notes": [dict(note) for note in plan.notes],
+        "completeness": plan.completeness,
+        "apply_allowed": plan.apply_allowed,
+        "refusals": [refusal.as_object() for refusal in plan.refusals],
+        "plan_digest": plan.digest,
+    }
+    return {key: values[key] for key in PLAN_ENVELOPE_KEYS}
+
+
+def build_plan(repo, run):
+    """Build the run's Plan for repo, resolve_clean_target()'s dict, and return
+    it, never a status (T049; data-model.md, "Plan"; lead rulings R-56 and R-59
+    D4). It reads lane G's evidence directly, inspect_repository() and
+    worktree_rows(), never cleanup_report(), so that a failed repository-wide
+    probe gives a plan incomplete with inspection-incomplete rather than a
+    refusal. Still raised, as the repository as a whole cannot be planned: the
+    baseline's `Cannot inspect Git repository at ROOT` where row 3 failed, ROOT
+    is no worktree toplevel, or no main worktree is named with no probe failed
+    (T107 codes these at resolution); and the merge target's own refusal
+    (`no-merge-target`, a manifest's), with the repository in its context.
+
+    The plan holds: `evidence`; `repository`, the envelope's object;
+    `merge_target` {name, source, sha}, its resolution's notes moved to the
+    plan's `notes` as {code, message} objects (P-13); `rows`, the main worktree
+    first, then by raw path bytes; in mode single for --action remove, P's
+    match (match_target(): `target_rows` and `target`, `worktree-not-found`
+    recorded through refuse()); `selected` and `excluded` from gate_rows(),
+    each selected row given `removal_args`, ["-C", ROOT, "worktree",
+    "remove", PATH] with ROOT the command directory and PATH the registry's
+    raw bytes (design D9); `completeness` and `apply_allowed` (false for every
+    report); `digest` (plan_digest()); `planning_probes`, the Git children
+    other than removals that this invocation ran to build it, the F + W + E of
+    the estimate (research.md R8); and `report`, the baseline report built from the same rows, which the
+    first bodies of confirm_removal(), apply_removals() and push_or_delete()
+    read until the apply and push lanes replace them. `omitted` stays
+    {count: 0, exactness: "exact"} until T075. Interim until T066 and T075
+    (lead ruling R-56 Q-17): an unstarted branch is selectable, and in mode
+    single another row's inspection-error makes the plan incomplete."""
+    plan = Plan(repo, run)
+    root = repo["root"]
+    evidence = plan.evidence = inspect_repository(root, run)
+    identity = evidence["identity"]
+    try:
+        toplevel = identity is not None and _realpath(os.fsencode(root)) == evidence["toplevel"]
+    except EvidenceError:
+        toplevel = False
+    if not toplevel or (identity["root"] is None and not evidence["errors"]):
+        raise Refused(f"Cannot inspect Git repository at {root}")
+    plan.repository = repository_object(identity)
+    refusal = evidence["merge_target_refusal"]
+    if refusal is not None:
+        if refusal.context is None:
+            refusal.context = {"repository": plan.repository}
+        raise refusal
+    target = evidence["merge_target"]
+    if target is not None:
+        plan.merge_target = {key: target[key] for key in MERGE_TARGET_KEYS}
+        plan.notes.extend(target.get("notes") or ())
+    plan.rows = sorted(worktree_rows(evidence, run), key=lambda row: (not row.main, row.raw_path))
+    plan.target_rows = []
+    if plan.mode == "single" and plan.action == "remove":
+        match_target(plan, run)
+    plan.selected, plan.excluded = gate_rows(plan.rows, plan, run)
+    command_dir = identity["root"] if identity["root"] is not None else os.fsencode(root)
+    for row in plan.selected:
+        row.removal_args = ["-C", command_dir, "worktree", "remove", row.raw_path]
+    codes = plan_completeness(plan)
+    plan.completeness = "incomplete" if codes else "complete"
+    plan.apply_allowed = plan.mode != "report" and not codes and not plan.refusals
+    plan.digest = plan_digest(plan)
+    plan.planning_probes = run.probes
+    plan.report = {"root": str(root), "target_branch": target and target["name"],
+                   "tracking_freshness": TRACKING_FRESHNESS, "worktrees": plan.rows}
     return plan
 # endregion plan
 
 # region gates
+# The ten gates of FR-020 (T050; design D10, D12 and D13; data-model.md,
+# "Gate"; lead rulings R-56 Q-6 and R-67 (a)). A row is selected only when it
+# passes every gate, and an excluded row's reason is its first failing gate:
+# 1 main-worktree, 2 unsupported-path-bytes, 3 registration-mismatch (region
+# index), 4 locked-worktree, 5 the classification when it is not
+# merged-removable, 6 not-requested, 7 unstarted-branch or reflog-unavailable
+# (region reflog), 8 deferred-target-cap, 9 contains-submodule and 10
+# hidden-local-state (region index). Gates 1 to 7 are per-row functions,
+# gate(row, plan, run) returning the reason or None, each free to set the row's
+# `errors`, set its class to inspection-error or set its unprobed marker; gate 8
+# takes the rows that passed gates 1 to 7 together; gates 9 and 10 run only for
+# the rows gate 8 takes. Every excluded row carries the reason its failing gate
+# returned, never null (R-67 (a)).
+
+
+def main_worktree_gate(row, plan, run):
+    """Gate 1: `main-worktree` for the main worktree, which is never removed."""
+    return "main-worktree" if row.main else None
+
+
+def path_bytes_gate(row, plan, run):
+    """Gate 2: `unsupported-path-bytes` for a path that is not valid UTF-8."""
+    return None if row["path_valid_utf8"] else "unsupported-path-bytes"
+
+
+def locked_gate(row, plan, run):
+    """Gate 4: `locked-worktree` for a row whose registry record is locked."""
+    return "locked-worktree" if row["locked"] else None
+
+
+def class_gate(row, plan, run):
+    """Gate 5: the row's classification when it is not `merged-removable`; a
+    row whose evidence was not established is excluded here as
+    `inspection-error`, and one whose registration was never read by its class
+    (lead ruling R-53 P-16)."""
+    classification = row["classification"]
+    return None if classification == "merged-removable" else classification
+
+
+def not_requested_gate(row, plan, run):
+    """Gate 6: `not-requested` in mode single for a row other than P
+    (plan.target), which has passed gates 1 to 5. Where P names no single row
+    (plan.target None), every such row is not requested, so nothing is
+    selected."""
+    return "not-requested" if plan.mode == "single" and row is not plan.target else None
+
+
+def row_gates():
+    """The per-row gates 1 to 7 in FR-020's order, one tuple of functions,
+    each gate(row, plan, run) returning its reason or None. The tuple is made
+    when called, so that the bodies T066 and T067 give the stubs of regions
+    reflog and index are the ones run."""
+    return (main_worktree_gate, path_bytes_gate, registration_gate, locked_gate, class_gate,
+            not_requested_gate, reflog_gate)
+
+
+def deferral_gate(candidates, plan):
+    """Gate 8, `deferred-target-cap` (T100 fills; D12, FR-032): candidates
+    are the rows that passed gates 1 to 7, in canonical order. Returns (taken,
+    deferred): taken, the first LIMITS["targets"] (16) of them, which go on to
+    the index gates (9 and 10); deferred, the rest, which gate_rows() excludes
+    as `deferred-target-cap` with no index probe. A row an index gate then
+    excludes keeps its place among the 16. It runs no child. This stub takes
+    every candidate and defers none."""
+    return list(candidates), []
+
+
+def first_failing_gate(row, gates, plan, run):
+    """The reason of the first of gates that row fails, or None."""
+    for gate in gates:
+        reason = gate(row, plan, run)
+        if reason is not None:
+            return reason
+    return None
+
+
+def gate_rows(rows, plan, run):
+    """The gates of FR-020 over rows, plan's rows in canonical order (data-model.md,
+    "Gate"): gates 1 to 7 per row (row_gates()), then gate 8 over the rows that
+    passed them (deferral_gate()), then gates 9 and 10 (index_gates()) for the
+    rows gate 8 took. Returns (selected, excluded): selected, the rows that
+    passed every gate; excluded, (row, reason) pairs, reason the first failing
+    gate's, never None (R-67 (a)); both by raw path bytes."""
+    excluded, candidates = [], []
+    for row in rows:
+        reason = first_failing_gate(row, row_gates(), plan, run)
+        if reason is None:
+            candidates.append(row)
+        else:
+            excluded.append((row, reason))
+    taken, deferred = deferral_gate(candidates, plan)
+    excluded += [(row, "deferred-target-cap") for row in deferred]
+    selected = []
+    for row in taken:
+        reason = index_gates(row, plan, run)
+        if reason is None:
+            selected.append(row)
+        else:
+            excluded.append((row, reason))
+    selected.sort(key=lambda row: row.raw_path)
+    excluded.sort(key=lambda item: item[0].raw_path)
+    return selected, excluded
+
+
+def next_step(reason):
+    """D18's next step for an exclusion reason: NEXT_STEPS's, else the class's
+    recommendation (RECOMMENDATIONS); None for a reason with neither."""
+    return NEXT_STEPS.get(reason) or RECOMMENDATIONS.get(reason)
+
+
+def target_refusal(row, reason):
+    """The `target-excluded` refusal of P's row, excluded by reason (FR-013;
+    design D18; lead rulings R-58 (a) and R-59 D9), its message in the
+    baseline's precedence (project:715-718 at 961c405): the current worktree's
+    when P is current, else the class's when P's class is not
+    merged-removable, which keeps its wording and has no next step, else the
+    gate's, `Worktree is excluded: REASON; NEXT STEP`."""
+    if row.get("current"):
+        message = TEXT["target_excluded_current"]
+    elif row["classification"] != "merged-removable":
+        message = TEXT["target_excluded_class"].format(CLASS=row["classification"])
+    else:
+        message = TEXT["target_excluded_gate"].format(REASON=reason, NEXT_STEP=next_step(reason) or "")
+    return Refused(message, code="target-excluded", path=row.raw_path, reason=reason)
 # endregion gates
 
 # region reflog
+def reflog_gate(row, plan, run):
+    """Gate 7, `unstarted-branch` or `reflog-unavailable` (T066 fills; D10,
+    FR-021, FR-022; lead rulings R-56 Q-6 and R-67 (a)).
+
+    Contract: reflog_gate(row, plan, run) -> reason or None, for a row that
+    passed gates 1 to 6, in every mode. It reads the common directory from the
+    plan (plan.evidence["identity"]["common_dir"]) and the branch and head from
+    the row, so that it can mark the row, and wraps
+    read_reflog(common_dir, branch, head, run): one fs_call() read of
+    logs/refs/heads/<branch> under the common directory, at most 64 KiB, never
+    a Git child. It returns `unstarted-branch` when an anchor survives with no
+    movement after it, its new object the head; `reflog-unavailable` where the
+    reflog cannot decide it (missing, empty, read to its 64 KiB bound, entries
+    that cannot decide, or a last entry whose new object is not the head);
+    `inspection-error`, after putting an `os-error` in row["errors"] and
+    setting row["classification"] to inspection-error, for any other read
+    error; and None when a movement survives. A read not finished within the
+    filesystem budget returns `reflog-unavailable` AND sets row.unprobed, the
+    marker's only setter, which plan_completeness() reads as
+    inspection-incomplete. This stub passes every row."""
+    return None
 # endregion reflog
 
 # region index
+def registration_gate(row, plan, run):
+    """Gate 3, `registration-mismatch` (T067 fills; D7, FR-055; lead ruling
+    R-53 P-16).
+
+    Contract: registration_gate(row, plan, run) -> "registration-mismatch" or
+    None. It fails only when row.registered is False, the two-way
+    registration read and found to disagree, a path two registry entries share
+    included; a row whose registration was never read (registered None, a
+    present: false row among them) passes, and gate 5 excludes it by its class.
+    It runs no child and reads no file. This stub passes every row."""
+    return None
+
+
+def index_gates(row, plan, run):
+    """Gates 9 and 10, `contains-submodule` and `hidden-local-state` (T067
+    fills; D12, FR-023; lead ruling R-56 Q-6).
+
+    Contract: index_gates(row, plan, run) -> reason or None, for a row that
+    passed gates 1 to 8 only. Through the per-target helpers T067 adds,
+    modules_check(common_dir, admin_id, run) and hidden_state_probe(path, run),
+    each (result, row_error): `contains-submodule` for a `modules` entry in the
+    row's admin directory or a gitlink in its own index; `hidden-local-state`
+    for an index entry flagged assume-unchanged or skip-worktree; and
+    `inspection-error`, after putting the check's row error in row["errors"]
+    and setting row["classification"] to inspection-error, for a check that
+    failed, timed out or met the deadline, since a null flag never passes.
+    This stub passes every row."""
+    return None
 # endregion index
 
 # region preview
@@ -3208,14 +3725,119 @@ def print_plan(plan, run):
     keeping their `Cleanup action:` output. Under --json the plan envelope goes
     to standard output through write_document() on the call where the run
     stops before the apply phase, so one document is written. The pipeline
-    writes `REFUSED:` itself. First body: the baseline report of a run
-    without --apply (print_clean_report(), project:674-676 at 961c405); a run
-    with --apply printed none."""
-    if plan.printed:
+    writes `REFUSED:` itself.
+
+    What prints (T052; lead rulings R-56 Q-11, R-57 H1, R-59 D2 and D8, R-62
+    (b) and R-67 (a)): a report, the baseline layout with each null shown as
+    `unknown` (report_lines()); an --all-safe plan, and a single-mode plan for
+    --action remove, D18's preview layout (preview_lines()); push and
+    delete-branch, nothing. `Merge target: NAME (SOURCE)` prints in every
+    mode, and every path and branch goes through human_path(). This replaces
+    print_clean_report() for `clean`."""
+    if plan.action in ("push", "delete-branch"):
         return
-    plan.printed = True
-    if not getattr(run.args, "apply", False):
-        print_clean_report(plan.report, getattr(run.args, "json", False))
+    json_output, apply = getattr(run.args, "json", False), getattr(run.args, "apply", False)
+    if not plan.printed:
+        plan.printed = True
+        if apply or not json_output:
+            for line in plan_lines(plan):
+                say(run, line)
+    if json_output and run.status is not None:
+        write_document(plan_document(plan))
+
+
+# The order of the Excluded groups (contracts/project-clean.md, "Human
+# output"): the gates in FR-020's order, the classes of gate 5 in the ladder's
+# order (RECOMMENDATIONS's), then the later gates; a reason not listed follows.
+EXCLUDED_GROUP_ORDER = ("main-worktree", "unsupported-path-bytes", "registration-mismatch", "locked-worktree",
+                        *RECOMMENDATIONS, "not-requested", "unstarted-branch", "reflog-unavailable",
+                        "deferred-target-cap", "contains-submodule", "hidden-local-state")
+
+
+def _shown(value):
+    """A report value as the baseline prints it, null as `unknown`."""
+    return "unknown" if value is None else str(value)
+
+
+def plan_lines(plan):
+    """The human plan, one string per line: the baseline header, `Cleanup plan
+    for ROOT`, then `Merge target: NAME (SOURCE)` (`unknown` while none is
+    established) and `Freshness:`, then the report's rows or the preview."""
+    identity = plan.evidence["identity"] if plan.evidence else None
+    root = identity["root"] if identity and identity["root"] is not None else os.fsencode(plan.root)
+    target = plan.merge_target
+    lines = [f"Cleanup plan for {human_path(root)}",
+             TEXT["merge_target_line"].format(NAME=human_path(target["name"]) if target else "unknown",
+                                              SOURCE=target["source"] if target else "unknown"),
+             f"Freshness: {TRACKING_FRESHNESS}"]
+    return lines + (report_lines(plan) if plan.mode == "report" else preview_lines(plan))
+
+
+def report_lines(plan):
+    """The baseline report's rows (project:631-637 at 961c405), in canonical
+    order: `CLASS: PATH [BRANCH] dirty=D; upstream=U; DELTA; merged=M`, then
+    the recommendation; a null dirty, merge answer or count shown as
+    `unknown`, and no upstream configured as `none`, as the baseline prints it.
+    T101 adds the D14 lines."""
+    lines = []
+    for row in plan.rows:
+        upstream = human_path(row["upstream"]) if row.get("upstream") else "none"
+        ahead, behind = row.get("ahead"), row.get("behind")
+        delta = "unknown" if ahead is None or behind is None else f"ahead={ahead}, behind={behind}"
+        lines.append(f"{row['classification'].upper()}: {human_path(row.raw_path)} [{human_path(row['branch'])}] "
+                     f"dirty={_shown(row.get('dirty'))}; upstream={upstream}; {delta}; "
+                     f"merged={_shown(row.get('merged_into_target'))}")
+        lines.append(f"  {row['recommendation']}")
+    return lines
+
+
+def ignored_suffix(row):
+    """D18's `: N ignored; first: SAMPLE` of an ignored-local-files row,
+    `at least N` when the probe stopped at its bound; empty with no sample."""
+    samples = row.status["ignored_samples"] if row.status else [
+        os.fsencode(sample["path"]) for sample in row.get("ignored_samples") or ()]
+    if not samples or row.get("ignored_files") is None:
+        return ""
+    key = "ignored_suffix_truncated" if row.get("ignored_files_truncated") else "ignored_suffix"
+    return TEXT[key].format(N=row["ignored_files"], SAMPLE=human_path(samples[0]))
+
+
+def preview_lines(plan):
+    """D18's preview layout (design.md D18; contracts/project-clean.md, "Human
+    output"): `Selected (N):` and one `  remove PATH [BRANCH]` per selected row;
+    `Excluded (M):` and, per reason in EXCLUDED_GROUP_ORDER, `  REASON (K):
+    NEXT STEP` (next_step()) over one `    PATH [BRANCH]` per row, an
+    ignored-local-files row adding its count and first sample; `No eligible
+    worktrees` when a complete --all-safe plan that carries no refusal selects
+    nothing; and the residual-window line when anything is selected. Rows go
+    in raw path byte order. In mode single, P is the one selected row and the
+    other eligible rows form the `not-requested` group."""
+    lines = []
+    selected = plan.selected or []
+    if selected:
+        lines.append(TEXT["selected_heading"].format(N=len(selected)))
+        lines += [TEXT["selected_row"].format(PATH=human_path(row.raw_path), BRANCH=human_path(row["branch"]))
+                  for row in selected]
+    if plan.excluded:
+        groups = {}
+        for row, reason in plan.excluded:
+            groups.setdefault(reason, []).append(row)
+        order = [reason for reason in EXCLUDED_GROUP_ORDER if reason in groups]
+        order += [reason for reason in groups if reason not in EXCLUDED_GROUP_ORDER]
+        lines.append(TEXT["excluded_heading"].format(M=len(plan.excluded)))
+        for reason in order:
+            rows = groups[reason]
+            lines.append(TEXT["excluded_group"].format(REASON=reason, K=len(rows),
+                                                       NEXT_STEP=next_step(reason) or ""))
+            for row in rows:
+                suffix = ignored_suffix(row) if reason == "ignored-local-files" else ""
+                lines.append(TEXT["excluded_row"].format(PATH=human_path(row.raw_path),
+                                                         BRANCH=human_path(row["branch"])) + suffix)
+    if plan.mode == "all-safe" and not selected and plan.completeness == "complete" and not plan.refusals:
+        lines.append(TEXT["empty_line"])
+    if selected:
+        lines.append(TEXT["residual_window_line"])
+    return lines
 # endregion preview
 
 # region apply

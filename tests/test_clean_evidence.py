@@ -983,7 +983,7 @@ class EvidenceTests(clean_support.CleanCase):
         steering = {"GIT_DIR": str(other / ".git"), "GIT_WORK_TREE": str(other),
                     "GIT_INDEX_FILE": str(other / ".git" / "index")}
         steered, records = self.report(root, env=dict(self.env, **steering))
-        self.assertEqual(steered.document, plain.document)
+        self.assertEqual({**steered.document, "observed_at": None}, {**plain.document, "observed_at": None})
         self.assertEqual([by_name(steered.document)[name]["classification"]
                           for name in ("repo", merged.name, dirty.name)],
                          ["protected-default", "merged-removable", "dirty"])
