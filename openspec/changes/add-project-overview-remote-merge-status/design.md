@@ -26,10 +26,9 @@ lead's C-28 and C-29 on two points found in applying them; its edits to
 Sequencing). Round C6 applies Codex's finding on `67e43ae` (C-30), the
 bounded inspection of a remote's URL, with the lead's C-31 to C-33 on three
 points found in applying it, and lane openRepoProject-3's folded read of
-`e198548..67e43ae` (C-34); this design describes
-`specs/project-overview/spec.md` as round C6 leaves it, written but held for
-lane openRepoProject-4 and not committed, and until it agrees the committed
-file is the one it agreed in round C5 (`6fe8a5e`).
+`e198548..67e43ae` (C-34); its edits to `specs/project-overview/spec.md`,
+agreed by lane openRepoProject-4 on 2026-10-20, are committed (`233df0b`;
+`proposal.md`, Dependencies and Sequencing).
 
 Citations follow `proposal.md`: the packet at `da33d92`; APO, CAS, PRS and
 `project:N` at main `961c405`, which main `e9d6711` holds unchanged for them
