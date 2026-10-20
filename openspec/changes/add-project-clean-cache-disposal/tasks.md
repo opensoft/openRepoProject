@@ -10,7 +10,7 @@ duplicate them, and nothing here is an implementation step.
 
 - [x] 1.1 Proposal written: `proposal.md` adopts the packet's cache-disposal
   contract (`BA:1314-1337`) under the lane's rulings L-1 to L-17 and B-1 to
-  B-24, names three departures from B-6 as first written, which B-11 accepted,
+  B-28, names three departures from B-6 as first written, which B-11 accepted,
   and one from B's list of modified requirements (CD-1 to CD-4) with the rest
   of its own decisions (CD-5 to CD-18), and puts four Open Questions before
   Brett Heap; verified by its Capabilities section accounting for every
@@ -40,7 +40,8 @@ duplicate them, and nothing here is an implementation step.
 - [x] 1.4 Spec deltas and design written: `specs/project-clean/spec.md`
   modifies five requirements and adds one (55 scenarios: 5, 14, 11, 6, 8 and
   11), and `specs/project-clean-review-safety/spec.md` modifies three and adds
-  one (27 scenarios: 6, 11, 4 and 6), every scenario of each modified
+  one (28 scenarios: 6, 11, 4 and 7, B-26's among the 7), every scenario of
+  each modified
   requirement's source text kept by name, in order and byte-exact except four,
   whose ignored files are now named as not Python bytecode caches:
   "Ignored-file bound", "A merged worktree has ignored local files", and,
@@ -52,16 +53,17 @@ duplicate them, and nothing here is an implementation step.
   and committed as `9f30fb9` (2.2); `design.md` holds D1 to D14 and
   `clarifications.md` the
   NOTED S-4; verified by `grep -c '^#### Scenario'` on each delta, by a script
-  run after the council round that compares every scenario of each of the
-  nine MODIFIED blocks with its source text, and by `design.md`'s headings.
+  run after the council round and again after round B3 that compares every
+  scenario of each of the nine MODIFIED blocks with its source text, and by
+  `design.md`'s headings.
 - [x] 1.5 Validation passes: `/usr/bin/openspec validate
   add-project-clean-cache-disposal --strict` reports the change valid,
   `/usr/bin/openspec validate --all --strict` passes every item, and
   `/usr/bin/openspec status --change add-project-clean-cache-disposal --json`
   shows every artifact done; verified by running the three commands on this
   branch after 1.4, after the alignment fix round, after the council round
-  (the last with the B-22 `project-overview` edit not yet committed) and again
-  after lane 4's agreement and that edit's commit. The INFO
+  (the last with the B-22 `project-overview` edit not yet committed), again
+  after lane 4's agreement and that edit's commit, and after round B3. The INFO
   lines, that the archive would refuse a delta
   whose MODIFIED requirement change 1 or change 2 adds until that change is
   archived, are the expected state for blocks written on sister changes.
@@ -89,28 +91,36 @@ duplicate them, and nothing here is an implementation step.
   the cleanup classifier and merge target" (APO/ov:358) whole with two
   sentences appended to its equality clause, lane 4's precision in its carried
   "Every protected classifier" and one added scenario, and the delta is then
-  committed on this branch; verified by lane 4's agreement, cited here, and by
-  the commits' shas. Lane 4 agreed the first diff on 2026-10-19 (lane
-  openRepoProject-5's log, NOTED of 2026-10-19T22:11:58Z): "#24, the
-  classifier block: YES, commit it. It is additions only, my two sentences
-  are verbatim, and the new scenario pins the pair and the no-enumeration
-  wrapper." That delta was committed as `b4d3e12`. The council's B-22 reopened
-  this task: its rewording of the two sentences, the third worktree in the
-  new scenario's fixture and lane 4's precision in "Every protected
+  committed on this branch; verified by lane 4's agreement, cited here from
+  the lane register's logs (`lanes/log/openRepoProject-4.md` and
+  `lanes/log/openRepoProject-5.md`, read on the register's `origin/main` at
+  `384f71e3c`), and by the commits' shas. Lane 4 agreed the first diff on
+  2026-10-19: lane 4's log, line 32 (NOTED of 2026-10-19T22:02:09Z), records
+  "Lane 5 sent both held overview diffs: #24's classifier block YES", and lane
+  openRepoProject-5's log, line 27 (NOTED of 2026-10-19T22:11:58Z), "lane 4
+  agreed #24's overview block as sent". That delta was committed as
+  `b4d3e12`, which lane 4's log, line 37 (NOTED of 2026-10-19T22:24:43Z),
+  records as "cmp-identical to the reviewed held copy". The council's B-22
+  reopened this task: its rewording of the two sentences, the third worktree
+  in the new scenario's fixture and lane 4's precision in "Every protected
   classifier" were written in the worktree and held uncommitted until lane 4
-  agreed their diff. Lane 4 agreed it on 2026-10-19, by cross-session message
-  to lane openRepoProject-5, recorded in lane openRepoProject-5's log: "yes,
-  lane 4 agrees to all three edits in held-B2 against b4d3e12, as written".
-  Its one optional point, that "because its cache enumeration proved" could
-  read "because clean's cache enumeration proved", is applied in the delta as
-  committed. That delta was committed as `9f30fb9`. Both agreements are cited
-  by the lane's log records in place of a link, since lane 4 gave them by lane
-  message and not on the pull request (lane 3's LOW 16).
+  agreed their diff. Lane 4's log, line 47 (NOTED of 2026-10-19T23:46:27Z),
+  records "Agreed lane 5's held-B2 diff to #27 (opensoft/openRepoProject#24)
+  against lane 4's b4d3e12 classifier block, all three edits as written", and
+  "One optional readability note was given ("its" to "clean's")." That point
+  is applied in the delta as committed, `9f30fb9`, which lane 4's log, line 49
+  (NOTED of 2026-10-19T23:56:15Z), records: "its project-overview/spec.md is
+  the held-B2 file plus lane 4's readability point (line 32, "because clean's
+  cache enumeration") and nothing else." Both agreements are cited by the lane
+  logs in place of a link, since lane 4 gave them by lane message and not on
+  the pull request (lane 3's LOW 16 and its re-read LOW 3).
 - [ ] 2.3 Enumeration, walk and stage measured (Open Questions, the caps;
   S-4): the cache enumeration's child, the plan-time walk with its access
   checks, and the cache stage timed warm and cold by change 1's protocol (its
-  design D5) on a Linux filesystem path, at 512 entries per worktree and 4,096
-  per run, through feature 004's `fs_call`, idle and at the workstation's
+  design D5) on a Linux filesystem path, the walk at 16 rows of 512 entries
+  with the invocation's totals reached (8,192 walked, 4,096 counted; B-25) and
+  the stage at 512 entries per worktree and 4,096 per run, through feature
+  004's `fs_call`, idle and at the workstation's
   usual load, and the fit of `design.md` D4 reapplied; and the enumeration's
   argument vector checked on Git 2.36.6 by change 1's D17 method (the `! `
   record, the trailing `/` of a directory record, the untracked-files refusal

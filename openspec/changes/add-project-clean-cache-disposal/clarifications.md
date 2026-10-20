@@ -41,3 +41,10 @@ Git 2.36 difference fails closed to `cache-unverified` or a refusal.
   workflow on the realization PR's base, feature 004's `git-floor` job
   included.
 - D14: the new tests' names begin `test_clean_`, so that `git-floor` runs them.
+
+**Restated in round B3 (B-25, 2026-10-20):** the walk's count above covered
+only the 4,096 entries the invocation's totals admit. A row the totals reject
+was still walked, so the walk's bound is 16 x 512 = 8,192 entries, about
+9,000 calls, about 2 s through one worker and about 5.6 s at a thread per call
+(Codex's P2 at design.md:294 on `90d18ee`). D4 restates the fit with it, and
+task 2.3 measures the walk at 16 rows of 512 entries with the totals reached.
