@@ -89,7 +89,7 @@ order the change already sets.
 
 **Context**: Feature 004 adds a CI job that builds Git 2.36 and runs the
 `clean`, `status` and `doctor` tests with it first on PATH (feature 004
-FR-067; change 1's design D17). Its task T003, ticked at `fe91f2c`, put that
+FR-067; change 1's design D17). Its task T003, ticked at `b0243e5`, put that
 job, `git-floor`, in its branch's workflow beside every job of the `test`
 matrix, selecting `-k test_clean_ -k test_status_ -k test_doctor_`; it is not
 on `main`. The overview refuses a Git older than 2.36 and so claims to work
@@ -120,7 +120,7 @@ which covers `project new` (feature 002) and says nothing of the overview;
 change 2's Impact names no `AGENTS.md` change. An agent reading `project
 overview --json` could run a suggested `project clean <root> --all-safe`
 with `--apply --yes` on its own. Feature 004's task T123, open at
-`fe91f2c`, adds to `AGENTS.md` a short section, "Cleaning up worktrees for a
+`b0243e5`, adds to `AGENTS.md` a short section, "Cleaning up worktrees for a
 person", which says never to answer the removal question, or pass `--yes`,
 on a person's behalf unless they asked for that run; its tasks list that
 edit among its departures from change 1, stated in its feature PR body for
@@ -194,7 +194,8 @@ errors?
 gives a consumer one fixed key to read, and drops two fields that would
 hold nothing on the other `deadline-exceeded` errors. Its last clause, for
 a row-level `scan-limit` error, is a proposal: an answer may take A with
-"carries neither" there instead.
+"carries neither" there instead, a further amendment, since POD:646-648 and
+POD:222-229 give such an error both fields.
 
 | Option | Description |
 |--------|-------------|
@@ -226,7 +227,7 @@ that could not be established.
 
 | Option | Description |
 |--------|-------------|
-| A | Amend change 2: one scan error records it (`os-error` or `probe-timeout`, with feature 004's fixed text and OPERATION `realpath`, its `path` the `PWD` environment value when that is set and absolute, else omitted, and first among the scan errors), every `current` is null, and each row the ladder would classify `merged-removable` or `merged-current` is `inspection-error` instead, so `inspection-incomplete` withholds `--all-safe` for its repository. |
+| A | Amend change 2: one scan error records it (`os-error` or `probe-timeout`, with feature 004's fixed text and OPERATION `realpath`, its `path` the `PWD` environment value when that is set and absolute, else omitted, and first among the scan errors), every `current` is null, and each row the ladder would classify `merged-removable` or `merged-current` is `inspection-error` instead, so `inspection-incomplete` withholds `--all-safe` for its repository. That `path` is taken raw, absolute as the environment gives it and unresolved, a further exception to DI:842-843's rule that paths are canonical, which already excepts `ignored_samples` and an absent default root: three exceptions with this one, four with Q13's option A as well. |
 | B | As A, but those rows keep a null classification, and their repository's `--all-safe` is withheld under a new gate code added to the gate table (additive within schema 1). |
 | C | Amend change 2's exit rule: the run refuses with exit 2 and `os-error` before listing any root, as for a Git refusal. |
 
@@ -266,7 +267,7 @@ and a validity flag can still follow later, additively within schema 1.
 | A | Amend change 2: every such string follows [P]'s path rule, decoded as a path is, each undecodable byte written `\xHH`, each Cc, Cf, Zl or Zp code point escaped by JSON and written `\uXXXX` in human output; no new field. |
 | B | As A, plus a validity flag beside each such field (`name_valid_utf8`, `branch_valid_utf8` and the like), additive within schema 1. |
 | C | Build as written and leave the rule to the plan. |
-| D | Amend change 2 so that every row and scan error's message is a fixed text for its code, naming no path, the path going in `path`: feature 004's for `os-error`, `probe-failed` and `probe-timeout` (its contract, lead ruling R-45); `OPERATION stopped at the invocation deadline` for `deadline-exceeded`; and texts this amendment fixes for `manifest-invalid` (naming the cause, the size bound or the missing library, never the reader's own text), `refused`, `undecodable-output`, `internal-error` (the exception's class only), `scan-limit` and `root-unreadable`. The amendment edits POD:337-338 to "with a message of at most 200 characters, the fixed text of its code, which names no path", and design D1 (design.md:99-101) so that a child's standard error is "drained and capped as [E] requires (CMD:175-177), and never shown"; FR-022 is folded to match after it is ratified. No text from Git's standard error then reaches a message or the `Incomplete:` line, and names, branch names, admin ids and every other string the report takes from the filesystem, a manifest or Git follow [P]'s path rule as in A. Git's own reason is then not shown: the person re-runs the Git command to see it. |
+| D | Amend change 2 so that every row and scan error's message is a fixed text for its code, naming no path, the path going in `path`: feature 004's for `os-error`, `probe-failed` and `probe-timeout` (its contract, lead ruling R-45); `OPERATION stopped at the invocation deadline` for `deadline-exceeded`, the overview's own term, where feature 004's contract reads `OPERATION stopped at the work deadline` (`contracts/project-clean.md:303` at `b0243e5`); and texts this amendment fixes for `manifest-invalid` (naming the cause, the size bound or the missing library, never the reader's own text), `refused`, `undecodable-output`, `internal-error` (the exception's class only), `scan-limit` and `root-unreadable`. The amendment edits POD:337-338 to "with a message of at most 200 characters, the fixed text of its code, which names no path"; design D1 (design.md:99-101) so that a child's standard error is "drained and capped as [E] requires (CMD:175-177), and never shown"; and clarifications N1 (clarifications.md:35-36 and :46-47), whose "first 200 characters kept" goes the same way; all three follow the packet's DI:544-545 ("for a failed probe, the first line of Git's standard error"), which this amendment departs from; FR-022 is folded to match after it is ratified. No text from Git's standard error then reaches a message or the `Incomplete:` line, and names, branch names, admin ids and every other string the report takes from the filesystem, a manifest or Git follow [P]'s path rule as in A. Git's own reason is then not shown: the person re-runs the Git command to see it. |
 
 ---
 
@@ -300,7 +301,7 @@ proved.
 | Option | Description |
 |--------|-------------|
 | A | Accept every one as a recorded residual beside EC-006 (spec EC-022), and amend change 2's read-only wording to claim only what the pins and the scrub prove. |
-| B | As A for filters and the configuration files; and amend change 1 to set `GIT_TRACE2`, `GIT_TRACE2_EVENT` and `GIT_TRACE2_PERF` to `0` on every Git child, which overrides `trace2.*` targets in the system and global configuration, and to add `GIT_TRACE` and the `GIT_TRACE_*` names Git 2.36 to 2.43 reads, each listed by name, to [E]'s scrub, which `clean`, `status` and `doctor` then share. The change-1 amendment rides in lane openRepoProject-2's draft PR #19, which already edits [E]'s Environment paragraph, and is ratified before feature 004 merges, so that feature 004 builds the wider scrub (lane openRepoProject-2); change 2's "seventeen names" becomes a citation of [E]'s list. |
+| B | As A for filters and the configuration files; and amend change 1 to set `GIT_TRACE2`, `GIT_TRACE2_EVENT` and `GIT_TRACE2_PERF` to `0` on every Git child, which overrides `trace2.*` targets in the system and global configuration, and to add `GIT_TRACE` and the `GIT_TRACE_*` names Git 2.36 to 2.43 reads, each listed by name, to [E]'s scrub, which `clean`, `status` and `doctor` then share. The change-1 amendment is proposed to ride in lane openRepoProject-2's draft PR #19, which already edits [E]'s Environment paragraph (not yet agreed by lane openRepoProject-2; PR #19 holds no trace pin at `c462d87`); if feature 004 merges first it builds the narrower scrub and the wider one follows as a change-1 amendment; change 2's "seventeen names" becomes a citation of [E]'s list. |
 | C | Amend change 1 to run every Git child with no global or system configuration (`GIT_CONFIG_GLOBAL=/dev/null`, `GIT_CONFIG_NOSYSTEM=1`), which also drops user settings that change 1's scenarios read and changes `clean`'s results. |
 
 ---
@@ -378,18 +379,28 @@ with no traceback, a refusal giving `refused`, an operating-system error
 proposal, Impact; spec FR-039). A failed write is an operating-system
 error, so as written its `os-error` object is due under `--json` on the
 very standard output that failed, since every exit 2 but an argument error
-prints one (POD:675-679; SC-009); an encoding failure is `internal-error`.
-For `project clean`, lane openRepoProject-2's ruling R-55 (2026-10-20) now
-decides a failed write: the first one points that stream at `/dev/null`
-and records the error on the run, so there is no second traceback and no
-exit 120; before the apply phase the error is `internal-error`, exit 2,
-nothing mutated, unless a recorded signal outranks it (130, 143 or 129,
-with `Cancelled.`); after the apply phase begins, writes are best-effort
-and the exit table decides; and a failed advisory write (`Cancelled.`,
-`REFUSED:`) never changes the exit status (feature 004's research.md R4
-and T047 at `b0243e5`). Feature 004 writes each `clean --json` document
-with `ensure_ascii=True` (its T035, lead ruling R-38), so its JSON is ASCII
-whatever the locale; its human output takes no position on the locale.
+prints one (POD:675-679; DI:1086-1089; SC-009); an encoding failure is
+`internal-error`. For `project clean`, lane openRepoProject-2's ruling R-55
+(2026-10-20) now decides a failed write: the first one points that stream
+at `/dev/null` and records the error on the run, so there is no second
+traceback and no exit 120; before the apply phase the error is
+`internal-error`, exit 2, nothing mutated, unless a recorded signal
+outranks it (130, 143 or 129, with `Cancelled.`); after the apply phase
+begins, writes are best-effort and the exit table decides; and a failed
+advisory write (`Cancelled.`, `REFUSED:`) never changes the exit status
+(feature 004's research.md R4 and T047 at `b0243e5`). Whether R-55's exit 2
+holds for a `project clean` preview or report once its plan is built is
+lane openRepoProject-2's LQ-7, pending with Brett Heap: change 1's
+`project-clean` delta,
+`openspec/changes/add-project-clean-all-safe/specs/project-clean/spec.md`,
+reads both ways, refusing an unexpected exception before the apply phase
+with `internal-error` and exit status 2 (`:940-941`), and letting a preview
+or report exit 2 only for a refusal raised before a plan is built
+(`:958-960`). R-55's reading stands until he rules, and Q12's options set
+the overview's own exit, so they do not wait on LQ-7. Feature 004 writes
+each `clean --json` document with `ensure_ascii=True` (its T035, lead
+ruling R-38), so its JSON is ASCII whatever the locale; its human output
+takes no position on the locale.
 
 **Question**: How should a failed write to standard output and the output
 encoding be handled?
@@ -401,7 +412,7 @@ nothing more on the failed stream and no traceback.
 
 | Option | Description |
 |--------|-------------|
-| A | Amend change 2: the whole document or report is rendered before its first byte is written, as UTF-8 whatever the locale, the JSON document with ASCII escapes as feature 004 writes its own (its R-38), every interpolated string already escaped by [P]'s rule; a failed write to standard output ends the run with exit 2, no traceback and no retry; nothing more goes to standard output, and one line goes to standard error on a best-effort basis; this is, besides an argument error, the one exit 2 under `--json` that prints no error object, carved out of POD:675-679 (FR-039 and SC-009 folded after), and with no error object there is no code to print, so R-55's `internal-error` is not kept; every child is already reaped or abandoned. A recorded signal decides the status, also over the exit 2 of a failed write. This matches lane openRepoProject-2's ruling R-55 for feature 004's phase before apply: the failed stream gets nothing more, the error is recorded on the run, and a recorded signal outranks it. Every other exception outside the collector ends as FR-039 maps it. |
+| A | Amend change 2: the whole document or report is rendered before its first byte is written, as UTF-8 whatever the locale, the JSON document with ASCII escapes as feature 004 writes its own (its R-38), every interpolated string already escaped by [P]'s rule; a failed write to standard output ends the run with exit 2, no traceback and no retry; nothing more goes to standard output, and one line goes to standard error on a best-effort basis; this is, besides an argument error, the one exit 2 under `--json` that prints no error object, carved out of POD:675-679 and the packet's DI:1086-1089 (FR-039 and SC-009 folded after), and with no error object there is no code to print, so R-55's `internal-error` is not kept; every child is already reaped or abandoned. A recorded signal decides the status, also over the exit 2 of a failed write. This matches lane openRepoProject-2's ruling R-55 for feature 004's phase before apply: the failed stream gets nothing more, the error is recorded on the run, and a recorded signal outranks it. Every other exception outside the collector ends as FR-039 maps it. |
 | B | As A for the failed write and the JSON document, but human output follows the locale's encoding, writing what it cannot encode as `\uXXXX`. |
 | C | Build as written: a failed write is an operating-system error raised outside the collector, so it is `os-error` with exit 2, its error object due under `--json` on the very standard output that failed; an encoding failure is `internal-error` with exit 2; and the plan decides rendering and encoding. |
 
@@ -427,7 +438,7 @@ rather than hiding one.
 
 | Option | Description |
 |--------|-------------|
-| A | Amend change 2: its `path` is the given path made absolute (expanded, and joined to the working directory when relative) but not resolved: absolute, as DI:842-843 has every path, and a third exception to its rule that paths are canonical; it sorts by those bytes among the canonical paths, is never deduplicated, and counts toward the 32-root cap, a root past the cap being `omitted` whether or not its canonicalisation was cut. |
+| A | Amend change 2: its `path` is the given path made absolute (expanded, and joined to the working directory when relative) but not resolved: absolute, as DI:842-843 has every path, and a further exception to its rule that paths are canonical, which already excepts `ignored_samples` and an absent default root: three exceptions with this one, four with Q7's option A as well; it sorts by those bytes among the canonical paths, is never deduplicated, and counts toward the 32-root cap, a root past the cap being `omitted` whether or not its canonicalisation was cut. |
 | B | As A, but it sorts after every canonical root and does not count toward the cap. |
 | C | Leave it to the plan, fixed once and recorded in the feature's traceability record. |
 
@@ -453,7 +464,7 @@ an error finding, and exit 1 on every run. Separately, a candidate whose
 beside its worktrees) fails its identity probe as written, since the probe
 asks for a toplevel, so the repository appears only as a `probe-failed`
 error row with none of its worktrees (spec EC-030, C-54). Feature 004 at
-`5a02c1a` reads a bare first record the same way for its own subcommands:
+`b0243e5` reads a bare first record the same way for its own subcommands:
 its `main_worktree()` returns no main worktree, with its cause, and never
 raises, so `root` is null and rows 4 to 7 run in the common directory (its
 T031, T107 and FR-055; analyze H4, lead ruling R-42); `clean` alone refuses
@@ -487,27 +498,28 @@ run shows the need.
 
 **Context**: On SIGINT, SIGTERM or SIGHUP the overview prints no result
 document and exits with that signal's status, which takes precedence over 1
-(POD:776-780; spec FR-044), and on exit 0 or 1 it prints the full result
-(POD:767). The change's scenarios send the signal during collection
-(POD:792-799), and design D1 handles signals around the collection loop,
-while rendering follows that loop (design D6). A signal that arrives after
-the first byte of the result reaches standard output, and before the last,
-cannot meet both rules: the bytes written cannot be withdrawn, and exiting 0
-or 1 would ignore the signal. Feature 004 decides this moment for `project
-clean` at `5a02c1a`: its record-only handlers stay installed "from the
-argument checks to the last write", so a signal recorded while a preview or
-report is being written does not stop the write, and the slot, read once
-more before the run exits, gives `Cancelled.` and 130, 143 or 129 (its
-research.md R4, Decision; data-model.md, the transition from `reported`).
-Its signal slot stores the first signal, which decides that status, and its
-driver raises `Interrupted` from it only in phase `planning` or on a second
-SIGINT in phase `reconciling` (lead ruling R-44). Lane openRepoProject-2's
-ruling R-55 (2026-10-20) has since decided the reader too, so that feature
-004's rule is now complete for its own report: a reader that closes the
-pipe makes the first failed write point that stream at `/dev/null`, a
-recorded signal outranking the error (Q12); and a stalled reader works as
-designed, the residual recorded in its research.md R4: under a handler that
-only records, Python resumes a write blocked on a stalled reader once the
+(POD:776-780 and the packet's DI:1094-1096; spec FR-044), and on exit 0 or
+1 it prints the full result (POD:767). The change's scenarios send the
+signal during collection (POD:792-799), and design D1 handles signals
+around the collection loop, while rendering follows that loop (design D6).
+A signal that arrives after the first byte of the result reaches standard
+output, and before the last, cannot meet both rules: the bytes written
+cannot be withdrawn, and exiting 0 or 1 would ignore the signal. Feature
+004 decides this moment for `project clean` at `b0243e5`: its record-only
+handlers stay installed "from the argument checks to the last write", so a
+signal recorded while a preview or report is being written does not stop
+the write, and the slot, read once more before the run exits, gives
+`Cancelled.` and 130, 143 or 129 (its research.md R4, Decision;
+data-model.md, the transition from `reported`). Its signal slot stores the
+first signal, which decides that status, and its driver raises
+`Interrupted` from it only in phase `planning` or on a second SIGINT in
+phase `reconciling` (lead ruling R-44). Lane openRepoProject-2's ruling
+R-55 (2026-10-20) has since decided the reader too, so that feature 004's
+rule is now complete for its own report: a reader that closes the pipe
+makes the first failed write point that stream at `/dev/null`, a recorded
+signal outranking the error (Q12); and a stalled reader works as designed,
+the residual recorded in its research.md R4: under a handler that only
+records, Python resumes a write blocked on a stalled reader once the
 handler returns (PEP 475), so a SIGTERM sent to the process alone waits for
 the reader to drain or exit (checked on Python 3.12.3 for this question).
 Question Q12 asks how a failed write ends, and its option A lets a recorded
@@ -528,10 +540,10 @@ narrows the window to the write itself.
 
 | Option | Description |
 |--------|-------------|
-| A | Amend change 2's "print no result document" to "start no result document once the signal is read, and stop one that is being written" (FR-044 and SC-011 folded after), and record the partial result as a residual beside EC-015: the write stops at the signal, `Cancelled.` follows on standard error, and the run exits with the signal's status; standard output may then hold part of a result, which an exit of 129, 130 or 143 marks as no result. A signal recorded before the run exits decides its status, also over the exit 2 of a write that fails after it. The raising span around the write is entered before the first byte is written, so a signal recorded while rendering prints nothing, and output not yet written is discarded, never flushed at exit. |
+| A | Amend change 2's "print no result document" (POD:778-779, and the packet's rule too, DI:1094-1096) to "start no result document once the signal is read, and stop one that is being written" (FR-044 and SC-011 folded after), and record the partial result as a residual beside EC-015: the write stops at the signal, `Cancelled.` follows on standard error, and the run exits with the signal's status; standard output may then hold part of a result, which an exit of 129, 130 or 143 marks as no result. A signal recorded before the run exits decides its status, also over the exit 2 of a write that fails after it. The raising span around the write is entered before the first byte is written, so a signal recorded while rendering prints nothing, and output not yet written is discarded, never flushed at exit. |
 | B | Block the three signals from the first byte of the result to the last, then exit 0 or 1 as the result says, dropping the signal; a consumer that stops reading the pipe then leaves the run unstoppable by Ctrl-C until it reads. |
 | C | Leave it to the plan, fixed once and recorded in the feature's traceability record. |
-| D | Follow feature 004's rule for `project clean` (its research.md R4): the handlers stay record-only through the write, so the result is written in full; the slot, read once more before the run exits, gives `Cancelled.` on standard error and the signal's status, 130, 143 or 129. Amend change 2's "print no result document" to "start no result document once the signal is read". A reader that stops reading leaves the signal unanswered until the write completes or fails. |
+| D | Follow feature 004's rule for `project clean` (its research.md R4): the handlers stay record-only through the write, so the result is written in full; the slot, read once more before the run exits, gives `Cancelled.` on standard error and the signal's status, 130, 143 or 129. Amend change 2's "print no result document" (POD:778-779, and the packet's rule too, DI:1094-1096) to "start no result document once the signal is read". A reader that stops reading leaves the signal unanswered until the write completes or fails. |
 
 ---
 
@@ -541,7 +553,7 @@ narrows the window to the write itself.
 registry "while SIGINT, SIGTERM and SIGHUP are blocked with
 `signal.pthread_sigmask`", unblocking them only after registration, so that
 no signal can fall between `Popen` and the registry (design.md:115-119), as
-clarifications N1 asks (clarifications.md:45-46). A child started with
+clarifications N1 asks (clarifications.md:45-47). A child started with
 `Popen` inherits that mask, and Git does not reset it: reproduced on Git
 2.43.0 and Python 3.12.3 for this question (runtime cross-check X-7),
 `git hash-object --stdin` started with the three signals blocked shows
@@ -549,15 +561,20 @@ clarifications N1 asks (clarifications.md:45-46). A child started with
 SIGTERM to its group, needing SIGKILL, while one started unblocked dies at
 once. Every stop would then wait out the 2 s grace and need SIGKILL, at a
 budget, at the deadline or after a signal, and also FR-011's stop at a
-record bound (C-2). Feature 004's child start blocks nothing, and its
-handlers only record the signal (its research.md R4), so no exception can
-fall between the spawn and the registry entry: that is the guarantee D1
-wanted, and nothing in feature 004, its code included, or in this spec
-names `pthread_sigmask`. The alternative, a pre-exec hook that clears the
-mask in the child, is ruled out by change 1's correction C4, which change
-2's proposal repeats (Corrections to the Packet, "Process groups on Python
-3.10"): every Git child starts with `start_new_session=True`, never
-`preexec_fn`.
+record bound (C-2); that cost is stated per stop, and whether a terminating
+child frees its concurrency slot during the wait is not in design D6, so
+its scale cost at record-bound stops is not quantified. The packet's rule,
+that a child stopped early "receives SIGTERM to its process group, then
+SIGKILL if it has not exited within 2 s" (DI:461-464), and [E]'s
+(CMD:177-179) are met either way, and neither names a mask. Feature 004's
+child start blocks nothing, and its handlers only record the signal (its
+research.md R4), so no termination pass can miss a child: that is the
+guarantee D1 wanted, and nothing in feature 004, its code included, or in
+this spec names `pthread_sigmask`. The alternative, a pre-exec hook that
+clears the mask in the child, is ruled out by change 1's correction C4,
+which change 2's proposal repeats (Corrections to the Packet, "Process
+groups on Python 3.10"): every Git child starts with
+`start_new_session=True`, never `preexec_fn`.
 
 **Question**: How should feature 005 start its Git children?
 
@@ -568,7 +585,7 @@ answers already need.
 | Option | Description |
 |--------|-------------|
 | A | Depart from design D1's spawning paragraph and the line of clarifications N1 that asks for the block, recorded as a departure on Brett Heap's word, as feature 004 records its own (its R-32), and start each child unblocked under handlers that only record the signal. |
-| B | Amend change 2's design D1 and clarifications N1 to say the same, in the same amendment that carries the other answers. |
+| B | Amend change 2, in the same amendment that carries the other answers: design D1's spawning paragraph (design.md:115-119) and the spawn line of clarifications N1 (clarifications.md:45-47) change so that each child starts with SIGINT, SIGTERM and SIGHUP unblocked, and N1's "or raise a `BaseException` subclass" (clarifications.md:42-44) is struck, so that the handlers only record the signal, as D1's signals paragraph already has them (design.md:103-107), which keeps a termination pass from missing a child; FR-011 and FR-044 are folded after. |
 | C | Keep D1 and N1 as written, and accept the 2 s wait and SIGKILL on every stop. |
 
 ---
@@ -589,38 +606,46 @@ recommends that feature 005 reserve no flag, field or hook.
 classify a merged worktree whose only ignored files are Python bytecode
 caches `merged-removable`, on evidence the overview does not collect, and
 MODIFIES change 2's "Overview reuses the cleanup classifier and merge
-target" with the two sentences lane openRepoProject-4 agreed (`9f30fb9`):
+target" with the two sentences lane openRepoProject-4 agreed (`e1049b2`):
 the overview classifies such a row `ignored-local-files`, and never
 classifies a row `merged-removable` where `project clean` classifies it
-otherwise. It also names the ignored file of "Every protected classifier"
-as not a Python bytecode cache, and adds the scenario "Caches that only
-project clean proves disposable". The overview's code is the same either
-way. That change does the work on feature 005's side in its own feature,
-"once feature 005 has landed ... never in feature 005" (its proposal,
-Impact), and its feature writes the added scenario's test (its design D14);
-but its proposal also says that feature "does not wait for feature 005"
-(Dependencies and Sequencing). If it merges first, FR-026 and SC-003 are
-false on `main` for cache-only rows before feature 005 is built, a feature
+otherwise for the same working directory and refs. It also names the
+ignored file of "Every protected classifier" as not a Python bytecode
+cache, and adds the scenario "Caches that only project clean proves
+disposable". The overview's code is the same either way. That change does
+the work on feature 005's side in its own feature, "once feature 005 has
+landed ... never in feature 005" (its proposal, Impact), and its feature
+writes the added scenario's test (its design D14); but its proposal also
+says that feature "does not wait for feature 005" (Dependencies and
+Sequencing). If it merges first, FR-026 and SC-003 would no longer hold for
+cache-only rows when feature 005 is built against that `main`, a feature
 005 fixture whose ignored file is a `.pyc` fails its parity test, and the
 added scenario has no overview to run against. Taking the block into
 feature 005 before the cache-disposal code exists would leave that
-scenario's test unable to pass, and FR-049 counts no skipped test.
+scenario's test unable to pass, and FR-049 counts no skipped test. Change 2
+rules that each extension needs a proposal of its own (OQ-27, in change 2's
+proposal.md:560-568 and :631, on OV:357-359) and lists cache disposal and
+remote queries in its Out of Scope (proposal.md:565-568, on OV:142-146);
+spec.md's Out of Scope names both.
 
 **Question**: Should feature 005 realize the overview parts of #24 and #25
 if they are ratified before its plan, or leave them to their own features?
 
-**Recommended:** Option A - It is the order both proposals set and costs
-nothing now: the overview's code is the same, and fixtures without bytecode
-caches keep its parity tests true in either order. Feature 005 takes #24's
-block only in the one order #24 leaves open, when that change's code is
-already on `main`, so no second plan is needed.
+**Recommended:** Option A - It is the order #25 sets (its tasks 2.1 and
+2.2, `tasks.md:20-21` at `e198548`), and #24 allows it: #24 does not wait
+for feature 005 (its `proposal.md:588-589` at `e1049b2`) and says its
+overview part is done in its own feature, never in feature 005
+(`proposal.md:532-535`). It costs nothing now: the overview's code is the
+same, and fixtures with an ignored `local.env` keep feature 005's parity
+tests true in every order, so the plan is the same whichever realization
+merges first and no second plan is needed.
 
 | Option | Description |
 |--------|-------------|
-| A | Leave both to their own features. Feature 005 builds change 2 as ratified, reserves no flag, field or hook for `--remote`, and gives every fixture it compares with `project clean` an ignored file that is not a Python bytecode cache. Only if #24 is ratified and its realization merges into `main` before feature 005's implementation does feature 005's plan take #24's ratified block: FR-026's exception, SC-003's carve-out, the added scenario and its test. |
-| B | Leave both to their own features in every order, and ask lane openRepoProject-5 to amend #24 so that its realization merges after feature 005, its proposal and tasks saying so. |
-| C | Realize #24's block in feature 005 whenever #24 is ratified before feature 005's plan, whatever order the realizations merge in, a departure from #24's order on Brett Heap's word; the added scenario's test then waits for the cache-disposal code. #25 stays its own feature. |
-| D | Realize both in feature 005 if they are ratified before its plan, departing from the order of both on Brett Heap's word: `--remote` joins this feature, adding one requirement and 16 scenarios. |
+| A | Leave both to their own features in every order, as #25 sets and as #24 states for its overview part ("never in feature 005"). Feature 005 builds change 2 as ratified and as the other answers amend it, reserves no flag, field or hook for `--remote`, and gives every fixture it compares with `project clean` an ignored file such as `local.env`, which no cache rule #24 proposes admits. If #24's realization merges first, a cache-only worktree is `ignored-local-files` in the overview and `merged-removable` in `project clean` until #24's overview block is archived: the cautious direction, and the very exception that block records; no feature 005 test depends on it. |
+| B | As A, and ask lane openRepoProject-5 to amend #24 so that its realization merges after feature 005, its proposal and tasks saying so. |
+| C | Realize #24's block in feature 005 whenever #24 is ratified before feature 005's plan, whatever order the realizations merge in: a departure from #24's order, from OQ-27 and from change 2's Out of Scope, on Brett Heap's word. Feature 005 then cannot merge until #24's code is on `main`, since the added scenario's test cannot pass before it and FR-049 counts no skipped test. #25 stays its own feature. |
+| D | Realize both in feature 005 if they are ratified before its plan, departing from the order of both, from OQ-27 and from change 2's Out of Scope on Brett Heap's word: `--remote` joins this feature, adding one requirement and 16 scenarios to the overview, and #25's `project-command` block, which MODIFIES [E] on draft PR #19's text (10 scenarios, one added). Feature 005 then inherits #25's dependency on PR #19 and on feature 004's runner (`proposal.md:304-315`, `:337-340` and `:399-407` at `e198548`), and amends spec 005's Out of Scope and Dependencies, which reverses "`--remote` stays an invalid invocation here". |
 
 ---
 

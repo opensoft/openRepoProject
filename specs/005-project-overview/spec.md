@@ -1630,9 +1630,9 @@ and [P] are change 1's requirements as the header names them.
   MUST run in its own process group; a child that reaches its budget, or
   whose output the overview stops reading early, MUST receive SIGTERM to its
   group, SIGKILL 2 s later, and be reaped within a further 2 s or abandoned.
-  Whether a child starts with SIGINT, SIGTERM and SIGHUP blocked, as design
-  D1 has it, so that SIGTERM cannot stop it before SIGKILL, is question Q16
-  of `clarify-questions.md`.
+  Whether a child inherits SIGINT, SIGTERM and SIGHUP blocked from the
+  parent's spawn, as design D1 sets up, with the result that SIGTERM cannot
+  stop it before SIGKILL, is question Q16 of `clarify-questions.md`.
   A child that reaches its budget, where the 5 s limit was the smaller, and
   any child stopped for its own budget or at a record bound and then
   abandoned after the reap wait, MUST record `probe-timeout` on its row,
@@ -2442,24 +2442,24 @@ and [P] are change 1's requirements as the header names them.
   PR #19, lead ruling R-28), also awaiting his word, concerns `clean`'s push
   child alone, which the overview never starts (FR-016).
 - **Open changes that modify change 2, none ratified** (lane
-  openRepoProject-5): this feature neither waits for them nor realizes them,
-  as each orders itself.
+  openRepoProject-5): this feature neither waits for them nor realizes them
+  (except as question Q17 decides), as each orders itself.
   - `add-project-clean-cache-disposal` (issue #24, draft PR #27) MODIFIES
     "Overview reuses the cleanup classifier and merge target" (requirement
     5), appending to its equality clause two sentences that lane
-    openRepoProject-4 agreed (`9f30fb9`): a worktree that `project clean`
+    openRepoProject-4 agreed (`e1049b2`): a worktree that `project clean`
     classifies `merged-removable` because its cache enumeration proved every
     ignored path a listed cache is `ignored-local-files` in the overview,
     which collects no cache evidence, and the overview never classifies a
     worktree `merged-removable` where `project clean` classifies it
-    otherwise. It also names the ignored file of "Every protected
-    classifier" as not a Python bytecode cache, and adds the scenario
-    "Caches that only project clean proves disposable". The overview's
-    collection and code are the same either way, and that change's own
-    feature excludes the cache case from this feature's parity tests "once
-    feature 005 has landed ... never in feature 005" (its proposal, Impact).
-    Which feature takes its block if its realization merges first is
-    question Q17 of `clarify-questions.md`.
+    otherwise for the same working directory and refs. It also names the
+    ignored file of "Every protected classifier" as not a Python bytecode
+    cache, and adds the scenario "Caches that only project clean proves
+    disposable". The overview's collection and code are the same either way,
+    and that change's own feature excludes the cache case from this
+    feature's parity tests "once feature 005 has landed ... never in feature
+    005" (its proposal, Impact). Which feature takes its block if its
+    realization merges first is question Q17 of `clarify-questions.md`.
   - `add-project-overview-remote-merge-status` (issue #25, draft PR #29)
     MODIFIES "Overview bounds its work and reports what it omitted",
     "Overview prints a versioned JSON envelope" and "Overview is local and
@@ -2470,7 +2470,8 @@ and [P] are change 1's requirements as the header names them.
     archives (its `tasks.md` 2.1 and 2.2). As its Open Question 3,
     addressed to lane openRepoProject-4, recommends, this feature reserves
     no flag, field or hook for it: `--remote` stays an invalid invocation
-    here (FR-039, FR-042). Without `--remote` each of its blocks holds
+    here (FR-039, FR-042; whether this feature adds it is question Q17 of
+    `clarify-questions.md`). Without `--remote` each of its blocks holds
     change 2's text as written, so no requirement here changes.
   - `add-project-clean-branch-retirement` (issue #23, draft PR #26) leaves
     `project-overview` untouched. It MODIFIES [E], [G]'s two requirements
