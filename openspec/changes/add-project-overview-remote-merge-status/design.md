@@ -453,8 +453,8 @@ printed, never a URL, a repository name taken from a response, or a reason
 other than [R]'s codes, so every printed character is ASCII. After [H]'s
 summary line a `--remote` run prints:
 
-    Remote: N gh requests started; merged a, open b, not found d,
-    unavailable e, unknown f. Remote evidence, where GitHub answered, was
+    Remote: N gh requests started; merged a, open b, not found c,
+    unavailable d, unknown e. Remote evidence, where GitHub answered, was
     read live from github.com and may already be stale; it never authorizes
     cleanup.
 
