@@ -353,10 +353,15 @@ ruling R-56). A `git-too-old` or
 `clean`'s refusal text (lead ruling R-48). Every `path` gains
 `path_valid_utf8`, every `root` gains `root_valid_utf8`, and
 `ignored_samples` entries are objects. A deleted upstream shows its short
-name with `ahead` and `behind` null. The version check runs once per
-invocation, memoized, when a repository is inspected; doctor's `git` row
+name with `ahead` and `behind` null. `ignored_files` is the evidence model's
+bounded count, capped at 64 (`ignored_entries`), so 64 means "64 or more";
+no key is added for it (lead ruling R-66 (d)). The version check runs once
+per invocation, memoized, when a repository is inspected; doctor's `git` row
 runs it itself when none was, and `status` never runs it for nothing (lead
-ruling R-56).
+ruling R-56). `handoff()` runs its `git remote get-url origin` only for a
+root whose repository was inspected, present and past the version check;
+otherwise it returns the same no-identity state with no child (lead ruling
+R-66 (c)).
 
 ### Child handle (D2; lead ruling R-30, research.md R14)
 

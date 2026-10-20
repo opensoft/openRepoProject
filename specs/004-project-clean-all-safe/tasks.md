@@ -2724,8 +2724,10 @@ test and T116's removal-child clause held back (lead ruling R-56 Q-5).
   the configured short name, `origin/<branch>`, with `ahead` and `behind`
   null); and `test_update_a_leg_s_probe_times_out` (launcher, with a table that
   shortens the 15 s inspection budget (R-29); `status-hangs-in` a leg: `update
-  --apply --component shape` refuses with exit 2, and the fake `openRepoShape`
-  records no run); and `test_status_a_submodule_checkout_is_reported` (a
+  --apply --component shape --shape-source DIR` refuses with exit 2, and the
+  fake `update-shape.py` in DIR, which `update` runs from `--shape-source`,
+  records no run, lead ruling R-66 (f)); and
+  `test_status_a_submodule_checkout_is_reported` (a
   submodule's checkout, and a linked worktree of a bare repository: `status`
   exits 0 and `doctor` 0 or 1, never 2, each value written into the test as a
   literal (R9); FR-055, analyze H4, lead ruling R-42). Scenarios: "A failed
@@ -2771,8 +2773,13 @@ test and T116's removal-child clause held back (lead ruling R-56 Q-5).
   `snapshot()`'s root); for a linked worktree, that worktree's own branch,
   head and `dirty`, as `tests/test_project.py:586-601` asserts (lead ruling
   R-56); a deleted
-  upstream's short name with `ahead` and `behind` null; every other key and
-  value as today, so that `tests/test_project.py:586`, `:615` and `:916` pass.
+  upstream's short name with `ahead` and `behind` null; `ignored_files` the
+  evidence model's bounded count, capped at 64, so that 64 means "64 or
+  more", with no new key (lead ruling R-66 (d)); every other key and value
+  as today, with one departure, a bare repository's registry entry no
+  longer among `worktrees`, since D8's bare first record names no worktree
+  row (lead ruling R-66 (f)), so that `tests/test_project.py:586`, `:615`
+  and `:916` pass.
   — files: `project`, `tests/clean_support.py`
   — verify: `python3 -c "import importlib.machinery as m,importlib.util as iu,sys;l=m.SourceFileLoader('pv','project');s=iu.spec_from_loader('pv',l);p=iu.module_from_spec(s);sys.modules['pv']=p;l.exec_module(p);import os,tempfile;from pathlib import Path;d=tempfile.mkdtemp();r=p.repo_state(Path(d));os.rmdir(d);print('repo_state of a directory with no .git:',r);sys.exit(0 if isinstance(r,dict) and r.get('present') is False and r.get('path_valid_utf8') is True else 1)" && python3 -m unittest discover -s tests -p 'test_clean_harness.py' -k '*.test_clean_text_fixtures_equal_the_contract_table' && python3 -m unittest discover -s tests -p 'test_project.py' -k '*.test_status_from_nested_path_and_feature_worktree_is_read_only' -k '*.test_human_reports_render_present_project_leg_state' -k '*.test_clean_reports_dirty_detached_and_pushed_unmerged_states'`
 - [ ] T118 [US9] [O] In `discover()` (`project:433-467`; research.md R2, FR-053):
