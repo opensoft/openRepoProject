@@ -692,9 +692,9 @@ accepted. Each selected target SHALL end in one stage with one reason:
   `internal-error` or `removal-ceiling`;
 - `not-attempted`: the run stopped before reaching the target, or before
   spawning its removal because less than the removal floor remained, or, for a
-  target whose cache stage ran, before its removal was spawned because a signal
-  had been received or less than the removal floor remained; `batch-stopped`,
-  `interrupted` or `deadline-exceeded`.
+  target whose cache stage ended `disposed`, before its removal was spawned
+  because a signal had been received or less than the removal floor remained;
+  `batch-stopped`, `interrupted` or `deadline-exceeded`.
 
 A removal child that exits nonzero on its own SHALL be `failed` with Git's
 status, `git-refused` for 128 and `git-failed` otherwise, whether or not a
@@ -721,8 +721,9 @@ probe child, print "Cancelled." on standard error and no JSON document, and exit
 130, 143 or 129 with nothing mutated, and end of input at the question SHALL
 exit 130 the same way. During the apply phase, the first of
 those signals received SHALL set the exit status and stop scheduling, so that no
-further probe or removal starts, a started cache stage running to its end as
-"Clean disposes of listed caches before a worktree removal" states. A removal
+further probe or removal starts, a cache stage that has handed over its first
+removal running to its end as "Clean disposes of listed caches before a
+worktree removal" states. A removal
 in flight SHALL be waited for, and
 its target SHALL end by the stage rule above. Targets not yet started SHALL be
 `not-attempted` with `interrupted`. `project` SHALL then reconcile within the
@@ -743,7 +744,8 @@ The exit status of a run with `--apply` SHALL be the first row that matches:
 1. 130, 143 or 129: a signal was received, the first one received deciding, or
    input ended at the question (130);
 2. 1: the deadline stopped work after the apply phase began, any target is
-   `unknown`, or any target's reason is `removal-ceiling`;
+   `unknown`, any target's reason is `removal-ceiling`, or a cache stage's
+   removal reached the removal ceiling;
 3. Git's own status, passed through unchanged: a target is `failed` with
    `git-refused` or `git-failed`;
 4. 2: any refusal; a `refused` target; a `removed` target with a

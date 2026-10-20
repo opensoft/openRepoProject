@@ -243,11 +243,11 @@ Ignored files created, and index flags set, after that revalidation, and any
 change made after Git's own check, SHALL be outside the contract; the
 confirmation and the result SHALL each state this residual window in one line.
 For a target whose plan lists caches, that window SHALL include a cache
-recreated after its cache stage, which Git's non-force removal deletes with the
-worktree, and ignored files created during its cache stage outside the listed
-caches, which Git's non-force removal deletes with the worktree; when the plan
-selects such a target, the residual-window line SHALL also name ignored files
-created during a cache stage and caches recreated after it. Cleanup SHALL never
+recreated after its cache stage and ignored files created during its cache
+stage outside the listed caches, both of which Git's non-force removal deletes
+with the worktree; when the plan selects such a target, the residual-window
+line SHALL also name ignored files created during a cache stage and caches
+recreated after it. Cleanup SHALL never
 delete a
 branch, so that a branch race cannot lose commits: a branch change seen at
 revalidation SHALL refuse the target with `branch-changed`, and one seen only by
@@ -339,9 +339,13 @@ lists; re-list every listed cache directory, requiring each entry to have the
 allowlisted shape, each nested directory to carry its planned identity, each
 listed cache's entries to number exactly the `entries` that the plan recorded
 for it, and the target's bytes to stay within the per-worktree cap; require
-every listed file to be a regular file; and fix the names it will remove. A
-difference, an error, or a filesystem call that runs out of its budget SHALL end
-the stage `refused` with `cache-changed`, nothing deleted.
+every listed file to be a regular file; keep the run's byte total, the sum of
+the bytes that this preflight measures and that the preflight of every earlier
+target whose cache stage passed its preflight in this run measured, and
+require it to stay within the invocation's 1 GiB (1,073,741,824 bytes,
+`limits.cache_bytes_total`); and fix the names it will remove. A difference, an
+error, a byte total past either cap, or a filesystem call that runs out of its
+budget SHALL end the stage `refused` with `cache-changed`, nothing deleted.
 
 After its first removal, a removal that fails, a read that runs out of its
 budget, a removal whose wait the removal ceiling ends, or the removal floor
@@ -465,3 +469,22 @@ window" states.
   still ends `partial` and never `refused`
 - **AND** when the hook holds the second cache's first unlink for 6 s and then
   lets it return, the stage waits for it, counts its entry and goes on
+
+#### Scenario: Caches that grew after the plan cannot pass the run's byte cap
+
+- **WHEN** a plan selects five targets, each listing one `__pycache__`
+  directory holding two small `.pyc` files, and a test hook, after the plan is
+  built and before the first target's revalidation, grows each listed `.pyc`
+  file in place, its name, its type and its cache's number of entries
+  unchanged, until each target's listed regular files total 250 MiB, and
+  `--all-safe --apply --yes` runs
+- **THEN** the first four targets pass their revalidations and preflights, the
+  run's byte total reaching 1,000 MiB, and their caches are disposed of and
+  their worktrees removed as without the hook, their branches kept
+- **AND** the fifth target passes its revalidation, but its preflight finds
+  that its 250 MiB would take the run's byte total past 1 GiB, so its stage
+  ends `refused` with `cache-changed` and nothing in it is deleted, the target
+  is `refused` with `state-changed` and carries its reconciliation, no removal
+  child is spawned for it, and the exit status is 2
+- **AND** before the stop block the human result reads `Cache disposal at PATH
+  refused (cache-changed); nothing was deleted.`
