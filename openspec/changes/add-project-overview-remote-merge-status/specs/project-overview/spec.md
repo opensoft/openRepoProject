@@ -24,9 +24,19 @@ In place of that clause, the `project` process SHALL read no credential file
 and no profile data the scan does not need; a `gh` child authenticates by the
 GitHub client's own means, reading what that client reads; and the overview
 SHALL read, test, infer, print and forward no credential value, the caller's
-environment excepted, which it passes to a `gh` child unread. Both outputs
-SHALL label remote evidence as queried live, apart from the local evidence,
-which stays as of the last fetch.
+environment excepted, which it passes to a `gh` child unread, and a remote's
+URL excepted, which it inspects only within the bounds that follow. The URL
+that a remote-target read of `Overview reports remote merge evidence on
+request` prints on standard output SHALL be held in memory only while the
+overview derives the GitHub `owner/repository` from it and detects its user
+information, which it SHALL test only as that requirement's
+`credential-bearing-remote` and `malformed-remote` reasons state. After that,
+no part of the user information SHALL be retained or compared; no part of it
+SHALL ever be printed, logged, sent or used to authenticate; and the URL SHALL
+never be forwarded with its user information. Such a read's standard error
+SHALL be drained and discarded unexamined. Both outputs SHALL label remote
+evidence as queried live, apart from the local evidence, which stays as of the
+last fetch.
 
 #### Scenario: Local and read-only
 - **WHEN** the overview runs with default options over any fixture of this capability, with networking disabled for the process
@@ -361,8 +371,8 @@ per-child budget that `Overview bounds its work and reports what it omitted`
 gives; at most 64 KiB and one byte of each one's standard output SHALL be read
 and at most 64 KiB of it kept, so that an output of exactly 64 KiB is told from
 a longer one, which fails the read; its standard error SHALL be drained and
-discarded, and when the merge target names no usable remote the overview SHALL
-read no other remote, `origin` included. They SHALL
+discarded unexamined, and when the merge target names no usable remote the
+overview SHALL read no other remote, `origin` included. They SHALL
 be counted in the envelope's `probes` as that requirement states for a run with
 `--remote`. A repository's queried rows SHALL be `unavailable`, with no
 request, when one of these applies, the first that applies giving the reason:
@@ -401,8 +411,7 @@ sends no telemetry and prints no colour, and with `GH_DEBUG`, `DEBUG`,
 and `CLICOLOR_FORCE` removed from it, every other variable passed on unread. At
 most 64 requests SHALL be sent per invocation; a key past the 64th SHALL NOT be
 sent, and its rows SHALL be `unknown` with reason `request-cap` unless the
-Results paragraph makes them `unavailable`: `request-cap` applies only when
-requests can be sent and the cap stops them. At most four
+Results paragraph makes them `unavailable`. At most four
 `gh` children SHALL run at once. The requests SHALL start after the
 remote-target reads, under a remote budget of `min(30 s, deadline - now)` taken
 when the first request starts, part of the 60 s invocation deadline and never
@@ -578,9 +587,9 @@ by its code, never a URL, and only ASCII characters.
 - **AND** when the fake `gh` instead answers the first of those keys with `acme/gizmo` as the queried repository's `nameWithOwner`, standing for a renamed repository, and with a merged #10 whose base repository is `acme/widget`, the name asked, and an open #11 whose base repository is `acme/gizmo`, each with the row's head and base branch `main`, its row's `remote` is `open` #11 with the `url` `https://github.com/acme/gizmo/pull/11`
 
 #### Scenario: Remotes that give no request
-- **WHEN** the merge targets of four repositories have as their remote's URL `https://alice:s3cr3t@github.com/acme/widget.git`, `https://evilgithub.com/acme/widget` and `https://github.com/acme`, and, for the fourth, no remote named by its merge target, though that repository has an `origin` remote whose URL is `https://github.com/acme/widget.git`
+- **WHEN** the merge targets of four repositories have as their remote's URL `https://u9zq-kx7w:s3cr3t@github.com/acme/widget.git`, `https://evilgithub.com/acme/widget` and `https://github.com/acme`, and, for the fourth, no remote named by its merge target, though that repository has an `origin` remote whose URL is `https://github.com/acme/widget.git`
 - **THEN** their queried rows are `unavailable` with reasons `credential-bearing-remote`, `not-github`, `malformed-remote` and `no-remote-target`, and no `gh` child starts
-- **AND** neither output, no argv and no message contains `s3cr3t` or any of those URLs
+- **AND** neither output, no argv and no message contains `u9zq-kx7w`, `s3cr3t` or any of those URLs
 
 #### Scenario: No gh, or a gh without authentication
 - **WHEN** `gh` is not on `PATH` and two rows with distinct heads are queried
