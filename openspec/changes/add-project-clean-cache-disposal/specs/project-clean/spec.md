@@ -994,8 +994,9 @@ SHALL be deleted. The same two checks SHALL run again immediately before the
 stage hands its first removal to its worker, after the whole-list preflight and
 once the first listed cache's chain is reopened, with the same outcome, which
 the removal floor or the deadline stopping a read of that preflight has too, a
-signal received before such a stop is classified taking precedence there, as
-"Cache disposal never follows a symlink or leaves its worktree" states; a
+signal received before any outcome of that preflight is classified taking
+precedence over each, as "Cache disposal never follows a symlink or leaves its
+worktree" states; a
 signal recorded after that check SHALL be handled as one received during the
 removals. That hand-off SHALL be the stage's first removal for every rule of
 this requirement and of "Cache disposal never follows a symlink or leaves its
@@ -1050,18 +1051,19 @@ one repository" states it. A successful apply SHALL add one line naming how
 many cache paths were disposed of in how many worktrees. A run that stops at a
 target whose cache stage ended `refused` or `partial` SHALL print, before its
 stop block, one line naming that target and saying that nothing was deleted,
-only when no entry was removed and no removal is outstanding, or else how many
-of its cache paths were removed, which remain and which a removal still
-outstanding may still remove, naming the work deadline as the cause, and not a
-change of state, when the deadline ended the stage, with the command that shows
-a fresh plan for the rest. A run that stops after a target's cache stage ended
-`disposed` and before its removal child was spawned SHALL print `Cache disposal
-at PATH: removed N cache paths; the worktree was not removed.` before its stop
-block. A run that stops at a target whose cache stage the removal floor or the
-work deadline stopped in a read before its first removal, no signal having been
-received by then, SHALL print `Cache disposal at PATH not attempted
-(deadline-exceeded); nothing was deleted.` before its stop block, naming the
-deadline and not a change of state. The
+only when no entry was removed and no removal is outstanding and, for a stage
+that ended before its first removal, no signal had been received by then, or
+else how many of its cache paths were removed, which remain and which a removal
+still outstanding may still remove, naming the work deadline as the cause, and
+not a change of state, when the deadline ended the stage, with the command that
+shows a fresh plan for the rest. A run that stops after a target's cache stage
+ended `disposed` and before its removal child was spawned SHALL print
+`Cache disposal at PATH: removed N cache paths; the worktree was not removed.`
+before its stop block. A run that stops at a target whose cache stage the
+removal floor or the work deadline stopped in a read before its first removal,
+no signal having been received by then, SHALL print
+`Cache disposal at PATH not attempted (deadline-exceeded); nothing was deleted.`
+before its stop block, naming the deadline and not a change of state. The
 residual-window line SHALL be the one that "Cleanup states a narrow guarantee
 and its residual window" states.
 
@@ -1277,11 +1279,12 @@ and its residual window" states.
   `cache_disposal` `not-attempted` with `target-stopped`
 - **AND** where SIGINT arrives while a test hook holds a read of that
   whole-list preflight, and the read then outlives its 5 s per-call budget, or
-  the shorter budget that the deadline sets, before that check is reached, the
-  signal is checked before the timeout is classified: nothing is deleted, the
-  stage is `not-attempted` with `target-stopped`, the target and every later
-  one are `not-attempted` with `interrupted`, never `refused` with
-  `cache-changed` and never `deadline-exceeded`, and the exit status is 130
+  the shorter budget that the deadline sets, or the preflight then finds a
+  changed entry, before that check is reached, the signal is checked before
+  that outcome is classified: nothing is deleted, the stage is `not-attempted`
+  with `target-stopped`, the target and every later one are `not-attempted`
+  with `interrupted`, never `refused` with `cache-changed` and never
+  `deadline-exceeded`, and the exit status is 130
 
 #### Scenario: An unwritable cache directory is kept, not a stop
 
