@@ -269,6 +269,252 @@ class StatusDoctorUpdateTests(clean_support.CleanCase):
         self.assertEqual(tools.read_text(), "\n")
         self.assertNotIn("REFUSED", result.stderr)
 
+    # T115: the evidence model's rows in status, doctor and update.
+
+    def test_status_a_failed_root_status_is_reported(self):
+        # FR-050, FR-051: a failed root status probe is a row-level
+        # inspection-error, never a refusal with exit 2.
+        root = self.repo()
+        head = self.git(root, "rev-parse", "HEAD").strip()
+        fake_dir = self.base / "fake"
+        clean_support.install_fake_git(fake_dir, "status-fails-in", path=root)
+        env = self.path_first(fake_dir)
+        message = git_message("status", "row_error_probe_failed",
+                              DETAIL=TEXT["row_error_probe_failed_exit"].format(N=128))
+        errors = [{"code": "probe-failed", "message": message}]
+        for name, code in (("status", 0), ("doctor", 1)):
+            with self.subTest(command=name):
+                result = self.run_json(name, root, "--json", env=env)
+                self.assert_status(result, code)
+                repository = result.document["repository"]
+                self.assertEqual([repository[key] for key in ("present", "branch", "head", "dirty",
+                                                              "classification", "errors")],
+                                 [True, "main", head, None, "inspection-error", errors])
+                self.assertEqual(repository["worktrees"],
+                                 [{"path": str(root), "path_valid_utf8": True, "present": True, "head": head,
+                                   "branch": "main", "dirty": None, "ignored_files": None, "current": False,
+                                   "upstream": None, "ahead": None, "behind": None,
+                                   "classification": "inspection-error", "errors": errors}])
+                if name == "doctor":
+                    self.assertEqual(checks(result.document, "error"),
+                                     [{"level": "error", "check": str(root),
+                                       "detail": "inspection-error (probe-failed): " + message}])
+        result = self.run_cli("status", root, env=env)
+        self.assert_status(result, 0)
+        self.assertIn("  Git: inspection-error (probe-failed)\n", result.stdout)
+
+    def test_doctor_not_established_is_an_error_none_is_not(self):
+        # FR-051, analyze M4: a null that means "none" is no error; a null that
+        # means "not established" is.
+        with self.subTest("a fresh project with no remote passes"):
+            root = self.repo("Fresh")
+            result, records = self.counted("doctor", root, "--json")
+            self.assert_status(result, 0)
+            repository = self.assert_one_document(result)["repository"]
+            self.assertEqual([repository[key] for key in ("present", "upstream", "ahead", "behind", "dirty")],
+                             [True, None, None, None, False])
+            self.assertNotIn("classification", repository)
+            self.assertEqual(checks(result.document, "error"), [])
+            # Rule 13: the git row names the counting wrapper, the git on PATH.
+            self.assertEqual(git_row(result.document),
+                             {"level": "ok", "check": "git", "detail": f"{result.wrapper} (git version {real_version()})"})
+
+        with self.subTest("a leg whose status probe fails"):
+            root = self.project("Atlas", [("spec", "spec")])
+            leg = self.repo("Atlas/spec")
+            fake_dir = self.base / "fake"
+            fake = clean_support.install_fake_git(fake_dir, "status-fails-in", path=leg)
+            result, records = self.counted("doctor", root, "--json", real=fake)
+            self.assert_status(result, 1)
+            child = self.assert_one_document(result)["children"][0]
+            message = git_message("status", "row_error_probe_failed",
+                                  DETAIL=TEXT["row_error_probe_failed_exit"].format(N=128))
+            self.assertEqual([child[key] for key in ("present", "dirty", "classification", "errors")],
+                             [True, None, "inspection-error", [{"code": "probe-failed", "message": message}]])
+            self.assertEqual(checks(result.document, "error"),
+                             [{"level": "error", "check": str(leg),
+                               "detail": "inspection-error (probe-failed): " + message}])
+
+        with self.subTest("a leg whose parent denies search"):
+            if hasattr(os, "geteuid") and os.geteuid() == 0:
+                self.skipTest("permission fixtures do not bind the superuser (effective uid 0)")
+            root = self.project("Locked", [("spec", "locked/spec")])
+            (root / ".gitignore").write_text("locked/\n")
+            leg = self.repo("Locked/locked/spec")
+            (root / "locked").chmod(0o600)
+            self.addCleanup((root / "locked").chmod, 0o700)
+            result = self.run_json("doctor", root, "--json")
+            self.assert_status(result, 1)
+            child = result.document["children"][0]
+            message = TEXT["row_error_os_error"].format(OPERATION="lstat", STRERROR=os.strerror(errno.EACCES))
+            self.assertEqual([child[key] for key in ("path", "present", "dirty", "classification", "errors")],
+                             [str(leg), None, None, "inspection-error", [{"code": "os-error", "message": message}]])
+            self.assertEqual(checks(result.document, "error"),
+                             [{"level": "error", "check": str(leg),
+                               "detail": "inspection-error (os-error): " + message}])
+
+    @clean_support.linux_paths
+    def test_status_json_paths_carry_their_flags(self):
+        # FR-051, analyze M4, lead ruling R-9: `path_valid_utf8` beside every
+        # path, `root_valid_utf8` beside every root, and ignored samples as
+        # objects, in status and doctor JSON alike.
+        holder = self.repo("Family/Family")
+        (holder / "family.yaml").write_text("kind: family-manifest\nmembers:\n  - project: Atlas\n"
+                                            "  - project: Ghost\n")
+        member = self.project("Family/Atlas", [("spec", "spec")])
+        self.repo("Family/Atlas/spec")
+        (member / ".gitignore").write_text("local.env\nspec/\n")
+        self.commit(member)
+        feature = self.base / "feature-tree"
+        self.git(member, "worktree", "add", "-b", "001-feature", feature)
+        (feature / "local.env").write_text("preserve")
+        odd = os.fsencode(self.base) + b"/odd-\xff-tree"
+        self.git(member, "worktree", "add", "-b", "002-odd", odd)
+        for name in ("status", "doctor"):
+            with self.subTest(command=name):
+                result = self.run_json(name, holder, "--json")
+                found = list(walk(result.document))
+                paths = [item for item in found if "path" in item]
+                roots = [item for item in found if "root" in item]
+                self.assertGreaterEqual(len(paths), 6)
+                for item in paths:
+                    self.assertIsInstance(item.get("path_valid_utf8"), bool, item)
+                self.assertEqual([(item["root"], item["root_valid_utf8"]) for item in roots],
+                                 [(str(holder), True), (str(member), True)])
+                atlas = result.document["children"][0]
+                ghost = result.document["children"][1]
+                self.assertEqual(ghost, {"role": "member", "path": str(self.base / "Family/Ghost"),
+                                         "path_valid_utf8": True, "present": False})
+                trees = {Path(tree["path"]).name: tree for tree in atlas["repository"]["worktrees"]}
+                self.assertEqual(trees["feature-tree"]["ignored_samples"],
+                                 [{"path": "local.env", "path_valid_utf8": True}])
+                self.assertEqual(trees["Atlas"]["ignored_samples"],
+                                 [{"path": "spec/", "path_valid_utf8": True}])
+                self.assertEqual((trees["odd-\\xff-tree"]["path"], trees["odd-\\xff-tree"]["path_valid_utf8"]),
+                                 (f"{self.base}/odd-\\xff-tree", False))
+                for tree in trees.values():
+                    for sample in tree["ignored_samples"]:
+                        self.assertEqual(list(sample), ["path", "path_valid_utf8"])
+
+    def test_status_sigterm_during_inspection(self):
+        # FR-058, analyze M5, research.md R4. Launcher, its own table (R-29): a
+        # 10 s probe budget for status (so the signal, not the budget, stops the
+        # probe), a grace of 0.5 s and a reap wait of 0.5 s; every other value
+        # real. The ignore-sigterm fake is the root's status probe.
+        table = clean_support.timing_table(inspect_budget=10.0, term_grace=0.5, reap_wait=0.5)
+        root = self.repo()
+        fake_dir = self.base / "fake"
+        clean_support.install_fake_git(fake_dir, "ignore-sigterm")
+        env = self.path_first(fake_dir)
+        events = fake_dir / clean_support.FAKE_EVENTS
+        for signum, code in ((signal.SIGTERM, 143), (signal.SIGHUP, 129)):
+            with self.subTest(signal=signum.name):
+                if events.exists():
+                    events.unlink()
+                child = subprocess.Popen(clean_support.launched_argv(table, "status", root, "--json"),
+                                         cwd=self.base, env=env, stdin=subprocess.DEVNULL,
+                                         stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True,
+                                         start_new_session=True)
+                try:
+                    ready = clean_support.wait_for_event(fake_dir, "ready", timeout=10)
+                    self.assertIsNotNone(ready, "the fake status probe started")
+                    child.send_signal(signum)
+                    out, err = child.communicate(timeout=clean_support.TIMEOUT)
+                finally:
+                    if child.poll() is None:
+                        os.killpg(child.pid, signal.SIGKILL)
+                        child.communicate()
+                self.assertEqual(child.returncode, code, err)
+                self.assertEqual((out, err), ("", CANCELLED + "\n"))
+                term = clean_support.wait_for_event(fake_dir, "term", pid=ready["pid"])
+                death = clean_support.wait_for_event(fake_dir, "death", pid=ready["pid"])
+                self.assertIsNotNone(term, "the probe's group got SIGTERM")
+                self.assertIsNotNone(death, "the probe was killed")
+                self.assertGreaterEqual(death["t"] - term["t"], 0.9 * table["term_grace"])
+                with self.assertRaises(ProcessLookupError):
+                    os.killpg(ready["pgid"], 0)
+
+    def test_status_a_deleted_upstream_in_status_and_doctor(self):
+        # FR-051, FR-056: an upstream whose remote-tracking ref was deleted keeps
+        # its configured short name, with ahead and behind null.
+        root = self.repo()
+        self.bare_remote()
+        self.git(root, "push", "-q", "-u", "origin", "main")
+        tree = self.base / "gone-tree"
+        self.git(root, "worktree", "add", "-b", "001-gone", tree)
+        self.git(tree, "push", "-q", "-u", "origin", "001-gone")
+        for branch in ("main", "001-gone"):
+            self.git(root, "update-ref", "-d", f"refs/remotes/origin/{branch}")
+        for name in ("status", "doctor"):
+            with self.subTest(command=name):
+                result = self.run_json(name, root, "--json")
+                self.assert_status(result, 0)
+                repository = result.document["repository"]
+                self.assertEqual([repository[key] for key in ("upstream", "ahead", "behind")],
+                                 ["origin/main", None, None])
+                self.assertNotIn("classification", repository)
+                gone = {Path(item["path"]).name: item for item in repository["worktrees"]}["gone-tree"]
+                self.assertEqual([gone[key] for key in ("upstream", "ahead", "behind")],
+                                 ["origin/001-gone", None, None])
+                if name == "doctor":
+                    self.assertEqual(checks(result.document, "error"), [])
+                result = self.run_json(name, tree, "--json")
+                self.assert_status(result, 0)
+                self.assertEqual([result.document["repository"][key] for key in ("branch", "upstream", "ahead",
+                                                                                 "behind")],
+                                 ["001-gone", "origin/001-gone", None, None])
+
+    def test_update_a_leg_s_probe_times_out(self):
+        # D-R, FR-052. Launcher, its own table (R-29): status, doctor and update
+        # give each Git child the inspect budget, here 1 s, with a grace of
+        # 0.5 s and a reap wait of 0.5 s; every other value real. The leg's
+        # status probe hangs, so its dirty is null and the update refuses.
+        table = clean_support.timing_table(inspect_budget=1.0, term_grace=0.5, reap_wait=0.5)
+        root = self.project("Atlas", [("spec", "spec")])
+        leg = self.repo("Atlas/spec")
+        self.commit(root)  # the manifest, and the leg as a gitlink: a clean root
+        shape = self.base / "shape"
+        runs = self.recording_script(shape / "update-shape.py")
+        fake_dir = self.base / "fake"
+        clean_support.install_fake_git(fake_dir, "status-hangs-in", path=leg)
+        result = self.run_launched(table, "update", root, "--apply", "--component", "shape",
+                                   "--shape-source", shape, "--at", "a" * 40, "--yes",
+                                   env=self.path_first(fake_dir))
+        self.assert_status(result, 2)
+        self.assertEqual(result.stderr, "REFUSED: " + CHILD_WORK.format(PATH=leg) + "\n")
+        self.assertFalse(runs.exists(), "the owner tool was never invoked")
+
+    def test_status_a_submodule_checkout_is_reported(self):
+        # FR-055, analyze H4, lead ruling R-42: status and doctor report what
+        # clean refuses, a submodule's checkout and a linked worktree of a bare
+        # repository, and never refuse.
+        superproject = self.repo("super")
+        sub = self.submodule(superproject)
+        self.commit(superproject)
+        sub_head = self.git(sub, "rev-parse", "HEAD").strip()
+        seed = self.repo("seed")
+        seed_head = self.git(seed, "rev-parse", "HEAD").strip()
+        bare = self.base / "bare.git"
+        self.git(self.base, "init", "-q", "--bare", bare)
+        self.git(seed, "push", "-q", bare, "main")
+        linked = self.base / "linked"
+        self.git(bare, "worktree", "add", "-q", "-b", "001-linked", linked, "main")
+        cases = (
+            ("submodule", sub, {"present": True, "branch": "main", "head": sub_head, "dirty": False,
+                                "upstream": "origin/main", "ahead": 0, "behind": 0}, [str(sub)], 0),
+            ("bare", linked, {"present": True, "branch": "001-linked", "head": seed_head, "dirty": False,
+                              "upstream": None, "ahead": None, "behind": None}, [str(linked)], 0),
+        )
+        for label, path, values, trees, doctor_code in cases:
+            for name, code in (("status", 0), ("doctor", doctor_code)):
+                with self.subTest(case=label, command=name):
+                    result = self.run_json(name, path, "--json")
+                    self.assert_status(result, code)
+                    repository = result.document["repository"]
+                    self.assertEqual({key: repository[key] for key in values}, values)
+                    self.assertNotIn("classification", repository)
+                    self.assertEqual([tree["path"] for tree in repository["worktrees"]], trees)
+
 
 if __name__ == "__main__":
     unittest.main()
