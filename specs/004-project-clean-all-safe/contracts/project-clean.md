@@ -183,7 +183,10 @@ one progress line per target, printed at its final stage, `  STAGE PATH` or
 `  STAGE PATH (REASON)`, `pending` never printed (R-56 Q-10); "D18 success
 line" followed by "D18 residual-window line", as the stop block is (R-56
 Q-9); the retained-branch line `Branches kept: B1, B2.`, naming every
-selected target's branch in canonical order; a plan-blocking refusal prints
+selected target's branch in canonical order; a stop block with no target
+`not-attempted`, as when the last selected target stops the run, reads
+`Not attempted: none.`, a fill, since D18's stop block has no such form
+(lead ruling R-68 (a)); a plan-blocking refusal prints
 the plan, then `REFUSED: MESSAGE`; each code with no baseline message gets
 one here:
 

@@ -861,8 +861,12 @@ T033), when B, D, E and F are; H, guard (T034, T035), when T023 is, beside G
   apart; lead rulings R-54 X-1 and R-64 (b); returning the identity `{root,
   common_dir, dev, ino}` with the rows' evidence; where `main_worktree()`
   gives `None`,
-  `root` is null and rows 4 to 7 run in the common directory for a bare
-  repository, and otherwise where row 3 ran, FR-055);
+  `root` is null and rows 6 and 7 run in the common directory for a bare
+  repository, and otherwise where row 3 ran, FR-055; row 4 runs where row 3
+  ran in every layout, before the main worktree is known, which for a bare
+  repository is equivalent to the common directory, since `git worktree
+  list` reads the same registry from either and prints the same bytes, as
+  data-model.md records (lead ruling R-68, lane 4's note));
   `verify_registration()` and the presence `lstat`, both through `fs_call()`
   (`present` false on `ENOENT` or `ENOTDIR`, null with an `os-error` on any
   other failure, lead ruling R-36; a `present: false` row is decided first
@@ -1158,9 +1162,10 @@ L-8).
   1 or 2) and `test_clean_result_document_keys` (the keys equal the contract
   tuples; `reconciliation` is an object on `removed`, `refused`, `failed` and
   `unknown` targets and null on `not-attempted` ones; `exit_status` is null
-  unless a child was spawned and reaped, and 128 plus the signal number when a
-  signal ended it, whoever sent it, 137 for a child killed at the ceiling; plan
-  review M12).
+  unless a child was spawned and reaped, and 128 plus the number of the
+  signal that ended it, whoever sent it: 143 when SIGTERM ends it, and 137
+  only for a child that outlives SIGTERM until SIGKILL; plan review M12,
+  lead ruling R-68 (b)).
   — files: `tests/test_clean_apply.py`
   — verify: `python3 -c "import sys,unittest as u;L=u.defaultTestLoader;f=lambda s:[i for t in s for i in (f(t) if isinstance(t,u.TestSuite) else [t.id()])];I=[i for i in f(L.discover('tests',pattern=sys.argv[1])) if not i.startswith('unittest.')];A=sys.argv[2:];M=[a for a in A if not any(a in ('*',i.split('.')[-1]) for i in I)];[print('not collected:',m) for m in M];[print(e) for e in L.errors];sys.exit(1 if M or L.errors or not A else 0)" test_clean_apply.py 'test_clean_apply_exit_table' 'test_clean_result_document_keys'`
 - [ ] T046 [P] [US1] [O] Rewrite
@@ -1509,7 +1514,9 @@ L-8).
   `print_result()` (one progress line per target, printed at its final stage,
   `  STAGE PATH` or `  STAGE PATH (REASON)`, `pending` never printed (R-56
   Q-10); `Removed N; branches kept: B1, B2.`, then the residual-window line
-  (R-56 Q-9); or the D18 stop block, then `Branches kept: B1, B2.` and the
+  (R-56 Q-9); or the D18 stop block, reading `Not attempted: none.` when no
+  target is `not-attempted`, the contract's fill (lead ruling R-68 (a)),
+  then `Branches kept: B1, B2.` and the
   residual-window line; each list of kept branches naming every selected
   target's branch in canonical order (R-56); plan review M8) to region
   `result`;
@@ -2226,8 +2233,11 @@ the recovery text that T094 prints (analyze M2).
 - [ ] T089 [P] [US5] [O] Add to `tests/test_clean_result.py`:
   `test_clean_a_removal_past_the_hard_ceiling` (launcher, with a table that
   shortens the ceiling, the grace and the reap wait and leaves the probe budget
-  whole (R-29); a `remove-slow` child past the ceiling: its group is killed,
-  `exit_status` 137 once it is reaped (plan review M12), then the rescan
+  whole (R-29); a removal child that ignores SIGTERM and runs past the
+  ceiling, a fixture written in this module (rule 3), since the
+  `remove-slow` fake ends at SIGTERM with 143: SIGTERM to its group, then
+  SIGKILL after the grace, `exit_status` 137 once it is reaped (plan review
+  M12, lead ruling R-68 (b)), then the rescan
   decides: `unknown` with `removal-ceiling`, the note `partially-removed` and
   the recovery text while the entry or path remains, and `removed` with
   `removal-ceiling` when both are gone; later targets `not-attempted`; exit 1);
@@ -2246,8 +2256,13 @@ the recovery text that T094 prints (analyze M2).
   — files: `tests/test_clean_result.py`
   — verify: `python3 -c "import sys,unittest as u;L=u.defaultTestLoader;f=lambda s:[i for t in s for i in (f(t) if isinstance(t,u.TestSuite) else [t.id()])];I=[i for i in f(L.discover('tests',pattern=sys.argv[1])) if not i.startswith('unittest.')];A=sys.argv[2:];M=[a for a in A if not any(a in ('*',i.split('.')[-1]) for i in I)];[print('not collected:',m) for m in M];[print(e) for e in L.errors];sys.exit(1 if M or L.errors or not A else 0)" test_clean_result.py 'test_clean_a_removal_past_the_hard_ceiling' 'test_clean_unreadable_path_after_removal' 'test_clean_exception_after_the_apply_phase_begins'`
 - [ ] T090 [P] [US5] [S] Add `test_clean_stage_and_reason_table` to
-  `tests/test_clean_result.py`: `decide_stage()` on literal inputs reaches
-  every stage and reason pair of data-model.md's "Target stages" and no other;
+  `tests/test_clean_result.py`: `decide_stage()`, which decides a spawned
+  target only, on literal inputs reaches every stage and reason pair of
+  data-model.md's "Target stages" that a spawned target can end in, and no
+  other, the `refused` and `not-attempted` pairs being decided by
+  `revalidate()` and `apply_removals()`; the test calls T056's
+  `decide_stage()` as built and asks no wider signature unless it needs one
+  (lead ruling R-68 (c));
   a child that exits nonzero on its own is `failed` whatever the signal slot
   holds; only a child killed at the ceiling, or whose exit was not observed, is
   decided by the rescan.
@@ -2285,8 +2300,10 @@ the recovery text that T094 prints (analyze M2).
   first of those prints D18's wait line, at most once; the ceiling,
   `TIMING["removal_ceiling"]` read at the spawn, ends the wait by
   `terminate_group()`, which the wait's own loop advances to SIGKILL and a
-  bounded reap (R-30), and a child reaped there has `exit_status` 137 (plan
-  review M12); a child killed there, or whose exit was not observed, is decided
+  bounded reap (R-30), and a child reaped there has `exit_status` 143 when
+  SIGTERM ended it and 137 when it outlived SIGTERM until SIGKILL (plan
+  review M12, lead ruling R-68 (b)); a child killed there, or whose exit was
+  not observed, is decided
   by the rescan with reason `removal-ceiling` and, while its entry or path
   remains, the note `partially-removed`.
   — files: `project`

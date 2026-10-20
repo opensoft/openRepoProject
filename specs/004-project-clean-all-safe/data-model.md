@@ -28,6 +28,15 @@ four identity fields go into the plan and its digest, and are compared at
 every revalidation and first in every rescan; `dev` and `ino` are host-local,
 so a remount that renumbers them fails closed.
 
+Where `root` is null, rows 6 and 7 run in the common directory for a bare
+repository and otherwise where row 3 ran. Row 4, the registry listing, runs
+where row 3 ran in every layout, since the main worktree is not yet known
+when it runs. For a bare repository that is equivalent to running it in the
+common directory: `git worktree list --porcelain -z` reads the same registry
+from a linked worktree and from the common directory and prints the same
+bytes (checked on Git 2.43.0), so the code keeps row 4 where row 3 ran
+(lead ruling R-68, lane 4's note; evidence follow-up 2 may move it).
+
 ### Merge target (D8; FR-018, FR-060)
 
 | Field | Value |
@@ -272,9 +281,10 @@ argument vector, present even when nothing ran), `exit_status`,
 `probes_performed` and `reconciliation`.
 
 `exit_status` is null unless a child was spawned and reaped, and is 128
-plus the signal number when a signal ended it, whoever sent it (137 for a
-child killed at the ceiling), as `BA:1035-1039` (at `da33d92`) and
-`execute()` report it.
+plus the number of the signal that ended it, whoever sent it, as
+`BA:1035-1039` (at `da33d92`) and `execute()` report it: 143 when SIGTERM
+ends it, at the ceiling too, and 137 only for a child that outlives SIGTERM
+until SIGKILL (lead ruling R-68 (b)).
 
 `reconciliation` is an object on every `removed`, `refused`, `failed` or
 `unknown` target and null on a `not-attempted` one:
@@ -312,7 +322,9 @@ target:
 | 6. the combined status probe in the target, which must print nothing | Git child | `state-changed` |
 | 7. the hidden-state probe | Git child | `contains-submodule` (a gitlink); `hidden-local-state` |
 
-At most five Git children (steps 1, 3, 4, 6 and 7). A value null in the plan
+At most five Git children (steps 1, 3, 4, 6 and 7), from T084 on; until
+then T055's interim full re-read runs 6 or 7 where row 4b or row 5 runs,
+and T084 restores the bound (lead ruling R-68 (d)). A value null in the plan
 and null again is no difference; a value that cannot be re-read, a
 timed-out call included, is a difference, with its step's reason. The first
 target's revalidation is the preflight of every selected target: its steps 3
