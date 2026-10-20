@@ -2948,26 +2948,37 @@ class Plan:
     - `repo`: what resolve_clean_target() returned, a dict whose "root" is
       the command directory; `root`, that directory; `mode` and `action`, the
       run's.
-    - `evidence`: inspect_repository()'s dict for the plan's repository (its
-      identity, refs and merge target), or None until build_plan() reads it.
+    - `evidence`: inspect_repository()'s dict for the plan's repository, or
+      None until build_plan() reads it; its `identity` holds `root` and
+      `common_dir` as bytes, `dev` and `ino`.
+    - `repository`: the envelope's object, repository_object()'s, built from
+      that identity.
     - `rows`: the WorktreeRows, main worktree first, then by raw path bytes.
     - `merge_target`: {name, source, sha}, or None until established.
-    - `selected`: the selected rows in canonical order (raw path bytes), each
-      given `removal_args`, the arguments of its removal child,
-      ["-C", ROOT, "worktree", "remove", PATH] with PATH its raw path bytes
-      (design D9), so that its `operation.argv` is git_argv("removal",
-      removal_args); `excluded`: (row, reason) pairs in canonical order, the
-      reason None for an unprobed row.
-    - `target`: in mode single, P's row, or None while none matches.
+    - `selected`: the selected WorktreeRows in canonical order (raw path
+      bytes), each given the attribute `removal_args`, the arguments of its
+      removal child, ["-C", ROOT, "worktree", "remove", PATH] (design D9):
+      ROOT the identity's `root` as bytes, or os.fsencode(root) while none is
+      named, and PATH the row's raw_path, bytes. Its `operation.argv` is
+      git_argv("removal", removal_args), each bytes element written through
+      json_argument().
+    - `excluded`: (row, reason) pairs in canonical order, every reason a
+      gate's, never None (lead ruling R-67 (a)).
+    - `target`: in mode single, P's row, or None while none, or more than
+      one, matches; `target_rows`, the rows P may name (empty outside mode
+      single for --action remove).
     - `notes`: the plan notes, {code, message} objects.
     - `completeness` ("complete" or "incomplete", None until decided) and
       `apply_allowed`.
-    - `refusals`: the Refused objects refuse() recorded, in order; the first
-      is the one a `REFUSED:` line names.
+    - `refusals`: the Refused objects refuse() recorded, one per code, in
+      REFUSAL_CODES order; the first is the one a `REFUSED:` line names.
     - `digest`: plan_digest()'s value, None until computed.
+    - `planning_probes`: the Git children other than removals that built the
+      plan, the F + W + E of the estimate (research.md R8).
     - `printed`: whether print_plan() has written the human plan.
-    - `report`: the baseline report, cleanup_report()'s, which the stages'
-      first bodies read; build_plan() leaves it None once T049 fills it."""
+    - `report`: a baseline-shaped dict {root, target_branch,
+      tracking_freshness, worktrees}, its worktrees the plan's rows, which
+      push_or_delete()'s first body reads; the apply stages do not."""
 
     def __init__(self, repo, run):
         self.repo = repo
@@ -3842,40 +3853,454 @@ def preview_lines(plan):
 
 # region apply
 def confirm_removal(plan, run):
-    """Accept the plan for removal (T054 fills; FR-026; research.md R3): ask
-    the question under raising_signals(), swapped in around the question
-    alone, or take --yes; return None when the plan is accepted, or record
-    `cancelled` through refuse() and return 2, never raising (lead ruling R-56
-    Q-3). The pipeline then reads the slot, sets phase `apply` and calls
-    apply_removals(). First body: the baseline (project:719-720 and :736-737 at
-    961c405), confirm() under raising_signals(), its refusal recorded."""
-    wanted = Path(run.args.worktree).expanduser().resolve()
-    command = ["git", "-C", str(plan.root), "worktree", "remove", str(wanted)]
-    print(f"Cleanup action: remove merged worktree {wanted}")
-    show_plan([command], plan.root)
+    """Accept the plan for removal (T054; FR-026; research.md R3; lead ruling
+    R-56 Q-3): --yes accepts the fresh plan without asking; otherwise
+    ask_removal(), looked up by its global name since T046 patches it there,
+    asks D18's question under raising_signals(), swapped in around the
+    question alone, with the clock paused, and only `yes`, its surrounding
+    whitespace stripped, accepts. Returns None when the plan is accepted. Any
+    other answer records `cancelled`, with the baseline's message, through
+    refuse() and returns 2, never raising. End of input and a signal at the
+    question pass to main() (EOFError, KeyboardInterrupt, Terminated). The
+    pipeline then reads the slot, sets phase `apply` and calls
+    apply_removals()."""
+    if getattr(run.args, "yes", False):
+        return None
+    if ask_removal(plan, run).strip() == "yes":
+        return None
+    return refuse(plan, Refused("Cancelled; no command was run.", code="cancelled"), run)
+
+
+def ask_removal(plan, run):
+    """The removal question (T054; FR-026, design D18; research.md R3): write
+    D18's question for the plan's selected targets, `question_one` for one, to
+    the human stream (run.human, standard error under --apply --json) through
+    say(), which flushes it; then read one line by input() given no prompt, so
+    that standard output never carries the question; and return that line as
+    read, which confirm_removal() strips and compares with `yes`.
+
+    The question alone runs under raising_signals() (D1, D15; research.md R4)
+    with the Invocation's clock paused (run.pause(), FR-031): SIGINT raises
+    KeyboardInterrupt and SIGTERM or SIGHUP Terminated, and end of input
+    raises EOFError, each passing to main(), which prints `Cancelled.` and
+    exits 130, 143 or 129, with no JSON document. A question that could not be
+    written (say() recorded the failed write) is not answered: nothing is read
+    and "" is returned, so the plan is not accepted, and the pipeline's check
+    after the question ends the run as `internal-error` (lead ruling R-55).
+    confirm_removal() looks this function up by its global name, so a test
+    patches it there (T046; lead ruling R-56)."""
+    count = len(plan.selected)
+    question = TEXT["question_one"] if count == 1 else TEXT["question"].format(N=count)
+    run.pause()
     try:
         with raising_signals():
-            confirm(getattr(run.args, "yes", False))
-    except Refused as exc:
-        return refuse(plan, exc, run)
-    return None
+            say(run, question)
+            if getattr(run, "write_error", None) is not None:
+                return ""
+            return input()
+    finally:
+        run.resume()
+
+
+class Target(dict):
+    """One selected target of the apply phase (data-model.md, "Target result
+    and reconciliation record"): as a dict, the target result's values in
+    TARGET_RESULT_KEYS's order as project keeps them, `path_valid_utf8` aside,
+    which result_document() derives: `path`, the registry's raw path bytes;
+    `branch` and `planned_sha`, the planned row's branch and head; `stage`,
+    `pending` until it is final, and its `reason`; `notes`, codes; `command`,
+    the planned argument vector, git_argv("removal", removal_args), held
+    whether or not anything ran; `exit_status`; `probes_performed`; and
+    `reconciliation`, the record, or None while none was read. As attributes,
+    what no document writes: `row`, the plan's selected WorktreeRow;
+    `removal_args`, its removal's arguments (region dispatcher, Plan); `root`,
+    the command directory; and `identity`, the plan's repository identity
+    {root, common_dir, dev, ino}, which the rescan re-establishes first."""
+
+    row = removal_args = root = identity = None
+
+
+def make_target(plan, row):
+    """The pending Target of row, one of plan.selected (T056; design D9): its
+    command is the plan's own argument vector, git_argv("removal",
+    row.removal_args), the vector operation.argv shows (lead ruling R-56)."""
+    target = Target(path=row.raw_path, branch=row["branch"], planned_sha=row["head"], stage="pending",
+                    reason=None, notes=[], command=git_argv("removal", row.removal_args), exit_status=None,
+                    probes_performed=0, reconciliation=None)
+    target.row, target.removal_args, target.root = row, list(row.removal_args), plan.root
+    target.identity = None if plan.evidence is None else plan.evidence["identity"]
+    return target
+
+
+# The planned values revalidate() compares on the re-read row (T055): the
+# baseline signature fields (cleanup_signature(), project:494-497 at 961c405)
+# and `locked` (design D7).
+REVALIDATED_FIELDS = ("path", "branch", "head", "present", "dirty", "ignored_files", "upstream", "ahead",
+                      "behind", "remote_present", "merged_into_target", "current", "classification",
+                      "locked")
+IDENTITY_FIELDS = ("root", "common_dir", "dev", "ino")
+
+
+def reconciliation_record(registry_entry_present, path_present, branch_present, branch_sha):
+    """A reconciliation record in RECONCILIATION_KEYS's order (data-model.md,
+    "Target result and reconciliation record"): each value true, false or
+    null, null meaning not established; `reconciled` is true only when the
+    three presence fields are non-null and `branch_sha` is non-null whenever
+    `branch_present` is true. A pure function."""
+    reconciled = (None not in (registry_entry_present, path_present, branch_present)
+                  and (branch_sha is not None or not branch_present))
+    return {"registry_entry_present": registry_entry_present, "path_present": path_present,
+            "branch_present": branch_present, "branch_sha": branch_sha, "reconciled": reconciled}
+
+
+def path_presence(raw):
+    """Whether the planned path is present, by one lstat through fs_call()
+    (design D6; data-model.md, "Target result and reconciliation record"):
+    true when it succeeds, false only on ENOENT or ENOTDIR, and null on any
+    other error or when the call is cut at its budget."""
+    try:
+        found = fs_call(os.lstat, raw)
+    except OSError as exc:
+        found = exc
+    if isinstance(found, DriverOutcome):
+        return None
+    return presence_from_lstat(found)[0]
+
+
+def _branch_ref(target):
+    return b"refs/heads/" + target["branch"].encode("utf-8", "surrogateescape")
+
+
+def _branch_evidence(target, refs):
+    """(branch_present, branch_sha) of target's branch in refs, RefParser's
+    records, or (None, None) when the listing did not run or failed."""
+    if refs is None:
+        return None, None
+    for ref in refs:
+        if ref["refname"] == _branch_ref(target):
+            return True, ref["objectname"]
+    return False, None
+
+
+def revalidate(plan, target, run):
+    """Revalidate target after the confirmation, before its removal (T055,
+    this phase's body; design D7, FR-046; lead ruling R-56 Q-13): read the
+    repository afresh through the evidence model, inspect_repository(root,
+    run, refresh=True), never its memo, which would hand back the planned
+    evidence, and rebuild the target's row by worktree_rows(); then compare
+    the repository identity, the merge target {name, source, sha} and the
+    row's REVALIDATED_FIELDS with the plan's. A re-read that fails, a row that
+    is gone, and any difference refuse the target with `state-changed`. T084
+    replaces this body with D7's targeted check and its other reasons.
+
+    Sets target["probes_performed"], the Git children this revalidation ran,
+    and returns None when nothing differs, or (reason, reconciliation): the
+    record from that same re-read, its registry and branch fields null where
+    the listing did not run or the repository identity differs, and the
+    path's presence the re-read row's, or one lstat of the planned path where
+    no row was rebuilt."""
+    before = run.probes
+    raw = target["path"]
+    repo = inspect_repository(plan.root, run, refresh=True)
+    planned = None if plan.evidence is None else plan.evidence["identity"]
+    identity = repo["identity"]
+    same_repository = (identity is not None and planned is not None
+                       and all(identity[key] == planned[key] for key in IDENTITY_FIELDS))
+    records = repo["records"] if same_repository else None
+    matches = [record for record in records or () if record["path"] == raw]
+    rows = worktree_rows(repo, run, records=matches[:1]) if matches else []
+    row = rows[0] if rows else None
+    merge_target = repo["merge_target"]
+    changed = (not same_repository or bool(repo["errors"]) or repo["merge_target_refusal"] is not None
+               or merge_target is None or plan.merge_target is None
+               or any(merge_target[key] != plan.merge_target[key] for key in MERGE_TARGET_KEYS)
+               or row is None or any(row.get(field) != target.row.get(field) for field in REVALIDATED_FIELDS))
+    target["probes_performed"] = run.probes - before
+    if not changed:
+        return None
+    registry_entry_present = None if records is None else bool(matches)
+    path_present = row["present"] if row is not None else path_presence(raw)
+    branch_present, branch_sha = _branch_evidence(target, repo["refs"] if same_repository else None)
+    return "state-changed", reconciliation_record(registry_entry_present, path_present, branch_present,
+                                                  branch_sha)
+
+
+def removal_exit_status(outcome):
+    """A removal's `exit_status` (T045, T056; data-model.md, "Target result and
+    reconciliation record"; plan review M12) from its DriverOutcome: None
+    unless the child was spawned and reaped; Git's own status when it exited;
+    and 128 plus the signal number when a signal ended it, whoever sent it
+    (128 minus Popen's negative return code), so 137 for a child killed at the
+    ceiling, as execute() reports a delegate's."""
+    status = outcome.status
+    if status is None:
+        return None
+    return status if status >= 0 else 128 - status
+
+
+def run_removal(target, run):
+    """Spawn target's removal and wait for it (T056; design D2 and D9,
+    FR-012): a ChildHandle of kind `removal` running git_argv("removal",
+    target.removal_args), the plan's own argument vector, `-C ROOT worktree
+    remove PATH` with PATH the registry's raw bytes and never --force, from
+    the command directory, through run_bounded(), which counts it among
+    `operations`, gives it no budget, never signals it before its ceiling,
+    and waits for it. Sets target["exit_status"] (removal_exit_status()) and
+    returns the DriverOutcome; one that could not be spawned is outcome
+    `failed` with no status."""
+    outcome = run_bounded(("removal", target.removal_args, target.root), None, run)
+    target["exit_status"] = removal_exit_status(outcome)
+    return outcome
+
+
+def rescan(target, run):
+    """The rescan after target's removal child is reaped (T056; design D7;
+    data-model.md, "Revalidation step and probes_performed"): it first
+    re-establishes the repository identity, the identity probe (row 3) in the
+    command directory and the realpath and lstat of the common directory it
+    names, compared with the plan's {root, common_dir, dev, ino}; then the
+    registry listing (row 4, WorktreeListParser), the ref listing (row 6,
+    RefParser) and an lstat of the planned path, each through run_bounded()
+    or fs_call(). Returns the reconciliation record: whether the registry
+    still lists the planned path, whether the path is present, and the
+    branch's presence and SHA, a value not established null. Where the
+    identity cannot be re-established or differs, every field is null and
+    `reconciled` false (T085 decides the stage of such a target)."""
+    unknown = reconciliation_record(None, None, None, None)
+    root = os.fsencode(target.root)
+    values, error = identity_probe(root, run)
+    planned = target.identity
+    if error is not None or planned is None:
+        return unknown
+    try:
+        found = [fs_call(os.path.realpath, values[0]), fs_call(os.path.realpath, values[1])]
+        if not isinstance(found[1], DriverOutcome):
+            found.append(fs_call(os.lstat, found[1]))
+    except OSError:
+        return unknown
+    if any(isinstance(value, DriverOutcome) for value in found):
+        return unknown
+    toplevel, common_dir, common = found
+    if (toplevel, common_dir, common.st_dev, common.st_ino) != tuple(planned[key] for key in IDENTITY_FIELDS):
+        return unknown
+    listing = run_bounded(("probe", ["-C", root, "worktree", "list", "--porcelain", "-z"], None),
+                          WorktreeListParser(), run)
+    registry_entry_present = None
+    if listing.name == "complete":
+        registry_entry_present = any(record["path"] == target["path"] for record in listing.result)
+    refs = run_bounded(("probe", ["-C", root, "for-each-ref", "--format=" + REF_FORMAT, "refs/heads",
+                                  "refs/remotes"], None), RefParser(), run)
+    branch_present, branch_sha = _branch_evidence(target, refs.result if refs.name == "complete" else None)
+    return reconciliation_record(registry_entry_present, path_presence(target["path"]), branch_present,
+                                 branch_sha)
+
+
+def decide_stage(target, outcome, reconciliation):
+    """The final stage of a spawned target (T056; design D9, D15 and D19;
+    data-model.md, "Target stages"), a pure function of its removal's
+    DriverOutcome and the rescan's reconciliation record; returns (stage,
+    reason, notes). target is the Target, whose planned branch and head the
+    branch-after-removal reasons read (T085).
+
+    - Not spawned (outcome `failed` with no status): `failed`, `spawn-error`.
+    - Exited on its own, signal or not: nonzero is `failed`, `git-refused` for
+      128 and `git-failed` for any other status, whatever the slot holds; 0
+      is `removed` with reason null when the registry entry and the path are
+      both gone, and otherwise `unknown` with `unconfirmed-removal`.
+    - Cut at its ceiling, or its exit not observed (outcome `timeout`, design
+      D9): the rescan alone decides, `removed` when the entry and the path are
+      both gone, otherwise `unknown`, each with `removal-ceiling`, and the
+      note `partially-removed` while the entry or the path remains. T092
+      adds the wait around it; this function is total over the outcomes
+      run_bounded() gives a removal handle."""
+    gone = reconciliation["registry_entry_present"] is False and reconciliation["path_present"] is False
+    if outcome.name == "timeout":
+        if gone:
+            return "removed", "removal-ceiling", []
+        remains = reconciliation["registry_entry_present"] or reconciliation["path_present"]
+        return "unknown", "removal-ceiling", ["partially-removed"] if remains else []
+    if outcome.status is None:
+        return "failed", "spawn-error", []
+    if outcome.status != 0:
+        return "failed", "git-refused" if outcome.status == 128 else "git-failed", []
+    if gone:
+        return "removed", None, []
+    return "unknown", "unconfirmed-removal", []
 
 
 def apply_removals(plan, run):
-    """Remove the plan's selected worktrees (T057 fills): called in phase
-    `apply`, which the pipeline sets, never this function (lead ruling R-56);
-    returns the run's exit status by D19. First body: the baseline
-    revalidation and removal (project:719, :721-722 and :741-743 at
-    961c405)."""
-    wanted = Path(run.args.worktree).expanduser().resolve()
-    command = ["git", "-C", str(plan.root), "worktree", "remove", str(wanted)]
-    expected = {"target_branch": plan.report["target_branch"],
-                "signature": cleanup_signature(plan.report, plan.target)}
-    require_unchanged_cleanup_state(plan.root, "remove", expected, path=wanted)
-    return execute(command)
+    """Remove the plan's selected worktrees (T057; design D7, D9 and D19;
+    contracts/project-clean.md, "Order of a run", step 8): called in phase
+    `apply`, which the pipeline sets, never this function (lead ruling R-56).
+    Per selected row, in canonical order: its Target (make_target()); its
+    revalidation (revalidate()), a difference refusing it; otherwise its
+    removal child, spawned and waited for (run_removal()), the rescan
+    (rescan()) and its stage (decide_stage()). The batch stops after the
+    first target that is not a plain `removed` (reason null), and every later
+    target is `not-attempted` with `batch-stopped` and no reconciliation.
+    Each target's progress line prints at its final stage (print_progress()),
+    then the result (print_result()), every human line through say() to
+    run.human, standard error under --apply --json; under --apply --json the
+    apply result record then goes to standard output through
+    write_document(). After the apply phase begins every write is
+    best-effort (lead ruling R-55): a failed one is recorded, never raised,
+    and never changes the exit. Returns apply_exit_status(targets,
+    run.signal), D19's table, whose first row reads the slot. T093 adds the
+    slot's seams, the reserve and the handling of an exception; T084 and T085
+    the targeted revalidation and rescan."""
+    targets = [make_target(plan, row) for row in plan.selected or ()]
+    stopped = False
+    for target in targets:
+        if stopped:
+            target.update(stage="not-attempted", reason="batch-stopped", reconciliation=None)
+        else:
+            refused = revalidate(plan, target, run)
+            if refused is not None:
+                reason, reconciliation = refused
+                target.update(stage="refused", reason=reason, reconciliation=reconciliation)
+            else:
+                outcome = run_removal(target, run)
+                reconciliation = rescan(target, run)
+                stage, reason, notes = decide_stage(target, outcome, reconciliation)
+                target.update(stage=stage, reason=reason, notes=list(notes), reconciliation=reconciliation)
+            stopped = not (target["stage"] == "removed" and target["reason"] is None)
+        print_progress(target, run)
+    status = apply_exit_status(targets, run.signal)
+    print_result(plan, targets, run)
+    if getattr(run.args, "json", False):
+        estimated = getattr(plan, "planning_probes", 0) + 5 * len(targets) + 3
+        write_document(result_document(
+            targets, status, repository=getattr(plan, "repository", None), merge_target=plan.merge_target,
+            plan_digest=plan.digest, probes={"estimated": estimated, "performed": run.probes},
+            operations={"estimated": len(targets), "performed": run.operations}))
+    return status
 # endregion apply
 
 # region result
+# The end of an apply (T045, T057; design D18 and D19; data-model.md, "Target
+# stages", "Exit statuses" and "Apply result record"; contracts/project-clean.md,
+# "Human output", "Apply result record" and "Exit statuses"; lead ruling R-56
+# Q-8 to Q-10). A target is a mapping of the values a target result holds
+# (region apply, Target): these functions read it and never mutate it.
+
+# The reasons that send a run with --apply to D19's second row, exit 1: the
+# deadline stopping work after the apply phase began, and the hard ceiling.
+EXIT_ONE_REASONS = ("deadline-exceeded", "removal-ceiling")
+
+
+def apply_exit_status(targets, signum):
+    """The exit status of a run with --apply by D19's table (FR-037; lead
+    ruling R-56 Q-8), its first matching row: signum, the slot's first
+    signal, gives 128 plus its number (130, 143 or 129); then 1 when any
+    target is `unknown`, or its reason is `removal-ceiling` or, on a
+    `not-attempted` target, `deadline-exceeded`; then the status of the first
+    target `failed` with `git-refused` or `git-failed`, Git's own, passed
+    through even when it equals one of project's (OQ-25); then 2 for a
+    `refused` target, a `removed` one with a branch-after-removal reason, or
+    `failed` with `spawn-error`; then 0 when every target is `removed` with
+    reason null, or none was selected. A list no row matches, which the apply
+    phase never builds (a target still `pending`, or `not-attempted` with
+    nothing that stopped the run), fails closed with 2."""
+    if signum is not None:
+        return 128 + int(signum)
+    if any(target["stage"] == "unknown" or target["reason"] in EXIT_ONE_REASONS for target in targets):
+        return 1
+    for target in targets:
+        if (target["stage"] == "failed" and target["reason"] in ("git-refused", "git-failed")
+                and target["exit_status"] is not None):
+            return target["exit_status"]
+    if all(target["stage"] == "removed" and target["reason"] is None for target in targets):
+        return 0
+    return 2
+
+
+def json_argv(argv):
+    """An argument vector as a document writes it: each str as it is, and each
+    path (bytes or a path object) through json_path(), as text."""
+    return [arg if isinstance(arg, str) else json_path(arg)[0] for arg in argv]
+
+
+def target_document(target):
+    """One target result in TARGET_RESULT_KEYS's order (data-model.md, "Target
+    result and reconciliation record"): `path` through json_path() with
+    `path_valid_utf8` beside it, `command` through json_argv(), and
+    `reconciliation` null on a `not-attempted` target and an object in
+    RECONCILIATION_KEYS's order on every other, every field null and
+    `reconciled` false where none was read."""
+    path, valid = json_path(target["path"])
+    reconciliation = None
+    if target["stage"] != "not-attempted":
+        record = target["reconciliation"] or {key: None for key in RECONCILIATION_KEYS}
+        reconciliation = {key: record[key] for key in RECONCILIATION_KEYS}
+        reconciliation["reconciled"] = bool(reconciliation["reconciled"])
+    values = dict(target, path=path, path_valid_utf8=valid, notes=list(target["notes"]),
+                  command=json_argv(target["command"]), reconciliation=reconciliation)
+    return {key: values[key] for key in TARGET_RESULT_KEYS}
+
+
+def result_document(targets, exit_code, *, repository, merge_target, plan_digest, probes, operations):
+    """The apply result record (contracts/project-clean.md, "Apply result
+    record"; data-model.md, "Apply result record"), in APPLY_RESULT_KEYS's
+    order, written by write_document() as the one document of --apply --json
+    once the apply phase has begun: `schema_version` 1; `observed_at`, now,
+    when reconciliation finished; `repository`, `merge_target` and
+    `plan_digest`, the plan's, as its envelope writes them; `probes` and
+    `operations`, {estimated, performed}; one target_document() per target,
+    in canonical order; `exit_code`, the run's exit status (apply_exit_status());
+    and `completeness`, `complete` when every target whose reconciliation is
+    an object has `reconciled: true`, else `incomplete`."""
+    documents = [target_document(target) for target in targets]
+    complete = all(document["reconciliation"]["reconciled"] for document in documents
+                   if document["reconciliation"] is not None)
+    values = {"schema_version": 1, "observed_at": observed_at(), "repository": repository,
+              "merge_target": merge_target, "plan_digest": plan_digest, "probes": probes,
+              "operations": operations, "targets": documents, "exit_code": exit_code,
+              "completeness": "complete" if complete else "incomplete"}
+    return {key: values[key] for key in APPLY_RESULT_KEYS}
+
+
+def progress_line(target):
+    """A target's one progress line, at its final stage (lead ruling R-56
+    Q-10; `pending` is never printed): `  STAGE PATH`, or `  STAGE PATH
+    (REASON)` when it has a reason, PATH through human_path()."""
+    path = human_path(target["path"])
+    if target["reason"] is None:
+        return TEXT["progress_line"].format(STAGE=target["stage"], PATH=path)
+    return TEXT["progress_line_reason"].format(STAGE=target["stage"], PATH=path, REASON=target["reason"])
+
+
+def print_progress(target, run):
+    """Print target's progress line through say() once it is final; the apply
+    phase calls it for each target in canonical order as it ends."""
+    say(run, progress_line(target))
+
+
+def print_result(plan, targets, run):
+    """The human result of an apply (design D18; lead ruling R-56 Q-9), after
+    every target's progress line, through say(), so standard error under
+    --apply --json and a failed write recorded, never raised: when every
+    target is `removed` with reason null, `Removed N; branches kept: B1,
+    B2.`; otherwise D18's stop block at the first target that is not, its
+    `Not attempted:` naming the `not-attempted` targets (`none` when there is
+    none, a case D18 leaves open), its `Next:` command naming plan.root, then
+    `Branches kept: B1, B2.`; and in both cases the residual-window line.
+    Each list of kept branches names every selected target's branch in
+    canonical order, since the apply phase deletes no branch; paths and
+    branches print through human_path(), the command's root in its command
+    form."""
+    branches = ", ".join(human_path(target["branch"]) for target in targets)
+    stop = next((target for target in targets
+                 if not (target["stage"] == "removed" and target["reason"] is None)), None)
+    if stop is None:
+        say(run, TEXT["success_line"].format(N=len(targets), BRANCHES=branches))
+    else:
+        skipped = [human_path(target["path"]) for target in targets if target["stage"] == "not-attempted"]
+        say(run, TEXT["stop_block"].format(
+            PATH=human_path(stop["path"]), REASON=stop["reason"],
+            K=sum(target["stage"] == "removed" for target in targets), N=len(targets),
+            NOT_ATTEMPTED=", ".join(skipped) or "none", ROOT=human_path(plan.root, command=True)))
+        say(run, TEXT["branches_kept_line"].format(BRANCHES=branches))
+    say(run, TEXT["residual_window_line"])
 # endregion result
 
 # region push
