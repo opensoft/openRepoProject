@@ -19,7 +19,8 @@ C-22), so there is no `clarifications.md`: the decisions below carry the
 verdicts, and round C4's edits to `specs/project-overview/spec.md`, agreed
 by lane openRepoProject-4 on 2026-10-20, are committed (`proposal.md`,
 Dependencies and Sequencing). Round C5 applies lane openRepoProject-3's delta
-read of `e198548` and Codex's three findings on it (C-24 to C-27); this design
+read of `e198548` and Codex's three findings on it (C-24 to C-27), with the
+lead's C-28 and C-29 on two points found in applying them; this design
 describes `specs/project-overview/spec.md` as round C5 leaves it, written but
 held for lane openRepoProject-4 and not committed, and until it agrees the
 committed file is the one it agreed in round C4 (`d73d25d`).
@@ -63,6 +64,8 @@ The rulings and the packet's boundary map to the decisions:
 | C-25: no request can be sent or answered, so `unavailable` outranks the request cap | D4, D5, D6 |
 | C-26: a lookup of `gh` that fails or runs out of time | D5, D10, D11, Risks |
 | C-27: one sentinel byte past each read bound | D6 |
+| C-28: a key past the 64th stays `request-cap` at an expiry | D4, D5, D7 |
+| C-29: one sentinel byte past each remote-target read's 64 KiB | D2 |
 | C-10, L-12: CI on Linux only | Migration Plan |
 
 What in `project` shapes the approach (at `961c405`; features 004 and 005
@@ -200,10 +203,12 @@ protocol pins:
    only makes the child fail.
 
 Any other failure, a budget reached or a stop at the deadline gives
-`remote-target-unread` (D7). Each child's standard output is capped at
-64 KiB, and its standard error is drained and discarded, never kept for a
-message, because Git may echo the remote's name or URL there. The URL lives
-in memory only for D3's judgement.
+`remote-target-unread` (D7). Each child's standard output is read to at most
+64 KiB and one byte and kept to at most 64 KiB, the byte past the cap telling
+an output of exactly 64 KiB from a longer one, which fails the read (C-29),
+and its standard error is drained and discarded, never kept for a message,
+because Git may echo the remote's name or URL there. The URL lives in memory
+only for D3's judgement.
 
 The two reads are counted in the envelope's `probes`, as lane
 openRepoProject-4's fourth option has it (C-9): they are Git children, so
@@ -272,7 +277,10 @@ its first appearance. The first 64 are sent; the rest are `request-cap` only
 when requests can be sent and the cap stops them: with no `gh` found (D5), or
 when each of the 64 requests sent exits 4 with nothing on standard output (D6),
 they are `gh-unavailable` or `gh-unauthenticated`, as every other key is
-(C-25). `requests.estimated` is the number of distinct keys. Rows sharing a
+(C-25). The cap decides before any request whether a key is sent, so a key
+past the 64th stays `request-cap` when the remote budget or the deadline
+expires, and only keys within the cap are `cancelled` or `aborted` (D7; C-28).
+`requests.estimated` is the number of distinct keys. Rows sharing a
 key share the response, and each row is matched against it with its own
 repository's base branch (D6), since two clones of one repository can have
 different merge targets.
@@ -347,10 +355,11 @@ starts (C-25, C-26). [B]'s bounded-task rule would otherwise record
 `probe-timeout`; [B]'s added paragraph and [R]'s isolation clause record the
 lookup's failure or cut only in the rows' `remote`, never as a row or scan
 error (D10). A lookup that the deadline stops before its 5 s end leaves its
-rows `cancelled`, as an expiry does (D7), just as [B] tells
-`deadline-exceeded` from `probe-timeout` and D7 tells `aborted` from
-`timeout`. The README's next step for `gh-unavailable` names both causes:
-install `gh`, or check that `PATH`'s directories are reachable.
+rows as an expiry does (D7), `cancelled` within the cap and `request-cap` past
+it (C-28), just as [B] tells `deadline-exceeded` from `probe-timeout` and D7
+tells `aborted` from `timeout`. The README's next step for `gh-unavailable`
+names both causes: install `gh`, or check that `PATH`'s directories are
+reachable.
 
 Rejected: REST `commits/{sha}/pulls` (an unknown commit is HTTP 422, an
 `unknown` under DI:1055-1056, and a further page shows only in a `Link`
@@ -430,9 +439,13 @@ child; the key is `timeout` when the child's own 5 s ended first and `aborted`
 when the budget or the deadline did.
 
 When the remote budget ends or the deadline passes, no child starts; every
-key not yet sent, and every row whose remote-target read never started, is
-`cancelled`; every request in flight is stopped as above and `aborted`; and a
-remote-target read in flight is stopped and its rows `remote-target-unread`.
+key within the cap not yet sent, and every row whose remote-target read never
+started, is `cancelled`; every request in flight is stopped as above and
+`aborted`; a key past the 64th stays `request-cap`, since the cap decided
+before any request that it is never sent (D4; C-28); the run-wide
+`unavailable` of D5 and D6 outranks both `cancelled` and `request-cap`
+(C-25, C-28); and a remote-target read in flight is stopped and its rows
+`remote-target-unread`.
 None of these is a row error or a scan error, and none is [B]'s `probe-timeout`
 or `deadline-exceeded` on a row: [B] and [E], as this change modifies them,
 record them in the rows' `remote` (D2, D10). Everything starts inside the 60 s
