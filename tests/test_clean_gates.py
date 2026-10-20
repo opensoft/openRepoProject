@@ -136,6 +136,201 @@ class GatesTests(clean_support.CleanCase):
              "reason": reason}])
         self.assertEqual((result.document["selected"], result.document["apply_allowed"]), ([], False))
 
+    # T061: "Every protected classifier".
+
+    def protected_repository(self):
+        """The repository of "Every protected classifier": every protected
+        class as a linked worktree, beside the main worktree on the merge
+        target and one plain merged, clean, published worktree with a commit of
+        its own. Returns its paths by name and the expected reason of each
+        excluded path; the non-UTF-8 row is added under linux_paths only."""
+        base = self.base
+        root = self.repo()
+        self.bare_remote()
+        trees = {"root": root}
+        reasons = {str(root): "main-worktree"}
+
+        def add(name, reason, tree):
+            trees[name] = tree
+            if reason is not None:
+                reasons[str(tree)] = reason
+
+        stale = base / "stale"
+        self.git(root, "worktree", "add", "-q", "-b", "001-stale", stale)
+        shutil.rmtree(stale)
+        add("stale", "stale-worktree", stale)
+        detached = base / "detached"
+        self.git(root, "worktree", "add", "-q", "--detach", detached)
+        add("detached", "detached", detached)
+        dirty = self.merged_worktree("003-dirty", path=base / "dirty")
+        (dirty / "uncommitted").write_text("preserve")
+        add("dirty", "dirty", dirty)
+        ignored = self.merged_worktree("004-ignored", path=base / "ignored",
+                                       setup=lambda tree: (tree / ".gitignore").write_text("local.env\n"))
+        (ignored / "local.env").write_text("preserve")
+        add("ignored", "ignored-local-files", ignored)
+        unpublished = base / "unpublished"
+        self.git(root, "worktree", "add", "-q", "-b", "005-unpublished", unpublished)
+        (unpublished / "work").write_text("work")
+        self.commit(unpublished)
+        add("unpublished", "unpublished", unpublished)
+        gone = self.pushed_worktree("006-remote-gone", base / "remote-gone")
+        self.git(root, "push", "-q", "origin", "--delete", "006-remote-gone")
+        add("remote-gone", "remote-gone", gone)
+        diverged = self.pushed_worktree("007-diverged", base / "diverged")
+        (diverged / "remote-side").write_text("remote")
+        self.commit(diverged)
+        self.git(diverged, "push", "-q", "origin", "007-diverged")
+        self.git(diverged, "reset", "-q", "--hard", "HEAD~1")
+        (diverged / "local-side").write_text("local")
+        self.commit(diverged)
+        add("diverged", "diverged", diverged)
+        behind = self.pushed_worktree("008-remote-ahead", base / "remote-ahead")
+        (behind / "remote-side").write_text("remote")
+        self.commit(behind)
+        self.git(behind, "push", "-q", "origin", "008-remote-ahead")
+        self.git(behind, "reset", "-q", "--hard", "HEAD~1")
+        add("remote-ahead", "remote-ahead", behind)
+        unpushed = self.pushed_worktree("009-unpushed", base / "unpushed")
+        (unpushed / "later").write_text("later")
+        self.commit(unpushed)
+        add("unpushed", "unpushed", unpushed)
+        add("pushed-unmerged", "pushed-unmerged", self.pushed_worktree("010-pushed-unmerged",
+                                                                       base / "pushed-unmerged"))
+        add("current", "merged-current", self.merged_worktree("011-current", path=base / "current"))
+        locked = self.merged_worktree("012-locked", path=base / "locked")
+        self.git(root, "worktree", "lock", locked)
+        add("locked", "locked-worktree", locked)
+
+        @clean_support.linux_paths
+        def non_utf_8():
+            raw = os.fsencode(base) + b"/non-utf-8-" + bytes([0xFF])
+            tree = self.merged_worktree("013-non-utf-8", path=raw)
+            trees["non-utf-8"] = tree
+            reasons[str(base) + "/non-utf-8-\\xff"] = "unsupported-path-bytes"
+
+        with self.subTest("merged with a non-UTF-8 path, under linux_paths"):
+            non_utf_8()
+        hidden = self.merged_worktree("014-assume-unchanged", path=base / "assume-unchanged")
+        self.git(hidden, "update-index", "--assume-unchanged", "work-014-assume-unchanged")
+        (hidden / "work-014-assume-unchanged").write_text("hidden edit")
+        add("assume-unchanged", "hidden-local-state", hidden)
+        add("plain", None, self.merged_worktree("015-plain", path=base / "plain"))
+        # Last: once merged, its gitlink is in the merge target's tree, and a
+        # worktree added after it would hold that gitlink too.
+        add("submodule", "contains-submodule",
+            self.merged_worktree("016-submodule", path=base / "submodule", setup=self.submodule))
+        return trees, reasons
+
+    def test_clean_every_protected_classifier(self):
+        trees, reasons = self.protected_repository()
+        root, current = trees["root"], trees["current"]
+        before = self.snapshot(root)
+        result = self.preview(root, cwd=current)
+        self.assert_status(result, 0)
+        document = result.document
+        self.assertEqual([entry["path"] for entry in document["selected"]], [str(trees["plain"])])
+        self.assertEqual(by_path(document), reasons, "every other row excluded with the gate order's reason")
+        self.assertEqual((document["completeness"], document["apply_allowed"], document["refusals"]),
+                         ("complete", True, []))
+        # The index gates exclude without relabelling: both rows keep their class.
+        for name in ("assume-unchanged", "submodule"):
+            row = row_of(document, trees[name])
+            self.assertEqual((row["classification"], row["errors"]), ("merged-removable", []), name)
+        # The human preview groups them under their gates' next steps.
+        human = self.run_cli("clean", root, "--all-safe", cwd=current)
+        self.assert_status(human, 0)
+        lines = human.stdout.splitlines()
+        for reason, name in (("contains-submodule", "submodule"), ("hidden-local-state", "assume-unchanged")):
+            group = lines.index(TEXT["excluded_group"].format(REASON=reason, K=1, NEXT_STEP=STEPS[reason]))
+            branch = self.git(trees[name], "branch", "--show-current").strip()
+            self.assertEqual(lines[group + 1], TEXT["excluded_row"].format(PATH=trees[name], BRANCH=branch))
+        self.assertEqual(self.snapshot(root), before, "a preview changes nothing")
+
+    def test_clean_every_protected_classifier_incomplete_copy(self):
+        trees, reasons = self.protected_repository()
+        root, current = trees["root"], trees["current"]
+        plain = str(trees["plain"])
+        refused = TEXT["plan_incomplete"].format(CODE="inspection-incomplete",
+                                                 REMEDY=TEXT["remedy_inspection_incomplete"])
+
+        def assert_incomplete(added):
+            """The copy's plan, with added (path to reason) beside the
+            scenario's rows: incomplete, its preview exit 1, and --apply with
+            --yes refused with exit 2, nothing removed."""
+            before = self.snapshot(root)
+            result = self.preview(root, cwd=current)
+            self.assert_status(result, 1)
+            document = result.document
+            self.assertEqual(by_path(document), {**reasons, **added})
+            self.assertEqual([entry["path"] for entry in document["selected"]], [plain])
+            for path in added:
+                self.assertEqual({row["classification"] for row in document["worktrees"] if row["path"] == path},
+                                 {"inspection-error"}, path)
+            self.assertEqual((document["completeness"], document["apply_allowed"], document["refusals"]),
+                             ("incomplete", False, [{"code": "inspection-incomplete", "message": refused}]))
+            result, records = self.run_counted("clean", root, "--all-safe", "--apply", "--yes", "--json",
+                                               cwd=current)
+            self.assert_status(result, 2)
+            self.assertEqual(self.load_json(result)["refusals"],
+                             [{"code": "inspection-incomplete", "message": refused}])
+            self.assertEqual(removals(records), [])
+            self.assertEqual(self.snapshot(root), before, "nothing removed")
+
+        @clean_support.not_root
+        def unreadable():
+            hidden = self.base / "unreadable"
+            hidden.mkdir()
+            tree = hidden / "tree"
+            self.git(root, "worktree", "add", "-q", "-b", "021-unreadable", tree)
+            hidden.chmod(0o600)
+            try:
+                assert_incomplete({str(tree): "inspection-error"})
+            finally:
+                hidden.chmod(0o700)
+                self.git(root, "worktree", "remove", "--force", tree)
+
+        with self.subTest("a copy adding an unreadable worktree"):
+            unreadable()
+        with self.subTest("a copy adding a broken admin registration"):
+            broken = self.merged_worktree("022-broken", path=self.base / "broken")
+            gitfile = broken / ".git"
+            saved = gitfile.read_bytes()
+            missing = self.common_dir(root) / "worktrees" / "missing-admin"
+            gitfile.write_text(f"gitdir: {missing}\n")
+            try:
+                assert_incomplete({str(broken): "registration-mismatch"})
+            finally:
+                gitfile.write_bytes(saved)
+                self.git(root, "worktree", "remove", broken)
+        with self.subTest("a copy adding a second registry entry naming a present worktree's path"):
+            shared = self.merged_worktree("023-shared", path=self.base / "shared")
+            admin = self.common_dir(root) / "worktrees"
+            shutil.copytree(admin / shared.name, admin / "shared-copy")
+            self.assertEqual(self.git(root, "worktree", "list", "--porcelain").splitlines().count(
+                f"worktree {shared}"), 2)
+            # Both entries are registration-mismatch (lead rulings R-57 L3 and
+            # R-59 D6); the map holds the path once, the document twice.
+            assert_incomplete({str(shared): "registration-mismatch"})
+            document = self.preview(root, cwd=current).document
+            self.assertEqual([entry["reason"] for entry in document["excluded"] if entry["path"] == str(shared)],
+                             ["registration-mismatch", "registration-mismatch"])
+            # Lead ruling R-62 (a): naming the shared path refuses with
+            # inspection-incomplete, exit 2, before any target-excluded; nothing
+            # is removed.
+            before = self.snapshot(root)
+            result, records = self.run_counted("clean", root, "--apply", "--action", "remove", "--worktree", shared,
+                                               "--yes", cwd=current)
+            self.assert_status(result, 2)
+            self.assertEqual(result.stderr, f"REFUSED: {refused}\n")
+            self.assertEqual(removals(records), [])
+            result = self.run_json("clean", root, "--apply", "--action", "remove", "--worktree", shared, "--yes",
+                                   "--json", cwd=current)
+            self.assert_status(result, 2)
+            self.assertEqual((result.document["refusals"], result.document["selected"]),
+                             ([{"code": "inspection-incomplete", "message": refused}], []))
+            self.assertEqual(self.snapshot(root), before, "nothing removed")
+
     # T064: "A merged worktree whose upstream was deleted"; "A deleted upstream
     # is remote-gone". They pin T032, T049 and T057.
 
