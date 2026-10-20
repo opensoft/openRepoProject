@@ -322,7 +322,12 @@ and require the opened directory's device and inode to equal the target's
 recorded worktree identity; it SHALL open every directory below the root
 relative to its parent's descriptor with `O_DIRECTORY` and `O_NOFOLLOW`, and
 require each opened directory's device and inode to equal those that the plan
-recorded for it. It SHALL remove a file by an unlink relative to its directory's
+recorded for it. In its preflight, and again in its removals, it SHALL open
+that chain once for each directory that holds a listed path, not once per
+entry, checking every identity on it, SHALL check or remove that directory's
+listed entries relative to its descriptor, and SHALL reach a listed cache
+directory and the directories inside it from that descriptor. It SHALL remove a
+file by an unlink relative to its directory's
 descriptor, and a directory by a removal relative to its parent's descriptor
 only after removing every entry it listed there. It SHALL NOT use a recursive
 deletion, a check by path name followed by a deletion by path name, `git clean`,

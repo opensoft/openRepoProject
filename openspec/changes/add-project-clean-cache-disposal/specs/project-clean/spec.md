@@ -546,7 +546,8 @@ The caps SHALL be: at most 128 worktree rows in
 registry entry counting, the main worktree and missing rows included; at most 16
 targets per run; and the ignored-file bounds that "Repository inspection
 requires Git 2.36 and shares one evidence model" sets; and the cache caps: at
-most 16 cache enumerations per invocation, at most 512 cache entries and 256 MiB
+most 16 cache enumerations per invocation, at most 512 recorded cache objects,
+its cache entries and the directories its plan records for them, and 256 MiB
 (268,435,456 bytes) per worktree, and at most 4,096 cache entries and 1 GiB
 (1,073,741,824 bytes) per invocation, applied as "Clean disposes of listed
 caches before a worktree removal" states. A cache cap reached SHALL keep its row
@@ -842,7 +843,10 @@ disposal never follows a symlink or leaves its worktree" adds. Names SHALL match
 byte for byte. Every other ignored path SHALL be blocking. A cache entry SHALL
 be each file and each directory that disposing of a listed cache removes, the
 listed path included, and a listed cache's bytes SHALL be the sum of the
-`lstat` sizes of its regular files.
+`lstat` sizes of its regular files. A worktree's recorded cache objects SHALL
+be its cache entries and every directory that its plan records for its cache
+stage, each directory between the worktree root and a listed path included,
+each counted once.
 
 A candidate SHALL be a linked worktree row whose combined status probe
 established `dirty` false after reading at least one ignored record, which
@@ -861,10 +865,13 @@ after the row's identity is verified: one Git child in the row's own worktree,
 carrying the status pins `-c core.untrackedCache=false -c
 core.fsmonitor=false`, the protocol pins, the scrubbed environment and
 `GIT_OPTIONAL_LOCKS=0` that every read-only Git child carries, under the
-per-child budget and counted in `probes`; then a walk of each listed directory
-that opens every directory relative to its parent's descriptor without
-following a symbolic link, each directory open, listing and `lstat` one
-filesystem call under the per-call budget. The walk SHALL also check, for each
+per-child budget and counted in `probes`; then a walk that takes the records in
+canonical order, opens each directory it records once, from the worktree root
+down, relative to its parent's descriptor and without following a symbolic
+link, lists each listed or nested cache directory and `lstat`s each entry, each
+directory open, listing and `lstat` one filesystem call under the per-call
+budget, and stops at the row's 513th recorded cache object. The walk SHALL also
+check, for each
 directory that a cache stage would change (each listed cache directory, each
 nested `__pycache__` directory and the parent of each listed path), that the
 running user may remove entries from it: one descriptor-relative access check
@@ -879,8 +886,9 @@ caps, or when its cache stage could not remove them:
 - `not-candidate`: it holds ignored records but is not a candidate, the sample
   test included;
 - `cache-cap`: it is a candidate past the 16th; its child reached its record
-  bound; its cache entries exceed 512 or its bytes 256 MiB (268,435,456,
-  `limits.cache_bytes`); or, every ignored path being a listed cache that
+  bound; its recorded cache objects exceed 512 (`limits.cache_entries`) or its
+  bytes 256 MiB (268,435,456, `limits.cache_bytes`); or, every ignored path
+  being a listed cache that
   passes the access check, its entries or bytes would take the invocation's
   totals, summed in canonical order over such rows, past 4,096 entries
   (`limits.cache_entries_total`) or 1 GiB (1,073,741,824,
@@ -901,18 +909,29 @@ SHALL NOT stop the run. A candidate whose enumeration leaves it at the
 sample test keeps out of them a row whose samples show a blocking name, but not
 a row whose samples all have cache names while it holds a blocking path beyond
 its 8 samples, a path with a cache name that is blocking by its type, its
-contents or its device, more cache entries or bytes than a per-worktree cap
-allows, an enumeration that fails, or a cache directory that the running user
-cannot change. When each of the first 16 candidates in canonical order is left
-with `blocking` above 0, by a per-worktree cap, with `cache-unverified` or with
-`cache-unwritable`, no later candidate is enumerated, and a re-run enumerates
-the same 16 first; the human report SHALL then, and only then, say why the rows
-left with `cache-cap` will not drain, naming from those 16 rows' reasons how
-many hold ignored files that are not caches, how many exceed a per-worktree
-cache cap, how many could not be enumerated and how many hold a cache directory
-that the running user cannot change, each with its next step, and SHALL never
-tell the person to remove by hand a worktree whose state was not established;
-otherwise a later run SHALL take the rows the caps left. A deadline that passes
+contents or its device, more recorded cache objects or bytes than a
+per-worktree cap allows, an enumeration that fails, or a cache directory that
+the running user cannot change. A candidate SHALL be held at the rung for a
+persistent reason when any one of these holds:
+
+- its enumeration finished with `blocking` above 0;
+- its `reason` is `cache-cap` from a per-worktree cap, which leaves its counts
+  null, and not from the invocation's totals, which leave them established, nor
+  from the 16-enumeration cap, which leaves only candidates past the 16th;
+- its `reason` is `cache-unverified`;
+- its `reason` is `cache-unwritable`.
+
+The test SHALL read these reasons and never `blocking` alone, which is null for
+`cache-cap` and `cache-unverified` and 0 for `cache-unwritable`. When each of
+the first 16 candidates in canonical order is held for a persistent reason, no
+later candidate is enumerated, and a re-run enumerates the same 16 first; the
+human report SHALL then, and only then, say why the rows left with `cache-cap`
+will not drain, naming from those 16 rows' reasons how many hold ignored files
+that are not caches, how many exceed a per-worktree cache cap, how many could
+not be enumerated and how many hold a cache directory that the running user
+cannot change, each with its next step, and SHALL never tell the person to
+remove by hand a worktree whose state was not established; otherwise a later
+run SHALL take the rows the caps left. A deadline that passes
 during an enumeration SHALL make the plan incomplete with `deadline-exceeded`,
 as it does during any probe. A row whose enumeration finished with no cap
 reached SHALL have its ignored records counted as `disposable`, those that are
@@ -994,10 +1013,11 @@ stage that ends `refused` or `partial` SHALL refuse the target with
 removal child is spawned, the target carries its reconciliation, no later
 target is attempted, and the exit status is the first matching row of the table
 that "Clean records a reconcilable result for every removal target" defines, 2
-unless a signal or the deadline decides it. When the removal floor ends a stage
-after its first removal, or the removal ceiling ends the wait for one of its
-removals, every later target SHALL be `not-attempted` with
-`deadline-exceeded`, and the exit status SHALL be 1.
+unless a signal, the deadline or the removal ceiling decides it. When the
+removal floor ends a stage after its first removal, or the removal ceiling ends
+the wait for one of its removals, every later target SHALL be `not-attempted`
+with `deadline-exceeded`, and the exit status SHALL be 1 unless a signal
+decides it.
 
 An apply-result target SHALL carry `cache_disposal` exactly when its plan
 listed at least one cache for it, and SHALL carry no such key otherwise, never
@@ -1102,6 +1122,10 @@ guarantee and its residual window" states.
   "cache-cap"`, the first's enumeration child having stopped at its 513th
   record, nothing is deleted, the plan is complete, and apply is allowed, with
   `disposable` and `blocking` null
+- **AND** when a candidate's only ignored file is one loose `.pyc` 600
+  directories below the worktree root, it stays `ignored-local-files` with
+  `cache-cap`, since the directories above that file count toward its 512
+  recorded cache objects, its counts are null, and nothing is deleted
 - **AND** when seventeen candidates each hold one small cache directory, the
   first sixteen in canonical order are enumerated and selected, the seventeenth
   stays `ignored-local-files` with `cache-cap`, `--all-safe --apply --yes`
@@ -1125,6 +1149,16 @@ guarantee and its residual window" states.
   entries, each stays `ignored-local-files` with `cache-cap`, and the line
   names the per-worktree cache cap with its next step, to delete their caches
   and re-run
+- **AND** when the sixteen instead are held with no `blocking` above 0, five
+  because a fake `git` makes their cache enumeration child exit 128, five
+  because their `__pycache__` directory is mode 0555 and the run is not root's,
+  and six because their `__pycache__` directory holds 600 entries, they stay
+  `ignored-local-files` with `cache-unverified`, `cache-unwritable` and
+  `cache-cap`, the seventeenth stays `ignored-local-files` with `cache-cap`,
+  and the line is printed, naming the six that exceed a per-worktree cache cap,
+  the five that could not be enumerated and the five that this user cannot
+  change, each with its next step, and no count of rows holding ignored files
+  that are not caches
 - **AND** when the sixteen instead hold `local.env` among their samples, none
   of them is enumerated, and the seventeenth is enumerated and selected
 
