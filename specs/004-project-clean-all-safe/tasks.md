@@ -1039,8 +1039,12 @@ L-8).
   `dirty`, prints `No eligible worktrees` and exits 0 without asking; with
   `--expect-plan` naming the preview's digest it refuses with
   `plan-digest-mismatch`, exit 2) and `test_clean_paths_and_empty_plans`
-  (worktree paths with spaces are selected and shell-quoted in commands, their
-  removal being T041's, which needs the apply lane (lead ruling R-56 Q-5); an
+  (worktree paths with spaces are selected; the preview prints no command,
+  so such a path prints verbatim in its prose, `  remove PATH [BRANCH]`, is
+  one exact argument of the JSON `operation.argv`, and is shell-quoted by
+  `human_path(..., command=True)` wherever a command prints it (lead ruling
+  R-69); their removal is T041's, which needs the apply lane (lead ruling
+  R-56 Q-5); an
   external worktree whose path is missing is excluded as
   `stale-worktree`, and a locked one as `locked-worktree`; a complete plan
   selecting nothing prints `No eligible worktrees` and exits 0 without asking,
@@ -1420,7 +1424,9 @@ L-8).
   — files: `project`, `tests/clean_support.py`, `tests/test_clean_batch.py`
   — verify: `python3 -c "import sys,re;t=open('project').read();A=sys.argv[1:];c=lambda r:t.split('# region '+r+'\n')[1].split('# endregion '+r+'\n')[0];M=[a for a in A if not ((a.split('%',1)[1] not in c(a.split('%',1)[0])) if '%' in a else (a.split('~',1)[1] in c(a.split('~',1)[0])) if '~' in a else re.search(r'^[a-z]*\s?'+re.escape(a.split(':',1)[1])+r'\b',c(a.split(':',1)[0]),re.M))];[print('region check failed:',m) for m in M];sys.exit(1 if M or not A else 0)" 'preview~human_path' 'preview~selected_heading' 'preview~excluded_group' 'contracts~"main-worktree":' 'contracts~"unsupported-path-bytes":' 'contracts~"not-requested":' && python3 project clean --help >/dev/null && python3 -m unittest discover -s tests -p 'test_clean_harness.py' -k '*.test_clean_text_fixtures_equal_the_contract_table' && python3 -c "import sys,unittest as u;L=u.defaultTestLoader;f=lambda s:[i for t in s for i in (f(t) if isinstance(t,u.TestSuite) else [t.id()])];I=[i for i in f(L.discover('tests',pattern=sys.argv[1])) if not i.startswith('unittest.')];A=sys.argv[2:];M=[a for a in A if not any(a in ('*',i.split('.')[-1]) for i in I)];[print('not collected:',m) for m in M];[print(e) for e in L.errors];sys.exit(1 if M or L.errors or not A else 0)" test_clean_batch.py 'test_clean_a_reader_that_closes_standard_output' 'test_clean_the_preview_says_what_keeps_each_row_single_mode' && python3 -m unittest discover -s tests -p 'test_clean_batch.py' -k '*.test_clean_a_reader_that_closes_standard_output' -k '*.test_clean_the_preview_says_what_keeps_each_row_single_mode'`
 - [x] T053 [P] [US1] [O] Fill `check_plan(plan, run)` in region `dispatcher`, in
-  FR-024's order: an incomplete plan (an all-safe preview exits 1; `--apply`
+  FR-024's order: an incomplete plan (an all-safe preview records its
+  refusal, so that `REFUSED:` and its remedy print and the envelope carries
+  it in `refusals`, and exits 1, lead ruling R-69 reading 1; `--apply`
   refuses with exit 2 and the plan's code before any question; a report still
   exits 0 until T101); an `--expect-plan` mismatch (`plan-digest-mismatch`); a
   complete all-safe plan selecting nothing (`No eligible worktrees`, exit 0);
@@ -2452,7 +2458,10 @@ statuses, the child counts and the order of what was cut.
 
 - [ ] T099 [US6] [O] Bound planning and gate removals by the clock of the
   `Invocation` (FR-029, FR-030; regions `plan` and `apply`): `build_plan()`
-  stops at the work deadline, leaving the remaining rows unprobed and the plan
+  stops at the work deadline, each row it stops being `inspection-error`
+  with a `deadline-exceeded` row error and excluded with reason
+  `inspection-error`, never a null reason and never T031's unprobed marker,
+  which is T066's alone (lead rulings R-67 (a) and R-69), and the plan
   incomplete with `deadline-exceeded`, a non-blocking note in mode single;
   every Git child and filesystem call gets `min(5 s, work remaining)`;
   `apply_removals()` spawns a removal only while the 5 s floor of work remains,

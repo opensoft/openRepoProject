@@ -341,6 +341,12 @@ R-48).
 | `git-too-old` | status or doctor row error, and doctor's `git` row | `Git VERSION is older than 2.36; repository inspection needs Git 2.36 or later.` |
 | `git-unavailable` | status or doctor row error, and doctor's `git` row | `Git is unavailable (DETAIL); repository inspection needs Git 2.36 or later.`, DETAIL as for clean's refusal |
 
+The rows the single-mode `deadline-exceeded` note counts are the rows the
+work deadline stopped: each is `inspection-error` with a `deadline-exceeded`
+row error, excluded with reason `inspection-error`, never a null reason and
+never carrying the unprobed marker, which only a reflog read past its
+filesystem budget sets (lead rulings R-67 (a) and R-69; T099).
+
 A doctor row (`level`, `check`, `detail`) has no code field, so doctor's `git`
 row writes its detail as `CODE: MESSAGE`, such as `git-too-old: Git 2.35.0 is
 older than 2.36; repository inspection needs Git 2.36 or later.`; in the ok

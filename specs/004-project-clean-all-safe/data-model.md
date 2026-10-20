@@ -253,7 +253,9 @@ execution order are by raw path bytes.
 Completeness: a plan is `incomplete` when the row cap is exceeded
 (`inspect-cap`), a repository-wide probe failed or a row is
 `inspection-error` (`inspection-incomplete`), or the deadline passed while
-planning (`deadline-exceeded`). In single mode those three are non-blocking
+planning (`deadline-exceeded`), each row it stopped being `inspection-error`
+with a `deadline-exceeded` row error, never left unprobed (lead rulings R-67
+(a) and R-69; T099). In single mode those three are non-blocking
 notes about other rows, and only P's own row and the repository-wide probes
 decide (D13). In report mode above 128 rows, the `inspect-cap` note alone
 does not make it incomplete. `apply_allowed` is false for every report and
