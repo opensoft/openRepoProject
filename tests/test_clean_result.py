@@ -811,15 +811,19 @@ class ResultTests(clean_support.CleanCase):
         # removal once its child has started (ChildHandle.due(), which
         # run_bounded() calls after the spawn, raises once for the removal
         # handle, so that the driver waits for the child before the exception
-        # goes on; the child is a 1 s removal that logs its end); and into the
-        # final rescan, the second target's. The target being handled is
+        # goes on; the child is a 1 s removal that logs its end); into the
+        # driver's setup once that removal child has started (the selector,
+        # which fails once with EMFILE: the child is waited for all the same;
+        # the runner review's EMFILE candidate, lead ruling R-101 (b)); and
+        # into the final rescan, the second target's. The target being handled is
         # unknown with internal-error and its fields not established null,
         # later targets not-attempted, the record printed, exit 1; and 143 when
         # the fault also records SIGTERM in the slot (plan review M2;
         # pcl:938-941; research.md R6; lead ruling R-83, P-7). No signal is
         # sent (rule 7).
         original_rescan, original_due, original_progress = project.rescan, project.ChildHandle.due, project.print_progress
-        for fault in ("rescan", "removal", "final rescan"):
+        original_start, original_selector = project.ChildHandle.start, project.selectors.DefaultSelector
+        for fault in ("rescan", "removal", "selector", "final rescan"):
             for signum in (None, signal.SIGTERM):
                 with self.subTest(fault=fault, signal=signum and signal.Signals(signum).name):
                     case = f"fault-{fault.replace(' ', '-')}-{'sigterm' if signum else 'plain'}"
@@ -845,15 +849,31 @@ class ResultTests(clean_support.CleanCase):
                             inject("fault once the removal child has started")
                         return original_due(handle)
 
+                    def start(argv, cwd, kind):
+                        handle = original_start(argv, cwd, kind)
+                        if kind == "removal" and not calls:
+                            calls.append(handle.pid)
+                        return handle
+
+                    def selector(*args, signum=signum, **kwargs):
+                        if len(calls) == 1:  # the removal child has just started
+                            calls.append("selector")
+                            if signum is not None:
+                                project.current_invocation().record_signal(signum)
+                            raise OSError(errno.EMFILE, os.strerror(errno.EMFILE))
+                        return original_selector(*args, **kwargs)
+
                     def print_progress(target, run, log=None):
                         seen.append((target["path"], log_lines(log) if log else []))
                         original_progress(target, run)
 
-                    if fault == "removal":
+                    if fault in ("removal", "selector"):
                         bin_dir, log = self.base / case / "slow-bin", self.base / case / "removal.log"
                         signal_recording_git(bin_dir, log, slow=trees[0], seconds=1.0)
                         env = self.path_first(bin_dir)
-                        patches = [(project.ChildHandle, "due", due)]
+                        patches = ([(project.ChildHandle, "due", due)] if fault == "removal" else
+                                   [(project.ChildHandle, "start", staticmethod(start)),
+                                    (project.selectors, "DefaultSelector", selector)])
                     else:
                         patches = [(project, "rescan", rescan)]
                     patches.append((project, "print_progress", lambda target, run, log=log: print_progress(
@@ -877,16 +897,16 @@ class ResultTests(clean_support.CleanCase):
                         self.assertTrue(trees[1].is_dir())
                     self.assertEqual(handled["reconciliation"], NULL_RECORD)
                     self.assertEqual(handled["notes"], [])
-                    # The rescan faults follow an exit 0; the removal fault leaves
-                    # the child's status unobserved.
-                    self.assertEqual(handled["exit_status"], None if fault == "removal" else 0)
+                    # The rescan faults follow an exit 0; the removal and selector
+                    # faults leave the child's status unobserved.
+                    self.assertEqual(handled["exit_status"], None if fault in ("removal", "selector") else 0)
                     self.assertEqual(document["exit_code"], expected)
                     self.assertEqual(document["completeness"], "incomplete")
                     path, removed, not_attempted = stop
                     self.assertIn(TEXT["stop_block"].format(PATH=path, REASON="internal-error", K=removed, N=2,
                                                             NOT_ATTEMPTED=not_attempted, ROOT=quoted(root)),
                                   result.stderr.splitlines())
-                    if fault == "removal":
+                    if fault in ("removal", "selector"):
                         # The child was waited for: it had run to its end, the
                         # real removal included, before the target was decided.
                         self.assertEqual(seen[0][0], os.fsencode(trees[0]))  # a Target holds raw bytes

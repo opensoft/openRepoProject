@@ -1520,15 +1520,17 @@ def run_bounded(spec, parser, run):
     if kind == "removal":
         handle.ceiling_end = handle.started + TIMING["removal_ceiling"]
     out, err = handle.process.stdout.fileno(), handle.process.stderr.fileno()
-    selector = selectors.DefaultSelector()
     streams = {out, err}
-    for fd in streams:
-        selector.register(fd, selectors.EVENT_READ)
-    wake = signal_wakeup()
-    if wake is not None:
-        selector.register(wake, selectors.EVENT_READ)
-    name = None
+    selector = name = None
     try:
+        # Set up inside the protected path, so that a failure here (EMFILE,
+        # say) once the child runs still settles it: a removal is waited for.
+        selector = selectors.DefaultSelector()
+        for fd in streams:
+            selector.register(fd, selectors.EVENT_READ)
+        wake = signal_wakeup()
+        if wake is not None:
+            selector.register(wake, selectors.EVENT_READ)
         while not handle.finished:
             if tick is not None:
                 tick(run)
@@ -1583,7 +1585,8 @@ def run_bounded(spec, parser, run):
         _settle(handle)
         raise
     finally:
-        selector.close()
+        if selector is not None:
+            selector.close()
         handle.close()
     if name == "interrupted":
         raise Interrupted(run.signal)
