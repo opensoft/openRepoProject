@@ -1496,9 +1496,8 @@ archive (step 4); a sentence that task 2.3 re-aligns, or that lane
 openRepoProject-4 asks for, is such a change. The ADDED requirement has no
 archived block, so a `diff -u` of it as committed at the ratified head against
 the re-read text shows any change to it, and such a change returns to Brett Heap
-in the same way. Tasks 2.3 and 2.4, whose lines lane openRepoProject-4 pins, are
-not edited in round C15 and name the first diff alone; this paragraph governs
-until they name both.
+in the same way. Tasks 2.3 and 2.4 name both diffs, on lane openRepoProject-4's
+YES of 2026-10-21.
 
 Rollback: revert the realization's merge; `--remote` goes away, and the
 default overview, which nothing here changed, is untouched.

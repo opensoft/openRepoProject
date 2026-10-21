@@ -17,7 +17,7 @@ edit, in `design.md` and `tasks.md`, C-47 also in Impact and Open Question 1;
 round C14's C-48, RC's other five findings, its spec edit committed on lane
 openRepoProject-4's YES of 2026-10-21, and C-49, lane openRepoProject-3's eight
 LOWs, both also in `design.md`, Impact and `tasks.md`; and round C15's C-50 and
-C-51 (its W16; reader RF's M1), in `design.md`; ratification by Brett Heap
+C-51 (W16; RF's M1), in `design.md` and `tasks.md`; ratification by Brett Heap
 pending; nothing here is ratified. Governing issue: opensoft/openRepoProject#25,
 claimed by lane openRepoProject-5 (comment 6111242617); refs #6, the record of
 the project maintenance design packet. Proposed on Brett Heap's word "usage
@@ -1704,3 +1704,11 @@ for placeholders found none.
 | Round C14's follow-up, named in C-50's timing: RC's M1 clause in What Changes and Capabilities, only if it fits within their line counts | follow-up | Applied within the counts. The What Changes bullet on "Overview bounds its work and reports what it omitted" adds "an expiry in the remote phase records no `deadline-exceeded` scan error (C-48)" after "never as a row or scan error", in 12 lines still; its Capabilities entry adds "(nor is an expiry in the remote phase, C-48)" at the same place, in 14 lines still, a shorter form, since the longer one takes a fifteenth line. The spec's sentence (spec:156-159) governs both | What Changes; Capabilities |
 | The round's record in this file and `tasks.md` | follow-on | Applied: Status names round C15 within its 22 lines, the citation key runs to C-51, and `tasks.md` 1.1 lists C-45 to C-51, 1.3 gains a round C15 clause and this section's title, and 1.5 records this round's validation, each in place, 45 lines still. The Decisions list is not edited: the brief names Status and the citation key, and the list's 34 lines leave no room for C-50 and C-51 without shortening the descriptions of earlier rulings | Status; citation key; `tasks.md` 1.1, 1.3, 1.5 |
 | Codex's review of `3965dfb` (its receipt on #29, 2026-10-21T14:48:10Z) | no finding | "Didn't find any major issues", for `3965dfbdb8`; nothing to apply. The same record shows every check on `3965dfb` passed, SonarCloud's included, as W16 also found | none |
+
+Addendum (2026-10-21, after round C15). Lane openRepoProject-4 said YES to
+C-51's edits of `tasks.md` 2.3 and 2.4 as the C15 writer drafted them, with one
+word corrected ("such as a re-aligned or added sentence included"). The two
+tasks now name both diffs, and their lines stay at 22 and 23. The Migration
+Plan's interim sentence, which governed until they did, now says that they do,
+and Status names `tasks.md` for C-51. Lane openRepoProject-4's other pinned
+lines are unchanged.
