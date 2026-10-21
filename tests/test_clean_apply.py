@@ -465,6 +465,7 @@ class ApplyTests(clean_support.CleanCase):
             self.assertEqual(self.snapshot(root, trees.values()), before)
 
     def test_clean_revalidate_refuses_a_changed_target_with_state_changed(self):
+        """It also asserts identity-changed, for a removed registry entry and another identity (R-77(1))."""
         # Lead ruling R-56 Q-13: the memo would hand back the planned evidence,
         # so each change below is seen only by a fresh read.
         names = ("001-dirty", "002-locked", "003-gone", "004-identity")

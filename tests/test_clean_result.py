@@ -3,7 +3,7 @@ ends in a reconcilable record (design D9, D15, D18 and D19; the project-clean
 delta, "Clean can explicitly retire verified worktrees" and "Clean records a
 reconcilable result for every removal target"; data-model.md, "Signal slot",
 "Target result and reconciliation record" and "Target stages"; research.md R4
-and R6; lead rulings R-29, R-44, R-68, R-76, R-82 and R-83).
+and R6; lead rulings R-29, R-44, R-68, R-76, R-82, R-83 and R-93).
 
 The command-line tests run `project clean` as a child through
 tests/launch_project.py, each with the TIMING table it names (R-29): signals go
@@ -225,6 +225,14 @@ def when_target(path, *commands):
     """sh text for a counting-wrapper hook that runs commands only when the
     worktree being removed ($target) is path."""
     return f"if [ \"$target\" = {shlex.quote(os.fsdecode(path))} ]; then\n" + "\n".join(commands) + "\nfi"
+
+
+def replaced_by_a_file(directory):
+    """sh text for a counting-wrapper hook that moves directory aside, to
+    DIRECTORY.moved, and puts an empty file at its path, so that an lstat of
+    any path under it fails with ENOTDIR (lead ruling R-93 (a))."""
+    path = os.fsdecode(directory)
+    return f"mv {shlex.quote(path)} {shlex.quote(path + '.moved')} && : > {shlex.quote(path)}"
 
 
 class ResultTests(clean_support.CleanCase):
@@ -838,6 +846,135 @@ class ResultTests(clean_support.CleanCase):
                         self.assertIn(f"exited {trees[0]} 0", seen[0][1])
                         self.assertFalse(trees[0].exists())
                     self.assertEqual(self.head(root, "refs/heads/" + NAMES[0]), planned[0], "the branch is kept")
+
+    # What the rescan reads after a removal that exited 0 (T085, T093; lead
+    # rulings R-82 (d), R-93 (a) and R-78 (e), second amendment).
+
+    def test_clean_a_parent_replaced_by_a_file_after_removal(self):
+        # Lead ruling R-93 (a), which corrects R-82 (d): an lstat that fails
+        # with ENOTDIR, a parent no longer a directory, is evidence of
+        # absence, as ENOENT is (R-36; data-model.md, "Target result and
+        # reconciliation record"). Between Git's exit 0 and the rescan, the
+        # post-remove hook:
+        # - moves the target's own parent aside and puts a file at its path:
+        #   path_present is false, the record reconciled, and the target
+        #   `removed`, so the batch goes on, exit 0;
+        # - does the same to the parent of the repository root, which holds
+        #   the repository alone: the identity probe fails and the root's
+        #   lstat gives ENOTDIR, so the identity is lost and the record, every
+        #   field null, is left unmarked, `unknown` with `unconfirmed-removal`,
+        #   exit 1 (R-78 (e); rescan(), _identity_gone());
+        # - in the contrast, an lstat that cannot tell, makes the target's
+        #   parent mode 000: EACCES, path_present null and a marked record,
+        #   `unknown` with `reconciliation-incomplete`, exit 1 (pcl:1012-1018;
+        #   test_clean_unreadable_path_after_removal pins that case in full).
+        # Lane 3's runs enotdir-path-parent and enotdir-root-parent gave the
+        # first two outcomes.
+        for case in ("own parent", "root parent", "unsearchable parent"):
+            with self.subTest(case):
+                if case == "unsearchable parent" and hasattr(os, "geteuid") and os.geteuid() == 0:
+                    self.skipTest("permission fixtures do not bind the superuser (effective uid 0)")
+                name = "after-exit-0-" + case.replace(" ", "-")
+                if case == "root parent":
+                    top = self.base / name
+                    root = self._init_repo(top / "parent" / "repo", "main")
+                    self.bare_remote(root, name=f"{name}/remote.git")
+                    trees = [self.merged_worktree(branch, path=top / "trees" / branch, root=root)
+                             for branch in NAMES[:2]]
+                    changed = root.parent
+                else:
+                    root, trees = self.batch(name, count=2, own_parent=True)
+                    changed = trees[0].parent
+                planned = [self.head(tree) for tree in trees]
+                aside = Path(str(changed) + ".moved")
+                if case == "unsearchable parent":
+                    self.addCleanup(os.chmod, changed, 0o755)
+                    action = f"chmod 000 {shlex.quote(str(changed))}"
+                else:
+                    action = replaced_by_a_file(changed)
+                env, log = self.counting(name, hooks={"post": when_target(trees[0], action)})
+                result = self.run_json("clean", root, "--all-safe", "--apply", "--yes", "--json", env=env)
+                if case == "unsearchable parent":
+                    os.chmod(changed, 0o755)
+                else:
+                    self.assertTrue(changed.is_file() and aside.is_dir(), "the hook replaced the parent")
+                document = result.document
+                first = document["targets"][0]
+                if case == "own parent":
+                    self.assert_status(result, 0)
+                    self.assertEqual(self.stages(document), [(str(trees[0]), "removed", None),
+                                                             (str(trees[1]), "removed", None)])
+                    self.assertEqual(first["reconciliation"], record(False, False, True, planned[0]))
+                    self.assertEqual((document["exit_code"], document["completeness"]), (0, "complete"))
+                elif case == "root parent":
+                    self.assert_status(result, 1)
+                    self.assertEqual(self.stages(document), [(str(trees[0]), "unknown", "unconfirmed-removal"),
+                                                             (str(trees[1]), "not-attempted", "batch-stopped")])
+                    self.assertEqual(first["reconciliation"], NULL_RECORD)
+                    self.assertEqual((document["exit_code"], document["completeness"]), (1, "incomplete"))
+                    # The identity probe failed, and the rescan read nothing more.
+                    records = clean_support.child_log(log)
+                    at = next(index for index, child in enumerate(records) if is_removal(child))
+                    self.assertEqual([subcommand(child)[:2] for child in records[at + 1:]],
+                                     [["rev-parse", "--path-format=absolute"]])
+                    root = aside / "repo"
+                    self.assertTrue(trees[1].is_dir())
+                else:
+                    self.assert_status(result, 1)
+                    self.assertEqual(self.stages(document),
+                                     [(str(trees[0]), "unknown", "reconciliation-incomplete"),
+                                      (str(trees[1]), "not-attempted", "batch-stopped")])
+                    self.assertEqual(first["reconciliation"], record(False, None, True, planned[0]))
+                    self.assertEqual((document["exit_code"], document["completeness"]), (1, "incomplete"))
+                    self.assertTrue(trees[1].is_dir())
+                self.assertEqual((first["exit_status"], first["notes"]), (0, []))
+                self.assertFalse(os.path.lexists(trees[0]), "Git removed the worktree")
+                self.assertEqual(self.head(root, "refs/heads/" + NAMES[0]), planned[0], "the branch is kept")
+
+    def test_clean_a_rescan_identity_probe_cut_before_it_answers(self):
+        # Lead rulings R-82 (d) and R-78 (e), second amendment: the rescan's
+        # identity probe, cut at its budget before it answers while the
+        # planned root and common directory are still there by lstat, marks
+        # the record, so the target is `unknown` with
+        # `reconciliation-incomplete`, every field null, exit 1, and the
+        # rescan reads nothing more. The same all-null record left unmarked,
+        # an identity lost, stays `unconfirmed-removal`: the root parent case
+        # of test_clean_a_parent_replaced_by_a_file_after_removal. A fake
+        # behind the counting wrapper sleeps on `rev-parse` once the
+        # post-remove hook has left its marker. Through the launcher with the
+        # probe budget 1 s and the grace and the reap wait 0.5 s each (R-29),
+        # so the cut comes at 1 s, inside the 10 s reserve.
+        table = clean_support.timing_table(probe_budget=1.0, term_grace=0.5, reap_wait=0.5)
+        root, trees = self.batch("cut-identity", count=2)
+        planned = [self.head(tree) for tree in trees]
+        marker = self.base / "cut-identity" / "removed.marker"
+        fake = write_script(self.base / "cut-identity" / "fake-bin" / "git", (
+            "#!/bin/sh\n"
+            f"case \" $* \" in *\" rev-parse \"*) [ -e {quoted(marker)} ] && exec sleep 30;; esac\n"
+            f"exec {quoted(REAL_GIT)} \"$@\"\n"))
+        env, log = self.counting("cut-identity", hooks={"post": when_target(trees[0], f": > {quoted(marker)}")},
+                                 real=fake)
+        result = self.run_json("clean", root, "--all-safe", "--apply", "--yes", "--json", timing=table, env=env)
+        self.assert_status(result, 1)
+        document = result.document
+        self.assertEqual(self.stages(document), [(str(trees[0]), "unknown", "reconciliation-incomplete"),
+                                                 (str(trees[1]), "not-attempted", "batch-stopped")])
+        first = document["targets"][0]
+        self.assertEqual((first["exit_status"], first["reconciliation"], first["notes"]), (0, NULL_RECORD, []))
+        self.assertEqual((document["exit_code"], document["completeness"]), (1, "incomplete"))
+        # After the removal, the identity probe alone, cut, its group
+        # terminated and reaped.
+        records = clean_support.child_log(log)
+        at = next(index for index, child in enumerate(records) if is_removal(child))
+        rescan = records[at + 1:]
+        self.assertEqual([subcommand(child)[:2] for child in rescan], [["rev-parse", "--path-format=absolute"]])
+        with self.assertRaises(ProcessLookupError):
+            os.killpg(rescan[0].pgid, 0)
+        self.assertTrue(marker.is_file())
+        self.assertTrue((root / ".git").is_dir(), "the root and its common directory are still there")
+        self.assertFalse(trees[0].exists())
+        self.assertTrue(trees[1].is_dir())
+        self.assertEqual(self.head(root, "refs/heads/" + NAMES[0]), planned[0], "the branch is kept")
 
     # T090: decide_stage()'s stage and reason table.
 

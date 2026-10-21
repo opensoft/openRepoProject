@@ -542,9 +542,11 @@ class KilledDuringDeletionTests(clean_support.CleanCase):
                     self.assertTrue(0 < deleted < bound, deleted)
                 else:
                     self.assertTrue(bound < deleted < self.FILES, deleted)
-                # Which case this run reached, for the person reading the run.
-                print(f"\n{self.id()} [{case}]: {deleted} tracked files deleted at the kill; "
-                      f"the .git file {'survived' if survived else 'was deleted'}", file=sys.stderr, flush=True)
+                # Which case this run reached, for the person reading the run,
+                # only when CLEAN_TEST_DEBUG=1 is set (lead ruling R-86 (c)).
+                if os.environ.get("CLEAN_TEST_DEBUG") == "1":
+                    print(f"\n{self.id()} [{case}]: {deleted} tracked files deleted at the kill; "
+                          f"the .git file {'survived' if survived else 'was deleted'}", file=sys.stderr, flush=True)
                 self.assert_reports_after_the_kill(root, tree, survived, below)
 
 if __name__ == "__main__":
