@@ -840,7 +840,8 @@ configuration"; "A lazy fetch in a partial clone is refused locally";
   stale. Without an apply action it MUST NOT fetch, commit, push, reset,
   stash or remove anything. Traces: "Clean reports local worktree state".
 - **FR-002**: `project clean` MUST run its Git version check before any other
-  Git child and, before any repository is probed, refuse a Git older than
+  Git child, after the configuration-path test of FR-068, and, before any
+  repository is probed, refuse a Git older than
   2.36 with `git-too-old` and a `git` that is missing or unusable with
   `git-unavailable`, exit status 2, printing under `--json` the extended
   error object carrying that code. Traces: "Clean reports local worktree
@@ -1268,7 +1269,8 @@ configuration"; "A lazy fetch in a partial clone is refused locally";
   and `notes`. Traces: "Clean plans and refusals are versioned JSON".
 - **FR-043**: Refusals and row errors MUST be `{code, message, path?,
   path_valid_utf8?, reason?}` objects with a stable kebab-case `code` from
-  the eighteen refusal codes the delta lists, and plan, target and row notes
+  the nineteen refusal codes, the eighteen the delta lists and FR-068's
+  `relative-config-path`, and plan, target and row notes
   MUST use only the codes the delta lists for each. A resolve refusal MUST
   print the extended error object, and a plan or select refusal the plan with
   `apply_allowed: false`. Null MUST mean unknown or not established, never a
@@ -1382,7 +1384,8 @@ configuration"; "A lazy fetch in a partial clone is refused locally";
   invoked, while `--component tools` or `--component workflow` MUST NOT
   require Git. Traces: "Explicit maintenance"; design D16.
 - **FR-053**: Every subcommand that inspects a Git repository MUST use one
-  evidence model, running `git --version` once per invocation and inspecting
+  evidence model, running `git --version` once per invocation, after
+  FR-068's configuration-path test, and inspecting
   no repository with a Git older than 2.36 (`git-too-old`) or a `git` that is
   missing, fails, times out or prints an unparseable version
   (`git-unavailable`); whether it then refuses or reports is its own
@@ -1532,6 +1535,26 @@ configuration"; "A lazy fetch in a partial clone is refused locally";
   PATH, beside the existing jobs; a test that needs Git 2.36 itself, such
   as "The sixteenth scrubbed name on Git 2.36", runs in that job and is
   skipped elsewhere with that reason. Traces: design D17.
+- **FR-068**: Before any Git child, `git --version` included, `clean`,
+  `status`, `doctor` and `update` MUST test `HOME` and `XDG_CONFIG_HOME`,
+  and the lead's extension `GIT_CONFIG_GLOBAL` and `GIT_CONFIG_SYSTEM`, which
+  Brett Heap may strike, each on its raw bytes: a value that is not empty
+  and whose first byte is not `/` fails, so that Git never reads a
+  repository's own files as the user's configuration. `clean` MUST then
+  refuse, after the argument checks and in every mode, with
+  `relative-config-path`, exit 2, D18's line `NAME is set to a path that does
+  not begin with /; make it absolute or unset it.` for each failing variable
+  and never its value, and under `--json` the extended error object carrying
+  that code; `status` MUST mark the root `inspection-error` with that code and
+  exit 0; `doctor` MUST report it as an `error` check row and exit 1; and
+  `update --apply --component shape` or `bench` MUST refuse with exit 2,
+  invoking no owner tool, while `tools` and `workflow` run as before; none of
+  them starts a Git child. Traces: "Clean reports local worktree state" ("A
+  relative configuration path"); "Repository inspection requires Git 2.36
+  and shares one evidence model" ("A relative configuration path in status,
+  doctor and update"), both in draft PR #19; design D11, D16 and D18; Brett
+  Heap's ruling LQ-15 ("LQ-15: yes, refuse relative HOME like #29"; lead
+  rulings R-102 and R-173).
 
 ### Key Entities *(include if feature involves data)*
 

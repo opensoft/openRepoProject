@@ -301,7 +301,9 @@ regions and contracts every lane writes against.
   says `prunable`; plan review M11), `repository`, `merge_target`, the plan
   envelope, a `selected` and an `excluded` entry, the extended error object, a
   target result, `reconciliation` and the apply result record (data-model.md;
-  contracts/project-clean.md); `REFUSAL_CODES`, the eighteen; `STAGE_REASONS`
+  contracts/project-clean.md); `REFUSAL_CODES`, the eighteen, nineteen since
+  Brett Heap's ruling LQ-15 added `relative-config-path` after `git-too-old`
+  (lead rulings R-102 and R-173; T048); `STAGE_REASONS`
   (data-model.md, "Target stages"); `NOTE_CODES`; `TEXT`, every new D18 and D14
   line with its placeholders, the lines the contract fixes beyond D18 (plan
   review M8: one progress line per target, `  STAGE PATH` or `  STAGE PATH
@@ -321,7 +323,7 @@ regions and contracts every lane writes against.
   one side only (R-45). Nothing in `contracts` reads a timing value (R-29).
   The 96 tests still pass.
   — files: `project`
-  — verify: `python3 -c "import importlib.machinery as m,importlib.util as iu,sys;l=m.SourceFileLoader('pv','project');s=iu.spec_from_loader('pv',l);p=iu.module_from_spec(s);sys.modules['pv']=p;l.exec_module(p);v=lambda x:[z for y in x.values() for z in (v(y) if isinstance(y,dict) else [y])];assert {128,256,16,64,4096,8,65536,1048576,5,3}.issubset(v(p.LIMITS)),'LIMITS';assert p.GIT_FLOOR==(2,36),'GIT_FLOOR';assert len(p.REFUSAL_CODES)==18 and set(p.REFUSAL_CODES)=={'invalid-arguments','internal-error','git-unavailable','git-too-old','repository-not-found','ambiguous-name','target-not-repository-root','unsupported-path-bytes','manifest-invalid','no-merge-target','inspection-incomplete','inspect-cap','deadline-exceeded','worktree-not-found','target-excluded','plan-digest-mismatch','confirmation-required','cancelled'},'REFUSAL_CODES';assert set(p.STAGE_REASONS)=={'removed','refused','failed','unknown','not-attempted'},'STAGE_REASONS';assert p.NOTE_CODES and p.NEXT_STEPS,'NOTE_CODES or NEXT_STEPS';assert 'Cannot remove the current worktree.' in p.TEXT.values(),'TEXT'" && python3 -c "import sys,re;t=open('project').read();A=sys.argv[1:];c=lambda r:t.split('# region '+r+'\n')[1].split('# endregion '+r+'\n')[0];M=[a for a in A if not ((a.split('%',1)[1] not in c(a.split('%',1)[0])) if '%' in a else (a.split('~',1)[1] in c(a.split('~',1)[0])) if '~' in a else re.search(r'^[a-z]*\s?'+re.escape(a.split(':',1)[1])+r'\b',c(a.split(':',1)[0]),re.M))];[print('region check failed:',m) for m in M];sys.exit(1 if M or not A else 0)" 'contracts:LIMITS' 'contracts:GIT_FLOOR' 'contracts:REFUSAL_CODES' 'contracts:STAGE_REASONS' 'contracts:NOTE_CODES' 'contracts:TEXT' 'contracts:NEXT_STEPS' && python3 -c "import ast,sys;t=open('project').read();r=sys.argv[1];c=t.split('# region '+r+'\n')[1].split('# endregion '+r+'\n')[0];W=list(ast.walk(ast.parse(c)));N={x.id for x in W if isinstance(x,ast.Name)}.union(x.attr for x in W if isinstance(x,ast.Attribute)).union(x.value for x in W if isinstance(x,ast.Constant) and isinstance(x.value,str));M=[a for a in sys.argv[2:] if a in N];[print('region',r,'code reads',m) for m in M];sys.exit(1 if M or len(sys.argv)<3 or not W[1:] else 0)" 'contracts' 'TIMING' && python3 -m unittest discover -s tests -p 'test_project.py'`
+  — verify: `python3 -c "import importlib.machinery as m,importlib.util as iu,sys;l=m.SourceFileLoader('pv','project');s=iu.spec_from_loader('pv',l);p=iu.module_from_spec(s);sys.modules['pv']=p;l.exec_module(p);v=lambda x:[z for y in x.values() for z in (v(y) if isinstance(y,dict) else [y])];assert {128,256,16,64,4096,8,65536,1048576,5,3}.issubset(v(p.LIMITS)),'LIMITS';assert p.GIT_FLOOR==(2,36),'GIT_FLOOR';assert len(p.REFUSAL_CODES)==19 and p.REFUSAL_CODES.index('relative-config-path')==p.REFUSAL_CODES.index('git-too-old')+1 and set(p.REFUSAL_CODES)=={'invalid-arguments','internal-error','git-unavailable','git-too-old','relative-config-path','repository-not-found','ambiguous-name','target-not-repository-root','unsupported-path-bytes','manifest-invalid','no-merge-target','inspection-incomplete','inspect-cap','deadline-exceeded','worktree-not-found','target-excluded','plan-digest-mismatch','confirmation-required','cancelled'},'REFUSAL_CODES';assert set(p.STAGE_REASONS)=={'removed','refused','failed','unknown','not-attempted'},'STAGE_REASONS';assert p.NOTE_CODES and p.NEXT_STEPS,'NOTE_CODES or NEXT_STEPS';assert 'Cannot remove the current worktree.' in p.TEXT.values(),'TEXT'" && python3 -c "import sys,re;t=open('project').read();A=sys.argv[1:];c=lambda r:t.split('# region '+r+'\n')[1].split('# endregion '+r+'\n')[0];M=[a for a in A if not ((a.split('%',1)[1] not in c(a.split('%',1)[0])) if '%' in a else (a.split('~',1)[1] in c(a.split('~',1)[0])) if '~' in a else re.search(r'^[a-z]*\s?'+re.escape(a.split(':',1)[1])+r'\b',c(a.split(':',1)[0]),re.M))];[print('region check failed:',m) for m in M];sys.exit(1 if M or not A else 0)" 'contracts:LIMITS' 'contracts:GIT_FLOOR' 'contracts:REFUSAL_CODES' 'contracts:STAGE_REASONS' 'contracts:NOTE_CODES' 'contracts:TEXT' 'contracts:NEXT_STEPS' && python3 -c "import ast,sys;t=open('project').read();r=sys.argv[1];c=t.split('# region '+r+'\n')[1].split('# endregion '+r+'\n')[0];W=list(ast.walk(ast.parse(c)));N={x.id for x in W if isinstance(x,ast.Name)}.union(x.attr for x in W if isinstance(x,ast.Attribute)).union(x.value for x in W if isinstance(x,ast.Constant) and isinstance(x.value,str));M=[a for a in sys.argv[2:] if a in N];[print('region',r,'code reads',m) for m in M];sys.exit(1 if M or len(sys.argv)<3 or not W[1:] else 0)" 'contracts' 'TIMING' && python3 -m unittest discover -s tests -p 'test_project.py'`
 
 ---
 
@@ -1334,9 +1336,28 @@ L-8).
   `--apply` and when unused (plan review M9); all before any Git child) and
   `require_git(run)` (`git_version()`, refusing with `git-too-old` or
   `git-unavailable` before resolution, FR-002) in region `dispatcher`. T039
-  passes.
-  — files: `project`
-  — verify: `python3 -m unittest discover -s tests -p 'test_clean_batch.py' -k '*.test_clean_invalid_argument_combinations' -k '*.test_clean_invalid_argument_combinations_unrefused_flags'`
+  passes. Brett Heap's ruling LQ-15 folds in here (FR-068; draft PR #19 at
+  `cc000ea` and `9fb22fa`; lead rulings R-102 (c) 3, R-131 and R-173), built by
+  lane H at `a7e77a4` and merged as `5794f91`: `require_git()` runs D11's
+  configuration-path test first, after the argument checks and before
+  `git_version()`, and refuses `relative-config-path`, exit 2, with D18's line
+  for each failing variable and no Git child, `git --version` included, in
+  every mode, push and delete-branch among them. Region `git environment`
+  gains `CONFIG_PATH_RULED` (`HOME`, `XDG_CONFIG_HOME`),
+  `CONFIG_PATH_EXTENSION` (`GIT_CONFIG_GLOBAL`, `GIT_CONFIG_SYSTEM`, the
+  lead's extension, struck by making that one line `()`),
+  `relative_config_paths()` (raw bytes, `os.environb`, a value that is not
+  empty and whose first byte is not `/` failing), `config_path_message()` and
+  `hold_git_for_config_paths(run)`, which `inspect_project()` and `update()`
+  call at their entry, so that status, doctor and update memoize the code in
+  the version check's place and start no Git child; `REFUSAL_CODES` gains
+  `relative-config-path` after `git-too-old` and `TEXT` its line
+  `relative_config_path`, with its fixture in `tests/clean_support.py` (rule 2;
+  lead rulings R-48 and R-131 (c)); and `git_refusal()` in region `runner`
+  gives the code its own message, and the region's docstring lists it (R-131
+  (b)). T114's LQ-15 tests pass.
+  — files: `project`, `tests/clean_support.py`
+  — verify: `python3 -m unittest discover -s tests -p 'test_clean_batch.py' -k '*.test_clean_invalid_argument_combinations' -k '*.test_clean_invalid_argument_combinations_unrefused_flags' && python3 -c "import sys,re;t=open('project').read();A=sys.argv[1:];c=lambda r:t.split('# region '+r+'\n')[1].split('# endregion '+r+'\n')[0];M=[a for a in A if not ((a.split('%',1)[1] not in c(a.split('%',1)[0])) if '%' in a else (a.split('~',1)[1] in c(a.split('~',1)[0])) if '~' in a else re.search(r'^[a-z]*\s?'+re.escape(a.split(':',1)[1])+r'\b',c(a.split(':',1)[0]),re.M))];[print('region check failed:',m) for m in M];sys.exit(1 if M or not A else 0)" 'git environment:CONFIG_PATH_RULED' 'git environment:CONFIG_PATH_EXTENSION' 'git environment:relative_config_paths' 'git environment:config_path_message' 'git environment:hold_git_for_config_paths' 'dispatcher~relative_config_paths()' 'runner~relative-config-path' 'contracts~"relative-config-path"' 'contracts~"relative_config_path"' && python3 -m unittest discover -s tests -p 'test_clean_resolution.py' -k relative_configuration_path && python3 -m unittest discover -s tests -p 'test_clean_batch.py' -k relative_configuration_path && python3 -m unittest discover -s tests -p 'test_status_doctor_update.py' -k relative_configuration_path`
 - [x] T049 [P] [US1] [O] Fill `build_plan(repo, run)` in region `plan`, reading lane
   G's `inspect_repository()` and `worktree_rows()` directly, never
   `cleanup_report()`, which raises the baseline `Refused` when a
@@ -3225,11 +3246,42 @@ test and T116's removal-child clause held back (lead ruling R-56 Q-5).
   output (lead ruling R-59 D7), exit 1; research.md R2); and
   `test_update_tools_and_workflow_need_no_git` (the 2.35 fake: `update --apply
   --component workflow --yes` runs the fake `setup-openspeckit` as before and
-  is not refused for Git's version). Scenarios: "Git older than 2.36"; "Git
-  older than 2.36 in status and doctor"; "No git on PATH"; "Tools and workflow
-  need no Git".
-  — files: `tests/test_status_doctor_update.py`
-  — verify: `python3 -c "import sys,unittest as u;L=u.defaultTestLoader;f=lambda s:[i for t in s for i in (f(t) if isinstance(t,u.TestSuite) else [t.id()])];I=[i for i in f(L.discover('tests',pattern=sys.argv[1])) if not i.startswith('unittest.')];A=sys.argv[2:];M=[a for a in A if not any(a in ('*',i.split('.')[-1]) for i in I)];[print('not collected:',m) for m in M];[print(e) for e in L.errors];sys.exit(1 if M or L.errors or not A else 0)" test_status_doctor_update.py 'test_clean_git_older_than_2_36' 'test_status_git_older_than_2_36_in_status_and_doctor' 'test_doctor_no_git_on_path' 'test_update_tools_and_workflow_need_no_git'`
+  is not refused for Git's version). Brett Heap's ruling LQ-15 folds in here
+  (FR-068; draft PR #19 at `cc000ea` and `9fb22fa`; lead rulings R-102 and
+  R-173; each test failed on `2439838`'s `project`), its tests written by lane
+  H: `test_clean_a_relative_configuration_path_before_the_version_check` (the
+  2.35 fake behind the counting wrapper and a relative `HOME`: every mode
+  refuses `relative-config-path`, not `git-too-old`, exit 2, with no child,
+  `git --version` included; with no `git` on PATH the same refusal comes
+  before `git-unavailable`) and
+  `test_status_a_relative_configuration_path_in_status_doctor_and_update` (a
+  clean project tracking `h/.gitconfig` and `cfg/git/config`, each a clean
+  filter that writes a marker, selected by its `.gitattributes`; for a
+  relative `HOME`, then `XDG_CONFIG_HOME`, then `GIT_CONFIG_GLOBAL` or
+  `GIT_CONFIG_SYSTEM` beside an absolute `HOME`, a control shows Git reading
+  the planted file, then no Git child runs and no marker is written: status
+  marks the root `inspection-error` with the code and exits 0, doctor reports
+  error rows and exits 1, `update --apply --component shape --yes` refuses
+  with exit 2 and runs no owner tool, and `--component workflow` is not
+  refused), in this module; in `tests/test_clean_resolution.py`,
+  `test_clean_a_relative_configuration_path` (a relative `HOME` over a
+  tracked `h/.gitconfig` with a hook directory and a clean filter: the
+  read-only form, `--all-safe --apply --yes` and `--action push` each refuse,
+  exit 2, no child, no hook or filter run, nothing changed, the `--json` form
+  printing the extended error object),
+  `test_clean_a_relative_configuration_path_each_variable_and_spelling`,
+  `test_clean_a_relative_configuration_path_not_valid_utf_8` and
+  `test_clean_a_relative_configuration_path_empty_and_absolute_values_pass`;
+  and in `tests/test_clean_batch.py`,
+  `test_clean_a_relative_configuration_path_after_the_argument_checks` (the
+  argument checks still refuse `invalid-arguments` first, then the same run
+  made valid refuses `relative-config-path`, both with no child). Scenarios:
+  "Git older than 2.36"; "Git older than 2.36 in status and doctor"; "No git
+  on PATH"; "Tools and workflow need no Git"; and PR #19's "A relative
+  configuration path" and "A relative configuration path in status, doctor
+  and update".
+  — files: `tests/test_status_doctor_update.py`, `tests/test_clean_resolution.py`, `tests/test_clean_batch.py`
+  — verify: `python3 -c "import sys,unittest as u;L=u.defaultTestLoader;f=lambda s:[i for t in s for i in (f(t) if isinstance(t,u.TestSuite) else [t.id()])];I=[i for i in f(L.discover('tests',pattern=sys.argv[1])) if not i.startswith('unittest.')];A=sys.argv[2:];M=[a for a in A if not any(a in ('*',i.split('.')[-1]) for i in I)];[print('not collected:',m) for m in M];[print(e) for e in L.errors];sys.exit(1 if M or L.errors or not A else 0)" test_status_doctor_update.py 'test_clean_git_older_than_2_36' 'test_status_git_older_than_2_36_in_status_and_doctor' 'test_doctor_no_git_on_path' 'test_update_tools_and_workflow_need_no_git' 'test_clean_a_relative_configuration_path_before_the_version_check' 'test_status_a_relative_configuration_path_in_status_doctor_and_update' && python3 -c "import sys,unittest as u;L=u.defaultTestLoader;f=lambda s:[i for t in s for i in (f(t) if isinstance(t,u.TestSuite) else [t.id()])];I=[i for i in f(L.discover('tests',pattern=sys.argv[1])) if not i.startswith('unittest.')];A=sys.argv[2:];M=[a for a in A if not any(a in ('*',i.split('.')[-1]) for i in I)];[print('not collected:',m) for m in M];[print(e) for e in L.errors];sys.exit(1 if M or L.errors or not A else 0)" test_clean_resolution.py 'test_clean_a_relative_configuration_path' 'test_clean_a_relative_configuration_path_each_variable_and_spelling' 'test_clean_a_relative_configuration_path_not_valid_utf_8' 'test_clean_a_relative_configuration_path_empty_and_absolute_values_pass' && python3 -c "import sys,unittest as u;L=u.defaultTestLoader;f=lambda s:[i for t in s for i in (f(t) if isinstance(t,u.TestSuite) else [t.id()])];I=[i for i in f(L.discover('tests',pattern=sys.argv[1])) if not i.startswith('unittest.')];A=sys.argv[2:];M=[a for a in A if not any(a in ('*',i.split('.')[-1]) for i in I)];[print('not collected:',m) for m in M];[print(e) for e in L.errors];sys.exit(1 if M or L.errors or not A else 0)" test_clean_batch.py 'test_clean_a_relative_configuration_path_after_the_argument_checks'`
 - [x] T115 [US9] [O] Add to `tests/test_status_doctor_update.py`:
   `test_status_a_failed_root_status_is_reported` (`status-fails-in` the root:
   status and doctor report it with `classification: "inspection-error"`, its
@@ -3677,6 +3729,7 @@ included (T074). By requirement:
 | FR-065 | T122, T124 |
 | FR-066 | T005 to T011, T126, T128 |
 | FR-067 | T003, T129 |
+| FR-068 | T048, T114 |
 
 Success criteria: SC-001 and SC-002 T041, T061, T097; SC-003 T030, T029, T074;
 SC-004 and SC-005 T018, T026, T099, T089, T098; SC-006 T098, T102; SC-007 T090,

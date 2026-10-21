@@ -338,7 +338,9 @@ or the deadline refuses them (`inspection-incomplete`, `inspect-cap`,
 
 `{code, message, path?, path_valid_utf8?, reason?}`. `path_valid_utf8` is
 present exactly when `path` is; `reason` only on `target-excluded`. The
-eighteen codes and their phases are in the contract. `invalid-arguments`,
+nineteen codes and their phases are in the contract: the eighteen the delta
+lists, and `relative-config-path` after `git-too-old`, Brett Heap's ruling
+LQ-15 (draft PR #19; lead rulings R-102 and R-173). `invalid-arguments`,
 `internal-error` and every resolve refusal print the extended error object;
 every other code prints the plan envelope with `apply_allowed: false`
 (contract, "Streams").
@@ -458,10 +460,12 @@ confirmation and in the result.
 
 Each root, leg and nested member keeps its baseline dict. A directory with no
 `.git` is `present: false` with no Git child. A present one that cannot be
-inspected (an old, missing or unusable Git, a failed or timed-out status
-probe) adds `classification: "inspection-error"` and `errors` (`git-too-old`,
-`git-unavailable`, `probe-failed`, `probe-timeout` or `os-error`), with
-`present` null when the version check failed and every value not established
+inspected (an old, missing or unusable Git, a configuration path that fails
+D11's test, a failed or timed-out status probe) adds `classification:
+"inspection-error"` and `errors` (`git-too-old`, `git-unavailable`,
+`relative-config-path`, `probe-failed`, `probe-timeout` or `os-error`), with
+`present` null when the version check failed or the configuration-path test
+stood in its place (LQ-15) and every value not established
 null, `worktrees` among them; an inspected dict has neither field (lead
 ruling R-56). A `git-too-old` or
 `git-unavailable` entry carries the contract's command-neutral message, never
@@ -576,7 +580,7 @@ it (lead ruling R-95 (a), lane 3's LOW-1; T093's
 
 | State | Meaning |
 | --- | --- |
-| resolving | arguments checked, `git --version` run, the argument resolved, the merge target found |
+| resolving | arguments checked, the configuration paths tested, `git --version` run, the argument resolved, the merge target found |
 | planning | rows inspected under the deadline, caps and budgets; gates applied |
 | reported | a preview or report printed; the run ends |
 | asking | the removal question is on the human stream (`--apply` without `--yes`) |
@@ -590,7 +594,7 @@ it (lead ruling R-95 (a), lane 3's LOW-1; T093's
 | From | Event | To |
 | --- | --- | --- |
 | (start) | invalid argument combination; parser usage error | refused (exit 2; a usage error prints no JSON) |
-| resolving | Git missing, unusable or older than 2.36; a resolve refusal | refused |
+| resolving | a configuration path that fails D11's test (`relative-config-path`, before any Git child); Git missing, unusable or older than 2.36; a resolve refusal | refused |
 | resolving | resolved | planning |
 | resolving to asking | unexpected exception | refused (`internal-error`) |
 | planning | preview or report built | reported (exit 0 complete, 1 incomplete) |

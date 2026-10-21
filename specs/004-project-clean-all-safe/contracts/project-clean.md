@@ -72,8 +72,21 @@ than the cap's 128, and the run refuses with `inspection-incomplete`, exit 2
 ## Order of a run
 
 1. Argument checks.
-2. `git --version`, once (row 1): `git-unavailable` or `git-too-old`, exit
-   2, before any repository is probed.
+2. The configuration-path test, before any Git child, then `git
+   --version`, once (row 1): `relative-config-path`, then `git-unavailable`
+   or `git-too-old`, exit 2, before any repository is probed. The test
+   (design D11; Brett Heap's ruling LQ-15, draft PR #19 at `cc000ea` and
+   `9fb22fa`; lead rulings R-102 (c) 3 and R-173): `HOME`,
+   `XDG_CONFIG_HOME`, `GIT_CONFIG_GLOBAL` and `GIT_CONFIG_SYSTEM`, each read as
+   its raw bytes, fail it when set to a value that is not empty and whose
+   first byte is not `/`, so that ` /x`, `~/x`, `.` and a first byte that is
+   not UTF-8 fail and `/` alone passes. Any failure refuses with
+   `relative-config-path`, exit 2, in every mode, push and delete-branch
+   included, so that no Git child starts. The test reads each value for itself
+   alone, never in Git's order of precedence and whether or not Git would read
+   a file through it; the values reach every child unchanged, and nothing
+   prints them. The last two names are the lead's extension of the ruling,
+   which Brett Heap may strike (`CONFIG_PATH_EXTENSION`; R-102 (c) 3).
 3. Resolution (below), then `unsupported-path-bytes` for a `root` or
    `common_dir` that is not valid UTF-8.
 4. The manifest read at `root`, row 6, and the merge target over row 6's
@@ -81,8 +94,8 @@ than the cap's 128, and the run refuses with `inspection-incomplete`, exit 2
 5. Planning under the deadline (row 7, then each row in order; in
    single mode for `--action remove` P is matched first,
    `worktree-not-found` if absent, and its row is established first, its
-   status probe then its gates (1 to 7, the deferral with P alone, 9 and
-   10), before any other row is inspected; then the other rows in order and
+   status probe then its gates (1 to 7, the deferral with P alone, then 9,
+   10 and 11), before any other row is inspected; then the other rows in order and
    their gates), then `plan_digest`.
 6. Plan checks, in this order: an incomplete plan (a preview or report exits
    1; with `--apply`, exit 2 before any question, coded
@@ -115,8 +128,8 @@ In single mode, step 5's order is design D13's, "inspects P's row first:
 identity, status probe, gates" (`design.md:594-599`), which the delta's "P
 SHALL be probed first" (its `spec.md:262-263`) and FR-013's "probed first"
 say in short: a fill, not a departure. `build_plan()` runs gates 1 to 7,
-gate 8 (P alone) and gates 9 and 10 over P's row, gate 10's `ls-files`
-included, right after it builds that row and before `worktree_rows()` takes
+gate 8 (P alone) and gates 9, 10 and 11 over P's row, gate 10's `ls-files`
+and gate 11's listing included, right after it builds that row and before `worktree_rows()` takes
 any other row, and no gate reads another row to decide P. A work deadline
 reached among the other rows then leaves P's row decided and the plan
 complete beside the non-blocking note `deadline-exceeded`, and the apply
@@ -259,6 +272,7 @@ code with no baseline message gets one here:
 | `internal-error` | before the apply phase, `TYPE: TEXT`, the exception's class and text, so `REFUSED: RuntimeError: boom` (research.md R6); after it, no text (below) |
 | `git-unavailable` | `Git is unavailable (DETAIL); clean needs Git 2.36 or later.`, DETAIL one of `not found`, `exit N`, `timed out`, `unparseable version`; clean's refusal only, a status or doctor row taking the command-neutral text in "Codes" (lead ruling R-48) |
 | `git-too-old` | `Git VERSION is older than 2.36; clean needs Git 2.36 or later.`; clean's refusal only, as above (R-48) |
+| `relative-config-path` | D18's line, `NAME is set to a path that does not begin with /; make it absolute or unset it.`, one line per variable that fails the configuration-path test, in the order `HOME`, `XDG_CONFIG_HOME`, `GIT_CONFIG_GLOBAL`, `GIT_CONFIG_SYSTEM`, never its value; a human refusal prints `REFUSED: ` before the first line only; status's `errors` entry and doctor's rows carry the same lines (LQ-15; R-102, R-131 (b)) |
 | `target-not-repository-root` | `Not the main worktree of a repository: PATH; pass the repository root.` |
 | `unsupported-path-bytes` | `The repository path is not valid UTF-8: PATH` |
 | `manifest-invalid` | `Manifest PATH is larger than 1 MiB.`; otherwise the baseline messages of `read_yaml()` and `manifest()`: `Cannot read PATH: ...` (an `OSError`, a read cut at its budget, or a parse error), `Expected a mapping in PATH`, `Unexpected kind in PATH; expected project-manifest` or `expected family-manifest`, and, where PyYAML is missing, `read_yaml()`'s own `YAML inspection needs PyYAML; use a workBench with python3-yaml installed.` (lead ruling R-73 (e)) |
@@ -270,7 +284,8 @@ code with no baseline message gets one here:
 `repository-not-found`, `ambiguous-name`, `no-merge-target`,
 `worktree-not-found` and `cancelled` keep the baseline's messages, and
 `target-excluded` is "D18 refusal messages". `remote-gone` is a reason, not
-a nineteenth code, since the delta closes the eighteen: push, which prints
+a twentieth code, since the delta, with LQ-15's `relative-config-path`,
+closes the nineteen: push, which prints
 no JSON, refuses with no code and the reason `remote-gone`, printing
 `REFUSED: ` and the message above (lead ruling R-45).
 
@@ -391,6 +406,7 @@ values in data-model.md).
 | `internal-error` | any, before the apply phase | an unexpected exception (research.md R6) |
 | `git-unavailable` | resolve | `git` missing, failing, timing out or printing an unparseable version |
 | `git-too-old` | resolve | Git older than 2.36 |
+| `relative-config-path` | resolve | `HOME`, `XDG_CONFIG_HOME`, `GIT_CONFIG_GLOBAL` or `GIT_CONFIG_SYSTEM` set to a value that is not empty and does not begin with `/`, tested after the argument checks and before `git --version` ("Order of a run"; Brett Heap's ruling LQ-15, lead ruling R-102) |
 | `repository-not-found` | resolve | a bare name resolves to no project directory |
 | `ambiguous-name` | resolve | a bare name matches more than one |
 | `target-not-repository-root` | resolve | the resolution rules above |
@@ -434,6 +450,7 @@ R-48).
 | `deadline-exceeded` | row error | `OPERATION stopped at the work deadline` |
 | `git-too-old` | status or doctor row error, and doctor's `git` row | `Git VERSION is older than 2.36; repository inspection needs Git 2.36 or later.` |
 | `git-unavailable` | status or doctor row error, and doctor's `git` row | `Git is unavailable (DETAIL); repository inspection needs Git 2.36 or later.`, DETAIL as for clean's refusal |
+| `relative-config-path` | status or doctor row error, and doctor's `git` row | D18's lines, as for clean's refusal; no Git child ran (LQ-15) |
 
 The rows the work deadline stopped are `deadline-exceeded`'s, never
 unprobed: each is `inspection-error` with a `deadline-exceeded` row error,
@@ -594,17 +611,19 @@ they run up to 8 and 6 (design D6, "the rare repeat"; data-model.md,
 | Aspect | Contract |
 | --- | --- |
 | Git check | `git --version` once per invocation, memoized, when a repository is inspected; doctor's `git` row runs it itself when none was, and `status` never runs it for nothing (lead ruling R-56); never a refusal |
+| Configuration paths | the test of "Order of a run", step 2, at each command's entry, before any Git child: a failure is memoized in the version check's place with code `relative-config-path` and D18's lines, so that no Git child starts, `git --version`, `discover()`'s lookup and `handoff()`'s remote read included, and each command reports it where it reports a Git below the floor (`hold_git_for_config_paths()`; Brett Heap's ruling LQ-15; lead rulings R-102, R-131 (a) and R-173) |
 | `handoff()`'s remote read | `git remote get-url origin` only for a root whose repository was inspected, present and past the version check; otherwise the same no-identity state and no child (lead ruling R-66 (c)) |
 | No `.git` | `present: false`, no Git child, as today |
-| Uninspectable root, leg or worktree | `classification: "inspection-error"`, `errors`, unestablished values null, `worktrees` among them (R-56); status exits 0 |
-| Doctor's `git` row | `ok` with the detail `PATH (git version X)`, or `error` with the detail `CODE: MESSAGE`, CODE `git-too-old` or `git-unavailable` and MESSAGE its command-neutral text ("Codes"; lead rulings R-48 and R-57) |
+| Uninspectable root, leg or worktree | `classification: "inspection-error"`, `errors`, unestablished values null, `worktrees` among them (R-56); status exits 0; a failed configuration-path test gives the root `present` null and one `errors` entry, `relative-config-path` with D18's lines |
+| Doctor's `git` row | `ok` with the detail `PATH (git version X)`, or `error` with the detail `CODE: MESSAGE`, CODE `git-too-old` or `git-unavailable` and MESSAGE its command-neutral text, or CODE `relative-config-path` and MESSAGE D18's lines ("Codes"; lead rulings R-48 and R-57; LQ-15); doctor then exits 1 by its error rows |
 | Doctor's error rows | one per null `present`, null `dirty` from a failed or timed-out probe, and `inspection-error` row; none for a null that means "none" |
 | Human `status` and `doctor` | `Git: inspection-error (CODES)` in place of the branch line |
 | Deleted upstream | `upstream` is the configured short name; `ahead`, `behind` null |
 | Paths in JSON | `path_valid_utf8` beside every `path`, `root_valid_utf8` beside every `root`, `ignored_samples` entries as objects |
 | Budgets | 15 s per Git child, no deadline, no row cap; non-Git children keep 15 s |
-| `update --apply --component shape` or `bench` | refuses with exit 2, invoking no owner tool, unless the root's and every child's `dirty` are exactly false |
-| `update --apply --component tools` or `workflow` | needs no Git; not refused for Git's version |
+| `update --apply --component shape` or `bench` | refuses with exit 2, invoking no owner tool, unless the root's and every child's `dirty` are exactly false; a failed configuration-path test leaves the root's `dirty` null, so it refuses with its existing message, `Project updates require a clean tracking checkout; preserve feature work first.`, as for a Git below the floor (D16 as amended for LQ-15; lead ruling R-131 (a)) |
+| `update --apply --component tools` or `workflow` | needs no Git; not refused for Git's version or for the configuration-path test |
+| Owner tools of `update --apply` | run with the push child's scrub, every one of the thirty-one names but `GIT_ALLOW_PROTOCOL` removed and nothing added (`delegate_env()`; LQ-12; "Git children" above) |
 | Signals | SIGTERM and SIGHUP during inspection exit 143 and 129 after the probe groups are killed; at `Type yes` and during a delegate, as today |
 
 The JSON of `status` and `doctor` stays unversioned; every change to it is
