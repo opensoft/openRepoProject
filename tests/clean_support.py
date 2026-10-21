@@ -598,6 +598,7 @@ TEXT_FIXTURES = {
     "progress_line": "  {STAGE} {PATH}",
     "progress_line_reason": "  {STAGE} {PATH} ({REASON})",
     "branches_kept_line": "Branches kept: {BRANCHES}.",
+    "branches_not_confirmed": "Branches not confirmed: {BRANCHES}.",
     "invalid_arguments_all_safe": "--all-safe cannot be combined with --action, --branch or --worktree.",
     "invalid_arguments_expect_plan": "--expect-plan requires --all-safe and --apply.",
     "invalid_arguments_expect_plan_value": "--expect-plan takes 64 lowercase hexadecimal characters.",
