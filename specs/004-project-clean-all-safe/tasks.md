@@ -2323,10 +2323,11 @@ US3, US7 and US9; US5's text lane follows it (analyze M2 and L9).
   T079 to T083 pass.
   — files: `project`, `tests/test_clean_revalidation.py`
   — verify: `python3 -c "import sys,unittest as u;L=u.defaultTestLoader;f=lambda s:[i for t in s for i in (f(t) if isinstance(t,u.TestSuite) else [t.id()])];I=[i for i in f(L.discover('tests',pattern=sys.argv[1])) if not i.startswith('unittest.')];A=sys.argv[2:];M=[a for a in A if not any(a in ('*',i.split('.')[-1]) for i in I)];[print('not collected:',m) for m in M];[print(e) for e in L.errors];sys.exit(1 if M or L.errors or not A else 0)" test_clean_revalidation.py 'test_clean_decide_stage_removed_needs_reconciled' 'test_clean_a_failed_rescan_ref_listing_is_not_removed' 'test_clean_rescan_marks_every_failed_read' && python3 -m unittest discover -s tests -p 'test_clean_revalidation.py'`
-- [x] T086 [US4] [S] Run the US4 module, every earlier module and the 96 tests: all
-  pass.
+- [x] T086 [US4] [S] Run the US4 module, every earlier module, the US3, US7
+  and US9 modules, which have landed, and the 96 tests: all pass (lead
+  ruling R-79 P-13).
   — files: (none)
-  — verify: `python3 -m unittest discover -s tests -p 'test_clean_timing.py' && python3 -m unittest discover -s tests -p 'test_clean_harness.py' && python3 -m unittest discover -s tests -p 'test_clean_scrub.py' && python3 -m unittest discover -s tests -p 'test_clean_parsers.py' && python3 -m unittest discover -s tests -p 'test_clean_escaping.py' && python3 -m unittest discover -s tests -p 'test_clean_runner.py' && python3 -m unittest discover -s tests -p 'test_clean_evidence.py' && python3 -m unittest discover -s tests -p 'test_clean_guard.py' && python3 -m unittest discover -s tests -p 'test_clean_batch.py' && python3 -m unittest discover -s tests -p 'test_clean_apply.py' && python3 -m unittest discover -s tests -p 'test_clean_reflog.py' && python3 -m unittest discover -s tests -p 'test_clean_gates.py' && python3 -m unittest discover -s tests -p 'test_clean_revalidation.py' && python3 -m unittest discover -s tests -p 'test_project.py'`
+  — verify: `python3 -m unittest discover -s tests -p 'test_clean_timing.py' && python3 -m unittest discover -s tests -p 'test_clean_harness.py' && python3 -m unittest discover -s tests -p 'test_clean_scrub.py' && python3 -m unittest discover -s tests -p 'test_clean_parsers.py' && python3 -m unittest discover -s tests -p 'test_clean_escaping.py' && python3 -m unittest discover -s tests -p 'test_clean_runner.py' && python3 -m unittest discover -s tests -p 'test_clean_evidence.py' && python3 -m unittest discover -s tests -p 'test_clean_guard.py' && python3 -m unittest discover -s tests -p 'test_clean_batch.py' && python3 -m unittest discover -s tests -p 'test_clean_apply.py' && python3 -m unittest discover -s tests -p 'test_clean_reflog.py' && python3 -m unittest discover -s tests -p 'test_clean_gates.py' && python3 -m unittest discover -s tests -p 'test_clean_single.py' && python3 -m unittest discover -s tests -p 'test_clean_push.py' && python3 -m unittest discover -s tests -p 'test_clean_revalidation.py' && python3 -m unittest discover -s tests -p 'test_clean_resolution.py' && python3 -m unittest discover -s tests -p 'test_status_doctor_update.py' && python3 -m unittest discover -s tests -p 'test_project.py'`
 
 **Checkpoint**: A change after the plan refuses its target and attempts nothing
 later; a race after Git's own removal loses no commit.
@@ -2350,10 +2351,14 @@ stop block and the exit status.
 
 **Lanes**: text (T091, T094: `tests/test_clean_stop.py`, regions `preview`
 and `result`), after US4, since T091's stop block expects `branch-changed`,
-which only US4's T084 produces; then removal (T087 to T090, T092, T093:
-`tests/test_clean_result.py`, region `apply`), after US4, since both edit
-`rescan()` and `decide_stage()`, and after the text lane, since T089 asserts
-the recovery text that T094 prints (analyze M2).
+which only US4's T084 produces; and removal (T087 to T090, T092, T093:
+`tests/test_clean_result.py`, region `apply`, and T092's two-line hook in
+region `runner`, lead ruling R-83 P-1), after US4, since both edit
+`rescan()` and `decide_stage()`. The two lanes run in parallel, their
+regions disjoint, and the removal lane writes T089's recovery-text
+assertion last, after merging the feature branch with the text lane in
+it, since T089 asserts the recovery text that T094 prints (analyze M2;
+lead ruling R-83).
 
 ### Tests for User Story 5
 
@@ -2483,10 +2488,18 @@ the recovery text that T094 prints (analyze M2).
 
 ### Implementation for User Story 5
 
-- [ ] T092 [P] [US5] [O] Fill `run_removal()` (region `apply`; D9, FR-012): the
+- [ ] T092 [P] [US5] [O] Fill `run_removal()` (region `apply`; D9, FR-012), and
+  add one lead-approved two-line hook to `run_bounded()` (region `runner`),
+  beside T077's `feed_stderr` hook:
+  `tick = getattr(parser, "tick", None)`, then `tick(run)` on each pass of
+  the wait loop, which keeps D1's one loop and R-30's tested termination
+  path (lead ruling R-83 P-1, amending R-54 X-2, which named T077's hook as
+  the only runner edit): the
   child is never signalled on SIGINT, SIGTERM, SIGHUP or the deadline; the
-  first of those prints D18's wait line, at most once; the ceiling,
-  `TIMING["removal_ceiling"]` read at the spawn, ends the wait by
+  first of those prints D18's wait line, at most once, from the `tick()` of
+  the parser `run_removal()` passes; the ceiling,
+  `TIMING["removal_ceiling"]` read at the spawn, by `run_bounded()` as
+  built, ends the wait by
   `terminate_group()`, which the wait's own loop advances to SIGKILL and a
   bounded reap (R-30), and a child reaped there has `exit_status` 143 when
   SIGTERM ended it and 137 when it outlived SIGTERM until SIGKILL (plan
@@ -2495,13 +2508,16 @@ the recovery text that T094 prints (analyze M2).
   by the rescan with reason `removal-ceiling` and, while its entry or path
   remains, the note `partially-removed`.
   — files: `project`
-  — verify: `python3 -c "import sys,re;t=open('project').read();A=sys.argv[1:];c=lambda r:t.split('# region '+r+'\n')[1].split('# endregion '+r+'\n')[0];M=[a for a in A if not ((a.split('%',1)[1] not in c(a.split('%',1)[0])) if '%' in a else (a.split('~',1)[1] in c(a.split('~',1)[0])) if '~' in a else re.search(r'^[a-z]*\s?'+re.escape(a.split(':',1)[1])+r'\b',c(a.split(':',1)[0]),re.M))];[print('region check failed:',m) for m in M];sys.exit(1 if M or not A else 0)" 'apply~removal_ceiling' 'apply~wait_line' && python3 project clean --help >/dev/null`
+  — verify: `python3 -c "import sys,re;t=open('project').read();A=sys.argv[1:];c=lambda r:t.split('# region '+r+'\n')[1].split('# endregion '+r+'\n')[0];M=[a for a in A if not ((a.split('%',1)[1] not in c(a.split('%',1)[0])) if '%' in a else (a.split('~',1)[1] in c(a.split('~',1)[0])) if '~' in a else re.search(r'^[a-z]*\s?'+re.escape(a.split(':',1)[1])+r'\b',c(a.split(':',1)[0]),re.M))];[print('region check failed:',m) for m in M];sys.exit(1 if M or not A else 0)" 'apply~wait_line' 'runner~getattr(parser, "tick", None)' && python3 project clean --help >/dev/null`
 - [ ] T093 [P] [US5] [O] In `apply_removals()`, `rescan()` and `decide_stage()`
   (region `apply`; D15, FR-034 to FR-036): read the signal slot before each
   revalidation and each spawn, a set slot making that target and every later
   one `not-attempted` with `interrupted`; reconcile within the reserve, the
-  `Invocation`'s phase set to `reconciling` (R-44), each rescan child getting
-  `min(5 s, reserve remaining)`; a second SIGINT during
+  `Invocation`'s phase set to `reconciling` (R-44) before every rescan, and
+  to `apply` again before the next target's own steps when the target ended
+  a plain `removed` and the slot is empty (lead ruling R-83 P-3), each
+  rescan child getting `min(5 s, reserve remaining)`, the reserve counted
+  from the exit being T099's (R-80 P-3); a second SIGINT during
   reconciliation abandons the remaining rescans, their fields null and the
   target `unknown` with `reconciliation-incomplete` (M17); an exception after
   the apply phase begins, in a target, its rescan, the final rescan or the
@@ -2533,10 +2549,11 @@ the recovery text that T094 prints (analyze M2).
   (lead rulings R-76 (f) and R-79 P-10). T091 passes.
   — files: `project`, `tests/clean_support.py`
   — verify: `python3 -m unittest discover -s tests -p 'test_clean_stop.py'`
-- [ ] T095 [US5] [S] Run the US5 modules, every earlier module and the 96 tests:
-  all pass.
+- [ ] T095 [US5] [S] Run the US5 modules, every earlier module, the US3, US7
+  and US9 modules, which have landed, and the 96 tests: all pass (lead
+  ruling R-79 P-13).
   — files: (none)
-  — verify: `python3 -m unittest discover -s tests -p 'test_clean_timing.py' && python3 -m unittest discover -s tests -p 'test_clean_harness.py' && python3 -m unittest discover -s tests -p 'test_clean_scrub.py' && python3 -m unittest discover -s tests -p 'test_clean_parsers.py' && python3 -m unittest discover -s tests -p 'test_clean_escaping.py' && python3 -m unittest discover -s tests -p 'test_clean_runner.py' && python3 -m unittest discover -s tests -p 'test_clean_evidence.py' && python3 -m unittest discover -s tests -p 'test_clean_guard.py' && python3 -m unittest discover -s tests -p 'test_clean_batch.py' && python3 -m unittest discover -s tests -p 'test_clean_apply.py' && python3 -m unittest discover -s tests -p 'test_clean_reflog.py' && python3 -m unittest discover -s tests -p 'test_clean_gates.py' && python3 -m unittest discover -s tests -p 'test_clean_revalidation.py' && python3 -m unittest discover -s tests -p 'test_clean_result.py' && python3 -m unittest discover -s tests -p 'test_clean_stop.py' && python3 -m unittest discover -s tests -p 'test_project.py'`
+  — verify: `python3 -m unittest discover -s tests -p 'test_clean_timing.py' && python3 -m unittest discover -s tests -p 'test_clean_harness.py' && python3 -m unittest discover -s tests -p 'test_clean_scrub.py' && python3 -m unittest discover -s tests -p 'test_clean_parsers.py' && python3 -m unittest discover -s tests -p 'test_clean_escaping.py' && python3 -m unittest discover -s tests -p 'test_clean_runner.py' && python3 -m unittest discover -s tests -p 'test_clean_evidence.py' && python3 -m unittest discover -s tests -p 'test_clean_guard.py' && python3 -m unittest discover -s tests -p 'test_clean_batch.py' && python3 -m unittest discover -s tests -p 'test_clean_apply.py' && python3 -m unittest discover -s tests -p 'test_clean_reflog.py' && python3 -m unittest discover -s tests -p 'test_clean_gates.py' && python3 -m unittest discover -s tests -p 'test_clean_single.py' && python3 -m unittest discover -s tests -p 'test_clean_push.py' && python3 -m unittest discover -s tests -p 'test_clean_revalidation.py' && python3 -m unittest discover -s tests -p 'test_clean_result.py' && python3 -m unittest discover -s tests -p 'test_clean_stop.py' && python3 -m unittest discover -s tests -p 'test_clean_resolution.py' && python3 -m unittest discover -s tests -p 'test_status_doctor_update.py' && python3 -m unittest discover -s tests -p 'test_project.py'`
 
 **Checkpoint**: Every target of every apply ends in a stage, a reason and,
 unless not attempted, a reconciliation record.

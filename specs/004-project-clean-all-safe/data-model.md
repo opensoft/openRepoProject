@@ -553,6 +553,15 @@ The driver reads the slot by the `Invocation`'s phase: it raises
 | applying, reconciling | an unexpected exception | reconciling (an in-flight removal waited for; that target `unknown` with `internal-error`, later ones `not-attempted`; research.md R6) |
 | reconciling | record printed | exit by the table below |
 
+The `Invocation`'s phase follows these states. The pipeline sets `apply`
+after the confirmation and the slot read (lead ruling R-56 Q-1 and Q-2);
+then `reconciling` is set before every rescan, and `apply` again before
+the next target's own steps when the target ended a plain `removed` and the
+slot is empty, so that each rescan child gets
+`min(5 s, reserve remaining)` and a second SIGINT counts during every
+rescan, a fail-safe reading; the reserve counted from the exit stays
+T099's (lead rulings R-83 P-3 and R-80 P-3; T093).
+
 ### States of push and delete-branch
 
 | From | Event | To |
