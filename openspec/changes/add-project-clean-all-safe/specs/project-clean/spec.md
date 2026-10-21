@@ -650,18 +650,20 @@ every earlier gate.
 A row SHALL be excluded as `operation-in-progress` when its own administrative
 directory, `<common_dir>/worktrees/<admin_id>`, holds an entry of any kind
 named `MERGE_HEAD`, `CHERRY_PICK_HEAD`, `REVERT_HEAD`, `BISECT_LOG`,
-`BISECT_START`, `rebase-apply`, `rebase-merge` or `sequencer`: the markers by
+`BISECT_START`, `rebase-apply`, `rebase-merge`, `sequencer`,
+`MERGE_AUTOSTASH`, `NOTES_MERGE_PARTIAL` or `NOTES_MERGE_REF`: the markers by
 which Git knows that a merge, a cherry-pick or revert or a sequence of them, an
-`am` or a rebase, or a bisect is in progress there, and which the removal
-would delete with that directory, even where the operation left the index and
-the working tree unchanged. The gate SHALL read that directory by one listing,
-counted in the filesystem budget. One outcome rule SHALL govern the gate: a
-marker present SHALL make the row `operation-in-progress`; an error on the
-listing SHALL make the row `inspection-error`, as any failed row probe does,
+`am` or a rebase, a bisect, or a notes merge is in progress there, or that a
+merge holds an autostash, and which the removal would delete with that
+directory, even where the operation left the index and the working tree
+unchanged. The gate SHALL read that directory by one listing, counted in the
+filesystem budget and never by a Git child. One outcome rule SHALL govern the
+gate: a marker present SHALL make the row `operation-in-progress`; an error on
+the listing SHALL make the row `inspection-error`, as any failed row probe does,
 so that the plan is incomplete with `inspection-incomplete`; a listing not
-finished within the filesystem budget SHALL leave the row unprobed and the
-plan incomplete with `inspection-incomplete`; and the deadline passing SHALL
-leave it incomplete with `deadline-exceeded`, as for every other read.
+finished within the filesystem budget SHALL leave the row unprobed and the plan
+incomplete with `inspection-incomplete`; and the deadline passing SHALL leave it
+incomplete with `deadline-exceeded`, as for every other read.
 
 A row SHALL be excluded as `worktree-only-commits` when a commit that its own
 HEAD reflog or a ref under its own `refs/worktree/` holds is reachable from no
@@ -788,21 +790,37 @@ apply SHALL print `Removed N; branches kept: ` followed by the branches kept.
   working tree equal to their branch head: a `git am` that failed on a patch
   that does not apply; a `git cherry-pick` of two commits stopped at a conflict
   on the first and resolved to the branch's own content; a `git merge
-  --no-commit -s ours` of another branch; and a `git bisect start
-  --no-checkout`
+  --no-commit -s ours` of another branch; a `git notes merge` stopped at a
+  conflict; and a `git bisect start --no-checkout`
 - **THEN** the combined status probe prints no record for any of them,
   `--all-safe` excludes each as `operation-in-progress`, and `--all-safe
   --apply --yes` removes none of them
 - **AND** `--apply --action remove --worktree` naming one refuses with
   `target-excluded`, reason `operation-in-progress`, and exit 2
 - **AND** once each operation is aborted (`git am --abort`, `git cherry-pick
-  --abort`, `git merge --abort` and `git bisect reset`), each worktree is
-  selected as before
+  --abort`, `git merge --abort`, `git notes merge --abort` and `git bisect
+  reset`), each worktree is selected as before, although the aborted notes
+  merge leaves its `NOTES_MERGE_WORKTREE` directory behind
 - **AND** a worktree whose administrative directory cannot be listed, its read
   permission removed while its `gitdir` file stays readable, is
   `inspection-error`, the plan is incomplete with `inspection-incomplete`, the
   preview exits 1, and `--all-safe --apply --yes` refuses with exit 2 before
   any removal
+
+#### Scenario: A squash merge that holds an autostash
+
+- **WHEN** an otherwise eligible linked worktree has an edit to a tracked file
+  and runs `git merge --squash --autostash -s ours` of another branch, on a
+  Git that keeps the autostash until the squash is committed, as 2.40.4 and
+  2.43.0 do, so that only `MERGE_AUTOSTASH` in its administrative directory
+  holds the edit, `git stash list` is empty and the combined status probe
+  prints no record
+- **THEN** `--all-safe` excludes it as `operation-in-progress`, and
+  `--all-safe --apply --yes` leaves the worktree and its `MERGE_AUTOSTASH` in
+  place, where before this change the non-force removal exited 0 and left the
+  edit unreachable
+- **AND** on Git 2.36.6, which applies the autostash at once, the edit is back
+  in the working tree and the row is excluded as `dirty`
 
 #### Scenario: A commit held only by the worktree
 

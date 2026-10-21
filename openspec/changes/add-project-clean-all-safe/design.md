@@ -29,7 +29,8 @@ read of LQ-15, Context, D11, D16 and D18; LQ-14, Context, D7, D18, D20, D21,
 D22 and Risks; and lane openRepoProject-3's W10 read of LQ-12 and LQ-13, under
 the lead's rulings R-124 and R-127, Context, D6, D12, D14, D21, D22 and Risks;
 and its W9 read of LQ-10 and LQ-11, under the lead's R-125, Context, D6, D7,
-D11, D17, D18 and Risks. Brett Heap's ruling
+D11, D17, D18 and Risks; and its W14 read of LQ-14, under the lead's R-126,
+Context, D18 and D22. Brett Heap's ruling
 of 2026-10-09 on open question 1, that a local ancestry proof outranks
 `remote-gone` for worktree rows, is in `proposal.md` Decisions and edited
 Context, D6, D7, D20, Risks, the Migration Plan and Open Questions here.
@@ -1030,17 +1031,16 @@ The next steps by reason: `dirty` "commit or preserve the changes";
 review, then git worktree remove yourself"; `reflog-unavailable` "the branch's
 reflog is missing, expired or undecidable; review, then git worktree remove
 yourself"; `contains-submodule` and `hidden-local-state` "review, then remove
-the worktree yourself"; `operation-in-progress` "a git am, merge, cherry-pick,
-revert, rebase or bisect is, or may be, in progress there; finish or abort it,
-then run again" (LQ-14); `worktree-only-commits` "a commit is, or may be, held
-only by this worktree's HEAD reflog or refs/worktree; keep it on a branch or
-tag, or review, then git worktree remove yourself" (LQ-13);
-`registration-mismatch` "review, then git worktree repair or git worktree
-prune, unset core.worktree and core.bare in the worktree's config.worktree, or
-remove the row by hand" (LQ-11, R-125); `inspection-error` "review, then git
-worktree repair or git worktree prune, or remove the row by hand";
-`locked-worktree` "unlock it yourself if it should go"; every other class its
-recommendation.
+the worktree yourself"; `operation-in-progress` "a git am, merge, notes merge,
+cherry-pick, revert, rebase or bisect is, or may be, in progress there; finish
+or abort it, then run again" (LQ-14, R-126); `worktree-only-commits` "a commit
+is, or may be, held only by this worktree's HEAD reflog or refs/worktree; keep
+it on a branch or tag, or review, then git worktree remove yourself" (LQ-13);
+`registration-mismatch` "review, then git worktree repair or git worktree prune,
+unset core.worktree and core.bare in the worktree's config.worktree, or remove
+the row by hand" (LQ-11, R-125); `inspection-error` "review, then git worktree
+repair or git worktree prune, or remove the row by hand"; `locked-worktree`
+"unlock it yourself if it should go"; every other class its recommendation.
 
 The question: `Remove N worktrees, keeping N branches? [yes/N]`, in the singular
 for one. The wait line, at most once: `Waiting for git worktree remove PATH to
@@ -1253,15 +1253,17 @@ the fixup replaced (Risks).
 ### D22. Operations in progress (LQ-14)
 
 Brett Heap's ruling LQ-14 of 2026-10-21 never removes a worktree with an
-operation in progress. Git keeps the state of a merge, a cherry-pick or
-revert, an `am`, a rebase or a bisect in the worktree's own git directory, its
+operation in progress. Git keeps the state of a merge and its autostash, a
+notes merge, a cherry-pick or revert, an `am`, a rebase or a bisect in the
+worktree's own git directory, its
 administrative directory for a linked worktree, since none of these names is
 in `common_list` (`path.c`, at 2.36.6 and 2.43.7). An operation that stopped
 with the index and the working tree equal to the branch head reads clean to
 the status probe and to Git's own check, and the removal deletes its state:
 a failed `am`, a merge or a cherry-pick sequence resolved to the branch's own
 content, a bisect with `--no-checkout` (lane openRepoProject-3's F1 H-2 at
-`2cf34d3`). Each decision below is the simple, conservative one:
+`2cf34d3`), a squash merge holding an autostash and a notes merge stopped at a
+conflict (its W14 M1). Each decision below is the simple, conservative one:
 
 - Reason. A new exclusion reason, `operation-in-progress`. No existing reason
   fits: the row is not dirty, `hidden-local-state` names index flags,
@@ -1291,9 +1293,23 @@ content, a bisect with `--no-checkout` (lane openRepoProject-3's F1 H-2 at
     in progress (`builtin/bisect--helper.c:718` at 2.36.6,
     `builtin/bisect.c:791` at 2.43.7) and which `bisect_clean_state` removes
     last (`bisect.c:1179-1182` at 2.36.6), so a cleanup cut short can leave it
-    alone.
-  An entry of one of these names, of any kind, is a marker; the set is a
-  superset of what `git status` reports, never a subset.
+    alone;
+  - `MERGE_AUTOSTASH`, the stash commit that `git merge --autostash`, or
+    `merge.autoStash`, saves before a merge and that only that file names
+    until the merge ends (`git_path_merge_autostash`, `path.c:1559` at 2.36.6
+    and `:1593` at 2.43.7, which `builtin/merge.c` applies and removes); a
+    `git merge --squash` keeps it until the squash is committed on 2.40.4 and
+    2.43.0, while 2.36.6 applies it at once, so a worktree that reads clean can
+    hold a person's edit only there (lane openRepoProject-3's W14 M1, R-126);
+  - `NOTES_MERGE_PARTIAL` and `NOTES_MERGE_REF`, which a `git notes merge`
+    stopped at a conflict leaves and which its `--commit` and `--abort`
+    delete (`builtin/notes.c:691-698` at 2.36.6, `:791-798` at 2.43.7).
+  An entry of one of these eleven names, of any kind, is a marker; the set is
+  a superset of what `git status` reports, never a subset, and wider by the
+  last three, which `git status` does not report. `NOTES_MERGE_WORKTREE`,
+  which holds a notes merge's resolutions, is not a marker, since `--abort`
+  and `--commit` leave it behind and it would keep a worktree out for
+  nothing; nor is `SQUASH_MSG`, which a squash undone by hand leaves (R-126).
 - Reads. One listing of `<common_dir>/worktrees/<admin_id>`, a filesystem
   call under the filesystem budget like D6's identity reads, and no Git child:
   a status-like child would read the same files and cost a child per row.
@@ -1309,8 +1325,11 @@ content, a bisect with `--no-checkout` (lane openRepoProject-3's F1 H-2 at
 - Revalidation. The same listing runs again in revalidation's filesystem step,
   beside the target's identity and `modules` check, with no new Git child; a
   marker refuses the target with `operation-in-progress`, and a listing that
-  fails is a value that cannot be re-read and refuses it with `state-changed`
-  (R-124, R-127). It catches an operation started after the plan,
+  fails refuses it as every failed read of that step does, by the rule of
+  `Cleanup revalidates destructive actions` that "a value that cannot be
+  re-read, a filesystem call that times out included, SHALL count as a
+  difference", with the reason `state-changed` (R-124, R-126, R-127). It
+  catches an operation started after the plan,
   which no step read before (lane openRepoProject-3's reader RB at `2cf34d3`,
   whose cases were all removed with exit 0; R-107). An operation started after
   that revalidation is in the residual window, whose line names it (D18).
@@ -1324,7 +1343,13 @@ of a range stopped at a conflict leaves `CHERRY_PICK_HEAD` and `sequencer`,
 holding `todo`; a `git merge --no-commit -s ours` leaves `MERGE_HEAD`; and a
 `git bisect start --no-checkout` leaves `BISECT_LOG` and `BISECT_START`, which
 `git bisect reset` removes. In each case the pinned status probe printed no
-record once the index and tree matched the branch head.
+record once the index and tree matched the branch head. On Git 2.43.0 a `git
+merge --squash --autostash -s ours` with an edited tracked file leaves
+`MERGE_AUTOSTASH` and `SQUASH_MSG`, an empty `git stash list` and no record
+from the probe, while 2.36.6 applies the autostash at once and the probe shows
+the edit; on both, a `git notes merge` stopped at a conflict leaves
+`NOTES_MERGE_PARTIAL`, `NOTES_MERGE_REF` and `NOTES_MERGE_WORKTREE` with no
+record from the probe, and its `--abort` leaves `NOTES_MERGE_WORKTREE` alone.
 
 ## Risks / Trade-offs
 

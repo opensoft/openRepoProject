@@ -139,47 +139,43 @@ Scope).
   `unstarted-branch`, `deferred-target-cap` (Bounded work),
   `contains-submodule` (any gitlink or admin `modules` entry),
   `hidden-local-state` (any entry flagged assume-unchanged or skip-worktree),
-  `operation-in-progress` (a merge, cherry-pick, revert, `am`, rebase or
-  bisect marker in the worktree's administrative directory; Brett Heap's
-  ruling LQ-14) and `worktree-only-commits` (a commit that only the
-  worktree's HEAD reflog or `refs/worktree/` holds, which no branch, tag,
-  remote-tracking ref or the branch's reflog reaches, or a HEAD reflog over
-  its 64 KiB bound or with a line that does not parse; Brett Heap's ruling
-  LQ-13), the last four read
-  in the row's own worktree or administrative directory
-  (`BA:113-150`, `BA:629-675`, `BA:554-583`). A merged worktree whose
-  upstream was deleted is
-  `merged-removable` and faces these gates like any other merged row, since
-  local ancestry outranks `remote-gone` for worktree rows (Brett Heap's
-  ruling of 2026-10-09; Decisions). Local ancestry is the only removal proof,
-  and it proves that a branch adds nothing, not that its work began. Nor
-  does a head equal to
-  the merge-target SHA prove that the work never began, because a branch
-  fast-forward merged into the target sits at the target's tip, so the gate
-  reads the branch's reflog in every case. Its anchor is the last surviving
-  entry whose old object is all zeros, as every entry that creates the
-  branch has, whatever its message (`git fetch origin feat:f1`, `update-ref`
-  and `push .` write no `branch:` message), or whose message begins
-  `branch: Created from` or `branch: Reset to` (`worktree add -B`,
-  `branch -f` and `checkout -B` write the second; R-15). An entry whose old
-  object is all zeros is never a movement, and a movement is a later entry,
-  or any entry when no anchor survives, whose old and new objects are
-  non-zero and differ (a rename's are equal). A branch whose anchor survives
-  with no movement after it, at the anchor's new object, is excluded as
-  `unstarted-branch`, so a freshly created and published lane worktree,
-  whose push adds no reflog entry, is never swept, nor one reset to the
-  target's tip by `worktree add -B` or created there by
-  `git fetch origin feat:f1`; a branch with a movement, at the target's tip
-  or not, is merged and stays eligible. The reflog is a bounded
-  filesystem read of `logs/refs/heads/<branch>` in the common directory, at
-  most 64 KiB, counted in the filesystem budget and never a Git child, so the
-  fit test is unchanged. One outcome rule decides the read (M3; R-12): a
-  missing, empty (0 byte) or bound-reaching reflog, one whose surviving
-  entries cannot decide, and one whose last entry's new object is not the
-  head fail closed as `reflog-unavailable`, at the same gate position; any
-  other error on the read is the row's `inspection-error`; and a read not
-  finished within the filesystem budget leaves the row unprobed
-  (`inspection-incomplete`). The gate applies in single mode too (M4).
+  `operation-in-progress` (a merge, autostash, notes merge, cherry-pick,
+  revert, `am`, rebase or bisect marker in the worktree's administrative
+  directory; Brett Heap's ruling LQ-14) and `worktree-only-commits` (a commit
+  that only the worktree's HEAD reflog or `refs/worktree/` holds, which no
+  branch, tag, remote-tracking ref or the branch's reflog reaches, or a HEAD
+  reflog over its 64 KiB bound or with a line that does not parse; Brett Heap's
+  ruling LQ-13), the last four read in the row's own worktree or administrative
+  directory (`BA:113-150`, `BA:629-675`, `BA:554-583`). A merged worktree whose
+  upstream was deleted is `merged-removable` and faces these gates like any
+  other merged row, since local ancestry outranks `remote-gone` for worktree
+  rows (Brett Heap's ruling of 2026-10-09; Decisions). Local ancestry is the
+  only removal proof, and it proves that a branch adds nothing, not that its
+  work began. Nor does a head equal to the merge-target SHA prove that the work
+  never began, because a branch fast-forward merged into the target sits at the
+  target's tip, so the gate reads the branch's reflog in every case. Its anchor
+  is the last surviving entry whose old object is all zeros, as every entry that
+  creates the branch has, whatever its message (`git fetch origin feat:f1`,
+  `update-ref` and `push .` write no `branch:` message), or whose message begins
+  `branch: Created from` or `branch: Reset to` (`worktree add -B`, `branch -f`
+  and `checkout -B` write the second; R-15). An entry whose old object is all
+  zeros is never a movement, and a movement is a later entry, or any entry when
+  no anchor survives, whose old and new objects are non-zero and differ (a
+  rename's are equal). A branch whose anchor survives with no movement after it,
+  at the anchor's new object, is excluded as `unstarted-branch`, so a freshly
+  created and published lane worktree, whose push adds no reflog entry, is never
+  swept, nor one reset to the target's tip by `worktree add -B` or created there
+  by `git fetch origin feat:f1`; a branch with a movement, at the target's tip
+  or not, is merged and stays eligible. The reflog is a bounded filesystem read
+  of `logs/refs/heads/<branch>` in the common directory, at most 64 KiB, counted
+  in the filesystem budget and never a Git child, so the fit test is unchanged.
+  One outcome rule decides the read (M3; R-12): a missing, empty (0 byte) or
+  bound-reaching reflog, one whose surviving entries cannot decide, and one
+  whose last entry's new object is not the head fail closed as
+  `reflog-unavailable`, at the same gate position; any other error on the read
+  is the row's `inspection-error`; and a read not finished within the filesystem
+  budget leaves the row unprobed (`inspection-incomplete`). The gate applies in
+  single mode too (M4).
 - **Single-target `remove` becomes a one-item batch.** Flags unchanged,
   `--apply --json` now accepted (OQ-10). It builds the same plan (`mode:
   "single"`), lists every other eligible row as `not-requested`, and shares
@@ -217,8 +213,8 @@ Scope).
   revalidated with at most six Git children, the sixth the reachability probe
   of `worktree-only-commits` (LQ-13), and seven in a repository whose
   `extensions.worktreeConfig` the plan read as true (LQ-11), a manifest
-  re-read and a
-  `modules` check, never the full report (`BA:677-719`), against recorded
+  re-read, a `modules` check and the `operation-in-progress` listing (LQ-14),
+  never the full report (`BA:677-719`), against recorded
   repository, worktree and merge-target identity objects (`BA:203-235`).
   Concurrent writers are outside the contract and no lock is claimed; the
   guarantee is `BA:261-268`, its outcomes are the changes-after-confirmation
@@ -511,8 +507,8 @@ Headers are quoted verbatim, one per line; ADDED headers are proposed text.
     person sees: the preview layout, the default-No prompt, the success line.
     By Brett Heap's rulings LQ-14 and LQ-13 the gate order ends with
     `operation-in-progress` and `worktree-only-commits`, with the added
-    scenarios "An operation in progress" and "A commit held only by the
-    worktree".
+    scenarios "An operation in progress", "A squash merge that holds an
+    autostash" (R-126) and "A commit held only by the worktree".
   - ADDED:
     `### Requirement: Clean bounds its Git work and reports omitted work`.
     The deadline, budgets, caps, `omitted`, `probes`, `operations`, `limits`
@@ -1055,20 +1051,23 @@ Departures from packet decisions, each citing the decision departed from:
   recommendation "Yes, add a protection. Never remove a worktree with an
   operation in progress. This also needs an amendment to change 1."; extends
   the gates of `BA:113-165` and the revalidation of `BA:677-707`): Git keeps
-  the state of a merge, a cherry-pick or revert, an `am`, a rebase or a bisect
-  in the worktree's administrative directory, so one that stopped with the
+  the state of a merge and its autostash, a notes merge, a cherry-pick or
+  revert, an `am`, a rebase or a bisect in the worktree's administrative
+  directory, so one that stopped with the
   index and tree equal to the branch head reads clean and the removal deletes
   its state (lane openRepoProject-3's F1 H-2 at `2cf34d3`). A new gate,
   `operation-in-progress`, after `hidden-local-state` and before
   `worktree-only-commits`, lists that directory once and excludes the row when
   it holds `MERGE_HEAD`, `CHERRY_PICK_HEAD`, `REVERT_HEAD`, `BISECT_LOG`,
   `BISECT_START`, `rebase-apply`, `rebase-merge` or `sequencer`, the markers
-  of Git's own state detection, read in its sources at 2.36.6 and 2.43.7; a
-  listing that fails is `inspection-error` (R-124). Revalidation lists it
-  again with no new Git child, so an operation started after the plan refuses
-  the target with the same reason (lane openRepoProject-3's reader RB, R-107),
-  and the residual-window line names an operation started after that check. No
-  JSON field is added (design D7, D18, D21, D22, Risks).
+  of Git's own state detection, or `MERGE_AUTOSTASH`, `NOTES_MERGE_PARTIAL` or
+  `NOTES_MERGE_REF`, which a held autostash and a stopped notes merge leave
+  (lane openRepoProject-3's W14 M1, R-126), all read in its sources at 2.36.6
+  and 2.43.7; a listing that fails is `inspection-error` (R-124). Revalidation
+  lists it again with no new Git child, so an operation started after the plan
+  refuses the target with the same reason (lane openRepoProject-3's reader RB,
+  R-107), and the residual-window line names an operation started after that
+  check. No JSON field is added (design D7, D18, D21, D22, Risks).
 
 Packet decisions adopted, not open: OQ-5, the caps and bounds of `BA:966`,
 subject to OQ-4, less the target cap's refusal; OQ-9, the budgets of
@@ -1476,7 +1475,23 @@ previews and applies a batch of eligible worktree removals in one repository`,
 `Clean bounds its Git work and reports omitted work` and its scenario "Bounded
 revalidation work", and the `project-command` ADDED evidence model with its
 scenarios "An edit that keeps its size and restores its mtime" and "A
-commondir that names another repository").
+commondir that names another repository"). Lane openRepoProject-3's W14 read
+of LQ-14 at `43f7107` (HIGH 1, MEDIUM 1, LOW 4; its H1, a failed listing,
+already fixed by R-124 (b)), under the lead's R-126, adds `MERGE_AUTOSTASH`,
+`NOTES_MERGE_PARTIAL` and `NOTES_MERGE_REF` to the markers, eleven in all, and
+the scenario "A squash merge that holds an autostash" (M1); cites, for a
+failed re-listing at revalidation, the rule by which a value that cannot be
+re-read counts as a difference, with `state-changed` (H1); and records L1 (the
+four gates past the cap, fixed by R-124), L2 (the listing in What Changes), L3
+(that `43f7107` also re-wrapped the lines of `Cleanup revalidates destructive
+actions` naming the target's worktree identity and two-way registration, with
+no change of words) and L4 ("never by a Git child") (What Changes, eligibility
+and revalidation; Capabilities batch; Decisions, departures; this list; design
+Context, D18, D22; `tasks.md` 1.2, 1.4; the deltas' `Clean previews and
+applies a batch of eligible worktree removals in one repository` with its
+scenario "An operation in progress" and its added scenario "A squash merge
+that holds an autostash", and `Cleanup preserves all local work not proven
+disposable`).
 
 ### Council Verdicts
 

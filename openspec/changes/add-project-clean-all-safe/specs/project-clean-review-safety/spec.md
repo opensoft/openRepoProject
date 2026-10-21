@@ -18,15 +18,15 @@ the branch has whatever its message, or whose message begins
 to the merge target's SHA not being proof of that; a branch whose reflog is
 missing, empty or read to its 64 KiB bound, or whose surviving entries cannot
 decide that (`reflog-unavailable`); a worktree whose administrative directory
-shows a merge, cherry-pick, revert, `am`, rebase or bisect in progress
-(`operation-in-progress`); a worktree whose HEAD reflog or `refs/worktree/`
-holds a commit that no branch, tag or remote-tracking ref reaches, nor its
-branch's reflog, or whose HEAD reflog is read to its 64 KiB bound or holds a
-line that cannot be parsed (`worktree-only-commits`); and a worktree whose
-path cannot be read or whose state could not be established
-(`inspection-error`). It MUST not offer destructive removal for those states. A
-value that is not established SHALL be null, never false or 0, and SHALL keep
-its row out of every removal.
+shows a merge, notes merge, cherry-pick, revert, `am`, rebase or bisect in
+progress, or a merge's held autostash (`operation-in-progress`); a worktree
+whose HEAD reflog or `refs/worktree/` holds a commit that no branch, tag or
+remote-tracking ref reaches, nor its branch's reflog, or whose HEAD reflog is
+read to its 64 KiB bound or holds a line that cannot be parsed
+(`worktree-only-commits`); and a worktree whose path cannot be read or whose
+state could not be established (`inspection-error`). It MUST not offer
+destructive removal for those states. A value that is not established SHALL be
+null, never false or 0, and SHALL keep its row out of every removal.
 
 #### Scenario: A merged worktree has ignored local files
 
