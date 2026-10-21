@@ -199,6 +199,19 @@ def execute(argv, cwd=None, env=None):
     return result.returncode if result.returncode >= 0 else 128 - result.returncode
 
 
+def delegate_env():
+    """The environment of every owner tool that `update --apply` runs (lead
+    ruling R-102, LQ-12, approved by Brett Heap; change 1's "Explicit
+    maintenance" as amended at eae1a79): project's own, with every GIT_SCRUB
+    name but GIT_ALLOW_PROTOCOL removed, as the push child has them removed,
+    and nothing added: no -c pin, no GIT_OPTIONAL_LOCKS and no trace2
+    variable. A caller's GIT_DIR, GIT_WORK_TREE or GIT_INDEX_FILE then cannot
+    point a tool at a repository other than the one the check inspected, and
+    a protocol list the caller set still binds any Git the tool runs."""
+    return {name: value for name, value in os.environ.items()
+            if name not in GIT_SCRUB or name == "GIT_ALLOW_PROTOCOL"}
+
+
 def show_plan(commands, cwd=None):
     if cwd:
         print(f"Working directory: {cwd}")
@@ -611,10 +624,12 @@ APPLY_RESULT_KEYS = (
     "operations", "targets", "exit_code", "completeness",
 )
 
-# The eighteen refusal codes, in the order of the contract's "Codes" table.
+# The nineteen refusal codes, in the order of the contract's "Codes" table;
+# `relative-config-path` is Brett Heap's ruling LQ-15 (lead ruling R-102), in
+# the place the project-clean delta's list gives it.
 REFUSAL_CODES = (
     "invalid-arguments", "internal-error", "git-unavailable", "git-too-old",
-    "repository-not-found", "ambiguous-name", "target-not-repository-root",
+    "relative-config-path", "repository-not-found", "ambiguous-name", "target-not-repository-root",
     "unsupported-path-bytes", "manifest-invalid", "no-merge-target",
     "inspection-incomplete", "inspect-cap", "deadline-exceeded",
     "worktree-not-found", "target-excluded", "plan-digest-mismatch",
@@ -713,6 +728,11 @@ TEXT = {
     "inspection_git_too_old": "Git {VERSION} is older than 2.36; repository inspection needs Git 2.36 or later.",
     "inspection_git_unavailable":
         "Git is unavailable ({DETAIL}); repository inspection needs Git 2.36 or later.",
+    # D18's `relative-config-path` line, one per variable that fails D11's
+    # configuration-path test, never its value: clean's refusal, status's
+    # `errors` entry and doctor's error rows carry the same text (Brett Heap's
+    # ruling LQ-15; lead ruling R-102).
+    "relative_config_path": "{NAME} is set to a path that does not begin with /; make it absolute or unset it.",
     "target_not_repository_root": "Not the main worktree of a repository: {PATH}; pass the repository root.",
     "unsupported_path_bytes": "The repository path is not valid UTF-8: {PATH}",
     "manifest_invalid_size": "Manifest {PATH} is larger than 1 MiB.",
@@ -779,11 +799,63 @@ NEXT_STEPS = {
 # The environment and the argument vector of every Git child (design D6, D9 and
 # D11; contracts/project-clean.md, "Git children"; FR-054).
 
+# The variables of D11's configuration-path test (Brett Heap's ruling LQ-15;
+# lead ruling R-102), in D18's order. Git builds its user configuration and its
+# global ignore and attributes files from HOME and XDG_CONFIG_HOME as they are
+# spelled, so a relative value resolves in the directory a Git child runs in,
+# where a repository's own files would be read as the user's configuration.
+CONFIG_PATH_RULED = ("HOME", "XDG_CONFIG_HOME")
+# The lead's extension of LQ-15, which Brett Heap may strike: Git's own names
+# for the user's and the system's configuration file. Striking it is this one
+# line, made `CONFIG_PATH_EXTENSION = ()`; nothing else in project names them
+# for the test.
+CONFIG_PATH_EXTENSION = ("GIT_CONFIG_GLOBAL", "GIT_CONFIG_SYSTEM")
+
+
+def relative_config_paths():
+    """The names of the variables that fail D11's configuration-path test, in
+    D18's order: each of CONFIG_PATH_RULED and CONFIG_PATH_EXTENSION whose raw
+    value (os.environb) is not empty and whose first byte is not b"/", so that
+    ` /x`, `~/x`, `.` and a first byte that is not UTF-8 fail it and `/` alone
+    passes. An unset or empty variable passes. Each is tested whether or not
+    Git would read a file through it, not in Git's order of precedence. The
+    values are read for this test alone: they reach every child unchanged, and
+    nothing prints them."""
+    return [name for name in (*CONFIG_PATH_RULED, *CONFIG_PATH_EXTENSION)
+            if os.environb.get(os.fsencode(name), b"")[:1] not in (b"", b"/")]
+
+
+def config_path_message(names):
+    """D18's text for the variables that fail the test: one line per name, in
+    the order given, never a value."""
+    return "\n".join(TEXT["relative_config_path"].format(NAME=name) for name in names)
+
+
+def hold_git_for_config_paths(run):
+    """The configuration-path test of status, doctor and update, at their entry,
+    before any Git child (D11, D16; LQ-15). When a variable fails it, run's
+    version memo is set, in place of the version check, to a GitVersion whose
+    code is `relative-config-path` and whose detail is config_path_message()'s
+    text, and returned: every reader that tests the memo before a Git child,
+    discover(), repo_state(), handoff()'s remote read through git() and
+    doctor's git row, then starts none, `git --version` included, and the
+    command reports the code as it reports a Git below the floor. Returns None,
+    and sets nothing, when every variable passes. `clean` refuses instead
+    (require_git())."""
+    names = relative_config_paths()
+    if not names:
+        return None
+    run.version = GitVersion("relative-config-path", detail=config_path_message(names))
+    return run.version
+
+
 # Removed from every Git child's environment, never from project's own, in the
 # contract's order: the fifteen names `git rev-parse --local-env-vars` prints on
 # Git 2.40 and later; GIT_INTERNAL_SUPER_PREFIX, which Git 2.36 to 2.39 also
-# print (lead ruling R-21); and GIT_ALLOW_PROTOCOL, which Git consults before
-# any -c pin (R-25). A fixed list, never queried from Git.
+# print (lead ruling R-21); GIT_ALLOW_PROTOCOL, which Git consults before any
+# -c pin (R-25); and the fourteen trace names Git 2.36 to 2.43 read, through
+# which a caller could make a child create or append to a file (Brett Heap's
+# ruling Q9 B, PR #19). A fixed list of thirty-one, never queried from Git.
 GIT_SCRUB = (
     "GIT_ALTERNATE_OBJECT_DIRECTORIES", "GIT_CONFIG", "GIT_CONFIG_PARAMETERS",
     "GIT_CONFIG_COUNT", "GIT_OBJECT_DIRECTORY", "GIT_DIR", "GIT_WORK_TREE",
@@ -791,7 +863,20 @@ GIT_SCRUB = (
     "GIT_NO_REPLACE_OBJECTS", "GIT_REPLACE_REF_BASE", "GIT_PREFIX",
     "GIT_SHALLOW_FILE", "GIT_COMMON_DIR", "GIT_INTERNAL_SUPER_PREFIX",
     "GIT_ALLOW_PROTOCOL",
+    "GIT_TRACE", "GIT_TRACE_BARE", "GIT_TRACE_CURL", "GIT_TRACE_CURL_NO_DATA",
+    "GIT_TRACE_FSMONITOR", "GIT_TRACE_PACKET", "GIT_TRACE_PACKFILE",
+    "GIT_TRACE_PACK_ACCESS", "GIT_TRACE_PERFORMANCE", "GIT_TRACE_REDACT",
+    "GIT_TRACE_REFS", "GIT_TRACE_SETUP", "GIT_TRACE_SHALLOW",
+    "GIT_TRACE_WORKING_TREE_ENCODING",
 )
+
+# Set in every Git child's environment, the push child's included, over any
+# value the caller gave: "0" turns each trace2 target off, and it outranks the
+# trace2.normalTarget, trace2.eventTarget and trace2.perfTarget settings of the
+# system and global configuration, which no -c pin reaches (Q9 B). The other
+# GIT_TRACE2_* names stay as the caller set them; none opens a file while these
+# three are "0".
+TRACE2_OFF = (("GIT_TRACE2", "0"), ("GIT_TRACE2_EVENT", "0"), ("GIT_TRACE2_PERF", "0"))
 
 # The seven protocol pins, so that a lazy fetch is refused locally (D11; lead
 # rulings R-23 and R-25).
@@ -802,8 +887,13 @@ PROTOCOL_PINS = (
     "-c", "protocol.ext.allow=never",
 )
 
-# The two status pins, on the status and hidden-state probes and the removal.
-STATUS_PINS = ("-c", "core.untrackedCache=false", "-c", "core.fsmonitor=false")
+# The status pins, on the status and hidden-state probes and the removal: the
+# untracked cache and fsmonitor off (D11), and every stat field compared, so
+# that an edit which keeps a file's size and restores its mtime still shows by
+# its ctime under a repository's core.trustctime=false or core.checkStat=minimal
+# (lead ruling R-102: LQ-10, approved by Brett Heap; lane 3's F1 H-3).
+STATUS_PINS = ("-c", "core.untrackedCache=false", "-c", "core.fsmonitor=false",
+               "-c", "core.trustctime=true", "-c", "core.checkStat=default")
 
 # Per kind of Git child: whether it is a read-only probe, which sets
 # GIT_OPTIONAL_LOCKS=0; the -c pins it carries before the protocol pins;
@@ -817,16 +907,21 @@ GIT_KINDS = {
     # The push child of `clean --action push` follows draft PR #19 and lead
     # ruling R-28: no protocol pin, and the caller's GIT_ALLOW_PROTOCOL kept.
     # That is LQ-3's assumption until Brett Heap's word; a ruling either way
-    # edits this one row.
+    # edits this one row. It keeps no other scrubbed name, and git_env() gives
+    # it TRACE2_OFF as it gives every kind: Q9 B says every Git child, and
+    # trace output changes nothing about where a push reaches.
     "push": (False, (), False, ("GIT_ALLOW_PROTOCOL",)),
 }
 
 
 def git_env(kind):
-    """A copy of project's environment, scrubbed for a Git child of KIND."""
+    """A copy of project's environment for a Git child of KIND: GIT_SCRUB's
+    names removed but those KIND keeps, TRACE2_OFF set for every kind, and
+    GIT_OPTIONAL_LOCKS=0 for a read-only probe."""
     read_only, _, _, kept = GIT_KINDS[kind]
     env = {name: value for name, value in os.environ.items()
            if name not in GIT_SCRUB or name in kept}
+    env.update(TRACE2_OFF)
     if read_only:
         env["GIT_OPTIONAL_LOCKS"] = "0"
     return env
@@ -1159,8 +1254,10 @@ class Invocation:
     def interrupting(self):
         """Whether a driver stops its probe and raises Interrupted now: the slot
         set while planning, or a second SIGINT while reconciling (R-44 (3);
-        data-model.md, "Signal slot"). In the apply phase only the seams read
-        the slot, before each revalidation and each spawn (D15)."""
+        data-model.md, "Signal slot"). In the apply phase no driver stops: the
+        seams read the slot before each revalidation and each spawn (D15), and
+        a revalidation reads it before each read it starts (slot_set(); lead
+        ruling R-95 (a))."""
         if self.phase == "planning":
             return self.signal is not None
         return self.phase == "reconciling" and self.second_interrupt
@@ -1175,11 +1272,16 @@ def current_invocation():
 
 def _install_handlers(handlers):
     """Install {signum: handler} and return the handlers replaced; a handler not
-    installed from Python (None) is kept as SIG_DFL. On failure, what was
-    installed is put back."""
+    installed from Python (None) is kept as SIG_DFL. A signal ignored when this
+    is called (SIG_IGN, as nohup leaves SIGHUP and a non-interactive shell's
+    `&` job leaves SIGINT) stays ignored, and nothing is saved for it, so no
+    scope catches or restores it (lead ruling R-101 (b), F2). On failure, what
+    was installed is put back."""
     saved = {}
     try:
         for signum, handler in handlers.items():
+            if signal.getsignal(signum) == signal.SIG_IGN:
+                continue
             previous = signal.signal(signum, handler)
             saved[signum] = signal.SIG_DFL if previous is None else previous
     except BaseException:
@@ -1200,9 +1302,10 @@ def _in_main_thread():
 
 class signal_scope:
     """D1's record-only handlers (research.md R4): for SIGINT, SIGTERM and
-    SIGHUP a handler that stores the signal in the slot of the invocation in
-    force when the scope is entered (one entered for the scope's own span when
-    none is), and does nothing else; and a non-blocking wakeup pipe, set with
+    SIGHUP, each one not ignored on entry (_install_handlers()), a handler
+    that stores the signal in the slot of the invocation in force when the
+    scope is entered (one entered for the scope's own span when none is), and
+    does nothing else; and a non-blocking wakeup pipe, set with
     warn_on_full_buffer=False, so that a signal wakes the driver's select() at
     once; `wake` is its read end. On every exit, BaseException included, every
     live probe group is first killed and reaped (kill_live_probes()), and then
@@ -1424,14 +1527,17 @@ def _process_text(data):
 
 
 def git_refusal(run):
-    """After the invocation's version check failed, the CompletedProcess that
-    git() returns without spawning anything (FR-053, plan review M10), or None
-    while Git may run."""
+    """After the invocation's version check failed, or a configuration path
+    failed D11's test in its place (hold_git_for_config_paths(); LQ-15), the
+    CompletedProcess that git() returns without spawning anything (FR-053,
+    plan review M10), its message the code's own, or None while Git may run."""
     version = run.version
     if version is None or version.code is None:
         return None
     if version.code == "git-too-old":
         message = TEXT["git_too_old"].format(VERSION=version.text)
+    elif version.code == "relative-config-path":
+        message = version.detail  # D18's lines, one per variable that failed
     else:
         message = TEXT["git_unavailable"].format(DETAIL=version.detail)
     return subprocess.CompletedProcess(["git"], 2, "", message)
@@ -1512,15 +1618,17 @@ def run_bounded(spec, parser, run):
     if kind == "removal":
         handle.ceiling_end = handle.started + TIMING["removal_ceiling"]
     out, err = handle.process.stdout.fileno(), handle.process.stderr.fileno()
-    selector = selectors.DefaultSelector()
     streams = {out, err}
-    for fd in streams:
-        selector.register(fd, selectors.EVENT_READ)
-    wake = signal_wakeup()
-    if wake is not None:
-        selector.register(wake, selectors.EVENT_READ)
-    name = None
+    selector = name = None
     try:
+        # Set up inside the protected path, so that a failure here (EMFILE,
+        # say) once the child runs still settles it: a removal is waited for.
+        selector = selectors.DefaultSelector()
+        for fd in streams:
+            selector.register(fd, selectors.EVENT_READ)
+        wake = signal_wakeup()
+        if wake is not None:
+            selector.register(wake, selectors.EVENT_READ)
         while not handle.finished:
             if tick is not None:
                 tick(run)
@@ -1575,7 +1683,8 @@ def run_bounded(spec, parser, run):
         _settle(handle)
         raise
     finally:
-        selector.close()
+        if selector is not None:
+            selector.close()
         handle.close()
     if name == "interrupted":
         raise Interrupted(run.signal)
@@ -1638,7 +1747,12 @@ class GitVersion:
     """The version check's result (FR-053; data-model.md, "Driver outcome"):
     `code`, None, `git-too-old` or `git-unavailable`; `version`, the numbers
     read, as (major, minor, patch); `text`, what followed `git version `; and
-    `detail`, the git-unavailable detail as TEXT words it."""
+    `detail`, the git-unavailable detail as TEXT words it. Status, doctor and
+    update memoize one with code `relative-config-path` in the check's place
+    when a configuration path fails D11's test, so that no Git child starts,
+    `git --version` included; its `detail` is then D18's lines
+    (hold_git_for_config_paths(); Brett Heap's ruling LQ-15; lead ruling
+    R-131 (b))."""
 
     def __init__(self, code, version=None, text=None, detail=None):
         self.code = code
@@ -2150,9 +2264,15 @@ def declared_tracking_branch(root):
     messages of read_yaml() and manifest() (lead ruling R-45 (6)): `Cannot
     read PATH: ...` for an OSError, a call cut at its budget or a parse
     error, `Expected a mapping in PATH`, `Unexpected kind in PATH; expected
-    KIND`, and read_yaml()'s own message when PyYAML is missing. A refusal
-    carries no context; the resolution adds the repository (lead ruling
-    R-53, P-12)."""
+    KIND`, and read_yaml()'s own message when PyYAML is missing. A parse
+    error is anything safe_load() raises, not only YAMLError and
+    UnicodeError: PyYAML raises ValueError for an impossible date such as
+    `released: 2021-02-30`, KeyError for `!!bool maybe`, AttributeError for
+    a malformed `!!timestamp` and RecursionError for deep nesting, so every
+    caller treats such a manifest as one that does not parse: clean refuses
+    it, status, doctor and update report on (lane 3's US7/US9 M-1). The
+    signal exceptions are not Exceptions and pass. A refusal carries no
+    context; the resolution adds the repository (lead ruling R-53, P-12)."""
     limit = LIMITS["manifest_bytes"]
     base = Path(os.fsdecode(root))
 
@@ -2195,7 +2315,7 @@ def declared_tracking_branch(root):
                           code="manifest-invalid") from exc
         try:
             value = yaml.safe_load(data.decode("utf-8"))
-        except (UnicodeError, yaml.YAMLError) as exc:
+        except Exception as exc:  # any failure to load it, a YAMLError or not, is a parse error
             raise Refused(f"Cannot read {human_path(os.fsencode(path))}: {exc}", code="manifest-invalid") from exc
         if not isinstance(value, dict):
             raise Refused(f"Expected a mapping in {human_path(os.fsencode(path))}", code="manifest-invalid")
@@ -2381,6 +2501,17 @@ def _fs(operation, fn, *args):
     return value
 
 
+def _direct(operation, fn, *args):
+    """fn(*args) called at once, as _fs() calls it but with no fs_call() of
+    its own: for reads that already run together inside one fs_call() (its
+    one thread and one budget; _identity_now()). An OSError raises
+    EvidenceError with its `os-error` for operation and its error number."""
+    try:
+        return fn(*args)
+    except OSError as exc:
+        raise EvidenceError(os_error(operation, exc), exc.errno) from None
+
+
 def _lstat(path):
     """The lstat of path through fs_call(): its value, or the EvidenceError of
     a call that gave none, for presence_from_lstat()."""
@@ -2414,8 +2545,8 @@ def _read_head(path, limit):
         return stream.read(limit)
 
 
-def _realpath(path):
-    return _fs("realpath", os.path.realpath, path)
+def _realpath(path, fs=_fs):
+    return fs("realpath", os.path.realpath, path)
 
 
 def _git(run, directory, args, subcommand, parser=None, kind="probe"):
@@ -2465,35 +2596,54 @@ def gitdir_line(content):
     return content[len(b"gitdir: "):]
 
 
-def _gitfile(path):
+def _gitfile(path, fs=_fs):
     """The realpath that `<path>/.git` names when it is a gitfile: a regular
     file holding a gitdir line (gitdir_line()), a relative value resolved
     against path. None when `.git` is missing, not a regular file, or holds no
-    gitdir line; any other failed read raises EvidenceError."""
+    gitdir line; any other failed read raises EvidenceError. fs makes each
+    read: _fs(), or _direct() inside one fs_call()."""
     dotgit = os.path.join(path, b".git")
     try:
-        mode = _fs("lstat", os.lstat, dotgit).st_mode
+        mode = fs("lstat", os.lstat, dotgit).st_mode
     except EvidenceError as exc:
         if exc.errno in (errno.ENOENT, errno.ENOTDIR):
             return None
         raise
     if not stat.S_ISREG(mode):
         return None
-    value = gitdir_line(_fs("read", _read_head, dotgit, GITFILE_BYTES))
-    return None if value is None else _realpath(os.path.join(path, value))
+    value = gitdir_line(fs("read", _read_head, dotgit, GITFILE_BYTES))
+    return None if value is None else _realpath(os.path.join(path, value), fs)
 
 
-def _admin_gitdir(admin):
+def _admin_gitdir(admin, fs=_fs):
     """The realpath that the `gitdir` file of the admin directory admin names,
     a relative value resolved against admin; None when that file is missing
-    or holds nothing. Any other failed read raises EvidenceError."""
+    or holds nothing. Any other failed read raises EvidenceError. fs as for
+    _gitfile()."""
     try:
-        back = _fs("read", _read_head, os.path.join(admin, b"gitdir"), GITFILE_BYTES).rstrip()
+        back = fs("read", _read_head, os.path.join(admin, b"gitdir"), GITFILE_BYTES).rstrip()
     except EvidenceError as exc:
         if exc.errno in (errno.ENOENT, errno.ENOTDIR):
             return None
         raise
-    return _realpath(os.path.join(admin, back)) if back else None
+    return _realpath(os.path.join(admin, back), fs) if back else None
+
+
+def _admin_commondir(admin, fs=_fs):
+    """The realpath of the common directory that the admin directory admin's
+    `commondir` file names, as Git's get_common_dir_noenv() reads it
+    (setup.c:301-325 at 2.36.6, :316-340 at 2.43.7; lead ruling R-125;
+    change 1 as amended at 93f3194): the file's trailing line feeds and
+    carriage returns removed, a relative value resolved against admin. With
+    no such file Git takes admin as its own common directory, and so does
+    this. Any other failed read raises EvidenceError. fs as for _gitfile()."""
+    try:
+        value = fs("read", _read_head, os.path.join(admin, b"commondir"), GITFILE_BYTES).rstrip(b"\r\n")
+    except EvidenceError as exc:
+        if exc.errno in (errno.ENOENT, errno.ENOTDIR):
+            return admin
+        raise
+    return _realpath(os.path.join(admin, value), fs)
 
 
 def main_worktree_decision(identity, records, core_worktree, candidate_gitfiles):
@@ -2581,10 +2731,12 @@ def main_worktree(identity, records, run):
     return main_worktree_decision(facts, records, core_worktree, candidate_gitfiles)
 
 
-def registration_verdict(main, common_dir, named, worktrees=None, back=None, dotgit=None, shared=False):
+def registration_verdict(main, common_dir, named, worktrees=None, back=None, dotgit=None, shared=False,
+                         commondir=None):
     """The two-way registration of a present worktree (D7, FR-055; lead
-    rulings R-57 L3 and R-59 D5), a pure decider over realpaths already read:
-    (True, admin_id) when it holds, (False, None) when it disagrees.
+    rulings R-57 L3, R-59 D5 and R-125), a pure decider over realpaths
+    already read: (True, admin_id) when it holds, (False, None) when it
+    disagrees.
 
     - shared: another entry of the registry names the row's path too
       (shared_paths()), or another present row built with it has its
@@ -2596,9 +2748,13 @@ def registration_verdict(main, common_dir, named, worktrees=None, back=None, dot
       or else dotgit, the realpath of `<path>/.git`, is common_dir, with
       admin_id None.
     - Otherwise it holds when named's parent is worktrees, the realpath of
-      `<common_dir>/worktrees`, and back, the realpath that named's `gitdir`
-      file names (None when that file is missing or empty), is dotgit;
-      admin_id is named's last component.
+      `<common_dir>/worktrees`, back, the realpath that named's `gitdir`
+      file names (None when that file is missing or empty), is dotgit, and
+      commondir, the common directory that named's `commondir` file names
+      (_admin_commondir(); named itself when there is none), is common_dir,
+      since Git takes the worktree's common directory, and so the
+      configuration row 4c reads, from that file (R-125); admin_id is
+      named's last component.
 
     A value the verdict does not reach may be None: verify_registration()
     reads in this order and stops at the first value that decides."""
@@ -2606,18 +2762,20 @@ def registration_verdict(main, common_dir, named, worktrees=None, back=None, dot
         return False, None
     if main:
         return (named if named is not None else dotgit) == common_dir, None
-    if named is None or os.path.dirname(named) != worktrees or back is None or back != dotgit:
+    if (named is None or os.path.dirname(named) != worktrees or back is None or back != dotgit
+            or commondir != common_dir):
         return False, None
     return True, os.path.basename(named)
 
 
-def verify_registration(path, common_dir, main):
+def verify_registration(path, common_dir, main, fs=_fs):
     """The two-way registration of a present worktree (D7, FR-055), between
     realpaths: (True, admin_id) when it holds, (False, None) when it
     disagrees; a failed read other than a missing file raises EvidenceError.
     A linked worktree: `<path>/.git` is a regular file whose gitdir line names
-    `<common_dir>/worktrees/<admin_id>`, and that directory's `gitdir` file
-    names `<path>/.git`, relative values resolved against the directory
+    `<common_dir>/worktrees/<admin_id>`, that directory's `gitdir` file
+    names `<path>/.git`, and its `commondir` file names `<common_dir>`
+    (lead ruling R-125), relative values resolved against the directory
     holding the file. The main worktree has no admin directory: its `.git` is
     the common directory itself, or a gitfile naming it; admin_id None. This
     check alone passes both of two registry entries naming one path, since
@@ -2626,19 +2784,44 @@ def verify_registration(path, common_dir, main):
     spellings, with one admin id, since both read one `.git` file;
     worktree_rows() fails both kinds closed (lead rulings R-57 L3 and R-67
     (c)). It reads what registration_verdict() needs, in its order, and
-    decides there."""
+    decides there. fs makes each read: _fs(), each its own bounded call, or
+    _direct() inside one fs_call() (_identity_now())."""
     dotgit = os.path.join(path, b".git")
-    named = _gitfile(path)
+    named = _gitfile(path, fs)
     if main:
-        return registration_verdict(main, common_dir, named, dotgit=_realpath(dotgit) if named is None else None)
-    worktrees = back = real_dotgit = None
+        return registration_verdict(main, common_dir, named, dotgit=_realpath(dotgit, fs) if named is None else None)
+    worktrees = back = real_dotgit = commondir = None
     if named is not None:
-        worktrees = _realpath(os.path.join(common_dir, b"worktrees"))
+        worktrees = _realpath(os.path.join(common_dir, b"worktrees"), fs)
         if os.path.dirname(named) == worktrees:
-            back = _admin_gitdir(named)
+            back = _admin_gitdir(named, fs)
             if back is not None:
-                real_dotgit = _realpath(dotgit)
-    return registration_verdict(main, common_dir, named, worktrees, back, real_dotgit)
+                real_dotgit = _realpath(dotgit, fs)
+                if back == real_dotgit:
+                    commondir = _admin_commondir(named, fs)
+    return registration_verdict(main, common_dir, named, worktrees, back, real_dotgit, commondir=commondir)
+
+
+def status_warned(outcome):
+    """Whether a status probe's standard error says the worktree's state was
+    not established (lane 3's US2 M-1; lead ruling R-101 (e)), a pure
+    function of the outcome: any byte past the 4 KiB head the runner keeps,
+    or any line of that head other than Git's advice lines, `hint:` alone or
+    `hint: TEXT`.
+
+    The rule comes from Git's output (Git 2.43.0): on a clean run the probe
+    prints nothing to standard error; for a directory it cannot open it
+    prints `warning: could not open directory 'D/': Permission denied`, and
+    for an unreadable `.gitignore` `warning: unable to access ...`, and
+    exits 0 with what it could not read left out of its records. Git
+    translates its `warning: ` and `error: ` prefixes under a localized
+    message catalogue (`Warnung: ` in German), so the rule reads no prefix
+    but the advice prefix; a translated advice line counts, which fails
+    closed."""
+    if outcome.stderr_bytes > len(outcome.stderr):
+        return True
+    return any(line and line != b"hint:" and not line.startswith(b"hint: ")
+               for line in outcome.stderr.split(b"\n"))
 
 
 def status_probe(path, run):
@@ -2646,13 +2829,65 @@ def status_probe(path, run):
     FR-057): STATUS_PROBE with `-C path`, a `status` child (the two status
     pins and GIT_OPTIONAL_LOCKS=0), read by StatusParser. Returns (outcome,
     error): outcome.result is the parser's result for a complete outcome, one
-    stopped at its bound included; error the row error of a failed one."""
-    return _git(run, path, list(STATUS_PROBE), "status", StatusParser(), kind="status")
+    stopped at its bound included; error the row error of a failed one. A
+    complete outcome whose standard error status_warned() names has not
+    established the worktree's state either: its error is `probe-failed`,
+    DETAIL `unparseable output`, so the row is inspection-error with `dirty`
+    null (pcl:121-125), and revalidation reads it as state-changed."""
+    outcome, error = _git(run, path, list(STATUS_PROBE), "status", StatusParser(), kind="status")
+    if error is None and status_warned(outcome):
+        error = unparseable_error("status")
+    return outcome, error
+
+
+# A linked worktree's effective-work-tree probe, after its `-C WORKTREE` (D7, LQ-11).
+WORK_TREE_PROBE = ("rev-parse", "--path-format=absolute", "--show-toplevel")
+
+
+def worktree_config(common_dir, directory, run):
+    """Row 4c (design D6 and D7; Brett Heap's ruling LQ-11; R-102 (b); change
+    1 as amended at addd346): the repository's `extensions.worktreeConfig`,
+    read as Git's own format check reads it, from the common directory's own
+    `config` file alone and without includes, by `git config --file
+    <common_dir>/config --type=bool --get extensions.worktreeConfig` in
+    directory. Only where it is true does Git apply a `core.worktree` or
+    `core.bare` to a linked worktree. False when Git prints `false` or exits
+    1, the key not being set; True when it prints `true`, and for any other
+    outcome, a failure, a timeout or other output, which fails closed."""
+    outcome, error = _git(run, directory, ["config", "--file", os.path.join(common_dir, b"config"), "--type=bool",
+                                           "--get", "extensions.worktreeConfig"], "config")
+    if error is None:
+        return outcome.result.strip() != b"false"
+    return outcome.status != 1
+
+
+def effective_work_tree(raw, run):
+    """Whether the linked worktree at raw has raw as its effective work tree,
+    the work tree a Git command run in it uses (design D7; LQ-11; change 1
+    as amended at addd346): WORK_TREE_PROBE in raw, a `probe` child.
+    Returns (holds, error): holds True when it prints exactly one line whose
+    realpath is raw's realpath; False when it prints another, fails (Git
+    exits 128 under `core.bare=true`, `fatal: this operation must be run in
+    a work tree`) or prints other than one non-empty line; None with error,
+    the row error, when the probe timed out or met the work deadline or a
+    realpath read failed. A pure reader: the caller decides."""
+    outcome, error = _git(run, raw, list(WORK_TREE_PROBE), "rev-parse")
+    if error is not None:
+        return (False, None) if error["code"] == "probe-failed" else (None, error)
+    lines = outcome.result.split(b"\n")
+    if lines[-1] == b"":
+        lines.pop()
+    if len(lines) != 1 or not lines[0]:
+        return False, None
+    try:
+        return _realpath(lines[0]) == _realpath(raw), None
+    except EvidenceError as exc:
+        return None, exc.error
 
 
 def inspect_repository(directory, run, refresh=False, *, repeat_identity_at_root=True):
     """The repository-wide evidence of the repository holding directory (D6,
-    D8; FR-055, FR-056): rows 3, 4, 4b, 5, 6 and 7 through run_bounded() and
+    D8; FR-055, FR-056): rows 3, 4, 4b, 5, 4c, 6 and 7 through run_bounded() and
     their parsers, memoized on run, the Invocation (`common_dirs`), by the
     device and inode of the common directory (lead ruling R-54 X-1), so that
     another directory of one repository runs only row 3. refresh reads afresh
@@ -2667,13 +2902,22 @@ def inspect_repository(directory, run, refresh=False, *, repeat_identity_at_root
     - `identity`: {root, common_dir, dev, ino}, the realpaths of the main
       worktree and the common directory and the common directory's device and
       inode, by lstat; root None where main_worktree() names none, with its
-      cause in `main_cause`; None itself when row 3 failed;
+      cause in `main_cause`, or where row 5 did not confirm it; None itself
+      when row 3 failed;
+    - `main_path`, main_worktree()'s path as named before row 5 runs, kept
+      where row 5 then fails, so that the resolution still names the main
+      worktree as the command directory (plan review F2); None where
+      main_worktree() names none or row 4 failed;
     - `directory`, where row 3 and row 4 ran; `toplevel` and `superproject`,
       what row 3 printed (toplevel as a realpath);
     - `probe_dir`, where rows 6 and 7 ran: root, or, where root is null, the
       common directory for a bare repository and otherwise where row 3 ran
       (FR-055; lead ruling R-42);
     - `records`, row 4's entries, and `first_is_common_dir`;
+    - `worktree_config`, row 4c (worktree_config(), run in probe_dir before
+      row 6; Brett Heap's ruling LQ-11): True or False, None where an
+      earlier probe failed and it was not read, which worktree_rows() reads
+      as True, failing closed;
     - `refs`, row 6's records; `merge_target`, resolve_merge_target()'s
       result, or None with the refusal in `merge_target_refusal`; `merged`,
       row 7's refnames;
@@ -2681,9 +2925,9 @@ def inspect_repository(directory, run, refresh=False, *, repeat_identity_at_root
       what needs a failed probe's answer is not run."""
     directory = os.fsencode(directory)
     repo = {"identity": None, "directory": directory, "toplevel": None, "superproject": None,
-            "main_cause": None, "probe_dir": directory, "records": None, "first_is_common_dir": False,
-            "refs": None, "merge_target": None, "merge_target_refusal": None, "merged": None,
-            "errors": []}
+            "main_cause": None, "main_path": None, "probe_dir": directory, "records": None,
+            "first_is_common_dir": False, "worktree_config": None, "refs": None, "merge_target": None,
+            "merge_target_refusal": None, "merged": None, "errors": []}
     values, error = identity_probe(directory, run)
     if error is not None:
         repo["errors"].append(error)
@@ -2710,6 +2954,7 @@ def inspect_repository(directory, run, refresh=False, *, repeat_identity_at_root
     records = repo["records"] = outcome.result
     root, repo["main_cause"] = main_worktree(
         {"common_dir": common_dir, "toplevel": toplevel, "directory": directory}, records, run)
+    repo["main_path"] = root  # kept where row 5 then fails (plan review F2)
     try:
         if records and not records[0]["bare"]:
             repo["first_is_common_dir"] = _realpath(records[0]["path"]) == common_dir
@@ -2729,6 +2974,7 @@ def inspect_repository(directory, run, refresh=False, *, repeat_identity_at_root
     elif records and records[0]["bare"]:
         repo["probe_dir"] = common_dir
     probe_dir = repo["probe_dir"]
+    repo["worktree_config"] = worktree_config(common_dir, probe_dir, run)  # row 4c (LQ-11)
     outcome, error = _git(run, probe_dir, ["for-each-ref", "--format=" + REF_FORMAT, "refs/heads", "refs/remotes"],
                           "for-each-ref", RefParser())
     if error is not None:
@@ -2869,7 +3115,8 @@ def _read_row(raw, main, common_dir, active, active_error, shared):
     registration, a shared path's verdict taken with nothing read (lead
     rulings R-57 L2 and L3). A failed read becomes an entry of `errors`, and
     what follows it in the same step is not read. _read_status() runs the
-    probe once worktree_rows() has compared the rows (shared_identities())."""
+    probe once worktree_rows() has compared the rows (shared_identities())
+    and read the row's identity again (_identity_unchanged())."""
     read = {"present": None, "dev": None, "ino": None, "active": active, "tree": None,
             "registered": None, "admin_id": None, "status": None, "errors": []}
     errors = read["errors"]
@@ -2893,10 +3140,69 @@ def _read_row(raw, main, common_dir, active, active_error, shared):
     return read
 
 
+def _identity_now(raw, main, common_dir):
+    """A row's identity read now, every read at once with _direct(), for one
+    fs_call(): (dev, ino, realpath, (registered, admin_id)), the reads of
+    _read_row() in its order; an OSError raises EvidenceError."""
+    found = _direct("lstat", os.lstat, raw)
+    return (found.st_dev, found.st_ino, _realpath(raw, _direct),
+            verify_registration(raw, common_dir, main, fs=_direct))
+
+
+def _identity_unchanged(read, raw, main, common_dir):
+    """The second verification of a row's identity, made immediately before
+    its status probe (the project-command delta, pc:124-126: a worktree probe
+    runs "only after that worktree's identity has been verified immediately
+    before"; lane 3's env H-1, lead ruling R-101 (e) and (j)). It makes the
+    reads of _read_row() again, the lstat, the realpath and the two-way
+    registration (verify_registration()), together in one bounded
+    fs_call() (_identity_now()), and compares them with read, the row's
+    first reads: True when the device, inode, realpath and admin id are the
+    same and the registration still holds. Otherwise False, and the row gets
+    no probe: a read that fails, or the call cut at its budget, appends its
+    row error (OPERATION lstat for a cut call), a registration that now
+    disagrees sets `registered` false (registration-mismatch), and any other
+    change leaves the row present with no status, which classify() makes
+    inspection-error."""
+    budget, _ = current_invocation().child_budget("probe")
+    try:
+        value = fs_call(_identity_now, raw, main, common_dir)
+    except EvidenceError as exc:
+        read["errors"].append(exc.error)
+        return False
+    if isinstance(value, DriverOutcome):
+        read["errors"].append(probe_error(value, "lstat", budget))
+        return False
+    dev, ino, tree, (registered, admin_id) = value
+    if (dev, ino) != (read["dev"], read["ino"]) or tree != read["tree"]:
+        return False
+    if not registered:
+        read["registered"], read["admin_id"] = False, None
+        return False
+    return admin_id == read["admin_id"]
+
+
+def _work_tree_holds(read, raw, run):
+    """Whether the linked row at raw, its identity verified, has raw as its
+    effective work tree (effective_work_tree(); LQ-11), read after its
+    identity and before its status probe in a repository whose row 4c read
+    true. Otherwise False, and the row gets no probe: another work tree, a
+    failed probe or other output sets `registered` false
+    (registration-mismatch), and a probe that timed out or met the work
+    deadline, or a failed realpath read, appends its row error."""
+    holds, error = effective_work_tree(raw, run)
+    if error is not None:
+        read["errors"].append(error)
+    elif not holds:
+        read["registered"], read["admin_id"] = False, None
+    return bool(holds)
+
+
 def _read_status(read, raw, run):
     """The combined status probe of the row at raw whose reads are done
     (_read_row()), only when its registration holds and nothing failed: its
-    result in read's `status`, or its row error appended to `errors`."""
+    result in read's `status`, or its row error appended to `errors`.
+    worktree_rows() calls it only after _identity_unchanged()."""
     if read["registered"] and not read["errors"]:
         outcome, error = status_probe(raw, run)
         if error is not None:
@@ -2931,7 +3237,22 @@ def worktree_rows(repo, run, records=None):
     row of the call is read and before any status probe, so that none of
     them gets one; an entry the call does not build is never read for it,
     so a row past the cap stays uninspected, while match_target() builds P's
-    realpath twins among P's rows. Then the branch evidence from row 6, a
+    realpath twins among P's rows. Every other row's identity is verified
+    again immediately before its own probe (_identity_unchanged(); pc:124-126,
+    lead ruling R-101 (e) and (j)), since the probes of the rows before it
+    may take their whole budgets: a row whose lstat, realpath or registration
+    changed since its first read gets no probe and is inspection-error, in
+    the same row order with the same budgets. Then, in a repository whose
+    row 4c read true (or was not read), each linked row's effective work
+    tree (_work_tree_holds(); Brett Heap's ruling LQ-11, change 1 as amended
+    at addd346): another work tree, a failed probe or other output is
+    registration-mismatch, unprobed. Once the work deadline has passed no
+    probe starts, and such a row keeps its probe's own deadline-exceeded,
+    unread again. Then the branch evidence from row 6; where
+    row 6 gave no listing, because it or a probe before it failed, each
+    present row on a branch carries that probe's row errors and is
+    inspection-error, its upstream fields null as not established (plan
+    review F3), while a detached row needs no ref. Otherwise a
     deleted upstream keeping its short name with `ahead` and `behind` null, and a
     branch named HEAD (HEAD_BRANCH_REF) taking none: its `upstream`,
     `remote_present`, `ahead` and `behind` stay null and its row carries a
@@ -2943,8 +3264,8 @@ def worktree_rows(repo, run, records=None):
 
     The reader of row_evidence(): the working directory's realpath once;
     per row _read_row(); shared_identities() over those reads; then per row,
-    in the same order, _read_status() and the assembly (lead ruling R-54
-    X-1)."""
+    in the same order, _identity_unchanged(), _read_status() and the assembly
+    (lead ruling R-54 X-1)."""
     identity = repo["identity"]
     registry = repo["records"]
     if identity is None or not registry:
@@ -2952,6 +3273,11 @@ def worktree_rows(repo, run, records=None):
     common_dir = identity["common_dir"]
     target = repo["merge_target"]["name"] if repo["merge_target"] else None
     refs = {ref["refname"]: ref for ref in repo["refs"] or ()}
+    # No ref listing (row 6 failed, or a probe before it did): no branch's
+    # evidence is established, so each present row on a branch carries the
+    # failed probe's error and is inspection-error (plan review F3).
+    unlisted = [] if repo["refs"] is not None else (list(repo["errors"]) or [unparseable_error("for-each-ref")])
+    redirectable = repo.get("worktree_config") is not False  # row 4c true, or not read (LQ-11)
     shared = shared_paths(registry)
     entries = _registry_entries(registry, records)
     try:
@@ -2975,7 +3301,17 @@ def worktree_rows(repo, run, records=None):
         if at in twins:  # registration-mismatch, as a shared path is (R-67 (c))
             read["registered"], read["admin_id"] = registration_verdict(
                 index == 0, common_dir, None, shared=True)
-        _read_status(read, raw, run)
+        elif read["registered"] and not read["errors"] and (
+                run.child_budget("status")[0] <= 0
+                or (_identity_unchanged(read, raw, index == 0, common_dir)
+                    and (index == 0 or not redirectable or _work_tree_holds(read, raw, run)))):
+            # Verified again immediately before its probe (pc:124-126; R-101 (e)), and a
+            # linked row's effective work tree read where row 4c read true (LQ-11).
+            # With no work time left no probe starts, and the row keeps that probe's
+            # own deadline-exceeded, as the work deadline's rows always have (T099).
+            _read_status(read, raw, run)
+        if unlisted and read["present"] is True and record["branch"] is not None:
+            read["errors"].extend(dict(error) for error in unlisted)
         rows.append(row_evidence(record, raw, index == 0, read, refs, repo["merged"], target))
     return rows
 # endregion evidence
@@ -3077,7 +3413,13 @@ def write_document(doc):
     (write_failed(), region dispatcher; lead ruling R-55, T047), so there is
     no second traceback and no exit 120. Before the apply phase the
     pipeline's check after printing makes it `internal-error`; main() writing
-    an error document keeps its own status."""
+    an error document keeps its own status. Standard output closed when
+    project started (sys.stdout None, the stream say() skips) is such a
+    failed write, EBADF, so that `clean --json` refuses with `internal-error`
+    and exit 2 instead of a traceback (lead ruling R-101 (b), F3)."""
+    if sys.stdout is None:
+        write_failed(current_invocation(), None, OSError(errno.EBADF, os.strerror(errno.EBADF)))
+        return
     try:
         sys.stdout.write(json.dumps(doc, indent=2, ensure_ascii=True) + "\n")
         sys.stdout.flush()
@@ -3343,11 +3685,19 @@ def check_clean_arguments(args):
 
 
 def require_git(run):
-    """The version check, once, after the argument checks and before
-    resolution (T048; FR-002, FR-053; contracts/project-clean.md, "Order of a
-    run"): git_version(run), memoized on the run, refusing `git-too-old` or
-    `git-unavailable` with its contract message, exit 2, before any repository
-    is probed. Returns None when Git may run."""
+    """The configuration-path test, then the version check, once, after the
+    argument checks and before resolution (T048; FR-002, FR-053;
+    contracts/project-clean.md, "Order of a run"). A variable that fails D11's
+    test (relative_config_paths()) refuses `relative-config-path` with D18's
+    lines, one per such variable, exit 2, before any Git child, `git
+    --version` included, so that no push or removal child starts either
+    (Brett Heap's ruling LQ-15; lead ruling R-102). Then git_version(run),
+    memoized on the run, refusing `git-too-old` or `git-unavailable` with its
+    contract message, exit 2, before any repository is probed. Returns None
+    when Git may run."""
+    names = relative_config_paths()
+    if names:
+        raise Refused(config_path_message(names), code="relative-config-path")
     version = git_version(run)
     if version.code == "git-too-old":
         raise Refused(TEXT["git_too_old"].format(VERSION=version.text), code="git-too-old")
@@ -3470,6 +3820,14 @@ def resolve_clean_target(args, run):
     T118 gives discover() these codes itself (P-10); a refusal that already
     carries a code passes unchanged, except that the PATH of a
     `repository-not-found` message is printed through human_path() (R-92 (c)).
+    A name the lookup cannot examine, `~user` for no such user, a name too
+    long for a path component, or one looked up from a working directory
+    that is gone, is `repository-not-found` with the message `Directory does
+    not exist: PATH`, as a name with no directory is (plan review F4; lane
+    3's US7/US9 L-1 and L-3). A relative path, or none, from a working
+    directory that is gone is refused `target-not-repository-root` naming
+    the argument as given, or `.`; otherwise a relative path's refusal names
+    the directory Git examines, its realpath, not its lexical form (L-2).
 
     Refused `target-not-repository-root`, exit 2, before any plan and with no
     context, in M6's order: row 3 failed (a directory outside any
@@ -3487,10 +3845,18 @@ def resolve_clean_target(args, run):
     refusal (`no-merge-target`, `manifest-invalid`), before any row is
     probed, its context the repository and a null merge target. A
     repository-wide probe that failed after row 3 is no refusal here:
-    build_plan() makes that plan incomplete."""
+    build_plan() makes that plan incomplete. Where row 5 failed, the main
+    worktree main_worktree() named (`main_path`) is still the root and the
+    command directory, and the absolute-path rule compares the toplevel
+    with it (plan review F2)."""
     target = getattr(args, "target", None) or ""
     text = os.path.expanduser(target)
     bare, absolute = is_bare_name(target), os.path.isabs(text)
+
+    def refused(path):
+        return Refused(TEXT["target_not_repository_root"].format(PATH=human_path(path)),
+                       code="target-not-repository-root", path=path)
+
     if bare:
         try:
             found = discover(target)
@@ -3504,29 +3870,51 @@ def resolve_clean_target(args, run):
             if exc.code == "repository-not-found" and escaped is not None:
                 exc.args = (escaped,)  # R-92 (c): the path the message names prints escaped
             raise
+        except (OSError, RuntimeError) as exc:
+            # A name the lookup cannot examine names no project directory:
+            # `~user` for no such user (Path.expanduser() raises
+            # RuntimeError), a name longer than a path component allows
+            # (ENAMETOOLONG; Python 3.15 answers False there and reaches
+            # discover()'s own refusal), or a working directory that is gone
+            # (ENOENT). discover()'s message names the name against the working
+            # directory, or the name as given when that is gone (plan review F4;
+            # lane 3's US7/US9 L-1 and L-3).
+            if isinstance(exc, OSError) and exc.errno not in (errno.ENAMETOOLONG, errno.ENOENT):
+                raise
+            if not isinstance(exc, OSError) and type(exc) is not RuntimeError:
+                raise
+            try:
+                named = os.path.join(os.getcwd(), target)
+            except OSError:
+                named = target
+            raise Refused("Directory does not exist: " + human_path(named), code="repository-not-found") from None
         directory = shown = os.fsencode(found)
     elif absolute:
         directory = shown = os.fsencode(text)
     else:
-        directory = os.path.join(os.getcwdb(), os.fsencode(text)) if text else os.getcwdb()
-        shown = os.path.abspath(directory)
-
-    def refused():
-        return Refused(TEXT["target_not_repository_root"].format(PATH=human_path(shown)),
-                       code="target-not-repository-root", path=shown)
+        try:
+            cwd = os.getcwdb()
+        except OSError:  # the working directory is gone: Git finds no worktree there (pcl:449-451; L-3)
+            raise refused(os.fsencode(text) if text else b".") from None
+        directory = os.path.join(cwd, os.fsencode(text)) if text else cwd
+        # The directory Git examines: `..` taken after any symlink before it,
+        # as chdir() takes it, not lexically (lane 3's US7/US9 L-2).
+        shown = os.path.realpath(directory)
 
     evidence = inspect_repository(directory, run)
     identity = evidence["identity"]
     if identity is None or evidence["superproject"] is not None or evidence["main_cause"] is not None:
-        raise refused()
-    toplevel, root = evidence["toplevel"], identity["root"]
+        raise refused(shown)
+    # Where row 5 failed the root is not confirmed, but the main worktree is
+    # still the one main_worktree() named, never a linked toplevel (plan review F2).
+    toplevel, root = evidence["toplevel"], identity["root"] or evidence.get("main_path")
     if bare or absolute:  # the directory itself must be a worktree toplevel
         try:
             exact = _realpath(directory) == toplevel
         except EvidenceError:
             exact = False
         if not exact or (absolute and root is not None and toplevel != root):
-            raise refused()
+            raise refused(shown)
     for raw in (toplevel if root is None else root, identity["common_dir"]):  # FR-041; R-80 P-13
         if not json_path(raw)[1]:
             raise Refused(TEXT["unsupported_path_bytes"].format(PATH=human_path(raw)),
@@ -4374,8 +4762,10 @@ def print_plan(plan, run):
     plain --json prints none, and push and delete-branch print nothing here,
     keeping their `Cleanup action:` output. Under --json the plan envelope goes
     to standard output through write_document() on the call where the run
-    stops before the apply phase, so one document is written. The pipeline
-    writes `REFUSED:` itself.
+    stops before the apply phase, so one document is written; not once a
+    write has failed (run.write_error), since check_writes() then ends the
+    run as `internal-error`, whose object is that one document (lead ruling
+    R-101 (b), F1). The pipeline writes `REFUSED:` itself.
 
     What prints (T052; lead rulings R-56 Q-11, R-57 H1, R-59 D2 and D8, R-62
     (b) and R-67 (a)): a report, the baseline layout with each null shown as
@@ -4394,7 +4784,7 @@ def print_plan(plan, run):
         if apply or not json_output:
             for line in plan_lines(plan):
                 say(run, line)
-    if json_output and run.status is not None:
+    if json_output and run.status is not None and getattr(run, "write_error", None) is None:
         write_document(plan_document(plan))
 
 
@@ -4566,8 +4956,12 @@ def ask_removal(plan, run):
     written (say() recorded the failed write) is not answered: nothing is read
     and "" is returned, so the plan is not accepted, and the pipeline's check
     after the question ends the run as `internal-error` (lead ruling R-55).
-    confirm_removal() looks this function up by its global name, so a test
-    patches it there (T046; lead ruling R-56)."""
+    An answer that standard input cannot decode, such as the byte 0xE9 read
+    by a strict UTF-8 decoder, is returned as "", so that confirm_removal()
+    records `cancelled`, as for any other answer that is not `yes` (lead
+    ruling R-101 (c); plan review F1). confirm_removal() looks this function
+    up by its global name, so a test patches it there (T046; lead ruling
+    R-56)."""
     count = len(plan.selected)
     question = TEXT["question_one"] if count == 1 else TEXT["question"].format(N=count)
     run.pause()
@@ -4576,7 +4970,10 @@ def ask_removal(plan, run):
             say(run, question)
             if getattr(run, "write_error", None) is not None:
                 return ""
-            return input()
+            try:
+                return input()
+            except UnicodeDecodeError:
+                return ""
     finally:
         run.resume()
 
@@ -4645,18 +5042,33 @@ class UnfinishedRescan(dict):
     into a plain dict, so no document carries the class."""
 
 
-def path_presence(raw):
+def path_presence(raw, budget=None):
     """Whether the planned path is present, by one lstat through fs_call()
     (design D6; data-model.md, "Target result and reconciliation record"):
     true when it succeeds, false only on ENOENT or ENOTDIR, and null on any
-    other error or when the call is cut at its budget."""
+    other error or when the call is cut at its budget, the per-child budget
+    unless budget is given (reserve_budget())."""
     try:
-        found = fs_call(os.lstat, raw)
+        found = fs_call(os.lstat, raw, budget=budget)
     except OSError as exc:
         found = exc
     if isinstance(found, DriverOutcome):
         return None
     return presence_from_lstat(found)[0]
+
+
+def reserve_budget(run):
+    """The budget of the one lstat that records a refused target's planned
+    path after its revalidation stopped before its own (revalidate(); lead
+    ruling R-101 (d); apply review F3): min(probe budget, reserve remaining),
+    as child_budget() gives a read while reconciling, never below 0, so that
+    a difference found as the work deadline passes still records the path's
+    presence; None, the per-child budget, without a deadline. Read at call
+    time (lead ruling R-29)."""
+    left = run.reserve_remaining()
+    if left is None:
+        return None
+    return max(0.0, min(TIMING["probe_budget"], left))
 
 
 def _branch_ref(target):
@@ -4745,6 +5157,16 @@ def reread_manifest(root):
         return declared_tracking_branch(root)
     except Refused:
         return UNREADABLE
+
+
+def as_candidate(declared):
+    """A manifest's raw `tracking_branch` as resolve_merge_target() reads it:
+    the string as written, or None for any other value, which names no
+    candidate, YAML's `.nan` among them (lead ruling R-101 (d); apply review
+    F2). Revalidation compares the plan's and the fresh value through it, so
+    that a value planning ignored is no difference, while a string is still
+    compared as written (lead ruling R-77). A pure function."""
+    return declared if isinstance(declared, str) else None
 
 
 def _listing(run, root, args, subcommand, parser):
@@ -4912,8 +5334,9 @@ def revalidation_difference(plan, target, run, part, seen):
     1. The repository identity at the command directory equals the plan's,
        else `identity-changed`.
     2. The manifest's `tracking_branch`, re-read, equals the plan's as
-       written, its absence included (lead ruling R-77), else
-       `state-changed`.
+       written, its absence included (lead ruling R-77), and a value that
+       is not a string read as none, as planning reads it (as_candidate();
+       lead ruling R-101 (d)), else `state-changed`.
     3. The registry listing names each checked row's path once, else
        `identity-changed`, with its `locked` as planned, else
        `state-changed`.
@@ -4981,7 +5404,7 @@ def revalidation_difference(plan, target, run, part, seen):
     if declared is UNREADABLE and not part and work_spent(run):
         return "deadline-exceeded"
     expected = evidence.get("declared", UNREADABLE)
-    if declared is UNREADABLE or type(declared) is not type(expected) or declared != expected:
+    if declared is UNREADABLE or expected is UNREADABLE or as_candidate(declared) != as_candidate(expected):
         return "state-changed"
 
     if part:
@@ -5051,6 +5474,14 @@ def revalidation_difference(plan, target, run, part, seen):
             return "deadline-exceeded" if read_cut(exc.error) else "identity-changed"
         if not registered or admin_id != row.admin_id:
             return "identity-changed"
+    if evidence.get("worktree_config") is True:  # the target's effective work tree, as row 4c read (LQ-11)
+        if slot_set(run):
+            return "interrupted"
+        holds, error = effective_work_tree(target.row.raw_path, run)
+        if read_cut(error):
+            return "deadline-exceeded"
+        if not holds:
+            return "identity-changed"
     if slot_set(run):
         return "interrupted"
     unread = {row.raw_path for row in getattr(plan, "rows", None) or () if row["present"] is None}
@@ -5100,7 +5531,8 @@ def revalidate(plan, target, run):
     (plan review M13), its registry field from the registry listing and its
     branch fields from the ref listing, each null where its listing did not
     run, and the path's presence from the target's own lstat, or from one
-    lstat of the planned path where the revalidation stopped before it. A
+    lstat of the planned path where the revalidation stopped before it, run
+    with the reserve's budget (reserve_budget(); lead ruling R-101 (d)). A
     read the work deadline cut returns ("deadline-exceeded", None), its
     distinct return: no refusal, the target `not-attempted` with no
     reconciliation (T099; lead ruling R-80, P-2). A signal in the slot
@@ -5118,7 +5550,10 @@ def revalidate(plan, target, run):
     raw = target["path"]
     registry_entry_present = None if seen["records"] is None else any(
         record["path"] == raw for record in seen["records"])
-    path_present = path_presence(raw) if seen["path_present"] is UNREADABLE else seen["path_present"]
+    if seen["path_present"] is UNREADABLE:
+        path_present = path_presence(raw, reserve_budget(run))
+    else:
+        path_present = seen["path_present"]
     branch_present, branch_sha = _branch_evidence(target, seen["refs"])
     return reason, reconciliation_record(registry_entry_present, path_present, branch_present, branch_sha)
 
@@ -5646,9 +6081,18 @@ def push_or_delete(repo, run):
     detached one and the classes to reconcile; then a branch whose configured
     upstream's remote-tracking ref is gone, whatever its class, with
     TEXT["push_remote_gone"] and the reason `remote-gone`, no code (R-45 (5));
-    only then is the command built, `remote get-url origin` running through
-    the driver (git_text()). Delete-branch refuses the default branch, a
-    branch a present worktree holds, and a branch not verified as merged: its
+    only then is the command built (lead ruling R-101 (e) 1; lane 3's H-1 and
+    H-2). For a configured upstream it is `push -- REMOTE refs/heads/B:MERGE`,
+    REMOTE and MERGE read from branch.B.remote and branch.B.merge through the
+    driver (git_text()), never split from the upstream's short name: one value
+    each, REMOTE not `.` and MERGE under refs/heads/, or the baseline's
+    `Unsupported upstream mapping` refusal. With none it is `push -u -- origin
+    refs/heads/B:refs/heads/B`, `remote get-url origin` running through the
+    driver. The refspec is fully qualified with no leading `+`, and `--` ends
+    the options, so that no remote, branch or ref text is read as an option, a
+    forced update or a configured push mapping. Delete-branch refuses the
+    default branch, a branch a present worktree holds, and a branch not
+    verified as merged: its
     head is read from row 6 and its merged-ness from row 7 of the plan's
     evidence, never through a new child, and a branch absent from row 6 or a
     row 7 not read refuses (P-23).
@@ -5659,17 +6103,19 @@ def push_or_delete(repo, run):
     default_signals() with the clock paused, since time at the question does
     not count (research.md R4; analyze M3); the full re-inspection after
     confirmation (require_unchanged_cleanup_state()); and the child, the
-    slot read just before it is spawned and again once it is reaped, a set
-    slot raising Interrupted (P-7). The run so exits 130, 143 or 129 when a
-    signal was recorded before or while the child ran, otherwise with the
-    child's status, 128 plus the signal number for a signal death (D19's
-    first row; plan review M3).
+    slot read just before it is spawned, a set slot raising Interrupted with
+    nothing run (P-7). Once the child is reaped the phase is `apply`, as the
+    pipeline sets it before a removal (R-101 (e) 2; lane 3's M-1; pcl:928-935):
+    a signal recorded by then is reported on standard error with git's status,
+    never as `Cancelled.`, and the run exits 130, 143 or 129; otherwise it
+    exits with the child's status, 128 plus the signal number for a signal
+    death (D19's first row; plan review M3).
 
     The push child runs through execute() with git_env("push") (R1, PR #19):
     project's own streams and process group, so that it is in the terminal's
     foreground when project is; no pin; the caller's GIT_ALLOW_PROTOCOL kept
-    and the other sixteen names removed (R-28). The `git branch -d` child is a
-    `delegate` handle on the driver: its own process group, the seventeen
+    and the other thirty names removed (R-28, Q9 B). The `git branch -d` child is a
+    `delegate` handle on the driver: its own process group, the thirty-one
     names removed and the seven pins, no budget, its output relayed to
     project's streams by RelayParser (R5, P-1); one that cannot be spawned is
     the baseline's `Cannot run git: ...` refusal. Neither is ever signalled:
@@ -5696,14 +6142,16 @@ def push_or_delete(repo, run):
             raise Refused(TEXT["push_remote_gone"].format(BRANCH=shown, UPSTREAM=human_path(upstream)),
                           reason="remote-gone")
         if upstream:
-            remote, separator, remote_branch = upstream.partition("/")
-            if not separator or not remote or not remote_branch:
+            remote = git_text(root, "config", "--get-all", f"branch.{branch}.remote")
+            merge = git_text(root, "config", "--get-all", f"branch.{branch}.merge")
+            if (not remote or remote == "." or not merge or "\n" in remote + merge
+                    or not merge.startswith("refs/heads/") or merge == "refs/heads/"):
                 raise Refused(f"Unsupported upstream mapping for {shown}: {human_path(upstream)}")
-            words = [remote, f"{branch}:{remote_branch}"]
+            words = ["--", remote, f"refs/heads/{branch}:{merge}"]
         else:
             if not git_text(root, "remote", "get-url", "origin"):
                 raise Refused("Cannot publish a branch without an origin remote.")
-            words = ["-u", "origin", branch]
+            words = ["-u", "--", "origin", f"refs/heads/{branch}:refs/heads/{branch}"]
         argv = git_argv("push", ["-C", str(root), "push", *words])
         action = f"push branch {shown}"
     else:
@@ -5737,8 +6185,13 @@ def push_or_delete(repo, run):
             detail = outcome.detail or "git was not run"
             raise Refused(detail[:1].upper() + detail[1:])
         status = outcome.status if outcome.status >= 0 else 128 - outcome.status
-    read_slot(run)
-    return status
+    run.phase = "apply"  # the child ran: a signal now sets the status, never `Cancelled.`
+    if run.signal is None:
+        return status
+    noun = "the push" if args.action == "push" else "the branch deletion"
+    say(run, f"Interrupted; {noun} had started and was waited for, and git exited with status {status}.",
+        sys.stderr)
+    return 128 + int(run.signal)
 
 
 def show_push_plan(run, argv, cwd):
@@ -5802,7 +6255,9 @@ def repo_state(root):
 
     `lstat` of `<root>/.git` comes first: when it is absent the state is
     `present: false` and no Git child runs. Then the version check, memoized
-    on the invocation; an old, missing or unusable Git gives `present` null.
+    on the invocation; an old, missing or unusable Git gives `present` null,
+    and so does a configuration path that failed D11's test at the command's
+    entry (hold_git_for_config_paths(); LQ-15), with no Git child at all.
     Then inspect_repository() and worktree_rows(), memoized per common
     directory, with the 15 s budget per Git child and per filesystem call that
     the invocation gives every command but `clean`, no deadline and no row cap.
@@ -5814,7 +6269,8 @@ def repo_state(root):
     "inspection-error"` and `errors`, `{code, message}` objects, and every
     value not established is null, `worktrees` among them when the listing
     is not established; an inspected state has neither field. `git-too-old`
-    and `git-unavailable` carry the command-neutral texts (lead ruling R-48).
+    and `git-unavailable` carry the command-neutral texts (lead ruling R-48),
+    and `relative-config-path` D18's lines.
     Each `path` has `path_valid_utf8` beside it. A worktree entry keeps its
     baseline keys and adds `path_valid_utf8`, `ignored_samples` (`{path,
     path_valid_utf8}` objects) where its probe ran, and `classification` and
@@ -5865,6 +6321,8 @@ def repo_state(root):
     version = git_version(run)
     if version.code == "git-too-old":
         message = TEXT["inspection_git_too_old"].format(VERSION=version.text)
+    elif version.code == "relative-config-path":
+        message = version.detail  # D18's lines (hold_git_for_config_paths())
     elif version.code is not None:
         message = TEXT["inspection_git_unavailable"].format(DETAIL=version.detail)
     if version.code is not None:
@@ -6180,7 +6638,8 @@ def check_rows(report):
     its baseline row. The `git` row reports the version check, memoized on the
     invocation, which runs it here only when no repository was inspected:
     `ok` with `PATH (git version X)`, or `error` with `CODE: MESSAGE`, the
-    command-neutral text (lead rulings R-48, R-56 and R-57)."""
+    command-neutral text (lead rulings R-48, R-56 and R-57), or D18's lines
+    for `relative-config-path`, where no Git child ran (D16; LQ-15)."""
     rows = []
     def add(level, name, detail):
         rows.append({"level": level, "check": name, "detail": detail})
@@ -6236,6 +6695,8 @@ def check_rows(report):
                 add("ok", command, f"{shutil.which(command) or command} (git version {version.text})")
             elif version.code == "git-too-old":
                 add("error", command, f"{version.code}: " + TEXT["inspection_git_too_old"].format(VERSION=version.text))
+            elif version.code == "relative-config-path":
+                add("error", command, f"{version.code}: {version.detail}")
             else:
                 add("error", command, f"{version.code}: " + TEXT["inspection_git_unavailable"].format(DETAIL=version.detail))
             continue
@@ -6291,10 +6752,14 @@ def inspect_project(args):
     the run with 130, 143 or 129 and `Cancelled.`; the slot is read once the
     scope has exited, and an exception that leaves the scope with the slot set
     becomes Interrupted, as `clean` does (T119; research.md R4; FR-058; lead
-    ruling R-56). The exit rule is unchanged."""
+    ruling R-56). The exit rule is unchanged. D11's configuration-path test
+    comes first, before any Git child: a variable that fails it is reported as
+    `relative-config-path` where a Git below the floor would be, and no Git
+    child starts (hold_git_for_config_paths(); LQ-15)."""
     scope = signal_scope()
     try:
         with scope:
+            hold_git_for_config_paths(scope.invocation)
             report = snapshot(discover(args.target))
             checks = check_rows(report) if args.command == "doctor" else None
     except BaseException:
@@ -6369,10 +6834,19 @@ def update(args):
     (D-R, FR-052). `origin/HEAD` is read from the ref listing's symref (row 6),
     memoized per common directory, never from a child of its own, and only
     after the root's state has passed, so after a failed version check update
-    spawns no Git child (plan review M10). `tools` and `workflow` need no Git."""
+    spawns no Git child (plan review M10). `tools` and `workflow` need no Git.
+    The owner-tool delegates run in delegate_env(), the caller's environment
+    less every GIT_SCRUB name but GIT_ALLOW_PROTOCOL, so they act on the
+    repository the check inspected (lead ruling R-102, LQ-12).
+    D11's configuration-path test comes first, before any Git child: a
+    variable that fails it holds every Git child, as a Git below the floor
+    does, so the root's `dirty` is null: `shape` and `bench` refuse as for
+    any `dirty` that is not exactly false, no owner tool runs, and `tools` and
+    `workflow` run as before (hold_git_for_config_paths(); D16; LQ-15)."""
     scope = signal_scope()
     try:
         with scope:
+            hold_git_for_config_paths(scope.invocation)
             root = discover(args.target)
             report = snapshot(root)
             report["updates"] = [
@@ -6460,16 +6934,16 @@ def update(args):
         return 0
     with default_signals():
         if args.component == "shape":
-            check = execute(commands.pop(0), cwd=root)
+            check = execute(commands.pop(0), cwd=root, env=delegate_env())
             # update-shape check exits 1 when differences are available.
             if check not in (0, 1):
                 return check
             # The owner retains its own confirmation prompt, even if this coordinator
             # received --yes for a different update component.
-            return execute(commands[0], cwd=root)
+            return execute(commands[0], cwd=root, env=delegate_env())
         confirm(args.yes)
         for command in commands:
-            code = execute(command, cwd=root)
+            code = execute(command, cwd=root, env=delegate_env())
             if code:
                 return code
     return 0

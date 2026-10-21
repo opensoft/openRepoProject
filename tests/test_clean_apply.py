@@ -52,7 +52,8 @@ PROTOCOL_PINS = ["-c", "protocol.allow=never", "-c", "protocol.file.allow=never"
                  "-c", "protocol.http.allow=never", "-c", "protocol.https.allow=never",
                  "-c", "protocol.ext.allow=never"]
 REMOVAL_PINS = ["-c", "status.showUntrackedFiles=normal", "-c", "core.untrackedCache=false",
-                "-c", "core.fsmonitor=false", *PROTOCOL_PINS]
+                "-c", "core.fsmonitor=false", "-c", "core.trustctime=true", "-c", "core.checkStat=default",
+                *PROTOCOL_PINS]
 # The rescan's three children after `-C ROOT` (design D6, rows 3, 4 and 6).
 ROW_3 = ["rev-parse", "--path-format=absolute", "--show-toplevel", "--git-common-dir",
          "--show-superproject-working-tree"]
@@ -342,7 +343,7 @@ class ApplyTests(clean_support.CleanCase):
                                                    "branch_present": True, "branch_sha": SHA_A, "reconciled": True})
         self.assertEqual((failed["stage"], failed["reason"], failed["exit_status"], failed["notes"]),
                          ("failed", "git-failed", 255, ["orphaned-directory"]))
-        self.assertEqual(failed["reconciliation"]["path_present"], True)
+        self.assertTrue(failed["reconciliation"]["path_present"])
         # A not-attempted target: no reconciliation, no exit status, its path
         # escaped with its flag beside it (FR-041).
         self.assertIsNone(skipped["reconciliation"])
@@ -425,8 +426,9 @@ class ApplyTests(clean_support.CleanCase):
             def ended():
                 raise EOFError
 
+            question = types.SimpleNamespace(selected=[1])
             with mock.patch.object(project, "input", ended, create=True), self.assertRaises(EOFError):
-                project.ask_removal(types.SimpleNamespace(selected=[1]), run)
+                project.ask_removal(question, run)
             first = run.now()  # the clock runs again
             time.sleep(0.01)
             self.assertGreater(run.now(), first)
@@ -435,9 +437,10 @@ class ApplyTests(clean_support.CleanCase):
         with self.in_process(command="clean") as run:
             run.human = io.StringIO()
             run.record_signal(signal.SIGTERM)
-            with mock.patch.object(project, "input", lambda: self.fail("input() was called"), create=True), \
-                    self.assertRaises(project.Terminated):
-                project.ask_removal(types.SimpleNamespace(selected=[1]), run)
+            question = types.SimpleNamespace(selected=[1])
+            with mock.patch.object(project, "input", side_effect=self.failureException("input() was called"),
+                                   create=True), self.assertRaises(project.Terminated):
+                project.ask_removal(question, run)
             self.assertEqual(run.human.getvalue(), "")
 
     def test_clean_ask_removal_never_reads_after_a_failed_write(self):
@@ -445,7 +448,8 @@ class ApplyTests(clean_support.CleanCase):
         # answered; the failed write is recorded for the check after it.
         with self.in_process() as run:
             run.human = RaisingStream()
-            with mock.patch.object(project, "input", lambda: self.fail("input() was called"), create=True):
+            with mock.patch.object(project, "input", side_effect=self.failureException("input() was called"),
+                                   create=True):
                 self.assertEqual(project.ask_removal(types.SimpleNamespace(selected=[1]), run), "")
             self.assertIsInstance(run.write_error, BrokenPipeError)
 
@@ -503,6 +507,40 @@ class ApplyTests(clean_support.CleanCase):
             self.git(root, "commit", "-q", "--allow-empty", "-m", "advance the merge target")
             self.assertEqual(project.revalidate(plan, entry, run),
                              ("state-changed", record(True, True, True, heads["004-identity"])))
+
+    def test_clean_revalidate_records_a_refused_path_after_the_work_deadline(self):
+        # Lead ruling R-101 (d), apply review F3: a difference found just as the
+        # work deadline passes still records the planned path's presence, since
+        # that one lstat runs with the reserve's budget (data-model.md, "Target
+        # result and reconciliation record"). In process, on the Invocation's
+        # own clock under `clean` (the real table), in phase `apply`: the lock
+        # makes step 3 differ before the target's own lstat, and the stand-in
+        # moves the work deadline 1 s into the past as the difference returns,
+        # the reserve ending reconciliation_reserve (10 s) after it. So the
+        # work left is below 0, the reserve left about 9 s, and the lstat's
+        # budget min(5 s, 9 s); under the per-child budget it would be 0.
+        root, trees = self.merged_repository("001-a")
+        tree = trees["001-a"]
+        with self.in_process(command="clean") as run:
+            plan = self.plan_of(root, run, [tree])
+            entry = project.make_target(plan, plan.selected[0])
+            self.git(root, "worktree", "lock", tree)
+            real = project.revalidation_difference
+
+            def at_the_work_deadline(*args):
+                reason = real(*args)
+                run.work_end = run.now() - 1
+                run.reserve_end = run.work_end + project.TIMING["reconciliation_reserve"]
+                return reason
+
+            run.phase = "apply"
+            with mock.patch.object(project, "revalidation_difference", at_the_work_deadline):
+                refused = project.revalidate(plan, entry, run)
+            self.assertLess(run.work_remaining(), 0)
+            self.assertGreater(run.reserve_remaining(), 0)
+        self.assertEqual(refused, ("state-changed", record(True, True, None, None)))
+        self.assertIs(refused[1]["reconciled"], False)  # the branch was not read back
+        self.assertTrue(tree.is_dir())
 
     # T056: the removal child, the rescan and the stage.
 
@@ -847,7 +885,9 @@ class ApplyTests(clean_support.CleanCase):
         self.assertEqual(question, "Remove 7 worktrees, keeping 7 branches? [yes/N]")
         before = self.snapshot(root, trees)
         argv = clean_support.cli_argv("clean", root, "--all-safe", "--apply")
-        for answer in ("y", "", "no"):
+        # Only `yes`, its surrounding whitespace stripped, accepts: `YES` and
+        # `Yes` are cancelled like `y` (plan review C1; lead ruling R-101 (c)).
+        for answer in ("y", "", "no", "YES", "Yes"):
             with self.subTest(answer=answer):
                 result = self.run_pty_steps(argv, [(question, answer)])
                 self.assert_status(result, 2)
@@ -883,6 +923,36 @@ class ApplyTests(clean_support.CleanCase):
         self.assertEqual(lines[-3:], self.result_lines([(tree, "011-one")]))
         self.assertFalse(tree.exists())
         self.assertEqual(self.head(one, "refs/heads/011-one"), self.head(one, "011-one"))
+
+    def test_clean_only_yes_confirms_an_undecodable_answer(self):
+        # Lead ruling R-101 (c), plan review F1: an answer standard input cannot
+        # decode is not `yes`, so it is cancelled like any other: exit 2, the
+        # human refusal, and under --json the plan envelope refused as
+        # `cancelled`, never internal-error's error object. Standard input
+        # decodes strictly here, as Python's does under a UTF-8 locale other
+        # than C, through PYTHONIOENCODING=utf-8:strict; the answer is the byte
+        # 0xE9 and a newline, as a Latin-1 terminal sends it.
+        root = self.repo()
+        self.bare_remote()
+        tree = self.merged_worktree("001-a")
+        before = self.snapshot(root, [tree])
+        env = dict(self.env, PYTHONIOENCODING="utf-8:strict")
+        argv = clean_support.cli_argv("clean", root, "--all-safe", "--apply")
+        answer = [(TEXT["question_one"], b"\xe9\n")]
+        result = self.run_pty_steps(argv, answer, env=env)
+        self.assert_status(result, 2)
+        self.assertEqual(result.stderr, f"REFUSED: {CANCELLED}\n")
+        self.assertEqual(self.snapshot(root, [tree]), before, "nothing removed")
+        result = self.run_pty_steps([*argv, "--json"], answer, env=env, stdout_pipe=True)
+        self.assert_status(result, 2)
+        self.assertIn(TEXT["question_one"], result.stderr.splitlines())
+        self.assertNotIn("REFUSED", result.stderr)
+        document = self.load_json(result)
+        self.assertNotIn("code", document, "a plan envelope, not an error object")
+        self.assertEqual((document["apply_allowed"], document["refusals"]),
+                         (False, [{"code": "cancelled", "message": CANCELLED}]))
+        self.assertEqual([entry["path"] for entry in document["selected"]], [str(tree)])
+        self.assertEqual(self.snapshot(root, [tree]), before, "nothing removed")
 
     # T044: "A noninteractive batch needs --yes".
 

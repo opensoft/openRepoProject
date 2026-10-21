@@ -246,8 +246,10 @@ class RevalidationTests(clean_support.CleanCase):
         # the matching reason, the second is not attempted, nothing is
         # mutated, and the exit status is 2 (research.md R16, lead ruling
         # R-41). The merge-target SHA, the second target's branch tip,
-        # upstream object and lock are the first target's preflight; the
-        # first target's ignored-file state and classification are its own.
+        # upstream object and lock, and its filesystem identity and
+        # registration (apply review F1; lead ruling R-101 (d)), are the
+        # first target's preflight; the first target's ignored-file state and
+        # classification are its own.
         def merge_target_moves(root, trees):
             self.git(root, "commit", "-q", "--allow-empty", "-m", "the merge target moves")
 
@@ -259,6 +261,20 @@ class RevalidationTests(clean_support.CleanCase):
 
         def second_locked(root, trees):
             self.git(root, "worktree", "lock", trees[1])
+
+        def second_directory_copied(root, trees):
+            # Moved aside and copied back with its `.git` file: its
+            # registration still holds both ways, and only its `dev` and `ino`
+            # differ from the plan's.
+            aside = trees[1].with_name(trees[1].name + ".aside")
+            trees[1].rename(aside)
+            shutil.copytree(aside, trees[1], symlinks=True)
+
+        def second_dotgit_rewritten(root, trees):
+            # Its `.git` file names the first target's admin directory, so its
+            # two-way registration no longer holds.
+            common = Path(self.git(root, "rev-parse", "--path-format=absolute", "--git-common-dir").strip())
+            (trees[1] / ".git").write_text(f"gitdir: {common / 'worktrees' / '001-p'}\n")
 
         def first_ignored_file(root, trees):
             exclude = Path(self.git(root, "rev-parse", "--path-format=absolute", "--git-common-dir").strip())
@@ -275,6 +291,8 @@ class RevalidationTests(clean_support.CleanCase):
             ("second-branch-tip", second_branch_moves, "branch-changed", True),
             ("second-upstream-object", second_upstream_moves, "state-changed", True),
             ("second-lock", second_locked, "state-changed", True),
+            ("second-directory-copied", second_directory_copied, "identity-changed", True),
+            ("second-dotgit-rewritten", second_dotgit_rewritten, "identity-changed", True),
             ("first-ignored-file", first_ignored_file, "state-changed", False),
             ("first-classification", first_classification, "state-changed", False),
         ]
@@ -290,8 +308,8 @@ class RevalidationTests(clean_support.CleanCase):
                     # Found by the first target's preflight, so the first is
                     # the refused one, though nothing about it changed.
                     first = result.document["targets"][0]
-                    self.assertEqual(first["reconciliation"]["registry_entry_present"], True)
-                    self.assertEqual(first["exit_status"], None)
+                    self.assertTrue(first["reconciliation"]["registry_entry_present"])
+                    self.assertIsNone(first["exit_status"])
 
     def test_clean_changed_later_target(self):
         root, trees = self.batch("later", count=3)
@@ -491,6 +509,39 @@ class RevalidationTests(clean_support.CleanCase):
                 self.assertEqual(self.registered(root), before, "nothing removed")
                 self.assertTrue(all(tree.is_dir() for tree in trees))
 
+    def test_clean_state_changes_before_revalidation_a_tracking_branch_that_is_not_a_string(self):
+        # Lead ruling R-101 (d), apply review F2: YAML's `.nan` loads as a float
+        # that never equals itself, and planning reads a value that is not a
+        # string as no candidate (resolve_merge_target()), so the merge target
+        # is main. Revalidation compares the manifest's value the same way:
+        # left as it was, it is no difference, and both targets are removed.
+        # An edit to or from a string still differs, as written (R-77).
+        cases = [
+            ("nan-left-unchanged", ".nan", None, "main", None),
+            ("nan-edited-to-a-string", ".nan", "release", "main", "state-changed"),
+            ("a-string-edited-to-nan", "main", ".nan", "manifest", "state-changed"),
+        ]
+        for case, planned, edited, source, reason in cases:
+            with self.subTest(case):
+                root, trees = self.batch(case)
+                self.git(root, "branch", "release")
+                self.manifest(root, planned)
+                preview = self.run_json("clean", root, "--all-safe", "--json").document
+                self.assertEqual((preview["merge_target"]["name"], preview["merge_target"]["source"]),
+                                 ("main", source))
+                self.assertEqual(len(preview["selected"]), 2)
+                before = self.registered(root)
+                result = self.apply(root, None if edited is None else lambda: self.manifest(root, edited))
+                if reason is None:
+                    self.assertEqual(self.stages(result), [(str(tree), "removed", None) for tree in trees],
+                                     result.stderr)
+                    self.assertEqual((result.status, result.document["exit_code"]), (0, 0))
+                    self.assertFalse(any(tree.exists() for tree in trees))
+                else:
+                    self.assert_stopped_at_first(result, trees, reason)
+                    self.assertEqual(self.registered(root), before, "nothing removed")
+                    self.assertTrue(all(tree.is_dir() for tree in trees))
+
     def test_clean_branch_advances_before_removal(self):
         root, trees = self.batch("advances")
         planned = self.head(trees[0])
@@ -587,9 +638,10 @@ class RevalidationTests(clean_support.CleanCase):
         result = self.apply(root, env=env)
         self.assert_git_refused_first(result, trees, late)
         [removal] = [record for record in clean_support.child_log(log) if is_removal(record)]
-        self.assertEqual(strip_pins(removal.argv)[0][:6], ["-c", "status.showUntrackedFiles=normal",
-                                                            "-c", "core.untrackedCache=false",
-                                                            "-c", "core.fsmonitor=false"])
+        self.assertEqual(strip_pins(removal.argv)[0][:10], ["-c", "status.showUntrackedFiles=normal",
+                                                             "-c", "core.untrackedCache=false",
+                                                             "-c", "core.fsmonitor=false",
+                                                             "-c", "core.trustctime=true", "-c", "core.checkStat=default"])
 
     def test_clean_ignored_file_in_the_residual_window(self):
         root, trees = self.batch("residual")

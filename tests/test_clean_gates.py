@@ -542,6 +542,86 @@ class GatesTests(clean_support.CleanCase):
         for tree in (left, populated, deinitialized, never):
             self.assertTrue(tree.is_dir(), tree)
 
+    def test_clean_submodules_beside_hidden_local_state(self):
+        # Lane 3's W4 M-3 (lead ruling R-117): one worktree whose own index holds
+        # both a gitlink and an entry flagged assume-unchanged is excluded by gate
+        # 9, contains-submodule, never by gate 10, hidden-local-state, in the gate
+        # order (pcl:577-583): the hidden-state probe decides the gitlink first.
+        # HiddenStateParser stops at the first gitlink, so the flagged entry is
+        # put before it in path order, `work-001-both` before `zz-vendored`.
+        root = self.repo()
+        self.bare_remote()
+        tree = self.merged_worktree("001-both", path=self.base / "both",
+                                    setup=lambda tree: self.gitlink(tree, "zz-vendored"))
+        self.git(tree, "update-index", "--assume-unchanged", "work-001-both")
+        self.assertEqual([(line[:1], line.split()[1], line.split("\t")[1])
+                          for line in self.git(tree, "ls-files", "-v", "--stage").splitlines()],
+                         [("h", "100644", "work-001-both"), ("H", "160000", "zz-vendored")])
+        self.assertFalse((self.common_dir(root) / "worktrees" / tree.name / "modules").exists())
+        # The probe's parser reads both: the flag, then the gitlink, its bound.
+        parser = project.HiddenStateParser()
+        parser.feed(os.fsencode(self.git(tree, "ls-files", "-v", "--stage", "-z")))
+        self.assertEqual(parser.finish(), {"gitlink": True, "hidden": True, "entries": 1})
+        before = self.snapshot(root)
+        result = self.preview(root)
+        self.assert_status(result, 0)
+        self.assertEqual((result.document["selected"], by_path(result.document)),
+                         ([], {str(root): "main-worktree", str(tree): "contains-submodule"}))
+        self.assertEqual(row_of(result.document, tree)["classification"], "merged-removable")
+        message = TEXT["target_excluded_gate"].format(REASON="contains-submodule", NEXT_STEP=STEPS["contains-submodule"])
+        result, records = self.run_counted("clean", root, "--apply", "--action", "remove", "--worktree", tree, "--yes")
+        self.assert_status(result, 2)
+        self.assertEqual(result.stderr, f"REFUSED: {message}\n")
+        self.assertEqual(removals(records), [])
+        result = self.run_json("clean", root, "--apply", "--action", "remove", "--worktree", tree, "--yes", "--json")
+        self.assert_refused_target(result, tree, "contains-submodule", message)
+        self.assertEqual(self.snapshot(root), before, "nothing removed")
+
+    def test_clean_submodules_beside_hidden_local_state_with_a_modules_entry(self):
+        # Lead ruling R-155 (lane 3's W19 M-3, mutants G9-10b and G9-10c): the
+        # `modules` check runs before the hidden-state probe (index_gates()), so
+        # a worktree whose admin directory holds a `modules` entry is
+        # contains-submodule, never hidden-local-state, though its index holds
+        # an entry flagged assume-unchanged. Two worktrees:
+        # - 001-left: a submodule added and removed again, which leaves its
+        #   repository under the admin directory's `modules` and no gitlink.
+        #   Only this shape tells G9-10b apart, since the probe, run first,
+        #   still answers contains-submodule for any gitlink it reads.
+        # - 002-both: a submodule added, so a gitlink, a .gitmodules entry and a
+        #   `modules` entry, with the flagged entry before the gitlink in path
+        #   order, so the probe reads both (G9-10c).
+        root = self.repo()
+        self.bare_remote()
+
+        def added_then_removed(tree):
+            self.submodule(tree, "sub-removed")
+            self.commit(tree, "add sub-removed")
+            self.git(tree, "rm", "-q", "sub-removed")
+
+        left = self.merged_worktree("001-left", path=self.base / "left", setup=added_then_removed)
+        # Last: once merged, its gitlink is in the merge target's tree.
+        both = self.merged_worktree("002-both", path=self.base / "both",
+                                    setup=lambda tree: self.submodule(tree, "zz-sub"))
+        admin = self.common_dir(root) / "worktrees"
+        for tree, name, gitlink in ((left, "001-left", False), (both, "002-both", True)):
+            self.git(tree, "update-index", "--assume-unchanged", "work-" + name)
+            self.assertTrue((admin / tree.name / "modules").is_dir(), name)
+            parser = project.HiddenStateParser()
+            parser.feed(os.fsencode(self.git(tree, "ls-files", "-v", "--stage", "-z")))
+            found = parser.finish()
+            self.assertEqual((found["gitlink"], found["hidden"]), (gitlink, True), name)
+        self.assertEqual(self.git(both, "config", "--file", ".gitmodules", "--get", "submodule.zz-sub.path"),
+                         "zz-sub\n")
+        before = self.snapshot(root)
+        result = self.preview(root)
+        self.assert_status(result, 0)
+        self.assertEqual((result.document["selected"], by_path(result.document)),
+                         ([], {str(root): "main-worktree", str(left): "contains-submodule",
+                               str(both): "contains-submodule"}))
+        for tree in (left, both):
+            self.assertEqual(row_of(result.document, tree)["classification"], "merged-removable", tree)
+        self.assertEqual(self.snapshot(root), before, "a preview changes nothing")
+
     def test_clean_a_worktree_holding_a_submodule_is_never_offered(self):
         root = self.repo()
         self.bare_remote()

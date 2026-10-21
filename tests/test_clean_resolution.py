@@ -18,6 +18,7 @@ import io
 import json
 import os
 from pathlib import Path
+import shlex
 import unittest
 from unittest import mock
 
@@ -25,6 +26,11 @@ import clean_support
 
 project = clean_support.load_project()
 TEXT = clean_support.TEXT_FIXTURES
+
+# The lead's extension of Brett Heap's ruling LQ-15 (lead ruling R-102), which
+# Brett Heap may strike: the two variables tested beside HOME and
+# XDG_CONFIG_HOME. Striking it here is this one line, made `()`.
+EXTENSION = ("GIT_CONFIG_GLOBAL", "GIT_CONFIG_SYSTEM")
 
 EXTENDED_ERROR_KEYS = ["error", "code", "schema_version", "observed_at", "mode", "repository", "merge_target",
                        "completeness", "apply_allowed", "refusals"]
@@ -44,6 +50,11 @@ def command(record):
     while at + 1 < len(argv) and argv[at] == "-c":
         at += 2
     return argv[at:]
+
+
+def config_lines(*names):
+    """D18's relative-config-path text for names, one line each, from the fixtures (rule 8)."""
+    return "\n".join(TEXT["relative_config_path"].format(NAME=name) for name in names)
 
 
 def manifest_text(size, *lines):
@@ -322,6 +333,74 @@ class ResolutionTests(clean_support.CleanCase):
         status, out, err = self.main_in_process("clean", "Atlas", cwd=elsewhere, discover=already_coded)
         self.assertEqual((status, coded.code), (2, "ambiguous-name"), "a coded refusal passes unchanged")
 
+    def main_in_a_gone_directory(self, *argv):
+        """main_in_process() run from a working directory removed after the
+        chdir into it: (status, stdout, stderr)."""
+        gone = self.base / "gone"
+        gone.mkdir()
+        out, err = io.StringIO(), io.StringIO()
+        with mock.patch.dict(os.environ, self.env, clear=True), working_directory(gone), \
+                contextlib.redirect_stdout(out), contextlib.redirect_stderr(err):
+            gone.rmdir()
+            status = project.main([os.fspath(arg) for arg in argv])
+        return status, out.getvalue(), err.getvalue()
+
+    def document_of(self, status, out, err, argv):
+        result = mock.Mock(returncode=status, stdout=out, stderr=err, args=list(argv))
+        result.document = json.loads(out)
+        return result
+
+    def test_clean_bare_name_refusals_carry_their_codes_for_a_name_the_lookup_cannot_examine(self):
+        # The contract's Codes table: `repository-not-found` for "a bare name
+        # resolves to no project directory". Plan review F4 (`~user` for no such
+        # user: Path.expanduser() raises RuntimeError) and lane 3's US7/US9 L-1
+        # (a name of 256 bytes or more: ENAMETOOLONG on Python 3.10 to 3.13) and
+        # L-3 (a working directory that is gone) ended in internal-error.
+        elsewhere = self.base / "elsewhere"
+        elsewhere.mkdir()
+        for label, name in (("~ for no such user", "~nosuchuser7f3a9c"), ("a name of 300 bytes", "n" * 300)):
+            with self.subTest(label):
+                message = f"Directory does not exist: {elsewhere / name}"
+                result = self.run_json("clean", name, "--json", cwd=elsewhere)
+                self.assert_error_document(result, "repository-not-found", message, "report")
+                result = self.run_cli("clean", name, "--all-safe", cwd=elsewhere)
+                self.assert_refused_human(result, message)
+        with self.subTest("a name looked up from a working directory that is gone"):
+            argv = ("clean", "Nowhere", "--json")
+            result = self.document_of(*self.main_in_a_gone_directory(*argv), argv)
+            self.assert_error_document(result, "repository-not-found", "Directory does not exist: Nowhere", "report")
+
+    def test_clean_a_relative_path_or_none_from_a_working_directory_that_is_gone(self):
+        # pcl:449-451: a relative path, or no argument, is made absolute against
+        # the working directory and refused target-not-repository-root where Git
+        # finds no worktree there; with the working directory gone Git finds
+        # none, and the refusal names the argument as given, or `.` (lane 3's
+        # US7/US9 L-3, which ended in internal-error).
+        for words, shown in (((), "."), ((".",), "."), (("./sub",), "./sub")):
+            with self.subTest(words=words):
+                argv = ("clean", *words, "--json")
+                result = self.document_of(*self.main_in_a_gone_directory(*argv), argv)
+                self.assert_error_document(result, "target-not-repository-root", self.not_root(shown), "report",
+                                           path=shown)
+                status, out, err = self.main_in_a_gone_directory("clean", *words)
+                self.assertEqual((status, out, err), (2, "", f"REFUSED: {self.not_root(shown)}\n"))
+
+    def test_clean_a_relative_path_s_refusal_names_the_directory_git_examined(self):
+        # Lane 3's US7/US9 L-2, wording only: `ln-inner/..` from `work`, where
+        # ln-inner is a symbolic link to ../other/dir/inner, examines other/dir
+        # (chdir() takes `..` after the link), so the refusal names other/dir,
+        # not work, the lexical result.
+        work = self.base / "work"
+        inner = self.base / "other" / "dir" / "inner"
+        work.mkdir()
+        inner.mkdir(parents=True)
+        (work / "ln-inner").symlink_to(Path("..") / "other" / "dir" / "inner")
+        examined = self.base / "other" / "dir"
+        result = self.run_json("clean", "ln-inner/..", "--json", cwd=work)
+        self.assert_error_document(result, "target-not-repository-root", self.not_root(examined), "report",
+                                   path=examined)
+        self.assert_refused_human(self.run_cli("clean", "ln-inner/..", cwd=work), self.not_root(examined))
+
     # R-71 (b): row 3 runs once, where the argument resolves.
 
     def test_clean_row_3_runs_once_where_the_argument_resolves(self):
@@ -347,6 +426,39 @@ class ResolutionTests(clean_support.CleanCase):
                 self.assertEqual([c[1] for c in commands if c[2:] == ROW_3], row_3,
                                  "row 3 once where the argument resolves, then row 5 at root only from elsewhere")
                 self.assertEqual(sorted(c[1] for c in commands if c[2:] == STATUS), sorted([str(root), str(linked)]))
+
+    # Plan review F2: row 5 failing.
+
+    def test_clean_row_5_failing_still_resolves_to_the_main_worktree(self):
+        # pcl "Clean resolves its target Git-first": a relative path, or no
+        # argument, resolves to the repository Git finds "with `root` set to
+        # its main worktree", and an absolute path must be the main worktree.
+        # Row 5, row 3 again at the main worktree, fails here (a fake git fails
+        # `-C ROOT rev-parse`); lead ruling R-73 (e)(1) keeps the plan
+        # incomplete rather than refused, and its root is still the main
+        # worktree, never the linked worktree the command ran in.
+        root = self.repo()
+        self.bare_remote()
+        linked = self.merged_worktree("001-merged")
+        fake = self.base / "fake-row-5" / "git"
+        fake.parent.mkdir()
+        fake.write_text("#!/bin/sh\np2=; p1=\nfor a in \"$@\"; do\n"
+                        f"  if [ \"x$p2\" = x-C ] && [ \"x$p1\" = x{shlex.quote(str(root))} ] && "
+                        "[ \"x$a\" = xrev-parse ]; then\n"
+                        "    echo 'fatal: row 5 failed (fake)' >&2; exit 128\n  fi\n  p2=$p1; p1=$a\ndone\n"
+                        f"exec {shlex.quote(clean_support.REAL_GIT)} \"$@\"\n")
+        fake.chmod(0o755)
+        env = self.path_first(fake.parent)
+        for words in ((), (".",)):
+            with self.subTest(words=words):
+                result = self.run_json("clean", *words, "--json", cwd=linked, env=env)
+                self.assert_status(result, 1)
+                self.assertEqual((result.document["root"], result.document["completeness"]),
+                                 (str(root), "incomplete"))
+        with self.subTest("an absolute path to the linked worktree is still refused"):
+            result = self.run_json("clean", linked, "--json", env=env)
+            self.assert_error_document(result, "target-not-repository-root", self.not_root(linked), "report",
+                                       path=linked)
 
     # T105: "A bare repository reached from a linked worktree".
 
@@ -523,6 +635,35 @@ class ResolutionTests(clean_support.CleanCase):
             message = f"Cannot read {manifest}: [Errno 13] Permission denied: '{manifest}'"
             self.assert_error_document(result, "manifest-invalid", message, "report", repository=self.repository(root))
 
+    def test_clean_merge_target_missing_invalid_or_conflicting_a_value_pyyaml_cannot_build(self):
+        # Lane 3's US7/US9 M-1, lead ruling R-101 (e): "a manifest that cannot
+        # be read ... SHALL refuse with manifest-invalid". PyYAML raises
+        # ValueError, KeyError, AttributeError or RecursionError, not a
+        # YAMLError, for these values; each is a manifest that does not parse,
+        # where c9103ba ended in internal-error.
+        root = self.repo()
+        manifest = root / "project.yaml"
+        cases = (
+            ("an impossible date", "released: 2021-02-30\n"),
+            ("an unknown boolean", "flag: !!bool maybe\n"),
+            ("a malformed timestamp", "when: !!timestamp soon\n"),
+            ("nesting past the recursion limit", "deep: " + "[" * 100000 + "\n"),
+        )
+        for label, text in cases:
+            with self.subTest(label):
+                manifest.write_text("kind: project-manifest\n" + text)
+                result, records = self.counted("clean", root, "--json")
+                self.assert_status(result, 2)
+                document = result.document
+                self.assertEqual((document["code"], document["repository"]),
+                                 ("manifest-invalid", self.repository(root)))
+                self.assertTrue(document["error"].startswith(f"Cannot read {manifest}: "), document["error"])
+                self.assert_no_plan(records)
+                result = self.run_cli("clean", root, "--all-safe")
+                self.assert_status(result, 2)
+                self.assertTrue(result.stderr.startswith(f"REFUSED: Cannot read {manifest}: "), result.stderr)
+                self.assertNotIn("Traceback", result.stderr)
+
     # T106: "A tracking branch spelled with its remote".
 
     def test_clean_a_tracking_branch_spelled_with_its_remote(self):
@@ -567,8 +708,9 @@ class ResolutionTests(clean_support.CleanCase):
             with self.subTest(declared=declared):
                 target = project.resolve_merge_target(refs, declared)
                 self.assertEqual((target["name"], target["source"], target["notes"]), expected)
+        trunk_only = [ref(b"refs/heads/trunk")]
         with self.assertRaises(project.Refused) as caught:
-            project.resolve_merge_target([ref(b"refs/heads/trunk")], None)
+            project.resolve_merge_target(trunk_only, None)
         self.assertEqual((str(caught.exception), caught.exception.code), (TEXT["no_merge_target"], "no-merge-target"))
 
     # T106: "A manifest over 1 MiB".
@@ -638,6 +780,152 @@ class ResolutionTests(clean_support.CleanCase):
             self.assertEqual(json.loads(out)["merge_target"]["source"], "manifest")
             self.assertEqual([entry[0] for entry in opened], ["open", "read"])
             self.assertTrue(all(0 <= size <= MIB for kind, size in opened if kind == "read"), opened)
+
+    # Brett Heap's ruling LQ-15 (lead ruling R-102): "A relative configuration path".
+
+    def plant_configuration(self, root, config):
+        """Inline fixture (rule 3): commit in root, at the relative path config, a
+        configuration whose clean filter `mark`, which root's tracked
+        .gitattributes selects for *.txt, and whose core.hooksPath, root's
+        tracked hooks/, each append to self.base/marker, beside a tracked
+        data.txt. The fixture's own git reads none of it (GIT_CONFIG_GLOBAL is
+        os.devnull). Returns the marker's path."""
+        marker = self.base / "marker"
+        quoted = shlex.quote(str(marker))
+        hooks = root / "hooks"
+        hooks.mkdir()
+        for name in ("pre-push", "reference-transaction", "post-checkout", "post-merge"):
+            (hooks / name).write_text(f"#!/bin/sh\necho {name} >> {quoted}\n")
+            (hooks / name).chmod(0o755)
+        path = root / config
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(f'[filter "mark"]\n\tclean = "tee -a {quoted}"\n[core]\n\thooksPath = "{hooks}"\n')
+        (root / ".gitattributes").write_text("*.txt filter=mark\n")
+        (root / "data.txt").write_text("data\n")
+        self.commit(root)
+        return marker
+
+    def stale_stat(self, path):
+        """Move path's mtime an hour back, so that its index entry no longer
+        matches and a status probe reads the file through its clean filter."""
+        found = os.stat(path)
+        os.utime(path, (found.st_atime - 3600, found.st_mtime - 3600))
+
+    def assert_planted_configuration_is_live(self, root, marker, env):
+        """The control: the real git, run in root under env with no optional
+        lock, reads the planted file as the user's configuration, and its
+        filter writes the marker, which is then removed."""
+        self.assertFalse(marker.exists())
+        self.git(root, "status", "--porcelain", env=dict(env, GIT_OPTIONAL_LOCKS="0"))
+        self.assertTrue(marker.exists(), "the planted filter runs under the real git: the fixture is live")
+        marker.unlink()
+
+    def test_clean_a_relative_configuration_path(self):
+        # D11's test runs after the argument checks and before the version
+        # check, so a relative HOME refuses the read-only form, the batch apply
+        # and the push with exit 2 and starts no Git child, git --version
+        # included. The control shows the real git reading h/.gitconfig under
+        # the same environment. Beside an absolute XDG_CONFIG_HOME and an
+        # absolute GIT_CONFIG_GLOBAL, Git would read nothing under HOME, and
+        # the test still refuses (it does not follow Git's precedence).
+        root = self.repo()
+        marker = self.plant_configuration(root, "h/.gitconfig")
+        self.bare_remote()
+        self.merged_worktree("001-merged")
+        self.stale_stat(root / "data.txt")
+        before = self.snapshot(root)
+        live = {name: value for name, value in self.env.items() if name != "GIT_CONFIG_GLOBAL"}
+        live["HOME"] = "h"
+        beside = dict(self.env, HOME="h", XDG_CONFIG_HOME=str(self.base / "xdg"))  # GIT_CONFIG_GLOBAL os.devnull
+        message = config_lines("HOME")
+        modes = (("read-only", ()), ("all-safe apply", ("--all-safe", "--apply", "--yes")),
+                 ("push", ("--apply", "--action", "push", "--branch", "001-merged", "--yes")))
+        for label, env in (("Git would read h/.gitconfig", live),
+                           ("beside an absolute XDG_CONFIG_HOME and GIT_CONFIG_GLOBAL", beside)):
+            if env is live:
+                self.assert_planted_configuration_is_live(root, marker, env)
+            for mode, words in modes:
+                with self.subTest(label, mode=mode):
+                    result, records = self.counted("clean", root, *words, env=env)
+                    self.assert_refused_human(result, message)
+                    self.assertEqual(records, [], "no Git child, git --version included")
+            with self.subTest(label, mode="read-only", output="json"):
+                result, records = self.counted("clean", root, "--json", env=env)
+                self.assert_error_document(result, "relative-config-path", message, "report")
+                self.assertEqual(records, [])
+        self.assertFalse(marker.exists(), "no filter or hook ran")
+        self.assertEqual(self.snapshot(root), before, "nothing changes")
+
+    def test_clean_a_relative_configuration_path_each_variable_and_spelling(self):
+        # The scenario's other ANDs: a relative XDG_CONFIG_HOME beside an
+        # absolute HOME; a HOME of " /x", "~/x" or "."; a relative
+        # GIT_CONFIG_GLOBAL or GIT_CONFIG_SYSTEM beside an absolute HOME (the
+        # lead's extension). Every variable that fails is named, one line each,
+        # in D18's order, and no value is printed.
+        root = self.repo()
+        cases = [({"XDG_CONFIG_HOME": "cfg"}, ("XDG_CONFIG_HOME",)),
+                 ({"HOME": " /x"}, ("HOME",)), ({"HOME": "~/x"}, ("HOME",)), ({"HOME": "."}, ("HOME",))]
+        cases += [({name: "h/.gitconfig"}, (name,)) for name in EXTENSION]
+        cases.append(({"HOME": "h", "XDG_CONFIG_HOME": "cfg", **{name: "h/.gitconfig" for name in EXTENSION}},
+                      ("HOME", "XDG_CONFIG_HOME", *EXTENSION)))
+        for values, names in cases:
+            env = dict(self.env, **values)
+            with self.subTest(values=values):
+                result, records = self.counted("clean", root, "--all-safe", env=env)
+                self.assert_refused_human(result, config_lines(*names))
+                self.assertEqual(records, [])
+                for value in values.values():
+                    if len(value) > 1:  # "." and "h" are letters of the message itself
+                        self.assertNotIn(value, result.stderr, "the value is never printed")
+            with self.subTest(values=values, output="json"):
+                result, records = self.counted("clean", root, "--all-safe", "--json", env=env)
+                self.assert_error_document(result, "relative-config-path", config_lines(*names), "all-safe")
+                self.assertEqual(records, [])
+
+    def test_clean_a_relative_configuration_path_not_valid_utf_8(self):
+        # D11: the test is made on the raw bytes, so a relative value whose
+        # first byte is not UTF-8 fails it too; the message names the variable.
+        root = self.repo()
+        for name in ("HOME", "XDG_CONFIG_HOME", *EXTENSION):
+            env = dict(self.env)
+            env[name] = b"\xffh"
+            with self.subTest(name=name):
+                result, records = self.counted("clean", root, env=env)
+                self.assert_refused_human(result, config_lines(name))
+                self.assertEqual(records, [])
+                result, records = self.counted("clean", root, "--json", env=env)
+                self.assert_error_document(result, "relative-config-path", config_lines(name), "report")
+                self.assertEqual(records, [])
+
+    def test_clean_a_relative_configuration_path_empty_and_absolute_values_pass(self):
+        # The scenario's last AND: with HOME absolute, XDG_CONFIG_HOME empty,
+        # and GIT_CONFIG_GLOBAL and GIT_CONFIG_SYSTEM unset, clean is not
+        # refused for them. Nor is it for an empty value, `/` alone, or an
+        # absolute value that is not UTF-8; beside one relative variable, such
+        # a value is not named, and the run goes on to the version check.
+        root = self.repo()
+        unset = {name: value for name, value in self.env.items() if name not in EXTENSION}
+        with self.subTest("HOME absolute, XDG_CONFIG_HOME empty, the two unset"):
+            result, records = self.counted("clean", root, "--json", env=dict(unset, XDG_CONFIG_HOME=""))
+            self.assert_status(result, 0)
+            self.assertEqual(result.document["root"], str(root))
+            self.assertEqual(command(records[0]), ["--version"], "the version check runs next")
+        absolute = os.fsencode(self.base) + b"/home-\xff"
+        cases = [("HOME", ""), ("HOME", "/"), ("HOME", absolute), ("XDG_CONFIG_HOME", ""),
+                 ("XDG_CONFIG_HOME", "/"), ("XDG_CONFIG_HOME", absolute)]
+        cases += [(name, value) for name in EXTENSION for value in ("", os.devnull)]
+        for name, value in cases:
+            env = dict(self.env)
+            env[name] = value
+            with self.subTest(name=name, value=value):
+                result, records = self.counted("clean", root, "--json", env=env)
+                self.assert_status(result, 0)
+                self.assertEqual(command(records[0]), ["--version"])
+            companion = "XDG_CONFIG_HOME" if name == "HOME" else "HOME"
+            with self.subTest(name=name, value=value, beside=companion):
+                result, records = self.counted("clean", root, env=dict(env, **{companion: "rel"}))
+                self.assert_refused_human(result, config_lines(companion))
+                self.assertEqual(records, [])
 
 
 if __name__ == "__main__":

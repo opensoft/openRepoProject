@@ -140,7 +140,7 @@ class GuardTests(clean_support.CleanCase):
                            KeyboardInterrupt(), EOFError()):
                 with self.subTest(stage=stage, raised=type(raised).__name__):
                     with self.in_process(**{stage: raising(raised)}), project.Invocation("clean"), \
-                            self.assertRaises(BaseException) as caught:
+                            self.assertRaises(type(raised)) as caught:
                         project.run_clean(args)
                     self.assertIs(caught.exception, raised)
 
@@ -321,6 +321,80 @@ class GuardTests(clean_support.CleanCase):
             child.communicate()
             self.fail(f"project did not end within {clean_support.TIMEOUT} s")
         self.assertEqual((child.returncode, out), (129, b""))
+
+    def run_child(self, argv, env=None, preexec_fn=None, stdout=subprocess.PIPE):
+        """Run argv in a session of its own, standard input empty, standard
+        error on a pipe, preexec_fn (the test's own) run in the child before it
+        execs. Returns the exit status and both streams as text."""
+        child = subprocess.Popen(argv, cwd=self.base, env=self.env if env is None else env,
+                                 stdin=subprocess.DEVNULL, stdout=stdout, stderr=subprocess.PIPE,
+                                 start_new_session=True, preexec_fn=preexec_fn)
+        try:
+            out, err = child.communicate(timeout=clean_support.TIMEOUT)
+        except subprocess.TimeoutExpired:
+            with contextlib.suppress(OSError):
+                os.killpg(child.pid, signal.SIGKILL)
+            child.communicate()
+            self.fail(f"project did not end within {clean_support.TIMEOUT} s")
+        return child.returncode, (out or b"").decode("utf-8", "replace"), err.decode("utf-8", "replace")
+
+    def test_clean_the_plain_report_exits_by_completeness_when_the_caller_ignores_the_signal(self):
+        # Runner review F2 (lead ruling R-101 (b)): a signal ignored when
+        # project starts stays ignored, as by convention and in the baseline;
+        # FR-036 does not reach it. The `signal-parent-in` fake sends SIGHUP,
+        # and in turn SIGINT, to project, its parent, from the linked
+        # worktree's status probe while it plans. With the signal at SIG_IGN
+        # when project starts (set by a preexec_fn of the test's own, as nohup
+        # sets SIGHUP and a `&` job of a non-interactive shell SIGINT), the
+        # plain report completes and exits 0, by its completeness; with the
+        # signal at SIG_DFL the same run is cancelled, which shows that the
+        # fake's signal arrives. The signal goes to the child only (rule 7).
+        tree = self.base / "feature-tree"
+        self.git(self.root, "worktree", "add", "-q", "-b", "001-feature", tree)
+        for signum, cancelled in ((signal.SIGHUP, 129), (signal.SIGINT, 130)):
+            name = signal.Signals(signum).name
+            bin_dir = self.base / f"bin-{name.lower()}"
+            clean_support.install_fake_git(bin_dir, "signal-parent-in", path=tree, signal=name)
+            for disposition, expected in ((signal.SIG_IGN, 0), (signal.SIG_DFL, cancelled)):
+                with self.subTest(signal=name, disposition=disposition.name):
+                    def preexec(signum=signum, disposition=disposition):
+                        signal.signal(signum, disposition)
+
+                    status, out, err = self.run_child(clean_support.cli_argv("clean", self.root),
+                                                      env=self.path_first(bin_dir), preexec_fn=preexec)
+                    self.assertEqual(status, expected, err)
+                    if expected == 0:
+                        self.assertIn(f"Cleanup plan for {self.root}\n", out)
+                        self.assertIn(f"{tree} [001-feature]", out)
+                        self.assertEqual(err, "")
+                    else:
+                        self.assertEqual((out, err), ("", CANCELLED))
+
+    def test_clean_the_plain_report_in_json_with_standard_output_closed(self):
+        # Runner review F3 and lane 3's F4 M-1 (lead ruling R-101 (b)): with
+        # descriptor 1 closed when project starts, as `project clean ROOT
+        # --json >&-` closes it, sys.stdout is None and the one document cannot
+        # be written. That is a failed write before the apply phase, so the
+        # run refuses with `internal-error` and exit 2 and prints no traceback
+        # (lead ruling R-55; pcl:938-941), never AttributeError with exit 1,
+        # the incomplete plan's status. The report, the preview, and an apply
+        # that stops at its question each refuse so, and nothing is removed.
+        # A preexec_fn of the test's own closes the descriptor in the child.
+        self.bare_remote()
+        merged = self.merged_worktree("001-merged")
+
+        def close_standard_output():
+            os.close(1)
+
+        for extra in ((), ("--all-safe",), ("--all-safe", "--apply")):
+            with self.subTest(arguments=extra):
+                status, _, err = self.run_child(clean_support.cli_argv("clean", self.root, "--json", *extra),
+                                                preexec_fn=close_standard_output, stdout=None)
+                self.assertEqual(status, 2, err)
+                self.assertNotIn("Traceback", err)
+                if "--apply" not in extra:
+                    self.assertEqual(err, "", "under --json the refusal is the document alone")
+                self.assertTrue(merged.is_dir(), "nothing removed")
 
 
 if __name__ == "__main__":

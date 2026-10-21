@@ -50,7 +50,7 @@ def _which_git():
 # setup calls it by this absolute path, so a wrapper never counts a fixture call.
 REAL_GIT = _which_git()
 
-# The seventeen names every Git child of `project` runs without, in the order of
+# The thirty-one names every Git child of `project` runs without, in the order of
 # specs/004-project-clean-all-safe/contracts/project-clean.md, "Git children"
 # (:297-301), and the one name read-only probes set. This is the harness's own
 # literal transcription, never imported from project's GIT_SCRUB (lead ruling
@@ -64,6 +64,12 @@ SCRUBBED_NAMES = (
     "GIT_NO_REPLACE_OBJECTS", "GIT_REPLACE_REF_BASE", "GIT_PREFIX",
     "GIT_SHALLOW_FILE", "GIT_COMMON_DIR", "GIT_INTERNAL_SUPER_PREFIX",
     "GIT_ALLOW_PROTOCOL",
+    # The fourteen trace names of Brett Heap's ruling Q9 B (PR #19).
+    "GIT_TRACE", "GIT_TRACE_BARE", "GIT_TRACE_CURL", "GIT_TRACE_CURL_NO_DATA",
+    "GIT_TRACE_FSMONITOR", "GIT_TRACE_PACKET", "GIT_TRACE_PACKFILE",
+    "GIT_TRACE_PACK_ACCESS", "GIT_TRACE_PERFORMANCE", "GIT_TRACE_REDACT",
+    "GIT_TRACE_REFS", "GIT_TRACE_SETUP", "GIT_TRACE_SHALLOW",
+    "GIT_TRACE_WORKING_TREE_ENCODING",
 )
 OPTIONAL_LOCKS = "GIT_OPTIONAL_LOCKS"
 
@@ -639,6 +645,8 @@ TEXT_FIXTURES = {
     "git_too_old": "Git {VERSION} is older than 2.36; clean needs Git 2.36 or later.",
     "inspection_git_too_old": "Git {VERSION} is older than 2.36; repository inspection needs Git 2.36 or later.",
     "inspection_git_unavailable": "Git is unavailable ({DETAIL}); repository inspection needs Git 2.36 or later.",
+    # D18's relative-config-path line, one per failing variable (Brett Heap's ruling LQ-15).
+    "relative_config_path": "{NAME} is set to a path that does not begin with /; make it absolute or unset it.",
     "target_not_repository_root": "Not the main worktree of a repository: {PATH}; pass the repository root.",
     "unsupported_path_bytes": "The repository path is not valid UTF-8: {PATH}",
     "manifest_invalid_size": "Manifest {PATH} is larger than 1 MiB.",

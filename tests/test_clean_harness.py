@@ -146,7 +146,7 @@ class CleanHarnessTests(CleanCase):
             self.assertEqual(COUNTED_NAMES, (*SCRUBBED_NAMES, OPTIONAL_LOCKS))
             # Two transcriptions of the contract's list guard each other (R-42).
             self.assertEqual(SCRUBBED_NAMES, tuple(load_project().GIT_SCRUB))
-            self.assertEqual(len(set(SCRUBBED_NAMES)), 17)
+            self.assertEqual(len(set(SCRUBBED_NAMES)), 31)
 
         with self.subTest("the process group without /proc, from ps"):
             no_proc = install_counting_git(self.base / "bin-ps", self.base / "ps.log", real=stub,

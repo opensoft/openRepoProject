@@ -38,7 +38,8 @@ PINS = ["-c", "protocol.allow=never", "-c", "protocol.file.allow=never",
         "-c", "protocol.ssh.allow=never", "-c", "protocol.git.allow=never",
         "-c", "protocol.http.allow=never", "-c", "protocol.https.allow=never",
         "-c", "protocol.ext.allow=never"]
-STATUS_PINS = ["-c", "core.untrackedCache=false", "-c", "core.fsmonitor=false"]
+STATUS_PINS = ["-c", "core.untrackedCache=false", "-c", "core.fsmonitor=false",
+               "-c", "core.trustctime=true", "-c", "core.checkStat=default"]
 
 # The prelude of every child interpreter: project loaded by the launcher's own
 # prepare(), its TIMING replaced by the table passed first as --timing=JSON
@@ -81,6 +82,14 @@ def first_event(events, name, pid):
     return next((entry for entry in events if entry["event"] == name and entry["pid"] == pid), None)
 
 
+def sigint_default():
+    """preexec_fn of run_child() when this process ignores SIGINT, as a `&` job
+    of a non-interactive shell does: the child interpreter starts with SIGINT
+    at SIG_DFL, as a foreground run starts it, since project leaves a signal
+    ignored on entry ignored (lead ruling R-101 (b))."""
+    signal.signal(signal.SIGINT, signal.SIG_DFL)
+
+
 class RunnerTests(CleanCase):
     def setUp(self):
         super().setUp()
@@ -98,9 +107,10 @@ class RunnerTests(CleanCase):
                 "--timing=" + json.dumps(table), json.dumps(args)]
         env = dict(self.env if env is None else env)
         env["PYTHONPATH"] = str(TESTS)
+        reset = sigint_default if signal.getsignal(signal.SIGINT) == signal.SIG_IGN else None
         try:
             result = subprocess.run(argv, cwd=self.base, env=env, capture_output=True, text=True,
-                                    timeout=TIMEOUT)
+                                    timeout=TIMEOUT, preexec_fn=reset)
         except subprocess.TimeoutExpired as exc:
             self.fail(f"child interpreter passed {TIMEOUT} s\n{exc.stdout}\n{exc.stderr}")
         lines = [line for line in result.stdout.splitlines() if line.startswith("RESULT ")]
@@ -599,6 +609,30 @@ class RunnerTests(CleanCase):
                 except project.Terminated as exc:
                     got = ["Terminated", exc.signum]
                 out["raise_preset"] = got + [handlers() == start[0]]
+
+            # A signal ignored on entry stays ignored in every scope, which
+            # neither records it nor restores anything for it, while the other
+            # two get the scope's handlers (lead ruling R-101 (b)).
+            for number in (signal.SIGHUP, signal.SIGINT):
+                entry = signal.signal(number, signal.SIG_IGN)
+                ignored = []
+                with project.signal_scope() as scope:
+                    ignored.append(signal.getsignal(number))
+                    others = all(callable(signal.getsignal(other)) for other in SIGNALS if other != number)
+                    os.kill(os.getpid(), number)
+                    time.sleep(0.01)
+                    with project.raising_signals():
+                        ignored.append(signal.getsignal(number))
+                        os.kill(os.getpid(), number)
+                        time.sleep(0.01)
+                    with project.default_signals():
+                        ignored.append(signal.getsignal(number))
+                    ignored.append(signal.getsignal(number))
+                    slot = scope.invocation.signal
+                ignored.append(signal.getsignal(number))
+                signal.signal(number, entry)
+                out["ignored_" + signal.Signals(number).name] = [
+                    [handler == signal.SIG_IGN for handler in ignored], others, slot]
             emit(**out)
         """, env=self.env_with(fake), repo=str(repo))
         self.assertTrue(fields["installed"], "record-only handlers for SIGINT, SIGTERM and SIGHUP")
@@ -620,6 +654,11 @@ class RunnerTests(CleanCase):
         self.assertEqual(fields["raise_SIGTERM"], ["Terminated", signal.SIGTERM, signal.SIGTERM, True])
         self.assertEqual(fields["raise_SIGHUP"], ["Terminated", signal.SIGHUP, signal.SIGHUP, True])
         self.assertEqual(fields["raise_preset"], ["Terminated", signal.SIGHUP, True], "lead ruling R-47")
+        for name in ("SIGHUP", "SIGINT"):
+            with self.subTest(ignored_on_entry=name):
+                self.assertEqual(fields["ignored_" + name], [[True] * 5, True, None],
+                                 "ignored in signal_scope, raising_signals, default_signals and after; "
+                                 "the other two installed; nothing recorded (lead ruling R-101 (b))")
 
     # T020.
 
@@ -815,7 +854,7 @@ class RunnerTests(CleanCase):
             self.assertIn("fatal:", missing.stderr)
             self.assertEqual(len(spawned), 4)
             for handle, handlers, wakeup in spawned:
-                self.assertEqual(handle.budget_end - handle.started, project.TIMING["inspect_budget"])
+                self.assertAlmostEqual(handle.budget_end - handle.started, project.TIMING["inspect_budget"], places=6)
                 self.assertEqual((handlers, wakeup), before, "no handler installed")
                 self.assertEqual(handle.state, "reaped")
             # Inside an invocation each child is counted.
