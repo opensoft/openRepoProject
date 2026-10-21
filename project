@@ -4376,8 +4376,10 @@ def print_plan(plan, run):
     plain --json prints none, and push and delete-branch print nothing here,
     keeping their `Cleanup action:` output. Under --json the plan envelope goes
     to standard output through write_document() on the call where the run
-    stops before the apply phase, so one document is written. The pipeline
-    writes `REFUSED:` itself.
+    stops before the apply phase, so one document is written; not once a
+    write has failed (run.write_error), since check_writes() then ends the
+    run as `internal-error`, whose object is that one document (lead ruling
+    R-101 (b), F1). The pipeline writes `REFUSED:` itself.
 
     What prints (T052; lead rulings R-56 Q-11, R-57 H1, R-59 D2 and D8, R-62
     (b) and R-67 (a)): a report, the baseline layout with each null shown as
@@ -4396,7 +4398,7 @@ def print_plan(plan, run):
         if apply or not json_output:
             for line in plan_lines(plan):
                 say(run, line)
-    if json_output and run.status is not None:
+    if json_output and run.status is not None and getattr(run, "write_error", None) is None:
         write_document(plan_document(plan))
 
 

@@ -17,6 +17,7 @@ its end, and the sender that signals project once a removal is in flight.
 Expected human text comes from clean_support's fixtures (rule 8).
 """
 import contextlib
+import errno
 import io
 import json
 import os
@@ -214,6 +215,19 @@ exec {shlex.quote(REAL_GIT)} "$@"
 def events_of(path):
     path = Path(path)
     return [json.loads(line) for line in path.read_bytes().split(b"\n")[:-1] if line] if path.exists() else []
+
+
+def json_documents(text):
+    """Every JSON document text holds, in order, read with raw_decode, so that
+    a second document is counted where one json.loads() would fail."""
+    decoder, documents, at = json.JSONDecoder(), [], 0
+    while True:
+        while at < len(text) and text[at].isspace():
+            at += 1
+        if at == len(text):
+            return documents
+        document, at = decoder.raw_decode(text, at)
+        documents.append(document)
 
 
 def sh_git(*args):
@@ -1068,6 +1082,62 @@ class ResultTests(clean_support.CleanCase):
                 for given in (killed, termed, unobserved):
                     self.assertNotEqual(project.decide_stage(target, given, gone),
                                         project.decide_stage(target, given, kept))
+
+    # Lead ruling R-101 (b): the runner review's F1 and F2.
+
+    def run_with_failing_stderr(self, argv, failure):
+        """Run argv with standard input empty, standard output on a pipe, and
+        standard error failing: on /dev/full for ENOSPC, or for EPIPE on a pipe
+        whose read end is closed before the child starts. Returns the exit
+        status and standard output as text."""
+        if failure == "ENOSPC":
+            if not os.path.exists("/dev/full"):
+                self.skipTest("no /dev/full on this host")
+            stderr = os.open("/dev/full", os.O_WRONLY)
+        else:
+            read_end, stderr = os.pipe()
+            os.close(read_end)
+        try:
+            child = subprocess.Popen(argv, cwd=self.base, env=self.env, stdin=subprocess.DEVNULL,
+                                     stdout=subprocess.PIPE, stderr=stderr, start_new_session=True)
+        finally:
+            os.close(stderr)
+        try:
+            out, _ = child.communicate(timeout=TIMEOUT)
+        except subprocess.TimeoutExpired:
+            with contextlib.suppress(OSError):
+                os.killpg(child.pid, signal.SIGKILL)
+            child.communicate()
+            self.fail(f"project did not end within {TIMEOUT} s")
+        return child.returncode, out.decode("utf-8", "surrogateescape")
+
+    def test_clean_apply_with_json_prints_one_document_when_standard_error_fails(self):
+        # Runner review F1 (lead ruling R-101 (b)): under --apply --json the
+        # human plan goes to standard error. When that write fails before the
+        # apply phase, with ENOSPC (/dev/full) or with EPIPE (a reader that
+        # closed), the run ends as `internal-error`, exit 2 (lead ruling R-55),
+        # and standard output holds exactly one document, the extended error
+        # object, with no plan envelope before it (pcl:1133-1135); nothing is
+        # removed. Two stops before the apply phase: the question a run
+        # without --yes needs (confirmation-required), and the scenario's own,
+        # a stale --expect-plan (plan-digest-mismatch).
+        root, trees = self.batch("stderr-fails", count=2)
+        before = self.snapshot(root, trees)
+        stops = (("confirmation-required", ()), ("plan-digest-mismatch", ("--yes", "--expect-plan", "0" * 64)))
+        for failure, number in (("ENOSPC", errno.ENOSPC), ("EPIPE", errno.EPIPE)):
+            for stop, extra in stops:
+                with self.subTest(failure=failure, stop=stop):
+                    argv = clean_support.cli_argv("clean", root, "--all-safe", "--apply", "--json", *extra)
+                    status, out = self.run_with_failing_stderr(argv, failure)
+                    documents = json_documents(out)
+                    self.assertEqual(len(documents), 1, f"exit {status}, standard output:\n{out}")
+                    [document] = documents
+                    self.assertEqual(status, 2, out)
+                    self.assertEqual(list(document)[:2], ["error", "code"], "the extended error object")
+                    self.assertEqual((document["code"], [refusal["code"] for refusal in document["refusals"]]),
+                                     ("internal-error", ["internal-error"]))
+                    self.assertIn(f"[Errno {number}]", document["error"], "the failed write's own error")
+                    self.assertEqual(self.snapshot(root, trees), before, "nothing removed")
 
 
 if __name__ == "__main__":
