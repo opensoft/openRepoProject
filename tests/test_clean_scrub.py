@@ -12,6 +12,7 @@ import os
 from pathlib import Path
 import shlex
 import sys
+import time
 import unittest
 from unittest import mock
 
@@ -38,19 +39,24 @@ GIT_TRACE_SHALLOW GIT_TRACE_WORKING_TREE_ENCODING
 # The three trace2 targets, set to "0" on every Git child (Q9 B).
 TRACE2_OFF = {"GIT_TRACE2": "0", "GIT_TRACE2_EVENT": "0", "GIT_TRACE2_PERF": "0"}
 
-# The seven protocol pins and the two status pins, as the contract spells them.
+# The seven protocol pins, as the contract spells them, and the status pins:
+# the contract's two, then the two stat pins of lead ruling R-102 (LQ-10,
+# approved by Brett Heap).
 PROTOCOL = tuple("""
 -c protocol.allow=never -c protocol.file.allow=never
 -c protocol.ssh.allow=never -c protocol.git.allow=never
 -c protocol.http.allow=never -c protocol.https.allow=never
 -c protocol.ext.allow=never
 """.split())
-STATUS = ("-c", "core.untrackedCache=false", "-c", "core.fsmonitor=false")
+STATUS = ("-c", "core.untrackedCache=false", "-c", "core.fsmonitor=false",
+          "-c", "core.trustctime=true", "-c", "core.checkStat=default")
 
-# Design D9's removal vector up to `-C`, character for character.
+# Design D9's removal vector up to `-C`, character for character, with R-102's
+# two stat pins after core.fsmonitor=false.
 D9_REMOVAL = """git -c
 status.showUntrackedFiles=normal -c core.untrackedCache=false -c
-core.fsmonitor=false -c protocol.allow=never -c protocol.file.allow=never -c
+core.fsmonitor=false -c core.trustctime=true -c core.checkStat=default -c
+protocol.allow=never -c protocol.file.allow=never -c
 protocol.ssh.allow=never -c protocol.git.allow=never -c
 protocol.http.allow=never -c protocol.https.allow=never -c
 protocol.ext.allow=never""".split()
@@ -172,6 +178,46 @@ class ScrubTests(unittest.TestCase):
         self.assertEqual(project.git_argv("push", push), ["git", *push])
         with self.assertRaises(KeyError):
             project.git_argv("unknown", args)
+
+
+class PinnedStatusTests(clean_support.CleanCase):
+    """STATUS_PINS's stat pins (R-102: LQ-10, approved by Brett Heap; lane 3's
+    F1 H-3), beside its argument-vector test above. Rule 1 names the test after
+    the evidence model's scenario "The pinned status configuration"."""
+
+    def test_status_the_pinned_status_configuration_sees_a_same_size_edit(self):
+        # A linked worktree whose repository sets core.trustctime=false and
+        # core.checkStat=minimal, with a tracked file edited at the same size
+        # and its mtime restored: only its ctime tells, which those settings
+        # ignore. The status probe's own pins read it, so --all-safe never
+        # selects the row.
+        root = self.repo()
+        self.bare_remote()
+        tree = self.merged_worktree("050-edited")
+        tracked = tree / "work-050-edited"  # "done", committed and merged
+        self.git(root, "config", "core.trustctime", "false")
+        self.git(root, "config", "core.checkStat", "minimal")
+        before = self.run_json("clean", root, "--all-safe", "--json")
+        self.assert_status(before, 0)
+        self.assertEqual([entry["path"] for entry in before.document["selected"]], [str(tree)])
+
+        # The file's mtime set well in the past and recorded in the index, so the
+        # entry is not racily clean; then a wait past a whole second, so that the
+        # edit's ctime differs from the indexed one without nanosecond stat data.
+        old = time.time_ns() - 100 * 10**9
+        os.utime(tracked, ns=(old, old))
+        self.git(tree, "update-index", "-q", "--refresh")
+        time.sleep(1.1)
+        tracked.write_text("edit")  # four bytes, as "done" is
+        os.utime(tracked, ns=(old, old))
+        self.assertEqual(tracked.stat().st_mtime_ns, old)
+        # Git under the repository's own settings misses the edit.
+        self.assertEqual(self.git(tree, "status", "--porcelain", env=dict(self.env, GIT_OPTIONAL_LOCKS="0")), "")
+
+        after = self.run_json("clean", root, "--all-safe", "--json")
+        self.assert_status(after, 0)
+        self.assertEqual(after.document["selected"], [])
+        self.assertIn((str(tree), "dirty"), [(entry["path"], entry["reason"]) for entry in after.document["excluded"]])
 
 
 # The env-dumping git, inline (lead ruling R-99 (d) 2). First on PATH, an sh

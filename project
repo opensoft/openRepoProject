@@ -817,8 +817,13 @@ PROTOCOL_PINS = (
     "-c", "protocol.ext.allow=never",
 )
 
-# The two status pins, on the status and hidden-state probes and the removal.
-STATUS_PINS = ("-c", "core.untrackedCache=false", "-c", "core.fsmonitor=false")
+# The status pins, on the status and hidden-state probes and the removal: the
+# untracked cache and fsmonitor off (D11), and every stat field compared, so
+# that an edit which keeps a file's size and restores its mtime still shows by
+# its ctime under a repository's core.trustctime=false or core.checkStat=minimal
+# (lead ruling R-102: LQ-10, approved by Brett Heap; lane 3's F1 H-3).
+STATUS_PINS = ("-c", "core.untrackedCache=false", "-c", "core.fsmonitor=false",
+               "-c", "core.trustctime=true", "-c", "core.checkStat=default")
 
 # Per kind of Git child: whether it is a read-only probe, which sets
 # GIT_OPTIONAL_LOCKS=0; the -c pins it carries before the protocol pins;
