@@ -77,7 +77,12 @@ Lane: openRepoProject-4
     registered path is a disagreement, as PR #19 amends [E] at `addd346`
     (LQ-11), pending its ratification: an effective-work-tree probe that fails
     or prints other than one line is a disagreement, and one that cannot be
-    spawned or is cut leaves the check not completed (FR-007).
+    spawned or is cut leaves the check not completed (FR-007). Later that day
+    an administrative `commondir` file that is missing or does not name
+    `<common_dir>` became a disagreement too, and a failed read of it a check
+    not completed, as PR #19 amends [E] at `93f3194` (R-125), pending; and
+    FR-007 declares its split of the effective-work-tree probe's outcomes as a
+    fill of [E]'s "a probe that fails" (lane openRepoProject-3's W17 read, L1).
 
 ## Requirement Consistency
 
@@ -137,9 +142,10 @@ their results still pass; CHK007, CHK009 to CHK011, CHK022, CHK028 and CHK029
 re-evaluated on 2026-10-21 after Brett Heap's answers (C-55 to C-71), and
 CHK016 later that day, after the re-check against feature 004's head `2cf34d3`,
 its result still pass, and again after lane openRepoProject-3's W6 read of
-`8082d3b`, and after its W11 read of `08d5d79` and PR #19's `addd346`. 29
-items: 27 pass, 1 fixed in the spec, 0 open, 1 plan notes, 0 new questions. An
-open item waits on the question or residual its result names; a plan note is
-for the plan, not the spec; a new question is asked in `clarify-questions.md`.
+`8082d3b`, and after its W11 read of `08d5d79` and PR #19's `addd346`, and
+again after its W17 read of `b511bdb` and PR #19's `93f3194`. 29 items: 27
+pass, 1 fixed in the spec, 0 open, 1 plan notes, 0 new questions. An open item
+waits on the question or residual its result names; a plan note is for the
+plan, not the spec; a new question is asked in `clarify-questions.md`.
 
 Plan notes: PN-9 (CHK024).

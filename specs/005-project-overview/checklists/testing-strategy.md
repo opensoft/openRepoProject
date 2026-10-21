@@ -20,7 +20,8 @@ Lane: openRepoProject-4
     its identity re-read before a status probe. Later that day it also names
     FR-007's extension read and effective-work-tree probe (LQ-11), a counting
     wrapper recording no `rev-parse` child in a linked worktree where the
-    extension reads false.
+    extension reads false. It also names FR-007's `commondir` check (R-125, PR
+    #19 at `93f3194`, pending).
 - [x] CHK003 Is the harness specified (a scratch home directory, `PROJECTS_DIR` set or unset explicitly, networking disabled, the snapshots)? [Completeness, Spec FR-049]
   - Result: pass.
 - [x] CHK004 Are the counting wrapper's records and assertions specified? [Completeness, Spec FR-049]
@@ -102,9 +103,9 @@ and CHK024 re-read on 2026-10-21 after Brett Heap's answers (C-55 to C-71),
 their results still pass, and CHK002, CHK004 and CHK014 later that day, after
 lane openRepoProject-3's fidelity read of `c54d393` and the re-check against
 feature 004's head `2cf34d3`, theirs too, and CHK002 again after PR #19's
-`addd346`. 25 items: 24 pass, 0 fixed in the spec, 0 open, 1 plan notes, 0 new
-questions. An open item waits on the question or residual its result names; a
-plan note is for the plan, not the spec; a new question is asked in
-`clarify-questions.md`.
+`addd346` and `93f3194`. 25 items: 24 pass, 0 fixed in the spec, 0 open, 1 plan
+notes, 0 new questions. An open item waits on the question or residual its
+result names; a plan note is for the plan, not the spec; a new question is
+asked in `clarify-questions.md`.
 
 Plan notes: PN-17 (CHK025).

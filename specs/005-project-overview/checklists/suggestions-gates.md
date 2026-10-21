@@ -40,8 +40,10 @@ Lane: openRepoProject-4
     `43f7107`) and `worktree-only-commits` (LQ-13, `93de4bb`) join them, after
     them in [G]'s order, and the overview evaluates neither (FR-032), as
     amendment A1 at `367223a` proposes, pending, keeping the overview's
-    `--all-safe` suggestion of such a worktree and assuming PR #19's failure
-    rule for the two gates, which R-124 is to settle.
+    `--all-safe` suggestion of such a worktree and under the failure rule that
+    R-124 settles at `2b86a5f`, pending: the batch excludes the worktree on a
+    decided result, and on a failed or timed-out check makes it
+    `inspection-error` and leaves its plan incomplete.
 
 ## Requirement Clarity
 
@@ -69,7 +71,10 @@ Lane: openRepoProject-4
 
 - [x] CHK020 Is SC-004 measurable, the batch preview's own deadline and index-gate read failures included? [Measurability, Spec SC-004]
   - Result: pass; SC-004 also names the two exclusions that PR #19 adds and a
-    read of their gates that does not finish.
+    read of their gates that does not finish. Since R-124 (`2b86a5f`) it also
+    names a failed check of either gate, made `inspection-error` in a preview
+    that is then incomplete, and cites PR #19's lines at `1ebdd90` beside
+    CLN:800-803 (lane openRepoProject-3's W17 read, L5).
 
 ## Scenario Coverage
 
@@ -110,9 +115,10 @@ Lane: openRepoProject-4
 Evaluated on 2026-10-19 against `spec.md` at `8f433f7`; CHK018 re-read on
 2026-10-21 after the re-check against feature 004's head `2cf34d3`, its result
 still pass, and CHK012, CHK020, CHK025 and CHK027 after PR #19's LQ-13 and
-LQ-14, theirs too, and CHK012 again after A1's revision 3 at `367223a`. 29
-items: 28 pass, 1 fixed in the spec, 0 open, 0 plan notes, 0 new questions. An
-open item waits on the question or residual its result names; a plan note is
-for the plan, not the spec; a new question is asked in `clarify-questions.md`.
+LQ-14, theirs too, and CHK012 again after A1's revision 3 at `367223a`, and
+CHK012 and CHK020 after PR #19's R-124 and R-126. 29 items: 28 pass, 1 fixed in
+the spec, 0 open, 0 plan notes, 0 new questions. An open item waits on the
+question or residual its result names; a plan note is for the plan, not the
+spec; a new question is asked in `clarify-questions.md`.
 
 Plan notes: none.

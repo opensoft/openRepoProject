@@ -433,6 +433,31 @@ Lane: openRepoProject-4
   `suggestions-gates.md` and CHK015, CHK023 and CHK025 below; and the totals
   below were recounted by script. Re-validation: 16 of 16 items pass, with the
   checks of iteration 2 re-run by script on the edited spec.
+- 2026-10-21, a sixth pass: lane openRepoProject-3's W17 read of `b511bdb`
+  (HIGH 0, MEDIUM 2, LOW 7) and PR #19's rulings R-124 (`2b86a5f`), R-125
+  (`93f3194`) and R-126 (`1ebdd90`) are applied, by the lead's decisions shared
+  with A1's revision 4. W17's two MEDIUMs were met by the fifth pass (US1 s3's
+  count, POD:129 among the LQ-11 sites, and FR-045's path line). Its LOWs:
+  FR-007 declares its split of the effective-work-tree probe's outcomes as a
+  fill of [E]'s "a probe that fails" (L1); the POD:333 record and FR-007 name
+  the probe's failing exit as a disagreement with no error, as `addd346` has it
+  and A1 revision 4 is to propose (L2); EC-032 says that FR-020's
+  identity-probe count stands as ratified (L3); FR-043 and the LQ-15 bullet
+  read the code as resting on Brett Heap's LQ-15 word, which names only
+  `clean`, `status`, `doctor` and `update` (L4); SC-004 cites PR #19's lines
+  beside CLN:800-803 (L5); EC-033 cites R-116 and W17's reproduction on Git
+  2.36.6 (L6); and FR-013's and FR-020's LQ-11 sentences carry their own
+  pending mark (L7). From PR #19, pending its ratification: FR-032, SC-004 and
+  the LQ-13 and LQ-14 bullet take R-124's settled failure rule; FR-007, FR-013,
+  FR-049 and the LQ-11 bullet take R-125's `commondir` check; the bullet cites
+  #19's list of eleven markers at `1ebdd90` rather than naming them (R-126);
+  and the LQ intro names the commits each item now follows. A1 revision 4
+  (draft PR #34) is cited with no sha. No pin moves, and `clarify-questions.md`
+  is unchanged. In this folder, CHK016 of `discovery-identity.md`, CHK012 and
+  CHK020 of `suggestions-gates.md`, CHK020 of `integration.md` and CHK002 of
+  `testing-strategy.md` were re-read, no category changing, and the totals
+  below were recounted by script. Re-validation: 16 of 16 items pass, with the
+  checks of iteration 2 re-run by script on the edited spec.
 - Items marked incomplete require spec updates before `/speckit-clarify` or `/speckit-plan`
 
 ## Cross-cutting Requirements Quality (no-argument `/speckit.checklist`, 2026-10-19)
@@ -544,5 +569,5 @@ All 17 checklists: 414 items: 373 pass, 25 fixed in the spec, 0 open, 16 plan
 notes (PN-1 to PN-18 but PN-4 and PN-11, withdrawn on 2026-10-21; PN-2 narrowed
 to an exception of any other kind in human mode and widened to a failed write's
 standard-error line), 0 new questions. Recounted by script on 2026-10-21, and
-again after the re-check, after the W6 read and after the fourth and fifth
+again after the re-check, after the W6 read and after the fourth to sixth
 passes of that day.

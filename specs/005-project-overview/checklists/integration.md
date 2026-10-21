@@ -87,8 +87,10 @@ Lane: openRepoProject-4
     `43f7107`) and `worktree-only-commits` (LQ-13, `93de4bb`) join the index
     gates among the exclusions only the batch applies (FR-032, SC-004). The
     overview keeps the `--all-safe` suggestion of such a worktree, as amendment
-    A1 at `367223a` proposes, pending, assuming PR #19's failure rule for the
-    two gates, which R-124 is to settle.
+    A1 at `367223a` proposes, pending, under the failure rule that R-124
+    settles at `2b86a5f`, pending: the batch excludes the worktree on a decided
+    result, and on a failed or timed-out check makes it `inspection-error` and
+    leaves its plan incomplete.
 - [x] CHK021 Exception: is clean refusing a path that is not a main worktree root covered? [Coverage, Spec US4 s2]
   - Result: pass.
 - [x] CHK022 Recovery: does a constant that feature 004 moves reach the overview without an edit? [Recovery, Spec FR-035, FR-036]
@@ -132,10 +134,10 @@ their results unchanged; CHK026 added on 2026-10-21 after lane
 openRepoProject-3's W6 read of `8082d3b`, as plan note PN-18; and CHK012,
 CHK020 and CHK026 re-read after the alignment with amendment A1 at `b020edc`,
 PR #19's LQ-11 to LQ-14 and lane openRepoProject-3's W11 read of `08d5d79`, and
-CHK012 and CHK020 again after A1's revision 3 at `367223a`, their categories
-unchanged. 26 items: 24 pass, 0 fixed in the spec, 0 open, 2 plan notes, 0 new
-questions. An open item waits on the question or residual its result names; a
-plan note is for the plan, not the spec; a new question is asked in
-`clarify-questions.md`.
+CHK012 and CHK020 again after A1's revision 3 at `367223a`, and CHK020 after PR
+#19's R-124, their categories unchanged. 26 items: 24 pass, 0 fixed in the
+spec, 0 open, 2 plan notes, 0 new questions. An open item waits on the question
+or residual its result names; a plan note is for the plan, not the spec; a new
+question is asked in `clarify-questions.md`.
 
 Plan notes: PN-16 (CHK025), PN-18 (CHK026).
