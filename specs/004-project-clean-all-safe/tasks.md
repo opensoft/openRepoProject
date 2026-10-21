@@ -2901,7 +2901,7 @@ after US6 and US7.
 
 ### Tests for User Story 8
 
-- [ ] T110 [US8] [O] Add to `tests/test_clean_paths.py`:
+- [x] T110 [US8] [O] Add to `tests/test_clean_paths.py`:
   `test_clean_control_character_and_non_utf_8_paths` (`linux_paths`; eligible
   worktrees whose paths hold a line feed, a tab, U+0001 and U+202E, and an
   otherwise eligible one whose path holds 0xFF: the preview and the apply
@@ -2919,7 +2919,7 @@ after US6 and US7.
   "Non-UTF-8 repository root".
   — files: `tests/test_clean_paths.py`
   — verify: `python3 -c "import sys,unittest as u;L=u.defaultTestLoader;f=lambda s:[i for t in s for i in (f(t) if isinstance(t,u.TestSuite) else [t.id()])];I=[i for i in f(L.discover('tests',pattern=sys.argv[1])) if not i.startswith('unittest.')];A=sys.argv[2:];M=[a for a in A if not any(a in ('*',i.split('.')[-1]) for i in I)];[print('not collected:',m) for m in M];[print(e) for e in L.errors];sys.exit(1 if M or L.errors or not A else 0)" test_clean_paths.py 'test_clean_control_character_and_non_utf_8_paths' 'test_clean_non_utf_8_repository_root'`
-- [ ] T111 [US8] [O] Add to `tests/test_clean_paths.py`:
+- [x] T111 [US8] [O] Add to `tests/test_clean_paths.py`:
   `test_clean_apply_with_json_prints_one_document` (`--all-safe --apply --yes
   --json` removing two worktrees: standard output is exactly one document, the
   apply result record with two `removed` targets and `exit_code: 0`, and the
@@ -2946,7 +2946,7 @@ after US6 and US7.
 
 ### Implementation for User Story 8
 
-- [ ] T112 [US8] [O] In `resolve_clean_target()` (region `resolution`; FR-041),
+- [x] T112 [US8] [O] In `resolve_clean_target()` (region `resolution`; FR-041),
   refuse a `root` or `common_dir` that is not valid UTF-8 with
   `unsupported-path-bytes`, exit 2, before any plan or digest. Check that every
   printer and document writer (regions `preview`, `result`, `plan` and `guard`)
@@ -2957,7 +2957,7 @@ after US6 and US7.
   D8). T110 and T111 pass.
   — files: `project`
   — verify: `python3 -m unittest discover -s tests -p 'test_clean_paths.py'`
-- [ ] T113 [US8] [S] Run the US8 module, every earlier module and the 96 tests: all
+- [x] T113 [US8] [S] Run the US8 module, every earlier module and the 96 tests: all
   pass.
   — files: (none)
   — verify: `python3 -m unittest discover -s tests -p 'test_clean_timing.py' && python3 -m unittest discover -s tests -p 'test_clean_harness.py' && python3 -m unittest discover -s tests -p 'test_clean_scrub.py' && python3 -m unittest discover -s tests -p 'test_clean_parsers.py' && python3 -m unittest discover -s tests -p 'test_clean_escaping.py' && python3 -m unittest discover -s tests -p 'test_clean_runner.py' && python3 -m unittest discover -s tests -p 'test_clean_evidence.py' && python3 -m unittest discover -s tests -p 'test_clean_guard.py' && python3 -m unittest discover -s tests -p 'test_clean_batch.py' && python3 -m unittest discover -s tests -p 'test_clean_apply.py' && python3 -m unittest discover -s tests -p 'test_clean_reflog.py' && python3 -m unittest discover -s tests -p 'test_clean_gates.py' && python3 -m unittest discover -s tests -p 'test_clean_single.py' && python3 -m unittest discover -s tests -p 'test_clean_push.py' && python3 -m unittest discover -s tests -p 'test_clean_revalidation.py' && python3 -m unittest discover -s tests -p 'test_clean_result.py' && python3 -m unittest discover -s tests -p 'test_clean_stop.py' && python3 -m unittest discover -s tests -p 'test_clean_bounds.py' && python3 -m unittest discover -s tests -p 'test_clean_resolution.py' && python3 -m unittest discover -s tests -p 'test_clean_paths.py' && python3 -m unittest discover -s tests -p 'test_project.py'`
