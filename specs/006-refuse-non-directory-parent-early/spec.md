@@ -20,7 +20,9 @@ at `openspec/changes/refuse-non-directory-parent-early/`: the proposal, the
 design D1 to D6 and clarifications N1 to N6. Governing issue:
 opensoft/openRepoProject#20. Packet: PR #21
 (https://github.com/opensoft/openRepoProject/pull/21), ratified by Brett Heap
-("ratify 21", 2026-10-21) and landed on main by squash as `b233333` (of
+("ratify 21", 2026-10-21, quoted at
+https://github.com/opensoft/openRepoProject/pull/21#issuecomment-6313890629)
+and landed on main by squash as `b233333` (of
 `8f3ca2d`). This is the change's one linked Speckit feature (its `tasks.md`
 2.1). Where this summary is shorter than the spec delta, the delta governs.
 Fixed strings are those of `design.md` D2; they are quoted here only
