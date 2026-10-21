@@ -84,46 +84,75 @@ removal child is spawned, or, for a target whose plan lists caches, immediately
 before its cache stage; a change after it is the residual window that "Cleanup
 states a narrow guarantee and its residual window" states. A worktree removal
 SHALL be revalidated by a targeted check, never by recomputing the full report:
-at most five Git children, a fresh manifest read and the `modules` check, run in
-this order and stopping at the first difference: the identity probe in the
-command directory; the manifest re-read; the registry listing; one ref listing
-that names the merge-target candidates, `refs/remotes/origin/HEAD`, and the
-selected branches and their upstreams; the target's identity and its `modules`
-check, by filesystem reads; and, inside the target worktree, the combined status
-probe, which SHALL print no record, or, for a target whose plan lists caches,
-the child of the cache enumeration that "Clean disposes of listed caches before
-a worktree removal" defines, which SHALL print exactly the ignored records that
-the plan listed and no other record, then the hidden-state probe. It SHALL
-compare the recorded repository identity (`root`, `common_dir`, `dev`, `ino`),
-the target's worktree identity (`path`, `dev`, `ino`, `admin_id`) and two-way
-registration, its branch evidence (`branch`, `head`, `upstream`, `upstream_oid`,
-`ahead`, `behind`), every baseline signature field of the target, its `locked`
-flag, the manifest's `tracking_branch`, and the merge target's `name`, `source`
-and `sha`, re-resolved from the fresh manifest read.
+at most six Git children, and a seventh where the plan read the repository's
+`extensions.worktreeConfig` as true, a fresh manifest read and the `modules`
+and `operation-in-progress` checks, run in this order and stopping at the first
+difference: the identity probe in the command directory; the manifest re-read;
+the registry listing; one ref listing that names the merge-target candidates,
+`refs/remotes/origin/HEAD`, and the selected branches and their upstreams; the
+target's identity, its `modules` check and its `operation-in-progress` check,
+by filesystem reads, and, where the plan read
+`extensions.worktreeConfig` as true, its effective work tree, by the probe that
+"Repository inspection requires Git 2.36 and shares one evidence model" states;
+and, inside the target worktree, the combined status probe, which SHALL print
+no record, or, for a target whose plan lists caches, the child of the cache
+enumeration that "Clean disposes of listed caches before a worktree removal"
+defines, which SHALL print exactly the ignored records that the plan listed and
+no other record,
+then the hidden-state probe, then the `worktree-only-commits` check
+that "Clean previews and applies a batch of eligible worktree removals in one
+repository" states, `logs/HEAD` read again and the non-zero objects that the
+plan's branch reflog named taken as they were, whose probe SHALL print
+nothing. It SHALL compare
+the recorded repository identity (`root`, `common_dir`, `dev`, `ino`), the
+target's worktree identity (`path`, `dev`, `ino`, `admin_id`), two-way
+registration and, where it
+was read, effective work tree, its branch evidence (`branch`, `head`,
+`upstream`, `upstream_oid`, `ahead`, `behind`), every baseline signature field
+of the target, its `locked` flag, the manifest's `tracking_branch`, and the
+merge target's `name`, `source` and `sha`, re-resolved from the fresh manifest
+read.
 
 A difference SHALL refuse the target, spawn nothing, attempt no later target and
 exit 2, with the reason `identity-changed` for a repository or worktree identity
-or registration difference or a missing registry entry, `branch-changed` for a
+or registration difference, an effective work tree that the probe decides is
+not the target's path, or a missing registry entry, `branch-changed` for a
 different branch name or head, `state-changed` for any other signature, lock,
 manifest, merge-target or listed-cache difference and for a cache stage that
 ends `refused` or `partial` as "Cache disposal never follows a symlink or leaves
 its worktree" states, whose exit status is the one "Clean disposes of listed
 caches before a worktree removal" gives, `contains-submodule` for a new gitlink
-or `modules` entry, and `hidden-local-state` for a newly flagged index entry. A
-value that was null in the plan and is null at revalidation, such as the
-`upstream_oid`, `ahead` and `behind` of a selected row whose upstream was
-deleted, SHALL NOT count as a difference; a value that cannot be re-read, a
-filesystem call that times out included, SHALL count as a difference. The first
-target's repository-wide checks SHALL serve as
-the preflight of every selected target, so that a difference found there removes
-nothing at all. Push and delete-branch SHALL keep the full re-inspection, and
-SHALL refuse with `inspection-incomplete`, `inspect-cap` or `deadline-exceeded`
-and exit 2 when it is incomplete. Git's own non-force check SHALL be the last
-defense only on the pinned configuration that the removal command carries:
-`status.showUntrackedFiles=normal`, `core.untrackedCache=false` and
-`core.fsmonitor=false`; the protocol pins that every Git child, except the push
-child, carries (`-c protocol.allow=never` and the six per-protocol pins) are no
-part of that defense.
+or `modules` entry, `hidden-local-state` for a newly flagged index entry,
+`operation-in-progress` for a marker that the re-read listing finds, and
+`worktree-only-commits` for a commit that only the target's HEAD reflog or
+`refs/worktree/` holds, or for a `logs/HEAD` read to its 64 KiB bound or holding
+a line that cannot be parsed. A value that was null in the plan and is null at
+revalidation, such as the `upstream_oid`, `ahead` and `behind` of a selected row
+whose upstream was deleted, SHALL NOT count as a difference; a value that cannot
+be re-read, a filesystem call that times out included, SHALL count as a
+difference, and where the listing, read or child of the `operation-in-progress`
+or `worktree-only-commits` check fails or runs past its budget, that difference
+SHALL be `state-changed`, as it is for a status probe that fails there. One rule
+SHALL decide every Git child of these steps that does not finish with a value:
+one that the work deadline cuts, as any read the deadline cuts, SHALL count as
+no difference, and the target and every later one SHALL be `not-attempted` with
+`deadline-exceeded`; one that fails, or that runs past its own budget while the
+deadline is not the limit, SHALL count as a difference with the reason
+`state-changed`, whatever its step. A Git child SHALL give its step's own
+reason only for a value it decided, so that only an effective work tree that the
+probe decides is not the target's path gives `identity-changed`, and a work-tree
+probe that fails, runs past its budget or prints anything but one line gives
+`state-changed` (the lead's R-171). The first target's repository-wide checks
+SHALL serve as the preflight of every selected target, so that a difference
+found there removes nothing at all. Push and delete-branch SHALL keep the full
+re-inspection, and SHALL refuse with `inspection-incomplete`, `inspect-cap` or
+`deadline-exceeded` and exit 2 when it is incomplete. Git's own non-force check
+SHALL be the last defense only on the pinned configuration that the removal
+command carries: `status.showUntrackedFiles=normal`,
+`core.untrackedCache=false`, `core.fsmonitor=false`, `core.trustctime=true` and
+`core.checkStat=default`; the protocol pins that every Git child, except the
+push child, carries (`-c protocol.allow=never` and the six per-protocol pins)
+are no part of that defense.
 
 #### Scenario: Worktree changes while confirmation is pending
 
@@ -211,6 +240,39 @@ part of that defense.
   exits 0 and before the rescan that follows it, P, null in the plan and null at
   revalidation, is `removed`, Q is `refused` with `state-changed`, and the exit
   status is 2
+
+#### Scenario: A worktree-only commit made after the plan
+
+- **WHEN** a confirmed plan selects P and Q, in that order, and after the plan
+  and before P's revalidation P's HEAD is detached, a commit is made there and
+  P's branch is checked out again, so that only P's HEAD reflog holds the
+  commit and P's tree, index and branch are as the plan recorded them
+- **THEN** P is `refused` with `worktree-only-commits`, no child is spawned, Q
+  is `not-attempted`, nothing is removed, and the exit status is 2, where
+  before this change P was removed with exit 0
+- **AND** the same holds when that commit is held only by a ref under P's
+  `refs/worktree/`, created after the plan
+
+#### Scenario: An operation started after the plan
+
+- **WHEN** a confirmed plan selects P and Q, in that order, and after the plan
+  and before P's revalidation `git bisect start --no-checkout` runs in P,
+  leaving P's tree, index and branch as the plan recorded them
+- **THEN** P is `refused` with `operation-in-progress`, no child is spawned, Q
+  is `not-attempted`, nothing is removed, and the exit status is 2, where
+  before this change P was removed with exit 0
+
+#### Scenario: A check that fails at revalidation
+
+- **WHEN** a confirmed plan selects P and Q, in that order, and after the plan
+  and before P's revalidation P's administrative directory loses its read
+  permission while its `gitdir` and `commondir` files stay readable, so that
+  its listing fails
+- **THEN** P is `refused` with `state-changed`, no removal child is spawned, Q
+  is `not-attempted`, nothing is removed, and the exit status is 2
+- **AND** the same holds when, instead, a line naming an object that the
+  repository does not hold is appended to P's `logs/HEAD`, so that the
+  reachability child exits 128 with `fatal: bad object`
 
 #### Scenario: A cache target changes before revalidation
 
@@ -307,7 +369,9 @@ field null and `reconciled` false, and SHALL stop the run with exit status 1.
 ### Requirement: Cache disposal never follows a symlink or leaves its worktree
 
 A listed cache SHALL NOT be a symbolic link, nor SHALL any directory between it
-and the worktree root, nor any entry inside a listed directory; every such
+and the worktree root (at plan time a symbolic-link directory on the way down
+is `cache-unverified`, below, since the walk meets it only as a refused
+no-follow open), nor any entry inside a listed directory; every such
 directory, and a listed cache that is a directory and every directory inside
 it, SHALL be on the device of the worktree root; and the cache's path, and the
 name of every entry inside a listed directory, SHALL be valid UTF-8. An

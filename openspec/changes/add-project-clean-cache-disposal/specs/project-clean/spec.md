@@ -516,12 +516,13 @@ starts and SHALL hold back a 10 s reconciliation reserve, so that work stops 50
 s after start; time spent blocked at the confirmation question SHALL NOT count,
 both deadlines moving later by the time spent waiting. Each Git child SHALL get
 `min(5 s, work remaining)`, and each filesystem call (`lstat`, `realpath`, the
-reads of `.git`, `gitdir`, reflog and manifest files, and the directory opens,
-bounded directory enumerations, `lstat` calls and access checks of the cache
-walk) SHALL be abandoned
-after the same budget, recording `probe-timeout`, or `deadline-exceeded` where
-the deadline was the limit, and leaving its values null. Probing SHALL be
-serial. Reconciliation probes SHALL get `min(5 s, reserve remaining)`.
+reads of `.git`, `gitdir`, `commondir`, reflog and manifest files, the listing
+of a worktree's administrative directory, and the directory opens, bounded
+directory enumerations, `lstat` calls and access checks of the cache walk)
+SHALL be abandoned after the
+same budget, recording `probe-timeout`, or `deadline-exceeded` where the
+deadline was the limit, and leaving its values null. Probing SHALL be serial.
+Reconciliation probes SHALL get `min(5 s, reserve remaining)`.
 
 The deadline SHALL bound inspection and SHALL gate only the start of a removal:
 a removal child SHALL be spawned only while at least the 5 s removal floor of
@@ -569,26 +570,30 @@ worktrees" states for a single-target removal. A preview or report SHALL exit 1
 when its plan is incomplete and 0 when it is complete, deferred rows included.
 
 When more than 16 rows pass every gate before `deferred-target-cap`, the first
-16 in canonical order SHALL go on to the two index gates and the rest SHALL be
+16 in canonical order SHALL go on to the gates after it, the two index gates,
+`operation-in-progress` and `worktree-only-commits`, and the rest SHALL be
 excluded as `deferred-target-cap`, with the command to run next. The plan SHALL
 stay complete and apply SHALL be allowed; re-running SHALL take the next 16,
 each run building its own fresh plan and revalidating each of its targets. Rows
-that an index gate then excludes SHALL keep their places among the 16, so that
-when every one of those 16 is excluded as `contains-submodule` no re-run reaches
-a deferred row, and the human report SHALL say why the deferred rows will not
-drain. No plan SHALL be refused for having more than 16 such rows. In a
-single-target removal the limit SHALL count P alone, because `not-requested`
-precedes it.
+that a gate after the cap then excludes SHALL keep their places among the 16,
+so that when every one of those 16 is excluded by a gate after the cap no
+re-run reaches a deferred row, and the human report SHALL say why the deferred
+rows will not drain, naming those gates' reasons. No plan SHALL be refused for
+having more than 16 such rows. In a single-target removal the limit SHALL count
+P alone, because `not-requested` precedes it.
 
 The cache enumerations SHALL count in the fit that sets the row and target
 caps: with 128 worktree rows, 16 cache enumerations and 16 targets, planning,
-revalidation and the final rescan spawn at most 250 Git children besides the 16
-removals, about 42.3 s at 150 ms per child and 0.3 s per removal, the cache
-walk's and the cache stages' filesystem calls not counted; a target whose cache
-stage or spawn cannot start under the removal floor SHALL be `not-attempted`
-with `deadline-exceeded`, as for every removal, and a cache stage's removal
-that does not return SHALL hold the run only as a removal in flight does, up to
-the removal ceiling.
+revalidation and the final rescan spawn at most 283 Git children besides the 16
+removals where the plan read the repository's `extensions.worktreeConfig` as
+false, about 47.3 s at 150 ms per child and 0.3 s per removal, the cache
+walk's and the cache stages' filesystem calls not counted, on which count the
+first 14 targets start any cache stage and their removal child before the
+removal floor and the last two are `not-attempted` with `deadline-exceeded`; a
+target whose cache stage or spawn cannot start under the removal floor SHALL be
+`not-attempted` with `deadline-exceeded`, as for every removal, and a cache
+stage's removal that does not return SHALL hold the run only as a removal in
+flight does, up to the removal ceiling.
 
 Plans and apply results SHALL report `probes: {estimated, performed}` and
 `operations: {estimated, performed}`, every Git child counted once, a removal
@@ -600,7 +605,8 @@ under `operations` and every other child, a cache enumeration included, under
 and `cache_bytes_total` 1073741824); and `budget` (`probe_timeout_seconds`
 5, `invocation_timeout_seconds` 60, `reconciliation_reserve_seconds` 10,
 `removal_floor_seconds` 5, `removal_ceiling_seconds` 300 and `probe_concurrency`
-1). Revalidating one target SHALL spawn at most five Git children and never
+1). Revalidating one target SHALL spawn at most six Git children, seven where
+the plan read the repository's `extensions.worktreeConfig` as true, and never
 recompute the full report, and the final rescan at most three.
 
 #### Scenario: Row cap and planning failures
@@ -639,16 +645,17 @@ recompute the full report, and the final rescan at most three.
 
 #### Scenario: Bounded revalidation work
 
-- **WHEN** a repository has five worktree rows, three of them selected, and
-  `--all-safe --apply --yes` runs under a counting `git` wrapper on PATH
-- **THEN** every target's revalidation spawns at most five children, the final
+- **WHEN** a repository without `extensions.worktreeConfig` has five worktree
+  rows, three of them selected, and `--all-safe --apply --yes` runs under a
+  counting `git` wrapper on PATH
+- **THEN** every target's revalidation spawns at most six children, the final
   rescan spawns three, three removals run, no merged-set listing and no status
   probe of a non-selected worktree runs after confirmation, and the record's
   `probes.performed` equals the wrapper's count of children other than the three
   removals, and its `operations.performed` is 3
-- **AND** every `status` and `ls-files` child names its own worktree as its
-  directory, and every other child after resolution, the removals included,
-  names the command directory
+- **AND** every `status`, `ls-files` and `rev-list` child names its own
+  worktree as its directory, and every other child after resolution, the
+  removals included, names the command directory
 
 #### Scenario: Deadline expiry mid-batch
 
