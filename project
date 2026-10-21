@@ -1498,6 +1498,7 @@ def run_bounded(spec, parser, run):
         return DriverOutcome(argv, "deadline", detail="no time was left to start it")
     if parser is None:
         parser = RawOutput()
+    tick = getattr(parser, "tick", None)  # a removal's wait line (T092; lead ruling R-83, P-1)
     try:
         handle = ChildHandle.start(argv, cwd, kind)
     except OSError as exc:
@@ -1518,6 +1519,8 @@ def run_bounded(spec, parser, run):
     name = None
     try:
         while not handle.finished:
+            if tick is not None:
+                tick(run)
             now = time.monotonic()
             if handle.advance(now):
                 break
@@ -4794,25 +4797,63 @@ def removal_exit_status(outcome):
     reconciliation record"; plan review M12) from its DriverOutcome: None
     unless the child was spawned and reaped; Git's own status when it exited;
     and 128 plus the signal number when a signal ended it, whoever sent it
-    (128 minus Popen's negative return code), so 137 for a child killed at the
-    ceiling, as execute() reports a delegate's."""
+    (128 minus Popen's negative return code), as execute() reports a
+    delegate's: so 143 when SIGTERM ends it, at the ceiling too, and 137 only
+    for a child that outlives SIGTERM until SIGKILL (lead rulings R-68 (b) and
+    R-76 (e))."""
     status = outcome.status
     if status is None:
         return None
     return status if status >= 0 else 128 - status
 
 
+class RemovalWait(RawOutput):
+    """The parser of a removal child (T092; design D9 and D18; lead ruling
+    R-83, P-1): its standard output read whole, as RawOutput reads it, and
+    tick(run), which run_bounded() calls on each pass of its wait loop while
+    the child is in flight. tick() prints D18's wait line, PATH in its
+    command form (human_path(path, command=True); R-83, P-2), at most once
+    per run: at the first signal recorded in the slot, or once the work
+    deadline has passed, whichever comes first. It stops nothing, since a
+    started removal is never signalled for either (D9). The line goes
+    through say() only when the run has a human stream, so a bare
+    Invocation prints nothing."""
+
+    def __init__(self, path):
+        super().__init__()
+        self.path = path
+
+    def tick(self, run):
+        if getattr(run, "wait_line_printed", False):
+            return
+        left = run.work_remaining()
+        if run.signal is None and (left is None or left > 0):
+            return
+        run.wait_line_printed = True
+        if getattr(run, "human", None) is not None:
+            say(run, TEXT["wait_line"].format(PATH=human_path(self.path, command=True)))
+
+
 def run_removal(target, run):
-    """Spawn target's removal and wait for it (T056; design D2 and D9,
+    """Spawn target's removal and wait for it (T056, T092; design D2 and D9,
     FR-012): a ChildHandle of kind `removal` running git_argv("removal",
     target.removal_args), the plan's own argument vector, `-C ROOT worktree
     remove PATH` with PATH the registry's raw bytes and never --force, from
     the command directory, through run_bounded(), which counts it among
-    `operations`, gives it no budget, never signals it before its ceiling,
-    and waits for it. Sets target["exit_status"] (removal_exit_status()) and
-    returns the DriverOutcome; one that could not be spawned is outcome
-    `failed` with no status."""
-    outcome = run_bounded(("removal", target.removal_args, target.root), None, run)
+    `operations` and waits for it in D1's one loop with no budget: SIGINT,
+    SIGTERM and SIGHUP are only recorded and the work deadline changes
+    nothing, so the child is never signalled for any of them. Only its hard
+    ceiling ends the wait: TIMING["removal_ceiling"] (300 s in the real
+    table), read by run_bounded() at the spawn, after which terminate_group()
+    sends SIGTERM to its group and the loop advances it to SIGKILL and a
+    bounded reap, or abandons it (R-30), outcome `timeout`, which the rescan
+    decides (decide_stage()). An exception in that loop waits for the child
+    before it goes on (_settle()). Its parser, RemovalWait, prints D18's wait
+    line at the first signal or once the deadline has passed (lead ruling
+    R-83, P-1). Sets target["exit_status"] (removal_exit_status()) and returns
+    the DriverOutcome; one that could not be spawned is outcome `failed` with
+    no status."""
+    outcome = run_bounded(("removal", target.removal_args, target.root), RemovalWait(target["path"]), run)
     target["exit_status"] = removal_exit_status(outcome)
     return outcome
 
