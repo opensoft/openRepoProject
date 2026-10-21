@@ -134,7 +134,7 @@ use it, is unchanged, and so are its signals (research.md R4).
 | report or preview, `--json` | one JSON document: the plan envelope, or the extended error object | `Cancelled.` |
 | `--apply` (removal) | the plan, the question, progress, "D18 wait line", the result | `REFUSED: ...`, `Cancelled.` |
 | `--apply --json` (removal) | one JSON document: the plan envelope or the extended error object when the run stops before the apply phase, otherwise the apply result record | the plan, the question, progress, "D18 wait line", the result text, `Cancelled.` |
-| push, delete-branch | `Cleanup action: ...`, the plan (`Working directory:` in the path-escaping printer's prose form, and every word of the command in its command form, below; lead ruling R-74 (c)(1)), `Type yes` and the delegate's own output, as today | `REFUSED: ...`, `Cancelled.`, the delegate's own |
+| push, delete-branch | `Cleanup action: ...`, the plan (`Working directory:` in the path-escaping printer's prose form, and every word of the command in its command form, below; lead ruling R-74 (c)(1)) and the delegate's own output, as today; `Type yes` only when standard output is not a terminal | `REFUSED: ...`, `Cancelled.`, `Type yes` at a terminal, since `input()` writes its prompt to standard error when standard input and output are both terminals, and the delegate's own |
 
 Under `--json` a refusal is a JSON document on standard output, never a
 `REFUSED:` line. Three cases print no JSON document: a parser usage error;
@@ -199,11 +199,16 @@ then `Branches kept:`, then "D18 residual-window line", D18's order
 `project-clean` delta's "SHALL end its human result with `Stopped at ...`"
 (its `spec.md:962-964`) is read (lead ruling R-76 (d)); the retained-branch
 line `Branches kept: B1, B2.`, naming every selected target's branch in
-canonical order, except a branch missing after removal, or never read back,
-which it leaves out and the result names instead, in words the text lane
-fixes as a `TEXT` key (T094, a lead-approved contracts edit) and a doc
-round then records here, since D18 has none (lead ruling R-76 (f)); a stop
-block with
+canonical order, except a branch whose last read shows it absent
+(`branch_present` false, at any stage) or that a spawned target's rescan
+did not read back (`branch_present` null on a `removed`, `failed` or
+`unknown` target), the branches of `refused` and `not-attempted` targets
+otherwise staying listed, since nothing was spawned for them; the left-out
+names print on one new line after `Branches kept:` and before "D18
+residual-window line", `Branches not confirmed: B2.`, a `TEXT` key the
+text lane adds (T094, a lead-approved contracts edit), and the line reads
+`Branches kept: none.` when every branch is left out, since D18 has
+neither form (lead rulings R-76 (f) and R-79 P-10); a stop block with
 no target `not-attempted`, as when the last selected target stops the run,
 reads `Not attempted: none.`, a fill, since D18's stop block has no such
 form (lead ruling R-68 (a)); the stop block's `Next: project clean ROOT
@@ -477,7 +482,10 @@ signals either child, waits for it, and then exits by D19's first row
 (data-model.md, "Exit statuses"). Probing is serial; termination never
 blocks (data-model.md, "Child handle").
 Revalidation spawns at most five Git children per target, the final rescan
-at most three.
+at most three, the identity probe counted once: a line feed in the root's
+or the common directory's path repeats it, one child per option, so that
+they run up to 8 and 6 (design D6, "the rare repeat"; data-model.md,
+"Revalidation step and `probes_performed`"; lead ruling R-82 (c)).
 
 ## `status`, `doctor` and `update` (FR-050 to FR-053, FR-059; D16)
 

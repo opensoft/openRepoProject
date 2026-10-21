@@ -771,7 +771,10 @@ T033), when B, D, E and F are; H, guard (T034, T035), when T023 is, beside G
   `test_clean_evidence_checks_registration_both_ways` (a rewritten `.git` file,
   and a changed admin `gitdir` file, each give that row `inspection-error` and
   no status probe; a subtest where two registry entries name one path, both
-  `registration-mismatch`, lead ruling R-57, built by lane G's follow-up);
+  `registration-mismatch`, lead ruling R-57, built by lane G's follow-up;
+  and one where two present entries name one worktree by two spellings,
+  with one realpath and one admin id, both `registration-mismatch` and
+  neither probed, lead ruling R-67 (c), built by evidence follow-up 2);
   `test_clean_evidence_reads_presence` (`ENOENT` gives
   `present: false`, and so does `ENOTDIR`, a registered path whose parent has
   become a regular file; lead ruling R-36) and
@@ -800,7 +803,8 @@ T033), when B, D, E and F are; H, guard (T034, T035), when T023 is, beside G
   registry); the four deciders' tests on literal inputs, with every Git
   child and filesystem call failing the test,
   `test_clean_presence_from_lstat_decides_on_literal_results`,
-  `test_clean_registration_verdict_decides_on_literal_realpaths`,
+  `test_clean_registration_verdict_decides_on_literal_realpaths` (with
+  `shared_identities()`'s cases, R-67 (c)),
   `test_clean_main_worktree_decision_decides_on_literal_values` and
   `test_clean_row_evidence_assembles_a_row_from_literal_reads`; and
   `test_clean_evidence_memo_by_device_and_inode_and_the_row_5_switch`
@@ -881,8 +885,12 @@ T033), when B, D, E and F are; H, guard (T034, T035), when T023 is, beside G
   G's follow-up builds, R-59 D6; and, by lead ruling R-67 (c), present rows
   with the same realpath, or with the same admin id, are each
   `registration-mismatch` too, in `--all-safe` and in single mode, a rule
-  not yet built at this task's tick, which compares raw path bytes only, so
-  that until it is T049's single-mode match fails closed for P);
+  built after this task's tick, which compared raw path bytes only: it is
+  `shared_identities()` in region `evidence`, built by evidence follow-up 2
+  (merged as `a5156a5`) inside this task's scope and T029's, comparing the
+  present rows one `worktree_rows()` call inspects together before any
+  status probe, so that neither twin is probed (lead ruling R-81 (a); lane
+  3's L-6));
   `status_probe()`; and
   `worktree_rows(repo, run, records=None)`, `records` the registry records
   to build rows for, in the order given, None the whole registry (lead
@@ -1342,9 +1350,14 @@ L-8).
   R-69, reading 2). Each realpath read is one `fs_call()`, a bounded
   filesystem call with the budget every filesystem call gets, `min(5 s, work
   remaining)` under `clean`'s deadline, so that it spends the work deadline
-  as any read does, a read cut at its budget giving no realpath; one is made
-  for P and one for each registry entry whose raw bytes differ from P's, the
-  entries past the cap included, before any row is inspected; and nothing
+  as any read does, a read cut at its budget giving no realpath and
+  recording no row error, since no row exists yet, the plan's
+  `inspection-incomplete` carrying it; one is made for P and, when P's own
+  read gives a realpath, one for each registry entry whose raw bytes differ
+  from that realpath, the entries past the cap included, before any row is
+  inspected, while a P whose own read gives none reads no other entry, the
+  entries the cap takes all counting as its matches (lead ruling R-73 (d);
+  lane 3's L-2); and nothing
   counts them, as nothing counts any filesystem call, `probes` counting Git
   children only (lead ruling R-75 (h)). Exactly one decided match is P's
   row. No match records
@@ -1534,11 +1547,17 @@ L-8).
   listing, ref listing, `lstat` of the path) fills the reconciliation record;
   the stage is `removed` with reason null when the child exited 0 and the entry
   and path are gone, with `reconciled` true (FR-034; the `project-clean`
-  delta's `spec.md:891-895`; a condition T085 builds, since as ticked the
-  stage reads the entry and path alone, lead ruling R-76 (a)), `unknown`
-  with `unconfirmed-removal` when it exited 0
-  otherwise, and `failed` with `git-refused` (128), `git-failed` (any other
-  status) or `spawn-error`; `exit_status` as T045 states it (plan review M12),
+  delta's `spec.md:891-895`); after exit 0 otherwise, `unknown` with
+  `reconciliation-incomplete` when a rescan read failed or was cut, which
+  marks the record, or when the entry and path are gone with `reconciled`
+  false, and `unknown` with `unconfirmed-removal` for an unmarked record,
+  every read having succeeded and shown the removal not done, or the
+  identity having been found lost or different (lead ruling R-78 (e),
+  second amendment; conditions T085 builds, since as ticked the stage read
+  the entry and path alone and gave every other exit-0 record
+  `unconfirmed-removal`, lead ruling R-76 (a)); and `failed` with
+  `git-refused` (128), `git-failed` (any other status) or `spawn-error`;
+  `exit_status` as T045 states it (plan review M12),
   128 plus the signal number for a signal death (128 minus Popen's negative
   return code), and none for `spawn-error`. `run_bounded()` builds the
   argument vector from `(kind, args)`, so the plan keeps each target's
@@ -1585,33 +1604,41 @@ Interim behaviour at this checkpoint (lead ruling R-56 Q-17): until T075, a
 named removal is refused when another row is `inspection-error`, since the
 non-blocking single-mode notes are T075's; and until T066, a merged branch
 with no commit of its own is still selectable, so quickstart.md's User Story
-1 preview shows `Selected (4)` here. The removal path carries six more, each
-assigned to its task (lead ruling R-76 (b), lane 3's M-1); the first two
-lose work:
+1 preview shows `Selected (4)` here. The removal path carried six more,
+each assigned to its task (lead ruling R-76 (b), lane 3's M-1), the first
+two losing work, and US4 adds a seventh. Rows 2 and 5 are CLOSED, since
+T084 and T085 have landed, and rows 1, 3, 4, 6 and 7 stay open until
+their tasks land (lead ruling R-82 (b), lane 3's LOW-2):
 
-- A SIGINT, SIGTERM or SIGHUP during the apply phase does not stop
-  scheduling: later targets are still revalidated and removed, and the run
-  exits 130, 143 or 129 (T093; test T087).
-- Revalidation is T055's full re-read, with no `modules` check, no
-  hidden-state probe, no `dev`, `ino`, `admin_id` or `upstream_oid`
-  comparison and no preflight, so an assume-unchanged edit set at the
-  question, or a copy put at P, is removed with exit 0 (T084; tests T079 to
-  T083).
-- No removal floor and no reserve: a removal is spawned however little work
-  time is left, and the rescan runs on the work deadline's budget (T099 and
-  T093; test T098).
-- An exception in the apply phase propagates instead of reconciling (T093;
-  test T089).
-- The branch race after removal goes undetected, a moved or deleted branch
-  still giving `removed`; and a target is `removed` from its entry and path
-  alone, even when the rescan's ref listing failed and `reconciled` is false
-  (T085; test T083, and T085's own tests, lead ruling R-76 (a)).
-- No wait line, no `orphaned-directory` note and no recovery text on a
-  `partially-removed` target (T092, T093, T094).
+1. Open. A SIGINT, SIGTERM or SIGHUP during the apply phase does not stop
+   scheduling: later targets are still revalidated and removed, and the
+   run exits 130, 143 or 129 (T093; test T087).
+2. CLOSED by T084. Revalidation was T055's full re-read, with no
+   `modules` check, no hidden-state probe, no `dev`, `ino`, `admin_id` or
+   `upstream_oid` comparison and no preflight, so an assume-unchanged edit
+   set at the question, or a copy put at P, was removed with exit 0 (T084;
+   tests T079 to T083); each now refuses, exit 2, and nothing is removed.
+3. Open. No removal floor and no reserve: a removal is spawned however
+   little work time is left, and the rescan runs on the work deadline's
+   budget (T099 and T093; test T098).
+4. Open. An exception in the apply phase propagates instead of
+   reconciling (T093; test T089).
+5. CLOSED by T085. The branch race after removal went undetected, a moved
+   or deleted branch still giving `removed`; and a target was `removed`
+   from its entry and path alone, even when the rescan's ref listing failed
+   and `reconciled` was false (T085; test T083, and T085's own tests, lead
+   ruling R-76 (a)).
+6. Open. No wait line, no `orphaned-directory` note and no recovery text
+   on a `partially-removed` target (T092, T093, T094).
+7. Open. A revalidation cut at the work deadline refuses its target with
+   the reason of the step it cut, exit 2, where the delta gives
+   `not-attempted` with `deadline-exceeded`, exit 1; nothing is removed
+   either way (US6's T099; lead ruling R-80 P-2).
 
 None of this reaches `main`, since the feature ships as one pull request,
-which opens only when every task of 004 has landed, T084, T085, T092, T093
-and T099 among them, and its body names that gate (R-76 (b)).
+which opens only when every task of 004 has landed, T092, T093 and T099
+among them, T084 and T085 having landed, and its body names that gate
+(R-76 (b)).
 
 ---
 
@@ -2025,10 +2052,16 @@ US2, US7 and US9.
 - [x] T076 [P] [US3] [O] Fill `push_or_delete()` in region `push` (FR-010, FR-041,
   FR-046, FR-047): both actions resolve through the pipeline and plan in mode
   single for the cap and the bounds, with the batch's completeness (T075; plan
-  review B1); `require_unchanged_cleanup_state()` (`project:656-666`)
-  re-inspects fully, before and after confirmation, through `build_plan()`, and
-  refuses with `inspection-incomplete`, `inspect-cap` or `deadline-exceeded`,
-  exit 2, when either inspection is incomplete, another row's
+  review B1); the full inspection is checked before and after
+  confirmation: before, the run's own plan, which `check_plan()` refuses
+  when incomplete before `push_or_delete()` runs (plan review B1; lead
+  ruling R-69, reading 3); after, the fresh re-inspection of
+  `require_unchanged_cleanup_state()`, through `inspect_repository()` with
+  `refresh=True`, then `build_plan()`, a failed identity or
+  repository-wide probe refusing with `inspection-incomplete` before
+  `build_plan()` (lead rulings R-53 P-5 and R-74 (c)(5)); each refuses with
+  `inspection-incomplete`, `inspect-cap` or `deadline-exceeded`, exit 2,
+  when its inspection is incomplete, another row's
   `inspection-error` included; add `show_push_plan()`, which prints `Working
   directory:` and the command as `show_plan()` does, the `Working directory:`
   line in the prose form, `human_path(cwd)`, and every word of the command
@@ -2257,25 +2290,44 @@ US3, US7 and US9; US5's text lane follows it (analyze M2 and L9).
   only when its entry and path are gone and `reconciled` is true (FR-034;
   the `project-clean` delta's `spec.md:891-895`): an exit-0 child that is
   gone but not reconciled is `unknown` with `reconciliation-incomplete`, as
-  is one whose rescan registry listing failed (`BA:723-730` at `e45155a`),
+  is one whose rescan registry listing failed (`BA:518-526` at `da33d92`),
   and a child killed at the ceiling that is gone but not reconciled is
   `unknown` with `removal-ceiling`, exit 1 either way (lead ruling R-76 (a),
-  lane 3's H-1). Its tests go in `tests/test_clean_revalidation.py`:
+  lane 3's H-1). A rescan read that fails or is cut marks the record: the
+  identity probe, while the planned root and common directory are still
+  there by `lstat`, the registry listing, the ref listing or the `lstat` of
+  the planned path. After exit 0 a marked record is `unknown` with
+  `reconciliation-incomplete` (the `project-clean` delta's
+  `spec.md:1012-1018`), and an unmarked unreconciled record is `unknown`
+  with `unconfirmed-removal`, reached only when every read succeeded and
+  showed the removal not done (its `spec.md:966-970`), or when the identity
+  was found lost or different (the `project-clean-review-safety` delta's
+  `spec.md:215-217`); a ceiling child keeps `removal-ceiling`. The mark is
+  the record's class, `UnfinishedRescan`, a `dict` subclass, so that
+  equality and every document are unchanged (lead ruling R-78 (e), second
+  amendment; lane 3's L-8 and LOW-1). Its tests go in
+  `tests/test_clean_revalidation.py`:
   `test_clean_decide_stage_removed_needs_reconciled` (`decide_stage()` on
   literal records: entry and path gone, `branch_present` null, exit 0,
   gives `unknown` with `reconciliation-incomplete`; at the ceiling,
-  `unknown` with `removal-ceiling`) and
+  `unknown` with `removal-ceiling`);
   `test_clean_a_failed_rescan_ref_listing_is_not_removed` (a wrapper `git`
   that fails `for-each-ref` once `worktree remove` has run, one merged
   worktree, `--all-safe --apply --yes --json`: the target `unknown` with
-  `reconciliation-incomplete`, `reconciled` false, exit 1; lane 3's E1).
+  `reconciliation-incomplete`, `reconciled` false, exit 1; lane 3's E1);
+  and `test_clean_rescan_marks_every_failed_read` (the root moved away
+  after the removal: the identity found lost, `unconfirmed-removal`, every
+  field null; then the identity probe, the registry listing, the ref
+  listing and the `lstat` each failing alone after exit 0, and the last
+  three together: `reconciliation-incomplete`, exit 1).
   T079 to T083 pass.
   — files: `project`, `tests/test_clean_revalidation.py`
-  — verify: `python3 -c "import sys,unittest as u;L=u.defaultTestLoader;f=lambda s:[i for t in s for i in (f(t) if isinstance(t,u.TestSuite) else [t.id()])];I=[i for i in f(L.discover('tests',pattern=sys.argv[1])) if not i.startswith('unittest.')];A=sys.argv[2:];M=[a for a in A if not any(a in ('*',i.split('.')[-1]) for i in I)];[print('not collected:',m) for m in M];[print(e) for e in L.errors];sys.exit(1 if M or L.errors or not A else 0)" test_clean_revalidation.py 'test_clean_decide_stage_removed_needs_reconciled' 'test_clean_a_failed_rescan_ref_listing_is_not_removed' && python3 -m unittest discover -s tests -p 'test_clean_revalidation.py'`
-- [x] T086 [US4] [S] Run the US4 module, every earlier module and the 96 tests: all
-  pass.
+  — verify: `python3 -c "import sys,unittest as u;L=u.defaultTestLoader;f=lambda s:[i for t in s for i in (f(t) if isinstance(t,u.TestSuite) else [t.id()])];I=[i for i in f(L.discover('tests',pattern=sys.argv[1])) if not i.startswith('unittest.')];A=sys.argv[2:];M=[a for a in A if not any(a in ('*',i.split('.')[-1]) for i in I)];[print('not collected:',m) for m in M];[print(e) for e in L.errors];sys.exit(1 if M or L.errors or not A else 0)" test_clean_revalidation.py 'test_clean_decide_stage_removed_needs_reconciled' 'test_clean_a_failed_rescan_ref_listing_is_not_removed' 'test_clean_rescan_marks_every_failed_read' && python3 -m unittest discover -s tests -p 'test_clean_revalidation.py'`
+- [x] T086 [US4] [S] Run the US4 module, every earlier module, the US3, US7
+  and US9 modules, which have landed, and the 96 tests: all pass (lead
+  ruling R-79 P-13).
   — files: (none)
-  — verify: `python3 -m unittest discover -s tests -p 'test_clean_timing.py' && python3 -m unittest discover -s tests -p 'test_clean_harness.py' && python3 -m unittest discover -s tests -p 'test_clean_scrub.py' && python3 -m unittest discover -s tests -p 'test_clean_parsers.py' && python3 -m unittest discover -s tests -p 'test_clean_escaping.py' && python3 -m unittest discover -s tests -p 'test_clean_runner.py' && python3 -m unittest discover -s tests -p 'test_clean_evidence.py' && python3 -m unittest discover -s tests -p 'test_clean_guard.py' && python3 -m unittest discover -s tests -p 'test_clean_batch.py' && python3 -m unittest discover -s tests -p 'test_clean_apply.py' && python3 -m unittest discover -s tests -p 'test_clean_reflog.py' && python3 -m unittest discover -s tests -p 'test_clean_gates.py' && python3 -m unittest discover -s tests -p 'test_clean_revalidation.py' && python3 -m unittest discover -s tests -p 'test_project.py'`
+  — verify: `python3 -m unittest discover -s tests -p 'test_clean_timing.py' && python3 -m unittest discover -s tests -p 'test_clean_harness.py' && python3 -m unittest discover -s tests -p 'test_clean_scrub.py' && python3 -m unittest discover -s tests -p 'test_clean_parsers.py' && python3 -m unittest discover -s tests -p 'test_clean_escaping.py' && python3 -m unittest discover -s tests -p 'test_clean_runner.py' && python3 -m unittest discover -s tests -p 'test_clean_evidence.py' && python3 -m unittest discover -s tests -p 'test_clean_guard.py' && python3 -m unittest discover -s tests -p 'test_clean_batch.py' && python3 -m unittest discover -s tests -p 'test_clean_apply.py' && python3 -m unittest discover -s tests -p 'test_clean_reflog.py' && python3 -m unittest discover -s tests -p 'test_clean_gates.py' && python3 -m unittest discover -s tests -p 'test_clean_single.py' && python3 -m unittest discover -s tests -p 'test_clean_push.py' && python3 -m unittest discover -s tests -p 'test_clean_revalidation.py' && python3 -m unittest discover -s tests -p 'test_clean_resolution.py' && python3 -m unittest discover -s tests -p 'test_status_doctor_update.py' && python3 -m unittest discover -s tests -p 'test_project.py'`
 
 **Checkpoint**: A change after the plan refuses its target and attempts nothing
 later; a race after Git's own removal loses no commit.
@@ -2299,10 +2351,14 @@ stop block and the exit status.
 
 **Lanes**: text (T091, T094: `tests/test_clean_stop.py`, regions `preview`
 and `result`), after US4, since T091's stop block expects `branch-changed`,
-which only US4's T084 produces; then removal (T087 to T090, T092, T093:
-`tests/test_clean_result.py`, region `apply`), after US4, since both edit
-`rescan()` and `decide_stage()`, and after the text lane, since T089 asserts
-the recovery text that T094 prints (analyze M2).
+which only US4's T084 produces; and removal (T087 to T090, T092, T093:
+`tests/test_clean_result.py`, region `apply`, and T092's two-line hook in
+region `runner`, lead ruling R-83 P-1), after US4, since both edit
+`rescan()` and `decide_stage()`. The two lanes run in parallel, their
+regions disjoint, and the removal lane writes T089's recovery-text
+assertion last, after merging the feature branch with the text lane in
+it, since T089 asserts the recovery text that T094 prints (analyze M2;
+lead ruling R-83).
 
 ### Tests for User Story 5
 
@@ -2400,11 +2456,17 @@ the recovery text that T094 prints (analyze M2).
   form (`  STAGE PATH` or `  STAGE PATH (REASON)`), then `Stopped at P2
   (branch-changed). Removed 1 of 3. Not attempted: P3. Next: project clean ROOT
   --all-safe`, then `Branches kept: B1, B2, B3.` and the residual-window line
-  (plan review M8); it pins T057; and a target whose branch is missing after
-  removal (`branch-missing-after-removal`), or was never read back
-  (`branch_present` null), leaves that branch out of `Branches kept:`, the
-  result naming it instead in the words of T094's `TEXT` key, once T085
-  makes the record honest; lead ruling R-76 (f));
+  (plan review M8); it pins T057; and, by lead ruling R-79 P-10 on R-76
+  (f), a branch whose last read shows it absent (`branch_present` false,
+  at any stage, `branch-missing-after-removal` among them), or that a
+  spawned target's rescan did not read back (`branch_present` null on a
+  `removed`, `failed` or `unknown` target), is left out of the line
+  `Branches kept:`, the branches of `refused` and `not-attempted` targets
+  otherwise staying listed, since nothing was spawned for them; the
+  left-out names print on one new line after `Branches kept:` and before
+  the residual-window line, `Branches not confirmed: B2.`, in T094's
+  `TEXT` key, and the line reads `Branches kept: none.` when every branch
+  is left out);
   `test_clean_only_tracked_file_deletions`
   (tracked files deleted by hand in a registered worktree whose `.git` file is
   intact: classified `dirty` with the dirty advice, the line `Probable partial
@@ -2426,10 +2488,18 @@ the recovery text that T094 prints (analyze M2).
 
 ### Implementation for User Story 5
 
-- [ ] T092 [P] [US5] [O] Fill `run_removal()` (region `apply`; D9, FR-012): the
+- [ ] T092 [P] [US5] [O] Fill `run_removal()` (region `apply`; D9, FR-012), and
+  add one lead-approved two-line hook to `run_bounded()` (region `runner`),
+  beside T077's `feed_stderr` hook:
+  `tick = getattr(parser, "tick", None)`, then `tick(run)` on each pass of
+  the wait loop, which keeps D1's one loop and R-30's tested termination
+  path (lead ruling R-83 P-1, amending R-54 X-2, which named T077's hook as
+  the only runner edit): the
   child is never signalled on SIGINT, SIGTERM, SIGHUP or the deadline; the
-  first of those prints D18's wait line, at most once; the ceiling,
-  `TIMING["removal_ceiling"]` read at the spawn, ends the wait by
+  first of those prints D18's wait line, at most once, from the `tick()` of
+  the parser `run_removal()` passes; the ceiling,
+  `TIMING["removal_ceiling"]` read at the spawn, by `run_bounded()` as
+  built, ends the wait by
   `terminate_group()`, which the wait's own loop advances to SIGKILL and a
   bounded reap (R-30), and a child reaped there has `exit_status` 143 when
   SIGTERM ended it and 137 when it outlived SIGTERM until SIGKILL (plan
@@ -2438,13 +2508,16 @@ the recovery text that T094 prints (analyze M2).
   by the rescan with reason `removal-ceiling` and, while its entry or path
   remains, the note `partially-removed`.
   — files: `project`
-  — verify: `python3 -c "import sys,re;t=open('project').read();A=sys.argv[1:];c=lambda r:t.split('# region '+r+'\n')[1].split('# endregion '+r+'\n')[0];M=[a for a in A if not ((a.split('%',1)[1] not in c(a.split('%',1)[0])) if '%' in a else (a.split('~',1)[1] in c(a.split('~',1)[0])) if '~' in a else re.search(r'^[a-z]*\s?'+re.escape(a.split(':',1)[1])+r'\b',c(a.split(':',1)[0]),re.M))];[print('region check failed:',m) for m in M];sys.exit(1 if M or not A else 0)" 'apply~removal_ceiling' 'apply~wait_line' && python3 project clean --help >/dev/null`
+  — verify: `python3 -c "import sys,re;t=open('project').read();A=sys.argv[1:];c=lambda r:t.split('# region '+r+'\n')[1].split('# endregion '+r+'\n')[0];M=[a for a in A if not ((a.split('%',1)[1] not in c(a.split('%',1)[0])) if '%' in a else (a.split('~',1)[1] in c(a.split('~',1)[0])) if '~' in a else re.search(r'^[a-z]*\s?'+re.escape(a.split(':',1)[1])+r'\b',c(a.split(':',1)[0]),re.M))];[print('region check failed:',m) for m in M];sys.exit(1 if M or not A else 0)" 'apply~wait_line' 'runner~getattr(parser, "tick", None)' && python3 project clean --help >/dev/null`
 - [ ] T093 [P] [US5] [O] In `apply_removals()`, `rescan()` and `decide_stage()`
   (region `apply`; D15, FR-034 to FR-036): read the signal slot before each
   revalidation and each spawn, a set slot making that target and every later
   one `not-attempted` with `interrupted`; reconcile within the reserve, the
-  `Invocation`'s phase set to `reconciling` (R-44), each rescan child getting
-  `min(5 s, reserve remaining)`; a second SIGINT during
+  `Invocation`'s phase set to `reconciling` (R-44) before every rescan, and
+  to `apply` again before the next target's own steps when the target ended
+  a plain `removed` and the slot is empty (lead ruling R-83 P-3), each
+  rescan child getting `min(5 s, reserve remaining)`, the reserve counted
+  from the exit being T099's (R-80 P-3); a second SIGINT during
   reconciliation abandons the remaining rescans, their fields null and the
   target `unknown` with `reconciliation-incomplete` (M17); an exception after
   the apply phase begins, in a target, its rescan, the final rescan or the
@@ -2464,17 +2537,23 @@ the recovery text that T094 prints (analyze M2).
 - [ ] T094 [P] [US5] [S] In `print_plan()` (region `preview`), print D18's
   partial-removal note on its own line under the `dirty` advice of a row noted
   `partially-removed`; in `print_result()` (region `result`), print the same
-  note with the recovery text on a `partially-removed` target, and leave a
-  branch missing after removal, or never read back, out of `Branches kept:`,
-  naming it in words this task fixes as a `TEXT` key in region `contracts`, a
-  lead-approved contracts edit, with its fixture in `tests/clean_support.py`
-  (rule 2), since D18 has none (lead ruling R-76 (f)). T091 passes.
+  note with the recovery text on a `partially-removed` target, and leave
+  out of `Branches kept:` each branch whose last read shows it absent, at
+  any stage, or that a spawned target's rescan did not read back, the
+  branches of `refused` and `not-attempted` targets otherwise staying
+  listed; print the left-out names on one new line after `Branches kept:`
+  and before the residual-window line, `Branches not confirmed: B2.`, a
+  new `TEXT` key in region `contracts`, a lead-approved contracts edit,
+  with its fixture in `tests/clean_support.py` (rule 2), since D18 has
+  none; and print `Branches kept: none.` when every branch is left out
+  (lead rulings R-76 (f) and R-79 P-10). T091 passes.
   — files: `project`, `tests/clean_support.py`
   — verify: `python3 -m unittest discover -s tests -p 'test_clean_stop.py'`
-- [ ] T095 [US5] [S] Run the US5 modules, every earlier module and the 96 tests:
-  all pass.
+- [ ] T095 [US5] [S] Run the US5 modules, every earlier module, the US3, US7
+  and US9 modules, which have landed, and the 96 tests: all pass (lead
+  ruling R-79 P-13).
   — files: (none)
-  — verify: `python3 -m unittest discover -s tests -p 'test_clean_timing.py' && python3 -m unittest discover -s tests -p 'test_clean_harness.py' && python3 -m unittest discover -s tests -p 'test_clean_scrub.py' && python3 -m unittest discover -s tests -p 'test_clean_parsers.py' && python3 -m unittest discover -s tests -p 'test_clean_escaping.py' && python3 -m unittest discover -s tests -p 'test_clean_runner.py' && python3 -m unittest discover -s tests -p 'test_clean_evidence.py' && python3 -m unittest discover -s tests -p 'test_clean_guard.py' && python3 -m unittest discover -s tests -p 'test_clean_batch.py' && python3 -m unittest discover -s tests -p 'test_clean_apply.py' && python3 -m unittest discover -s tests -p 'test_clean_reflog.py' && python3 -m unittest discover -s tests -p 'test_clean_gates.py' && python3 -m unittest discover -s tests -p 'test_clean_revalidation.py' && python3 -m unittest discover -s tests -p 'test_clean_result.py' && python3 -m unittest discover -s tests -p 'test_clean_stop.py' && python3 -m unittest discover -s tests -p 'test_project.py'`
+  — verify: `python3 -m unittest discover -s tests -p 'test_clean_timing.py' && python3 -m unittest discover -s tests -p 'test_clean_harness.py' && python3 -m unittest discover -s tests -p 'test_clean_scrub.py' && python3 -m unittest discover -s tests -p 'test_clean_parsers.py' && python3 -m unittest discover -s tests -p 'test_clean_escaping.py' && python3 -m unittest discover -s tests -p 'test_clean_runner.py' && python3 -m unittest discover -s tests -p 'test_clean_evidence.py' && python3 -m unittest discover -s tests -p 'test_clean_guard.py' && python3 -m unittest discover -s tests -p 'test_clean_batch.py' && python3 -m unittest discover -s tests -p 'test_clean_apply.py' && python3 -m unittest discover -s tests -p 'test_clean_reflog.py' && python3 -m unittest discover -s tests -p 'test_clean_gates.py' && python3 -m unittest discover -s tests -p 'test_clean_single.py' && python3 -m unittest discover -s tests -p 'test_clean_push.py' && python3 -m unittest discover -s tests -p 'test_clean_revalidation.py' && python3 -m unittest discover -s tests -p 'test_clean_result.py' && python3 -m unittest discover -s tests -p 'test_clean_stop.py' && python3 -m unittest discover -s tests -p 'test_clean_resolution.py' && python3 -m unittest discover -s tests -p 'test_status_doctor_update.py' && python3 -m unittest discover -s tests -p 'test_project.py'`
 
 **Checkpoint**: Every target of every apply ends in a stage, a reason and,
 unless not attempted, a reconciliation record.

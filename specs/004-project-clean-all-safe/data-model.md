@@ -107,9 +107,17 @@ R-57, withdrawing R-51(c)'s known limit, and R-59 D5). The rule extends to
 present rows spelled differently with the same realpath, or with the same
 admin id, which both pass the two-way check: each is
 `registration-mismatch` too, in `--all-safe` and in single mode (lead
-ruling R-67 (c), lane 3's L-4). Until region `evidence` builds that
-extension, T049's single-mode match fails closed for P, its realpath
-matching both.
+ruling R-67 (c), lane 3's L-4). It is built, as `shared_identities()` in
+region `evidence` (evidence follow-up 2, merged as `a5156a5`; lead ruling
+R-81 (a)). The comparison is among the present rows one `worktree_rows()`
+call inspects together, before any status probe, so that neither twin is
+probed; in single mode `match_target()` matches P against the whole
+registry by realpath, so P's twins are among P's rows. It leaves two
+residuals: a twin made after planning, which revalidation does not see,
+since it rebuilds the target's row alone, goes to US6 (R-81 (a): a fresh
+registry read showing another present entry with the target's realpath
+or admin id gives `identity-changed`); and a twin past the row cap is not
+compared, the plan being `inspect-cap` anyway.
 
 ### Branch evidence (D6, D7)
 
@@ -278,8 +286,9 @@ or the deadline passed while
 planning (`deadline-exceeded`), each row it stopped being `inspection-error`
 with a `deadline-exceeded` row error, never left unprobed (lead rulings R-67
 (a) and R-69; T099). In single mode those three are non-blocking
-notes about other rows, and only P's own row and the repository-wide probes
-decide (D13). In report mode above 128 rows, the `inspect-cap` note alone
+notes about other rows, and only P's own row, P's match and the
+repository-wide probes decide (D13; lane 3's L-7). In report mode above
+128 rows, the `inspect-cap` note alone
 does not make it incomplete. `apply_allowed` is false for every report and
 for any plan that is incomplete or carries a refusal.
 
@@ -352,11 +361,16 @@ target:
 | 6. the combined status probe in the target, which must print nothing | Git child | `state-changed` |
 | 7. the hidden-state probe | Git child | `contains-submodule` (a gitlink); `hidden-local-state` |
 
-At most five Git children (steps 1, 3, 4, 6 and 7), from T084 on; until
-then T055's interim full re-read runs 6 or 7 where row 4b or row 5 runs,
-and T084 restores the bound (lead ruling R-68 (d)). A value null in the plan
-and null again is no difference; a value that cannot be re-read, a
-timed-out call included, is a difference, with its step's reason. The first
+At most five Git children (steps 1, 3, 4, 6 and 7), as T084 built them
+(lead ruling R-75 (i)), the identity probe counted once: a line feed in
+the root's or the common directory's path makes step 1 read row 3 again,
+one child per option, as design D6 allows for "the rare repeat"
+(`design.md:298-302`), so that a revalidation then runs up to 8 children
+and the final rescan up to 6, a fill of the `project-clean` delta's bound
+(its `spec.md:825-826`; lead ruling R-82 (c), lane 3's LOW-4). A value
+null in the plan and null again is no difference; a value that cannot be
+re-read, a timed-out call included, is a difference, with its step's
+reason. The first
 target's revalidation is the preflight of every selected target: its steps 3
 and 4 and its filesystem reads compare every selected target's registration,
 `locked` and filesystem identity, branch tip and upstream object, beside the
@@ -365,10 +379,14 @@ with that step's reason, nothing removed and later targets `not-attempted`
 with `batch-stopped`; each target's steps 6 and 7 (its ignored-file state and
 classification among them) run only in its own revalidation (research.md
 R16, lead ruling R-41). After target k's
-removal child is reaped, its rescan runs steps 1 to 4 again (three Git
-children); when k ends as a plain `removed` they are target k+1's steps 1 to
-4, and otherwise, or after the last spawned target, they are the final
-rescan.
+removal child is reaped, its rescan runs steps 1 to 4 again, as built: the
+identity probe, the manifest re-read, the registry listing and row 6's
+full ref listing (`refs/heads refs/remotes`), three Git children and a
+file read. The full listing is a superset of step 4's narrowed one, which
+is how design D7's "its rescan runs the same three" (`design.md:374`) is
+read (lead rulings R-77 (a) and R-82 (a); lane 3's LOW-3). When k ends as
+a plain `removed` they are target k+1's steps 1 to 4, and otherwise, or
+after the last spawned target, they are the final rescan.
 
 `probes_performed` counts the Git children of that target's revalidation,
 the three it shares with the previous target's rescan included: at most 5,
@@ -535,6 +553,15 @@ The driver reads the slot by the `Invocation`'s phase: it raises
 | applying, reconciling | an unexpected exception | reconciling (an in-flight removal waited for; that target `unknown` with `internal-error`, later ones `not-attempted`; research.md R6) |
 | reconciling | record printed | exit by the table below |
 
+The `Invocation`'s phase follows these states. The pipeline sets `apply`
+after the confirmation and the slot read (lead ruling R-56 Q-1 and Q-2);
+then `reconciling` is set before every rescan, and `apply` again before
+the next target's own steps when the target ended a plain `removed` and the
+slot is empty, so that each rescan child gets
+`min(5 s, reserve remaining)` and a second SIGINT counts during every
+rescan, a fail-safe reading; the reserve counted from the exit stays
+T099's (lead rulings R-83 P-3 and R-80 P-3; T093).
+
 ### States of push and delete-branch
 
 | From | Event | To |
@@ -567,6 +594,47 @@ final stage (lead ruling R-56 Q-10).
 A child that exits nonzero on its own is `failed`, signal or not; only a
 child killed at the 300 s ceiling, or whose exit was not observed, is decided
 by the rescan between `removed` and `unknown`. No target is retried.
+
+A spawned target is `removed` only when the rescan shows its registry entry
+and its path both gone and `reconciled` is true (FR-034; the
+`project-clean` delta's `spec.md:891-895`; lane 3's L-5). A rescan read
+that fails or is cut marks the record: the identity probe, while the
+planned root and common directory are still there by `lstat`, the registry
+listing, the ref listing or the `lstat` of the planned path. After exit 0,
+a marked record, or one whose entry and path are gone with `reconciled`
+false, is `unknown` with `reconciliation-incomplete` (its
+`spec.md:1012-1018`; `BA:518-526` at `da33d92`); an unmarked unreconciled
+record is `unknown` with `unconfirmed-removal`, reached only when every
+read succeeded and showed the removal not done (its `spec.md:966-970`), or
+when the identity was found lost or different (the
+`project-clean-review-safety` delta's `spec.md:215-217`); a child killed at
+the ceiling, or whose exit was not observed, keeps `removal-ceiling`. The
+mark is the record's class, `UnfinishedRescan`, a `dict` subclass, so that
+equality and every document are unchanged (lead ruling R-78 (e), second
+amendment; T085).
+
+Three overlaps of the delta's rules are decided this way, as built (lead
+ruling R-82 (a), lane 3's LOW-6):
+
+- Exit 0, nothing removed, and a rescan read that fails: `unknown` with
+  `reconciliation-incomplete`, by the mark, where `BA:520-521` (at
+  `da33d92`) reads "exit 0 without that evidence is `unknown` with
+  `unconfirmed-removal`"; the delta's `spec.md:966-970` speaks only of
+  reads that succeed, and the stage and exit status, `unknown` and 1, are
+  the same either way.
+- A ceiling child whose repository the rescan finds replaced: `unknown`
+  with `removal-ceiling`, every field null and no note. The
+  `project-clean-review-safety` delta's `spec.md:215-217` gives a replaced
+  repository `unconfirmed-removal`, and the `project-clean` delta's
+  `spec.md:253-256` gives the ceiling `removal-ceiling` "in both cases";
+  the build takes the second (R-78 (e)), exit 1 either way.
+- A ceiling child whose branch also moved or was deleted:
+  `removal-ceiling` covers it, the target `removed` when its entry and path
+  are gone and reconciled, so `branch-advanced-after-removal` and
+  `branch-missing-after-removal` do not show, one reason per target (the
+  `project-clean` delta's `spec.md:889-895`), and the run exits 1, where a
+  branch reason alone would give 2 (D19, its 1 row first); the record's
+  `branch_present` and `branch_sha` still show the branch.
 
 Later targets take `interrupted` after a signal, `deadline-exceeded` when
 the floor or deadline stopped the run, and `batch-stopped` otherwise.
@@ -612,7 +680,7 @@ check row, its rule unchanged; `update --apply --component shape` or
 | targets per run | 16 |
 | `ignored_entries`, `status_records`, `ignored_samples` | 64, 4,096, 8 |
 | reflog read, manifest read | 64 KiB, 1 MiB |
-| revalidation, final rescan | at most 5 and 3 Git children |
+| revalidation, final rescan | at most 5 and 3 Git children; 8 and 6 when a line feed repeats the identity probe (D6) |
 
 The timing values live in one module-level table, `TIMING`, read at call
 time only, never captured in a default argument or a derived constant
