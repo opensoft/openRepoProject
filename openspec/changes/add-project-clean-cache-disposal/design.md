@@ -7,10 +7,13 @@ Lane: openRepoProject-5
 See `proposal.md` for why and what, and the deltas under `specs/` for the
 requirements. Citations follow the proposal's key: the packet at `da33d92`
 (`BA`, `SY`, `OV`, `HO`), change 1 (`CAS`, `CAS/pc`, `CAS/rs`, `CAS/cmd`) and
-change 2 (`APO`, `APO/ov`) at `961c405`, draft PR #19 at `c462d87` (`PR19/pc`,
-`PR19/rs`), and `project:N` at `961c405`; main is now `e9d6711`, with the same
-`openspec/`, `ideation/` and `project` (L-15). The lane's rulings are L-1 to
-L-17 and B-1 to B-52, and A-9, A-23 and A-24 for #23; this change's own
+change 2 (`APO`, `APO/ov`) at `961c405`, draft PR #19 at `a664799` (`PR19/pc`,
+`PR19/rs`; at `c462d87` before round B10), and `project:N` at `961c405`; at
+`origin/main` `15504f1`, `project`, `openspec/specs/` and the directories of
+change 1 and change 2 equal `961c405`'s, `ideation/` differs by PR #16's
+packet revision (`e45155a`), and `openspec/changes/` gains two other changes
+(L-15). The lane's rulings are L-1 to
+L-17 and B-1 to B-55, and A-9, A-23 and A-24 for #23; this change's own
 decisions are CD-1 to CD-18 in `proposal.md`, and the alignment review's
 findings (SA-n, QA-n, G1 to G5) are resolved in its table. The council (P-n,
 S-n and AE-n) read `9ebe9f0`; its VALID verdicts, ruled as B-16 to B-24, are
@@ -35,7 +38,13 @@ and B-45, are applied in round B7 (proposal, "Re-read and Codex Findings
 (round B7)"). Round B8 edited only the proposal and `tasks.md` (B-46). Lane
 openRepoProject-5's adversarial read of `fe5b245` (RB) and the M2 of its
 composition read of #26, #27 and #29 (RD), ruled as B-47 to B-52, are applied
-in round B9 (proposal, "Re-read and Codex Findings (round B9)").
+in round B9 (proposal, "Re-read and Codex Findings (round B9)"). Lane 3's
+confirm read of round B9 (W2's LOW 1 to 8) and reader RF's composition read at
+the final heads (its H1, and this change's share of its M1), ruled as B-53 and
+B-54, with the lead's B-55 on that round's choices, are applied in round B10
+(proposal, "Re-read and Codex Findings (round B10)"): the two blocks written on
+PR #19's text are rewritten on its text at `a664799`, its round (b), and D4
+restates the fit on it.
 
 How the packet's contract and the rulings map to the decisions below:
 
@@ -94,6 +103,9 @@ How the packet's contract and the rulings map to the decisions below:
 | B-50 | the recommendation on `.pytest_cache` turns to no for this change, with its reasons and what a later change would need (RB's MEDIUM-3) | Non-Goals, Risks, Migration Plan, Open Questions |
 | B-51 | RB's five LOWs: an ignored record whose path is absolute or holds an empty, `.` or `..` component is `cache-unverified`; the access check's premise corrected, a read-only mount being seen; the batch block's reflog sentence excepts the cache walk's timed-out reads; the digest covers the disposal decision and not the entry counts, by decision; an entry name that is not valid UTF-8 is blocking, and a no-follow open refused at plan time is `cache-unverified` | Context, D2, D3, D5, D8, Risks |
 | B-52 | `tasks.md` 2.1 verifies the re-check of every block written on change 1's or PR #19's text by `diff -u`, `validate` being a second check only, and returns a re-base that changes this change's added text to Brett Heap (RD's M2) | Migration Plan |
+| B-53 | lane 3's confirm read of round B9 (W2), LOW 1 to 8: the round B9 record's citation form and LOW-2 count; LOW-1's empty and `.` components named in the proposal; the `faccessat2` condition kept wherever the access check is said to see a read-only mount; a sticky directory's `partial` case; task 2.1's word-level check, a conjunction that a list extension moves allowed; the Migration Plan's step 2 naming the re-base on main and the return to Brett Heap; the review-safety ADDED requirement's ancestor-symlink clause | D3, Risks, Migration Plan |
+| B-54 | reader RF's H1 and this change's share of its M1: the two blocks written on PR #19's text rewritten on its text at `a664799`, its round (b), the revalidation's step lists kept in one order; the fit restated on PR #19's D14 at `a664799`, and the caps' Open Question with it; every re-base or re-copy checked by a second diff, from this change's block as committed at its ratified head, and `tasks.md` 3.2 given its return route | Context, Goals, D4, D10, D14, Migration Plan |
+| B-55 | the lead's rulings on round B10's first drafts: its choices kept; the enumeration's child at revalidation follows PR #19's round (b) rule (R-171), a cut by the work deadline giving `deadline-exceeded` and its own failure or timeout `state-changed`, B-34's preflight rule unchanged; D13's and the B-19 decision's figures labelled "at `c462d87`"; the Context's account of main corrected to `origin/main` at `15504f1` | Context, D10, D13 |
 
 What in `project` shapes the approach:
 
@@ -151,7 +163,9 @@ Facts checked here, on Git 2.43.0 and Linux 6.18, with Python 3.10.21 and
   link, never outside the worktree, never recursively, and say exactly what was
   and was not deleted when a stage stops (D7, D8).
 - Keep change 1's bounds: the 50 s work deadline, the 64 s run bound, the
-  removal floor, at most five children per revalidation, and the fit (D4, D12).
+  removal floor, at most six children per revalidation, seven where the plan
+  read `extensions.worktreeConfig` as true, as PR #19 states them at `a664799`
+  (B-54), and the fit (D4, D12).
 
 **Non-Goals:**
 
@@ -367,9 +381,12 @@ these; its decision stands on the cases above, each a refusal that the plan
 cannot see. A sticky directory is computable from what the walk already reads,
 the directory's `S_ISVTX` and owner and each entry's `st_uid` against the
 effective uid, but the check does not add it: such a target fails closed,
-`refused` with nothing deleted, so the case is no safety gap, and B-51 changes
-behaviour only to close one; each run then stops at that target, and its line
-names it.
+`refused` or `partial`, never deleting anything but cache entries: `refused`,
+nothing deleted, when the stage's first removal meets an entry the user does
+not own, and `partial` when the user's own entries in that directory come
+first (D8; B-53, lane 3's LOW 5). So the case is no safety gap, and
+B-51 changes behaviour only to close one; each run then stops at that target,
+and its line names it.
 
 ### D4. The caps and the fit
 
@@ -438,16 +455,18 @@ preflight requires each listed cache's entries to equal the plan's, whose sum
 the plan already capped at 4,096. The check adds no filesystem call: the
 preflight already `lstat`s every entry it re-lists.
 
-The fit is change 1's (CAS design D14; `BA:729-735`) at 150 ms per Git child and
-0.3 s per removal, with the enumerations added:
+The fit is change 1's as PR #19 states it at `a664799` (its design.md D14,
+lines 873-946; `BA:729-735`), at 150 ms per Git child and 0.3 s per removal,
+with the enumerations added, for a plan that read `extensions.worktreeConfig`
+as false (B-54; the rows read on `c462d87` before round B10):
 
 | Mode | Children | Time | Fits the 50 s work deadline |
 | --- | --- | --- | --- |
-| all-safe, 128 rows, 16 enumerations, 16 targets | 7 + 128 + 16 + 16 + 80 + 3 = 250, and 16 removals | 37.5 s + about 4.8 s = 42.3 s | yes for the Git children and removals: the 16th target reaches its cache stage or spawn after 247 children and 15 removals, at about 41.55 s, with 8.45 s left before the walk's and the stages' filesystem time; with that time at B-25's bound, no at the top of the measured cost, 15 of 16 targets reaching their stage (below); in B-33's worst shapes fewer, or none at a thread per call (below) |
-| report, 256 rows | 7 + 256 + 16 + 16 = 295 | 44.25 s, plus the walk's about 2.0 s (B-25): about 46.3 s, and 44.25 + 5.6 = about 49.85 s at a thread per call | yes for ordinary trees, by about 0.15 s at a thread per call; in B-33's directory shape only at 169 us (below) |
-| single, 128 rows plus P | 7 + 129 + 1 + 1 + 5 + 3 = 146, and 1 removal | 21.9 s + about 0.3 s | yes |
-| all-safe, one enumeration per candidate (no `cache_rows`) | 7 + 128 + 127 + 16 + 80 + 3 = 361 | 54.15 s + 4.8 s | no |
-| report, likewise | 7 + 256 + 255 + 16 = 534 | 80.1 s | no |
+| all-safe, 128 rows, 16 enumerations, 16 targets | 8 + 128 + 16 + 16 + 16 + 96 + 3 = 283, and 16 removals | 42.45 s + about 4.8 s = 47.25 s | no for the Git children and removals: the 15th target reaches its cache stage or spawn after 274 children and 14 removals, at about 45.3 s, and the 16th after 280 children and 15 removals, at about 46.5 s, with 3.5 s left, so 14 of 16 reach it before the floor, before the walk's and the stages' filesystem time; with that time at B-25's bound, 11 of 16 at the top of the measured cost (below); in B-33's worst shapes fewer, or none at a thread per call (below) |
+| report, 256 rows | 8 + 256 + 16 + 16 + 16 = 312 | 46.8 s, plus the walk's about 2.0 s (B-25): about 48.8 s, and 46.8 + 5.6 = about 52.4 s at a thread per call | yes for ordinary trees through one worker; no at a thread per call, and in B-33's directory shape at no measured cost (below) |
+| single, 128 rows plus P | 8 + 129 + 1 + 1 + 1 + 6 + 3 = 149, and 1 removal | 22.35 s + about 0.3 s | yes |
+| all-safe, one enumeration per candidate (no `cache_rows`) | 8 + 128 + 16 + 16 + 127 + 96 + 3 = 394 | 59.1 s + 4.8 s | no |
+| report, likewise | 8 + 256 + 16 + 16 + 255 = 551 | 82.65 s | no |
 
 The last two rows are why CD-6 adds `cache_rows`. A cache stage spawns no
 child. In each of its two passes, the preflight and the removals, it opens one
@@ -484,6 +503,40 @@ call, the shape of feature 004's `fs_call` (`clarifications.md`, S-4): at
 224 us, 8,500 stage calls take 1.9 s and the walk's 9,000 take 2.0 s, about
 2 s each; at 622 us, a thread per call, 5.3 s and 5.6 s. A 512-entry stage
 took about 0.25 s here (AE-4's 1,248 calls in 236 to 273 ms).
+
+B-54 restates the fit on PR #19's text at `a664799`, its round (b), on which
+this change's two blocks are written since round B10 (reader RF's H1). PR #19's
+D14 (its design.md:873-946) has F = 8, D21's reachability probe for at most 16
+rows, and six revalidation children a target, seven where the plan read
+`extensions.worktreeConfig` as true (PR19/pc:1020-1022, PR19/rs:76-77): where it
+read it as false, 8 + 128 + 16 + 16 + 96 + 3 = 267 children, the 16th removal
+spawning at 44.1 s with 5.9 s left, by the formula this section uses (its
+design.md:881 and :899-903). With this change's 16 enumerations, target k
+reaches its cache stage, or its spawn, after the 184 planning children (8 + 128
++ 16 + 16 + 16), the 6k revalidation children of it and the targets before it,
+and k - 1 removals, at 0.15 x (184 + 6k) + 0.3 x (k - 1) = 27.3 + 1.2k s: the
+14th at 44.1 s, the 15th at 45.3 s and the 16th at 46.5 s, so at the packet's
+model 14 of 16 targets reach their stage before the floor before any filesystem
+time is counted, as the table's first row says. With the walk and the stages at
+B-25's bound, through one worker, 11 of 16 do at 224 us a call, or 12 with the 8
+cache targets last, and 12 at 169 us; at a thread per call 6 do with the 8 cache
+targets first, and 9 with them last. At change 1's measured costs, PR #19's
+estimate for D21's 32 children (about 7.7 s, its design.md:918-921) added to the
+16th removal's 23.6 s (its `tasks.md`:115), the enumerations' 3.7 s and the walk
+and the stages bring the 16th to about 38.9 s through one worker, so all 16 fit
+there, and to about 45.9 s at a thread per call, past the floor. Where the plan
+read `extensions.worktreeConfig` as true, PR #19's D14 itself finds that seven
+children a target fit 14 removals, not 16, and that with its probe for each
+linked row a plan of 128 rows removes nothing, every target `not-attempted` with
+`deadline-exceeded` and the run exiting 1, never unsafe (its design.md:903-913);
+whether that stands is its open question LQ-20, before Brett Heap, and this
+change's enumerations add to those children. The paragraphs of this section that
+follow keep their arithmetic on change 1's terms at `c462d87`, F = 7 with no
+reachability probe and five revalidation children a target, where target k
+arrives at 24.75 + 1.05k s, 2.55 + 0.15k s earlier than at `a664799`, and the
+report mode's Git children take 2.55 s less; each count of targets there is
+therefore an upper bound on that count at `a664799`, and the counts of this
+paragraph are the ones that the Open Question on the caps cites.
 
 The fit for ordinary trees, restated with those costs, with the walk's bound of
 B-25 and with the stage's removals waited for (B-16); B-33's worst case follows
@@ -595,10 +648,13 @@ handoff, through `fs_call`, idle and at the workstation's usual load, as
 change 1's task 2.1 measured its probes; a measured cost that breaks the fit
 lowers `cache_rows` in steps of 4 and the entry caps in powers of two before
 the feature starts. The fit sentence of the bounds block counts the Git
-children and states the walk's and the stages' filesystem calls as outside
-it, and a target whose stage or spawn cannot start under the floor is
+children and the removals, with the first 14 of 16 targets starting before the
+floor on that count and the last two `not-attempted` (lane openRepoProject-2's
+check of round B10), states the walk's and the stages' filesystem calls as
+outside it, and a target whose stage or spawn cannot start under the floor is
 `not-attempted` with `deadline-exceeded` as for every removal (QA-5), so the
-margins above are design arithmetic, not a promise of the spec.
+margins above that count those calls are design arithmetic, not a promise of
+the spec.
 
 With `--retire-branches` (#23, PR #26) a run spawns branch children too, and #26
 states the joint fit at `9b67e8c` (its design.md D7), under A-23, A-24 and A-25
@@ -954,16 +1010,34 @@ B-15), and where it is missing the check fails closed.
 
 ### D10. Revalidating a cache target
 
-The targeted revalidation keeps change 1's order and its limit of five Git
-children. In the target worktree, a target with listed caches runs the D3 child
+The targeted revalidation keeps the order and the limit of PR #19's text at
+`a664799`, on which the MODIFIED "Cleanup revalidates destructive actions" is
+written (B-54): six Git children, seven where the plan read
+`extensions.worktreeConfig` as true (PR19/rs:76-77). In the target worktree, a
+target with listed caches runs the D3 child
 instead of the combined probe: it must read no record other than ignored ones,
 and its ignored records must be exactly the plan's `paths` as `[path, kind]`,
 the trailing `/` of a directory record giving `directory`; the baseline
 signature's `ignored_files` is recomputed from those records with the combined
-probe's bound of 64. A difference, a failure or a timeout refuses the target
-with `state-changed` (a value that cannot be re-read is a difference,
-CAS/rs:92-93), before any cache is touched. The hidden-state probe follows as
-before.
+probe's bound of 64. A difference, a failure of the child, or a run past its
+own budget while the deadline is not the limit, refuses the target with
+`state-changed` (a value that cannot be re-read is a difference,
+CAS/rs:92-93), before any cache is touched. A child that the work deadline
+cuts counts as no difference, and the target and every later one are
+`not-attempted` with `deadline-exceeded`, nothing touched, by the one rule that
+PR #19's round (b) states for every Git child of the revalidation
+(PR19/rs:117-127, lane 2's R-171; B-55); the child is one of those steps, so
+the block needs no sentence of its own for it. B-34's rule for a read of the
+stage's preflight is unchanged. The hidden-state probe and PR #19's
+`worktree-only-commits` check follow it, in that order, as for every target.
+Where the two step lists meet (reader RF's H1), the block's order is therefore:
+the combined status probe, or for a target whose plan lists caches the D3
+child in its place, then the hidden-state probe, then the
+`worktree-only-commits` check. That keeps the meaning of both: this change's,
+the D3 child in the combined probe's place and before the hidden-state probe,
+and PR #19's, the hidden-state probe and then the `worktree-only-commits` check
+after the in-worktree status check. The D3 child takes a place and adds none,
+so the count stays PR #19's six, or seven.
 
 ### D11. JSON and what the person sees
 
@@ -1151,8 +1225,10 @@ directory that holds it (D7), which is the sense in which CD-18 calls the stage
 safer. The window is stated, not closed: one combined status probe after each
 `disposed` stage would close it at one Git child per cache target, at most 266
 children and 16 removals, 39.9 s + 4.8 s = about 44.7 s at the packet's model
-before any filesystem time. With the walk and the stages at B-25's bound
-through one worker (D4), it costs about one target: each earlier cache target
+before any filesystem time, these figures and the counts below being at
+`c462d87`, on change 1's terms before PR #19 changed them (B-55; D4). With
+the walk and the stages at B-25's bound through one worker (D4), it costs
+about one target: each earlier cache target
 delays target k by 0.15 s more, and 16 cache targets and an 8,192-entry walk
 cannot come together, since 16 selected targets hold the walk to the 4,096
 entries they list. With 16 cache targets the 15th arrives at 40.5 + 2.1 + 1.0
@@ -1173,13 +1249,14 @@ own check.`; otherwise it is change 1's line, unchanged.
 ### D14. Tests
 
 The deltas hold 55 scenarios in `project-clean` (5 classification, 14 retire,
-11 batch, 6 bounds, 8 reconcilable result and 11 ADDED), 28 in
-`project-clean-review-safety` (6 preservation, 11 revalidation, 4 narrow
+11 batch, 6 bounds, 8 reconcilable result and 11 ADDED), 31 in
+`project-clean-review-safety` (6 preservation, 14 revalidation, the 13 of
+PR #19's text at `a664799` and this change's one (B-54), 4 narrow
 guarantee and 7 ADDED, B-26's among them) and 8 in `project-overview` (the one
 MODIFIED block of B-14). The new ones, 1 + 1 + 1 + 11 + 1 + 1 + 1 + 7 + 1 = 25,
 each get a test
-named after it. Of the 66 carried ones, which keep the tests of features 004
-and 005, 62 are byte-exact and four are edited, each to name its ignored file
+named after it. Of the 69 carried ones, which keep the tests of features 004
+and 005, 65 are byte-exact and four are edited, each to name its ignored file
 as not a Python bytecode cache: "Ignored-file bound" and "A merged worktree has
 ignored local files", as before, and, under B-22 and lane openRepoProject-4's
 precision, change 1's "Every protected classifier" in the batch block and
@@ -1294,10 +1371,13 @@ cache phase" and "A file placed in a cache directory during the stage".
   wrote] -> The plan's access check keeps the row `cache-unwritable`, not
   selected and stopping nothing, its line saying to fix the ownership or mode
   and re-run (B-20), and so it does for a read-only mount, which the check
-  sees on Linux 5.8 or later (B-51, D3). Only a failure the check cannot see,
-  a sticky directory, an append-only or immutable attribute or a change made
-  after the plan, stops the run at that target, `refused` with
-  `cache-changed` and nothing deleted, and the human line names it each time.
+  sees on Linux 5.8 or later where the C library makes the effective-ids check
+  with the `faccessat2` call (B-51, B-53, D3). Only a failure the check cannot
+  see, a sticky directory, an append-only or immutable attribute or a change
+  made after the plan, stops the run at that target, `refused` with
+  `cache-changed` and nothing deleted, or `partial`, only cache entries
+  deleted, where a sticky directory also holds the user's own entries (B-53),
+  and the human line names it each time.
 - [The overview reads a cache-proven row as `ignored-local-files` where
   `project clean` reads it `merged-removable`, whether or not `project clean`
   then excludes it] -> The safe direction: its suggestion is the read-only
@@ -1355,9 +1435,11 @@ cache phase" and "A file placed in a cache directory during the stage".
    adopting the limit on the stage's directory opens (B-33).
 2. Before the Speckit handoff (`tasks.md` section 2): change 1 archived after
    feature 004 merges, with PR #19's amendment of change 1 landed (L-16), or
-   PR #19 closed, and the two blocks written on its text re-checked, each block
-   written on change 1's or PR #19's text checked by `diff -u` against the
-   archived requirement (B-52); lane
+   PR #19 closed, and the two blocks written on its text at `a664799` (B-54)
+   re-checked, or re-based on change 1's text at main if PR #19 closes
+   unmerged (B-52), each block written on change 1's or PR #19's text checked
+   by the two diffs below, a change to this change's added text returning the
+   block to Brett Heap before the Speckit handoff (B-52, B-53, B-54); lane
    openRepoProject-4's agreement on the `project-overview` delta's diff, given
    on 2026-10-19 for `b4d3e12`, and again on B-22's diff before its commit as
    `9f30fb9` (B-14, B-22), and its byte check of B-30's `4d5855a`, given on
@@ -1383,10 +1465,31 @@ cache phase" and "A file placed in a cache directory during the stage".
    landed there meanwhile, such as lane openRepoProject-4's planned one for
    feature 005's open Q7 A, which the archive would otherwise drop silently,
    since a MODIFIED block replaces its requirement whole; a `diff -u` of main's
-   block against this change's shows additions only, and the validation passes
-   again (B-29, `tasks.md` 3.2). `add-project-clean-branch-retirement` archives
-   after this change, writing its blocks of the five requirements both changes
-   modify on this change's archived text.
+   block against this change's shows additions only, the second diff below
+   shows no change to this change's added text, and the validation passes
+   again (B-29, B-54, `tasks.md` 3.2). `add-project-clean-branch-retirement`
+   archives after this change, writing its blocks of the five requirements both
+   changes modify on this change's archived text.
+
+Each re-check, re-base or re-copy of a block in steps 2 and 8 (`tasks.md` 2.1
+and 3.2) is checked by two diffs (reader RF's M1; B-54). The first, `diff -u`
+of the archived block, or of main's block, against this change's re-based
+block, shows additions only, as tasks 2.1 and 3.2 say, and is kept. It cannot
+see a change to this change's own words, which after the earlier change
+archives are all additions to the archived block, so a re-base that reworded
+them would still show additions only, validate and archive. The second,
+`diff -u` of this change's block as committed at its ratified head against the
+re-based block, shows only the archived block's own text carried in: for the
+two blocks written on PR #19's text, change 1's archived text in place of
+PR #19's at `a664799`; for the other blocks of `project-clean` and
+`project-clean-review-safety`, change 1's archived text in place of its text at
+`961c405`; and for the `project-overview` block, main's text in place of change
+2's at `961c405`, every amendment that landed there included. Any change that
+the second diff shows to this change's own ratified words, its added
+sentences, clauses and scenarios and its edits of carried scenarios, returns
+the block to Brett Heap before the Speckit handoff (step 2) or before the
+archive (step 8); a sentence that lane openRepoProject-4 asks for in step 8 is
+such a change.
 
 Rollback: revert the realization commit on `main`. `__pycache__` entries
 already disposed of are written again by Python on the next import; a loose
