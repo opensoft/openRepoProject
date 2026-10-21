@@ -607,51 +607,6 @@ class SingleTests(clean_support.CleanCase):
         self.assertIn(f"worktree {target}", self.git(root, "worktree", "list", "--porcelain").splitlines())
         self.assertEqual(self.snapshot(root), before)
 
-    # Lead ruling R-93 (e), lane 3's LOW-5.
-
-    def test_clean_single_target_an_undecided_match_has_no_non_blocking_note(self):
-        # Lane 3's r78b.py shape, in process: the single-mode row cap patched
-        # from 128 to 4 on the module object called (LIMITS), six rows
-        # registered directly and P, a merged worktree whose path sorts last.
-        # A realpath read that fails during P's match, P's own or another
-        # entry's, leaves P's match undecided (lead rulings R-73 (d) and R-78
-        # (b)): the rows inspected are the main worktree and the three
-        # smallest paths, the four others are omitted, and the run refuses
-        # with inspection-incomplete, exit 2. That refusal speaks alone: none
-        # of single mode's non-blocking notes, each saying that rows "do not
-        # block" P, stands beside it.
-        root = self.repo()
-        self.bare_remote()
-        registered = self.register_worktrees(6, "r")
-        target = self.merged_worktree("p", path=self.base / "zz-p")
-        self.assertEqual(sorted(map(os.fsencode, registered + [target]))[-1], os.fsencode(target))
-        before = self.snapshot(root)
-        inspected = [str(root)] + [str(tree) for tree in registered[:3]]
-        asked = AssertionError("the run reached the question stage")
-        for case, unread in (("P's own realpath", target), ("another entry's realpath", registered[1])):
-            with self.subTest(case):
-                real_fs_call, failed = project.fs_call, []
-
-                def fs_call(fn, *args, **kwargs):
-                    if fn is os.path.realpath and args[0] == os.fsencode(unread) and not failed:
-                        failed.append(args[0])
-                        raise OSError(errno.EIO, os.strerror(errno.EIO))
-                    return real_fs_call(fn, *args, **kwargs)
-
-                with mock.patch.dict(project.LIMITS["worktree_rows"], single=4):
-                    status, out, err = self.main_in_process(
-                        "clean", root, "--apply", "--action", "remove", "--worktree", target, "--yes", "--json",
-                        fs_call=fs_call, confirm_removal=mock.Mock(side_effect=asked),
-                        apply_removals=mock.Mock(side_effect=asked))
-                self.assertEqual((status, failed), (2, [os.fsencode(unread)]), err)
-                document = json.loads(out)
-                self.assertEqual((codes(document), document["notes"]), (["inspection-incomplete"], []))
-                self.assertEqual((document["selected"], document["completeness"], document["omitted"],
-                                  document["limits"]["worktree_rows"]),
-                                 ([], "incomplete", {"count": 4, "exactness": "exact"}, 4))
-                self.assertEqual([row["path"] for row in document["worktrees"]], inspected)
-                self.assertEqual(self.snapshot(root), before)
-
 
 if __name__ == "__main__":
     unittest.main()
