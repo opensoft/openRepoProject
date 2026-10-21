@@ -10,7 +10,6 @@ import contextlib
 import json
 import os
 import re
-import shlex
 import signal
 import subprocess
 import sys
@@ -18,7 +17,8 @@ import time
 import unittest
 from unittest.mock import patch
 
-from clean_support import CLI, LAUNCHER, REAL_GIT, TIMEOUT, CleanCase, load_project, timing_table, transcript
+from clean_support import (CLI, LAUNCHER, TIMEOUT, CleanCase, child_log, install_counting_git,
+                           install_fake_git, load_project, timing_table, transcript)
 import launch_project
 
 # T005's table as literals (R10; data-model.md "Constants"), in seconds.
@@ -38,19 +38,9 @@ MUTATORS = {"update", "setdefault", "pop", "popitem", "clear", "__setitem__", "_
 # (a lock, a slot object) compares by identity and is left out.
 PLAIN_DATA = (dict, list, tuple, set, frozenset, str, bytes, int, float, bool, type(None), re.Pattern)
 
-# Lane A's fake git: a status child records its own pid, its parent's pid and the
-# parent's process group, then sleeps until it is cut, ending by itself after 10 s;
-# every other command, the version check and the pins included, is the real git's.
-FAKE_STATUS_GIT = """#!/bin/sh
-case " $* " in
-*" status "*)
-    printf '%s %s %s\\n' "$$" "$PPID" "$(ps -o pgid= -p "$PPID" | tr -d ' ')" > {part}
-    mv {part} {record}
-    exec sleep 10
-    ;;
-esac
-exec {real} "$@"
-"""
+# The status child's lifetime under the status-hangs-in fake: it sleeps until it is
+# cut, ending by itself after 10 s.
+STATUS_LIFETIME = 10
 
 
 def project_tree():
@@ -112,14 +102,6 @@ def timing_reads(node, where, found):
 
 
 class TimingTests(CleanCase):
-    def timing_repo(self):
-        """A repository with one commit on main, made by the real git."""
-        path = self.base / "repo"
-        path.mkdir()
-        self.git(path, "init", "-q", "-b", "main")
-        self.commit(path, allow_empty=True)
-        return path
-
     def test_clean_timing_table_holds_every_time_constant(self):
         project = load_project()
         self.assertEqual(project.TIMING, REAL_TIMING)
@@ -252,7 +234,7 @@ class TimingTests(CleanCase):
         self.assertIn("no_such_key", refused.stderr, transcript(refused))
 
     def test_clean_launcher_replaces_the_table_keeps_project_s_streams_and_exit_status(self):
-        repo = self.timing_repo()
+        repo = self.repo()
         statuses = set()
         for arguments in (("status", repo, "--json"), ("clean", repo), ("clean", "--no-such-flag"),
                           ("status", self.base / "missing")):
@@ -267,26 +249,28 @@ class TimingTests(CleanCase):
 
     def interrupted_status(self, repo, launcher, signum, label):
         """`project status REPO`, run as python3 project or through the launcher in a new
-        session, with lane A's fake git first on PATH; once the status child has started,
-        signum goes to project's pid alone. Returns project's pid, the child's record (its
-        pid, its parent's pid, its parent's process group), and project's exit status and
-        streams."""
+        session, with the counting wrapper first on PATH over the status-hangs-in fake:
+        the status child in REPO sleeps until it is cut, ending by itself after 10 s, and
+        every other command, the version check and the pins included, is the real git's.
+        Once the wrapper has recorded the status child, project's process group is read
+        while project runs, and signum goes to project's pid alone. Returns project's pid,
+        the status child's pid and its parent's pid (from the wrapper's first `status`
+        record) with project's process group, and project's exit status and streams."""
         bin_dir = self.base / f"bin-{label}"
-        bin_dir.mkdir()
-        record = self.base / f"status-child-{label}"
-        fake = bin_dir / "git"
-        fake.write_text(FAKE_STATUS_GIT.format(part=shlex.quote(f"{record}.part"),
-                                               record=shlex.quote(str(record)),
-                                               real=shlex.quote(REAL_GIT)))
-        fake.chmod(0o755)
-        env = {**self.env, "PATH": f"{bin_dir}{os.pathsep}{self.env.get('PATH', os.defpath)}"}
+        log = self.base / f"children-{label}.log"
+        fake = install_fake_git(self.base / f"fake-{label}", "status-hangs-in", path=repo,
+                                lifetime=STATUS_LIFETIME)
+        install_counting_git(bin_dir, log, real=fake)
         argv = [sys.executable, str(LAUNCHER if launcher else CLI), "status", str(repo)]
-        child = subprocess.Popen(argv, cwd=self.base, env=env, stdin=subprocess.DEVNULL,
-                                 stdout=subprocess.PIPE, stderr=subprocess.PIPE,
-                                 start_new_session=True)
+        child = subprocess.Popen(argv, cwd=self.base, env=self.path_first(bin_dir),
+                                 stdin=subprocess.DEVNULL, stdout=subprocess.PIPE,
+                                 stderr=subprocess.PIPE, start_new_session=True)
         try:
             deadline = time.monotonic() + TIMEOUT / 2
-            while not record.exists():
+            while True:
+                status = [record for record in child_log(log) if "status" in record.argv]
+                if status:
+                    break
                 if child.poll() is not None or time.monotonic() > deadline:
                     child.kill()
                     out, err = child.communicate()
@@ -294,18 +278,20 @@ class TimingTests(CleanCase):
                               f"exit {child.returncode}\n--- stdout ---\n{out.decode()}\n"
                               f"--- stderr ---\n{err.decode()}")
                 time.sleep(0.02)
-            fields = [int(field) for field in record.read_text().split()]
+            fields = [status[0].pid, status[0].ppid, os.getpgid(child.pid)]
             os.kill(child.pid, signum)
             out, err = child.communicate(timeout=TIMEOUT / 2)
         finally:
             with contextlib.suppress(ProcessLookupError, PermissionError):
-                os.killpg(child.pid, signal.SIGKILL)  # a status child left in project's group
+                # project's own group, which project leads (start_new_session above). Every Git
+                # child of `project status` leads a group of its own, so none is in this one.
+                os.killpg(child.pid, signal.SIGKILL)
             if child.poll() is None:
                 child.wait()
         return child.pid, fields, child.returncode, out.decode(), err.decode()
 
     def test_clean_launcher_replaces_the_table_runs_project_in_its_own_process(self):
-        repo = self.timing_repo()
+        repo = self.repo()
         for signum in (signal.SIGINT, signal.SIGTERM):
             name = signal.Signals(signum).name
             with self.subTest(signal=name):

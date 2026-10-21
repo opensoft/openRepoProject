@@ -48,21 +48,25 @@ Flags this table does not refuse keep the baseline's handling: without
 and an unused `--branch` or `--worktree` is ignored. `--worktree P` is
 expanded, joined to the working directory and realpath'd by one bounded
 call, and matched against every registry row: a row matches when its path
-equals it, or else when its realpath, one bounded call each, does, and a
-realpath that cannot be read counts as a match, failing closed (lead ruling
-R-69). Exactly one decided match names P's row; no match is
+equals it, or else when its realpath, one bounded call each, does. A
+realpath that cannot be read, P's own or any entry's, a call cut at the work
+deadline included, makes P's match undecided, failing closed (lead rulings
+R-69 and R-78 (b)). Exactly one decided match names P's row; no match is
 `worktree-not-found`; more than one match, by raw bytes or by realpath, or
 one not decided, selects nothing and leaves P's own evidence incomplete, so
 the run refuses with `inspection-incomplete`, exit 2, before any
 `target-excluded`, because P's own evidence is strict and an incomplete plan
 is refused first (lead rulings R-57, R-62 and R-67 (b)). A path two entries
 share is such a case, both entries also `registration-mismatch`,
-`inspection-error` rows. So is a P whose own realpath cannot be read: every
-entry the row cap takes counts as a match, none is exempt from the cap, so
-the rows inspected are the main worktree and the 127 linked worktrees with
-the smallest paths, as the delta's scenario "Row cap and planning failures"
-takes them, and the run refuses with `inspection-incomplete`, exit 2 (lead
-rulings R-73 (d) and R-74 (a)).
+`inspection-error` rows. So is a P whose match is undecided, whichever entry's
+realpath could not be read: every entry the row cap takes counts as a match,
+none is exempt from the cap, a fill of FR-013 and of the delta's
+`spec.md:262-263` ("P SHALL be probed first and SHALL be exempt from the row
+cap"), which presumes a P that is a known entry, so the rows inspected are
+the main worktree and the 127 linked worktrees with the smallest paths, as
+the delta's scenario "Row cap and planning failures" takes them, never more
+than the cap's 128, and the run refuses with `inspection-incomplete`, exit 2
+(lead rulings R-73 (d), R-74 (a), R-78 (b) and R-91 LOW F).
 
 ## Order of a run
 
@@ -91,6 +95,17 @@ rulings R-73 (d) and R-74 (a)).
    removal while the 5 s floor remains, wait, rescan; continue only after a
    plain `removed`.
 9. The final rescan within the 10 s reserve, the result, the exit status.
+
+Steps 3 and 4 give the order of the refusals, not of the reads. The
+`project-clean` delta asks only that `unsupported-path-bytes` come "before
+any plan or digest is built" (its `spec.md:1067-1069`) and fixes no order
+between that check and the manifest read, so the contract's order, the
+UTF-8 check before the manifest read, is a reading of the delta, and the
+code's is another: `resolve_clean_target()` makes one `inspect_repository()`
+call, which runs rows 4, 6 and 7 and reads the manifest at `root`, and only
+then checks `root` and `common_dir` for UTF-8, before the merge target's
+own refusals (`manifest-invalid`, `no-merge-target`) and before any plan or
+digest, no row being probed (lead rulings R-80 P-13 and R-92 (d)).
 
 ## Resolution (FR-016, FR-017; D8)
 
@@ -205,22 +220,24 @@ did not read back (`branch_present` null on a `removed`, `failed` or
 `unknown` target), the branches of `refused` and `not-attempted` targets
 otherwise staying listed, since nothing was spawned for them; the left-out
 names print on one new line after `Branches kept:` and before "D18
-residual-window line", `Branches not confirmed: B2.`, a `TEXT` key the
-text lane adds (T094, a lead-approved contracts edit), and the line reads
-`Branches kept: none.` when every branch is left out, since D18 has
-neither form (lead rulings R-76 (f) and R-79 P-10); a stop block with
-no target `not-attempted`, as when the last selected target stops the run,
-reads `Not attempted: none.`, a fill, since D18's stop block has no such
-form (lead ruling R-68 (a)); the stop block's `Next: project clean ROOT
---all-safe` prints in single mode too, though that run named one worktree,
-since D18 fixes the line as it is (lead ruling R-73 (f)); a plan-blocking
-refusal prints the plan, then `REFUSED: MESSAGE`; each code with no baseline
-message gets one here:
+residual-window line", `Branches not confirmed: B2.`, a `TEXT` key,
+`branches_not_confirmed`, the text lane adds (T094, a lead-approved
+contracts edit), and the line reads
+`Branches kept: none.` when every branch is left out; D18 has neither form,
+its stop and its success lines (`design.md:765-768`) naming no branch the
+run could not confirm, so both are a fill (lead rulings R-76 (f), R-79 P-10
+and R-86 (d)); a stop block with no target `not-attempted`, as when the last
+selected target stops the run, reads `Not attempted: none.`, a fill, since
+D18's stop block has no such form (lead ruling R-68 (a)); the stop block's
+`Next: project clean ROOT --all-safe` prints in single mode too, though that
+run named one worktree, since D18 fixes the line as it is (lead ruling R-73
+(f)); a plan-blocking refusal prints the plan, then `REFUSED: MESSAGE`; each
+code with no baseline message gets one here:
 
 | Code | Message |
 | --- | --- |
 | `invalid-arguments` | `--all-safe cannot be combined with --action, --branch or --worktree.`; `--expect-plan requires --all-safe and --apply.`; `--expect-plan takes 64 lowercase hexadecimal characters.`; the baseline messages for the baseline cases |
-| `internal-error` | `TYPE: TEXT`, the exception's class and text, so `REFUSED: RuntimeError: boom` (research.md R6) |
+| `internal-error` | before the apply phase, `TYPE: TEXT`, the exception's class and text, so `REFUSED: RuntimeError: boom` (research.md R6); after it, no text (below) |
 | `git-unavailable` | `Git is unavailable (DETAIL); clean needs Git 2.36 or later.`, DETAIL one of `not found`, `exit N`, `timed out`, `unparseable version`; clean's refusal only, a status or doctor row taking the command-neutral text in "Codes" (lead ruling R-48) |
 | `git-too-old` | `Git VERSION is older than 2.36; clean needs Git 2.36 or later.`; clean's refusal only, as above (R-48) |
 | `target-not-repository-root` | `Not the main worktree of a repository: PATH; pass the repository root.` |
@@ -237,6 +254,31 @@ message gets one here:
 a nineteenth code, since the delta closes the eighteen: push, which prints
 no JSON, refuses with no code and the reason `remote-gone`, printing
 `REFUSED: ` and the message above (lead ruling R-45).
+
+Two of the baseline messages print the user's own argument raw today:
+`discover()`'s `Directory does not exist: PATH` and `No project found at
+PATH; supply a path or name.`, which reach clean as `repository-not-found`,
+where the delta's human-output rule (`spec.md:1061-1066`) escapes a path
+that holds a code point to escape. PENDING, not yet built: a final fixes
+lane, after the polish wave, is to have `resolve_clean_target()` re-render
+both with `human_path()` where it maps their codes, a two-line edit with a
+test of an argument holding U+202E; `discover()` itself stays as it is,
+since `status`, `doctor` and `update` share it (lead ruling R-92 (c)). This
+paragraph is to be reworded as built once that lane has merged.
+
+`internal-error` prints its exception's type and text only where it is a
+refusal, before the apply phase. After the apply phase begins, an exception
+while handling a target makes that target `unknown` with `internal-error`
+and prints no exception type and no text, neither on a stream nor in the
+result record, so the cause is lost, though the stage fails closed; and a
+fault while rendering a progress line, the human result or the apply result
+record is dropped silently by `best_effort()`, changing no stage, since a
+proven removal stays proven, and no exit status, which D19 has decided
+already. The `project-clean` delta's rule (`spec.md:938-941`) names the
+stage and the reason and no text, so this is the contract's reading of it.
+Whether to print the exception's type on standard error goes to Brett Heap
+in LQ-7's group, since it touches the error streams (lead ruling R-87 (c);
+LQ-7, listed for him in the feature PR body).
 
 The delta's rule that every plan-blocking refusal names `git worktree
 prune`, `git worktree repair` or removing the offending row by hand, "as the
@@ -330,7 +372,7 @@ values in data-model.md).
 | `unsupported-path-bytes` | resolve | `root` or `common_dir` not valid UTF-8 |
 | `manifest-invalid` | resolve | unreadable, not a mapping, wrong kind, over 1 MiB by `st_size`, or PyYAML missing |
 | `no-merge-target` | resolve | no candidate exists as a local branch |
-| `inspection-incomplete` | plan | a repository-wide probe failed, a row is `inspection-error`, a row was left unprobed, or, in single mode, P matches several entries or its match is undecided, its own realpath unread among them (lead rulings R-67 (b), R-73 (d) and R-75 (b)) |
+| `inspection-incomplete` | plan | a repository-wide probe failed, a row is `inspection-error`, a row was left unprobed, or, in single mode, P matches several entries or its match is undecided, any entry's realpath unread among the causes (lead rulings R-67 (b), R-73 (d), R-75 (b) and R-78 (b)) |
 | `inspect-cap` | plan | more rows than the mode's cap, which counts the registry entries that become rows, the main worktree and missing rows included; a bare repository's `bare` entry and a first record equal to `common_dir` with no main worktree are no rows (D8; lead ruling R-73 (d)) |
 | `deadline-exceeded` | plan | the work deadline passed while planning |
 | `worktree-not-found` | select | `--worktree` matches no registry entry |

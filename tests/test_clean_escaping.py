@@ -10,17 +10,10 @@ import re
 import shlex
 import shutil
 import subprocess
-import sys
 import unicodedata
 import unittest
 
-TESTS = str(Path(__file__).resolve().parent)
-if TESTS not in sys.path:
-    # `python3 -m unittest tests.test_clean_escaping` does not put tests/
-    # on sys.path, as `discover -s tests` does.
-    sys.path.insert(0, TESTS)
-
-from clean_support import load_project  # noqa: E402
+from clean_support import load_project
 
 project = load_project()
 

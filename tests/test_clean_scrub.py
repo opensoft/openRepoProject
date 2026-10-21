@@ -8,10 +8,7 @@ import os
 import unittest
 from unittest import mock
 
-try:
-    import clean_support
-except ModuleNotFoundError:  # run as tests.test_clean_scrub from the root
-    from tests import clean_support
+import clean_support
 
 project = clean_support.load_project()
 

@@ -2179,9 +2179,9 @@ def declared_tracking_branch(root):
         try:
             found = fs_call(examine, str(path))
         except OSError as exc:
-            raise Refused(f"Cannot read {path}: {exc}", code="manifest-invalid") from exc
+            raise Refused(f"Cannot read {human_path(os.fsencode(path))}: {exc}", code="manifest-invalid") from exc
         if isinstance(found, DriverOutcome):
-            raise Refused(f"Cannot read {path}: {found.detail}", code="manifest-invalid")
+            raise Refused(f"Cannot read {human_path(os.fsencode(path))}: {found.detail}", code="manifest-invalid")
         state, data = found
         if state == "absent":
             continue
@@ -2196,11 +2196,11 @@ def declared_tracking_branch(root):
         try:
             value = yaml.safe_load(data.decode("utf-8"))
         except (UnicodeError, yaml.YAMLError) as exc:
-            raise Refused(f"Cannot read {path}: {exc}", code="manifest-invalid") from exc
+            raise Refused(f"Cannot read {human_path(os.fsencode(path))}: {exc}", code="manifest-invalid") from exc
         if not isinstance(value, dict):
-            raise Refused(f"Expected a mapping in {path}", code="manifest-invalid")
+            raise Refused(f"Expected a mapping in {human_path(os.fsencode(path))}", code="manifest-invalid")
         if value.get("kind") != kind:
-            raise Refused(f"Unexpected kind in {path}; expected {kind}", code="manifest-invalid")
+            raise Refused(f"Unexpected kind in {human_path(os.fsencode(path))}; expected {kind}", code="manifest-invalid")
         return value.get("tracking_branch")
     return None
 
@@ -2656,8 +2656,8 @@ def inspect_repository(directory, run, refresh=False, *, repeat_identity_at_root
     their parsers, memoized on run, the Invocation (`common_dirs`), by the
     device and inode of the common directory (lead ruling R-54 X-1), so that
     another directory of one repository runs only row 3. refresh reads afresh
-    and replaces the memo; cleanup_report() always does (lead ruling R-51
-    (d)), and so does require_unchanged_cleanup_state() after confirmation
+    and replaces the memo; the retired cleanup_report() always did (lead ruling
+    R-51 (d)), and so does require_unchanged_cleanup_state() after confirmation
     (T076). repeat_identity_at_root, on by default, runs row 5, row 3 again at
     the main worktree where row 3 ran in another worktree, and names no root
     when that common directory differs; off, row 5 is not run, and the memo
@@ -3436,6 +3436,18 @@ def is_bare_name(argument):
     return bool(text) and not os.path.isabs(text) and "/" not in text and text not in (".", "..")
 
 
+def escaped_not_found(message):
+    """discover()'s two bare-name messages, `Directory does not exist: PATH` and
+    `No project found at PATH; supply a path or name.`, with PATH printed through
+    human_path() as every other path of `clean` is (FR-041; lead ruling R-92 (c));
+    None for any other message. discover() prints the user's own argument raw,
+    and status, doctor and update share it, so it stays as it is."""
+    for head, tail in (("Directory does not exist: ", ""), ("No project found at ", "; supply a path or name.")):
+        if message.startswith(head) and message.endswith(tail):
+            return head + human_path(message[len(head):len(message) - len(tail)]) + tail
+    return None
+
+
 def resolve_clean_target(args, run):
     """Resolve the target argument Git-first to exactly one repository and
     its main worktree (T107; D8, FR-016, FR-017; contracts/project-clean.md,
@@ -3456,17 +3468,26 @@ def resolve_clean_target(args, run):
     supply a path." and `repository-not-found` for "Directory does not exist:
     PATH" and "No project found at PATH; supply a path or name.", until US9's
     T118 gives discover() these codes itself (P-10); a refusal that already
-    carries a code passes unchanged.
+    carries a code passes unchanged, except that the PATH of a
+    `repository-not-found` message is printed through human_path() (R-92 (c)).
 
     Refused `target-not-repository-root`, exit 2, before any plan and with no
     context, in M6's order: row 3 failed (a directory outside any
     repository, a bare repository's own directory, a timeout); a submodule
     checkout (row 3's third line); a main worktree that main_worktree() gives
     as (None, cause); then the absolute-path and bare-name rules above. Then
-    the merge target's own refusal (`no-merge-target`, `manifest-invalid`),
-    before any row is probed, its context the repository and a null merge
-    target. A repository-wide probe that failed after row 3 is no refusal
-    here: build_plan() makes that plan incomplete."""
+    `unsupported-path-bytes`, exit 2, before any plan or digest, for a root or
+    common directory that is not valid UTF-8 (json_path()'s flag; FR-041,
+    T112): the root, the command directory this returns, is checked first and
+    named when invalid, else the common directory, as bytes, so the refusal
+    object carries `path_valid_utf8: false`; it has no context, so the error
+    object's `repository` and `merge_target` are null (lead ruling R-80,
+    P-13). Rows 4, 6 and 7 and the manifest read have run by then, inside
+    inspect_repository(); no row is probed. Then the merge target's own
+    refusal (`no-merge-target`, `manifest-invalid`), before any row is
+    probed, its context the repository and a null merge target. A
+    repository-wide probe that failed after row 3 is no refusal here:
+    build_plan() makes that plan incomplete."""
     target = getattr(args, "target", None) or ""
     text = os.path.expanduser(target)
     bare, absolute = is_bare_name(target), os.path.isabs(text)
@@ -3475,11 +3496,13 @@ def resolve_clean_target(args, run):
             found = discover(target)
         except Refused as exc:
             message = str(exc)
+            escaped = escaped_not_found(message)
             if exc.code is None and message == "Ambiguous project name; supply a path.":
                 exc.code = "ambiguous-name"
-            elif exc.code is None and (message.startswith("Directory does not exist: ") or (
-                    message.startswith("No project found at ") and message.endswith("; supply a path or name."))):
+            elif exc.code is None and escaped is not None:
                 exc.code = "repository-not-found"
+            if exc.code == "repository-not-found" and escaped is not None:
+                exc.args = (escaped,)  # R-92 (c): the path the message names prints escaped
             raise
         directory = shown = os.fsencode(found)
     elif absolute:
@@ -3504,6 +3527,10 @@ def resolve_clean_target(args, run):
             exact = False
         if not exact or (absolute and root is not None and toplevel != root):
             raise refused()
+    for raw in (toplevel if root is None else root, identity["common_dir"]):  # FR-041; R-80 P-13
+        if not json_path(raw)[1]:
+            raise Refused(TEXT["unsupported_path_bytes"].format(PATH=human_path(raw)),
+                          code="unsupported-path-bytes", path=raw)
     refusal = evidence["merge_target_refusal"]
     if refusal is not None:
         refusal.context = {"repository": repository_object(identity), "merge_target": None}
@@ -3656,10 +3683,18 @@ def plan_completeness(plan, exclude=()):
 
 def incomplete_refusal(plan, code):
     """The refusal of a plan incomplete with code (FR-024, FR-031; design D18):
-    `The plan is incomplete (CODE): REMEDY.`, REMEDY D18's for the code."""
+    `The plan is incomplete (CODE): REMEDY.`, REMEDY D18's for the code. The
+    inspect-cap remedy's N counts the registry entries that become rows, as
+    the row cap and build_plan() count them: a bare first entry, and a first
+    entry that is the common directory with no main worktree named, are no
+    rows (D8; contracts/project-clean.md, "Codes"; lead rulings R-73 (d) and
+    R-89 (b))."""
     if code == "inspect-cap":
-        registry = (plan.evidence or {}).get("records") or ()
-        remedy = TEXT["remedy_inspect_cap"].format(N=len(registry), M=LIMITS["worktree_rows"][plan.mode])
+        evidence = plan.evidence or {}
+        registry = evidence.get("records") or ()
+        no_row = bool(registry) and bool(registry[0]["bare"] or (
+            evidence.get("first_is_common_dir") and (evidence.get("identity") or {}).get("root") is None))
+        remedy = TEXT["remedy_inspect_cap"].format(N=len(registry) - no_row, M=LIMITS["worktree_rows"][plan.mode])
     elif code == "deadline-exceeded":
         remedy = TEXT["remedy_deadline_exceeded"]
     else:
@@ -3782,9 +3817,9 @@ def build_plan(repo, run):
     """Build the run's Plan for repo, resolve_clean_target()'s dict, and return
     it, never a status (T049; data-model.md, "Plan"; lead rulings R-56 and R-59
     D4). It reads lane G's evidence directly, inspect_repository()'s dict and
-    worktree_rows(), never cleanup_report(), so that a failed repository-wide
-    probe gives a plan incomplete with inspection-incomplete rather than a
-    refusal. That dict is repo's "evidence", the resolution's, so that row 3
+    worktree_rows(), so that a failed repository-wide probe gives a plan
+    incomplete with inspection-incomplete, never a refusal. That dict is
+    repo's "evidence", the resolution's, so that row 3
     runs once (lead ruling R-71 (b)). Only for a caller that passes no
     evidence does build_plan() read it itself and raise the baseline's
     `Cannot inspect Git repository at ROOT` where row 3 failed, ROOT is no
@@ -3808,11 +3843,22 @@ def build_plan(repo, run):
     and inspected first (match_target(): `target_rows` and `target`,
     `worktree-not-found` recorded through refuse()), exempt from the cap, so
     that the rows inspected are P's and the first 128 others (lead ruling R-53
-    P-15), unless P's match is undecided (R-73 (d), R-78 (b)); another row's
+    P-15), unless P's match is undecided (R-73 (d), R-78 (b)). P's row is
+    established first, identity, status probe and gates (D13; lead ruling
+    R-93 (d)): gate_rows() runs on P's rows, gates 1 to 7, gate 8 with P
+    alone and gates 9 and 10, before worktree_rows() inspects any other row,
+    and then on the other rows. No gate reads another row to decide P, so a
+    work deadline reached among the other rows leaves P's row decided and
+    the plan complete beside the note `deadline-exceeded`, while one that
+    cuts P's own read leaves P's row incomplete, which check_plan() refuses
+    as inspection-incomplete. Another row's
     inspection-error or unprobed marker, the rows past the cap, and the rows
     the work deadline stopped are its non-blocking notes
     `inspection-incomplete`, `inspect-cap` and `deadline-exceeded`, a row
-    counted in one of them only (lead ruling R-80, P-1). Push and
+    counted in one of them only (lead ruling R-80, P-1). When P's match is
+    undecided none of them is recorded, since each says the rows do not
+    block P beside the plan's refusal of P, inspection-incomplete, which
+    speaks alone (lead ruling R-93 (e)). Push and
     delete-branch take the cap with no exemption and the batch's completeness
     (plan_completeness()).
 
@@ -3823,7 +3869,8 @@ def build_plan(repo, run):
     `deadline-exceeded` row error, excluded as `inspection-error`, never
     unprobed (lead rulings R-67 (a) and R-69), and the plan is incomplete
     with `deadline-exceeded` (plan_completeness()). Then `selected` and
-    `excluded` from gate_rows(), each selected row given `removal_args`, ["-C",
+    `excluded` from gate_rows(), P's rows' and the other rows' together, both
+    by raw path bytes, each selected row given `removal_args`, ["-C",
     ROOT, "worktree", "remove", PATH] with ROOT the command directory and PATH
     the registry's raw bytes (design D9); `completeness` and `apply_allowed`
     (false for every report); `digest` (plan_digest()); `planning_probes`, the
@@ -3855,7 +3902,7 @@ def build_plan(repo, run):
         except EvidenceError:
             toplevel = False
         if not toplevel or (identity["root"] is None and not evidence["errors"]):
-            raise Refused(f"Cannot inspect Git repository at {root}")
+            raise Refused(f"Cannot inspect Git repository at {human_path(root)}")
     identity = evidence["identity"]
     plan.repository = repository_object(identity)
     refusal = evidence["merge_target_refusal"]
@@ -3878,8 +3925,12 @@ def build_plan(repo, run):
     cap = LIMITS["worktree_rows"][plan.mode]
     named = plan.mode == "single" and plan.action == "remove"
     plan.target_rows, matched, path, exempt = [], (), None, True
+    selected, excluded = [], []
     if named:
         matched, path, exempt = match_target(plan, run, entries, cap)
+        # D13: P's row first, its gates included, before any other row is
+        # inspected (lead ruling R-93 (d)); no gate reads another row.
+        selected, excluded = gate_rows(plan.target_rows, plan, run)
     own = {id(record) for _, record in matched}
     others = [record for _, record in entries if id(record) not in own]
     room = cap if exempt else max(0, cap - len(matched))  # an undecided P takes its rows from the cap
@@ -3888,7 +3939,10 @@ def build_plan(repo, run):
         rows += worktree_rows(evidence, run, records=others[:room])
     plan.omitted = {"count": max(0, len(others) - room), "exactness": "exact"}
     plan.rows = sorted(rows, key=lambda row: (not row.main, row.raw_path))
-    plan.selected, plan.excluded = gate_rows(plan.rows, plan, run)
+    first = {id(row) for row in plan.target_rows}
+    later_selected, later_excluded = gate_rows([row for row in plan.rows if id(row) not in first], plan, run)
+    plan.selected = sorted(selected + later_selected, key=lambda row: row.raw_path)
+    plan.excluded = sorted(excluded + later_excluded, key=lambda item: item[0].raw_path)
     command_dir = identity["root"] if identity["root"] is not None else os.fsencode(root)
     for row in plan.selected:
         row.removal_args = ["-C", command_dir, "worktree", "remove", row.raw_path]
@@ -3897,7 +3951,7 @@ def build_plan(repo, run):
         plan.selected = None
         plan.notes.append({"code": "inspect-cap", "message": TEXT["note_inspect_cap_report"].format(
             N=len(entries), M=batch_cap), "rows": len(entries)})
-    if named:
+    if named and exempt:  # an undecided P's refusal speaks alone (lead ruling R-93 (e))
         shown = human_path(plan.target.raw_path if plan.target is not None else path)
         own = {id(row) for row in plan.target_rows}
         others = [row for row in plan.rows if id(row) not in own and row_incomplete(row)]
@@ -4330,8 +4384,8 @@ def print_plan(plan, run):
     delete-branch, nothing. `Merge target: NAME (SOURCE)` prints in every
     mode, and every path and branch goes through human_path(). A row noted
     `partially-removed` (D4) also prints D18's partial-removal note beside its
-    advice, never instead of it (T094; lead ruling R-79, P-11). This replaces
-    print_clean_report() for `clean`."""
+    advice, never instead of it (T094; lead ruling R-79, P-11). It replaced the
+    baseline's print_clean_report() for `clean`, which T125 then retired."""
     if plan.action in ("push", "delete-branch"):
         return
     json_output, apply = getattr(run.args, "json", False), getattr(run.args, "apply", False)
@@ -5769,84 +5823,10 @@ def repo_state(root):
     return state
 
 
-def default_branch(root, declared=None):
-    """Return the local branch used as the cleanup merge target."""
-    candidates = [declared, git_text(root, "symbolic-ref", "--short", "refs/remotes/origin/HEAD"),
-                  "main", "master"]
-    for candidate in candidates:
-        if not isinstance(candidate, str) or not candidate:
-            continue
-        candidate = candidate.removeprefix("origin/")
-        if git(root, "show-ref", "--verify", "--quiet", f"refs/heads/{candidate}").returncode == 0:
-            return candidate
-    return None
-
-
-def ancestor(root, commit, branch):
-    if not commit or not branch:
-        return None
-    result = git(root, "merge-base", "--is-ancestor", commit, f"refs/heads/{branch}")
-    return True if result.returncode == 0 else False if result.returncode == 1 else None
-
-
-def cleanup_report(root):
-    """The report of `project clean ROOT` on the evidence model (T033;
-    research.md R9): the baseline document {root, target_branch,
-    tracking_freshness, worktrees}, its rows from worktree_rows() with the six
-    added fields. It reads afresh every time (refresh; lead ruling R-51 (d)).
-    Since T076 nothing calls it: require_unchanged_cleanup_state() re-inspects
-    through inspect_repository() and build_plan() instead. Refusals keep
-    their baseline messages: `Cannot inspect Git repository at ROOT` for a
-    ROOT that is not a worktree toplevel of a repository whose main worktree
-    can be named, or whose repository-wide probes failed; the manifest's own;
-    and `no-merge-target`."""
-    run = current_invocation()
-    repo = inspect_repository(root, run, refresh=True)
-    identity = repo["identity"]
-    try:
-        toplevel = identity is not None and _realpath(os.fsencode(root)) == repo["toplevel"]
-    except EvidenceError:
-        toplevel = False
-    if not toplevel or identity["root"] is None:
-        raise Refused(f"Cannot inspect Git repository at {root}")
-    if repo["merge_target_refusal"] is not None:
-        raise repo["merge_target_refusal"]
-    if repo["errors"]:
-        raise Refused(f"Cannot inspect Git repository at {root}")
-    return {"root": str(root), "target_branch": repo["merge_target"]["name"],
-            "tracking_freshness": "local refs only; remote information is as of the last fetch; no fetch performed",
-            "worktrees": worktree_rows(repo, run)}
-
-
-def print_clean_report(report, as_json):
-    if as_json:
-        print(json.dumps(report, indent=2))
-        return
-    print(f"Cleanup plan for {report['root']}")
-    print(f"Merge target: {report['target_branch']}")
-    print(f"Freshness: {report['tracking_freshness']}")
-    for row in report["worktrees"]:
-        branch = row.get("branch", "unknown")
-        upstream = row.get("upstream") or "none"
-        delta = "unknown" if row.get("ahead") is None else f"ahead={row['ahead']}, behind={row['behind']}"
-        print(f"{row['classification'].upper()}: {row['path']} [{branch}] "
-              f"dirty={row.get('dirty', 'unknown')}; upstream={upstream}; {delta}; "
-              f"merged={row.get('merged_into_target', 'unknown')}")
-        print(f"  {row['recommendation']}")
-
-
 def cleanup_signature(report, row):
     fields = ("path", "branch", "head", "present", "dirty", "ignored_files", "upstream",
               "ahead", "behind", "remote_present", "merged_into_target", "current", "classification")
     return report["target_branch"], tuple((field, row.get(field)) for field in fields)
-
-
-def matching_worktree(report, *, branch=None, path=None):
-    if branch is not None:
-        rows = [row for row in report["worktrees"] if row.get("branch") == branch]
-    else:
-        rows = [row for row in report["worktrees"] if Path(row["path"]).resolve() == path]
-    return rows[0] if len(rows) == 1 else None
 
 
 def require_unchanged_cleanup_state(repo, run, action, branch):

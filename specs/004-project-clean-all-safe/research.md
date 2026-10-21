@@ -324,11 +324,16 @@ scratch directory, never in the repository.
   `internal-error`, exit 2, printed as the extended error object under
   `--json` and as `REFUSED: ` with the exception's type and text otherwise.
   After the apply phase begins, any other exception, in a target, its
-  rescan, the final rescan or the record's rendering, first waits for an
-  in-flight removal (D1), then makes the target being handled `unknown`
-  with `internal-error` (fields not established null) and later targets
-  `not-attempted`; the record is printed and the run exits by D19 (1, or
-  the signal status). The guard is `clean`'s only: no requirement gives
+  rescan or the final rescan, first waits for an in-flight removal (D1),
+  then makes the target being handled `unknown` with `internal-error`
+  (fields not established null) and later targets `not-attempted`; the
+  record is printed and the run exits by D19 (1, or the signal status). A
+  fault in rendering a progress line, the human result or the record is no
+  such exception: `best_effort()` drops it, changing no stage and no exit,
+  since rendering is not handling a target and a proven removal stays
+  proven, a fill of the delta's rule (`spec.md:938-941`, `:1020-1024`; lead
+  rulings R-83 P-8, R-87 (c) and R-91 M-1; the contract, "Human output").
+  The guard is `clean`'s only: no requirement gives
   `status`, `doctor` or `update` an `internal-error` code, and their
   handling stays as it is.
 - **Scenarios**: "Exception after the apply phase begins" (US5-7), "SIGTERM
