@@ -889,6 +889,53 @@ class RevalidationTests(clean_support.CleanCase):
                 self.assertEqual((result.status, result.document["exit_code"]), (status, status))
                 self.assert_nothing_removed(root, trees, before, log)
 
+    # The lead's R-195 (#19 at 4485678, "Cleanup revalidates destructive
+    # actions"): every Git child of the revalidation that fails, or runs past
+    # its own budget while the deadline is not the limit, is state-changed,
+    # whatever its step; a child gives its step's own reason only for a value
+    # it decided.
+
+    def assert_child_that_decides_nothing(self, case, words, in_target):
+        """P's revalidation child whose words follow `-C DIR` (DIR the command
+        directory, or P where in_target) made, after the question, to exit
+        128 and to time out: each refuses P with state-changed, Q is
+        not-attempted, exit 2, nothing removed."""
+        for label, fields in (("exits 128", dict(name="failed", status=128)), ("times out", dict(name="timeout"))):
+            with self.subTest(f"{case} {label}"):
+                root, trees = self.batch(f"{case}-{fields['name']}")
+                directory_bytes = bytes(trees[0]) if in_target else os.fsencode(root)
+                before = self.snapshot(root, trees)
+                asked, calls, real_run_bounded = [], [], project.run_bounded
+
+                def run_bounded(spec, parser, run, fields=fields, asked=asked, calls=calls, at=directory_bytes):
+                    kind, args, cwd = spec
+                    if asked and not calls and args[2:] == words and os.fsencode(args[1]) == at:
+                        calls.append(args)
+                        return project.DriverOutcome(project.git_argv(kind, args), **fields)
+                    return real_run_bounded(spec, parser, run)
+
+                env, log = self.counting()
+                with mock.patch.object(project, "run_bounded", run_bounded):
+                    result = self.apply(root, lambda: asked.append(True), env=env, log=log)
+                self.assertEqual(len(calls), 1, "the child was reached at P's revalidation")
+                self.assert_stopped_at_first(result, trees, "state-changed")
+                self.assert_nothing_removed(root, trees, before, log)
+
+    def test_clean_an_identity_probe_that_decides_nothing_at_revalidation(self):
+        # Step 1: identity-changed only for a decided different identity
+        # ("Repository replaced mid-batch" pins it).
+        self.assert_child_that_decides_nothing(
+            "identity", ["rev-parse", "--path-format=absolute", *project.IDENTITY_OPTIONS], in_target=False)
+
+    def test_clean_a_registry_listing_that_decides_nothing_at_revalidation(self):
+        # Step 3: identity-changed only for a missing or doubled entry.
+        self.assert_child_that_decides_nothing("registry", ["worktree", "list", "--porcelain", "-z"], in_target=False)
+
+    def test_clean_a_hidden_state_probe_that_decides_nothing_at_revalidation(self):
+        # Step 7: hidden-local-state only for a decided flagged entry ("Hidden
+        # local state", its after-confirmation clause, pins it).
+        self.assert_child_that_decides_nothing("hidden", list(project.HIDDEN_STATE_PROBE), in_target=True)
+
     def test_clean_worktree_only_commits_check_cut_at_revalidation(self):
         # In process, after the question: the read of P's logs/HEAD made to
         # time out, and the reachability child made to exit 128 and to time

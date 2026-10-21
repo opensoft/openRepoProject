@@ -853,8 +853,9 @@ class BoundsTests(clean_support.CleanCase):
         # (e)): the same stuck hidden-state probe, cut by a 1 s probe budget,
         # the rest of the table real (work deadline 50 s, grace 2 s), so the
         # budget is the limit and the read times out. A timeout stays a
-        # difference (T084; the project-clean-review-safety delta, rs:92-93):
-        # the first target is refused with hidden-local-state, its record from
+        # difference (T084; the project-clean-review-safety delta, rs:92-93),
+        # state-changed as for every revalidation child that decides nothing
+        # (the lead's R-195): the first target is refused with it, its record from
         # its revalidation's reads, the second is not-attempted with
         # batch-stopped, nothing is removed, and the exit status is 2.
         root, trees = self.batch("reval-budget-cut", ["001-p", "002-q"])
@@ -868,7 +869,7 @@ class BoundsTests(clean_support.CleanCase):
                             timing=table, env=env)
         self.assert_status(result, 2)
         document = result.document
-        self.assertEqual(stages(document), [(str(trees[0]), "refused", "hidden-local-state"),
+        self.assertEqual(stages(document), [(str(trees[0]), "refused", "state-changed"),
                                             (str(trees[1]), "not-attempted", "batch-stopped")],
                          f"elapsed {result.elapsed:.1f} s\n{result.stderr}")
         first, second = document["targets"]

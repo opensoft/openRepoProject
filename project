@@ -5326,15 +5326,19 @@ def narrowed_ref_patterns(plan, declared=None):
     return list(dict.fromkeys(patterns))
 
 
-def repository_identity(root, run):
+def repository_identity(root, run, errors=None):
     """The repository identity at root, the command directory (design D7):
     the identity probe (row 3, one Git child, or one per option where its
     output needs it), then the realpaths of the toplevel and the common
     directory and the lstat of that directory, by filesystem calls. Returns
     {root, common_dir, dev, ino, superproject}, or None when the probe failed
-    or a call gave no value."""
+    or a call gave no value. errors, when given, is a list that receives the
+    probe's row error where the probe gave no value, so that a caller can tell
+    a child that decided nothing from an identity read (the lead's R-195)."""
     values, error = identity_probe(root, run)
     if error is not None:
+        if errors is not None:
+            errors.append(error)
         return None
     try:
         common_dir = _realpath(values[1])
@@ -5537,14 +5541,16 @@ def revalidation_difference(plan, target, run, part, seen):
     own lstat.
 
     1. The repository identity at the command directory equals the plan's,
-       else `identity-changed`.
+       else `identity-changed`; an identity probe that decided nothing is
+       `state-changed` (the lead's R-195).
     2. The manifest's `tracking_branch`, re-read, equals the plan's as
        written, its absence included (lead ruling R-77), and a value that
        is not a string read as none, as planning reads it (as_candidate();
        lead ruling R-101 (d)), else `state-changed`.
     3. The registry listing names each checked row's path once, else
        `identity-changed`, with its `locked` as planned, else
-       `state-changed`.
+       `state-changed`; a listing that decided nothing is `state-changed`
+       (R-195).
     4. The narrowed ref listing (narrowed_ref_patterns()): each checked
        row's registry branch and head and its branch's tip as planned, else
        `branch-changed`; its upstream, `remote_present`, `ahead`, `behind` and
@@ -5581,13 +5587,16 @@ def revalidation_difference(plan, target, run, part, seen):
     LQ-4); steps 6 and 7, the ignored-file state and the classification
     among them, run in each target's own revalidation. A value null in the
     plan and null again is no difference; a value that cannot be re-read is
-    one, with its step's reason: a failed registry listing `identity-changed`,
-    a failed ref listing `state-changed`, a failed `modules` check
-    `contains-submodule`, a failed admin directory listing `state-changed`
-    (lead rulings R-124 and R-127), a failed hidden-state probe
-    `hidden-local-state`, a failed read of logs/HEAD or reachability probe
-    `state-changed` (R-124, R-127). A `timeout` stays such a difference
-    (T084).
+    one. Every Git child of these steps that fails, or runs past its own
+    budget while the deadline is not the limit, is `state-changed`, whatever
+    its step, and gives its step's own reason only for a value it decided
+    (the lead's R-171 and R-195; #19 at 4485678): the identity probe, the
+    registry listing, the ref listing, the work-tree probe, the status
+    probe, the hidden-state probe and the reachability probe. A filesystem
+    read that fails takes its step's reason: a failed `modules` check
+    `contains-submodule`; a failed admin directory listing or read of
+    logs/HEAD `state-changed` (lead rulings R-124 and R-127). A `timeout`
+    stays such a difference (T084).
 
     A read the work deadline cut gives `deadline-exceeded` instead, never a
     difference (T099; lead ruling R-80, P-2): its row error's code says so,
@@ -5610,9 +5619,12 @@ def revalidation_difference(plan, target, run, part, seen):
 
     if not part and slot_set(run):
         return "interrupted"
-    found = part["identity"] if part else repository_identity(root, run)
-    if found is None and not part and work_spent(run):
+    probe_errors = []
+    found = part["identity"] if part else repository_identity(root, run, probe_errors)
+    if found is None and not part and (work_spent(run) or any(map(read_cut, probe_errors))):
         return "deadline-exceeded"
+    if found is None and probe_errors:
+        return "state-changed"  # an identity probe that decided nothing (R-195)
     if not same_repository(found, planned):
         return "identity-changed"
 
@@ -5637,7 +5649,7 @@ def revalidation_difference(plan, target, run, part, seen):
         records = None if error is not None else outcome.result
     seen["records"] = records
     if records is None:
-        return "identity-changed"
+        return "state-changed"  # a registry listing that decided nothing (R-195)
     entries = []
     for row in rows:
         matches = [record for record in records if record["path"] == row.raw_path]
@@ -5743,7 +5755,7 @@ def revalidation_difference(plan, target, run, part, seen):
     if reason is not None:
         return reason
     if error is not None:
-        return "hidden-local-state"
+        return "state-changed"  # a hidden-state probe that decided nothing (R-195)
 
     if slot_set(run):
         return "interrupted"
