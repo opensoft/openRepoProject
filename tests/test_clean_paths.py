@@ -377,6 +377,288 @@ class PathsTests(clean_support.CleanCase):
         self.assertEqual([record for record in clean_support.child_log(log) if probes_a_row(record)], [])
         self.assertEqual(self.snapshot(checkout), before)
 
+    # T111: "Apply with JSON prints one document".
+
+    def test_clean_apply_with_json_prints_one_document(self):
+        # Pins T057: under --apply --json, standard output holds the one document.
+        root = self.repo()
+        self.bare_remote()
+        trees = [(self.merged_worktree("001-a"), "001-a"), (self.merged_worktree("002-b"), "002-b")]
+        plan = [f"Cleanup plan for {root}", TEXT["merge_target_line"].format(NAME="main", SOURCE="main"),
+                f"Freshness: {FRESHNESS}", TEXT["selected_heading"].format(N=2)]
+        plan += [TEXT["selected_row"].format(PATH=tree, BRANCH=branch) for tree, branch in trees]
+        plan += [TEXT["excluded_heading"].format(M=1),
+                 TEXT["excluded_group"].format(REASON="main-worktree", K=1, NEXT_STEP=STEPS["main-worktree"]),
+                 TEXT["excluded_row"].format(PATH=root, BRANCH="main"), TEXT["residual_window_line"]]
+
+        with self.subTest("stopped before the apply phase by plan-digest-mismatch"):
+            stopped = self.run_cli("clean", root, "--all-safe", "--apply", "--yes", "--json", "--expect-plan", ZEROS)
+            self.assert_status(stopped, 2)
+            document = self.one_document(stopped)
+            self.assertEqual(list(document), PLAN_ENVELOPE_KEYS, "only the plan envelope")
+            self.assertEqual((document["apply_allowed"], document["refusals"]), (False, [{
+                "code": "plan-digest-mismatch",
+                "message": TEXT["plan_digest_mismatch"].format(DIGEST=document["plan_digest"], EXPECTED=ZEROS)}]))
+            self.assertEqual(stopped.stderr, "\n".join(plan) + "\n", "the human plan alone, no REFUSED: line")
+            self.assertTrue(all(tree.is_dir() for tree, _ in trees), "nothing removed")
+
+        with self.subTest("the apply removes two worktrees"):
+            applied = self.run_cli("clean", root, "--all-safe", "--apply", "--yes", "--json")
+            self.assert_status(applied, 0)
+            document = self.one_document(applied)
+            self.assertEqual(list(document), APPLY_RESULT_KEYS, "the apply result record alone")
+            self.assertEqual([(target["path"], target["stage"], target["reason"]) for target in document["targets"]],
+                             [(str(tree), "removed", None) for tree, _ in trees])
+            self.assertEqual((document["exit_code"], document["completeness"]), (0, "complete"))
+            result = [TEXT["progress_line"].format(STAGE="removed", PATH=tree) for tree, _ in trees]
+            result += [TEXT["success_line"].format(N=2, BRANCHES="001-a, 002-b"), TEXT["residual_window_line"]]
+            self.assertEqual(applied.stderr, "\n".join(plan + result) + "\n",
+                             "the human plan and the progress on standard error")
+            self.assertFalse(any(tree.exists() for tree, _ in trees))
+
+    # T111: "The plain report in JSON".
+
+    def test_clean_the_plain_report_in_json(self):
+        # Pins T051 (the envelope) and T101 (a complete report exits 0).
+        root = self.repo()
+        self.bare_remote()
+        tree = self.merged_worktree("001-eligible")
+        report = self.run_json("clean", root, "--json")
+        self.assert_status(report, 0)
+        document = self.one_document(report)
+        self.assertEqual(list(document), PLAN_ENVELOPE_KEYS)
+        self.assertEqual((document["schema_version"], document["mode"], document["apply_allowed"],
+                          document["limits"]["worktree_rows"], document["completeness"], document["refusals"]),
+                         (1, "report", False, 256, "complete", []))
+        self.assertEqual([entry["path"] for entry in document["selected"]], [str(tree)])
+        self.assertIsNotNone(HEX_64.fullmatch(document["plan_digest"]), document["plan_digest"])
+        self.assertEqual(report.stderr, "")
+        preview = self.run_json("clean", root, "--all-safe", "--json")
+        self.assert_status(preview, 0)
+        previewed = self.one_document(preview)
+        self.assertEqual((previewed["mode"], previewed["limits"]["worktree_rows"]), ("all-safe", 128))
+        self.assertEqual(document["plan_digest"], previewed["plan_digest"],
+                         "FR-004: the report's digest equals the --all-safe preview's")
+
+    # T111: every path value in JSON carries its flag (lead ruling R-9).
+
+    def test_clean_every_json_path_carries_its_flag(self):
+        root = self.repo()
+        self.bare_remote()
+        self.merged_worktree("001-merged")
+        ignored = self.merged_worktree("002-ignored",
+                                       setup=lambda tree: (tree / ".gitignore").write_text("local.env\n"))
+        (ignored / "local.env").write_text("preserve")
+        dirty = self.merged_worktree("003-dirty")
+        (dirty / "uncommitted").write_text("preserve")
+        failing = self.merged_worktree("004-failing")
+        fake = clean_support.install_fake_git(self.base / "fails-bin", "status-fails-in", path=failing)
+        failing_env = self.path_first(fake.parent)
+        subdirectory = root / "sub"
+        subdirectory.mkdir()
+        documents = {}
+        for label, target, words, env, status in (
+                ("report", root, ("--json",), failing_env, 1),
+                ("preview", root, ("--all-safe", "--json"), failing_env, 1),
+                ("target-excluded", root, ("--apply", "--action", "remove", "--worktree", dirty, "--yes", "--json"),
+                 None, 2),
+                ("worktree-not-found", root, ("--apply", "--action", "remove", "--worktree", self.base / "nowhere",
+                                              "--yes", "--json"), None, 2),
+                ("target-not-repository-root", subdirectory, ("--json",), None, 2),
+                ("apply", root, ("--all-safe", "--apply", "--yes", "--json"), None, 0)):
+            result = self.run_cli("clean", target, *words, env=env)
+            self.assert_status(result, status)
+            documents[label] = self.one_document(result)
+
+        flagged, samples, repositories = [], [], 0
+        for label, document in documents.items():
+            for item in objects(document):
+                if "path" in item:
+                    self.assertIs(item.get("path_valid_utf8"), True, (label, item))
+                    flagged.append((label, item["path"]))
+                if "path" in item and item.get("ignored_samples") is not None:  # a row; `limits` has a count
+                    for sample in item["ignored_samples"]:
+                        self.assertEqual(list(sample), ["path", "path_valid_utf8"], (label, sample))
+                        samples.append(sample)
+                if isinstance(item.get("repository"), dict):
+                    self.assertEqual(list(item["repository"]), REPOSITORY_KEYS)
+                    self.assertEqual((item["repository"]["root_valid_utf8"],
+                                      item["repository"]["common_dir_valid_utf8"]), (True, True), label)
+                    repositories += 1
+        # The walk reached every kind of object that carries a path.
+        self.assertIn({"path": "local.env", "path_valid_utf8": True}, samples)
+        self.assertEqual(repositories, 5, "every document but the extended error object")
+        for label, kinds in (("report", ("worktrees", "selected", "excluded")), ("apply", ("targets",))):
+            for kind in kinds:
+                self.assertTrue(documents[label][kind], (label, kind))
+        for label in ("target-excluded", "worktree-not-found", "target-not-repository-root"):
+            refusal = documents[label]["refusals"][0]
+            self.assertEqual((refusal["code"], refusal["path_valid_utf8"]), (label, True))
+        self.assertIn(("report", str(failing)), flagged)
+
+    # T111: each refusal code prints its one document (plan review M6).
+
+    def test_clean_each_refusal_prints_its_document(self):
+        root = self.repo()
+        self.bare_remote()
+        merged = self.merged_worktree("001-merged")
+        dirty = self.merged_worktree("002-dirty")
+        (dirty / "uncommitted").write_text("preserve")
+        elsewhere = self.base / "elsewhere"
+        elsewhere.mkdir()
+        before = self.snapshot(root)
+        reached = []
+
+        def in_process(*argv, **options):
+            status, out, err = self.main_in_process(*argv, **options)
+            return types.SimpleNamespace(returncode=status, stdout=out, stderr=err, args=[os.fspath(a) for a in argv])
+
+        def error_object(result, code, message, mode, path=None, repository=None):
+            """Exit 2 and one extended error object (invalid-arguments,
+            internal-error and every resolve code)."""
+            self.assert_status(result, 2)
+            document = self.one_document(result)
+            refusal = {"code": code, "message": message}
+            if path is not None:
+                refusal.update(path=str(path), path_valid_utf8=True)
+            self.assertEqual(list(document), EXTENDED_ERROR_KEYS)
+            self.assertEqual(document, {
+                "error": message, "code": code, "schema_version": 1, "observed_at": document["observed_at"],
+                "mode": mode, "repository": repository, "merge_target": None, "completeness": "incomplete",
+                "apply_allowed": False, "refusals": [refusal]})
+            self.assertNotIn("REFUSED", result.stderr)
+            reached.append(code)
+
+        def envelope(result, status, refusal, mode):
+            """One plan envelope with `apply_allowed: false` and the refusal in
+            `refusals` (the plan, select and confirm codes)."""
+            self.assert_status(result, status)
+            document = self.one_document(result)
+            self.assertEqual(list(document), PLAN_ENVELOPE_KEYS)
+            self.assertEqual((document["mode"], document["apply_allowed"], document["refusals"]),
+                             (mode, False, [refusal]))
+            self.assertNotIn("REFUSED", result.stderr)
+            reached.append(refusal["code"])
+            return document
+
+        def incomplete(code, remedy):
+            return {"code": code, "message": TEXT["plan_incomplete"].format(CODE=code, REMEDY=remedy)}
+
+        with self.subTest("invalid-arguments"):
+            result = self.run_cli("clean", root, "--all-safe", "--action", "remove", "--json")
+            error_object(result, "invalid-arguments", TEXT["invalid_arguments_all_safe"], "all-safe")
+        with self.subTest("internal-error"):
+            # An exception injected in process, on the module object main() runs (rule 3).
+            result = in_process("clean", root, "--json", build_plan=raising(RuntimeError("boom")))
+            error_object(result, "internal-error", TEXT["internal_error"].format(TYPE="RuntimeError", TEXT="boom"),
+                         "report")
+        with self.subTest("git-unavailable"):
+            result = self.run_cli("clean", root, "--json", env=dict(self.env, PATH=self.path_without_git()))
+            error_object(result, "git-unavailable",
+                         TEXT["git_unavailable"].format(DETAIL=TEXT["git_unavailable_not_found"]), "report")
+        with self.subTest("git-too-old"):
+            fake = clean_support.install_fake_git(self.base / "old-bin", "version-2.35.0")
+            result = self.run_cli("clean", root, "--all-safe", "--json", env=self.path_first(fake.parent))
+            error_object(result, "git-too-old", TEXT["git_too_old"].format(VERSION="2.35.0"), "all-safe")
+        with self.subTest("repository-not-found"):
+            # Inline bare-name fixture (rule 3), as tests/test_clean_resolution.py builds it.
+            result = self.run_cli("clean", "Nowhere", "--json", cwd=elsewhere)
+            error_object(result, "repository-not-found", f"Directory does not exist: {elsewhere / 'Nowhere'}",
+                         "report")
+        with self.subTest("ambiguous-name"):
+            # Inline bare-name fixture (rule 3), as tests/test_clean_resolution.py
+            # builds it: two project directories each holding Atlas, given to
+            # main() in process through projects_dirs(), since macOS folds
+            # ~/projects and ~/Projects into one directory.
+            directories = [self.base / "projects-one", self.base / "projects-two"]
+            for directory in directories:
+                (directory / "Atlas").mkdir(parents=True)
+            result = in_process("clean", "Atlas", "--json", cwd=elsewhere, projects_dirs=lambda: directories)
+            error_object(result, "ambiguous-name", "Ambiguous project name; supply a path.", "report")
+        with self.subTest("target-not-repository-root"):
+            subdirectory = root / "sub"
+            subdirectory.mkdir()
+            result = self.run_cli("clean", subdirectory, "--json")
+            error_object(result, "target-not-repository-root",
+                         TEXT["target_not_repository_root"].format(PATH=subdirectory), "report", path=subdirectory)
+        with self.subTest("manifest-invalid"):
+            wrong = self.repo("wrong-kind")
+            (wrong / "project.yaml").write_text("kind: family-manifest\n")
+            result = self.run_cli("clean", wrong, "--json")
+            error_object(result, "manifest-invalid",
+                         f"Unexpected kind in {wrong / 'project.yaml'}; expected project-manifest", "report",
+                         repository=self.repository(wrong))
+        with self.subTest("no-merge-target"):
+            trunk = self.repo("trunk-only", branch="trunk")
+            result = self.run_cli("clean", trunk, "--all-safe", "--json")
+            error_object(result, "no-merge-target", TEXT["no_merge_target"], "all-safe",
+                         repository=self.repository(trunk))
+        with self.subTest("inspection-incomplete"):
+            fake = clean_support.install_fake_git(self.base / "fails-bin", "status-fails-in", path=dirty)
+            result = self.run_cli("clean", root, "--all-safe", "--json", env=self.path_first(fake.parent))
+            envelope(result, 1, incomplete("inspection-incomplete", TEXT["remedy_inspection_incomplete"]), "all-safe")
+        with self.subTest("inspect-cap"):
+            capped = self.repo("capped")
+            self.register_worktrees(128, "cap", root=capped)  # 129 rows with the main worktree
+            result = self.run_cli("clean", capped, "--all-safe", "--json")
+            document = envelope(result, 1, incomplete("inspect-cap", TEXT["remedy_inspect_cap"].format(N=129, M=128)),
+                                "all-safe")
+            self.assertEqual(document["omitted"], {"count": 1, "exactness": "exact"})
+        with self.subTest("deadline-exceeded"):
+            # Through the launcher, with a table that shortens the deadline to 3 s
+            # and the reserve to 1 s: 2 s of work, so each probe's budget,
+            # min(5 s, work remaining), is at most 2 s (rule 5, R-29). The first
+            # linked row's status probe hangs (status-hangs-in, US6's T099), the
+            # work deadline cuts it, and the row after it is never probed.
+            fake = clean_support.install_fake_git(self.base / "hangs-bin", "status-hangs-in", path=merged)
+            table = clean_support.timing_table(invocation_deadline=3.0, reconciliation_reserve=1.0)
+            result = self.run_launched(table, "clean", root, "--all-safe", "--json", env=self.path_first(fake.parent))
+            envelope(result, 1, incomplete("deadline-exceeded", TEXT["remedy_deadline_exceeded"]), "all-safe")
+        with self.subTest("worktree-not-found"):
+            nowhere = self.base / "nowhere"
+            result = self.run_cli("clean", root, "--apply", "--action", "remove", "--worktree", nowhere, "--yes",
+                                  "--json")
+            envelope(result, 2, {"code": "worktree-not-found", "message": f"No unique linked worktree found at {nowhere}",
+                                 "path": str(nowhere), "path_valid_utf8": True}, "single")
+        with self.subTest("target-excluded"):
+            result = self.run_cli("clean", root, "--apply", "--action", "remove", "--worktree", dirty, "--yes", "--json")
+            envelope(result, 2, {"code": "target-excluded", "message": TEXT["target_excluded_class"].format(CLASS="dirty"),
+                                 "path": str(dirty), "path_valid_utf8": True, "reason": "dirty"}, "single")
+        with self.subTest("plan-digest-mismatch"):
+            result = self.run_cli("clean", root, "--all-safe", "--apply", "--yes", "--expect-plan", ZEROS, "--json")
+            digest = self.load_json(result)["plan_digest"]
+            envelope(result, 2, {"code": "plan-digest-mismatch", "message": TEXT["plan_digest_mismatch"].format(
+                DIGEST=digest, EXPECTED=ZEROS)}, "all-safe")
+        with self.subTest("confirmation-required"):
+            result = self.run_cli("clean", root, "--all-safe", "--apply", "--json")  # standard input a pipe
+            envelope(result, 2, {"code": "confirmation-required", "message": TEXT["confirmation_required"]}, "all-safe")
+        with self.subTest("cancelled"):
+            # Standard input at a terminal, standard output on a pipe (lead
+            # ruling R-56 Q-14): the question on standard error, answered `no`.
+            argv = clean_support.cli_argv("clean", root, "--all-safe", "--apply", "--json")
+            result = self.run_pty_steps(argv, [(TEXT["question_one"], "no")], stdout_pipe=True)
+            self.assertIn(TEXT["question_one"], result.stderr.split("\n"))
+            envelope(result, 2, {"code": "cancelled", "message": CANCELLED}, "all-safe")
+
+        self.assertEqual(sorted(reached), sorted(code for code in REFUSAL_CODES if code != "unsupported-path-bytes"),
+                         "every code but unsupported-path-bytes, its clause below")
+        self.assertEqual(self.snapshot(root), before, "nothing changes")
+
+    @clean_support.linux_paths
+    def test_clean_each_refusal_prints_its_document_unsupported_path_bytes(self):
+        # The eighteenth code needs a root that is not valid UTF-8, which only a
+        # Linux file system holds (rule 9); T110's root test asserts the whole object.
+        self.assert_plain_base()
+        raw = os.fsencode(self.base) + b"/root-a" + NOT_UTF_8 + b"b"
+        self.repo_at(raw)
+        result = self.run_cli("clean", raw, "--json")
+        self.assert_status(result, 2)
+        document = self.one_document(result)
+        self.assertEqual(list(document), EXTENDED_ERROR_KEYS)
+        self.assertEqual((document["code"], document["apply_allowed"], [item["code"] for item in document["refusals"]]),
+                         ("unsupported-path-bytes", False, ["unsupported-path-bytes"]))
+        self.assertEqual(result.stderr, "")
+
 
 if __name__ == "__main__":
     unittest.main()
