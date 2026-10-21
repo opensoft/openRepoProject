@@ -2871,7 +2871,8 @@ def _read_row(raw, main, common_dir, active, active_error, shared):
     registration, a shared path's verdict taken with nothing read (lead
     rulings R-57 L2 and L3). A failed read becomes an entry of `errors`, and
     what follows it in the same step is not read. _read_status() runs the
-    probe once worktree_rows() has compared the rows (shared_identities())."""
+    probe once worktree_rows() has compared the rows (shared_identities())
+    and read the row's identity again (_identity_unchanged())."""
     read = {"present": None, "dev": None, "ino": None, "active": active, "tree": None,
             "registered": None, "admin_id": None, "status": None, "errors": []}
     errors = read["errors"]
@@ -2895,10 +2896,38 @@ def _read_row(raw, main, common_dir, active, active_error, shared):
     return read
 
 
+def _identity_unchanged(read, raw, main, common_dir):
+    """The second verification of a row's identity, made immediately before
+    its status probe (the project-command delta, pc:124-126: a worktree probe
+    runs "only after that worktree's identity has been verified immediately
+    before"; lane 3's env H-1, lead ruling R-101 (e) and (j)). It makes the
+    reads of _read_row() again, the lstat, the realpath and the two-way
+    registration (verify_registration()), and compares them with read, the
+    row's first reads: True when the device, inode, realpath and admin id are
+    the same and the registration still holds. Otherwise False, and the row
+    gets no probe: a read that fails appends its row error, a registration
+    that now disagrees sets `registered` false (registration-mismatch), and
+    any other change leaves the row present with no status, which classify()
+    makes inspection-error."""
+    try:
+        found = _fs("lstat", os.lstat, raw)
+        if (found.st_dev, found.st_ino) != (read["dev"], read["ino"]) or _realpath(raw) != read["tree"]:
+            return False
+        registered, admin_id = verify_registration(raw, common_dir, main)
+    except EvidenceError as exc:
+        read["errors"].append(exc.error)
+        return False
+    if not registered:
+        read["registered"], read["admin_id"] = False, None
+        return False
+    return admin_id == read["admin_id"]
+
+
 def _read_status(read, raw, run):
     """The combined status probe of the row at raw whose reads are done
     (_read_row()), only when its registration holds and nothing failed: its
-    result in read's `status`, or its row error appended to `errors`."""
+    result in read's `status`, or its row error appended to `errors`.
+    worktree_rows() calls it only after _identity_unchanged()."""
     if read["registered"] and not read["errors"]:
         outcome, error = status_probe(raw, run)
         if error is not None:
@@ -2933,7 +2962,14 @@ def worktree_rows(repo, run, records=None):
     row of the call is read and before any status probe, so that none of
     them gets one; an entry the call does not build is never read for it,
     so a row past the cap stays uninspected, while match_target() builds P's
-    realpath twins among P's rows. Then the branch evidence from row 6, a
+    realpath twins among P's rows. Every other row's identity is verified
+    again immediately before its own probe (_identity_unchanged(); pc:124-126,
+    lead ruling R-101 (e) and (j)), since the probes of the rows before it
+    may take their whole budgets: a row whose lstat, realpath or registration
+    changed since its first read gets no probe and is inspection-error, in
+    the same row order with the same budgets. Once the work deadline has
+    passed no probe starts, and such a row keeps its probe's own
+    deadline-exceeded, unread again. Then the branch evidence from row 6, a
     deleted upstream keeping its short name with `ahead` and `behind` null, and a
     branch named HEAD (HEAD_BRANCH_REF) taking none: its `upstream`,
     `remote_present`, `ahead` and `behind` stay null and its row carries a
@@ -2945,8 +2981,8 @@ def worktree_rows(repo, run, records=None):
 
     The reader of row_evidence(): the working directory's realpath once;
     per row _read_row(); shared_identities() over those reads; then per row,
-    in the same order, _read_status() and the assembly (lead ruling R-54
-    X-1)."""
+    in the same order, _identity_unchanged(), _read_status() and the assembly
+    (lead ruling R-54 X-1)."""
     identity = repo["identity"]
     registry = repo["records"]
     if identity is None or not registry:
@@ -2977,7 +3013,12 @@ def worktree_rows(repo, run, records=None):
         if at in twins:  # registration-mismatch, as a shared path is (R-67 (c))
             read["registered"], read["admin_id"] = registration_verdict(
                 index == 0, common_dir, None, shared=True)
-        _read_status(read, raw, run)
+        elif read["registered"] and not read["errors"] and (
+                run.child_budget("status")[0] <= 0 or _identity_unchanged(read, raw, index == 0, common_dir)):
+            # Verified again immediately before its probe (pc:124-126; R-101 (e)). With no
+            # work time left no probe starts, and the row keeps that probe's own
+            # deadline-exceeded, as the work deadline's rows always have (T099).
+            _read_status(read, raw, run)
         rows.append(row_evidence(record, raw, index == 0, read, refs, repo["merged"], target))
     return rows
 # endregion evidence

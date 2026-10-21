@@ -13,6 +13,7 @@ import errno
 import json
 import os
 from pathlib import Path
+import shlex
 import shutil
 import unittest
 from unittest import mock
@@ -990,6 +991,84 @@ class EvidenceTests(clean_support.CleanCase):
         self.assertEqual([os.fsencode(call.args[0][1][1]) for call in spy.call_args_list], order)
         self.assertEqual([(row.main, row["classification"]) for row in copy_of_first],
                          [(True, "protected-default")])
+
+    def fake_script(self, name, body):
+        """An sh script self.base/fake-NAME/git that runs body, then execs the real
+        git with its arguments: a fake to stand behind the counting wrapper."""
+        path = self.base / f"fake-{name}" / "git"
+        path.parent.mkdir()
+        path.write_text(f"#!/bin/sh\n{body}\nexec {shlex.quote(clean_support.REAL_GIT)} \"$@\"\n")
+        path.chmod(0o755)
+        return path
+
+    def test_clean_evidence_verifies_each_identity_immediately_before_its_status_probe(self):
+        # The project-command delta, pc:124-126: a worktree probe runs "only
+        # after that worktree's identity has been verified immediately before";
+        # lane 3's env H-1, lead ruling R-101 (e) and (j). R-67 (c)'s twins are
+        # still decided from every row's first read before any probe; each other
+        # row's lstat, realpath and registration are read again just before its
+        # own probe, and a row whose identity changed gets none.
+        root = self.repo()
+        self.bare_remote()
+        first = self.merged_worktree("001-first")
+        swapped = self.merged_worktree("002-swapped")
+
+        with self.subTest("each row's lstat comes after the previous row's probe"):
+            events = []
+            real_fs_call, real_status_probe = project.fs_call, project.status_probe
+
+            def fs_call(fn, *args, **kwargs):
+                if fn is os.lstat:
+                    events.append(("lstat", os.fsencode(args[0])))
+                return real_fs_call(fn, *args, **kwargs)
+
+            def status_probe(path, run):
+                events.append(("status", path))
+                return real_status_probe(path, run)
+
+            with mock.patch.dict(os.environ, self.env, clear=True):
+                run = project.Invocation()
+                repo = project.inspect_repository(os.fsencode(root), run)
+                with mock.patch.object(project, "fs_call", fs_call), \
+                        mock.patch.object(project, "status_probe", status_probe):
+                    rows = project.worktree_rows(repo, run)
+            probes = [at for at, event in enumerate(events) if event[0] == "status"]
+            self.assertEqual([events[at][1] for at in probes], [row.raw_path for row in rows],
+                             "every row probed, in the registry's order")
+            for before, at in zip([-1, *probes], probes):
+                with self.subTest(row=os.fsdecode(events[at][1])):
+                    self.assertIn(("lstat", events[at][1]), events[before + 1:at],
+                                  "its lstat is read again after the previous row's probe")
+
+        with self.subTest("a worktree swapped after its first read"):
+            # A dirty worktree: once every row's identity is read, the first
+            # status child (the main worktree's) moves it aside and puts at its
+            # path a copy without the uncommitted file, so its `.git` file and
+            # registration still hold and only its device and inode differ.
+            (swapped / "uncommitted").write_text("preserve")
+            decoy = self.base / "decoy"
+            shutil.copytree(swapped, decoy, symlinks=True)
+            (decoy / "uncommitted").unlink()
+            aside = self.base / "aside"
+            marker = self.base / "swapped.marker"
+            quoted = {name: shlex.quote(str(path)) for name, path in
+                      (("tree", swapped), ("decoy", decoy), ("aside", aside), ("marker", marker))}
+            fake = self.fake_script("swap", (
+                'case " $* " in *" status "*)\n'
+                f'  if [ ! -e {quoted["marker"]} ]; then : > {quoted["marker"]}; '
+                f'mv {quoted["tree"]} {quoted["aside"]} && mv {quoted["decoy"]} {quoted["tree"]}; fi;;\nesac'))
+            result, records = self.report(root, "--all-safe", real=fake)
+            self.assertTrue(marker.exists(), "the swap ran")
+            rows = by_name(result.document)
+            self.assertEqual([rows[swapped.name][key] for key in ("present", "dirty", "errors", "classification")],
+                             [True, None, [], "inspection-error"])
+            self.assertEqual(rows[first.name]["classification"], "merged-removable")
+            self.assertEqual([entry["path"] for entry in result.document["selected"]], [str(first)])
+            self.assertEqual((result.document["completeness"], result.document["refusals"][0]["code"]),
+                             ("incomplete", "inspection-incomplete"))
+            self.assertEqual(self.status_dirs(records), sorted(map(str, (root, first))),
+                             "no status probe at the swapped path")
+            self.assertTrue((aside / "uncommitted").exists(), "nothing was removed")
 
     # T030: the evidence model's scenarios (rule 1: test_status_, plan review M14).
 
