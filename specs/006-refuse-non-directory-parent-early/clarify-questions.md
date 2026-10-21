@@ -14,6 +14,8 @@ Brett Heap ("ratify 21", 2026-10-21).
 yet. The lead puts this block to Brett Heap. The answers are then encoded in
 the spec's Clarifications section, and only then does `/speckit-plan` run.
 
+**Corrected**: 2026-10-21, before any answer was given: Q5's precedent and option A now say that feature 003 ticked 2.2 after its first implementation commit, not before (`90a4cee` left it open; `f401e06` has it ticked).
+
 **Count**: 5 questions (cap 25). The spec writer recorded 5 ambiguities. Two
 of them are asked here (Q1, Q2). The other three are decided by the packet's
 text and dropped (see "Decided by the packet"). The coverage scan added three
@@ -178,18 +180,18 @@ Handoff still reads "to be created":
 
 Precedent: feature 003's realization PR #17 (`f401e06`) edited
 `openspec/changes/fix-parent-obstacle-wording/tasks.md` on its own branch. It
-ticked 1.6, 2.1 and 2.2 and filled in the handoff fields, recorded as "at
-90a4cee before the first implementation commit f492558". Its 3.1 to 3.3 were
-ticked at the archive (#18, `d81bf8d`). This spec's Scope already leaves 3.2
-and 3.3 to lane steps after the merge.
+ticked 1.6 and 2.1 and filled in the handoff fields at `90a4cee`, before the
+first implementation commit `f492558`. It ticked 2.2 later in the same PR, and
+2.2 is ticked in the squash `f401e06`. Its 3.1 to 3.3 were ticked at the archive
+(#18, `d81bf8d`). This spec's Scope already leaves 3.2 and 3.3 to lane steps
+after the merge.
 
 **Recommended:** Option A - it follows the precedent, keeps the handoff record
-in the PR that does the work, and meets 2.2 before the first implementation
-commit without a second PR.
+in the PR that does the work, and needs no second PR.
 
 | Option | Description |
 | --- | --- |
-| A | On this feature's branch, as PR #17 did. Before the first implementation commit, the change's `tasks.md` gets the 1.6 tick with the quote and its link, the 2.1 and 2.2 ticks, and the Speckit Handoff fields. 3.1 to 3.3 wait for the archive. FR-016 narrows to the change's proposal, design, clarifications and spec delta, and to its `tasks.md` beyond those entries. |
+| A | On this feature's branch, as PR #17 did. Before the first implementation commit, the change's `tasks.md` gets the 1.6 tick with the quote and its link, the 2.1 tick, and the Speckit Handoff fields. The 2.2 tick follows in the same PR once the first implementation step has run after reading that section, as feature 003 did. 3.1 to 3.3 wait for the archive. FR-016 narrows to the change's proposal, design, clarifications and spec delta, and to its `tasks.md` beyond those entries. |
 | B | In a separate governance PR to main, before `/opsx:apply`. This branch then merges main in and never edits `openspec/`. FR-016 stands as written. |
 | Short | Another place (<=5 words) |
 
