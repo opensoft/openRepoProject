@@ -359,7 +359,8 @@ computes:
   `target-cap`. Change 1's council V5 has the batch select up to the limit in
   canonical order and defer the rest as `deferred-target-cap`, apply
   allowed, re-runs draining. The overview's count can exceed what the batch
-  would select, since the batch's index gates may exclude some rows; the
+  would select, since the batch's index gates and its `operation-in-progress`
+  and `worktree-only-commits` gates may exclude some rows; the
   message is advice either way;
 - the root gates: a null root from a bare repository withholds every clean
   suggestion with `target-not-repository-root`; a root or `common_dir` that
@@ -479,6 +480,10 @@ now)`:
 - one task per worktree row: `lstat` of the path and reads of its `.git` file
   and the matching `gitdir` file (DI:392-394); the missing-main `lstat` and
   D3's `.git` read take the same shape;
+- one task per linked row whose effective work tree [E] reads, where the
+  repository's `extensions.worktreeConfig` is taken as true: the realpath of
+  the toplevel that read reports, compared with the realpath of the row's
+  registered path under [E]'s rule;
 - one task per reflog read of D5's gates, `logs/refs/heads/<branch>` under
   `common_dir`, at most 64 KiB, under D5's one outcome rule: a missing
   (`ENOENT`, `ENOTDIR`), empty or bound-reaching file is
@@ -494,7 +499,8 @@ when the deadline was the smaller limit, on its root or row, and every field
 it would have established stays null. No filesystem call runs on the main
 thread, so a hung mount never blocks the loop (spec requirement 11).
 Abandoned workers are bounded by the number of tasks started (at most 32
-roots, 128 manifests, 512 rows, 512 reflog reads and a handful more), not by
+roots, 128 manifests, 512 rows, 512 toplevel realpaths, 512 reflog reads and a
+handful more), not by
 time.
 
 Rejected: a size check by path before opening (a race).
@@ -764,8 +770,9 @@ with `project clean <root> --json` at the same commit, not at `a040790`.
   README says such roots can truncate on every run.
 - [Change 1's final text moves a gate, code, cap or probe] -> D12 and task
   2.2; the overview copies no number (N-3, D11).
-- [`target-cap` disagrees with the batch, which sees the index gates the
-  overview does not] -> The suggestion is advice; `project clean` recomputes
+- [`target-cap` disagrees with the batch, which sees the index gates and the
+  `operation-in-progress` and `worktree-only-commits` gates the overview does
+  not] -> The suggestion is advice; `project clean` recomputes
   and shows its own plan.
 - [Repositories without file reflogs (the reftable backend,
   `core.logAllRefUpdates=false`) give every merged row `reflog-unavailable`,

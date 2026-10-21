@@ -139,7 +139,7 @@ probes SHALL then run in the candidate. A suggestion for a gitfile checkout
 SHALL follow `Clean resolves its target Git-first`.
 
 #### Scenario: One probe set per repository
-- **WHEN** a repository has a main worktree and three linked worktrees, one of them an immediate entry of the root and one outside every root
+- **WHEN** a repository that does not set `extensions.worktreeConfig` has a main worktree and three linked worktrees, one of them an immediate entry of the root and one outside every root
 - **THEN** there is one project row with four worktree rows, and the external worktree adds no project
 - **AND** the identity probe, the registry, the single ref listing, the single merged-set query and the `extensions.worktreeConfig` read run once for the repository, each present row gets one status probe, and `probes.performed` equals one version check, plus one identity probe per Git candidate, plus four, plus four
 - **AND** when the main worktree lies outside every root, so that a linked worktree reaches the repository first, `repository.root` is the canonical path of the first registry record, never that linked worktree's toplevel
@@ -262,7 +262,10 @@ canonical order has finished its first phase; identity probes may still be
 dispatched ahead of that point. In a run in which no child, task or root
 listing reaches its budget and the deadline does not expire, the JSON
 document, apart from timestamps and `budget.probe_concurrency`, SHALL NOT
-depend on concurrency or completion order.
+depend on concurrency or completion order. In the second phase, a linked row's
+effective-work-tree read, where `Repository inspection requires Git 2.36 and
+shares one evidence model` gives that row one, SHALL run before its status
+probe.
 
 The envelope SHALL report `probes: {estimated, performed}`: `performed`
 counts every Git child started, timed-out and stopped ones included;
@@ -353,7 +356,7 @@ remove or reorder any other row or an earlier scan error:
 | an operating-system error | `os-error` |
 | output a reused helper could not decode | `undecodable-output` |
 | any other exception, its message naming the exception class | `internal-error` |
-| a Git child exits nonzero | `probe-failed` |
+| a Git child exits nonzero, except the `extensions.worktreeConfig` read's exit 1 with nothing printed, by which Git reports the value not set, read as false with no error | `probe-failed` |
 | a Git child or filesystem task reaches its 5 s limit | `probe-timeout` |
 | the deadline ends a child or task, or prevents its start | `deadline-exceeded` |
 
@@ -856,9 +859,10 @@ Once its arguments are parsed, and before any Git child starts, the version
 check included, the overview SHALL refuse with `relative-config-path` and
 status 2 when `HOME` or `XDG_CONFIG_HOME` is set to a non-empty value whose
 first byte is not `/`, the test being made on the raw bytes of each value and
-an empty or unset variable passing it, with a message naming each variable
-that fails the test, never its value, and no Git child; such a refusal SHALL
-never be an incompleteness.
+an empty or unset variable passing it, and applying to each variable whether
+or not Git would read a file through it, not following Git's order of
+precedence, with a message naming each variable that fails the test, never
+its value, and no Git child; such a refusal SHALL never be an incompleteness.
 The same test SHALL apply to `GIT_CONFIG_GLOBAL` and `GIT_CONFIG_SYSTEM`.
 
 It SHALL run the version check of `Repository inspection requires Git 2.36
@@ -895,6 +899,7 @@ be discarded, never flushed at exit.
 - **WHEN** `HOME` is set to the relative `h`, or `XDG_CONFIG_HOME` to the relative `cfg` beside an absolute `HOME`
 - **THEN** the overview exits 2 with code `relative-config-path` and a message naming that variable, never its value, before listing any root or starting any Git child, `git --version` included
 - **AND** under `--json` it prints only `{"error": "<message>", "code": "relative-config-path"}`
+- **AND** the same holds for a relative `HOME` beside an absolute `XDG_CONFIG_HOME` and an absolute `GIT_CONFIG_GLOBAL`, although Git would then read no configuration file under `HOME`, since the test does not follow Git's order of precedence
 
 #### Scenario: SIGTERM or SIGHUP during collection
 - **WHEN** SIGTERM is sent while, at probe concurrency 4, one Git child is hung and another is writing a large output

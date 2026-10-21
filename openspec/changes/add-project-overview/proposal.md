@@ -100,7 +100,8 @@ builds the shared evidence model the overview reads across many repositories.
   directory that is not valid UTF-8. A finding names the gate that withheld
   or limited its suggestion in `suggestion_gate`, with a fixed remedy in its
   message. The batch may still exclude a suggested worktree through its
-  index gates. Never `--apply` or `--yes`, never a bare name (DI:661-702,
+  index gates and its `operation-in-progress` and `worktree-only-commits`
+  gates. Never `--apply` or `--yes`, never a bare name (DI:661-702,
   DI:847-886).
 - **A versioned JSON envelope.** `--json` prints one `schema_version: 1`
   document with exactly the envelope, row, worktree, finding and summary
@@ -712,8 +713,11 @@ Departures from packet decisions, each citing the decision departed from:
   `inspection-error`, and an unfinished read leaves it unprobed
   (`inspection-incomplete`). Either code keeps the finding with the
   read-only suggestion, that `suggestion_gate` and requirement 7's message.
-  Only the index gates, then `operation-in-progress` and
-  `worktree-only-commits`, stay residual exclusions the batch applies.
+  Only the index gates stay residual exclusions the batch applies.
+  Amendment A1 (proposed, not ratified): after the index gates,
+  `operation-in-progress` and `worktree-only-commits` are further exclusions
+  that only the batch applies (section "Amendment A1" below); the words above
+  are this entry's as ratified.
 - **Determinism scoped** (DI:440-449, "never depends on timing"):
   requirement 3 promises timing-independent JSON only for an uncut run, and
   starts a repository's phase 2 only once every candidate earlier in
@@ -1245,38 +1249,50 @@ Not carried, since each changes only spec 005 and builds this change as
 ratified: Q1 A, Q2 A, Q5 A, Q10 A and Q14 A.
 
 Three items of A1's own follow from change 1's amendments in draft PR #19,
-not from Q1-Q17. Their authority is Brett Heap's ruling, in lane
+not from Q1-Q17. Their basis is Brett Heap's ruling, in lane
 openRepoProject-3's session on 2026-10-21, "yes to all six recommendations,
 LQ-10 to LQ-15", which that lane recorded as a NOTED line at 12:33:41Z:
 https://github.com/opensoft/brett-wip/blob/5276f65d18fcb46ba3fcc5758a09941d15a36e21/lanes/log/openRepoProject-3.md#L89
 and, for LQ-15, his words to lane openRepoProject-2, "LQ-15: yes, refuse
-relative HOME like #29" (its ruling R-102 (a)), as PR #19 records them. Each
-follows PR #19's text at the commits named, a draft pending its own
-ratification, and changes if that text does before either is ratified; each
-is declared here for Brett Heap's review:
+relative HOME like #29" (its ruling R-102 (a)), as PR #19 records them. That
+ruling is about change 1: LQ-15 names `clean`, `status`, `doctor` and
+`update`, and what reaches the overview reaches it through [E] and [G], which
+this change cites; beyond that, each item is A1's own proposal, put to Brett
+Heap here. Each follows PR #19's text at the commits named, a draft pending
+its own ratification. Each lands only with or after PR #19's ratification of
+the commit it follows, and is re-aligned before A1 is ratified if that commit
+changes first. Two rulings are still to come on PR #19 and are not written
+here: R-124, under which a failed check or listing of LQ-13's or LQ-14's gate
+is to give `inspection-error` with the plan incomplete, and R-125, LQ-11's
+commondir check. Each item is declared here for Brett Heap's review:
 
 - **`relative-config-path` (LQ-15; PR #19 at `cc000ea` and `9fb22fa`), a
   declared item.** Once its arguments are parsed, and before any Git child
   starts, the version check included, the overview refuses with
   `relative-config-path` and exit 2 when `HOME` or `XDG_CONFIG_HOME` is set
-  to a non-empty value whose first byte is not `/`, tested on the raw bytes,
-  its message naming each variable that fails the test, never its value, as
-  `project clean`'s refusal does; under `--json` it prints only the error
-  object with that code. The order is PR #19's at `9fb22fa`: argument
-  errors, then this refusal, then the version check. A separate sentence
-  applies the same test to `GIT_CONFIG_GLOBAL` and `GIT_CONFIG_SYSTEM`, the
-  lead's extension in PR #19; if Brett Heap strikes that extension, A1's
-  sentence is struck with PR #19's sites (its design D11's list at
-  `9fb22fa`), and nothing else here names the two variables, the new scenario
-  testing `HOME` and `XDG_CONFIG_HOME` alone. Amended: requirement 8's exit-2
-  code list (POD:677-678); requirement 11's exit rule (POD:765-768), a new
-  paragraph after POD:768, and the scenario "A relative configuration path"
-  after "Git unavailable" (POD:790), 62 scenarios in all; design D13's
-  scenario map (design.md:697); the summary of requirement 8 in
-  Capabilities (proposal.md:334-335); and task 1.4, which records the 62.
-  PR #19 at `9fb22fa` leaves the overview's
-  code and exit status under this test to this change. If Brett Heap strikes
-  the code, the fallback is `refused` with exit 2.
+  to a non-empty value whose first byte is not `/`, tested on the raw bytes
+  and for each variable whether or not Git would read a file through it, not
+  following Git's order of precedence (C-44's other half, which PR #19 adds
+  at `9fb22fa`), its message naming each variable that fails the test, never
+  its value, as `project clean`'s refusal does; under `--json` it prints only
+  the error object with that code. The order is PR #19's at `9fb22fa`:
+  argument errors, then this refusal, then the version check. A separate
+  sentence applies the same test to `GIT_CONFIG_GLOBAL` and
+  `GIT_CONFIG_SYSTEM`, the lead's extension in PR #19; if Brett Heap strikes
+  that extension, A1's sentence is struck with PR #19's sites (its design
+  D11's list at `9fb22fa`), and no other text here tests the two variables:
+  the scenario's precedence AND, which names an absolute `GIT_CONFIG_GLOBAL`,
+  stays, as PR #19's own precedence AND stays in that list. Amended:
+  requirement 8's exit-2 code list (POD:677-678); requirement 11's exit rule
+  (POD:765-768), a new paragraph after POD:768, and the scenario "A relative
+  configuration path" after "Git unavailable" (POD:790), with its
+  precedence AND, 62 scenarios in all; design D13's scenario map
+  (design.md:697); the summary of requirement 8 in Capabilities
+  (proposal.md:334-335); and task 1.4, which records the 62. PR #19 at
+  `9fb22fa` leaves the overview's code and exit status under this test to
+  this change. The code departs from the packet's closed list of exit-2 codes
+  (DI:1086-1089). If Brett Heap strikes the code, the fallback is `refused`
+  with exit 2, which departs from nothing.
 - **`operation-in-progress` and `worktree-only-commits` (LQ-14, PR #19 at
   `43f7107`; LQ-13, at `93de4bb`), a declared proposal.** PR #19 adds them as
   [G]'s last two gates, in that order after `hidden-local-state`: an
@@ -1289,9 +1305,16 @@ is declared here for Brett Heap's review:
   applies, beside the index gates: the overview evaluates neither, makes no
   listing, `logs/HEAD` read or `rev-list` child for them, and keeps its
   `--all-safe` suggestion, which `project clean`'s batch then excludes itself.
-  Amended: requirement 7 (POD:525-526) and design D5 (design.md:324-325),
-  with the proposal's summary of requirement 7 in Capabilities
-  (proposal.md:290-291) and its reflog-gates departure (proposal.md:704). The
+  That clause assumes PR #19's failure rule for the two gates, which R-124 is
+  to settle, and is re-aligned with it when it lands. Amended: requirement 7
+  (POD:525-526) and design D5 (design.md:324-325), with the proposal's
+  summaries of the batch's exclusions in What Changes (proposal.md:100-101)
+  and in Capabilities, requirement 7 (proposal.md:290-291), and design's in
+  D5's `target-cap` item (design.md:346) and in Risks (design.md:732-733).
+  The reflog-gates departure (proposal.md:704) keeps its ratified words, with
+  an A1 note after it. The route departs from the packet's OV:110-113 and
+  DI:690-692, which name `hidden-local-state` and `contains-submodule` as the
+  only exclusions the batch applies beyond the overview's gates. The
   alternative, for Brett Heap: overview gate codes `operation-in-progress`
   and `worktree-only-commits`, evaluated from the same reads, each a new row
   in requirement 7's closed gate table, which withholds `--all-safe` for that
@@ -1306,9 +1329,21 @@ is declared here for Brett Heap's review:
   scenario "One probe set per repository" counts `probes.performed` exactly,
   and the `estimated` rule and design D6 list the repository-wide probes.
   Amended: requirement 3's `estimated` rule (POD:250-254) and that scenario
-  (POD:129); design D6 (design.md:390-392); and the shared evidence model as
-  "Dependencies and Sequencing" lists it (proposal.md:472-473). Spec 005
-  carries the parity.
+  (POD:129), whose fixture now states that the repository does not set
+  `extensions.worktreeConfig` (POD:127); design D6 (design.md:390-392); and
+  the shared evidence model as "Dependencies and Sequencing" lists it
+  (proposal.md:472-473). The counts depart from the packet's DI:506-509 ("3
+  more per distinct repository") and DI:1193-1201 ("plus three"). Amended
+  also, where this change's text contradicts PR #19's two reads, at the sites
+  spec 005 recorded at `b511bdb`: the collector table's `probe-failed` row
+  (POD:333), so that the read's exit 1 with nothing printed, by which Git
+  reports the value not set, reads as false with no error, as PR #19 has an
+  unset value; the second phase, which runs a linked row's
+  effective-work-tree read before its status probe (a sentence after
+  POD:246); and design D8, a task for the realpath of the toplevel that read
+  reports (after design.md:463) and its count (design.md:478). POD:238-239
+  keeps its words, and POD:248-254 and design D6, amended above, agree with
+  both reads. Spec 005 carries the parity.
 
 Q15 A and Q16 B together: the handlers only record the signal wherever a
 child can run, and Q15 A's raising span, feature 004's `raising_signals` (its
