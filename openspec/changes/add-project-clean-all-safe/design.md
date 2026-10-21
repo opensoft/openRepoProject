@@ -32,8 +32,9 @@ and its W9 read of LQ-10 and LQ-11, under the lead's R-125, Context, D6, D7,
 D11, D17, D18 and Risks; its W14 read of LQ-14, under the lead's R-126,
 Context, D18 and D22; and its W21 read of R-124 to R-126 with the round of the
 lead's R-146 and R-147, Context, D7, D12, D18, D21, D22 and Risks; and its
-W26 read of that round, with the lead's R-171, Context, D7, D18 and D22. Brett
-Heap's ruling
+W26 read of that round, with the lead's R-171, Context, D7, D18 and D22; and
+the restated fit of the lead's R-178, Context, D14, Risks and Open Questions.
+Brett Heap's ruling
 of 2026-10-09 on open question 1, that a local ancestry proof outranks
 `remote-gone` for worktree rows, is in `proposal.md` Decisions and edited
 Context, D6, D7, D20, Risks, the Migration Plan and Open Questions here.
@@ -877,16 +878,44 @@ At BA's 150 ms per Git child, with F = 8 (row 4c of LQ-11 included):
 | --- | --- | --- | --- |
 | report, 256 rows | 8 + 256 + 16 + 16 = 296 | 44.4 s | yes |
 | report, 512 rows | 8 + 512 + 16 + 16 = 552 | 82.8 s | no |
-| all-safe, 128 rows, 16 targets | 8 + 128 + 16 + 16 + 96 + 3 = 267, and 16 removals | 40.05 s + about 4.8 s = 44.85 s | yes; the 16th removal spawns at 44.1 s with 5.9 s left (BA:753-756) |
-| single, 128 rows plus P | 8 + 129 + 1 + 1 + 6 + 3 = 148, and 1 removal | 22.2 s + about 0.3 s | yes |
+| all-safe, 128 rows, 16 targets, row 4c false | 8 + 128 + 16 + 16 + 96 + 3 = 267, and 16 removals | 40.05 s + about 4.8 s = 44.85 s | yes; the 16th removal spawns at 44.1 s with 5.9 s left (BA:753-756) |
+| all-safe, 128 rows, 16 targets, row 4c true | 8 + 128 + 127 + 16 + 16 = 295 before the first revalidation, then 7 | 44.25 s, and 45.3 s at the first spawn | no removal: less than the 5 s floor remains, so every target is `not-attempted` with `deadline-exceeded`, exit 1 |
+| report, 256 rows, row 4c true | 8 + 256 + 255 + 16 + 16 = 551 | 82.65 s | no; incomplete with `deadline-exceeded` above 147 rows |
+| single, 128 rows plus P, row 4c false | 8 + 129 + 1 + 1 + 6 + 3 = 148, and 1 removal | 22.2 s + about 0.3 s | yes |
+| single, 128 rows plus P, row 4c true | 8 + 129 + 128 + 1 + 1 + 7 + 3 = 277, and 1 removal | 41.1 s at the spawn + about 0.3 s | yes |
 
 The report builds no apply plan, so its worst case is the planning term alone,
 and 256 is the largest power of two that fits (D-V, OQ-29). Row 4b and the rare
-row 3 repeat add 0.15 s each; the reflog reads add no child. In a repository
-whose row 4c reads true, each linked row adds its effective-work-tree probe and
-each target's revalidation adds it again, so a large plan there reaches the
-deadline sooner and goes incomplete with `deadline-exceeded`, never unsafe
-(LQ-11). D21's reachability probe adds one child for each of at most 16 rows
+row 3 repeat add 0.15 s each; the reflog reads add no child.
+
+The planning term counts what a plan runs: F; one status probe per present
+row; where row 4c reads true, one effective-work-tree probe per linked row
+(LQ-11); and, past the cap, at most 16 hidden-state probes and 16 reachability
+probes (LQ-13). Writer G measured these counts with a logging Git wrapper at
+`f0fdbc2`, before LQ-13 was built (the lead's R-178): one status child per
+present row, one `rev-parse --show-toplevel` per linked row where row 4c reads
+true, one `ls-files` per row past the cap, and five children per
+revalidation, six where row 4c reads true, to which LQ-13's reachability probe
+adds one, giving the six and seven of D7. Removal k spawns at (P + V k) x
+0.15 s + (k - 1) x 0.3 s, P the planning children and V the children per
+revalidation, and only while that is at most 45 s, the 50 s work deadline less
+the 5 s removal floor. With P = 168 and V = 6, row 4c false, the 16th removal
+spawns at 44.1 s, as the table says. With V = 7 and P still 168, the 14th
+spawns at 43.8 s and the 15th would at 45.15 s, so seven children per target
+fit 14 removals, not 16. Where row 4c reads true, the per-row probes make P =
+39 + 2R for R rows (8 + R + (R - 1) + 32): all 16 removals fit up to 59 rows,
+the first fits up to 127 rows (at 45.0 s), and at 128 rows it would spawn at
+45.3 s, so nothing is removed, every target is `not-attempted` with
+`deadline-exceeded` and the run exits 1, which is safe, since no removal
+starts; a plain report there goes incomplete with `deadline-exceeded` above
+147 rows. Before this restatement D14 counted P as 168 in every repository,
+which left the per-row probe out (lane openRepoProject-5's A9, R-178).
+Whether that worst case stands is open question LQ-20, before Brett Heap
+(Risks, Open Questions). Writer G's run also found the build's
+`probes.estimated` short where row 4c reads true, 37 children performed
+against 34 estimated, which is the build's to correct.
+
+D21's reachability probe adds one child for each of at most 16 rows
 and one to each revalidation (LQ-13); its walk is unmeasured, and at task 2.1's
 `for-each-ref` cost over 1,000 loose branches, 240 ms warm, those 32 children
 would add about 7.7 s, which the measured fit's 26.4 s margin absorbs. A slower
@@ -1479,6 +1508,17 @@ record from the probe, and its `--abort` leaves `NOTES_MERGE_WORKTREE` alone.
   cap, `contains-submodule` among them (D18); 16 such rows ahead of a backlog
   stall it alike; V5's
   caveat was ratified with the deferral at the merge of PR #11.
+- [In a repository whose `extensions.worktreeConfig` is true, LQ-11's
+  effective-work-tree probe runs for every linked row at plan time, so a
+  128-row `--all-safe --apply` reaches its first removal at 45.3 s, past the 5 s
+  floor, and removes nothing, and a report goes incomplete above 147 rows (D14)]
+  -> Fails safe: no removal starts, every target is `not-attempted` with
+  `deadline-exceeded`, and the run exits 1. Whether that worst case stands is
+  open question LQ-20, which awaits Brett Heap; its options, none chosen here,
+  are (a) accept it; (b) bound the plan-time work-tree probe to the selected
+  targets, at most 16, and report the other rows' identity as unverified; and
+  (c) a larger removal floor where `extensions.worktreeConfig` is true (the
+  lead's R-178).
 - [Rows of 100,000-entry indexes: the fit of BA:729-735 would give 64 rows, 16
   targets and a report cap of 128, since the plan term alone for 128 such rows
   is 46.6 s] -> The caps measured at 10,000 entries stand; a plan over such rows
@@ -1618,6 +1658,13 @@ reading stated, and a different ruling edits the deltas before the archive.
   follow-up change after the archive, as `fix-parent-obstacle-wording` followed
   `prefer-triad-in-project-new`, which costs a second archive and leaves the
   archived spec wrong in between.
+- LQ-20, the fit where `extensions.worktreeConfig` is true (D14, Risks): a
+  128-row `--all-safe --apply` there removes nothing, safely. The options are
+  (a) accept that worst case, (b) bound the plan-time work-tree probe to the
+  selected targets, at most 16, and report the other rows' identity as
+  unverified, and (c) a larger removal floor where `extensions.worktreeConfig`
+  is true. This draft recommends none of them; the deltas as written give
+  (a)'s behaviour until he rules.
 
 Ruled on 2026-10-09: a merged worktree whose remote branch was deleted is
 `merged-removable`, Brett Heap having ruled that a local ancestry proof

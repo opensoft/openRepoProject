@@ -1270,6 +1270,15 @@ OQ-29's cap; these bind until that revision merges (C2 is now reading R9).
   alternative is a follow-up change after the archive, as
   `fix-parent-obstacle-wording` followed `prefer-triad-in-project-new`, which
   costs a second archive and leaves the archived spec wrong in between.
+- **LQ-20, the fit where `extensions.worktreeConfig` is true.** LQ-11's
+  effective-work-tree probe runs for every linked row at plan time, so a
+  128-row `--all-safe --apply` in such a repository reaches its first removal
+  at 45.3 s, past the 5 s floor, and removes nothing, which is safe (design
+  D14, Risks; the lead's R-178). Before Brett Heap, with no recommendation
+  here: (a) accept that worst case; (b) bound the plan-time work-tree probe to
+  the selected targets, at most 16, and report the other rows' identity as
+  unverified; or (c) a larger removal floor where `extensions.worktreeConfig`
+  is true. The deltas as written give (a)'s behaviour until he rules.
 
 The question of a merged worktree whose remote branch was deleted is closed:
 Brett Heap ruled on 2026-10-09 that a local ancestry proof outranks
@@ -1541,7 +1550,16 @@ words (F-5); and says "a gate after the cap" in OQ-5 (F-6) (Capabilities
 1.2; the deltas' `Clean can explicitly push safe feature branches` and its
 scenario "Push refuses a branch it may not push", `Clean records a
 reconcilable result for every removal target` and `Cleanup revalidates
-destructive actions`).
+destructive actions`). Under the lead's R-178, design D14 restates the fit
+with writer G's measured counts: the planning term counts LQ-11's per-row
+probe where `extensions.worktreeConfig` is true, seven children per target fit
+14 removals rather than 16, and at 128 rows in such a repository the first
+removal would spawn at 45.3 s, so none is made, safely; open question LQ-20
+names the three options before Brett Heap, choosing none. No requirement
+changes: no sentence of `Clean bounds its Git work and reports omitted work`
+is false under the restated figures, since it bounds children per target and
+targets per run and promises no number of removals (Open Questions; this
+list; design Context, D14, Risks, Open Questions; `tasks.md` 1.2).
 
 ### Council Verdicts
 

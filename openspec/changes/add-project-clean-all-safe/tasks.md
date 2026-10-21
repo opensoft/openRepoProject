@@ -49,7 +49,9 @@ duplicate them, and nothing here is an implementation step.
   lead's R-146 and R-147 (the commit titled 'Amend change 1: lane 3's W21
   LOWs, the Git cites and two refusal scenarios (R-146, R-147)'); and its W26
   read with the lead's R-171 (the commit titled 'Amend change 1: lane 3's W26
-  read and R-171's revalidation rule'); verified by
+  read and R-171's revalidation rule'); and the fit restated under the lead's
+  R-178 (the commit titled 'Amend change 1: restate D14's fit with the
+  measured counts, and name LQ-20 (R-178)'); verified by
   the table "Questions Resolved by the Alignment Review" in `proposal.md` and
   the later-rulings list under it, which name the section each ruling edited.
 - [x] 1.3 Council resolved: every concern is VALID, none dismissed, the verdicts
