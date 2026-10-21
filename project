@@ -1527,14 +1527,17 @@ def _process_text(data):
 
 
 def git_refusal(run):
-    """After the invocation's version check failed, the CompletedProcess that
-    git() returns without spawning anything (FR-053, plan review M10), or None
-    while Git may run."""
+    """After the invocation's version check failed, or a configuration path
+    failed D11's test in its place (hold_git_for_config_paths(); LQ-15), the
+    CompletedProcess that git() returns without spawning anything (FR-053,
+    plan review M10), its message the code's own, or None while Git may run."""
     version = run.version
     if version is None or version.code is None:
         return None
     if version.code == "git-too-old":
         message = TEXT["git_too_old"].format(VERSION=version.text)
+    elif version.code == "relative-config-path":
+        message = version.detail  # D18's lines, one per variable that failed
     else:
         message = TEXT["git_unavailable"].format(DETAIL=version.detail)
     return subprocess.CompletedProcess(["git"], 2, "", message)
@@ -1744,7 +1747,12 @@ class GitVersion:
     """The version check's result (FR-053; data-model.md, "Driver outcome"):
     `code`, None, `git-too-old` or `git-unavailable`; `version`, the numbers
     read, as (major, minor, patch); `text`, what followed `git version `; and
-    `detail`, the git-unavailable detail as TEXT words it."""
+    `detail`, the git-unavailable detail as TEXT words it. Status, doctor and
+    update memoize one with code `relative-config-path` in the check's place
+    when a configuration path fails D11's test, so that no Git child starts,
+    `git --version` included; its `detail` is then D18's lines
+    (hold_git_for_config_paths(); Brett Heap's ruling LQ-15; lead ruling
+    R-131 (b))."""
 
     def __init__(self, code, version=None, text=None, detail=None):
         self.code = code
