@@ -2578,7 +2578,7 @@ statuses, the child counts and the order of what was cut.
 
 ### Tests for User Story 6
 
-- [ ] T096 [US6] [O] Add to `tests/test_clean_bounds.py`:
+- [x] T096 [US6] [O] Add to `tests/test_clean_bounds.py`:
   `test_clean_audit_a_repository_with_a_feature_worktree` (plain `project
   clean` reports the main worktree and each linked one and says remote
   information may be stale, and the counting log holds no fetch, commit, push,
@@ -2605,7 +2605,7 @@ statuses, the child counts and the order of what was cut.
   repository root".
   — files: `tests/test_clean_bounds.py`
   — verify: `python3 -c "import sys,unittest as u;L=u.defaultTestLoader;f=lambda s:[i for t in s for i in (f(t) if isinstance(t,u.TestSuite) else [t.id()])];I=[i for i in f(L.discover('tests',pattern=sys.argv[1])) if not i.startswith('unittest.')];A=sys.argv[2:];M=[a for a in A if not any(a in ('*',i.split('.')[-1]) for i in I)];[print('not collected:',m) for m in M];[print(e) for e in L.errors];sys.exit(1 if M or L.errors or not A else 0)" test_clean_bounds.py 'test_clean_audit_a_repository_with_a_feature_worktree' 'test_clean_the_plain_report_exits_by_completeness' 'test_clean_an_unreadable_worktree_is_one_row' 'test_clean_a_failed_status_probe_on_the_merge_target_checkout' 'test_clean_a_failed_status_in_the_repository_root'`
-- [ ] T097 [US6] [O] Add to `tests/test_clean_bounds.py`:
+- [x] T097 [US6] [O] Add to `tests/test_clean_bounds.py`:
   `test_clean_row_cap_and_planning_failures` (129 rows: incomplete with
   `inspect-cap`, `omitted` visible, the status children those of the main
   worktree and the 127 smallest paths, the preview exit 1, and `--apply` exit 2
@@ -2630,7 +2630,7 @@ statuses, the child counts and the order of what was cut.
   "Ignored-file bound".
   — files: `tests/test_clean_bounds.py`
   — verify: `python3 -c "import sys,unittest as u;L=u.defaultTestLoader;f=lambda s:[i for t in s for i in (f(t) if isinstance(t,u.TestSuite) else [t.id()])];I=[i for i in f(L.discover('tests',pattern=sys.argv[1])) if not i.startswith('unittest.')];A=sys.argv[2:];M=[a for a in A if not any(a in ('*',i.split('.')[-1]) for i in I)];[print('not collected:',m) for m in M];[print(e) for e in L.errors];sys.exit(1 if M or L.errors or not A else 0)" test_clean_bounds.py 'test_clean_row_cap_and_planning_failures' 'test_clean_twenty_rows_pass_every_gate_before_deferred_target_cap' 'test_clean_ignored_file_bound'`
-- [ ] T098 [US6] [O] Add to `tests/test_clean_bounds.py`:
+- [x] T098 [US6] [O] Add to `tests/test_clean_bounds.py`:
   `test_clean_bounded_revalidation_work` (five rows, three selected,
   `--all-safe --apply --yes` under the counting wrapper and the real table
   (R-29): each revalidation spawns at most five children, the final rescan
@@ -2667,7 +2667,7 @@ statuses, the child counts and the order of what was cut.
 
 ### Implementation for User Story 6
 
-- [ ] T099 [US6] [O] Bound planning and gate removals by the clock of the
+- [x] T099 [US6] [O] Bound planning and gate removals by the clock of the
   `Invocation` (FR-029, FR-030; regions `plan` and `apply`): `build_plan()`
   stops at the work deadline, each row it stops being `inspection-error`
   with a `deadline-exceeded` row error and excluded with reason
@@ -2686,14 +2686,14 @@ statuses, the child counts and the order of what was cut.
   deadline is waited for, and the reserve counts from its exit.
   — files: `project`, `tests/clean_support.py`
   — verify: `python3 -c "import sys,re;t=open('project').read();A=sys.argv[1:];c=lambda r:t.split('# region '+r+'\n')[1].split('# endregion '+r+'\n')[0];M=[a for a in A if not ((a.split('%',1)[1] not in c(a.split('%',1)[0])) if '%' in a else (a.split('~',1)[1] in c(a.split('~',1)[0])) if '~' in a else re.search(r'^[a-z]*\s?'+re.escape(a.split(':',1)[1])+r'\b',c(a.split(':',1)[0]),re.M))];[print('region check failed:',m) for m in M];sys.exit(1 if M or not A else 0)" 'apply~removal_floor' && python3 project clean --help >/dev/null && python3 -c "import sys;sys.path.insert(0,'tests');import clean_support as c;t=c.load_project().TEXT['note_deadline_exceeded'];f=c.TEXT_FIXTURES['note_deadline_exceeded'];print('note_deadline_exceeded:',t);sys.exit(1 if 'unprobed' in t+f else 0)" && python3 -m unittest discover -s tests -p 'test_clean_harness.py' -k '*.test_clean_text_fixtures_equal_the_contract_table'`
-- [ ] T100 [US6] [O] Fill `deferral_gate` (region `gates`; D12, FR-032): the first
+- [x] T100 [US6] [O] Fill `deferral_gate` (region `gates`; D12, FR-032): the first
   16 rows that pass gates 1 to 7, in canonical order, go on to the index gates,
   and the rest are excluded as `deferred-target-cap`; in `print_plan()` (region
   `preview`), D18's deferral line with `project clean ROOT --all-safe --apply`,
   and its non-drain line when all 16 are `contains-submodule`.
   — files: `project`
   — verify: `python3 -c "import sys,re;t=open('project').read();A=sys.argv[1:];c=lambda r:t.split('# region '+r+'\n')[1].split('# endregion '+r+'\n')[0];M=[a for a in A if not ((a.split('%',1)[1] not in c(a.split('%',1)[0])) if '%' in a else (a.split('~',1)[1] in c(a.split('~',1)[0])) if '~' in a else re.search(r'^[a-z]*\s?'+re.escape(a.split(':',1)[1])+r'\b',c(a.split(':',1)[0]),re.M))];[print('region check failed:',m) for m in M];sys.exit(1 if M or not A else 0)" 'preview~deferral_line' 'preview~non_drain_line' && python3 project clean --help >/dev/null`
-- [ ] T101 [US6] [O] Finish report mode (D14, FR-003 to FR-005; regions `plan`,
+- [x] T101 [US6] [O] Finish report mode (D14, FR-003 to FR-005; regions `plan`,
   `preview` and `dispatcher`): above 128 rows `selected` is null and the notes
   carry `inspect-cap` with `rows`, which alone leaves the report complete,
   while the gates still run and `excluded` still lists every inspected row a
@@ -2703,7 +2703,7 @@ statuses, the child counts and the order of what was cut.
   report 0 when complete and 1 when incomplete.
   — files: `project`
   — verify: `python3 -c "import sys,re;t=open('project').read();A=sys.argv[1:];c=lambda r:t.split('# region '+r+'\n')[1].split('# endregion '+r+'\n')[0];M=[a for a in A if not ((a.split('%',1)[1] not in c(a.split('%',1)[0])) if '%' in a else (a.split('~',1)[1] in c(a.split('~',1)[0])) if '~' in a else re.search(r'^[a-z]*\s?'+re.escape(a.split(':',1)[1])+r'\b',c(a.split(':',1)[0]),re.M))];[print('region check failed:',m) for m in M];sys.exit(1 if M or not A else 0)" 'preview~completeness_line_complete' 'preview~selection_line_above_cap' && python3 project clean --help >/dev/null`
-- [ ] T102 [US6] [O] Account the counts (FR-033, research.md R8; regions `plan` and
+- [x] T102 [US6] [O] Account the counts (FR-033, research.md R8; regions `plan` and
   `apply`): `probes` and `operations`, `estimated` as T049 computes it (plan
   review M7) and `performed` from the counters, in plans and results; each
   target's `probes_performed` counts its revalidation children and the rescan
@@ -2711,7 +2711,7 @@ statuses, the child counts and the order of what was cut.
   T096 to T098 pass.
   — files: `project`
   — verify: `python3 -m unittest discover -s tests -p 'test_clean_bounds.py'`
-- [ ] T103 [US6] [S] Run the US6 module, every earlier module and the 96 tests: all
+- [x] T103 [US6] [S] Run the US6 module, every earlier module and the 96 tests: all
   pass.
   — files: (none)
   — verify: `python3 -m unittest discover -s tests -p 'test_clean_timing.py' && python3 -m unittest discover -s tests -p 'test_clean_harness.py' && python3 -m unittest discover -s tests -p 'test_clean_scrub.py' && python3 -m unittest discover -s tests -p 'test_clean_parsers.py' && python3 -m unittest discover -s tests -p 'test_clean_escaping.py' && python3 -m unittest discover -s tests -p 'test_clean_runner.py' && python3 -m unittest discover -s tests -p 'test_clean_evidence.py' && python3 -m unittest discover -s tests -p 'test_clean_guard.py' && python3 -m unittest discover -s tests -p 'test_clean_batch.py' && python3 -m unittest discover -s tests -p 'test_clean_apply.py' && python3 -m unittest discover -s tests -p 'test_clean_reflog.py' && python3 -m unittest discover -s tests -p 'test_clean_gates.py' && python3 -m unittest discover -s tests -p 'test_clean_single.py' && python3 -m unittest discover -s tests -p 'test_clean_push.py' && python3 -m unittest discover -s tests -p 'test_clean_revalidation.py' && python3 -m unittest discover -s tests -p 'test_clean_result.py' && python3 -m unittest discover -s tests -p 'test_clean_stop.py' && python3 -m unittest discover -s tests -p 'test_clean_bounds.py' && python3 -m unittest discover -s tests -p 'test_project.py'`
