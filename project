@@ -3840,7 +3840,10 @@ def build_plan(repo, run):
     inspection-error or unprobed marker, the rows past the cap, and the rows
     the work deadline stopped are its non-blocking notes
     `inspection-incomplete`, `inspect-cap` and `deadline-exceeded`, a row
-    counted in one of them only (lead ruling R-80, P-1). Push and
+    counted in one of them only (lead ruling R-80, P-1). When P's match is
+    undecided none of them is recorded, since each says the rows do not
+    block P beside the plan's refusal of P, inspection-incomplete, which
+    speaks alone (lead ruling R-93 (e)). Push and
     delete-branch take the cap with no exemption and the batch's completeness
     (plan_completeness()).
 
@@ -3933,7 +3936,7 @@ def build_plan(repo, run):
         plan.selected = None
         plan.notes.append({"code": "inspect-cap", "message": TEXT["note_inspect_cap_report"].format(
             N=len(entries), M=batch_cap), "rows": len(entries)})
-    if named:
+    if named and exempt:  # an undecided P's refusal speaks alone (lead ruling R-93 (e))
         shown = human_path(plan.target.raw_path if plan.target is not None else path)
         own = {id(row) for row in plan.target_rows}
         others = [row for row in plan.rows if id(row) not in own and row_incomplete(row)]
