@@ -10,12 +10,16 @@ Human and JSON reports SHALL describe that remote information may be stale.
 
 The report SHALL be built from the evidence that "Repository inspection requires
 Git 2.36 and shares one evidence model" defines, within the bounds that "Clean
-bounds its Git work and reports omitted work" sets. `project clean` SHALL run
-its Git version check before any other Git child, and SHALL refuse a Git older
-than 2.36 with `git-too-old`, and a `git` that is missing or unusable with
-`git-unavailable`, with exit status 2, before any repository is probed; under
-`--json` it SHALL print the extended error object that "Clean plans and refusals
-are versioned JSON" defines, carrying that code.
+bounds its Git work and reports omitted work" sets. In every mode, before any
+Git child starts, `project clean` SHALL refuse with `relative-config-path` and
+exit status 2 when a configuration path fails the test that the evidence model
+states, its message naming each variable that fails it, never its value, so
+that no push or removal child starts either. It SHALL then run its Git version
+check before any other Git child, and SHALL refuse a Git older than 2.36 with
+`git-too-old`, and a `git` that is missing or unusable with `git-unavailable`,
+with exit status 2, before any repository is probed. Under `--json` each of
+these refusals SHALL print the extended error object that "Clean plans and
+refusals are versioned JSON" defines, carrying its code.
 
 The plain report (neither `--all-safe` nor `--apply`) SHALL be the plan that a
 batch preview builds, in `mode: "report"`, under a cap of 256 worktree rows. It
@@ -101,6 +105,26 @@ resolved repository.
   and under `--json` it prints the extended error object with `code:
   "git-too-old"`
 - **AND** with no `git` on PATH it refuses with `git-unavailable` and exit 2
+
+#### Scenario: A relative configuration path
+
+- **WHEN** `project clean <root>` runs in the read-only form, with `--all-safe
+  --apply --yes`, and with `--apply --action push --branch B --yes`, with `HOME`
+  set to the relative `h`, where `<root>` tracks `h/.gitconfig`, whose
+  `core.hooksPath` names a tracked hook directory and whose clean filter, which
+  the repository's tracked `.gitattributes` selects, writes a marker file
+- **THEN** each refuses with `relative-config-path` and exit 2, a counting `git`
+  wrapper records no Git child, `git --version` included, no hook or filter
+  runs, the marker file is never written, and nothing changes; under `--json`
+  the read-only form prints the extended error object with `code:
+  "relative-config-path"`
+- **AND** the same holds with `XDG_CONFIG_HOME` set to the relative `cfg`
+  beside an absolute `HOME`, and for a `HOME` of ` /x`, `~/x` or `.`, since
+  the test is made on the raw bytes
+- **AND** the same holds with `GIT_CONFIG_GLOBAL` or `GIT_CONFIG_SYSTEM` set to
+  the relative `h/.gitconfig` beside an absolute `HOME`
+- **AND** with `HOME` absolute, `XDG_CONFIG_HOME` empty, and
+  `GIT_CONFIG_GLOBAL` and `GIT_CONFIG_SYSTEM` unset, it is not refused for them
 
 ### Requirement: Clean classifies preservation and cleanup actions
 
@@ -1113,8 +1137,9 @@ records. Worktree rows SHALL add `locked`, `ignored_files_truncated`,
 Refusals and row errors SHALL be `{code, message, path?, path_valid_utf8?,
 reason?}` objects, `path_valid_utf8` present exactly when `path` is, with a
 stable kebab-case `code`. The refusal codes SHALL be `invalid-arguments`,
-`internal-error`, `git-unavailable`, `git-too-old`, `repository-not-found`,
-`ambiguous-name`, `target-not-repository-root`, `unsupported-path-bytes`,
+`internal-error`, `git-unavailable`, `git-too-old`, `relative-config-path`,
+`repository-not-found`, `ambiguous-name`, `target-not-repository-root`,
+`unsupported-path-bytes`,
 `manifest-invalid`, `no-merge-target`, `inspection-incomplete`, `inspect-cap`,
 `deadline-exceeded`, `worktree-not-found`, `target-excluded`,
 `plan-digest-mismatch`, `confirmation-required` and `cancelled`; `project clean`

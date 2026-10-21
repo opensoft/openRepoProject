@@ -301,9 +301,14 @@ Scope).
   `merged-current`) and only an unmerged one is `remote-gone` (Brett Heap's
   ruling of 2026-10-09; Decisions). Its text changes for that and for the
   partial-removal note (MODIFIED `:25`), and it becomes a pure function over
-  evidence (OQ-28). Git 2.36 is required as R6 scopes it. The visible
-  consequences are the baseline behavior changes of `BA:1200-1274`, less
-  `BA:1255-1256`, with `BA:1238-1240` and `BA:1268-1274` narrowed (Decisions)
+  evidence (OQ-28). Git 2.36 is required as R6 scopes it. Before any Git child
+  starts, `git --version` included, a `HOME`, `XDG_CONFIG_HOME`,
+  `GIT_CONFIG_GLOBAL` or `GIT_CONFIG_SYSTEM` set to a non-empty value whose
+  first byte is not `/` refuses `clean` with `relative-config-path`, exit 2,
+  and `status`, `doctor` and `update` report it as they report a Git below the
+  floor, a baseline behavior change (Brett Heap's ruling LQ-15; Decisions).
+  The visible consequences are the baseline behavior changes of
+  `BA:1200-1274`, less `BA:1255-1256`, with `BA:1238-1240` and `BA:1268-1274` narrowed (Decisions)
   and `BA:1241-1245` (R6), plus R1, R2, R10, R11, `unstarted-branch` and
   `reflog-unavailable` in single mode (M4), a merged worktree whose upstream was
   deleted reading `merged-removable` where `a040790` reads it `unpublished`
@@ -398,7 +403,9 @@ Headers are quoted verbatim, one per line; ADDED headers are proposed text.
   - MODIFIED (`:10`): `### Requirement: Clean reports local worktree state`.
     The report comes from the shared evidence model (NUL parsing, the combined
     bounded probe, the 5 s and 60 s budgets, Git 2.36 and `clean`'s refusal
-    below it, R6); an unreadable path is one `inspection-error` row with
+    below it, R6, and its refusal of a relative configuration path before any
+    Git child, `relative-config-path`, LQ-15); an unreadable path is one
+    `inspection-error` row with
     `present: null` and an `os-error`, not a whole-command exit 2;
     `ignored_files` counts ignored records observed, at least, beside
     `ignored_files_truncated`; `root` names the command directory. The
@@ -542,7 +549,8 @@ Headers are quoted verbatim, one per line; ADDED headers are proposed text.
   `da33d92`; at `7a9134b` `Inspect and diagnose`, `Explicit maintenance` and
   `Distribution and compatibility` sit 22 lines lower, their text unchanged):
   - MODIFIED (`:22`): `### Requirement: Inspect and diagnose`. Minimal text
-    per R6: doctor's `error` check row for old or unusable Git, status's
+    per R6: doctor's `error` check row for old or unusable Git, or for a
+    relative configuration path (LQ-15), status's
     `inspection-error` marker on a root or leg dict in a field matching
     worktree rows (R7), and `present: false` for a directory with no `.git`.
     Doctor shows as an `error` check row, never `ok` (`:24-25`), a null that
@@ -565,7 +573,10 @@ Headers are quoted verbatim, one per line; ADDED headers are proposed text.
     repository" (today `clean`, and `status`, `doctor` and `update` through
     `snapshot`, `project:681`, `:699`, `:789`, `:846`). It carries the
     evidence model: the version check (`BA:593`), R6's timing not stated as a
-    rule for every reader; the probe directory rule (`BA:554-583`); the scrub
+    rule for every reader; the configuration-path test before any Git child,
+    `relative-config-path`, and its scenario "A relative configuration path in
+    status, doctor and update" (Brett Heap's ruling LQ-15); the probe directory
+    rule (`BA:554-583`); the scrub
     with `GIT_OPTIONAL_LOCKS=0` (`BA:243-253`); NUL parsing; the combined
     probe, its pins and bounds (`BA:629-652`, `BA:793-814`), among them the `-c
     protocol.allow=never` pin and the six per-protocol pins on every Git child
@@ -626,8 +637,9 @@ Headers are quoted verbatim, one per line; ADDED headers are proposed text.
   (clarifications N2) lets
   `add-project-overview` drive four children without forking it.
   The ladder becomes a pure function; `status`, `doctor` and `update` gain the
-  Git version check (R6). No new flag outside `clean`, no network, no new
-  dependency.
+  Git version check (R6), and every subcommand that inspects a Git repository
+  gains the configuration-path test before it (LQ-15). No new flag outside
+  `clean`, no network, no new dependency.
 - **`README.md`**: "Clean up Git worktrees" opens with the five behaviour
   changes users will notice (R2, R6, the `unstarted-branch` and
   `reflog-unavailable` refusals in single mode, M4, and `--worktree P`
@@ -638,9 +650,11 @@ Headers are quoted verbatim, one per line; ADDED headers are proposed text.
   the narrow guarantee and residual window, and the result record and
   recovery; its sentence "Apply actions are
   always explicit and target one branch or worktree" (README:106) is
-  corrected. Install (README:17-19) states the Git 2.36 requirement, and the
-  exit-code line (README:194-196) gains `clean`'s 1 for an incomplete
-  preview, 143 and 129, Git's own status passing through.
+  corrected. Install (README:17-19) states the Git 2.36 requirement, and that
+  `HOME`, `XDG_CONFIG_HOME`, `GIT_CONFIG_GLOBAL` and `GIT_CONFIG_SYSTEM` must
+  be absolute paths when set (LQ-15), and the exit-code line (README:194-196)
+  gains `clean`'s 1 for an incomplete preview, 143 and 129, Git's own status
+  passing through.
 - **`tests/test_project.py`**: each ADDED and MODIFIED requirement has a test
   named after its scenario; disposable-repository tests for the packet's 35
   batch scenarios (`BA:1347-1628`) as the deltas carry them; a counting `git`
@@ -877,6 +891,28 @@ Departures from packet decisions, each citing the decision departed from:
   nothing about where a push reaches. The ruling's other half, which accepts a
   repository's filters and the configuration files themselves as residuals,
   belongs to `add-project-overview` (design D6, D11, Risks).
+- **A relative configuration path refused before any Git child** (Brett
+  Heap's ruling LQ-15 of 2026-10-21, in his words to lane openRepoProject-2,
+  "LQ-15: yes, refuse relative HOME like #29", and in lane openRepoProject-3's
+  session, "yes to all six recommendations, LQ-10 to LQ-15", on lane
+  openRepoProject-3's recommendation "Yes: refuse such a value up front, the
+  same way #29 now refuses relative gh config paths."; an addition to
+  `BA:243-253` and `BA:593`, which test no configuration path): Git builds the
+  paths of the user's and the system's configuration, and of its global ignore
+  and attributes files, from `HOME`, `XDG_CONFIG_HOME`, `GIT_CONFIG_GLOBAL` and
+  `GIT_CONFIG_SYSTEM` as they are spelled, so a relative value resolves inside
+  the directory a Git child runs in, where files a repository holds would run a
+  filter in every status probe, a hook in the removal and a command in the
+  push child, or turn untracked work into ignored files that Git's own check
+  passes over. Before any Git child starts, `git --version` included, `clean`,
+  `status`, `doctor` and `update` therefore test `HOME` and `XDG_CONFIG_HOME`
+  for a non-empty value whose first byte is not `/`, on its raw bytes. They
+  test `GIT_CONFIG_GLOBAL` and `GIT_CONFIG_SYSTEM` the same way, the lead's
+  extension, which Brett Heap may strike. `clean` refuses such a value with the
+  new code `relative-config-path`, exit 2, in every mode, and `status`,
+  `doctor` and `update` report it as they report a Git below the floor (R6),
+  starting no Git child. A baseline behavior change: `a040790` runs every child
+  under such a value (design D6, D11, D16, D18, Risks).
 
 Packet decisions adopted, not open: OQ-5, the caps and bounds of `BA:966`,
 subject to OQ-4, less the target cap's refusal; OQ-9, the budgets of
@@ -1186,7 +1222,18 @@ evidence model; Capabilities, `project-command` ADDED; Impact, `project`;
 Decisions, departures and council; this list; design Context, D6, D11, D17,
 D20, Risks; `tasks.md` 1.2, 1.4; the delta `project-command` ADDED evidence
 model, its scenario "The push child reaches its remote" and its added scenario
-"Trace targets are never written").
+"Trace targets are never written"). Brett Heap's rulings of 2026-10-21 on lane
+openRepoProject-3's recommendations LQ-10 to LQ-15, each in the words the
+departures quote: LQ-15 refuses a relative `HOME`, `XDG_CONFIG_HOME`,
+`GIT_CONFIG_GLOBAL` or `GIT_CONFIG_SYSTEM` before any Git child,
+`relative-config-path` (What Changes, evidence model; Capabilities `:10`,
+`:22` and `project-command` ADDED; Impact, `project` and README; Decisions,
+departures; this list; design Context, D6, D11, D16, D18, D20, Risks;
+`tasks.md` 1.2, 1.4; the deltas' `Clean reports local worktree state` and its
+added scenario "A relative configuration path", `Clean plans and refusals are
+versioned JSON`, `Inspect and diagnose`, and the `project-command` ADDED
+evidence model and its added scenario "A relative configuration path in
+status, doctor and update").
 
 ### Council Verdicts
 

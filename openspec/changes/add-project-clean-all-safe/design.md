@@ -19,7 +19,9 @@ D20 and Risks; the push-child exception, before Brett Heap, edits D6, D11, D20,
 Risks and Open Questions; and Brett Heap's ruling Q9 B of 2026-10-21, given
 through lane openRepoProject-4's spec 005 clarify round and recorded in
 `proposal.md` Decisions, edits Context, D6, D11, D17, D20 and Risks. Brett
-Heap's ruling
+Heap's rulings of 2026-10-21 on lane openRepoProject-3's recommendations LQ-10
+to LQ-15, recorded in `proposal.md` Decisions, edit here: LQ-15, Context, D6,
+D11, D16, D18, D20 and Risks. Brett Heap's ruling
 of 2026-10-09 on open question 1, that a local ancestry proof outranks
 `remote-gone` for worktree rows, is in `proposal.md` Decisions and edited
 Context, D6, D7, D20, Risks, the Migration Plan and Open Questions here.
@@ -292,6 +294,9 @@ them:
 | 5 | row 3 repeated in the command directory | only when row 3 ran elsewhere |
 | 6 | one `for-each-ref` over `refs/heads` and `refs/remotes` | command directory |
 | 7 | `for-each-ref --merged=<merge-target sha> --format=%(refname) refs/heads` | command directory |
+
+No row runs, row 1 included, when a configuration path fails D11's test
+(Brett Heap's ruling LQ-15).
 
 Row 6 uses the packet's shared format, BA:605-607: refname, object name, symref,
 upstream, upstream short name and `upstream:track,nobracket`, NUL-separated,
@@ -618,6 +623,66 @@ release from 2.36.6 to 2.43.7, none opens a file while the three targets are
 off. The push child carries the same environment, because trace output changes
 nothing about where a push reaches; the cost is recorded under Risks.
 
+A relative configuration path is refused before any Git child starts (Brett
+Heap's ruling LQ-15, 2026-10-21, on the model of C-44 in
+`add-project-overview-remote-merge-status`, which refuses a relative
+`GH_CONFIG_DIR`, `XDG_CONFIG_HOME` or `HOME`). Git reads the user's
+configuration from `$HOME/.gitconfig` and from `$XDG_CONFIG_HOME/git/config`,
+or `$HOME/.config/git/config` where `XDG_CONFIG_HOME` is empty or unset; it
+takes its default `core.excludesFile` and its global attributes file from the
+same directory (`git/ignore` and `git/attributes`); and it reads the files that
+`GIT_CONFIG_GLOBAL` and `GIT_CONFIG_SYSTEM` name in place of the user's and the
+system's. Each path is built from the variable as it is spelled
+(`xdg_config_home_for` and `interpolate_path` in `path.c`, `git_global_config`
+and `git_system_config` in `config.c`, and the defaults in `dir.c` and `attr.c`,
+read at 2.36.6 and 2.43.7), so a value that does not begin with `/` resolves
+against the directory a Git child runs in: the worktree for every worktree
+probe, and the main worktree for every other child. Files a repository holds,
+tracked ones included, are then read as the user's or the system's own, and no
+pin of this section reaches what they set. Two risks follow:
+
+- Code execution. A planted configuration's `filter.<name>.clean`, which a
+  `.gitattributes` the repository tracks can select, runs in every status
+  probe, and so in every preview, report, `status`, `doctor` and revalidation;
+  its `core.hooksPath` runs a planted hook in the removal; and its
+  `core.sshCommand` or `credential.helper` reaches the push child, which
+  carries no pin. Lane openRepoProject-3's reader RA reproduced the first two
+  at `2cf34d3` with a relative `HOME`, `XDG_CONFIG_HOME` and `GIT_CONFIG_GLOBAL`
+  alike (the lead's R-105), lane openRepoProject-4 reproduced the filter on Git
+  2.43.0 with a relative `HOME`, where an absolute `HOME` or
+  `GIT_CONFIG_GLOBAL=/dev/null` ran nothing, and lane openRepoProject-5's
+  reader RC raised the push child's exposure (R-101).
+- Removal. The planted ignore file is the default `core.excludesFile`, so
+  untracked files it names read as ignored: checked here on Git 2.36.6 and
+  2.43.0, a relative `XDG_CONFIG_HOME` turns the pinned probe's `?? work.txt`
+  into `!! work.txt`. Such a row is then `ignored-local-files` and still kept
+  out of every plan, but Git's own non-force check, the last defense, no longer
+  refuses for such a file, and `worktree remove` deletes ignored files; and a
+  planted attributes file can select a filter for a tracked file.
+
+The test therefore runs first in every subcommand that inspects a Git
+repository, before `git --version`: `HOME` or `XDG_CONFIG_HOME` set to a
+non-empty value whose first byte is not `/` makes the subcommand start no Git
+child (`relative-config-path`). `GIT_CONFIG_GLOBAL` and `GIT_CONFIG_SYSTEM`,
+Git's own variables naming a configuration file and the analogue of C-44's
+`GH_CONFIG_DIR`, are tested the same way; they are the lead's extension of the
+ruling, which Brett Heap may strike, and RA's reproduction with
+`GIT_CONFIG_GLOBAL` is why that one is in the list. The test is made on the raw
+bytes: ` /x`, `~/x` and `.` fail it, as does a first byte that is not UTF-8,
+and `/` alone passes. An empty or unset variable passes, because it names no
+relative file: Git treats an empty `XDG_CONFIG_HOME` as unset, an empty `HOME`
+gives `/.gitconfig` and `/.config/git/`, and an empty `GIT_CONFIG_GLOBAL` or
+`GIT_CONFIG_SYSTEM` names no file Git can open. The test holds whichever of the
+variables Git would use, so a relative `HOME` beside an absolute
+`GIT_CONFIG_GLOBAL` fails it too, the ignore and attributes files still coming
+from `HOME`. `clean` then refuses with `relative-config-path`, exit 2, in every
+mode; `status`, `doctor` and `update` report it as they report a Git below the
+floor (D16). The values are read only for this test, are passed to every child
+unchanged when it passes, and are never printed: the message names each
+variable that fails the test (D18). The test covers these variables only; other
+relative paths in the environment that a Git child resolves against its
+directory are outside it.
+
 ### D12. The 16-per-run deferral (V5)
 
 Gates are evaluated in canonical order. Rows that pass every gate before
@@ -720,11 +785,13 @@ or 129 whenever a signal arrived.
 
 For a root or leg, `repo_state()` first checks `<path>/.git` with `lstat`:
 absent, the dict is `present: false` with no Git child, as today. Present, the
-memoized version check runs; an old or unusable Git, or a failed or timed-out
-status probe, gives the dict `classification: "inspection-error"` and `errors`
-(`{code, message, path?, path_valid_utf8?, reason?}`: `git-too-old`,
-`git-unavailable`, `probe-failed`, `probe-timeout` or `os-error`), `present`
-null when the version check failed, and null for every value not established. An
+memoized version check runs, unless D11's configuration-path test failed, in
+which case no Git child runs at all (LQ-15); a failed test, an old or unusable
+Git, or a failed or timed-out status probe gives the dict `classification:
+"inspection-error"` and `errors` (`{code, message, path?, path_valid_utf8?,
+reason?}`: `relative-config-path`, `git-too-old`, `git-unavailable`,
+`probe-failed`, `probe-timeout` or `os-error`), `present` null when the test or
+the version check failed, and null for every value not established. An
 inspected dict has neither field, so the JSON stays additive and unversioned.
 The marker is `classification`, the field worktree rows carry, as V11 asked the
 delta to name, with `errors` for the cause. Every `path` in these dicts, the
@@ -735,7 +802,8 @@ root, leg and worktree rows and `errors` entries alike, carries
 it; all are additive too.
 
 `check_rows()`: the `git` tool row reports the version check, `ok` with the
-version or `error` with its code, where today a missing `git` is a warning
+version or `error` with its code, or `error` with `relative-config-path` where
+D11's test failed and no Git child ran, where today a missing `git` is a warning
 (`project:755-757`); a root, leg or worktree row classified `inspection-error`,
 a null `present` and a null `dirty` each add an `error` row naming the cause;
 nulls that mean "none" add nothing, so a fresh project with no remote passes.
@@ -821,7 +889,11 @@ NEXT STEP`. A plan-blocking refusal names its remedy: `inspection-incomplete`
 worktree prune, or remove the row by hand after review"; `inspect-cap` "N rows
 exceed the row cap of M; remove worktrees explicitly, or prune stale entries by
 hand"; `deadline-exceeded` "the run ran out of time; remove worktrees explicitly
-or re-run".
+or re-run". `relative-config-path` prints one line per variable that fails
+D11's test, in the order `HOME`, `XDG_CONFIG_HOME`, `GIT_CONFIG_GLOBAL`,
+`GIT_CONFIG_SYSTEM`: `NAME is set to a path that does not begin with /; make it
+absolute or unset it.`, never the value; doctor's `error` row and status's
+`errors` entry carry the same text.
 
 ### D19. Stages, notes and exit codes, as normalised
 
@@ -900,7 +972,8 @@ under the classification; R10, R11, D-T and the manifest cap
 under Git-first resolution; V1 to V4, M3 and M4 under retirement; OQ-10, OQ-16
 and M1 under the JSON and the result; V9, R-23, R-25, the push-child
 exception and Brett Heap's ruling Q9 B under the evidence model; D-D under
-push; D-R under maintenance; R-22 under revalidation.
+push; D-R under maintenance; R-22 under revalidation. Brett Heap's rulings of
+2026-10-21: LQ-15 under the evidence model and the report.
 
 ## Risks / Trade-offs
 
@@ -979,6 +1052,14 @@ push; D-R under maintenance; R-22 under revalidation.
   (Brett Heap's ruling Q9 B): trace output is a side effect that writes files,
   never evidence, and a person who needs a trace runs the Git command by hand
   (D6, D11).
+- [A caller whose `HOME`, `XDG_CONFIG_HOME`, `GIT_CONFIG_GLOBAL` or
+  `GIT_CONFIG_SYSTEM` is set to a relative path cannot run `clean`, and
+  `status`, `doctor` and `update` inspect no repository for it, even where the
+  path names nothing a repository holds] -> Accepted (Brett Heap's ruling
+  LQ-15): it fails closed, the message names each such variable and the remedy,
+  an absolute path, and the alternative, anchoring the value elsewhere, would
+  rewrite the caller's environment; deliberate over-refusal, as C-44's is (D11,
+  D18).
 - [Squash-merged branches never prove ancestry, so squash-merging
   repositories select little] -> Before Brett Heap (Open Questions).
 - [A merged worktree whose upstream was deleted is removed on local ancestry

@@ -7,9 +7,11 @@ state SHALL be visible; inspection SHALL never fetch, reset, or bootstrap.
 
 Status and doctor SHALL inspect Git repositories through the evidence model that
 "Repository inspection requires Git 2.36 and shares one evidence model" defines,
-and SHALL NOT refuse for Git's version or for a repository they cannot inspect.
-Doctor SHALL report a Git older than 2.36, or a `git` that is missing or
-unusable, as an `error` check row naming `git-too-old` or `git-unavailable`,
+and SHALL NOT refuse for Git's version, for a relative configuration path or for
+a repository they cannot inspect. Doctor SHALL report a Git older than 2.36, or
+a `git` that is missing or unusable, as an `error` check row naming
+`git-too-old` or `git-unavailable`, and a configuration path that fails that
+evidence model's test as an `error` check row naming `relative-config-path`,
 keeping its exit status for error rows; status SHALL mark each repository root,
 leg or worktree row it cannot inspect `inspection-error`. A directory with no
 `.git` SHALL keep `present: false` and needs no Git version check. A root or leg
@@ -94,6 +96,19 @@ Version: it SHALL run `git --version` once per invocation, and SHALL NOT inspect
 a repository with a Git older than 2.36 (`git-too-old`) or with a `git` that is
 missing, fails, times out or prints an unparseable version (`git-unavailable`);
 whether the subcommand then refuses or reports is its own requirement's rule.
+
+Configuration paths: before any Git child starts, `git --version` included,
+every subcommand that inspects a Git repository SHALL test whether `HOME` or
+`XDG_CONFIG_HOME` is set to a non-empty value whose first byte is not `/`.
+The same test SHALL apply to `GIT_CONFIG_GLOBAL` and `GIT_CONFIG_SYSTEM`.
+The test SHALL be made on the raw bytes of each value, an empty or unset
+variable passing it, and SHALL hold whichever of these variables Git would
+use. Where any fails it, the subcommand SHALL start no Git child and SHALL
+inspect no repository (`relative-config-path`), because Git resolves such a
+value against the directory a Git child runs in, so that files a repository
+holds would be read as the user's or the system's configuration and as the
+global ignore and attributes files; whether the subcommand then refuses or
+reports is its own requirement's rule, as for the version.
 
 Environment: every Git child but the push child of `clean --action push` SHALL
 run in its own process group, and every Git child SHALL have these thirty-one
@@ -247,6 +262,13 @@ requirement states a change.
 #### Scenario: A caller's Git environment is ignored
 - **WHEN** `GIT_DIR`, `GIT_WORK_TREE` and `GIT_INDEX_FILE` are set in the caller's environment to name another repository
 - **THEN** every probe reads the resolved repository, and each worktree probe reads that worktree's own index
+
+#### Scenario: A relative configuration path in status, doctor and update
+- **WHEN** status, doctor and `update --apply --component shape --yes` run on a clean project whose root repository tracks `h/.gitconfig`, which defines a clean filter that writes a marker file, and a `.gitattributes` that selects that filter, with `HOME` set to the relative `h`
+- **THEN** a counting `git` wrapper records no Git child, `git --version` included, and the marker file is never written
+- **AND** doctor reports `relative-config-path` as an `error` check row and exits 1, status marks the repository root `inspection-error` with that code and exits 0, the update refuses with exit 2 and the owner tool is never invoked, and `update --apply --component workflow --yes` is not refused for it
+- **AND** the same holds with `XDG_CONFIG_HOME` set to the relative `cfg` beside an absolute `HOME`, the repository tracking `cfg/git/config` instead
+- **AND** the same holds with `GIT_CONFIG_GLOBAL` or `GIT_CONFIG_SYSTEM` set to the relative `h/.gitconfig` beside an absolute `HOME`
 
 #### Scenario: The sixteenth scrubbed name on Git 2.36
 - **WHEN** Git 2.36 is first on PATH and `GIT_INTERNAL_SUPER_PREFIX` is set in the caller's environment

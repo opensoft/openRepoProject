@@ -30,20 +30,24 @@ duplicate them, and nothing here is an implementation step.
   given through lane openRepoProject-4's spec 005 clarify round, the three
   trace2 variables at `0` on every Git child and the fourteen trace variables
   in the scrub (the commit titled 'Pin trace2 and scrub the trace names on
-  every Git child (Q9 B)'); verified by the table "Questions Resolved by the
-  Alignment Review" in `proposal.md` and the later-rulings list under it, which
+  every Git child (Q9 B)'), and Brett Heap's rulings of 2026-10-21 on lane
+  openRepoProject-3's recommendations LQ-10 to LQ-15, each in its own commit
+  titled 'Amend change 1 for LQ-<n> (Brett Heap, 2026-10-21): ...': LQ-15, a
+  relative configuration path refused before any Git child; verified by the
+  table "Questions Resolved by the Alignment Review" in `proposal.md` and the
+  later-rulings list under it, which
   name the section each ruling edited.
 - [x] 1.3 Council resolved: every concern is VALID, none dismissed, the verdicts
   V1 to V12 applied to `proposal.md` (`ea9c73b`) and the five NOTED constraints
   recorded as N1 to N5 in `clarifications.md` (`1d4ed5b`); verified by
   `design.md`, whose D1 to D5 answer N1 to N5 one for one.
 - [x] 1.4 Spec deltas and design written: `specs/project-clean/spec.md` modifies
-  five requirements and adds six (65 scenarios),
-  `specs/project-clean-review-safety/spec.md` modifies two and adds one (18
-  scenarios, the last added under R-22), and `specs/project-command/spec.md`
-  modifies two and adds one (19 scenarios, the last two added under the
-  push-child exception and Brett Heap's ruling Q9 B), every canonical scenario
-  of each modified requirement kept;
+  five requirements and adds six (66 scenarios, one added under Brett Heap's
+  ruling LQ-15), `specs/project-clean-review-safety/spec.md` modifies two and
+  adds one (18 scenarios, the last added under R-22), and
+  `specs/project-command/spec.md` modifies two and adds one (20 scenarios, of
+  which the push-child exception added one and Brett Heap's rulings Q9 B and
+  LQ-15 one each), every canonical scenario of each modified requirement kept;
   `design.md` holds D1 to D20, mapping the packet's 35 validation scenarios to
   the deltas (D20); verified by the scenario counts in the commit that adds
   them.
