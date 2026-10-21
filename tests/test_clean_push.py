@@ -650,6 +650,40 @@ class PushTests(clean_support.CleanCase):
                 self.assertEqual(self.refs(root), before, "the branch is kept")
         self.assertTrue((tree / "work-001-merged").is_file(), "the linked worktree is kept")
 
+    def test_clean_a_branch_deletion_of_a_branch_not_merged_into_the_merge_target_is_refused(self):
+        # Lead ruling R-155 (lane 3's W19 M-2, mutant D3): delete-branch's third
+        # refusal, "Branch B is not verified as merged into TARGET.", exit 2,
+        # read from row 7's merged set, not from HEAD. The main worktree is on
+        # 001-work, one commit past main; 002-feat sits at 001-work's tip, so
+        # it is merged into HEAD but not into main, the merge target, and
+        # without the refusal `git branch -d` deleted it, exit 0. 003-own holds
+        # a commit of its own, merged nowhere; Git's own check then refused it,
+        # exit 1. Neither branch is held by a worktree.
+        root = self.repo()
+        self.bare_remote()
+        self.git(root, "checkout", "-q", "-b", "001-work")
+        self.commit(root, "work past main", allow_empty=True)
+        self.git(root, "branch", "002-feat")
+        own = self.git(root, "commit-tree", "main^{tree}", "-p", "main", "-m", "a commit of its own").strip()
+        self.git(root, "update-ref", "refs/heads/003-own", own)
+
+        def merged(into):
+            return self.git(root, "branch", "--merged", into, "--format=%(refname:short)").split()
+
+        self.assertEqual((sorted(merged("HEAD")), merged("main")), (["001-work", "002-feat", "main"], ["main"]))
+        env, log = self.counting()
+        for branch in ("002-feat", "003-own"):
+            with self.subTest(branch):
+                before = self.refs(root)
+                clean_support.reset_child_log(log)
+                result = self.run_cli("clean", root, "--apply", "--action", "delete-branch", "--branch", branch,
+                                      "--yes", env=env)
+                self.assert_status(result, 2)
+                self.assertEqual((result.stdout, result.stderr),
+                                 ("", f"REFUSED: Branch {branch} is not verified as merged into main.\n"))
+                self.assertEqual(deletions(clean_support.child_log(log)), [], "no git branch -d")
+                self.assertEqual(self.refs(root), before, "the branch is kept")
+
     def test_clean_push_and_branch_deletion_stay_human_only(self):
         # Pins T048's argument check: no child runs, `git --version` included.
         root = self.repo()
@@ -832,6 +866,43 @@ class PushTests(clean_support.CleanCase):
             self.assertIn("Deleted branch 002-merged (was ", result.stdout, "the child's own output")
             self.assert_status(result, 128 + signal.SIGTERM)
             self.assertEqual(result.stderr, INTERRUPTED.format(WHAT="the branch deletion", STATUS=0))
+
+    def test_clean_a_signal_during_the_push_or_branch_deletion_recorded_in_process(self):
+        # Lead rulings R-108 (a) and R-155 (lane 3's W19 L-2, mutant N10), with no
+        # signal sent and no timing: main() in process, its `git branch -d`
+        # delegate run as built, then the signal recorded in the slot as the
+        # child is reaped, as signal_scope()'s handler records one. Once the
+        # child ran the phase is `apply`, so clean()'s last slot read, which
+        # runs only in `planning`, raises nothing, and main() prints no
+        # `Cancelled.`: only `Interrupted; ... git exited with status 0.`, exit
+        # 128 plus the signal's number. Without the phase change (N10) the slot
+        # read raised Interrupted and main() added `Cancelled.`, the same exit.
+        # The push takes the same line after execute(); the launched tests
+        # above pin it with real signals.
+        root = self.repo()
+        self.bare_remote()
+        real = project.run_bounded
+        for signum in (signal.SIGTERM, signal.SIGINT, signal.SIGHUP):
+            with self.subTest(signal=signum.name):
+                branch = "002-merged-" + signum.name.lower()
+                self.git(root, "branch", branch)  # at the merge target's tip, with no worktree
+
+                def reaped_then_signalled(spec, parser, run, signum=signum):
+                    outcome = real(spec, parser, run)
+                    if spec[0] == "delegate":
+                        run.record_signal(signum)
+                    return outcome
+
+                out, err = io.StringIO(), io.StringIO()
+                with mock.patch.dict(os.environ, self.env, clear=True), \
+                        mock.patch.object(project, "run_bounded", reaped_then_signalled), \
+                        mock.patch.object(project.sys, "stdout", out), mock.patch.object(project.sys, "stderr", err):
+                    status = project.main(["clean", str(root), "--apply", "--action", "delete-branch", "--branch",
+                                           branch, "--yes"])
+                self.assertEqual((status, err.getvalue()),
+                                 (128 + signum, INTERRUPTED.format(WHAT="the branch deletion", STATUS=0)))
+                self.assertIn(f"Deleted branch {branch} (was ", out.getvalue(), "the child ran and was reaped")
+                self.assertEqual(self.git(root, "for-each-ref", "refs/heads/" + branch), "", "the branch is gone")
 
     def test_clean_push_and_delete_branch_escape_their_paths(self):
         # The root's name holds a tab (Cc) and U+202E (Cf), and so does one
