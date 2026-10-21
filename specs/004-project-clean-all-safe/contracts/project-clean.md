@@ -482,7 +482,10 @@ signals either child, waits for it, and then exits by D19's first row
 (data-model.md, "Exit statuses"). Probing is serial; termination never
 blocks (data-model.md, "Child handle").
 Revalidation spawns at most five Git children per target, the final rescan
-at most three.
+at most three, the identity probe counted once: a line feed in the root's
+or the common directory's path repeats it, one child per option, so that
+they run up to 8 and 6 (design D6, "the rare repeat"; data-model.md,
+"Revalidation step and `probes_performed`"; lead ruling R-82 (c)).
 
 ## `status`, `doctor` and `update` (FR-050 to FR-053, FR-059; D16)
 
