@@ -3692,10 +3692,7 @@ and [P] are change 1's requirements as the header names them.
   that EC-022 cites, at :1494-1499. R-171 governs `project clean`'s
   revalidation only. The overview has no revalidation, so no requirement of
   this spec moves, and the LQ-13 bullet's revalidation sentence stays pinned at
-  `1ebdd90`: #19's next round may change that clause, lane openRepoProject-3's
-  W31 M-1 setting the rule's :113-114 against its :118-120 at `a664799` on a
-  read that the deadline cuts at revalidation, a point open with lane
-  openRepoProject-2. R-178 names LQ-20, open for Brett Heap (its
+  `1ebdd90`. R-178 names LQ-20, open for Brett Heap (its
   `proposal.md:1273-1281` at `a664799`). This spec re-aligns only if #19 comes
   to bound [E]'s plan-time work-tree probe (its
   `specs/project-command/spec.md:221-227`, the same from `93f3194` to
@@ -3703,11 +3700,28 @@ and [P] are change 1's requirements as the header names them.
   clean`'s plan alone. The units that follow that probe are FR-007, FR-013's
   toplevel realpath task, FR-019, FR-020 and FR-049, and US1 s3 counts no such
   probe, its repository not setting `extensions.worktreeConfig`; the ordering
-  rule above covers such a re-alignment. So PR #34 does not merge before #19's
-  ratification of those commits; should Brett Heap want #34 sooner, the four
-  items move to a later amendment of change 2, and A1 lands without them (its
-  :1268-1270), the parts of this spec that follow them following that amendment
-  instead.
+  rule above covers such a re-alignment. #19's round (c), `2e819ad` (lane
+  openRepoProject-3's W31 read; lane openRepoProject-2's R-187 and R-190),
+  follows, and settles W31 M-1, which set the rule's :113-114 against its
+  :118-120 at `a664799` on a read that the deadline cuts at revalidation: the
+  rule's clause now reads "runs past its own budget" and leaves a read that the
+  work deadline cuts to R-171's rule (its :113-118 and :124-128 there), and the
+  scenario "A work-tree probe at revalidation" is added (:260-280), the LQ-13
+  bullet, which names only a failure and a run past the budget, still reading
+  as the clause has it. Re-checked by script against `a664799`: its
+  `project-command` spec is unchanged, its :221-227 included; [G]'s "Clean
+  bounds its Git work and reports omitted work" changes only its re-run
+  sentence for deferred targets (:1004-1014 there), which this spec does not
+  cite, SC-004 naming `deferred-target-cap` only as a preview's outcome; the
+  gate block and the three scenarios keep their text and lines; the two
+  review-safety scenarios keep theirs, at :227 and :239; and the Risk that
+  EC-022 cites keeps its text, at :1557-1562. LQ-20, still open for Brett Heap,
+  now takes as its first step measuring the two probes or deciding the basis
+  (its `proposal.md:1273-1294` at `2e819ad`), and the re-align condition above
+  still holds. So PR #34 does not merge before #19's ratification of those
+  commits; should Brett Heap want #34 sooner, the four items move to a later
+  amendment of change 2, and A1 lands without them (its :1268-1270), the parts
+  of this spec that follow them following that amendment instead.
   - LQ-10, on PR #19 at `ea697ba`, pending its ratification: every status
     probe, the hidden-state probe and the removal pass `-c core.trustctime=true
     -c core.checkStat=default` after `-c core.fsmonitor=false`, four status

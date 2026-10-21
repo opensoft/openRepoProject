@@ -577,6 +577,18 @@ Lane: openRepoProject-4
   their `fe5b245` pins unchanged. No checklist result changes, and the totals
   below were recounted by script. Re-validation: 16 of 16 items pass, with the
   checks of iteration 2 re-run by script on the edited spec.
+- 2026-10-21, a twelfth pass: #19's round (c), `2e819ad` (lane
+  openRepoProject-2's R-187 and R-190), is re-checked in the LQ intro. It
+  settles lane openRepoProject-3's W31 M-1, so the round (b) sentences no
+  longer call that clause open; the LQ-13 bullet stays pinned at `1ebdd90` and
+  unchanged. Its `project-command` spec is unchanged; "Clean bounds" changes
+  only a sentence this spec does not cite; the gate block, the three scenarios,
+  the two review-safety scenarios and the Risk keep their text, at the lines
+  the LQ intro states; and LQ-20 is cited at :1273-1294 there, with no figures
+  or options, the re-align condition still holding. No checklist result
+  changes, and the totals below were recounted by script. Re-validation: 16 of
+  16 items pass, with the checks of iteration 2 re-run by script on the edited
+  spec.
 - Items marked incomplete require spec updates before `/speckit-clarify` or `/speckit-plan`
 
 ## Cross-cutting Requirements Quality (no-argument `/speckit.checklist`, 2026-10-19)
@@ -688,5 +700,5 @@ All 17 checklists: 414 items: 373 pass, 25 fixed in the spec, 0 open, 16 plan
 notes (PN-1 to PN-18 but PN-4 and PN-11, withdrawn on 2026-10-21; PN-2 narrowed
 to an exception of any other kind in human mode and widened to a failed write's
 standard-error line), 0 new questions. Recounted by script on 2026-10-21, and
-again after the re-check, after the W6 read and after the fourth to eleventh
+again after the re-check, after the W6 read and after the fourth to twelfth
 passes of that day.
