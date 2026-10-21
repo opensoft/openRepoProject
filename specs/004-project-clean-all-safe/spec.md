@@ -725,7 +725,9 @@ wrapper's record of every child.
    file `GIT_CONFIG_GLOBAL` names, **When** inspection runs, **Then** a clean
    worktree is classified by the ladder, every probe reads the resolved
    repository and each worktree's own index, inspection succeeds on Git 2.36,
-   and every status and removal child carries the two status pins.
+   and every status and removal child carries the four status pins (the two
+   of the change as ratified and Brett Heap's ruling LQ-10's
+   `core.trustctime=true` and `core.checkStat=default`; lead ruling R-102).
 9. **Given** a partial clone made with `--no-checkout --filter=tree:0` whose
    `remote.origin.uploadpack` names a script that logs each run, **When** a
    status probe runs, also with `GIT_ALLOW_PROTOCOL=file` in the caller's
@@ -930,8 +932,10 @@ configuration"; "A lazy fetch in a partial clone is refused locally";
   work deadline remains, the non-force `git worktree remove` of that path
   from the command directory in its own process group, pinned with
   `status.showUntrackedFiles=normal`, `core.untrackedCache=false`,
-  `core.fsmonitor=false` and the protocol pins of FR-054, as the delta spells
-  the command; wait for it; and reconcile by rescan. Removal MUST stop after
+  `core.fsmonitor=false`, `core.trustctime=true`, `core.checkStat=default`
+  and the protocol pins of FR-054, as the delta spells the command with Brett
+  Heap's ruling LQ-10's two pins (draft PR #19; lead ruling R-102); wait for
+  it; and reconcile by rescan. Removal MUST stop after
   the first target whose result is not a plain `removed`, with no
   continuation, rollback or automatic retry. Traces: "Clean can explicitly
   retire verified worktrees"; design D9.
@@ -1385,13 +1389,18 @@ configuration"; "A lazy fetch in a partial clone is refused locally";
   requirement's rule (FR-002, FR-050). Traces: "Repository inspection
   requires Git 2.36 and shares one evidence model"; design D17.
 - **FR-054**: Every Git child MUST run in its own process group with the
-  seventeen variables the delta lists removed from its environment,
-  unconditionally and from a fixed list never queried from Git (the fifteen
-  that `git rev-parse --local-env-vars` prints on Git 2.40 and later,
-  `GIT_INTERNAL_SUPER_PREFIX` and `GIT_ALLOW_PROTOCOL`); read-only probes
-  MUST set `GIT_OPTIONAL_LOCKS=0`; every status probe MUST pin
-  `core.untrackedCache=false` and `core.fsmonitor=false`; and every Git
-  child, of every kind, MUST pin `protocol.allow=never` and the six
+  thirty-one variables listed removed from its environment, unconditionally
+  and from a fixed list never queried from Git: the seventeen the delta lists
+  (the fifteen that `git rev-parse --local-env-vars` prints on Git 2.40 and
+  later, `GIT_INTERNAL_SUPER_PREFIX` and `GIT_ALLOW_PROTOCOL`) and the
+  fourteen trace names of Brett Heap's ruling Q9 B, with `GIT_TRACE2`,
+  `GIT_TRACE2_EVENT` and `GIT_TRACE2_PERF` set to `0` (draft PR #19; lead
+  ruling R-99 (b) and (d)); read-only probes
+  MUST set `GIT_OPTIONAL_LOCKS=0`; every status probe, the hidden-state probe
+  and the removal MUST pin `core.untrackedCache=false`,
+  `core.fsmonitor=false`, `core.trustctime=true` and `core.checkStat=default`,
+  the last two Brett Heap's ruling LQ-10 (draft PR #19; lead ruling R-102);
+  and every Git child, of every kind, MUST pin `protocol.allow=never` and the six
   per-protocol `allow=never` settings (`file`, `ssh`, `git`, `http`, `https`
   and `ext`), so that a lazy fetch in a partial clone fails locally and its
   row is `inspection-error`, never a network call. Traces: "Repository

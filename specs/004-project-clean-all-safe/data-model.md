@@ -117,10 +117,13 @@ planning is seen at revalidation, which US6 built as `registry_twin()`, step
 5 of the table in "Revalidation step and `probes_performed`" below (lead
 rulings R-81 (a) and R-89 (a)): every entry of the fresh registry listing,
 a row past the cap included, is read as `worktree_rows()` reads a row and
-compared by `shared_identities()`, by realpath and by admin id, since a twin
-whose `.git` is a symbolic link can share an admin id without sharing a
-realpath, and a present entry sharing a checked row's realpath or admin id
-gives `identity-changed`. An entry whose lstat or realpath fails other than
+compared by `shared_identities()`, by realpath and by admin id; under the
+two-way check's regular-file rule (`_gitfile()` takes `<path>/.git` only as a
+regular file, so a `.git` that is a symbolic link gives no admin id), two
+registered entries with one admin id also share a realpath, so the admin-id
+comparison is a second guard that never decides alone (R-81 (a); lane 3's
+final delta read, LOW-6; lead ruling R-101 (e)), and a present entry sharing a
+checked row's realpath or admin id gives `identity-changed`. An entry whose lstat or realpath fails other than
 with `ENOENT` or `ENOTDIR`, a call cut at its probe budget included, is a
 difference too, `identity-changed`, since a twin could stand behind it and a
 value that cannot be re-read is a difference (the `project-clean-review-safety`

@@ -405,12 +405,14 @@ T033), when B, D, E and F are; H, guard (T034, T035), when T023 is, beside G
   `test_clean_counting_wrapper_records_and_execs` (per child the wrapper
   records, before Git runs, the argument vector as raw bytes, the working
   directory, the pid, the parent pid, the process group, and which of the
-  seventeen scrubbed names and `GIT_OPTIONAL_LOCKS` are set; with no hook the
+  thirty-one scrubbed names (the seventeen, then Brett Heap's ruling Q9 B's
+  fourteen trace names; lead ruling R-99 (d)) and `GIT_OPTIONAL_LOCKS` are
+  set; with no hook the
   recorded pid and process group are Git's own, and the exit status and output
   are the real `git`'s; with hooks, `worktree remove` runs the pre-hook, the
   real `git` as a child and the post-hook in that order and exits with Git's
   status; a record still being written is never parsed; the wrapper's
-  seventeen names equal `project`'s `GIT_SCRUB` (analyze L7, lead ruling
+  thirty-one names equal `project`'s `GIT_SCRUB` (analyze L7, lead ruling
   R-42); plan review M4, lead ruling R-31);
   `test_clean_fake_gits_behave_as_named` (each fake of T011,
   `version-2.35.0` answering `--version` behind the seven pins);
@@ -477,7 +479,7 @@ T033), when B, D, E and F are; H, guard (T034, T035), when T023 is, beside G
   appends to `log`, with one `printf`, one record for the child, its fields
   NUL-separated and the record terminated: the pid, the parent pid, the process
   group (from `/proc/$$/stat`, else `ps -o pgid= -p $$`), the working directory
-  (`pwd -P`), which of the seventeen scrubbed names and `GIT_OPTIONAL_LOCKS`
+  (`pwd -P`), which of the thirty-one scrubbed names and `GIT_OPTIONAL_LOCKS`
   are set (each tested as `${NAME+x}`; the names a literal transcribed from
   contracts/project-clean.md, "Git children", never imported from `project`,
   analyze L7), and the argument vector. With no hook
@@ -522,18 +524,26 @@ T033), when B, D, E and F are; H, guard (T034, T035), when T023 is, beside G
 ### Lane C: the scrubbed environment and the pins
 
 - [x] T012 [P] [O] Add `tests/test_clean_scrub.py`:
-  `test_clean_scrub_removes_the_seventeen_names` (`GIT_SCRUB` is the contract's
-  list in its order; from an environment holding all seventeen and
-  `GIT_CONFIG_GLOBAL` and `GIT_CONFIG_SYSTEM`, `git_env("probe")` keeps those
-  two, removes the seventeen and sets `GIT_OPTIONAL_LOCKS=0`; the kinds
-  `removal` and `delegate` set no `GIT_OPTIONAL_LOCKS`; the kind `push` keeps
-  the caller's `GIT_ALLOW_PROTOCOL` and removes the other sixteen, lead ruling
-  R-28; `os.environ` is unchanged) and `test_clean_pins_are_on_every_argv`
+  `test_clean_scrub_removes_the_thirty_one_names` (`GIT_SCRUB` is the
+  contract's list in its order, the seventeen, then the fourteen trace names
+  of Brett Heap's ruling Q9 B (draft PR #19; lead ruling R-99 (b) and (d)),
+  which renamed this test from `..._the_seventeen_names` (`02e4645`); from an
+  environment holding all thirty-one and `GIT_CONFIG_GLOBAL` and
+  `GIT_CONFIG_SYSTEM`, `git_env("probe")` keeps those two, removes the
+  thirty-one and sets `GIT_OPTIONAL_LOCKS=0`; every kind, the push child's
+  included, sets `GIT_TRACE2`, `GIT_TRACE2_EVENT` and `GIT_TRACE2_PERF` to
+  `0` and leaves the other `GIT_TRACE2_*` names; the kinds `removal` and
+  `delegate` set no `GIT_OPTIONAL_LOCKS`; the kind `push` keeps the caller's
+  `GIT_ALLOW_PROTOCOL` and removes the other thirty, lead ruling R-28;
+  `os.environ` is unchanged) and `test_clean_pins_are_on_every_argv`
   (`git_argv(kind, args)` puts the seven protocol pins on every kind but
-  `push`, the two status pins on `status`, `hidden` and `removal`, and builds
-  the removal vector exactly as D9 spells it; `push` carries no pin, PR #19).
+  `push`, the four status pins on `status`, `hidden` and `removal` (the
+  contract's two, then `core.trustctime=true` and `core.checkStat=default`,
+  Brett Heap's ruling LQ-10, lead ruling R-102), and builds the removal vector
+  exactly as D9 spells it with those two after `core.fsmonitor=false`; `push`
+  carries no pin, PR #19).
   — files: `tests/test_clean_scrub.py`
-  — verify: `python3 -c "import sys,unittest as u;L=u.defaultTestLoader;f=lambda s:[i for t in s for i in (f(t) if isinstance(t,u.TestSuite) else [t.id()])];I=[i for i in f(L.discover('tests',pattern=sys.argv[1])) if not i.startswith('unittest.')];A=sys.argv[2:];M=[a for a in A if not any(a in ('*',i.split('.')[-1]) for i in I)];[print('not collected:',m) for m in M];[print(e) for e in L.errors];sys.exit(1 if M or L.errors or not A else 0)" test_clean_scrub.py 'test_clean_scrub_removes_the_seventeen_names' 'test_clean_pins_are_on_every_argv'`
+  — verify: `python3 -c "import sys,unittest as u;L=u.defaultTestLoader;f=lambda s:[i for t in s for i in (f(t) if isinstance(t,u.TestSuite) else [t.id()])];I=[i for i in f(L.discover('tests',pattern=sys.argv[1])) if not i.startswith('unittest.')];A=sys.argv[2:];M=[a for a in A if not any(a in ('*',i.split('.')[-1]) for i in I)];[print('not collected:',m) for m in M];[print(e) for e in L.errors];sys.exit(1 if M or L.errors or not A else 0)" test_clean_scrub.py 'test_clean_scrub_removes_the_thirty_one_names' 'test_clean_pins_are_on_every_argv'`
 - [x] T013 [P] [O] Add `GIT_SCRUB`, `PROTOCOL_PINS`, `STATUS_PINS`, `git_env(kind)`
   and `git_argv(kind, args)` to region `git environment` of `project`. T012
   passes.
@@ -3260,8 +3270,10 @@ test and T116's removal-child clause held back (lead ruling R-56 Q-5).
   `test_status_the_pinned_status_configuration` (rule 1, plan review M14;
   `core.untrackedCache` and `core.fsmonitor` true in the `GIT_CONFIG_GLOBAL`
   file: the counting log shows `-c core.untrackedCache=false -c
-  core.fsmonitor=false` on every status child and on every removal child of an
-  apply; it pins Phase 2 and T056); `test_doctor_missing_leg` (a declared leg
+  core.fsmonitor=false -c core.trustctime=true -c core.checkStat=default` on
+  every status child and on every removal child of an apply, the last two
+  Brett Heap's ruling LQ-10, appended to the test's pin list by `d1ef33e`
+  (lead rulings R-102 and R-104); it pins Phase 2 and T056); `test_doctor_missing_leg` (a declared leg
   with no checkout: an actionable failure, nonzero exit); and
   `test_update_default_report` (`update` without `--apply` reports a plan, the
   counting log holds no child that writes, and nothing is installed).

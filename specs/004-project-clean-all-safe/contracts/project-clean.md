@@ -23,8 +23,9 @@ project clean [TARGET] --apply --action delete-branch --branch BRANCH [--yes]
 New flags: `--all-safe` and `--expect-plan D` (FR-019); no flag is added
 outside `clean` (FR-064). `project` reads no new environment variable, flag
 or file to change a limit or a time (research.md R10). It removes the
-seventeen names below from every Git child's environment, never from its own,
-except that the push child keeps `GIT_ALLOW_PROTOCOL` (R-28).
+thirty-one names below from every Git child's environment, never from its own,
+except that the push child keeps `GIT_ALLOW_PROTOCOL` (R-28), and sets the
+three trace2 targets to `0` in every Git child's (Brett Heap's ruling Q9 B).
 
 ## Argument checks (before any Git child)
 
@@ -485,10 +486,13 @@ for a refusal.
 
 Every Git child but the push child is a D2 handle: its own session
 (`start_new_session=True`), standard input from `/dev/null`, both outputs
-read by the driver. Every Git child but the push child has these seventeen
+read by the driver. Every Git child but the push child has these thirty-one
 names removed from its environment, unconditionally, from this fixed list
-(FR-054); the push child has the first sixteen removed and keeps the
-caller's `GIT_ALLOW_PROTOCOL` (lead ruling R-28):
+(FR-054): the seventeen of the change as ratified, then the fourteen trace
+names of Brett Heap's ruling Q9 B, through which a caller could make a child
+create or append to a file (draft PR #19; lead rulings R-99 (b) and (d) and
+R-103); the push child has every name but the seventeenth removed and keeps
+the caller's `GIT_ALLOW_PROTOCOL` (lead ruling R-28):
 
 ```text
 GIT_ALTERNATE_OBJECT_DIRECTORIES GIT_CONFIG GIT_CONFIG_PARAMETERS
@@ -496,13 +500,31 @@ GIT_CONFIG_COUNT GIT_OBJECT_DIRECTORY GIT_DIR GIT_WORK_TREE
 GIT_IMPLICIT_WORK_TREE GIT_GRAFT_FILE GIT_INDEX_FILE GIT_NO_REPLACE_OBJECTS
 GIT_REPLACE_REF_BASE GIT_PREFIX GIT_SHALLOW_FILE GIT_COMMON_DIR
 GIT_INTERNAL_SUPER_PREFIX GIT_ALLOW_PROTOCOL
+GIT_TRACE GIT_TRACE_BARE GIT_TRACE_CURL GIT_TRACE_CURL_NO_DATA
+GIT_TRACE_FSMONITOR GIT_TRACE_PACKET GIT_TRACE_PACKFILE GIT_TRACE_PACK_ACCESS
+GIT_TRACE_PERFORMANCE GIT_TRACE_REDACT GIT_TRACE_REFS GIT_TRACE_SETUP
+GIT_TRACE_SHALLOW GIT_TRACE_WORKING_TREE_ENCODING
 ```
 
-`GIT_CONFIG_GLOBAL` and `GIT_CONFIG_SYSTEM` stay. Read-only probes add
+Every Git child, the push child included, also gets `GIT_TRACE2=0`,
+`GIT_TRACE2_EVENT=0` and `GIT_TRACE2_PERF=0` over any value the caller set;
+`0` turns each trace2 target off and outranks the `trace2.normalTarget`,
+`trace2.eventTarget` and `trace2.perfTarget` of the system and global
+configuration, which no `-c` pin reaches, and the other `GIT_TRACE2_*` names
+stay as the caller set them (Q9 B; `TRACE2_OFF`).
+
+`GIT_CONFIG_GLOBAL` and `GIT_CONFIG_SYSTEM` stay; with `HOME` and
+`XDG_CONFIG_HOME` they are read only by the configuration-path test (D11;
+"Order of a run" and "`status`, `doctor` and `update`", below), and reach every
+child unchanged. Read-only probes add
 `GIT_OPTIONAL_LOCKS=0`; the removal and the delegates add none, and a value
 the caller set reaches them unchanged, as every child received it before this
-change (`GIT_OPTIONAL_LOCKS` is not among the seventeen; D2 sets it for probes
-only).
+change (`GIT_OPTIONAL_LOCKS` is not among the thirty-one; D2 sets it for probes
+only). The owner tools that `update --apply` runs are no Git children of
+`project`'s, yet run in the push child's scrub: every name of the list but
+`GIT_ALLOW_PROTOCOL` removed, and nothing added, no `-c` pin, no
+`GIT_OPTIONAL_LOCKS` and no trace2 variable (`delegate_env()`; Brett Heap's
+ruling LQ-12, draft PR #19 at `eae1a79`; lead rulings R-102 and R-111).
 
 The protocol pins, on every Git child except the push child (the push-child
 exception, LQ-3, awaiting Brett Heap's word on draft PR #19; research.md
@@ -516,7 +538,12 @@ R1):
 ```
 
 The status pins, on every status probe, the hidden-state probe and the
-removal: `-c core.untrackedCache=false -c core.fsmonitor=false`.
+removal: `-c core.untrackedCache=false -c core.fsmonitor=false -c
+core.trustctime=true -c core.checkStat=default`. The last two, Brett Heap's
+ruling LQ-10 (draft PR #19 at `ea697ba`; lead rulings R-102 and R-110 (b)),
+compare every stat field, so that an edit which keeps a file's size and
+restores its mtime still shows by its ctime under a repository's
+`core.trustctime=false` or `core.checkStat=minimal`.
 
 | Child | Argument vector after `git` and its pins (its status pins first, then the protocol pins; D9, D11) | Directory |
 | --- | --- | --- |
@@ -528,11 +555,11 @@ removal: `-c core.untrackedCache=false -c core.fsmonitor=false`.
 | row 5 | row 3 again | `root`, only when row 3 ran elsewhere |
 | row 6 | `-C ROOT for-each-ref --format=%(refname)%00%(objectname)%00%(symref)%00%(upstream)%00%(upstream:short)%00%(upstream:track,nobracket) refs/heads refs/remotes` | `root` |
 | row 7 | `-C ROOT for-each-ref --merged=SHA --format=%(refname) refs/heads` | `root` |
-| status | `-c core.untrackedCache=false -c core.fsmonitor=false` + protocol pins + `-C WORKTREE status --porcelain=v1 -z --untracked-files=normal --ignored=matching` | the row's worktree |
-| hidden state | `-c core.untrackedCache=false -c core.fsmonitor=false` + protocol pins + `-C WORKTREE ls-files -v --stage -z` | the target's worktree |
+| status | `-c core.untrackedCache=false -c core.fsmonitor=false -c core.trustctime=true -c core.checkStat=default` + protocol pins + `-C WORKTREE status --porcelain=v1 -z --untracked-files=normal --ignored=matching` | the row's worktree |
+| hidden state | `-c core.untrackedCache=false -c core.fsmonitor=false -c core.trustctime=true -c core.checkStat=default` + protocol pins + `-C WORKTREE ls-files -v --stage -z` | the target's worktree |
 | narrowed ref listing (revalidation) | row 6's format with patterns naming the merge target, the manifest's candidate, the branch `origin/HEAD` named, `main`, `master`, `refs/remotes/origin/HEAD`, and the selected branches and their upstreams | `root` |
 | remote URL | `-C ROOT remote get-url origin` | `root` (push; `handoff()` in `status` and `doctor`, for an inspected repository only, R-66 (c)) |
-| removal | `-c status.showUntrackedFiles=normal -c core.untrackedCache=false -c core.fsmonitor=false` + protocol pins + `-C ROOT worktree remove PATH` | `root`; PATH the registry's raw bytes, one argument, never `--force` |
+| removal | `-c status.showUntrackedFiles=normal -c core.untrackedCache=false -c core.fsmonitor=false -c core.trustctime=true -c core.checkStat=default` + protocol pins + `-C ROOT worktree remove PATH` | `root`; PATH the registry's raw bytes, one argument, never `--force` |
 | branch deletion | protocol pins + `-C ROOT branch -d BRANCH` | `root`; a D2 handle run by the driver with no budget, its output relayed to `project`'s streams |
 | push | `-C ROOT push REMOTE BRANCH:REMOTE_BRANCH`, or `push -u origin BRANCH`; no protocol pins | `root`; run by `execute()`, not the driver: `project`'s own streams, never read or capped; `project`'s process group, in the terminal's foreground when `project` is; never signalled, waited for, unbounded; yields no evidence |
 

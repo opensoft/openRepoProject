@@ -262,7 +262,7 @@ def install_counting_git(bin_dir, log, real=REAL_GIT, hooks=None, proc="/proc"):
     fields NUL-terminated and the record ended by an argument count and a final
     `end` field: the pid, the parent pid, the process group (from
     /proc/$$/stat, else `ps -o pgid= -p $$`), the working directory (`pwd -P`),
-    which of the seventeen scrubbed names and GIT_OPTIONAL_LOCKS are set (each
+    which of the thirty-one scrubbed names and GIT_OPTIONAL_LOCKS are set (each
     tested as ${NAME+x}), GIT_OPTIONAL_LOCKS's value, and the argument vector.
     With no hook it then execs real by absolute path, so the record's pid and
     process group are Git's own. hooks, a dict with "pre" and/or "post", applies
@@ -703,7 +703,7 @@ class CleanCase(unittest.TestCase):
     builds (tests/test_project.py:117-136): a resolved temporary base, a fake
     workBenches with the test generator, and self.env with WORKBENCHES_ROOT,
     HOME, PROJECTS_DIR, GIT_CONFIG_NOSYSTEM=1 and GIT_CONFIG_GLOBAL=os.devnull;
-    plus a fixed author and committer, and none of the seventeen scrubbed names
+    plus a fixed author and committer, and none of the thirty-one scrubbed names
     or GIT_OPTIONAL_LOCKS inherited from the caller."""
 
     def setUp(self):

@@ -46,7 +46,7 @@ RECONCILIATION_KEYS = ["registry_entry_present", "path_present", "branch_present
 OBSERVED_AT = re.compile("[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z")
 
 # The removal child's pins, as the contract writes them ("Git children"): the
-# three status pins, then the seven protocol pins, before `-C ROOT`.
+# five status pins, then the seven protocol pins, before `-C ROOT`.
 PROTOCOL_PINS = ["-c", "protocol.allow=never", "-c", "protocol.file.allow=never",
                  "-c", "protocol.ssh.allow=never", "-c", "protocol.git.allow=never",
                  "-c", "protocol.http.allow=never", "-c", "protocol.https.allow=never",
