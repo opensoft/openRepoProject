@@ -283,7 +283,9 @@ class TimingTests(CleanCase):
             out, err = child.communicate(timeout=TIMEOUT / 2)
         finally:
             with contextlib.suppress(ProcessLookupError, PermissionError):
-                os.killpg(child.pid, signal.SIGKILL)  # a status child left in project's group
+                # project's own group, which project leads (start_new_session above). Every Git
+                # child of `project status` leads a group of its own, so none is in this one.
+                os.killpg(child.pid, signal.SIGKILL)
             if child.poll() is None:
                 child.wait()
         return child.pid, fields, child.returncode, out.decode(), err.decode()

@@ -668,7 +668,6 @@ class PathsTests(clean_support.CleanCase):
         self.assert_plain_base()
         rlo = chr(0x202E)
         root = self.repo("rlo-a" + rlo + "b")
-        root_form = self.dollar(str(self.base), "/rlo-a", BACKSLASH, "u202eb")
         manifest_form = self.dollar(str(self.base), "/rlo-a", BACKSLASH, "u202eb/project.yaml")
         manifest = root / "project.yaml"
         for label, content, message in (
@@ -712,6 +711,80 @@ class PathsTests(clean_support.CleanCase):
                     project.build_plan({"root": subdirectory}, run)
             self.assertEqual(str(caught.exception), "Cannot inspect Git repository at " + self.dollar(
                 str(self.base), "/rlo-a", BACKSLASH, "u202eb/sub-a", BACKSLASH, "u202eb"))
+
+    # Lead ruling R-92 (c): discover()'s two bare-name messages, `Directory does
+    # not exist: PATH` and `No project found at PATH; supply a path or name.`,
+    # reach clean as `repository-not-found` and name the user's own argument, so
+    # resolve_clean_target() prints the path in each through human_path()
+    # (contracts/project-clean.md, "Human output" and "Codes"). The JSON
+    # document keeps the one message, escaped alike, in `error` and in the
+    # refusal, which has no `path` of its own: the baseline's refusal had none.
+
+    def assert_bare_name_not_found(self, argument, message, cwd):
+        """clean ARGUMENT in CWD refuses with `repository-not-found` and MESSAGE,
+        in human output and in the extended error object, both ASCII only."""
+        human = self.run_cli("clean", argument, cwd=cwd)
+        self.assert_status(human, 2)
+        self.assertEqual((human.stdout, human.stderr), ("", f"REFUSED: {message}\n"))
+        self.assertTrue(human.stderr.isascii(), human.stderr)
+        result = self.run_cli("clean", argument, "--json", cwd=cwd)
+        self.assert_status(result, 2)
+        document = self.one_document(result)
+        self.assertTrue(result.stdout.isascii(), result.stdout)
+        self.assertEqual(list(document), EXTENDED_ERROR_KEYS)
+        self.assertEqual(document, {
+            "error": message, "code": "repository-not-found", "schema_version": 1,
+            "observed_at": document["observed_at"], "mode": "report", "repository": None, "merge_target": None,
+            "completeness": "incomplete", "apply_allowed": False,
+            "refusals": [{"code": "repository-not-found", "message": message}]})
+        self.assertEqual(result.stderr, "")
+
+    def test_clean_refusal_messages_print_their_paths_escaped_for_a_bare_name_not_found(self):
+        self.assert_plain_base()
+        rlo = chr(0x202E)
+        elsewhere = self.base / "elsewhere"
+        elsewhere.mkdir()
+        (self.base / ("Plain" + rlo + "dir")).mkdir()  # in the projects directory, holding no project
+        before = sorted(path.name for path in self.base.iterdir())
+        for label, argument, message in (
+                ("a directory that does not exist", "No" + rlo + "where",
+                 "Directory does not exist: " + self.dollar(str(elsewhere), "/No", BACKSLASH, "u202ewhere")),
+                ("an existing directory with no project", "Plain" + rlo + "dir",
+                 "No project found at " + self.dollar(str(self.base), "/Plain", BACKSLASH, "u202edir")
+                 + "; supply a path or name.")):
+            with self.subTest(label):
+                self.assertNotIn(rlo, message)
+                self.assert_bare_name_not_found(argument, message, elsewhere)
+        with self.subTest("a discover() that codes neither message, as before T118"):
+            # In process, since discover() now codes both: the fallback in
+            # resolve_clean_target() maps and escapes them alike.
+            path = str(elsewhere / ("No" + rlo + "where"))
+            form = self.dollar(str(elsewhere), "/No", BACKSLASH, "u202ewhere")
+            for raw, message in (
+                    (f"Directory does not exist: {path}", f"Directory does not exist: {form}"),
+                    (f"No project found at {path}; supply a path or name.",
+                     f"No project found at {form}; supply a path or name.")):
+                status, out, err = self.main_in_process("clean", "Nowhere", cwd=elsewhere,
+                                                        discover=raising(project.Refused(raw)))
+                self.assertEqual((status, out, err), (2, "", f"REFUSED: {message}\n"))
+        self.assertEqual(sorted(path.name for path in self.base.iterdir()), before, "nothing changes")
+
+    @clean_support.linux_paths
+    def test_clean_refusal_messages_print_their_paths_escaped_for_a_bare_name_not_found_not_utf_8(self):
+        # The same two messages for a bare name that holds the byte 0xFF, which
+        # prints as \xff (rule 9, Linux only).
+        self.assert_plain_base()
+        elsewhere = self.base / "elsewhere"
+        elsewhere.mkdir()
+        os.mkdir(os.fsencode(self.base) + b"/Plain" + NOT_UTF_8 + b"dir")
+        for label, argument, message in (
+                ("a directory that does not exist", b"No" + NOT_UTF_8 + b"where",
+                 "Directory does not exist: " + self.dollar(str(elsewhere), "/No", BACKSLASH, "xffwhere")),
+                ("an existing directory with no project", b"Plain" + NOT_UTF_8 + b"dir",
+                 "No project found at " + self.dollar(str(self.base), "/Plain", BACKSLASH, "xffdir")
+                 + "; supply a path or name.")):
+            with self.subTest(label):
+                self.assert_bare_name_not_found(argument, message, elsewhere)
 
     # Lead ruling R-89 (b), a fix in region plan carried by this lane.
 

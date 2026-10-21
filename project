@@ -3436,6 +3436,18 @@ def is_bare_name(argument):
     return bool(text) and not os.path.isabs(text) and "/" not in text and text not in (".", "..")
 
 
+def escaped_not_found(message):
+    """discover()'s two bare-name messages, `Directory does not exist: PATH` and
+    `No project found at PATH; supply a path or name.`, with PATH printed through
+    human_path() as every other path of `clean` is (FR-041; lead ruling R-92 (c));
+    None for any other message. discover() prints the user's own argument raw,
+    and status, doctor and update share it, so it stays as it is."""
+    for head, tail in (("Directory does not exist: ", ""), ("No project found at ", "; supply a path or name.")):
+        if message.startswith(head) and message.endswith(tail):
+            return head + human_path(message[len(head):len(message) - len(tail)]) + tail
+    return None
+
+
 def resolve_clean_target(args, run):
     """Resolve the target argument Git-first to exactly one repository and
     its main worktree (T107; D8, FR-016, FR-017; contracts/project-clean.md,
@@ -3456,7 +3468,8 @@ def resolve_clean_target(args, run):
     supply a path." and `repository-not-found` for "Directory does not exist:
     PATH" and "No project found at PATH; supply a path or name.", until US9's
     T118 gives discover() these codes itself (P-10); a refusal that already
-    carries a code passes unchanged.
+    carries a code passes unchanged, except that the PATH of a
+    `repository-not-found` message is printed through human_path() (R-92 (c)).
 
     Refused `target-not-repository-root`, exit 2, before any plan and with no
     context, in M6's order: row 3 failed (a directory outside any
@@ -3483,11 +3496,13 @@ def resolve_clean_target(args, run):
             found = discover(target)
         except Refused as exc:
             message = str(exc)
+            escaped = escaped_not_found(message)
             if exc.code is None and message == "Ambiguous project name; supply a path.":
                 exc.code = "ambiguous-name"
-            elif exc.code is None and (message.startswith("Directory does not exist: ") or (
-                    message.startswith("No project found at ") and message.endswith("; supply a path or name."))):
+            elif exc.code is None and escaped is not None:
                 exc.code = "repository-not-found"
+            if exc.code == "repository-not-found" and escaped is not None:
+                exc.args = (escaped,)  # R-92 (c): the path the message names prints escaped
             raise
         directory = shown = os.fsencode(found)
     elif absolute:
@@ -4350,8 +4365,8 @@ def print_plan(plan, run):
     delete-branch, nothing. `Merge target: NAME (SOURCE)` prints in every
     mode, and every path and branch goes through human_path(). A row noted
     `partially-removed` (D4) also prints D18's partial-removal note beside its
-    advice, never instead of it (T094; lead ruling R-79, P-11). This replaces
-    print_clean_report() for `clean`."""
+    advice, never instead of it (T094; lead ruling R-79, P-11). It replaced the
+    baseline's print_clean_report() for `clean`, which T125 then retired."""
     if plan.action in ("push", "delete-branch"):
         return
     json_output, apply = getattr(run.args, "json", False), getattr(run.args, "apply", False)
