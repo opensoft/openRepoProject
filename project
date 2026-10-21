@@ -2643,13 +2643,42 @@ def verify_registration(path, common_dir, main):
     return registration_verdict(main, common_dir, named, worktrees, back, real_dotgit)
 
 
+def status_warned(outcome):
+    """Whether a status probe's standard error says the worktree's state was
+    not established (lane 3's US2 M-1; lead ruling R-101 (e)), a pure
+    function of the outcome: any byte past the 4 KiB head the runner keeps,
+    or any line of that head other than Git's advice lines, `hint:` alone or
+    `hint: TEXT`.
+
+    The rule comes from Git's output (Git 2.43.0): on a clean run the probe
+    prints nothing to standard error; for a directory it cannot open it
+    prints `warning: could not open directory 'D/': Permission denied`, and
+    for an unreadable `.gitignore` `warning: unable to access ...`, and
+    exits 0 with what it could not read left out of its records. Git
+    translates its `warning: ` and `error: ` prefixes under a localized
+    message catalogue (`Warnung: ` in German), so the rule reads no prefix
+    but the advice prefix; a translated advice line counts, which fails
+    closed."""
+    if outcome.stderr_bytes > len(outcome.stderr):
+        return True
+    return any(line and line != b"hint:" and not line.startswith(b"hint: ")
+               for line in outcome.stderr.split(b"\n"))
+
+
 def status_probe(path, run):
     """The combined status probe in the worktree at path (D6, D11; FR-056,
     FR-057): STATUS_PROBE with `-C path`, a `status` child (the two status
     pins and GIT_OPTIONAL_LOCKS=0), read by StatusParser. Returns (outcome,
     error): outcome.result is the parser's result for a complete outcome, one
-    stopped at its bound included; error the row error of a failed one."""
-    return _git(run, path, list(STATUS_PROBE), "status", StatusParser(), kind="status")
+    stopped at its bound included; error the row error of a failed one. A
+    complete outcome whose standard error status_warned() names has not
+    established the worktree's state either: its error is `probe-failed`,
+    DETAIL `unparseable output`, so the row is inspection-error with `dirty`
+    null (pcl:121-125), and revalidation reads it as state-changed."""
+    outcome, error = _git(run, path, list(STATUS_PROBE), "status", StatusParser(), kind="status")
+    if error is None and status_warned(outcome):
+        error = unparseable_error("status")
+    return outcome, error
 
 
 def inspect_repository(directory, run, refresh=False, *, repeat_identity_at_root=True):

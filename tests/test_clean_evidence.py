@@ -584,17 +584,24 @@ class EvidenceTests(clean_support.CleanCase):
         rows = by_name(result.document)
         error = {"code": "probe-failed", "message": git_message(
             "for-each-ref", "row_error_probe_failed", DETAIL=TEXT["row_error_probe_failed_unparseable"])}
+        # With refs/heads/HEAD present, Git 2.43.0 warns "refname 'HEAD' is
+        # ambiguous." on standard error in every worktree's status probe, the
+        # main worktree's included, so no row's state is established there
+        # (status_warned(); lane 3's US2 M-1, lead ruling R-101 (e)).
+        warned = {"code": "probe-failed", "message": git_message(
+            "status", "row_error_probe_failed", DETAIL=TEXT["row_error_probe_failed_unparseable"])}
         row = rows[tree.name]
         self.assertEqual([row[key] for key in ("branch", "upstream", "remote_present", "ahead", "behind", "errors",
                                                "classification", "recommendation")],
-                         ["HEAD", None, None, None, None, [error], "inspection-error",
+                         ["HEAD", None, None, None, None, [warned, error], "inspection-error",
                           RECOMMENDATIONS["inspection-error"]])
-        self.assertEqual((row["present"], row["dirty"], row["merged_into_target"]), (True, False, True),
-                         "the status probe and row 7 still read it")
+        self.assertEqual((row["present"], row["dirty"], row["merged_into_target"]), (True, None, True),
+                         "the status probe ran and row 7 still reads it")
         self.assertIn(str(tree), self.status_dirs(records))
         self.assertEqual([(rows[name]["upstream"], rows[name]["errors"], rows[name]["classification"])
                           for name in ("repo", merged.name)],
-                         [("origin/main", [], "protected-default"), ("origin/001-merged", [], "merged-removable")])
+                         [("origin/main", [warned], "inspection-error"),
+                          ("origin/001-merged", [warned], "inspection-error")])
 
     # Lead ruling R-54 X-1: each evidence step's pure decider, on literal inputs,
     # with every Git child and filesystem call failing the test.
@@ -1070,24 +1077,88 @@ class EvidenceTests(clean_support.CleanCase):
                              "no status probe at the swapped path")
             self.assertTrue((aside / "uncommitted").exists(), "nothing was removed")
 
+    @clean_support.not_root
+    def test_clean_evidence_a_status_probe_that_warns_establishes_nothing(self):
+        # Lane 3's US2 M-1, lead ruling R-101 (e); pcl:121-125: a row whose
+        # evidence could not be established is inspection-error. Git exits 0
+        # from a status it could not finish, printing `warning: could not open
+        # directory 'secret/': Permission denied` and no record of the files it
+        # could not read, so the row's state is not established. Before this
+        # rule the row was selected, and the removal failed with exit 255 and
+        # left a broken worktree.
+        root = self.repo()
+        self.bare_remote()
+        tree = self.merged_worktree("001-unreadable")
+        control = self.merged_worktree("002-control")
+        secret = tree / "secret"
+        secret.mkdir()
+        (secret / "kept.txt").write_text("preserve")
+        secret.chmod(0o300)
+        self.addCleanup(secret.chmod, 0o700)
+        warned = {"code": "probe-failed", "message": git_message(
+            "status", "row_error_probe_failed", DETAIL=TEXT["row_error_probe_failed_unparseable"])}
+        result, records = self.report(root, "--all-safe")
+        row = by_name(result.document)[tree.name]
+        self.assertEqual([row[key] for key in ("present", "dirty", "ignored_files", "errors", "classification")],
+                         [True, None, None, [warned], "inspection-error"])
+        self.assertIn(str(tree), self.status_dirs(records), "its probe ran")
+        self.assertEqual([entry["path"] for entry in result.document["selected"]], [str(control)])
+        self.assertEqual((result.document["completeness"], result.document["refusals"][0]["code"]),
+                         ("incomplete", "inspection-incomplete"))
+        applied = self.run_cli("clean", root, "--all-safe", "--apply", "--yes")
+        self.assert_status(applied, 2)
+        self.assertTrue(tree.exists() and control.exists(), "nothing was removed")
+        self.assertIn(tree.name, self.git(root, "worktree", "list", "--porcelain"))
+
+        with self.subTest("status reports the row as not established"):
+            document = self.run_json("status", root, "--json").document
+            entry = {Path(item["path"]).name: item for item in document["repository"]["worktrees"]}[tree.name]
+            self.assertEqual([entry[key] for key in ("dirty", "classification", "errors")],
+                             [None, "inspection-error", [warned]])
+
+        with self.subTest("the rule, on literal outcomes"):
+            def outcome(stderr, counted=None):
+                return project.DriverOutcome(["git"], "complete", stderr=stderr,
+                                             stderr_bytes=len(stderr) if counted is None else counted)
+
+            for label, value, expected in (
+                    ("nothing", outcome(b""), False),
+                    ("advice lines", outcome(b"hint: Use 'git x'.\nhint:\nhint: to do y.\n"), False),
+                    ("Git's warning", outcome(b"warning: could not open directory 'secret/': Permission denied\n"),
+                     True),
+                    ("a translated warning", outcome(b"Warnung: could not open directory 'secret/'\n"), True),
+                    ("an error line", outcome(b"error: x\n"), True),
+                    ("advice, then a warning", outcome(b"hint: a\nwarning: b\n"), True),
+                    ("a line with no line end", outcome(b"E" * 10), True),
+                    ("advice past the head kept", outcome(b"hint: a\n", counted=5000), True)):
+                with self.subTest(label):
+                    self.assertIs(project.status_warned(value), expected)
+
     # T030: the evidence model's scenarios (rule 1: test_status_, plan review M14).
 
     def test_status_a_git_that_floods_standard_error(self):
+        # The probe completes with its records, no probe-timeout, its standard
+        # error capped. A status probe whose standard error holds anything but
+        # Git's advice lines has not established the row's state (lane 3's US2
+        # M-1, lead ruling R-101 (e); status_warned()), so the row reads
+        # inspection-error with `dirty` null, as a failed probe's does.
         root = self.repo()
         fake_dir = self.base / "fake"
         fake = clean_support.install_fake_git(fake_dir, "flood-stderr", kib=70)
         result, records = self.report(root, real=fake)
         row = by_name(result.document)["repo"]
-        self.assertEqual((row["errors"], row["dirty"], row["classification"]), ([], False, "protected-default"))
+        warned = {"code": "probe-failed", "message": git_message(
+            "status", "row_error_probe_failed", DETAIL=TEXT["row_error_probe_failed_unparseable"])}
+        self.assertEqual((row["errors"], row["dirty"], row["classification"]), ([warned], None, "inspection-error"))
         self.assertEqual(self.status_dirs(records), [str(root)])
         self.assertNotIn("EEEE", result.stderr, "the child's standard error is read, never passed on")
         # The standard error kept is capped at 4 KiB, and every byte counted.
         with mock.patch.dict(os.environ, self.path_first(fake_dir), clear=True):
             outcome, error = project.status_probe(os.fsencode(root), project.Invocation())
-        self.assertIsNone(error)
+        self.assertEqual(error, warned)
         self.assertEqual((outcome.name, len(outcome.stderr), outcome.stderr_bytes),
                          ("complete", 4096, 70 * 1024))
-        self.assertIs(outcome.result["dirty"], False)
+        self.assertIs(outcome.result["dirty"], False, "the records were read")
 
     def test_status_a_git_that_ignores_sigterm(self):
         # Launcher, its own table (R-29): a probe budget of 1 s, a grace of 0.5 s
