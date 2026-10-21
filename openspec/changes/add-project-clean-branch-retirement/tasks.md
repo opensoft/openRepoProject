@@ -64,12 +64,17 @@ duplicate them.
   one cross-PR note, N1, which needs no edit here), by `fab35e9` (the design),
   `1651d53` (the proposal's body) and the commit that records the round's
   table and updates this task; verified by "Re-read and Codex Findings (round
-  A6)" in `proposal.md`.
+  A6)" in `proposal.md`. Round A7, on `01b5dd8`, applied the lane's review
+  wave of 2026-10-21, its readers RA, RD and RE (rulings A-30 to A-34), by
+  `ad1faad` (the spec delta), `17307c5` (the design), `aa61817` (the
+  proposal's body) and the commit that records the round's table and updates
+  this task; verified by "Re-read and Codex Findings (round A7)" in
+  `proposal.md`.
 - [x] 1.4 Spec deltas and design written: `specs/project-clean/spec.md`
   modifies five requirements and adds one (68 scenarios: 43 carried unchanged
   from change 1 and PR #19, 6, 14, 10, 5 and 8 by block, and 25 added, the
-  24th in round A3 and the 25th in round A4, round A5 adding ANDs only and
-  round A6 editing no spec file),
+  24th in round A3 and the 25th in round A4, rounds A5 and A7 adding ANDs
+  only and round A6 editing no spec file),
   `specs/project-clean-review-safety/spec.md` modifies one (4 scenarios: 3
   carried, 1 added), and `specs/project-command/spec.md` modifies one on PR
   #19's text (9 scenarios carried, none added; agreed by lane
@@ -78,9 +83,9 @@ duplicate them.
   each modified requirement's source text kept byte for byte; `design.md`
   holds D1 to D10 (`8341954`, `d0b33ce`, and the commit titled 'Settle which
   later targets carry branch-retention-stop'), revised by the alignment fix
-  round (1.2), the council round (1.3) and rounds A3, A4, A5 and A6; verified
+  round (1.2), the council round (1.3) and rounds A3 to A7; verified
   by `grep -c '^#### Scenario:'` on each spec file and by a scenario-carry
-  script run after the council round and again after rounds A3, A4, A5 and A6
+  script run after the council round and again after rounds A3 to A7
   over all seven MODIFIED blocks, every source scenario present byte for byte
   and in order.
 - [x] 1.5 Validation passes: `/usr/bin/openspec validate
@@ -89,7 +94,7 @@ duplicate them.
   `/usr/bin/openspec status --change add-project-clean-branch-retirement
   --json` shows every artifact done; verified by running the three on this
   branch after 1.4, after the alignment fix round, after the council round
-  and after rounds A3, A4, A5 and A6
+  and after rounds A3 to A7
   (build 1.13.1, which notes only as INFO that archive would refuse the
   MODIFIED blocks whose base still sits in change 1).
 - [ ] 1.6 Ratified by Brett Heap's word on the pull request, quoted with its
@@ -113,8 +118,15 @@ duplicate them.
   worktree removals in one repository", "Clean bounds its Git work and reports
   omitted work", "Clean records a reconcilable result for every removal
   target" and "Cleanup states a narrow guarantee and its residual window" are
-  canonical and the seam this change attaches to is on `main`; verified by
-  those headers in `openspec/specs/` and by `/usr/bin/openspec validate
+  canonical and the seam this change attaches to is on `main`; and "Clean
+  reports local worktree state", written on change 1's text at `961c405` and
+  shared with no other open change, is re-read against change 1's archived
+  text and re-copied from it with this change's one clause, so that no
+  amendment of change 1 is reverted by this change's archive (lane
+  openRepoProject-5's reader RD, its M4; ruling A-33); verified by
+  those headers in `openspec/specs/`, by `diff -u` of the archived "Clean
+  reports local worktree state" against this change's block showing
+  additions only, and by `/usr/bin/openspec validate
   add-project-clean-branch-retirement --strict` passing with no archive notice.
 - [ ] 2.2 PR #19 resolved: when it lands, the two blocks written on its text,
   "Clean bounds its Git work and reports omitted work" and "Repository
@@ -135,7 +147,9 @@ duplicate them.
   250 Git children besides the 16 removals, about 42.3 s", or its restatement
   under the lane's ruling B-25, scoped to runs without the flag; "Clean
   records a reconcilable result for
-  every removal target", the cache-deletion exception; "Cleanup states a
+  every removal target", the cache-deletion exception and five other edits,
+  exit-table row 2 being edited by both (lane openRepoProject-5's reader RD,
+  its L1); "Cleanup states a
   narrow guarantee and its residual window", the cache target's revalidation
   and the residual-window line, whose cache clauses then precede this
   change's branch clause, as `design.md` D8 says (ruling A-23; lane
@@ -143,27 +157,50 @@ duplicate them.
   are listed here with the cache change's state, and if it has archived, this
   change's five blocks are re-based on its archived text now, otherwise 3.2
   holds the re-base (L-11). At the re-base the flagless digest becomes
-  byte-identical to the cache change's, `retire` follows its per-target cache
-  data, and the two stage sentences after the removal floor sit side by side.
+  byte-identical to the cache change's, the two stage sentences after the
+  removal floor sit side by side, and the rewordings that `design.md`'s
+  Migration Plan writes out are made, no others (RD's M3, L1, L2 and L3;
+  ruling A-33): this change's digest sentence after the cache change's,
+  binding to "the canonical text" with no position for `retire` (ruling
+  A-30); this change's guarantee sentences directly after the guarantee
+  sentence, reading "that guarantee"; exit-table row 2 merged; the cache
+  change's `Caches disposed` line after the summary line; and the scenario "A
+  branch changed after the re-read meets Git's own check" naming a run whose
+  plan selects no cache target. A re-base that changes a block's added text
+  beyond those rewordings returns that block to Brett Heap for ratification
+  before the handoff (RD's M3).
   At that re-base, and only then, "A flagged preview's digest binds the
   flagged apply" gains this AND, which tests the cache change's own
-  requirement (lane openRepoProject-3's re-read, MEDIUM-2): "**AND** when the
+  requirement (lane openRepoProject-3's re-read, MEDIUM-2) and pins no order
+  of the canonical text's members (ruling A-30): "**AND** when the
   flagged plan also selects a target whose plan lists caches, as "Clean
   disposes of listed caches before a worktree removal" states, the canonical
-  text carries that target's cache data after its triple and `retire` after
-  both, so that a change to one of its listed caches, or to a branch the plan
-  retires, gives another digest and the flagged apply refuses with
+  text carries that target's cache data and the `retire` member, so that a
+  change to one of its listed caches, or to a branch the plan retires or its
+  planned SHA, gives another digest and the flagged apply refuses with
   `plan-digest-mismatch` and exit 2". If PR #27 is not ratified, the five
   blocks re-base on change 1's archived text instead, that AND is not added,
-  and A-9's joint fit is moot; verified by `/usr/bin/openspec validate --all
-  --strict` passing after any re-base.
+  and A-9's joint fit is moot; verified by `diff -u` of each archived block
+  against this change's re-based block showing additions only, apart from
+  the rewordings above and this change's own edits of its base text (RD's
+  M1; ruling A-33), and by `/usr/bin/openspec validate --all --strict`
+  passing after any re-base, a second check that alone proves nothing, since
+  a re-base that keeps every scenario but drops sentences validates and
+  archives.
 - [ ] 2.4 `add-project-overview-remote-merge-status` (issue #25, PR #29)
   checked: its MODIFIED block of "Repository inspection requires Git 2.36 and
   shares one evidence model" is committed at `f66ed58`, on PR #19's text,
   agreed by lane openRepoProject-2 with one fix and unchanged at its head
   `c928cb2`, and by L-11 and L-17 whichever of it and this change archives
-  second re-bases that block on the other's archived block; verified by
-  `/usr/bin/openspec validate --all --strict` passing after any re-base.
+  second re-bases that block on the other's archived block; if this change is
+  second, the composed block quotes requirement names one way, in change 1's
+  double quotes, a change of quoting only (lane openRepoProject-5's reader
+  RD, its L4), and a re-base that changes this change's added text returns
+  the block to Brett Heap (RD's M3; ruling A-33); verified by `diff -u` of
+  the archived block against the re-based block showing additions only,
+  apart from that quoting (RD's M1), and by
+  `/usr/bin/openspec validate --all --strict` passing after any re-base, a
+  second check that alone proves nothing.
 
 ## 3. Landing and archive readiness
 
@@ -177,9 +214,13 @@ duplicate them.
   with it, carry its archived text (L-5, L-11, A-13), and the AND of 2.3 is
   added; if it is not ratified, the five blocks carry change 1's archived text
   and the AND is not added (lane openRepoProject-3's re-read, MEDIUM-2; its
-  review 26, M4); verified by `/usr/bin/openspec validate
-  add-project-clean-branch-retirement --strict` passing against the main specs
-  that archive left.
+  review 26, M4); verified by `diff -u` of each archived block against this
+  change's re-based block showing additions only, apart from the rewordings
+  of 2.3 and this change's own edits of its base text (lane
+  openRepoProject-5's reader RD, its M1; ruling A-33), and by
+  `/usr/bin/openspec validate add-project-clean-branch-retirement --strict`
+  passing against the main specs that archive left, a second check that
+  alone proves nothing.
 - [ ] 3.3 The change is archived with `/opsx:archive` only after 3.1 and 3.2,
   and after PR #19 is resolved: after its amendment of change 1 has landed,
   or, if it closed unmerged, after both blocks on its text were re-based on
