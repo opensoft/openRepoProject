@@ -4782,6 +4782,17 @@ def work_spent(run):
     return left is not None and left <= 0
 
 
+def slot_set(run):
+    """Whether the signal slot holds a signal, read by revalidation_difference()
+    before each read it starts, its Git children and its filesystem steps
+    alike (lead ruling R-93 (e), LOW-1; design D15; the project-clean delta's
+    "stop scheduling, so that no further probe or removal starts",
+    pcl:931-933). In phase `apply` the driver stops no child
+    (Invocation.interrupting()), so the revalidation reads the slot itself,
+    and a set slot ends it as the seam before the spawn would: `interrupted`."""
+    return run.signal is not None
+
+
 def below_removal_floor(run):
     """Whether less than the removal floor of work time is left, read now
     (T099, FR-030; design D9; the project-clean delta's "a removal child SHALL
@@ -4877,19 +4888,31 @@ def revalidation_difference(plan, target, run, part, seen):
     difference (T099; lead ruling R-80, P-2): its row error's code says so,
     and for steps 1 and 2, read through repository_identity() and
     reread_manifest(), which keep no code, an unread value with no work time
-    left (work_spent())."""
+    left (work_spent()).
+
+    The signal slot is read before each read a step starts (slot_set()): the
+    Git children of steps 1, 3, 4, 6 and 7, the manifest re-read, and step
+    5's identity reads, twin reads and `modules` check. A signal recorded
+    gives `interrupted`, never a difference, and no later read starts (lead
+    ruling R-93 (e), LOW-1; pcl:931-933). A step whose values come from part
+    starts no read. A step that has already read is decided first, so a
+    difference it found stands."""
     evidence = plan.evidence or {}
     planned = evidence.get("identity")
     root = os.fsencode(target.root)
     selected = list(plan.selected or ())
     rows = selected if selected and target.row is selected[0] else [target.row]
 
+    if not part and slot_set(run):
+        return "interrupted"
     found = part["identity"] if part else repository_identity(root, run)
     if found is None and not part and work_spent(run):
         return "deadline-exceeded"
     if not same_repository(found, planned):
         return "identity-changed"
 
+    if not part and slot_set(run):
+        return "interrupted"
     declared = part["declared"] if part else reread_manifest(root)
     if declared is UNREADABLE and not part and work_spent(run):
         return "deadline-exceeded"
@@ -4899,6 +4922,8 @@ def revalidation_difference(plan, target, run, part, seen):
 
     if part:
         records = part["records"]
+    elif slot_set(run):
+        return "interrupted"
     else:
         outcome, error = _git(run, root, ["worktree", "list", "--porcelain", "-z"], "worktree list",
                               WorktreeListParser())
@@ -4919,6 +4944,8 @@ def revalidation_difference(plan, target, run, part, seen):
 
     if part:
         refs, patterns = part["refs"], None
+    elif slot_set(run):
+        return "interrupted"
     else:
         patterns = narrowed_ref_patterns(plan, declared)
         outcome, error = _git(run, root, ["for-each-ref", "--format=" + REF_FORMAT, *patterns], "for-each-ref",
@@ -4942,6 +4969,8 @@ def revalidation_difference(plan, target, run, part, seen):
     if not _same_merge_target(plan, refs, declared, patterns):
         return "state-changed"
 
+    if slot_set(run):
+        return "interrupted"
     common_dir = planned["common_dir"]
     for row in rows:
         result = _lstat(row.raw_path)
@@ -4958,15 +4987,21 @@ def revalidation_difference(plan, target, run, part, seen):
             return "deadline-exceeded" if read_cut(exc.error) else "identity-changed"
         if not registered or admin_id != row.admin_id:
             return "identity-changed"
+    if slot_set(run):
+        return "interrupted"
     twin = registry_twin(evidence, records, rows, common_dir)
     if twin is not None:
         return twin
+    if slot_set(run):
+        return "interrupted"
     reason, error = modules_check(common_dir, target.row.admin_id, run)
     if read_cut(error):
         return "deadline-exceeded"
     if reason is not None or error is not None:
         return "contains-submodule"
 
+    if slot_set(run):
+        return "interrupted"
     outcome, error = status_probe(target.row.raw_path, run)
     if read_cut(error):
         return "deadline-exceeded"
@@ -4975,6 +5010,8 @@ def revalidation_difference(plan, target, run, part, seen):
             or status["ignored_files"] != 0):
         return "state-changed"
 
+    if slot_set(run):
+        return "interrupted"
     reason, error = hidden_state_probe(target.row.raw_path, run)
     if read_cut(error):
         return "deadline-exceeded"
@@ -5001,7 +5038,9 @@ def revalidate(plan, target, run):
     lstat of the planned path where the revalidation stopped before it. A
     read the work deadline cut returns ("deadline-exceeded", None), its
     distinct return: no refusal, the target `not-attempted` with no
-    reconciliation (T099; lead ruling R-80, P-2)."""
+    reconciliation (T099; lead ruling R-80, P-2). A signal in the slot
+    before one of its reads returns ("interrupted", None) the same way, the
+    outcome of the seam before the spawn (lead ruling R-93 (e), LOW-1)."""
     before = run.probes
     part = take_rescan_part(plan, target, run)
     seen = {"records": None, "refs": None, "path_present": UNREADABLE}
@@ -5009,7 +5048,7 @@ def revalidate(plan, target, run):
     target["probes_performed"] = run.probes - before + (part["children"] if part else 0)
     if reason is None:
         return None
-    if reason == "deadline-exceeded":
+    if reason in ("deadline-exceeded", "interrupted"):
         return reason, None
     raw = target["path"]
     registry_entry_present = None if seen["records"] is None else any(
@@ -5237,7 +5276,9 @@ def remove_target(plan, target, run):
     design D7, D9 and D15): its revalidation (revalidate()), a difference
     refusing it with that revalidation's record, and a read the work deadline
     cut making it `not-attempted` with `deadline-exceeded` and no
-    reconciliation (lead ruling R-80, P-2); then the seam before the spawn:
+    reconciliation (lead ruling R-80, P-2), as a signal read in the slot
+    before one of its reads makes it `not-attempted` with `interrupted` (lead
+    ruling R-93 (e), LOW-1); then the seam before the spawn:
     the slot read, a signal recorded since the revalidation began making it
     `not-attempted` with `interrupted`, then the removal floor read again
     (below_removal_floor()), less than the floor of work left making it
@@ -5253,7 +5294,7 @@ def remove_target(plan, target, run):
     refused = revalidate(plan, target, run)
     if refused is not None:
         reason, reconciliation = refused
-        if reason == "deadline-exceeded":
+        if reason in ("deadline-exceeded", "interrupted"):
             target.update(stage="not-attempted", reason=reason, reconciliation=None)
             return
         target.update(stage="refused", reason=reason, reconciliation=reconciliation,
@@ -5305,7 +5346,10 @@ def apply_removals(plan, run):
     - otherwise its own steps (remove_target()) in phase `apply`, set again
       here after the previous target's rescan: D7's targeted revalidation
       (T084), a read the deadline cut ending it `not-attempted` with
-      `deadline-exceeded`; the seam before the spawn, with the floor read
+      `deadline-exceeded`, and a signal it reads in the slot before any of
+      its reads `not-attempted` with `interrupted`, so that no probe starts
+      after the signal (lead ruling R-93 (e), LOW-1; pcl:931-933); the seam
+      before the spawn, with the floor read
       again (T099); the removal, never signalled and waited for up to its
       ceiling (T092), the reserve then counting from its exit (T099); then
       the rescan in phase `reconciling`, within the reserve, whose three
