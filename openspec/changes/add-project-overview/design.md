@@ -97,8 +97,8 @@ generator is dropped. The scheduler (D6) decides which yielded child request
 starts and when. A child's stdout feeds its incremental parser as bytes
 arrive; a parser that reaches its record bound asks the loop to stop the
 child, a deliberate early stop that records nothing (DI:464). Its stderr is
-drained throughout and its first 200 characters kept for the error message
-(DI:544-545), so no child blocks on a full 64 KiB pipe.
+drained and capped as [E] requires (CMD:175-177), and never shown, so no
+child blocks on a full 64 KiB pipe.
 
 Signals: the handlers for SIGINT, SIGTERM and SIGHUP only record the first
 signal received; `signal.set_wakeup_fd` on the self-pipe wakes the loop. The
@@ -107,19 +107,29 @@ loop then raises a cancellation derived from `BaseException`, not
 cannot turn it into an `internal-error` row. Termination runs in one
 `finally` around the loop: SIGTERM to every registered process group, up to
 2 s, SIGKILL to the rest, a reap within a further 2 s, and abandonment of
-whatever remains (P6-1). After a signal no result document is printed,
+whatever remains (P6-1). After a signal no result document is started once
+the signal is read, and one that is being written is stopped;
 `Cancelled.` is written to stderr with any `OSError` swallowed (after SIGHUP
 the terminal may be gone, and the write fails with EIO), and the exit status
 is 128 plus the signal number.
 
-Spawning: each child is started and entered in the in-flight registry while
-SIGINT, SIGTERM and SIGHUP are blocked with `signal.pthread_sigmask`, and
-they are unblocked only after registration, so no signal can fall between
-`Popen` and the registry. `pthread_sigmask` is POSIX-only, as `project`
-already is.
+Spawning: each child is started with SIGINT, SIGTERM and SIGHUP unblocked,
+then entered in the in-flight registry. The handlers only record the signal,
+as above, and termination runs from the loop, never from a handler, so a
+signal that falls between `Popen` and the registry is acted on only after
+registration, and no termination pass can miss the child.
+
+The result is written inside a raising span, entered before its first byte is
+written and only after every child is reaped or abandoned: for that span
+alone the handlers raise once they have recorded the signal, so that a write
+blocked on a stalled reader stops, and a signal already recorded when the span
+is entered stops the run before any byte is written. Output not yet written is
+discarded, never flushed at exit. No child runs under those handlers.
 
 Recorded, not designed away: SIGKILL of `project` itself orphans its
-read-only children, which then run untimed.
+read-only children, which then run untimed; and a signal that stops the
+result's write leaves part of a result on standard output, which the exit
+status 130, 143 or 129 marks as no result.
 
 Rejected: one thread per repository (signals still land on the main
 thread, and termination and canonical output would need cross-thread
@@ -408,8 +418,9 @@ contract. Output is rendered after collection in canonical order: rows by
 path bytes; worktrees main first, then by path bytes; findings by checkout
 path, then code; row errors in each candidate's own step order, which is
 serial and so fixed; and scan errors in canonical collection order, not
-wall-clock order: root errors by root order, then the candidate cap, then
-deadline and worktree-row errors by rank. With that, an uncut run's JSON at
+wall-clock order: the working directory's realpath error first, then root
+errors by root order, then the candidate cap, then deadline and worktree-row
+errors by rank. With that, an uncut run's JSON at
 probe concurrency 1 and 4 differs only in timestamps and
 `budget.probe_concurrency` (spec requirement 3). A cut run reports each cut
 unit with `omitted` and DI:165-169's exactness, and what it selected may
@@ -468,7 +479,8 @@ now)`:
   `os-error` and `inspection-error`, and a missed wait leaves the row
   unprobed for the gate, recorded as below;
 - one task at start for the realpath of the working directory, which
-  `current` needs.
+  `current` needs; when it fails or is cut, one scan error records it, as
+  spec requirement 5 states.
 
 A task that misses its wait records `probe-timeout`, or `deadline-exceeded`
 when the deadline was the smaller limit, on its root or row, and every field
@@ -658,7 +670,7 @@ change 1's commit of the same title. No item stays open.
   pins sit beside `protocol.allow` because it is only the default policy: a
   per-protocol `allow=always` in a config file or `GIT_ALLOW_PROTOCOL` in the
   caller's environment would still allow the fetch (R-25), so
-  `GIT_ALLOW_PROTOCOL` is among the seventeen names that [E]'s scrub of the
+  `GIT_ALLOW_PROTOCOL` is among the names of [E]'s list that its scrub of the
   child environment removes before any Git call, a scrub the overview carries
   by citation. Command-line `-c` outranks every config file.
 - Fixture rewrite: change 1 pins `-c core.fsmonitor=false` and
@@ -724,6 +736,12 @@ with `project clean <root> --json` at the same commit, not at `a040790`.
   ships] -> Accepted (R-25): the case is rare, and the probe would then
   succeed rather than fail, so no unsafe removal follows, the overview being
   read-only.
+- [A clean or process filter that a repository's attributes name, which a
+  status probe runs when it re-hashes a tracked file, and the user's and the
+  system's configuration, which Git still reads, can write files or open
+  connections outside the pins and the scrub] -> Accepted (Brett Heap's
+  answer Q9 B; proposal, Amendment A1): neither can be switched off in
+  general, so requirement 9 claims only what the pins and the scrub prove.
 - [A Windows drive mounted into WSL2 makes every listing slow] -> Not
   measured, since drvfs was not available on the measuring workstation; the
   README says such roots can truncate on every run.

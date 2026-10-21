@@ -14,6 +14,11 @@ its roots from the repeatable `--root` option (source `argument`), else from
 directories `~/projects` and `~/Projects` (source `default`). Each root SHALL
 be expanded, canonicalised, deduplicated by canonical path and by device and
 inode, and sorted by the bytes of its canonical path.
+A root whose canonicalisation is cut SHALL instead take as its `path` the
+given path made absolute (expanded, and joined to the working directory when
+relative) but not resolved; it SHALL sort by those bytes among the canonical
+paths, SHALL never be deduplicated, and SHALL count toward the 32-root cap, a
+root past the cap being `omitted` whether or not its canonicalisation was cut.
 
 Discovery SHALL examine each root and its immediate entries only and SHALL
 never recurse. A symbolic-link entry SHALL be resolved once, and one that
@@ -85,6 +90,16 @@ admin_id}` and the two-way registration check that requirement defines. The
 candidate that reached a repository first SHALL mean the first in canonical
 candidate order; where two spellings of one directory, such as a bind mount,
 give one device and inode, the canonically first spelling SHALL win.
+
+A candidate other than a family holder whose identity probe reports a toplevel
+that is a proper ancestor of the candidate SHALL be an error row, its error
+`refused`, its `path` the candidate's `.git` and its message a fixed text
+saying that Git did not accept it and reported an enclosing repository, and
+SHALL create or join no repository row; a family holder whose identity probe
+reports another toplevel SHALL keep null `repository`, `merge_target`, `git`
+and `worktrees` and carry no error; and a toplevel elsewhere that Git reports
+for a layout it accepts, such as a `core.worktree` naming another directory,
+SHALL be unaffected.
 
 Each registered path SHALL fall into exactly one case: `lstat` fails with "no
 such entry" or "not a directory" (`present: false`, no status probe); `lstat`
@@ -178,7 +193,10 @@ further child SHALL start, every in-flight child SHALL be terminated together
 in the same way and recorded `deadline-exceeded`, each candidate whose
 collection never started SHALL still be a row carrying only filesystem facts,
 status `error` and a `deadline-exceeded` error, and one `deadline-exceeded`
-scan error SHALL count the candidates not started.
+scan error SHALL count the candidates not started in `omitted`, its `limit`
+being `"invocation_timeout_seconds"`, the `budget` key; every other
+`deadline-exceeded` error, row or scan, SHALL carry neither `limit` nor
+`omitted`.
 
 Every filesystem call, root canonicalisation and deduplication, marker and
 holder checks, registration reads, manifest reads and branch reflog reads
@@ -209,10 +227,10 @@ a failed status probe leaves its worktree `inspection-error`, and no
 network call is made. The per-protocol pins sit beside `protocol.allow`
 because it is only the default policy: a per-protocol `allow=always` in a
 config file or `GIT_ALLOW_PROTOCOL` in the caller's environment would still
-allow the fetch (R-25). `GIT_ALLOW_PROTOCOL` is therefore among the seventeen
-names that the child-environment scrub of that requirement removes before any
-Git call, a scrub this requirement carries by citation. That requirement
-carries the same pins.
+allow the fetch (R-25). `GIT_ALLOW_PROTOCOL` is therefore among the names of
+the list that the child-environment scrub of that requirement removes before
+any Git call, a scrub and a list this requirement carries by citation. That
+requirement carries the same pins.
 
 The caps SHALL be 32 roots, 4,096 entries per root, 128 candidates and 512
 worktree rows across the run, main worktrees included. The OQ-4 measurement
@@ -231,7 +249,8 @@ Worktree rows SHALL be ranked by repository rank, the canonical position of
 the candidate that first reached the repository, then by row order; rows past
 the cap SHALL keep their registry and branch evidence with `dirty`,
 `ignored_files` and `classification` null, and their project rows SHALL carry
-`scan-limit` errors.
+`scan-limit` errors, each with `limit: "worktree_rows"` and `omitted` counting
+that repository's rows past the cap, exactness `exact`.
 
 At most four Git children SHALL run at once, never two once their
 `common_dir` is known to be the same, and one repository's children SHALL run
@@ -335,7 +354,7 @@ remove or reorder any other row or an earlier scan error:
 | the deadline ends a child or task, or prevents its start | `deadline-exceeded` |
 
 Each error SHALL be `{code, message, path?}`, with a message of at most 200
-characters (for a failed probe, the first line of Git's standard error) and
+characters, the fixed text of its code, which names no path, and
 `path` naming the file or directory involved, `path_valid_utf8` beside it
 whenever it is present. Evidence gathered before a failure SHALL be kept and
 every field not established SHALL stay null; a row whose `errors` is non-empty
@@ -345,6 +364,26 @@ boundary SHALL NOT catch an interrupt or an exit request. When the YAML library
 the manifest reader needs is not installed, each row whose directory holds a
 manifest SHALL carry a `manifest-invalid` error naming that cause, and the run
 SHALL continue.
+
+Every row error and scan error SHALL carry as its `message` the fixed text of
+its code in this table, and no text from Git's standard error, from a manifest
+or from an exception beyond its class. OPERATION is `git SUBCOMMAND` for a Git
+child, the filesystem call (`lstat`, `stat`, `realpath`, `scandir` or `read`)
+for a filesystem task, and `collection` for a candidate whose collection never
+started and for the scan error that counts such candidates:
+
+| Code | Message |
+| --- | --- |
+| `manifest-invalid` | `manifest is invalid (CAUSE)`, CAUSE one of STRERROR, the error number's text, for a manifest that cannot be read, `not valid UTF-8 text`, `malformed`, `wrong kind`, `over the 1 MiB size bound` and `PyYAML is not installed` |
+| `refused` | `Git did not accept the candidate's .git and reported an enclosing repository` for the error row of `Overview groups worktrees by repository identity`, and `a shared check refused this candidate` for any other refusal |
+| `os-error` | `OPERATION failed: STRERROR`, STRERROR the error number's text |
+| `undecodable-output` | `OPERATION printed output that could not be decoded` |
+| `internal-error` | `internal error (CLASS)`, CLASS the exception's class name |
+| `probe-failed` | `OPERATION failed: DETAIL`, DETAIL one of `exit N`, `signal N`, `cannot spawn (STRERROR)` and `unparseable output` |
+| `probe-timeout` | `OPERATION timed out after S s`, S the budget in force |
+| `deadline-exceeded` | `OPERATION stopped at the invocation deadline` |
+| `scan-limit` | `LIMIT cap of M reached`, LIMIT the error's `limit` and M its value in `limits` |
+| `root-unreadable` | `root is unreadable (CAUSE)`, CAUSE one of `no such directory`, `not a directory` and STRERROR |
 
 #### Scenario: One helper failure is isolated
 - **WHEN** a root holds `alpha`, `ledger` and `zeta`, and `ledger/project.yaml` declares `kind: other`
@@ -384,6 +423,15 @@ working directory and the same refs, the row's classification SHALL equal what
 that report gives it; that report leaves the rows beyond its own row cap
 uninspected, while the overview classifies rows up to its own worktree-row cap
 per run.
+
+When the realpath of the overview's working directory cannot be established,
+its task failing or cut, one scan error SHALL record it, `os-error` or
+`probe-timeout` with OPERATION `realpath`, first among the scan errors, its
+`path` the `PWD` environment value when that is set and absolute, taken raw
+and unresolved, and omitted otherwise. Every worktree row's `current` SHALL
+then be null, and each row the ladder would classify `merged-removable` or
+`merged-current` SHALL be `inspection-error` instead, so that
+`inspection-incomplete` withholds `--all-safe` for its repository.
 
 #### Scenario: Manifest target
 - **WHEN** a `project.yaml` sets `tracking_branch: origin/develop`, a local `develop` exists, and there is no `origin/HEAD`
@@ -645,7 +693,8 @@ exactly these fields, every one always present:
   collection whatever `--attention` shows;
 - error object: `code`, `message` and an optional `path` with
   `path_valid_utf8` beside it, with `limit` and `omitted` added on
-  `scan-limit` and `deadline-exceeded` errors.
+  `scan-limit` errors and on the one `deadline-exceeded` scan error that
+  counts the candidates not started.
 
 Integers SHALL be JSON integers, object ids full lowercase hexadecimal, times
 RFC 3339 UTC with a `Z` suffix, and durations integer seconds in fields ending
@@ -672,11 +721,29 @@ SHALL get an `unsupported-path-bytes` finding and contribute to no clean
 suggestion. Human output SHALL print a path holding a code point of those
 categories or an undecodable byte in the `$'...'` form that requirement
 defines, each such code point written as `\uXXXX`, or as `\UXXXXXXXX` above
-U+FFFF, as the tag characters need. Under `--json`, an exit status 2 other than
-an argument error SHALL print only `{"error": "<message>", "code": "<code>"}`,
+U+FFFF, as the tag characters need. Every other string the report takes from
+the filesystem, a manifest or Git, names, branch names and admin ids among
+them, SHALL follow that path rule, decoded as a path is, each undecodable byte
+written `\xHH` and each code point of those categories escaped by JSON and
+written `\uXXXX` in human output, with no validity flag of its own. Under
+`--json`, an exit status 2 other than an argument error or a failed write to
+standard output SHALL print only `{"error": "<message>", "code": "<code>"}`,
 the code being `git-too-old`, `git-unavailable`, `refused`, `os-error` or
 `internal-error`; an argument error SHALL print the command-line parser's usage
 message on standard error and no JSON.
+
+The whole document or report SHALL be rendered before its first byte is
+written, as UTF-8 whatever the locale, the JSON document with ASCII escapes
+for every non-ASCII code point, and every interpolated string already escaped
+by the path rule above. A failed write to standard output SHALL end the run
+with exit status 2, no traceback and no retry, every child being already
+reaped or abandoned: nothing more SHALL go to standard output, and one line
+SHALL go to standard error on a best-effort basis. Besides an argument error,
+it is the one exit status 2 under `--json` that prints no error object, and so
+no code; a signal recorded before the run exits decides its status instead, as
+`Overview exits by completeness and severity` states. Every other exception
+raised outside the per-candidate boundary SHALL end as this requirement and
+that one state.
 
 #### Scenario: Control and format characters in paths
 - **WHEN** a repository's directory name contains a newline and its linked worktrees' names contain a tab, U+0007, U+202E and U+200B
@@ -715,6 +782,13 @@ requires Git 2.36 and shares one evidence model` defines. It SHALL read no
 credential file and no profile data the scan does not need, and SHALL keep no
 state beyond one invocation. Ahead, behind and merge evidence SHALL be
 observations as of the last fetch, and both outputs SHALL say so.
+For the overview's Git children, no network connection and no filesystem
+mutation are claimed beyond what the pins and the environment scrub of
+`Repository inspection requires Git 2.36 and shares one evidence model` prove:
+the clean and process filters that a repository's attributes name, which a
+status probe runs when it re-hashes a tracked file, and what Git reads from
+the user's and the system's configuration are recorded residuals outside that
+claim.
 
 #### Scenario: Local and read-only
 - **WHEN** the overview runs with default options over any fixture of this capability, with networking disabled for the process
@@ -775,10 +849,18 @@ unparseable version with `git-unavailable`, each with status 2, a message
 naming the 2.36 minimum, and no other Git child; such a refusal SHALL never be
 an incompleteness. On SIGINT, SIGTERM or SIGHUP it SHALL stop scheduling,
 terminate and reap every child as `Overview bounds its work and reports what
-it omitted` states, abandoning one still unreaped 2 s after SIGKILL, print no
-result document, print `Cancelled.` to standard error on a best-effort basis,
+it omitted` states, abandoning one still unreaped 2 s after SIGKILL, start no
+result document once the signal is read, and stop one that is being written,
+print `Cancelled.` to standard error on a best-effort basis,
 and exit with that signal's status, which SHALL take precedence over 1. Its
 main thread SHALL never block in an unbounded filesystem call.
+A signal that arrives while the result is being written SHALL stop the write,
+`Cancelled.` following on standard error, so that standard output may hold
+part of a result, which the exit status 130, 143 or 129 marks as no result. A
+signal recorded before the run exits SHALL decide its status, also over the
+exit status 2 of a write that fails after it. A signal recorded while the
+result is rendered SHALL print nothing of it, and output not yet written SHALL
+be discarded, never flushed at exit.
 
 #### Scenario: Git too old
 - **WHEN** `git` reports version 2.34.1

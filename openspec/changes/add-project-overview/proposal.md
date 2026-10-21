@@ -228,8 +228,8 @@ builds the shared evidence model the overview reads across many repositories.
      sitting beside `protocol.allow` because it is only the default policy,
      which a per-protocol `allow=always` in a config file or
      `GIT_ALLOW_PROTOCOL` in the caller's environment would override, so that
-     `GIT_ALLOW_PROTOCOL` is among the seventeen names [E]'s scrub removes
-     (R-25); SHALL run every filesystem call, root
+     `GIT_ALLOW_PROTOCOL` is among the names of [E]'s list that its scrub
+     removes (R-25); SHALL run every filesystem call, root
      canonicalisation and dedupe, marker and holder checks, manifest reads and
      branch reflog reads (at most 64 KiB each, an unfinished one leaving its
      row unprobed for requirement 7's gate) included, in a bounded daemon
@@ -447,6 +447,12 @@ renders no nested estate or leg; `project-command`, `project-clean` and
   skipped on macOS with that reason. Tests run with
   `python3 -m unittest discover -s tests -v` (README.md:187), the command
   CI runs as `python -m ...` (`.github/workflows/tests.yml:18`).
+- **`.github/workflows/tests.yml`** (Amendment A1, Brett Heap's answer Q3 B):
+  feature 004's Git 2.36 floor job, `git-floor`, which builds Git 2.36 and
+  runs the `clean`, `status` and `doctor` tests with it first on `PATH`, also
+  runs a small set of the overview's tests, selected by one more `-k` prefix:
+  the version check accepting Git 2.36, and one end-to-end run over a fixture
+  with linked worktrees, merge targets and a gated suggestion.
 - **Speckit handoff**: exactly one feature, `specs/005-<slug>/`, created by
   `/speckit.specify` after ratification and after feature 004 merges. `002`
   is lane openRepoProject-1's, merged by PR #8; `003` is lane
@@ -474,7 +480,7 @@ restate its contract. Change 1 owns:
   and its record bounds, NUL-delimited parsing and path escaping, the child
   environment and pins (R-23 adds `-c protocol.allow=never`, and R-25 adds
   the six per-protocol `allow=never` pins and `GIT_ALLOW_PROTOCOL` in the
-  seventeen-name scrub, there and in
+  scrub's list, there and in
   requirement 3), the 1 MiB manifest read, over-cap judged from the file's size
   before the read (so `clean` and the overview resolve the same merge
   target), and the bounded runner, not `probe()`, for
@@ -997,7 +1003,7 @@ the pin: `protocol.allow` is only the default policy, so a per-protocol
 the caller's environment would still allow the fetch. Every Git child also
 pins `-c protocol.file.allow=never -c protocol.ssh.allow=never -c protocol.git.allow=never -c protocol.http.allow=never -c protocol.https.allow=never -c protocol.ext.allow=never` beside `-c protocol.allow=never`
 (command-line `-c` outranks every config file), and `GIT_ALLOW_PROTOCOL` joins
-the fixed scrub that [E] applies to the child environment, which then removes
+the fixed scrub that [E] applies to the child environment, which then removed
 seventeen names; the overview carries the pins and the scrub by citation of
 [E] plus the literal list. The residual that a remote-helper protocol of
 another name, with its own `allow=always` in the repository's config, could
@@ -1051,3 +1057,181 @@ engineer) read `6204234`: V1 to V12 are applied here, N1 to N4 are in
 | AE-3 unbounded filesystem calls | MEDIUM | VALID, V7 | What Changes; Capabilities (requirements 3, 11) |
 | AE-4 predictable `target-cap` refusal | MEDIUM-LOW | VALID, V5, amended per change 1 council V5 | Capabilities (requirement 7); Dependencies; Decisions (departures) |
 | AE-5 determinism versus cuts | LOW | VALID, V6, with SA-3 | Capabilities (requirement 3) |
+
+## Amendment A1: Brett Heap's answers to feature 005's clarify questions (2026-10-21)
+
+Status: A1 drafted; not ratified; it lands only on Brett Heap's word.
+
+A1, `amend-project-overview-clarify-answers`, is lane openRepoProject-4's
+amendment of this change in place, under its governing issue
+opensoft/openRepoProject#10, in the form in which draft PR #19 amends
+`add-project-clean-all-safe`. Until Brett Heap's word ratifies it, the
+ratified text is this change as PR #12 landed it (`961c405`), and the text A1
+amends is its draft.
+
+Brett Heap's words, in lane openRepoProject-4's session at about
+2026-10-21T10:31Z, answering the seventeen clarify questions of feature 005
+(`specs/005-project-overview/clarify-questions.md` at `acd8cef`, its question
+block unchanged at `c54d393`): "yes, recommended for Q1-Q17". The answers are
+Q1 A, Q2 A, Q3 B, Q4 D, Q5 A, Q6 A,
+Q7 A, Q8 D, Q9 B, Q10 A, Q11 A, Q12 A, Q13 A, Q14 A, Q15 A, Q16 B and Q17 A,
+each the recommended option, and spec 005 encodes them as its Clarifications
+C-55 to C-71. Lane openRepoProject-4 recorded them as a RULED line at
+10:33:09Z:
+https://github.com/opensoft/brett-wip/blob/bd597b390d918c3f832e787c97844e3a2ce3ccea/lanes/log/openRepoProject-4.md#L115
+
+Citations in this section add to those of Input above: `POD:N` is line N of
+`specs/project-overview/spec.md`, and `design.md:N`, `clarifications.md:N`
+and `proposal.md:N` are lines of this change's files, all at `961c405`,
+before A1, as spec 005 cites them; `CMD:N` is line N of change 1's
+`specs/project-command/spec.md` at the same commit.
+
+Each carried answer, with what it amends and where:
+
+- **Q3 B, an amendment, carried in Impact as the option allows.** A small set
+  of the overview's tests runs in feature 004's Git 2.36 floor job,
+  `git-floor`, selected by one more `-k` prefix: the version check accepting
+  Git 2.36, and one end-to-end run over a fixture with linked worktrees,
+  merge targets and a gated suggestion. Amended: Impact, a new
+  `.github/workflows/tests.yml` bullet after the tests bullet
+  (proposal.md:441-449).
+- **Q4 D, a recorded departure from Impact, on Brett Heap's word.** After
+  feature 004 lands, feature 005 adds one sentence on the overview, that a
+  suggestion is advice to review and that applying it needs the person's
+  word, to the `AGENTS.md` section that feature 004's task T123 adds,
+  "Cleaning up worktrees for a person", following that section's title and
+  wording; it is recorded as feature 004 records its own departures (its lead
+  ruling R-32). If Brett Heap declines feature 004's T123 departure, the
+  question's option C applies instead: a separate small OpenSpec change,
+  after feature 005, carries agent guidance on the overview and the batch
+  apply. Amended: no text; Impact (proposal.md:415-465) names no `AGENTS.md`
+  change and stays so.
+- **Q6 A, an amendment.** Only the `deadline-exceeded` scan error that counts
+  the candidates not started carries `limit` and `omitted`, `limit` being
+  `"invocation_timeout_seconds"`, the `budget` key, and `omitted` the
+  candidates not started; every other `deadline-exceeded` error, row or scan,
+  carries neither; and a row-level `scan-limit` error carries `limit:
+  "worktree_rows"` and `omitted` counting that repository's rows past the
+  cap, exactness `exact`. Amended: requirement 3 (POD:180-181, :233-234) and
+  requirement 8's error object (POD:646-648). For the one deadline error it
+  departs from the packet's `limit`, "a key of `limits`" (DI:824-825).
+- **Q7 A, an amendment.** When the working directory's realpath cannot be
+  established, one scan error records it (`os-error` or `probe-timeout`, with
+  feature 004's fixed text and OPERATION `realpath`, its `path` the `PWD`
+  value when that is set and absolute, else omitted, first among the scan
+  errors), every `current` is null, and each row the ladder would classify
+  `merged-removable` or `merged-current` is `inspection-error` instead, so
+  that `inspection-incomplete` withholds `--all-safe`. Amended: requirement
+  5, a new paragraph after its equality clause (after POD:386); design D6's
+  scan-error order (design.md:410-412) and D8's realpath task
+  (design.md:470-471). Its raw `PWD` path departs from DI:842-843's rule that
+  paths are canonical.
+- **Q8 D, an amendment.** Every row and scan error's message is the fixed
+  text of its code, naming no path, the path going in `path`; a child's
+  standard error is drained and capped, and never shown; and names, branch
+  names, admin ids and every other string taken from the filesystem, a
+  manifest or Git follow [P]'s path rule, with no new field. Git's own reason
+  is then not shown: the person re-runs the Git command to see it. Amended:
+  requirement 4 (POD:337-338, and a table of fixed texts after POD:347);
+  requirement 8 (POD:675); design D1 (design.md:99-101); clarifications N1
+  (clarifications.md:35-36 and :46-47). The texts for `os-error`,
+  `probe-failed` and `probe-timeout` are feature 004's (its
+  `contracts/project-clean.md:300-302` at `b0243e5`, lead ruling R-45);
+  `deadline-exceeded` reads `OPERATION stopped at the invocation deadline`,
+  the overview's own term, where that contract's :303 reads `work deadline`;
+  the texts for `manifest-invalid`, `refused`, `undecodable-output`,
+  `internal-error`, `scan-limit` and `root-unreadable`, and the OPERATION
+  values `stat`, `scandir` and `collection`, are A1's own, drafted for Brett
+  Heap's review. It departs from the packet's DI:544-545 ("for a failed
+  probe, the first line of Git's standard error").
+- **Q9 B, an amendment of this change; its change-1 half rides in PR #19.**
+  The read-only wording claims for the overview's Git children only what the
+  pins and the scrub prove, the clean and process filters and the
+  configuration files being recorded residuals beside the remote-helper one;
+  and "seventeen names" becomes a citation of [E]'s list, which PR #19 amends
+  at `423a532` to thirty-one names, with `GIT_TRACE2`, `GIT_TRACE2_EVENT` and
+  `GIT_TRACE2_PERF` at `0` on every Git child, both reaching the overview by
+  that citation. Amended: requirement 3 (POD:212-215); requirement 9 (after
+  POD:717); design D13 (design.md:661) and Risks (after design.md:726);
+  proposal.md:231-232 and :477, and :1000, whose record of R-25 now reads in
+  the past tense. If feature 004 merges before PR #19 is ratified, it builds
+  the narrower scrub and the wider one follows as a change-1 amendment; the
+  citation holds either way.
+- **Q11 A, an amendment.** A candidate other than a family holder whose
+  identity probe reports a toplevel that is a proper ancestor of the
+  candidate is a `refused` error row, its `path` the candidate's `.git`, and
+  creates or joins no repository row; a family holder whose probe reports
+  another toplevel keeps null `repository`, `merge_target`, `git` and
+  `worktrees` and no error, as DI:284-287 has it; and a toplevel that Git
+  reports for a layout it accepts, such as a `core.worktree` naming another
+  directory, is unaffected. Amended: requirement 2, a new paragraph after
+  POD:87; the `refused` row of requirement 4's new table.
+- **Q12 A, an amendment.** The whole document or report is rendered before
+  its first byte is written, as UTF-8 whatever the locale, the JSON document
+  with ASCII escapes as feature 004 writes its own (its lead ruling R-38); a
+  failed write to standard output ends the run with exit 2, no traceback and
+  no retry, nothing more on standard output and one best-effort line on
+  standard error, the one exit 2 under `--json` besides an argument error
+  that prints no error object, and so no code (lane openRepoProject-2's
+  ruling R-55 gives `internal-error` there, which is not kept); a recorded
+  signal decides the status over it. Amended: requirement 8 (POD:675-676, and
+  a new paragraph after POD:679). It departs from the packet's DI:1086-1089.
+- **Q13 A, an amendment.** A root whose canonicalisation is cut takes as its
+  `path` the given path made absolute but not resolved, sorts by those bytes
+  among the canonical paths, is never deduplicated, and counts toward the
+  32-root cap. Amended: requirement 1, a new sentence after POD:16, through
+  which POD:217-222, :303-306, :610-611 and :622-624 read. The unresolved
+  `path` departs from DI:842-843, whose exceptions to canonical paths,
+  `ignored_samples` and an absent default root, are four with Q7 A's.
+- **Q15 A, an amendment.** "Print no result document" becomes "start no
+  result document once the signal is read, and stop one that is being
+  written"; the part of a result that a stopped write leaves is a recorded
+  residual, marked as no result by the exit status 130, 143 or 129; a signal
+  recorded before the run exits decides its status, also over the exit 2 of
+  a write that fails after it; and the raising span around the write is
+  entered before its first byte, so that a signal recorded while rendering
+  prints nothing, and output not yet written is discarded, never flushed at
+  exit. Amended: requirement 11 (POD:778-779, and new sentences after
+  POD:781); design D1 (design.md:110-111, in the same words, as lead decision
+  L6 has it; a new paragraph for the raising span; and the "Recorded"
+  paragraph, design.md:121-122). It departs from the packet's DI:1094-1096.
+- **Q16 B, an amendment.** Each Git child starts with SIGINT, SIGTERM and
+  SIGHUP unblocked, under handlers that only record the signal, which keeps a
+  termination pass from missing a child; a child started with them blocked
+  inherits the mask, survives SIGTERM to its group and needs SIGKILL at every
+  stop (runtime cross-check X-7). Amended: design D1's spawning paragraph
+  (design.md:115-119); clarifications N1 (clarifications.md:42-44, where "or
+  raise a `BaseException` subclass" is struck, and :45-47).
+- **Q17 A, a recorded departure, in one order only.** Feature 005 leaves the
+  overview parts of #24 and #25 to their own features in every order. If
+  #24's realization merges first, a worktree whose only ignored files are
+  Python bytecode caches is `ignored-local-files` in the overview and
+  `merged-removable` in `project clean`, a departure on Brett Heap's word from
+  requirement 5's equality clause (POD:381-386, on DI:620-624) until #24's
+  overview block is archived, after which that block records it as a lasting
+  exception. Amended: no text.
+
+Not carried, since each changes only spec 005 and builds this change as
+ratified: Q1 A, Q2 A, Q5 A, Q10 A and Q14 A.
+
+Q15 A and Q16 B together: the handlers only record the signal wherever a
+child can run, and Q15 A's raising span, feature 004's `raising_signals` (its
+lead ruling R-47), is entered only after every child is reaped or abandoned,
+so that no child runs under its raising handlers (design D1).
+
+Open point, left to Brett Heap with no behaviour written (lead decision M1,
+from lane openRepoProject-3's fidelity read of spec 005 at `c54d393`): Q7 A is
+silent on parity with `project clean` run from the same working directory
+when that directory's realpath cannot be established. Requirement 5's
+equality clause (POD:381-386) stays as ratified, while at `2cf34d3` feature
+004 gives every present row `inspection-error` there (its
+`project:2960-2962`, :2887-2888 and :2081), wider than the two classes Q7 A
+converts, so that rows such as a `dirty` one would differ.
+
+The changes that carry this change's requirements in MODIFIED blocks re-align
+them to A1's text: lane openRepoProject-5's `add-project-clean-cache-disposal`
+(#24, PR #27) for requirement 5, and `add-project-overview-remote-merge-status`
+(#25, PR #29) for requirements 3, 8 and 9 and, through its task 2.3, for the
+spawning sentence of its design D7. Spec 005 folded its FR-011, FR-022,
+FR-039, FR-044, SC-009 and SC-011 ahead of A1, and re-reads them against A1's
+text once A1 is ratified.

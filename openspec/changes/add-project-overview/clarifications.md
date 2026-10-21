@@ -32,19 +32,18 @@ single-file Python program breaks a stated bound:
 - a handler that walks the registry between `Popen()` and registration
   misses that child, which then outlives `project` under
   `start_new_session=True`;
-- standard error is kept only to 200 characters (DI:544-545) but must be
-  drained the whole time, or it blocks the child the same way.
+- standard error is capped as [E] requires (CMD:175-177) and never shown,
+  but must be drained the whole time, or it blocks the child the same way.
 **Design impact:** design.md fixes the loop:
 - one main-thread `selectors` loop over every child's stdout and stderr;
   filesystem workers post completions to a queue plus a self-pipe the loop
   watches; each selector timeout is the nearest of the child budgets, the
   task waits and the deadline;
 - signal handlers only record the first signal and wake the loop through
-  `signal.set_wakeup_fd`, or raise a `BaseException` subclass; termination
-  runs in one `finally`;
-- each child is spawned and registered under
-  `signal.pthread_sigmask(SIG_BLOCK)`; stderr is drained continuously and
-  its first 200 characters kept.
+  `signal.set_wakeup_fd`; termination runs in one `finally`;
+- each child is spawned with SIGINT, SIGTERM and SIGHUP unblocked, then
+  registered; stderr is drained continuously, capped as [E] requires
+  (CMD:175-177) and never shown.
 A test runs one hung child and one large-output child at concurrency 4,
 then sends SIGTERM, and expects exit 143, no result document, and
 `os.killpg(pgid, 0)` raising `ProcessLookupError` for every child's group.
