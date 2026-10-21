@@ -59,9 +59,11 @@ APPLY_RESULT_KEYS = ["schema_version", "observed_at", "repository", "merge_targe
                      "operations", "targets", "exit_code", "completeness"]
 REPOSITORY_KEYS = ["root", "common_dir", "dev", "ino", "root_valid_utf8", "common_dir_valid_utf8"]
 
-# The eighteen refusal codes (the delta's "Clean plans and refusals are
-# versioned JSON"), written here as a literal.
+# The nineteen refusal codes (the delta's "Clean plans and refusals are
+# versioned JSON"), written here as a literal; relative-config-path is Brett
+# Heap's ruling LQ-15 (lead rulings R-102 and R-131 (c)).
 REFUSAL_CODES = ["invalid-arguments", "internal-error", "git-unavailable", "git-too-old",
+                 "relative-config-path",
                  "repository-not-found", "ambiguous-name", "target-not-repository-root",
                  "unsupported-path-bytes", "manifest-invalid", "no-merge-target",
                  "inspection-incomplete", "inspect-cap", "deadline-exceeded",
@@ -560,6 +562,9 @@ class PathsTests(clean_support.CleanCase):
             fake = clean_support.install_fake_git(self.base / "old-bin", "version-2.35.0")
             result = self.run_cli("clean", root, "--all-safe", "--json", env=self.path_first(fake.parent))
             error_object(result, "git-too-old", TEXT["git_too_old"].format(VERSION="2.35.0"), "all-safe")
+        with self.subTest("relative-config-path"):
+            result = self.run_cli("clean", root, "--json", env=dict(self.env, HOME="h"))
+            error_object(result, "relative-config-path", TEXT["relative_config_path"].format(NAME="HOME"), "report")
         with self.subTest("repository-not-found"):
             # Inline bare-name fixture (rule 3), as tests/test_clean_resolution.py builds it.
             result = self.run_cli("clean", "Nowhere", "--json", cwd=elsewhere)
@@ -646,7 +651,7 @@ class PathsTests(clean_support.CleanCase):
 
     @clean_support.linux_paths
     def test_clean_each_refusal_prints_its_document_unsupported_path_bytes(self):
-        # The eighteenth code needs a root that is not valid UTF-8, which only a
+        # The one code left needs a root that is not valid UTF-8, which only a
         # Linux file system holds (rule 9); T110's root test asserts the whole object.
         self.assert_plain_base()
         raw = os.fsencode(self.base) + b"/root-a" + NOT_UTF_8 + b"b"

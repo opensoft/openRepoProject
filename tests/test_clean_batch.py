@@ -487,6 +487,45 @@ class BatchTests(clean_support.CleanCase):
         self.assertEqual(self.git(root, "worktree", "list", "--porcelain"), before)
         self.assertTrue((dirty / "uncommitted").is_file())
 
+    def test_clean_a_relative_configuration_path_after_the_argument_checks(self):
+        # Brett Heap's ruling LQ-15 (lead ruling R-102) in the order of a run
+        # (the project-clean delta, "Clean reports local worktree state"):
+        # under a relative HOME the argument checks, which start no Git child,
+        # still refuse invalid-arguments first; the same run with its
+        # arguments made valid then refuses relative-config-path, exit 2,
+        # again with no child, before the version check.
+        root = self.repo()
+        tree = self.base / "w"
+        env = dict(self.env, HOME="h")
+        relative = TEXT["relative_config_path"].format(NAME="HOME")
+        cases = [
+            (("--all-safe", "--action", "remove"), TEXT["invalid_arguments_all_safe"], ("--all-safe",)),
+            (("--expect-plan", DIGEST), TEXT["invalid_arguments_expect_plan"],
+             ("--all-safe", "--apply", "--expect-plan", DIGEST)),
+            (("--all-safe", "--apply", "--expect-plan", "abc"), TEXT["invalid_arguments_expect_plan_value"],
+             ("--all-safe", "--apply", "--yes")),
+            (("--apply", "--action", "remove"), "Worktree cleanup requires --worktree PATH",
+             ("--apply", "--action", "remove", "--worktree", tree, "--yes")),
+        ]
+        for invalid, message, valid in cases:
+            for as_json in (False, True):
+                label = [os.fspath(arg) for arg in invalid]
+                with self.subTest(arguments=label, json=as_json):
+                    extra = ("--json",) if as_json else ()
+                    first, records = self.run_counted("clean", root, *invalid, *extra, env=env)
+                    self.assert_status(first, 2)
+                    self.assertEqual(records, [], "no child ran, not even git --version")
+                    second, records = self.run_counted("clean", root, *valid, *extra, env=env)
+                    self.assert_status(second, 2)
+                    self.assertEqual(records, [])
+                    if as_json:
+                        self.assertEqual([(document["code"], document["error"]) for document in
+                                          (self.load_json(first), self.load_json(second))],
+                                         [("invalid-arguments", message), ("relative-config-path", relative)])
+                    else:
+                        self.assertEqual([(result.stdout, result.stderr) for result in (first, second)],
+                                         [("", f"REFUSED: {message}\n"), ("", f"REFUSED: {relative}\n")])
+
     # T040: the first gates, the plan document and the estimates.
 
     def test_clean_first_gates_in_order(self):
