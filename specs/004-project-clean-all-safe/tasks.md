@@ -1604,33 +1604,41 @@ Interim behaviour at this checkpoint (lead ruling R-56 Q-17): until T075, a
 named removal is refused when another row is `inspection-error`, since the
 non-blocking single-mode notes are T075's; and until T066, a merged branch
 with no commit of its own is still selectable, so quickstart.md's User Story
-1 preview shows `Selected (4)` here. The removal path carries six more, each
-assigned to its task (lead ruling R-76 (b), lane 3's M-1); the first two
-lose work:
+1 preview shows `Selected (4)` here. The removal path carried six more,
+each assigned to its task (lead ruling R-76 (b), lane 3's M-1), the first
+two losing work, and US4 adds a seventh. Rows 2 and 5 are CLOSED, since
+T084 and T085 have landed, and rows 1, 3, 4, 6 and 7 stay open until
+their tasks land (lead ruling R-82 (b), lane 3's LOW-2):
 
-- A SIGINT, SIGTERM or SIGHUP during the apply phase does not stop
-  scheduling: later targets are still revalidated and removed, and the run
-  exits 130, 143 or 129 (T093; test T087).
-- Revalidation is T055's full re-read, with no `modules` check, no
-  hidden-state probe, no `dev`, `ino`, `admin_id` or `upstream_oid`
-  comparison and no preflight, so an assume-unchanged edit set at the
-  question, or a copy put at P, is removed with exit 0 (T084; tests T079 to
-  T083).
-- No removal floor and no reserve: a removal is spawned however little work
-  time is left, and the rescan runs on the work deadline's budget (T099 and
-  T093; test T098).
-- An exception in the apply phase propagates instead of reconciling (T093;
-  test T089).
-- The branch race after removal goes undetected, a moved or deleted branch
-  still giving `removed`; and a target is `removed` from its entry and path
-  alone, even when the rescan's ref listing failed and `reconciled` is false
-  (T085; test T083, and T085's own tests, lead ruling R-76 (a)).
-- No wait line, no `orphaned-directory` note and no recovery text on a
-  `partially-removed` target (T092, T093, T094).
+1. Open. A SIGINT, SIGTERM or SIGHUP during the apply phase does not stop
+   scheduling: later targets are still revalidated and removed, and the
+   run exits 130, 143 or 129 (T093; test T087).
+2. CLOSED by T084. Revalidation was T055's full re-read, with no
+   `modules` check, no hidden-state probe, no `dev`, `ino`, `admin_id` or
+   `upstream_oid` comparison and no preflight, so an assume-unchanged edit
+   set at the question, or a copy put at P, was removed with exit 0 (T084;
+   tests T079 to T083); each now refuses, exit 2, and nothing is removed.
+3. Open. No removal floor and no reserve: a removal is spawned however
+   little work time is left, and the rescan runs on the work deadline's
+   budget (T099 and T093; test T098).
+4. Open. An exception in the apply phase propagates instead of
+   reconciling (T093; test T089).
+5. CLOSED by T085. The branch race after removal went undetected, a moved
+   or deleted branch still giving `removed`; and a target was `removed`
+   from its entry and path alone, even when the rescan's ref listing failed
+   and `reconciled` was false (T085; test T083, and T085's own tests, lead
+   ruling R-76 (a)).
+6. Open. No wait line, no `orphaned-directory` note and no recovery text
+   on a `partially-removed` target (T092, T093, T094).
+7. Open. A revalidation cut at the work deadline refuses its target with
+   the reason of the step it cut, exit 2, where the delta gives
+   `not-attempted` with `deadline-exceeded`, exit 1; nothing is removed
+   either way (US6's T099; lead ruling R-80 P-2).
 
 None of this reaches `main`, since the feature ships as one pull request,
-which opens only when every task of 004 has landed, T084, T085, T092, T093
-and T099 among them, and its body names that gate (R-76 (b)).
+which opens only when every task of 004 has landed, T092, T093 and T099
+among them, T084 and T085 having landed, and its body names that gate
+(R-76 (b)).
 
 ---
 
@@ -2044,10 +2052,16 @@ US2, US7 and US9.
 - [x] T076 [P] [US3] [O] Fill `push_or_delete()` in region `push` (FR-010, FR-041,
   FR-046, FR-047): both actions resolve through the pipeline and plan in mode
   single for the cap and the bounds, with the batch's completeness (T075; plan
-  review B1); `require_unchanged_cleanup_state()` (`project:656-666`)
-  re-inspects fully, before and after confirmation, through `build_plan()`, and
-  refuses with `inspection-incomplete`, `inspect-cap` or `deadline-exceeded`,
-  exit 2, when either inspection is incomplete, another row's
+  review B1); the full inspection is checked before and after
+  confirmation: before, the run's own plan, which `check_plan()` refuses
+  when incomplete before `push_or_delete()` runs (plan review B1; lead
+  ruling R-69, reading 3); after, the fresh re-inspection of
+  `require_unchanged_cleanup_state()`, through `inspect_repository()` with
+  `refresh=True`, then `build_plan()`, a failed identity or
+  repository-wide probe refusing with `inspection-incomplete` before
+  `build_plan()` (lead rulings R-53 P-5 and R-74 (c)(5)); each refuses with
+  `inspection-incomplete`, `inspect-cap` or `deadline-exceeded`, exit 2,
+  when its inspection is incomplete, another row's
   `inspection-error` included; add `show_push_plan()`, which prints `Working
   directory:` and the command as `show_plan()` does, the `Working directory:`
   line in the prose form, `human_path(cwd)`, and every word of the command
@@ -2437,11 +2451,17 @@ the recovery text that T094 prints (analyze M2).
   form (`  STAGE PATH` or `  STAGE PATH (REASON)`), then `Stopped at P2
   (branch-changed). Removed 1 of 3. Not attempted: P3. Next: project clean ROOT
   --all-safe`, then `Branches kept: B1, B2, B3.` and the residual-window line
-  (plan review M8); it pins T057; and a target whose branch is missing after
-  removal (`branch-missing-after-removal`), or was never read back
-  (`branch_present` null), leaves that branch out of `Branches kept:`, the
-  result naming it instead in the words of T094's `TEXT` key, once T085
-  makes the record honest; lead ruling R-76 (f));
+  (plan review M8); it pins T057; and, by lead ruling R-79 P-10 on R-76
+  (f), a branch whose last read shows it absent (`branch_present` false,
+  at any stage, `branch-missing-after-removal` among them), or that a
+  spawned target's rescan did not read back (`branch_present` null on a
+  `removed`, `failed` or `unknown` target), is left out of the line
+  `Branches kept:`, the branches of `refused` and `not-attempted` targets
+  otherwise staying listed, since nothing was spawned for them; the
+  left-out names print on one new line after `Branches kept:` and before
+  the residual-window line, `Branches not confirmed: B2.`, in T094's
+  `TEXT` key, and the line reads `Branches kept: none.` when every branch
+  is left out);
   `test_clean_only_tracked_file_deletions`
   (tracked files deleted by hand in a registered worktree whose `.git` file is
   intact: classified `dirty` with the dirty advice, the line `Probable partial
@@ -2501,11 +2521,16 @@ the recovery text that T094 prints (analyze M2).
 - [ ] T094 [P] [US5] [S] In `print_plan()` (region `preview`), print D18's
   partial-removal note on its own line under the `dirty` advice of a row noted
   `partially-removed`; in `print_result()` (region `result`), print the same
-  note with the recovery text on a `partially-removed` target, and leave a
-  branch missing after removal, or never read back, out of `Branches kept:`,
-  naming it in words this task fixes as a `TEXT` key in region `contracts`, a
-  lead-approved contracts edit, with its fixture in `tests/clean_support.py`
-  (rule 2), since D18 has none (lead ruling R-76 (f)). T091 passes.
+  note with the recovery text on a `partially-removed` target, and leave
+  out of `Branches kept:` each branch whose last read shows it absent, at
+  any stage, or that a spawned target's rescan did not read back, the
+  branches of `refused` and `not-attempted` targets otherwise staying
+  listed; print the left-out names on one new line after `Branches kept:`
+  and before the residual-window line, `Branches not confirmed: B2.`, a
+  new `TEXT` key in region `contracts`, a lead-approved contracts edit,
+  with its fixture in `tests/clean_support.py` (rule 2), since D18 has
+  none; and print `Branches kept: none.` when every branch is left out
+  (lead rulings R-76 (f) and R-79 P-10). T091 passes.
   — files: `project`, `tests/clean_support.py`
   — verify: `python3 -m unittest discover -s tests -p 'test_clean_stop.py'`
 - [ ] T095 [US5] [S] Run the US5 modules, every earlier module and the 96 tests:
