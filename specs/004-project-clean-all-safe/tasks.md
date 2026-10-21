@@ -1534,11 +1534,17 @@ L-8).
   listing, ref listing, `lstat` of the path) fills the reconciliation record;
   the stage is `removed` with reason null when the child exited 0 and the entry
   and path are gone, with `reconciled` true (FR-034; the `project-clean`
-  delta's `spec.md:891-895`; a condition T085 builds, since as ticked the
-  stage reads the entry and path alone, lead ruling R-76 (a)), `unknown`
-  with `unconfirmed-removal` when it exited 0
-  otherwise, and `failed` with `git-refused` (128), `git-failed` (any other
-  status) or `spawn-error`; `exit_status` as T045 states it (plan review M12),
+  delta's `spec.md:891-895`); after exit 0 otherwise, `unknown` with
+  `reconciliation-incomplete` when a rescan read failed or was cut, which
+  marks the record, or when the entry and path are gone with `reconciled`
+  false, and `unknown` with `unconfirmed-removal` for an unmarked record,
+  every read having succeeded and shown the removal not done, or the
+  identity having been found lost or different (lead ruling R-78 (e),
+  second amendment; conditions T085 builds, since as ticked the stage read
+  the entry and path alone and gave every other exit-0 record
+  `unconfirmed-removal`, lead ruling R-76 (a)); and `failed` with
+  `git-refused` (128), `git-failed` (any other status) or `spawn-error`;
+  `exit_status` as T045 states it (plan review M12),
   128 plus the signal number for a signal death (128 minus Popen's negative
   return code), and none for `spawn-error`. `run_bounded()` builds the
   argument vector from `(kind, args)`, so the plan keeps each target's
@@ -2257,21 +2263,39 @@ US3, US7 and US9; US5's text lane follows it (analyze M2 and L9).
   only when its entry and path are gone and `reconciled` is true (FR-034;
   the `project-clean` delta's `spec.md:891-895`): an exit-0 child that is
   gone but not reconciled is `unknown` with `reconciliation-incomplete`, as
-  is one whose rescan registry listing failed (`BA:723-730` at `e45155a`),
+  is one whose rescan registry listing failed (`BA:518-526` at `da33d92`),
   and a child killed at the ceiling that is gone but not reconciled is
   `unknown` with `removal-ceiling`, exit 1 either way (lead ruling R-76 (a),
-  lane 3's H-1). Its tests go in `tests/test_clean_revalidation.py`:
+  lane 3's H-1). A rescan read that fails or is cut marks the record: the
+  identity probe, while the planned root and common directory are still
+  there by `lstat`, the registry listing, the ref listing or the `lstat` of
+  the planned path. After exit 0 a marked record is `unknown` with
+  `reconciliation-incomplete` (the `project-clean` delta's
+  `spec.md:1012-1018`), and an unmarked unreconciled record is `unknown`
+  with `unconfirmed-removal`, reached only when every read succeeded and
+  showed the removal not done (its `spec.md:966-970`), or when the identity
+  was found lost or different (the `project-clean-review-safety` delta's
+  `spec.md:215-217`); a ceiling child keeps `removal-ceiling`. The mark is
+  the record's class, `UnfinishedRescan`, a `dict` subclass, so that
+  equality and every document are unchanged (lead ruling R-78 (e), second
+  amendment; lane 3's L-8 and LOW-1). Its tests go in
+  `tests/test_clean_revalidation.py`:
   `test_clean_decide_stage_removed_needs_reconciled` (`decide_stage()` on
   literal records: entry and path gone, `branch_present` null, exit 0,
   gives `unknown` with `reconciliation-incomplete`; at the ceiling,
-  `unknown` with `removal-ceiling`) and
+  `unknown` with `removal-ceiling`);
   `test_clean_a_failed_rescan_ref_listing_is_not_removed` (a wrapper `git`
   that fails `for-each-ref` once `worktree remove` has run, one merged
   worktree, `--all-safe --apply --yes --json`: the target `unknown` with
-  `reconciliation-incomplete`, `reconciled` false, exit 1; lane 3's E1).
+  `reconciliation-incomplete`, `reconciled` false, exit 1; lane 3's E1);
+  and `test_clean_rescan_marks_every_failed_read` (the root moved away
+  after the removal: the identity found lost, `unconfirmed-removal`, every
+  field null; then the identity probe, the registry listing, the ref
+  listing and the `lstat` each failing alone after exit 0, and the last
+  three together: `reconciliation-incomplete`, exit 1).
   T079 to T083 pass.
   — files: `project`, `tests/test_clean_revalidation.py`
-  — verify: `python3 -c "import sys,unittest as u;L=u.defaultTestLoader;f=lambda s:[i for t in s for i in (f(t) if isinstance(t,u.TestSuite) else [t.id()])];I=[i for i in f(L.discover('tests',pattern=sys.argv[1])) if not i.startswith('unittest.')];A=sys.argv[2:];M=[a for a in A if not any(a in ('*',i.split('.')[-1]) for i in I)];[print('not collected:',m) for m in M];[print(e) for e in L.errors];sys.exit(1 if M or L.errors or not A else 0)" test_clean_revalidation.py 'test_clean_decide_stage_removed_needs_reconciled' 'test_clean_a_failed_rescan_ref_listing_is_not_removed' && python3 -m unittest discover -s tests -p 'test_clean_revalidation.py'`
+  — verify: `python3 -c "import sys,unittest as u;L=u.defaultTestLoader;f=lambda s:[i for t in s for i in (f(t) if isinstance(t,u.TestSuite) else [t.id()])];I=[i for i in f(L.discover('tests',pattern=sys.argv[1])) if not i.startswith('unittest.')];A=sys.argv[2:];M=[a for a in A if not any(a in ('*',i.split('.')[-1]) for i in I)];[print('not collected:',m) for m in M];[print(e) for e in L.errors];sys.exit(1 if M or L.errors or not A else 0)" test_clean_revalidation.py 'test_clean_decide_stage_removed_needs_reconciled' 'test_clean_a_failed_rescan_ref_listing_is_not_removed' 'test_clean_rescan_marks_every_failed_read' && python3 -m unittest discover -s tests -p 'test_clean_revalidation.py'`
 - [x] T086 [US4] [S] Run the US4 module, every earlier module and the 96 tests: all
   pass.
   — files: (none)

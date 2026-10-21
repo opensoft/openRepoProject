@@ -568,6 +568,47 @@ A child that exits nonzero on its own is `failed`, signal or not; only a
 child killed at the 300 s ceiling, or whose exit was not observed, is decided
 by the rescan between `removed` and `unknown`. No target is retried.
 
+A spawned target is `removed` only when the rescan shows its registry entry
+and its path both gone and `reconciled` is true (FR-034; the
+`project-clean` delta's `spec.md:891-895`; lane 3's L-5). A rescan read
+that fails or is cut marks the record: the identity probe, while the
+planned root and common directory are still there by `lstat`, the registry
+listing, the ref listing or the `lstat` of the planned path. After exit 0,
+a marked record, or one whose entry and path are gone with `reconciled`
+false, is `unknown` with `reconciliation-incomplete` (its
+`spec.md:1012-1018`; `BA:518-526` at `da33d92`); an unmarked unreconciled
+record is `unknown` with `unconfirmed-removal`, reached only when every
+read succeeded and showed the removal not done (its `spec.md:966-970`), or
+when the identity was found lost or different (the
+`project-clean-review-safety` delta's `spec.md:215-217`); a child killed at
+the ceiling, or whose exit was not observed, keeps `removal-ceiling`. The
+mark is the record's class, `UnfinishedRescan`, a `dict` subclass, so that
+equality and every document are unchanged (lead ruling R-78 (e), second
+amendment; T085).
+
+Three overlaps of the delta's rules are decided this way, as built (lead
+ruling R-82 (a), lane 3's LOW-6):
+
+- Exit 0, nothing removed, and a rescan read that fails: `unknown` with
+  `reconciliation-incomplete`, by the mark, where `BA:520-521` (at
+  `da33d92`) reads "exit 0 without that evidence is `unknown` with
+  `unconfirmed-removal`"; the delta's `spec.md:966-970` speaks only of
+  reads that succeed, and the stage and exit status, `unknown` and 1, are
+  the same either way.
+- A ceiling child whose repository the rescan finds replaced: `unknown`
+  with `removal-ceiling`, every field null and no note. The
+  `project-clean-review-safety` delta's `spec.md:215-217` gives a replaced
+  repository `unconfirmed-removal`, and the `project-clean` delta's
+  `spec.md:253-256` gives the ceiling `removal-ceiling` "in both cases";
+  the build takes the second (R-78 (e)), exit 1 either way.
+- A ceiling child whose branch also moved or was deleted:
+  `removal-ceiling` covers it, the target `removed` when its entry and path
+  are gone and reconciled, so `branch-advanced-after-removal` and
+  `branch-missing-after-removal` do not show, one reason per target (the
+  `project-clean` delta's `spec.md:889-895`), and the run exits 1, where a
+  branch reason alone would give 2 (D19, its 1 row first); the record's
+  `branch_present` and `branch_sha` still show the branch.
+
 Later targets take `interrupted` after a signal, `deadline-exceeded` when
 the floor or deadline stopped the run, and `batch-stopped` otherwise.
 
