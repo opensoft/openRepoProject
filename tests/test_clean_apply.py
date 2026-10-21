@@ -52,7 +52,8 @@ PROTOCOL_PINS = ["-c", "protocol.allow=never", "-c", "protocol.file.allow=never"
                  "-c", "protocol.http.allow=never", "-c", "protocol.https.allow=never",
                  "-c", "protocol.ext.allow=never"]
 REMOVAL_PINS = ["-c", "status.showUntrackedFiles=normal", "-c", "core.untrackedCache=false",
-                "-c", "core.fsmonitor=false", *PROTOCOL_PINS]
+                "-c", "core.fsmonitor=false", "-c", "core.trustctime=true", "-c", "core.checkStat=default",
+                *PROTOCOL_PINS]
 # The rescan's three children after `-C ROOT` (design D6, rows 3, 4 and 6).
 ROW_3 = ["rev-parse", "--path-format=absolute", "--show-toplevel", "--git-common-dir",
          "--show-superproject-working-tree"]
