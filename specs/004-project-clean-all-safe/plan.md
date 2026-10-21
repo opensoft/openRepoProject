@@ -405,6 +405,16 @@ The feature PR body lists these for his word:
   any locale, the display form keeping `\u` and `\U`. This feature
   implements the delta as written and records the limit (contract, "Human
   output").
+- **LQ-9, a bare repository's entry in `status`'s `worktrees`** (lead
+  ruling R-75 (a)): T117 leaves a bare repository's registry entry out of
+  `worktrees`, while the `project-command` delta keeps every value "except
+  where a requirement states a change" (its `spec.md:196-197`). Lane 3
+  reads the `project-clean` delta's "the common directory SHALL never be
+  probed as a worktree row" (its `spec.md:478`) as covering it, a fill,
+  which the lead recommends; the lead reads that sentence as part of
+  clean's gitfile-layout resolution. The question is whether it covers
+  `status`'s `worktrees`, or the change is a departure that needs his word;
+  the code stays as built (T117).
 
 The others are recorded where they apply: LQ-3, the push-child exception
 (R1); LQ-4, the preflight's scope (R16); and LQ-5, the remedy reading

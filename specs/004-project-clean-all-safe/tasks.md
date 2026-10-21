@@ -771,7 +771,10 @@ T033), when B, D, E and F are; H, guard (T034, T035), when T023 is, beside G
   `test_clean_evidence_checks_registration_both_ways` (a rewritten `.git` file,
   and a changed admin `gitdir` file, each give that row `inspection-error` and
   no status probe; a subtest where two registry entries name one path, both
-  `registration-mismatch`, lead ruling R-57, built by lane G's follow-up);
+  `registration-mismatch`, lead ruling R-57, built by lane G's follow-up;
+  and one where two present entries name one worktree by two spellings,
+  with one realpath and one admin id, both `registration-mismatch` and
+  neither probed, lead ruling R-67 (c), built by evidence follow-up 2);
   `test_clean_evidence_reads_presence` (`ENOENT` gives
   `present: false`, and so does `ENOTDIR`, a registered path whose parent has
   become a regular file; lead ruling R-36) and
@@ -800,7 +803,8 @@ T033), when B, D, E and F are; H, guard (T034, T035), when T023 is, beside G
   registry); the four deciders' tests on literal inputs, with every Git
   child and filesystem call failing the test,
   `test_clean_presence_from_lstat_decides_on_literal_results`,
-  `test_clean_registration_verdict_decides_on_literal_realpaths`,
+  `test_clean_registration_verdict_decides_on_literal_realpaths` (with
+  `shared_identities()`'s cases, R-67 (c)),
   `test_clean_main_worktree_decision_decides_on_literal_values` and
   `test_clean_row_evidence_assembles_a_row_from_literal_reads`; and
   `test_clean_evidence_memo_by_device_and_inode_and_the_row_5_switch`
@@ -881,8 +885,12 @@ T033), when B, D, E and F are; H, guard (T034, T035), when T023 is, beside G
   G's follow-up builds, R-59 D6; and, by lead ruling R-67 (c), present rows
   with the same realpath, or with the same admin id, are each
   `registration-mismatch` too, in `--all-safe` and in single mode, a rule
-  not yet built at this task's tick, which compares raw path bytes only, so
-  that until it is T049's single-mode match fails closed for P);
+  built after this task's tick, which compared raw path bytes only: it is
+  `shared_identities()` in region `evidence`, built by evidence follow-up 2
+  (merged as `a5156a5`) inside this task's scope and T029's, comparing the
+  present rows one `worktree_rows()` call inspects together before any
+  status probe, so that neither twin is probed (lead ruling R-81 (a); lane
+  3's L-6));
   `status_probe()`; and
   `worktree_rows(repo, run, records=None)`, `records` the registry records
   to build rows for, in the order given, None the whole registry (lead
@@ -1342,9 +1350,14 @@ L-8).
   R-69, reading 2). Each realpath read is one `fs_call()`, a bounded
   filesystem call with the budget every filesystem call gets, `min(5 s, work
   remaining)` under `clean`'s deadline, so that it spends the work deadline
-  as any read does, a read cut at its budget giving no realpath; one is made
-  for P and one for each registry entry whose raw bytes differ from P's, the
-  entries past the cap included, before any row is inspected; and nothing
+  as any read does, a read cut at its budget giving no realpath and
+  recording no row error, since no row exists yet, the plan's
+  `inspection-incomplete` carrying it; one is made for P and, when P's own
+  read gives a realpath, one for each registry entry whose raw bytes differ
+  from that realpath, the entries past the cap included, before any row is
+  inspected, while a P whose own read gives none reads no other entry, the
+  entries the cap takes all counting as its matches (lead ruling R-73 (d);
+  lane 3's L-2); and nothing
   counts them, as nothing counts any filesystem call, `probes` counting Git
   children only (lead ruling R-75 (h)). Exactly one decided match is P's
   row. No match records

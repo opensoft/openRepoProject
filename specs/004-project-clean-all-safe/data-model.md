@@ -107,9 +107,17 @@ R-57, withdrawing R-51(c)'s known limit, and R-59 D5). The rule extends to
 present rows spelled differently with the same realpath, or with the same
 admin id, which both pass the two-way check: each is
 `registration-mismatch` too, in `--all-safe` and in single mode (lead
-ruling R-67 (c), lane 3's L-4). Until region `evidence` builds that
-extension, T049's single-mode match fails closed for P, its realpath
-matching both.
+ruling R-67 (c), lane 3's L-4). It is built, as `shared_identities()` in
+region `evidence` (evidence follow-up 2, merged as `a5156a5`; lead ruling
+R-81 (a)). The comparison is among the present rows one `worktree_rows()`
+call inspects together, before any status probe, so that neither twin is
+probed; in single mode `match_target()` matches P against the whole
+registry by realpath, so P's twins are among P's rows. It leaves two
+residuals: a twin made after planning, which revalidation does not see,
+since it rebuilds the target's row alone, goes to US6 (R-81 (a): a fresh
+registry read showing another present entry with the target's realpath
+or admin id gives `identity-changed`); and a twin past the row cap is not
+compared, the plan being `inspect-cap` anyway.
 
 ### Branch evidence (D6, D7)
 
@@ -278,8 +286,9 @@ or the deadline passed while
 planning (`deadline-exceeded`), each row it stopped being `inspection-error`
 with a `deadline-exceeded` row error, never left unprobed (lead rulings R-67
 (a) and R-69; T099). In single mode those three are non-blocking
-notes about other rows, and only P's own row and the repository-wide probes
-decide (D13). In report mode above 128 rows, the `inspect-cap` note alone
+notes about other rows, and only P's own row, P's match and the
+repository-wide probes decide (D13; lane 3's L-7). In report mode above
+128 rows, the `inspect-cap` note alone
 does not make it incomplete. `apply_allowed` is false for every report and
 for any plan that is incomplete or carries a refusal.
 
