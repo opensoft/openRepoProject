@@ -17,6 +17,7 @@ its end, and the sender that signals project once a removal is in flight.
 Expected human text comes from clean_support's fixtures (rule 8).
 """
 import contextlib
+import errno
 import io
 import json
 import os
@@ -217,6 +218,46 @@ def events_of(path):
     return [json.loads(line) for line in path.read_bytes().split(b"\n")[:-1] if line] if path.exists() else []
 
 
+def json_documents(text):
+    """Every JSON document text holds, in order, read with raw_decode, so that
+    a second document is counted where one json.loads() would fail."""
+    decoder, documents, at = json.JSONDecoder(), [], 0
+    while True:
+        while at < len(text) and text[at].isspace():
+            at += 1
+        if at == len(text):
+            return documents
+        document, at = decoder.raw_decode(text, at)
+        documents.append(document)
+
+
+# project leaves a signal ignored when it starts ignored (lead ruling R-101
+# (b)), and a `&` job of a non-interactive shell starts with SIGINT ignored.
+# So a child that a test sends SIGINT gets SIGINT back at SIG_DFL, as a
+# foreground run starts it, when this process ignores SIGINT; otherwise it runs
+# as it always has.
+
+
+def sigint_ignored():
+    return signal.getsignal(signal.SIGINT) == signal.SIG_IGN
+
+
+def sigint_default():
+    """preexec_fn: SIGINT at SIG_DFL in the child, before it execs."""
+    signal.signal(signal.SIGINT, signal.SIG_DFL)
+
+
+# An exec shim for a child spawned by a helper that takes no preexec_fn: it
+# sets SIGINT to SIG_DFL, then execs the command in its own place.
+SIGINT_DEFAULT_SHIM = ("import os, signal, sys; signal.signal(signal.SIGINT, signal.SIG_DFL); "
+                       "os.execv(sys.argv[1], sys.argv[1:])")
+
+
+def sigint_default_argv(argv):
+    """argv, or argv behind SIGINT_DEFAULT_SHIM when this process ignores SIGINT."""
+    return [sys.executable, "-I", "-S", "-c", SIGINT_DEFAULT_SHIM, *argv] if sigint_ignored() else argv
+
+
 def sh_git(*args):
     """One real-git command line for a hook, by absolute path (lead ruling R-31)."""
     return " ".join(shlex.quote(os.fsdecode(arg)) for arg in (REAL_GIT, *args))
@@ -287,14 +328,19 @@ class ResultTests(clean_support.CleanCase):
         clean_support.reset_child_log(log)
         return self.path_first(bin_dir), log
 
-    def run_signalled(self, argv, env, steps):
+    def run_signalled(self, argv, env, steps, preexec_fn=None):
         """Run argv, project through the launcher, in a session of its own with
         both streams on pipes read as they fill; for each (ready, signum) of
         steps in turn, poll ready() until it holds, then send signum to project
-        alone (rule 7). Returns a CompletedProcess with text streams, its
-        document parsed when standard output holds one."""
+        alone (rule 7). preexec_fn, a test's own, runs in the child before it
+        execs; without one, the child gets SIGINT at SIG_DFL when this process
+        ignores SIGINT (sigint_default()). Returns a CompletedProcess with text
+        streams, its document parsed when standard output holds one."""
+        if preexec_fn is None and sigint_ignored():
+            preexec_fn = sigint_default
         child = subprocess.Popen(argv, cwd=self.base, env=env, stdin=subprocess.DEVNULL,
-                                 stdout=subprocess.PIPE, stderr=subprocess.PIPE, start_new_session=True)
+                                 stdout=subprocess.PIPE, stderr=subprocess.PIPE, start_new_session=True,
+                                 preexec_fn=preexec_fn)
         streams = {"out": [], "err": []}
         readers = [threading.Thread(target=lambda key=key, stream=stream: streams[key].append(stream.read()),
                                     daemon=True)
@@ -426,10 +472,11 @@ class ResultTests(clean_support.CleanCase):
                 self.assertEqual(self.head(root, "refs/heads/" + NAMES[1]), planned[trees[1]])
 
         # At a pseudo-terminal: SIGINT at the question, and end of input there,
-        # exit 130 with nothing removed.
+        # exit 130 with nothing removed. run_pty_steps() takes no preexec_fn, so
+        # the shim gives the child SIGINT at SIG_DFL when this process ignores it.
         root, trees = self.batch("question", count=2)
         before = self.snapshot(root, trees)
-        argv = clean_support.launched_argv(table, "clean", root, "--all-safe", "--apply")
+        argv = sigint_default_argv(clean_support.launched_argv(table, "clean", root, "--all-safe", "--apply"))
         question = TEXT["question"].format(N=2)
         for name, action in (("SIGINT", signal.SIGINT), ("end of input", clean_support.PTY_EOF)):
             with self.subTest(at_the_question=name):
@@ -765,15 +812,19 @@ class ResultTests(clean_support.CleanCase):
         # removal once its child has started (ChildHandle.due(), which
         # run_bounded() calls after the spawn, raises once for the removal
         # handle, so that the driver waits for the child before the exception
-        # goes on; the child is a 1 s removal that logs its end); and into the
-        # final rescan, the second target's. The target being handled is
+        # goes on; the child is a 1 s removal that logs its end); into the
+        # driver's setup once that removal child has started (the selector,
+        # which fails once with EMFILE: the child is waited for all the same;
+        # the runner review's EMFILE candidate, lead ruling R-101 (b)); and
+        # into the final rescan, the second target's. The target being handled is
         # unknown with internal-error and its fields not established null,
         # later targets not-attempted, the record printed, exit 1; and 143 when
         # the fault also records SIGTERM in the slot (plan review M2;
         # pcl:938-941; research.md R6; lead ruling R-83, P-7). No signal is
         # sent (rule 7).
         original_rescan, original_due, original_progress = project.rescan, project.ChildHandle.due, project.print_progress
-        for fault in ("rescan", "removal", "final rescan"):
+        original_start, original_selector = project.ChildHandle.start, project.selectors.DefaultSelector
+        for fault in ("rescan", "removal", "selector", "final rescan"):
             for signum in (None, signal.SIGTERM):
                 with self.subTest(fault=fault, signal=signum and signal.Signals(signum).name):
                     case = f"fault-{fault.replace(' ', '-')}-{'sigterm' if signum else 'plain'}"
@@ -799,15 +850,31 @@ class ResultTests(clean_support.CleanCase):
                             inject("fault once the removal child has started")
                         return original_due(handle)
 
+                    def start(argv, cwd, kind):
+                        handle = original_start(argv, cwd, kind)
+                        if kind == "removal" and not calls:
+                            calls.append(handle.pid)
+                        return handle
+
+                    def selector(*args, signum=signum, **kwargs):
+                        if len(calls) == 1:  # the removal child has just started
+                            calls.append("selector")
+                            if signum is not None:
+                                project.current_invocation().record_signal(signum)
+                            raise OSError(errno.EMFILE, os.strerror(errno.EMFILE))
+                        return original_selector(*args, **kwargs)
+
                     def print_progress(target, run, log=None):
                         seen.append((target["path"], log_lines(log) if log else []))
                         original_progress(target, run)
 
-                    if fault == "removal":
+                    if fault in ("removal", "selector"):
                         bin_dir, log = self.base / case / "slow-bin", self.base / case / "removal.log"
                         signal_recording_git(bin_dir, log, slow=trees[0], seconds=1.0)
                         env = self.path_first(bin_dir)
-                        patches = [(project.ChildHandle, "due", due)]
+                        patches = ([(project.ChildHandle, "due", due)] if fault == "removal" else
+                                   [(project.ChildHandle, "start", staticmethod(start)),
+                                    (project.selectors, "DefaultSelector", selector)])
                     else:
                         patches = [(project, "rescan", rescan)]
                     patches.append((project, "print_progress", lambda target, run, log=log: print_progress(
@@ -831,16 +898,16 @@ class ResultTests(clean_support.CleanCase):
                         self.assertTrue(trees[1].is_dir())
                     self.assertEqual(handled["reconciliation"], NULL_RECORD)
                     self.assertEqual(handled["notes"], [])
-                    # The rescan faults follow an exit 0; the removal fault leaves
-                    # the child's status unobserved.
-                    self.assertEqual(handled["exit_status"], None if fault == "removal" else 0)
+                    # The rescan faults follow an exit 0; the removal and selector
+                    # faults leave the child's status unobserved.
+                    self.assertEqual(handled["exit_status"], None if fault in ("removal", "selector") else 0)
                     self.assertEqual(document["exit_code"], expected)
                     self.assertEqual(document["completeness"], "incomplete")
                     path, removed, not_attempted = stop
                     self.assertIn(TEXT["stop_block"].format(PATH=path, REASON="internal-error", K=removed, N=2,
                                                             NOT_ATTEMPTED=not_attempted, ROOT=quoted(root)),
                                   result.stderr.splitlines())
-                    if fault == "removal":
+                    if fault in ("removal", "selector"):
                         # The child was waited for: it had run to its end, the
                         # real removal included, before the target was decided.
                         self.assertEqual(seen[0][0], os.fsencode(trees[0]))  # a Target holds raw bytes
@@ -1069,6 +1136,106 @@ class ResultTests(clean_support.CleanCase):
                 for given in (killed, termed, unobserved):
                     self.assertNotEqual(project.decide_stage(target, given, gone),
                                         project.decide_stage(target, given, kept))
+
+    # Lead ruling R-101 (b): the runner review's F1 and F2.
+
+    def run_with_failing_stderr(self, argv, failure):
+        """Run argv with standard input empty, standard output on a pipe, and
+        standard error failing: on /dev/full for ENOSPC, or for EPIPE on a pipe
+        whose read end is closed before the child starts. Returns the exit
+        status and standard output as text."""
+        if failure == "ENOSPC":
+            if not os.path.exists("/dev/full"):
+                self.skipTest("no /dev/full on this host")
+            stderr = os.open("/dev/full", os.O_WRONLY)
+        else:
+            read_end, stderr = os.pipe()
+            os.close(read_end)
+        try:
+            child = subprocess.Popen(argv, cwd=self.base, env=self.env, stdin=subprocess.DEVNULL,
+                                     stdout=subprocess.PIPE, stderr=stderr, start_new_session=True)
+        finally:
+            os.close(stderr)
+        try:
+            out, _ = child.communicate(timeout=TIMEOUT)
+        except subprocess.TimeoutExpired:
+            with contextlib.suppress(OSError):
+                os.killpg(child.pid, signal.SIGKILL)
+            child.communicate()
+            self.fail(f"project did not end within {TIMEOUT} s")
+        return child.returncode, out.decode("utf-8", "surrogateescape")
+
+    def test_clean_apply_with_json_prints_one_document_when_standard_error_fails(self):
+        # Runner review F1 (lead ruling R-101 (b)): under --apply --json the
+        # human plan goes to standard error. When that write fails before the
+        # apply phase, with ENOSPC (/dev/full) or with EPIPE (a reader that
+        # closed), the run ends as `internal-error`, exit 2 (lead ruling R-55),
+        # and standard output holds exactly one document, the extended error
+        # object, with no plan envelope before it (pcl:1133-1135); nothing is
+        # removed. Two stops before the apply phase: the question a run
+        # without --yes needs (confirmation-required), and the scenario's own,
+        # a stale --expect-plan (plan-digest-mismatch).
+        root, trees = self.batch("stderr-fails", count=2)
+        before = self.snapshot(root, trees)
+        stops = (("confirmation-required", ()), ("plan-digest-mismatch", ("--yes", "--expect-plan", "0" * 64)))
+        for failure, number in (("ENOSPC", errno.ENOSPC), ("EPIPE", errno.EPIPE)):
+            for stop, extra in stops:
+                with self.subTest(failure=failure, stop=stop):
+                    argv = clean_support.cli_argv("clean", root, "--all-safe", "--apply", "--json", *extra)
+                    status, out = self.run_with_failing_stderr(argv, failure)
+                    documents = json_documents(out)
+                    self.assertEqual(len(documents), 1, f"exit {status}, standard output:\n{out}")
+                    [document] = documents
+                    self.assertEqual(status, 2, out)
+                    self.assertEqual(list(document)[:2], ["error", "code"], "the extended error object")
+                    self.assertEqual((document["code"], [refusal["code"] for refusal in document["refusals"]]),
+                                     ("internal-error", ["internal-error"]))
+                    self.assertIn(f"[Errno {number}]", document["error"], "the failed write's own error")
+                    self.assertEqual(self.snapshot(root, trees), before, "nothing removed")
+
+    def test_clean_a_signal_during_a_removal_ignored_on_entry_stays_ignored(self):
+        # Runner review F2 (lead ruling R-101 (b)): a signal whose disposition
+        # is SIG_IGN when project starts, as nohup leaves SIGHUP and a `&` job
+        # of a non-interactive shell leaves SIGINT, stays ignored, as by
+        # convention and in the baseline; FR-036 reaches only a signal the
+        # caller did not ignore. The scenario's run, as
+        # test_clean_a_signal_during_a_removal makes it, with the signal set to
+        # SIG_IGN in the child before it execs (a preexec_fn of the test's
+        # own) and sent to project alone once the second removal is in
+        # flight: no target is interrupted, all three
+        # are removed, the record's exit_code is 0 and the run exits 0, with
+        # no wait line and no `Cancelled.`. The real table.
+        table = clean_support.timing_table()
+        for signum in (signal.SIGHUP, signal.SIGINT):
+            name = signal.Signals(signum).name
+            with self.subTest(signal=name):
+                case = f"ignored-{name.lower()}"
+                root, trees = self.batch(case)
+                bin_dir, log = self.base / case / "fake-bin", self.base / case / "signals.log"
+                signal_recording_git(bin_dir, log, slow=trees[1], seconds=1.5)
+
+                def ignore(signum=signum):
+                    signal.signal(signum, signal.SIG_IGN)
+
+                result = self.run_signalled(
+                    clean_support.launched_argv(table, "clean", root, "--all-safe", "--apply", "--yes", "--json"),
+                    self.path_first(bin_dir), [(lambda: f"ready {trees[1]}" in log_lines(log), signum)],
+                    preexec_fn=ignore)
+                self.assert_status(result, 0)
+                document = result.document
+                self.assertIsNotNone(document, clean_support.transcript(result))
+                self.assertEqual(self.stages(document), [(str(tree), "removed", None) for tree in trees])
+                self.assertEqual(document["exit_code"], 0)
+                self.assertFalse(any(tree.exists() for tree in trees))
+                self.assertNotIn(CANCELLED, result.stderr.splitlines())
+                self.assertNotIn("Waiting for git worktree remove", result.stderr)
+                # The signal went while the second removal ran, and every
+                # removal then ran to its end.
+                lines = log_lines(log)
+                self.assertEqual([line for line in lines if line.startswith("ready ")],
+                                 [f"ready {tree}" for tree in trees])
+                self.assertEqual([line for line in lines if line.startswith("exited ")],
+                                 [f"exited {tree} 0" for tree in trees])
 
 
 if __name__ == "__main__":

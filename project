@@ -199,6 +199,19 @@ def execute(argv, cwd=None, env=None):
     return result.returncode if result.returncode >= 0 else 128 - result.returncode
 
 
+def delegate_env():
+    """The environment of every owner tool that `update --apply` runs (lead
+    ruling R-102, LQ-12, approved by Brett Heap; change 1's "Explicit
+    maintenance" as amended at eae1a79): project's own, with every GIT_SCRUB
+    name but GIT_ALLOW_PROTOCOL removed, as the push child has them removed,
+    and nothing added: no -c pin, no GIT_OPTIONAL_LOCKS and no trace2
+    variable. A caller's GIT_DIR, GIT_WORK_TREE or GIT_INDEX_FILE then cannot
+    point a tool at a repository other than the one the check inspected, and
+    a protocol list the caller set still binds any Git the tool runs."""
+    return {name: value for name, value in os.environ.items()
+            if name not in GIT_SCRUB or name == "GIT_ALLOW_PROTOCOL"}
+
+
 def show_plan(commands, cwd=None):
     if cwd:
         print(f"Working directory: {cwd}")
@@ -1202,11 +1215,16 @@ def current_invocation():
 
 def _install_handlers(handlers):
     """Install {signum: handler} and return the handlers replaced; a handler not
-    installed from Python (None) is kept as SIG_DFL. On failure, what was
-    installed is put back."""
+    installed from Python (None) is kept as SIG_DFL. A signal ignored when this
+    is called (SIG_IGN, as nohup leaves SIGHUP and a non-interactive shell's
+    `&` job leaves SIGINT) stays ignored, and nothing is saved for it, so no
+    scope catches or restores it (lead ruling R-101 (b), F2). On failure, what
+    was installed is put back."""
     saved = {}
     try:
         for signum, handler in handlers.items():
+            if signal.getsignal(signum) == signal.SIG_IGN:
+                continue
             previous = signal.signal(signum, handler)
             saved[signum] = signal.SIG_DFL if previous is None else previous
     except BaseException:
@@ -1227,9 +1245,10 @@ def _in_main_thread():
 
 class signal_scope:
     """D1's record-only handlers (research.md R4): for SIGINT, SIGTERM and
-    SIGHUP a handler that stores the signal in the slot of the invocation in
-    force when the scope is entered (one entered for the scope's own span when
-    none is), and does nothing else; and a non-blocking wakeup pipe, set with
+    SIGHUP, each one not ignored on entry (_install_handlers()), a handler
+    that stores the signal in the slot of the invocation in force when the
+    scope is entered (one entered for the scope's own span when none is), and
+    does nothing else; and a non-blocking wakeup pipe, set with
     warn_on_full_buffer=False, so that a signal wakes the driver's select() at
     once; `wake` is its read end. On every exit, BaseException included, every
     live probe group is first killed and reaped (kill_live_probes()), and then
@@ -1539,15 +1558,17 @@ def run_bounded(spec, parser, run):
     if kind == "removal":
         handle.ceiling_end = handle.started + TIMING["removal_ceiling"]
     out, err = handle.process.stdout.fileno(), handle.process.stderr.fileno()
-    selector = selectors.DefaultSelector()
     streams = {out, err}
-    for fd in streams:
-        selector.register(fd, selectors.EVENT_READ)
-    wake = signal_wakeup()
-    if wake is not None:
-        selector.register(wake, selectors.EVENT_READ)
-    name = None
+    selector = name = None
     try:
+        # Set up inside the protected path, so that a failure here (EMFILE,
+        # say) once the child runs still settles it: a removal is waited for.
+        selector = selectors.DefaultSelector()
+        for fd in streams:
+            selector.register(fd, selectors.EVENT_READ)
+        wake = signal_wakeup()
+        if wake is not None:
+            selector.register(wake, selectors.EVENT_READ)
         while not handle.finished:
             if tick is not None:
                 tick(run)
@@ -1602,7 +1623,8 @@ def run_bounded(spec, parser, run):
         _settle(handle)
         raise
     finally:
-        selector.close()
+        if selector is not None:
+            selector.close()
         handle.close()
     if name == "interrupted":
         raise Interrupted(run.signal)
@@ -3326,7 +3348,13 @@ def write_document(doc):
     (write_failed(), region dispatcher; lead ruling R-55, T047), so there is
     no second traceback and no exit 120. Before the apply phase the
     pipeline's check after printing makes it `internal-error`; main() writing
-    an error document keeps its own status."""
+    an error document keeps its own status. Standard output closed when
+    project started (sys.stdout None, the stream say() skips) is such a
+    failed write, EBADF, so that `clean --json` refuses with `internal-error`
+    and exit 2 instead of a traceback (lead ruling R-101 (b), F3)."""
+    if sys.stdout is None:
+        write_failed(current_invocation(), None, OSError(errno.EBADF, os.strerror(errno.EBADF)))
+        return
     try:
         sys.stdout.write(json.dumps(doc, indent=2, ensure_ascii=True) + "\n")
         sys.stdout.flush()
@@ -4661,8 +4689,10 @@ def print_plan(plan, run):
     plain --json prints none, and push and delete-branch print nothing here,
     keeping their `Cleanup action:` output. Under --json the plan envelope goes
     to standard output through write_document() on the call where the run
-    stops before the apply phase, so one document is written. The pipeline
-    writes `REFUSED:` itself.
+    stops before the apply phase, so one document is written; not once a
+    write has failed (run.write_error), since check_writes() then ends the
+    run as `internal-error`, whose object is that one document (lead ruling
+    R-101 (b), F1). The pipeline writes `REFUSED:` itself.
 
     What prints (T052; lead rulings R-56 Q-11, R-57 H1, R-59 D2 and D8, R-62
     (b) and R-67 (a)): a report, the baseline layout with each null shown as
@@ -4681,7 +4711,7 @@ def print_plan(plan, run):
         if apply or not json_output:
             for line in plan_lines(plan):
                 say(run, line)
-    if json_output and run.status is not None:
+    if json_output and run.status is not None and getattr(run, "write_error", None) is None:
         write_document(plan_document(plan))
 
 
@@ -6719,7 +6749,10 @@ def update(args):
     (D-R, FR-052). `origin/HEAD` is read from the ref listing's symref (row 6),
     memoized per common directory, never from a child of its own, and only
     after the root's state has passed, so after a failed version check update
-    spawns no Git child (plan review M10). `tools` and `workflow` need no Git."""
+    spawns no Git child (plan review M10). `tools` and `workflow` need no Git.
+    The owner-tool delegates run in delegate_env(), the caller's environment
+    less every GIT_SCRUB name but GIT_ALLOW_PROTOCOL, so they act on the
+    repository the check inspected (lead ruling R-102, LQ-12)."""
     scope = signal_scope()
     try:
         with scope:
@@ -6810,16 +6843,16 @@ def update(args):
         return 0
     with default_signals():
         if args.component == "shape":
-            check = execute(commands.pop(0), cwd=root)
+            check = execute(commands.pop(0), cwd=root, env=delegate_env())
             # update-shape check exits 1 when differences are available.
             if check not in (0, 1):
                 return check
             # The owner retains its own confirmation prompt, even if this coordinator
             # received --yes for a different update component.
-            return execute(commands[0], cwd=root)
+            return execute(commands[0], cwd=root, env=delegate_env())
         confirm(args.yes)
         for command in commands:
-            code = execute(command, cwd=root)
+            code = execute(command, cwd=root, env=delegate_env())
             if code:
                 return code
     return 0
