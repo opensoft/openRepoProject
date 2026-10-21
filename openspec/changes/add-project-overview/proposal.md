@@ -1263,10 +1263,12 @@ follows PR #19's text at the commits its heading names, a draft pending its
 own ratification; PR #19's tip is `1ebdd90`, and its rulings R-124
 (`2b86a5f`), R-125 (`93f3194`) and R-126 (`1ebdd90`) are taken in below. Each
 lands only with or after PR #19's ratification of the commits it follows, and
-is re-aligned before A1 is ratified if one of those commits changes first. So
-PR #34 does not merge before that ratification; if Brett Heap wants it to land
-sooner, the four items move to a later amendment of this change, and A1 lands
-without them. Each item is declared here for Brett Heap's review:
+is re-aligned before A1 is ratified if one of those commits changes first,
+and, if A1 is ratified first, is re-aligned for Brett Heap's review before PR
+#34 merges. So PR #34 does not merge before that ratification; if Brett Heap
+wants it to land sooner, the four items move to a later amendment of this
+change, and A1 lands without them. Each item is declared here for Brett Heap's
+review:
 
 - **`relative-config-path` (LQ-15; PR #19 at `cc000ea` and `9fb22fa`), a
   declared item.** Once its arguments are parsed, and before any Git child
@@ -1352,28 +1354,43 @@ without them. Each item is declared here for Brett Heap's review:
   reads as false with no error, as PR #19 has an unset value, while an exit 1
   with a warning, as for an unreadable `config`, stays a failure that counts
   as true, and so that the effective-work-tree read records no error where a
-  probe that fails, as it does under `core.bare=true` (exit 128), and output
-  that is not exactly one line each make the row's registration disagree, as
-  PR #19 has it at `addd346` and as POD:89-95 classifies a disagreeing
-  registration (lane openRepoProject-3's W17 L2 and W20 M2); the second
-  phase, which runs a linked row's effective-work-tree read before its status
-  probe (POD:238-239 and a sentence after POD:246); and design D8, a task for
-  the realpath of the toplevel that read reports (after design.md:463), with
-  its outcomes, `ENOENT` or `ENOTDIR` making the registration disagree with
-  no error and any other `OSError` or a missed wait leaving the check not
-  completed, and its count (design.md:478). POD:248-254 and design D6,
-  amended above, agree with both reads. The table's two exceptions depart
-  from the packet's DI:535 ("A Git child exits nonzero | `probe-failed`").
-  R-125 at `93f3194` adds the administrative directory's `commondir` file to
-  [E]'s two-way registration: it must name `<common_dir>`, read by the
-  filesystem with no Git child as Git reads it; a missing one, or one naming
-  another directory, makes the registration disagree, and a read of it that
-  fails gives the row `inspection-error` (its scenario "A commondir that
-  names another repository"). It reaches the overview through the shared
-  evidence model, by the registration check that requirement 2 cites
-  (POD:84), with no Git child and no task or count of its own; the one text
-  amended for it is D8's per-row task, which names its reads and now names
-  the `commondir` file (design.md:461-462). Spec 005 carries the parity.
+  probe that fails, as it does under `core.bare=true` (exit 128) and as a
+  probe that cannot be spawned does, on the lane openRepoProject-4 lead's
+  ruling, and output that is not exactly one line each make the row's
+  registration disagree, as PR #19 has it at `addd346` and as POD:89-95
+  classifies a disagreeing registration (lane openRepoProject-3's W17 L2, W20
+  M2 and W25 L8); the second phase, which runs a linked row's
+  effective-work-tree read before its status probe (POD:238-239 and a sentence
+  after POD:246); and design D8, a task for the realpath of the toplevel that
+  read reports (after design.md:463), with its outcomes, `ENOENT` or `ENOTDIR`
+  making the registration disagree with no error and any other `OSError` or a
+  missed wait leaving the check not completed, and its count (design.md:478).
+  POD:248-254 and design D6, amended above, agree with both reads. The table's
+  two exceptions depart from the packet's DI:535 ("A Git child exits nonzero |
+  `probe-failed`"). R-125 at `93f3194` adds the administrative directory's
+  `commondir` file to [E]'s two-way registration: it must name `<common_dir>`,
+  read by the filesystem with no Git child as Git reads it; a missing one, or
+  one naming another directory, makes the registration disagree, and a read of
+  it that fails gives the row `inspection-error` (its scenario "A commondir
+  that names another repository"). It reaches the overview through the shared
+  evidence model, by the registration check that requirement 2 cites (POD:84),
+  with no Git child and no task or count of its own. Two texts are amended for
+  it. D8's per-row task names its reads and now names the `commondir` file
+  (design.md:461-462). Requirement 2's closed case list (POD:89-95) gains,
+  after its second case, a case for a registration check that cannot be
+  completed: a registration read, the `commondir` read included, or the
+  realpath of the toplevel that the effective-work-tree read reports failing
+  other than with `ENOENT` or `ENOTDIR`, or one of them or that read itself
+  being cut, gives no status probe, the code that fits it and
+  `inspection-error` set directly, as [E] at `93f3194` has a failed
+  `commondir` read ("a read of it that fails SHALL give the row
+  `inspection-error` and no probe", its
+  `specs/project-command/spec.md:211-213`) and as D8's realpath task leaves
+  the check not completed (lane openRepoProject-3's W25 M1). Without that case
+  the list sent such a row to its last case, a status probe. The case departs
+  from the packet's DI:251-261, whose table of the cases a registered path
+  falls into has none for a check that cannot be completed. Spec 005 carries
+  the parity.
 - **The stat pins (LQ-10, PR #19 at `ea697ba`; its pointer at `93f3194`), a
   restatement.** PR #19 adds `-c core.trustctime=true -c
   core.checkStat=default` after `-c core.fsmonitor=false` on every status
@@ -1394,9 +1411,16 @@ without them. Each item is declared here for Brett Heap's review:
   adds a precondition to the scenario "An edit that keeps its size and
   restores its mtime" (lane openRepoProject-3's W9 L1). No packet line quotes
   the two older pins: the packet gives the status probe's argv with no `-c`
-  pin (DI:396, DI:1181), so no departure is declared. PR #19 accepts that the
-  two new pins make a probe slower, never wrong, where ctimes or inodes change
-  without an edit (its design Risks).
+  pin (DI:396, DI:1181), so no departure is declared. PR #19 accepts in its
+  design Risks, on Brett Heap's ruling LQ-10, that where ctimes or inodes
+  change without an edit the probe is slower, never wrong, and a slow probe
+  makes a plan incomplete, never unsafe; and that where the repository defines
+  a clean filter, a ctime-only change under `core.trustctime=false` now runs
+  that filter once per probe, where it ran none before, which widens the
+  clean-filter residual that LQ-16 leaves open (requirement 9's sentence after
+  POD:717, Q9 B above), a filter whose command is missing giving a false
+  `dirty` or a failed probe, both of which fail closed (lane
+  openRepoProject-3's W25 L10).
 
 Q15 A and Q16 B together: the handlers only record the signal wherever a
 child can run, and Q15 A's raising span, feature 004's `raising_signals` (its
@@ -1417,15 +1441,15 @@ drafted texts and its OPERATION values, with the fill that prints an error's
 `path` in the human report (lane openRepoProject-3's W7-M1); PR #19's new
 refusal code, `relative-config-path`, and its two new gates,
 `operation-in-progress` and `worktree-only-commits`, reaching the overview,
-with the route and the alternative each takes above; LQ-11's counted reads
-and its conflict sites: the collector table's two exceptions to
-`probe-failed`, the second phase's effective-work-tree read, and design D8's
-toplevel realpath task with its outcomes and the `commondir` read in its
-per-row task; LQ-10's four stat pins, restated where this change quoted two;
-the merge order, under which PR #34 does not merge before PR #19's
-ratification of the commits its four LQ items follow, unless Brett Heap moves
-those items to a later amendment; and the open point M1. All of A1 stays
-drafted, not ratified.
+with the route and the alternative each takes above; LQ-11's counted reads and
+its conflict sites: the collector table's two exceptions to `probe-failed`,
+the second phase's effective-work-tree read, design D8's toplevel realpath
+task with its outcomes and the `commondir` read in its per-row task, and
+requirement 2's case for a check that cannot be completed; LQ-10's four stat
+pins, restated where this change quoted two; the merge order, under which PR
+#34 does not merge before PR #19's ratification of the commits its four LQ
+items follow, unless Brett Heap moves those items to a later amendment; and
+the open point M1. All of A1 stays drafted, not ratified.
 
 The changes that carry this change's requirements in MODIFIED blocks are to
 re-align them to A1's text: lane openRepoProject-5's

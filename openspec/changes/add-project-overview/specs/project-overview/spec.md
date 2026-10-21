@@ -104,10 +104,15 @@ SHALL be unaffected.
 Each registered path SHALL fall into exactly one case: `lstat` fails with "no
 such entry" or "not a directory" (`present: false`, no status probe); `lstat`
 fails otherwise (`present: null`, no status probe, an `os-error`, and
-`inspection-error` set directly); registration disagrees in either direction
-(no status probe, `inspection-error` set directly, a `registration-mismatch`
-finding and no error); otherwise the status probe runs in that worktree. No
-probe SHALL run in a path the overview could not `lstat`.
+`inspection-error` set directly); the registration check cannot be completed,
+a registration read, the `commondir` read included, or the realpath of the
+toplevel that the effective-work-tree read reports failing other than with
+`ENOENT` or `ENOTDIR`, or one of them or that read itself being cut (no status
+probe, the code that fits it, `inspection-error` set directly); registration
+disagrees in either direction (no status probe, `inspection-error` set
+directly, a `registration-mismatch` finding and no error); otherwise the
+status probe runs in that worktree. No probe SHALL run in a path the overview
+could not `lstat`.
 
 Every repository SHALL first take the submodule test of `Clean resolves its
 target Git-first`: when Git reports a superproject working tree for a
@@ -356,7 +361,7 @@ remove or reorder any other row or an earlier scan error:
 | an operating-system error | `os-error` |
 | output a reused helper could not decode | `undecodable-output` |
 | any other exception, its message naming the exception class | `internal-error` |
-| a Git child exits nonzero, except the `extensions.worktreeConfig` read's exit 1 with nothing printed on standard output or standard error, by which Git reports the value not set, read as false with no error, and the effective-work-tree read, where a probe that fails, as it does under `core.bare=true`, and output that is not exactly one line each make the row's registration disagree, with no error | `probe-failed` |
+| a Git child exits nonzero, except the `extensions.worktreeConfig` read's exit 1 with nothing printed on standard output or standard error, by which Git reports the value not set, read as false with no error, and the effective-work-tree read, where a probe that fails, as it does under `core.bare=true` and as a probe that cannot be spawned does, and output that is not exactly one line each make the row's registration disagree, with no error | `probe-failed` |
 | a Git child or filesystem task reaches its 5 s limit | `probe-timeout` |
 | the deadline ends a child or task, or prevents its start | `deadline-exceeded` |
 
