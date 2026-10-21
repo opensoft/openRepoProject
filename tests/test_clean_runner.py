@@ -141,6 +141,32 @@ class RunnerTests(CleanCase):
             time.sleep(0.01)
         handle.close()
 
+    def blocked_fds(self, proc, deadline):
+        """The sorted descriptor names of the process whose /proc directory is
+        proc, listed while it is blocked: state S, with the same context-switch
+        counts in its status before and after the listing, so that it did not
+        run while it was listed; and two such listings in a row agree (lead
+        ruling R-81 (c)). A process still starting, its dynamic loader or
+        setlocale holding fd 3 open, is running (R) or in a disk read (D),
+        never asleep (S), though `comm` already names the new program."""
+        def blocked_state():
+            fields = dict(line.split(":", 1) for line in (proc / "status").read_text().splitlines())
+            return (fields["State"].split()[0], fields["voluntary_ctxt_switches"].strip(),
+                    fields["nonvoluntary_ctxt_switches"].strip())
+        last = None
+        while True:
+            before = blocked_state()
+            fds = sorted(os.listdir(proc / "fd"))
+            after = blocked_state()
+            if before[0] == "S" and before == after:
+                if fds == last:
+                    return fds
+                last = fds
+            else:
+                last = None
+            self.assertLess(time.monotonic(), deadline, f"the child never blocked: {after}, fds {fds}")
+            time.sleep(0.01)
+
     # T018.
 
     def test_clean_child_handle_runs_in_its_own_group(self):
@@ -181,12 +207,16 @@ class RunnerTests(CleanCase):
                     if proc.is_dir():  # Linux; macOS, where no CI job runs, has no /proc (R-35)
                         # Standard input from /dev/null, and only the three standard
                         # descriptors once the fake has exec'd sleep (close_fds): the
-                        # inheritable pipe of this process is not among them.
+                        # inheritable pipe of this process is not among them. `comm`
+                        # reads `sleep` from the exec on, while sleep's own start-up
+                        # still opens and closes files at fd 3, so the descriptors
+                        # are listed once sleep is blocked in its sleep (R-81 (c)).
                         while (proc / "comm").read_text().strip() != "sleep":
                             self.assertLess(time.monotonic(), deadline, "the fake never reached sleep")
                             time.sleep(0.01)
+                        fds = self.blocked_fds(proc, deadline)
                         self.assertEqual(os.readlink(proc / "fd" / "0"), os.devnull)
-                        self.assertEqual(sorted(os.listdir(proc / "fd")), ["0", "1", "2"])
+                        self.assertEqual(fds, ["0", "1", "2"])
                     self.stop(handle)
                     self.assertEqual(handle.state, "reaped")
                     self.assertNotIn(handle, project.LIVE_PROBES)
