@@ -3377,12 +3377,19 @@ def check_plan(plan, run):
     6. single, P excluded by a gate (`target-excluded`, target_refusal());
     7. `confirmation-required` for --apply without --yes on a standard input
        that is not a terminal, isatty() read now, since T046 patches it.
-    A report exits 0 until T101 exits an incomplete one 1; push and
+    A report takes check 1 as a preview does, exiting 1 when incomplete with
+    one refusal per code, and otherwise 0, or 2 for a refusal already
+    recorded (T101; pcl:40-43; lead ruling R-80, P-5); push and
     delete-branch go on after check 1, to their own checks; a preview that
     passes every check exits 0."""
     args = run.args
     apply = getattr(args, "apply", False)
     if plan.mode == "report":
+        codes = plan_completeness(plan)
+        for code in codes:
+            refuse(plan, incomplete_refusal(plan, code), run)
+        if codes:
+            return 1
         return 2 if plan.refusals else 0
     single, removing = plan.mode == "single", plan.action == "remove"
     target_rows = getattr(plan, "target_rows", [])
@@ -3830,7 +3837,13 @@ def build_plan(repo, run):
     decide it as `reflog-unavailable` (lead ruling R-78 (c)). Gate 8,
     deferral_gate(), takes the first 16 rows that pass gates 1 to 7 and
     defers the rest as `deferred-target-cap`, P alone counting in mode
-    single (T100). A report above 128 rows is T101's."""
+    single (T100). A report above the --all-safe row cap of 128 rows, which
+    counts the entries that become rows as `inspect-cap` does (contract,
+    "Codes"; lead ruling R-73 (d)), has `selected` null and the note
+    `inspect-cap` with `rows`, that count, which alone leaves it complete,
+    while the gates still run and `excluded` lists every inspected row a
+    gate excludes; its own cap of 256 rows makes it `inspect-cap` incomplete
+    (T101; D14, FR-031)."""
     plan = Plan(repo, run)
     root = repo["root"]
     evidence = plan.evidence = repo.get("evidence")  # the resolution's: row 3 runs once (R-71 (b))
@@ -3879,6 +3892,11 @@ def build_plan(repo, run):
     command_dir = identity["root"] if identity["root"] is not None else os.fsencode(root)
     for row in plan.selected:
         row.removal_args = ["-C", command_dir, "worktree", "remove", row.raw_path]
+    batch_cap = LIMITS["worktree_rows"]["all-safe"]
+    if plan.mode == "report" and len(entries) > batch_cap:  # T101; D14, FR-031
+        plan.selected = None
+        plan.notes.append({"code": "inspect-cap", "message": TEXT["note_inspect_cap_report"].format(
+            N=len(entries), M=batch_cap), "rows": len(entries)})
     if named:
         shown = human_path(plan.target.raw_path if plan.target is not None else path)
         own = {id(row) for row in plan.target_rows}
@@ -4367,8 +4385,17 @@ def report_lines(plan):
     its own line right after its recommendation, the `dirty` advice, and
     indented as that line is, its PATH in the command form, since the note
     names a command to paste (T094; lead rulings R-79, P-11, and R-83, P-2).
-    T101 adds the D14 lines."""
-    lines = []
+    First D14's two lines (T101; plan review M8): `Report: complete`, or
+    `Report: incomplete (CODES)` with plan_completeness()'s codes in
+    REFUSAL_CODES order joined by `, ` (lead ruling R-80, P-5); then
+    `--all-safe would select N`, N the rows the gates select, or, above the
+    --all-safe row cap, where `selected` is null, `--all-safe would be
+    incomplete (inspect-cap)`."""
+    codes = plan_completeness(plan)
+    lines = [TEXT["completeness_line_incomplete"].format(CODES=", ".join(codes)) if codes
+             else TEXT["completeness_line_complete"],
+             TEXT["selection_line_above_cap"] if plan.selected is None
+             else TEXT["selection_line"].format(N=len(plan.selected))]
     for row in plan.rows:
         upstream = human_path(row["upstream"]) if row.get("upstream") else "none"
         ahead, behind = row.get("ahead"), row.get("behind")
