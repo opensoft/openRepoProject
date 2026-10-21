@@ -4568,8 +4568,12 @@ def ask_removal(plan, run):
     written (say() recorded the failed write) is not answered: nothing is read
     and "" is returned, so the plan is not accepted, and the pipeline's check
     after the question ends the run as `internal-error` (lead ruling R-55).
-    confirm_removal() looks this function up by its global name, so a test
-    patches it there (T046; lead ruling R-56)."""
+    An answer that standard input cannot decode, such as the byte 0xE9 read
+    by a strict UTF-8 decoder, is returned as "", so that confirm_removal()
+    records `cancelled`, as for any other answer that is not `yes` (lead
+    ruling R-101 (c); plan review F1). confirm_removal() looks this function
+    up by its global name, so a test patches it there (T046; lead ruling
+    R-56)."""
     count = len(plan.selected)
     question = TEXT["question_one"] if count == 1 else TEXT["question"].format(N=count)
     run.pause()
@@ -4578,7 +4582,10 @@ def ask_removal(plan, run):
             say(run, question)
             if getattr(run, "write_error", None) is not None:
                 return ""
-            return input()
+            try:
+                return input()
+            except UnicodeDecodeError:
+                return ""
     finally:
         run.resume()
 
@@ -4647,18 +4654,33 @@ class UnfinishedRescan(dict):
     into a plain dict, so no document carries the class."""
 
 
-def path_presence(raw):
+def path_presence(raw, budget=None):
     """Whether the planned path is present, by one lstat through fs_call()
     (design D6; data-model.md, "Target result and reconciliation record"):
     true when it succeeds, false only on ENOENT or ENOTDIR, and null on any
-    other error or when the call is cut at its budget."""
+    other error or when the call is cut at its budget, the per-child budget
+    unless budget is given (reserve_budget())."""
     try:
-        found = fs_call(os.lstat, raw)
+        found = fs_call(os.lstat, raw, budget=budget)
     except OSError as exc:
         found = exc
     if isinstance(found, DriverOutcome):
         return None
     return presence_from_lstat(found)[0]
+
+
+def reserve_budget(run):
+    """The budget of the one lstat that records a refused target's planned
+    path after its revalidation stopped before its own (revalidate(); lead
+    ruling R-101 (d); apply review F3): min(probe budget, reserve remaining),
+    as child_budget() gives a read while reconciling, never below 0, so that
+    a difference found as the work deadline passes still records the path's
+    presence; None, the per-child budget, without a deadline. Read at call
+    time (lead ruling R-29)."""
+    left = run.reserve_remaining()
+    if left is None:
+        return None
+    return max(0.0, min(TIMING["probe_budget"], left))
 
 
 def _branch_ref(target):
@@ -4747,6 +4769,16 @@ def reread_manifest(root):
         return declared_tracking_branch(root)
     except Refused:
         return UNREADABLE
+
+
+def as_candidate(declared):
+    """A manifest's raw `tracking_branch` as resolve_merge_target() reads it:
+    the string as written, or None for any other value, which names no
+    candidate, YAML's `.nan` among them (lead ruling R-101 (d); apply review
+    F2). Revalidation compares the plan's and the fresh value through it, so
+    that a value planning ignored is no difference, while a string is still
+    compared as written (lead ruling R-77). A pure function."""
+    return declared if isinstance(declared, str) else None
 
 
 def _listing(run, root, args, subcommand, parser):
@@ -4914,8 +4946,9 @@ def revalidation_difference(plan, target, run, part, seen):
     1. The repository identity at the command directory equals the plan's,
        else `identity-changed`.
     2. The manifest's `tracking_branch`, re-read, equals the plan's as
-       written, its absence included (lead ruling R-77), else
-       `state-changed`.
+       written, its absence included (lead ruling R-77), and a value that
+       is not a string read as none, as planning reads it (as_candidate();
+       lead ruling R-101 (d)), else `state-changed`.
     3. The registry listing names each checked row's path once, else
        `identity-changed`, with its `locked` as planned, else
        `state-changed`.
@@ -4983,7 +5016,7 @@ def revalidation_difference(plan, target, run, part, seen):
     if declared is UNREADABLE and not part and work_spent(run):
         return "deadline-exceeded"
     expected = evidence.get("declared", UNREADABLE)
-    if declared is UNREADABLE or type(declared) is not type(expected) or declared != expected:
+    if declared is UNREADABLE or expected is UNREADABLE or as_candidate(declared) != as_candidate(expected):
         return "state-changed"
 
     if part:
@@ -5102,7 +5135,8 @@ def revalidate(plan, target, run):
     (plan review M13), its registry field from the registry listing and its
     branch fields from the ref listing, each null where its listing did not
     run, and the path's presence from the target's own lstat, or from one
-    lstat of the planned path where the revalidation stopped before it. A
+    lstat of the planned path where the revalidation stopped before it, run
+    with the reserve's budget (reserve_budget(); lead ruling R-101 (d)). A
     read the work deadline cut returns ("deadline-exceeded", None), its
     distinct return: no refusal, the target `not-attempted` with no
     reconciliation (T099; lead ruling R-80, P-2). A signal in the slot
@@ -5120,7 +5154,10 @@ def revalidate(plan, target, run):
     raw = target["path"]
     registry_entry_present = None if seen["records"] is None else any(
         record["path"] == raw for record in seen["records"])
-    path_present = path_presence(raw) if seen["path_present"] is UNREADABLE else seen["path_present"]
+    if seen["path_present"] is UNREADABLE:
+        path_present = path_presence(raw, reserve_budget(run))
+    else:
+        path_present = seen["path_present"]
     branch_present, branch_sha = _branch_evidence(target, seen["refs"])
     return reason, reconciliation_record(registry_entry_present, path_present, branch_present, branch_sha)
 
