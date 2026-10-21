@@ -1501,6 +1501,7 @@ def run_bounded(spec, parser, run):
         return DriverOutcome(argv, "deadline", detail="no time was left to start it")
     if parser is None:
         parser = RawOutput()
+    tick = getattr(parser, "tick", None)  # a removal's wait line (T092; lead ruling R-83, P-1)
     try:
         handle = ChildHandle.start(argv, cwd, kind)
     except OSError as exc:
@@ -1521,6 +1522,8 @@ def run_bounded(spec, parser, run):
     name = None
     try:
         while not handle.finished:
+            if tick is not None:
+                tick(run)
             now = time.monotonic()
             if handle.advance(now):
                 break
@@ -4811,25 +4814,63 @@ def removal_exit_status(outcome):
     reconciliation record"; plan review M12) from its DriverOutcome: None
     unless the child was spawned and reaped; Git's own status when it exited;
     and 128 plus the signal number when a signal ended it, whoever sent it
-    (128 minus Popen's negative return code), so 137 for a child killed at the
-    ceiling, as execute() reports a delegate's."""
+    (128 minus Popen's negative return code), as execute() reports a
+    delegate's: so 143 when SIGTERM ends it, at the ceiling too, and 137 only
+    for a child that outlives SIGTERM until SIGKILL (lead rulings R-68 (b) and
+    R-76 (e))."""
     status = outcome.status
     if status is None:
         return None
     return status if status >= 0 else 128 - status
 
 
+class RemovalWait(RawOutput):
+    """The parser of a removal child (T092; design D9 and D18; lead ruling
+    R-83, P-1): its standard output read whole, as RawOutput reads it, and
+    tick(run), which run_bounded() calls on each pass of its wait loop while
+    the child is in flight. tick() prints D18's wait line, PATH in its
+    command form (human_path(path, command=True); R-83, P-2), at most once
+    per run: at the first signal recorded in the slot, or once the work
+    deadline has passed, whichever comes first. It stops nothing, since a
+    started removal is never signalled for either (D9). The line goes
+    through say() only when the run has a human stream, so a bare
+    Invocation prints nothing."""
+
+    def __init__(self, path):
+        super().__init__()
+        self.path = path
+
+    def tick(self, run):
+        if getattr(run, "wait_line_printed", False):
+            return
+        left = run.work_remaining()
+        if run.signal is None and (left is None or left > 0):
+            return
+        run.wait_line_printed = True
+        if getattr(run, "human", None) is not None:
+            say(run, TEXT["wait_line"].format(PATH=human_path(self.path, command=True)))
+
+
 def run_removal(target, run):
-    """Spawn target's removal and wait for it (T056; design D2 and D9,
+    """Spawn target's removal and wait for it (T056, T092; design D2 and D9,
     FR-012): a ChildHandle of kind `removal` running git_argv("removal",
     target.removal_args), the plan's own argument vector, `-C ROOT worktree
     remove PATH` with PATH the registry's raw bytes and never --force, from
     the command directory, through run_bounded(), which counts it among
-    `operations`, gives it no budget, never signals it before its ceiling,
-    and waits for it. Sets target["exit_status"] (removal_exit_status()) and
-    returns the DriverOutcome; one that could not be spawned is outcome
-    `failed` with no status."""
-    outcome = run_bounded(("removal", target.removal_args, target.root), None, run)
+    `operations` and waits for it in D1's one loop with no budget: SIGINT,
+    SIGTERM and SIGHUP are only recorded and the work deadline changes
+    nothing, so the child is never signalled for any of them. Only its hard
+    ceiling ends the wait: TIMING["removal_ceiling"] (300 s in the real
+    table), read by run_bounded() at the spawn, after which terminate_group()
+    sends SIGTERM to its group and the loop advances it to SIGKILL and a
+    bounded reap, or abandons it (R-30), outcome `timeout`, which the rescan
+    decides (decide_stage()). An exception in that loop waits for the child
+    before it goes on (_settle()). Its parser, RemovalWait, prints D18's wait
+    line at the first signal or once the deadline has passed (lead ruling
+    R-83, P-1). Sets target["exit_status"] (removal_exit_status()) and returns
+    the DriverOutcome; one that could not be spawned is outcome `failed` with
+    no status."""
+    outcome = run_bounded(("removal", target.removal_args, target.root), RemovalWait(target["path"]), run)
     target["exit_status"] = removal_exit_status(outcome)
     return outcome
 
@@ -4872,29 +4913,45 @@ def rescan(target, run):
     run as `rescan_part`, for the next selected target's revalidation to
     take as its steps 1 to 4 when this target ends a plain `removed`
     (take_rescan_part(); T085; lead ruling R-77 (b)); they then count in that
-    target's `probes_performed`, and otherwise they are the final rescan."""
+    target's `probes_performed`, and otherwise they are the final rescan.
+
+    apply_removals() runs it in phase `reconciling` (T093; lead ruling R-83,
+    P-3), so each of its children and calls gets min(5 s, reserve remaining)
+    (child_budget()), and a second SIGINT raises Interrupted out of the read
+    in progress, run_bounded() having terminated and reaped its child, or
+    fs_call() having abandoned its call. The remaining reads are then
+    abandoned (D15, FR-036; pcl:935-937): the fields they would have read
+    stay null, the record is an UnfinishedRescan, and no part is left for a
+    next target. Interrupted never leaves the rescan."""
     before = run.probes
     run.rescan_part = None
     root = os.fsencode(target.root)
     planned = target.identity
-    found = repository_identity(root, run)
-    if planned is None or (found is None and not _identity_gone(planned)):
-        return UnfinishedRescan(reconciliation_record(None, None, None, None))
-    if not same_repository(found, planned):
-        return reconciliation_record(None, None, None, None)
-    declared = reread_manifest(root)
-    records = _listing(run, root, ["worktree", "list", "--porcelain", "-z"], "worktree list",
-                       WorktreeListParser())
-    refs = _listing(run, root, ["for-each-ref", "--format=" + REF_FORMAT, "refs/heads", "refs/remotes"],
-                    "for-each-ref", RefParser())
-    run.rescan_part = {"after": target.row, "identity": found, "declared": declared, "records": records,
-                       "refs": refs, "children": run.probes - before}
+    records = refs = path_present = None
+    abandoned = False
+    try:
+        found = repository_identity(root, run)
+        if planned is None or (found is None and not _identity_gone(planned)):
+            return UnfinishedRescan(reconciliation_record(None, None, None, None))
+        if not same_repository(found, planned):
+            return reconciliation_record(None, None, None, None)
+        declared = reread_manifest(root)
+        records = _listing(run, root, ["worktree", "list", "--porcelain", "-z"], "worktree list",
+                           WorktreeListParser())
+        refs = _listing(run, root, ["for-each-ref", "--format=" + REF_FORMAT, "refs/heads", "refs/remotes"],
+                        "for-each-ref", RefParser())
+        run.rescan_part = {"after": target.row, "identity": found, "declared": declared, "records": records,
+                           "refs": refs, "children": run.probes - before}
+        path_present = path_presence(target["path"])
+    except Interrupted:
+        run.rescan_part, abandoned = None, True
     registry_entry_present = None if records is None else any(
         record["path"] == target["path"] for record in records)
-    path_present = path_presence(target["path"])
     branch_present, branch_sha = _branch_evidence(target, refs)
     reconciliation = reconciliation_record(registry_entry_present, path_present, branch_present, branch_sha)
-    return UnfinishedRescan(reconciliation) if None in (records, refs, path_present) else reconciliation
+    if abandoned or None in (records, refs, path_present):
+        return UnfinishedRescan(reconciliation)
+    return reconciliation
 
 
 def decide_stage(target, outcome, reconciliation):
@@ -4915,18 +4972,21 @@ def decide_stage(target, outcome, reconciliation):
       `planned_sha`, any difference, a rewind included (D7; rs:210-214);
       either stops the run, exit 2, and no commit is lost, since no branch is
       deleted. Otherwise `unknown`: `reconciliation-incomplete` when a rescan
-      read failed or was cut (an UnfinishedRescan), or the entry and the path
-      are gone with the branch not read back (BA:723-730 at e45155a; lead
-      ruling R-78 (e), second amendment); else `unconfirmed-removal`, whose
-      reads showed the removal not done, or the identity found lost or
-      another one (pcl:966-970, rs:215-217).
+      read failed, was cut or was abandoned (an UnfinishedRescan), or the
+      entry and the path are gone with the branch not read back (BA:518-526
+      at da33d92; lead ruling R-78 (e), second amendment); else
+      `unconfirmed-removal`, whose reads showed the removal not done, or the
+      identity found lost or another one (pcl:966-970, rs:215-217).
     - Cut at its ceiling, or its exit not observed (outcome `timeout`, design
       D9): the rescan alone decides, `removed` when the entry and the path
       are gone and the record is reconciled, otherwise `unknown`, each with
       `removal-ceiling`, and the note `partially-removed` while the entry or
       the path is shown to remain; a repository found replaced or lost at
       the ceiling, every field null, is `unknown` with `removal-ceiling` and
-      no note."""
+      no note.
+
+    The `orphaned-directory` note is never decided here: apply_removals()
+    adds it after this function (target_notes(); lead ruling R-83, P-5)."""
     entry, path = reconciliation["registry_entry_present"], reconciliation["path_present"]
     proven = entry is False and path is False and reconciliation["reconciled"]
     if outcome.name == "timeout":
@@ -4948,51 +5008,120 @@ def decide_stage(target, outcome, reconciliation):
     return "unknown", "unconfirmed-removal", []
 
 
+def target_notes(notes, reconciliation):
+    """A target's `notes` (T093; the project-clean delta, pcl:921-926; lead
+    ruling R-83, P-5): notes, what decide_stage() gave (`partially-removed`
+    or none), plus `orphaned-directory` when the target has a reconciliation
+    record whose registry entry is absent (false) and whose path is present
+    (true), a refused target's included; in NOTE_CODES["target"]'s order. A
+    pure function."""
+    codes = set(notes)
+    if (reconciliation is not None and reconciliation["registry_entry_present"] is False
+            and reconciliation["path_present"] is True):
+        codes.add("orphaned-directory")
+    return [code for code in NOTE_CODES["target"] if code in codes]
+
+
+def remove_target(plan, target, run):
+    """One selected target's own steps, in phase `apply` (T057, T093; design
+    D7, D9 and D15): its revalidation (revalidate()), a difference refusing
+    it with that revalidation's record; then the slot read before the spawn,
+    a signal recorded since the revalidation began making it
+    `not-attempted` with `interrupted` and no reconciliation; then its
+    removal child, spawned and waited for (run_removal()); then the phase
+    `reconciling` and the rescan (rescan()), its record kept on the target at
+    once; then its stage (decide_stage()) and its notes (target_notes()).
+    Each step may raise an Exception, which apply_removals() handles."""
+    refused = revalidate(plan, target, run)
+    if refused is not None:
+        reason, reconciliation = refused
+        target.update(stage="refused", reason=reason, reconciliation=reconciliation,
+                      notes=target_notes((), reconciliation))
+        return
+    if run.signal is not None:
+        target.update(stage="not-attempted", reason="interrupted", reconciliation=None)
+        return
+    # The seam before the spawn: the slot first; US6's T099 checks the removal
+    # floor here, after it (lead ruling R-83, P-15).
+    outcome = run_removal(target, run)
+    run.phase = "reconciling"
+    target["reconciliation"] = reconciliation = rescan(target, run)
+    stage, reason, notes = decide_stage(target, outcome, reconciliation)
+    target.update(stage=stage, reason=reason, notes=target_notes(notes, reconciliation))
+
+
+def best_effort(write, *args):
+    """Call write(*args), one of the apply phase's renderings: a progress
+    line, the human result, or the apply result record. An Exception there
+    changes no stage, since a proven removal stays proven, and no exit
+    status, which D19 has decided already (T093; lead ruling R-83, P-8); the
+    rendering is dropped and the run goes on. A failed write is say()'s and
+    write_document()'s to record, never raised (lead ruling R-55, P-9)."""
+    try:
+        write(*args)
+    except Exception:
+        pass
+
+
 def apply_removals(plan, run):
-    """Remove the plan's selected worktrees (T057; design D7, D9 and D19;
-    contracts/project-clean.md, "Order of a run", step 8): called in phase
-    `apply`, which the pipeline sets, never this function (lead ruling R-56).
-    Per selected row, in canonical order: its Target (make_target()); its
-    revalidation (revalidate()), a difference refusing it; otherwise its
-    removal child, spawned and waited for (run_removal()), the rescan
-    (rescan()) and its stage (decide_stage()). The batch stops after the
-    first target that is not a plain `removed` (reason null), and every later
-    target is `not-attempted` with `batch-stopped` and no reconciliation.
-    Each target's progress line prints at its final stage (print_progress()),
-    then the result (print_result()), every human line through say() to
-    run.human, standard error under --apply --json; under --apply --json the
-    apply result record then goes to standard output through
-    write_document(). After the apply phase begins every write is
-    best-effort (lead ruling R-55): a failed one is recorded, never raised,
-    and never changes the exit. Returns apply_exit_status(targets,
-    run.signal), D19's table, whose first row reads the slot. T093 adds the
-    slot's seams, the reserve and the handling of an exception; T084 and T085
-    the targeted revalidation and rescan."""
+    """Remove the plan's selected worktrees (T057, T093; design D7, D9, D15
+    and D19; contracts/project-clean.md, "Order of a run", step 8): called in
+    phase `apply`, which the pipeline sets after its own read of the slot
+    (lead ruling R-56). Per selected row, in canonical order, its Target
+    (make_target()); then:
+
+    - the seam before its revalidation: a signal in the slot makes it, and
+      every later target, `not-attempted` with `interrupted` and no
+      reconciliation (D15; pcl:931-935); otherwise, once the batch has
+      stopped, `not-attempted` with `batch-stopped`;
+    - otherwise its own steps (remove_target()) in phase `apply`, set again
+      here after the previous target's rescan: D7's targeted revalidation
+      (T084), the seam before the spawn, the removal, never signalled and
+      waited for up to its ceiling (T092), then the rescan in phase
+      `reconciling`, within the reserve, whose three repository children
+      serve as the next target's steps 1 to 4 after a plain `removed` (T085;
+      lead ruling R-83, P-3), and the stage and notes;
+    - an Exception while handling it, after any removal in flight has been
+      waited for (run_bounded()'s _settle()), makes it `unknown` with
+      `internal-error`, its record the rescan's when one was read and every
+      field null otherwise, and later targets `not-attempted` (plan review
+      M2; pcl:938-941; research.md R6). Interrupted, a second SIGINT while
+      reconciling, never leaves the rescan.
+
+    The batch stops after the first target that is not a plain `removed`
+    (reason null). Each target's progress line prints at its final stage
+    (print_progress()), then the result (print_result()), every human line
+    through say() to run.human, standard error under --apply --json, and
+    under --apply --json the apply result record then goes to standard
+    output through write_document(): each rendering best-effort
+    (best_effort()), so the record is printed whatever stopped the batch.
+    Returns apply_exit_status(targets, run.signal), D19's table, whose first
+    row reads the slot."""
     targets = [make_target(plan, row) for row in plan.selected or ()]
     stopped = False
     for target in targets:
-        if stopped:
+        if run.signal is not None:
+            target.update(stage="not-attempted", reason="interrupted", reconciliation=None)
+        elif stopped:
             target.update(stage="not-attempted", reason="batch-stopped", reconciliation=None)
         else:
-            refused = revalidate(plan, target, run)
-            if refused is not None:
-                reason, reconciliation = refused
-                target.update(stage="refused", reason=reason, reconciliation=reconciliation)
-            else:
-                outcome = run_removal(target, run)
-                reconciliation = rescan(target, run)
-                stage, reason, notes = decide_stage(target, outcome, reconciliation)
-                target.update(stage=stage, reason=reason, notes=list(notes), reconciliation=reconciliation)
+            run.phase = "apply"
+            try:
+                remove_target(plan, target, run)
+            except Exception:
+                reconciliation = target["reconciliation"] or reconciliation_record(None, None, None, None)
+                target.update(stage="unknown", reason="internal-error", reconciliation=reconciliation,
+                              notes=target_notes((), reconciliation))
             stopped = not (target["stage"] == "removed" and target["reason"] is None)
-        print_progress(target, run)
+        best_effort(print_progress, target, run)
     status = apply_exit_status(targets, run.signal)
-    print_result(plan, targets, run)
+    best_effort(print_result, plan, targets, run)
     if getattr(run.args, "json", False):
         estimated = getattr(plan, "planning_probes", 0) + 5 * len(targets) + 3
-        write_document(result_document(
+        best_effort(lambda: write_document(result_document(
             targets, status, repository=getattr(plan, "repository", None), merge_target=plan.merge_target,
             plan_digest=plan.digest, probes={"estimated": estimated, "performed": run.probes},
-            operations={"estimated": len(targets), "performed": run.operations}))
+            operations={"estimated": len(targets), "performed": run.operations})))
     return status
 # endregion apply
 
