@@ -702,6 +702,23 @@ class ResultTests(clean_support.CleanCase):
                 self.assertEqual(self.head(root, "refs/heads/" + NAMES[0]), planned[0], "the branch is kept")
                 # Neither a signal nor the deadline came: no wait line.
                 self.assertNotIn("Waiting for git worktree remove", result.stderr)
+                # T094's recovery text on the partially-removed target, once,
+                # first in the result, before the stop block (pcl:925-926; lead
+                # rulings R-79 P-11 and R-83 P-2); none once both are gone.
+                lines = result.stderr.splitlines()
+                note = TEXT["partial_removal_note"].format(PATH=quoted(trees[0]))
+                stop = TEXT["stop_block"].format(PATH=trees[0], REASON="removal-ceiling",
+                                                 K=0 if mode == "hang" else 1, N=2, NOT_ATTEMPTED=trees[1],
+                                                 ROOT=quoted(root))
+                self.assertIn(stop, lines)
+                if mode == "hang":
+                    self.assertEqual(lines.count(note), 1, result.stderr)
+                    self.assertLess(lines.index(note), lines.index(stop))
+                    self.assertEqual(note, "Probable partial removal: inspect, then git worktree remove --force "
+                                           f"{quoted(trees[0])} by hand.")
+                else:
+                    self.assertNotIn(note, lines)
+                    self.assertFalse(any(line.startswith("Probable partial removal:") for line in lines))
 
     @clean_support.not_root
     def test_clean_unreadable_path_after_removal(self):
