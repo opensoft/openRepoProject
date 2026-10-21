@@ -7,7 +7,13 @@ terminal on 2026-10-21, from about 09:15Z to 09:36Z. Lead ruling R-50 says
 the lead runs them through tmux and no subagent dispatches them.
 
 - Code under test: `project` at e48de37. Every code lane is merged there, and
-  its `project` equals c813869's.
+  its `project` equals c813869's. The code has moved since: the push fix, Q9
+  B's trace names, Brett Heap's rulings LQ-10, LQ-11, LQ-12, LQ-14 and LQ-15,
+  and the fix lanes landed after it (`cceb6d7` is 004's head now). Lane 3's
+  W24 walked three of these entries again at 2439838 (the US1 apply rows, the
+  US3 rows at "push remote-gone", "push `--json`" and the named removal, and
+  the US9 rows), and each still matched; the other rows were walked at
+  e48de37 only (lead ruling R-174, O-1).
 - Terminal: a tmux pane (a pseudo-terminal) in the py-bench container, with
   bash 5.2.21 (history expansion off, `set +H`), Git 2.43.0 and Python 3.12.3.
 - Fixture: quickstart.md's "Set up a fixture for hand runs (bash)",
@@ -49,7 +55,7 @@ defect is recorded against the tasks.
 
 | Run | Observed | Verdict |
 | --- | --- | --- |
-| `--apply --action remove --worktree "$W/a" --yes --json` | one document: `exit_code` 0, one target `removed`, whose `command` is the pinned vector (`git`, the eleven `-c` pins, `-C` ROOT, `worktree remove` PATH); the plan on standard error; branch a kept | MATCH |
+| `--apply --action remove --worktree "$W/a" --yes --json` | one document: `exit_code` 0, one target `removed`, whose `command` is the pinned vector (`git`, its `-c` pins, `-C` ROOT, `worktree remove` PATH): ten pins at e48de37, `status.showUntrackedFiles=normal`, the two status pins and the seven protocol pins, where this record first said eleven, and twelve at 2439838, with LQ-10's `core.trustctime=true` and `core.checkStat=default` after `core.fsmonitor=false` (lane 3's W24; lead ruling R-174, L-2); the plan on standard error; branch a kept | MATCH |
 | `--apply --action remove --worktree "$W/a" < /dev/null` | `Selected (1):` with `$W/a`; `not-requested (3): name it with --worktree to plan its removal` over `$W/b`, `$W/c` and `$W/f`; the `Not protected:` line; then the confirmation-required refusal, `exit=2` | MATCH |
 | `--worktree "$T/nowhere" --yes` | `REFUSED: No unique linked worktree found at $T/nowhere`, `exit=2` (worktree-not-found) | MATCH |
 | `--worktree "$W/d" --yes` | `REFUSED: Worktree is dirty; only clean merged worktrees may be removed.`, `exit=2` (target-excluded, the class message) | MATCH |

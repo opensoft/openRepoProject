@@ -213,7 +213,8 @@ upstream is remote-gone"; "Dirty or unmerged work is preserved"; "A merged
 worktree has ignored local files"; "Default branch cannot be established
 locally"; "An edit hidden by assume-unchanged survives"; "A worktree holding a
 submodule is never offered"; "The main worktree and a locked worktree";
-"Pushed feature branch has an open review path".
+"Pushed feature branch has an open review path"; and PR #19's "An operation
+in progress" and "A squash merge that holds an autostash" (LQ-14).
 
 The after-confirmation clauses of "Hidden local state" and "Submodules" are
 exercised by User Story 4, scenario 2.
@@ -287,7 +288,9 @@ removal beside another row's inspection error"; "A named removal among
 seventeen eligible rows"; "A named removal beyond the row cap"; "Remove a
 merged clean worktree"; "Push an unpushed feature branch"; "Push refuses a
 branch whose upstream was deleted"; "Push refuses an incomplete inspection";
-"Push and branch deletion stay human-only".
+"Push and branch deletion stay human-only"; and PR #19's "Push refuses a
+branch it may not push" and "Branch deletion refuses a branch it may not
+delete" (round (a)).
 
 ---
 
@@ -380,7 +383,9 @@ revalidation"; "Changed later target"; "Untracked file under
 status.showUntrackedFiles=no"; "Branch advances before removal"; "Deleted
 upstream reappears before revalidation"; "Git's own check runs on the pinned
 configuration"; "Ignored file in the residual window"; "Branch advances after
-removal"; "Repository replaced mid-batch".
+removal"; "Repository replaced mid-batch"; and PR #19's "An operation started
+after the plan" (LQ-14) and "A check that fails at revalidation" (round
+(a)).
 
 ---
 
@@ -524,7 +529,8 @@ statuses, the child counts and each run's elapsed time.
    classification `dirty`, the plan complete.
 6. **Given** five rows with three selected and a counting `git` wrapper on
    PATH, **When** `--all-safe --apply --yes` runs, **Then** each target's
-   revalidation spawns at most five children, the final rescan three, no
+   revalidation spawns at most five children (six where row 4c read
+   `extensions.worktreeConfig` as true, LQ-11), the final rescan three, no
    merged-set listing and no probe of a non-selected worktree runs after
    confirmation, `status` and `ls-files` children run in their own
    worktree and every other child after resolution, the removals included,
@@ -725,7 +731,9 @@ wrapper's record of every child.
    file `GIT_CONFIG_GLOBAL` names, **When** inspection runs, **Then** a clean
    worktree is classified by the ladder, every probe reads the resolved
    repository and each worktree's own index, inspection succeeds on Git 2.36,
-   and every status and removal child carries the two status pins.
+   and every status and removal child carries the four status pins (the two
+   of the change as ratified and Brett Heap's ruling LQ-10's
+   `core.trustctime=true` and `core.checkStat=default`; lead ruling R-102).
 9. **Given** a partial clone made with `--no-checkout --filter=tree:0` whose
    `remote.origin.uploadpack` names a script that logs each run, **When** a
    status probe runs, also with `GIT_ALLOW_PROTOCOL=file` in the caller's
@@ -737,6 +745,15 @@ wrapper's record of every child.
     `--apply`, **When** doctor or update runs, **Then** doctor reports an
     actionable failure and returns nonzero, and update reports a plan without
     modifying repositories or installing software.
+11. **Given** `HOME` set to the relative `h` over a repository that tracks
+    `h/.gitconfig`, whose clean filter writes a marker file, or
+    `XDG_CONFIG_HOME`, `GIT_CONFIG_GLOBAL` or `GIT_CONFIG_SYSTEM` set to a
+    relative path, **When** `clean`, `status`, `doctor` or `update` runs,
+    **Then** no Git child starts, `git --version` included, and the marker is
+    never written: `clean` refuses with `relative-config-path`, exit 2, after
+    the argument checks; status marks the root `inspection-error` and exits
+    0; doctor reports an `error` row and exits 1; and a shape or bench update
+    refuses with exit 2 (FR-068; Brett Heap's ruling LQ-15).
 
 **Delta scenarios**: "Git older than 2.36"; "Git older than 2.36 in status
 and doctor"; "No git on PATH"; "A failed root status is reported"; "A leg's
@@ -746,7 +763,12 @@ floods standard error"; "A git that ignores SIGTERM"; "Five thousand ignored
 records"; "User status configuration"; "A caller's Git environment is
 ignored"; "The sixteenth scrubbed name on Git 2.36"; "The pinned status
 configuration"; "A lazy fetch in a partial clone is refused locally";
-"Missing leg"; "Default report".
+"Missing leg"; "Default report"; and PR #19's "A relative configuration
+path", "A relative configuration path in status, doctor and update", "Owner
+tools see the repository the check inspected", "A linked worktree whose work
+tree is redirected", "A commondir that names another repository", "An edit
+that keeps its size and restores its mtime" and "Trace targets are never
+written".
 
 ---
 
@@ -811,8 +833,9 @@ configuration"; "A lazy fetch in a partial clone is refused locally";
 - **EC-015**: A value null in the plan and null at revalidation, such as a
   deleted upstream's `upstream_oid`, is no difference; a value that cannot be
   re-read, a timed-out filesystem call included, is one (design D7 and D20).
-- **EC-016**: Ignored files created, or index flags set, after the last
-  revalidation, and any change after Git's own check, are outside the
+- **EC-016**: Ignored files created, index flags set, or operations started
+  (LQ-14), after the last revalidation, and any change after Git's own check,
+  are outside the
   guarantee: such a target is removed, and the residual-window line says so
   (design D7).
 - **EC-017**: A probe stopped at its record bound is complete, never
@@ -838,7 +861,8 @@ configuration"; "A lazy fetch in a partial clone is refused locally";
   stale. Without an apply action it MUST NOT fetch, commit, push, reset,
   stash or remove anything. Traces: "Clean reports local worktree state".
 - **FR-002**: `project clean` MUST run its Git version check before any other
-  Git child and, before any repository is probed, refuse a Git older than
+  Git child, after the configuration-path test of FR-068, and, before any
+  repository is probed, refuse a Git older than
   2.36 with `git-too-old` and a `git` that is missing or unusable with
   `git-unavailable`, exit status 2, printing under `--json` the extended
   error object carrying that code. Traces: "Clean reports local worktree
@@ -930,8 +954,10 @@ configuration"; "A lazy fetch in a partial clone is refused locally";
   work deadline remains, the non-force `git worktree remove` of that path
   from the command directory in its own process group, pinned with
   `status.showUntrackedFiles=normal`, `core.untrackedCache=false`,
-  `core.fsmonitor=false` and the protocol pins of FR-054, as the delta spells
-  the command; wait for it; and reconcile by rescan. Removal MUST stop after
+  `core.fsmonitor=false`, `core.trustctime=true`, `core.checkStat=default`
+  and the protocol pins of FR-054, as the delta spells the command with Brett
+  Heap's ruling LQ-10's two pins (draft PR #19; lead ruling R-102); wait for
+  it; and reconcile by rescan. Removal MUST stop after
   the first target whose result is not a plain `removed`, with no
   continuation, rollback or automatic retry. Traces: "Clean can explicitly
   retire verified worktrees"; design D9.
@@ -1012,9 +1038,10 @@ configuration"; "A lazy fetch in a partial clone is refused locally";
   `locked-worktree`; its classification when not `merged-removable`;
   `not-requested` (an eligible row other than the named one in a
   single-target removal); `unstarted-branch` or `reflog-unavailable`;
-  `deferred-target-cap`; `contains-submodule`; `hidden-local-state`. Traces:
-  "Clean previews and applies a batch of eligible worktree removals in one
-  repository"; design D10 and D12.
+  `deferred-target-cap`; `contains-submodule`; `hidden-local-state`;
+  `operation-in-progress`, Brett Heap's ruling LQ-14 (draft PR #19; lead
+  rulings R-102 and R-121). Traces: "Clean previews and applies a batch of
+  eligible worktree removals in one repository"; design D10, D12 and D22.
 - **FR-021**: The `unstarted-branch` gate MUST read the branch's reflog,
   `logs/refs/heads/<branch>` in the common directory, for every row it checks,
   in every mode, from the filesystem (at most 64 KiB, counted in the filesystem
@@ -1043,9 +1070,18 @@ configuration"; "A lazy fetch in a partial clone is refused locally";
   their own worktree, for `contains-submodule` (any gitlink in the index, or
   a `modules` entry in the worktree's administrative directory) and
   `hidden-local-state` (any index entry flagged assume-unchanged or
-  skip-worktree, sparse checkouts included). Traces: "Clean previews and
-  applies a batch of eligible worktree removals in one repository"; "Cleanup
-  preserves all local work not proven disposable".
+  skip-worktree, sparse checkouts included), and then for
+  `operation-in-progress`: an entry named by one of eleven markers in the
+  worktree's administrative directory, read by one filesystem listing within
+  the filesystem budget and never by a Git child (`MERGE_HEAD`,
+  `CHERRY_PICK_HEAD`, `REVERT_HEAD`, `BISECT_LOG`, `BISECT_START`,
+  `rebase-apply`, `rebase-merge`, `sequencer`, `MERGE_AUTOSTASH`,
+  `NOTES_MERGE_PARTIAL` and `NOTES_MERGE_REF`), a listing that fails or is
+  cut making the row `inspection-error` and the plan incomplete (LQ-14; lead
+  rulings R-124 and R-126). Traces: "Clean previews and applies a batch of
+  eligible worktree removals in one repository"; "Cleanup preserves all local
+  work not proven disposable"; PR #19's "An operation in progress" and "A
+  squash merge that holds an autostash".
 - **FR-024**: `selected` and `excluded` MUST be in canonical order by raw
   path bytes, which is also the execution order. Once a plan is built, an
   incomplete plan MUST be refused first (a preview or report exits 1, and
@@ -1153,8 +1189,10 @@ configuration"; "A lazy fetch in a partial clone is refused locally";
   (`probe_timeout_seconds` 5, `invocation_timeout_seconds` 60,
   `reconciliation_reserve_seconds` 10, `removal_floor_seconds` 5,
   `removal_ceiling_seconds` 300 and `probe_concurrency` 1). Revalidating one
-  target MUST spawn at most five Git children and never recompute the full
-  report, and the final rescan at most three. Traces: "Clean bounds its Git
+  target MUST spawn at most five Git children, six where row 4c read
+  `extensions.worktreeConfig` as true (Brett Heap's ruling LQ-11, draft PR
+  #19), and never recompute the full report, and the final rescan at most
+  three. Traces: "Clean bounds its Git
   work and reports omitted work"; design D7; lead ruling R-27 (Assumptions).
 - **FR-034**: The apply phase MUST begin when the question is answered `yes`
   or `--yes` is accepted, and each selected target MUST end in one stage
@@ -1162,7 +1200,8 @@ configuration"; "A lazy fetch in a partial clone is refused locally";
   registry entry and its path both absent, with `reconciled` true (null,
   `branch-advanced-after-removal`, `branch-missing-after-removal` or
   `removal-ceiling`); `refused` (`identity-changed`, `branch-changed`,
-  `state-changed`, `contains-submodule` or `hidden-local-state`); `failed`
+  `state-changed`, `contains-submodule`, `hidden-local-state` or, by LQ-14,
+  `operation-in-progress`); `failed`
   (`git-refused` for exit status 128, `git-failed` for any other status, which
   is 128 plus the signal number when a signal that `project` did not send ended
   the child, or `spawn-error`); `unknown`, where a child ran or an exception
@@ -1201,7 +1240,10 @@ configuration"; "A lazy fetch in a partial clone is refused locally";
   began MUST make that target `unknown` with `internal-error` and later targets
   `not-attempted`, and one before it MUST refuse with `internal-error`, exit 2.
   An `unknown` or `failed` target MUST NOT be retried automatically, and
-  `project` MUST never force a removal or delete a directory itself. Traces:
+  `project` MUST never force a removal or delete a directory itself. A
+  signal the caller ignored on entry (`SIG_IGN`, as under `nohup`) stays
+  ignored in every scope, as the baseline left it, so this requirement does
+  not reach it (lead ruling R-101 (b), the runner review's F2). Traces:
   "Clean records a reconcilable result for every removal target"; design D15.
 - **FR-037**: A run with `--apply` MUST exit with the first matching row: 130,
   143 or 129 when a signal was received, the first deciding, or 130 when
@@ -1264,7 +1306,8 @@ configuration"; "A lazy fetch in a partial clone is refused locally";
   and `notes`. Traces: "Clean plans and refusals are versioned JSON".
 - **FR-043**: Refusals and row errors MUST be `{code, message, path?,
   path_valid_utf8?, reason?}` objects with a stable kebab-case `code` from
-  the eighteen refusal codes the delta lists, and plan, target and row notes
+  the nineteen refusal codes, the eighteen the delta lists and FR-068's
+  `relative-config-path`, and plan, target and row notes
   MUST use only the codes the delta lists for each. A resolve refusal MUST
   print the extended error object, and a plan or select refusal the plan with
   `apply_allowed: false`. Null MUST mean unknown or not established, never a
@@ -1286,7 +1329,8 @@ configuration"; "A lazy fetch in a partial clone is refused locally";
   detached state, an unknown default branch, remote divergence, the main
   worktree, a locked worktree, `contains-submodule`, `hidden-local-state`,
   `registration-mismatch`, `unsupported-path-bytes`, `unstarted-branch`,
-  `reflog-unavailable` and `inspection-error` (a path that cannot be read or
+  `reflog-unavailable`, `operation-in-progress` (LQ-14) and
+  `inspection-error` (a path that cannot be read or
   state that could not be established). A value that is not established MUST
   be null, never false or 0, and MUST keep its row out of every removal.
   Traces: "Cleanup preserves all local work not proven disposable".
@@ -1295,7 +1339,9 @@ configuration"; "A lazy fetch in a partial clone is refused locally";
   its state no longer matches the reviewed plan; for a removal, that MUST hold
   at the revalidation immediately before each spawn. A removal MUST be
   revalidated by a targeted check, never the full report, of at most five Git
-  children, a fresh manifest read and the `modules` check, in the delta's order
+  children (six where row 4c read true, LQ-11), a fresh manifest read, the
+  `modules` check and LQ-14's listing of the administrative directory, in
+  the delta's order
   and stopping at the first difference, comparing the recorded repository
   identity, the target's worktree identity and two-way registration, its branch
   evidence, every baseline signature field (the row's `path`, `branch`, `head`,
@@ -1308,8 +1354,10 @@ configuration"; "A lazy fetch in a partial clone is refused locally";
   later target and exit 2, with `identity-changed` (an identity or
   registration difference, or a missing registry entry), `branch-changed` (a
   different branch name or head), `state-changed` (any other signature, lock,
-  manifest or merge-target difference), `contains-submodule` (a new gitlink or
-  `modules` entry) or `hidden-local-state` (a newly flagged index entry). A
+  manifest or merge-target difference, and by LQ-14 a listing of the
+  administrative directory that fails or is cut), `contains-submodule` (a new
+  gitlink or `modules` entry), `hidden-local-state` (a newly flagged index
+  entry) or `operation-in-progress` (a marker, LQ-14). A
   value null in the plan and null at revalidation MUST NOT count as a
   difference, and a value that cannot be re-read, a timed-out filesystem call
   included, MUST. The first target's repository-wide checks MUST serve as the
@@ -1325,9 +1373,10 @@ configuration"; "A lazy fetch in a partial clone is refused locally";
   guarantee MUST be that a removal child is spawned only if, at the
   revalidation immediately before it, every value FR-046 compares, the
   absence of submodules and of hidden local state in the target's own index
-  included, equals the confirmed plan's. Ignored files created and index
-  flags set after that revalidation, and any change after Git's own check,
-  MUST be outside the contract, and the confirmation and the result MUST each
+  included, and by LQ-14 no operation in progress, equals the confirmed
+  plan's. Ignored files created, index flags set and operations started
+  after that revalidation, and any change after Git's own check, MUST be
+  outside the contract, and the confirmation and the result MUST each
   state that residual window in one line. Traces: "Cleanup states a narrow
   guarantee and its residual window"; design D7.
 - **FR-049**: The removal path, `--all-safe --apply` and `--action remove`,
@@ -1343,16 +1392,17 @@ configuration"; "A lazy fetch in a partial clone is refused locally";
 - **FR-050**: Status and doctor MUST keep their human and JSON reports for
   single repositories, project manifests, families, worktrees and local
   tooling, show missing or malformed state, and never fetch, reset or
-  bootstrap. They MUST inspect Git repositories through the evidence model
-  and MUST NOT refuse for Git's version or for a repository they cannot
-  inspect: doctor MUST report an old, missing or unusable Git as an `error`
-  check row naming `git-too-old` or `git-unavailable`, keeping its exit rule
-  for error rows; status MUST mark each root, leg or worktree row it cannot
-  inspect `inspection-error`; a directory with no `.git` MUST keep `present:
-  false` with no version check; and a root or leg whose state cannot be
-  established, a failed or timed-out status probe included, MUST be a
-  row-level `inspection-error`, never an exit 2. Traces: "Inspect and
-  diagnose"; design D16.
+  bootstrap. They MUST inspect Git repositories through the evidence model and
+  MUST NOT refuse for Git's version or for a repository they cannot inspect:
+  doctor MUST report an old, missing or unusable Git, or a configuration path
+  that fails FR-068's test, as an `error` check row naming `git-too-old`,
+  `git-unavailable` or `relative-config-path`, keeping its exit rule for error
+  rows; status MUST mark each root, leg or worktree row it cannot inspect
+  `inspection-error`; a directory with no `.git` MUST keep `present: false`
+  with no version check; and a root or leg whose state cannot be established, a
+  failed or timed-out status probe included, MUST be a row-level
+  `inspection-error`, never an exit 2. Traces: "Inspect and diagnose"; design
+  D16.
 - **FR-051**: In status and doctor JSON, which stays unversioned, a root or
   leg that could not be inspected MUST carry `classification:
   "inspection-error"` and an `errors` list of refusal-shaped objects, with
@@ -1376,27 +1426,36 @@ configuration"; "A lazy fetch in a partial clone is refused locally";
   MUST refuse unless the root's and every child's `dirty` are exactly false,
   a null `dirty` refusing as dirty work does and the owner tool never
   invoked, while `--component tools` or `--component workflow` MUST NOT
-  require Git. Traces: "Explicit maintenance"; design D16.
+  require Git. Every owner tool that `update --apply` runs MUST get the push
+  child's scrub, every one of the thirty-one names of FR-054 but
+  `GIT_ALLOW_PROTOCOL` removed and nothing added, so that it acts on the
+  repository the check inspected (Brett Heap's ruling LQ-12; draft PR #19's
+  "Owner tools see the repository the check inspected"; lead rulings R-102
+  and R-111). Traces: "Explicit maintenance"; design D16.
 - **FR-053**: Every subcommand that inspects a Git repository MUST use one
-  evidence model, running `git --version` once per invocation and inspecting
+  evidence model, running `git --version` once per invocation, after
+  FR-068's configuration-path test, and inspecting
   no repository with a Git older than 2.36 (`git-too-old`) or a `git` that is
   missing, fails, times out or prints an unparseable version
   (`git-unavailable`); whether it then refuses or reports is its own
   requirement's rule (FR-002, FR-050). Traces: "Repository inspection
   requires Git 2.36 and shares one evidence model"; design D17.
 - **FR-054**: Every Git child MUST run in its own process group with the
-  seventeen variables the delta lists removed from its environment,
-  unconditionally and from a fixed list never queried from Git (the fifteen
-  that `git rev-parse --local-env-vars` prints on Git 2.40 and later,
-  `GIT_INTERNAL_SUPER_PREFIX` and `GIT_ALLOW_PROTOCOL`); read-only probes
-  MUST set `GIT_OPTIONAL_LOCKS=0`; every status probe MUST pin
-  `core.untrackedCache=false` and `core.fsmonitor=false`; and every Git
-  child, of every kind, MUST pin `protocol.allow=never` and the six
+  thirty-one variables listed removed from its environment, unconditionally and
+  from a fixed list never queried from Git: the seventeen the delta lists (the
+  fifteen that `git rev-parse --local-env-vars` prints on Git 2.40 and later,
+  `GIT_INTERNAL_SUPER_PREFIX` and `GIT_ALLOW_PROTOCOL`) and the fourteen trace
+  names of Brett Heap's ruling Q9 B, with `GIT_TRACE2`, `GIT_TRACE2_EVENT` and
+  `GIT_TRACE2_PERF` set to `0` (draft PR #19; lead ruling R-99 (b) and (d));
+  read-only probes MUST set `GIT_OPTIONAL_LOCKS=0`; every status probe, the
+  hidden-state probe and the removal MUST pin `core.untrackedCache=false`,
+  `core.fsmonitor=false`, `core.trustctime=true` and `core.checkStat=default`,
+  the last two Brett Heap's ruling LQ-10 (draft PR #19; lead ruling R-102); and
+  every Git child, of every kind, MUST pin `protocol.allow=never` and the six
   per-protocol `allow=never` settings (`file`, `ssh`, `git`, `http`, `https`
-  and `ext`), so that a lazy fetch in a partial clone fails locally and its
-  row is `inspection-error`, never a network call. Traces: "Repository
-  inspection requires Git 2.36 and shares one evidence model"; design D6 and
-  D11.
+  and `ext`), so that a lazy fetch in a partial clone fails locally and its row
+  is `inspection-error`, never a network call. Traces: "Repository inspection
+  requires Git 2.36 and shares one evidence model"; design D6 and D11.
 - **FR-055**: A worktree probe MUST run in that worktree, against its own
   index, only after its identity was verified immediately before;
   repository-wide probes MUST run in the main worktree, except the identity
@@ -1415,10 +1474,21 @@ configuration"; "A lazy fetch in a partial clone is refused locally";
   and be `inspection-error`; an `lstat` that fails because the path does not
   exist (`ENOENT` or `ENOTDIR`) MUST give `present: false`, and any other
   failure `present: null`, an `os-error`, `inspection-error` and no probe.
+  By Brett Heap's ruling LQ-11 and its amendments (draft PR #19; lead rulings
+  R-102, R-113 and R-125), the registration MUST also require the admin
+  directory's `commondir` file to name the common directory, and where row
+  4c reads `extensions.worktreeConfig` as true, or could not read it, each
+  linked row's effective work tree, probed in it by `rev-parse
+  --path-format=absolute --show-toplevel`, MUST be its own path, or the row is
+  `registration-mismatch`, unprobed; and the identity MUST be read again
+  immediately before each row's status probe (lane 3's F3; lead ruling R-101
+  (e)).
   Traces: "Repository inspection requires Git 2.36 and shares one evidence
   model"; design D6 and D7.
 - **FR-056**: Once per common directory, the model MUST run the identity
-  probe, the registry listing, one ref listing over local and
+  probe, the registry listing, row 4c's read of `extensions.worktreeConfig`
+  from the common directory's own `config` (LQ-11, draft PR #19), one ref
+  listing over local and
   remote-tracking refs carrying each ref's name, object, symref, upstream,
   upstream short name and track, and the merged set of local branches
   against the merge target's SHA; and for each present, registration-verified
@@ -1523,6 +1593,26 @@ configuration"; "A lazy fetch in a partial clone is refused locally";
   PATH, beside the existing jobs; a test that needs Git 2.36 itself, such
   as "The sixteenth scrubbed name on Git 2.36", runs in that job and is
   skipped elsewhere with that reason. Traces: design D17.
+- **FR-068**: Before any Git child, `git --version` included, `clean`,
+  `status`, `doctor` and `update` MUST test `HOME` and `XDG_CONFIG_HOME`,
+  and the lead's extension `GIT_CONFIG_GLOBAL` and `GIT_CONFIG_SYSTEM`, which
+  Brett Heap may strike, each on its raw bytes: a value that is not empty
+  and whose first byte is not `/` fails, so that Git never reads a
+  repository's own files as the user's configuration. `clean` MUST then
+  refuse, after the argument checks and in every mode, with
+  `relative-config-path`, exit 2, D18's line `NAME is set to a path that does
+  not begin with /; make it absolute or unset it.` for each failing variable
+  and never its value, and under `--json` the extended error object carrying
+  that code; `status` MUST mark the root `inspection-error` with that code and
+  exit 0; `doctor` MUST report it as an `error` check row and exit 1; and
+  `update --apply --component shape` or `bench` MUST refuse with exit 2,
+  invoking no owner tool, while `tools` and `workflow` run as before; none of
+  them starts a Git child. Traces: "Clean reports local worktree state" ("A
+  relative configuration path"); "Repository inspection requires Git 2.36
+  and shares one evidence model" ("A relative configuration path in status,
+  doctor and update"), both in draft PR #19; design D11, D16 and D18; Brett
+  Heap's ruling LQ-15 ("LQ-15: yes, refuse relative HOME like #29"; lead
+  rulings R-102 and R-173).
 
 ### Key Entities *(include if feature involves data)*
 

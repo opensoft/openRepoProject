@@ -1023,7 +1023,7 @@ class PushTests(clean_support.CleanCase):
 
     def assert_children(self, records, pid, root, branch, kept=()):
         """The push child alone: the vector shown, no pin, project's process
-        group, the seventeen names removed but those kept; every other child:
+        group, the thirty-one names removed but those kept; every other child:
         the seven pins, its own process group, no scrubbed name. Returns the
         push child's record."""
         [push] = pushes(records)
