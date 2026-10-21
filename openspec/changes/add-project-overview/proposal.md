@@ -1248,7 +1248,7 @@ Each carried answer, with what it amends and where:
 Not carried, since each changes only spec 005 and builds this change as
 ratified: Q1 A, Q2 A, Q5 A, Q10 A and Q14 A.
 
-Three items of A1's own follow from change 1's amendments in draft PR #19,
+Four items of A1's own follow from change 1's amendments in draft PR #19,
 not from Q1-Q17. Their basis is Brett Heap's ruling, in lane
 openRepoProject-3's session on 2026-10-21, "yes to all six recommendations,
 LQ-10 to LQ-15", which that lane recorded as a NOTED line at 12:33:41Z:
@@ -1265,7 +1265,7 @@ own ratification; PR #19's tip is `1ebdd90`, and its rulings R-124
 lands only with or after PR #19's ratification of the commits it follows, and
 is re-aligned before A1 is ratified if one of those commits changes first. So
 PR #34 does not merge before that ratification; if Brett Heap wants it to land
-sooner, the three items move to a later amendment of this change, and A1 lands
+sooner, the four items move to a later amendment of this change, and A1 lands
 without them. Each item is declared here for Brett Heap's review:
 
 - **`relative-config-path` (LQ-15; PR #19 at `cc000ea` and `9fb22fa`), a
@@ -1374,6 +1374,29 @@ without them. Each item is declared here for Brett Heap's review:
   (POD:84), with no Git child and no task or count of its own; the one text
   amended for it is D8's per-row task, which names its reads and now names
   the `commondir` file (design.md:461-462). Spec 005 carries the parity.
+- **The stat pins (LQ-10, PR #19 at `ea697ba`; its pointer at `93f3194`), a
+  restatement.** PR #19 adds `-c core.trustctime=true -c
+  core.checkStat=default` after `-c core.fsmonitor=false` on every status
+  probe, and on its hidden-state probe and removal, because Git compares a
+  file's ctime only while both settings keep these values, so that under a
+  repository's `core.trustctime=false` or `core.checkStat=minimal` an edit
+  that keeps a file's size and restores its mtime would read unchanged. The
+  overview's status probe takes the four pins through [E], by citation; the
+  overview runs no hidden-state probe and no removal. This change quoted [E]'s
+  status pins as the two older ones, quotes that PR #19 at `93f3194` calls
+  stale after LQ-10 and this change's to restate (its Dependencies and
+  Sequencing). Amended: requirement 3's quote (POD:202-204) and design D13's
+  (design.md:650-652), each now `-c core.untrackedCache=false -c
+  core.fsmonitor=false -c core.trustctime=true -c core.checkStat=default` on a
+  status probe. D13's fixture-rewrite item (design.md:664-665) keeps its
+  words: it names the two pins that disarm a `core.fsmonitor` hook, which [E]
+  still passes on every status probe. PR #19 at `93f3194` changes no pin; it
+  adds a precondition to the scenario "An edit that keeps its size and
+  restores its mtime" (lane openRepoProject-3's W9 L1). No packet line quotes
+  the two older pins: the packet gives the status probe's argv with no `-c`
+  pin (DI:396, DI:1181), so no departure is declared. PR #19 accepts that the
+  two new pins make a probe slower, never wrong, where ctimes or inodes change
+  without an edit (its design Risks).
 
 Q15 A and Q16 B together: the handlers only record the signal wherever a
 child can run, and Q15 A's raising span, feature 004's `raising_signals` (its
@@ -1398,10 +1421,11 @@ with the route and the alternative each takes above; LQ-11's counted reads
 and its conflict sites: the collector table's two exceptions to
 `probe-failed`, the second phase's effective-work-tree read, and design D8's
 toplevel realpath task with its outcomes and the `commondir` read in its
-per-row task; the merge order, under which PR #34 does not merge before PR
-#19's ratification of the commits its three LQ items follow, unless Brett
-Heap moves those items to a later amendment; and the open point M1. All of
-A1 stays drafted, not ratified.
+per-row task; LQ-10's four stat pins, restated where this change quoted two;
+the merge order, under which PR #34 does not merge before PR #19's
+ratification of the commits its four LQ items follow, unless Brett Heap moves
+those items to a later amendment; and the open point M1. All of A1 stays
+drafted, not ratified.
 
 The changes that carry this change's requirements in MODIFIED blocks are to
 re-align them to A1's text: lane openRepoProject-5's

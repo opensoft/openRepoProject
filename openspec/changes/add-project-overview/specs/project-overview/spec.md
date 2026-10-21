@@ -219,7 +219,7 @@ defines. Every Git child SHALL also run with
 `-c protocol.allow=never -c protocol.file.allow=never -c protocol.ssh.allow=never -c protocol.git.allow=never -c protocol.http.allow=never -c protocol.https.allow=never -c protocol.ext.allow=never`,
 pinned beside the environment and the status pins that requirement defines
 (`GIT_OPTIONAL_LOCKS=0`, and on a status probe
-`-c core.untrackedCache=false -c core.fsmonitor=false`), because Git 2.43
+`-c core.untrackedCache=false -c core.fsmonitor=false -c core.trustctime=true -c core.checkStat=default`), because Git 2.43
 has no `GIT_NO_LAZY_FETCH`: without the pins a read-only probe in a partial
 clone could fetch missing objects from the network, and with them that fetch
 fails locally, so the failed probe is recorded as `probe-failed` on its row,

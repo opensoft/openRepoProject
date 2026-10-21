@@ -688,7 +688,7 @@ change 1's commit of the same title. No item stays open.
 - Pins: every Git child runs with
   `-c protocol.allow=never -c protocol.file.allow=never -c protocol.ssh.allow=never -c protocol.git.allow=never -c protocol.http.allow=never -c protocol.https.allow=never -c protocol.ext.allow=never`
   beside the pins [E] defines (`GIT_OPTIONAL_LOCKS=0`, and on a status probe
-  `-c core.untrackedCache=false -c core.fsmonitor=false`), and [E] carries
+  `-c core.untrackedCache=false -c core.fsmonitor=false -c core.trustctime=true -c core.checkStat=default`), and [E] carries
   the same pins (R-23, R-25). Git 2.43 has no `GIT_NO_LAZY_FETCH`, so a
   read-only probe in a partial clone could fetch missing objects from the
   network; with the pins that fetch fails locally, the failed probe is
