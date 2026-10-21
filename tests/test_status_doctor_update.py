@@ -15,8 +15,10 @@ import errno
 import json
 import os
 from pathlib import Path
+import shlex
 import signal
 import subprocess
+import sys
 import unittest
 
 import clean_support
@@ -29,7 +31,8 @@ PINS = ["-c", "protocol.allow=never", "-c", "protocol.file.allow=never",
         "-c", "protocol.ssh.allow=never", "-c", "protocol.git.allow=never",
         "-c", "protocol.http.allow=never", "-c", "protocol.https.allow=never",
         "-c", "protocol.ext.allow=never"]
-STATUS_PINS = ["-c", "core.untrackedCache=false", "-c", "core.fsmonitor=false"]
+STATUS_PINS = ["-c", "core.untrackedCache=false", "-c", "core.fsmonitor=false",
+               "-c", "core.trustctime=true", "-c", "core.checkStat=default"]
 
 # The status, doctor and update texts this change keeps or adds outside TEXT.
 CANCELLED = "Cancelled."
@@ -45,8 +48,9 @@ NO_IDENTITY = "no GitHub repository identity to match a parked record"
 TOO_OLD = TEXT["inspection_git_too_old"].format(VERSION="2.35.0")
 NOT_FOUND = TEXT["inspection_git_unavailable"].format(DETAIL=TEXT["git_unavailable_not_found"])
 
-# The commands status, doctor and update run, all read-only probes (D6).
-READ_ONLY = {"--version", "rev-parse", "worktree", "for-each-ref", "status", "remote"}
+# The commands status, doctor and update run, all read-only probes (D6), row
+# 4c's `config --file ... --get` among them (Brett Heap's ruling LQ-11).
+READ_ONLY = {"--version", "rev-parse", "worktree", "config", "for-each-ref", "status", "remote"}
 
 
 def real_version():
@@ -406,6 +410,30 @@ class StatusDoctorUpdateTests(clean_support.CleanCase):
                              [{"level": "error", "check": str(leg),
                                "detail": "inspection-error (os-error): " + message}])
 
+    def test_status_a_leg_manifest_that_does_not_load_reads_as_one_that_does_not_parse(self):
+        # Lane 3's US7/US9 M-1, lead ruling R-101 (e); pc "Inspect and
+        # diagnose": status and doctor "SHALL NOT refuse for ... a repository
+        # they cannot inspect". Every inspected repository's manifest is now
+        # read for its merge target, a leg's included, and PyYAML raises
+        # ValueError, not a YAMLError, for an impossible date. status, doctor
+        # and update treat that manifest exactly as one that does not parse,
+        # where c9103ba printed a traceback and exited 1.
+        root = self.project("Atlas", [("spec", "spec")])
+        leg = self.repo("Atlas/spec")
+        manifest = leg / "project.yaml"
+        runs = {}
+        for label, text in (("does not parse", "kind: [unclosed\n"),
+                            ("does not load", "kind: project-manifest\nreleased: 2021-02-30\n")):
+            manifest.write_text(text)
+            for name in ("status", "doctor", "update"):
+                result = self.run_cli(name, root, "--json")
+                runs[label, name] = (result.returncode, result.stdout, result.stderr)
+        for name in ("status", "doctor", "update"):
+            with self.subTest(command=name):
+                self.assertNotIn("Traceback", runs["does not load", name][2])
+                self.assertEqual(runs["does not load", name], runs["does not parse", name])
+        self.assertEqual([runs["does not load", name][0] for name in ("status", "update")], [0, 0])
+
     @clean_support.linux_paths
     def test_status_json_paths_carry_their_flags(self):
         # FR-051, analyze M4, lead ruling R-9: `path_valid_utf8` beside every
@@ -651,6 +679,73 @@ class StatusDoctorUpdateTests(clean_support.CleanCase):
         for record in (workflow, shape, tools):
             self.assertFalse(record.exists(), f"{record.name}: nothing was installed or run")
         self.assertEqual(self.git(root, "status", "--porcelain", "--ignored"), before)
+
+    # Lead ruling R-102 (LQ-12, approved by Brett Heap): the owner tools'
+    # environment, change 1's amendment at eae1a79.
+
+    def test_update_owner_tools_see_the_repository_the_check_inspected(self):
+        # Change 1's "Explicit maintenance" as amended for LQ-12 at eae1a79,
+        # and lane 3's F5 M-3: the clean-checkout check reads the project's
+        # own repository, and every owner tool update then runs gets the
+        # caller's environment with every scrubbed name but GIT_ALLOW_PROTOCOL
+        # removed, as the push child has them removed, and nothing added, so
+        # it cannot act on a repository other than the one checked. GIT_DIR,
+        # GIT_WORK_TREE and GIT_INDEX_FILE name another repository, which
+        # holds work (so a check of it would refuse), GIT_ALLOW_PROTOCOL is
+        # `file`, and every other scrubbed name is set but the trace names,
+        # which the caller leaves unset; a mark outside Git's names shows that
+        # the rest of the caller's environment still reaches the tools. Shape's
+        # update-shape.py, run for its check and then its apply, and the
+        # workflow tool on PATH each log their arguments and environment, one
+        # JSON line per run.
+        other = self.repo("other")
+        (other / "work.txt").write_text("work to preserve")
+        root = self.project("Atlas", [("spec", "spec")])
+        self.repo("Atlas/spec")
+        self.commit(root)  # the manifest, and the leg as a gitlink: a clean root
+        dump = ("import json, os, sys\n"
+                "with open(sys.argv[1], 'a') as stream:\n"
+                "    stream.write(json.dumps({'argv': sys.argv[2:], 'env': dict(os.environ)}) + '\\n')\n")
+        bin_dir = self.fake_bin()
+        workflow_log = bin_dir / "setup-openspeckit.runs"
+        tool = bin_dir / "setup-openspeckit"
+        tool.write_text(f"#!/bin/sh\nexec {shlex.quote(sys.executable)} -I -S -c {shlex.quote(dump)} "
+                        f"{shlex.quote(str(workflow_log))} \"$@\"\n")
+        tool.chmod(0o755)
+        shape = self.base / "shape"
+        shape.mkdir()
+        shape_log = shape / "update-shape.py.runs"
+        (shape / "update-shape.py").write_text(f"import sys\nsys.argv[1:1] = [{str(shape_log)!r}]\n{dump}")
+        caller = {name: "set-by-the-caller" for name in clean_support.SCRUBBED_NAMES
+                  if not name.startswith("GIT_TRACE")}
+        caller.update(GIT_DIR=str(other / ".git"), GIT_WORK_TREE=str(other),
+                      GIT_INDEX_FILE=str(other / ".git" / "index"), GIT_ALLOW_PROTOCOL="file",
+                      CALLER_MARK="kept")
+        env = {**self.path_first(bin_dir), **caller}
+        unset = ("GIT_OPTIONAL_LOCKS", "GIT_TRACE2", "GIT_TRACE2_EVENT", "GIT_TRACE2_PERF")
+        self.assertEqual([name for name in unset if name in env], [], "the caller sets none of these")
+        runs = (
+            ("shape", ("--component", "shape", "--shape-source", shape, "--at", "a" * 40), shape_log,
+             [["check", "--root", str(root), "--at", "a" * 40],
+              ["apply", "--root", str(root), "--at", "a" * 40, "--branch", "shape/update-" + "a" * 12]]),
+            ("workflow", ("--component", "workflow"), workflow_log, [["--repo", str(root)]]),
+        )
+        for component, extra, log, expected in runs:
+            with self.subTest(component=component):
+                result = self.run_cli("update", root, "--apply", *extra, "--yes", env=env)
+                self.assert_status(result, 0)  # the check passed: it read the project's own repository
+                logged = [json.loads(line) for line in log.read_text().splitlines()]
+                self.assertEqual([entry["argv"] for entry in logged], expected)
+                for entry in logged:
+                    tool_env = entry["env"]
+                    self.assertEqual([name for name in clean_support.SCRUBBED_NAMES if name in tool_env],
+                                     ["GIT_ALLOW_PROTOCOL"], "every scrubbed name removed but GIT_ALLOW_PROTOCOL")
+                    self.assertEqual(tool_env["GIT_ALLOW_PROTOCOL"], "file", "the caller's protocol list, unchanged")
+                    self.assertEqual([name for name in unset if name in tool_env], [], "project adds none of these")
+                    self.assertEqual([name for name in tool_env if name.startswith("GIT_CONFIG_KEY_")], [],
+                                     "no -c pin added")
+                    self.assertEqual(tool_env.get("CALLER_MARK"), "kept")
+                    self.assertEqual(tool_env.get("GIT_CONFIG_GLOBAL"), os.devnull, "the caller's own Git settings")
 
 
 if __name__ == "__main__":

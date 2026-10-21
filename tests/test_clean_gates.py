@@ -542,6 +542,41 @@ class GatesTests(clean_support.CleanCase):
         for tree in (left, populated, deinitialized, never):
             self.assertTrue(tree.is_dir(), tree)
 
+    def test_clean_submodules_beside_hidden_local_state(self):
+        # Lane 3's W4 M-3 (lead ruling R-117): one worktree whose own index holds
+        # both a gitlink and an entry flagged assume-unchanged is excluded by gate
+        # 9, contains-submodule, never by gate 10, hidden-local-state, in the gate
+        # order (pcl:577-583): the hidden-state probe decides the gitlink first.
+        # HiddenStateParser stops at the first gitlink, so the flagged entry is
+        # put before it in path order, `work-001-both` before `zz-vendored`.
+        root = self.repo()
+        self.bare_remote()
+        tree = self.merged_worktree("001-both", path=self.base / "both",
+                                    setup=lambda tree: self.gitlink(tree, "zz-vendored"))
+        self.git(tree, "update-index", "--assume-unchanged", "work-001-both")
+        self.assertEqual([(line[:1], line.split()[1], line.split("\t")[1])
+                          for line in self.git(tree, "ls-files", "-v", "--stage").splitlines()],
+                         [("h", "100644", "work-001-both"), ("H", "160000", "zz-vendored")])
+        self.assertFalse((self.common_dir(root) / "worktrees" / tree.name / "modules").exists())
+        # The probe's parser reads both: the flag, then the gitlink, its bound.
+        parser = project.HiddenStateParser()
+        parser.feed(os.fsencode(self.git(tree, "ls-files", "-v", "--stage", "-z")))
+        self.assertEqual(parser.finish(), {"gitlink": True, "hidden": True, "entries": 1})
+        before = self.snapshot(root)
+        result = self.preview(root)
+        self.assert_status(result, 0)
+        self.assertEqual((result.document["selected"], by_path(result.document)),
+                         ([], {str(root): "main-worktree", str(tree): "contains-submodule"}))
+        self.assertEqual(row_of(result.document, tree)["classification"], "merged-removable")
+        message = TEXT["target_excluded_gate"].format(REASON="contains-submodule", NEXT_STEP=STEPS["contains-submodule"])
+        result, records = self.run_counted("clean", root, "--apply", "--action", "remove", "--worktree", tree, "--yes")
+        self.assert_status(result, 2)
+        self.assertEqual(result.stderr, f"REFUSED: {message}\n")
+        self.assertEqual(removals(records), [])
+        result = self.run_json("clean", root, "--apply", "--action", "remove", "--worktree", tree, "--yes", "--json")
+        self.assert_refused_target(result, tree, "contains-submodule", message)
+        self.assertEqual(self.snapshot(root), before, "nothing removed")
+
     def test_clean_a_worktree_holding_a_submodule_is_never_offered(self):
         root = self.repo()
         self.bare_remote()
