@@ -103,16 +103,21 @@ SHALL be unaffected.
 
 Each registered path SHALL fall into exactly one case: `lstat` fails with "no
 such entry" or "not a directory" (`present: false`, no status probe); `lstat`
-fails otherwise (`present: null`, no status probe, an `os-error`, and
+fails otherwise, or its filesystem task reaches its 5 s limit or the deadline
+ends it or prevents its start (`present: null`, no status probe, the code that
+fits it, `os-error`, `probe-timeout` or `deadline-exceeded`, and
 `inspection-error` set directly); the registration check cannot be completed,
-a registration read, the `commondir` read included, or the realpath of the
-toplevel that the effective-work-tree read reports failing other than with
-`ENOENT` or `ENOTDIR`, or one of them or that read itself being cut (no status
-probe, the code that fits it, `inspection-error` set directly); registration
-disagrees in either direction (no status probe, `inspection-error` set
-directly, a `registration-mismatch` finding and no error); otherwise the
-status probe runs in that worktree. No probe SHALL run in a path the overview
-could not `lstat`.
+a registration read, the `commondir` read included, failing with an error that
+shows no disagreement, or the realpath of the toplevel that the
+effective-work-tree read reports failing other than with `ENOENT` or
+`ENOTDIR`, or one of them or that read itself being cut (no status probe, the
+code that fits it, `inspection-error` set directly); registration disagrees in
+either direction, a `<path>/.git` that is missing (`ENOENT` or `ENOTDIR`) or
+not a regular file, or an administrative `gitdir` or `commondir` file that is
+missing (`ENOENT` or `ENOTDIR`), being a disagreement and not such an error
+(no status probe, `inspection-error` set directly, a `registration-mismatch`
+finding and no error); otherwise the status probe runs in that worktree. No
+probe SHALL run in a path the overview could not `lstat`.
 
 Every repository SHALL first take the submodule test of `Clean resolves its
 target Git-first`: when Git reports a superproject working tree for a

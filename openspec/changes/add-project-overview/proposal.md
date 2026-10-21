@@ -1378,19 +1378,29 @@ review:
   it. D8's per-row task names its reads and now names the `commondir` file
   (design.md:461-462). Requirement 2's closed case list (POD:89-95) gains,
   after its second case, a case for a registration check that cannot be
-  completed: a registration read, the `commondir` read included, or the
-  realpath of the toplevel that the effective-work-tree read reports failing
-  other than with `ENOENT` or `ENOTDIR`, or one of them or that read itself
-  being cut, gives no status probe, the code that fits it and
-  `inspection-error` set directly, as [E] at `93f3194` has a failed
-  `commondir` read ("a read of it that fails SHALL give the row
-  `inspection-error` and no probe", its
+  completed: a registration read, the `commondir` read included, failing with
+  an error that shows no disagreement, or the realpath of the toplevel that
+  the effective-work-tree read reports failing other than with `ENOENT` or
+  `ENOTDIR`, or one of them or that read itself being cut, gives no status
+  probe, the code that fits it and `inspection-error` set directly, as [E] at
+  `93f3194` has a failed `commondir` read ("a read of it that fails SHALL give
+  the row `inspection-error` and no probe", its
   `specs/project-command/spec.md:211-213`) and as D8's realpath task leaves
-  the check not completed (lane openRepoProject-3's W25 M1). Without that case
-  the list sent such a row to its last case, a status probe. The case departs
-  from the packet's DI:251-261, whose table of the cases a registered path
-  falls into has none for a check that cannot be completed. Spec 005 carries
-  the parity.
+  the check not completed (lane openRepoProject-3's W25 M1, and W29 L1 for the
+  words, which are spec 005 FR-007's). Its disagreement case gains FR-007's
+  tie-break: a `<path>/.git` that is missing (`ENOENT` or `ENOTDIR`) or not a
+  regular file, or an administrative `gitdir` or `commondir` file that is
+  missing (`ENOENT` or `ENOTDIR`), is a disagreement and not such an error, as
+  [E] requires that `<path>/.git` "SHALL be a regular file", that the `gitdir`
+  file "SHALL name `<path>/.git`" and that "A `commondir` file that is
+  missing" makes the registration disagree (its :203-213, unchanged through
+  `6f2cb54` and `a664799`). What a failed read of the `.git` or `gitdir` file
+  gives, and that a missing or non-regular file decides as a disagreement
+  before any read can fail, [E] does not state; they are A1's fill, in
+  FR-007's words. Without the new case the list sent such a row to its last
+  case, a status probe. The case departs from the packet's DI:251-261, whose
+  table of the cases a registered path falls into has none for a check that
+  cannot be completed. Spec 005 carries the parity.
 - **The stat pins (LQ-10, PR #19 at `ea697ba`; its pointer at `93f3194`), a
   restatement.** PR #19 adds `-c core.trustctime=true -c
   core.checkStat=default` after `-c core.fsmonitor=false` on every status
@@ -1426,6 +1436,21 @@ Q15 A and Q16 B together: the handlers only record the signal wherever a
 child can run, and Q15 A's raising span, feature 004's `raising_signals` (its
 lead ruling R-47), is entered only after every child is reaped or abandoned,
 so that no child runs under its raising handlers (design D1).
+
+Requirement 2 and design D8 together (lane openRepoProject-3's W29 O2):
+requirement 2's second case now also takes an `lstat` whose filesystem task
+reaches its 5 s limit or that the deadline ends or prevents, with the code
+that fits it, `os-error`, `probe-timeout` or `deadline-exceeded` (POD:330,
+:334-335), as spec 005's FR-007 does. By its words the closed list sent a cut
+`lstat` to its last case, a status probe, and only its closing sentence, that
+no probe runs in a path the overview could not `lstat`, kept the probe from
+running. Design D8 already gives the outcome: one task for the row's `lstat`
+and registration reads (design.md:461-462), whose missed wait records
+`probe-timeout` or `deadline-exceeded` and leaves every field it would have
+established null (design.md:473-475). Amended: requirement 2's second case
+(POD:90-92). It departs from no packet line: DI:258's row, "`lstat` fails with
+any other `OSError`", does not exclude a cut, and DI:477-480 and DI:1238-1242
+give a row cut this way `probe-timeout` or `deadline-exceeded`.
 
 Open point, left to Brett Heap with no behaviour written (lead decision M1,
 from lane openRepoProject-3's fidelity read of spec 005 at `c54d393`): Q7 A is
