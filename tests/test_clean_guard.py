@@ -140,7 +140,7 @@ class GuardTests(clean_support.CleanCase):
                            KeyboardInterrupt(), EOFError()):
                 with self.subTest(stage=stage, raised=type(raised).__name__):
                     with self.in_process(**{stage: raising(raised)}), project.Invocation("clean"), \
-                            self.assertRaises(BaseException) as caught:
+                            self.assertRaises(type(raised)) as caught:
                         project.run_clean(args)
                     self.assertIs(caught.exception, raised)
 

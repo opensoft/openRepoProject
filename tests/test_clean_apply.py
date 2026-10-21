@@ -342,7 +342,7 @@ class ApplyTests(clean_support.CleanCase):
                                                    "branch_present": True, "branch_sha": SHA_A, "reconciled": True})
         self.assertEqual((failed["stage"], failed["reason"], failed["exit_status"], failed["notes"]),
                          ("failed", "git-failed", 255, ["orphaned-directory"]))
-        self.assertEqual(failed["reconciliation"]["path_present"], True)
+        self.assertTrue(failed["reconciliation"]["path_present"])
         # A not-attempted target: no reconciliation, no exit status, its path
         # escaped with its flag beside it (FR-041).
         self.assertIsNone(skipped["reconciliation"])
@@ -425,8 +425,9 @@ class ApplyTests(clean_support.CleanCase):
             def ended():
                 raise EOFError
 
+            question = types.SimpleNamespace(selected=[1])
             with mock.patch.object(project, "input", ended, create=True), self.assertRaises(EOFError):
-                project.ask_removal(types.SimpleNamespace(selected=[1]), run)
+                project.ask_removal(question, run)
             first = run.now()  # the clock runs again
             time.sleep(0.01)
             self.assertGreater(run.now(), first)
@@ -435,9 +436,10 @@ class ApplyTests(clean_support.CleanCase):
         with self.in_process(command="clean") as run:
             run.human = io.StringIO()
             run.record_signal(signal.SIGTERM)
-            with mock.patch.object(project, "input", lambda: self.fail("input() was called"), create=True), \
-                    self.assertRaises(project.Terminated):
-                project.ask_removal(types.SimpleNamespace(selected=[1]), run)
+            question = types.SimpleNamespace(selected=[1])
+            with mock.patch.object(project, "input", side_effect=self.failureException("input() was called"),
+                                   create=True), self.assertRaises(project.Terminated):
+                project.ask_removal(question, run)
             self.assertEqual(run.human.getvalue(), "")
 
     def test_clean_ask_removal_never_reads_after_a_failed_write(self):
@@ -445,7 +447,8 @@ class ApplyTests(clean_support.CleanCase):
         # answered; the failed write is recorded for the check after it.
         with self.in_process() as run:
             run.human = RaisingStream()
-            with mock.patch.object(project, "input", lambda: self.fail("input() was called"), create=True):
+            with mock.patch.object(project, "input", side_effect=self.failureException("input() was called"),
+                                   create=True):
                 self.assertEqual(project.ask_removal(types.SimpleNamespace(selected=[1]), run), "")
             self.assertIsInstance(run.write_error, BrokenPipeError)
 

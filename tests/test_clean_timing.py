@@ -245,7 +245,7 @@ class TimingTests(CleanCase):
                                  (plain.returncode, plain.stdout, plain.stderr),
                                  f"\n{transcript(plain)}\n{transcript(launched)}")
                 statuses.add(plain.returncode)
-        self.assertTrue({0, 2} <= statuses, statuses)
+        self.assertLessEqual({0, 2}, statuses)
 
     def interrupted_status(self, repo, launcher, signum, label):
         """`project status REPO`, run as python3 project or through the launcher in a new

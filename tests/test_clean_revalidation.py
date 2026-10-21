@@ -290,8 +290,8 @@ class RevalidationTests(clean_support.CleanCase):
                     # Found by the first target's preflight, so the first is
                     # the refused one, though nothing about it changed.
                     first = result.document["targets"][0]
-                    self.assertEqual(first["reconciliation"]["registry_entry_present"], True)
-                    self.assertEqual(first["exit_status"], None)
+                    self.assertTrue(first["reconciliation"]["registry_entry_present"])
+                    self.assertIsNone(first["exit_status"])
 
     def test_clean_changed_later_target(self):
         root, trees = self.batch("later", count=3)
