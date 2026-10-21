@@ -273,16 +273,22 @@ a nineteenth code, since the delta closes the eighteen: push, which prints
 no JSON, refuses with no code and the reason `remote-gone`, printing
 `REFUSED: ` and the message above (lead ruling R-45).
 
-Two of the baseline messages print the user's own argument raw today:
-`discover()`'s `Directory does not exist: PATH` and `No project found at
+Two of the baseline messages print the user's own argument raw in
+`discover()`: `Directory does not exist: PATH` and `No project found at
 PATH; supply a path or name.`, which reach clean as `repository-not-found`,
 where the delta's human-output rule (`spec.md:1061-1066`) escapes a path
-that holds a code point to escape. PENDING, not yet built: a final fixes
-lane, after the polish wave, is to have `resolve_clean_target()` re-render
-both with `human_path()` where it maps their codes, a two-line edit with a
-test of an argument holding U+202E; `discover()` itself stays as it is,
-since `status`, `doctor` and `update` share it (lead ruling R-92 (c)). This
-paragraph is to be reworded as built once that lane has merged.
+that holds a code point to escape. `resolve_clean_target()` prints the PATH
+of both through `human_path()`, in the `$'...'` form for such a path,
+taking it out of `discover()`'s message by the message's fixed head and
+tail (`escaped_not_found()`, region `resolution`), for a refusal
+`discover()` already codes and for one it leaves uncoded alike. The JSON
+stays `{code, message}` with no `path`, since the contract lists none for
+that code and `tests/test_clean_resolution.py` asserts the shape: `error`
+and the refusal's `message` carry the escaped text the human line shows.
+`discover()` itself is unchanged, since `status`, `doctor` and `update`
+share it (lead rulings R-92 (c) and R-94 (a); T112's tests in
+`tests/test_clean_paths.py`, one for an argument holding U+202E and, under
+`linux_paths`, one for the byte 0xFF).
 
 `internal-error` prints its exception's type and text only where it is a
 refusal, before the apply phase. After the apply phase begins, an exception
