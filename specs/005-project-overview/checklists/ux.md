@@ -48,7 +48,10 @@ Lane: openRepoProject-4
 - [ ] CHK011 Is the `--help` text of `project overview` specified? [Completeness, Gap]
   - Result: plan note PN-3.
 - [ ] CHK012 Is the display of a row error under the repair category specified, including where its `path` prints? [Completeness, Spec FR-045, design D10]
-  - Result: plan note PN-4.
+  - Result: plan note PN-4, narrowed on 2026-10-21: FR-045 now prints an
+    error's `path` on its line, by [P]'s rule, when the error carries one, a
+    fill that A1's revision 2 proposes, pending; where on the line it prints
+    stays the plan's, with design D10.
 
 ## Requirement Clarity
 
@@ -121,11 +124,13 @@ Lane: openRepoProject-4
 Evaluated on 2026-10-19 against `spec.md` at `8f433f7`; CHK006 re-evaluated on
 2026-10-20 after lane openRepoProject-3's packet-fidelity read, and again after
 its delta read, and re-read on 2026-10-21 after Brett Heap's answers (C-55 to
-C-71). 34 items: 27 pass, 2 fixed in the spec, 0 open, 5 plan notes, 0 new
+C-71), and CHK012 after lane openRepoProject-3's W7 read of A1, its category
+unchanged. 34 items: 27 pass, 2 fixed in the spec, 0 open, 5 plan notes, 0 new
 questions. An open item waits on the question or residual its result names; a
 plan note is for the plan, not the spec; a new question is asked in
 `clarify-questions.md`.
 
 Plan notes: PN-1 (CHK004, CHK023), PN-2 (CHK006, narrowed to an exception of
 any other kind in human mode, and since 2026-10-21 also the standard-error line
-of a failed write, C-66), PN-3 (CHK011), PN-4 (CHK012), PN-5 (CHK016).
+of a failed write, C-66), PN-3 (CHK011), PN-4 (CHK012, narrowed on 2026-10-21
+by FR-045's `path`), PN-5 (CHK016).

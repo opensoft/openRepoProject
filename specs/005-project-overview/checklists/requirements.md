@@ -375,6 +375,40 @@ Lane: openRepoProject-4
   and CHK023 below were re-read, and the totals below were recounted by script.
   Re-validation: 16 of 16 items pass, with the checks of iteration 2 re-run by
   script on the edited spec.
+- 2026-10-21, a fourth pass: the spec aligns with amendment A1 at `b020edc`
+  (draft PR #34), whose side lane openRepoProject-3's W7 read found to match
+  each option: FR-050 and C-57 cite A1's Impact for Q3 B, no longer a
+  departure; FR-022, SC-010 and C-62 cite A1's requirement 4 table and its
+  OPERATION values `stat`, `scandir` and `collection`, A1's drafted fill; the
+  A1 bullet takes A1's own map of sites (W6 L1; W7 check 4, item 3); and FR-044
+  and C-70 take design D1's scope, the handlers only recording while a child
+  can run and raising only in the write span. W7's three MEDIUMs are mirrored:
+  FR-045 prints an error's `path` (M1), C-61 records DI:778's null rule for
+  `current` (M2) and C-63 the narrowing of DI:307-308 (M3). From PR #19,
+  pending its ratification: FR-007 classifies a linked row whose effective work
+  tree is not its registered path as `project clean` does, by the extension
+  read and the effective-work-tree probe of LQ-11 (`addd346`), FR-013, FR-019,
+  FR-020 and FR-049 following and the change-2 texts that read against the two
+  children recorded for A1; FR-032, SC-004 and EC-007 make LQ-14's
+  `operation-in-progress` (`43f7107`) and LQ-13's `worktree-only-commits`
+  (`93de4bb`) exclusions only the batch applies; FR-043 takes `9fb22fa`'s order
+  and wording, with A1's revision 2's proposed `relative-config-path` and the
+  fallback `refused`, and LQ-12 cites `eae1a79`. EC-022 and FR-040 add the `gh`
+  residual (#29's D5 at `11a0ba2`), and EC-033 the `refs/heads/HEAD`
+  consequence of feature 004's F1 M-1 fix, pending. Lane openRepoProject-3's
+  W11 read of `08d5d79` is applied: EC-036 drops a version R-101 (j) does not
+  give and cites W8 for `GIT_CONFIG_SYSTEM` (L1, L2); FR-043 and security
+  CHK016 carry the strike mark (L3); the LQ bullets cite every commit (L4);
+  FR-007 keeps the first read's identity and counts an `ENOENT` or `ENOTDIR`
+  re-read as a differing value (L5, L6); FR-043 takes `9fb22fa`'s wording (L7)
+  and the A1 pointer names POD:765-766 (L8). No pin moves, and
+  `clarify-questions.md` is unchanged. In this folder, results that cite the
+  changed text were re-read in `deployment.md`, `integration.md`,
+  `security.md`, `discovery-identity.md`, `observability.md`, `ux.md`,
+  `error-handling.md`, `suggestions-gates.md`, `testing-strategy.md` and CHK015
+  and CHK025 below, no category changing, and the totals below were recounted
+  by script. Re-validation: 16 of 16 items pass, with the checks of iteration 2
+  re-run by script on the edited spec.
 - Items marked incomplete require spec updates before `/speckit-clarify` or `/speckit-plan`
 
 ## Cross-cutting Requirements Quality (no-argument `/speckit.checklist`, 2026-10-19)
@@ -420,7 +454,9 @@ Lane: openRepoProject-4
 - [x] CHK014 Do the stories' acceptance scenarios agree with the delta scenarios they realize? [Consistency, Spec Appendix Scenarios]
   - Result: pass.
 - [x] CHK015 Are the exit rules consistent across FR-029, FR-042, FR-043, FR-044 and the stories? [Consistency, Spec FR-042]
-  - Result: pass.
+  - Result: pass; FR-043's pointer also names FR-042's exit-2 causes
+    (POD:765-766), for which A1's revision 2 proposes `relative-config-path`
+    with exit 2, pending.
 
 ### Acceptance Criteria Quality
 
@@ -460,7 +496,9 @@ Lane: openRepoProject-4
 - [x] CHK025 Are the recorded residuals (EC-001, EC-002, EC-006, EC-022, EC-025
   to EC-036) kept apart from requirements, so that none reads as a promise?
   [Ambiguity, Spec Edge Cases]
-  - Result: pass, EC-034 to EC-036 included since 2026-10-21.
+  - Result: pass, EC-034 to EC-036 included since 2026-10-21. EC-022's `gh`
+    residual and EC-033's `refs/heads/HEAD` consequence, added on the same day,
+    are kept apart too.
 
 ## Evaluation
 
@@ -468,12 +506,13 @@ Evaluated on 2026-10-19 against `spec.md` at `8f433f7`; CHK007, CHK019, CHK023
 and CHK025 re-read on 2026-10-21 after Brett Heap's answers (C-55 to C-71),
 their results still pass, and CHK019, CHK024 and CHK025 again later that day,
 after the re-check against feature 004's head `2cf34d3` and EC-036, theirs too,
-and CHK023 after lane openRepoProject-3's W6 read, its result still pass. 25
-items: 24 pass, 1 fixed in the spec, 0 open, 0 plan notes, 0 new questions. An
-open item waits on the question or residual its result names; a plan note is
-for the plan, not the spec; a new question is asked in `clarify-questions.md`.
-The counts are for the cross-cutting section above; the 16 built-in items
-before it carry no ids and are not counted.
+and CHK023 after lane openRepoProject-3's W6 read, its result still pass, and
+CHK015 and CHK025 after the fourth pass, theirs too. 25 items: 24 pass, 1 fixed
+in the spec, 0 open, 0 plan notes, 0 new questions. An open item waits on the
+question or residual its result names; a plan note is for the plan, not the
+spec; a new question is asked in `clarify-questions.md`. The counts are for the
+cross-cutting section above; the 16 built-in items before it carry no ids and
+are not counted.
 
 Plan notes: none.
 
@@ -481,4 +520,5 @@ All 17 checklists: 414 items: 373 pass, 24 fixed in the spec, 0 open, 17 plan
 notes (PN-1 to PN-18 but PN-11, withdrawn on 2026-10-21; PN-2 narrowed to an
 exception of any other kind in human mode and widened to a failed write's
 standard-error line), 0 new questions. Recounted by script on 2026-10-21, and
-again after the re-check and after the W6 read of that day.
+again after the re-check, after the W6 read and after the fourth pass of that
+day.

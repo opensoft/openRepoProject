@@ -49,7 +49,9 @@ Lane: openRepoProject-4
   decided? [Completeness, Dependency, Spec Dependencies]
   - Result: pass with C-57: one more `-k` prefix selects a small set of the
     overview's tests (FR-050); the job's `-k` selection is unchanged at
-    `c9103ba` (Dependencies, Runtime and CI).
+    `c9103ba` (Dependencies, Runtime and CI). Amendment A1 carries that
+    selection in change 2's Impact, the second branch Q3 B allows, at
+    `b020edc`, pending its ratification (FR-050).
 - [x] CHK013 Is the state of feature 004 that must exist before the plan
   decided? [Completeness, Dependency, Spec Dependencies]
   - Result: pass with C-56: feature 004 merged into `main`, the plan starting
@@ -80,7 +82,9 @@ Lane: openRepoProject-4
 - [x] CHK019 Primary: is the path from an overview suggestion to clean's plan covered? [Coverage, Spec US4 s2]
   - Result: pass.
 - [x] CHK020 Alternate: is clean excluding a suggested worktree (index gates, deferral) covered? [Coverage, Spec SC-004, FR-034]
-  - Result: pass.
+  - Result: pass; once PR #19 is ratified, `operation-in-progress` (LQ-14,
+    `43f7107`) and `worktree-only-commits` (LQ-13, `93de4bb`) join the index
+    gates among the exclusions only the batch applies (FR-032, SC-004).
 - [x] CHK021 Exception: is clean refusing a path that is not a main worktree root covered? [Coverage, Spec US4 s2]
   - Result: pass.
 - [x] CHK022 Recovery: does a constant that feature 004 moves reach the overview without an edit? [Recovery, Spec FR-035, FR-036]
@@ -98,7 +102,10 @@ Lane: openRepoProject-4
   Spec FR-007, EC-031]
   - Result: plan note PN-18: when feature 004's fix is built, the plan re-reads
     FR-007's re-verification outcome against it, and a difference in class goes
-    to lane openRepoProject-4's lead.
+    to lane openRepoProject-4's lead. The re-read covers the two points lane
+    openRepoProject-3's W11 read of `08d5d79` asked to be fixed, the row
+    keeping its first read's identity and a re-read failing with `ENOENT` or
+    `ENOTDIR` counting as a differing value (W11 L5 and L6; FR-007).
 
 ## Notes
 
@@ -118,9 +125,12 @@ feature 004's `96a08d4`; CHK011 to CHK013 re-evaluated on 2026-10-21 after
 Brett Heap's answers (C-55 to C-71), and CHK002, CHK004, CHK008, CHK011 to
 CHK013 and CHK025 re-read later that day against feature 004's head `2cf34d3`,
 their results unchanged; CHK026 added on 2026-10-21 after lane
-openRepoProject-3's W6 read of `8082d3b`, as plan note PN-18. 26 items: 24
-pass, 0 fixed in the spec, 0 open, 2 plan notes, 0 new questions. An open item
-waits on the question or residual its result names; a plan note is for the
-plan, not the spec; a new question is asked in `clarify-questions.md`.
+openRepoProject-3's W6 read of `8082d3b`, as plan note PN-18; and CHK012,
+CHK020 and CHK026 re-read after the alignment with amendment A1 at `b020edc`,
+PR #19's LQ-11 to LQ-14 and lane openRepoProject-3's W11 read of `08d5d79`,
+their categories unchanged. 26 items: 24 pass, 0 fixed in the spec, 0 open, 2
+plan notes, 0 new questions. An open item waits on the question or residual its
+result names; a plan note is for the plan, not the spec; a new question is
+asked in `clarify-questions.md`.
 
 Plan notes: PN-16 (CHK025), PN-18 (CHK026).

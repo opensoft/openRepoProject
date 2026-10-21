@@ -26,8 +26,12 @@ Lane: openRepoProject-4
     `XDG_CONFIG_HOME` makes a file inside a candidate act as the user's
     configuration, which no residual recorded; Brett Heap's answer to lane
     openRepoProject-2's LQ-15 refuses such a value, as PR #19 amends [E] at
-    `cc000ea`, pending its ratification, the overview's code and exit status
-    being open for A1 (FR-043; Dependencies).
+    `cc000ea` and `9fb22fa`, pending its ratification, `9fb22fa` leaving the
+    overview's code and exit status to `add-project-overview`, where A1's
+    revision 2 proposes `relative-config-path` with exit 2, pending (FR-043;
+    Dependencies). The `gh` children of #25, which the overview never starts,
+    are recorded outside Q9 B's claim, the caller's environment passing to them
+    unread (#29's D5 at `11a0ba2`; EC-022, FR-040).
 - [x] CHK004 Is the treatment of those residuals decided (accept, scrub the
   trace variables, or drop the user's configuration)? [Completeness, Spec
   EC-022]
@@ -35,8 +39,8 @@ Lane: openRepoProject-4
     residuals, the read-only guarantee claims only what the pins and the scrub
     prove, and [E]'s list as PR #19 amends it at `423a532` carries the trace
     pins and names (FR-016, FR-040, EC-022); a relative `HOME` or
-    `XDG_CONFIG_HOME` is refused as PR #19 at `cc000ea` has it, pending its
-    ratification (EC-036).
+    `XDG_CONFIG_HOME` is refused as PR #19 at `cc000ea` and `9fb22fa` has it,
+    pending its ratification (EC-036).
 - [ ] CHK005 Is the threat model the requirements assume stated: the user's own local repositories, some of which may hold hostile names, configuration, attributes or manifests? [Completeness, Gap, Traceability]
   - Result: plan note PN-15.
 - [x] CHK006 Is access to credentials and profile data restricted? [Completeness, Spec FR-040]
@@ -68,7 +72,7 @@ Lane: openRepoProject-4
   - Result: pass. A Git child that exits nonzero records `probe-failed` on its
     row. A relative `HOME` could let a planted `safe.directory` admit such a
     repository, which EC-036 records and LQ-15's refusal closes, as PR #19 at
-    `cc000ea` has it, pending its ratification.
+    `cc000ea` and `9fb22fa` has it, pending its ratification.
 - [x] CHK015 Is a candidate whose broken `.git` sends Git to an ancestor
   repository kept from widening the scan beyond the roots? [Completeness, Spec
   FR-002]
@@ -77,7 +81,9 @@ Lane: openRepoProject-4
 - [x] CHK016 Is the overview kept from running repository-configured programs the pins cover (`core.fsmonitor`), with those they cannot cover recorded? [Completeness, Spec FR-016, EC-022]
   - Result: pass; EC-036 adds the clean filter that a relative `HOME` or
     `GIT_CONFIG_GLOBAL` lets a candidate's own files define, closed by LQ-15's
-    refusal as PR #19 at `cc000ea` has it, pending its ratification.
+    refusal as PR #19 at `cc000ea` and `9fb22fa` has it, pending its
+    ratification, the `GIT_CONFIG_GLOBAL` case only while LQ-15's extension
+    stands, which Brett Heap may strike (FR-043; Dependencies).
 
 ## Requirement Clarity
 
@@ -94,7 +100,9 @@ Lane: openRepoProject-4
     LQ-10's two status pins join FR-016 as PR #19 adds them at `ea697ba`,
     pending its ratification.
 - [x] CHK020 Does no requirement exempt any Git child of the overview from the pins or the scrub? [Consistency, Spec FR-016, Clarifications C-5]
-  - Result: pass.
+  - Result: pass; re-read on 2026-10-21 for LQ-11's two children, the extension
+    read and the effective-work-tree probe, which FR-007 gives FR-016's pins
+    and environment (PR #19 at `addd346`, pending its ratification).
 
 ## Acceptance Criteria Quality
 
@@ -131,9 +139,11 @@ later that day, after PR #19's `423a532`, the re-check against feature 004's
 head `2cf34d3` and Brett Heap's answers to lane openRepoProject-2's LQ-10 to
 LQ-15 (EC-036), and CHK002 to CHK004, CHK014, CHK016 and CHK019 again after
 lane openRepoProject-3's W6 read of `8082d3b` and PR #19's `ea697ba` and
-`cc000ea`. 25 items: 23 pass, 1 fixed in the spec, 0 open, 1 plan notes, 0 new
-questions. An open item waits on the question or residual its result names; a
-plan note is for the plan, not the spec; a new question is asked in
-`clarify-questions.md`.
+`cc000ea`, and CHK003, CHK004, CHK014, CHK016 and CHK020 again after PR #19's
+`addd346` and `9fb22fa`, #29's D5 at `11a0ba2` and lane openRepoProject-3's W11
+read of `08d5d79`. 25 items: 23 pass, 1 fixed in the spec, 0 open, 1 plan
+notes, 0 new questions. An open item waits on the question or residual its
+result names; a plan note is for the plan, not the spec; a new question is
+asked in `clarify-questions.md`.
 
 Plan notes: PN-15 (CHK005).

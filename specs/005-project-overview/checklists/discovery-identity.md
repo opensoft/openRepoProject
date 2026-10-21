@@ -69,7 +69,15 @@ Lane: openRepoProject-4
     or an admin id joined the disagreements, by the fill of EC-031 (R-67 (c)),
     and a row that its identity re-verification does not confirm became
     `inspection-error`, unprobed, with the class's finding and a row error only
-    where the re-read itself fails (R-101 (j); FR-007).
+    where the re-read itself fails (R-101 (j); FR-007). After lane
+    openRepoProject-3's W11 read of `08d5d79`, a re-read failing with `ENOENT`
+    or `ENOTDIR` is a differing value with no row error, any other failed
+    re-read carries its row error, and the row keeps its first read's identity
+    (W11 L5 and L6); and a linked row whose effective work tree is not its
+    registered path is a disagreement, as PR #19 amends [E] at `addd346`
+    (LQ-11), pending its ratification: an effective-work-tree probe that fails
+    or prints other than one line is a disagreement, and one that cannot be
+    spawned or is cut leaves the check not completed (FR-007).
 
 ## Requirement Consistency
 
@@ -129,9 +137,9 @@ their results still pass; CHK007, CHK009 to CHK011, CHK022, CHK028 and CHK029
 re-evaluated on 2026-10-21 after Brett Heap's answers (C-55 to C-71), and
 CHK016 later that day, after the re-check against feature 004's head `2cf34d3`,
 its result still pass, and again after lane openRepoProject-3's W6 read of
-`8082d3b`. 29 items: 27 pass, 1 fixed in the spec, 0 open, 1 plan notes, 0 new
-questions. An open item waits on the question or residual its result names; a
-plan note is for the plan, not the spec; a new question is asked in
-`clarify-questions.md`.
+`8082d3b`, and after its W11 read of `08d5d79` and PR #19's `addd346`. 29
+items: 27 pass, 1 fixed in the spec, 0 open, 1 plan notes, 0 new questions. An
+open item waits on the question or residual its result names; a plan note is
+for the plan, not the spec; a new question is asked in `clarify-questions.md`.
 
 Plan notes: PN-9 (CHK024).

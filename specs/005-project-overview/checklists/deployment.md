@@ -27,8 +27,9 @@ Lane: openRepoProject-4
 - [x] CHK006 Is the overview's place in the Git 2.36 floor job decided?
   [Completeness, Spec Dependencies]
   - Result: pass with C-57: a small set of the overview's tests joins the
-    `git-floor` job by one more `-k` prefix, a departure from change 2's Impact
-    on Brett Heap's word (FR-050).
+    `git-floor` job by one more `-k` prefix, which amendment A1 carries in
+    change 2's Impact, the second branch Q3 B allows, at `b020edc`, pending its
+    ratification, so that it is no departure (FR-050).
 - [x] CHK007 Is distribution to installed copies stated as out of scope? [Completeness, Spec Assumptions, Out of Scope]
   - Result: pass.
 - [x] CHK008 Is the governance state of change 2's tasks stated (3.2 open until the handoff names one feature)? [Completeness, Spec Dependencies]
@@ -58,9 +59,11 @@ Lane: openRepoProject-4
 ## Evaluation
 
 Evaluated on 2026-10-19 against `spec.md` at `8f433f7`; CHK001 and CHK006
-re-evaluated on 2026-10-21 after Brett Heap's answers (C-55 to C-71). 12 items:
-11 pass, 1 fixed in the spec, 0 open, 0 plan notes, 0 new questions. An open
-item waits on the question or residual its result names; a plan note is for the
-plan, not the spec; a new question is asked in `clarify-questions.md`.
+re-evaluated on 2026-10-21 after Brett Heap's answers (C-55 to C-71), and
+CHK006 again after the alignment with amendment A1 at `b020edc`, its result
+still pass. 12 items: 11 pass, 1 fixed in the spec, 0 open, 0 plan notes, 0 new
+questions. An open item waits on the question or residual its result names; a
+plan note is for the plan, not the spec; a new question is asked in
+`clarify-questions.md`.
 
 Plan notes: none.

@@ -17,7 +17,10 @@ Lane: openRepoProject-4
   - Result: pass.
 - [x] CHK002 Must every requirement part no delta scenario exercises have a test, named in the traceability record? [Completeness, Spec FR-049]
   - Result: pass; since 2026-10-21 FR-049's list also names FR-007's twins and
-    its identity re-read before a status probe.
+    its identity re-read before a status probe. Later that day it also names
+    FR-007's extension read and effective-work-tree probe (LQ-11), a counting
+    wrapper recording no `rev-parse` child in a linked worktree where the
+    extension reads false.
 - [x] CHK003 Is the harness specified (a scratch home directory, `PROJECTS_DIR` set or unset explicitly, networking disabled, the snapshots)? [Completeness, Spec FR-049]
   - Result: pass.
 - [x] CHK004 Are the counting wrapper's records and assertions specified? [Completeness, Spec FR-049]
@@ -98,9 +101,10 @@ Evaluated on 2026-10-19 against `spec.md` at `8f433f7`; CHK025 added on
 and CHK024 re-read on 2026-10-21 after Brett Heap's answers (C-55 to C-71),
 their results still pass, and CHK002, CHK004 and CHK014 later that day, after
 lane openRepoProject-3's fidelity read of `c54d393` and the re-check against
-feature 004's head `2cf34d3`, theirs too. 25 items: 24 pass, 0 fixed in the
-spec, 0 open, 1 plan notes, 0 new questions. An open item waits on the question
-or residual its result names; a plan note is for the plan, not the spec; a new
-question is asked in `clarify-questions.md`.
+feature 004's head `2cf34d3`, theirs too, and CHK002 again after PR #19's
+`addd346`. 25 items: 24 pass, 0 fixed in the spec, 0 open, 1 plan notes, 0 new
+questions. An open item waits on the question or residual its result names; a
+plan note is for the plan, not the spec; a new question is asked in
+`clarify-questions.md`.
 
 Plan notes: PN-17 (CHK025).

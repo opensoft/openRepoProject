@@ -18,7 +18,9 @@ Lane: openRepoProject-4
 - [x] CHK002 Is every cut reported with what it omitted and how exactly that is known? [Completeness, Spec FR-012, FR-017, SC-006]
   - Result: pass.
 - [x] CHK003 Is the probe accounting specified (`performed` counts every child; `estimated`'s terms)? [Completeness, Spec FR-020]
-  - Result: pass.
+  - Result: pass; since 2026-10-21 `estimated` also counts FR-007's extension
+    read and effective-work-tree probes (LQ-11, PR #19 at `addd346`, pending
+    its ratification), which POD:248-254 does not name (FR-020).
 - [ ] CHK004 Is it specified whether `probes.estimated` counts a worktree row that never takes a status probe, such as a git-directory record? [Clarity, Gap, Spec FR-020]
   - Result: plan note PN-12, narrowed on 2026-10-21 by C-68: a bare
     repository's main worktree row adds none (FR-020); the other rows that take
@@ -42,7 +44,9 @@ Lane: openRepoProject-4
 ## Requirement Clarity
 
 - [x] CHK011 Is the `Incomplete:` line's content tied to its scan error's message and code? [Clarity, Spec FR-045]
-  - Result: pass. Design D10's `Incomplete: <message> (<code>).`
+  - Result: pass. Design D10's `Incomplete: <message> (<code>).`, which since
+    2026-10-21 also prints the scan error's `path` by [P]'s rule when it
+    carries one, a fill that A1's revision 2 proposes, pending (FR-045).
 
 ## Requirement Consistency
 
@@ -81,9 +85,10 @@ Lane: openRepoProject-4
 
 Evaluated on 2026-10-19 against `spec.md` at `8f433f7`; CHK004 and CHK008
 re-read on 2026-10-21 after Brett Heap's answers (C-55 to C-71), their
-categories unchanged. 18 items: 17 pass, 0 fixed in the spec, 0 open, 1 plan
-notes, 0 new questions. An open item waits on the question or residual its
-result names; a plan note is for the plan, not the spec; a new question is
-asked in `clarify-questions.md`.
+categories unchanged, and CHK003 and CHK011 after PR #19's `addd346` and lane
+openRepoProject-3's W7 read of A1, theirs too. 18 items: 17 pass, 0 fixed in
+the spec, 0 open, 1 plan notes, 0 new questions. An open item waits on the
+question or residual its result names; a plan note is for the plan, not the
+spec; a new question is asked in `clarify-questions.md`.
 
 Plan notes: PN-7 (CHK006), PN-12 (CHK004, narrowed by C-68).

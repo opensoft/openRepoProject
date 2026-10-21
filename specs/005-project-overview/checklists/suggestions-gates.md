@@ -36,7 +36,10 @@ Lane: openRepoProject-4
 - [x] CHK011 Is the path the `--root <repository parent>` remedy names defined? [Completeness, Spec FR-035, Clarifications C-11]
   - Result: pass.
 - [x] CHK012 Is it specified which gates the overview leaves to the batch (`contains-submodule`, `hidden-local-state`)? [Completeness, Spec FR-032]
-  - Result: pass.
+  - Result: pass; once PR #19 is ratified, `operation-in-progress` (LQ-14,
+    `43f7107`) and `worktree-only-commits` (LQ-13, `93de4bb`) join them, after
+    them in [G]'s order, and the overview evaluates neither (FR-032), as A1's
+    revision 2 proposes, pending.
 
 ## Requirement Clarity
 
@@ -63,7 +66,8 @@ Lane: openRepoProject-4
 ## Acceptance Criteria Quality
 
 - [x] CHK020 Is SC-004 measurable, the batch preview's own deadline and index-gate read failures included? [Measurability, Spec SC-004]
-  - Result: pass.
+  - Result: pass; SC-004 also names the two exclusions that PR #19 adds and a
+    read of their gates that does not finish.
 
 ## Scenario Coverage
 
@@ -76,11 +80,14 @@ Lane: openRepoProject-4
 - [x] CHK024 Recovery: does the suggestion return after a repair, and does a re-run drain a backlog? [Recovery, Spec US4 s1, FR-035]
   - Result: pass.
 - [x] CHK025 Non-functional: do the gates need no Git child beyond design D3's and one bounded read per gated row? [Coverage, Spec FR-032, FR-033]
-  - Result: pass.
+  - Result: pass; the overview evaluates neither of PR #19's two new gates, so
+    it makes no listing or `logs/HEAD` read for them and starts no `rev-list`
+    child (FR-032).
 - [x] CHK026 Edge: is a repository over both row caps covered? [Edge Case, Spec Clarifications C-14]
   - Result: pass.
 - [x] CHK027 Edge: are `target-cap` rows the batch's index gates may still exclude addressed? [Edge Case, Spec EC-007]
-  - Result: pass.
+  - Result: pass; EC-007 also names the two gates that FR-032 adds once PR #19
+    is ratified.
 - [x] CHK028 Edge: are repositories without file reflogs, a reflog of 64 KiB or more and a branch created from a remote branch that had commits addressed? [Edge Case, Spec EC-008, EC-009, EC-010]
   - Result: pass.
 - [x] CHK029 Edge: is an informational finding that feeds a shown row's command under `--attention` addressed? [Edge Case, Spec EC-024]
@@ -100,9 +107,10 @@ Lane: openRepoProject-4
 
 Evaluated on 2026-10-19 against `spec.md` at `8f433f7`; CHK018 re-read on
 2026-10-21 after the re-check against feature 004's head `2cf34d3`, its result
-still pass. 29 items: 28 pass, 1 fixed in the spec, 0 open, 0 plan notes, 0 new
-questions. An open item waits on the question or residual its result names; a
-plan note is for the plan, not the spec; a new question is asked in
-`clarify-questions.md`.
+still pass, and CHK012, CHK020, CHK025 and CHK027 after PR #19's LQ-13 and
+LQ-14, theirs too. 29 items: 28 pass, 1 fixed in the spec, 0 open, 0 plan
+notes, 0 new questions. An open item waits on the question or residual its
+result names; a plan note is for the plan, not the spec; a new question is
+asked in `clarify-questions.md`.
 
 Plan notes: none.
