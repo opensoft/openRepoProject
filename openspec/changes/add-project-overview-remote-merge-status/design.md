@@ -79,11 +79,28 @@ their own directories, so that a `gh` installed beside them is not found; its
 fake `gh` writes a start record and an end record, so that a stopped child is
 still seen; and its in-process runs fix the proxy, token and configuration
 variables (M4, M5, L6). D3 says how a URL's host is read, and that a URL with no
-scheme is a local path to Git; D2 says what `transfer.credentialsInUrl=die`
-gives; and D10 counts the reads' addition to `probes` (L2 to L4). `proposal.md`
-changes its README step and Open Question 1 (L2, L5). C-48, RC's M1, M2, M3, L1
-and L4's spec part, is HELD for lane openRepoProject-4 with amendment A1's
-alignment, and no spec or design text answers it here.
+`://` and no `:` before its first `/` is a local path to Git; D2 says what
+`transfer.credentialsInUrl=die` gives; and D10 counts the reads' addition to
+`probes` (L2 to L4). `proposal.md` changes its README step and Open Question 1
+(L2, L5). C-48, RC's M1, M2, M3, L1 and L4's spec part, was held for lane
+openRepoProject-4 in that round. Round C14 commits C-48's spec text on lane
+openRepoProject-4's YES of 2026-10-21 (`c0062f9`), the file it agreed, held
+revision 3, sha256
+`8ef40dcabe1974d52a059ef6a513f883aa48af692759e74dea3f772a8d3145bc`, which
+carries the two points the lead ruled into it and lane openRepoProject-4's
+clause for a failed write to standard output: a deadline that expires in the
+remote phase records no `deadline-exceeded` scan error (M1); a remote whose
+fetch refspecs do not map the merge ref is `no-remote-target` (M2); the
+comparison at concurrency 1 excepts `remote.limits.concurrency` (M3); a
+repository whose first read named a usable remote and whose second never
+started is `cancelled` (L1); and Isolation excepts a signal that ends the run
+and a failed write (L4). The tool fact below, D2, D8, D10, D11 and Risks follow
+it; D7, which those edits also reach, waits with task 2.3 for amendment A1's
+alignment, as lane openRepoProject-4 asked. Round C14 also applies lane
+openRepoProject-3's confirm read of round C13 (C-49), eight LOWs with no spec
+edit, in this paragraph, D2, D3 and D11, and D5 records, on lane
+openRepoProject-4's call 4, that the caller's `GIT_TRACE*` names reach the `gh`
+children, a residual.
 
 Citations follow `proposal.md`: the packet at `da33d92`; APO, CAS, PRS and
 `project:N` at main `961c405`, which main `e9d6711` holds unchanged for them
@@ -144,7 +161,9 @@ The rulings and the packet's boundary map to the decisions:
 | C-45: lane openRepoProject-3's confirm read of rounds C10 and C11, six LOWs, applied in the design and tasks with no spec edit: D6's escape sentence completed, the Context's tense, tasks 1.5's record of the validation runs on the committed files, D2's list of failures and D11's fixture for an output that does not decode as UTF-8, D5's wording of a first byte, and the three XDG variables in Risks | D2, D5, D6, D11, Risks |
 | C-46: reader RC's M4, M5 and L6: D11's test `PATH` holds a directory of links to `git`, `bash` and the interpreter and never their own directories, so that a `gh` beside them (on `ubuntu-latest`, `/usr/bin/gh` beside `/usr/bin/git`) is not found; the fake `gh` writes a start record, with its pid and process group, and an end record, so that a stopped or killed child is still seen; in-process runs set the proxy variables in the environment the overview passes on, remove `NO_PROXY`, `no_proxy`, `GH_TOKEN` and `GITHUB_TOKEN`, and fix `GH_CONFIG_DIR` and `XDG_CONFIG_HOME` as absolute or unset | D11 |
 | C-47: reader RC's L2 (the design part), L3, L4 (the design part) and L5, with no spec edit: D3 says how a URL's host is read, and that a URL with no scheme and no `:` before its first `/` is a local path to Git with no host, so `not-github`; D2 says that with `transfer.credentialsInUrl=die` a password-bearing remote reads `remote-target-unread` and that nothing leaks; D10 counts the reads' addition to `probes`; the README's next steps and Open Question 1 change in `proposal.md` | D2, D3, D10 |
-| C-48: reader RC's M1, M2, M3, L1 and L4's spec part: spec edits HELD for lane openRepoProject-4 together with amendment A1's alignment, because M1 touches "Expiry cancels queued and in-flight requests", which Q16 B also reaches; this change writes no spec text and no design text for them | none |
+| C-48: reader RC's M1, M2, M3, L1 and L4's spec part, held in round C13 and committed in round C14 on lane openRepoProject-4's YES of 2026-10-21 (`c0062f9`), with the lead's two points and lane openRepoProject-4's clause for a failed write: no `deadline-exceeded` scan error at an expiry in the remote phase; `no-remote-target` for a remote whose fetch refspecs do not map the merge ref; `remote.limits.concurrency` excepted from the comparison at concurrency 1; `cancelled` for a repository whose second read never started; Isolation's exceptions for a signal and a failed write; D7's follow-ons wait with task 2.3 for amendment A1's alignment | Context, D2, D8, D10, D11, Risks |
+| C-49: lane openRepoProject-3's confirm read of round C13, eight LOWs, with no spec edit: a `:` begins a port only when digits follow it, and `ssh://git@github.com:acme/widget.git` is a residual; a local path is a URL with no `://` and no `:` before its first `/`; the `die` rule from Git 2.37.0, whose release notes introduce `transfer.credentialsInUrl`; the in-process environment's linked `PATH`; the packet's `github.com/owner/repository` an identity, not a form of URL; step 1's conservative reading of a user that holds a `:`; and, in `proposal.md` and `tasks.md`, Status, Decisions, the round C13 row of L2 and task 1.3 | Context, D2, D3, D11 |
+| Lane openRepoProject-4's call 4 on C-48 (2026-10-21): the caller's `GIT_TRACE*` names reach the `gh` children unread, recorded as a residual, as tested | D5 |
 | C-10, L-12: CI on Linux only | Migration Plan |
 
 What in `project` shapes the approach (at `961c405`; features 004 and 005
@@ -187,7 +206,11 @@ move these lines, and this change's feature re-pins them):
   `for-each-ref --format='%(upstream:remotename)%00%(upstream:remoteref)'`
   from `branch.<name>.remote` and `.merge` with no remote-tracking ref
   present, prints `.` for a local remote and empty fields for a remote given as
-  a URL or for a branch with either key unset, and `git remote get-url <name>`
+  a URL, for a branch with either key unset, or for a remote whose fetch
+  refspecs do not map the merge ref, its `remote.<name>.fetch` unset or covering
+  other branches only, where `git remote add` writes one that maps every branch
+  (C-48's M2: reader RC's cases, repeated by the writer of the held file), and
+  `git remote get-url <name>`
   expands `url.<base>.insteadOf` and exits 2 for a remote that is not
   configured. `gh` 2.96.0 documents exit status 4 for a command that "requires
   authentication" (`gh help exit-codes`) and the environment switches D5 sets
@@ -284,9 +307,11 @@ protocol pins:
 
 1. `git for-each-ref --format=%(upstream:remotename)%00%(upstream:remoteref)%00 refs/heads/<target>`,
    where `<target>` is `merge_target.name`. An empty remote name (no
-   `branch.<target>.remote` or no `branch.<target>.merge`, or a remote given as
-   a URL), a remote of `.`, or a merge ref outside `refs/heads/` gives
-   `no-remote-target`, and the second child does not run.
+   `branch.<target>.remote` or no `branch.<target>.merge`, a remote given as a
+   URL, or a remote whose fetch refspecs do not map the merge ref, so that Git
+   names no upstream for the merge target, C-48's M2), a remote of `.`, or a
+   merge ref outside `refs/heads/` gives `no-remote-target`, and the second
+   child does not run.
 2. `git remote get-url <remote name>`, which prints the URL as Git expands
    `url.<base>.insteadOf`. Exit 2, Git's status for "No such remote", gives
    `no-remote-target`: the exit status decides, never Git's message (C-31).
@@ -304,24 +329,36 @@ output itself, as strict UTF-8 (`bytes.decode("utf-8")`, its default `strict`
 error handler), never with `surrogateescape`; an output that does not decode
 fails the read and gives `remote-target-unread`, as an output past 64 KiB does
 (C-29), which is the spec's "fails for any other cause"
-(`specs/project-overview/spec.md:387-388`), so a `baseRefName` (D6) can equal
+(`specs/project-overview/spec.md:392-393`), so a `baseRefName` (D6) can equal
 only a merge ref that is valid UTF-8 text (C-43). The URL that standard output
 carries is the only credential-bearing text the overview inspects: it lives in
 memory only while D3 derives the `owner/repository` and detects the URL's user
 information; after that no part of the user information is retained or
 compared, none is ever printed, logged, sent or used to authenticate, and the
 URL is never forwarded with it (C-30). Under a Git configuration that sets
-`transfer.credentialsInUrl` to `die`, Git itself refuses a URL that holds a
-password: Git 2.43.0 exits 128 on each of the two reads of a merge target whose
-remote's URL holds one, the first with nothing on standard output, so that no
-second read starts and the repository's queried rows are `unknown` with reason
-`remote-target-unread`, as for any other failing read, and never
-`credential-bearing-remote`, which D3 reaches only when the reads succeed.
+`transfer.credentialsInUrl` to `die`, a Git that honours the setting refuses a
+URL that holds a password: Git 2.43.0 exits 128 on each of the two reads of a
+merge target whose remote's URL holds one, the first with nothing on standard
+output, so that no second read starts and the repository's queried rows are
+`unknown` with reason `remote-target-unread`, as for any other failing read, and
+never `credential-bearing-remote`, which D3 reaches only when the reads succeed.
 Nothing leaks: Git's message gives the URL's user part, with the password
 redacted, on standard error, which is discarded unexamined (C-31), and under
 `warn` Git writes the same warning there and both reads succeed. A
 credential-bearing remote that the merge target does not use leaves both reads
-alone; the writer saw each of these on Git 2.43.0 on 2026-10-21 (C-47).
+alone; the writer saw each of these on Git 2.43.0 on 2026-10-21 (C-47). Git
+honours the setting from 2.37.0, whose release notes introduce it: in Git's
+`Documentation/RelNotes/2.37.0.adoc`, read on 2026-10-21, the variable
+`transfer.credentialsInURL` "controls what happens when a URL with embedded
+login credential is used on either" fetch or push. Both reads meet it though
+neither fetches or pushes: in Git's `remote.c` at `v2.37.0`, as at `v2.43.0`,
+the check runs whenever a remote is looked up, which `git remote get-url` does
+and the upstream atoms do through the merge target's branch, and `v2.36.0`
+has no such check. So on the 2.36 floor the setting is unknown, both reads
+succeed, and D3 gives such a remote `credential-bearing-remote`; no request is
+sent either way. Lane openRepoProject-3 saw a 2.36.6 build give both reads exit
+0 under `die` and `warn`, and a 2.40.4 build refuse both under `die`; Git 2.37
+to 2.39 were not run (C-49).
 
 The two reads are counted in the envelope's `probes`, as lane
 openRepoProject-4's fourth option has it (C-9): they are Git children, so
@@ -371,24 +408,50 @@ In this order, the first that applies deciding:
    yields no identity, as for `https://github.com/acme`, a user other than
    `git`, or an explicit port.
 
-Every step reads the host as Git reads the URL, and the host and the scheme
-compare as written, never without case (C-47). A URL with `://` has its scheme
-before it, then any user information before an `@`, then the host, up to the
-next `/` or a `:` that begins a port. An scp-like URL has no `://` and a `:`
-before its first `/`, and its host is what stands after any `user@` and before
-the `:` that begins the path. A URL with neither, no `://` and no `:` before its
-first `/`, is a path on the local disk to Git and has no host, so it is
-`not-github` at step 2 however it reads: `github.com/acme/widget` and
-`github.com/acme/widget.git`, which `remote_repository_identity()`'s pattern
-alone gives as `acme/widget`, are never sent. The writer saw, on 2026-10-21,
-that function, taken from `project` at `961c405`, give `acme/widget` for both,
-and `git ls-remote github.com/acme/widget` on Git 2.43.0 list the refs of a
-local bare repository at that relative path and exit 0. By the same reading
+Every step reads the host as Git reads the URL, except in the forms that the
+next paragraph names, for none of which a request is sent; the host and the
+scheme compare as written, never without case (C-47, C-49). A URL with `://` has
+its scheme before it, then any user information before an `@`, then the host, up
+to the next `/` or a `:` that begins a port, which a `:` does only when digits
+alone follow it up to that `/`, as Git reads a port (C-49). An scp-like URL has
+no `://` and a `:` before its first `/`, and its host is what stands after any
+`user@` and before the `:` that begins the path. A URL with neither, no `://`
+and no `:` before its first `/`, is a path on the local disk to Git and has no
+host, so it is `not-github` at step 2 however it reads: `github.com/acme/widget`
+and `github.com/acme/widget.git`, which `remote_repository_identity()`'s pattern
+alone gives as `acme/widget`, are never sent. The packet's
+`github.com/owner/repository` (DI:1039-1042) names the identity derived from a
+remote, not a form of URL that is accepted: as a URL, that string is such a
+local path (C-49). The writer saw, on 2026-10-21, that function, taken from
+`project` at `961c405`, give `acme/widget` for both, and `git ls-remote
+github.com/acme/widget` on Git 2.43.0 list the refs of a local bare repository
+at that relative path and exit 0. By the same reading
 `git@GitHub.com:acme/widget.git` and `https://GitHub.com/acme/widget` are
 `not-github`, the host not being exactly `github.com`, while
 `HTTPS://github.com/acme/widget` and `git://github.com/acme/widget.git` pass
 step 2, the host being exact, and are `malformed-remote`, that function giving
 no identity for either; the README's next steps say so.
+
+The writer ran four forms on Git 2.43.0 on 2026-10-21 through a
+`GIT_SSH_COMMAND` stand-in that logged its arguments and connected nowhere
+(C-49). `ssh://git@github.com:acme/widget.git`, which the pattern alone gives as
+`acme/widget`, has no port, `acme` not being digits, so its host is
+`github.com:acme`, as Git's is: Git ran the stand-in on `git@github.com:acme`
+for the path `/widget.git`. It is `not-github` at step 2 and is never sent; that
+its reason is `not-github` and not `malformed-remote`, for a URL that names
+`github.com`, is a residual, which the README's next steps do not name, and Git
+cannot fetch it either. Git drops a `:` that nothing follows up to the `/`, so
+that `ssh://git@github.com:/acme/widget.git` has the host `github.com`, and
+keeps digits past 65535 in the host, so that
+`ssh://git@github.com:99999/acme/widget.git` has the host `github.com:99999`
+and no port. D3 reads the first host as `github.com:` and the second as
+`github.com` with a port, so the first is `not-github` and the second
+`malformed-remote`, and neither is sent. And step 1's reading of a user that
+holds a `:` is deliberately conservative, not Git's: for the scp-like
+`u:pw@github.com:acme/widget`, Git ran the stand-in on the host `u`, what stands
+before the first `:`, for the path `pw@github.com:acme/widget`, while step 1
+refuses that URL as `credential-bearing-remote` before any host is read; no
+request is sent either way.
 
 What passes is `owner/repository`, the only part of the URL kept. The dedupe
 key compares it without case. No reason carries the URL, and nothing of the
@@ -479,7 +542,19 @@ own help text, and from the state it writes for it, as far as gh documents
 them; "Overview is local and read-only" binds `project` and its Git children,
 and gh's behaviour beyond its switches is the client's; the fake `gh` of D11
 records the values, and that block's new scenario asserts them. [E]'s Git scrub
-does not apply; this is not a Git child.
+does not apply; this is not a Git child. So the caller's `GIT_TRACE` and its
+other `GIT_TRACE*` names reach a `gh` child unread, with every other variable:
+feature 005's Q9 B, which reaches [E]'s scrub of Git children, does not extend
+to `gh` children, and this is recorded as a residual, as tested (lane
+openRepoProject-4's call 4 on C-48, 2026-10-21). `gh` 2.96.0, run offline on
+2026-10-21 with D5's flags, switches and query, from `/`, with a fake token, its
+proxy at a closed local port, its configuration, state, cache and data
+directories empty, `GIT_TRACE`, `GIT_TRACE2` and `GIT_TRACE2_EVENT` naming files
+and a fake `git` first on `PATH`, exited 1 on the refused connection with
+nothing on standard output, started no `git`, created no trace file and wrote
+no file. The path of a 200 answer is not verified. If Brett Heap wants the
+residual closed, it is one clause in D5 at ratification, removing those names
+beside `GH_DEBUG` and `DEBUG`.
 
 The child starts in `/`, which re-anchors every relative path in its
 environment. So the lookup of `gh` counts as failing when any of
@@ -770,7 +845,7 @@ the loop stops reading, stops the child (D7) and records `truncated`.
 - Each node must have a `number` whose parsed type is exactly `int`
   (`type(number) is int`): never a `bool`, so not `true` or `false`, and never a
   `float`, so not `1.0` or `1e999`. The spec already says "a positive integer
-  `number`" (`specs/project-overview/spec.md:472`), and C-42 reads that as a
+  `number`" (`specs/project-overview/spec.md:479`), and C-42 reads that as a
   JSON integer literal. It must also be at least 1 and at most 2,147,483,647,
   the largest GraphQL `Int` (the hook above bounds the literal's text, this
   bounds its value, C-37); a `state` of `OPEN`, `CLOSED` or `MERGED`; a
@@ -855,6 +930,15 @@ In a `--remote` run only:
   keys, each an integer, zeros included) and `completeness`; it has no
   `probes`, the remote-target reads being in the envelope's (D2).
 
+`remote.limits.concurrency` reports the `gh` concurrency in force: 4 in every
+run, and 1 only where an in-process test patches the concurrency to 1, as
+change 2's `budget.probe_concurrency` reports the probe concurrency in force
+(APO design.md, D6, where the JSON at probe concurrency 1 and 4 differs only in
+timestamps and that field). So [R]'s determinism sentence and the AND at
+concurrency 1 of "The request bounds" except it beside `remote.observed_at`, as
+change 2's determinism sentence and its scenario except
+`budget.probe_concurrency` (C-48's M3).
+
 Without `--remote` both `remote` keys are absent, not null, so a document of a
 run without `--remote` is exactly [J]'s, as [J], as this change modifies it,
 states; in a `--remote` run a row outside the query set has no `remote` key
@@ -897,23 +981,30 @@ remote-tracking ref (C-18).
 
 The remote phase starts after classification, findings, gates, suggestions,
 summary counts and completeness are computed, and it writes only into the
-`remote` slots and into the envelope's `probes`, which D2's remote-target
-reads raise by the same number in `estimated` and in `performed` in an uncut
-remote phase and by nothing else (C-47). Nothing it records is a row error, a
-scan error or a finding,
-[B]'s added paragraph saying so for its children that exit nonzero or are
-stopped and for a lookup of `gh` that fails or does not finish in time
-(C-26), and [R]'s isolation clause for every failure, cut or stop of a
-remote-target read, of that lookup or of a `gh` child, `probe-failed`,
-`probe-timeout` and `deadline-exceeded` notwithstanding, so [X]'s exit status
-and [J]'s `completeness` are what they are without `--remote`, unless the
-remote phase raises an exception that [R] records as none of its reasons,
-which exits 2 as [X] gives any exception outside the per-candidate boundary
-(a body that the parser rejects, for any cause, is `api-error`, one of [R]'s
-reasons, never such an exception: C-22), and the envelope's `probes` differs
-only by D2's reads. Nothing is written to disk or kept past the run, `gh`
-never gets `--cache`, and `project clean` has neither the option nor a reader
-of these fields, so remote evidence never reaches an eligibility gate, a
+`remote` slots and into the envelope's `probes`, which D2's remote-target reads
+raise by the same number in `estimated` and in `performed` in an uncut remote
+phase and by nothing else (C-47). Nothing it records is a row error, a scan
+error or a finding, [B]'s added paragraph saying so for its children that exit
+nonzero or are stopped, for a lookup of `gh` that fails or does not finish in
+time (C-26) and for a deadline that expires after collection has finished,
+during the remote phase, which records no `deadline-exceeded` scan error, its
+effects shown only in the `remote` fields and in `probes` (C-48's M1), and [R]'s
+isolation clause for every failure, cut or stop of a remote-target read, of that
+lookup or of a `gh` child, `probe-failed`, `probe-timeout` and
+`deadline-exceeded` notwithstanding, so [X]'s exit status and [J]'s
+`completeness` are what they are without `--remote`, unless the remote phase
+raises an exception that [R] records as none of its reasons, which exits 2 as
+[X] gives any exception outside the per-candidate boundary (a body that the
+parser rejects, for any cause, is `api-error`, one of [R]'s reasons, never such
+an exception: C-22), or a signal ends the run or a write to standard output
+fails, the two other cases that [R]'s Isolation paragraph excepts (C-48's L4,
+the second clause on lane openRepoProject-4's YES): a signal ends the run with
+[X]'s exit status and no result document (D7), and a `--remote` document is
+longer than the same run's without `--remote`, so that a reader that closes
+early can fail the one write and not the other; and the envelope's `probes`
+differs only by D2's reads. Nothing is written to disk or kept past the run,
+`gh` never gets `--cache`, and `project clean` has neither the option nor a
+reader of these fields, so remote evidence never reaches an eligibility gate, a
 `plan_digest` or a revalidation (SY:129-130; DI:1059-1060).
 
 ### D11. Test seams and the scenario map
@@ -988,7 +1079,7 @@ of these fields, so remote evidence never reaches an eligibility gate, a
   (D10), so each by-value writing fails the test. It tests the parse and the
   node checks and is no scenario: "API failures stay unknown" already requires
   the 5,000-digit outcome, and the added requirement's "a positive integer
-  `number`" (`specs/project-overview/spec.md:472`) the others.
+  `number`" (`specs/project-overview/spec.md:479`) the others.
 - One test serves 200 answers that D6's parse refuses though each is otherwise
   valid (C-39, C-40). Each is a matched, merged pull request that would give
   its key's rows `merged` if it parsed, and each gives `api-error` with D6's
@@ -1003,8 +1094,8 @@ of these fields, so remote evidence never reaches an eligibility gate, a
   rule and from no other
   fault of the answer. The test checks the parse and is no scenario: the added
   requirement's "A 200 body SHALL be UTF-8 JSON"
-  (`specs/project-overview/spec.md:467-468`), and its `api-error` for a
-  response "that cannot be decoded or parsed for any cause" (:459-460),
+  (`specs/project-overview/spec.md:474-475`), and its `api-error` for a
+  response "that cannot be decoded or parsed for any cause" (:466-467),
   already require each outcome.
 - A planted `gh`, a second fake that records each run, sits in the working
   directory of a run whose `PATH` begins with an empty entry and `.`, so that
@@ -1071,7 +1162,7 @@ of these fields, so remote evidence never reaches an eligibility gate, a
   a second repository in the same run, whose merge ref is valid UTF-8, is
   answered as usual, so that the byte is the only fault. A `remote.<name>.url`
   that holds the byte is the same fixture for the second read. It is no
-  scenario: `specs/project-overview/spec.md:387-388`'s "fails for any other
+  scenario: `specs/project-overview/spec.md:392-393`'s "fails for any other
   cause" already requires the outcome (D2). The writer saw, in a scratch
   repository on Git 2.43.0, that `git config` took the byte, that `git
   for-each-ref` with D2's format and `git remote get-url` each printed it, and
@@ -1121,10 +1212,12 @@ of these fields, so remote evidence never reaches an eligibility gate, a
     receive the environment that the overview passes on, which is the caller's
     (D5), and `os.environ` is the developer's own. So an in-process run replaces
     `os.environ` for its duration with the environment that a subprocess run
-    gets, `self.env` (tests:133-134) with the changes below, and restores it
-    after; and that environment sets `HTTPS_PROXY` and `HTTP_PROXY` to a closed
-    local port, as subprocess runs do, so that even a real `gh` reached by
-    mistake could not connect.
+    gets, `self.env` (tests:133-134) with the `PATH` of the first sub-bullet
+    above, the fake bin directory and the directory of links, in place of the
+    developer's, and with the changes below, and restores it after, so that the
+    lookup of `gh` reads that `PATH` (C-49); and that environment sets
+    `HTTPS_PROXY` and `HTTP_PROXY` to a closed local port, as subprocess runs
+    do, so that even a real `gh` reached by mistake could not connect.
   - That environment, which every subprocess run gets as well, removes
     `NO_PROXY` and `no_proxy`, either of which could exempt `github.com` from
     that proxy, and `GH_TOKEN` and `GITHUB_TOKEN`, setting a fake token only
@@ -1138,14 +1231,38 @@ of these fields, so remote evidence never reaches an eligibility gate, a
 - Fixtures: a bare repository takes the pushes; the merge target's
   `branch.main.remote` names a second remote whose URL is a `github.com` URL
   that nothing contacts; a squash merge is made in a publisher clone with
-  `git merge --squash`, pushed and fetched.
+  `git merge --squash`, pushed and fetched. That second remote is made with
+  `git remote add`, which writes a default fetch refspec that maps
+  `refs/heads/main`, and `branch.main.remote` and `branch.main.merge` are set
+  with `git config`, since `git branch --set-upstream-to` needs the
+  remote-tracking ref to exist; a remote made with
+  `git config remote.<name>.url` alone has no fetch refspec, so that every row
+  of the fixture would read `no-remote-target` (C-48's M2; reader RC's trap).
+  One more fixture, a test and no scenario, gives a merge target's remote the
+  fetch refspec `+refs/heads/develop:refs/remotes/<name>/develop` alone: its
+  queried rows are `unavailable` with reason `no-remote-target` after one read,
+  no second read starts and no request is made for them (C-48's M2).
 - The expiry scenario patches the 30 s budget, the 5 s limit and the 60 s
   deadline down in-process, keeping their ratios, as change 2's design does
-  for its deadline.
+  for its deadline. The fixture of its first AND, in which collection leaves
+  less than 30 s, is also run without `--remote`, and the two runs' scan errors,
+  `completeness` and exit status are compared (C-48's M1). The case of a
+  repository whose first remote-target read named a usable remote and whose
+  second never started, `cancelled` under the Requests paragraph (C-48's L1),
+  is not tested: D1 dispatches the reads in rank order, so a repository's second
+  read takes the slot its first read freed, and a first read's budget ends at
+  the deadline or before, so the case arises only when the deadline passes
+  between the reaping of a first read and the dispatch of the second, an
+  instant that none of these seams can place. If that race happens in the
+  fixture of the second AND, its rows are `cancelled` like those of every other
+  repository not in flight, so the AND's outcome is the same either way.
 - Concurrency: in a run whose children end on their own, as in "The request
   bounds", the fake's start and end records show at most four overlapping
   children; a stopped child writes no end record, so the tests of stops read its
-  start record and probe its group instead (C-46).
+  start record and probe its group instead (C-46). The AND at concurrency 1 of
+  "The request bounds" compares the `remote` fields of its two runs with
+  `remote.observed_at` and `remote.limits.concurrency` apart, the second
+  reporting 1 in the patched run and 4 in the other (D8; C-48's M3).
 
 | Scenario | Requirement |
 | --- | --- |
@@ -1287,10 +1404,13 @@ requests".
   a row or scan error, though a `gh` lies further on; the README's next step
   says to check that `PATH`'s directories are reachable (C-26).
 - [The `for-each-ref` atoms on the Git 2.36 floor] -> Checked on 2.43 here;
-  the realization checks them on 2.36 as change 1 checked its probes, or
-  reads the two keys with `git config --get`, at one more child. That fallback
-  changes the count that [B]'s added paragraph states, so it needs a spec
-  change before the Speckit handoff.
+  the realization checks them on 2.36 as change 1 checked its probes. Reading
+  the two keys with `git config --get` in their place, the fallback this entry
+  named, was rejected in C-48 (reader RC's M2, its option (b)): it costs one
+  more child per repository, changes the count that [B]'s added paragraph
+  states, and gives up Git's own reading of the upstream, by which a remote
+  whose fetch refspecs do not map the merge ref is `no-remote-target`, as the
+  spec now says, so it would need spec changes before the Speckit handoff.
 - [A response's `url` in an unexpected form] -> The key is `api-error`; an
   unchecked string is never printed.
 - [Two clones of one repository with different merge targets share a key] ->
