@@ -69,12 +69,18 @@ duplicate them.
   `ad1faad` (the spec delta), `17307c5` (the design), `aa61817` (the
   proposal's body) and the commit that records the round's table and updates
   this task; verified by "Re-read and Codex Findings (round A7)" in
-  `proposal.md`.
+  `proposal.md`. Round A8, on `48e8119`, applied lane openRepoProject-3's
+  confirm read of round A7, its F1 to F10 (ruling A-35), by `50f569a` (the
+  spec delta), `65149e3` (the design), `8c4b801` (the proposal's body) and
+  the commit that records the round's table and updates this task; verified
+  by "Re-read and Codex Findings (round A8)" in `proposal.md`.
 - [x] 1.4 Spec deltas and design written: `specs/project-clean/spec.md`
   modifies five requirements and adds one (68 scenarios: 43 carried unchanged
   from change 1 and PR #19, 6, 14, 10, 5 and 8 by block, and 25 added, the
-  24th in round A3 and the 25th in round A4, rounds A5 and A7 adding ANDs
-  only and round A6 editing no spec file),
+  24th in round A3 and the 25th in round A4, round A5 adding ANDs only, round
+  A6 editing no spec file, round A7 adding no scenario and editing WHENs and
+  ANDs (ruling A-35, lane openRepoProject-3's confirm read, F5), and round A8
+  editing no scenario),
   `specs/project-clean-review-safety/spec.md` modifies one (4 scenarios: 3
   carried, 1 added), and `specs/project-command/spec.md` modifies one on PR
   #19's text (9 scenarios carried, none added; agreed by lane
@@ -83,9 +89,9 @@ duplicate them.
   each modified requirement's source text kept byte for byte; `design.md`
   holds D1 to D10 (`8341954`, `d0b33ce`, and the commit titled 'Settle which
   later targets carry branch-retention-stop'), revised by the alignment fix
-  round (1.2), the council round (1.3) and rounds A3 to A7; verified
+  round (1.2), the council round (1.3) and rounds A3 to A8; verified
   by `grep -c '^#### Scenario:'` on each spec file and by a scenario-carry
-  script run after the council round and again after rounds A3 to A7
+  script run after the council round and again after rounds A3 to A8
   over all seven MODIFIED blocks, every source scenario present byte for byte
   and in order.
 - [x] 1.5 Validation passes: `/usr/bin/openspec validate
@@ -94,7 +100,7 @@ duplicate them.
   `/usr/bin/openspec status --change add-project-clean-branch-retirement
   --json` shows every artifact done; verified by running the three on this
   branch after 1.4, after the alignment fix round, after the council round
-  and after rounds A3 to A7
+  and after rounds A3 to A8
   (build 1.13.1, which notes only as INFO that archive would refuse the
   MODIFIED blocks whose base still sits in change 1).
 - [ ] 1.6 Ratified by Brett Heap's word on the pull request, quoted with its
@@ -192,13 +198,15 @@ duplicate them.
   shares one evidence model" is committed at `f66ed58`, on PR #19's text,
   agreed by lane openRepoProject-2 with one fix and unchanged at its head
   `c928cb2`, and by L-11 and L-17 whichever of it and this change archives
-  second re-bases that block on the other's archived block; if this change is
-  second, the composed block quotes requirement names one way, in change 1's
-  double quotes, a change of quoting only (lane openRepoProject-5's reader
-  RD, its L4), and a re-base that changes this change's added text returns
-  the block to Brett Heap (RD's M3; ruling A-33); verified by `diff -u` of
-  the archived block against the re-based block showing additions only,
-  apart from that quoting (RD's M1), and by
+  second re-bases that block on the other's archived block, changing none of
+  the other's ratified words, quotation marks included, so that if this
+  change is second the composed block keeps that change's backquoted
+  requirement name beside this change's double-quoted ones (ruling A-35,
+  lane openRepoProject-3's confirm read, F9, refining lane
+  openRepoProject-5's reader RD, its L4), and a re-base that changes this
+  change's added text returns the block to Brett Heap (RD's M3; ruling
+  A-33); verified by `diff -u` of the archived block against the re-based
+  block showing additions only (RD's M1), and by
   `/usr/bin/openspec validate --all --strict` passing after any re-base, a
   second check that alone proves nothing.
 

@@ -12,6 +12,9 @@ the lane's rulings A-25 to A-28; round A6 applied lane openRepoProject-3's
 folded read of `9b67e8c`, four LOW wording items, under the lane's ruling A-29;
 round A7 applied the lane's review wave of 2026-10-21 on `01b5dd8`, its
 readers RA, RD and RE, under the lane's rulings A-30 to A-34;
+round A8 applied lane openRepoProject-3's confirm read of round A7,
+`01b5dd8..48e8119`, its F1 to F10, under the lane's ruling A-35, Codex
+having found no major issue in `48e8119`;
 nothing here is ratified. Governing issue:
 opensoft/openRepoProject#23, claimed by lane openRepoProject-5 (comment
 6111211798); refs #6, the record of the project maintenance design packet.
@@ -43,7 +46,8 @@ citation at `961c405` holds at main (L-15). Canonical requirements are cited as
 A-7, its addendum of 2026-10-18, L-10 to L-15, A-5 as amended and A-9 to A-15,
 its council verdicts and addendum of 2026-10-19, A-16 to A-21, A-1, A-4 and
 A-5 as amended, and L-16, its rulings of 2026-10-20, A-22 to A-29, and its
-rulings on the review wave of 2026-10-21, A-30 to A-34, bind
+rulings on the review wave of 2026-10-21, A-30 to A-34, and its ruling on
+lane openRepoProject-3's confirm read of round A7, A-35, bind
 this draft and are applied under Decisions and
 in the round tables. That wave's readers are lane openRepoProject-5's RA (an
 adversarial read of `01b5dd8`), RD (how this change, PR #27 at `fe5b245` and
@@ -58,7 +62,9 @@ at the register commit named; lane openRepoProject-3's delta read of `9ff8202`
 is `attachments/lane-openRepoProject-3/delta-26-a3-findings.md` there, read at
 `653112ca8`, and its folded read of `9b67e8c` is
 `attachments/lane-openRepoProject-3/delta-26-a5-findings.md`, read at
-`196e1c1b3`.
+`196e1c1b3`, and its confirm read of round A7, by its reader W1, is
+`attachments/lane-openRepoProject-3/wave01i-a7-findings.md`, read at
+`050e4492e`, cited by finding id, F1 to F10.
 
 ## Why
 
@@ -1404,19 +1410,20 @@ RE-6, RE-7 and RE-8 for alignment when feature 004 merges. The lead's rulings
 A-30 to A-34 bind. Of the 22 rows below, 15 are applied, 3 are applied with
 change (RA's LOW-5, RD's M3 and RE's RE-2), 4 are rulings with no edit (RE-4,
 RE-6, RE-7 and RE-8), and none is declined. RE's other findings, RE-5, whose
-subject A-31 meets, and RE-9 to RE-17, were not ruled for this round. No
-ruling needs `specs/project-command/spec.md`, lane openRepoProject-2's agreed
-block, which is unchanged (blob `e7665dda`). Round A7 adds ANDs only, so the
-scenarios stay 68, 4 and 9. Git facts were checked on Git 2.43.0 in a scratch
+subject A-31 meets, and RE-9 to RE-17, were recorded by A-34 for alignment
+with no edit. No ruling needs `specs/project-command/spec.md`, lane
+openRepoProject-2's agreed block, which is unchanged (blob `e7665dda`). Round
+A7 adds no scenario; it edits WHENs and ANDs, so the scenarios stay 68, 4
+and 9. Git facts were checked on Git 2.43.0 in a scratch
 repository (`design.md` Context), and feature 004's code at `2cf34d3` was
 read only as a check.
 
 | Finding | Severity | Ruling | Section edited |
 | --- | --- | --- | --- |
 | RA (01b5dd8) MEDIUM-1: "`retire` ... as its last member, after the selected triples" cannot hold under feature 004's canonical text, a JSON object with sorted keys, and the order of the retire pairs is undefined | MEDIUM | A-30: applied: change 1 and PR #19 name what the canonical JSON text covers and not its layout (`CAS/pc:629-632`, the same at `c462d87`), so the ADDED requirement names the member `retire` and leaves its position to that construction, its pairs ordered as `selected` is, each at its branch's last holder; D10, the archive-order note and task 2.3's AND pin no position; checked against feature 004's `project:3729-3749` at `2cf34d3`, where `retire` sorts before `selected` (reproduced) | project-clean delta (ADDED); Dependencies and Sequencing (archive order); `design.md` D10; `tasks.md` 2.3 |
-| RA (01b5dd8) MEDIUM-2: an exception during a branch stage is recorded by change 1's rule as `unknown` and `target-not-removed`, even after the branch child deleted the branch | MEDIUM | A-31: applied: under the flag an exception in the stage leaves the target as its rescan decided it, and `branch_retirement` takes what the stage established, `retained` or `retired` with `internal-error`, a reason of the sub-record's own enum, or null with `reconciliation-incomplete` once a branch child ran and no post-check decided, never `target-not-removed`; a deletion the post-check saw is `retired`, with its SHA and restore line printed; the reconcilable block's exception sentence names the exception; one AND pins the three cases; and, from RA's fix, "a fault" in three ADDED scenarios is reworded to the failed listing or spawn it meant | project-clean delta (reconcilable block; ADDED; "The merge target moves before the branch stage", "A branch child that cannot be spawned", "A post-check that cannot decide"); What Changes; Capabilities; Decisions, readings; `design.md` D5, D6, D9, Risks |
+| RA (01b5dd8) MEDIUM-2: an exception during a branch stage is recorded by change 1's rule as `unknown` and `target-not-removed`, even after the branch child deleted the branch | MEDIUM | A-31: applied: under the flag an exception in the stage leaves the target as its rescan decided it, and `branch_retirement` takes what the stage established, `retained` or `retired` with `internal-error`, a reason of the sub-record's own enum, or null with `reconciliation-incomplete` once a branch child ran and no post-check decided, never `target-not-removed`; a deletion the post-check saw is `retired`, with its SHA and restore line printed; the reconcilable block's exception sentence names the exception; one AND pins the three cases; and, from RA's fix, "a fault" in three ADDED scenarios is reworded to the failed listing or spawn it meant, the WHEN of "A post-check that cannot decide" also gaining two preconditions, its branch child "the real Git's", so that the deletion its `Unconfirmed` line reports is real, and "for the first of two targets", so that a later target is there to be `not-attempted` | project-clean delta (reconcilable block; ADDED; "The merge target moves before the branch stage", "A branch child that cannot be spawned", "A post-check that cannot decide"); What Changes; Capabilities; Decisions, readings; `design.md` D5, D6, D9, Risks |
 | RA (01b5dd8) MEDIUM-3: a null `stage` has no human line, and R, K and G cannot add up for it | MEDIUM | A-31: applied, applying A-19 without reopening it: `; unconfirmed: U` in the summary when U is above 0, R, K, G and U adding up, and the line `Unconfirmed BRANCH (was SHA); if git -C ROOT rev-parse --verify refs/heads/BRANCH fails, restore: ` with the restore command, never `Kept`, nor named among a stopped run's retained branches; checked: `rev-parse --verify` exits 128 for a deleted ref, 0 for `refs/heads/-f` and `refs/heads/HEAD`; one AND | project-clean delta (ADDED; "A post-check that cannot decide"); What Changes; Decisions, readings; `design.md` Context, D5, D8 |
-| RA (01b5dd8) LOW-4: a branch that another local branch tracks as its upstream is retired without notice | LOW | A-32: applied: after its `Retired` line, `Note: BRANCH2 tracks BRANCH as its upstream, which now reads gone; no commit is lost`, from the plan's ref listing, with no child; a later row on BRANCH2, refused with `state-changed` at its revalidation, stands; reproduced: `branch -d` deletes `b1` without a word, `b3`'s upstream reads `[gone]`, and the restore line restores it; one AND | project-clean delta (ADDED; "Retire the branches of a batch"); Decisions; `design.md` Context, D8, D9, Risks |
+| RA (01b5dd8) LOW-4: a branch that another local branch tracks as its upstream is retired without notice | LOW | A-32: applied: after its `Retired` line, `Note: BRANCH2 tracks BRANCH as its upstream, which now reads gone; no commit is lost`, from the plan's ref listing, with no child; a later row on BRANCH2, refused with `state-changed` at its revalidation, stands; reproduced: `branch -d` deletes `b1` without a word, `b3`'s upstream reads `[gone]`, and the restore line restores it; one AND | project-clean delta (ADDED; "Retire the branches of a batch"); What Changes; Decisions; `design.md` Context, D8, D9, Risks |
 | RA (01b5dd8) LOW-5: a branch being rebased or bisected in another worktree is invisible to the registry listing, so Git refuses it and the printed retry fails the same way | LOW | A-32: applied with change: stated as a residual in the ADDED requirement, and the `git-refused` line, with the upstream ref present, reads `; if a rebase or bisect in another worktree holds BRANCH, wait for it to end and remove that worktree; then retry: RETRY`; the change: the hint also says to remove that worktree, because, reproduced for a rebase and a bisect, once either ends that worktree holds the branch again and Git still refuses until it is removed; two scenario literals updated and one AND with the real Git | project-clean delta (ADDED; "Git refuses the branch deletion"; "A branch name in a printed command is quoted for the shell"); Decisions; `design.md` Context, D4, D8, D9, Risks |
 | RA (01b5dd8) LOW-6: the re-proof's outcome rule omits the gate's other undecidable readings | LOW | A-32: applied: a line that does not parse, and a last entry whose new object is not the head the re-read observed, keep the branch with `reflog-unmerged` | project-clean delta (ADDED step 3); `design.md` D4 |
 | RA (01b5dd8) LOW-7: `branch_plan` and the plan line are unspecified for a row whose proof did not finish | LOW | A-32: applied: such a row keeps its branch with `reflog-unmerged`, in its `branch_plan` and plan line, as a failed proof keeps it; no apply runs on such a plan | project-clean delta (ADDED item 1); `design.md` D4 |
@@ -1435,3 +1442,38 @@ read only as a check.
 | RE (2cf34d3) RE-6: "the gate's read is reused" needs an API change in feature 004 | MEDIUM | A-34: no edit; recorded for alignment when feature 004 merges; a matter of feature 004's code, not of change 1's text, whose gate reads the reflog this change reuses | none |
 | RE (2cf34d3) RE-7: the README's edit points at feature 004's head | MEDIUM | A-34: no edit; recorded for alignment when feature 004 merges; feature 004's README, not change 1's text | none |
 | RE (2cf34d3) RE-8: the CI job list, chiefly PR #29's | MEDIUM | A-34: no edit; recorded for alignment when feature 004 merges; `tasks.md` 3.1 already names every job, `git-floor` included | none |
+
+### Re-read and Codex Findings (round A8)
+
+Lane openRepoProject-3's reader W1 read round A7, `01b5dd8..48e8119`
+(`wave01i-a7-findings.md` at the register's `050e4492e`): no HIGH, 2 MEDIUM
+and 8 LOW, F1 to F10. It found validate valid and 8 of 8, the scenarios 68, 4
+and 9, all seven MODIFIED blocks carrying their source scenarios, the
+project-command blob `e7665dda`, and A-30 faithful, change 1 and PR #19
+fixing no layout of the digest's text. The lead's ruling A-35 accepts all
+ten; where its wording differs from W1's suggested fix it governs, F9
+refining A-33's reading of RD's L4 and F10 settling the D8 clause. Codex
+reviewed `48e8119` and found no major issue. Of the 11 rows below, 9 are
+applied, 1 is applied with change (F2), 1 is a review with no finding, and
+none is declined. No ruling needs `specs/project-command/spec.md`, which is
+unchanged (blob `e7665dda`). Round A8 adds no scenario and edits none, so the
+scenarios stay 68, 4 and 9, and every MODIFIED block still carries its source
+scenarios byte for byte; F1's clause is added to change 1's sentence with
+none of its words changed. F5 to F8 correct round A7's own record in place,
+and the round A7 row for RD's L4 keeps what that round did, which F9
+replaces. Git facts were checked on Git 2.43.0 in a scratch repository
+(`design.md` Context).
+
+| Finding | Severity | Ruling | Section edited |
+| --- | --- | --- | --- |
+| lane 3 confirm read (48e8119) F1: the flagged result order puts the summary and branch lines after the stop block, while the reconcilable block's carried sentence says that a run that stops ends its human result with `Stopped at ...` | MEDIUM | A-35: applied: that sentence gains, after its command, "or, under `--retire-branches`, with the lines that "Clean retires a removed worktree's branch only on fresh head and ancestry evidence" orders after it", added to change 1's sentence with none of its words changed, the block's eight scenarios carried byte for byte; Capabilities lists the clause; the reading of A-6's summary line no longer calls the flagged order change 1's own order, since change 1's D18 holds no summary or branch line after the stop block | project-clean delta (reconcilable block); Capabilities; Decisions, readings (A-6's summary line) |
+| lane 3 confirm read (48e8119) F2: the exception rule departs from the packet's own rule, its exit status included, while the reading named only change 1's copy of the rule | MEDIUM | A-35: applied with change: the reading of an exception in a branch stage quotes the packet's rule and names its exit change, 1 becoming 2 by exit row 4, or staying 1 for a null `stage` by row 2, a departure recorded the way the reading of the branch child's wait records `BA:466-468`; the change: it is cited as `BA:479-482`, where W1 and A-35 give `BA:478-482`, because line 478 at `da33d92` is blank and the rule begins at 479 | Decisions, readings (an exception in a branch stage) |
+| lane 3 confirm read (48e8119) F3: "SHALL only keep the stage from starting its next read or child" literally takes in the post-check, the stage's next read after its branch child | LOW | A-35: applied: "its next re-read, re-proof or branch child, never the post-check"; What Changes names the second SIGINT's exception, which abandons the post-check as change 1 abandons its remaining rescans; D7 and the reading of the branch child's wait read the same | project-clean delta (ADDED); What Changes; Decisions, readings (a branch child is waited for on a signal); `design.md` D7 |
+| lane 3 confirm read (48e8119) F4: the rebase-or-bisect hint is on the `git-refused` line with the upstream ref present only, while Git refuses the same way with it absent | LOW | A-35: applied: the `git-refused` line with the upstream ref absent carries `; if a rebase or bisect in another worktree holds BRANCH, wait for it to end and remove that worktree` before its `; next: ` step, which stays the `head-not-merge-target` step, unchanged for that keep; reproduced on Git 2.43.0: W1's `exp2` re-run (a rebase stopped on a conflict, no upstream configured: "used by worktree", exit 1), and, for an eligible row's shape, a published branch whose upstream's remote-tracking ref was deleted, the main worktree on the merge target: Git refuses the same way, the step printed before this round, a checkout of the merge target the main worktree already holds, exits 0 while the retry still fails, and once the rebase ends and that worktree is removed the same steps delete the branch, exit 0 | project-clean delta (ADDED); `design.md` Context, D8 |
+| lane 3 confirm read (48e8119) F5: "Round A7 adds ANDs only" is inexact, since round A7 also rewrote three WHENs and seven existing ANDs | LOW | A-35: applied: round A7 "adds no scenario; it edits WHENs and ANDs", in its prose and in `tasks.md` 1.4 | Re-read and Codex Findings (round A7), its opening prose; `tasks.md` 1.4 |
+| lane 3 confirm read (48e8119) F6: the WHEN of "A post-check that cannot decide" gained two preconditions that no row names | LOW | A-35: applied: RA's MEDIUM-2 row names them, its branch child "the real Git's" and "for the first of two targets", with what each supports | Re-read and Codex Findings (round A7), RA's MEDIUM-2 row |
+| lane 3 confirm read (48e8119) F7: RA's LOW-4 row omits What Changes, which gained the note | LOW | A-35: applied | Re-read and Codex Findings (round A7), RA's LOW-4 row |
+| lane 3 confirm read (48e8119) F8: round A7's prose says that RE-5 and RE-9 to RE-17 "were not ruled for this round" | LOW | A-35: applied: they "were recorded by A-34 for alignment with no edit", and take no rows, as A-34 gives them none | Re-read and Codex Findings (round A7), its opening prose |
+| lane 3 confirm read (48e8119) F9: RD's L4 was met by re-quoting PR #29's ratified words at this change's archive | LOW | A-35, refining A-33's reading of RD's L4: applied: a re-base never changes another change's ratified words, quotation marks included, and one-way quoting binds this change's own text only, so PR #29's backquoted requirement name stays as ratified and the composed block may hold both styles; the re-quote is withdrawn from the Migration Plan, the project-command Dependency and task 2.4, whose `diff -u` check needs no exception for quoting; the round A7 row for RD's L4 keeps what that round did | Dependencies and Sequencing (the project-command block); `design.md` Migration Plan; `tasks.md` 2.4 |
+| lane 3 confirm read (48e8119) F10: D8 calls feature 004's stop form "the form this order extends", while its `Branches not confirmed:` line has no place in the flagged order | LOW | A-35: applied: D8 says that under the flag the per-branch `Unconfirmed` lines name each branch whose deletion is unconfirmed, and that whether feature 004's `Branches not confirmed:` line, which change 1's text does not hold (checked at `961c405` and at PR #19's `c462d87`), stays beside them is settled at the alignment with feature 004, with RE-4 to RE-8 | `design.md` D8 |
+| Codex (48e8119): its review receipt on PR #26 of 2026-10-21T13:24:29Z, "Didn't find any major issues", for reviewed commit `48e81197b0` | none | no finding and no edit | none |
