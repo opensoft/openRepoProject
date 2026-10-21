@@ -14,6 +14,7 @@ duplicate them.
 - [x] 1.4 Spec deltas and design written: `specs/project-overview/spec.md` adds twelve requirements with 61 scenarios, `specs/project-review-safety/spec.md` modifies "YAML decoding errors are structured refusals" with its existing scenario kept and the overview carve-out added, and `design.md` holds decisions D1 to D13 with the reconciliation list in D12; verified by `openspec status --change add-project-overview --json` showing every artifact done.
 - [x] 1.5 Validation passes: `openspec validate add-project-overview --strict` and `openspec validate --all --strict` both pass; verified by their output, quoted in the message of the commit that adds these artifacts.
 - [x] 1.6 Ratified by Brett Heap's word: on 2026-10-09 he told lane openRepoProject-2, "ratify, merge #11 and run the runbook"; the change lands by squash-merge of PR #12 after PR #11 (`add-project-clean-all-safe`), with the Speckit handoff `005-project-overview` to follow after feature 004 merges; verified by that quote, recorded in `proposal.md`'s Status line. No implementation starts before the Speckit feature of 3.1 exists.
+- [ ] 1.7 Amendment A1 (`amend-project-overview-clarify-answers`, `proposal.md` "Amendment A1") ratified by Brett Heap's word ratifying #34 (such as "ratify 34"), quoted with its link on PR #34; PR #34 lands by squash; verified by that quote. Feature 005's plan does not start before it. To fill when he rules: his words, verbatim, and the link to them.
 
 ## 2. Before the handoff
 

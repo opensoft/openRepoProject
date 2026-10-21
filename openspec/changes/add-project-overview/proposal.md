@@ -5,7 +5,9 @@ Lane: openRepoProject-2
 Status: ratified by Brett Heap on 2026-10-09, in his words to lane
 openRepoProject-2, "ratify, merge #11 and run the runbook". It lands by
 squash-merge of PR #12 after PR #11 (`add-project-clean-all-safe`), and the
-Speckit handoff `005-project-overview` follows after feature 004 merges. It was
+Speckit handoff `005-project-overview` follows after feature 004 merges;
+amendment A1 (PR #34) is drafted and not ratified, and lands only on Brett
+Heap's word. It was
 revised after the alignment review, the lead's later rulings, the council and
 the packet author's final delta read (resolutions on PR #12 and in "Questions
 Resolved by the Alignment Review"; noted constraints in `clarifications.md`).
@@ -899,7 +901,8 @@ merges, these corrections bind this change and the spec phase (OQ-3):
 
 ## Open Questions
 
-None is open here. The one this proposal carried, `remote-gone` before a
+None is open here but one point that amendment A1 leaves open, M1 (section
+"Amendment A1" below). The one this proposal carried, `remote-gone` before a
 merge proof, was ruled by Brett Heap on 2026-10-09: a local ancestry proof
 outranks `remote-gone` for worktree rows, so the overview's `--all-safe`
 suggestion now reaches a merged worktree whose upstream was deleted (Decisions,
@@ -1060,7 +1063,8 @@ engineer) read `6204234`: V1 to V12 are applied here, N1 to N4 are in
 
 ## Amendment A1: Brett Heap's answers to feature 005's clarify questions (2026-10-21)
 
-Status: A1 drafted; not ratified; it lands only on Brett Heap's word.
+Status: A1 drafted; not ratified; it lands only on Brett Heap's word. It is
+draft PR #34, https://github.com/opensoft/openRepoProject/pull/34.
 
 A1, `amend-project-overview-clarify-answers`, is lane openRepoProject-4's
 amendment of this change in place, under its governing issue
