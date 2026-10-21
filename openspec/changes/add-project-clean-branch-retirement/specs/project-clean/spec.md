@@ -896,8 +896,10 @@ precedes any later target's revalidation, in this order:
    head among the commits the reflog names, computes it again; and no
    registered worktree, the main worktree included, has the branch checked
    out in the registry listing of that rescan. A value that manifest read or
-   that listing cannot establish, a read that fails or times out included,
-   SHALL count as a difference.
+   that listing cannot establish, a read that fails or times out at its own
+   5 s budget included, SHALL count as a difference; a read whose budget the
+   work deadline ends SHALL count as no difference, and the stage SHALL then
+   spawn nothing more and SHALL retain the branch with `deadline-exceeded`.
 3. Re-prove the reflog, as the re-read's last step and under its budget,
    because a branch moved to a commit the merge target lacks and back to its
    planned SHA between the plan and the stage passes every check above while
