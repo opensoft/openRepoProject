@@ -7,7 +7,8 @@ branches" in openspec/changes/add-project-clean-all-safe/specs/, and draft PR
 specs/004-project-clean-all-safe/research.md R1, R4 and R5; data-model.md,
 "States of push and delete-branch" and "Exit statuses"; contracts/project-clean.md,
 "Streams" and "Git children"; lead rulings R-28, R-53 (P-1, P-5 to P-9, P-19,
-P-23) and R-74 (c).
+P-23), R-74 (c) and R-101 (e), which rules on lane openRepoProject-3's fan-out
+read F2: H-1 and H-2, the push vector, and M-1, a signal once the child ran.
 
 Expected human text comes from clean_support's fixtures (rule 8), and the
 baseline messages push and delete-branch keep are written here as literals
@@ -46,6 +47,12 @@ JSON_REFUSED = "--json cannot be combined with --apply; use JSON for the read-on
 INCOMPLETE = "REFUSED: " + TEXT["plan_incomplete"].format(
     CODE="inspection-incomplete", REMEDY=TEXT["remedy_inspection_incomplete"]) + "\n"
 NO_TERMINAL = f"REFUSED: {CONFIRM} Supply explicit options when stdin is not a terminal.\n"
+
+# Lead ruling R-101 (e) 2 (lane 3's M-1): a signal recorded once the push or
+# `git branch -d` child has run is reported with git's status, never as
+# `Cancelled.`, which the delta pairs with nothing mutated (project-clean
+# spec.md:928-930). Region push's own text, written here as a literal.
+INTERRUPTED = "Interrupted; {WHAT} had started and was waited for, and git exited with status {STATUS}.\n"
 
 # The hook of the signal tests, installed as pre-push and as
 # reference-transaction (T073). It acts only in a run whose environment names
@@ -139,6 +146,33 @@ class PushTests(clean_support.CleanCase):
         """Every ref of the repository at path with its object, as text."""
         return self.git(path, "for-each-ref", "--format=%(refname) %(objectname)")
 
+    def stray_commit(self, message, root=None):
+        """A commit on top of the root's HEAD that no local branch holds, made
+        by `commit-tree`, as another clone's commit; returns its SHA."""
+        return self.git(self._root(root), "commit-tree", "HEAD^{tree}", "-p", "HEAD", "-m", message).strip()
+
+    def option_branch(self, name, root=None):
+        """A clean linked worktree on the branch NAME, which `git branch`
+        refuses for an option-like name but `update-ref` and `symbolic-ref`
+        make, holding one commit of its own and no upstream (`unpublished`).
+        Returns its head."""
+        root = self._root(root)
+        tree = self.base / "option-tree"
+        self.git(root, "worktree", "add", "-q", "--detach", tree)
+        self.git(root, "update-ref", "refs/heads/" + name, "HEAD")
+        self.git(tree, "symbolic-ref", "HEAD", "refs/heads/" + name)
+        return self.advance(tree)
+
+    def push_named(self, root, branch, env):
+        """`clean ROOT --apply --action push --branch=BRANCH --yes`, the branch
+        in the `=` form, so that a name such as `--force` stays the value."""
+        return self.run_cli("clean", root, "--apply", "--action", "push", f"--branch={branch}", "--yes", env=env)
+
+    def pushed_as(self, log, root, *words):
+        """The one push child in log, its argument vector `-C ROOT push WORDS`."""
+        [push] = pushes(clean_support.child_log(log))
+        self.assertEqual(push.argv, ["-C", str(root), "push", *words])
+
     def test_clean_push_an_unpushed_feature_branch(self):
         root = self.repo()
         remote = self.bare_remote()
@@ -150,14 +184,15 @@ class PushTests(clean_support.CleanCase):
         self.assert_status(result, 0)
         shown = ("Cleanup action: push branch 001-feature\n"
                  f"Working directory: {root}\n"
-                 f"  git -C {root} push origin 001-feature:001-feature\n")
+                 f"  git -C {root} push -- origin refs/heads/001-feature:refs/heads/001-feature\n")
         # The terminal shows the plan, then the answer echoed; input() writes
         # confirm()'s prompt to standard error at a terminal.
         self.assertEqual(result.stdout, shown + "yes\n", "the exact push plan, then the confirmation")
         self.assertTrue(result.stderr.startswith(CONFIRM + " "), result.stderr)
         [push] = pushes(clean_support.child_log(log))
-        self.assertEqual(push.argv, ["-C", str(root), "push", "origin", "001-feature:001-feature"],
-                         "pushed as shown: no pin, and no --force")
+        self.assertEqual(push.argv, ["-C", str(root), "push", "--", "origin",
+                                     "refs/heads/001-feature:refs/heads/001-feature"],
+                         "pushed as shown: no pin, no --force, and both refs named in full (R-101 (e) 1)")
         self.assertEqual(self.git(remote, "rev-parse", "refs/heads/001-feature"),
                          self.git(tree, "rev-parse", "HEAD"))
 
@@ -172,6 +207,130 @@ class PushTests(clean_support.CleanCase):
             self.assert_status(result, 1)  # git push's own status, passed through
             self.assertIn("pre-receive hook declined", result.stderr)
             self.assertEqual((self.refs(root), self.git(tree, "rev-parse", "HEAD"), self.refs(remote)), before)
+
+    # Lane 3's H-1 (lead ruling R-101 (e) 1): the bare branch name in the
+    # refspec let Git read it as a `+` force marker, as an option, or through
+    # a configured push mapping. Each test below fails on the vector of
+    # c9103ba, and each pushes the named branch to its own ref and nothing
+    # else, never forced: `push [-u] -- REMOTE refs/heads/B:DESTINATION`.
+
+    def test_clean_push_an_unpushed_feature_branch_named_plus_x(self):
+        # X3: `+x` is a legal branch name, and `push -u origin +x` force-pushed
+        # branch x over another clone's commit, x having diverged locally.
+        root = self.repo()
+        remote = self.bare_remote()
+        theirs = self.stray_commit("another clone's x")
+        self.git(root, "push", "-q", "origin", f"{theirs}:refs/heads/x")
+        self.git(root, "branch", "x", self.stray_commit("the local x"))
+        tree = self.base / "plus-x-tree"
+        self.git(root, "worktree", "add", "-q", "-b", "+x", tree)
+        head = self.advance(tree)
+        env, log = self.counting()
+        result = self.push_named(root, "+x", env)
+        self.assert_status(result, 0)
+        self.pushed_as(log, root, "-u", "--", "origin", "refs/heads/+x:refs/heads/+x")
+        self.assertEqual(self.git(remote, "rev-parse", "refs/heads/x").strip(), theirs, "origin's x is not forced")
+        self.assertEqual(self.git(remote, "rev-parse", "refs/heads/+x").strip(), head)
+
+    def test_clean_push_an_unpushed_feature_branch_named_dash_dash_force(self):
+        # X2: `push -u origin --force` read the name as the option and
+        # force-pushed main, the default branch, over another clone's commit.
+        root = self.repo()
+        remote = self.bare_remote()
+        self.git(root, "push", "-q", "-u", "origin", "main")
+        theirs = self.stray_commit("another clone's main")
+        self.git(root, "push", "-q", "origin", f"{theirs}:refs/heads/main")
+        head = self.option_branch("--force")
+        env, log = self.counting()
+        result = self.push_named(root, "--force", env)
+        self.assert_status(result, 0)
+        self.pushed_as(log, root, "-u", "--", "origin", "refs/heads/--force:refs/heads/--force")
+        self.assertEqual(self.git(remote, "rev-parse", "refs/heads/main").strip(), theirs, "origin's main is not forced")
+        self.assertEqual(self.git(remote, "rev-parse", "refs/heads/--force").strip(), head)
+
+    def test_clean_push_an_unpushed_feature_branch_named_dash_dash_mirror(self):
+        # X1: `push -u origin --mirror` deleted a branch only origin holds and
+        # published the repository's remote-tracking refs.
+        root = self.repo()
+        remote = self.bare_remote()
+        self.git(root, "push", "-q", "-u", "origin", "main")
+        self.git(root, "push", "-q", "origin", f"{self.stray_commit('only on origin')}:refs/heads/keep1")
+        before = self.refs(remote).splitlines()
+        head = self.option_branch("--mirror")
+        env, log = self.counting()
+        result = self.push_named(root, "--mirror", env)
+        self.assert_status(result, 0)
+        self.pushed_as(log, root, "-u", "--", "origin", "refs/heads/--mirror:refs/heads/--mirror")
+        self.assertEqual(sorted(self.refs(remote).splitlines()), sorted([*before, f"refs/heads/--mirror {head}"]),
+                         "origin gains the branch alone: nothing deleted, no remote-tracking ref published")
+
+    def test_clean_push_an_unpushed_feature_branch_under_a_forced_push_mapping(self):
+        # X6h: with remote.origin.push mapping every branch through a `+`
+        # refspec, `push -u origin solo` became `solo -> other/solo (forced
+        # update)`; a destination named in full leaves the mapping unused.
+        root = self.repo()
+        remote = self.bare_remote()
+        theirs = self.stray_commit("another clone's other/solo")
+        self.git(root, "push", "-q", "origin", f"{theirs}:refs/heads/other/solo")
+        self.git(root, "config", "remote.origin.push", "+refs/heads/*:refs/heads/other/*")
+        tree = self.base / "solo-tree"
+        self.git(root, "worktree", "add", "-q", "-b", "solo", tree)
+        head = self.advance(tree)
+        env, log = self.counting()
+        result = self.push_named(root, "solo", env)
+        self.assert_status(result, 0)
+        self.pushed_as(log, root, "-u", "--", "origin", "refs/heads/solo:refs/heads/solo")
+        self.assertEqual(self.git(remote, "rev-parse", "refs/heads/other/solo").strip(), theirs,
+                         "not forced through the mapping")
+        self.assertEqual(self.git(remote, "rev-parse", "refs/heads/solo").strip(), head)
+
+    def test_clean_push_an_unpushed_feature_branch_tracking_a_remote_named_a_b(self):
+        # Lane 3's H-2, X5 (R-101 (e) 1): the upstream's short name `a/b/feat`
+        # was cut at its first `/`, so the push went to remote `a` as
+        # `feat:b/feat`. The remote and the destination now come from
+        # branch.feat.remote and branch.feat.merge.
+        root = self.repo()
+        self.bare_remote()
+        remotes = {"a": self.base / "a.git", "a/b": self.base / "ab.git"}
+        for name, path in remotes.items():
+            self.git(self.base, "init", "-q", "--bare", path)
+            self.git(root, "remote", "add", name, path)
+        tree = self.base / "feat-tree"
+        self.git(root, "worktree", "add", "-q", "-b", "feat", tree)
+        self.git(tree, "push", "-q", "-u", "a/b", "feat")
+        head = self.advance(tree)
+        env, log = self.counting()
+        result = self.push_named(root, "feat", env)
+        self.assert_status(result, 0)
+        self.pushed_as(log, root, "--", "a/b", "refs/heads/feat:refs/heads/feat")
+        self.assertEqual(self.git(remotes["a/b"], "rev-parse", "refs/heads/feat").strip(), head)
+        self.assertEqual(self.refs(remotes["a"]), "", "nothing pushed to remote a")
+
+    def test_clean_push_an_unpushed_feature_branch_with_an_unusable_upstream_refuses(self):
+        # R-101 (e) 1: a configured remote or merge ref that is missing or
+        # unusable runs no push, and refuses as the code already did for an
+        # upstream it could not map. A local upstream (remote `.`) named
+        # `team/base` was pushed to a remote `team`; a second merge ref was
+        # ignored, the short name taking the first.
+        root = self.repo()
+        remote = self.bare_remote()
+        self.git(root, "branch", "team/base")
+        local = self.base / "local-tree"
+        self.git(root, "worktree", "add", "-q", "--track", "-b", "002-local", local, "team/base")
+        self.advance(local)
+        self.unpushed("003-two")
+        self.git(root, "config", "--add", "branch.003-two.merge", "refs/heads/elsewhere")
+        env, log = self.counting()
+        for variant, branch, upstream in (("a local upstream", "002-local", "team/base"),
+                                          ("two merge refs", "003-two", "origin/003-two")):
+            with self.subTest(variant):
+                before = (self.refs(root), self.refs(remote))
+                clean_support.reset_child_log(log)
+                result = self.push_named(root, branch, env)
+                self.assert_status(result, 2)
+                self.assertEqual(result.stderr, f"REFUSED: Unsupported upstream mapping for {branch}: {upstream}\n")
+                self.assertEqual(pushes(clean_support.child_log(log)), [], "no push child")
+                self.assertEqual((self.refs(root), self.refs(remote)), before)
 
     def test_clean_push_refuses_a_branch_whose_upstream_was_deleted(self):
         root = self.repo()
@@ -353,7 +512,8 @@ class PushTests(clean_support.CleanCase):
         # Through the launcher with the real table. A signal sent to project
         # alone while the child's hook waits is recorded only: the hook sees
         # none, the child completes, and project exits 128 plus the signal's
-        # number (plan review M3; data-model.md, "Exit statuses").
+        # number (plan review M3; data-model.md, "Exit statuses"), reporting
+        # the child's status and never `Cancelled.` (R-101 (e) 2).
         root = self.repo()
         remote = self.bare_remote()
         tree = self.unpushed("001-feature")
@@ -373,7 +533,9 @@ class PushTests(clean_support.CleanCase):
                 self.assertEqual(self.git(remote, "rev-parse", "refs/heads/001-feature").strip(), head,
                                  "the push was waited for and completed")
                 self.assert_status(result, expected)
-                self.assertEqual(result.stderr.endswith("Cancelled.\n"), signum is not None, result.stderr)
+                self.assertNotIn("Cancelled.", result.stderr, "the push ran")
+                self.assertEqual(result.stderr.endswith(INTERRUPTED.format(WHAT="the push", STATUS=0)),
+                                 signum is not None, result.stderr)
             with self.subTest("delete-branch", signal=name):
                 branch = "002-merged-" + name.lower()
                 self.git(root, "branch", branch)
@@ -383,7 +545,9 @@ class PushTests(clean_support.CleanCase):
                 self.assertEqual(self.git(root, "for-each-ref", "refs/heads/" + branch), "", "the branch is gone")
                 self.assertIn(f"Deleted branch {branch} (was ", result.stdout, "the child's own output")
                 self.assert_status(result, expected)
-                self.assertEqual(result.stderr.endswith("Cancelled.\n"), signum is not None, result.stderr)
+                self.assertNotIn("Cancelled.", result.stderr, "git branch -d ran")
+                self.assertEqual(result.stderr, INTERRUPTED.format(WHAT="the branch deletion", STATUS=0)
+                                 if signum is not None else "")
 
         with self.subTest("a hook that ends its own git push with SIGKILL"):
             self.advance(tree)
@@ -405,6 +569,51 @@ class PushTests(clean_support.CleanCase):
             self.assert_status(result, 128 + signal.SIGKILL)
             self.assertNotEqual(self.git(root, "for-each-ref", "refs/heads/003-merged-killed"), "")
 
+    def test_clean_a_signal_during_the_push_or_branch_deletion_once_git_has_mutated(self):
+        # Lane 3's M-1 (lead ruling R-101 (e) 2): a slow git wrapper first on
+        # PATH runs the real push, or `git branch -d`, to its end, so that the
+        # ref has moved, and only then waits for the release while the test
+        # sends the signal to project alone. Project still waits for the
+        # child, reports git's status, exits 128 plus the signal's number, and
+        # never prints `Cancelled.`, which the delta pairs with nothing mutated
+        # (project-clean spec.md:928-930). Through the launcher, the real table.
+        root = self.repo()
+        remote = self.bare_remote()
+        tree = self.unpushed("001-feature")
+        self.git(root, "branch", "002-merged")
+        real = shlex.quote(clean_support.REAL_GIT)
+        slow = self.base / "slow-bin" / "git"
+        slow.parent.mkdir()
+        slow.write_text("#!/bin/sh\n"
+                        f'case " $* " in *" push "*|*" branch -d "*) ;; *) exec {real} "$@";; esac\n'
+                        f'{real} "$@"\nstatus=$?\necho started >> "$HOOK_LOG"\ni=0\n'
+                        'while [ ! -e "$HOOK_RELEASE" ] && [ "$i" -lt 300 ]; do sleep 0.05; i=$((i + 1)); done\n'
+                        'echo done >> "$HOOK_LOG"\nexit $status\n')
+        slow.chmod(0o755)
+        env = dict(self.path_first(slow.parent), HOOK_LOG=str(self.base / "slow.log"),
+                   HOOK_RELEASE=str(self.base / "slow.release"))
+
+        def launched(*args):
+            return clean_support.launched_argv(None, "clean", root, "--apply", *args, "--yes")
+
+        for signum in (signal.SIGTERM, signal.SIGINT, signal.SIGHUP):
+            with self.subTest("push", signal=signum.name):
+                head = self.advance(tree)
+                result, log = self.run_signalled(launched("--action", "push", "--branch", "001-feature"), env, signum)
+                self.assertEqual(log, "started\ndone\n", "the signal came after the push, while git still ran")
+                self.assertEqual(self.git(remote, "rev-parse", "refs/heads/001-feature").strip(), head, "pushed")
+                self.assert_status(result, 128 + signum)
+                self.assertNotIn("Cancelled.", result.stderr)
+                self.assertTrue(result.stderr.endswith(INTERRUPTED.format(WHAT="the push", STATUS=0)), result.stderr)
+        with self.subTest("delete-branch", signal="SIGTERM"):
+            result, log = self.run_signalled(launched("--action", "delete-branch", "--branch", "002-merged"), env,
+                                             signal.SIGTERM)
+            self.assertEqual(log, "started\ndone\n", "the signal came after the deletion, while git still ran")
+            self.assertEqual(self.git(root, "for-each-ref", "refs/heads/002-merged"), "", "the branch is gone")
+            self.assertIn("Deleted branch 002-merged (was ", result.stdout, "the child's own output")
+            self.assert_status(result, 128 + signal.SIGTERM)
+            self.assertEqual(result.stderr, INTERRUPTED.format(WHAT="the branch deletion", STATUS=0))
+
     def test_clean_push_and_delete_branch_escape_their_paths(self):
         # The root's name holds a tab (Cc) and U+202E (Cf), and so does one
         # branch's U+202E; each is built with chr(), as is the backslash of
@@ -421,7 +630,7 @@ class PushTests(clean_support.CleanCase):
         shown = f"$'002-merged{backslash}u202e'"
         pinned = " ".join(PINS)
         cases = (("push", "001-feature", "push branch 001-feature",
-                  f"git -C {escaped} push origin 001-feature:001-feature"),
+                  f"git -C {escaped} push -- origin refs/heads/001-feature:refs/heads/001-feature"),
                  ("delete-branch", "002-merged", "delete verified merged local branch 002-merged",
                   f"git {pinned} -C {escaped} branch -d 002-merged"),
                  ("delete-branch", reversed_branch, f"delete verified merged local branch {shown}",
@@ -458,7 +667,8 @@ class PushTests(clean_support.CleanCase):
         the seven pins, its own process group, no scrubbed name. Returns the
         push child's record."""
         [push] = pushes(records)
-        self.assertEqual(push.argv, ["-C", str(root), "push", "origin", f"{branch}:{branch}"], "no pin")
+        self.assertEqual(push.argv, ["-C", str(root), "push", "--", "origin",
+                                     f"refs/heads/{branch}:refs/heads/{branch}"], "no pin")
         self.assertEqual((push.ppid, push.pgid), (pid, pid), "project's own process group")
         self.assertEqual(push.names, tuple(kept))
         others = [record for record in records if record is not push]
@@ -539,7 +749,10 @@ class PushTests(clean_support.CleanCase):
             before = self.refs(remote)
             result = self.run_pty_steps(argv, [(PROMPTS[0], chr(3))], controlling_tty=True, env=env)
             self.assert_status(result, 130)  # D19's first row: SIGINT was recorded
-            self.assertTrue(result.stderr.endswith("Cancelled.\n"), result.stderr)
+            # The push child was spawned, so project cannot say nothing was
+            # mutated: it reports git's own status, never `Cancelled.` (R-101 (e) 2).
+            self.assertNotIn("Cancelled.", result.stderr)
+            self.assertTrue(result.stderr.endswith(INTERRUPTED.format(WHAT="the push", STATUS=130)), result.stderr)
             self.assertEqual(self.refs(remote), before, "nothing pushed")
 
     def test_clean_the_delegate_relay_passes_both_streams_whole(self):
