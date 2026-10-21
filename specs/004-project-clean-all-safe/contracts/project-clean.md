@@ -96,6 +96,17 @@ than the cap's 128, and the run refuses with `inspection-incomplete`, exit 2
    plain `removed`.
 9. The final rescan within the 10 s reserve, the result, the exit status.
 
+Steps 3 and 4 give the order of the refusals, not of the reads. The
+`project-clean` delta asks only that `unsupported-path-bytes` come "before
+any plan or digest is built" (its `spec.md:1067-1069`) and fixes no order
+between that check and the manifest read, so the contract's order, the
+UTF-8 check before the manifest read, is a reading of the delta, and the
+code's is another: `resolve_clean_target()` makes one `inspect_repository()`
+call, which runs rows 4, 6 and 7 and reads the manifest at `root`, and only
+then checks `root` and `common_dir` for UTF-8, before the merge target's
+own refusals (`manifest-invalid`, `no-merge-target`) and before any plan or
+digest, no row being probed (lead rulings R-80 P-13 and R-92 (d)).
+
 ## Resolution (FR-016, FR-017; D8)
 
 | Argument (after `expanduser`) | Resolves to | Refusal |
@@ -243,6 +254,17 @@ code with no baseline message gets one here:
 a nineteenth code, since the delta closes the eighteen: push, which prints
 no JSON, refuses with no code and the reason `remote-gone`, printing
 `REFUSED: ` and the message above (lead ruling R-45).
+
+Two of the baseline messages print the user's own argument raw today:
+`discover()`'s `Directory does not exist: PATH` and `No project found at
+PATH; supply a path or name.`, which reach clean as `repository-not-found`,
+where the delta's human-output rule (`spec.md:1061-1066`) escapes a path
+that holds a code point to escape. PENDING, not yet built: a final fixes
+lane, after the polish wave, is to have `resolve_clean_target()` re-render
+both with `human_path()` where it maps their codes, a two-line edit with a
+test of an argument holding U+202E; `discover()` itself stays as it is,
+since `status`, `doctor` and `update` share it (lead ruling R-92 (c)). This
+paragraph is to be reworded as built once that lane has merged.
 
 `internal-error` prints its exception's type and text only where it is a
 refusal, before the apply phase. After the apply phase begins, an exception
