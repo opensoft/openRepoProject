@@ -1159,8 +1159,10 @@ class Invocation:
     def interrupting(self):
         """Whether a driver stops its probe and raises Interrupted now: the slot
         set while planning, or a second SIGINT while reconciling (R-44 (3);
-        data-model.md, "Signal slot"). In the apply phase only the seams read
-        the slot, before each revalidation and each spawn (D15)."""
+        data-model.md, "Signal slot"). In the apply phase no driver stops: the
+        seams read the slot before each revalidation and each spawn (D15), and
+        a revalidation reads it before each read it starts (slot_set(); lead
+        ruling R-95 (a))."""
         if self.phase == "planning":
             return self.signal is not None
         return self.phase == "reconciling" and self.second_interrupt

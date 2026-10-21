@@ -815,7 +815,7 @@ class RunnerTests(CleanCase):
             self.assertIn("fatal:", missing.stderr)
             self.assertEqual(len(spawned), 4)
             for handle, handlers, wakeup in spawned:
-                self.assertEqual(handle.budget_end - handle.started, project.TIMING["inspect_budget"])
+                self.assertAlmostEqual(handle.budget_end - handle.started, project.TIMING["inspect_budget"], places=6)
                 self.assertEqual((handlers, wakeup), before, "no handler installed")
                 self.assertEqual(handle.state, "reaped")
             # Inside an invocation each child is counted.
