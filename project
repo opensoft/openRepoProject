@@ -570,7 +570,10 @@ TIMING = {
 # prints is its literal text. A change to a key or a code goes through the lead.
 
 # Caps and bounds, never scaled by a test. `worktree_rows` is the row cap of
-# each plan mode; the first five keys are the plan's `limits` object.
+# each plan mode; the first five keys are the plan's `limits` object. A
+# target's revalidation spawns at most six Git children, seven where the plan
+# read the repository's extensions.worktreeConfig as true (design D7 and D14;
+# LQ-11, LQ-13; lead ruling R-165); revalidation_children() picks one.
 LIMITS = {
     "worktree_rows": {"report": 256, "all-safe": 128, "single": 128},
     "targets": 16,
@@ -579,7 +582,8 @@ LIMITS = {
     "ignored_samples": 8,
     "reflog_bytes": 65536,  # 64 KiB
     "manifest_bytes": 1048576,  # 1 MiB
-    "revalidation_children": 5,
+    "revalidation_children": 6,
+    "revalidation_children_worktree_config": 7,
     "rescan_children": 3,
 }
 
@@ -641,7 +645,7 @@ REFUSAL_CODES = (
 STAGE_REASONS = {
     "removed": (None, "branch-advanced-after-removal", "branch-missing-after-removal", "removal-ceiling"),
     "refused": ("identity-changed", "branch-changed", "state-changed", "contains-submodule",
-                "hidden-local-state", "operation-in-progress"),
+                "hidden-local-state", "operation-in-progress", "worktree-only-commits"),
     "failed": ("git-refused", "git-failed", "spawn-error"),
     "unknown": ("unconfirmed-removal", "reconciliation-incomplete", "internal-error", "removal-ceiling"),
     "not-attempted": ("batch-stopped", "interrupted", "deadline-exceeded"),
@@ -684,8 +688,8 @@ TEXT = {
         "  these deferred rows will not drain while the 16 rows ahead of them are contains-submodule; "
         "review those worktrees, then remove them yourself",
     "residual_window_line":
-        "Not protected: ignored files created, index flags set or operations started after the last check, "
-        "and any change after Git's own check.",
+        "Not protected: ignored files created, index flags set, operations started or worktree-only commits "
+        "made after the last check, and any change after Git's own check.",
     "empty_line": "No eligible worktrees",
     # D18: the question, the wait, the result.
     "question": "Remove {N} worktrees, keeping {N} branches? [yes/N]",
@@ -789,6 +793,10 @@ NEXT_STEPS = {
         "a git am, merge, notes merge, cherry-pick, revert, rebase or bisect is, or may be, in progress there; "
         "finish or abort it (a squash merge that holds an autostash ends only with git commit, --allow-empty "
         "where nothing is staged), then run again",
+    # LQ-13.
+    "worktree-only-commits":
+        "a commit is, or may be, held only by this worktree's HEAD reflog or refs/worktree; keep it on a branch "
+        "or tag, or review, then git worktree remove yourself",
     "registration-mismatch": "review, then git worktree repair or git worktree prune, or remove the row by hand",
     "inspection-error": "review, then git worktree repair or git worktree prune, or remove the row by hand",
     "locked-worktree": "unlock it yourself if it should go",
@@ -4140,6 +4148,18 @@ def plan_digest(plan):
     return hashlib.sha256(text.encode("utf-8", "surrogateescape")).hexdigest()
 
 
+def revalidation_children(plan):
+    """The most Git children one target's revalidation spawns (design D7 and
+    D14; the project-clean delta's "at most six Git children, seven where the
+    plan read the repository's extensions.worktreeConfig as true"; lead ruling
+    R-165): LIMITS["revalidation_children_worktree_config"] where the plan's
+    row 4c read the extension as true, as revalidation_difference() then runs
+    the effective-work-tree probe, else LIMITS["revalidation_children"]."""
+    evidence = getattr(plan, "evidence", None) or {}
+    worktree_config = evidence.get("worktree_config") is True
+    return LIMITS["revalidation_children_worktree_config" if worktree_config else "revalidation_children"]
+
+
 def plan_limits(mode):
     """The envelope's `limits`: the mode's row cap and the bounds, as in force."""
     return {"worktree_rows": LIMITS["worktree_rows"][mode], "targets": LIMITS["targets"],
@@ -4165,7 +4185,9 @@ def plan_document(plan):
     `worktrees`, the rows in canonical order, row `notes` code strings;
     `probes` and `operations` (research.md R8; lead ruling R-27), `estimated`
     the upper bound of an --apply run of this plan in every mode, F + W + E +
-    5T + 3 and T, and `performed` from the counters of the invocation in force;
+    RT + 3 and T, R the children of one revalidation (revalidation_children(),
+    six or seven) and 3 the final rescan's (LIMITS["rescan_children"]), and
+    `performed` from the counters of the invocation in force;
     `selected` (select_entry()), `excluded` {path, path_valid_utf8, branch,
     classification, reason}, `omitted` ({count: 0, exactness: "exact"} until
     T075 sets plan.omitted), the plan's `notes` as {code, message} objects,
@@ -4190,7 +4212,8 @@ def plan_document(plan):
         "merge_target": merge_target,
         "limits": plan_limits(plan.mode),
         "budget": plan_budget(),
-        "probes": {"estimated": getattr(plan, "planning_probes", 0) + 5 * targets + 3, "performed": run.probes},
+        "probes": {"estimated": getattr(plan, "planning_probes", 0) + revalidation_children(plan) * targets
+                   + LIMITS["rescan_children"], "performed": run.probes},
         "operations": {"estimated": targets, "performed": run.operations},
         "selected": None if selected is None else [select_entry(row, plan) for row in selected],
         "excluded": [{"path": row["path"], "path_valid_utf8": row["path_valid_utf8"], "branch": row.get("branch"),
@@ -4369,19 +4392,20 @@ def build_plan(repo, run):
 # endregion plan
 
 # region gates
-# The eleven gates of FR-020 (T050; design D10, D12, D13 and D22; data-model.md,
-# "Gate"; lead rulings R-56 Q-6 and R-67 (a); Brett Heap's ruling LQ-14). A row
-# is selected only when it passes every gate, and an excluded row's reason is
-# its first failing gate: 1 main-worktree, 2 unsupported-path-bytes, 3
-# registration-mismatch (region index), 4 locked-worktree, 5 the classification
-# when it is not merged-removable, 6 not-requested, 7 unstarted-branch or
-# reflog-unavailable (region reflog), 8 deferred-target-cap, 9
-# contains-submodule and 10 hidden-local-state (region index), and 11
-# operation-in-progress. Gates 1 to 7 are per-row functions, gate(row, plan,
-# run) returning the reason or None, each free to set the row's `errors`, set
-# its class to inspection-error or set its unprobed marker; gate 8 takes the
-# rows that passed gates 1 to 7 together; gates 9 to 11 run only for the rows
-# gate 8 takes. Every excluded row carries the reason its failing gate
+# The twelve gates of FR-020 (T050; design D10, D12, D13, D21 and D22;
+# data-model.md, "Gate"; lead rulings R-56 Q-6 and R-67 (a); Brett Heap's
+# rulings LQ-13 and LQ-14). A row is selected only when it passes every gate,
+# and an excluded row's reason is its first failing gate: 1 main-worktree, 2
+# unsupported-path-bytes, 3 registration-mismatch (region index), 4
+# locked-worktree, 5 the classification when it is not merged-removable, 6
+# not-requested, 7 unstarted-branch or reflog-unavailable (region reflog), 8
+# deferred-target-cap, 9 contains-submodule and 10 hidden-local-state (region
+# index), 11 operation-in-progress, and 12 worktree-only-commits (region
+# reflog), the last. Gates 1 to 7 are per-row functions, gate(row, plan, run)
+# returning the reason or None, each free to set the row's `errors`, set its
+# class to inspection-error or set its unprobed marker; gate 8 takes the rows
+# that passed gates 1 to 7 together; gates 9 to 12 run only for the rows gate
+# 8 takes. Every excluded row carries the reason its failing gate
 # returned, never null (R-67 (a)).
 
 
@@ -4430,7 +4454,7 @@ def deferral_gate(candidates, plan):
     """Gate 8, `deferred-target-cap` (T100; D12, FR-032): candidates
     are the rows that passed gates 1 to 7, in canonical order. Returns (taken,
     deferred): taken, the first LIMITS["targets"] (16) of them, which go on to
-    the gates after it (9 to 11); deferred, the rest, which gate_rows() excludes
+    the gates after it (9 to 12); deferred, the rest, which gate_rows() excludes
     as `deferred-target-cap` with no index probe. A row a gate after it then
     excludes keeps its place among the 16. It runs no child. In mode single
     the candidates are at most P, so the limit counts P alone (pcl:815-817);
@@ -4478,25 +4502,36 @@ def operation_check(common_dir, admin_id, run):
 
 
 def admin_state_gates(row, plan, run):
-    """Gate 11, `operation-in-progress` (design D22; LQ-14; lead ruling
-    R-124), for a row that passed gates 1 to 10 only.
+    """Gates 11 and 12, `operation-in-progress` and `worktree-only-commits`
+    (design D21 and D22; LQ-13 and LQ-14; lead ruling R-124), for a row that
+    passed gates 1 to 10 only.
 
     Contract: admin_state_gates(row, plan, run) -> reason or None. Through
-    operation_check(common_dir, admin_id, run), the common directory the
-    plan's (plan.evidence["identity"]): `operation-in-progress` for a marker
-    in the row's admin directory; and `inspection-error`, after putting the
-    listing's row error in row["errors"] and setting row["classification"] to
-    inspection-error (_index_undecided()), for a listing that failed, timed out
-    or met the deadline, so that the plan is incomplete with
-    inspection-incomplete, or with deadline-exceeded where only the deadline
-    cut it (plan_completeness()). A row whose admin directory or common
-    directory is not established cannot be checked and is inspection-error,
-    with no read made, as index_gates() makes it."""
+    operation_check(common_dir, admin_id, run), then, only where it passed,
+    worktree_only_check(common_dir, admin_id, path, negatives, head, run), the
+    negatives the non-zero objects of the row's branch reflog that gate 7 read
+    (row.reflog_objects), and the common directory the plan's
+    (plan.evidence["identity"]): `operation-in-progress` for a marker in the
+    row's admin directory; `worktree-only-commits` for a commit that only its
+    HEAD reflog or refs/worktree holds, or a logs/HEAD that cannot be decided;
+    and `inspection-error`, after putting the check's row error in
+    row["errors"] and setting row["classification"] to inspection-error
+    (_index_undecided()), for a read or child that failed, timed out or met
+    the deadline, so that the plan is incomplete with inspection-incomplete,
+    or with deadline-exceeded where only the deadline cut it
+    (plan_completeness()). The listing runs first, being one filesystem call
+    and the earlier gate, so that a row with an operation in progress runs no
+    child. A row whose admin directory or common directory is not established
+    cannot be checked and is inspection-error, with no read made, as
+    index_gates() makes it."""
     identity = plan.evidence["identity"] if plan.evidence else None
     common_dir = identity["common_dir"] if identity else None
     if common_dir is None or row.admin_id is None:
         return _index_undecided(row, None)
     reason, error = operation_check(common_dir, row.admin_id, run)
+    if reason is None and error is None:
+        reason, error = worktree_only_check(common_dir, row.admin_id, row.raw_path,
+                                            getattr(row, "reflog_objects", None), row["head"], run)
     if error is not None:
         return _index_undecided(row, error)
     return reason
@@ -4514,8 +4549,8 @@ def first_failing_gate(row, gates, plan, run):
 def gate_rows(rows, plan, run):
     """The gates of FR-020 over rows, plan's rows in canonical order (data-model.md,
     "Gate"): gates 1 to 7 per row (row_gates()), then gate 8 over the rows that
-    passed them (deferral_gate()), then gates 9 and 10 (index_gates()) and gate
-    11 (admin_state_gates()) for the rows gate 8 took. Returns (selected, excluded): selected, the rows that
+    passed them (deferral_gate()), then gates 9 and 10 (index_gates()) and gates
+    11 and 12 (admin_state_gates()) for the rows gate 8 took. Returns (selected, excluded): selected, the rows that
     passed every gate; excluded, (row, reason) pairs, reason the first failing
     gate's, never None (R-67 (a)); both by raw path bytes."""
     excluded, candidates = [], []
@@ -4567,7 +4602,12 @@ def target_refusal(row, reason):
 # Gate 7 from the branch's reflog (T066; design D10; data-model.md, "Reflog
 # anchor and movement"; FR-021, FR-022; lead rulings R-33, R-53 P-22, R-54 X-1,
 # R-56 Q-6 and R-67 (a)). read_reflog() makes the one bounded filesystem call;
-# reflog_outcome() decides from the bytes read and does no I/O.
+# reflog_outcome() decides from the bytes read and does no I/O. Gate 12,
+# worktree-only-commits, from the row's own HEAD reflog (design D21; Brett
+# Heap's ruling LQ-13; lead rulings R-124 and R-146): worktree_only_check()
+# reads logs/HEAD by one bounded filesystem call and runs one rev-list child,
+# whose negatives include the non-zero objects that the branch's reflog named
+# when gate 7 read it (reflog_objects()).
 
 # One reflog line: `<old> <new> <identity> <time> <zone>`, then a tab and the
 # message when the command wrote one; `git update-ref` without -m writes neither
@@ -4638,7 +4678,30 @@ def reflog_outcome(data, head):
     return "reflog-unavailable"
 
 
-def read_reflog(common_dir, branch, head, run):
+def reflog_objects(data, length=None):
+    """The non-zero old and new objects that reflog bytes name, each once in
+    first-seen order, as text, a pure function of the bytes (D10, D21): [] for
+    no bytes, and None where the bytes cannot be decided, as reflog_outcome()
+    reads them: read to the 64 KiB bound (65,536 bytes, R-33), ending without
+    a line feed, or holding a line that is not `<old> <new> ...` with old and
+    new of one length, and of length where given (a head's)."""
+    if not data:
+        return []
+    if len(data) >= LIMITS["reflog_bytes"] or not data.endswith(b"\n"):
+        return None
+    named = {}
+    for line in data[:-1].split(b"\n"):
+        match = REFLOG_LINE.fullmatch(line)
+        if match is None or len(match["old"]) != len(match["new"]) or (
+                length is not None and len(match["old"]) != length):
+            return None
+        for name in (match["old"], match["new"]):
+            if not _null_object(name):
+                named.setdefault(name.decode("ascii"), None)
+    return list(named)
+
+
+def read_reflog(common_dir, branch, head, run, named=None):
     """Read the branch's reflog (reflog_path()) by one fs_call() of at most
     LIMITS["reflog_bytes"] (64 KiB) and decide gate 7 from it (D10, the
     project-clean delta's outcome rule; lead ruling R-56 Q-6): (reason, error),
@@ -4650,7 +4713,9 @@ def read_reflog(common_dir, branch, head, run):
     row to be left unprobed; and bytes read, (reflog_outcome(data, head),
     None). run is the invocation in force, whose per-child budget fs_call()
     gives the read and the timeout message names, as _fs() does; Interrupted
-    passes up."""
+    passes up. named, when given, is a list that receives the non-zero
+    objects the bytes read name (reflog_objects()), the negatives of gate 12
+    (D21, LQ-13)."""
     path = reflog_path(common_dir, branch)
     budget, _ = current_invocation().child_budget("probe")
     try:
@@ -4661,6 +4726,8 @@ def read_reflog(common_dir, branch, head, run):
         return "inspection-error", os_error("read", exc)
     if isinstance(data, DriverOutcome):
         return "reflog-unavailable", probe_error(data, "read", budget)
+    if named is not None:
+        named.extend(reflog_objects(data, None if head is None else len(head)) or ())
     return reflog_outcome(data, head), None
 
 
@@ -4686,9 +4753,13 @@ def reflog_gate(row, plan, run):
     inspection-incomplete; its `probe-timeout` or `deadline-exceeded` goes in
     row["errors"], as the delta records for every filesystem call cut at its
     budget. The inspection-error row also takes that class's
-    recommendation, as classify() pairs them."""
+    recommendation, as classify() pairs them. It sets row.reflog_objects, the
+    non-zero objects the reflog names, which gate 12 and the revalidation take
+    as negatives, as they were (D21, LQ-13); no document writes it."""
     common_dir = plan.evidence["identity"]["common_dir"]
-    reason, error = read_reflog(common_dir, row["branch"], row["head"], run)
+    named = []
+    reason, error = read_reflog(common_dir, row["branch"], row["head"], run, named)
+    row.reflog_objects = tuple(named)
     if error is not None:
         row["errors"].append(error)
         if reason == "inspection-error":
@@ -4697,6 +4768,56 @@ def reflog_gate(row, plan, run):
         else:
             row.unprobed = True
     return reason
+
+
+# The reachability probe of gate 12, after its `-C WORKTREE` (design D21).
+REACHABILITY_PROBE = ("rev-list", "--max-count=1", "--glob=refs/worktree")
+
+
+def worktree_only_check(common_dir, admin_id, path, negatives, head, run):
+    """Gate 12's reads for one row (design D21; LQ-13; lead rulings R-124 and
+    R-146), shared with the revalidation (revalidation_difference()).
+
+    Signature: worktree_only_check(common_dir, admin_id, path, negatives, head,
+    run) -> (result, row_error). common_dir and admin_id name the row's admin
+    directory, path is its worktree, all bytes; negatives the non-zero objects
+    its branch's reflog named (row.reflog_objects); head its head, whose length
+    a line of logs/HEAD must have; run the Invocation that bounds and counts
+    the child. First one fs_call() read of `<admin>/logs/HEAD` of at most
+    LIMITS["reflog_bytes"] (through _fs(), OPERATION `read`), every non-zero
+    object it names a candidate (reflog_objects()); then one Git child of kind
+    `probe` in the worktree, `rev-list --max-count=1 --glob=refs/worktree
+    <candidates> --not --branches --tags --remotes <negatives>`:
+
+    - logs/HEAD read to its 64 KiB bound, or holding a line that does not
+      parse: ("worktree-only-commits", None), with no child;
+    - a missing (ENOENT or ENOTDIR) or empty logs/HEAD: no candidate, and the
+      child still runs, for refs/worktree;
+    - a child that exits 0 and prints anything: ("worktree-only-commits",
+      None); one that prints nothing: (None, None), the gate passes;
+    - any other error on the read, or the read cut at its budget or the
+      deadline: (None, its row error);
+    - a child that cannot start or exits nonzero, as on a missing object (128),
+      or one stopped at its budget or the deadline: (None, its row error),
+      `probe-failed`, `probe-timeout` or `deadline-exceeded`, OPERATION `git
+      rev-list`.
+
+    Only a decided result gives the reason (R-124). Interrupted passes."""
+    log = os.path.join(common_dir, b"worktrees", admin_id, b"logs", b"HEAD")
+    try:
+        data = _fs("read", _read_head, log, LIMITS["reflog_bytes"])
+    except EvidenceError as exc:
+        if exc.errno not in (errno.ENOENT, errno.ENOTDIR):
+            return None, exc.error
+        data = b""
+    candidates = reflog_objects(data, None if head is None else len(head))
+    if candidates is None:
+        return "worktree-only-commits", None
+    args = [*REACHABILITY_PROBE, *candidates, "--not", "--branches", "--tags", "--remotes", *(negatives or ())]
+    outcome, error = _git(run, path, args, "rev-list")
+    if error is not None:
+        return None, error
+    return ("worktree-only-commits" if outcome.result else None), None
 # endregion reflog
 
 # region index
@@ -4864,7 +4985,8 @@ def print_plan(plan, run):
 # order (RECOMMENDATIONS's), then the later gates; a reason not listed follows.
 EXCLUDED_GROUP_ORDER = ("main-worktree", "unsupported-path-bytes", "registration-mismatch", "locked-worktree",
                         *RECOMMENDATIONS, "not-requested", "unstarted-branch", "reflog-unavailable",
-                        "deferred-target-cap", "contains-submodule", "hidden-local-state", "operation-in-progress")
+                        "deferred-target-cap", "contains-submodule", "hidden-local-state", "operation-in-progress",
+                        "worktree-only-commits")
 
 
 def _shown(value):
@@ -5431,6 +5553,10 @@ def revalidation_difference(plan, target, run, part, seen):
        else `state-changed`.
     7. The hidden-state probe in the target: its own reason
        (`contains-submodule` or `hidden-local-state`).
+    8. Gate 12's check in the target (worktree_only_check(); D21, LQ-13):
+       logs/HEAD read again and the reachability probe run again, with the
+       non-zero objects that the plan's branch reflog named taken as they
+       were (row.reflog_objects), else `worktree-only-commits`.
 
     The checked rows are the target's own, or for the first selected target
     every selected row: its revalidation is the preflight of every selected
@@ -5443,7 +5569,9 @@ def revalidation_difference(plan, target, run, part, seen):
     a failed ref listing `state-changed`, a failed `modules` check
     `contains-submodule`, a failed admin directory listing `state-changed`
     (lead rulings R-124 and R-127), a failed hidden-state probe
-    `hidden-local-state`. A `timeout` stays such a difference (T084).
+    `hidden-local-state`, a failed read of logs/HEAD or reachability probe
+    `state-changed` (R-124, R-127). A `timeout` stays such a difference
+    (T084).
 
     A read the work deadline cut gives `deadline-exceeded` instead, never a
     difference (T099; lead ruling R-80, P-2): its row error's code says so,
@@ -5452,8 +5580,8 @@ def revalidation_difference(plan, target, run, part, seen):
     left (work_spent()).
 
     The signal slot is read before each read a step starts (slot_set()): the
-    Git children of steps 1, 3, 4, 6 and 7, the manifest re-read, and step
-    5's identity reads, twin reads, `modules` check and admin listing. A signal recorded
+    Git children of steps 1, 3, 4, 6, 7 and 8, the manifest re-read, and
+    step 5's identity reads, twin reads, `modules` check and admin listing. A signal recorded
     gives `interrupted`, never a difference, and no later read starts (lead
     ruling R-93 (e), LOW-1; pcl:931-933). A step whose values come from part
     starts no read. A step that has already read is decided first, so a
@@ -5596,14 +5724,27 @@ def revalidation_difference(plan, target, run, part, seen):
         return "deadline-exceeded"
     if reason is not None:
         return reason
-    return "hidden-local-state" if error is not None else None
+    if error is not None:
+        return "hidden-local-state"
+
+    if slot_set(run):
+        return "interrupted"
+    row = target.row
+    reason, error = worktree_only_check(common_dir, row.admin_id, row.raw_path, getattr(row, "reflog_objects", None),
+                                        row["head"], run)  # D21's re-read (LQ-13)
+    if read_cut(error):
+        return "deadline-exceeded"
+    if error is not None:
+        return "state-changed"  # a value that cannot be re-read (R-124, R-127)
+    return reason
 
 
 def revalidate(plan, target, run):
     """Revalidate target after the confirmation, before its removal (T084;
     design D7, FR-046, FR-047; lead rulings R-22, R-41 and R-77): D7's
-    targeted check, revalidation_difference(), at most five Git children,
-    never the full report and never the memo. Its repository part (the
+    targeted check, revalidation_difference(), at most six Git children, seven
+    where the plan read extensions.worktreeConfig as true
+    (revalidation_children()), never the full report and never the memo. Its repository part (the
     identity probe, the manifest, the registry listing and the ref listing)
     is the previous target's rescan when take_rescan_part() hands one over
     (T085), and is read here otherwise.
@@ -5978,7 +6119,8 @@ def apply_removals(plan, run):
     status = apply_exit_status(targets, run.signal)
     best_effort(print_result, plan, targets, run)
     if getattr(run.args, "json", False):
-        estimated = getattr(plan, "planning_probes", 0) + 5 * len(targets) + 3
+        estimated = (getattr(plan, "planning_probes", 0) + revalidation_children(plan) * len(targets)
+                     + LIMITS["rescan_children"])
         best_effort(lambda: write_document(result_document(
             targets, status, repository=getattr(plan, "repository", None), merge_target=plan.merge_target,
             plan_digest=plan.digest, probes={"estimated": estimated, "performed": run.probes},

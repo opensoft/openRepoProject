@@ -710,10 +710,13 @@ class BatchTests(clean_support.CleanCase):
     def test_clean_estimates_are_the_apply_upper_bound(self):
         # Plan review M7, research.md R8, lead rulings R-27 and R-56: in every
         # mode, previews and reports included, probes.estimated is F + W + E +
-        # 5T + 3 and operations.estimated is T, so that a run's estimate is its
-        # counted children plus 5T + 3. F, W and E come from the counting log:
-        # W the status probes, E the hidden-state probes (`ls-files`), never
-        # assumed zero, F every other child; no removal runs.
+        # 6T + 3 and operations.estimated is T, so that a run's estimate is its
+        # counted children plus 6T + 3, six the children of one revalidation in
+        # a repository without extensions.worktreeConfig (D7, as LQ-13 amends
+        # it; lead ruling R-165). F, W and E come from the counting log: W the
+        # status probes, E the hidden-state probes (`ls-files`), never assumed
+        # zero, F every other child, the reachability probes among them; no
+        # removal runs.
         root = self.repo()
         self.bare_remote()
         target = self.merged_worktree("001-merged")
@@ -736,7 +739,7 @@ class BatchTests(clean_support.CleanCase):
                 repository_wide = len(records) - status_children - hidden
                 self.assertEqual(status_children, 4, "one status probe per present, verified row")
                 self.assertEqual(document["probes"], {
-                    "estimated": repository_wide + status_children + hidden + 5 * targets + 3,
+                    "estimated": repository_wide + status_children + hidden + 6 * targets + 3,
                     "performed": len(records)})
                 self.assertEqual(document["operations"], {"estimated": targets, "performed": 0})
 

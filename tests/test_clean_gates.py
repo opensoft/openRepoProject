@@ -1123,6 +1123,247 @@ class GatesTests(clean_support.CleanCase):
                 self.assertEqual(self.snapshot(root), before, "nothing removed")
                 self.assertTrue(tree.is_dir())
 
+    # LQ-13 (Brett Heap, 2026-10-21; design D21; lead rulings R-124 and R-146):
+    # the last gate, `worktree-only-commits`: one bounded read of the row's
+    # logs/HEAD, then one `rev-list` in the worktree. Scenario "A commit held
+    # only by the worktree", and the read's and the child's outcomes.
+
+    # The reachability child's first words after `-C WORKTREE` (D21).
+    REACHABILITY = ["rev-list", "--max-count=1", "--glob=refs/worktree"]
+
+    def reachability(self, records):
+        """The counted reachability children: (directory, the words after -C DIR)."""
+        return [(argv_words(record)[1], argv_words(record)[2:]) for record in records
+                if argv_words(record)[2:5] == self.REACHABILITY]
+
+    def detached_commit(self, tree, branch, name):
+        """A commit made on tree's detached HEAD, then its branch checked out
+        again, so that only tree's HEAD reflog holds it. Returns its SHA."""
+        self.git(tree, "checkout", "-q", "--detach")
+        (tree / name).write_text("work made only here\n")
+        sha = self.commit(tree, "detached work")
+        self.git(tree, "checkout", "-q", branch)
+        return sha
+
+    def test_clean_a_commit_held_only_by_the_worktree(self):
+        root = self.repo()
+        self.bare_remote()
+        plain = self.merged_worktree("001-plain", path=self.base / "plain")
+        detached = self.merged_worktree("002-detached", path=self.base / "detached")
+        kept = self.merged_worktree("003-kept", path=self.base / "kept")
+        amended = self.merged_worktree("004-amended", path=self.base / "amended")
+        lost = self.detached_commit(detached, "002-detached", "detached-work")
+        # A commit that only refs/worktree/keep holds: made with commit-tree,
+        # so that no HEAD reflog names it, and kept by that per-worktree ref.
+        held = self.git(kept, "commit-tree", "HEAD^{tree}", "-p", "HEAD", "-m", "kept work").strip()
+        self.git(kept, "update-ref", "refs/worktree/keep", held)
+        self.assertEqual(self.git(root, "for-each-ref", "refs/worktree"), "", "the main worktree does not see it")
+        # A branch committed on, amended and reset back to its merged head: its
+        # HEAD reflog names two commits that only its branch's reflog still holds.
+        merged = self.git(amended, "rev-parse", "HEAD").strip()
+        (amended / "later").write_text("later\n")
+        first = self.commit(amended, "later")
+        self.git(amended, "commit", "-q", "--amend", "-m", "later, amended")
+        self.git(amended, "reset", "-q", "--hard", merged)
+        self.assertNotEqual(self.git(amended, "rev-list", "--max-count=1", first, "--not", "--branches", "--tags",
+                                     "--remotes"), "", "only the branch's reflog holds the amended commits")
+        for tree in (detached, kept, amended):
+            self.assertEqual(self.git(tree, *self.STATUS_WORDS), "", tree)
+        before = self.snapshot(root)
+        result, records = self.run_counted("clean", root, "--all-safe", "--json")
+        self.assert_status(result, 0)
+        document = self.load_json(result)
+        self.assertEqual([entry["path"] for entry in document["selected"]], [str(amended), str(plain)])
+        self.assertEqual(by_path(document), {str(root): "main-worktree", str(detached): "worktree-only-commits",
+                                             str(kept): "worktree-only-commits"})
+        for tree in (detached, kept):
+            self.assertEqual((row_of(document, tree)["classification"], row_of(document, tree)["errors"]),
+                             ("merged-removable", []), "the gate excludes without relabelling")
+        # One child per row past the cap, in its own worktree; the negatives
+        # name the non-zero objects of that row's branch reflog.
+        self.assertEqual([directory for directory, _ in self.reachability(records)],
+                         [str(amended), str(detached), str(kept), str(plain)])
+        [words] = [words for directory, words in self.reachability(records) if directory == str(amended)]
+        negatives = words[words.index("--not") + 1:]
+        self.assertEqual(negatives[:3], ["--branches", "--tags", "--remotes"])
+        self.assertTrue({first, merged} <= set(negatives[3:]), negatives)
+        self.assertNotIn("0" * len(merged), negatives, "never the all-zeros object")
+        human = self.run_cli("clean", root, "--all-safe")
+        self.assert_status(human, 0)
+        lines = human.stdout.splitlines()
+        group = lines.index(TEXT["excluded_group"].format(REASON="worktree-only-commits", K=2,
+                                                          NEXT_STEP=STEPS["worktree-only-commits"]))
+        self.assertEqual(lines[group + 1:group + 3],
+                         [TEXT["excluded_row"].format(PATH=detached, BRANCH="002-detached"),
+                          TEXT["excluded_row"].format(PATH=kept, BRANCH="003-kept")])
+        self.assertEqual(self.snapshot(root), before, "a preview changes nothing")
+        # The batch removes neither; both commits stay reachable from their worktrees.
+        result, records = self.run_counted("clean", root, "--all-safe", "--apply", "--yes")
+        self.assert_status(result, 0)
+        self.assertEqual([argv_words(record)[-1] for record in removals(records)], [str(amended), str(plain)])
+        self.assertTrue(detached.is_dir() and kept.is_dir())
+        self.assertEqual(self.git(detached, "rev-parse", "HEAD@{1}").strip(), lost)
+        self.assertEqual(self.git(kept, "rev-parse", "refs/worktree/keep").strip(), held)
+        # Naming either refuses with target-excluded, reason worktree-only-commits.
+        message = TEXT["target_excluded_gate"].format(REASON="worktree-only-commits",
+                                                      NEXT_STEP=STEPS["worktree-only-commits"])
+        for tree in (detached, kept):
+            with self.subTest(named=str(tree)):
+                result = self.run_json("clean", root, "--apply", "--action", "remove", "--worktree", tree, "--yes",
+                                       "--json")
+                self.assert_refused_target(result, tree, "worktree-only-commits", message)
+        # Once the first commit is tagged, and a branch is made at the second and
+        # its refs/worktree/keep deleted, both are selected as before.
+        self.git(root, "tag", "keep-lost", lost)
+        self.git(root, "branch", "keep-held", held)
+        self.git(kept, "update-ref", "-d", "refs/worktree/keep")
+        result = self.preview(root)
+        self.assert_status(result, 0)
+        self.assertEqual(([entry["path"] for entry in result.document["selected"]], by_path(result.document)),
+                         ([str(detached), str(kept)], {str(root): "main-worktree"}))
+        # A HEAD reflog naming a commit whose object was deleted: the child exits
+        # 128 (`fatal: bad object`), the row is inspection-error and the plan
+        # incomplete; the preview exits 1, --apply 2, nothing removed.
+        missing = self.merged_worktree("005-missing", path=self.base / "missing")
+        gone = self.detached_commit(missing, "005-missing", "gone-work")
+        os.unlink(self.common_dir(root) / "objects" / gone[:2] / gone[2:])
+        failed = {"code": "probe-failed", "message": TEXT["row_error_probe_failed"].format(
+            OPERATION="git rev-list", DETAIL=TEXT["row_error_probe_failed_exit"].format(N=128))}
+        refused = {"code": "inspection-incomplete", "message": TEXT["plan_incomplete"].format(
+            CODE="inspection-incomplete", REMEDY=TEXT["remedy_inspection_incomplete"])}
+        for words, status in ((("--all-safe", "--json"), 1), (("--all-safe", "--apply", "--yes", "--json"), 2)):
+            with self.subTest(missing_object=words):
+                result, records = self.run_counted("clean", root, *words)
+                self.assert_status(result, status)
+                document = self.load_json(result)
+                self.assertEqual(by_path(document)[str(missing)], "inspection-error")
+                row = row_of(document, missing)
+                self.assertEqual((row["classification"], row["errors"]), ("inspection-error", [failed]))
+                self.assertEqual((document["completeness"], document["refusals"]), ("incomplete", [refused]))
+                self.assertEqual(removals(records), [])
+        self.assertTrue(all(tree.is_dir() for tree in (detached, kept, missing)))
+
+    def test_clean_worktree_only_commits_reads_and_children_that_fail(self):
+        # R-124: only a decided result gives the reason. In process, the read of
+        # the row's logs/HEAD made to raise PermissionError, to time out and to
+        # be cut by the work deadline, and the reachability child made to exit
+        # 128, to time out and to be cut by the deadline: each makes the row
+        # inspection-error, the plan incomplete with inspection-incomplete, or
+        # with deadline-exceeded for a deadline cut; nothing is removed.
+        root = self.repo()
+        self.bare_remote()
+        tree = self.merged_worktree("001-target", path=self.base / "target")
+        log = os.fsencode(self.common_dir(root) / "worktrees" / tree.name / "logs" / "HEAD")
+        real_fs_call, real_run_bounded = project.fs_call, project.run_bounded
+        denied = PermissionError(errno.EACCES, os.strerror(errno.EACCES), os.fsdecode(log))
+
+        def read_error(key, **fields):
+            return TEXT[key].format(OPERATION="read", **fields)
+
+        def child_error(key, **fields):
+            return TEXT[key].format(OPERATION="git rev-list", **fields)
+
+        reads = (
+            ("PermissionError", denied, {"code": "os-error", "message": read_error(
+                "row_error_os_error", STRERROR=os.strerror(errno.EACCES))}, "inspection-incomplete"),
+            ("a timeout", project.DriverOutcome(None, "timeout", detail="no answer within 5 s"),
+             {"code": "probe-timeout", "message": read_error("row_error_probe_timeout", S="5")},
+             "inspection-incomplete"),
+            ("the work deadline", project.DriverOutcome(None, "deadline", detail="no time was left to start it"),
+             {"code": "deadline-exceeded", "message": read_error("row_error_deadline_exceeded")}, "deadline-exceeded"),
+        )
+        children = (
+            ("exit 128", dict(name="failed", status=128), {"code": "probe-failed", "message": child_error(
+                "row_error_probe_failed", DETAIL=TEXT["row_error_probe_failed_exit"].format(N=128))},
+             "inspection-incomplete"),
+            ("a timeout", dict(name="timeout"), {"code": "probe-timeout", "message": child_error(
+                "row_error_probe_timeout", S="5")}, "inspection-incomplete"),
+            ("the work deadline", dict(name="deadline"), {"code": "deadline-exceeded", "message": child_error(
+                "row_error_deadline_exceeded")}, "deadline-exceeded"),
+        )
+        remedies = {"inspection-incomplete": TEXT["remedy_inspection_incomplete"],
+                    "deadline-exceeded": TEXT["remedy_deadline_exceeded"]}
+
+        def assert_undecided(stand_ins, error, code, calls):
+            refused = {"code": code, "message": TEXT["plan_incomplete"].format(CODE=code, REMEDY=remedies[code])}
+            before = self.snapshot(root)
+            for words, status in ((("--all-safe", "--json"), 1), (("--all-safe", "--apply", "--yes", "--json"), 2)):
+                out_status, out, err = self.main_in_process("clean", root, *words, **stand_ins)
+                self.assertEqual(out_status, status, out + err)
+                document = json.loads(out)
+                self.assertEqual((document["selected"], by_path(document)),
+                                 ([], {str(root): "main-worktree", str(tree): "inspection-error"}))
+                row = row_of(document, tree)
+                self.assertEqual((row["classification"], row["recommendation"], row["errors"]),
+                                 ("inspection-error", INSPECTION_ERROR_ADVICE, [error]))
+                self.assertEqual((document["completeness"], document["apply_allowed"], document["refusals"]),
+                                 ("incomplete", False, [refused]))
+            self.assertEqual(len(calls), 2, "one read or child per run")
+            self.assertEqual(self.snapshot(root), before, "nothing removed")
+
+        for label, answer, error, code in reads:
+            with self.subTest(f"the read of logs/HEAD meets {label}"):
+                calls = []
+
+                def fs_call(fn, *args, answer=answer, calls=calls, **options):
+                    if fn is project._read_head and args[:1] == (log,):
+                        calls.append(args)
+                        if isinstance(answer, BaseException):
+                            raise answer
+                        return answer
+                    return real_fs_call(fn, *args, **options)
+
+                assert_undecided({"fs_call": fs_call}, error, code, calls)
+        for label, fields, error, code in children:
+            with self.subTest(f"the reachability child meets {label}"):
+                calls = []
+
+                def run_bounded(spec, parser, run, fields=fields, calls=calls):
+                    kind, args, cwd = spec
+                    if args[2:5] == self.REACHABILITY:
+                        calls.append(args)
+                        return project.DriverOutcome(project.git_argv(kind, args), **fields)
+                    return real_run_bounded(spec, parser, run)
+
+                assert_undecided({"run_bounded": run_bounded}, error, code, calls)
+
+    def test_clean_worktree_only_commits_decided_by_the_read(self):
+        # D21: a logs/HEAD read to its 64 KiB bound, or holding a line that
+        # does not parse, decides `worktree-only-commits` with no child run; a
+        # missing or empty logs/HEAD gives no candidate, and the child still
+        # runs, for refs/worktree, and passes.
+        root = self.repo()
+        self.bare_remote()
+        log_of = {}
+        trees = {}
+        for name in ("bound", "unparsable", "missing", "empty"):
+            tree = self.merged_worktree(f"00{len(trees) + 1}-{name}", path=self.base / name)
+            trees[name] = tree
+            log_of[name] = self.common_dir(root) / "worktrees" / tree.name / "logs" / "HEAD"
+        # Whole, parseable lines past 64 KiB: only the bound decides.
+        head = self.git(trees["bound"], "rev-parse", "HEAD").strip()
+        pad = f"{head} {head} T <t@e.invalid> 0 +0000\tpad\n".encode()
+        size = log_of["bound"].stat().st_size
+        log_of["bound"].write_bytes(log_of["bound"].read_bytes() + pad * ((64 * 1024 - size) // len(pad) + 1))
+        self.assertGreater(log_of["bound"].stat().st_size, 64 * 1024)
+        with log_of["unparsable"].open("ab") as stream:
+            stream.write(b"not a reflog line\n")
+        log_of["missing"].unlink()
+        log_of["empty"].write_bytes(b"")
+        result, records = self.run_counted("clean", root, "--all-safe", "--json")
+        self.assert_status(result, 0)
+        document = self.load_json(result)
+        self.assertEqual(by_path(document), {str(root): "main-worktree", str(trees["bound"]): "worktree-only-commits",
+                                             str(trees["unparsable"]): "worktree-only-commits"})
+        self.assertEqual([entry["path"] for entry in document["selected"]],
+                         [str(trees["empty"]), str(trees["missing"])])
+        reached = dict(self.reachability(records))
+        self.assertEqual(sorted(reached), sorted([str(trees["empty"]), str(trees["missing"])]),
+                         "no child where the read decided")
+        for name in ("empty", "missing"):
+            words = reached[str(trees[name])]
+            self.assertEqual(words[3], "--not", "no candidate before the negatives")
+
 
 if __name__ == "__main__":
     unittest.main()

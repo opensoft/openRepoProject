@@ -557,10 +557,31 @@ class BoundsTests(clean_support.CleanCase):
         # worktree made dirty, not selected; --all-safe --apply --yes under
         # the counting wrapper and the real table (R-29). The plan's estimate
         # gives the boundary in the log: planning's children are
-        # probes.estimated - 5T - 3 (research.md R8).
+        # probes.estimated - 6T - 3 (research.md R8; D7 and D14 as LQ-13
+        # amends them).
         root, trees = self.batch("bounded", ["001-a", "002-b", "003-c"])
         dirty = self.merged_worktree("004-dirty", path=self.base / "bounded" / "trees" / "004-dirty", root=root)
         (dirty / "uncommitted").write_text("keep")
+        self.assert_bounded_revalidation(root, trees, per_target=6, row_probes=("status", "ls-files", "rev-list"))
+
+    def test_clean_bounded_revalidation_work_where_row_4c_reads_true(self):
+        # The same five rows in a repository whose `extensions.worktreeConfig`
+        # is true (LQ-11): each target's revalidation adds its effective-work-tree
+        # probe, seven children in all (the project-clean delta's "at most six
+        # Git children, seven where the plan read the repository's
+        # extensions.worktreeConfig as true"), and the estimate counts seven.
+        root, trees = self.batch("bounded-4c", ["001-a", "002-b", "003-c"])
+        dirty = self.merged_worktree("004-dirty", path=self.base / "bounded-4c" / "trees" / "004-dirty", root=root)
+        (dirty / "uncommitted").write_text("keep")
+        self.git(root, "config", "extensions.worktreeConfig", "true")
+        self.assert_bounded_revalidation(root, trees, per_target=7,
+                                         row_probes=("rev-parse", "status", "ls-files", "rev-list"))
+
+    def assert_bounded_revalidation(self, root, trees, per_target, row_probes):
+        """--all-safe --apply --yes --json over trees, three selected targets:
+        every revalidation spawns per_target children, the repository's three
+        (rescan-shared after the first) and then row_probes in the target, the
+        final rescan three, and probes.estimated equals probes.performed."""
         env, log = self.counting()
         result = self.run_json("clean", root, "--all-safe", "--apply", "--yes", "--json", env=env)
         self.assert_status(result, 0)
@@ -568,50 +589,53 @@ class BoundsTests(clean_support.CleanCase):
         self.assertEqual(stages(document), [(str(tree), "removed", None) for tree in trees])
         records = clean_support.child_log(log)
         probes, operations, targets = document["probes"], document["operations"], len(trees)
-        planning = probes["estimated"] - 5 * targets - 3
+        planning = probes["estimated"] - per_target * targets - 3
         planned, after = records[:planning], records[planning:]
         self.assertFalse(any(map(is_removal, planned)))
-        self.assertEqual(subcommand(planned[-1])[:1], ["ls-files"], "planning ends with the hidden-state probes")
-        # F + W + E + 5T + 3 (plan review M7): W the status probes, E the
-        # hidden-state probes, F every other planning child.
+        self.assertEqual(subcommand(planned[-1])[:1], ["rev-list"], "planning ends with the reachability probes")
+        # F + W + E + 6T + 3 (plan review M7): W the status probes, E the
+        # hidden-state probes, F every other planning child, the reachability
+        # probes among them.
         kinds = [subcommand(child)[:1] for child in planned]
-        self.assertEqual((kinds.count(["status"]), kinds.count(["ls-files"])), (5, 3))
+        self.assertEqual((kinds.count(["status"]), kinds.count(["ls-files"]), kinds.count(["rev-list"])), (5, 3, 3))
         at = [index for index, child in enumerate(after) if is_removal(child)]
         self.assertEqual(len(at), 3, "three removals run")
         segments = [after[:at[0]], after[at[0] + 1:at[1]], after[at[1] + 1:at[2]], after[at[2] + 1:]]
         words = [[subcommand(child)[0] for child in segment] for segment in segments]
-        self.assertEqual(words[0], ["rev-parse", "worktree", "for-each-ref", "status", "ls-files"])
-        self.assertEqual(words[1], ["rev-parse", "worktree", "for-each-ref", "status", "ls-files"])
-        self.assertEqual(words[2], ["rev-parse", "worktree", "for-each-ref", "status", "ls-files"])
+        for segment in words[:3]:
+            self.assertEqual(segment, ["rev-parse", "worktree", "for-each-ref", *row_probes])
         self.assertEqual(words[3], ["rev-parse", "worktree", "for-each-ref"], "the final rescan spawns three")
         performed = [target["probes_performed"] for target in document["targets"]]
-        self.assertEqual(performed, [5, 5, 5], "at most five children per revalidation")
+        self.assertEqual(performed, [per_target] * 3, f"at most {per_target} children per revalidation")
         # After confirmation: no merged-set listing and no status probe of a
         # worktree not selected.
         self.assertFalse(any(any(word.startswith("--merged") for word in subcommand(child)) for child in after))
         self.assertEqual(set(status_paths(after)), {str(tree) for tree in trees})
-        # Every status and ls-files child names its own worktree, every other
-        # child after resolution, the removals included, the command
-        # directory.
+        # Every status, ls-files and rev-list child, and every effective-work-tree
+        # probe, names its own worktree; every other child after resolution,
+        # the removals included, the command directory.
         rows = {row["path"] for row in json.loads(self.run_cli("clean", root, "--json").stdout)["worktrees"]}
         rows |= {str(tree) for tree in trees}
         for child in records:
             with self.subTest(argv=child.argv):
                 if argv_words(child) == ["--version"]:
                     continue
-                if subcommand(child)[0] in ("status", "ls-files"):
+                if subcommand(child)[0] in ("status", "ls-files", "rev-list") or subcommand(child) == [
+                        "rev-parse", "--path-format=absolute", "--show-toplevel"]:
                     self.assertIn(directory(child), rows)
                 else:
                     self.assertEqual(directory(child), str(root))
         # The counts (lead ruling R-27): probes every child but the removals,
         # operations the removals; the record's probes.performed is the
         # planning's count, each target's probes_performed and the final
-        # rescan (data-model.md, "Revalidation step and probes_performed").
+        # rescan (data-model.md, "Revalidation step and probes_performed"),
+        # and the estimate is its upper bound, met here.
         removals = [child for child in records if is_removal(child)]
         self.assertEqual(probes["performed"], len(records) - len(removals))
         self.assertEqual(operations, {"estimated": 3, "performed": len(removals)})
         self.assertEqual(probes["performed"], planning + sum(performed) + len(segments[3]))
-        self.assertEqual(probes["estimated"], planning + 5 * targets + 3)
+        self.assertEqual(probes["estimated"], planning + per_target * targets + 3)
+        self.assertEqual(probes["performed"], probes["estimated"])
 
     def test_clean_deadline_expiry_mid_batch(self):
         # Through the launcher with tables that shorten the deadline, the
@@ -709,7 +733,7 @@ class BoundsTests(clean_support.CleanCase):
                 f"elapsed {result.elapsed:.1f} s\n{result.stderr}")
             second, third = document["targets"][1:]
             self.assertEqual((second["reconciliation"], second["exit_status"], second["probes_performed"]),
-                             (None, None, 5), "revalidated, never spawned")
+                             (None, None, 6), "revalidated, its six children (D7, LQ-13), never spawned")
             self.assertEqual((third["reconciliation"], third["exit_status"], third["probes_performed"]), (None, None, 0))
             self.assertEqual(len([child for child in clean_support.child_log(log) if is_removal(child)]), 1,
                              "no second child")
