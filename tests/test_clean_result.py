@@ -149,6 +149,73 @@ def log_lines(log):
     return path.read_text().splitlines() if path.exists() else []
 
 
+# The ceiling child (T089; rule 3): Python behind an sh prelude, so that it can
+# log. It logs `term` at each SIGTERM and survives it, and a helper in its own
+# session, which a kill of the child's group spares, logs its `death` when the
+# last write end of a pipe closes. In mode `remove-first` it runs the real
+# removal first and logs `removed` with Git's status; then it logs `ready` with
+# its process group and sleeps past any ceiling, so that only SIGKILL ends it.
+CEILING_CHILD = r'''
+import json, os, signal, subprocess, sys, time
+
+EVENTS, MODE, REAL, ARGV = sys.argv[1], sys.argv[2], sys.argv[3], sys.argv[4:]
+
+
+def log(**fields):
+    fields.setdefault("pid", os.getpid())
+    fields.setdefault("t", time.monotonic())
+    fd = os.open(EVENTS, os.O_WRONLY | os.O_APPEND | os.O_CREAT, 0o644)
+    try:
+        os.write(fd, (json.dumps(fields) + "\n").encode())
+    finally:
+        os.close(fd)
+
+
+signal.signal(signal.SIGTERM, lambda signum, frame: log(event="term"))
+child = os.getpid()
+read_end, write_end = os.pipe()
+ack_read, ack_write = os.pipe()
+if os.fork() == 0:
+    os.setsid()
+    os.write(ack_write, b"x")
+    null = os.open(os.devnull, os.O_RDWR)
+    for fd in (0, 1, 2):
+        os.dup2(null, fd)
+    os.close(write_end)
+    os.read(read_end, 1)
+    log(event="death", pid=child)
+    os._exit(0)
+os.read(ack_read, 1)
+for fd in (ack_read, ack_write, read_end):
+    os.close(fd)
+if MODE == "remove-first":
+    log(event="removed", status=subprocess.run([REAL, *ARGV]).returncode)
+log(event="ready", pgid=os.getpgrp())
+while True:
+    time.sleep(3600)
+'''
+
+
+def ceiling_git(bin_dir, mode):
+    """bin_dir/git: on `worktree remove`, the ceiling child in mode (`hang`,
+    or `remove-first`), its events in bin_dir/ceiling-events.jsonl; every
+    other command the real git. Returns the events file."""
+    events = Path(bin_dir) / "ceiling-events.jsonl"
+    write_script(Path(bin_dir) / "git", f"""#!/bin/sh
+case " $* " in *" worktree remove "*)
+  exec {shlex.quote(sys.executable)} -I -S -c {shlex.quote(CEILING_CHILD)} {shlex.quote(str(events))} {mode} \
+{shlex.quote(REAL_GIT)} "$@";;
+esac
+exec {shlex.quote(REAL_GIT)} "$@"
+""")
+    return events
+
+
+def events_of(path):
+    path = Path(path)
+    return [json.loads(line) for line in path.read_bytes().split(b"\n")[:-1] if line] if path.exists() else []
+
+
 def sh_git(*args):
     """One real-git command line for a hook, by absolute path (lead ruling R-31)."""
     return " ".join(shlex.quote(os.fsdecode(arg)) for arg in (REAL_GIT, *args))
@@ -575,6 +642,185 @@ class ResultTests(clean_support.CleanCase):
                                          ROOT=quoted(root))
         self.assertIn(stop, lines)
         self.assertEqual(lines[lines.index(stop) + 1], TEXT["branches_kept_line"].format(BRANCHES=", ".join(NAMES[:2])))
+
+    # T089: "A removal past the hard ceiling", "Unreadable path after removal"
+    # and "Exception after the apply phase begins".
+
+    def test_clean_a_removal_past_the_hard_ceiling(self):
+        # Through the launcher with a table that shortens the ceiling to 1.5 s,
+        # the grace and the reap wait to 0.5 s each, and leaves the probe budget
+        # whole, 5 s (R-29). The ceiling child survives SIGTERM: at the ceiling
+        # its group gets SIGTERM, then SIGKILL after the grace, and it is reaped
+        # with exit_status 137 (plan review M12, lead ruling R-68 (b)). The
+        # rescan then decides (D9; pcl:252-256, :910-926): the child that never
+        # removed is unknown with removal-ceiling and the note
+        # partially-removed; the one that removed first is removed with
+        # removal-ceiling. Later targets are not-attempted; exit 1. Lane 3's
+        # E4 a end to end (lead ruling R-82 (d)).
+        table = clean_support.timing_table(removal_ceiling=1.5, term_grace=0.5, reap_wait=0.5)
+        grace = table["term_grace"]
+        for mode in ("hang", "remove-first"):
+            with self.subTest(mode):
+                root, trees = self.batch(f"ceiling-{mode}", count=2)
+                planned = [self.head(tree) for tree in trees]
+                bin_dir = self.base / f"ceiling-{mode}-bin"
+                events = ceiling_git(bin_dir, mode)
+                result = self.run_json("clean", root, "--all-safe", "--apply", "--yes", "--json", timing=table,
+                                       env=self.path_first(bin_dir))
+                self.assert_status(result, 1)
+                document = result.document
+                first, second = document["targets"]
+                logged = events_of(events)
+                ready = next(event for event in logged if event["event"] == "ready")
+                term = next((event for event in logged if event["event"] == "term"), None)
+                deadline = time.monotonic() + TIMEOUT
+                while not any(event["event"] == "death" for event in logged) and time.monotonic() < deadline:
+                    time.sleep(0.01)
+                    logged = events_of(events)
+                death = next((event for event in logged if event["event"] == "death"), None)
+                self.assertIsNotNone(term, logged)
+                self.assertIsNotNone(death, logged)
+                self.assertGreaterEqual(death["t"] - term["t"], 0.9 * grace)
+                with self.assertRaises(ProcessLookupError):
+                    os.killpg(ready["pgid"], 0)
+                self.assertEqual(first["exit_status"], 137)
+                if mode == "hang":
+                    self.assertEqual((first["stage"], first["reason"], first["notes"]),
+                                     ("unknown", "removal-ceiling", ["partially-removed"]))
+                    self.assertEqual(first["reconciliation"], record(True, True, True, planned[0]))
+                    self.assertTrue(trees[0].is_dir())
+                else:
+                    self.assertEqual([event["status"] for event in logged if event["event"] == "removed"], [0])
+                    self.assertEqual((first["stage"], first["reason"], first["notes"]),
+                                     ("removed", "removal-ceiling", []))
+                    self.assertEqual(first["reconciliation"], record(False, False, True, planned[0]))
+                    self.assertFalse(trees[0].exists())
+                self.assertEqual((second["stage"], second["reason"], second["reconciliation"]),
+                                 ("not-attempted", "batch-stopped", None))
+                self.assertTrue(trees[1].is_dir())
+                self.assertEqual(document["exit_code"], 1)
+                self.assertEqual(self.head(root, "refs/heads/" + NAMES[0]), planned[0], "the branch is kept")
+                # Neither a signal nor the deadline came: no wait line.
+                self.assertNotIn("Waiting for git worktree remove", result.stderr)
+
+    @clean_support.not_root
+    def test_clean_unreadable_path_after_removal(self):
+        # Each target under a parent directory of its own: CleanCase's base also
+        # holds the repository, so an unsearchable base would lose the identity
+        # (unconfirmed-removal) instead. After Git exits 0, the post-remove hook
+        # removes search permission from the first target's parent, so the
+        # rescan's lstat fails with EACCES (pcl:1012-1018).
+        root, trees = self.batch("unreadable", count=2, own_parent=True)
+        parent = trees[0].parent
+        self.addCleanup(os.chmod, parent, 0o755)
+        planned = [self.head(tree) for tree in trees]
+        env, log = self.counting("unreadable", hooks={"post": when_target(
+            trees[0], f"chmod 000 {shlex.quote(str(parent))}")})
+        result = self.run_json("clean", root, "--all-safe", "--apply", "--yes", "--json", env=env)
+        os.chmod(parent, 0o755)
+        self.assert_status(result, 1)
+        document = result.document
+        self.assertEqual(self.stages(document), [(str(trees[0]), "unknown", "reconciliation-incomplete"),
+                                                 (str(trees[1]), "not-attempted", "batch-stopped")])
+        first = document["targets"][0]
+        self.assertEqual((first["exit_status"], first["notes"]), (0, []))
+        self.assertEqual(first["reconciliation"], record(False, None, True, planned[0]))
+        self.assertIs(first["reconciliation"]["reconciled"], False)
+        self.assertEqual((document["exit_code"], document["completeness"]), (1, "incomplete"))
+        self.assertFalse(trees[0].exists())
+        # The record is printed: the stop block on the human stream.
+        self.assertIn(TEXT["stop_block"].format(PATH=trees[0], REASON="reconciliation-incomplete", K=0, N=2,
+                                                NOT_ATTEMPTED=trees[1], ROOT=quoted(root)),
+                      result.stderr.splitlines())
+
+    def test_clean_exception_after_the_apply_phase_begins(self):
+        # In process, `--all-safe --apply --yes --json` on two targets, a fault
+        # injected in turn: into the first target's rescan; into the first
+        # removal once its child has started (ChildHandle.due(), which
+        # run_bounded() calls after the spawn, raises once for the removal
+        # handle, so that the driver waits for the child before the exception
+        # goes on; the child is a 1 s removal that logs its end); and into the
+        # final rescan, the second target's. The target being handled is
+        # unknown with internal-error and its fields not established null,
+        # later targets not-attempted, the record printed, exit 1; and 143 when
+        # the fault also records SIGTERM in the slot (plan review M2;
+        # pcl:938-941; research.md R6; lead ruling R-83, P-7). No signal is
+        # sent (rule 7).
+        original_rescan, original_due, original_progress = project.rescan, project.ChildHandle.due, project.print_progress
+        for fault in ("rescan", "removal", "final rescan"):
+            for signum in (None, signal.SIGTERM):
+                with self.subTest(fault=fault, signal=signum and signal.Signals(signum).name):
+                    case = f"fault-{fault.replace(' ', '-')}-{'sigterm' if signum else 'plain'}"
+                    root, trees = self.batch(case, count=2)
+                    planned = [self.head(tree) for tree in trees]
+                    env, log = self.env, None
+                    calls, seen = [], []
+
+                    def inject(message, signum=signum):
+                        if signum is not None:
+                            project.current_invocation().record_signal(signum)
+                        raise RuntimeError(message)
+
+                    def rescan(target, run, fault=fault):
+                        calls.append(target["path"])
+                        if fault == "rescan" or len(calls) == 2:
+                            inject(f"fault in the {fault}")
+                        return original_rescan(target, run)
+
+                    def due(handle):
+                        if handle.kind == "removal" and not calls:
+                            calls.append(handle.pid)
+                            inject("fault once the removal child has started")
+                        return original_due(handle)
+
+                    def print_progress(target, run, log=None):
+                        seen.append((target["path"], log_lines(log) if log else []))
+                        original_progress(target, run)
+
+                    if fault == "removal":
+                        bin_dir, log = self.base / case / "slow-bin", self.base / case / "removal.log"
+                        signal_recording_git(bin_dir, log, slow=trees[0], seconds=1.0)
+                        env = self.path_first(bin_dir)
+                        patches = [(project.ChildHandle, "due", due)]
+                    else:
+                        patches = [(project, "rescan", rescan)]
+                    patches.append((project, "print_progress", lambda target, run, log=log: print_progress(
+                        target, run, log)))
+                    result = self.main_in_process(["clean", root, "--all-safe", "--apply", "--yes", "--json"],
+                                                  env=env, patches=patches)
+                    expected = 1 if signum is None else 143
+                    self.assertEqual(result.status, expected, result.stderr)
+                    document = result.document
+                    self.assertIsNotNone(document, result.stderr)
+                    later = "batch-stopped" if signum is None else "interrupted"
+                    if fault == "final rescan":
+                        self.assertEqual(self.stages(document), [(str(trees[0]), "removed", None),
+                                                                 (str(trees[1]), "unknown", "internal-error")])
+                        handled, stop = document["targets"][1], (trees[1], 1, "none")
+                    else:
+                        self.assertEqual(self.stages(document), [(str(trees[0]), "unknown", "internal-error"),
+                                                                 (str(trees[1]), "not-attempted", later)])
+                        handled, stop = document["targets"][0], (trees[0], 0, trees[1])
+                        self.assertIsNone(document["targets"][1]["reconciliation"])
+                        self.assertTrue(trees[1].is_dir())
+                    self.assertEqual(handled["reconciliation"], NULL_RECORD)
+                    self.assertEqual(handled["notes"], [])
+                    # The rescan faults follow an exit 0; the removal fault leaves
+                    # the child's status unobserved.
+                    self.assertEqual(handled["exit_status"], None if fault == "removal" else 0)
+                    self.assertEqual(document["exit_code"], expected)
+                    self.assertEqual(document["completeness"], "incomplete")
+                    path, removed, not_attempted = stop
+                    self.assertIn(TEXT["stop_block"].format(PATH=path, REASON="internal-error", K=removed, N=2,
+                                                            NOT_ATTEMPTED=not_attempted, ROOT=quoted(root)),
+                                  result.stderr.splitlines())
+                    if fault == "removal":
+                        # The child was waited for: it had run to its end, the
+                        # real removal included, before the target was decided.
+                        self.assertEqual(seen[0][0], str(trees[0]))
+                        self.assertIn(f"exited {trees[0]} 0", seen[0][1])
+                        self.assertFalse(trees[0].exists())
+                    self.assertEqual(self.head(root, "refs/heads/" + NAMES[0]), planned[0], "the branch is kept")
 
 
 if __name__ == "__main__":
