@@ -1831,23 +1831,27 @@ path"; "Non-UTF-8 common directory".
   `_read_status` (:2898-2908); `shared_paths` is unchanged, at :2756-2763. A
   row not present, or whose realpath was not read, is compared by neither, and
   only a registration that held gives an admin id to compare. Change 2 names no
-  case of two spellings, and FR-007 as change 2 words it would probe and
-  classify both, so FR-026's equality with `project clean` needs the same
-  outcome: the overview takes R-67 (c) as a fill of change 2's rule, not a
-  departure, as EC-033 takes R-61(b), with the finding and the absence of an
-  error of two entries on one path, deciding the twins from all of a
-  repository's row reads before any of its status probes (FR-007, FR-019). Lane
-  openRepoProject-2's ruling R-101 keeps that pass, which lane
+  case of two spellings of one registered worktree, and FR-007 as change 2
+  words it would probe and classify both, so FR-026's equality with `project
+  clean` needs the same outcome: the overview takes R-67 (c) as a fill of
+  change 2's rule, not a departure, as EC-033 takes R-61(b), with the finding
+  and the absence of an error of two entries on one path, deciding the twins
+  from all of a repository's row reads before any of its status probes (FR-007,
+  FR-019). Lane openRepoProject-2's ruling R-101 keeps that pass, which lane
   openRepoProject-3 found to depart from CMD:124-126's identity "verified
   immediately before" the probe, and adds that each row's own identity is
   verified again immediately before that row's probe, a changed identity making
   the row `inspection-error` and leaving it unprobed; it is queued as a code
   fix in feature 004, not built at `2cf34d3`, and the overview takes it with
-  the fill (FR-007; Dependencies). The overview inherits feature 004's decider
-  only where its rows are built by it (Dependencies, R-54); where they are not,
-  the same fill applies. As in feature 004 (its lead ruling R-95 (d)), a twin
-  past the row cap is not compared, and the row the cap left withholds
-  `--all-safe` for its repository (FR-034).
+  the fill, deciding within change 2's closed lists what R-101 leaves open: the
+  class's `inspection-error` finding, no row error where a re-read value
+  differs, and the fitting code of change 2's table where the re-read itself
+  fails (FR-007). When feature 004's fix is built, the plan re-reads that
+  outcome against it (R-101 (e) and (j); Dependencies). The overview inherits
+  feature 004's decider only where its rows are built by it (Dependencies,
+  R-54); where they are not, the same fill applies. As in feature 004 (its lead
+  ruling R-95 (d)), a twin past the row cap is not compared, and the row the
+  cap left withholds `--all-safe` for its repository (FR-034).
 - **EC-032**: When a value of the identity probe holds a line feed, as the
   name of a repository directory can (US11 s1), the probe is repeated, one
   child per option, each counted (change 1's design D6, row 3), so that for
@@ -1915,23 +1919,30 @@ path"; "Non-UTF-8 common directory".
   its user configuration from inside the directory it runs in: with `HOME=h`,
   `git -C <dir>` reads `<dir>/h/.gitconfig`, which `git config --show-origin`
   prints as `file:h/.gitconfig`, and `GIT_CONFIG_GLOBAL=/dev/null` neutralises
-  it. Lane openRepoProject-5's reader RC found it, and lane openRepoProject-2's
-  lead reproduced it on Git 2.43.0 (its ruling R-101 (j)); the baseline has the
-  same exposure. A file inside a candidate, which a clone can carry, then acts
-  as the user's configuration for the overview's Git children there. The status
-  probe's `--untracked-files=normal` and `--ignored=matching` outrank a planted
+  it. Lane openRepoProject-5's reader RC found it, confirmed by lane
+  openRepoProject-4's reproduction on Git 2.43.0 (lane openRepoProject-2's
+  ruling R-101 (j)); the baseline has the same exposure. A file inside a
+  candidate, which a clone can carry, then acts as the user's configuration for
+  the overview's Git children there. The status probe's
+  `--untracked-files=normal` and `--ignored=matching` outrank a planted
   `status.showUntrackedFiles`, but a planted `safe.directory` is honoured as
   the user's own; and, reproduced for this record on Git 2.43.0 with `HOME=h`,
   the status probe's arguments and its two status pins, a clean filter that
   such a file defines runs when the probe re-hashes a path that the
   repository's own `.gitattributes` gives that filter, while an absolute `HOME`
-  or `GIT_CONFIG_GLOBAL=/dev/null` runs none (EC-022). The overview starts no
-  push child, through which lane openRepoProject-2 finds feature 004 exposed to
-  a planted `core.hooksPath`, `core.sshCommand` or `credential.helper`. Brett
-  Heap's "yes to all six recommendations, LQ-10 to LQ-15" (2026-10-21, lane
-  openRepoProject-3's session) decides it as lane openRepoProject-2's LQ-15,
-  not built: [E], amended in PR #19, refuses such a value before any Git child
-  starts, and the overview follows [E] as amended (FR-043; Dependencies).
+  or `GIT_CONFIG_GLOBAL=/dev/null` runs none (EC-022; lane openRepoProject-2's
+  ruling R-105 (c) records it). A relative `GIT_CONFIG_GLOBAL` beside an
+  absolute `HOME` runs the filter the same way (lane openRepoProject-3's reader
+  W6, and reader RA's H5 in lane openRepoProject-2's ruling R-105), the
+  evidence for [E]'s separate sentence on `GIT_CONFIG_GLOBAL` and
+  `GIT_CONFIG_SYSTEM`. The overview starts no push child, through which lane
+  openRepoProject-2 finds feature 004 exposed to a planted `core.hooksPath`,
+  `core.sshCommand` or `credential.helper`. Brett Heap's "yes to all six
+  recommendations, LQ-10 to LQ-15" (2026-10-21, lane openRepoProject-3's
+  session) decides it as lane openRepoProject-2's LQ-15, not built: PR #19
+  amends [E] at `cc000ea`, pending its ratification, so that every subcommand
+  that inspects a Git repository tests these values before any Git child
+  starts, and the overview makes the same test (FR-043; Dependencies).
 
 ## Requirements *(mandatory)*
 
@@ -2046,17 +2057,26 @@ and [P] are change 1's requirements as the header names them.
   whose registration held having an admin id to compare: lane
   openRepoProject-2's ruling R-67 (c), taken as a fill of change 2's rule
   (EC-031). Immediately before each status probe the row's own identity MUST be
-  verified again, and a changed identity MUST make the row `inspection-error`
-  set directly with no status probe, its finding and any row error being those
-  that feature 004's fix gives (lane openRepoProject-2's ruling R-101; EC-031;
-  Dependencies). Once PR #19 carries lane openRepoProject-2's LQ-11, a linked
-  row whose effective work tree is not its registered path MUST be a
-  registration disagreement as above, as [E] then states it (Dependencies). A
-  probe MUST NOT run in a path the overview could not `lstat`, nor a status
-  probe in a worktree whose registration it could not verify or whose identity
-  it could not verify again immediately before (POD:89-95; CMD:124-126,
-  :139-142; CLN:114-116; DI:244-245, :267-273; Clarifications, C-23, C-26, C-33
-  and C-39).
+  verified again, and a row that this re-verification does not confirm MUST be
+  `inspection-error` set directly with no status probe (lane
+  openRepoProject-2's ruling R-101 (j)), with the class's `inspection-error`
+  finding: where a re-read value differs, an absent path or registration file
+  (`ENOENT` or `ENOTDIR`) included, the row carries no row error; where a
+  re-read itself fails, it carries the code of change 2's table that fits the
+  failure (POD:326-335), `os-error` for a failed `lstat`, realpath or
+  registration read, `probe-timeout` for one whose filesystem task reaches its
+  limit and `deadline-exceeded` for one that the deadline ends or prevents, the
+  re-verification starting no Git child. Either way the finding's severity
+  `error` makes the run exit 1 (POD:762-764), and FR-034's
+  `inspection-incomplete` withholds `--all-safe` for the repository (EC-031).
+  Once PR #19 carries lane openRepoProject-2's LQ-11, a linked row whose
+  effective work tree is not its registered path MUST be a registration
+  disagreement as above, as [E] then states it (Dependencies). A probe MUST NOT
+  run in a path the overview could not `lstat`, nor a status probe in a
+  worktree whose registration it could not verify or whose identity it could
+  not verify again immediately before (POD:89-95; CMD:124-126, :139-142;
+  CLN:114-116; DI:244-245, :267-273; Clarifications, C-23, C-26, C-33 and
+  C-39).
 - **FR-008**: Every repository MUST first take [R]'s submodule test: when
   Git reports a superproject working tree for a candidate that reached the
   repository, `repository.root` MUST be null with an `unsupported-layout`
@@ -2172,16 +2192,17 @@ and [P] are change 1's requirements as the header names them.
   `GIT_TRACE2_PERF` set to `0`, which overrides `trace2.*` targets in the
   system and global configuration (:119-124 there; Clarifications, C-63), and
   every status probe MUST also carry `-c core.untrackedCache=false -c
-  core.fsmonitor=false` and, once PR #19 carries lane openRepoProject-2's
-  LQ-10, the two status pins it adds to [E], `-c core.trustctime=true -c
-  core.checkStat=default` (Dependencies). No Git child of the overview is
-  exempt: it starts no push child, so feature 004's push-child exception (lead
-  ruling R-28) never applies. A lazy fetch in a partial clone MUST therefore
-  fail locally and be recorded `probe-failed` on its row, a failed status probe
-  leaving its worktree `inspection-error`, with no network call. A Git child is
-  a process the overview starts; processes Git itself starts run in that
-  child's process group and take the pins from Git (POD:200-215; R-23, R-25;
-  Clarifications, C-5 and C-34).
+  core.fsmonitor=false` and after them, as PR #19 adds them to [E] at `ea697ba`
+  for lane openRepoProject-2's LQ-10, pending #19's ratification, `-c
+  core.trustctime=true -c core.checkStat=default` (its
+  `specs/project-command/spec.md:140-147`; Dependencies). No Git child of the
+  overview is exempt: it starts no push child, so feature 004's push-child
+  exception (lead ruling R-28) never applies. A lazy fetch in a partial clone
+  MUST therefore fail locally and be recorded `probe-failed` on its row, a
+  failed status probe leaving its worktree `inspection-error`, with no network
+  call. A Git child is a process the overview starts; processes Git itself
+  starts run in that child's process group and take the pins from Git
+  (POD:200-215; R-23, R-25; Clarifications, C-5 and C-34).
 - **FR-017**: The caps MUST be 32 roots, 4,096 entries per root, 128
   candidates and 512 worktree rows across the run, main worktrees included,
   reported in `limits` as the values in force; the root, candidate and
@@ -2209,20 +2230,20 @@ and [P] are change 1's requirements as the header names them.
   at a time. Collection MUST run in two canonical phases, the identity and
   repository-wide probes and then the worktree status probes; a repository's
   first worktree status probe MUST wait until every one of its rows within the
-  cap has finished the `lstat` and registration reads from which FR-007 decides
-  its twins (EC-031); a repository's second phase MUST start only when every
-  candidate earlier in canonical order has completed or failed its identity
-  probe and every repository earlier in canonical order has finished its first
-  phase, identity probes still being free to start ahead of that point; a
-  repository whose first registry record equals its `common_dir` and whose
-  checkout no candidate has yet named MUST also wait until every candidate's
-  identity probe has completed or failed. In a run in which no child, task or
-  root listing reaches its budget and the deadline does not expire, over an
-  estate that no other process changes during the run (this feature's reading,
-  a condition POD:243-246 does not state; EC-023), the JSON document, apart
-  from timestamps and `budget.probe_concurrency`, MUST NOT depend on
-  concurrency or completion order (POD:236-246; design D3, item 3, and D6;
-  Clarifications, C-28; EC-023).
+  cap has finished the `lstat`, realpath and registration reads from which
+  FR-007 decides its twins (EC-031); a repository's second phase MUST start
+  only when every candidate earlier in canonical order has completed or failed
+  its identity probe and every repository earlier in canonical order has
+  finished its first phase, identity probes still being free to start ahead of
+  that point; a repository whose first registry record equals its `common_dir`
+  and whose checkout no candidate has yet named MUST also wait until every
+  candidate's identity probe has completed or failed. In a run in which no
+  child, task or root listing reaches its budget and the deadline does not
+  expire, over an estate that no other process changes during the run (this
+  feature's reading, a condition POD:243-246 does not state; EC-023), the JSON
+  document, apart from timestamps and `budget.probe_concurrency`, MUST NOT
+  depend on concurrency or completion order (POD:236-246; design D3, item 3,
+  and D6; Clarifications, C-28; EC-023).
 - **FR-020**: The envelope MUST report `probes: {estimated, performed}`:
   `performed` counting every Git child started, timed-out and stopped ones
   included, and `estimated` counting 1 for the version check, 1 per Git
@@ -2593,10 +2614,22 @@ and [P] are change 1's requirements as the header names them.
   each with exit status 2, a message naming the 2.36 minimum, such as the
   packet's "project overview needs Git 2.36 or newer; found 2.34.1"
   (DI:322-323), and no other Git child; such a refusal MUST never be reported
-  as an incompleteness (POD:770-776). Before that check, the overview MUST
-  refuse a relative `HOME` or `XDG_CONFIG_HOME` as [E] refuses one once PR #19
-  carries lane openRepoProject-2's LQ-15, starting no Git child, [E]'s text
-  deciding the variables, the code and the exit status (EC-036; Dependencies).
+  as an incompleteness (POD:770-776). Before that check, the overview MUST make
+  the test of [E]'s "Configuration paths", as PR #19 amends [E] at `cc000ea`
+  for lane openRepoProject-2's LQ-15, pending #19's ratification (its
+  `specs/project-command/spec.md:100-111`): where `HOME` or `XDG_CONFIG_HOME`
+  is set to a non-empty value whose first byte is not "/", the test made on the
+  raw bytes and an empty or unset variable passing it, the overview MUST
+  refuse, starting no Git child, the version check included, and inspecting no
+  repository. The same test MUST apply to `GIT_CONFIG_GLOBAL` and
+  `GIT_CONFIG_SYSTEM`, as that text has it (:103 there; EC-036). The overview's
+  code and exit status for this refusal are open, and are decided in amendment
+  A1 (draft PR #34), which is pending: change 2 closes the overview's refusal
+  codes (POD:676-678), so [E]'s text cannot give one. A1's next revision
+  proposes adding `relative-config-path` to that list, with the exit status the
+  overview gives its other refusals; the alternative is `refused` with exit 2,
+  inside change 2's list; and Brett Heap decides at A1's ratification
+  (Dependencies).
 - **FR-044**: On SIGINT, SIGTERM or SIGHUP the overview MUST stop scheduling,
   terminate and reap every child as FR-011 states, abandoning one still
   unreaped 2 s after SIGKILL, start no result document once the signal is read
@@ -3060,11 +3093,12 @@ and [P] are change 1's requirements as the header names them.
   parser hooks, `feed_stderr` (T077, `6167503`; lead rulings R-53 P-1 and R-54
   X-2) and `tick` (T092, `651b610`; lead ruling R-83 P-1, which amends R-54
   X-2), and this feature's factoring of `start_child` and `conclude` keeps
-  both. Its parsers are identical to those of `96a08d4`, so FR-015's
-  keep-filter is still this feature's own to build. Its scrub still removes the
-  seventeen names there, and its draft #33 builds [E]'s list as PR #19 amends
-  it (lead ruling R-99 (b) and (d)). One defect found there reaches a parity
-  case: a failed ref listing makes `project clean` print every row as
+  both. Its five incremental parsers are identical to those of `96a08d4`, and
+  `RelayParser`, T077's relay of `git branch -d` (`project:5759`), is new, so
+  FR-015's keep-filter is still this feature's own to build. Its scrub still
+  removes the seventeen names there, and its draft #33 builds [E]'s list as PR
+  #19 amends it (lead ruling R-99 (b) and (d)). One defect found there reaches
+  a parity case: a failed ref listing makes `project clean` print every row as
   `unpublished`, with no row errors (lane openRepoProject-2's plan review,
   finding F3, in its record R-100 (c)), where the overview records the error
   and runs no ladder (FR-025, FR-026), so that a parity test of that case
@@ -3239,14 +3273,22 @@ and [P] are change 1's requirements as the header names them.
   LQ-15" (2026-10-21, lane openRepoProject-3's session), NOTED in that lane's
   log at 12:33:41Z, which lane openRepoProject-2 records as its ruling R-102.
   That lane's draft PR #19 carries every change-1 amendment, one commit per
-  ruling (R-102 (c) 1); none of these six commits exists yet, so each is cited
-  as pending. The overview follows [E] as amended, as for Q9 B.
-  - LQ-10: [E]'s status pins gain `core.trustctime=true` and
-    `core.checkStat=default`, so that an edit that keeps a file's size and
-    restores its modification time still shows where a repository sets
-    `core.trustctime=false` (lane openRepoProject-3's finding F1 H-3; R-101
-    (e)). The overview's status probe takes the same pins (FR-016), so that its
-    dirty evidence stays at parity with `project clean`'s.
+  ruling (R-102 (c) 1); LQ-15, LQ-10 and LQ-12 are there as `cc000ea`,
+  `ea697ba` and `eae1a79`, drafts cited as pending #19's ratification, and the
+  commits for LQ-11, LQ-13 and LQ-14 do not exist yet. The overview follows [E]
+  as amended, as for Q9 B.
+  - LQ-10, on PR #19 at `ea697ba`, pending its ratification: every status
+    probe, the hidden-state probe and the removal pass `-c core.trustctime=true
+    -c core.checkStat=default` after `-c core.fsmonitor=false`, four status
+    pins in all, so that an edit that keeps a file's size and restores its
+    modification time still shows where a repository sets
+    `core.trustctime=false` or `core.checkStat=minimal` (its
+    `specs/project-command/spec.md:140-147`; lane openRepoProject-3's finding
+    F1 H-3; R-101 (e)). Its scenario "The pinned status configuration" records
+    the four (:281), and the new scenario "An edit that keeps its size and
+    restores its mtime" (:285) brings that delta to 21 scenarios. The
+    overview's status probe carries the same pins (FR-016), so that by FR-026
+    its dirty evidence stays at parity with `project clean`'s.
   - LQ-11: a linked row whose effective work tree is not its registered path,
     such as one whose per-worktree `core.worktree` names a decoy under
     `extensions.worktreeConfig` (lane openRepoProject-5's reader RB), is
@@ -3256,26 +3298,47 @@ and [P] are change 1's requirements as the header names them.
     codes, gate order and scenarios lane openRepoProject-2 drafts in PR #19
     (R-102 (c) 4). LQ-13 keeps a worktree whose HEAD reflog or
     `refs/worktree/*` holds a commit unreachable from every branch, tag and
-    remote ref; LQ-14 keeps one with an operation in progress, an am, merge,
-    cherry-pick or revert sequence, rebase or bisect. The overview reuses [L]
-    and evaluates [G]'s gates as change 2 lists them (FR-026, FR-032), so each
-    protection reaches the overview where the amendment puts it: in the ladder,
-    through FR-026's parity once it lands; as a gate of the batch, as one that
-    only the batch applies, like the index gates (FR-032), unless change 2 is
-    amended as well. No gate text, reason code or gate order is written here
-    before then.
-  - LQ-15, decided and not built (EC-036): [E] is amended so that `clean`,
-    `status`, `doctor` and `update` refuse, before any Git child starts, a
-    non-empty `HOME` or `XDG_CONFIG_HOME` whose first byte is not "/", as #25's
-    C-44 (draft PR #29) refuses a relative `GH_CONFIG_DIR`, `XDG_CONFIG_HOME`
-    or `HOME`; Brett Heap also gave it to lane openRepoProject-2 directly,
-    "yes, refuse relative HOME like #29" (R-102 (a)). That lane's form adds
-    `GIT_CONFIG_GLOBAL` and `GIT_CONFIG_SYSTEM`, its own extension, which Brett
-    Heap may strike, and gives `clean`'s refusal the code
-    `relative-config-path` with exit status 2 (R-102 (c) 3). The overview
-    follows [E] as amended: the same refusal before any Git child, the version
-    check included (FR-043), with the variables, the code and the exit status
-    that [E]'s text gives once PR #19's commit lands, pending.
+    remote ref; LQ-14 keeps one with an operation in progress, "a failed am, a
+    merge or cherry-pick sequence, and a bisect" (R-102 (b)). The overview
+    reuses [L] and evaluates [G]'s gates as change 2 lists them (FR-026,
+    FR-032), so each protection reaches the overview where the amendment puts
+    it: in the ladder, through FR-026's parity once it lands, though a new
+    class or reason code would need an amendment of change 2, as LQ-15's code
+    does (FR-043); as a gate of the batch, as one that only the batch applies,
+    like the index gates (FR-032), unless change 2 is amended as well. No gate
+    text, reason code or gate order is written here before then.
+  - LQ-15, decided and not built (EC-036), on PR #19 at `cc000ea`, pending its
+    ratification: [E]'s new "Configuration paths" paragraph (its
+    `specs/project-command/spec.md:100-111`) has every subcommand that inspects
+    a Git repository test, before any Git child starts, `git --version`
+    included, whether `HOME` or `XDG_CONFIG_HOME` is set to a non-empty value
+    whose first byte is not "/", on the raw bytes, an empty or unset variable
+    passing it; where one fails, the subcommand starts no Git child and
+    inspects no repository (`relative-config-path`), as #25's C-44 (draft PR
+    #29) refuses a relative `GH_CONFIG_DIR`, `XDG_CONFIG_HOME` or `HOME`. Brett
+    Heap also gave it to lane openRepoProject-2 directly, "yes, refuse relative
+    HOME like #29" (R-102 (a)). `clean` refuses with `relative-config-path` and
+    exit status 2 in every mode (its `specs/project-clean/spec.md:13-22`, and
+    the scenario "A relative configuration path", :109); `doctor` reports it as
+    an `error` check row and exits 1, `status` marks the repository root
+    `inspection-error` with that code and exits 0, and `update --apply
+    --component shape` refuses with exit 2 and never invokes the owner tool
+    (project-command `:8-17`, and the scenario "A relative configuration path
+    in status, doctor and update", :266). The overview follows [E] as amended,
+    making the same test before any Git child, the version check included
+    (FR-043). Its own code and exit status for the refusal are open, and are
+    decided in amendment A1 (draft PR #34), which is pending, because change
+    2's closed list of refusal codes (POD:676-678) leaves [E]'s text none to
+    give: A1's next revision proposes adding `relative-config-path` to that
+    list, with the exit status the overview gives its other refusals, the
+    alternative being `refused` with exit 2, inside change 2's list, and Brett
+    Heap decides at A1's ratification. A later pass replaces this pointer with
+    A1's text.
+  - LQ-15's extension, in a sentence of its own that Brett Heap may strike: the
+    same test applies to `GIT_CONFIG_GLOBAL` and `GIT_CONFIG_SYSTEM` (:103 at
+    `cc000ea`), lane openRepoProject-2's own addition (R-102 (c) 3), since a
+    relative `GIT_CONFIG_GLOBAL` runs a candidate's filter as a relative `HOME`
+    does (EC-036).
   - LQ-12, `update`'s owner-tool environment, does not reach the overview,
     which starts no owner tool.
 - **Features 001 to 003** (`specs/001-project-command/`,

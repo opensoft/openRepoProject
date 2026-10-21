@@ -19,14 +19,15 @@ Lane: openRepoProject-4
   (seven protocol pins, [E]'s name scrub, `GIT_OPTIONAL_LOCKS=0`, the status
   pins)? [Completeness, Spec FR-016]
   - Result: pass; re-read on 2026-10-21: [E]'s list as PR #19 amends it at
-    `423a532`, thirty-one names, and LQ-10's two status pins once PR #19
-    carries them (FR-016; C-63).
+    `423a532`, thirty-one names, and LQ-10's two status pins as PR #19 adds
+    them at `ea697ba`, pending its ratification (FR-016; C-63).
 - [x] CHK003 Are the residuals beyond the pins and the scrub recorded (remote-helper protocols, configuration files, trace targets, attribute filters)? [Completeness, Spec EC-006, EC-022]
   - Result: fixed in spec.md, EC-036 (2026-10-21): a relative `HOME` or
     `XDG_CONFIG_HOME` makes a file inside a candidate act as the user's
     configuration, which no residual recorded; Brett Heap's answer to lane
-    openRepoProject-2's LQ-15 refuses such a value once PR #19 amends [E]
-    (FR-043; Dependencies).
+    openRepoProject-2's LQ-15 refuses such a value, as PR #19 amends [E] at
+    `cc000ea`, pending its ratification, the overview's code and exit status
+    being open for A1 (FR-043; Dependencies).
 - [x] CHK004 Is the treatment of those residuals decided (accept, scrub the
   trace variables, or drop the user's configuration)? [Completeness, Spec
   EC-022]
@@ -34,7 +35,8 @@ Lane: openRepoProject-4
     residuals, the read-only guarantee claims only what the pins and the scrub
     prove, and [E]'s list as PR #19 amends it at `423a532` carries the trace
     pins and names (FR-016, FR-040, EC-022); a relative `HOME` or
-    `XDG_CONFIG_HOME` is refused once PR #19 carries LQ-15 (EC-036).
+    `XDG_CONFIG_HOME` is refused as PR #19 at `cc000ea` has it, pending its
+    ratification (EC-036).
 - [ ] CHK005 Is the threat model the requirements assume stated: the user's own local repositories, some of which may hold hostile names, configuration, attributes or manifests? [Completeness, Gap, Traceability]
   - Result: plan note PN-15.
 - [x] CHK006 Is access to credentials and profile data restricted? [Completeness, Spec FR-040]
@@ -65,17 +67,17 @@ Lane: openRepoProject-4
 - [x] CHK014 Are repositories Git itself refuses as unsafe (`safe.directory`, dubious ownership) covered? [Completeness, Spec FR-021]
   - Result: pass. A Git child that exits nonzero records `probe-failed` on its
     row. A relative `HOME` could let a planted `safe.directory` admit such a
-    repository, which EC-036 records and LQ-15's refusal closes once [E]
-    carries it.
+    repository, which EC-036 records and LQ-15's refusal closes, as PR #19 at
+    `cc000ea` has it, pending its ratification.
 - [x] CHK015 Is a candidate whose broken `.git` sends Git to an ancestor
   repository kept from widening the scan beyond the roots? [Completeness, Spec
   FR-002]
   - Result: pass with C-65: such a candidate is a `refused` error row and
     creates or joins no repository row (FR-006).
 - [x] CHK016 Is the overview kept from running repository-configured programs the pins cover (`core.fsmonitor`), with those they cannot cover recorded? [Completeness, Spec FR-016, EC-022]
-  - Result: pass; EC-036 adds the clean filter that a relative `HOME` lets a
-    candidate's own files define, closed by LQ-15's refusal once [E] carries
-    it.
+  - Result: pass; EC-036 adds the clean filter that a relative `HOME` or
+    `GIT_CONFIG_GLOBAL` lets a candidate's own files define, closed by LQ-15's
+    refusal as PR #19 at `cc000ea` has it, pending its ratification.
 
 ## Requirement Clarity
 
@@ -89,7 +91,8 @@ Lane: openRepoProject-4
 
 - [x] CHK019 Do the pins in FR-016 match [E]'s and design D13's lists character for character? [Consistency, Spec FR-016]
   - Result: pass. The seven `-c protocol.*` pins agree in all three texts.
-    LQ-10's two status pins join FR-016 once PR #19 carries them.
+    LQ-10's two status pins join FR-016 as PR #19 adds them at `ea697ba`,
+    pending its ratification.
 - [x] CHK020 Does no requirement exempt any Git child of the overview from the pins or the scrub? [Consistency, Spec FR-016, Clarifications C-5]
   - Result: pass.
 
@@ -126,9 +129,11 @@ CHK013, CHK015 and CHK018 re-evaluated on 2026-10-21 after Brett Heap's answers
 (C-55 to C-71), and CHK002 to CHK004, CHK010, CHK013, CHK014, CHK016 and CHK019
 later that day, after PR #19's `423a532`, the re-check against feature 004's
 head `2cf34d3` and Brett Heap's answers to lane openRepoProject-2's LQ-10 to
-LQ-15 (EC-036). 25 items: 23 pass, 1 fixed in the spec, 0 open, 1 plan notes, 0
-new questions. An open item waits on the question or residual its result names;
-a plan note is for the plan, not the spec; a new question is asked in
+LQ-15 (EC-036), and CHK002 to CHK004, CHK014, CHK016 and CHK019 again after
+lane openRepoProject-3's W6 read of `8082d3b` and PR #19's `ea697ba` and
+`cc000ea`. 25 items: 23 pass, 1 fixed in the spec, 0 open, 1 plan notes, 0 new
+questions. An open item waits on the question or residual its result names; a
+plan note is for the plan, not the spec; a new question is asked in
 `clarify-questions.md`.
 
 Plan notes: PN-15 (CHK005).

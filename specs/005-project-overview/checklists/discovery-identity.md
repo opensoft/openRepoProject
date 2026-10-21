@@ -67,8 +67,9 @@ Lane: openRepoProject-4
     that is missing (`ENOENT` or `ENOTDIR`) is one too (its finding D4;
     DI:244-245; CMD:141-142). On 2026-10-21 present rows that share a realpath
     or an admin id joined the disagreements, by the fill of EC-031 (R-67 (c)),
-    and a row whose identity changed before its probe became
-    `inspection-error`, unprobed (R-101).
+    and a row that its identity re-verification does not confirm became
+    `inspection-error`, unprobed, with the class's finding and a row error only
+    where the re-read itself fails (R-101 (j); FR-007).
 
 ## Requirement Consistency
 
@@ -127,9 +128,10 @@ their results unchanged, and again after its delta read (findings D2 to D4),
 their results still pass; CHK007, CHK009 to CHK011, CHK022, CHK028 and CHK029
 re-evaluated on 2026-10-21 after Brett Heap's answers (C-55 to C-71), and
 CHK016 later that day, after the re-check against feature 004's head `2cf34d3`,
-its result still pass. 29 items: 27 pass, 1 fixed in the spec, 0 open, 1 plan
-notes, 0 new questions. An open item waits on the question or residual its
-result names; a plan note is for the plan, not the spec; a new question is
-asked in `clarify-questions.md`.
+its result still pass, and again after lane openRepoProject-3's W6 read of
+`8082d3b`. 29 items: 27 pass, 1 fixed in the spec, 0 open, 1 plan notes, 0 new
+questions. An open item waits on the question or residual its result names; a
+plan note is for the plan, not the spec; a new question is asked in
+`clarify-questions.md`.
 
 Plan notes: PN-9 (CHK024).

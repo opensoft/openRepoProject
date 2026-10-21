@@ -352,6 +352,29 @@ Lane: openRepoProject-4
   and CHK019, CHK024 and CHK025 below were re-read, and the totals below were
   recounted by script. Re-validation: 16 of 16 items pass, with the checks of
   iteration 2 re-run by script on the edited spec.
+- 2026-10-21, a third pass: lane openRepoProject-3's W6 read of `8082d3b` and
+  PR #19's LQ-15 (`cc000ea`) and LQ-10 (`ea697ba`) commits are applied. FR-007
+  decides, within change 2's lists, the outcome of a row that its identity
+  re-verification does not confirm: the class's `inspection-error` finding, no
+  row error where a re-read value differs, and the fitting code where the
+  re-read itself fails, so that the run exits 1 (W6 M2); plan note PN-18 has
+  the plan re-read it against feature 004's fix. FR-043 and the LQ-15 bullet
+  take LQ-15 from `cc000ea`, pending #19's ratification, keep
+  `GIT_CONFIG_GLOBAL` and `GIT_CONFIG_SYSTEM` in a sentence of their own, and
+  leave the overview's code and exit status open for A1 (W6 M1); FR-016 and the
+  LQ-10 bullet take LQ-10 from `ea697ba`. EC-036 credits lane
+  openRepoProject-4's reproduction as R-101 (j) records it, uses the present
+  tense of `cc000ea` and adds a relative `GIT_CONFIG_GLOBAL` (W6 L2 to L4);
+  LQ-14 takes R-102 (b)'s list (L5); FR-019 names the realpath read (L6);
+  EC-031 says "of one registered worktree" (L7); the Dependencies name the five
+  incremental parsers and the new `RelayParser` (L8); and the LQ-13 and LQ-14
+  bullet says that a new class or code would need an amendment of change 2
+  (L9). No pin moves, and `clarify-questions.md` is unchanged. In this folder,
+  CHK026 of `integration.md` is added as plan note PN-18; CHK002 to CHK004,
+  CHK014, CHK016 and CHK019 of `security.md`, CHK016 of `discovery-identity.md`
+  and CHK023 below were re-read, and the totals below were recounted by script.
+  Re-validation: 16 of 16 items pass, with the checks of iteration 2 re-run by
+  script on the edited spec.
 - Items marked incomplete require spec updates before `/speckit-clarify` or `/speckit-plan`
 
 ## Cross-cutting Requirements Quality (no-argument `/speckit.checklist`, 2026-10-19)
@@ -425,10 +448,12 @@ Lane: openRepoProject-4
 
 - [x] CHK023 Is every point left to the plan named as such? [Ambiguity, Spec Assumptions]
   - Result: pass. The spec names its one; this run's plan notes PN-1 to PN-17,
-    PN-2 narrowed on 2026-10-20 to an exception of any other kind in human mode
-    and widened on 2026-10-21 to a failed write's standard-error line (C-66),
-    PN-6 and PN-12 narrowed on 2026-10-21 (C-66, C-68) and PN-11 withdrawn then
-    (C-62), are listed in the domain checklists' Evaluation sections.
+    with PN-18 added on 2026-10-21 for FR-007's re-verification against feature
+    004's fix, PN-2 narrowed on 2026-10-20 to an exception of any other kind in
+    human mode and widened on 2026-10-21 to a failed write's standard-error
+    line (C-66), PN-6 and PN-12 narrowed on 2026-10-21 (C-66, C-68) and PN-11
+    withdrawn then (C-62), are listed in the domain checklists' Evaluation
+    sections.
 - [x] CHK024 Are the differences between change 2 and feature 004 recorded with which text governs? [Conflict, Spec Assumptions, Clarifications C-33]
   - Result: pass; since 2026-10-21 also where the change is silent: the twin
     fill of EC-031 and the recorded divergence in the cap count (Dependencies).
@@ -442,17 +467,18 @@ Lane: openRepoProject-4
 Evaluated on 2026-10-19 against `spec.md` at `8f433f7`; CHK007, CHK019, CHK023
 and CHK025 re-read on 2026-10-21 after Brett Heap's answers (C-55 to C-71),
 their results still pass, and CHK019, CHK024 and CHK025 again later that day,
-after the re-check against feature 004's head `2cf34d3` and EC-036, theirs too.
-25 items: 24 pass, 1 fixed in the spec, 0 open, 0 plan notes, 0 new questions.
-An open item waits on the question or residual its result names; a plan note is
+after the re-check against feature 004's head `2cf34d3` and EC-036, theirs too,
+and CHK023 after lane openRepoProject-3's W6 read, its result still pass. 25
+items: 24 pass, 1 fixed in the spec, 0 open, 0 plan notes, 0 new questions. An
+open item waits on the question or residual its result names; a plan note is
 for the plan, not the spec; a new question is asked in `clarify-questions.md`.
 The counts are for the cross-cutting section above; the 16 built-in items
 before it carry no ids and are not counted.
 
 Plan notes: none.
 
-All 17 checklists: 413 items: 373 pass, 24 fixed in the spec, 0 open, 16 plan
-notes (PN-1 to PN-17 but PN-11, withdrawn on 2026-10-21; PN-2 narrowed to an
+All 17 checklists: 414 items: 373 pass, 24 fixed in the spec, 0 open, 17 plan
+notes (PN-1 to PN-18 but PN-11, withdrawn on 2026-10-21; PN-2 narrowed to an
 exception of any other kind in human mode and widened to a failed write's
 standard-error line), 0 new questions. Recounted by script on 2026-10-21, and
-again after the re-check of that day.
+again after the re-check and after the W6 read of that day.

@@ -92,6 +92,13 @@ Lane: openRepoProject-4
 - [ ] CHK025 Edge: is the place of FR-015's keep-filter left to the plan, feature 004's `RefParser` keeping every record and offering no hook for it? [Edge Case, Dependency, Gap, Spec FR-015, Dependencies]
   - Result: plan note PN-16; at feature 004's head `2cf34d3` its parsers are
     unchanged and no hook serves the keep-filter.
+- [ ] CHK026 Edge: is FR-007's outcome for a row that its identity
+  re-verification does not confirm checked against feature 004's fix (lead
+  rulings R-101 (e) and (j)) once that fix is built? [Edge Case, Dependency,
+  Spec FR-007, EC-031]
+  - Result: plan note PN-18: when feature 004's fix is built, the plan re-reads
+    FR-007's re-verification outcome against it, and a difference in class goes
+    to lane openRepoProject-4's lead.
 
 ## Notes
 
@@ -110,9 +117,10 @@ Evaluated on 2026-10-19 against `spec.md` at `8f433f7`; CHK025 added on
 feature 004's `96a08d4`; CHK011 to CHK013 re-evaluated on 2026-10-21 after
 Brett Heap's answers (C-55 to C-71), and CHK002, CHK004, CHK008, CHK011 to
 CHK013 and CHK025 re-read later that day against feature 004's head `2cf34d3`,
-their results unchanged. 25 items: 24 pass, 0 fixed in the spec, 0 open, 1 plan
-notes, 0 new questions. An open item waits on the question or residual its
-result names; a plan note is for the plan, not the spec; a new question is
-asked in `clarify-questions.md`.
+their results unchanged; CHK026 added on 2026-10-21 after lane
+openRepoProject-3's W6 read of `8082d3b`, as plan note PN-18. 26 items: 24
+pass, 0 fixed in the spec, 0 open, 2 plan notes, 0 new questions. An open item
+waits on the question or residual its result names; a plan note is for the
+plan, not the spec; a new question is asked in `clarify-questions.md`.
 
-Plan notes: PN-16 (CHK025).
+Plan notes: PN-16 (CHK025), PN-18 (CHK026).
