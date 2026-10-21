@@ -3618,6 +3618,14 @@ def resolve_clean_target(args, run):
     T118 gives discover() these codes itself (P-10); a refusal that already
     carries a code passes unchanged, except that the PATH of a
     `repository-not-found` message is printed through human_path() (R-92 (c)).
+    A name the lookup cannot examine, `~user` for no such user, a name too
+    long for a path component, or one looked up from a working directory
+    that is gone, is `repository-not-found` with the message `Directory does
+    not exist: PATH`, as a name with no directory is (plan review F4; lane
+    3's US7/US9 L-1 and L-3). A relative path, or none, from a working
+    directory that is gone is refused `target-not-repository-root` naming
+    the argument as given, or `.`; otherwise a relative path's refusal names
+    the directory Git examines, its realpath, not its lexical form (L-2).
 
     Refused `target-not-repository-root`, exit 2, before any plan and with no
     context, in M6's order: row 3 failed (a directory outside any
@@ -3642,6 +3650,11 @@ def resolve_clean_target(args, run):
     target = getattr(args, "target", None) or ""
     text = os.path.expanduser(target)
     bare, absolute = is_bare_name(target), os.path.isabs(text)
+
+    def refused(path):
+        return Refused(TEXT["target_not_repository_root"].format(PATH=human_path(path)),
+                       code="target-not-repository-root", path=path)
+
     if bare:
         try:
             found = discover(target)
@@ -3655,21 +3668,41 @@ def resolve_clean_target(args, run):
             if exc.code == "repository-not-found" and escaped is not None:
                 exc.args = (escaped,)  # R-92 (c): the path the message names prints escaped
             raise
+        except (OSError, RuntimeError) as exc:
+            # A name the lookup cannot examine names no project directory:
+            # `~user` for no such user (Path.expanduser() raises
+            # RuntimeError), a name longer than a path component allows
+            # (ENAMETOOLONG; Python 3.15 answers False there and reaches
+            # discover()'s own refusal), or a working directory that is gone
+            # (ENOENT). discover()'s message names the name against the working
+            # directory, or the name as given when that is gone (plan review F4;
+            # lane 3's US7/US9 L-1 and L-3).
+            if isinstance(exc, OSError) and exc.errno not in (errno.ENAMETOOLONG, errno.ENOENT):
+                raise
+            if not isinstance(exc, OSError) and type(exc) is not RuntimeError:
+                raise
+            try:
+                named = os.path.join(os.getcwd(), target)
+            except OSError:
+                named = target
+            raise Refused("Directory does not exist: " + human_path(named), code="repository-not-found") from None
         directory = shown = os.fsencode(found)
     elif absolute:
         directory = shown = os.fsencode(text)
     else:
-        directory = os.path.join(os.getcwdb(), os.fsencode(text)) if text else os.getcwdb()
-        shown = os.path.abspath(directory)
-
-    def refused():
-        return Refused(TEXT["target_not_repository_root"].format(PATH=human_path(shown)),
-                       code="target-not-repository-root", path=shown)
+        try:
+            cwd = os.getcwdb()
+        except OSError:  # the working directory is gone: Git finds no worktree there (pcl:449-451; L-3)
+            raise refused(os.fsencode(text) if text else b".") from None
+        directory = os.path.join(cwd, os.fsencode(text)) if text else cwd
+        # The directory Git examines: `..` taken after any symlink before it,
+        # as chdir() takes it, not lexically (lane 3's US7/US9 L-2).
+        shown = os.path.realpath(directory)
 
     evidence = inspect_repository(directory, run)
     identity = evidence["identity"]
     if identity is None or evidence["superproject"] is not None or evidence["main_cause"] is not None:
-        raise refused()
+        raise refused(shown)
     # Where row 5 failed the root is not confirmed, but the main worktree is
     # still the one main_worktree() named, never a linked toplevel (plan review F2).
     toplevel, root = evidence["toplevel"], identity["root"] or evidence.get("main_path")
@@ -3679,7 +3712,7 @@ def resolve_clean_target(args, run):
         except EvidenceError:
             exact = False
         if not exact or (absolute and root is not None and toplevel != root):
-            raise refused()
+            raise refused(shown)
     for raw in (toplevel if root is None else root, identity["common_dir"]):  # FR-041; R-80 P-13
         if not json_path(raw)[1]:
             raise Refused(TEXT["unsupported_path_bytes"].format(PATH=human_path(raw)),

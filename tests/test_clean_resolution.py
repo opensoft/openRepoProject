@@ -323,6 +323,74 @@ class ResolutionTests(clean_support.CleanCase):
         status, out, err = self.main_in_process("clean", "Atlas", cwd=elsewhere, discover=already_coded)
         self.assertEqual((status, coded.code), (2, "ambiguous-name"), "a coded refusal passes unchanged")
 
+    def main_in_a_gone_directory(self, *argv):
+        """main_in_process() run from a working directory removed after the
+        chdir into it: (status, stdout, stderr)."""
+        gone = self.base / "gone"
+        gone.mkdir()
+        out, err = io.StringIO(), io.StringIO()
+        with mock.patch.dict(os.environ, self.env, clear=True), working_directory(gone), \
+                contextlib.redirect_stdout(out), contextlib.redirect_stderr(err):
+            gone.rmdir()
+            status = project.main([os.fspath(arg) for arg in argv])
+        return status, out.getvalue(), err.getvalue()
+
+    def document_of(self, status, out, err, argv):
+        result = mock.Mock(returncode=status, stdout=out, stderr=err, args=list(argv))
+        result.document = json.loads(out)
+        return result
+
+    def test_clean_bare_name_refusals_carry_their_codes_for_a_name_the_lookup_cannot_examine(self):
+        # The contract's Codes table: `repository-not-found` for "a bare name
+        # resolves to no project directory". Plan review F4 (`~user` for no such
+        # user: Path.expanduser() raises RuntimeError) and lane 3's US7/US9 L-1
+        # (a name of 256 bytes or more: ENAMETOOLONG on Python 3.10 to 3.13) and
+        # L-3 (a working directory that is gone) ended in internal-error.
+        elsewhere = self.base / "elsewhere"
+        elsewhere.mkdir()
+        for label, name in (("~ for no such user", "~nosuchuser7f3a9c"), ("a name of 300 bytes", "n" * 300)):
+            with self.subTest(label):
+                message = f"Directory does not exist: {elsewhere / name}"
+                result = self.run_json("clean", name, "--json", cwd=elsewhere)
+                self.assert_error_document(result, "repository-not-found", message, "report")
+                result = self.run_cli("clean", name, "--all-safe", cwd=elsewhere)
+                self.assert_refused_human(result, message)
+        with self.subTest("a name looked up from a working directory that is gone"):
+            argv = ("clean", "Nowhere", "--json")
+            result = self.document_of(*self.main_in_a_gone_directory(*argv), argv)
+            self.assert_error_document(result, "repository-not-found", "Directory does not exist: Nowhere", "report")
+
+    def test_clean_a_relative_path_or_none_from_a_working_directory_that_is_gone(self):
+        # pcl:449-451: a relative path, or no argument, is made absolute against
+        # the working directory and refused target-not-repository-root where Git
+        # finds no worktree there; with the working directory gone Git finds
+        # none, and the refusal names the argument as given, or `.` (lane 3's
+        # US7/US9 L-3, which ended in internal-error).
+        for words, shown in (((), "."), ((".",), "."), (("./sub",), "./sub")):
+            with self.subTest(words=words):
+                argv = ("clean", *words, "--json")
+                result = self.document_of(*self.main_in_a_gone_directory(*argv), argv)
+                self.assert_error_document(result, "target-not-repository-root", self.not_root(shown), "report",
+                                           path=shown)
+                status, out, err = self.main_in_a_gone_directory("clean", *words)
+                self.assertEqual((status, out, err), (2, "", f"REFUSED: {self.not_root(shown)}\n"))
+
+    def test_clean_a_relative_path_s_refusal_names_the_directory_git_examined(self):
+        # Lane 3's US7/US9 L-2, wording only: `ln-inner/..` from `work`, where
+        # ln-inner is a symbolic link to ../other/dir/inner, examines other/dir
+        # (chdir() takes `..` after the link), so the refusal names other/dir,
+        # not work, the lexical result.
+        work = self.base / "work"
+        inner = self.base / "other" / "dir" / "inner"
+        work.mkdir()
+        inner.mkdir(parents=True)
+        (work / "ln-inner").symlink_to(Path("..") / "other" / "dir" / "inner")
+        examined = self.base / "other" / "dir"
+        result = self.run_json("clean", "ln-inner/..", "--json", cwd=work)
+        self.assert_error_document(result, "target-not-repository-root", self.not_root(examined), "report",
+                                   path=examined)
+        self.assert_refused_human(self.run_cli("clean", "ln-inner/..", cwd=work), self.not_root(examined))
+
     # R-71 (b): row 3 runs once, where the argument resolves.
 
     def test_clean_row_3_runs_once_where_the_argument_resolves(self):
