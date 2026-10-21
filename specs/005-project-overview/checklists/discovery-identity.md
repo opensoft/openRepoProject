@@ -87,7 +87,13 @@ Lane: openRepoProject-4
     read's exit 1 is a value not set only with nothing on standard output or
     standard error, and FR-013's toplevel realpath task gives FR-007's
     outcomes, `ENOENT` or `ENOTDIR` a disagreement with no error and any other
-    failure, or a cut task, a check not completed.
+    failure, or a cut task, a check not completed. After A1's revision 5 at
+    `3ee860c`, on the lead's ruling for `addd346`, an effective-work-tree probe
+    that cannot be spawned is "a probe that fails" in [E]'s words, a
+    disagreement with no error, and only a cut of the probe leaves the check
+    not completed, FR-007's declared fill narrowing to the cut; FR-007 quotes
+    both of A1's exceptions in the collector table (its
+    `specs/project-overview/spec.md:359`).
 
 ## Requirement Consistency
 
@@ -149,9 +155,9 @@ CHK016 later that day, after the re-check against feature 004's head `2cf34d3`,
 its result still pass, and again after lane openRepoProject-3's W6 read of
 `8082d3b`, and after its W11 read of `08d5d79` and PR #19's `addd346`, and
 again after its W17 read of `b511bdb` and PR #19's `93f3194`, and after its W20
-read of A1 revision 3. 29 items: 27 pass, 1 fixed in the spec, 0 open, 1 plan
-notes, 0 new questions. An open item waits on the question or residual its
-result names; a plan note is for the plan, not the spec; a new question is
-asked in `clarify-questions.md`.
+read of A1 revision 3, and after A1's revision 5 at `3ee860c`. 29 items: 27
+pass, 1 fixed in the spec, 0 open, 1 plan notes, 0 new questions. An open item
+waits on the question or residual its result names; a plan note is for the
+plan, not the spec; a new question is asked in `clarify-questions.md`.
 
 Plan notes: PN-9 (CHK024).

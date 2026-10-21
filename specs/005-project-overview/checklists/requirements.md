@@ -477,6 +477,39 @@ Lane: openRepoProject-4
   unchanged, and the totals below were recounted by script. Re-validation: 16
   of 16 items pass, with the checks of iteration 2 re-run by script on the
   edited spec.
+- 2026-10-21, an eighth pass: A1's revision 5 at `3ee860c`, which restates the
+  status pins after LQ-10, with the lead's commit 3f inputs. Every citation of
+  A1 at `367223a`, and every "A1 revision 4 (draft PR #34)" placeholder, now
+  cites `3ee860c` at its lines there: D8's toplevel realpath task and its bound
+  move to design.md:484-491 and :506-508, D10's fill to :548-550, :556-559 and
+  :567-572, the open point to proposal.md:1406-1413 and Q15 A and Q16 B to
+  :1401-1404; requirement 7 (spec:580-587) and D5 (design.md:334-341) do not
+  move. FR-019 and the LQ-11 bullet record that A1 now amends POD:238-239 as
+  well, naming the second phase "the worktree probes, effective-work-tree reads
+  and status probes" (its :257-259). FR-007 and the LQ-11 bullet quote both of
+  A1's exceptions in the collector table (its :359); on the lead's ruling for
+  `addd346`, a rev-parse that cannot be spawned is "a probe that fails", a
+  disagreement with no error, only a cut leaving the check not completed, and
+  FR-007's declared fill narrows to the cut. FR-032, SC-004 and the LQ-13 and
+  LQ-14 bullet give R-124's outcome rule in `2b86a5f`'s words, and the bullet
+  cites [G]'s list of markers at `1ebdd90` (:650-659) with no names and no
+  count. The LQ intro and the A1 bullet count four LQ items, the fourth LQ-10's
+  stat pins, a restatement, each with the commits it follows, and the merge
+  order for PR #34; FR-016 and the LQ-10 bullet quote [E]'s four status pins as
+  A1 restates them (requirement 3, spec:220-222; D13, design.md:690-691), and
+  EC-036 names its reproduction's two pins as those [E] carried before LQ-10.
+  #25 is re-checked at `86324ff` and `2eeaec4`, its pin `05a424a` kept: the
+  cited ranges are byte-identical by `cmp`, except tasks 2.3 and 2.4
+  (`tasks.md:22-23`), which gain C-51's second diff, and EC-022's D5 residual
+  reads the same at `design.md:565-592` there. No pin moves, and
+  `clarify-questions.md` is unchanged. In this folder, CHK006 of
+  `deployment.md`, CHK012 and CHK020 of `integration.md`, CHK012 of `ux.md`,
+  CHK003 and CHK011 of `observability.md`, CHK002, CHK003 and CHK019 of
+  `security.md`, CHK016 of `discovery-identity.md`, CHK008 of `idempotency.md`,
+  CHK012 and CHK020 of `suggestions-gates.md` and CHK015 here were re-read, no
+  category changing, and the totals below were recounted by script.
+  Re-validation: 16 of 16 items pass, with the checks of iteration 2 re-run by
+  script on the edited spec.
 - Items marked incomplete require spec updates before `/speckit-clarify` or `/speckit-plan`
 
 ## Cross-cutting Requirements Quality (no-argument `/speckit.checklist`, 2026-10-19)
@@ -523,7 +556,7 @@ Lane: openRepoProject-4
   - Result: pass.
 - [x] CHK015 Are the exit rules consistent across FR-029, FR-042, FR-043, FR-044 and the stories? [Consistency, Spec FR-042]
   - Result: pass; FR-043's pointer also names FR-042's exit-2 causes
-    (POD:765-766), for which amendment A1 at `367223a` proposes
+    (POD:765-766), for which amendment A1 at `3ee860c` proposes
     `relative-config-path` with exit 2, pending.
 
 ### Acceptance Criteria Quality
@@ -588,5 +621,5 @@ All 17 checklists: 414 items: 373 pass, 25 fixed in the spec, 0 open, 16 plan
 notes (PN-1 to PN-18 but PN-4 and PN-11, withdrawn on 2026-10-21; PN-2 narrowed
 to an exception of any other kind in human mode and widened to a failed write's
 standard-error line), 0 new questions. Recounted by script on 2026-10-21, and
-again after the re-check, after the W6 read and after the fourth to seventh
+again after the re-check, after the W6 read and after the fourth to eighth
 passes of that day.

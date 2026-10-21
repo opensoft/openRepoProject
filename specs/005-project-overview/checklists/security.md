@@ -19,8 +19,9 @@ Lane: openRepoProject-4
   (seven protocol pins, [E]'s name scrub, `GIT_OPTIONAL_LOCKS=0`, the status
   pins)? [Completeness, Spec FR-016]
   - Result: pass; re-read on 2026-10-21: [E]'s list as PR #19 amends it at
-    `423a532`, thirty-one names, and LQ-10's two status pins as PR #19 adds
-    them at `ea697ba`, pending its ratification (FR-016; C-63).
+    `423a532`, thirty-one names, and [E]'s four status pins, the last two as PR
+    #19 adds them at `ea697ba` for LQ-10, pending its ratification, and the
+    four as amendment A1 at `3ee860c` restates them, pending (FR-016; C-63).
 - [x] CHK003 Are the residuals beyond the pins and the scrub recorded (remote-helper protocols, configuration files, trace targets, attribute filters)? [Completeness, Spec EC-006, EC-022]
   - Result: fixed in spec.md, EC-036 (2026-10-21): a relative `HOME` or
     `XDG_CONFIG_HOME` makes a file inside a candidate act as the user's
@@ -28,11 +29,12 @@ Lane: openRepoProject-4
     openRepoProject-2's LQ-15 refuses such a value, as PR #19 amends [E] at
     `cc000ea` and `9fb22fa`, pending its ratification, `9fb22fa` leaving the
     overview's code and exit status to `add-project-overview`, where amendment
-    A1 at `367223a` proposes `relative-config-path` with exit 2, pending,
+    A1 at `3ee860c` proposes `relative-config-path` with exit 2, pending,
     departing from the packet's DI:1086-1089 (FR-043; Dependencies). The `gh`
     children of #25, which the overview never starts, are recorded outside
     Q9 B's claim, the caller's environment passing to them unread (#29's D5 at
-    `11a0ba2`, which records the residual at `79d196a`; EC-022, FR-040).
+    `11a0ba2`, which records the residual at `79d196a`, the same at `86324ff`
+    and `2eeaec4`; EC-022, FR-040).
 - [x] CHK004 Is the treatment of those residuals decided (accept, scrub the
   trace variables, or drop the user's configuration)? [Completeness, Spec
   EC-022]
@@ -98,8 +100,11 @@ Lane: openRepoProject-4
 
 - [x] CHK019 Do the pins in FR-016 match [E]'s and design D13's lists character for character? [Consistency, Spec FR-016]
   - Result: pass. The seven `-c protocol.*` pins agree in all three texts.
-    LQ-10's two status pins join FR-016 as PR #19 adds them at `ea697ba`,
-    pending its ratification.
+    FR-016 quotes [E]'s four status pins as amendment A1 at `3ee860c` restates
+    them in requirement 3 and design D13 (its
+    `specs/project-overview/spec.md:220-222` and design.md:690-691), character
+    for character, the last two as PR #19 adds them at `ea697ba`, pending its
+    ratification.
 - [x] CHK020 Does no requirement exempt any Git child of the overview from the pins or the scrub? [Consistency, Spec FR-016, Clarifications C-5]
   - Result: pass; re-read on 2026-10-21 for LQ-11's two children, the extension
     read and the effective-work-tree probe, which FR-007 gives FR-016's pins
@@ -143,9 +148,10 @@ lane openRepoProject-3's W6 read of `8082d3b` and PR #19's `ea697ba` and
 `cc000ea`, and CHK003, CHK004, CHK014, CHK016 and CHK020 again after PR #19's
 `addd346` and `9fb22fa`, #29's D5 at `11a0ba2` and lane openRepoProject-3's W11
 read of `08d5d79`, and CHK003 after A1's revision 3 at `367223a` and #29's
-`79d196a`. 25 items: 23 pass, 1 fixed in the spec, 0 open, 1 plan notes, 0 new
-questions. An open item waits on the question or residual its result names; a
-plan note is for the plan, not the spec; a new question is asked in
+`79d196a`, and CHK002, CHK003 and CHK019 after A1's revision 5 at `3ee860c` and
+#29's `2eeaec4`. 25 items: 23 pass, 1 fixed in the spec, 0 open, 1 plan notes,
+0 new questions. An open item waits on the question or residual its result
+names; a plan note is for the plan, not the spec; a new question is asked in
 `clarify-questions.md`.
 
 Plan notes: PN-15 (CHK005).

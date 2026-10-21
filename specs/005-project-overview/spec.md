@@ -108,7 +108,10 @@ C-56). #25's change (`add-project-overview-remote-merge-status`) stays pinned
 at `05a424a`: at `11a0ba2`, its draft PR #29's head after its round C13, every
 range that this spec and `clarify-questions.md` cite is byte-identical, its
 overview spec's lines 1 to 410 included; at `3965dfb`, after its round C14, the
-same ranges are byte-identical, three of them at new lines (Dependencies).
+same ranges are byte-identical, three of them at new lines; and at `86324ff`,
+after its round C15, and at `2eeaec4`, which commits C-51's edits of its tasks
+2.3 and 2.4, they are byte-identical as at `3965dfb`, except those two tasks,
+`tasks.md:22-23`, which gain C-51's second diff (Dependencies).
 #24's change (`add-project-clean-cache-disposal`) stays pinned at `fe5b245`: at
 `e07cc42`, its draft PR #27's head after its round B9, every pinned range is
 byte-identical at new lines, which the Dependencies list for a later re-pin.
@@ -643,7 +646,7 @@ draft PR #19, which that lane agreed on 2026-10-21 to carry it in.
   change 2's Impact on Brett Heap's word (or carried in the change-2
   amendment's Impact)", and amendment A1 takes the second branch: its Impact
   gains a `.github/workflows/tests.yml` bullet after the tests bullet
-  (proposal.md:441-449; its `proposal.md:455-460` at `367223a`), proposed in
+  (proposal.md:441-449; its `proposal.md:455-460` at `3ee860c`), proposed in
   draft PR #34, pending Brett Heap's ratification. It proves FR-043's claim at
   2.36 on the probes the overview drives for little CI time, the shared probes
   being proven there already by feature 004's tests. Where applied: FR-050;
@@ -704,7 +707,7 @@ draft PR #19, which that lane agreed on 2026-10-21 to carry it in.
   requirement 5, a new paragraph after its equality clause (after POD:386),
   leaving POD:378-386 as ratified, and in design D6's scan-error order
   (design.md:410-412) and D8's realpath task (design.md:470-471), its own map
-  at `367223a`, which records the DI:778 departure as well (its
+  at `3ee860c`, which records the DI:778 departure as well (its
   `proposal.md:1136-1147`; Dependencies). Where applied: C-25; FR-013; FR-026;
   FR-037; FR-038; Dependencies.
 - **C-62** Q: How are strings that are not paths decoded and printed? -> A:
@@ -732,7 +735,7 @@ draft PR #19, which that lane agreed on 2026-10-21 to carry it in.
   as a path is, each undecodable byte written `\xHH`, each Cc, Cf, Zl or Zp
   code point escaped by JSON and written `\uXXXX` in human output, with no new
   field. Git's own reason is then not shown: the person re-runs the Git command
-  to see it. A1 at `367223a` writes those texts as a table after POD:347, with
+  to see it. A1 at `3ee860c` writes those texts as a table after POD:347, with
   OPERATION `git SUBCOMMAND` for a Git child, the filesystem call (`lstat`,
   `stat`, `realpath`, `scandir` or `read`) for a filesystem task, and
   `collection` for a candidate whose collection never started and for the scan
@@ -768,7 +771,7 @@ draft PR #19, which that lane agreed on 2026-10-21 to carry it in.
   validators, writes files, or contacts the network", for the overview's Git
   children to what the pins and the scrub prove, the filters and the
   configuration files being outside that claim (A1's
-  `specs/project-overview/spec.md:799-805` at `367223a`, whose Q9 B entry
+  `specs/project-overview/spec.md:799-805` at `3ee860c`, whose Q9 B entry
   records the narrowing, its `proposal.md:1176-1192`; lane openRepoProject-3's
   W7 read of A1, M3). Trace output is a pure side effect, cheap to pin and
   scrub for every subcommand at once, while filters and the configuration files
@@ -868,7 +871,7 @@ draft PR #19, which that lane agreed on 2026-10-21 to carry it in.
   only record the signal while a child can run, and raise only during the span,
   which is entered only after every child is reaped or abandoned, as A1
   reconciles the two (its design D1, design.md:116-127, its clarifications N1,
-  clarifications.md:42-45, and its `proposal.md:1348-1351`, at `367223a`;
+  clarifications.md:42-45, and its `proposal.md:1401-1404`, at `3ee860c`;
   FR-044). Where applied: FR-011; FR-044; Dependencies.
 - **C-71** Q: Does feature 005 realize the overview parts of #24 and #25? -> A:
   Q17 A: No, in every order: both stay in their own features, as #25 sets (its
@@ -942,7 +945,7 @@ disabled and before-and-after snapshots, as every story's fixtures run
    `extensions.worktreeConfig` read run once for the repository, each present
    row gets one status probe, and `probes.performed` is one version check, plus
    one identity probe per Git candidate, plus four, plus four, as amendment A1
-   at `367223a` words the scenario (its
+   at `3ee860c` words the scenario (its
    `specs/project-overview/spec.md:141-145`), pending (FR-020; Dependencies);
    when the main worktree lies outside every root, so that a linked worktree
    reaches the repository first, `repository.root` is the canonical path of the
@@ -1789,7 +1792,9 @@ path"; "Non-UTF-8 common directory".
   (`design.md:530-557` at `79d196a`): `gh` 2.96.0, run offline with D5's flags,
   switches and query, exited 1 on the refused connection, started no `git`,
   created no trace file and wrote no file, and the path of a 200 answer is not
-  verified.
+  verified. Re-checked at `86324ff`, #29's head after its round C15, and at
+  `2eeaec4`: the residual reads the same, at `design.md:565-592` there, apart
+  from D5 now locating Q9 B at PR #19's `423a532` (C-50).
 - **EC-023**: Each field is as of its own probe. A commit, a new worktree or
   a recreated repository during the scan can mix moments within one row, in
   which case the reflog's head test fails closed (FR-033); and a common
@@ -1988,26 +1993,26 @@ path"; "Non-UTF-8 common directory".
   children there. The status probe's `--untracked-files=normal` and
   `--ignored=matching` outrank a planted `status.showUntrackedFiles`, but a
   planted `safe.directory` is honoured as the user's own; and, reproduced for
-  this record on Git 2.43.0 with `HOME=h`, the status probe's arguments and its
-  two status pins, a clean filter that such a file defines runs when the probe
-  re-hashes a path that the repository's own `.gitattributes` gives that
-  filter, while an absolute `HOME` or `GIT_CONFIG_GLOBAL=/dev/null` runs none
-  (EC-022; lane openRepoProject-2's ruling R-105 (c) records it). A relative
-  `GIT_CONFIG_GLOBAL` beside an absolute `HOME` runs the filter the same way
-  (lane openRepoProject-3's reader W6, and reader RA's H5 in lane
-  openRepoProject-2's ruling R-105), and with a relative `GIT_CONFIG_SYSTEM`
-  Git reads a file the repository holds as the system's configuration, on Git
-  2.43.0 and 2.36.6 (lane openRepoProject-3's W8 read of LQ-15 on PR #19, its
-  check 2): the evidence for [E]'s separate sentence on `GIT_CONFIG_GLOBAL` and
-  `GIT_CONFIG_SYSTEM`. The overview starts no push child, through which lane
-  openRepoProject-2 finds feature 004 exposed to a planted `core.hooksPath`,
-  `core.sshCommand` or `credential.helper`. Brett Heap's "yes to all six
-  recommendations, LQ-10 to LQ-15" (2026-10-21, lane openRepoProject-3's
-  session) decides it as lane openRepoProject-2's LQ-15, not built: PR #19
-  amends [E] at `cc000ea` and `9fb22fa`, pending its ratification, so that
-  every subcommand that inspects a Git repository tests these values before any
-  Git child starts, and the overview makes the same test (FR-043;
-  Dependencies).
+  this record on Git 2.43.0 with `HOME=h`, the status probe's arguments and the
+  two status pins that [E] carried before LQ-10 (FR-016), a clean filter that
+  such a file defines runs when the probe re-hashes a path that the
+  repository's own `.gitattributes` gives that filter, while an absolute `HOME`
+  or `GIT_CONFIG_GLOBAL=/dev/null` runs none (EC-022; lane openRepoProject-2's
+  ruling R-105 (c) records it). A relative `GIT_CONFIG_GLOBAL` beside an
+  absolute `HOME` runs the filter the same way (lane openRepoProject-3's reader
+  W6, and reader RA's H5 in lane openRepoProject-2's ruling R-105), and with a
+  relative `GIT_CONFIG_SYSTEM` Git reads a file the repository holds as the
+  system's configuration, on Git 2.43.0 and 2.36.6 (lane openRepoProject-3's W8
+  read of LQ-15 on PR #19, its check 2): the evidence for [E]'s separate
+  sentence on `GIT_CONFIG_GLOBAL` and `GIT_CONFIG_SYSTEM`. The overview starts
+  no push child, through which lane openRepoProject-2 finds feature 004 exposed
+  to a planted `core.hooksPath`, `core.sshCommand` or `credential.helper`.
+  Brett Heap's "yes to all six recommendations, LQ-10 to LQ-15" (2026-10-21,
+  lane openRepoProject-3's session) decides it as lane openRepoProject-2's
+  LQ-15, not built: PR #19 amends [E] at `cc000ea` and `9fb22fa`, pending its
+  ratification, so that every subcommand that inspects a Git repository tests
+  these values before any Git child starts, and the overview makes the same
+  test (FR-043; Dependencies).
 
 ## Requirements *(mandatory)*
 
@@ -2157,44 +2162,52 @@ and [P] are change 1's requirements as the header names them.
   <common_dir>/config --type=bool --get extensions.worktreeConfig` (change 1's
   design D6, row 4c): `true` reads as true and `false` as false; an exit of 1
   with nothing printed on standard output or standard error, Git's report of a
-  value not set, reads as false with no error, as amendment A1 at `367223a`
-  excepts it in change 2's table (its `specs/project-overview/spec.md:359`,
-  amending POD:333), pending, an exception that departs from the packet's
-  collector table, DI:535 ("A Git child exits nonzero | `probe-failed`"), an
-  exit of 1 with a warning, as for an unreadable `config`, being no such
-  report; and any other outcome counts as true, as [E] states, recording on the
-  project row the code that change 2's table gives it (POD:333-335),
-  `probe-failed`, its DETAIL `unparseable output` for output that is not one of
-  those values, or `probe-timeout` or `deadline-exceeded` for a cut read
-  (FR-011, FR-012), the ladder still running on the rows' own evidence. Where
-  the extension reads or counts as true, each linked row whose registration
-  agrees MUST take `git rev-parse --path-format=absolute --show-toplevel` in
-  that worktree, after its identity reads and before its re-verification and
-  status probe: a toplevel whose realpath, taken in a bounded task (FR-013), is
-  not the realpath of the row's registered path, that realpath failing with
-  `ENOENT` or `ENOTDIR` included, a probe that fails, by an exit other than 0
-  (128 under `core.bare=true`) or a signal, and output that is not exactly one
-  line each make the registration disagree, with no error; a probe that cannot
-  be spawned or that its budget or the deadline cuts, and a realpath that fails
-  otherwise or is cut, leave the check not completed, as in the third case
-  above, with the code of change 2's table that fits it. That split is a fill
-  of [E]'s "a probe that fails" (`addd346`, :216-219 there and :224-227 at
-  `93f3194`), which names no spawn failure or cut, decided as change 2's table
-  needs (POD:333-335), the class being `inspection-error` either way; and the
-  probe's failure, as under `core.bare=true` (exit 128, a per-worktree
-  `core.bare=true` included, as lane openRepoProject-3's W20 read measured on
-  Git 2.43.0 and 2.36.6), which change 2's table would make `probe-failed`
-  (POD:333), is the disagreement with no error that `addd346` makes it, as A1
-  revision 4 (draft PR #34) proposes beside the extension read's exception,
-  pending. Where the extension reads false, no such probe runs. Both children
-  carry FR-016's pins and environment, the rev-parse, which is not a status
-  probe, without the status pins. `project clean` re-runs the probe when it
-  revalidates a removal target; the overview, which removes nothing, has no
-  revalidation (Dependencies). A probe MUST NOT run in a path the overview
-  could not `lstat`, nor a status probe in a worktree whose registration it
-  could not verify or whose identity it could not verify again immediately
-  before (POD:89-95; CMD:124-126, :139-142; CLN:114-116; DI:244-245, :267-273;
-  Clarifications, C-23, C-26, C-33 and C-39).
+  value not set, reads as false with no error, as amendment A1 at `3ee860c`
+  excepts it in change 2's table, "the `extensions.worktreeConfig` read's exit
+  1 with nothing printed on standard output or standard error, by which Git
+  reports the value not set, read as false with no error" (its
+  `specs/project-overview/spec.md:359`, amending POD:333), pending, an
+  exception that departs from the packet's collector table, DI:535 ("A Git
+  child exits nonzero | `probe-failed`"), an exit of 1 with a warning, as for
+  an unreadable `config`, being no such report; and any other outcome counts as
+  true, as [E] states, recording on the project row the code that change 2's
+  table gives it (POD:333-335), `probe-failed`, its DETAIL `unparseable output`
+  for output that is not one of those values, or `probe-timeout` or
+  `deadline-exceeded` for a cut read (FR-011, FR-012), the ladder still running
+  on the rows' own evidence. Where the extension reads or counts as true, each
+  linked row whose registration agrees MUST take `git rev-parse
+  --path-format=absolute --show-toplevel` in that worktree, after its identity
+  reads and before its re-verification and status probe: a toplevel whose
+  realpath, taken in a bounded task (FR-013), is not the realpath of the row's
+  registered path, that realpath failing with `ENOENT` or `ENOTDIR` included, a
+  probe that fails, by an exit other than 0 (128 under `core.bare=true`), a
+  signal or a spawn that fails (`probe-failed`'s `cannot spawn`, FR-022), and
+  output that is not exactly one line each make the registration disagree, with
+  no error, a rev-parse that cannot be spawned being "a probe that fails" in
+  [E]'s words (`addd346`, :216-219 there and :224-227 at `93f3194`); only a cut
+  of the probe, by its budget or by the deadline ending it or preventing its
+  start, and a realpath that fails otherwise or is cut leave the check not
+  completed, as in the third case above, with the code of change 2's table that
+  fits it. That a cut leaves the check not completed is a fill of [E]'s "a
+  probe that fails", which names no cut, decided as change 2's table needs
+  (POD:334-335), the class being `inspection-error` either way; and the probe's
+  failure, as under `core.bare=true` (exit 128, a per-worktree `core.bare=true`
+  included, as lane openRepoProject-3's W20 read measured on Git 2.43.0 and
+  2.36.6), which change 2's table would make `probe-failed` (POD:333), is the
+  disagreement with no error that `addd346` makes it, as amendment A1 at
+  `3ee860c` excepts the effective-work-tree read in the same row of change 2's
+  table, "where a probe that fails, as it does under `core.bare=true`, and
+  output that is not exactly one line each make the row's registration
+  disagree, with no error" (its :359), pending. Where the extension reads
+  false, no such probe runs. Both children carry FR-016's pins and environment,
+  the rev-parse, which is not a status probe, without the status pins. `project
+  clean` re-runs the probe when it revalidates a removal target; the overview,
+  which removes nothing, has no revalidation (Dependencies). A probe MUST NOT
+  run in a path the overview could not `lstat`, nor a status probe in a
+  worktree whose registration it could not verify or whose identity it could
+  not verify again immediately before (POD:89-95; CMD:124-126, :139-142;
+  CLN:114-116; DI:244-245, :267-273; Clarifications, C-23, C-26, C-33 and
+  C-39).
 - **FR-008**: Every repository MUST first take [R]'s submodule test: when
   Git reports a superproject working tree for a candidate that reached the
   repository, `repository.root` MUST be null with an `unsupported-layout`
@@ -2274,18 +2287,19 @@ and [P] are change 1's requirements as the header names them.
   canonicalisation, deduplication `stat`, listing and marker and holder checks,
   so that a root's whole listing has one budget; one per worktree row,
   enclosing its `lstat` and registration reads, the `commondir` read that
-  FR-007 takes from R-125 included (pending); one per linked row whose
-  effective work tree FR-007 reads, for the realpath of the toplevel that read
-  reports, compared with the realpath of the row's registered path, its
-  `ENOENT` or `ENOTDIR` making the registration disagree with no error and any
-  other operating-system error, or a cut task, leaving the check not completed,
-  as FR-007 states and as A1 revision 4 (draft PR #34) gives D8's task,
-  pending: the task that amendment A1 at `367223a` adds to design D8 with 512
-  toplevel realpaths in D8's bound of abandoned workers (its design.md:483-486
-  and :501-503), pending A1's ratification (LQ-11, pending #19's; FR-007;
-  Dependencies); one per manifest read; one per branch reflog read of at most
-  64 KiB, never by a Git child; and one for the realpath of the working
-  directory taken at start, a realpath that cannot be established being
+  FR-007 takes from R-125 included (pending), as amendment A1 at `3ee860c`
+  names it in D8's per-row task (its design.md:480-483, amending
+  design.md:461-462), pending; one per linked row whose effective work tree
+  FR-007 reads, for the realpath of the toplevel that read reports, compared
+  with the realpath of the row's registered path, its `ENOENT` or `ENOTDIR`
+  making the registration disagree with no error and any other operating-system
+  error, or a cut task, leaving the check not completed, as FR-007 states: the
+  task that amendment A1 at `3ee860c` adds to design D8 with those outcomes,
+  and with 512 toplevel realpaths in D8's bound of abandoned workers (its
+  design.md:484-491 and :506-508), pending A1's ratification (LQ-11, pending
+  #19's; FR-007; Dependencies); one per manifest read; one per branch reflog
+  read of at most 64 KiB, never by a Git child; and one for the realpath of the
+  working directory taken at start, a realpath that cannot be established being
   recorded as FR-026 states (Clarifications, C-61). A task that does not finish
   MUST record `probe-timeout`, or `deadline-exceeded` where the deadline was
   the smaller limit, on its root or row, and the overview MUST move on without
@@ -2318,18 +2332,22 @@ and [P] are change 1's requirements as the header names them.
   and with `GIT_OPTIONAL_LOCKS=0` and `GIT_TRACE2`, `GIT_TRACE2_EVENT` and
   `GIT_TRACE2_PERF` set to `0`, which overrides `trace2.*` targets in the
   system and global configuration (:119-124 there; Clarifications, C-63), and
-  every status probe MUST also carry `-c core.untrackedCache=false -c
-  core.fsmonitor=false` and after them, as PR #19 adds them to [E] at `ea697ba`
-  for lane openRepoProject-2's LQ-10, pending #19's ratification, `-c
-  core.trustctime=true -c core.checkStat=default` (its
-  `specs/project-command/spec.md:140-147`; Dependencies). No Git child of the
-  overview is exempt: it starts no push child, so feature 004's push-child
-  exception (lead ruling R-28) never applies. A lazy fetch in a partial clone
-  MUST therefore fail locally and be recorded `probe-failed` on its row, a
-  failed status probe leaving its worktree `inspection-error`, with no network
-  call. A Git child is a process the overview starts; processes Git itself
-  starts run in that child's process group and take the pins from Git
-  (POD:200-215; R-23, R-25; Clarifications, C-5 and C-34).
+  every status probe MUST also carry [E]'s four status pins, `-c
+  core.untrackedCache=false -c core.fsmonitor=false -c core.trustctime=true -c
+  core.checkStat=default`, the last two as PR #19 adds them to [E] at `ea697ba`
+  for lane openRepoProject-2's LQ-10, pending #19's ratification (its
+  `specs/project-command/spec.md:140-147`), and the four as amendment A1 at
+  `3ee860c` restates them where change 2 quoted two, in requirement 3 (its
+  `specs/project-overview/spec.md:220-222`, amending POD:202-204) and design
+  D13 (its design.md:690-691, amending design.md:650-652), pending
+  (Dependencies). No Git child of the overview is exempt: it starts no push
+  child, so feature 004's push-child exception (lead ruling R-28) never
+  applies. A lazy fetch in a partial clone MUST therefore fail locally and be
+  recorded `probe-failed` on its row, a failed status probe leaving its
+  worktree `inspection-error`, with no network call. A Git child is a process
+  the overview starts; processes Git itself starts run in that child's process
+  group and take the pins from Git (POD:200-215; R-23, R-25; Clarifications,
+  C-5 and C-34).
 - **FR-017**: The caps MUST be 32 roots, 4,096 entries per root, 128
   candidates and 512 worktree rows across the run, main worktrees included,
   reported in `limits` as the values in force; the root, candidate and
@@ -2357,20 +2375,22 @@ and [P] are change 1's requirements as the header names them.
   at a time. Collection MUST run in two canonical phases, the identity and
   repository-wide probes, FR-007's extension read among them, and then the
   worktree probes, a row's effective-work-tree probe, where FR-007 gives it
-  one, before its status probe (the sentence that amendment A1 at `367223a`
-  adds after POD:246, its `specs/project-overview/spec.md:265-268`, pending,
-  POD:238-239 keeping its words; Dependencies); a repository's first worktree
-  probe MUST wait until every one of its rows within the cap has finished the
-  `lstat`, realpath and registration reads from which FR-007 decides its twins
-  (EC-031); a repository's second phase MUST start only when every candidate
-  earlier in canonical order has completed or failed its identity probe and
-  every repository earlier in canonical order has finished its first phase,
-  identity probes still being free to start ahead of that point; a repository
-  whose first registry record equals its `common_dir` and whose checkout no
-  candidate has yet named MUST also wait until every candidate's identity probe
-  has completed or failed. In a run in which no child, task or root listing
-  reaches its budget and the deadline does not expire, over an estate that no
-  other process changes during the run (this feature's reading, a condition
+  one, before its status probe (as amendment A1 at `3ee860c` names the second
+  phase "the worktree probes, effective-work-tree reads and status probes",
+  amending POD:238-239, and adds a sentence after POD:246, its
+  `specs/project-overview/spec.md:257-259` and :266-268, pending;
+  Dependencies); a repository's first worktree probe MUST wait until every one
+  of its rows within the cap has finished the `lstat`, realpath and
+  registration reads from which FR-007 decides its twins (EC-031); a
+  repository's second phase MUST start only when every candidate earlier in
+  canonical order has completed or failed its identity probe and every
+  repository earlier in canonical order has finished its first phase, identity
+  probes still being free to start ahead of that point; a repository whose
+  first registry record equals its `common_dir` and whose checkout no candidate
+  has yet named MUST also wait until every candidate's identity probe has
+  completed or failed. In a run in which no child, task or root listing reaches
+  its budget and the deadline does not expire, over an estate that no other
+  process changes during the run (this feature's reading, a condition
   POD:243-246 does not state; EC-023), the JSON document, apart from timestamps
   and `budget.probe_concurrency`, MUST NOT depend on concurrency or completion
   order (POD:236-246; design D3, item 3, and D6; Clarifications, C-28; EC-023).
@@ -2383,7 +2403,7 @@ and [P] are change 1's requirements as the header names them.
   cap that is present and registration-verified, a bare repository's main
   worktree row adding none, since it takes no status probe (POD:248-254; design
   D3, item 3; Clarifications, C-68). It MUST also count FR-007's two children
-  (LQ-11, pending #19's ratification; FR-007), as amendment A1 at `367223a`
+  (LQ-11, pending #19's ratification; FR-007), as amendment A1 at `3ee860c`
   amends that rule (its `specs/project-overview/spec.md:270-280`), pending: 4
   more per distinct repository whose identity was established in place of 3,
   the fourth being the extension read, and 1 more per worktree row within the
@@ -2411,7 +2431,7 @@ and [P] are change 1's requirements as the header names them.
   1's closed set: the collector table's eight, `scan-limit` and
   `root-unreadable` (Clarifications, C-41). Its message MUST be at most 200
   characters, the fixed text of its code in amendment A1's table (A1's
-  `specs/project-overview/spec.md:375-393` at `367223a`, after POD:347), which
+  `specs/project-overview/spec.md:375-393` at `3ee860c`, after POD:347), which
   names no path, the path going in `path`: feature 004's text for `os-error`,
   `probe-failed` and `probe-timeout` (its contract, lead ruling R-45);
   `OPERATION stopped at the invocation deadline` for `deadline-exceeded`; and
@@ -2558,8 +2578,8 @@ and [P] are change 1's requirements as the header names them.
   evaluates neither: it makes no listing of a worktree's administrative
   directory and no `logs/HEAD` read for them, and starts no `rev-list` child.
   The overview MUST keep the `--all-safe` suggestion of such a worktree, which
-  the batch then excludes itself. Amendment A1 at `367223a` proposes this as an
-  item of its own, in requirement 7 (its
+  the batch then excludes itself. Amendment A1 at `3ee860c` proposes this as an
+  item of its own (its `proposal.md:1298-1332`), in requirement 7 (its
   `specs/project-overview/spec.md:580-587`, after POD:525-526) and design D5
   (its design.md:334-341, amending D5's "Only the index gates
   `contains-submodule` and `hidden-local-state` stay residual exclusions the
@@ -2567,13 +2587,18 @@ and [P] are change 1's requirements as the header names them.
   Heap's ratification: the route departs from the packet's OV:110-113 and
   DI:690-692, which name `hidden-local-state` and `contains-submodule` as the
   only exclusions the batch applies beyond the overview's gates, and the batch
-  decides each gate itself, by the failure rule that R-124 settles at
-  `2b86a5f`, pending #19's ratification: it excludes the worktree on a decided
-  result, and on a failed or timed-out check it makes the worktree
-  `inspection-error` and leaves its plan incomplete, a read or listing not
-  finished within its budget leaving the row unprobed, as for every other read,
-  which A1 revision 4 (draft PR #34) takes in place of revision 3's "which
-  R-124 is to settle", pending (Dependencies).
+  decides each gate itself, by the one outcome rule of each gate that R-124
+  settles at `2b86a5f`, pending #19's ratification. It excludes the worktree on
+  a decided result: a marker present; a `rev-list` child that exits 0 and
+  prints anything; a `logs/HEAD` read to its 64 KiB bound or holding a line
+  that cannot be parsed. An error on the listing, any other error on the read
+  (a missing or empty `logs/HEAD` giving no candidate), and a child that cannot
+  be started, exits nonzero or is stopped at its 5 s budget make the worktree
+  `inspection-error`; a listing or read not finished within the filesystem
+  budget leaves the row unprobed; the deadline's cut records
+  `deadline-exceeded`; and each of these leaves the batch's plan incomplete, as
+  A1 words it in place of revision 3's "which R-124 is to settle" (its
+  :1309-1320), pending (Dependencies).
 - **FR-033**: For every row that gate checks, the branch's reflog,
   `logs/refs/heads/<branch>` under `common_dir`, MUST be read by one bounded
   filesystem read of at most 64 KiB (65,536 bytes), never by a Git child,
@@ -2805,7 +2830,7 @@ and [P] are change 1's requirements as the header names them.
   which Brett Heap may strike (Dependencies). PR #19 leaves the overview's code
   and exit status for this refusal to `add-project-overview` (its
   `proposal.md:951-956` at `9fb22fa`), whose closed lists give [E]'s text none:
-  amendment A1 at `367223a` proposes `relative-config-path` with exit 2 as an
+  amendment A1 at `3ee860c` proposes `relative-config-path` with exit 2 as an
   item of its own, on the basis of Brett Heap's LQ-15 word, which names only
   `clean`, `status`, `doctor` and `update` (`9fb22fa` proposal.md:954-956), in
   requirement 8's exit-2 codes (POD:677-678; its
@@ -2839,7 +2864,7 @@ and [P] are change 1's requirements as the header names them.
   that a write blocked on a stalled reader stops, and no child runs under them.
   That is the scope that amendment A1's design D1 gives Q15 A and Q16 B
   together (A1's design.md:116-127, its clarifications.md:42-45 and its
-  `proposal.md:1348-1351`, at `367223a`, pending its ratification; POD:776-781,
+  `proposal.md:1401-1404`, at `3ee860c`, pending its ratification; POD:776-781,
   as C-69 amends it; clarifications N1, as C-70 amends it; design D1, as C-69
   and C-70 amend it; FR-011; Clarifications, C-70).
 
@@ -2865,8 +2890,8 @@ and [P] are change 1's requirements as the header names them.
   the root it concerns (DI:94), one that carries none reading `Incomplete:
   <message> (<code>).`, every such path printed by [P]'s rules, in the `$'...'`
   form where they mark it, since every message is a fixed text that names no
-  path (FR-022): a fill that amendment A1 at `367223a` declares under Q8 D, in
-  design D10 (its design.md:544-546, :552-555 and :563-568, amending
+  path (FR-022): a fill that amendment A1 at `3ee860c` declares under Q8 D, in
+  design D10 (its design.md:548-550, :556-559 and :567-572, amending
   design.md:519-520 and :526-527) and requirement 12 (its
   `specs/project-overview/spec.md:924-928`, amending POD:812-813), proposed in
   draft PR #34, pending Brett Heap's ratification (lane openRepoProject-3's W7
@@ -2976,7 +3001,7 @@ and [P] are change 1's requirements as the header names them.
   Brett Heap's word (or carried in the change-2 amendment's Impact)", and
   amendment A1 takes the second branch: its Impact gains a
   `.github/workflows/tests.yml` bullet after the tests bullet
-  (proposal.md:441-449; its `proposal.md:455-460` at `367223a`), proposed in
+  (proposal.md:441-449; its `proposal.md:455-460` at `3ee860c`), proposed in
   draft PR #34, pending Brett Heap's ratification, so this requirement realizes
   A1's Impact and records no departure of its own (Clarifications, C-57;
   Dependencies).
@@ -3085,11 +3110,13 @@ and [P] are change 1's requirements as the header names them.
   cut it, either selected or excluded only as `deferred-target-cap`,
   `contains-submodule` or `hidden-local-state`, or, once PR #19 is ratified,
   `operation-in-progress` or `worktree-only-commits` (FR-032), or, when that
-  preview's own index-gate read fails or times out, or its check of those two
-  gates fails or its `rev-list` child reaches its budget, made
-  `inspection-error` in a preview that is then incomplete, or, when a read or
-  listing of those two gates does not finish, left unprobed in a preview that
-  is then incomplete (CLN:800-803; for the two gates, PR #19's
+  preview's own index-gate read fails or times out, or, for those two gates,
+  its listing fails, its `logs/HEAD` read fails other than as missing, or its
+  `rev-list` child cannot be started, exits nonzero or is stopped at its 5 s
+  budget, made `inspection-error` in a preview that is then incomplete, or,
+  when a listing or read of those two gates does not finish within the
+  filesystem budget, left unprobed in a preview that is then incomplete
+  (CLN:800-803; for the two gates, PR #19's
   `specs/project-clean/spec.md:650-666` and :668-690 at `1ebdd90`, after R-124
   at `2b86a5f`, pending).
 - **SC-005**: Every run ends within 64 s of the moment its deadline is set,
@@ -3121,7 +3148,7 @@ and [P] are change 1's requirements as the header names them.
   Cf, Zl or Zp and 0 undecodable bytes from a path, and every fixed line,
   message and remedy matches design D3, D4, D5 and D10, the delta's gate table
   and amendment A1's table of error messages (A1's
-  `specs/project-overview/spec.md:375-393` at `367223a`, pending its
+  `specs/project-overview/spec.md:375-393` at `3ee860c`, pending its
   ratification; FR-022), OPERATION taking only the values that table names,
   character for character in its fixed text, which is ASCII.
 - **SC-011**: Every run's exit status is the one FR-042 gives, a recorded
@@ -3417,7 +3444,22 @@ and [P] are change 1's requirements as the header names them.
     :367-370 and :430-438, its `tasks.md` :20-23, its design D7, its
     "Dependencies and Sequencing" and its tasks 2.1 to 2.5 are unchanged, as
     lane openRepoProject-5 reports for lane openRepoProject-4's five pinned
-    ranges.
+    ranges. Re-checked again at `86324ff`, its head after round C15
+    (`3965dfb..86324ff`: `770e935` in its design, C-50's edits, D3's own
+    refusal of an explicit port among them, and C-51's second diff in each
+    re-read and re-base check of its Migration Plan; `86324ff` in its proposal
+    and tasks), and at `2eeaec4` (`86324ff..2eeaec4`), which commits C-51's
+    edits of its tasks 2.3 and 2.4: neither edits a spec, its `specs/` tree
+    being that of `3965dfb`, and every range that this spec and
+    `clarify-questions.md` cite is byte-identical at both, compared by `cmp`,
+    its `proposal.md` :334-345, :367-370 and :430-438, its `tasks.md` :20-21
+    (tasks 2.1 and 2.2) and :24 (task 2.5), its design D7 and its "Dependencies
+    and Sequencing" included, except its tasks 2.3 and 2.4 (`tasks.md:22-23`),
+    which at `2eeaec4` gain C-51's second `diff -u`, of each block as committed
+    at its ratified head against the re-aligned or re-based block, and return
+    any change to its ratified words to Brett Heap, and which still re-read and
+    re-align its overview blocks (2.3) and re-base its block of [E] (2.4), as
+    this spec cites them.
   - `add-project-clean-branch-retirement` (issue #23, draft PR #26) leaves
     `project-overview` untouched. It MODIFIES [E], [G]'s two requirements
     and other `project-clean` requirements for `clean --retire-branches`
@@ -3428,7 +3470,7 @@ and [P] are change 1's requirements as the header names them.
     changes carry in MODIFIED blocks, among them #24's block of requirement 5,
     where Q7 A adds a paragraph after its equality clause (after POD:386), and
     #25's blocks of requirements 3, 8 and 9, which Q6 A, Q8 D, Q9 B and Q12 A
-    amend (A1's own map at `367223a`). Q13 A adds a sentence to requirement 1
+    amend (A1's own map at `3ee860c`). Q13 A adds a sentence to requirement 1
     (after POD:16), which no MODIFIED block carries, through which POD:217-222,
     :303-306, :610-611 and :622-624, the root object's `path`, read, lines that
     #25 carries unchanged at its `spec.md:102-107`, `:206-209`, `:229-230` and
@@ -3449,9 +3491,9 @@ and [P] are change 1's requirements as the header names them.
   give; each departs from the text named here and is carried as stated.
   - Amendment A1, `amend-project-overview-clarify-answers`, lane
     openRepoProject-4's governed change, drafted as draft PR #34, its revision
-    3 at `367223a`, and not ratified, amends change 2
+    5 at `3ee860c`, and not ratified, amends change 2
     (`openspec/changes/add-project-overview/`) in place. Its own map at
-    `367223a` (its `proposal.md`, "Amendment A1", :1072-1377, which cites
+    `3ee860c` (its `proposal.md`, "Amendment A1", :1072-1437, which cites
     change 2's lines at `961c405`, as this spec does) gives these sites: for
     Q3 B, Impact, a new `.github/workflows/tests.yml` bullet after the tests
     bullet (proposal.md:441-449), the option's second branch (C-57); for Q6 A,
@@ -3485,39 +3527,42 @@ and [P] are change 1's requirements as the header names them.
     Q17 A amend no text there, and Q1 A, Q2 A, Q5 A, Q10 A and Q14 A are not
     carried, since each changes only this spec. This list replaces this spec's
     forecast of A1's sites (lane openRepoProject-3's W6 read, L1, and its W7
-    read of A1, check 4, item 3). A1 at `367223a` records the two packet lines
+    read of A1, check 4, item 3). A1 at `3ee860c` records the two packet lines
     that lane openRepoProject-3's W7 read found undeclared, DI:778 and
-    DI:307-308 (W7, M2 and M3). Three items of A1's own follow PR #19, not
+    DI:307-308 (W7, M2 and M3). Four items of A1's own follow PR #19, not
     Q1-Q17, on Brett Heap's "yes to all six recommendations, LQ-10 to LQ-15"
-    (its `proposal.md:1251-1346`), each declared for his review:
+    (its `proposal.md:1251-1399`), each declared for his review:
     `relative-config-path` (LQ-15; FR-043), departing from DI:1086-1089, its
     fallback `refused` departing from nothing; `operation-in-progress` and
     `worktree-only-commits` as exclusions only the batch applies (LQ-14 and
-    LQ-13; FR-032), departing from OV:110-113 and DI:690-692; and LQ-11's
-    counted reads and the change-2 sites that read against them (FR-007,
-    FR-013, FR-019, FR-020), departing from DI:506-509 and DI:1193-1201 and, by
-    the collector-table exception, from DI:535. Each lands only with or after
-    PR #19's ratification of the commit it follows, and is re-aligned before A1
-    is ratified if that commit changes first; PR #34 does not merge before that
-    ratification, and should Brett Heap want it sooner, the three items move to
+    LQ-13; FR-032), departing from OV:110-113 and DI:690-692; LQ-11's counted
+    reads and the change-2 sites that read against them (FR-007, FR-013,
+    FR-019, FR-020), departing from DI:506-509 and DI:1193-1201 and, by the
+    collector table's two exceptions, from DI:535; and LQ-10's stat pins, a
+    restatement of [E]'s four status pins where change 2 quoted two (FR-016),
+    departing from nothing, since no packet line quotes the two older pins
+    (DI:396, DI:1181). Each lands only with or after PR #19's ratification of
+    the commits it follows, and is re-aligned before A1 is ratified if one of
+    those commits changes first; PR #34 does not merge before that
+    ratification, and should Brett Heap want it sooner, the four items move to
     a later amendment of change 2 and A1 lands without them, a point for his
-    review, as A1 revision 4 (draft PR #34) words it, pending (Change-1
+    review, as A1 words it (its :1266-1269 and :1425-1427), pending (Change-1
     amendments, below). FR-011, FR-022, FR-039, FR-044, FR-045, FR-050, SC-009,
     SC-010 and SC-011, which the answers fold after A1 is ratified, are folded
     here ahead of their carrier, A1, on Brett Heap's answers. Until A1 is
     ratified, nothing is planned or built from them, and where they differ from
     change 2's ratified text, that text stands as ratified; once A1 is
     ratified, each is re-read against A1's text. The same rule holds for what
-    follows A1's three items of its own: FR-007's LQ-11 parity with FR-013,
+    follows A1's four items of its own: FR-007's LQ-11 parity with FR-013,
     FR-019, FR-020 and US1 s3; FR-032's batch-only gates with SC-004 and
-    EC-007; and FR-043's code. One point A1 leaves to Brett Heap, as this spec
-    does, with no behaviour written (its proposal, "Open point",
-    `proposal.md:1353-1360` at `367223a`): Q7 A is silent on FR-026's parity
-    with `project clean` run from the same working directory when that
-    directory's realpath cannot be established, and at `2cf34d3` feature 004
-    gives every present row `inspection-error` there (its `project:2960-2962`,
-    :2887-2888 and :2081), wider than the two classes Q7 A converts (C-61; lane
-    openRepoProject-3's fidelity read of `c54d393`, M1).
+    EC-007; FR-043's code; and FR-016's four status pins. One point A1 leaves
+    to Brett Heap, as this spec does, with no behaviour written (its proposal,
+    "Open point", `proposal.md:1406-1413` at `3ee860c`): Q7 A is silent on
+    FR-026's parity with `project clean` run from the same working directory
+    when that directory's realpath cannot be established, and at `2cf34d3`
+    feature 004 gives every present row `inspection-error` there (its
+    `project:2960-2962`, :2887-2888 and :2081), wider than the two classes Q7 A
+    converts (C-61; lane openRepoProject-3's fidelity read of `c54d393`, M1).
   - Change 1's [E], for Q9 B: lane openRepoProject-2 agreed on 2026-10-21 that
     its draft PR #19, which already edits [E]'s Environment paragraph
     (CMD:98-122), carries the trace pins and the trace-variable scrub names
@@ -3553,19 +3598,21 @@ and [P] are change 1's requirements as the header names them.
   openRepoProject-2's rulings R-124, R-125 and R-126 on that lane's later reads
   as `2b86a5f`, `93f3194` and `1ebdd90`, drafts cited as pending #19's
   ratification. The overview follows [E] as amended, as for Q9 B. Where an
-  amendment reaches change 2's own text, amendment A1 at `367223a` carries it
-  as an item of its own, for LQ-11, for LQ-13 and LQ-14 together, and for
-  LQ-15, and each such item lands only with or after #19's ratification of the
-  commit it follows, and is re-aligned if that commit changes first (its
-  `proposal.md:1251-1268`). R-124, R-125 and R-126 have since landed, and lane
-  openRepoProject-2 reports nothing more queued; the rule holds for the commits
-  each item now follows: LQ-11, `addd346` and `93f3194`; LQ-13 and LQ-14,
-  `93de4bb`, `43f7107`, `2b86a5f` and `1ebdd90`; LQ-15, `cc000ea` and
-  `9fb22fa`, which A1 revision 4 (draft PR #34) cites, pending. In the case
-  where A1 would be ratified first, PR #34 does not merge before #19's
-  ratification of those commits; should Brett Heap want #34 sooner, the three
-  items move to a later amendment of change 2, and the parts of this spec that
-  follow them follow that amendment instead.
+  amendment reaches change 2's own text, amendment A1 at `3ee860c` carries it
+  as an item of its own, four in all, each following the commits its heading
+  names (its `proposal.md:1251-1399`): `relative-config-path` (LQ-15),
+  `cc000ea` and `9fb22fa`; the gates (LQ-14 and LQ-13), `43f7107`, `1ebdd90`,
+  `93de4bb` and `2b86a5f`; the redirected work tree (LQ-11), `addd346` and
+  `93f3194`; and the stat pins (LQ-10), a restatement, `ea697ba`, with its
+  pointer at `93f3194`. Each such item lands only with or after #19's
+  ratification of the commits it follows, and is re-aligned before A1 is
+  ratified if one of those commits changes first (its :1262-1266). R-124, R-125
+  and R-126 have landed, #19's tip being `1ebdd90`, and lane openRepoProject-2
+  reports nothing more queued. So PR #34 does not merge before #19's
+  ratification of those commits; should Brett Heap want #34 sooner, the four
+  items move to a later amendment of change 2, and A1 lands without them (its
+  :1266-1269), the parts of this spec that follow them following that amendment
+  instead.
   - LQ-10, on PR #19 at `ea697ba`, pending its ratification: every status
     probe, the hidden-state probe and the removal pass `-c core.trustctime=true
     -c core.checkStat=default` after `-c core.fsmonitor=false`, four status
@@ -3577,7 +3624,20 @@ and [P] are change 1's requirements as the header names them.
     the four (:281), and the new scenario "An edit that keeps its size and
     restores its mtime" (:285) brings that delta to 21 scenarios. The
     overview's status probe carries the same pins (FR-016), so that by FR-026
-    its dirty evidence stays at parity with `project clean`'s.
+    its dirty evidence stays at parity with `project clean`'s. Amendment A1 at
+    `3ee860c` restates the four where change 2 quoted [E]'s two older status
+    pins, as an item of its own, a restatement following `ea697ba` and the
+    pointer that #19 adds at `93f3194` (its `proposal.md:1377-1399`), proposed
+    in draft PR #34, pending Brett Heap's ratification: requirement 3's quote
+    (POD:202-204; its `specs/project-overview/spec.md:220-222`) and design
+    D13's (design.md:650-652; its :690-691) each now read `-c
+    core.untrackedCache=false -c core.fsmonitor=false -c core.trustctime=true
+    -c core.checkStat=default` on a status probe, D13's fixture-rewrite item
+    (design.md:664-665) keeping its words, since it names the two pins that
+    disarm a `core.fsmonitor` hook; no packet line quotes the two older pins,
+    the packet giving the status probe's argv with no `-c` pin (DI:396,
+    DI:1181), so A1 declares no departure. FR-016 quotes the four as A1
+    restates them.
   - LQ-11, on PR #19 at `addd346`, pending its ratification: a linked row whose
     effective work tree is not its registered path, such as one whose
     per-worktree `core.worktree` names a decoy under
@@ -3597,68 +3657,80 @@ and [P] are change 1's requirements as the header names them.
     (its `specs/project-command/spec.md:204-214`, where the lines above sit at
     :214-227 and :232-240, and the scenario "A commondir that names another
     repository", :318, bringing that delta to 24 scenarios); FR-007 and FR-013
-    take it, pending, and how it reaches change 2's text is for A1 revision 4
-    (draft PR #34) to record, pending. Lane openRepoProject-2 holds that the
-    overview must classify such a row exactly as `project clean` does, with the
-    same read and probe, and FR-007 does so, FR-013, FR-019, FR-020 and FR-049
-    following; the overview has no revalidation. Amendment A1 at `367223a`
-    amends change 2's texts that close or count the overview's children, as an
-    item of its own (its `proposal.md:1322-1346`), proposed in draft PR #34,
-    pending Brett Heap's ratification: requirement 3's `estimated` rule
-    (POD:250-254; its `specs/project-overview/spec.md:270-280`) and the
-    scenario "One probe set per repository" (POD:127-129; its :141-145), with
-    design D6's repository-wide probes (design.md:390-392; its :407-410), the
-    counts departing from the packet's DI:506-509 and DI:1193-1201; and, at the
-    sites this spec recorded at `b511bdb`, the collector table's `probe-failed`
-    row (POD:333; its :359), departing from the packet's DI:535, so that the
-    extension read's exit 1 with nothing printed reads as false with no error,
-    as FR-007 reads it, and, as A1 revision 4 (draft PR #34) adds, pending, the
-    effective-work-tree probe's failure, as under a per-worktree
-    `core.bare=true` (exit 128, measured by lane openRepoProject-3's W20 read
-    on Git 2.43.0 and 2.36.6), and its output of more than one line are each a
-    registration disagreement with no error, as `addd346` words them (lane
-    openRepoProject-3's W17 read, L2); the second phase, by a sentence after
-    POD:246 (its :265-268), POD:238-239 keeping its words; and design D8, with
-    a task for the toplevel's realpath (its design.md:483-486) and 512 toplevel
-    realpaths in its bound of abandoned workers (:501-503), which FR-013
-    matches.
+    take it, pending, and A1 at `3ee860c` records that it reaches the overview
+    through the shared evidence model, by the registration check that
+    requirement 2 cites (POD:84), with no Git child and no task or count of its
+    own, the one text it amends for it being D8's per-row task, which now names
+    the `commondir` file (design.md:461-462; its :480-483), pending. Lane
+    openRepoProject-2 holds that the overview must classify such a row exactly
+    as `project clean` does, with the same read and probe, and FR-007 does so,
+    FR-013, FR-019, FR-020 and FR-049 following; the overview has no
+    revalidation. Amendment A1 at `3ee860c` amends change 2's texts that close
+    or count the overview's children, as an item of its own (its
+    `proposal.md:1333-1376`), proposed in draft PR #34, pending Brett Heap's
+    ratification: requirement 3's `estimated` rule (POD:250-254; its
+    `specs/project-overview/spec.md:270-280`) and the scenario "One probe set
+    per repository" (POD:127-129; its :141-145), with design D6's
+    repository-wide probes (design.md:390-392; its :407-410), the counts
+    departing from the packet's DI:506-509 and DI:1193-1201; and, at the sites
+    this spec recorded at `b511bdb`, the collector table's `probe-failed` row
+    (POD:333; its :359), its two exceptions departing from the packet's DI:535:
+    the extension read's exit 1 "with nothing printed on standard output or
+    standard error, by which Git reports the value not set, read as false with
+    no error", an exit 1 with a warning, as for an unreadable `config`, staying
+    a failure that counts as true, as FR-007 reads it; and the
+    effective-work-tree read, "where a probe that fails, as it does under
+    `core.bare=true`, and output that is not exactly one line each make the
+    row's registration disagree, with no error", a per-worktree
+    `core.bare=true` included (exit 128, measured by lane openRepoProject-3's
+    W20 read on Git 2.43.0 and 2.36.6), as `addd346` words them (lane
+    openRepoProject-3's W17 read, L2), a rev-parse that cannot be spawned being
+    such a probe, as FR-007 reads [E]; the second phase, which A1 names "the
+    worktree probes, effective-work-tree reads and status probes" (POD:238-239;
+    its :257-259), with a sentence after POD:246 (its :266-268); and design D8,
+    with a task for the toplevel's realpath and its outcomes (its
+    design.md:484-491) and 512 toplevel realpaths in its bound of abandoned
+    workers (:506-508), which FR-013 matches.
   - LQ-13, on PR #19 at `93de4bb`, and LQ-14, at `43f7107`, with the rulings
     R-124 at `2b86a5f` and R-126 at `1ebdd90`, pending its ratification: two
     protections of the batch, whose codes, gate order, markers, failure rule
     and scenarios are #19's own text. LQ-14's `operation-in-progress` keeps a
-    worktree whose administrative directory holds one of the markers that [G]
-    lists, eleven since R-126, read by one listing and never by a Git child
-    (its `specs/project-clean/spec.md:650-666` and the scenarios "An operation
-    in progress", :787, and "A squash merge that holds an autostash", :810, at
-    `1ebdd90`); LQ-13's `worktree-only-commits` keeps one whose HEAD reflog or
-    `refs/worktree/` holds a commit that no branch, tag or remote-tracking ref
-    reaches, nor a non-zero object of its branch's reflog, read from
-    `logs/HEAD` and one `rev-list` child (:668-690 and the scenario "A commit
-    held only by the worktree", :825, there). They are the last two gates, in
-    that order, after `hidden-local-state` (:609-616 there). Since R-124, only
-    a decided result gives either reason, and a failed or timed-out check makes
-    the row `inspection-error` and leaves the plan incomplete; at revalidation,
-    before each removal, such a failure refuses the target with `state-changed`
-    (R-127; the review-safety rule, :100-117, and its scenarios "A
-    worktree-only commit made after the plan" and "An operation started after
-    the plan", :218 and :230, at `1ebdd90`). Neither is a class, so neither
-    reaches the ladder or FR-026's parity; both are gates of the batch, which
-    the overview leaves to it as it leaves the index gates: FR-032 lists them
-    among the exclusions only the batch applies, and the overview evaluates
-    neither, making no listing of a worktree's administrative directory and no
-    `logs/HEAD` read for them and starting no `rev-list` child. Amendment A1 at
-    `367223a` proposes the same as an item of its own (its
-    `proposal.md:1296-1321`), in requirement 7 (POD:525-526; its
+    worktree whose administrative directory holds a marker of [G]'s list at
+    `1ebdd90` (its `specs/project-clean/spec.md:650-659`, after R-126), read by
+    one listing and never by a Git child (the rule at :650-666 and the
+    scenarios "An operation in progress", :787, and "A squash merge that holds
+    an autostash", :810, there); LQ-13's `worktree-only-commits` keeps one
+    whose HEAD reflog or `refs/worktree/` holds a commit that no branch, tag or
+    remote-tracking ref reaches, nor a non-zero object of its branch's reflog,
+    read from `logs/HEAD` and one `rev-list` child (:668-690 and the scenario
+    "A commit held only by the worktree", :825, there). They are the last two
+    gates, in that order, after `hidden-local-state` (:609-616 there). Since
+    R-124, only a decided result gives either reason; an error on the listing,
+    any other error on the `logs/HEAD` read, and a `rev-list` child that cannot
+    be started, exits nonzero or is stopped at its 5 s budget make the row
+    `inspection-error`, a listing or read not finished within the filesystem
+    budget leaves the row unprobed, the deadline's cut records
+    `deadline-exceeded`, and each leaves the plan incomplete (:660-666 and
+    :679-690 there); at revalidation, before each removal, a listing, read or
+    child of either check that fails or runs past its budget refuses the target
+    with `state-changed` (R-127; the review-safety rule, :100-117, and its
+    scenarios "A worktree-only commit made after the plan" and "An operation
+    started after the plan", :218 and :230, at `1ebdd90`). Neither is a class,
+    so neither reaches the ladder or FR-026's parity; both are gates of the
+    batch, which the overview leaves to it as it leaves the index gates: FR-032
+    lists them among the exclusions only the batch applies, and the overview
+    evaluates neither, making no listing of a worktree's administrative
+    directory and no `logs/HEAD` read for them and starting no `rev-list`
+    child. Amendment A1 at `3ee860c` proposes the same as an item of its own
+    (its `proposal.md:1298-1332`), in requirement 7 (POD:525-526; its
     `specs/project-overview/spec.md:580-587`) and design D5 (design.md:324-325;
     its :334-341), with D5's `target-cap` item and Risks, proposed in draft PR
     #34, pending Brett Heap's ratification: the overview keeps the `--all-safe`
-    suggestion of such a worktree, which the batch then decides itself,
-    excluding the worktree on a decided result and, on a failed or timed-out
-    check, making it `inspection-error` and leaving its plan incomplete; and
-    the route departs from the packet's OV:110-113 and DI:690-692. A1 revision
-    4 (draft PR #34) takes R-124's settled rule in place of revision 3's "which
-    R-124 is to settle", and cites #19's list of markers at `1ebdd90` rather
-    than naming them, pending. SC-004 and EC-007 follow.
+    suggestion of such a worktree, which the batch then decides itself, by
+    R-124's rule above; and the route departs from the packet's OV:110-113 and
+    DI:690-692. A1 takes R-124's settled rule in place of revision 3's "which
+    R-124 is to settle", and cites [G]'s list at `1ebdd90` rather than naming
+    the markers, pending. SC-004 and EC-007 follow.
   - LQ-15, decided and not built (EC-036), on PR #19 at `cc000ea` and, after
     lane openRepoProject-3's W8 read, `9fb22fa`, pending its ratification:
     [E]'s new "Configuration paths" paragraph (its
@@ -3688,11 +3760,11 @@ and [P] are change 1's requirements as the header names them.
     leaves the overview's code and exit status under the test to
     `add-project-overview` (its `proposal.md:951-956`), and change 2's closed
     lists give [E]'s text none: its exit-2 codes (POD:677-678) and requirement
-    11's exit rule (POD:765-768; FR-042). Amendment A1 at `367223a` proposes
+    11's exit rule (POD:765-768; FR-042). Amendment A1 at `3ee860c` proposes
     `relative-config-path` among those codes, with exit 2 under that rule, as
     an item of its own on the basis of Brett Heap's LQ-15 word, which names
     only `clean`, `status`, `doctor` and `update` (`9fb22fa`
-    proposal.md:954-956; A1's `proposal.md:1269-1295`), proposed in draft PR
+    proposal.md:954-956; A1's `proposal.md:1271-1297`), proposed in draft PR
     #34, pending Brett Heap's ratification: the code departs from the packet's
     closed list of exit-2 codes (DI:1086-1089), and the fallback, should he
     strike it, is `refused` with exit 2, inside change 2's lists, which departs

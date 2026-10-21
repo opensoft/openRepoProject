@@ -52,7 +52,7 @@ Lane: openRepoProject-4
     `path` is followed by it on the next line, indented to the message column,
     as a worktree's finding is by its worktree path, and a scan error's
     `Incomplete:` line names its `path` first, every such path printed by [P]'s
-    rules, the fill that amendment A1 at `367223a` declares in design D10 and
+    rules, the fill that amendment A1 at `3ee860c` declares in design D10 and
     requirement 12, pending; plan note PN-4 is withdrawn.
 
 ## Requirement Clarity
@@ -128,10 +128,10 @@ Evaluated on 2026-10-19 against `spec.md` at `8f433f7`; CHK006 re-evaluated on
 its delta read, and re-read on 2026-10-21 after Brett Heap's answers (C-55 to
 C-71), and CHK012 after lane openRepoProject-3's W7 read of A1, its category
 unchanged, and again after A1's revision 3 at `367223a`, fixed in the spec with
-PN-4 withdrawn. 34 items: 27 pass, 3 fixed in the spec, 0 open, 4 plan notes, 0
-new questions. An open item waits on the question or residual its result names;
-a plan note is for the plan, not the spec; a new question is asked in
-`clarify-questions.md`.
+PN-4 withdrawn, and after its revision 5 at `3ee860c`, its category unchanged.
+34 items: 27 pass, 3 fixed in the spec, 0 open, 4 plan notes, 0 new questions.
+An open item waits on the question or residual its result names; a plan note is
+for the plan, not the spec; a new question is asked in `clarify-questions.md`.
 
 Plan notes: PN-1 (CHK004, CHK023), PN-2 (CHK006, narrowed to an exception of
 any other kind in human mode, and since 2026-10-21 also the standard-error line
