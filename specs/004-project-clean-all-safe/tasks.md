@@ -22,7 +22,11 @@ and where a finding and a ruling differ, the ruling governs.
 **Tests**: Required. FR-066 and SC-012 require at least one automated test
 named after each of the 100 delta scenarios: 65 in `project-clean`, 18 in
 `project-clean-review-safety` and 17 in `project-command`. PR #19 adds a 101st,
-"The push child reaches its remote", tested here under LQ-3 (T074). Each phase
+"The push child reaches its remote", tested here under LQ-3 (T074). Its
+amendments at `6f2cb54` add fifteen more, by Brett Heap's rulings Q9 B and
+LQ-10 to LQ-15 and round (a) (lead ruling R-102); the thirteen whose builds
+are on 004 fold into existing tasks (R-95 (g); doc round 13), and LQ-13's
+two wait for that gate's build (traceability.md). Each phase
 lists its tests first: write them, see them fail, then implement. Every
 scenario test task names its scenario by its exact title. A test that pins what
 an earlier task built says "pins" and that task's ID; it may pass on arrival,
@@ -253,9 +257,14 @@ regions and contracts every lane writes against.
   files on `main`, and PR #19's "The push child reaches its remote", marked as
   PR #19's draft), with columns for the delta, the requirement, the exact
   title, the story and the test names. Each test task fills its rows as its
-  tests land.
+  tests land. Doc round 13 adds thirteen more of PR #19's scenarios, as
+  amended at `6f2cb54`, whose builds are on 004 at `cceb6d7`: 114 rows; LQ-13's
+  two, "A commit held only by the worktree" and "A worktree-only commit made
+  after the plan", wait for that gate's build (lead rulings R-122 and
+  R-166). The verify names PR #19's titles and leaves LQ-13's two out, so
+  that it holds before and after PR #19 lands.
   — files: `specs/004-project-clean-all-safe/traceability.md`
-  — verify: `python3 -c "import glob,re,sys;V=chr(124);L=open('specs/004-project-clean-all-safe/traceability.md').read().splitlines();R=[[c.strip() for c in l.strip().strip(V).split(V)] for l in L if l.startswith(V)][2:];T=[l[15:].strip() for f in sorted(glob.glob('openspec/changes/add-project-clean-all-safe/specs/*/spec.md')) for l in open(f) if l.startswith('#### Scenario: ')];T+=[x for x in ['The push child reaches its remote'] if x not in T];e=[x for x in (L[0]=='Lane: openRepoProject-2' or 'lane line',len(R)==101 or 'rows',all(len(r)==5 for r in R) or 'columns',len(T)==101 or 'delta titles',sorted(r[2] for r in R)==sorted(T) or 'titles') if not x is True];print(len(R),'rows',e);sys.exit(1 if e else 0)"`
+  — verify: `python3 -c "import glob,re,sys;V=chr(124);L=open('specs/004-project-clean-all-safe/traceability.md').read().splitlines();R=[[c.strip() for c in l.strip().strip(V).split(V)] for l in L if l.startswith(V)][2:];T=[l[15:].strip() for f in sorted(glob.glob('openspec/changes/add-project-clean-all-safe/specs/*/spec.md')) for l in open(f) if l.startswith('#### Scenario: ')];T+=[x for x in ['The push child reaches its remote','A relative configuration path','Push refuses a branch it may not push','Branch deletion refuses a branch it may not delete','An operation in progress','A squash merge that holds an autostash','An operation started after the plan','A check that fails at revalidation','Owner tools see the repository the check inspected','A linked worktree whose work tree is redirected','A commondir that names another repository','A relative configuration path in status, doctor and update','An edit that keeps its size and restores its mtime','Trace targets are never written'] if x not in T];T=[x for x in T if x not in ['A commit held only by the worktree','A worktree-only commit made after the plan']];e=[x for x in (L[0]=='Lane: openRepoProject-2' or 'lane line',len(R)==114 or 'rows',all(len(r)==5 for r in R) or 'columns',len(T)==114 or 'delta titles',sorted(r[2] for r in R)==sorted(T) or 'titles') if not x is True];print(len(R),'rows',e);sys.exit(1 if e else 0)"`
 - [x] T003 [P] [S] Add the `git-floor` job to `.github/workflows/tests.yml`
   (FR-067, research.md R11), starting from the lead's ci-spike `workflow.patch`
   (48 added lines, applied with `git apply -p1`; its NOTES.md records the
@@ -301,7 +310,9 @@ regions and contracts every lane writes against.
   says `prunable`; plan review M11), `repository`, `merge_target`, the plan
   envelope, a `selected` and an `excluded` entry, the extended error object, a
   target result, `reconciliation` and the apply result record (data-model.md;
-  contracts/project-clean.md); `REFUSAL_CODES`, the eighteen; `STAGE_REASONS`
+  contracts/project-clean.md); `REFUSAL_CODES`, the eighteen, nineteen since
+  Brett Heap's ruling LQ-15 added `relative-config-path` after `git-too-old`
+  (lead rulings R-102 and R-173; T048); `STAGE_REASONS`
   (data-model.md, "Target stages"); `NOTE_CODES`; `TEXT`, every new D18 and D14
   line with its placeholders, the lines the contract fixes beyond D18 (plan
   review M8: one progress line per target, `  STAGE PATH` or `  STAGE PATH
@@ -321,7 +332,7 @@ regions and contracts every lane writes against.
   one side only (R-45). Nothing in `contracts` reads a timing value (R-29).
   The 96 tests still pass.
   — files: `project`
-  — verify: `python3 -c "import importlib.machinery as m,importlib.util as iu,sys;l=m.SourceFileLoader('pv','project');s=iu.spec_from_loader('pv',l);p=iu.module_from_spec(s);sys.modules['pv']=p;l.exec_module(p);v=lambda x:[z for y in x.values() for z in (v(y) if isinstance(y,dict) else [y])];assert {128,256,16,64,4096,8,65536,1048576,5,3}.issubset(v(p.LIMITS)),'LIMITS';assert p.GIT_FLOOR==(2,36),'GIT_FLOOR';assert len(p.REFUSAL_CODES)==18 and set(p.REFUSAL_CODES)=={'invalid-arguments','internal-error','git-unavailable','git-too-old','repository-not-found','ambiguous-name','target-not-repository-root','unsupported-path-bytes','manifest-invalid','no-merge-target','inspection-incomplete','inspect-cap','deadline-exceeded','worktree-not-found','target-excluded','plan-digest-mismatch','confirmation-required','cancelled'},'REFUSAL_CODES';assert set(p.STAGE_REASONS)=={'removed','refused','failed','unknown','not-attempted'},'STAGE_REASONS';assert p.NOTE_CODES and p.NEXT_STEPS,'NOTE_CODES or NEXT_STEPS';assert 'Cannot remove the current worktree.' in p.TEXT.values(),'TEXT'" && python3 -c "import sys,re;t=open('project').read();A=sys.argv[1:];c=lambda r:t.split('# region '+r+'\n')[1].split('# endregion '+r+'\n')[0];M=[a for a in A if not ((a.split('%',1)[1] not in c(a.split('%',1)[0])) if '%' in a else (a.split('~',1)[1] in c(a.split('~',1)[0])) if '~' in a else re.search(r'^[a-z]*\s?'+re.escape(a.split(':',1)[1])+r'\b',c(a.split(':',1)[0]),re.M))];[print('region check failed:',m) for m in M];sys.exit(1 if M or not A else 0)" 'contracts:LIMITS' 'contracts:GIT_FLOOR' 'contracts:REFUSAL_CODES' 'contracts:STAGE_REASONS' 'contracts:NOTE_CODES' 'contracts:TEXT' 'contracts:NEXT_STEPS' && python3 -c "import ast,sys;t=open('project').read();r=sys.argv[1];c=t.split('# region '+r+'\n')[1].split('# endregion '+r+'\n')[0];W=list(ast.walk(ast.parse(c)));N={x.id for x in W if isinstance(x,ast.Name)}.union(x.attr for x in W if isinstance(x,ast.Attribute)).union(x.value for x in W if isinstance(x,ast.Constant) and isinstance(x.value,str));M=[a for a in sys.argv[2:] if a in N];[print('region',r,'code reads',m) for m in M];sys.exit(1 if M or len(sys.argv)<3 or not W[1:] else 0)" 'contracts' 'TIMING' && python3 -m unittest discover -s tests -p 'test_project.py'`
+  — verify: `python3 -c "import importlib.machinery as m,importlib.util as iu,sys;l=m.SourceFileLoader('pv','project');s=iu.spec_from_loader('pv',l);p=iu.module_from_spec(s);sys.modules['pv']=p;l.exec_module(p);v=lambda x:[z for y in x.values() for z in (v(y) if isinstance(y,dict) else [y])];assert {128,256,16,64,4096,8,65536,1048576,5,3}.issubset(v(p.LIMITS)),'LIMITS';assert p.GIT_FLOOR==(2,36),'GIT_FLOOR';assert len(p.REFUSAL_CODES)==19 and p.REFUSAL_CODES.index('relative-config-path')==p.REFUSAL_CODES.index('git-too-old')+1 and set(p.REFUSAL_CODES)=={'invalid-arguments','internal-error','git-unavailable','git-too-old','relative-config-path','repository-not-found','ambiguous-name','target-not-repository-root','unsupported-path-bytes','manifest-invalid','no-merge-target','inspection-incomplete','inspect-cap','deadline-exceeded','worktree-not-found','target-excluded','plan-digest-mismatch','confirmation-required','cancelled'},'REFUSAL_CODES';assert set(p.STAGE_REASONS)=={'removed','refused','failed','unknown','not-attempted'},'STAGE_REASONS';assert p.NOTE_CODES and p.NEXT_STEPS,'NOTE_CODES or NEXT_STEPS';assert 'Cannot remove the current worktree.' in p.TEXT.values(),'TEXT'" && python3 -c "import sys,re;t=open('project').read();A=sys.argv[1:];c=lambda r:t.split('# region '+r+'\n')[1].split('# endregion '+r+'\n')[0];M=[a for a in A if not ((a.split('%',1)[1] not in c(a.split('%',1)[0])) if '%' in a else (a.split('~',1)[1] in c(a.split('~',1)[0])) if '~' in a else re.search(r'^[a-z]*\s?'+re.escape(a.split(':',1)[1])+r'\b',c(a.split(':',1)[0]),re.M))];[print('region check failed:',m) for m in M];sys.exit(1 if M or not A else 0)" 'contracts:LIMITS' 'contracts:GIT_FLOOR' 'contracts:REFUSAL_CODES' 'contracts:STAGE_REASONS' 'contracts:NOTE_CODES' 'contracts:TEXT' 'contracts:NEXT_STEPS' && python3 -c "import ast,sys;t=open('project').read();r=sys.argv[1];c=t.split('# region '+r+'\n')[1].split('# endregion '+r+'\n')[0];W=list(ast.walk(ast.parse(c)));N={x.id for x in W if isinstance(x,ast.Name)}.union(x.attr for x in W if isinstance(x,ast.Attribute)).union(x.value for x in W if isinstance(x,ast.Constant) and isinstance(x.value,str));M=[a for a in sys.argv[2:] if a in N];[print('region',r,'code reads',m) for m in M];sys.exit(1 if M or len(sys.argv)<3 or not W[1:] else 0)" 'contracts' 'TIMING' && python3 -m unittest discover -s tests -p 'test_project.py'`
 
 ---
 
@@ -405,12 +416,14 @@ T033), when B, D, E and F are; H, guard (T034, T035), when T023 is, beside G
   `test_clean_counting_wrapper_records_and_execs` (per child the wrapper
   records, before Git runs, the argument vector as raw bytes, the working
   directory, the pid, the parent pid, the process group, and which of the
-  seventeen scrubbed names and `GIT_OPTIONAL_LOCKS` are set; with no hook the
+  thirty-one scrubbed names (the seventeen, then Brett Heap's ruling Q9 B's
+  fourteen trace names; lead ruling R-99 (d)) and `GIT_OPTIONAL_LOCKS` are
+  set; with no hook the
   recorded pid and process group are Git's own, and the exit status and output
   are the real `git`'s; with hooks, `worktree remove` runs the pre-hook, the
   real `git` as a child and the post-hook in that order and exits with Git's
   status; a record still being written is never parsed; the wrapper's
-  seventeen names equal `project`'s `GIT_SCRUB` (analyze L7, lead ruling
+  thirty-one names equal `project`'s `GIT_SCRUB` (analyze L7, lead ruling
   R-42); plan review M4, lead ruling R-31);
   `test_clean_fake_gits_behave_as_named` (each fake of T011,
   `version-2.35.0` answering `--version` behind the seven pins);
@@ -477,7 +490,7 @@ T033), when B, D, E and F are; H, guard (T034, T035), when T023 is, beside G
   appends to `log`, with one `printf`, one record for the child, its fields
   NUL-separated and the record terminated: the pid, the parent pid, the process
   group (from `/proc/$$/stat`, else `ps -o pgid= -p $$`), the working directory
-  (`pwd -P`), which of the seventeen scrubbed names and `GIT_OPTIONAL_LOCKS`
+  (`pwd -P`), which of the thirty-one scrubbed names and `GIT_OPTIONAL_LOCKS`
   are set (each tested as `${NAME+x}`; the names a literal transcribed from
   contracts/project-clean.md, "Git children", never imported from `project`,
   analyze L7), and the argument vector. With no hook
@@ -522,23 +535,52 @@ T033), when B, D, E and F are; H, guard (T034, T035), when T023 is, beside G
 ### Lane C: the scrubbed environment and the pins
 
 - [x] T012 [P] [O] Add `tests/test_clean_scrub.py`:
-  `test_clean_scrub_removes_the_seventeen_names` (`GIT_SCRUB` is the contract's
-  list in its order; from an environment holding all seventeen and
-  `GIT_CONFIG_GLOBAL` and `GIT_CONFIG_SYSTEM`, `git_env("probe")` keeps those
-  two, removes the seventeen and sets `GIT_OPTIONAL_LOCKS=0`; the kinds
-  `removal` and `delegate` set no `GIT_OPTIONAL_LOCKS`; the kind `push` keeps
-  the caller's `GIT_ALLOW_PROTOCOL` and removes the other sixteen, lead ruling
-  R-28; `os.environ` is unchanged) and `test_clean_pins_are_on_every_argv`
+  `test_clean_scrub_removes_the_thirty_one_names` (`GIT_SCRUB` is the
+  contract's list in its order, the seventeen, then the fourteen trace names
+  of Brett Heap's ruling Q9 B (draft PR #19; lead ruling R-99 (b) and (d)),
+  which renamed this test from `..._the_seventeen_names` (`02e4645`); from an
+  environment holding all thirty-one and `GIT_CONFIG_GLOBAL` and
+  `GIT_CONFIG_SYSTEM`, `git_env("probe")` keeps those two, removes the
+  thirty-one and sets `GIT_OPTIONAL_LOCKS=0`; every kind, the push child's
+  included, sets `GIT_TRACE2`, `GIT_TRACE2_EVENT` and `GIT_TRACE2_PERF` to
+  `0` and leaves the other `GIT_TRACE2_*` names; the kinds `removal` and
+  `delegate` set no `GIT_OPTIONAL_LOCKS`; the kind `push` keeps the caller's
+  `GIT_ALLOW_PROTOCOL` and removes the other thirty, lead ruling R-28;
+  `os.environ` is unchanged) and `test_clean_pins_are_on_every_argv`
   (`git_argv(kind, args)` puts the seven protocol pins on every kind but
-  `push`, the two status pins on `status`, `hidden` and `removal`, and builds
-  the removal vector exactly as D9 spells it; `push` carries no pin, PR #19).
+  `push`, the four status pins on `status`, `hidden` and `removal` (the
+  contract's two, then `core.trustctime=true` and `core.checkStat=default`,
+  Brett Heap's ruling LQ-10, lead ruling R-102), and builds the removal vector
+  exactly as D9 spells it with those two after `core.fsmonitor=false`; `push`
+  carries no pin, PR #19).
+  Q9 B's and LQ-10's tests fold in here (R-95 (g); lead rulings R-99 (d),
+  R-103, R-104 and R-118): `test_status_trace_targets_are_never_written` and
+  `test_status_trace_targets_are_never_written_by_any_kind_of_child` (a
+  wrapper recording each child's environment finds the three trace2 targets at
+  `0` and none of the thirty-one names on every Git child, and no trace file
+  the caller's environment or the global configuration names is created or
+  written), and
+  `test_status_the_pinned_status_configuration_sees_a_same_size_edit` (a
+  repository setting `core.trustctime=false` and `core.checkStat=minimal`, a
+  tracked file in an eligible worktree rewritten at its size with its mtime
+  restored: the status probe reports it modified, the row is `dirty` and
+  excluded, and the apply leaves the edit; it failed before `d1ef33e`).
+  Scenarios: PR #19's "Trace targets are never written"; LQ-10's "An edit that
+  keeps its size and restores its mtime", whose test is named after "The
+  pinned status configuration" instead (traceability.md).
   — files: `tests/test_clean_scrub.py`
-  — verify: `python3 -c "import sys,unittest as u;L=u.defaultTestLoader;f=lambda s:[i for t in s for i in (f(t) if isinstance(t,u.TestSuite) else [t.id()])];I=[i for i in f(L.discover('tests',pattern=sys.argv[1])) if not i.startswith('unittest.')];A=sys.argv[2:];M=[a for a in A if not any(a in ('*',i.split('.')[-1]) for i in I)];[print('not collected:',m) for m in M];[print(e) for e in L.errors];sys.exit(1 if M or L.errors or not A else 0)" test_clean_scrub.py 'test_clean_scrub_removes_the_seventeen_names' 'test_clean_pins_are_on_every_argv'`
+  — verify: `python3 -c "import sys,unittest as u;L=u.defaultTestLoader;f=lambda s:[i for t in s for i in (f(t) if isinstance(t,u.TestSuite) else [t.id()])];I=[i for i in f(L.discover('tests',pattern=sys.argv[1])) if not i.startswith('unittest.')];A=sys.argv[2:];M=[a for a in A if not any(a in ('*',i.split('.')[-1]) for i in I)];[print('not collected:',m) for m in M];[print(e) for e in L.errors];sys.exit(1 if M or L.errors or not A else 0)" test_clean_scrub.py 'test_clean_scrub_removes_the_thirty_one_names' 'test_clean_pins_are_on_every_argv' && python3 -c "import sys,unittest as u;L=u.defaultTestLoader;f=lambda s:[i for t in s for i in (f(t) if isinstance(t,u.TestSuite) else [t.id()])];I=[i for i in f(L.discover('tests',pattern=sys.argv[1])) if not i.startswith('unittest.')];A=sys.argv[2:];M=[a for a in A if not any(a in ('*',i.split('.')[-1]) for i in I)];[print('not collected:',m) for m in M];[print(e) for e in L.errors];sys.exit(1 if M or L.errors or not A else 0)" test_clean_scrub.py 'test_status_trace_targets_are_never_written' 'test_status_trace_targets_are_never_written_by_any_kind_of_child' 'test_status_the_pinned_status_configuration_sees_a_same_size_edit'`
 - [x] T013 [P] [O] Add `GIT_SCRUB`, `PROTOCOL_PINS`, `STATUS_PINS`, `git_env(kind)`
   and `git_argv(kind, args)` to region `git environment` of `project`. T012
   passes.
+  Q9 B and LQ-10 fold in here (lead rulings R-99 (d), R-102 and R-104):
+  `GIT_SCRUB` holds thirty-one names, the seventeen then the fourteen trace
+  names, `TRACE2_OFF` sets `GIT_TRACE2`, `GIT_TRACE2_EVENT` and
+  `GIT_TRACE2_PERF` to `0` in every kind's environment through `git_env()`,
+  the push child's included, and `STATUS_PINS` appends `core.trustctime=true`
+  and `core.checkStat=default`.
   — files: `project`
-  — verify: `python3 -c "import sys,re;t=open('project').read();A=sys.argv[1:];c=lambda r:t.split('# region '+r+'\n')[1].split('# endregion '+r+'\n')[0];M=[a for a in A if not ((a.split('%',1)[1] not in c(a.split('%',1)[0])) if '%' in a else (a.split('~',1)[1] in c(a.split('~',1)[0])) if '~' in a else re.search(r'^[a-z]*\s?'+re.escape(a.split(':',1)[1])+r'\b',c(a.split(':',1)[0]),re.M))];[print('region check failed:',m) for m in M];sys.exit(1 if M or not A else 0)" 'git environment:GIT_SCRUB' 'git environment:PROTOCOL_PINS' 'git environment:STATUS_PINS' 'git environment:git_env' 'git environment:git_argv' && python3 -m unittest discover -s tests -p 'test_clean_scrub.py'`
+  — verify: `python3 -c "import sys,re;t=open('project').read();A=sys.argv[1:];c=lambda r:t.split('# region '+r+'\n')[1].split('# endregion '+r+'\n')[0];M=[a for a in A if not ((a.split('%',1)[1] not in c(a.split('%',1)[0])) if '%' in a else (a.split('~',1)[1] in c(a.split('~',1)[0])) if '~' in a else re.search(r'^[a-z]*\s?'+re.escape(a.split(':',1)[1])+r'\b',c(a.split(':',1)[0]),re.M))];[print('region check failed:',m) for m in M];sys.exit(1 if M or not A else 0)" 'git environment:GIT_SCRUB' 'git environment:PROTOCOL_PINS' 'git environment:STATUS_PINS' 'git environment:git_env' 'git environment:git_argv' && python3 -m unittest discover -s tests -p 'test_clean_scrub.py' && python3 -c "import sys,re;t=open('project').read();A=sys.argv[1:];c=lambda r:t.split('# region '+r+'\n')[1].split('# endregion '+r+'\n')[0];M=[a for a in A if not ((a.split('%',1)[1] not in c(a.split('%',1)[0])) if '%' in a else (a.split('~',1)[1] in c(a.split('~',1)[0])) if '~' in a else re.search(r'^[a-z]*\s?'+re.escape(a.split(':',1)[1])+r'\b',c(a.split(':',1)[0]),re.M))];[print('region check failed:',m) for m in M];sys.exit(1 if M or not A else 0)" 'git environment:TRACE2_OFF' 'git environment~core.trustctime=true' 'git environment~core.checkStat=default' 'git environment~GIT_TRACE_WORKING_TREE_ENCODING'`
 
 ### Lane D: the parsers
 
@@ -625,6 +667,9 @@ T033), when B, D, E and F are; H, guard (T034, T035), when T023 is, beside G
   exception inside a scope, `BaseException` included, kills and reaps every
   live probe group; `Interrupted` and `Terminated` are not `Exception`
   subclasses.
+  Its subtests since lane O (lead ruling R-101 (b), the runner review's F2): a
+  signal ignored on entry stays ignored in every scope, no handler installed
+  for it and nothing restored.
   — files: `tests/test_clean_runner.py`
   — verify: `python3 -c "import sys,unittest as u;L=u.defaultTestLoader;f=lambda s:[i for t in s for i in (f(t) if isinstance(t,u.TestSuite) else [t.id()])];I=[i for i in f(L.discover('tests',pattern=sys.argv[1])) if not i.startswith('unittest.')];A=sys.argv[2:];M=[a for a in A if not any(a in ('*',i.split('.')[-1]) for i in I)];[print('not collected:',m) for m in M];[print(e) for e in L.errors];sys.exit(1 if M or L.errors or not A else 0)" test_clean_runner.py 'test_clean_signal_scopes'`
 - [x] T020 [P] [O] Add to `tests/test_clean_runner.py`:
@@ -715,8 +760,16 @@ T033), when B, D, E and F are; H, guard (T034, T035), when T023 is, beside G
   truncated last record or a malformed one, giving `failed` and
   `probe-failed`; `fs_call()`; and `git_version()`. Every timing
   value is read from `TIMING` when called (R-29). T018 to T020 pass.
+  Lane O's runner fixes fold in here, merged as `2439838` (lead ruling R-101
+  (b)): `_install_handlers()` skips a signal that is `SIG_IGN` when a scope
+  starts, so that it stays ignored (F2); `run_bounded()` creates and registers
+  its selector inside its protected path, so that an `EMFILE` there waits for
+  a removal child before the exception goes on (the review's candidate); a
+  `None` standard output is a failed write, `internal-error` with exit 2 (F3,
+  R-55); and `print_plan()` in region `preview` writes the plan envelope only
+  while no write has failed (F1).
   — files: `project`
-  — verify: `python3 -c "import sys,re;t=open('project').read();A=sys.argv[1:];c=lambda r:t.split('# region '+r+'\n')[1].split('# endregion '+r+'\n')[0];M=[a for a in A if not ((a.split('%',1)[1] not in c(a.split('%',1)[0])) if '%' in a else (a.split('~',1)[1] in c(a.split('~',1)[0])) if '~' in a else re.search(r'^[a-z]*\s?'+re.escape(a.split(':',1)[1])+r'\b',c(a.split(':',1)[0]),re.M))];[print('region check failed:',m) for m in M];sys.exit(1 if M or not A else 0)" 'runner:run_bounded' 'runner:fs_call' 'runner:git_version' && python3 -m unittest discover -s tests -p 'test_clean_runner.py' -k '*.test_clean_child_handle_runs_in_its_own_group' -k '*.test_clean_driver_outcomes' -k '*.test_clean_termination_never_blocks' -k '*.test_clean_a_flooding_child_never_times_out' -k '*.test_clean_reaping_uses_popen_only' -k '*.test_clean_signal_scopes' -k '*.test_clean_filesystem_calls_are_bounded' -k '*.test_clean_git_version_check' -k '*.test_clean_invocation_holds_the_per_run_state' && python3 -m unittest discover -s tests -p 'test_clean_timing.py' -k '*.test_clean_timing_is_read_at_call_time'`
+  — verify: `python3 -c "import sys,re;t=open('project').read();A=sys.argv[1:];c=lambda r:t.split('# region '+r+'\n')[1].split('# endregion '+r+'\n')[0];M=[a for a in A if not ((a.split('%',1)[1] not in c(a.split('%',1)[0])) if '%' in a else (a.split('~',1)[1] in c(a.split('~',1)[0])) if '~' in a else re.search(r'^[a-z]*\s?'+re.escape(a.split(':',1)[1])+r'\b',c(a.split(':',1)[0]),re.M))];[print('region check failed:',m) for m in M];sys.exit(1 if M or not A else 0)" 'runner:run_bounded' 'runner:fs_call' 'runner:git_version' && python3 -m unittest discover -s tests -p 'test_clean_runner.py' -k '*.test_clean_child_handle_runs_in_its_own_group' -k '*.test_clean_driver_outcomes' -k '*.test_clean_termination_never_blocks' -k '*.test_clean_a_flooding_child_never_times_out' -k '*.test_clean_reaping_uses_popen_only' -k '*.test_clean_signal_scopes' -k '*.test_clean_filesystem_calls_are_bounded' -k '*.test_clean_git_version_check' -k '*.test_clean_invocation_holds_the_per_run_state' && python3 -m unittest discover -s tests -p 'test_clean_timing.py' -k '*.test_clean_timing_is_read_at_call_time' && python3 -c "import sys,re;t=open('project').read();A=sys.argv[1:];c=lambda r:t.split('# region '+r+'\n')[1].split('# endregion '+r+'\n')[0];M=[a for a in A if not ((a.split('%',1)[1] not in c(a.split('%',1)[0])) if '%' in a else (a.split('~',1)[1] in c(a.split('~',1)[0])) if '~' in a else re.search(r'^[a-z]*\s?'+re.escape(a.split(':',1)[1])+r'\b',c(a.split(':',1)[0]),re.M))];[print('region check failed:',m) for m in M];sys.exit(1 if M or not A else 0)" 'runner~signal.SIG_IGN' 'preview~write_error'`
 - [x] T025 [P] [O] Reroute `git()` and `git_text()` (`project:68-74`) through
   `run_bounded()` with `git_argv("probe", ...)`, keeping their names, place,
   signatures and return types, their output decoded as T021 states (lead
@@ -775,7 +828,7 @@ T033), when B, D, E and F are; H, guard (T034, T035), when T023 is, beside G
   wrapper, `project clean ROOT --json` runs rows 3, 4, 6 and 7 once each, row
   4b only in a gitfile layout, and one combined status probe per present,
   verified row inside that worktree; every child carries the seven protocol
-  pins and every status child the two status pins);
+  pins and every status child the status pins, four since LQ-10);
   `test_clean_evidence_checks_registration_both_ways` (a rewritten `.git` file,
   and a changed admin `gitdir` file, each give that row `inspection-error` and
   no status probe; a subtest where two registry entries name one path, both
@@ -854,8 +907,30 @@ T033), when B, D, E and F are; H, guard (T034, T035), when T023 is, beside G
   "Five thousand ignored records"; "User status configuration"; "A caller's Git
   environment is ignored"; "The sixteenth scrubbed name on Git 2.36"; "A lazy
   fetch in a partial clone is refused locally".
+  Brett Heap's ruling LQ-11 and lane E's evidence fixes fold in here (R-95
+  (g); lead rulings R-101 (e) and (g), R-102, R-113, R-116, R-125 and R-153):
+  `test_clean_a_linked_worktree_whose_work_tree_is_redirected` and
+  `test_clean_a_linked_worktree_whose_work_tree_is_redirected_after_the_plan`
+  (`extensions.worktreeConfig` true and a `config.worktree` whose
+  `core.worktree`, or `core.bare`, redirects an eligible linked worktree W
+  holding an ignored file: W is `registration-mismatch`, `inspection-error`,
+  unprobed, the batch apply refuses and W survives; redirected after the plan,
+  revalidation refuses it);
+  `test_clean_a_commondir_that_names_another_repository` (W's admin
+  `commondir` rewritten to name a shared clone that sets the extension:
+  `registration-mismatch`, nothing removed); and
+  `test_clean_evidence_verifies_each_identity_immediately_before_its_status_probe`,
+  `test_clean_evidence_a_status_probe_that_warns_establishes_nothing` and
+  `test_clean_evidence_a_failed_ref_listing_establishes_no_branch_evidence`.
+  Rule 1 would give PR #19's two scenario tests the prefix `test_status_`;
+  they take `test_clean_`, which the floor job's `-k` selects as well. Since
+  R-116, `test_status_a_git_that_floods_standard_error` reads its row
+  `inspection-error` with `probe-failed` (`unparseable output`), its records
+  still read and its standard error still capped. Scenarios: PR #19's "A
+  linked worktree whose work tree is redirected" and "A commondir that names
+  another repository".
   — files: `tests/test_clean_evidence.py`
-  — verify: `python3 -c "import sys,unittest as u;L=u.defaultTestLoader;f=lambda s:[i for t in s for i in (f(t) if isinstance(t,u.TestSuite) else [t.id()])];I=[i for i in f(L.discover('tests',pattern=sys.argv[1])) if not i.startswith('unittest.')];A=sys.argv[2:];M=[a for a in A if not any(a in ('*',i.split('.')[-1]) for i in I)];[print('not collected:',m) for m in M];[print(e) for e in L.errors];sys.exit(1 if M or L.errors or not A else 0)" test_clean_evidence.py 'test_status_a_git_that_floods_standard_error' 'test_status_a_git_that_ignores_sigterm' 'test_status_five_thousand_ignored_records' 'test_status_user_status_configuration' 'test_status_a_caller_s_git_environment_is_ignored' 'test_status_the_sixteenth_scrubbed_name_on_git_2_36' 'test_status_a_lazy_fetch_in_a_partial_clone_is_refused_locally'`
+  — verify: `python3 -c "import sys,unittest as u;L=u.defaultTestLoader;f=lambda s:[i for t in s for i in (f(t) if isinstance(t,u.TestSuite) else [t.id()])];I=[i for i in f(L.discover('tests',pattern=sys.argv[1])) if not i.startswith('unittest.')];A=sys.argv[2:];M=[a for a in A if not any(a in ('*',i.split('.')[-1]) for i in I)];[print('not collected:',m) for m in M];[print(e) for e in L.errors];sys.exit(1 if M or L.errors or not A else 0)" test_clean_evidence.py 'test_status_a_git_that_floods_standard_error' 'test_status_a_git_that_ignores_sigterm' 'test_status_five_thousand_ignored_records' 'test_status_user_status_configuration' 'test_status_a_caller_s_git_environment_is_ignored' 'test_status_the_sixteenth_scrubbed_name_on_git_2_36' 'test_status_a_lazy_fetch_in_a_partial_clone_is_refused_locally' && python3 -c "import sys,unittest as u;L=u.defaultTestLoader;f=lambda s:[i for t in s for i in (f(t) if isinstance(t,u.TestSuite) else [t.id()])];I=[i for i in f(L.discover('tests',pattern=sys.argv[1])) if not i.startswith('unittest.')];A=sys.argv[2:];M=[a for a in A if not any(a in ('*',i.split('.')[-1]) for i in I)];[print('not collected:',m) for m in M];[print(e) for e in L.errors];sys.exit(1 if M or L.errors or not A else 0)" test_clean_evidence.py 'test_clean_a_linked_worktree_whose_work_tree_is_redirected' 'test_clean_a_linked_worktree_whose_work_tree_is_redirected_after_the_plan' 'test_clean_a_commondir_that_names_another_repository' 'test_clean_evidence_verifies_each_identity_immediately_before_its_status_probe' 'test_clean_evidence_a_status_probe_that_warns_establishes_nothing' 'test_clean_evidence_a_failed_ref_listing_establishes_no_branch_evidence'`
 - [x] T031 [P] [O] Add to region `evidence` of `project`: `identity_probe()` (row
   3, repeated one option per child when a value holds a line feed);
   `main_worktree(identity, records, run)`, which builds D8's whole order (M6)
@@ -920,8 +995,24 @@ T033), when B, D, E and F are; H, guard (T034, T035), when T023 is, beside G
   contract's text for its code, from a `TEXT` key this lane adds as a
   lead-approved contracts edit, with the same key in `TEXT_FIXTURES` of
   `tests/clean_support.py`, which this task also touches (lead ruling R-45).
+  Lane E's evidence fixes and LQ-11 fold in here, merged as `91552e3` (lead
+  rulings R-101 (c), (e) and (g), R-113, R-116, R-125, R-149 and R-153):
+  `_identity_unchanged()`, each row's identity read again immediately before
+  its status probe in one bounded filesystem call (`_identity_now()`), skipped
+  once the work deadline has passed; `status_warned()`, so that a status probe
+  whose standard error holds anything but Git's advice lines, or more than the
+  4 KiB kept, is `probe-failed`, DETAIL `unparseable output`; a failed row 6
+  leaving each present row on a branch with that probe's errors,
+  `inspection-error`; the evidence's `main_path`, so that `repository.root`
+  stays null when row 5 fails; row 4c (`worktree_config()`) once per common
+  directory before row 6, true where not read; the effective-work-tree probe
+  (`effective_work_tree()`) for each linked row where row 4c is not false; and
+  the admin `commondir` read (`_admin_commondir()`) in the two-way
+  registration. Revalidation reaches the commondir rule through
+  `verify_registration()` and the work-tree probe through an 8-line hunk in
+  region `apply` (`revalidation_difference()`), a departure R-149 accepts.
   — files: `project`, `tests/clean_support.py`
-  — verify: `python3 -c "import sys,re;t=open('project').read();A=sys.argv[1:];c=lambda r:t.split('# region '+r+'\n')[1].split('# endregion '+r+'\n')[0];M=[a for a in A if not ((a.split('%',1)[1] not in c(a.split('%',1)[0])) if '%' in a else (a.split('~',1)[1] in c(a.split('~',1)[0])) if '~' in a else re.search(r'^[a-z]*\s?'+re.escape(a.split(':',1)[1])+r'\b',c(a.split(':',1)[0]),re.M))];[print('region check failed:',m) for m in M];sys.exit(1 if M or not A else 0)" 'evidence:identity_probe' 'evidence:main_worktree' 'evidence:inspect_repository' 'evidence:verify_registration' 'evidence:status_probe' 'evidence:worktree_rows' 'evidence~def inspect_repository(directory, run, refresh=False, *, repeat_identity_at_root=True)' 'evidence~def worktree_rows(repo, run, records=None)' && python3 -m unittest discover -s tests -p 'test_clean_evidence.py' -k '*.test_clean_evidence_parity_with_the_baseline_reader' -k '*.test_clean_evidence_a_bare_repository_s_registry_listing_runs_where_the_argument_resolves' && python3 -m unittest discover -s tests -p 'test_clean_harness.py' -k '*.test_clean_text_fixtures_equal_the_contract_table'`
+  — verify: `python3 -c "import sys,re;t=open('project').read();A=sys.argv[1:];c=lambda r:t.split('# region '+r+'\n')[1].split('# endregion '+r+'\n')[0];M=[a for a in A if not ((a.split('%',1)[1] not in c(a.split('%',1)[0])) if '%' in a else (a.split('~',1)[1] in c(a.split('~',1)[0])) if '~' in a else re.search(r'^[a-z]*\s?'+re.escape(a.split(':',1)[1])+r'\b',c(a.split(':',1)[0]),re.M))];[print('region check failed:',m) for m in M];sys.exit(1 if M or not A else 0)" 'evidence:identity_probe' 'evidence:main_worktree' 'evidence:inspect_repository' 'evidence:verify_registration' 'evidence:status_probe' 'evidence:worktree_rows' 'evidence~def inspect_repository(directory, run, refresh=False, *, repeat_identity_at_root=True)' 'evidence~def worktree_rows(repo, run, records=None)' && python3 -m unittest discover -s tests -p 'test_clean_evidence.py' -k '*.test_clean_evidence_parity_with_the_baseline_reader' -k '*.test_clean_evidence_a_bare_repository_s_registry_listing_runs_where_the_argument_resolves' && python3 -m unittest discover -s tests -p 'test_clean_harness.py' -k '*.test_clean_text_fixtures_equal_the_contract_table' && python3 -c "import sys,re;t=open('project').read();A=sys.argv[1:];c=lambda r:t.split('# region '+r+'\n')[1].split('# endregion '+r+'\n')[0];M=[a for a in A if not ((a.split('%',1)[1] not in c(a.split('%',1)[0])) if '%' in a else (a.split('~',1)[1] in c(a.split('~',1)[0])) if '~' in a else re.search(r'^[a-z]*\s?'+re.escape(a.split(':',1)[1])+r'\b',c(a.split(':',1)[0]),re.M))];[print('region check failed:',m) for m in M];sys.exit(1 if M or not A else 0)" 'evidence:status_warned' 'evidence:worktree_config' 'evidence:effective_work_tree' 'evidence:_admin_commondir' 'evidence:_identity_unchanged' 'evidence~"main_path"' && python3 -m unittest discover -s tests -p 'test_clean_evidence.py'`
 - [x] T032 [P] [O] Add to region `evidence`: `classify()` (pure, with its one
   reorder; `RECOMMENDATIONS` from `project:566-616`); `partial_removal_note()`;
   `declared_tracking_branch(root)` (today's `manifest()` read, bounded by
@@ -963,8 +1054,17 @@ T033), when B, D, E and F are; H, guard (T034, T035), when T023 is, beside G
   `cleanup_report` and `resolve_clean_target` for `discover`, since after T049
   and T107 `clean` reaches neither old function for a path argument (analyze
   H3, lead ruling R-42).
+  Lane O's runner fixes fold in here (R-95 (g); lead ruling R-101 (b), the
+  runner review's F2 and F3; lane 3's F4 M-1):
+  `test_clean_the_plain_report_exits_by_completeness_when_the_caller_ignores_the_signal`
+  (SIGHUP, then SIGINT, ignored when `project` starts, as `nohup` and a `&`
+  job leave them: the signal sent while it plans changes nothing, and the
+  report exits by its completeness) and
+  `test_clean_the_plain_report_in_json_with_standard_output_closed`
+  (descriptor 1 closed at start: `internal-error`, exit 2, no traceback,
+  R-55).
   — files: `tests/test_clean_guard.py`
-  — verify: `python3 -c "import sys,unittest as u;L=u.defaultTestLoader;f=lambda s:[i for t in s for i in (f(t) if isinstance(t,u.TestSuite) else [t.id()])];I=[i for i in f(L.discover('tests',pattern=sys.argv[1])) if not i.startswith('unittest.')];A=sys.argv[2:];M=[a for a in A if not any(a in ('*',i.split('.')[-1]) for i in I)];[print('not collected:',m) for m in M];[print(e) for e in L.errors];sys.exit(1 if M or L.errors or not A else 0)" test_clean_guard.py '*' && python3 -c "import os,sys;e=os.path.isfile(sys.argv[1]);t=open(sys.argv[1]).read() if e else '';M=[k for k in sys.argv[2:] if k not in t];print('missing file:',sys.argv[1]) if not e else [print('absent:',m) for m in M];sys.exit(1 if M or not e or len(sys.argv)<3 else 0)" tests/test_clean_guard.py 'internal-error' 'REFUSED: ' 'RuntimeError: boom' 'Cancelled.'`
+  — verify: `python3 -c "import sys,unittest as u;L=u.defaultTestLoader;f=lambda s:[i for t in s for i in (f(t) if isinstance(t,u.TestSuite) else [t.id()])];I=[i for i in f(L.discover('tests',pattern=sys.argv[1])) if not i.startswith('unittest.')];A=sys.argv[2:];M=[a for a in A if not any(a in ('*',i.split('.')[-1]) for i in I)];[print('not collected:',m) for m in M];[print(e) for e in L.errors];sys.exit(1 if M or L.errors or not A else 0)" test_clean_guard.py '*' && python3 -c "import os,sys;e=os.path.isfile(sys.argv[1]);t=open(sys.argv[1]).read() if e else '';M=[k for k in sys.argv[2:] if k not in t];print('missing file:',sys.argv[1]) if not e else [print('absent:',m) for m in M];sys.exit(1 if M or not e or len(sys.argv)<3 else 0)" tests/test_clean_guard.py 'internal-error' 'REFUSED: ' 'RuntimeError: boom' 'Cancelled.' && python3 -c "import sys,unittest as u;L=u.defaultTestLoader;f=lambda s:[i for t in s for i in (f(t) if isinstance(t,u.TestSuite) else [t.id()])];I=[i for i in f(L.discover('tests',pattern=sys.argv[1])) if not i.startswith('unittest.')];A=sys.argv[2:];M=[a for a in A if not any(a in ('*',i.split('.')[-1]) for i in I)];[print('not collected:',m) for m in M];[print(e) for e in L.errors];sys.exit(1 if M or L.errors or not A else 0)" test_clean_guard.py 'test_clean_the_plain_report_exits_by_completeness_when_the_caller_ignores_the_signal' 'test_clean_the_plain_report_in_json_with_standard_output_closed'`
 - [x] T035 [P] [O] Give `Refused` (`project:23-24`) the keyword fields `code`,
   `path`, `reason` and `context` (the repository and merge target once
   established) and `as_object()`; add to region `guard` `clean_mode(args)`;
@@ -1175,8 +1275,13 @@ L-8).
   `tests/clean_support.py` as a lead-approved edit, since `run_pty_steps()`
   puts both on the pseudo-terminal (lead ruling R-56 Q-14). Scenario: "Only
   yes confirms".
+  Lane A's fix of the plan review's F1 and its C1 fold in here (lead ruling
+  R-101 (c)): `test_clean_only_yes_confirms_an_undecodable_answer` (an answer
+  standard input cannot decode, such as the byte 0xE9, is `cancelled`, exit 2,
+  nothing removed, where it was `internal-error`), and the answers `YES` and
+  `Yes` among this test's refusals, so that a `.lower()` mutant fails it.
   — files: `tests/test_clean_apply.py`, `tests/clean_support.py`
-  — verify: `python3 -c "import sys,unittest as u;L=u.defaultTestLoader;f=lambda s:[i for t in s for i in (f(t) if isinstance(t,u.TestSuite) else [t.id()])];I=[i for i in f(L.discover('tests',pattern=sys.argv[1])) if not i.startswith('unittest.')];A=sys.argv[2:];M=[a for a in A if not any(a in ('*',i.split('.')[-1]) for i in I)];[print('not collected:',m) for m in M];[print(e) for e in L.errors];sys.exit(1 if M or L.errors or not A else 0)" test_clean_apply.py 'test_clean_only_yes_confirms' && python3 -c "import inspect,sys;sys.path.insert(0,'tests');import clean_support as c;r=getattr(c.CleanCase,'run_pty_steps',None) or getattr(c,'run_pty_steps',None);ok=bool(r) and 'stdout_pipe' in inspect.signature(r).parameters;print('run_pty_steps has stdout_pipe:',ok);sys.exit(0 if ok else 1)" && python3 -m unittest discover -s tests -p 'test_clean_harness.py' -k '*.test_clean_pty_runner_gives_a_controlling_terminal'`
+  — verify: `python3 -c "import sys,unittest as u;L=u.defaultTestLoader;f=lambda s:[i for t in s for i in (f(t) if isinstance(t,u.TestSuite) else [t.id()])];I=[i for i in f(L.discover('tests',pattern=sys.argv[1])) if not i.startswith('unittest.')];A=sys.argv[2:];M=[a for a in A if not any(a in ('*',i.split('.')[-1]) for i in I)];[print('not collected:',m) for m in M];[print(e) for e in L.errors];sys.exit(1 if M or L.errors or not A else 0)" test_clean_apply.py 'test_clean_only_yes_confirms' && python3 -c "import inspect,sys;sys.path.insert(0,'tests');import clean_support as c;r=getattr(c.CleanCase,'run_pty_steps',None) or getattr(c,'run_pty_steps',None);ok=bool(r) and 'stdout_pipe' in inspect.signature(r).parameters;print('run_pty_steps has stdout_pipe:',ok);sys.exit(0 if ok else 1)" && python3 -m unittest discover -s tests -p 'test_clean_harness.py' -k '*.test_clean_pty_runner_gives_a_controlling_terminal' && python3 -c "import sys,unittest as u;L=u.defaultTestLoader;f=lambda s:[i for t in s for i in (f(t) if isinstance(t,u.TestSuite) else [t.id()])];I=[i for i in f(L.discover('tests',pattern=sys.argv[1])) if not i.startswith('unittest.')];A=sys.argv[2:];M=[a for a in A if not any(a in ('*',i.split('.')[-1]) for i in I)];[print('not collected:',m) for m in M];[print(e) for e in L.errors];sys.exit(1 if M or L.errors or not A else 0)" test_clean_apply.py 'test_clean_only_yes_confirms' 'test_clean_only_yes_confirms_an_undecodable_answer'`
 - [x] T044 [P] [US1] [S] Add `test_clean_a_noninteractive_batch_needs_yes` to
   `tests/test_clean_apply.py`: with standard input not a terminal and no
   `--yes`, `--all-safe --apply` refuses with `confirmation-required` and exit
@@ -1205,8 +1310,13 @@ L-8).
   signal that ended it, whoever sent it: 143 when SIGTERM ends it, and 137
   only for a child that outlives SIGTERM until SIGKILL; plan review M12,
   lead ruling R-68 (b)).
+  Lane A's fix of the apply review's F3 folds in here (lead ruling R-101 (d)):
+  `test_clean_revalidate_records_a_refused_path_after_the_work_deadline` (in
+  process, a difference found as the work deadline passes still records the
+  planned path's presence, since that one `lstat` runs with the reserve's
+  budget, `reserve_budget()`).
   — files: `tests/test_clean_apply.py`
-  — verify: `python3 -c "import sys,unittest as u;L=u.defaultTestLoader;f=lambda s:[i for t in s for i in (f(t) if isinstance(t,u.TestSuite) else [t.id()])];I=[i for i in f(L.discover('tests',pattern=sys.argv[1])) if not i.startswith('unittest.')];A=sys.argv[2:];M=[a for a in A if not any(a in ('*',i.split('.')[-1]) for i in I)];[print('not collected:',m) for m in M];[print(e) for e in L.errors];sys.exit(1 if M or L.errors or not A else 0)" test_clean_apply.py 'test_clean_apply_exit_table' 'test_clean_result_document_keys'`
+  — verify: `python3 -c "import sys,unittest as u;L=u.defaultTestLoader;f=lambda s:[i for t in s for i in (f(t) if isinstance(t,u.TestSuite) else [t.id()])];I=[i for i in f(L.discover('tests',pattern=sys.argv[1])) if not i.startswith('unittest.')];A=sys.argv[2:];M=[a for a in A if not any(a in ('*',i.split('.')[-1]) for i in I)];[print('not collected:',m) for m in M];[print(e) for e in L.errors];sys.exit(1 if M or L.errors or not A else 0)" test_clean_apply.py 'test_clean_apply_exit_table' 'test_clean_result_document_keys' && python3 -c "import sys,unittest as u;L=u.defaultTestLoader;f=lambda s:[i for t in s for i in (f(t) if isinstance(t,u.TestSuite) else [t.id()])];I=[i for i in f(L.discover('tests',pattern=sys.argv[1])) if not i.startswith('unittest.')];A=sys.argv[2:];M=[a for a in A if not any(a in ('*',i.split('.')[-1]) for i in I)];[print('not collected:',m) for m in M];[print(e) for e in L.errors];sys.exit(1 if M or L.errors or not A else 0)" test_clean_apply.py 'test_clean_revalidate_records_a_refused_path_after_the_work_deadline'`
 - [x] T046 [P] [US1] [O] Rewrite
   `test_clean_revalidates_a_worktree_after_confirmation` in
   `tests/test_project.py` (`:1020-1040`; with T009's loader line, the only
@@ -1324,9 +1434,28 @@ L-8).
   `--apply` and when unused (plan review M9); all before any Git child) and
   `require_git(run)` (`git_version()`, refusing with `git-too-old` or
   `git-unavailable` before resolution, FR-002) in region `dispatcher`. T039
-  passes.
-  — files: `project`
-  — verify: `python3 -m unittest discover -s tests -p 'test_clean_batch.py' -k '*.test_clean_invalid_argument_combinations' -k '*.test_clean_invalid_argument_combinations_unrefused_flags'`
+  passes. Brett Heap's ruling LQ-15 folds in here (FR-068; draft PR #19 at
+  `cc000ea` and `9fb22fa`; lead rulings R-102 (c) 3, R-131 and R-173), built by
+  lane H at `a7e77a4` and merged as `5794f91`: `require_git()` runs D11's
+  configuration-path test first, after the argument checks and before
+  `git_version()`, and refuses `relative-config-path`, exit 2, with D18's line
+  for each failing variable and no Git child, `git --version` included, in
+  every mode, push and delete-branch among them. Region `git environment`
+  gains `CONFIG_PATH_RULED` (`HOME`, `XDG_CONFIG_HOME`),
+  `CONFIG_PATH_EXTENSION` (`GIT_CONFIG_GLOBAL`, `GIT_CONFIG_SYSTEM`, the
+  lead's extension, struck by making that one line `()`),
+  `relative_config_paths()` (raw bytes, `os.environb`, a value that is not
+  empty and whose first byte is not `/` failing), `config_path_message()` and
+  `hold_git_for_config_paths(run)`, which `inspect_project()` and `update()`
+  call at their entry, so that status, doctor and update memoize the code in
+  the version check's place and start no Git child; `REFUSAL_CODES` gains
+  `relative-config-path` after `git-too-old` and `TEXT` its line
+  `relative_config_path`, with its fixture in `tests/clean_support.py` (rule 2;
+  lead rulings R-48 and R-131 (c)); and `git_refusal()` in region `runner`
+  gives the code its own message, and the region's docstring lists it (R-131
+  (b)). T114's LQ-15 tests pass.
+  — files: `project`, `tests/clean_support.py`
+  — verify: `python3 -m unittest discover -s tests -p 'test_clean_batch.py' -k '*.test_clean_invalid_argument_combinations' -k '*.test_clean_invalid_argument_combinations_unrefused_flags' && python3 -c "import sys,re;t=open('project').read();A=sys.argv[1:];c=lambda r:t.split('# region '+r+'\n')[1].split('# endregion '+r+'\n')[0];M=[a for a in A if not ((a.split('%',1)[1] not in c(a.split('%',1)[0])) if '%' in a else (a.split('~',1)[1] in c(a.split('~',1)[0])) if '~' in a else re.search(r'^[a-z]*\s?'+re.escape(a.split(':',1)[1])+r'\b',c(a.split(':',1)[0]),re.M))];[print('region check failed:',m) for m in M];sys.exit(1 if M or not A else 0)" 'git environment:CONFIG_PATH_RULED' 'git environment:CONFIG_PATH_EXTENSION' 'git environment:relative_config_paths' 'git environment:config_path_message' 'git environment:hold_git_for_config_paths' 'dispatcher~relative_config_paths()' 'runner~relative-config-path' 'contracts~"relative-config-path"' 'contracts~"relative_config_path"' && python3 -m unittest discover -s tests -p 'test_clean_resolution.py' -k relative_configuration_path && python3 -m unittest discover -s tests -p 'test_clean_batch.py' -k relative_configuration_path && python3 -m unittest discover -s tests -p 'test_status_doctor_update.py' -k relative_configuration_path`
 - [x] T049 [P] [US1] [O] Fill `build_plan(repo, run)` in region `plan`, reading lane
   G's `inspect_repository()` and `worktree_rows()` directly, never
   `cleanup_report()`, which raises the baseline `Refused` when a
@@ -1425,8 +1554,20 @@ L-8).
   deferred)` (region `gates`, T100) (lead ruling R-56 Q-6, settling R-53's
   P-2). The next steps come from `NEXT_STEPS`, and every
   other class's from its recommendation. The first test of T040 passes.
+  Gate 11, `operation-in-progress`, folds in here (Brett Heap's ruling LQ-14;
+  design D22; lead rulings R-121, R-124, R-126 and R-180), built by lane G at
+  `2405880` and merged as `e0c589a`: `gate_rows()` runs `admin_state_gates()`
+  after `index_gates()` for the rows gate 8 takes, through
+  `operation_check(common_dir, admin_id, run)`, one `listdir` of
+  `<common_dir>/worktrees/<admin_id>` within the filesystem budget and no Git
+  child, against `OPERATION_MARKERS`' eleven names; a listing that fails,
+  times out or meets the deadline makes the row `inspection-error`. Its
+  departures, accepted (lead rulings R-165, R-178 and R-180): `refused` and
+  the result table's literal gain the reason, the residual-window line its
+  third item, `EXCLUDED_GROUP_ORDER` in region `preview` the group, and
+  `tests/test_clean_batch.py`'s first-gates test stubs `admin_state_gates`.
   — files: `project`
-  — verify: `python3 -c "import sys,re;t=open('project').read();A=sys.argv[1:];c=lambda r:t.split('# region '+r+'\n')[1].split('# endregion '+r+'\n')[0];M=[a for a in A if not ((a.split('%',1)[1] not in c(a.split('%',1)[0])) if '%' in a else (a.split('~',1)[1] in c(a.split('~',1)[0])) if '~' in a else re.search(r'^[a-z]*\s?'+re.escape(a.split(':',1)[1])+r'\b',c(a.split(':',1)[0]),re.M))];[print('region check failed:',m) for m in M];sys.exit(1 if M or not A else 0)" 'gates:gate_rows' 'index:registration_gate' 'index:index_gates' 'reflog:reflog_gate' 'gates:deferral_gate' 'index~def registration_gate(row, plan, run)' 'index~def index_gates(row, plan, run)' 'reflog~def reflog_gate(row, plan, run)' 'gates~def deferral_gate(candidates, plan)' && python3 -m unittest discover -s tests -p 'test_clean_batch.py' -k '*.test_clean_first_gates_in_order'`
+  — verify: `python3 -c "import sys,re;t=open('project').read();A=sys.argv[1:];c=lambda r:t.split('# region '+r+'\n')[1].split('# endregion '+r+'\n')[0];M=[a for a in A if not ((a.split('%',1)[1] not in c(a.split('%',1)[0])) if '%' in a else (a.split('~',1)[1] in c(a.split('~',1)[0])) if '~' in a else re.search(r'^[a-z]*\s?'+re.escape(a.split(':',1)[1])+r'\b',c(a.split(':',1)[0]),re.M))];[print('region check failed:',m) for m in M];sys.exit(1 if M or not A else 0)" 'gates:gate_rows' 'index:registration_gate' 'index:index_gates' 'reflog:reflog_gate' 'gates:deferral_gate' 'index~def registration_gate(row, plan, run)' 'index~def index_gates(row, plan, run)' 'reflog~def reflog_gate(row, plan, run)' 'gates~def deferral_gate(candidates, plan)' && python3 -m unittest discover -s tests -p 'test_clean_batch.py' -k '*.test_clean_first_gates_in_order' && python3 -c "import sys,re;t=open('project').read();A=sys.argv[1:];c=lambda r:t.split('# region '+r+'\n')[1].split('# endregion '+r+'\n')[0];M=[a for a in A if not ((a.split('%',1)[1] not in c(a.split('%',1)[0])) if '%' in a else (a.split('~',1)[1] in c(a.split('~',1)[0])) if '~' in a else re.search(r'^[a-z]*\s?'+re.escape(a.split(':',1)[1])+r'\b',c(a.split(':',1)[0]),re.M))];[print('region check failed:',m) for m in M];sys.exit(1 if M or not A else 0)" 'gates:admin_state_gates' 'gates:operation_check' 'gates:OPERATION_MARKERS' 'contracts~"operation-in-progress"' 'preview~"operation-in-progress"'`
 - [x] T051 [P] [US1] [O] Fill `plan_digest(plan)` (R12's canonical text) and
   `plan_document(plan)` (the envelope with the baseline keys kept, in the
   contract's key order, every path through `json_path()` beside its flag,
@@ -1551,8 +1692,11 @@ L-8).
   through T047's `refuse()` and returning 2, never raising (lead ruling
   R-56); `confirm_removal()` looks `ask_removal` up by its global name, since
   T046 patches it there; `--yes` accepts the fresh plan without asking.
+  `ask_removal()` returns an answer that standard input cannot decode as `""`,
+  so that `confirm_removal()` records `cancelled` (lead ruling R-101 (c); the
+  plan review's F1; lane A's `6833dd6`).
   — files: `project`
-  — verify: `python3 -c "import sys,re;t=open('project').read();A=sys.argv[1:];c=lambda r:t.split('# region '+r+'\n')[1].split('# endregion '+r+'\n')[0];M=[a for a in A if not ((a.split('%',1)[1] not in c(a.split('%',1)[0])) if '%' in a else (a.split('~',1)[1] in c(a.split('~',1)[0])) if '~' in a else re.search(r'^[a-z]*\s?'+re.escape(a.split(':',1)[1])+r'\b',c(a.split(':',1)[0]),re.M))];[print('region check failed:',m) for m in M];sys.exit(1 if M or not A else 0)" 'apply:ask_removal' 'apply~raising_signals' && python3 project clean --help >/dev/null`
+  — verify: `python3 -c "import sys,re;t=open('project').read();A=sys.argv[1:];c=lambda r:t.split('# region '+r+'\n')[1].split('# endregion '+r+'\n')[0];M=[a for a in A if not ((a.split('%',1)[1] not in c(a.split('%',1)[0])) if '%' in a else (a.split('~',1)[1] in c(a.split('~',1)[0])) if '~' in a else re.search(r'^[a-z]*\s?'+re.escape(a.split(':',1)[1])+r'\b',c(a.split(':',1)[0]),re.M))];[print('region check failed:',m) for m in M];sys.exit(1 if M or not A else 0)" 'apply:ask_removal' 'apply~raising_signals' && python3 project clean --help >/dev/null && python3 -c "import sys,re;t=open('project').read();A=sys.argv[1:];c=lambda r:t.split('# region '+r+'\n')[1].split('# endregion '+r+'\n')[0];M=[a for a in A if not ((a.split('%',1)[1] not in c(a.split('%',1)[0])) if '%' in a else (a.split('~',1)[1] in c(a.split('~',1)[0])) if '~' in a else re.search(r'^[a-z]*\s?'+re.escape(a.split(':',1)[1])+r'\b',c(a.split(':',1)[0]),re.M))];[print('region check failed:',m) for m in M];sys.exit(1 if M or not A else 0)" 'apply~except UnicodeDecodeError'`
 - [x] T055 [P] [US1] [O] Add `revalidate(plan, target, run)` to region `apply`,
   with this phase's body: recompute the target's row through the evidence model
   with `inspect_repository(root, run, refresh=True)`, never the memo, which
@@ -1804,8 +1948,29 @@ carrying the reason the gate order gives.
   `contains-submodule`, exit 2, and the counting log holds no `worktree
   remove`). Scenarios: "Submodules", whose after-confirmation clause is T083's;
   "A worktree holding a submodule is never offered".
+  Brett Heap's ruling LQ-14's gate and lane A's gate tests fold in here (R-95
+  (g); lead rulings R-117, R-121, R-124, R-126, R-155, R-164 and R-180):
+  `test_clean_an_operation_in_progress` (an otherwise eligible worktree with
+  an operation in progress is excluded as `operation-in-progress`, and the
+  named removal refuses with `target-excluded`) and
+  `test_clean_an_operation_in_progress_admin_directory_that_cannot_be_listed`
+  (`inspection-error`, the plan incomplete, nothing removed, where `004` used
+  to exit 255 and delete the worktree);
+  `test_clean_operation_in_progress_markers` (each of the eleven markers, as a
+  file, a directory and a symbolic link) and
+  `test_clean_operation_in_progress_markers_from_real_operations`;
+  `test_clean_a_squash_merge_that_holds_an_autostash` (`merge --squash
+  --autostash` holds the edit only in `MERGE_AUTOSTASH`: excluded, the edit
+  kept); `test_clean_operation_in_progress_listing_that_fails` (a listing that
+  fails or times out: `inspection-error`, the plan incomplete); and
+  `test_clean_submodules_beside_hidden_local_state` and
+  `test_clean_submodules_beside_hidden_local_state_with_a_modules_entry` (a
+  row with a gitlink, or a `modules` entry, and a flagged index entry reads
+  `contains-submodule`, not `hidden-local-state`, killing W4's G9-10a and
+  W19's G9-10b and G9-10c). Scenarios: PR #19's "An operation in progress" and
+  "A squash merge that holds an autostash".
   — files: `tests/test_clean_gates.py`
-  — verify: `python3 -c "import sys,unittest as u;L=u.defaultTestLoader;f=lambda s:[i for t in s for i in (f(t) if isinstance(t,u.TestSuite) else [t.id()])];I=[i for i in f(L.discover('tests',pattern=sys.argv[1])) if not i.startswith('unittest.')];A=sys.argv[2:];M=[a for a in A if not any(a in ('*',i.split('.')[-1]) for i in I)];[print('not collected:',m) for m in M];[print(e) for e in L.errors];sys.exit(1 if M or L.errors or not A else 0)" test_clean_gates.py 'test_clean_submodules' 'test_clean_a_worktree_holding_a_submodule_is_never_offered'`
+  — verify: `python3 -c "import sys,unittest as u;L=u.defaultTestLoader;f=lambda s:[i for t in s for i in (f(t) if isinstance(t,u.TestSuite) else [t.id()])];I=[i for i in f(L.discover('tests',pattern=sys.argv[1])) if not i.startswith('unittest.')];A=sys.argv[2:];M=[a for a in A if not any(a in ('*',i.split('.')[-1]) for i in I)];[print('not collected:',m) for m in M];[print(e) for e in L.errors];sys.exit(1 if M or L.errors or not A else 0)" test_clean_gates.py 'test_clean_submodules' 'test_clean_a_worktree_holding_a_submodule_is_never_offered' && python3 -c "import sys,unittest as u;L=u.defaultTestLoader;f=lambda s:[i for t in s for i in (f(t) if isinstance(t,u.TestSuite) else [t.id()])];I=[i for i in f(L.discover('tests',pattern=sys.argv[1])) if not i.startswith('unittest.')];A=sys.argv[2:];M=[a for a in A if not any(a in ('*',i.split('.')[-1]) for i in I)];[print('not collected:',m) for m in M];[print(e) for e in L.errors];sys.exit(1 if M or L.errors or not A else 0)" test_clean_gates.py 'test_clean_an_operation_in_progress' 'test_clean_an_operation_in_progress_admin_directory_that_cannot_be_listed' 'test_clean_operation_in_progress_markers' 'test_clean_operation_in_progress_markers_from_real_operations' 'test_clean_a_squash_merge_that_holds_an_autostash' 'test_clean_operation_in_progress_listing_that_fails' 'test_clean_submodules_beside_hidden_local_state' 'test_clean_submodules_beside_hidden_local_state_with_a_modules_entry'`
 - [x] T064 [P] [US2] [S] Add to `tests/test_clean_gates.py`:
   `test_clean_a_merged_worktree_whose_upstream_was_deleted` (a clean, merged
   worktree with a commit of its own and a deleted remote-tracking upstream is
@@ -2032,15 +2197,41 @@ US2, US7 and US9.
   child; it pins T048). Scenarios: "Push an unpushed feature branch"; "Push
   refuses a branch whose upstream was deleted"; "Push refuses an incomplete
   inspection"; "Push and branch deletion stay human-only".
+  The push fix and lane A's push refusals fold in here (R-95 (g); lead rulings
+  R-101 (e), R-109, R-130, R-143 and R-163): lane P's
+  `test_clean_push_an_unpushed_feature_branch_named_dash_dash_force`,
+  `..._named_dash_dash_mirror`, `..._named_plus_x`,
+  `..._tracking_a_remote_named_a_b`, `..._under_a_forced_push_mapping` and
+  `..._with_an_unusable_upstream_refuses` (lane 3's F2 H-1 and H-2: a branch
+  named as an option or with a `+`, a remote named `a/b`, a forced push
+  mapping and an unusable upstream each push only `refs/heads/B` to its
+  configured destination with no force, or refuse); and lane A's addendum 2,
+  `test_clean_push_refuses_the_default_branch`,
+  `test_clean_push_refuses_a_dirty_worktree`,
+  `test_clean_push_refuses_a_detached_worktree`,
+  `test_clean_push_refuses_a_branch_to_reconcile`,
+  `test_clean_push_an_unpushed_feature_branch_whose_merge_is_outside_refs_heads_refuses`
+  and `test_clean_push_refuses_to_publish_without_an_origin_remote` (the
+  baseline's refusals, each with its exact message, exit 2 and no push child,
+  killing W12's P1 to P4, N3 and N9); and lane A's addendum 5,
+  `test_clean_push_refuses_a_branch_it_may_not_push_no_unique_worktree` (the
+  baseline's `No unique linked worktree found for branch B`, exit 2 and no
+  code, for a branch no worktree holds and for one two worktrees hold; #19
+  round (b) at `4485678`). PR #19's scenario "Push refuses a branch it may not
+  push" names that test; the six cover its other cases, none named after it
+  (traceability.md).
   — files: `tests/test_clean_push.py`
-  — verify: `python3 -c "import sys,unittest as u;L=u.defaultTestLoader;f=lambda s:[i for t in s for i in (f(t) if isinstance(t,u.TestSuite) else [t.id()])];I=[i for i in f(L.discover('tests',pattern=sys.argv[1])) if not i.startswith('unittest.')];A=sys.argv[2:];M=[a for a in A if not any(a in ('*',i.split('.')[-1]) for i in I)];[print('not collected:',m) for m in M];[print(e) for e in L.errors];sys.exit(1 if M or L.errors or not A else 0)" test_clean_push.py 'test_clean_push_an_unpushed_feature_branch' 'test_clean_push_refuses_a_branch_whose_upstream_was_deleted' 'test_clean_push_refuses_an_incomplete_inspection' 'test_clean_push_and_branch_deletion_stay_human_only'`
+  — verify: `python3 -c "import sys,unittest as u;L=u.defaultTestLoader;f=lambda s:[i for t in s for i in (f(t) if isinstance(t,u.TestSuite) else [t.id()])];I=[i for i in f(L.discover('tests',pattern=sys.argv[1])) if not i.startswith('unittest.')];A=sys.argv[2:];M=[a for a in A if not any(a in ('*',i.split('.')[-1]) for i in I)];[print('not collected:',m) for m in M];[print(e) for e in L.errors];sys.exit(1 if M or L.errors or not A else 0)" test_clean_push.py 'test_clean_push_an_unpushed_feature_branch' 'test_clean_push_refuses_a_branch_whose_upstream_was_deleted' 'test_clean_push_refuses_an_incomplete_inspection' 'test_clean_push_and_branch_deletion_stay_human_only' && python3 -c "import sys,unittest as u;L=u.defaultTestLoader;f=lambda s:[i for t in s for i in (f(t) if isinstance(t,u.TestSuite) else [t.id()])];I=[i for i in f(L.discover('tests',pattern=sys.argv[1])) if not i.startswith('unittest.')];A=sys.argv[2:];M=[a for a in A if not any(a in ('*',i.split('.')[-1]) for i in I)];[print('not collected:',m) for m in M];[print(e) for e in L.errors];sys.exit(1 if M or L.errors or not A else 0)" test_clean_push.py 'test_clean_push_an_unpushed_feature_branch_named_dash_dash_force' 'test_clean_push_an_unpushed_feature_branch_named_dash_dash_mirror' 'test_clean_push_an_unpushed_feature_branch_named_plus_x' 'test_clean_push_an_unpushed_feature_branch_tracking_a_remote_named_a_b' 'test_clean_push_an_unpushed_feature_branch_under_a_forced_push_mapping' 'test_clean_push_an_unpushed_feature_branch_with_an_unusable_upstream_refuses' 'test_clean_push_refuses_the_default_branch' 'test_clean_push_refuses_a_dirty_worktree' 'test_clean_push_refuses_a_detached_worktree' 'test_clean_push_refuses_a_branch_to_reconcile' 'test_clean_push_an_unpushed_feature_branch_whose_merge_is_outside_refs_heads_refuses' 'test_clean_push_refuses_to_publish_without_an_origin_remote' 'test_clean_push_refuses_a_branch_it_may_not_push_no_unique_worktree'`
 - [x] T073 [P] [US3] [O] Add to `tests/test_clean_push.py`:
   `test_clean_a_signal_during_the_push_or_branch_deletion` (launcher, the real
   table: SIGTERM, and in turn SIGINT and SIGHUP, sent to `project` alone while
   a `pre-push` hook sleeps, and while a `reference-transaction` hook of `git
   branch -d` sleeps: the hook records that no signal reached it, the child is
   waited for and completes, `origin` holds the branch or the branch is gone,
-  and `project` exits 143, 130 or 129; with no signal to `project`, the child's
+  and `project` exits 143, 130 or 129, printing `Interrupted; the push had
+  started and was waited for, and git exited with status N.` (`the branch
+  deletion` for `git branch -d`) and never `Cancelled.` (lead rulings R-101
+  (e) and R-108 (a)); with no signal to `project`, the child's
   own status passes through, and a hook that ends its own `git` with SIGKILL
   gives 137; plan review M3),
   `test_clean_push_and_delete_branch_escape_their_paths` (a repository root
@@ -2061,8 +2252,30 @@ US2, US7 and US9.
   child after the re-inspection and no `git branch -d` run, and the branch
   kept; it passes on arrival, pinning built behaviour; lead rulings R-81 (b)
   and R-96 (a)).
+  Folded since (R-95 (g)):
+  `test_clean_a_signal_during_the_push_or_branch_deletion_once_git_has_mutated`
+  (lane 3's F2 M-1: the ref has moved before the signal, and `project` still
+  waits, reports Git's status and never prints `Cancelled.`; lead ruling R-101
+  (e));
+  `test_clean_a_signal_during_the_push_or_branch_deletion_recorded_in_process`
+  (W19's N10: the signal recorded as the child is reaped gives the
+  `Interrupted` line, exit 128 plus its number; R-155 and R-167);
+  `test_clean_a_signal_during_the_push_or_branch_deletion_recorded_before_the_spawn`
+  (lane 3's N13: a signal recorded as `require_unchanged_cleanup_state()`
+  returns prints `Cancelled.` alone, exit 128 plus its number, and no push or
+  `git branch -d` child runs; R-177, merged as `cceb6d7`); and the three
+  delete-branch refusals,
+  `test_clean_a_branch_deletion_of_the_default_branch_is_refused`,
+  `test_clean_a_branch_deletion_of_a_branch_a_worktree_holds_is_refused`
+  (linked and main worktrees) and
+  `test_clean_a_branch_deletion_of_a_branch_not_merged_into_the_merge_target_is_refused`
+  (`REFUSED: Branch B is not verified as merged into main.`, exit 2), killing
+  D1, D2 and D3 (lead rulings R-107, R-117, R-155 and R-167). PR #19's
+  scenario "Branch deletion refuses a branch it may not delete" (round (a)) is
+  covered by those three, none named after it, and its "No unique linked
+  worktree found for branch B" refusal by none (R-166; traceability.md).
   — files: `tests/test_clean_push.py`
-  — verify: `python3 -c "import sys,unittest as u;L=u.defaultTestLoader;f=lambda s:[i for t in s for i in (f(t) if isinstance(t,u.TestSuite) else [t.id()])];I=[i for i in f(L.discover('tests',pattern=sys.argv[1])) if not i.startswith('unittest.')];A=sys.argv[2:];M=[a for a in A if not any(a in ('*',i.split('.')[-1]) for i in I)];[print('not collected:',m) for m in M];[print(e) for e in L.errors];sys.exit(1 if M or L.errors or not A else 0)" test_clean_push.py 'test_clean_a_signal_during_the_push_or_branch_deletion' 'test_clean_push_and_delete_branch_escape_their_paths' 'test_clean_a_branch_deletion_that_cannot_be_spawned' && python3 -m unittest discover -s tests -p 'test_clean_push.py' -k '*.test_clean_a_branch_deletion_that_cannot_be_spawned'`
+  — verify: `python3 -c "import sys,unittest as u;L=u.defaultTestLoader;f=lambda s:[i for t in s for i in (f(t) if isinstance(t,u.TestSuite) else [t.id()])];I=[i for i in f(L.discover('tests',pattern=sys.argv[1])) if not i.startswith('unittest.')];A=sys.argv[2:];M=[a for a in A if not any(a in ('*',i.split('.')[-1]) for i in I)];[print('not collected:',m) for m in M];[print(e) for e in L.errors];sys.exit(1 if M or L.errors or not A else 0)" test_clean_push.py 'test_clean_a_signal_during_the_push_or_branch_deletion' 'test_clean_push_and_delete_branch_escape_their_paths' 'test_clean_a_branch_deletion_that_cannot_be_spawned' && python3 -m unittest discover -s tests -p 'test_clean_push.py' -k '*.test_clean_a_branch_deletion_that_cannot_be_spawned' && python3 -c "import sys,unittest as u;L=u.defaultTestLoader;f=lambda s:[i for t in s for i in (f(t) if isinstance(t,u.TestSuite) else [t.id()])];I=[i for i in f(L.discover('tests',pattern=sys.argv[1])) if not i.startswith('unittest.')];A=sys.argv[2:];M=[a for a in A if not any(a in ('*',i.split('.')[-1]) for i in I)];[print('not collected:',m) for m in M];[print(e) for e in L.errors];sys.exit(1 if M or L.errors or not A else 0)" test_clean_push.py 'test_clean_a_signal_during_the_push_or_branch_deletion_once_git_has_mutated' 'test_clean_a_signal_during_the_push_or_branch_deletion_recorded_in_process' 'test_clean_a_signal_during_the_push_or_branch_deletion_recorded_before_the_spawn' 'test_clean_a_branch_deletion_of_the_default_branch_is_refused' 'test_clean_a_branch_deletion_of_a_branch_a_worktree_holds_is_refused' 'test_clean_a_branch_deletion_of_a_branch_not_merged_into_the_merge_target_is_refused'`
 - [x] T074 [P] [US3] [O] Add to `tests/test_clean_push.py` (PR #19; plan.md LQ-3;
   research.md R1): `test_clean_the_push_child_reaches_its_remote` (`project
   clean ROOT --apply --action push --branch B --yes`, with ROOT the main
@@ -2071,9 +2284,9 @@ US2, US7 and US9.
   clean feature branch B the push accepts (not the default branch, `origin/B`
   present, lacking a commit B holds and holding none B lacks, no other row
   `inspection-error`), `origin` a local path. The counting log shows the push
-  child with none of the seven pins and with the seventeen names but
-  `GIT_ALLOW_PROTOCOL` removed, and all seven pins on every other child; the
-  push child's process group is `project`'s, and every other child's is its
+  child with none of the seven pins and with the thirty-one names but
+  `GIT_ALLOW_PROTOCOL` removed (seventeen before Q9 B), and all seven pins
+  on every other child; the push child's process group is `project`'s, and every other child's is its
   own; the push exits 0 and `origin` holds B at its local commit. With a
   `pre-push` hook that sleeps 7 s, unscaled, the push still exits 0, `origin`
   holds B, and the hook records that no signal reached it; the `sh` counting
@@ -2085,8 +2298,10 @@ US2, US7 and US9.
   username and password prompts are answered through the pseudo-terminal, the
   terminal's foreground process group is the push child's, which is
   `project`'s, and the push lands; ^C typed at the username prompt interrupts
-  the push, nothing is pushed, and `project` prints `Cancelled.` and exits 130,
-  by D19's first row (plan review M3)). Scenario: "The push child reaches its
+  the push, nothing is pushed, and `project` exits 130, by D19's first row
+  (plan review M3), printing `Interrupted; the push had started and was
+  waited for, and git exited with status 130.`, never `Cancelled.`, since the
+  push child had been spawned (lead rulings R-101 (e) and R-108 (a))). Scenario: "The push child reaches its
   remote" (PR #19, draft).
   — files: `tests/test_clean_push.py`
   — verify: `python3 -c "import sys,unittest as u;L=u.defaultTestLoader;f=lambda s:[i for t in s for i in (f(t) if isinstance(t,u.TestSuite) else [t.id()])];I=[i for i in f(L.discover('tests',pattern=sys.argv[1])) if not i.startswith('unittest.')];A=sys.argv[2:];M=[a for a in A if not any(a in ('*',i.split('.')[-1]) for i in I)];[print('not collected:',m) for m in M];[print(e) for e in L.errors];sys.exit(1 if M or L.errors or not A else 0)" test_clean_push.py 'test_clean_the_push_child_reaches_its_remote' 'test_clean_the_push_child_reaches_its_remote_at_a_terminal'`
@@ -2167,13 +2382,25 @@ US2, US7 and US9.
   reads the branch head from row 6 and merged-ness from row 7 instead of
   calling `ancestor()`; `remote get-url origin` runs through the driver; the
   signal slot is read just before either child is spawned, a set slot
-  raising `Interrupted` with no child run, and again once the child is
-  reaped, a set slot raising `Interrupted` then too (lead ruling R-53 P-7);
+  raising `Interrupted` with no child run, and once the child is reaped
+  the phase is `apply`, so that a signal recorded by then prints `Interrupted;
+  the push had started and was waited for, and git exited with status N.`
+  (`the branch deletion` for delete-branch), never `Cancelled.`, since
+  `project` cannot prove that nothing changed (lead rulings R-53 P-7, R-101
+  (e) and R-108 (a));
   so the run exits by D19's first row: 130, 143 or 129 when a signal was
   recorded before or while the child ran, otherwise the child's status, 128
   plus the signal number for a signal death, and 2 for a refusal (M3).
+  The push fix folds in here, merged as `1eb5afa` (lead rulings R-101 (e) and
+  R-109; lane 3's F2 H-1, H-2 and M-1): the push reads its remote and
+  destination from `git config --get-all branch.B.remote` and
+  `branch.B.merge`, never splitting the upstream's short name, one value each,
+  the remote not `.` and the destination under `refs/heads/`, or the
+  baseline's `Unsupported upstream mapping for B: U`; the command is `push --
+  REMOTE refs/heads/B:MERGE`, or `push -u -- origin refs/heads/B:refs/heads/B`
+  with no upstream, fully qualified with no `+`, `--` ending the options.
   — files: `project`
-  — verify: `python3 -c "import sys,re;t=open('project').read();A=sys.argv[1:];c=lambda r:t.split('# region '+r+'\n')[1].split('# endregion '+r+'\n')[0];M=[a for a in A if not ((a.split('%',1)[1] not in c(a.split('%',1)[0])) if '%' in a else (a.split('~',1)[1] in c(a.split('~',1)[0])) if '~' in a else re.search(r'^[a-z]*\s?'+re.escape(a.split(':',1)[1])+r'\b',c(a.split(':',1)[0]),re.M))];[print('region check failed:',m) for m in M];sys.exit(1 if M or not A else 0)" 'push:show_push_plan' 'push~remote-gone' && python3 -c "import ast,subprocess as s,sys;g=lambda t:{n.name:ast.dump(n) for n in ast.parse(t).body if isinstance(n,(ast.FunctionDef,ast.ClassDef))};a=g(s.run(['git','show','961c405:project'],capture_output=True,text=True,check=True).stdout);b=g(open('project').read());M=[n for n in sys.argv[1:] if n not in a or not a[n]==b.get(n)];[print('changed since 961c405:',m) for m in M];sys.exit(1 if M or not sys.argv[1:] else 0)" show_plan confirm && python3 project clean --help >/dev/null`
+  — verify: `python3 -c "import sys,re;t=open('project').read();A=sys.argv[1:];c=lambda r:t.split('# region '+r+'\n')[1].split('# endregion '+r+'\n')[0];M=[a for a in A if not ((a.split('%',1)[1] not in c(a.split('%',1)[0])) if '%' in a else (a.split('~',1)[1] in c(a.split('~',1)[0])) if '~' in a else re.search(r'^[a-z]*\s?'+re.escape(a.split(':',1)[1])+r'\b',c(a.split(':',1)[0]),re.M))];[print('region check failed:',m) for m in M];sys.exit(1 if M or not A else 0)" 'push:show_push_plan' 'push~remote-gone' && python3 -c "import ast,subprocess as s,sys;g=lambda t:{n.name:ast.dump(n) for n in ast.parse(t).body if isinstance(n,(ast.FunctionDef,ast.ClassDef))};a=g(s.run(['git','show','961c405:project'],capture_output=True,text=True,check=True).stdout);b=g(open('project').read());M=[n for n in sys.argv[1:] if n not in a or not a[n]==b.get(n)];[print('changed since 961c405:',m) for m in M];sys.exit(1 if M or not sys.argv[1:] else 0)" show_plan confirm && python3 project clean --help >/dev/null && python3 -c "import sys,re;t=open('project').read();A=sys.argv[1:];c=lambda r:t.split('# region '+r+'\n')[1].split('# endregion '+r+'\n')[0];M=[a for a in A if not ((a.split('%',1)[1] not in c(a.split('%',1)[0])) if '%' in a else (a.split('~',1)[1] in c(a.split('~',1)[0])) if '~' in a else re.search(r'^[a-z]*\s?'+re.escape(a.split(':',1)[1])+r'\b',c(a.split(':',1)[0]),re.M))];[print('region check failed:',m) for m in M];sys.exit(1 if M or not A else 0)" 'push~"--get-all"' 'push~"refs/heads/{branch}:{merge}"' 'push~run.phase = "apply"' 'push~Interrupted; '`
 - [x] T077 [P] [US3] [O] `execute()` (`project:157-162`) gains only an optional
   `env` argument. The push child runs as `execute(git_argv("push", ["-C",
   ROOT, "push", ...]), env=git_env("push"))`, built through `git_argv()` so
@@ -2214,7 +2441,8 @@ keep their flags and gain their refusals.
 **Priority**: P2.
 
 **Goal**: Before each removal, a targeted revalidation of at most five Git
-children compares the recorded identities and evidence and refuses at the first
+children (six where row 4c read `extensions.worktreeConfig` as true, LQ-11)
+compares the recorded identities and evidence and refuses at the first
 difference; the rescan after a removal re-establishes the repository first and
 reports a branch race without losing a commit.
 
@@ -2286,8 +2514,13 @@ US3, US7 and US9; US5's text lane follows it (analyze M2 and L9).
   0 and before its rescan: P `removed`, Q `refused` with `state-changed`, exit
   2). Scenarios: "State changes before revalidation"; "Branch advances before
   removal"; "Deleted upstream reappears before revalidation".
+  Lane A's fix of the apply review's F2 folds in here (lead ruling R-101 (d)):
+  `test_clean_state_changes_before_revalidation_a_tracking_branch_that_is_not_a_string`
+  (a manifest `tracking_branch` of YAML's `.nan`, which planning reads as no
+  candidate: left as it was it is no difference and both targets are removed,
+  and an edit to or from a string is `state-changed`, as written, R-77).
   — files: `tests/test_clean_revalidation.py`
-  — verify: `python3 -c "import sys,unittest as u;L=u.defaultTestLoader;f=lambda s:[i for t in s for i in (f(t) if isinstance(t,u.TestSuite) else [t.id()])];I=[i for i in f(L.discover('tests',pattern=sys.argv[1])) if not i.startswith('unittest.')];A=sys.argv[2:];M=[a for a in A if not any(a in ('*',i.split('.')[-1]) for i in I)];[print('not collected:',m) for m in M];[print(e) for e in L.errors];sys.exit(1 if M or L.errors or not A else 0)" test_clean_revalidation.py 'test_clean_state_changes_before_revalidation' 'test_clean_branch_advances_before_removal' 'test_clean_deleted_upstream_reappears_before_revalidation'`
+  — verify: `python3 -c "import sys,unittest as u;L=u.defaultTestLoader;f=lambda s:[i for t in s for i in (f(t) if isinstance(t,u.TestSuite) else [t.id()])];I=[i for i in f(L.discover('tests',pattern=sys.argv[1])) if not i.startswith('unittest.')];A=sys.argv[2:];M=[a for a in A if not any(a in ('*',i.split('.')[-1]) for i in I)];[print('not collected:',m) for m in M];[print(e) for e in L.errors];sys.exit(1 if M or L.errors or not A else 0)" test_clean_revalidation.py 'test_clean_state_changes_before_revalidation' 'test_clean_branch_advances_before_removal' 'test_clean_deleted_upstream_reappears_before_revalidation' && python3 -c "import sys,unittest as u;L=u.defaultTestLoader;f=lambda s:[i for t in s for i in (f(t) if isinstance(t,u.TestSuite) else [t.id()])];I=[i for i in f(L.discover('tests',pattern=sys.argv[1])) if not i.startswith('unittest.')];A=sys.argv[2:];M=[a for a in A if not any(a in ('*',i.split('.')[-1]) for i in I)];[print('not collected:',m) for m in M];[print(e) for e in L.errors];sys.exit(1 if M or L.errors or not A else 0)" test_clean_revalidation.py 'test_clean_state_changes_before_revalidation_a_tracking_branch_that_is_not_a_string'`
 - [x] T082 [US4] [O] Add to `tests/test_clean_revalidation.py`:
   `test_clean_untracked_file_under_status_showuntrackedfiles_no`
   (`status.showUntrackedFiles=no` in the `GIT_CONFIG_GLOBAL` file, and an
@@ -2328,8 +2561,22 @@ US3, US7 and US9; US5's text lane follows it (analyze M2 and L9).
   `contains-submodule`, exit 2). Scenarios: "Branch advances after removal";
   "Repository replaced mid-batch"; "Hidden local state" and "Submodules", their
   after-confirmation clauses (spec.md, US4 scenario 2).
+  Brett Heap's ruling LQ-14's revalidation folds in here, built by lane G at
+  `2405880` and merged as `e0c589a` (lead rulings R-121, R-124, R-126, R-127
+  and R-180): `test_clean_an_operation_started_after_the_plan` (`git bisect
+  start --no-checkout` in the first target at the question: `refused` with
+  `operation-in-progress`, the second `not-attempted`, nothing removed, exit
+  2, the bisect kept); `test_clean_a_check_that_fails_at_revalidation` (the
+  first target's administrative directory made unlistable at the question:
+  `refused` with `state-changed`, nothing removed, exit 2; its scenario's
+  `logs/HEAD` clause belongs to LQ-13, held); and
+  `test_clean_operation_in_progress_listing_cut_at_revalidation` (in process,
+  the listing timed out is `state-changed`, exit 2, and cut by the work
+  deadline is `not-attempted` with `deadline-exceeded`, exit 1). Scenarios: PR
+  #19's "An operation started after the plan" and "A check that fails at
+  revalidation", the listing clause.
   — files: `tests/test_clean_revalidation.py`
-  — verify: `python3 -c "import sys,unittest as u;L=u.defaultTestLoader;f=lambda s:[i for t in s for i in (f(t) if isinstance(t,u.TestSuite) else [t.id()])];I=[i for i in f(L.discover('tests',pattern=sys.argv[1])) if not i.startswith('unittest.')];A=sys.argv[2:];M=[a for a in A if not any(a in ('*',i.split('.')[-1]) for i in I)];[print('not collected:',m) for m in M];[print(e) for e in L.errors];sys.exit(1 if M or L.errors or not A else 0)" test_clean_revalidation.py 'test_clean_branch_advances_after_removal' 'test_clean_repository_replaced_mid_batch' 'test_clean_hidden_local_state_after_confirmation' 'test_clean_submodules_after_confirmation'`
+  — verify: `python3 -c "import sys,unittest as u;L=u.defaultTestLoader;f=lambda s:[i for t in s for i in (f(t) if isinstance(t,u.TestSuite) else [t.id()])];I=[i for i in f(L.discover('tests',pattern=sys.argv[1])) if not i.startswith('unittest.')];A=sys.argv[2:];M=[a for a in A if not any(a in ('*',i.split('.')[-1]) for i in I)];[print('not collected:',m) for m in M];[print(e) for e in L.errors];sys.exit(1 if M or L.errors or not A else 0)" test_clean_revalidation.py 'test_clean_branch_advances_after_removal' 'test_clean_repository_replaced_mid_batch' 'test_clean_hidden_local_state_after_confirmation' 'test_clean_submodules_after_confirmation' && python3 -c "import sys,unittest as u;L=u.defaultTestLoader;f=lambda s:[i for t in s for i in (f(t) if isinstance(t,u.TestSuite) else [t.id()])];I=[i for i in f(L.discover('tests',pattern=sys.argv[1])) if not i.startswith('unittest.')];A=sys.argv[2:];M=[a for a in A if not any(a in ('*',i.split('.')[-1]) for i in I)];[print('not collected:',m) for m in M];[print(e) for e in L.errors];sys.exit(1 if M or L.errors or not A else 0)" test_clean_revalidation.py 'test_clean_an_operation_started_after_the_plan' 'test_clean_a_check_that_fails_at_revalidation' 'test_clean_operation_in_progress_listing_cut_at_revalidation'`
 
 ### Implementation for User Story 4
 
@@ -2363,8 +2610,21 @@ US3, US7 and US9; US5's text lane follows it (analyze M2 and L9).
   it, plus an `lstat` of the planned path when that
   revalidation stopped before its own; a field whose listing did not run is
   null (plan review M13).
+  Folded since: a `tracking_branch` that is not a string reads as none on both
+  sides of step 2 (`as_candidate()`; lead ruling R-101 (d), the apply review's
+  F2); a refused target's `lstat` of its planned path runs with the reserve's
+  budget (`reserve_budget()`; R-101 (d), F3); where row 4c read
+  `extensions.worktreeConfig` as true, step 5 also probes the target's
+  effective work tree, a sixth Git child, a different work tree giving
+  `identity-changed` (LQ-11; lane E's hunk, R-149), and at `cceb6d7` a failed
+  or timed-out probe too, which lead ruling R-171 makes `state-changed`, lane
+  G building it (R-180); and step 5 ends with LQ-14's listing of the target's
+  administrative directory (`operation_check()`), a marker giving
+  `operation-in-progress`, a listing that fails or times out `state-changed`
+  and a cut at the work deadline `deadline-exceeded` (lead rulings R-124,
+  R-127 and R-180).
   — files: `project`
-  — verify: `python3 -c "import sys,re;t=open('project').read();A=sys.argv[1:];c=lambda r:t.split('# region '+r+'\n')[1].split('# endregion '+r+'\n')[0];M=[a for a in A if not ((a.split('%',1)[1] not in c(a.split('%',1)[0])) if '%' in a else (a.split('~',1)[1] in c(a.split('~',1)[0])) if '~' in a else re.search(r'^[a-z]*\s?'+re.escape(a.split(':',1)[1])+r'\b',c(a.split(':',1)[0]),re.M))];[print('region check failed:',m) for m in M];sys.exit(1 if M or not A else 0)" 'apply:narrowed_ref_patterns' && python3 project clean --help >/dev/null`
+  — verify: `python3 -c "import sys,re;t=open('project').read();A=sys.argv[1:];c=lambda r:t.split('# region '+r+'\n')[1].split('# endregion '+r+'\n')[0];M=[a for a in A if not ((a.split('%',1)[1] not in c(a.split('%',1)[0])) if '%' in a else (a.split('~',1)[1] in c(a.split('~',1)[0])) if '~' in a else re.search(r'^[a-z]*\s?'+re.escape(a.split(':',1)[1])+r'\b',c(a.split(':',1)[0]),re.M))];[print('region check failed:',m) for m in M];sys.exit(1 if M or not A else 0)" 'apply:narrowed_ref_patterns' && python3 project clean --help >/dev/null && python3 -c "import sys,re;t=open('project').read();A=sys.argv[1:];c=lambda r:t.split('# region '+r+'\n')[1].split('# endregion '+r+'\n')[0];M=[a for a in A if not ((a.split('%',1)[1] not in c(a.split('%',1)[0])) if '%' in a else (a.split('~',1)[1] in c(a.split('~',1)[0])) if '~' in a else re.search(r'^[a-z]*\s?'+re.escape(a.split(':',1)[1])+r'\b',c(a.split(':',1)[0]),re.M))];[print('region check failed:',m) for m in M];sys.exit(1 if M or not A else 0)" 'apply:as_candidate' 'apply:reserve_budget' 'apply~operation_check(' 'apply~effective_work_tree('`
 - [x] T085 [US4] [O] In `rescan()` and `decide_stage()` (region `apply`; D7,
   FR-035, FR-049): the rescan re-establishes the repository identity first, and
   where it differs every reconciliation field is null, `reconciled` is false,
@@ -2485,8 +2745,17 @@ lead ruling R-83).
   the fields not read are null, the record is printed, exit 130; plan review
   M17, FR-036; lead ruling R-91 LOW D). Scenarios: "A signal during a
   removal"; "SIGTERM before the apply phase".
+  Lane O's runner fixes fold in here (lead ruling R-101 (b), the runner
+  review's F1 and F2):
+  `test_clean_a_signal_during_a_removal_ignored_on_entry_stays_ignored` (the
+  scenario's run with the signal at `SIG_IGN` when `project` starts: it
+  changes nothing, the removals finish and the run exits 0) and
+  `test_clean_apply_with_json_prints_one_document_when_standard_error_fails`
+  (`--apply --json` with standard error on `/dev/full` or a closed pipe, at
+  `confirmation-required` and `plan-digest-mismatch`: one document, the
+  `internal-error` object, exit 2, nothing removed).
   — files: `tests/test_clean_result.py`
-  — verify: `python3 -c "import sys,unittest as u;L=u.defaultTestLoader;f=lambda s:[i for t in s for i in (f(t) if isinstance(t,u.TestSuite) else [t.id()])];I=[i for i in f(L.discover('tests',pattern=sys.argv[1])) if not i.startswith('unittest.')];A=sys.argv[2:];M=[a for a in A if not any(a in ('*',i.split('.')[-1]) for i in I)];[print('not collected:',m) for m in M];[print(e) for e in L.errors];sys.exit(1 if M or L.errors or not A else 0)" test_clean_result.py 'test_clean_a_signal_during_a_removal' 'test_clean_sigterm_before_the_apply_phase' 'test_clean_sigterm_before_the_apply_phase_after_the_last_probe' 'test_clean_sigterm_before_the_apply_phase_while_the_plan_is_written' 'test_clean_a_second_sigint_abandons_reconciliation'`
+  — verify: `python3 -c "import sys,unittest as u;L=u.defaultTestLoader;f=lambda s:[i for t in s for i in (f(t) if isinstance(t,u.TestSuite) else [t.id()])];I=[i for i in f(L.discover('tests',pattern=sys.argv[1])) if not i.startswith('unittest.')];A=sys.argv[2:];M=[a for a in A if not any(a in ('*',i.split('.')[-1]) for i in I)];[print('not collected:',m) for m in M];[print(e) for e in L.errors];sys.exit(1 if M or L.errors or not A else 0)" test_clean_result.py 'test_clean_a_signal_during_a_removal' 'test_clean_sigterm_before_the_apply_phase' 'test_clean_sigterm_before_the_apply_phase_after_the_last_probe' 'test_clean_sigterm_before_the_apply_phase_while_the_plan_is_written' 'test_clean_a_second_sigint_abandons_reconciliation' && python3 -c "import sys,unittest as u;L=u.defaultTestLoader;f=lambda s:[i for t in s for i in (f(t) if isinstance(t,u.TestSuite) else [t.id()])];I=[i for i in f(L.discover('tests',pattern=sys.argv[1])) if not i.startswith('unittest.')];A=sys.argv[2:];M=[a for a in A if not any(a in ('*',i.split('.')[-1]) for i in I)];[print('not collected:',m) for m in M];[print(e) for e in L.errors];sys.exit(1 if M or L.errors or not A else 0)" test_clean_result.py 'test_clean_a_signal_during_a_removal_ignored_on_entry_stays_ignored' 'test_clean_apply_with_json_prints_one_document_when_standard_error_fails'`
 - [x] T088 [P] [US5] [S] Add to `tests/test_clean_result.py`:
   `test_clean_exit_0_without_evidence` (the `remove-noop` fake: `unknown` with
   `unconfirmed-removal`, later targets `not-attempted`, exit 1; it pins T056);
@@ -2526,6 +2795,10 @@ lead ruling R-83).
   and 143 when the patch also records SIGTERM in the slot; plan review M2).
   Scenarios: "A removal past the hard ceiling"; "Unreadable path after
   removal"; "Exception after the apply phase begins".
+  `test_clean_exception_after_the_apply_phase_begins` gains the fault
+  `selector`, the driver's selector raising `EMFILE` once a removal child has
+  started, plainly and with SIGTERM in the slot: the child is waited for
+  before the target is decided (lead ruling R-101 (b); lane O's `83f356e`).
   — files: `tests/test_clean_result.py`
   — verify: `python3 -c "import sys,unittest as u;L=u.defaultTestLoader;f=lambda s:[i for t in s for i in (f(t) if isinstance(t,u.TestSuite) else [t.id()])];I=[i for i in f(L.discover('tests',pattern=sys.argv[1])) if not i.startswith('unittest.')];A=sys.argv[2:];M=[a for a in A if not any(a in ('*',i.split('.')[-1]) for i in I)];[print('not collected:',m) for m in M];[print(e) for e in L.errors];sys.exit(1 if M or L.errors or not A else 0)" test_clean_result.py 'test_clean_a_removal_past_the_hard_ceiling' 'test_clean_unreadable_path_after_removal' 'test_clean_exception_after_the_apply_phase_begins'`
 - [x] T090 [P] [US5] [S] Add `test_clean_stage_and_reason_table` to
@@ -2979,8 +3252,23 @@ checkpoint, beside US2, US3 and US9.
   every relative argument holding a `/` resolving as a path; `~` is expanded
   first). Scenarios: "Absolute path that is not a repository root"; "Overview
   handoff keeps identity".
+  Lane E's resolution fixes fold in here (lead ruling R-101 (c); the plan
+  review's F2 and F4; lane 3's US7/US9 L-1 to L-3; lane E's `548b409` and
+  `085a43b`):
+  `test_clean_bare_name_refusals_carry_their_codes_for_a_name_the_lookup_cannot_examine`
+  (`~nosuchuser`, a name of 256 bytes or more, and a name looked up from a
+  working directory that is gone: `repository-not-found`, exit 2, where each
+  was `internal-error`);
+  `test_clean_a_relative_path_or_none_from_a_working_directory_that_is_gone`
+  (`target-not-repository-root` naming the argument, or `.`);
+  `test_clean_a_relative_path_s_refusal_names_the_directory_git_examined` (its
+  realpath, not its lexical form); and
+  `test_clean_row_5_failing_still_resolves_to_the_main_worktree` (row 5
+  failing leaves `repository.root` null and the plan incomplete, the command
+  directory still the main worktree, never the linked worktree the command ran
+  in).
   — files: `tests/test_clean_resolution.py`
-  — verify: `python3 -c "import sys,unittest as u;L=u.defaultTestLoader;f=lambda s:[i for t in s for i in (f(t) if isinstance(t,u.TestSuite) else [t.id()])];I=[i for i in f(L.discover('tests',pattern=sys.argv[1])) if not i.startswith('unittest.')];A=sys.argv[2:];M=[a for a in A if not any(a in ('*',i.split('.')[-1]) for i in I)];[print('not collected:',m) for m in M];[print(e) for e in L.errors];sys.exit(1 if M or L.errors or not A else 0)" test_clean_resolution.py 'test_clean_absolute_path_that_is_not_a_repository_root' 'test_clean_overview_handoff_keeps_identity' 'test_clean_bare_name_predicate'`
+  — verify: `python3 -c "import sys,unittest as u;L=u.defaultTestLoader;f=lambda s:[i for t in s for i in (f(t) if isinstance(t,u.TestSuite) else [t.id()])];I=[i for i in f(L.discover('tests',pattern=sys.argv[1])) if not i.startswith('unittest.')];A=sys.argv[2:];M=[a for a in A if not any(a in ('*',i.split('.')[-1]) for i in I)];[print('not collected:',m) for m in M];[print(e) for e in L.errors];sys.exit(1 if M or L.errors or not A else 0)" test_clean_resolution.py 'test_clean_absolute_path_that_is_not_a_repository_root' 'test_clean_overview_handoff_keeps_identity' 'test_clean_bare_name_predicate' && python3 -c "import sys,unittest as u;L=u.defaultTestLoader;f=lambda s:[i for t in s for i in (f(t) if isinstance(t,u.TestSuite) else [t.id()])];I=[i for i in f(L.discover('tests',pattern=sys.argv[1])) if not i.startswith('unittest.')];A=sys.argv[2:];M=[a for a in A if not any(a in ('*',i.split('.')[-1]) for i in I)];[print('not collected:',m) for m in M];[print(e) for e in L.errors];sys.exit(1 if M or L.errors or not A else 0)" test_clean_resolution.py 'test_clean_bare_name_refusals_carry_their_codes_for_a_name_the_lookup_cannot_examine' 'test_clean_a_relative_path_or_none_from_a_working_directory_that_is_gone' 'test_clean_a_relative_path_s_refusal_names_the_directory_git_examined' 'test_clean_row_5_failing_still_resolves_to_the_main_worktree'`
 - [x] T105 [US7] [S] Add to `tests/test_clean_resolution.py`:
   `test_clean_a_bare_repository_reached_from_a_linked_worktree` (a relative
   path, and no argument, inside a linked worktree of a bare repository:
@@ -3016,8 +3304,14 @@ checkpoint, beside US2, US3 and US9.
   process with `read_yaml` patched to fail, the file never read). Scenarios:
   "Merge target missing, invalid, or conflicting"; "A tracking branch spelled
   with its remote"; "A manifest over 1 MiB".
+  Lane E's fix of lane 3's US7/US9 M-1 folds in here (lead ruling R-101 (e);
+  lane E's `0322175`):
+  `test_clean_merge_target_missing_invalid_or_conflicting_a_value_pyyaml_cannot_build`
+  (a manifest value PyYAML raises `ValueError`, `KeyError`, `AttributeError`
+  or `RecursionError` for, such as `released: 2021-02-30`, is
+  `manifest-invalid`, exit 2, where it was `internal-error`).
   — files: `tests/test_clean_resolution.py`
-  — verify: `python3 -c "import sys,unittest as u;L=u.defaultTestLoader;f=lambda s:[i for t in s for i in (f(t) if isinstance(t,u.TestSuite) else [t.id()])];I=[i for i in f(L.discover('tests',pattern=sys.argv[1])) if not i.startswith('unittest.')];A=sys.argv[2:];M=[a for a in A if not any(a in ('*',i.split('.')[-1]) for i in I)];[print('not collected:',m) for m in M];[print(e) for e in L.errors];sys.exit(1 if M or L.errors or not A else 0)" test_clean_resolution.py 'test_clean_merge_target_missing_invalid_or_conflicting' 'test_clean_a_tracking_branch_spelled_with_its_remote' 'test_clean_a_manifest_over_1_mib'`
+  — verify: `python3 -c "import sys,unittest as u;L=u.defaultTestLoader;f=lambda s:[i for t in s for i in (f(t) if isinstance(t,u.TestSuite) else [t.id()])];I=[i for i in f(L.discover('tests',pattern=sys.argv[1])) if not i.startswith('unittest.')];A=sys.argv[2:];M=[a for a in A if not any(a in ('*',i.split('.')[-1]) for i in I)];[print('not collected:',m) for m in M];[print(e) for e in L.errors];sys.exit(1 if M or L.errors or not A else 0)" test_clean_resolution.py 'test_clean_merge_target_missing_invalid_or_conflicting' 'test_clean_a_tracking_branch_spelled_with_its_remote' 'test_clean_a_manifest_over_1_mib' && python3 -c "import sys,unittest as u;L=u.defaultTestLoader;f=lambda s:[i for t in s for i in (f(t) if isinstance(t,u.TestSuite) else [t.id()])];I=[i for i in f(L.discover('tests',pattern=sys.argv[1])) if not i.startswith('unittest.')];A=sys.argv[2:];M=[a for a in A if not any(a in ('*',i.split('.')[-1]) for i in I)];[print('not collected:',m) for m in M];[print(e) for e in L.errors];sys.exit(1 if M or L.errors or not A else 0)" test_clean_resolution.py 'test_clean_merge_target_missing_invalid_or_conflicting_a_value_pyyaml_cannot_build'`
 
 ### Implementation for User Story 7
 
@@ -3042,8 +3336,16 @@ checkpoint, beside US2, US3 and US9.
   table; lead ruling R-71 (b)). Each refusal passes complete `context`
   objects, every key of their contract tuples present, since
   `error_document()` raises `KeyError` on a missing key (R-49).
+  Lane E's resolution fixes fold in here (lead ruling R-101 (c); lane E's
+  `085a43b`): a name the lookup cannot examine (`~user` for no such user, a
+  name too long for a path component, or one looked up from a working
+  directory that is gone) is `repository-not-found` with `discover()`'s
+  message `Directory does not exist: PATH`; a relative path, or none, from a
+  working directory that is gone is `target-not-repository-root` naming the
+  argument as given, or `.`; and a relative path's refusal names the directory
+  Git examined, its realpath. `discover()` is unchanged.
   — files: `project`
-  — verify: `python3 -c "import sys,re;t=open('project').read();A=sys.argv[1:];c=lambda r:t.split('# region '+r+'\n')[1].split('# endregion '+r+'\n')[0];M=[a for a in A if not ((a.split('%',1)[1] not in c(a.split('%',1)[0])) if '%' in a else (a.split('~',1)[1] in c(a.split('~',1)[0])) if '~' in a else re.search(r'^[a-z]*\s?'+re.escape(a.split(':',1)[1])+r'\b',c(a.split(':',1)[0]),re.M))];[print('region check failed:',m) for m in M];sys.exit(1 if M or not A else 0)" 'resolution:is_bare_name' && python3 -m unittest discover -s tests -p 'test_clean_resolution.py' -k '*.test_clean_bare_name_predicate' -k '*.test_clean_a_submodule_checkout' -k '*.test_clean_a_bare_repository_reached_from_a_linked_worktree'`
+  — verify: `python3 -c "import sys,re;t=open('project').read();A=sys.argv[1:];c=lambda r:t.split('# region '+r+'\n')[1].split('# endregion '+r+'\n')[0];M=[a for a in A if not ((a.split('%',1)[1] not in c(a.split('%',1)[0])) if '%' in a else (a.split('~',1)[1] in c(a.split('~',1)[0])) if '~' in a else re.search(r'^[a-z]*\s?'+re.escape(a.split(':',1)[1])+r'\b',c(a.split(':',1)[0]),re.M))];[print('region check failed:',m) for m in M];sys.exit(1 if M or not A else 0)" 'resolution:is_bare_name' && python3 -m unittest discover -s tests -p 'test_clean_resolution.py' -k '*.test_clean_bare_name_predicate' -k '*.test_clean_a_submodule_checkout' -k '*.test_clean_a_bare_repository_reached_from_a_linked_worktree' && python3 -c "import sys,re;t=open('project').read();A=sys.argv[1:];c=lambda r:t.split('# region '+r+'\n')[1].split('# endregion '+r+'\n')[0];M=[a for a in A if not ((a.split('%',1)[1] not in c(a.split('%',1)[0])) if '%' in a else (a.split('~',1)[1] in c(a.split('~',1)[0])) if '~' in a else re.search(r'^[a-z]*\s?'+re.escape(a.split(':',1)[1])+r'\b',c(a.split(':',1)[0]),re.M))];[print('region check failed:',m) for m in M];sys.exit(1 if M or not A else 0)" 'resolution~os.getcwdb()'`
 - [x] T108 [US7] [O] Fill `declared_tracking_branch(root)` (region `evidence`; D8,
   FR-018, FR-060) with a bounded read: an `st_size` over 1 MiB is
   `manifest-invalid` without a read, the read never passes 1 MiB, and an
@@ -3060,6 +3362,12 @@ checkpoint, beside US2, US3 and US9.
   extended error object fills them, each a complete object with every key
   of its contract tuple, since `error_document()` raises `KeyError` on a
   missing key (lead ruling R-49). T104 to T106 pass.
+  Lane E's `0322175` folds in here (lead ruling R-101 (e); lane 3's US7/US9
+  M-1): a manifest PyYAML cannot build, raising other than a `YAMLError`, is
+  `manifest-invalid` with the baseline's `Cannot read PATH: ...` message in
+  `clean`, and in status, doctor and update reads as a manifest that does not
+  parse (T115's
+  `test_status_a_leg_manifest_that_does_not_load_reads_as_one_that_does_not_parse`).
   — files: `project`
   — verify: `python3 -m unittest discover -s tests -p 'test_clean_resolution.py'`
 - [x] T109 [US7] [S] Run the US7 module, every earlier module and the 96 tests: all
@@ -3215,11 +3523,42 @@ test and T116's removal-child clause held back (lead ruling R-56 Q-5).
   output (lead ruling R-59 D7), exit 1; research.md R2); and
   `test_update_tools_and_workflow_need_no_git` (the 2.35 fake: `update --apply
   --component workflow --yes` runs the fake `setup-openspeckit` as before and
-  is not refused for Git's version). Scenarios: "Git older than 2.36"; "Git
-  older than 2.36 in status and doctor"; "No git on PATH"; "Tools and workflow
-  need no Git".
-  — files: `tests/test_status_doctor_update.py`
-  — verify: `python3 -c "import sys,unittest as u;L=u.defaultTestLoader;f=lambda s:[i for t in s for i in (f(t) if isinstance(t,u.TestSuite) else [t.id()])];I=[i for i in f(L.discover('tests',pattern=sys.argv[1])) if not i.startswith('unittest.')];A=sys.argv[2:];M=[a for a in A if not any(a in ('*',i.split('.')[-1]) for i in I)];[print('not collected:',m) for m in M];[print(e) for e in L.errors];sys.exit(1 if M or L.errors or not A else 0)" test_status_doctor_update.py 'test_clean_git_older_than_2_36' 'test_status_git_older_than_2_36_in_status_and_doctor' 'test_doctor_no_git_on_path' 'test_update_tools_and_workflow_need_no_git'`
+  is not refused for Git's version). Brett Heap's ruling LQ-15 folds in here
+  (FR-068; draft PR #19 at `cc000ea` and `9fb22fa`; lead rulings R-102 and
+  R-173; each test failed on `2439838`'s `project`), its tests written by lane
+  H: `test_clean_a_relative_configuration_path_before_the_version_check` (the
+  2.35 fake behind the counting wrapper and a relative `HOME`: every mode
+  refuses `relative-config-path`, not `git-too-old`, exit 2, with no child,
+  `git --version` included; with no `git` on PATH the same refusal comes
+  before `git-unavailable`) and
+  `test_status_a_relative_configuration_path_in_status_doctor_and_update` (a
+  clean project tracking `h/.gitconfig` and `cfg/git/config`, each a clean
+  filter that writes a marker, selected by its `.gitattributes`; for a
+  relative `HOME`, then `XDG_CONFIG_HOME`, then `GIT_CONFIG_GLOBAL` or
+  `GIT_CONFIG_SYSTEM` beside an absolute `HOME`, a control shows Git reading
+  the planted file, then no Git child runs and no marker is written: status
+  marks the root `inspection-error` with the code and exits 0, doctor reports
+  error rows and exits 1, `update --apply --component shape --yes` refuses
+  with exit 2 and runs no owner tool, and `--component workflow` is not
+  refused), in this module; in `tests/test_clean_resolution.py`,
+  `test_clean_a_relative_configuration_path` (a relative `HOME` over a
+  tracked `h/.gitconfig` with a hook directory and a clean filter: the
+  read-only form, `--all-safe --apply --yes` and `--action push` each refuse,
+  exit 2, no child, no hook or filter run, nothing changed, the `--json` form
+  printing the extended error object),
+  `test_clean_a_relative_configuration_path_each_variable_and_spelling`,
+  `test_clean_a_relative_configuration_path_not_valid_utf_8` and
+  `test_clean_a_relative_configuration_path_empty_and_absolute_values_pass`;
+  and in `tests/test_clean_batch.py`,
+  `test_clean_a_relative_configuration_path_after_the_argument_checks` (the
+  argument checks still refuse `invalid-arguments` first, then the same run
+  made valid refuses `relative-config-path`, both with no child). Scenarios:
+  "Git older than 2.36"; "Git older than 2.36 in status and doctor"; "No git
+  on PATH"; "Tools and workflow need no Git"; and PR #19's "A relative
+  configuration path" and "A relative configuration path in status, doctor
+  and update".
+  — files: `tests/test_status_doctor_update.py`, `tests/test_clean_resolution.py`, `tests/test_clean_batch.py`
+  — verify: `python3 -c "import sys,unittest as u;L=u.defaultTestLoader;f=lambda s:[i for t in s for i in (f(t) if isinstance(t,u.TestSuite) else [t.id()])];I=[i for i in f(L.discover('tests',pattern=sys.argv[1])) if not i.startswith('unittest.')];A=sys.argv[2:];M=[a for a in A if not any(a in ('*',i.split('.')[-1]) for i in I)];[print('not collected:',m) for m in M];[print(e) for e in L.errors];sys.exit(1 if M or L.errors or not A else 0)" test_status_doctor_update.py 'test_clean_git_older_than_2_36' 'test_status_git_older_than_2_36_in_status_and_doctor' 'test_doctor_no_git_on_path' 'test_update_tools_and_workflow_need_no_git' 'test_clean_a_relative_configuration_path_before_the_version_check' 'test_status_a_relative_configuration_path_in_status_doctor_and_update' && python3 -c "import sys,unittest as u;L=u.defaultTestLoader;f=lambda s:[i for t in s for i in (f(t) if isinstance(t,u.TestSuite) else [t.id()])];I=[i for i in f(L.discover('tests',pattern=sys.argv[1])) if not i.startswith('unittest.')];A=sys.argv[2:];M=[a for a in A if not any(a in ('*',i.split('.')[-1]) for i in I)];[print('not collected:',m) for m in M];[print(e) for e in L.errors];sys.exit(1 if M or L.errors or not A else 0)" test_clean_resolution.py 'test_clean_a_relative_configuration_path' 'test_clean_a_relative_configuration_path_each_variable_and_spelling' 'test_clean_a_relative_configuration_path_not_valid_utf_8' 'test_clean_a_relative_configuration_path_empty_and_absolute_values_pass' && python3 -c "import sys,unittest as u;L=u.defaultTestLoader;f=lambda s:[i for t in s for i in (f(t) if isinstance(t,u.TestSuite) else [t.id()])];I=[i for i in f(L.discover('tests',pattern=sys.argv[1])) if not i.startswith('unittest.')];A=sys.argv[2:];M=[a for a in A if not any(a in ('*',i.split('.')[-1]) for i in I)];[print('not collected:',m) for m in M];[print(e) for e in L.errors];sys.exit(1 if M or L.errors or not A else 0)" test_clean_batch.py 'test_clean_a_relative_configuration_path_after_the_argument_checks'`
 - [x] T115 [US9] [O] Add to `tests/test_status_doctor_update.py`:
   `test_status_a_failed_root_status_is_reported` (`status-fails-in` the root:
   status and doctor report it with `classification: "inspection-error"`, its
@@ -3254,21 +3593,37 @@ test and T116's removal-child clause held back (lead ruling R-56 Q-5).
   root status is reported"; "Not
   established is an error, none is not"; "A deleted upstream in status and
   doctor"; "A leg's probe times out".
+  Lane E's `0322175` folds in here (lead ruling R-101 (e)):
+  `test_status_a_leg_manifest_that_does_not_load_reads_as_one_that_does_not_parse`
+  (a leg's manifest whose value PyYAML cannot build: status, doctor and update
+  treat it as one that does not parse, where they printed a traceback and
+  exited 1).
   — files: `tests/test_status_doctor_update.py`
-  — verify: `python3 -c "import sys,unittest as u;L=u.defaultTestLoader;f=lambda s:[i for t in s for i in (f(t) if isinstance(t,u.TestSuite) else [t.id()])];I=[i for i in f(L.discover('tests',pattern=sys.argv[1])) if not i.startswith('unittest.')];A=sys.argv[2:];M=[a for a in A if not any(a in ('*',i.split('.')[-1]) for i in I)];[print('not collected:',m) for m in M];[print(e) for e in L.errors];sys.exit(1 if M or L.errors or not A else 0)" test_status_doctor_update.py 'test_status_a_failed_root_status_is_reported' 'test_doctor_not_established_is_an_error_none_is_not' 'test_status_a_deleted_upstream_in_status_and_doctor' 'test_update_a_leg_s_probe_times_out' 'test_status_json_paths_carry_their_flags' 'test_status_sigterm_during_inspection' 'test_status_a_submodule_checkout_is_reported'`
+  — verify: `python3 -c "import sys,unittest as u;L=u.defaultTestLoader;f=lambda s:[i for t in s for i in (f(t) if isinstance(t,u.TestSuite) else [t.id()])];I=[i for i in f(L.discover('tests',pattern=sys.argv[1])) if not i.startswith('unittest.')];A=sys.argv[2:];M=[a for a in A if not any(a in ('*',i.split('.')[-1]) for i in I)];[print('not collected:',m) for m in M];[print(e) for e in L.errors];sys.exit(1 if M or L.errors or not A else 0)" test_status_doctor_update.py 'test_status_a_failed_root_status_is_reported' 'test_doctor_not_established_is_an_error_none_is_not' 'test_status_a_deleted_upstream_in_status_and_doctor' 'test_update_a_leg_s_probe_times_out' 'test_status_json_paths_carry_their_flags' 'test_status_sigterm_during_inspection' 'test_status_a_submodule_checkout_is_reported' && python3 -c "import sys,unittest as u;L=u.defaultTestLoader;f=lambda s:[i for t in s for i in (f(t) if isinstance(t,u.TestSuite) else [t.id()])];I=[i for i in f(L.discover('tests',pattern=sys.argv[1])) if not i.startswith('unittest.')];A=sys.argv[2:];M=[a for a in A if not any(a in ('*',i.split('.')[-1]) for i in I)];[print('not collected:',m) for m in M];[print(e) for e in L.errors];sys.exit(1 if M or L.errors or not A else 0)" test_status_doctor_update.py 'test_status_a_leg_manifest_that_does_not_load_reads_as_one_that_does_not_parse'`
 - [x] T116 [US9] [O] Add to `tests/test_status_doctor_update.py`:
   `test_status_the_pinned_status_configuration` (rule 1, plan review M14;
   `core.untrackedCache` and `core.fsmonitor` true in the `GIT_CONFIG_GLOBAL`
   file: the counting log shows `-c core.untrackedCache=false -c
-  core.fsmonitor=false` on every status child and on every removal child of an
-  apply; it pins Phase 2 and T056); `test_doctor_missing_leg` (a declared leg
+  core.fsmonitor=false -c core.trustctime=true -c core.checkStat=default` on
+  every status child and on every removal child of an apply, the last two
+  Brett Heap's ruling LQ-10, appended to the test's pin list by `d1ef33e`
+  (lead rulings R-102 and R-104); it pins Phase 2 and T056); `test_doctor_missing_leg` (a declared leg
   with no checkout: an actionable failure, nonzero exit); and
   `test_update_default_report` (`update` without `--apply` reports a plan, the
   counting log holds no child that writes, and nothing is installed).
   Scenarios: "The pinned status configuration"; "Missing leg"; "Default
   report".
+  Brett Heap's ruling LQ-12 folds in here (draft PR #19 at `eae1a79`; lead
+  rulings R-101 (e), R-102, R-111 and R-157):
+  `test_update_owner_tools_see_the_repository_the_check_inspected` (`update
+  --apply --component shape --yes` with `GIT_DIR`, `GIT_WORK_TREE` and
+  `GIT_INDEX_FILE` naming another repository and `GIT_ALLOW_PROTOCOL=file`:
+  the check reads the project's own repository, and the fake owner tool
+  records none of the thirty-one names but `GIT_ALLOW_PROTOCOL`, as `file`,
+  and no `GIT_OPTIONAL_LOCKS` or trace2 variable). Scenario: PR #19's "Owner
+  tools see the repository the check inspected".
   — files: `tests/test_status_doctor_update.py`
-  — verify: `python3 -c "import sys,unittest as u;L=u.defaultTestLoader;f=lambda s:[i for t in s for i in (f(t) if isinstance(t,u.TestSuite) else [t.id()])];I=[i for i in f(L.discover('tests',pattern=sys.argv[1])) if not i.startswith('unittest.')];A=sys.argv[2:];M=[a for a in A if not any(a in ('*',i.split('.')[-1]) for i in I)];[print('not collected:',m) for m in M];[print(e) for e in L.errors];sys.exit(1 if M or L.errors or not A else 0)" test_status_doctor_update.py 'test_status_the_pinned_status_configuration' 'test_doctor_missing_leg' 'test_update_default_report'`
+  — verify: `python3 -c "import sys,unittest as u;L=u.defaultTestLoader;f=lambda s:[i for t in s for i in (f(t) if isinstance(t,u.TestSuite) else [t.id()])];I=[i for i in f(L.discover('tests',pattern=sys.argv[1])) if not i.startswith('unittest.')];A=sys.argv[2:];M=[a for a in A if not any(a in ('*',i.split('.')[-1]) for i in I)];[print('not collected:',m) for m in M];[print(e) for e in L.errors];sys.exit(1 if M or L.errors or not A else 0)" test_status_doctor_update.py 'test_status_the_pinned_status_configuration' 'test_doctor_missing_leg' 'test_update_default_report' && python3 -c "import sys,unittest as u;L=u.defaultTestLoader;f=lambda s:[i for t in s for i in (f(t) if isinstance(t,u.TestSuite) else [t.id()])];I=[i for i in f(L.discover('tests',pattern=sys.argv[1])) if not i.startswith('unittest.')];A=sys.argv[2:];M=[a for a in A if not any(a in ('*',i.split('.')[-1]) for i in I)];[print('not collected:',m) for m in M];[print(e) for e in L.errors];sys.exit(1 if M or L.errors or not A else 0)" test_status_doctor_update.py 'test_update_owner_tools_see_the_repository_the_check_inspected'`
 
 ### Implementation for User Story 9
 
@@ -3296,17 +3651,22 @@ test and T116's removal-child clause held back (lead ruling R-56 Q-5).
   upstream's short name with `ahead` and `behind` null; `ignored_files` the
   evidence model's bounded count, capped at 64, so that 64 means "64 or
   more", with no new key (lead ruling R-66 (d)); every other key and value
-  as today, with one departure, a bare repository's registry entry no
+  as today, with two departures: a bare repository's registry entry no
   longer among `worktrees`, since D8's bare first record names no worktree
   row (lead ruling R-66 (f)), so that `tests/test_project.py:586`, `:615`
-  and `:916` pass. The `project-command` delta keeps every value "except
+  and `:916` pass; and a gitfile layout's git-directory entry (a separate git
+  directory, or a submodule's checkout), which becomes the checkout's row,
+  its `path` the checkout and its `dirty` and `ignored_files` read there,
+  false and 0 where they were null (lane 3's F5 M-2; lead ruling R-101 (e),
+  accepted as a fill of the `project-clean` delta's `spec.md:478`). The
+  `project-command` delta keeps every value "except
   where a requirement states a change"; lane 3 reads this one as a fill of
   the `project-clean` delta's "the common directory SHALL never be probed as
   a worktree row" (its `spec.md:478`), as data-model.md's `common_dir` row
   says ("never a worktree row"), while the lead reads that sentence as part
   of clean's gitfile-layout resolution, so whether it covers status's
-  `worktrees` is LQ-9, for Brett Heap; the code stays as built (lead ruling
-  R-75 (a)).
+  `worktrees`, in both cases, is LQ-9, for Brett Heap; the code stays as
+  built (lead rulings R-75 (a) and R-101 (e)).
   — files: `project`, `tests/clean_support.py`
   — verify: `python3 -c "import importlib.machinery as m,importlib.util as iu,sys;l=m.SourceFileLoader('pv','project');s=iu.spec_from_loader('pv',l);p=iu.module_from_spec(s);sys.modules['pv']=p;l.exec_module(p);import os,tempfile;from pathlib import Path;d=tempfile.mkdtemp();r=p.repo_state(Path(d));os.rmdir(d);print('repo_state of a directory with no .git:',r);sys.exit(0 if isinstance(r,dict) and r.get('present') is False and r.get('path_valid_utf8') is True else 1)" && python3 -m unittest discover -s tests -p 'test_clean_harness.py' -k '*.test_clean_text_fixtures_equal_the_contract_table' && python3 -m unittest discover -s tests -p 'test_project.py' -k '*.test_status_from_nested_path_and_feature_worktree_is_read_only' -k '*.test_human_reports_render_present_project_leg_state' -k '*.test_clean_reports_dirty_detached_and_pushed_unmerged_states'`
 - [x] T118 [US9] [O] In `discover()` (`project:433-467`; research.md R2, FR-053):
@@ -3352,6 +3712,14 @@ test and T116's removal-child clause held back (lead ruling R-56 Q-5).
   `worktrees`, accepts a null one as it stands (R-56).
   `tests/test_project.py:652-670` and `:767-799` pass, and so do T114 to
   T116.
+  Brett Heap's ruling LQ-12 folds in here, merged as `2439838` (lead rulings
+  R-101 (e), R-102, R-111 and R-157): every owner tool runs through
+  `execute()` with `delegate_env()`, the caller's environment less every
+  `GIT_SCRUB` name but `GIT_ALLOW_PROTOCOL`, as the push child has them
+  removed, and nothing added, no `-c` pin, no `GIT_OPTIONAL_LOCKS` and no
+  trace2 variable; and, for LQ-15, a configuration path that fails D11's test
+  holds every Git child, so that `shape` and `bench` refuse with the
+  clean-checkout message and `tools` and `workflow` run (T048).
   — files: `project`
   — verify: `python3 -m unittest discover -s tests -p 'test_status_doctor_update.py' && python3 -m unittest discover -s tests -p 'test_project.py' -k '*.test_update_default_and_dry_run_do_not_execute' -k '*.test_update_refuses_dirty_and_feature_branch' -k '*.test_update_refuses_missing_child_and_retains_shape_owner_prompt' -k '*.test_update_refuses_a_dirty_family_member'`
 - [x] T121 [US9] [S] Run the US9 module, every earlier module and the 96 tests: all
@@ -3418,13 +3786,18 @@ verification.
   — files: `project`
   — verify: `python3 -c "import ast,sys;t=ast.parse(open('project').read());D={n.name for n in t.body if isinstance(n,ast.FunctionDef)};U={x.id for x in ast.walk(t) if isinstance(x,ast.Name)}.union(x.attr for x in ast.walk(t) if isinstance(x,ast.Attribute));B=[n for n in ('default_branch','ancestor') if n in D]+[n for n in ('print_clean_report','matching_worktree','cleanup_report') if n in D and n not in U];print('defined without a caller, or not retired:',B);sys.exit(1 if B else 0)" && python3 -m unittest discover -s tests`
 - [x] T126 [S] Complete `specs/004-project-clean-all-safe/traceability.md`: every
-  one of the 101 rows names at least one test, and a script confirms each named
+  one of the 101 rows names at least one test (114 rows since doc round 13,
+  two of PR #19's rows naming a gap instead, which the verify lists: "Branch
+  deletion refuses a branch it may not delete" and "An edit that keeps its
+  size and restores its mtime", whose tests are not named after them; lead
+  ruling R-166; "Push refuses a branch it may not push" names lane A's
+  addendum 5 test, on 004 at `598929b`), and a script confirms each named
   test is defined as `def NAME` in a `tests/test_*.py` module and starts with
   its subcommand's prefix and the title in snake case (rule 1); if PR #19 has
   landed, the script reads the push-child scenario from `main`'s delta,
   otherwise from `origin/change/amend-clean-all-safe-push-pins`.
   — files: `specs/004-project-clean-all-safe/traceability.md`
-  — verify: `python3 -c "import glob,re,sys;V=chr(124);L=open('specs/004-project-clean-all-safe/traceability.md').read().splitlines();R=[[c.strip() for c in l.strip().strip(V).split(V)] for l in L if l.startswith(V)][2:];T=[l[15:].strip() for f in sorted(glob.glob('openspec/changes/add-project-clean-all-safe/specs/*/spec.md')) for l in open(f) if l.startswith('#### Scenario: ')];T+=[x for x in ['The push child reaches its remote'] if x not in T];D=set(m for f in glob.glob('tests/test_*.py') for m in re.findall(r'^\s*def (test_\w+)\(',open(f).read(),re.M));P=('test_clean_','test_status_','test_doctor_','test_update_');k=lambda t:re.sub('[^a-z0-9]+','_',t.lower()).strip('_');B=[(r[2],n) for r in R for n in (re.findall(r'test_\w+',r[4]) or ['(none)']) if n not in D or not any(n==p+k(r[2]) or n.startswith(p+k(r[2])+'_') for p in P)];[print('bad:',b) for b in B];print(len(R),'rows');sys.exit(1 if B or not len(R)==101 or not sorted(r[2] for r in R)==sorted(T) else 0)"`
+  — verify: `python3 -c "import glob,re,sys;V=chr(124);L=open('specs/004-project-clean-all-safe/traceability.md').read().splitlines();R=[[c.strip() for c in l.strip().strip(V).split(V)] for l in L if l.startswith(V)][2:];T=[l[15:].strip() for f in sorted(glob.glob('openspec/changes/add-project-clean-all-safe/specs/*/spec.md')) for l in open(f) if l.startswith('#### Scenario: ')];T+=[x for x in ['The push child reaches its remote','A relative configuration path','Push refuses a branch it may not push','Branch deletion refuses a branch it may not delete','An operation in progress','A squash merge that holds an autostash','An operation started after the plan','A check that fails at revalidation','Owner tools see the repository the check inspected','A linked worktree whose work tree is redirected','A commondir that names another repository','A relative configuration path in status, doctor and update','An edit that keeps its size and restores its mtime','Trace targets are never written'] if x not in T];T=[x for x in T if x not in ['A commit held only by the worktree','A worktree-only commit made after the plan']];D=set(m for f in glob.glob('tests/test_*.py') for m in re.findall(r'^\s*def (test_\w+)\(',open(f).read(),re.M));P=('test_clean_','test_status_','test_doctor_','test_update_');k=lambda t:re.sub('[^a-z0-9]+','_',t.lower()).strip('_');G=['Branch deletion refuses a branch it may not delete','An edit that keeps its size and restores its mtime'];B=[(r[2],n) for r in R for n in (re.findall(r'test_\w+',r[4]) or ([] if r[2] in G else ['(none)'])) if n not in D or not any(n==p+k(r[2]) or n.startswith(p+k(r[2])+'_') for p in P)];[print('bad:',b) for b in B];print(len(R),'rows; named gaps:',[r[2] for r in R if r[2] in G and not re.findall(r'test_\w+',r[4])]);sys.exit(1 if B or not len(R)==114 or not sorted(r[2] for r in R)==sorted(T) else 0)"`
 - [x] T127 [O] Check by script that every D18 and D14 literal of
   `tests/clean_support.py`, its placeholders substituted, equals a line or
   quoted string of design.md D18 or D14 character for character, and that every
@@ -3610,7 +3983,9 @@ change's governance record, and are not tasks here.
 ## Requirement Coverage
 
 Every delta scenario is named by at least one test task above, PR #19's
-included (T074). By requirement:
+included: T074, and since doc round 13 the thirteen of its amendments that
+004 builds, folded into T012, T030, T063, T072, T073, T083, T114 and T116,
+LQ-13's two held. By requirement:
 
 | Requirement | Tasks |
 | --- | --- |
@@ -3665,6 +4040,7 @@ included (T074). By requirement:
 | FR-065 | T122, T124 |
 | FR-066 | T005 to T011, T126, T128 |
 | FR-067 | T003, T129 |
+| FR-068 | T048, T114 |
 
 Success criteria: SC-001 and SC-002 T041, T061, T097; SC-003 T030, T029, T074;
 SC-004 and SC-005 T018, T026, T099, T089, T098; SC-006 T098, T102; SC-007 T090,

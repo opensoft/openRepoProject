@@ -32,7 +32,7 @@ TESTS = Path(__file__).resolve().parent
 # The combined status probe of a worktree (design D6), after its -C PATH.
 STATUS = ["status", "--porcelain=v1", "-z", "--untracked-files=normal", "--ignored=matching"]
 
-# The seven protocol pins and the two status pins, as the contract writes them
+# The seven protocol pins and the four status pins, as the contract writes them
 # (contracts/project-clean.md, "Git children").
 PINS = ["-c", "protocol.allow=never", "-c", "protocol.file.allow=never",
         "-c", "protocol.ssh.allow=never", "-c", "protocol.git.allow=never",
@@ -207,7 +207,7 @@ class RunnerTests(CleanCase):
                     self.assertEqual((record.pgid, record.ppid), (handle.pid, os.getpid()))
                     self.assertEqual(os.getsid(handle.pid), handle.pid)
                     self.assertEqual(os.getpgid(handle.pid), handle.pid)
-                    # git_env(kind): none of the seventeen names, and GIT_OPTIONAL_LOCKS=0
+                    # git_env(kind): none of the thirty-one names, and GIT_OPTIONAL_LOCKS=0
                     # for the read-only kinds only.
                     self.assertEqual([n for n in record.names if n in SCRUBBED_NAMES], [])
                     self.assertEqual(record.optional_locks, locks)
