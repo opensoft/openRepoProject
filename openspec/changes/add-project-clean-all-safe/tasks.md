@@ -127,7 +127,7 @@ Implementation is tracked exclusively in one Speckit feature, to be created by
 
 - Feature identifier: 004-project-clean-all-safe
 - Branch: 004-project-clean-all-safe
-- Tasks: specs/004-project-clean-all-safe/tasks.md (reserved; created by
+- Tasks: specs/004-project-clean-all-safe/tasks.md (created by
   /speckit.tasks)
 - Created: specs/004-project-clean-all-safe/spec.md created 2026-10-09 by
   /speckit.specify after ratification, PR #11 squash 0050f3e, branch
