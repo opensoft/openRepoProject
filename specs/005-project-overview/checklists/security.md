@@ -15,17 +15,26 @@ Lane: openRepoProject-4
 
 - [x] CHK001 Is the read-only guarantee enumerated (no fetch, pull, reset, bootstrap, validator run or file write; no worktree created, pruned, repaired, locked or unlocked; no index rewritten)? [Completeness, Spec FR-040]
   - Result: pass.
-- [x] CHK002 Is the no-network guarantee backed by mechanism requirements (seven protocol pins, the seventeen-name scrub, `GIT_OPTIONAL_LOCKS=0`, the status pins)? [Completeness, Spec FR-016]
-  - Result: pass.
+- [x] CHK002 Is the no-network guarantee backed by mechanism requirements
+  (seven protocol pins, [E]'s name scrub, `GIT_OPTIONAL_LOCKS=0`, the status
+  pins)? [Completeness, Spec FR-016]
+  - Result: pass; re-read on 2026-10-21: [E]'s list as PR #19 amends it at
+    `423a532`, thirty-one names, and LQ-10's two status pins once PR #19
+    carries them (FR-016; C-63).
 - [x] CHK003 Are the residuals beyond the pins and the scrub recorded (remote-helper protocols, configuration files, trace targets, attribute filters)? [Completeness, Spec EC-006, EC-022]
-  - Result: pass.
+  - Result: fixed in spec.md, EC-036 (2026-10-21): a relative `HOME` or
+    `XDG_CONFIG_HOME` makes a file inside a candidate act as the user's
+    configuration, which no residual recorded; Brett Heap's answer to lane
+    openRepoProject-2's LQ-15 refuses such a value once PR #19 amends [E]
+    (FR-043; Dependencies).
 - [x] CHK004 Is the treatment of those residuals decided (accept, scrub the
   trace variables, or drop the user's configuration)? [Completeness, Spec
   EC-022]
   - Result: pass with C-63: filters and the configuration files are recorded
     residuals, the read-only guarantee claims only what the pins and the scrub
-    prove, and [E]'s list as PR #19 amends it carries the trace pins and names
-    (FR-016, FR-040, EC-022).
+    prove, and [E]'s list as PR #19 amends it at `423a532` carries the trace
+    pins and names (FR-016, FR-040, EC-022); a relative `HOME` or
+    `XDG_CONFIG_HOME` is refused once PR #19 carries LQ-15 (EC-036).
 - [ ] CHK005 Is the threat model the requirements assume stated: the user's own local repositories, some of which may hold hostile names, configuration, attributes or manifests? [Completeness, Gap, Traceability]
   - Result: plan note PN-15.
 - [x] CHK006 Is access to credentials and profile data restricted? [Completeness, Spec FR-040]
@@ -41,25 +50,32 @@ Lane: openRepoProject-4
 - [x] CHK009 Is a suggestion barred from carrying permission (`--apply`, `--yes`) or naming a project by bare name? [Completeness, Spec FR-031, SC-004]
   - Result: pass.
 - [x] CHK010 Are agents told that a suggestion is advice and that applying it
-  needs the person's word? [Completeness, Spec FR-048]
+  needs the person's word? [Completeness, Spec FR-051]
   - Result: pass with C-58, as long as Brett Heap accepts feature 004's T123
     departure, and otherwise through a separate change after feature 005
-    (FR-051).
+    (FR-051). T123's section is written at feature 004's head `2cf34d3`
+    (`AGENTS.md:53-70` there).
 - [x] CHK011 Is untrusted manifest content bounded (its size judged before the read, the read capped at 1 MiB, the read and parse inside a bounded task)? [Completeness, Spec FR-013, FR-014]
   - Result: pass, the task's extent per C-38.
 - [x] CHK012 Is the reflog path built only from ref names Git lists, so that it cannot leave `logs/refs/heads/`? [Completeness, Spec FR-033]
   - Result: pass. The branch comes from the ref listing, and Git's ref-name rules admit no `..` component.
 - [x] CHK013 Is every Git child isolated from the caller's repository-selecting variables (`GIT_DIR`, `GIT_WORK_TREE`, `GIT_INDEX_FILE` and the rest)? [Completeness, Spec FR-016]
-  - Result: pass. [E]'s scrub, its list as PR #19 amends it (FR-016; C-63).
+  - Result: pass. [E]'s scrub, its list as PR #19 amends it at `423a532`,
+    thirty-one names (FR-016; C-63).
 - [x] CHK014 Are repositories Git itself refuses as unsafe (`safe.directory`, dubious ownership) covered? [Completeness, Spec FR-021]
-  - Result: pass. A Git child that exits nonzero records `probe-failed` on its row.
+  - Result: pass. A Git child that exits nonzero records `probe-failed` on its
+    row. A relative `HOME` could let a planted `safe.directory` admit such a
+    repository, which EC-036 records and LQ-15's refusal closes once [E]
+    carries it.
 - [x] CHK015 Is a candidate whose broken `.git` sends Git to an ancestor
   repository kept from widening the scan beyond the roots? [Completeness, Spec
   FR-002]
   - Result: pass with C-65: such a candidate is a `refused` error row and
     creates or joins no repository row (FR-006).
 - [x] CHK016 Is the overview kept from running repository-configured programs the pins cover (`core.fsmonitor`), with those they cannot cover recorded? [Completeness, Spec FR-016, EC-022]
-  - Result: pass.
+  - Result: pass; EC-036 adds the clean filter that a relative `HOME` lets a
+    candidate's own files define, closed by LQ-15's refusal once [E] carries
+    it.
 
 ## Requirement Clarity
 
@@ -73,6 +89,7 @@ Lane: openRepoProject-4
 
 - [x] CHK019 Do the pins in FR-016 match [E]'s and design D13's lists character for character? [Consistency, Spec FR-016]
   - Result: pass. The seven `-c protocol.*` pins agree in all three texts.
+    LQ-10's two status pins join FR-016 once PR #19 carries them.
 - [x] CHK020 Does no requirement exempt any Git child of the overview from the pins or the scrub? [Consistency, Spec FR-016, Clarifications C-5]
   - Result: pass.
 
@@ -106,7 +123,10 @@ Lane: openRepoProject-4
 
 Evaluated on 2026-10-19 against `spec.md` at `8f433f7`; CHK004, CHK008, CHK010,
 CHK013, CHK015 and CHK018 re-evaluated on 2026-10-21 after Brett Heap's answers
-(C-55 to C-71). 25 items: 24 pass, 0 fixed in the spec, 0 open, 1 plan notes, 0
+(C-55 to C-71), and CHK002 to CHK004, CHK010, CHK013, CHK014, CHK016 and CHK019
+later that day, after PR #19's `423a532`, the re-check against feature 004's
+head `2cf34d3` and Brett Heap's answers to lane openRepoProject-2's LQ-10 to
+LQ-15 (EC-036). 25 items: 23 pass, 1 fixed in the spec, 0 open, 1 plan notes, 0
 new questions. An open item waits on the question or residual its result names;
 a plan note is for the plan, not the spec; a new question is asked in
 `clarify-questions.md`.

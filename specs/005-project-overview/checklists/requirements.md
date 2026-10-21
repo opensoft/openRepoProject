@@ -80,13 +80,13 @@ Lane: openRepoProject-4
   requirement until he answers. One point is left to the plan on purpose:
   where a repository-level finding sorts among a row's findings
   (Assumptions).
-- Lane openRepoProject-2's binding flags were checked: the order departure
-  is recorded with the time of Brett Heap's word; no test needs a running
-  filesystem monitor (FR-049, C-6); every Git child carries the seven pins
-  and the seventeen-name scrub, with no push child and so no R-28
-  exception (FR-016, C-5); local ancestry outranks `remote-gone` (FR-028)
-  and squash merges (LQ-2) are deferred to a follow-on change (EC-013,
-  C-8); the MODIFIED capability is `project-review-safety` (C-7).
+- Lane openRepoProject-2's binding flags were checked: the order departure is
+  recorded with the time of Brett Heap's word; no test needs a running
+  filesystem monitor (FR-049, C-6); every Git child carries the seven pins and
+  [E]'s name scrub, with no push child and so no R-28 exception (FR-016, C-5);
+  local ancestry outranks `remote-gone` (FR-028) and squash merges (LQ-2) are
+  deferred to a follow-on change (EC-013, C-8); the MODIFIED capability is
+  `project-review-safety` (C-7).
 - Feature 004's citations were re-pinned from `dd923ee` to `5a71f83` after
   this validation, on lane openRepoProject-2's word relayed by the lead.
   Every feature 004 term the spec uses was re-checked there: no shared term
@@ -319,6 +319,39 @@ Lane: openRepoProject-4
   PN-2 also takes a failed write's standard-error line (C-66), and the totals
   below were recounted by script. Re-validation: 16 of 16 items pass, with the
   checks of iteration 2 re-run by script on the edited spec.
+- 2026-10-21, later the same day: a re-check that keeps every pin, of feature
+  004 against its head `2cf34d3` (133 of 133 tasks ticked, not on `main`), of
+  #25 against its draft PR's head `11a0ba2` and of #24 against its draft PR's
+  head `e07cc42`, is recorded in a header paragraph and in the Dependencies.
+  Lane openRepoProject-2's lead ruling R-67 (c), present rows that share a
+  realpath or an admin id being `registration-mismatch`, is taken as a fill, as
+  EC-033 takes R-61 (b), with its R-101's second identity check before each
+  status probe: FR-007, FR-019, FR-049 and EC-031 say so. PR #19's Q9 B commit
+  `423a532` is cited for [E]'s thirty-one names (C-63, FR-016, EC-022,
+  Dependencies), C-5's seventeen staying as C-63 reads it. Brett Heap's answers
+  to lane openRepoProject-2's LQ-10 to LQ-15, given in lane openRepoProject-3's
+  session, are recorded as dependencies on PR #19 (FR-007, FR-016, FR-043 and a
+  new Dependencies bullet), with EC-036 for a relative `HOME` or
+  `XDG_CONFIG_HOME`; LQ-8, LQ-9, the bare entries that feature 004's
+  `inspect-cap` leaves out, a failed ref listing's parity case and the
+  `git-floor` job's change at `c9103ba` are recorded in the Dependencies, and
+  C-22, C-58, EC-033 and FR-051 read the head. Lane openRepoProject-3's
+  fidelity read of `c54d393` is applied: A1's bullet records Q7 A's open parity
+  case (M1), states the interim rule for the six requirements folded ahead of
+  A1 (M2) and gains design D1's restatement of Q15 A's rule (L6); the older
+  session intros record the answers (L1); FR-049 and US10's Independent Test
+  assert the trace2 pins (L3); FR-005, US6 s13 and US7 s1 and s5 put the path
+  in `path` (L4); FR-005 names an absent default root's path as one of FR-038's
+  exceptions (L5); FR-048's `AGENTS.md` pointer goes, FR-051 carrying it (L7);
+  and C-64 quotes DI:126-128 (L8). `clarify-questions.md` is unchanged. In this
+  folder, CHK010 of `classification.md` is fixed by the twin fill and CHK003 of
+  `security.md` by EC-036; CHK002, CHK004, CHK010, CHK013, CHK014, CHK016 and
+  CHK019 of `security.md`, CHK002, CHK004, CHK008, CHK011 to CHK013 and CHK025
+  of `integration.md`, CHK016 of `discovery-identity.md`, CHK018 of
+  `suggestions-gates.md`, CHK002, CHK004 and CHK014 of `testing-strategy.md`,
+  and CHK019, CHK024 and CHK025 below were re-read, and the totals below were
+  recounted by script. Re-validation: 16 of 16 items pass, with the checks of
+  iteration 2 re-run by script on the edited spec.
 - Items marked incomplete require spec updates before `/speckit-clarify` or `/speckit-plan`
 
 ## Cross-cutting Requirements Quality (no-argument `/speckit.checklist`, 2026-10-19)
@@ -379,7 +412,8 @@ Lane: openRepoProject-4
 
 - [x] CHK019 Is the dependency on feature 004 stated with the commit it is read at, and is the open choice of its state before the plan recorded? [Dependency, Spec Dependencies]
   - Result: pass; the plan starts once feature 004 has merged into `main`, on
-    Brett Heap's word given after it (C-56).
+    Brett Heap's word given after it (C-56). Re-checked on 2026-10-21 at its
+    head `2cf34d3`, with the pins kept (header).
 - [x] CHK020 Are the measured assumptions stated with their source and date (48.3 s, 219 candidates, 96 tests)? [Assumption, Spec Assumptions]
   - Result: pass. 96 tests re-counted in `tests/test_project.py` at this commit.
 - [x] CHK021 Is the assumption that no other process changes the estate stated where determinism depends on it? [Assumption, Spec FR-019, EC-023]
@@ -396,25 +430,29 @@ Lane: openRepoProject-4
     PN-6 and PN-12 narrowed on 2026-10-21 (C-66, C-68) and PN-11 withdrawn then
     (C-62), are listed in the domain checklists' Evaluation sections.
 - [x] CHK024 Are the differences between change 2 and feature 004 recorded with which text governs? [Conflict, Spec Assumptions, Clarifications C-33]
-  - Result: pass.
+  - Result: pass; since 2026-10-21 also where the change is silent: the twin
+    fill of EC-031 and the recorded divergence in the cap count (Dependencies).
 - [x] CHK025 Are the recorded residuals (EC-001, EC-002, EC-006, EC-022, EC-025
-  to EC-035) kept apart from requirements, so that none reads as a promise?
+  to EC-036) kept apart from requirements, so that none reads as a promise?
   [Ambiguity, Spec Edge Cases]
-  - Result: pass, EC-034 and EC-035 included since 2026-10-21.
+  - Result: pass, EC-034 to EC-036 included since 2026-10-21.
 
 ## Evaluation
 
 Evaluated on 2026-10-19 against `spec.md` at `8f433f7`; CHK007, CHK019, CHK023
 and CHK025 re-read on 2026-10-21 after Brett Heap's answers (C-55 to C-71),
-their results still pass. 25 items: 24 pass, 1 fixed in the spec, 0 open, 0
-plan notes, 0 new questions. An open item waits on the question or residual its
-result names; a plan note is for the plan, not the spec; a new question is
-asked in `clarify-questions.md`. The counts are for the cross-cutting section
-above; the 16 built-in items before it carry no ids and are not counted.
+their results still pass, and CHK019, CHK024 and CHK025 again later that day,
+after the re-check against feature 004's head `2cf34d3` and EC-036, theirs too.
+25 items: 24 pass, 1 fixed in the spec, 0 open, 0 plan notes, 0 new questions.
+An open item waits on the question or residual its result names; a plan note is
+for the plan, not the spec; a new question is asked in `clarify-questions.md`.
+The counts are for the cross-cutting section above; the 16 built-in items
+before it carry no ids and are not counted.
 
 Plan notes: none.
 
-All 17 checklists: 413 items: 375 pass, 22 fixed in the spec, 0 open, 16 plan
+All 17 checklists: 413 items: 373 pass, 24 fixed in the spec, 0 open, 16 plan
 notes (PN-1 to PN-17 but PN-11, withdrawn on 2026-10-21; PN-2 narrowed to an
 exception of any other kind in human mode and widened to a failed write's
-standard-error line), 0 new questions. Recounted by script on 2026-10-21.
+standard-error line), 0 new questions. Recounted by script on 2026-10-21, and
+again after the re-check of that day.

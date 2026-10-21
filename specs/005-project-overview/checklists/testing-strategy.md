@@ -16,11 +16,14 @@ Lane: openRepoProject-4
 - [x] CHK001 Must every delta scenario have a running test named after it? [Completeness, Spec FR-049, SC-012]
   - Result: pass.
 - [x] CHK002 Must every requirement part no delta scenario exercises have a test, named in the traceability record? [Completeness, Spec FR-049]
-  - Result: pass.
+  - Result: pass; since 2026-10-21 FR-049's list also names FR-007's twins and
+    its identity re-read before a status probe.
 - [x] CHK003 Is the harness specified (a scratch home directory, `PROJECTS_DIR` set or unset explicitly, networking disabled, the snapshots)? [Completeness, Spec FR-049]
   - Result: pass.
 - [x] CHK004 Are the counting wrapper's records and assertions specified? [Completeness, Spec FR-049]
-  - Result: pass.
+  - Result: pass; since 2026-10-21 the wrapper also asserts that each child has
+    `GIT_TRACE2`, `GIT_TRACE2_EVENT` and `GIT_TRACE2_PERF` set to `0`, as
+    SC-002 measures (FR-049).
 - [x] CHK005 Is the hung-filesystem seam specified (an injected slow call always; a FUSE fixture in addition where one can be made)? [Completeness, Spec FR-049]
   - Result: pass.
 - [x] CHK006 Is the device-and-inode seam specified (an injected file-status call)? [Completeness, Spec FR-049]
@@ -40,7 +43,8 @@ Lane: openRepoProject-4
 - [x] CHK013 Is the parity oracle defined (`project clean <root> --json` from the same directory at the same commit)? [Completeness, Spec US3]
   - Result: pass.
 - [x] CHK014 Is the tests' CI scope stated (Linux only, Python 3.10 and 3.12)? [Completeness, Spec Dependencies, EC-017]
-  - Result: pass; the floor job runs the overview's small set (FR-050; C-57).
+  - Result: pass; the floor job runs the overview's small set (FR-050; C-57),
+    its `-k` selection unchanged at `c9103ba`.
 - [x] CHK015 Are the signal tests' assertions specified (exit status, no result document, every process group gone apart from abandoned children)? [Completeness, Spec FR-049, US10 s3, US10 s4]
   - Result: pass.
 - [x] CHK016 Are the bound claims tested without long waits, with the full-length measurement kept to governance task 2.1? [Completeness, Spec FR-049, Assumptions]
@@ -92,9 +96,11 @@ Lane: openRepoProject-4
 Evaluated on 2026-10-19 against `spec.md` at `8f433f7`; CHK025 added on
 2026-10-20, after lane openRepoProject-3's R8 read of EC-033; CHK011, CHK014
 and CHK024 re-read on 2026-10-21 after Brett Heap's answers (C-55 to C-71),
-their results still pass. 25 items: 24 pass, 0 fixed in the spec, 0 open, 1
-plan notes, 0 new questions. An open item waits on the question or residual its
-result names; a plan note is for the plan, not the spec; a new question is
-asked in `clarify-questions.md`.
+their results still pass, and CHK002, CHK004 and CHK014 later that day, after
+lane openRepoProject-3's fidelity read of `c54d393` and the re-check against
+feature 004's head `2cf34d3`, theirs too. 25 items: 24 pass, 0 fixed in the
+spec, 0 open, 1 plan notes, 0 new questions. An open item waits on the question
+or residual its result names; a plan note is for the plan, not the spec; a new
+question is asked in `clarify-questions.md`.
 
 Plan notes: PN-17 (CHK025).

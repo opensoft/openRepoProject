@@ -16,11 +16,14 @@ Lane: openRepoProject-4
 - [x] CHK001 Is each reused requirement of change 1 named by its header ([E], [L], [G], [R], [P])? [Completeness, Spec header]
   - Result: pass.
 - [x] CHK002 Is the runner interface the overview needs from feature 004 named (the child handle, the one-wide driver beside the overview's own loop, the pure incremental parsers)? [Completeness, Dependency, Spec Dependencies]
-  - Result: pass.
+  - Result: pass; at feature 004's head `2cf34d3` its one-wide driver gains two
+    parser hooks, which the plan's factoring keeps (Dependencies).
 - [x] CHK003 Are the shared constants the overview reads at run time named, with their `limits` keys? [Completeness, Spec FR-036, Dependencies]
   - Result: pass.
 - [x] CHK004 Is the parity contract with `project clean` stated, for classification and the merge target? [Completeness, Spec FR-026, SC-003]
-  - Result: pass.
+  - Result: pass; FR-007's twin fill keeps it for two spellings of one worktree
+    (EC-031), and one parity case, a failed ref listing, waits for a fix in
+    feature 004 (Dependencies).
 - [x] CHK005 Is the handoff contract stated: a suggestion resolves Git-first to the row's repository and merge target? [Completeness, Spec US4 s2]
   - Result: pass.
 - [x] CHK006 Is the MODIFIED `project-review-safety` requirement's scope stated (the overview only), with every other command's behaviour kept? [Completeness, Spec FR-023, SC-014]
@@ -28,25 +31,30 @@ Lane: openRepoProject-4
 - [x] CHK007 Is it stated that no other subcommand's output, flags or exits change? [Completeness, Spec FR-047, SC-012]
   - Result: pass.
 - [x] CHK008 Is it stated which text governs where change 2 and feature 004 differ? [Completeness, Spec Assumptions, Clarifications C-33]
-  - Result: pass. The change.
+  - Result: pass. The change; where the change is silent and feature 004's rule
+    keeps FR-026's parity, the spec takes that rule as a fill and says so
+    (EC-031, EC-033).
 - [x] CHK009 Is the overview's own timing of the version check stated (before any root is listed)? [Completeness, Spec FR-043]
   - Result: pass.
 - [x] CHK010 Is the README section specified item by item? [Completeness, Spec FR-048]
   - Result: pass.
 - [x] CHK011 Is the guidance to agents in `AGENTS.md` decided? [Completeness,
-  Spec FR-048]
+  Spec FR-051]
   - Result: pass with C-58: one sentence on the overview joins the `AGENTS.md`
     section of feature 004's T123, a departure on Brett Heap's word; if he
     declines T123's departure, a separate change after feature 005 carries the
-    guidance (FR-051).
+    guidance (FR-051). T123's section is written at feature 004's head
+    `2cf34d3` (`AGENTS.md:53-70` there).
 - [x] CHK012 Is the overview's place in feature 004's Git 2.36 floor job
   decided? [Completeness, Dependency, Spec Dependencies]
   - Result: pass with C-57: one more `-k` prefix selects a small set of the
-    overview's tests (FR-050).
+    overview's tests (FR-050); the job's `-k` selection is unchanged at
+    `c9103ba` (Dependencies, Runtime and CI).
 - [x] CHK013 Is the state of feature 004 that must exist before the plan
   decided? [Completeness, Dependency, Spec Dependencies]
   - Result: pass with C-56: feature 004 merged into `main`, the plan starting
-    on Brett Heap's word given after it.
+    on Brett Heap's word given after it; re-checked on 2026-10-21 at its head
+    `2cf34d3`, 133 of 133 tasks ticked and not on `main`.
 
 ## Requirement Clarity
 
@@ -82,7 +90,8 @@ Lane: openRepoProject-4
 - [x] CHK024 Edge: are installed copies elsewhere (workBenches' `onp`) addressed? [Edge Case, Spec Assumptions]
   - Result: pass.
 - [ ] CHK025 Edge: is the place of FR-015's keep-filter left to the plan, feature 004's `RefParser` keeping every record and offering no hook for it? [Edge Case, Dependency, Gap, Spec FR-015, Dependencies]
-  - Result: plan note PN-16.
+  - Result: plan note PN-16; at feature 004's head `2cf34d3` its parsers are
+    unchanged and no hook serves the keep-filter.
 
 ## Notes
 
@@ -99,9 +108,11 @@ Lane: openRepoProject-4
 Evaluated on 2026-10-19 against `spec.md` at `8f433f7`; CHK025 added on
 2026-10-20, after lane openRepoProject-2's ruling R-70(b) and the re-pin to
 feature 004's `96a08d4`; CHK011 to CHK013 re-evaluated on 2026-10-21 after
-Brett Heap's answers (C-55 to C-71). 25 items: 24 pass, 0 fixed in the spec, 0
-open, 1 plan notes, 0 new questions. An open item waits on the question or
-residual its result names; a plan note is for the plan, not the spec; a new
-question is asked in `clarify-questions.md`.
+Brett Heap's answers (C-55 to C-71), and CHK002, CHK004, CHK008, CHK011 to
+CHK013 and CHK025 re-read later that day against feature 004's head `2cf34d3`,
+their results unchanged. 25 items: 24 pass, 0 fixed in the spec, 0 open, 1 plan
+notes, 0 new questions. An open item waits on the question or residual its
+result names; a plan note is for the plan, not the spec; a new question is
+asked in `clarify-questions.md`.
 
 Plan notes: PN-16 (CHK025).

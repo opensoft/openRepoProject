@@ -60,7 +60,15 @@ Lane: openRepoProject-4
 - [x] CHK015 Is "canonicalise" clear enough to decide a dangling link, a relative path and two spellings of one directory? [Clarity, Spec FR-001, Clarifications C-27, EC-018]
   - Result: pass. C-27 (a dangling link names a path that does not exist) and EC-018 (two spellings count once).
 - [x] CHK016 Is "registration disagrees" told apart from a registration read that cannot complete? [Clarity, Spec FR-007, Clarifications C-23]
-  - Result: pass. FR-007 also names a `<path>/.git` that is missing (`ENOENT` or `ENOTDIR`) or not a regular file as a disagreement, not a failed read (DI:267-268; CMD:139-141), added 2026-10-20 after lane openRepoProject-3's packet-fidelity read; after its delta read an administrative `gitdir` file that is missing (`ENOENT` or `ENOTDIR`) is one too (its finding D4; DI:244-245; CMD:141-142).
+  - Result: pass. FR-007 also names a `<path>/.git` that is missing (`ENOENT`
+    or `ENOTDIR`) or not a regular file as a disagreement, not a failed read
+    (DI:267-268; CMD:139-141), added 2026-10-20 after lane openRepoProject-3's
+    packet-fidelity read; after its delta read an administrative `gitdir` file
+    that is missing (`ENOENT` or `ENOTDIR`) is one too (its finding D4;
+    DI:244-245; CMD:141-142). On 2026-10-21 present rows that share a realpath
+    or an admin id joined the disagreements, by the fill of EC-031 (R-67 (c)),
+    and a row whose identity changed before its probe became
+    `inspection-error`, unprobed (R-101).
 
 ## Requirement Consistency
 
@@ -117,9 +125,11 @@ Evaluated on 2026-10-19 against `spec.md` at `8f433f7`; CHK007 and CHK016
 re-read on 2026-10-20 after lane openRepoProject-3's packet-fidelity read,
 their results unchanged, and again after its delta read (findings D2 to D4),
 their results still pass; CHK007, CHK009 to CHK011, CHK022, CHK028 and CHK029
-re-evaluated on 2026-10-21 after Brett Heap's answers (C-55 to C-71). 29 items:
-27 pass, 1 fixed in the spec, 0 open, 1 plan notes, 0 new questions. An open
-item waits on the question or residual its result names; a plan note is for the
-plan, not the spec; a new question is asked in `clarify-questions.md`.
+re-evaluated on 2026-10-21 after Brett Heap's answers (C-55 to C-71), and
+CHK016 later that day, after the re-check against feature 004's head `2cf34d3`,
+its result still pass. 29 items: 27 pass, 1 fixed in the spec, 0 open, 1 plan
+notes, 0 new questions. An open item waits on the question or residual its
+result names; a plan note is for the plan, not the spec; a new question is
+asked in `clarify-questions.md`.
 
 Plan notes: PN-9 (CHK024).

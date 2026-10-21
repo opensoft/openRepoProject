@@ -32,7 +32,12 @@ Lane: openRepoProject-4
 - [x] CHK009 Is the outcome recorded for a merge-target branch that no worktree has checked out? [Completeness, Edge Case, Gap, Spec FR-041]
   - Result: fixed in spec.md, C-50 and EC-026. No default-branch finding can fire for it.
 - [x] CHK010 Is parity with `project clean` stated with its scope (the rows clean inspects, the same working directory, the same refs)? [Completeness, Spec FR-026, SC-003]
-  - Result: pass.
+  - Result: fixed in spec.md, FR-007 and EC-031 (2026-10-21). At feature 004's
+    head `2cf34d3` two present rows that share a realpath or an admin id are
+    `registration-mismatch` (its lead ruling R-67 (c)), which FR-007 as change
+    2 words it let pass, so FR-026's equality failed for them; the overview now
+    takes the rule as a fill, with R-101's second identity check before each
+    probe.
 
 ## Requirement Clarity
 
@@ -93,9 +98,11 @@ Lane: openRepoProject-4
 ## Evaluation
 
 Evaluated on 2026-10-19 against `spec.md` at `8f433f7`; CHK012 re-read on
-2026-10-21 after Brett Heap's answers (C-55 to C-71), its result still pass. 26
-items: 24 pass, 2 fixed in the spec, 0 open, 0 plan notes, 0 new questions. An
-open item waits on the question or residual its result names; a plan note is
-for the plan, not the spec; a new question is asked in `clarify-questions.md`.
+2026-10-21 after Brett Heap's answers (C-55 to C-71), its result still pass;
+CHK010 re-evaluated later that day against feature 004's head `2cf34d3`, fixed
+by the twin fill (EC-031). 26 items: 23 pass, 3 fixed in the spec, 0 open, 0
+plan notes, 0 new questions. An open item waits on the question or residual its
+result names; a plan note is for the plan, not the spec; a new question is
+asked in `clarify-questions.md`.
 
 Plan notes: none.

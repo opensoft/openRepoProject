@@ -54,7 +54,9 @@ Lane: openRepoProject-4
 - [x] CHK017 Do the gates mirror [G]'s order and outcomes, so that a suggestion never points at what `project clean` refuses? [Consistency, Spec FR-032, FR-034, US4 s2]
   - Result: pass.
 - [x] CHK018 Are the causes of `inspection-incomplete` consistent across FR-007, FR-013, FR-033 and FR-034 (failed or cut presence, registration and reflog reads)? [Consistency, Spec Clarifications C-23]
-  - Result: pass.
+  - Result: pass; since 2026-10-21 the twins of FR-007 and a row whose identity
+    changed before its probe are `inspection-error` too, so FR-034's
+    `inspection-incomplete` takes them (EC-031).
 - [x] CHK019 Is the merge-target checkout kept out of suggestions both on its findings and on the row? [Consistency, Spec FR-041]
   - Result: pass.
 
@@ -96,9 +98,11 @@ Lane: openRepoProject-4
 
 ## Evaluation
 
-Evaluated on 2026-10-19 against `spec.md` at `8f433f7`. 29 items: 28 pass, 1
-fixed in the spec, 0 open, 0 plan notes, 0 new questions. An open item waits
-on the question or residual its result names; a plan note is for the plan, not
-the spec; a new question is asked in `clarify-questions.md`.
+Evaluated on 2026-10-19 against `spec.md` at `8f433f7`; CHK018 re-read on
+2026-10-21 after the re-check against feature 004's head `2cf34d3`, its result
+still pass. 29 items: 28 pass, 1 fixed in the spec, 0 open, 0 plan notes, 0 new
+questions. An open item waits on the question or residual its result names; a
+plan note is for the plan, not the spec; a new question is asked in
+`clarify-questions.md`.
 
 Plan notes: none.
