@@ -25,6 +25,11 @@ import clean_support
 
 TEXT = clean_support.TEXT_FIXTURES
 
+# The lead's extension of Brett Heap's ruling LQ-15 (lead ruling R-102), which
+# Brett Heap may strike: the two variables tested beside HOME and
+# XDG_CONFIG_HOME. Striking it here is this one line, made `()`.
+EXTENSION = ("GIT_CONFIG_GLOBAL", "GIT_CONFIG_SYSTEM")
+
 # The seven protocol pins and the two status pins, as the contract writes them
 # (contracts/project-clean.md, "Git children").
 PINS = ["-c", "protocol.allow=never", "-c", "protocol.file.allow=never",
@@ -84,6 +89,11 @@ def git_message(subcommand_name, code, **fields):
     """A row error's message for `git SUBCOMMAND`, from the fixtures (rule 8)."""
     operation = TEXT["row_error_git_operation"].format(SUBCOMMAND=subcommand_name)
     return TEXT[code].format(OPERATION=operation, **fields)
+
+
+def config_lines(*names):
+    """D18's relative-config-path text for names, one line each, from the fixtures (rule 8)."""
+    return "\n".join(TEXT["relative_config_path"].format(NAME=name) for name in names)
 
 
 def checks(document, level=None):
@@ -171,6 +181,42 @@ class StatusDoctorUpdateTests(clean_support.CleanCase):
         (root / "project.yaml").write_text("kind: project-manifest\nlegs:\n" + lines)
         return root
 
+    def plant_configuration(self, root, *configs):
+        """Inline fixture (rule 3): commit in root, at each relative path of
+        configs, a configuration whose clean filter `mark`, which root's
+        tracked .gitattributes selects for *.txt, and whose core.hooksPath,
+        root's tracked hooks/, each append to self.base/marker, beside a
+        tracked data.txt; then move data.txt's mtime an hour back, so that a
+        status probe reads it through the filter. The fixture's own git reads
+        none of it (GIT_CONFIG_GLOBAL is os.devnull). Returns the marker."""
+        marker = self.base / "marker"
+        quoted = shlex.quote(str(marker))
+        hooks = root / "hooks"
+        hooks.mkdir()
+        for name in ("pre-push", "reference-transaction", "post-checkout", "post-merge"):
+            (hooks / name).write_text(f"#!/bin/sh\necho {name} >> {quoted}\n")
+            (hooks / name).chmod(0o755)
+        for config in configs:
+            path = root / config
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_text(f'[filter "mark"]\n\tclean = "tee -a {quoted}"\n[core]\n\thooksPath = "{hooks}"\n')
+        (root / ".gitattributes").write_text("*.txt filter=mark\n")
+        (root / "data.txt").write_text("data\n")
+        self.commit(root)
+        found = os.stat(root / "data.txt")
+        os.utime(root / "data.txt", (found.st_atime - 3600, found.st_mtime - 3600))
+        return marker
+
+    def assert_planted_configuration_is_live(self, root, marker, env):
+        """The control: the real git, run in root under env with no optional
+        lock, reads the planted file as the user's or the system's
+        configuration, and its filter writes the marker, which is then
+        removed."""
+        self.assertFalse(marker.exists())
+        self.git(root, "status", "--porcelain", env=dict(env, GIT_OPTIONAL_LOCKS="0"))
+        self.assertTrue(marker.exists(), "the planted filter runs under the real git: the fixture is live")
+        marker.unlink()
+
     # T114: Git older than 2.36, no git, and the components that need no Git.
 
     def test_clean_git_older_than_2_36(self):
@@ -218,6 +264,47 @@ class StatusDoctorUpdateTests(clean_support.CleanCase):
             self.assertEqual([result.document[key] for key in ("error", "code")],
                              [unavailable, "git-unavailable"])
             self.assertTrue(tree.is_dir())
+
+    def test_clean_a_relative_configuration_path_before_the_version_check(self):
+        # Brett Heap's ruling LQ-15 (lead ruling R-102) in the order of a run:
+        # D11's configuration-path test comes before the version check. With
+        # the 2.35 fake behind the counting wrapper and a relative HOME, every
+        # mode refuses relative-config-path, not git-too-old, with exit 2, and
+        # not even `git --version` runs; with no git on PATH, the same
+        # refusal comes before git-unavailable.
+        root = self.repo()
+        self.bare_remote()
+        tree = self.merged_worktree("001-merged")
+        fake = clean_support.install_fake_git(self.base / "fake", "version-2.35.0")
+        env = dict(self.env, HOME="h")
+        message = config_lines("HOME")
+        modes = (
+            ("report", ()),
+            ("all-safe preview", ("--all-safe",)),
+            ("all-safe apply", ("--all-safe", "--apply", "--yes")),
+            ("single remove", ("--apply", "--action", "remove", "--worktree", tree, "--yes")),
+            ("push", ("--apply", "--action", "push", "--branch", "001-merged", "--yes")),
+            ("delete-branch", ("--apply", "--action", "delete-branch", "--branch", "001-merged", "--yes")),
+        )
+        for label, extra in modes:
+            with self.subTest(mode=label):
+                result, records = self.counted("clean", root, *extra, real=fake, env=env)
+                self.assert_status(result, 2)
+                self.assertEqual((result.stdout, result.stderr), ("", "REFUSED: " + message + "\n"))
+                self.assertEqual(records, [], "no Git child, not even git --version")
+                self.assertTrue(tree.is_dir(), "nothing was removed")
+        with self.subTest(mode="report", output="json"):
+            result, records = self.counted("clean", root, "--json", real=fake, env=env)
+            self.assert_status(result, 2)
+            document = self.assert_one_document(result)
+            self.assertEqual([document[key] for key in ("error", "code", "completeness", "apply_allowed")],
+                             [message, "relative-config-path", "incomplete", False])
+            self.assertEqual(document["refusals"], [{"code": "relative-config-path", "message": message}])
+            self.assertEqual(records, [])
+        with self.subTest("no git on PATH"):
+            result = self.run_cli("clean", root, env=dict(env, PATH=self.path_without_git(env)))
+            self.assert_status(result, 2)
+            self.assertEqual(result.stderr, "REFUSED: " + message + "\n")
 
     def test_status_git_older_than_2_36_in_status_and_doctor(self):
         # FR-050, FR-053, research.md R2: the 2.35 fake behind the counting
@@ -286,6 +373,99 @@ class StatusDoctorUpdateTests(clean_support.CleanCase):
                                      {"level": "error", "check": "git", "detail": "git-too-old: " + TOO_OLD})
                 self.assertEqual([command(record) for record in records], [["--version"]],
                                  "doctor's git row runs the memoized version check itself, and nothing else")
+
+    def test_status_a_relative_configuration_path_in_status_doctor_and_update(self):
+        # Brett Heap's ruling LQ-15 (lead ruling R-102; R-131 (a)), change 1's
+        # scenario as amended at cc000ea and 9fb22fa: a clean project whose
+        # root tracks h/.gitconfig and cfg/git/config, each defining a clean
+        # filter that writes a marker, and a .gitattributes selecting it. For
+        # HOME relative, then XDG_CONFIG_HOME relative beside an absolute
+        # HOME, then (the lead's extension) GIT_CONFIG_GLOBAL or
+        # GIT_CONFIG_SYSTEM relative beside an absolute HOME, the control
+        # shows the real git reading the planted file. Then the counting
+        # wrapper records no Git child in any run, git --version included, and
+        # the marker is never written: status marks the root inspection-error
+        # with relative-config-path and exits 0, doctor reports it as error
+        # rows and exits 1, `update --apply --component shape --yes` refuses
+        # with exit 2 and never invokes its owner tool, and `update --apply
+        # --component workflow --yes` is not refused for it. A workspace is
+        # configured, so handoff() reaches its remote read, which spawns nothing.
+        root = self.repo("Atlas")
+        (root / "project.yaml").write_text("kind: project-manifest\nlegs: []\n")
+        marker = self.plant_configuration(root, "h/.gitconfig", "cfg/git/config")
+        workspace = self.base / "workspace"
+        workspace.mkdir()
+        bin_dir = self.fake_bin()
+        workflow = self.recording_tool(bin_dir / "setup-openspeckit")
+        shape = self.base / "shape"
+        shape_runs = self.recording_script(shape / "update-shape.py")
+        no_global = {name: value for name, value in self.env.items() if name != "GIT_CONFIG_GLOBAL"}
+        variants = [("HOME", dict(no_global, HOME="h")), ("XDG_CONFIG_HOME", dict(no_global, XDG_CONFIG_HOME="cfg"))]
+        for name in EXTENSION:
+            env = dict(self.env, **{name: "h/.gitconfig"})
+            if name == "GIT_CONFIG_SYSTEM":
+                del env["GIT_CONFIG_NOSYSTEM"]  # so that Git would read the file it names: the control
+            variants.append((name, env))
+        for name, env in variants:
+            self.assert_planted_configuration_is_live(root, marker, env)
+            env = dict(self.path_first(bin_dir, env), SPECKIT_WORKSPACE_PATH=str(workspace))
+            lines = config_lines(name)
+            repository = {"path": str(root), "path_valid_utf8": True, "present": None, "branch": None,
+                          "head": None, "dirty": None, "upstream": None, "ahead": None, "behind": None,
+                          "tracking_freshness": FRESHNESS, "worktrees": None,
+                          "classification": "inspection-error",
+                          "errors": [{"code": "relative-config-path", "message": lines}]}
+            git_error = {"level": "error", "check": "git", "detail": "relative-config-path: " + lines}
+            root_error = {"level": "error", "check": str(root),
+                          "detail": "inspection-error (relative-config-path): " + lines}
+            for command_name, code in (("status", 0), ("doctor", 1), ("update", 0)):
+                with self.subTest(variable=name, command=command_name, output="json"):
+                    result, records = self.counted(command_name, root, "--json", env=env)
+                    self.assert_status(result, code)
+                    document = self.assert_one_document(result)
+                    self.assertEqual(document["repository"], repository)
+                    self.assertEqual(document["handoff"], {"state": NO_IDENTITY})
+                    self.assertEqual(records, [], "no Git child, git --version included")
+                    if command_name == "doctor":
+                        self.assertEqual(git_row(document), git_error)
+                        self.assertIn(root_error, checks(document))
+                with self.subTest(variable=name, command=command_name, output="human"):
+                    result, records = self.counted(command_name, root, env=env)
+                    self.assert_status(result, code)
+                    self.assertIn("  Git: inspection-error (relative-config-path)\n", result.stdout)
+                    self.assertNotIn("REFUSED", result.stderr)
+                    self.assertEqual(records, [])
+                    if command_name == "doctor":
+                        self.assertIn("ERROR git: relative-config-path: " + lines + "\n", result.stdout)
+            with self.subTest(variable=name, command="update --apply --component shape"):
+                result, records = self.counted("update", root, "--apply", "--component", "shape",
+                                               "--shape-source", shape, "--at", "a" * 40, "--yes", env=env)
+                self.assert_status(result, 2)
+                self.assertEqual(result.stderr, "REFUSED: " + CLEAN_TRACKING + "\n")
+                self.assertFalse(shape_runs.exists(), "the owner tool was never invoked")
+                self.assertEqual(records, [])
+            with self.subTest(variable=name, command="update --apply --component workflow"):
+                result, records = self.counted("update", root, "--apply", "--component", "workflow", "--yes",
+                                               env=env)
+                self.assert_status(result, 0)
+                self.assertNotIn("REFUSED", result.stderr)
+                self.assertEqual(workflow.read_text(), f"--repo {root}\n", "the workflow command runs as before")
+                workflow.unlink()
+                self.assertEqual(records, [])
+            self.assertFalse(marker.exists(), "no filter ran")
+
+        with self.subTest("before the version check"):
+            # The 2.35 fake behind the counting wrapper: the code is still
+            # relative-config-path, not git-too-old, and nothing runs.
+            fake = clean_support.install_fake_git(self.base / "fake", "version-2.35.0")
+            env = dict(self.path_first(bin_dir, variants[0][1]), SPECKIT_WORKSPACE_PATH=str(workspace))
+            result, records = self.counted("doctor", root, "--json", real=fake, env=env)
+            self.assert_status(result, 1)
+            document = self.assert_one_document(result)
+            self.assertEqual(document["repository"]["errors"],
+                             [{"code": "relative-config-path", "message": config_lines("HOME")}])
+            self.assertEqual(git_row(document)["detail"], "relative-config-path: " + config_lines("HOME"))
+            self.assertEqual(records, [])
 
     def test_doctor_no_git_on_path(self):
         # Research.md R2: with no git, discover() finds the root by the nearest
