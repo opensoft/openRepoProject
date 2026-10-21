@@ -188,7 +188,8 @@ Scope).
   `--apply --json` stays refused with `invalid-arguments`, exit 2.
 - **One mutation seam, `retire_worktree(plan, target)`.** Revalidate; spawn the
   non-force `git -c status.showUntrackedFiles=normal -c
-  core.untrackedCache=false -c core.fsmonitor=false -c protocol.allow=never -c
+  core.untrackedCache=false -c core.fsmonitor=false -c core.trustctime=true -c
+  core.checkStat=default -c protocol.allow=never -c
   protocol.file.allow=never -c protocol.ssh.allow=never -c
   protocol.git.allow=never -c protocol.http.allow=never -c
   protocol.https.allow=never -c protocol.ext.allow=never -C <command
@@ -275,9 +276,11 @@ Scope).
   --version`, four repository-wide children memoized per `common_dir`
   (identity, `worktree list --porcelain -z`, one `for-each-ref` in the shared
   format, the merged set), and one combined bounded status probe per row
-  (`BA:585-652`) under `-c core.untrackedCache=false -c core.fsmonitor=false`
-  (pins that also override `GIT_CONFIG_GLOBAL` and `GIT_CONFIG_SYSTEM`, which
-  the scrub leaves), every Git child except the push child also under `-c
+  (`BA:585-652`) under `-c core.untrackedCache=false -c core.fsmonitor=false
+  -c core.trustctime=true -c core.checkStat=default`, the last two by Brett
+  Heap's ruling LQ-10 and on the hidden-state probe and the removal too (pins
+  that also override `GIT_CONFIG_GLOBAL` and `GIT_CONFIG_SYSTEM`, which the
+  scrub leaves), every Git child except the push child also under `-c
   protocol.allow=never` and the six per-protocol pins (`protocol.file`, `ssh`,
   `git`, `http`, `https` and `ext`, each `.allow=never`), with
   `GIT_ALLOW_PROTOCOL` in the scrub, so that a lazy fetch in a partial
@@ -369,7 +372,8 @@ Scope).
 - **A started removal is never interrupted.** Signals and the deadline wait
   for the removal child; only the 300 s hard ceiling kills it.
 - **Git's own check runs on pinned configuration.** `core.untrackedCache`
-  and `core.fsmonitor` off, untracked files listed (What Changes, seam).
+  and `core.fsmonitor` off, untracked files listed, ctime trusted and the
+  default stat check (What Changes, seam; LQ-10).
 - **One repository per invocation.** Never siblings, family members, mounted
   legs, pinned member copies or independent clones (`BA:103-105`).
 - **Never prune, repair, lock or unlock.** `project` never runs
@@ -530,7 +534,8 @@ Headers are quoted verbatim, one per line; ADDED headers are proposed text.
     immediately before each spawn; changes after it are the residual window
     the ADDED guarantee states, and Git's own non-force check is the last
     defense only on the pinned configuration (`status.showUntrackedFiles`,
-    `core.untrackedCache`, `core.fsmonitor`; the protocol pins on every Git
+    `core.untrackedCache`, `core.fsmonitor`, and `core.trustctime` and
+    `core.checkStat` by LQ-10; the protocol pins on every Git
     child except the push child are no part of it). A value null in the plan and
     null at revalidation, as a deleted upstream's `upstream_oid`, `ahead` and
     `behind` are, is no difference, while a value that cannot be re-read is
@@ -578,7 +583,10 @@ Headers are quoted verbatim, one per line; ADDED headers are proposed text.
     status, doctor and update" (Brett Heap's ruling LQ-15); the probe directory
     rule (`BA:554-583`); the scrub
     with `GIT_OPTIONAL_LOCKS=0` (`BA:243-253`); NUL parsing; the combined
-    probe, its pins and bounds (`BA:629-652`, `BA:793-814`), among them the `-c
+    probe, its pins and bounds (`BA:629-652`, `BA:793-814`), among them
+    `core.trustctime=true` and `core.checkStat=default` on the status and
+    hidden-state probes, with the scenario "An edit that keeps its size and
+    restores its mtime" (Brett Heap's ruling LQ-10), and the `-c
     protocol.allow=never` pin and the six per-protocol pins on every Git child
     except the push child, with `GIT_ALLOW_PROTOCOL` in the scrub, against lazy
     fetches (R-23, R-25); `GIT_TRACE2`, `GIT_TRACE2_EVENT` and
@@ -913,6 +921,20 @@ Departures from packet decisions, each citing the decision departed from:
   `doctor` and `update` report it as they report a Git below the floor (R6),
   starting no Git child. A baseline behavior change: `a040790` runs every child
   under such a value (design D6, D11, D16, D18, Risks).
+- **The stat pins** (Brett Heap's ruling LQ-10 of 2026-10-21, in lane
+  openRepoProject-3's session, "yes to all six recommendations, LQ-10 to
+  LQ-15", on lane openRepoProject-3's recommendation "Approve. It is stricter
+  than the spec and only adds protection."; an addition to `BA:307-317` and
+  to the council's pinned status configuration): Git compares a file's ctime only while both
+  `core.trustctime` and `core.checkStat` keep their defaults, so under a
+  repository's `core.trustctime=false` or `core.checkStat=minimal` an edit
+  that keeps a file's size and restores its mtime is invisible to the status
+  probe and to Git's own check, and the removal deletes it (lane
+  openRepoProject-3's F1 H-3 at `2cf34d3`). Every status probe, the
+  hidden-state probe and the removal therefore also pass `-c
+  core.trustctime=true -c core.checkStat=default`, after `-c
+  core.fsmonitor=false`, and like the other pins they outrank every
+  configuration file (design D9, D11, Risks).
 
 Packet decisions adopted, not open: OQ-5, the caps and bounds of `BA:966`,
 subject to OQ-4, less the target cap's refusal; OQ-9, the budgets of
@@ -1233,7 +1255,15 @@ departures; this list; design Context, D6, D11, D16, D18, D20, Risks;
 added scenario "A relative configuration path", `Clean plans and refusals are
 versioned JSON`, `Inspect and diagnose`, and the `project-command` ADDED
 evidence model and its added scenario "A relative configuration path in
-status, doctor and update").
+status, doctor and update"); LQ-10 adds `-c core.trustctime=true -c
+core.checkStat=default` to every status probe, the hidden-state probe and the
+removal (What Changes, seam and evidence model; Rules This Change Keeps;
+Capabilities, review-safety `:49` and `project-command` ADDED; Decisions,
+departures; this list; design Context, D9, D11, D20, Risks; `tasks.md` 1.2,
+1.4; the deltas' `Clean can explicitly retire verified worktrees`, `Cleanup
+revalidates destructive actions`, and the `project-command` ADDED evidence
+model, its scenario "The pinned status configuration" and its added scenario
+"An edit that keeps its size and restores its mtime").
 
 ### Council Verdicts
 

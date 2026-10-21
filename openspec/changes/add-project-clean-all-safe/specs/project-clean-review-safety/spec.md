@@ -97,10 +97,11 @@ nothing at all. Push and delete-branch SHALL keep the full re-inspection, and
 SHALL refuse with `inspection-incomplete`, `inspect-cap` or `deadline-exceeded`
 and exit 2 when it is incomplete. Git's own non-force check SHALL be the last
 defense only on the pinned configuration that the removal command carries:
-`status.showUntrackedFiles=normal`, `core.untrackedCache=false` and
-`core.fsmonitor=false`; the protocol pins that every Git child, except the push
-child, carries (`-c protocol.allow=never` and the six per-protocol pins) are no
-part of that defense.
+`status.showUntrackedFiles=normal`, `core.untrackedCache=false`,
+`core.fsmonitor=false`, `core.trustctime=true` and `core.checkStat=default`;
+the protocol pins that every Git child, except the push child, carries (`-c
+protocol.allow=never` and the six per-protocol pins) are no part of that
+defense.
 
 #### Scenario: Worktree changes while confirmation is pending
 

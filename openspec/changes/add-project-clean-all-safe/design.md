@@ -21,7 +21,8 @@ through lane openRepoProject-4's spec 005 clarify round and recorded in
 `proposal.md` Decisions, edits Context, D6, D11, D17, D20 and Risks. Brett
 Heap's rulings of 2026-10-21 on lane openRepoProject-3's recommendations LQ-10
 to LQ-15, recorded in `proposal.md` Decisions, edit here: LQ-15, Context, D6,
-D11, D16, D18, D20 and Risks. Brett Heap's ruling
+D11, D16, D18, D20 and Risks; LQ-10, Context, D9, D11, D20 and Risks. Brett
+Heap's ruling
 of 2026-10-09 on open question 1, that a local ancestry proof outranks
 `remote-gone` for worktree rows, is in `proposal.md` Decisions and edited
 Context, D6, D7, D20, Risks, the Migration Plan and Open Questions here.
@@ -452,7 +453,8 @@ this change leaves alone.
 The removal child is a D2 handle of kind `removal`: the scrubbed environment
 without `GIT_OPTIONAL_LOCKS`, and the argument vector `git -c
 status.showUntrackedFiles=normal -c core.untrackedCache=false -c
-core.fsmonitor=false -c protocol.allow=never -c protocol.file.allow=never -c
+core.fsmonitor=false -c core.trustctime=true -c core.checkStat=default -c
+protocol.allow=never -c protocol.file.allow=never -c
 protocol.ssh.allow=never -c protocol.git.allow=never -c
 protocol.http.allow=never -c protocol.https.allow=never -c
 protocol.ext.allow=never -C <command directory> worktree remove <path>`, both
@@ -559,9 +561,11 @@ one does. No child is added, so the fit is unchanged (M3).
 ### D11. The pinned configuration (V3)
 
 Every combined status probe runs as `git -c core.untrackedCache=false -c
-core.fsmonitor=false -C <worktree> status --porcelain=v1 -z
---untracked-files=normal --ignored=matching`, the removal as D9 states, and the
-hidden-state probe carries the same two pins for uniformity. The council's
+core.fsmonitor=false -c core.trustctime=true -c core.checkStat=default -C
+<worktree> status --porcelain=v1 -z --untracked-files=normal
+--ignored=matching`, the removal as D9 states, and the hidden-state probe
+carries the same four pins for uniformity; the last two are Brett Heap's ruling
+LQ-10, below. The council's
 fixture `k3` (the untracked cache on, `core.checkStat=minimal`, an index-writing
 status run) showed Git's own pre-removal check missing a file created after
 revalidation and deleting it with exit 0; with the pins it refuses with 128. A
@@ -577,6 +581,24 @@ helped; task 2.1 measured the pinned probe at 42 to 49 ms warm for 10,000
 entries and 215 to 232 ms for 100,000. One consequence crosses changes: feature
 005's fixtures that rely on a running fsmonitor (DI:1233-1237, DI:1249-1254)
 must be rewritten, as the lead's ruling records.
+
+`core.trustctime=true` and `core.checkStat=default` restore Git's full stat
+comparison (Brett Heap's ruling LQ-10, 2026-10-21). Git compares an index
+entry's ctime with the file's only while both settings keep these values
+(`match_stat_data`, `read-cache.c:185` and `:192` at 2.36.6, `statinfo.c:40`
+and `:47` at 2.43.7), and `core.checkStat=minimal` also drops the inode, owner
+and sub-second checks. Under either repository setting an edit that keeps a
+file's size and restores its mtime matches the index entry, so the status probe
+and Git's own check both read the worktree clean and the removal deletes the
+edit (lane openRepoProject-3's F1 H-3 at `2cf34d3`). Checked here on Git 2.36.6
+and 2.43.0: with `core.trustctime=false` and `core.checkStat=minimal` in the
+repository's configuration, such an edit gives no record under the two older
+pins and ` M` under all four. The pins follow `core.fsmonitor=false` on every
+status probe, the hidden-state probe and the removal, and like them outrank
+every configuration file; the removal's pins reach Git's own check, which runs
+in a child of the removal. A ctime or inode that changes without an edit makes
+Git compare the content instead, which is slower and never a wrong answer
+(Risks).
 
 Every Git child, of every kind, except the push child of `clean --action push`,
 also carries `-c protocol.allow=never -c protocol.file.allow=never -c
@@ -973,7 +995,8 @@ under Git-first resolution; V1 to V4, M3 and M4 under retirement; OQ-10, OQ-16
 and M1 under the JSON and the result; V9, R-23, R-25, the push-child
 exception and Brett Heap's ruling Q9 B under the evidence model; D-D under
 push; D-R under maintenance; R-22 under revalidation. Brett Heap's rulings of
-2026-10-21: LQ-15 under the evidence model and the report.
+2026-10-21: LQ-15 under the evidence model and the report; LQ-10 under the
+evidence model.
 
 ## Risks / Trade-offs
 
@@ -1006,6 +1029,12 @@ push; D-R under maintenance; R-22 under revalidation. Brett Heap's rulings of
   large trees are slower] -> Task 2.1 measured it (42 to 49 ms warm for 10,000
   entries, 215 to 232 ms for 100,000); a slow probe makes a plan incomplete,
   never unsafe.
+- [The stat pins override a repository's `core.trustctime=false` or
+  `core.checkStat=minimal`, set where ctimes or inodes change without an edit,
+  as under some backup tools and network filesystems, so Git compares those
+  files' content on every probe] -> Accepted (Brett Heap's ruling LQ-10): the
+  probe is slower there, never wrong, and a slow probe makes a plan incomplete,
+  never unsafe (D11).
 - [A repository whose every worktree carries a gitlink, the V5 deferral's
   motivating repository (Opensoft-Tenant: 20 rows pass every gate before
   `deferred-target-cap` and all 20 are `contains-submodule` after it), yields 0

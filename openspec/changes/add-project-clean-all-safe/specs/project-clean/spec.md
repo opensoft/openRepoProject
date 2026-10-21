@@ -262,7 +262,8 @@ removal, single or batch, SHALL follow one sequence: revalidate the target as
 "Cleanup revalidates destructive actions" states; spawn, only while at least the
 5 s removal floor of the work deadline remains, the non-force command `git -c
 status.showUntrackedFiles=normal -c core.untrackedCache=false -c
-core.fsmonitor=false -c protocol.allow=never -c protocol.file.allow=never -c
+core.fsmonitor=false -c core.trustctime=true -c core.checkStat=default -c
+protocol.allow=never -c protocol.file.allow=never -c
 protocol.ssh.allow=never -c protocol.git.allow=never -c
 protocol.http.allow=never -c protocol.https.allow=never -c
 protocol.ext.allow=never -C <command directory> worktree remove <path>` in its

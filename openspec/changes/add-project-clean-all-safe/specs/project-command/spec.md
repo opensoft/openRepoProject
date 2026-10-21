@@ -137,10 +137,14 @@ outranks the matching `trace2.normalTarget`, `trace2.eventTarget` or
 `trace2.perfTarget` setting of the system and global configuration, the only
 configuration from which Git reads a trace2 target and one that no `-c` pin
 reaches, and `0` turns that target off, so that no trace2 target opens.
-Read-only probes SHALL also set `GIT_OPTIONAL_LOCKS=0`. Every status probe
-SHALL pass `-c
-core.untrackedCache=false -c core.fsmonitor=false`, which also override
-`GIT_CONFIG_GLOBAL` and `GIT_CONFIG_SYSTEM`. Every Git child, of every kind,
+Read-only probes SHALL also set `GIT_OPTIONAL_LOCKS=0`. Every status probe,
+and the hidden-state probe that reads a worktree's index flags, SHALL pass `-c
+core.untrackedCache=false -c core.fsmonitor=false -c core.trustctime=true -c
+core.checkStat=default`, which also override `GIT_CONFIG_GLOBAL` and
+`GIT_CONFIG_SYSTEM`; the last two restore Git's full stat comparison, because
+Git compares a file's ctime only while both settings keep these values, so
+that an edit that keeps a file's size and restores its mtime would otherwise
+read unchanged. Every Git child, of every kind,
 except the push child of `clean --action push`, SHALL also pass `-c
 protocol.allow=never -c protocol.file.allow=never -c protocol.ssh.allow=never -c
 protocol.git.allow=never -c protocol.http.allow=never -c
@@ -275,8 +279,12 @@ requirement states a change.
 - **THEN** every Git child runs with `GIT_INTERNAL_SUPER_PREFIX` removed from its environment, and the inspection succeeds, where with that variable kept every command on 2.36 fails closed
 
 #### Scenario: The pinned status configuration
-- **WHEN** `core.untrackedCache` and `core.fsmonitor` are set to true in the file that `GIT_CONFIG_GLOBAL` names
-- **THEN** a counting `git` wrapper records `-c core.untrackedCache=false -c core.fsmonitor=false` on every status child and on every removal child
+- **WHEN** `core.untrackedCache` and `core.fsmonitor` are set to true, `core.trustctime` to false and `core.checkStat` to `minimal` in the file that `GIT_CONFIG_GLOBAL` names
+- **THEN** a counting `git` wrapper records `-c core.untrackedCache=false -c core.fsmonitor=false -c core.trustctime=true -c core.checkStat=default` on every status child, every hidden-state child and every removal child
+
+#### Scenario: An edit that keeps its size and restores its mtime
+- **WHEN** a repository sets `core.trustctime=false` and `core.checkStat=minimal`, and a tracked file in an otherwise eligible linked worktree is rewritten at least one second after its index entry was recorded, keeping its size, and its mtime is then restored to the recorded value
+- **THEN** the status probe reports the file modified, the row is classified `dirty` and excluded, and `--all-safe --apply --yes` leaves the worktree and the edit in place, where without the two stat pins the probe and Git's own check read the worktree clean and the removal deleted the edit
 
 #### Scenario: A lazy fetch in a partial clone is refused locally
 - **WHEN** a status probe runs in a partial clone made with `--no-checkout --filter=tree:0`, so that the probe needs a tree object the clone does not hold, and the clone's `remote.origin.uploadpack` names a script that logs each run
