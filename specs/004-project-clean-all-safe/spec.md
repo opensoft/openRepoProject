@@ -1195,8 +1195,9 @@ configuration"; "A lazy fetch in a partial clone is refused locally";
   reserve and prints the record, on a best-effort basis after SIGHUP; a
   second SIGINT during reconciliation MUST abandon the remaining rescans,
   leaving their fields null and the target whose rescan was running `unknown`
-  with `reconciliation-incomplete`. An exception after the apply phase began
-  MUST make that target `unknown` with `internal-error` and later targets
+  with `reconciliation-incomplete` after exit 0, a child that exited nonzero
+  on its own staying `failed` by FR-034. An exception after the apply phase
+  began MUST make that target `unknown` with `internal-error` and later targets
   `not-attempted`, and one before it MUST refuse with `internal-error`, exit 2.
   An `unknown` or `failed` target MUST NOT be retried automatically, and
   `project` MUST never force a removal or delete a directory itself. Traces:

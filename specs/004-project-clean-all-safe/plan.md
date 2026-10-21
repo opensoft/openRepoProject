@@ -395,7 +395,11 @@ The feature PR body lists these for his word:
   rule gives exit 2 only to a refusal raised before a plan is built; and a
   reader that stalls can hold a run past the delta's 64 s bound, which does
   not cover a write blocked by its reader. R-55 stands until he rules
-  (research.md R4; contract, "Exit statuses").
+  (research.md R4; contract, "Exit statuses"). The same group holds whether
+  to print an exception's type on standard error when an internal error
+  strikes after the apply phase begins, where the run prints no type and no
+  text today (lead ruling R-87 (c); contract, "Human output", the refusal
+  messages).
 - **LQ-8, the command form's escapes** (lead ruling R-61): a printed
   `$'...'` command holding a `\u` or `\U` escape is read differently
   outside a UTF-8 locale, so a command pasted in a C locale can name a
