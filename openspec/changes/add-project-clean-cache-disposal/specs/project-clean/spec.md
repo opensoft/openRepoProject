@@ -325,7 +325,10 @@ that row `reflog-unavailable`, at the gate's place in this order; any other
 error on the read SHALL make that row `inspection-error`, as any failed row
 probe does; and a read not finished within the filesystem budget SHALL leave
 the row unprobed and the plan incomplete with `inspection-incomplete`, as for
-every other filesystem read. A row SHALL be excluded as `contains-submodule`
+every other filesystem read, except a read of the cache walk that times out,
+which leaves its row `cache-unverified` and the plan complete, as "Clean
+disposes of listed caches before a worktree removal" states. A row SHALL be
+excluded as `contains-submodule`
 when its index holds any gitlink or its worktree administrative directory holds
 a `modules` entry, and as
 `hidden-local-state` when its index flags any entry assume-unchanged or
@@ -864,7 +867,9 @@ holds. For the candidates in canonical order, at most 16 per invocation
 after the row's identity is verified: one Git child in the row's own worktree,
 `status --porcelain=v2 -z --untracked-files=normal --ignored=matching`,
 carrying the status pins `-c core.untrackedCache=false -c
-core.fsmonitor=false`, the protocol pins, the scrubbed environment and
+core.fsmonitor=false`, its own pin `-c status.showStash=false`, so that a
+repository's stash never puts a `# stash` header before its records, the
+protocol pins, the scrubbed environment and
 `GIT_OPTIONAL_LOCKS=0` that every read-only Git child carries, under the
 per-child budget and counted in `probes`; then a walk that takes the records in
 canonical order, opens each directory it records once, from the worktree root
@@ -899,8 +904,10 @@ caps, or when its cache stage could not remove them:
   (`limits.cache_entries_total`) or 1 GiB (1,073,741,824,
   `limits.cache_bytes_total`), its own then not counted;
 - `cache-unverified`: its child failed or timed out, read a record that is not
-  an ignored one, or read no ignored record, or a filesystem call of its walk
-  failed or timed out;
+  an ignored one or an ignored record whose path, its trailing `/`
+  disregarded, begins with `/` or holds an empty, `.` or `..` component, or
+  read no ignored record, or a filesystem call of its walk failed or timed
+  out, an open that the walk's no-follow rule refused at plan time included;
 - `cache-unwritable`: every ignored path being a listed cache within the
   per-worktree caps, a directory that its cache stage would change failed the
   access check;
@@ -1067,9 +1074,14 @@ else how many of its cache paths were removed, which remain and which a removal
 still outstanding may still remove, naming the work deadline as the cause, and
 not a change of state, when the deadline ended the stage, with the command that
 shows a fresh plan for the rest. A run that stops after a target's cache stage
-ended `disposed` and before its removal child was spawned SHALL print
+ended `disposed`, before its removal child was spawned or at that target when
+its removal then ended `failed`, SHALL print
 `Cache disposal at PATH: removed N cache paths; the worktree was not removed.`
-before its stop block. A run that stops at a target whose cache stage the
+before its stop block, and one that stops at such a target that ended
+`unknown` SHALL print there `Cache disposal at PATH: removed N cache paths;
+the worktree's removal is not proven.`, so that the person reads how many
+cache paths were deleted before the stop block names the target's reason and
+the next step. A run that stops at a target whose cache stage the
 removal floor or the work deadline stopped in a read before its first removal,
 no signal having been received by then, SHALL print
 `Cache disposal at PATH not attempted (deadline-exceeded); nothing was deleted.`
@@ -1099,6 +1111,12 @@ and its residual window" states.
 - **AND** on a copy whose branch's upstream remote-tracking ref was deleted, the
   branch still merged, the row is still a candidate and `merged-removable`, its
   caches are disposed of, and the worktree is removed, its branch kept
+- **AND** on a copy where a test hook locks the worktree after its cache stage
+  and before its removal child is spawned, Git refuses the removal with exit
+  status 128, the target is `failed` with `git-refused`, its four cache
+  entries are gone and its worktree remains, the exit status is 128, and
+  before the stop block the human result reads `Cache disposal at PATH:
+  removed 2 cache paths; the worktree was not removed.`
 
 #### Scenario: Caches beside a blocking ignored file
 
@@ -1194,14 +1212,19 @@ and its residual window" states.
 
 #### Scenario: The cache enumeration runs under the pins
 
-- **WHEN** the user's configuration sets `status.showUntrackedFiles=no` and
-  `core.untrackedCache=true`, and `--all-safe` previews a repository with one
-  cache-only candidate under a counting `git` wrapper on PATH
+- **WHEN** the user's configuration sets `status.showUntrackedFiles=no`,
+  `core.untrackedCache=true` and `status.showStash=true`, and `--all-safe`
+  previews a repository that holds one stash and one cache-only candidate
+  under a counting `git` wrapper on PATH
 - **THEN** the wrapper records one `status --porcelain=v2 -z
   --untracked-files=normal --ignored=matching` child naming that worktree as its
   directory and carrying `-c core.untrackedCache=false -c
-  core.fsmonitor=false` and the seven protocol pins, the enumeration succeeds,
-  and `probes.performed` counts that child
+  core.fsmonitor=false`, `-c status.showStash=false` and the seven protocol
+  pins, the enumeration succeeds, its output holding no `# stash` header, and
+  `probes.performed` counts that child
+- **AND** `--all-safe --apply --yes` then revalidates the candidate with the
+  same child and pins, which prints exactly the planned records, disposes of
+  its caches and removes it, its branch kept, and the exit status is 0
 - **AND** no such child runs for a row that is not a candidate, nor for
   `--apply --action push`
 
@@ -1215,8 +1238,11 @@ and its residual window" states.
   "cache-unverified"` and null counts, not `inspection-error`, the plan is
   complete, `--all-safe --apply --yes` removes only the second, the first's
   caches are untouched, and the exit status is 0
-- **AND** the same holds when the child prints no ignored record, or when a
-  test hook makes a filesystem call of the walk fail or outlive its budget
+- **AND** the same holds when the child prints no ignored record, or, a fake
+  `git` printing it, an ignored record whose path begins `../`, for which the
+  walk opens nothing, or when a test hook makes a filesystem call of the walk
+  fail or outlive its budget, or makes a directory's no-follow open fail as
+  for a symbolic link
 - **AND** when the work deadline passes while that cache enumeration child
   runs, the plan is incomplete with `deadline-exceeded`, the preview exits 1,
   and `--apply` refuses with exit 2 before any mutation

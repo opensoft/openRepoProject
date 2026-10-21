@@ -308,10 +308,16 @@ field null and `reconciled` false, and SHALL stop the run with exit status 1.
 
 A listed cache SHALL NOT be a symbolic link, nor SHALL any directory between it
 and the worktree root, nor any entry inside a listed directory; every such
-directory SHALL be on the device of the worktree root; and the cache's path
-SHALL be valid UTF-8. An ignored path that fails any of these SHALL be blocking,
+directory, and a listed cache that is a directory and every directory inside
+it, SHALL be on the device of the worktree root; and the cache's path, and the
+name of every entry inside a listed directory, SHALL be valid UTF-8. An
+ignored path that fails any of these SHALL be blocking,
 and its row SHALL be preserved as "Cleanup preserves all local work not proven
-disposable" states. Neither the cache enumeration nor the cache stage SHALL ever
+disposable" states. Where the walk's no-follow open of a directory is refused
+at plan time, as for a directory replaced by a symbolic link after Git printed
+its records, the row SHALL instead be `cache-unverified`, as for any failed
+call of the walk, and SHALL NOT be counted blocking. Neither the cache
+enumeration nor the cache stage SHALL ever
 follow a symbolic link, so that its target, inside or outside the worktree, is
 never read, listed or changed by them, and a file with other hard links SHALL
 lose only its name inside the worktree.
@@ -382,8 +388,9 @@ reached at a hand-off SHALL end the stage. A stage that has handed over its
 first removal SHALL end `disposed` or `partial`, never `refused`, except that a
 stage every one of whose handed-over removals returned without removing its
 entry SHALL end `refused` with `cache-changed`, nothing deleted, as a removal
-refused for a sticky directory or a read-only filesystem, which the plan's
-access check cannot see, ends it. Otherwise the entries already removed SHALL
+refused for a sticky directory or a filesystem made read-only after the plan,
+which the plan's access check cannot see, ends it. Otherwise the entries
+already removed SHALL
 stay removed, recorded as permanent partial cache completion. The stage SHALL
 then rescan every listed cache: it SHALL open the chain to the cache's parent
 as its removals do, checking every identity, and `lstat` the cache's name
@@ -431,10 +438,12 @@ window" states.
   `blocking: 1`, nothing is deleted, and the outside directory and its files are
   intact
 - **AND** a symbolic link `link.pyc` ignored by the rule `*.pyc`, and a
-  `__pycache__` directory holding a symbolic link `x.pyc` or a file `notes.txt`,
-  are blocking the same way
-- **AND** a `__pycache__` directory whose parent's `lstat`, stubbed, reports a
-  device other than the worktree root's is blocking the same way, and on Linux a
+  `__pycache__` directory holding a symbolic link `x.pyc`, a file `notes.txt`
+  or, on Linux, a file whose name holds the byte 0xFF before its `.pyc`, are
+  blocking the same way
+- **AND** a `__pycache__` directory whose parent's `lstat`, or whose own,
+  stubbed, reports a device other than the worktree root's is blocking the same
+  way, and on Linux a
   `__pycache__` directory under a directory whose name holds the byte 0xFF
   fails the sample test, its row `not-candidate` with that path in
   `blocking_samples`; both are untouched
