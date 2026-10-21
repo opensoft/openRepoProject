@@ -16,7 +16,10 @@ R-19 edited Context, D14 and D19; R-21 edited Context, D6 and D17; R-22 edited
 Context and D20; R-23 edited Context, D6, D9, D11 and D20; R-24 edited D5, D9,
 D11, D12, D18, Risks and the Migration Plan; R-25 edited Context, D6, D9, D11,
 D20 and Risks; the push-child exception, before Brett Heap, edits D6, D11, D20,
-Risks and Open Questions. Brett Heap's ruling
+Risks and Open Questions; and Brett Heap's ruling Q9 B of 2026-10-21, given
+through lane openRepoProject-4's spec 005 clarify round and recorded in
+`proposal.md` Decisions, edits Context, D6, D11, D17, D20 and Risks. Brett
+Heap's ruling
 of 2026-10-09 on open question 1, that a local ancestry proof outranks
 `remote-gone` for worktree rows, is in `proposal.md` Decisions and edited
 Context, D6, D7, D20, Risks, the Migration Plan and Open Questions here.
@@ -317,15 +320,25 @@ main worktree, or a gitfile checkout whose main worktree cannot be named), rows
 row 3 ran, as the evidence model states; `clean` refuses those layouts (D8), so
 only a reader that reports them, such as `add-project-overview`, probes there.
 
-The scrubbed environment is a copy of the caller's with seventeen variables
+The scrubbed environment is a copy of the caller's with thirty-one variables
 removed, unconditionally and before any Git call, from a fixed list that is
 hard-coded rather than queried: the fifteen of BA:244-250, which Git 2.40 and
 later print from `rev-parse --local-env-vars`; `GIT_INTERNAL_SUPER_PREFIX`,
 which 2.36 through 2.39 also print and which makes every command on 2.36 fail
-closed when it is set (D17, R-21); and `GIT_ALLOW_PROTOCOL`, which Git does not
+closed when it is set (D17, R-21); `GIT_ALLOW_PROTOCOL`, which Git does not
 print and which, set to a protocol list, is consulted before every `-c` pin
-(D11, R-25). `GIT_CONFIG_GLOBAL` and `GIT_CONFIG_SYSTEM` are not in that list
-and stay; D11's `-c` pins override them.
+(D11, R-25); and the fourteen trace variables that Git 2.36 through 2.43 read,
+`GIT_TRACE`, `GIT_TRACE_BARE`, `GIT_TRACE_CURL`, `GIT_TRACE_CURL_NO_DATA`,
+`GIT_TRACE_FSMONITOR`, `GIT_TRACE_PACKET`, `GIT_TRACE_PACKFILE`,
+`GIT_TRACE_PACK_ACCESS`, `GIT_TRACE_PERFORMANCE`, `GIT_TRACE_REDACT`,
+`GIT_TRACE_REFS`, `GIT_TRACE_SETUP`, `GIT_TRACE_SHALLOW` and
+`GIT_TRACE_WORKING_TREE_ENCODING`, twelve of them trace keys, which create or
+append to the file that an absolute-path value names, and two modifiers that
+open nothing (D11, D17; Brett Heap's ruling Q9 B). It then sets `GIT_TRACE2`,
+`GIT_TRACE2_EVENT` and `GIT_TRACE2_PERF` to `0` for every kind of child, the
+push child included (D11, Q9 B). `GIT_CONFIG_GLOBAL` and `GIT_CONFIG_SYSTEM`
+are not in that list and stay; D11's `-c` pins and those three variables
+override them.
 
 Every child in the table, `git --version` and D9's removal child included, also
 runs with `-c protocol.allow=never` and the six per-protocol pins (D11, R-23,
@@ -588,6 +601,23 @@ refuses the fetch locally, the probe fails with `probe-failed`, and the row is
 on Git 2.36.6, 2.40.4 and 2.43.0. The residual, recorded under Risks, is a
 remote-helper protocol of another name, which no pin names.
 
+Trace output is turned off for every Git child, the push child included
+(Brett Heap's ruling Q9 B, 2026-10-21, through lane openRepoProject-4's spec
+005 clarify round). Git reads a trace2 target only from `GIT_TRACE2`,
+`GIT_TRACE2_EVENT` and `GIT_TRACE2_PERF` and from the `trace2.normalTarget`,
+`trace2.eventTarget` and `trace2.perfTarget` settings, which it reads early,
+from the system and global configuration alone, ignoring the repository's and
+the command line's, so no `-c` pin reaches them; a non-empty variable replaces
+its setting, and `0` turns that target off. D6 therefore sets the three
+variables to `0` in every child's environment, which also overrides the files
+that `GIT_CONFIG_GLOBAL` and `GIT_CONFIG_SYSTEM` name. The older trace
+variables, `GIT_TRACE` and the thirteen `GIT_TRACE_*` names, have no
+configuration setting, and the scrub removes them (D6). The other
+`GIT_TRACE2_*` names stay as the caller set them: read in the sources of every
+release from 2.36.6 to 2.43.7, none opens a file while the three targets are
+off. The push child carries the same environment, because trace output changes
+nothing about where a push reaches; the cost is recorded under Risks.
+
 ### D12. The 16-per-run deferral (V5)
 
 Gates are evaluated in canonical order. Rows that pass every gate before
@@ -728,7 +758,7 @@ The design relies on these Git behaviours, with the release that brought each:
 | `status --ignored=matching` with `--untracked-files=normal` and `-z` | 2.16 |
 | `--show-superproject-working-tree` | 2.13 |
 | `ls-files -v` combined with `--stage`, and `worktree remove`'s refusals for a populated submodule and an admin `modules` entry | verified on 2.43 only (BA:132-137, BA:665-668) |
-| the variables of `rev-parse --local-env-vars` | measured by task 2.2: 2.36.6 prints sixteen, 2.40.4 and 2.43.0 fifteen (BA:244-250); the extra name, `GIT_INTERNAL_SUPER_PREFIX`, is printed through 2.39, and with it set 2.36 fails closed in every command with `fatal: version doesn't support --super-prefix`; resolved by scrubbing it, sixteen names then and seventeen with R-25's `GIT_ALLOW_PROTOCOL` (R-21), the floor staying 2.36 |
+| the variables of `rev-parse --local-env-vars` | measured by task 2.2: 2.36.6 prints sixteen, 2.40.4 and 2.43.0 fifteen (BA:244-250); the extra name, `GIT_INTERNAL_SUPER_PREFIX`, is printed through 2.39, and with it set 2.36 fails closed in every command with `fatal: version doesn't support --super-prefix`; resolved by scrubbing it, sixteen names then and seventeen with R-25's `GIT_ALLOW_PROTOCOL` (R-21), the floor staying 2.36; thirty-one since Brett Heap's ruling Q9 B added the fourteen trace variables, which every release from 2.36.6 to 2.43.7 reads alike (D6) |
 
 Governance task 2.2 verifies the floor before the handoff: Git v2.36.x built
 from its release tarball in a scratch directory, first on PATH, and a scratch
@@ -868,9 +898,9 @@ requirements: R1, R2, R6, D-N and OQ-29 under the reports; R9 and C3 under the
 classification and "Inspect and diagnose", and the ruling on open question 1
 under the classification; R10, R11, D-T and the manifest cap
 under Git-first resolution; V1 to V4, M3 and M4 under retirement; OQ-10, OQ-16
-and M1 under the JSON and the result; V9, R-23, R-25 and the push-child
-exception under the evidence model; D-D under push; D-R under maintenance; R-22
-under revalidation.
+and M1 under the JSON and the result; V9, R-23, R-25, the push-child
+exception and Brett Heap's ruling Q9 B under the evidence model; D-D under
+push; D-R under maintenance; R-22 under revalidation.
 
 ## Risks / Trade-offs
 
@@ -943,6 +973,12 @@ under revalidation.
   act on the repository and configuration the run inspected; every inspection
   child stays pinned, so no evidence comes from such a configuration (D11, the
   push-child exception).
+- [No Git child of `project`, the push child included, writes a trace: a
+  caller's `GIT_TRACE` variables are scrubbed and the three trace2 targets are
+  off, so a person cannot trace a Git child through `project`] -> Accepted
+  (Brett Heap's ruling Q9 B): trace output is a side effect that writes files,
+  never evidence, and a person who needs a trace runs the Git command by hand
+  (D6, D11).
 - [Squash-merged branches never prove ancestry, so squash-merging
   repositories select little] -> Before Brett Heap (Open Questions).
 - [A merged worktree whose upstream was deleted is removed on local ancestry

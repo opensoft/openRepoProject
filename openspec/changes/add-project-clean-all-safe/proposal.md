@@ -282,8 +282,12 @@ Scope).
   `git`, `http`, `https` and `ext`, each `.allow=never`), with
   `GIT_ALLOW_PROTOCOL` in the scrub, so that a lazy fetch in a partial
   (promisor) clone fails locally and its row is `inspection-error` (R-23, R-25),
-  all parsed NUL-delimited, with the scrubbed environment of `BA:243-253`,
-  through a new bounded runner (Impact). A probe
+  and every Git child, the push child included, with `GIT_TRACE2`,
+  `GIT_TRACE2_EVENT` and `GIT_TRACE2_PERF` set to `0` and with `GIT_TRACE` and
+  the thirteen `GIT_TRACE_*` names Git 2.36 to 2.43 read in the scrub, so that
+  no Git child writes a trace file (Brett Heap's ruling Q9 B; Decisions),
+  all parsed NUL-delimited, with the scrubbed environment of `BA:243-253` and
+  those trace names, through a new bounded runner (Impact). A probe
   `project` stops at its record bound is complete, never `probe-failed`; after
   SIGKILL the reap waits at most the 2 s grace, then abandons the child and
   records `probe-timeout`; every exit path terminates the probe groups it
@@ -566,7 +570,10 @@ Headers are quoted verbatim, one per line; ADDED headers are proposed text.
     probe, its pins and bounds (`BA:629-652`, `BA:793-814`), among them the `-c
     protocol.allow=never` pin and the six per-protocol pins on every Git child
     except the push child, with `GIT_ALLOW_PROTOCOL` in the scrub, against lazy
-    fetches (R-23, R-25);
+    fetches (R-23, R-25); `GIT_TRACE2`, `GIT_TRACE2_EVENT` and
+    `GIT_TRACE2_PERF` at `0` on every Git child, the push child included, and
+    the fourteen trace variables in the scrub, each by name, thirty-one names
+    in all, against trace files (Brett Heap's ruling Q9 B);
     the 1 MiB cap on the manifest read that resolves a merge target, a larger
     manifest being `manifest-invalid`; the runner's outcomes (What Changes,
     evidence model); its every-exit-path termination rule, stated in its own
@@ -609,11 +616,13 @@ Headers are quoted verbatim, one per line; ADDED headers are proposed text.
   probes, under one deadline in `clean`. Git children other than the push
   child run through a new bounded runner, not the baseline `probe()` (a
   departure from `BA:1212-1213`): each is a `Popen` in its own process group
-  (C4), with the environment scrubbed of `BA:243-253`'s variables, and its
-  stdout is read as bytes and streamed, so a probe can stop at its record
-  bound. The push child runs through `execute()` with the same scrub but for
-  `GIT_ALLOW_PROTOCOL`, in `project`'s process group (the push-child
-  exception). `probe()` stays for non-Git children. The runner's shape
+  (C4), with the environment scrubbed of `BA:243-253`'s variables and of the
+  fourteen trace variables, and with the three trace2 variables set to `0`
+  (Brett Heap's ruling Q9 B); its stdout is read as bytes and streamed, so a
+  probe can stop at its record bound. The push child runs through `execute()`
+  with the same scrub but for `GIT_ALLOW_PROTOCOL`, and the same three trace2
+  variables at `0`, in `project`'s process group (the push-child exception).
+  `probe()` stays for non-Git children. The runner's shape
   (clarifications N2) lets
   `add-project-overview` drive four children without forking it.
   The ladder becomes a pure function; `status`, `doctor` and `update` gain the
@@ -781,10 +790,12 @@ Departures from packet decisions, each citing the decision departed from:
   difference in row 7. `rev-parse --local-env-vars` prints
   `GIT_INTERNAL_SUPER_PREFIX` on 2.36 through 2.39 and not from 2.40, and with
   it set every command on 2.36 fails closed. Applying the rule would raise the
-  floor to 2.40; the lead kept 2.36 and added the name to the scrub, sixteen
-  names then and seventeen with R-25's `GIT_ALLOW_PROTOCOL`, because raising
-  would exclude Debian 12's Git 2.39 for a one-name difference. Ratified with
-  the merge of PR #11.
+  floor to 2.40; the lead kept 2.36 and added the name to the scrub, because
+  raising would exclude Debian 12's Git 2.39 for a one-name difference. The
+  scrub held sixteen names then and seventeen with R-25's `GIT_ALLOW_PROTOCOL`,
+  and holds thirty-one since Brett Heap's ruling Q9 B added the fourteen trace
+  variables, which every release from 2.36.6 to 2.43.7 reads alike. Ratified
+  with the merge of PR #11.
 - **OQ-24, JSON compatibility** (`BA:949-953`; `HO:210`): one
   `schema_version: 1` envelope for every `clean --json`, not an "additive
   superset" (R7). Baseline keys keep their names and types, the scope the
@@ -842,6 +853,30 @@ Departures from packet decisions, each citing the decision departed from:
   actions`); push still refuses its branch with `remote-gone`, whatever its
   row's class (D-D). The interim recommendation that called such a row not
   removable is withdrawn.
+- **Trace output turned off on every Git child** (Brett Heap's ruling Q9 B of
+  2026-10-21, given through lane openRepoProject-4's spec 005 clarify round in
+  his words "yes, recommended for Q1-Q17", on option B of that round's Q9,
+  `specs/005-project-overview/clarify-questions.md` at `acd8cef`; an addition
+  to `BA:243-253`, whose scrub names no trace variable): Git honours trace
+  targets, which append to files, so a read-only probe could still write a
+  file that a caller's environment or the configuration names. Every Git
+  child, the push child included, therefore runs with `GIT_TRACE2`,
+  `GIT_TRACE2_EVENT` and `GIT_TRACE2_PERF` set to `0`, which outrank the
+  `trace2.*` targets of the system and global configuration, the only
+  configuration from which Git reads them and one that no `-c` reaches; and
+  the scrub gains `GIT_TRACE` and the thirteen `GIT_TRACE_*` names Git 2.36 to
+  2.43 read, each by name (`GIT_TRACE_BARE`, `GIT_TRACE_CURL`,
+  `GIT_TRACE_CURL_NO_DATA`, `GIT_TRACE_FSMONITOR`, `GIT_TRACE_PACKET`,
+  `GIT_TRACE_PACKFILE`, `GIT_TRACE_PACK_ACCESS`, `GIT_TRACE_PERFORMANCE`,
+  `GIT_TRACE_REDACT`, `GIT_TRACE_REFS`, `GIT_TRACE_SETUP`, `GIT_TRACE_SHALLOW`
+  and `GIT_TRACE_WORKING_TREE_ENCODING`), thirty-one names in all, which
+  `clean`, `status` and `doctor` share. The fourteen were read from the
+  sources of every release from 2.36.6 to 2.43.7 and are the same in each; the
+  other `GIT_TRACE2_*` names stay, since none opens a file while the three
+  targets are off. The push child carries both, because trace output changes
+  nothing about where a push reaches. The ruling's other half, which accepts a
+  repository's filters and the configuration files themselves as residuals,
+  belongs to `add-project-overview` (design D6, D11, Risks).
 
 Packet decisions adopted, not open: OQ-5, the caps and bounds of `BA:966`,
 subject to OQ-4, less the target cap's refusal; OQ-9, the budgets of
@@ -892,7 +927,8 @@ Council decisions, with the packet text each replaces or extends:
   protocol.git.allow=never -c protocol.http.allow=never -c
   protocol.https.allow=never -c protocol.ext.allow=never`, which outrank every
   configuration file, and the scrub removes `GIT_ALLOW_PROTOCOL`, which no `-c`
-  outranks, seventeen names in all. Accepted residual: a remote-helper protocol
+  outranks, seventeen names in all then and thirty-one since Brett Heap's ruling
+  Q9 B (departures). Accepted residual: a remote-helper protocol
   of another name with its own `allow=always` in the repository's configuration
   could still fetch; the probe then succeeds rather than fails, and no unsafe
   removal follows (design Context, D11, Risks). The push-child exception: the
@@ -1124,8 +1160,8 @@ the deltas' `Clean bounds its Git work and reports omitted work`, the caps and
 deferral text; this list; design D5, D9, D11, D12, D18, Risks, Migration Plan;
 `tasks.md` 1.2, 2.1); and R-25 (R-23's gap: `protocol.allow` is only the default
 policy, so every Git child except the push child also pins the six per-protocol
-policies and the scrub gains `GIT_ALLOW_PROTOCOL`, seventeen names, with the
-residual of a
+policies and the scrub gains `GIT_ALLOW_PROTOCOL`, seventeen names then and
+thirty-one since Brett Heap's ruling Q9 B, with the residual of a
 remote-helper protocol of another name accepted; What Changes, seam and
 evidence model; Capabilities, `project-command` ADDED evidence model and its
 scenario "A lazy fetch in a partial clone is refused locally", and review-safety
@@ -1141,7 +1177,16 @@ README; Open Questions; this list; design Context, D6, D7, D20, Risks, Migration
 Plan, Open Questions; `tasks.md` 1.2, 1.6; the deltas' `Clean classifies
 preservation and cleanup actions` and its scenario "A merged worktree whose
 upstream was deleted", `Clean can explicitly push safe feature branches` and
-`Cleanup revalidates destructive actions`).
+`Cleanup revalidates destructive actions`). Brett Heap's ruling Q9 B of
+2026-10-21, given through lane openRepoProject-4's spec 005 clarify round in
+the words the departures quote, sets `GIT_TRACE2`, `GIT_TRACE2_EVENT` and
+`GIT_TRACE2_PERF` to `0` on every Git child, the push child included, and adds
+the fourteen trace variables to the scrub, thirty-one names (What Changes,
+evidence model; Capabilities, `project-command` ADDED; Impact, `project`;
+Decisions, departures and council; this list; design Context, D6, D11, D17,
+D20, Risks; `tasks.md` 1.2, 1.4; the delta `project-command` ADDED evidence
+model, its scenario "The push child reaches its remote" and its added scenario
+"Trace targets are never written").
 
 ### Council Verdicts
 

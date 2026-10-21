@@ -96,7 +96,7 @@ missing, fails, times out or prints an unparseable version (`git-unavailable`);
 whether the subcommand then refuses or reports is its own requirement's rule.
 
 Environment: every Git child but the push child of `clean --action push` SHALL
-run in its own process group, and every Git child SHALL have these seventeen
+run in its own process group, and every Git child SHALL have these thirty-one
 variables removed from its environment, `GIT_ALLOW_PROTOCOL` excepted for the
 push child, unconditionally and before any Git call, from a fixed list that is
 never queried from Git: the fifteen that
@@ -107,10 +107,23 @@ never queried from Git: the fifteen that
 `GIT_NO_REPLACE_OBJECTS`, `GIT_REPLACE_REF_BASE`, `GIT_PREFIX`,
 `GIT_SHALLOW_FILE` and `GIT_COMMON_DIR`); `GIT_INTERNAL_SUPER_PREFIX`, which
 Git 2.36 through 2.39 also print and which makes every command on those
-versions fail when it is set; and `GIT_ALLOW_PROTOCOL`, which Git does not print
+versions fail when it is set; `GIT_ALLOW_PROTOCOL`, which Git does not print
 and which, when it names a protocol, is consulted before every `-c` pin and
-would allow the fetch that the pins below refuse. Read-only probes SHALL also
-set `GIT_OPTIONAL_LOCKS=0`. Every status probe SHALL pass `-c
+would allow the fetch that the pins below refuse; and the fourteen trace
+variables that Git 2.36 through 2.43 read, `GIT_TRACE`, `GIT_TRACE_BARE`,
+`GIT_TRACE_CURL`, `GIT_TRACE_CURL_NO_DATA`, `GIT_TRACE_FSMONITOR`,
+`GIT_TRACE_PACKET`, `GIT_TRACE_PACKFILE`, `GIT_TRACE_PACK_ACCESS`,
+`GIT_TRACE_PERFORMANCE`, `GIT_TRACE_REDACT`, `GIT_TRACE_REFS`,
+`GIT_TRACE_SETUP`, `GIT_TRACE_SHALLOW` and `GIT_TRACE_WORKING_TREE_ENCODING`,
+through which a caller could make a Git child create or append to a file it
+names. Every Git child, the push child included, SHALL also have `GIT_TRACE2`,
+`GIT_TRACE2_EVENT` and `GIT_TRACE2_PERF` set to `0` in its environment: each
+outranks the matching `trace2.normalTarget`, `trace2.eventTarget` or
+`trace2.perfTarget` setting of the system and global configuration, the only
+configuration from which Git reads a trace2 target and one that no `-c` pin
+reaches, and `0` turns that target off, so that no trace2 target opens.
+Read-only probes SHALL also set `GIT_OPTIONAL_LOCKS=0`. Every status probe
+SHALL pass `-c
 core.untrackedCache=false -c core.fsmonitor=false`, which also override
 `GIT_CONFIG_GLOBAL` and `GIT_CONFIG_SYSTEM`. Every Git child, of every kind,
 except the push child of `clean --action push`, SHALL also pass `-c
@@ -123,10 +136,12 @@ the default policy, which a `protocol.<name>.allow` setting in the repository's
 configuration overrides and a `-c` on the command line outranks; with the pins
 the fetch fails locally, the probe fails, and its row is `inspection-error`,
 never a network call. The push child is the one Git child whose purpose is to
-reach a remote: it SHALL run with the seventeen names but `GIT_ALLOW_PROTOCOL`
+reach a remote: it SHALL run with the thirty-one names but `GIT_ALLOW_PROTOCOL`
 removed from its environment, so that it acts on the repository the run
 inspected while a protocol list the caller set still binds it, as it binds the
-push before this change, and with none of the seven protocol pins, so that the
+push before this change, and with the three trace2 variables at `0`, as every
+Git child has them, since trace output changes nothing about where a push
+reaches, but with none of the seven protocol pins, so that the
 remote it publishes to stays reachable over any protocol that list and the
 configuration allow; it SHALL run as the push ran before this change, in the
 process group of `project` itself, and so in the terminal's foreground whenever
@@ -249,7 +264,13 @@ requirement states a change.
 
 #### Scenario: The push child reaches its remote
 - **WHEN** `project clean <root> --apply --action push --branch B --yes` runs, with `<root>` the absolute path of the main worktree and, in the caller's environment, `GIT_DIR` naming another repository and `GIT_CONFIG_PARAMETERS` set, for a clean feature branch B that the push action accepts (B is not the default branch, its upstream `origin/B` exists, lacks a commit that B holds and holds none that B lacks, and no other worktree row is `inspection-error`), whose `origin` is a local path (the `file` protocol)
-- **THEN** a counting `git` wrapper records the push child with none of the seven protocol pins and with the seventeen names but `GIT_ALLOW_PROTOCOL` removed from its environment, and records all seven pins on every other Git child of the run
+- **THEN** a counting `git` wrapper records the push child with none of the seven protocol pins and with the thirty-one names but `GIT_ALLOW_PROTOCOL` removed from its environment, and records all seven pins on every other Git child of the run
 - **AND** the wrapper records that the push child shares `project`'s process group, where every other Git child of the run has a process group of its own
 - **AND** the push exits 0 and `origin` holds B at the commit it has locally
 - **AND** with a `pre-push` hook that sleeps 7 s, the push still exits 0 and `origin` holds B, no signal having reached the push child
+
+#### Scenario: Trace targets are never written
+- **WHEN** `project status <root>` and `project clean <root>` run for a repository with one linked worktree, with `GIT_TRACE`, `GIT_TRACE_PACKET`, `GIT_TRACE2` and `GIT_TRACE2_EVENT` each naming a file in the caller's environment and `trace2.eventTarget` naming a file in the file that `GIT_CONFIG_GLOBAL` names
+- **THEN** a `git` wrapper that records each child's environment records `GIT_TRACE2`, `GIT_TRACE2_EVENT` and `GIT_TRACE2_PERF` set to `0`, and none of the thirty-one names, on every Git child
+- **AND** none of the named files is created or written
+- **AND** with no trace variable in the caller's environment and `trace2.normalTarget`, `trace2.eventTarget` and `trace2.perfTarget` each naming a file in that global configuration, none of those files is created or written either
