@@ -2698,7 +2698,12 @@ def inspect_repository(directory, run, refresh=False, *, repeat_identity_at_root
     - `identity`: {root, common_dir, dev, ino}, the realpaths of the main
       worktree and the common directory and the common directory's device and
       inode, by lstat; root None where main_worktree() names none, with its
-      cause in `main_cause`; None itself when row 3 failed;
+      cause in `main_cause`, or where row 5 did not confirm it; None itself
+      when row 3 failed;
+    - `main_path`, main_worktree()'s path as named before row 5 runs, kept
+      where row 5 then fails, so that the resolution still names the main
+      worktree as the command directory (plan review F2); None where
+      main_worktree() names none or row 4 failed;
     - `directory`, where row 3 and row 4 ran; `toplevel` and `superproject`,
       what row 3 printed (toplevel as a realpath);
     - `probe_dir`, where rows 6 and 7 ran: root, or, where root is null, the
@@ -2712,9 +2717,9 @@ def inspect_repository(directory, run, refresh=False, *, repeat_identity_at_root
       what needs a failed probe's answer is not run."""
     directory = os.fsencode(directory)
     repo = {"identity": None, "directory": directory, "toplevel": None, "superproject": None,
-            "main_cause": None, "probe_dir": directory, "records": None, "first_is_common_dir": False,
-            "refs": None, "merge_target": None, "merge_target_refusal": None, "merged": None,
-            "errors": []}
+            "main_cause": None, "main_path": None, "probe_dir": directory, "records": None,
+            "first_is_common_dir": False, "refs": None, "merge_target": None, "merge_target_refusal": None,
+            "merged": None, "errors": []}
     values, error = identity_probe(directory, run)
     if error is not None:
         repo["errors"].append(error)
@@ -2741,6 +2746,7 @@ def inspect_repository(directory, run, refresh=False, *, repeat_identity_at_root
     records = repo["records"] = outcome.result
     root, repo["main_cause"] = main_worktree(
         {"common_dir": common_dir, "toplevel": toplevel, "directory": directory}, records, run)
+    repo["main_path"] = root  # kept where row 5 then fails (plan review F2)
     try:
         if records and not records[0]["bare"]:
             repo["first_is_common_dir"] = _realpath(records[0]["path"]) == common_dir
@@ -2998,7 +3004,11 @@ def worktree_rows(repo, run, records=None):
     changed since its first read gets no probe and is inspection-error, in
     the same row order with the same budgets. Once the work deadline has
     passed no probe starts, and such a row keeps its probe's own
-    deadline-exceeded, unread again. Then the branch evidence from row 6, a
+    deadline-exceeded, unread again. Then the branch evidence from row 6; where
+    row 6 gave no listing, because it or a probe before it failed, each
+    present row on a branch carries that probe's row errors and is
+    inspection-error, its upstream fields null as not established (plan
+    review F3), while a detached row needs no ref. Otherwise a
     deleted upstream keeping its short name with `ahead` and `behind` null, and a
     branch named HEAD (HEAD_BRANCH_REF) taking none: its `upstream`,
     `remote_present`, `ahead` and `behind` stay null and its row carries a
@@ -3019,6 +3029,10 @@ def worktree_rows(repo, run, records=None):
     common_dir = identity["common_dir"]
     target = repo["merge_target"]["name"] if repo["merge_target"] else None
     refs = {ref["refname"]: ref for ref in repo["refs"] or ()}
+    # No ref listing (row 6 failed, or a probe before it did): no branch's
+    # evidence is established, so each present row on a branch carries the
+    # failed probe's error and is inspection-error (plan review F3).
+    unlisted = [] if repo["refs"] is not None else (list(repo["errors"]) or [unparseable_error("for-each-ref")])
     shared = shared_paths(registry)
     entries = _registry_entries(registry, records)
     try:
@@ -3048,6 +3062,8 @@ def worktree_rows(repo, run, records=None):
             # work time left no probe starts, and the row keeps that probe's own
             # deadline-exceeded, as the work deadline's rows always have (T099).
             _read_status(read, raw, run)
+        if unlisted and read["present"] is True and record["branch"] is not None:
+            read["errors"].extend(dict(error) for error in unlisted)
         rows.append(row_evidence(record, raw, index == 0, read, refs, repo["merged"], target))
     return rows
 # endregion evidence
@@ -3559,7 +3575,10 @@ def resolve_clean_target(args, run):
     refusal (`no-merge-target`, `manifest-invalid`), before any row is
     probed, its context the repository and a null merge target. A
     repository-wide probe that failed after row 3 is no refusal here:
-    build_plan() makes that plan incomplete."""
+    build_plan() makes that plan incomplete. Where row 5 failed, the main
+    worktree main_worktree() named (`main_path`) is still the root and the
+    command directory, and the absolute-path rule compares the toplevel
+    with it (plan review F2)."""
     target = getattr(args, "target", None) or ""
     text = os.path.expanduser(target)
     bare, absolute = is_bare_name(target), os.path.isabs(text)
@@ -3591,7 +3610,9 @@ def resolve_clean_target(args, run):
     identity = evidence["identity"]
     if identity is None or evidence["superproject"] is not None or evidence["main_cause"] is not None:
         raise refused()
-    toplevel, root = evidence["toplevel"], identity["root"]
+    # Where row 5 failed the root is not confirmed, but the main worktree is
+    # still the one main_worktree() named, never a linked toplevel (plan review F2).
+    toplevel, root = evidence["toplevel"], identity["root"] or evidence.get("main_path")
     if bare or absolute:  # the directory itself must be a worktree toplevel
         try:
             exact = _realpath(directory) == toplevel

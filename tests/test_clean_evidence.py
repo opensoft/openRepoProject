@@ -1077,6 +1077,36 @@ class EvidenceTests(clean_support.CleanCase):
                              "no status probe at the swapped path")
             self.assertTrue((aside / "uncommitted").exists(), "nothing was removed")
 
+    def test_clean_evidence_a_failed_ref_listing_establishes_no_branch_evidence(self):
+        # Plan review F3; pcl:121-125 ("A row whose evidence could not be
+        # established ... SHALL be classified inspection-error directly,
+        # whatever its branch") and pcl:1129-1130 ("Null SHALL mean unknown or
+        # not established"). Row 6 fails, so no branch's upstream is read: each
+        # present row on a branch carries row 6's error, never `unpublished`
+        # with a null upstream that would mean "none configured"; a detached
+        # row needs no ref.
+        root = self.repo()
+        self.bare_remote()
+        merged = self.merged_worktree("001-merged")
+        detached = self.add("detached", "--detach")
+        fake = self.fake_script("row-6", (
+            'case " $* " in *" refs/remotes "*) echo "fatal: ref listing failed (fake)" >&2; exit 128;; esac'))
+        result, records = self.report(root, real=fake)
+        rows = by_name(result.document)
+        error = {"code": "probe-failed", "message": git_message(
+            "for-each-ref", "row_error_probe_failed", DETAIL=TEXT["row_error_probe_failed_exit"].format(N=128))}
+        for name in ("repo", merged.name):
+            with self.subTest(row=name):
+                self.assertEqual([rows[name][key] for key in ("upstream", "remote_present", "dirty", "errors",
+                                                              "classification")],
+                                 [None, None, False, [error], "inspection-error"])
+        self.assertEqual([rows[detached.name][key] for key in ("branch", "errors", "classification")],
+                         ["detached", [], "detached"])
+        self.assertEqual((result.document["completeness"], result.document["refusals"][0]["code"]),
+                         ("incomplete", "inspection-incomplete"))
+        self.assertEqual(self.status_dirs(records), sorted(map(str, (root, merged, detached))),
+                         "the status probes still run")
+
     @clean_support.not_root
     def test_clean_evidence_a_status_probe_that_warns_establishes_nothing(self):
         # Lane 3's US2 M-1, lead ruling R-101 (e); pcl:121-125: a row whose

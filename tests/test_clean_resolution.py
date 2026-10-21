@@ -18,6 +18,7 @@ import io
 import json
 import os
 from pathlib import Path
+import shlex
 import unittest
 from unittest import mock
 
@@ -347,6 +348,39 @@ class ResolutionTests(clean_support.CleanCase):
                 self.assertEqual([c[1] for c in commands if c[2:] == ROW_3], row_3,
                                  "row 3 once where the argument resolves, then row 5 at root only from elsewhere")
                 self.assertEqual(sorted(c[1] for c in commands if c[2:] == STATUS), sorted([str(root), str(linked)]))
+
+    # Plan review F2: row 5 failing.
+
+    def test_clean_row_5_failing_still_resolves_to_the_main_worktree(self):
+        # pcl "Clean resolves its target Git-first": a relative path, or no
+        # argument, resolves to the repository Git finds "with `root` set to
+        # its main worktree", and an absolute path must be the main worktree.
+        # Row 5, row 3 again at the main worktree, fails here (a fake git fails
+        # `-C ROOT rev-parse`); lead ruling R-73 (e)(1) keeps the plan
+        # incomplete rather than refused, and its root is still the main
+        # worktree, never the linked worktree the command ran in.
+        root = self.repo()
+        self.bare_remote()
+        linked = self.merged_worktree("001-merged")
+        fake = self.base / "fake-row-5" / "git"
+        fake.parent.mkdir()
+        fake.write_text("#!/bin/sh\np2=; p1=\nfor a in \"$@\"; do\n"
+                        f"  if [ \"x$p2\" = x-C ] && [ \"x$p1\" = x{shlex.quote(str(root))} ] && "
+                        "[ \"x$a\" = xrev-parse ]; then\n"
+                        "    echo 'fatal: row 5 failed (fake)' >&2; exit 128\n  fi\n  p2=$p1; p1=$a\ndone\n"
+                        f"exec {shlex.quote(clean_support.REAL_GIT)} \"$@\"\n")
+        fake.chmod(0o755)
+        env = self.path_first(fake.parent)
+        for words in ((), (".",)):
+            with self.subTest(words=words):
+                result = self.run_json("clean", *words, "--json", cwd=linked, env=env)
+                self.assert_status(result, 1)
+                self.assertEqual((result.document["root"], result.document["completeness"]),
+                                 (str(root), "incomplete"))
+        with self.subTest("an absolute path to the linked worktree is still refused"):
+            result = self.run_json("clean", linked, "--json", env=env)
+            self.assert_error_document(result, "target-not-repository-root", self.not_root(linked), "report",
+                                       path=linked)
 
     # T105: "A bare repository reached from a linked worktree".
 
