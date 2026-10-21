@@ -3,27 +3,27 @@ Lane: openRepoProject-5
 # Proposal: add-project-overview-remote-merge-status
 
 Status: draft; alignment review and council resolved on PR #29, round C4's spec
-edits committed; round C5's edits for lane openRepoProject-3's delta read and
-Codex's findings on `e198548` (C-24 to C-29) and round C6's for Codex's finding
-on `67e43ae`, the lead's three points and lane openRepoProject-3's folded read
-of `e198548..67e43ae` (C-30 to C-34) applied, their `project-overview` spec
-edits committed, on lane openRepoProject-4's agreement of 2026-10-20; and C-35
-to C-43, applied in `design.md` alone with no spec edit, C-41 also in Impact:
-lane openRepoProject-3's narrowing of the `gh` lookup's per-directory rule
-(C-35), its confirm reads of rounds C6c, C7 and C9 (C-36, C-38, C-42, C-43) and
-Codex's findings on `1c32667`, `05a424a` and `f34dfe2` (C-37, a `parse_int`
-hook; C-39, a `parse_constant` hook; C-41, a residual), with the lead's C-40;
-round C11's C-44, which replaces C-41's residual with a refusal of a relative
-`GH_CONFIG_DIR`, `XDG_CONFIG_HOME` or `HOME`, applied in `design.md` and Impact,
-its one spec edit committed on lane openRepoProject-4's YES of 2026-10-21 with
-two edits; round C12's C-45, lane openRepoProject-3's six LOWs, applied in
-`design.md` and `tasks.md`, with no spec edit; ratification by Brett Heap
-pending; nothing here is ratified. Governing issue: opensoft/openRepoProject#25,
-claimed by lane openRepoProject-5 (comment 6111242617); refs #6, the record of
-the project maintenance design packet. Proposed on Brett Heap's word "usage
-reset, resume all. read handoff and resume and fan out wide and do as much as
-possible in parallel" (2026-10-11), read by lanes openRepoProject-4 and
-openRepoProject-5 as a go for the candidate list they put to him.
+edits committed; rounds C5 and C6 (C-24 to C-34: lane openRepoProject-3's delta
+and folded reads, Codex's findings on `e198548` and `67e43ae` and the lead's
+three points) applied, their spec edits committed, on lane openRepoProject-4's
+agreement of 2026-10-20; and C-35 to C-43, applied in `design.md` alone with no
+spec edit, C-41 also in Impact: lane openRepoProject-3's narrowing of the `gh`
+lookup's per-directory rule (C-35), its confirm reads of rounds C6c, C7 and C9
+(C-36, C-38, C-42, C-43) and Codex's findings on `1c32667`, `05a424a` and
+`f34dfe2` (C-37, C-39, C-41), with the lead's C-40; round C11's C-44, which
+replaces C-41's residual with a refusal of a relative `GH_CONFIG_DIR`,
+`XDG_CONFIG_HOME` or `HOME`, applied in `design.md` and Impact, its spec edit
+committed on lane openRepoProject-4's YES of 2026-10-21; round C12's C-45, lane
+openRepoProject-3's six LOWs, applied in `design.md` and `tasks.md`; round C13's
+C-46 and C-47, reader RC's M4, M5, L6 and L2 to L5, applied in `design.md` and
+Impact, and C-48, its other findings, held for lane openRepoProject-4, with no
+spec edit in either round; ratification by Brett Heap pending; nothing here is
+ratified. Governing issue: opensoft/openRepoProject#25, claimed by lane
+openRepoProject-5 (comment 6111242617); refs #6, the record of the project
+maintenance design packet. Proposed on Brett Heap's word "usage reset, resume
+all. read handoff and resume and fan out wide and do as much as possible in
+parallel" (2026-10-11), read by lanes openRepoProject-4 and openRepoProject-5 as
+a go for the candidate list they put to him.
 
 Citations are `file:line`. The packet is cited at `da33d92`, equal to main
 `961c405` for `ideation/`: `DI`, `SY`, `BA` and `OV` are its
@@ -42,7 +42,7 @@ executable. Change 1's evidence model,
 `Repository inspection requires Git 2.36 and shares one evidence model`
 (CAS/cmd:90), is [E]. The lane's rulings are cited as L-1 to L-9 and C-1 to C-8
 (2026-10-11), L-10 to L-15, B-14, C-9 and C-10 (2026-10-18), L-16, L-17 and
-C-11 to C-14 (2026-10-19), and F-3 and C-15 to C-45 (2026-10-20 and 2026-10-21,
+C-11 to C-14 (2026-10-19), and F-3 and C-15 to C-48 (2026-10-20 and 2026-10-21,
 C-16 to C-22 being the council's verdicts). `PR19/cmd` is draft PR #19's
 `openspec/changes/add-project-clean-all-safe/specs/project-command/spec.md` at
 `c462d87`.
@@ -374,25 +374,25 @@ scenarios (14, 2, 7 and 13), and one MODIFIED requirement in `project-command`,
   subcommand changes. No new dependency: `gh` is optional at run time, its
   absence giving `unavailable`, and nothing is imported. `probe()`
   (`project:60-65`, one child, 15 s, no process group) is not used for `gh`.
-- **`README.md`**: the overview section gains `--remote`: what it asks, that
-  it needs an authenticated `gh`, its bounds, what `unknown` and `unavailable`
-  mean, that the answer is live, and that it never authorizes cleanup, and
-  what the person can do next: for a `merged` row, bring the local merge
-  target up to date and run the overview again, after which local ancestry
-  decides a merge-commit merge; a squash-merged row stays kept, and whether a
-  local patch-equivalence proof may ever retire it is change 1's open question
-  on squash-merged branches (CAS proposal.md:1001-1005); for `gh-unavailable`,
-  install `gh`, check that `PATH`'s directories are reachable, or make a
-  relative `GH_CONFIG_DIR`, `XDG_CONFIG_HOME` or `HOME` absolute (C-26, C-44);
-  for `gh-unauthenticated`, run `gh auth login`; for `no-remote-target`, give
-  the merge target an upstream (for example
-  `git branch --set-upstream-to=origin/main main`); for
-  `credential-bearing-remote`, take the credential out of the URL; for
-  `malformed-remote`, give the remote a URL naming an `owner/repository` on
-  `github.com`, with no user but `git` and no port; and for `not-github`,
-  nothing, as only `github.com` is queried (C-18). These next steps are advice,
-  not a `suggested_command`. It also says a merge target tracking the person's
-  fork asks about the fork, so every queried row reads `not-found` (C-21).
+- **`README.md`**: the overview section gains `--remote`: what it asks, that it
+  needs an authenticated `gh`, its bounds, what `unknown` and `unavailable`
+  mean, that the answer is live and never authorizes cleanup, and the next
+  steps: for a `merged` row, bring the local merge target up to date and run it
+  again, after which local ancestry decides a merge-commit merge; a
+  squash-merged row stays kept; whether a local patch-equivalence proof may
+  ever retire it is change 1's open question (CAS proposal.md:1001-1005); for
+  `gh-unavailable`, install `gh`, check that `PATH`'s directories are
+  reachable, or make a relative `GH_CONFIG_DIR`, `XDG_CONFIG_HOME` or `HOME`
+  absolute (C-26, C-44); for `gh-unauthenticated`, run `gh auth login`; for
+  `no-remote-target`, give the merge target an upstream (for example `git
+  branch --set-upstream-to=origin/main main`); for `credential-bearing-remote`,
+  take the credential out of the URL; for `malformed-remote`, use an https, ssh
+  or scp-like URL, not `git://`, with an `owner/repository` on `github.com`, no
+  user but `git` and no port; and for `not-github`, nothing, as only
+  `github.com` is queried, but write `https://github.com/acme/widget.git` for
+  `GitHub.com` or a URL with no scheme, a local path to Git (C-18, C-47). They
+  are advice, not a `suggested_command`. It also says a merge target tracking a
+  fork asks about the fork, so every queried row is `not-found` (C-21).
 - **`tests/test_project.py`**: one test named after each scenario, offline,
   with a fake `gh` written into the fake bin directory (`fake_bin`,
   tests:148; `write_fake`, tests:172) that answers from a fixture table and
@@ -666,16 +666,16 @@ GitHub's commit association returns no pull request closed without merging),
 below), **C-23** (Open Questions 3), **C-24** to **C-29** (C5: lane
 openRepoProject-3's delta read of `e198548`, Codex's three findings on it and
 two points found in applying them), **C-30** to **C-34** (C6: Codex's finding on
-`67e43ae`, the lead's three points and lane openRepoProject-3's folded read of
-`e198548..67e43ae`), **C-35** to **C-40** (the lookup's per-directory rule; D5's
-rationale; a `parse_int` hook; four LOWs on C7; a `parse_constant` hook; a
-strict UTF-8 decode), **C-41** (Codex's P2 on `f34dfe2`; **C-44** replaces it),
-**C-42** (lane openRepoProject-3's MEDIUM-1, `number` by type), **C-43** (its
-four LOWs), **C-44** (a relative `GH_CONFIG_DIR`, `XDG_CONFIG_HOME` or `HOME`
-fails the lookup of `gh`) and **C-45** (lane openRepoProject-3's six LOWs); all
-are applied in `design.md`, C-45 also in `tasks.md`, C-41 and C-44 also in
-Impact, C-44's spec edit committed on lane openRepoProject-4's YES ("Re-read and
-Codex Findings", rounds C5-C12).
+`67e43ae`, the lead's three points and lane openRepoProject-3's folded read),
+**C-35** to **C-40** (the lookup's rule; D5's rationale; `parse_int`; four LOWs
+on C7; `parse_constant`; strict UTF-8), **C-41** (Codex's P2 on `f34dfe2`;
+**C-44** replaces it), **C-42** (lane openRepoProject-3's MEDIUM-1, `number` by
+type), **C-43** (its four LOWs), **C-44** (a relative `GH_CONFIG_DIR`,
+`XDG_CONFIG_HOME` or `HOME` fails the lookup of `gh`), **C-45** (lane
+openRepoProject-3's six LOWs), **C-46** and **C-47** (RC's M4, M5 and L2 to L6)
+and **C-48** (its other five, held for lane openRepoProject-4); all but C-48 are
+applied in `design.md`, C-45 also in `tasks.md`, C-41, C-44 and C-47 also in
+Impact, C-44's spec edit committed on lane openRepoProject-4's YES (C5-C13).
 
 Packet open decisions taken, each citing the text that leaves it open:
 
@@ -1067,14 +1067,14 @@ None.
 The first two are before Brett Heap with a recommendation; the third, put to
 lane openRepoProject-4 first, is resolved by its answer (C-23).
 
-1. **Enum closure (L-4).** Change 1 says "Enums SHALL be closed within a
-   schema version" (CAS/pc:1129-1131); change 2 says "adding a field or an
-   enum value is additive" (APO/ov:655-658). This change adds no value to any
-   existing enum: it adds a row sub-record and an envelope object, in a
-   `--remote` run only, whose own `state` enum is new and closed.
-   Recommendation: the sub-records make the disagreement moot for this
-   change; the overview keeps `schema_version: 1`, and the disagreement is
-   settled where it bites, by a change that adds a value to an existing enum.
+1. **Enum closure (L-4).** Change 1: "Enums SHALL be closed within a schema
+   version" (CAS/pc:1129-1131); change 2: "adding a field or an enum value is
+   additive" (APO/ov:655-658). This change adds no value to an existing enum:
+   it adds a row sub-record and an envelope object, in a `--remote` run only,
+   with a new, closed `state` enum. Recommendation: the sub-records make it
+   moot for this change, which keeps `schema_version: 1`; it is settled where
+   it bites, and the first change it reaches is this change's own `closed`
+   follow-on (Out of Scope; C-47), which adds a value to `remote.state`.
 2. **The client and the non-Git default (C-4).** `gh api`, or direct HTTPS
    from `project`? Recommendation: `gh`. It is the packet's "normal GitHub
    client authentication path" (DI:1056-1057), so `project` never handles a
@@ -1415,3 +1415,89 @@ rounds C5 and C6 and names "rounds C5-C12" once; and the citation key says
 | L4 (D2 :297-299 and D11): LOW-3's decode failure is in D2's body but not in D2's own list of failures, and nothing pins it: (a) the list reads "exits nonzero, reaches its budget, overruns its output cap or is stopped at the deadline"; (b) D11's counting `git` wrapper can set an exit status and a stderr line or hold past a budget, but not emit chosen stdout bytes, so no test shows a merge ref with the byte FF giving `remote-target-unread`, though C-40's decode has a D11 test; (c) "which is the spec's 'fails for any other cause'" holds by analogy with `specs/project-overview/spec.md:371-373` ("a longer one, which fails the read"), not quite by the letter | LOW | C-45: applied as worded: D2's list now reads "exits nonzero, reaches its budget, overruns its output cap, gives output that does not decode as UTF-8 (C-43) or is stopped at the deadline"; D11 gains one fixture, placed after the counting wrapper's bullet, a repository whose merge target's `branch.<target>.merge` is `refs/heads/` followed by the byte 0x80, set with `git config`, which gives its queried rows `unknown` with reason `remote-target-unread`, starts no second read and no request for them, and sits beside a second repository whose merge ref is valid UTF-8 and is answered as usual, so that the byte is the only fault; a `remote.<name>.url` that holds the byte is the same fixture for the second read. The fixture needs no wrapper control: the writer saw, in a scratch repository on Git 2.43.0, that `git config` took the byte, that `git for-each-ref` with D2's format and `git remote get-url` each printed it, and that `bytes.decode("utf-8")` of the first output raised `UnicodeDecodeError` ("invalid start byte"). It is no scenario, as the ruling words it: the spec's "fails for any other cause" (`specs/project-overview/spec.md:387-388`) already requires the outcome, and lane openRepoProject-3's note (c) is recorded here, not acted on: the anchor needs no spec edit | `design.md` D2, D11 |
 | L5 (D5 :446-447): "a value whose first byte is not UTF-8" is imprecise: EF is a valid UTF-8 lead byte, and the prototype (D5) refuses both FF and EF because neither is `/` | LOW | C-45: applied as worded: D5 now reads "a value whose first byte is any byte other than `/`, a non-ASCII byte included"; the rest of the paragraph, including the prototype's 18 cases, is unchanged, and its aside that a decoded string leaves a first byte that is not UTF-8 as no `/` is left as it stands, since it describes the string writing's decoding and not the rule | `design.md` D5 |
 | L6 (Risks, optional): the general class leaves out three more relative-path variables that `gh` reads: its binary holds `XDG_DATA_HOME`, `XDG_STATE_HOME` and `XDG_CACHE_HOME` (one string each), D5's extension check covers the data directory only through a relative `HOME`, so that a relative one of the three alone is neither refused nor named, and the design does not say that the reasons look like the extension check's | LOW (optional) | C-45: applied: Risks names the three in its general class and gains one nested bullet with three sub-bullets, each saying only what is known. The writer's offline checks on `gh` 2.96.0 on 2026-10-21, with a fake token that no output held, the working directory a scratch directory standing for `/`, and, where a request was answered, a small server on a Unix socket standing in for the API (`gh` reaches it through `http_unix_socket`, as the lead's check in D5 showed): `gh help environment` documents `XDG_CONFIG_HOME` and none of the three, and the binary holds each name once (the writer repeated lane openRepoProject-3's count). Data: under a relative `XDG_DATA_HOME` that held planted `gh-api` and `gh-zzz` extensions, `gh zzz` ran the planted extension, while `gh api --help` and D5's argv, whether the request was refused at a closed proxy port or answered by the stand-in, ran `gh`'s own command and client and never the planted `gh-api`, and `gh` wrote no file there; lane openRepoProject-4's check, in D5, had run the same under a relative `HOME`. State: `gh help environment` documents the update check (once every 24 hours) and the two switches that D5 sets, and does not name the directory; D5's argv wrote no file under a relative or an absolute `XDG_STATE_HOME`; the writer could not make the update check itself run offline (in a pseudo-terminal, with the switches unset and a stand-in for the release endpoint, no request for it came), so the bullet says "as far as `gh` documents them" and that the check's use of the directory is not observed. Cache: `gh api --cache 1h`, answered by the stand-in, wrote a file under an absolute `$XDG_CACHE_HOME/gh`, and `gh api` without it, which D5's argv is, wrote none under a relative or an absolute value. No rule changes: D5's refusal stays on the three configuration variables, and the README's next steps do not name these three, as they do not name the others | `design.md` Risks |
+
+### Re-read and Codex Findings (round C13)
+
+Reader RC, a read-only adversarial reader of lane openRepoProject-5, read this
+change at `e11d755`: D1 to D4 and D7 to D10, D11's seams against the 13
+scenarios of the ADDED requirement, and the three MODIFIED blocks against change
+2's text (`RC-findings.md`, in the lane's scratch). It found no HIGH, five
+MEDIUM (M1 to M5) and six LOW (L1 to L6), and re-raised no settled ruling. It
+also found the three `project-overview` blocks and [E] adding only to the text
+they modify, the composed `project-overview` at 13 requirements and 77 scenarios
+with no scenario name twice, and the citations of D1 to D4 and D7 to D10 landing
+on their quoted text. It could not verify Git 2.36 (only 2.43.0 was on its
+bench), the runner's `gh` itself (no Actions run), live `gh` answers (task 2.5)
+or whether feature 005's code writes a scan error with a count of 0 at an expiry
+(005 has its spec only); the writer had Git 2.43.0 alone too.
+
+The lead ruled on 2026-10-21 (12:3xZ, on team-01h; `rulings-2026-10-20.md`,
+"Rulings on the 2026-10-21 review wave, part 1"): C-46 (M4, M5 and L6) and C-47
+(L2's design part, L3, L4's design part and L5) are applied, and C-48 (M1, M2,
+M3, L1 and L4's spec part) is HELD for lane openRepoProject-4 as one file
+together with amendment A1's alignment, since M1 touches "Expiry cancels queued
+and in-flight requests", which Q16 B also reaches. This section records C-48 as
+held, with no spec text and no design text, and the other rows apply as the
+ruling words them. Round C13 edits `design.md` (the Context and its table, D2,
+D3, D10 and D11), this file (Status, the citation key, Impact's README bullet,
+the Decisions list, Open Question 1 and this section) and `tasks.md` (1.1, 1.3
+and 1.5, in place, 45 lines still). No spec file changed:
+`git diff e11d755 -- '*/specs/*'` is empty, `specs/project-overview/spec.md` is
+still the file lane openRepoProject-4 agreed, sha256
+`ce57ed5eca8085d1edc5687c7b25b10c5c603e777694bda13c481f6fe94be19a`, with its 36
+scenarios, `specs/project-command/spec.md` is unchanged with its 10, and the
+count stays 46.
+
+Lines 1252 to 1417 of this file, rounds C6 to C12, are unchanged (`cmp` against
+`e11d755`), and this section follows them; lines 334-345, 367-370 and 430-438
+are `cmp`-identical to `e11d755` too, as are `tasks.md` lines 20-23; and every
+paragraph of this file before line 1252 keeps its line count, the five edits
+there (Status at 5-26, the citation key at 45, Impact's README bullet at
+377-395, the Decisions list at 655-678 and Open Question 1 at 1070-1077) each
+replacing as many lines as they had. To hold the counts, Status says "rounds C5
+and C6 (C-24 to C-34: ...)" for the two longer clauses of those rounds, and
+drops "a `parse_int` hook", "a `parse_constant` hook" and "a residual" from
+C-37, C-39 and C-41, "`project-overview`" before "spec edits", and "one" and
+"with two edits" from C-44's spec edit, and moves "with no spec edit" to the
+end, where it covers both rounds; the Decisions list shortens the descriptions
+of C-35 to C-40, drops "of `e198548..67e43ae`" and the pointer to the section
+titles; the README bullet says "the next steps" for "what the person can do
+next", "run it again", "on squash-merged branches" dropped, "a fork" for "the
+person's fork" and "They are advice" for "These next steps are advice", with a
+few smaller word changes in the same lines; and Open Question 1 says "Change 1:"
+and "change 2:" for "Change 1 says" and "change 2 says", "an" for "any" existing
+enum and "with a new, closed `state` enum", and words its recommendation in
+fewer words, which it keeps.
+
+The writer ran these on 2026-10-21, on Git 2.43.0, in a scratch repository and
+with `project` as it stands at `961c405`: the identity pattern on thirteen URL
+shapes (L2), `git ls-remote github.com/acme/widget` against a local bare
+repository at that path (L2), the two remote-target reads of a password-bearing
+remote under `transfer.credentialsInUrl` `die` and `warn` and beside a clean
+merge-target remote (L3), and a simulation of the runner's `PATH` layout against
+a directory of links (M4). Validation, run before the round's edits were
+committed and again at its head (a commit cannot hold its own sha; the head is
+in the round's report):
+`/usr/bin/openspec validate add-project-overview-remote-merge-status --strict`
+reports the change valid with its two INFO lines,
+`/usr/bin/openspec validate --all --strict` passes 8 of 8, and
+`openspec status --change add-project-overview-remote-merge-status --json` shows
+every artifact done. The added text holds no non-ASCII character, bidi control,
+host path or literal backslash-u, and a grep of the three files for placeholders
+found none.
+
+| Finding | Severity | Ruling | Section edited |
+| --- | --- | --- | --- |
+| Reader RC's M4 (D11's seams cannot keep `gh` off `PATH` in CI, where `gh` sits beside `git`): D11 builds its `PATH` on `question_env()` (tests:154-170), the fake bin directory plus the directories of `bash`, `git` and the interpreter; the `tests` workflow runs only on `ubuntu-latest` (main `e9d6711`), whose image installs `gh` at `/usr/bin/gh`, beside `/usr/bin/git`; so the three parts of "No gh, or a gh without authentication" (its WHEN and its planted-`gh` AND) and of "The request bounds" (its last AND) that need no `gh` on `PATH` would find the runner's real `gh`, start it and read `gh-unauthenticated` or `api-error` with `remote.requests.performed` 2 or 64, not `gh-unavailable` and 0, while on a bench that keeps `gh` apart from `git` the same tests pass; D11 says "No test needs `gh` installed", and its converse, a test that needs `gh` absent, is not provided for | MEDIUM | C-46: applied as the ruling words it, which is wider than RC's fix (the runs that need `gh` absent): the test `PATH` of every run holds the fake bin directory and one directory of links to `git`, `bash` and the interpreter, never their whole directories, and the counting `git` wrapper runs the real `git` by the absolute path of its link; before a run that needs `gh` absent the test asserts `assert_absent_from_path(env, "gh")` (tests:200, a helper the file already has), and where the fake is present `assert_fake_on_path(env, "gh")` (tests:196). D11 says the runner's layout is inferred and not run: the image's `install-github-cli.sh` does an `apt-get install` of cli/cli's Linux `.deb`, and cli/cli's `.goreleaser.yml` has `nfpms` with `bindir: /usr` and `binary: bin/gh` (RC's copies of both files; no Actions run was made). The writer's simulation, with `git`, `bash`, `gh` and an interpreter in one directory as on the runner: `question_env()`'s `PATH` found that `gh`; the directory of links found none, and `git`, `bash` and the interpreter each ran through its link, `git for-each-ref` on a scratch repository included | `design.md` D11 (the `PATH` bullet and its sub-bullets), Context and its table |
+| RC's M5 (the fake `gh`'s one record per run cannot show children that were stopped or signalled): D11's fake appends one JSON record per run that holds its start and end times and no pid or process group, and a record that carries the end time is written only when the fake exits on its own; a child stopped at its limit, at the expiry or on a signal is killed by SIGTERM or SIGKILL and writes none, so the record cannot show that every child started before the expiry and none after it, when a held child started, or which process groups to probe ("A signal while requests run" needs them, as change 2's signal test probes "every group the wrapper recorded", APO design.md:642), and counting overlaps from start and end times misses killed children; the stops of "API failures stay unknown" (the held child at 5 s), "Expiry cancels queued and in-flight requests" and [E]'s new scenario (`specs/project-command/spec.md:179`) have the same gap | MEDIUM | C-46: applied: the fake `gh` writes a start record the moment it starts, before it answers or holds, with the argv, the environment fields, its pid and process group and its start time, and an end record when it exits on its own (pid, end time, exit status). The signal, expiry, API-failure and [E] tests read the start records and probe each recorded group with `os.killpg(pgid, 0)`; the concurrency bullet reads start and end records for runs whose children end on their own, and a stopped child's start record and group probe otherwise. The writer adds one detail that RC's fix does not state: each record is one JSON line written in one call on a descriptor opened for append, so that the records of concurrent children do not interleave. The C-44 test's "the fake `gh`'s record empty" now reads "no start record of the fake `gh`" | `design.md` D11 (the fake `gh` bullet, the C-44 test bullet and the concurrency bullet) |
+| RC's L6 (the `gh` children of in-process runs are outside the network guard): the audit hook binds the test interpreter and not its children, the proxy variables are set only for subprocess runs, and several in-process runs start `gh` children (the expiry scenario, the AND at concurrency 1 and the `set_int_max_str_digits(0)` test), each given the test process's own environment, since D5 passes the caller's on; so a real `gh` reached by mistake (M4) would connect with whatever `GH_TOKEN` or configuration that environment holds, and `self.env` copies `os.environ` (tests:133), so the children also inherit a `NO_PROXY` or `no_proxy` that covers github.com and any `GH_CONFIG_DIR` or `XDG_CONFIG_HOME` | LOW | C-46: applied: an in-process run replaces `os.environ` for its duration with the environment that a subprocess run gets, `self.env` with the changes below, and restores it after; that environment sets `HTTPS_PROXY` and `HTTP_PROXY` to the closed port; every run removes `NO_PROXY`, `no_proxy`, `GH_TOKEN` and `GITHUB_TOKEN`, setting a fake token only where a test asserts one (the AND on `GH_TOKEN` in "The request bounds"), and fixes `GH_CONFIG_DIR` and `XDG_CONFIG_HOME` as absolute paths or unset, `HOME` being the test's own absolute `home` already (tests:133-134). The writer's reading of how the ruling meets C-44's test: that test sets the three configuration variables on purpose, each case its own run, and a refused case starts no child while an accepted case has the fake `gh` first on `PATH`, so it is the one exception and cannot reach a real `gh` | `design.md` D11 (the network and environment sub-bullets) |
+| RC's L2 (D3 leaves the parsing of steps 1 and 2 unstated, and two README steps mislead): D3 names `remote_repository_identity()` for step 3 but no parser for the host; the pattern (`project:766-769`) accepts `github.com/acme/widget` and `github.com/acme/widget.git` as `acme/widget`, which Git reads as a relative local path (`git ls-remote github.com/acme/widget` exits 0 against a local bare repository there), so an implementation that took `github.com` for the host of a URL with no scheme and no `:` would send a GitHub request about a local directory; `git@GitHub.com:acme/widget.git` and `https://GitHub.com/...` are `not-github`, since the host must be exact, so the README's "nothing, as only `github.com` is queried" misleads; `git://github.com/...` and `git+ssh://git@github.com/...` are `malformed-remote`, and the README's step for it ("a URL naming an `owner/repository` on `github.com`, with no user but `git` and no port") is one that these URLs already meet; and `ssh://git@github.com:acme/widget.git` passes the pattern though Git reads `acme` as a port | LOW | C-47: applied in the design and the README as the ruling words it. D3 says how the host is read (after the scheme and any user information of a URL with `://`; between any `user@` and the `:` that begins the path of an scp-like URL), that the host and the scheme compare as written, never without case, and that a URL with no `://` and no `:` before its first `/` is a local path to Git with no host, so `not-github` and never sent; it names `GitHub.com` hosts as `not-github` and `HTTPS://github.com/...` and `git://github.com/...` as `malformed-remote`. The README's `not-github` step now says to write `https://github.com/acme/widget.git` for `GitHub.com` or a URL with no scheme, and its `malformed-remote` step names an https, ssh or scp-like URL, not `git://`. The writer ran the pattern as `project` has it at `961c405` and saw `acme/widget` for `github.com/acme/widget`, `github.com/acme/widget.git` and `github.com:acme/widget`, and no identity for `git@GitHub.com:acme/widget.git`, `https://GitHub.com/acme/widget`, `HTTPS://github.com/acme/widget`, `git://github.com/acme/widget.git` and `git+ssh://git@github.com/acme/widget.git`; and that the three forms the README names, `https://github.com/acme/widget.git`, `ssh://git@github.com/acme/widget.git` and `git@github.com:acme/widget.git`, each give `acme/widget`. `ssh://git@github.com:acme/widget.git`, which RC rated harmless, stands: the ruling takes no action on it | `design.md` D3, Context (the identity bullet); Impact (README bullet) |
+| RC's L3 (under Git's `transfer.credentialsInUrl=die`, a credential-bearing merge-target remote reads `remote-target-unread`): Git 2.43 exits 128 on both reads of a remote whose URL holds a password ("fatal: URL '...' uses plaintext credentials"), so the rows are `unknown`, `remote.completeness` is `incomplete`, and the README's step for `credential-bearing-remote` is never shown; a credential-bearing remote that the merge target does not use leaves both reads alone; the case fails closed and leaks nothing, standard error being discarded (C-31); under `warn`, Git's standard error carries the user part with the password redacted, which confirms why C-31 discards it | LOW | C-47: applied in D2 as the ruling words it: with `transfer.credentialsInUrl=die` a password-bearing merge-target remote reads `remote-target-unread`, never `credential-bearing-remote`, and nothing leaks. The writer repeated RC's runs on Git 2.43.0: under `die` the first read exited 128 with nothing on standard output and the second read exited 128; under `warn` both exited 0 with a redacted warning on standard error; under `die` both exited 0 for a clean merge-target remote beside the credential-bearing one. Not applied: RC's fix also asked for a README sentence that names `remote-target-unread` under that setting; the ruling words L3 for D2 alone, and the brief limits the README edit to L2's steps, so the README's `credential-bearing-remote` step stands as it was. No spec text: the spec's "fails for any other cause" (`:387-389`) already requires the outcome | `design.md` D2, Context |
+| RC's L4, the design part (D10's "writes only into the `remote` slots" leaves out `probes`): D2's reads add to the envelope's `probes`, as D10's own last clause says; the spec part, that [R]'s "exit status" leaves out a signal that ends a `--remote` run, is in the held row below | LOW | C-47: applied: D10 says that the phase writes only into the `remote` slots and into the envelope's `probes`, which D2's remote-target reads raise by the same number in `estimated` and in `performed` in an uncut remote phase and by nothing else, and keeps its last clause | `design.md` D10 |
+| RC's L5 (Open Question 1 should name this change's own follow-on as the change where the enum disagreement bites): Open Question 1 recommends that the sub-records make L-4's disagreement moot and settles it "by a change that adds a value to an existing enum"; the follow-on recommended under Out of Scope, a `closed` state (C-16), is that change, since it adds a value to `remote.state`, a closed enum in schema version 1, which is additive under APO/ov:655-658 and needs a new schema version under CAS/pc:1129-1131 | LOW | C-47: applied in this file with the item's eight lines kept: Open Question 1 now says that the first change the disagreement reaches is this change's own `closed` follow-on (Out of Scope), which adds a value to `remote.state`; the recommendation is as it was: the overview keeps `schema_version: 1`, and the disagreement is settled where it bites | Open Questions (1) |
+| RC's M1 (a deadline that expires in the remote phase: [B]'s carried sentence asks for a scan error that [R] forbids): [B] keeps "On deadline expiry no further child SHALL start ... and one `deadline-exceeded` scan error SHALL count the candidates not started" (spec:61-66), [B]'s added paragraph exempts the records of the remote children and of the lookup but not that scan error (spec:141-157), and [R]'s Isolation paragraph requires a `--remote` run and the run without it to agree on every scan error, `completeness` and exit status (spec:531-543); so a `--remote` run whose collection finishes and whose deadline then expires in the remote phase (Risks, and the AND at spec:634) reads literally as one `deadline-exceeded` scan error counting 0 candidates, `incomplete` and exit 1, where the run without `--remote` can exit 0; feature 005's FR-012 states the sentence with no condition (F005:1713-1724), change 2's design never says whether a scan error with a count of 0 is written, and no scenario checks the scan errors, `completeness` or exit status at an expiry | MEDIUM | C-48: HELD for lane openRepoProject-4, as one file with amendment A1's alignment, since this item touches "Expiry cancels queued and in-flight requests", which Q16 B also reaches. No spec text and no design text here: D7 and D10 already say that nothing remote is a scan error, and RC rates the item MEDIUM, not HIGH, because [R] and D10 state the intended outcome | none (held) |
+| RC's M2 (a configured remote whose fetch refspec does not map the merge ref): Git prints `%(upstream:remotename)` and `%(upstream:remoteref)` only when it can name the upstream as a remote-tracking ref, which needs a fetch refspec that maps `branch.<target>.merge`; for a remote configured with a URL whose `remote.<name>.fetch` is unset or does not cover the merge ref, D2's first read prints empty fields and the rows are `no-remote-target`, a cause that the spec's list (spec:378-381) and the Context's tool fact do not name, and the README's step for it, `git branch --set-upstream-to=origin/main main`, fails (RC's cases A to G on Git 2.43.0; today the case fails closed, no request is sent and no answer is wrong); RC also notes a trap in D11's fixtures: a second remote created with `git config remote.<n>.url` alone makes every fixture row read `no-remote-target`, while `git remote add` writes a default refspec | MEDIUM | C-48: HELD as above. RC's two ways are (a) a clause in the spec's `no-remote-target` list, with the tool fact, the README step and D11's fixtures corrected, or (b) reading the two keys with `git config --get`, which changes [B]'s count; lane openRepoProject-4 and the lead choose. RC's fixture note belongs to this item and waits with it: D11's Fixtures bullet, the Context's tool fact and the README's `no-remote-target` step are not changed here | none (held) |
+| RC's M3 (`remote.limits.concurrency` and the comparison at concurrency 1): the AND of "The request bounds" (spec:628) requires the `remote` fields of the run with the `gh` concurrency set to 1 and of the run at 4, `remote.observed_at` apart, to be byte-identical, while `remote.limits` carries `concurrency` 4 (spec:518); change 2 reports its concurrency in `budget.probe_concurrency` and excludes exactly that field from its own byte-identical comparison (spec:130 and :195); an implementation that builds `remote.limits.concurrency` from the patched constant prints 1 and fails the AND, and one that hard-codes 4 passes but misstates the concurrency in force; the spec does not say which is meant | MEDIUM | C-48: HELD as above. RC offers two readings: an exception for `remote.limits.concurrency` at spec:628 and in the determinism sentence at spec:496-498, as change 2 excepts `budget.probe_concurrency`, or a statement at spec:517-518 that `limits` gives the constants and not the values in force; D8 follows either | none (held) |
+| RC's L1 (no reason is stated for a repository whose first remote-target read finished and whose second never started): the expiry sentence gives `cancelled` to rows "whose remote-target read never started" and `remote-target-unread` to rows whose read the deadline stopped, and a repository whose first read named a usable remote and whose second read waited for a slot when the deadline passed, or found its budget not positive (spec:57-58), is neither; the AND at spec:635, with several repositories and held reads, can reach it without meaning to | LOW | C-48: HELD as above, as a wording edit of the spec (RC: "whose remote-target reads did not all start", read as `cancelled`). RC notes that it could be D7 alone if the lane reads "read" as either of the two reads; the ruling holds it with the spec edits, so D7 is not changed | none (held) |
+| RC's L4, the spec part ([R]'s Isolation paragraph agrees a `--remote` run and the same run without it on the exit status "unless the remote phase raises an exception", but a signal during the remote phase exits 143 or 130, as "A signal while requests run" has it, and the run without `--remote` never sees that signal) | LOW | C-48: HELD as above: RC's "or a signal ends the run" for [R] is spec wording. D7 already says that [X]'s exits 130, 143 and 129 hold with no result document, and D10's exit-status clause is left as it was | none (held) |
+| RC's note outside its sections (not counted): with a relative `HOME` or `XDG_CONFIG_HOME`, a Git child run with `-C <dir>` reads its global configuration from inside that directory (from `/`, `HOME=h git -C <repo> config --show-origin --get user.name` printed `file:h/.gitconfig` with the planted value); in this change C-44 already stops every request under a relative `HOME`, but change 1's and change 2's collection probes run with the same environment, so a tracked `h/.gitconfig` in a scanned worktree would supply their global configuration | not counted | routed by the lead to lanes openRepoProject-2 and openRepoProject-4, with C-44 as the precedent; nothing here changes | none |
