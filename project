@@ -1177,11 +1177,16 @@ def current_invocation():
 
 def _install_handlers(handlers):
     """Install {signum: handler} and return the handlers replaced; a handler not
-    installed from Python (None) is kept as SIG_DFL. On failure, what was
-    installed is put back."""
+    installed from Python (None) is kept as SIG_DFL. A signal ignored when this
+    is called (SIG_IGN, as nohup leaves SIGHUP and a non-interactive shell's
+    `&` job leaves SIGINT) stays ignored, and nothing is saved for it, so no
+    scope catches or restores it (lead ruling R-101 (b), F2). On failure, what
+    was installed is put back."""
     saved = {}
     try:
         for signum, handler in handlers.items():
+            if signal.getsignal(signum) == signal.SIG_IGN:
+                continue
             previous = signal.signal(signum, handler)
             saved[signum] = signal.SIG_DFL if previous is None else previous
     except BaseException:
@@ -1202,9 +1207,10 @@ def _in_main_thread():
 
 class signal_scope:
     """D1's record-only handlers (research.md R4): for SIGINT, SIGTERM and
-    SIGHUP a handler that stores the signal in the slot of the invocation in
-    force when the scope is entered (one entered for the scope's own span when
-    none is), and does nothing else; and a non-blocking wakeup pipe, set with
+    SIGHUP, each one not ignored on entry (_install_handlers()), a handler
+    that stores the signal in the slot of the invocation in force when the
+    scope is entered (one entered for the scope's own span when none is), and
+    does nothing else; and a non-blocking wakeup pipe, set with
     warn_on_full_buffer=False, so that a signal wakes the driver's select() at
     once; `wake` is its read end. On every exit, BaseException included, every
     live probe group is first killed and reaped (kill_live_probes()), and then

@@ -230,6 +230,33 @@ def json_documents(text):
         documents.append(document)
 
 
+# project leaves a signal ignored when it starts ignored (lead ruling R-101
+# (b)), and a `&` job of a non-interactive shell starts with SIGINT ignored.
+# So a child that a test sends SIGINT gets SIGINT back at SIG_DFL, as a
+# foreground run starts it, when this process ignores SIGINT; otherwise it runs
+# as it always has.
+
+
+def sigint_ignored():
+    return signal.getsignal(signal.SIGINT) == signal.SIG_IGN
+
+
+def sigint_default():
+    """preexec_fn: SIGINT at SIG_DFL in the child, before it execs."""
+    signal.signal(signal.SIGINT, signal.SIG_DFL)
+
+
+# An exec shim for a child spawned by a helper that takes no preexec_fn: it
+# sets SIGINT to SIG_DFL, then execs the command in its own place.
+SIGINT_DEFAULT_SHIM = ("import os, signal, sys; signal.signal(signal.SIGINT, signal.SIG_DFL); "
+                       "os.execv(sys.argv[1], sys.argv[1:])")
+
+
+def sigint_default_argv(argv):
+    """argv, or argv behind SIGINT_DEFAULT_SHIM when this process ignores SIGINT."""
+    return [sys.executable, "-I", "-S", "-c", SIGINT_DEFAULT_SHIM, *argv] if sigint_ignored() else argv
+
+
 def sh_git(*args):
     """One real-git command line for a hook, by absolute path (lead ruling R-31)."""
     return " ".join(shlex.quote(os.fsdecode(arg)) for arg in (REAL_GIT, *args))
@@ -300,14 +327,19 @@ class ResultTests(clean_support.CleanCase):
         clean_support.reset_child_log(log)
         return self.path_first(bin_dir), log
 
-    def run_signalled(self, argv, env, steps):
+    def run_signalled(self, argv, env, steps, preexec_fn=None):
         """Run argv, project through the launcher, in a session of its own with
         both streams on pipes read as they fill; for each (ready, signum) of
         steps in turn, poll ready() until it holds, then send signum to project
-        alone (rule 7). Returns a CompletedProcess with text streams, its
-        document parsed when standard output holds one."""
+        alone (rule 7). preexec_fn, a test's own, runs in the child before it
+        execs; without one, the child gets SIGINT at SIG_DFL when this process
+        ignores SIGINT (sigint_default()). Returns a CompletedProcess with text
+        streams, its document parsed when standard output holds one."""
+        if preexec_fn is None and sigint_ignored():
+            preexec_fn = sigint_default
         child = subprocess.Popen(argv, cwd=self.base, env=env, stdin=subprocess.DEVNULL,
-                                 stdout=subprocess.PIPE, stderr=subprocess.PIPE, start_new_session=True)
+                                 stdout=subprocess.PIPE, stderr=subprocess.PIPE, start_new_session=True,
+                                 preexec_fn=preexec_fn)
         streams = {"out": [], "err": []}
         readers = [threading.Thread(target=lambda key=key, stream=stream: streams[key].append(stream.read()),
                                     daemon=True)
@@ -439,10 +471,11 @@ class ResultTests(clean_support.CleanCase):
                 self.assertEqual(self.head(root, "refs/heads/" + NAMES[1]), planned[trees[1]])
 
         # At a pseudo-terminal: SIGINT at the question, and end of input there,
-        # exit 130 with nothing removed.
+        # exit 130 with nothing removed. run_pty_steps() takes no preexec_fn, so
+        # the shim gives the child SIGINT at SIG_DFL when this process ignores it.
         root, trees = self.batch("question", count=2)
         before = self.snapshot(root, trees)
-        argv = clean_support.launched_argv(table, "clean", root, "--all-safe", "--apply")
+        argv = sigint_default_argv(clean_support.launched_argv(table, "clean", root, "--all-safe", "--apply"))
         question = TEXT["question"].format(N=2)
         for name, action in (("SIGINT", signal.SIGINT), ("end of input", clean_support.PTY_EOF)):
             with self.subTest(at_the_question=name):
@@ -1138,6 +1171,50 @@ class ResultTests(clean_support.CleanCase):
                                      ("internal-error", ["internal-error"]))
                     self.assertIn(f"[Errno {number}]", document["error"], "the failed write's own error")
                     self.assertEqual(self.snapshot(root, trees), before, "nothing removed")
+
+    def test_clean_a_signal_during_a_removal_ignored_on_entry_stays_ignored(self):
+        # Runner review F2 (lead ruling R-101 (b)): a signal whose disposition
+        # is SIG_IGN when project starts, as nohup leaves SIGHUP and a `&` job
+        # of a non-interactive shell leaves SIGINT, stays ignored, as by
+        # convention and in the baseline; FR-036 reaches only a signal the
+        # caller did not ignore. The scenario's run, as
+        # test_clean_a_signal_during_a_removal makes it, with the signal set to
+        # SIG_IGN in the child before it execs (a preexec_fn of the test's
+        # own) and sent to project alone once the second removal is in
+        # flight: no target is interrupted, all three
+        # are removed, the record's exit_code is 0 and the run exits 0, with
+        # no wait line and no `Cancelled.`. The real table.
+        table = clean_support.timing_table()
+        for signum in (signal.SIGHUP, signal.SIGINT):
+            name = signal.Signals(signum).name
+            with self.subTest(signal=name):
+                case = f"ignored-{name.lower()}"
+                root, trees = self.batch(case)
+                bin_dir, log = self.base / case / "fake-bin", self.base / case / "signals.log"
+                signal_recording_git(bin_dir, log, slow=trees[1], seconds=1.5)
+
+                def ignore(signum=signum):
+                    signal.signal(signum, signal.SIG_IGN)
+
+                result = self.run_signalled(
+                    clean_support.launched_argv(table, "clean", root, "--all-safe", "--apply", "--yes", "--json"),
+                    self.path_first(bin_dir), [(lambda: f"ready {trees[1]}" in log_lines(log), signum)],
+                    preexec_fn=ignore)
+                self.assert_status(result, 0)
+                document = result.document
+                self.assertIsNotNone(document, clean_support.transcript(result))
+                self.assertEqual(self.stages(document), [(str(tree), "removed", None) for tree in trees])
+                self.assertEqual(document["exit_code"], 0)
+                self.assertFalse(any(tree.exists() for tree in trees))
+                self.assertNotIn(CANCELLED, result.stderr.splitlines())
+                self.assertNotIn("Waiting for git worktree remove", result.stderr)
+                # The signal went while the second removal ran, and every
+                # removal then ran to its end.
+                lines = log_lines(log)
+                self.assertEqual([line for line in lines if line.startswith("ready ")],
+                                 [f"ready {tree}" for tree in trees])
+                self.assertEqual([line for line in lines if line.startswith("exited ")],
+                                 [f"exited {tree} 0" for tree in trees])
 
 
 if __name__ == "__main__":
