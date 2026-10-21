@@ -2179,9 +2179,9 @@ def declared_tracking_branch(root):
         try:
             found = fs_call(examine, str(path))
         except OSError as exc:
-            raise Refused(f"Cannot read {path}: {exc}", code="manifest-invalid") from exc
+            raise Refused(f"Cannot read {human_path(os.fsencode(path))}: {exc}", code="manifest-invalid") from exc
         if isinstance(found, DriverOutcome):
-            raise Refused(f"Cannot read {path}: {found.detail}", code="manifest-invalid")
+            raise Refused(f"Cannot read {human_path(os.fsencode(path))}: {found.detail}", code="manifest-invalid")
         state, data = found
         if state == "absent":
             continue
@@ -2196,11 +2196,11 @@ def declared_tracking_branch(root):
         try:
             value = yaml.safe_load(data.decode("utf-8"))
         except (UnicodeError, yaml.YAMLError) as exc:
-            raise Refused(f"Cannot read {path}: {exc}", code="manifest-invalid") from exc
+            raise Refused(f"Cannot read {human_path(os.fsencode(path))}: {exc}", code="manifest-invalid") from exc
         if not isinstance(value, dict):
-            raise Refused(f"Expected a mapping in {path}", code="manifest-invalid")
+            raise Refused(f"Expected a mapping in {human_path(os.fsencode(path))}", code="manifest-invalid")
         if value.get("kind") != kind:
-            raise Refused(f"Unexpected kind in {path}; expected {kind}", code="manifest-invalid")
+            raise Refused(f"Unexpected kind in {human_path(os.fsencode(path))}; expected {kind}", code="manifest-invalid")
         return value.get("tracking_branch")
     return None
 
@@ -3463,10 +3463,18 @@ def resolve_clean_target(args, run):
     repository, a bare repository's own directory, a timeout); a submodule
     checkout (row 3's third line); a main worktree that main_worktree() gives
     as (None, cause); then the absolute-path and bare-name rules above. Then
-    the merge target's own refusal (`no-merge-target`, `manifest-invalid`),
-    before any row is probed, its context the repository and a null merge
-    target. A repository-wide probe that failed after row 3 is no refusal
-    here: build_plan() makes that plan incomplete."""
+    `unsupported-path-bytes`, exit 2, before any plan or digest, for a root or
+    common directory that is not valid UTF-8 (json_path()'s flag; FR-041,
+    T112): the root, the command directory this returns, is checked first and
+    named when invalid, else the common directory, as bytes, so the refusal
+    object carries `path_valid_utf8: false`; it has no context, so the error
+    object's `repository` and `merge_target` are null (lead ruling R-80,
+    P-13). Rows 4, 6 and 7 and the manifest read have run by then, inside
+    inspect_repository(); no row is probed. Then the merge target's own
+    refusal (`no-merge-target`, `manifest-invalid`), before any row is
+    probed, its context the repository and a null merge target. A
+    repository-wide probe that failed after row 3 is no refusal here:
+    build_plan() makes that plan incomplete."""
     target = getattr(args, "target", None) or ""
     text = os.path.expanduser(target)
     bare, absolute = is_bare_name(target), os.path.isabs(text)
@@ -3504,6 +3512,10 @@ def resolve_clean_target(args, run):
             exact = False
         if not exact or (absolute and root is not None and toplevel != root):
             raise refused()
+    for raw in (toplevel if root is None else root, identity["common_dir"]):  # FR-041; R-80 P-13
+        if not json_path(raw)[1]:
+            raise Refused(TEXT["unsupported_path_bytes"].format(PATH=human_path(raw)),
+                          code="unsupported-path-bytes", path=raw)
     refusal = evidence["merge_target_refusal"]
     if refusal is not None:
         refusal.context = {"repository": repository_object(identity), "merge_target": None}
@@ -3855,7 +3867,7 @@ def build_plan(repo, run):
         except EvidenceError:
             toplevel = False
         if not toplevel or (identity["root"] is None and not evidence["errors"]):
-            raise Refused(f"Cannot inspect Git repository at {root}")
+            raise Refused(f"Cannot inspect Git repository at {human_path(root)}")
     identity = evidence["identity"]
     plan.repository = repository_object(identity)
     refusal = evidence["merge_target_refusal"]
