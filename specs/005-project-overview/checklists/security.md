@@ -27,11 +27,12 @@ Lane: openRepoProject-4
     configuration, which no residual recorded; Brett Heap's answer to lane
     openRepoProject-2's LQ-15 refuses such a value, as PR #19 amends [E] at
     `cc000ea` and `9fb22fa`, pending its ratification, `9fb22fa` leaving the
-    overview's code and exit status to `add-project-overview`, where A1's
-    revision 2 proposes `relative-config-path` with exit 2, pending (FR-043;
-    Dependencies). The `gh` children of #25, which the overview never starts,
-    are recorded outside Q9 B's claim, the caller's environment passing to them
-    unread (#29's D5 at `11a0ba2`; EC-022, FR-040).
+    overview's code and exit status to `add-project-overview`, where amendment
+    A1 at `367223a` proposes `relative-config-path` with exit 2, pending,
+    departing from the packet's DI:1086-1089 (FR-043; Dependencies). The `gh`
+    children of #25, which the overview never starts, are recorded outside
+    Q9 B's claim, the caller's environment passing to them unread (#29's D5 at
+    `11a0ba2`, which records the residual at `79d196a`; EC-022, FR-040).
 - [x] CHK004 Is the treatment of those residuals decided (accept, scrub the
   trace variables, or drop the user's configuration)? [Completeness, Spec
   EC-022]
@@ -141,9 +142,10 @@ LQ-15 (EC-036), and CHK002 to CHK004, CHK014, CHK016 and CHK019 again after
 lane openRepoProject-3's W6 read of `8082d3b` and PR #19's `ea697ba` and
 `cc000ea`, and CHK003, CHK004, CHK014, CHK016 and CHK020 again after PR #19's
 `addd346` and `9fb22fa`, #29's D5 at `11a0ba2` and lane openRepoProject-3's W11
-read of `08d5d79`. 25 items: 23 pass, 1 fixed in the spec, 0 open, 1 plan
-notes, 0 new questions. An open item waits on the question or residual its
-result names; a plan note is for the plan, not the spec; a new question is
-asked in `clarify-questions.md`.
+read of `08d5d79`, and CHK003 after A1's revision 3 at `367223a` and #29's
+`79d196a`. 25 items: 23 pass, 1 fixed in the spec, 0 open, 1 plan notes, 0 new
+questions. An open item waits on the question or residual its result names; a
+plan note is for the plan, not the spec; a new question is asked in
+`clarify-questions.md`.
 
 Plan notes: PN-15 (CHK005).

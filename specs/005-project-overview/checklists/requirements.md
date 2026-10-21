@@ -409,6 +409,30 @@ Lane: openRepoProject-4
   and CHK025 below, no category changing, and the totals below were recounted
   by script. Re-validation: 16 of 16 items pass, with the checks of iteration 2
   re-run by script on the edited spec.
+- 2026-10-21, a fifth pass: every citation of amendment A1 moves from `b020edc`
+  to its revision 3 at `367223a`, those of the items the fourth pass marked as
+  A1's revision 2's included, each still proposed in draft PR #34 and pending
+  Brett Heap's ratification under the interim rule, which now also names what
+  follows A1's three items of its own. The A1 bullet and the LQ bullets mirror
+  revision 3's ordering rule, each item landing only with or after PR #19's
+  ratification of the commit it follows, with R-124 and R-125 named as still to
+  come and none of their text, and its departure records: DI:506-509 and
+  DI:1193-1201 for LQ-11's counts (FR-020), DI:1086-1089 for
+  `relative-config-path`, its `refused` fallback departing from nothing
+  (FR-043), and OV:110-113 and DI:690-692 for the batch-only gates (FR-032).
+  LQ-11's change-2 sites are cited as A1 amends them: POD:333's exit-1
+  exception (FR-007), the second-phase sentence after POD:246 (FR-019), the
+  `estimated` rule (FR-020) and D8's toplevel realpath task (FR-013); US1 s3
+  takes A1's "plus four, plus four". FR-045 prints a row error's `path` on the
+  next line, indented to the message column, and a scan error's as `Incomplete:
+  <path>: <message> (<code>).`, in D10's and requirement 12's words. #25 is
+  re-checked at `3965dfb`, its pin `05a424a` kept, and EC-022 cites #29's D5 at
+  `79d196a`. In this folder, CHK012 of `ux.md` is fixed in the spec, with plan
+  note PN-4 withdrawn; results that cite A1 were re-read in `deployment.md`,
+  `integration.md`, `security.md`, `observability.md`, `error-handling.md`,
+  `suggestions-gates.md` and CHK015, CHK023 and CHK025 below; and the totals
+  below were recounted by script. Re-validation: 16 of 16 items pass, with the
+  checks of iteration 2 re-run by script on the edited spec.
 - Items marked incomplete require spec updates before `/speckit-clarify` or `/speckit-plan`
 
 ## Cross-cutting Requirements Quality (no-argument `/speckit.checklist`, 2026-10-19)
@@ -455,8 +479,8 @@ Lane: openRepoProject-4
   - Result: pass.
 - [x] CHK015 Are the exit rules consistent across FR-029, FR-042, FR-043, FR-044 and the stories? [Consistency, Spec FR-042]
   - Result: pass; FR-043's pointer also names FR-042's exit-2 causes
-    (POD:765-766), for which A1's revision 2 proposes `relative-config-path`
-    with exit 2, pending.
+    (POD:765-766), for which amendment A1 at `367223a` proposes
+    `relative-config-path` with exit 2, pending.
 
 ### Acceptance Criteria Quality
 
@@ -487,9 +511,9 @@ Lane: openRepoProject-4
     with PN-18 added on 2026-10-21 for FR-007's re-verification against feature
     004's fix, PN-2 narrowed on 2026-10-20 to an exception of any other kind in
     human mode and widened on 2026-10-21 to a failed write's standard-error
-    line (C-66), PN-6 and PN-12 narrowed on 2026-10-21 (C-66, C-68) and PN-11
-    withdrawn then (C-62), are listed in the domain checklists' Evaluation
-    sections.
+    line (C-66), PN-6 and PN-12 narrowed on 2026-10-21 (C-66, C-68), PN-11
+    withdrawn then (C-62) and PN-4 later that day (FR-045), are listed in the
+    domain checklists' Evaluation sections.
 - [x] CHK024 Are the differences between change 2 and feature 004 recorded with which text governs? [Conflict, Spec Assumptions, Clarifications C-33]
   - Result: pass; since 2026-10-21 also where the change is silent: the twin
     fill of EC-031 and the recorded divergence in the cap count (Dependencies).
@@ -498,7 +522,7 @@ Lane: openRepoProject-4
   [Ambiguity, Spec Edge Cases]
   - Result: pass, EC-034 to EC-036 included since 2026-10-21. EC-022's `gh`
     residual and EC-033's `refs/heads/HEAD` consequence, added on the same day,
-    are kept apart too.
+    are kept apart too, the first citing #29's D5 at `79d196a`.
 
 ## Evaluation
 
@@ -507,18 +531,18 @@ and CHK025 re-read on 2026-10-21 after Brett Heap's answers (C-55 to C-71),
 their results still pass, and CHK019, CHK024 and CHK025 again later that day,
 after the re-check against feature 004's head `2cf34d3` and EC-036, theirs too,
 and CHK023 after lane openRepoProject-3's W6 read, its result still pass, and
-CHK015 and CHK025 after the fourth pass, theirs too. 25 items: 24 pass, 1 fixed
-in the spec, 0 open, 0 plan notes, 0 new questions. An open item waits on the
-question or residual its result names; a plan note is for the plan, not the
-spec; a new question is asked in `clarify-questions.md`. The counts are for the
-cross-cutting section above; the 16 built-in items before it carry no ids and
-are not counted.
+CHK015 and CHK025 after the fourth pass, theirs too, and CHK015, CHK023 and
+CHK025 after the fifth. 25 items: 24 pass, 1 fixed in the spec, 0 open, 0 plan
+notes, 0 new questions. An open item waits on the question or residual its
+result names; a plan note is for the plan, not the spec; a new question is
+asked in `clarify-questions.md`. The counts are for the cross-cutting section
+above; the 16 built-in items before it carry no ids and are not counted.
 
 Plan notes: none.
 
-All 17 checklists: 414 items: 373 pass, 24 fixed in the spec, 0 open, 17 plan
-notes (PN-1 to PN-18 but PN-11, withdrawn on 2026-10-21; PN-2 narrowed to an
-exception of any other kind in human mode and widened to a failed write's
+All 17 checklists: 414 items: 373 pass, 25 fixed in the spec, 0 open, 16 plan
+notes (PN-1 to PN-18 but PN-4 and PN-11, withdrawn on 2026-10-21; PN-2 narrowed
+to an exception of any other kind in human mode and widened to a failed write's
 standard-error line), 0 new questions. Recounted by script on 2026-10-21, and
-again after the re-check, after the W6 read and after the fourth pass of that
-day.
+again after the re-check, after the W6 read and after the fourth and fifth
+passes of that day.

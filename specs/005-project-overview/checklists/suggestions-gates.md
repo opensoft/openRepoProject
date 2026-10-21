@@ -38,8 +38,10 @@ Lane: openRepoProject-4
 - [x] CHK012 Is it specified which gates the overview leaves to the batch (`contains-submodule`, `hidden-local-state`)? [Completeness, Spec FR-032]
   - Result: pass; once PR #19 is ratified, `operation-in-progress` (LQ-14,
     `43f7107`) and `worktree-only-commits` (LQ-13, `93de4bb`) join them, after
-    them in [G]'s order, and the overview evaluates neither (FR-032), as A1's
-    revision 2 proposes, pending.
+    them in [G]'s order, and the overview evaluates neither (FR-032), as
+    amendment A1 at `367223a` proposes, pending, keeping the overview's
+    `--all-safe` suggestion of such a worktree and assuming PR #19's failure
+    rule for the two gates, which R-124 is to settle.
 
 ## Requirement Clarity
 
@@ -108,9 +110,9 @@ Lane: openRepoProject-4
 Evaluated on 2026-10-19 against `spec.md` at `8f433f7`; CHK018 re-read on
 2026-10-21 after the re-check against feature 004's head `2cf34d3`, its result
 still pass, and CHK012, CHK020, CHK025 and CHK027 after PR #19's LQ-13 and
-LQ-14, theirs too. 29 items: 28 pass, 1 fixed in the spec, 0 open, 0 plan
-notes, 0 new questions. An open item waits on the question or residual its
-result names; a plan note is for the plan, not the spec; a new question is
-asked in `clarify-questions.md`.
+LQ-14, theirs too, and CHK012 again after A1's revision 3 at `367223a`. 29
+items: 28 pass, 1 fixed in the spec, 0 open, 0 plan notes, 0 new questions. An
+open item waits on the question or residual its result names; a plan note is
+for the plan, not the spec; a new question is asked in `clarify-questions.md`.
 
 Plan notes: none.

@@ -107,9 +107,10 @@ citation against the `main` that feature 004's merge produces (Clarifications,
 C-56). #25's change (`add-project-overview-remote-merge-status`) stays pinned
 at `05a424a`: at `11a0ba2`, its draft PR #29's head after its round C13, every
 range that this spec and `clarify-questions.md` cite is byte-identical, its
-overview spec's lines 1 to 410 included. #24's change
-(`add-project-clean-cache-disposal`) stays pinned at `fe5b245`: at `e07cc42`,
-its draft PR #27's head after its round B9, every pinned range is
+overview spec's lines 1 to 410 included; at `3965dfb`, after its round C14, the
+same ranges are byte-identical, three of them at new lines (Dependencies).
+#24's change (`add-project-clean-cache-disposal`) stays pinned at `fe5b245`: at
+`e07cc42`, its draft PR #27's head after its round B9, every pinned range is
 byte-identical at new lines, which the Dependencies list for a later re-pin.
 
 **Created before feature 004 merges**: The change creates this feature only
@@ -642,10 +643,11 @@ draft PR #19, which that lane agreed on 2026-10-21 to carry it in.
   change 2's Impact on Brett Heap's word (or carried in the change-2
   amendment's Impact)", and amendment A1 takes the second branch: its Impact
   gains a `.github/workflows/tests.yml` bullet after the tests bullet
-  (proposal.md:441-449), at `b020edc`, pending its ratification. It proves
-  FR-043's claim at 2.36 on the probes the overview drives for little CI time,
-  the shared probes being proven there already by feature 004's tests. Where
-  applied: FR-050; Dependencies; Appendix, Coverage.
+  (proposal.md:441-449; its `proposal.md:455-460` at `367223a`), proposed in
+  draft PR #34, pending Brett Heap's ratification. It proves FR-043's claim at
+  2.36 on the probes the overview drives for little CI time, the shared probes
+  being proven there already by feature 004's tests. Where applied: FR-050;
+  Dependencies; Appendix, Coverage.
 - **C-58** Q: Should agents be told in `AGENTS.md` that an overview suggestion
   is advice to review, and that applying it needs the person's word? -> A:
   Q4 D: Yes, after feature 004 lands, in one sentence on the overview added to
@@ -702,8 +704,9 @@ draft PR #19, which that lane agreed on 2026-10-21 to carry it in.
   requirement 5, a new paragraph after its equality clause (after POD:386),
   leaving POD:378-386 as ratified, and in design D6's scan-error order
   (design.md:410-412) and D8's realpath task (design.md:470-471), its own map
-  at `b020edc` (Dependencies). Where applied: C-25; FR-013; FR-026; FR-037;
-  FR-038; Dependencies.
+  at `367223a`, which records the DI:778 departure as well (its
+  `proposal.md:1136-1147`; Dependencies). Where applied: C-25; FR-013; FR-026;
+  FR-037; FR-038; Dependencies.
 - **C-62** Q: How are strings that are not paths decoded and printed? -> A:
   Q8 D: Amend change 2 so that every row and scan error's message is a fixed
   text for its code, naming no path, the path going in `path`: feature 004's
@@ -729,13 +732,14 @@ draft PR #19, which that lane agreed on 2026-10-21 to carry it in.
   as a path is, each undecodable byte written `\xHH`, each Cc, Cf, Zl or Zp
   code point escaped by JSON and written `\uXXXX` in human output, with no new
   field. Git's own reason is then not shown: the person re-runs the Git command
-  to see it. A1 at `b020edc` writes those texts as a table after POD:347, with
+  to see it. A1 at `367223a` writes those texts as a table after POD:347, with
   OPERATION `git SUBCOMMAND` for a Git child, the filesystem call (`lstat`,
   `stat`, `realpath`, `scandir` or `read`) for a filesystem task, and
   `collection` for a candidate whose collection never started and for the scan
   error that counts such candidates, its own texts and the values `stat`,
   `scandir` and `collection` being its drafted fill, for Brett Heap's review
-  (its `specs/project-overview/spec.md:368-386`; FR-022). Where applied:
+  (its `specs/project-overview/spec.md:375-393`; FR-022), and records the
+  `e256b59` re-check above (its `proposal.md:1148-1175`). Where applied:
   FR-022; FR-038; EC-033; EC-034; Key Entities, Row error and scan error;
   Dependencies.
 - **C-63** Q: How does the feature treat the residuals beyond what the pins and
@@ -764,11 +768,12 @@ draft PR #19, which that lane agreed on 2026-10-21 to carry it in.
   validators, writes files, or contacts the network", for the overview's Git
   children to what the pins and the scrub prove, the filters and the
   configuration files being outside that claim (A1's
-  `specs/project-overview/spec.md:785-791` at `b020edc`; lane
-  openRepoProject-3's W7 read of A1, M3). Trace output is a pure side effect,
-  cheap to pin and scrub for every subcommand at once, while filters and the
-  configuration files cannot be switched off in general. Where applied: US10;
-  FR-016; FR-040; FR-049; SC-002; EC-022; Dependencies.
+  `specs/project-overview/spec.md:799-805` at `367223a`, whose Q9 B entry
+  records the narrowing, its `proposal.md:1176-1192`; lane openRepoProject-3's
+  W7 read of A1, M3). Trace output is a pure side effect, cheap to pin and
+  scrub for every subcommand at once, while filters and the configuration files
+  cannot be switched off in general. Where applied: US10; FR-016; FR-040;
+  FR-049; SC-002; EC-022; Dependencies.
 - **C-64** Q: Should the overview report the two layouts the marker table
   leaves unreported? -> A: Q10 A: No. Feature 005 builds the ratified marker
   table (POD:24-31) and keeps both layouts as recorded edge cases: both are
@@ -862,9 +867,9 @@ draft PR #19, which that lane agreed on 2026-10-21 to carry it in.
   carrying a standing departure. Read with C-69's raising span, the handlers
   only record the signal while a child can run, and raise only during the span,
   which is entered only after every child is reaped or abandoned, as A1
-  reconciles the two (its design D1, design.md:116-127, and its
-  `proposal.md:1221-1224`, at `b020edc`; FR-044). Where applied: FR-011;
-  FR-044; Dependencies.
+  reconciles the two (its design D1, design.md:116-127, its clarifications N1,
+  clarifications.md:42-45, and its `proposal.md:1348-1351`, at `367223a`;
+  FR-044). Where applied: FR-011; FR-044; Dependencies.
 - **C-71** Q: Does feature 005 realize the overview parts of #24 and #25? -> A:
   Q17 A: No, in every order: both stay in their own features, as #25 sets (its
   `tasks.md:20-21` at `05a424a`) and as #24 states for its overview part,
@@ -928,17 +933,20 @@ disabled and before-and-after snapshots, as every story's fixtures run
    `ok`, no error and no Git child; and with `acme` itself as the root,
    `web` and `api` are ordinary rows of their own and `relationships` stays
    `[]`.
-3. **Given** a repository with a main worktree and three linked worktrees,
-   one an immediate entry of the root and one outside every root, **When**
-   the overview runs, **Then** there is one project row with four worktree
-   rows, main worktree first and then by path bytes, the external worktree
-   adds no project, the identity probe, the registry, the ref listing and
-   the merged-set query run once for the repository, each present row gets
-   one status probe, and `probes.performed` is one version check, plus one
-   identity probe per Git candidate, plus three, plus four; when the main
-   worktree lies outside every root, so that a linked worktree reaches the
-   repository first, `repository.root` is the canonical path of the first
-   registry record, never that linked worktree's toplevel.
+3. **Given** a repository that does not set `extensions.worktreeConfig`, with a
+   main worktree and three linked worktrees, one an immediate entry of the root
+   and one outside every root, **When** the overview runs, **Then** there is
+   one project row with four worktree rows, main worktree first and then by
+   path bytes, the external worktree adds no project, the identity probe, the
+   registry, the ref listing, the merged-set query and the
+   `extensions.worktreeConfig` read run once for the repository, each present
+   row gets one status probe, and `probes.performed` is one version check, plus
+   one identity probe per Git candidate, plus four, plus four, as amendment A1
+   at `367223a` words the scenario (its
+   `specs/project-overview/spec.md:141-145`), pending (FR-020; Dependencies);
+   when the main worktree lies outside every root, so that a linked worktree
+   reaches the repository first, `repository.root` is the canonical path of the
+   first registry record, never that linked worktree's toplevel.
 4. **Given** `atlas` has a clean, pushed, merged linked worktree outside
    every root, whose branch has a commit of its own, **When** the overview
    runs, **Then** it appears among `atlas`'s worktrees with `dev`, `ino` and
@@ -1776,10 +1784,12 @@ path"; "Non-UTF-8 common directory".
   caller's environment less `GH_DEBUG` and five other names, every variable a
   child gets passing unchanged and [E]'s Git scrub not applying, so that the
   `GIT_TRACE*` names reach `gh` unread (its design D5, `design.md:467-482` at
-  `11a0ba2`). Lane openRepoProject-5 ran `gh` 2.96.0 offline with D5's flags:
-  it started no Git child and wrote no trace file on its failed-connection
-  path; its success path is not verified, and lane openRepoProject-5's round
-  C14 records the residual in D5, pending.
+  `11a0ba2`). Lane openRepoProject-5's round C14 records this in D5 as a
+  residual, in lane openRepoProject-4's words, pending #29's ratification
+  (`design.md:530-557` at `79d196a`): `gh` 2.96.0, run offline with D5's flags,
+  switches and query, exited 1 on the refused connection, started no `git`,
+  created no trace file and wrote no file, and the path of a 200 answer is not
+  verified.
 - **EC-023**: Each field is as of its own probe. A commit, a new worktree or
   a recreated repository during the scan can mix moments within one row, in
   which case the reflog's head test fails closed (FR-033); and a common
@@ -2135,26 +2145,28 @@ and [P] are change 1's requirements as the header names them.
   by `git config --file <common_dir>/config --type=bool --get
   extensions.worktreeConfig` (change 1's design D6, row 4c): `true` reads as
   true and `false` as false; an exit of 1 with nothing printed, Git's report of
-  a value not set, reads as false with no error; and any other outcome counts
-  as true, as [E] states, recording on the project row the code that change 2's
-  table gives it (POD:333-335), `probe-failed`, its DETAIL `unparseable output`
-  for output that is not one of those values, or `probe-timeout` or
-  `deadline-exceeded` for a cut read (FR-011, FR-012), the ladder still running
-  on the rows' own evidence. Where the extension reads or counts as true, each
-  linked row whose registration agrees MUST take `git rev-parse
-  --path-format=absolute --show-toplevel` in that worktree, after its identity
-  reads and before its re-verification and status probe: a toplevel whose
-  realpath, taken in a bounded task (FR-013), is not the realpath of the row's
-  registered path, that realpath failing with `ENOENT` or `ENOTDIR` included, a
-  probe that fails, by an exit other than 0 (128 under `core.bare=true`) or a
-  signal, and output that is not exactly one line each make the registration
-  disagree, with no error; a probe that cannot be spawned or that its budget or
-  the deadline cuts, and a realpath that fails otherwise or is cut, leave the
-  check not completed, as in the third case above, with the code of change 2's
-  table that fits it. Where the extension reads false, no such probe runs. Both
-  children carry FR-016's pins and environment, the rev-parse, which is not a
-  status probe, without the status pins. `project clean` re-runs the probe when
-  it revalidates a removal target; the overview, which removes nothing, has no
+  a value not set, reads as false with no error, as amendment A1 at `367223a`
+  excepts it in change 2's table (its `specs/project-overview/spec.md:359`,
+  amending POD:333), pending; and any other outcome counts as true, as [E]
+  states, recording on the project row the code that change 2's table gives it
+  (POD:333-335), `probe-failed`, its DETAIL `unparseable output` for output
+  that is not one of those values, or `probe-timeout` or `deadline-exceeded`
+  for a cut read (FR-011, FR-012), the ladder still running on the rows' own
+  evidence. Where the extension reads or counts as true, each linked row whose
+  registration agrees MUST take `git rev-parse --path-format=absolute
+  --show-toplevel` in that worktree, after its identity reads and before its
+  re-verification and status probe: a toplevel whose realpath, taken in a
+  bounded task (FR-013), is not the realpath of the row's registered path, that
+  realpath failing with `ENOENT` or `ENOTDIR` included, a probe that fails, by
+  an exit other than 0 (128 under `core.bare=true`) or a signal, and output
+  that is not exactly one line each make the registration disagree, with no
+  error; a probe that cannot be spawned or that its budget or the deadline
+  cuts, and a realpath that fails otherwise or is cut, leave the check not
+  completed, as in the third case above, with the code of change 2's table that
+  fits it. Where the extension reads false, no such probe runs. Both children
+  carry FR-016's pins and environment, the rev-parse, which is not a status
+  probe, without the status pins. `project clean` re-runs the probe when it
+  revalidates a removal target; the overview, which removes nothing, has no
   revalidation (Dependencies). A probe MUST NOT run in a path the overview
   could not `lstat`, nor a status probe in a worktree whose registration it
   could not verify or whose identity it could not verify again immediately
@@ -2238,22 +2250,25 @@ and [P] are change 1's requirements as the header names them.
   calls into (Clarifications, C-38): one per root, enclosing its
   canonicalisation, deduplication `stat`, listing and marker and holder checks,
   so that a root's whole listing has one budget; one per worktree row,
-  enclosing its `lstat` and registration reads; one per toplevel that FR-007's
-  effective-work-tree probe prints, for its realpath, a task that change 2's
-  design D8 does not list (Dependencies); one per manifest read; one per branch
-  reflog read of at most 64 KiB, never by a Git child; and one for the realpath
-  of the working directory taken at start, a realpath that cannot be
-  established being recorded as FR-026 states (Clarifications, C-61). A task
-  that does not finish MUST record `probe-timeout`, or `deadline-exceeded`
-  where the deadline was the smaller limit, on its root or row, and the
-  overview MUST move on without blocking on it. A root cut this way MUST count
-  as `truncated`, and its listing MUST read no further entry once the root is
-  abandoned; a reflog read cut this way MUST leave its row unprobed for the
-  repository gate of FR-034, and a worktree row's `lstat`, registration read or
-  toplevel realpath cut this way MUST make that row `inspection-error` as
-  FR-007 states (POD:183-192, :781; clarifications N2; design D2 and D8;
-  Clarifications, C-23, C-25 and C-38). A root whose canonicalisation is itself
-  cut MUST be reported as FR-001 states (Clarifications, C-67).
+  enclosing its `lstat` and registration reads; one per linked row whose
+  effective work tree FR-007 reads, for the realpath of the toplevel that read
+  reports, compared with the realpath of the row's registered path, the task
+  that amendment A1 at `367223a` adds to design D8 with 512 toplevel realpaths
+  in D8's bound of abandoned workers (its design.md:483-486 and :501-503),
+  pending (Dependencies); one per manifest read; one per branch reflog read of
+  at most 64 KiB, never by a Git child; and one for the realpath of the working
+  directory taken at start, a realpath that cannot be established being
+  recorded as FR-026 states (Clarifications, C-61). A task that does not finish
+  MUST record `probe-timeout`, or `deadline-exceeded` where the deadline was
+  the smaller limit, on its root or row, and the overview MUST move on without
+  blocking on it. A root cut this way MUST count as `truncated`, and its
+  listing MUST read no further entry once the root is abandoned; a reflog read
+  cut this way MUST leave its row unprobed for the repository gate of FR-034,
+  and a worktree row's `lstat`, registration read or toplevel realpath cut this
+  way MUST make that row `inspection-error` as FR-007 states (POD:183-192,
+  :781; clarifications N2; design D2 and D8; Clarifications, C-23, C-25 and
+  C-38). A root whose canonicalisation is itself cut MUST be reported as FR-001
+  states (Clarifications, C-67).
 - **FR-014**: A manifest whose size, taken before the read, exceeds [E]'s
   1 MiB MUST be `manifest-invalid` on its row without being read, and a
   manifest read MUST NOT exceed 1 MiB (POD:192-196; design D8).
@@ -2314,19 +2329,20 @@ and [P] are change 1's requirements as the header names them.
   at a time. Collection MUST run in two canonical phases, the identity and
   repository-wide probes, FR-007's extension read among them, and then the
   worktree probes, a row's effective-work-tree probe, where FR-007 gives it
-  one, before its status probe (POD:238-239 naming the status probes alone;
-  Dependencies); a repository's first worktree probe MUST wait until every one
-  of its rows within the cap has finished the `lstat`, realpath and
-  registration reads from which FR-007 decides its twins (EC-031); a
-  repository's second phase MUST start only when every candidate earlier in
-  canonical order has completed or failed its identity probe and every
-  repository earlier in canonical order has finished its first phase, identity
-  probes still being free to start ahead of that point; a repository whose
-  first registry record equals its `common_dir` and whose checkout no candidate
-  has yet named MUST also wait until every candidate's identity probe has
-  completed or failed. In a run in which no child, task or root listing reaches
-  its budget and the deadline does not expire, over an estate that no other
-  process changes during the run (this feature's reading, a condition
+  one, before its status probe (the sentence that amendment A1 at `367223a`
+  adds after POD:246, its `specs/project-overview/spec.md:265-268`, pending,
+  POD:238-239 keeping its words; Dependencies); a repository's first worktree
+  probe MUST wait until every one of its rows within the cap has finished the
+  `lstat`, realpath and registration reads from which FR-007 decides its twins
+  (EC-031); a repository's second phase MUST start only when every candidate
+  earlier in canonical order has completed or failed its identity probe and
+  every repository earlier in canonical order has finished its first phase,
+  identity probes still being free to start ahead of that point; a repository
+  whose first registry record equals its `common_dir` and whose checkout no
+  candidate has yet named MUST also wait until every candidate's identity probe
+  has completed or failed. In a run in which no child, task or root listing
+  reaches its budget and the deadline does not expire, over an estate that no
+  other process changes during the run (this feature's reading, a condition
   POD:243-246 does not state; EC-023), the JSON document, apart from timestamps
   and `budget.probe_concurrency`, MUST NOT depend on concurrency or completion
   order (POD:236-246; design D3, item 3, and D6; Clarifications, C-28; EC-023).
@@ -2339,11 +2355,14 @@ and [P] are change 1's requirements as the header names them.
   cap that is present and registration-verified, a bare repository's main
   worktree row adding none, since it takes no status probe (POD:248-254; design
   D3, item 3; Clarifications, C-68). It MUST also count FR-007's two children,
-  which POD:248-254 does not name (Dependencies): 1 more per distinct
-  repository whose identity was established, for the extension read, and, in a
-  repository whose extension read gives or counts as true, 1 per linked
-  worktree row within the cap that is present and whose two-way registration
-  agrees, for its effective-work-tree probe.
+  as amendment A1 at `367223a` amends that rule (its
+  `specs/project-overview/spec.md:270-280`), pending: 4 more per distinct
+  repository whose identity was established in place of 3, the fourth being the
+  extension read, and 1 more per worktree row within the cap that is present
+  and registration-verified and is a linked worktree of a repository whose
+  extension read is taken as true, for its effective-work-tree probe. These
+  counts depart from the packet's DI:506-509 ("3 more per distinct repository")
+  and DI:1193-1201 ("plus three"), as A1 records (Dependencies).
 
 **Isolation**
 
@@ -2364,7 +2383,7 @@ and [P] are change 1's requirements as the header names them.
   1's closed set: the collector table's eight, `scan-limit` and
   `root-unreadable` (Clarifications, C-41). Its message MUST be at most 200
   characters, the fixed text of its code in amendment A1's table (A1's
-  `specs/project-overview/spec.md:368-386` at `b020edc`, after POD:347), which
+  `specs/project-overview/spec.md:375-393` at `367223a`, after POD:347), which
   names no path, the path going in `path`: feature 004's text for `os-error`,
   `probe-failed` and `probe-timeout` (its contract, lead ruling R-45);
   `OPERATION stopped at the invocation deadline` for `deadline-exceeded`; and
@@ -2377,18 +2396,19 @@ and [P] are change 1's requirements as the header names them.
   `collection` for a candidate whose collection never started and for the scan
   error that counts such candidates. A1's own texts and the OPERATION values
   `stat`, `scandir` and `collection` are its drafted fill, for Brett Heap's
-  review, pending A1's ratification. A Git child's standard error MUST be
-  drained and capped as [E] requires (CMD:175-177), and never shown, so that no
-  text from it reaches a message or the `Incomplete:` line; Git's own reason is
-  then not shown, and the person re-runs the Git command to see it
-  (Clarifications, C-62). Evidence gathered before a failure MUST be kept and
-  every field not established MUST stay null; a row whose `errors` is non-empty
-  MUST have status `error`, else `ok`; and every candidate entering collection
-  MUST yield exactly one row or merge into exactly one existing repository row.
-  Without the YAML library the manifest reader needs, each row whose directory
-  holds a manifest MUST carry a `manifest-invalid` error naming that cause, and
-  the run MUST continue (POD:337-347, its message rule as C-62 amends it;
-  Clarifications, C-41 and C-62).
+  review, proposed in draft PR #34, pending Brett Heap's ratification. A Git
+  child's standard error MUST be drained and capped as [E] requires
+  (CMD:175-177), and never shown, so that no text from it reaches a message or
+  the `Incomplete:` line; Git's own reason is then not shown, and the person
+  re-runs the Git command to see it (Clarifications, C-62). Evidence gathered
+  before a failure MUST be kept and every field not established MUST stay null;
+  a row whose `errors` is non-empty MUST have status `error`, else `ok`; and
+  every candidate entering collection MUST yield exactly one row or merge into
+  exactly one existing repository row. Without the YAML library the manifest
+  reader needs, each row whose directory holds a manifest MUST carry a
+  `manifest-invalid` error naming that cause, and the run MUST continue
+  (POD:337-347, its message rule as C-62 amends it; Clarifications, C-41 and
+  C-62).
 - **FR-023**: In `project overview` alone, a project or family manifest
   with an invalid text encoding MUST be a `manifest-invalid` error on its
   candidate's row, in human and JSON mode alike, never a traceback; the
@@ -2508,9 +2528,17 @@ and [P] are change 1's requirements as the header names them.
   `specs/project-clean/spec.md:608-615` and :649-662 at `43f7107`, and :643-660
   at `93de4bb`). The overview evaluates neither: it makes no listing of a
   worktree's administrative directory and no `logs/HEAD` read for them, and
-  starts no `rev-list` child. A1's revision 2 proposes this, amending design
-  D5's "Only the index gates `contains-submodule` and `hidden-local-state` stay
-  residual exclusions the batch applies" (design.md:324-325), pending
+  starts no `rev-list` child. The overview MUST keep the `--all-safe`
+  suggestion of such a worktree, which the batch then excludes itself.
+  Amendment A1 at `367223a` proposes this as an item of its own, in requirement
+  7 (its `specs/project-overview/spec.md:580-587`, after POD:525-526) and
+  design D5 (its design.md:334-341, amending D5's "Only the index gates
+  `contains-submodule` and `hidden-local-state` stay residual exclusions the
+  batch applies", design.md:324-325), proposed in draft PR #34, pending Brett
+  Heap's ratification: the route departs from the packet's OV:110-113 and
+  DI:690-692, which name `hidden-local-state` and `contains-submodule` as the
+  only exclusions the batch applies beyond the overview's gates, and it assumes
+  #19's failure rule for the two gates, which R-124 is to settle
   (Dependencies).
 - **FR-033**: For every row that gate checks, the branch's reflog,
   `logs/refs/heads/<branch>` under `common_dir`, MUST be read by one bounded
@@ -2743,11 +2771,15 @@ and [P] are change 1's requirements as the header names them.
   which Brett Heap may strike (Dependencies). PR #19 leaves the overview's code
   and exit status for this refusal to `add-project-overview` (its
   `proposal.md:951-956` at `9fb22fa`), whose closed lists give [E]'s text none:
-  A1's revision 2 (draft PR #34) proposes `relative-config-path` among change
-  2's exit-2 codes (POD:676-678), with exit 2 under requirement 11's exit rule
-  (POD:765-766; FR-042), which it amends, under Brett Heap's LQ-15 word,
-  pending A1's ratification; the fallback is `refused` with exit 2, inside
-  change 2's lists (Dependencies).
+  amendment A1 at `367223a` proposes `relative-config-path` with exit 2 as an
+  item of its own, under Brett Heap's LQ-15 word, in requirement 8's exit-2
+  codes (POD:677-678; its `specs/project-overview/spec.md:743-747`) and in
+  requirement 11's exit rule (POD:765-768; FR-042), with a paragraph after it
+  and the scenario "A relative configuration path" (its :850-866 and :898-902),
+  proposed in draft PR #34, pending Brett Heap's ratification. The code departs
+  from the packet's closed list of exit-2 codes (DI:1086-1089); should he
+  strike it, the fallback is `refused` with exit 2, inside change 2's lists,
+  which departs from nothing (Dependencies).
 - **FR-044**: On SIGINT, SIGTERM or SIGHUP the overview MUST stop scheduling,
   terminate and reap every child as FR-011 states, abandoning one still
   unreaped 2 s after SIGKILL, start no result document once the signal is read
@@ -2770,10 +2802,10 @@ and [P] are change 1's requirements as the header names them.
   span alone the handlers MUST raise once they have recorded the signal, so
   that a write blocked on a stalled reader stops, and no child runs under them.
   That is the scope that amendment A1's design D1 gives Q15 A and Q16 B
-  together (A1's design.md:116-127 and its `proposal.md:1221-1224`, at
-  `b020edc`, pending its ratification; POD:776-781, as C-69 amends it;
-  clarifications N1, as C-70 amends it; design D1, as C-69 and C-70 amend it;
-  FR-011; Clarifications, C-70).
+  together (A1's design.md:116-127, its clarifications.md:42-45 and its
+  `proposal.md:1348-1351`, at `367223a`, pending its ratification; POD:776-781,
+  as C-69 amends it; clarifications N1, as C-70 amends it; design D1, as C-69
+  and C-70 amend it; FR-011; Clarifications, C-70).
 
 **Human report**
 
@@ -2789,25 +2821,31 @@ and [P] are change 1's requirements as the header names them.
   design D10 states. Rows, the findings and row errors within a row, and the
   `Incomplete:` lines MUST follow the JSON document's order (FR-037;
   Clarifications, C-43). Row errors MUST display in the repair category; one
-  `Incomplete:` line MUST follow per scan error; each row error's line and each
-  `Incomplete:` line MUST print the error's `path`, when the error carries one,
-  by [P]'s rule, since every message is a fixed text that names no path
-  (FR-022), as the packet's human report names the root that an `Incomplete:`
-  line concerns (DI:94): a fill of design D10's forms, which print no `path`
-  (design.md:517-520 and :526-527), that A1's revision 2 proposes as a declared
-  fill, pending (lane openRepoProject-3's W7 read of A1, M1); and the summary
-  line MUST always be printed, giving the counts of projects, errors and
-  findings by category and stating that findings reflect local refs as of the
-  last fetch, and saying that nothing needs attention under `--attention` when
-  no row is shown; a complete scan that finds no project says so through that
-  line, which then reads `0 projects`, and exits 0 (POD:722; DI:1097-1098;
-  design D10). A path holding a code point of FR-038's categories or an
-  undecodable byte MUST print in the `$'...'` form, each such code point
-  written `\uXXXX`, or `\UXXXXXXXX` above U+FFFF. The layout and fixed lines
-  MUST read as design D10 fixes them, their fixed text in ASCII, while
-  interpolated names, paths and numbers follow FR-038 and [P] (POD:672-675,
-  :722, :802-817; DI:1097-1098; design D4, D6 and D10; Clarifications, C-43 and
-  C-44).
+  `Incomplete:` line MUST follow per scan error; a row error that carries a
+  `path` MUST be followed by that path on the next line, indented to the
+  message column, as a worktree's finding is by its worktree path, and the
+  `Incomplete:` line of a scan error that carries a `path` MUST read
+  `Incomplete: <path>: <message> (<code>).`, as the packet's human report names
+  the root it concerns (DI:94), one that carries none reading `Incomplete:
+  <message> (<code>).`, every such path printed by [P]'s rules, in the `$'...'`
+  form where they mark it, since every message is a fixed text that names no
+  path (FR-022): a fill that amendment A1 at `367223a` declares under Q8 D, in
+  design D10 (its design.md:544-546, :552-555 and :563-568, amending
+  design.md:519-520 and :526-527) and requirement 12 (its
+  `specs/project-overview/spec.md:924-928`, amending POD:812-813), proposed in
+  draft PR #34, pending Brett Heap's ratification (lane openRepoProject-3's W7
+  read of A1, M1); and the summary line MUST always be printed, giving the
+  counts of projects, errors and findings by category and stating that findings
+  reflect local refs as of the last fetch, and saying that nothing needs
+  attention under `--attention` when no row is shown; a complete scan that
+  finds no project says so through that line, which then reads `0 projects`,
+  and exits 0 (POD:722; DI:1097-1098; design D10). A path holding a code point
+  of FR-038's categories or an undecodable byte MUST print in the `$'...'`
+  form, each such code point written `\uXXXX`, or `\UXXXXXXXX` above U+FFFF.
+  The layout and fixed lines MUST read as design D10 fixes them, their fixed
+  text in ASCII, while interpolated names, paths and numbers follow FR-038 and
+  [P] (POD:672-675, :722, :802-817; DI:1097-1098; design D4, D6 and D10;
+  Clarifications, C-43 and C-44).
 - **FR-046**: When standard error is a terminal, and only then, the overview
   MUST write one `Scanning N roots...` line to standard error before
   listing, N being the number of roots given, or of the defaults, before
@@ -2902,9 +2940,10 @@ and [P] are change 1's requirements as the header names them.
   Brett Heap's word (or carried in the change-2 amendment's Impact)", and
   amendment A1 takes the second branch: its Impact gains a
   `.github/workflows/tests.yml` bullet after the tests bullet
-  (proposal.md:441-449), at `b020edc`, pending A1's ratification, so this
-  requirement realizes A1's Impact and records no departure of its own
-  (Clarifications, C-57; Dependencies).
+  (proposal.md:441-449; its `proposal.md:455-460` at `367223a`), proposed in
+  draft PR #34, pending Brett Heap's ratification, so this requirement realizes
+  A1's Impact and records no departure of its own (Clarifications, C-57;
+  Dependencies).
 - **FR-051**: After feature 004 lands, the feature MUST add one sentence on the
   overview to the `AGENTS.md` section that feature 004's task T123 adds,
   "Cleaning up worktrees for a person" (written at feature 004's head
@@ -3042,7 +3081,7 @@ and [P] are change 1's requirements as the header names them.
   Cf, Zl or Zp and 0 undecodable bytes from a path, and every fixed line,
   message and remedy matches design D3, D4, D5 and D10, the delta's gate table
   and amendment A1's table of error messages (A1's
-  `specs/project-overview/spec.md:368-386` at `b020edc`, pending its
+  `specs/project-overview/spec.md:375-393` at `367223a`, pending its
   ratification; FR-022), OPERATION taking only the values that table names,
   character for character in its fixed text, which is ASCII.
 - **SC-011**: Every run's exit status is the one FR-042 gives, a recorded
@@ -3326,6 +3365,19 @@ and [P] are change 1's requirements as the header names them.
     overview spec's lines 1 to 410 equal the pin's, its `proposal.md` :334-345,
     :367-370 and :430-438 and its `tasks.md` :20-23 are unchanged, and so are
     its design D7, its "Dependencies and Sequencing" and its tasks 2.1 to 2.5.
+    Re-checked again at `3965dfb`, its head after round C14
+    (`11a0ba2..3965dfb`), whose `c0062f9` commits C-48's five spec items,
+    reader RC's M1, M2, M3 and L1 and L4's spec part, with Isolation's "or a
+    write to standard output fails" beside L4's "or a signal ends the run":
+    every range that this spec and `clarify-questions.md` cite is
+    byte-identical there, compared by `cmp`. Its overview spec's lines 1 to 155
+    equal the pin's, and the root-path lines `:206-209`, `:229-230` and
+    `:241-243` sit at `:209-212`, `:232-233` and `:244-246`; its
+    `project-command` spec is as at `11a0ba2`; and its `proposal.md` :334-345,
+    :367-370 and :430-438, its `tasks.md` :20-23, its design D7, its
+    "Dependencies and Sequencing" and its tasks 2.1 to 2.5 are unchanged, as
+    lane openRepoProject-5 reports for lane openRepoProject-4's five pinned
+    ranges.
   - `add-project-clean-branch-retirement` (issue #23, draft PR #26) leaves
     `project-overview` untouched. It MODIFIES [E], [G]'s two requirements
     and other `project-clean` requirements for `clean --retire-branches`
@@ -3336,7 +3388,7 @@ and [P] are change 1's requirements as the header names them.
     changes carry in MODIFIED blocks, among them #24's block of requirement 5,
     where Q7 A adds a paragraph after its equality clause (after POD:386), and
     #25's blocks of requirements 3, 8 and 9, which Q6 A, Q8 D, Q9 B and Q12 A
-    amend (A1's own map at `b020edc`). Q13 A adds a sentence to requirement 1
+    amend (A1's own map at `367223a`). Q13 A adds a sentence to requirement 1
     (after POD:16), which no MODIFIED block carries, through which POD:217-222,
     :303-306, :610-611 and :622-624, the root object's `path`, read, lines that
     #25 carries unchanged at its `spec.md:102-107`, `:206-209`, `:229-230` and
@@ -3356,50 +3408,68 @@ and [P] are change 1's requirements as the header names them.
   (Clarifications, C-55 to C-71). This spec builds the behaviour the answers
   give; each departs from the text named here and is carried as stated.
   - Amendment A1, `amend-project-overview-clarify-answers`, lane
-    openRepoProject-4's governed change, drafted as draft PR #34 and not
-    ratified, amends change 2 (`openspec/changes/add-project-overview/`) in
-    place. Its own map at `b020edc` (its `proposal.md`, "Amendment A1", which
-    cites change 2's lines at `961c405`, as this spec does) gives these sites:
-    for Q3 B, Impact, a new `.github/workflows/tests.yml` bullet after the
-    tests bullet (proposal.md:441-449), the option's second branch (C-57); for
-    Q6 A, requirement 3 (POD:180-181, :233-234) and requirement 8's error
-    object (POD:646-648), with the packet's definition of `limit` (DI:824-825)
-    for the deadline error (C-60); for Q7 A, requirement 5, a new paragraph
-    after its equality clause (after POD:386), leaving POD:378-386 as ratified,
-    and design D6's scan-error order (design.md:410-412) and D8's realpath task
-    (design.md:470-471), with DI:842-843's exceptions (C-61); for Q8 D,
-    requirement 4 (POD:337-338, and a table of fixed texts after POD:347),
-    requirement 8 (POD:675), design D1 (design.md:99-101) and clarifications N1
-    (clarifications.md:35-36 and :46-47), departing from the packet's
-    DI:544-545 (C-62); for Q9 B, requirement 3 (POD:212-215), where "seventeen
-    names" becomes a citation of [E]'s list, requirement 9 (after POD:717),
-    design D13 (design.md:661) and Risks (after design.md:726), and
-    proposal.md:231-232, :477 and :1000 (C-63); for Q11 A, requirement 2, a new
-    paragraph after POD:87, and the `refused` row of requirement 4's new table
-    (C-65); for Q12 A, requirement 8 (POD:675-676, and a new paragraph after
-    POD:679), departing from the packet's DI:1086-1089 (C-66); for Q13 A,
-    requirement 1, a new sentence after POD:16, through which POD:217-222,
-    :303-306, :610-611 and :622-624 read, with DI:842-843 (C-67); for Q15 A,
-    requirement 11 (POD:778-779, and new sentences after POD:781) and design D1
-    (design.md:110-111, in the same words, a new paragraph for the raising
-    span, and the "Recorded" paragraph, design.md:121-122), departing from the
-    packet's DI:1094-1096 (C-69); and for Q16 B, design D1's spawning paragraph
-    (design.md:115-119) and clarifications N1 (clarifications.md:42-44 and
-    :45-47) (C-70). Q4 D and Q17 A amend no text there, and Q1 A, Q2 A, Q5 A,
-    Q10 A and Q14 A are not carried, since each changes only this spec. This
-    list replaces this spec's forecast of A1's sites (lane openRepoProject-3's
-    W6 read, L1, and its W7 read of A1, check 4, item 3). Two more packet lines
-    that A1's answers depart from are recorded here: Q7 A's null `current`
-    departs from DI:778 (C-61), and Q9 B narrows DI:307-308 for the overview's
-    Git children (C-63) (W7, M2 and M3). FR-011, FR-022, FR-039, FR-044,
-    FR-045, FR-050, SC-009, SC-010 and SC-011, which the answers fold after A1
-    is ratified, are folded here ahead of their carrier, A1, on Brett Heap's
+    openRepoProject-4's governed change, drafted as draft PR #34, its revision
+    3 at `367223a`, and not ratified, amends change 2
+    (`openspec/changes/add-project-overview/`) in place. Its own map at
+    `367223a` (its `proposal.md`, "Amendment A1", :1072-1377, which cites
+    change 2's lines at `961c405`, as this spec does) gives these sites: for
+    Q3 B, Impact, a new `.github/workflows/tests.yml` bullet after the tests
+    bullet (proposal.md:441-449), the option's second branch (C-57); for Q6 A,
+    requirement 3 (POD:180-181, :233-234) and requirement 8's error object
+    (POD:646-648), with the packet's definition of `limit` (DI:824-825) for the
+    deadline error (C-60); for Q7 A, requirement 5, a new paragraph after its
+    equality clause (after POD:386), leaving POD:378-386 as ratified, and
+    design D6's scan-error order (design.md:410-412) and D8's realpath task
+    (design.md:470-471), with DI:842-843's exceptions and DI:778's null rule
+    for `current` (C-61); for Q8 D, requirement 4 (POD:337-338, and a table of
+    fixed texts after POD:347), requirement 8 (POD:675), design D1
+    (design.md:99-101) and clarifications N1 (clarifications.md:35-36 and
+    :46-47), departing from the packet's DI:544-545, with the human report's
+    path fill in design D10 (design.md:519-520 and :526-527, and a paragraph
+    after :533) and requirement 12 (POD:812-813) (C-62; FR-045); for Q9 B,
+    requirement 3 (POD:212-215), where "seventeen names" becomes a citation of
+    [E]'s list, requirement 9 (after POD:717), design D13 (design.md:661) and
+    Risks (after design.md:726), and proposal.md:231-232, :477 and :1000,
+    narrowing the packet's DI:307-308 for the overview's Git children (C-63);
+    for Q11 A, requirement 2, a new paragraph after POD:87, and the `refused`
+    row of requirement 4's new table (C-65); for Q12 A, requirement 8
+    (POD:675-676, and a new paragraph after POD:679), departing from the
+    packet's DI:1086-1089 (C-66); for Q13 A, requirement 1, a new sentence
+    after POD:16, through which POD:217-222, :303-306, :610-611 and :622-624
+    read, with DI:842-843 (C-67); for Q15 A, requirement 11 (POD:778-779, and
+    new sentences after POD:781) and design D1 (design.md:110-111, in the same
+    words, a new paragraph for the raising span, and the "Recorded" paragraph,
+    design.md:121-122), departing from the packet's DI:1094-1096 (C-69); and
+    for Q16 B, design D1's spawning paragraph (design.md:115-119) and
+    clarifications N1 (clarifications.md:42-44 and :45-47) (C-70). Q4 D and
+    Q17 A amend no text there, and Q1 A, Q2 A, Q5 A, Q10 A and Q14 A are not
+    carried, since each changes only this spec. This list replaces this spec's
+    forecast of A1's sites (lane openRepoProject-3's W6 read, L1, and its W7
+    read of A1, check 4, item 3). A1 at `367223a` records the two packet lines
+    that lane openRepoProject-3's W7 read found undeclared, DI:778 and
+    DI:307-308 (W7, M2 and M3). Three items of A1's own follow PR #19, not
+    Q1-Q17, on Brett Heap's "yes to all six recommendations, LQ-10 to LQ-15"
+    (its `proposal.md:1251-1346`), each declared for his review:
+    `relative-config-path` (LQ-15; FR-043), departing from DI:1086-1089, its
+    fallback `refused` departing from nothing; `operation-in-progress` and
+    `worktree-only-commits` as exclusions only the batch applies (LQ-14 and
+    LQ-13; FR-032), departing from OV:110-113 and DI:690-692; and LQ-11's
+    counted reads and the change-2 sites that read against them (FR-007,
+    FR-013, FR-019, FR-020), departing from DI:506-509 and DI:1193-1201. Each
+    lands only with or after PR #19's ratification of the commit it follows,
+    and is re-aligned before A1 is ratified if that commit changes first
+    (Change-1 amendments, below). FR-011, FR-022, FR-039, FR-044, FR-045,
+    FR-050, SC-009, SC-010 and SC-011, which the answers fold after A1 is
+    ratified, are folded here ahead of their carrier, A1, on Brett Heap's
     answers. Until A1 is ratified, nothing is planned or built from them, and
     where they differ from change 2's ratified text, that text stands as
-    ratified; once A1 is ratified, each is re-read against A1's text. One point
-    A1 leaves to Brett Heap, as this spec does, with no behaviour written (its
-    proposal, "Open point", at `b020edc`): Q7 A is silent on FR-026's parity
-    with `project clean` run from the same working directory when that
+    ratified; once A1 is ratified, each is re-read against A1's text. The same
+    rule holds for what follows A1's three items of its own: FR-007's LQ-11
+    parity with FR-013, FR-019, FR-020 and US1 s3; FR-032's batch-only gates
+    with SC-004 and EC-007; and FR-043's code. One point A1 leaves to Brett
+    Heap, as this spec does, with no behaviour written (its proposal, "Open
+    point", `proposal.md:1353-1360` at `367223a`): Q7 A is silent on FR-026's
+    parity with `project clean` run from the same working directory when that
     directory's realpath cannot be established, and at `2cf34d3` feature 004
     gives every present row `inspection-error` there (its `project:2960-2962`,
     :2887-2888 and :2081), wider than the two classes Q7 A converts (C-61; lane
@@ -3437,7 +3507,12 @@ and [P] are change 1's requirements as the header names them.
   as `cc000ea`, `ea697ba`, `eae1a79`, `addd346`, `93de4bb` and `43f7107`, with
   lane openRepoProject-3's W8 read of LQ-15 applied as `9fb22fa`, drafts cited
   as pending #19's ratification. The overview follows [E] as amended, as for
-  Q9 B.
+  Q9 B. Where an amendment reaches change 2's own text, amendment A1 at
+  `367223a` carries it as an item of its own, for LQ-11, for LQ-13 and LQ-14
+  together, and for LQ-15, and each such item lands only with or after #19's
+  ratification of the commit it follows, and is re-aligned if that commit
+  changes first (its `proposal.md:1251-1268`). Rulings R-124 and R-125 are
+  still to come on PR #19; none of their text is written here.
   - LQ-10, on PR #19 at `ea697ba`, pending its ratification: every status
     probe, the hidden-state probe and the removal pass `-c core.trustctime=true
     -c core.checkStat=default` after `-c core.fsmonitor=false`, four status
@@ -3464,14 +3539,21 @@ and [P] are change 1's requirements as the header names them.
     probe for a target. Lane openRepoProject-2 holds that the overview must
     classify such a row exactly as `project clean` does, with the same read and
     probe, and FR-007 does so, FR-013, FR-019, FR-020 and FR-049 following; the
-    overview has no revalidation. Change 2's texts that close or count the
-    overview's children read against the two, and are recorded for amendment
-    A1, pending: the two phases (POD:238-239) and design D6's repository-wide
-    probes (design.md:390-392), which name neither; `probes.estimated`
-    (POD:248-254), which counts neither; the collector table's `probe-failed`
-    for a Git child that exits nonzero (POD:333), where the extension read's
-    exit 1 with nothing printed is a value not set; and design D8's task list
-    (design.md:454-471), which has no task for the toplevel's realpath.
+    overview has no revalidation. Amendment A1 at `367223a` amends change 2's
+    texts that close or count the overview's children, as an item of its own
+    (its `proposal.md:1322-1346`), proposed in draft PR #34, pending Brett
+    Heap's ratification: requirement 3's `estimated` rule (POD:250-254; its
+    `specs/project-overview/spec.md:270-280`) and the scenario "One probe set
+    per repository" (POD:127-129; its :141-145), with design D6's
+    repository-wide probes (design.md:390-392; its :407-410), the counts
+    departing from the packet's DI:506-509 and DI:1193-1201; and, at the sites
+    this spec recorded at `b511bdb`, the collector table's `probe-failed` row
+    (POD:333; its :359), so that the extension read's exit 1 with nothing
+    printed reads as false with no error, as FR-007 reads it; the second phase,
+    by a sentence after POD:246 (its :265-268), POD:238-239 keeping its words;
+    and design D8, with a task for the toplevel's realpath (its
+    design.md:483-486) and 512 toplevel realpaths in its bound of abandoned
+    workers (:501-503), which FR-013 matches.
   - LQ-13, on PR #19 at `93de4bb`, and LQ-14, at `43f7107`, pending its
     ratification: two protections of the batch, whose codes, gate order and
     scenarios are now #19's own text. LQ-14's `operation-in-progress` keeps a
@@ -3492,9 +3574,15 @@ and [P] are change 1's requirements as the header names them.
     gates: FR-032 lists them among the exclusions only the batch applies, and
     the overview evaluates neither, making no listing of a worktree's
     administrative directory and no `logs/HEAD` read for them and starting no
-    `rev-list` child. A1's revision 2 proposes the same, amending design D5's
-    "Only the index gates ..." sentence (design.md:324-325), pending; SC-004
-    and EC-007 follow.
+    `rev-list` child. Amendment A1 at `367223a` proposes the same as an item of
+    its own (its `proposal.md:1296-1321`), in requirement 7 (POD:525-526; its
+    `specs/project-overview/spec.md:580-587`) and design D5 (design.md:324-325;
+    its :334-341), with D5's `target-cap` item and Risks, proposed in draft PR
+    #34, pending Brett Heap's ratification: the overview keeps the `--all-safe`
+    suggestion of such a worktree, which the batch then excludes itself; the
+    route departs from the packet's OV:110-113 and DI:690-692; and the clause
+    assumes #19's failure rule for the two gates, which R-124 is to settle, and
+    is re-aligned with it when it lands. SC-004 and EC-007 follow.
   - LQ-15, decided and not built (EC-036), on PR #19 at `cc000ea` and, after
     lane openRepoProject-3's W8 read, `9fb22fa`, pending its ratification:
     [E]'s new "Configuration paths" paragraph (its
@@ -3523,12 +3611,16 @@ and [P] are change 1's requirements as the header names them.
     included, once its arguments have passed its own checks (FR-043). `9fb22fa`
     leaves the overview's code and exit status under the test to
     `add-project-overview` (its `proposal.md:951-956`), and change 2's closed
-    lists give [E]'s text none: its exit-2 codes (POD:676-678) and requirement
-    11's exit rule (POD:765-766; FR-042). A1's revision 2 (draft PR #34)
-    proposes `relative-config-path` among those codes, with exit 2 under that
-    rule, which it amends, under Brett Heap's LQ-15 word, pending A1's
-    ratification; the fallback is `refused` with exit 2, inside change 2's
-    lists.
+    lists give [E]'s text none: its exit-2 codes (POD:677-678) and requirement
+    11's exit rule (POD:765-768; FR-042). Amendment A1 at `367223a` proposes
+    `relative-config-path` among those codes, with exit 2 under that rule, as
+    an item of its own on Brett Heap's LQ-15 word (its
+    `proposal.md:1269-1295`), proposed in draft PR #34, pending Brett Heap's
+    ratification: the code departs from the packet's closed list of exit-2
+    codes (DI:1086-1089), and the fallback, should he strike it, is `refused`
+    with exit 2, inside change 2's lists, which departs from nothing. If he
+    strikes LQ-15's extension, A1's sentence on `GIT_CONFIG_GLOBAL` and
+    `GIT_CONFIG_SYSTEM` is struck with PR #19's sites.
   - LQ-15's extension, in a sentence of its own that Brett Heap may strike: the
     same test applies to `GIT_CONFIG_GLOBAL` and `GIT_CONFIG_SYSTEM` (:103 at
     `cc000ea`, :119-120 at `9fb22fa`, whose design D11 lists every site a

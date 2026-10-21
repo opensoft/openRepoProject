@@ -96,8 +96,9 @@ Lane: openRepoProject-4
     (FR-039).
 - [x] CHK027 Recovery: does every error name its code and, where one is involved, its path, so that the person can act on it? [Recovery, Spec FR-022, FR-045]
   - Result: pass; since 2026-10-21 the human report also prints an error's
-    `path` by [P]'s rule when it carries one, since every message is a fixed
-    text that names no path (FR-022, FR-045).
+    `path` by [P]'s rules when it carries one, a row error's on the next line
+    and a scan error's first on its `Incomplete:` line, since every message is
+    a fixed text that names no path (FR-022, FR-045).
 - [x] CHK028 Recovery: is a re-run after an interrupted run safe, with nothing left to clean up? [Recovery, Spec FR-040, FR-044]
   - Result: pass. No state is kept, and no child outlives the run beyond EC-001 and EC-002.
 - [x] CHK029 Non-functional: can any failure cost more than its budget, by a retry or otherwise? [Coverage, Spec FR-011, FR-013]
@@ -121,9 +122,9 @@ Evaluated on 2026-10-19 against `spec.md` at `8f433f7`; CHK004 and CHK021
 re-evaluated on 2026-10-20 after lane openRepoProject-3's packet-fidelity read,
 and CHK004, CHK006, CHK010, CHK012 and CHK026 on 2026-10-21 after Brett Heap's
 answers (C-55 to C-71), and CHK027 after lane openRepoProject-3's W7 read of
-A1, its result still pass. 30 items: 27 pass, 3 fixed in the spec, 0 open, 0
-plan notes, 0 new questions. An open item waits on the question or residual its
-result names; a plan note is for the plan, not the spec; a new question is
-asked in `clarify-questions.md`.
+A1, and again after A1's revision 3 at `367223a`, its result still pass. 30
+items: 27 pass, 3 fixed in the spec, 0 open, 0 plan notes, 0 new questions. An
+open item waits on the question or residual its result names; a plan note is
+for the plan, not the spec; a new question is asked in `clarify-questions.md`.
 
 Plan notes: none (PN-11, CHK006, withdrawn on 2026-10-21: C-62 settles it).
