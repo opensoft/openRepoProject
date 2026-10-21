@@ -571,7 +571,10 @@ Headers are quoted verbatim, one per line; ADDED headers are proposed text.
     `false`, as push already does (`project:541`; `project:863` and `:869`
     test truthiness, which `null` passes). Added scenario: WHEN a leg's
     status probe times out at 15 s, THEN `update --apply` refuses and the
-    owner tool is never invoked.
+    owner tool is never invoked. By Brett Heap's ruling LQ-12, every owner
+    tool runs with the push child's scrub, so that it acts on the repository
+    the check inspected, with the added scenario "Owner tools see the
+    repository the check inspected".
   - ADDED:
     `### Requirement: Repository inspection requires Git 2.36 and shares one evidence model`.
     Its readers are named generically, "every subcommand that inspects a Git
@@ -641,7 +644,9 @@ Headers are quoted verbatim, one per line; ADDED headers are proposed text.
   probe can stop at its record bound. The push child runs through `execute()`
   with the same scrub but for `GIT_ALLOW_PROTOCOL`, and the same three trace2
   variables at `0`, in `project`'s process group (the push-child exception).
-  `probe()` stays for non-Git children. The runner's shape
+  `probe()` stays for non-Git children. The owner tools that `update --apply`
+  invokes run through `execute()` with the push child's scrub and nothing set
+  (Brett Heap's ruling LQ-12). The runner's shape
   (clarifications N2) lets
   `add-project-overview` drive four children without forking it.
   The ladder becomes a pure function; `status`, `doctor` and `update` gain the
@@ -935,6 +940,22 @@ Departures from packet decisions, each citing the decision departed from:
   core.trustctime=true -c core.checkStat=default`, after `-c
   core.fsmonitor=false`, and like the other pins they outrank every
   configuration file (design D9, D11, Risks).
+- **Owner tools see the repository the check inspected** (Brett Heap's
+  ruling LQ-12 of 2026-10-21, in lane openRepoProject-3's session, "yes to all
+  six recommendations, LQ-10 to LQ-15", on lane openRepoProject-3's
+  recommendation "Approve. Stricter."; an addition, no packet text behind it,
+  since `BA:243-253` scrubs Git children only): at `a040790` an owner tool
+  gets the caller's environment (`project:157-162`), so the dirty check before
+  `update --apply`, which runs under the scrub, and the owner tool could see
+  different repositories through a caller's `GIT_DIR`, `GIT_WORK_TREE` or
+  `GIT_INDEX_FILE` (lane openRepoProject-3's F5 M-3 at `2cf34d3`). Every owner
+  tool that `update --apply` invokes therefore runs with the push child's
+  scrub, the thirty-one names but `GIT_ALLOW_PROTOCOL` removed, and with
+  nothing set: it is not a Git child, so it takes no `-c` pin, no
+  `GIT_OPTIONAL_LOCKS` and no trace2 variable, and a caller's
+  `GIT_ALLOW_PROTOCOL` still binds any Git it runs, as it binds the push
+  child, because only the protocol pins that the tool lacks would replace it
+  (design D6, D16).
 
 Packet decisions adopted, not open: OQ-5, the caps and bounds of `BA:966`,
 subject to OQ-4, less the target cap's refusal; OQ-9, the budgets of
@@ -1263,7 +1284,11 @@ departures; this list; design Context, D9, D11, D20, Risks; `tasks.md` 1.2,
 1.4; the deltas' `Clean can explicitly retire verified worktrees`, `Cleanup
 revalidates destructive actions`, and the `project-command` ADDED evidence
 model, its scenario "The pinned status configuration" and its added scenario
-"An edit that keeps its size and restores its mtime").
+"An edit that keeps its size and restores its mtime"); LQ-12 runs every owner
+tool of `update --apply` with the push child's scrub (Capabilities, `:31`;
+Impact, `project`; Decisions, departures; this list; design Context, D6, D16,
+D20; `tasks.md` 1.2, 1.4; the delta `Explicit maintenance` and its added
+scenario "Owner tools see the repository the check inspected").
 
 ### Council Verdicts
 

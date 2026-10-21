@@ -75,6 +75,17 @@ probe SHALL refuse as dirty work does, and the owner tool SHALL NOT be invoked.
 `update --apply --component tools` or `--component workflow` SHALL NOT require
 Git.
 
+Every owner tool that `update --apply` invokes, for any component, SHALL run
+with the thirty-one variables that "Repository inspection requires Git 2.36 and
+shares one evidence model" lists removed from its environment, but
+`GIT_ALLOW_PROTOCOL`, as the push child of `clean --action push` has them
+removed, so that it acts on the repository that the check before it inspected,
+never on one that a caller's `GIT_DIR`, `GIT_WORK_TREE` or `GIT_INDEX_FILE`
+names. An owner tool is not a Git child: `project` SHALL pass it no `-c` pin
+and SHALL set no `GIT_OPTIONAL_LOCKS` and no trace2 variable for it, and a
+protocol list that the caller set in `GIT_ALLOW_PROTOCOL` SHALL still bind any
+Git it runs.
+
 #### Scenario: Default report
 - **WHEN** update is run without --apply
 - **THEN** it reports a plan without modifying repositories or installing software.
@@ -86,6 +97,11 @@ Git.
 #### Scenario: Tools and workflow need no Git
 - **WHEN** Git 2.35 is first on PATH and `update --apply --component workflow --yes` runs
 - **THEN** it is not refused for Git's version, and the workflow command runs as before
+
+#### Scenario: Owner tools see the repository the check inspected
+- **WHEN** `update --apply --component shape --yes` runs on a clean project with, in the caller's environment, `GIT_DIR` and `GIT_WORK_TREE` naming another repository, `GIT_INDEX_FILE` set and `GIT_ALLOW_PROTOCOL=file`, and a fake owner tool that records its environment
+- **THEN** the check before it reads the project's own repository, and the owner tool records none of the thirty-one names but `GIT_ALLOW_PROTOCOL`, which it records as `file`, where before this change it received the caller's `GIT_DIR`, `GIT_WORK_TREE` and `GIT_INDEX_FILE`
+- **AND** it records no `GIT_OPTIONAL_LOCKS`, `GIT_TRACE2`, `GIT_TRACE2_EVENT` or `GIT_TRACE2_PERF`, the caller having set none
 
 ## ADDED Requirements
 

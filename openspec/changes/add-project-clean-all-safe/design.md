@@ -21,8 +21,8 @@ through lane openRepoProject-4's spec 005 clarify round and recorded in
 `proposal.md` Decisions, edits Context, D6, D11, D17, D20 and Risks. Brett
 Heap's rulings of 2026-10-21 on lane openRepoProject-3's recommendations LQ-10
 to LQ-15, recorded in `proposal.md` Decisions, edit here: LQ-15, Context, D6,
-D11, D16, D18, D20 and Risks; LQ-10, Context, D9, D11, D20 and Risks. Brett
-Heap's ruling
+D11, D16, D18, D20 and Risks; LQ-10, Context, D9, D11, D20 and Risks; LQ-12,
+Context, D6, D16 and D20. Brett Heap's ruling
 of 2026-10-09 on open question 1, that a local ancestry proof outranks
 `remote-gone` for worktree rows, is in `proposal.md` Decisions and edited
 Context, D6, D7, D20, Risks, the Migration Plan and Open Questions here.
@@ -345,6 +345,20 @@ open nothing (D11, D17; Brett Heap's ruling Q9 B). It then sets `GIT_TRACE2`,
 push child included (D11, Q9 B). `GIT_CONFIG_GLOBAL` and `GIT_CONFIG_SYSTEM`
 are not in that list and stay; D11's `-c` pins and those three variables
 override them.
+
+Every owner tool that `update --apply` invokes, for any component, runs
+through `execute()` with the push child's scrub, the thirty-one names but
+`GIT_ALLOW_PROTOCOL` removed, and with nothing set (Brett Heap's ruling LQ-12,
+2026-10-21). At `a040790` an owner tool
+gets the caller's environment (`project:157-162`), so a caller's `GIT_DIR`,
+`GIT_WORK_TREE` or `GIT_INDEX_FILE` could point it at another repository than
+the one the dirty check before it inspected through the scrub (lane
+openRepoProject-3's F5 M-3 at `2cf34d3`). `GIT_ALLOW_PROTOCOL` stays, as for
+the push child: Git children lose it only because the protocol pins take its
+place, an owner tool takes no pin, and removing it would lift a restriction
+that the caller set, where the ruling only tightens. Nothing is set: no
+`GIT_OPTIONAL_LOCKS`, since the tool may write, and no trace2 variable, since
+Brett Heap's ruling Q9 B binds Git children and the tool is not one.
 
 Every child in the table, `git --version` and D9's removal child included, also
 runs with `-c protocol.allow=never` and the six per-protocol pins (D11, R-23,
@@ -834,7 +848,7 @@ inspection-error (<codes>)` in place of the branch line. `update` tests `dirty
 is not False` for the root and every child (`project:863`, `:869`), and its
 `tools` and `workflow` components need no Git (`project:884-885`, `:905-906`):
 with an old Git their report shows `inspection-error` rows and the delegate
-still runs.
+still runs. Every delegate runs with D6's push-child scrub (LQ-12).
 
 ### D17. Verifying the Git 2.36 floor (OQ-23)
 
@@ -996,7 +1010,7 @@ and M1 under the JSON and the result; V9, R-23, R-25, the push-child
 exception and Brett Heap's ruling Q9 B under the evidence model; D-D under
 push; D-R under maintenance; R-22 under revalidation. Brett Heap's rulings of
 2026-10-21: LQ-15 under the evidence model and the report; LQ-10 under the
-evidence model.
+evidence model; LQ-12 under maintenance.
 
 ## Risks / Trade-offs
 

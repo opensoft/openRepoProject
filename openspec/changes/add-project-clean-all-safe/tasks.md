@@ -34,7 +34,8 @@ duplicate them, and nothing here is an implementation step.
   openRepoProject-3's recommendations LQ-10 to LQ-15, each in its own commit
   titled 'Amend change 1 for LQ-<n> (Brett Heap, 2026-10-21): ...': LQ-15, a
   relative configuration path refused before any Git child; LQ-10, the stat
-  pins `core.trustctime=true` and `core.checkStat=default`; verified by the
+  pins `core.trustctime=true` and `core.checkStat=default`; LQ-12, the push
+  child's scrub on every owner tool of `update --apply`; verified by the
   table "Questions Resolved by the Alignment Review" in `proposal.md` and the
   later-rulings list under it, which
   name the section each ruling edited.
@@ -46,9 +47,9 @@ duplicate them, and nothing here is an implementation step.
   five requirements and adds six (66 scenarios, one added under Brett Heap's
   ruling LQ-15), `specs/project-clean-review-safety/spec.md` modifies two and
   adds one (18 scenarios, the last added under R-22), and
-  `specs/project-command/spec.md` modifies two and adds one (21 scenarios, of
+  `specs/project-command/spec.md` modifies two and adds one (22 scenarios, of
   which the push-child exception added one and Brett Heap's rulings Q9 B,
-  LQ-15 and LQ-10 one each), every canonical scenario of each modified
+  LQ-15, LQ-10 and LQ-12 one each), every canonical scenario of each modified
   requirement kept;
   `design.md` holds D1 to D20, mapping the packet's 35 validation scenarios to
   the deltas (D20); verified by the scenario counts in the commit that adds
