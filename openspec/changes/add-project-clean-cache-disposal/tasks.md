@@ -10,7 +10,7 @@ duplicate them, and nothing here is an implementation step.
 
 - [x] 1.1 Proposal written: `proposal.md` adopts the packet's cache-disposal
   contract (`BA:1314-1337`) under the lane's rulings L-1 to L-17 and B-1 to
-  B-52, names three departures from B-6 as first written, which B-11 accepted,
+  B-55, names three departures from B-6 as first written, which B-11 accepted,
   and one from B's list of modified requirements (CD-1 to CD-4) with the rest
   of its own decisions (CD-5 to CD-18), and puts five Open Questions before
   Brett Heap; verified by its Capabilities section accounting for every
@@ -40,7 +40,8 @@ duplicate them, and nothing here is an implementation step.
 - [x] 1.4 Spec deltas and design written: `specs/project-clean/spec.md`
   modifies five requirements and adds one (55 scenarios: 5, 14, 11, 6, 8 and
   11), and `specs/project-clean-review-safety/spec.md` modifies three and adds
-  one (28 scenarios: 6, 11, 4 and 7, B-26's among the 7), every scenario of
+  one (31 scenarios: 6, 14, 4 and 7, B-26's among the 7, the 14 being
+  PR #19's 13 at `a664799` and one added, B-54, B-55), every scenario of
   each modified
   requirement's source text kept by name, in order and byte-exact except four,
   whose ignored files are now named as not Python bytecode caches:
@@ -53,9 +54,10 @@ duplicate them, and nothing here is an implementation step.
   and committed as `9f30fb9`, and B-30's scope, lane 4's own words, committed
   as `4d5855a` (2.2); `design.md` holds D1 to D14 and `clarifications.md` the
   NOTED S-4; verified by `grep -c '^#### Scenario'` on each delta, by a script
-  run after the council round and again after each round from B3 to B9
+  run after the council round and again after each round from B3 to B10
   that compares every scenario of each of the nine MODIFIED blocks with its
-  source text, and by `design.md`'s headings.
+  source text, the two blocks written on PR #19's text against it at
+  `a664799` since round B10, and by `design.md`'s headings.
 - [x] 1.5 Validation passes: `/usr/bin/openspec validate
   add-project-clean-cache-disposal --strict` reports the change valid,
   `/usr/bin/openspec validate --all --strict` passes every item, and
@@ -64,7 +66,7 @@ duplicate them, and nothing here is an implementation step.
   branch after 1.4, after the alignment fix round, after the council round
   (the last with the B-22 `project-overview` edit not yet committed), again
   after lane 4's agreement and that edit's commit, after round B3, after round
-  B4, and after each round from B5 to B9. The
+  B4, and after each round from B5 to B10. The
   INFO lines, that the archive would refuse a delta
   whose MODIFIED requirement change 1 or change 2 adds until that change is
   archived, are the expected state for blocks written on sister changes.
@@ -77,11 +79,14 @@ duplicate them, and nothing here is an implementation step.
 - [ ] 2.1 Change 1 archived: `add-project-clean-all-safe` is archived after
   feature 004 merges, with draft PR #19's amendment of change 1 landed first
   (L-16), or PR #19 closed, and the two
-  MODIFIED blocks written on PR #19's text ("Clean bounds its Git work and
-  reports omitted work" and "Cleanup revalidates destructive actions")
+  MODIFIED blocks written on PR #19's text at `a664799` (B-54; "Clean bounds
+  its Git work and reports omitted work" and "Cleanup revalidates destructive
+  actions")
   re-checked against the archived text and rewritten where it differs, as every
   other block written on change 1's text is; if PR #19 closes unmerged, those
-  two blocks are re-based on change 1's text at main (B-52, RD's M2);
+  two blocks are re-based on change 1's text at main (B-52, RD's M2); a
+  re-base that changes this change's added text returns the block to Brett
+  Heap before the Speckit handoff (reader RF's M1; B-54);
   verified by
   `openspec/specs/project-clean/spec.md` and
   `openspec/specs/project-clean-review-safety/spec.md` holding every requirement
@@ -89,9 +94,13 @@ duplicate them, and nothing here is an implementation step.
   this change's block of it, for every block written on change 1's or PR #19's
   text, showing additions only, its changed lines keeping every word of the
   archived text, so that the carried text equals it and only this change's
-  additions differ, a re-base that changes this change's added text being
-  returned to Brett Heap, and, as a second check only, since it cannot see a
-  dropped sentence, by `/usr/bin/openspec validate
+  additions differ, read word by word (`git diff --no-index --word-diff`),
+  where an `and` or an `or` that a list extension moves to the list's new last
+  item is no change (B-53, W2's LOW 6), by a second `diff -u`, of this
+  change's block as committed at its ratified head against the re-based block,
+  showing only the archived block's own text carried in and no change to this
+  change's added text (reader RF's M1; B-54), and, as a further check only,
+  since it cannot see a dropped sentence, by `/usr/bin/openspec validate
   add-project-clean-cache-disposal --strict` reporting no archive refusal for
   those two deltas.
 - [x] 2.2 The overview exception agreed (B-14, B-22, B-30, B-36): lane
@@ -175,9 +184,13 @@ duplicate them, and nothing here is an implementation step.
   `961c405`, such as lane 4's planned one for feature 005's open Q7 A, with
   this change's two sentences, its precision in "Every protected classifier"
   and its added scenario, and any sentence lane openRepoProject-4 asks for is
-  in; verified by a `diff -u` of main's block against this change's block
-  showing additions only, its changed lines keeping every word of main's, and
-  by the validation of 1.5 passing again.
+  in; a re-base that changes the block's added text returns it to Brett Heap
+  before the archive (reader RF's M1; B-54); verified by a `diff -u` of main's
+  block against this change's block showing additions only, its changed lines
+  keeping every word of main's, by a second `diff -u`, of this change's block
+  as committed at its ratified head against the re-copied block, showing only
+  main's text carried in and no change to the block's added text (reader RF's
+  M1; B-54), and by the validation of 1.5 passing again.
 - [ ] 3.3 The change is archived with `/opsx:archive` only after 3.1, 2.1,
   change 2's archive (B-14) and 3.2, and before
   `add-project-clean-branch-retirement` (#23) archives; verified by
