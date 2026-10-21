@@ -611,10 +611,12 @@ APPLY_RESULT_KEYS = (
     "operations", "targets", "exit_code", "completeness",
 )
 
-# The eighteen refusal codes, in the order of the contract's "Codes" table.
+# The nineteen refusal codes, in the order of the contract's "Codes" table;
+# `relative-config-path` is Brett Heap's ruling LQ-15 (lead ruling R-102), in
+# the place the project-clean delta's list gives it.
 REFUSAL_CODES = (
     "invalid-arguments", "internal-error", "git-unavailable", "git-too-old",
-    "repository-not-found", "ambiguous-name", "target-not-repository-root",
+    "relative-config-path", "repository-not-found", "ambiguous-name", "target-not-repository-root",
     "unsupported-path-bytes", "manifest-invalid", "no-merge-target",
     "inspection-incomplete", "inspect-cap", "deadline-exceeded",
     "worktree-not-found", "target-excluded", "plan-digest-mismatch",
@@ -713,6 +715,11 @@ TEXT = {
     "inspection_git_too_old": "Git {VERSION} is older than 2.36; repository inspection needs Git 2.36 or later.",
     "inspection_git_unavailable":
         "Git is unavailable ({DETAIL}); repository inspection needs Git 2.36 or later.",
+    # D18's `relative-config-path` line, one per variable that fails D11's
+    # configuration-path test, never its value: clean's refusal, status's
+    # `errors` entry and doctor's error rows carry the same text (Brett Heap's
+    # ruling LQ-15; lead ruling R-102).
+    "relative_config_path": "{NAME} is set to a path that does not begin with /; make it absolute or unset it.",
     "target_not_repository_root": "Not the main worktree of a repository: {PATH}; pass the repository root.",
     "unsupported_path_bytes": "The repository path is not valid UTF-8: {PATH}",
     "manifest_invalid_size": "Manifest {PATH} is larger than 1 MiB.",
@@ -778,6 +785,56 @@ NEXT_STEPS = {
 # region git environment
 # The environment and the argument vector of every Git child (design D6, D9 and
 # D11; contracts/project-clean.md, "Git children"; FR-054).
+
+# The variables of D11's configuration-path test (Brett Heap's ruling LQ-15;
+# lead ruling R-102), in D18's order. Git builds its user configuration and its
+# global ignore and attributes files from HOME and XDG_CONFIG_HOME as they are
+# spelled, so a relative value resolves in the directory a Git child runs in,
+# where a repository's own files would be read as the user's configuration.
+CONFIG_PATH_RULED = ("HOME", "XDG_CONFIG_HOME")
+# The lead's extension of LQ-15, which Brett Heap may strike: Git's own names
+# for the user's and the system's configuration file. Striking it is this one
+# line, made `CONFIG_PATH_EXTENSION = ()`; nothing else in project names them
+# for the test.
+CONFIG_PATH_EXTENSION = ("GIT_CONFIG_GLOBAL", "GIT_CONFIG_SYSTEM")
+
+
+def relative_config_paths():
+    """The names of the variables that fail D11's configuration-path test, in
+    D18's order: each of CONFIG_PATH_RULED and CONFIG_PATH_EXTENSION whose raw
+    value (os.environb) is not empty and whose first byte is not b"/", so that
+    ` /x`, `~/x`, `.` and a first byte that is not UTF-8 fail it and `/` alone
+    passes. An unset or empty variable passes. Each is tested whether or not
+    Git would read a file through it, not in Git's order of precedence. The
+    values are read for this test alone: they reach every child unchanged, and
+    nothing prints them."""
+    return [name for name in (*CONFIG_PATH_RULED, *CONFIG_PATH_EXTENSION)
+            if os.environb.get(os.fsencode(name), b"")[:1] not in (b"", b"/")]
+
+
+def config_path_message(names):
+    """D18's text for the variables that fail the test: one line per name, in
+    the order given, never a value."""
+    return "\n".join(TEXT["relative_config_path"].format(NAME=name) for name in names)
+
+
+def hold_git_for_config_paths(run):
+    """The configuration-path test of status, doctor and update, at their entry,
+    before any Git child (D11, D16; LQ-15). When a variable fails it, run's
+    version memo is set, in place of the version check, to a GitVersion whose
+    code is `relative-config-path` and whose detail is config_path_message()'s
+    text, and returned: every reader that tests the memo before a Git child,
+    discover(), repo_state(), handoff()'s remote read through git() and
+    doctor's git row, then starts none, `git --version` included, and the
+    command reports the code as it reports a Git below the floor. Returns None,
+    and sets nothing, when every variable passes. `clean` refuses instead
+    (require_git())."""
+    names = relative_config_paths()
+    if not names:
+        return None
+    run.version = GitVersion("relative-config-path", detail=config_path_message(names))
+    return run.version
+
 
 # Removed from every Git child's environment, never from project's own, in the
 # contract's order: the fifteen names `git rev-parse --local-env-vars` prints on
@@ -3345,11 +3402,19 @@ def check_clean_arguments(args):
 
 
 def require_git(run):
-    """The version check, once, after the argument checks and before
-    resolution (T048; FR-002, FR-053; contracts/project-clean.md, "Order of a
-    run"): git_version(run), memoized on the run, refusing `git-too-old` or
-    `git-unavailable` with its contract message, exit 2, before any repository
-    is probed. Returns None when Git may run."""
+    """The configuration-path test, then the version check, once, after the
+    argument checks and before resolution (T048; FR-002, FR-053;
+    contracts/project-clean.md, "Order of a run"). A variable that fails D11's
+    test (relative_config_paths()) refuses `relative-config-path` with D18's
+    lines, one per such variable, exit 2, before any Git child, `git
+    --version` included, so that no push or removal child starts either
+    (Brett Heap's ruling LQ-15; lead ruling R-102). Then git_version(run),
+    memoized on the run, refusing `git-too-old` or `git-unavailable` with its
+    contract message, exit 2, before any repository is probed. Returns None
+    when Git may run."""
+    names = relative_config_paths()
+    if names:
+        raise Refused(config_path_message(names), code="relative-config-path")
     version = git_version(run)
     if version.code == "git-too-old":
         raise Refused(TEXT["git_too_old"].format(VERSION=version.text), code="git-too-old")
@@ -5822,7 +5887,9 @@ def repo_state(root):
 
     `lstat` of `<root>/.git` comes first: when it is absent the state is
     `present: false` and no Git child runs. Then the version check, memoized
-    on the invocation; an old, missing or unusable Git gives `present` null.
+    on the invocation; an old, missing or unusable Git gives `present` null,
+    and so does a configuration path that failed D11's test at the command's
+    entry (hold_git_for_config_paths(); LQ-15), with no Git child at all.
     Then inspect_repository() and worktree_rows(), memoized per common
     directory, with the 15 s budget per Git child and per filesystem call that
     the invocation gives every command but `clean`, no deadline and no row cap.
@@ -5834,7 +5901,8 @@ def repo_state(root):
     "inspection-error"` and `errors`, `{code, message}` objects, and every
     value not established is null, `worktrees` among them when the listing
     is not established; an inspected state has neither field. `git-too-old`
-    and `git-unavailable` carry the command-neutral texts (lead ruling R-48).
+    and `git-unavailable` carry the command-neutral texts (lead ruling R-48),
+    and `relative-config-path` D18's lines.
     Each `path` has `path_valid_utf8` beside it. A worktree entry keeps its
     baseline keys and adds `path_valid_utf8`, `ignored_samples` (`{path,
     path_valid_utf8}` objects) where its probe ran, and `classification` and
@@ -5885,6 +5953,8 @@ def repo_state(root):
     version = git_version(run)
     if version.code == "git-too-old":
         message = TEXT["inspection_git_too_old"].format(VERSION=version.text)
+    elif version.code == "relative-config-path":
+        message = version.detail  # D18's lines (hold_git_for_config_paths())
     elif version.code is not None:
         message = TEXT["inspection_git_unavailable"].format(DETAIL=version.detail)
     if version.code is not None:
@@ -6200,7 +6270,8 @@ def check_rows(report):
     its baseline row. The `git` row reports the version check, memoized on the
     invocation, which runs it here only when no repository was inspected:
     `ok` with `PATH (git version X)`, or `error` with `CODE: MESSAGE`, the
-    command-neutral text (lead rulings R-48, R-56 and R-57)."""
+    command-neutral text (lead rulings R-48, R-56 and R-57), or D18's lines
+    for `relative-config-path`, where no Git child ran (D16; LQ-15)."""
     rows = []
     def add(level, name, detail):
         rows.append({"level": level, "check": name, "detail": detail})
@@ -6256,6 +6327,8 @@ def check_rows(report):
                 add("ok", command, f"{shutil.which(command) or command} (git version {version.text})")
             elif version.code == "git-too-old":
                 add("error", command, f"{version.code}: " + TEXT["inspection_git_too_old"].format(VERSION=version.text))
+            elif version.code == "relative-config-path":
+                add("error", command, f"{version.code}: {version.detail}")
             else:
                 add("error", command, f"{version.code}: " + TEXT["inspection_git_unavailable"].format(DETAIL=version.detail))
             continue
@@ -6311,10 +6384,14 @@ def inspect_project(args):
     the run with 130, 143 or 129 and `Cancelled.`; the slot is read once the
     scope has exited, and an exception that leaves the scope with the slot set
     becomes Interrupted, as `clean` does (T119; research.md R4; FR-058; lead
-    ruling R-56). The exit rule is unchanged."""
+    ruling R-56). The exit rule is unchanged. D11's configuration-path test
+    comes first, before any Git child: a variable that fails it is reported as
+    `relative-config-path` where a Git below the floor would be, and no Git
+    child starts (hold_git_for_config_paths(); LQ-15)."""
     scope = signal_scope()
     try:
         with scope:
+            hold_git_for_config_paths(scope.invocation)
             report = snapshot(discover(args.target))
             checks = check_rows(report) if args.command == "doctor" else None
     except BaseException:
@@ -6389,10 +6466,16 @@ def update(args):
     (D-R, FR-052). `origin/HEAD` is read from the ref listing's symref (row 6),
     memoized per common directory, never from a child of its own, and only
     after the root's state has passed, so after a failed version check update
-    spawns no Git child (plan review M10). `tools` and `workflow` need no Git."""
+    spawns no Git child (plan review M10). `tools` and `workflow` need no Git.
+    D11's configuration-path test comes first, before any Git child: a
+    variable that fails it holds every Git child, as a Git below the floor
+    does, so the root's `dirty` is null: `shape` and `bench` refuse as for
+    any `dirty` that is not exactly false, no owner tool runs, and `tools` and
+    `workflow` run as before (hold_git_for_config_paths(); D16; LQ-15)."""
     scope = signal_scope()
     try:
         with scope:
+            hold_git_for_config_paths(scope.invocation)
             root = discover(args.target)
             report = snapshot(root)
             report["updates"] = [

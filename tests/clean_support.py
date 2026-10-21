@@ -639,6 +639,8 @@ TEXT_FIXTURES = {
     "git_too_old": "Git {VERSION} is older than 2.36; clean needs Git 2.36 or later.",
     "inspection_git_too_old": "Git {VERSION} is older than 2.36; repository inspection needs Git 2.36 or later.",
     "inspection_git_unavailable": "Git is unavailable ({DETAIL}); repository inspection needs Git 2.36 or later.",
+    # D18's relative-config-path line, one per failing variable (Brett Heap's ruling LQ-15).
+    "relative_config_path": "{NAME} is set to a path that does not begin with /; make it absolute or unset it.",
     "target_not_repository_root": "Not the main worktree of a repository: {PATH}; pass the repository root.",
     "unsupported_path_bytes": "The repository path is not valid UTF-8: {PATH}",
     "manifest_invalid_size": "Manifest {PATH} is larger than 1 MiB.",

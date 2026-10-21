@@ -18,6 +18,7 @@ import io
 import json
 import os
 from pathlib import Path
+import shlex
 import unittest
 from unittest import mock
 
@@ -25,6 +26,11 @@ import clean_support
 
 project = clean_support.load_project()
 TEXT = clean_support.TEXT_FIXTURES
+
+# The lead's extension of Brett Heap's ruling LQ-15 (lead ruling R-102), which
+# Brett Heap may strike: the two variables tested beside HOME and
+# XDG_CONFIG_HOME. Striking it here is this one line, made `()`.
+EXTENSION = ("GIT_CONFIG_GLOBAL", "GIT_CONFIG_SYSTEM")
 
 EXTENDED_ERROR_KEYS = ["error", "code", "schema_version", "observed_at", "mode", "repository", "merge_target",
                        "completeness", "apply_allowed", "refusals"]
@@ -44,6 +50,11 @@ def command(record):
     while at + 1 < len(argv) and argv[at] == "-c":
         at += 2
     return argv[at:]
+
+
+def config_lines(*names):
+    """D18's relative-config-path text for names, one line each, from the fixtures (rule 8)."""
+    return "\n".join(TEXT["relative_config_path"].format(NAME=name) for name in names)
 
 
 def manifest_text(size, *lines):
@@ -639,6 +650,152 @@ class ResolutionTests(clean_support.CleanCase):
             self.assertEqual(json.loads(out)["merge_target"]["source"], "manifest")
             self.assertEqual([entry[0] for entry in opened], ["open", "read"])
             self.assertTrue(all(0 <= size <= MIB for kind, size in opened if kind == "read"), opened)
+
+    # Brett Heap's ruling LQ-15 (lead ruling R-102): "A relative configuration path".
+
+    def plant_configuration(self, root, config):
+        """Inline fixture (rule 3): commit in root, at the relative path config, a
+        configuration whose clean filter `mark`, which root's tracked
+        .gitattributes selects for *.txt, and whose core.hooksPath, root's
+        tracked hooks/, each append to self.base/marker, beside a tracked
+        data.txt. The fixture's own git reads none of it (GIT_CONFIG_GLOBAL is
+        os.devnull). Returns the marker's path."""
+        marker = self.base / "marker"
+        quoted = shlex.quote(str(marker))
+        hooks = root / "hooks"
+        hooks.mkdir()
+        for name in ("pre-push", "reference-transaction", "post-checkout", "post-merge"):
+            (hooks / name).write_text(f"#!/bin/sh\necho {name} >> {quoted}\n")
+            (hooks / name).chmod(0o755)
+        path = root / config
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(f'[filter "mark"]\n\tclean = "tee -a {quoted}"\n[core]\n\thooksPath = "{hooks}"\n')
+        (root / ".gitattributes").write_text("*.txt filter=mark\n")
+        (root / "data.txt").write_text("data\n")
+        self.commit(root)
+        return marker
+
+    def stale_stat(self, path):
+        """Move path's mtime an hour back, so that its index entry no longer
+        matches and a status probe reads the file through its clean filter."""
+        found = os.stat(path)
+        os.utime(path, (found.st_atime - 3600, found.st_mtime - 3600))
+
+    def assert_planted_configuration_is_live(self, root, marker, env):
+        """The control: the real git, run in root under env with no optional
+        lock, reads the planted file as the user's configuration, and its
+        filter writes the marker, which is then removed."""
+        self.assertFalse(marker.exists())
+        self.git(root, "status", "--porcelain", env=dict(env, GIT_OPTIONAL_LOCKS="0"))
+        self.assertTrue(marker.exists(), "the planted filter runs under the real git: the fixture is live")
+        marker.unlink()
+
+    def test_clean_a_relative_configuration_path(self):
+        # D11's test runs after the argument checks and before the version
+        # check, so a relative HOME refuses the read-only form, the batch apply
+        # and the push with exit 2 and starts no Git child, git --version
+        # included. The control shows the real git reading h/.gitconfig under
+        # the same environment. Beside an absolute XDG_CONFIG_HOME and an
+        # absolute GIT_CONFIG_GLOBAL, Git would read nothing under HOME, and
+        # the test still refuses (it does not follow Git's precedence).
+        root = self.repo()
+        marker = self.plant_configuration(root, "h/.gitconfig")
+        self.bare_remote()
+        self.merged_worktree("001-merged")
+        self.stale_stat(root / "data.txt")
+        before = self.snapshot(root)
+        live = {name: value for name, value in self.env.items() if name != "GIT_CONFIG_GLOBAL"}
+        live["HOME"] = "h"
+        beside = dict(self.env, HOME="h", XDG_CONFIG_HOME=str(self.base / "xdg"))  # GIT_CONFIG_GLOBAL os.devnull
+        message = config_lines("HOME")
+        modes = (("read-only", ()), ("all-safe apply", ("--all-safe", "--apply", "--yes")),
+                 ("push", ("--apply", "--action", "push", "--branch", "001-merged", "--yes")))
+        for label, env in (("Git would read h/.gitconfig", live),
+                           ("beside an absolute XDG_CONFIG_HOME and GIT_CONFIG_GLOBAL", beside)):
+            if env is live:
+                self.assert_planted_configuration_is_live(root, marker, env)
+            for mode, words in modes:
+                with self.subTest(label, mode=mode):
+                    result, records = self.counted("clean", root, *words, env=env)
+                    self.assert_refused_human(result, message)
+                    self.assertEqual(records, [], "no Git child, git --version included")
+            with self.subTest(label, mode="read-only", output="json"):
+                result, records = self.counted("clean", root, "--json", env=env)
+                self.assert_error_document(result, "relative-config-path", message, "report")
+                self.assertEqual(records, [])
+        self.assertFalse(marker.exists(), "no filter or hook ran")
+        self.assertEqual(self.snapshot(root), before, "nothing changes")
+
+    def test_clean_a_relative_configuration_path_each_variable_and_spelling(self):
+        # The scenario's other ANDs: a relative XDG_CONFIG_HOME beside an
+        # absolute HOME; a HOME of " /x", "~/x" or "."; a relative
+        # GIT_CONFIG_GLOBAL or GIT_CONFIG_SYSTEM beside an absolute HOME (the
+        # lead's extension). Every variable that fails is named, one line each,
+        # in D18's order, and no value is printed.
+        root = self.repo()
+        cases = [({"XDG_CONFIG_HOME": "cfg"}, ("XDG_CONFIG_HOME",)),
+                 ({"HOME": " /x"}, ("HOME",)), ({"HOME": "~/x"}, ("HOME",)), ({"HOME": "."}, ("HOME",))]
+        cases += [({name: "h/.gitconfig"}, (name,)) for name in EXTENSION]
+        cases.append(({"HOME": "h", "XDG_CONFIG_HOME": "cfg", **{name: "h/.gitconfig" for name in EXTENSION}},
+                      ("HOME", "XDG_CONFIG_HOME", *EXTENSION)))
+        for values, names in cases:
+            env = dict(self.env, **values)
+            with self.subTest(values=values):
+                result, records = self.counted("clean", root, "--all-safe", env=env)
+                self.assert_refused_human(result, config_lines(*names))
+                self.assertEqual(records, [])
+                for value in values.values():
+                    if len(value) > 1:  # "." and "h" are letters of the message itself
+                        self.assertNotIn(value, result.stderr, "the value is never printed")
+            with self.subTest(values=values, output="json"):
+                result, records = self.counted("clean", root, "--all-safe", "--json", env=env)
+                self.assert_error_document(result, "relative-config-path", config_lines(*names), "all-safe")
+                self.assertEqual(records, [])
+
+    def test_clean_a_relative_configuration_path_not_valid_utf_8(self):
+        # D11: the test is made on the raw bytes, so a relative value whose
+        # first byte is not UTF-8 fails it too; the message names the variable.
+        root = self.repo()
+        for name in ("HOME", "XDG_CONFIG_HOME", *EXTENSION):
+            env = dict(self.env)
+            env[name] = b"\xffh"
+            with self.subTest(name=name):
+                result, records = self.counted("clean", root, env=env)
+                self.assert_refused_human(result, config_lines(name))
+                self.assertEqual(records, [])
+                result, records = self.counted("clean", root, "--json", env=env)
+                self.assert_error_document(result, "relative-config-path", config_lines(name), "report")
+                self.assertEqual(records, [])
+
+    def test_clean_a_relative_configuration_path_empty_and_absolute_values_pass(self):
+        # The scenario's last AND: with HOME absolute, XDG_CONFIG_HOME empty,
+        # and GIT_CONFIG_GLOBAL and GIT_CONFIG_SYSTEM unset, clean is not
+        # refused for them. Nor is it for an empty value, `/` alone, or an
+        # absolute value that is not UTF-8; beside one relative variable, such
+        # a value is not named, and the run goes on to the version check.
+        root = self.repo()
+        unset = {name: value for name, value in self.env.items() if name not in EXTENSION}
+        with self.subTest("HOME absolute, XDG_CONFIG_HOME empty, the two unset"):
+            result, records = self.counted("clean", root, "--json", env=dict(unset, XDG_CONFIG_HOME=""))
+            self.assert_status(result, 0)
+            self.assertEqual(result.document["root"], str(root))
+            self.assertEqual(command(records[0]), ["--version"], "the version check runs next")
+        absolute = os.fsencode(self.base) + b"/home-\xff"
+        cases = [("HOME", ""), ("HOME", "/"), ("HOME", absolute), ("XDG_CONFIG_HOME", ""),
+                 ("XDG_CONFIG_HOME", "/"), ("XDG_CONFIG_HOME", absolute)]
+        cases += [(name, value) for name in EXTENSION for value in ("", os.devnull)]
+        for name, value in cases:
+            env = dict(self.env)
+            env[name] = value
+            with self.subTest(name=name, value=value):
+                result, records = self.counted("clean", root, "--json", env=env)
+                self.assert_status(result, 0)
+                self.assertEqual(command(records[0]), ["--version"])
+            companion = "XDG_CONFIG_HOME" if name == "HOME" else "HOME"
+            with self.subTest(name=name, value=value, beside=companion):
+                result, records = self.counted("clean", root, env=dict(env, **{companion: "rel"}))
+                self.assert_refused_human(result, config_lines(companion))
+                self.assertEqual(records, [])
 
 
 if __name__ == "__main__":
