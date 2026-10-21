@@ -2,17 +2,24 @@ Lane: openRepoProject-4
 
 # Proposal: support-later-python-versions
 
-Status: draft, opened as a draft pull request; the alignment review and the
+Status: ratified by Brett Heap on 2026-10-21 (10:40:31Z), in lane 4's session,
+in his words "ratify 28, recommended for SA-2 and SA-7", quoted on PR #28 at
+https://github.com/opensoft/openRepoProject/pull/28#issuecomment-6315794017.
+Decision 3 (SA-7), which had no recommendation, he answered when asked, at
+12:05:15Z the same day, by choosing "A1: PR per release (Recommended)";
+Decision 12 (SA-2) takes its recommendation, and Decisions 1, 2 and 4 to 11
+take theirs (Decisions for Brett Heap, below). The alignment review and the
 council are applied (Review resolution, at the end); main is merged in at
 `e9d6711`, so CI is Linux only (#32), and #21 is cited at its head
-`8f3ca2d`; `clarifications.md`, the spec delta, `design.md` and `tasks.md`
-complete the proposal stage; nothing is ratified. Governing issue:
-opensoft/openRepoProject#22, claimed by lane openRepoProject-4. Taken up under
-Brett Heap's word of 2026-10-11 (about 15:55Z), "usage reset, resume all. read
-handoff and resume and fan out wide and do as much as possible in parallel",
-which named no item; lanes openRepoProject-4 and -5 split the open candidates
-and this one fell to lane 4 (issue #22, Authority). It lands only on Brett
-Heap's word ratifying #28.
+`8f3ca2d`; #21 has since landed on main as `b233333`, whose change directory
+is identical to `8f3ca2d`, the commit cited; `clarifications.md`, the spec
+delta, `design.md` and `tasks.md` complete the proposal stage. Governing
+issue: opensoft/openRepoProject#22, claimed by lane openRepoProject-4. Taken
+up under Brett Heap's word of 2026-10-11 (about 15:55Z), "usage reset, resume
+all. read handoff and resume and fan out wide and do as much as possible in
+parallel", which named no item; lanes openRepoProject-4 and -5 split the open
+candidates and this one fell to lane 4 (issue #22, Authority). That word is
+given, and PR #28 lands by squash (tasks.md 1.6).
 
 Source: the archived change
 `openspec/changes/archive/2026-10-09-fix-parent-obstacle-wording/` recorded
@@ -175,8 +182,10 @@ process, `main()`'s handlers bypassed, so that an exception keeps its frame.
   where there are two. A later minor version joins at its final release by
   one pull request that adds it to the matrix and to the README's range,
   under the first ADDED requirement below; until then the README calls it
-  untested. Who opens that pull request is a decision for Brett Heap
-  (Decisions, 3). No pre-release runs in CI. The floor stays 3.10, so
+  untested. Who opens that pull request was a decision for Brett Heap
+  (Decisions, 3); he chose A1 on 2026-10-21: an issue and the pull request at
+  each final release, opened by the lane that owns `project` at the time. No
+  pre-release runs in CI. The floor stays 3.10, so
   `AGENTS.md:19` ("Python 3.10+") still states the floor.
 - **The two cases**, read on the parent `new()` already computes from
   `--into`, the positional parent, `PROJECTS_DIR` or `~/projects`:
@@ -324,8 +333,9 @@ process, `main()`'s handlers bypassed, so that an exception keeps its frame.
   scheduled job that fails when setup-python's manifest lists a stable minor
   version above the matrix: it notices for us, at the cost of a new trigger
   and job in the shared `tests.yml`, beyond the matrix-only agreement, so it
-  needs lane openRepoProject-2's assent. Neither is recommended over the
-  other here (Decisions, 3).
+  needs lane openRepoProject-2's assent. Neither was recommended over the
+  other here (Decisions, 3); Brett Heap chose A1 on 2026-10-21, so A2 is not
+  chosen.
 - **A pre-release, such as 3.16.** (P1) None in CI; a minor version joins at
   its final release: recommended. It stays within the `test` job's matrix,
   the edit agreed with lane openRepoProject-2, and a pre-release failure
@@ -464,8 +474,10 @@ wording.
   to a parent that passes those earlier refusals. Its permission sentence
   (lines 37-43) and its scenario "A parent the person cannot write still
   fails only at creation" (lines 73-76) are scoped to "a directory the person
-  can search but cannot write". This block drops if lane openRepoProject-1
-  scopes them in #21 before it is ratified (Decisions, 12).
+  can search but cannot write". This block would have dropped had lane
+  openRepoProject-1 scoped them in #21 before it was ratified; Brett Heap took
+  Decision 12's recommendation on 2026-10-21, so the block stays (Decisions,
+  12).
 
 ### Statements this change makes false, and their treatment
 
@@ -490,7 +502,8 @@ destination:
   shape sentence (lines 36-37) and scenario (lines 86-88), since a looped or
   unreadable parent with `--shape` by flag now gets (L) or (U), not the shape
   refusal (on 3.13 and later for (L), on 3.14 and later for (U); on 3.10 to
-  3.12 a loop is a traceback today). MODIFIED, or scoped by lane 1.
+  3.12 a loop is a traceback today). MODIFIED (Decision 12 took this route,
+  not scoping by lane 1).
 - #21's ADDED requirement, its permission sentence (lines 37-43, "a parent
   that is a directory the person cannot write, or a missing parent whose
   nearest existing path above it is such a directory, still passes the dry
@@ -503,7 +516,8 @@ destination:
   410-411); on 3.14 and later this change makes it false. A directory the
   person can search but not write (mode 555, #21's acceptance criterion 9)
   is unchanged on every version (council evidence 1). MODIFIED, scoped to "a
-  directory the person can search but cannot write", or scoped by lane 1.
+  directory the person can search but cannot write" (Decision 12 took this
+  route, not scoping by lane 1).
 - #21's README sentence (its `design.md:187-191`, inserted after "Existing
   destinations refuse.", `README.md:96`): "`--dry-run` reads no permissions:
   a parent that is a directory the person cannot write still passes the dry
@@ -560,9 +574,9 @@ above now include (L) and (U) among them.
 - **Speckit handoff**: one feature, numbered when `/speckit.specify` runs
   from a main synced to origin (the next free number; none hard-coded).
 - **Handoffs after landing**: no new issue but the release practice of
-  Decisions, 3. The realization reaches `onp` when workBenches next moves its
-  pin, on its owner's act; a comment on a workBenches pin issue, as archived
-  D5 did, is design D9's.
+  Decisions, 3 (A1, chosen). The realization reaches `onp` when workBenches
+  next moves its pin, on its owner's act; a comment on a workBenches pin
+  issue, as archived D5 did, is design D9's.
 
 ### Feasibility
 
@@ -814,7 +828,7 @@ On every version of the new matrix, on `ubuntu-latest`, each by a test:
   variable (`tests/clean_support.py:686`); they are the only failures of its
   suite on 3.14.7 with `FORCE_COLOR=1`. As this change's rule says of a
   feature 004 failure on an added version, it is reported to its owner, lane
-  openRepoProject-2, which has ruled (R-70, relayed by the lead on
+  openRepoProject-2, which has ruled (lane openRepoProject-2's ruling R-70,
   2026-10-20) that `CleanCase.setUp()` pops both variables and sets
   `NO_COLOR=1` (`tests/clean_support.py:686-691`), not yet on 004 at
   `96a08d4`; a scratch copy with that change passes both assertions. Main's
@@ -855,27 +869,34 @@ On every version of the new matrix, on `ubuntu-latest`, each by a test:
   and patched (council case H), raised by `expanduser()`, which S1's mapping
   does not cover (N9).
 - Any new sentence, flag, environment variable or configuration file.
-- Raising the floor (R4); a pre-release job (P2, P3) or a scheduled release
-  check (A2) unless Brett Heap chooses one; `fail-fast` or any other key
-  outside the matrix unless he chooses it with lane 2's assent; a macOS or
-  Windows job, since CI runs on Linux only by his decision of 2026-10-15
-  (#32), and the README directs Windows to WSL2 (`README.md:282`).
+- Raising the floor (R4); a pre-release job (P2, P3) unless Brett Heap
+  chooses one; a scheduled release check (A2), which he did not choose
+  (Decision 3 is A1, 2026-10-21); `fail-fast` or any other key outside the
+  matrix unless he chooses it with lane 2's assent; a macOS or Windows job,
+  since CI runs on Linux only by his decision of 2026-10-15 (#32), and the
+  README directs Windows to WSL2 (`README.md:282`).
 - workBenches, openRepoShape, setup-openspeckit, the archived changes and
   the feature records: other owners' code, or immutable records.
 
 ## Decisions for Brett Heap
 
-Each has a recommendation above unless marked open; none is taken. Two stay
-open for Brett Heap: 3 (SA-7), which has no recommendation, and 12 (SA-2),
-which has one but turns on lane 1's text. The design and the delta follow
-every recommendation, and say what changes under each alternative.
+Ratified by Brett Heap on 2026-10-21, in lane 4's session: "ratify 28,
+recommended for SA-2 and SA-7" (quoted on PR #28 at
+https://github.com/opensoft/openRepoProject/pull/28#issuecomment-6315794017).
+Decisions 1, 2 and 4 to 11 take their recommendations. Decision 12 (SA-2), the
+one that turned on lane 1's text, takes its recommendation. Decision 3 (SA-7),
+which had no recommendation, he answered when asked, at 2026-10-21T12:05:15Z:
+"A1: PR per release (Recommended)". The design and the delta follow every
+recommendation, and say what would change under each alternative, none of
+which is taken.
 
 1. The versions: R1, every released minor version from 3.10 to 3.15 on
    `ubuntu-latest`, six jobs.
 2. The range's form: C1, closed, with later versions called untested.
-3. Who adds each new release (open): A1, an issue and a pull request at each
-   CPython final release by the lane that owns `project`, or A2, a scheduled
-   check, with lane 2's assent.
+3. Who adds each new release (chosen by Brett Heap on 2026-10-21T12:05:15Z:
+   "A1: PR per release (Recommended)"): A1, an issue and a pull request at
+   each CPython final release by the lane that owns `project`, or A2, a
+   scheduled check, with lane 2's assent (not chosen).
 4. A pre-release: P1, none in CI.
 5. The floor: keep 3.10 (R4 deferred).
 6. (L)'s answer and place: L1, the system's `ELOOP` refusal, which also
@@ -890,10 +911,12 @@ every recommendation, and say what changes under each alternative.
 11. `fail-fast`: unchanged (recommended, as the matrix-only agreement
     stands), or `false`, with lane 2's assent.
 12. #21's shape sentence and scenario, and its permission sentence, its
-    permission scenario and its README permission sentence (open, SA-2):
-    this change MODIFIES and scopes them (recommended, as it needs nothing
-    from lane 1), or lane 1 scopes them in #21 before ratification, and the
-    second MODIFIED block and the README clause drop (design D6).
+    permission scenario and its README permission sentence (SA-2): this
+    change MODIFIES and scopes them (recommended, as it needs nothing from
+    lane 1), or lane 1 scopes them in #21 before ratification, and the second
+    MODIFIED block and the README clause drop (design D6). The recommendation
+    is taken (Brett Heap, 2026-10-21): this change MODIFIES and scopes them,
+    and nothing drops.
 
 ## Review resolution
 
@@ -906,7 +929,9 @@ QA-9; 2 BLOCKER, 9 MAJOR, 9 MINOR). Applied unless marked otherwise:
 - SA-2 (MODIFIED blocks against #21): two MODIFIED blocks, the statements
   record, archive after #21, and reliance on #21's "Preview" WHEN. Its
   preferred route, asking lane 1 to scope #21's shape sentence, is not this
-  proposal's to take; it is Decision 12's alternative.
+  proposal's to take; it is Decision 12's alternative (since decided: Brett
+  Heap took Decision 12's recommendation on 2026-10-21, so this change
+  MODIFIES and scopes #21's statements and the alternative is not taken).
 - SA-3 (stale #21 pin): every #21 citation is re-pinned to `a43e7d2`, and
   the delta is quoted where it differs from #21's proposal.
 - SA-4 (realization order): this realization lands after #21's, as issue #22
@@ -918,7 +943,9 @@ QA-9; 2 BLOCKER, 9 MAJOR, 9 MINOR). Applied unless marked otherwise:
   both routes (Feasibility, AC2).
 - SA-7 (open range): closed range (C1). Who opens each release's pull
   request is left open for Brett Heap (Decision 3, A1 or A2) rather than
-  named here: lanes are not standing owners, and A2 needs lane 2's assent.
+  named here: lanes are not standing owners, and A2 needs lane 2's assent
+  (since decided: Brett Heap chose A1 on 2026-10-21, "A1: PR per release
+  (Recommended)", so A2 is not chosen).
 - SA-8 (E1 is not 3.10 to 3.12 made explicit): (ii) by taking 3.10 to 3.13
   pathlib's ignored errnos (E1, with the narrower read as rejected E3); (i)
   stated as S2's one intended deviation, with test rows (AC4), and E2 kept

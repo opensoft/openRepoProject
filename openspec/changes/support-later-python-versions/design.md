@@ -16,8 +16,10 @@ D5, N11 D7, N12 D5 and D10.
 
 The design follows every recommendation in the proposal's "Decisions for
 Brett Heap" (R1, C1, H1, P1, the 3.10 floor, L1 and Q1, U1, T2 and E1, M1,
-`fail-fast` unchanged, and Decision 12's MODIFIED route). Decisions 3 and 12
-stay open for him; "Open Questions" says what each alternative changes.
+`fail-fast` unchanged, and Decision 12's MODIFIED route). Brett Heap ratified
+it on 2026-10-21 with every recommendation taken, Decision 12 as recommended
+and Decision 3, which had none, as A1; "Open Questions" says what each
+alternative would have changed.
 
 What in `project` shapes the approach (unchanged on this branch from
 `961c405` to main `e9d6711`):
@@ -115,7 +117,9 @@ rewrapped to the README's line width:
 
 A later minor version joins at its final release by one pull request that
 changes line 9 and both README sentences together. AC6's test fails if any
-of the three disagrees. Who opens that pull request is Decision 3 (open).
+of the three disagrees. Who opens that pull request was Decision 3; Brett Heap
+chose A1 on 2026-10-21: an issue and the pull request at each final release,
+opened by the lane that owns `project` at the time.
 
 ### D2. S1: the looped parent
 
@@ -358,7 +362,9 @@ discover -s tests -v`; no new dependency (PyYAML is already in
   scenario, and its permission sentence, scenario and README sentence, in
   #21 before it is ratified, the second MODIFIED block and D4's README
   replacement drop. The first block, the ADDED requirements, `project` and
-  the tests are unchanged.
+  the tests are unchanged. Not taken: Brett Heap took Decision 12's
+  recommendation on 2026-10-21, so this change MODIFIES and scopes #21's
+  statements, and nothing drops.
 
 ### D7. Shared files
 
@@ -402,8 +408,9 @@ sha and the sha256 of `project` at that sha (from `git show <sha>:project |
 sha256sum`) as an alternative pin target, as archived D5 and #21's D5 did. If
 #145 is closed by then, nothing is posted, and the change reaches `onp` and
 `new-project.sh` at the owner's next pin move. The release practice for each
-later CPython version is Decision 3's (open): under A1 it needs no machinery
-here, and under A2 a scheduled check is a later change with lane 2's assent.
+later CPython version is Decision 3's, which Brett Heap chose as A1 on
+2026-10-21: it needs no machinery here. A2, not chosen, would have been a
+scheduled check in a later change with lane 2's assent.
 
 ### D10. What is explicitly not changed
 
@@ -452,8 +459,9 @@ output, files and exit status are unchanged on every version. A looped parent
 exits 2 instead of 1 on 3.10 to 3.12; an unreadable destination exits 2
 instead of 0 on 3.14 and later.
 
-1. Ratification by Brett Heap's word ratifying #28 (Decision 12's answer, if
-   it is the alternative, drops the second MODIFIED block first).
+1. Ratification by Brett Heap's word ratifying #28, given on 2026-10-21
+   (Decision 12's recommendation is taken, so the second MODIFIED block
+   stays).
 2. #21 ratified and its realization landed; this realization merges main in
    after it.
 3. `/speckit.specify`, from a local main synced to origin, creates the one
@@ -470,16 +478,20 @@ follow workBenches' pin, so a revert reaches nobody until the pin moves.
 
 ## Open Questions
 
-None changes what `project` or the tests do. Two decisions stay with Brett
-Heap:
+None remains. None changed what `project` or the tests do, and the two
+decisions that stayed with Brett Heap are answered (ratified on 2026-10-21,
+"ratify 28, recommended for SA-2 and SA-7"):
 
-- Decision 3 (SA-7), who adds each new release: A1 or A2. Either is a
+- Decision 3 (SA-7), who adds each new release: A1 is chosen, "A1: PR per
+  release (Recommended)" (2026-10-21T12:05:15Z); A2 is not chosen. Either is a
   practice after landing (D9); neither changes this change's artifacts.
 - Decision 12 (SA-2), whether this change scopes #21's statements or lane 1
-  does: the alternative drops the second MODIFIED block and D4's README
-  replacement only (D6).
+  does: the recommendation is taken, and this change scopes them. The
+  alternative, not taken, would have dropped the second MODIFIED block and
+  D4's README replacement only (D6); nothing drops.
 
-If he takes another alternative than the one recommended, the change is
-named here: L2, D4's sentence in AC2; H2, the first ADDED requirement drops
-and AC6's test stays as a README-to-CI check; E2, two reads at S2 and no
-deviation; R2, three versions in line 9 and the README.
+He took the recommendation on each of the decisions the alternatives below
+belong to, so none of them applies; the change under each would have been: L2,
+D4's sentence in AC2; H2, the first ADDED requirement drops and AC6's test
+stays as a README-to-CI check; E2, two reads at S2 and no deviation; R2, three
+versions in line 9 and the README.
