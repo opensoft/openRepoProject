@@ -72,7 +72,18 @@ decode as UTF-8, and D11 pins it with one fixture; D5 says that the test refuses
 a value whose first byte is any byte other than `/`; Risks names
 `XDG_DATA_HOME`, `XDG_STATE_HOME` and `XDG_CACHE_HOME` in its general class,
 each with only what is known of it; and task 1.5 records the validation runs on
-the committed files.
+the committed files. Round C13 then applies the read of `e11d755` by lane
+openRepoProject-5's reader RC (C-46 and C-47), with no spec edit: D11's test
+`PATH` holds a directory of links to `git`, `bash` and the interpreter and never
+their own directories, so that a `gh` installed beside them is not found; its
+fake `gh` writes a start record and an end record, so that a stopped child is
+still seen; and its in-process runs fix the proxy, token and configuration
+variables (M4, M5, L6). D3 says how a URL's host is read, and that a URL with no
+scheme is a local path to Git; D2 says what `transfer.credentialsInUrl=die`
+gives; and D10 counts the reads' addition to `probes` (L2 to L4). `proposal.md`
+changes its README step and Open Question 1 (L2, L5). C-48, RC's M1, M2, M3, L1
+and L4's spec part, is HELD for lane openRepoProject-4 with amendment A1's
+alignment, and no spec or design text answers it here.
 
 Citations follow `proposal.md`: the packet at `da33d92`; APO, CAS, PRS and
 `project:N` at main `961c405`, which main `e9d6711` holds unchanged for them
@@ -131,6 +142,9 @@ The rulings and the packet's boundary map to the decisions:
 | C-43: lane openRepoProject-3's four LOWs on round C9: no `parse_float` hook, by decision; the escape of a lone surrogate; each remote-target read's output decoded as strict UTF-8; and three wordings | D2, D6, D11 |
 | C-44: the lead's ruling on lane openRepoProject-3's and lane openRepoProject-4's planted-configuration point, refined on lane openRepoProject-3's six points: the lookup of `gh` counts as failing when any of `GH_CONFIG_DIR`, `XDG_CONFIG_HOME` and `HOME` is set to a non-empty value whose first byte is not `/`, so every keyed row is `gh-unavailable` and no child starts; other relative paths that `/` re-anchors stay residuals (Risks); its spec sentence is committed on lane openRepoProject-4's YES of 2026-10-21 (`2b89bfc`) | D4, D5, D11, Risks |
 | C-45: lane openRepoProject-3's confirm read of rounds C10 and C11, six LOWs, applied in the design and tasks with no spec edit: D6's escape sentence completed, the Context's tense, tasks 1.5's record of the validation runs on the committed files, D2's list of failures and D11's fixture for an output that does not decode as UTF-8, D5's wording of a first byte, and the three XDG variables in Risks | D2, D5, D6, D11, Risks |
+| C-46: reader RC's M4, M5 and L6: D11's test `PATH` holds a directory of links to `git`, `bash` and the interpreter and never their own directories, so that a `gh` beside them (on `ubuntu-latest`, `/usr/bin/gh` beside `/usr/bin/git`) is not found; the fake `gh` writes a start record, with its pid and process group, and an end record, so that a stopped or killed child is still seen; in-process runs set the proxy variables in the environment the overview passes on, remove `NO_PROXY`, `no_proxy`, `GH_TOKEN` and `GITHUB_TOKEN`, and fix `GH_CONFIG_DIR` and `XDG_CONFIG_HOME` as absolute or unset | D11 |
+| C-47: reader RC's L2 (the design part), L3, L4 (the design part) and L5, with no spec edit: D3 says how a URL's host is read, and that a URL with no scheme and no `:` before its first `/` is a local path to Git with no host, so `not-github`; D2 says that with `transfer.credentialsInUrl=die` a password-bearing remote reads `remote-target-unread` and that nothing leaks; D10 counts the reads' addition to `probes`; the README's next steps and Open Question 1 change in `proposal.md` | D2, D3, D10 |
+| C-48: reader RC's M1, M2, M3, L1 and L4's spec part: spec edits HELD for lane openRepoProject-4 together with amendment A1's alignment, because M1 touches "Expiry cancels queued and in-flight requests", which Q16 B also reaches; this change writes no spec text and no design text for them | none |
 | C-10, L-12: CI on Linux only | Migration Plan |
 
 What in `project` shapes the approach (at `961c405`; features 004 and 005
@@ -149,8 +163,9 @@ move these lines, and this change's feature re-pins them):
   `https://user@github.com/...` never yields an identity. Together they are the
   rule PRS:32 states for status and doctor, where `handoff()`
   (`project:772-783`) takes the identity from `git remote get-url origin`. D3
-  reuses both and adds the reason that tells a credential-bearing URL from a
-  foreign host or a malformed path.
+  reuses both, adds the reason that tells a credential-bearing URL from a
+  foreign host or a malformed path, and gives a URL that Git reads as a local
+  path no host, whatever the pattern makes of it (C-47).
 - `cleanup_report()` (`project:544-622`) is where `09af8c8` attached its
   lookup and its three extra classes; this change touches nothing of `clean`.
 - The parser (`project:1074`) has no `overview` yet. Feature 005 adds the
@@ -159,7 +174,8 @@ move these lines, and this change's feature re-pins them):
   `write_fake()` (tests:172) writes a fake tool into it, and `question_env()`
   (tests:154-170) builds a `PATH` of that directory and the directories of
   `bash`, `git` and the interpreter, dropping `GH_TOKEN` and `GITHUB_TOKEN`.
-  D11 builds on all three.
+  D11 builds on all three, and puts a directory of links to `bash`, `git` and
+  the interpreter in that `PATH` in place of their directories (C-46).
 - After features 004 and 005: the overview's control loop on the main thread
   with its in-flight child registry, self-pipe and signal handling (APO
   design.md, D1), its two-phase scheduler (D6) and its renderers (D10), driving
@@ -294,7 +310,18 @@ carries is the only credential-bearing text the overview inspects: it lives in
 memory only while D3 derives the `owner/repository` and detects the URL's user
 information; after that no part of the user information is retained or
 compared, none is ever printed, logged, sent or used to authenticate, and the
-URL is never forwarded with it (C-30).
+URL is never forwarded with it (C-30). Under a Git configuration that sets
+`transfer.credentialsInUrl` to `die`, Git itself refuses a URL that holds a
+password: Git 2.43.0 exits 128 on each of the two reads of a merge target whose
+remote's URL holds one, the first with nothing on standard output, so that no
+second read starts and the repository's queried rows are `unknown` with reason
+`remote-target-unread`, as for any other failing read, and never
+`credential-bearing-remote`, which D3 reaches only when the reads succeed.
+Nothing leaks: Git's message gives the URL's user part, with the password
+redacted, on standard error, which is discarded unexamined (C-31), and under
+`warn` Git writes the same warning there and both reads succeed. A
+credential-bearing remote that the merge target does not use leaves both reads
+alone; the writer saw each of these on Git 2.43.0 on 2026-10-21 (C-47).
 
 The two reads are counted in the envelope's `probes`, as lane
 openRepoProject-4's fourth option has it (C-9): they are Git children, so
@@ -343,6 +370,25 @@ In this order, the first that applies deciding:
 3. `malformed-remote`: `remote_repository_identity()` (`project:766-769`)
    yields no identity, as for `https://github.com/acme`, a user other than
    `git`, or an explicit port.
+
+Every step reads the host as Git reads the URL, and the host and the scheme
+compare as written, never without case (C-47). A URL with `://` has its scheme
+before it, then any user information before an `@`, then the host, up to the
+next `/` or a `:` that begins a port. An scp-like URL has no `://` and a `:`
+before its first `/`, and its host is what stands after any `user@` and before
+the `:` that begins the path. A URL with neither, no `://` and no `:` before its
+first `/`, is a path on the local disk to Git and has no host, so it is
+`not-github` at step 2 however it reads: `github.com/acme/widget` and
+`github.com/acme/widget.git`, which `remote_repository_identity()`'s pattern
+alone gives as `acme/widget`, are never sent. The writer saw, on 2026-10-21,
+that function, taken from `project` at `961c405`, give `acme/widget` for both,
+and `git ls-remote github.com/acme/widget` on Git 2.43.0 list the refs of a
+local bare repository at that relative path and exit 0. By the same reading
+`git@GitHub.com:acme/widget.git` and `https://GitHub.com/acme/widget` are
+`not-github`, the host not being exactly `github.com`, while
+`HTTPS://github.com/acme/widget` and `git://github.com/acme/widget.git` pass
+step 2, the host being exact, and are `malformed-remote`, that function giving
+no identity for either; the README's next steps say so.
 
 What passes is `owner/repository`, the only part of the URL kept. The dedupe
 key compares it without case. No reason carries the URL, and nothing of the
@@ -851,7 +897,10 @@ remote-tracking ref (C-18).
 
 The remote phase starts after classification, findings, gates, suggestions,
 summary counts and completeness are computed, and it writes only into the
-`remote` slots. Nothing it records is a row error, a scan error or a finding,
+`remote` slots and into the envelope's `probes`, which D2's remote-target
+reads raise by the same number in `estimated` and in `performed` in an uncut
+remote phase and by nothing else (C-47). Nothing it records is a row error, a
+scan error or a finding,
 [B]'s added paragraph saying so for its children that exit nonzero or are
 stopped and for a lookup of `gh` that fails or does not finish in time
 (C-26), and [R]'s isolation clause for every failure, cut or stop of a
@@ -895,13 +944,26 @@ of these fields, so remote evidence never reaches an eligibility gate, a
   in a state that task 2.5 recorded there;
   the `CLOSED` nodes of "The chosen pull request and a rejected answer" are
   the one exception, a defensive input that pins that such a node never
-  matches (C-16, C-19). It
-  appends one JSON record per run: the argv, the names of the environment
-  variables set, the values of `GH_NO_UPDATE_NOTIFIER`,
-  `GH_NO_EXTENSION_UPDATE_NOTIFIER`, `GH_PROMPT_DISABLED`, `GH_TELEMETRY` and
-  `NO_COLOR`, whether each of `GH_CONFIG_DIR`, `XDG_CONFIG_HOME` and `HOME` is
-  set and its value (C-44), whether `GH_TOKEN` equals the caller's, the working
-  directory, and its start and end times.
+  matches (C-16, C-19). It appends two kinds of JSON line to a record file
+  beside it, each written in one call on a descriptor opened for append, so that
+  the records of concurrent children do not interleave (C-46). The start record
+  is written the moment the child starts, before it answers or holds: the argv,
+  the names of the environment variables set, the values of
+  `GH_NO_UPDATE_NOTIFIER`, `GH_NO_EXTENSION_UPDATE_NOTIFIER`,
+  `GH_PROMPT_DISABLED`, `GH_TELEMETRY` and `NO_COLOR`, whether each of
+  `GH_CONFIG_DIR`, `XDG_CONFIG_HOME` and `HOME` is set and its value (C-44),
+  whether `GH_TOKEN` equals the caller's, the working directory, its pid and
+  process group, and its start time. The end record is written when it exits on
+  its own: its pid, its end time and its exit status. A child that the loop
+  stops, at its limit, at the expiry or on a signal, is killed and writes no end
+  record, so a record per run that held the end time would leave out just the
+  children whose stops are tested. Their start records show that each started,
+  in what order and when, and `os.killpg(pgid, 0)` raising `ProcessLookupError`
+  on a recorded group shows that the loop reaped it, as change 2's signal test
+  does for the groups its wrapper recorded (APO design.md, D13). The tests of
+  "API failures stay unknown", "Expiry cancels queued and in-flight requests"
+  and "A signal while requests run", and the test of [E]'s new scenario, read
+  the start records and probe each recorded group so.
 - One test sets the interpreter's limit on converting a string to an integer to
   0, with `sys.set_int_max_str_digits(0)` where the interpreter has it, and
   restores it after; that emulates Python 3.10.0 to 3.10.6, which have no such
@@ -962,7 +1024,7 @@ of these fields, so remote evidence never reaches an eligibility gate, a
     absolute; and, for `GH_CONFIG_DIR`, the values ` /x` (a leading space),
     `~/x` and `.`, since the test is on the raw bytes. Each gives both rows
     `unavailable` with reason `gh-unavailable`, `remote.requests.performed` 0,
-    `remote.observed_at` null, the fake `gh`'s record empty although it lies
+    `remote.observed_at` null, no start record of the fake `gh` although it lies
     first on `PATH`, and the exit status and every local field those of the run
     without `--remote`.
   - Not refused: an absolute `GH_CONFIG_DIR`; an empty `GH_CONFIG_DIR`; an empty
@@ -1022,10 +1084,57 @@ of these fields, so remote evidence never reaches an eligibility gate, a
   failed read, `remote-target-unread`. With the fake `gh`'s exact-size answers
   above, these pin the byte past each bound (C-27, C-29); they are tests only,
   and no scenario changes (lane openRepoProject-3's folded read, L2; C-34).
-- No real network: in-process runs install an audit hook that fails
-  `socket.connect` (APO design.md, D13); subprocess runs set `HTTPS_PROXY`
-  and `HTTP_PROXY` to a closed local port, so even a real `gh` reached by
-  mistake could not connect. No test needs `gh` installed.
+- The `PATH` and the environment of every run (C-46). No test needs `gh`
+  installed, and some need it absent, which `question_env()`'s `PATH` cannot
+  give where `gh` lies beside the tools it keeps. That `PATH` holds the fake bin
+  directory and the directories of `bash`, `git` and the interpreter, and on
+  `ubuntu-latest`, the one runner of CI (L-12), `gh` is installed at
+  `/usr/bin/gh`, beside `/usr/bin/git`. So the three parts of "No gh, or a gh
+  without authentication" and "The request bounds" that need no `gh` on `PATH`
+  would find the runner's real `gh`, start it, and read `gh-unauthenticated` or
+  `api-error` with 2 or 64 requests where the spec requires `gh-unavailable` and
+  0, while on a bench that keeps `gh` apart from `git` the same tests pass. The
+  layout is inferred, not run: from the image's `install-github-cli.sh`
+  (actions/runner-images, `images/ubuntu/scripts/build/install-github-cli.sh`),
+  whose `apt-get install` takes cli/cli's Linux `.deb`, and from cli/cli's
+  `.goreleaser.yml`, whose `nfpms` entry has `bindir: /usr` and
+  `binary: bin/gh`, both read by reader RC on 2026-10-21; no Actions run was
+  made.
+  - `PATH` holds the fake bin directory and one temporary directory, built in
+    the test's own tree, of symbolic links to `git`, `bash` and the interpreter,
+    and never the directories that those tools live in; the counting `git`
+    wrapper above runs the real `git` by the absolute path of its link. The
+    writer's simulation of the runner's layout, with `git`, `bash`, `gh` and an
+    interpreter in one directory, on 2026-10-21: `question_env()`'s `PATH` found
+    that `gh`, the directory of links found none, and `git`, `bash` and the
+    interpreter each ran through its link, `git for-each-ref` on a scratch
+    repository included, on Git 2.43.0.
+  - A run that needs `gh` absent first asserts
+    `assert_absent_from_path(env, "gh")` (tests:200), which fails the test when
+    `shutil.which("gh", path=env["PATH"])` finds one, and a run that has the
+    fake `gh` asserts `assert_fake_on_path(env, "gh")` (tests:196), so that a
+    `gh` found anywhere else fails the test and not the product.
+  - No real network: in-process runs install an audit hook that fails
+    `socket.connect` (APO design.md, D13), which binds the test's interpreter
+    and not its children. The `gh` children of an in-process run, as in the
+    expiry scenario, the AND at concurrency 1 and the integer-limit test above,
+    receive the environment that the overview passes on, which is the caller's
+    (D5), and `os.environ` is the developer's own. So an in-process run replaces
+    `os.environ` for its duration with the environment that a subprocess run
+    gets, `self.env` (tests:133-134) with the changes below, and restores it
+    after; and that environment sets `HTTPS_PROXY` and `HTTP_PROXY` to a closed
+    local port, as subprocess runs do, so that even a real `gh` reached by
+    mistake could not connect.
+  - That environment, which every subprocess run gets as well, removes
+    `NO_PROXY` and `no_proxy`, either of which could exempt `github.com` from
+    that proxy, and `GH_TOKEN` and `GITHUB_TOKEN`, setting a fake token only
+    where a test asserts one, as the AND on `GH_TOKEN` in "The request bounds"
+    does; and it fixes `GH_CONFIG_DIR` and `XDG_CONFIG_HOME` as absolute paths
+    or leaves them unset, `HOME` being the absolute path of the test's own
+    `home` already, so that a real `gh` reached by mistake would read no
+    developer's token or configuration. C-44's test sets the three configuration
+    variables on purpose, each case its own run: a refused case starts no child,
+    and an accepted case has the fake `gh` first on `PATH`.
 - Fixtures: a bare repository takes the pushes; the merge target's
   `branch.main.remote` names a second remote whose URL is a `github.com` URL
   that nothing contacts; a squash merge is made in a publisher clone with
@@ -1033,8 +1142,10 @@ of these fields, so remote evidence never reaches an eligibility gate, a
 - The expiry scenario patches the 30 s budget, the 5 s limit and the 60 s
   deadline down in-process, keeping their ratios, as change 2's design does
   for its deadline.
-- Concurrency: the fake's start and end times show at most four overlapping
-  children.
+- Concurrency: in a run whose children end on their own, as in "The request
+  bounds", the fake's start and end records show at most four overlapping
+  children; a stopped child writes no end record, so the tests of stops read its
+  start record and probe its group instead (C-46).
 
 | Scenario | Requirement |
 | --- | --- |
