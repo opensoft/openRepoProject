@@ -199,6 +199,19 @@ def execute(argv, cwd=None, env=None):
     return result.returncode if result.returncode >= 0 else 128 - result.returncode
 
 
+def delegate_env():
+    """The environment of every owner tool that `update --apply` runs (lead
+    ruling R-102, LQ-12, approved by Brett Heap; change 1's "Explicit
+    maintenance" as amended at eae1a79): project's own, with every GIT_SCRUB
+    name but GIT_ALLOW_PROTOCOL removed, as the push child has them removed,
+    and nothing added: no -c pin, no GIT_OPTIONAL_LOCKS and no trace2
+    variable. A caller's GIT_DIR, GIT_WORK_TREE or GIT_INDEX_FILE then cannot
+    point a tool at a repository other than the one the check inspected, and
+    a protocol list the caller set still binds any Git the tool runs."""
+    return {name: value for name, value in os.environ.items()
+            if name not in GIT_SCRUB or name == "GIT_ALLOW_PROTOCOL"}
+
+
 def show_plan(commands, cwd=None):
     if cwd:
         print(f"Working directory: {cwd}")
@@ -6388,7 +6401,10 @@ def update(args):
     (D-R, FR-052). `origin/HEAD` is read from the ref listing's symref (row 6),
     memoized per common directory, never from a child of its own, and only
     after the root's state has passed, so after a failed version check update
-    spawns no Git child (plan review M10). `tools` and `workflow` need no Git."""
+    spawns no Git child (plan review M10). `tools` and `workflow` need no Git.
+    The owner-tool delegates run in delegate_env(), the caller's environment
+    less every GIT_SCRUB name but GIT_ALLOW_PROTOCOL, so they act on the
+    repository the check inspected (lead ruling R-102, LQ-12)."""
     scope = signal_scope()
     try:
         with scope:
@@ -6479,16 +6495,16 @@ def update(args):
         return 0
     with default_signals():
         if args.component == "shape":
-            check = execute(commands.pop(0), cwd=root)
+            check = execute(commands.pop(0), cwd=root, env=delegate_env())
             # update-shape check exits 1 when differences are available.
             if check not in (0, 1):
                 return check
             # The owner retains its own confirmation prompt, even if this coordinator
             # received --yes for a different update component.
-            return execute(commands[0], cwd=root)
+            return execute(commands[0], cwd=root, env=delegate_env())
         confirm(args.yes)
         for command in commands:
-            code = execute(command, cwd=root)
+            code = execute(command, cwd=root, env=delegate_env())
             if code:
                 return code
     return 0
