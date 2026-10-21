@@ -42,7 +42,9 @@ duplicate them, and nothing here is an implementation step.
   read of LQ-15 (the commit titled 'Amend change 1 for LQ-15: lane 3's W8
   read'); and its W10 read of LQ-12 and LQ-13, under the lead's R-124 and
   R-127 (the commit titled 'Amend change 1 for LQ-13 and LQ-14: lane 3's W10
-  read (R-124)'); verified by the table "Questions Resolved by the Alignment
+  read (R-124)'); and its W9 read of LQ-10 and LQ-11, under the lead's R-125
+  (the commit titled 'Amend change 1 for LQ-10 and LQ-11: lane 3's W9 read');
+  verified by the table "Questions Resolved by the Alignment
   Review" in `proposal.md` and the later-rulings list under it, which name the
   section each ruling edited.
 - [x] 1.3 Council resolved: every concern is VALID, none dismissed, the verdicts
@@ -54,13 +56,13 @@ duplicate them, and nothing here is an implementation step.
   Heap's rulings LQ-15, LQ-13 and LQ-14),
   `specs/project-clean-review-safety/spec.md` modifies two and adds one (20
   scenarios, one added under R-22 and one under each of LQ-13 and LQ-14), and
-  `specs/project-command/spec.md` modifies two and adds one (23 scenarios, of
-  which the push-child exception added one and Brett Heap's rulings Q9 B,
-  LQ-15, LQ-10, LQ-12 and LQ-11 one each), every canonical scenario of each
-  modified requirement kept;
-  `design.md` holds D1 to D22, mapping the packet's 35 validation scenarios to
-  the deltas (D20), D21 and D22 added under LQ-13 and LQ-14; verified by the
-  scenario counts in the commit that adds them.
+  `specs/project-command/spec.md` modifies two and adds one (24 scenarios, of
+  which the push-child exception added one, Brett Heap's rulings Q9 B, LQ-15,
+  LQ-10, LQ-12 and LQ-11 one each, and the lead's R-125 one), every canonical
+  scenario of each modified requirement kept; `design.md` holds D1 to D22,
+  mapping the packet's 35 validation scenarios to the deltas (D20), D21 and D22
+  added under LQ-13 and LQ-14; verified by the scenario counts in the commit
+  that adds them.
 - [x] 1.5 Validation passes: `openspec validate add-project-clean-all-safe
   --strict` reports the change valid, `openspec validate --all --strict` passes
   every item, and `openspec status --change add-project-clean-all-safe` shows

@@ -202,10 +202,16 @@ one identity probe, and the device and inode of the common directory, read
 without following a symlink. A worktree SHALL be identified by `{path, dev, ino,
 admin_id}` together. Its registration SHALL be checked in both directions:
 `<path>/.git` SHALL be a regular file whose `gitdir:` line names
-`<common_dir>/worktrees/<admin_id>`, and that directory's `gitdir` file SHALL
-name `<path>/.git`, relative values resolved against the directory holding the
-file and both comparisons made between realpaths. A row whose registration
-disagrees SHALL get no status probe and SHALL be `inspection-error`. A linked
+`<common_dir>/worktrees/<admin_id>`, that directory's `gitdir` file SHALL
+name `<path>/.git`, and that directory's `commondir` file, from which Git takes
+the worktree's common directory, SHALL name `<common_dir>`, read by the
+filesystem with no Git child, as Git reads it, its trailing line feeds and
+carriage returns removed; relative values SHALL be resolved against the
+directory holding the file and every comparison made between realpaths. A
+`commondir` file that is missing or names another directory SHALL make the
+registration disagree, and a read of it that fails SHALL give the row
+`inspection-error` and no probe. A row whose registration disagrees SHALL get
+no status probe and SHALL be `inspection-error`. A linked
 worktree's effective work tree, the work tree that a Git command run in it
 uses, SHALL be its registered path, and a row whose effective work tree is not
 SHALL be treated as a row whose registration disagrees. Git gives a linked
@@ -309,6 +315,11 @@ requirement states a change.
 - **AND** the same holds when W's `config.worktree` sets `core.bare` to true instead
 - **AND** with the extension set and neither setting for W, W's effective work tree is its path and W is selected as before, and without the extension a counting `git` wrapper records no `rev-parse` child whose directory is a linked worktree
 
+#### Scenario: A commondir that names another repository
+- **WHEN** a linked worktree W of a repository R, which does not set `extensions.worktreeConfig`, holds an ignored file; a shared clone X of R sets `extensions.worktreeConfig` to true; the `config.worktree` in W's administrative directory sets `core.worktree` to a clean decoy directory D; and the `commondir` file in that administrative directory is rewritten to name X's git directory, while W's `.git` file and that directory's `gitdir` file still agree
+- **THEN** W reads `registration-mismatch` with classification `inspection-error`, no status probe runs in W or in D, `project clean <root> --all-safe` is incomplete, and `--all-safe --apply --yes` refuses with exit 2 and removes nothing, so W and its ignored file stay, where with only the `gitdir` links compared the extension read from R's `config` was unset, the probe in W read D, and the removal deleted W with its ignored file
+- **AND** with the `commondir` file as `git worktree add` wrote it, a relative path naming R's git directory, W's registration agrees as before
+
 #### Scenario: A relative configuration path in status, doctor and update
 - **WHEN** status, doctor and `update --apply --component shape --yes` run on a clean project whose root repository tracks `h/.gitconfig`, which defines a clean filter that writes a marker file, and a `.gitattributes` that selects that filter, with `HOME` set to the relative `h`
 - **THEN** a counting `git` wrapper records no Git child, `git --version` included, and the marker file is never written
@@ -325,7 +336,7 @@ requirement states a change.
 - **THEN** a counting `git` wrapper records `-c core.untrackedCache=false -c core.fsmonitor=false -c core.trustctime=true -c core.checkStat=default` on every status child, every hidden-state child and every removal child
 
 #### Scenario: An edit that keeps its size and restores its mtime
-- **WHEN** a repository sets `core.trustctime=false` and `core.checkStat=minimal`, and a tracked file in an otherwise eligible linked worktree is rewritten at least one second after its index entry was recorded, keeping its size, and its mtime is then restored to the recorded value
+- **WHEN** a repository sets `core.trustctime=false` and `core.checkStat=minimal`, and a tracked file in an otherwise eligible linked worktree, whose index entry was written at least one second after the file's mtime so that the entry is not racily clean, is rewritten at least one second after that entry was recorded, keeping its size, and its mtime is then restored to the recorded value
 - **THEN** the status probe reports the file modified, the row is classified `dirty` and excluded, and `--all-safe --apply --yes` leaves the worktree and the edit in place, where without the two stat pins the probe and Git's own check read the worktree clean and the removal deleted the edit
 
 #### Scenario: A lazy fetch in a partial clone is refused locally

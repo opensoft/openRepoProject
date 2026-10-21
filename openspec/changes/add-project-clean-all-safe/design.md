@@ -27,8 +27,9 @@ Context, D6, D16 and D20; LQ-11, Context, D6, D7, D14, D20 and Risks; LQ-13,
 Context, D7, D12, D14, D18, D20, D21 and Risks; lane openRepoProject-3's W8
 read of LQ-15, Context, D11, D16 and D18; LQ-14, Context, D7, D18, D20, D21,
 D22 and Risks; and lane openRepoProject-3's W10 read of LQ-12 and LQ-13, under
-the lead's rulings R-124 and R-127, Context, D6, D12, D14, D21, D22 and Risks.
-Brett Heap's ruling
+the lead's rulings R-124 and R-127, Context, D6, D12, D14, D21, D22 and Risks;
+and its W9 read of LQ-10 and LQ-11, under the lead's R-125, Context, D6, D7,
+D11, D17, D18 and Risks. Brett Heap's ruling
 of 2026-10-09 on open question 1, that a local ancestry proof outranks
 `remote-gone` for worktree rows, is in `proposal.md` Decisions and edited
 Context, D6, D7, D20, Risks, the Migration Plan and Open Questions here.
@@ -323,18 +324,18 @@ BA:615-616's 7 and row 4c, plus row 4b in the gitfile layout and the rare
 repeat.
 
 Per row: the identity reads (`lstat` without following, the `.git` file, the
-admin `gitdir` file), each a filesystem call on a daemon `threading.Thread`
-waited for with `min(5 s, work remaining)` and abandoned after it (C4; never a
-`concurrent.futures` pool, whose shutdown would wait for a stuck call); then, in
-a linked row of a repository whose row 4c read true, the effective-work-tree
-probe of D7; then the combined status probe in that worktree (D11). Rows 3 to 7
-are memoized by common
-directory within an invocation, which matters to `status` and `doctor`, whose
-legs are other repositories. Where `root` is null (a bare repository, a missing
-main worktree, or a gitfile checkout whose main worktree cannot be named), rows
-4 to 7 run in the common directory for a bare repository and otherwise where
-row 3 ran, as the evidence model states; `clean` refuses those layouts (D8), so
-only a reader that reports them, such as `add-project-overview`, probes there.
+admin `gitdir` and `commondir` files), each a filesystem call on a daemon
+`threading.Thread` waited for with `min(5 s, work remaining)` and abandoned
+after it (C4; never a `concurrent.futures` pool, whose shutdown would wait for a
+stuck call); then, in a linked row of a repository whose row 4c read true, the
+effective-work-tree probe of D7; then the combined status probe in that worktree
+(D11). Rows 3 to 7 are memoized by common directory within an invocation, which
+matters to `status` and `doctor`, whose legs are other repositories. Where
+`root` is null (a bare repository, a missing main worktree, or a gitfile
+checkout whose main worktree cannot be named), rows 4 to 7 run in the common
+directory for a bare repository and otherwise where row 3 ran, as the evidence
+model states; `clean` refuses those layouts (D8), so only a reader that reports
+them, such as `add-project-overview`, probes there.
 
 The scrubbed environment is a copy of the caller's with thirty-one variables
 removed, unconditionally and before any Git call, from a fixed list that is
@@ -432,6 +433,24 @@ every way the extension can redirect a row, without parsing configuration in
 2.36.6 and 2.43.0: the extension read exits 1 when unset and prints `true` when
 set; the probe prints the decoy for a `core.worktree` in `config.worktree` and
 for one in the common `config`, and fails with 128 under `core.bare=true`.
+
+The two-way registration also reads the administrative directory's `commondir`
+file, from which Git takes a linked worktree's common directory
+(`get_common_dir_noenv`, `setup.c:301-325` at 2.36.6 and `:316-340` at 2.43.7:
+the file's trailing line feeds and carriage returns removed, a relative value
+resolved against that directory, then its realpath; with no such file the
+administrative directory is its own common directory), and requires it to name
+`<common_dir>`, by a filesystem read with no Git child; otherwise the
+registration disagrees, and a read that fails makes the row
+`inspection-error`. Row 4c then reads the `config` that Git reads. Lane
+openRepoProject-3's W9 M2 planted a `commondir` naming a shared clone X whose
+own `config` set the extension, beside a `config.worktree` decoy: row 4c,
+reading the registered repository's `config`, read the extension unset, no
+probe ran, and the removal deleted the ignored `local.env` (the lead's R-125).
+Checked here on Git 2.36.6 and 2.43.0: `git worktree add` writes `../..`,
+which resolves to `<common_dir>`; the planted value moves Git's common
+directory in the worktree to X and its toplevel to the decoy; and the
+non-force removal exits 0 and deletes the ignored file.
 
 Revalidation is BA:677-707's targeted check, in its order, stopping at the first
 difference: the identity probe; the manifest re-read (a file read, 1 MiB cap);
@@ -651,18 +670,18 @@ comparison (Brett Heap's ruling LQ-10, 2026-10-21). Git compares an index
 entry's ctime with the file's only while both settings keep these values
 (`match_stat_data`, `read-cache.c:185` and `:192` at 2.36.6, `statinfo.c:40`
 and `:47` at 2.43.7), and `core.checkStat=minimal` also drops the inode, owner
-and sub-second checks. Under either repository setting an edit that keeps a
-file's size and restores its mtime matches the index entry, so the status probe
-and Git's own check both read the worktree clean and the removal deletes the
-edit (lane openRepoProject-3's F1 H-3 at `2cf34d3`). Checked here on Git 2.36.6
-and 2.43.0: with `core.trustctime=false` and `core.checkStat=minimal` in the
-repository's configuration, such an edit gives no record under the two older
-pins and ` M` under all four. The pins follow `core.fsmonitor=false` on every
-status probe, the hidden-state probe and the removal, and like them outrank
-every configuration file; the removal's pins reach Git's own check, which runs
-in a child of the removal. A ctime or inode that changes without an edit makes
-Git compare the content instead, which is slower and never a wrong answer
-(Risks).
+and sub-second checks (where Git is built with `USE_NSEC`). Under either
+repository setting an edit that keeps a file's size and restores its mtime
+matches the index entry, so the status probe and Git's own check both read the
+worktree clean and the removal deletes the edit (lane openRepoProject-3's F1 H-3
+at `2cf34d3`). Checked here on Git 2.36.6 and 2.43.0: with
+`core.trustctime=false` and `core.checkStat=minimal` in the repository's
+configuration, such an edit gives no record under the two older pins and ` M`
+under all four. The pins follow `core.fsmonitor=false` on every status probe,
+the hidden-state probe and the removal, and like them outrank every
+configuration file; the removal's pins reach Git's own check, which runs in a
+child of the removal. A ctime or inode that changes without an edit makes Git
+compare the content instead, which is slower and never a wrong answer (Risks).
 
 Every Git child, of every kind, except the push child of `clean --action push`,
 also carries `-c protocol.allow=never -c protocol.file.allow=never -c
@@ -965,6 +984,12 @@ The design relies on these Git behaviours, with the release that brought each:
 | `ls-files -v` combined with `--stage`, and `worktree remove`'s refusals for a populated submodule and an admin `modules` entry | verified on 2.43 only (BA:132-137, BA:665-668) |
 | the variables of `rev-parse --local-env-vars` | measured by task 2.2: 2.36.6 prints sixteen, 2.40.4 and 2.43.0 fifteen (BA:244-250); the extra name, `GIT_INTERNAL_SUPER_PREFIX`, is printed through 2.39, and with it set 2.36 fails closed in every command with `fatal: version doesn't support --super-prefix`; resolved by scrubbing it, sixteen names then and seventeen with R-25's `GIT_ALLOW_PROTOCOL` (R-21), the floor staying 2.36; thirty-one since Brett Heap's ruling Q9 B added the fourteen trace variables, which every release from 2.36.6 to 2.43.7 reads alike (D6) |
 
+The table is not exhaustive. Behaviours that Brett Heap's rulings LQ-10 and
+LQ-11 rely on, `core.trustctime`, `core.checkStat`, `config --type=bool`,
+`extensions.worktreeConfig` and the `commondir` file, are all older than 2.36
+and were checked alike on 2.36.6 and 2.43.0 (lane openRepoProject-3's W9 L9,
+R-125; D7, D11).
+
 Governance task 2.2 verifies the floor before the handoff: Git v2.36.x built
 from its release tarball in a scratch directory, first on PATH, and a scratch
 script comparing each row's output with Git 2.43's. If any row differs, the
@@ -1010,8 +1035,10 @@ revert, rebase or bisect is, or may be, in progress there; finish or abort it,
 then run again" (LQ-14); `worktree-only-commits` "a commit is, or may be, held
 only by this worktree's HEAD reflog or refs/worktree; keep it on a branch or
 tag, or review, then git worktree remove yourself" (LQ-13);
-`registration-mismatch` and `inspection-error` "review,
-then git worktree repair or git worktree prune, or remove the row by hand";
+`registration-mismatch` "review, then git worktree repair or git worktree
+prune, unset core.worktree and core.bare in the worktree's config.worktree, or
+remove the row by hand" (LQ-11, R-125); `inspection-error` "review, then git
+worktree repair or git worktree prune, or remove the row by hand";
 `locked-worktree` "unlock it yourself if it should go"; every other class its
 recommendation.
 
@@ -1365,7 +1392,12 @@ record once the index and tree matched the branch head.
   as under some backup tools and network filesystems, so Git compares those
   files' content on every probe] -> Accepted (Brett Heap's ruling LQ-10): the
   probe is slower there, never wrong, and a slow probe makes a plan incomplete,
-  never unsafe (D11).
+  never unsafe (D11). Where the repository defines a clean filter, a ctime-only
+  change under `core.trustctime=false` now runs that filter once per probe,
+  where it ran none before, which widens the filter residual that LQ-16 leaves
+  open with Brett Heap; a filter whose command is missing gives a false
+  `dirty` or a failed probe, and both fail closed (lane openRepoProject-3's W9
+  L2, R-125).
 - [A repository whose every worktree carries a gitlink, the V5 deferral's
   motivating repository (Opensoft-Tenant: 20 rows pass every gate before
   `deferred-target-cap` and all 20 are `contains-submodule` after it), yields 0

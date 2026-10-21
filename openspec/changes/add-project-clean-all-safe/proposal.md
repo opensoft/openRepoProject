@@ -616,7 +616,9 @@ Headers are quoted verbatim, one per line; ADDED headers are proposed text.
     effective work tree is not its registered path disagrees with its
     registration, read where `extensions.worktreeConfig` is set, with the
     scenario "A linked worktree whose work tree is redirected" (Brett Heap's
-    ruling LQ-11); the scrub
+    ruling LQ-11), and whose administrative `commondir` must name the common
+    directory, with the scenario "A commondir that names another repository"
+    (R-125); the scrub
     with `GIT_OPTIONAL_LOCKS=0` (`BA:243-253`); NUL parsing; the combined
     probe, its pins and bounds (`BA:629-652`, `BA:793-814`), among them
     `core.trustctime=true` and `core.checkStat=default` on the status and
@@ -757,7 +759,11 @@ Headers are quoted verbatim, one per line; ADDED headers are proposed text.
   suggestion is gated by this change's gates and refusal codes
   (`SY:287-306`), and it reuses this change's evidence model, ladder function
   and Git 2.36 refusal (`SY:39-51`, `SY:78-109`). It should be ratified after
-  this change, and re-aligned if this change moves before ratification.
+  this change, and re-aligned if this change moves before ratification. Its
+  quotes of this change's status pins as the two older ones (its
+  `specs/project-overview/spec.md:202-204` and `design.md:650-652` at
+  `961c405`) are stale after Brett Heap's ruling LQ-10, and are
+  `add-project-overview`'s to restate.
 - **Implementation order.** Feature `004-<slug>` lands before the overview's
   `005-<slug>`. PR #8 has landed, so feature 004 builds on its `project` and
   tests and merges `main` into its branch as `main` moves. Never rebase: the
@@ -976,7 +982,9 @@ Departures from packet decisions, each citing the decision departed from:
   hidden-state probe and the removal therefore also pass `-c
   core.trustctime=true -c core.checkStat=default`, after `-c
   core.fsmonitor=false`, and like the other pins they outrank every
-  configuration file (design D9, D11, Risks).
+  configuration file. The hidden-state probe's two older pins, which design
+  D11 gave it for uniformity, become a requirement with the two new ones
+  (design D9, D11, Risks).
 - **Owner tools see the repository the check inspected** (Brett Heap's
   ruling LQ-12 of 2026-10-21, in lane openRepoProject-3's session, "yes to all
   six recommendations, LQ-10 to LQ-15", on lane openRepoProject-3's
@@ -997,7 +1005,8 @@ Departures from packet decisions, each citing the decision departed from:
   LQ-11 of 2026-10-21, in lane openRepoProject-3's session, "yes to all six
   recommendations, LQ-10 to LQ-15", on lane openRepoProject-3's
   recommendation "Approve. Stricter, protective."; an addition to the two-way
-  registration of `BA:203-235`): where a repository sets
+  registration of `BA:203-235`, and a departure from `BA:615`'s F of at most 7
+  and `BA:679`'s at most five revalidation children): where a repository sets
   `extensions.worktreeConfig`, Git applies a `core.worktree` or `core.bare`
   from a linked worktree's `config.worktree`, or from the repository's own
   `config`, to that worktree, so every probe of a row whose registration
@@ -1009,7 +1018,14 @@ Departures from packet decisions, each citing the decision departed from:
   repository's `extensions.worktreeConfig` is read once per common directory,
   and where it is true each linked row's effective work tree is read by `git
   rev-parse --path-format=absolute --show-toplevel` in it, before its status
-  probe, and again at revalidation (design D6, D7, D14, Risks).
+  probe, and again at revalidation; the registration also requires the
+  administrative `commondir` to name the common directory, so that row 4c
+  reads the `config` Git reads (lane openRepoProject-3's W9 M2, R-125). Row
+  4c, the per-row probe and the `commondir` read reach `project overview`
+  through the evidence model that `add-project-overview` adopts, as Q9 B's
+  pins do; the overview's probe count and its scenario "One probe set per
+  repository" are `add-project-overview`'s to restate (design D6, D7, D14,
+  Risks).
 - **A commit held only by the worktree keeps it** (Brett Heap's ruling LQ-13
   of 2026-10-21, in lane openRepoProject-3's session, "yes to all six
   recommendations, LQ-10 to LQ-15", on lane openRepoProject-3's
@@ -1442,7 +1458,25 @@ D14, D21, D22, Risks; `tasks.md` 1.2; the deltas' `Clean previews and applies
 a batch of eligible worktree removals in one repository` and its scenarios "An
 operation in progress" and "A commit held only by the worktree", `Clean bounds
 its Git work and reports omitted work`, `Cleanup preserves all local work not
-proven disposable` and `Cleanup revalidates destructive actions`).
+proven disposable` and `Cleanup revalidates destructive actions`). Lane
+openRepoProject-3's W9 read of LQ-10 and LQ-11 at `ea697ba` and `addd346`
+(HIGH 0, MEDIUM 2, LOW 9, nothing departing), under the lead's R-125, adds the
+`commondir` file to the two-way registration and its scenario "A commondir
+that names another repository" (M2), the pointer that row 4c and the per-row
+probe reach `project overview` (M1), and L1 to L9: the non-racy precondition,
+the filter risk under LQ-16, the hidden-state pins made a requirement, the
+stale quote in `add-project-overview`, `USE_NSEC`, the remedy that unsets
+`core.worktree` and `core.bare`, the citations of `BA:615` and `BA:679`, two
+scenarios said to run without the extension, and D17's table said not to be
+exhaustive (Capabilities project-command ADDED; Decisions, departures;
+Dependencies and Sequencing; this list; design Context, D6, D7, D11, D17,
+D18, Risks; `tasks.md` 1.2, 1.4; the deltas' `Clean reports local worktree
+state` and its scenario "The plain report exits by completeness", `Clean
+previews and applies a batch of eligible worktree removals in one repository`,
+`Clean bounds its Git work and reports omitted work` and its scenario "Bounded
+revalidation work", and the `project-command` ADDED evidence model with its
+scenarios "An edit that keeps its size and restores its mtime" and "A
+commondir that names another repository").
 
 ### Council Verdicts
 

@@ -71,7 +71,8 @@ resolved repository.
   registered worktree rows
 - **THEN** it prints an incomplete report carrying `inspect-cap` and `omitted`,
   and exits 1, where before this change it exited 0 whenever it printed
-- **AND** on a repository with 200 rows the plain report is complete, says that
+- **AND** on a repository with 200 rows and without
+  `extensions.worktreeConfig` the plain report is complete, says that
   `--all-safe` itself would be incomplete with `inspect-cap`, and exits 0, its
   JSON carrying `selected: null` and a `notes` entry `inspect-cap` with
   `rows: 200`, while `project clean <root> --all-safe` on the same repository
@@ -721,7 +722,8 @@ gate excludes SHALL refuse with `target-excluded`, whose `reason` carries the
 exclusion reason and whose message keeps the existing wording for the current
 worktree and for a class that is not removable. Every refusal that blocks a
 plan, in either mode, SHALL name a manual remedy: `git worktree prune`, `git
-worktree repair`, or removing the offending row by hand, as the cause fits.
+worktree repair`, unsetting `core.worktree` and `core.bare` in a worktree's
+`config.worktree`, or removing the offending row by hand, as the cause fits.
 
 The human preview SHALL list the selected rows, then the excluded rows grouped
 by reason, each group with its next step; an `ignored-local-files` exclusion
@@ -888,11 +890,11 @@ starts and SHALL hold back a 10 s reconciliation reserve, so that work stops 50
 s after start; time spent blocked at the confirmation question SHALL NOT count,
 both deadlines moving later by the time spent waiting. Each Git child SHALL get
 `min(5 s, work remaining)`, and each filesystem call (`lstat`, `realpath`, the
-reads of `.git`, `gitdir`, reflog and manifest files, and the listing of a
-worktree's administrative directory) SHALL be abandoned
-after the same budget, recording `probe-timeout`, or `deadline-exceeded` where
-the deadline was the limit, and leaving its values null. Probing SHALL be
-serial. Reconciliation probes SHALL get `min(5 s, reserve remaining)`.
+reads of `.git`, `gitdir`, `commondir`, reflog and manifest files, and the
+listing of a worktree's administrative directory) SHALL be abandoned after the
+same budget, recording `probe-timeout`, or `deadline-exceeded` where the
+deadline was the limit, and leaving its values null. Probing SHALL be serial.
+Reconciliation probes SHALL get `min(5 s, reserve remaining)`.
 
 The deadline SHALL bound inspection and SHALL gate only the start of a removal:
 a removal child SHALL be spawned only while at least the 5 s removal floor of
@@ -981,8 +983,9 @@ recompute the full report, and the final rescan at most three.
 
 #### Scenario: Bounded revalidation work
 
-- **WHEN** a repository has five worktree rows, three of them selected, and
-  `--all-safe --apply --yes` runs under a counting `git` wrapper on PATH
+- **WHEN** a repository without `extensions.worktreeConfig` has five worktree
+  rows, three of them selected, and `--all-safe --apply --yes` runs under a
+  counting `git` wrapper on PATH
 - **THEN** every target's revalidation spawns at most six children, the final
   rescan spawns three, three removals run, no merged-set listing and no status
   probe of a non-selected worktree runs after confirmation, and the record's
