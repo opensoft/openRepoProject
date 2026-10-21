@@ -418,6 +418,33 @@ class PushTests(clean_support.CleanCase):
         self.assertEqual(pushes(clean_support.child_log(log)), [], "no push child")
         self.assertEqual((self.refs(root), self.refs(remote)), before, "nothing pushed")
 
+    def test_clean_push_refuses_a_branch_it_may_not_push_no_unique_worktree(self):
+        # The first case of PR #19's "Push refuses a branch it may not push" (at
+        # 4485678, round (b)): the baseline's refusal (project:684-685
+        # at 961c405; project:6128-6130 at fc27b73), exit 2 and no code, when
+        # the rows hold the branch other than exactly once. 002-loose has a
+        # commit of its own and no worktree; 003-shared, unpublished with a
+        # commit of its own, is held by two worktrees, the second added with
+        # --force, and is refused with the same message.
+        root = self.repo()
+        remote = self.bare_remote()
+        loose = self.git(root, "commit-tree", "main^{tree}", "-p", "main", "-m", "a commit of its own").strip()
+        self.git(root, "update-ref", "refs/heads/002-loose", loose)
+        first, second = self.base / "shared-tree", self.base / "shared-tree-2"
+        self.git(root, "worktree", "add", "-q", "-b", "003-shared", first)
+        self.advance(first)
+        self.git(root, "worktree", "add", "-q", "--force", second, "003-shared")
+        registry = self.git(root, "worktree", "list", "--porcelain").splitlines()
+        self.assertEqual((registry.count("branch refs/heads/002-loose"), registry.count("branch refs/heads/003-shared")),
+                         (0, 2))
+        env, log = self.counting()
+        for case, branch in (("no worktree", "002-loose"), ("two worktrees", "003-shared")):
+            with self.subTest(case):
+                self.assert_push_refused(root, branch, env, log, f"No unique linked worktree found for branch {branch}",
+                                         remote)
+        self.assertEqual(self.git(root, "config", "--get-all", "branch.003-shared.remote", check=False), "",
+                         "no upstream was set")
+
     def test_clean_push_refuses_the_default_branch(self):
         # P1 (project:5761-5762 at 92daad9): main, the merge target, one commit
         # ahead of its upstream origin/main; P1 pushed it to origin.
