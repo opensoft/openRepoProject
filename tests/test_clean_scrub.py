@@ -2,9 +2,16 @@
 
 FR-054; design D6, D9 and D11; contracts/project-clean.md, "Git children";
 lead rulings R-21, R-23, R-25 and R-28. The push kind follows draft PR #19
-(LQ-3, an assumption until Brett Heap's word).
+(LQ-3, an assumption until Brett Heap's word). The fourteen trace names and
+the three trace2 variables at "0" follow Brett Heap's ruling Q9 B, which
+draft PR #19 records in change 1's Environment paragraph and its scenario
+"Trace targets are never written" (lead ruling R-99 (b) and (d)).
 """
+import json
 import os
+from pathlib import Path
+import shlex
+import sys
 import unittest
 from unittest import mock
 
@@ -13,14 +20,23 @@ import clean_support
 project = clean_support.load_project()
 
 # The contract's list, character for character and in its order
-# (contracts/project-clean.md, "Git children").
+# (contracts/project-clean.md, "Git children"), then the fourteen trace names
+# of Brett Heap's ruling Q9 B in the order PR #19's Environment paragraph lists
+# them, read from Git 2.36.6 to 2.43.7's sources.
 SCRUB = tuple("""
 GIT_ALTERNATE_OBJECT_DIRECTORIES GIT_CONFIG GIT_CONFIG_PARAMETERS
 GIT_CONFIG_COUNT GIT_OBJECT_DIRECTORY GIT_DIR GIT_WORK_TREE
 GIT_IMPLICIT_WORK_TREE GIT_GRAFT_FILE GIT_INDEX_FILE GIT_NO_REPLACE_OBJECTS
 GIT_REPLACE_REF_BASE GIT_PREFIX GIT_SHALLOW_FILE GIT_COMMON_DIR
 GIT_INTERNAL_SUPER_PREFIX GIT_ALLOW_PROTOCOL
+GIT_TRACE GIT_TRACE_BARE GIT_TRACE_CURL GIT_TRACE_CURL_NO_DATA
+GIT_TRACE_FSMONITOR GIT_TRACE_PACKET GIT_TRACE_PACKFILE GIT_TRACE_PACK_ACCESS
+GIT_TRACE_PERFORMANCE GIT_TRACE_REDACT GIT_TRACE_REFS GIT_TRACE_SETUP
+GIT_TRACE_SHALLOW GIT_TRACE_WORKING_TREE_ENCODING
 """.split())
+
+# The three trace2 targets, set to "0" on every Git child (Q9 B).
+TRACE2_OFF = {"GIT_TRACE2": "0", "GIT_TRACE2_EVENT": "0", "GIT_TRACE2_PERF": "0"}
 
 # The seven protocol pins and the two status pins, as the contract spells them.
 PROTOCOL = tuple("""
@@ -51,15 +67,17 @@ def holds(argv, part):
 
 
 class ScrubTests(unittest.TestCase):
-    def test_clean_scrub_removes_the_seventeen_names(self):
+    def test_clean_scrub_removes_the_thirty_one_names(self):
         self.assertEqual(project.GIT_SCRUB, SCRUB)
-        self.assertEqual(len(set(SCRUB)), 17)
-        # The caller's environment, built whole: all seventeen, the two config
-        # files, and names the scrub never touches; no GIT_OPTIONAL_LOCKS.
+        self.assertEqual(len(set(SCRUB)), 31)
+        # The caller's environment, built whole: all thirty-one, the two config
+        # files, the three trace2 targets naming files, another trace2 name,
+        # and names the scrub never touches; no GIT_OPTIONAL_LOCKS.
         caller = {name: "caller-" + name for name in SCRUB}
         caller.update(GIT_CONFIG_GLOBAL="/cfg/global", GIT_CONFIG_SYSTEM="/cfg/system",
                       GIT_CONFIG_NOSYSTEM="1", PATH="/usr/bin:/bin",
-                      LANE_C_UNRELATED="kept")
+                      LANE_C_UNRELATED="kept", GIT_TRACE2_BRIEF="1",
+                      **{name: "/trace/" + name for name in TRACE2_OFF})
         with mock.patch.dict(os.environ, caller, clear=True):
             self.assertEqual(dict(os.environ), caller)
             envs = {kind: project.git_env(kind) for kind in KINDS}
@@ -72,6 +90,7 @@ class ScrubTests(unittest.TestCase):
                 kept = ("GIT_ALLOW_PROTOCOL",) if kind == "push" else ()
                 expected = {name: value for name, value in caller.items()
                             if name not in SCRUB or name in kept}
+                expected.update(TRACE2_OFF)
                 if kind in READ_ONLY:
                     expected["GIT_OPTIONAL_LOCKS"] = "0"
                 self.assertEqual(env, expected)
@@ -83,17 +102,26 @@ class ScrubTests(unittest.TestCase):
                         self.assertEqual(env[name], caller[name])
                     else:
                         self.assertNotIn(name, env)
+                # Every kind, the push child's included: the caller's trace2
+                # targets give way to "0"; the other trace2 names stay (Q9 B).
+                for name, value in TRACE2_OFF.items():
+                    self.assertEqual(env[name], value)
+                self.assertEqual(env["GIT_TRACE2_BRIEF"], "1")
                 if kind not in READ_ONLY:
                     self.assertNotIn("GIT_OPTIONAL_LOCKS", env)
-        # The push child keeps GIT_ALLOW_PROTOCOL only: the other sixteen go.
+        # The push child keeps GIT_ALLOW_PROTOCOL only: the other thirty go.
         self.assertEqual([name for name in SCRUB if name in envs["push"]],
                          ["GIT_ALLOW_PROTOCOL"])
-        # A read-only probe sets GIT_OPTIONAL_LOCKS=0 over a caller's value.
+        # A read-only probe sets GIT_OPTIONAL_LOCKS=0 over a caller's value, and
+        # every kind sets the trace2 targets off with none given.
         locked = {"GIT_OPTIONAL_LOCKS": "1", "PATH": "/usr/bin:/bin"}
         with mock.patch.dict(os.environ, locked, clear=True):
             for kind in READ_ONLY:
                 self.assertEqual(project.git_env(kind),
-                                 {"GIT_OPTIONAL_LOCKS": "0", "PATH": "/usr/bin:/bin"})
+                                 {"GIT_OPTIONAL_LOCKS": "0", "PATH": "/usr/bin:/bin", **TRACE2_OFF})
+            for kind in KINDS:
+                self.assertEqual({name: project.git_env(kind).get(name) for name in TRACE2_OFF},
+                                 TRACE2_OFF)
             self.assertEqual(dict(os.environ), locked)
         # An unknown kind fails closed rather than going unscrubbed.
         with self.assertRaises(KeyError):
@@ -144,6 +172,127 @@ class ScrubTests(unittest.TestCase):
         self.assertEqual(project.git_argv("push", push), ["git", *push])
         with self.assertRaises(KeyError):
             project.git_argv("unknown", args)
+
+
+# The env-dumping git, inline (lead ruling R-99 (d) 2). First on PATH, an sh
+# script that execs this Python, which appends one JSON line per child, its
+# argument vector and every GIT_* variable it was given, then execs the real
+# git by absolute path: the record is the environment that Git itself runs in.
+ENV_DUMP = r'''
+import json, os, sys
+log, real, argv = sys.argv[1], sys.argv[2], sys.argv[3:]
+record = {"argv": argv,
+          "env": {name: value for name, value in os.environ.items() if name.startswith("GIT_")}}
+with open(log, "a") as stream:
+    stream.write(json.dumps(record) + "\n")
+os.execv(real, [real] + argv)
+'''
+
+# The caller's trace variables of PR #19's scenario, each set to a file path.
+TRACE_NAMES = ("GIT_TRACE", "GIT_TRACE_PACKET", "GIT_TRACE2", "GIT_TRACE2_EVENT")
+
+
+class TraceTests(clean_support.CleanCase):
+    """Brett Heap's ruling Q9 B, through PR #19's scenario "Trace targets are
+    never written" (project-command, the evidence model); rule 1 names each
+    test after it. Every trace target named here is a file in an empty
+    directory, so a trace written anywhere leaves a file there."""
+
+    def env_dump(self):
+        """The env-dumping git first on PATH; returns the environment and its log."""
+        bin_dir, log, script = self.base / "env-dump-bin", self.base / "env-dump.jsonl", self.base / "env-dump.py"
+        bin_dir.mkdir()
+        script.write_text(ENV_DUMP)
+        words = (sys.executable, "-I", str(script), str(log), clean_support.REAL_GIT)
+        wrapper = bin_dir / "git"
+        wrapper.write_text("#!/bin/sh\nexec " + " ".join(map(shlex.quote, words)) + ' "$@"\n')
+        wrapper.chmod(0o755)
+        log.write_text("")
+        return self.path_first(bin_dir), log
+
+    def children(self, log):
+        """The env-dumping git's records, one per Git child, in their order."""
+        return [json.loads(line) for line in Path(log).read_text().splitlines()]
+
+    def targets(self, directory, *names):
+        """An empty directory, and {name: the absolute path of a file in it} per name."""
+        directory.mkdir()
+        return {name: str(directory / name.lower()) for name in names}
+
+    def global_config(self, path, **settings):
+        """A global configuration file at path with each trace2.KEY = VALUE."""
+        path.write_text("[trace2]\n" + "".join(f"\t{key} = {json.dumps(value)}\n"
+                                               for key, value in settings.items()))
+        return str(path)
+
+    def assert_unwritten(self, directory, result=None):
+        detail = "" if result is None else "\n" + clean_support.transcript(result)
+        self.assertEqual(sorted(os.listdir(directory)), [], "a trace target was written" + detail)
+
+    def test_status_trace_targets_are_never_written(self):
+        # PR #19's scenario through the real git: status and clean for a
+        # repository with one linked worktree, the caller's four trace
+        # variables and the global trace2.eventTarget each naming a file.
+        root = self.repo()
+        self.git(root, "worktree", "add", "-q", "-b", "030-linked", self.base / "030-linked-tree")
+        traces = self.base / "traces"
+        env = dict(self.env, **self.targets(traces, *TRACE_NAMES))
+        env["GIT_CONFIG_GLOBAL"] = self.global_config(self.base / "global.config",
+                                                      eventTarget=str(traces / "config-event"))
+        runs = (("status", root), ("clean", root), ("clean", root, "--json"))
+        for args in runs:
+            with self.subTest(args=args[:1] + args[2:]):
+                result = self.run_cli(*args, env=env)
+                self.assert_status(result, 0)
+                self.assert_unwritten(traces, result)
+
+        with self.subTest("the three trace2 targets in the global configuration, no trace variable"):
+            config = self.base / "config-traces"
+            config.mkdir()
+            env = dict(self.env, GIT_CONFIG_GLOBAL=self.global_config(
+                self.base / "targets.config", normalTarget=str(config / "normal"),
+                eventTarget=str(config / "event"), perfTarget=str(config / "perf")))
+            for args in runs:
+                result = self.run_cli(*args, env=env)
+                self.assert_status(result, 0)
+                self.assert_unwritten(config, result)
+
+    def test_status_trace_targets_are_never_written_by_any_kind_of_child(self):
+        # The scenario's wrapper, run over every kind of Git child: status,
+        # doctor and the clean report (probes, status and hidden-state probes),
+        # an --all-safe apply (the removal), delete-branch (the delegate) and
+        # push (the push child), with the caller's four trace variables each
+        # naming a file.
+        root = self.repo()
+        remote = self.bare_remote()
+        self.merged_worktree("040-done")
+        feature = self.base / "041-feature-tree"
+        self.git(root, "worktree", "add", "-q", "-b", "041-feature", feature)
+        self.git(feature, "push", "-q", "-u", "origin", "041-feature")
+        head = self.commit(feature, "one more", allow_empty=True)
+        traces = self.base / "traces"
+        env, log = self.env_dump()
+        env.update(self.targets(traces, *TRACE_NAMES))
+        for args in (("status", root), ("doctor", root), ("clean", root, "--json"),
+                     ("clean", root, "--all-safe", "--apply", "--yes"),
+                     ("clean", root, "--apply", "--action", "delete-branch", "--branch", "040-done", "--yes"),
+                     ("clean", root, "--apply", "--action", "push", "--branch", "041-feature", "--yes")):
+            result = self.run_cli(*args, env=env)
+            if args[0] != "doctor":  # doctor's exit follows its tool rows, not Git's
+                self.assert_status(result, 0)
+            self.assert_unwritten(traces, result)
+
+        children = self.children(log)
+        for kind, part in (("status", ["status", "--porcelain=v1"]), ("hidden", ["ls-files", "-v"]),
+                           ("removal", ["worktree", "remove"]), ("delegate", ["branch", "-d"]),
+                           ("push", ["push"])):
+            self.assertTrue(any(holds(child["argv"], part) for child in children), f"no {kind} child ran")
+        for child in children:
+            with self.subTest(argv=child["argv"]):
+                self.assertEqual({name: child["env"].get(name) for name in TRACE2_OFF}, TRACE2_OFF)
+                self.assertEqual([name for name in SCRUB if name in child["env"]], [])
+        self.assertEqual(self.git(remote, "rev-parse", "refs/heads/041-feature").strip(), head)
+        self.assertEqual(self.git(root, "branch", "--list", "040-done"), "")
 
 
 if __name__ == "__main__":
