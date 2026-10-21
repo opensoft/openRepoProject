@@ -289,7 +289,8 @@ builds the shared evidence model the overview reads across many repositories.
      `worktree add -B`; and one outcome rule makes a missing, empty,
      bound-reaching or undecidable reflog `reflog-unavailable`, any other OS
      error the row's `inspection-error`, and an unfinished read an unprobed
-     row (`inspection-incomplete`); only the index gates stay residual
+     row (`inspection-incomplete`); only the index gates, then
+     `operation-in-progress` and `worktree-only-commits`, stay residual
      exclusions the batch applies) and [G]'s `inspection-incomplete` and
      `inspect-cap`
      refusals, and with no row left unprobed; a `merged-removable` worktree
@@ -334,8 +335,9 @@ builds the shared evidence model the overview reads across many repositories.
      `common_dir_valid_utf8`; `ignored_samples` entries as
      `{path, path_valid_utf8}` objects); a `--json` exit 2 other than an
      argument error prints `{"error", "code"}` with code `git-too-old`,
-     `git-unavailable`, `refused`, `os-error` or `internal-error`, and an
-     argument error prints argparse's usage on standard error and no JSON.
+     `git-unavailable`, `relative-config-path`, `refused`, `os-error` or
+     `internal-error`, and an argument error prints argparse's usage on
+     standard error and no JSON.
      SHALL emit every path by [E]'s parsing and [P]'s rules: exactly when valid
      UTF-8, else escaped with its flag false; SHALL print a path holding a code
      point of Unicode general category Cc, Cf, Zl or Zp (control, format, line
@@ -478,7 +480,8 @@ drafted in parallel. This change depends on it, cites it by name, and does not
 restate its contract. Change 1 owns:
 
 - the shared evidence model: the version check, the four repository-wide
-  probes memoized per `common_dir`, the combined status probe per worktree row
+  probes memoized per `common_dir` and the `extensions.worktreeConfig` read
+  beside them, the combined status probe per worktree row
   and its record bounds, NUL-delimited parsing and path escaping, the child
   environment and pins (R-23 adds `-c protocol.allow=never`, and R-25 adds
   the six per-protocol `allow=never` pins and `GIT_ALLOW_PROTOCOL` in the
@@ -709,7 +712,8 @@ Departures from packet decisions, each citing the decision departed from:
   `inspection-error`, and an unfinished read leaves it unprobed
   (`inspection-incomplete`). Either code keeps the finding with the
   read-only suggestion, that `suggestion_gate` and requirement 7's message.
-  Only the index gates stay residual exclusions the batch applies.
+  Only the index gates, then `operation-in-progress` and
+  `worktree-only-commits`, stay residual exclusions the batch applies.
 - **Determinism scoped** (DI:440-449, "never depends on timing"):
   requirement 3 promises timing-independent JSON only for an uncut run, and
   starts a repository's phase 2 only once every candidate earlier in
@@ -1268,7 +1272,9 @@ is declared here for Brett Heap's review:
   code list (POD:677-678); requirement 11's exit rule (POD:765-768), a new
   paragraph after POD:768, and the scenario "A relative configuration path"
   after "Git unavailable" (POD:790), 62 scenarios in all; design D13's
-  scenario map (design.md:697). PR #19 at `9fb22fa` leaves the overview's
+  scenario map (design.md:697); the summary of requirement 8 in
+  Capabilities (proposal.md:334-335); and task 1.4, which records the 62.
+  PR #19 at `9fb22fa` leaves the overview's
   code and exit status under this test to this change. If Brett Heap strikes
   the code, the fallback is `refused` with exit 2.
 - **`operation-in-progress` and `worktree-only-commits` (LQ-14, PR #19 at
@@ -1283,7 +1289,9 @@ is declared here for Brett Heap's review:
   applies, beside the index gates: the overview evaluates neither, makes no
   listing, `logs/HEAD` read or `rev-list` child for them, and keeps its
   `--all-safe` suggestion, which `project clean`'s batch then excludes itself.
-  Amended: requirement 7 (POD:525-526) and design D5 (design.md:324-325). The
+  Amended: requirement 7 (POD:525-526) and design D5 (design.md:324-325),
+  with the proposal's summary of requirement 7 in Capabilities
+  (proposal.md:290-291) and its reflog-gates departure (proposal.md:704). The
   alternative, for Brett Heap: overview gate codes `operation-in-progress`
   and `worktree-only-commits`, evaluated from the same reads, each a new row
   in requirement 7's closed gate table, which withholds `--all-safe` for that
@@ -1298,7 +1306,9 @@ is declared here for Brett Heap's review:
   scenario "One probe set per repository" counts `probes.performed` exactly,
   and the `estimated` rule and design D6 list the repository-wide probes.
   Amended: requirement 3's `estimated` rule (POD:250-254) and that scenario
-  (POD:129); design D6 (design.md:390-392). Spec 005 carries the parity.
+  (POD:129); design D6 (design.md:390-392); and the shared evidence model as
+  "Dependencies and Sequencing" lists it (proposal.md:472-473). Spec 005
+  carries the parity.
 
 Q15 A and Q16 B together: the handlers only record the signal wherever a
 child can run, and Q15 A's raising span, feature 004's `raising_signals` (its
