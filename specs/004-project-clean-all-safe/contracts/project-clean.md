@@ -60,11 +60,13 @@ is refused first (lead rulings R-57, R-62 and R-67 (b)). A path two entries
 share is such a case, both entries also `registration-mismatch`,
 `inspection-error` rows. So is a P whose match is undecided, whichever entry's
 realpath could not be read: every entry the row cap takes counts as a match,
-none is exempt from the cap, so the rows inspected are the main worktree and
-the 127 linked worktrees with the smallest paths, as the delta's scenario
-"Row cap and planning failures" takes them, never more than the cap's 128,
-and the run refuses with `inspection-incomplete`, exit 2 (lead rulings R-73
-(d), R-74 (a) and R-78 (b)).
+none is exempt from the cap, a fill of FR-013 and of the delta's
+`spec.md:262-263` ("P SHALL be probed first and SHALL be exempt from the row
+cap"), which presumes a P that is a known entry, so the rows inspected are
+the main worktree and the 127 linked worktrees with the smallest paths, as
+the delta's scenario "Row cap and planning failures" takes them, never more
+than the cap's 128, and the run refuses with `inspection-incomplete`, exit 2
+(lead rulings R-73 (d), R-74 (a), R-78 (b) and R-91 LOW F).
 
 ## Order of a run
 
@@ -207,8 +209,9 @@ did not read back (`branch_present` null on a `removed`, `failed` or
 `unknown` target), the branches of `refused` and `not-attempted` targets
 otherwise staying listed, since nothing was spawned for them; the left-out
 names print on one new line after `Branches kept:` and before "D18
-residual-window line", `Branches not confirmed: B2.`, a `TEXT` key the
-text lane adds (T094, a lead-approved contracts edit), and the line reads
+residual-window line", `Branches not confirmed: B2.`, a `TEXT` key,
+`branches_not_confirmed`, the text lane adds (T094, a lead-approved
+contracts edit), and the line reads
 `Branches kept: none.` when every branch is left out; D18 has neither form,
 its stop and its success lines (`design.md:765-768`) naming no branch the
 run could not confirm, so both are a fill (lead rulings R-76 (f), R-79 P-10

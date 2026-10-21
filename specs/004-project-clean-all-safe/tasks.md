@@ -1376,12 +1376,14 @@ L-8).
   refusal, a twin that passes gates 1 to 5 being excluded as `not-requested`
   (lead rulings R-62 (a), R-67 (b) and R-69). When the realpath of P or of
   any other entry cannot be read, P's match is undecided: no entry is exempt
-  from the row cap, the rows inspected are the ones the cap takes, the main
-  worktree and the 127 linked worktrees with the smallest paths, never more
-  than the cap's 128, as the `project-clean` delta's scenario "Row cap and
-  planning failures" takes them (its `spec.md:828-834`), and `check_plan()`
-  refuses with `inspection-incomplete` (lead rulings R-73 (d), R-74 (a) and
-  R-78 (b); T069's
+  from the row cap, a fill of FR-013 and of the `project-clean` delta's
+  `spec.md:262-263`, "P SHALL be probed first and SHALL be exempt from the
+  row cap", which presumes a P that is a known entry; the rows inspected are
+  the ones the cap takes, the main worktree and the 127 linked worktrees with
+  the smallest paths, never more than the cap's 128, as the delta's scenario
+  "Row cap and planning failures" takes them (its `spec.md:828-834`), and
+  `check_plan()` refuses with `inspection-incomplete` (lead rulings R-73
+  (d), R-74 (a), R-78 (b) and R-91 LOW F; T069's
   `test_clean_single_target_p_s_own_realpath_unread_keeps_the_cap`, and
   T097's
   `test_clean_row_cap_and_planning_failures_an_unreadable_realpath_in_single_mode`
@@ -2057,9 +2059,10 @@ US2, US7 and US9.
   so that the rows inspected are P and the first 128 entries other than P,
   the main worktree first (lead ruling R-53 P-15), unless a realpath read
   fails, P's own or any other entry's: P's match is then undecided, no entry
-  is exempt, the rows inspected are the first 128 entries, the main worktree
-  first, and the plan refuses with `inspection-incomplete` (T049; lead
-  rulings R-73 (d), R-74 (a) and R-78 (b)); the limit of 16 counting P alone,
+  is exempt, a fill of FR-013 and of the delta's `spec.md:262-263` (T049),
+  the rows inspected are the first 128 entries, the main worktree first, and
+  the plan refuses with `inspection-incomplete` (lead rulings R-73 (d),
+  R-74 (a), R-78 (b) and R-91 LOW F); the limit of 16 counting P alone,
   and another row's `inspection-error`, omission by the cap or being left
   unprobed recorded as the non-blocking notes `inspection-incomplete`,
   `inspect-cap` and `deadline-exceeded`, while P's own
@@ -2310,16 +2313,19 @@ US3, US7 and US9; US5's text lane follows it (analyze M2 and L9).
   part, counted in that target's `probes_performed`. A target is `removed`
   only when its entry and path are gone and `reconciled` is true (FR-034;
   the `project-clean` delta's `spec.md:891-895`): an exit-0 child that is
-  gone but not reconciled is `unknown` with `reconciliation-incomplete`, as
-  is one whose rescan registry listing failed (`BA:518-526` at `da33d92`),
-  and a child killed at the ceiling that is gone but not reconciled is
-  `unknown` with `removal-ceiling`, exit 1 either way (lead ruling R-76 (a),
-  lane 3's H-1). A rescan read that fails or is cut marks the record: the
-  identity probe, while the planned root and common directory are still
-  there by `lstat`, the registry listing, the ref listing or the `lstat` of
-  the planned path. After exit 0 a marked record is `unknown` with
-  `reconciliation-incomplete` (the `project-clean` delta's
-  `spec.md:1012-1018`), and an unmarked unreconciled record is `unknown`
+  gone but not reconciled is `unknown` with `reconciliation-incomplete`
+  (`BA:521-523` at `da33d92`), as is one whose rescan registry listing failed
+  (`BA:518-526`, of which `BA:520-521`, "exit 0 without that evidence is
+  `unknown` with `unconfirmed-removal`", would read the other way for a
+  failed listing: the first of data-model.md's three overlaps; lead rulings
+  R-82 (a) and R-91 LOW E), and a child killed at the ceiling that is gone
+  but not reconciled is `unknown` with `removal-ceiling`, exit 1 either way
+  (lead ruling R-76 (a), lane 3's H-1). A rescan read that fails or is cut
+  marks the record: the identity probe, while the planned root and common
+  directory are still there by `lstat`, the registry listing, the ref
+  listing or the `lstat` of the planned path. After exit 0 a marked record
+  is `unknown` with `reconciliation-incomplete` (the `project-clean`
+  delta's `spec.md:1012-1018`), and an unmarked unreconciled record is `unknown`
   with `unconfirmed-removal`, reached only when every read succeeded and
   showed the removal not done (its `spec.md:966-970`), or when the identity
   was found lost or different (the `project-clean-review-safety` delta's
@@ -2411,9 +2417,10 @@ lead ruling R-83).
   research.md R4, lead ruling R-34; it pins T047); and
   `test_clean_a_second_sigint_abandons_reconciliation` (the `slow-after-remove`
   fake: SIGINT while the first removal runs, then a second SIGINT while its
-  rescan waits: the remaining rescans are abandoned, the target is `unknown`
-  with `reconciliation-incomplete` and the fields not read are null, the record
-  is printed, exit 130; plan review M17, FR-036). Scenarios: "A signal during a
+  rescan waits: the remaining rescans are abandoned, the target, whose child
+  exits 0, is `unknown` with `reconciliation-incomplete` after that exit and
+  the fields not read are null, the record is printed, exit 130; plan review
+  M17, FR-036; lead ruling R-91 LOW D). Scenarios: "A signal during a
   removal"; "SIGTERM before the apply phase".
   — files: `tests/test_clean_result.py`
   — verify: `python3 -c "import sys,unittest as u;L=u.defaultTestLoader;f=lambda s:[i for t in s for i in (f(t) if isinstance(t,u.TestSuite) else [t.id()])];I=[i for i in f(L.discover('tests',pattern=sys.argv[1])) if not i.startswith('unittest.')];A=sys.argv[2:];M=[a for a in A if not any(a in ('*',i.split('.')[-1]) for i in I)];[print('not collected:',m) for m in M];[print(e) for e in L.errors];sys.exit(1 if M or L.errors or not A else 0)" test_clean_result.py 'test_clean_a_signal_during_a_removal' 'test_clean_sigterm_before_the_apply_phase' 'test_clean_sigterm_before_the_apply_phase_after_the_last_probe' 'test_clean_sigterm_before_the_apply_phase_while_the_plan_is_written' 'test_clean_a_second_sigint_abandons_reconciliation'`
@@ -2486,8 +2493,8 @@ lead ruling R-83).
   otherwise staying listed, since nothing was spawned for them; the
   left-out names print on one new line after `Branches kept:` and before
   the residual-window line, `Branches not confirmed: B2.`, in T094's
-  `TEXT` key, and the line reads `Branches kept: none.` when every branch
-  is left out);
+  `TEXT` key, `branches_not_confirmed`, and the line reads `Branches kept:
+  none.` when every branch is left out);
   `test_clean_only_tracked_file_deletions`
   (tracked files deleted by hand in a registered worktree whose `.git` file is
   intact: classified `dirty` with the dirty advice, the line `Probable partial
@@ -2573,10 +2580,11 @@ lead ruling R-83).
   branches of `refused` and `not-attempted` targets otherwise staying
   listed; print the left-out names on one new line after `Branches kept:`
   and before the residual-window line, `Branches not confirmed: B2.`, a
-  new `TEXT` key in region `contracts`, a lead-approved contracts edit,
-  with its fixture in `tests/clean_support.py` (rule 2), since D18 has
-  none; and print `Branches kept: none.` when every branch is left out
-  (lead rulings R-76 (f) and R-79 P-10). T091 passes.
+  new `TEXT` key in region `contracts`, `branches_not_confirmed`, a
+  lead-approved contracts edit, with its fixture in `tests/clean_support.py`
+  (rule 2), since D18 has none; and print `Branches kept: none.` when every
+  branch is left out (lead rulings R-76 (f), R-79 P-10 and R-91 LOW C).
+  T091 passes.
   — files: `project`, `tests/clean_support.py`
   — verify: `python3 -m unittest discover -s tests -p 'test_clean_stop.py'`
 - [x] T095 [US5] [S] Run the US5 modules, every earlier module, the US3, US7
@@ -3289,8 +3297,11 @@ verification.
 - [ ] T128 [S] Run the whole suite in this worktree: `python3 -m unittest discover
   -s tests -v` passes; record the test count and the elapsed time, under 8
   minutes in `py-bench` (R11); run it under Python 3.10 too where an
-  interpreter is available; and confirm by script that `git diff 961c405 --
-  tests/test_project.py` changes only
+  interpreter is available, where an empty `discover` exits 0, so that a
+  selection naming an absent module passes vacuously: check the module
+  count in its output, which must equal the number of `tests/test_*.py`
+  modules (lead ruling R-85 (d), lane 3's LOW-H); and confirm by script that
+  `git diff 961c405 -- tests/test_project.py` changes only
   `test_clean_revalidates_a_worktree_after_confirmation` and adds the one
   `sys.modules` line to the loader, every other method's `ast` source being
   identical.
