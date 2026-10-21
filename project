@@ -4803,7 +4803,15 @@ def below_removal_floor(run):
     return left is not None and left < TIMING["removal_floor"]
 
 
-def registry_twin(evidence, records, rows, common_dir):
+def _absence_error(error, operation):
+    """Whether error, a row error, is the `os-error` that operation gives for
+    ENOENT or ENOTDIR: the path or a parent of it gone, which is absence and
+    not a failed read (lead rulings R-36 and R-93 (a))."""
+    return any(error == os_error(operation, OSError(number, os.strerror(number)))
+               for number in (errno.ENOENT, errno.ENOTDIR))
+
+
+def registry_twin(evidence, records, rows, common_dir, unread=frozenset()):
     """A twin made after planning, the step 5 check of revalidation_difference()
     (lead ruling R-81 (a); R-67 (c)): each entry of records, the fresh registry
     listing, read as worktree_rows() reads a row (_read_row(): its lstat, its
@@ -4813,11 +4821,26 @@ def registry_twin(evidence, records, rows, common_dir):
     realpath or admin id, since two spellings of one worktree both pass the
     two-way check; `deadline-exceeded` when the work deadline cut one of these
     reads (R-80, P-2), so that no twin goes unread for want of time; else
-    None. An entry whose realpath could not be read for any other cause is
-    compared by neither, as in planning (R-57 L2). Every entry is read, a row
-    past the cap included, since the cap bounds planning's rows and not this
-    comparison. rows are the checked rows; common_dir the planned common
-    directory."""
+    None. Every entry is read, a row past the cap included, since the cap
+    bounds planning's rows and not this comparison. rows are the checked
+    rows; common_dir the planned common directory; unread the raw paths of
+    the plan's rows whose lstat failed while planning (`present: null`).
+
+    An entry whose lstat or realpath fails other than with ENOENT or ENOTDIR,
+    a call cut at its probe budget included, gives `identity-changed` at
+    once: a twin could stand behind it, and a value that cannot be re-read is
+    a difference (the project-clean-review-safety delta, rs:92-93; lead
+    ruling R-93 (e), LOW-3). Planning fails closed on such an entry too:
+    --all-safe makes its row `inspection-error`, and in single mode a
+    realpath that raises leaves P's match undecided (R-78 (b)). One entry is
+    no difference: a row of unread whose lstat fails again, null in the plan
+    and null again (rs:89-92), which in single mode the plan recorded as
+    another row's non-blocking `inspection-error`, and which therefore does
+    not refuse P (the project-clean delta, pcl:258-262). An entry the plan
+    never read, new since planning or left past the row cap, is not one of
+    them. An entry whose lstat or realpath gives ENOENT or ENOTDIR is absent
+    and compared by neither (R-36), and one whose registration alone cannot
+    be read is compared by its realpath alone (R-57 L2)."""
     own = {row.raw_path for row in rows}
     identity = evidence.get("identity") or {}
     reads, checked = [], set()
@@ -4832,6 +4855,11 @@ def registry_twin(evidence, records, rows, common_dir):
         read = _read_row(raw, index == 0, common_dir, None, None, False)
         if any(read_cut(error) for error in read["errors"]):
             return "deadline-exceeded"
+        lstat_failed = read["present"] is None and raw not in unread
+        realpath_failed = (read["present"] is True and read["tree"] is None
+                           and not _absence_error(read["errors"][-1], "realpath"))
+        if lstat_failed or realpath_failed:
+            return "identity-changed"
         if raw in own:
             checked.add(len(reads))
         reads.append(read)
@@ -4865,7 +4893,9 @@ def revalidation_difference(plan, target, run, part, seen):
        `admin_id` (verify_registration()), else `identity-changed`; then no
        other present entry of the registry listing sharing a checked row's
        realpath or admin id, a twin made after planning (registry_twin();
-       lead ruling R-81 (a)), else `identity-changed`; then the target's
+       lead ruling R-81 (a)), and no entry whose lstat or realpath cannot
+       be read, unless the plan read its lstat as failed too (lead ruling
+       R-93 (e), LOW-3), else `identity-changed`; then the target's
        `modules` check, else `contains-submodule`.
     6. The combined status probe in the target, which must print no record,
        else `state-changed`.
@@ -4989,7 +5019,8 @@ def revalidation_difference(plan, target, run, part, seen):
             return "identity-changed"
     if slot_set(run):
         return "interrupted"
-    twin = registry_twin(evidence, records, rows, common_dir)
+    unread = {row.raw_path for row in getattr(plan, "rows", None) or () if row["present"] is None}
+    twin = registry_twin(evidence, records, rows, common_dir, unread)
     if twin is not None:
         return twin
     if slot_set(run):

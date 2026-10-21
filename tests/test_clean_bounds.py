@@ -921,6 +921,131 @@ class BoundsTests(clean_support.CleanCase):
                 self.assertEqual((status, document["exit_code"]), (2, 2))
                 self.assertTrue(all(tree.is_dir() for tree in trees), "nothing removed")
 
+    @clean_support.not_root
+    def test_clean_admin_registration_changed_a_twin_spelled_through_an_unsearchable_directory(self):
+        # Lead ruling R-93 (e), LOW-3 (lane 3's twin-unreadable). At the
+        # question, a twin of the second target is registered as the test above
+        # registers one, but spelled through a directory that is then made mode
+        # 000, so that the twin's lstat fails with EACCES and its realpath and
+        # admin id cannot be read. A value that cannot be re-read is a
+        # difference (the project-clean-review-safety delta, rs:92-93), as
+        # planning fails closed on an unread realpath (R-78 (b)): the target is
+        # refused with identity-changed, exit 2, and nothing is removed. Under
+        # --all-safe the first target's preflight reads the fresh registry
+        # listing (R-41), so the first target is the one refused and the
+        # second is not attempted; with --worktree naming the second target,
+        # it is refused itself.
+        for mode in ("all-safe", "single"):
+            with self.subTest(mode):
+                case = f"twin-unsearchable-{mode}"
+                root, trees = self.batch(case, ["001-p", "002-q"])
+                planned = {tree: self.head(tree) for tree in trees}
+                locked = self.base / case / "locked"
+                spelled = locked / "in" / trees[1].name
+
+                def twin(root=root, tree=trees[1], locked=locked, spelled=spelled):
+                    admin = self.common_dir(root) / "worktrees"
+                    shutil.copytree(admin / tree.name, admin / f"{tree.name}-twin")
+                    locked.mkdir()
+                    (locked / "in").symlink_to(tree.parent)
+                    (admin / f"{tree.name}-twin" / "gitdir").write_text(f"{spelled / '.git'}\n")
+                    locked.chmod(0o000)
+                    self.addCleanup(locked.chmod, 0o700)
+
+                words = ("--all-safe",) if mode == "all-safe" else ("--action", "remove", "--worktree", trees[1])
+                status, out, err = self.main_in_process("clean", root, *words, "--apply", "--json", at_question=twin)
+                with self.assertRaises(PermissionError):
+                    os.lstat(spelled)
+                registry = self.git(root, "worktree", "list", "--porcelain").splitlines()
+                self.assertIn(f"worktree {spelled}", registry)
+                document = json.loads(out)
+                refused_tree = trees[0] if mode == "all-safe" else trees[1]
+                expected = [(str(refused_tree), "refused", "identity-changed")]
+                if mode == "all-safe":
+                    expected.append((str(trees[1]), "not-attempted", "batch-stopped"))
+                self.assertEqual(stages(document), expected, err)
+                self.assertEqual(document["targets"][0]["reconciliation"],
+                                 record(True, True, True, planned[refused_tree]))
+                self.assertEqual((status, document["exit_code"]), (2, 2))
+                self.assertTrue(all(tree.is_dir() for tree in trees), "nothing removed")
+                self.assertTrue(all(f"worktree {tree}" in registry for tree in trees))
+
+        # The realpath half: a twin spelled through a searchable symbolic link,
+        # as the test above spells it, whose realpath read is made to fail in
+        # this process (a realpath that is not strict raises only in a race or
+        # at its budget). EACCES, or a read cut at its probe budget, refuses as
+        # above; ENOENT is absence (R-36), so the twin is compared by neither
+        # and both targets are removed.
+        def realpath_error(number):
+            return {"code": "os-error", "message": TEXT["row_error_os_error"].format(
+                OPERATION="realpath", STRERROR=os.strerror(number))}
+
+        timeout = {"code": "probe-timeout", "message": TEXT["row_error_probe_timeout"].format(
+            OPERATION="realpath", S="5")}
+        cases = [("EACCES", realpath_error(errno.EACCES), errno.EACCES), ("timeout", timeout, None),
+                 ("ENOENT", realpath_error(errno.ENOENT), errno.ENOENT)]
+        for name, error, number in cases:
+            with self.subTest(realpath=name):
+                case = f"twin-realpath-{name.lower()}"
+                root, trees = self.batch(case, ["001-p", "002-q"])
+                link = self.base / case / "linked-trees"
+                original = project._realpath
+
+                def realpath(path, spelled=os.fsencode(link / trees[1].name), error=error, number=number):
+                    if path == spelled:
+                        raise project.EvidenceError(error, number)
+                    return original(path)
+
+                def twin(root=root, tree=trees[1], link=link):
+                    admin = self.common_dir(root) / "worktrees"
+                    shutil.copytree(admin / tree.name, admin / f"{tree.name}-twin")
+                    link.symlink_to(tree.parent)
+                    (admin / f"{tree.name}-twin" / "gitdir").write_text(f"{link / tree.name / '.git'}\n")
+
+                status, out, err = self.main_in_process("clean", root, "--all-safe", "--apply", "--json",
+                                                        at_question=twin, _realpath=realpath)
+                document = json.loads(out)
+                if number == errno.ENOENT:
+                    self.assertEqual(stages(document), [(str(tree), "removed", None) for tree in trees], err)
+                    self.assertEqual((status, document["exit_code"]), (0, 0))
+                    continue
+                self.assertEqual(stages(document), [(str(trees[0]), "refused", "identity-changed"),
+                                                    (str(trees[1]), "not-attempted", "batch-stopped")], err)
+                self.assertEqual((status, document["exit_code"]), (2, 2))
+                self.assertTrue(all(tree.is_dir() for tree in trees), "nothing removed")
+
+        # The boundary, in single mode with P the first target: another
+        # worktree whose lstat already failed while planning is null in the
+        # plan and null again (rs:89-92), the plan's non-blocking
+        # inspection-error that does not refuse P (pcl:258-262), so P is
+        # removed; the same worktree made unsearchable at the question can no
+        # longer be re-read, so P is refused with identity-changed.
+        for when in ("before-planning", "at-the-question"):
+            with self.subTest(another_worktree_unsearchable=when):
+                root, trees = self.batch(f"other-unsearchable-{when}", ["001-p", "002-q"])
+                holder = self.base / f"other-unsearchable-{when}" / "other"
+                holder.mkdir()
+                self.merged_worktree("003-r", path=holder / "003-r", root=root)
+                self.addCleanup(holder.chmod, 0o700)
+
+                def unsearchable(holder=holder):
+                    holder.chmod(0o000)
+
+                if when == "before-planning":
+                    unsearchable()
+                status, out, err = self.main_in_process(
+                    "clean", root, "--action", "remove", "--worktree", trees[0], "--apply", "--json",
+                    at_question=unsearchable if when == "at-the-question" else None)
+                document = json.loads(out)
+                if when == "before-planning":
+                    self.assertEqual(stages(document), [(str(trees[0]), "removed", None)], err)
+                    self.assertEqual((status, document["exit_code"]), (0, 0))
+                    self.assertFalse(trees[0].exists())
+                    continue
+                self.assertEqual(stages(document), [(str(trees[0]), "refused", "identity-changed")], err)
+                self.assertEqual((status, document["exit_code"]), (2, 2))
+                self.assertTrue(all(tree.is_dir() for tree in trees), "nothing removed")
+
 
 if __name__ == "__main__":
     unittest.main()
