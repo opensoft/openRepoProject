@@ -3059,7 +3059,7 @@ evidence model.
 **Purpose**: Documentation (FR-065), integration, traceability, and
 verification.
 
-- [ ] T122 [P] [S] Update `README.md` (FR-065, SC-014; D3, D18, design Migration
+- [x] T122 [P] [S] Update `README.md` (FR-065, SC-014; D3, D18, design Migration
   Plan step 5): the "Clean up Git worktrees" section opens with the five
   behaviour changes (plain `project clean` exits 1 on an incomplete report;
   `clean` refuses below Git 2.36; `--worktree P` refuses a freshly created
@@ -3080,7 +3080,7 @@ verification.
   passing through. ASCII only.
   — files: `README.md`
   — verify: `python3 -c "import re,sys;r=open('README.md').read();s=r.split('## Clean up Git worktrees')[1].split(chr(10)+'## ')[0];x=s.find('--expect-plan');F=[k for k in ('2.36','unstarted-branch','reflog-unavailable','incomplete','upstream') if not -1<s.find(k)<x];G=[k for k in ('--all-safe','--apply','--yes','--expect-plan','Next:','main-worktree','unsupported-path-bytes','registration-mismatch','locked-worktree','not-requested','unstarted-branch','reflog-unavailable','deferred-target-cap','contains-submodule','hidden-local-state','dirty','ignored-local-files','inspection-error') if k not in s];import subprocess as p;b=p.run(['git','merge-base','HEAD','origin/main'],capture_output=True,text=True,check=True).stdout.strip();d=p.run(['git','diff','-U0',b,'--','README.md'],capture_output=True,text=True,check=True).stdout;N=[l for l in d.splitlines() if l.startswith('+') and not l.isascii()];i=r.split('## Install')[1].split(chr(10)+'## ')[0];e=r[r.find('Exit codes:'):][:600];H=[k for k,ok in (('Install: Git 2.36','2.36' in i),('exit codes: 143','143' in e),('exit codes: 129','129' in e),('README.md:195 corrected','Apply actions are always explicit and target one branch or worktree.' not in r)) if not ok];print('not before --expect-plan:',F,'absent:',G,'non-ASCII added:',len(N),'other:',H);sys.exit(1 if F or G or N or H or x<0 else 0)"`
-- [ ] T123 [P] [S] Update `AGENTS.md`: under "Runtime and verification", Git 2.36
+- [x] T123 [P] [S] Update `AGENTS.md`: under "Runtime and verification", Git 2.36
   or later, and the clean tests in `tests/test_clean_*.py` and
   `tests/test_status_doctor_update.py`, with helpers in
   `tests/clean_support.py`, the launcher `tests/launch_project.py`, and `-k
@@ -3093,7 +3093,7 @@ verification.
   untouched, and do not edit `CLAUDE.md`.
   — files: `AGENTS.md`
   — verify: `python3 -c "import subprocess as p,sys;a=open('AGENTS.md').read();b=p.run(['git','merge-base','HEAD','origin/main'],capture_output=True,text=True,check=True).stdout.strip();o=p.run(['git','show',b+':AGENTS.md'],capture_output=True,text=True,check=True).stdout;k=lambda t:t.split('OPENSPEC-SPECKIT-GLOBAL:START')[1].split('OPENSPEC-SPECKIT-GLOBAL:END')[0];v=a.split('## Runtime and verification')[1].split(chr(10)+'## ')[0];c=a.split('Cleaning up worktrees for a person')[1] if 'Cleaning up worktrees for a person' in a else '';M=[t for t in ('2.36','tests/test_clean_','tests/test_status_doctor_update.py','tests/clean_support.py','tests/launch_project.py','-k test_clean_ -k test_status_') if t not in v]+[t for t in ('--all-safe','--expect-plan','--yes') if t not in c];d=p.run(['git','diff','-U0',b,'--','AGENTS.md'],capture_output=True,text=True,check=True).stdout;N=[l for l in d.splitlines() if l.startswith('+') and not l.isascii()];C=p.run(['git','diff','--quiet',b,'--','CLAUDE.md']).returncode;print('absent:',M,'non-ASCII added:',len(N),'block same:',k(a)==k(o),'CLAUDE.md diff:',C);sys.exit(0 if not M and not N and k(a)==k(o) and C==0 and c else 1)"`
-- [ ] T124 [S] Read the README's "Clean up Git worktrees" section alone and confirm
+- [x] T124 [S] Read the README's "Clean up Git worktrees" section alone and confirm
   SC-014: the five behaviour changes come first, and it says how to preview,
   confirm and pin a preview's digest, each exclusion reason with its next step,
   and the command to run after a stopped batch.
