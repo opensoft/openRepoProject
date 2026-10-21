@@ -613,7 +613,7 @@ TEXT_FIXTURES = {
     "ignored_suffix": ": {N} ignored; first: {SAMPLE}",
     "ignored_suffix_truncated": ": at least {N} ignored; first: {SAMPLE}",
     "deferral_line": "  deferred-target-cap ({K}): this run removes up to 16; run again: project clean {ROOT} --all-safe --apply",
-    "non_drain_line": "  these deferred rows will not drain while the 16 rows ahead of them are contains-submodule; review those worktrees, then remove them yourself",
+    "non_drain_line": "  these deferred rows will not drain while the 16 rows ahead of them are {REASONS}; review those worktrees, then remove them yourself",
     "residual_window_line": "Not protected: ignored files created, index flags set, operations started or worktree-only commits made after the last check, and any change after Git's own check.",
     "empty_line": "No eligible worktrees",
     # D18: the question, the wait, the result.

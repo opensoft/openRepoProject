@@ -478,7 +478,8 @@ class BoundsTests(clean_support.CleanCase):
         self.assertEqual(lines[at + 1:at + 5], [TEXT["excluded_row"].format(PATH=tree, BRANCH=tree.name)
                                                 for tree in trees[16:]])
         self.assertIn(TEXT["selected_heading"].format(N=16), lines)
-        self.assertNotIn(TEXT["non_drain_line"], lines)
+        drain = TEXT["non_drain_line"].split("{REASONS}")[0]
+        self.assertEqual([line for line in lines if line.startswith(drain)], [], "no drain line")
         document = self.run_json("clean", root, "--all-safe", "--json").document
         self.assertEqual((document["completeness"], document["apply_allowed"], codes(document)), ("complete", True, []))
         self.assertEqual([entry["path"] for entry in document["selected"]], [str(tree) for tree in trees[:16]])
@@ -509,14 +510,53 @@ class BoundsTests(clean_support.CleanCase):
             self.assertIn(TEXT["excluded_group"].format(REASON="contains-submodule", K=16,
                                                         NEXT_STEP=STEPS["contains-submodule"]), lines)
             at = lines.index(TEXT["deferral_line"].format(K=1, ROOT=shlex.quote(str(held_root))))
-            self.assertEqual(lines[at + 1:at + 3], [TEXT["non_drain_line"],
-                                                    TEXT["excluded_row"].format(PATH=held[16], BRANCH=held[16].name)])
+            # R-146 (W21 L-f): REASONS is contains-submodule alone, so the line
+            # reads exactly as it did before REASONS was added.
+            line = TEXT["non_drain_line"].format(REASONS="contains-submodule")
+            self.assertEqual(line, "  these deferred rows will not drain while the 16 rows ahead of them are "
+                                   "contains-submodule; review those worktrees, then remove them yourself")
+            self.assertEqual(lines[at + 1:at + 3], [line, TEXT["excluded_row"].format(PATH=held[16],
+                                                                                      BRANCH=held[16].name)])
             document = self.run_json("clean", held_root, "--all-safe", "--json").document
             self.assertEqual((document["completeness"], document["selected"]), ("complete", []))
             self.assertEqual([(entry["path"], entry["reason"]) for entry in document["excluded"]
                               if entry["reason"] != "main-worktree"],
                              [(str(tree), "contains-submodule") for tree in held[:16]]
                              + [(str(held[16]), "deferred-target-cap")])
+
+    def test_clean_deferred_rows_that_will_not_drain_name_the_gates_after_the_cap(self):
+        # Design D12 and D18 as R-146 (W21 L-f) amends them: when every one of
+        # the 16 rows taken past the cap is excluded by a gate after it, the
+        # drain line names their reasons, each once, in gate order, joined by
+        # ", ". Seventeen rows: the first sixteen split between
+        # hidden-local-state, operation-in-progress and worktree-only-commits,
+        # the seventeenth deferred.
+        root, trees = self.batch("mixed", [f"{number:03d}-row" for number in range(1, 18)])
+        common = Path(self.git(root, "rev-parse", "--path-format=absolute", "--git-common-dir").strip())
+        expected = {}
+        for number, tree in enumerate(trees[:16]):
+            if number % 3 == 0:
+                self.git(tree, "update-index", "--assume-unchanged", f"work-{tree.name}")
+                expected[str(tree)] = "hidden-local-state"
+            elif number % 3 == 1:
+                (common / "worktrees" / tree.name / "MERGE_HEAD").write_text(self.head(root) + "\n")
+                expected[str(tree)] = "operation-in-progress"
+            else:
+                held = self.git(tree, "commit-tree", "HEAD^{tree}", "-p", "HEAD", "-m", "kept").strip()
+                self.git(tree, "update-ref", "refs/worktree/keep", held)
+                expected[str(tree)] = "worktree-only-commits"
+        preview = self.run_cli("clean", root, "--all-safe")
+        self.assert_status(preview, 0)
+        lines = preview.stdout.splitlines()
+        at = lines.index(TEXT["deferral_line"].format(K=1, ROOT=shlex.quote(str(root))))
+        self.assertEqual(lines[at + 1:at + 3], [
+            TEXT["non_drain_line"].format(REASONS="hidden-local-state, operation-in-progress, worktree-only-commits"),
+            TEXT["excluded_row"].format(PATH=trees[16], BRANCH=trees[16].name)])
+        document = self.run_json("clean", root, "--all-safe", "--json").document
+        self.assertEqual((document["completeness"], document["selected"]), ("complete", []))
+        self.assertEqual({entry["path"]: entry["reason"] for entry in document["excluded"]
+                          if entry["reason"] != "main-worktree"},
+                         {**expected, str(trees[16]): "deferred-target-cap"})
 
     def test_clean_ignored_file_bound(self):
         # Pins the parsers and the evidence model of Phase 2.

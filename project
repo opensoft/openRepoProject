@@ -684,8 +684,10 @@ TEXT = {
     "ignored_suffix_truncated": ": at least {N} ignored; first: {SAMPLE}",
     "deferral_line":
         "  deferred-target-cap ({K}): this run removes up to 16; run again: project clean {ROOT} --all-safe --apply",
+    # {REASONS}: the reasons of the 16 rows past the cap, each once, in gate
+    # order, joined by ", " (R-146, W21 L-f).
     "non_drain_line":
-        "  these deferred rows will not drain while the 16 rows ahead of them are contains-submodule; "
+        "  these deferred rows will not drain while the 16 rows ahead of them are {REASONS}; "
         "review those worktrees, then remove them yourself",
     "residual_window_line":
         "Not protected: ignored files created, index flags set, operations started or worktree-only commits "
@@ -4987,6 +4989,9 @@ EXCLUDED_GROUP_ORDER = ("main-worktree", "unsupported-path-bytes", "registration
                         *RECOMMENDATIONS, "not-requested", "unstarted-branch", "reflog-unavailable",
                         "deferred-target-cap", "contains-submodule", "hidden-local-state", "operation-in-progress",
                         "worktree-only-commits")
+# The reasons of the gates after deferred-target-cap, in gate order: those
+# that exclude a row gate 8 took (D12; R-146, W21 L-f).
+AFTER_CAP_REASONS = EXCLUDED_GROUP_ORDER[EXCLUDED_GROUP_ORDER.index("deferred-target-cap") + 1:]
 
 
 def _shown(value):
@@ -5069,10 +5074,12 @@ def preview_lines(plan):
     group headed by D18's deferral line in place of the generic one, its K
     the deferred rows and its ROOT plan_root() in the command form (T100;
     D12, FR-032), and, right under it, the non-drain line when all 16 rows
-    gate 8 took are excluded as `contains-submodule`, so that running again
-    would defer the same rows, and no line otherwise, the 16 split between
-    `contains-submodule` and `hidden-local-state` included, since the
-    deferral line still says to run again (lead ruling R-80, P-6);
+    gate 8 took are excluded by a gate after it (AFTER_CAP_REASONS), so that
+    running again would defer the same rows, naming their reasons, each once,
+    in gate order, joined by ", " (design D12 and D18 as R-146, W21 L-f, amends
+    them; it reads as before when all 16 are `contains-submodule`), and no
+    line otherwise, since the deferral line still says to run again (lead
+    ruling R-80, P-6);
     `No eligible worktrees` when a complete --all-safe plan that carries no refusal selects
     nothing; and the residual-window line when anything is selected. Rows go
     in raw path byte order. In mode single, P is the one selected row and the
@@ -5094,8 +5101,9 @@ def preview_lines(plan):
             rows = groups[reason]
             if reason == "deferred-target-cap":
                 lines.append(TEXT["deferral_line"].format(K=len(rows), ROOT=human_path(plan_root(plan), command=True)))
-                if len(groups.get("contains-submodule", ())) == LIMITS["targets"]:
-                    lines.append(TEXT["non_drain_line"])
+                ahead = [reason for reason in AFTER_CAP_REASONS if reason in groups]
+                if sum(len(groups[reason]) for reason in ahead) == LIMITS["targets"]:
+                    lines.append(TEXT["non_drain_line"].format(REASONS=", ".join(ahead)))
             else:
                 lines.append(TEXT["excluded_group"].format(REASON=reason, K=len(rows),
                                                            NEXT_STEP=next_step(reason) or ""))
