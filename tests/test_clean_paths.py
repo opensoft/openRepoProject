@@ -713,6 +713,30 @@ class PathsTests(clean_support.CleanCase):
             self.assertEqual(str(caught.exception), "Cannot inspect Git repository at " + self.dollar(
                 str(self.base), "/rlo-a", BACKSLASH, "u202eb/sub-a", BACKSLASH, "u202eb"))
 
+    # Lead ruling R-89 (b), a fix in region plan carried by this lane.
+
+    def test_clean_the_inspect_cap_remedy_counts_the_entries_that_become_rows(self):
+        # N of the inspect-cap remedy counts the registry entries that become
+        # rows, as the row cap counts them (contracts/project-clean.md, "Codes";
+        # pcl:24; lead ruling R-73 (d)): a bare repository's `bare` entry, and a
+        # first entry that is the common directory with no main worktree named,
+        # are no rows (D8). Literal evidence, as inspect_repository() shapes it.
+        def entry(path, bare=False):
+            return {"path": path, "bare": bare}
+        linked = [entry(b"/w/%03d" % number) for number in range(129)]
+        for label, first, first_is_common_dir, root, rows in (
+                ("a bare repository's bare entry", entry(b"/r.git", bare=True), False, None, 129),
+                ("the common directory with no main worktree named", entry(b"/r/.git"), True, None, 129),
+                ("the common directory with its main worktree named", entry(b"/r/.git"), True, b"/r", 130),
+                ("the main worktree", entry(b"/r"), False, b"/r", 130)):
+            with self.subTest(label):
+                plan = types.SimpleNamespace(mode="all-safe", evidence={
+                    "records": [first, *linked], "first_is_common_dir": first_is_common_dir,
+                    "identity": {"root": root, "common_dir": b"/r/.git", "dev": 1, "ino": 2}})
+                refusal = project.incomplete_refusal(plan, "inspect-cap")
+                self.assertEqual((refusal.code, str(refusal)), ("inspect-cap", TEXT["plan_incomplete"].format(
+                    CODE="inspect-cap", REMEDY=TEXT["remedy_inspect_cap"].format(N=rows, M=128))))
+
 
 if __name__ == "__main__":
     unittest.main()

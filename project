@@ -3668,10 +3668,18 @@ def plan_completeness(plan, exclude=()):
 
 def incomplete_refusal(plan, code):
     """The refusal of a plan incomplete with code (FR-024, FR-031; design D18):
-    `The plan is incomplete (CODE): REMEDY.`, REMEDY D18's for the code."""
+    `The plan is incomplete (CODE): REMEDY.`, REMEDY D18's for the code. The
+    inspect-cap remedy's N counts the registry entries that become rows, as
+    the row cap and build_plan() count them: a bare first entry, and a first
+    entry that is the common directory with no main worktree named, are no
+    rows (D8; contracts/project-clean.md, "Codes"; lead rulings R-73 (d) and
+    R-89 (b))."""
     if code == "inspect-cap":
-        registry = (plan.evidence or {}).get("records") or ()
-        remedy = TEXT["remedy_inspect_cap"].format(N=len(registry), M=LIMITS["worktree_rows"][plan.mode])
+        evidence = plan.evidence or {}
+        registry = evidence.get("records") or ()
+        no_row = bool(registry) and bool(registry[0]["bare"] or (
+            evidence.get("first_is_common_dir") and (evidence.get("identity") or {}).get("root") is None))
+        remedy = TEXT["remedy_inspect_cap"].format(N=len(registry) - no_row, M=LIMITS["worktree_rows"][plan.mode])
     elif code == "deadline-exceeded":
         remedy = TEXT["remedy_deadline_exceeded"]
     else:
