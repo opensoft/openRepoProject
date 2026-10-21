@@ -47,23 +47,32 @@ bytes, and D11 tests both with one test; they edit no spec text either. Round
 C10 then applies Codex's P2 on `f34dfe2` (C-41) and lane openRepoProject-3's
 confirm read of round C9 (C-42, its MEDIUM-1, and C-43, its four LOWs): C-41 is
 declined as a design change and kept as a residual, which D5 and Risks record,
-since the spec has the `gh` child run in the filesystem root with every other
-variable passed on unread; D6 states the check of `number` by type and inside
-the parse's boundary, and what a float literal and an escape of a lone surrogate
-do; D2 decodes a remote-target read's output as strict UTF-8; and D11 tests
-C-41's decision and C-42; they edit no spec text either. Round C11 then applies
-C-44, the lead's ruling on lane openRepoProject-3's and lane openRepoProject-4's
-planted-configuration point, refined on lane openRepoProject-3's six points,
-which replaces C-41's residual with a refusal: the lookup of `gh` counts as
-failing when any of `GH_CONFIG_DIR`, `XDG_CONFIG_HOME` and `HOME` is set to a
-non-empty value whose first byte is not `/`, so that every keyed row is
-`gh-unavailable` and no child starts. D4, D5, D11 and Risks record it, and its
-edit to `specs/project-overview/spec.md`, one sentence in the Requests
-paragraph, a clause in the Results paragraph and one AND on an existing
-scenario, was agreed by lane openRepoProject-4 on 2026-10-21 with two edits
-("may name" for "names" in the sentence, and a relative `XDG_CONFIG_HOME` in
-the AND) and is committed (`2b89bfc`): the Requests paragraph now says that
-every other variable is passed on unchanged.
+since, as the spec then had it, the `gh` child ran in the filesystem root with
+every other variable passed on unread; D6 states the check of `number` by type
+and inside the parse's boundary, and what a float literal and an escape of a
+lone surrogate do; D2 decodes a remote-target read's output as strict UTF-8; and
+D11 tests C-41's decision and C-42; they edit no spec text either. Round C11
+then applies C-44, the lead's ruling on lane openRepoProject-3's and lane
+openRepoProject-4's planted-configuration point, refined on lane
+openRepoProject-3's six points, which replaces C-41's residual with a refusal:
+the lookup of `gh` counts as failing when any of `GH_CONFIG_DIR`,
+`XDG_CONFIG_HOME` and `HOME` is set to a non-empty value whose first byte is not
+`/`, so that every keyed row is `gh-unavailable` and no child starts. D4, D5,
+D11 and Risks record it, and its edit to `specs/project-overview/spec.md`, one
+sentence in the Requests paragraph, a clause in the Results paragraph and one
+AND on an existing scenario, was agreed by lane openRepoProject-4 on 2026-10-21
+with two edits ("may name" for "names" in the sentence, and a relative
+`XDG_CONFIG_HOME` in the AND) and is committed (`2b89bfc`): the Requests
+paragraph now says that every other variable is passed on unchanged. Round C12
+then applies lane openRepoProject-3's confirm read of rounds C10 and C11 (C-45),
+six LOWs, with no spec edit: D6's sentence on an escape of a lone surrogate, in
+which a stray placeholder had stood, is completed; the account of C-41 above
+says what the spec then had; D2's list of failures names an output that does not
+decode as UTF-8, and D11 pins it with one fixture; D5 says that the test refuses
+a value whose first byte is any byte other than `/`; Risks names
+`XDG_DATA_HOME`, `XDG_STATE_HOME` and `XDG_CACHE_HOME` in its general class,
+each with only what is known of it; and task 1.5 records the validation runs on
+the committed files.
 
 Citations follow `proposal.md`: the packet at `da33d92`; APO, CAS, PRS and
 `project:N` at main `961c405`, which main `e9d6711` holds unchanged for them
@@ -121,6 +130,7 @@ The rulings and the packet's boundary map to the decisions:
 | C-42: lane openRepoProject-3's MEDIUM-1 on round C9: a node's `number` is accepted only when its parsed type is exactly `int`, and every check on the parsed answer runs inside the parse's catch-everything boundary | D6, D11 |
 | C-43: lane openRepoProject-3's four LOWs on round C9: no `parse_float` hook, by decision; the escape of a lone surrogate; each remote-target read's output decoded as strict UTF-8; and three wordings | D2, D6, D11 |
 | C-44: the lead's ruling on lane openRepoProject-3's and lane openRepoProject-4's planted-configuration point, refined on lane openRepoProject-3's six points: the lookup of `gh` counts as failing when any of `GH_CONFIG_DIR`, `XDG_CONFIG_HOME` and `HOME` is set to a non-empty value whose first byte is not `/`, so every keyed row is `gh-unavailable` and no child starts; other relative paths that `/` re-anchors stay residuals (Risks); its spec sentence is committed on lane openRepoProject-4's YES of 2026-10-21 (`2b89bfc`) | D4, D5, D11, Risks |
+| C-45: lane openRepoProject-3's confirm read of rounds C10 and C11, six LOWs, applied in the design and tasks with no spec edit: D6's escape sentence completed, the Context's tense, tasks 1.5's record of the validation runs on the committed files, D2's list of failures and D11's fixture for an output that does not decode as UTF-8, D5's wording of a first byte, and the three XDG variables in Risks | D2, D5, D6, D11, Risks |
 | C-10, L-12: CI on Linux only | Migration Plan |
 
 What in `project` shapes the approach (at `961c405`; features 004 and 005
@@ -295,10 +305,10 @@ reads add the same number to both counts in an uncut remote phase. A run
 without `--remote` counts exactly as [B] does at `961c405`. The `remote` object
 has no `probes` of its own, and the `gh` children, which are not Git children,
 are counted only in `remote.requests` (D5). A read that exits nonzero, reaches
-its budget, overruns its output cap or is stopped at the deadline is
-`remote-target-unread` on its rows' `remote` and never a row error or a scan
-error, the exception that [B]'s added paragraph and [E]'s added Termination
-sentence state (D7, D10).
+its budget, overruns its output cap, gives output that does not decode as UTF-8
+(C-43) or is stopped at the deadline is `remote-target-unread` on its rows'
+`remote` and never a row error or a scan error, the exception that [B]'s added
+paragraph and [E]'s added Termination sentence state (D7, D10).
 
 [E]'s pins sentence, "with the pins the fetch fails locally, the probe fails,
 and its row is `inspection-error`" (PR19/cmd:123-125), does not reach these
@@ -444,29 +454,29 @@ reason would cost an enum value for a cause that the README's next step makes
 discoverable.
 
 The test is made on the raw bytes of each value, by design: ` /x`, `~/x` and `.`
-are all refused, and so is a value whose first byte is not UTF-8, while a value
-that is `/` alone is not. It does not follow `gh`'s order of precedence and
-holds whichever of the three `gh` would use, so a relative `XDG_CONFIG_HOME` or
-`HOME` beside an absolute `GH_CONFIG_DIR` is refused too: that over-refusal is
-deliberate, fail-safe, and independent of `gh` keeping its order. An empty or
-unset value is not refused. `gh` treats an empty `GH_CONFIG_DIR` or
-`XDG_CONFIG_HOME` as unset, and when all three are empty or unset it reads
-`.config/gh` from its working directory, here `/.config/gh`, which only root can
-create on a normal system. The test needs no filesystem call and is the lookup's
-first step, before the search of `PATH`, so that a refused value gives
-`gh-unavailable` whether or not a `gh` lies on `PATH`. The three hold no
-credential value: the overview reads them only for this test, opens nothing they
-name, and never prints, logs or compares them otherwise, and every variable a
-child gets, these three included, is passed unchanged, as the Requests paragraph
-of `specs/project-overview/spec.md` says, lane openRepoProject-4 having agreed
-"unchanged" for "unread" there on 2026-10-21 (`2b89bfc`). A prototype of
-the test, written once on `os.environb` and once on `os.environ` (a `startswith`
-of `/` on the string, whose decoding leaves a first byte that is not UTF-8 as no
-`/`), agreed with the rule on 18 cases on Python 3.10.21, 3.11.16, 3.12.3,
-3.13.15 and 3.14.7: each of the three alone and relative, a relative
-`XDG_CONFIG_HOME` or `HOME` beside an absolute `GH_CONFIG_DIR`, ` /x`, `~/x`,
-`.`, a first byte of FF and one of EF, which are refused, and `/` alone, empty,
-unset and all three absolute, which are not.
+are all refused, and so is a value whose first byte is any byte other than `/`,
+a non-ASCII byte included, while a value that is `/` alone is not. It does not
+follow `gh`'s order of precedence and holds whichever of the three `gh` would
+use, so a relative `XDG_CONFIG_HOME` or `HOME` beside an absolute
+`GH_CONFIG_DIR` is refused too: that over-refusal is deliberate, fail-safe, and
+independent of `gh` keeping its order. An empty or unset value is not refused.
+`gh` treats an empty `GH_CONFIG_DIR` or `XDG_CONFIG_HOME` as unset, and when all
+three are empty or unset it reads `.config/gh` from its working directory, here
+`/.config/gh`, which only root can create on a normal system. The test needs no
+filesystem call and is the lookup's first step, before the search of `PATH`, so
+that a refused value gives `gh-unavailable` whether or not a `gh` lies on
+`PATH`. The three hold no credential value: the overview reads them only for
+this test, opens nothing they name, and never prints, logs or compares them
+otherwise, and every variable a child gets, these three included, is passed
+unchanged, as the Requests paragraph of `specs/project-overview/spec.md` says,
+lane openRepoProject-4 having agreed "unchanged" for "unread" there on
+2026-10-21 (`2b89bfc`). A prototype of the test, written once on `os.environb`
+and once on `os.environ` (a `startswith` of `/` on the string, whose decoding
+leaves a first byte that is not UTF-8 as no `/`), agreed with the rule on 18
+cases on Python 3.10.21, 3.11.16, 3.12.3, 3.13.15 and 3.14.7: each of the three
+alone and relative, a relative `XDG_CONFIG_HOME` or `HOME` beside an absolute
+`GH_CONFIG_DIR`, ` /x`, `~/x`, `.`, a first byte of FF and one of EF, which are
+refused, and `/` alone, empty, unset and all three absolute, which are not.
 
 The evidence was observed offline on `gh` 2.96.0 on 2026-10-20 with fake tokens,
 and none of it is a test of this change. The lead's check, with the token
@@ -632,14 +642,14 @@ the loop stops reading, stops the child (D7) and records `truncated`.
   requires UTF-8 for JSON exchanged outside a closed ecosystem, and lets a
   parser treat a byte order mark as an error, which one at the start of a body
   is here. A JSON escape of a lone surrogate, a backslash, `u` and D800, six
-  ASCII characters, is another matter: it is ASCII, XX, which concerns the
-  body's bytes and not its strings, leaves it. No field the row keeps can hold
-  one: `state`, `number`, `url` and `head_sha` are closed forms (below and D9),
-  and the two open fields, `baseRefName` and `errors[].type`, are compared and
-  never kept (C-43). The parse passes `json.loads` a `parse_int` hook, which
-  receives the text of each integer literal of the body, wherever it stands, and
-  raises before converting it when the text has more than 10 digits, a sign not
-  counted.
+  ASCII characters, is another matter: it is ASCII, valid UTF-8 JSON, and
+  parses, and C-40, which concerns the body's bytes and not its strings, leaves
+  it. No field the row keeps can hold one: `state`, `number`, `url` and
+  `head_sha` are closed forms (below and D9), and the two open fields,
+  `baseRefName` and `errors[].type`, are compared and never kept (C-43). The
+  parse passes `json.loads` a `parse_int` hook, which receives the text of each
+  integer literal of the body, wherever it stands, and raises before converting
+  it when the text has more than 10 digits, a sign not counted.
   GraphQL's `Int`, which `number` is, is a signed 32-bit integer, at most
   2,147,483,647, which has 10 digits. The parse then fails, and the key is
   `api-error` by the rule above, whatever the interpreter's own limit on
@@ -990,6 +1000,21 @@ of these fields, so remote evidence never reaches an eligibility gate, a
   it past 10 s in another, and "The overview's remote-phase children" to hold
   one past its budget while it ignores SIGTERM; this extends the test file
   only, never change 2's text.
+- One fixture pins D2's strict decode (C-43, C-45) and needs no control of the
+  wrapper above: a repository whose merge target's `branch.<target>.merge` is
+  `refs/heads/` followed by the byte 0x80, set with `git config`, so that the
+  first remote-target read's output holds a byte that is not UTF-8. Its queried
+  rows are `unknown` with reason `remote-target-unread`, no second read starts
+  there and no request is made for its rows, as for a read that exits 128, while
+  a second repository in the same run, whose merge ref is valid UTF-8, is
+  answered as usual, so that the byte is the only fault. A `remote.<name>.url`
+  that holds the byte is the same fixture for the second read. It is no
+  scenario: `specs/project-overview/spec.md:387-388`'s "fails for any other
+  cause" already requires the outcome (D2). The writer saw, in a scratch
+  repository on Git 2.43.0, that `git config` took the byte, that `git
+  for-each-ref` with D2's format and `git remote get-url` each printed it, and
+  that `bytes.decode("utf-8")` of the first output raised `UnicodeDecodeError`
+  ("invalid start byte").
 - The bounded reader is unit-tested at N-1, N and N+1 bytes for each of its
   three bounds: the 1 MiB body, the 64 KiB of status and headers, and the
   64 KiB of a remote-target read's standard output. At N-1 and N the part is
@@ -1095,10 +1120,11 @@ requests".
   the refusal protects the token.
 - [`gh`, started in `/`, resolves every relative path in the caller's
   environment against `/`, not only the three that name its configuration; the
-  rule leaves out `SSL_CERT_FILE`, `SSL_CERT_DIR` and `LD_LIBRARY_PATH`] -> Each
-  is left out because it is not `gh`'s documented configuration, each for its
-  own reason below, and the remedy for each is the same, an absolute path. The
-  README's next steps do not name them.
+  rule leaves out `SSL_CERT_FILE`, `SSL_CERT_DIR`, `LD_LIBRARY_PATH`,
+  `XDG_DATA_HOME`, `XDG_STATE_HOME` and `XDG_CACHE_HOME`] -> Each is left out
+  because it is not `gh`'s documented configuration, each for its own reason
+  below, and the remedy for each is the same, an absolute path. The README's
+  next steps do not name them.
   - `SSL_CERT_FILE`, and each element of `SSL_CERT_DIR`, which Go's
     `crypto/x509` splits on `:`: a relative value resolves against `/`, so a CA
     planted in a tree that any local user can write, such as `tmp`, `var/tmp` or
@@ -1114,6 +1140,35 @@ requests".
     where it resolves. Release builds of `gh` are static, so the case needs a
     distribution build that links dynamically; the `gh` 2.96.0 binary checked
     here is a static executable, `ldd` printing "not a dynamic executable".
+  - `XDG_DATA_HOME`, `XDG_STATE_HOME` and `XDG_CACHE_HOME`, each left out for
+    what is known of it and no more (C-45): `gh help environment` documents
+    `XDG_CONFIG_HOME` and names none of these three, though the `gh` 2.96.0
+    binary holds each name once (lane openRepoProject-3's count, which the
+    writer repeated), and a relative value of any of them resolves against `/`,
+    as the others do. The checks below were run offline on 2026-10-21 with a
+    fake token, in a scratch directory standing for `/`; where a request was
+    answered, a small server on a Unix socket answered it, which `gh` reaches
+    through `http_unix_socket`, as the lead's check in D5 showed.
+    - The data directory holds extensions, which D5's argv never runs, since it
+      begins with `api` (lane openRepoProject-4's check, D5, run under a
+      relative `HOME`). The writer's own, under a relative `XDG_DATA_HOME` that
+      held planted `gh-api` and `gh-zzz` extensions: `gh zzz` ran the planted
+      extension, while `gh api --help` and D5's argv, whether the request failed
+      to connect or the stand-in answered it, ran `gh`'s own command and client
+      and never the planted `gh-api`, and `gh` wrote no file there.
+    - The state directory serves the update check, which the two notifier
+      switches turn off as far as `gh` documents them. `gh help environment`
+      documents the check, once every 24 hours, and both switches, which D5
+      sets, and does not name this directory; D5's argv, with the switches set,
+      wrote no file under a relative or an absolute `XDG_STATE_HOME`; and the
+      writer could not make the update check itself run offline (in a
+      pseudo-terminal with the switches unset and a stand-in for the release
+      endpoint, no request for that endpoint came), so that the check's use of
+      this directory is not observed here.
+    - The cache serves `--cache`, which D5 never passes: `gh api --cache 1h`,
+      answered by the stand-in, wrote a file under an absolute
+      `$XDG_CACHE_HOME/gh`, and `gh api` without it, as D5's argv runs, wrote
+      none under a relative or an absolute `XDG_CACHE_HOME`.
 - [Collection used most of the 60 s] -> The requests end at the deadline as
   `cancelled` or `aborted`, and `remote.completeness` says `incomplete`.
 - [A `PATH` directory on an unreachable mount ahead of the one holding `gh`]
