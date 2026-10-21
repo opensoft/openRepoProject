@@ -486,6 +486,46 @@ class KilledDuringDeletionTests(clean_support.CleanCase):
         self.assertIn(f"worktree {tree}\n", self.git(root, "worktree", "list", "--porcelain"))
         return self.FILES - (left - (1 if survived else 0)), survived
 
+    def assert_reports_after_the_kill(self, root, tree, survived, below):
+        """Plain `project clean` after the kill, with its JSON row and the
+        --all-safe preview: the case the surviving `.git` file decides.
+        below says whether the deletions stopped before the record bound."""
+        document = self.run_json("clean", root, "--json").document
+        row = {entry["path"]: entry for entry in document["worktrees"]}[str(tree)]
+        report = self.run_cli("clean", root)
+        preview = self.run_cli("clean", root, "--all-safe")
+        lines = report.stdout.splitlines()
+        shown = preview.stdout.splitlines()
+        transcript = "\n" + clean_support.transcript(report) + "\n" + clean_support.transcript(preview)
+        if survived:
+            # `dirty`, with the dirty advice and, beside it, the probable
+            # partial-removal note and its recovery text; past the bound the
+            # status stream stopped at it and was judged on its prefix.
+            self.assertEqual((row["classification"], row["dirty"], row["notes"]), ("dirty", True, [NOTE]))
+            self.assertEqual(row["ignored_files_truncated"], not below)
+            self.assert_status(report, 0)
+            [at] = [index for index, line in enumerate(lines) if line.startswith(f"DIRTY: {tree} [feat] ")]
+            self.assertEqual(lines[at + 1:at + 3], [REPORT_INDENT + DIRTY_ADVICE, REPORT_INDENT + note_line(tree)],
+                             transcript)
+            self.assert_status(preview, 0)
+            at = shown.index(TEXT["excluded_group"].format(REASON="dirty", K=1, NEXT_STEP=STEPS["dirty"]))
+            self.assertEqual(shown[at + 1:at + 3], [TEXT["excluded_row"].format(PATH=tree, BRANCH="feat"),
+                                                    PREVIEW_INDENT + note_line(tree)], transcript)
+        else:
+            # `registration-mismatch` with classification `inspection-error`,
+            # a named manual remedy and no note.
+            self.assertEqual((row["classification"], row["notes"]), ("inspection-error", []))
+            self.assertIn({"path": str(tree), "reason": "registration-mismatch"},
+                          [{"path": entry["path"], "reason": entry["reason"]} for entry in document["excluded"]])
+            [at] = [index for index, line in enumerate(lines) if line.startswith(f"INSPECTION-ERROR: {tree} [")]
+            self.assertEqual(lines[at + 1], REPORT_INDENT + INSPECTION_ERROR_ADVICE, transcript)
+            self.assert_status(preview, 1)
+            at = shown.index(TEXT["excluded_group"].format(REASON="registration-mismatch", K=1,
+                                                           NEXT_STEP=STEPS["registration-mismatch"]))
+            self.assertEqual(shown[at + 1], TEXT["excluded_row"].format(PATH=tree, BRANCH="feat"), transcript)
+            for text in (report.stdout, preview.stdout):
+                self.assertNotIn("Probable partial removal", text, transcript)
+
     def test_clean_project_killed_during_a_deletion(self):
         # Once with fewer deletions than the status probe's record bound
         # (LIMITS["status_records"], 4,096) and once with more, so the second
@@ -505,45 +545,7 @@ class KilledDuringDeletionTests(clean_support.CleanCase):
                 # Which case this run reached, for the person reading the run.
                 print(f"\n{self.id()} [{case}]: {deleted} tracked files deleted at the kill; "
                       f"the .git file {'survived' if survived else 'was deleted'}", file=sys.stderr, flush=True)
-
-                document = self.run_json("clean", root, "--json").document
-                row = {entry["path"]: entry for entry in document["worktrees"]}[str(tree)]
-                report = self.run_cli("clean", root)
-                preview = self.run_cli("clean", root, "--all-safe")
-                lines = report.stdout.splitlines()
-                shown = preview.stdout.splitlines()
-                transcript = "\n" + clean_support.transcript(report) + "\n" + clean_support.transcript(preview)
-                if survived:
-                    # `dirty`, with the dirty advice and, beside it, the probable
-                    # partial-removal note and its recovery text; past the bound
-                    # the status stream stopped at it and was judged on its prefix.
-                    self.assertEqual((row["classification"], row["dirty"], row["notes"]), ("dirty", True, [NOTE]))
-                    self.assertEqual(row["ignored_files_truncated"], not below)
-                    self.assert_status(report, 0)
-                    [at] = [index for index, line in enumerate(lines) if line.startswith(f"DIRTY: {tree} [feat] ")]
-                    self.assertEqual(lines[at + 1:at + 3], [REPORT_INDENT + DIRTY_ADVICE,
-                                                            REPORT_INDENT + note_line(tree)], transcript)
-                    self.assert_status(preview, 0)
-                    at = shown.index(TEXT["excluded_group"].format(REASON="dirty", K=1, NEXT_STEP=STEPS["dirty"]))
-                    self.assertEqual(shown[at + 1:at + 3], [TEXT["excluded_row"].format(PATH=tree, BRANCH="feat"),
-                                                            PREVIEW_INDENT + note_line(tree)], transcript)
-                else:
-                    # `registration-mismatch` with classification
-                    # `inspection-error`, a named manual remedy and no note.
-                    self.assertEqual((row["classification"], row["notes"]), ("inspection-error", []))
-                    self.assertIn({"path": str(tree), "reason": "registration-mismatch"},
-                                  [{"path": entry["path"], "reason": entry["reason"]}
-                                   for entry in document["excluded"]])
-                    [at] = [index for index, line in enumerate(lines)
-                            if line.startswith(f"INSPECTION-ERROR: {tree} [")]
-                    self.assertEqual(lines[at + 1], REPORT_INDENT + INSPECTION_ERROR_ADVICE, transcript)
-                    self.assert_status(preview, 1)
-                    at = shown.index(TEXT["excluded_group"].format(REASON="registration-mismatch", K=1,
-                                                                   NEXT_STEP=STEPS["registration-mismatch"]))
-                    self.assertEqual(shown[at + 1], TEXT["excluded_row"].format(PATH=tree, BRANCH="feat"), transcript)
-                    for text in (report.stdout, preview.stdout):
-                        self.assertNotIn("Probable partial removal", text, transcript)
-
+                self.assert_reports_after_the_kill(root, tree, survived, below)
 
 if __name__ == "__main__":
     unittest.main()
