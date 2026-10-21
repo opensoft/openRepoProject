@@ -659,6 +659,60 @@ class PathsTests(clean_support.CleanCase):
                          ("unsupported-path-bytes", False, ["unsupported-path-bytes"]))
         self.assertEqual(result.stderr, "")
 
+    # T112's sweep: every refusal that names a path prints it through the
+    # escaping printer (FR-041), so that a path holding U+202E, valid UTF-8 and
+    # so never refused for its bytes, is escaped in `REFUSED:` (lead ruling
+    # R-80, P-12, and the fallback of build_plan() in region plan).
+
+    def test_clean_refusal_messages_print_their_paths_escaped(self):
+        self.assert_plain_base()
+        rlo = chr(0x202E)
+        root = self.repo("rlo-a" + rlo + "b")
+        root_form = self.dollar(str(self.base), "/rlo-a", BACKSLASH, "u202eb")
+        manifest_form = self.dollar(str(self.base), "/rlo-a", BACKSLASH, "u202eb/project.yaml")
+        manifest = root / "project.yaml"
+        for label, content, message in (
+                ("the wrong kind", "kind: family-manifest\n",
+                 f"Unexpected kind in {manifest_form}; expected project-manifest"),
+                ("not a mapping", "- kind\n- project-manifest\n", f"Expected a mapping in {manifest_form}"),
+                ("a parse error", "kind: [unclosed\n", f"Cannot read {manifest_form}: ")):
+            with self.subTest(label):
+                manifest.write_text(content)
+                human = self.run_cli("clean", root)
+                self.assert_status(human, 2)
+                self.assertTrue(human.stderr.isascii(), human.stderr)
+                self.assertTrue(human.stderr.startswith("REFUSED: " + message), human.stderr)
+                result = self.run_cli("clean", root, "--all-safe", "--json")
+                self.assert_status(result, 2)
+                document = self.one_document(result)
+                self.assertEqual((document["code"], document["repository"]["root_valid_utf8"]),
+                                 ("manifest-invalid", True))
+                self.assertTrue(document["error"].startswith(message), document["error"])
+        manifest.unlink()
+        with self.subTest("built: target-not-repository-root"):
+            subdirectory = root / ("sub-a" + rlo + "b")
+            subdirectory.mkdir()
+            human = self.run_cli("clean", subdirectory)
+            form = self.dollar(str(self.base), "/rlo-a", BACKSLASH, "u202eb/sub-a", BACKSLASH, "u202eb")
+            self.assertEqual((human.returncode, human.stderr),
+                             (2, "REFUSED: " + TEXT["target_not_repository_root"].format(PATH=form) + "\n"))
+        with self.subTest("built: worktree-not-found"):
+            nowhere = self.base / ("nowhere-a" + rlo + "b")
+            human = self.run_cli("clean", root, "--apply", "--action", "remove", "--worktree", nowhere, "--yes")
+            form = self.dollar(str(self.base), "/nowhere-a", BACKSLASH, "u202eb")
+            self.assertEqual((human.returncode, human.stderr),
+                             (2, f"REFUSED: No unique linked worktree found at {form}\n"))
+            self.assertTrue(human.stdout.isascii(), human.stdout)
+        with self.subTest("build_plan() for a caller that passes no evidence"):
+            # Only such a caller reaches the fallback (lead rulings R-71 (b) and
+            # R-72 (g)); it runs in process on the module object loaded here.
+            with mock.patch.dict(os.environ, self.env, clear=True), project.Invocation("clean") as run:
+                run.mode, run.action = "report", None
+                with self.assertRaises(project.Refused) as caught:
+                    project.build_plan({"root": subdirectory}, run)
+            self.assertEqual(str(caught.exception), "Cannot inspect Git repository at " + self.dollar(
+                str(self.base), "/rlo-a", BACKSLASH, "u202eb/sub-a", BACKSLASH, "u202eb"))
+
 
 if __name__ == "__main__":
     unittest.main()
