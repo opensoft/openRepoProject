@@ -795,8 +795,10 @@ NEXT_STEPS = {
 # Removed from every Git child's environment, never from project's own, in the
 # contract's order: the fifteen names `git rev-parse --local-env-vars` prints on
 # Git 2.40 and later; GIT_INTERNAL_SUPER_PREFIX, which Git 2.36 to 2.39 also
-# print (lead ruling R-21); and GIT_ALLOW_PROTOCOL, which Git consults before
-# any -c pin (R-25). A fixed list, never queried from Git.
+# print (lead ruling R-21); GIT_ALLOW_PROTOCOL, which Git consults before any
+# -c pin (R-25); and the fourteen trace names Git 2.36 to 2.43 read, through
+# which a caller could make a child create or append to a file (Brett Heap's
+# ruling Q9 B, PR #19). A fixed list of thirty-one, never queried from Git.
 GIT_SCRUB = (
     "GIT_ALTERNATE_OBJECT_DIRECTORIES", "GIT_CONFIG", "GIT_CONFIG_PARAMETERS",
     "GIT_CONFIG_COUNT", "GIT_OBJECT_DIRECTORY", "GIT_DIR", "GIT_WORK_TREE",
@@ -804,7 +806,20 @@ GIT_SCRUB = (
     "GIT_NO_REPLACE_OBJECTS", "GIT_REPLACE_REF_BASE", "GIT_PREFIX",
     "GIT_SHALLOW_FILE", "GIT_COMMON_DIR", "GIT_INTERNAL_SUPER_PREFIX",
     "GIT_ALLOW_PROTOCOL",
+    "GIT_TRACE", "GIT_TRACE_BARE", "GIT_TRACE_CURL", "GIT_TRACE_CURL_NO_DATA",
+    "GIT_TRACE_FSMONITOR", "GIT_TRACE_PACKET", "GIT_TRACE_PACKFILE",
+    "GIT_TRACE_PACK_ACCESS", "GIT_TRACE_PERFORMANCE", "GIT_TRACE_REDACT",
+    "GIT_TRACE_REFS", "GIT_TRACE_SETUP", "GIT_TRACE_SHALLOW",
+    "GIT_TRACE_WORKING_TREE_ENCODING",
 )
+
+# Set in every Git child's environment, the push child's included, over any
+# value the caller gave: "0" turns each trace2 target off, and it outranks the
+# trace2.normalTarget, trace2.eventTarget and trace2.perfTarget settings of the
+# system and global configuration, which no -c pin reaches (Q9 B). The other
+# GIT_TRACE2_* names stay as the caller set them; none opens a file while these
+# three are "0".
+TRACE2_OFF = (("GIT_TRACE2", "0"), ("GIT_TRACE2_EVENT", "0"), ("GIT_TRACE2_PERF", "0"))
 
 # The seven protocol pins, so that a lazy fetch is refused locally (D11; lead
 # rulings R-23 and R-25).
@@ -815,8 +830,13 @@ PROTOCOL_PINS = (
     "-c", "protocol.ext.allow=never",
 )
 
-# The two status pins, on the status and hidden-state probes and the removal.
-STATUS_PINS = ("-c", "core.untrackedCache=false", "-c", "core.fsmonitor=false")
+# The status pins, on the status and hidden-state probes and the removal: the
+# untracked cache and fsmonitor off (D11), and every stat field compared, so
+# that an edit which keeps a file's size and restores its mtime still shows by
+# its ctime under a repository's core.trustctime=false or core.checkStat=minimal
+# (lead ruling R-102: LQ-10, approved by Brett Heap; lane 3's F1 H-3).
+STATUS_PINS = ("-c", "core.untrackedCache=false", "-c", "core.fsmonitor=false",
+               "-c", "core.trustctime=true", "-c", "core.checkStat=default")
 
 # Per kind of Git child: whether it is a read-only probe, which sets
 # GIT_OPTIONAL_LOCKS=0; the -c pins it carries before the protocol pins;
@@ -830,16 +850,21 @@ GIT_KINDS = {
     # The push child of `clean --action push` follows draft PR #19 and lead
     # ruling R-28: no protocol pin, and the caller's GIT_ALLOW_PROTOCOL kept.
     # That is LQ-3's assumption until Brett Heap's word; a ruling either way
-    # edits this one row.
+    # edits this one row. It keeps no other scrubbed name, and git_env() gives
+    # it TRACE2_OFF as it gives every kind: Q9 B says every Git child, and
+    # trace output changes nothing about where a push reaches.
     "push": (False, (), False, ("GIT_ALLOW_PROTOCOL",)),
 }
 
 
 def git_env(kind):
-    """A copy of project's environment, scrubbed for a Git child of KIND."""
+    """A copy of project's environment for a Git child of KIND: GIT_SCRUB's
+    names removed but those KIND keeps, TRACE2_OFF set for every kind, and
+    GIT_OPTIONAL_LOCKS=0 for a read-only probe."""
     read_only, _, _, kept = GIT_KINDS[kind]
     env = {name: value for name, value in os.environ.items()
            if name not in GIT_SCRUB or name in kept}
+    env.update(TRACE2_OFF)
     if read_only:
         env["GIT_OPTIONAL_LOCKS"] = "0"
     return env
@@ -5711,8 +5736,8 @@ def push_or_delete(repo, run):
     The push child runs through execute() with git_env("push") (R1, PR #19):
     project's own streams and process group, so that it is in the terminal's
     foreground when project is; no pin; the caller's GIT_ALLOW_PROTOCOL kept
-    and the other sixteen names removed (R-28). The `git branch -d` child is a
-    `delegate` handle on the driver: its own process group, the seventeen
+    and the other thirty names removed (R-28, Q9 B). The `git branch -d` child is a
+    `delegate` handle on the driver: its own process group, the thirty-one
     names removed and the seven pins, no budget, its output relayed to
     project's streams by RelayParser (R5, P-1); one that cannot be spawned is
     the baseline's `Cannot run git: ...` refusal. Neither is ever signalled:
