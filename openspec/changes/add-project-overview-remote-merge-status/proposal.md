@@ -2,22 +2,22 @@ Lane: openRepoProject-5
 
 # Proposal: add-project-overview-remote-merge-status
 
-Status: draft; alignment review and council resolved on PR #29, round C4's
-spec edits committed; round C5's edits for lane openRepoProject-3's delta read
-and Codex's findings on `e198548` (C-24 to C-29) and round C6's for Codex's
-finding on `67e43ae`, three points found in applying it and lane
-openRepoProject-3's folded read of `e198548..67e43ae` (C-30 to C-34) applied,
-their `project-overview` spec edits committed, all on lane openRepoProject-4's
-agreement of 2026-10-20; and C-35 to C-43, applied in `design.md` alone with no
-spec edit, C-41 also in Impact: lane openRepoProject-3's narrowing of the lookup
-of `gh`'s per-directory rule (C-35), its confirm reads of rounds C6c, C7 and C9
-(C-36, C-38, C-42, C-43) and Codex's findings on `1c32667`, `05a424a` and
-`f34dfe2` (C-37, a `parse_int` hook; C-39, a `parse_constant` hook; C-41, a
-relative configuration path kept unread, a residual), with the lead's C-40;
+Status: draft; alignment review and council resolved on PR #29, round C4's spec
+edits committed; round C5's edits for lane openRepoProject-3's delta read and
+Codex's findings on `e198548` (C-24 to C-29) and round C6's for Codex's finding
+on `67e43ae`, the lead's three points and lane openRepoProject-3's folded read
+of `e198548..67e43ae` (C-30 to C-34) applied, their `project-overview` spec
+edits committed, on lane openRepoProject-4's agreement of 2026-10-20; and C-35
+to C-43, applied in `design.md` alone with no spec edit, C-41 also in Impact:
+lane openRepoProject-3's narrowing of the `gh` lookup's per-directory rule
+(C-35), its confirm reads of rounds C6c, C7 and C9 (C-36, C-38, C-42, C-43) and
+Codex's findings on `1c32667`, `05a424a` and `f34dfe2` (C-37, a `parse_int`
+hook; C-39, a `parse_constant` hook; C-41, a residual), with the lead's C-40;
 round C11's C-44, which replaces C-41's residual with a refusal of a relative
-`GH_CONFIG_DIR`, `XDG_CONFIG_HOME` or `HOME` (every keyed row `gh-unavailable`),
-applied in `design.md` and Impact, its one spec edit committed on lane
-openRepoProject-4's YES of 2026-10-21 with two edits; ratification by Brett Heap
+`GH_CONFIG_DIR`, `XDG_CONFIG_HOME` or `HOME`, applied in `design.md` and Impact,
+its one spec edit committed on lane openRepoProject-4's YES of 2026-10-21 with
+two edits; round C12's C-45, lane openRepoProject-3's six LOWs, applied in
+`design.md` and `tasks.md`, with no spec edit; ratification by Brett Heap
 pending; nothing here is ratified. Governing issue: opensoft/openRepoProject#25,
 claimed by lane openRepoProject-5 (comment 6111242617); refs #6, the record of
 the project maintenance design packet. Proposed on Brett Heap's word "usage
@@ -42,8 +42,8 @@ executable. Change 1's evidence model,
 `Repository inspection requires Git 2.36 and shares one evidence model`
 (CAS/cmd:90), is [E]. The lane's rulings are cited as L-1 to L-9 and C-1 to C-8
 (2026-10-11), L-10 to L-15, B-14, C-9 and C-10 (2026-10-18), L-16, L-17 and
-C-11 to C-14 (2026-10-19), and F-3 and C-15 to C-44 (2026-10-20, C-16 to C-22
-being the council's verdicts). `PR19/cmd` is draft PR #19's
+C-11 to C-14 (2026-10-19), and F-3 and C-15 to C-45 (2026-10-20 and 2026-10-21,
+C-16 to C-22 being the council's verdicts). `PR19/cmd` is draft PR #19's
 `openspec/changes/add-project-clean-all-safe/specs/project-command/spec.md` at
 `c462d87`.
 
@@ -663,19 +663,19 @@ block on 2026-10-19, with one fix), and **C-11** to **C-14** below. From the
 rulings and council verdicts of 2026-10-20: **F-3** (the lead's live check that
 GitHub's commit association returns no pull request closed without merging),
 **C-15** (the council's inputs), **C-16** to **C-22** (the council's verdicts,
-below), **C-23** (Open Questions 3), **C-24** to **C-29** (round C5: lane
+below), **C-23** (Open Questions 3), **C-24** to **C-29** (C5: lane
 openRepoProject-3's delta read of `e198548`, Codex's three findings on it and
-two points found in applying them; "Re-read and Codex Findings (round C5)"),
-**C-30** to **C-34** (round C6: Codex's finding on `67e43ae`, three points found
-in applying it and lane openRepoProject-3's folded read of `e198548..67e43ae`;
-"Re-read and Codex Findings (round C6)"), **C-35** to **C-40** (the lookup's
-per-directory rule; D5's rationale; a `parse_int` hook; four LOWs on C7; a
-`parse_constant` hook; a strict UTF-8 decode), **C-41** (Codex's P2 on
-`f34dfe2`; **C-44** replaces it), **C-42** (lane openRepoProject-3's MEDIUM-1,
-`number` by type), **C-43** (its four LOWs) and **C-44** (a relative
-`GH_CONFIG_DIR`, `XDG_CONFIG_HOME` or `HOME` fails the lookup of `gh`); all are
-applied in `design.md`, C-41 and C-44 also in Impact, C-44's spec edit committed
-on lane openRepoProject-4's YES ("Re-read and Codex Findings", rounds C6-C11).
+two points found in applying them), **C-30** to **C-34** (C6: Codex's finding on
+`67e43ae`, the lead's three points and lane openRepoProject-3's folded read of
+`e198548..67e43ae`), **C-35** to **C-40** (the lookup's per-directory rule; D5's
+rationale; a `parse_int` hook; four LOWs on C7; a `parse_constant` hook; a
+strict UTF-8 decode), **C-41** (Codex's P2 on `f34dfe2`; **C-44** replaces it),
+**C-42** (lane openRepoProject-3's MEDIUM-1, `number` by type), **C-43** (its
+four LOWs), **C-44** (a relative `GH_CONFIG_DIR`, `XDG_CONFIG_HOME` or `HOME`
+fails the lookup of `gh`) and **C-45** (lane openRepoProject-3's six LOWs); all
+are applied in `design.md`, C-45 also in `tasks.md`, C-41 and C-44 also in
+Impact, C-44's spec edit committed on lane openRepoProject-4's YES ("Re-read and
+Codex Findings", rounds C5-C12).
 
 Packet open decisions taken, each citing the text that leaves it open:
 
@@ -1383,3 +1383,35 @@ lines.
 | Lane openRepoProject-4's check of extensions (offline, `gh` 2.96.0, a fake token): run in `/` under a relative `HOME` beside an absolute `GH_CONFIG_DIR`, `gh` listed planted `gh-api` and `gh-zzz` extensions and ran `gh zzz` by its own name, but `gh api` ran `gh`'s own client, and `gh` wrote no file under that `HOME` | evidence | recorded in D5 and Risks: D5's argv always begins with `api`, so it never runs an extension, and the rule's refusal of that case is deliberate over-refusal, not a fix for a demonstrated hole | `design.md` D5, Risks |
 | The tests of the AND, and of the rule beyond it | ruling | applied in D11: C-41's short test is replaced by one test of C-44's rule, with the fake `gh` first on `PATH` and recording `GH_CONFIG_DIR`, `XDG_CONFIG_HOME` and `HOME` as set or unset and byte for byte. Refused, each giving both rows `gh-unavailable` and no child: `GH_CONFIG_DIR=.gh-config`, `XDG_CONFIG_HOME=cfg`, `HOME=h`, each of the last two beside an absolute `GH_CONFIG_DIR`, each of the three beside the other two absolute, and ` /x`, `~/x` and `.` as `GH_CONFIG_DIR`. Not refused, each starting the children and recording every value unchanged with `/` as the working directory: an absolute `GH_CONFIG_DIR`, an empty `GH_CONFIG_DIR`, an empty `XDG_CONFIG_HOME` and an empty `HOME`, all three unset, and all three absolute. With 70 keys and a relative `GH_CONFIG_DIR`, all 70 are `gh-unavailable`, none `request-cap`. No test runs a real `gh`. After lane openRepoProject-4's YES, D11's account of the AND names the cases it takes: `GH_CONFIG_DIR=.gh-config`, `XDG_CONFIG_HOME=cfg`, a relative `HOME` beside an absolute `GH_CONFIG_DIR`, and the absolute and the empty `GH_CONFIG_DIR` | `design.md` D11 |
 | The spec edit, committed | ruling | Committed (`2b89bfc`) on lane openRepoProject-4's YES of 2026-10-21 (01:0xZ), which it gave after checking the held sha256 `75d4bc0215b1dc51ed972306f9ebfa89c54dd6fa8ed6d806c703d2620ec5078a`, `:1-410` byte for byte against its `05a424a` pin (so that `:13-39` and every range it cites, all at or before `:243`, hold), that its Q17 D needs no text change (the re-pin is the sha only) and that "hold no credential value" is present. The committed diff is the held file plus the two edits the lane asked for, and nothing else: "names" became "may name" in the rationale at `:417` ("such a value may name a configuration other than the caller's"), the old wording being inexact twice, since a relative `HOME` beside an absolute `GH_CONFIG_DIR` names no `gh` configuration and, for a caller whose own working directory is `/`, a relative value names the caller's own (lane openRepoProject-3 made the same point; the three lines are re-wrapped and the line count is kept); and the AND at `:610` also takes "separately when `XDG_CONFIG_HOME` is set to a relative value", so that a test that leaves `XDG_CONFIG_HOME` out of the check fails. The whole edit is one sentence in the Requests paragraph after "every other variable passed on unchanged" (`:411-417`), naming the three variables, the raw-byte test and the failed lookup and saying that they "hold no credential value"; one clause in the Results paragraph (`:478-480`) that names this cause where it says when the lookup fails; and one AND on "No gh, or a gh without authentication" (`:610`): with `GH_CONFIG_DIR` set to the relative `.gh-config`, separately with `HOME` relative beside an absolute `GH_CONFIG_DIR`, and separately with a relative `XDG_CONFIG_HOME`, no `gh` child starts and both rows are `gh-unavailable`, while with an absolute or an empty `GH_CONFIG_DIR` the children start. "unread" became "unchanged" at `:411` deliberately: "unread" was never exact, since the lookup reads `PATH` and now also tests the three configuration paths, and "unchanged" says what the child receives; credential values stay unread under `:26-28` ("read, test, infer, print and forward no credential value, the caller's environment excepted, which it passes to a `gh` child unread"), which lane openRepoProject-4's Q17 D restates, so nothing is weakened: the overview reads no credential value, and every variable reaches the child as the caller set it. No scenario is added, `:1-410` is byte-identical to the file at 4013734, and `specs/project-command/spec.md` is unchanged | `project-overview` delta (Requests, Results; "No gh, or a gh without authentication"); `tasks.md` 1.3, 1.4, 1.5 |
+
+### Re-read and Codex Findings (round C12)
+
+Lane openRepoProject-3's read-only verifier read the delta `f34dfe2..21846c3`
+(its confirm read of rounds C10 and C11, `confirm-c11-findings.md`, brett-wip
+77da4ac71) and found no HIGH, no MEDIUM and six LOWs, all in the design, with
+its checks 1 to 7 passing: the spec diff is `2b89bfc` alone, C-42 reproduces,
+the C-44 rule agrees on 38 of 38 cases, the moved cites land, and `validate`
+passes 8 of 8. The lead accepted all six (C-45, 2026-10-21). They edit
+`design.md` and `tasks.md`, and this file only for Status, the citation key, the
+Decisions list and this section: no spec file changed,
+`specs/project-overview/spec.md` is still the file lane openRepoProject-4
+agreed, sha256
+`ce57ed5eca8085d1edc5687c7b25b10c5c603e777694bda13c481f6fe94be19a`, with its 36
+scenarios, `specs/project-command/spec.md` is unchanged with its 10, and the
+count stays 46. Lines 1252 to 1385 of this file, rounds C6 to C11, are
+unchanged, and this section follows them. To hold each paragraph's line count,
+Status drops "(every keyed row `gh-unavailable`)", "all" before "on lane
+openRepoProject-4's agreement" and "a relative configuration path kept unread"
+from C-41's note, and says "the lead's three points" for "three points found in
+applying it"; the Decisions list drops its two pointers to the section titles of
+rounds C5 and C6 and names "rounds C5-C12" once; and the citation key says
+"2026-10-20 and 2026-10-21".
+
+| Finding | Severity | Ruling | Section edited |
+| --- | --- | --- | --- |
+| Lane openRepoProject-3's confirm read of rounds C10 and C11, L1 (design D6, at :635; a real defect): the sentence on a JSON escape of a lone surrogate holds a stray two-letter placeholder where its reason should stand (the words "it is ASCII,", the placeholder, then "which concerns the body's bytes and not its strings, leaves it"), so that C-43's LOW-2 sentence did not land as worded; it has stood since `af9a5a0`, and the sentence never says that the escape parses | LOW | C-45: applied as worded: D6 now reads "it is ASCII, valid UTF-8 JSON, and parses, and C-40, which concerns the body's bytes and not its strings, leaves it", the content that round C10's pinned LOW-2 row records. The lead's verification of round C10 read D5 and the node bullet, not this sentence. Before committing, the writer grepped `design.md`, `proposal.md` and `tasks.md` for the stray placeholder, the usual placeholder words, a marker between two at signs, a bracketed ellipsis, a doubled word and a doubled comma or period, and read each paragraph and list item for a cut-off ending: no other placeholder and no cut-off sentence remains; the ellipses that remain are an example URL and a form of URL, in the Context's list of facts about `project` and in D3, a GraphQL spread in D5's query and quotations in this file, and the Speckit Handoff lines of `tasks.md` end without a full stop by their template | `design.md` D6 |
+| L2 (design Context, :47-51): a present-tense statement the committed spec no longer makes: C-41 was kept "since the spec has the `gh` child run in the filesystem root with every other variable passed on unread", and the committed spec says "unchanged" (C-44, `2b89bfc`) | LOW | C-45: applied: the Context says "as the spec then had it, the `gh` child ran in the filesystem root with every other variable passed on unread" and its next sentences, on C-44, already say that the committed spec now says "unchanged"; the Context's account of C-45 and its table gain an entry | `design.md` Context and its table |
+| L3 (tasks 1.5): "and in round C11 on the committed tree and again with the held spec file in place": the spec is no longer held, and 1.5 records no validation after `2b89bfc` | LOW | C-45: applied: 1.5 records the three validation commands on the committed files, at 21846c3 (valid with the two INFO lines, 8 of 8, every artifact done, as lane openRepoProject-3 also found) and at round C12's head, in place of the run with the held spec file; 1.1 names C-45, and 1.3 carries a round C12 clause and this section in its list. A commit cannot hold its own sha, so 1.5 says "that round's head" and the head is in the round's report | `tasks.md` 1.1, 1.3, 1.5 |
+| L4 (D2 :297-299 and D11): LOW-3's decode failure is in D2's body but not in D2's own list of failures, and nothing pins it: (a) the list reads "exits nonzero, reaches its budget, overruns its output cap or is stopped at the deadline"; (b) D11's counting `git` wrapper can set an exit status and a stderr line or hold past a budget, but not emit chosen stdout bytes, so no test shows a merge ref with the byte FF giving `remote-target-unread`, though C-40's decode has a D11 test; (c) "which is the spec's 'fails for any other cause'" holds by analogy with `specs/project-overview/spec.md:371-373` ("a longer one, which fails the read"), not quite by the letter | LOW | C-45: applied as worded: D2's list now reads "exits nonzero, reaches its budget, overruns its output cap, gives output that does not decode as UTF-8 (C-43) or is stopped at the deadline"; D11 gains one fixture, placed after the counting wrapper's bullet, a repository whose merge target's `branch.<target>.merge` is `refs/heads/` followed by the byte 0x80, set with `git config`, which gives its queried rows `unknown` with reason `remote-target-unread`, starts no second read and no request for them, and sits beside a second repository whose merge ref is valid UTF-8 and is answered as usual, so that the byte is the only fault; a `remote.<name>.url` that holds the byte is the same fixture for the second read. The fixture needs no wrapper control: the writer saw, in a scratch repository on Git 2.43.0, that `git config` took the byte, that `git for-each-ref` with D2's format and `git remote get-url` each printed it, and that `bytes.decode("utf-8")` of the first output raised `UnicodeDecodeError` ("invalid start byte"). It is no scenario, as the ruling words it: the spec's "fails for any other cause" (`specs/project-overview/spec.md:387-388`) already requires the outcome, and lane openRepoProject-3's note (c) is recorded here, not acted on: the anchor needs no spec edit | `design.md` D2, D11 |
+| L5 (D5 :446-447): "a value whose first byte is not UTF-8" is imprecise: EF is a valid UTF-8 lead byte, and the prototype (D5) refuses both FF and EF because neither is `/` | LOW | C-45: applied as worded: D5 now reads "a value whose first byte is any byte other than `/`, a non-ASCII byte included"; the rest of the paragraph, including the prototype's 18 cases, is unchanged, and its aside that a decoded string leaves a first byte that is not UTF-8 as no `/` is left as it stands, since it describes the string writing's decoding and not the rule | `design.md` D5 |
+| L6 (Risks, optional): the general class leaves out three more relative-path variables that `gh` reads: its binary holds `XDG_DATA_HOME`, `XDG_STATE_HOME` and `XDG_CACHE_HOME` (one string each), D5's extension check covers the data directory only through a relative `HOME`, so that a relative one of the three alone is neither refused nor named, and the design does not say that the reasons look like the extension check's | LOW (optional) | C-45: applied: Risks names the three in its general class and gains one nested bullet with three sub-bullets, each saying only what is known. The writer's offline checks on `gh` 2.96.0 on 2026-10-21, with a fake token that no output held, the working directory a scratch directory standing for `/`, and, where a request was answered, a small server on a Unix socket standing in for the API (`gh` reaches it through `http_unix_socket`, as the lead's check in D5 showed): `gh help environment` documents `XDG_CONFIG_HOME` and none of the three, and the binary holds each name once (the writer repeated lane openRepoProject-3's count). Data: under a relative `XDG_DATA_HOME` that held planted `gh-api` and `gh-zzz` extensions, `gh zzz` ran the planted extension, while `gh api --help` and D5's argv, whether the request was refused at a closed proxy port or answered by the stand-in, ran `gh`'s own command and client and never the planted `gh-api`, and `gh` wrote no file there; lane openRepoProject-4's check, in D5, had run the same under a relative `HOME`. State: `gh help environment` documents the update check (once every 24 hours) and the two switches that D5 sets, and does not name the directory; D5's argv wrote no file under a relative or an absolute `XDG_STATE_HOME`; the writer could not make the update check itself run offline (in a pseudo-terminal, with the switches unset and a stand-in for the release endpoint, no request for it came), so the bullet says "as far as `gh` documents them" and that the check's use of the directory is not observed. Cache: `gh api --cache 1h`, answered by the stand-in, wrote a file under an absolute `$XDG_CACHE_HOME/gh`, and `gh api` without it, which D5's argv is, wrote none under a relative or an absolute value. No rule changes: D5's refusal stays on the three configuration variables, and the README's next steps do not name these three, as they do not name the others | `design.md` Risks |
