@@ -641,7 +641,7 @@ class StatusDoctorUpdateTests(clean_support.CleanCase):
                     document = self.assert_one_document(result)
                     self.assertEqual([update["component"] for update in document["updates"]],
                                      ["shape", "workflow", "bench", "tools"])
-                    self.assertEqual(document["repository"]["dirty"], False)
+                    self.assertIs(document["repository"]["dirty"], False)
                 else:
                     self.assertIn("workflow: Refresh through setup-openspeckit --repo PATH\n", result.stdout)
                 self.assertTrue(records)
