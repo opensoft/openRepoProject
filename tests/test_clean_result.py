@@ -822,6 +822,99 @@ class ResultTests(clean_support.CleanCase):
                         self.assertFalse(trees[0].exists())
                     self.assertEqual(self.head(root, "refs/heads/" + NAMES[0]), planned[0], "the branch is kept")
 
+    # T090: decide_stage()'s stage and reason table.
+
+    def test_clean_stage_and_reason_table(self):
+        # data-model.md, "Target stages", as literals; project's table equals it.
+        stages = {
+            "removed": (None, "branch-advanced-after-removal", "branch-missing-after-removal", "removal-ceiling"),
+            "refused": ("identity-changed", "branch-changed", "state-changed", "contains-submodule",
+                        "hidden-local-state"),
+            "failed": ("git-refused", "git-failed", "spawn-error"),
+            "unknown": ("unconfirmed-removal", "reconciliation-incomplete", "internal-error", "removal-ceiling"),
+            "not-attempted": ("batch-stopped", "interrupted", "deadline-exceeded"),
+        }
+        self.assertEqual(project.STAGE_REASONS, stages)
+        # decide_stage() decides a spawned target only, with the signature T056
+        # gave it (lead ruling R-68 (c)). The refused and not-attempted pairs
+        # are revalidate()'s and apply_removals()'s, and unknown with
+        # internal-error is apply_removals()' handling of an exception (lead
+        # ruling R-83, P-7), so these ten pairs are every one it can reach.
+        spawned = {("removed", None), ("removed", "branch-advanced-after-removal"),
+                   ("removed", "branch-missing-after-removal"), ("removed", "removal-ceiling"),
+                   ("failed", "git-refused"), ("failed", "git-failed"), ("failed", "spawn-error"),
+                   ("unknown", "unconfirmed-removal"), ("unknown", "reconciliation-incomplete"),
+                   ("unknown", "removal-ceiling")}
+        sha, other = "a" * 40, "b" * 40
+        target = {"planned_sha": sha}
+        outcome = project.DriverOutcome
+        exited = outcome(["git"], "complete", status=0)
+        killed = outcome(["git"], "timeout", status=-signal.SIGKILL)  # outlived SIGTERM at the ceiling: 137
+        termed = outcome(["git"], "timeout", status=-signal.SIGTERM)  # ended by SIGTERM at the ceiling: 143
+        unobserved = outcome(["git"], "timeout", detail="the child did not end after SIGKILL")
+        gone, kept = record(False, False, True, sha), record(True, True, True, sha)
+
+        def unfinished(*values):
+            return project.UnfinishedRescan(record(*values))
+
+        cases = [
+            # Exit 0: the rescan proves the removal, or the target is unknown.
+            (exited, gone, ("removed", None, [])),
+            (exited, record(False, False, True, other), ("removed", "branch-advanced-after-removal", [])),
+            (exited, record(False, False, False, None), ("removed", "branch-missing-after-removal", [])),
+            (exited, kept, ("unknown", "unconfirmed-removal", [])),
+            (exited, record(False, True, True, sha), ("unknown", "unconfirmed-removal", [])),
+            (exited, record(None, None, None, None), ("unknown", "unconfirmed-removal", [])),
+            (exited, record(False, False, None, None), ("unknown", "reconciliation-incomplete", [])),
+            (exited, unfinished(None, False, True, sha), ("unknown", "reconciliation-incomplete", [])),
+            (exited, unfinished(False, None, True, sha), ("unknown", "reconciliation-incomplete", [])),
+            (exited, unfinished(None, None, None, None), ("unknown", "reconciliation-incomplete", [])),
+            # Exited nonzero on its own, a signal death included: failed, Git's status.
+            (outcome(["git"], "failed", status=128), kept, ("failed", "git-refused", [])),
+            (outcome(["git"], "failed", status=1), kept, ("failed", "git-failed", [])),
+            (outcome(["git"], "failed", status=255), record(False, True, True, sha), ("failed", "git-failed", [])),
+            (outcome(["git"], "failed", status=-signal.SIGTERM), gone, ("failed", "git-failed", [])),
+            # Never spawned.
+            (outcome(["git"], "failed", detail="cannot run git: [Errno 2] No such file"), kept,
+             ("failed", "spawn-error", [])),
+            # Cut at the ceiling, or its exit not observed: the rescan decides.
+            (killed, gone, ("removed", "removal-ceiling", [])),
+            (termed, record(False, False, True, other), ("removed", "removal-ceiling", [])),
+            (unobserved, gone, ("removed", "removal-ceiling", [])),
+            (killed, kept, ("unknown", "removal-ceiling", ["partially-removed"])),
+            (termed, record(False, True, True, sha), ("unknown", "removal-ceiling", ["partially-removed"])),
+            (unobserved, record(True, False, True, sha), ("unknown", "removal-ceiling", ["partially-removed"])),
+            (killed, record(False, False, None, None), ("unknown", "removal-ceiling", [])),
+            (killed, unfinished(None, None, None, None), ("unknown", "removal-ceiling", [])),
+        ]
+        reached = set()
+        for given, reconciliation, expected in cases:
+            with self.subTest(outcome=given, reconciliation=reconciliation,
+                              marked=isinstance(reconciliation, project.UnfinishedRescan)):
+                decided = project.decide_stage(target, given, reconciliation)
+                self.assertEqual(decided, expected)
+                self.assertIn(decided[1], stages[decided[0]])
+                # orphaned-directory is never decide_stage()'s (lead ruling R-83, P-5).
+                self.assertLessEqual(set(decided[2]), {"partially-removed"})
+                reached.add(decided[:2])
+        self.assertEqual(reached, spawned)
+
+        # A child that exits nonzero on its own is failed whatever the slot
+        # holds; only a child killed at the ceiling, or whose exit was not
+        # observed, is decided by the rescan (D15; pcl:910-915).
+        for signum in (None, signal.SIGINT, signal.SIGTERM, signal.SIGHUP):
+            with self.subTest(slot=signum and signal.Signals(signum).name), project.Invocation("clean") as run:
+                if signum is not None:
+                    run.record_signal(signum)
+                for status in (1, 128, 255, -signal.SIGINT, -signal.SIGTERM, -signal.SIGHUP, -signal.SIGKILL):
+                    given = outcome(["git"], "failed", status=status)
+                    reason = "git-refused" if status == 128 else "git-failed"
+                    for reconciliation in (gone, kept, unfinished(None, None, None, None)):
+                        self.assertEqual(project.decide_stage(target, given, reconciliation), ("failed", reason, []))
+                for given in (killed, termed, unobserved):
+                    self.assertNotEqual(project.decide_stage(target, given, gone),
+                                        project.decide_stage(target, given, kept))
+
 
 if __name__ == "__main__":
     unittest.main()
