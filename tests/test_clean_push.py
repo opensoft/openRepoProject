@@ -570,3 +570,53 @@ class PushTests(clean_support.CleanCase):
         self.assertEqual(stderr.buffer.getvalue(), bytes(reversed(range(256))) * 700)
         self.assertEqual((len(outcome.stderr), outcome.stderr_bytes), (4096, 256 * 700),
                          "the driver still keeps the standard-error head")
+
+    def test_clean_a_branch_deletion_that_cannot_be_spawned(self):
+        # Lead ruling R-81 (b): a `git branch -d` delegate that cannot be
+        # spawned gives the baseline's refusal, execute()'s `Cannot run git:
+        # ...` (project:194-198), which push_or_delete() builds from
+        # run_bounded()'s detail, exit 2, and no other child. In process, so
+        # that git goes at the moment of deletion: the counting wrapper is the
+        # only git on PATH (path_without_git()), the full re-inspection after
+        # confirmation runs through it as built, and only then is the wrapper
+        # made not executable, or removed. Every spawn attempt is recorded
+        # through subprocess.Popen, which all three of project's spawns use.
+        root = self.repo()
+        self.bare_remote()
+        self.git(root, "branch", "002-merged")  # at the merge target's tip, with no worktree
+        wrapper = self.base / "counting-bin" / "git"
+        delegate = ["git", *PINS, "-C", str(root), "branch", "-d", "002-merged"]
+        shown = ("Cleanup action: delete verified merged local branch 002-merged\n"
+                 f"Working directory: {root}\n"
+                 f"  git {' '.join(PINS)} -C {root} branch -d 002-merged\n")
+        for variant, disable, code in (("not executable", lambda: wrapper.chmod(0o644), errno.EACCES),
+                                       ("missing", wrapper.unlink, errno.ENOENT)):
+            with self.subTest(variant):
+                env, log = self.counting(env=dict(self.env, PATH=self.path_without_git()))
+                popen, marks = mock.Mock(wraps=subprocess.Popen), []
+                out, err = io.StringIO(), io.StringIO()
+
+                def then_unspawnable(*args, reinspect=project.require_unchanged_cleanup_state, disable=disable,
+                                     popen=popen, marks=marks):
+                    reinspect(*args)
+                    disable()
+                    marks.append(len(popen.call_args_list))
+
+                with mock.patch.dict(os.environ, env, clear=True), \
+                        mock.patch.object(project, "require_unchanged_cleanup_state", then_unspawnable), \
+                        mock.patch.object(project.subprocess, "Popen", popen), \
+                        mock.patch.object(project.sys, "stdout", out), mock.patch.object(project.sys, "stderr", err):
+                    status = project.main(["clean", str(root), "--apply", "--action", "delete-branch",
+                                           "--branch", "002-merged", "--yes"])
+                self.assertEqual(len(marks), 1, "the re-inspection ran once, as built")
+                self.assertEqual(status, 2, err.getvalue())
+                self.assertEqual(out.getvalue(), shown, "the plan, and nothing relayed")
+                self.assertEqual(err.getvalue(),
+                                 f"REFUSED: Cannot run git: [Errno {code}] {os.strerror(code)}: 'git'\n")
+                attempts = [call.args[0] for call in popen.call_args_list]
+                self.assertEqual(attempts[marks[0]:], [delegate], "after the re-inspection, the delegate alone")
+                records = clean_support.child_log(log)
+                self.assertEqual(deletions(records), [], "no git branch -d ran")
+                self.assertEqual(len(records), marks[0], "every other attempt was a child the wrapper counted")
+                self.assertEqual({record.optional_locks for record in records}, {"0"}, "read-only probes only")
+                self.assertNotEqual(self.git(root, "for-each-ref", "refs/heads/002-merged"), "", "the branch is kept")
