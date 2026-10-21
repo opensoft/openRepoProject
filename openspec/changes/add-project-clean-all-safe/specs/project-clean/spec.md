@@ -605,8 +605,9 @@ row SHALL carry one `reason`, its first failing gate in this order:
 `locked-worktree`; the row's classification when it is not `merged-removable`;
 `not-requested`, for an eligible row other than the named one in a single-target
 removal; `unstarted-branch`, or `reflog-unavailable` where the reflog cannot
-decide it; `deferred-target-cap`; `contains-submodule`; and
-`hidden-local-state`. A head equal to the merge target's SHA SHALL NOT by itself
+decide it; `deferred-target-cap`; `contains-submodule`; `hidden-local-state`;
+and `worktree-only-commits`. A head equal to the merge target's SHA SHALL NOT
+by itself
 prove a branch unstarted, because a branch fast-forward merged into the target
 sits at the target's tip, so the gate SHALL read the branch's reflog,
 `logs/refs/heads/<branch>` in the common directory, for every row it checks,
@@ -638,6 +639,25 @@ a `modules` entry, and as
 skip-worktree, sparse checkouts included; the index SHALL be read inside the
 row's own worktree, and both gates SHALL be checked only for rows that pass
 every earlier gate.
+
+A row SHALL be excluded as `worktree-only-commits` when a commit that its own
+HEAD reflog or a ref under its own `refs/worktree/` holds is reachable from no
+branch, tag or remote-tracking ref and from no object that its branch's reflog
+names, because removing the worktree deletes that reflog and those refs with
+its administrative directory. The gate SHALL read `logs/HEAD` in that directory
+by one filesystem call, at most 64 KiB, counted in the filesystem budget, every
+non-zero old and new object it names being a candidate, and SHALL then run one
+Git child in the worktree, `git rev-list --max-count=1 --glob=refs/worktree
+<candidates> --not --branches --tags --remotes <objects the branch's reflog
+names>`, which prints a commit exactly when one is held that way. A `logs/HEAD`
+that is missing (`ENOENT` or `ENOTDIR`) or empty SHALL give no candidate. One
+outcome rule SHALL govern the gate: a printed commit, a `logs/HEAD` read to its
+64 KiB bound or holding a line that cannot be parsed, any other error on the
+read, and a child that fails, runs past its budget or prints anything but one
+object name SHALL each make the row `worktree-only-commits`; a read not
+finished within the filesystem budget SHALL leave the row unprobed and the plan
+incomplete with `inspection-incomplete`, and the deadline passing SHALL leave
+it incomplete with `deadline-exceeded`, as for every other read and child.
 
 `selected` and `excluded` SHALL be in canonical order, by raw path bytes, and
 that order SHALL be the execution order. Once a plan is built, these checks
@@ -732,6 +752,23 @@ apply SHALL print `Removed N; branches kept: ` followed by the branches kept.
   administrative directory before its revalidation, that target is `refused`
   with `contains-submodule`, later targets are `not-attempted`, and the exit
   status is 2
+
+#### Scenario: A commit held only by the worktree
+
+- **WHEN** one otherwise eligible linked worktree had its HEAD detached, a
+  commit made there and its branch checked out again, so that only its HEAD
+  reflog holds that commit, and another holds a commit made the same way that
+  only its `refs/worktree/keep` holds
+- **THEN** `--all-safe` excludes both as `worktree-only-commits`,
+  `--all-safe --apply --yes` removes neither, and both commits stay reachable
+  from their worktrees
+- **AND** `--apply --action remove --worktree` naming either refuses with
+  `target-excluded`, reason `worktree-only-commits`, and exit 2
+- **AND** once the first commit is tagged, and a branch is made at the second
+  and its `refs/worktree/keep` deleted, both worktrees are selected as before
+- **AND** a worktree whose branch was amended and reset, so that its HEAD
+  reflog names commits that only that branch's reflog still holds, is selected
+  as before
 
 #### Scenario: Paths and empty plans
 
@@ -849,7 +886,7 @@ under `operations` and every other child under `probes`; `limits`
 `status_records` and `ignored_samples`); and `budget` (`probe_timeout_seconds`
 5, `invocation_timeout_seconds` 60, `reconciliation_reserve_seconds` 10,
 `removal_floor_seconds` 5, `removal_ceiling_seconds` 300 and `probe_concurrency`
-1). Revalidating one target SHALL spawn at most five Git children, six where
+1). Revalidating one target SHALL spawn at most six Git children, seven where
 the plan read the repository's `extensions.worktreeConfig` as true, and never
 recompute the full report, and the final rescan at most three.
 
@@ -890,14 +927,14 @@ recompute the full report, and the final rescan at most three.
 
 - **WHEN** a repository has five worktree rows, three of them selected, and
   `--all-safe --apply --yes` runs under a counting `git` wrapper on PATH
-- **THEN** every target's revalidation spawns at most five children, the final
+- **THEN** every target's revalidation spawns at most six children, the final
   rescan spawns three, three removals run, no merged-set listing and no status
   probe of a non-selected worktree runs after confirmation, and the record's
   `probes.performed` equals the wrapper's count of children other than the three
   removals, and its `operations.performed` is 3
-- **AND** every `status` and `ls-files` child names its own worktree as its
-  directory, and every other child after resolution, the removals included,
-  names the command directory
+- **AND** every `status`, `ls-files` and `rev-list` child names its own
+  worktree as its directory, and every other child after resolution, the
+  removals included, names the command directory
 
 #### Scenario: Deadline expiry mid-batch
 
@@ -923,8 +960,8 @@ accepted. Each selected target SHALL end in one stage with one reason:
   `branch-advanced-after-removal`, `branch-missing-after-removal` or
   `removal-ceiling`;
 - `refused`: revalidation found a difference and nothing was spawned;
-  `identity-changed`, `branch-changed`, `state-changed`, `contains-submodule` or
-  `hidden-local-state`;
+  `identity-changed`, `branch-changed`, `state-changed`, `contains-submodule`,
+  `hidden-local-state` or `worktree-only-commits`;
 - `failed`: the child exited nonzero on its own, whether or not a signal reached
   `project`, or could not be spawned; `git-refused` for exit status 128,
   `git-failed` for any other status (128 plus the signal number when a signal

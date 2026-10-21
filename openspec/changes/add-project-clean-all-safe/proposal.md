@@ -137,10 +137,14 @@ Scope).
   `locked-worktree`, the
   baseline classification when not `merged-removable`, `not-requested`,
   `unstarted-branch`, `deferred-target-cap` (Bounded work),
-  `contains-submodule` (any gitlink or admin `modules` entry) and
-  `hidden-local-state` (any entry flagged assume-unchanged or skip-worktree),
-  the last two read in the row's own worktree (`BA:113-150`, `BA:629-675`,
-  `BA:554-583`). A merged worktree whose upstream was deleted is
+  `contains-submodule` (any gitlink or admin `modules` entry),
+  `hidden-local-state` (any entry flagged assume-unchanged or skip-worktree)
+  and `worktree-only-commits` (a commit that only the worktree's HEAD reflog
+  or `refs/worktree/` holds, which no branch, tag, remote-tracking ref or the
+  branch's reflog reaches, or a check that cannot decide it; Brett Heap's
+  ruling LQ-13), the last three read in the row's own worktree
+  (`BA:113-150`, `BA:629-675`, `BA:554-583`). A merged worktree whose
+  upstream was deleted is
   `merged-removable` and faces these gates like any other merged row, since
   local ancestry outranks `remote-gone` for worktree rows (Brett Heap's
   ruling of 2026-10-09; Decisions). Local ancestry is the only removal proof,
@@ -206,8 +210,9 @@ Scope).
   hand"; the reason `removal-ceiling` names the ceiling cause, and the run exits
   1 (Decisions).
 - **Targeted revalidation under a narrow guarantee.** Each target is
-  revalidated with at most five Git children (six in a repository whose
-  `extensions.worktreeConfig` the plan read as true, LQ-11), a manifest
+  revalidated with at most six Git children, the sixth the reachability probe
+  of `worktree-only-commits` (LQ-13), and seven in a repository whose
+  `extensions.worktreeConfig` the plan read as true (LQ-11), a manifest
   re-read and a
   `modules` check, never the full report (`BA:677-719`), against recorded
   repository, worktree and merge-target identity objects (`BA:203-235`).
@@ -448,7 +453,8 @@ Headers are quoted verbatim, one per line; ADDED headers are proposed text.
     `### Requirement: Clean can explicitly retire verified worktrees`.
     "remove one named linked worktree" (`:57`) becomes one named worktree or
     the `--all-safe` set, through `retire_worktree`, the gates
-    (`unstarted-branch` included) and the pinned removal command, stopping at
+    (`unstarted-branch` and `worktree-only-commits` included) and the pinned
+    removal command, stopping at
     the first failure; the removal child is never signalled before the 300 s
     ceiling; a named P's completeness is the repository-wide evidence plus its
     own row. `:59-61` (branch deletion separate; never force) and the
@@ -498,6 +504,9 @@ Headers are quoted verbatim, one per line; ADDED headers are proposed text.
     `--all-safe`, the gate order, the fresh plan, `plan_digest` and
     `--expect-plan`, single-target removal as a one-item batch, and what the
     person sees: the preview layout, the default-No prompt, the success line.
+    By Brett Heap's ruling LQ-13 the gate order ends with
+    `worktree-only-commits`, with the added scenario "A commit held only by
+    the worktree".
   - ADDED:
     `### Requirement: Clean bounds its Git work and reports omitted work`.
     The deadline, budgets, caps, `omitted`, `probes`, `operations`, `limits`
@@ -526,14 +535,17 @@ Headers are quoted verbatim, one per line; ADDED headers are proposed text.
     Adds the main worktree, locked, `contains-submodule`, `hidden-local-state`
     (sparse checkouts included), `registration-mismatch` (an effective work
     tree that is not the registered path included, LQ-11),
-    `unsupported-path-bytes`, `unstarted-branch`, `reflog-unavailable` and
-    unreadable worktrees to the preserved states. Both scenarios (`:27-36`)
-    stay.
+    `unsupported-path-bytes`, `unstarted-branch`, `reflog-unavailable`,
+    `worktree-only-commits` (LQ-13) and unreadable worktrees to the preserved
+    states. Both scenarios (`:27-36`) stay.
   - MODIFIED (`:49`): `### Requirement: Cleanup revalidates destructive actions`.
     Removal revalidates by the targeted check against the recorded identity
     objects, and the effective work tree where the plan read it (LQ-11),
     refusing with `identity-changed`, `branch-changed`,
-    `state-changed`, `contains-submodule` or `hidden-local-state`; push and
+    `state-changed`, `contains-submodule`, `hidden-local-state` or, for a
+    commit held only by the worktree that the re-read finds, with the added
+    scenario "A worktree-only commit made after the plan",
+    `worktree-only-commits` (LQ-13); push and
     `delete-branch` keep the full re-inspection (`project:508-518`) and refuse
     with `inspection-incomplete`, `inspect-cap` or `deadline-exceeded`, exit
     2, when it is incomplete. The MUST is scoped to the revalidation
@@ -555,7 +567,8 @@ Headers are quoted verbatim, one per line; ADDED headers are proposed text.
   - ADDED:
     `### Requirement: Cleanup states a narrow guarantee and its residual window`.
     Concurrent writers outside the contract, no lock, the guarantee, the
-    residual-window line, and the branch race.
+    residual-window line, and the branch race; the guarantee and the line name
+    worktree-only commits by LQ-13.
 - `project-command` (all ten at `7a9134b` accounted for; line numbers are at
   `da33d92`; at `7a9134b` `Inspect and diagnose`, `Explicit maintenance` and
   `Distribution and compatibility` sit 22 lines lower, their text unchanged):
@@ -983,6 +996,27 @@ Departures from packet decisions, each citing the decision departed from:
   and where it is true each linked row's effective work tree is read by `git
   rev-parse --path-format=absolute --show-toplevel` in it, before its status
   probe, and again at revalidation (design D6, D7, D14, Risks).
+- **A commit held only by the worktree keeps it** (Brett Heap's ruling LQ-13
+  of 2026-10-21, in lane openRepoProject-3's session, "yes to all six
+  recommendations, LQ-10 to LQ-15", on lane openRepoProject-3's
+  recommendation "Yes, add a protection. Leave the worktree in place if any
+  such commit is unreachable from every branch, tag and remote ref. This needs
+  an amendment to change 1."; extends the gates of `BA:113-165` and the
+  revalidation of `BA:677-707`): `git worktree remove` deletes the worktree's
+  administrative directory with its `logs/HEAD` and its `refs/worktree/`, so a
+  commit that only they hold is left to garbage collection (lane
+  openRepoProject-3's F1 H-1 at `2cf34d3`). A new last gate,
+  `worktree-only-commits`, reads `logs/HEAD` (at most 64 KiB) and runs one
+  `rev-list` in the worktree, the candidates being the reflog's objects and
+  `refs/worktree/`, and the negatives every branch, tag and remote-tracking
+  ref and the objects that the branch's own reflog names, which survives the
+  removal, so that an amend, reset or rebase of the branch is not taken for
+  lost work. A printed commit, and every read or child that cannot decide,
+  excludes the row; revalidation runs the check again, so a commit made after
+  the plan refuses the target with the same reason (lane openRepoProject-3's
+  reader RB, R-107), and the residual-window line names such a commit made
+  after that check. No JSON field is added (design D7, D12, D14, D18, D21,
+  Risks).
 
 Packet decisions adopted, not open: OQ-5, the caps and bounds of `BA:966`,
 subject to OQ-4, less the target cap's refusal; OQ-9, the budgets of
@@ -1325,7 +1359,18 @@ actions`, `Clean bounds its Git work and reports omitted work`, `Cleanup
 preserves all local work not proven disposable`, `Cleanup revalidates
 destructive actions`, `Cleanup states a narrow guarantee and its residual
 window`, and the `project-command` ADDED evidence model and its added scenario
-"A linked worktree whose work tree is redirected").
+"A linked worktree whose work tree is redirected"); LQ-13 adds the gate
+`worktree-only-commits` and its revalidation (What Changes, eligibility and
+revalidation; Capabilities `:55`, batch, review-safety `:21`, `:49` and its
+ADDED; Decisions, departures; this list; design Context, D7, D12, D14, D18,
+D20, D21, Risks; `tasks.md` 1.2, 1.4; the deltas' `Clean previews and applies
+a batch of eligible worktree removals in one repository` and its added scenario
+"A commit held only by the worktree", `Clean bounds its Git work and reports
+omitted work` and its scenario "Bounded revalidation work", `Clean records a
+reconcilable result for every removal target`, `Cleanup preserves all local
+work not proven disposable`, `Cleanup revalidates destructive actions` and its
+added scenario "A worktree-only commit made after the plan", and `Cleanup
+states a narrow guarantee and its residual window`).
 
 ### Council Verdicts
 

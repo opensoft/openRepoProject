@@ -6,8 +6,9 @@ Lane: openRepoProject-2
 
 See `proposal.md` for why and what, and the deltas under `specs/` for the
 requirements. The council's noted constraints, `clarifications.md` N1 to N5, are
-answered by D1 to D5; D6 to D19 give the how of the proposal's decisions, and
-D20 maps the packet's 35 validation scenarios to the deltas. The binding rulings
+answered by D1 to D5; D6 to D19, and D21 for Brett Heap's ruling LQ-13, give
+the how of the proposal's decisions, and D20 maps the packet's 35 validation
+scenarios to the deltas. The binding rulings
 (D-A to D-AF, X1, X2, V1 to V12 with V2 as amended, lane 3's M1 to M7, and the
 lead's R-4, R-8 and R-9, R-11 to R-15, R-17, R-19 and R-21 to R-25) are already
 in `proposal.md`, with the sections each edited; R-15 edited Context, D10, D14,
@@ -22,8 +23,8 @@ through lane openRepoProject-4's spec 005 clarify round and recorded in
 Heap's rulings of 2026-10-21 on lane openRepoProject-3's recommendations LQ-10
 to LQ-15, recorded in `proposal.md` Decisions, edit here: LQ-15, Context, D6,
 D11, D16, D18, D20 and Risks; LQ-10, Context, D9, D11, D20 and Risks; LQ-12,
-Context, D6, D16 and D20; LQ-11, Context, D6, D7, D14, D20 and Risks. Brett
-Heap's ruling
+Context, D6, D16 and D20; LQ-11, Context, D6, D7, D14, D20 and Risks; LQ-13,
+Context, D7, D12, D14, D18, D20, D21 and Risks. Brett Heap's ruling
 of 2026-10-09 on open question 1, that a local ancestry proof outranks
 `remote-gone` for worktree rows, is in `proposal.md` Decisions and edited
 Context, D6, D7, D20, Risks, the Migration Plan and Open Questions here.
@@ -433,13 +434,15 @@ target, the manifest's candidate, the branch the plan's `origin/HEAD` named,
 their upstreams; the target's identity and `modules` check by filesystem reads,
 and, where the plan's row 4c read true, its effective-work-tree probe, whose
 difference is `identity-changed`; then, inside the target worktree, the
-combined status probe, which must print nothing, and the hidden-state probe.
-Row 4c itself is not re-read, which keeps revalidation at five Git children in
+combined status probe, which must print nothing, the hidden-state probe, and
+D21's `logs/HEAD` re-read and reachability probe, which must print nothing.
+Row 4c itself is not re-read, which keeps revalidation at six Git children in
 a repository without the extension: an extension turned on after the plan, with
 a `core.worktree` for a target, is a concurrent writer's change outside the
 contract (Risks). Ancestry needs no child: it is a function
 of the branch head and the merge-target SHA, both compared. The reflog of D10 is
-not re-read: a moved branch is already `branch-changed`. A selected row whose
+not re-read: a moved branch is already `branch-changed`. The HEAD reflog of D21
+is re-read, as D21 states. A selected row whose
 upstream was deleted (D6) records `upstream_oid`, `ahead` and `behind` null,
 and revalidation compares them as recorded, by the review-safety rule that a
 value null in the plan and null at revalidation is no difference while a value
@@ -763,7 +766,8 @@ directory are outside it.
 Gates are evaluated in canonical order. Rows that pass every gate before
 `deferred-target-cap` are counted; the first 16 go on to the `modules` check and
 the hidden-state probe, and the rest are excluded as `deferred-target-cap` with
-no index probe, so at most 16 hidden-state probes run and E is at most 16. A row
+no index probe, so at most 16 hidden-state probes run and E is at most 16; at
+most 16 of D21's reachability probes run likewise. A row
 an index gate then excludes keeps its place, so a run can select fewer than 16
 while rows stay deferred, and 16 rows that an index gate always excludes, ahead
 of a backlog, stop it until a person handles them; when every one of the 16 is
@@ -796,10 +800,10 @@ At BA's 150 ms per Git child, with F = 8 (row 4c of LQ-11 included):
 
 | Mode | Children | Time | Fits the 50 s work deadline |
 | --- | --- | --- | --- |
-| report, 256 rows | 8 + 256 + 16 = 280 | 42.0 s | yes |
-| report, 512 rows | 8 + 512 + 16 = 536 | 80.4 s | no |
-| all-safe, 128 rows, 16 targets | 8 + 128 + 16 + 80 + 3 = 235, and 16 removals | 35.25 s + about 4.8 s = 40.05 s | yes; the 16th removal spawns at 39.3 s with 10.7 s left (BA:753-756) |
-| single, 128 rows plus P | 8 + 129 + 1 + 5 + 3 = 146, and 1 removal | 21.9 s + about 0.3 s | yes |
+| report, 256 rows | 8 + 256 + 16 + 16 = 296 | 44.4 s | yes |
+| report, 512 rows | 8 + 512 + 16 + 16 = 552 | 82.8 s | no |
+| all-safe, 128 rows, 16 targets | 8 + 128 + 16 + 16 + 96 + 3 = 267, and 16 removals | 40.05 s + about 4.8 s = 44.85 s | yes; the 16th removal spawns at 44.1 s with 5.9 s left (BA:753-756) |
+| single, 128 rows plus P | 8 + 129 + 1 + 1 + 6 + 3 = 148, and 1 removal | 22.2 s + about 0.3 s | yes |
 
 The report builds no apply plan, so its worst case is the planning term alone,
 and 256 is the largest power of two that fits (D-V, OQ-29). Row 4b and the rare
@@ -807,7 +811,11 @@ row 3 repeat add 0.15 s each; the reflog reads add no child. In a repository
 whose row 4c reads true, each linked row adds its effective-work-tree probe and
 each target's revalidation adds it again, so a large plan there reaches the
 deadline sooner and goes incomplete with `deadline-exceeded`, never unsafe
-(LQ-11). Under D9 a removal
+(LQ-11). D21's reachability probe adds one child for each of at most 16 rows
+and one to each revalidation (LQ-13); its walk is unmeasured, and at task 2.1's
+`for-each-ref` cost over 1,000 loose branches, 240 ms warm, those 32 children
+would add about 7.7 s, which the measured fit's 26.4 s margin absorbs, a slower
+walk making a plan incomplete, never unsafe. Under D9 a removal
 running past the deadline is bounded by its ceiling, not by the fit. The report
 keeps the baseline layout and adds `Report: complete` or `Report: incomplete
 (CODES)`, and, for a repository of at most 128 worktree rows, `--all-safe would
@@ -935,8 +943,9 @@ project clean ROOT --all-safe --apply`, and, when every one of the 16 rows taken
 past the cap is excluded as `contains-submodule`, the line `  these deferred
 rows will not drain while the 16 rows ahead of them are contains-submodule;
 review those worktrees, then remove them yourself` (R-24); the
-residual-window line, `Not protected: ignored files created or index flags set
-after the last check, and any change after Git's own check.`; and, when a
+residual-window line, `Not protected: ignored files created, index flags set or
+worktree-only commits made after the last check, and any change after Git's own
+check.` (its third item by LQ-13); and, when a
 complete plan selects nothing, `No eligible worktrees`.
 
 The next steps by reason: `dirty` "commit or preserve the changes";
@@ -945,7 +954,10 @@ The next steps by reason: `dirty` "commit or preserve the changes";
 review, then git worktree remove yourself"; `reflog-unavailable` "the branch's
 reflog is missing, expired or undecidable; review, then git worktree remove
 yourself"; `contains-submodule` and `hidden-local-state` "review, then remove
-the worktree yourself"; `registration-mismatch` and `inspection-error` "review,
+the worktree yourself"; `worktree-only-commits` "a commit is, or may be, held
+only by this worktree's HEAD reflog or refs/worktree; keep it on a branch or
+tag, or review, then git worktree remove yourself" (LQ-13);
+`registration-mismatch` and `inspection-error` "review,
 then git worktree repair or git worktree prune, or remove the row by hand";
 `locked-worktree` "unlock it yourself if it should go"; every other class its
 recommendation.
@@ -1053,7 +1065,88 @@ and M1 under the JSON and the result; V9, R-23, R-25, the push-child
 exception and Brett Heap's ruling Q9 B under the evidence model; D-D under
 push; D-R under maintenance; R-22 under revalidation. Brett Heap's rulings of
 2026-10-21: LQ-15 under the evidence model and the report; LQ-10 under the
-evidence model; LQ-12 under maintenance; LQ-11 under the evidence model.
+evidence model; LQ-12 under maintenance; LQ-11 under the evidence model; LQ-13
+under the batch and revalidation.
+
+### D21. Commits held only by a worktree (LQ-13)
+
+Brett Heap's ruling LQ-13 of 2026-10-21 keeps a worktree in place when a
+commit that only its own HEAD reflog or its `refs/worktree/` holds is
+unreachable from every branch, tag and remote ref. `git worktree remove`
+deletes the worktree's administrative directory, and with it `logs/HEAD` and
+every ref under `refs/worktree/`, which live there and are never packed
+(`common_list` in `path.c`; `should_pack_ref` in `refs/files-backend.c`, at
+2.36.6 and 2.43.7); such a commit is then held by nothing and is left to
+garbage collection. Lane openRepoProject-3 found the gap (F1 H-1 at
+`2cf34d3`). Each decision below is the simple, conservative one:
+
+- Reason. A new exclusion reason, `worktree-only-commits`, in the gates'
+  kebab-case. No existing reason fits: `reflog-unavailable` names the branch's
+  reflog and its remedy says that reflog is missing, expired or undecidable;
+  `unstarted-branch` says the opposite, that no work was done; and
+  `inspection-error` would make the whole plan incomplete for a state that is
+  fully established.
+- Place. The last gate, after `hidden-local-state`. It is a protection, so it
+  runs before any row is selected, in every mode, `mode: "single"` included,
+  where an excluded P refuses `target-excluded`; a row an earlier gate excludes,
+  as every row with work in its index or tree is, needs no such protection. It
+  sits past `deferred-target-cap` with the index gates because it costs a Git
+  child, which bounds it at 16 rows per run (D12).
+- Reads. One bounded filesystem read of `logs/HEAD` in the worktree's
+  administrative directory, at most 64 KiB, the cap of D10's branch reflog, and
+  counted in the filesystem budget, each line parsed as D10 parses one; every
+  non-zero old and new object it names is a candidate. Then, after the
+  hidden-state probe, one Git child in the worktree, with the scrub, the pins
+  and `GIT_OPTIONAL_LOCKS=0` of every read-only probe:
+  `git -C <worktree> rev-list --max-count=1 --glob=refs/worktree <candidates>
+  --not --branches --tags --remotes <branch reflog objects>`.
+  `--glob=refs/worktree` adds the worktree's own per-worktree refs, which only
+  that worktree sees. The negative side is every branch, tag and
+  remote-tracking ref and every object that the row's branch reflog names,
+  which D10 already read and which survives the removal in the common
+  directory, so that an amend, a reset or a rebase of the row's own branch is
+  not taken for lost work: such a commit is not held only by the worktree. The
+  child prints a commit exactly when one is reachable from the candidates or
+  from `refs/worktree/` and from none of the negatives.
+- Bounds. The read takes the filesystem budget and the child `min(5 s, work
+  remaining)`, as every read and child do; `--max-count=1` keeps the output to
+  one line.
+- Fail closed. A missing (`ENOENT` or `ENOTDIR`) or empty `logs/HEAD` gives no
+  candidate, since no reflog then holds anything. A printed commit gives
+  `worktree-only-commits`, and so does every outcome that cannot decide: the
+  64 KiB bound reached, a line that does not parse, any other error on the
+  read, and a child that exits nonzero, as on a missing object (`fatal: bad
+  object`, 128), runs past its budget, or prints anything but one object name;
+  `reflog-unavailable` does not fit there, since its remedy names the branch's
+  reflog. A read not finished within the filesystem budget leaves the row
+  unprobed and the plan incomplete with `inspection-incomplete`, and the
+  deadline gives `deadline-exceeded`, as for every read and child.
+- Revalidation. After the hidden-state probe, revalidation reads `logs/HEAD`
+  again and runs the same child, with the plan's branch reflog objects; a
+  printed commit, or any outcome that cannot decide, refuses the target with
+  `worktree-only-commits`. That is the sixth Git child of a revalidation (D7,
+  D14), and it catches a commit made, or a ref under `refs/worktree/` created,
+  after the plan, which no step read before (lane openRepoProject-3's reader RB
+  at `2cf34d3`, whose cases were all removed with exit 0; R-107). After that
+  revalidation such a commit is in the residual window, whose line names it
+  (D18).
+- Rendering. The reason appears where every gate's does: an `excluded`
+  entry's `reason`, a `target-excluded` refusal's `reason` and a `refused`
+  target's `reason`, so no JSON field is added and the closed enums gain one
+  value within `schema_version: 1`, before any release. The human preview
+  groups it with its next step (D18).
+
+Checked here on Git 2.36.6 and 2.43.0: the child prints nothing for a worktree
+whose HEAD reflog holds only commits a branch reaches, and nothing with no
+candidate at all; it prints the commit made on a detached HEAD and left there,
+and nothing once that commit is tagged; run in the worktree, it prints the
+commit that only `refs/worktree/keep` holds, and run in the main worktree it
+does not; that ref stays loose after `git pack-refs --all`; it exits 128 on a
+missing object; and for a branch amended and reset in the worktree it prints
+the pre-amend commit with only the refs as negatives, and nothing once the
+branch reflog's objects are negatives too. On Git 2.43.0, after an interactive
+rebase onto a merge target that had moved, with one pick turned into a fixup,
+it prints the intermediate commit that the fixup replaced (Risks).
 
 ## Risks / Trade-offs
 
@@ -1075,6 +1168,14 @@ evidence model; LQ-12 under maintenance; LQ-11 under the evidence model.
   runs first and the bound ends the read] -> Fails closed; the remedy calls the
   reflog undecidable and names `git worktree remove` (D18), and D5's survey
   counts such rows.
+- [A worktree whose HEAD reflog names commits of no value that nothing else
+  holds, such as the intermediate commits of an interactive rebase that
+  rewrote its picks and then squashed or fixed them up, or the commits of a
+  branch checked out there and
+  since deleted, is excluded as `worktree-only-commits`; so is one whose HEAD
+  reflog exceeds 64 KiB] -> Fails closed, as Brett Heap's ruling LQ-13 asks;
+  the remedy says to keep any such commit on a branch or tag, or to review and
+  remove the worktree by hand (D18, D21).
 - [A branch created from a remote branch that already had commits, then merged
   elsewhere, reads as unstarted, because nothing moved it here since its
   creation entry] -> Fails closed as `unstarted-branch`; the remedy says that no
