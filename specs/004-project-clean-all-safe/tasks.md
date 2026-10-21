@@ -2042,16 +2042,27 @@ US2, US7 and US9.
   waited for and completes, `origin` holds the branch or the branch is gone,
   and `project` exits 143, 130 or 129; with no signal to `project`, the child's
   own status passes through, and a hook that ends its own `git` with SIGKILL
-  gives 137; plan review M3) and
+  gives 137; plan review M3),
   `test_clean_push_and_delete_branch_escape_their_paths` (a repository root
   holding a tab and U+202E, the code point built with `chr(0x202E)` in the
   test's source, never written there as the raw character or as a `\u`
   escape written by an edit tool (lead ruling R-74 (c)(2)): `--action push`
   and `--action delete-branch` print `Working directory:` and the command
   with the root in the `$'...'` form and never the raw code points; plan
-  review B2, FR-041, SC-010).
+  review B2, FR-041, SC-010) and
+  `test_clean_a_branch_deletion_that_cannot_be_spawned` (in process,
+  `--action delete-branch` on a merged branch with no worktree, the counting
+  wrapper the only `git` on PATH: the full re-inspection after confirmation
+  runs through it as built, and only then is the wrapper made not executable
+  (`EACCES`), or removed (`ENOENT`), as two subtests: the `git branch -d`
+  child that cannot be spawned gives the baseline's `REFUSED: Cannot run git:
+  [Errno N] ...: 'git'`, which `push_or_delete()` builds from
+  `run_bounded()`'s detail, exit 2, with the plan shown and nothing relayed, no
+  child after the re-inspection and no `git branch -d` run, and the branch
+  kept; it passes on arrival, pinning built behaviour; lead rulings R-81 (b)
+  and R-96 (a)).
   — files: `tests/test_clean_push.py`
-  — verify: `python3 -c "import sys,unittest as u;L=u.defaultTestLoader;f=lambda s:[i for t in s for i in (f(t) if isinstance(t,u.TestSuite) else [t.id()])];I=[i for i in f(L.discover('tests',pattern=sys.argv[1])) if not i.startswith('unittest.')];A=sys.argv[2:];M=[a for a in A if not any(a in ('*',i.split('.')[-1]) for i in I)];[print('not collected:',m) for m in M];[print(e) for e in L.errors];sys.exit(1 if M or L.errors or not A else 0)" test_clean_push.py 'test_clean_a_signal_during_the_push_or_branch_deletion' 'test_clean_push_and_delete_branch_escape_their_paths'`
+  — verify: `python3 -c "import sys,unittest as u;L=u.defaultTestLoader;f=lambda s:[i for t in s for i in (f(t) if isinstance(t,u.TestSuite) else [t.id()])];I=[i for i in f(L.discover('tests',pattern=sys.argv[1])) if not i.startswith('unittest.')];A=sys.argv[2:];M=[a for a in A if not any(a in ('*',i.split('.')[-1]) for i in I)];[print('not collected:',m) for m in M];[print(e) for e in L.errors];sys.exit(1 if M or L.errors or not A else 0)" test_clean_push.py 'test_clean_a_signal_during_the_push_or_branch_deletion' 'test_clean_push_and_delete_branch_escape_their_paths' 'test_clean_a_branch_deletion_that_cannot_be_spawned' && python3 -m unittest discover -s tests -p 'test_clean_push.py' -k '*.test_clean_a_branch_deletion_that_cannot_be_spawned'`
 - [x] T074 [P] [US3] [O] Add to `tests/test_clean_push.py` (PR #19; plan.md LQ-3;
   research.md R1): `test_clean_the_push_child_reaches_its_remote` (`project
   clean ROOT --apply --action push --branch B --yes`, with ROOT the main
@@ -2624,11 +2635,40 @@ lead ruling R-83).
   gives `reconciliation-incomplete` after exit 0, except that a child that
   exited nonzero on its own stays `failed`, `decide_stage()` reading its
   status first, and a child killed at the ceiling keeps `removal-ceiling`
-  (T085's rule; lead rulings R-76 (a) and R-91 LOW D); add the
+  (T085's rule; lead rulings R-76 (a) and R-91 LOW D); an `lstat` that fails
+  with `ENOENT` or `ENOTDIR` is evidence of absence, not a failed read
+  (R-36), so a parent replaced by a file after a reconciled removal reads as
+  absence: the target's own parent gives `path_present` false and the target
+  `removed`, exit 0, while the root's parent replaced by a file loses the
+  repository identity, `unknown` with `unconfirmed-removal`, every field null
+  (R-78 (e)), and only an `lstat` that cannot tell, `EACCES`, gives
+  `reconciliation-incomplete`; an identity probe cut at its budget before it
+  answers, the planned root and common directory still there, marks the
+  record, `unknown` with `reconciliation-incomplete`, every field null, exit
+  1 (lead rulings R-82 (d), as R-93 (a) corrects it, and R-96 (b)); add the
   `orphaned-directory` note; guard every
   write of the record against `OSError`, the EIO a terminal may answer after
-  SIGHUP. T087 to T090 pass.
-  — files: `project`, `tests/test_clean_revalidation.py`
+  SIGHUP. T087 to T090 pass. The hygiene lane's two tests of the rescan, in
+  `tests/test_clean_result.py`, Git's removal exiting 0 in each:
+  `test_clean_a_parent_replaced_by_a_file_after_removal` (three subtests, the
+  post-remove hook changing the parent: the target's own parent replaced by a
+  file, both targets `removed` with the record (false, false, true, planned
+  SHA, true), exit 0, complete; the repository root's parent replaced by a
+  file, `unknown` with `unconfirmed-removal`, every field null, the identity
+  probe the only child after the removal and the second target
+  `not-attempted` with `batch-stopped`, exit 1; and, as the contrast, the
+  target's parent made mode 000, `unknown` with `reconciliation-incomplete`,
+  `path_present` null, exit 1, skipped under the superuser) and
+  `test_clean_a_rescan_identity_probe_cut_before_it_answers` (a fake `git`
+  that sleeps on `rev-parse` once the post-remove hook has left its marker,
+  under the launcher with a 1 s probe budget and a 0.5 s grace and reap
+  wait: the identity probe, the rescan's only child, is cut and its group
+  reaped, `unknown` with `reconciliation-incomplete`, every field null, exit
+  1, the worktree gone and the branch kept; the same all-null record left
+  unmarked is the root case above, `unconfirmed-removal`). Both pass on
+  arrival and pin built behaviour (lead rulings R-82 (d), as R-93 (a)
+  corrects it, and R-96 (b)); round 11's item 11.
+  — files: `project`, `tests/test_clean_revalidation.py`, `tests/test_clean_result.py`
   — verify: `python3 -m unittest discover -s tests -p 'test_clean_result.py' && python3 -m unittest discover -s tests -p 'test_clean_revalidation.py' -k '*.test_clean_a_signal_during_a_removal_sigint_during_a_revalidation'`
 - [x] T094 [P] [US5] [S] In `print_plan()` (region `preview`), print D18's
   partial-removal note on its own line for a row noted `partially-removed`:
