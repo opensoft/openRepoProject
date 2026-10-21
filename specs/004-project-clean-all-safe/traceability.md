@@ -68,9 +68,9 @@ methods that cover the scenario.
 | project-clean | Clean bounds its Git work and reports omitted work | Twenty rows pass every gate before deferred-target-cap | US6 | `test_clean_twenty_rows_pass_every_gate_before_deferred_target_cap` |
 | project-clean | Clean bounds its Git work and reports omitted work | Ignored-file bound | US6 | `test_clean_ignored_file_bound` |
 | project-clean | Clean bounds its Git work and reports omitted work | Bounded revalidation work | US6 | `test_clean_bounded_revalidation_work` |
-| project-clean | Clean bounds its Git work and reports omitted work | Deadline expiry mid-batch | US6 | `test_clean_deadline_expiry_mid_batch`, `test_clean_deadline_expiry_mid_batch_a_rescan_read_cut_at_the_deadline` |
+| project-clean | Clean bounds its Git work and reports omitted work | Deadline expiry mid-batch | US6 | `test_clean_deadline_expiry_mid_batch`, `test_clean_deadline_expiry_mid_batch_a_rescan_read_cut_at_the_deadline`, `test_clean_deadline_expiry_mid_batch_a_revalidation_read_cut_at_the_deadline`, `test_clean_deadline_expiry_mid_batch_a_revalidation_read_cut_at_its_probe_budget` |
 | project-clean | Clean records a reconcilable result for every removal target | Exit 0 without evidence | US5 | `test_clean_exit_0_without_evidence` |
-| project-clean | Clean records a reconcilable result for every removal target | A signal during a removal | US5 | `test_clean_a_signal_during_a_removal` |
+| project-clean | Clean records a reconcilable result for every removal target | A signal during a removal | US5 | `test_clean_a_signal_during_a_removal`, `test_clean_a_signal_during_a_removal_sigint_during_a_revalidation` |
 | project-clean | Clean records a reconcilable result for every removal target | SIGTERM before the apply phase | US5 | `test_clean_sigterm_before_the_apply_phase`, `test_clean_sigterm_before_the_apply_phase_after_the_last_probe`, `test_clean_sigterm_before_the_apply_phase_while_the_plan_is_written` |
 | project-clean | Clean records a reconcilable result for every removal target | Git leaves an orphaned directory | US5 | `test_clean_git_leaves_an_orphaned_directory` |
 | project-clean | Clean records a reconcilable result for every removal target | Git refuses the removal | US5 | `test_clean_git_refuses_the_removal` |
@@ -88,7 +88,7 @@ methods that cover the scenario.
 | project-clean-review-safety | Cleanup preserves all local work not proven disposable | The main worktree and a locked worktree | US2 | `test_clean_the_main_worktree_and_a_locked_worktree` |
 | project-clean-review-safety | Cleanup revalidates destructive actions | Worktree changes while confirmation is pending | US4 | `test_clean_worktree_changes_while_confirmation_is_pending` |
 | project-clean-review-safety | Cleanup revalidates destructive actions | Target directory replaced | US4 | `test_clean_target_directory_replaced` |
-| project-clean-review-safety | Cleanup revalidates destructive actions | Admin registration changed | US4 | `test_clean_admin_registration_changed`, `test_clean_admin_registration_changed_a_twin_made_after_planning` |
+| project-clean-review-safety | Cleanup revalidates destructive actions | Admin registration changed | US4 | `test_clean_admin_registration_changed`, `test_clean_admin_registration_changed_a_twin_made_after_planning`, `test_clean_admin_registration_changed_a_twin_spelled_through_an_unsearchable_directory` |
 | project-clean-review-safety | Cleanup revalidates destructive actions | Parent directory swapped | US4 | `test_clean_parent_directory_swapped` |
 | project-clean-review-safety | Cleanup revalidates destructive actions | New worktree and pre-removal changes | US4 | `test_clean_new_worktree_and_pre_removal_changes` |
 | project-clean-review-safety | Cleanup revalidates destructive actions | State changes before revalidation | US4 | `test_clean_state_changes_before_revalidation` |
