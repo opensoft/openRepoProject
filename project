@@ -695,6 +695,9 @@ TEXT = {
     "progress_line": "  {STAGE} {PATH}",
     "progress_line_reason": "  {STAGE} {PATH} ({REASON})",
     "branches_kept_line": "Branches kept: {BRANCHES}.",
+    # The branches a stopped run leaves out of `Branches kept:`, missing after
+    # removal or never read back (T094; lead rulings R-76 (f) and R-79, P-10).
+    "branches_not_confirmed": "Branches not confirmed: {BRANCHES}.",
     "invalid_arguments_all_safe": "--all-safe cannot be combined with --action, --branch or --worktree.",
     "invalid_arguments_expect_plan": "--expect-plan requires --all-safe and --apply.",
     "invalid_arguments_expect_plan_value": "--expect-plan takes 64 lowercase hexadecimal characters.",
@@ -4255,7 +4258,9 @@ def print_plan(plan, run):
     `unknown` (report_lines()); an --all-safe plan, and a single-mode plan for
     --action remove, D18's preview layout (preview_lines()); push and
     delete-branch, nothing. `Merge target: NAME (SOURCE)` prints in every
-    mode, and every path and branch goes through human_path(). This replaces
+    mode, and every path and branch goes through human_path(). A row noted
+    `partially-removed` (D4) also prints D18's partial-removal note beside its
+    advice, never instead of it (T094; lead ruling R-79, P-11). This replaces
     print_clean_report() for `clean`."""
     if plan.action in ("push", "delete-branch"):
         return
@@ -4301,6 +4306,10 @@ def report_lines(plan):
     order: `CLASS: PATH [BRANCH] dirty=D; upstream=U; DELTA; merged=M`, then
     the recommendation; a null dirty, merge answer or count shown as
     `unknown`, and no upstream configured as `none`, as the baseline prints it.
+    A row noted `partially-removed` (D4) prints D18's partial-removal note on
+    its own line right after its recommendation, the `dirty` advice, and
+    indented as that line is, its PATH in the command form, since the note
+    names a command to paste (T094; lead rulings R-79, P-11, and R-83, P-2).
     T101 adds the D14 lines."""
     lines = []
     for row in plan.rows:
@@ -4311,6 +4320,8 @@ def report_lines(plan):
                      f"dirty={_shown(row.get('dirty'))}; upstream={upstream}; {delta}; "
                      f"merged={_shown(row.get('merged_into_target'))}")
         lines.append(f"  {row['recommendation']}")
+        if "partially-removed" in (row.get("notes") or ()):
+            lines.append("  " + TEXT["partial_removal_note"].format(PATH=human_path(row.raw_path, command=True)))
     return lines
 
 
@@ -4330,7 +4341,10 @@ def preview_lines(plan):
     output"): `Selected (N):` and one `  remove PATH [BRANCH]` per selected row;
     `Excluded (M):` and, per reason in EXCLUDED_GROUP_ORDER, `  REASON (K):
     NEXT STEP` (next_step()) over one `    PATH [BRANCH]` per row, an
-    ignored-local-files row adding its count and first sample; `No eligible
+    ignored-local-files row adding its count and first sample, and a row
+    noted `partially-removed` (D4), a dirty one, followed by D18's
+    partial-removal note, six spaces in, its PATH in the command form (T094;
+    lead rulings R-79, P-11, and R-83, P-2); `No eligible
     worktrees` when a complete --all-safe plan that carries no refusal selects
     nothing; and the residual-window line when anything is selected. Rows go
     in raw path byte order. In mode single, P is the one selected row and the
@@ -4356,6 +4370,9 @@ def preview_lines(plan):
                 suffix = ignored_suffix(row) if reason == "ignored-local-files" else ""
                 lines.append(TEXT["excluded_row"].format(PATH=human_path(row.raw_path),
                                                          BRANCH=human_path(row["branch"])) + suffix)
+                if "partially-removed" in (row.get("notes") or ()):
+                    lines.append("      " + TEXT["partial_removal_note"].format(
+                        PATH=human_path(row.raw_path, command=True)))
     if plan.mode == "all-safe" and not selected and plan.completeness == "complete" and not plan.refusals:
         lines.append(TEXT["empty_line"])
     if selected:
@@ -5078,23 +5095,52 @@ def print_progress(target, run):
     say(run, progress_line(target))
 
 
+# The stages of a target whose removal child the apply phase spawned, or
+# tried to: the rescan after it reads the branch back (lead ruling R-79, P-10).
+RESCANNED_STAGES = ("removed", "failed", "unknown")
+
+
+def branch_not_confirmed(target):
+    """Whether target's branch is left out of `Branches kept:` (T094; lead
+    rulings R-76 (f) and R-79, P-10): its last read shows it absent
+    (`branch_present` false, at any stage), or its rescan did not read it
+    back (`branch_present` null on a `removed`, `failed` or `unknown`
+    target), a reconciliation still None reading as every field null, as
+    target_document() writes it. A `refused` target whose revalidation
+    stopped before its ref listing, and a `not-attempted` one, which has no
+    reconciliation, keep their branch, since nothing was spawned for them.
+    print_result()'s alone."""
+    if target["stage"] == "not-attempted":
+        return False
+    present = (target["reconciliation"] or {}).get("branch_present")
+    return present is False or (present is None and target["stage"] in RESCANNED_STAGES)
+
+
 def print_result(plan, targets, run):
-    """The human result of an apply (design D18; lead ruling R-56 Q-9), after
-    every target's progress line, through say(), so standard error under
-    --apply --json and a failed write recorded, never raised: when every
-    target is `removed` with reason null, `Removed N; branches kept: B1,
-    B2.`; otherwise D18's stop block at the first target that is not, its
-    `Not attempted:` naming the `not-attempted` targets (`none` when there is
+    """The human result of an apply (design D18; lead rulings R-56 Q-9,
+    R-76 (d) and (f) and R-79, P-10 and P-11), after every target's progress
+    line, through say(), so standard error under --apply --json and a failed
+    write recorded, never raised. First, D18's partial-removal note for each
+    target noted `partially-removed`, in canonical order, its PATH in the
+    command form (lead ruling R-83, P-2). Then, when every target is
+    `removed` with reason null, `Removed N; branches kept: B1, B2.`, naming
+    every selected target's branch, since the apply phase deletes no branch;
+    otherwise D18's stop block at the first target that is not, its `Not
+    attempted:` naming the `not-attempted` targets (`none` when there is
     none, a case D18 leaves open), its `Next:` command naming plan.root, then
-    `Branches kept: B1, B2.`; and in both cases the residual-window line.
-    Each list of kept branches names every selected target's branch in
-    canonical order, since the apply phase deletes no branch; paths and
-    branches print through human_path(), the command's root in its command
-    form."""
-    branches = ", ".join(human_path(target["branch"]) for target in targets)
+    `Branches kept: B1, B2.` (`none` when there is none), leaving out each
+    branch branch_not_confirmed() names, and those branches on their own
+    line, `Branches not confirmed: B1.`, when there is one. In both cases the
+    residual-window line ends the result. Targets go in canonical order;
+    paths and branches print through human_path(), the commands' paths in
+    their command form."""
+    for target in targets:
+        if "partially-removed" in (target["notes"] or ()):
+            say(run, TEXT["partial_removal_note"].format(PATH=human_path(target["path"], command=True)))
     stop = next((target for target in targets
                  if not (target["stage"] == "removed" and target["reason"] is None)), None)
     if stop is None:
+        branches = ", ".join(human_path(target["branch"]) for target in targets)
         say(run, TEXT["success_line"].format(N=len(targets), BRANCHES=branches))
     else:
         skipped = [human_path(target["path"]) for target in targets if target["stage"] == "not-attempted"]
@@ -5102,7 +5148,11 @@ def print_result(plan, targets, run):
             PATH=human_path(stop["path"]), REASON=stop["reason"],
             K=sum(target["stage"] == "removed" for target in targets), N=len(targets),
             NOT_ATTEMPTED=", ".join(skipped) or "none", ROOT=human_path(plan.root, command=True)))
-        say(run, TEXT["branches_kept_line"].format(BRANCHES=branches))
+        kept = [human_path(target["branch"]) for target in targets if not branch_not_confirmed(target)]
+        unconfirmed = [human_path(target["branch"]) for target in targets if branch_not_confirmed(target)]
+        say(run, TEXT["branches_kept_line"].format(BRANCHES=", ".join(kept) or "none"))
+        if unconfirmed:
+            say(run, TEXT["branches_not_confirmed"].format(BRANCHES=", ".join(unconfirmed)))
     say(run, TEXT["residual_window_line"])
 # endregion result
 
