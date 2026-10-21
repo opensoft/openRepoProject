@@ -458,6 +458,25 @@ Lane: openRepoProject-4
   `testing-strategy.md` were re-read, no category changing, and the totals
   below were recounted by script. Re-validation: 16 of 16 items pass, with the
   checks of iteration 2 re-run by script on the edited spec.
+- 2026-10-21, a seventh pass: lane openRepoProject-3's W20 read of A1 revision
+  3 (HIGH 0, MEDIUM 2, LOW 8), by the lead's decisions D6 to D9 shared with
+  A1's revision 4. FR-007 and the LQ-11 bullet record that the collector-table
+  exception departs from the packet's DI:535, and the A1 bullet adds it to the
+  LQ-11 item's departures (D6); FR-007 and the LQ-11 bullet name a per-worktree
+  `core.bare=true` among the failures of the effective-work-tree probe that are
+  a disagreement with no error, as W20 measured on Git 2.43.0 and 2.36.6 (D7);
+  the LQ intro and the A1 bullet add the ordering rule's ratified-first case,
+  PR #34 not merging before #19's ratification of the commits its LQ items
+  follow, or those items moving to a later amendment if Brett Heap wants #34
+  sooner (D8); and FR-013's toplevel realpath task gives FR-007's outcomes
+  (D9). FR-007 also reads the extension read's exit 1 as a value not set only
+  with nothing on either stream, an exit 1 with a warning, as for an unreadable
+  `config`, counting as true (W20, section 4). A1 revision 4 (draft PR #34) is
+  cited with no sha. No pin moves, and `clarify-questions.md` is unchanged. In
+  this folder, CHK016 of `discovery-identity.md` was re-read, its category
+  unchanged, and the totals below were recounted by script. Re-validation: 16
+  of 16 items pass, with the checks of iteration 2 re-run by script on the
+  edited spec.
 - Items marked incomplete require spec updates before `/speckit-clarify` or `/speckit-plan`
 
 ## Cross-cutting Requirements Quality (no-argument `/speckit.checklist`, 2026-10-19)
@@ -569,5 +588,5 @@ All 17 checklists: 414 items: 373 pass, 25 fixed in the spec, 0 open, 16 plan
 notes (PN-1 to PN-18 but PN-4 and PN-11, withdrawn on 2026-10-21; PN-2 narrowed
 to an exception of any other kind in human mode and widened to a failed write's
 standard-error line), 0 new questions. Recounted by script on 2026-10-21, and
-again after the re-check, after the W6 read and after the fourth to sixth
+again after the re-check, after the W6 read and after the fourth to seventh
 passes of that day.

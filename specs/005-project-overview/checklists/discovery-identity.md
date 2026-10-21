@@ -83,6 +83,11 @@ Lane: openRepoProject-4
     not completed, as PR #19 amends [E] at `93f3194` (R-125), pending; and
     FR-007 declares its split of the effective-work-tree probe's outcomes as a
     fill of [E]'s "a probe that fails" (lane openRepoProject-3's W17 read, L1).
+    After lane openRepoProject-3's W20 read of A1 revision 3, the extension
+    read's exit 1 is a value not set only with nothing on standard output or
+    standard error, and FR-013's toplevel realpath task gives FR-007's
+    outcomes, `ENOENT` or `ENOTDIR` a disagreement with no error and any other
+    failure, or a cut task, a check not completed.
 
 ## Requirement Consistency
 
@@ -143,9 +148,10 @@ re-evaluated on 2026-10-21 after Brett Heap's answers (C-55 to C-71), and
 CHK016 later that day, after the re-check against feature 004's head `2cf34d3`,
 its result still pass, and again after lane openRepoProject-3's W6 read of
 `8082d3b`, and after its W11 read of `08d5d79` and PR #19's `addd346`, and
-again after its W17 read of `b511bdb` and PR #19's `93f3194`. 29 items: 27
-pass, 1 fixed in the spec, 0 open, 1 plan notes, 0 new questions. An open item
-waits on the question or residual its result names; a plan note is for the
-plan, not the spec; a new question is asked in `clarify-questions.md`.
+again after its W17 read of `b511bdb` and PR #19's `93f3194`, and after its W20
+read of A1 revision 3. 29 items: 27 pass, 1 fixed in the spec, 0 open, 1 plan
+notes, 0 new questions. An open item waits on the question or residual its
+result names; a plan note is for the plan, not the spec; a new question is
+asked in `clarify-questions.md`.
 
 Plan notes: PN-9 (CHK024).
