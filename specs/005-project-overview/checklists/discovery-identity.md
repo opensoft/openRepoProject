@@ -93,7 +93,14 @@ Lane: openRepoProject-4
     disagreement with no error, and only a cut of the probe leaves the check
     not completed, FR-007's declared fill narrowing to the cut; FR-007 quotes
     both of A1's exceptions in the collector table (its
-    `specs/project-overview/spec.md:359`).
+    `specs/project-overview/spec.md:359`). After A1's revision 6 at `d644517`,
+    requirement 2's closed case list holds FR-007's third case as change 2's
+    own text (its `specs/project-overview/spec.md:107-111`, amending
+    POD:89-95), a case that departs from the packet's DI:251-261 and that takes
+    the effective-work-tree read's own cut, and the collector table's exception
+    names a probe that cannot be spawned (its :364); FR-007 credits that
+    reading to the lane openRepoProject-4 lead's ruling (lane
+    openRepoProject-3's W25 M1, L8 and L12).
 
 ## Requirement Consistency
 
@@ -155,9 +162,10 @@ CHK016 later that day, after the re-check against feature 004's head `2cf34d3`,
 its result still pass, and again after lane openRepoProject-3's W6 read of
 `8082d3b`, and after its W11 read of `08d5d79` and PR #19's `addd346`, and
 again after its W17 read of `b511bdb` and PR #19's `93f3194`, and after its W20
-read of A1 revision 3, and after A1's revision 5 at `3ee860c`. 29 items: 27
-pass, 1 fixed in the spec, 0 open, 1 plan notes, 0 new questions. An open item
-waits on the question or residual its result names; a plan note is for the
-plan, not the spec; a new question is asked in `clarify-questions.md`.
+read of A1 revision 3, and after A1's revisions 5 and 6 at `3ee860c` and
+`d644517`. 29 items: 27 pass, 1 fixed in the spec, 0 open, 1 plan notes, 0 new
+questions. An open item waits on the question or residual its result names; a
+plan note is for the plan, not the spec; a new question is asked in
+`clarify-questions.md`.
 
 Plan notes: PN-9 (CHK024).

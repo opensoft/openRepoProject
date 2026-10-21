@@ -39,7 +39,7 @@ Lane: openRepoProject-4
   - Result: pass; once PR #19 is ratified, `operation-in-progress` (LQ-14,
     `43f7107`) and `worktree-only-commits` (LQ-13, `93de4bb`) join them, after
     them in [G]'s order, and the overview evaluates neither (FR-032), as
-    amendment A1 at `3ee860c` proposes, pending, keeping the overview's
+    amendment A1 at `d644517` proposes, pending, keeping the overview's
     `--all-safe` suggestion of such a worktree and under the one outcome rule
     of each gate that R-124 settles at `2b86a5f`, pending: the batch excludes
     the worktree on a decided result; an error on the listing, any other error
@@ -123,9 +123,10 @@ Evaluated on 2026-10-19 against `spec.md` at `8f433f7`; CHK018 re-read on
 still pass, and CHK012, CHK020, CHK025 and CHK027 after PR #19's LQ-13 and
 LQ-14, theirs too, and CHK012 again after A1's revision 3 at `367223a`, and
 CHK012 and CHK020 after PR #19's R-124 and R-126, and again after A1's revision
-5 at `3ee860c`, with R-124's outcome rule in `2b86a5f`'s words. 29 items: 28
-pass, 1 fixed in the spec, 0 open, 0 plan notes, 0 new questions. An open item
-waits on the question or residual its result names; a plan note is for the
-plan, not the spec; a new question is asked in `clarify-questions.md`.
+5 at `3ee860c`, with R-124's outcome rule in `2b86a5f`'s words, and CHK012
+after its revision 6 at `d644517`. 29 items: 28 pass, 1 fixed in the spec, 0
+open, 0 plan notes, 0 new questions. An open item waits on the question or
+residual its result names; a plan note is for the plan, not the spec; a new
+question is asked in `clarify-questions.md`.
 
 Plan notes: none.

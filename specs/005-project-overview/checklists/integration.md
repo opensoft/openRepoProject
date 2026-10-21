@@ -50,7 +50,7 @@ Lane: openRepoProject-4
   - Result: pass with C-57: one more `-k` prefix selects a small set of the
     overview's tests (FR-050); the job's `-k` selection is unchanged at
     `c9103ba` (Dependencies, Runtime and CI). Amendment A1 carries that
-    selection in change 2's Impact, the second branch Q3 B allows, at `3ee860c`
+    selection in change 2's Impact, the second branch Q3 B allows, at `d644517`
     (its `proposal.md:455-460`), proposed in draft PR #34, pending Brett Heap's
     ratification (FR-050).
 - [x] CHK013 Is the state of feature 004 that must exist before the plan
@@ -87,7 +87,7 @@ Lane: openRepoProject-4
     `43f7107`) and `worktree-only-commits` (LQ-13, `93de4bb`) join the index
     gates among the exclusions only the batch applies (FR-032, SC-004). The
     overview keeps the `--all-safe` suggestion of such a worktree, as amendment
-    A1 at `3ee860c` proposes, pending, under the one outcome rule of each gate
+    A1 at `d644517` proposes, pending, under the one outcome rule of each gate
     that R-124 settles at `2b86a5f`, pending: the batch excludes the worktree
     on a decided result; an error on the listing, any other error on the
     `logs/HEAD` read, and a `rev-list` child that cannot be started, exits
@@ -140,10 +140,10 @@ CHK020 and CHK026 re-read after the alignment with amendment A1 at `b020edc`,
 PR #19's LQ-11 to LQ-14 and lane openRepoProject-3's W11 read of `08d5d79`, and
 CHK012 and CHK020 again after A1's revision 3 at `367223a`, and CHK020 after PR
 #19's R-124, and CHK012 and CHK020 again after A1's revision 5 at `3ee860c`,
-CHK020 with R-124's outcome rule in `2b86a5f`'s words, their categories
-unchanged. 26 items: 24 pass, 0 fixed in the spec, 0 open, 2 plan notes, 0 new
-questions. An open item waits on the question or residual its result names; a
-plan note is for the plan, not the spec; a new question is asked in
-`clarify-questions.md`.
+CHK020 with R-124's outcome rule in `2b86a5f`'s words, and again after its
+revision 6 at `d644517`, their categories unchanged. 26 items: 24 pass, 0 fixed
+in the spec, 0 open, 2 plan notes, 0 new questions. An open item waits on the
+question or residual its result names; a plan note is for the plan, not the
+spec; a new question is asked in `clarify-questions.md`.
 
 Plan notes: PN-16 (CHK025), PN-18 (CHK026).

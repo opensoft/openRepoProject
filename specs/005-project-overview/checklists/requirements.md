@@ -443,8 +443,9 @@ Lane: openRepoProject-4
   the probe's failing exit as a disagreement with no error, as `addd346` has it
   and A1 revision 4 is to propose (L2); EC-032 says that FR-020's
   identity-probe count stands as ratified (L3); FR-043 and the LQ-15 bullet
-  read the code as resting on Brett Heap's LQ-15 word, which names only
-  `clean`, `status`, `doctor` and `update` (L4); SC-004 cites PR #19's lines
+  read the code as resting on Brett Heap's LQ-15 word, whose form the lead gave
+  as `clean`, `status`, `doctor` and `update` (lane openRepoProject-2's ruling
+  R-102 (c) 3; `9fb22fa` proposal.md:954-956) (L4); SC-004 cites PR #19's lines
   beside CLN:800-803 (L5); EC-033 cites R-116 and W17's reproduction on Git
   2.36.6 (L6); and FR-013's and FR-020's LQ-11 sentences carry their own
   pending mark (L7). From PR #19, pending its ratification: FR-032, SC-004 and
@@ -510,6 +511,34 @@ Lane: openRepoProject-4
   category changing, and the totals below were recounted by script.
   Re-validation: 16 of 16 items pass, with the checks of iteration 2 re-run by
   script on the edited spec.
+- 2026-10-21, a ninth pass: A1's revision 6 at `d644517` and lane
+  openRepoProject-3's W25 read of 3c to 3f and of A1's revisions 4 and 5 (HIGH
+  0, MEDIUM 1, LOW 12), by the lead's commit 3g decisions. Every citation of A1
+  now cites `d644517` at its lines there: its spec's lines from 112 on move
+  down 5 (the collector-table row to :364), and its proposal's LQ items to
+  :1251-1423, Q15 A and Q16 B to :1425-1428 and the open point to :1430-1437;
+  its design and clarifications do not move. FR-007, the LQ-11 bullet and the
+  A1 bullet record that requirement 2's closed case list now holds FR-007's
+  third case as change 2's own text (A1's spec:107-111, amending POD:89-95),
+  departing from the packet's DI:251-261 (W25 M1), and that A1's
+  collector-table exception names a probe that cannot be spawned (L8); FR-007
+  credits that reading to the lane openRepoProject-4 lead's ruling (L12).
+  FR-043, the LQ-15 bullet and the sixth pass above credit the LQ-15 form to
+  lane openRepoProject-2's ruling R-102 (c) 3 (L2); the LQ-13 and LQ-14 bullet
+  cites the review-safety rule at :101-118 (L6); the LQ intro and the A1 bullet
+  add the ratified-first re-alignment (L9); and EC-022, FR-040 and the LQ-10
+  bullet record that LQ-10's pins widen the clean-filter residual, as #19's
+  design Risks says and A1 records (L10). The LQ intro re-checks PR #19 at its
+  round (a), `6f2cb54`: nothing this spec cites from #19 at `1ebdd90` changes
+  there. #24's re-check at #27's round B10 waits for lane openRepoProject-5's
+  sha and line map. No pin moves, and `clarify-questions.md` is unchanged. In
+  this folder, CHK006 of `deployment.md`, CHK012 and CHK020 of
+  `integration.md`, CHK012 of `ux.md`, CHK003 and CHK011 of `observability.md`,
+  CHK002, CHK003 and CHK019 of `security.md`, CHK016 of
+  `discovery-identity.md`, CHK012 of `suggestions-gates.md` and CHK015 here
+  were re-read, no category changing, and the totals below were recounted by
+  script. Re-validation: 16 of 16 items pass, with the checks of iteration 2
+  re-run by script on the edited spec.
 - Items marked incomplete require spec updates before `/speckit-clarify` or `/speckit-plan`
 
 ## Cross-cutting Requirements Quality (no-argument `/speckit.checklist`, 2026-10-19)
@@ -556,7 +585,7 @@ Lane: openRepoProject-4
   - Result: pass.
 - [x] CHK015 Are the exit rules consistent across FR-029, FR-042, FR-043, FR-044 and the stories? [Consistency, Spec FR-042]
   - Result: pass; FR-043's pointer also names FR-042's exit-2 causes
-    (POD:765-766), for which amendment A1 at `3ee860c` proposes
+    (POD:765-766), for which amendment A1 at `d644517` proposes
     `relative-config-path` with exit 2, pending.
 
 ### Acceptance Criteria Quality
@@ -621,5 +650,5 @@ All 17 checklists: 414 items: 373 pass, 25 fixed in the spec, 0 open, 16 plan
 notes (PN-1 to PN-18 but PN-4 and PN-11, withdrawn on 2026-10-21; PN-2 narrowed
 to an exception of any other kind in human mode and widened to a failed write's
 standard-error line), 0 new questions. Recounted by script on 2026-10-21, and
-again after the re-check, after the W6 read and after the fourth to eighth
+again after the re-check, after the W6 read and after the fourth to ninth
 passes of that day.
