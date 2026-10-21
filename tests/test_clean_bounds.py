@@ -744,6 +744,79 @@ class BoundsTests(clean_support.CleanCase):
         self.assertFalse(tree.exists())
         self.assertEqual(self.head(root, "refs/heads/001-p"), planned, "the branch is kept")
 
+    def test_clean_deadline_expiry_mid_batch_a_revalidation_read_cut_at_the_deadline(self):
+        # Lead ruling R-80, P-2 (interim row 7's closure; lane 3's
+        # reval-deadline-cut and LOW-2, lead ruling R-93 (e)): a revalidation
+        # read the work deadline cuts is no difference. Table: deadline 8 s,
+        # reserve 2 s (6 s of work), probe budget 30 s and grace 1 s, so each
+        # probe's budget is min(30 s, work remaining) and the work deadline is
+        # the limit. The ls-files-stuck-again-in fake, behind the counting
+        # wrapper, lets planning's hidden-state probe of the first target run;
+        # the revalidation's ignores SIGTERM and sleeps, is cut at the work
+        # deadline and killed after the grace. Both targets are then
+        # not-attempted with deadline-exceeded and no reconciliation, nothing
+        # is removed, and the exit status is 1 (D19, row 2).
+        root, trees = self.batch("reval-deadline-cut", ["001-p", "002-q"])
+        before = self.snapshot(root)
+        fake = clean_support.install_fake_git(self.base / "reval-deadline-cut-fake", "ls-files-stuck-again-in",
+                                              path=trees[0], lifetime=30)
+        env, log = self.counting(real=fake, name="reval-deadline-cut-bin")
+        table = clean_support.timing_table(invocation_deadline=8.0, reconciliation_reserve=2.0, probe_budget=30.0,
+                                           term_grace=1.0)
+        result = self.timed(self.run_json, "clean", root, "--all-safe", "--apply", "--yes", "--json",
+                            timing=table, env=env)
+        self.assert_status(result, 1)
+        document = result.document
+        self.assertEqual(stages(document), [(str(tree), "not-attempted", "deadline-exceeded") for tree in trees],
+                         f"elapsed {result.elapsed:.1f} s\n{result.stderr}")
+        first, second = document["targets"]
+        # The first target's revalidation ran its five children, the last cut;
+        # the second was never revalidated.
+        self.assertEqual((first["reconciliation"], first["exit_status"], first["probes_performed"]), (None, None, 5))
+        self.assertEqual((second["reconciliation"], second["exit_status"], second["probes_performed"]),
+                         (None, None, 0))
+        self.assertEqual(document["exit_code"], 1)
+        records = clean_support.child_log(log)
+        self.assertEqual([directory(child) for child in records if subcommand(child)[:1] == ["ls-files"]].count(
+            str(trees[0])), 2, "planning's hidden-state probe of the first target, then the revalidation's")
+        self.assertEqual((subcommand(records[-1])[:1], directory(records[-1])), (["ls-files"], str(trees[0])),
+                         "the cut read is the run's last child: no removal, no rescan")
+        self.assertFalse(any(map(is_removal, records)))
+        self.assertEqual(self.snapshot(root), before, "nothing removed")
+
+    def test_clean_deadline_expiry_mid_batch_a_revalidation_read_cut_at_its_probe_budget(self):
+        # The contrast (lead ruling R-80, P-2; lane 3's reval-budget-cut; R-93
+        # (e)): the same stuck hidden-state probe, cut by a 1 s probe budget,
+        # the rest of the table real (work deadline 50 s, grace 2 s), so the
+        # budget is the limit and the read times out. A timeout stays a
+        # difference (T084; the project-clean-review-safety delta, rs:92-93):
+        # the first target is refused with hidden-local-state, its record from
+        # its revalidation's reads, the second is not-attempted with
+        # batch-stopped, nothing is removed, and the exit status is 2.
+        root, trees = self.batch("reval-budget-cut", ["001-p", "002-q"])
+        planned = self.head(trees[0])
+        before = self.snapshot(root)
+        fake = clean_support.install_fake_git(self.base / "reval-budget-cut-fake", "ls-files-stuck-again-in",
+                                              path=trees[0], lifetime=30)
+        env, log = self.counting(real=fake, name="reval-budget-cut-bin")
+        table = clean_support.timing_table(probe_budget=1.0)
+        result = self.timed(self.run_json, "clean", root, "--all-safe", "--apply", "--yes", "--json",
+                            timing=table, env=env)
+        self.assert_status(result, 2)
+        document = result.document
+        self.assertEqual(stages(document), [(str(trees[0]), "refused", "hidden-local-state"),
+                                            (str(trees[1]), "not-attempted", "batch-stopped")],
+                         f"elapsed {result.elapsed:.1f} s\n{result.stderr}")
+        first, second = document["targets"]
+        self.assertEqual((first["reconciliation"], first["exit_status"], first["probes_performed"]),
+                         (record(True, True, True, planned), None, 5))
+        self.assertEqual((second["reconciliation"], second["probes_performed"]), (None, 0))
+        self.assertEqual(document["exit_code"], 2)
+        records = clean_support.child_log(log)
+        self.assertEqual((subcommand(records[-1])[:1], directory(records[-1])), (["ls-files"], str(trees[0])))
+        self.assertFalse(any(map(is_removal, records)))
+        self.assertEqual(self.snapshot(root), before, "nothing removed")
+
     def test_clean_push_refuses_an_incomplete_inspection_deadline(self):
         # At a pseudo-terminal made project's controlling terminal (rule 14),
         # through the launcher. status-hangs-in stands first on PATH, behind
