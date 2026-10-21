@@ -37,7 +37,8 @@ duplicate them, and nothing here is an implementation step.
   pins `core.trustctime=true` and `core.checkStat=default`; LQ-12, the push
   child's scrub on every owner tool of `update --apply`; LQ-11, a redirected
   effective work tree read as `registration-mismatch`; LQ-13, the gate
-  `worktree-only-commits` and its revalidation; and lane openRepoProject-3's
+  `worktree-only-commits` and its revalidation; LQ-14, the gate
+  `operation-in-progress` and its revalidation; and lane openRepoProject-3's
   W8 read of LQ-15 (the commit titled 'Amend change 1 for LQ-15: lane 3's W8
   read'); verified by the table "Questions Resolved by the Alignment Review"
   in `proposal.md` and the later-rulings list under it, which name the section
@@ -47,17 +48,17 @@ duplicate them, and nothing here is an implementation step.
   recorded as N1 to N5 in `clarifications.md` (`1d4ed5b`); verified by
   `design.md`, whose D1 to D5 answer N1 to N5 one for one.
 - [x] 1.4 Spec deltas and design written: `specs/project-clean/spec.md` modifies
-  five requirements and adds six (67 scenarios, one added under each of Brett
-  Heap's rulings LQ-15 and LQ-13), `specs/project-clean-review-safety/spec.md`
-  modifies two and adds one (19 scenarios, one added under R-22 and one under
-  LQ-13), and
+  five requirements and adds six (68 scenarios, one added under each of Brett
+  Heap's rulings LQ-15, LQ-13 and LQ-14),
+  `specs/project-clean-review-safety/spec.md` modifies two and adds one (20
+  scenarios, one added under R-22 and one under each of LQ-13 and LQ-14), and
   `specs/project-command/spec.md` modifies two and adds one (23 scenarios, of
   which the push-child exception added one and Brett Heap's rulings Q9 B,
   LQ-15, LQ-10, LQ-12 and LQ-11 one each), every canonical scenario of each
   modified requirement kept;
-  `design.md` holds D1 to D21, mapping the packet's 35 validation scenarios to
-  the deltas (D20), D21 added under LQ-13; verified by the scenario counts in
-  the commit that adds them.
+  `design.md` holds D1 to D22, mapping the packet's 35 validation scenarios to
+  the deltas (D20), D21 and D22 added under LQ-13 and LQ-14; verified by the
+  scenario counts in the commit that adds them.
 - [x] 1.5 Validation passes: `openspec validate add-project-clean-all-safe
   --strict` reports the change valid, `openspec validate --all --strict` passes
   every item, and `openspec status --change add-project-clean-all-safe` shows

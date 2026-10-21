@@ -17,7 +17,9 @@ the branch has whatever its message, or whose message begins
 `branch: Created from` or `branch: Reset to` (`unstarted-branch`), a head equal
 to the merge target's SHA not being proof of that; a branch whose reflog is
 missing, empty or read to its 64 KiB bound, or whose surviving entries cannot
-decide that (`reflog-unavailable`); a worktree whose HEAD reflog or
+decide that (`reflog-unavailable`); a worktree whose administrative directory
+shows a merge, cherry-pick, revert, `am`, rebase or bisect in progress, or
+cannot be listed (`operation-in-progress`); a worktree whose HEAD reflog or
 `refs/worktree/` holds a commit that no branch, tag or remote-tracking ref
 reaches, nor its branch's reflog, or whose check cannot decide that
 (`worktree-only-commits`); and a worktree whose path cannot be read or
@@ -73,11 +75,12 @@ states a narrow guarantee and its residual window" states. A worktree removal
 SHALL be revalidated by a targeted check, never by recomputing the full report:
 at most six Git children, and a seventh where the plan read the repository's
 `extensions.worktreeConfig` as true, a fresh manifest read and the `modules`
-check, run in this order and stopping at the first difference: the identity
-probe in the command directory; the manifest re-read; the registry listing; one
-ref listing that names the merge-target candidates, `refs/remotes/origin/HEAD`,
-and the selected branches and their upstreams; the target's identity and its
-`modules` check, by filesystem reads, and, where the plan read
+and `operation-in-progress` checks, run in this order and stopping at the first
+difference: the identity probe in the command directory; the manifest re-read;
+the registry listing; one ref listing that names the merge-target candidates,
+`refs/remotes/origin/HEAD`, and the selected branches and their upstreams; the
+target's identity, its `modules` check and its `operation-in-progress` check,
+by filesystem reads, and, where the plan read
 `extensions.worktreeConfig` as true, its effective work tree, by the probe that
 "Repository inspection requires Git 2.36 and shares one evidence model" states;
 and, inside the target worktree, the combined status probe, which SHALL print
@@ -86,8 +89,8 @@ that "Clean previews and applies a batch of eligible worktree removals in one
 repository" states, `logs/HEAD` read again and the plan's branch reflog
 objects taken as they were, whose probe SHALL print nothing. It SHALL compare
 the recorded repository identity (`root`, `common_dir`, `dev`, `ino`), the
-target's worktree
-identity (`path`, `dev`, `ino`, `admin_id`), two-way registration and, where it
+target's worktree identity (`path`, `dev`, `ino`, `admin_id`), two-way
+registration and, where it
 was read, effective work tree, its branch evidence (`branch`, `head`,
 `upstream`, `upstream_oid`, `ahead`, `behind`), every baseline signature field
 of the target, its `locked` flag, the manifest's `tracking_branch`, and the
@@ -100,13 +103,15 @@ or registration difference, an effective work tree that is not the target's
 path, or a missing registry entry, `branch-changed` for a different branch name
 or head, `state-changed` for any other signature, lock,
 manifest or merge-target difference, `contains-submodule` for a new gitlink or
-`modules` entry, `hidden-local-state` for a newly flagged index entry, and
-`worktree-only-commits` for a commit that only the target's HEAD reflog or
-`refs/worktree/` holds, or for a check that cannot decide it. A
-value that was null in the plan and is null at revalidation, such as the
-`upstream_oid`, `ahead` and `behind` of a selected row whose upstream was
-deleted, SHALL NOT count as a difference; a value that cannot be re-read, a
-filesystem call that times out included, SHALL count as a difference. The first
+`modules` entry, `hidden-local-state` for a newly flagged index entry,
+`operation-in-progress` for a marker that the re-read listing finds, or for a
+listing that fails, and `worktree-only-commits` for a commit that only the
+target's HEAD reflog or `refs/worktree/` holds, or for a check that cannot
+decide it. A value that was null in the plan and is null at revalidation,
+such as the `upstream_oid`, `ahead` and `behind` of a selected row whose
+upstream was deleted, SHALL NOT count as a difference; a value that cannot be
+re-read, a filesystem call that times out included, SHALL count as a
+difference. The first
 target's repository-wide checks SHALL serve as
 the preflight of every selected target, so that a difference found there removes
 nothing at all. Push and delete-branch SHALL keep the full re-inspection, and
@@ -218,6 +223,15 @@ defense.
 - **AND** the same holds when that commit is held only by a ref under P's
   `refs/worktree/`, created after the plan
 
+#### Scenario: An operation started after the plan
+
+- **WHEN** a confirmed plan selects P and Q, in that order, and after the plan
+  and before P's revalidation `git bisect start --no-checkout` runs in P,
+  leaving P's tree, index and branch as the plan recorded them
+- **THEN** P is `refused` with `operation-in-progress`, no child is spawned, Q
+  is `not-attempted`, nothing is removed, and the exit status is 2, where
+  before this change P was removed with exit 0
+
 ## ADDED Requirements
 
 ### Requirement: Cleanup states a narrow guarantee and its residual window
@@ -230,13 +244,15 @@ immediately before spawning it, the repository identity, the target's worktree
 identity, its effective work tree where the plan read it, and its branch
 evidence, every baseline signature field of the target, its
 `locked` flag, the absence of submodules and of hidden local state in its own
-index (read inside the target worktree), the absence of a commit that only its
+index (read inside the target worktree), the absence of an operation in
+progress in its administrative directory, the absence of a commit that only its
 HEAD reflog or `refs/worktree/` holds, the manifest's `tracking_branch`, and
 the merge target's name, source and SHA all equal the values in the confirmed
 plan.
 
-Ignored files created, index flags set, and commits made that only the
-target's HEAD reflog or `refs/worktree/` holds, after that revalidation, and
+Ignored files created, index flags set, operations started, and commits made
+that only the target's HEAD reflog or `refs/worktree/` holds, after that
+revalidation, and
 any change made after Git's own check, SHALL be outside the contract; the
 confirmation and the result SHALL each state this residual window in one line.
 Cleanup SHALL never delete a branch, so that a branch race cannot lose commits:

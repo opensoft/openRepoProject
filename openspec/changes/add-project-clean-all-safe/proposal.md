@@ -138,11 +138,14 @@ Scope).
   baseline classification when not `merged-removable`, `not-requested`,
   `unstarted-branch`, `deferred-target-cap` (Bounded work),
   `contains-submodule` (any gitlink or admin `modules` entry),
-  `hidden-local-state` (any entry flagged assume-unchanged or skip-worktree)
-  and `worktree-only-commits` (a commit that only the worktree's HEAD reflog
-  or `refs/worktree/` holds, which no branch, tag, remote-tracking ref or the
-  branch's reflog reaches, or a check that cannot decide it; Brett Heap's
-  ruling LQ-13), the last three read in the row's own worktree
+  `hidden-local-state` (any entry flagged assume-unchanged or skip-worktree),
+  `operation-in-progress` (a merge, cherry-pick, revert, `am`, rebase or
+  bisect marker in the worktree's administrative directory, or a listing of
+  it that fails; Brett Heap's ruling LQ-14) and `worktree-only-commits` (a
+  commit that only the worktree's HEAD reflog or `refs/worktree/` holds, which
+  no branch, tag, remote-tracking ref or the branch's reflog reaches, or a
+  check that cannot decide it; Brett Heap's ruling LQ-13), the last four read
+  in the row's own worktree or administrative directory
   (`BA:113-150`, `BA:629-675`, `BA:554-583`). A merged worktree whose
   upstream was deleted is
   `merged-removable` and faces these gates like any other merged row, since
@@ -453,7 +456,8 @@ Headers are quoted verbatim, one per line; ADDED headers are proposed text.
     `### Requirement: Clean can explicitly retire verified worktrees`.
     "remove one named linked worktree" (`:57`) becomes one named worktree or
     the `--all-safe` set, through `retire_worktree`, the gates
-    (`unstarted-branch` and `worktree-only-commits` included) and the pinned
+    (`unstarted-branch`, `operation-in-progress` and `worktree-only-commits`
+    included) and the pinned
     removal command, stopping at
     the first failure; the removal child is never signalled before the 300 s
     ceiling; a named P's completeness is the repository-wide evidence plus its
@@ -504,9 +508,10 @@ Headers are quoted verbatim, one per line; ADDED headers are proposed text.
     `--all-safe`, the gate order, the fresh plan, `plan_digest` and
     `--expect-plan`, single-target removal as a one-item batch, and what the
     person sees: the preview layout, the default-No prompt, the success line.
-    By Brett Heap's ruling LQ-13 the gate order ends with
-    `worktree-only-commits`, with the added scenario "A commit held only by
-    the worktree".
+    By Brett Heap's rulings LQ-14 and LQ-13 the gate order ends with
+    `operation-in-progress` and `worktree-only-commits`, with the added
+    scenarios "An operation in progress" and "A commit held only by the
+    worktree".
   - ADDED:
     `### Requirement: Clean bounds its Git work and reports omitted work`.
     The deadline, budgets, caps, `omitted`, `probes`, `operations`, `limits`
@@ -536,16 +541,19 @@ Headers are quoted verbatim, one per line; ADDED headers are proposed text.
     (sparse checkouts included), `registration-mismatch` (an effective work
     tree that is not the registered path included, LQ-11),
     `unsupported-path-bytes`, `unstarted-branch`, `reflog-unavailable`,
-    `worktree-only-commits` (LQ-13) and unreadable worktrees to the preserved
-    states. Both scenarios (`:27-36`) stay.
+    `operation-in-progress` (LQ-14), `worktree-only-commits` (LQ-13) and
+    unreadable worktrees to the preserved states. Both scenarios (`:27-36`)
+    stay.
   - MODIFIED (`:49`): `### Requirement: Cleanup revalidates destructive actions`.
     Removal revalidates by the targeted check against the recorded identity
     objects, and the effective work tree where the plan read it (LQ-11),
     refusing with `identity-changed`, `branch-changed`,
-    `state-changed`, `contains-submodule`, `hidden-local-state` or, for a
-    commit held only by the worktree that the re-read finds, with the added
-    scenario "A worktree-only commit made after the plan",
-    `worktree-only-commits` (LQ-13); push and
+    `state-changed`, `contains-submodule`, `hidden-local-state`, or, for an
+    operation in progress or a commit held only by the worktree that the
+    re-read finds, with the added scenarios "An operation started after the
+    plan" and "A worktree-only commit made after the plan",
+    `operation-in-progress` (LQ-14) or `worktree-only-commits` (LQ-13); push
+    and
     `delete-branch` keep the full re-inspection (`project:508-518`) and refuse
     with `inspection-incomplete`, `inspect-cap` or `deadline-exceeded`, exit
     2, when it is incomplete. The MUST is scoped to the revalidation
@@ -568,7 +576,7 @@ Headers are quoted verbatim, one per line; ADDED headers are proposed text.
     `### Requirement: Cleanup states a narrow guarantee and its residual window`.
     Concurrent writers outside the contract, no lock, the guarantee, the
     residual-window line, and the branch race; the guarantee and the line name
-    worktree-only commits by LQ-13.
+    worktree-only commits by LQ-13 and operations in progress by LQ-14.
 - `project-command` (all ten at `7a9134b` accounted for; line numbers are at
   `da33d92`; at `7a9134b` `Inspect and diagnose`, `Explicit maintenance` and
   `Distribution and compatibility` sit 22 lines lower, their text unchanged):
@@ -1022,6 +1030,26 @@ Departures from packet decisions, each citing the decision departed from:
   reader RB, R-107), and the residual-window line names such a commit made
   after that check. No JSON field is added (design D7, D12, D14, D18, D21,
   Risks).
+- **An operation in progress keeps the worktree** (Brett Heap's ruling LQ-14
+  of 2026-10-21, in lane openRepoProject-3's session, "yes to all six
+  recommendations, LQ-10 to LQ-15", on lane openRepoProject-3's
+  recommendation "Yes, add a protection. Never remove a worktree with an
+  operation in progress. This also needs an amendment to change 1."; extends
+  the gates of `BA:113-165` and the revalidation of `BA:677-707`): Git keeps
+  the state of a merge, a cherry-pick or revert, an `am`, a rebase or a bisect
+  in the worktree's administrative directory, so one that stopped with the
+  index and tree equal to the branch head reads clean and the removal deletes
+  its state (lane openRepoProject-3's F1 H-2 at `2cf34d3`). A new gate,
+  `operation-in-progress`, after `hidden-local-state` and before
+  `worktree-only-commits`, lists that directory once and excludes the row when
+  it holds `MERGE_HEAD`, `CHERRY_PICK_HEAD`, `REVERT_HEAD`, `BISECT_LOG`,
+  `BISECT_START`, `rebase-apply`, `rebase-merge` or `sequencer`, the markers
+  of Git's own state detection, read in its sources at 2.36.6 and 2.43.7, or
+  when the listing fails. Revalidation lists it again with no new Git child,
+  so an operation started after the plan refuses the target with the same
+  reason (lane openRepoProject-3's reader RB, R-107), and the residual-window
+  line names an operation started after that check. No JSON field is added
+  (design D7, D18, D21, D22, Risks).
 
 Packet decisions adopted, not open: OQ-5, the caps and bounds of `BA:966`,
 subject to OQ-4, less the target cap's refusal; OQ-9, the budgets of
@@ -1387,7 +1415,17 @@ message (L5) and the ignore-file risk's weight (L6) (this list; design Context,
 D11, D16, D18; `tasks.md` 1.2; the deltas' `Clean reports local worktree
 state` and its scenario "A relative configuration path", and the
 `project-command` ADDED evidence model); its L7, interim wording that holds
-once LQ-10 to LQ-14 are recorded, needs no edit.
+once LQ-10 to LQ-14 are recorded, needs no edit. LQ-14 adds the gate
+`operation-in-progress` and its revalidation (What Changes, eligibility;
+Capabilities `:55`, batch, review-safety `:21`, `:49` and its ADDED;
+Decisions, departures; this list; design Context, D7, D18, D20, D21, D22,
+Risks; `tasks.md` 1.2, 1.4; the deltas' `Clean previews and applies a batch of
+eligible worktree removals in one repository` and its added scenario "An
+operation in progress", `Clean bounds its Git work and reports omitted work`,
+`Clean records a reconcilable result for every removal target`, `Cleanup
+preserves all local work not proven disposable`, `Cleanup revalidates
+destructive actions` and its added scenario "An operation started after the
+plan", and `Cleanup states a narrow guarantee and its residual window`).
 
 ### Council Verdicts
 

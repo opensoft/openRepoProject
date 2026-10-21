@@ -15,10 +15,11 @@ arguments have passed the checks that refuse `invalid-arguments`, which start
 no Git child, and before any Git child starts, `project clean` SHALL refuse
 with `relative-config-path` and exit status 2 when a configuration path fails
 the test that the evidence model states, its message naming each variable that
-fails it, never its value, so that no push or removal child starts either. It SHALL then run its Git version
-check before any other Git child, and SHALL refuse a Git older than 2.36 with
-`git-too-old`, and a `git` that is missing or unusable with `git-unavailable`,
-with exit status 2, before any repository is probed. Under `--json` each of
+fails it, never its value, so that no push or removal child starts either. It
+SHALL then run its Git version check before any other Git child, and SHALL
+refuse a Git older than 2.36 with `git-too-old`, and a `git` that is missing or
+unusable with `git-unavailable`, with exit status 2, before any repository is
+probed. Under `--json` each of
 these refusals SHALL print the extended error object that "Clean plans and
 refusals are versioned JSON" defines, carrying its code.
 
@@ -611,11 +612,11 @@ row SHALL carry one `reason`, its first failing gate in this order:
 `not-requested`, for an eligible row other than the named one in a single-target
 removal; `unstarted-branch`, or `reflog-unavailable` where the reflog cannot
 decide it; `deferred-target-cap`; `contains-submodule`; `hidden-local-state`;
-and `worktree-only-commits`. A head equal to the merge target's SHA SHALL NOT
-by itself
-prove a branch unstarted, because a branch fast-forward merged into the target
-sits at the target's tip, so the gate SHALL read the branch's reflog,
-`logs/refs/heads/<branch>` in the common directory, for every row it checks,
+`operation-in-progress`; and `worktree-only-commits`. A head equal to the merge
+target's SHA SHALL NOT by itself prove a branch unstarted, because a branch
+fast-forward merged into the target sits at the target's tip, so the gate
+SHALL read the branch's reflog, `logs/refs/heads/<branch>` in the common
+directory, for every row it checks,
 from the filesystem, at most 64 KiB, counted in the filesystem budget and never
 by a Git child. The reflog's anchor SHALL be its last surviving entry whose old
 object is all zeros, as every entry that creates the branch has, whatever
@@ -644,6 +645,21 @@ a `modules` entry, and as
 skip-worktree, sparse checkouts included; the index SHALL be read inside the
 row's own worktree, and both gates SHALL be checked only for rows that pass
 every earlier gate.
+
+A row SHALL be excluded as `operation-in-progress` when its own administrative
+directory, `<common_dir>/worktrees/<admin_id>`, holds an entry of any kind
+named `MERGE_HEAD`, `CHERRY_PICK_HEAD`, `REVERT_HEAD`, `BISECT_LOG`,
+`BISECT_START`, `rebase-apply`, `rebase-merge` or `sequencer`: the markers by
+which Git knows that a merge, a cherry-pick or revert or a sequence of them, an
+`am` or a rebase, or a bisect is in progress there, and which the removal
+would delete with that directory, even where the operation left the index and
+the working tree unchanged. The gate SHALL read that directory by one listing,
+counted in the filesystem budget. One outcome rule SHALL govern the gate: a
+marker present, and any error on the listing, SHALL make the row
+`operation-in-progress`; a listing not finished within the filesystem budget
+SHALL leave the row unprobed and the plan incomplete with
+`inspection-incomplete`, and the deadline passing SHALL leave it incomplete
+with `deadline-exceeded`, as for every other read.
 
 A row SHALL be excluded as `worktree-only-commits` when a commit that its own
 HEAD reflog or a ref under its own `refs/worktree/` holds is reachable from no
@@ -758,6 +774,23 @@ apply SHALL print `Removed N; branches kept: ` followed by the branches kept.
   with `contains-submodule`, later targets are `not-attempted`, and the exit
   status is 2
 
+#### Scenario: An operation in progress
+
+- **WHEN** otherwise eligible linked worktrees each hold, with an index and a
+  working tree equal to their branch head: a `git am` that failed on a patch
+  that does not apply; a `git cherry-pick` of two commits stopped at a conflict
+  on the first and resolved to the branch's own content; a `git merge
+  --no-commit -s ours` of another branch; and a `git bisect start
+  --no-checkout`
+- **THEN** the combined status probe prints no record for any of them,
+  `--all-safe` excludes each as `operation-in-progress`, and `--all-safe
+  --apply --yes` removes none of them
+- **AND** `--apply --action remove --worktree` naming one refuses with
+  `target-excluded`, reason `operation-in-progress`, and exit 2
+- **AND** once each operation is aborted (`git am --abort`, `git cherry-pick
+  --abort`, `git merge --abort` and `git bisect reset`), each worktree is
+  selected as before
+
 #### Scenario: A commit held only by the worktree
 
 - **WHEN** one otherwise eligible linked worktree had its HEAD detached, a
@@ -838,8 +871,9 @@ Each `project clean` invocation SHALL set one monotonic deadline 60 s after it
 starts and SHALL hold back a 10 s reconciliation reserve, so that work stops 50
 s after start; time spent blocked at the confirmation question SHALL NOT count,
 both deadlines moving later by the time spent waiting. Each Git child SHALL get
-`min(5 s, work remaining)`, and each filesystem call (`lstat`, `realpath`, and
-the reads of `.git`, `gitdir`, reflog and manifest files) SHALL be abandoned
+`min(5 s, work remaining)`, and each filesystem call (`lstat`, `realpath`, the
+reads of `.git`, `gitdir`, reflog and manifest files, and the listing of a
+worktree's administrative directory) SHALL be abandoned
 after the same budget, recording `probe-timeout`, or `deadline-exceeded` where
 the deadline was the limit, and leaving its values null. Probing SHALL be
 serial. Reconciliation probes SHALL get `min(5 s, reserve remaining)`.
@@ -966,7 +1000,7 @@ accepted. Each selected target SHALL end in one stage with one reason:
   `removal-ceiling`;
 - `refused`: revalidation found a difference and nothing was spawned;
   `identity-changed`, `branch-changed`, `state-changed`, `contains-submodule`,
-  `hidden-local-state` or `worktree-only-commits`;
+  `hidden-local-state`, `operation-in-progress` or `worktree-only-commits`;
 - `failed`: the child exited nonzero on its own, whether or not a signal reached
   `project`, or could not be spawned; `git-refused` for exit status 128,
   `git-failed` for any other status (128 plus the signal number when a signal

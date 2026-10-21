@@ -6,9 +6,9 @@ Lane: openRepoProject-2
 
 See `proposal.md` for why and what, and the deltas under `specs/` for the
 requirements. The council's noted constraints, `clarifications.md` N1 to N5, are
-answered by D1 to D5; D6 to D19, and D21 for Brett Heap's ruling LQ-13, give
-the how of the proposal's decisions, and D20 maps the packet's 35 validation
-scenarios to the deltas. The binding rulings
+answered by D1 to D5; D6 to D19, and D21 and D22 for Brett Heap's rulings LQ-13
+and LQ-14, give the how of the proposal's decisions, and D20 maps the packet's
+35 validation scenarios to the deltas. The binding rulings
 (D-A to D-AF, X1, X2, V1 to V12 with V2 as amended, lane 3's M1 to M7, and the
 lead's R-4, R-8 and R-9, R-11 to R-15, R-17, R-19 and R-21 to R-25) are already
 in `proposal.md`, with the sections each edited; R-15 edited Context, D10, D14,
@@ -24,8 +24,9 @@ Heap's rulings of 2026-10-21 on lane openRepoProject-3's recommendations LQ-10
 to LQ-15, recorded in `proposal.md` Decisions, edit here: LQ-15, Context, D6,
 D11, D16, D18, D20 and Risks; LQ-10, Context, D9, D11, D20 and Risks; LQ-12,
 Context, D6, D16 and D20; LQ-11, Context, D6, D7, D14, D20 and Risks; LQ-13,
-Context, D7, D12, D14, D18, D20, D21 and Risks; and lane openRepoProject-3's
-W8 read of LQ-15, Context, D11, D16 and D18. Brett Heap's ruling
+Context, D7, D12, D14, D18, D20, D21 and Risks; lane openRepoProject-3's W8
+read of LQ-15, Context, D11, D16 and D18; and LQ-14, Context, D7, D18, D20,
+D21, D22 and Risks. Brett Heap's ruling
 of 2026-10-09 on open question 1, that a local ancestry proof outranks
 `remote-gone` for worktree rows, is in `proposal.md` Decisions and edited
 Context, D6, D7, D20, Risks, the Migration Plan and Open Questions here.
@@ -432,8 +433,9 @@ difference: the identity probe; the manifest re-read (a file read, 1 MiB cap);
 the registry listing; a narrowed ref listing whose patterns name the merge
 target, the manifest's candidate, the branch the plan's `origin/HEAD` named,
 `main`, `master`, `refs/remotes/origin/HEAD`, and the selected branches and
-their upstreams; the target's identity and `modules` check by filesystem reads,
-and, where the plan's row 4c read true, its effective-work-tree probe, whose
+their upstreams; the target's identity, `modules` check and D22's listing of its
+administrative directory, by filesystem reads, and, where the plan's row 4c read
+true, its effective-work-tree probe, whose
 difference is `identity-changed`; then, inside the target worktree, the
 combined status probe, which must print nothing, the hidden-state probe, and
 D21's `logs/HEAD` re-read and reachability probe, which must print nothing.
@@ -790,9 +792,9 @@ checks, which start no Git child and so refuse `invalid-arguments` first, and
 before its version check; `status`, `doctor` and `update` report it as they
 report a Git below the floor (D16). The values are read only for this test,
 are passed to every child unchanged when it passes, and are never printed: the
-message names each variable that fails the test (D18). The test covers these variables only; other
-relative paths in the environment that a Git child resolves against its
-directory are outside it.
+message names each variable that fails the test (D18). The test covers these
+variables only; other relative paths in the environment that a Git child
+resolves against its directory are outside it.
 
 ### D12. The 16-per-run deferral (V5)
 
@@ -982,9 +984,10 @@ project clean ROOT --all-safe --apply`, and, when every one of the 16 rows taken
 past the cap is excluded as `contains-submodule`, the line `  these deferred
 rows will not drain while the 16 rows ahead of them are contains-submodule;
 review those worktrees, then remove them yourself` (R-24); the
-residual-window line, `Not protected: ignored files created, index flags set or
-worktree-only commits made after the last check, and any change after Git's own
-check.` (its third item by LQ-13); and, when a
+residual-window line, `Not protected: ignored files created, index flags set,
+operations started or worktree-only commits made after the last check, and any
+change after Git's own check.` (its third item by LQ-14, its fourth by LQ-13);
+and, when a
 complete plan selects nothing, `No eligible worktrees`.
 
 The next steps by reason: `dirty` "commit or preserve the changes";
@@ -993,7 +996,9 @@ The next steps by reason: `dirty` "commit or preserve the changes";
 review, then git worktree remove yourself"; `reflog-unavailable` "the branch's
 reflog is missing, expired or undecidable; review, then git worktree remove
 yourself"; `contains-submodule` and `hidden-local-state` "review, then remove
-the worktree yourself"; `worktree-only-commits` "a commit is, or may be, held
+the worktree yourself"; `operation-in-progress` "a git am, merge, cherry-pick,
+revert, rebase or bisect is, or may be, in progress there; finish or abort it,
+then run again" (LQ-14); `worktree-only-commits` "a commit is, or may be, held
 only by this worktree's HEAD reflog or refs/worktree; keep it on a branch or
 tag, or review, then git worktree remove yourself" (LQ-13);
 `registration-mismatch` and `inspection-error` "review,
@@ -1107,7 +1112,7 @@ exception and Brett Heap's ruling Q9 B under the evidence model; D-D under
 push; D-R under maintenance; R-22 under revalidation. Brett Heap's rulings of
 2026-10-21: LQ-15 under the evidence model and the report; LQ-10 under the
 evidence model; LQ-12 under maintenance; LQ-11 under the evidence model; LQ-13
-under the batch and revalidation.
+and LQ-14 under the batch and revalidation.
 
 ### D21. Commits held only by a worktree (LQ-13)
 
@@ -1127,7 +1132,9 @@ garbage collection. Lane openRepoProject-3 found the gap (F1 H-1 at
   `unstarted-branch` says the opposite, that no work was done; and
   `inspection-error` would make the whole plan incomplete for a state that is
   fully established.
-- Place. The last gate, after `hidden-local-state`. It is a protection, so it
+- Place. The last gate, after `hidden-local-state` and LQ-14's
+  `operation-in-progress` (D22), so that a row with an operation in progress
+  runs no reachability child. It is a protection, so it
   runs before any row is selected, in every mode, `mode: "single"` included,
   where an excluded P refuses `target-excluded`; a row an earlier gate excludes,
   as every row with work in its index or tree is, needs no such protection. It
@@ -1189,6 +1196,80 @@ branch reflog's objects are negatives too. On Git 2.43.0, after an interactive
 rebase onto a merge target that had moved, with one pick turned into a fixup,
 it prints the intermediate commit that the fixup replaced (Risks).
 
+### D22. Operations in progress (LQ-14)
+
+Brett Heap's ruling LQ-14 of 2026-10-21 never removes a worktree with an
+operation in progress. Git keeps the state of a merge, a cherry-pick or
+revert, an `am`, a rebase or a bisect in the worktree's own git directory, its
+administrative directory for a linked worktree, since none of these names is
+in `common_list` (`path.c`, at 2.36.6 and 2.43.7). An operation that stopped
+with the index and the working tree equal to the branch head reads clean to
+the status probe and to Git's own check, and the removal deletes its state:
+a failed `am`, a merge or a cherry-pick sequence resolved to the branch's own
+content, a bisect with `--no-checkout` (lane openRepoProject-3's F1 H-2 at
+`2cf34d3`). Each decision below is the simple, conservative one:
+
+- Reason. A new exclusion reason, `operation-in-progress`. No existing reason
+  fits: the row is not dirty, `hidden-local-state` names index flags,
+  `reflog-unavailable` a branch reflog, and `inspection-error` would make the
+  whole plan incomplete for a state that is fully established.
+- Place. After `hidden-local-state` and before `worktree-only-commits`: a
+  protection, so before any selection and in every mode; past
+  `deferred-target-cap` with the other gates that read the worktree's own
+  state, and before the gate that costs a Git child, so that a row with an
+  operation in progress runs none. Most operations stopped with work in the
+  index or the tree, or with a detached head, are already `dirty` or
+  `detached`, and those reasons stand.
+- Markers. Taken from Git's own state detection, read in the sources of
+  2.36.6 and 2.43.7, not from memory:
+  - `MERGE_HEAD`, `rebase-apply` (an `am` when it holds `applying`, otherwise
+    a rebase), `rebase-merge`, `CHERRY_PICK_HEAD`, `REVERT_HEAD` and
+    `BISECT_LOG`, which `wt_status_get_state`, `wt_status_check_rebase` and
+    `wt_status_check_bisect` test (`wt-status.c:1745-1781`, `:1675-1700` and
+    `:1702-1713` at 2.36.6; `:1773-1809`, `:1703-1728` and `:1730-1741` at
+    2.43.7);
+  - `sequencer`, whose `todo` `sequencer_get_last_command` reads for a
+    cherry-pick or revert sequence (`sequencer.c:2513` at 2.36.6, `:2660` at
+    2.43.7), taken as the whole directory because `create_seq_dir` creates it
+    with `mkdir`, which fails while it exists, so its presence alone stops a
+    new sequence;
+  - `BISECT_START`, which `git bisect reset` tests to decide that a bisect is
+    in progress (`builtin/bisect--helper.c:718` at 2.36.6,
+    `builtin/bisect.c:791` at 2.43.7) and which `bisect_clean_state` removes
+    last (`bisect.c:1179-1182` at 2.36.6), so a cleanup cut short can leave it
+    alone.
+  An entry of one of these names, of any kind, is a marker; the set is a
+  superset of what `git status` reports, never a subset.
+- Reads. One listing of `<common_dir>/worktrees/<admin_id>`, a filesystem
+  call under the filesystem budget like D6's identity reads, and no Git child:
+  a status-like child would read the same files and cost a child per row.
+- Bounds. The listing takes `min(5 s, work remaining)` as every filesystem
+  call does; a directory too large to list in that time is a row unprobed.
+- Fail closed. A marker present gives `operation-in-progress`, and so does any
+  error on the listing: the registration check has already read that
+  directory, so an error there cannot be told from a state hidden. A listing
+  not finished within the filesystem budget leaves the row unprobed and the
+  plan incomplete with `inspection-incomplete`, and the deadline gives
+  `deadline-exceeded`, as for every read.
+- Revalidation. The same listing runs again in revalidation's filesystem step,
+  beside the target's identity and `modules` check, with no new Git child; a
+  marker, or a listing that fails, refuses the target with
+  `operation-in-progress`. It catches an operation started after the plan,
+  which no step read before (lane openRepoProject-3's reader RB at `2cf34d3`,
+  whose cases were all removed with exit 0; R-107). An operation started after
+  that revalidation is in the residual window, whose line names it (D18).
+- Rendering. The reason appears where every gate's does, so no JSON field is
+  added and the closed enums gain one value within `schema_version: 1`, before
+  any release; the human preview groups it with its next step (D18).
+
+Checked here on Git 2.36.6 and 2.43.0, in a linked worktree each time: a `git
+am` of a patch that does not apply leaves `rebase-apply`; a `git cherry-pick`
+of a range stopped at a conflict leaves `CHERRY_PICK_HEAD` and `sequencer`,
+holding `todo`; a `git merge --no-commit -s ours` leaves `MERGE_HEAD`; and a
+`git bisect start --no-checkout` leaves `BISECT_LOG` and `BISECT_START`, which
+`git bisect reset` removes. In each case the pinned status probe printed no
+record once the index and tree matched the branch head.
+
 ## Risks / Trade-offs
 
 - [A started removal cannot be interrupted for up to 300 s, so Ctrl-C seems to
@@ -1217,6 +1298,13 @@ it prints the intermediate commit that the fixup replaced (Risks).
   reflog exceeds 64 KiB] -> Fails closed, as Brett Heap's ruling LQ-13 asks;
   the remedy says to keep any such commit on a branch or tag, or to review and
   remove the worktree by hand (D18, D21).
+- [A marker left behind with nothing in progress, such as a `sequencer`
+  directory after a crash or a lone `BISECT_START` after a cut-short `git
+  bisect reset`, keeps its worktree out as `operation-in-progress`] -> Fails
+  closed, as Brett Heap's ruling LQ-14 asks; the remedy says to finish or abort
+  the operation, which clears the marker (`git cherry-pick --quit`, `git bisect
+  reset`), and Git itself refuses a new sequence while that directory exists
+  (D18, D22).
 - [A branch created from a remote branch that already had commits, then merged
   elsewhere, reads as unstarted, because nothing moved it here since its
   creation entry] -> Fails closed as `unstarted-branch`; the remedy says that no
