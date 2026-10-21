@@ -223,7 +223,7 @@ code with no baseline message gets one here:
 | Code | Message |
 | --- | --- |
 | `invalid-arguments` | `--all-safe cannot be combined with --action, --branch or --worktree.`; `--expect-plan requires --all-safe and --apply.`; `--expect-plan takes 64 lowercase hexadecimal characters.`; the baseline messages for the baseline cases |
-| `internal-error` | `TYPE: TEXT`, the exception's class and text, so `REFUSED: RuntimeError: boom` (research.md R6) |
+| `internal-error` | before the apply phase, `TYPE: TEXT`, the exception's class and text, so `REFUSED: RuntimeError: boom` (research.md R6); after it, no text (below) |
 | `git-unavailable` | `Git is unavailable (DETAIL); clean needs Git 2.36 or later.`, DETAIL one of `not found`, `exit N`, `timed out`, `unparseable version`; clean's refusal only, a status or doctor row taking the command-neutral text in "Codes" (lead ruling R-48) |
 | `git-too-old` | `Git VERSION is older than 2.36; clean needs Git 2.36 or later.`; clean's refusal only, as above (R-48) |
 | `target-not-repository-root` | `Not the main worktree of a repository: PATH; pass the repository root.` |
@@ -240,6 +240,20 @@ code with no baseline message gets one here:
 a nineteenth code, since the delta closes the eighteen: push, which prints
 no JSON, refuses with no code and the reason `remote-gone`, printing
 `REFUSED: ` and the message above (lead ruling R-45).
+
+`internal-error` prints its exception's type and text only where it is a
+refusal, before the apply phase. After the apply phase begins, an exception
+while handling a target makes that target `unknown` with `internal-error`
+and prints no exception type and no text, neither on a stream nor in the
+result record, so the cause is lost, though the stage fails closed; and a
+fault while rendering a progress line, the human result or the apply result
+record is dropped silently by `best_effort()`, changing no stage, since a
+proven removal stays proven, and no exit status, which D19 has decided
+already. The `project-clean` delta's rule (`spec.md:938-941`) names the
+stage and the reason and no text, so this is the contract's reading of it.
+Whether to print the exception's type on standard error goes to Brett Heap
+in LQ-7's group, since it touches the error streams (lead ruling R-87 (c);
+LQ-7, listed for him in the feature PR body).
 
 The delta's rule that every plan-blocking refusal names `git worktree
 prune`, `git worktree repair` or removing the offending row by hand, "as the

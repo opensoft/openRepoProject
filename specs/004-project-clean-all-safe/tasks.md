@@ -2698,7 +2698,10 @@ statuses, the child counts and the order of what was cut.
   `note_deadline_exceeded` text in `TEXT` and its fixture in
   `tests/clean_support.py` to the contract's message, `K rows were stopped
   at the work deadline; they do not block PATH.` (lead ruling R-75 (g));
-  every Git child and filesystem call gets `min(5 s, work remaining)`;
+  every Git child and filesystem call of the work phase gets `min(5 s, work
+  remaining)`, and each rescan child and filesystem call of the reconciling
+  phase gets `min(5 s, reserve remaining)`, per D9 (`child_budget()`, the
+  `Invocation`'s phase deciding; lead ruling R-89 (c));
   `apply_removals()` spawns a removal only while the 5 s floor of work remains,
   else that target and every later one are `not-attempted` with
   `deadline-exceeded` and `reconciliation: null`; a removal running at the
@@ -2707,21 +2710,25 @@ statuses, the child counts and the order of what was cut.
   — verify: `python3 -c "import sys,re;t=open('project').read();A=sys.argv[1:];c=lambda r:t.split('# region '+r+'\n')[1].split('# endregion '+r+'\n')[0];M=[a for a in A if not ((a.split('%',1)[1] not in c(a.split('%',1)[0])) if '%' in a else (a.split('~',1)[1] in c(a.split('~',1)[0])) if '~' in a else re.search(r'^[a-z]*\s?'+re.escape(a.split(':',1)[1])+r'\b',c(a.split(':',1)[0]),re.M))];[print('region check failed:',m) for m in M];sys.exit(1 if M or not A else 0)" 'apply~removal_floor' && python3 project clean --help >/dev/null && python3 -c "import sys;sys.path.insert(0,'tests');import clean_support as c;t=c.load_project().TEXT['note_deadline_exceeded'];f=c.TEXT_FIXTURES['note_deadline_exceeded'];print('note_deadline_exceeded:',t);sys.exit(1 if 'unprobed' in t+f else 0)" && python3 -m unittest discover -s tests -p 'test_clean_harness.py' -k '*.test_clean_text_fixtures_equal_the_contract_table'`
 - [x] T100 [US6] [O] Fill `deferral_gate` (region `gates`; D12, FR-032): the first
   16 rows that pass gates 1 to 7, in canonical order, go on to the index gates,
-  and the rest are excluded as `deferred-target-cap`; in `print_plan()` (region
-  `preview`), D18's deferral line with `project clean ROOT --all-safe --apply`,
-  and its non-drain line when all 16 are `contains-submodule`.
+  and the rest are excluded as `deferred-target-cap`; in region `preview`,
+  D18's deferral line with `project clean ROOT --all-safe --apply`, and its
+  non-drain line when all 16 are `contains-submodule`, both built in
+  `preview_lines()`, which `print_plan()` calls through `plan_lines()` (lead
+  ruling R-89 (c)).
   — files: `project`
-  — verify: `python3 -c "import sys,re;t=open('project').read();A=sys.argv[1:];c=lambda r:t.split('# region '+r+'\n')[1].split('# endregion '+r+'\n')[0];M=[a for a in A if not ((a.split('%',1)[1] not in c(a.split('%',1)[0])) if '%' in a else (a.split('~',1)[1] in c(a.split('~',1)[0])) if '~' in a else re.search(r'^[a-z]*\s?'+re.escape(a.split(':',1)[1])+r'\b',c(a.split(':',1)[0]),re.M))];[print('region check failed:',m) for m in M];sys.exit(1 if M or not A else 0)" 'preview~deferral_line' 'preview~non_drain_line' && python3 project clean --help >/dev/null`
+  — verify: `python3 -c "import sys,re;t=open('project').read();A=sys.argv[1:];c=lambda r:t.split('# region '+r+'\n')[1].split('# endregion '+r+'\n')[0];M=[a for a in A if not ((a.split('%',1)[1] not in c(a.split('%',1)[0])) if '%' in a else (a.split('~',1)[1] in c(a.split('~',1)[0])) if '~' in a else re.search(r'^[a-z]*\s?'+re.escape(a.split(':',1)[1])+r'\b',c(a.split(':',1)[0]),re.M))];[print('region check failed:',m) for m in M];sys.exit(1 if M or not A else 0)" 'preview:preview_lines' 'preview~deferral_line' 'preview~non_drain_line' && python3 project clean --help >/dev/null`
 - [x] T101 [US6] [O] Finish report mode (D14, FR-003 to FR-005; regions `plan`,
   `preview` and `dispatcher`): above 128 rows `selected` is null and the notes
   carry `inspect-cap` with `rows`, which alone leaves the report complete,
   while the gates still run and `excluded` still lists every inspected row a
   gate excludes; `print_plan()` adds, after `Freshness:`, `Report: complete` or
   `Report: incomplete (CODES)`, then `--all-safe would select N` or `--all-safe
-  would be incomplete (inspect-cap)` (plan review M8); `check_plan()` exits a
-  report 0 when complete and 1 when incomplete.
+  would be incomplete (inspect-cap)` (plan review M8), both lines built in
+  `report_lines()`, which `print_plan()` calls through `plan_lines()` (lead
+  ruling R-89 (c)); `check_plan()` exits a report 0 when complete and 1 when
+  incomplete.
   — files: `project`
-  — verify: `python3 -c "import sys,re;t=open('project').read();A=sys.argv[1:];c=lambda r:t.split('# region '+r+'\n')[1].split('# endregion '+r+'\n')[0];M=[a for a in A if not ((a.split('%',1)[1] not in c(a.split('%',1)[0])) if '%' in a else (a.split('~',1)[1] in c(a.split('~',1)[0])) if '~' in a else re.search(r'^[a-z]*\s?'+re.escape(a.split(':',1)[1])+r'\b',c(a.split(':',1)[0]),re.M))];[print('region check failed:',m) for m in M];sys.exit(1 if M or not A else 0)" 'preview~completeness_line_complete' 'preview~selection_line_above_cap' && python3 project clean --help >/dev/null`
+  — verify: `python3 -c "import sys,re;t=open('project').read();A=sys.argv[1:];c=lambda r:t.split('# region '+r+'\n')[1].split('# endregion '+r+'\n')[0];M=[a for a in A if not ((a.split('%',1)[1] not in c(a.split('%',1)[0])) if '%' in a else (a.split('~',1)[1] in c(a.split('~',1)[0])) if '~' in a else re.search(r'^[a-z]*\s?'+re.escape(a.split(':',1)[1])+r'\b',c(a.split(':',1)[0]),re.M))];[print('region check failed:',m) for m in M];sys.exit(1 if M or not A else 0)" 'preview:report_lines' 'preview~completeness_line_complete' 'preview~selection_line_above_cap' && python3 project clean --help >/dev/null`
 - [x] T102 [US6] [O] Account the counts (FR-033, research.md R8; regions `plan` and
   `apply`): `probes` and `operations`, `estimated` as T049 computes it (plan
   review M7) and `performed` from the counters, in plans and results; each
