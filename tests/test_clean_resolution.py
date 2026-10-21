@@ -567,8 +567,9 @@ class ResolutionTests(clean_support.CleanCase):
             with self.subTest(declared=declared):
                 target = project.resolve_merge_target(refs, declared)
                 self.assertEqual((target["name"], target["source"], target["notes"]), expected)
+        trunk_only = [ref(b"refs/heads/trunk")]
         with self.assertRaises(project.Refused) as caught:
-            project.resolve_merge_target([ref(b"refs/heads/trunk")], None)
+            project.resolve_merge_target(trunk_only, None)
         self.assertEqual((str(caught.exception), caught.exception.code), (TEXT["no_merge_target"], "no-merge-target"))
 
     # T106: "A manifest over 1 MiB".

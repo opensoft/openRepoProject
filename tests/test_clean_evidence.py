@@ -258,7 +258,7 @@ class EvidenceTests(clean_support.CleanCase):
                 else:
                     self.assertNotIn("prunable", row)
         self.assertEqual(rows["detached-tree"]["branch"], "detached")
-        self.assertEqual(rows["stale-tree"]["present"], False)
+        self.assertIs(rows["stale-tree"]["present"], False)
         self.assertEqual(rows["011-current-tree"]["path"], os.fspath(current))
 
     def test_clean_ladder_is_a_pure_function(self):
