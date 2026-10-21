@@ -34,7 +34,25 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.10'
-      - run: python -m pip install -r requirements.txt
+      # PyYAML 6.0.3 satisfies requirements.txt (PyYAML>=6.0,<7). The hashes
+      # are every CPython 3.10 Linux wheel of 6.0.3 on PyPI (manylinux x86_64,
+      # aarch64 and s390x, musllinux x86_64 and aarch64), so pip installs only
+      # a wheel it can check, never builds from source and never resolves a
+      # version of its own. The file lives in the runner's temp directory so
+      # that the repository gains no file.
+      - name: Install PyYAML from a hash-pinned wheel
+        shell: bash
+        run: |
+          cat > "$RUNNER_TEMP/floor-requirements.txt" <<'EOF'
+          PyYAML==6.0.3 \
+            --hash=sha256:9c7708761fccb9397fe64bbc0395abcae8c4bf7b0eac081e12b809bf47700d0b \
+            --hash=sha256:b30236e45cf30d2b8e7b3e85881719e98507abed1011bf463a8fa23e9c3e98a8 \
+            --hash=sha256:66291b10affd76d76f54fad28e22e51719ef9ba22b29e1d7d03d6777a9174198 \
+            --hash=sha256:5e0b74767e5f8c593e8c9b5912019159ed0533c70051e9cce3e8b6aa699fcd69 \
+            --hash=sha256:418cf3f2111bc80e0933b2cd8cd04f286338bb88bdc7bc8e6dd775ebde60b5e0
+          EOF
+          python -m pip install --only-binary :all: --require-hashes \
+            -r "$RUNNER_TEMP/floor-requirements.txt"
       - name: Choose the install prefix
         run: echo "GIT_FLOOR_PREFIX=$HOME/git-floor/$GIT_FLOOR_VERSION" >> "$GITHUB_ENV"
       - name: Restore the Git build
@@ -50,13 +68,19 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y --no-install-recommends zlib1g-dev
           cd "$RUNNER_TEMP"
-          curl -fsSL --retry 3 -o "git-$GIT_FLOOR_VERSION.tar.xz" \
+          curl -fsSL --retry 3 --proto '=https' --proto-redir '=https' \
+            -o "git-$GIT_FLOOR_VERSION.tar.xz" \
             "https://mirrors.edge.kernel.org/pub/software/scm/git/git-$GIT_FLOOR_VERSION.tar.xz"
           echo "$GIT_FLOOR_SHA256  git-$GIT_FLOOR_VERSION.tar.xz" | sha256sum -c -
           mkdir git-src
           tar -xJf "git-$GIT_FLOOR_VERSION.tar.xz" -C git-src --strip-components=1
+          # Ubuntu 26.04's GCC defaults to C23, whose <stddef.h> defines
+          # unreachable(); Git 2.36's reflog.c declares a function of that
+          # name. -std=gnu17 builds it as Git 2.36 expects (Git's own default
+          # CFLAGS are "-g -O2 -Wall").
           make -C git-src -j"$(nproc)" \
             NO_GETTEXT=1 NO_TCLTK=1 NO_PERL=1 NO_PYTHON=1 NO_CURL=1 NO_OPENSSL=1 \
+            CFLAGS="-g -O2 -Wall -std=gnu17" \
             prefix="$GIT_FLOOR_PREFIX" install
       - name: Put the built Git first on PATH
         run: echo "$GIT_FLOOR_PREFIX/bin" >> "$GITHUB_PATH"
