@@ -904,6 +904,49 @@ class PushTests(clean_support.CleanCase):
                 self.assertIn(f"Deleted branch {branch} (was ", out.getvalue(), "the child ran and was reaped")
                 self.assertEqual(self.git(root, "for-each-ref", "refs/heads/" + branch), "", "the branch is gone")
 
+    def test_clean_a_signal_during_the_push_or_branch_deletion_recorded_before_the_spawn(self):
+        # Lead ruling R-177 (lane 3's M-2 at 2439838, mutant N13), design D15:
+        # the slot is read before each spawn. main() in process under the
+        # counting wrapper; the signal is recorded in the slot as
+        # require_unchanged_cleanup_state() returns, the last read before the
+        # child, as signal_scope()'s handler records one, with no signal sent.
+        # The slot read just after it raises, so no child is spawned and main()
+        # prints `Cancelled.`, exit 128 plus the signal's number, the plan
+        # shown and nothing else. Without that read (N13) `git branch -d` ran
+        # and deleted the branch, and the push ran, each then reported with
+        # `Interrupted; ...` instead.
+        root = self.repo()
+        remote = self.bare_remote()
+        self.unpushed("001-feature")
+        env, log = self.counting()
+        real = project.require_unchanged_cleanup_state
+        cases = [("delete-branch", "002-merged-" + signum.name.lower(), signum)
+                 for signum in (signal.SIGTERM, signal.SIGINT, signal.SIGHUP)]
+        cases.append(("push", "001-feature", signal.SIGTERM))
+        for action, branch, signum in cases:
+            with self.subTest(action=action, signal=signum.name):
+                if action == "delete-branch":
+                    self.git(root, "branch", branch)  # at the merge target's tip, with no worktree
+
+                def then_signalled(repo, run, which, name, signum=signum):
+                    real(repo, run, which, name)
+                    run.record_signal(signum)
+
+                before = (self.refs(root), self.refs(remote))
+                clean_support.reset_child_log(log)
+                out, err = io.StringIO(), io.StringIO()
+                with mock.patch.dict(os.environ, env, clear=True), \
+                        mock.patch.object(project, "require_unchanged_cleanup_state", then_signalled), \
+                        mock.patch.object(project.sys, "stdout", out), mock.patch.object(project.sys, "stderr", err):
+                    status = project.main(["clean", str(root), "--apply", "--action", action, "--branch", branch,
+                                           "--yes"])
+                self.assertEqual((status, err.getvalue()), (128 + signum, "Cancelled.\n"))
+                self.assertTrue(out.getvalue().startswith("Cleanup action: "), out.getvalue())
+                records = clean_support.child_log(log)
+                self.assertTrue(records, "the counting wrapper recorded the inspection's children")
+                self.assertEqual((deletions(records), pushes(records)), ([], []), "no child was spawned")
+                self.assertEqual((self.refs(root), self.refs(remote)), before, "the branch survives, nothing pushed")
+
     def test_clean_push_and_delete_branch_escape_their_paths(self):
         # The root's name holds a tab (Cc) and U+202E (Cf), and so does one
         # branch's U+202E; each is built with chr(), as is the backslash of
