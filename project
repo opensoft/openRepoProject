@@ -4724,6 +4724,41 @@ def below_removal_floor(run):
     return left is not None and left < TIMING["removal_floor"]
 
 
+def registry_twin(evidence, records, rows, common_dir):
+    """A twin made after planning, the step 5 check of revalidation_difference()
+    (lead ruling R-81 (a); R-67 (c)): each entry of records, the fresh registry
+    listing, read as worktree_rows() reads a row (_read_row(): its lstat, its
+    realpath and its two-way registration), with the entries worktree_rows()
+    builds no row for skipped, then compared by shared_identities().
+    Returns `identity-changed` when a present entry shares a checked row's
+    realpath or admin id, since two spellings of one worktree both pass the
+    two-way check; `deadline-exceeded` when the work deadline cut one of these
+    reads (R-80, P-2), so that no twin goes unread for want of time; else
+    None. An entry whose realpath could not be read for any other cause is
+    compared by neither, as in planning (R-57 L2). Every entry is read, a row
+    past the cap included, since the cap bounds planning's rows and not this
+    comparison. rows are the checked rows; common_dir the planned common
+    directory."""
+    own = {row.raw_path for row in rows}
+    identity = evidence.get("identity") or {}
+    reads, checked = [], set()
+    for index, record in enumerate(records):
+        raw = record["path"]
+        if index == 0 and record["bare"]:
+            continue
+        if index == 0 and evidence.get("first_is_common_dir"):
+            raw = identity.get("root")
+            if raw is None:
+                continue
+        read = _read_row(raw, index == 0, common_dir, None, None, False)
+        if any(read_cut(error) for error in read["errors"]):
+            return "deadline-exceeded"
+        if raw in own:
+            checked.add(len(reads))
+        reads.append(read)
+    return "identity-changed" if checked & shared_identities(reads) else None
+
+
 def revalidation_difference(plan, target, run, part, seen):
     """The first difference of target's revalidation, its reason, or None
     (T084; design D7; the project-clean-review-safety delta, rs:66-96;
@@ -4748,8 +4783,11 @@ def revalidation_difference(plan, target, run, part, seen):
        target re-resolved as planned, else `state-changed`.
     5. By filesystem reads, each checked row's path present with its planned
        `dev` and `ino`, and its two-way registration holding with its planned
-       `admin_id` (verify_registration()), else `identity-changed`; then the
-       target's `modules` check, else `contains-submodule`.
+       `admin_id` (verify_registration()), else `identity-changed`; then no
+       other present entry of the registry listing sharing a checked row's
+       realpath or admin id, a twin made after planning (registry_twin();
+       lead ruling R-81 (a)), else `identity-changed`; then the target's
+       `modules` check, else `contains-submodule`.
     6. The combined status probe in the target, which must print no record,
        else `state-changed`.
     7. The hidden-state probe in the target: its own reason
@@ -4852,6 +4890,9 @@ def revalidation_difference(plan, target, run, part, seen):
             return "deadline-exceeded" if read_cut(exc.error) else "identity-changed"
         if not registered or admin_id != row.admin_id:
             return "identity-changed"
+    twin = registry_twin(evidence, records, rows, common_dir)
+    if twin is not None:
+        return twin
     reason, error = modules_check(common_dir, target.row.admin_id, run)
     if read_cut(error):
         return "deadline-exceeded"
