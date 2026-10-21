@@ -3261,7 +3261,7 @@ verification.
   and the command to run after a stopped batch.
   — files: (none)
   — verify: `python3 -c "import re,sys;r=open('README.md').read();s=r.split('## Clean up Git worktrees')[1].split(chr(10)+'## ')[0];x=s.find('--expect-plan');F=[k for k in ('2.36','unstarted-branch','reflog-unavailable','incomplete','upstream') if not -1<s.find(k)<x];G=[k for k in ('--all-safe','--apply','--yes','--expect-plan','Next:','main-worktree','unsupported-path-bytes','registration-mismatch','locked-worktree','not-requested','unstarted-branch','reflog-unavailable','deferred-target-cap','contains-submodule','hidden-local-state','dirty','ignored-local-files','inspection-error') if k not in s];print('not before --expect-plan:',F,'absent:',G);sys.exit(1 if F or G or x<0 else 0)"`
-- [ ] T125 [S] Retire `default_branch()` and `ancestor()` (`project:524-541`), and
+- [x] T125 [S] Retire `default_branch()` and `ancestor()` (`project:524-541`), and
   any baseline helper no caller still reaches (`print_clean_report()`,
   `matching_worktree()`, and `cleanup_report()` if no stage calls it), each
   checked by `grep` over `project` and `tests/`; plan.md's "Code touched, and
@@ -3269,7 +3269,7 @@ verification.
   before this task. The whole suite passes.
   — files: `project`
   — verify: `python3 -c "import ast,sys;t=ast.parse(open('project').read());D={n.name for n in t.body if isinstance(n,ast.FunctionDef)};U={x.id for x in ast.walk(t) if isinstance(x,ast.Name)}.union(x.attr for x in ast.walk(t) if isinstance(x,ast.Attribute));B=[n for n in ('default_branch','ancestor') if n in D]+[n for n in ('print_clean_report','matching_worktree','cleanup_report') if n in D and n not in U];print('defined without a caller, or not retired:',B);sys.exit(1 if B else 0)" && python3 -m unittest discover -s tests`
-- [ ] T126 [S] Complete `specs/004-project-clean-all-safe/traceability.md`: every
+- [x] T126 [S] Complete `specs/004-project-clean-all-safe/traceability.md`: every
   one of the 101 rows names at least one test, and a script confirms each named
   test is defined as `def NAME` in a `tests/test_*.py` module and starts with
   its subcommand's prefix and the title in snake case (rule 1); if PR #19 has
@@ -3277,7 +3277,7 @@ verification.
   otherwise from `origin/change/amend-clean-all-safe-push-pins`.
   — files: `specs/004-project-clean-all-safe/traceability.md`
   — verify: `python3 -c "import glob,re,sys;V=chr(124);L=open('specs/004-project-clean-all-safe/traceability.md').read().splitlines();R=[[c.strip() for c in l.strip().strip(V).split(V)] for l in L if l.startswith(V)][2:];T=[l[15:].strip() for f in sorted(glob.glob('openspec/changes/add-project-clean-all-safe/specs/*/spec.md')) for l in open(f) if l.startswith('#### Scenario: ')];T+=[x for x in ['The push child reaches its remote'] if x not in T];D=set(m for f in glob.glob('tests/test_*.py') for m in re.findall(r'^\s*def (test_\w+)\(',open(f).read(),re.M));P=('test_clean_','test_status_','test_doctor_','test_update_');k=lambda t:re.sub('[^a-z0-9]+','_',t.lower()).strip('_');B=[(r[2],n) for r in R for n in (re.findall(r'test_\w+',r[4]) or ['(none)']) if n not in D or not any(n==p+k(r[2]) or n.startswith(p+k(r[2])+'_') for p in P)];[print('bad:',b) for b in B];print(len(R),'rows');sys.exit(1 if B or not len(R)==101 or not sorted(r[2] for r in R)==sorted(T) else 0)"`
-- [ ] T127 [O] Check by script that every D18 and D14 literal of
+- [x] T127 [O] Check by script that every D18 and D14 literal of
   `tests/clean_support.py`, its placeholders substituted, equals a line or
   quoted string of design.md D18 or D14 character for character, and that every
   D18 and D14 string has a literal (SC-010); `TEXT` in `project` equals the
@@ -3340,7 +3340,7 @@ verification.
   `specs/004-project-clean-all-safe/hand-runs.md` (lead ruling R-50).
   — files: `specs/004-project-clean-all-safe/hand-runs.md`
   — verify: `python3 -c "import os,sys;f='specs/004-project-clean-all-safe/hand-runs.md';t=open(f).read() if os.path.isfile(f) else '';print('missing file:',f) if not t else 0;M=[k for k in ['Lane: openRepoProject-2']+['User Story '+str(i) for i in range(1,10)] if k not in t];print('absent:',M);sys.exit(1 if M or not t.startswith('Lane: openRepoProject-2') else 0)"`
-- [ ] T133 [S] In `openspec/changes/add-project-clean-all-safe/tasks.md`, under
+- [x] T133 [S] In `openspec/changes/add-project-clean-all-safe/tasks.md`, under
   "Speckit Handoff", change the Tasks line to `Tasks:
   specs/004-project-clean-all-safe/tasks.md (created by /speckit.tasks)`, as
   lane openRepoProject-1's archived changes record theirs; the branch's four
