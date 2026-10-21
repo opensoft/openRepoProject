@@ -744,6 +744,79 @@ class BoundsTests(clean_support.CleanCase):
         self.assertFalse(tree.exists())
         self.assertEqual(self.head(root, "refs/heads/001-p"), planned, "the branch is kept")
 
+    def test_clean_deadline_expiry_mid_batch_a_revalidation_read_cut_at_the_deadline(self):
+        # Lead ruling R-80, P-2 (interim row 7's closure; lane 3's
+        # reval-deadline-cut and LOW-2, lead ruling R-93 (e)): a revalidation
+        # read the work deadline cuts is no difference. Table: deadline 8 s,
+        # reserve 2 s (6 s of work), probe budget 30 s and grace 1 s, so each
+        # probe's budget is min(30 s, work remaining) and the work deadline is
+        # the limit. The ls-files-stuck-again-in fake, behind the counting
+        # wrapper, lets planning's hidden-state probe of the first target run;
+        # the revalidation's ignores SIGTERM and sleeps, is cut at the work
+        # deadline and killed after the grace. Both targets are then
+        # not-attempted with deadline-exceeded and no reconciliation, nothing
+        # is removed, and the exit status is 1 (D19, row 2).
+        root, trees = self.batch("reval-deadline-cut", ["001-p", "002-q"])
+        before = self.snapshot(root)
+        fake = clean_support.install_fake_git(self.base / "reval-deadline-cut-fake", "ls-files-stuck-again-in",
+                                              path=trees[0], lifetime=30)
+        env, log = self.counting(real=fake, name="reval-deadline-cut-bin")
+        table = clean_support.timing_table(invocation_deadline=8.0, reconciliation_reserve=2.0, probe_budget=30.0,
+                                           term_grace=1.0)
+        result = self.timed(self.run_json, "clean", root, "--all-safe", "--apply", "--yes", "--json",
+                            timing=table, env=env)
+        self.assert_status(result, 1)
+        document = result.document
+        self.assertEqual(stages(document), [(str(tree), "not-attempted", "deadline-exceeded") for tree in trees],
+                         f"elapsed {result.elapsed:.1f} s\n{result.stderr}")
+        first, second = document["targets"]
+        # The first target's revalidation ran its five children, the last cut;
+        # the second was never revalidated.
+        self.assertEqual((first["reconciliation"], first["exit_status"], first["probes_performed"]), (None, None, 5))
+        self.assertEqual((second["reconciliation"], second["exit_status"], second["probes_performed"]),
+                         (None, None, 0))
+        self.assertEqual(document["exit_code"], 1)
+        records = clean_support.child_log(log)
+        self.assertEqual([directory(child) for child in records if subcommand(child)[:1] == ["ls-files"]].count(
+            str(trees[0])), 2, "planning's hidden-state probe of the first target, then the revalidation's")
+        self.assertEqual((subcommand(records[-1])[:1], directory(records[-1])), (["ls-files"], str(trees[0])),
+                         "the cut read is the run's last child: no removal, no rescan")
+        self.assertFalse(any(map(is_removal, records)))
+        self.assertEqual(self.snapshot(root), before, "nothing removed")
+
+    def test_clean_deadline_expiry_mid_batch_a_revalidation_read_cut_at_its_probe_budget(self):
+        # The contrast (lead ruling R-80, P-2; lane 3's reval-budget-cut; R-93
+        # (e)): the same stuck hidden-state probe, cut by a 1 s probe budget,
+        # the rest of the table real (work deadline 50 s, grace 2 s), so the
+        # budget is the limit and the read times out. A timeout stays a
+        # difference (T084; the project-clean-review-safety delta, rs:92-93):
+        # the first target is refused with hidden-local-state, its record from
+        # its revalidation's reads, the second is not-attempted with
+        # batch-stopped, nothing is removed, and the exit status is 2.
+        root, trees = self.batch("reval-budget-cut", ["001-p", "002-q"])
+        planned = self.head(trees[0])
+        before = self.snapshot(root)
+        fake = clean_support.install_fake_git(self.base / "reval-budget-cut-fake", "ls-files-stuck-again-in",
+                                              path=trees[0], lifetime=30)
+        env, log = self.counting(real=fake, name="reval-budget-cut-bin")
+        table = clean_support.timing_table(probe_budget=1.0)
+        result = self.timed(self.run_json, "clean", root, "--all-safe", "--apply", "--yes", "--json",
+                            timing=table, env=env)
+        self.assert_status(result, 2)
+        document = result.document
+        self.assertEqual(stages(document), [(str(trees[0]), "refused", "hidden-local-state"),
+                                            (str(trees[1]), "not-attempted", "batch-stopped")],
+                         f"elapsed {result.elapsed:.1f} s\n{result.stderr}")
+        first, second = document["targets"]
+        self.assertEqual((first["reconciliation"], first["exit_status"], first["probes_performed"]),
+                         (record(True, True, True, planned), None, 5))
+        self.assertEqual((second["reconciliation"], second["probes_performed"]), (None, 0))
+        self.assertEqual(document["exit_code"], 2)
+        records = clean_support.child_log(log)
+        self.assertEqual((subcommand(records[-1])[:1], directory(records[-1])), (["ls-files"], str(trees[0])))
+        self.assertFalse(any(map(is_removal, records)))
+        self.assertEqual(self.snapshot(root), before, "nothing removed")
+
     def test_clean_push_refuses_an_incomplete_inspection_deadline(self):
         # At a pseudo-terminal made project's controlling terminal (rule 14),
         # through the launcher. status-hangs-in stands first on PATH, behind
@@ -845,6 +918,131 @@ class BoundsTests(clean_support.CleanCase):
                 document = json.loads(out)
                 self.assertEqual(stages(document), [(str(trees[0]), "refused", "identity-changed"),
                                                     (str(trees[1]), "not-attempted", "batch-stopped")], err)
+                self.assertEqual((status, document["exit_code"]), (2, 2))
+                self.assertTrue(all(tree.is_dir() for tree in trees), "nothing removed")
+
+    @clean_support.not_root
+    def test_clean_admin_registration_changed_a_twin_spelled_through_an_unsearchable_directory(self):
+        # Lead ruling R-93 (e), LOW-3 (lane 3's twin-unreadable). At the
+        # question, a twin of the second target is registered as the test above
+        # registers one, but spelled through a directory that is then made mode
+        # 000, so that the twin's lstat fails with EACCES and its realpath and
+        # admin id cannot be read. A value that cannot be re-read is a
+        # difference (the project-clean-review-safety delta, rs:92-93), as
+        # planning fails closed on an unread realpath (R-78 (b)): the target is
+        # refused with identity-changed, exit 2, and nothing is removed. Under
+        # --all-safe the first target's preflight reads the fresh registry
+        # listing (R-41), so the first target is the one refused and the
+        # second is not attempted; with --worktree naming the second target,
+        # it is refused itself.
+        for mode in ("all-safe", "single"):
+            with self.subTest(mode):
+                case = f"twin-unsearchable-{mode}"
+                root, trees = self.batch(case, ["001-p", "002-q"])
+                planned = {tree: self.head(tree) for tree in trees}
+                locked = self.base / case / "locked"
+                spelled = locked / "in" / trees[1].name
+
+                def twin(root=root, tree=trees[1], locked=locked, spelled=spelled):
+                    admin = self.common_dir(root) / "worktrees"
+                    shutil.copytree(admin / tree.name, admin / f"{tree.name}-twin")
+                    locked.mkdir()
+                    (locked / "in").symlink_to(tree.parent)
+                    (admin / f"{tree.name}-twin" / "gitdir").write_text(f"{spelled / '.git'}\n")
+                    locked.chmod(0o000)
+                    self.addCleanup(locked.chmod, 0o700)
+
+                words = ("--all-safe",) if mode == "all-safe" else ("--action", "remove", "--worktree", trees[1])
+                status, out, err = self.main_in_process("clean", root, *words, "--apply", "--json", at_question=twin)
+                with self.assertRaises(PermissionError):
+                    os.lstat(spelled)
+                registry = self.git(root, "worktree", "list", "--porcelain").splitlines()
+                self.assertIn(f"worktree {spelled}", registry)
+                document = json.loads(out)
+                refused_tree = trees[0] if mode == "all-safe" else trees[1]
+                expected = [(str(refused_tree), "refused", "identity-changed")]
+                if mode == "all-safe":
+                    expected.append((str(trees[1]), "not-attempted", "batch-stopped"))
+                self.assertEqual(stages(document), expected, err)
+                self.assertEqual(document["targets"][0]["reconciliation"],
+                                 record(True, True, True, planned[refused_tree]))
+                self.assertEqual((status, document["exit_code"]), (2, 2))
+                self.assertTrue(all(tree.is_dir() for tree in trees), "nothing removed")
+                self.assertTrue(all(f"worktree {tree}" in registry for tree in trees))
+
+        # The realpath half: a twin spelled through a searchable symbolic link,
+        # as the test above spells it, whose realpath read is made to fail in
+        # this process (a realpath that is not strict raises only in a race or
+        # at its budget). EACCES, or a read cut at its probe budget, refuses as
+        # above; ENOENT is absence (R-36), so the twin is compared by neither
+        # and both targets are removed.
+        def realpath_error(number):
+            return {"code": "os-error", "message": TEXT["row_error_os_error"].format(
+                OPERATION="realpath", STRERROR=os.strerror(number))}
+
+        timeout = {"code": "probe-timeout", "message": TEXT["row_error_probe_timeout"].format(
+            OPERATION="realpath", S="5")}
+        cases = [("EACCES", realpath_error(errno.EACCES), errno.EACCES), ("timeout", timeout, None),
+                 ("ENOENT", realpath_error(errno.ENOENT), errno.ENOENT)]
+        for name, error, number in cases:
+            with self.subTest(realpath=name):
+                case = f"twin-realpath-{name.lower()}"
+                root, trees = self.batch(case, ["001-p", "002-q"])
+                link = self.base / case / "linked-trees"
+                original = project._realpath
+
+                def realpath(path, spelled=os.fsencode(link / trees[1].name), error=error, number=number):
+                    if path == spelled:
+                        raise project.EvidenceError(error, number)
+                    return original(path)
+
+                def twin(root=root, tree=trees[1], link=link):
+                    admin = self.common_dir(root) / "worktrees"
+                    shutil.copytree(admin / tree.name, admin / f"{tree.name}-twin")
+                    link.symlink_to(tree.parent)
+                    (admin / f"{tree.name}-twin" / "gitdir").write_text(f"{link / tree.name / '.git'}\n")
+
+                status, out, err = self.main_in_process("clean", root, "--all-safe", "--apply", "--json",
+                                                        at_question=twin, _realpath=realpath)
+                document = json.loads(out)
+                if number == errno.ENOENT:
+                    self.assertEqual(stages(document), [(str(tree), "removed", None) for tree in trees], err)
+                    self.assertEqual((status, document["exit_code"]), (0, 0))
+                    continue
+                self.assertEqual(stages(document), [(str(trees[0]), "refused", "identity-changed"),
+                                                    (str(trees[1]), "not-attempted", "batch-stopped")], err)
+                self.assertEqual((status, document["exit_code"]), (2, 2))
+                self.assertTrue(all(tree.is_dir() for tree in trees), "nothing removed")
+
+        # The boundary, in single mode with P the first target: another
+        # worktree whose lstat already failed while planning is null in the
+        # plan and null again (rs:89-92), the plan's non-blocking
+        # inspection-error that does not refuse P (pcl:258-262), so P is
+        # removed; the same worktree made unsearchable at the question can no
+        # longer be re-read, so P is refused with identity-changed.
+        for when in ("before-planning", "at-the-question"):
+            with self.subTest(another_worktree_unsearchable=when):
+                root, trees = self.batch(f"other-unsearchable-{when}", ["001-p", "002-q"])
+                holder = self.base / f"other-unsearchable-{when}" / "other"
+                holder.mkdir()
+                self.merged_worktree("003-r", path=holder / "003-r", root=root)
+                self.addCleanup(holder.chmod, 0o700)
+
+                def unsearchable(holder=holder):
+                    holder.chmod(0o000)
+
+                if when == "before-planning":
+                    unsearchable()
+                status, out, err = self.main_in_process(
+                    "clean", root, "--action", "remove", "--worktree", trees[0], "--apply", "--json",
+                    at_question=unsearchable if when == "at-the-question" else None)
+                document = json.loads(out)
+                if when == "before-planning":
+                    self.assertEqual(stages(document), [(str(trees[0]), "removed", None)], err)
+                    self.assertEqual((status, document["exit_code"]), (0, 0))
+                    self.assertFalse(trees[0].exists())
+                    continue
+                self.assertEqual(stages(document), [(str(trees[0]), "refused", "identity-changed")], err)
                 self.assertEqual((status, document["exit_code"]), (2, 2))
                 self.assertTrue(all(tree.is_dir() for tree in trees), "nothing removed")
 
