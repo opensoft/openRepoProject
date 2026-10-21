@@ -51,7 +51,11 @@ Migration Plan; and A-34 (signals in the apply phase, and the flagged result's
 order) to D4, D5, D7, D8 and D9 (proposal, "Re-read and Codex Findings (round
 A7)"). Round A8 maps A-35 (lane openRepoProject-3's confirm read of round A7,
 its F1 to F10) to Context and D8 (F4), D7 (F3), D8 (F10) and the Migration
-Plan (F9) (proposal, "Re-read and Codex Findings (round A8)").
+Plan (F9) (proposal, "Re-read and Codex Findings (round A8)"). Round A9 maps
+A-37 (the lane's reader RF's final composition read: its M2, L1, L2 and L3,
+and this change's share of its M1) to D7 and Risks (M2) and the Migration
+Plan (M1, L1 and L2); A-36's LOW-2 edits the spec delta alone (proposal,
+"Re-read and Codex Findings (round A9)").
 
 Citations follow `proposal.md`: packet files at `da33d92`, `CAS` for change 1,
 `APO` for change 2, `project:N` and `tests:N` at `961c405`, all unchanged at
@@ -695,7 +699,10 @@ repository and one per selected row. A keep the plan names spawns no stage
 child, so each kept branch lowers the count by four.
 
 The fit of `BA:729-760`, at the packet's assumed costs (150 ms per child, 0.3
-s per removal, T = 16, the 50 s work deadline and the 5 s floor). Without the
+s per removal, T = 16, the 50 s work deadline and the 5 s floor), on change
+1's terms as PR #19 words them at `c462d87`: F = 7 (its `design.md:305` and
+D14 at `:625`), E = 16 (`:596`) and five children per revalidation (its
+`specs/project-clean/spec.md:826-827`). Without the
 cache change and with one reflog child, target k's removal spawns after 7 +
 128 + 16 + 1 + 5k probes, k - 1 removals and 4(k - 1) stage children, at
 (152 + 5k) x 0.15 + 0.3(k - 1) + 0.6(k - 1) = 21.9 + 1.65k s, and its branch
@@ -716,6 +723,40 @@ at 25.35 + 1.65k s: 12 removed (the 12th at 44.1 s) and 11 retired (the 11th
 branch child at 43.5 s, the 12th due at 45.15 s), fewer where a row's proof
 failed, whose stage then does not run and which saves 0.6 s for each later
 row.
+
+At PR #19's `6f2cb54`, its head after lane openRepoProject-2's round of
+2026-10-21, change 1's terms move (reader RF's M2, derived at `1ebdd90`,
+whose inputs `6f2cb54` keeps byte for byte; ruling A-37): F = 8, its row 4c
+added (its `design.md:325-326` and D14 at `:868`); E and the reachability
+probes of its D21 at most 16 each (`:837-838`), D21 adding one child to each
+revalidation (`:883-884`); and six children per revalidation, seven where the
+plan read the repository's `extensions.worktreeConfig` as true (its
+`specs/project-clean/spec.md:1015-1017` and
+`specs/project-clean-review-safety/spec.md:76-77`).
+
+- On D14's terms as written, six children per target (its `design.md:874`),
+  target k's removal spawns at (169 + 6k) x 0.15 + 0.9(k - 1) = 24.45 + 1.8k
+  s and its branch child at 25.5 + 1.8k s: removals 1 to 11 spawn (the 11th
+  at 44.25 s) and branch children 1 to 10 (the 10th at 43.5 s); the 11th
+  branch child, due at 45.3 s, cannot start, and the 12th removal, due at
+  46.05 s, does not spawn. A flagged run of 16 then removes 11 worktrees and
+  retires 10 branches, where `c462d87` gives 14 and 13.
+- Where the plan read `extensions.worktreeConfig` as true, seven children per
+  target on D14's planning term as written, removals spawn at 24.45 + 1.95k s
+  and branch children at 25.5 + 1.95k s: 10 removed (the 10th at 43.95 s) and
+  9 retired (the 9th at 43.05 s), the 10th branch child falling at 45.0 s, on
+  the floor's boundary, where its strict test refuses it. In such a
+  repository each linked row also gets its effective-work-tree probe at plan
+  time (its `design.md:431-433` and `:880-882`), which D14 says brings a
+  large plan to the deadline sooner, never unsafe; lane openRepoProject-2 is
+  checking D14's fit for the seven-child case on 2026-10-21.
+
+The other figures of this section, the worst case of the reflog proof, the
+joint fit with the cache change, change 1's measured costs and a lower target
+cap's arithmetic, stand on change 1's terms at `c462d87`. This change
+ratifies its two blocks on PR #19's text only as written at `c462d87`
+(`tasks.md` 1.6), PR #19's later heads do not block it, and the figures meet
+PR #19's final text at the re-base (`tasks.md` 2.2).
 
 At change 1's measured costs (CAS `tasks.md` 2.1: the 16th removal spawning at
 23.6 s with 26.4 s left), the 60 stage children before the 16th removal, four
@@ -1158,10 +1199,12 @@ proposal puts it before Brett Heap with L-4's recommendation.
 - [A `reference-transaction` hook runs inside the branch child, as under
   `delete-branch` today] -> Its time counts in the child's 5 s budget, and the
   post-check decides; the hook is the repository owner's code.
-- [At the packet's assumed costs a flagged run of 16 retires 13 branches; with
-  the cache change and its filesystem time, 9 through one worker per stage,
-  8 in the worst case of the reflog proof, and at least 5, or 3, at a thread
-  per call, 6, or 5, in the worst order a run can take]
+- [At the packet's assumed costs a flagged run of 16 retires 13 branches on
+  change 1's terms at PR #19's `c462d87`, and 10 at its `6f2cb54`, or 9 where
+  the plan read `extensions.worktreeConfig` as true (D7); with the cache
+  change and its filesystem time, at `c462d87`, 9 through one worker per
+  stage, 8 in the worst case of the reflog proof, and at least 5, or 3, at a
+  thread per call, 6, or 5, in the worst order a run can take]
   -> Change 1's measured fit governs (D7, A-9), under which all 16 fit through
   a worker and at least the 16th is deferred at a thread per call, with one
   reflog child or 17; the degraded case is a `not-attempted`
@@ -1229,21 +1272,31 @@ Without the flag nothing changes: every run behaves as change 1 specifies.
    is shared with no other open change and is re-read against change 1's
    archived text (step 2).
 
-   Every re-base and re-read is checked by `diff -u` of the archived block
-   against this change's block showing additions only, read with
+   Every re-base and re-read is checked by two diffs (reader RF's M1; ruling
+   A-37). The first, kept, is `diff -u` of the archived block against this
+   change's block showing additions only, read with
    `git diff --no-index --word-diff` where a line takes an insertion, apart
-   from this
-   change's own edits of its base text, which the proposal's Capabilities
-   names, and the rewordings below; `/usr/bin/openspec validate` is a second
-   check and no proof, since OpenSpec's archive guard compares scenario names
-   only, so that a re-base that keeps every scenario but drops sentences
-   validates and archives (lane openRepoProject-5's reader RD, its M1, shown
-   with `/usr/bin/openspec` 1.13.1; ruling A-33). A re-base that changes a
-   block's added text beyond the rewordings written here returns that block
-   to Brett Heap (RD's M3). The re-base onto the cache change's archived
-   blocks needs these, written here so that they are ratified with this
-   change (RD's M3 and its LOWs, ruling A-33; its table "What a re-base at
-   archive has to change"):
+   from this change's own edits of its base text, which the proposal's
+   Capabilities names, and the rewordings below (lane openRepoProject-5's
+   reader RD, its M1; ruling A-33). It cannot see a change to this change's
+   own words, which after the earlier change archives are all additions to
+   the archived block, so a re-base that reworded them would still show
+   additions only. The second is `diff -u` of this change's block as
+   committed at its ratified head against the re-based block, which may show
+   only the archived block's text carried in and the rewordings written out
+   below; the ADDED requirement, which has no archived block, is checked the
+   same way, as committed there against its re-based text, which may show
+   only the rewording of its order sentence below and the AND of `tasks.md`
+   2.3. Any other change to this change's words returns that block to Brett
+   Heap, before the handoff or before the archive, as the task that makes the
+   re-base says (`tasks.md` 2.1 to 2.4 and 3.2; RD's M3).
+   `/usr/bin/openspec validate` is a further check and no proof, since
+   OpenSpec's archive guard compares scenario names only, so that a re-base
+   that keeps every scenario but drops sentences validates and archives (RD's
+   M1, shown with `/usr/bin/openspec` 1.13.1). The re-base onto the cache
+   change's archived blocks needs these, written here so that they are
+   ratified with this change (RD's M3 and its LOWs, ruling A-33; its table
+   "What a re-base at archive has to change"):
    - "Clean can explicitly retire verified worktrees": the cache change's one
      clause is carried; nothing is reworded.
    - "Clean previews and applies a batch of eligible worktree removals in one
@@ -1279,16 +1332,26 @@ Without the flag nothing changes: every run behaves as change 1 specifies.
      in its WHEN "in a run whose plan selects no cache target", since the cache
      change's longer line applies when one is selected (RD's L3).
    - The human result: the cache change's `Caches disposed` line follows the
-     summary line and precedes the branch lines (RD's L2; D8).
+     summary line and precedes the branch lines (RD's L2; D8). The ADDED
+     requirement's sentence that orders the flagged result ("Under the flag
+     the human result SHALL end with these lines, in this order: ...") is
+     reworded to place it: its "then the summary line and the branch lines"
+     reads "then the summary line, the line that "Clean disposes of listed
+     caches before a worktree removal" adds to a successful apply, and the
+     branch lines" (reader RF's L1; ruling A-37).
 
    If this change archives after `add-project-overview-remote-merge-status`,
    the composed project-command block keeps that change's words as ratified,
    quotation marks included, so that its backquoted `Overview reports remote
    merge evidence on request` stays backquoted beside the double-quoted names
-   of change 1, PR #19 and this change: a re-base never changes another
-   change's ratified words, and quoting requirement names one way binds this
-   change's own text only, so the composed block may hold both styles and the
-   check above needs no exception for quoting (ruling A-35, lane
+   of change 1, PR #19 and this change: a re-base changes no other change's
+   ratified words, except the two rewordings of the cache change's words that
+   this change's re-base onto it makes, written out above, a scope added to
+   that change's fit sentence and its "or" moved in exit-table row 2, each of
+   which returns to Brett Heap, as `tasks.md` 2.3 says (reader RF's L2;
+   ruling A-37); and quoting requirement names one way binds this change's
+   own text only, so the composed block may hold both styles and the check
+   above needs no exception for quoting (ruling A-35, lane
    openRepoProject-3's F9, refining A-33's reading of RD's L4).
 
 Rollback: revert the realization commit on `main`. The flag is opt-in, so the
