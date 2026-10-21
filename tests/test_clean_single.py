@@ -38,6 +38,8 @@ TEXT = clean_support.TEXT_FIXTURES
 
 # The status probe's words after `-C PATH` (design D6), as the contract writes them.
 STATUS = ["status", "--porcelain=v1", "-z", "--untracked-files=normal", "--ignored=matching"]
+# The hidden-state probe's words after `-C PATH` (gate 10; design D2 and D11).
+HIDDEN = ["ls-files", "-v", "--stage", "-z"]
 
 
 def argv_words(record):
@@ -51,6 +53,13 @@ def argv_words(record):
 def status_paths(records):
     """The directory of each status probe in the counting log, in spawn order."""
     return [argv_words(record)[1] for record in records if argv_words(record)[2:] == STATUS]
+
+
+def worktree_children(records):
+    """(subcommand, directory) of each status probe and hidden-state probe in
+    the counting log, in spawn order."""
+    return [(argv_words(record)[2], argv_words(record)[1]) for record in records
+            if argv_words(record)[2:] in (STATUS, HIDDEN)]
 
 
 def removals(records):
@@ -431,7 +440,7 @@ class SingleTests(clean_support.CleanCase):
         inspected = [str(root)] + [str(tree) for tree in registered[:127]]
         self.assertEqual((codes(document), document["selected"], document["completeness"], document["omitted"]),
                          (["inspection-incomplete"], [], "incomplete", {"count": 3, "exactness": "exact"}))
-        self.assertEqual(document["notes"], [self.note("inspect-cap", target, K=3, M=128)])
+        self.assertEqual(document["notes"], [], "the refusal speaks alone (lead ruling R-93 (e))")
         self.assertEqual([row["path"] for row in document["worktrees"]], inspected)
         self.assertEqual(status_paths(clean_support.child_log(log)), inspected,
                          "no status probe past the cap: none for the last two registered rows or P")
@@ -510,6 +519,92 @@ class SingleTests(clean_support.CleanCase):
         self.assertEqual(sorted((entry["path"], entry["reason"]) for entry in document["excluded"]),
                          [(str(target), "not-requested"), (str(other), "not-requested"),
                           (str(root), "main-worktree")])
+        self.assertEqual(self.snapshot(root), before)
+
+    # Lead ruling R-93 (d), lane 3's HIGH-1: design D13 inspects P's row first,
+    # "identity, status probe, gates", then the other rows (the delta's "P
+    # SHALL be probed first").
+
+    def test_clean_single_target_a_deadline_among_other_rows_leaves_p_decided(self):
+        # P (001-p) and another merged worktree whose status probe hangs (the
+        # fake `status-hangs-in`, which SIGTERM ends) behind the counting
+        # wrapper, run through the launcher with a table that shortens the
+        # deadline to 3 s and the reserve to 1 s (R-29): 2 s of work, and the
+        # probe budget min(5 s, work remaining), so the hang is cut at the work
+        # deadline. P's status probe and P's gates (gate 7's reflog read, gate
+        # 9's `modules` lstat and gate 10's `ls-files`) run before any other
+        # row is inspected, so P's row is decided and the plan complete beside
+        # the non-blocking note `deadline-exceeded`; the floor then makes P
+        # `not-attempted` with deadline-exceeded, exit 1 (D19 row 2), and
+        # nothing is removed.
+        root = self.repo()
+        self.bare_remote()
+        target = self.merged_worktree("001-p")
+        hang = self.merged_worktree("002-hang")
+        fake = clean_support.install_fake_git(self.base / "fake", "status-hangs-in", path=hang, lifetime=10)
+        env, log = self.counting(real=fake)
+        table = clean_support.timing_table(invocation_deadline=3.0, reconciliation_reserve=1.0)
+        words = ("clean", root, "--apply", "--action", "remove", "--worktree", target)
+        order = [("status", str(target)), ("ls-files", str(target)), ("status", str(root)), ("status", str(hang))]
+        progress = TEXT["progress_line_reason"].format(STAGE="not-attempted", PATH=target, REASON="deadline-exceeded")
+        stop = TEXT["stop_block"].format(PATH=target, REASON="deadline-exceeded", K=0, N=1, NOT_ATTEMPTED=target,
+                                         ROOT=root)
+        result_text = [progress, stop, TEXT["branches_kept_line"].format(BRANCHES="001-p"),
+                       TEXT["residual_window_line"]]
+        before = self.snapshot(root)
+
+        def launched(*extra):
+            clean_support.reset_child_log(log)
+            result = self.run_launched(table, *words, *extra, env=env)
+            return result, clean_support.child_log(log)
+
+        def assert_children(records):
+            self.assertEqual(worktree_children(records), order, "P's gate children before the other rows' status")
+            self.assertEqual(removals(records), [])
+
+        with self.subTest("human"):
+            result, records = launched("--yes")
+            self.assert_status(result, 1)
+            lines = result.stdout.splitlines()
+            self.assertIn(TEXT["selected_heading"].format(N=1), lines)
+            self.assertIn(progress, lines, "\n" + clean_support.transcript(result))
+            self.assertEqual(lines[lines.index(progress):], result_text)
+            self.assertNotIn("REFUSED", result.stdout + result.stderr)
+            assert_children(records)
+
+        with self.subTest("json, the plan"):
+            # Without --yes on a standard input that is not a terminal the run
+            # stops at confirmation-required and prints the plan envelope.
+            result, records = launched("--json")
+            self.assert_status(result, 2)
+            document = self.load_json(result)
+            self.assertEqual((codes(document), document["completeness"],
+                              sorted((entry["path"], entry["reason"]) for entry in document["excluded"])),
+                             (["confirmation-required"], "complete",
+                              [(str(hang), "inspection-error"), (str(root), "main-worktree")]))
+            self.assert_named_plan(document, target, [self.note("deadline-exceeded", target, K=1)])
+            rows = {row["path"]: row for row in document["worktrees"]}
+            cut = [{"code": "deadline-exceeded",
+                    "message": TEXT["row_error_deadline_exceeded"].format(OPERATION="git status")}]
+            self.assertEqual([(rows[str(tree)]["classification"], rows[str(tree)]["errors"]) for tree in (target, hang)],
+                             [("merged-removable", []), ("inspection-error", cut)])
+            assert_children(records)
+
+        with self.subTest("json, the result"):
+            result, records = launched("--yes", "--json")
+            self.assert_status(result, 1)
+            document = self.load_json(result)
+            self.assertEqual([(item["path"], item["stage"], item["reason"], item["reconciliation"])
+                              for item in document["targets"]],
+                             [(str(target), "not-attempted", "deadline-exceeded", None)])
+            self.assertEqual((document["exit_code"], document["operations"]["performed"]), (1, 0))
+            lines = result.stderr.splitlines()
+            self.assertIn(progress, lines, "\n" + clean_support.transcript(result))
+            self.assertEqual(lines[lines.index(progress):], result_text)
+            assert_children(records)
+
+        self.assertTrue(target.is_dir())
+        self.assertIn(f"worktree {target}", self.git(root, "worktree", "list", "--porcelain").splitlines())
         self.assertEqual(self.snapshot(root), before)
 
 

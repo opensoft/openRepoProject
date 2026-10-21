@@ -3817,9 +3817,9 @@ def build_plan(repo, run):
     """Build the run's Plan for repo, resolve_clean_target()'s dict, and return
     it, never a status (T049; data-model.md, "Plan"; lead rulings R-56 and R-59
     D4). It reads lane G's evidence directly, inspect_repository()'s dict and
-    worktree_rows(), never cleanup_report(), so that a failed repository-wide
-    probe gives a plan incomplete with inspection-incomplete rather than a
-    refusal. That dict is repo's "evidence", the resolution's, so that row 3
+    worktree_rows(), so that a failed repository-wide probe gives a plan
+    incomplete with inspection-incomplete, never a refusal. That dict is
+    repo's "evidence", the resolution's, so that row 3
     runs once (lead ruling R-71 (b)). Only for a caller that passes no
     evidence does build_plan() read it itself and raise the baseline's
     `Cannot inspect Git repository at ROOT` where row 3 failed, ROOT is no
@@ -3843,11 +3843,22 @@ def build_plan(repo, run):
     and inspected first (match_target(): `target_rows` and `target`,
     `worktree-not-found` recorded through refuse()), exempt from the cap, so
     that the rows inspected are P's and the first 128 others (lead ruling R-53
-    P-15), unless P's match is undecided (R-73 (d), R-78 (b)); another row's
+    P-15), unless P's match is undecided (R-73 (d), R-78 (b)). P's row is
+    established first, identity, status probe and gates (D13; lead ruling
+    R-93 (d)): gate_rows() runs on P's rows, gates 1 to 7, gate 8 with P
+    alone and gates 9 and 10, before worktree_rows() inspects any other row,
+    and then on the other rows. No gate reads another row to decide P, so a
+    work deadline reached among the other rows leaves P's row decided and
+    the plan complete beside the note `deadline-exceeded`, while one that
+    cuts P's own read leaves P's row incomplete, which check_plan() refuses
+    as inspection-incomplete. Another row's
     inspection-error or unprobed marker, the rows past the cap, and the rows
     the work deadline stopped are its non-blocking notes
     `inspection-incomplete`, `inspect-cap` and `deadline-exceeded`, a row
-    counted in one of them only (lead ruling R-80, P-1). Push and
+    counted in one of them only (lead ruling R-80, P-1). When P's match is
+    undecided none of them is recorded, since each says the rows do not
+    block P beside the plan's refusal of P, inspection-incomplete, which
+    speaks alone (lead ruling R-93 (e)). Push and
     delete-branch take the cap with no exemption and the batch's completeness
     (plan_completeness()).
 
@@ -3858,7 +3869,8 @@ def build_plan(repo, run):
     `deadline-exceeded` row error, excluded as `inspection-error`, never
     unprobed (lead rulings R-67 (a) and R-69), and the plan is incomplete
     with `deadline-exceeded` (plan_completeness()). Then `selected` and
-    `excluded` from gate_rows(), each selected row given `removal_args`, ["-C",
+    `excluded` from gate_rows(), P's rows' and the other rows' together, both
+    by raw path bytes, each selected row given `removal_args`, ["-C",
     ROOT, "worktree", "remove", PATH] with ROOT the command directory and PATH
     the registry's raw bytes (design D9); `completeness` and `apply_allowed`
     (false for every report); `digest` (plan_digest()); `planning_probes`, the
@@ -3913,8 +3925,12 @@ def build_plan(repo, run):
     cap = LIMITS["worktree_rows"][plan.mode]
     named = plan.mode == "single" and plan.action == "remove"
     plan.target_rows, matched, path, exempt = [], (), None, True
+    selected, excluded = [], []
     if named:
         matched, path, exempt = match_target(plan, run, entries, cap)
+        # D13: P's row first, its gates included, before any other row is
+        # inspected (lead ruling R-93 (d)); no gate reads another row.
+        selected, excluded = gate_rows(plan.target_rows, plan, run)
     own = {id(record) for _, record in matched}
     others = [record for _, record in entries if id(record) not in own]
     room = cap if exempt else max(0, cap - len(matched))  # an undecided P takes its rows from the cap
@@ -3923,7 +3939,10 @@ def build_plan(repo, run):
         rows += worktree_rows(evidence, run, records=others[:room])
     plan.omitted = {"count": max(0, len(others) - room), "exactness": "exact"}
     plan.rows = sorted(rows, key=lambda row: (not row.main, row.raw_path))
-    plan.selected, plan.excluded = gate_rows(plan.rows, plan, run)
+    first = {id(row) for row in plan.target_rows}
+    later_selected, later_excluded = gate_rows([row for row in plan.rows if id(row) not in first], plan, run)
+    plan.selected = sorted(selected + later_selected, key=lambda row: row.raw_path)
+    plan.excluded = sorted(excluded + later_excluded, key=lambda item: item[0].raw_path)
     command_dir = identity["root"] if identity["root"] is not None else os.fsencode(root)
     for row in plan.selected:
         row.removal_args = ["-C", command_dir, "worktree", "remove", row.raw_path]
@@ -3932,7 +3951,7 @@ def build_plan(repo, run):
         plan.selected = None
         plan.notes.append({"code": "inspect-cap", "message": TEXT["note_inspect_cap_report"].format(
             N=len(entries), M=batch_cap), "rows": len(entries)})
-    if named:
+    if named and exempt:  # an undecided P's refusal speaks alone (lead ruling R-93 (e))
         shown = human_path(plan.target.raw_path if plan.target is not None else path)
         own = {id(row) for row in plan.target_rows}
         others = [row for row in plan.rows if id(row) not in own and row_incomplete(row)]
