@@ -7,7 +7,7 @@ openRepoProject-2, "ratify, merge #11 and run the runbook". It lands by
 squash-merge of PR #12 after PR #11 (`add-project-clean-all-safe`), and the
 Speckit handoff `005-project-overview` follows after feature 004 merges;
 amendment A1 (PR #34) is drafted and not ratified, and lands only on Brett
-Heap's word. It was
+Heap's word. The change was
 revised after the alignment review, the lead's later rulings, the council and
 the packet author's final delta read (resolutions on PR #12 and in "Questions
 Resolved by the Alignment Review"; noted constraints in `clarifications.md`).
@@ -1073,6 +1073,12 @@ opensoft/openRepoProject#10, in the form in which draft PR #19 amends
 ratified text is this change as PR #12 landed it (`961c405`), and the text A1
 amends is its draft.
 
+Task 1.7 records A1's ratification and holds feature 005's plan until it, a
+gate beyond the words of Q2 A, which waits for feature 004's merge and Brett
+Heap's word after it. The gate is declared here as the cautious direction: it
+matches spec 005's interim rule that nothing is planned or built from the
+answers A1 carries until A1 is ratified.
+
 Brett Heap's words, in lane openRepoProject-4's session at about
 2026-10-21T10:31Z, answering the seventeen clarify questions of feature 005
 (`specs/005-project-overview/clarify-questions.md` at `acd8cef`, its question
@@ -1129,7 +1135,8 @@ Each carried answer, with what it amends and where:
   5, a new paragraph after its equality clause (after POD:386); design D6's
   scan-error order (design.md:410-412) and D8's realpath task
   (design.md:470-471). Its raw `PWD` path departs from DI:842-843's rule that
-  paths are canonical.
+  paths are canonical, and from DI:778's null rule for `current`, which is
+  null there only when `present` is.
 - **Q8 D, an amendment.** Every row and scan error's message is the fixed
   text of its code, naming no path, the path going in `path`; a child's
   standard error is drained and capped, and never shown; and names, branch
@@ -1146,8 +1153,18 @@ Each carried answer, with what it amends and where:
   the texts for `manifest-invalid`, `refused`, `undecodable-output`,
   `internal-error`, `scan-limit` and `root-unreadable`, and the OPERATION
   values `stat`, `scandir` and `collection`, are A1's own, drafted for Brett
-  Heap's review. It departs from the packet's DI:544-545 ("for a failed
-  probe, the first line of Git's standard error").
+  Heap's review. Re-checked at feature 004's `e256b59`, where the same rows
+  sit at `contracts/project-clean.md:430-433` with the texts unchanged; the
+  `b0243e5` pin stays (R-45). It departs from the packet's DI:544-545 ("for a
+  failed probe, the first line of Git's standard error"). A fill, declared for
+  Brett Heap's review (lane openRepoProject-3's W7-M1): since the path leaves
+  the message, the human report prints an error's `path`, when it carries
+  one, by [P]'s rules, a scan error as `Incomplete: <path>: <message>
+  (<code>).`, as the packet's DI:94 names the root, and a row error with its
+  `path` on the next line, indented to the message column, as a worktree's
+  finding shows its worktree path; an error with no `path` prints as before.
+  Amended for the fill: design D10 (design.md:519-520 and :526-527, and a
+  paragraph after :533) and requirement 12 (POD:812-813).
 - **Q9 B, an amendment of this change; its change-1 half rides in PR #19.**
   The read-only wording claims for the overview's Git children only what the
   pins and the scrub prove, the clean and process filters and the
@@ -1160,7 +1177,11 @@ Each carried answer, with what it amends and where:
   proposal.md:231-232 and :477, and :1000, whose record of R-25 now reads in
   the past tense. If feature 004 merges before PR #19 is ratified, it builds
   the narrower scrub and the wider one follows as a change-1 amendment; the
-  citation holds either way.
+  citation holds either way. For the overview's Git children, the new
+  sentence after POD:717 narrows the packet's DI:307-308, "it never fetches,
+  pulls, resets, bootstraps, runs validators, writes files, or contacts the
+  network", as this change already accepted the remote-helper residual
+  without correcting the packet (design Risks, design.md:721-726; R-25).
 - **Q11 A, an amendment.** A candidate other than a family holder whose
   identity probe reports a toplevel that is a proper ancestor of the
   candidate is a `refused` error row, its `path` the candidate's `.git`, and
@@ -1186,7 +1207,8 @@ Each carried answer, with what it amends and where:
   32-root cap. Amended: requirement 1, a new sentence after POD:16, through
   which POD:217-222, :303-306, :610-611 and :622-624 read. The unresolved
   `path` departs from DI:842-843, whose exceptions to canonical paths,
-  `ignored_samples` and an absent default root, are four with Q7 A's.
+  `ignored_samples` and an absent default root, are three with this one and
+  four with Q7 A's.
 - **Q15 A, an amendment.** "Print no result document" becomes "start no
   result document once the signal is read, and stop one that is being
   written"; the part of a result that a stopped write leaves is a recorded
@@ -1218,6 +1240,66 @@ Each carried answer, with what it amends and where:
 Not carried, since each changes only spec 005 and builds this change as
 ratified: Q1 A, Q2 A, Q5 A, Q10 A and Q14 A.
 
+Three items of A1's own follow from change 1's amendments in draft PR #19,
+not from Q1-Q17. Their authority is Brett Heap's ruling, in lane
+openRepoProject-3's session on 2026-10-21, "yes to all six recommendations,
+LQ-10 to LQ-15", which that lane recorded as a NOTED line at 12:33:41Z:
+https://github.com/opensoft/brett-wip/blob/5276f65d18fcb46ba3fcc5758a09941d15a36e21/lanes/log/openRepoProject-3.md#L89
+and, for LQ-15, his words to lane openRepoProject-2, "LQ-15: yes, refuse
+relative HOME like #29" (its ruling R-102 (a)), as PR #19 records them. Each
+follows PR #19's text at the commits named, a draft pending its own
+ratification, and changes if that text does before either is ratified; each
+is declared here for Brett Heap's review:
+
+- **`relative-config-path` (LQ-15; PR #19 at `cc000ea` and `9fb22fa`), a
+  declared item.** Once its arguments are parsed, and before any Git child
+  starts, the version check included, the overview refuses with
+  `relative-config-path` and exit 2 when `HOME` or `XDG_CONFIG_HOME` is set
+  to a non-empty value whose first byte is not `/`, tested on the raw bytes,
+  its message naming each variable that fails the test, never its value, as
+  `project clean`'s refusal does; under `--json` it prints only the error
+  object with that code. The order is PR #19's at `9fb22fa`: argument
+  errors, then this refusal, then the version check. A separate sentence
+  applies the same test to `GIT_CONFIG_GLOBAL` and `GIT_CONFIG_SYSTEM`, the
+  lead's extension in PR #19; if Brett Heap strikes that extension, A1's
+  sentence is struck with PR #19's sites (its design D11's list at
+  `9fb22fa`), and nothing else here names the two variables, the new scenario
+  testing `HOME` and `XDG_CONFIG_HOME` alone. Amended: requirement 8's exit-2
+  code list (POD:677-678); requirement 11's exit rule (POD:765-768), a new
+  paragraph after POD:768, and the scenario "A relative configuration path"
+  after "Git unavailable" (POD:790), 62 scenarios in all; design D13's
+  scenario map (design.md:697). PR #19 at `9fb22fa` leaves the overview's
+  code and exit status under this test to this change. If Brett Heap strikes
+  the code, the fallback is `refused` with exit 2.
+- **`operation-in-progress` and `worktree-only-commits` (LQ-14, PR #19 at
+  `43f7107`; LQ-13, at `93de4bb`), a declared proposal.** PR #19 adds them as
+  [G]'s last two gates, in that order after `hidden-local-state`: an
+  operation marker (`MERGE_HEAD`, `CHERRY_PICK_HEAD`, `REVERT_HEAD`,
+  `BISECT_LOG`, `BISECT_START`, `rebase-apply`, `rebase-merge` or
+  `sequencer`) in the worktree's administrative directory, read by one
+  listing and no Git child; and a commit that only the worktree's HEAD reflog
+  or a ref under its `refs/worktree/` holds, read from `logs/HEAD` and one
+  `rev-list` child. A1 makes both further exclusions that only the batch
+  applies, beside the index gates: the overview evaluates neither, makes no
+  listing, `logs/HEAD` read or `rev-list` child for them, and keeps its
+  `--all-safe` suggestion, which `project clean`'s batch then excludes itself.
+  Amended: requirement 7 (POD:525-526) and design D5 (design.md:324-325). The
+  alternative, for Brett Heap: overview gate codes `operation-in-progress`
+  and `worktree-only-commits`, evaluated from the same reads, each a new row
+  in requirement 7's closed gate table, which withholds `--all-safe` for that
+  worktree; the second costs one Git child per row that reaches it.
+- **The redirected work tree (LQ-11, PR #19 at `addd346`), a minimal
+  amendment.** PR #19 adds to the shared evidence model one
+  `extensions.worktreeConfig` read per common directory and, where that is
+  taken as true, one `rev-parse --path-format=absolute --show-toplevel` in
+  each linked row whose registration agrees, before its status probe, a
+  different work tree making the registration disagree. The overview reaches
+  both by citation, but this change's own probe counts are closed: the
+  scenario "One probe set per repository" counts `probes.performed` exactly,
+  and the `estimated` rule and design D6 list the repository-wide probes.
+  Amended: requirement 3's `estimated` rule (POD:250-254) and that scenario
+  (POD:129); design D6 (design.md:390-392). Spec 005 carries the parity.
+
 Q15 A and Q16 B together: the handlers only record the signal wherever a
 child can run, and Q15 A's raising span, feature 004's `raising_signals` (its
 lead ruling R-47), is entered only after every child is reaped or abandoned,
@@ -1232,9 +1314,18 @@ equality clause (POD:381-386) stays as ratified, while at `2cf34d3` feature
 `project:2960-2962`, :2887-2888 and :2081), wider than the two classes Q7 A
 converts, so that rows such as a `dirty` one would differ.
 
-The changes that carry this change's requirements in MODIFIED blocks re-align
-them to A1's text: lane openRepoProject-5's `add-project-clean-cache-disposal`
-(#24, PR #27) for requirement 5, and `add-project-overview-remote-merge-status`
+Points for Brett Heap's review, beside the answers themselves: Q8 D's six
+drafted texts and its OPERATION values, with the fill that prints an error's
+`path` in the human report (lane openRepoProject-3's W7-M1); PR #19's new
+refusal code, `relative-config-path`, and its two new gates,
+`operation-in-progress` and `worktree-only-commits`, reaching the overview,
+with the route and the alternative each takes above, and LQ-11's counted
+reads; and the open point M1. All of A1 stays drafted, not ratified.
+
+The changes that carry this change's requirements in MODIFIED blocks are to
+re-align them to A1's text: lane openRepoProject-5's
+`add-project-clean-cache-disposal` (#24, PR #27) for requirement 5, and
+`add-project-overview-remote-merge-status`
 (#25, PR #29) for requirements 3, 8 and 9 and, through its task 2.3, for the
 spawning sentence of its design D7. Spec 005 folded its FR-011, FR-022,
 FR-039, FR-044, SC-009 and SC-011 ahead of A1, and re-reads them against A1's

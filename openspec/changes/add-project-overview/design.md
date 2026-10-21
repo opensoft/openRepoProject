@@ -332,7 +332,13 @@ computes:
   anchors at that entry and is `unstarted-branch` until it gains a commit.
   Either code keeps the finding and gives the read-only suggestion with that
   `suggestion_gate`. Only the index gates `contains-submodule` and
-  `hidden-local-state` stay residual exclusions the batch applies;
+  `hidden-local-state`, and after them [G]'s `operation-in-progress`, for an
+  operation marker in the worktree's administrative directory, and
+  `worktree-only-commits`, for a commit that only the worktree's HEAD reflog
+  or a ref under its `refs/worktree/` holds, stay residual exclusions the
+  batch applies: the overview evaluates neither of the last two, making no
+  listing of that directory, no `logs/HEAD` read and no `rev-list` child for
+  them, and keeps the `--all-safe` suggestion of such a worktree;
 - the repository gates, computed from the overview's rows as [G] computes
   its plan's refusals: `inspection-incomplete` when any row is
   `inspection-error` (a failed or timed-out status probe, an unreadable
@@ -398,8 +404,9 @@ completions (speculative dispatch; identity probes take no lock and may
 overlap, DI:436-438). On completion the memo is consulted by the
 `(dev, ino)` of `common_dir`: a hit merges the candidate into that
 repository, a miss creates the repository, whose repository-wide probes
-(registry, ref listing, merged set, and D3's tests for a gitfile layout) then
-run one at a time. No two children with one known `common_dir` run at once.
+(registry, ref listing, merged set, the `extensions.worktreeConfig` read, and
+D3's tests for a gitfile layout) then run one at a time. No two children with
+one known `common_dir` run at once.
 
 A repository's rank is the canonical position of the first candidate that
 reached it, and it is final only when every candidate earlier in canonical
@@ -529,20 +536,30 @@ Layout on stdout, in DI:83-96's shape, pinned by tests:
 - per shown finding: two spaces, the category padded to 14 columns, then
   `code: message`; for a worktree's finding, the worktree path on the next
   line, indented to the message column. Row errors show the same way under
-  the repair category;
+  the repair category, a row error that carries a `path` showing that path
+  on the next line, indented to the message column;
 - one `next` line when the row has a suggested command or a gate decided it:
   two spaces, `next` padded to 14 columns, the command with POSIX shell
   quoting or in the `$'...'` form for a path [P] marks, or `none` when there
   is no command, then two spaces and `(withheld: <remedy>)` or
   `(limited: <remedy>)`;
-- after the rows, one `Incomplete: <message> (<code>).` line per scan error,
-  in the JSON's order;
+- after the rows, one line per scan error, in the JSON's order:
+  `Incomplete: <path>: <message> (<code>).` for a scan error that carries a
+  `path`, as DI:94 names the root, and `Incomplete: <message> (<code>).` for
+  one that carries none;
 - always the summary line, `N projects; E errors; repair a, preserve b,
   housekeeping c, informational d. Findings reflect local refs as of the
   last fetch.`, which under `--attention` with no row shown begins
   `Nothing needs attention: `;
 - when every root is `absent`, the line `No projects directory found; pass
   --root D or set PROJECTS_DIR.` before the summary.
+
+Every path on these lines, an error's included, is printed by [P]'s rules,
+in the `$'...'` form where they mark it. An error's `path` on its line is a
+fill of Amendment A1 (proposal), under Brett Heap's answer Q8 D: that answer
+moves every path out of an error's message and into `path`, and without the
+fill the human report would no longer say which root or path an error
+concerns.
 
 The `next` line names the gate that decided the row's own suggested command:
 the first code, in D5's order, among the findings whose suggestion fed the
@@ -706,7 +723,7 @@ added ones come from the council, the lead's rulings or this design.
 | 8 JSON | control characters; non-UTF-8 path | non-UTF-8 common directory; argument error; envelope fields; internal error |
 | 9 read-only | local and read-only | none |
 | 10 default branch | none | pushed without `-u`; no remote; dirty and ahead; failed probe |
-| 11 exits | Git version refusal | Git unavailable; SIGTERM or SIGHUP; SIGINT |
+| 11 exits | Git version refusal | Git unavailable; relative configuration path (Amendment A1); SIGTERM or SIGHUP; SIGINT |
 | 12 human report | none | nothing needs attention; gated suggestion; scanning notice |
 
 The probe-timeout and bounded-concurrency scenarios use the fixture rewrite

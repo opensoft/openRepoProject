@@ -40,7 +40,9 @@ single-file Python program breaks a stated bound:
   watches; each selector timeout is the nearest of the child budgets, the
   task waits and the deadline;
 - signal handlers only record the first signal and wake the loop through
-  `signal.set_wakeup_fd`; termination runs in one `finally`;
+  `signal.set_wakeup_fd`, the result's write alone running under raising
+  handlers, after every child is reaped or abandoned (design D1's write
+  span); termination runs in one `finally`;
 - each child is spawned with SIGINT, SIGTERM and SIGHUP unblocked, then
   registered; stderr is drained continuously, capped as [E] requires
   (CMD:175-177) and never shown.

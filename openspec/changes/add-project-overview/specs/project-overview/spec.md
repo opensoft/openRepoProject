@@ -141,7 +141,7 @@ SHALL follow `Clean resolves its target Git-first`.
 #### Scenario: One probe set per repository
 - **WHEN** a repository has a main worktree and three linked worktrees, one of them an immediate entry of the root and one outside every root
 - **THEN** there is one project row with four worktree rows, and the external worktree adds no project
-- **AND** the identity probe, the registry, the single ref listing and the single merged-set query run once for the repository, each present row gets one status probe, and `probes.performed` equals one version check, plus one identity probe per Git candidate, plus three, plus four
+- **AND** the identity probe, the registry, the single ref listing, the single merged-set query and the `extensions.worktreeConfig` read run once for the repository, each present row gets one status probe, and `probes.performed` equals one version check, plus one identity probe per Git candidate, plus four, plus four
 - **AND** when the main worktree lies outside every root, so that a linked worktree reaches the repository first, `repository.root` is the canonical path of the first registry record, never that linked worktree's toplevel
 
 #### Scenario: Present eligible external worktree
@@ -266,11 +266,15 @@ depend on concurrency or completion order.
 
 The envelope SHALL report `probes: {estimated, performed}`: `performed`
 counts every Git child started, timed-out and stopped ones included;
-`estimated` counts 1 for the version check, 1 per Git candidate, 3 more per
+`estimated` counts 1 for the version check, 1 per Git candidate, 4 more per
 distinct repository whose identity was established, 1 per Git child needed
 to name the main checkout of a repository whose first registry record equals
-its `common_dir`, and 1 per worktree row within the cap that is present and
-registration-verified.
+its `common_dir`, 1 per worktree row within the cap that is present and
+registration-verified, and 1 more per such row that is a linked worktree of a
+repository whose `extensions.worktreeConfig` is taken as true; the four per
+repository are the registry, the ref listing, the merged set and the
+`extensions.worktreeConfig` read that `Repository inspection requires Git 2.36
+and shares one evidence model` defines.
 
 #### Scenario: Candidate cap after sorting, with an exact count
 - **WHEN** one root holds 130 candidate directories `p000` to `p129`, created in reverse order
@@ -379,7 +383,7 @@ started and for the scan error that counts such candidates:
 | `os-error` | `OPERATION failed: STRERROR`, STRERROR the error number's text |
 | `undecodable-output` | `OPERATION printed output that could not be decoded` |
 | `internal-error` | `internal error (CLASS)`, CLASS the exception's class name |
-| `probe-failed` | `OPERATION failed: DETAIL`, DETAIL one of `exit N`, `signal N`, `cannot spawn (STRERROR)` and `unparseable output` |
+| `probe-failed` | `OPERATION failed: DETAIL`, DETAIL one of `exit N`, `signal N`, `cannot spawn (STRERROR)`, `unparseable output` |
 | `probe-timeout` | `OPERATION timed out after S s`, S the budget in force |
 | `deadline-exceeded` | `OPERATION stopped at the invocation deadline` |
 | `scan-limit` | `LIMIT cap of M reached`, LIMIT the error's `limit` and M its value in `limits` |
@@ -571,7 +575,14 @@ within the filesystem budget SHALL leave that row unprobed for the gate, as
 for every other filesystem read, recording `probe-timeout` or
 `deadline-exceeded`. Either code SHALL keep the `merged-removable` finding
 with the read-only suggestion. The index gates SHALL remain exclusions only the
-batch applies. The `--all-safe` form SHALL also be withheld for every worktree
+batch applies, and so SHALL, in this order, `operation-in-progress`, for an
+operation marker in the worktree's administrative directory, and
+`worktree-only-commits`, for a commit that only the worktree's HEAD reflog or
+a ref under its `refs/worktree/` holds: the overview SHALL evaluate neither,
+making no listing of that directory, no `logs/HEAD` read and no `rev-list`
+child for them, and SHALL keep the `--all-safe` suggestion of such a worktree,
+which `project clean`'s batch then excludes itself.
+The `--all-safe` form SHALL also be withheld for every worktree
 of a repository whose batch plan would be refused as `inspection-incomplete`
 (any worktree row is `inspection-error`, or is unprobed for this gate because
 its reflog read did not finish) or `inspect-cap` (more worktree rows
@@ -728,9 +739,9 @@ written `\xHH` and each code point of those categories escaped by JSON and
 written `\uXXXX` in human output, with no validity flag of its own. Under
 `--json`, an exit status 2 other than an argument error or a failed write to
 standard output SHALL print only `{"error": "<message>", "code": "<code>"}`,
-the code being `git-too-old`, `git-unavailable`, `refused`, `os-error` or
-`internal-error`; an argument error SHALL print the command-line parser's usage
-message on standard error and no JSON.
+the code being `git-too-old`, `git-unavailable`, `relative-config-path`,
+`refused`, `os-error` or `internal-error`; an argument error SHALL print the
+command-line parser's usage message on standard error and no JSON.
 
 The whole document or report SHALL be rendered before its first byte is
 written, as UTF-8 whatever the locale, the JSON document with ASCII escapes
@@ -837,9 +848,18 @@ The overview SHALL exit with status 0 when `completeness` is `complete` and no
 finding has severity `error`; 1 when the result is incomplete, a finding has
 severity `error`, or `--strict` is given and a finding has severity
 `warning`; 2 for an invalid invocation, an exception raised outside the
-per-candidate boundary, or a Git refusal; and 130, 143 or 129 on SIGINT,
-SIGTERM or SIGHUP. On 0 or 1 the full result SHALL be printed. A root problem
-SHALL never cause status 2.
+per-candidate boundary, a Git refusal or a relative configuration path; and
+130, 143 or 129 on SIGINT, SIGTERM or SIGHUP. On 0 or 1 the full result SHALL
+be printed. A root problem SHALL never cause status 2.
+
+Once its arguments are parsed, and before any Git child starts, the version
+check included, the overview SHALL refuse with `relative-config-path` and
+status 2 when `HOME` or `XDG_CONFIG_HOME` is set to a non-empty value whose
+first byte is not `/`, the test being made on the raw bytes of each value and
+an empty or unset variable passing it, with a message naming each variable
+that fails the test, never its value, and no Git child; such a refusal SHALL
+never be an incompleteness.
+The same test SHALL apply to `GIT_CONFIG_GLOBAL` and `GIT_CONFIG_SYSTEM`.
 
 It SHALL run the version check of `Repository inspection requires Git 2.36
 and shares one evidence model` once per invocation, after the deadline is
@@ -871,6 +891,11 @@ be discarded, never flushed at exit.
 - **WHEN** no `git` is on `PATH`
 - **THEN** the overview exits 2 with code `git-unavailable` before listing any root, and under `--json` prints only the error object with that code
 
+#### Scenario: A relative configuration path
+- **WHEN** `HOME` is set to the relative `h`, or `XDG_CONFIG_HOME` to the relative `cfg` beside an absolute `HOME`
+- **THEN** the overview exits 2 with code `relative-config-path` and a message naming that variable, never its value, before listing any root or starting any Git child, `git --version` included
+- **AND** under `--json` it prints only `{"error": "<message>", "code": "relative-config-path"}`
+
 #### Scenario: SIGTERM or SIGHUP during collection
 - **WHEN** SIGTERM is sent while, at probe concurrency 4, one Git child is hung and another is writing a large output
 - **THEN** the exit status is 143, no result document is printed, `Cancelled.` is printed to standard error when it can be, and every child's process group is gone
@@ -892,7 +917,10 @@ suggestion (`target-not-repository-root`, `unsupported-path-bytes`,
 row, `unstarted-branch`, `reflog-unavailable`), or `(limited: <remedy>)` when a
 suggestion is given but capped (`target-cap`, or `inspect-cap` over the
 report's row cap on the read-only command). Row errors SHALL display in the
-repair category. One `Incomplete:` line SHALL follow per scan error. The
+repair category, each followed by its `path` when it carries one. One
+`Incomplete:` line SHALL follow per scan error, naming its `path` first when
+it carries one. Every such path SHALL be printed as the report prints every
+other path. The
 summary line SHALL always be printed, even under `--attention` when no row is
 shown, where it SHALL say that nothing needs attention, with the counts of
 projects, errors and findings by category, and SHALL state that findings
