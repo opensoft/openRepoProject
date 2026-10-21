@@ -2876,7 +2876,7 @@ def worktree_config(common_dir, directory, run):
     return outcome.status != 1
 
 
-def effective_work_tree(raw, run):
+def effective_work_tree(raw, run, strict=False):
     """Whether the linked worktree at raw has raw as its effective work tree,
     the work tree a Git command run in it uses (design D7; LQ-11; change 1
     as amended at addd346): WORK_TREE_PROBE in raw, a `probe` child.
@@ -2885,15 +2885,19 @@ def effective_work_tree(raw, run):
     exits 128 under `core.bare=true`, `fatal: this operation must be run in
     a work tree`) or prints other than one non-empty line; None with error,
     the row error, when the probe timed out or met the work deadline or a
-    realpath read failed. A pure reader: the caller decides."""
+    realpath read failed. strict, at revalidation, keeps False for the one
+    decided value, another toplevel, and gives a probe that fails or prints
+    other than one non-empty line None with its row error too, since it
+    decided nothing (the lead's R-171; #19 at 4485678, D7). A pure reader:
+    the caller decides."""
     outcome, error = _git(run, raw, list(WORK_TREE_PROBE), "rev-parse")
     if error is not None:
-        return (False, None) if error["code"] == "probe-failed" else (None, error)
+        return (False, None) if error["code"] == "probe-failed" and not strict else (None, error)
     lines = outcome.result.split(b"\n")
     if lines[-1] == b"":
         lines.pop()
     if len(lines) != 1 or not lines[0]:
-        return False, None
+        return (None, unparseable_error("rev-parse")) if strict else (False, None)
     try:
         return _realpath(lines[0]) == _realpath(raw), None
     except EvidenceError as exc:
@@ -5548,7 +5552,11 @@ def revalidation_difference(plan, target, run, part, seen):
        target re-resolved as planned, else `state-changed`.
     5. By filesystem reads, each checked row's path present with its planned
        `dev` and `ino`, and its two-way registration holding with its planned
-       `admin_id` (verify_registration()), else `identity-changed`; then no
+       `admin_id` (verify_registration()), else `identity-changed`; where the
+       plan's row 4c read true, the target's effective work tree
+       (effective_work_tree(), strict), `identity-changed` only for a decided
+       other toplevel and `state-changed` for a probe that decided nothing
+       (the lead's R-171); then no
        other present entry of the registry listing sharing a checked row's
        realpath or admin id, a twin made after planning (registry_twin();
        lead ruling R-81 (a)), and no entry whose lstat or realpath cannot
@@ -5687,11 +5695,13 @@ def revalidation_difference(plan, target, run, part, seen):
     if evidence.get("worktree_config") is True:  # the target's effective work tree, as row 4c read (LQ-11)
         if slot_set(run):
             return "interrupted"
-        holds, error = effective_work_tree(target.row.raw_path, run)
+        holds, error = effective_work_tree(target.row.raw_path, run, strict=True)
         if read_cut(error):
             return "deadline-exceeded"
+        if holds is None:
+            return "state-changed"  # a probe that decided nothing (R-171)
         if not holds:
-            return "identity-changed"
+            return "identity-changed"  # a decided different work tree
     if slot_set(run):
         return "interrupted"
     unread = {row.raw_path for row in getattr(plan, "rows", None) or () if row["present"] is None}

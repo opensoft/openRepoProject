@@ -851,6 +851,44 @@ class RevalidationTests(clean_support.CleanCase):
                 self.assert_nothing_removed(root, trees, before, log)
                 self.assertEqual(self.git(trees[0], "branch", "--show-current").strip(), branch)
 
+    def test_clean_a_work_tree_probe_that_decides_nothing_at_revalidation(self):
+        # The lead's R-171 (#19 at 4485678, "Cleanup revalidates destructive
+        # actions" and D7): where the plan read extensions.worktreeConfig as
+        # true, only a decided different effective work tree is
+        # identity-changed (lane E's test of a work tree redirected after the
+        # plan pins it). In process, after the question, P's work-tree probe
+        # made to exit 128, to time out, and to print two lines, each
+        # state-changed; and cut by the work deadline, which is no difference
+        # (P not-attempted with deadline-exceeded, exit 1).
+        probe = ["rev-parse", "--path-format=absolute", "--show-toplevel"]
+        cases = (("exits 128", dict(name="failed", status=128), ("refused", "state-changed"), 2),
+                 ("times out", dict(name="timeout"), ("refused", "state-changed"), 2),
+                 ("prints two lines", dict(name="complete", status=0, result=b"/a\n/b\n"),
+                  ("refused", "state-changed"), 2),
+                 ("is cut by the deadline", dict(name="deadline"), ("not-attempted", "deadline-exceeded"), 1))
+        for number, (label, fields, expected, status) in enumerate(cases):
+            with self.subTest(f"the work-tree probe {label}"):
+                root, trees = self.batch(f"work-tree-{number}")
+                self.git(root, "config", "extensions.worktreeConfig", "true")
+                before = self.snapshot(root, trees)
+                asked, calls, real_run_bounded = [], [], project.run_bounded
+
+                def run_bounded(spec, parser, run, fields=fields, asked=asked, calls=calls, target=bytes(trees[0])):
+                    kind, args, cwd = spec
+                    if asked and args[2:] == probe and args[1] == target:
+                        calls.append(args[1])
+                        return project.DriverOutcome(project.git_argv(kind, args), **fields)
+                    return real_run_bounded(spec, parser, run)
+
+                env, log = self.counting()
+                with mock.patch.object(project, "run_bounded", run_bounded):
+                    result = self.apply(root, lambda: asked.append(True), env=env, log=log)
+                self.assertEqual(len(calls), 1, "one work-tree probe at P's revalidation")
+                self.assertEqual(self.stages(result)[0], (str(trees[0]), *expected), result.stderr)
+                self.assertEqual([stage for _, stage, _ in self.stages(result)[1:]], ["not-attempted"])
+                self.assertEqual((result.status, result.document["exit_code"]), (status, status))
+                self.assert_nothing_removed(root, trees, before, log)
+
     def test_clean_worktree_only_commits_check_cut_at_revalidation(self):
         # In process, after the question: the read of P's logs/HEAD made to
         # time out, and the reachability child made to exit 128 and to time
