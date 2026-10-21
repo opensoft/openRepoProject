@@ -45,18 +45,21 @@ duplicate them, and nothing here is an implementation step.
   read (R-124)'); and its W9 read of LQ-10 and LQ-11, under the lead's R-125
   (the commit titled 'Amend change 1 for LQ-10 and LQ-11: lane 3's W9 read');
   and its W14 read of LQ-14, under the lead's R-126 (the commit titled 'Amend
-  change 1 for LQ-14: lane 3's W14 read (R-126)'); verified by the table
-  "Questions Resolved by the Alignment Review" in `proposal.md` and the
-  later-rulings list under it, which name the section each ruling edited.
+  change 1 for LQ-14: lane 3's W14 read (R-126)'); and its W21 read with the
+  lead's R-146 and R-147 (the commit titled 'Amend change 1: lane 3's W21
+  LOWs, the Git cites and two refusal scenarios (R-146, R-147)'); verified by
+  the table "Questions Resolved by the Alignment Review" in `proposal.md` and
+  the later-rulings list under it, which name the section each ruling edited.
 - [x] 1.3 Council resolved: every concern is VALID, none dismissed, the verdicts
   V1 to V12 applied to `proposal.md` (`ea9c73b`) and the five NOTED constraints
   recorded as N1 to N5 in `clarifications.md` (`1d4ed5b`); verified by
   `design.md`, whose D1 to D5 answer N1 to N5 one for one.
 - [x] 1.4 Spec deltas and design written: `specs/project-clean/spec.md` modifies
-  five requirements and adds six (69 scenarios, one added under each of Brett
-  Heap's rulings LQ-15, LQ-13 and LQ-14 and one under the lead's R-126),
-  `specs/project-clean-review-safety/spec.md` modifies two and adds one (20
-  scenarios, one added under R-22 and one under each of LQ-13 and LQ-14), and
+  five requirements and adds six (71 scenarios, one added under each of Brett
+  Heap's rulings LQ-15, LQ-13 and LQ-14, one under the lead's R-126 and two
+  under R-147), `specs/project-clean-review-safety/spec.md` modifies two and
+  adds one (21 scenarios, one added under R-22, one under each of LQ-13 and
+  LQ-14 and one under R-146), and
   `specs/project-command/spec.md` modifies two and adds one (24 scenarios, of
   which the push-child exception added one, Brett Heap's rulings Q9 B, LQ-15,
   LQ-10, LQ-12 and LQ-11 one each, and the lead's R-125 one), every canonical

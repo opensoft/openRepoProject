@@ -264,8 +264,9 @@ Scope).
   gates after it and the rest are excluded `deferred-target-cap` with the
   next command; the plan stays complete, apply is allowed, and re-running drains
   the backlog 16 at a time, the fresh plan and revalidation unchanged; when
-  every one of those 16 is then excluded as `contains-submodule`, no re-run
-  reaches a deferred row, and the human report says why. The `target-cap`
+  every one of those 16 is then excluded by a gate after the cap, such as
+  `contains-submodule`, no re-run reaches a deferred row, and the human report
+  says why. The `target-cap`
   refusal is retired; the code survives only as `add-project-overview`'s
   limiting gate reason (Decisions). Plans and results report `probes` and
   `operations` as `{estimated, performed}`, a removal counted under `operations`
@@ -440,7 +441,7 @@ Headers are quoted verbatim, one per line; ADDED headers are proposed text.
     `--worktree` remove it, and an unmerged one stay `remote-gone`.
   - MODIFIED (`:39`):
     `### Requirement: Clean can explicitly push safe feature branches`.
-    Two additions; the rest stays. Push refuses a branch on its deleted
+    Three additions; the rest stays. Push refuses a branch on its deleted
     upstream itself, whatever its row's class (`remote-gone` when unmerged;
     `merged-removable` or `merged-current` when merged, under Brett Heap's
     ruling), because it must be reviewed before it is republished
@@ -448,7 +449,10 @@ Headers are quoted verbatim, one per line; ADDED headers are proposed text.
     exit 2, and refuses with `inspection-incomplete`, `inspect-cap` or
     `deadline-exceeded`, exit 2, when its re-inspection is incomplete. Added
     scenario: WHEN push is requested for a branch whose upstream was deleted,
-    THEN it refuses with `remote-gone` and runs no push.
+    THEN it refuses with `remote-gone` and runs no push. By the lead's R-147,
+    a sentence names the refusals the baseline makes and this change keeps,
+    each before the plan, with exit 2, no code and the baseline's message, with
+    the added scenario "Push refuses a branch it may not push".
   - MODIFIED (`:55`):
     `### Requirement: Clean can explicitly retire verified worktrees`.
     "remove one named linked worktree" (`:57`) becomes one named worktree or
@@ -479,7 +483,11 @@ Headers are quoted verbatim, one per line; ADDED headers are proposed text.
     registry entry and path are gone and otherwise `unknown` with
     `partially-removed`, the reason `removal-ceiling` either way; after
     `project` and its child are killed with SIGKILL mid-deletion, the report
-    shows the partial-removal note beside the `dirty` advice.
+    shows the partial-removal note beside the `dirty` advice. By the lead's
+    R-147, a sentence after `:59-61` names branch deletion's refusals, the
+    default branch, a branch a present worktree holds and a branch the plan's
+    evidence does not show merged into the merge target, with the added
+    scenario "Branch deletion refuses a branch it may not delete".
   - MODIFIED (`:70`): `### Requirement: Clean hands off work requiring review`.
     `:75-76` requires "explicit confirmation and action targets", and
     `--all-safe --apply --yes` names no single target, so the text defines
@@ -1035,16 +1043,16 @@ Departures from packet decisions, each citing the decision departed from:
   `worktree-only-commits`, reads `logs/HEAD` (at most 64 KiB) and runs one
   `rev-list` in the worktree, the candidates being the reflog's objects and
   `refs/worktree/`, and the negatives every branch, tag and remote-tracking
-  ref and the objects that the branch's own reflog names, which survives the
-  removal, so that an amend, reset or rebase of the branch is not taken for
-  lost work. A printed commit, or a `logs/HEAD` over its 64 KiB bound or with
-  a line that does not parse, excludes the row, and a read or child that fails
-  or times out is `inspection-error`, as every other evidence read is
-  (`BA:188-192`, `BA:642-644`; the lead's R-124); revalidation runs the
-  check again, so a commit made after the plan refuses the target with the same
-  reason (lane openRepoProject-3's reader RB, R-107), and the residual-window
-  line names such a commit made after that check. No JSON field is added (design
-  D7, D12, D14, D18, D21, Risks).
+  ref and the non-zero objects that the branch's own reflog names, which
+  survives the removal, so that an amend, reset or rebase of the branch is not
+  taken for lost work. A printed commit, or a `logs/HEAD` over its 64 KiB bound
+  or with a line that does not parse, excludes the row, and a read or child that
+  fails or times out is `inspection-error`, as every other evidence read is
+  (`BA:188-192`, `BA:642-644`; the lead's R-124); revalidation runs the check
+  again, so a commit made after the plan refuses the target with the same reason
+  (lane openRepoProject-3's reader RB, R-107), and the residual-window line
+  names such a commit made after that check. No JSON field is added (design D7,
+  D12, D14, D18, D21, Risks).
 - **An operation in progress keeps the worktree** (Brett Heap's ruling LQ-14
   of 2026-10-21, in lane openRepoProject-3's session, "yes to all six
   recommendations, LQ-10 to LQ-15", on lane openRepoProject-3's
@@ -1491,7 +1499,28 @@ Context, D18, D22; `tasks.md` 1.2, 1.4; the deltas' `Clean previews and
 applies a batch of eligible worktree removals in one repository` with its
 scenario "An operation in progress" and its added scenario "A squash merge
 that holds an autostash", and `Cleanup preserves all local work not proven
-disposable`).
+disposable`). Lane openRepoProject-3's W21 confirm read of R-124 to R-126 at
+`1ebdd90` (HIGH 0, MEDIUM 0, LOW 6), under the lead's R-146 and R-147, adds
+the scenario "A check that fails at revalidation" (L-a); "non-zero" in the
+LQ-13 departures entry and the gate's first sentence (L-b); `git commit` in
+the `operation-in-progress` next step for a squash merge that holds an
+autostash, which no abort ends (L-c); the fast-forward squash, which applies
+the autostash at once (L-d); this declaration that the commits of R-124, R-125
+and R-126 also re-wrapped the paragraphs their edits lengthened, the
+proposal's eligibility bullet among them, with no other change of words
+(L-e); and the drain message naming every gate after the cap (L-f). It cites
+the Git source lines of D7, D11, D21 and D22 by release, tags `v2.36.6` and
+`v2.43.7`, as read in those tarballs. By R-147 it adds the push refusals the
+baseline makes and this change keeps, with the scenario "Push refuses a
+branch it may not push", and branch deletion's refusals, with the scenario
+"Branch deletion refuses a branch it may not delete", both checked against
+`project` and lane openRepoProject-2's tests at `2439838` (What Changes,
+deferral; Capabilities `:39` and `:55`; Decisions, departures; this list;
+design Context, D7, D12, D18, D21, D22, Risks; `tasks.md` 1.2, 1.4; the
+deltas' `Clean can explicitly push safe feature branches`, `Clean can
+explicitly retire verified worktrees`, `Clean previews and applies a batch of
+eligible worktree removals in one repository`, `Clean bounds its Git work and
+reports omitted work` and `Cleanup revalidates destructive actions`).
 
 ### Council Verdicts
 

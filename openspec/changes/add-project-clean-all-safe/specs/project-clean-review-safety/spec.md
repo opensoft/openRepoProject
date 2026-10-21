@@ -236,6 +236,18 @@ defense.
   is `not-attempted`, nothing is removed, and the exit status is 2, where
   before this change P was removed with exit 0
 
+#### Scenario: A check that fails at revalidation
+
+- **WHEN** a confirmed plan selects P and Q, in that order, and after the plan
+  and before P's revalidation P's administrative directory loses its read
+  permission while its `gitdir` and `commondir` files stay readable, so that
+  its listing fails
+- **THEN** P is `refused` with `state-changed`, no removal child is spawned, Q
+  is `not-attempted`, nothing is removed, and the exit status is 2
+- **AND** the same holds when, instead, a line naming an object that the
+  repository does not hold is appended to P's `logs/HEAD`, so that the
+  reachability child exits 128 with `fatal: bad object`
+
 ## ADDED Requirements
 
 ### Requirement: Cleanup states a narrow guarantee and its residual window

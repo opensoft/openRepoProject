@@ -216,7 +216,15 @@ configured upstream, or establish its explicitly named upstream when none
 exists. It MUST use a normal non-force push, require confirmation unless
 explicit confirmation was supplied, and preserve the delegated exit status and
 output. It SHALL refuse to push a default branch or a branch with unresolved
-local work.
+local work. Those refusals, and the baseline's others that this change keeps,
+SHALL each come before the push plan is shown, with exit status 2, no code,
+the baseline's message after `REFUSED: ` on standard error and no push: a
+branch that no unique linked worktree holds; the default branch; a worktree that
+is dirty, missing or unreadable; a detached worktree; a branch whose remote
+state must first be reconciled (`diverged`, `remote-ahead` or
+`review-required`); a configured upstream that is not one remote other than `.`
+with one branch under `refs/heads/`; and a branch with no upstream where no
+`origin` remote exists.
 
 It SHALL refuse, with exit status 2 and no push, a branch whose configured
 upstream's remote-tracking ref no longer exists, on that deleted upstream
@@ -236,6 +244,27 @@ Git-first" states, and `--apply --json` SHALL stay refused with
   commits not present on its remote branch
 - **THEN** the command shows the exact push plan, confirms it, and pushes
   without force; a failed push leaves the repository unchanged by the command
+
+#### Scenario: Push refuses a branch it may not push
+
+- **WHEN** `--apply --action push --branch B --yes` names, in turn: the default
+  branch, one commit ahead of its upstream; an unpublished branch with a
+  commit of its own whose worktree holds a staged and an untracked file, and
+  then that worktree moved away; `detached`, the row of a detached worktree;
+  a `diverged` and a `remote-ahead` branch; a branch whose `branch.B.merge` is
+  `refs/tags/v1`, `refs/for/main` or `+refs/heads/B` through a remote whose
+  fetch refspec maps every ref; and an unpublished branch in a repository with
+  no remote, then with one remote not named `origin`
+- **THEN** each refuses with exit 2, printing nothing on standard output and
+  on standard error only `REFUSED: ` followed, in turn, by `The default
+  branch is protected; use its normal repository workflow.`, `Cannot push B;
+  its worktree is dirty, missing, or unreadable.`, `Cannot push a detached
+  worktree; name the branch first.`, `Cannot push B; reconcile its remote
+  state first.`, `Unsupported upstream mapping for B: U`, U the upstream's
+  short name, and `Cannot publish a branch without an origin remote.`
+- **AND** no push child runs, every ref of the repository and of each remote
+  is as it was, no upstream is set, and the dirty worktree keeps its staged
+  and untracked files
 
 #### Scenario: Push refuses a branch whose upstream was deleted
 
@@ -298,6 +327,13 @@ from the row cap.
 It SHALL remove a local branch only as a separate, explicit action after the
 worktree is gone and the branch is verified merged.
 It MUST never use a force removal, reset, or deletion of unmerged work.
+Branch deletion SHALL refuse, before its plan is shown, with exit status 2,
+no code, the baseline's message after `REFUSED: ` on standard error and no
+`git branch -d`: the default branch; a branch that a present worktree holds,
+the main worktree included; and a branch that the plan's evidence does not
+show merged into the merge target, by its ref listing and its merged set, so
+that a branch merged only into the current branch is refused, where `git
+branch -d` alone would delete it.
 
 #### Scenario: Remove a merged clean worktree
 
@@ -305,6 +341,20 @@ It MUST never use a force removal, reset, or deletion of unmerged work.
   is an ancestor of the target branch
 - **THEN** the command confirms and removes that worktree, while refusing to
   remove its branch unless the user separately requests branch deletion
+
+#### Scenario: Branch deletion refuses a branch it may not delete
+
+- **WHEN** `--apply --action delete-branch --branch B --yes` names, in turn:
+  the merge target, while the main worktree is on another branch; a branch
+  merged into the merge target that a linked worktree holds, and one that the
+  main worktree holds; and a branch merged into the main worktree's current
+  branch, which is not the merge target, but not into the merge target
+- **THEN** each refuses with exit 2, printing nothing on standard output and
+  on standard error only `REFUSED: ` followed, in turn, by `The default
+  branch is protected and cannot be deleted.`, `Remove the linked worktree
+  first; branch deletion is a separate action.` and `Branch B is not verified
+  as merged into T.`, T the merge target
+- **AND** no `git branch -d` runs, and every branch and worktree is kept
 
 #### Scenario: Every branch remains after a batch
 
@@ -667,25 +717,25 @@ incomplete with `deadline-exceeded`, as for every other read.
 
 A row SHALL be excluded as `worktree-only-commits` when a commit that its own
 HEAD reflog or a ref under its own `refs/worktree/` holds is reachable from no
-branch, tag or remote-tracking ref and from no object that its branch's reflog
-names, because removing the worktree deletes that reflog and those refs with
-its administrative directory. The gate SHALL read `logs/HEAD` in that directory
-by one filesystem call, at most 64 KiB, counted in the filesystem budget, every
-non-zero old and new object it names being a candidate, and SHALL then run one
-Git child in the worktree, `git rev-list --max-count=1 --glob=refs/worktree
-<candidates> --not --branches --tags --remotes <the non-zero objects the
-branch's reflog names>`, which prints a commit exactly when one is held that
-way. A `logs/HEAD` that is missing (`ENOENT` or `ENOTDIR`) or empty SHALL give
-no candidate. One outcome rule SHALL govern the gate, split as the branch
-reflog's is: a child that exits 0 and prints anything, and a `logs/HEAD` read
-to its 64 KiB bound or holding a line that cannot be parsed, SHALL each make
-the row `worktree-only-commits`, at the gate's place in this order; any other
-error on the read, and a child that cannot be started or exits nonzero, as on
-a missing object, SHALL make the row `inspection-error`, as any failed row
-probe does; a child stopped at its 5 s budget, the deadline not being the
-limit, SHALL record `probe-timeout` and make the row `inspection-error`; a read
-not finished within the filesystem budget SHALL leave the row unprobed; and a
-read or child that the deadline cuts SHALL record `deadline-exceeded`. Each of
+branch, tag or remote-tracking ref and from no non-zero object that its branch's
+reflog names, because removing the worktree deletes that reflog and those refs
+with its administrative directory. The gate SHALL read `logs/HEAD` in that
+directory by one filesystem call, at most 64 KiB, counted in the filesystem
+budget, every non-zero old and new object it names being a candidate, and SHALL
+then run one Git child in the worktree, `git rev-list --max-count=1
+--glob=refs/worktree <candidates> --not --branches --tags --remotes <the
+non-zero objects the branch's reflog names>`, which prints a commit exactly when
+one is held that way. A `logs/HEAD` that is missing (`ENOENT` or `ENOTDIR`) or
+empty SHALL give no candidate. One outcome rule SHALL govern the gate, split as
+the branch reflog's is: a child that exits 0 and prints anything, and a
+`logs/HEAD` read to its 64 KiB bound or holding a line that cannot be parsed,
+SHALL each make the row `worktree-only-commits`, at the gate's place in this
+order; any other error on the read, and a child that cannot be started or exits
+nonzero, as on a missing object, SHALL make the row `inspection-error`, as any
+failed row probe does; a child stopped at its 5 s budget, the deadline not being
+the limit, SHALL record `probe-timeout` and make the row `inspection-error`; a
+read not finished within the filesystem budget SHALL leave the row unprobed; and
+a read or child that the deadline cuts SHALL record `deadline-exceeded`. Each of
 those four SHALL leave the plan incomplete, with `inspection-incomplete` or
 `deadline-exceeded`, as for every other read and child.
 
@@ -949,11 +999,11 @@ excluded as `deferred-target-cap`, with the command to run next. The plan SHALL
 stay complete and apply SHALL be allowed; re-running SHALL take the next 16,
 each run building its own fresh plan and revalidating each of its targets. Rows
 that a gate after the cap then excludes SHALL keep their places among the 16,
-so that when every one of those 16 is excluded as `contains-submodule` no re-run
-reaches a deferred row, and the human report SHALL say why the deferred rows
-will not drain. No plan SHALL be refused for having more than 16 such rows. In a
-single-target removal the limit SHALL count P alone, because `not-requested`
-precedes it.
+so that when every one of those 16 is excluded by a gate after the cap no
+re-run reaches a deferred row, and the human report SHALL say why the deferred
+rows will not drain, naming those gates' reasons. No plan SHALL be refused for
+having more than 16 such rows. In a single-target removal the limit SHALL count
+P alone, because `not-requested` precedes it.
 
 Plans and apply results SHALL report `probes: {estimated, performed}` and
 `operations: {estimated, performed}`, every Git child counted once, a removal

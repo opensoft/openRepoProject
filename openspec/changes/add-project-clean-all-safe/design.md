@@ -29,8 +29,10 @@ read of LQ-15, Context, D11, D16 and D18; LQ-14, Context, D7, D18, D20, D21,
 D22 and Risks; and lane openRepoProject-3's W10 read of LQ-12 and LQ-13, under
 the lead's rulings R-124 and R-127, Context, D6, D12, D14, D21, D22 and Risks;
 and its W9 read of LQ-10 and LQ-11, under the lead's R-125, Context, D6, D7,
-D11, D17, D18 and Risks; and its W14 read of LQ-14, under the lead's R-126,
-Context, D18 and D22. Brett Heap's ruling
+D11, D17, D18 and Risks; its W14 read of LQ-14, under the lead's R-126,
+Context, D18 and D22; and its W21 read of R-124 to R-126 with the round of the
+lead's R-146 and R-147, Context, D7, D12, D18, D21, D22 and Risks. Brett
+Heap's ruling
 of 2026-10-09 on open question 1, that a local ancestry proof outranks
 `remote-gone` for worktree rows, is in `proposal.md` Decisions and edited
 Context, D6, D7, D20, Risks, the Migration Plan and Open Questions here.
@@ -419,21 +421,26 @@ per-worktree `core.worktree` naming a decoy, every probe read the decoy's tree,
 the row read clean, and Git's non-force removal deleted the registered
 directory with its ignored `local.env`, because Git's own check runs with
 `GIT_WORK_TREE` set to the registered path (`check_clean_worktree` in
-`builtin/worktree.c`) and is not misled. Row 4c reads the extension once per
-common directory, from the common `config` alone and without includes, as
-Git's own format check reads it; an unset value is false and any other failure
-counts as true. Where it is true, each linked row whose registration agrees
-gets one more worktree probe, `git rev-parse --path-format=absolute
---show-toplevel`, after its identity reads and before its status probe, and a
-toplevel whose realpath differs from the registered path's, a failed probe (as
-under `core.bare=true`, `fatal: this operation must be run in a work tree`) or
-output that is not one line makes the row's registration disagree, so the row
-is `registration-mismatch`, `inspection-error` and unprobed. Asking Git covers
-every way the extension can redirect a row, without parsing configuration in
-`project`, and the probe runs only in such repositories. Checked here on Git
-2.36.6 and 2.43.0: the extension read exits 1 when unset and prints `true` when
-set; the probe prints the decoy for a `core.worktree` in `config.worktree` and
-for one in the common `config`, and fails with 128 under `core.bare=true`.
+`builtin/worktree.c:978-995` at 2.36.6 and `:1256-1273` at 2.43.7) and is not
+misled. The Git source lines of D7, D11, D21 and D22 are cited from the release
+tarballs of Git 2.36.6 and 2.43.7, tags `v2.36.6` and `v2.43.7`, each
+tarball's sha256 matching kernel.org's `sha256sums.asc`, and were read there
+(lane openRepoProject-3's W21, which could not check them, R-146). Row 4c reads
+the extension once per common directory, from the common `config` alone and
+without includes, as Git's own format check reads it; an unset value is false
+and any other failure counts as true. Where it is true, each linked row whose
+registration agrees gets one more worktree probe, `git rev-parse
+--path-format=absolute --show-toplevel`, after its identity reads and before its
+status probe, and a toplevel whose realpath differs from the registered path's,
+a failed probe (as under `core.bare=true`, `fatal: this operation must be run in
+a work tree`) or output that is not one line makes the row's registration
+disagree, so the row is `registration-mismatch`, `inspection-error` and
+unprobed. Asking Git covers every way the extension can redirect a row, without
+parsing configuration in `project`, and the probe runs only in such
+repositories. Checked here on Git 2.36.6 and 2.43.0: the extension read exits 1
+when unset and prints `true` when set; the probe prints the decoy for a
+`core.worktree` in `config.worktree` and for one in the common `config`, and
+fails with 128 under `core.bare=true`.
 
 The two-way registration also reads the administrative directory's `commondir`
 file, from which Git takes a linked worktree's common directory
@@ -831,14 +838,15 @@ the rest are excluded as `deferred-target-cap` with no index probe, so at most
 reachability probes run likewise. A row that a gate after the cap then
 excludes keeps its place, so a run can select fewer than 16 while rows stay
 deferred, and 16 rows that such a gate always excludes, ahead of a backlog,
-stop it until a person handles them; when every one of the 16 is
-`contains-submodule`, the human text says why the deferred rows will not drain
-(D18, R-24). The plan stays complete and apply allowed; each re-run plans and
-revalidates afresh, draining 16 at a time. `plan_digest` covers only `selected`,
-so a deferred row's change leaves a preview valid, and the report mode defers
-alike. The `target-cap` refusal (BA:96-101, BA:1004, BA:1367-1371) is retired, a
-departure ratified with the merge of PR #11; the code survives only as the
-overview's limiting gate.
+stop it until a person handles them; when every one of the 16 is excluded by
+a gate after the cap, the human text says why the deferred rows will not
+drain, naming those reasons (D18, R-24; lane openRepoProject-3's W21 L-f). The
+plan stays complete and apply allowed; each re-run plans and revalidates afresh,
+draining 16 at a time. `plan_digest` covers only `selected`, so a deferred row's
+change leaves a preview valid, and the report mode defers alike. The
+`target-cap` refusal (BA:96-101, BA:1004, BA:1367-1371) is retired, a departure
+ratified with the merge of PR #11; the code survives only as the overview's
+limiting gate.
 
 ### D13. Single-mode completeness (V4)
 
@@ -1016,9 +1024,11 @@ STEP` and one line `    PATH [BRANCH]` per row, an `ignored-local-files` row
 adding `: N ignored; first: SAMPLE` (`at least N` when truncated); for the
 deferral, `  deferred-target-cap (K): this run removes up to 16; run again:
 project clean ROOT --all-safe --apply`, and, when every one of the 16 rows taken
-past the cap is excluded as `contains-submodule`, the line `  these deferred
-rows will not drain while the 16 rows ahead of them are contains-submodule;
-review those worktrees, then remove them yourself` (R-24); the
+past the cap is excluded by a gate after the cap, the line `  these deferred
+rows will not drain while the 16 rows ahead of them are REASONS; review those
+worktrees, then remove them yourself` (R-24), REASONS those rows' reasons,
+each once, in gate order and joined by `, `, so that it reads as before when
+all 16 are `contains-submodule` (W21 L-f, R-146); the
 residual-window line, `Not protected: ignored files created, index flags set,
 operations started or worktree-only commits made after the last check, and any
 change after Git's own check.` (its third item by LQ-14, its fourth by LQ-13);
@@ -1033,14 +1043,16 @@ reflog is missing, expired or undecidable; review, then git worktree remove
 yourself"; `contains-submodule` and `hidden-local-state` "review, then remove
 the worktree yourself"; `operation-in-progress` "a git am, merge, notes merge,
 cherry-pick, revert, rebase or bisect is, or may be, in progress there; finish
-or abort it, then run again" (LQ-14, R-126); `worktree-only-commits` "a commit
-is, or may be, held only by this worktree's HEAD reflog or refs/worktree; keep
-it on a branch or tag, or review, then git worktree remove yourself" (LQ-13);
-`registration-mismatch` "review, then git worktree repair or git worktree prune,
-unset core.worktree and core.bare in the worktree's config.worktree, or remove
-the row by hand" (LQ-11, R-125); `inspection-error` "review, then git worktree
-repair or git worktree prune, or remove the row by hand"; `locked-worktree`
-"unlock it yourself if it should go"; every other class its recommendation.
+or abort it (a squash merge that holds an autostash ends only with git commit,
+--allow-empty where nothing is staged), then run again" (LQ-14, R-126, R-146);
+`worktree-only-commits` "a commit is, or may be, held only by this worktree's
+HEAD reflog or refs/worktree; keep it on a branch or tag, or review, then git
+worktree remove yourself" (LQ-13); `registration-mismatch` "review, then git
+worktree repair or git worktree prune, unset core.worktree and core.bare in the
+worktree's config.worktree, or remove the row by hand" (LQ-11, R-125);
+`inspection-error` "review, then git worktree repair or git worktree prune, or
+remove the row by hand"; `locked-worktree` "unlock it yourself if it should go";
+every other class its recommendation.
 
 The question: `Remove N worktrees, keeping N branches? [yes/N]`, in the singular
 for one. The wait line, at most once: `Waiting for git worktree remove PATH to
@@ -1157,8 +1169,10 @@ commit that only its own HEAD reflog or its `refs/worktree/` holds is
 unreachable from every branch, tag and remote ref. `git worktree remove`
 deletes the worktree's administrative directory, and with it `logs/HEAD` and
 every ref under `refs/worktree/`, which live there and are never packed
-(`common_list` in `path.c`; `should_pack_ref` in `refs/files-backend.c`, at
-2.36.6 and 2.43.7); such a commit is then held by nothing and is left to
+(`common_list`, `path.c:111` at 2.36.6 and `:116` at 2.43.7, which lists
+`logs/HEAD`, `logs/refs/worktree` and `refs/worktree` as per-worktree;
+`should_pack_ref`, `refs/files-backend.c:1176` at 2.36.6 and `:1174` at
+2.43.7); such a commit is then held by nothing and is left to
 garbage collection. Lane openRepoProject-3 found the gap (F1 H-1 at
 `2cf34d3`). Each decision below is the simple, conservative one:
 
@@ -1257,10 +1271,10 @@ operation in progress. Git keeps the state of a merge and its autostash, a
 notes merge, a cherry-pick or revert, an `am`, a rebase or a bisect in the
 worktree's own git directory, its
 administrative directory for a linked worktree, since none of these names is
-in `common_list` (`path.c`, at 2.36.6 and 2.43.7). An operation that stopped
-with the index and the working tree equal to the branch head reads clean to
-the status probe and to Git's own check, and the removal deletes its state:
-a failed `am`, a merge or a cherry-pick sequence resolved to the branch's own
+in `common_list` (`path.c:111` at 2.36.6, `:116` at 2.43.7). An operation that
+stopped with the index and the working tree equal to the branch head reads clean
+to the status probe and to Git's own check, and the removal deletes its state: a
+failed `am`, a merge or a cherry-pick sequence resolved to the branch's own
 content, a bisect with `--no-checkout` (lane openRepoProject-3's F1 H-2 at
 `2cf34d3`), a squash merge holding an autostash and a notes merge stopped at a
 conflict (its W14 M1). Each decision below is the simple, conservative one:
@@ -1276,8 +1290,8 @@ conflict (its W14 M1). Each decision below is the simple, conservative one:
   operation in progress runs none. Most operations stopped with work in the
   index or the tree, or with a detached head, are already `dirty` or
   `detached`, and those reasons stand.
-- Markers. Taken from Git's own state detection, read in the sources of
-  2.36.6 and 2.43.7, not from memory:
+- Markers. Taken from Git's own state detection, read in the release sources
+  of 2.36.6 and 2.43.7 (tags `v2.36.6` and `v2.43.7`, D7), not from memory:
   - `MERGE_HEAD`, `rebase-apply` (an `am` when it holds `applying`, otherwise
     a rebase), `rebase-merge`, `CHERRY_PICK_HEAD`, `REVERT_HEAD` and
     `BISECT_LOG`, which `wt_status_get_state`, `wt_status_check_rebase` and
@@ -1287,23 +1301,32 @@ conflict (its W14 M1). Each decision below is the simple, conservative one:
   - `sequencer`, whose `todo` `sequencer_get_last_command` reads for a
     cherry-pick or revert sequence (`sequencer.c:2513` at 2.36.6, `:2660` at
     2.43.7), taken as the whole directory because `create_seq_dir` creates it
-    with `mkdir`, which fails while it exists, so its presence alone stops a
+    with `mkdir`, which fails while it exists (`sequencer.c:3033` and `:3065`
+    at 2.36.6, `:3194` and `:3226` at 2.43.7), so its presence alone stops a
     new sequence;
   - `BISECT_START`, which `git bisect reset` tests to decide that a bisect is
     in progress (`builtin/bisect--helper.c:718` at 2.36.6,
     `builtin/bisect.c:791` at 2.43.7) and which `bisect_clean_state` removes
-    last (`bisect.c:1179-1182` at 2.36.6), so a cleanup cut short can leave it
-    alone;
+    last (`bisect.c:1179-1182` at 2.36.6, `:1198-1201` at 2.43.7), so a
+    cleanup cut short can leave it alone;
   - `MERGE_AUTOSTASH`, the stash commit that `git merge --autostash`, or
     `merge.autoStash`, saves before a merge and that only that file names
     until the merge ends (`git_path_merge_autostash`, `path.c:1559` at 2.36.6
     and `:1593` at 2.43.7, which `builtin/merge.c` applies and removes); a
-    `git merge --squash` keeps it until the squash is committed on 2.40.4 and
-    2.43.0, while 2.36.6 applies it at once, so a worktree that reads clean can
-    hold a person's edit only there (lane openRepoProject-3's W14 M1, R-126);
+    `git merge --squash` that does not fast-forward keeps it until the squash
+    is committed on 2.40.4 and 2.43.0, while a fast-forward squash, and every
+    squash on 2.36.6, applies it at once, so a worktree that reads clean can
+    hold a person's edit only there (lane openRepoProject-3's W14 M1, R-126;
+    its W21 L-d). `git merge --abort` does not end it, since it refuses where
+    no `MERGE_HEAD` exists before it reads `MERGE_AUTOSTASH`
+    (`builtin/merge.c:1333-1334` at 2.36.6, `:1324-1325` at 2.43.7), and
+    neither `git stash pop` nor `git reset --hard` does; only a commit applies
+    it, so D18's next step names `git commit` (W21 L-c);
   - `NOTES_MERGE_PARTIAL` and `NOTES_MERGE_REF`, which a `git notes merge`
     stopped at a conflict leaves and which its `--commit` and `--abort`
-    delete (`builtin/notes.c:691-698` at 2.36.6, `:791-798` at 2.43.7).
+    delete (`merge_abort`, `builtin/notes.c:686` with the deletions at
+    `:691-698` at 2.36.6, and `:786` with `:791-798` at 2.43.7; `merge_commit`
+    calls it, `:704` and `:804`).
   An entry of one of these eleven names, of any kind, is a marker; the set is
   a superset of what `git status` reports, never a subset, and wider by the
   last three, which `git status` does not report. `NOTES_MERGE_WORKTREE`,
@@ -1430,8 +1453,9 @@ record from the probe, and its `--abort` leaves `NOTES_MERGE_WORKTREE` alone.
   `contains-submodule` is an index gate tested after the deferral] -> The order
   stays, since the index gates cost a probe per row and the deferral keeps those
   probes to 16 (D12); the human report says why the deferred rows will not drain
-  when every one of the 16 rows past the cap is `contains-submodule` (D18); 16
-  rows that any index gate excludes ahead of a backlog stall it alike; V5's
+  when every one of the 16 rows past the cap is excluded by a gate after the
+  cap, `contains-submodule` among them (D18); 16 such rows ahead of a backlog
+  stall it alike; V5's
   caveat was ratified with the deferral at the merge of PR #11.
 - [Rows of 100,000-entry indexes: the fit of BA:729-735 would give 64 rows, 16
   targets and a report cap of 128, since the plan term alone for 128 such rows
