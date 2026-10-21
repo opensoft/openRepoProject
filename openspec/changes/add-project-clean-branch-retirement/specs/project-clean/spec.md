@@ -1300,6 +1300,15 @@ N; branches kept: `; and then the residual-window line.
   checks pass, Git refuses the deletion with exit 1, the target's
   `branch_retirement` is `retained` with `git-refused`, the branch remains,
   the result prints the same line, and the exit status is 2
+- **AND** when, with the real Git and that rebase, the first branch's
+  upstream remote-tracking ref was instead deleted before the plan and the
+  main worktree is on the merge target, so that the plan retires the branch,
+  Git refuses the deletion with exit 1, the target's `branch_retirement` is
+  `retained` with `git-refused`, the branch remains, the result prints `Kept
+  <branch> (git-refused); if a rebase or bisect in another worktree holds
+  <branch>, wait for it to end and remove that worktree; next: check out
+  <merge target> in the main worktree, then: project clean <root> --apply
+  --action delete-branch --branch <branch>`, and the exit status is 2
 
 #### Scenario: The deadline before the branch stage
 
