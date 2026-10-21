@@ -817,7 +817,7 @@ class ResultTests(clean_support.CleanCase):
                     if fault == "removal":
                         # The child was waited for: it had run to its end, the
                         # real removal included, before the target was decided.
-                        self.assertEqual(seen[0][0], str(trees[0]))
+                        self.assertEqual(seen[0][0], os.fsencode(trees[0]))  # a Target holds raw bytes
                         self.assertIn(f"exited {trees[0]} 0", seen[0][1])
                         self.assertFalse(trees[0].exists())
                     self.assertEqual(self.head(root, "refs/heads/" + NAMES[0]), planned[0], "the branch is kept")
