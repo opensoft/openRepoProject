@@ -12,7 +12,9 @@ B-37), lane 4's byte check of B-30's overview commit recorded in `tasks.md`
 2.2, lane 3's folded read of `cf57956..fffc194` with Codex's finding on
 `fffc194` resolved in round B6 (B-38 to B-42), lane 3's confirm read of round
 B6 with Codex's two findings on `e399309` resolved in round B7 (B-43 to B-45),
-and lane 3's confirm read of B7 in round B8 (B-46); nothing here is ratified.
+lane 3's confirm read of B7 in round B8 (B-46), and the lane's review wave of
+2026-10-21 on `fe5b245`, RB's adversarial read and RD's M2, in round B9 (B-47
+to B-52); nothing here is ratified.
 Governing issue:
 opensoft/openRepoProject#24, claimed by lane
 openRepoProject-5 (comment 6111257933); refs #6, the record of the project
@@ -39,17 +41,20 @@ named), and `PR19/rs` is `CAS/rs` as PR #19 amends it at that head.
 for the three extensions and for this one: L-1 to L-9 and B-1 to B-9 of
 2026-10-11, L-10 to L-15 and B-10 to B-15 of 2026-10-18, L-16 and L-17 of
 2026-10-19 with B-16 to B-24, the lead's council verdicts of that date, and
-B-25 to B-46 of 2026-10-20; A-n are the rulings for #23 that this proposal
-cites. SA-n, QA-n and G1 to G5 are the alignment review's findings on this
-draft at `7290100`. P-n, S-n and AE-n are the council's concerns
+B-25 to B-46 of 2026-10-20 and B-47 to B-52 of 2026-10-21; A-n are the
+rulings for #23 that this proposal cites. SA-n, QA-n and G1 to G5 are the
+alignment review's findings on this draft at `7290100`. P-n, S-n and AE-n
+are the council's concerns
 (product-advocate, systems-architect, adversary-engineer) on `9ebe9f0`, and M1
 to M5 and LOW 1 to LOW 17 are lane openRepoProject-3's packet-fidelity findings
 on `3c08613` and `9ebe9f0`; its re-read of `e906c2f` is cited as "re-read
 MEDIUM 1" and so on, its delta read of `cf57956` as "delta read LOW (1)" and so
 on, lane openRepoProject-4's review of 2026-10-20 by its findings F2 and F4,
-and Codex's inline findings by their file and line. CD-n
-are this proposal's own decisions. The packet is non-normative brainstorm
-material (`OV:16-19`); only the deltas that follow will be normative.
+the lane's review wave of 2026-10-21 by reader and finding, RB's HIGH-1 to
+LOW-5 (an adversarial read of `fe5b245`) and RD's M2 (a composition read of
+#26, #27 and #29 in archive order), and Codex's inline findings by their file
+and line. CD-n are this proposal's own decisions. The packet is non-normative
+brainstorm material (`OV:16-19`); only the deltas that follow will be normative.
 
 ## Why
 
@@ -123,11 +128,13 @@ through `getattr(os, "O_NOFOLLOW", 0)` instead of failing closed.
   names end `.pyc` or `.pyo` and directories named `__pycache__` of the same
   shape, or a regular file whose name ends `.pyc` or `.pyo`, none of them a
   symbolic link. Every directory between the worktree root and a listed path
-  must be a non-symlink directory on the worktree root's device, and the path
-  must be valid UTF-8 (CD-8). Every other ignored path is blocking.
-  `.pytest_cache` is before Brett Heap, with a recommendation to admit it here,
-  and is added only on his answer (B-23); other cache kinds are out of scope
-  (Open Questions).
+  must be a non-symlink directory on the worktree root's device, as must a
+  listed cache directory and every directory inside it (B-48), and the path,
+  and every entry name inside a listed directory, must be valid UTF-8 (CD-8,
+  B-51). Every other ignored path is blocking.
+  `.pytest_cache` is before Brett Heap, with a recommendation not to admit it
+  in this change (B-23, B-50); other cache kinds are out of scope (Open
+  Questions).
 - **Detection by a bounded enumeration of its own (B-2, B-12).** The combined
   status probe stops at the 65th ignored record and keeps eight samples
   (CAS/cmd:161-173), so it cannot prove a whole worktree disposable. A
@@ -139,7 +146,8 @@ through `getattr(os, "O_NOFOLLOW", 0)` instead of failing closed.
   invocation (CD-6), `project clean` runs one more Git child in that worktree,
   `status --porcelain=v2 -z --untracked-files=normal --ignored=matching`, under
   the evidence model's scrub, protocol pins and directory rule and with the
-  status pins (CD-5), reading at most 512 records, then walks the listed caches
+  status pins and its own `-c status.showStash=false` (CD-5, B-47), reading at
+  most 512 records, then walks the listed caches
   descriptor-relatively, opening each directory it records once and counting
   it toward the per-worktree cap with the entries (B-33), enumerating each
   cache directory one entry at a time and closing the enumeration as soon as
@@ -149,7 +157,8 @@ through `getattr(os, "O_NOFOLLOW", 0)` instead of failing closed.
   the running user may remove entries from it (B-20). A row whose enumeration
   reaches a cap stays `ignored-local-files` with the reason `cache-cap`; one
   whose enumeration fails, times out, or reads anything but ignored records
-  stays `ignored-local-files` with `cache-unverified`; one whose caches the
+  whose paths stay inside the worktree's tree (B-51) stays
+  `ignored-local-files` with `cache-unverified`; one whose caches the
   user cannot change stays `ignored-local-files` with `cache-unwritable`, its
   counts established, not selected and stopping nothing; and the plan stays
   complete (CD-9).
@@ -220,8 +229,9 @@ through `getattr(os, "O_NOFOLLOW", 0)` instead of failing closed.
   (CD-11). Change 1's rule that `project` never deletes a directory itself
   gains this stage as its one exception (B-10).
 - **Failure and recovery (B-6, B-11).** A preflight difference deletes nothing,
-  and so does a first removal refused by a sticky directory or a read-only
-  filesystem that the plan's access check cannot see (B-20). A failure after an
+  and so does a first removal refused for what the plan's access check cannot
+  see, a sticky directory or a change made after the plan (B-20, B-51). A
+  failure after an
   entry was removed leaves the earlier removals as permanent partial cache
   completion, rescans the listed paths by the same identity-checked descriptor
   chains the removals use (B-18), and reports each one removed, remaining, or
@@ -273,7 +283,9 @@ through `getattr(os, "O_NOFOLLOW", 0)` instead of failing closed.
   removed, which remain and which may still be removed, naming the work
   deadline when it ended the stage (B-16, B-21); a stop after a stage that
   disposed of every cache says so and that the worktree was not removed
-  (B-17); a stop at a stage that the floor or the deadline stopped in a read
+  (B-17), as does a stop at that target when Git's removal then failed, or,
+  where that removal is not proven, says so (B-49); a stop at a stage that
+  the floor or the deadline stopped in a read
   before its first removal, and with no signal received by then, says that it
   was not attempted because of the deadline and that nothing was deleted (B-34,
   B-39), and the line for a stage that ended `refused` before its first removal
@@ -327,7 +339,10 @@ through `getattr(os, "O_NOFOLLOW", 0)` instead of failing closed.
   descriptor-relative with `O_NOFOLLOW` and an identity check, and no
   descriptor given to a call still outstanding is closed and reused (B-16); a
   hard-linked `.pyc` loses only its name inside the worktree, and every
-  external target stays intact (`BA:1632-1634`).
+  external target stays intact (`BA:1632-1634`). One residual is stated, not
+  closed: a bind mount from the worktree's own filesystem passes the device
+  check, so through it disposal reaches the mount's cache files as the
+  worktree's own (CD-8, B-48).
 - **Stop before the worktree removal when the cache stage fails**
   (`BA:1335-1336`), and stop the run at the first target that is not a plain
   `removed`, as change 1 does (CAS/pc:246-248; `BA:1640-1643`).
@@ -395,8 +410,10 @@ also names the delta text it is written on.
     `### Requirement: Clean previews and applies a batch of eligible worktree removals in one repository`.
     The digest's canonical text carries, after each selected target's triple
     whose plan lists caches, its cache paths and planned cache directory
-    identities; a plan that selects no such target carries none. Every other
-    sentence stays. The scenario "Every protected classifier" names its
+    identities; a plan that selects no such target carries none. The reflog
+    read's outcome rule gains one clause: a read of the cache walk that times
+    out leaves its row `cache-unverified` and the plan complete (B-51). Every
+    other sentence stays. The scenario "Every protected classifier" names its
     ignored files as not Python bytecode caches (B-22, lane openRepoProject-4's
     precision); the other nine stay. Added scenario: cache paths are part of
     the plan digest.
@@ -428,15 +445,20 @@ also names the delta text it is written on.
   - ADDED:
     `### Requirement: Clean disposes of listed caches before a worktree removal`.
     The allowlist, the sample test, candidate rows, the enumeration with its
+    pins, `status.showStash=false` among them (B-47), and its
     caps, the per-worktree one counting recorded directories (B-33), the
     walk's streaming enumeration of each cache directory, closed when the cap
-    decides (B-44), the access check, reasons and the stall on persistent
+    decides (B-44), the access check, reasons, a record path that leaves the
+    worktree's tree and a no-follow open refused at plan time among the
+    causes of `cache-unverified` (B-51), and the stall on persistent
     reasons (B-32), reported only beside a later candidate that the
     16-enumeration cap left (B-45), the plan's `cache_disposal`
     with identities, counts and `candidate_block` and its presence rule, the
     cache stage's place, start, checks, commit point and budget, the result's
     `cache_disposal`, the exit statuses through change 1's table, and the human
-    lines, the one for a preflight that the deadline stopped included (B-34).
+    lines, the one for a preflight that the deadline stopped included (B-34),
+    and the one for a `disposed` stage whose target's removal then failed or
+    is not proven (B-49).
   - Untouched (`:10`): `### Requirement: Clean reports local worktree state`.
     The plain report carries `cache_disposal` on its rows holding ignored
     records as every plan does, and its `selected` stays what `--all-safe`
@@ -482,7 +504,10 @@ also names the delta text it is written on.
     scenarios stay. Added scenario: a cache recreated after the cache stage.
   - ADDED:
     `### Requirement: Cache disposal never follows a symlink or leaves its worktree`.
-    Symlink candidates, ancestors and entries blocking; descriptor-relative
+    Symlink candidates, ancestors and entries blocking; the device rule on a
+    listed cache directory and every directory inside it too (B-48); entry
+    names valid UTF-8, and a no-follow open refused at plan time
+    `cache-unverified`, not blocking (B-51); descriptor-relative
     no-follow operations against planned identities, one chain per directory
     holding a listed path in each pass (B-33), no descriptor of an
     outstanding call reused; no recursive deletion; the whole-list preflight
@@ -531,8 +556,9 @@ also names the delta text it is written on.
 - `project-command`, `project-review-safety` and
   `speckit-extension-integration`: untouched. The enumeration child is a Git
   child of `project clean` alone, carrying the evidence model's environment,
-  protocol pins, status pins and directory rule (CAS/cmd:98-133) without
-  changing that model's probe list; status and doctor gather no cache evidence.
+  protocol pins, status pins and directory rule (CAS/cmd:98-133), and its own
+  `-c status.showStash=false` (B-47), without changing that model's probe
+  list or pins; status and doctor gather no cache evidence.
 
 ## Impact
 
@@ -591,7 +617,13 @@ also names the delta text it is written on.
   PR #19's wording are marked "(draft PR #19, pending)". `validate --strict` passes while
   changes 1 and 2 are unarchived; the archive is the gate (it reports "Archive
   would refuse this delta" for each delta file until change 1, and for the
-  `project-overview` delta change 2, is archived).
+  `project-overview` delta change 2, is archived). `validate` and the archive
+  check requirement and scenario names, not sentences, so a block that kept
+  PR #19's text after PR #19 closed would pass both; before the archive, each
+  block written on change 1's or PR #19's text is therefore checked by a
+  `diff -u` against the archived requirement, its carried text equal and only
+  this change's additions differing, and a re-base that changes this change's
+  added text goes back to Brett Heap (B-52, RD's M2; `tasks.md` 2.1).
 - **Archive order (L-5, L-11, L-16, B-14, B-29).** This change archives after
   change 1's archive, which follows feature 004's merge, after PR #19's
   amendment of change 1 has landed, or PR #19 has closed and the two blocks
@@ -653,10 +685,10 @@ also names the delta text it is written on.
 
 ## Out of Scope
 
-- **`.pytest_cache`, until Brett Heap answers its Open Question.** The
-  recommendation is to admit it in this change as a third listed form; if he
-  declines, it is the next change, first in line, measured 2026-10-19 as the
-  only blocker of 16 kept rows (B-23).
+- **`.pytest_cache`** (B-23, B-50). The recommendation to Brett Heap is now
+  not to admit it in this change, for the reasons its Open Question gives; it
+  is the next change, first in line, measured 2026-10-19 as the only blocker
+  of 16 kept rows, unless he admits it here.
 - **Other cache kinds** (`.mypy_cache`, `.ruff_cache`, `node_modules`, virtual
   environments, build directories) (B-1; Open Questions).
 - **Paired branch retirement** (#23) and **remote merge status** (#25), each
@@ -850,10 +882,15 @@ NOTED; the table "Council Verdicts" below):
   candidate `ignored-local-files` with `cache_disposal.reason`
   `cache-unwritable` (the sub-record's own enum, L-4), its counts established,
   not selected and stopping nothing; its line says to fix the ownership or mode
-  of the worktree's caches and re-run. A failure the check cannot see (a sticky
-  directory, `EROFS`) ends the stage `refused` with `cache-changed`, nothing
-  deleted, when every call handed over has returned and none removed an entry
-  (B-16). The platform check gains the three `os.access` support checks.
+  of the worktree's caches and re-run. A failure the check cannot see ends the
+  stage `refused` with `cache-changed`, nothing deleted, when every call
+  handed over has returned and none removed an entry (B-16). As B-51 restates
+  it, those failures are a sticky directory's rule for an entry the user does
+  not own, an append-only or immutable attribute, a security module's
+  refusal, and a change made after the plan; B-20 first named `EROFS` among
+  them, but the check sees a read-only mount on Linux 5.8 or later, which is
+  then `cache-unwritable` at plan time (design D3). The platform check gains
+  the three `os.access` support checks.
 - **B-21, stop and stall lines name their cause** (P-3 items 1 and 4, AE-5,
   Codex's P2 on `3c08613`). The stall line is printed only when each of the
   first 16 candidates in canonical order is held at the rung for a persistent
@@ -894,7 +931,8 @@ NOTED; the table "Council Verdicts" below):
   Open Question "Other cache kinds" is split: `.pytest_cache` goes to Brett
   Heap with the recommendation to admit it here as a third listed form; the
   rest stays under the existing "no". This round does not add the third form;
-  it is added only on his answer.
+  it is added only on his answer. B-50 later turns the recommendation to no
+  for this change (below).
 - **B-24, what really blocks a cache-only row** (P-2). A row whose
   `cache_disposal.reason` is `not-candidate` and whose samples pass the sample
   test carries `candidate_block`: the class the ladder gives it with the
@@ -1232,6 +1270,78 @@ B-45 (the table "Re-read and Codex Findings (round B7)" below):
   stall line; design D4, D11, D14 (in a bullet of its own) and Risks, the B-21
   decision above, What Changes and Capabilities follow.
 
+The findings of 2026-10-21 that followed round B8, ruled by the lead as B-47
+to B-52 (the table "Re-read and Codex Findings (round B9)" below):
+
+- **B-47, the enumeration's child pins `status.showStash=false`** (RB's
+  HIGH-1). Under a user's `status.showStash=true`, porcelain v2 prints
+  `# stash N` ahead of the records whenever the repository holds a stash, and
+  a stash is repository-wide, so every candidate of such a repository read a
+  record that is not an ignored one and was `cache-unverified`, and every
+  revalidation of a cache target read a record that its plan did not list:
+  nothing was ever disposed of, though nothing unsafe was. The child's pins
+  gain `-c status.showStash=false` in the ADDED requirement, and the scenario
+  that pins the command gains the setting, a stash, the pin and an AND for the
+  revalidation at apply. RB's fixture was run on Git 2.43.0 before and after:
+  `# stash 1` before the record without the pin, the record alone with it
+  (design, Context). Git's own documentation at `v2.36.0` gives
+  `status.showStash` from 2.14.0 and porcelain v2's `# stash <N>` from 2.35.0,
+  so the setting, the header and the pin all exist at the Git 2.36 floor.
+  Change 1's combined probe is porcelain v1, which prints no such header, so
+  the evidence model is not modified.
+- **B-48, a bind mount from the worktree's own filesystem** (RB's MEDIUM-1;
+  applied as a residual, with one check added). The device check cannot see
+  such a mount, so CD-8's "disposal never reaches into a mounted tree" was
+  false and is corrected: disposal acts on paths inside the worktree's tree,
+  and through such a mount it disposes of the mount's cache files as the
+  worktree's own; where the mount point is a directory that the stage
+  removes, its removal fails with `EBUSY`, and the target stops there until
+  the mount is gone. The device rule now names a listed cache directory and
+  every directory inside it, as design D3's walk already checked every
+  directory it records. Parsing `/proc/self/mountinfo` is rejected: it is
+  Linux-only parsing for a rare case whose reach is limited to caches inside
+  the worktree's path.
+- **B-49, a line when Git's removal fails after a `disposed` stage** (RB's
+  MEDIUM-2). Change 1's own scenarios reach a cache target whose stage ended
+  `disposed` and whose removal then ends `failed` ("Git refuses the removal",
+  "Git leaves an orphaned directory") or `unknown`: B-17's end state, the
+  caches deleted and the worktree kept, though the person read only the stop
+  block. `Cache disposal at PATH: removed N cache paths; the worktree was not
+  removed.` now precedes the stop block there too, and for an `unknown`
+  target `Cache disposal at PATH: removed N cache paths; the worktree's
+  removal is not proven.`; the stop block that follows gives the reason and
+  the next step. One AND of "A merged worktree whose only ignored files are
+  caches" locks the worktree after its stage.
+- **B-50, `.pytest_cache`: the recommendation turns to no** (RB's MEDIUM-3).
+  Its Open Question now recommends not admitting it in this change, with four
+  reasons and what a later change would need; What Changes, Out of Scope and
+  design's Non-Goals, Risks, Migration Plan and Open Questions follow. No delta
+  text changes, since the form was never added.
+- **B-51, RB's five LOWs.** LOW-1: an ignored record whose path, its trailing
+  `/` disregarded, begins with `/` or holds an empty, `.` or `..` component
+  makes its candidate `cache-unverified`, so that the walk never opens `..`.
+  LOW-2: B-20's premise is corrected to what was observed and B-20 restated
+  with a true reason (above; design D3); behaviour does not change, since a
+  sticky target fails closed, nothing deleted, and so is no safety gap. LOW-3:
+  the batch block's reflog sentence keeps change 1's words and gains the
+  clause "except a read of the cache walk that times out, which leaves its row
+  `cache-unverified` and the plan complete". LOW-4: design D5 states by
+  decision that the digest covers each target's disposal decision and not its
+  entry counts, the apply's caps bounding the difference. LOW-5, answered
+  fail-closed: an entry of a listed directory whose name is not valid UTF-8 is
+  blocking, and a no-follow open refused at plan time makes the row
+  `cache-unverified`, not blocking.
+- **B-52, the re-checks against the archived text proved by `diff -u`** (RD's
+  M2). If PR #19 closes unmerged, its two blocks here carry its unratified
+  sentences, which `validate` and the archive cannot see. `tasks.md` 2.1 then
+  re-bases them on change 1's text at main, and verifies every block written
+  on change 1's or PR #19's text by a `diff -u` against the archived
+  requirement showing additions only, a re-base that changes this change's
+  added text going back to Brett Heap; `validate` is a second check only
+  (Dependencies and Sequencing). The ruling names "#27's `project-command`
+  block"; this change has none, so the two blocks written on PR #19's text
+  are read for it.
+
 Departures from the rulings as first written, each naming what it departs
 from. B-11 accepted CD-1 to CD-3 as the consistent reading of B-6 and amended
 B-6 to match, so of these only CD-4 still departs from a ruling, besides
@@ -1292,7 +1402,9 @@ ruled by B-22:
   for every such user, as change 1 found for its own probe (CAS
   proposal.md:51-53); every status child carries the two status pins
   (CAS/cmd:111-113). This was observed with Git 2.43.0 on Linux (design,
-  Context), the platform CI runs.
+  Context), the platform CI runs. B-47 adds the child's own pin, `-c
+  status.showStash=false`, since a user's `status.showStash=true` and any
+  stash put a `# stash N` header before porcelain v2's records.
 
 Lane additions, with no packet or ruling text behind them:
 
@@ -1323,11 +1435,21 @@ Lane additions, with no packet or ruling text behind them:
   counts, a row that only the sample test kept out carries the samples it
   rejected in `blocking_samples`, and a row whose samples pass carries the
   class or gate that keeps it in `candidate_block` (B-24).
-- **CD-8, device and encoding.** A cache path, or a directory on its way down,
-  on a device other than the worktree root's (a mount point inside the
-  worktree) is blocking, so disposal never reaches into a mounted tree; a cache
-  path that is not valid UTF-8 is blocking, as change 1 never uses such a path
-  as an operand.
+- **CD-8, device and encoding.** A cache path, a directory on its way down, or
+  a listed cache directory or a directory inside it (B-48), on a device other
+  than the worktree root's (a mount point inside the worktree) is blocking; a
+  cache path, or an entry name inside a listed directory (B-51), that is not
+  valid UTF-8 is blocking, as change 1 never uses such a path as an operand.
+  The device check cannot see a bind mount from the worktree's own
+  filesystem, whose device is the worktree's: disposal acts on paths inside
+  the worktree's tree, so through such a mount it disposes of the mount's
+  cache files as the worktree's own, and where the mount point is a directory
+  that the stage removes, its removal fails with `EBUSY` and the target stops
+  there until the mount is gone. The first wording, "so disposal never
+  reaches into a mounted tree", was false for that case and is withdrawn
+  (B-48, RB's MEDIUM-1); parsing `/proc/self/mountinfo` to see such mounts is
+  rejected as Linux-only parsing for a rare case whose reach is limited to
+  caches inside the worktree's path.
 - **CD-9, a failed enumeration preserves the row, not the plan.** The row
   already has a complete combined probe; a failed, timed-out or inconsistent
   enumeration leaves its ignored paths unproven, `ignored-local-files` with
@@ -1440,9 +1562,10 @@ asks for both a planned identity and a fail-closed refusal.
 
 Each is before Brett Heap with a recommendation; the deltas implement the
 recommendation, and a different ruling edits them before ratification, except
-`.pytest_cache` and the limit on the cache stage's directory opens, whose
-recommendations the deltas do not yet implement: each is added only on his
-answer (B-23, B-33).
+the limit on the cache stage's directory opens, whose recommendation the
+deltas do not yet implement: it is added only on his answer (B-33). For
+`.pytest_cache` the recommendation is now no (B-50), which the deltas
+implement by not admitting it.
 
 - **Enum closure and `schema_version` (L-4).** Change 1 says "Enums SHALL be
   closed within a schema version" (CAS/pc:1129-1131) and change 2 that "adding
@@ -1453,25 +1576,57 @@ answer (B-23, B-33).
   `operations`, which now also counts removed cache entries. If Brett Heap
   reads a widened `merged-removable` as a change of meaning, the deltas move
   `clean --json` to `schema_version: 2` instead.
-- **`.pytest_cache` (B-1, B-23).** Measured 2026-10-19 as the only blocker of
-  16 of the 37 kept rows, 12 of which pass every later gate. Each of its 19
-  instances has one shape: `.gitignore`, `CACHEDIR.TAG` with the
+- **`.pytest_cache` (B-1, B-23, B-50).** Measured 2026-10-19 as the only
+  blocker of 16 of the 37 kept rows, 12 of which pass every later gate. Each
+  of its 19 instances has one shape: `.gitignore`, `CACHEDIR.TAG` with the
   cache-directory signature, `README.md` and `v/`; 4 or 5 regular files of at
   most 89 KB; no symbolic link and no executable file. Git prints it as those
   four records, since pytest's own `.gitignore` (`*`) ignores them.
-  Recommendation: admit it in this change as a third listed form, under the
-  same walk, identities, caps and stage. The form is the ignored records
-  `D/.gitignore`, `D/CACHEDIR.TAG`, `D/README.md` and `D/v/` (or `D/` itself
-  where an ignore rule names it), of a non-symlink directory `D` whose last
-  component is exactly `.pytest_cache`. Its `D/CACHEDIR.TAG` must be a regular
-  file whose first 43 bytes are `Signature: 8a477f597d28d172789f06886806bc55`,
-  read descriptor-relatively under the per-call budget. Its `D/v/` must hold
-  only regular files and non-symlink directories. The sample test accepts a
-  sample whose parent component is `.pytest_cache` and whose last is one of
-  those four names. The emptied `D` is left for Git's removal, as the Risks
-  already say of an emptied `__pycache__`. Alternative: a follow-on change,
-  first in line. The deltas do not yet admit it; this round adds the third form
-  only on Brett Heap's answer.
+  Recommendation: no, not in this change (B-50). B-23 recommended admitting
+  it here as a third listed form (the ignored records `D/.gitignore`,
+  `D/CACHEDIR.TAG`, `D/README.md` and `D/v/`, or `D/` itself where an ignore
+  rule names it, of a non-symlink directory `D` named exactly
+  `.pytest_cache`, its `CACHEDIR.TAG` carrying the 43-byte
+  signature, its `v/` holding only regular files and non-symlink
+  directories, and a sample test accepting those four names under
+  `.pytest_cache`); RB's adversarial read of 2026-10-21 showed, by fixtures
+  run again on Git 2.43.0 in round B9, that this form would:
+  - delete files under `D/v/` by their place and not by their name, so that
+    the stage would no longer remove only names that the allowlist matches
+    byte for byte (a `notes.txt` saved under `v/` fits the form), and the
+    stage's guarantee would have to be widened;
+  - remove `D/.gitignore` first, since it sorts first in raw-byte order, so
+    that a stage stopped after it, by a failure, the floor, the ceiling or a
+    SIGKILL, leaves `.pytest_cache/` untracked; the next run reads the row
+    `dirty`, a rung above `ignored-local-files`, which is never planned again
+    and which Git's non-force removal refuses, so a re-run would not finish
+    the job;
+  - never accept a repository that ignores `.pytest_cache/` itself, where Git
+    prints the one record `.pytest_cache/`, whose last component is none of
+    the four names that the sample test as worded accepts, so that its row
+    would never be a candidate: 35 of the 239 top-level repositories that the
+    review counted on this workstation on 2026-10-21, this repository among
+    them;
+  - force three carried scenarios to be reworded, the batch block's "Every
+    protected classifier", the bounds block's "Ignored-file bound" and the
+    overview block's "Every protected classifier", each of which names its
+    ignored file as not a Python bytecode cache, a fixture that a
+    `.pytest_cache` would satisfy and that the stage would then dispose of;
+    the overview's is lane openRepoProject-4's byte-checked text (`tasks.md`
+    2.2).
+
+  A later change that admits it would need: the form's `D/.gitignore`
+  removed last; a form and a sample test that accept the single record
+  `.pytest_cache/` of a repository that ignores it; the stage's guarantee
+  widened, or the form narrowed, for the files under `D/v/` that it admits by
+  place; `CACHEDIR.TAG`, the first file the cache code would open, opened
+  descriptor-relatively with `O_NOFOLLOW` and `O_NONBLOCK`, checked a regular
+  file by `fstat` after the open and read for at most 43 bytes under the
+  per-call budget, those flags added to the platform check; the three
+  scenarios reworded to "not a listed cache", with lane openRepoProject-4's
+  agreement again and a re-pin of its spec 005; and Why and What Changes
+  recounted, 13 of the 37 kept rows becoming 25. Alternative: admit it here as
+  B-23 recommended, with all of the above. The deltas do not admit it.
 - **Other cache kinds (B-1).** `.mypy_cache`, `.ruff_cache`, `node_modules` and
   virtual environments are larger, hold executables or installed state, and
   have no single safe shape. Recommendation: no; each would need its own
@@ -1738,3 +1893,35 @@ openRepoProject-4's.
 | Finding | Severity | Ruling | Section edited |
 | --- | --- | --- | --- |
 | lane 3 confirm read of B7 (ca34644), three LOWs: LOW 1: the round B7 intro says that B-43's LOW 3 and B-44 each edit "one passage" beyond the lines the ruling names, but the B-44 row names several; LOW 2: D14's streaming bullet (`design.md`:1139-1147) carries a third assertion that no row names, that after each enumeration is closed the walk's descriptor still `fstat`s and is rewound to 0; LOW 3: the B-43 LOW 2 row says "the words of the deadline AND", but the clause also adds "removal" before "floor" | LOW | B-46: applied, in `proposal.md` alone: LOW 1: the intro says that B-43's LOW 3 also edits one passage beyond the line the ruling names and B-44 several beyond the lines its ruling names, said in their rows; LOW 2: the B-44 row names the assertion, that after each enumeration is closed the walk's descriptor still `fstat`s to its identity and a second enumeration from it starts at its first entry, the descriptor rewound to offset 0, which was checked in scratch on Python 3.10.21, 3.12.3 and 3.13.15 and by lane 3 on 3.12.3, so D14's bullet keeps its words; LOW 3: the B-43 LOW 2 row says that the clause takes the words of the deadline AND, "until no more than the floor remains for the next read to start", with "removal" added before "floor"; no scenario is added and the counts stay 55, 28 and 8 | the round B7 table (its intro, the B-43 LOW 2 row and the B-44 row); Status; the key's ruling range (B-25 to B-46); `tasks.md` 1.1, 1.4, 1.5, 2.2 |
+
+### Re-read and Codex Findings (round B9)
+
+The lane's review wave of 2026-10-21 read this change at `fe5b245`. Reader
+RB's adversarial read found 1 HIGH, 3 MEDIUM and 5 LOW, and one observation
+outside this change's scope, a per-worktree `core.worktree` that redirects
+change 1's evidence, which the lead sent to lane openRepoProject-2. Reader
+RD's composition read of #26, #27 and #29 in archive order found M2 for this
+change. The lead ruled them on 2026-10-21 as B-47 to B-52, applied in round
+B9. Lane openRepoProject-4 asked that the round edit in place, so every range
+of `proposal.md`, `design.md` and `tasks.md` that its spec 005 pins keeps its
+bytes, as `cmp` against `fe5b245` confirmed, though some of their line numbers
+move. Of the 10 items here, 7 are applied, 3 are applied with change (RB's
+MEDIUM-1 and MEDIUM-3, and RD's M2), and none is declined. The rulings add
+ANDs and no scenario, so the counts stay 55, 28 and 8. The round also
+updates the Status, the key's ruling range (B-47 to B-52), design's Context
+and source table, and `tasks.md` 1.1, 1.4, 1.5 and 2.1.
+`specs/project-overview/spec.md` is not edited: none of the rulings needs it,
+and its block is lane openRepoProject-4's.
+
+| Finding | Severity | Ruling | Section edited |
+| --- | --- | --- | --- |
+| RB (fe5b245) HIGH-1: under a user's `status.showStash=true` and any stash, porcelain v2 prints `# stash N` before the enumeration child's records, so every candidate of that repository is `cache-unverified`, every revalidation of a cache target refuses, and nothing is ever disposed of | HIGH | B-47: applied: the child's pins gain `-c status.showStash=false`; the scenario "The cache enumeration runs under the pins" gains the setting, a stash, the pin and an AND for the revalidation at apply; RB's fixture run on Git 2.43.0 printed `# stash 1` before the record without the pin and the record alone with it; Git's own documentation at `v2.36.0` gives the setting (2.14.0) and porcelain v2's header (2.35.0), so both exist at the 2.36 floor; change 1's porcelain v1 probe prints no header, so the evidence model is not modified | project-clean delta (ADDED walk paragraph; "The cache enumeration runs under the pins"); `design.md` Context, D3; What Changes (detection); Capabilities; Decisions (B-47); CD-5 |
+| RB (fe5b245) MEDIUM-1: a bind mount from the worktree's own filesystem passes the device check, so CD-8's "disposal never reaches into a mounted tree" is false, and the device rule's words omit the listed directory itself | MEDIUM | B-48: applied with change: the residual stated in CD-8, Rules and design Risks: disposal acts on paths inside the worktree's tree and, through such a mount, disposes of its cache files as the worktree's own, and where the mount point is a directory that the stage removes, its removal fails with `EBUSY` and the target stops there until the mount is gone; the device rule names the listed cache directory and, beyond the ruling's words, every directory inside it, which design D3's walk already checked; one AND puts a listed `__pycache__` itself on another device; parsing `/proc/self/mountinfo` rejected, with the ruling's reason; the `EBUSY` was not reproduced, for want of the privileges to mount | review-safety delta (ADDED first paragraph; "A symlink named like a cache is never disposable"); `design.md` D2, Risks; What Changes (the allowlist); Rules; Capabilities; Decisions (B-48); CD-8 |
+| RB (fe5b245) MEDIUM-2: no human line says that a target's caches were deleted when its stage ended `disposed` and Git's removal then failed or is unproven | MEDIUM | B-49: applied: before the stop block, `Cache disposal at PATH: removed N cache paths; the worktree was not removed.` for a `failed` target, as for B-17's, and `Cache disposal at PATH: removed N cache paths; the worktree's removal is not proven.` for an `unknown` one, the stop block that follows giving the reason and the next step; one AND of "A merged worktree whose only ignored files are caches" locks the worktree after its stage | project-clean delta (ADDED human lines; "A merged worktree whose only ignored files are caches"); `design.md` D11; What Changes (What the person sees); Capabilities; Decisions (B-49) |
+| RB (fe5b245) MEDIUM-3: admitting `.pytest_cache` as B-23 recommended would delete by place, leave an untracked remnant after a stopped stage, never accept repositories that ignore it themselves, and force three carried scenarios, one of them lane 4's, to be reworded | MEDIUM | B-50: applied with change: the Open Question's recommendation is no for this change, with the four reasons and what a later change would need, RB's fixture run again on Git 2.43.0 (records in raw-byte order with `.gitignore` first, `? .pytest_cache/` once it is gone, and the one record `!! .pytest_cache/` where the repository ignores it); the committed text says "this repository among them" where the ruling names it, since B-23 names no repository in committed text; this round does not edit the pull request's description, which the ruling also names | Open Questions (`.pytest_cache`, and their introduction); What Changes (the allowlist); Out of Scope; Decisions (B-23, B-50); `design.md` Non-Goals, Risks, Migration Plan, Open Questions |
+| RB (fe5b245) LOW-1: nothing excludes a record path with an empty, `.` or `..` component or a leading `/`, so a walk written to the spec's words could open `..` | LOW | B-51: applied: such a record makes its candidate `cache-unverified` and the walk opens nothing; an AND of "A failed cache enumeration preserves the row, not the plan" for a record beginning `../` | project-clean delta (ADDED `cache-unverified`; "A failed cache enumeration preserves the row, not the plan"); `design.md` D3; What Changes (detection); Capabilities; Decisions (B-51) |
+| RB (fe5b245) LOW-2: B-20's premise is partly false: the access check sees a read-only filesystem, and a sticky directory is computable from what the walk reads | LOW | B-51: applied: design D3 states what was observed, `EROFS` from D3's access call on a read-only bind mount on Linux 6.18 with glibc 2.39, and B-20's decision is restated with a true reason, the refusals the plan cannot see (a sticky directory's rule, an append-only or immutable attribute, a security module, a change after the plan); behaviour does not change, since a sticky target fails closed with nothing deleted and is no safety gap; beyond the lines named, the review-safety delta's ADDED sentence on a refused first removal says "a filesystem made read-only after the plan" | review-safety delta (ADDED paragraph on the outcome after the first removal); `design.md` Context, D3, D8, Risks; What Changes (Failure and recovery); Decisions (B-20, B-51) |
+| RB (fe5b245) LOW-3: the carried batch sentence makes every timed-out filesystem read leave the plan incomplete, which the cache walk's reads do not | LOW | B-51: applied: one clause after change 1's "as for every other filesystem read", "except a read of the cache walk that times out, which leaves its row `cache-unverified` and the plan complete", change 1's words kept | project-clean delta (MODIFIED "Clean previews and applies a batch of eligible worktree removals in one repository"); Capabilities; Decisions (B-51) |
+| RB (fe5b245) LOW-4: the digest is silent on entry counts, so `--expect-plan` accepts more entries than the preview showed | LOW | B-51: applied: design D5 states by decision that the digest covers each target's disposal decision and not its entry counts or bytes, since caches change between preview and apply, and that the apply's caps bound the difference | `design.md` D5; Decisions (B-51) |
+| RB (fe5b245) LOW-5: two ambiguities, a name that is not valid UTF-8 inside a listed `__pycache__`, and an open refused for a symbolic link at plan time | LOW | B-51: applied, fail-closed: such an entry is blocking, its listed directory with it; such an open makes the row `cache-unverified`, not blocking; ANDs of "A symlink named like a cache is never disposable" and "A failed cache enumeration preserves the row, not the plan" | review-safety delta (ADDED first paragraph; "A symlink named like a cache is never disposable"); project-clean delta (ADDED `cache-unverified`; "A failed cache enumeration preserves the row, not the plan"); `design.md` D2, D3; What Changes (the allowlist); Capabilities; Decisions (B-51); CD-8 |
+| RD (fe5b245) M2: `tasks.md` 2.1 proves the re-check of the blocks written on PR #19's text by `validate` alone, which sees no dropped sentence, so if PR #19 closes this change's archive would write PR #19's unratified text | MEDIUM | B-52: applied with change: 2.1 re-bases the two blocks written on PR #19's text on change 1's text at main if PR #19 closes unmerged, and verifies every block written on change 1's or PR #19's text by a `diff -u` against the archived requirement showing additions only, a re-base that changes this change's added text going back to Brett Heap, `validate` a second check; the ruling names "#27's `project-command` block", and this change has none, so the two blocks written on PR #19's text are read for it | `tasks.md` 2.1; Dependencies and Sequencing; `design.md` Migration Plan; Decisions (B-52) |
