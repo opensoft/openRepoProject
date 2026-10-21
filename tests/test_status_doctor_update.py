@@ -46,8 +46,9 @@ NO_IDENTITY = "no GitHub repository identity to match a parked record"
 TOO_OLD = TEXT["inspection_git_too_old"].format(VERSION="2.35.0")
 NOT_FOUND = TEXT["inspection_git_unavailable"].format(DETAIL=TEXT["git_unavailable_not_found"])
 
-# The commands status, doctor and update run, all read-only probes (D6).
-READ_ONLY = {"--version", "rev-parse", "worktree", "for-each-ref", "status", "remote"}
+# The commands status, doctor and update run, all read-only probes (D6), row
+# 4c's `config --file ... --get` among them (Brett Heap's ruling LQ-11).
+READ_ONLY = {"--version", "rev-parse", "worktree", "config", "for-each-ref", "status", "remote"}
 
 
 def real_version():
@@ -406,6 +407,30 @@ class StatusDoctorUpdateTests(clean_support.CleanCase):
             self.assertEqual(checks(result.document, "error"),
                              [{"level": "error", "check": str(leg),
                                "detail": "inspection-error (os-error): " + message}])
+
+    def test_status_a_leg_manifest_that_does_not_load_reads_as_one_that_does_not_parse(self):
+        # Lane 3's US7/US9 M-1, lead ruling R-101 (e); pc "Inspect and
+        # diagnose": status and doctor "SHALL NOT refuse for ... a repository
+        # they cannot inspect". Every inspected repository's manifest is now
+        # read for its merge target, a leg's included, and PyYAML raises
+        # ValueError, not a YAMLError, for an impossible date. status, doctor
+        # and update treat that manifest exactly as one that does not parse,
+        # where c9103ba printed a traceback and exited 1.
+        root = self.project("Atlas", [("spec", "spec")])
+        leg = self.repo("Atlas/spec")
+        manifest = leg / "project.yaml"
+        runs = {}
+        for label, text in (("does not parse", "kind: [unclosed\n"),
+                            ("does not load", "kind: project-manifest\nreleased: 2021-02-30\n")):
+            manifest.write_text(text)
+            for name in ("status", "doctor", "update"):
+                result = self.run_cli(name, root, "--json")
+                runs[label, name] = (result.returncode, result.stdout, result.stderr)
+        for name in ("status", "doctor", "update"):
+            with self.subTest(command=name):
+                self.assertNotIn("Traceback", runs["does not load", name][2])
+                self.assertEqual(runs["does not load", name], runs["does not parse", name])
+        self.assertEqual([runs["does not load", name][0] for name in ("status", "update")], [0, 0])
 
     @clean_support.linux_paths
     def test_status_json_paths_carry_their_flags(self):
