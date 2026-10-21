@@ -112,12 +112,16 @@ region `evidence` (evidence follow-up 2, merged as `a5156a5`; lead ruling
 R-81 (a)). The comparison is among the present rows one `worktree_rows()`
 call inspects together, before any status probe, so that neither twin is
 probed; in single mode `match_target()` matches P against the whole
-registry by realpath, so P's twins are among P's rows. It leaves two
-residuals: a twin made after planning, which revalidation does not see,
-since it rebuilds the target's row alone, goes to US6 (R-81 (a): a fresh
-registry read showing another present entry with the target's realpath
-or admin id gives `identity-changed`); and a twin past the row cap is not
-compared, the plan being `inspect-cap` anyway.
+registry by realpath, so P's twins are among P's rows. A twin made after
+planning is seen at revalidation, which US6 built as `registry_twin()`, step
+5 of the table in "Revalidation step and `probes_performed`" below (lead
+rulings R-81 (a) and R-89 (a)): every entry of the fresh registry listing,
+a row past the cap included, is read as `worktree_rows()` reads a row and
+compared by `shared_identities()`, by realpath and by admin id, since a twin
+whose `.git` is a symbolic link can share an admin id without sharing a
+realpath, and a present entry sharing a checked row's realpath or admin id
+gives `identity-changed`. One residual remains: at planning, a twin past the
+row cap is not compared, the plan being `inspect-cap` anyway.
 
 ### Branch evidence (D6, D7)
 
@@ -356,7 +360,7 @@ target:
 | 2. the manifest re-read | filesystem | `state-changed` (manifest or merge target) |
 | 3. the registry listing | Git child | `identity-changed` (registration, or a missing entry); `state-changed` (lock) |
 | 4. the narrowed ref listing | Git child | `branch-changed` (branch name or head); `state-changed` (upstream, `upstream_oid`, `ahead`, `behind`, merge target) |
-| 5. the target's identity and `modules` check | filesystem | `identity-changed`; `contains-submodule` (a `modules` entry) |
+| 5. the target's identity, a twin of a checked row, and the `modules` check | filesystem | `identity-changed` (the identity, or another present entry of the fresh registry listing sharing a checked row's realpath or admin id, `registry_twin()`; R-81 (a)); `contains-submodule` (a `modules` entry) |
 | 6. the combined status probe in the target, which must print nothing | Git child | `state-changed` |
 | 7. the hidden-state probe | Git child | `contains-submodule` (a gitlink); `hidden-local-state` |
 
@@ -369,7 +373,11 @@ and the final rescan up to 6, a fill of the `project-clean` delta's bound
 (its `spec.md:825-826`; lead ruling R-82 (c), lane 3's LOW-4). A value
 null in the plan and null again is no difference; a value that cannot be
 re-read, a timed-out call included, is a difference, with its step's
-reason. The first
+reason. A read the work deadline cut is none: `revalidate()` returns its
+distinct `deadline-exceeded`, and that target and every later one are
+`not-attempted` with that reason and no reconciliation (T099; lead ruling
+R-80 P-2), `registry_twin()` giving it too when the deadline cut one of its
+reads, so that no twin goes unread for want of time. The first
 target's revalidation is the preflight of every selected target: its steps 3
 and 4 and its filesystem reads compare every selected target's registration,
 `locked` and filesystem identity, branch tip and upstream object, beside the

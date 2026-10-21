@@ -1614,39 +1614,49 @@ non-blocking single-mode notes are T075's; and until T066, a merged branch
 with no commit of its own is still selectable, so quickstart.md's User Story
 1 preview shows `Selected (4)` here. The removal path carried six more,
 each assigned to its task (lead ruling R-76 (b), lane 3's M-1), the first
-two losing work, and US4 adds a seventh. Rows 2 and 5 are CLOSED, since
-T084 and T085 have landed, and rows 1, 3, 4, 6 and 7 stay open until
-their tasks land (lead ruling R-82 (b), lane 3's LOW-2):
+two losing work, and US4 adds a seventh. The list is this checkpoint's
+snapshot, kept as it was; every row is now CLOSED, rows 2 and 5 by T084 and
+T085, and rows 1, 3, 4, 6 and 7 by the tasks named in each (lead rulings
+R-82 (b), lane 3's LOW-2, and R-91 LOW A):
 
-1. Open. A SIGINT, SIGTERM or SIGHUP during the apply phase does not stop
-   scheduling: later targets are still revalidated and removed, and the
-   run exits 130, 143 or 129 (T093; test T087).
+1. CLOSED by T093. A SIGINT, SIGTERM or SIGHUP during the apply phase did
+   not stop scheduling: later targets were still revalidated and removed,
+   and the run exited 130, 143 or 129 (T093; test T087); the slot is now
+   read before each revalidation and each spawn, and a set slot makes that
+   target and every later one `not-attempted` with `interrupted`.
 2. CLOSED by T084. Revalidation was T055's full re-read, with no
    `modules` check, no hidden-state probe, no `dev`, `ino`, `admin_id` or
    `upstream_oid` comparison and no preflight, so an assume-unchanged edit
    set at the question, or a copy put at P, was removed with exit 0 (T084;
    tests T079 to T083); each now refuses, exit 2, and nothing is removed.
-3. Open. No removal floor and no reserve: a removal is spawned however
-   little work time is left, and the rescan runs on the work deadline's
-   budget (T099 and T093; test T098).
-4. Open. An exception in the apply phase propagates instead of
-   reconciling (T093; test T089).
+3. CLOSED by T099 and T093. There was no removal floor and no reserve: a
+   removal was spawned however little work time was left, and the rescan
+   ran on the work deadline's budget (T099 and T093; test T098); the floor
+   is now read before each revalidation and again before the spawn, and the
+   rescan runs within the reserve, which counts from the removal's exit.
+4. CLOSED by T093. An exception in the apply phase propagated instead of
+   reconciling (T093; test T089); it now makes the target being handled
+   `unknown` with `internal-error`, and the record is printed.
 5. CLOSED by T085. The branch race after removal went undetected, a moved
    or deleted branch still giving `removed`; and a target was `removed`
    from its entry and path alone, even when the rescan's ref listing failed
    and `reconciled` was false (T085; test T083, and T085's own tests, lead
    ruling R-76 (a)).
-6. Open. No wait line, no `orphaned-directory` note and no recovery text
-   on a `partially-removed` target (T092, T093, T094).
-7. Open. A revalidation cut at the work deadline refuses its target with
+6. CLOSED by T092, T093 and T094. There was no wait line, no
+   `orphaned-directory` note and no recovery text on a `partially-removed`
+   target (T092, T093, T094).
+7. CLOSED by T099 (lead ruling R-80 P-2, with its floor and its deadline
+   cut). A revalidation cut at the work deadline refused its target with
    the reason of the step it cut, exit 2, where the delta gives
-   `not-attempted` with `deadline-exceeded`, exit 1; nothing is removed
-   either way (US6's T099; lead ruling R-80 P-2).
+   `not-attempted` with `deadline-exceeded`, exit 1; nothing was removed
+   either way. `revalidate()` now returns the distinct `deadline-exceeded`,
+   and the floor is read before each revalidation (T099; T098's
+   `test_clean_deadline_expiry_mid_batch`).
 
 None of this reaches `main`, since the feature ships as one pull request,
-which opens only when every task of 004 has landed, T092, T093 and T099
-among them, T084 and T085 having landed, and its body names that gate
-(R-76 (b)).
+which opens only when every task of 004 has landed, and its body names that
+gate (R-76 (b)); the gate's tasks, T084, T085, T092, T093 and T099, have
+all landed (lead ruling R-91 LOW A).
 
 ---
 
@@ -2533,15 +2543,22 @@ lead ruling R-83).
   target's stage follows the stage rule on that unfinished record,
   `unknown` with `reconciliation-incomplete` after exit 0, while a child that
   exited nonzero on its own stays `failed` (M17; lead ruling R-87 (c)); an
-  exception after the apply phase begins, in a target, its rescan, the final
-  rescan or the record's rendering, first waits for an in-flight removal, then
-  makes the target being handled `unknown` with `internal-error` (fields not
-  established null) and later targets `not-attempted`, and the record is still
-  printed, the exit by D19 (plan review M2); any rescan read that fails or
+  exception after the apply phase begins, in a target, its rescan or the
+  final rescan, first waits for an in-flight removal, then makes the target
+  being handled `unknown` with `internal-error` (fields not established
+  null) and later targets `not-attempted`, and the record is still printed,
+  the exit by D19 (plan review M2); a fault in rendering a progress line,
+  the human result or the record is no such exception: `best_effort()` drops
+  it, changing no stage and no exit, since rendering is not handling a
+  target and a proven removal stays proven, a fill of the `project-clean`
+  delta's `spec.md:938-941` and `:1020-1024` (contract, "Human output"; lead
+  rulings R-83 P-8, R-87 (c) and R-91 M-1); any rescan read that fails or
   times out, the registry listing, the ref listing, or an `lstat` that fails
-  other than with `ENOENT` or `ENOTDIR`, leaves the fields it reads null and gives
-  `reconciliation-incomplete`, except that a child killed at the ceiling
-  keeps `removal-ceiling` (T085's rule; lead ruling R-76 (a)); add the
+  other than with `ENOENT` or `ENOTDIR`, leaves the fields it reads null and
+  gives `reconciliation-incomplete` after exit 0, except that a child that
+  exited nonzero on its own stays `failed`, `decide_stage()` reading its
+  status first, and a child killed at the ceiling keeps `removal-ceiling`
+  (T085's rule; lead rulings R-76 (a) and R-91 LOW D); add the
   `orphaned-directory` note; guard every
   write of the record against `OSError`, the EIO a terminal may answer after
   SIGHUP. T087 to T090 pass.
@@ -2678,11 +2695,29 @@ statuses, the child counts and the order of what was cut.
   analyze M3); and `test_clean_budget_reports_the_values_in_force`
   (unscaled, `budget` holds 5, 60, 10, 5, 300 and 1, and `limits` 128 or 256,
   16, 64, 4096 and 8; under the launcher, `budget` shows the values of the
-  test's own table, the clause T005 leaves to this test, lead ruling R-39).
-  Scenarios: "Bounded revalidation work"; "Deadline expiry
-  mid-batch"; "Push refuses an incomplete inspection", its deadline clause.
+  test's own table, the clause T005 leaves to this test, lead ruling R-39);
+  `test_clean_deadline_expiry_mid_batch_a_rescan_read_cut_at_the_deadline`
+  (launcher; a table with a 3 s deadline, a 1 s reserve and a 0.5 s floor, the
+  `slow-after-remove` fake, the removal slowed past the planned end of the
+  reserve: the reserve counts from its exit, and the rescan's registry
+  listing, which the fake hangs, is cut at the reserve's end, so the target
+  is `unknown` with `reconciliation-incomplete`, `exit_status` 0 and every
+  reconciliation field null, the rescan's children the identity probe and the
+  registry listing only, the wait line printed once, the branch kept, exit 1;
+  lead rulings R-82 (d) and R-89 (a)); and
+  `test_clean_admin_registration_changed_a_twin_made_after_planning` (in
+  process, two subtests, a twin of the first target and of the second: at the
+  question, a copy of the target's admin directory whose `gitdir` names it
+  through a symbolic link is added to the registry, so that both entries pass
+  the two-way check with one admin id; the first target is `refused` with
+  `identity-changed` and the second `not-attempted` with `batch-stopped`,
+  exit 2 and nothing removed, the second target's twin found by the first
+  target's preflight; lead rulings R-81 (a), R-41 and R-89 (a)). Scenarios:
+  "Bounded revalidation work"; "Deadline expiry mid-batch"; "Push refuses an
+  incomplete inspection", its deadline clause; "Admin registration changed",
+  its twin case (lead ruling R-91 M-2).
   — files: `tests/test_clean_bounds.py`
-  — verify: `python3 -c "import sys,unittest as u;L=u.defaultTestLoader;f=lambda s:[i for t in s for i in (f(t) if isinstance(t,u.TestSuite) else [t.id()])];I=[i for i in f(L.discover('tests',pattern=sys.argv[1])) if not i.startswith('unittest.')];A=sys.argv[2:];M=[a for a in A if not any(a in ('*',i.split('.')[-1]) for i in I)];[print('not collected:',m) for m in M];[print(e) for e in L.errors];sys.exit(1 if M or L.errors or not A else 0)" test_clean_bounds.py 'test_clean_bounded_revalidation_work' 'test_clean_deadline_expiry_mid_batch' 'test_clean_push_refuses_an_incomplete_inspection_deadline' 'test_clean_budget_reports_the_values_in_force'`
+  — verify: `python3 -c "import sys,unittest as u;L=u.defaultTestLoader;f=lambda s:[i for t in s for i in (f(t) if isinstance(t,u.TestSuite) else [t.id()])];I=[i for i in f(L.discover('tests',pattern=sys.argv[1])) if not i.startswith('unittest.')];A=sys.argv[2:];M=[a for a in A if not any(a in ('*',i.split('.')[-1]) for i in I)];[print('not collected:',m) for m in M];[print(e) for e in L.errors];sys.exit(1 if M or L.errors or not A else 0)" test_clean_bounds.py 'test_clean_bounded_revalidation_work' 'test_clean_deadline_expiry_mid_batch' 'test_clean_push_refuses_an_incomplete_inspection_deadline' 'test_clean_budget_reports_the_values_in_force' 'test_clean_deadline_expiry_mid_batch_a_rescan_read_cut_at_the_deadline' 'test_clean_admin_registration_changed_a_twin_made_after_planning'`
 
 ### Implementation for User Story 6
 
@@ -2703,11 +2738,24 @@ statuses, the child counts and the order of what was cut.
   phase gets `min(5 s, reserve remaining)`, per D9 (`child_budget()`, the
   `Invocation`'s phase deciding; lead ruling R-89 (c));
   `apply_removals()` spawns a removal only while the 5 s floor of work remains,
+  read before each target's revalidation and again just before its spawn,
   else that target and every later one are `not-attempted` with
-  `deadline-exceeded` and `reconciliation: null`; a removal running at the
-  deadline is waited for, and the reserve counts from its exit.
+  `deadline-exceeded` and `reconciliation: null`, as is a target whose
+  revalidation read the work deadline cut, `revalidate()` returning its
+  distinct `deadline-exceeded`, where a `timeout` stays a difference (T084;
+  lead ruling R-80 P-2); `revalidation_difference()`'s step 5 gains
+  `registry_twin()`, which reads every entry of the fresh registry listing, a
+  row past the cap included, as `worktree_rows()` reads a row, compares them
+  by `shared_identities()`, and gives `identity-changed` for a present entry
+  that shares a checked row's realpath or admin id and `deadline-exceeded`
+  when the deadline cut one of its reads (lead rulings R-81 (a) and R-89
+  (a)); a removal running at the deadline is waited for, and the reserve
+  counts from its exit. T098's
+  `test_clean_deadline_expiry_mid_batch_a_rescan_read_cut_at_the_deadline`
+  and `test_clean_admin_registration_changed_a_twin_made_after_planning`
+  pin the cut rescan and the twin (lead ruling R-91 M-2).
   — files: `project`, `tests/clean_support.py`
-  — verify: `python3 -c "import sys,re;t=open('project').read();A=sys.argv[1:];c=lambda r:t.split('# region '+r+'\n')[1].split('# endregion '+r+'\n')[0];M=[a for a in A if not ((a.split('%',1)[1] not in c(a.split('%',1)[0])) if '%' in a else (a.split('~',1)[1] in c(a.split('~',1)[0])) if '~' in a else re.search(r'^[a-z]*\s?'+re.escape(a.split(':',1)[1])+r'\b',c(a.split(':',1)[0]),re.M))];[print('region check failed:',m) for m in M];sys.exit(1 if M or not A else 0)" 'apply~removal_floor' && python3 project clean --help >/dev/null && python3 -c "import sys;sys.path.insert(0,'tests');import clean_support as c;t=c.load_project().TEXT['note_deadline_exceeded'];f=c.TEXT_FIXTURES['note_deadline_exceeded'];print('note_deadline_exceeded:',t);sys.exit(1 if 'unprobed' in t+f else 0)" && python3 -m unittest discover -s tests -p 'test_clean_harness.py' -k '*.test_clean_text_fixtures_equal_the_contract_table'`
+  — verify: `python3 -c "import sys,re;t=open('project').read();A=sys.argv[1:];c=lambda r:t.split('# region '+r+'\n')[1].split('# endregion '+r+'\n')[0];M=[a for a in A if not ((a.split('%',1)[1] not in c(a.split('%',1)[0])) if '%' in a else (a.split('~',1)[1] in c(a.split('~',1)[0])) if '~' in a else re.search(r'^[a-z]*\s?'+re.escape(a.split(':',1)[1])+r'\b',c(a.split(':',1)[0]),re.M))];[print('region check failed:',m) for m in M];sys.exit(1 if M or not A else 0)" 'apply~removal_floor' 'apply:registry_twin' && python3 project clean --help >/dev/null && python3 -c "import sys;sys.path.insert(0,'tests');import clean_support as c;t=c.load_project().TEXT['note_deadline_exceeded'];f=c.TEXT_FIXTURES['note_deadline_exceeded'];print('note_deadline_exceeded:',t);sys.exit(1 if 'unprobed' in t+f else 0)" && python3 -m unittest discover -s tests -p 'test_clean_harness.py' -k '*.test_clean_text_fixtures_equal_the_contract_table' && python3 -m unittest discover -s tests -p 'test_clean_bounds.py' -k '*.test_clean_deadline_expiry_mid_batch_a_rescan_read_cut_at_the_deadline' -k '*.test_clean_admin_registration_changed_a_twin_made_after_planning'`
 - [x] T100 [US6] [O] Fill `deferral_gate` (region `gates`; D12, FR-032): the first
   16 rows that pass gates 1 to 7, in canonical order, go on to the index gates,
   and the rest are excluded as `deferred-target-cap`; in region `preview`,
