@@ -253,7 +253,7 @@ remains only for such a caller (lead rulings R-71 (b) and R-72 (g)).
 | --- | --- | --- | --- |
 | `report` | every other invocation without `--all-safe`: plain `project clean`, with or without `--json`, and flags without `--apply` | 256 | what `--all-safe` would select at 128 rows or fewer; null above 128, with the note `inspect-cap` and `rows` |
 | `all-safe` | `--all-safe`, preview or `--apply` | 128 | every row passing every gate, at most 16 |
-| `single` | `--apply --action remove --worktree P` | 128, P exempt and probed first, unless a realpath read fails (below) | P alone |
+| `single` | `--apply --action remove --worktree P` | 128, P exempt, its row and gates first, unless a realpath read fails (below) | P alone |
 | `single`, push and delete-branch | `--apply --action push` or `--action delete-branch`, which take single mode's cap and bounds only (below) | 128, no exemption | the named branch; completeness the batch's |
 
 `clean_mode(args)` (T035) decides the mode as this table spells it: `single`
@@ -292,10 +292,19 @@ R-78 (b)), or the deadline passed while planning (`deadline-exceeded`), each
 row it stopped being `inspection-error` with a `deadline-exceeded` row error,
 never left unprobed (lead rulings R-67 (a) and R-69; T099). In single mode
 those three are non-blocking notes about other rows, and only P's own row,
-P's match and the repository-wide probes decide (D13; lane 3's L-7). In
-report mode above 128 rows, the `inspect-cap` note alone does not make it
-incomplete. `apply_allowed` is false for every report and for any plan that
-is incomplete or carries a refusal.
+P's match and the repository-wide probes decide (D13; lane 3's L-7). P's
+row is established first there, its status probe then its gates, before any
+other row is inspected, which is how D13's "inspects P's row first:
+identity, status probe, gates" is built, a fill of FR-013's "probed first":
+a work deadline reached among the other rows leaves P's row decided and the
+plan complete (lead ruling R-93 (d)). When P's match is undecided, none of
+the three notes is recorded, since each says that rows "do not block" P
+beside the plan's refusal of P, `inspection-incomplete`, which speaks alone;
+a P that matches several entries is decided, so the notes stay (lead
+rulings R-93 (e) and R-94 (b)). In report mode above 128 rows, the
+`inspect-cap` note alone does not make it incomplete. `apply_allowed` is
+false for every report and for any plan that is incomplete or carries a
+refusal.
 
 Push and delete-branch take single mode's 128-row cap and bounds only:
 their completeness is the batch's, so any `inspection-error` row, the cap
@@ -646,7 +655,9 @@ ruling R-82 (a), lane 3's LOW-6):
   `branch_present` and `branch_sha` still show the branch.
 
 Later targets take `interrupted` after a signal, `deadline-exceeded` when
-the floor or deadline stopped the run, and `batch-stopped` otherwise.
+the floor stopped the run or a revalidation read was cut at the work
+deadline, and `batch-stopped` after a target that ended otherwise, a rescan
+cut at the reserve's end included (lead ruling R-93 (e), lane 3's LOW-6).
 
 ## Exit statuses
 

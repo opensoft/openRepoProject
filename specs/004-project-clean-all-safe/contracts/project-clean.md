@@ -78,8 +78,11 @@ than the cap's 128, and the run refuses with `inspection-incomplete`, exit 2
 4. The manifest read at `root`, row 6, and the merge target over row 6's
    listing: `manifest-invalid`, `no-merge-target`.
 5. Planning under the deadline (row 7, then each row in order; in
-   single mode P is matched first, `worktree-not-found` if absent, and
-   probed first), the gates and the deferral, then `plan_digest`.
+   single mode for `--action remove` P is matched first,
+   `worktree-not-found` if absent, and its row is established first, its
+   status probe then its gates (1 to 7, the deferral with P alone, 9 and
+   10), before any other row is inspected; then the other rows in order and
+   their gates), then `plan_digest`.
 6. Plan checks, in this order: an incomplete plan (a preview or report exits
    1; with `--apply`, exit 2 before any question, coded
    `inspection-incomplete`, `inspect-cap` or `deadline-exceeded`); an
@@ -106,6 +109,20 @@ call, which runs rows 4, 6 and 7 and reads the manifest at `root`, and only
 then checks `root` and `common_dir` for UTF-8, before the merge target's
 own refusals (`manifest-invalid`, `no-merge-target`) and before any plan or
 digest, no row being probed (lead rulings R-80 P-13 and R-92 (d)).
+
+In single mode, step 5's order is design D13's, "inspects P's row first:
+identity, status probe, gates" (`design.md:594-599`), which the delta's "P
+SHALL be probed first" (its `spec.md:262-263`) and FR-013's "probed first"
+say in short: a fill, not a departure. `build_plan()` runs gates 1 to 7,
+gate 8 (P alone) and gates 9 and 10 over P's row, gate 10's `ls-files`
+included, right after it builds that row and before `worktree_rows()` takes
+any other row, and no gate reads another row to decide P. A work deadline
+reached among the other rows then leaves P's row decided and the plan
+complete beside the non-blocking note `deadline-exceeded`, and the apply
+phase's removal floor gives P `not-attempted` with `deadline-exceeded`,
+exit 1 (D19, row 2); a deadline that cuts P's own read leaves P's row
+incomplete, refused with `inspection-incomplete` (lead ruling R-93 (d);
+T070's `test_clean_single_target_a_deadline_among_other_rows_leaves_p_decided`).
 
 ## Resolution (FR-016, FR-017; D8)
 
@@ -179,7 +196,7 @@ message}` objects, an `inspect-cap` note adding `rows`.
 | "D18 empty line" | `No eligible worktrees` |
 | "D18 question", "D18 wait line" | above; the wait line once, at the first signal or deadline during a removal (D9) |
 | "D18 success line", "D18 stop block" | the result; the stop block names the retained branches and the residual window |
-| "D18 partial-removal note" | under the `dirty` advice of a row, or on a `partially-removed` target |
+| "D18 partial-removal note" | in three places (lead ruling R-79 P-11): in the report, on the line right after the row's recommendation line, two spaces in; in the preview, right after the row of the `dirty` group, six spaces in; in the result, first, before the stop block, one line per `partially-removed` target in canonical order, its path in the command form |
 | "D18 refusal messages", "D18 remedies" | `target-excluded` (the current-worktree and class messages kept), gates, and the plan-blocking remedies |
 
 Lines D18 leaves open are fixed here before tasks: the `Report:` and
@@ -209,7 +226,8 @@ R-56's); one progress line per target, printed at its final stage,
 Q-10); "D18 success line" followed by "D18 residual-window line", as the
 stop block is (R-56 Q-9): a stopped run's human result is the stop block,
 then `Branches kept:`, then "D18 residual-window line", D18's order
-(`design.md:765-767`), the residual window being the result's too (the
+(`design.md:765-767`), the partial-removal notes printing before the stop
+block (R-79 P-11, above), the residual window being the result's too (the
 `project-clean-review-safety` delta's `spec.md:208-209`), which is how the
 `project-clean` delta's "SHALL end its human result with `Stopped at ...`"
 (its `spec.md:962-964`) is read (lead ruling R-76 (d)); the retained-branch
@@ -334,7 +352,7 @@ are closed within the version.
 | `selected` | array in canonical order, or null in a report above 128 rows; each entry: `path`, `path_valid_utf8`, `branch`, `head`, `upstream`, `upstream_oid`, `ahead`, `behind`, `dev`, `ino`, `admin_id`, `locked`, the baseline signature fields (`present`, `dirty`, `ignored_files`, `remote_present`, `merged_into_target`, `current`, `classification`), and `operation` (`{kind: "worktree-remove", argv}`, the exact argument vector) |
 | `excluded` | array in canonical order: `path`, `path_valid_utf8`, `branch` (or null), `classification` (or null when never classified), `reason` (a string, the first failing gate, never null: a row left unprobed, its reflog read not finished within the filesystem budget, is `reflog-unavailable`, keeps its classification and makes the plan incomplete with `inspection-incomplete`; lead ruling R-67 (a), withdrawing R-56's null) |
 | `omitted` | `{count, exactness: "exact"}` |
-| `notes` | `{code, message}` objects; `merge-target-conflict`; in single mode the non-blocking `inspection-incomplete`, `inspect-cap`, `deadline-exceeded`; in a report above 128 rows `inspect-cap` with `rows` |
+| `notes` | `{code, message}` objects; `merge-target-conflict`; in single mode the non-blocking `inspection-incomplete`, `inspect-cap`, `deadline-exceeded`, none of them when P's match is undecided (below); in a report above 128 rows `inspect-cap` with `rows` |
 | `completeness` | `complete` or `incomplete` |
 | `apply_allowed` | false for every report, and for any incomplete or refused plan |
 | `refusals` | refusal objects |
@@ -399,9 +417,9 @@ R-48).
 | Code | Kind | Message |
 | --- | --- | --- |
 | `merge-target-conflict` | plan note | `The manifest names NAME and origin/HEAD names OTHER; NAME is the merge target.` |
-| `inspection-incomplete` | plan note, single mode | `K other rows are inspection-error or were left unprobed; they do not block PATH.` |
-| `inspect-cap` | plan note, single mode | `K rows past the row cap of M were not inspected; they do not block PATH.` |
-| `deadline-exceeded` | plan note, single mode | `K rows were stopped at the work deadline; they do not block PATH.` (lead ruling R-75 (g); T099) |
+| `inspection-incomplete` | plan note, single mode, not when P's match is undecided | `K other rows are inspection-error or were left unprobed; they do not block PATH.` |
+| `inspect-cap` | plan note, single mode, not when P's match is undecided | `K rows past the row cap of M were not inspected; they do not block PATH.` |
+| `deadline-exceeded` | plan note, single mode, not when P's match is undecided | `K rows were stopped at the work deadline; they do not block PATH.` (lead ruling R-75 (g); T099) |
 | `inspect-cap` | plan note, report above 128 rows, beside `rows` | `N rows exceed the --all-safe row cap of M; --all-safe would be incomplete (inspect-cap).` |
 | `os-error` | row error | `OPERATION failed: STRERROR`, STRERROR the error number's text |
 | `probe-failed` | row error | `OPERATION failed: DETAIL`, DETAIL one of `exit N`, `signal N`, `cannot spawn (STRERROR)`, `unparseable output` |
@@ -417,6 +435,15 @@ carrying the unprobed marker, which only T066's reflog read past its
 filesystem budget sets (lead rulings R-67 (a), R-69 and R-75 (g)). T099
 decides which single-mode note counts them, and brings the `deadline-exceeded`
 note's `TEXT` key and its fixture to the message above.
+
+When P's match is undecided, none of the three single-mode notes is recorded:
+each says that rows "do not block PATH" beside the plan's refusal of P,
+`inspection-incomplete`, which speaks alone, and the `inspect-cap` note would
+count P among the rows past the cap. A P that matches several entries is a
+decided match, so the notes about the other rows stay beside its refusal
+(lead rulings R-93 (e) and R-94 (b); T069's
+`test_clean_single_target_p_s_own_realpath_unread_keeps_the_cap` pins it at the
+real cap of 128).
 
 A doctor row (`level`, `check`, `detail`) has no code field, so doctor's `git`
 row writes its detail as `CODE: MESSAGE`, such as `git-too-old: Git 2.35.0 is
