@@ -253,9 +253,9 @@ repository's main worktree. After the header (`Cleanup plan for ROOT`, `Merge
 target: NAME (SOURCE)`, `Freshness:`) it prints `Selected (N):` with one
 `  remove PATH [BRANCH]` line for each worktree a batch would remove, then
 `Excluded (M):` with a group `  REASON (K): NEXT STEP` for each reason and its
-worktrees beneath, then, when a worktree is selected, `Not protected: ...` (see
-"What is guaranteed"). When a complete plan selects nothing it prints `No
-eligible worktrees` and exits 0.
+worktrees beneath (each heading prints only when it has rows), then, when a
+worktree is selected, `Not protected: ...` (see "What is guaranteed"). When a
+complete plan selects nothing it prints `No eligible worktrees` and exits 0.
 The plain report adds `Report: complete` or `Report: incomplete (CODES)` and
 `--all-safe would select N`. A plain report inspects up to 256 worktrees and
 `--all-safe` up to 128; a report of more than 128 says `--all-safe would be
@@ -285,16 +285,22 @@ for `--action push` and `--action delete-branch`. `--apply --action remove
 --worktree P` gives the one worktree P the same gates and checks, asks the same
 question and takes `--yes` and `--json`; it prints the other worktrees as
 `not-requested`, a gate that excludes P refuses with `target-excluded`, exit 2,
-and no match is `worktree-not-found`. The `target-excluded` message is `Worktree
-is excluded: REASON; NEXT STEP` for a gate, and the older wording, with no next
-step, for the current worktree (`Cannot remove the current worktree.`) and for a
-class that is not removable (`Worktree is CLASS; only clean merged worktrees may
-be removed.`).
+and no match is `worktree-not-found`. This mode differs on completeness: P's row
+and its gates come first, and only the repository-wide evidence and P's own row
+must be complete. Another row's inspection error, rows past the cap of 128 and
+rows the deadline stopped are noted and do not block P. If the deadline has
+passed, P is `not-attempted` (`deadline-exceeded`) and the run exits 1. The
+`target-excluded` message is `Worktree is excluded: REASON; NEXT STEP` for a
+gate, and the older wording, with no next step, for the current worktree
+(`Cannot remove the current worktree.`) and for a class that is not removable
+(`Worktree is CLASS; only clean merged worktrees may be removed.`).
 
 With `--json`, a report or preview prints one JSON document (`mode`,
 `selected`, `excluded`, `completeness`, `apply_allowed`, `plan_digest`, and
-more), and `--apply --json` prints one document, the result record below, with
-the plan, the question and the progress on standard error. A refusal under
+more), and `--apply --json` prints one document: the result record below once
+the apply phase has begun, otherwise the plan (or the error object) with its
+refusal. The plan, the question and the progress go to standard error. An empty
+plan, `No eligible worktrees`, is no refusal and exits 0. A refusal under
 `--json` is a JSON document with its `code`, not a `REFUSED:` line.
 
 ### Pin a preview with `--expect-plan`
@@ -343,8 +349,8 @@ classification, one gate, and only a `merged-removable` row passes it.
 `not-requested` applies to `--worktree P` only. `unstarted-branch` and
 `reflog-unavailable` come from the branch's reflog, read from the filesystem.
 `contains-submodule` and `hidden-local-state` read the worktree's own index (a
-gitlink or `modules` entry; an assume-unchanged or skip-worktree flag), for the
-16 worktrees a run can take.
+gitlink; an assume-unchanged or skip-worktree flag) and its administrative
+directory (a `modules` entry), for the 16 worktrees a run can take.
 
 A run removes at most 16 worktrees. Further eligible worktrees show as
 `deferred-target-cap`, and each run plans afresh, so run the same command again
@@ -385,6 +391,10 @@ Stopped at PATH (REASON). Removed K of N. Not attempted: P1, P2. Next: project c
 Branches kept: B1, B2.
 ```
 
+A branch that read absent after its removal, or was not read back, is left out
+of that line and listed on its own, `Branches not confirmed: B1.`, and the kept
+line reads `Branches kept: none.` when no branch is left.
+
 The run stops at the first target that does not end as a plain `removed`, and
 every later target is `not-attempted`. The `Next:` command is a preview, not an
 apply: run it, read what changed, then apply again; nothing from the stopped run
@@ -401,11 +411,11 @@ recorded, and when a signal or the deadline arrives during a removal, `Waiting
 for git worktree remove PATH to finish; a started removal is never interrupted
 (at most 300 s).` prints once and the removal is waited for. After a signal,
 later targets are `not-attempted` (`interrupted`) and the run exits 130, 143
-(SIGTERM) or 129 (SIGHUP); after the deadline they are `not-attempted`
-(`deadline-exceeded`) and it exits 1. At 300 s the removal is killed, and its
-target is `removed` or `unknown` with reason `removal-ceiling` by what a rescan
-finds, exit 1. A removal that Git refuses or fails ends the run with Git's own
-status.
+(SIGTERM) or 129 (SIGHUP); once less than 5 s of work time is left, later
+targets are `not-attempted` (`deadline-exceeded`) and the run exits 1. At 300 s
+the removal is killed, and its target is `removed` or `unknown` with reason
+`removal-ceiling` by what a rescan finds, exit 1. A removal that Git refuses or
+fails ends the run with Git's own status.
 
 A removal killed at the ceiling, or whose exit was not seen, can leave the
 worktree's registry entry or directory behind. The note `Probable partial
