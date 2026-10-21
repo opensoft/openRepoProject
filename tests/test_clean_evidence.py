@@ -37,6 +37,17 @@ ROW_3 = ["rev-parse", "--path-format=absolute", "--show-toplevel", "--git-common
          "--show-superproject-working-tree"]
 ROW_4 = ["worktree", "list", "--porcelain", "-z"]
 ROW_4B = ["config", "--get", "core.worktree"]
+
+
+def row_4c(common):
+    """Row 4c after `-C DIR` (design D6; Brett Heap's ruling LQ-11): the
+    extension read from the common directory's own `config` file."""
+    return ["config", "--file", os.path.join(str(common), "config"), "--type=bool", "--get",
+            "extensions.worktreeConfig"]
+
+
+# A linked worktree's effective-work-tree probe after `-C WORKTREE` (D7, LQ-11).
+WORK_TREE_PROBE = ["rev-parse", "--path-format=absolute", "--show-toplevel"]
 ROW_6 = ["for-each-ref", "--format=%(refname)%00%(objectname)%00%(symref)%00%(upstream)"
          "%00%(upstream:short)%00%(upstream:track,nobracket)", "refs/heads", "refs/remotes"]
 STATUS = ["status", "--porcelain=v1", "-z", "--untracked-files=normal", "--ignored=matching"]
@@ -441,9 +452,9 @@ class EvidenceTests(clean_support.CleanCase):
         self.assertEqual((result.stdout, result.stderr),
                          ("", "REFUSED: " + TEXT["target_not_repository_root"].format(PATH=tree) + "\n"))
         self.assertEqual([command(record)[1:] for record in records if command(record)[:1] == ["-C"]],
-                         [[str(tree), *ROW_3], [str(tree), *ROW_4], [common, *ROW_6],
+                         [[str(tree), *ROW_3], [str(tree), *ROW_4], [common, *row_4c(common)], [common, *ROW_6],
                           [common, "for-each-ref", f"--merged={head}", "--format=%(refname)", "refs/heads"]],
-                         "rows 3 and 4 where the argument resolves; rows 6 and 7 in the common directory")
+                         "rows 3 and 4 where the argument resolves; rows 4c, 6 and 7 in the common directory")
         self.assertEqual(self.status_dirs(records), [])
         self.assert_pinned(records)
 
@@ -657,7 +668,7 @@ class EvidenceTests(clean_support.CleanCase):
         # D7, FR-055; R-57 L3 and R-59 D5: the two-way check over realpaths
         # already read, a shared registry path disagreeing whatever was read.
         common, worktrees, admin, dotgit = b"/r/.git", b"/r/.git/worktrees", b"/r/.git/worktrees/wt", b"/w/wt/.git"
-        holds = {"worktrees": worktrees, "back": dotgit, "dotgit": dotgit}
+        holds = {"worktrees": worktrees, "back": dotgit, "dotgit": dotgit, "commondir": common}
         self.assert_decides(project.registration_verdict, [
             ("main, .git the common directory", (True, common, None), {"dotgit": common}, (True, None)),
             ("main, a gitfile naming it", (True, common, common), {}, (True, None)),
@@ -671,6 +682,12 @@ class EvidenceTests(clean_support.CleanCase):
              (False, None)),
             ("linked, its gitdir file naming another .git", (False, common, admin),
              dict(holds, back=b"/w/other/.git"), (False, None)),
+            # R-125: Git takes the worktree's common directory from its commondir.
+            ("linked, its commondir naming another repository", (False, common, admin),
+             dict(holds, commondir=b"/x/.git"), (False, None)),
+            ("linked, no commondir file: its admin directory", (False, common, admin), dict(holds, commondir=admin),
+             (False, None)),
+            ("linked, its commondir not read", (False, common, admin), dict(holds, commondir=None), (False, None)),
             ("linked, a shared path", (False, common, admin), dict(holds, shared=True), (False, None)),
             ("main, a shared path", (True, common, common), {"shared": True}, (False, None)),
             ("a shared path, nothing read", (False, common, None), {"shared": True}, (False, None)),
@@ -1079,6 +1096,154 @@ class EvidenceTests(clean_support.CleanCase):
             self.assertEqual(self.status_dirs(records), sorted(map(str, (root, first))),
                              "no status probe at the swapped path")
             self.assertTrue((aside / "uncommitted").exists(), "nothing was removed")
+
+    def decoy_of(self, tree):
+        """self.base/decoy: a plain directory holding a copy of each file the
+        worktree at tree tracks, and nothing else, so that it reads clean."""
+        decoy = self.base / "decoy"
+        decoy.mkdir()
+        for name in self.git(tree, "ls-files", "-z").split("\0"):
+            if name:
+                shutil.copy2(tree / name, decoy / name)
+        return decoy
+
+    def assert_kept_unprobed(self, root, tree, decoy, *, selected):
+        """The preview of `clean ROOT --all-safe`: tree is registration-mismatch
+        and inspection-error, no status probe runs in tree or in decoy, only
+        selected is selected and the plan is incomplete; then the apply
+        refuses with exit 2 and removes nothing."""
+        result, records = self.report(root, "--all-safe")
+        row = by_name(result.document)[tree.name]
+        self.assertEqual([row[key] for key in ("present", "dirty", "errors", "classification")],
+                         [True, None, [], "inspection-error"])
+        self.assertEqual({entry["path"]: entry["reason"] for entry in result.document["excluded"]}[str(tree)],
+                         "registration-mismatch")
+        self.assertEqual([entry["path"] for entry in result.document["selected"]], [str(path) for path in selected])
+        self.assertEqual((result.document["completeness"], result.document["refusals"][0]["code"]),
+                         ("incomplete", "inspection-incomplete"))
+        self.assertFalse({str(tree), str(decoy)} & set(self.status_dirs(records)), "no status probe in W or D")
+        applied = self.run_cli("clean", root, "--all-safe", "--apply", "--yes")
+        self.assert_status(applied, 2)
+        self.assertTrue((tree / "local.env").exists(), "W and its ignored file survive")
+        for path in selected:
+            self.assertTrue(path.exists(), "nothing was removed")
+        return records
+
+    def test_clean_a_linked_worktree_whose_work_tree_is_redirected(self):
+        # The project-command delta as amended at addd346 (Brett Heap's ruling
+        # LQ-11, R-102 (b)); lane 5's RB e7. With extensions.worktreeConfig set,
+        # a core.worktree in W's config.worktree made every probe read the decoy
+        # D, while Git's removal deleted W with its ignored local.env. Row 4c
+        # reads the extension; where it is true, each linked row's effective
+        # work tree is read before its status probe.
+        root = self.repo()
+        self.bare_remote()
+        tree = self.merged_worktree("001-redirected", setup=lambda t: (t / ".gitignore").write_text("*.env\n"))
+        plain = self.merged_worktree("002-plain")
+        (tree / "local.env").write_text("SECRET=keep-me\n")
+        decoy = self.decoy_of(tree)
+        self.git(root, "config", "extensions.worktreeConfig", "true")
+        config = self.common_dir() / "worktrees" / tree.name / "config.worktree"
+        self.git(root, "config", "--file", config, "core.worktree", decoy)
+        self.assertEqual(self.git(tree, "rev-parse", "--show-toplevel").strip(), str(decoy), "Git reads D for W")
+
+        records = self.assert_kept_unprobed(root, tree, decoy, selected=[plain])
+        commands = [command(record) for record in records]
+        self.assertEqual(sorted(c[1] for c in commands if c[2:] == WORK_TREE_PROBE), sorted(map(str, (tree, plain))),
+                         "one effective-work-tree probe per linked row")
+        self.assertEqual([c[1:] for c in commands if c[2:3] == ["config"]],
+                         [[str(root), *row_4c(self.common_dir())]], "row 4c once, in the command directory")
+        single = self.run_cli("clean", root, "--apply", "--action", "remove", "--worktree", tree, "--yes")
+        self.assert_status(single, 2)
+        self.assertTrue((tree / "local.env").exists())
+        document = self.run_json("status", root, "--json").document
+        entry = {Path(item["path"]).name: item for item in document["repository"]["worktrees"]}[tree.name]
+        self.assertEqual((entry["dirty"], entry["classification"]), (None, "inspection-error"))
+
+        with self.subTest("core.bare=true in W's config.worktree"):
+            config.write_text("[core]\n\tbare = true\n")
+            self.assert_kept_unprobed(root, tree, decoy, selected=[plain])
+
+        with self.subTest("the extension set and neither setting: W's work tree is its path"):
+            config.unlink()
+            (tree / "local.env").rename(self.base / "local.env")
+            result, records = self.report(root, "--all-safe")
+            self.assertEqual([entry["path"] for entry in result.document["selected"]], sorted(map(str, (tree, plain))))
+            self.assertIn(str(tree), [command(record)[1] for record in records
+                                      if command(record)[2:] == WORK_TREE_PROBE])
+
+        with self.subTest("without the extension: no effective-work-tree probe"):
+            self.git(root, "config", "--unset", "extensions.worktreeConfig")
+            result, records = self.report(root, "--all-safe")
+            self.assertEqual([command(record)[1] for record in records if command(record)[2:3] == ["rev-parse"]
+                              and command(record)[1] in (str(tree), str(plain))], [])
+            self.assertEqual(len(result.document["selected"]), 2)
+
+    def test_clean_a_linked_worktree_whose_work_tree_is_redirected_after_the_plan(self):
+        # The review-safety delta as amended at addd346: where the plan's row 4c
+        # read true, revalidation reads the target's effective work tree in its
+        # identity step, and a difference is identity-changed. A fake git plants
+        # the decoy, and an ignored file in W, at the second registry listing,
+        # revalidation's, after the plan selected W.
+        root = self.repo()
+        self.bare_remote()
+        tree = self.merged_worktree("001-late", setup=lambda t: (t / ".gitignore").write_text("*.env\n"))
+        decoy = self.decoy_of(tree)
+        self.git(root, "config", "extensions.worktreeConfig", "true")
+        config = self.common_dir() / "worktrees" / tree.name / "config.worktree"
+        count = self.base / "listings"
+        quoted = {name: shlex.quote(str(path)) for name, path in
+                  (("count", count), ("config", config), ("decoy", decoy), ("env", tree / "local.env"),
+                   ("git", clean_support.REAL_GIT))}
+        fake = self.fake_script("late", (
+            'case " $* " in *" worktree list "*)\n'
+            f'  n=$(( $(cat {quoted["count"]} 2>/dev/null || echo 0) + 1 )); echo "$n" > {quoted["count"]}\n'
+            f'  if [ "$n" = 2 ]; then {quoted["git"]} config --file {quoted["config"]} core.worktree {quoted["decoy"]}; '
+            f"printf 'SECRET=keep-me\\n' > {quoted['env']}; fi;;\nesac"))
+        result, records = self.counted("clean", root, "--all-safe", "--apply", "--yes", "--json", real=fake)
+        self.assert_status(result, 2)
+        self.assertEqual(count.read_text().strip(), "2", "planned, then revalidated")
+        [target] = result.document["targets"]
+        self.assertEqual((target["path"], target["stage"], target["reason"]),
+                         (str(tree), "refused", "identity-changed"))
+        self.assertEqual([command(record)[1] for record in records if command(record)[2:] == WORK_TREE_PROBE],
+                         [str(tree), str(tree)], "read in planning and again in revalidation")
+        self.assertTrue((tree / "local.env").exists(), "W and its ignored file survive")
+        self.assertIn(tree.name, self.git(root, "worktree", "list", "--porcelain"))
+
+    def test_clean_a_commondir_that_names_another_repository(self):
+        # The project-command delta as amended at 93f3194 (lead ruling R-125;
+        # lane 3's W9 M2): Git takes a linked worktree's common directory, and
+        # so the config that row 4c reads, from its admin `commondir` file. A
+        # planted commondir naming a shared clone X that sets the extension,
+        # beside a config.worktree decoy, left row 4c reading R's config unset
+        # while Git in W read D. The two-way registration now requires the
+        # commondir to name <common_dir>.
+        root = self.repo()
+        self.bare_remote()
+        tree = self.merged_worktree("001-moved", setup=lambda t: (t / ".gitignore").write_text("*.env\n"))
+        (tree / "local.env").write_text("SECRET=keep-me\n")
+        decoy = self.decoy_of(tree)
+        shared = self.base / "shared-clone"
+        self.git(self.base, "clone", "-q", "--shared", root, shared)
+        self.git(shared, "branch", "001-moved", "origin/001-moved")
+        self.git(shared, "config", "extensions.worktreeConfig", "true")
+        admin = self.common_dir() / "worktrees" / tree.name
+        self.git(root, "config", "--file", admin / "config.worktree", "core.worktree", decoy)
+        written = (admin / "commondir").read_text()
+        (admin / "commondir").write_text(f"{shared / '.git'}\n")
+        self.assertEqual(self.git(tree, "rev-parse", "--show-toplevel").strip(), str(decoy), "Git reads D for W")
+
+        self.assert_kept_unprobed(root, tree, decoy, selected=[])
+
+        with self.subTest("the commondir as `git worktree add` wrote it"):
+            (admin / "commondir").write_text(written)
+            self.assertEqual(written.strip(), "../..")
+            result, records = self.report(root, "--all-safe")
+            row = by_name(result.document)[tree.name]
+            self.assertEqual((row["errors"], row["classification"]), ([], "ignored-local-files"),
+                             "W's registration agrees as before, and its ignored file keeps it")
+            self.assertIn(str(tree), self.status_dirs(records))
 
     def test_clean_evidence_a_failed_ref_listing_establishes_no_branch_evidence(self):
         # Plan review F3; pcl:121-125 ("A row whose evidence could not be

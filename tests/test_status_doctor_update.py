@@ -46,8 +46,9 @@ NO_IDENTITY = "no GitHub repository identity to match a parked record"
 TOO_OLD = TEXT["inspection_git_too_old"].format(VERSION="2.35.0")
 NOT_FOUND = TEXT["inspection_git_unavailable"].format(DETAIL=TEXT["git_unavailable_not_found"])
 
-# The commands status, doctor and update run, all read-only probes (D6).
-READ_ONLY = {"--version", "rev-parse", "worktree", "for-each-ref", "status", "remote"}
+# The commands status, doctor and update run, all read-only probes (D6), row
+# 4c's `config --file ... --get` among them (Brett Heap's ruling LQ-11).
+READ_ONLY = {"--version", "rev-parse", "worktree", "config", "for-each-ref", "status", "remote"}
 
 
 def real_version():

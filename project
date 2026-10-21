@@ -2542,6 +2542,23 @@ def _admin_gitdir(admin, fs=_fs):
     return _realpath(os.path.join(admin, back), fs) if back else None
 
 
+def _admin_commondir(admin, fs=_fs):
+    """The realpath of the common directory that the admin directory admin's
+    `commondir` file names, as Git's get_common_dir_noenv() reads it
+    (setup.c:301-325 at 2.36.6, :316-340 at 2.43.7; lead ruling R-125;
+    change 1 as amended at 93f3194): the file's trailing line feeds and
+    carriage returns removed, a relative value resolved against admin. With
+    no such file Git takes admin as its own common directory, and so does
+    this. Any other failed read raises EvidenceError. fs as for _gitfile()."""
+    try:
+        value = fs("read", _read_head, os.path.join(admin, b"commondir"), GITFILE_BYTES).rstrip(b"\r\n")
+    except EvidenceError as exc:
+        if exc.errno in (errno.ENOENT, errno.ENOTDIR):
+            return admin
+        raise
+    return _realpath(os.path.join(admin, value), fs)
+
+
 def main_worktree_decision(identity, records, core_worktree, candidate_gitfiles):
     """The main worktree (D8, FR-055; analyze H4, lead rulings R-36, R-42 and
     R-51 (a)), a pure decider over values already read: (path, None), or
@@ -2627,10 +2644,12 @@ def main_worktree(identity, records, run):
     return main_worktree_decision(facts, records, core_worktree, candidate_gitfiles)
 
 
-def registration_verdict(main, common_dir, named, worktrees=None, back=None, dotgit=None, shared=False):
+def registration_verdict(main, common_dir, named, worktrees=None, back=None, dotgit=None, shared=False,
+                         commondir=None):
     """The two-way registration of a present worktree (D7, FR-055; lead
-    rulings R-57 L3 and R-59 D5), a pure decider over realpaths already read:
-    (True, admin_id) when it holds, (False, None) when it disagrees.
+    rulings R-57 L3, R-59 D5 and R-125), a pure decider over realpaths
+    already read: (True, admin_id) when it holds, (False, None) when it
+    disagrees.
 
     - shared: another entry of the registry names the row's path too
       (shared_paths()), or another present row built with it has its
@@ -2642,9 +2661,13 @@ def registration_verdict(main, common_dir, named, worktrees=None, back=None, dot
       or else dotgit, the realpath of `<path>/.git`, is common_dir, with
       admin_id None.
     - Otherwise it holds when named's parent is worktrees, the realpath of
-      `<common_dir>/worktrees`, and back, the realpath that named's `gitdir`
-      file names (None when that file is missing or empty), is dotgit;
-      admin_id is named's last component.
+      `<common_dir>/worktrees`, back, the realpath that named's `gitdir`
+      file names (None when that file is missing or empty), is dotgit, and
+      commondir, the common directory that named's `commondir` file names
+      (_admin_commondir(); named itself when there is none), is common_dir,
+      since Git takes the worktree's common directory, and so the
+      configuration row 4c reads, from that file (R-125); admin_id is
+      named's last component.
 
     A value the verdict does not reach may be None: verify_registration()
     reads in this order and stops at the first value that decides."""
@@ -2652,7 +2675,8 @@ def registration_verdict(main, common_dir, named, worktrees=None, back=None, dot
         return False, None
     if main:
         return (named if named is not None else dotgit) == common_dir, None
-    if named is None or os.path.dirname(named) != worktrees or back is None or back != dotgit:
+    if (named is None or os.path.dirname(named) != worktrees or back is None or back != dotgit
+            or commondir != common_dir):
         return False, None
     return True, os.path.basename(named)
 
@@ -2662,8 +2686,9 @@ def verify_registration(path, common_dir, main, fs=_fs):
     realpaths: (True, admin_id) when it holds, (False, None) when it
     disagrees; a failed read other than a missing file raises EvidenceError.
     A linked worktree: `<path>/.git` is a regular file whose gitdir line names
-    `<common_dir>/worktrees/<admin_id>`, and that directory's `gitdir` file
-    names `<path>/.git`, relative values resolved against the directory
+    `<common_dir>/worktrees/<admin_id>`, that directory's `gitdir` file
+    names `<path>/.git`, and its `commondir` file names `<common_dir>`
+    (lead ruling R-125), relative values resolved against the directory
     holding the file. The main worktree has no admin directory: its `.git` is
     the common directory itself, or a gitfile naming it; admin_id None. This
     check alone passes both of two registry entries naming one path, since
@@ -2678,14 +2703,16 @@ def verify_registration(path, common_dir, main, fs=_fs):
     named = _gitfile(path, fs)
     if main:
         return registration_verdict(main, common_dir, named, dotgit=_realpath(dotgit, fs) if named is None else None)
-    worktrees = back = real_dotgit = None
+    worktrees = back = real_dotgit = commondir = None
     if named is not None:
         worktrees = _realpath(os.path.join(common_dir, b"worktrees"), fs)
         if os.path.dirname(named) == worktrees:
             back = _admin_gitdir(named, fs)
             if back is not None:
                 real_dotgit = _realpath(dotgit, fs)
-    return registration_verdict(main, common_dir, named, worktrees, back, real_dotgit)
+                if back == real_dotgit:
+                    commondir = _admin_commondir(named, fs)
+    return registration_verdict(main, common_dir, named, worktrees, back, real_dotgit, commondir=commondir)
 
 
 def status_warned(outcome):
@@ -2726,9 +2753,54 @@ def status_probe(path, run):
     return outcome, error
 
 
+# A linked worktree's effective-work-tree probe, after its `-C WORKTREE` (D7, LQ-11).
+WORK_TREE_PROBE = ("rev-parse", "--path-format=absolute", "--show-toplevel")
+
+
+def worktree_config(common_dir, directory, run):
+    """Row 4c (design D6 and D7; Brett Heap's ruling LQ-11; R-102 (b); change
+    1 as amended at addd346): the repository's `extensions.worktreeConfig`,
+    read as Git's own format check reads it, from the common directory's own
+    `config` file alone and without includes, by `git config --file
+    <common_dir>/config --type=bool --get extensions.worktreeConfig` in
+    directory. Only where it is true does Git apply a `core.worktree` or
+    `core.bare` to a linked worktree. False when Git prints `false` or exits
+    1, the key not being set; True when it prints `true`, and for any other
+    outcome, a failure, a timeout or other output, which fails closed."""
+    outcome, error = _git(run, directory, ["config", "--file", os.path.join(common_dir, b"config"), "--type=bool",
+                                           "--get", "extensions.worktreeConfig"], "config")
+    if error is None:
+        return outcome.result.strip() != b"false"
+    return outcome.status != 1
+
+
+def effective_work_tree(raw, run):
+    """Whether the linked worktree at raw has raw as its effective work tree,
+    the work tree a Git command run in it uses (design D7; LQ-11; change 1
+    as amended at addd346): WORK_TREE_PROBE in raw, a `probe` child.
+    Returns (holds, error): holds True when it prints exactly one line whose
+    realpath is raw's realpath; False when it prints another, fails (Git
+    exits 128 under `core.bare=true`, `fatal: this operation must be run in
+    a work tree`) or prints other than one non-empty line; None with error,
+    the row error, when the probe timed out or met the work deadline or a
+    realpath read failed. A pure reader: the caller decides."""
+    outcome, error = _git(run, raw, list(WORK_TREE_PROBE), "rev-parse")
+    if error is not None:
+        return (False, None) if error["code"] == "probe-failed" else (None, error)
+    lines = outcome.result.split(b"\n")
+    if lines[-1] == b"":
+        lines.pop()
+    if len(lines) != 1 or not lines[0]:
+        return False, None
+    try:
+        return _realpath(lines[0]) == _realpath(raw), None
+    except EvidenceError as exc:
+        return None, exc.error
+
+
 def inspect_repository(directory, run, refresh=False, *, repeat_identity_at_root=True):
     """The repository-wide evidence of the repository holding directory (D6,
-    D8; FR-055, FR-056): rows 3, 4, 4b, 5, 6 and 7 through run_bounded() and
+    D8; FR-055, FR-056): rows 3, 4, 4b, 5, 4c, 6 and 7 through run_bounded() and
     their parsers, memoized on run, the Invocation (`common_dirs`), by the
     device and inode of the common directory (lead ruling R-54 X-1), so that
     another directory of one repository runs only row 3. refresh reads afresh
@@ -2755,6 +2827,10 @@ def inspect_repository(directory, run, refresh=False, *, repeat_identity_at_root
       common directory for a bare repository and otherwise where row 3 ran
       (FR-055; lead ruling R-42);
     - `records`, row 4's entries, and `first_is_common_dir`;
+    - `worktree_config`, row 4c (worktree_config(), run in probe_dir before
+      row 6; Brett Heap's ruling LQ-11): True or False, None where an
+      earlier probe failed and it was not read, which worktree_rows() reads
+      as True, failing closed;
     - `refs`, row 6's records; `merge_target`, resolve_merge_target()'s
       result, or None with the refusal in `merge_target_refusal`; `merged`,
       row 7's refnames;
@@ -2763,8 +2839,8 @@ def inspect_repository(directory, run, refresh=False, *, repeat_identity_at_root
     directory = os.fsencode(directory)
     repo = {"identity": None, "directory": directory, "toplevel": None, "superproject": None,
             "main_cause": None, "main_path": None, "probe_dir": directory, "records": None,
-            "first_is_common_dir": False, "refs": None, "merge_target": None, "merge_target_refusal": None,
-            "merged": None, "errors": []}
+            "first_is_common_dir": False, "worktree_config": None, "refs": None, "merge_target": None,
+            "merge_target_refusal": None, "merged": None, "errors": []}
     values, error = identity_probe(directory, run)
     if error is not None:
         repo["errors"].append(error)
@@ -2811,6 +2887,7 @@ def inspect_repository(directory, run, refresh=False, *, repeat_identity_at_root
     elif records and records[0]["bare"]:
         repo["probe_dir"] = common_dir
     probe_dir = repo["probe_dir"]
+    repo["worktree_config"] = worktree_config(common_dir, probe_dir, run)  # row 4c (LQ-11)
     outcome, error = _git(run, probe_dir, ["for-each-ref", "--format=" + REF_FORMAT, "refs/heads", "refs/remotes"],
                           "for-each-ref", RefParser())
     if error is not None:
@@ -3018,6 +3095,22 @@ def _identity_unchanged(read, raw, main, common_dir):
     return admin_id == read["admin_id"]
 
 
+def _work_tree_holds(read, raw, run):
+    """Whether the linked row at raw, its identity verified, has raw as its
+    effective work tree (effective_work_tree(); LQ-11), read after its
+    identity and before its status probe in a repository whose row 4c read
+    true. Otherwise False, and the row gets no probe: another work tree, a
+    failed probe or other output sets `registered` false
+    (registration-mismatch), and a probe that timed out or met the work
+    deadline, or a failed realpath read, appends its row error."""
+    holds, error = effective_work_tree(raw, run)
+    if error is not None:
+        read["errors"].append(error)
+    elif not holds:
+        read["registered"], read["admin_id"] = False, None
+    return bool(holds)
+
+
 def _read_status(read, raw, run):
     """The combined status probe of the row at raw whose reads are done
     (_read_row()), only when its registration holds and nothing failed: its
@@ -3062,9 +3155,13 @@ def worktree_rows(repo, run, records=None):
     lead ruling R-101 (e) and (j)), since the probes of the rows before it
     may take their whole budgets: a row whose lstat, realpath or registration
     changed since its first read gets no probe and is inspection-error, in
-    the same row order with the same budgets. Once the work deadline has
-    passed no probe starts, and such a row keeps its probe's own
-    deadline-exceeded, unread again. Then the branch evidence from row 6; where
+    the same row order with the same budgets. Then, in a repository whose
+    row 4c read true (or was not read), each linked row's effective work
+    tree (_work_tree_holds(); Brett Heap's ruling LQ-11, change 1 as amended
+    at addd346): another work tree, a failed probe or other output is
+    registration-mismatch, unprobed. Once the work deadline has passed no
+    probe starts, and such a row keeps its probe's own deadline-exceeded,
+    unread again. Then the branch evidence from row 6; where
     row 6 gave no listing, because it or a probe before it failed, each
     present row on a branch carries that probe's row errors and is
     inspection-error, its upstream fields null as not established (plan
@@ -3093,6 +3190,7 @@ def worktree_rows(repo, run, records=None):
     # evidence is established, so each present row on a branch carries the
     # failed probe's error and is inspection-error (plan review F3).
     unlisted = [] if repo["refs"] is not None else (list(repo["errors"]) or [unparseable_error("for-each-ref")])
+    redirectable = repo.get("worktree_config") is not False  # row 4c true, or not read (LQ-11)
     shared = shared_paths(registry)
     entries = _registry_entries(registry, records)
     try:
@@ -3117,10 +3215,13 @@ def worktree_rows(repo, run, records=None):
             read["registered"], read["admin_id"] = registration_verdict(
                 index == 0, common_dir, None, shared=True)
         elif read["registered"] and not read["errors"] and (
-                run.child_budget("status")[0] <= 0 or _identity_unchanged(read, raw, index == 0, common_dir)):
-            # Verified again immediately before its probe (pc:124-126; R-101 (e)). With no
-            # work time left no probe starts, and the row keeps that probe's own
-            # deadline-exceeded, as the work deadline's rows always have (T099).
+                run.child_budget("status")[0] <= 0
+                or (_identity_unchanged(read, raw, index == 0, common_dir)
+                    and (index == 0 or not redirectable or _work_tree_holds(read, raw, run)))):
+            # Verified again immediately before its probe (pc:124-126; R-101 (e)), and a
+            # linked row's effective work tree read where row 4c read true (LQ-11).
+            # With no work time left no probe starts, and the row keeps that probe's
+            # own deadline-exceeded, as the work deadline's rows always have (T099).
             _read_status(read, raw, run)
         if unlisted and read["present"] is True and record["branch"] is not None:
             read["errors"].extend(dict(error) for error in unlisted)
@@ -5236,6 +5337,14 @@ def revalidation_difference(plan, target, run, part, seen):
         except EvidenceError as exc:
             return "deadline-exceeded" if read_cut(exc.error) else "identity-changed"
         if not registered or admin_id != row.admin_id:
+            return "identity-changed"
+    if evidence.get("worktree_config") is True:  # the target's effective work tree, as row 4c read (LQ-11)
+        if slot_set(run):
+            return "interrupted"
+        holds, error = effective_work_tree(target.row.raw_path, run)
+        if read_cut(error):
+            return "deadline-exceeded"
+        if not holds:
             return "identity-changed"
     if slot_set(run):
         return "interrupted"
