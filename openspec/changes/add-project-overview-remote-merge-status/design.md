@@ -414,9 +414,9 @@ In this order, the first that applies deciding:
 2. `not-github`: a host other than exactly `github.com`, so `evilgithub.com`,
    `github.com.example.org` and `api.github.com` are refused.
 3. `malformed-remote`: `remote_repository_identity()` (`project:766-769`)
-   yields no identity, as for `https://github.com/acme`, a user other than
-   `git`, or an explicit port. An explicit port is refused at this step
-   itself, before that function runs and whatever identity it would give, as
+   yields no identity, as for `https://github.com/acme` or a user other than
+   `git`. An explicit port is also refused here, before that function runs
+   and whatever identity it would give, as
    `specs/project-overview/spec.md:389-390` lists an explicit port among this
    reason's causes beside the identity rule (C-50): before a one-segment path
    the function gives an identity, `22/widget` for
