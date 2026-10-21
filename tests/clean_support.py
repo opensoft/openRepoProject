@@ -52,7 +52,7 @@ REAL_GIT = _which_git()
 
 # The thirty-one names every Git child of `project` runs without, in the order of
 # specs/004-project-clean-all-safe/contracts/project-clean.md, "Git children"
-# (:297-301), and the one name read-only probes set. This is the harness's own
+# (:562-570), and the one name read-only probes set. This is the harness's own
 # literal transcription, never imported from project's GIT_SCRUB (lead ruling
 # R-42); test_clean_counting_wrapper_records_and_execs asserts the two equal, in
 # order. The counting wrapper records these names, and CleanCase removes them

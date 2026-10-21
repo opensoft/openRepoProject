@@ -296,8 +296,11 @@ question and takes `--yes` and `--json`; it prints the other worktrees as
 and no match is `worktree-not-found`. This mode differs on completeness: P's row
 and its gates come first, and only the repository-wide evidence and P's own row
 must be complete. Another row's inspection error, rows past the cap of 128 and
-rows the deadline stopped are noted and do not block P. If the deadline has
-passed, P is `not-attempted` (`deadline-exceeded`) and the run exits 1. The
+rows the deadline stopped are noted and do not block P, so P's row still
+decides. If the deadline cuts one of P's own reads, the plan is refused with
+`inspection-incomplete`, exit 2; and if less than 5 s of work time is left
+when P's removal would start, P is `not-attempted` (`deadline-exceeded`) and
+the run exits 1. The
 `target-excluded` message is `Worktree is excluded: REASON; NEXT STEP` for a
 gate, and the older wording, with no next step, for the current worktree
 (`Cannot remove the current worktree.`) and for a class that is not removable
@@ -351,6 +354,7 @@ carries its next step:
 | `deferred-target-cap` | this run removes up to 16; run again: project clean ROOT --all-safe --apply |
 | `contains-submodule` | review, then remove the worktree yourself |
 | `hidden-local-state` | review, then remove the worktree yourself |
+| `operation-in-progress` | a git am, merge, notes merge, cherry-pick, revert, rebase or bisect is, or may be, in progress there; finish or abort it (a squash merge that holds an autostash ends with git commit, --allow-empty where nothing is staged, or with git merge --quit, which keeps the edit in the stash list), then run again |
 
 The first four reasons are facts about the row. The next four are its
 classification, one gate, and only a `merged-removable` row passes it.
@@ -359,6 +363,14 @@ classification, one gate, and only a `merged-removable` row passes it.
 `contains-submodule` and `hidden-local-state` read the worktree's own index (a
 gitlink; an assume-unchanged or skip-worktree flag) and its administrative
 directory (a `modules` entry), for the 16 worktrees a run can take.
+`operation-in-progress` lists that administrative directory for the same 16:
+a stopped `am`, merge, cherry-pick, revert, rebase, sequence or bisect, a
+squash merge that holds an autostash, or a stopped notes merge leaves a
+marker there (`MERGE_HEAD`, `CHERRY_PICK_HEAD`, `REVERT_HEAD`, `BISECT_LOG`,
+`BISECT_START`, `rebase-apply`, `rebase-merge`, `sequencer`,
+`MERGE_AUTOSTASH`, `NOTES_MERGE_PARTIAL` or `NOTES_MERGE_REF`), though the
+worktree's files and index may look clean. A directory that cannot be listed
+makes the worktree `inspection-error`.
 
 A run removes at most 16 worktrees. Further eligible worktrees show as
 `deferred-target-cap`, and each run plans afresh, so run the same command again
@@ -374,7 +386,8 @@ contains-submodule; review those worktrees, then remove them yourself`.
 it spawns a removal only if, at the revalidation immediately before it, what
 the plan recorded still holds: the repository and the worktree (identity,
 registration, lock), the branch's name and tip, its upstream, the merge target,
-the manifest, a clean status, and no submodule or hidden index flag. The first
+the manifest, a clean status, no submodule or hidden index flag, and no
+operation in progress (`operation-in-progress`). The first
 target's repository-wide checks serve every target, so a difference found there
 removes nothing at all. A difference refuses that target (`refused`), starts no
 removal, attempts no later target and exits 2. Git's own `git worktree remove`,
@@ -382,8 +395,8 @@ never forced, is the last check.
 
 The residual window is stated in one line in the preview when a worktree is
 selected, in the confirmation and in the result: `Not protected: ignored files
-created or index flags set after the last check, and any change after Git's own
-check.` A removal never deletes a branch, so a branch that moves during a run
+created, index flags set or operations started after the last check, and any
+change after Git's own check.` A removal never deletes a branch, so a branch that moves during a run
 loses no commit; one seen only after Git removed the worktree leaves the target
 `removed` with `branch-advanced-after-removal` or
 `branch-missing-after-removal`, stops the run and exits 2.

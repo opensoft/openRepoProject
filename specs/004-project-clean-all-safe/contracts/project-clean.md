@@ -157,6 +157,15 @@ manifest-ancestor redirections (`project:455-461`) never apply to a path
 argument. The command directory is `root`: every repository-wide Git child
 after resolution, every removal and the manifest read use it.
 
+A name the lookup cannot examine, `~user` for no such user, a name too long
+for a path component (256 bytes or more), or one looked up from a working
+directory that is gone, is `repository-not-found` with `discover()`'s message
+`Directory does not exist: PATH`; a relative path, or none, from a working
+directory that is gone is `target-not-repository-root`, naming the argument
+as given, or `.`; and a relative path's refusal names the directory Git
+examined, its realpath, not its lexical form (the plan review's F4; lane 3's
+US7/US9 L-1 to L-3; lead ruling R-101 (c); lane E's `085a43b`).
+
 ## The removal question (FR-026; research.md R3)
 
 | Aspect | Contract |
@@ -164,7 +173,7 @@ after resolution, every removal and the manifest read use it.
 | Asked | `--all-safe --apply` or `--action remove`, without `--yes`, standard input a terminal, after the plan is printed |
 | Text | "D18 question", the singular for one; written by `project` to the human stream (below), never by `input()` |
 | Accepts | `yes`, surrounding whitespace ignored |
-| Any other answer (`y`, empty, `no`, ...) | refusal `cancelled`, exit 2, nothing removed |
+| Any other answer (`y`, empty, `no`, ...), or one standard input cannot decode, such as the byte 0xE9 under a strict UTF-8 decoder | refusal `cancelled`, exit 2, nothing removed; `ask_removal()` returns an undecodable answer as `""` (lead ruling R-101 (c); plan review F1) |
 | End of input | `Cancelled.` on standard error, exit 130, no JSON document |
 | SIGINT, SIGTERM, SIGHUP | `Cancelled.`, exit 130, 143 or 129, no JSON document |
 
@@ -185,7 +194,14 @@ use it, is unchanged, and so are its signals (research.md R4).
 Under `--json` a refusal is a JSON document on standard output, never a
 `REFUSED:` line. Three cases print no JSON document: a parser usage error;
 SIGINT, SIGTERM or SIGHUP before the apply phase; and end of input at the
-question.
+question. A run whose standard error fails before the apply phase still
+prints one: the plan envelope is written only while no write has failed, so
+the run ends as `internal-error`, exit 2, and its object is the one document
+(`print_plan()`; lead ruling R-101 (b), the runner review's F1). A standard
+output that is closed when `project` starts counts as a failed write too, so
+`clean --json` refuses with `internal-error`, exit 2, with no traceback, R-55
+extended (R-101 (b), F3); a closed human stream does not refuse, which lane 3
+records as open (its F4 L-2).
 
 `invalid-arguments`, `internal-error` and every resolve refusal print the
 extended error object; `worktree-not-found`, `target-excluded`, the plan
@@ -327,6 +343,31 @@ D18's `deadline-exceeded` remedy, "the run ran out of time; remove worktrees
 explicitly or re-run", names none of the three and stands (lead ruling R-45;
 LQ-5, listed for Brett Heap in the feature PR body).
 
+Brett Heap's ruling LQ-14 adds gate 11, `operation-in-progress`, after
+`hidden-local-state` (design D22; draft PR #19 at `43f7107`, `2b86a5f` and
+`1ebdd90`; lead rulings R-102, R-121, R-124, R-126 and R-180), and with it
+two lines. Its group's next step is #19's as round (b) words it at
+`4485678`: `a git am, merge, notes merge, cherry-pick, revert, rebase or
+bisect is, or may be, in progress there; finish or abort it (a squash merge
+that holds an autostash ends with git commit, --allow-empty where nothing is
+staged, or with git merge --quit, which keeps the edit in the stash list),
+then run again`. `project` at `cceb6d7` still prints round (a)'s wording,
+`... ends only with git commit, --allow-empty where nothing is staged), then
+run again`, which is false, since `git merge --quit` and `git reset --hard`
+also end a held autostash, saving the edit to the stash list (lane 3's W26
+F-1; lead ruling R-171); its `NEXT_STEPS` entry follows round (b) in a later
+build. The residual-window line gains LQ-14's third item, `Not protected:
+ignored files created, index flags set or operations started after the last
+check, and any change after Git's own check.`; LQ-13's fourth, `worktree-only
+commits made`, waits for that gate. In the preview the `operation-in-progress`
+group follows `hidden-local-state`, in gate order (`EXCLUDED_GROUP_ORDER`).
+`registration-mismatch`'s next step at `4485678` also names `unset
+core.worktree and core.bare in the worktree's config.worktree` (LQ-11, lead
+ruling R-125 L6); `project` at `cceb6d7` prints `review, then git worktree
+repair or git worktree prune, or remove the row by hand`, without that
+clause, and the text here follows the code until `NEXT_STEPS` takes it (lane
+E's and lane G's reports).
+
 All new text is ASCII. A path prints verbatim in prose and shell-quoted in
 commands, unless it holds a code point of general category Cc, Cf, Zl or Zp
 or an undecodable byte; then it prints as `$'...'` with `\xHH`, `\uXXXX` or
@@ -429,7 +470,8 @@ values in data-model.md).
 
 Each plan note and row error carries one fixed message (lead ruling R-45).
 OPERATION names what was cut: `git SUBCOMMAND` for a Git child, or the
-filesystem call (`lstat`, `realpath` or `read`). The lane that first prints
+filesystem call (`lstat`, `realpath`, `read`, or `listdir`, gate 11's
+listing of the row's administrative directory; LQ-14). The lane that first prints
 each adds its `TEXT` key as a lead-approved contracts edit, with its fixture
 in `tests/clean_support.py`: the plan notes the plan lane (T049, T051), the
 row errors lane G (T031, T032), and the two status and doctor texts the US9
@@ -497,7 +539,12 @@ R-55 and R-59; LQ-7, listed for Brett Heap in the feature PR body). The
 baseline exited 0 for every printed report; it now exits 1 when the report
 is incomplete (FR-005). Push and delete-branch exit 130, 143 or
 129 when a signal was recorded, otherwise with the child's status, and 2
-for a refusal.
+for a refusal; a signal recorded before the child is spawned prints
+`Cancelled.` and runs no child, and one recorded once the child has run
+prints `Interrupted; the push had started and was waited for, and git exited
+with status N.`, or `the branch deletion` in place of `the push`, never
+`Cancelled.`, since `project` cannot prove that nothing changed (lead rulings
+R-101 (e), R-108 (a) and R-177; lane 3's F2 M-1 and N13).
 
 ## Git children
 
@@ -569,6 +616,8 @@ restores its mtime still shows by its ctime under a repository's
 | row 3 | `-C DIR rev-parse --path-format=absolute --show-toplevel --git-common-dir --show-superproject-working-tree` | where the argument resolves |
 | row 4 | `-C DIR worktree list --porcelain -z` | there while the main worktree is unknown, else `root` |
 | row 4b | `-C DIR config --get core.worktree` | only when the first record is `common_dir` |
+| row 4c | `-C DIR config --file COMMON_DIR/config --type=bool --get extensions.worktreeConfig` | where rows 6 and 7 run, once per common directory, before row 6: true, false (Git prints `false` or exits 1, the key unset), or not read where an earlier probe failed, which is read as true; any other outcome is true, failing closed (Brett Heap's ruling LQ-11; draft PR #19 at `addd346`; lead rulings R-101 (g) and R-113) |
+| work tree | `-C WORKTREE rev-parse --path-format=absolute --show-toplevel` | each present linked row whose identity and registration hold, before its status probe, only where row 4c is not false; at revalidation the target's, only where row 4c read true; one line naming the row's own realpath holds; another path, a failure such as exit 128 under `core.bare=true`, or other output makes the row `registration-mismatch`, unprobed; a probe cut at its budget or the deadline, or a realpath read that fails, is a row error instead, the row `inspection-error` (LQ-11; lane E's report). At revalidation a different work tree, and at `cceb6d7` also a failed or timed-out probe, is `identity-changed`; lead ruling R-171 rules `state-changed` for the failed or timed-out probe, which lane G is building (lead ruling R-180) |
 | row 5 | row 3 again | `root`, only when row 3 ran elsewhere |
 | row 6 | `-C ROOT for-each-ref --format=%(refname)%00%(objectname)%00%(symref)%00%(upstream)%00%(upstream:short)%00%(upstream:track,nobracket) refs/heads refs/remotes` | `root` |
 | row 7 | `-C ROOT for-each-ref --merged=SHA --format=%(refname) refs/heads` | `root` |
@@ -578,7 +627,8 @@ restores its mtime still shows by its ctime under a repository's
 | remote URL | `-C ROOT remote get-url origin` | `root` (push; `handoff()` in `status` and `doctor`, for an inspected repository only, R-66 (c)) |
 | removal | `-c status.showUntrackedFiles=normal -c core.untrackedCache=false -c core.fsmonitor=false -c core.trustctime=true -c core.checkStat=default` + protocol pins + `-C ROOT worktree remove PATH` | `root`; PATH the registry's raw bytes, one argument, never `--force` |
 | branch deletion | protocol pins + `-C ROOT branch -d BRANCH` | `root`; a D2 handle run by the driver with no budget, its output relayed to `project`'s streams |
-| push | `-C ROOT push REMOTE BRANCH:REMOTE_BRANCH`, or `push -u origin BRANCH`; no protocol pins | `root`; run by `execute()`, not the driver: `project`'s own streams, never read or capped; `project`'s process group, in the terminal's foreground when `project` is; never signalled, waited for, unbounded; yields no evidence |
+| upstream mapping | `-C ROOT config --get-all branch.BRANCH.remote`, then `branch.BRANCH.merge` | push only, for a branch with a configured upstream, after the plan's checks; one value each, REMOTE not `.` and MERGE under `refs/heads/` and not that prefix alone, or `Unsupported upstream mapping for BRANCH: U` (lead ruling R-101 (e); lane 3's F2 H-2) |
+| push | `-C ROOT push -- REMOTE refs/heads/BRANCH:MERGE`, or, with no upstream, `push -u -- origin refs/heads/BRANCH:refs/heads/BRANCH` after `remote get-url origin` finds an `origin`; never a `+`, `--` ending the options; no protocol pins (lead ruling R-101 (e); lane 3's F2 H-1, M-1) | `root`; run by `execute()`, not the driver: `project`'s own streams, never read or capped; `project`'s process group, in the terminal's foreground when `project` is; never signalled, waited for, unbounded; yields no evidence |
 
 Row 6 cannot establish the upstream of a branch named `HEAD`
 (`refs/heads/HEAD`), because `git for-each-ref` reports the current branch's
@@ -586,7 +636,21 @@ upstream for it. Such a row has `upstream`, `remote_present`, `ahead` and
 `behind` null and is `inspection-error`, its row error `probe-failed` with
 `git for-each-ref failed: unparseable output`, filling the delta's rule that
 evidence not established is `inspection-error` (lead rulings R-61 and R-64
-(a); built by lane G's follow-up).
+(a); built by lane G's follow-up). Since lane E's status-probe rule (below),
+a repository holding `refs/heads/HEAD` makes every row `inspection-error`,
+not only that branch's, because Git warns `refname 'HEAD' is ambiguous.` in
+every worktree's status probe; that fails closed and narrows R-61 (b)'s effect
+(lead ruling R-116).
+
+A status probe that exits 0 has still established nothing when its standard
+error holds a line other than Git's advice lines (`hint:` alone or `hint:
+TEXT`), or a byte past the 4 KiB the runner keeps: it is `probe-failed` with
+DETAIL `unparseable output` (`git status failed: unparseable output`), the row
+`inspection-error` with `dirty` null, and at revalidation a `state-changed`
+difference (`status_warned()`; lane 3's US2 M-1; lead ruling R-116). Git
+prints nothing there on a clean run, and it translates its `warning:` and
+`error:` prefixes under a localized catalogue, so the rule reads no prefix
+but the advice one; no DETAIL form is added.
 
 Bounds: each probe child gets `min(5 s, work remaining)` under `clean`'s 60 s
 deadline (50 s of work, a 10 s reserve, time at the question excluded), each
@@ -598,13 +662,20 @@ signalled before its 300 s ceiling, and is waited for. Push and branch
 deletion stay unbounded: no budget and no deadline. A signal recorded while
 the push or `git branch -d` child runs is not passed on: `project` never
 signals either child, waits for it, and then exits by D19's first row
-(data-model.md, "Exit statuses"). Probing is serial; termination never
-blocks (data-model.md, "Child handle").
-Revalidation spawns at most five Git children per target, the final rescan
-at most three, the identity probe counted once: a line feed in the root's
-or the common directory's path repeats it, one child per option, so that
-they run up to 8 and 6 (design D6, "the rare repeat"; data-model.md,
-"Revalidation step and `probes_performed`"; lead ruling R-82 (c)).
+(data-model.md, "Exit statuses"); the slot is read just before either child
+is spawned, so a signal recorded by then runs no child (lane 3's N13; lead
+ruling R-177). Probing is serial; termination never blocks (data-model.md,
+"Child handle").
+Revalidation spawns at most five Git children per target, six where row 4c
+read `extensions.worktreeConfig` as true (the work-tree probe; LQ-11), the
+final rescan at most three, the identity probe counted once: a line feed in
+the root's or the common directory's path repeats it, one child per option,
+so that they run up to 8 (9 with the work-tree probe) and 6 (design D6, "the
+rare repeat"; data-model.md, "Revalidation step and `probes_performed`";
+lead ruling R-82 (c)). Gate 11's listing is a filesystem read, no child
+(LQ-14). `LIMITS["revalidation_children"]` stays 5 and the plan's estimate
+`5T + 3`; reconciling them with the sixth child is held with D14's fit for
+#19's round (b) and LQ-20 (lead rulings R-168, R-170 and R-178).
 
 ## `status`, `doctor` and `update` (FR-050 to FR-053, FR-059; D16)
 

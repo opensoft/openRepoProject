@@ -33,7 +33,14 @@ where row 3 ran, in every layout, "while the main worktree is not yet
 known", as the `project-command` delta says (its `spec.md:124-133`). Rows 6
 and 7 run in the main worktree where it is known; where `root` is null, in
 the common directory for a bare repository only, and otherwise where row 3
-ran (lead ruling R-75 (j)).
+ran (lead ruling R-75 (j)). Row 4c, `extensions.worktreeConfig` read from
+the common directory's own `config` file, runs there too, once per common
+directory and before row 6; where an earlier probe failed and it was not
+read, it counts as true, failing closed (Brett Heap's ruling LQ-11; lane E's
+report). Where row 5 fails, `repository.root` stays null, and the
+resolution still names the main worktree as the command directory from the
+evidence's `main_path`, the path `main_worktree()` named before row 5 ran
+(the plan review's F2; lead ruling R-101 (c)).
 
 ### Merge target (D8; FR-018, FR-060)
 
@@ -94,7 +101,23 @@ so, which doctor never reports as an error (FR-051).
 registration holds in both directions between realpaths: `<path>/.git` is a
 regular file whose `gitdir:` line names `<common_dir>/worktrees/<admin_id>`,
 and that directory's `gitdir` file names `<path>/.git`, relative values
-resolved against the directory holding the file. A row with `present:
+resolved against the directory holding the file; and that directory's
+`commondir` file, read as Git's `get_common_dir_noenv()` reads it, a
+relative value resolved against the directory, names `<common_dir>`, a
+missing file naming the directory itself, so that a `commondir` rewritten to
+name another repository is `registration-mismatch` and a read that fails is
+`inspection-error` (LQ-11 as amended for lead ruling R-125; draft PR #19 at
+`93f3194`). Each row's identity is read twice: once with the other rows,
+and again immediately before its own status probe, its `lstat`, realpath and
+two-way registration in one bounded filesystem call, since the probes of the
+rows before it may take their whole budgets; a row whose identity changed
+gets no probe and is `inspection-error`, and once the work deadline has
+passed no probe starts (lane 3's F3; lead ruling R-101 (e)). Then, where row
+4c is not false, each linked row's effective work tree is probed (`rev-parse
+--path-format=absolute --show-toplevel` in it): a work tree other than its
+path, a failure or other output is `registration-mismatch`, unprobed, and a
+probe cut at its budget or the deadline is a row error, `inspection-error`
+(LQ-11; lead ruling R-113). A row with `present:
 false` is decided first: it gets no registration check, no shared-path
 check and no probe, and its reason is its class, `stale-worktree` (lead
 rulings R-57 and R-59 D5). Otherwise a row whose registration disagrees
@@ -159,7 +182,15 @@ establish its upstream: its `upstream`, `remote_present`, `ahead` and
 `behind` are null, meaning not established, never "none configured", and
 the row is `inspection-error` with `probe-failed`, `git for-each-ref failed:
 unparseable output` (lead rulings R-61 and R-64 (a); built by lane G's
-follow-up).
+follow-up). Since a status probe whose standard error holds anything but
+Git's advice lines establishes nothing (contract, "Git children"), and Git
+warns `refname 'HEAD' is ambiguous.` in every worktree of such a repository,
+every row there is `inspection-error` too, failing closed (lead ruling
+R-116, which narrows R-61 (b)'s effect). Where row 6 gives no listing,
+because it or a probe before it failed, each present row on a branch carries
+that probe's row errors and is `inspection-error`, its upstream fields null,
+where every row once printed as `unpublished` (the plan review's F3; lead
+ruling R-101 (c)).
 
 ### Classification (D6; FR-007)
 
@@ -211,7 +242,7 @@ null reason for R-53's P-3):
 | --- | --- | --- |
 | 1 | `main-worktree` | the row is the main worktree |
 | 2 | `unsupported-path-bytes` | the path is not valid UTF-8 |
-| 3 | `registration-mismatch` | the two-way registration was read and disagrees (`registered is False`); a row whose registration was never read, a `present: false` one among them, passes and is excluded at gate 5 by its class (lead ruling R-53 P-16) |
+| 3 | `registration-mismatch` | the two-way registration was read and disagrees (`registered is False`), its `commondir` and, where row 4c is not false, its effective work tree included (LQ-11); a row whose registration was never read, a `present: false` one among them, passes and is excluded at gate 5 by its class (lead ruling R-53 P-16) |
 | 4 | `locked-worktree` | `locked` is true |
 | 5 | the classification | the class is not `merged-removable` |
 | 6 | `not-requested` | single mode, an eligible row other than P |
@@ -219,17 +250,27 @@ null reason for R-53's P-3):
 | 8 | `deferred-target-cap` | beyond the first 16 rows that passed gates 1 to 7 |
 | 9 | `contains-submodule` | a gitlink in the row's index, or `modules` in its admin directory |
 | 10 | `hidden-local-state` | an index entry flagged assume-unchanged or skip-worktree |
+| 11 | `operation-in-progress` | an entry of any kind named by one of the eleven markers in the row's administrative directory, `<common_dir>/worktrees/<admin_id>`: `MERGE_HEAD`, `CHERRY_PICK_HEAD`, `REVERT_HEAD`, `BISECT_LOG`, `BISECT_START`, `rebase-apply`, `rebase-merge`, `sequencer`, `MERGE_AUTOSTASH`, `NOTES_MERGE_PARTIAL` and `NOTES_MERGE_REF` (`NOTES_MERGE_WORKTREE`, which a notes merge leaves behind, is none) |
 
-Gates 9 and 10 read the row's own index, inside its worktree, only for rows
-that passed gates 1 to 8; at most 16 rows reach them. A row an index gate
-excludes keeps its place among the 16.
+Gates 9 and 10 read the row's own index, inside its worktree, and gate 11
+lists its administrative directory, one filesystem call (`os.listdir`,
+OPERATION `listdir`) within the filesystem budget and no Git child, only for
+rows that passed gates 1 to 8; at most 16 rows reach them. A row a gate
+after the cap excludes keeps its place among the 16. Gate 11 is Brett Heap's
+ruling LQ-14 (design D22; draft PR #19 at `43f7107` and `1ebdd90`; lead
+rulings R-102, R-124, R-126 and R-180), built by lane G at `2405880` and
+merged as `e0c589a`.
 
 A gate whose own read cannot finish decides nothing: a reflog read error
-other than `ENOENT` or `ENOTDIR`, or a failed or timed-out `modules` read or
-hidden-state probe, makes the row `inspection-error` (classification and
-`reason`), its `errors` naming `os-error`, `probe-failed`, `probe-timeout`
-or `deadline-exceeded`, and the plan incomplete (`inspection-incomplete`); a
-null flag never passes gate 9 or 10, while gate 3 fails only on a
+other than `ENOENT` or `ENOTDIR`, or a failed or timed-out `modules` read,
+hidden-state probe or gate 11 listing, makes the row `inspection-error`
+(classification and `reason`), its `errors` naming `os-error`,
+`probe-failed`, `probe-timeout` or `deadline-exceeded`, and the plan
+incomplete (`inspection-incomplete`, or `deadline-exceeded` where only the
+deadline cut it); only a marker present gives `operation-in-progress`, and an
+administrative directory that cannot be listed is `inspection-error`, not
+`operation-in-progress` (lead ruling R-124 (b)); a null flag never passes
+gate 9, 10 or 11, while gate 3 fails only on a
 registration read and found to disagree (R-53 P-16). A reflog read not
 finished within the filesystem budget follows the `project-clean` delta's
 reflog outcome rule instead: the row is left unprobed, its marker set, and
@@ -371,8 +412,11 @@ until SIGKILL (lead ruling R-68 (b)).
 The rescan first re-establishes the repository identity; where it differs,
 every field is null and `reconciled` is false. A `refused` target's values
 come from the revalidation that refused it, plus an `lstat` of the planned
-path when that revalidation stopped before its own; a field from a listing
-that did not run is null (`BA:1163-1174` at `da33d92` shows a ref-listing
+path when that revalidation stopped before its own, run with the reserve's
+budget, `min(5 s, reserve remaining)`, so that a difference found as the work
+deadline passes still records the path's presence (`reserve_budget()`; lead
+ruling R-101 (d), the apply review's F3); a field from a listing that did not
+run is null (`BA:1163-1174` at `da33d92` shows a ref-listing
 refusal with `path_present: true`). A spawned target's values come from the
 rescan after the child is reaped. Target notes: `orphaned-directory` (entry
 gone, path present) and `partially-removed` (a child killed at the ceiling,
@@ -393,15 +437,17 @@ target:
 | Step | Read by | A difference gives |
 | --- | --- | --- |
 | 1. the identity probe (row 3 at `root`) | Git child | `identity-changed` |
-| 2. the manifest re-read | filesystem | `state-changed` (manifest or merge target) |
+| 2. the manifest re-read | filesystem | `state-changed` (manifest or merge target); a `tracking_branch` that is not a string, YAML's `.nan` among them, reads as none on both sides, as planning reads it (`as_candidate()`; lead ruling R-101 (d), the apply review's F2) |
 | 3. the registry listing | Git child | `identity-changed` (registration, or a missing entry); `state-changed` (lock) |
 | 4. the narrowed ref listing | Git child | `branch-changed` (branch name or head); `state-changed` (upstream, `upstream_oid`, `ahead`, `behind`, merge target) |
-| 5. the target's identity, a twin of a checked row, and the `modules` check | filesystem | `identity-changed` (the identity; another present entry of the fresh registry listing sharing a checked row's realpath or admin id, `registry_twin()`, R-81 (a); or an entry whose lstat or realpath fails other than with `ENOENT` or `ENOTDIR`, unless the plan read its lstat as failed too, null and null again, R-95 (c)); `contains-submodule` (a `modules` entry) |
+| 5. the target's identity and registration (its `commondir` included), its effective work tree where row 4c read true, a twin of a checked row, the `modules` check, and gate 11's listing of its administrative directory | filesystem, and one Git child for the work tree | `identity-changed` (the identity or registration; a different effective work tree, and at `cceb6d7` also a failed or timed-out work-tree probe, which lead ruling R-171 makes `state-changed`, lane G building it; another present entry of the fresh registry listing sharing a checked row's realpath or admin id, `registry_twin()`, R-81 (a); or an entry whose lstat or realpath fails other than with `ENOENT` or `ENOTDIR`, unless the plan read its lstat as failed too, null and null again, R-95 (c)); `contains-submodule` (a `modules` entry); `operation-in-progress` (a marker), and `state-changed` for a listing that fails or times out (LQ-14; lead rulings R-124 and R-127) |
 | 6. the combined status probe in the target, which must print nothing | Git child | `state-changed` |
 | 7. the hidden-state probe | Git child | `contains-submodule` (a gitlink); `hidden-local-state` |
 
 At most five Git children (steps 1, 3, 4, 6 and 7), as T084 built them
-(lead ruling R-75 (i)), the identity probe counted once: a line feed in
+(lead ruling R-75 (i)), and six where row 4c read `extensions.worktreeConfig`
+as true, step 5's work-tree probe added (LQ-11; lane E's report), the
+identity probe counted once: a line feed in
 the root's or the common directory's path makes step 1 read row 3 again,
 one child per option, as design D6 allows for "the rare repeat"
 (`design.md:298-302`), so that a revalidation then runs up to 8 children
@@ -437,7 +483,7 @@ after the last spawned target, they are the final rescan.
 
 `probes_performed` counts the Git children of that target's revalidation,
 the three it shares with the previous target's rescan included: at most 5,
-fewer when it stopped at a difference, and 0 when it was never revalidated.
+or 6 where row 4c read true, fewer when it stopped at a difference, and 0 when it was never revalidated.
 The record's `probes.performed` is the plan's count plus each target's
 `probes_performed` plus the final rescan, which is 3 when the rescan after
 the last spawned target counted toward no later target and 0 otherwise
@@ -452,9 +498,12 @@ object has `reconciled: true`).
 
 ### Residual window (D7; FR-048)
 
-Ignored files created and index flags set after the last revalidation, and
-any change after Git's own check. Stated in one line (D18) in the
-confirmation and in the result.
+Ignored files created, index flags set and operations started after the
+last revalidation, and any change after Git's own check. Stated in one line
+(D18) in the confirmation and in the result: `Not protected: ignored files
+created, index flags set or operations started after the last check, and any
+change after Git's own check.` The third item is LQ-14's; LQ-13's fourth,
+`worktree-only commits made`, waits for that gate (held).
 
 ### Root and leg state outside `clean` (D16; FR-050 to FR-052)
 
@@ -576,6 +625,15 @@ difference it found stands. D15 stays as written and this is the reading of
 it (lead ruling R-95 (a), lane 3's LOW-1; T093's
 `test_clean_a_signal_during_a_removal_sigint_during_a_revalidation`).
 
+A signal the caller ignored on entry (`SIG_IGN`, as under `nohup` or in a
+shell's `&` job) stays ignored in every scope, as the baseline left it: no
+handler is installed for it, so it never reaches the slot, and FR-036 does
+not reach a signal the caller ignored (lead ruling R-101 (b), the runner
+review's F2; lane O's `0e93044`). A test suite run as a `&` job therefore
+fails wherever a test sends SIGINT to `project`, unless the module resets
+SIGINT in its children, as the revalidation, timing, push and apply modules
+now do; a foreground run and CI are unaffected (lane O's report).
+
 ## States of a `project clean` run
 
 | State | Meaning |
@@ -634,8 +692,9 @@ T099's (lead rulings R-83 P-3 and R-80 P-3; T093).
 | confirming | `yes` or `--yes` | re-inspecting: the full re-inspection |
 | confirming | another answer; no terminal and no `--yes`; Ctrl-C or end of input | refused (`confirm()`'s baseline messages, exit 2); cancelled (130) |
 | re-inspecting | incomplete, or the state changed | refused (exit 2, no delegate) |
-| re-inspecting | unchanged | delegating: the push child through `execute()`, or the `git branch -d` handle through the driver; unbounded, never signalled, waited for |
-| delegating | the child exits | exit: 130, 143 or 129 when a signal was recorded, otherwise the child's status |
+| re-inspecting | unchanged, and the slot read just before the spawn is empty | delegating: the push child through `execute()`, or the `git branch -d` handle through the driver; unbounded, never signalled, waited for |
+| re-inspecting | the slot read just before the spawn is set | cancelled (`Cancelled.`; 130, 143 or 129; no child run; lane 3's N13, lead ruling R-177) |
+| delegating | the child exits | exit: with a signal recorded, `Interrupted; the push had started and was waited for, and git exited with status N.` (`the branch deletion` for delete-branch) on standard error, never `Cancelled.`, and 130, 143 or 129, the phase being `apply` once the child is reaped (lead rulings R-101 (e) and R-108 (a)); otherwise the child's status |
 | resolving, planning, re-inspecting | SIGINT, SIGTERM, SIGHUP | cancelled (130, 143, 129; probe groups killed and reaped) |
 
 ### Target stages
@@ -647,7 +706,7 @@ final stage (lead ruling R-56 Q-10).
 | Stage | Reasons |
 | --- | --- |
 | `removed` | null, `branch-advanced-after-removal`, `branch-missing-after-removal`, `removal-ceiling` |
-| `refused` | `identity-changed`, `branch-changed`, `state-changed`, `contains-submodule`, `hidden-local-state` |
+| `refused` | `identity-changed`, `branch-changed`, `state-changed`, `contains-submodule`, `hidden-local-state`, `operation-in-progress` (LQ-14) |
 | `failed` | `git-refused` (128), `git-failed` (any other status), `spawn-error` |
 | `unknown` | `unconfirmed-removal`, `reconciliation-incomplete`, `internal-error`, `removal-ceiling` |
 | `not-attempted` | `batch-stopped`, `interrupted`, `deadline-exceeded` |
@@ -743,7 +802,7 @@ check row, its rule unchanged; `update --apply --component shape` or
 | targets per run | 16 |
 | `ignored_entries`, `status_records`, `ignored_samples` | 64, 4,096, 8 |
 | reflog read, manifest read | 64 KiB, 1 MiB |
-| revalidation, final rescan | at most 5 and 3 Git children; 8 and 6 when a line feed repeats the identity probe (D6) |
+| revalidation, final rescan | at most 5 and 3 Git children, 6 for revalidation where row 4c read true (LQ-11); 8 and 6 when a line feed repeats the identity probe (D6) |
 
 The timing values live in one module-level table, `TIMING`, read at call
 time only, never captured in a default argument or a derived constant
