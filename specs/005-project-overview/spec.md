@@ -115,7 +115,10 @@ after its round C15, and at `2eeaec4`, which commits C-51's edits of its tasks
 round C16, they are byte-identical as at `2eeaec4` (Dependencies).
 #24's change (`add-project-clean-cache-disposal`) stays pinned at `fe5b245`: at
 `e07cc42`, its draft PR #27's head after its round B9, every pinned range is
-byte-identical at new lines, which the Dependencies list for a later re-pin.
+byte-identical at new lines, which the Dependencies list for a later re-pin; at
+`d4e960b`, after its round B10, they are byte-identical at new lines again,
+compared by `cmp`, except its task 3.2, which gains reader RF's M1
+(Dependencies).
 
 **Created before feature 004 merges**: The change creates this feature only
 after feature 004 merges (proposal, Status and "Dependencies and
@@ -3446,7 +3449,19 @@ and [P] are change 1's requirements as the header names them.
     :595-598, :628-639 and :657-658; its `design.md` :592-595, :658-661 and
     D14's :1159-1165 at :650-653, :729-732 and :1239-1245; and its `tasks.md`
     3.2, :161-172, at :169-180. Its `project-overview` block is unchanged
-    there, so a later re-pin moves only those line numbers.
+    there, so a later re-pin moves only those line numbers. Re-checked again at
+    `d4e960b`, its head after round B10 (`e07cc42..d4e960b`: `166016b` in its
+    spec deltas, `b14ea45` in its design, `d4e960b` in its proposal and tasks),
+    by lane openRepoProject-5's line map and this spec's own `cmp` of each
+    range against `e07cc42` and against the pin: its `proposal.md` ranges sit
+    at :601-604, :625-628, :668-679 and :697-698, its `design.md` ranges at
+    :706-709, :785-788 and D14's :1316-1322, and the first line of its task 3.2
+    at :178, each byte-identical. Its task 3.2, now :178-193, gains reader RF's
+    M1 on lane openRepoProject-4's YES of 2026-10-21T16:13:14Z: "a re-base that
+    changes the block's added text returns it to Brett Heap before the
+    archive", and a second `diff -u`, of the block as committed at its ratified
+    head against the re-copied block, worded as #25's task 2.4 (its B-54). Its
+    `project-overview` block is still unchanged.
   - `add-project-overview-remote-merge-status` (issue #25, draft PR #29)
     MODIFIES "Overview bounds its work and reports what it omitted", "Overview
     prints a versioned JSON envelope" and "Overview is local and read-only"

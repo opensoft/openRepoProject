@@ -566,6 +566,17 @@ Lane: openRepoProject-4
   `suggestions-gates.md` and CHK015 here were re-read, no category changing,
   and the totals below were recounted by script. Re-validation: 16 of 16 items
   pass, with the checks of iteration 2 re-run by script on the edited spec.
+- 2026-10-21, an eleventh pass: #24 is re-checked at its draft PR #27's head
+  `d4e960b`, after round B10, its pin `fe5b245` kept, by lane
+  openRepoProject-5's line map and this spec's own `cmp` of each range against
+  `e07cc42` and the pin: every pinned range of its proposal and design is
+  byte-identical at new lines, and so is the first line of its task 3.2, which
+  now holds reader RF's M1, the return route and the second re-base diff, on
+  lane openRepoProject-4's YES of 2026-10-21T16:13:14Z. The header paragraph
+  and the Dependencies bullet record it; C-71 and `clarify-questions.md` keep
+  their `fe5b245` pins unchanged. No checklist result changes, and the totals
+  below were recounted by script. Re-validation: 16 of 16 items pass, with the
+  checks of iteration 2 re-run by script on the edited spec.
 - Items marked incomplete require spec updates before `/speckit-clarify` or `/speckit-plan`
 
 ## Cross-cutting Requirements Quality (no-argument `/speckit.checklist`, 2026-10-19)
@@ -677,5 +688,5 @@ All 17 checklists: 414 items: 373 pass, 25 fixed in the spec, 0 open, 16 plan
 notes (PN-1 to PN-18 but PN-4 and PN-11, withdrawn on 2026-10-21; PN-2 narrowed
 to an exception of any other kind in human mode and widened to a failed write's
 standard-error line), 0 new questions. Recounted by script on 2026-10-21, and
-again after the re-check, after the W6 read and after the fourth to tenth
+again after the re-check, after the W6 read and after the fourth to eleventh
 passes of that day.
