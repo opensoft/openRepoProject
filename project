@@ -5678,9 +5678,18 @@ def push_or_delete(repo, run):
     detached one and the classes to reconcile; then a branch whose configured
     upstream's remote-tracking ref is gone, whatever its class, with
     TEXT["push_remote_gone"] and the reason `remote-gone`, no code (R-45 (5));
-    only then is the command built, `remote get-url origin` running through
-    the driver (git_text()). Delete-branch refuses the default branch, a
-    branch a present worktree holds, and a branch not verified as merged: its
+    only then is the command built (lead ruling R-101 (e) 1; lane 3's H-1 and
+    H-2). For a configured upstream it is `push -- REMOTE refs/heads/B:MERGE`,
+    REMOTE and MERGE read from branch.B.remote and branch.B.merge through the
+    driver (git_text()), never split from the upstream's short name: one value
+    each, REMOTE not `.` and MERGE under refs/heads/, or the baseline's
+    `Unsupported upstream mapping` refusal. With none it is `push -u -- origin
+    refs/heads/B:refs/heads/B`, `remote get-url origin` running through the
+    driver. The refspec is fully qualified with no leading `+`, and `--` ends
+    the options, so that no remote, branch or ref text is read as an option, a
+    forced update or a configured push mapping. Delete-branch refuses the
+    default branch, a branch a present worktree holds, and a branch not
+    verified as merged: its
     head is read from row 6 and its merged-ness from row 7 of the plan's
     evidence, never through a new child, and a branch absent from row 6 or a
     row 7 not read refuses (P-23).
@@ -5691,11 +5700,13 @@ def push_or_delete(repo, run):
     default_signals() with the clock paused, since time at the question does
     not count (research.md R4; analyze M3); the full re-inspection after
     confirmation (require_unchanged_cleanup_state()); and the child, the
-    slot read just before it is spawned and again once it is reaped, a set
-    slot raising Interrupted (P-7). The run so exits 130, 143 or 129 when a
-    signal was recorded before or while the child ran, otherwise with the
-    child's status, 128 plus the signal number for a signal death (D19's
-    first row; plan review M3).
+    slot read just before it is spawned, a set slot raising Interrupted with
+    nothing run (P-7). Once the child is reaped the phase is `apply`, as the
+    pipeline sets it before a removal (R-101 (e) 2; lane 3's M-1; pcl:928-935):
+    a signal recorded by then is reported on standard error with git's status,
+    never as `Cancelled.`, and the run exits 130, 143 or 129; otherwise it
+    exits with the child's status, 128 plus the signal number for a signal
+    death (D19's first row; plan review M3).
 
     The push child runs through execute() with git_env("push") (R1, PR #19):
     project's own streams and process group, so that it is in the terminal's
@@ -5728,14 +5739,16 @@ def push_or_delete(repo, run):
             raise Refused(TEXT["push_remote_gone"].format(BRANCH=shown, UPSTREAM=human_path(upstream)),
                           reason="remote-gone")
         if upstream:
-            remote, separator, remote_branch = upstream.partition("/")
-            if not separator or not remote or not remote_branch:
+            remote = git_text(root, "config", "--get-all", f"branch.{branch}.remote")
+            merge = git_text(root, "config", "--get-all", f"branch.{branch}.merge")
+            if (not remote or remote == "." or not merge or "\n" in remote + merge
+                    or not merge.startswith("refs/heads/") or merge == "refs/heads/"):
                 raise Refused(f"Unsupported upstream mapping for {shown}: {human_path(upstream)}")
-            words = [remote, f"{branch}:{remote_branch}"]
+            words = ["--", remote, f"refs/heads/{branch}:{merge}"]
         else:
             if not git_text(root, "remote", "get-url", "origin"):
                 raise Refused("Cannot publish a branch without an origin remote.")
-            words = ["-u", "origin", branch]
+            words = ["-u", "--", "origin", f"refs/heads/{branch}:refs/heads/{branch}"]
         argv = git_argv("push", ["-C", str(root), "push", *words])
         action = f"push branch {shown}"
     else:
@@ -5769,8 +5782,13 @@ def push_or_delete(repo, run):
             detail = outcome.detail or "git was not run"
             raise Refused(detail[:1].upper() + detail[1:])
         status = outcome.status if outcome.status >= 0 else 128 - outcome.status
-    read_slot(run)
-    return status
+    run.phase = "apply"  # the child ran: a signal now sets the status, never `Cancelled.`
+    if run.signal is None:
+        return status
+    noun = "the push" if args.action == "push" else "the branch deletion"
+    say(run, f"Interrupted; {noun} had started and was waited for, and git exited with status {status}.",
+        sys.stderr)
+    return 128 + int(run.signal)
 
 
 def show_push_plan(run, argv, cwd):
