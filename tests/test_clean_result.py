@@ -149,6 +149,17 @@ def log_lines(log):
     return path.read_text().splitlines() if path.exists() else []
 
 
+def sh_git(*args):
+    """One real-git command line for a hook, by absolute path (lead ruling R-31)."""
+    return " ".join(shlex.quote(os.fsdecode(arg)) for arg in (REAL_GIT, *args))
+
+
+def when_target(path, *commands):
+    """sh text for a counting-wrapper hook that runs commands only when the
+    worktree being removed ($target) is path."""
+    return f"if [ \"$target\" = {shlex.quote(os.fsdecode(path))} ]; then\n" + "\n".join(commands) + "\nfi"
+
+
 class ResultTests(clean_support.CleanCase):
 
     # Fixtures: one repository per case, its worktrees merged, clean and
@@ -478,6 +489,92 @@ class ResultTests(clean_support.CleanCase):
                                                 NOT_ATTEMPTED=trees[1], ROOT=quoted(root)),
                       result.stderr.splitlines())
         self.assertEqual(result.stderr.splitlines().count(wait_line(trees[0])), 1, result.stderr)
+
+    # T088: "Exit 0 without evidence", "Git leaves an orphaned directory" and
+    # "Git refuses the removal".
+
+    def test_clean_exit_0_without_evidence(self):
+        # The remove-noop fake exits 0 and removes nothing; the rescan finds the
+        # entry, the path and the branch at its planned SHA. Pins T056.
+        root, trees = self.batch("noop", count=2)
+        planned = [self.head(tree) for tree in trees]
+        fake = self.base / "remove-noop-bin"
+        clean_support.install_fake_git(fake, "remove-noop")
+        result = self.run_json("clean", root, "--all-safe", "--apply", "--yes", "--json", env=self.path_first(fake))
+        self.assert_status(result, 1)
+        document = result.document
+        self.assertEqual(self.stages(document), [(str(trees[0]), "unknown", "unconfirmed-removal"),
+                                                 (str(trees[1]), "not-attempted", "batch-stopped")])
+        first, second = document["targets"]
+        self.assertEqual((first["exit_status"], first["notes"]), (0, []))
+        self.assertEqual(first["reconciliation"], record(True, True, True, planned[0]))
+        self.assertEqual((second["reconciliation"], second["exit_status"]), (None, None))
+        self.assertEqual(document["exit_code"], 1)
+        self.assertTrue(all(tree.is_dir() for tree in trees))
+
+    @clean_support.not_root
+    def test_clean_git_leaves_an_orphaned_directory(self):
+        # The first target holds a tracked file in a subdirectory made
+        # unwritable after the merge. Git deletes the admin directory, cannot
+        # delete the tree and exits 255 (checked on Git 2.43.0). The note goes
+        # on the target after decide_stage() (lead ruling R-83, P-5).
+        def setup(name, tree):
+            if name == NAMES[0]:
+                (tree / "kept").mkdir()
+                (tree / "kept" / "file").write_text("held")
+
+        root, trees = self.batch("orphaned", count=2, setup=setup)
+        held = trees[0] / "kept"
+        held.chmod(0o555)
+        self.addCleanup(held.chmod, 0o755)
+        planned = [self.head(tree) for tree in trees]
+        branches = self.branches(root)
+        result = self.run_json("clean", root, "--all-safe", "--apply", "--yes", "--json")
+        self.assert_status(result, 255)
+        document = result.document
+        self.assertEqual(self.stages(document), [(str(trees[0]), "failed", "git-failed"),
+                                                 (str(trees[1]), "not-attempted", "batch-stopped")])
+        first, second = document["targets"]
+        self.assertEqual((first["exit_status"], first["notes"]), (255, ["orphaned-directory"]))
+        # Entry gone, path present, the retained branch with its SHA.
+        self.assertEqual(first["reconciliation"], record(False, True, True, planned[0]))
+        self.assertEqual((second["reconciliation"], second["notes"]), (None, []))
+        self.assertEqual(document["exit_code"], 255)
+        self.assertEqual(self.branches(root), branches, "every branch is kept")
+        # Nothing deletes the directory, and no later plan lists it.
+        self.assertTrue((held / "file").is_file())
+        preview = self.run_json("clean", root, "--all-safe", "--json").document
+        self.assertNotIn(str(trees[0]), [row["path"] for row in preview["worktrees"]])
+        self.assertEqual([entry["path"] for entry in preview["selected"]], [str(trees[1])])
+        self.assertTrue((held / "file").is_file())
+
+    def test_clean_git_refuses_the_removal(self):
+        # The pre-remove hook locks the first target after its revalidation, so
+        # Git refuses with 128 (checked on Git 2.43.0).
+        root, trees = self.batch("git-refuses", count=2)
+        planned = [self.head(tree) for tree in trees]
+        env, log = self.counting("git-refuses", hooks={"pre": when_target(
+            trees[0], sh_git("-C", root, "worktree", "lock", trees[0]))})
+        result = self.run_json("clean", root, "--all-safe", "--apply", "--yes", "--json", env=env)
+        self.assert_status(result, 128)
+        document = result.document
+        self.assertEqual(self.stages(document), [(str(trees[0]), "failed", "git-refused"),
+                                                 (str(trees[1]), "not-attempted", "batch-stopped")])
+        first, second = document["targets"]
+        self.assertEqual(first["command"], ["git", *REMOVAL_PINS, "-C", str(root), "worktree", "remove",
+                                            str(trees[0])])
+        self.assertEqual((first["exit_status"], first["notes"]), (128, []))
+        self.assertEqual(first["reconciliation"], record(True, True, True, planned[0]))
+        self.assertIsNone(second["reconciliation"])
+        self.assertEqual(document["exit_code"], 128)
+        self.assertEqual(sum(map(is_removal, clean_support.child_log(log))), 1)
+        self.assertTrue(all(tree.is_dir() for tree in trees))
+        # Every retained branch is reported, after the stop block.
+        lines = result.stderr.splitlines()
+        stop = TEXT["stop_block"].format(PATH=trees[0], REASON="git-refused", K=0, N=2, NOT_ATTEMPTED=trees[1],
+                                         ROOT=quoted(root))
+        self.assertIn(stop, lines)
+        self.assertEqual(lines[lines.index(stop) + 1], TEXT["branches_kept_line"].format(BRANCHES=", ".join(NAMES[:2])))
 
 
 if __name__ == "__main__":
