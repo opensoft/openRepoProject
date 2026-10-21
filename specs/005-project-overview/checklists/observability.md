@@ -21,7 +21,7 @@ Lane: openRepoProject-4
   - Result: pass; since 2026-10-21 `estimated` also counts FR-007's extension
     read and effective-work-tree probes (LQ-11, PR #19 at `addd346`, pending
     its ratification), which POD:248-254 does not name and amendment A1 at
-    `d644517` adds to it, pending (FR-020).
+    `0394be4` adds to it, pending (FR-020).
 - [ ] CHK004 Is it specified whether `probes.estimated` counts a worktree row that never takes a status probe, such as a git-directory record? [Clarity, Gap, Spec FR-020]
   - Result: plan note PN-12, narrowed on 2026-10-21 by C-68: a bare
     repository's main worktree row adds none (FR-020); the other rows that take
@@ -48,7 +48,7 @@ Lane: openRepoProject-4
   - Result: pass. Design D10's `Incomplete: <message> (<code>).`, which since
     2026-10-21 reads `Incomplete: <path>: <message> (<code>).` for a scan error
     that carries a `path`, printed by [P]'s rules, a fill that amendment A1 at
-    `d644517` declares in D10 and requirement 12, pending (FR-045).
+    `0394be4` declares in D10 and requirement 12, pending (FR-045).
 
 ## Requirement Consistency
 
@@ -89,9 +89,9 @@ Evaluated on 2026-10-19 against `spec.md` at `8f433f7`; CHK004 and CHK008
 re-read on 2026-10-21 after Brett Heap's answers (C-55 to C-71), their
 categories unchanged, and CHK003 and CHK011 after PR #19's `addd346` and lane
 openRepoProject-3's W7 read of A1, theirs too, and again after A1's revisions
-3, 5 and 6, at `367223a`, `3ee860c` and `d644517`. 18 items: 17 pass, 0 fixed
-in the spec, 0 open, 1 plan notes, 0 new questions. An open item waits on the
-question or residual its result names; a plan note is for the plan, not the
-spec; a new question is asked in `clarify-questions.md`.
+3, 5, 6 and 7, at `367223a`, `3ee860c`, `d644517` and `0394be4`. 18 items: 17
+pass, 0 fixed in the spec, 0 open, 1 plan notes, 0 new questions. An open item
+waits on the question or residual its result names; a plan note is for the
+plan, not the spec; a new question is asked in `clarify-questions.md`.
 
 Plan notes: PN-7 (CHK006), PN-12 (CHK004, narrowed by C-68).

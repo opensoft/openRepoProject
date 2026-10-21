@@ -539,6 +539,33 @@ Lane: openRepoProject-4
   were re-read, no category changing, and the totals below were recounted by
   script. Re-validation: 16 of 16 items pass, with the checks of iteration 2
   re-run by script on the edited spec.
+- 2026-10-21, a tenth pass: A1's revision 7 at `0394be4` and lane
+  openRepoProject-3's W29 read of A1's revision 6 and of 3g (HIGH 0, MEDIUM 0,
+  LOW 3), by the lead's commit 3h decisions. Every live citation of A1 now
+  cites `0394be4` by A1's line map: its spec's lines from 116 on move down 5
+  (the collector-table row to :369, the case list to :104-120), and its
+  proposal's LQ-11 record to :1375-1403, the LQ-10 item to :1404-1433, Q15 A
+  and Q16 B to :1435-1438 and the open point to :1455-1462. FR-007's record
+  notes that A1's third case now takes FR-007's words, its disagreement case
+  FR-007's tie-break and its second case a cut `lstat` (W29 L1 and O2),
+  FR-007's own words unchanged; FR-040 cites A1's record of #19's Risk at
+  :1424-1433 (W29 L2); and the LQ intro says that one word of #19's gate block
+  changes at `6f2cb54` (W29 L3). The LQ intro re-checks #19's round (b),
+  `4485678` and `a664799`: nothing this spec cites changes there but the
+  review-safety rule, which keeps the clause the LQ-13 bullet cites and gains
+  R-171's rule; the overview has no revalidation, so no requirement moves; and
+  LQ-20 is cited, not restated, with the units that would follow if #19 bounded
+  [E]'s plan-time work-tree probe in [E] itself. #25 is re-checked at
+  `6b5bf8f`, its pin `05a424a` kept, every cited range byte-identical to
+  `2eeaec4`'s by `cmp`. #24's re-check at #27's round B10 still waits for lane
+  openRepoProject-5's sha and line map. No pin moves, and
+  `clarify-questions.md` is unchanged. In this folder, CHK006 of
+  `deployment.md`, CHK012 and CHK020 of `integration.md`, CHK012 of `ux.md`,
+  CHK003 and CHK011 of `observability.md`, CHK002, CHK003 and CHK019 of
+  `security.md`, CHK016 of `discovery-identity.md`, CHK012 of
+  `suggestions-gates.md` and CHK015 here were re-read, no category changing,
+  and the totals below were recounted by script. Re-validation: 16 of 16 items
+  pass, with the checks of iteration 2 re-run by script on the edited spec.
 - Items marked incomplete require spec updates before `/speckit-clarify` or `/speckit-plan`
 
 ## Cross-cutting Requirements Quality (no-argument `/speckit.checklist`, 2026-10-19)
@@ -585,7 +612,7 @@ Lane: openRepoProject-4
   - Result: pass.
 - [x] CHK015 Are the exit rules consistent across FR-029, FR-042, FR-043, FR-044 and the stories? [Consistency, Spec FR-042]
   - Result: pass; FR-043's pointer also names FR-042's exit-2 causes
-    (POD:765-766), for which amendment A1 at `d644517` proposes
+    (POD:765-766), for which amendment A1 at `0394be4` proposes
     `relative-config-path` with exit 2, pending.
 
 ### Acceptance Criteria Quality
@@ -650,5 +677,5 @@ All 17 checklists: 414 items: 373 pass, 25 fixed in the spec, 0 open, 16 plan
 notes (PN-1 to PN-18 but PN-4 and PN-11, withdrawn on 2026-10-21; PN-2 narrowed
 to an exception of any other kind in human mode and widened to a failed write's
 standard-error line), 0 new questions. Recounted by script on 2026-10-21, and
-again after the re-check, after the W6 read and after the fourth to ninth
+again after the re-check, after the W6 read and after the fourth to tenth
 passes of that day.
