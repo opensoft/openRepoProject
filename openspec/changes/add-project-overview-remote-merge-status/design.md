@@ -60,8 +60,10 @@ non-empty value whose first byte is not `/`, so that every keyed row is
 `gh-unavailable` and no child starts. D4, D5, D11 and Risks record it, and its
 edit to `specs/project-overview/spec.md`, one sentence in the Requests
 paragraph, a clause in the Results paragraph and one AND on an existing
-scenario, is HELD for lane openRepoProject-4 until it agrees, so that the
-committed spec file still says that every other variable passes on unread.
+scenario, was agreed by lane openRepoProject-4 on 2026-10-21 with two edits
+("may name" for "names" in the sentence, and a relative `XDG_CONFIG_HOME` in
+the AND) and is committed (`2b89bfc`): the Requests paragraph now says that
+every other variable is passed on unchanged.
 
 Citations follow `proposal.md`: the packet at `da33d92`; APO, CAS, PRS and
 `project:N` at main `961c405`, which main `e9d6711` holds unchanged for them
@@ -118,7 +120,7 @@ The rulings and the packet's boundary map to the decisions:
 | C-41: Codex's P2 on `f34dfe2` at design.md:381: a relative `GH_CONFIG_DIR`, `XDG_CONFIG_HOME` or `HOME` resolves against `/` when the child starts there; declined as an anchoring and kept in round C10 as a residual, which C-44 replaced | D5, D11, Risks |
 | C-42: lane openRepoProject-3's MEDIUM-1 on round C9: a node's `number` is accepted only when its parsed type is exactly `int`, and every check on the parsed answer runs inside the parse's catch-everything boundary | D6, D11 |
 | C-43: lane openRepoProject-3's four LOWs on round C9: no `parse_float` hook, by decision; the escape of a lone surrogate; each remote-target read's output decoded as strict UTF-8; and three wordings | D2, D6, D11 |
-| C-44: the lead's ruling on lane openRepoProject-3's and lane openRepoProject-4's planted-configuration point, refined on lane openRepoProject-3's six points: the lookup of `gh` counts as failing when any of `GH_CONFIG_DIR`, `XDG_CONFIG_HOME` and `HOME` is set to a non-empty value whose first byte is not `/`, so every keyed row is `gh-unavailable` and no child starts; other relative paths that `/` re-anchors stay residuals (Risks); its spec sentence is HELD for lane openRepoProject-4 | D4, D5, D11, Risks |
+| C-44: the lead's ruling on lane openRepoProject-3's and lane openRepoProject-4's planted-configuration point, refined on lane openRepoProject-3's six points: the lookup of `gh` counts as failing when any of `GH_CONFIG_DIR`, `XDG_CONFIG_HOME` and `HOME` is set to a non-empty value whose first byte is not `/`, so every keyed row is `gh-unavailable` and no child starts; other relative paths that `/` re-anchors stay residuals (Risks); its spec sentence is committed on lane openRepoProject-4's YES of 2026-10-21 (`2b89bfc`) | D4, D5, D11, Risks |
 | C-10, L-12: CI on Linux only | Migration Plan |
 
 What in `project` shapes the approach (at `961c405`; features 004 and 005
@@ -456,8 +458,8 @@ first step, before the search of `PATH`, so that a refused value gives
 credential value: the overview reads them only for this test, opens nothing they
 name, and never prints, logs or compares them otherwise, and every variable a
 child gets, these three included, is passed unchanged, as the Requests paragraph
-of `specs/project-overview/spec.md` says in the edit that is HELD for lane
-openRepoProject-4; the committed spec still says "unread" there. A prototype of
+of `specs/project-overview/spec.md` says, lane openRepoProject-4 having agreed
+"unchanged" for "unread" there on 2026-10-21 (`2b89bfc`). A prototype of
 the test, written once on `os.environb` and once on `os.environ` (a `startswith`
 of `/` on the string, whose decoding leaves a first byte that is not UTF-8 as no
 `/`), agreed with the rule on 18 cases on Python 3.10.21, 3.11.16, 3.12.3,
@@ -712,7 +714,7 @@ the loop stops reading, stops the child (D7) and records `truncated`.
 - Each node must have a `number` whose parsed type is exactly `int`
   (`type(number) is int`): never a `bool`, so not `true` or `false`, and never a
   `float`, so not `1.0` or `1e999`. The spec already says "a positive integer
-  `number`" (`specs/project-overview/spec.md:466`), and C-42 reads that as a
+  `number`" (`specs/project-overview/spec.md:472`), and C-42 reads that as a
   JSON integer literal. It must also be at least 1 and at most 2,147,483,647,
   the largest GraphQL `Int` (the hook above bounds the literal's text, this
   bounds its value, C-37); a `state` of `OPEN`, `CLOSED` or `MERGED`; a
@@ -914,7 +916,7 @@ of these fields, so remote evidence never reaches an eligibility gate, a
   (D10), so each by-value writing fails the test. It tests the parse and the
   node checks and is no scenario: "API failures stay unknown" already requires
   the 5,000-digit outcome, and the added requirement's "a positive integer
-  `number`" (`specs/project-overview/spec.md:466`) the others.
+  `number`" (`specs/project-overview/spec.md:472`) the others.
 - One test serves 200 answers that D6's parse refuses though each is otherwise
   valid (C-39, C-40). Each is a matched, merged pull request that would give
   its key's rows `merged` if it parsed, and each gives `api-error` with D6's
@@ -929,8 +931,8 @@ of these fields, so remote evidence never reaches an eligibility gate, a
   rule and from no other
   fault of the answer. The test checks the parse and is no scenario: the added
   requirement's "A 200 body SHALL be UTF-8 JSON"
-  (`specs/project-overview/spec.md:461-462`), and its `api-error` for a
-  response "that cannot be decoded or parsed for any cause" (:453-454),
+  (`specs/project-overview/spec.md:467-468`), and its `api-error` for a
+  response "that cannot be decoded or parsed for any cause" (:459-460),
   already require each outcome.
 - A planted `gh`, a second fake that records each run, sits in the working
   directory of a run whose `PATH` begins with an empty entry and `.`, so that
@@ -961,12 +963,15 @@ of these fields, so remote evidence never reaches an eligibility gate, a
     rewritten.
   - With 70 distinct keys and a relative `GH_CONFIG_DIR`, all 70 keys are
     `gh-unavailable`, none `request-cap`, as with no `gh` on `PATH`.
-  - The AND of "No gh, or a gh without authentication" takes the first two
-    refused cases and the absolute and the empty `GH_CONFIG_DIR`; the rest tests
-    the sentence of the Requests paragraph and the Results paragraph's clause,
-    which the scenario does not enumerate. A refused case starts no `gh` child,
-    so no test runs a real `gh` for it; the checks of D5 are evidence and no
-    test.
+  - The AND of "No gh, or a gh without authentication" takes
+    `GH_CONFIG_DIR=.gh-config`, `XDG_CONFIG_HOME=cfg`, a relative `HOME` beside
+    an absolute `GH_CONFIG_DIR`, and the absolute and the empty `GH_CONFIG_DIR`;
+    the relative `XDG_CONFIG_HOME` case is in it because lane openRepoProject-4
+    asked, on 2026-10-21, that a test that leaves `XDG_CONFIG_HOME` out of the
+    check fail. The rest of the cases test the sentence of the Requests
+    paragraph and the Results paragraph's clause, which the scenario does not
+    enumerate. A refused case starts no `gh` child, so no test runs a real `gh`
+    for it; the checks of D5 are evidence and no test.
 - Two `PATH` fixtures, built in the test's temporary tree, test the lookup's
   per-directory rule (C-35). A directory of mode 000 placed before the
   directory that holds the fake `gh` is skipped, and the lookup finds that
