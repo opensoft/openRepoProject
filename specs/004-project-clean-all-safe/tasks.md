@@ -875,7 +875,10 @@ T033), when B, D, E and F are; H, guard (T034, T035), when T023 is, beside G
   main worktree where `main_worktree()` names it, and where it gives `None`,
   `root` being null, the common directory for a bare repository only, and
   otherwise the directory where row 3 ran, the delta's order (FR-055; lead
-  ruling R-75 (j)));
+  ruling R-75 (j)), pinned by
+  `test_clean_evidence_a_bare_repository_s_registry_listing_runs_where_the_argument_resolves`,
+  a bare repository reached through a linked worktree, whose rows 3 and 4 run
+  where the argument resolves and rows 6 and 7 in the common directory);
   `verify_registration()` and the presence `lstat`, both through `fs_call()`
   (`present` false on `ENOENT` or `ENOTDIR`, null with an `os-error` on any
   other failure, lead ruling R-36; a `present: false` row is decided first
@@ -910,7 +913,7 @@ T033), when B, D, E and F are; H, guard (T034, T035), when T023 is, beside G
   lead-approved contracts edit, with the same key in `TEXT_FIXTURES` of
   `tests/clean_support.py`, which this task also touches (lead ruling R-45).
   — files: `project`, `tests/clean_support.py`
-  — verify: `python3 -c "import sys,re;t=open('project').read();A=sys.argv[1:];c=lambda r:t.split('# region '+r+'\n')[1].split('# endregion '+r+'\n')[0];M=[a for a in A if not ((a.split('%',1)[1] not in c(a.split('%',1)[0])) if '%' in a else (a.split('~',1)[1] in c(a.split('~',1)[0])) if '~' in a else re.search(r'^[a-z]*\s?'+re.escape(a.split(':',1)[1])+r'\b',c(a.split(':',1)[0]),re.M))];[print('region check failed:',m) for m in M];sys.exit(1 if M or not A else 0)" 'evidence:identity_probe' 'evidence:main_worktree' 'evidence:inspect_repository' 'evidence:verify_registration' 'evidence:status_probe' 'evidence:worktree_rows' 'evidence~def inspect_repository(directory, run, refresh=False, *, repeat_identity_at_root=True)' 'evidence~def worktree_rows(repo, run, records=None)' && python3 -m unittest discover -s tests -p 'test_clean_evidence.py' -k '*.test_clean_evidence_parity_with_the_baseline_reader' && python3 -m unittest discover -s tests -p 'test_clean_harness.py' -k '*.test_clean_text_fixtures_equal_the_contract_table'`
+  — verify: `python3 -c "import sys,re;t=open('project').read();A=sys.argv[1:];c=lambda r:t.split('# region '+r+'\n')[1].split('# endregion '+r+'\n')[0];M=[a for a in A if not ((a.split('%',1)[1] not in c(a.split('%',1)[0])) if '%' in a else (a.split('~',1)[1] in c(a.split('~',1)[0])) if '~' in a else re.search(r'^[a-z]*\s?'+re.escape(a.split(':',1)[1])+r'\b',c(a.split(':',1)[0]),re.M))];[print('region check failed:',m) for m in M];sys.exit(1 if M or not A else 0)" 'evidence:identity_probe' 'evidence:main_worktree' 'evidence:inspect_repository' 'evidence:verify_registration' 'evidence:status_probe' 'evidence:worktree_rows' 'evidence~def inspect_repository(directory, run, refresh=False, *, repeat_identity_at_root=True)' 'evidence~def worktree_rows(repo, run, records=None)' && python3 -m unittest discover -s tests -p 'test_clean_evidence.py' -k '*.test_clean_evidence_parity_with_the_baseline_reader' -k '*.test_clean_evidence_a_bare_repository_s_registry_listing_runs_where_the_argument_resolves' && python3 -m unittest discover -s tests -p 'test_clean_harness.py' -k '*.test_clean_text_fixtures_equal_the_contract_table'`
 - [x] T032 [P] [O] Add to region `evidence`: `classify()` (pure, with its one
   reorder; `RECOMMENDATIONS` from `project:566-616`); `partial_removal_note()`;
   `declared_tracking_branch(root)` (today's `manifest()` read, bounded by
@@ -1325,9 +1328,9 @@ L-8).
   fields, `locked`, `operation.argv`); `plan_completeness()`
   (`inspection-incomplete` for an `inspection-error` row, a row carrying
   T031's unprobed marker, a failed repository-wide probe, or, in mode
-  single, a P that matches several entries or whose match is undecided, its
-  own realpath unread among them; analyze M6, lead rulings R-67 (b), R-73
-  (d) and R-75 (b));
+  single, a P that matches several entries or whose match is undecided, any
+  entry's realpath unread among the causes; analyze M6, lead rulings R-67
+  (b), R-73 (d), R-75 (b) and R-78 (b));
   `apply_allowed`; `refusals`; `limits` and `budget` as
   the values in force; `probes` and `operations`, `estimated` as the upper
   bound for an `--apply` run of this plan in every mode, `probes` F + W + E +
@@ -1345,19 +1348,20 @@ L-8).
   expanded, joined to the working directory and realpath'd by one bounded call,
   is matched against every registry row: a row matches when its raw path
   bytes equal it, or else when its own realpath, one bounded call each, does;
-  a realpath that cannot be read counts as a match, failing closed, and every
-  row the row cap takes matches when P's own cannot be read (lead ruling
-  R-69, reading 2). Each realpath read is one `fs_call()`, a bounded
-  filesystem call with the budget every filesystem call gets, `min(5 s, work
-  remaining)` under `clean`'s deadline, so that it spends the work deadline
-  as any read does, a read cut at its budget giving no realpath and
-  recording no row error, since no row exists yet, the plan's
+  a realpath that cannot be read, P's own or any entry's, makes P's match
+  undecided, failing closed, and every row the row cap takes then matches
+  (lead rulings R-69, reading 2, and R-78 (b)). Each realpath read is one
+  `fs_call()`, a bounded filesystem call with the budget every filesystem
+  call gets, `min(5 s, work remaining)` under `clean`'s deadline, so that it
+  spends the work deadline as any read does, a read cut at its budget giving
+  no realpath and recording no row error, since no row exists yet, the plan's
   `inspection-incomplete` carrying it; one is made for P and, when P's own
   read gives a realpath, one for each registry entry whose raw bytes differ
   from that realpath, the entries past the cap included, before any row is
-  inspected, while a P whose own read gives none reads no other entry, the
-  entries the cap takes all counting as its matches (lead ruling R-73 (d);
-  lane 3's L-2); and nothing
+  inspected, the reads stopping at the first that fails, while a P whose own
+  read gives none reads no other entry, the entries the cap takes all
+  counting as its matches (lead rulings R-73 (d) and R-78 (b); lane 3's L-2);
+  and nothing
   counts them, as nothing counts any filesystem call, `probes` counting Git
   children only (lead ruling R-75 (h)). Exactly one decided match is P's
   row. No match records
@@ -1370,14 +1374,18 @@ L-8).
   selected, P's own evidence is incomplete, and `check_plan()` refuses with
   `inspection-incomplete`, never the baseline's `No unique linked worktree`
   refusal, a twin that passes gates 1 to 5 being excluded as `not-requested`
-  (lead rulings R-62 (a), R-67 (b) and R-69). When P's own realpath cannot
-  be read, P's match is undecided: no entry is exempt from the row cap, the
-  rows inspected are the ones the cap takes, the main worktree and the 127
-  linked worktrees with the smallest paths, as the `project-clean` delta's
-  scenario "Row cap and planning failures" takes them (its
-  `spec.md:828-834`), and `check_plan()` refuses with `inspection-incomplete`
-  (lead rulings R-73 (d) and R-74 (a); T069's
-  `test_clean_single_target_p_s_own_realpath_unread_keeps_the_cap`). Otherwise
+  (lead rulings R-62 (a), R-67 (b) and R-69). When the realpath of P or of
+  any other entry cannot be read, P's match is undecided: no entry is exempt
+  from the row cap, the rows inspected are the ones the cap takes, the main
+  worktree and the 127 linked worktrees with the smallest paths, never more
+  than the cap's 128, as the `project-clean` delta's scenario "Row cap and
+  planning failures" takes them (its `spec.md:828-834`), and `check_plan()`
+  refuses with `inspection-incomplete` (lead rulings R-73 (d), R-74 (a) and
+  R-78 (b); T069's
+  `test_clean_single_target_p_s_own_realpath_unread_keeps_the_cap`, and
+  T097's
+  `test_clean_row_cap_and_planning_failures_an_unreadable_realpath_in_single_mode`
+  for another entry's). Otherwise
   P is selected alone, and every other eligible row is `not-requested`; in mode
   report the plan is the same, with `apply_allowed: false`.
   — files: `project`
@@ -1537,7 +1545,7 @@ L-8).
   (lead ruling R-56 Q-13), and compare its signature fields, `locked`, the
   merge target and the repository identity with the plan's; any difference
   refuses the target with `state-changed`, its reconciliation taken from that
-  same re-read. T084 replaces the body with D7's targeted check.
+  same re-read. T084 replaced the body with D7's targeted check.
   — files: `project`
   — verify: `python3 -c "import sys,re;t=open('project').read();A=sys.argv[1:];c=lambda r:t.split('# region '+r+'\n')[1].split('# endregion '+r+'\n')[0];M=[a for a in A if not ((a.split('%',1)[1] not in c(a.split('%',1)[0])) if '%' in a else (a.split('~',1)[1] in c(a.split('~',1)[0])) if '~' in a else re.search(r'^[a-z]*\s?'+re.escape(a.split(':',1)[1])+r'\b',c(a.split(':',1)[0]),re.M))];[print('region check failed:',m) for m in M];sys.exit(1 if M or not A else 0)" 'apply:revalidate' && python3 project clean --help >/dev/null`
 - [x] T056 [P] [US1] [O] Add `run_removal(target, run)`, `rescan(target, run)` and
@@ -1915,10 +1923,12 @@ US2, US7 and US9.
   and a dirty worktree `target-excluded` with `reason: "dirty"`. Two more
   tests of the scenario, the single lane's:
   `test_clean_single_target_a_failed_realpath_read_counts_as_a_match`
-  (another entry's realpath read fails during P's match: it counts as a
-  match, failing closed, so P's match is undecided and nothing is selected;
-  `inspection-incomplete`, exit 2, nothing asked or removed; lead ruling R-72
-  (c)) and `test_clean_single_target_p_s_own_realpath_unread_keeps_the_cap`
+  (another entry's realpath read fails during P's match: P's match is
+  undecided, failing closed, so nothing is selected and no entry is exempt
+  from the cap, which T097's test of the 128-row bound pins;
+  `inspection-incomplete`, exit 2, nothing asked or removed; lead rulings
+  R-72 (c) and R-78 (b)) and
+  `test_clean_single_target_p_s_own_realpath_unread_keeps_the_cap`
   (P's own realpath read fails among 131 entries: no entry is exempt from
   the cap, the rows inspected are the main worktree and the 127 smallest
   paths, with no status probe past the cap, `omitted` counts 3, and the run
@@ -2035,13 +2045,14 @@ US2, US7 and US9.
   `inspect-cap`; and mode single: P
   matched against the whole registry and inspected first, exempt from the cap,
   so that the rows inspected are P and the first 128 entries other than P,
-  the main worktree first (lead ruling R-53 P-15), unless P's own realpath
-  cannot be read: P's match is then undecided, no entry is exempt, the rows
-  inspected are the first 128 entries, the main worktree first, and the plan
-  refuses with `inspection-incomplete` (T049; lead rulings R-73 (d) and R-74
-  (a)); the limit of 16 counting P alone, and another row's `inspection-error`,
-  omission by the cap or being left unprobed recorded as the non-blocking notes
-  `inspection-incomplete`, `inspect-cap` and `deadline-exceeded`, while P's own
+  the main worktree first (lead ruling R-53 P-15), unless a realpath read
+  fails, P's own or any other entry's: P's match is then undecided, no entry
+  is exempt, the rows inspected are the first 128 entries, the main worktree
+  first, and the plan refuses with `inspection-incomplete` (T049; lead
+  rulings R-73 (d), R-74 (a) and R-78 (b)); the limit of 16 counting P alone,
+  and another row's `inspection-error`, omission by the cap or being left
+  unprobed recorded as the non-blocking notes `inspection-incomplete`,
+  `inspect-cap` and `deadline-exceeded`, while P's own
   evidence stays strict. These non-blocking notes serve `--action remove`
   alone: a single plan built for push or delete-branch (the `Invocation`'s
   action) keeps the cap and the bounds with the batch's completeness, so
@@ -2518,15 +2529,17 @@ lead ruling R-83).
   a plain `removed` and the slot is empty (lead ruling R-83 P-3), each
   rescan child getting `min(5 s, reserve remaining)`, the reserve counted
   from the exit being T099's (R-80 P-3); a second SIGINT during
-  reconciliation abandons the remaining rescans, their fields null and the
-  target `unknown` with `reconciliation-incomplete` (M17); an exception after
-  the apply phase begins, in a target, its rescan, the final rescan or the
-  record's rendering, first waits for an in-flight removal, then makes the
-  target being handled `unknown` with `internal-error` (fields not established
-  null) and later targets `not-attempted`, and the record is still printed, the
-  exit by D19 (plan review M2); any rescan read that fails or times out, the
-  registry listing, the ref listing, or an `lstat` that fails other than
-  with `ENOENT` or `ENOTDIR`, leaves the fields it reads null and gives
+  reconciliation abandons the remaining rescans, their fields null, and the
+  target's stage follows the stage rule on that unfinished record,
+  `unknown` with `reconciliation-incomplete` after exit 0, while a child that
+  exited nonzero on its own stays `failed` (M17; lead ruling R-87 (c)); an
+  exception after the apply phase begins, in a target, its rescan, the final
+  rescan or the record's rendering, first waits for an in-flight removal, then
+  makes the target being handled `unknown` with `internal-error` (fields not
+  established null) and later targets `not-attempted`, and the record is still
+  printed, the exit by D19 (plan review M2); any rescan read that fails or
+  times out, the registry listing, the ref listing, or an `lstat` that fails
+  other than with `ENOENT` or `ENOTDIR`, leaves the fields it reads null and gives
   `reconciliation-incomplete`, except that a child killed at the ceiling
   keeps `removal-ceiling` (T085's rule; lead ruling R-76 (a)); add the
   `orphaned-directory` note; guard every
@@ -2614,6 +2627,12 @@ statuses, the child counts and the order of what was cut.
   than 1 s; R-29): `inspection-incomplete` with the row visible; the work
   deadline passing during planning under the launcher (a table that shortens
   the deadline and the reserve), with slow fakes: `deadline-exceeded`);
+  `test_clean_row_cap_and_planning_failures_an_unreadable_realpath_in_single_mode`
+  (129 rows registered and P, a merged worktree whose path sorts last; the
+  realpath read of one other entry fails during P's match: P's match is
+  undecided, no entry is exempt from the cap, the document lists at most 128
+  rows, the main worktree and the 127 smallest paths, `inspection-incomplete`,
+  exit 2, and P stays; lead ruling R-78 (b));
   `test_clean_twenty_rows_pass_every_gate_before_deferred_target_cap` (twenty
   merged rows: the first sixteen by raw path selected and removed, four
   excluded as `deferred-target-cap` with D18's deferral line and the command to
@@ -2629,7 +2648,7 @@ statuses, the child counts and the order of what was cut.
   failures"; "Twenty rows pass every gate before deferred-target-cap";
   "Ignored-file bound".
   — files: `tests/test_clean_bounds.py`
-  — verify: `python3 -c "import sys,unittest as u;L=u.defaultTestLoader;f=lambda s:[i for t in s for i in (f(t) if isinstance(t,u.TestSuite) else [t.id()])];I=[i for i in f(L.discover('tests',pattern=sys.argv[1])) if not i.startswith('unittest.')];A=sys.argv[2:];M=[a for a in A if not any(a in ('*',i.split('.')[-1]) for i in I)];[print('not collected:',m) for m in M];[print(e) for e in L.errors];sys.exit(1 if M or L.errors or not A else 0)" test_clean_bounds.py 'test_clean_row_cap_and_planning_failures' 'test_clean_twenty_rows_pass_every_gate_before_deferred_target_cap' 'test_clean_ignored_file_bound'`
+  — verify: `python3 -c "import sys,unittest as u;L=u.defaultTestLoader;f=lambda s:[i for t in s for i in (f(t) if isinstance(t,u.TestSuite) else [t.id()])];I=[i for i in f(L.discover('tests',pattern=sys.argv[1])) if not i.startswith('unittest.')];A=sys.argv[2:];M=[a for a in A if not any(a in ('*',i.split('.')[-1]) for i in I)];[print('not collected:',m) for m in M];[print(e) for e in L.errors];sys.exit(1 if M or L.errors or not A else 0)" test_clean_bounds.py 'test_clean_row_cap_and_planning_failures' 'test_clean_row_cap_and_planning_failures_an_unreadable_realpath_in_single_mode' 'test_clean_twenty_rows_pass_every_gate_before_deferred_target_cap' 'test_clean_ignored_file_bound'`
 - [x] T098 [US6] [O] Add to `tests/test_clean_bounds.py`:
   `test_clean_bounded_revalidation_work` (five rows, three selected,
   `--all-safe --apply --yes` under the counting wrapper and the real table

@@ -48,21 +48,23 @@ Flags this table does not refuse keep the baseline's handling: without
 and an unused `--branch` or `--worktree` is ignored. `--worktree P` is
 expanded, joined to the working directory and realpath'd by one bounded
 call, and matched against every registry row: a row matches when its path
-equals it, or else when its realpath, one bounded call each, does, and a
-realpath that cannot be read counts as a match, failing closed (lead ruling
-R-69). Exactly one decided match names P's row; no match is
+equals it, or else when its realpath, one bounded call each, does. A
+realpath that cannot be read, P's own or any entry's, a call cut at the work
+deadline included, makes P's match undecided, failing closed (lead rulings
+R-69 and R-78 (b)). Exactly one decided match names P's row; no match is
 `worktree-not-found`; more than one match, by raw bytes or by realpath, or
 one not decided, selects nothing and leaves P's own evidence incomplete, so
 the run refuses with `inspection-incomplete`, exit 2, before any
 `target-excluded`, because P's own evidence is strict and an incomplete plan
 is refused first (lead rulings R-57, R-62 and R-67 (b)). A path two entries
 share is such a case, both entries also `registration-mismatch`,
-`inspection-error` rows. So is a P whose own realpath cannot be read: every
-entry the row cap takes counts as a match, none is exempt from the cap, so
-the rows inspected are the main worktree and the 127 linked worktrees with
-the smallest paths, as the delta's scenario "Row cap and planning failures"
-takes them, and the run refuses with `inspection-incomplete`, exit 2 (lead
-rulings R-73 (d) and R-74 (a)).
+`inspection-error` rows. So is a P whose match is undecided, whichever entry's
+realpath could not be read: every entry the row cap takes counts as a match,
+none is exempt from the cap, so the rows inspected are the main worktree and
+the 127 linked worktrees with the smallest paths, as the delta's scenario
+"Row cap and planning failures" takes them, never more than the cap's 128,
+and the run refuses with `inspection-incomplete`, exit 2 (lead rulings R-73
+(d), R-74 (a) and R-78 (b)).
 
 ## Order of a run
 
@@ -207,15 +209,16 @@ otherwise staying listed, since nothing was spawned for them; the left-out
 names print on one new line after `Branches kept:` and before "D18
 residual-window line", `Branches not confirmed: B2.`, a `TEXT` key the
 text lane adds (T094, a lead-approved contracts edit), and the line reads
-`Branches kept: none.` when every branch is left out, since D18 has
-neither form (lead rulings R-76 (f) and R-79 P-10); a stop block with
-no target `not-attempted`, as when the last selected target stops the run,
-reads `Not attempted: none.`, a fill, since D18's stop block has no such
-form (lead ruling R-68 (a)); the stop block's `Next: project clean ROOT
---all-safe` prints in single mode too, though that run named one worktree,
-since D18 fixes the line as it is (lead ruling R-73 (f)); a plan-blocking
-refusal prints the plan, then `REFUSED: MESSAGE`; each code with no baseline
-message gets one here:
+`Branches kept: none.` when every branch is left out; D18 has neither form,
+its stop and its success lines (`design.md:765-768`) naming no branch the
+run could not confirm, so both are a fill (lead rulings R-76 (f), R-79 P-10
+and R-86 (d)); a stop block with no target `not-attempted`, as when the last
+selected target stops the run, reads `Not attempted: none.`, a fill, since
+D18's stop block has no such form (lead ruling R-68 (a)); the stop block's
+`Next: project clean ROOT --all-safe` prints in single mode too, though that
+run named one worktree, since D18 fixes the line as it is (lead ruling R-73
+(f)); a plan-blocking refusal prints the plan, then `REFUSED: MESSAGE`; each
+code with no baseline message gets one here:
 
 | Code | Message |
 | --- | --- |
@@ -330,7 +333,7 @@ values in data-model.md).
 | `unsupported-path-bytes` | resolve | `root` or `common_dir` not valid UTF-8 |
 | `manifest-invalid` | resolve | unreadable, not a mapping, wrong kind, over 1 MiB by `st_size`, or PyYAML missing |
 | `no-merge-target` | resolve | no candidate exists as a local branch |
-| `inspection-incomplete` | plan | a repository-wide probe failed, a row is `inspection-error`, a row was left unprobed, or, in single mode, P matches several entries or its match is undecided, its own realpath unread among them (lead rulings R-67 (b), R-73 (d) and R-75 (b)) |
+| `inspection-incomplete` | plan | a repository-wide probe failed, a row is `inspection-error`, a row was left unprobed, or, in single mode, P matches several entries or its match is undecided, any entry's realpath unread among the causes (lead rulings R-67 (b), R-73 (d), R-75 (b) and R-78 (b)) |
 | `inspect-cap` | plan | more rows than the mode's cap, which counts the registry entries that become rows, the main worktree and missing rows included; a bare repository's `bare` entry and a first record equal to `common_dir` with no main worktree are no rows (D8; lead ruling R-73 (d)) |
 | `deadline-exceeded` | plan | the work deadline passed while planning |
 | `worktree-not-found` | select | `--worktree` matches no registry entry |

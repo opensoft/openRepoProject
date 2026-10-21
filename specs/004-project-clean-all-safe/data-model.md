@@ -249,7 +249,7 @@ remains only for such a caller (lead rulings R-71 (b) and R-72 (g)).
 | --- | --- | --- | --- |
 | `report` | every other invocation without `--all-safe`: plain `project clean`, with or without `--json`, and flags without `--apply` | 256 | what `--all-safe` would select at 128 rows or fewer; null above 128, with the note `inspect-cap` and `rows` |
 | `all-safe` | `--all-safe`, preview or `--apply` | 128 | every row passing every gate, at most 16 |
-| `single` | `--apply --action remove --worktree P` | 128, P exempt and probed first, unless P's own realpath cannot be read (below) | P alone |
+| `single` | `--apply --action remove --worktree P` | 128, P exempt and probed first, unless a realpath read fails (below) | P alone |
 | `single`, push and delete-branch | `--apply --action push` or `--action delete-branch`, which take single mode's cap and bounds only (below) | 128, no exemption | the named branch; completeness the batch's |
 
 `clean_mode(args)` (T035) decides the mode as this table spells it: `single`
@@ -259,12 +259,12 @@ The row cap counts the registry entries that become rows, the main worktree
 and missing rows included: a bare repository's `bare` entry, and a first
 record equal to `common_dir` with no main worktree named, are no rows (D8),
 so neither counts (lead ruling R-73 (d), a fill of the delta's "every
-registry entry counting"). In mode single, when P's own realpath cannot be
-read, P's match is undecided: no entry is exempt from the cap, the rows
-inspected are the main worktree and the 127 linked worktrees with the
-smallest paths, as the delta's scenario "Row cap and planning failures"
-takes them, and the plan refuses with `inspection-incomplete` (lead rulings
-R-73 (d) and R-74 (a)).
+registry entry counting"). In mode single, when the realpath of P or of any
+other entry cannot be read, P's match is undecided: no entry is exempt from
+the cap, the rows inspected are the main worktree and the 127 linked
+worktrees with the smallest paths, as the delta's scenario "Row cap and
+planning failures" takes them, and the plan refuses with
+`inspection-incomplete` (lead rulings R-73 (d), R-74 (a) and R-78 (b)).
 
 Fields, in the delta's envelope order: `schema_version`, `observed_at`,
 `mode`, the baseline `root`, `target_branch` and `tracking_freshness`,
@@ -280,17 +280,16 @@ execution order are by raw path bytes.
 Completeness: a plan is `incomplete` when the row cap is exceeded
 (`inspect-cap`), a repository-wide probe failed, a row is
 `inspection-error`, or, in mode single, P matches several entries or its
-match is undecided, its own realpath unread among them
-(`inspection-incomplete`; lead rulings R-67 (b), R-73 (d) and R-75 (b)),
-or the deadline passed while
-planning (`deadline-exceeded`), each row it stopped being `inspection-error`
-with a `deadline-exceeded` row error, never left unprobed (lead rulings R-67
-(a) and R-69; T099). In single mode those three are non-blocking
-notes about other rows, and only P's own row, P's match and the
-repository-wide probes decide (D13; lane 3's L-7). In report mode above
-128 rows, the `inspect-cap` note alone
-does not make it incomplete. `apply_allowed` is false for every report and
-for any plan that is incomplete or carries a refusal.
+match is undecided, any entry's realpath unread among the causes
+(`inspection-incomplete`; lead rulings R-67 (b), R-73 (d), R-75 (b) and
+R-78 (b)), or the deadline passed while planning (`deadline-exceeded`), each
+row it stopped being `inspection-error` with a `deadline-exceeded` row error,
+never left unprobed (lead rulings R-67 (a) and R-69; T099). In single mode
+those three are non-blocking notes about other rows, and only P's own row,
+P's match and the repository-wide probes decide (D13; lane 3's L-7). In
+report mode above 128 rows, the `inspect-cap` note alone does not make it
+incomplete. `apply_allowed` is false for every report and for any plan that
+is incomplete or carries a refusal.
 
 Push and delete-branch take single mode's 128-row cap and bounds only:
 their completeness is the batch's, so any `inspection-error` row, the cap
@@ -510,7 +509,7 @@ The driver reads the slot by the `Invocation`'s phase: it raises
 | a later signal | the slot keeps the first; a later SIGINT counts only in phase `reconciling` |
 | the slot read set in phase `planning` (after each wake of the driver) | the child is terminated and `Interrupted` raised: cancelled |
 | the slot read set at a seam of phase `apply` (before each revalidation and each spawn) | that target and every later one `not-attempted` with `interrupted`; reconciling follows |
-| a second SIGINT while a rescan runs in phase `reconciling` | the remaining rescans are abandoned: the running group is terminated, fields not established stay null, and the target is `unknown` with `reconciliation-incomplete` |
+| a second SIGINT while a rescan runs in phase `reconciling` | the remaining rescans are abandoned: the running group is terminated and fields not established stay null (the `project-clean` delta's `spec.md:936-937`); the target's stage is then the stage rule's on that unfinished record: after exit 0, `unknown` with `reconciliation-incomplete`, but a child that exited nonzero on its own stays `failed`, `git-refused` or `git-failed` (its `spec.md:899-902` and `:910-912`; lead ruling R-87 (c)) |
 | `raising_signals` entered with the slot already set | it raises at once, `KeyboardInterrupt` for SIGINT and `Terminated` for SIGTERM or SIGHUP, so no signal falls between reading the slot and installing its handlers (lead ruling R-47) |
 | `default_signals` entered | the handlers in force before the outermost scope was entered are restored for its span (R-47) |
 | a signal while a removal, push or `git branch -d` child runs | recorded only; the child is never signalled and is waited for |
