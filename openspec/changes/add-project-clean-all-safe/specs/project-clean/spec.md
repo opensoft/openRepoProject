@@ -223,8 +223,10 @@ branch that no unique linked worktree holds; the default branch; a worktree that
 is dirty, missing or unreadable; a detached worktree; a branch whose remote
 state must first be reconciled (`diverged`, `remote-ahead` or
 `review-required`); a configured upstream that is not one remote other than `.`
-with one branch under `refs/heads/`; and a branch with no upstream where no
-`origin` remote exists.
+with one branch under `refs/heads/`, the baseline's message with a wider
+trigger, since the baseline refused only an upstream whose short name lacked a
+remote or a branch part (the lead's R-130); and a branch with no upstream where
+no `origin` remote exists.
 
 It SHALL refuse, with exit status 2 and no push, a branch whose configured
 upstream's remote-tracking ref no longer exists, on that deleted upstream
@@ -247,24 +249,27 @@ Git-first" states, and `--apply --json` SHALL stay refused with
 
 #### Scenario: Push refuses a branch it may not push
 
-- **WHEN** `--apply --action push --branch B --yes` names, in turn: the default
-  branch, one commit ahead of its upstream; an unpublished branch with a
-  commit of its own whose worktree holds a staged and an untracked file, and
-  then that worktree moved away; `detached`, the row of a detached worktree;
-  a `diverged` and a `remote-ahead` branch; a branch whose `branch.B.merge` is
-  `refs/tags/v1`, `refs/for/main` or `+refs/heads/B` through a remote whose
-  fetch refspec maps every ref; and an unpublished branch in a repository with
-  no remote, then with one remote not named `origin`
+- **WHEN** `--apply --action push --branch B --yes` names, in turn: a branch
+  that no worktree holds; the default branch, one commit ahead of its
+  upstream; an unpublished branch with a commit of its own whose worktree
+  holds a staged and an untracked file, and then that worktree moved away;
+  `detached`, given as `--branch detached`, which names a detached worktree's
+  row; a `diverged` and a `remote-ahead` branch; a branch whose
+  `branch.B.merge` is `refs/tags/v1`, `refs/for/main` or `+refs/heads/B`
+  through a remote whose fetch refspec maps every ref, its remote-tracking ref
+  existing; and an unpublished branch in a repository with no remote, then
+  with one remote not named `origin`
 - **THEN** each refuses with exit 2, printing nothing on standard output and
-  on standard error only `REFUSED: ` followed, in turn, by `The default
-  branch is protected; use its normal repository workflow.`, `Cannot push B;
-  its worktree is dirty, missing, or unreadable.`, `Cannot push a detached
-  worktree; name the branch first.`, `Cannot push B; reconcile its remote
-  state first.`, `Unsupported upstream mapping for B: U`, U the upstream's
-  short name, and `Cannot publish a branch without an origin remote.`
+  on standard error only `REFUSED: ` followed, in turn, by `No unique linked
+  worktree found for branch B`, `The default branch is protected; use its
+  normal repository workflow.`, `Cannot push B; its worktree is dirty,
+  missing, or unreadable.`, `Cannot push a detached worktree; name the branch
+  first.`, `Cannot push B; reconcile its remote state first.`, `Unsupported
+  upstream mapping for B: U`, U the upstream's short name, and `Cannot publish
+  a branch without an origin remote.`
 - **AND** no push child runs, every ref of the repository and of each remote
-  is as it was, no upstream is set, and the dirty worktree keeps its staged
-  and untracked files
+  is as it was, no upstream is established, and the dirty worktree keeps its
+  staged and untracked files
 
 #### Scenario: Push refuses a branch whose upstream was deleted
 
@@ -1097,8 +1102,9 @@ accepted. Each selected target SHALL end in one stage with one reason:
   not proven; `unconfirmed-removal`, `reconciliation-incomplete`,
   `internal-error` or `removal-ceiling`;
 - `not-attempted`: the run stopped before reaching the target, or before
-  spawning its removal because less than the removal floor remained;
-  `batch-stopped`, `interrupted` or `deadline-exceeded`.
+  spawning its removal because less than the removal floor remained or the
+  work deadline cut its revalidation; `batch-stopped`, `interrupted` or
+  `deadline-exceeded`.
 
 A removal child that exits nonzero on its own SHALL be `failed` with Git's
 status, `git-refused` for 128 and `git-failed` otherwise, whether or not a

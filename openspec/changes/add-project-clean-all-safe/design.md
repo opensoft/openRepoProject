@@ -31,7 +31,8 @@ the lead's rulings R-124 and R-127, Context, D6, D12, D14, D21, D22 and Risks;
 and its W9 read of LQ-10 and LQ-11, under the lead's R-125, Context, D6, D7,
 D11, D17, D18 and Risks; its W14 read of LQ-14, under the lead's R-126,
 Context, D18 and D22; and its W21 read of R-124 to R-126 with the round of the
-lead's R-146 and R-147, Context, D7, D12, D18, D21, D22 and Risks. Brett
+lead's R-146 and R-147, Context, D7, D12, D18, D21, D22 and Risks; and its
+W26 read of that round, with the lead's R-171, Context, D7, D18 and D22. Brett
 Heap's ruling
 of 2026-10-09 on open question 1, that a local ancestry proof outranks
 `remote-gone` for worktree rows, is in `proposal.md` Decisions and edited
@@ -467,8 +468,13 @@ target, the manifest's candidate, the branch the plan's `origin/HEAD` named,
 `main`, `master`, `refs/remotes/origin/HEAD`, and the selected branches and
 their upstreams; the target's identity, `modules` check and D22's listing of its
 administrative directory, by filesystem reads, and, where the plan's row 4c read
-true, its effective-work-tree probe, whose
-difference is `identity-changed`; then, inside the target worktree, the
+true, its effective-work-tree probe, whose decided difference, a toplevel
+that is not the target's path, is `identity-changed`, while a probe that
+fails, runs past its budget or prints anything but one line is
+`state-changed` and one that the deadline cuts leaves the target
+`not-attempted` with `deadline-exceeded`, as for every revalidation child
+(the lead's R-171, which makes planning's rule, a failed probe a row error,
+hold at revalidation too); then, inside the target worktree, the
 combined status probe, which must print nothing, the hidden-state probe, and
 D21's `logs/HEAD` re-read and reachability probe, which must print nothing.
 Row 4c itself is not re-read, which keeps revalidation at six Git children in
@@ -1043,8 +1049,9 @@ reflog is missing, expired or undecidable; review, then git worktree remove
 yourself"; `contains-submodule` and `hidden-local-state` "review, then remove
 the worktree yourself"; `operation-in-progress` "a git am, merge, notes merge,
 cherry-pick, revert, rebase or bisect is, or may be, in progress there; finish
-or abort it (a squash merge that holds an autostash ends only with git commit,
---allow-empty where nothing is staged), then run again" (LQ-14, R-126, R-146);
+or abort it (a squash merge that holds an autostash ends with git commit,
+--allow-empty where nothing is staged, or with git merge --quit, which keeps the
+edit in the stash list), then run again" (LQ-14, R-126, R-146, R-171);
 `worktree-only-commits` "a commit is, or may be, held only by this worktree's
 HEAD reflog or refs/worktree; keep it on a branch or tag, or review, then git
 worktree remove yourself" (LQ-13); `registration-mismatch` "review, then git
@@ -1319,9 +1326,24 @@ conflict (its W14 M1). Each decision below is the simple, conservative one:
     hold a person's edit only there (lane openRepoProject-3's W14 M1, R-126;
     its W21 L-d). `git merge --abort` does not end it, since it refuses where
     no `MERGE_HEAD` exists before it reads `MERGE_AUTOSTASH`
-    (`builtin/merge.c:1333-1334` at 2.36.6, `:1324-1325` at 2.43.7), and
-    neither `git stash pop` nor `git reset --hard` does; only a commit applies
-    it, so D18's next step names `git commit` (W21 L-c);
+    (`builtin/merge.c:1333-1334` at 2.36.6, `:1324-1325` at 2.43.7), and nor
+    does `git stash pop`, which finds no stash entry. `git commit`
+    (`--allow-empty` where nothing is staged) applies the edit back, and `git
+    merge --quit` and `git reset --hard` end it by saving the edit to the
+    stash list, which the common directory holds and a removal keeps: both
+    call `remove_merge_branch_state`, which calls `save_autostash`
+    (`branch.c:705-712` at 2.36.6, `:814-821` at 2.43.7;
+    `builtin/merge.c:1350-1356` and, through `remove_branch_state`,
+    `builtin/reset.c:564` at 2.36.6, `:1341-1347` and `:511` at 2.43.7). D18's
+    next step names `git commit` and `git merge --quit` (lane
+    openRepoProject-3's W26 F-1, R-171, which corrects W21's L-c, whose `git
+    reset --hard` was cut short by its own pipe). Checked here on Git 2.43.0 and
+    2.56.0: after `git merge --squash --autostash -s ours` with an edited file,
+    `git reset --hard` and `git merge --quit` each print `Autostash exists;
+    creating a new stash entry.`, leave no `MERGE_AUTOSTASH` and add one stash
+    entry; `git commit --allow-empty` prints `Applied autostash.` and restores
+    the edit; `git merge --abort` exits 128 and `git commit` alone finds nothing
+    to commit, each leaving the marker;
   - `NOTES_MERGE_PARTIAL` and `NOTES_MERGE_REF`, which a `git notes merge`
     stopped at a conflict leaves and which its `--commit` and `--abort`
     delete (`merge_abort`, `builtin/notes.c:686` with the deletions at

@@ -100,33 +100,41 @@ read.
 
 A difference SHALL refuse the target, spawn nothing, attempt no later target and
 exit 2, with the reason `identity-changed` for a repository or worktree identity
-or registration difference, an effective work tree that is not the target's
-path, or a missing registry entry, `branch-changed` for a different branch name
-or head, `state-changed` for any other signature, lock,
+or registration difference, an effective work tree that the probe decides is
+not the target's path, or a missing registry entry, `branch-changed` for a
+different branch name or head, `state-changed` for any other signature, lock,
 manifest or merge-target difference, `contains-submodule` for a new gitlink or
 `modules` entry, `hidden-local-state` for a newly flagged index entry,
 `operation-in-progress` for a marker that the re-read listing finds, and
 `worktree-only-commits` for a commit that only the target's HEAD reflog or
-`refs/worktree/` holds, or for a `logs/HEAD` read to its 64 KiB bound or
-holding a line that cannot be parsed. A value that was null in the plan and is
-null at revalidation, such as the `upstream_oid`, `ahead` and `behind` of a
-selected row whose upstream was deleted, SHALL NOT count as a difference; a
-value that cannot be re-read, a filesystem call that times out included, SHALL
-count as a difference, and where the listing, read or child of the
-`operation-in-progress` or `worktree-only-commits` check fails or runs past its
-budget, that difference SHALL be `state-changed`, as it is for a status probe
-that fails there. The first
-target's repository-wide checks SHALL serve as
-the preflight of every selected target, so that a difference found there removes
-nothing at all. Push and delete-branch SHALL keep the full re-inspection, and
-SHALL refuse with `inspection-incomplete`, `inspect-cap` or `deadline-exceeded`
-and exit 2 when it is incomplete. Git's own non-force check SHALL be the last
-defense only on the pinned configuration that the removal command carries:
-`status.showUntrackedFiles=normal`, `core.untrackedCache=false`,
-`core.fsmonitor=false`, `core.trustctime=true` and `core.checkStat=default`;
-the protocol pins that every Git child, except the push child, carries (`-c
-protocol.allow=never` and the six per-protocol pins) are no part of that
-defense.
+`refs/worktree/` holds, or for a `logs/HEAD` read to its 64 KiB bound or holding
+a line that cannot be parsed. A value that was null in the plan and is null at
+revalidation, such as the `upstream_oid`, `ahead` and `behind` of a selected row
+whose upstream was deleted, SHALL NOT count as a difference; a value that cannot
+be re-read, a filesystem call that times out included, SHALL count as a
+difference, and where the listing, read or child of the `operation-in-progress`
+or `worktree-only-commits` check fails or runs past its budget, that difference
+SHALL be `state-changed`, as it is for a status probe that fails there. One rule
+SHALL decide every Git child of these steps that does not finish with a value:
+one that the work deadline cuts, as any read the deadline cuts, SHALL count as
+no difference, and the target and every later one SHALL be `not-attempted` with
+`deadline-exceeded`; one that fails, or that runs past its own budget while the
+deadline is not the limit, SHALL count as a difference with the reason
+`state-changed`, whatever its step. A Git child SHALL give its step's own
+reason only for a value it decided, so that only an effective work tree that the
+probe decides is not the target's path gives `identity-changed`, and a work-tree
+probe that fails, runs past its budget or prints anything but one line gives
+`state-changed` (the lead's R-171). The first target's repository-wide checks
+SHALL serve as the preflight of every selected target, so that a difference
+found there removes nothing at all. Push and delete-branch SHALL keep the full
+re-inspection, and SHALL refuse with `inspection-incomplete`, `inspect-cap` or
+`deadline-exceeded` and exit 2 when it is incomplete. Git's own non-force check
+SHALL be the last defense only on the pinned configuration that the removal
+command carries: `status.showUntrackedFiles=normal`,
+`core.untrackedCache=false`, `core.fsmonitor=false`, `core.trustctime=true` and
+`core.checkStat=default`; the protocol pins that every Git child, except the
+push child, carries (`-c protocol.allow=never` and the six per-protocol pins)
+are no part of that defense.
 
 #### Scenario: Worktree changes while confirmation is pending
 

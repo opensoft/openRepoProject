@@ -451,8 +451,12 @@ Headers are quoted verbatim, one per line; ADDED headers are proposed text.
     scenario: WHEN push is requested for a branch whose upstream was deleted,
     THEN it refuses with `remote-gone` and runs no push. By the lead's R-147,
     a sentence names the refusals the baseline makes and this change keeps,
-    each before the plan, with exit 2, no code and the baseline's message, with
-    the added scenario "Push refuses a branch it may not push".
+    each before the plan, with exit 2, no code and the baseline's message, the
+    upstream mapping refusal's trigger widened by the lead's R-130, with the
+    added scenario "Push refuses a branch it may not push"; that scenario
+    leaves `review-required` out, since the evidence model gives no row that
+    class and only an in-process test reaches it (lane openRepoProject-3's W26
+    F-2, F-3).
   - MODIFIED (`:55`):
     `### Requirement: Clean can explicitly retire verified worktrees`.
     "remove one named linked worktree" (`:57`) becomes one named worktree or
@@ -873,7 +877,7 @@ Departures from packet decisions, each citing the decision departed from:
 - **OQ-5, the target cap's refusal** (`BA:96-101`, `BA:1004`,
   `BA:1367-1371`), ratified with the merge of PR #11: retired for the
   deferral (What Changes), the council's survey having found about 20 such
-  rows in Opensoft-Tenant. Rows an index gate then excludes keep their
+  rows in Opensoft-Tenant. Rows a gate after the cap then excludes keep their
   places, so 16 of them ahead of a backlog stop it until handled by hand.
 - **Per-child budget without a deadline** (V10; `BA:1238-1240`,
   `OV:228-230`; M5): `status`, `doctor` and `update` keep 15 s (no deadline
@@ -1520,7 +1524,24 @@ design Context, D7, D12, D18, D21, D22, Risks; `tasks.md` 1.2, 1.4; the
 deltas' `Clean can explicitly push safe feature branches`, `Clean can
 explicitly retire verified worktrees`, `Clean previews and applies a batch of
 eligible worktree removals in one repository`, `Clean bounds its Git work and
-reports omitted work` and `Cleanup revalidates destructive actions`).
+reports omitted work` and `Cleanup revalidates destructive actions`). Lane
+openRepoProject-3's W26 confirm read of that round at `6f2cb54` (HIGH 0,
+MEDIUM 0, LOW 6), under the lead's R-171, corrects D22 and D18: `git reset
+--hard` and `git merge --quit` also end a held autostash, saving the edit to
+the stash list (F-1); calls the upstream mapping refusal's trigger R-130's
+widening (F-2); adds the case of a branch that no worktree holds to the push
+scenario and says why `review-required` stays out (F-3); writes R-171's rule,
+that at revalidation only a decided effective work tree that is not the
+target's path gives `identity-changed`, and the rule for every revalidation
+child, that a deadline cut gives `deadline-exceeded` and a failure or a
+timeout `state-changed` (F-4); declares that R-146's commit and this one also
+re-wrapped the paragraphs their edits lengthened, with no other change of
+words (F-5); and says "a gate after the cap" in OQ-5 (F-6) (Capabilities
+`:39`; Decisions, OQ-5; this list; design Context, D7, D18, D22; `tasks.md`
+1.2; the deltas' `Clean can explicitly push safe feature branches` and its
+scenario "Push refuses a branch it may not push", `Clean records a
+reconcilable result for every removal target` and `Cleanup revalidates
+destructive actions`).
 
 ### Council Verdicts
 
