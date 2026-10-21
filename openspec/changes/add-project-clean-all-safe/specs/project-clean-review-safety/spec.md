@@ -9,7 +9,8 @@ worktree whose index holds a gitlink or whose administrative directory holds a
 `modules` entry (`contains-submodule`); a worktree whose index flags any entry
 assume-unchanged or skip-worktree, sparse checkouts included
 (`hidden-local-state`); a worktree whose registration disagrees in either
-direction (`registration-mismatch`); a path that is not valid UTF-8
+direction, or whose effective work tree is not its registered path
+(`registration-mismatch`); a path that is not valid UTF-8
 (`unsupported-path-bytes`); a branch whose reflog shows no movement since its
 anchor, its last entry whose old object is all zeros, as any entry that creates
 the branch has whatever its message, or whose message begins
@@ -67,24 +68,30 @@ That MUST SHALL apply at the revalidation performed immediately before each
 removal child is spawned; a change after it is the residual window that "Cleanup
 states a narrow guarantee and its residual window" states. A worktree removal
 SHALL be revalidated by a targeted check, never by recomputing the full report:
-at most five Git children, a fresh manifest read and the `modules` check, run in
-this order and stopping at the first difference: the identity probe in the
-command directory; the manifest re-read; the registry listing; one ref listing
-that names the merge-target candidates, `refs/remotes/origin/HEAD`, and the
-selected branches and their upstreams; the target's identity and its `modules`
-check, by filesystem reads; and, inside the target worktree, the combined status
-probe, which SHALL print no record, then the hidden-state probe. It SHALL
-compare the recorded repository identity (`root`, `common_dir`, `dev`, `ino`),
-the target's worktree identity (`path`, `dev`, `ino`, `admin_id`) and two-way
-registration, its branch evidence (`branch`, `head`, `upstream`, `upstream_oid`,
-`ahead`, `behind`), every baseline signature field of the target, its `locked`
-flag, the manifest's `tracking_branch`, and the merge target's `name`, `source`
-and `sha`, re-resolved from the fresh manifest read.
+at most five Git children, and a sixth where the plan read the repository's
+`extensions.worktreeConfig` as true, a fresh manifest read and the `modules`
+check, run in this order and stopping at the first difference: the identity
+probe in the command directory; the manifest re-read; the registry listing; one
+ref listing that names the merge-target candidates, `refs/remotes/origin/HEAD`,
+and the selected branches and their upstreams; the target's identity and its
+`modules` check, by filesystem reads, and, where the plan read
+`extensions.worktreeConfig` as true, its effective work tree, by the probe that
+"Repository inspection requires Git 2.36 and shares one evidence model" states;
+and, inside the target worktree, the combined status probe, which SHALL print
+no record, then the hidden-state probe. It SHALL compare the recorded
+repository identity (`root`, `common_dir`, `dev`, `ino`), the target's worktree
+identity (`path`, `dev`, `ino`, `admin_id`), two-way registration and, where it
+was read, effective work tree, its branch evidence (`branch`, `head`,
+`upstream`, `upstream_oid`, `ahead`, `behind`), every baseline signature field
+of the target, its `locked` flag, the manifest's `tracking_branch`, and the
+merge target's `name`, `source` and `sha`, re-resolved from the fresh manifest
+read.
 
 A difference SHALL refuse the target, spawn nothing, attempt no later target and
 exit 2, with the reason `identity-changed` for a repository or worktree identity
-or registration difference or a missing registry entry, `branch-changed` for a
-different branch name or head, `state-changed` for any other signature, lock,
+or registration difference, an effective work tree that is not the target's
+path, or a missing registry entry, `branch-changed` for a different branch name
+or head, `state-changed` for any other signature, lock,
 manifest or merge-target difference, `contains-submodule` for a new gitlink or
 `modules` entry, and `hidden-local-state` for a newly flagged index entry. A
 value that was null in the plan and is null at revalidation, such as the
@@ -199,7 +206,8 @@ commands run by anyone else) SHALL be outside the safe contract, and cleanup
 SHALL claim no lock, lease or writer-quiescence handoff. Its one guarantee SHALL
 be that a removal child is spawned only if, at the revalidation performed
 immediately before spawning it, the repository identity, the target's worktree
-identity and branch evidence, every baseline signature field of the target, its
+identity, its effective work tree where the plan read it, and its branch
+evidence, every baseline signature field of the target, its
 `locked` flag, the absence of submodules and of hidden local state in its own
 index (read inside the target worktree), the manifest's `tracking_branch`, and
 the merge target's name, source and SHA all equal the values in the confirmed

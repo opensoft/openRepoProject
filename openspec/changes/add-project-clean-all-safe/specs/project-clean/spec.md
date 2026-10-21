@@ -136,8 +136,9 @@ classes, by a ladder tested in this order: `stale-worktree`,
 `pushed-unmerged`. The ladder SHALL be a function of the row's evidence alone,
 and its names SHALL NOT change; its order SHALL NOT change except by the one
 ancestry test stated here. A row whose evidence could not be established (a
-path that cannot be read, a registration that disagrees, or a status probe that
-failed or timed out) SHALL be classified `inspection-error` directly, whatever
+path that cannot be read, a registration that disagrees, an effective work tree
+that is not the registered path, or a status probe that failed or timed out)
+SHALL be classified `inspection-error` directly, whatever
 its branch. A branch with no configured upstream SHALL be `unpublished`. A
 branch whose configured upstream's remote-tracking ref no longer exists SHALL be
 tested for local ancestry before the `remote-gone` rung: when its
@@ -848,7 +849,8 @@ under `operations` and every other child under `probes`; `limits`
 `status_records` and `ignored_samples`); and `budget` (`probe_timeout_seconds`
 5, `invocation_timeout_seconds` 60, `reconciliation_reserve_seconds` 10,
 `removal_floor_seconds` 5, `removal_ceiling_seconds` 300 and `probe_concurrency`
-1). Revalidating one target SHALL spawn at most five Git children and never
+1). Revalidating one target SHALL spawn at most five Git children, six where
+the plan read the repository's `extensions.worktreeConfig` as true, and never
 recompute the full report, and the final rescan at most three.
 
 #### Scenario: Row cap and planning failures

@@ -22,7 +22,8 @@ through lane openRepoProject-4's spec 005 clarify round and recorded in
 Heap's rulings of 2026-10-21 on lane openRepoProject-3's recommendations LQ-10
 to LQ-15, recorded in `proposal.md` Decisions, edit here: LQ-15, Context, D6,
 D11, D16, D18, D20 and Risks; LQ-10, Context, D9, D11, D20 and Risks; LQ-12,
-Context, D6, D16 and D20. Brett Heap's ruling
+Context, D6, D16 and D20; LQ-11, Context, D6, D7, D14, D20 and Risks. Brett
+Heap's ruling
 of 2026-10-09 on open question 1, that a local ancestry proof outranks
 `remote-gone` for worktree rows, is in `proposal.md` Decisions and edited
 Context, D6, D7, D20, Risks, the Migration Plan and Open Questions here.
@@ -292,6 +293,7 @@ them:
 | 3 | `rev-parse --path-format=absolute --show-toplevel --git-common-dir --show-superproject-working-tree` | at the directory the argument resolves to |
 | 4 | `worktree list --porcelain -z` | at the same directory while the main worktree is unknown, otherwise the command directory |
 | 4b | `config --get core.worktree` | only when the first registry record is the common directory (D8) |
+| 4c | `config --file <common_dir>/config --type=bool --get extensions.worktreeConfig` | once per common directory, after row 4, in the command directory (D7, LQ-11) |
 | 5 | row 3 repeated in the command directory | only when row 3 ran elsewhere |
 | 6 | one `for-each-ref` over `refs/heads` and `refs/remotes` | command directory |
 | 7 | `for-each-ref --merged=<merge-target sha> --format=%(refname) refs/heads` | command directory |
@@ -311,14 +313,17 @@ replaces `default_branch()`'s calls and the per-worktree `rev-parse` and
 Row 3 prints one value per line, and Git has no NUL form for it. Two lines mean
 a plain checkout and three a submodule checkout; a value containing a line feed
 makes the count exceed what was asked, and the probe is then repeated as one
-child per option, counted, rather than guessed at. F is therefore at most 7, as
-BA:615-616 states, plus row 4b in the gitfile layout and the rare repeat.
+child per option, counted, rather than guessed at. F is therefore at most 8,
+BA:615-616's 7 and row 4c, plus row 4b in the gitfile layout and the rare
+repeat.
 
 Per row: the identity reads (`lstat` without following, the `.git` file, the
 admin `gitdir` file), each a filesystem call on a daemon `threading.Thread`
 waited for with `min(5 s, work remaining)` and abandoned after it (C4; never a
-`concurrent.futures` pool, whose shutdown would wait for a stuck call); then the
-combined status probe in that worktree (D11). Rows 3 to 7 are memoized by common
+`concurrent.futures` pool, whose shutdown would wait for a stuck call); then, in
+a linked row of a repository whose row 4c read true, the effective-work-tree
+probe of D7; then the combined status probe in that worktree (D11). Rows 3 to 7
+are memoized by common
 directory within an invocation, which matters to `status` and `doctor`, whose
 legs are other repositories. Where `root` is null (a bare repository, a missing
 main worktree, or a gitfile checkout whose main worktree cannot be named), rows
@@ -391,14 +396,48 @@ selected or excluded entry, a result target, a refusal, a row error) adds
 `path_valid_utf8`, so an escaped `\xHH` never reads as a valid path holding
 those four characters.
 
+A linked row's effective work tree must be its registered path (Brett Heap's
+ruling LQ-11, 2026-10-21). Two-way registration does not prove it: Git applies
+a `core.worktree` or `core.bare` to a linked worktree only where the
+repository's own `config` sets `extensions.worktreeConfig`, and then from the
+worktree's `config.worktree` and from that `config` alike
+(`check_repository_format_gently` and `check_repo_format` in `setup.c`, which
+read `config.worktree` and clear `has_common` under the extension, at
+`setup.c:637-657` and `:600` in 2.36.6 and `:665-685` and `:629` in 2.43.7).
+Lane openRepoProject-5's reader RB found the gap (its `e7`): with a
+per-worktree `core.worktree` naming a decoy, every probe read the decoy's tree,
+the row read clean, and Git's non-force removal deleted the registered
+directory with its ignored `local.env`, because Git's own check runs with
+`GIT_WORK_TREE` set to the registered path (`check_clean_worktree` in
+`builtin/worktree.c`) and is not misled. Row 4c reads the extension once per
+common directory, from the common `config` alone and without includes, as
+Git's own format check reads it; an unset value is false and any other failure
+counts as true. Where it is true, each linked row whose registration agrees
+gets one more worktree probe, `git rev-parse --path-format=absolute
+--show-toplevel`, after its identity reads and before its status probe, and a
+toplevel whose realpath differs from the registered path's, a failed probe (as
+under `core.bare=true`, `fatal: this operation must be run in a work tree`) or
+output that is not one line makes the row's registration disagree, so the row
+is `registration-mismatch`, `inspection-error` and unprobed. Asking Git covers
+every way the extension can redirect a row, without parsing configuration in
+`project`, and the probe runs only in such repositories. Checked here on Git
+2.36.6 and 2.43.0: the extension read exits 1 when unset and prints `true` when
+set; the probe prints the decoy for a `core.worktree` in `config.worktree` and
+for one in the common `config`, and fails with 128 under `core.bare=true`.
+
 Revalidation is BA:677-707's targeted check, in its order, stopping at the first
 difference: the identity probe; the manifest re-read (a file read, 1 MiB cap);
 the registry listing; a narrowed ref listing whose patterns name the merge
 target, the manifest's candidate, the branch the plan's `origin/HEAD` named,
 `main`, `master`, `refs/remotes/origin/HEAD`, and the selected branches and
-their upstreams; the target's identity and `modules` check by filesystem reads;
-then, inside the target worktree, the combined status probe, which must print
-nothing, and the hidden-state probe. Ancestry needs no child: it is a function
+their upstreams; the target's identity and `modules` check by filesystem reads,
+and, where the plan's row 4c read true, its effective-work-tree probe, whose
+difference is `identity-changed`; then, inside the target worktree, the
+combined status probe, which must print nothing, and the hidden-state probe.
+Row 4c itself is not re-read, which keeps revalidation at five Git children in
+a repository without the extension: an extension turned on after the plan, with
+a `core.worktree` for a target, is a concurrent writer's change outside the
+contract (Risks). Ancestry needs no child: it is a function
 of the branch head and the merge-target SHA, both compared. The reflog of D10 is
 not re-read: a moved branch is already `branch-changed`. A selected row whose
 upstream was deleted (D6) records `upstream_oid`, `ahead` and `behind` null,
@@ -753,18 +792,22 @@ full-repository completeness.
 
 ### D14. Report mode at 256 rows, and the fit arithmetic
 
-At BA's 150 ms per Git child, with F = 7:
+At BA's 150 ms per Git child, with F = 8 (row 4c of LQ-11 included):
 
 | Mode | Children | Time | Fits the 50 s work deadline |
 | --- | --- | --- | --- |
-| report, 256 rows | 7 + 256 + 16 = 279 | 41.85 s | yes |
-| report, 512 rows | 7 + 512 + 16 = 535 | 80.25 s | no |
-| all-safe, 128 rows, 16 targets | 7 + 128 + 16 + 80 + 3 = 234, and 16 removals | 35.1 s + about 4.8 s = 39.9 s | yes; the 16th removal spawns at 39.15 s with 10.85 s left (BA:753-756) |
-| single, 128 rows plus P | 7 + 129 + 1 + 5 + 3 = 145, and 1 removal | 21.75 s + about 0.3 s | yes |
+| report, 256 rows | 8 + 256 + 16 = 280 | 42.0 s | yes |
+| report, 512 rows | 8 + 512 + 16 = 536 | 80.4 s | no |
+| all-safe, 128 rows, 16 targets | 8 + 128 + 16 + 80 + 3 = 235, and 16 removals | 35.25 s + about 4.8 s = 40.05 s | yes; the 16th removal spawns at 39.3 s with 10.7 s left (BA:753-756) |
+| single, 128 rows plus P | 8 + 129 + 1 + 5 + 3 = 146, and 1 removal | 21.9 s + about 0.3 s | yes |
 
 The report builds no apply plan, so its worst case is the planning term alone,
 and 256 is the largest power of two that fits (D-V, OQ-29). Row 4b and the rare
-row 3 repeat add 0.15 s each; the reflog reads add no child. Under D9 a removal
+row 3 repeat add 0.15 s each; the reflog reads add no child. In a repository
+whose row 4c reads true, each linked row adds its effective-work-tree probe and
+each target's revalidation adds it again, so a large plan there reaches the
+deadline sooner and goes incomplete with `deadline-exceeded`, never unsafe
+(LQ-11). Under D9 a removal
 running past the deadline is bounded by its ceiling, not by the fit. The report
 keeps the baseline layout and adds `Report: complete` or `Report: incomplete
 (CODES)`, and, for a repository of at most 128 worktree rows, `--all-safe would
@@ -1010,7 +1053,7 @@ and M1 under the JSON and the result; V9, R-23, R-25, the push-child
 exception and Brett Heap's ruling Q9 B under the evidence model; D-D under
 push; D-R under maintenance; R-22 under revalidation. Brett Heap's rulings of
 2026-10-21: LQ-15 under the evidence model and the report; LQ-10 under the
-evidence model; LQ-12 under maintenance.
+evidence model; LQ-12 under maintenance; LQ-11 under the evidence model.
 
 ## Risks / Trade-offs
 
@@ -1036,6 +1079,14 @@ evidence model; LQ-12 under maintenance.
   elsewhere, reads as unstarted, because nothing moved it here since its
   creation entry] -> Fails closed as `unstarted-branch`; the remedy says that no
   commit was made on the branch here since it was created (D18).
+- [`extensions.worktreeConfig` turned on after the plan, in a repository where
+  the plan read it unset, together with a `core.worktree` for a target, is not
+  re-read at revalidation, so that target's status probe there reads the other
+  tree] -> A concurrent writer's change, outside the contract; Git's own check
+  still reads the registered tree, so modified and untracked files there still
+  refuse the removal, and only ignored files created there after the plan are
+  exposed. Re-reading row 4c for every target would add a child to every
+  revalidation (D7, D14; LQ-11).
 - [A live session in a started, merged worktree is not protected] -> D3's
   residual; the README asks for sessions to be closed, and no commit can be
   lost.

@@ -203,7 +203,20 @@ admin_id}` together. Its registration SHALL be checked in both directions:
 `<common_dir>/worktrees/<admin_id>`, and that directory's `gitdir` file SHALL
 name `<path>/.git`, relative values resolved against the directory holding the
 file and both comparisons made between realpaths. A row whose registration
-disagrees SHALL get no status probe and SHALL be `inspection-error`. A
+disagrees SHALL get no status probe and SHALL be `inspection-error`. A linked
+worktree's effective work tree, the work tree that a Git command run in it
+uses, SHALL be its registered path, and a row whose effective work tree is not
+SHALL be treated as a row whose registration disagrees. Git gives a linked
+worktree another work tree, or none, only through a `core.worktree` or a
+`core.bare`, which it applies to that worktree, from the worktree's
+`config.worktree` or from the repository's own `config`, only where that
+`config` sets `extensions.worktreeConfig` to true. In such a repository, each
+linked row whose registration agrees SHALL have its effective work tree read,
+after its identity is verified and before its status probe, by `git rev-parse
+--path-format=absolute --show-toplevel` run in it; a toplevel whose realpath is
+not the realpath of the row's registered path, a probe that fails, as it does
+under `core.bare=true`, and output that is not exactly one line SHALL each make
+the row's registration disagree. A
 registered path whose `lstat` fails because it does not exist SHALL be `present:
 false`; any other failure SHALL give `present: null`, an `os-error`,
 `inspection-error` and no probe.
@@ -211,8 +224,12 @@ false`; any other failure SHALL give `present: null`, an `os-error`,
 Probes: for each repository, once per common directory, the identity probe; the
 registry listing, `worktree list --porcelain -z`; one ref listing over
 `refs/heads` and `refs/remotes`, NUL-separated, carrying each ref's name,
-object, symref, upstream, upstream short name and upstream track; and the merged
-set of local branches against the merge target's SHA. For each present,
+object, symref, upstream, upstream short name and upstream track; the merged
+set of local branches against the merge target's SHA; and the repository's
+`extensions.worktreeConfig`, read as Git reads it, as a boolean from the common
+directory's own `config` file alone, by `git config --file <common_dir>/config
+--type=bool --get extensions.worktreeConfig`, a value that is not set being
+false and any other failure counting as true. For each present,
 registration-verified worktree row, the main worktree's included, one combined
 status probe: `status --porcelain=v1 -z --untracked-files=normal
 --ignored=matching`. Every Git output that carries a path SHALL be parsed
@@ -282,6 +299,13 @@ requirement states a change.
 #### Scenario: A caller's Git environment is ignored
 - **WHEN** `GIT_DIR`, `GIT_WORK_TREE` and `GIT_INDEX_FILE` are set in the caller's environment to name another repository
 - **THEN** every probe reads the resolved repository, and each worktree probe reads that worktree's own index
+
+#### Scenario: A linked worktree whose work tree is redirected
+- **WHEN** a repository sets `extensions.worktreeConfig` to true, and the `config.worktree` of an otherwise eligible linked worktree W, which holds an ignored file `local.env`, sets `core.worktree` to a clean directory D elsewhere
+- **THEN** W reads `registration-mismatch` with classification `inspection-error`, no status probe runs in W or in D, `project clean <root> --all-safe` is incomplete, `--all-safe --apply --yes` refuses with exit 2 and removes nothing, and W and `local.env` survive, where before this change W read clean from D's tree and Git's removal deleted W with `local.env`
+- **AND** `--apply --action remove --worktree W --yes` refuses with exit 2 and removes nothing, and `project status` marks W `inspection-error`
+- **AND** the same holds when W's `config.worktree` sets `core.bare` to true instead
+- **AND** with the extension set and neither setting for W, W's effective work tree is its path and W is selected as before, and without the extension a counting `git` wrapper records no `rev-parse` child whose directory is a linked worktree
 
 #### Scenario: A relative configuration path in status, doctor and update
 - **WHEN** status, doctor and `update --apply --component shape --yes` run on a clean project whose root repository tracks `h/.gitconfig`, which defines a clean filter that writes a marker file, and a `.gitattributes` that selects that filter, with `HOME` set to the relative `h`

@@ -132,7 +132,9 @@ Scope).
 - **Eligibility is `merged-removable` plus gates**, in this order
   (`BA:152-160` as extended by V2 and V5, the council's AE-2 and PA-1):
   `main-worktree`, `unsupported-path-bytes`,
-  `registration-mismatch` (two-way admin registration), `locked-worktree`, the
+  `registration-mismatch` (two-way admin registration, and a linked
+  worktree's effective work tree being its registered path, LQ-11),
+  `locked-worktree`, the
   baseline classification when not `merged-removable`, `not-requested`,
   `unstarted-branch`, `deferred-target-cap` (Bounded work),
   `contains-submodule` (any gitlink or admin `modules` entry) and
@@ -204,7 +206,9 @@ Scope).
   hand"; the reason `removal-ceiling` names the ceiling cause, and the run exits
   1 (Decisions).
 - **Targeted revalidation under a narrow guarantee.** Each target is
-  revalidated with at most five Git children, a manifest re-read and a
+  revalidated with at most five Git children (six in a repository whose
+  `extensions.worktreeConfig` the plan read as true, LQ-11), a manifest
+  re-read and a
   `modules` check, never the full report (`BA:677-719`), against recorded
   repository, worktree and merge-target identity objects (`BA:203-235`).
   Concurrent writers are outside the contract and no lock is claimed; the
@@ -520,13 +524,15 @@ Headers are quoted verbatim, one per line; ADDED headers are proposed text.
   - MODIFIED (`:21`):
     `### Requirement: Cleanup preserves all local work not proven disposable`.
     Adds the main worktree, locked, `contains-submodule`, `hidden-local-state`
-    (sparse checkouts included), `registration-mismatch`,
+    (sparse checkouts included), `registration-mismatch` (an effective work
+    tree that is not the registered path included, LQ-11),
     `unsupported-path-bytes`, `unstarted-branch`, `reflog-unavailable` and
     unreadable worktrees to the preserved states. Both scenarios (`:27-36`)
     stay.
   - MODIFIED (`:49`): `### Requirement: Cleanup revalidates destructive actions`.
     Removal revalidates by the targeted check against the recorded identity
-    objects, refusing with `identity-changed`, `branch-changed`,
+    objects, and the effective work tree where the plan read it (LQ-11),
+    refusing with `identity-changed`, `branch-changed`,
     `state-changed`, `contains-submodule` or `hidden-local-state`; push and
     `delete-branch` keep the full re-inspection (`project:508-518`) and refuse
     with `inspection-incomplete`, `inspect-cap` or `deadline-exceeded`, exit
@@ -584,7 +590,11 @@ Headers are quoted verbatim, one per line; ADDED headers are proposed text.
     rule for every reader; the configuration-path test before any Git child,
     `relative-config-path`, and its scenario "A relative configuration path in
     status, doctor and update" (Brett Heap's ruling LQ-15); the probe directory
-    rule (`BA:554-583`); the scrub
+    rule (`BA:554-583`); the identity rule, under which a linked worktree whose
+    effective work tree is not its registered path disagrees with its
+    registration, read where `extensions.worktreeConfig` is set, with the
+    scenario "A linked worktree whose work tree is redirected" (Brett Heap's
+    ruling LQ-11); the scrub
     with `GIT_OPTIONAL_LOCKS=0` (`BA:243-253`); NUL parsing; the combined
     probe, its pins and bounds (`BA:629-652`, `BA:793-814`), among them
     `core.trustctime=true` and `core.checkStat=default` on the status and
@@ -956,6 +966,23 @@ Departures from packet decisions, each citing the decision departed from:
   `GIT_ALLOW_PROTOCOL` still binds any Git it runs, as it binds the push
   child, because only the protocol pins that the tool lacks would replace it
   (design D6, D16).
+- **A redirected work tree is a registration mismatch** (Brett Heap's ruling
+  LQ-11 of 2026-10-21, in lane openRepoProject-3's session, "yes to all six
+  recommendations, LQ-10 to LQ-15", on lane openRepoProject-3's
+  recommendation "Approve. Stricter, protective."; an addition to the two-way
+  registration of `BA:203-235`): where a repository sets
+  `extensions.worktreeConfig`, Git applies a `core.worktree` or `core.bare`
+  from a linked worktree's `config.worktree`, or from the repository's own
+  `config`, to that worktree, so every probe of a row whose registration
+  agrees can read another directory's tree while Git's non-force removal,
+  whose own check reads the registered path, deletes the registered directory
+  and its ignored files (lane openRepoProject-5's reader RB, its `e7`). A
+  linked row whose effective work tree is not its registered path therefore
+  disagrees with its registration and is `registration-mismatch`: the
+  repository's `extensions.worktreeConfig` is read once per common directory,
+  and where it is true each linked row's effective work tree is read by `git
+  rev-parse --path-format=absolute --show-toplevel` in it, before its status
+  probe, and again at revalidation (design D6, D7, D14, Risks).
 
 Packet decisions adopted, not open: OQ-5, the caps and bounds of `BA:966`,
 subject to OQ-4, less the target cap's refusal; OQ-9, the budgets of
@@ -1288,7 +1315,17 @@ model, its scenario "The pinned status configuration" and its added scenario
 tool of `update --apply` with the push child's scrub (Capabilities, `:31`;
 Impact, `project`; Decisions, departures; this list; design Context, D6, D16,
 D20; `tasks.md` 1.2, 1.4; the delta `Explicit maintenance` and its added
-scenario "Owner tools see the repository the check inspected").
+scenario "Owner tools see the repository the check inspected"); LQ-11 makes a
+linked worktree whose effective work tree is not its registered path
+`registration-mismatch` (What Changes, eligibility and revalidation;
+Capabilities, review-safety `:21`, `:49` and `project-command` ADDED;
+Decisions, departures; this list; design Context, D6, D7, D14, D20, Risks;
+`tasks.md` 1.2, 1.4; the deltas' `Clean classifies preservation and cleanup
+actions`, `Clean bounds its Git work and reports omitted work`, `Cleanup
+preserves all local work not proven disposable`, `Cleanup revalidates
+destructive actions`, `Cleanup states a narrow guarantee and its residual
+window`, and the `project-command` ADDED evidence model and its added scenario
+"A linked worktree whose work tree is redirected").
 
 ### Council Verdicts
 
