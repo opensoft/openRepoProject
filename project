@@ -726,7 +726,7 @@ TEXT = {
     "note_inspection_incomplete":
         "{K} other rows are inspection-error or were left unprobed; they do not block {PATH}.",
     "note_inspect_cap": "{K} rows past the row cap of {M} were not inspected; they do not block {PATH}.",
-    "note_deadline_exceeded": "{K} rows were left unprobed at the work deadline; they do not block {PATH}.",
+    "note_deadline_exceeded": "{K} rows were stopped at the work deadline; they do not block {PATH}.",
     "note_inspect_cap_report":
         "{N} rows exceed the --all-safe row cap of {M}; --all-safe would be incomplete (inspect-cap).",
     "confirmation_required": "Standard input is not a terminal; pass --yes to apply this plan.",
@@ -3541,37 +3541,40 @@ def match_target(plan, run, entries, cap):
     row carries; cap the plan's row cap. --worktree is expanded and
     realpath'd, which joins it to the working directory, by one bounded call;
     an entry matches when raw equals P's bytes, or else when its own realpath,
-    one bounded call each, does; a realpath that cannot be read counts as a
-    match, failing closed. The entries matched are P's rows: worktree_rows()
-    inspects them before any other row, so that P's status probe is the run's
-    first, and they are exempt from the row cap. When P's own realpath cannot
-    be read, every entry counts as a match, so P's match is undecided and no
-    entry is exempt: the entries matched are the ones the cap takes, the first
-    cap of entries, the main worktree first, and no other row is inspected
-    (lead ruling R-73 (d)). Sets plan.target_rows, the rows inspected for P,
-    and plan.target, the one row when exactly one entry matched and was
-    decided, else None. No match records `worktree-not-found` through
-    refuse() with the baseline message, never raised (R-59 D4); several
-    matches, or one not decided, leave plan.target None, so that nothing is
-    selected for P and check_plan() refuses with inspection-incomplete.
-    Returns (matched, path, exempt): the entries matched; P's realpath, or the
-    expanded argument where that cannot be read, the PATH of the single-mode
-    notes while no row is P's; and whether the entries matched are exempt from
-    the cap."""
+    one bounded call each, does. The entries matched are P's rows:
+    worktree_rows() inspects them before any other row, so that P's status
+    probe is the run's first, and they are exempt from the row cap. When any
+    realpath cannot be read, P's own or another entry's, a call cut at the
+    work deadline included, P's match is undecided (failing closed; lead
+    rulings R-73 (d) and R-78 (b)): no entry is exempt, the entries matched are
+    the ones the cap takes, the first cap of entries, the main worktree first,
+    and no other row is inspected, so that a deadline during matching never
+    puts more than the cap's rows into the plan. Sets plan.target_rows, the
+    rows inspected for P, and plan.target, the one row when exactly one entry
+    matched and was decided, else None. No match records `worktree-not-found`
+    through refuse() with the baseline message, never raised (R-59 D4);
+    several matches, or one not decided, leave plan.target None, so that
+    nothing is selected for P and check_plan() refuses with
+    inspection-incomplete. Returns (matched, path, exempt): the entries
+    matched; P's realpath, or the expanded argument where that cannot be read,
+    the PATH of the single-mode notes while no row is P's; and whether the
+    entries matched are exempt from the cap, that is whether P's match was
+    decided."""
     wanted = os.path.expanduser(os.fsencode(run.args.worktree))
     found = _bounded_realpath(wanted)
-    if found is None:
-        matches, decided = list(entries[:cap]), False
-    else:
-        matches, decided = [], True
+    matches, decided = [], found is not None
+    if decided:
         for raw, record in entries:
-            if raw == found:
-                matches.append((raw, record))
-            else:
+            if raw != found:
                 real = _bounded_realpath(raw)
-                if real is None or real == found:
-                    matches.append((raw, record))
-                    decided = decided and real is not None
+                if real is None:
+                    decided = False  # R-78 (b): an unread realpath leaves P's match undecided
+                    break
+                if real != found:
+                    continue
+            matches.append((raw, record))
+    if not decided:
+        matches = list(entries[:cap])
     path = found if found is not None else wanted
     plan.target_rows = worktree_rows(plan.evidence, run, records=[record for _, record in matches]) if matches else []
     if len(matches) == 1 and decided and len(plan.target_rows) == 1:
@@ -3579,7 +3582,7 @@ def match_target(plan, run, entries, cap):
     elif not matches:
         refuse(plan, Refused(f"No unique linked worktree found at {human_path(path)}",
                              code="worktree-not-found", path=path), run)
-    return matches, path, found is not None
+    return matches, path, decided
 
 
 def row_incomplete(row):
@@ -3588,32 +3591,59 @@ def row_incomplete(row):
     return bool(row.unprobed) or row["classification"] == "inspection-error"
 
 
+def cut_at_deadline(errors):
+    """Whether errors, row errors {code, message}, are those of reads the work
+    deadline stopped and nothing else: at least one, each `deadline-exceeded`
+    (lead ruling R-80, P-1)."""
+    return bool(errors) and all(error["code"] == "deadline-exceeded" for error in errors)
+
+
+def deadline_stopped(row):
+    """Whether row is incomplete only because the work deadline stopped it
+    (T099; lead rulings R-67 (a), R-69 and R-80, P-1): `inspection-error`,
+    every row error `deadline-exceeded`, and no unprobed marker. Such a row is
+    `deadline-exceeded`'s, never `inspection-incomplete`'s; a row left
+    unprobed by its reflog read stays `inspection-incomplete`'s, whatever cut
+    the read."""
+    return (not row.unprobed and row["classification"] == "inspection-error"
+            and cut_at_deadline(row.get("errors")))
+
+
 def plan_completeness(plan, exclude=()):
     """The codes that make plan incomplete, in REFUSAL_CODES order (FR-024,
-    FR-031; data-model.md, "Plan"; analyze M6; T075): `inspection-incomplete`
+    FR-031; data-model.md, "Plan"; analyze M6; T075, T099): `inspection-incomplete`
     when a repository-wide probe failed (plan.evidence's errors), when a
     counted row of plan.rows not in exclude is `inspection-error` or unprobed,
     or when P's rows are not excluded and P names no single established row
     (plan.target None while plan.target_rows holds rows); `inspect-cap` when
-    rows were left past the row cap (plan.omitted's count). In mode single for
-    --action remove only P's own rows count and the cap is no code: another
-    row's state and the rows past the cap are non-blocking notes, which
-    build_plan() records, while P's own evidence stays strict (the delta's
-    "Clean can explicitly retire verified worktrees"). Every other plan, push
-    and delete-branch included, counts every row and the cap (plan review
-    B1). check_plan() passes P's rows as exclude, so that its own step 3 judges
-    them. T099 adds `deadline-exceeded`."""
+    rows were left past the row cap (plan.omitted's count); and
+    `deadline-exceeded` when the work deadline stopped planning: a counted
+    row deadline_stopped() names, or a repository-wide probe whose every
+    error is `deadline-exceeded`, counts toward it and not toward
+    `inspection-incomplete`, so that no row counts twice (lead ruling R-80,
+    P-1). In mode single for --action remove only P's own rows count and the
+    cap is no code: another row's state and the rows past the cap are
+    non-blocking notes, which build_plan() records, while P's own evidence
+    stays strict (the delta's "Clean can explicitly retire verified
+    worktrees"). Every other plan, push and delete-branch included, counts
+    every row and the cap (plan review B1). check_plan() passes P's rows as
+    exclude, so that its own step 3 judges them."""
     skip = {id(row) for row in exclude}
     target_rows = getattr(plan, "target_rows", [])
     named = plan.mode == "single" and plan.action == "remove"
     own = {id(row) for row in target_rows}
     counted = [row for row in plan.rows if id(row) not in skip and (id(row) in own or not named)]
+    errors = (plan.evidence or {}).get("errors") or []
+    incomplete = [row for row in counted if row_incomplete(row)]
+    stopped = [row for row in incomplete if deadline_stopped(row)]
     codes = []
-    if ((plan.evidence and plan.evidence["errors"]) or any(row_incomplete(row) for row in counted)
+    if ((errors and not cut_at_deadline(errors)) or len(stopped) < len(incomplete)
             or (plan.target is None and bool(target_rows) and not any(id(row) in skip for row in target_rows))):
         codes.append("inspection-incomplete")
     if not named and (getattr(plan, "omitted", None) or {}).get("count"):
         codes.append("inspect-cap")
+    if cut_at_deadline(errors) or stopped:
+        codes.append("deadline-exceeded")
     return codes
 
 
@@ -3771,10 +3801,21 @@ def build_plan(repo, run):
     and inspected first (match_target(): `target_rows` and `target`,
     `worktree-not-found` recorded through refuse()), exempt from the cap, so
     that the rows inspected are P's and the first 128 others (lead ruling R-53
-    P-15); another row's inspection-error or unprobed marker, and the rows
-    past the cap, are its non-blocking notes `inspection-incomplete` and
-    `inspect-cap`. Push and delete-branch take the cap with no exemption and
-    the batch's completeness (plan_completeness()). Then `selected` and
+    P-15), unless P's match is undecided (R-73 (d), R-78 (b)); another row's
+    inspection-error or unprobed marker, the rows past the cap, and the rows
+    the work deadline stopped are its non-blocking notes
+    `inspection-incomplete`, `inspect-cap` and `deadline-exceeded`, a row
+    counted in one of them only (lead ruling R-80, P-1). Push and
+    delete-branch take the cap with no exemption and the batch's completeness
+    (plan_completeness()).
+
+    Planning stops at the work deadline (T099, FR-029): every Git child and
+    filesystem call gets min(5 s, work remaining) from the Invocation
+    (child_budget(), region runner), and once none is left none is started,
+    so each row the deadline stops is `inspection-error` with a
+    `deadline-exceeded` row error, excluded as `inspection-error`, never
+    unprobed (lead rulings R-67 (a) and R-69), and the plan is incomplete
+    with `deadline-exceeded` (plan_completeness()). Then `selected` and
     `excluded` from gate_rows(), each selected row given `removal_args`, ["-C",
     ROOT, "worktree", "remove", PATH] with ROOT the command directory and PATH
     the registry's raw bytes (design D9); `completeness` and `apply_allowed`
@@ -3839,13 +3880,17 @@ def build_plan(repo, run):
     if named:
         shown = human_path(plan.target.raw_path if plan.target is not None else path)
         own = {id(row) for row in plan.target_rows}
-        unread = sum(1 for row in plan.rows if id(row) not in own and row_incomplete(row))
-        if unread:
-            plan.notes.append({"code": "inspection-incomplete",
-                               "message": TEXT["note_inspection_incomplete"].format(K=unread, PATH=shown)})
+        others = [row for row in plan.rows if id(row) not in own and row_incomplete(row)]
+        stopped = sum(1 for row in others if deadline_stopped(row))  # R-80 P-1: one note per row
+        if len(others) - stopped:
+            plan.notes.append({"code": "inspection-incomplete", "message": TEXT["note_inspection_incomplete"].format(
+                K=len(others) - stopped, PATH=shown)})
         if plan.omitted["count"]:
             plan.notes.append({"code": "inspect-cap", "message": TEXT["note_inspect_cap"].format(
                 K=plan.omitted["count"], M=cap, PATH=shown)})
+        if stopped:
+            plan.notes.append({"code": "deadline-exceeded",
+                               "message": TEXT["note_deadline_exceeded"].format(K=stopped, PATH=shown)})
     codes = plan_completeness(plan)
     plan.completeness = "incomplete" if codes else "complete"
     plan.apply_allowed = plan.mode != "report" and not codes and not plan.refusals
@@ -4657,6 +4702,28 @@ def take_rescan_part(plan, target, run):
     return part
 
 
+def read_cut(error):
+    """Whether error, a read's row error or None, says the work deadline cut
+    the read: code `deadline-exceeded` (T099; lead ruling R-80, P-2)."""
+    return error is not None and error["code"] == "deadline-exceeded"
+
+
+def work_spent(run):
+    """Whether the work deadline has passed: no work time is left (T099)."""
+    left = run.work_remaining()
+    return left is not None and left <= 0
+
+
+def below_removal_floor(run):
+    """Whether less than the removal floor of work time is left, read now
+    (T099, FR-030; design D9; the project-clean delta's "a removal child SHALL
+    be spawned only while at least the 5 s removal floor of the work deadline
+    remains"): TIMING["removal_floor"], read at call time (lead ruling R-29).
+    False without a deadline (an Invocation of another command)."""
+    left = run.work_remaining()
+    return left is not None and left < TIMING["removal_floor"]
+
+
 def revalidation_difference(plan, target, run, part, seen):
     """The first difference of target's revalidation, its reason, or None
     (T084; design D7; the project-clean-review-safety delta, rs:66-96;
@@ -4697,7 +4764,14 @@ def revalidation_difference(plan, target, run, part, seen):
     plan and null again is no difference; a value that cannot be re-read is
     one, with its step's reason: a failed registry listing `identity-changed`,
     a failed ref listing `state-changed`, a failed `modules` check
-    `contains-submodule`, a failed hidden-state probe `hidden-local-state`."""
+    `contains-submodule`, a failed hidden-state probe `hidden-local-state`. A
+    `timeout` stays such a difference (T084).
+
+    A read the work deadline cut gives `deadline-exceeded` instead, never a
+    difference (T099; lead ruling R-80, P-2): its row error's code says so,
+    and for steps 1 and 2, read through repository_identity() and
+    reread_manifest(), which keep no code, an unread value with no work time
+    left (work_spent())."""
     evidence = plan.evidence or {}
     planned = evidence.get("identity")
     root = os.fsencode(target.root)
@@ -4705,16 +4779,27 @@ def revalidation_difference(plan, target, run, part, seen):
     rows = selected if selected and target.row is selected[0] else [target.row]
 
     found = part["identity"] if part else repository_identity(root, run)
+    if found is None and not part and work_spent(run):
+        return "deadline-exceeded"
     if not same_repository(found, planned):
         return "identity-changed"
 
     declared = part["declared"] if part else reread_manifest(root)
+    if declared is UNREADABLE and not part and work_spent(run):
+        return "deadline-exceeded"
     expected = evidence.get("declared", UNREADABLE)
     if declared is UNREADABLE or type(declared) is not type(expected) or declared != expected:
         return "state-changed"
 
-    records = seen["records"] = (part["records"] if part else _listing(
-        run, root, ["worktree", "list", "--porcelain", "-z"], "worktree list", WorktreeListParser()))
+    if part:
+        records = part["records"]
+    else:
+        outcome, error = _git(run, root, ["worktree", "list", "--porcelain", "-z"], "worktree list",
+                              WorktreeListParser())
+        if read_cut(error):
+            return "deadline-exceeded"
+        records = None if error is not None else outcome.result
+    seen["records"] = records
     if records is None:
         return "identity-changed"
     entries = []
@@ -4730,8 +4815,11 @@ def revalidation_difference(plan, target, run, part, seen):
         refs, patterns = part["refs"], None
     else:
         patterns = narrowed_ref_patterns(plan, declared)
-        refs = _listing(run, root, ["for-each-ref", "--format=" + REF_FORMAT, *patterns], "for-each-ref",
-                        RefParser())
+        outcome, error = _git(run, root, ["for-each-ref", "--format=" + REF_FORMAT, *patterns], "for-each-ref",
+                              RefParser())
+        if read_cut(error):
+            return "deadline-exceeded"
+        refs = None if error is not None else outcome.result
     seen["refs"] = refs
     if refs is None:
         return "state-changed"
@@ -4754,25 +4842,33 @@ def revalidation_difference(plan, target, run, part, seen):
         present = presence_from_lstat(result)[0]
         if row is target.row:
             seen["path_present"] = present
+        if isinstance(result, EvidenceError) and read_cut(result.error):
+            return "deadline-exceeded"
         if not present or (result.st_dev, result.st_ino) != (row.dev, row.ino):
             return "identity-changed"
         try:
             registered, admin_id = verify_registration(row.raw_path, common_dir, False)
-        except EvidenceError:
-            return "identity-changed"
+        except EvidenceError as exc:
+            return "deadline-exceeded" if read_cut(exc.error) else "identity-changed"
         if not registered or admin_id != row.admin_id:
             return "identity-changed"
     reason, error = modules_check(common_dir, target.row.admin_id, run)
+    if read_cut(error):
+        return "deadline-exceeded"
     if reason is not None or error is not None:
         return "contains-submodule"
 
     outcome, error = status_probe(target.row.raw_path, run)
+    if read_cut(error):
+        return "deadline-exceeded"
     status = None if error is not None else outcome.result
     if (status is None or status["records"] or status["ignored_files_truncated"] or status["dirty"] is not False
             or status["ignored_files"] != 0):
         return "state-changed"
 
     reason, error = hidden_state_probe(target.row.raw_path, run)
+    if read_cut(error):
+        return "deadline-exceeded"
     if reason is not None:
         return reason
     return "hidden-local-state" if error is not None else None
@@ -4793,7 +4889,10 @@ def revalidate(plan, target, run):
     (plan review M13), its registry field from the registry listing and its
     branch fields from the ref listing, each null where its listing did not
     run, and the path's presence from the target's own lstat, or from one
-    lstat of the planned path where the revalidation stopped before it."""
+    lstat of the planned path where the revalidation stopped before it. A
+    read the work deadline cut returns ("deadline-exceeded", None), its
+    distinct return: no refusal, the target `not-attempted` with no
+    reconciliation (T099; lead ruling R-80, P-2)."""
     before = run.probes
     part = take_rescan_part(plan, target, run)
     seen = {"records": None, "refs": None, "path_present": UNREADABLE}
@@ -4801,6 +4900,8 @@ def revalidate(plan, target, run):
     target["probes_performed"] = run.probes - before + (part["children"] if part else 0)
     if reason is None:
         return None
+    if reason == "deadline-exceeded":
+        return reason, None
     raw = target["path"]
     registry_entry_present = None if seen["records"] is None else any(
         record["path"] == raw for record in seen["records"])
@@ -5023,27 +5124,41 @@ def target_notes(notes, reconciliation):
 
 
 def remove_target(plan, target, run):
-    """One selected target's own steps, in phase `apply` (T057, T093; design
-    D7, D9 and D15): its revalidation (revalidate()), a difference refusing
-    it with that revalidation's record; then the slot read before the spawn,
-    a signal recorded since the revalidation began making it
-    `not-attempted` with `interrupted` and no reconciliation; then its
-    removal child, spawned and waited for (run_removal()); then the phase
-    `reconciling` and the rescan (rescan()), its record kept on the target at
-    once; then its stage (decide_stage()) and its notes (target_notes()).
-    Each step may raise an Exception, which apply_removals() handles."""
+    """One selected target's own steps, in phase `apply` (T057, T093, T099;
+    design D7, D9 and D15): its revalidation (revalidate()), a difference
+    refusing it with that revalidation's record, and a read the work deadline
+    cut making it `not-attempted` with `deadline-exceeded` and no
+    reconciliation (lead ruling R-80, P-2); then the seam before the spawn:
+    the slot read, a signal recorded since the revalidation began making it
+    `not-attempted` with `interrupted`, then the removal floor read again
+    (below_removal_floor()), less than the floor of work left making it
+    `not-attempted` with `deadline-exceeded`, each with no reconciliation
+    (R-83, P-15; R-80, P-2); then its removal child, spawned and waited for
+    (run_removal()); then the reserve counted from the child's exit, the
+    Invocation's reserve_end becoming the later of its planned end and the
+    exit plus TIMING["reconciliation_reserve"], so that the reserve never
+    shrinks (R-80, P-3; design D9); then the phase `reconciling` and the
+    rescan (rescan()), its record kept on the target at once; then its stage
+    (decide_stage()) and its notes (target_notes()). Each step may raise an
+    Exception, which apply_removals() handles."""
     refused = revalidate(plan, target, run)
     if refused is not None:
         reason, reconciliation = refused
+        if reason == "deadline-exceeded":
+            target.update(stage="not-attempted", reason=reason, reconciliation=None)
+            return
         target.update(stage="refused", reason=reason, reconciliation=reconciliation,
                       notes=target_notes((), reconciliation))
         return
     if run.signal is not None:
         target.update(stage="not-attempted", reason="interrupted", reconciliation=None)
         return
-    # The seam before the spawn: the slot first; US6's T099 checks the removal
-    # floor here, after it (lead ruling R-83, P-15).
+    if below_removal_floor(run):
+        target.update(stage="not-attempted", reason="deadline-exceeded", reconciliation=None)
+        return
     outcome = run_removal(target, run)
+    if run.reserve_end is not None:
+        run.reserve_end = max(run.reserve_end, run.now() + TIMING["reconciliation_reserve"])
     run.phase = "reconciling"
     target["reconciliation"] = reconciliation = rescan(target, run)
     stage, reason, notes = decide_stage(target, outcome, reconciliation)
@@ -5072,15 +5187,21 @@ def apply_removals(plan, run):
 
     - the seam before its revalidation: a signal in the slot makes it, and
       every later target, `not-attempted` with `interrupted` and no
-      reconciliation (D15; pcl:931-935); otherwise, once the batch has
-      stopped, `not-attempted` with `batch-stopped`;
+      reconciliation (D15; pcl:931-935); otherwise, once the work deadline
+      has stopped the run, or when less than the removal floor of work is
+      left now (below_removal_floor()), `not-attempted` with
+      `deadline-exceeded` and no reconciliation, and so is every later
+      target (T099; pcl:779-782; lead ruling R-80, P-2); otherwise, once the
+      batch has stopped, `not-attempted` with `batch-stopped`;
     - otherwise its own steps (remove_target()) in phase `apply`, set again
       here after the previous target's rescan: D7's targeted revalidation
-      (T084), the seam before the spawn, the removal, never signalled and
-      waited for up to its ceiling (T092), then the rescan in phase
-      `reconciling`, within the reserve, whose three repository children
-      serve as the next target's steps 1 to 4 after a plain `removed` (T085;
-      lead ruling R-83, P-3), and the stage and notes;
+      (T084), a read the deadline cut ending it `not-attempted` with
+      `deadline-exceeded`; the seam before the spawn, with the floor read
+      again (T099); the removal, never signalled and waited for up to its
+      ceiling (T092), the reserve then counting from its exit (T099); then
+      the rescan in phase `reconciling`, within the reserve, whose three
+      repository children serve as the next target's steps 1 to 4 after a
+      plain `removed` (T085; lead ruling R-83, P-3), and the stage and notes;
     - an Exception while handling it, after any removal in flight has been
       waited for (run_bounded()'s _settle()), makes it `unknown` with
       `internal-error`, its record the rescan's when one was read and every
@@ -5098,10 +5219,13 @@ def apply_removals(plan, run):
     Returns apply_exit_status(targets, run.signal), D19's table, whose first
     row reads the slot."""
     targets = [make_target(plan, row) for row in plan.selected or ()]
-    stopped = False
+    stopped = deadline = False
     for target in targets:
         if run.signal is not None:
             target.update(stage="not-attempted", reason="interrupted", reconciliation=None)
+        elif deadline or (not stopped and below_removal_floor(run)):
+            target.update(stage="not-attempted", reason="deadline-exceeded", reconciliation=None)
+            stopped = deadline = True
         elif stopped:
             target.update(stage="not-attempted", reason="batch-stopped", reconciliation=None)
         else:
@@ -5113,6 +5237,7 @@ def apply_removals(plan, run):
                 target.update(stage="unknown", reason="internal-error", reconciliation=reconciliation,
                               notes=target_notes((), reconciliation))
             stopped = not (target["stage"] == "removed" and target["reason"] is None)
+            deadline = (target["stage"], target["reason"]) == ("not-attempted", "deadline-exceeded")
         best_effort(print_progress, target, run)
     status = apply_exit_status(targets, run.signal)
     best_effort(print_result, plan, targets, run)
