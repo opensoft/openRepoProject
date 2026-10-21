@@ -8,22 +8,22 @@ Codex's findings and the lead's three points) applied, their spec edits
 committed, on lane openRepoProject-4's agreement of 2026-10-20; and C-35 to
 C-43, applied in `design.md` alone with no spec edit, C-41 also in Impact: lane
 openRepoProject-3's narrowing of the `gh` lookup's per-directory rule (C-35),
-its confirm reads of rounds C6c, C7 and C9 and Codex's findings on `1c32667`,
-`05a424a` and `f34dfe2`, with the lead's C-40; round C11's C-44, a refusal of a
-relative `GH_CONFIG_DIR`, `XDG_CONFIG_HOME` or `HOME`, applied in `design.md`
-and Impact, its spec edit committed on lane openRepoProject-4's YES of
-2026-10-21; rounds C12 and C13 (C-45 to C-47: lane openRepoProject-3's six LOWs;
-reader RC's M4, M5, L6 and L2 to L5), with no spec edit, in `design.md` and
-`tasks.md`, C-47 also in Impact and Open Question 1; and round C14's C-48, RC's
-other five findings, its spec edit committed on lane openRepoProject-4's YES of
-2026-10-21, and C-49, lane openRepoProject-3's eight LOWs, both also in
-`design.md`, Impact and `tasks.md`; ratification by Brett Heap pending; nothing
-here is ratified. Governing issue: opensoft/openRepoProject#25, claimed by lane
-openRepoProject-5 (comment 6111242617); refs #6, the record of the project
-maintenance design packet. Proposed on Brett Heap's word "usage reset, resume
-all. read handoff and resume and fan out wide and do as much as possible in
-parallel" (2026-10-11), read by lanes openRepoProject-4 and openRepoProject-5 as
-a go for the candidate list they put to him.
+its confirm reads of rounds C6c, C7 and C9 and Codex's findings, with the lead's
+C-40; round C11's C-44, a refusal of a relative `GH_CONFIG_DIR`,
+`XDG_CONFIG_HOME` or `HOME`, in `design.md` and Impact, its spec edit committed
+on lane openRepoProject-4's YES; rounds C12 and C13 (C-45 to C-47: lane
+openRepoProject-3's six LOWs; reader RC's M4, M5, L6 and L2 to L5), with no spec
+edit, in `design.md` and `tasks.md`, C-47 also in Impact and Open Question 1;
+round C14's C-48, RC's other five findings, its spec edit committed on lane
+openRepoProject-4's YES of 2026-10-21, and C-49, lane openRepoProject-3's eight
+LOWs, both also in `design.md`, Impact and `tasks.md`; and round C15's C-50 and
+C-51 (its W16; reader RF's M1), in `design.md`; ratification by Brett Heap
+pending; nothing here is ratified. Governing issue: opensoft/openRepoProject#25,
+claimed by lane openRepoProject-5 (comment 6111242617); refs #6, the record of
+the project maintenance design packet. Proposed on Brett Heap's word "usage
+reset, resume all. read handoff and resume and fan out wide and do as much as
+possible in parallel" (2026-10-11), read by lanes openRepoProject-4 and
+openRepoProject-5 as a go for the candidate list they put to him.
 
 Citations are `file:line`. The packet is cited at `da33d92`, equal to main
 `961c405` for `ideation/`: `DI`, `SY`, `BA` and `OV` are its
@@ -42,7 +42,7 @@ executable. Change 1's evidence model,
 `Repository inspection requires Git 2.36 and shares one evidence model`
 (CAS/cmd:90), is [E]. The lane's rulings are cited as L-1 to L-9 and C-1 to C-8
 (2026-10-11), L-10 to L-15, B-14, C-9 and C-10 (2026-10-18), L-16, L-17 and
-C-11 to C-14 (2026-10-19), and F-3 and C-15 to C-49 (2026-10-20 and 2026-10-21,
+C-11 to C-14 (2026-10-19), and F-3 and C-15 to C-51 (2026-10-20 and 2026-10-21,
 C-16 to C-22 being the council's verdicts). `PR19/cmd` is draft PR #19's
 `openspec/changes/add-project-clean-all-safe/specs/project-command/spec.md` at
 `c462d87`.
@@ -165,10 +165,10 @@ put the answer inside the revalidation signature and added ladder classes.
   target names a usable remote, so that the reads add the same number to both
   counts. A remote-phase child that exits nonzero, reaches its limit or is
   stopped at the deadline is recorded in its rows' `remote`, never as a row or
-  scan error. Without `--remote` both counts are change 2's, byte for byte; the
-  `gh` requests are counted in `remote.requests` alone, and the `remote`
-  object keeps no `probes` of its own, so a run has one count of Git
-  children.
+  scan error; an expiry in the remote phase records no `deadline-exceeded` scan
+  error (C-48). Without `--remote` both counts are change 2's, byte for byte;
+  the `gh` requests are counted in `remote.requests` alone, and the `remote`
+  object keeps no `probes` of its own, so a run has one count of Git children.
 - **One sentence each in the Termination and Budgets paragraphs of change 1's
   evidence model**, on draft PR #19's text (C-11). A remote-target read that
   is stopped, reaped or abandoned is recorded in its rows' `remote`, never as
@@ -263,11 +263,11 @@ its one modified requirement and those of
     merge target names a usable remote, the `gh` children are counted in
     neither, and a remote-phase child that exits nonzero or is stopped at its
     limit or at the deadline is recorded in its rows' `remote`, never as a row
-    or scan error; without `--remote` both counts stay as change 2 states
-    them. Added scenario: in a complete run `estimated` equals `performed`
-    with and without `--remote`, the `--remote` run's counts exceeding the
-    other's by exactly the remote-target reads, and the `gh` request counted
-    only in `remote.requests`.
+    or scan error (nor is an expiry in the remote phase, C-48); without
+    `--remote` both counts stay as change 2 states them. Added scenario: in a
+    complete run `estimated` equals `performed` with and without `--remote`, the
+    `--remote` run's counts exceeding the other's by exactly the remote-target
+    reads, and the `gh` request counted only in `remote.requests`.
   - MODIFIED (`:606`):
     `### Requirement: Overview prints a versioned JSON envelope`.
     Change 2's whole block and its six scenarios stay untouched; one paragraph
@@ -1610,3 +1610,97 @@ for placeholders found none.
 | W3-7 (the packet's canonical form against D3's local-path rule) | LOW | C-49: applied: D3 says that the packet's `github.com/owner/repository` (DI:1039-1042) names the identity derived from a remote, not a form of URL that is accepted, since as a URL that string is a local path; the outcome the packet gives a non-GitHub remote, unavailable with no request, is the same, so "Corrections to the Packet" stays none | `design.md` D3 |
 | W3-8 (step 1's reading of a user that holds a `:` is not Git's) | LOW | C-49: applied: D3 says that step 1's reading is deliberately conservative and not Git's: for `u:pw@github.com:acme/widget` the writer saw Git 2.43.0 run the stand-in on the host `u` for the path `pw@github.com:acme/widget`, while step 1 refuses that URL as `credential-bearing-remote`; no request is sent either way | `design.md` D3 |
 | Lane openRepoProject-4's call 4 on its YES (13:4xZ): record `GIT_TRACE*` reaching `gh` as a residual in D5 | lane openRepoProject-4's call | Applied in D5: the caller's `GIT_TRACE` and other `GIT_TRACE*` names reach a `gh` child unread, with every other variable, since [E]'s Git scrub does not apply and feature 005's Q9 B, which reaches that scrub for Git children, does not extend to `gh` children. `gh` 2.96.0, run offline by the writer on 2026-10-21 with D5's flags, switches and query, from `/`, with a fake token, its proxy at a closed local port, empty configuration, state, cache and data directories, `GIT_TRACE`, `GIT_TRACE2` and `GIT_TRACE2_EVENT` naming files and a fake `git` first on `PATH`, exited 1 on the refused connection with nothing on standard output, started no `git`, created no trace file and wrote no file, as the held file's writer had seen with a shorter query; the path of a 200 answer is not verified. If Brett Heap wants it closed, it is one clause in D5 at ratification, beside `GH_DEBUG` and `DEBUG`. No spec text: the Requests paragraph already passes every other variable on unchanged | `design.md` D5, Context and its table |
+
+### Re-read and Codex Findings (round C15)
+
+Round C15 (2026-10-21, on team-01k) applies C-50 and C-51 on the lead's brief
+for the round (`rulings-2026-10-20.md`: C-50 under the bullet "W16 on #29's
+round C14", and C-51 under "Rulings on reader RF's final composition read").
+C-50 is the lead's ruling on lane openRepoProject-3's confirm read of round C14,
+`11a0ba2..3965dfb` (W16, `confirm-c14-findings.md`, brett-wip `8a08f9a5d`: no
+HIGH, one MEDIUM, three LOWs and no undeclared departure, W16-1 to W16-4), all
+accepted for `design.md` and this section, with no spec edit. W16 also found
+C-49's eight fixes applied, seven as written and W3-3 with the ruled change to
+2.37.0, W3-1's two new shapes reproduced on Git 2.36.6, 2.40.4 and 2.43.0, the
+held file's follow-ons made where its notes said, D5 agreeing with Q9 B at
+`423a532`, lane openRepoProject-4's pinned ranges `cmp`-identical, and
+validation at 8 of 8 with 36 and 10 scenarios. C-51 is the lead's ruling on the
+M1 of reader RF, a read-only reader of lane openRepoProject-5 that re-ran the
+composition of #27, #26 and this change at their final heads (`RF-findings.md`,
+in the lane's scratch): each draft's re-base check diffs the archived block
+against the re-based block, which cannot see a change to the re-basing draft's
+own ratified words, so each re-base step gains a second diff, from the draft's
+own committed block, and a return to Brett Heap for any change it shows. RF's
+other findings are for #27 and #26 (B-54 and A-37), and it found nothing else
+for this change. Codex's review of `3965dfb` found no major issues (the last
+row).
+
+The round edits `design.md` (`770e935`: the Context and its table, D3, D5 and
+the Migration Plan), and in its last commit this file (Status, the citation
+key, the What Changes bullet and the Capabilities entry for "Overview bounds its
+work and reports what it omitted", and this section) and `tasks.md` (1.1, 1.3
+and 1.5, in place, 45 lines still). No spec file changed: `git diff 3965dfb --
+'*/specs/*'` is empty, `specs/project-overview/spec.md` is still the file lane
+openRepoProject-4 agreed, sha256
+`8ef40dcabe1974d52a059ef6a513f883aa48af692759e74dea3f772a8d3145bc`, with its 36
+scenarios, `specs/project-command/spec.md` is unchanged with its 10, and the
+count stays 46. C-51's edits of `tasks.md` 2.3 and 2.4 are not made: both tasks
+lie in lane openRepoProject-4's pinned `tasks.md` lines 20-23, which the brief
+keeps byte-identical, and the brief stops an edit that cannot keep a pin; the
+Migration Plan states the second diff and governs until those tasks name it
+(the row of RF's M1).
+
+Lines 1252 to 1417 of this file, rounds C6 to C12, are unchanged (`cmp` against
+`3965dfb`), as are lines 334-345, 367-370 and 430-438 and `tasks.md` lines
+20-23, lane openRepoProject-4's pinned ranges; lines 1418 to 1612, rounds C13
+and C14, are unchanged too, and this section follows them; and every paragraph
+of this file before line 1252 keeps its line count, the four edits there
+(Status at 5-26, the citation key at 45, the What Changes bullet at 160-171 and
+the Capabilities entry at 257-270) each replacing as many lines as they had. To
+hold the counts, Status drops "on `1c32667`, `05a424a` and `f34dfe2`" after
+Codex's findings, and "applied" and "of 2026-10-21" from C-44's clause, and its
+"and" moves from round C14 to round C15; the citation key says C-51 for C-49;
+and the What Changes bullet and the Capabilities entry only add their clause.
+
+The writer checked these on 2026-10-21, in a scratch directory.
+`remote_repository_identity()`, taken from `project` at `961c405`, gave
+`22/widget` for `ssh://git@github.com:22/widget` and for
+`ssh://github.com:22/widget`, `99999/widget` for
+`ssh://git@github.com:99999/widget`, `acme/widget` for
+`ssh://git@github.com/acme/widget.git`, and no identity for
+`ssh://git@github.com:22/acme/widget.git`,
+`ssh://git@github.com:99999/acme/widget.git`,
+`ssh://git@github.com:+22/acme/widget.git` and
+`ssh://git@[github.com]/acme/widget.git`. Git 2.43.0 ran `ls-remote` on the
+same eight URLs through a `GIT_SSH_COMMAND` stand-in that logged its arguments
+and connected nowhere: with `-p 22` on `git@github.com` for the two `:22` URLs
+with a user and on `github.com` for the one without; on `git@github.com:99999`,
+with no port, for the two `:99999` URLs; with `-p +22` on `git@github.com` for
+the signed port; and on `git@github.com`, with no port, for the bracketed host
+and for `ssh://git@github.com/acme/widget.git`; each for the URL's own path.
+Codex's receipt on #29 at 2026-10-21T14:48:10Z, read from the lead's record of
+the pull request, says "Didn't find any major issues" for `3965dfbdb8`. The
+carry check of every MODIFIED block against its source passes, as in round C14:
+"Overview is local and read-only" 1 of 1 scenarios byte for byte, +33/-0;
+"Overview bounds its work and reports what it omitted" 13 of 13, +26/-0;
+"Overview prints a versioned JSON envelope" 6 of 6, +12/-0, against change 2 at
+`961c405`; and [E] 9 of 9, +11/-0, against PR #19 at `c462d87`. Validation, run
+before each of the round's commits and again at its head (a commit cannot hold
+its own sha; the head is in the round's report): `/usr/bin/openspec validate
+add-project-overview-remote-merge-status --strict` reports the change valid with
+its two INFO lines, `/usr/bin/openspec validate --all --strict` passes 8 of 8,
+and `/usr/bin/openspec status --change add-project-overview-remote-merge-status
+--json` shows every artifact done. The added text holds no non-ASCII character,
+bidi control, host path or literal backslash-u, and a grep of the three files
+for placeholders found none.
+
+| Finding | Severity | Ruling | Section edited |
+| --- | --- | --- | --- |
+| Lane openRepoProject-3's W16-1 (D3's step 3 leaves the explicit-port refusal to `remote_repository_identity()`, which gives an identity for a port before a one-segment path, `22/widget` for `ssh://git@github.com:22/widget` and `99999/widget` for `ssh://git@github.com:99999/widget`, so that D3 taken as written would ask about the wrong repository; the spec lists an explicit port as its own cause of `malformed-remote`, spec:389-390, and round C14's "neither is sent" held only for the three-segment URLs it named) | MEDIUM | C-50: applied as worded, in D3: step 3 keeps its sentence and gains one clause, that an explicit port is refused at this step itself, before that function runs and whatever identity it would give, as `specs/project-overview/spec.md:389-390` lists an explicit port among this reason's causes beside the identity rule, with its reason: before a one-segment path the function gives an identity, so a step 3 that left the port to it would ask GitHub about the wrong repository. A paragraph after round C14's four forms records what the writer saw on Git 2.43.0 through the stand-in: Git ran `ssh://git@github.com:22/widget` on `git@github.com` with `-p 22`, and `ssh://git@github.com:99999/widget` on `git@github.com:99999` with no port, each for `/widget`, while the function gave `22/widget` and `99999/widget`; step 3 refuses both by their port, so neither is sent. Round C14's "neither is sent", for the three-segment `:99999` URL, now holds by the port refusal too. No spec text: the spec already governs, as lane openRepoProject-3 notes | `design.md` D3 (step 3, and the paragraph after round C14's forms), Context and its table |
+| W16-2 (D3's "except in the forms that the next paragraph names" reads as a complete list, though more forms read a host otherwise than Git: a signed port, `ssh://git@github.com:+22/acme/widget.git`, which Git runs on `git@github.com` with `-p +22`, and a bracketed host, `ssh://git@[github.com]/acme/widget.git`, which Git runs on `git@github.com`; both fail closed) | LOW | C-50: applied: the sentence reads "except in forms such as those that the next two paragraphs name, which are examples and not a complete list (C-50), for none of which a request is sent", and the new paragraph names both forms with what the writer saw on Git 2.43.0: Git ran the signed port on `git@github.com` with `-p +22` and the bracketed host on `git@github.com`, while D3 reads the hosts `github.com:+22`, `+22` not being digits alone, and `[github.com]`, so both are `not-github` at step 2 and never sent. The paragraph also records lane openRepoProject-3's property check, as its finding file gives it: 3,619 generated URLs through D3 as worded, with the port refused at step 3, and, for each of the 30 that D3 would send, Git 2.43.0 through such a stand-in ran it on the host `github.com`, with no port, for the same `owner/repository`. The blank-led port that W16-2 also names (`: 22`) is not added, since the ruling names the two forms above | `design.md` D3 |
+| W16-3 (round C14 grew the round C13 section's introduction from 4 lines to 6, so that the section's later lines moved by 2, and round C14's introduction says that the introduction was edited, not that the rows moved) | LOW | C-50: applied here, as the ruling words it. Round C14's edit of the round C13 section's introduction, lines 1441-1444 at `11a0ba2` and 1441-1446 at `3965dfb`, grew it from 4 lines to 6, so that the section's later lines, 1445-1503 at `11a0ba2`, are 1447-1505 at `3965dfb` and here: the row of RC's L2 moved from 1494 to 1496, and the five held rows from 1498-1502 to 1500-1504, where lane openRepoProject-5's notes for the held file, the rulings and lane openRepoProject-3's findings on round C13 cite them. That range is not pinned, no citation inside this change points into it, and its lines are not moved back. The writer checked the shift with a line diff of `11a0ba2` against `3965dfb`, whose only unequal ranges before round C14's section are Status, the citation key, the README bullet, the Decisions list, that introduction, the L2 row and the five held rows | this section |
+| W16-4 (D5 and the round C14 row of lane openRepoProject-4's call 4 name feature 005's Q9 B without locating it) | LOW | C-50: applied in D5, as the ruling words it: "feature 005's Q9 B (PR #19 at `423a532`, C-50)". The writer read `423a532`, "Pin trace2 and scrub the trace names on every Git child (Q9 B)": its text is about Git children and names no `gh` child, as D5 says. The round C14 row stays as that round's record, the ruling naming D5 alone | `design.md` D5 |
+| Reader RF's M1 (every draft's re-base check is "archived block against re-based block, additions only", which cannot see a change to the re-basing draft's own ratified words, since after the earlier change archives they are all additions; RF changed two of #26's words in its composed blocks, and that check, `validate` and the archive all passed; for this change, task 2.4, and task 2.3's re-read onto A1, which the A1 map checks the same way) | MEDIUM | C-51: applied in `design.md`, with its `tasks.md` part not made. The Migration Plan gains a paragraph after its four steps: each re-read or re-base of a block in steps 2 and 4 (tasks 2.3 and 2.4) is checked by two diffs; the first, `diff -u` of the archived block against this change's re-based block, additions only, is kept; the second, `diff -u` of this change's block as committed at its ratified head against the re-based block, shows only the archived block's own text carried in, for [E] change 1's archived text in place of PR #19's at `c462d87`, with `add-project-clean-branch-retirement`'s additions if that change archived first, and for the three `project-overview` blocks change 2's archived text in place of its text at `961c405`; and any change it shows to this change's own ratified words returns the block to Brett Heap before the Speckit handoff (step 2) or before the archive (step 4), a sentence that task 2.3 re-aligns or that lane openRepoProject-4 asks for included. Added beyond the ruling: the ADDED requirement, which has no archived block, returns to Brett Heap in the same way for any change that a `diff -u` from its committed text shows. Not made: the in-place edits of tasks 2.3 and 2.4, which lie in lane openRepoProject-4's pinned `tasks.md` lines 20-23; the brief keeps those lines byte-identical and stops an edit that cannot keep a pin, so the two tasks still name the first diff alone, and the Migration Plan says that it governs until they name both; the text the writer drafted for them is in the lane's scratch, not in this change. C-51's note that this change ratifies its PR #19 block on `c462d87`, as #26 does, needs no edit: task 1.6 and Dependencies and Sequencing already say so | `design.md` Migration Plan, Context and its table |
+| Round C14's follow-up, named in C-50's timing: RC's M1 clause in What Changes and Capabilities, only if it fits within their line counts | follow-up | Applied within the counts. The What Changes bullet on "Overview bounds its work and reports what it omitted" adds "an expiry in the remote phase records no `deadline-exceeded` scan error (C-48)" after "never as a row or scan error", in 12 lines still; its Capabilities entry adds "(nor is an expiry in the remote phase, C-48)" at the same place, in 14 lines still, a shorter form, since the longer one takes a fifteenth line. The spec's sentence (spec:156-159) governs both | What Changes; Capabilities |
+| The round's record in this file and `tasks.md` | follow-on | Applied: Status names round C15 within its 22 lines, the citation key runs to C-51, and `tasks.md` 1.1 lists C-45 to C-51, 1.3 gains a round C15 clause and this section's title, and 1.5 records this round's validation, each in place, 45 lines still. The Decisions list is not edited: the brief names Status and the citation key, and the list's 34 lines leave no room for C-50 and C-51 without shortening the descriptions of earlier rulings | Status; citation key; `tasks.md` 1.1, 1.3, 1.5 |
+| Codex's review of `3965dfb` (its receipt on #29, 2026-10-21T14:48:10Z) | no finding | "Didn't find any major issues", for `3965dfbdb8`; nothing to apply. The same record shows every check on `3965dfb` passed, SonarCloud's included, as W16 also found | none |
