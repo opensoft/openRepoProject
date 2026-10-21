@@ -19,30 +19,45 @@ Lane: openRepoProject-4
   - Result: pass.
 - [x] CHK003 Are the residuals beyond the pins and the scrub recorded (remote-helper protocols, configuration files, trace targets, attribute filters)? [Completeness, Spec EC-006, EC-022]
   - Result: pass.
-- [ ] CHK004 Is the treatment of those residuals decided (accept, scrub the trace variables, or drop the user's configuration)? [Completeness, Spec EC-022]
-  - Result: open on existing question Q9.
+- [x] CHK004 Is the treatment of those residuals decided (accept, scrub the
+  trace variables, or drop the user's configuration)? [Completeness, Spec
+  EC-022]
+  - Result: pass with C-63: filters and the configuration files are recorded
+    residuals, the read-only guarantee claims only what the pins and the scrub
+    prove, and [E]'s list as PR #19 amends it carries the trace pins and names
+    (FR-016, FR-040, EC-022).
 - [ ] CHK005 Is the threat model the requirements assume stated: the user's own local repositories, some of which may hold hostile names, configuration, attributes or manifests? [Completeness, Gap, Traceability]
   - Result: plan note PN-15.
 - [x] CHK006 Is access to credentials and profile data restricted? [Completeness, Spec FR-040]
   - Result: pass.
 - [x] CHK007 Are path bytes kept from forging report lines or reaching the terminal as controls? [Completeness, Spec FR-038, FR-045, SC-010]
   - Result: pass.
-- [ ] CHK008 Are strings that are not paths (names, branch names, Git's error text) kept from forging lines or failing the encoding? [Completeness, Spec FR-038]
-  - Result: open on existing question Q8.
+- [x] CHK008 Are strings that are not paths (names, branch names, Git's error
+  text) kept from forging lines or failing the encoding? [Completeness, Spec
+  FR-038]
+  - Result: pass with C-62: every error message is the fixed text of its code,
+    and every string that is not a path follows [P]'s path rule (FR-022,
+    FR-038).
 - [x] CHK009 Is a suggestion barred from carrying permission (`--apply`, `--yes`) or naming a project by bare name? [Completeness, Spec FR-031, SC-004]
   - Result: pass.
-- [ ] CHK010 Are agents told that a suggestion is advice and that applying it needs the person's word? [Completeness, Spec FR-048]
-  - Result: open on existing question Q4.
+- [x] CHK010 Are agents told that a suggestion is advice and that applying it
+  needs the person's word? [Completeness, Spec FR-048]
+  - Result: pass with C-58, as long as Brett Heap accepts feature 004's T123
+    departure, and otherwise through a separate change after feature 005
+    (FR-051).
 - [x] CHK011 Is untrusted manifest content bounded (its size judged before the read, the read capped at 1 MiB, the read and parse inside a bounded task)? [Completeness, Spec FR-013, FR-014]
   - Result: pass, the task's extent per C-38.
 - [x] CHK012 Is the reflog path built only from ref names Git lists, so that it cannot leave `logs/refs/heads/`? [Completeness, Spec FR-033]
   - Result: pass. The branch comes from the ref listing, and Git's ref-name rules admit no `..` component.
 - [x] CHK013 Is every Git child isolated from the caller's repository-selecting variables (`GIT_DIR`, `GIT_WORK_TREE`, `GIT_INDEX_FILE` and the rest)? [Completeness, Spec FR-016]
-  - Result: pass. [E]'s seventeen-name scrub.
+  - Result: pass. [E]'s scrub, its list as PR #19 amends it (FR-016; C-63).
 - [x] CHK014 Are repositories Git itself refuses as unsafe (`safe.directory`, dubious ownership) covered? [Completeness, Spec FR-021]
   - Result: pass. A Git child that exits nonzero records `probe-failed` on its row.
-- [ ] CHK015 Is a candidate whose broken `.git` sends Git to an ancestor repository kept from widening the scan beyond the roots? [Completeness, Spec FR-002]
-  - Result: open on existing question Q11.
+- [x] CHK015 Is a candidate whose broken `.git` sends Git to an ancestor
+  repository kept from widening the scan beyond the roots? [Completeness, Spec
+  FR-002]
+  - Result: pass with C-65: such a candidate is a `refused` error row and
+    creates or joins no repository row (FR-006).
 - [x] CHK016 Is the overview kept from running repository-configured programs the pins cover (`core.fsmonitor`), with those they cannot cover recorded? [Completeness, Spec FR-016, EC-022]
   - Result: pass.
 
@@ -51,7 +66,8 @@ Lane: openRepoProject-4
 - [x] CHK017 Is "opens no network connection" made measurable? [Clarity, Measurability, Spec FR-049, SC-002]
   - Result: pass. Audit hook on `socket.connect`, the logging `uploadpack` and the wrapper's checks.
 - [x] CHK018 Is the extent of "no file write" clear about files Git may write under the caller's own configuration? [Clarity, Spec EC-022]
-  - Result: pass. Recorded as a residual; the wording question is Q9.
+  - Result: pass. Recorded as a residual, and FR-040 claims only what the pins
+    and the scrub prove (C-63).
 
 ## Requirement Consistency
 
@@ -88,9 +104,11 @@ Lane: openRepoProject-4
 
 ## Evaluation
 
-Evaluated on 2026-10-19 against `spec.md` at `8f433f7`. 25 items: 20 pass, 0
-fixed in the spec, 4 open, 1 plan notes, 0 new questions. An open item waits
-on the question or residual its result names; a plan note is for the plan, not
-the spec; a new question is asked in `clarify-questions.md`.
+Evaluated on 2026-10-19 against `spec.md` at `8f433f7`; CHK004, CHK008, CHK010,
+CHK013, CHK015 and CHK018 re-evaluated on 2026-10-21 after Brett Heap's answers
+(C-55 to C-71). 25 items: 24 pass, 0 fixed in the spec, 0 open, 1 plan notes, 0
+new questions. An open item waits on the question or residual its result names;
+a plan note is for the plan, not the spec; a new question is asked in
+`clarify-questions.md`.
 
 Plan notes: PN-15 (CHK005).

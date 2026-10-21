@@ -34,13 +34,13 @@ Lane: openRepoProject-4
 - [x] CHK010 Is the regression guard specified (every test on `main` keeps passing unchanged)? [Completeness, Spec FR-049, SC-012]
   - Result: pass.
 - [x] CHK011 Are this spec's clarified points (C-22 to C-54) covered by tests, through FR-049's rule for parts no delta scenario exercises? [Completeness, Spec FR-049]
-  - Result: pass.
+  - Result: pass, C-55 to C-71 included since 2026-10-21.
 - [x] CHK012 Is the scanning notice's terminal condition testable? [Completeness, Spec US1 s7, FR-046]
   - Result: pass. Standard error on a terminal and on a pipe are both observable; the seam is the plan's.
 - [x] CHK013 Is the parity oracle defined (`project clean <root> --json` from the same directory at the same commit)? [Completeness, Spec US3]
   - Result: pass.
 - [x] CHK014 Is the tests' CI scope stated (Linux only, Python 3.10 and 3.12)? [Completeness, Spec Dependencies, EC-017]
-  - Result: pass; the floor job is existing question Q3.
+  - Result: pass; the floor job runs the overview's small set (FR-050; C-57).
 - [x] CHK015 Are the signal tests' assertions specified (exit status, no result document, every process group gone apart from abandoned children)? [Completeness, Spec FR-049, US10 s3, US10 s4]
   - Result: pass.
 - [x] CHK016 Are the bound claims tested without long waits, with the full-length measurement kept to governance task 2.1? [Completeness, Spec FR-049, Assumptions]
@@ -72,7 +72,8 @@ Lane: openRepoProject-4
 - [x] CHK023 Edge: are permission-dependent fixtures skipped as root? [Edge Case, Spec FR-049]
   - Result: pass.
 - [x] CHK024 Edge: do tests wait for the open questions rather than assume an answer? [Edge Case, Spec Assumptions]
-  - Result: pass. No open question alters a requirement until Brett Heap answers it.
+  - Result: pass. Brett Heap answered every question on 2026-10-21, and the
+    tests follow the folded requirements (C-55 to C-71).
 - [ ] CHK025 Edge: does the plan's test list name EC-033 (a branch named `HEAD`), which no functional requirement or scenario names? [Edge Case, Traceability, Gap, Spec EC-033, FR-049]
   - Result: plan note PN-17.
 
@@ -89,9 +90,11 @@ Lane: openRepoProject-4
 ## Evaluation
 
 Evaluated on 2026-10-19 against `spec.md` at `8f433f7`; CHK025 added on
-2026-10-20, after lane openRepoProject-3's R8 read of EC-033. 25 items: 24
-pass, 0 fixed in the spec, 0 open, 1 plan notes, 0 new questions. An open
-item waits on the question or residual its result names; a plan note is for
-the plan, not the spec; a new question is asked in `clarify-questions.md`.
+2026-10-20, after lane openRepoProject-3's R8 read of EC-033; CHK011, CHK014
+and CHK024 re-read on 2026-10-21 after Brett Heap's answers (C-55 to C-71),
+their results still pass. 25 items: 24 pass, 0 fixed in the spec, 0 open, 1
+plan notes, 0 new questions. An open item waits on the question or residual its
+result names; a plan note is for the plan, not the spec; a new question is
+asked in `clarify-questions.md`.
 
 Plan notes: PN-17 (CHK025).

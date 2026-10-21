@@ -24,15 +24,28 @@ Lane: openRepoProject-4
 - [x] CHK005 Is the closed set of row and scan error codes for schema version 1 enumerated? [Completeness, Gap, Spec FR-021, FR-022, FR-037]
   - Result: fixed in spec.md, C-41.
 - [x] CHK006 Is it specified when the exit-2 codes `refused` and `os-error` apply under `--json`, rather than `internal-error`? [Completeness, Spec FR-039]
-  - Result: fixed in spec.md, FR-039 (2026-10-20, after lane openRepoProject-3's packet-fidelity read): the code follows the exception's kind (DI:1083-1089; POD:675-679, :705-707), a refusal giving `refused`, an operating-system error `os-error` and any other exception `internal-error`. A failed write and the output's encoding stay in question Q12.
-- [ ] CHK007 Is the content of `limit` and `omitted` on `deadline-exceeded` errors specified, for the scan error and for row errors? [Completeness, Spec FR-036, Clarifications C-30]
-  - Result: open on existing question Q6.
+  - Result: fixed in spec.md, FR-039 (2026-10-20, after lane
+    openRepoProject-3's packet-fidelity read): the code follows the exception's
+    kind (DI:1083-1089; POD:675-679, :705-707), a refusal giving `refused`, an
+    operating-system error `os-error` and any other exception `internal-error`.
+    A failed write and the output's encoding are settled since 2026-10-21 by
+    C-66 (FR-039).
+- [x] CHK007 Is the content of `limit` and `omitted` on `deadline-exceeded`
+  errors specified, for the scan error and for row errors? [Completeness, Spec
+  FR-036, Clarifications C-30]
+  - Result: pass with C-60 (Brett Heap's answer to Q6, 2026-10-21): only the
+    `deadline-exceeded` scan error that counts the candidates not started
+    carries `limit`, `"invocation_timeout_seconds"`, and `omitted`; every other
+    `deadline-exceeded` error, row or scan, carries neither (FR-012, FR-036).
 - [x] CHK008 Is the content of `limit` and `omitted` on a project row's `scan-limit` error specified? [Completeness, Spec FR-017, FR-018]
   - Result: pass. FR-017's rule covers every `scan-limit` error: `limit` names the cap's `limits` key and `omitted` carries the count that error dropped, `exact` for a registry read whole.
 - [x] CHK009 Is an argument error under `--json` specified (no JSON, the usage message on standard error, exit 2)? [Completeness, Spec FR-039, US5 s2]
   - Result: pass.
 - [ ] CHK010 Is the JSON text's form (indentation, key order, a final newline, which code points beyond Cc, Cf, Zl and Zp are escaped) specified or named as the plan's? [Completeness, Gap, Spec FR-036, FR-038, SC-007]
-  - Result: plan note PN-6.
+  - Result: plan note PN-6, narrowed on 2026-10-21 by C-66: the JSON is written
+    with ASCII escapes, as feature 004 writes its own (R-38), so every code
+    point outside ASCII is escaped; indentation, key order and a final newline
+    stay the plan's.
 - [ ] CHK011 Is a finding's `observed_at` defined for a finding that no probe decided (a filesystem read, a manifest) or that two evidence sources decided? [Completeness, Gap, Spec FR-037, Clarifications C-12]
   - Result: plan note PN-7.
 
@@ -100,10 +113,11 @@ Lane: openRepoProject-4
 
 ## Evaluation
 
-Evaluated on 2026-10-19 against `spec.md` at `8f433f7`; CHK006 re-evaluated
-on 2026-10-20 after lane openRepoProject-3's packet-fidelity read. 31 items:
-22 pass, 6 fixed in the spec, 1 open, 2 plan notes, 0 new questions. An open
-item waits on the question or residual its result names; a plan note is for
-the plan, not the spec; a new question is asked in `clarify-questions.md`.
+Evaluated on 2026-10-19 against `spec.md` at `8f433f7`; CHK006 re-evaluated on
+2026-10-20 after lane openRepoProject-3's packet-fidelity read, and CHK006,
+CHK007 and CHK010 on 2026-10-21 after Brett Heap's answers (C-55 to C-71). 31
+items: 23 pass, 6 fixed in the spec, 0 open, 2 plan notes, 0 new questions. An
+open item waits on the question or residual its result names; a plan note is
+for the plan, not the spec; a new question is asked in `clarify-questions.md`.
 
-Plan notes: PN-6 (CHK010), PN-7 (CHK011), PN-8 (CHK020).
+Plan notes: PN-6 (CHK010, narrowed by C-66), PN-7 (CHK011), PN-8 (CHK020).

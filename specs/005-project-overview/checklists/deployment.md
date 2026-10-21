@@ -14,7 +14,8 @@ Lane: openRepoProject-4
 ## Requirement Completeness
 
 - [x] CHK001 Is the sequencing specified (the plan and the implementation after feature 004's code and Brett Heap's word)? [Completeness, Dependency, Spec Dependencies, Clarifications C-21]
-  - Result: pass; which state of feature 004 is existing question Q2.
+  - Result: pass; the plan starts once feature 004 has merged into `main`, on
+    Brett Heap's word given after it (C-56).
 - [x] CHK002 Are migration and rollback specified? [Completeness, Gap]
   - Result: fixed in spec.md, C-49. Nothing migrates, and rollback is a revert of feature 005's merge (design, Migration Plan).
 - [x] CHK003 Is the archive order of the two changes stated? [Completeness, Spec Dependencies, Clarifications C-7]
@@ -23,8 +24,11 @@ Lane: openRepoProject-4
   - Result: pass.
 - [x] CHK005 Is the CI scope stated (Linux only, Python 3.10 and 3.12)? [Completeness, Spec Dependencies]
   - Result: pass.
-- [ ] CHK006 Is the overview's place in the Git 2.36 floor job decided? [Completeness, Spec Dependencies]
-  - Result: open on existing question Q3.
+- [x] CHK006 Is the overview's place in the Git 2.36 floor job decided?
+  [Completeness, Spec Dependencies]
+  - Result: pass with C-57: a small set of the overview's tests joins the
+    `git-floor` job by one more `-k` prefix, a departure from change 2's Impact
+    on Brett Heap's word (FR-050).
 - [x] CHK007 Is distribution to installed copies stated as out of scope? [Completeness, Spec Assumptions, Out of Scope]
   - Result: pass.
 - [x] CHK008 Is the governance state of change 2's tasks stated (3.2 open until the handoff names one feature)? [Completeness, Spec Dependencies]
@@ -53,9 +57,10 @@ Lane: openRepoProject-4
 
 ## Evaluation
 
-Evaluated on 2026-10-19 against `spec.md` at `8f433f7`. 12 items: 10 pass, 1
-fixed in the spec, 1 open, 0 plan notes, 0 new questions. An open item waits
-on the question or residual its result names; a plan note is for the plan, not
-the spec; a new question is asked in `clarify-questions.md`.
+Evaluated on 2026-10-19 against `spec.md` at `8f433f7`; CHK001 and CHK006
+re-evaluated on 2026-10-21 after Brett Heap's answers (C-55 to C-71). 12 items:
+11 pass, 1 fixed in the spec, 0 open, 0 plan notes, 0 new questions. An open
+item waits on the question or residual its result names; a plan note is for the
+plan, not the spec; a new question is asked in `clarify-questions.md`.
 
 Plan notes: none.

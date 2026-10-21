@@ -32,7 +32,8 @@ Lane: openRepoProject-4
 - [ ] CHK009 Is the number of abandoned filesystem workers (threads) bounded? [Completeness, Gap, Spec FR-013]
   - Result: plan note PN-10.
 - [x] CHK010 Is what each parser keeps bounded (the ref listing by the heads; the status stream by its record bounds; standard error by 200 characters)? [Completeness, Spec FR-015, FR-022]
-  - Result: pass.
+  - Result: pass. Since C-62 a child's standard error is drained and capped as
+    [E] requires and never shown (FR-022).
 
 ## Requirement Clarity
 
@@ -86,9 +87,10 @@ Lane: openRepoProject-4
 
 ## Evaluation
 
-Evaluated on 2026-10-19 against `spec.md` at `8f433f7`. 24 items: 20 pass, 3
-fixed in the spec, 0 open, 1 plan notes, 0 new questions. An open item waits
-on the question or residual its result names; a plan note is for the plan, not
-the spec; a new question is asked in `clarify-questions.md`.
+Evaluated on 2026-10-19 against `spec.md` at `8f433f7`; CHK010 re-read on
+2026-10-21 after Brett Heap's answers (C-55 to C-71), its result still pass. 24
+items: 20 pass, 3 fixed in the spec, 0 open, 1 plan notes, 0 new questions. An
+open item waits on the question or residual its result names; a plan note is
+for the plan, not the spec; a new question is asked in `clarify-questions.md`.
 
 Plan notes: PN-10 (CHK009).

@@ -20,7 +20,9 @@ Lane: openRepoProject-4
 - [x] CHK003 Is the probe accounting specified (`performed` counts every child; `estimated`'s terms)? [Completeness, Spec FR-020]
   - Result: pass.
 - [ ] CHK004 Is it specified whether `probes.estimated` counts a worktree row that never takes a status probe, such as a git-directory record? [Clarity, Gap, Spec FR-020]
-  - Result: plan note PN-12.
+  - Result: plan note PN-12, narrowed on 2026-10-21 by C-68: a bare
+    repository's main worktree row adds none (FR-020); the other rows that take
+    no status probe, such as a git-directory record, stay the plan's.
 - [x] CHK005 Are the limits and budgets in force reported? [Completeness, Spec FR-036, FR-047]
   - Result: pass.
 - [x] CHK006 Are evidence times reported (the collection start; each finding's deciding probe)? [Completeness, Spec FR-037, Clarifications C-12]
@@ -28,7 +30,10 @@ Lane: openRepoProject-4
 - [x] CHK007 Is the evidence's freshness stated in both outputs? [Completeness, Spec FR-036, FR-040, FR-045]
   - Result: pass.
 - [x] CHK008 Are errors diagnosable (code, a message of at most 200 characters carrying Git's first line of standard error, the path with its flag)? [Completeness, Spec FR-022]
-  - Result: pass.
+  - Result: pass, read on 2026-10-21 against C-62: the message is the fixed
+    text of its code, naming no path, the path and its flag in `path`; Git's
+    own reason is not shown, and the person re-runs the Git command to see it
+    (FR-022).
 - [x] CHK009 Is the source of each finding's evidence reported? [Completeness, Spec FR-027]
   - Result: pass. `evidence_source`.
 - [x] CHK010 Is a progress signal specified for an interactive run? [Completeness, Spec FR-046]
@@ -74,9 +79,11 @@ Lane: openRepoProject-4
 
 ## Evaluation
 
-Evaluated on 2026-10-19 against `spec.md` at `8f433f7`. 18 items: 17 pass, 0
-fixed in the spec, 0 open, 1 plan notes, 0 new questions. An open item waits
-on the question or residual its result names; a plan note is for the plan, not
-the spec; a new question is asked in `clarify-questions.md`.
+Evaluated on 2026-10-19 against `spec.md` at `8f433f7`; CHK004 and CHK008
+re-read on 2026-10-21 after Brett Heap's answers (C-55 to C-71), their
+categories unchanged. 18 items: 17 pass, 0 fixed in the spec, 0 open, 1 plan
+notes, 0 new questions. An open item waits on the question or residual its
+result names; a plan note is for the plan, not the spec; a new question is
+asked in `clarify-questions.md`.
 
-Plan notes: PN-7 (CHK006), PN-12 (CHK004).
+Plan notes: PN-7 (CHK006), PN-12 (CHK004, narrowed by C-68).

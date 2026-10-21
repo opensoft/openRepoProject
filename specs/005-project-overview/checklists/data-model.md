@@ -19,8 +19,14 @@ Lane: openRepoProject-4
   - Result: pass.
 - [x] CHK003 Is the worktree identity defined for the main worktree, which has no administrative registration to check? [Completeness, Gap, Spec FR-006, FR-007]
   - Result: fixed in spec.md, C-39. FR-007's registration cases read as if the main worktree's directory `.git` failed the two-way check; DI:241-246 gives it `admin_id: null` and no such check.
-- [ ] CHK004 Is it specified whether a bare repository's first registry record (the `bare` main entry) is a worktree row, with which values, status probe and classification, and whether it counts toward the caps? [Completeness, Gap, Spec FR-006, FR-008, US8 s4]
-  - Result: new question Q14.
+- [x] CHK004 Is it specified whether a bare repository's first registry record
+  (the `bare` main entry) is a worktree row, with which values, status probe
+  and classification, and whether it counts toward the caps? [Completeness,
+  Gap, Spec FR-006, FR-008, US8 s4]
+  - Result: pass with C-68: the bare record is the main worktree row, at the
+    common directory, `present` from `lstat`, no status probe, null status
+    fields and classification, no finding of its own, and counted toward the
+    caps and the row count (FR-008).
 - [x] CHK005 Is the list of layouts that leave `repository.root` null complete (bare, submodule, unnamed gitfile checkout, missing main worktree)? [Completeness, Spec Key Entities, FR-008, FR-009]
   - Result: pass.
 - [x] CHK006 Are a row's `path`, `kind` and `name` defined when several candidates reach one repository? [Completeness, Spec FR-010, Clarifications C-19]
@@ -37,7 +43,10 @@ Lane: openRepoProject-4
 - [x] CHK010 Is `present: null` told apart from `present: false`? [Clarity, Spec FR-007]
   - Result: pass. False for "no such entry" or "not a directory"; null for any other failure or a cut call.
 - [x] CHK011 Is `current` defined, including a working directory inside two nested worktrees? [Clarity, Spec FR-026, Clarifications C-25]
-  - Result: pass. True exactly when the working directory lies inside the worktree, so both nested worktrees, the baseline meaning that FR-026's parity needs; an unresolvable working directory is Q7.
+  - Result: pass. True exactly when the working directory lies inside the
+    worktree, so both nested worktrees, the baseline meaning that FR-026's
+    parity needs; an unresolvable working directory makes every `current` null
+    (C-61).
 - [x] CHK012 Is the identity comparison defined (all four fields together; `dev` and `ino` from the no-follow `lstat` of the common directory)? [Clarity, Spec FR-006, Clarifications C-29]
   - Result: pass.
 - [x] CHK013 Are the `kind` and `name` of an error row and of a candidate the deadline left unstarted defined? [Clarity, Spec FR-005, FR-012]
@@ -62,7 +71,8 @@ Lane: openRepoProject-4
 - [x] CHK018 Primary: is the ordinary repository with linked worktrees modelled completely? [Coverage, Spec US1 s3]
   - Result: pass.
 - [x] CHK019 Alternate: are the gitfile, submodule, bare and missing-main layouts modelled? [Coverage, Spec US8]
-  - Result: pass for the repository and its findings; the bare record's own row is CHK004.
+  - Result: pass for the repository and its findings, the bare record's own row
+    included (CHK004; C-68).
 - [x] CHK020 Exception: does a row keep the evidence established before a failure and null the rest? [Coverage, Spec FR-022]
   - Result: pass.
 - [x] CHK021 Recovery: are the states after a repair modelled (a registration repaired, a worktree pruned)? [Coverage, Spec US4 s1, US1 s5]
@@ -86,9 +96,10 @@ Lane: openRepoProject-4
 
 ## Evaluation
 
-Evaluated on 2026-10-19 against `spec.md` at `8f433f7`. 24 items: 20 pass, 2
-fixed in the spec, 0 open, 1 plan notes, 1 new questions. An open item waits
-on the question or residual its result names; a plan note is for the plan, not
-the spec; a new question is asked in `clarify-questions.md`.
+Evaluated on 2026-10-19 against `spec.md` at `8f433f7`; CHK004, CHK011 and
+CHK019 re-evaluated on 2026-10-21 after Brett Heap's answers (C-55 to C-71). 24
+items: 21 pass, 2 fixed in the spec, 0 open, 1 plan notes, 0 new questions. An
+open item waits on the question or residual its result names; a plan note is
+for the plan, not the spec; a new question is asked in `clarify-questions.md`.
 
 Plan notes: PN-8 (CHK022).

@@ -20,23 +20,39 @@ Lane: openRepoProject-4
 - [x] CHK003 Is a failure outside the boundary specified (`internal-error`, exit 2, no traceback)? [Completeness, Spec FR-039, FR-042]
   - Result: pass.
 - [x] CHK004 Is it specified when `refused` and `os-error` apply outside the boundary? [Completeness, Spec FR-039]
-  - Result: fixed in spec.md, FR-039 (2026-10-20, after lane openRepoProject-3's packet-fidelity read). An exception outside the boundary maps by its kind, as DI:1083-1089 says: a refusal gives `refused`, an operating-system error `os-error`, any other exception `internal-error`, each with exit 2; POD:705-707 is the scenario for the last. A failed write and the output's encoding stay in question Q12 (CHK012).
+  - Result: fixed in spec.md, FR-039 (2026-10-20, after lane
+    openRepoProject-3's packet-fidelity read). An exception outside the
+    boundary maps by its kind, as DI:1083-1089 says: a refusal gives `refused`,
+    an operating-system error `os-error`, any other exception `internal-error`,
+    each with exit 2; POD:705-707 is the scenario for the last. A failed write
+    and the output's encoding are settled since 2026-10-21 by C-66 (CHK012).
 - [x] CHK005 Is the evidence kept after a failure specified (what was established stays; the rest is null)? [Completeness, Spec FR-022]
   - Result: pass.
-- [ ] CHK006 Is the error message specified for a failed probe whose standard error is empty? [Completeness, Gap, Spec FR-022]
-  - Result: plan note PN-11.
+- [x] CHK006 Is the error message specified for a failed probe whose standard
+  error is empty? [Completeness, Gap, Spec FR-022]
+  - Result: pass with C-62: every row and scan error's message is the fixed
+    text of its code, `OPERATION failed: DETAIL` for `probe-failed`, so an
+    empty standard error changes nothing (FR-022); plan note PN-11 is
+    withdrawn.
 - [x] CHK007 Is a missing YAML library specified? [Completeness, Spec FR-022]
   - Result: pass.
 - [x] CHK008 Is the invalid-encoding carve-out specified, with every other command's rule kept? [Completeness, Spec FR-023]
   - Result: pass.
 - [x] CHK009 Are signal outcomes specified (stop scheduling, terminate, reap or abandon, no result document, `Cancelled.`, the status's precedence)? [Completeness, Spec FR-044]
   - Result: pass.
-- [ ] CHK010 Is a signal that arrives while the result is being written specified? [Completeness, Gap, Spec FR-042, FR-044]
-  - Result: new question Q15.
+- [x] CHK010 Is a signal that arrives while the result is being written
+  specified? [Completeness, Gap, Spec FR-042, FR-044]
+  - Result: pass with C-69: the write stops at the signal, `Cancelled.` follows
+    and the run exits with the signal's status, the partial result recorded
+    beside EC-015 as EC-035 (FR-044).
 - [x] CHK011 Is it specified that the boundary never catches an interrupt or an exit request? [Completeness, Spec FR-021]
   - Result: pass.
-- [ ] CHK012 Are output failures (a closed pipe, a full disk) and output a locale cannot encode specified? [Completeness, Spec FR-039, FR-042]
-  - Result: open on existing question Q12.
+- [x] CHK012 Are output failures (a closed pipe, a full disk) and output a
+  locale cannot encode specified? [Completeness, Spec FR-039, FR-042]
+  - Result: pass with C-66: the result is rendered whole before its first byte
+    is written, as UTF-8 whatever the locale, and a failed write to standard
+    output ends with exit 2, no traceback, no retry and no error object
+    (FR-039).
 - [x] CHK013 Is it specified that a root problem never causes exit status 2? [Completeness, Spec FR-005, FR-042]
   - Result: pass.
 - [x] CHK014 Is a Git child killed by a signal the overview did not send (an out-of-memory kill) covered? [Completeness, Spec FR-021]
@@ -76,7 +92,8 @@ Lane: openRepoProject-4
 - [x] CHK025 Alternate: are failures at each step covered (marker, identity, manifest, repository probes, status, reflog)? [Coverage, Spec FR-021, US7, US4 s6]
   - Result: pass.
 - [x] CHK026 Exception: are failures outside the boundary covered? [Coverage, Spec US5 s3]
-  - Result: pass for an exception; output failures are Q12.
+  - Result: pass for an exception; output failures are settled by C-66
+    (FR-039).
 - [x] CHK027 Recovery: does every error name its code and, where one is involved, its path, so that the person can act on it? [Recovery, Spec FR-022, FR-045]
   - Result: pass.
 - [x] CHK028 Recovery: is a re-run after an interrupted run safe, with nothing left to clean up? [Recovery, Spec FR-040, FR-044]
@@ -99,10 +116,11 @@ Lane: openRepoProject-4
 ## Evaluation
 
 Evaluated on 2026-10-19 against `spec.md` at `8f433f7`; CHK004 and CHK021
-re-evaluated on 2026-10-20 after lane openRepoProject-3's packet-fidelity
-read. 30 items: 24 pass, 3 fixed in the spec, 1 open, 1 plan notes, 1 new
-questions. An open item waits on the question or residual its result names; a
-plan note is for the plan, not the spec; a new question is asked in
-`clarify-questions.md`.
+re-evaluated on 2026-10-20 after lane openRepoProject-3's packet-fidelity read,
+and CHK004, CHK006, CHK010, CHK012 and CHK026 on 2026-10-21 after Brett Heap's
+answers (C-55 to C-71). 30 items: 27 pass, 3 fixed in the spec, 0 open, 0 plan
+notes, 0 new questions. An open item waits on the question or residual its
+result names; a plan note is for the plan, not the spec; a new question is
+asked in `clarify-questions.md`.
 
-Plan notes: PN-11 (CHK006).
+Plan notes: none (PN-11, CHK006, withdrawn on 2026-10-21: C-62 settles it).

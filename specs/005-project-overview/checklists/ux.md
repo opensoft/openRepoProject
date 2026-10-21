@@ -24,7 +24,19 @@ Lane: openRepoProject-4
 - [x] CHK005 Is the message of a gated finding specified: its own text, then `; `, then the remedy, within 200 characters, the own text shortened with `...` when both do not fit? [Completeness, Spec FR-035, Clarifications C-11]
   - Result: pass. C-11 cites design D5 for the composition and the shortening rule.
 - [ ] CHK006 Are the human text of an exit-2 refusal without `--json` (`git-too-old`, `git-unavailable`, an internal error) and the stream it is written to specified? [Completeness, Gap, Spec FR-039, FR-043]
-  - Result: plan note PN-2, narrowed to an exception of any other kind in human mode. The rest is fixed in spec.md, FR-039 and FR-043 (2026-10-20, after lane openRepoProject-3's packet-fidelity read): DI:1083-1085 keeps the baseline behaviour for a refusal or an operating-system error, `REFUSED: <message>` on standard error (feature 002's `contracts/project-new.md:121`; `project:995-999` at `da33d92`), and exit 2 for any other exception, never the interpreter's default 1; DI:322-323 gives the Git refusal's message, such as "project overview needs Git 2.36 or newer; found 2.34.1". No source says what human mode prints for that last exception beyond its exit (POD:707's "no traceback" is a `--json` scenario), so the plan fixes it (lane openRepoProject-3's delta read, its finding D6).
+  - Result: plan note PN-2, narrowed to an exception of any other kind in human
+    mode. The rest is fixed in spec.md, FR-039 and FR-043 (2026-10-20, after
+    lane openRepoProject-3's packet-fidelity read): DI:1083-1085 keeps the
+    baseline behaviour for a refusal or an operating-system error, `REFUSED:
+    <message>` on standard error (feature 002's `contracts/project-new.md:121`;
+    `project:995-999` at `da33d92`), and exit 2 for any other exception, never
+    the interpreter's default 1; DI:322-323 gives the Git refusal's message,
+    such as "project overview needs Git 2.36 or newer; found 2.34.1". No source
+    says what human mode prints for that last exception beyond its exit
+    (POD:707's "no traceback" is a `--json` scenario), so the plan fixes it
+    (lane openRepoProject-3's delta read, its finding D6). Since 2026-10-21
+    PN-2 also takes the one line that a failed write to standard output writes
+    to standard error (C-66), whose text no source fixes.
 - [x] CHK007 Is the summary line's text specified for the usual case and for `--attention` with no row shown? [Completeness, Spec FR-045]
   - Result: pass. FR-045 requires the summary on every run and the nothing-needs-attention form, citing design D10's fixed text.
 - [x] CHK008 Is the human output specified for a complete scan that lists its roots and finds no project? [Completeness, Edge Case, Spec US10 s1, FR-045]
@@ -106,12 +118,14 @@ Lane: openRepoProject-4
 
 ## Evaluation
 
-Evaluated on 2026-10-19 against `spec.md` at `8f433f7`; CHK006 re-evaluated
-on 2026-10-20 after lane openRepoProject-3's packet-fidelity read, and again
-after its delta read. 34 items: 27 pass, 2 fixed in the spec, 0 open, 5 plan
-notes, 0 new questions. An open item waits on the question or residual its
-result names; a plan note is for the plan, not the spec; a new question is
-asked in `clarify-questions.md`.
+Evaluated on 2026-10-19 against `spec.md` at `8f433f7`; CHK006 re-evaluated on
+2026-10-20 after lane openRepoProject-3's packet-fidelity read, and again after
+its delta read, and re-read on 2026-10-21 after Brett Heap's answers (C-55 to
+C-71). 34 items: 27 pass, 2 fixed in the spec, 0 open, 5 plan notes, 0 new
+questions. An open item waits on the question or residual its result names; a
+plan note is for the plan, not the spec; a new question is asked in
+`clarify-questions.md`.
 
 Plan notes: PN-1 (CHK004, CHK023), PN-2 (CHK006, narrowed to an exception of
-any other kind in human mode), PN-3 (CHK011), PN-4 (CHK012), PN-5 (CHK016).
+any other kind in human mode, and since 2026-10-21 also the standard-error line
+of a failed write, C-66), PN-3 (CHK011), PN-4 (CHK012), PN-5 (CHK016).

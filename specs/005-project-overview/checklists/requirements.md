@@ -295,6 +295,30 @@ Lane: openRepoProject-4
   on its `gh` children and the clauses that still bind the `project`
   process and every Git child (lane openRepoProject-3's R11-1); no
   recommendation changed letter; no requirement changes.
+- 2026-10-21: Brett Heap's answers to Q1 to Q17, "yes, recommended for Q1-Q17"
+  (lane openRepoProject-4's session at about 10:31Z, recorded as a RULED line
+  at 10:33:09Z), were folded into `spec.md` as C-55 to C-71, in a session of
+  their own: Q1 A, Q2 A, Q3 B, Q4 D, Q5 A, Q6 A, Q7 A, Q8 D, Q9 B, Q10 A,
+  Q11 A, Q12 A, Q13 A, Q14 A, Q15 A, Q16 B and Q17 A. Every sentence that
+  pointed at an open question now states the decision and cites its C-id;
+  FR-050 (the overview's small set in the `git-floor` job) and FR-051 (one
+  `AGENTS.md` sentence) are added, with EC-034 (strings that are not paths
+  carry no validity flag) and EC-035 (a signal that stops the write of a
+  result). Dependencies names amendment A1,
+  `amend-project-overview-clarify-answers`, lane openRepoProject-4's governed
+  change to be proposed after this fold, as the carrier of the change-2
+  amendments; lane openRepoProject-2's draft PR #19 as the carrier of Q9 B's
+  change-1 part, which that lane agreed on 2026-10-21 to carry, its commit and
+  the list's count left to a later pass; and the departures on Brett Heap's
+  word (Q3 B, Q4 D, and Q17 A in the #24-first order). No pin moved. In
+  `clarify-questions.md` the Status records the answers and the closing
+  paragraph says they are folded; every question, option and Recommended
+  paragraph is unchanged. In this folder, the 15 items open on a question and
+  the 2 new questions now pass, CHK006 of `error-handling.md` passes on C-62
+  with plan note PN-11 withdrawn, PN-6 and PN-12 are narrowed (C-66, C-68),
+  PN-2 also takes a failed write's standard-error line (C-66), and the totals
+  below were recounted by script. Re-validation: 16 of 16 items pass, with the
+  checks of iteration 2 re-run by script on the edited spec.
 - Items marked incomplete require spec updates before `/speckit-clarify` or `/speckit-plan`
 
 ## Cross-cutting Requirements Quality (no-argument `/speckit.checklist`, 2026-10-19)
@@ -317,7 +341,8 @@ Lane: openRepoProject-4
 - [x] CHK006 Is every citation key the spec uses (`POD`, `PRSD`, `DI`, `CMD`, `CLN`, [E], [L], [G], [R], [P]) defined with the file and the commit it points at? [Traceability, Gap, Spec header]
   - Result: fixed in spec.md, C-37. `CMD:N` and `CLN:N` were used eight times and defined nowhere.
 - [x] CHK007 Are the points the change leaves open recorded as questions for Brett Heap rather than settled in the spec? [Completeness, Spec Assumptions]
-  - Result: pass. Q1 to Q13, and Q14 and Q15 from this run.
+  - Result: pass. Q1 to Q17, answered by Brett Heap on 2026-10-21 and folded as
+    C-55 to C-71.
 - [x] CHK008 Is each clarification applied where its "Where applied" line says? [Consistency, Traceability, Spec Clarifications]
   - Result: pass, by script: every target a C-n names exists and cites it or carries its rule.
 
@@ -353,7 +378,8 @@ Lane: openRepoProject-4
 ### Dependencies and Assumptions
 
 - [x] CHK019 Is the dependency on feature 004 stated with the commit it is read at, and is the open choice of its state before the plan recorded? [Dependency, Spec Dependencies]
-  - Result: pass; the choice is existing question Q2.
+  - Result: pass; the plan starts once feature 004 has merged into `main`, on
+    Brett Heap's word given after it (C-56).
 - [x] CHK020 Are the measured assumptions stated with their source and date (48.3 s, 219 candidates, 96 tests)? [Assumption, Spec Assumptions]
   - Result: pass. 96 tests re-counted in `tests/test_project.py` at this commit.
 - [x] CHK021 Is the assumption that no other process changes the estate stated where determinism depends on it? [Assumption, Spec FR-019, EC-023]
@@ -364,23 +390,31 @@ Lane: openRepoProject-4
 ### Ambiguities and Conflicts
 
 - [x] CHK023 Is every point left to the plan named as such? [Ambiguity, Spec Assumptions]
-  - Result: pass. The spec names its one; this run's plan notes PN-1 to PN-17, PN-2 narrowed on 2026-10-20 to an exception of any other kind in human mode, are listed in the domain checklists' Evaluation sections.
+  - Result: pass. The spec names its one; this run's plan notes PN-1 to PN-17,
+    PN-2 narrowed on 2026-10-20 to an exception of any other kind in human mode
+    and widened on 2026-10-21 to a failed write's standard-error line (C-66),
+    PN-6 and PN-12 narrowed on 2026-10-21 (C-66, C-68) and PN-11 withdrawn then
+    (C-62), are listed in the domain checklists' Evaluation sections.
 - [x] CHK024 Are the differences between change 2 and feature 004 recorded with which text governs? [Conflict, Spec Assumptions, Clarifications C-33]
   - Result: pass.
-- [x] CHK025 Are the recorded residuals (EC-001, EC-002, EC-006, EC-022, EC-025 to EC-033) kept apart from requirements, so that none reads as a promise? [Ambiguity, Spec Edge Cases]
-  - Result: pass.
+- [x] CHK025 Are the recorded residuals (EC-001, EC-002, EC-006, EC-022, EC-025
+  to EC-035) kept apart from requirements, so that none reads as a promise?
+  [Ambiguity, Spec Edge Cases]
+  - Result: pass, EC-034 and EC-035 included since 2026-10-21.
 
 ## Evaluation
 
-Evaluated on 2026-10-19 against `spec.md` at `8f433f7`. 25 items: 24 pass, 1
-fixed in the spec, 0 open, 0 plan notes, 0 new questions. An open item waits
-on the question or residual its result names; a plan note is for the plan, not
-the spec; a new question is asked in `clarify-questions.md`.
-The counts are for the cross-cutting section above; the 16 built-in items
-before it carry no ids and are not counted.
+Evaluated on 2026-10-19 against `spec.md` at `8f433f7`; CHK007, CHK019, CHK023
+and CHK025 re-read on 2026-10-21 after Brett Heap's answers (C-55 to C-71),
+their results still pass. 25 items: 24 pass, 1 fixed in the spec, 0 open, 0
+plan notes, 0 new questions. An open item waits on the question or residual its
+result names; a plan note is for the plan, not the spec; a new question is
+asked in `clarify-questions.md`. The counts are for the cross-cutting section
+above; the 16 built-in items before it carry no ids and are not counted.
 
 Plan notes: none.
 
-All 17 checklists: 413 items: 357 pass, 22 fixed in the spec, 15 open, 17
-plan notes (PN-1 to PN-17; PN-2 narrowed to an exception of any other kind
-in human mode), 2 new questions. Recounted by script on 2026-10-20.
+All 17 checklists: 413 items: 375 pass, 22 fixed in the spec, 0 open, 16 plan
+notes (PN-1 to PN-17 but PN-11, withdrawn on 2026-10-21; PN-2 narrowed to an
+exception of any other kind in human mode and widened to a failed write's
+standard-error line), 0 new questions. Recounted by script on 2026-10-21.

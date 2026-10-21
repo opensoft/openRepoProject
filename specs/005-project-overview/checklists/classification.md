@@ -39,7 +39,9 @@ Lane: openRepoProject-4
 - [x] CHK011 Is "a remote copy of the merge target", which `unpublished` needs, defined? [Clarity, Spec FR-015, Clarifications C-15]
   - Result: pass.
 - [x] CHK012 Is the role of `current` in `merged-current` versus `merged-removable` defined? [Clarity, Spec FR-026, Clarifications C-25]
-  - Result: pass; a working directory that cannot be resolved is existing question Q7.
+  - Result: pass; a working directory that cannot be resolved leaves every
+    `current` null, and the rows the ladder would classify `merged-removable`
+    or `merged-current` are `inspection-error` (C-61).
 - [x] CHK013 Is a failed status probe on the merge-target branch unambiguous (`inspection-error`, not `protected-default`)? [Clarity, Spec FR-041, Clarifications C-10]
   - Result: pass.
 - [x] CHK014 Is each default-branch finding's evidence source stated? [Clarity, Spec FR-027, FR-041]
@@ -90,9 +92,10 @@ Lane: openRepoProject-4
 
 ## Evaluation
 
-Evaluated on 2026-10-19 against `spec.md` at `8f433f7`. 26 items: 24 pass, 2
-fixed in the spec, 0 open, 0 plan notes, 0 new questions. An open item waits
-on the question or residual its result names; a plan note is for the plan, not
-the spec; a new question is asked in `clarify-questions.md`.
+Evaluated on 2026-10-19 against `spec.md` at `8f433f7`; CHK012 re-read on
+2026-10-21 after Brett Heap's answers (C-55 to C-71), its result still pass. 26
+items: 24 pass, 2 fixed in the spec, 0 open, 0 plan notes, 0 new questions. An
+open item waits on the question or residual its result names; a plan note is
+for the plan, not the spec; a new question is asked in `clarify-questions.md`.
 
 Plan notes: none.

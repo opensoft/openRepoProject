@@ -21,8 +21,11 @@ Lane: openRepoProject-4
   - Result: pass.
 - [x] CHK004 Is the human `$'...'` rule specified, with `\UXXXXXXXX` above U+FFFF? [Completeness, Spec FR-045]
   - Result: pass.
-- [ ] CHK005 Are strings that are not paths covered by an encoding rule? [Completeness, Spec FR-038]
-  - Result: open on existing question Q8.
+- [x] CHK005 Are strings that are not paths covered by an encoding rule?
+  [Completeness, Spec FR-038]
+  - Result: pass with C-62: names, branch names, admin ids and every other
+    string the report takes from the filesystem, a manifest or Git follow [P]'s
+    path rule, with no flag of their own (FR-038; EC-034).
 - [x] CHK006 Is a root or common directory that is not valid UTF-8 barred from every suggestion? [Completeness, Spec FR-031]
   - Result: pass.
 - [x] CHK007 Is a worktree path that is not valid UTF-8 kept out of the `--all-safe` suggestion? [Completeness, Spec FR-032, FR-038]
@@ -65,8 +68,9 @@ Lane: openRepoProject-4
   - Result: pass.
 - [x] CHK020 Edge: are a single quote and a backslash inside the `$'...'` form covered? [Edge Case, Spec FR-045]
   - Result: pass, by citation of [P] (each backslash doubled, each single quote as `\'`).
-- [ ] CHK021 Edge: is output under a locale that cannot encode a printable path specified? [Edge Case, Spec FR-045]
-  - Result: open on existing question Q12.
+- [x] CHK021 Edge: is output under a locale that cannot encode a printable path
+  specified? [Edge Case, Spec FR-045]
+  - Result: pass with C-66: human output is UTF-8 whatever the locale (FR-039).
 
 ## Notes
 
@@ -80,9 +84,10 @@ Lane: openRepoProject-4
 
 ## Evaluation
 
-Evaluated on 2026-10-19 against `spec.md` at `8f433f7`. 21 items: 19 pass, 0
-fixed in the spec, 2 open, 0 plan notes, 0 new questions. An open item waits
-on the question or residual its result names; a plan note is for the plan, not
-the spec; a new question is asked in `clarify-questions.md`.
+Evaluated on 2026-10-19 against `spec.md` at `8f433f7`; CHK005 and CHK021
+re-evaluated on 2026-10-21 after Brett Heap's answers (C-55 to C-71). 21 items:
+21 pass, 0 fixed in the spec, 0 open, 0 plan notes, 0 new questions. An open
+item waits on the question or residual its result names; a plan note is for the
+plan, not the spec; a new question is asked in `clarify-questions.md`.
 
 Plan notes: none.

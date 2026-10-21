@@ -4,16 +4,23 @@ Lane: openRepoProject-4
 
 **Path**: `specs/005-project-overview/clarify-questions.md`
 
-**Status**: Open, for Brett Heap; not answered here. Asked by lane
-openRepoProject-4 for feature `005-project-overview` on 2026-10-11, after the
-spec's specify step. Each question is one the ratified change
-(`openspec/changes/add-project-overview/`) and feature 004 leave genuinely
-open; what their text settles is in `spec.md`, Clarifications, C-1 to C-54.
-No requirement changes until an answer is given; answers join the spec's
-Clarifications as a later session. Q6 to Q13 were added on 2026-10-19 from
-three read-only reviews of the spec at `3d28710`, and Q14 and Q15 the same
-day, from the evaluation of the spec against the checklists of the
-no-argument `/speckit.checklist` run.
+**Status**: Answered. Brett Heap answered every question on 2026-10-21, in lane
+openRepoProject-4's session at about 10:31Z, in his words "yes, recommended for
+Q1-Q17", recorded by that lane as a RULED line at 10:33:09Z. The answers are
+the recommended options: Q1 A, Q2 A, Q3 B, Q4 D, Q5 A, Q6 A, Q7 A, Q8 D, Q9 B,
+Q10 A, Q11 A, Q12 A, Q13 A, Q14 A, Q15 A, Q16 B and Q17 A. They are folded into
+`spec.md`, Clarifications, as C-55 to C-71 (Session 2026-10-21, Brett Heap's
+answers). Every question, option and Recommended paragraph below is kept
+unchanged, as the record of what he answered.
+
+The questions were asked by lane openRepoProject-4 for feature
+`005-project-overview` on 2026-10-11, after the spec's specify step. Each
+question is one the ratified change (`openspec/changes/add-project-overview/`)
+and feature 004 leave genuinely open; what their text settles is in `spec.md`,
+Clarifications, C-1 to C-54. Q6 to Q13 were added on 2026-10-19 from three
+read-only reviews of the spec at `3d28710`, and Q14 and Q15 the same day, from
+the evaluation of the spec against the checklists of the no-argument
+`/speckit.checklist` run.
 
 Seventeen questions, in one block: Q1 to Q5 asked on 2026-10-11, Q6 to Q15
 added on 2026-10-19, and Q16 and Q17 on 2026-10-20. On 2026-10-19, after
@@ -685,10 +692,7 @@ which #24's design makes in every order once its code is on `main`
 
 ---
 
-You can reply with the option letter for each question (e.g., "Q1 A, Q2 A,
-Q3 B, Q4 D, Q5 A, Q6 A, Q7 A, Q8 D, Q9 B, Q10 A, Q11 A, Q12 A, Q13 A,
-Q14 A, Q15 A, Q16 B, Q17 A"),
-accept every recommendation by saying "yes" or "recommended", or give your
-own short answer for any of them.
+Answered on 2026-10-21 by Brett Heap, "yes, recommended for Q1-Q17"; folded
+into `spec.md` as C-55 to C-71.
 
 **Path**: `specs/005-project-overview/clarify-questions.md`

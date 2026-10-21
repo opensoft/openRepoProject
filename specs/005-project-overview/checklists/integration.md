@@ -33,12 +33,20 @@ Lane: openRepoProject-4
   - Result: pass.
 - [x] CHK010 Is the README section specified item by item? [Completeness, Spec FR-048]
   - Result: pass.
-- [ ] CHK011 Is the guidance to agents in `AGENTS.md` decided? [Completeness, Spec FR-048]
-  - Result: open on existing question Q4.
-- [ ] CHK012 Is the overview's place in feature 004's Git 2.36 floor job decided? [Completeness, Dependency, Spec Dependencies]
-  - Result: open on existing question Q3.
-- [ ] CHK013 Is the state of feature 004 that must exist before the plan decided? [Completeness, Dependency, Spec Dependencies]
-  - Result: open on existing question Q2.
+- [x] CHK011 Is the guidance to agents in `AGENTS.md` decided? [Completeness,
+  Spec FR-048]
+  - Result: pass with C-58: one sentence on the overview joins the `AGENTS.md`
+    section of feature 004's T123, a departure on Brett Heap's word; if he
+    declines T123's departure, a separate change after feature 005 carries the
+    guidance (FR-051).
+- [x] CHK012 Is the overview's place in feature 004's Git 2.36 floor job
+  decided? [Completeness, Dependency, Spec Dependencies]
+  - Result: pass with C-57: one more `-k` prefix selects a small set of the
+    overview's tests (FR-050).
+- [x] CHK013 Is the state of feature 004 that must exist before the plan
+  decided? [Completeness, Dependency, Spec Dependencies]
+  - Result: pass with C-56: feature 004 merged into `main`, the plan starting
+    on Brett Heap's word given after it.
 
 ## Requirement Clarity
 
@@ -90,9 +98,10 @@ Lane: openRepoProject-4
 
 Evaluated on 2026-10-19 against `spec.md` at `8f433f7`; CHK025 added on
 2026-10-20, after lane openRepoProject-2's ruling R-70(b) and the re-pin to
-feature 004's `96a08d4`. 25 items: 21 pass, 0 fixed in the spec, 3 open, 1 plan
-notes, 0 new questions. An open item waits on the question or residual its
-result names; a plan note is for the plan, not the spec; a new question is
-asked in `clarify-questions.md`.
+feature 004's `96a08d4`; CHK011 to CHK013 re-evaluated on 2026-10-21 after
+Brett Heap's answers (C-55 to C-71). 25 items: 24 pass, 0 fixed in the spec, 0
+open, 1 plan notes, 0 new questions. An open item waits on the question or
+residual its result names; a plan note is for the plan, not the spec; a new
+question is asked in `clarify-questions.md`.
 
 Plan notes: PN-16 (CHK025).

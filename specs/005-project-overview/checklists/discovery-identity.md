@@ -26,15 +26,28 @@ Lane: openRepoProject-4
 - [x] CHK006 Is deduplication specified for roots and candidates, by canonical path and by device and inode, with the canonically first spelling winning? [Completeness, Spec FR-001, FR-003, EC-018]
   - Result: pass.
 - [x] CHK007 Is a family holder's treatment specified (one row, no member read, Git probes only at a Git toplevel)? [Completeness, Spec FR-003]
-  - Result: pass. FR-003 also states the outcome for a holder that is not that toplevel, whether it has no `.git` entry or its identity probe reports another toplevel: null `repository`, `merge_target`, `git` and `worktrees`, and no error for the Git probes it does not get, its manifest's error still recorded (DI:284-287; FR-004), added 2026-10-20 after lane openRepoProject-3's packet-fidelity read and made exact after its delta read (its finding D3); the pointer there to question Q11 now excepts a family holder (its finding D2).
+  - Result: pass. FR-003 also states the outcome for a holder that is not that
+    toplevel, whether it has no `.git` entry or its identity probe reports
+    another toplevel: null `repository`, `merge_target`, `git` and `worktrees`,
+    and no error for the Git probes it does not get, its manifest's error still
+    recorded (DI:284-287; FR-004), added 2026-10-20 after lane
+    openRepoProject-3's packet-fidelity read and made exact after its delta
+    read (its finding D3); the pointer there to question Q11 now excepts a
+    family holder (its finding D2), and since 2026-10-21 states C-65's rule for
+    every other candidate.
 - [x] CHK008 Is a candidate without a `.git` entry specified (no Git child, null Git fields, no finding)? [Completeness, Spec FR-004, Clarifications C-4]
   - Result: pass.
 - [x] CHK009 Are the rules naming the main checkout specified for every layout: ordinary, reached by a linked worktree first, gitfile with and without `core.worktree`, submodule, bare and missing main worktree? [Completeness, Spec FR-008, FR-009]
-  - Result: pass for `repository.root`; the bare record's own row is Q14 (data-model.md CHK004).
+  - Result: pass, the bare record's own row included (FR-008; C-68).
 - [x] CHK010 Is the outcome recorded for a candidate whose `.git` file names a bare repository, where the identity probe asks for a toplevel that Git cannot give? [Completeness, Edge Case, Gap]
-  - Result: fixed in spec.md, C-54 and EC-030, the outcome as written (a `probe-failed` error row); whether to report such a repository otherwise is in new question Q14.
-- [ ] CHK011 Is a candidate whose `.git` Git does not accept, so that Git finds an ancestor repository, specified? [Completeness, Spec Clarifications]
-  - Result: open on existing question Q11.
+  - Result: fixed in spec.md, C-54 and EC-030, the outcome as written (a
+    `probe-failed` error row), which stays so on Brett Heap's answer to Q14
+    (C-68).
+- [x] CHK011 Is a candidate whose `.git` Git does not accept, so that Git finds
+  an ancestor repository, specified? [Completeness, Spec Clarifications]
+  - Result: pass with C-65: a candidate other than a family holder whose
+    identity probe reports a toplevel that is a proper ancestor of it is a
+    `refused` error row and creates or joins no repository row (FR-006).
 - [x] CHK012 Is the resolution of a relative `core.worktree` specified? [Completeness, Spec FR-008, Clarifications C-33]
   - Result: pass. Against the git directory.
 - [x] CHK013 Is an `lstat` that fails with "not a directory" specified? [Completeness, Spec FR-007, Clarifications C-33]
@@ -68,7 +81,8 @@ Lane: openRepoProject-4
 - [x] CHK021 Primary: are the default roots, one `--root` and several `--root` options covered? [Coverage, Spec US1]
   - Result: pass.
 - [x] CHK022 Alternate: are a root naming one project's own directory, an assembly root and a Triad assembly covered? [Coverage, Spec US1 s8, US4 s2, EC-014]
-  - Result: pass. The Triad's outcome is recorded (EC-014) with existing question Q1.
+  - Result: pass. The Triad's outcome is built as ratified, and the README says
+    so (EC-014, FR-048; C-55).
 - [x] CHK023 Exception: are an unreadable candidate, an unreadable root and a marker check that fails covered? [Coverage, Spec US7 s1, FR-005]
   - Result: pass.
 - [ ] CHK024 Exception: is a root whose listing fails partway specified (its state, and whether the candidates read before the failure are kept)? [Coverage, Edge Case, Gap, Spec FR-005, FR-017]
@@ -80,9 +94,12 @@ Lane: openRepoProject-4
 - [x] CHK027 Edge: are overlapping roots (one root an immediate entry of another) covered? [Edge Case, Spec FR-003, Clarifications C-1]
   - Result: pass. Candidates are deduplicated across the run.
 - [x] CHK028 Edge: are the layouts the marker table cannot see recorded? [Edge Case, Spec EC-025]
-  - Result: pass. Recorded, with existing question Q10.
-- [ ] CHK029 Edge: is a root whose canonicalisation is cut specified (its path, order, deduplication and count under the cap)? [Edge Case, Spec FR-013]
-  - Result: open on existing question Q13.
+  - Result: pass. Recorded, and kept so (EC-025; C-64).
+- [x] CHK029 Edge: is a root whose canonicalisation is cut specified (its path,
+  order, deduplication and count under the cap)? [Edge Case, Spec FR-013]
+  - Result: pass with C-67: its `path` is the given path made absolute but not
+    resolved, sorted by those bytes among the canonical paths, never
+    deduplicated, and counted toward the root cap (FR-001).
 
 ## Notes
 
@@ -99,9 +116,10 @@ Lane: openRepoProject-4
 Evaluated on 2026-10-19 against `spec.md` at `8f433f7`; CHK007 and CHK016
 re-read on 2026-10-20 after lane openRepoProject-3's packet-fidelity read,
 their results unchanged, and again after its delta read (findings D2 to D4),
-their results still pass. 29 items: 25 pass, 1 fixed in the spec, 2 open, 1
-plan notes, 0 new questions. An open item waits on the question or residual
-its result names; a plan note is for the plan, not the spec; a new question
-is asked in `clarify-questions.md`.
+their results still pass; CHK007, CHK009 to CHK011, CHK022, CHK028 and CHK029
+re-evaluated on 2026-10-21 after Brett Heap's answers (C-55 to C-71). 29 items:
+27 pass, 1 fixed in the spec, 0 open, 1 plan notes, 0 new questions. An open
+item waits on the question or residual its result names; a plan note is for the
+plan, not the spec; a new question is asked in `clarify-questions.md`.
 
 Plan notes: PN-9 (CHK024).

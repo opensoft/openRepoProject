@@ -29,8 +29,10 @@ Lane: openRepoProject-4
   - Result: pass. An `environment` root reported `unreadable`.
 - [x] CHK008 Is the precedence specified when `--root` and `PROJECTS_DIR` are both given? [Completeness, Spec FR-001]
   - Result: pass. `--root` wins.
-- [ ] CHK009 Is the locale's effect on output specified? [Completeness, Spec FR-045]
-  - Result: open on existing question Q12.
+- [x] CHK009 Is the locale's effect on output specified? [Completeness, Spec
+  FR-045]
+  - Result: pass with C-66: output is rendered as UTF-8 whatever the locale,
+    the JSON document with ASCII escapes (FR-039).
 - [x] CHK010 Are the default roots' expansion rules specified? [Completeness, Spec FR-001, Clarifications C-3]
   - Result: pass. The command's existing projects-directory rule.
 
@@ -71,9 +73,10 @@ Lane: openRepoProject-4
 
 ## Evaluation
 
-Evaluated on 2026-10-19 against `spec.md` at `8f433f7`. 18 items: 16 pass, 0
-fixed in the spec, 1 open, 1 plan notes, 0 new questions. An open item waits
-on the question or residual its result names; a plan note is for the plan, not
-the spec; a new question is asked in `clarify-questions.md`.
+Evaluated on 2026-10-19 against `spec.md` at `8f433f7`; CHK009 re-evaluated on
+2026-10-21 after Brett Heap's answers (C-55 to C-71). 18 items: 17 pass, 0
+fixed in the spec, 0 open, 1 plan notes, 0 new questions. An open item waits on
+the question or residual its result names; a plan note is for the plan, not the
+spec; a new question is asked in `clarify-questions.md`.
 
 Plan notes: PN-13 (CHK005).
