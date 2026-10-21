@@ -2656,8 +2656,8 @@ def inspect_repository(directory, run, refresh=False, *, repeat_identity_at_root
     their parsers, memoized on run, the Invocation (`common_dirs`), by the
     device and inode of the common directory (lead ruling R-54 X-1), so that
     another directory of one repository runs only row 3. refresh reads afresh
-    and replaces the memo; cleanup_report() always does (lead ruling R-51
-    (d)), and so does require_unchanged_cleanup_state() after confirmation
+    and replaces the memo; the retired cleanup_report() always did (lead ruling
+    R-51 (d)), and so does require_unchanged_cleanup_state() after confirmation
     (T076). repeat_identity_at_root, on by default, runs row 5, row 3 again at
     the main worktree where row 3 ran in another worktree, and names no root
     when that common directory differs; off, row 5 is not run, and the memo
@@ -5789,84 +5789,10 @@ def repo_state(root):
     return state
 
 
-def default_branch(root, declared=None):
-    """Return the local branch used as the cleanup merge target."""
-    candidates = [declared, git_text(root, "symbolic-ref", "--short", "refs/remotes/origin/HEAD"),
-                  "main", "master"]
-    for candidate in candidates:
-        if not isinstance(candidate, str) or not candidate:
-            continue
-        candidate = candidate.removeprefix("origin/")
-        if git(root, "show-ref", "--verify", "--quiet", f"refs/heads/{candidate}").returncode == 0:
-            return candidate
-    return None
-
-
-def ancestor(root, commit, branch):
-    if not commit or not branch:
-        return None
-    result = git(root, "merge-base", "--is-ancestor", commit, f"refs/heads/{branch}")
-    return True if result.returncode == 0 else False if result.returncode == 1 else None
-
-
-def cleanup_report(root):
-    """The report of `project clean ROOT` on the evidence model (T033;
-    research.md R9): the baseline document {root, target_branch,
-    tracking_freshness, worktrees}, its rows from worktree_rows() with the six
-    added fields. It reads afresh every time (refresh; lead ruling R-51 (d)).
-    Since T076 nothing calls it: require_unchanged_cleanup_state() re-inspects
-    through inspect_repository() and build_plan() instead. Refusals keep
-    their baseline messages: `Cannot inspect Git repository at ROOT` for a
-    ROOT that is not a worktree toplevel of a repository whose main worktree
-    can be named, or whose repository-wide probes failed; the manifest's own;
-    and `no-merge-target`."""
-    run = current_invocation()
-    repo = inspect_repository(root, run, refresh=True)
-    identity = repo["identity"]
-    try:
-        toplevel = identity is not None and _realpath(os.fsencode(root)) == repo["toplevel"]
-    except EvidenceError:
-        toplevel = False
-    if not toplevel or identity["root"] is None:
-        raise Refused(f"Cannot inspect Git repository at {root}")
-    if repo["merge_target_refusal"] is not None:
-        raise repo["merge_target_refusal"]
-    if repo["errors"]:
-        raise Refused(f"Cannot inspect Git repository at {root}")
-    return {"root": str(root), "target_branch": repo["merge_target"]["name"],
-            "tracking_freshness": "local refs only; remote information is as of the last fetch; no fetch performed",
-            "worktrees": worktree_rows(repo, run)}
-
-
-def print_clean_report(report, as_json):
-    if as_json:
-        print(json.dumps(report, indent=2))
-        return
-    print(f"Cleanup plan for {report['root']}")
-    print(f"Merge target: {report['target_branch']}")
-    print(f"Freshness: {report['tracking_freshness']}")
-    for row in report["worktrees"]:
-        branch = row.get("branch", "unknown")
-        upstream = row.get("upstream") or "none"
-        delta = "unknown" if row.get("ahead") is None else f"ahead={row['ahead']}, behind={row['behind']}"
-        print(f"{row['classification'].upper()}: {row['path']} [{branch}] "
-              f"dirty={row.get('dirty', 'unknown')}; upstream={upstream}; {delta}; "
-              f"merged={row.get('merged_into_target', 'unknown')}")
-        print(f"  {row['recommendation']}")
-
-
 def cleanup_signature(report, row):
     fields = ("path", "branch", "head", "present", "dirty", "ignored_files", "upstream",
               "ahead", "behind", "remote_present", "merged_into_target", "current", "classification")
     return report["target_branch"], tuple((field, row.get(field)) for field in fields)
-
-
-def matching_worktree(report, *, branch=None, path=None):
-    if branch is not None:
-        rows = [row for row in report["worktrees"] if row.get("branch") == branch]
-    else:
-        rows = [row for row in report["worktrees"] if Path(row["path"]).resolve() == path]
-    return rows[0] if len(rows) == 1 else None
 
 
 def require_unchanged_cleanup_state(repo, run, action, branch):
