@@ -49,7 +49,9 @@ D5, D6 and D8; A-32 (five LOW items) to D4, D8, D9 and Risks; A-33 (how the
 re-bases are checked, and the rewordings they need) to D8, D10 and the
 Migration Plan; and A-34 (signals in the apply phase, and the flagged result's
 order) to D4, D5, D7, D8 and D9 (proposal, "Re-read and Codex Findings (round
-A7)").
+A7)"). Round A8 maps A-35 (lane openRepoProject-3's confirm read of round A7,
+its F1 to F10) to Context and D8 (F4), D7 (F3), D8 (F10) and the Migration
+Plan (F9) (proposal, "Re-read and Codex Findings (round A8)").
 
 Citations follow `proposal.md`: packet files at `da33d92`, `CAS` for change 1,
 `APO` for change 2, `project:N` and `tests:N` at `961c405`, all unchanged at
@@ -122,6 +124,7 @@ bare remote, `GIT_CONFIG_NOSYSTEM=1` and an empty global configuration:
 | a local branch `b3` whose configured upstream is the local `b1` (`branch.b3.remote` `.`, `branch.b3.merge` `refs/heads/b1`; round A7, ruling A-32, RA's LOW-4) | `for-each-ref` over `refs/heads` gives `b3`'s upstream as `refs/heads/b1`; after `worktree remove`, `branch -d -- b1` deletes `b1`, exit 0, without a word about `b3`; `b3` stays at its SHA and its upstream track reads `[gone]`; the restore line recreates `b1`, exit 0, and `b3`'s upstream reads again |
 | a rebase, then a bisect, of `b` in another worktree (round A7, ruling A-32, RA's LOW-5) | an interactive rebase whose instruction list begins with `break` stops at once, `worktree list --porcelain` lists that worktree as `detached` with no `branch` line, and `b` stays at its SHA; `branch -d -- b` refuses, "cannot delete branch 'b' used by worktree at", exit 1; after `rebase --abort` the worktree lists `branch refs/heads/b` and Git still refuses; a bisect of `b` started there behaves alike, detached while it runs and holding `b` after `bisect reset`; once that worktree is removed, `branch -d -- b` deletes it, exit 0 |
 | `git -C '<root>' rev-parse --verify refs/heads/<b>`, run from `/` (round A7, ruling A-31) | exit 0 while the branch exists, `refs/heads/-f` and `refs/heads/HEAD` included; after `branch -d`, "fatal: Needed a single revision", exit 128; the restore line then recreates the branch, exit 0 |
+| a rebase of `b` in another worktree, `b` published and its upstream's remote-tracking ref deleted, the main worktree on the merge target (round A8; ruling A-35, lane openRepoProject-3's F4 and its `exp2`, re-run) | `branch -d -- b` refuses, "cannot delete branch 'b' used by worktree at", exit 1, as it does with the ref present and with no upstream configured; `git checkout <merge target>` in the main worktree, which already holds it, exits 0, and `branch -d b` still refuses, exit 1; after `rebase --abort` and `worktree remove` of that worktree, the same checkout and `branch -d b` delete the branch, exit 0; with no rebase and the main worktree moved to a branch that lacks `b`, Git refuses "the branch 'b' is not fully merged", exit 1, and the checkout of the merge target and `branch -d b` delete it, exit 0 |
 
 The council's adversary engineer added, on Git 2.43.0 (council finding AE-1):
 a commit reset or amended away on a branch stays reachable through that
@@ -140,7 +143,7 @@ exclusion as the one line `^<merge target SHA>`, a revision rather than an
 option, which the round A3 row above checks on 2.43.
 
 The Git 2.36 floor was not available for these checks here, nor for rounds
-A3's, A4's, A5's and A7's; D9 puts them on change 1's CI floor job. Lane
+A3's, A4's, A5's, A7's and A8's; D9 puts them on change 1's CI floor job. Lane
 openRepoProject-3, running rows of this table on Git 2.36.6, 2.40.4 and 2.43.0
 (its delta read of `9ff8202`, D10), found the same exit statuses and outcomes
 on all three and three messages that differ, so the messages the table quotes
@@ -657,10 +660,12 @@ D15 stop the planning child. In the apply phase change 1's D15 holds for the
 stage as for a removal: the handler only records, and the seam reads the slot
 between steps, so a signal stops no child of the stage. A re-read listing, a
 re-proof or a branch child in flight when it arrives runs to its own end or
-budget and its outcome decides; the stage reads the slot before each read or
-child it would start, and once the slot is set it starts nothing more, the
-branch `retained` with `interrupted` unless the step that ran decided another
-reason. A branch child past its budget gets change 1's probe termination
+budget and its outcome decides; the stage reads the slot before each re-read,
+re-proof or branch child it would start, never before the post-check, and once
+the slot is set it starts none of them, the branch `retained` with
+`interrupted` unless the step that ran decided another reason (ruling A-35,
+lane openRepoProject-3's F3). A branch child past its budget gets change 1's
+probe termination
 (SIGTERM to the group, SIGKILL 2 s later, a reap of at most 2 s) from that
 budget, never from the signal. After the signal the post-check runs in the
 reserve, as change 1 reconciles after a signal, and a second SIGINT while it
@@ -889,8 +894,9 @@ as amended, Codex's P2 on `9ff8202`).
     `rev-parse --verify` exits 128 for a ref that is gone (Context);
   - `Kept BRANCH (head-not-merge-target); next: check out MERGE_TARGET in the
     main worktree, then: RETRY`, the same next step for `git-refused` when the
-    upstream ref is absent; when the plan's registry listing shows
-    MERGE_TARGET checked out in a linked worktree at PATH2, where Git refuses
+    upstream ref is absent, after that line's rebase-or-bisect clause (below);
+    when the plan's registry listing shows MERGE_TARGET checked out in a
+    linked worktree at PATH2, where Git refuses
     that checkout, `next: MERGE_TARGET is checked out at PATH2, so check out
     its tip TARGET_SHA detached in the main worktree, then: RETRY` (lane
     openRepoProject-3's re-read, LOW-10; Context);
@@ -917,7 +923,15 @@ as amended, Codex's P2 on `9ff8202`).
     sees Git's "used by worktree"; a worktree mid-rebase or mid-bisect is
     listed detached and Git refuses, and once the rebase or bisect ends that
     worktree holds the branch again and Git still refuses until it is removed
-    (Context), which is why the hint names both steps;
+    (Context), which is why the hint names both steps; with the upstream ref
+    absent, the same clause comes before that line's `next:` step above,
+    `Kept BRANCH (git-refused); if a rebase or bisect in another worktree
+    holds BRANCH, wait for it to end and remove that worktree; next: check out
+    MERGE_TARGET in the main worktree, then: RETRY`, because Git refuses a
+    branch so held whether its upstream's ref is present or absent, or no
+    upstream is configured, and the checkout alone, of a merge target the main
+    worktree already holds, changes nothing (ruling A-35, lane
+    openRepoProject-3's F4; Context);
   - otherwise `Kept BRANCH (REASON); retry: RETRY`.
 - Stop block: change 1's, with a branch stage's stop reading `Stopped at PATH
   (branch BRANCH: REASON). Removed K of N. Not attempted: P1, P2. Next: project
@@ -934,7 +948,12 @@ as amended, Codex's P2 on `9ff8202`).
   branch lines and not from that reconciliation. Feature 004, checked at
   `2cf34d3` only as a check, prints the stop block, `Branches kept:`,
   `Branches not confirmed:` and then the residual-window line, the form this
-  order extends (reader RE's RE-3). With the cache change archived first, its
+  order extends (reader RE's RE-3). Under the flag the per-branch
+  `Unconfirmed` lines name each branch whose deletion is unconfirmed; whether
+  feature 004's `Branches not confirmed:` line, which change 1's text does not
+  hold, stays beside them is settled at the alignment with feature 004,
+  together with RE-4 to RE-8 (ruling A-35, lane openRepoProject-3's F10). With
+  the cache change archived first, its
   `Caches disposed` line, which it prints after change 1's success line,
   follows the summary line and precedes the branch lines (reader RD's L2;
   `tasks.md` 2.3).
@@ -1263,11 +1282,14 @@ Without the flag nothing changes: every run behaves as change 1 specifies.
      summary line and precedes the branch lines (RD's L2; D8).
 
    If this change archives after `add-project-overview-remote-merge-status`,
-   the composed project-command block quotes requirement names one way, in
-   the double quotes that change 1, PR #19 and this change use, so that that
-   change's backquoted `Overview reports remote merge evidence on request`
-   takes double quotes, a change of quoting and of no word, named here so that
-   the check above does not read it as dropped text (RD's L4).
+   the composed project-command block keeps that change's words as ratified,
+   quotation marks included, so that its backquoted `Overview reports remote
+   merge evidence on request` stays backquoted beside the double-quoted names
+   of change 1, PR #19 and this change: a re-base never changes another
+   change's ratified words, and quoting requirement names one way binds this
+   change's own text only, so the composed block may hold both styles and the
+   check above needs no exception for quoting (ruling A-35, lane
+   openRepoProject-3's F9, refining A-33's reading of RD's L4).
 
 Rollback: revert the realization commit on `main`. The flag is opt-in, so the
 revert removes only it; branches it retired can be recreated from the SHAs that
