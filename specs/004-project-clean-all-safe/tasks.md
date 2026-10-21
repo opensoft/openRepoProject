@@ -2450,7 +2450,7 @@ lead ruling R-83).
   decided by the rescan.
   — files: `tests/test_clean_result.py`
   — verify: `python3 -c "import sys,unittest as u;L=u.defaultTestLoader;f=lambda s:[i for t in s for i in (f(t) if isinstance(t,u.TestSuite) else [t.id()])];I=[i for i in f(L.discover('tests',pattern=sys.argv[1])) if not i.startswith('unittest.')];A=sys.argv[2:];M=[a for a in A if not any(a in ('*',i.split('.')[-1]) for i in I)];[print('not collected:',m) for m in M];[print(e) for e in L.errors];sys.exit(1 if M or L.errors or not A else 0)" test_clean_result.py 'test_clean_stage_and_reason_table'`
-- [ ] T091 [P] [US5] [O] Add to `tests/test_clean_stop.py`:
+- [x] T091 [P] [US5] [O] Add to `tests/test_clean_stop.py`:
   `test_clean_the_stop_block` (three targets, the second refused with
   `branch-changed`: the human result reads the progress lines in the contract's
   form (`  STAGE PATH` or `  STAGE PATH (REASON)`), then `Stopped at P2
@@ -2534,7 +2534,7 @@ lead ruling R-83).
   SIGHUP. T087 to T090 pass.
   — files: `project`
   — verify: `python3 -m unittest discover -s tests -p 'test_clean_result.py'`
-- [ ] T094 [P] [US5] [S] In `print_plan()` (region `preview`), print D18's
+- [x] T094 [P] [US5] [S] In `print_plan()` (region `preview`), print D18's
   partial-removal note on its own line under the `dirty` advice of a row noted
   `partially-removed`; in `print_result()` (region `result`), print the same
   note with the recovery text on a `partially-removed` target, and leave
