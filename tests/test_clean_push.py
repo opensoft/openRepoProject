@@ -431,6 +431,54 @@ class PushTests(clean_support.CleanCase):
         self.assertEqual(self.git(remote, "rev-parse", "refs/heads/001-feature"), pushed)
         self.assertNotEqual(self.git(root, "for-each-ref", "refs/heads/002-merged"), "")
 
+    # Lane 3's RB M-1 and W4 M-2 (lead rulings R-107 and R-117): delete-branch's
+    # first two refusals, inherited from the baseline (project:727-730 at
+    # 961c405), each pinned where the other cannot stand in for it. Without
+    # the first, `git branch -d` deleted the merge target, exit 0; without the
+    # second, Git's own check refused, exit 1. Both refuse before the plan is
+    # shown and run no child after the inspection.
+
+    def test_clean_a_branch_deletion_of_the_default_branch_is_refused(self):
+        # The main worktree on a branch cut from main, so that no worktree holds
+        # main, the merge target, which is merged into itself and into HEAD.
+        root = self.repo()
+        self.bare_remote()
+        self.git(root, "checkout", "-q", "-b", "001-work")
+        self.assertNotIn("branch refs/heads/main", self.git(root, "worktree", "list", "--porcelain"))
+        before = self.refs(root)
+        env, log = self.counting()
+        result = self.run_cli("clean", root, "--apply", "--action", "delete-branch", "--branch", "main", "--yes",
+                              env=env)
+        self.assert_status(result, 2)
+        self.assertEqual((result.stdout, result.stderr),
+                         ("", "REFUSED: The default branch is protected and cannot be deleted.\n"))
+        self.assertEqual(deletions(clean_support.child_log(log)), [], "no git branch -d")
+        self.assertEqual(self.refs(root), before, "main is kept")
+
+    def test_clean_a_branch_deletion_of_a_branch_a_worktree_holds_is_refused(self):
+        # Each branch is merged into main, the merge target, so that this refusal
+        # alone stands before `git branch -d`: held by a present linked worktree,
+        # then by the main worktree, checked out on a branch other than main.
+        root = self.repo()
+        self.bare_remote()
+        tree = self.merged_worktree("001-merged")
+        env, log = self.counting()
+        for holder, branch in (("a linked worktree", "001-merged"), ("the main worktree", "002-held")):
+            with self.subTest(holder):
+                if branch == "002-held":
+                    self.git(root, "checkout", "-q", "-b", branch)
+                self.assertIn(branch, self.git(root, "branch", "--merged", "main", "--format=%(refname:short)").split())
+                before = self.refs(root)
+                clean_support.reset_child_log(log)
+                result = self.run_cli("clean", root, "--apply", "--action", "delete-branch", "--branch", branch,
+                                      "--yes", env=env)
+                self.assert_status(result, 2)
+                self.assertEqual((result.stdout, result.stderr), (
+                    "", "REFUSED: Remove the linked worktree first; branch deletion is a separate action.\n"))
+                self.assertEqual(deletions(clean_support.child_log(log)), [], "no git branch -d")
+                self.assertEqual(self.refs(root), before, "the branch is kept")
+        self.assertTrue((tree / "work-001-merged").is_file(), "the linked worktree is kept")
+
     def test_clean_push_and_branch_deletion_stay_human_only(self):
         # Pins T048's argument check: no child runs, `git --version` included.
         root = self.repo()
