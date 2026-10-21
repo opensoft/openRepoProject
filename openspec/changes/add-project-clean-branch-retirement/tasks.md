@@ -11,8 +11,9 @@ duplicate them.
 - [x] 1.1 Proposal written: `proposal.md` adopts the packet's paired-retirement
   contract (`BA:1339-1345`) under the lane's rulings L-1 to L-9 and A-1 to A-7,
   on change 1's text at `961c405` and PR #19's at `c462d87` (`d66d02c`),
-  `design.md` D7 also stating its fit at PR #19's `6f2cb54` (round A9, ruling
-  A-37); verified by its Capabilities section accounting for every canonical
+  `design.md` D7 also stating its fit at PR #19's `6f2cb54` and `a664799`
+  (rounds A9 and A10, rulings A-37 and A-38); verified by its Capabilities
+  section accounting for every canonical
   requirement of `project-clean` and `project-clean-review-safety` and every
   requirement change 1 adds to them.
 - [x] 1.2 Alignment resolved: the stack-architect and qa-lead findings on
@@ -81,13 +82,23 @@ duplicate them.
   `e054a9f` (the spec delta), `0e0a674` (the design) and the commit that
   edits the proposal's body, records the round's table and updates this
   task; verified by "Re-read and Codex Findings (round A9)" in `proposal.md`.
+  Round A10, on `d5896fc`, applied lane openRepoProject-3's confirm read of
+  round A9, its LOW-2 to LOW-5, the follow-on at PR #19's `a664799`, the
+  re-read's alignment with PR #19's revalidation rule there and the
+  corrected main of the citation key (ruling A-38, with the lead's
+  refinement of it), by `ac8bb0d` (the spec delta), `8a6e94f` (the design)
+  and the commit that edits the proposal's body, records the round's table
+  and updates this task; verified by "Re-read and Codex Findings (round
+  A10)" in `proposal.md`.
 - [x] 1.4 Spec deltas and design written: `specs/project-clean/spec.md`
   modifies five requirements and adds one (68 scenarios: 43 carried unchanged
   from change 1 and PR #19, 6, 14, 10, 5 and 8 by block, and 25 added, the
   24th in round A3 and the 25th in round A4, round A5 adding ANDs only, round
   A6 editing no spec file, round A7 adding no scenario and editing WHENs and
   ANDs (ruling A-35, lane openRepoProject-3's confirm read, F5), round A8
-  editing no scenario, and round A9 adding one AND, under ruling A-36),
+  editing no scenario, round A9 adding one AND, under ruling A-36, and
+  round A10 adding and editing no scenario, one sentence of the ADDED
+  requirement's step 2 edited under ruling A-38),
   `specs/project-clean-review-safety/spec.md` modifies one (4 scenarios: 3
   carried, 1 added), and `specs/project-command/spec.md` modifies one on PR
   #19's text (9 scenarios carried, none added; agreed by lane
@@ -96,9 +107,9 @@ duplicate them.
   each modified requirement's source text kept byte for byte; `design.md`
   holds D1 to D10 (`8341954`, `d0b33ce`, and the commit titled 'Settle which
   later targets carry branch-retention-stop'), revised by the alignment fix
-  round (1.2), the council round (1.3) and rounds A3 to A9; verified
+  round (1.2), the council round (1.3) and rounds A3 to A10; verified
   by `grep -c '^#### Scenario:'` on each spec file and by a scenario-carry
-  script run after the council round and again after rounds A3 to A9
+  script run after the council round and again after rounds A3 to A10
   over all seven MODIFIED blocks, every source scenario present byte for byte
   and in order.
 - [x] 1.5 Validation passes: `/usr/bin/openspec validate
@@ -107,7 +118,7 @@ duplicate them.
   `/usr/bin/openspec status --change add-project-clean-branch-retirement
   --json` shows every artifact done; verified by running the three on this
   branch after 1.4, after the alignment fix round, after the council round
-  and after rounds A3 to A9
+  and after rounds A3 to A10
   (build 1.13.1, which notes only as INFO that archive would refuse the
   MODIFIED blocks whose base still sits in change 1).
 - [ ] 1.6 Ratified by Brett Heap's word on the pull request, quoted with its
@@ -251,9 +262,10 @@ duplicate them.
   with it, carry its archived text (L-5, L-11, A-13), and the AND of 2.3 is
   added; if it is not ratified, the five blocks carry change 1's archived text
   and the AND is not added (lane openRepoProject-3's re-read, MEDIUM-2; its
-  review 26, M4); a re-base that changes a block's added text beyond the
+  review 26, M4); a re-base that changes this change's words beyond the
   rewordings of 2.3 returns that block to Brett Heap for ratification before
-  the archive (reader RF's M1; ruling A-37); verified by `diff -u` of each
+  the archive (reader RF's M1; ruling A-37; lane openRepoProject-3's confirm
+  read of round A9, LOW-4, ruling A-38); verified by `diff -u` of each
   archived block against this
   change's re-based block showing additions only, apart from the rewordings
   of 2.3 and this change's own edits of its base text (lane
