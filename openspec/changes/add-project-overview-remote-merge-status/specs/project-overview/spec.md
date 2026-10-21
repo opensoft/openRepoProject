@@ -408,9 +408,15 @@ the null device, with `GH_NO_UPDATE_NOTIFIER=1`,
 and writes none of the state it keeps for that check, prompts for nothing,
 sends no telemetry and prints no colour, and with `GH_DEBUG`, `DEBUG`,
 `GH_HOST`, `GH_REPO`, `GH_FORCE_TTY`
-and `CLICOLOR_FORCE` removed from it, every other variable passed on unread. At
-most 64 requests SHALL be sent per invocation; a key past the 64th SHALL NOT be
-sent, and its rows SHALL be `unknown` with reason `request-cap` unless the
+and `CLICOLOR_FORCE` removed from it, every other variable passed on
+unchanged. `GH_CONFIG_DIR`, `XDG_CONFIG_HOME` and `HOME`, which name where gh
+keeps its configuration and hold no credential value, SHALL be read only to
+test whether any is set to a non-empty value whose first byte is not `/`, an
+empty or unset one being no such value; when one is, the lookup of `gh` SHALL
+count as failing, whether or not a `gh` lies on `PATH`, since from the
+filesystem root such a value may name a configuration other than the caller's.
+At most 64 requests SHALL be sent per invocation; a key past the 64th SHALL NOT
+be sent, and its rows SHALL be `unknown` with reason `request-cap` unless the
 Results paragraph makes them `unavailable`. At most four
 `gh` children SHALL run at once. The requests SHALL start after the
 remote-target reads, under a remote budget of `min(30 s, deadline - now)` taken
@@ -469,7 +475,9 @@ SHALL have a positive integer `number`, a `state` of `OPEN`, `CLOSED` or
 `owner/repository`, and a `url` exactly
 `https://github.com/<nameWithOwner>/pull/<number>`; one that fails any of these
 SHALL make its whole key `api-error`, never a partial answer. When the lookup
-of `gh` finds none, fails, or reaches its 5 s limit, as on an unreachable
+of `gh` finds none, fails (as it does when `GH_CONFIG_DIR`, `XDG_CONFIG_HOME`
+or `HOME` is set to a non-empty value whose first byte is not `/`, as the
+Requests paragraph states), or reaches its 5 s limit, as on an unreachable
 `PATH` directory, every queried row that has a key, whether or not its key is
 past the 64th, SHALL be `unavailable` with reason `gh-unavailable`, never a
 row error or a scan error, and no `gh` child SHALL start; a lookup that the
@@ -599,6 +607,7 @@ by its code, never a URL, and only ASCII characters.
 - **AND** when no worktree row is queried, because every worktree is merged into its merge target, no `gh` child starts, `remote.requests` is `{"estimated": 0, "performed": 0}`, `remote.observed_at` is null, every count is 0, `remote.completeness` is `complete`, and the `Remote:` line still follows the summary line, reading `0 gh requests started` and the freshness sentence
 - **AND** when `PATH` begins with an empty entry and the entry `.`, and the working directory holds a planted `gh` that records each run, the planted `gh` never runs: with no `gh` in an absolute directory of `PATH` both rows are `unavailable` with reason `gh-unavailable`, and with the fake `gh` in one, every `gh` child is started by that fake's absolute path
 - **AND** when the lookup's filesystem call on the first absolute directory of `PATH` takes 10 s, by an injected slow call standing for an unreachable mount, and the fake `gh` lies in a later directory, the lookup is cut at 5 s, both rows are `unavailable` with reason `gh-unavailable`, no child starts, and the row errors, scan errors and exit status are those of the run without `--remote`
+- **AND** when the fake `gh` is first on `PATH` and `GH_CONFIG_DIR` is set to the relative `.gh-config`, and separately when `HOME` is set to a relative value beside an absolute `GH_CONFIG_DIR`, and separately when `XDG_CONFIG_HOME` is set to a relative value, no `gh` child starts, `remote.requests.performed` is 0 and both rows are `unavailable` with reason `gh-unavailable`, while with an absolute `GH_CONFIG_DIR`, and with an empty one, the `gh` children start and answer both rows
 
 #### Scenario: API failures stay unknown
 - **WHEN** the fake `gh` answers ten keys with an HTTP 401, an HTTP 403, an HTTP 429, an HTTP 403 with `X-RateLimit-Remaining: 0`, an HTTP 403 that carries a `Retry-After` header, its name written as `gh` prints it, a 200 body whose `errors` entry has type `RATE_LIMITED`, an HTTP 502, a page whose further-page flag is set, a body of 1 MiB and one byte, and nothing for 10 s, each failing answer exiting 1 as gh does
