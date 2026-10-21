@@ -557,6 +557,35 @@ class ResolutionTests(clean_support.CleanCase):
             message = f"Cannot read {manifest}: [Errno 13] Permission denied: '{manifest}'"
             self.assert_error_document(result, "manifest-invalid", message, "report", repository=self.repository(root))
 
+    def test_clean_merge_target_missing_invalid_or_conflicting_a_value_pyyaml_cannot_build(self):
+        # Lane 3's US7/US9 M-1, lead ruling R-101 (e): "a manifest that cannot
+        # be read ... SHALL refuse with manifest-invalid". PyYAML raises
+        # ValueError, KeyError, AttributeError or RecursionError, not a
+        # YAMLError, for these values; each is a manifest that does not parse,
+        # where c9103ba ended in internal-error.
+        root = self.repo()
+        manifest = root / "project.yaml"
+        cases = (
+            ("an impossible date", "released: 2021-02-30\n"),
+            ("an unknown boolean", "flag: !!bool maybe\n"),
+            ("a malformed timestamp", "when: !!timestamp soon\n"),
+            ("nesting past the recursion limit", "deep: " + "[" * 100000 + "\n"),
+        )
+        for label, text in cases:
+            with self.subTest(label):
+                manifest.write_text("kind: project-manifest\n" + text)
+                result, records = self.counted("clean", root, "--json")
+                self.assert_status(result, 2)
+                document = result.document
+                self.assertEqual((document["code"], document["repository"]),
+                                 ("manifest-invalid", self.repository(root)))
+                self.assertTrue(document["error"].startswith(f"Cannot read {manifest}: "), document["error"])
+                self.assert_no_plan(records)
+                result = self.run_cli("clean", root, "--all-safe")
+                self.assert_status(result, 2)
+                self.assertTrue(result.stderr.startswith(f"REFUSED: Cannot read {manifest}: "), result.stderr)
+                self.assertNotIn("Traceback", result.stderr)
+
     # T106: "A tracking branch spelled with its remote".
 
     def test_clean_a_tracking_branch_spelled_with_its_remote(self):

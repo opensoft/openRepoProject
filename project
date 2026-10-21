@@ -2177,9 +2177,15 @@ def declared_tracking_branch(root):
     messages of read_yaml() and manifest() (lead ruling R-45 (6)): `Cannot
     read PATH: ...` for an OSError, a call cut at its budget or a parse
     error, `Expected a mapping in PATH`, `Unexpected kind in PATH; expected
-    KIND`, and read_yaml()'s own message when PyYAML is missing. A refusal
-    carries no context; the resolution adds the repository (lead ruling
-    R-53, P-12)."""
+    KIND`, and read_yaml()'s own message when PyYAML is missing. A parse
+    error is anything safe_load() raises, not only YAMLError and
+    UnicodeError: PyYAML raises ValueError for an impossible date such as
+    `released: 2021-02-30`, KeyError for `!!bool maybe`, AttributeError for
+    a malformed `!!timestamp` and RecursionError for deep nesting, so every
+    caller treats such a manifest as one that does not parse: clean refuses
+    it, status, doctor and update report on (lane 3's US7/US9 M-1). The
+    signal exceptions are not Exceptions and pass. A refusal carries no
+    context; the resolution adds the repository (lead ruling R-53, P-12)."""
     limit = LIMITS["manifest_bytes"]
     base = Path(os.fsdecode(root))
 
@@ -2222,7 +2228,7 @@ def declared_tracking_branch(root):
                           code="manifest-invalid") from exc
         try:
             value = yaml.safe_load(data.decode("utf-8"))
-        except (UnicodeError, yaml.YAMLError) as exc:
+        except Exception as exc:  # any failure to load it, a YAMLError or not, is a parse error
             raise Refused(f"Cannot read {human_path(os.fsencode(path))}: {exc}", code="manifest-invalid") from exc
         if not isinstance(value, dict):
             raise Refused(f"Expected a mapping in {human_path(os.fsencode(path))}", code="manifest-invalid")
