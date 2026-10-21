@@ -120,8 +120,28 @@ a row past the cap included, is read as `worktree_rows()` reads a row and
 compared by `shared_identities()`, by realpath and by admin id, since a twin
 whose `.git` is a symbolic link can share an admin id without sharing a
 realpath, and a present entry sharing a checked row's realpath or admin id
-gives `identity-changed`. One residual remains: at planning, a twin past the
-row cap is not compared, the plan being `inspect-cap` anyway.
+gives `identity-changed`. An entry whose lstat or realpath fails other than
+with `ENOENT` or `ENOTDIR`, a call cut at its probe budget included, is a
+difference too, `identity-changed`, since a twin could stand behind it and a
+value that cannot be re-read is a difference (the `project-clean-review-safety`
+delta's `spec.md:92-93`), as planning fails closed on such an entry alike.
+One entry is none: a row the plan itself read as `present: null`, whose
+lstat fails again, null in the plan and null again (the same delta's
+`spec.md:89-92`); in single mode the plan recorded it as another row's
+non-blocking `inspection-error`, which does not refuse P (the `project-clean`
+delta's `spec.md:258-262`). An entry the plan never read, new since planning
+or left past the row cap, is not one of them and refuses, failing closed; an
+entry whose lstat or realpath gives `ENOENT` or `ENOTDIR` is absent and
+compared by neither (R-36) (lead rulings R-93 (e), LOW-3, and R-95 (c)).
+Three residuals remain, the last two recorded and not fixed (lead ruling
+R-95 (d)): at planning, a twin past the row cap is not compared, the plan
+being `inspect-cap` anyway; an entry whose registration alone cannot be read
+is compared by its realpath only (R-57 L2); and in single mode a twin of P
+that existed at planning and is spelled through an unsearchable directory is
+not caught, since `match_target()`'s non-strict realpath does not raise on
+`EACCES` and the null-and-null rule applies, though no work is lost, because
+both spellings name one clean, merged worktree (lane 3, LOW-3); closing it
+would conflict with the `project-clean` delta's `spec.md:258-262`.
 
 ### Branch evidence (D6, D7)
 
@@ -253,7 +273,7 @@ remains only for such a caller (lead rulings R-71 (b) and R-72 (g)).
 | --- | --- | --- | --- |
 | `report` | every other invocation without `--all-safe`: plain `project clean`, with or without `--json`, and flags without `--apply` | 256 | what `--all-safe` would select at 128 rows or fewer; null above 128, with the note `inspect-cap` and `rows` |
 | `all-safe` | `--all-safe`, preview or `--apply` | 128 | every row passing every gate, at most 16 |
-| `single` | `--apply --action remove --worktree P` | 128, P exempt and probed first, unless a realpath read fails (below) | P alone |
+| `single` | `--apply --action remove --worktree P` | 128, P exempt, its row and gates first, unless a realpath read fails (below) | P alone |
 | `single`, push and delete-branch | `--apply --action push` or `--action delete-branch`, which take single mode's cap and bounds only (below) | 128, no exemption | the named branch; completeness the batch's |
 
 `clean_mode(args)` (T035) decides the mode as this table spells it: `single`
@@ -292,10 +312,19 @@ R-78 (b)), or the deadline passed while planning (`deadline-exceeded`), each
 row it stopped being `inspection-error` with a `deadline-exceeded` row error,
 never left unprobed (lead rulings R-67 (a) and R-69; T099). In single mode
 those three are non-blocking notes about other rows, and only P's own row,
-P's match and the repository-wide probes decide (D13; lane 3's L-7). In
-report mode above 128 rows, the `inspect-cap` note alone does not make it
-incomplete. `apply_allowed` is false for every report and for any plan that
-is incomplete or carries a refusal.
+P's match and the repository-wide probes decide (D13; lane 3's L-7). P's
+row is established first there, its status probe then its gates, before any
+other row is inspected, which is how D13's "inspects P's row first:
+identity, status probe, gates" is built, a fill of FR-013's "probed first":
+a work deadline reached among the other rows leaves P's row decided and the
+plan complete (lead ruling R-93 (d)). When P's match is undecided, none of
+the three notes is recorded, since each says that rows "do not block" P
+beside the plan's refusal of P, `inspection-incomplete`, which speaks alone;
+a P that matches several entries is decided, so the notes stay (lead
+rulings R-93 (e) and R-94 (b)). In report mode above 128 rows, the
+`inspect-cap` note alone does not make it incomplete. `apply_allowed` is
+false for every report and for any plan that is incomplete or carries a
+refusal.
 
 Push and delete-branch take single mode's 128-row cap and bounds only:
 their completeness is the batch's, so any `inspection-error` row, the cap
@@ -362,7 +391,7 @@ target:
 | 2. the manifest re-read | filesystem | `state-changed` (manifest or merge target) |
 | 3. the registry listing | Git child | `identity-changed` (registration, or a missing entry); `state-changed` (lock) |
 | 4. the narrowed ref listing | Git child | `branch-changed` (branch name or head); `state-changed` (upstream, `upstream_oid`, `ahead`, `behind`, merge target) |
-| 5. the target's identity, a twin of a checked row, and the `modules` check | filesystem | `identity-changed` (the identity, or another present entry of the fresh registry listing sharing a checked row's realpath or admin id, `registry_twin()`; R-81 (a)); `contains-submodule` (a `modules` entry) |
+| 5. the target's identity, a twin of a checked row, and the `modules` check | filesystem | `identity-changed` (the identity; another present entry of the fresh registry listing sharing a checked row's realpath or admin id, `registry_twin()`, R-81 (a); or an entry whose lstat or realpath fails other than with `ENOENT` or `ENOTDIR`, unless the plan read its lstat as failed too, null and null again, R-95 (c)); `contains-submodule` (a `modules` entry) |
 | 6. the combined status probe in the target, which must print nothing | Git child | `state-changed` |
 | 7. the hidden-state probe | Git child | `contains-submodule` (a gitlink); `hidden-local-state` |
 
@@ -379,7 +408,11 @@ reason. A read the work deadline cut is none: `revalidate()` returns its
 distinct `deadline-exceeded`, and that target and every later one are
 `not-attempted` with that reason and no reconciliation (T099; lead ruling
 R-80 P-2), `registry_twin()` giving it too when the deadline cut one of its
-reads, so that no twin goes unread for want of time. The first
+reads, so that no twin goes unread for want of time. A signal in the slot
+before a read starts is no difference either: `revalidate()` returns
+`interrupted`, its own return beside the deadline's, and that target and every
+later one are `not-attempted` with `interrupted` and no reconciliation (T093;
+lead ruling R-95 (a)). The first
 target's revalidation is the preflight of every selected target: its steps 3
 and 4 and its filesystem reads compare every selected target's registration,
 `locked` and filesystem identity, branch tip and upstream object, beside the
@@ -518,11 +551,23 @@ The driver reads the slot by the `Invocation`'s phase: it raises
 | the first SIGINT, SIGTERM or SIGHUP | the handler stores its number and does nothing else; it decides the exit status (130, 143, 129) |
 | a later signal | the slot keeps the first; a later SIGINT counts only in phase `reconciling` |
 | the slot read set in phase `planning` (after each wake of the driver) | the child is terminated and `Interrupted` raised: cancelled |
-| the slot read set at a seam of phase `apply` (before each revalidation and each spawn) | that target and every later one `not-attempted` with `interrupted`; reconciling follows |
+| the slot read set at a seam of phase `apply` (before each revalidation and each spawn, and before each read a revalidation starts) | that target and every later one `not-attempted` with `interrupted`; reconciling follows |
 | a second SIGINT while a rescan runs in phase `reconciling` | the remaining rescans are abandoned: the running group is terminated and fields not established stay null (the `project-clean` delta's `spec.md:936-937`); the target's stage is then the stage rule's on that unfinished record: after exit 0, `unknown` with `reconciliation-incomplete`, but a child that exited nonzero on its own stays `failed`, `git-refused` or `git-failed`, and one killed at the ceiling keeps `removal-ceiling` (its `spec.md:899-902` and `:910-914`; lead rulings R-87 (c) and R-91 LOW D) |
 | `raising_signals` entered with the slot already set | it raises at once, `KeyboardInterrupt` for SIGINT and `Terminated` for SIGTERM or SIGHUP, so no signal falls between reading the slot and installing its handlers (lead ruling R-47) |
 | `default_signals` entered | the handlers in force before the outermost scope was entered are restored for its span (R-47) |
 | a signal while a removal, push or `git branch -d` child runs | recorded only; the child is never signalled and is waited for |
+
+Design D15 places the seams "before each revalidation and before each spawn"
+(`design.md:660-661`), and the `project-clean` delta says the first signal
+stops scheduling "so that no further probe or removal starts" (its
+`spec.md:931-933`). Phase `apply` stops no child by itself, so the build
+reads the slot before each read a revalidation starts too (`slot_set()`): the
+Git children of its steps 1, 3, 4, 6 and 7, the manifest re-read, and step
+5's identity, twin and `modules` reads. A signal gives `interrupted` and no
+later read starts; a step that has already read is decided first, so a
+difference it found stands. D15 stays as written and this is the reading of
+it (lead ruling R-95 (a), lane 3's LOW-1; T093's
+`test_clean_a_signal_during_a_removal_sigint_during_a_revalidation`).
 
 ## States of a `project clean` run
 
@@ -646,7 +691,9 @@ ruling R-82 (a), lane 3's LOW-6):
   `branch_present` and `branch_sha` still show the branch.
 
 Later targets take `interrupted` after a signal, `deadline-exceeded` when
-the floor or deadline stopped the run, and `batch-stopped` otherwise.
+the floor stopped the run or a revalidation read was cut at the work
+deadline, and `batch-stopped` after a target that ended otherwise, a rescan
+cut at the reserve's end included (lead ruling R-93 (e), lane 3's LOW-6).
 
 ## Exit statuses
 
