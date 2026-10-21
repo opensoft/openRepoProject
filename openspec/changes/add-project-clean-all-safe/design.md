@@ -24,7 +24,8 @@ Heap's rulings of 2026-10-21 on lane openRepoProject-3's recommendations LQ-10
 to LQ-15, recorded in `proposal.md` Decisions, edit here: LQ-15, Context, D6,
 D11, D16, D18, D20 and Risks; LQ-10, Context, D9, D11, D20 and Risks; LQ-12,
 Context, D6, D16 and D20; LQ-11, Context, D6, D7, D14, D20 and Risks; LQ-13,
-Context, D7, D12, D14, D18, D20, D21 and Risks. Brett Heap's ruling
+Context, D7, D12, D14, D18, D20, D21 and Risks; and lane openRepoProject-3's
+W8 read of LQ-15, Context, D11, D16 and D18. Brett Heap's ruling
 of 2026-10-09 on open question 1, that a local ancestry proof outranks
 `remote-gone` for worktree rows, is in `proposal.md` Decisions and edited
 Context, D6, D7, D20, Risks, the Migration Plan and Open Questions here.
@@ -736,7 +737,11 @@ pin of this section reaches what they set. Two risks follow:
   into `!! work.txt`. Such a row is then `ignored-local-files` and still kept
   out of every plan, but Git's own non-force check, the last defense, no longer
   refuses for such a file, and `worktree remove` deletes ignored files; and a
-  planted attributes file can select a filter for a tracked file.
+  planted attributes file can select a filter for a tracked file. This risk is
+  not a relative path's alone: a tracked `.gitignore`, or the repository's own
+  `info/exclude`, already turns an untracked file into an ignored one with an
+  absolute `HOME` (lane openRepoProject-3's W8 read, on both releases), so the
+  code-execution risk is the one that motivates the test.
 
 The test therefore runs first in every subcommand that inspects a Git
 repository, before `git --version`: `HOME` or `XDG_CONFIG_HOME` set to a
@@ -745,19 +750,47 @@ child (`relative-config-path`). `GIT_CONFIG_GLOBAL` and `GIT_CONFIG_SYSTEM`,
 Git's own variables naming a configuration file and the analogue of C-44's
 `GH_CONFIG_DIR`, are tested the same way; they are the lead's extension of the
 ruling, which Brett Heap may strike, and RA's reproduction with
-`GIT_CONFIG_GLOBAL` is why that one is in the list. The test is made on the raw
+`GIT_CONFIG_GLOBAL` is why that one is in the list. Striking them touches these
+sites, which name the two variables for the extension and for nothing else:
+
+- `specs/project-command/spec.md`: the sentence of the evidence model's
+  "Configuration paths" paragraph that applies the test to them, which also
+  carries the paragraph's only mention of the system's configuration, so that
+  nothing else in the paragraph depends on it; and the AND naming them in the
+  scenario "A relative configuration path in status, doctor and update";
+- `specs/project-clean/spec.md`: the AND naming them in the scenario "A
+  relative configuration path", and the words "and `GIT_CONFIG_GLOBAL` and
+  `GIT_CONFIG_SYSTEM` unset" in its last AND;
+- this section: the clause on the files that they name in the list of files
+  Git reads above, with the words "or the system's" that follow from it; the
+  two sentences before this list, the list itself, and the clause on an empty
+  `GIT_CONFIG_GLOBAL` or `GIT_CONFIG_SYSTEM` in the empty-value sentence
+  below; D18's variable order; and the list of variables in the Risks entry
+  for LQ-15;
+- `proposal.md`: What Changes (evidence model), Impact (README Install), the
+  LQ-15 departures entry and its line in the later-rulings list.
+
+The other mentions of the two variables stay: the pins and the trace2
+variables that override the files they name, RA's and lane
+openRepoProject-4's evidence, and the precedence example below with its AND in
+"A relative configuration path", where an absolute `GIT_CONFIG_GLOBAL` is a
+condition, not a value the test refuses. The test is made on the raw
 bytes: ` /x`, `~/x` and `.` fail it, as does a first byte that is not UTF-8,
 and `/` alone passes. An empty or unset variable passes, because it names no
 relative file: Git treats an empty `XDG_CONFIG_HOME` as unset, an empty `HOME`
 gives `/.gitconfig` and `/.config/git/`, and an empty `GIT_CONFIG_GLOBAL` or
-`GIT_CONFIG_SYSTEM` names no file Git can open. The test holds whichever of the
-variables Git would use, so a relative `HOME` beside an absolute
-`GIT_CONFIG_GLOBAL` fails it too, the ignore and attributes files still coming
-from `HOME`. `clean` then refuses with `relative-config-path`, exit 2, in every
-mode; `status`, `doctor` and `update` report it as they report a Git below the
-floor (D16). The values are read only for this test, are passed to every child
-unchanged when it passes, and are never printed: the message names each
-variable that fails the test (D18). The test covers these variables only; other
+`GIT_CONFIG_SYSTEM` names no file Git can open. As in C-44, the test does not
+follow Git's order of precedence: it applies to each variable whether or not
+Git would read a file through it, so a relative `HOME` beside an absolute
+`XDG_CONFIG_HOME` and an absolute `GIT_CONFIG_GLOBAL` fails it too, though Git
+would then read no configuration file under `HOME`; that over-refusal is
+deliberate, fail-safe and independent of Git keeping its order. `clean` then
+refuses with `relative-config-path`, exit 2, in every mode, after its argument
+checks, which start no Git child and so refuse `invalid-arguments` first, and
+before its version check; `status`, `doctor` and `update` report it as they
+report a Git below the floor (D16). The values are read only for this test,
+are passed to every child unchanged when it passes, and are never printed: the
+message names each variable that fails the test (D18). The test covers these variables only; other
 relative paths in the environment that a Git child resolves against its
 directory are outside it.
 
@@ -899,7 +932,13 @@ inspection-error (<codes>)` in place of the branch line. `update` tests `dirty
 is not False` for the root and every child (`project:863`, `:869`), and its
 `tools` and `workflow` components need no Git (`project:884-885`, `:905-906`):
 with an old Git their report shows `inspection-error` rows and the delegate
-still runs. Every delegate runs with D6's push-child scrub (LQ-12).
+still runs. Every delegate runs with D6's push-child scrub (LQ-12). Where
+D11's configuration-path test failed, `update`'s report rows carry D18's
+`relative-config-path` text in their `errors`, while its refusal of `--apply
+--component shape` or `bench` keeps the message it gives for any checkout whose
+`dirty` is not exactly false, as it does for an old Git: the form of Brett
+Heap's ruling LQ-15, the lead's R-102 (c) 3, has `update` refuse as it does
+below the floor, and no more.
 
 ### D17. Verifying the Git 2.36 floor (OQ-23)
 
@@ -984,7 +1023,9 @@ or re-run". `relative-config-path` prints one line per variable that fails
 D11's test, in the order `HOME`, `XDG_CONFIG_HOME`, `GIT_CONFIG_GLOBAL`,
 `GIT_CONFIG_SYSTEM`: `NAME is set to a path that does not begin with /; make it
 absolute or unset it.`, never the value; doctor's `error` row and status's
-`errors` entry carry the same text.
+`errors` entry carry the same text. The line and its order are a fill of this
+change: Brett Heap's ruling LQ-15 names the code and the refusal, not the
+text.
 
 ### D19. Stages, notes and exit codes, as normalised
 

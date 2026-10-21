@@ -37,10 +37,11 @@ duplicate them, and nothing here is an implementation step.
   pins `core.trustctime=true` and `core.checkStat=default`; LQ-12, the push
   child's scrub on every owner tool of `update --apply`; LQ-11, a redirected
   effective work tree read as `registration-mismatch`; LQ-13, the gate
-  `worktree-only-commits` and its revalidation; verified by the
-  table "Questions Resolved by the Alignment Review" in `proposal.md` and the
-  later-rulings list under it, which
-  name the section each ruling edited.
+  `worktree-only-commits` and its revalidation; and lane openRepoProject-3's
+  W8 read of LQ-15 (the commit titled 'Amend change 1 for LQ-15: lane 3's W8
+  read'); verified by the table "Questions Resolved by the Alignment Review"
+  in `proposal.md` and the later-rulings list under it, which name the section
+  each ruling edited.
 - [x] 1.3 Council resolved: every concern is VALID, none dismissed, the verdicts
   V1 to V12 applied to `proposal.md` (`ea9c73b`) and the five NOTED constraints
   recorded as N1 to N5 in `clarifications.md` (`1d4ed5b`); verified by

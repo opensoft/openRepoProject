@@ -10,11 +10,12 @@ Human and JSON reports SHALL describe that remote information may be stale.
 
 The report SHALL be built from the evidence that "Repository inspection requires
 Git 2.36 and shares one evidence model" defines, within the bounds that "Clean
-bounds its Git work and reports omitted work" sets. In every mode, before any
-Git child starts, `project clean` SHALL refuse with `relative-config-path` and
-exit status 2 when a configuration path fails the test that the evidence model
-states, its message naming each variable that fails it, never its value, so
-that no push or removal child starts either. It SHALL then run its Git version
+bounds its Git work and reports omitted work" sets. In every mode, once its
+arguments have passed the checks that refuse `invalid-arguments`, which start
+no Git child, and before any Git child starts, `project clean` SHALL refuse
+with `relative-config-path` and exit status 2 when a configuration path fails
+the test that the evidence model states, its message naming each variable that
+fails it, never its value, so that no push or removal child starts either. It SHALL then run its Git version
 check before any other Git child, and SHALL refuse a Git older than 2.36 with
 `git-too-old`, and a `git` that is missing or unusable with `git-unavailable`,
 with exit status 2, before any repository is probed. Under `--json` each of
@@ -121,6 +122,10 @@ resolved repository.
 - **AND** the same holds with `XDG_CONFIG_HOME` set to the relative `cfg`
   beside an absolute `HOME`, and for a `HOME` of ` /x`, `~/x` or `.`, since
   the test is made on the raw bytes
+- **AND** the same holds for a relative `HOME` beside an absolute
+  `XDG_CONFIG_HOME` and an absolute `GIT_CONFIG_GLOBAL`, although Git would
+  then read no configuration file under `HOME`, since the test does not follow
+  Git's order of precedence
 - **AND** the same holds with `GIT_CONFIG_GLOBAL` or `GIT_CONFIG_SYSTEM` set to
   the relative `h/.gitconfig` beside an absolute `HOME`
 - **AND** with `HOME` absolute, `XDG_CONFIG_HOME` empty, and

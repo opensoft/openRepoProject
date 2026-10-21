@@ -948,7 +948,12 @@ Departures from packet decisions, each citing the decision departed from:
   new code `relative-config-path`, exit 2, in every mode, and `status`,
   `doctor` and `update` report it as they report a Git below the floor (R6),
   starting no Git child. A baseline behavior change: `a040790` runs every child
-  under such a value (design D6, D11, D16, D18, Risks).
+  under such a value (design D6, D11, D16, D18, Risks). The test binds
+  `project overview` too, through the evidence model that
+  `add-project-overview` adopts, so the overview starts no Git child under
+  such a value; its code and exit status there belong to
+  `add-project-overview`, since the ruling names only `clean`, `status`,
+  `doctor` and `update`.
 - **The stat pins** (Brett Heap's ruling LQ-10 of 2026-10-21, in lane
   openRepoProject-3's session, "yes to all six recommendations, LQ-10 to
   LQ-15", on lane openRepoProject-3's recommendation "Approve. It is stricter
@@ -1370,7 +1375,19 @@ omitted work` and its scenario "Bounded revalidation work", `Clean records a
 reconcilable result for every removal target`, `Cleanup preserves all local
 work not proven disposable`, `Cleanup revalidates destructive actions` and its
 added scenario "A worktree-only commit made after the plan", and `Cleanup
-states a narrow guarantee and its residual window`).
+states a narrow guarantee and its residual window`). Lane openRepoProject-3's
+W8 read of LQ-15 at `cc000ea` (HIGH 0, MEDIUM 1, LOW 7, nothing departing)
+adds the pointer that leaves the overview's code and exit status to
+`add-project-overview` (M1; Decisions, departures), a list of the sites that
+striking `GIT_CONFIG_GLOBAL` and `GIT_CONFIG_SYSTEM` touches, with the system's
+configuration named only in their own sentence (L2), C-44's "does not follow
+the order of precedence" and an AND for it (L4), the order after
+`invalid-arguments` (L3), the fill label on D18's message (L1), `update`'s
+message (L5) and the ignore-file risk's weight (L6) (this list; design Context,
+D11, D16, D18; `tasks.md` 1.2; the deltas' `Clean reports local worktree
+state` and its scenario "A relative configuration path", and the
+`project-command` ADDED evidence model); its L7, interim wording that holds
+once LQ-10 to LQ-14 are recorded, needs no edit.
 
 ### Council Verdicts
 

@@ -116,15 +116,17 @@ whether the subcommand then refuses or reports is its own requirement's rule.
 Configuration paths: before any Git child starts, `git --version` included,
 every subcommand that inspects a Git repository SHALL test whether `HOME` or
 `XDG_CONFIG_HOME` is set to a non-empty value whose first byte is not `/`.
-The same test SHALL apply to `GIT_CONFIG_GLOBAL` and `GIT_CONFIG_SYSTEM`.
+The same test SHALL apply to `GIT_CONFIG_GLOBAL` and `GIT_CONFIG_SYSTEM`, which
+name the user's and the system's configuration files.
 The test SHALL be made on the raw bytes of each value, an empty or unset
-variable passing it, and SHALL hold whichever of these variables Git would
-use. Where any fails it, the subcommand SHALL start no Git child and SHALL
-inspect no repository (`relative-config-path`), because Git resolves such a
-value against the directory a Git child runs in, so that files a repository
-holds would be read as the user's or the system's configuration and as the
-global ignore and attributes files; whether the subcommand then refuses or
-reports is its own requirement's rule, as for the version.
+variable passing it, and SHALL apply to each of these variables whether or not
+Git would read a file through it, not following Git's order of precedence.
+Where any fails it, the subcommand SHALL start no Git child and SHALL inspect no
+repository (`relative-config-path`), because Git resolves such a value against
+the directory a Git child runs in, so that files a repository holds would be
+read as the user's configuration and as the global ignore and attributes files;
+whether the subcommand then refuses or reports is its own requirement's rule,
+as for the version.
 
 Environment: every Git child but the push child of `clean --action push` SHALL
 run in its own process group, and every Git child SHALL have these thirty-one
