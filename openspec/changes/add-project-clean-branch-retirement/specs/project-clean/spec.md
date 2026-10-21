@@ -728,7 +728,9 @@ excepted.
 
 A run that stops SHALL end its human result with `Stopped at P (reason). Removed
 k of n. Not attempted: ... Next: ` followed by the command that shows a fresh
-read-only plan, and SHALL name every retained branch.
+read-only plan, or, under `--retire-branches`, with the lines that "Clean
+retires a removed worktree's branch only on fresh head and ancestry evidence"
+orders after it, and SHALL name every retained branch.
 
 #### Scenario: Exit 0 without evidence
 
@@ -942,7 +944,8 @@ second SIGINT SHALL abandon as "Clean records a reconcilable result for every
 removal target" abandons the remaining rescans: a signal received while the
 re-read, its re-proof or the branch child runs SHALL let it run to its own end
 or budget, its outcome deciding as above, and SHALL only keep the stage from
-starting its next read or child. The stage
+starting its next re-read, re-proof or branch child, never the post-check.
+The stage
 SHALL never pass `-D`, `--force` or `-f`, never spawn a second branch child for
 a target, never retry, and never delete, push or fetch a remote branch or
 change a remote-tracking ref. Git's own refusal SHALL retain the branch. A
@@ -1076,8 +1079,11 @@ order:
   the plan's registry listing shows MERGE_TARGET checked out in a linked
   worktree at PATH2, where Git refuses that checkout, `; next: MERGE_TARGET is
   checked out at PATH2, so check out its tip TARGET_SHA detached in the main
-  worktree, then: RETRY`; for `branch-in-use`, `; next: BRANCH is checked out
-  at PATH2; remove that worktree first`; for `branch-shared`, printed only
+  worktree, then: RETRY`, the `git-refused` line carrying `; if a rebase or
+  bisect in another worktree holds BRANCH, wait for it to end and remove that
+  worktree` before its `; next: `; for `branch-in-use`, `; next: BRANCH is
+  checked out at PATH2; remove that worktree first`; for `branch-shared`,
+  printed only
   when the run did not remove the branch's last holder PATH2, the same next
   step; for `branch-changed`, `; now at SHA2; inspect it before retrying:
   RETRY`; for `reflog-unmerged`, whether its proof printed a commit or failed,
