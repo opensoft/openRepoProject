@@ -11,17 +11,11 @@ the two status pins, and the first, to print a copy record, with
 """
 import builtins
 import os
-from pathlib import Path
 import subprocess
-import sys
 import unittest
 from unittest import mock
 
-TESTS = str(Path(__file__).resolve().parent)
-if TESTS not in sys.path:  # run by name from the root: python3 -m unittest tests.test_clean_parsers
-    sys.path.insert(0, TESTS)
-
-from clean_support import load_project  # noqa: E402
+from clean_support import load_project
 
 project = load_project()
 
