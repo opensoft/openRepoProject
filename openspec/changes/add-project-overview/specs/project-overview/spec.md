@@ -255,17 +255,17 @@ that repository's rows past the cap, exactness `exact`.
 At most four Git children SHALL run at once, never two once their
 `common_dir` is known to be the same, and one repository's children SHALL run
 one at a time. Collection SHALL run in two canonical phases: the identity and
-repository-wide probes, then the worktree status probes. A repository's
-second phase SHALL start only when every candidate earlier in canonical order
-has completed or failed its identity probe and every repository earlier in
-canonical order has finished its first phase; identity probes may still be
-dispatched ahead of that point. In a run in which no child, task or root
-listing reaches its budget and the deadline does not expire, the JSON
-document, apart from timestamps and `budget.probe_concurrency`, SHALL NOT
-depend on concurrency or completion order. In the second phase, a linked row's
-effective-work-tree read, where `Repository inspection requires Git 2.36 and
-shares one evidence model` gives that row one, SHALL run before its status
-probe.
+repository-wide probes, then the worktree probes, effective-work-tree reads
+and status probes. A repository's second phase SHALL start only when every
+candidate earlier in canonical order has completed or failed its identity
+probe and every repository earlier in canonical order has finished its first
+phase; identity probes may still be dispatched ahead of that point. In a run
+in which no child, task or root listing reaches its budget and the deadline
+does not expire, the JSON document, apart from timestamps and
+`budget.probe_concurrency`, SHALL NOT depend on concurrency or completion
+order. In the second phase, a linked row's effective-work-tree read, where
+`Repository inspection requires Git 2.36 and shares one evidence model` gives
+that row one, SHALL run before its status probe.
 
 The envelope SHALL report `probes: {estimated, performed}`: `performed`
 counts every Git child started, timed-out and stopped ones included;
@@ -356,7 +356,7 @@ remove or reorder any other row or an earlier scan error:
 | an operating-system error | `os-error` |
 | output a reused helper could not decode | `undecodable-output` |
 | any other exception, its message naming the exception class | `internal-error` |
-| a Git child exits nonzero, except the `extensions.worktreeConfig` read's exit 1 with nothing printed, by which Git reports the value not set, read as false with no error | `probe-failed` |
+| a Git child exits nonzero, except the `extensions.worktreeConfig` read's exit 1 with nothing printed on standard output or standard error, by which Git reports the value not set, read as false with no error, and the effective-work-tree read, where a probe that fails, as it does under `core.bare=true`, and output that is not exactly one line each make the row's registration disagree, with no error | `probe-failed` |
 | a Git child or filesystem task reaches its 5 s limit | `probe-timeout` |
 | the deadline ends a child or task, or prevents its start | `deadline-exceeded` |
 
