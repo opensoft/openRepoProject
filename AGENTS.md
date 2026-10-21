@@ -32,7 +32,8 @@ alone with
 `python3 -m unittest discover -s tests -v -k test_clean_ -k test_status_`:
 unittest matches `-k` against `module.Class.method`, so those two prefixes take
 every such module whole, and a new module must be named `test_clean_*` or
-`test_status_*` to be taken.
+`test_status_*` to be taken. They also select the `test_clean_*` and
+`test_status_*` methods of the baseline module `tests/test_project.py`.
 
 Generic orchestration belongs here; generators, shape mechanics and Git handoff
 stay with their existing owners. See docs/migration-review.md.
@@ -51,16 +52,19 @@ pseudo-terminal from a person.
 
 ## Cleaning up worktrees for a person
 
-When a person asks to clean up or retire worktrees, preview first and show it:
-`project clean ROOT --all-safe` changes nothing and lists what a batch would
-remove and each excluded worktree with its reason and next step. Apply only
-that plan, with `project clean ROOT --all-safe --apply --expect-plan DIGEST`,
-DIGEST being the `plan_digest` that `project clean ROOT --all-safe --json`
-printed for the same preview (the human preview does not print it), so a plan
-that changed since the person looked is refused. Never answer the removal
-question, or pass `--yes`, on a person's behalf unless they asked for that run;
-otherwise give them the command to run at their own terminal. Ask that sessions
-in the selected worktrees be closed first: `clean` cannot see them, and a
-session left open can find its worktree removed. After a stopped batch, show the
-stop block and run its `Next:` command, which is a preview, never the forced
-removal a partial-removal note names.
+When a person asks to clean up or retire worktrees, preview first and show it.
+ROOT is the repository's main worktree. `project clean ROOT --all-safe` changes
+nothing and lists what a batch would remove and each excluded worktree with its
+reason and next step, but the human preview does not print the plan's digest.
+So run `project clean ROOT --all-safe --json`, show the person that document's
+`selected` and `excluded`, and pass its `plan_digest`: apply only that plan,
+with `project clean ROOT --all-safe --apply --expect-plan DIGEST`, so a plan
+that changed since the person looked is refused. Or run the human preview and
+the `--json` run back to back, show the human preview, and apply only if the
+paths it selects are identical to the `--json` run's `selected` paths. Never
+answer the removal question, or pass `--yes`, on a person's behalf unless they
+asked for that run; otherwise give them the command to run at their own
+terminal. Ask that sessions in the selected worktrees be closed first: `clean`
+cannot see them, and a session left open can find its worktree removed. After a
+stopped batch, show the stop block and run its `Next:` command, which is a
+preview, never the forced removal a partial-removal note names.
