@@ -422,7 +422,7 @@ FAKE_KINDS = (
     "flood-stderr", "ignore-sigterm", "ignored-5000", "version-2.35.0", "remove-noop",
     "remove-slow", "remove-exit", "status-fails-in", "status-hangs-in",
     "ls-files-fails-in", "ls-files-hangs-in", "signal-parent-in", "slow-after-remove",
-    "tty-credential",
+    "tty-credential", "status-slow-again-in", "ls-files-stuck-again-in",
 )
 
 
@@ -458,6 +458,18 @@ def install_fake_git(bin_dir, kind, real=REAL_GIT, **options):
       no askpass), logs `tty` (whether /dev/tty opened, its errno, the
       terminal's foreground group, its own group, the answers read), then runs
       the real push. Python behind an sh prelude.
+    status-slow-again-in (path) [seconds=2]: on `status` with -C path, the
+      first runs as it is and leaves bin_dir/status-slow-again.marker; each
+      later one sleeps seconds, then runs the real status. So planning's
+      status probe of path is not slowed and a revalidation's is (lead ruling
+      R-93 (e), LOW-1). Installing the kind removes a marker left before.
+    ls-files-stuck-again-in (path) [lifetime=30]: on `ls-files` with -C path,
+      the first runs as it is and leaves bin_dir/ls-files-stuck-again.marker;
+      each later one ignores TERM and sleeps lifetime seconds instead, so
+      that only SIGKILL ends it sooner. So planning's hidden-state probe of
+      path runs and a revalidation's is cut at its budget or the deadline
+      (lead ruling R-93 (e), LOW-2). Installing the kind removes a marker
+      left before.
 
     No fake relies on signal.sigtimedwait, which macOS lacks."""
     if kind not in FAKE_KINDS:
@@ -468,7 +480,8 @@ def install_fake_git(bin_dir, kind, real=REAL_GIT, **options):
                "remove-slow": {"seconds"}, "remove-exit": {"status"},
                "status-fails-in": {"path", "status"}, "ls-files-fails-in": {"path", "status"},
                "status-hangs-in": {"path", "lifetime"}, "ls-files-hangs-in": {"path", "lifetime"},
-               "signal-parent-in": {"path", "signal"}, "slow-after-remove": {"lifetime"}}
+               "signal-parent-in": {"path", "signal"}, "slow-after-remove": {"lifetime"},
+               "status-slow-again-in": {"path", "seconds"}, "ls-files-stuck-again-in": {"path", "lifetime"}}
     unknown = sorted(set(options) - allowed.get(kind, set()))
     if unknown:
         raise KeyError(f"install_fake_git: {kind} takes no option {unknown}")
@@ -519,6 +532,21 @@ def install_fake_git(bin_dir, kind, real=REAL_GIT, **options):
                 b'*" worktree remove "*) "$real" "$@"; status=$?; : > "$marker"; exit $status;;\n'
                 b'*" worktree list "*|*" for-each-ref "*) [ -e "$marker" ] && exec sleep %s;;\nesac\n'
                 % (_sh_quote(bin_dir / "slow-after-remove.marker"), lifetime))
+    elif kind == "status-slow-again-in":
+        marker = bin_dir / "status-slow-again.marker"
+        marker.unlink(missing_ok=True)
+        body = (b"marker=%s\n"
+                b'if in_dir %s "$@"; then case " $* " in *" status "*)\n'
+                b'  if [ -e "$marker" ]; then sleep %s; else : > "$marker"; fi;;\nesac; fi\n'
+                % (_sh_quote(marker), path, str(float(options.get("seconds", 2))).encode()))
+    elif kind == "ls-files-stuck-again-in":
+        marker = bin_dir / "ls-files-stuck-again.marker"
+        marker.unlink(missing_ok=True)
+        body = (b"marker=%s\n"
+                b'if in_dir %s "$@"; then case " $* " in *" ls-files "*)\n'
+                b'  if [ -e "$marker" ]; then trap \'\' TERM; exec sleep %s; fi\n'
+                b'  : > "$marker";;\nesac; fi\n'
+                % (_sh_quote(marker), path, lifetime))
     else:  # tty-credential
         body = (b'case " $* " in *" push "*)\n'
                 b'  exec "$python" -I -S -c %s "$real" "$events" "$@";;\nesac\n'

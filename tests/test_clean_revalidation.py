@@ -23,6 +23,8 @@ from pathlib import Path
 import shlex
 import shutil
 import signal
+import subprocess
+import time
 import types
 import unittest
 from unittest import mock
@@ -919,6 +921,106 @@ class RevalidationTests(clean_support.CleanCase):
                 self.assertEqual((result.status, result.document["exit_code"]), (1, 1))
                 self.assertFalse(tree.exists())
                 self.assertEqual(self.head(root, "refs/heads/001-p"), planned)
+
+    # Lead ruling R-93 (e), LOW-1: during the apply phase the first signal
+    # stops scheduling, "so that no further probe or removal starts" (the
+    # project-clean delta, pcl:931-933), a revalidation's own children
+    # included.
+
+    def run_signalled(self, argv, env, ready, signum):
+        """Run argv, project through the launcher, in a session of its own with
+        both streams on pipes; poll ready() until it holds, then send signum to
+        project alone (rule 7) and wait for it to exit. Returns the
+        CompletedProcess, its streams as text and its one JSON document as
+        `document`. Each stream holds far less than a pipe's buffer, so both
+        are read once project has exited."""
+        child = subprocess.Popen(argv, cwd=self.base, env=env, stdin=subprocess.DEVNULL, stdout=subprocess.PIPE,
+                                 stderr=subprocess.PIPE, start_new_session=True)
+        deadline = time.monotonic() + clean_support.TIMEOUT
+        problem = None
+        try:
+            while problem is None and not ready():
+                if child.poll() is not None:
+                    problem = f"project exited before {signal.Signals(signum).name} was sent"
+                elif time.monotonic() > deadline:
+                    problem = f"the step sending {signal.Signals(signum).name} was not ready in {clean_support.TIMEOUT} s"
+                else:
+                    time.sleep(0.01)
+            if problem is None:
+                os.kill(child.pid, signum)
+                try:
+                    child.wait(max(0.1, deadline - time.monotonic()))
+                except subprocess.TimeoutExpired:
+                    problem = f"project did not exit within {clean_support.TIMEOUT} s"
+        finally:
+            if child.poll() is None:
+                with contextlib.suppress(OSError):
+                    os.killpg(child.pid, signal.SIGKILL)
+            out, err = child.communicate()
+        result = subprocess.CompletedProcess(argv, child.returncode, out.decode("utf-8", "surrogateescape"),
+                                             err.decode("utf-8", "surrogateescape"))
+        if problem:
+            self.fail(f"{problem}\n{clean_support.transcript(result)}")
+        result.document = self.load_json(result)
+        return result
+
+    def test_clean_a_signal_during_a_removal_sigint_during_a_revalidation(self):
+        # Lane 3's sig-reval-INT. Two targets, through the launcher with the
+        # real table (probe budget 5 s, work deadline 50 s), so that only the
+        # signal acts. The status-slow-again-in fake, behind the counting
+        # wrapper, sleeps 2 s before the first target's second status probe:
+        # planning's runs as it is, the revalidation's is slowed. Once the
+        # wrapper has recorded that probe, SIGINT goes to project alone. The
+        # probe runs to its end, since phase `apply` stops no child, and the
+        # revalidation then reads the slot before its next child: no Git child
+        # starts after the signal, neither the hidden-state probe nor a
+        # removal. The first target ends as the seam before the spawn ended it
+        # before this fix, `not-attempted` with `interrupted`, and so does the
+        # second; nothing is removed, and the exit status is 130.
+        root, trees = self.batch("signal-revalidation")
+        before = self.snapshot(root, trees)
+        fake = clean_support.install_fake_git(self.base / "slow-status-bin", "status-slow-again-in", path=trees[0],
+                                              seconds=2)
+        bin_dir, log = self.base / "signal-counting-bin", self.base / "signal-children.log"
+        clean_support.install_counting_git(bin_dir, log, real=fake)
+        clean_support.reset_child_log(log)
+        at_signal = []
+
+        def slowed():
+            records = clean_support.child_log(log)
+            if [directory(child) for child in records if subcommand(child)[:1] == ["status"]].count(
+                    str(trees[0])) < 2:
+                return False
+            at_signal[:] = records
+            return True
+
+        argv = clean_support.launched_argv(clean_support.timing_table(), "clean", root, "--all-safe", "--apply",
+                                           "--yes", "--json")
+        result = self.run_signalled(argv, self.path_first(bin_dir), slowed, signal.SIGINT)
+        self.assert_status(result, 130)
+        # The log at the end is the log as it stood when SIGINT was sent, the
+        # slowed status probe its last child: no child started after the
+        # signal.
+        records = clean_support.child_log(log)
+        self.assertEqual((subcommand(at_signal[-1])[:1], directory(at_signal[-1])), (["status"], str(trees[0])))
+        self.assertEqual([subcommand(child) for child in records[len(at_signal):]], [],
+                         "children started after SIGINT")
+        self.assertEqual(records, at_signal)
+        self.assertEqual([subcommand(child)[0] for child in records[-5:]],
+                         ["ls-files", "rev-parse", "worktree", "for-each-ref", "status"],
+                         "planning's last hidden-state probe, then the revalidation's four children")
+        self.assertFalse(any(map(is_removal, records)))
+        self.assertEqual(self.stages(result), [(str(tree), "not-attempted", "interrupted") for tree in trees],
+                         result.stderr)
+        first, second = result.document["targets"]
+        # The first target's revalidation spawned four children and stopped
+        # before its hidden-state probe; the second was never revalidated.
+        self.assertEqual((first["reconciliation"], first["exit_status"], first["probes_performed"]), (None, None, 4))
+        self.assertEqual((second["reconciliation"], second["exit_status"], second["probes_performed"]),
+                         (None, None, 0))
+        self.assertEqual(result.document["exit_code"], 130)
+        self.assertEqual(self.snapshot(root, trees), before, "nothing removed")
+
 
 if __name__ == "__main__":
     unittest.main()
