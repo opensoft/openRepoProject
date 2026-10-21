@@ -289,12 +289,20 @@ class PushTests(clean_support.CleanCase):
         # was cut at its first `/`, so the push went to remote `a` as
         # `feat:b/feat`. The remote and the destination now come from
         # branch.feat.remote and branch.feat.merge.
+        # Since Git 2.51.0 (a5a727c448, "remote: detect collisions in remote
+        # names") `git remote add` refuses a name nested under an existing
+        # remote's, `a/b` beside `a`, or one that holds an existing remote's.
+        # Git still reads, fetches and pushes such remotes when the config
+        # names them, so each is written as `remote add` writes it, its url
+        # and its default fetch refspec, and X5 runs on every Git.
         root = self.repo()
         self.bare_remote()
         remotes = {"a": self.base / "a.git", "a/b": self.base / "ab.git"}
         for name, path in remotes.items():
             self.git(self.base, "init", "-q", "--bare", path)
-            self.git(root, "remote", "add", name, path)
+            self.git(root, "config", f"remote.{name}.url", path)
+            self.git(root, "config", f"remote.{name}.fetch", f"+refs/heads/*:refs/remotes/{name}/*")
+        self.assertEqual(sorted(self.git(root, "remote").split()), ["a", "a/b", "origin"])
         tree = self.base / "feat-tree"
         self.git(root, "worktree", "add", "-q", "-b", "feat", tree)
         self.git(tree, "push", "-q", "-u", "a/b", "feat")
