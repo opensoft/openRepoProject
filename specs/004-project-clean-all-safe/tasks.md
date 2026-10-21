@@ -2362,7 +2362,7 @@ lead ruling R-83).
 
 ### Tests for User Story 5
 
-- [ ] T087 [P] [US5] [O] Add to `tests/test_clean_result.py`, each run through
+- [x] T087 [P] [US5] [O] Add to `tests/test_clean_result.py`, each run through
   the launcher with its own table (R-29), and the slot-read test in process:
   `test_clean_a_signal_during_a_removal` (launcher;
   three targets, the second removed by the `remove-slow` fake: SIGINT to
@@ -2396,7 +2396,7 @@ lead ruling R-83).
   removal"; "SIGTERM before the apply phase".
   — files: `tests/test_clean_result.py`
   — verify: `python3 -c "import sys,unittest as u;L=u.defaultTestLoader;f=lambda s:[i for t in s for i in (f(t) if isinstance(t,u.TestSuite) else [t.id()])];I=[i for i in f(L.discover('tests',pattern=sys.argv[1])) if not i.startswith('unittest.')];A=sys.argv[2:];M=[a for a in A if not any(a in ('*',i.split('.')[-1]) for i in I)];[print('not collected:',m) for m in M];[print(e) for e in L.errors];sys.exit(1 if M or L.errors or not A else 0)" test_clean_result.py 'test_clean_a_signal_during_a_removal' 'test_clean_sigterm_before_the_apply_phase' 'test_clean_sigterm_before_the_apply_phase_after_the_last_probe' 'test_clean_sigterm_before_the_apply_phase_while_the_plan_is_written' 'test_clean_a_second_sigint_abandons_reconciliation'`
-- [ ] T088 [P] [US5] [S] Add to `tests/test_clean_result.py`:
+- [x] T088 [P] [US5] [S] Add to `tests/test_clean_result.py`:
   `test_clean_exit_0_without_evidence` (the `remove-noop` fake: `unknown` with
   `unconfirmed-removal`, later targets `not-attempted`, exit 1; it pins T056);
   `test_clean_git_leaves_an_orphaned_directory` (`not_root`; a subdirectory
@@ -2412,7 +2412,7 @@ lead ruling R-83).
   an orphaned directory"; "Git refuses the removal".
   — files: `tests/test_clean_result.py`
   — verify: `python3 -c "import sys,unittest as u;L=u.defaultTestLoader;f=lambda s:[i for t in s for i in (f(t) if isinstance(t,u.TestSuite) else [t.id()])];I=[i for i in f(L.discover('tests',pattern=sys.argv[1])) if not i.startswith('unittest.')];A=sys.argv[2:];M=[a for a in A if not any(a in ('*',i.split('.')[-1]) for i in I)];[print('not collected:',m) for m in M];[print(e) for e in L.errors];sys.exit(1 if M or L.errors or not A else 0)" test_clean_result.py 'test_clean_exit_0_without_evidence' 'test_clean_git_leaves_an_orphaned_directory' 'test_clean_git_refuses_the_removal'`
-- [ ] T089 [P] [US5] [O] Add to `tests/test_clean_result.py`:
+- [x] T089 [P] [US5] [O] Add to `tests/test_clean_result.py`:
   `test_clean_a_removal_past_the_hard_ceiling` (launcher, with a table that
   shortens the ceiling, the grace and the reap wait and leaves the probe budget
   whole (R-29); a removal child that ignores SIGTERM and runs past the
@@ -2437,7 +2437,7 @@ lead ruling R-83).
   removal"; "Exception after the apply phase begins".
   — files: `tests/test_clean_result.py`
   — verify: `python3 -c "import sys,unittest as u;L=u.defaultTestLoader;f=lambda s:[i for t in s for i in (f(t) if isinstance(t,u.TestSuite) else [t.id()])];I=[i for i in f(L.discover('tests',pattern=sys.argv[1])) if not i.startswith('unittest.')];A=sys.argv[2:];M=[a for a in A if not any(a in ('*',i.split('.')[-1]) for i in I)];[print('not collected:',m) for m in M];[print(e) for e in L.errors];sys.exit(1 if M or L.errors or not A else 0)" test_clean_result.py 'test_clean_a_removal_past_the_hard_ceiling' 'test_clean_unreadable_path_after_removal' 'test_clean_exception_after_the_apply_phase_begins'`
-- [ ] T090 [P] [US5] [S] Add `test_clean_stage_and_reason_table` to
+- [x] T090 [P] [US5] [S] Add `test_clean_stage_and_reason_table` to
   `tests/test_clean_result.py`: `decide_stage()`, which decides a spawned
   target only, on literal inputs reaches every stage and reason pair of
   data-model.md's "Target stages" that a spawned target can end in, and no
@@ -2488,7 +2488,7 @@ lead ruling R-83).
 
 ### Implementation for User Story 5
 
-- [ ] T092 [P] [US5] [O] Fill `run_removal()` (region `apply`; D9, FR-012), and
+- [x] T092 [P] [US5] [O] Fill `run_removal()` (region `apply`; D9, FR-012), and
   add one lead-approved two-line hook to `run_bounded()` (region `runner`),
   beside T077's `feed_stderr` hook:
   `tick = getattr(parser, "tick", None)`, then `tick(run)` on each pass of
@@ -2509,7 +2509,7 @@ lead ruling R-83).
   remains, the note `partially-removed`.
   — files: `project`
   — verify: `python3 -c "import sys,re;t=open('project').read();A=sys.argv[1:];c=lambda r:t.split('# region '+r+'\n')[1].split('# endregion '+r+'\n')[0];M=[a for a in A if not ((a.split('%',1)[1] not in c(a.split('%',1)[0])) if '%' in a else (a.split('~',1)[1] in c(a.split('~',1)[0])) if '~' in a else re.search(r'^[a-z]*\s?'+re.escape(a.split(':',1)[1])+r'\b',c(a.split(':',1)[0]),re.M))];[print('region check failed:',m) for m in M];sys.exit(1 if M or not A else 0)" 'apply~wait_line' 'runner~getattr(parser, "tick", None)' && python3 project clean --help >/dev/null`
-- [ ] T093 [P] [US5] [O] In `apply_removals()`, `rescan()` and `decide_stage()`
+- [x] T093 [P] [US5] [O] In `apply_removals()`, `rescan()` and `decide_stage()`
   (region `apply`; D15, FR-034 to FR-036): read the signal slot before each
   revalidation and each spawn, a set slot making that target and every later
   one `not-attempted` with `interrupted`; reconcile within the reserve, the
@@ -2549,7 +2549,7 @@ lead ruling R-83).
   (lead rulings R-76 (f) and R-79 P-10). T091 passes.
   — files: `project`, `tests/clean_support.py`
   — verify: `python3 -m unittest discover -s tests -p 'test_clean_stop.py'`
-- [ ] T095 [US5] [S] Run the US5 modules, every earlier module, the US3, US7
+- [x] T095 [US5] [S] Run the US5 modules, every earlier module, the US3, US7
   and US9 modules, which have landed, and the 96 tests: all pass (lead
   ruling R-79 P-13).
   — files: (none)
