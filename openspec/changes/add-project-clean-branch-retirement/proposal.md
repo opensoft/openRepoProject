@@ -203,8 +203,10 @@ confirmed run, on fresh evidence, with nothing changed for a run without it.
   its budget when a signal arrives and stopped like a probe past it, never
   abandoned at its budget, since it is a mutation (A-20). As change 1's D15
   has it for the apply phase, a signal stops no child of the stage, the
-  re-read and its re-proof included: it only keeps the stage from starting
-  its next step (ruling A-34). The branch child
+  re-read and its re-proof included, the post-check excepted, which a second
+  SIGINT abandons as change 1 abandons its remaining rescans: a signal only
+  keeps the stage from starting its next re-read, re-proof or branch child,
+  never the post-check (rulings A-34, A-35). The branch child
   counts under `operations`, the reflog children, the two listings and the
   re-proof under `probes`: up to 81 more children per run.
   A run with no removal in flight still ends within 64 s of its start. The
@@ -395,9 +397,13 @@ their `CAS` line.
     `deadline-exceeded` among the deadline's stops (ruling A-32), row 4 a
     removed target whose
     `branch_retirement` is not plain, and row 5 a plain one, a keep the plan
-    names included, for every target under the flag; and one sentence after
+    names included, for every target under the flag; one sentence after
     the exception sentence (`:938-941`): under the flag, an exception raised in
-    a branch stage leaves the target as its rescan decided it (ruling A-31).
+    a branch stage leaves the target as its rescan decided it (ruling A-31);
+    and one clause of the stop sentence (`:962-964`), added after its command
+    with none of change 1's words changed: under the flag the human result
+    ends instead with the lines that the ADDED requirement orders after the
+    stop block (ruling A-35, lane openRepoProject-3's confirm read, F1).
     Its eight scenarios stay verbatim.
   - Untouched (`CAS/pc:1034`):
     `### Requirement: Clean reports every path exactly or excludes it`.
@@ -572,9 +578,13 @@ their `CAS` line.
     and unchanged at that change's head `c928cb2`, lane openRepoProject-2
     having agreed it with one fix ("as a probe child past its budget is
     above"); by L-17 whichever of the two archives second re-bases its block on
-    the first's archived block, and if this change is second, the composed
-    block quotes requirement names one way, in change 1's double quotes
-    (`design.md` Migration Plan; lane openRepoProject-5's reader RD, its L4);
+    the first's archived block, changing none of the first's ratified words,
+    quotation marks included, so that if this change is second the composed
+    block keeps that change's backquoted requirement name beside this
+    change's double-quoted ones, quoting one way binding this change's own
+    text only (`design.md` Migration Plan; ruling A-35, lane
+    openRepoProject-3's confirm read, F9, refining lane openRepoProject-5's
+    reader RD, its L4, under A-33);
   - lane openRepoProject-2 checked the block's diff against PR #19's block and
     agreed it on 2026-10-19 (recorded at `lanes/log/openRepoProject-5.md:34`,
     and as committed and owed nothing more in lane openRepoProject-2's handoff,
@@ -978,7 +988,16 @@ departs:
   child ran and no post-check decided, never `target-not-removed`; a
   deletion the post-check saw is `retired`, its SHA and restore line
   printed. The reconcilable block's exception sentence names this exception,
-  and the run stops as for any branch stage that does not end plain.
+  and the run stops as for any branch stage that does not end plain. This
+  departs from the packet's rule as well, `BA:479-482` ("Once the apply phase
+  begins, every exception raised while handling a target is caught for that
+  target and recorded as `unknown` with reason `internal-error`; later
+  targets are `not-attempted`, the result record is always printed, and the
+  exit status is 1 (130 after SIGINT)"): the target is not `unknown`, and the
+  exit status 1 becomes 2, by exit row 4, or stays 1 for a null `stage`, by
+  row 2, while later targets are still `not-attempted`, the record is still
+  printed and a signal still decides first (ruling A-35, lane
+  openRepoProject-3's confirm read, F2).
 - **A-4's `branch-retention-stop`** is carried by the later targets'
   `branch_retirement`; their own reason stays change 1's `batch-stopped`
   (`CAS/pc:906-908`), because a new reason in the target's closed enum is what
@@ -1000,15 +1019,19 @@ departs:
   `; already gone: G` when G is above 0 and `; unconfirmed: U` when U is
   above 0, R, K, G and U counting the distinct branches of the removed
   targets; it replaces `Removed N; branches kept: ` and precedes the branch
-  lines. Its place among change 1's lines follows change 1's own order
-  (CAS `design.md` D18: a stop prints `Stopped at ...`, "then the retained
-  branches and the residual-window line"), which `CAS/pc:962-964` states as
-  the stop block ending the result and naming every retained branch: in a
-  run that stops, the stop block and the retained branches come first, a
-  branch the stage retired, or whose deletion is unconfirmed or was already
-  gone, never named among them; then the summary and branch lines; then the
-  residual-window line (ruling A-34, lane openRepoProject-5's reader RE, its
-  RE-3). The first text put the stop block last.
+  lines. Its place among change 1's lines extends change 1's order, which
+  holds no summary or branch line after the stop block (CAS `design.md` D18:
+  a stop prints `Stopped at ...`, "then the retained branches and the
+  residual-window line"): in a run that stops, the stop block and the
+  retained branches come first, a branch the stage retired, or whose
+  deletion is unconfirmed or was already gone, never named among them; then
+  the summary and branch lines; then the residual-window line (ruling A-34,
+  lane openRepoProject-5's reader RE, its RE-3). `CAS/pc:962-964` states the
+  stop block as ending the result and naming every retained branch, so the
+  reconcilable block's sentence gains one clause, added to change 1's words:
+  under the flag the result ends with the lines that the ADDED requirement
+  orders after the stop block (ruling A-35, lane openRepoProject-3's confirm
+  read, F1). The first text put the stop block last.
 - **A-6's question counts distinct branches.** A-6 words it "Remove N
   worktrees and retire their N local branches?", but two selected worktrees
   can hold one branch (the second added with `git worktree add --force`), and
@@ -1037,8 +1060,10 @@ departs:
   The stage's re-read and re-proof follow change 1's D15 as well: in the
   apply phase the handler only records and the seam reads the slot between
   steps, so a signal stops none of them and only keeps the stage from
-  starting its next step, and a second SIGINT abandons the post-check as it
-  abandons change 1's remaining rescans (ruling A-34, RE's RE-2). The first
+  starting its next re-read, re-proof or branch child, never the post-check,
+  and a second SIGINT abandons the post-check as it abandons change 1's
+  remaining rescans (ruling A-34, RE's RE-2; ruling A-35, lane
+  openRepoProject-3's confirm read, F3). The first
   text had a signal stop the re-read and the re-proof like planning probes.
 
 Packet decisions adopted, not open: the paired-retirement contract
