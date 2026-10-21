@@ -620,7 +620,7 @@ TEXT_FIXTURES = {
     "note_merge_target_conflict": "The manifest names {NAME} and origin/HEAD names {OTHER}; {NAME} is the merge target.",
     "note_inspection_incomplete": "{K} other rows are inspection-error or were left unprobed; they do not block {PATH}.",
     "note_inspect_cap": "{K} rows past the row cap of {M} were not inspected; they do not block {PATH}.",
-    "note_deadline_exceeded": "{K} rows were left unprobed at the work deadline; they do not block {PATH}.",
+    "note_deadline_exceeded": "{K} rows were stopped at the work deadline; they do not block {PATH}.",
     "note_inspect_cap_report": "{N} rows exceed the --all-safe row cap of {M}; --all-safe would be incomplete (inspect-cap).",
     "confirmation_required": "Standard input is not a terminal; pass --yes to apply this plan.",
     "push_remote_gone": "Cannot push {BRANCH}; its upstream {UPSTREAM} was deleted (remote-gone); review it before it is republished.",
