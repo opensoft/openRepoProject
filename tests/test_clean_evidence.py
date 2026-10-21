@@ -166,7 +166,8 @@ class EvidenceTests(clean_support.CleanCase):
         return result, clean_support.child_log(log)
 
     def report(self, *args, **options):
-        """counted() for `clean ARGS... --json`, which must exit 0 with one document."""
+        """counted() for `clean ARGS... --json`, which prints one document and exits by
+        its completeness: 0 when complete, 1 otherwise (R-88; pcl:40-43)."""
         result, records = self.counted("clean", *args, "--json", **options)
         self.assert_status(result, 0 if (result.document or {}).get("completeness") == "complete" else 1)
         self.assertIsNotNone(result.document, clean_support.transcript(result))
