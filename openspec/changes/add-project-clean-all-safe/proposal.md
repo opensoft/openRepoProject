@@ -1271,14 +1271,27 @@ OQ-29's cap; these bind until that revision merges (C2 is now reading R9).
   `fix-parent-obstacle-wording` followed `prefer-triad-in-project-new`, which
   costs a second archive and leaves the archived spec wrong in between.
 - **LQ-20, the fit where `extensions.worktreeConfig` is true.** LQ-11's
-  effective-work-tree probe runs for every linked row at plan time, so a
-  128-row `--all-safe --apply` in such a repository reaches its first removal
-  at 45.3 s, past the 5 s floor, and removes nothing, which is safe (design
-  D14, Risks; the lead's R-178). Before Brett Heap, with no recommendation
-  here: (a) accept that worst case; (b) bound the plan-time work-tree probe to
-  the selected targets, at most 16, and report the other rows' identity as
-  unverified; or (c) a larger removal floor where `extensions.worktreeConfig`
-  is true. The deltas as written give (a)'s behaviour until he rules.
+  effective-work-tree probe runs for every linked row at plan time, and the
+  question's first step is the basis (design D14, Risks; the lead's R-178 and
+  R-190). The cap test is D5's, at task 2.1's measured costs, but task 2.1
+  measured neither that probe nor LQ-13's `rev-list`. At D14's flat 150 ms per
+  child a 128-row `--all-safe --apply` in such a repository reaches its first
+  removal at 45.3 s, past the 5 s floor, and removes nothing, which is safe. At
+  the measured costs, with the identity probe's 19.7 ms and the full ref
+  listing's 359.7 ms standing in for the two unmeasured probes, all 16 removals
+  fit (15 with 20,000-file removals), the 16th only while the work-tree probe
+  costs at most about 69 ms with the margin. On the mixed basis, the measured
+  costs plus 150 ms for each child added since, 11 fit. Before Brett Heap, with
+  no recommendation here: first, (i) measure those two probes on task 2.1's
+  protocol and rerun the cap test, or (ii) decide which basis the cap test uses;
+  then, only if the case fails on that basis, (a) accept that worst case; (b)
+  bound the plan-time work-tree probe to the selected targets, at most 16, and
+  report the other rows' identity as unverified; (c) a larger removal floor
+  where `extensions.worktreeConfig` is true; or (d) the rule's own step,
+  lowering the caps (BA:766-771), which gives 64 rows and 8 targets on the 150
+  ms basis and 128 rows and 8 targets on the mixed one, or, where the row cap is
+  chosen first, 32 rows and 16 targets and 64 rows and 16 targets (design D14).
+  The deltas as written give (a)'s behaviour until he rules.
 
 The question of a merged worktree whose remote branch was deleted is closed:
 Brett Heap ruled on 2026-10-09 that a local ancestry proof outranks
@@ -1543,23 +1556,53 @@ scenario and says why `review-required` stays out (F-3); writes R-171's rule,
 that at revalidation only a decided effective work tree that is not the
 target's path gives `identity-changed`, and the rule for every revalidation
 child, that a deadline cut gives `deadline-exceeded` and a failure or a
-timeout `state-changed` (F-4); declares that R-146's commit and this one also
-re-wrapped the paragraphs their edits lengthened, with no other change of
-words (F-5); and says "a gate after the cap" in OQ-5 (F-6) (Capabilities
-`:39`; Decisions, OQ-5; this list; design Context, D7, D18, D22; `tasks.md`
-1.2; the deltas' `Clean can explicitly push safe feature branches` and its
-scenario "Push refuses a branch it may not push", `Clean records a
-reconcilable result for every removal target` and `Cleanup revalidates
-destructive actions`). Under the lead's R-178, design D14 restates the fit
-with writer G's measured counts: the planning term counts LQ-11's per-row
-probe where `extensions.worktreeConfig` is true, seven children per target fit
-14 removals rather than 16, and at 128 rows in such a repository the first
-removal would spawn at 45.3 s, so none is made, safely; open question LQ-20
-names the three options before Brett Heap, choosing none. No requirement
-changes: no sentence of `Clean bounds its Git work and reports omitted work`
-is false under the restated figures, since it bounds children per target and
-targets per run and promises no number of removals (Open Questions; this
-list; design Context, D14, Risks, Open Questions; `tasks.md` 1.2).
+timeout `state-changed` (F-4); declares that R-146's commit and the commits of
+this entry and the R-178 entry below also re-wrapped the paragraphs their edits
+lengthened, with no other change of words (F-5); and says "a gate after the cap"
+in OQ-5 (F-6) (Capabilities `:39`; Decisions, OQ-5; this list; design Context,
+D7, D18, D22; `tasks.md` 1.2; the deltas' `Clean can explicitly push safe
+feature branches` and its scenario "Push refuses a branch it may not push",
+`Clean records a reconcilable result for every removal target` and `Cleanup
+revalidates destructive actions`). Under the lead's R-178, design D14 restates
+the fit at 150 ms per child with writer G's measured counts: the planning term
+counts LQ-11's per-row probe where `extensions.worktreeConfig` is true, seven
+children per target would fit 14 removals rather than 16 at a hypothetical P of
+168, and at 128 rows in such a repository the first removal would spawn at 45.3
+s, so none is made, safely; open question LQ-20 names the three options before
+Brett Heap, choosing none. No requirement changes: no sentence of `Clean bounds
+its Git work and reports omitted work` is false under the restated figures,
+since it bounds children per target and targets per run and promises no number
+of removals (Open Questions; this list; design Context, D14, Risks, Open
+Questions; `tasks.md` 1.2). Lane openRepoProject-3's W31 confirm read of that
+round at `a664799` (HIGH 0, MEDIUM 2, LOW 8), under the lead's R-187 and R-190,
+with lane openRepoProject-5's A10 read of the same commit, which the lead
+relayed: lets the rule for a revalidation child decide a read that the work
+deadline cuts, and says "its own budget" where the earlier wording left the
+deadline out (M-1); states that the cap test is D5's, at task 2.1's measured
+costs, names the two probes that task 2.1 did not measure and the stand-ins
+costed for them, gives the fit on D14's flat 150 ms basis, on that measured
+basis and on the mixed basis, and restates LQ-20 so that its first step is to
+measure those probes or to decide the basis, with the rule's own step, lowering
+the caps, as option (d) and no option chosen (M-2); drops R-171's rationale that
+planning makes a failed probe a row error, since there it makes the row's
+registration disagree (L-1, the lead's R-187 erratum); adds the scenario "A
+work-tree probe at revalidation", which pins R-171's three arms (L-2); limits
+D22's `git merge --abort` claim to a squash, which writes no `MERGE_HEAD`, and
+says that `git commit` keeps in the stash list an edit that conflicts with what
+the merge brought, both checked on Git 2.43.0 and 2.56.0 (L-3); labels the 14
+removals for seven children per target, here and in D14, as a hypothetical P of
+168 (L-4); gives each single-target run to its end in D14's table (L-5);
+replaces the stale 26.4 s margin (L-6); says that re-running takes the next 16
+as the rows ahead of them are removed, so that a run that the deadline stops
+before any removal leaves its 16 to the next, which the R-178 entry above missed
+when it found no sentence of `Clean bounds its Git work and reports omitted
+work` false (L-7); widens the W26 entry's declaration of re-wrapped paragraphs
+to both commits of that round (L-8); and declares that this commit also
+re-wrapped the paragraphs its edits lengthened, with no other change of words
+(Open Questions; this list; design Context, D7, D14, D21, D22, Risks, Open
+Questions; `tasks.md` 1.2, 1.4; the deltas' `Clean bounds its Git work and
+reports omitted work` and `Cleanup revalidates destructive actions`, with its
+added scenario "A work-tree probe at revalidation").
 
 ### Council Verdicts
 

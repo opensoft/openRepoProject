@@ -112,18 +112,19 @@ a line that cannot be parsed. A value that was null in the plan and is null at
 revalidation, such as the `upstream_oid`, `ahead` and `behind` of a selected row
 whose upstream was deleted, SHALL NOT count as a difference; a value that cannot
 be re-read, a filesystem call that times out included, SHALL count as a
-difference, and where the listing, read or child of the `operation-in-progress`
-or `worktree-only-commits` check fails or runs past its budget, that difference
+difference, other than a read that the work deadline cuts, which the rule below
+decides, and where the listing, read or child of the `operation-in-progress` or
+`worktree-only-commits` check fails or runs past its own budget, that difference
 SHALL be `state-changed`, as it is for a status probe that fails there. One rule
 SHALL decide every Git child of these steps that does not finish with a value:
 one that the work deadline cuts, as any read the deadline cuts, SHALL count as
 no difference, and the target and every later one SHALL be `not-attempted` with
 `deadline-exceeded`; one that fails, or that runs past its own budget while the
 deadline is not the limit, SHALL count as a difference with the reason
-`state-changed`, whatever its step. A Git child SHALL give its step's own
-reason only for a value it decided, so that only an effective work tree that the
-probe decides is not the target's path gives `identity-changed`, and a work-tree
-probe that fails, runs past its budget or prints anything but one line gives
+`state-changed`, whatever its step. A Git child SHALL give its step's own reason
+only for a value it decided, so that only an effective work tree that the probe
+decides is not the target's path gives `identity-changed`, and a work-tree probe
+that fails, runs past its own budget or prints anything but one line gives
 `state-changed` (the lead's R-171). The first target's repository-wide checks
 SHALL serve as the preflight of every selected target, so that a difference
 found there removes nothing at all. Push and delete-branch SHALL keep the full
@@ -255,6 +256,27 @@ are no part of that defense.
 - **AND** the same holds when, instead, a line naming an object that the
   repository does not hold is appended to P's `logs/HEAD`, so that the
   reachability child exits 128 with `fatal: bad object`
+
+#### Scenario: A work-tree probe at revalidation
+
+- **WHEN** a repository sets `extensions.worktreeConfig` to true, a confirmed
+  plan selects P and Q, in that order, having read P's effective work tree as
+  P's own path, and after the plan and before P's revalidation the
+  `config.worktree` in P's administrative directory sets `core.worktree` to a
+  clean directory D elsewhere
+- **THEN** P's work-tree probe prints D's path, so P is `refused` with
+  `identity-changed`, no removal child is spawned, Q is `not-attempted`,
+  nothing is removed, and the exit status is 2
+- **AND** when that `config.worktree` instead sets `core.bare` to true, so that
+  the probe exits 128, or sets `core.worktree` to an existing directory whose
+  name holds a line feed, so that the probe prints two lines, or when a `git`
+  wrapper holds the probe past its own 5 s budget, the probe having started
+  with more than 5 s of the work deadline left, P is `refused` with
+  `state-changed`, nothing is removed, and the exit status is 2
+- **AND** when a `git` wrapper holds the probe until the work deadline passes,
+  the probe having started with less than 5 s of it left, P and Q are
+  `not-attempted` with `deadline-exceeded`, nothing is removed, and the exit
+  status is 1
 
 ## ADDED Requirements
 

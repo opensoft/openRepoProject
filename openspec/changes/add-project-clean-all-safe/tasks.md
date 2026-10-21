@@ -51,9 +51,12 @@ duplicate them, and nothing here is an implementation step.
   read with the lead's R-171 (the commit titled 'Amend change 1: lane 3's W26
   read and R-171's revalidation rule'); and the fit restated under the lead's
   R-178 (the commit titled 'Amend change 1: restate D14's fit with the
-  measured counts, and name LQ-20 (R-178)'); verified by
-  the table "Questions Resolved by the Alignment Review" in `proposal.md` and
-  the later-rulings list under it, which name the section each ruling edited.
+  measured counts, and name LQ-20 (R-178)'); and lane 3's W31 read of that round
+  and of the fit, under the lead's R-187 and R-190 (the commit titled 'Amend
+  change 1: lane 3's W31 read, the fit on three bases and LQ-20 (R-187,
+  R-190)'); verified by the table "Questions Resolved by the Alignment Review"
+  in `proposal.md` and the later-rulings list under it, which name the section
+  each ruling edited.
 - [x] 1.3 Council resolved: every concern is VALID, none dismissed, the verdicts
   V1 to V12 applied to `proposal.md` (`ea9c73b`) and the five NOTED constraints
   recorded as N1 to N5 in `clarifications.md` (`1d4ed5b`); verified by
@@ -62,8 +65,8 @@ duplicate them, and nothing here is an implementation step.
   five requirements and adds six (71 scenarios, one added under each of Brett
   Heap's rulings LQ-15, LQ-13 and LQ-14, one under the lead's R-126 and two
   under R-147), `specs/project-clean-review-safety/spec.md` modifies two and
-  adds one (21 scenarios, one added under R-22, one under each of LQ-13 and
-  LQ-14 and one under R-146), and
+  adds one (22 scenarios, one added under R-22, one under each of LQ-13 and
+  LQ-14, one under R-146 and one under R-190), and
   `specs/project-command/spec.md` modifies two and adds one (24 scenarios, of
   which the push-child exception added one, Brett Heap's rulings Q9 B, LQ-15,
   LQ-10, LQ-12 and LQ-11 one each, and the lead's R-125 one), every canonical

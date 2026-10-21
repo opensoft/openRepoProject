@@ -1001,14 +1001,17 @@ When more than 16 rows pass every gate before `deferred-target-cap`, the first
 16 in canonical order SHALL go on to the gates after it, the two index gates,
 `operation-in-progress` and `worktree-only-commits`, and the rest SHALL be
 excluded as `deferred-target-cap`, with the command to run next. The plan SHALL
-stay complete and apply SHALL be allowed; re-running SHALL take the next 16,
-each run building its own fresh plan and revalidating each of its targets. Rows
-that a gate after the cap then excludes SHALL keep their places among the 16,
-so that when every one of those 16 is excluded by a gate after the cap no
-re-run reaches a deferred row, and the human report SHALL say why the deferred
-rows will not drain, naming those gates' reasons. No plan SHALL be refused for
-having more than 16 such rows. In a single-target removal the limit SHALL count
-P alone, because `not-requested` precedes it.
+stay complete and apply SHALL be allowed; re-running SHALL take the next 16 as
+the rows ahead of them are removed or excluded by a gate before the cap, each
+run building its own fresh plan and revalidating each of its targets, so that a
+run that removes none of its 16, as when the deadline leaves every target
+`not-attempted`, leaves its 16 to the next run. Rows that a gate after the cap
+then excludes SHALL keep their places among the 16, so that when every one of
+those 16 is excluded by a gate after the cap no re-run reaches a deferred row,
+and the human report SHALL say why the deferred rows will not drain, naming
+those gates' reasons. No plan SHALL be refused for having more than 16 such
+rows. In a single-target removal the limit SHALL count P alone, because
+`not-requested` precedes it.
 
 Plans and apply results SHALL report `probes: {estimated, performed}` and
 `operations: {estimated, performed}`, every Git child counted once, a removal
