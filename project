@@ -3085,7 +3085,13 @@ def write_document(doc):
     (write_failed(), region dispatcher; lead ruling R-55, T047), so there is
     no second traceback and no exit 120. Before the apply phase the
     pipeline's check after printing makes it `internal-error`; main() writing
-    an error document keeps its own status."""
+    an error document keeps its own status. Standard output closed when
+    project started (sys.stdout None, the stream say() skips) is such a
+    failed write, EBADF, so that `clean --json` refuses with `internal-error`
+    and exit 2 instead of a traceback (lead ruling R-101 (b), F3)."""
+    if sys.stdout is None:
+        write_failed(current_invocation(), None, OSError(errno.EBADF, os.strerror(errno.EBADF)))
+        return
     try:
         sys.stdout.write(json.dumps(doc, indent=2, ensure_ascii=True) + "\n")
         sys.stdout.flush()

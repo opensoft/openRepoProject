@@ -370,6 +370,32 @@ class GuardTests(clean_support.CleanCase):
                     else:
                         self.assertEqual((out, err), ("", CANCELLED))
 
+    def test_clean_the_plain_report_in_json_with_standard_output_closed(self):
+        # Runner review F3 and lane 3's F4 M-1 (lead ruling R-101 (b)): with
+        # descriptor 1 closed when project starts, as `project clean ROOT
+        # --json >&-` closes it, sys.stdout is None and the one document cannot
+        # be written. That is a failed write before the apply phase, so the
+        # run refuses with `internal-error` and exit 2 and prints no traceback
+        # (lead ruling R-55; pcl:938-941), never AttributeError with exit 1,
+        # the incomplete plan's status. The report, the preview, and an apply
+        # that stops at its question each refuse so, and nothing is removed.
+        # A preexec_fn of the test's own closes the descriptor in the child.
+        self.bare_remote()
+        merged = self.merged_worktree("001-merged")
+
+        def close_standard_output():
+            os.close(1)
+
+        for extra in ((), ("--all-safe",), ("--all-safe", "--apply")):
+            with self.subTest(arguments=extra):
+                status, _, err = self.run_child(clean_support.cli_argv("clean", self.root, "--json", *extra),
+                                                preexec_fn=close_standard_output, stdout=None)
+                self.assertEqual(status, 2, err)
+                self.assertNotIn("Traceback", err)
+                if "--apply" not in extra:
+                    self.assertEqual(err, "", "under --json the refusal is the document alone")
+                self.assertTrue(merged.is_dir(), "nothing removed")
+
 
 if __name__ == "__main__":
     unittest.main()
