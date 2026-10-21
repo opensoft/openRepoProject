@@ -4365,8 +4365,8 @@ def print_plan(plan, run):
     delete-branch, nothing. `Merge target: NAME (SOURCE)` prints in every
     mode, and every path and branch goes through human_path(). A row noted
     `partially-removed` (D4) also prints D18's partial-removal note beside its
-    advice, never instead of it (T094; lead ruling R-79, P-11). This replaces
-    print_clean_report() for `clean`."""
+    advice, never instead of it (T094; lead ruling R-79, P-11). It replaced the
+    baseline's print_clean_report() for `clean`, which T125 then retired."""
     if plan.action in ("push", "delete-branch"):
         return
     json_output, apply = getattr(run.args, "json", False), getattr(run.args, "apply", False)

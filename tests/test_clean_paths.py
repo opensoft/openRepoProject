@@ -668,7 +668,6 @@ class PathsTests(clean_support.CleanCase):
         self.assert_plain_base()
         rlo = chr(0x202E)
         root = self.repo("rlo-a" + rlo + "b")
-        root_form = self.dollar(str(self.base), "/rlo-a", BACKSLASH, "u202eb")
         manifest_form = self.dollar(str(self.base), "/rlo-a", BACKSLASH, "u202eb/project.yaml")
         manifest = root / "project.yaml"
         for label, content, message in (
