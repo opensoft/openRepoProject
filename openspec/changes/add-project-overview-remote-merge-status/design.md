@@ -100,7 +100,14 @@ alignment, as lane openRepoProject-4 asked. Round C14 also applies lane
 openRepoProject-3's confirm read of round C13 (C-49), eight LOWs with no spec
 edit, in this paragraph, D2, D3 and D11, and D5 records, on lane
 openRepoProject-4's call 4, that the caller's `GIT_TRACE*` names reach the `gh`
-children, a residual.
+children, a residual. Round C15 applies lane openRepoProject-3's confirm read of
+round C14 (C-50), with no spec edit: D3's step 3 refuses an explicit port
+itself, before the identity pattern runs, as the spec lists it; the forms in
+which D3 reads a host otherwise than Git are examples, not a complete list, and
+two more are named; and D5 cites PR #19 at `423a532` for Q9 B. It also applies
+reader RF's M1 (C-51): the Migration Plan checks each re-read and re-base of a
+block by a second diff, from this change's own block at its ratified head, and
+returns any change to this change's ratified words to Brett Heap.
 
 Citations follow `proposal.md`: the packet at `da33d92`; APO, CAS, PRS and
 `project:N` at main `961c405`, which main `e9d6711` holds unchanged for them
@@ -164,6 +171,8 @@ The rulings and the packet's boundary map to the decisions:
 | C-48: reader RC's M1, M2, M3, L1 and L4's spec part, held in round C13 and committed in round C14 on lane openRepoProject-4's YES of 2026-10-21 (`c0062f9`), with the lead's two points and lane openRepoProject-4's clause for a failed write: no `deadline-exceeded` scan error at an expiry in the remote phase; `no-remote-target` for a remote whose fetch refspecs do not map the merge ref; `remote.limits.concurrency` excepted from the comparison at concurrency 1; `cancelled` for a repository whose second read never started; Isolation's exceptions for a signal and a failed write; D7's follow-ons wait with task 2.3 for amendment A1's alignment | Context, D2, D8, D10, D11, Risks |
 | C-49: lane openRepoProject-3's confirm read of round C13, eight LOWs, with no spec edit: a `:` begins a port only when digits follow it, and `ssh://git@github.com:acme/widget.git` is a residual; a local path is a URL with no `://` and no `:` before its first `/`; the `die` rule from Git 2.37.0, whose release notes introduce `transfer.credentialsInUrl`; the in-process environment's linked `PATH`; the packet's `github.com/owner/repository` an identity, not a form of URL; step 1's conservative reading of a user that holds a `:`; and, in `proposal.md` and `tasks.md`, Status, Decisions, the round C13 row of L2 and task 1.3 | Context, D2, D3, D11 |
 | Lane openRepoProject-4's call 4 on C-48 (2026-10-21): the caller's `GIT_TRACE*` names reach the `gh` children unread, recorded as a residual, as tested | D5 |
+| C-50: lane openRepoProject-3's confirm read of round C14 (W16), with no spec edit: step 3 refuses an explicit port before the identity pattern runs, as the spec lists it, since before a one-segment path the pattern gives an identity; D3's forms in which its host differs from Git's are examples, not a complete list, `:+22` and a bracketed `[github.com]` added; D5 cites PR #19 at `423a532` for Q9 B | D3, D5 |
+| C-51: reader RF's M1: each re-read or re-base of a block is also diffed from this change's own block at its ratified head, and any change it shows to this change's ratified words returns to Brett Heap | Migration Plan |
 | C-10, L-12: CI on Linux only | Migration Plan |
 
 What in `project` shapes the approach (at `961c405`; features 004 and 005
@@ -406,11 +415,19 @@ In this order, the first that applies deciding:
    `github.com.example.org` and `api.github.com` are refused.
 3. `malformed-remote`: `remote_repository_identity()` (`project:766-769`)
    yields no identity, as for `https://github.com/acme`, a user other than
-   `git`, or an explicit port.
+   `git`, or an explicit port. An explicit port is refused at this step
+   itself, before that function runs and whatever identity it would give, as
+   `specs/project-overview/spec.md:389-390` lists an explicit port among this
+   reason's causes beside the identity rule (C-50): before a one-segment path
+   the function gives an identity, `22/widget` for
+   `ssh://git@github.com:22/widget` and `99999/widget` for
+   `ssh://git@github.com:99999/widget`, so a step 3 that left the port to it
+   would ask GitHub about the wrong repository.
 
-Every step reads the host as Git reads the URL, except in the forms that the
-next paragraph names, for none of which a request is sent; the host and the
-scheme compare as written, never without case (C-47, C-49). A URL with `://` has
+Every step reads the host as Git reads the URL, except in forms such as those
+that the next two paragraphs name, which are examples and not a complete list
+(C-50), for none of which a request is sent; the host and the scheme compare as
+written, never without case (C-47, C-49). A URL with `://` has
 its scheme before it, then any user information before an `@`, then the host, up
 to the next `/` or a `:` that begins a port, which a `:` does only when digits
 alone follow it up to that `/`, as Git reads a port (C-49). An scp-like URL has
@@ -452,6 +469,24 @@ holds a `:` is deliberately conservative, not Git's: for the scp-like
 before the first `:`, for the path `pw@github.com:acme/widget`, while step 1
 refuses that URL as `credential-bearing-remote` before any host is read; no
 request is sent either way.
+
+The writer ran four more forms the same way on Git 2.43.0 on 2026-10-21 (C-50).
+Before a one-segment path, Git ran the stand-in for
+`ssh://git@github.com:22/widget` on `git@github.com` with `-p 22`, and for
+`ssh://git@github.com:99999/widget` on `git@github.com:99999` with no port, each
+for the path `/widget`, while `remote_repository_identity()`, taken from
+`project` at `961c405`, gave `22/widget` and `99999/widget`; step 3 refuses both
+by their port before that function runs, so neither is sent. For the signed port
+of `ssh://git@github.com:+22/acme/widget.git`, Git ran the stand-in on
+`git@github.com` with `-p +22`, while D3, `+22` not being digits alone, reads
+the host `github.com:+22`; and for the bracketed host of
+`ssh://git@[github.com]/acme/widget.git`, Git, dropping the brackets, ran it on
+`git@github.com`, while D3 reads the host `[github.com]`. Both are `not-github`
+at step 2 and never sent: each fails closed. Lane openRepoProject-3's property
+check in its confirm read of round C14 generated 3,619 URLs, applied D3 as
+worded here, with the port refused at step 3, and ran Git 2.43.0 through such a
+stand-in for each of the 30 that D3 would send: Git ran each on the host
+`github.com`, with no port, for the same `owner/repository`.
 
 What passes is `owner/repository`, the only part of the URL kept. The dedupe
 key compares it without case. No reason carries the URL, and nothing of the
@@ -544,17 +579,17 @@ and gh's behaviour beyond its switches is the client's; the fake `gh` of D11
 records the values, and that block's new scenario asserts them. [E]'s Git scrub
 does not apply; this is not a Git child. So the caller's `GIT_TRACE` and its
 other `GIT_TRACE*` names reach a `gh` child unread, with every other variable:
-feature 005's Q9 B, which reaches [E]'s scrub of Git children, does not extend
-to `gh` children, and this is recorded as a residual, as tested (lane
-openRepoProject-4's call 4 on C-48, 2026-10-21). `gh` 2.96.0, run offline on
-2026-10-21 with D5's flags, switches and query, from `/`, with a fake token, its
-proxy at a closed local port, its configuration, state, cache and data
-directories empty, `GIT_TRACE`, `GIT_TRACE2` and `GIT_TRACE2_EVENT` naming files
-and a fake `git` first on `PATH`, exited 1 on the refused connection with
-nothing on standard output, started no `git`, created no trace file and wrote
-no file. The path of a 200 answer is not verified. If Brett Heap wants the
-residual closed, it is one clause in D5 at ratification, removing those names
-beside `GH_DEBUG` and `DEBUG`.
+feature 005's Q9 B (PR #19 at `423a532`, C-50), which reaches [E]'s scrub of Git
+children, does not extend to `gh` children, and this is recorded as a residual,
+as tested (lane openRepoProject-4's call 4 on C-48, 2026-10-21). `gh` 2.96.0,
+run offline on 2026-10-21 with D5's flags, switches and query, from `/`, with a
+fake token, its proxy at a closed local port, its configuration, state, cache
+and data directories empty, `GIT_TRACE`, `GIT_TRACE2` and `GIT_TRACE2_EVENT`
+naming files and a fake `git` first on `PATH`, exited 1 on the refused
+connection with nothing on standard output, started no `git`, created no trace
+file and wrote no file. The path of a 200 answer is not verified. If Brett Heap
+wants the residual closed, it is one clause in D5 at ratification, removing
+those names beside `GH_DEBUG` and `DEBUG`.
 
 The child starts in `/`, which re-anchors every relative path in its
 environment. So the lookup of `gh` counts as failing when any of
@@ -1440,6 +1475,30 @@ Nothing migrates: without `--remote` no output, flag or exit changes.
    re-based on change 1's text, and that block re-based on
    `add-project-clean-branch-retirement`'s archived block if that change
    archives first (L-17).
+
+Each re-read or re-base of a block in steps 2 and 4 (tasks 2.3 and 2.4) is
+checked by two diffs (reader RF's M1; C-51). The first, `diff -u` of the
+archived block against this change's re-based block, shows additions only, as
+tasks 2.3 and 2.4 say, and is kept. It cannot see a change to this change's own
+words, which after the earlier change archives are all additions to the archived
+block, so a re-base that reworded them would still show additions only, validate
+and archive. The second, `diff -u` of this change's block as committed at its
+ratified head against the re-based block, shows only the archived block's own
+text carried in: for the block of [E], change 1's archived text in place of
+PR #19's at `c462d87`, with the additions of
+`add-project-clean-branch-retirement` if that change archived first; for the
+three `project-overview` blocks, change 2's archived text in place of its text
+at `961c405`. Any change that the second diff shows to this change's own
+ratified words, the two added sentences and the added scenario of [E] and the
+added paragraphs and scenarios of the three `project-overview` blocks, returns
+the block to Brett Heap before the Speckit handoff (step 2) or before the
+archive (step 4); a sentence that task 2.3 re-aligns, or that lane
+openRepoProject-4 asks for, is such a change. The ADDED requirement has no
+archived block, so a `diff -u` of it as committed at the ratified head against
+the re-read text shows any change to it, and such a change returns to Brett Heap
+in the same way. Tasks 2.3 and 2.4, whose lines lane openRepoProject-4 pins, are
+not edited in round C15 and name the first diff alone; this paragraph governs
+until they name both.
 
 Rollback: revert the realization's merge; `--remote` goes away, and the
 default overview, which nothing here changed, is untouched.
