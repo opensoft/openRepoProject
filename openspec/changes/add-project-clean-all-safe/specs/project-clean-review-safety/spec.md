@@ -18,15 +18,15 @@ the branch has whatever its message, or whose message begins
 to the merge target's SHA not being proof of that; a branch whose reflog is
 missing, empty or read to its 64 KiB bound, or whose surviving entries cannot
 decide that (`reflog-unavailable`); a worktree whose administrative directory
-shows a merge, cherry-pick, revert, `am`, rebase or bisect in progress, or
-cannot be listed (`operation-in-progress`); a worktree whose HEAD reflog or
-`refs/worktree/` holds a commit that no branch, tag or remote-tracking ref
-reaches, nor its branch's reflog, or whose check cannot decide that
-(`worktree-only-commits`); and a worktree whose path cannot be read or
-whose state could not be established (`inspection-error`). It
-MUST not offer destructive removal for those states. A value that is not
-established SHALL be null, never false or 0, and SHALL keep its row out of every
-removal.
+shows a merge, cherry-pick, revert, `am`, rebase or bisect in progress
+(`operation-in-progress`); a worktree whose HEAD reflog or `refs/worktree/`
+holds a commit that no branch, tag or remote-tracking ref reaches, nor its
+branch's reflog, or whose HEAD reflog is read to its 64 KiB bound or holds a
+line that cannot be parsed (`worktree-only-commits`); and a worktree whose
+path cannot be read or whose state could not be established
+(`inspection-error`). It MUST not offer destructive removal for those states. A
+value that is not established SHALL be null, never false or 0, and SHALL keep
+its row out of every removal.
 
 #### Scenario: A merged worktree has ignored local files
 
@@ -86,8 +86,9 @@ by filesystem reads, and, where the plan read
 and, inside the target worktree, the combined status probe, which SHALL print
 no record, then the hidden-state probe, then the `worktree-only-commits` check
 that "Clean previews and applies a batch of eligible worktree removals in one
-repository" states, `logs/HEAD` read again and the plan's branch reflog
-objects taken as they were, whose probe SHALL print nothing. It SHALL compare
+repository" states, `logs/HEAD` read again and the non-zero objects that the
+plan's branch reflog named taken as they were, whose probe SHALL print
+nothing. It SHALL compare
 the recorded repository identity (`root`, `common_dir`, `dev`, `ino`), the
 target's worktree identity (`path`, `dev`, `ino`, `admin_id`), two-way
 registration and, where it
@@ -104,14 +105,17 @@ path, or a missing registry entry, `branch-changed` for a different branch name
 or head, `state-changed` for any other signature, lock,
 manifest or merge-target difference, `contains-submodule` for a new gitlink or
 `modules` entry, `hidden-local-state` for a newly flagged index entry,
-`operation-in-progress` for a marker that the re-read listing finds, or for a
-listing that fails, and `worktree-only-commits` for a commit that only the
-target's HEAD reflog or `refs/worktree/` holds, or for a check that cannot
-decide it. A value that was null in the plan and is null at revalidation,
-such as the `upstream_oid`, `ahead` and `behind` of a selected row whose
-upstream was deleted, SHALL NOT count as a difference; a value that cannot be
-re-read, a filesystem call that times out included, SHALL count as a
-difference. The first
+`operation-in-progress` for a marker that the re-read listing finds, and
+`worktree-only-commits` for a commit that only the target's HEAD reflog or
+`refs/worktree/` holds, or for a `logs/HEAD` read to its 64 KiB bound or
+holding a line that cannot be parsed. A value that was null in the plan and is
+null at revalidation, such as the `upstream_oid`, `ahead` and `behind` of a
+selected row whose upstream was deleted, SHALL NOT count as a difference; a
+value that cannot be re-read, a filesystem call that times out included, SHALL
+count as a difference, and where the listing, read or child of the
+`operation-in-progress` or `worktree-only-commits` check fails or runs past its
+budget, that difference SHALL be `state-changed`, as it is for a status probe
+that fails there. The first
 target's repository-wide checks SHALL serve as
 the preflight of every selected target, so that a difference found there removes
 nothing at all. Push and delete-branch SHALL keep the full re-inspection, and

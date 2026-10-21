@@ -140,11 +140,12 @@ Scope).
   `contains-submodule` (any gitlink or admin `modules` entry),
   `hidden-local-state` (any entry flagged assume-unchanged or skip-worktree),
   `operation-in-progress` (a merge, cherry-pick, revert, `am`, rebase or
-  bisect marker in the worktree's administrative directory, or a listing of
-  it that fails; Brett Heap's ruling LQ-14) and `worktree-only-commits` (a
-  commit that only the worktree's HEAD reflog or `refs/worktree/` holds, which
-  no branch, tag, remote-tracking ref or the branch's reflog reaches, or a
-  check that cannot decide it; Brett Heap's ruling LQ-13), the last four read
+  bisect marker in the worktree's administrative directory; Brett Heap's
+  ruling LQ-14) and `worktree-only-commits` (a commit that only the
+  worktree's HEAD reflog or `refs/worktree/` holds, which no branch, tag,
+  remote-tracking ref or the branch's reflog reaches, or a HEAD reflog over
+  its 64 KiB bound or with a line that does not parse; Brett Heap's ruling
+  LQ-13), the last four read
   in the row's own worktree or administrative directory
   (`BA:113-150`, `BA:629-675`, `BA:554-583`). A merged worktree whose
   upstream was deleted is
@@ -263,12 +264,12 @@ Scope).
   4,096 and 8 (`BA:721-814`). A cap or deadline hit is an incomplete plan
   (`inspect-cap`, `inspection-incomplete`, `deadline-exceeded`, with `omitted`)
   that blocks apply (preview exit 1). When more than 16 rows pass every gate
-  before the two index gates, the first 16 in canonical order go on to those
-  gates and the rest are excluded `deferred-target-cap` with the next command;
-  the plan stays complete, apply is allowed, and re-running drains the backlog
-  16 at a time, the fresh plan and revalidation unchanged; when every one of
-  those 16 is then excluded as `contains-submodule`, no re-run reaches a
-  deferred row, and the human report says why. The `target-cap`
+  before `deferred-target-cap`, the first 16 in canonical order go on to the
+  gates after it and the rest are excluded `deferred-target-cap` with the
+  next command; the plan stays complete, apply is allowed, and re-running drains
+  the backlog 16 at a time, the fresh plan and revalidation unchanged; when
+  every one of those 16 is then excluded as `contains-submodule`, no re-run
+  reaches a deferred row, and the human report says why. The `target-cap`
   refusal is retired; the code survives only as `add-project-overview`'s
   limiting gate reason (Decisions). Plans and results report `probes` and
   `operations` as `{estimated, performed}`, a removal counted under `operations`
@@ -592,7 +593,7 @@ Headers are quoted verbatim, one per line; ADDED headers are proposed text.
     `BA:897-900`, `DI:781-785`), so a fresh project with no remote passes.
     "Missing leg" and the rest stay. Added scenario: WHEN doctor runs with no
     `git` on PATH, THEN it reports `git-unavailable` as an error row, exit 1.
-  - MODIFIED (`:31`): `### Requirement: Explicit maintenance`. One sentence:
+  - MODIFIED (`:31`): `### Requirement: Explicit maintenance`. Two changes:
     `update --apply` for a project-modifying component (`shape`, `bench`)
     refuses whenever the root's or any child's `dirty` is not exactly
     `false`, as push already does (`project:541`; `project:863` and `:869`
@@ -1024,12 +1025,14 @@ Departures from packet decisions, each citing the decision departed from:
   `refs/worktree/`, and the negatives every branch, tag and remote-tracking
   ref and the objects that the branch's own reflog names, which survives the
   removal, so that an amend, reset or rebase of the branch is not taken for
-  lost work. A printed commit, and every read or child that cannot decide,
-  excludes the row; revalidation runs the check again, so a commit made after
-  the plan refuses the target with the same reason (lane openRepoProject-3's
-  reader RB, R-107), and the residual-window line names such a commit made
-  after that check. No JSON field is added (design D7, D12, D14, D18, D21,
-  Risks).
+  lost work. A printed commit, or a `logs/HEAD` over its 64 KiB bound or with
+  a line that does not parse, excludes the row, and a read or child that fails
+  or times out is `inspection-error`, as every other evidence read is
+  (`BA:188-192`, `BA:642-644`; the lead's R-124); revalidation runs the
+  check again, so a commit made after the plan refuses the target with the same
+  reason (lane openRepoProject-3's reader RB, R-107), and the residual-window
+  line names such a commit made after that check. No JSON field is added (design
+  D7, D12, D14, D18, D21, Risks).
 - **An operation in progress keeps the worktree** (Brett Heap's ruling LQ-14
   of 2026-10-21, in lane openRepoProject-3's session, "yes to all six
   recommendations, LQ-10 to LQ-15", on lane openRepoProject-3's
@@ -1044,12 +1047,12 @@ Departures from packet decisions, each citing the decision departed from:
   `worktree-only-commits`, lists that directory once and excludes the row when
   it holds `MERGE_HEAD`, `CHERRY_PICK_HEAD`, `REVERT_HEAD`, `BISECT_LOG`,
   `BISECT_START`, `rebase-apply`, `rebase-merge` or `sequencer`, the markers
-  of Git's own state detection, read in its sources at 2.36.6 and 2.43.7, or
-  when the listing fails. Revalidation lists it again with no new Git child,
-  so an operation started after the plan refuses the target with the same
-  reason (lane openRepoProject-3's reader RB, R-107), and the residual-window
-  line names an operation started after that check. No JSON field is added
-  (design D7, D18, D21, D22, Risks).
+  of Git's own state detection, read in its sources at 2.36.6 and 2.43.7; a
+  listing that fails is `inspection-error` (R-124). Revalidation lists it
+  again with no new Git child, so an operation started after the plan refuses
+  the target with the same reason (lane openRepoProject-3's reader RB, R-107),
+  and the residual-window line names an operation started after that check. No
+  JSON field is added (design D7, D18, D21, D22, Risks).
 
 Packet decisions adopted, not open: OQ-5, the caps and bounds of `BA:966`,
 subject to OQ-4, less the target cap's refusal; OQ-9, the budgets of
@@ -1425,7 +1428,21 @@ operation in progress", `Clean bounds its Git work and reports omitted work`,
 `Clean records a reconcilable result for every removal target`, `Cleanup
 preserves all local work not proven disposable`, `Cleanup revalidates
 destructive actions` and its added scenario "An operation started after the
-plan", and `Cleanup states a narrow guarantee and its residual window`).
+plan", and `Cleanup states a narrow guarantee and its residual window`). Lane
+openRepoProject-3's W10 read of LQ-12 and LQ-13 at `93de4bb` (HIGH 1, MEDIUM
+1, LOW 8; its H1 departing from `BA:188-192`), under the lead's rulings R-124
+and R-127, makes a failed or timed-out LQ-13 or LQ-14 check `inspection-error`
+in the plan and `state-changed` at revalidation, only a decided result giving
+the gate's reason (H1); takes the branch reflog's non-zero objects as the
+negatives (M1); names all four gates past the cap (L1); and records L2 to L5,
+L7 and L8, L3's stricter revalidation kept because it fails safe and L5's
+`logs/refs/worktree/` as a risk (What Changes, eligibility and deferral;
+Capabilities `:31`; Decisions, departures; this list; design Context, D6, D12,
+D14, D21, D22, Risks; `tasks.md` 1.2; the deltas' `Clean previews and applies
+a batch of eligible worktree removals in one repository` and its scenarios "An
+operation in progress" and "A commit held only by the worktree", `Clean bounds
+its Git work and reports omitted work`, `Cleanup preserves all local work not
+proven disposable` and `Cleanup revalidates destructive actions`).
 
 ### Council Verdicts
 

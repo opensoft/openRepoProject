@@ -655,11 +655,12 @@ which Git knows that a merge, a cherry-pick or revert or a sequence of them, an
 would delete with that directory, even where the operation left the index and
 the working tree unchanged. The gate SHALL read that directory by one listing,
 counted in the filesystem budget. One outcome rule SHALL govern the gate: a
-marker present, and any error on the listing, SHALL make the row
-`operation-in-progress`; a listing not finished within the filesystem budget
-SHALL leave the row unprobed and the plan incomplete with
-`inspection-incomplete`, and the deadline passing SHALL leave it incomplete
-with `deadline-exceeded`, as for every other read.
+marker present SHALL make the row `operation-in-progress`; an error on the
+listing SHALL make the row `inspection-error`, as any failed row probe does,
+so that the plan is incomplete with `inspection-incomplete`; a listing not
+finished within the filesystem budget SHALL leave the row unprobed and the
+plan incomplete with `inspection-incomplete`; and the deadline passing SHALL
+leave it incomplete with `deadline-exceeded`, as for every other read.
 
 A row SHALL be excluded as `worktree-only-commits` when a commit that its own
 HEAD reflog or a ref under its own `refs/worktree/` holds is reachable from no
@@ -669,16 +670,21 @@ its administrative directory. The gate SHALL read `logs/HEAD` in that directory
 by one filesystem call, at most 64 KiB, counted in the filesystem budget, every
 non-zero old and new object it names being a candidate, and SHALL then run one
 Git child in the worktree, `git rev-list --max-count=1 --glob=refs/worktree
-<candidates> --not --branches --tags --remotes <objects the branch's reflog
-names>`, which prints a commit exactly when one is held that way. A `logs/HEAD`
-that is missing (`ENOENT` or `ENOTDIR`) or empty SHALL give no candidate. One
-outcome rule SHALL govern the gate: a printed commit, a `logs/HEAD` read to its
-64 KiB bound or holding a line that cannot be parsed, any other error on the
-read, and a child that fails, runs past its budget or prints anything but one
-object name SHALL each make the row `worktree-only-commits`; a read not
-finished within the filesystem budget SHALL leave the row unprobed and the plan
-incomplete with `inspection-incomplete`, and the deadline passing SHALL leave
-it incomplete with `deadline-exceeded`, as for every other read and child.
+<candidates> --not --branches --tags --remotes <the non-zero objects the
+branch's reflog names>`, which prints a commit exactly when one is held that
+way. A `logs/HEAD` that is missing (`ENOENT` or `ENOTDIR`) or empty SHALL give
+no candidate. One outcome rule SHALL govern the gate, split as the branch
+reflog's is: a child that exits 0 and prints anything, and a `logs/HEAD` read
+to its 64 KiB bound or holding a line that cannot be parsed, SHALL each make
+the row `worktree-only-commits`, at the gate's place in this order; any other
+error on the read, and a child that cannot be started or exits nonzero, as on
+a missing object, SHALL make the row `inspection-error`, as any failed row
+probe does; a child stopped at its 5 s budget, the deadline not being the
+limit, SHALL record `probe-timeout` and make the row `inspection-error`; a read
+not finished within the filesystem budget SHALL leave the row unprobed; and a
+read or child that the deadline cuts SHALL record `deadline-exceeded`. Each of
+those four SHALL leave the plan incomplete, with `inspection-incomplete` or
+`deadline-exceeded`, as for every other read and child.
 
 `selected` and `excluded` SHALL be in canonical order, by raw path bytes, and
 that order SHALL be the execution order. Once a plan is built, these checks
@@ -790,6 +796,11 @@ apply SHALL print `Removed N; branches kept: ` followed by the branches kept.
 - **AND** once each operation is aborted (`git am --abort`, `git cherry-pick
   --abort`, `git merge --abort` and `git bisect reset`), each worktree is
   selected as before
+- **AND** a worktree whose administrative directory cannot be listed, its read
+  permission removed while its `gitdir` file stays readable, is
+  `inspection-error`, the plan is incomplete with `inspection-incomplete`, the
+  preview exits 1, and `--all-safe --apply --yes` refuses with exit 2 before
+  any removal
 
 #### Scenario: A commit held only by the worktree
 
@@ -807,6 +818,11 @@ apply SHALL print `Removed N; branches kept: ` followed by the branches kept.
 - **AND** a worktree whose branch was amended and reset, so that its HEAD
   reflog names commits that only that branch's reflog still holds, is selected
   as before
+- **AND** a worktree whose HEAD reflog names a commit whose object was deleted
+  from the repository, so that the child exits 128 with `fatal: bad object`,
+  is `inspection-error`, the plan is incomplete with `inspection-incomplete`,
+  the preview exits 1, and `--all-safe --apply --yes` refuses with exit 2
+  before any removal
 
 #### Scenario: Paths and empty plans
 
@@ -907,14 +923,15 @@ worktrees" states for a single-target removal. A preview or report SHALL exit 1
 when its plan is incomplete and 0 when it is complete, deferred rows included.
 
 When more than 16 rows pass every gate before `deferred-target-cap`, the first
-16 in canonical order SHALL go on to the two index gates and the rest SHALL be
+16 in canonical order SHALL go on to the gates after it, the two index gates,
+`operation-in-progress` and `worktree-only-commits`, and the rest SHALL be
 excluded as `deferred-target-cap`, with the command to run next. The plan SHALL
 stay complete and apply SHALL be allowed; re-running SHALL take the next 16,
 each run building its own fresh plan and revalidating each of its targets. Rows
-that an index gate then excludes SHALL keep their places among the 16, so that
-when every one of those 16 is excluded as `contains-submodule` no re-run reaches
-a deferred row, and the human report SHALL say why the deferred rows will not
-drain. No plan SHALL be refused for having more than 16 such rows. In a
+that a gate after the cap then excludes SHALL keep their places among the 16,
+so that when every one of those 16 is excluded as `contains-submodule` no re-run
+reaches a deferred row, and the human report SHALL say why the deferred rows
+will not drain. No plan SHALL be refused for having more than 16 such rows. In a
 single-target removal the limit SHALL count P alone, because `not-requested`
 precedes it.
 

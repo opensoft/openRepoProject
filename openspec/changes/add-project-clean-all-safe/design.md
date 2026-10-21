@@ -25,8 +25,10 @@ to LQ-15, recorded in `proposal.md` Decisions, edit here: LQ-15, Context, D6,
 D11, D16, D18, D20 and Risks; LQ-10, Context, D9, D11, D20 and Risks; LQ-12,
 Context, D6, D16 and D20; LQ-11, Context, D6, D7, D14, D20 and Risks; LQ-13,
 Context, D7, D12, D14, D18, D20, D21 and Risks; lane openRepoProject-3's W8
-read of LQ-15, Context, D11, D16 and D18; and LQ-14, Context, D7, D18, D20,
-D21, D22 and Risks. Brett Heap's ruling
+read of LQ-15, Context, D11, D16 and D18; LQ-14, Context, D7, D18, D20, D21,
+D22 and Risks; and lane openRepoProject-3's W10 read of LQ-12 and LQ-13, under
+the lead's rulings R-124 and R-127, Context, D6, D12, D14, D21, D22 and Risks.
+Brett Heap's ruling
 of 2026-10-09 on open question 1, that a local ancestry proof outranks
 `remote-gone` for worktree rows, is in `proposal.md` Decisions and edited
 Context, D6, D7, D20, Risks, the Migration Plan and Open Questions here.
@@ -366,7 +368,10 @@ the push child: Git children lose it only because the protocol pins take its
 place, an owner tool takes no pin, and removing it would lift a restriction
 that the caller set, where the ruling only tightens. Nothing is set: no
 `GIT_OPTIONAL_LOCKS`, since the tool may write, and no trace2 variable, since
-Brett Heap's ruling Q9 B binds Git children and the tool is not one.
+Brett Heap's ruling Q9 B binds Git children and the tool is not one. The
+scenario "Owner tools see the repository the check inspected" sets three of
+the thirty names, `GIT_DIR`, `GIT_WORK_TREE` and `GIT_INDEX_FILE`, as a
+sample, which is enough (lane openRepoProject-3's W10 L8, R-124 (d)).
 
 Every child in the table, `git --version` and D9's removal child included, also
 runs with `-c protocol.allow=never` and the six per-protocol pins (D11, R-23,
@@ -799,13 +804,14 @@ resolves against its directory are outside it.
 ### D12. The 16-per-run deferral (V5)
 
 Gates are evaluated in canonical order. Rows that pass every gate before
-`deferred-target-cap` are counted; the first 16 go on to the `modules` check and
-the hidden-state probe, and the rest are excluded as `deferred-target-cap` with
-no index probe, so at most 16 hidden-state probes run and E is at most 16; at
-most 16 of D21's reachability probes run likewise. A row
-an index gate then excludes keeps its place, so a run can select fewer than 16
-while rows stay deferred, and 16 rows that an index gate always excludes, ahead
-of a backlog, stop it until a person handles them; when every one of the 16 is
+`deferred-target-cap` are counted; the first 16 go on to the gates after it,
+the `modules` check, the hidden-state probe and the gates of D22 and D21, and
+the rest are excluded as `deferred-target-cap` with no index probe, so at most
+16 hidden-state probes run and E is at most 16; at most 16 of D21's
+reachability probes run likewise. A row that a gate after the cap then
+excludes keeps its place, so a run can select fewer than 16 while rows stay
+deferred, and 16 rows that such a gate always excludes, ahead of a backlog,
+stop it until a person handles them; when every one of the 16 is
 `contains-submodule`, the human text says why the deferred rows will not drain
 (D18, R-24). The plan stays complete and apply allowed; each re-run plans and
 revalidates afresh, draining 16 at a time. `plan_digest` covers only `selected`,
@@ -849,8 +855,11 @@ deadline sooner and goes incomplete with `deadline-exceeded`, never unsafe
 (LQ-11). D21's reachability probe adds one child for each of at most 16 rows
 and one to each revalidation (LQ-13); its walk is unmeasured, and at task 2.1's
 `for-each-ref` cost over 1,000 loose branches, 240 ms warm, those 32 children
-would add about 7.7 s, which the measured fit's 26.4 s margin absorbs, a slower
-walk making a plan incomplete, never unsafe. Under D9 a removal
+would add about 7.7 s, which the measured fit's 26.4 s margin absorbs. A slower
+walk is never unsafe: one stopped at its 5 s budget makes its row
+`inspection-error` and the plan incomplete, one that the deadline cuts gives
+`deadline-exceeded`, and at revalidation one that runs past its budget refuses
+the target with `state-changed` (D21, R-124). Under D9 a removal
 running past the deadline is bounded by its ceiling, not by the fit. The report
 keeps the baseline layout and adds `Report: complete` or `Report: incomplete
 (CODES)`, and, for a repository of at most 128 worktree rows, `--all-safe would
@@ -1131,7 +1140,8 @@ garbage collection. Lane openRepoProject-3 found the gap (F1 H-1 at
   reflog and its remedy says that reflog is missing, expired or undecidable;
   `unstarted-branch` says the opposite, that no work was done; and
   `inspection-error` would make the whole plan incomplete for a state that is
-  fully established.
+  fully established. A check that fails, which establishes nothing, is
+  `inspection-error` as every other failed read is (Fail closed).
 - Place. The last gate, after `hidden-local-state` and LQ-14's
   `operation-in-progress` (D22), so that a row with an operation in progress
   runs no reachability child. It is a protection, so it
@@ -1144,40 +1154,56 @@ garbage collection. Lane openRepoProject-3 found the gap (F1 H-1 at
   administrative directory, at most 64 KiB, the cap of D10's branch reflog, and
   counted in the filesystem budget, each line parsed as D10 parses one; every
   non-zero old and new object it names is a candidate. Then, after the
-  hidden-state probe, one Git child in the worktree, with the scrub, the pins
-  and `GIT_OPTIONAL_LOCKS=0` of every read-only probe:
+  hidden-state probe, one Git child in the worktree, with the scrub, the
+  protocol pins and `GIT_OPTIONAL_LOCKS=0` of every read-only probe:
   `git -C <worktree> rev-list --max-count=1 --glob=refs/worktree <candidates>
-  --not --branches --tags --remotes <branch reflog objects>`.
+  --not --branches --tags --remotes <non-zero branch reflog objects>`.
   `--glob=refs/worktree` adds the worktree's own per-worktree refs, which only
   that worktree sees. The negative side is every branch, tag and
-  remote-tracking ref and every object that the row's branch reflog names,
-  which D10 already read and which survives the removal in the common
-  directory, so that an amend, a reset or a rebase of the row's own branch is
-  not taken for lost work: such a commit is not held only by the worktree. The
-  child prints a commit exactly when one is reachable from the candidates or
-  from `refs/worktree/` and from none of the negatives.
+  remote-tracking ref and every non-zero object that the row's branch reflog
+  names (its creation entry's all-zeros object would make the child exit 128,
+  lane openRepoProject-3's W10 M1, R-124 (c)), which D10 already read and
+  which survives the removal in the common directory, so that an amend, a reset
+  or a rebase of the row's own branch is not taken for lost work: such a commit
+  is not held only by the worktree. The child prints a commit exactly when one
+  is reachable from the candidates or from `refs/worktree/` and from none of the
+  negatives.
 - Bounds. The read takes the filesystem budget and the child `min(5 s, work
   remaining)`, as every read and child do; `--max-count=1` keeps the output to
   one line.
 - Fail closed. A missing (`ENOENT` or `ENOTDIR`) or empty `logs/HEAD` gives no
-  candidate, since no reflog then holds anything. A printed commit gives
-  `worktree-only-commits`, and so does every outcome that cannot decide: the
-  64 KiB bound reached, a line that does not parse, any other error on the
-  read, and a child that exits nonzero, as on a missing object (`fatal: bad
-  object`, 128), runs past its budget, or prints anything but one object name;
-  `reflog-unavailable` does not fit there, since its remedy names the branch's
-  reflog. A read not finished within the filesystem budget leaves the row
-  unprobed and the plan incomplete with `inspection-incomplete`, and the
-  deadline gives `deadline-exceeded`, as for every read and child.
+  candidate, since no reflog then holds anything. Only a decided result gives
+  `worktree-only-commits`, as only a decided result gives `reflog-unavailable`
+  for the branch's reflog (D10): a child that exits 0 and prints anything, and
+  a `logs/HEAD` whose content cannot be decided, read to the 64 KiB bound or
+  holding a line that does not parse. A read or child that fails establishes
+  nothing and is treated as every other evidence read is (`BA:188-192`,
+  `BA:642-644`): any other error on the read, and a child that cannot be
+  started or exits nonzero, as on a missing object (`fatal: bad object`, 128),
+  make the row `inspection-error`, and so does a child stopped at its 5 s
+  budget, which records `probe-timeout`, so that the plan is incomplete with
+  `inspection-incomplete`; a read not finished within the filesystem budget
+  leaves the row unprobed, with the same code; and a read or child that the
+  deadline cuts gives `deadline-exceeded` (the lead's R-124 (a), on lane
+  openRepoProject-3's W10 H1, which found the first form of this rule
+  departing from the packet).
 - Revalidation. After the hidden-state probe, revalidation reads `logs/HEAD`
-  again and runs the same child, with the plan's branch reflog objects; a
-  printed commit, or any outcome that cannot decide, refuses the target with
-  `worktree-only-commits`. That is the sixth Git child of a revalidation (D7,
+  again and runs the same child, with the non-zero objects of the plan's
+  branch reflog; a printed commit, the 64 KiB bound or a line that does not
+  parse refuses the target with `worktree-only-commits`, and a read or child
+  that fails or runs past its budget, which cannot make a plan incomplete
+  there, is a value that cannot be re-read and refuses it with
+  `state-changed`, as a status probe that fails there does (R-124, R-127).
+  That is the sixth Git child of a revalidation (D7,
   D14), and it catches a commit made, or a ref under `refs/worktree/` created,
   after the plan, which no step read before (lane openRepoProject-3's reader RB
   at `2cf34d3`, whose cases were all removed with exit 0; R-107). After that
   revalidation such a commit is in the residual window, whose line names it
-  (D18).
+  (D18). Taking the plan's branch reflog objects as they were makes
+  revalidation stricter than planning: a commit made on the branch after the
+  plan and reset away, which the branch's reflog then holds, refuses the
+  target. That is kept, since it fails safe (lane openRepoProject-3's W10 L3,
+  R-124 (d)).
 - Rendering. The reason appears where every gate's does: an `excluded`
   entry's `reason`, a `target-excluded` refusal's `reason` and a `refused`
   target's `reason`, so no JSON field is added and the closed enums gain one
@@ -1190,11 +1216,12 @@ candidate at all; it prints the commit made on a detached HEAD and left there,
 and nothing once that commit is tagged; run in the worktree, it prints the
 commit that only `refs/worktree/keep` holds, and run in the main worktree it
 does not; that ref stays loose after `git pack-refs --all`; it exits 128 on a
-missing object; and for a branch amended and reset in the worktree it prints
-the pre-amend commit with only the refs as negatives, and nothing once the
-branch reflog's objects are negatives too. On Git 2.43.0, after an interactive
-rebase onto a merge target that had moved, with one pick turned into a fixup,
-it prints the intermediate commit that the fixup replaced (Risks).
+missing object, which makes the row `inspection-error`; and for a branch
+amended and reset in the worktree it prints the pre-amend commit with only the
+refs as negatives, and nothing once the branch reflog's objects are negatives
+too. On Git 2.43.0, after an interactive rebase onto a merge target that had
+moved, with one pick turned into a fixup, it prints the intermediate commit that
+the fixup replaced (Risks).
 
 ### D22. Operations in progress (LQ-14)
 
@@ -1245,16 +1272,18 @@ content, a bisect with `--no-checkout` (lane openRepoProject-3's F1 H-2 at
   a status-like child would read the same files and cost a child per row.
 - Bounds. The listing takes `min(5 s, work remaining)` as every filesystem
   call does; a directory too large to list in that time is a row unprobed.
-- Fail closed. A marker present gives `operation-in-progress`, and so does any
-  error on the listing: the registration check has already read that
-  directory, so an error there cannot be told from a state hidden. A listing
-  not finished within the filesystem budget leaves the row unprobed and the
-  plan incomplete with `inspection-incomplete`, and the deadline gives
-  `deadline-exceeded`, as for every read.
+- Fail closed. Only a marker present gives `operation-in-progress`. An error
+  on the listing establishes nothing and makes the row `inspection-error`, as
+  every failed read does, so that the plan is incomplete with
+  `inspection-incomplete` (the lead's R-124 (b), the rule of D21 kept for
+  consistency); a listing not finished within the filesystem budget leaves the
+  row unprobed and the plan incomplete with `inspection-incomplete`, and the
+  deadline gives `deadline-exceeded`, as for every read.
 - Revalidation. The same listing runs again in revalidation's filesystem step,
   beside the target's identity and `modules` check, with no new Git child; a
-  marker, or a listing that fails, refuses the target with
-  `operation-in-progress`. It catches an operation started after the plan,
+  marker refuses the target with `operation-in-progress`, and a listing that
+  fails is a value that cannot be re-read and refuses it with `state-changed`
+  (R-124, R-127). It catches an operation started after the plan,
   which no step read before (lane openRepoProject-3's reader RB at `2cf34d3`,
   whose cases were all removed with exit 0; R-107). An operation started after
   that revalidation is in the residual window, whose line names it (D18).
@@ -1295,9 +1324,16 @@ record once the index and tree matched the branch head.
   rewrote its picks and then squashed or fixed them up, or the commits of a
   branch checked out there and
   since deleted, is excluded as `worktree-only-commits`; so is one whose HEAD
-  reflog exceeds 64 KiB] -> Fails closed, as Brett Heap's ruling LQ-13 asks;
-  the remedy says to keep any such commit on a branch or tag, or to review and
-  remove the worktree by hand (D18, D21).
+  reflog exceeds 64 KiB] -> Fails closed, as Brett Heap's ruling LQ-13 asks,
+  and as D21's bound sets for an oversized reflog; the remedy says to keep any
+  such commit on a branch or tag, or to review and remove the worktree by hand
+  (D18, D21).
+- [A commit that only the reflog of a ref under `refs/worktree/` holds, in
+  `logs/refs/worktree/` of the administrative directory, which exists only
+  under `core.logAllRefUpdates=always`, is no candidate, so a removal can leave
+  it to garbage collection] -> Accepted, not widened (R-124 (d), R-127): Brett
+  Heap's ruling LQ-13 names the HEAD reflog and `refs/worktree/`, and a ref's
+  own reflog is outside its words (lane openRepoProject-3's W10 L5).
 - [A marker left behind with nothing in progress, such as a `sequencer`
   directory after a crash or a lone `BISECT_START` after a cut-short `git
   bisect reset`, keeps its worktree out as `operation-in-progress`] -> Fails
