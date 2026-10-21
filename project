@@ -2383,6 +2383,17 @@ def _fs(operation, fn, *args):
     return value
 
 
+def _direct(operation, fn, *args):
+    """fn(*args) called at once, as _fs() calls it but with no fs_call() of
+    its own: for reads that already run together inside one fs_call() (its
+    one thread and one budget; _identity_now()). An OSError raises
+    EvidenceError with its `os-error` for operation and its error number."""
+    try:
+        return fn(*args)
+    except OSError as exc:
+        raise EvidenceError(os_error(operation, exc), exc.errno) from None
+
+
 def _lstat(path):
     """The lstat of path through fs_call(): its value, or the EvidenceError of
     a call that gave none, for presence_from_lstat()."""
@@ -2416,8 +2427,8 @@ def _read_head(path, limit):
         return stream.read(limit)
 
 
-def _realpath(path):
-    return _fs("realpath", os.path.realpath, path)
+def _realpath(path, fs=_fs):
+    return fs("realpath", os.path.realpath, path)
 
 
 def _git(run, directory, args, subcommand, parser=None, kind="probe"):
@@ -2467,35 +2478,37 @@ def gitdir_line(content):
     return content[len(b"gitdir: "):]
 
 
-def _gitfile(path):
+def _gitfile(path, fs=_fs):
     """The realpath that `<path>/.git` names when it is a gitfile: a regular
     file holding a gitdir line (gitdir_line()), a relative value resolved
     against path. None when `.git` is missing, not a regular file, or holds no
-    gitdir line; any other failed read raises EvidenceError."""
+    gitdir line; any other failed read raises EvidenceError. fs makes each
+    read: _fs(), or _direct() inside one fs_call()."""
     dotgit = os.path.join(path, b".git")
     try:
-        mode = _fs("lstat", os.lstat, dotgit).st_mode
+        mode = fs("lstat", os.lstat, dotgit).st_mode
     except EvidenceError as exc:
         if exc.errno in (errno.ENOENT, errno.ENOTDIR):
             return None
         raise
     if not stat.S_ISREG(mode):
         return None
-    value = gitdir_line(_fs("read", _read_head, dotgit, GITFILE_BYTES))
-    return None if value is None else _realpath(os.path.join(path, value))
+    value = gitdir_line(fs("read", _read_head, dotgit, GITFILE_BYTES))
+    return None if value is None else _realpath(os.path.join(path, value), fs)
 
 
-def _admin_gitdir(admin):
+def _admin_gitdir(admin, fs=_fs):
     """The realpath that the `gitdir` file of the admin directory admin names,
     a relative value resolved against admin; None when that file is missing
-    or holds nothing. Any other failed read raises EvidenceError."""
+    or holds nothing. Any other failed read raises EvidenceError. fs as for
+    _gitfile()."""
     try:
-        back = _fs("read", _read_head, os.path.join(admin, b"gitdir"), GITFILE_BYTES).rstrip()
+        back = fs("read", _read_head, os.path.join(admin, b"gitdir"), GITFILE_BYTES).rstrip()
     except EvidenceError as exc:
         if exc.errno in (errno.ENOENT, errno.ENOTDIR):
             return None
         raise
-    return _realpath(os.path.join(admin, back)) if back else None
+    return _realpath(os.path.join(admin, back), fs) if back else None
 
 
 def main_worktree_decision(identity, records, core_worktree, candidate_gitfiles):
@@ -2613,7 +2626,7 @@ def registration_verdict(main, common_dir, named, worktrees=None, back=None, dot
     return True, os.path.basename(named)
 
 
-def verify_registration(path, common_dir, main):
+def verify_registration(path, common_dir, main, fs=_fs):
     """The two-way registration of a present worktree (D7, FR-055), between
     realpaths: (True, admin_id) when it holds, (False, None) when it
     disagrees; a failed read other than a missing file raises EvidenceError.
@@ -2628,18 +2641,19 @@ def verify_registration(path, common_dir, main):
     spellings, with one admin id, since both read one `.git` file;
     worktree_rows() fails both kinds closed (lead rulings R-57 L3 and R-67
     (c)). It reads what registration_verdict() needs, in its order, and
-    decides there."""
+    decides there. fs makes each read: _fs(), each its own bounded call, or
+    _direct() inside one fs_call() (_identity_now())."""
     dotgit = os.path.join(path, b".git")
-    named = _gitfile(path)
+    named = _gitfile(path, fs)
     if main:
-        return registration_verdict(main, common_dir, named, dotgit=_realpath(dotgit) if named is None else None)
+        return registration_verdict(main, common_dir, named, dotgit=_realpath(dotgit, fs) if named is None else None)
     worktrees = back = real_dotgit = None
     if named is not None:
-        worktrees = _realpath(os.path.join(common_dir, b"worktrees"))
+        worktrees = _realpath(os.path.join(common_dir, b"worktrees"), fs)
         if os.path.dirname(named) == worktrees:
-            back = _admin_gitdir(named)
+            back = _admin_gitdir(named, fs)
             if back is not None:
-                real_dotgit = _realpath(dotgit)
+                real_dotgit = _realpath(dotgit, fs)
     return registration_verdict(main, common_dir, named, worktrees, back, real_dotgit)
 
 
@@ -2931,26 +2945,41 @@ def _read_row(raw, main, common_dir, active, active_error, shared):
     return read
 
 
+def _identity_now(raw, main, common_dir):
+    """A row's identity read now, every read at once with _direct(), for one
+    fs_call(): (dev, ino, realpath, (registered, admin_id)), the reads of
+    _read_row() in its order; an OSError raises EvidenceError."""
+    found = _direct("lstat", os.lstat, raw)
+    return (found.st_dev, found.st_ino, _realpath(raw, _direct),
+            verify_registration(raw, common_dir, main, fs=_direct))
+
+
 def _identity_unchanged(read, raw, main, common_dir):
     """The second verification of a row's identity, made immediately before
     its status probe (the project-command delta, pc:124-126: a worktree probe
     runs "only after that worktree's identity has been verified immediately
     before"; lane 3's env H-1, lead ruling R-101 (e) and (j)). It makes the
     reads of _read_row() again, the lstat, the realpath and the two-way
-    registration (verify_registration()), and compares them with read, the
-    row's first reads: True when the device, inode, realpath and admin id are
-    the same and the registration still holds. Otherwise False, and the row
-    gets no probe: a read that fails appends its row error, a registration
-    that now disagrees sets `registered` false (registration-mismatch), and
-    any other change leaves the row present with no status, which classify()
-    makes inspection-error."""
+    registration (verify_registration()), together in one bounded
+    fs_call() (_identity_now()), and compares them with read, the row's
+    first reads: True when the device, inode, realpath and admin id are the
+    same and the registration still holds. Otherwise False, and the row gets
+    no probe: a read that fails, or the call cut at its budget, appends its
+    row error (OPERATION lstat for a cut call), a registration that now
+    disagrees sets `registered` false (registration-mismatch), and any other
+    change leaves the row present with no status, which classify() makes
+    inspection-error."""
+    budget, _ = current_invocation().child_budget("probe")
     try:
-        found = _fs("lstat", os.lstat, raw)
-        if (found.st_dev, found.st_ino) != (read["dev"], read["ino"]) or _realpath(raw) != read["tree"]:
-            return False
-        registered, admin_id = verify_registration(raw, common_dir, main)
+        value = fs_call(_identity_now, raw, main, common_dir)
     except EvidenceError as exc:
         read["errors"].append(exc.error)
+        return False
+    if isinstance(value, DriverOutcome):
+        read["errors"].append(probe_error(value, "lstat", budget))
+        return False
+    dev, ino, tree, (registered, admin_id) = value
+    if (dev, ino) != (read["dev"], read["ino"]) or tree != read["tree"]:
         return False
     if not registered:
         read["registered"], read["admin_id"] = False, None

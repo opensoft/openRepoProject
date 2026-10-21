@@ -1020,13 +1020,15 @@ class EvidenceTests(clean_support.CleanCase):
         first = self.merged_worktree("001-first")
         swapped = self.merged_worktree("002-swapped")
 
-        with self.subTest("each row's lstat comes after the previous row's probe"):
+        with self.subTest("each row's identity is read after the previous row's probe"):
             events = []
             real_fs_call, real_status_probe = project.fs_call, project.status_probe
 
             def fs_call(fn, *args, **kwargs):
-                if fn is os.lstat:
-                    events.append(("lstat", os.fsencode(args[0])))
+                # A bounded filesystem call on the row's own path: its lstat
+                # in the first read, its whole identity in the second.
+                if args and isinstance(args[0], (bytes, str)):
+                    events.append(("read", os.fsencode(args[0])))
                 return real_fs_call(fn, *args, **kwargs)
 
             def status_probe(path, run):
@@ -1044,8 +1046,8 @@ class EvidenceTests(clean_support.CleanCase):
                              "every row probed, in the registry's order")
             for before, at in zip([-1, *probes], probes):
                 with self.subTest(row=os.fsdecode(events[at][1])):
-                    self.assertIn(("lstat", events[at][1]), events[before + 1:at],
-                                  "its lstat is read again after the previous row's probe")
+                    self.assertIn(("read", events[at][1]), events[before + 1:at],
+                                  "its identity is read again after the previous row's probe")
 
         with self.subTest("a worktree swapped after its first read"):
             # A dirty worktree: once every row's identity is read, the first
