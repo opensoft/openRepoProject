@@ -186,17 +186,21 @@ before:
 1. An incomplete report exits 1. Plain `project clean` used to exit 0 for every
    report it printed. It now prints `Report: complete` or `Report: incomplete
    (CODES)`, and exits 1 when the report is incomplete: a worktree or probe it
-   could not inspect (`inspection-incomplete`), more worktrees than its row cap
-   (`inspect-cap`), or a run that ran out of time (`deadline-exceeded`). A
-   preview ends the same way.
+   could not inspect (`inspection-incomplete`), more worktrees than the row cap
+   (`inspect-cap`: above 256 for the plain report, above 128 for an
+   `--all-safe` preview), or a run that ran out of time (`deadline-exceeded`).
+   A plain report of 129 to 256 rows is still complete and exits 0; it only
+   says `--all-safe would be incomplete (inspect-cap)`. A preview ends the
+   same way.
 2. `clean` refuses below Git 2.36. An older Git ends the run with
    `git-too-old`, and a missing or unusable one with `git-unavailable`, exit 2,
    before any repository is probed.
 3. `--worktree P` refuses a freshly created merged worktree as
    `unstarted-branch`. A branch just created at the merge target counts as
-   merged, so such a worktree used to look removable. It is now refused, exit
-   2, with the remedy `no commit was made on this branch here since it was
-   created; review, then git worktree remove yourself`.
+   merged, and as published once it is pushed, so such a worktree used to look
+   removable. It is now refused, exit 2, with the remedy `no commit was made on
+   this branch here since it was created; review, then git worktree remove
+   yourself`.
 4. `--worktree P` refuses a merged worktree whose branch reflog keeps no
    decisive entry as `reflog-unavailable`: the reflog is missing, expired (no
    activity for `gc.reflogExpire`, 90 days by default) or undecidable. The
@@ -220,26 +224,27 @@ project clean --apply --action remove --worktree /path/to/feature-tree --yes
 project clean --apply --action delete-branch --branch 001-feature --yes
 ```
 
-`clean` is read-only by default. It inspects all linked worktrees using local
-refs and labels remote comparisons as of the last fetch. It protects the
-default branch and preserves dirty, detached, unpublished, remote-gone and
-unmerged work. Ignored local files, remote divergence, and an unknown default
-branch also stop destructive cleanup. A pushed-but-unmerged branch is handed
-off to the repository's normal pull-request or merge process. With no
-argument it uses the repository Git finds at the current directory; an
-absolute path must be the repository's main worktree, or `clean` refuses with
-`target-not-repository-root` (exit 2).
+`clean` is read-only by default. It inspects the linked worktrees, up to the row
+caps below, using local refs and labels remote comparisons as of the last
+fetch. It protects the default branch and preserves dirty, detached,
+unpublished, remote-gone and unmerged work. Ignored local files, remote
+divergence, and an unknown default branch also stop destructive cleanup. A
+pushed-but-unmerged branch is handed off to the repository's normal
+pull-request or merge process. With no argument it uses the repository Git
+finds at the current directory; an absolute path must be the repository's main
+worktree, or `clean` refuses with `target-not-repository-root` (exit 2).
 
-Apply actions are explicit. `--all-safe --apply` removes the worktrees of one
-previewed plan, at most 16 a run; `--action push`, `--action remove` and
-`--action delete-branch` each target one branch or worktree. Pushes are normal
-non-force pushes, and a push refuses (`remote-gone`, exit 2) when the branch's
-upstream was deleted. A worktree can be removed only when it is clean,
-non-current, verified merged into the local merge target and past every gate
-below; removing it never deletes its local branch, which is a separate
-action. `clean` never fetches, stashes, resets, force-pushes, creates or merges
-pull requests, or replaces `park`/`resume`. It rechecks the selected state
-after confirmation and before executing each action.
+Apply actions are explicit. `--all-safe --apply` always builds its own fresh
+plan, never reusing a preview, and removes that plan's worktrees, at most 16 a
+run; `--action push`, `--action remove` and `--action delete-branch` each
+target one branch or worktree. Pushes are normal non-force pushes, and a push
+refuses (`remote-gone`, exit 2) when the branch's upstream was deleted. A
+worktree can be removed only when it is clean, non-current, verified merged into
+the local merge target and past every gate below; removing it never deletes its
+local branch, which is a separate action. `clean` never fetches, stashes,
+resets, force-pushes, creates or merges pull requests, or replaces
+`park`/`resume`. It rechecks the selected state after confirmation and before
+executing each action.
 
 ### Preview and apply
 
@@ -248,12 +253,14 @@ repository's main worktree. After the header (`Cleanup plan for ROOT`, `Merge
 target: NAME (SOURCE)`, `Freshness:`) it prints `Selected (N):` with one
 `  remove PATH [BRANCH]` line for each worktree a batch would remove, then
 `Excluded (M):` with a group `  REASON (K): NEXT STEP` for each reason and its
-worktrees beneath, then `Not protected: ...` (see "What is guaranteed"). When a
-complete plan selects nothing it prints `No eligible worktrees` and exits 0.
+worktrees beneath, then, when a worktree is selected, `Not protected: ...` (see
+"What is guaranteed"). When a complete plan selects nothing it prints `No
+eligible worktrees` and exits 0.
 The plain report adds `Report: complete` or `Report: incomplete (CODES)` and
 `--all-safe would select N`. A plain report inspects up to 256 worktrees and
 `--all-safe` up to 128; a report of more than 128 says `--all-safe would be
-incomplete (inspect-cap)` in place of the count and withholds the selection.
+incomplete (inspect-cap)` in place of the count and withholds the selection;
+such a report, up to 256 worktrees, is still complete and exits 0.
 
 `--apply` runs the plan. `clean` plans again, prints the plan, and asks
 `Remove N worktrees, keeping N branches? [yes/N]` (singular for one). Only
@@ -272,11 +279,17 @@ or re-run.
 
 `--all-safe` cannot be combined with `--action`, `--branch` or `--worktree`,
 and `--expect-plan` needs `--all-safe` and `--apply`: each is
-`invalid-arguments`, exit 2, with nothing run. `--apply --action remove
+`invalid-arguments`, exit 2, with nothing run, as is an `--expect-plan` value
+that is not 64 lowercase hexadecimal characters. `--apply --json` stays refused
+for `--action push` and `--action delete-branch`. `--apply --action remove
 --worktree P` gives the one worktree P the same gates and checks, asks the same
 question and takes `--yes` and `--json`; it prints the other worktrees as
-`not-requested`, a gate that excludes P refuses with `target-excluded` and that
-gate's next step (exit 2), and no match is `worktree-not-found`.
+`not-requested`, a gate that excludes P refuses with `target-excluded`, exit 2,
+and no match is `worktree-not-found`. The `target-excluded` message is `Worktree
+is excluded: REASON; NEXT STEP` for a gate, and the older wording, with no next
+step, for the current worktree (`Cannot remove the current worktree.`) and for a
+class that is not removable (`Worktree is CLASS; only clean merged worktrees may
+be removed.`).
 
 With `--json`, a report or preview prints one JSON document (`mode`,
 `selected`, `excluded`, `completeness`, `apply_allowed`, `plan_digest`, and
@@ -353,13 +366,13 @@ removes nothing at all. A difference refuses that target (`refused`), starts no
 removal, attempts no later target and exits 2. Git's own `git worktree remove`,
 never forced, is the last check.
 
-The residual window is stated in one line in the preview, the confirmation and
-the result: `Not protected: ignored files created or index flags set after the
-last check, and any change after Git's own check.` A removal never deletes a
-branch, so a branch that moves during a run loses no commit; one seen only after
-Git removed the worktree leaves the target `removed` with
-`branch-advanced-after-removal` or `branch-missing-after-removal`, stops the run
-and exits 2.
+The residual window is stated in one line in the preview when a worktree is
+selected, in the confirmation and in the result: `Not protected: ignored files
+created or index flags set after the last check, and any change after Git's own
+check.` A removal never deletes a branch, so a branch that moves during a run
+loses no commit; one seen only after Git removed the worktree leaves the target
+`removed` with `branch-advanced-after-removal` or
+`branch-missing-after-removal`, stops the run and exits 2.
 
 ### The result and recovery
 
