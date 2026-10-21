@@ -772,6 +772,70 @@ class RevalidationTests(clean_support.CleanCase):
         self.assertEqual([record for record in clean_support.child_log(log) if is_removal(record)], [])
         self.assertTrue(all(tree.is_dir() for tree in trees))
 
+    # LQ-14 and LQ-13 at revalidation (design D21 and D22; lead rulings R-124,
+    # R-127 and R-146): "An operation started after the plan", "A check that
+    # fails at revalidation", and the reads that fail or are cut there.
+
+    def admin(self, tree):
+        """The administrative directory of the linked worktree at tree."""
+        return Path(self.git(tree, "rev-parse", "--path-format=absolute", "--git-dir").rstrip("\n"))
+
+    def assert_nothing_removed(self, root, trees, before, log):
+        self.assertEqual([record for record in clean_support.child_log(log) if is_removal(record)], [])
+        self.assertEqual(self.snapshot(root, trees)[:2], before[:2], "nothing removed")
+        self.assertTrue(all(tree.is_dir() for tree in trees))
+
+    def test_clean_an_operation_started_after_the_plan(self):
+        root, trees = self.batch("bisect")
+        before = self.snapshot(root, trees)
+        env, log = self.counting()
+        result = self.apply(root, lambda: self.git(trees[0], "bisect", "start", "--no-checkout"), env=env, log=log)
+        self.assert_stopped_at_first(result, trees, "operation-in-progress")
+        self.assert_nothing_removed(root, trees, before, log)
+        self.assertTrue((self.admin(trees[0]) / "BISECT_LOG").is_file(), "the bisect is kept")
+
+    @clean_support.not_root
+    def test_clean_a_check_that_fails_at_revalidation(self):
+        with self.subTest("the admin directory can no longer be listed"):
+            root, trees = self.batch("unlisted")
+            admin = self.admin(trees[0])
+            self.addCleanup(admin.chmod, 0o700)
+            before = self.snapshot(root, trees)
+            env, log = self.counting()
+            result = self.apply(root, lambda: admin.chmod(0o300), env=env, log=log)
+            self.assert_stopped_at_first(result, trees, "state-changed")
+            admin.chmod(0o700)
+            self.assert_nothing_removed(root, trees, before, log)
+
+    def test_clean_operation_in_progress_listing_cut_at_revalidation(self):
+        # In process: the listing of P's admin directory, after the question,
+        # made to time out at its budget, which is a value that cannot be
+        # re-read (state-changed), and to be cut by the work deadline, which
+        # is no difference (P not-attempted with deadline-exceeded, exit 1).
+        for label, name, expected, status in (
+                ("a timeout", "timeout", ("refused", "state-changed"), 2),
+                ("the work deadline", "deadline", ("not-attempted", "deadline-exceeded"), 1)):
+            with self.subTest(label):
+                root, trees = self.batch("listing-" + name)
+                admin = os.fsencode(self.admin(trees[0]))
+                before = self.snapshot(root, trees)
+                asked, calls, real_fs_call = [], [], project.fs_call
+
+                def fs_call(fn, *args, name=name, asked=asked, calls=calls, **options):
+                    if asked and fn is os.listdir and args == (admin,):
+                        calls.append(args[0])
+                        return project.DriverOutcome(None, name, detail="cut here")
+                    return real_fs_call(fn, *args, **options)
+
+                env, log = self.counting()
+                with mock.patch.object(project, "fs_call", fs_call):
+                    result = self.apply(root, lambda: asked.append(True), env=env, log=log)
+                self.assertEqual(calls, [admin], "one listing at P's revalidation")
+                self.assertEqual(self.stages(result)[0], (str(trees[0]), *expected), result.stderr)
+                self.assertEqual([stage for _, stage, _ in self.stages(result)[1:]], ["not-attempted"])
+                self.assertEqual((result.status, result.document["exit_code"]), (status, status))
+                self.assert_nothing_removed(root, trees, before, log)
+
     # D7's bound, by the counting wrapper (lead rulings R-68 (d) and R-73 (f)).
 
     def test_clean_revalidation_spawns_at_most_five_children(self):

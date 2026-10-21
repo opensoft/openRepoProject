@@ -519,7 +519,8 @@ class BatchTests(clean_support.CleanCase):
         with mock.patch.object(project, "run_bounded", side_effect=AssertionError("a Git child ran")), \
                 mock.patch.object(project, "fs_call", side_effect=AssertionError("a filesystem call ran")), \
                 mock.patch.object(project, "reflog_gate", return_value=None), \
-                mock.patch.object(project, "index_gates", return_value=None):
+                mock.patch.object(project, "index_gates", return_value=None), \
+                mock.patch.object(project, "admin_state_gates", return_value=None):
             for mode in ("all-safe", "report"):
                 with self.subTest(mode=mode):
                     self.assertEqual(outcome(literal_plan(mode)),
