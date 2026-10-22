@@ -15,6 +15,7 @@ import os
 from pathlib import Path
 import shlex
 import shutil
+import subprocess
 import unittest
 from unittest import mock
 
@@ -1457,6 +1458,169 @@ class EvidenceTests(clean_support.CleanCase):
             self.assertEqual((row["errors"], row["classification"]), ([], "ignored-local-files"),
                              "W's registration agrees as before, and its ignored file keeps it")
             self.assertIn(str(tree), self.status_dirs(records))
+
+    def test_clean_row_4c_reads_an_exit_1_by_what_it_printed(self):
+        # #19's design D7 at 20084cd (lane 4's finding; lead ruling R-332): "an
+        # unset value is false and any other failure counts as true". Git
+        # answers `config --get` for an unset key with exit 1 and nothing on
+        # either stream, so only that exit is false; an exit 1 that printed
+        # anything, a `hint:` line or a byte past the 4 KiB of standard error
+        # the runner keeps included, is another failure, true, the safe side
+        # that runs the work-tree probe. Literal outcomes stand in for the child.
+        common, directory = b"/repo/.git", b"/repo"
+        head = b"error: could not lock config file\n"
+
+        def outcome(name, status, result=b"", stderr=b"", counted=None, detail=None):
+            return project.DriverOutcome(
+                ["git"], name, result=result, status=status, stderr=stderr,
+                stderr_bytes=len(stderr) if counted is None else counted, detail=detail)
+
+        failed = lambda **kwargs: outcome("failed", 1, **kwargs)
+        cases = (
+            ("exit 1 and nothing on either stream", failed(), False),
+            ("exit 1 and a line on standard error", failed(stderr=head), True),
+            ("exit 1 and Git's hint lines alone", failed(stderr=b"hint: one\nhint: two\n"), True),
+            ("exit 1 and a count of standard error with no head", failed(counted=1), True),
+            ("exit 1 and standard error past the 4 KiB kept", failed(stderr=head * 200, counted=8192), True),
+            ("exit 1 and a line on standard output", failed(result=b"true\n"), True),
+            ("exit 1 and `false` on standard output", failed(result=b"false\n"), True),
+            ("exit 1 and a line feed alone on standard output", failed(result=b"\n"), True),
+            ("exit 1 and output on both", failed(result=b"true\n", stderr=head), True),
+            ("exit 128, the config file unreadable", outcome("failed", 128, stderr=b"fatal: unable to read\n"), True),
+            ("exit 128 and nothing printed", outcome("failed", 128), True),
+            ("exit 2", outcome("failed", 2), True),
+            ("a signal", outcome("failed", -9), True),
+            ("a child that could not be spawned", outcome("failed", None, result=None, detail="cannot run git"), True),
+            ("a timeout", outcome("timeout", None, result=None), True),
+            ("a timeout that ended with exit 1 and nothing printed", outcome("timeout", 1, result=None), True),
+            ("the deadline", outcome("deadline", None, result=None, detail="no time was left"), True),
+            ("`false`", outcome("complete", 0, result=b"false\n"), False),
+            ("`false` with no line feed", outcome("complete", 0, result=b"false"), False),
+            ("`true`", outcome("complete", 0, result=b"true\n"), True),
+            ("nothing, exit 0", outcome("complete", 0), True),
+            ("other output, exit 0", outcome("complete", 0, result=b"maybe\n"), True),
+        )
+        run = project.Invocation("status")
+        for label, answered, expected in cases:
+            asked = []
+
+            def run_bounded(spec, parser, run, answered=answered, asked=asked):
+                asked.append(spec[1])
+                return answered
+
+            with self.subTest(label), mock.patch.object(project, "run_bounded", run_bounded):
+                self.assertIs(project.worktree_config(common, directory, run), expected)
+                self.assertEqual(asked, [["-C", directory, "config", "--file", common + b"/config", "--type=bool",
+                                          "--get", "extensions.worktreeConfig"]], "one child, row 4c's")
+
+    def test_clean_row_4c_reads_a_real_repository_s_keys(self):
+        # Git's own answers, on the Git in use (2.43.0, and 2.36.6 the floor):
+        # `config --file <common>/config --type=bool --get` of a key that is
+        # not set exits 1 with nothing on standard output and nothing on
+        # standard error, which row 4c reads as false (design D7; R-332); a
+        # value that is not a boolean exits 128 with a fatal line, which is a
+        # failure and reads true.
+        root = self.repo()
+        common = self.common_dir()
+        argv = [clean_support.REAL_GIT, "config", "--file", str(common / "config"), "--type=bool", "--get",
+                "extensions.worktreeConfig"]
+
+        def ask():
+            """Git's answer to the child row 4c runs: (exit status, standard output, standard error)."""
+            answered = subprocess.run(argv, cwd=root, env=self.env, capture_output=True,
+                                      timeout=clean_support.TIMEOUT)
+            return answered.returncode, answered.stdout, answered.stderr
+
+        def read():
+            with mock.patch.dict(os.environ, self.env, clear=True):
+                return project.worktree_config(os.fsencode(common), os.fsencode(root), project.Invocation("status"))
+
+        with self.subTest("the key is not set"):
+            self.assertEqual(ask(), (1, b"", b""))
+            self.assertIs(read(), False)
+        for value, answer, expected in (("false", (0, b"false\n", b""), False), ("true", (0, b"true\n", b""), True),
+                                        ("no", (0, b"false\n", b""), False), ("yes", (0, b"true\n", b""), True)):
+            with self.subTest(f"the key is {value}"):
+                self.git(root, "config", "extensions.worktreeConfig", value)
+                self.assertEqual(ask(), answer)
+                self.assertIs(read(), expected)
+        with self.subTest("the key is not a boolean"):
+            self.git(root, "config", "extensions.worktreeConfig", "maybe")
+            status, output, error = ask()
+            self.assertEqual((status, output, error.startswith(b"fatal: bad boolean config value")), (128, b"", True))
+            self.assertIs(read(), True)
+        with self.subTest("the key is unset again"):
+            # From outside the repository: Git run in it refuses the bad boolean first.
+            self.git(self.base, "config", "--file", common / "config", "--unset", "extensions.worktreeConfig")
+            self.assertEqual(ask(), (1, b"", b""))
+            self.assertIs(read(), False)
+
+    def test_clean_a_row_4c_exit_1_that_printed_gives_each_linked_row_its_work_tree_probe(self):
+        # R-332 (#19's design D7): a fake git answers row 4c's child with exit
+        # 1 and what it prints, and execs Git for every other child. Nothing
+        # printed is the unset key, false: no linked row is probed for its
+        # work tree. Any output, on either stream, is another failure, true:
+        # each linked row gets the probe, and (the extension not being set, W's
+        # work tree is its path) the plan stays complete, both rows selected.
+        root = self.repo()
+        self.bare_remote()
+        first = self.merged_worktree("001-first")
+        second = self.merged_worktree("002-second")
+        trees = sorted(map(str, (first, second)))
+        pattern = '*" config --file "*" --type=bool --get extensions.worktreeConfig "*'
+        common = self.common_dir()
+        for number, (label, answer, true) in enumerate((
+                ("nothing, as Git answers an unset key", ":", False),
+                ("a line on standard error", "echo 'error: could not read config' >&2", True),
+                ("hint lines on standard error", "printf 'hint: one\\nhint: two\\n' >&2", True),
+                ("a line on standard output", "echo true", True),
+                ("`false` on standard output", "echo false", True),
+                ("a line feed alone on standard output", "echo", True),
+                ("a line on each stream", "echo true; echo 'error: x' >&2", True))):
+            with self.subTest(label):
+                fake = self.fake_script(f"row4c-{number}", f'case " $* " in {pattern}) {answer}; exit 1;; esac')
+                result, records = self.report(root, "--all-safe", real=fake)
+                commands = [command(record) for record in records]
+                self.assertEqual([c[1:] for c in commands if c[2:] == row_4c(common)], [[str(root), *row_4c(common)]],
+                                 "row 4c once, in the command directory")
+                self.assertEqual(sorted(c[1] for c in commands if c[2:] == WORK_TREE_PROBE),
+                                 trees if true else [], "one effective-work-tree probe per linked row, or none")
+                document = result.document
+                self.assertEqual([entry["path"] for entry in document["selected"]], trees)
+                self.assertEqual((document["completeness"], document["refusals"]), ("complete", []))
+                self.assertEqual(self.status_dirs(records), sorted([str(root), *trees]))
+
+    def test_clean_a_row_4c_exit_1_that_printed_adds_its_probes_to_the_estimate(self):
+        # R-332: where row 4c reads true from an exit 1 that printed, each
+        # revalidation spawns seven children, the work-tree probe among them
+        # (the project-clean delta's "seven where the plan read the
+        # repository's extensions.worktreeConfig as true"), and the plan's
+        # estimate counts them: probes.estimated equals probes.performed. The
+        # plain exit 1 reads false: six, and the same equality.
+        pattern = '*" config --file "*" --type=bool --get extensions.worktreeConfig "*'
+        for number, (label, answer, per_target) in enumerate((
+                ("an exit 1 with a line on standard error", "echo 'error: could not read config' >&2", 7),
+                ("an exit 1 with a line on standard output", "echo true", 7),
+                ("an exit 1 with nothing printed", ":", 6))):
+            with self.subTest(label):
+                root = self.repo(f"repo-{number}")
+                self.bare_remote(root, name=f"remote-{number}.git")
+                trees = [self.merged_worktree(branch, path=self.base / f"trees-{number}" / branch, root=root)
+                         for branch in ("001-a", "002-b")]
+                fake = self.fake_script(f"estimate-{number}", f'case " $* " in {pattern}) {answer}; exit 1;; esac')
+                result, records = self.counted("clean", root, "--all-safe", "--apply", "--yes", "--json", real=fake)
+                self.assert_status(result, 0)
+                document = result.document
+                self.assertEqual([(target["path"], target["stage"]) for target in document["targets"]],
+                                 [(str(tree), "removed") for tree in sorted(trees)])
+                self.assertEqual([target["probes_performed"] for target in document["targets"]], [per_target] * 2)
+                probes = document["probes"]
+                self.assertEqual(probes["estimated"], probes["performed"])
+                children = [record for record in records if command(record)[2:4] != ["worktree", "remove"]]
+                self.assertEqual(len(children), probes["performed"], "the estimate counts every child the log holds")
+                self.assertEqual(sorted(command(record)[1] for record in children if command(record)[2:] == WORK_TREE_PROBE),
+                                 sorted(map(str, trees * 2)) if per_target == 7 else [],
+                                 "planning's probe and revalidation's, per row, or none")
 
     def test_clean_evidence_a_failed_ref_listing_establishes_no_branch_evidence(self):
         # Plan review F3; pcl:121-125 ("A row whose evidence could not be
