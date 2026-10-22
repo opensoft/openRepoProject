@@ -14,10 +14,12 @@ duplicate them.
   `design.md` D7 also stating its fit at PR #19's `6f2cb54`, `a664799`,
   `9267303` and `f0bf538` (rounds A9 to A12, rulings A-37 to A-42), the joint
   fit with the cache change also at that change's own 3.7 s (round A13, ruling
-  A-44), and `design.md` D8 giving a holder that is the main worktree its own
-  next step (round A14, ruling A-45); verified by its Capabilities section accounting for every
-  canonical requirement of `project-clean` and `project-clean-review-safety`
-  and every requirement change 1 adds to them.
+  A-44), `design.md` D8 giving a holder that is the main worktree its own
+  next step (round A14, ruling A-45), and its restatements of PR #19's moving
+  facts worded relatively (round A15, ruling A-50); verified by its
+  Capabilities section accounting for every canonical requirement of
+  `project-clean` and `project-clean-review-safety` and every requirement
+  change 1 adds to them.
 - [x] 1.2 Alignment resolved: the stack-architect and qa-lead findings on
   `e7f3e65` (SA-1 to SA-5, QA-1 to QA-4) are applied, MISMATCH and DRIFT at
   once and qa-lead's GAP (QA-3) by its own scenario text, and the review's
@@ -115,6 +117,13 @@ duplicate them.
   A-46), by `a307cac` (the spec deltas), `901f691` (the design) and the commit
   that edits the proposal's body, records the round's table and updates this
   task; verified by "Re-read and Codex Findings (round A14)" in `proposal.md`.
+  Round A15, on `7b224c7`, applied Codex's P2 on `7b224c7`, reader RI's and
+  reader RH's findings on this change and lane openRepoProject-3's W54 confirm
+  read of round A14, 0 HIGH, 0 MEDIUM and 3 LOW, with its W52's F-4 (rulings
+  A-48 to A-52), by `8f3ed60` (the spec deltas), `87a3e85` and `75ea447` (the
+  design) and the commit that edits the proposal's body, records the round's
+  table and updates this task; verified by "Re-read and Codex Findings (round
+  A15)" in `proposal.md`.
 - [x] 1.4 Spec deltas and design written: `specs/project-clean/spec.md`
   modifies five requirements and adds one (68 scenarios: 43 carried unchanged
   from change 1 and PR #19, 6, 14, 10, 5 and 8 by block, and 25 added, the
@@ -133,7 +142,12 @@ duplicate them.
   round A14 adding no scenario, editing step 1 of the ADDED requirement, its
   `Kept` next steps, one AND of an ADDED scenario, split in two, the literals
   of three more ADDED scenarios' ANDs and one sentence of the review-safety
-  delta, under rulings A-45 and A-46),
+  delta, under rulings A-45 and A-46, and round A15 adding no scenario,
+  editing one sentence of the bounds block, step 4 of the ADDED requirement,
+  its `state-changed` definition and `Kept` next steps, the literals of four
+  ADDED scenarios' ANDs, adding one AND to "The merge target moves before the
+  branch stage" and editing the last AND of one review-safety scenario, under
+  rulings A-48 to A-51),
   `specs/project-clean-review-safety/spec.md` modifies one (4 scenarios: 3
   carried, 1 added), and `specs/project-command/spec.md` modifies one on PR
   #19's text (9 scenarios carried, none added; agreed by lane
@@ -142,9 +156,9 @@ duplicate them.
   each modified requirement's source text kept byte for byte; `design.md`
   holds D1 to D10 (`8341954`, `d0b33ce`, and the commit titled 'Settle which
   later targets carry branch-retention-stop'), revised by the alignment fix
-  round (1.2), the council round (1.3) and rounds A3 to A14; verified
+  round (1.2), the council round (1.3) and rounds A3 to A15; verified
   by `grep -c '^#### Scenario:'` on each spec file and by a scenario-carry
-  script run after the council round and again after rounds A3 to A14
+  script run after the council round and again after rounds A3 to A15
   over all seven MODIFIED blocks, every source scenario present byte for byte
   and in order.
 - [x] 1.5 Validation passes: `/usr/bin/openspec validate
@@ -153,7 +167,7 @@ duplicate them.
   `/usr/bin/openspec status --change add-project-clean-branch-retirement
   --json` shows every artifact done; verified by running the three on this
   branch after 1.4, after the alignment fix round, after the council round
-  and after rounds A3 to A14
+  and after rounds A3 to A15
   (build 1.13.1, which notes only as INFO that archive would refuse the
   MODIFIED blocks whose base still sits in change 1).
 - [ ] 1.6 Ratified by Brett Heap's word on the pull request, quoted with its
@@ -203,16 +217,25 @@ duplicate them.
   committed at this change's ratified head, on PR #19's text at `c462d87`,
   against the re-based block, showing only the text that landed, or change
   1's archived text, carried in and no change to this change's added text
-  (reader RF's M1; ruling A-37).
+  (reader RF's M1; ruling A-37), and by a read of this change's own
+  restatements of PR #19's moving facts, which round A15 words relatively so
+  that a re-base changes none of them (ruling A-50): the branch child's
+  environment, the residual-window line, the `state-changed` definition's
+  deadline clause and D7's counts at each base, each checked against the text
+  that landed.
 - [ ] 2.3 `add-project-clean-cache-disposal` (issue #24) checked: the five
   requirements both changes MODIFY under the lane's rulings B-10 and A-13
   ("Clean can explicitly retire verified worktrees", one cache clause; "Clean
   previews and applies a batch of eligible worktree removals in one
   repository", the cache digest; "Clean bounds its Git work and reports
   omitted work", the counting sentence merged, this change's incompleteness
-  clause kept, and the cache fit sentence, which at `e1049b2` counts "at most
-  250 Git children besides the 16 removals, about 42.3 s", or its restatement
-  under the lane's ruling B-25, scoped to runs without the flag; "Clean
+  clause kept, and the cache fit sentence, which counted at `e1049b2` "at most
+  250 Git children besides the 16 removals, about 42.3 s" and counts at
+  `69cb7a1` "at most 283 Git children besides the 16 removals where the plan
+  read the repository's `extensions.worktreeConfig` as false, about 47.3 s",
+  as it then reads, or any restatement under the cache change's rulings B-25,
+  B-54, B-55, B-57 and B-59 or a later one, scoped to runs without the flag
+  (ruling A-50); "Clean
   records a reconcilable result for
   every removal target", the cache-deletion exception and five other edits,
   exit-table row 2 being edited by both (lane openRepoProject-5's reader RD,

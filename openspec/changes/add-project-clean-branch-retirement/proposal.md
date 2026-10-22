@@ -61,6 +61,21 @@ sentence on a failed re-proof gains "while the work deadline is not the
 limit", and the spec says that the plan does not repeat the gate's reflog
 read, under the lane's rulings A-45 and A-46, Codex's review of `1bf217c`
 having raised that one P2;
+round A15 applied reader RI's read of feature 004 at `e69f6ef` (its RI-1, RI-2,
+RI-5, RI-7, RI-8 and RI-9), reader RH's composition read (its M2, M3, L1 and
+L3), Codex's P2 on `7b224c7` and lane openRepoProject-3's confirm read of round
+A14 (0 HIGH, 0 MEDIUM and 3 LOW), under the lane's rulings A-48 to A-52: a
+failed re-proof's `state-changed` line names an inspection of the branch's
+reflog before the retry, which is change 1's `delete-branch` and proves only
+the tip, so that it supersedes A-46's keeping of W47's LOW-3; this change's
+restatements of PR #19's moving facts, the branch child's environment, the
+residual-window line, D7's 5T and the cache change's fit sentence, are worded
+relatively, or as history with their shas, so that a later re-base changes none
+of its words, the block base staying `c462d87`; feature 004 has closed RE-6,
+and RE-4 and RE-5 still hold at `e69f6ef`; the `git-refused` hint puts the wait
+ahead of both steps; and the retry of a name that begins with `-` is recorded
+as open on feature 004's `delete-branch`, Codex's review of `7b224c7` having
+raised that one P2;
 nothing here is ratified. Governing issue:
 opensoft/openRepoProject#23, claimed by lane openRepoProject-5 (comment
 6111211798); refs #6, the record of the project maintenance design packet.
@@ -123,8 +138,11 @@ on that lane's confirm read of round A11, A-42, with item 3 of its ruling
 B-60, and its rulings on lane openRepoProject-2's answer on R-208 for this
 change, A-43, and on lane openRepoProject-3's confirm read of round A12, A-44,
 and its rulings on Codex's P2 on `1bf217c`, A-45, and on lane
-openRepoProject-3's confirm read of round A13, A-46, bind this draft and are
-applied under Decisions and
+openRepoProject-3's confirm read of round A13, A-46, and its rulings on
+reader RI's read of feature 004, A-48, on Codex's P2 on `7b224c7`, A-49, on
+reader RH's composition read and the base of this change's blocks, A-50, on
+lane openRepoProject-3's confirm read of round A14, A-51, and on its W52's
+F-4, A-52, bind this draft and are applied under Decisions and
 in the round tables. That wave's readers are lane openRepoProject-5's RA (an
 adversarial read of `01b5dd8`), RD (how this change, PR #27 at `fe5b245` and
 PR #29 at `e11d755` compose in archive order) and RE (feature 004 at
@@ -168,7 +186,18 @@ on R-208 for this change in the same file at `:1456`, with rulings A-43 and
 A-44 at `:1462` and `:1496`, read at `a622a156e`, where the first gives its
 time, 08:16:04Z, and Codex's P2 on `1bf217c` in the same file at `:1523`, with
 rulings A-45 and A-46 at `:1531` and `:1548`, read at `573fbc11a`, where the
-first gives its time, 08:45:31Z.
+first gives its time, 08:45:31Z, and reader RI's findings with A-48 at `:1638`
+and `:1643`, Codex's P2 on `7b224c7` at `:1653`, reader RH's report at `:1664`
+and A-49 and A-50 at `:1685` and `:1688`, read at `f9738cbf3`, and A-51 and
+A-52 at `:1719` and `:1732`, read at `a15c68b63` in the lane's checkout of the
+register, ahead of its `origin/main` when read; the reader files RI and RH, at
+`S/review-1022/`, are the lane's working records, cited by finding id, RI-1 to
+RI-9 and M2, M3, L1 and L3; lane openRepoProject-3's confirm read of round A14,
+by its reader W54, is `attachments/lane-openRepoProject-3/confirm-a14-findings.md`,
+read at `3a8fe2fa1`, cited by finding id, LOW-1 to LOW-3, and its composition
+read C, by its reader W52, is
+`attachments/lane-openRepoProject-3/compose-nextsteps-findings.md`, read at
+`29c8980b9`, cited by finding id, F-4.
 
 ## Why
 
@@ -267,10 +296,12 @@ confirmed run, on fresh evidence, with nothing changed for a run without it.
      is one whose reflog the re-proof finds missing, empty, at its bound or
      undecidable (ruling A-24); a re-proof whose read or child fails or times
      out at its own budget decides nothing and is retained with
-     `state-changed` (rulings A-43 and A-44);
+     `state-changed` (rulings A-43 and A-44), its line saying to inspect the
+     branch's reflog before the retry (ruling A-49);
   4. it spawns Git's non-force `git -c protocol.allow=never` with the six
      per-protocol pins, `-C <command directory> branch -d -- <branch>`, with
-     change 1's seventeen-name environment scrub, in its own process group;
+     the environment that change 1's evidence model gives every Git child, in
+     its own process group;
   5. it re-reads the branch in one more narrowed listing, and that post-check,
      never the child's exit status alone, decides the outcome.
 
@@ -338,12 +369,13 @@ confirmed run, on fresh evidence, with nothing changed for a run without it.
   `HEAD`, and a note for each local branch that tracks it as its upstream,
   `Kept BRANCH (REASON)` with a next step that never prints a retry
   the plan knows will fail, the retry of a name that begins with `-` excepted
-  while change 1's action passes no `--`, and never suggests `-D` (and, for a
-  holder that is the main worktree, which Git refuses to remove, says to switch
-  it off the branch, as ruling A-45 has it), `BRANCH
-  was already gone`, or `Unconfirmed BRANCH (was SHA)` with the check and the
-  restore command, never `Kept`, when the post-check could not establish the
-  deletion (rulings A-31, A-32); a stopped run prints change 1's stop block
+  while change 1's action passes no `--`, and never suggests `-D`; for a
+  holder that is the main worktree, which Git refuses to remove, a next step
+  says to switch it off the branch, as ruling A-45 has it, and for a failed
+  re-proof to inspect the branch's reflog before the retry (rulings A-45,
+  A-49); `BRANCH was already gone`; or `Unconfirmed BRANCH (was SHA)` with the
+  check and the restore command, never `Kept`, when the post-check could not
+  establish the deletion (rulings A-31, A-32); a stopped run prints change 1's stop block
   and its retained branches, a retired branch never among them, before those
   lines, and the residual-window line ends the result (ruling A-34); a
   branch or merge-target name inside a printed command is
@@ -769,11 +801,15 @@ their `CAS` line.
     after the removal floor, the cache stage's and the branch stage's, which
     sit side by side; this change's clause in the incompleteness sentence,
     which the cache change does not edit, stays; and where the cache change's
-    fit sentence counts, as it reads at `e1049b2`, "at most 250 Git children
-    besides the 16 removals, about 42.3 s", which the flag's up to 81 more
-    children make false, the re-based block scopes that sentence, and any
-    restatement of it under the lane's ruling B-25, to runs without
-    `--retire-branches` (`design.md` D7).
+    fit sentence counts, as it read at `e1049b2` ("at most 250 Git children
+    besides the 16 removals, about 42.3 s") and as it reads at `69cb7a1` ("at
+    most 283 Git children besides the 16 removals where the plan read the
+    repository's `extensions.worktreeConfig` as false, about 47.3 s on the
+    packet's basis of 150 ms per child and 0.3 s per removal"), a count which
+    the flag's up to 81 more children make false, the re-based block scopes
+    that sentence, as it then reads, and any restatement of it under the
+    cache change's rulings B-25, B-54, B-55, B-57 and B-59 or a later one, to
+    runs without `--retire-branches` (`design.md` D7; ruling A-50).
   - "Clean records a reconcilable result for every removal target": the cache
     change makes its descriptor-relative deletion of listed cache paths the one
     exception to "`project` SHALL never force a removal or delete a directory
@@ -793,12 +829,10 @@ their `CAS` line.
     the removal's guarantee (RD's M3(b); ruling A-33), and the
     residual-window line of a flagged run whose plan also selects a cache
     target is the cache change's line with this change's branch clause before
-    its last clause (ruling A-23): `Not protected: ignored files created or
-    index flags set after the last check or during a cache stage, caches
-    recreated after it, a branch changed after its last check, and any change
-    after Git's own check.` (`design.md` D8). The scenario "A branch changed
-    after the re-read meets Git's own check" then names a run whose plan
-    selects no cache target (RD's L3).
+    its last clause (ruling A-23), worded relatively and given no literal
+    (`design.md` D8; ruling A-50). The scenario "A branch changed after the
+    re-read meets Git's own check" then names a run whose plan selects no cache
+    target (RD's L3).
   - The human result: the cache change's `Caches disposed` line, which it
     prints after change 1's success line, follows this change's summary line
     and precedes its branch lines (RD's L2; `design.md` D8). The re-base
@@ -851,7 +885,13 @@ their `CAS` line.
   1's action passes the name after `--`, which change 1, lane
   openRepoProject-2's, settles; this change prints the retry that action is
   given and changes nothing in it. A branch named `HEAD` needs no such change:
-  `branch -d HEAD` deletes it.
+  `branch -d HEAD` deletes it. Feature 004 at `e69f6ef` does not pass `--`
+  either: its `delete-branch` runs `git branch -d <branch>` (`project:6487`), so
+  that the retry fails for such a name there as well, "branch name required",
+  exit 128, the branch staying, where `branch -d -- <branch>` deletes it (lane
+  openRepoProject-3's W52, F-4; ruling A-52). Lane openRepoProject-2 holds the
+  fix, this change keeps its retry text as it is, and the item is open, recorded
+  with RE-4, RE-5, RE-7 and RE-8 for the alignment with feature 004.
 - **Implementation.** The stage lives in feature 004's seam, so this change's
   feature is specified after feature 004 merges and change 1 archives; it
   never alters the order of feature 004 or feature 005. Whichever of this
@@ -1045,11 +1085,15 @@ open:
   as its upstream gets a note naming that branch, no commit being lost and a
   later row's refusal standing, and a branch that Git refuses because a
   rebase or bisect in another worktree holds it, which the registry listing
-  shows detached, is a residual whose line says to wait for that to end and
-  remove that worktree, or, for the main worktree, which Git refuses to remove,
-  to switch it off the branch, before the retry (rulings A-32 and A-45, RA's
-  LOW-4 and LOW-5; the rejected alternatives, a plan keep for each, are in
-  `design.md` D4 and D8). A `branch-in-use` line whose holder PATH2 is the main
+  shows detached, is a residual whose line says to wait for that to end, and
+  then to remove that worktree or, for the main worktree, which Git refuses to
+  remove, to switch it off the branch, before the retry, the wait coming first
+  because a rebase stopped in the main worktree refuses every switch (rulings
+  A-32, A-45 and A-51, RA's LOW-4 and LOW-5, W54's LOW-1; the rejected
+  alternatives, a plan keep for each, are in `design.md` D4 and D8). The line
+  of a re-proof that failed to read or run decides nothing and says to inspect
+  the branch's reflog before the retry, which is change 1's `delete-branch` and
+  proves only the branch's tip (ruling A-49, Codex's P2 on `7b224c7`). A `branch-in-use` line whose holder PATH2 is the main
   worktree reads `next: BRANCH is checked out at PATH2, the main worktree;
   switch it off BRANCH, by checking out another branch there, such as
   MERGE_TARGET, or by detaching it, then: RETRY`, where `git worktree remove`
@@ -1113,9 +1157,11 @@ departs:
   empty, at its 64 KiB bound or undecidable, each a value the re-proof
   decided; a re-proof whose read or child fails or runs past its own budget
   decides nothing and retains it with `state-changed`, as PR #19's rule for
-  revalidation gives a call that decides nothing, again exit 2 (rulings A-43
-  and A-44; lane openRepoProject-2's answer on R-208), and one that the
-  deadline stops with `deadline-exceeded`. The plan's own failed proof, its
+  revalidation gives a call that decides nothing, again exit 2, its line saying
+  to inspect the branch's reflog before the retry, since the retry's own check
+  is the tip alone (rulings A-43, A-44 and A-49; lane openRepoProject-2's
+  answer on R-208; A-49 supersedes A-46's keeping of W47's LOW-3), and one that
+  the deadline stops with `deadline-exceeded`. The plan's own failed proof, its
   `rev-list` child's alone since the plan does not repeat the gate's reflog
   read, stays a `reflog-unmerged` keep (ruling A-46, W47's LOW-2).
 - **The plan's keep order.** `reflog-unmerged`, then `branch-in-use`, then
@@ -1649,7 +1695,11 @@ A-30 to A-34 bind. Of the 22 rows below, 15 are applied, 3 are applied with
 change (RA's LOW-5, RD's M3 and RE's RE-2), 4 are rulings with no edit (RE-4,
 RE-6, RE-7 and RE-8), and none is declined. RE's other findings, RE-5, whose
 subject A-31 meets, and RE-9 to RE-17, were recorded by A-34 for alignment
-with no edit. No ruling needs `specs/project-command/spec.md`, lane
+with no edit. Feature 004 has since closed RE-6, and RE-4 and RE-5 still hold
+at its `e69f6ef`, with the stop rule's two sites as new detail (round A15,
+ruling A-48, reader RI's RI-5 and RI-7), and lane openRepoProject-3's W52 added
+one open item, the retry of a name that begins with `-` (F-4; ruling A-52; the
+table of round A15 records each). No ruling needs `specs/project-command/spec.md`, lane
 openRepoProject-2's agreed block, which is unchanged (blob `e7665dda`). Round
 A7 adds no scenario; it edits WHENs and ANDs, so the scenarios stay 68, 4
 and 9. Git facts were checked on Git 2.43.0 in a scratch
@@ -1676,8 +1726,8 @@ read only as a check.
 | RE (2cf34d3) RE-1: the same finding as RA's MEDIUM-1 | HIGH | A-30, as RA's MEDIUM-1 above | as RA's MEDIUM-1 |
 | RE (2cf34d3) RE-2: a signal is said to stop the stage's re-read and re-proof, where change 1's D15, and feature 004 with it, stops no child in the apply phase | HIGH | A-34: applied with change: a signal stops no read or child of the stage; one in flight runs to its own end or budget, its outcome decides, and the stage reads the slot before each start, retaining the branch with `interrupted` where the step that ran left it to retire; the SIGINT AND of "A branch moved to an unmerged commit and back is retained" now delays the re-proof by 2 s, which the signal does not stop, where the re-proof hung and was stopped; D4, D7, D9 and the readings follow; the change: RE-2 also asked what a second SIGINT does to the post-check, which A-34's summary does not name, and the text keeps change 1's rule, a second SIGINT abandoning it as change 1's D15 abandons the remaining rescans, the stage then null; checked: feature 004's phase probe, re-run, stops no child in its apply phase and stops one on a second SIGINT in its reconciling phase | project-clean delta (ADDED; "A branch moved to an unmerged commit and back is retained"); What Changes; Decisions, readings; `design.md` D4, D5, D7, D9 |
 | RE (2cf34d3) RE-3: under the flag a retired branch would still be named as kept, and the flagged result's order against change 1's lines is undefined | MEDIUM | A-34: applied: under the flag the result ends with, in a run that stops, change 1's stop block and the retained branches it names, never a branch its line names retired, already gone or unconfirmed, then the summary and branch lines, then the residual-window line, change 1's D18 order with the flag's lines before the residual-window line; the retained list is computed from the branch lines, since the reconciliation read before the stage shows a retired branch present; two scenarios' result order re-pinned and one AND added; checked against feature 004's `print_result` at `2cf34d3` | project-clean delta (ADDED; "A branch moved after removal is retained and can be retried", "A retirement with a reason", "A branch moved to an unmerged commit and back is retained"); What Changes; Decisions, readings; `design.md` D8 |
-| RE (2cf34d3) RE-4: the stage's budgets, phase, kind and counts have no counterpart in feature 004's runner | MEDIUM | A-34: no edit; recorded for alignment when feature 004 merges; checked against change 1's text: no contradiction of change 1 itself, the strict floor being this change's stated choice (`design.md` D7) and the shorter budget and the counts its own amendments in its MODIFIED blocks | none |
-| RE (2cf34d3) RE-6: "the gate's read is reused" needs an API change in feature 004 | MEDIUM | A-34: no edit; recorded for alignment when feature 004 merges; a matter of feature 004's code, not of change 1's text, whose gate reads the reflog this change reuses | none |
+| RE (2cf34d3) RE-4: the stage's budgets, phase, kind and counts have no counterpart in feature 004's runner | MEDIUM | A-34: no edit; recorded for alignment when feature 004 merges; checked against change 1's text: no contradiction of change 1 itself, the strict floor being this change's stated choice (`design.md` D7) and the shorter budget and the counts its own amendments in its MODIFIED blocks; still unbuilt at `e69f6ef`, with the stop rule's two sites noted (round A15, A-48, RI-7) | none |
+| RE (2cf34d3) RE-6: "the gate's read is reused" needs an API change in feature 004 | MEDIUM | A-34: no edit; recorded for alignment when feature 004 merges; a matter of feature 004's code, not of change 1's text, whose gate reads the reflog this change reuses; closed by feature 004 at `e69f6ef`, where `reflog_gate` keeps `row.reflog_objects` (`project:4776` and `:4808`) (round A15, A-48, RI-5) | none |
 | RE (2cf34d3) RE-7: the README's edit points at feature 004's head | MEDIUM | A-34: no edit; recorded for alignment when feature 004 merges; feature 004's README, not change 1's text | none |
 | RE (2cf34d3) RE-8: the CI job list, chiefly PR #29's | MEDIUM | A-34: no edit; recorded for alignment when feature 004 merges; `tasks.md` 3.1 already names every job, `git-floor` included | none |
 
@@ -1983,3 +2033,76 @@ those rounds' record; row 1 below supersedes them. The round also updates
 | lane 3 confirm read (1bf217c), LOW-3: a failed re-proof's line, `Kept BRANCH (state-changed); retry: RETRY`, no longer says to inspect the reflog, and `delete-branch`'s own check is by tip and merged set, not by reflog, so that the retry can delete a branch whose reflog still names a commit the merge target lacks; declared at `design.md` D4 | LOW | A-46: kept as it stands: a failed re-proof's line keeps `retry: RETRY`, like this change's other `state-changed` lines, since a read that decides nothing has nothing to inspect, so the next step is to retry; if lane openRepoProject-2 objects later, a later round changes it | none |
 | lane 3 confirm read (1bf217c), LOW-4: the record sentence of round A13's section, "Rounds A4, A10 and A12's rows ... keep their words as those rounds' record", omits round A5's row, whose A-26 item 1 says "the failing re-proof's AND pins that line", the `reflog-unmerged` line of the AND that round A13 changed | LOW | A-46: applied: the sentence reads "Rounds A4, A5, A10 and A12's rows"; A5's row keeps its words as that round's record | round A13's section (its record sentence) |
 | lane 3 confirm read (1bf217c), checks (a) and (c): (a) the changed AND's retry hint matches this change's existing next step for `state-changed`, the `otherwise ; retry: RETRY` arm (`specs/project-clean/spec.md:1105-1108` at `1bf217c`; `design.md` D8's last `Kept` bullet); (c) lane openRepoProject-2's wording check, whether "the plan's own failed proof stays a `reflog-unmerged` keep" takes in a plan-time reflog read that fails: it does not, the plan's read is gate 7's own (`:334-340`) and the proof that fails is the `rev-list` child alone | check | A-46: upheld, no change: (a) and (c) both hold; (c)'s one wording gap is LOW-2, row 3 | none |
+
+### Re-read and Codex Findings (round A15)
+
+Codex reviewed `7b224c7` and raised one P2 (2026-10-22T12:50:58Z), an inline
+thread at the project-clean delta's `Kept` next steps (its spec :1119 at
+`7b224c7`), "Re-prove the reflog before suggesting deletion": when the stage
+reports `state-changed` because its reflog read or re-proof failed, the line
+prints `retry: RETRY`, but RETRY is change 1's `delete-branch`, which checks
+only the current tip's ancestry before `git branch -d` and never looks at
+commits only the reflog names, so that a branch that briefly held an unmerged
+or amended-away commit and then returned to its merged tip would be deleted,
+with its reflog, by the advised retry. CI and SonarCloud passed. The lead's
+ruling A-49 accepts it and supersedes A-46's keeping of W47's LOW-3. Reader RI
+read feature 004 at `e69f6ef` against the three drafts (0 HIGH, 2 MEDIUM, 7
+LOW and 2 observations, received 12:53:02Z), and reader RH read the three
+drafts against PR #19 at `f0bf538` and main at `15504f1` (0 HIGH, 8 MEDIUM and
+8 LOW, received 12:56:37Z). The lead's rulings A-48 and A-50 take, for this
+change, RI-1, RI-2, RI-5, RI-7, RI-8 and RI-9 and RH's M2, M3, L1 and L3, RI-1
+and M3 being one finding and RI-2 and M2 another, and keep c462d87 as this
+change's block base, which RH found consistent there: this change words its own
+restatements of PR #19's moving facts relatively, so that a later re-base
+changes none of its ratified words. RI-3 and RI-4's detail on feature 004 are
+lane openRepoProject-2's, RI-4 went to lane openRepoProject-3's W52, RI-6 is
+PR #29's, and RH's M1 and M4, L2 and L4, item 7 and the figures of item 6 are
+the other drafts' or wait for PR #19's round (f), so that none takes a row
+here. Lane openRepoProject-3's reader W54 read round A14, `1bf217c..7b224c7`
+(`confirm-a14-findings.md` at the register's `3a8fe2fa1`): 0 HIGH, 0 MEDIUM, 3
+LOW and nothing departing. It held A-45 on Git 2.43.0 and on the 2.36.6 floor,
+found A-46's three LOW applied and answered this change's wording question: the
+`git-refused` hint parses as "(wait and remove) or (switch)", and a rebase
+stopped in the main worktree refuses every switch, so that the wait must come
+first. The lead's ruling A-51 takes its three LOW, and A-52 takes lane
+openRepoProject-3's W52, F-4 (`compose-nextsteps-findings.md` at the register's
+`29c8980b9`): the retry printed for a name that begins with `-` cannot succeed
+while change 1's `delete-branch` passes no `--`, which lane openRepoProject-2
+holds, and this change keeps its retry text. Where a ruling and a finding
+differ, the ruling governs: RI-1's and RI-2's suggested fixes give literal
+lines and counted names, which A-50 words relatively. Of the 14 rows below, 13
+are applied and 1 is a check upheld with no change; none is declined and none is
+applied with change. No ruling needs `specs/project-command/spec.md`, which is
+unchanged (blob `e7665dda`). Round A15 edits the project-clean delta (the
+bounds block's start test, step 4 of the ADDED requirement, its `state-changed`
+definition and `Kept` next steps, the literals of four ADDED scenarios' ANDs
+and one AND added to "The merge target moves before the branch stage") and the
+review-safety delta's last AND, and adds no scenario, so the scenarios stay 68,
+4 and 9 and every MODIFIED block still carries its source scenarios byte for
+byte; the one edit inside a carried block is this change's own sentence in
+"Clean bounds its Git work and reports omitted work". The facts that a rebase
+stopped in the main worktree refuses a switch were re-run on Git 2.43.0 here
+and by W54 on 2.43.0 and on 2.36.6 (`design.md` Context). Round A13's second
+row and round A14's third and sixth rows, which give a failed re-proof's line
+as `retry: RETRY`, and rounds A7's, A8's and A14's rows, which give the
+`git-refused` hint as "wait for it to end and remove that worktree", keep their
+words as those rounds' record; rows 1 and 11 below supersede them. The round
+also updates `design.md`'s Context map, the Status clause, the rulings and
+citation key and tasks 1.1, 1.3, 1.4 and 1.5, as earlier rounds did.
+
+| Finding | Severity | Ruling | Section edited |
+| --- | --- | --- | --- |
+| Codex (7b224c7), P2, an inline thread at the project-clean delta's `Kept` next steps (its spec :1119), "Re-prove the reflog before suggesting deletion" (2026-10-22T12:50:58Z): a `state-changed` from the reflog read or the re-proof prints `retry: RETRY`, which is change 1's `delete-branch`, whose own check is the tip alone | P2 | A-49: applied as the ruling words it, which supersedes A-46's keeping of W47's LOW-3: where `state-changed` comes from the re-proof's reflog read or child failing or running past its own budget, the line is `Kept BRANCH (state-changed); its reflog is not proven merged into MERGE_TARGET; inspect git -C ROOT reflog show refs/heads/BRANCH before retrying: RETRY`, the form of `branch-changed`'s "inspect it before retrying" with `reflog-unmerged`'s inspection command, `show` and the full ref name (A-46's row 3 gave the retry alone, since "a read that decides nothing has nothing to inspect", which the ruling overturns: a read that decided nothing has not proved the reflog, and the retry's check is the tip's); the places moved together: the spec's `Kept` rule, the scenario "A branch moved to an unmerged commit and back is retained" and its AND for a failed re-proof, `design.md` D4 and D8 (the `reflog-unmerged` bullet's pointer, a bullet of its own, and the last bullet's arm), What Changes, Decisions (the result names every branch; the reflog proof) and the Status clause; lines checked: a `state-changed` that the re-read's values cause (an upstream value, the manifest's `tracking_branch` or the merge target different from the plan, or one that could not be established, a listing or manifest read failing included) keeps `retry: RETRY`, since the stage stopped before its re-proof, with the head at the plan's SHA where a check was reached and the plan's proof of the reflog standing, and one AND of "The merge target moves before the branch stage" pins that line; `deadline-exceeded` (a re-read cut by the deadline, a re-proof whose budget the deadline ends, too little work time), `interrupted`, `spawn-error`, `unconfirmed-retirement`, `probe-timeout`, `internal-error` and `removal-ceiling` keep `retry: RETRY`, A-49 naming `state-changed` only; `branch-changed`, `reflog-unmerged`, `head-not-merge-target`, `branch-in-use`, `branch-shared` and `git-refused` keep their own next steps | project-clean delta (ADDED: the `Kept` rule; "A branch moved to an unmerged commit and back is retained"; "The merge target moves before the branch stage"); `design.md` D4, D8; What Changes; Decisions; Status |
+| RI-2 and RH's M2 (A-50): the branch child's environment is "the seventeen" names with no trace2 pin, where PR #19 at `f0bf538` removes thirty-one names and sets `GIT_TRACE2`, `GIT_TRACE2_EVENT` and `GIT_TRACE2_PERF` to 0 on every Git child | MEDIUM | A-50: applied as the ruling words it, relatively and with no count: the branch child runs with the environment that "Repository inspection requires Git 2.36 and shares one evidence model" gives every Git child, the variables it removes and the variables it sets, any trace2 variables among them, and no `GIT_OPTIONAL_LOCKS`, which that requirement gives to read-only probes alone; the places moved together: step 4 of the ADDED requirement, the AND of "Retire the branches of a batch" that pins the child's environment, `design.md` D3 and What Changes; the carried project-command block is unchanged and still says "seventeen", being PR #19's text at `c462d87`, which the re-base replaces; RE-12's caller-set `GIT_OPTIONAL_LOCKS` point still holds for "absent" | project-clean delta (ADDED: step 4; "Retire the branches of a batch"); `design.md` D3; What Changes |
+| RI-1 and RH's M3 (A-50): the flagged scenario's residual-window literal (`specs/project-clean-review-safety/spec.md:101-104` at `7b224c7`), `design.md` D8 and the proposal's archive-order note each give a two-item line, where PR #19's requirement at `f0bf538` now has four (`Not protected: ignored files created, index flags set, operations started or worktree-only commits made after the last check, and any change after Git's own check.`) | MEDIUM | A-50: applied relatively, as the ruling words it, and not as the findings' literal four-item line: each place refers to change 1's residual-window line, the one that "Cleanup states a narrow guarantee and its residual window" has the confirmation and the result each state, with this change's clause `a branch changed after its last check` after every other clause and before the last, `any change after Git's own check`; chosen for each place: the review-safety scenario's last AND, relative, so that no literal stays and none is added to task 2's re-base checks; `design.md` D8's line and its cache variant, relative, with a sentence saying why no literal is given; the proposal's archive-order note, relative; What Changes already read relatively; the cache change's D13 literal is PR #27's, in round B15 | review-safety delta ("A branch changed after the re-read meets Git's own check"); `design.md` D8; Dependencies and Sequencing (archive order) |
+| RI-8 (A-50): the carried blocks state change 1 at `c462d87` (ten gates, two index gates after the cap, at most five Git children per revalidation), and feature 004 builds `f0bf538`'s (twelve gates, four after the cap, six or seven children); D7's "5T" needs restating | LOW | A-50: applied: `design.md` D7's counts say that 5T is change 1's text at `c462d87` (its `specs/project-clean/spec.md:577-583`, `:807-809` and `:826-827`) and that at `f0bf538` the term is 6T, or 7T where the plan read `extensions.worktreeConfig` as true, with twelve gates, `operation-in-progress` and `worktree-only-commits` added (its `:665-671`), four after the cap (`:1003-1006`) and six or seven children (`:1026-1028`), which feature 004 at `e69f6ef` computes as its planning children plus 6T or 7T plus 3 (`project:4261-4262`, `:6218-6219`); the figures of the fit already stand at each base, as round A9 stated them, and none changes its meaning | `design.md` D7 |
+| RH's L1 (A-50): this change quotes PR #27's fit sentence at `e1049b2`, "at most 250 Git children besides the 16 removals, about 42.3 s", which at `69cb7a1` reads 283 children and 47.3 s, and scopes it "under the lane's ruling B-25" only | LOW | A-50: applied: both sentences are quoted with their shas, the `e1049b2` one as the history it is and the `69cb7a1` one as it now reads ("at most 283 Git children besides the 16 removals where the plan read the repository's `extensions.worktreeConfig` as false, about 47.3 s on the packet's basis of 150 ms per child and 0.3 s per removal"), and the scope names the cache change's rulings B-25, B-54, B-55, B-57 and B-59 "or a later one" and the sentence "as it then reads", so that the next restatement needs no edit here | `design.md` D7; `tasks.md` 2.3; Dependencies and Sequencing (archive order) |
+| RH's L3 (A-50): the `state-changed` definition lacks "while the work deadline is not the limit", which the review-safety sentence carries since A-46 | LOW | A-50: applied: the sentence "or its re-proof's reflog read or child failed or ran past its own budget" gains ", each while the work deadline is not the limit", so that it covers the definition's other clause, a value the re-read could not establish at its own budget, as well | project-clean delta (ADDED: the `state-changed` reason) |
+| RI-5 (A-48): feature 004 has closed RE-6 ("the gate's read is reused" needs an API change), since `reflog_gate` now keeps `row.reflog_objects` (`project:4776` and `:4808` at `e69f6ef`), every non-zero old and new object once, which is this change's set | LOW | A-48: applied: the open RE-6 record becomes closed, with that cite, in round A7's prose and its RE-6 row, and `design.md` D4 says that the reuse needs no change to feature 004's API; no spec edit | round A7's section (prose and the RE-6 row); `design.md` D4 |
+| RI-7 (A-48): RE-4 and RE-5 still hold at `e69f6ef`, and feature 004's stop rule looks only at the target (`project:6212`, `:6368-6369`), so a run stopped by its last target's branch stage prints the success line where this change requires its stop block | LOW | A-48: applied as a record, no spec edit: RE-4 (the budget term, the phase, the counter, `project:1268-1291`, `:6132`, `:6205`, `:1309-1318`) and RE-5 (the exception paths, `:6208-6211`, `:1610-1628`) are stated as unbuilt at `e69f6ef` in `design.md` D7 and D5, and the stop rule's two sites, the loop's `stopped` and the result's `stop`, in D6, which D2's rule covers for the loop only; round A7's RE-4 row notes it | `design.md` D5, D6, D7; round A7's section (RE-4 row) |
+| RI-9 (A-48): the stages' strict start test is called "under the same rule" as removals (the bounds block, `specs/project-clean/spec.md:525-526` at `7b224c7`), where the removal floor is inclusive: 5.0 s left is allowed (`below_removal_floor` refuses only when under 5) | LOW | A-48: applied: the bounds block words both tests exactly: a removal child is spawned while at least the 5 s floor remains, and the stage starts its re-read, its re-proof and its branch child only while more than that floor remains, so that with exactly the floor left a removal child is spawned and none of the stage's children starts; the ADDED requirement and `design.md` D7 already stated the strict test and the split, so that only this sentence changes; the sentence is this change's own inside a carried block, and the carry check still passes | project-clean delta ("Clean bounds its Git work and reports omitted work") |
+| lane 3 confirm read of round A14 (7b224c7), its W54: 0 HIGH, 0 MEDIUM and 3 LOW, nothing departs; checks (1) to (6): A-45 holds on Git 2.43.0 and on 2.36.6 (`git worktree remove` of a main worktree exits 128, a checkout of the merge target is refused 128 while a linked worktree holds it, a switch or a detach frees the branch), `branch-shared` is never the main worktree, A-46's LOW-1, LOW-2 and LOW-4 are applied, validate is valid and 8 of 8, ALL BLOCKS CARRIED, 68, 4 and 9, `e7665dda`, every hunk declared, A-44's text stands | check | A-51: upheld, no change: the three LOW below are rows 11 to 13; W54 left W47's LOW-3 ungraded, as A-49 takes it | none |
+| W54 LOW-1: the `git-refused` hint, "wait for it to end and remove that worktree, or, for the main worktree, ... switch it off BRANCH", parses as "(wait and remove) or (switch)", where a rebase stopped in the main worktree refuses every switch (`git switch --detach` and `git switch <other>` exit 128, "cannot switch branch while rebasing", on 2.43.0 and 2.36.6) | LOW | A-51: applied: the hint reads "wait for it to end, and then remove that worktree or, for the main worktree, which Git refuses to remove, switch it off BRANCH, by checking out another branch there, such as MERGE_TARGET, or by detaching it", the rule and every literal together with row 1's edit, which meets it at the same place: the spec's rule in both forms (the upstream ref absent and present), the three scenarios' ANDs that carry the literal (two in "Git refuses the branch deletion", one in "A branch name in a printed command is quoted for the shell"), `design.md` D8 (both forms and its reason), Risks, a Context row for the rebase stopped in the main worktree (re-run on Git 2.43.0 here) and the Decisions text; the rule is not a MODIFIED block, so it carries | project-clean delta (ADDED: the `Kept` rule; "Git refuses the branch deletion"; "A branch name in a printed command is quoted for the shell"); `design.md` Context, D8, Risks; Decisions |
+| W54 LOW-2: What Changes, "What the person sees", has the positive clause about the main worktree inside a "never suggests" list | LOW | A-51: applied: the clause is its own: "never suggests `-D`; for a holder that is the main worktree, which Git refuses to remove, a next step says to switch it off the branch, ... and for a failed re-proof to inspect the branch's reflog before the retry; `BRANCH was already gone`; or `Unconfirmed BRANCH ...`" | What Changes |
+| W54 LOW-3: `tasks.md:18`, in 1.1, runs to 95 characters in a file wrapped at 80 | LOW | A-51: applied: 1.1's clause re-wrapped to 80 characters | `tasks.md` 1.1 |
+| lane 3's W52, F-4 (A-52): the retry printed for a branch whose name begins with `-`, `--branch=-f`, can never succeed: feature 004's `delete-branch` runs `git branch -d -f` with no `--` before the name (`project:6487` at `e69f6ef`), and Git answers "branch name required", exit 128, where `--` deletes it, exit 0 | MEDIUM (W52's grade) | A-52: applied as a record, no spec edit: the retry text is kept as it is (the spec already says the retry deletes the branch only if the action passes the name after `--`), `design.md` D8 records that the retry for such a name depends on change 1's `delete-branch` putting `--` before the name and that feature 004 lacks it at `e69f6ef`, with the cite, lane openRepoProject-2 holding the fix, Dependencies and Sequencing says the same, and the item is added to the record of feature 004's departures as open, with RE-4, RE-5, RE-7 and RE-8, in round A7's prose | `design.md` D8; Dependencies and Sequencing; round A7's section (prose) |
