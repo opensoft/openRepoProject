@@ -1285,13 +1285,15 @@ OQ-29's cap; these bind until that revision merges (C2 is now reading R9).
   removes nothing, which is safe. At the measured costs, with the identity
   probe's 19.7 ms and the full ref listing's 359.7 ms standing in for the two
   unmeasured probes, all 16 removals fit (15 with 20,000-file removals), the
-  16th only while the work-tree probe costs at most about 69 ms with the margin.
+  16th only while the work-tree probe costs at most about 69 ms with the margin
+  and the `rev-list` about 581 ms or less, each with the other at its stand-in.
   On the mixed basis, the measured costs plus 150 ms for each child added since,
   11 fit. Before Brett Heap, with no recommendation here: first, (i) measure
   those two probes on task 2.1's protocol and rerun the cap test, or (ii) decide
   which basis the cap test uses, the measured one as D5 was ratified, the mixed
-  one, or BA's flat 150 ms, which would change D5; then, only if the case fails
-  on that basis, one of these, each with its result at 128 rows on each basis:
+  one, or BA's flat 150 ms, which would change D5 and fails the case at once, so
+  that an option has to be chosen with it; then, only if the case fails on that
+  basis, one of these, each with its result at 128 rows on each basis:
   - (a) accept that worst case:
     - 150 ms: no removal on this run or any re-run, since a re-run builds the
       same plan, so a re-run does not continue there; from 127 rows, one removal
@@ -1304,10 +1306,14 @@ OQ-29's cap; these bind until that revision merges (C2 is now reading R9).
     - measured: 16;
     - mixed: 16;
   - (c) a longer work deadline where `extensions.worktreeConfig` is true, so
-    that later removals can still start, the 5 s removal floor kept:
-    - 150 ms: at least 70.55 s, which moves the 64 s run bound to 84.55 s;
+    that later removals can still start, the 5 s removal floor kept, which there
+    also moves the ratified 60 s invocation deadline,
+    `budget.invocation_timeout_seconds` in every plan record:
+    - 150 ms: at least 70.55 s, which moves the invocation deadline to 80.55 s
+      and the 64 s run bound to 84.55 s;
     - measured: none needed;
-    - mixed: at least 55.0 s, a run bound of 69.0 s;
+    - mixed: at least 55.0 s, an invocation deadline of 65.0 s and a run bound
+      of 69.0 s;
   - (d) the rule's own step, lowering the caps (BA:766-771):
     - 150 ms: 64 rows and 8 targets, or 32 rows and 16 targets with the row cap
       chosen first, and a report cap of 128;
@@ -1648,12 +1654,33 @@ deadline is not the limit, gives `state-changed` whatever its step, as a Git
 child does, a decided value keeping its step's reason, a path found missing
 deciding that it is absent, and a deadline cut giving `deadline-exceeded`; the
 scenario "A check that fails at revalidation" gains an unreadable `.git` file.
-This commit also re-wrapped the paragraphs its edits lengthened, with no other
-change of words (Capabilities `:49`; Open Questions; this list; design Context,
-D7, D14, D21, D22, Risks, Open Questions; `tasks.md` 1.2; the deltas' `Clean
-previews and applies a batch of eligible worktree removals in one repository`
-and `Cleanup revalidates destructive actions`, with its scenario "A check that
-fails at revalidation").
+R-208 is a reading of BA:271-276, by which "a value that cannot be re-read,
+including a filesystem call that times out, counts as a mismatch": a read that
+fails decides no identity difference, so its mismatch is the packet's "any
+other" difference, `state-changed`; this reading went to Brett Heap to confirm,
+as O-2, on 2026-10-22. This commit also re-wrapped the paragraphs its edits
+lengthened, with no other change of words (Capabilities `:49`; Open Questions;
+this list; design Context, D7, D14, D21, D22, Risks, Open Questions; `tasks.md`
+1.2; the deltas' `Clean previews and applies a batch of eligible worktree
+removals in one repository` and `Cleanup revalidates destructive actions`, with
+its scenario "A check that fails at revalidation"). Lane openRepoProject-3's W38
+confirm read of that round at `9267303` (HIGH 0, MEDIUM 0, LOW 6), under the
+lead's R-213 and R-216: adds the `rev-list`'s limit, about 581 ms, to the pass
+test of LQ-20's step (i) (L-1); says that the `worktree-only-commits` gate's
+outcome rule differs from the branch reflog's for a read not finished within the
+filesystem budget (L-3); makes an administrative directory that the
+`operation-in-progress` listing finds absent at revalidation a registration
+difference, `identity-changed`, as feature 004 builds it (L-4); writes "SHALL
+NOT" (L-5); says that option (c) also moves the ratified 60 s invocation
+deadline there, to 80.55 s on the 150 ms basis and 65.0 s on the mixed one, and
+that choosing the flat basis at step (ii) fails the case at once, so that an
+option has to be chosen with it (L-6); and records R-208 as a reading of
+BA:271-276 that went to Brett Heap as O-2 (O-2). W38's L-2 touched only the
+lead's question file. This commit also re-wrapped the paragraphs its edits
+lengthened in `design.md` and this file, with no other change of words (Open
+Questions; this list; design Context, D7, Open Questions; `tasks.md` 1.2; the
+deltas' `Clean previews and applies a batch of eligible worktree removals in one
+repository` and `Cleanup revalidates destructive actions`).
 
 ### Council Verdicts
 

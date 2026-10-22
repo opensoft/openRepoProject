@@ -120,8 +120,10 @@ fails, or that runs past its own budget while the deadline is not the limit,
 SHALL count as a difference with the reason `state-changed`, whatever its step,
 as for a status probe that fails there and for the listing, read or child of the
 `operation-in-progress` or `worktree-only-commits` check. A filesystem call that
-finds no file or directory at its path (`ENOENT` or `ENOTDIR`) SHALL not count
-as one that fails: it SHALL decide that the path is absent. A Git child or a
+finds no file or directory at its path (`ENOENT` or `ENOTDIR`) SHALL NOT count
+as one that fails: it SHALL decide that the path is absent, and an
+administrative directory that the `operation-in-progress` listing finds absent
+SHALL be a registration difference, `identity-changed`. A Git child or a
 filesystem call SHALL give its step's own reason only for a value it decided, so
 that, of the work-tree probe's outcomes, only an effective work tree that it
 decides is not the target's path gives `identity-changed`, and a work-tree probe

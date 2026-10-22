@@ -733,7 +733,9 @@ then run one Git child in the worktree, `git rev-list --max-count=1
 non-zero objects the branch's reflog names>`, which prints a commit exactly when
 one is held that way. A `logs/HEAD` that is missing (`ENOENT` or `ENOTDIR`) or
 empty SHALL give no candidate. One outcome rule SHALL govern the gate, split as
-the branch reflog's is: a child that exits 0 and prints anything, and a
+the branch reflog's is, except that a read not finished within the filesystem
+budget makes the row `inspection-error` here: a child that exits 0 and prints
+anything, and a
 `logs/HEAD` read to its 64 KiB bound or holding a line that cannot be parsed,
 SHALL each make the row `worktree-only-commits`, at the gate's place in this
 order; any other error on the read, and a child that cannot be started or exits

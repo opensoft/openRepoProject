@@ -38,10 +38,11 @@ and lane openRepoProject-3's W31 read of that round and of the fit, with the
 lead's R-187 and R-190 and lane openRepoProject-5's A10 read, Context, D7, D14,
 D21, D22, Risks and Open Questions; and its W36 read of round (c), with its W32
 read of LQ-14 in feature 004 and the lead's R-200, R-207 and R-208, Context, D7,
-D14, D21, D22, Risks and Open Questions. Brett Heap's ruling of 2026-10-09 on
-open question 1, that a local ancestry proof outranks `remote-gone` for worktree
-rows, is in `proposal.md` Decisions and edited Context, D6, D7, D20, Risks, the
-Migration Plan and Open Questions here.
+D14, D21, D22, Risks and Open Questions; and its W38 read of round (d), with the
+lead's R-213 and R-216, Context, D7 and Open Questions. Brett Heap's ruling of
+2026-10-09 on open question 1, that a local ancestry proof outranks
+`remote-gone` for worktree rows, is in `proposal.md` Decisions and edited
+Context, D6, D7, D20, Risks, the Migration Plan and Open Questions here.
 
 Citations are `file:line` at `da33d92`: `BA`, `DI`, `OV` and `HO` are the
 packet's batch-cleanup, project-discovery, overview and handoff documents, and
@@ -489,18 +490,23 @@ failed read of the repository's or the target's identity or registration is
 `state-changed`, not `identity-changed`; one that finds its path missing
 (`ENOENT` or `ENOTDIR`) decides that the path is absent, a value that keeps its
 step's reason; and one that the deadline cuts leaves the target `not-attempted`
-with `deadline-exceeded`. Row 4c itself is not re-read, which keeps revalidation
-at six Git children in a repository without the extension: an extension turned
-on after the plan, with a `core.worktree` for a target, is a concurrent writer's
-change outside the contract (Risks). Ancestry needs no child: it is a function
-of the branch head and the merge-target SHA, both compared. The reflog of D10 is
-not re-read: a moved branch is already `branch-changed`. The HEAD reflog of D21
-is re-read, as D21 states. A selected row whose upstream was deleted (D6)
-records `upstream_oid`, `ahead` and `behind` null, and revalidation compares
-them as recorded, by the review-safety rule that a value null in the plan and
-null at revalidation is no difference while a value that cannot be re-read is
-one: the narrowed listing still showing no remote-tracking ref for it is no
-difference, and one that reappears is `state-changed`.
+with `deadline-exceeded`. R-208 is a reading of BA:271-276, by which "a value
+that cannot be re-read, including a filesystem call that times out, counts as a
+mismatch": a read that fails decides no identity difference, so its mismatch is
+the packet's "any other" difference, `state-changed`; this reading went to Brett
+Heap to confirm, as O-2, on 2026-10-22. Row 4c itself is not re-read, which
+keeps revalidation at six Git children in a repository without the extension: an
+extension turned on after the plan, with a `core.worktree` for a target, is a
+concurrent writer's change outside the contract (Risks). Ancestry needs no
+child: it is a function of the branch head and the merge-target SHA, both
+compared. The reflog of D10 is not re-read: a moved branch is already
+`branch-changed`. The HEAD reflog of D21 is re-read, as D21 states. A selected
+row whose upstream was deleted (D6) records `upstream_oid`, `ahead` and `behind`
+null, and revalidation compares them as recorded, by the review-safety rule that
+a value null in the plan and null at revalidation is no difference while a value
+that cannot be re-read is one: the narrowed listing still showing no
+remote-tracking ref for it is no difference, and one that reappears is
+`state-changed`.
 
 The first target's three repository children are the preflight for every target
 (BA:709-711). After target k's child is reaped, its rescan runs the same three,
@@ -1768,13 +1774,15 @@ different ruling edits the deltas before the archive.
   removal floor), so none is made, safely; at the measured costs, with those two
   probes costed at the identity probe's 19.7 ms and the full ref listing's
   359.7 ms, all 16 removals fit (15 with 20,000-file removals), the 16th only
-  while the work-tree probe costs at most about 69 ms with the margin; and on
+  while the work-tree probe costs at most about 69 ms with the margin and the
+  `rev-list` about 581 ms or less, each with the other at its stand-in; and on
   the mixed basis, the measured costs plus 150 ms for each child added since, 11
   fit. So the first step is either (i) to measure those two probes on task 2.1's
   protocol, at a load comparable with its runs, and rerun the cap test, or (ii)
   to decide which basis the cap test uses: the measured basis, D5's as ratified,
   with the two probes at those stand-in costs; the mixed basis, which prices
-  only those two at 150 ms; or BA's flat 150 ms, which would change D5. If the
+  only those two at 150 ms; or BA's flat 150 ms, which would change D5 and fails
+  the case at once, so that an option below has to be chosen with it. If the
   case then passes, no option is needed and the deltas stand. If it fails, the
   options are these, each with its result at 128 rows on each basis:
   - (a) accept that worst case:
@@ -1790,10 +1798,14 @@ different ruling edits the deltas before the archive.
     - measured: 16;
     - mixed: 16;
   - (c) a longer work deadline where `extensions.worktreeConfig` is true, so
-    that later removals can still start, the 5 s removal floor kept:
-    - 150 ms: at least 70.55 s, which moves the 64 s run bound to 84.55 s;
+    that later removals can still start, the 5 s removal floor kept, which there
+    also moves the ratified 60 s invocation deadline,
+    `budget.invocation_timeout_seconds` in every plan record:
+    - 150 ms: at least 70.55 s, which moves the invocation deadline to 80.55 s
+      and the 64 s run bound to 84.55 s;
     - measured: none needed;
-    - mixed: at least 55.0 s, a run bound of 69.0 s;
+    - mixed: at least 55.0 s, an invocation deadline of 65.0 s and a run bound
+      of 69.0 s;
   - (d) the rule's own step, lowering the caps (BA:766-771):
     - 150 ms: 64 rows and 8 targets, or 32 rows and 16 targets with the row cap
       chosen first, and a report cap of 128;

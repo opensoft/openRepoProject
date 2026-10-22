@@ -57,7 +57,9 @@ duplicate them, and nothing here is an implementation step.
   R-190)'); and its W36 read of round (c), with its W32 read of LQ-14 and the
   lead's R-200, R-207 and R-208 (the commit titled 'Amend change 1: lane 3's W36
   read, LQ-20's options costed, and filesystem reads at revalidation (R-207,
-  R-208)'); verified by the table "Questions Resolved by the Alignment Review"
+  R-208)'); and its W38 read of round (d), under the lead's R-213 and R-216 (the
+  commit titled 'Amend change 1: lane 3's W38 read of round (d) (R-213,
+  R-216)'); verified by the table "Questions Resolved by the Alignment Review"
   in `proposal.md` and the later-rulings list under it, which name the section
   each ruling edited.
 - [x] 1.3 Council resolved: every concern is VALID, none dismissed, the verdicts
