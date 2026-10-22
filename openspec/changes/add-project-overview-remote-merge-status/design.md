@@ -915,7 +915,7 @@ the loop stops reading, stops the child (D7) and records `truncated`.
 - Each node must have a `number` whose parsed type is exactly `int`
   (`type(number) is int`): never a `bool`, so not `true` or `false`, and never a
   `float`, so not `1.0` or `1e999`. The spec already says "a positive integer
-  `number`" (`specs/project-overview/spec.md:479`), and C-42 reads that as a
+  `number`" (`specs/project-overview/spec.md:483`), and C-42 reads that as a
   JSON integer literal. It must also be at least 1 and at most 2,147,483,647,
   the largest GraphQL `Int` (the hook above bounds the literal's text, this
   bounds its value, C-37); a `state` of `OPEN`, `CLOSED` or `MERGED`; a
@@ -1149,7 +1149,7 @@ reader of these fields, so remote evidence never reaches an eligibility gate, a
   (D10), so each by-value writing fails the test. It tests the parse and the
   node checks and is no scenario: "API failures stay unknown" already requires
   the 5,000-digit outcome, and the added requirement's "a positive integer
-  `number`" (`specs/project-overview/spec.md:479`) the others.
+  `number`" (`specs/project-overview/spec.md:483`) the others.
 - One test serves 200 answers that D6's parse refuses though each is otherwise
   valid (C-39, C-40). Each is a matched, merged pull request that would give
   its key's rows `merged` if it parsed, and each gives `api-error` with D6's
@@ -1164,8 +1164,8 @@ reader of these fields, so remote evidence never reaches an eligibility gate, a
   rule and from no other
   fault of the answer. The test checks the parse and is no scenario: the added
   requirement's "A 200 body SHALL be UTF-8 JSON"
-  (`specs/project-overview/spec.md:474-475`), and its `api-error` for a
-  response "that cannot be decoded or parsed for any cause" (:466-467),
+  (`specs/project-overview/spec.md:478-479`), and its `api-error` for a
+  response "that cannot be decoded or parsed for any cause" (:470-471),
   already require each outcome.
 - A planted `gh`, a second fake that records each run, sits in the working
   directory of a run whose `PATH` begins with an empty entry and `.`, so that
