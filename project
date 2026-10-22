@@ -695,10 +695,11 @@ TEXT = {
     "deferral_line":
         "  deferred-target-cap ({K}): this run removes up to 16; run again: project clean {ROOT} --all-safe --apply",
     # {REASONS}: the reasons of the 16 rows past the cap, each once, in gate
-    # order, joined by ", " (R-146, W21 L-f).
+    # order, joined by ", " (R-146, W21 L-f); the submodule clause is lane 3's
+    # W59 G-4, for #19's round (g3).
     "non_drain_line":
         "  these deferred rows will not drain while the 16 rows ahead of them are {REASONS}; "
-        "review those worktrees, then remove them yourself",
+        "review those worktrees, then remove them yourself (--force for any that holds a submodule)",
     "residual_window_line":
         "Not protected: ignored files created, index flags set, operations started or worktree-only commits "
         "made after the last check, and any change after Git's own check.",
@@ -769,6 +770,18 @@ TEXT = {
     "push_remote_gone":
         "Cannot push {BRANCH}; its upstream {UPSTREAM} was deleted (remote-gone); "
         "review it before it is republished.",
+    # D18: delete-branch's refusal for a branch the main worktree holds, NAME
+    # the merge target; a linked holder keeps the baseline's refusal (#19 at
+    # 4f1c0e0; lane 3's W52 F-5, lane 5's RI-4, R-248).
+    "branch_held_by_main_worktree":
+        "Branch {BRANCH} is checked out in the main worktree; detach HEAD there, or check out {NAME} there, "
+        "then retry.",
+    # The report's recommendation for the main worktree's row where the
+    # ladder says merged-removable or merged-current, and for a locked stale
+    # row: feature 004's own texts, which #19 at 4f1c0e0 does not carry (lane
+    # 3's W52 F-6 and F-10).
+    "recommendation_main_worktree": "The main worktree is never removed by project clean.",
+    "recommendation_stale_locked": "Review, unlock it, then prune stale worktree metadata manually.",
     # Baseline texts kept: `target-excluded` for the current worktree and for a
     # class (D18), and `no-merge-target` (project:551 at 961c405).
     "target_excluded_current": "Cannot remove the current worktree.",
@@ -794,25 +807,35 @@ TEXT = {
 NEXT_STEPS = {
     "dirty": "commit or preserve the changes",
     "ignored-local-files": "move or delete the ignored files by hand",
+    # Gate 7 precedes contains-submodule, and Git refuses a plain removal of a
+    # worktree that holds a submodule (#19's round (g) as the lead corrected
+    # it, short for change 2's 200-character rule; lane 3's W52 F-7, R-248).
     "unstarted-branch":
-        "no commit was made on this branch here since it was created; review, then git worktree remove yourself",
+        "no commit was made on this branch here since it was created; review, then git worktree remove yourself "
+        "(--force if it holds a submodule)",
     "reflog-unavailable":
-        "the branch's reflog is missing, expired or undecidable; review, then git worktree remove yourself",
-    "contains-submodule": "review, then remove the worktree yourself",
+        "the branch's reflog is missing, expired or undecidable; review, then git worktree remove yourself "
+        "(--force if it holds a submodule)",
+    # W52 F-8, R-248.
+    "contains-submodule": "review, then git worktree remove --force yourself",
     "hidden-local-state": "review, then remove the worktree yourself",
-    # LQ-14 (lead rulings R-126, R-146 and R-171; #19 at 2e819ad, lane 3's W26 F-1).
+    # LQ-14 (lead rulings R-126, R-146 and R-171; #19 at 2e819ad, lane 3's W26
+    # F-1), and the --quit clause for a marker left with nothing in progress
+    # (W52 F-9, R-248; worded as lane 3's W59 G-5 has it, for #19's round (g3)).
     "operation-in-progress":
         "a git am, merge, notes merge, cherry-pick, revert, rebase or bisect is, or may be, in progress there; "
         "finish or abort it (a squash merge that holds an autostash ends with git commit, --allow-empty where "
-        "nothing is staged, or with git merge --quit, which keeps the edit in the stash list), then run again",
+        "nothing is staged, or with git merge --quit, which keeps the edit in the stash list), or, where --abort "
+        "fails for a marker with nothing in progress, its --quit, then run again",
     # LQ-13.
     "worktree-only-commits":
         "a commit is, or may be, held only by this worktree's HEAD reflog or refs/worktree; keep it on a branch "
         "or tag, or review, then git worktree remove yourself",
-    # LQ-11 (the lead's R-125; #19 at 2e819ad, D18).
+    # LQ-11 (the lead's R-125; #19 at 2e819ad, D18), naming both files from
+    # which Git applies the redirect (#19 at 4f1c0e0; W52 F-3, R-248).
     "registration-mismatch":
         "review, then git worktree repair or git worktree prune, unset core.worktree and core.bare in the "
-        "worktree's config.worktree, or remove the row by hand",
+        "repository's config, or in that worktree's config.worktree, or remove the row by hand",
     "inspection-error": "review, then git worktree repair or git worktree prune, or remove the row by hand",
     "locked-worktree": "unlock it yourself if it should go",
     # The contract's next steps for the three reasons D18 gives none (T052;
@@ -3103,7 +3126,13 @@ def row_evidence(record, raw, main, read, refs, merged, target):
     FR-006, FR-042, FR-055 to FR-057; lead ruling R-54 X-1): a pure function
     returning the WorktreeRow, its document fields in WORKTREE_ROW_KEYS's
     order with `prunable` only on a stale row whose record says so (M11),
-    then classify()'s class and partial_removal_note()'s notes. record is
+    then classify()'s class and partial_removal_note()'s notes. classify()'s
+    recommendation stands but in two cases (lane 3's W52 F-6 and F-10): the
+    main worktree's row, where the ladder says merged-removable or
+    merged-current, takes TEXT's `recommendation_main_worktree`, since no
+    removal of it can succeed, and a locked stale row takes
+    `recommendation_stale_locked`, since `git worktree prune` keeps a locked
+    entry. The class is unchanged in both. record is
     the row's registry record; raw the row's path bytes; main whether it is
     the main worktree; refs row 6's records by refname; merged row 7's set,
     or None where row 7 did not run; target the merge target's name, or None.
@@ -3160,6 +3189,10 @@ def row_evidence(record, raw, main, read, refs, merged, target):
         "path_valid_utf8": valid, "errors": errors,
     }
     values["classification"], values["recommendation"] = classify(values, target)
+    if main and values["classification"] in ("merged-removable", "merged-current"):
+        values["recommendation"] = TEXT["recommendation_main_worktree"]  # W52 F-6: never removed
+    elif values["classification"] == "stale-worktree" and values["locked"]:
+        values["recommendation"] = TEXT["recommendation_stale_locked"]  # W52 F-10: prune keeps a locked entry
     values["notes"] = partial_removal_note(values, status, main)
     if present is False and record["prunable"]:
         values["prunable"] = True
@@ -6412,11 +6445,16 @@ def push_or_delete(repo, run):
     driver. The refspec is fully qualified with no leading `+`, and `--` ends
     the options, so that no remote, branch or ref text is read as an option, a
     forced update or a configured push mapping. Delete-branch refuses the
-    default branch, a branch a present worktree holds, and a branch not
-    verified as merged: its
+    default branch, a branch a present worktree holds (with the baseline's
+    message where a linked worktree holds it, and with
+    TEXT["branch_held_by_main_worktree"] where the main worktree alone does,
+    since Git never removes the main worktree: lane 3's W52 F-5, lane 5's
+    RI-4, R-248), and a branch not verified as merged: its
     head is read from row 6 and its merged-ness from row 7 of the plan's
     evidence, never through a new child, and a branch absent from row 6 or a
-    row 7 not read refuses (P-23).
+    row 7 not read refuses (P-23). Its vector is `branch -d -- B`, `--`
+    ending the options, so that a name that begins with `-` is never read as
+    one (W52 F-4).
 
     Then `Cleanup action:` and show_push_plan() through say(), and the check
     after printing (check_writes(); R-74 (c)(3)), so that a closed standard
@@ -6478,13 +6516,18 @@ def push_or_delete(repo, run):
     else:
         if branch == target:
             raise Refused("The default branch is protected and cannot be deleted.")
-        if any(row.get("present") and row.get("branch") == branch for row in rows):
+        holders = [row for row in rows if row.get("present") and row.get("branch") == branch]
+        if any(not row.main for row in holders):
             raise Refused("Remove the linked worktree first; branch deletion is a separate action.")
+        if holders:  # the main worktree alone holds it, which Git never removes (W52 F-5, RI-4)
+            raise Refused(TEXT["branch_held_by_main_worktree"].format(BRANCH=shown, NAME=human_path(target)))
         refname, evidence = os.fsencode("refs/heads/" + branch), plan.evidence
         listed = any(ref["refname"] == refname for ref in evidence["refs"] or ())
         if not listed or evidence["merged"] is None or refname not in evidence["merged"]:
             raise Refused(f"Branch {shown} is not verified as merged into {human_path(target)}.")
-        delegate = ["-C", str(root), "branch", "-d", branch]
+        # `--` before the name, as the push's vector has it, so that a name that
+        # begins with `-` is a branch and never an option (W52 F-4).
+        delegate = ["-C", str(root), "branch", "-d", "--", branch]
         argv = git_argv("delegate", delegate)
         action = f"delete verified merged local branch {shown}"
     say(run, f"Cleanup action: {action}")

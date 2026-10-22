@@ -511,10 +511,12 @@ class BoundsTests(clean_support.CleanCase):
                                                         NEXT_STEP=STEPS["contains-submodule"]), lines)
             at = lines.index(TEXT["deferral_line"].format(K=1, ROOT=shlex.quote(str(held_root))))
             # R-146 (W21 L-f): REASONS is contains-submodule alone, so the line
-            # reads exactly as it did before REASONS was added.
+            # reads as it did before REASONS was added, with lane 3's W59 G-4
+            # clause, since Git removes these 16 only with --force.
             line = TEXT["non_drain_line"].format(REASONS="contains-submodule")
             self.assertEqual(line, "  these deferred rows will not drain while the 16 rows ahead of them are "
-                                   "contains-submodule; review those worktrees, then remove them yourself")
+                                   "contains-submodule; review those worktrees, then remove them yourself "
+                                   "(--force for any that holds a submodule)")
             self.assertEqual(lines[at + 1:at + 3], [line, TEXT["excluded_row"].format(PATH=held[16],
                                                                                       BRANCH=held[16].name)])
             document = self.run_json("clean", held_root, "--all-safe", "--json").document

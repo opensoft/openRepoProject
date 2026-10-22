@@ -848,6 +848,114 @@ class EvidenceTests(clean_support.CleanCase):
             gone = project.row_evidence(record(b"refs/heads/g"), b"/w/f", False, read(), refs, merged, "main")
         self.assertEqual((first.upstream_oid, gone.upstream_oid), ("b" * 40, None))
 
+    def test_clean_row_evidence_never_recommends_a_step_git_refuses(self):
+        # Lane 3's W52 F-6 and F-10: classify()'s class stands, and so does its
+        # recommendation, but in two cases whose baseline text names a step
+        # that cannot work. The main worktree's row, merged-removable or
+        # merged-current, was told it "may be removed explicitly", or to
+        # "switch away before removal", where project clean refuses it
+        # (main-worktree) and `git worktree remove` exits 128; a locked stale
+        # row was told to prune, and `git worktree prune` keeps a locked entry.
+        def record(branch=b"refs/heads/f", locked=False):
+            return {"path": b"/w/f", "head": "a" * 40, "branch": branch, "bare": False, "detached": False,
+                    "locked": locked, "locked_reason": b"fixture" if locked else None, "prunable": False,
+                    "prunable_reason": None}
+
+        def ref(name, upstream=None, present=None, ahead=None, behind=None):
+            short = upstream and upstream.removeprefix(b"refs/remotes/")
+            return {"refname": name, "objectname": "a" * 40, "symref": None, "upstream": upstream,
+                    "upstream_short": short, "remote_present": present, "ahead": ahead, "behind": behind}
+
+        parser = project.StatusParser()
+        parser.feed(b"")
+        clean = parser.finish()
+        refs = {b"refs/heads/f": ref(b"refs/heads/f", b"refs/remotes/origin/f", True, 0, 0),
+                b"refs/remotes/origin/f": ref(b"refs/remotes/origin/f"),
+                b"refs/heads/main": ref(b"refs/heads/main", b"refs/remotes/origin/main", True, 0, 0)}
+        merged = frozenset({b"refs/heads/f", b"refs/heads/main"})
+
+        def read(**change):
+            return {"present": True, "dev": 1, "ino": 2, "active": b"/elsewhere", "tree": b"/w/f",
+                    "registered": True, "admin_id": b"f", "status": clean, "errors": [], **change}
+
+        stale = read(present=False, dev=None, ino=None, tree=None, registered=None, admin_id=None, status=None)
+        main_text, locked_text = TEXT["recommendation_main_worktree"], TEXT["recommendation_stale_locked"]
+        cases = [
+            # label, record, main, read, (classification, recommendation)
+            ("the main worktree, merged, not current", record(), True, read(), ("merged-removable", main_text)),
+            ("the main worktree, merged, current", record(), True, read(active=b"/w/f"),
+             ("merged-current", main_text)),
+            ("a linked worktree, merged, not current", record(), False, read(),
+             ("merged-removable", RECOMMENDATIONS["merged-removable"])),
+            ("a linked worktree, merged, current", record(), False, read(active=b"/w/f"),
+             ("merged-current", RECOMMENDATIONS["merged-current"])),
+            ("the main worktree on the target", record(b"refs/heads/main"), True, read(),
+             ("protected-default", RECOMMENDATIONS["protected-default"])),
+            ("a locked stale row", record(locked=True), False, stale, ("stale-worktree", locked_text)),
+            ("an unlocked stale row", record(), False, stale, ("stale-worktree", RECOMMENDATIONS["stale-worktree"])),
+            ("a locked present row", record(locked=True), False, read(),
+             ("merged-removable", RECOMMENDATIONS["merged-removable"])),
+        ]
+        self.assertEqual((main_text, locked_text), ("The main worktree is never removed by project clean.",
+                                                    "Review, unlock it, then prune stale worktree metadata manually."))
+        with self.no_io():
+            for label, entry, main, reads, expected in cases:
+                with self.subTest(label):
+                    row = project.row_evidence(entry, b"/w/f", main, reads, refs, merged, "main")
+                    self.assertEqual((row["classification"], row["recommendation"]), expected)
+
+    def test_clean_report_advice_for_the_main_worktree_and_a_locked_stale_row(self):
+        # W52 F-6 and F-10 end to end. The main worktree on a merged, clean,
+        # published branch reads merged-removable from outside it and
+        # merged-current from inside it, each with recommendation_main_worktree
+        # in the report and its JSON row; the explicit removal the baseline
+        # text invited refuses (main-worktree, exit 2). A locked worktree whose
+        # directory was moved away reads stale-worktree with
+        # recommendation_stale_locked, while an unlocked one keeps the
+        # baseline's text; `git worktree prune` keeps the locked entry until
+        # `git worktree unlock`, then prunes it.
+        root = self.repo()
+        self.bare_remote()
+        self.git(root, "checkout", "-q", "-b", "001-topic")
+        self.git(root, "push", "-q", "-u", "origin", "001-topic")
+        locked = self.base / "locked-tree"
+        gone = self.base / "gone-tree"
+        for branch, tree in (("002-locked", locked), ("003-gone", gone)):
+            self.git(root, "worktree", "add", "-q", "-b", branch, tree)
+        self.git(root, "worktree", "lock", "--reason", "fixture", locked)
+        for tree in (locked, gone):
+            tree.rename(tree.with_name(tree.name + "-moved"))
+        main_text, locked_text = TEXT["recommendation_main_worktree"], TEXT["recommendation_stale_locked"]
+
+        def advice(result, head):
+            lines = result.stdout.splitlines()
+            [at] = [index for index, line in enumerate(lines) if line.startswith(head)]
+            return lines[at + 1]
+
+        outside = self.run_cli("clean", root)
+        self.assert_status(outside, 0)
+        inside = self.run_cli("clean", root, cwd=root)
+        self.assert_status(inside, 0)
+        self.assertEqual([advice(outside, f"MERGED-REMOVABLE: {root} [001-topic] "),
+                          advice(inside, f"MERGED-CURRENT: {root} [001-topic] "),
+                          advice(outside, f"STALE-WORKTREE: {locked} [002-locked] "),
+                          advice(outside, f"STALE-WORKTREE: {gone} [003-gone] ")],
+                         ["  " + main_text, "  " + main_text, "  " + locked_text,
+                          "  " + RECOMMENDATIONS["stale-worktree"]], "\n" + clean_support.transcript(outside))
+        rows = {row["path"]: row for row in self.run_json("clean", root, "--json").document["worktrees"]}
+        self.assertEqual([(rows[str(path)]["classification"], rows[str(path)]["recommendation"])
+                          for path in (root, locked)],
+                         [("merged-removable", main_text), ("stale-worktree", locked_text)])
+        removal = self.run_cli("clean", root, "--apply", "--action", "remove", "--worktree", root, "--yes")
+        self.assert_status(removal, 2)
+        self.assertEqual(removal.stderr, "REFUSED: " + TEXT["target_excluded_gate"].format(
+            REASON="main-worktree", NEXT_STEP=clean_support.NEXT_STEP_FIXTURES["main-worktree"]) + "\n")
+        self.git(root, "worktree", "prune")
+        self.assertIn(f"worktree {locked}\n", self.git(root, "worktree", "list", "--porcelain"), "prune keeps it")
+        self.git(root, "worktree", "unlock", locked)
+        self.git(root, "worktree", "prune")
+        self.assertNotIn(f"worktree {locked}\n", self.git(root, "worktree", "list", "--porcelain"))
+
     def test_clean_evidence_memo_by_device_and_inode_and_the_row_5_switch(self):
         # R-54 X-1: inspect_repository() memoizes by the common directory's
         # (dev, ino), so another directory of the repository runs only row 3;
