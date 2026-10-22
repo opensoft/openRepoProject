@@ -76,7 +76,10 @@ duplicate them, and nothing here is an implementation step.
   and Brett Heap's ruling of 2026-10-22, "F-2: yes; F-1: prune-then-delete; O-1:
   deadline-exceeded" (R-263) (the commits whose titles begin 'Amend change 1:
   round (h)', the first titled 'Amend change 1: round (h) text, Brett Heap's
-  F-2, F-1 and O-1, and lane 2's open points (R-258 to R-263)'); verified by the
+  F-2, F-1 and O-1, and lane 2's open points (R-258 to R-263)'); and round (i),
+  round (h)'s open point, the message of a redirected main worktree's refusal,
+  under the lead's R-271 (the commit titled 'Amend change 1: round (i), name the
+  redirect in a redirected main worktree's refusal (R-271)'); verified by the
   table "Questions Resolved by the Alignment Review"
   in `proposal.md` and the later-rulings list under it, which name the section
   each ruling edited.

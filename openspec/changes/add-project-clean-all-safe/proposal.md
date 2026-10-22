@@ -2003,6 +2003,46 @@ records a reconcilable result for every removal target`, `Cleanup revalidates
 destructive actions`, and the `project-command` ADDED evidence model and its
 scenario "A linked worktree whose work tree is redirected").
 
+Round (i), round (h)'s open point, under the lead's R-271: a redirect of the
+main worktree, by a `core.worktree` or `core.bare` in the repository's `config`,
+or in the main worktree's `config.worktree` where `extensions.worktreeConfig` is
+true, is refused at resolution with `target-not-repository-root`, rightly, since
+no main worktree is there to clean, but feature 004's message for that code,
+`Not the main worktree of a repository: PATH; pass the repository root.`, asks a
+person who passed the root to pass it. The message is feature 004's, from its
+contract, not the baseline's (`project` at `961c405` holds no such text), so
+the rule that keeps baseline wording does not hold it. Fixtures on Git 2.43.0
+and 2.36.6, against feature 004 at `7164d7f`, give the same output on both
+builds: with `core.bare` true, from either file, the identity probe exits 128
+with `fatal: this operation must be run in a work tree`, while `git rev-parse
+--path-format=absolute --git-dir --git-common-dir --is-bare-repository` prints
+the checkout's `.git` twice and `true`; with `core.worktree` naming another
+directory, a missing one included, from either file, the identity probe prints
+that directory as the toplevel while the registry's first record is the
+checkout; without the extension Git ignores `config.worktree` and the
+root resolves; a separate git directory whose `core.worktree` names another
+directory, or whose `core.bare` is true, is refused the same way; and once
+`core.worktree` and `core.bare` are unset in both files, every one of these
+roots resolves. Design D18 therefore gives the refusal a variant that names the
+redirect, `Not the main worktree of a repository: PATH; core.worktree or
+core.bare redirects the main worktree; unset both in the repository's config, or
+in the main worktree's config.worktree, then run again.`, printed only where the
+directory the resolution examined holds its own `.git`, whose realpath is the
+repository's common directory, and Git run there uses another work tree or
+none; and D6 adds row 3b, the one child that shows `core.bare` true where the
+identity probe failed, run only on that refusal and only where the directory
+holds a `.git`, so that a run that resolves spawns no child for it. A `git init
+--bare` repository passed by its own directory keeps the plain message, as do a
+subdirectory, a linked worktree, a linked worktree that its own
+`config.worktree` redirects, a submodule checkout and a directory outside any
+repository; a repository made by `git init --bare X/.git` and passed as X cannot
+be told from a checkout at X whose `core.bare` is true by anything Git reads,
+and takes the variant, which is true of it, since with `core.bare` unset X
+resolves. No delta states this code's message text, so no delta is edited, and
+the scenario counts stay 71, 22 and 24. This commit also re-wrapped the
+paragraph its edit lengthened, with no other change of words (design Context),
+and `tasks.md` 1.2 names the round.
+
 ### Council Verdicts
 
 The council reviewed `0ed2f59` (labels its own: PA product advocate, SA

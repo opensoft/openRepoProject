@@ -52,8 +52,10 @@ under the lead's R-253, Context, D4, D7, D14, D18, Risks and Open Questions; and
 round (h), under the lead's R-258, R-259, R-260 and R-263, with writer E's
 report, lane openRepoProject-5's RI-3 and O-1, lane openRepoProject-3's W64 read
 of rounds (g2) and (g3), and Brett Heap's ruling of 2026-10-22 on F-2, F-1 and
-O-1, Context, D4, D7, D9, D10, D14, D18, Risks and Open Questions. Brett Heap's
-ruling of 2026-10-09 on open question 1, that a local ancestry proof outranks
+O-1, Context, D4, D7, D9, D10, D14, D18, Risks and Open Questions; and round
+(i), round (h)'s open point, the message of a redirected main worktree's
+refusal, under the lead's R-271, Context, D6 and D18. Brett Heap's ruling of
+2026-10-09 on open question 1, that a local ancestry proof outranks
 `remote-gone` for worktree rows, is in `proposal.md` Decisions and edited
 Context, D6, D7, D20, Risks, the Migration Plan and Open Questions here.
 
@@ -326,6 +328,7 @@ them:
 | 1 | `git --version` | once per invocation, before any other Git child |
 | 2 | `discover`'s `rev-parse --show-toplevel` | a bare-name argument only |
 | 3 | `rev-parse --path-format=absolute --show-toplevel --git-common-dir --show-superproject-working-tree` | at the directory the argument resolves to |
+| 3b | `rev-parse --path-format=absolute --git-dir --git-common-dir --is-bare-repository` | only on a `target-not-repository-root` refusal, at the directory row 3 ran in, where row 3 failed and that directory holds its own `.git` (D18) |
 | 4 | `worktree list --porcelain -z` | at the same directory while the main worktree is unknown, otherwise the command directory |
 | 4b | `config --get core.worktree` | only when the first registry record is the common directory (D8) |
 | 4c | `config --file <common_dir>/config --type=bool --get extensions.worktreeConfig` | once per common directory, after row 4, in the command directory (D7, LQ-11) |
@@ -350,7 +353,8 @@ a plain checkout and three a submodule checkout; a value containing a line feed
 makes the count exceed what was asked, and the probe is then repeated as one
 child per option, counted, rather than guessed at. F is therefore at most 8,
 BA:615-616's 7 and row 4c, plus row 4b in the gitfile layout and the rare
-repeat.
+repeat. Row 3b runs only when the resolution refuses, before any plan, so no
+plan counts it.
 
 Per row: the identity reads (`lstat` without following, the `.git` file, the
 admin `gitdir` and `commondir` files), each a filesystem call on a daemon
@@ -1329,6 +1333,36 @@ or `core.bare` in the repository's `config` or in the main worktree's
 `config.worktree`, is refused earlier, at resolution, with
 `target-not-repository-root`, before any plan is built (round (h), with feature
 004 at `d764c26` on Git 2.43.0 and 2.36.6; lane openRepoProject-3's W64 M-1).
+That refusal names the redirect, since feature 004's plain message for the
+code, `Not the main worktree of a repository: PATH; pass the repository root.`,
+asks for the root that was passed: it reads `Not the main worktree of a
+repository: PATH; core.worktree or core.bare redirects the main worktree; unset
+both in the repository's config, or in the main worktree's config.worktree,
+then run again.` It does so only where the directory the resolution examined
+holds its own `.git`, a directory or a gitfile, whose realpath is the
+repository's common directory, and Git run there uses another work tree or
+none: another where row 3 succeeded and its toplevel is not that directory,
+which only a `core.worktree` gives, and none where row 3 failed and row 3b
+prints that `.git` as both the git directory and the common directory, and
+`true`, which only a `core.bare` true gives, each from the repository's `config`
+or the main worktree's `config.worktree`; a submodule checkout is excluded
+first. Where row 3 succeeded the decision reads only the filesystem (the `lstat`
+of the `.git`, its gitdir line and the realpaths). Every other
+`target-not-repository-root` refusal keeps the plain message: a subdirectory, a
+linked worktree, a linked worktree that its own `config.worktree` redirects, a
+directory outside any repository, a submodule checkout, and a `git init --bare`
+repository passed by its own directory, which holds no `.git` and which an
+unset of `core.bare` does not make a work tree. A repository made by `git init
+--bare X/.git` and passed as X has the configuration of a checkout at X whose
+`core.bare` is true, and nothing Git reads tells the two apart, so it takes the
+variant, which is true of it: with `core.bare` unset, X resolves. A main
+checkout whose `.git` is a file and whose `core.worktree` names that checkout
+resolves as before (D8); one whose `core.worktree` names another directory, or
+whose `core.bare` is true, takes the variant. Row 3b runs only on that refusal,
+after the resolution has decided to refuse, counted and bounded as row 3 is,
+and only where the directory holds a `.git`, so a run that resolves spawns no
+child for it, and a row 3b that fails or is cut leaves the plain message (round
+(i), with feature 004 at `7164d7f` on Git 2.43.0 and 2.36.6; the lead's R-271).
 `relative-config-path` prints one line per variable that fails
 D11's test, in the order `HOME`, `XDG_CONFIG_HOME`, `GIT_CONFIG_GLOBAL`,
 `GIT_CONFIG_SYSTEM`: `NAME is set to a path that does not begin with /; make it
