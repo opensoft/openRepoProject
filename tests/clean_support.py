@@ -613,8 +613,8 @@ TEXT_FIXTURES = {
     "ignored_suffix": ": {N} ignored; first: {SAMPLE}",
     "ignored_suffix_truncated": ": at least {N} ignored; first: {SAMPLE}",
     "deferral_line": "  deferred-target-cap ({K}): this run removes up to 16; run again: project clean {ROOT} --all-safe --apply",
-    "non_drain_line": "  these deferred rows will not drain while the 16 rows ahead of them are contains-submodule; review those worktrees, then remove them yourself",
-    "residual_window_line": "Not protected: ignored files created, index flags set or operations started after the last check, and any change after Git's own check.",
+    "non_drain_line": "  these deferred rows will not drain while the 16 rows ahead of them are {REASONS}; review those worktrees, then remove them yourself",
+    "residual_window_line": "Not protected: ignored files created, index flags set, operations started or worktree-only commits made after the last check, and any change after Git's own check.",
     "empty_line": "No eligible worktrees",
     # D18: the question, the wait, the result.
     "question": "Remove {N} worktrees, keeping {N} branches? [yes/N]",
@@ -686,6 +686,7 @@ NEXT_STEP_FIXTURES = {
     "contains-submodule": "review, then remove the worktree yourself",
     "hidden-local-state": "review, then remove the worktree yourself",
     "operation-in-progress": "a git am, merge, notes merge, cherry-pick, revert, rebase or bisect is, or may be, in progress there; finish or abort it (a squash merge that holds an autostash ends only with git commit, --allow-empty where nothing is staged), then run again",
+    "worktree-only-commits": "a commit is, or may be, held only by this worktree's HEAD reflog or refs/worktree; keep it on a branch or tag, or review, then git worktree remove yourself",
     "registration-mismatch": "review, then git worktree repair or git worktree prune, or remove the row by hand",
     "inspection-error": "review, then git worktree repair or git worktree prune, or remove the row by hand",
     "locked-worktree": "unlock it yourself if it should go",
