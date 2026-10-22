@@ -132,21 +132,32 @@ returns a failed result, so `handoff()` and `update()` run none (FR-053).
 `execute()` (`:157-162`) gains only an optional environment argument (R5);
 `discover()`, `repo_state()`, `cleanup_report()`, `print_clean_report()`,
 `require_unchanged_cleanup_state()`, `clean()`, `handoff()`, `snapshot()`,
-`check_rows()`, `print_report()`, `inspect_project()`, `update()`, `parser()`
-and `main()` change; `default_branch()` and `ancestor()` retire, and so do
+`check_rows()`, `print_report()`, `inspect_project()`, `update()`,
+`projects_dirs()`, `workbenches()`, `new()`, `parser()` and `main()` change;
+`default_branch()` and `ancestor()` retire, and so do
 `print_clean_report()`, `matching_worktree()` and `cleanup_report()` once
 `grep` over `project` and `tests/` finds no caller after `clean()` is rewritten
-(lead ruling R-34). The new block sits after `discover()` and before
-`repo_state()`, so the code above it, which features 002 and 003 cite, moves
-only by what `Refused`, `git()` and `execute()` gain, and its names avoid those
-taken (`registry`, `profile`, `manifest`, `snapshot`, `probe`, `git`).
+(lead ruling R-34). `projects_dirs()`, `workbenches()` and `new()` change by
+lane H's addendum 1 (lead rulings R-202 and R-205; `22f95d1`, merged as
+`0b7dd94`): `projects_dirs()` and `workbenches()` expand through the new
+`home_directory()` and `expand_user()`, in place of `Path.home()` and
+`expanduser()`, and take nothing from a `HOME` that fails D11's test; and
+`new()` refuses, with D18's `HOME` line, when it has no parent argument, no
+`--into` and no `PROJECTS_DIR` under such a `HOME` (R-205 (b)), where it raised
+a traceback or created the project under a relative `h/projects`. The new
+block sits after `discover()` and before `repo_state()`, so the code above it,
+which features 002 and 003 cite, moves only by what `Refused`, `git()` and
+`execute()` gain and by the lines addendum 1 adds to `projects_dirs()`,
+`workbenches()` and `new()`, and its names avoid those taken (`registry`,
+`profile`, `manifest`, `snapshot`, `probe`, `git`).
 Unchanged: `probe()` for non-Git children (`:863`, `:965`), `ask()`,
 `confirm()`, `choose()`, `manifest()` (the merge target reads through a bounded
-variant; `snapshot()` keeps `manifest()`), `new()` and its helpers, and
-`benches`. `show_plan()` stays as it is for `new` and `update`; `clean`'s push
-and delete-branch print `Working directory:` and their command through the
-path-escaping printer, so a root holding a Cc, Cf, Zl or Zp code point prints
-in the `$'...'` form (FR-041, SC-010).
+variant; `snapshot()` keeps `manifest()`), the helpers of `new()` other than
+`projects_dirs()` and `workbenches()`, and `benches`. `show_plan()` stays as it
+is for `new` and `update`; `clean`'s push and delete-branch print `Working
+directory:` and their command through the path-escaping printer, so a root
+holding a Cc, Cf, Zl or Zp code point prints in the `$'...'` form (FR-041,
+SC-010).
 
 ## Citations
 
