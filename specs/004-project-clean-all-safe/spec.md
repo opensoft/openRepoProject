@@ -1632,7 +1632,11 @@ written".
   exit 0; `doctor` MUST report it as an `error` check row and exit 1; and
   `update --apply --component shape` or `bench` MUST refuse with exit 2,
   invoking no owner tool, while `tools` and `workflow` run as before; none of
-  them starts a Git child. Traces: "Clean reports local worktree state" ("A
+  them starts a Git child. A `HOME` that begins with `~` fails the test as
+  any relative value does, and `status`, `doctor` and `update` MUST read
+  nothing under a `HOME` that fails it and expand no `~` path against it, a
+  target that needs one refusing with `relative-config-path`, exit 2 (lead
+  rulings R-202 and R-205). Traces: "Clean reports local worktree state" ("A
   relative configuration path"); "Repository inspection requires Git 2.36
   and shares one evidence model" ("A relative configuration path in status,
   doctor and update"), both in draft PR #19; design D11, D16 and D18; Brett

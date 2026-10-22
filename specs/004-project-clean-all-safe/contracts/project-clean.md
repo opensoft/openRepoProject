@@ -716,7 +716,8 @@ LQ-20, before Brett Heap (lead rulings R-196 and R-197).
 | Aspect | Contract |
 | --- | --- |
 | Git check | `git --version` once per invocation, memoized, when a repository is inspected; doctor's `git` row runs it itself when none was, and `status` never runs it for nothing (lead ruling R-56); never a refusal |
-| Configuration paths | the test of "Order of a run", step 2, at each command's entry, before any Git child: a failure is memoized in the version check's place with code `relative-config-path` and D18's lines, so that no Git child starts, `git --version`, `discover()`'s lookup and `handoff()`'s remote read included, and each command reports it where it reports a Git below the floor (`hold_git_for_config_paths()`; Brett Heap's ruling LQ-15; lead rulings R-102, R-131 (a) and R-173) |
+| Configuration paths | the test of "Order of a run", step 2, at each command's entry, before any Git child: a failure is memoized in the version check's place with code `relative-config-path` and D18's lines, so that no Git child starts, `git --version`, `discover()`'s lookup and `handoff()`'s remote read included, and each command reports it where it reports a Git below the floor (`hold_git_for_config_paths()`; Brett Heap's ruling LQ-15; lead rulings R-102, R-131 (a) and R-173); a `HOME` that begins with `~` (`~`, `~/x`, `~user`) fails it as any relative value does, and nothing is read or expanded against a `HOME` that fails it: no workspace configuration, credential presence file, default projects directory, workBenches root or marker, or `~` path, so that `Path.home()`, which raises for such a `HOME`, is never called on it (`home_directory()`, `expand_user()`; lead rulings R-202 and R-205; lane H's `22f95d1`, merged as `0b7dd94`) |
+| A `~` target under such a `HOME` | a target argument that needs `~` expanded, `~` alone or `~/...`, refuses with `relative-config-path` and D18's `HOME` line, exit 2, no Git child, where it raised a traceback; `~user` is read from the user database, never from `HOME`, and expands as before (`discover()`; lead ruling R-205 (a)) |
 | `handoff()`'s remote read | `git remote get-url origin` only for a root whose repository was inspected, present and past the version check; otherwise the same no-identity state and no child (lead ruling R-66 (c)) |
 | No `.git` | `present: false`, no Git child, as today |
 | Uninspectable root, leg or worktree | `classification: "inspection-error"`, `errors`, unestablished values null, `worktrees` among them (R-56); status exits 0; a failed configuration-path test gives the root `present` null and one `errors` entry, `relative-config-path` with D18's lines |
@@ -733,3 +734,11 @@ LQ-20, before Brett Heap (lead rulings R-196 and R-197).
 
 The JSON of `status` and `doctor` stays unversioned; every change to it is
 additive.
+
+`new`, outside this feature, takes the same rule as an accepted departure:
+with no parent argument, no `--into` and no `PROJECTS_DIR`, under a `HOME`
+that fails the test it has no default parent and refuses with D18's `HOME`
+line, exit 2, where it raised a traceback or created the project under a
+relative `h/projects` (lead ruling R-205 (b), for Brett Heap in #33's body).
+`new --into ~/x` under a `~` `HOME` still raises, outside LQ-15 (R-205's LOW
+follow-up).

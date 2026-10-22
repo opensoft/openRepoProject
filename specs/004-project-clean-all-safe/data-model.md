@@ -567,7 +567,14 @@ runs it itself when none was, and `status` never runs it for nothing (lead
 ruling R-56). `handoff()` runs its `git remote get-url origin` only for a
 root whose repository was inspected, present and past the version check;
 otherwise it returns the same no-identity state with no child (lead ruling
-R-66 (c)).
+R-66 (c)). Under a `HOME` that fails D11's test, `~`, `~/x` and `~user`
+among them, `project` reads nothing under it and expands no `~` path against
+it: `handoff()` reads no workspace configuration and takes a `~` workspace
+path as not configured, doctor's credential presence checks read no file
+under it, the default projects directories and the workBenches root and
+marker are not taken from it, and a `~` target refuses with
+`relative-config-path` (`home_directory()`, `expand_user()`; lead rulings
+R-202 and R-205; lane H's `22f95d1`).
 
 ### Child handle (D2; lead ruling R-30, research.md R14)
 
