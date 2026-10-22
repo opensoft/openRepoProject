@@ -799,7 +799,10 @@ NEXT_STEPS = {
     "worktree-only-commits":
         "a commit is, or may be, held only by this worktree's HEAD reflog or refs/worktree; keep it on a branch "
         "or tag, or review, then git worktree remove yourself",
-    "registration-mismatch": "review, then git worktree repair or git worktree prune, or remove the row by hand",
+    # LQ-11 (the lead's R-125; #19 at 2e819ad, D18).
+    "registration-mismatch":
+        "review, then git worktree repair or git worktree prune, unset core.worktree and core.bare in the "
+        "worktree's config.worktree, or remove the row by hand",
     "inspection-error": "review, then git worktree repair or git worktree prune, or remove the row by hand",
     "locked-worktree": "unlock it yourself if it should go",
     # The contract's next steps for the three reasons D18 gives none (T052;

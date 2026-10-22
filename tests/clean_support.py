@@ -687,7 +687,7 @@ NEXT_STEP_FIXTURES = {
     "hidden-local-state": "review, then remove the worktree yourself",
     "operation-in-progress": "a git am, merge, notes merge, cherry-pick, revert, rebase or bisect is, or may be, in progress there; finish or abort it (a squash merge that holds an autostash ends with git commit, --allow-empty where nothing is staged, or with git merge --quit, which keeps the edit in the stash list), then run again",
     "worktree-only-commits": "a commit is, or may be, held only by this worktree's HEAD reflog or refs/worktree; keep it on a branch or tag, or review, then git worktree remove yourself",
-    "registration-mismatch": "review, then git worktree repair or git worktree prune, or remove the row by hand",
+    "registration-mismatch": "review, then git worktree repair or git worktree prune, unset core.worktree and core.bare in the worktree's config.worktree, or remove the row by hand",
     "inspection-error": "review, then git worktree repair or git worktree prune, or remove the row by hand",
     "locked-worktree": "unlock it yourself if it should go",
     # The contract's next steps for the three reasons D18 gives none
