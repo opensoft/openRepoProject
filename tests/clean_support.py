@@ -627,6 +627,9 @@ TEXT_FIXTURES = {
     # The ceiling's note where the rescan does not show both the target's .git and its
     # registry entry present (W52 F-1; Brett Heap's ruling "F-1: prune-then-delete", R-263).
     "partial_removal_note_prune": "Probable partial removal: inspect, then git worktree prune and delete {PATH} by hand.",
+    # The ceiling's note where the rescan's .git read failed or was cut, which advises no
+    # prune (#19's round (i) at 1a4785e; W73 M-1, R-284), copied exactly from the lead's message.
+    "partial_removal_note_unread": "Probable partial removal: inspect {PATH} by hand; its .git could not be read, so do not run git worktree prune until it can.",
     # D18's note for a locked worktree (#19 at 4f1c0e0, design.md:1225-1228; W52 F-2, R-248),
     # which replaces ratified text and so waits on Brett Heap's word.
     "partial_removal_note_locked": "Probable partial removal: inspect, unlock it, then git worktree remove --force {PATH} by hand.",

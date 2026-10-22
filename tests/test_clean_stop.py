@@ -102,13 +102,16 @@ def note_line(path):
     return TEXT["partial_removal_note"].format(PATH=shlex.quote(os.fsdecode(path)))
 
 
-def with_git_file(target, present):
+def with_git_file(target, present, read=None):
     """target, a literal target, as a project.Target whose rescan read its
     `.git` file as present (true, false or None, not read or no value), the
     one read the partial-removal note's text follows beside the registry
-    entry (lane 3's W52 F-1; lead ruling R-263)."""
+    entry (lane 3's W52 F-1; lead ruling R-263); read, whether the rescan
+    made that read, by default whether present has a value, and true with
+    present None for a read that failed or was cut (W73 M-1, R-284)."""
     target = project.Target(target)
     target.git_file_present = present
+    target.git_file_read = present is not None if read is None else read
     return target
 
 
@@ -388,23 +391,36 @@ class StopTests(clean_support.CleanCase):
         # entry is gone ("is not a working tree"). So print_result() keeps
         # D18's --force note only for a ceiling target whose rescan showed the
         # entry and the `.git` file both present, and prints the prune note
-        # otherwise, a value not established included; a report row's note is
-        # partial_removal_note()'s and keeps its text (the test above).
+        # otherwise, a value not established or a `.git` not reached
+        # included; a report row's note is partial_removal_note()'s and keeps
+        # its text (the test above). #19's round (i) at 1a4785e (lane 3's W73
+        # M-1, lead ruling R-284): where the rescan made the `.git` lstat and
+        # it failed or was cut, the third note, which advises no prune, comes
+        # first, whatever the rescan found of the registry entry.
         prune = TEXT.get("partial_removal_note_prune")
         self.assertEqual(prune, "Probable partial removal: inspect, then git worktree prune and delete {PATH} by "
                                 "hand.")
+        unread = TEXT.get("partial_removal_note_unread")
+        self.assertEqual(unread, "Probable partial removal: inspect {PATH} by hand; its .git could not be read, so "
+                                 "do not run git worktree prune until it can.")
+        self.assertEqual(project.TEXT.get("partial_removal_note_unread"), unread)
         plan = types.SimpleNamespace(root=b"/r oot")
-        for label, entry, path, git_file, key in [
-                ("the entry and the .git file present", True, True, True, "partial_removal_note"),
-                ("the .git file gone", True, True, False, "partial_removal_note_prune"),
-                ("the .git file not established", True, True, None, "partial_removal_note_prune"),
-                ("the entry gone, the path left", False, True, None, "partial_removal_note_prune"),
-                ("the entry not established", None, True, None, "partial_removal_note_prune"),
-                ("the path gone, the entry left", True, False, None, "partial_removal_note_prune")]:
+        for label, entry, path, git_file, read, key in [
+                ("the entry and the .git file present", True, True, True, None, "partial_removal_note"),
+                ("the .git file gone", True, True, False, None, "partial_removal_note_prune"),
+                ("the .git file not reached", True, True, None, False, "partial_removal_note_prune"),
+                ("the entry gone, the path left", False, True, None, None, "partial_removal_note_prune"),
+                ("the entry not established", None, True, None, None, "partial_removal_note_prune"),
+                ("the path gone, the entry left", True, False, None, None, "partial_removal_note_prune"),
+                ("the .git read failed or cut", True, True, None, True, "partial_removal_note_unread"),
+                ("the .git read failed or cut, the entry gone", False, True, None, True,
+                 "partial_removal_note_unread"),
+                ("the .git read failed or cut, the entry not established", None, True, None, True,
+                 "partial_removal_note_unread")]:
             with self.subTest(label):
                 target = with_git_file(literal_target(
                     "unknown", "removal-ceiling", path=b"/w/p 2", branch="b2", notes=[NOTE],
-                    reconciliation=record(entry, path, True, SHA_B), exit_status=137), git_file)
+                    reconciliation=record(entry, path, True, SHA_B), exit_status=137), git_file, read)
                 self.assertEqual(project.partial_removal_text(target), key)
                 run = types.SimpleNamespace(human=io.StringIO(), write_error=None)
                 project.print_result(plan, [target], run)

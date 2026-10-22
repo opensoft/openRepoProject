@@ -607,6 +607,190 @@ class SingleTests(clean_support.CleanCase):
         self.assertIn(f"worktree {target}", self.git(root, "worktree", "list", "--porcelain").splitlines())
         self.assertEqual(self.snapshot(root), before)
 
+    # Lead ruling R-283: #19 at b3228bb says single mode "SHALL build the same
+    # plan with `mode: "single"` ... and share the batch's sequence, refusal
+    # codes, stages and exit codes" (pcl:786-792), and a row whose every error
+    # is the work deadline's is deadline_stopped(), its plan deadline-exceeded
+    # (Brett Heap's ruling "O-1: deadline-exceeded", lead rulings R-263 and
+    # R-278). So P's own row cut by the deadline refuses as the one-item batch
+    # does, at check_plan()'s step 3.
+
+    def assert_p_s_own_row_cut(self, seam, operation, classification, reason):
+        """P's own row cut in process, every other read and child real:
+        seam(root, target, name, calls) gives main_in_process()'s stand-ins,
+        which answer one read or child of P's planning with a DriverOutcome
+        NAME and append to calls. Cut at its budget (`timeout`), the deadline
+        not being the limit, the run refuses inspection-incomplete with the
+        base remedy; cut by the work deadline (`deadline`), deadline-exceeded
+        with the deadline's remedy and no repair remedy. Either way `--worktree
+        P` refuses exactly as the one-item batch over the same repository
+        does, exit 2, before the question, P's row CLASSIFICATION with the
+        cut's error its one error and excluded as REASON; nothing is removed."""
+        root = self.repo()
+        self.bare_remote()
+        target = self.merged_worktree("001-p")
+        before = self.snapshot(root)
+        asked = AssertionError("the run reached the question stage")
+        cuts = (
+            ("its budget", "timeout", "no answer within 5 s",
+             {"code": "probe-timeout", "message": TEXT["row_error_probe_timeout"].format(OPERATION=operation, S="5")},
+             "inspection-incomplete", TEXT["remedy_inspection_incomplete"]),
+            ("the work deadline", "deadline", "no time was left to start it",
+             {"code": "deadline-exceeded", "message": TEXT["row_error_deadline_exceeded"].format(OPERATION=operation)},
+             "deadline-exceeded", TEXT["remedy_deadline_exceeded"]),
+        )
+        single = ("--apply", "--action", "remove", "--worktree", target, "--yes")
+        batch = ("--all-safe", "--apply", "--yes")
+        for label, name, detail, error, code, remedy in cuts:
+            with self.subTest(f"P's row cut at {label}"):
+                calls = []
+                patches = dict(seam(root, target, (name, detail), calls),
+                               confirm_removal=mock.Mock(side_effect=asked), apply_removals=mock.Mock(side_effect=asked))
+                message = TEXT["plan_incomplete"].format(CODE=code, REMEDY=remedy)
+                refusals = {}
+                for mode, words in (("single", single), ("all-safe", batch)):
+                    status, out, err = self.main_in_process("clean", root, *words, "--json", **patches)
+                    self.assertEqual(status, 2, out + err)
+                    document = json.loads(out)
+                    refusals[mode] = document["refusals"]
+                    [row] = [row for row in document["worktrees"] if row["path"] == str(target)]
+                    self.assertEqual((document["mode"], document["completeness"], document["apply_allowed"],
+                                      document["selected"], row["classification"], row["errors"],
+                                      {entry["path"]: entry["reason"] for entry in document["excluded"]}),
+                                     (mode, "incomplete", False, [], classification, [error],
+                                      {str(root): "main-worktree", str(target): reason}))
+                self.assertEqual(refusals["single"], [{"code": code, "message": message}])
+                self.assertEqual(refusals["single"], refusals["all-safe"], "the one-item batch's refusal")
+                status, out, err = self.main_in_process("clean", root, *single, **patches)
+                self.assertEqual((status, err), (2, "REFUSED: " + message + "\n"), out)
+                self.assertNotIn("[yes/N]", out)
+                if name == "deadline":
+                    for repair in (TEXT["remedy_inspection_incomplete"], TEXT["remedy_inspection_incomplete_redirect"]):
+                        self.assertNotIn(repair, err)
+                self.assertEqual(len(calls), 3, "one cut per run")
+                self.assertEqual(self.snapshot(root), before, "nothing removed")
+        self.assertTrue(target.is_dir())
+
+    def fs_cut(self, picks):
+        """A seam for assert_p_s_own_row_cut(): the filesystem call that
+        picks(root, target) gives a test of, given its function and
+        arguments, answered by the cut's DriverOutcome."""
+        def seam(root, target, cut, calls):
+            test, real_fs_call = picks(root, target), project.fs_call
+
+            def fs_call(fn, *args, **options):
+                if test(fn, args):
+                    calls.append(args[0])
+                    return project.DriverOutcome(None, cut[0], detail=cut[1])
+                return real_fs_call(fn, *args, **options)
+            return {"fs_call": fs_call}
+        return seam
+
+    def test_clean_single_target_p_s_reflog_read_cut_by_the_deadline(self):
+        # Gate 7: the read of P's branch reflog. reflog_gate() leaves the row
+        # merged-removable and unprobed, excluded as reflog-unavailable, the
+        # read's error its one error (lead ruling R-278).
+        def picks(root, target):
+            reflog = os.fsencode(self.reflog_file("001-p", root))
+            return lambda fn, args: fn is project._read_head and args[:1] == (reflog,)
+
+        self.assert_p_s_own_row_cut(self.fs_cut(picks), "read", "merged-removable", "reflog-unavailable")
+
+    def test_clean_single_target_p_s_admin_listing_cut_by_the_deadline(self):
+        # Gate 11: the listing of P's admin directory. _index_undecided()
+        # makes the row inspection-error, the listing's error its one error.
+        def picks(root, target):
+            admin = os.fsencode(self.common_dir(root) / "worktrees" / target.name)
+            return lambda fn, args: fn is os.listdir and args == (admin,)
+
+        self.assert_p_s_own_row_cut(self.fs_cut(picks), "listdir", "inspection-error", "inspection-error")
+
+    def test_clean_single_target_p_s_status_probe_cut_by_the_deadline(self):
+        # The status probe in P (design D6), a Git child: the row is
+        # inspection-error, the probe's error its one error.
+        def seam(root, target, cut, calls):
+            real_run_bounded = project.run_bounded
+
+            def run_bounded(spec, parser, run):
+                kind, args, cwd = spec
+                if args[2:] == list(project.STATUS_PROBE) and os.fsencode(args[1]) == bytes(target):
+                    calls.append(args[1])
+                    return project.DriverOutcome(project.git_argv(kind, args), cut[0], detail=cut[1])
+                return real_run_bounded(spec, parser, run)
+            return {"run_bounded": run_bounded}
+
+        self.assert_p_s_own_row_cut(seam, "git status", "inspection-error", "inspection-error")
+
+    def test_clean_single_target_p_s_rows_the_deadline_stopped_are_not_counted_for_the_variant(self):
+        # Lead ruling R-287 (a), lane 3's W73 L-2: check_plan()'s step 3
+        # counts P's rows for the variant remedy as a batch's rows are counted
+        # (counted_rows(); 63e4573's rule), so a row of P's that is excluded
+        # as registration-mismatch and that the work deadline stopped
+        # (deadline_stopped()) does not make the refusal name the unset of
+        # core.worktree and core.bare. A copied admin directory makes the
+        # registry name P twice: both rows are P's, so P names no single row
+        # and step 3 refuses inspection-incomplete, and both are
+        # registration-mismatch, read for no registration and probed by no
+        # status probe, so inspection-error (the shared registry path; lead
+        # rulings R-57 L3 and R-59 D5). In process, every read and child real
+        # but one: the working directory's realpath, which worktree_rows()
+        # reads once per call and gives to each present row it builds, is
+        # answered by a DriverOutcome, so that its error is each row's one
+        # error. Cut by the work deadline, P's rows are deadline_stopped() and
+        # not counted: the base remedy. With no cut, or cut at its budget, they
+        # are counted: the variant. Nothing is removed, and the run stops
+        # before the question.
+        root = self.repo()
+        self.bare_remote()
+        target = self.merged_worktree("001-p")
+        admin = self.common_dir(root) / "worktrees"
+        shutil.copytree(admin / target.name, admin / f"{target.name}-copy")
+        listed = self.git(root, "worktree", "list", "--porcelain").splitlines()
+        self.assertEqual(listed.count(f"worktree {target}"), 2, "the registry names P twice")
+        before = self.snapshot(root)
+        asked = AssertionError("the run reached the question stage")
+        variant, base = TEXT["remedy_inspection_incomplete_redirect"], TEXT["remedy_inspection_incomplete"]
+        cuts = (
+            ("no cut", None, [], variant),
+            ("its budget", ("timeout", "no answer within 5 s"),
+             [{"code": "probe-timeout", "message": TEXT["row_error_probe_timeout"].format(OPERATION="realpath",
+                                                                                         S="5")}], variant),
+            ("the work deadline", ("deadline", "no time was left to start it"),
+             [{"code": "deadline-exceeded",
+               "message": TEXT["row_error_deadline_exceeded"].format(OPERATION="realpath")}], base),
+        )
+        words = ("--apply", "--action", "remove", "--worktree", target, "--yes")
+        real_fs_call = project.fs_call
+        for label, cut, errors, remedy in cuts:
+            with self.subTest(f"the working directory's realpath: {label}"):
+                calls = []
+
+                def fs_call(fn, *args, cut=cut, calls=calls, **options):
+                    if cut is not None and fn is os.path.realpath and args == (b".",):
+                        calls.append(args[0])
+                        return project.DriverOutcome(None, cut[0], detail=cut[1])
+                    return real_fs_call(fn, *args, **options)
+
+                patches = dict(fs_call=fs_call, confirm_removal=mock.Mock(side_effect=asked),
+                               apply_removals=mock.Mock(side_effect=asked))
+                message = TEXT["plan_incomplete"].format(CODE="inspection-incomplete", REMEDY=remedy)
+                status, out, err = self.main_in_process("clean", root, *words, "--json", **patches)
+                self.assertEqual(status, 2, out + err)
+                document = json.loads(out)
+                rows = [row for row in document["worktrees"] if row["path"] == str(target)]
+                self.assertEqual([(row["classification"], row["errors"]) for row in rows],
+                                 [("inspection-error", errors)] * 2)
+                self.assertEqual(sorted((entry["path"], entry["reason"]) for entry in document["excluded"]),
+                                 sorted([(str(root), "main-worktree")] + [(str(target), "registration-mismatch")] * 2))
+                self.assertEqual((document["mode"], document["completeness"], document["selected"],
+                                  document["refusals"]),
+                                 ("single", "incomplete", [], [{"code": "inspection-incomplete", "message": message}]))
+                status, out, err = self.main_in_process("clean", root, *words, **patches)
+                self.assertEqual((status, err), (2, "REFUSED: " + message + "\n"), out)
+                self.assertEqual(len(calls), 0 if cut is None else 4, "one cut per worktree_rows() call")
+                self.assertEqual(self.snapshot(root), before, "nothing removed")
+        self.assertTrue(target.is_dir())
+
 
 if __name__ == "__main__":
     unittest.main()
