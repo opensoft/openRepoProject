@@ -134,10 +134,10 @@ entry and path are gone, and otherwise `unknown` with the note
 `partially-removed` and the recovery text "inspect, then `git worktree remove
 --force <path>` by hand" where the rescan finds both its `.git` file and its
 registry entry present, and "inspect, then `git worktree prune` and delete
-`<path>` by hand" otherwise, as where either is gone, since Git then refuses
-`git worktree remove --force`; the reason SHALL be `removal-ceiling` in both
-cases. Where the rescan cannot read that `.git` file, the read failing other
-than for the file's absence or cut at its budget, the recovery text SHALL
+`<path>` by hand" otherwise, as where either is gone, Git refusing `git worktree
+remove --force` while the path remains; the reason SHALL be `removal-ceiling` in
+both cases. Where the rescan cannot read that `.git` file, the read failing
+other than for the file's absence or cut at its budget, the recovery text SHALL
 instead be "inspect `<path>` by hand; its `.git` could not be read, so do not
 run `git worktree prune` until it can", since `git worktree prune` deletes the
 administrative directory of a worktree whose `.git` Git cannot stat, even a
@@ -906,9 +906,9 @@ registry entry or its path remaining; a `partially-removed` target SHALL show
 the recovery text "inspect, then `git worktree remove --force <path>` by hand"
 where the rescan finds both its `.git` file and its registry entry present, and
 "inspect, then `git worktree prune` and delete `<path>` by hand" otherwise, as
-where either is gone, because Git then refuses `git worktree remove --force`.
-The rescan SHALL read the `.git` file by one `lstat`, a filesystem call that
-starts no Git child. Where that `lstat` fails other than for the file's
+where either is gone, Git refusing `git worktree remove --force` while the path
+remains. The rescan SHALL read the `.git` file by one `lstat`, a filesystem call
+that starts no Git child. Where that `lstat` fails other than for the file's
 absence, or is cut at its budget, the recovery text SHALL instead be "inspect
 `<path>` by hand; its `.git` could not be read, so do not run `git worktree
 prune` until it can", since `git worktree prune` deletes the administrative
