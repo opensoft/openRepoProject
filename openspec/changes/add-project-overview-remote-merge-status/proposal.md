@@ -15,9 +15,9 @@ L2 to L5), with no spec edit, in `design.md` and `tasks.md`, C-47 also in Impact
 and Open Question 1; round C14's C-48, RC's other five findings, its spec edit
 committed on lane openRepoProject-4's YES of 2026-10-21, and C-49, lane
 openRepoProject-3's eight LOWs, both also in `design.md`, Impact and `tasks.md`;
-and rounds C15 to C20 (C-50 to C-66: W16, RF's M1, W22, W28, the currency check,
-RH's M4, RI-6, W57-1, RH's L4, W53's cites, W61), in `design.md` and `tasks.md`,
-C-58, C-66 also in the spec, C-63, C-65 in Decisions; ratification by Brett Heap
+and rounds C15 to C21 (C-50 to C-67: W16, RF's M1, W22, W28, RH's M4, RI-6,
+W57-1, RH's L4, W53's cites, W61), in `design.md` and `tasks.md`, C-58, C-66,
+C-67 also in the spec, C-63, C-65 in Decisions; ratification by Brett Heap
 pending; nothing here is ratified. Governing issue: opensoft/openRepoProject#25,
 claimed by lane openRepoProject-5 (comment 6111242617); refs #6, the record of
 the project maintenance design packet. Proposed on Brett Heap's word "usage
@@ -42,7 +42,7 @@ executable. Change 1's evidence model, `Repository inspection requires Git 2.36
 and shares one evidence model` (CAS/cmd:90), is [E]. The lane's rulings are
 cited as L-1 to L-9 and C-1 to C-8 (2026-10-11), L-10 to L-15, B-14, C-9 and
 C-10 (2026-10-18), L-16, L-17 and C-11 to C-14 (2026-10-19), and F-3 and C-15 to
-C-66 (2026-10-20 to 2026-10-22, C-16 to C-22 being the council's verdicts).
+C-67 (2026-10-20 to 2026-10-22, C-16 to C-22 being the council's verdicts).
 `PR19/cmd` is draft PR #19's
 `openspec/changes/add-project-clean-all-safe/specs/project-command/spec.md` at
 `c462d87`.
@@ -2253,3 +2253,116 @@ for placeholders found none.
 | C-66, the lead's ruling, sent to the running round: the spec edit in lane openRepoProject-4's form, with no scenario added and lane openRepoProject-4's cited spec spans byte for byte | ruling | C-66: applied, in `e053ad6`, committed first. Change 1's evidence model bars every Git child and inspects no repository, change 2's exit rule refuses the run, and `gh-unavailable` holds for a relative `XDG_CONFIG_HOME` or `HOME` only in a run that neither stops first: the Requests paragraph says "neither `Repository inspection requires Git 2.36 and shares one evidence model` (by barring every Git child and inspecting no repository) nor `Overview exits by completeness and severity` (by refusing the run) stops it before any child starts", the Results paragraph's parenthesis says "not stopped" for "not refused", and D5's paragraph pairs the verbs the same way (the design commit). The headers are as the spec already names them, no scenario is added or removed (36 and 10), the AND's "no `gh` child starts" holds for every case, and lines 1 to 419 of the spec are byte for byte as at `9a3f684`. New sha256 `6fda0ae8c5c60dab3a94c453af58503e11a6f19f62ddbde4d5ed7d098d26ee6c`, 661 lines, replacing `dee66d4f...`. Not edited, and reported to the lead: the AND on "No gh, or a gh without authentication" says "neither ... nor ... refuses the run before any child starts" for both requirements; it is not in C-66's list and not in the wording that lane openRepoProject-4 agreed | spec, ADDED requirement (Requests; Results); `design.md` D5 (:646-670) |
 | W61's answers on the passages that C18 left unedited and found right: D4 (`design.md:524-527`, names the cause as an example and cites D5), D10 (names none of the three variables and not C-44; the lead's list read C-26's row), Impact's README bullet (the list of remedies for a code a person sees; on a base with A1 the two extra variables are inert and never harmful) and the C-44 index entry in Decisions (history), and W61's observations OBS-1 to OBS-6 | note | C-65: left as they are. The rest of D5, which W61 finds right as read with its paragraph, is left too. OBS-3 (D5's "Two texts that land before this change" states an order, though amendment A1 is not a named dependency; "that are to land before this change is re-read (tasks 2.3, 2.4)" would be exact) is harmless and not taken | none |
 | The record: Status, the citation key, and tasks 1.1, 1.3, 1.4 and 1.5, in place | ruling | C-65 and C-66's record: Status says "rounds C15 to C20" and "C-50 to C-66" and names W61, within its 22 lines (the clause reading "C-58, C-66 also in the spec, C-63, C-65 in Decisions" to hold them); the citation key reads "C-15 to C-66", a span that still includes C-55 and C-60, which this change cites nowhere, and C-59, which it cites as not applied; `tasks.md` 1.1 lists C-45 to C-66, 1.3 gains a round C20 clause (this round recording itself, as C-56 orders) and "Re-read and Codex Findings (round C20)" in its verified-by list, 1.4 gains one clause for C-66's committed spec edit, which is beyond the brief's list as C18's was (1.4 records each round's committed spec edit), and 1.5 names round C20; the tasks file is 45 lines still | Status; citation key; `tasks.md` 1.1, 1.3, 1.4, 1.5 |
+
+### Re-read and Codex Findings (round C21)
+
+Round C21 (2026-10-22, on team-01n) applies C-67 on the lead's brief for the
+round (`rulings-2026-10-20.md`: the bullets "C20 on #29 at a6080a7", whose
+writer's notes were queued for C21, "Lane 4 (received 14:34:27Z): YES to
+"refuses" becoming "stops"" and "C-67"). The brief also gives #29's late read at
+`a6080a7` (2026-10-22T15:21:40Z): CI, all six test jobs, and SonarCloud pass.
+The `@codex review` request of 14:33:52Z drew Codex's usage-limit reply at
+14:34:11Z, so Codex did not review round C20, and no Codex finding is waiting
+for this round. The round applies the round C20 writer's notes (a) and (b) and
+records note (c).
+
+The round edits `specs/project-overview/spec.md` (`1cd73fb`, committed first:
+one word), `design.md` (`266a30f`: four cites, on four lines) and, in its last
+commit, this file (Status, the citation key and this section) and `tasks.md`
+(1.1, 1.3, 1.4 and 1.5, in place, 45 lines still).
+
+The spec edit, as `git diff --word-diff` against `a6080a7` shows it, is
+`[-refuses-]{+stops+}` and nothing else, in the last AND of the scenario "No gh,
+or a gh without authentication" (:624), which now reads "... and where neither
+`Repository inspection requires Git 2.36 and shares one evidence model` nor
+`Overview exits by completeness and severity` stops the run before any child
+starts, `remote.requests.performed` is 0 and both rows are `unavailable` with
+reason `gh-unavailable`": one verb for both requirements, as the Requests
+paragraph says "stops it before any child starts" (:421-424) since C-66. That
+paragraph's parenthesis "(by refusing the run)" (:423-424) says what change 2's
+exit rule does to the run, is not part of the note, and is not edited. No
+scenario is added, removed, renamed or moved (36 and 10, so the count stays 46),
+the spec file is 661 lines still, and lines 1 to 419 of it, lane
+openRepoProject-4's cited span, are byte for byte as at `a6080a7` (`cmp`). The
+spec file is now sha256
+`d42139fb5e6c26952e30aa953173cfcc5efb01f01f82e1f496e34bad6d77d306`, which
+replaces `6fda0ae8c5c60dab3a94c453af58503e11a6f19f62ddbde4d5ed7d098d26ee6c`, the
+sha that the round C20 section records as it stood;
+`specs/project-command/spec.md` is unchanged (sha256
+`208c06c36656194d2560614c44251cf404786cce90c54c9d8f6a0d6a5f2b601d`) with its 10.
+
+`design.md`: four cites of the spec's ADDED requirement read lines that the spec
+no longer holds there, and each now reads the line or lines that hold the text
+it names. At :918 and :1152, `specs/project-overview/spec.md:479` for "a
+positive integer `number`" is now `:483` ("SHALL have a positive integer
+`number`" begins that line). At :1167, `:474-475` for "A 200 body SHALL be UTF-8
+JSON" is now `:478-479` ("A 200 body" ends :478, "SHALL be UTF-8 JSON" is on
+:479). At :1168, `(:466-467)` for a response "that cannot be decoded or parsed
+for any cause", which the brief ordered checked beside the :1167 cite, is now
+`(:470-471)` ("one that cannot be decoded or" ends :470, "parsed for any cause"
+is on :471). All four were exact at `c0062f9`, round C14's spec edit, where the
+`number` line was :479 and the UTF-8 sentence :474-475; `51e854b` (C-58) added
+three lines before them and `e053ad6` (C-66) one more, which is the note's
+"stale at `9a3f684`, and C20's added line moves them by one more". Each new cite
+is as wide as the one it replaces, so `design.md` stays 1560 lines and no line
+is re-wrapped; it lies after D5's residual :574-601 and D7 :954-989, which stay
+`cmp`-identical to `a6080a7`.
+
+The other cites of a spec line in the three files were checked against the text
+each names at this head, and none other needs a correction. In `design.md`: :350
+and :1246 (`:392-393`, "fails for any other cause") and :429 (`:389-390`, an
+explicit port among the causes of `malformed-remote`) are exact; :219
+(`:405-417`) is qualified "at `2ab3743`" and records what was true there; :396,
+:650 and :657 cite change 1's and change 2's specs at a named sha. In
+`proposal.md`: the cites in the sections for rounds C5 to C20 and in the table
+"Questions Resolved by the Alignment Review" (`spec.md:13-27` and the like)
+record what was read at the commit each names, or at that round's head; :508, in
+"Dependencies and Sequencing", is qualified "on `67e43ae`"; and the cites in
+"Modified Capabilities" (`:166`, `:606` and the rest) are, as that section says,
+APO/ov's and `openspec/specs/project-command/spec.md`'s at `961c405`. In
+`tasks.md`, the one cite, `PR19/cmd` at `f0bf538`, :116-129, is qualified. All
+of these stay. Two groups lie inside parts that lane openRepoProject-4 cites,
+:508 and the rows of rounds C6 to C12; both are history by the same rule and are
+not edited, so nothing is left unedited as stale and reported.
+
+This file: Status, within its 22 lines, says "rounds C15 to C21", "C-50 to C-67"
+and "C-58, C-66, C-67 also in the spec", and, to hold those 22 lines, no longer
+lists "the currency check" among the sources of rounds C15 to C21 (the round C19
+section still records it); the citation key, at :45, reads "C-67". No line of
+this file moved: lines 1 to 2255 keep their numbers, this section following
+them, and every paragraph before line 1252 keeps its line count and its place
+(55 paragraphs, each with the same first line and the same line count). Lane
+openRepoProject-4's pinned ranges are `cmp`-identical to `a6080a7`: lines 1252
+to 1417 of this file, rounds C6 to C12, and lines 334-345, 367-370 and 430-438;
+"Dependencies and Sequencing" (181 lines, sha256 `c4d7a1797d240880` at its first
+16 digits) and "Open Questions" (39 lines, `ca53d0f392adc7e5`), each compared
+whole by sha256; `tasks.md` lines 20-23 (sha256
+`2e177de7a91d644759bb5e12177696c749be9d9e90a763ce9899e238e7c0e2c0`); D5's
+residual :574-601 and D7 :954-989 of `design.md`; and lines 1 to 419 of the
+spec.
+
+The writer checked these on 2026-10-22, in a scratch directory outside this
+tree, from the late read and the rulings the brief names. The cites above were
+read against the spec at this head by their text, and the line history of the
+`number` line was read with `git show` of the spec at each commit that touched
+it (`c0062f9` :479, `51e854b` :482, `e053ad6` :483). The carry check of every
+MODIFIED block against its source is as in round C19 and C20, since lines 1 to
+342 of the overview spec and the whole `project-command` spec are byte for byte
+as at `9a3f684`. Validation, run before each of the round's commits and again at
+its head (a commit cannot hold its own sha; the head is in the round's report):
+`/usr/bin/openspec validate add-project-overview-remote-merge-status --strict`
+reports the change valid with its two INFO lines, `/usr/bin/openspec validate
+--all --strict` passes 8 of 8, and `/usr/bin/openspec status --change
+add-project-overview-remote-merge-status --json` shows every artifact done. The
+added text holds no non-ASCII character, bidi control, host path or literal
+backslash-u, and a grep of the three files for placeholders found none.
+
+| Finding | Severity | Ruling | Section edited |
+| --- | --- | --- | --- |
+| #29's late read at `a6080a7` (2026-10-22T15:21:40Z), as the brief for this round gives it: CI, all six test jobs, and SonarCloud pass; the `@codex review` request of 14:33:52Z drew Codex's usage-limit reply at 14:34:11Z | no finding | Codex did not review round C20, so no Codex finding exists to apply; nothing to apply | none |
+| The round C20 writer's note (a): the last AND of the scenario "No gh, or a gh without authentication" (:624) says that `Overview exits by completeness and severity` "refuses the run before any child starts", for both requirements, where C-66's Requests paragraph says "stops it before any child starts" (:421-424); one word, "stops", would match it, and lane openRepoProject-4 was asked for a YES | note | C-67 (a): applied, in `1cd73fb`, committed first: "refuses" becomes "stops", that one word and nothing else (`git diff --word-diff` against `a6080a7` shows `[-refuses-]{+stops+}` alone). The parenthesis "(by refusing the run)" in the Requests paragraph, which says what change 2's exit rule does to the run, is not edited. No scenario is added or removed (36 and 10), the spec is 661 lines still, lines 1 to 419 are byte for byte as at `a6080a7`, and `specs/project-command/spec.md` is unchanged (`208c06c3...`). New sha256 `d42139fb...`, replacing `6fda0ae8...` | spec, ADDED requirement ("No gh, or a gh without authentication", last AND) |
+| Lane openRepoProject-4 (received by the lead at 14:34:27Z): YES to "refuses" becoming "stops" in the AND of the scenario "No gh, or a gh without authentication", which lies outside spec 005's cited spans | ruling | C-67 (a): applied as the previous row, one word in that AND; the AND is at :624 and the span that lane openRepoProject-4 cites is :1-419, which the edit does not reach. The sentence that it brings the AND into line with, C-66's Requests paragraph, is as lane openRepoProject-4 agreed it at 14:16:29Z | spec (as above) |
+| The round C20 writer's note (b): `design.md` :918 and :1152 cite the spec's `number` line as `:479`, and :1167 cites `:474-475` for "A 200 body SHALL be UTF-8 JSON"; already stale at `9a3f684`, and round C20's added line moves them by one more | note | C-67 (b): applied, in `266a30f`: `:479` becomes `:483` at :918 and :1152, `:474-475` becomes `:478-479` at :1167, and the `(:466-467)` at :1168 for a response "that cannot be decoded or parsed for any cause", which the brief ordered checked with the :1167 cite, becomes `(:470-471)`. All four were exact at `c0062f9` (the `number` line at :479, the UTF-8 sentence at :474-475), and `51e854b` and `e053ad6` added four lines before them. Each cite keeps its width, so `design.md` stays 1560 lines and no line is re-wrapped | `design.md` D6 (:918), D11 (:1152, :1167-1168) |
+| C-67 (b), every other cite of a spec line in `design.md`, `proposal.md` and `tasks.md`, checked against the text it names at this head | ruling | C-67 (b): none other needs a correction. `design.md` :350, :1246 (`:392-393`) and :429 (`:389-390`) are exact; :219 (`:405-417`) is qualified "at `2ab3743`"; :396, :650 and :657 cite change 1's and change 2's specs at a named sha. In `proposal.md`, the cites in the round C5 to C20 sections and the "Questions Resolved by the Alignment Review" table record what was true then, :508 is qualified "on `67e43ae`", and the Capabilities cites are APO/ov's and the canonical `project-command` spec's at `961c405`. In `tasks.md` the one cite is `PR19/cmd` at `f0bf538`. All stay. :508 and the rows of rounds C6 to C12 lie inside parts that lane openRepoProject-4 cites, and are history by the same rule and not edited, so nothing is reported as stale | none |
+| The round C20 writer's note (c): the commit messages of `a6080a7` and `6527f73` hold small slips | note | C-67: recorded and not amended, since amending a pushed commit would need a force push, which the house rules bar; they stand as history. In `a6080a7`'s, "the round C20 section with its eleven rows": its table holds 10. In `6527f73`'s, "design.md 1548 to 1560 lines, all of it after D7 but 1 to 602 and 671 to 1180 equal to 9a3f684's": D5's two edits (:603-619 and :646-670) lie before D7 (:954), so "all of it after D7" is wrong, though the line counts and the two equal ranges are right (`cmp` shows lines 1 to 602 and 671 to 1180 equal). The lead's note names the first slip; the second is the one the writer found. The commit messages of `1cd73fb` and `266a30f` were read against the same checks and hold no slip that the writer saw | none |
+| The record: Status, the citation key, and tasks 1.1, 1.3 (this round records itself, C-56), 1.4 and 1.5, in place | ruling | C-67's record: Status says "rounds C15 to C21", "C-50 to C-67" and "C-58, C-66, C-67 also in the spec", within its 22 lines, by no longer listing "the currency check" among its sources (the round C19 section still records it); the citation key reads "C-15 to C-67"; `tasks.md` 1.1 lists C-45 to C-67, 1.3 gains a round C21 clause (this round recording itself, as C-56 orders) and "Re-read and Codex Findings (round C21)" in its verified-by list, 1.4 gains one clause for the committed one-word spec edit, which is beyond the brief's list as C18's and C20's were (1.4 records each round's committed spec edit), and 1.5 names round C21; the tasks file is 45 lines still | Status; citation key; `tasks.md` 1.1, 1.3, 1.4, 1.5 |
