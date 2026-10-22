@@ -2038,10 +2038,16 @@ subdirectory, a linked worktree, a linked worktree that its own
 repository; a repository made by `git init --bare X/.git` and passed as X cannot
 be told from a checkout at X whose `core.bare` is true by anything Git reads,
 and takes the variant, which is true of it, since with `core.bare` unset X
-resolves. No delta states this code's message text, so no delta is edited, and
-the scenario counts stay 71, 22 and 24. This commit also re-wrapped the
-paragraph its edit lengthened, with no other change of words (design Context),
-and `tasks.md` 1.2 names the round.
+resolves. Design D6 also no longer says that three lines from the identity
+probe mean a submodule checkout: a plain checkout whose toplevel or common
+directory, a separate git directory among them, holds a line feed in its path
+prints three lines too, and on any count but two the probe is read again one
+option per child, which tells the two apart, as feature 004's
+`identity_probe()` does at `7164d7f` (lane openRepoProject-4's finding, through
+the lead). No delta states this code's message text, and no spec text changes,
+so no delta is edited, and the scenario counts stay 71, 22 and 24. The round's
+commits also re-wrapped the paragraphs their edits lengthened, with no other
+change of words (design Context and D6), and `tasks.md` 1.2 names the round.
 
 ### Council Verdicts
 

@@ -349,12 +349,17 @@ replaces `default_branch()`'s calls and the per-worktree `rev-parse` and
 `rev-list` calls (BA:617-621); row 7 replaces `ancestor()`.
 
 Row 3 prints one value per line, and Git has no NUL form for it. Two lines mean
-a plain checkout and three a submodule checkout; a value containing a line feed
-makes the count exceed what was asked, and the probe is then repeated as one
-child per option, counted, rather than guessed at. F is therefore at most 8,
-BA:615-616's 7 and row 4c, plus row 4b in the gitfile layout and the rare
-repeat. Row 3b runs only when the resolution refuses, before any plan, so no
-plan counts it.
+a plain checkout. Three lines mean a submodule checkout, whose third line is
+the superproject's toplevel, or a line feed in a path: a plain checkout whose
+toplevel or common directory, a separate git directory among them, holds one
+line feed in its path prints three lines too, on Git 2.43.0 and 2.36.6. The
+count cannot tell the two apart, so on any count but two the probe is repeated
+as one child per option, each child's output one value, counted, rather than
+guessed at, and that tells them apart (lane openRepoProject-4's finding; feature
+004's `identity_probe()` at `7164d7f`, `project:2663-2689`). F is therefore at
+most 8, BA:615-616's 7 and row 4c, plus row 4b in the gitfile layout and the
+rare repeat. Row 3b runs only when the resolution refuses, before any plan, so
+no plan counts it.
 
 Per row: the identity reads (`lstat` without following, the `.git` file, the
 admin `gitdir` and `commondir` files), each a filesystem call on a daemon
