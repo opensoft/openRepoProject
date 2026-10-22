@@ -693,6 +693,17 @@ Lane: openRepoProject-4
   cited at `c193f7b`. No checklist result changes, and the totals below were
   recounted by script. Re-validation: 16 of 16 items pass, with the checks of
   iteration 2 re-run by script on the edited spec.
+- 2026-10-22, an eighteenth pass: lane openRepoProject-3's W43 read of 3n and
+  3o (HIGH 0, MEDIUM 0, LOW 2), by the lead's commit 3p decisions. The round
+  (d) sentence now says that the proposal states that step (d) lowers the
+  report's row cap, the 256-row cap that the Dependencies state, as design D14
+  already gave it at `2e819ad`, with no figure of (d) (LOW-1); and the LQ-13
+  bullet puts "where the listing or read left the row unprobed before" in
+  parentheses, so that it cannot attach to the deadline arm (LOW-2). W43's O1
+  and O2 are left as observations. No pin moves, A1 stays cited at `c193f7b`,
+  and `clarify-questions.md` is unchanged. No checklist result changes, and the
+  totals below were recounted by script. Re-validation: 16 of 16 items pass,
+  with the checks of iteration 2 re-run by script on the edited spec.
 - Items marked incomplete require spec updates before `/speckit-clarify` or `/speckit-plan`
 
 ## Cross-cutting Requirements Quality (no-argument `/speckit.checklist`, 2026-10-19)
@@ -805,5 +816,5 @@ notes (PN-1 to PN-18 but PN-4 and PN-11, withdrawn on 2026-10-21; PN-2 narrowed
 to an exception of any other kind in human mode and widened to a failed write's
 standard-error line), 0 new questions. Recounted by script on 2026-10-21, and
 again after the re-check, after the W6 read and after the fourth to twelfth
-passes of that day, and after the thirteenth to seventeenth passes on
+passes of that day, and after the thirteenth to eighteenth passes on
 2026-10-22.

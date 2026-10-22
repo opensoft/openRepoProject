@@ -3789,24 +3789,25 @@ and [P] are change 1's requirements as the header names them.
   overview's 60 s deadline being its own (FR-011; POD:167-168); option (b),
   bounding the plan-time work-tree probe, is the condition's first arm where
   #19 makes it in [E] itself; and step (d), lowering the caps (:1311-1316
-  there), now states in the proposal the report cap that design D14 already
-  gave it at `2e819ad` (its `design.md:953-959`), the 256-row cap that this
-  spec's Dependencies state, that US4 s4 assumes and that the condition's
-  second arm names (POD:584; A1's :656 at `c193f7b`; lane openRepoProject-3's
-  W39 LOW-1). #19's round (e), `f0bf538` (lane openRepoProject-3's W38 read of
-  round (d); lane openRepoProject-2's R-213 and R-216), follows. Re-checked by
-  script against `9267303`: its `project-command` spec is unchanged (`git diff
-  --quiet`), its :221-227 included; its `project-clean` spec's gate block gains
-  one clause, the `worktree-only-commits` outcome rule now split as the branch
-  reflog's is "except that a read not finished within the filesystem budget
-  makes the row `inspection-error` here" (:735-737 there), which keeps the
-  outcome that FR-032 states and leaves the branch reflog's own unfinished read
-  unprobed, as change 2's requirement 7 has it for the overview's gate
-  (POD:521-524; FR-033); the lines after :736 move down 2, so that the rest of
-  the gate block, now :664-748, keeps its text, :719-722 at the same lines and
-  :741-746 at :743-748, and so do the three scenarios, at :845, :868 and :883,
-  and the caps and the re-run sentence of "Clean bounds", at :987-990 and
-  :1007-1017; the review-safety rule capitalizes its "SHALL NOT" and makes an
+  there), now states in the proposal that it lowers the report's row cap, the
+  256-row cap that this spec's Dependencies state, that US4 s4 assumes and that
+  the condition's second arm names, as design D14 already gave it at `2e819ad`
+  (its `design.md:953-959`; POD:584; A1's :656 at `c193f7b`; lane
+  openRepoProject-3's W39 LOW-1 and W43 LOW-1). #19's round (e), `f0bf538`
+  (lane openRepoProject-3's W38 read of round (d); lane openRepoProject-2's
+  R-213 and R-216), follows. Re-checked by script against `9267303`: its
+  `project-command` spec is unchanged (`git diff --quiet`), its :221-227
+  included; its `project-clean` spec's gate block gains one clause, the
+  `worktree-only-commits` outcome rule now split as the branch reflog's is
+  "except that a read not finished within the filesystem budget makes the row
+  `inspection-error` here" (:735-737 there), which keeps the outcome that
+  FR-032 states and leaves the branch reflog's own unfinished read unprobed, as
+  change 2's requirement 7 has it for the overview's gate (POD:521-524;
+  FR-033); the lines after :736 move down 2, so that the rest of the gate
+  block, now :664-748, keeps its text, :719-722 at the same lines and :741-746
+  at :743-748, and so do the three scenarios, at :845, :868 and :883, and the
+  caps and the re-run sentence of "Clean bounds", at :987-990 and :1007-1017;
+  the review-safety rule capitalizes its "SHALL NOT" and makes an
   administrative directory that the `operation-in-progress` listing finds
   absent at revalidation a registration difference, `identity-changed`
   (:122-126 there), which governs revalidation only, so no requirement of this
@@ -3931,22 +3932,22 @@ and [P] are change 1's requirements as the header names them.
     be started or exits nonzero make the row `inspection-error`, a `rev-list`
     child stopped at its 5 s budget, or, since #19's round (d), a listing or
     read not finished within the filesystem budget, the deadline not being the
-    limit, records `probe-timeout` and makes the row `inspection-error`, where
-    the listing or read left the row unprobed before, the deadline's cut
+    limit, records `probe-timeout` and makes the row `inspection-error` (where
+    the listing or read left the row unprobed before), the deadline's cut
     records `deadline-exceeded`, and each leaves the plan incomplete (:660-666
-    and :679-690 there, and :719-722 and :741-746 at `9267303`); at
-    revalidation, before each removal, a listing, read or child of either check
-    that fails or runs past its budget refuses the target with `state-changed`
-    (R-127; the review-safety rule, :101-118, and its scenarios "A
-    worktree-only commit made after the plan" and "An operation started after
-    the plan", :218 and :230, at `1ebdd90`). Neither is a class, so neither
-    reaches the ladder or FR-026's parity; both are gates of the batch, which
-    the overview leaves to it as it leaves the index gates: FR-032 lists them
-    among the exclusions only the batch applies, and the overview evaluates
-    neither, making no listing of a worktree's administrative directory and no
-    `logs/HEAD` read for them and starting no `rev-list` child. Amendment A1 at
-    `c193f7b` proposes the same as an item of its own (its
-    `proposal.md:1303-1342`), in requirement 7 (POD:525-526; its
+    and :679-690 there, and :719-722 and :741-746 at `9267303`; lane
+    openRepoProject-3's W43 LOW-2); at revalidation, before each removal, a
+    listing, read or child of either check that fails or runs past its budget
+    refuses the target with `state-changed` (R-127; the review-safety rule,
+    :101-118, and its scenarios "A worktree-only commit made after the plan"
+    and "An operation started after the plan", :218 and :230, at `1ebdd90`).
+    Neither is a class, so neither reaches the ladder or FR-026's parity; both
+    are gates of the batch, which the overview leaves to it as it leaves the
+    index gates: FR-032 lists them among the exclusions only the batch applies,
+    and the overview evaluates neither, making no listing of a worktree's
+    administrative directory and no `logs/HEAD` read for them and starting no
+    `rev-list` child. Amendment A1 at `c193f7b` proposes the same as an item of
+    its own (its `proposal.md:1303-1342`), in requirement 7 (POD:525-526; its
     `specs/project-overview/spec.md:590-597`) and design D5 (design.md:324-325;
     its :334-341), with D5's `target-cap` item and Risks, proposed in draft PR
     #34, pending Brett Heap's ratification: the overview keeps the `--all-safe`
