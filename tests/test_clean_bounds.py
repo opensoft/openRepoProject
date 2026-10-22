@@ -628,20 +628,26 @@ class BoundsTests(clean_support.CleanCase):
         # each revalidation spawns nine, ten where row 4c reads true, and the
         # final rescan six, and probes.estimated counts them, equal to
         # probes.performed. Both triggers, two targets each: a root under a
-        # directory whose name holds a line feed, and a plain root whose
-        # separate git directory's name holds one.
-        for label, separate in (("a root holding a line feed", False), ("a git directory holding one", True)):
+        # directory whose name holds a line feed, a plain root whose
+        # separate git directory's name holds one, and (lane 3's W73 L-1) a
+        # root under a directory whose name holds one beside a plain separate
+        # git directory, so that the root's path alone holds the line feed.
+        for label, kind, parent, separate, held in (
+                ("a root holding a line feed", "root", "li\nne", None, (True, True)),
+                ("a git directory holding one", "gitdir", "", "g\nd", (False, True)),
+                ("a root holding one, its separate git directory plain", "root-plain-gitdir", "li\nne", "gd",
+                 (True, False))):
             for worktree_config, per_target in ((False, 9), (True, 10)):
                 with self.subTest(label, worktree_config=worktree_config):
-                    case = f"{'gitdir' if separate else 'root'}-{int(worktree_config)}"
+                    case = f"{kind}-{int(worktree_config)}"
                     top = self.base / case
                     top.mkdir()
+                    root = top / parent / "repo"
+                    root.parent.mkdir(parents=True, exist_ok=True)
                     if separate:
-                        root = top / "repo"
-                        self.git(top, "init", "-q", "-b", "main", f"--separate-git-dir={top}/g\nd", root)
+                        self.git(top, "init", "-q", "-b", "main", f"--separate-git-dir={top}/{separate}", root)
                     else:
-                        root = top / "li\nne" / "repo"
-                        root.mkdir(parents=True)
+                        root.mkdir()
                         self.git(root, "init", "-q", "-b", "main")
                     self.git(root, "commit", "-q", "--allow-empty", "-m", "initial")
                     self.bare_remote(root, name=f"{case}/remote.git")
@@ -653,6 +659,9 @@ class BoundsTests(clean_support.CleanCase):
                     self.assertGreater(len(lines.rstrip("\n").split("\n")), 2, "the combined probe cannot be read")
                     preview = self.run_json("clean", root, "--all-safe", "--json")
                     self.assert_status(preview, 0)
+                    repository = preview.document["repository"]
+                    self.assertEqual(("\n" in repository["root"], "\n" in repository["common_dir"]), held,
+                                     "which of the plan's two paths holds the line feed")
                     planning = preview.document["probes"]["performed"]
                     self.assertEqual(preview.document["probes"]["estimated"], planning + per_target * 2 + 6)
                     result = self.run_json("clean", root, "--all-safe", "--apply", "--yes", "--json")
