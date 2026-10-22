@@ -658,6 +658,9 @@ TEXT_FIXTURES = {
     # D18's relative-config-path line, one per failing variable (Brett Heap's ruling LQ-15).
     "relative_config_path": "{NAME} is set to a path that does not begin with /; make it absolute or unset it.",
     "target_not_repository_root": "Not the main worktree of a repository: {PATH}; pass the repository root.",
+    # The variant where a core.worktree or core.bare of the repository's own redirects the
+    # main worktree (#19's round (i) at e0c91bb, design.md D18 :1365-1394; lead ruling R-271).
+    "target_not_repository_root_redirect": "Not the main worktree of a repository: {PATH}; core.worktree or core.bare redirects the main worktree; unset both in the repository's config, or in the main worktree's config.worktree, then run again.",
     "unsupported_path_bytes": "The repository path is not valid UTF-8: {PATH}",
     "manifest_invalid_size": "Manifest {PATH} is larger than 1 MiB.",
     "plan_incomplete": "The plan is incomplete ({CODE}): {REMEDY}.",
