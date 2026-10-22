@@ -494,7 +494,9 @@ Headers are quoted verbatim, one per line; ADDED headers are proposed text.
     `inspection-error`, among 17 eligible rows, and among more than 128 rows;
     a removal past the ceiling is decided by the rescan, `removed` when the
     registry entry and path are gone and otherwise `unknown` with
-    `partially-removed`, the reason `removal-ceiling` either way; after
+    `partially-removed`, the reason `removal-ceiling` either way, its recovery
+    text naming `git worktree prune` and a deletion by hand once the `.git`
+    file or the registry entry is gone (Brett Heap's ruling F-1); after
     `project` and its child are killed with SIGKILL mid-deletion, the report
     shows the partial-removal note beside the `dirty` advice. By the lead's
     R-147, a sentence after `:59-61` names branch deletion's refusals, the
@@ -1794,30 +1796,31 @@ lead's question file. This commit also re-wrapped the paragraphs its edits
 lengthened in `design.md` and this file, with no other change of words (Open
 Questions; this list; design Context, D7, Open Questions; `tasks.md` 1.2; the
 deltas' `Clean previews and applies a batch of eligible worktree removals in one
-repository` and `Cleanup revalidates destructive actions`). Brett Heap's ruling
-of 2026-10-22 on LQ-20, in his words to lane openRepoProject-2, "LQ-20: go with
-(i), measure first" (the lead's R-236), chose its step (i): LQ-11's work-tree
-probe and LQ-13's `rev-list` were measured on task 2.1's protocol, in the same
-`py-bench` container at a 1-minute load of 15 to 21, at 5.8 ms and 106.9 ms
-warm, 8.7 ms and 160.3 ms with the margin, neither reading the index, and the
-cap test, rerun on those costs, passes on the measured basis: at 128 rows and 16
-targets where `extensions.worktreeConfig` is true all 16 removals fit, the 16th
-spawning at 30.0 s with 20.0 s left (37.7 s with 20,000-file removals), and they
-would stop fitting only at about 114 ms for the work-tree probe or 630 ms for
-the `rev-list`, with the margin. Options (a) to (d) are therefore not needed and
-none is taken; they stay, each marked not taken, as the record of what was
-costed. D14's measured column and reachability sentence, and the Risks entry,
-take the measured costs, and D14's mixed basis, restated with them, fits all 16
-as well. With it, lane openRepoProject-3's W42 confirm read of round (e) at
-`f0bf538` (HIGH 0, MEDIUM 0, LOW 2): D14 says that option (c) also moves the
-ratified 60 s invocation deadline, to 80.55 s on the 150 ms basis and 65.0 s on
-the mixed one, where it named only the 64 s run bound (L-1); and D7 and D22's
-Revalidation bullet carry W38's L-4 clause, that an administrative directory
-that the `operation-in-progress` listing finds absent is a registration
-difference, `identity-changed` (L-2). By the lead's R-245, on lane
-openRepoProject-3's W53 departure ledger, the departures gain two entries, a
-revalidation read or child that the work deadline cuts counting as no difference
-(`BA:271-272`; its 19-10) and push's wider upstream-mapping refusal
+repository` and `Cleanup revalidates destructive actions`).
+
+Round (f): Brett Heap's ruling of 2026-10-22 on LQ-20, in his words to lane
+openRepoProject-2, "LQ-20: go with (i), measure first" (the lead's R-236), chose
+its step (i): LQ-11's work-tree probe and LQ-13's `rev-list` were measured on
+task 2.1's protocol, in the same `py-bench` container at a 1-minute load of 15
+to 21, at 5.8 ms and 106.9 ms warm, 8.7 ms and 160.3 ms with the margin, neither
+reading the index, and the cap test, rerun on those costs, passes on the
+measured basis: at 128 rows and 16 targets where `extensions.worktreeConfig` is
+true all 16 removals fit, the 16th spawning at 30.0 s with 20.0 s left (37.7 s
+with 20,000-file removals), and they would stop fitting only at about 114 ms for
+the work-tree probe or 630 ms for the `rev-list`, with the margin. Options (a)
+to (d) are therefore not needed and none is taken; they stay, each marked not
+taken, as the record of what was costed. D14's measured column and reachability
+sentence, and the Risks entry, take the measured costs, and D14's mixed basis,
+restated with them, fits all 16 as well. With it, lane openRepoProject-3's W42
+confirm read of round (e) at `f0bf538` (HIGH 0, MEDIUM 0, LOW 2): D14 says that
+option (c) also moves the ratified 60 s invocation deadline, to 80.55 s on the
+150 ms basis and 65.0 s on the mixed one, where it named only the 64 s run bound
+(L-1); and D7 and D22's Revalidation bullet carry W38's L-4 clause, that an
+administrative directory that the `operation-in-progress` listing finds absent
+is a registration difference, `identity-changed` (L-2). By the lead's R-245, on
+lane openRepoProject-3's W53 departure ledger, the departures gain two entries,
+a revalidation read or child that the work deadline cuts counting as no
+difference (`BA:271-272`; its 19-10) and push's wider upstream-mapping refusal
 (`BA:424-425`; its 19-11), and the push-child exception names the packet lines
 its process group departs from, `BA:1238-1240` and `BA:465-468`, with R-28 and
 its open question (Open Questions, the push-child exception; lane 2's LQ-3; its
@@ -1849,20 +1852,21 @@ in progress, the operation's `--quit`, since an empty `sequencer` or
 note says to unlock it first, since `git worktree remove --force` refuses a
 locked worktree (F-2), a sentence that for a locked row replaces the ratified
 recovery text of `0050f3e`, which the delta keeps for every other row, and so
-waits on Brett Heap's word together with F-1, the ceiling's recovery text. The
-scenario "Branch deletion refuses a branch it may not delete" quotes the new
-refusal, and the scenario counts stay. W52's F-6 and F-10 are baseline report
-texts that this change neither states nor quotes, D14 keeping the baseline
-report's layout, and are feature 004's; its F-4 is feature 004's `delete-branch`
-argv, and its F-11 and F-12 are lane openRepoProject-5's. Its F-1, the ceiling's
-recovery text, amends ratified text and waits on Brett Heap, and is unchanged.
-This commit also re-wrapped the paragraphs its edits lengthened, with no other
-change of words (What Changes, first bullet; Capabilities `:55`; this list;
-design Context, D4, D18, Risks, Migration Plan; `tasks.md` 1.2; the deltas'
-`Clean classifies preservation and cleanup actions`, `Clean can explicitly
-retire verified worktrees` and its scenario "Branch deletion refuses a branch it
-may not delete", and `Clean previews and applies a batch of eligible worktree
-removals in one repository`).
+waited on Brett Heap's word together with F-1, the ceiling's recovery text,
+until he ruled both on 2026-10-22 (round (h)). The scenario "Branch deletion
+refuses a branch it may not delete" quotes the new refusal, and the scenario
+counts stay. W52's F-6 and F-10 are baseline report texts that this change
+neither states nor quotes, D14 keeping the baseline report's layout, and are
+feature 004's; its F-4 is feature 004's `delete-branch` argv, and its F-11 and
+F-12 are lane openRepoProject-5's. Its F-1, the ceiling's recovery text, amends
+ratified text and waited on Brett Heap, and is unchanged here; he ruled it on
+2026-10-22 (round (h)). This commit also re-wrapped the paragraphs its edits
+lengthened, with no other change of words (What Changes, first bullet;
+Capabilities `:55`; this list; design Context, D4, D18, Risks, Migration Plan;
+`tasks.md` 1.2; the deltas' `Clean classifies preservation and cleanup actions`,
+`Clean can explicitly retire verified worktrees` and its scenario "Branch
+deletion refuses a branch it may not delete", and `Clean previews and applies a
+batch of eligible worktree removals in one repository`).
 
 Round (g2), lane openRepoProject-4's A1 on change 2's overview (PR #34), under
 the lead's R-252: the overview mirrors the remedies of `unstarted-branch` and
@@ -1891,7 +1895,8 @@ and cleanup actions`, which round (g) declared added beside the ratified
 recovery text of `0050f3e`, replaces that text for a locked row: the sentence
 stays as written, and round (g)'s entry, design D4 and D18 now say that it
 replaces the ratified text for locked rows and waits on Brett Heap's word
-together with F-1, the ceiling's recovery text (G-1). Branch deletion's message
+together with F-1, the ceiling's recovery text (G-1), as both did until he
+ruled them on 2026-10-22 (round (h)). Branch deletion's message
 for a branch the main worktree holds, round (g)'s F-5, is declared among the
 departures, against `BA:424-425` and the baseline's `project:730` at `15504f1`,
 as push's wider refusal is (G-2). Two AND clauses pin round (g)'s two unpinned
@@ -1908,10 +1913,95 @@ and rounds (g), (g2) and (g3) are entries of their own, each with one sentence
 on its re-wrapping (G-6). This commit also re-wrapped the paragraphs its edits
 shortened or lengthened, with no other change of words (Decisions, departures
 and council; Open Questions; this list; design Context, D4, D7, D14, D18, Risks,
-Open Questions; `tasks.md` 1.2, 2.1; the deltas' `Clean classifies preservation
-and cleanup actions` and its scenario "Only tracked-file deletions", and the
-`project-command` ADDED evidence model and its scenario "A linked worktree whose
-work tree is redirected").
+Open Questions; `tasks.md` 1.2, 2.1); the deltas only gained their AND lines, in
+the scenarios "Only tracked-file deletions" of `Clean classifies preservation
+and cleanup actions` and "A linked worktree whose work tree is redirected" of
+the `project-command` ADDED evidence model, and no delta line was re-wrapped
+(lane openRepoProject-3's W64 L-4, round (h)).
+
+Round (h), lane openRepoProject-2's open points after writer E, under the lead's
+R-258, R-259 and R-260, with writer E's report on feature 004 at `d764c26`, lane
+openRepoProject-5's RI-3 and O-1, lane openRepoProject-3's W64 read of rounds
+(g2) and (g3) at `6bf9f77` (HIGH 0, MEDIUM 1, LOW 5), and Brett Heap's ruling of
+2026-10-22, in his words to lane openRepoProject-2, "F-2: yes; F-1:
+prune-then-delete; O-1: deadline-exceeded" (the lead's R-263), which ends
+R-260's holding of O-1 and the round's first brief, which kept F-1
+byte-identical and O-1 pending. The Decisions opening and the departures list
+now separate their kinds: the decisions that PR #11 carried, the first eleven
+departures among them, were ratified with its merge; the next seven departures
+carry Brett Heap's rulings of 2026-10-21; and the last three, the work
+deadline's cut at revalidation, push's wider upstream refusal and branch
+deletion's message for a branch the main worktree holds, were declared by this
+amendment's rounds and wait on his ratification of it, as the push-child
+exception does; design Open Questions says the same, and no entry's text changes
+(R-258; W64's point 1). Every refusal that a `core.worktree` or `core.bare`
+redirect of a linked worktree causes is `inspection-incomplete`: in the batch's
+preview, apply and report, in push and branch deletion, and in a single-target
+removal naming the redirected row, whose own `inspection-error` makes its plan
+incomplete before any gate's exclusion. Feature 004 at `d764c26` showed this on
+Git 2.43.0 and 2.36.6, with the redirect in the worktree's `config.worktree`
+(`core.worktree` or `core.bare`) and in the repository's `config`
+(`core.worktree` naming the main worktree), and its remedy named repair, prune
+and removal by hand but not the unset, which the delta's plan-blocking SHALL
+requires as the cause fits (R-258, W64 M-1). D18 therefore gives the refusal a
+variant where any row it counts is `registration-mismatch`, "repair or remove
+the inspection-error rows first: git worktree repair, git worktree prune, unset
+core.worktree and core.bare in the repository's config or in a worktree's
+config.worktree, or remove the row by hand after review"; What Changes names the
+unset beside the other remedies; and the scenario "A linked worktree whose work
+tree is redirected" pins the refusal's remedy and gains an AND for the
+repository's own `config` (W64 L-5). A redirect of the main worktree itself is
+refused at resolution with `target-not-repository-root`, before any plan. The
+bounds sentence of `Clean bounds its Git work and reports omitted work`, and the
+revalidation bound of `Cleanup revalidates destructive actions`, carry RI-3's
+exception: where the path of the repository's root or of its common directory
+holds a line feed, the identity probe is read one option per child, so a
+revalidation spawns at most nine Git children, ten where the plan read
+`extensions.worktreeConfig` as true, and the final rescan at most six, as writer
+E measured on both Git builds for a root and this round for a separate git
+directory; the plan's `probes.estimated` counts them, where feature 004 at
+`d764c26` falls three short per target and three for the rescan (design D7, D14;
+R-259). `operation-in-progress`'s next step, in design D18 and Risks, adds "or,
+where Git leaves such a marker in place, delete it by hand from that worktree's
+git directory", since writer E's table, re-run here on both builds, shows
+markers that no Git command clears: an empty `CHERRY_PICK_HEAD`, `REVERT_HEAD`
+or `MERGE_AUTOSTASH`, whose `--abort` exits 128 and whose `--quit` exits 0 and
+leaves it, a lone `BISECT_LOG`, an empty `MERGE_HEAD` directory, a notes-merge
+marker file, and a `rebase-apply`, `rebase-merge` or `sequencer` that is an
+empty file; deleted by hand from the worktree's git directory, each such row is
+selected (R-259). Change 2's overview (PR #34's A1) does not mirror this next
+step, so the 200-character rule of R-252 does not bind it. D18 also says that
+this change states no argument vector for branch deletion, and that feature 004
+runs `git -C ROOT branch -d -- BRANCH` (W52 F-4, R-259). By Brett Heap's ruling:
+F-2's recovery text for a locked row stands as written and is now ruled, in
+design D4 and D18 and in the entries of rounds (g) and (g3); F-1's ceiling
+recovery text keeps `git worktree remove --force` only where the rescan finds
+both the target's `.git` file and its registry entry present, and otherwise
+reads "inspect, then `git worktree prune` and delete `<path>` by hand", at both
+of its sites in the deltas, with an AND clause in the scenario "A removal past
+the hard ceiling", and in What Changes, Capabilities and design D9 and D18, the
+rescan reading the `.git` file by one `lstat`, so that its bound of three Git
+children holds; and O-1's gate-7 sentence gives a read that the deadline cuts
+`deadline-exceeded`, the row unprobed and the plan incomplete with
+`deadline-exceeded`, while a read not finished within the filesystem budget, the
+deadline not being the limit, keeps `inspection-incomplete`, in What Changes and
+design D10. A list of amendments of ratified text, after the departures, records
+the three against `0050f3e`: pcl:135-138 for F-2, pcl:253-256 and pcl:922-926
+for F-1, and pcl:606-608 for O-1. From W64, round (f) gets its label inside the
+shared paragraph above (L-3); round (g3)'s entry no longer says that two deltas
+were re-wrapped, since each only gained a line (L-4); design Context and
+`tasks.md` 1.2 record F-1 and F-2 as ruled (L-2); and L-1 is settled as designed
+(R-264). The scenario counts stay 71, 22 and 24. This round's commits also
+re-wrapped the paragraphs their edits lengthened, round (f)'s among them after
+its label, with no other change of words (What Changes; Capabilities `:55`;
+Decisions, departures and amendments; this list; design Context, D4, D7, D9,
+D10, D14, D18, Risks, Open Questions; `tasks.md` 1.2; the deltas' `Clean can
+explicitly retire verified worktrees` and its scenario "A removal past the hard
+ceiling", `Clean previews and applies a batch of eligible worktree removals in
+one repository`, `Clean bounds its Git work and reports omitted work`, `Clean
+records a reconcilable result for every removal target`, `Cleanup revalidates
+destructive actions`, and the `project-command` ADDED evidence model and its
+scenario "A linked worktree whose work tree is redirected").
 
 ### Council Verdicts
 

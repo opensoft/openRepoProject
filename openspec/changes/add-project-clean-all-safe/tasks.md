@@ -64,13 +64,20 @@ duplicate them, and nothing here is an implementation step.
   departures of lane 3's W53 ledger, under the lead's R-236 and R-245 (the
   commit titled 'Amend change 1: LQ-20 resolved by measurement, lane 3's W42
   read and three departures (R-236, R-245)'); and lane 3's W52 read of next
-  steps that Git refuses, under the lead's R-248, its F-1 left for Brett Heap
-  (the commit titled 'Amend change 1: lane 3's W52 read, next steps that Git
-  refuses (R-248)'); and the shortening of F-7's clause, under the lead's R-252
-  (the commit titled 'Amend change 1: shorten the F-7 submodule clause
-  (R-252)'); and lane 3's W59 read of rounds (f) and (g), under the lead's R-253
-  (the commit titled 'Amend change 1: lane 3's W59 read of rounds (f) and (g)
-  (R-253)'); verified by the table "Questions Resolved by the Alignment Review"
+  steps that Git refuses, under the lead's R-248, its F-1, and its F-2 for a
+  locked row, left for Brett Heap, who ruled both on 2026-10-22 (the commit
+  titled 'Amend change 1: lane 3's W52 read, next steps that Git refuses
+  (R-248)'); and the shortening of F-7's clause, under the lead's R-252 (the
+  commit titled 'Amend change 1: shorten the F-7 submodule clause (R-252)'); and
+  lane 3's W59 read of rounds (f) and (g), under the lead's R-253 (the commit
+  titled 'Amend change 1: lane 3's W59 read of rounds (f) and (g) (R-253)'); and
+  round (h), lane 2's open points after writer E under the lead's R-258 to
+  R-260, with lane 5's RI-3 and O-1, lane 3's W64 read of rounds (g2) and (g3),
+  and Brett Heap's ruling of 2026-10-22, "F-2: yes; F-1: prune-then-delete; O-1:
+  deadline-exceeded" (R-263), in two commits (the commits titled 'Amend change
+  1: round (h) text, Brett Heap's F-2, F-1 and O-1, and lane 2's open points
+  (R-258 to R-263)' and 'Amend change 1: round (h) records and lane 3's W64 LOWs
+  (R-263)'); verified by the table "Questions Resolved by the Alignment Review"
   in `proposal.md` and the later-rulings list under it, which name the section
   each ruling edited.
 - [x] 1.3 Council resolved: every concern is VALID, none dismissed, the verdicts
