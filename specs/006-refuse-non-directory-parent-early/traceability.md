@@ -9,8 +9,8 @@ the functional requirements of `spec.md` the scenario realizes; no row names
 FR-002 or FR-012 to FR-016, which are not tied to one scenario. The Tests
 column names the test methods in `tests/test_project.py` that cover the
 scenario. For the 20 scenarios that this feature adds, alters or re-pins
-(plan.md, "Coverage map"), the cell reads `pending (T028)` until `tasks.md`
-T028 fills it with the tests the plan maps. The other 20 scenarios are
+(plan.md, "Coverage map"), `tasks.md` T028 filled the cell with the tests
+the plan maps. The other 20 scenarios are
 unchanged by this feature (FR-011): their cells are feature 002's
 `traceability.md` cells for the same title, copied byte for byte, except "No
 known obstacle", which takes feature 003's cell
