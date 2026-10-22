@@ -45,10 +45,12 @@ lane openRepoProject-3's W42 read of round (e), under the lead's R-236, Context,
 D7, D14, D22, Risks and Open Questions; and its W52 read of next steps that Git
 refuses, under the lead's R-248, Context, D4, D18, Risks and the Migration Plan,
 its F-1, the ceiling's recovery text, left for Brett Heap; and the shortening of
-F-7's clause, under the lead's R-252, Context, D18 and the Migration Plan. Brett
-Heap's ruling of 2026-10-09 on open question 1, that a local ancestry proof
-outranks `remote-gone` for worktree rows, is in `proposal.md` Decisions and
-edited Context, D6, D7, D20, Risks, the Migration Plan and Open Questions here.
+F-7's clause, under the lead's R-252, Context, D18 and the Migration Plan; and
+lane openRepoProject-3's W59 read of rounds (f) and (g), under the lead's R-253,
+Context, D4, D7, D14, D18, Risks and Open Questions. Brett Heap's ruling of
+2026-10-09 on open question 1, that a local ancestry proof outranks
+`remote-gone` for worktree rows, is in `proposal.md` Decisions and edited
+Context, D6, D7, D20, Risks, the Migration Plan and Open Questions here.
 
 Citations are `file:line` at `da33d92`: `BA`, `DI`, `OV` and `HO` are the
 packet's batch-cleanup, project-discovery, overview and handoff documents, and
@@ -253,7 +255,10 @@ every tracked file looks the same. The note is advisory: no classification, gate
 or eligibility changes; JSON shows `notes: ["partially-removed"]` on the row,
 and the human report prints it on its own line under the `dirty` advice with the
 recovery text, which for a locked worktree says to unlock it first (D18; lane
-openRepoProject-3's W52 F-2, R-248).
+openRepoProject-3's W52 F-2, R-248). For a locked row that text replaces the
+ratified recovery text of `0050f3e`, which the delta keeps for every other row,
+so it waits on Brett Heap's word together with W52's F-1, the ceiling's recovery
+text (lane openRepoProject-3's W59 G-1, R-253).
 
 When Git had already deleted `<path>/.git` (readdir order decides), the
 registration check fails, no status probe runs, and the row is excluded as
@@ -481,42 +486,41 @@ target, the manifest's candidate, the branch the plan's `origin/HEAD` named,
 `main`, `master`, `refs/remotes/origin/HEAD`, and the selected branches and
 their upstreams; the target's identity, `modules` check and D22's listing of its
 administrative directory, by filesystem reads, and, where the plan's row 4c read
-true, its effective-work-tree probe, whose decided difference, a toplevel
-that is not the target's path, is `identity-changed`, while a probe that
-fails, runs past its own budget or prints anything but one line is
-`state-changed` and one that the deadline cuts leaves the target
-`not-attempted` with `deadline-exceeded`, as for every revalidation child
-(the lead's R-171; at planning such a probe makes the row's registration
-disagree instead, as above, by the lead's R-187 erratum); then, inside the
-target worktree, the combined status probe, which must print nothing, the
-hidden-state probe, and D21's `logs/HEAD` re-read and reachability probe, which
-must print nothing. Every filesystem read of these steps follows the rule of a
-Git child (the lead's R-208): one that fails, or runs past its own budget while
-the deadline is not the limit, is `state-changed` whatever its step, so that a
-failed read of the repository's or the target's identity or registration is
-`state-changed`, not `identity-changed`; one that finds its path missing
-(`ENOENT` or `ENOTDIR`) decides that the path is absent, a value that keeps its
-step's reason, and an administrative directory that D22's
-`operation-in-progress` listing finds absent is a registration difference,
-`identity-changed` (lane openRepoProject-3's W38 L-4 and W42 L-2); and one that
-the deadline cuts leaves the target `not-attempted` with `deadline-exceeded`.
-R-208 is a reading of BA:271-276, by which "a value
-that cannot be re-read, including a filesystem call that times out, counts as a
-mismatch": a read that fails decides no identity difference, so its mismatch is
-the packet's "any other" difference, `state-changed`; this reading went to Brett
-Heap to confirm, as O-2, on 2026-10-22. Row 4c itself is not re-read, which
-keeps revalidation at six Git children in a repository without the extension: an
-extension turned on after the plan, with a `core.worktree` for a target, is a
-concurrent writer's change outside the contract (Risks). Ancestry needs no
-child: it is a function of the branch head and the merge-target SHA, both
-compared. The reflog of D10 is not re-read: a moved branch is already
-`branch-changed`. The HEAD reflog of D21 is re-read, as D21 states. A selected
-row whose upstream was deleted (D6) records `upstream_oid`, `ahead` and `behind`
-null, and revalidation compares them as recorded, by the review-safety rule that
-a value null in the plan and null at revalidation is no difference while a value
-that cannot be re-read is one: the narrowed listing still showing no
-remote-tracking ref for it is no difference, and one that reappears is
-`state-changed`.
+true, its effective-work-tree probe, whose decided difference, a toplevel that
+is not the target's path, is `identity-changed`, while a probe that fails, runs
+past its own budget or prints anything but one line is `state-changed` and one
+that the deadline cuts leaves the target `not-attempted` with
+`deadline-exceeded`, as for every revalidation child (the lead's R-171; at
+planning such a probe makes the row's registration disagree instead, as above,
+by the lead's R-187 erratum); then, inside the target worktree, the combined
+status probe, which must print nothing, the hidden-state probe, and D21's
+`logs/HEAD` re-read and reachability probe, which must print nothing. Every
+filesystem read of these steps follows the rule of a Git child (the lead's
+R-208): one that fails, or runs past its own budget while the deadline is not
+the limit, is `state-changed` whatever its step, so that a failed read of the
+repository's or the target's identity or registration is `state-changed`, not
+`identity-changed`; one that finds its path missing (`ENOENT` or `ENOTDIR`)
+decides that the path is absent, a value that keeps its step's reason, and an
+administrative directory that D22's `operation-in-progress` listing finds absent
+is a registration difference, `identity-changed` (lane openRepoProject-3's W38
+L-4 and W42 L-2); and one that the deadline cuts leaves the target
+`not-attempted` with `deadline-exceeded`. R-208 is a reading of BA:271-276, by
+which "a value that cannot be re-read, including a filesystem call that times
+out, counts as a mismatch": a read that fails decides no identity difference, so
+its mismatch is the packet's "any other" difference, `state-changed`; this
+reading went to Brett Heap to confirm, as O-2, on 2026-10-22. Row 4c itself is
+not re-read, which keeps revalidation at six Git children in a repository
+without the extension: an extension turned on after the plan, with a
+`core.worktree` for a target, is a concurrent writer's change outside the
+contract (Risks). Ancestry needs no child: it is a function of the branch head
+and the merge-target SHA, both compared. The reflog of D10 is not re-read: a
+moved branch is already `branch-changed`. The HEAD reflog of D21 is re-read, as
+D21 states. A selected row whose upstream was deleted (D6) records
+`upstream_oid`, `ahead` and `behind` null, and revalidation compares them as
+recorded, by the review-safety rule that a value null in the plan and null at
+revalidation is no difference while a value that cannot be re-read is one: the
+narrowed listing still showing no remote-tracking ref for it is no difference,
+and one that reappears is `state-changed`.
 
 The first target's three repository children are the preflight for every target
 (BA:709-711). After target k's child is reaped, its rescan runs the same three,
@@ -960,7 +964,7 @@ sensitivity case (lane openRepoProject-3's W36 L-b and L-c). Task 2.1 measured
 neither kind of child added since; LQ-20's step (i), which Brett Heap chose on
 2026-10-22 (the lead's R-236), measured both on its protocol, in the same
 `py-bench` container with Git 2.43.0 and Python 3.12.3, at a 1-minute load of 15
-to 21 on 32 threads, the larger median of two runs of 30 to 48 each: LQ-11's
+to 21 on 32 threads, the larger median of two runs of 40 to 48 each: LQ-11's
 per-row `rev-parse --path-format=absolute --show-toplevel`, 5.8 ms warm and 9.8
 ms cold, so 8.7 ms with the margin, and LQ-13's `rev-list`, 106.9 ms warm and
 686 ms cold, so 160.3 ms, its walk covering the whole history of a repository of
@@ -1178,14 +1182,16 @@ deferral, `  deferred-target-cap (K): this run removes up to 16; run again:
 project clean ROOT --all-safe --apply`, and, when every one of the 16 rows taken
 past the cap is excluded by a gate after the cap, the line `  these deferred
 rows will not drain while the 16 rows ahead of them are REASONS; review those
-worktrees, then remove them yourself` (R-24), REASONS those rows' reasons,
-each once, in gate order and joined by `, `, so that it reads as before when
-all 16 are `contains-submodule` (W21 L-f, R-146); the
-residual-window line, `Not protected: ignored files created, index flags set,
-operations started or worktree-only commits made after the last check, and any
-change after Git's own check.` (its third item by LQ-14, its fourth by LQ-13);
-and, when a
-complete plan selects nothing, `No eligible worktrees`.
+worktrees, then remove them yourself (--force for any that holds a submodule)`
+(R-24), REASONS those rows' reasons, each once, in gate order and joined by
+`, `, so that it reads as before when all 16 are `contains-submodule` (W21 L-f,
+R-146), but for its closing clause, which names `--force` because Git refuses a
+plain `git worktree remove` of a worktree that holds a submodule (lane
+openRepoProject-3's W59 G-4, R-253); the residual-window line, `Not protected:
+ignored files created, index flags set, operations started or worktree-only
+commits made after the last check, and any change after Git's own check.` (its
+third item by LQ-14, its fourth by LQ-13); and, when a complete plan selects
+nothing, `No eligible worktrees`.
 
 The next steps by reason: `dirty` "commit or preserve the changes";
 `ignored-local-files` "move or delete the ignored files by hand";
@@ -1201,10 +1207,12 @@ worktree yourself"; `operation-in-progress` "a git am, merge, notes merge,
 cherry-pick, revert, rebase or bisect is, or may be, in progress there; finish
 or abort it (a squash merge that holds an autostash ends with git commit,
 --allow-empty where nothing is staged, or with git merge --quit, which keeps the
-edit in the stash list), or, where Git says none is in progress, its --quit,
-then run again" (LQ-14, R-126, R-146, R-171), the `--quit` clause for a marker
-left with nothing in progress, such as an empty `sequencer` or `rebase-merge`,
-where `--abort` fails and only `--quit` clears it (W52 F-9, R-248);
+edit in the stash list), or, where --abort fails for a marker with nothing in
+progress, its --quit, then run again" (LQ-14, R-126, R-146, R-171), the `--quit`
+clause for a marker left with nothing in progress, such as an empty `sequencer`
+or `rebase-merge`, where `--abort` fails and only `--quit` clears it (W52 F-9,
+R-248), the clause naming the failed `--abort`, since for an empty
+`rebase-merge` `git status` still reports a rebase in progress (W59 G-5, R-253);
 `worktree-only-commits` "a commit is, or may be, held only by this worktree's
 HEAD reflog or refs/worktree; keep it on a branch or tag, or review, then git
 worktree remove yourself" (LQ-13); `registration-mismatch` "review, then git
@@ -1225,7 +1233,10 @@ the `dirty` advice or on a `partially-removed` target: `Probable partial
 removal: inspect, then git worktree remove --force PATH by hand.` For a locked
 worktree, which `git worktree remove --force` refuses, the note reads `Probable
 partial removal: inspect, unlock it, then git worktree remove --force PATH by
-hand.` (W52 F-2, R-248).
+hand.` (W52 F-2, R-248). For a locked row that note replaces the ratified
+recovery text of `0050f3e`, which the delta keeps for every other row, so it
+waits on Brett Heap's word together with W52's F-1, the ceiling's recovery text
+(W59 G-1, R-253).
 
 Refusal messages keep the baseline wording where a test reads it:
 `target-excluded` for the current worktree, `Cannot remove the current
@@ -1618,10 +1629,11 @@ record from the probe, and its `--abort` leaves `NOTES_MERGE_WORKTREE` alone.
   directory after a crash or a lone `BISECT_START` after a cut-short `git
   bisect reset`, keeps its worktree out as `operation-in-progress`] -> Fails
   closed, as Brett Heap's ruling LQ-14 asks; the remedy says to finish or abort
-  the operation or, where Git says none is in progress, to use its `--quit`,
-  each of which clears the marker (`git bisect reset`, `git cherry-pick
-  --quit`), and Git itself refuses a new sequence while that directory exists
-  (D18, D22; lane openRepoProject-3's W52 F-9, R-248).
+  the operation or, where `--abort` fails for a marker with nothing in progress,
+  to use its `--quit`, each of which clears the marker (`git bisect reset`, `git
+  cherry-pick --quit`), and Git itself refuses a new sequence while that
+  directory exists (D18, D22; lane openRepoProject-3's W52 F-9, R-248, and W59
+  G-5, R-253).
 - [A branch created from a remote branch that already had commits, then merged
   elsewhere, reads as unstarted, because nothing moved it here since its
   creation entry] -> Fails closed as `unstarted-branch`; the remedy says that no
@@ -1832,34 +1844,35 @@ archive.
   RESOLVED on 2026-10-22: Brett Heap chose step (i), in his words to lane
   openRepoProject-2, "LQ-20: go with (i), measure first" (the lead's R-236). The
   two probes were measured on task 2.1's protocol, in the same container and at
-  a comparable load: LQ-11's work-tree probe at 5.8 ms warm, 8.7 ms with the
-  margin, and LQ-13's `rev-list` at 106.9 ms warm, 160.3 ms with the margin, its
-  walk covering a whole history of 9,940 commits (D14; `tasks.md` 2.1). The cap
-  test, rerun on those costs, passes on the measured basis: at 128 rows and 16
-  targets where row 4c reads true, all 16 removals fit, the 16th spawning at
-  30.0 s with 20.0 s left (37.7 s with 20,000-file removals). Options (a) to (d)
-  are therefore not needed, and none is taken; the deltas stand as written. The
-  question as it stood before the ruling follows, kept as the record of what was
-  costed; its measured basis is at the stand-ins that step (i) replaced. Its
-  first step is the basis. The cap test is D5's, at task 2.1's measured costs
-  and its 10,000-file removal, but task 2.1 measured neither LQ-11's per-row
-  `rev-parse --show-toplevel` nor LQ-13's `rev-list`. For a 128-row `--all-safe
-  --apply` there: at D14's flat 150 ms per child the first removal would spawn
-  at 45.3 s, past the 45 s spawn limit (the 50 s work deadline less the 5 s
-  removal floor), so none is made, safely; at the measured costs, with those two
-  probes costed at the identity probe's 19.7 ms and the full ref listing's
-  359.7 ms, all 16 removals fit (15 with 20,000-file removals), the 16th only
-  while the work-tree probe costs at most about 69 ms with the margin and the
-  `rev-list` about 581 ms or less, each with the other at its stand-in; and on
-  the mixed basis, the measured costs plus 150 ms for each child added since, 11
-  fit. So the first step is either (i) to measure those two probes on task 2.1's
-  protocol, at a load comparable with its runs, and rerun the cap test, or (ii)
-  to decide which basis the cap test uses: the measured basis, D5's as ratified,
-  with the two probes at those stand-in costs; the mixed basis, which prices
-  only those two at 150 ms; or BA's flat 150 ms, which would change D5 and fails
-  the case at once, so that an option below has to be chosen with it. If the
-  case then passes, no option is needed and the deltas stand. If it fails, the
-  options are these, each with its result at 128 rows on each basis:
+  a 1-minute load of 15 to 21 on 32 threads: LQ-11's work-tree probe at 5.8 ms
+  warm, 8.7 ms with the margin, and LQ-13's `rev-list` at 106.9 ms warm, 160.3
+  ms with the margin, its walk covering a whole history of 9,940 commits (D14;
+  `tasks.md` 2.1). The cap test, rerun on those costs, passes on the measured
+  basis: at 128 rows and 16 targets where row 4c reads true, all 16 removals
+  fit, the 16th spawning at 30.0 s with 20.0 s left (37.7 s with 20,000-file
+  removals). Options (a) to (d) are therefore not needed, and none is taken; the
+  deltas stand as written. The question as it stood before the ruling follows,
+  kept as the record of what was costed; its measured basis is at the stand-ins
+  that step (i) replaced. Its first step is the basis. The cap test is D5's, at
+  task 2.1's measured costs and its 10,000-file removal, but task 2.1 measured
+  neither LQ-11's per-row `rev-parse --show-toplevel` nor LQ-13's `rev-list`.
+  For a 128-row `--all-safe --apply` there: at D14's flat 150 ms per child the
+  first removal would spawn at 45.3 s, past the 45 s spawn limit (the 50 s work
+  deadline less the 5 s removal floor), so none is made, safely; at the measured
+  costs, with those two probes costed at the identity probe's 19.7 ms and the
+  full ref listing's 359.7 ms, all 16 removals fit (15 with 20,000-file
+  removals), the 16th only while the work-tree probe costs at most about 69 ms
+  with the margin and the `rev-list` about 581 ms or less, each with the other
+  at its stand-in; and on the mixed basis, the measured costs plus 150 ms for
+  each child added since, 11 fit. So the first step is either (i) to measure
+  those two probes on task 2.1's protocol, at a load comparable with its runs,
+  and rerun the cap test, or (ii) to decide which basis the cap test uses: the
+  measured basis, D5's as ratified, with the two probes at those stand-in costs;
+  the mixed basis, which prices only those two at 150 ms; or BA's flat 150 ms,
+  which would change D5 and fails the case at once, so that an option below has
+  to be chosen with it. If the case then passes, no option is needed and the
+  deltas stand. If it fails, the options are these, each with its result at 128
+  rows on each basis:
   - (a) accept that worst case (not taken):
     - 150 ms: no removal on this run or any re-run, since a re-run builds the
       same plan, so a re-run does not continue there; from 127 rows, one removal

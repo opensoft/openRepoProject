@@ -311,6 +311,7 @@ requirement states a change.
 #### Scenario: A linked worktree whose work tree is redirected
 - **WHEN** a repository sets `extensions.worktreeConfig` to true, and the `config.worktree` of an otherwise eligible linked worktree W, which holds an ignored file `local.env`, sets `core.worktree` to a clean directory D elsewhere
 - **THEN** W reads `registration-mismatch` with classification `inspection-error`, no status probe runs in W or in D, `project clean <root> --all-safe` is incomplete, `--all-safe --apply --yes` refuses with exit 2 and removes nothing, and W and `local.env` survive, where before this change W read clean from D's tree and Git's removal deleted W with `local.env`
+- **AND** the preview of `project clean <root> --all-safe` lists W under `registration-mismatch`, whose next step names, as a manual remedy, unsetting `core.worktree` and `core.bare` in the repository's `config` or in a worktree's `config.worktree`
 - **AND** `--apply --action remove --worktree W --yes` refuses with exit 2 and removes nothing, and `project status` marks W `inspection-error`
 - **AND** the same holds when W's `config.worktree` sets `core.bare` to true instead
 - **AND** with the extension set and neither setting for W, W's effective work tree is its path and W is selected as before, and without the extension a counting `git` wrapper records no `rev-parse` child whose directory is a linked worktree

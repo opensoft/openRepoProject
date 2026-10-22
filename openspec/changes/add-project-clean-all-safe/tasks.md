@@ -68,7 +68,9 @@ duplicate them, and nothing here is an implementation step.
   (the commit titled 'Amend change 1: lane 3's W52 read, next steps that Git
   refuses (R-248)'); and the shortening of F-7's clause, under the lead's R-252
   (the commit titled 'Amend change 1: shorten the F-7 submodule clause
-  (R-252)'); verified by the table "Questions Resolved by the Alignment Review"
+  (R-252)'); and lane 3's W59 read of rounds (f) and (g), under the lead's R-253
+  (the commit titled 'Amend change 1: lane 3's W59 read of rounds (f) and (g)
+  (R-253)'); verified by the table "Questions Resolved by the Alignment Review"
   in `proposal.md` and the later-rulings list under it, which name the section
   each ruling edited.
 - [x] 1.3 Council resolved: every concern is VALID, none dismissed, the verdicts
@@ -148,11 +150,11 @@ duplicate them, and nothing here is an implementation step.
   `deferred-target-cap` and all are `contains-submodule` after it, so it yields
   no removable row each run and its deferred count never drains (design Risks,
   R-24). Results posted on PR #11; the caps stand as measured. LQ-20's step (i)
-  (Brett Heap, 2026-10-22; the lead's R-236) measured by the same protocol the
+  (Brett Heap, 2026-10-22; the lead's R-236) measured, by the same protocol, the
   two children that LQ-11 and LQ-13 added, in the same container, on a
   10,001-file fixture with `extensions.worktreeConfig` true, eight linked
   worktrees, 1,000 branches, 1,991 loose refs and 9,940 commits, at a 1-minute
-  load of 15 to 21, 30 to 48 runs a case, the larger median of two runs:
+  load of 15 to 21, 40 to 48 runs a case, the larger median of two runs:
   medians, warm / cold, the work-tree probe 5.8 / 9.8 ms and the `rev-list` over
   the whole history 106.9 / 686 ms, neither reading the index; with them the fit
   still rejects no cap, the 16th removal spawning at 30.0 s with 20.0 s left at

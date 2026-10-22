@@ -208,6 +208,8 @@ NOT change the row's classification, the ladder or any gate.
 - **THEN** it is classified `dirty` with the dirty advice, the human report
   shows the probable partial-removal note and the recovery text beside that
   advice, and the JSON row carries `notes: ["partially-removed"]`
+- **AND** when that worktree is also locked, the recovery text shown is
+  "inspect, unlock it, then `git worktree remove --force <path>` by hand"
 - **AND** a worktree with one deleted tracked file and one untracked file
   carries no such note
 
