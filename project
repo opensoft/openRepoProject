@@ -5584,10 +5584,13 @@ def revalidation_difference(plan, target, run, part, seen):
 
     The checked rows are the target's own, or for the first selected target
     every selected row: its revalidation is the preflight of every selected
-    target in steps 3 to 5, so that a difference on any of them refuses the
-    first target and nothing is removed (research.md R16, lead ruling R-41,
-    LQ-4); steps 6 and 7, the ignored-file state and the classification
-    among them, run in each target's own revalidation. A value null in the
+    target in steps 3 and 4 and in step 5's identity reads and twin check,
+    so that a difference there on any of them refuses the first target and
+    nothing is removed (research.md R16, lead ruling R-41, LQ-4). Step 5's
+    `modules` check, admin directory listing and effective-work-tree probe,
+    and steps 6 to 8, the ignored-file state, the classification and the
+    worktree-only commits among them, read the target alone, in each
+    target's own revalidation (lane 3's W32 L2). A value null in the
     plan and null again is no difference; a value that cannot be re-read is
     one. Every Git child of these steps that fails, or runs past its own
     budget while the deadline is not the limit, is `state-changed`, whatever
