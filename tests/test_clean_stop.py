@@ -406,7 +406,7 @@ class StopTests(clean_support.CleanCase):
                                 "hand.")
         unread = TEXT.get("partial_removal_note_unread")
         self.assertEqual(unread, "Probable partial removal: inspect {PATH} by hand; its .git could not be read, so "
-                                 "do not run git worktree prune until it can.")
+                                 "do not run git worktree prune, git worktree remove or git gc until it can.")
         self.assertEqual(project.TEXT.get("partial_removal_note_unread"), unread)
         plan = types.SimpleNamespace(root=b"/r oot")
         for label, entry, path, git_file, read, key in [

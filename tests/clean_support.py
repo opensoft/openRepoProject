@@ -629,7 +629,9 @@ TEXT_FIXTURES = {
     "partial_removal_note_prune": "Probable partial removal: inspect, then git worktree prune and delete {PATH} by hand.",
     # The ceiling's note where the rescan's .git read failed or was cut, which advises no
     # prune (#19's round (i) at 1a4785e; W73 M-1, R-284), copied exactly from the lead's message.
-    "partial_removal_note_unread": "Probable partial removal: inspect {PATH} by hand; its .git could not be read, so do not run git worktree prune until it can.",
+    # Its warning also names git worktree remove and git gc (R-324, ruled by Brett Heap,
+    # "R-324: yes", lead R-343).
+    "partial_removal_note_unread": "Probable partial removal: inspect {PATH} by hand; its .git could not be read, so do not run git worktree prune, git worktree remove or git gc until it can.",
     # D18's note for a locked worktree (#19 at 4f1c0e0, design.md:1225-1228; W52 F-2, R-248),
     # which replaces ratified text and so waits on Brett Heap's word.
     "partial_removal_note_locked": "Probable partial removal: inspect, unlock it, then git worktree remove --force {PATH} by hand.",
@@ -643,20 +645,23 @@ TEXT_FIXTURES = {
     # path that could not be read (its planning lstat failed, present null), and the next step of
     # such an inspection-error row: no git worktree prune, which deletes that live worktree's
     # admin directory (#19's round (l); lane 3's W87 M-1, lead ruling R-307), copied exactly from
-    # the lead's brief.
-    "remedy_inspection_incomplete_unread": "repair or remove the inspection-error rows first: git worktree repair, or remove the row by hand after review; a row's path could not be read, so do not run git worktree prune until it can",
-    "remedy_inspection_incomplete_redirect_unread": "repair or remove the inspection-error rows first: git worktree repair, unset core.worktree and core.bare in the repository's config or in a worktree's config.worktree, or remove the row by hand after review; a row's path could not be read, so do not run git worktree prune until it can",
-    "next_step_unread_row": "inspect the row by hand; its path could not be read, so do not run git worktree prune until it can",
+    # the lead's brief. Each warning also names git worktree remove and git gc (R-324, ruled by
+    # Brett Heap, "R-324: yes", lead R-343).
+    "remedy_inspection_incomplete_unread": "repair or remove the inspection-error rows first: git worktree repair, or remove the row by hand after review; a row's path could not be read, so do not run git worktree prune, git worktree remove or git gc until it can",
+    "remedy_inspection_incomplete_redirect_unread": "repair or remove the inspection-error rows first: git worktree repair, unset core.worktree and core.bare in the repository's config or in a worktree's config.worktree, or remove the row by hand after review; a row's path could not be read, so do not run git worktree prune, git worktree remove or git gc until it can",
+    "next_step_unread_row": "inspect the row by hand; its path could not be read, so do not run git worktree prune, git worktree remove or git gc until it can",
     # NEXT_STEP_FIXTURES's inspection-error and registration-mismatch next steps where any row of
     # the plan has such a path, since prune acts on the whole repository: each without " or git
     # worktree prune" and with the same warning appended (the lead's R-310, an addendum to R-307),
-    # copied exactly from the lead's message.
-    "next_step_inspection_error_unread": "review, then git worktree repair, or remove the row by hand; a row's path could not be read, so do not run git worktree prune until it can",
-    "next_step_registration_mismatch_unread": "review, then git worktree repair, unset core.worktree and core.bare in the repository's config, or in that worktree's config.worktree, or remove the row by hand; a row's path could not be read, so do not run git worktree prune until it can",
+    # copied exactly from the lead's message. Each warning also names git worktree remove and git
+    # gc (R-324, ruled by Brett Heap, "R-324: yes", lead R-343).
+    "next_step_inspection_error_unread": "review, then git worktree repair, or remove the row by hand; a row's path could not be read, so do not run git worktree prune, git worktree remove or git gc until it can",
+    "next_step_registration_mismatch_unread": "review, then git worktree repair, unset core.worktree and core.bare in the repository's config, or in that worktree's config.worktree, or remove the row by hand; a row's path could not be read, so do not run git worktree prune, git worktree remove or git gc until it can",
     # The inspect-cap remedy always warns against git worktree prune, since the rows past the
     # cap are never read (lane 3's W86 NM-1; R-320, ruled by Brett Heap, "R-320: yes", lead
-    # R-321), copied exactly from the lead's brief.
-    "remedy_inspect_cap": "{N} rows exceed the row cap of {M}; remove worktrees explicitly, or prune stale entries by hand; if a worktree's path cannot be read, do not run git worktree prune until it can",
+    # R-321), copied exactly from the lead's brief. The warning also names git worktree remove and
+    # git gc (R-324, ruled by Brett Heap, "R-324: yes", lead R-343).
+    "remedy_inspect_cap": "{N} rows exceed the row cap of {M}; remove worktrees explicitly, or prune stale entries by hand; if a worktree's path cannot be read, do not run git worktree prune, git worktree remove or git gc until it can",
     "remedy_deadline_exceeded": "the run ran out of time; remove worktrees explicitly or re-run",
     # The contract, beyond D18.
     "progress_line": "  {STAGE} {PATH}",
@@ -705,9 +710,10 @@ TEXT_FIXTURES = {
     # a path that could not be read (its planning lstat failed, present null): each with a
     # warning against git worktree prune, which deletes that live worktree's admin directory
     # (lane 3's W86 NM-1; R-320, ruled by Brett Heap, "R-320: yes", lead R-321), copied exactly
-    # from the lead's brief.
-    "recommendation_stale_worktree_unread": "Review and prune stale worktree metadata manually; a row's path could not be read, so do not run git worktree prune until it can.",
-    "recommendation_stale_locked_unread": "Review, unlock it, then prune stale worktree metadata manually; a row's path could not be read, so do not run git worktree prune until it can.",
+    # from the lead's brief. Each warning also names git worktree remove and git gc (R-324, ruled
+    # by Brett Heap, "R-324: yes", lead R-343).
+    "recommendation_stale_worktree_unread": "Review and prune stale worktree metadata manually; a row's path could not be read, so do not run git worktree prune, git worktree remove or git gc until it can.",
+    "recommendation_stale_locked_unread": "Review, unlock it, then prune stale worktree metadata manually; a row's path could not be read, so do not run git worktree prune, git worktree remove or git gc until it can.",
     # Baseline texts kept (project at 961c405).
     "target_excluded_current": "Cannot remove the current worktree.",
     "target_excluded_class": "Worktree is {CLASS}; only clean merged worktrees may be removed.",
