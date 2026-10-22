@@ -216,8 +216,9 @@ move these lines, and this change's feature re-pins them):
   which removes the Git names, sets `TRACE2_OFF` and takes only a `GIT_KINDS`
   key, so it cannot yet give a `gh` child the environment that the Requests
   paragraph and D5 specify, with the Git scrub not applying and every other
-  variable passed on unchanged. A `gh` row in `GIT_KINDS` would break that
-  "unchanged"; the realization needs a start path that takes its own
+  variable passed on unchanged (`specs/project-overview/spec.md:405-417`, this
+  bullet and `design.md:579-584`, at `2ab3743`). A `gh` row in `GIT_KINDS` would
+  break that "unchanged"; the realization needs a start path that takes its own
   environment, and that path is not built.
 - Tool facts checked for this design: Git 2.43.0 answers
   `for-each-ref --format='%(upstream:remotename)%00%(upstream:remoteref)'`
