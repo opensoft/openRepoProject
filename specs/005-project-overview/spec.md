@@ -118,9 +118,9 @@ round C16, they are byte-identical as at `2eeaec4` (Dependencies).
 byte-identical at new lines, which the Dependencies list for a later re-pin; at
 `d4e960b`, after its round B10, they are byte-identical at new lines again,
 compared by `cmp`, except its task 3.2, which gains reader RF's M1; and at
-`25f7333`, after its rounds B11 (`f170079`) and B12, they are byte-identical at
-new lines once more, by `cmp`, its task 3.2 and its `project-overview` block
-unchanged (Dependencies).
+`25f7333`, after its rounds B11 (`f170079`) and B12, and at `bced895`, after
+its round B13, they are byte-identical at new lines once more, by `cmp`, its
+task 3.2 and its `project-overview` block unchanged (Dependencies).
 
 **Created before feature 004 merges**: The change creates this feature only
 after feature 004 merges (proposal, Status and "Dependencies and
@@ -3486,9 +3486,16 @@ and [P] are change 1's requirements as the header names them.
     and D14's :1454-1460 (:789-792, :868-871 and :1424-1430 at `f170079`), and
     its task 3.2 at :178-193 throughout, each byte-identical, the task as at
     `d4e960b` and its first line as at the pin. Its `project-overview` block is
-    unchanged, the same blob from `fe5b245` to `25f7333`. Its re-check at #27's
-    round B13 is pending, lane openRepoProject-5 not having sent B13's head and
-    line map; the last check stays the one at `25f7333`.
+    unchanged, the same blob from `fe5b245` to `25f7333`. Re-checked at
+    `bced895`, its head after round B13 (`de47a4f` in its spec deltas,
+    `2152816` in its design, `bced895` in its proposal and tasks), by lane
+    openRepoProject-5's line map and this spec's own `cmp` of each range
+    against `25f7333` and against the pin: its `proposal.md` ranges sit at
+    :648-651, :672-675, :721-732 and :750-751, its `design.md` ranges at
+    :822-825, :901-904 and D14's :1476-1482, and its task 3.2 at :178-193, each
+    byte-identical, the task as at `25f7333` and its first line as at the pin.
+    Its `project-overview` block is unchanged, the same blob from `fe5b245` to
+    `bced895`.
   - `add-project-overview-remote-merge-status` (issue #25, draft PR #29)
     MODIFIES "Overview bounds its work and reports what it omitted", "Overview
     prints a versioned JSON envelope" and "Overview is local and read-only"
