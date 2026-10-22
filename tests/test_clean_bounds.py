@@ -380,10 +380,13 @@ class BoundsTests(clean_support.CleanCase):
             message = refused("inspect-cap", TEXT["remedy_inspect_cap"].format(N=129, M=128))
             # The remedy always warns against git worktree prune, since the
             # row past the cap is never read (lane 3's W86 NM-1; R-320, ruled
-            # by Brett Heap, "R-320: yes", lead R-321).
+            # by Brett Heap, "R-320: yes", lead R-321). It also names git
+            # worktree remove and git gc (R-324, ruled by Brett Heap,
+            # "R-324: yes", lead R-343).
             self.assertEqual(message, "REFUSED: The plan is incomplete (inspect-cap): 129 rows exceed the row cap "
                                       "of 128; remove worktrees explicitly, or prune stale entries by hand; if a "
-                                      "worktree's path cannot be read, do not run git worktree prune until it can.\n")
+                                      "worktree's path cannot be read, do not run git worktree prune, git "
+                                      "worktree remove or git gc until it can.\n")
             self.assertEqual([(refusal["code"], refusal["message"]) for refusal in document["refusals"]],
                              [("inspect-cap", message.removeprefix("REFUSED: ").removesuffix("\n"))])
             human = self.run_cli("clean", root, "--all-safe")

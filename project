@@ -730,10 +730,11 @@ TEXT = {
     # registry entry: `git worktree prune` deletes the admin directory of a
     # live worktree whose `.git` Git cannot stat (EACCES), so this note
     # advises no prune (#19's round (i) at 1a4785e; lane 3's W73 M-1, lead
-    # ruling R-284).
+    # ruling R-284). Its warning also names `git worktree remove` and `git
+    # gc` (R-324, ruled by Brett Heap, "R-324: yes", lead R-343).
     "partial_removal_note_unread":
         "Probable partial removal: inspect {PATH} by hand; its .git could not be read, "
-        "so do not run git worktree prune until it can.",
+        "so do not run git worktree prune, git worktree remove or git gc until it can.",
     # D18's note for a locked worktree's row, which `git worktree remove
     # --force` refuses (#19 at 4f1c0e0; lane 3's W52 F-2, R-248). It replaces
     # ratified text, so it waits on Brett Heap's word, in a commit of its own.
@@ -757,44 +758,55 @@ TEXT = {
     # variant would otherwise print: each without `git worktree prune, ` and
     # with a warning against it, since prune deletes the admin directory of a
     # live worktree whose path Git cannot stat (EACCES) (#19's round (l);
-    # lane 3's W87 M-1, lead ruling R-307).
+    # lane 3's W87 M-1, lead ruling R-307). Each warning also names `git
+    # worktree remove` and `git gc` (R-324, ruled by Brett Heap, "R-324:
+    # yes", lead R-343).
     "remedy_inspection_incomplete_unread":
         "repair or remove the inspection-error rows first: git worktree repair, or remove the row by hand after "
-        "review; a row's path could not be read, so do not run git worktree prune until it can",
+        "review; a row's path could not be read, so do not run git worktree prune, git worktree remove or git "
+        "gc until it can",
     "remedy_inspection_incomplete_redirect_unread":
         "repair or remove the inspection-error rows first: git worktree repair, "
         "unset core.worktree and core.bare in the repository's config or in a worktree's config.worktree, "
         "or remove the row by hand after review; a row's path could not be read, so do not run git worktree "
-        "prune until it can",
+        "prune, git worktree remove or git gc until it can",
     # The next step of an `inspection-error` row whose own path could not be
     # read, its planning lstat having failed (`present` null), in place of
     # NEXT_STEPS's, which names `git worktree prune`; the preview prints such
     # rows in a group of their own under `inspection-error` (excluded_groups();
-    # #19's round (l) at d1c5343; lane 3's W87 M-1, lead ruling R-307).
+    # #19's round (l) at d1c5343; lane 3's W87 M-1, lead ruling R-307). Its
+    # warning also names `git worktree remove` and `git gc` (R-324, ruled by
+    # Brett Heap, "R-324: yes", lead R-343).
     "next_step_unread_row":
-        "inspect the row by hand; its path could not be read, so do not run git worktree prune until it can",
+        "inspect the row by hand; its path could not be read, so do not run git worktree prune, git worktree "
+        "remove or git gc until it can",
     # NEXT_STEPS's two next steps that name `git worktree prune`, where any row
     # of the plan has a path that could not be read, as for the two remedies
     # above, since prune acts on the whole repository: each without ` or git
     # worktree prune` and with the same warning appended, the first for the
     # other `inspection-error` rows, whose paths were read (excluded_groups();
-    # #19's round (l); the lead's R-310, an addendum to R-307).
+    # #19's round (l); the lead's R-310, an addendum to R-307). Each warning
+    # also names `git worktree remove` and `git gc` (R-324, ruled by Brett
+    # Heap, "R-324: yes", lead R-343).
     "next_step_inspection_error_unread":
         "review, then git worktree repair, or remove the row by hand; a row's path could not be read, so do not "
-        "run git worktree prune until it can",
+        "run git worktree prune, git worktree remove or git gc until it can",
     "next_step_registration_mismatch_unread":
         "review, then git worktree repair, unset core.worktree and core.bare in the repository's config, or in "
         "that worktree's config.worktree, or remove the row by hand; a row's path could not be read, so do not "
-        "run git worktree prune until it can",
+        "run git worktree prune, git worktree remove or git gc until it can",
     # The inspect-cap remedy, with a warning against `git worktree prune`
     # always, not only where a row's path could not be read, since the rows
     # past the cap are never read, so no run can tell whether their paths can
     # be; prune deletes the admin directory of a live worktree whose path Git
     # cannot stat (EACCES), on Git 2.43.0 and 2.36.6 (lane 3's W86 NM-1;
-    # R-320, ruled by Brett Heap, "R-320: yes", lead R-321).
+    # R-320, ruled by Brett Heap, "R-320: yes", lead R-321). The warning also
+    # names `git worktree remove` and `git gc` (R-324, ruled by Brett Heap,
+    # "R-324: yes", lead R-343).
     "remedy_inspect_cap":
         "{N} rows exceed the row cap of {M}; remove worktrees explicitly, or prune stale entries by hand; if a "
-        "worktree's path cannot be read, do not run git worktree prune until it can",
+        "worktree's path cannot be read, do not run git worktree prune, git worktree remove or git gc until it "
+        "can",
     "remedy_deadline_exceeded": "the run ran out of time; remove worktrees explicitly or re-run",
     # The contract beyond D18 (plan review M8): progress, kept branches and the
     # message of each refusal code that has no baseline message.
@@ -870,12 +882,14 @@ TEXT = {
     # directory of a live worktree whose path Git cannot stat (EACCES), on
     # Git 2.43.0 and 2.36.6 (stale_recommendations(), excluded_groups(); lane
     # 3's W86 NM-1; R-320, ruled by Brett Heap, "R-320: yes", lead R-321).
+    # Each warning also names `git worktree remove` and `git gc` (R-324,
+    # ruled by Brett Heap, "R-324: yes", lead R-343).
     "recommendation_stale_worktree_unread":
         "Review and prune stale worktree metadata manually; a row's path could not be read, so do not run git "
-        "worktree prune until it can.",
+        "worktree prune, git worktree remove or git gc until it can.",
     "recommendation_stale_locked_unread":
         "Review, unlock it, then prune stale worktree metadata manually; a row's path could not be read, so do "
-        "not run git worktree prune until it can.",
+        "not run git worktree prune, git worktree remove or git gc until it can.",
     # Baseline texts kept: `target-excluded` for the current worktree and for a
     # class (D18), and `no-merge-target` (project:551 at 961c405).
     "target_excluded_current": "Cannot remove the current worktree.",
