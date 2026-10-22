@@ -97,8 +97,8 @@ generator is dropped. The scheduler (D6) decides which yielded child request
 starts and when. A child's stdout feeds its incremental parser as bytes
 arrive; a parser that reaches its record bound asks the loop to stop the
 child, a deliberate early stop that records nothing (DI:464). Its stderr is
-drained throughout and its first 200 characters kept for the error message
-(DI:544-545), so no child blocks on a full 64 KiB pipe.
+drained and capped as [E] requires (CMD:175-177), and never shown, so no
+child blocks on a full 64 KiB pipe.
 
 Signals: the handlers for SIGINT, SIGTERM and SIGHUP only record the first
 signal received; `signal.set_wakeup_fd` on the self-pipe wakes the loop. The
@@ -107,19 +107,29 @@ loop then raises a cancellation derived from `BaseException`, not
 cannot turn it into an `internal-error` row. Termination runs in one
 `finally` around the loop: SIGTERM to every registered process group, up to
 2 s, SIGKILL to the rest, a reap within a further 2 s, and abandonment of
-whatever remains (P6-1). After a signal no result document is printed,
+whatever remains (P6-1). After a signal no result document is started once
+the signal is read, and one that is being written is stopped;
 `Cancelled.` is written to stderr with any `OSError` swallowed (after SIGHUP
 the terminal may be gone, and the write fails with EIO), and the exit status
 is 128 plus the signal number.
 
-Spawning: each child is started and entered in the in-flight registry while
-SIGINT, SIGTERM and SIGHUP are blocked with `signal.pthread_sigmask`, and
-they are unblocked only after registration, so no signal can fall between
-`Popen` and the registry. `pthread_sigmask` is POSIX-only, as `project`
-already is.
+Spawning: each child is started with SIGINT, SIGTERM and SIGHUP unblocked,
+then entered in the in-flight registry. The handlers only record the signal,
+as above, and termination runs from the loop, never from a handler, so a
+signal that falls between `Popen` and the registry is acted on only after
+registration, and no termination pass can miss the child.
+
+The result is written inside a raising span, entered before its first byte is
+written and only after every child is reaped or abandoned: for that span
+alone the handlers raise once they have recorded the signal, so that a write
+blocked on a stalled reader stops, and a signal already recorded when the span
+is entered stops the run before any byte is written. Output not yet written is
+discarded, never flushed at exit. No child runs under those handlers.
 
 Recorded, not designed away: SIGKILL of `project` itself orphans its
-read-only children, which then run untimed.
+read-only children, which then run untimed; and a signal that stops the
+result's write leaves part of a result on standard output, which the exit
+status 130, 143 or 129 marks as no result.
 
 Rejected: one thread per repository (signals still land on the main
 thread, and termination and canonical output would need cross-thread
@@ -322,7 +332,13 @@ computes:
   anchors at that entry and is `unstarted-branch` until it gains a commit.
   Either code keeps the finding and gives the read-only suggestion with that
   `suggestion_gate`. Only the index gates `contains-submodule` and
-  `hidden-local-state` stay residual exclusions the batch applies;
+  `hidden-local-state`, and after them [G]'s `operation-in-progress`, for an
+  operation marker in the worktree's administrative directory, and
+  `worktree-only-commits`, for a commit that only the worktree's HEAD reflog
+  or a ref under its `refs/worktree/` holds, stay residual exclusions the
+  batch applies: the overview evaluates neither of the last two, making no
+  listing of that directory, no `logs/HEAD` read and no `rev-list` child for
+  them, and keeps the `--all-safe` suggestion of such a worktree;
 - the repository gates, computed from the overview's rows as [G] computes
   its plan's refusals: `inspection-incomplete` when any row is
   `inspection-error` (a failed or timed-out status probe, an unreadable
@@ -343,7 +359,8 @@ computes:
   `target-cap`. Change 1's council V5 has the batch select up to the limit in
   canonical order and defer the rest as `deferred-target-cap`, apply
   allowed, re-runs draining. The overview's count can exceed what the batch
-  would select, since the batch's index gates may exclude some rows; the
+  would select, since the batch's index gates and its `operation-in-progress`
+  and `worktree-only-commits` gates may exclude some rows; the
   message is advice either way;
 - the root gates: a null root from a bare repository withholds every clean
   suggestion with `target-not-repository-root`; a root or `common_dir` that
@@ -388,8 +405,9 @@ completions (speculative dispatch; identity probes take no lock and may
 overlap, DI:436-438). On completion the memo is consulted by the
 `(dev, ino)` of `common_dir`: a hit merges the candidate into that
 repository, a miss creates the repository, whose repository-wide probes
-(registry, ref listing, merged set, and D3's tests for a gitfile layout) then
-run one at a time. No two children with one known `common_dir` run at once.
+(registry, ref listing, merged set, the `extensions.worktreeConfig` read, and
+D3's tests for a gitfile layout) then run one at a time. No two children with
+one known `common_dir` run at once.
 
 A repository's rank is the canonical position of the first candidate that
 reached it, and it is final only when every candidate earlier in canonical
@@ -408,8 +426,9 @@ contract. Output is rendered after collection in canonical order: rows by
 path bytes; worktrees main first, then by path bytes; findings by checkout
 path, then code; row errors in each candidate's own step order, which is
 serial and so fixed; and scan errors in canonical collection order, not
-wall-clock order: root errors by root order, then the candidate cap, then
-deadline and worktree-row errors by rank. With that, an uncut run's JSON at
+wall-clock order: the working directory's realpath error first, then root
+errors by root order, then the candidate cap, then deadline and worktree-row
+errors by rank. With that, an uncut run's JSON at
 probe concurrency 1 and 4 differs only in timestamps and
 `budget.probe_concurrency` (spec requirement 3). A cut run reports each cut
 unit with `omitted` and DI:165-169's exactness, and what it selected may
@@ -459,8 +478,17 @@ now)`:
   from the opened file before the read, exceeds 1 MiB is `manifest-invalid`
   without being read, and the read itself never exceeds 1 MiB (the lead's R-4);
 - one task per worktree row: `lstat` of the path and reads of its `.git` file
-  and the matching `gitdir` file (DI:392-394); the missing-main `lstat` and
-  D3's `.git` read take the same shape;
+  and the matching `gitdir` file (DI:392-394), and of the `commondir` file
+  beside that `gitdir` file, which [E] compares with `common_dir`; the
+  missing-main `lstat` and D3's `.git` read take the same shape;
+- one task per linked row whose effective work tree [E] reads, where the
+  repository's `extensions.worktreeConfig` is taken as true: the realpath of
+  the toplevel that read reports, compared with the realpath of the row's
+  registered path under [E]'s rule: a realpath failing with `ENOENT` or
+  `ENOTDIR` makes the registration disagree, with no error, and any other
+  `OSError` or a missed wait leaves the check not completed, with no status
+  probe, the row's `os-error`, or the code a missed wait records below, and
+  `inspection-error` set directly;
 - one task per reflog read of D5's gates, `logs/refs/heads/<branch>` under
   `common_dir`, at most 64 KiB, under D5's one outcome rule: a missing
   (`ENOENT`, `ENOTDIR`), empty or bound-reaching file is
@@ -468,15 +496,16 @@ now)`:
   `os-error` and `inspection-error`, and a missed wait leaves the row
   unprobed for the gate, recorded as below;
 - one task at start for the realpath of the working directory, which
-  `current` needs.
+  `current` needs; when it fails or is cut, one scan error records it, as
+  spec requirement 5 states.
 
 A task that misses its wait records `probe-timeout`, or `deadline-exceeded`
 when the deadline was the smaller limit, on its root or row, and every field
 it would have established stays null. No filesystem call runs on the main
 thread, so a hung mount never blocks the loop (spec requirement 11).
 Abandoned workers are bounded by the number of tasks started (at most 32
-roots, 128 manifests, 512 rows, 512 reflog reads and a handful more), not by
-time.
+roots, 128 manifests, 512 rows, 512 toplevel realpaths, 512 reflog reads and a
+handful more), not by time.
 
 Rejected: a size check by path before opening (a race).
 
@@ -517,20 +546,30 @@ Layout on stdout, in DI:83-96's shape, pinned by tests:
 - per shown finding: two spaces, the category padded to 14 columns, then
   `code: message`; for a worktree's finding, the worktree path on the next
   line, indented to the message column. Row errors show the same way under
-  the repair category;
+  the repair category, a row error that carries a `path` showing that path
+  on the next line, indented to the message column;
 - one `next` line when the row has a suggested command or a gate decided it:
   two spaces, `next` padded to 14 columns, the command with POSIX shell
   quoting or in the `$'...'` form for a path [P] marks, or `none` when there
   is no command, then two spaces and `(withheld: <remedy>)` or
   `(limited: <remedy>)`;
-- after the rows, one `Incomplete: <message> (<code>).` line per scan error,
-  in the JSON's order;
+- after the rows, one line per scan error, in the JSON's order:
+  `Incomplete: <path>: <message> (<code>).` for a scan error that carries a
+  `path`, as DI:94 names the root, and `Incomplete: <message> (<code>).` for
+  one that carries none;
 - always the summary line, `N projects; E errors; repair a, preserve b,
   housekeeping c, informational d. Findings reflect local refs as of the
   last fetch.`, which under `--attention` with no row shown begins
   `Nothing needs attention: `;
 - when every root is `absent`, the line `No projects directory found; pass
   --root D or set PROJECTS_DIR.` before the summary.
+
+Every path on these lines, an error's included, is printed by [P]'s rules,
+in the `$'...'` form where they mark it. An error's `path` on its line is a
+fill of Amendment A1 (proposal), under Brett Heap's answer Q8 D: that answer
+moves every path out of an error's message and into `path`, and without the
+fill the human report would no longer say which root or path an error
+concerns.
 
 The `next` line names the gate that decided the row's own suggested command:
 the first code, in D5's order, among the findings whose suggestion fed the
@@ -649,7 +688,7 @@ change 1's commit of the same title. No item stays open.
 - Pins: every Git child runs with
   `-c protocol.allow=never -c protocol.file.allow=never -c protocol.ssh.allow=never -c protocol.git.allow=never -c protocol.http.allow=never -c protocol.https.allow=never -c protocol.ext.allow=never`
   beside the pins [E] defines (`GIT_OPTIONAL_LOCKS=0`, and on a status probe
-  `-c core.untrackedCache=false -c core.fsmonitor=false`), and [E] carries
+  `-c core.untrackedCache=false -c core.fsmonitor=false -c core.trustctime=true -c core.checkStat=default`), and [E] carries
   the same pins (R-23, R-25). Git 2.43 has no `GIT_NO_LAZY_FETCH`, so a
   read-only probe in a partial clone could fetch missing objects from the
   network; with the pins that fetch fails locally, the failed probe is
@@ -658,7 +697,7 @@ change 1's commit of the same title. No item stays open.
   pins sit beside `protocol.allow` because it is only the default policy: a
   per-protocol `allow=always` in a config file or `GIT_ALLOW_PROTOCOL` in the
   caller's environment would still allow the fetch (R-25), so
-  `GIT_ALLOW_PROTOCOL` is among the seventeen names that [E]'s scrub of the
+  `GIT_ALLOW_PROTOCOL` is among the names of [E]'s list that its scrub of the
   child environment removes before any Git call, a scrub the overview carries
   by citation. Command-line `-c` outranks every config file.
 - Fixture rewrite: change 1 pins `-c core.fsmonitor=false` and
@@ -694,7 +733,7 @@ added ones come from the council, the lead's rulings or this design.
 | 8 JSON | control characters; non-UTF-8 path | non-UTF-8 common directory; argument error; envelope fields; internal error |
 | 9 read-only | local and read-only | none |
 | 10 default branch | none | pushed without `-u`; no remote; dirty and ahead; failed probe |
-| 11 exits | Git version refusal | Git unavailable; SIGTERM or SIGHUP; SIGINT |
+| 11 exits | Git version refusal | Git unavailable; relative configuration path (Amendment A1); SIGTERM or SIGHUP; SIGINT |
 | 12 human report | none | nothing needs attention; gated suggestion; scanning notice |
 
 The probe-timeout and bounded-concurrency scenarios use the fixture rewrite
@@ -724,13 +763,20 @@ with `project clean <root> --json` at the same commit, not at `a040790`.
   ships] -> Accepted (R-25): the case is rare, and the probe would then
   succeed rather than fail, so no unsafe removal follows, the overview being
   read-only.
+- [A clean or process filter that a repository's attributes name, which a
+  status probe runs when it re-hashes a tracked file, and the user's and the
+  system's configuration, which Git still reads, can write files or open
+  connections outside the pins and the scrub] -> Accepted (Brett Heap's
+  answer Q9 B; proposal, Amendment A1): neither can be switched off in
+  general, so requirement 9 claims only what the pins and the scrub prove.
 - [A Windows drive mounted into WSL2 makes every listing slow] -> Not
   measured, since drvfs was not available on the measuring workstation; the
   README says such roots can truncate on every run.
 - [Change 1's final text moves a gate, code, cap or probe] -> D12 and task
   2.2; the overview copies no number (N-3, D11).
-- [`target-cap` disagrees with the batch, which sees the index gates the
-  overview does not] -> The suggestion is advice; `project clean` recomputes
+- [`target-cap` disagrees with the batch, which sees the index gates and the
+  `operation-in-progress` and `worktree-only-commits` gates the overview does
+  not] -> The suggestion is advice; `project clean` recomputes
   and shows its own plan.
 - [Repositories without file reflogs (the reftable backend,
   `core.logAllRefUpdates=false`) give every merged row `reflog-unavailable`,

@@ -5,7 +5,10 @@ Lane: openRepoProject-2
 Status: ratified by Brett Heap on 2026-10-09, in his words to lane
 openRepoProject-2, "ratify, merge #11 and run the runbook". It lands by
 squash-merge of PR #12 after PR #11 (`add-project-clean-all-safe`), and the
-Speckit handoff `005-project-overview` follows after feature 004 merges. It was
+Speckit handoff `005-project-overview` follows after feature 004 merges;
+amendment A1 (PR #34) is ratified by Brett Heap's word of 2026-10-22,
+"ratify 34", and lands by squash-merge of PR #34 as its section states.
+The change was
 revised after the alignment review, the lead's later rulings, the council and
 the packet author's final delta read (resolutions on PR #12 and in "Questions
 Resolved by the Alignment Review"; noted constraints in `clarifications.md`).
@@ -98,7 +101,8 @@ builds the shared evidence model the overview reads across many repositories.
   directory that is not valid UTF-8. A finding names the gate that withheld
   or limited its suggestion in `suggestion_gate`, with a fixed remedy in its
   message. The batch may still exclude a suggested worktree through its
-  index gates. Never `--apply` or `--yes`, never a bare name (DI:661-702,
+  index gates and its `operation-in-progress` and `worktree-only-commits`
+  gates. Never `--apply` or `--yes`, never a bare name (DI:661-702,
   DI:847-886).
 - **A versioned JSON envelope.** `--json` prints one `schema_version: 1`
   document with exactly the envelope, row, worktree, finding and summary
@@ -228,8 +232,8 @@ builds the shared evidence model the overview reads across many repositories.
      sitting beside `protocol.allow` because it is only the default policy,
      which a per-protocol `allow=always` in a config file or
      `GIT_ALLOW_PROTOCOL` in the caller's environment would override, so that
-     `GIT_ALLOW_PROTOCOL` is among the seventeen names [E]'s scrub removes
-     (R-25); SHALL run every filesystem call, root
+     `GIT_ALLOW_PROTOCOL` is among the names of [E]'s list that its scrub
+     removes (R-25); SHALL run every filesystem call, root
      canonicalisation and dedupe, marker and holder checks, manifest reads and
      branch reflog reads (at most 64 KiB each, an unfinished one leaving its
      row unprobed for requirement 7's gate) included, in a bounded daemon
@@ -287,7 +291,8 @@ builds the shared evidence model the overview reads across many repositories.
      `worktree add -B`; and one outcome rule makes a missing, empty,
      bound-reaching or undecidable reflog `reflog-unavailable`, any other OS
      error the row's `inspection-error`, and an unfinished read an unprobed
-     row (`inspection-incomplete`); only the index gates stay residual
+     row (`inspection-incomplete`); only the index gates, then
+     `operation-in-progress` and `worktree-only-commits`, stay residual
      exclusions the batch applies) and [G]'s `inspection-incomplete` and
      `inspect-cap`
      refusals, and with no row left unprobed; a `merged-removable` worktree
@@ -332,8 +337,9 @@ builds the shared evidence model the overview reads across many repositories.
      `common_dir_valid_utf8`; `ignored_samples` entries as
      `{path, path_valid_utf8}` objects); a `--json` exit 2 other than an
      argument error prints `{"error", "code"}` with code `git-too-old`,
-     `git-unavailable`, `refused`, `os-error` or `internal-error`, and an
-     argument error prints argparse's usage on standard error and no JSON.
+     `git-unavailable`, `relative-config-path`, `refused`, `os-error` or
+     `internal-error`, and an argument error prints argparse's usage on
+     standard error and no JSON.
      SHALL emit every path by [E]'s parsing and [P]'s rules: exactly when valid
      UTF-8, else escaped with its flag false; SHALL print a path holding a code
      point of Unicode general category Cc, Cf, Zl or Zp (control, format, line
@@ -447,6 +453,12 @@ renders no nested estate or leg; `project-command`, `project-clean` and
   skipped on macOS with that reason. Tests run with
   `python3 -m unittest discover -s tests -v` (README.md:187), the command
   CI runs as `python -m ...` (`.github/workflows/tests.yml:18`).
+- **`.github/workflows/tests.yml`** (Amendment A1, Brett Heap's answer Q3 B):
+  feature 004's Git 2.36 floor job, `git-floor`, which builds Git 2.36 and
+  runs the `clean`, `status` and `doctor` tests with it first on `PATH`, also
+  runs a small set of the overview's tests, selected by one more `-k` prefix:
+  the version check accepting Git 2.36, and one end-to-end run over a fixture
+  with linked worktrees, merge targets and a gated suggestion.
 - **Speckit handoff**: exactly one feature, `specs/005-<slug>/`, created by
   `/speckit.specify` after ratification and after feature 004 merges. `002`
   is lane openRepoProject-1's, merged by PR #8; `003` is lane
@@ -470,11 +482,12 @@ drafted in parallel. This change depends on it, cites it by name, and does not
 restate its contract. Change 1 owns:
 
 - the shared evidence model: the version check, the four repository-wide
-  probes memoized per `common_dir`, the combined status probe per worktree row
+  probes memoized per `common_dir` and the `extensions.worktreeConfig` read
+  beside them, the combined status probe per worktree row
   and its record bounds, NUL-delimited parsing and path escaping, the child
   environment and pins (R-23 adds `-c protocol.allow=never`, and R-25 adds
   the six per-protocol `allow=never` pins and `GIT_ALLOW_PROTOCOL` in the
-  seventeen-name scrub, there and in
+  scrub's list, there and in
   requirement 3), the 1 MiB manifest read, over-cap judged from the file's size
   before the read (so `clean` and the overview resolve the same merge
   target), and the bounded runner, not `probe()`, for
@@ -702,6 +715,10 @@ Departures from packet decisions, each citing the decision departed from:
   (`inspection-incomplete`). Either code keeps the finding with the
   read-only suggestion, that `suggestion_gate` and requirement 7's message.
   Only the index gates stay residual exclusions the batch applies.
+  Amendment A1 (ratified by Brett Heap on 2026-10-22, "ratify 34"): after the
+  index gates, `operation-in-progress` and `worktree-only-commits` are further
+  exclusions that only the batch applies (section "Amendment A1" below); the
+  words above are this entry's as PR #12 ratified them.
 - **Determinism scoped** (DI:440-449, "never depends on timing"):
   requirement 3 promises timing-independent JSON only for an uncut run, and
   starts a repository's phase 2 only once every candidate earlier in
@@ -893,7 +910,8 @@ merges, these corrections bind this change and the spec phase (OQ-3):
 
 ## Open Questions
 
-None is open here. The one this proposal carried, `remote-gone` before a
+None is open here but one point that amendment A1 leaves open, M1 (section
+"Amendment A1" below). The one this proposal carried, `remote-gone` before a
 merge proof, was ruled by Brett Heap on 2026-10-09: a local ancestry proof
 outranks `remote-gone` for worktree rows, so the overview's `--all-safe`
 suggestion now reaches a merged worktree whose upstream was deleted (Decisions,
@@ -997,7 +1015,7 @@ the pin: `protocol.allow` is only the default policy, so a per-protocol
 the caller's environment would still allow the fetch. Every Git child also
 pins `-c protocol.file.allow=never -c protocol.ssh.allow=never -c protocol.git.allow=never -c protocol.http.allow=never -c protocol.https.allow=never -c protocol.ext.allow=never` beside `-c protocol.allow=never`
 (command-line `-c` outranks every config file), and `GIT_ALLOW_PROTOCOL` joins
-the fixed scrub that [E] applies to the child environment, which then removes
+the fixed scrub that [E] applies to the child environment, which then removed
 seventeen names; the overview carries the pins and the scrub by citation of
 [E] plus the literal list. The residual that a remote-helper protocol of
 another name, with its own `allow=always` in the repository's config, could
@@ -1051,3 +1069,442 @@ engineer) read `6204234`: V1 to V12 are applied here, N1 to N4 are in
 | AE-3 unbounded filesystem calls | MEDIUM | VALID, V7 | What Changes; Capabilities (requirements 3, 11) |
 | AE-4 predictable `target-cap` refusal | MEDIUM-LOW | VALID, V5, amended per change 1 council V5 | Capabilities (requirement 7); Dependencies; Decisions (departures) |
 | AE-5 determinism versus cuts | LOW | VALID, V6, with SA-3 | Capabilities (requirement 3) |
+
+## Amendment A1: Brett Heap's answers to feature 005's clarify questions (2026-10-21)
+
+Status: A1 ratified by Brett Heap on 2026-10-22, at about 12:04Z in lane
+openRepoProject-4's session, in his words "ratify 34", which that lane
+recorded as a RULED line:
+https://github.com/opensoft/brett-wip/blob/13257af5b39798741fd762ca770c180cef2dae28/lanes/log/openRepoProject-4.md#L184
+and which is quoted on PR #34:
+https://github.com/opensoft/openRepoProject/pull/34#issuecomment-6340336911
+It is PR #34, https://github.com/opensoft/openRepoProject/pull/34, which stays
+a draft until PR #19's ratification of the commits its four LQ items follow
+and then lands by squash-merge, as the ordering rule below has it, or lands
+sooner without those items on his word (task 1.7).
+
+A1, `amend-project-overview-clarify-answers`, is lane openRepoProject-4's
+amendment of this change in place, under its governing issue
+opensoft/openRepoProject#10, in the form in which draft PR #19 amends
+`add-project-clean-all-safe`. Brett Heap's word has ratified it; until PR #34
+lands, `main` holds this change as PR #12 landed it (`961c405`), which is the
+text A1 amends.
+
+Task 1.7 records A1's ratification and holds feature 005's plan until it, a
+gate beyond the words of Q2 A, which waits for feature 004's merge and Brett
+Heap's word after it. The gate is declared here as the cautious direction: it
+matches spec 005's interim rule that nothing is planned or built from the
+answers A1 carries until A1 is ratified. With A1 ratified, that gate is met
+(task 1.7), and Q2 A's still holds.
+
+Brett Heap's words, in lane openRepoProject-4's session at about
+2026-10-21T10:31Z, answering the seventeen clarify questions of feature 005
+(`specs/005-project-overview/clarify-questions.md` at `acd8cef`, its question
+block unchanged at `c54d393`): "yes, recommended for Q1-Q17". The answers are
+Q1 A, Q2 A, Q3 B, Q4 D, Q5 A, Q6 A,
+Q7 A, Q8 D, Q9 B, Q10 A, Q11 A, Q12 A, Q13 A, Q14 A, Q15 A, Q16 B and Q17 A,
+each the recommended option, and spec 005 encodes them as its Clarifications
+C-55 to C-71. Lane openRepoProject-4 recorded them as a RULED line at
+10:33:09Z:
+https://github.com/opensoft/brett-wip/blob/bd597b390d918c3f832e787c97844e3a2ce3ccea/lanes/log/openRepoProject-4.md#L115
+
+Citations in this section add to those of Input above: `POD:N` is line N of
+`specs/project-overview/spec.md`, and `design.md:N`, `clarifications.md:N`
+and `proposal.md:N` are lines of this change's files, all at `961c405`,
+before A1, as spec 005 cites them; `CMD:N` is line N of change 1's
+`specs/project-command/spec.md` at the same commit.
+
+Each carried answer, with what it amends and where:
+
+- **Q3 B, an amendment, carried in Impact as the option allows.** A small set
+  of the overview's tests runs in feature 004's Git 2.36 floor job,
+  `git-floor`, selected by one more `-k` prefix: the version check accepting
+  Git 2.36, and one end-to-end run over a fixture with linked worktrees,
+  merge targets and a gated suggestion. Amended: Impact, a new
+  `.github/workflows/tests.yml` bullet after the tests bullet
+  (proposal.md:441-449).
+- **Q4 D, a recorded departure from Impact, on Brett Heap's word.** After
+  feature 004 lands, feature 005 adds one sentence on the overview, that a
+  suggestion is advice to review and that applying it needs the person's
+  word, to the `AGENTS.md` section that feature 004's task T123 adds,
+  "Cleaning up worktrees for a person", following that section's title and
+  wording; it is recorded as feature 004 records its own departures (its lead
+  ruling R-32). If Brett Heap declines feature 004's T123 departure, the
+  question's option C applies instead: a separate small OpenSpec change,
+  after feature 005, carries agent guidance on the overview and the batch
+  apply. Amended: no text; Impact (proposal.md:415-465) names no `AGENTS.md`
+  change and stays so.
+- **Q6 A, an amendment.** Only the `deadline-exceeded` scan error that counts
+  the candidates not started carries `limit` and `omitted`, `limit` being
+  `"invocation_timeout_seconds"`, the `budget` key, and `omitted` the
+  candidates not started; every other `deadline-exceeded` error, row or scan,
+  carries neither; and a row-level `scan-limit` error carries `limit:
+  "worktree_rows"` and `omitted` counting that repository's rows past the
+  cap, exactness `exact`. Amended: requirement 3 (POD:180-181, :233-234) and
+  requirement 8's error object (POD:646-648). For the one deadline error it
+  departs from the packet's `limit`, "a key of `limits`" (DI:824-825).
+- **Q7 A, an amendment.** When the working directory's realpath cannot be
+  established, one scan error records it (`os-error` or `probe-timeout`, with
+  feature 004's fixed text and OPERATION `realpath`, its `path` the `PWD`
+  value when that is set and absolute, else omitted, first among the scan
+  errors), every `current` is null, and each row the ladder would classify
+  `merged-removable` or `merged-current` is `inspection-error` instead, so
+  that `inspection-incomplete` withholds `--all-safe`. Amended: requirement
+  5, a new paragraph after its equality clause (after POD:386); design D6's
+  scan-error order (design.md:410-412) and D8's realpath task
+  (design.md:470-471). Its raw `PWD` path departs from DI:842-843's rule that
+  paths are canonical, and from DI:778's null rule for `current`, which is
+  null there only when `present` is.
+- **Q8 D, an amendment.** Every row and scan error's message is the fixed
+  text of its code, naming no path, the path going in `path`; a child's
+  standard error is drained and capped, and never shown; and names, branch
+  names, admin ids and every other string taken from the filesystem, a
+  manifest or Git follow [P]'s path rule, with no new field. Git's own reason
+  is then not shown: the person re-runs the Git command to see it. Amended:
+  requirement 4 (POD:337-338, and a table of fixed texts after POD:347);
+  requirement 8 (POD:675); design D1 (design.md:99-101); clarifications N1
+  (clarifications.md:35-36 and :46-47). The texts for `os-error`,
+  `probe-failed` and `probe-timeout` are feature 004's (its
+  `contracts/project-clean.md:300-302` at `b0243e5`, lead ruling R-45);
+  `deadline-exceeded` reads `OPERATION stopped at the invocation deadline`,
+  the overview's own term, where that contract's :303 reads `work deadline`;
+  the texts for `manifest-invalid`, `refused`, `undecodable-output`,
+  `internal-error`, `scan-limit` and `root-unreadable`, and the OPERATION
+  values `stat`, `scandir` and `collection`, are A1's own, drafted for Brett
+  Heap's review. Re-checked at feature 004's `e256b59`, where the same rows
+  sit at `contracts/project-clean.md:430-433` with the texts unchanged; the
+  `b0243e5` pin stays (R-45). It departs from the packet's DI:544-545 ("for a
+  failed probe, the first line of Git's standard error"). A fill, declared for
+  Brett Heap's review (lane openRepoProject-3's W7-M1): since the path leaves
+  the message, the human report prints an error's `path`, when it carries
+  one, by [P]'s rules, a scan error as `Incomplete: <path>: <message>
+  (<code>).`, as the packet's DI:94 names the root, and a row error with its
+  `path` on the next line, indented to the message column, as a worktree's
+  finding shows its worktree path; an error with no `path` prints as before.
+  Amended for the fill: design D10 (design.md:519-520 and :526-527, and a
+  paragraph after :533) and requirement 12 (POD:812-813).
+- **Q9 B, an amendment of this change; its change-1 half rides in PR #19.**
+  The read-only wording claims for the overview's Git children only what the
+  pins and the scrub prove, the clean and process filters and the
+  configuration files being recorded residuals beside the remote-helper one;
+  and "seventeen names" becomes a citation of [E]'s list, which PR #19 amends
+  at `423a532` to thirty-one names, with `GIT_TRACE2`, `GIT_TRACE2_EVENT` and
+  `GIT_TRACE2_PERF` at `0` on every Git child, both reaching the overview by
+  that citation. Amended: requirement 3 (POD:212-215); requirement 9 (after
+  POD:717); design D13 (design.md:661) and Risks (after design.md:726);
+  proposal.md:231-232 and :477, and :1000, whose record of R-25 now reads in
+  the past tense. If feature 004 merges before PR #19 is ratified, it builds
+  the narrower scrub and the wider one follows as a change-1 amendment; the
+  citation holds either way. For the overview's Git children, the new
+  sentence after POD:717 narrows the packet's DI:307-308, "it never fetches,
+  pulls, resets, bootstraps, runs validators, writes files, or contacts the
+  network", as this change already accepted the remote-helper residual
+  without correcting the packet (design Risks, design.md:721-726; R-25).
+- **Q11 A, an amendment.** A candidate other than a family holder whose
+  identity probe reports a toplevel that is a proper ancestor of the
+  candidate is a `refused` error row, its `path` the candidate's `.git`, and
+  creates or joins no repository row; a family holder whose probe reports
+  another toplevel keeps null `repository`, `merge_target`, `git` and
+  `worktrees` and no error, as DI:284-287 has it; and a toplevel that Git
+  reports for a layout it accepts, such as a `core.worktree` naming another
+  directory, is unaffected. Amended: requirement 2, a new paragraph after
+  POD:87; the `refused` row of requirement 4's new table.
+- **Q12 A, an amendment.** The whole document or report is rendered before
+  its first byte is written, as UTF-8 whatever the locale, the JSON document
+  with ASCII escapes as feature 004 writes its own (its lead ruling R-38); a
+  failed write to standard output ends the run with exit 2, no traceback and
+  no retry, nothing more on standard output and one best-effort line on
+  standard error, the one exit 2 under `--json` besides an argument error
+  that prints no error object, and so no code (lane openRepoProject-2's
+  ruling R-55 gives `internal-error` there, which is not kept); a recorded
+  signal decides the status over it. Amended: requirement 8 (POD:675-676, and
+  a new paragraph after POD:679). It departs from the packet's DI:1086-1089.
+- **Q13 A, an amendment.** A root whose canonicalisation is cut takes as its
+  `path` the given path made absolute but not resolved, sorts by those bytes
+  among the canonical paths, is never deduplicated, and counts toward the
+  32-root cap. Amended: requirement 1, a new sentence after POD:16, through
+  which POD:217-222, :303-306, :610-611 and :622-624 read. The unresolved
+  `path` departs from DI:842-843, whose exceptions to canonical paths,
+  `ignored_samples` and an absent default root, are three with this one and
+  four with Q7 A's.
+- **Q15 A, an amendment.** "Print no result document" becomes "start no
+  result document once the signal is read, and stop one that is being
+  written"; the part of a result that a stopped write leaves is a recorded
+  residual, marked as no result by the exit status 130, 143 or 129; a signal
+  recorded before the run exits decides its status, also over the exit 2 of
+  a write that fails after it; and the raising span around the write is
+  entered before its first byte, so that a signal recorded while rendering
+  prints nothing, and output not yet written is discarded, never flushed at
+  exit. Amended: requirement 11 (POD:778-779, and new sentences after
+  POD:781); design D1 (design.md:110-111, in the same words, as lead decision
+  L6 has it; a new paragraph for the raising span; and the "Recorded"
+  paragraph, design.md:121-122). It departs from the packet's DI:1094-1096.
+- **Q16 B, an amendment.** Each Git child starts with SIGINT, SIGTERM and
+  SIGHUP unblocked, under handlers that only record the signal, which keeps a
+  termination pass from missing a child; a child started with them blocked
+  inherits the mask, survives SIGTERM to its group and needs SIGKILL at every
+  stop (runtime cross-check X-7). Amended: design D1's spawning paragraph
+  (design.md:115-119); clarifications N1 (clarifications.md:42-44, where "or
+  raise a `BaseException` subclass" is struck, and :45-47).
+- **Q17 A, a recorded departure, in one order only.** Feature 005 leaves the
+  overview parts of #24 and #25 to their own features in every order. If
+  #24's realization merges first, a worktree whose only ignored files are
+  Python bytecode caches is `ignored-local-files` in the overview and
+  `merged-removable` in `project clean`, a departure on Brett Heap's word from
+  requirement 5's equality clause (POD:381-386, on DI:620-624) until #24's
+  overview block is archived, after which that block records it as a lasting
+  exception. Amended: no text.
+
+Not carried, since each changes only spec 005 and builds this change as
+ratified: Q1 A, Q2 A, Q5 A, Q10 A and Q14 A.
+
+Four items of A1's own follow from change 1's amendments in draft PR #19,
+not from Q1-Q17. Their basis is Brett Heap's ruling, in lane
+openRepoProject-3's session on 2026-10-21, "yes to all six recommendations,
+LQ-10 to LQ-15", which that lane recorded as a NOTED line at 12:33:41Z:
+https://github.com/opensoft/brett-wip/blob/5276f65d18fcb46ba3fcc5758a09941d15a36e21/lanes/log/openRepoProject-3.md#L89
+and, for LQ-15, his words to lane openRepoProject-2, "LQ-15: yes, refuse
+relative HOME like #29" (its ruling R-102 (a)), as PR #19 records them. That
+ruling is about change 1: the lead's form of LQ-15 (lane openRepoProject-2's
+ruling R-102 (c) 3) names `clean`, `status`, `doctor` and `update`, and what
+reaches the overview reaches it through [E] and [G], which this change cites;
+beyond that, each item is A1's own proposal, put to Brett Heap here. Each
+follows PR #19's text at the commits its heading names, a draft pending its
+own ratification; PR #19's tip is `f0bf538`, whose round (e) keeps the two
+gates' outcome and names the `worktree-only-commits` gate's unfinished read as
+its exception to the branch reflog's split (its
+`specs/project-clean/spec.md:736-737` there); its rulings R-124 (`2b86a5f`,
+amended at `9267303` by PR #19's round (d)), R-125 (`93f3194`) and R-126
+(`1ebdd90`) are taken in below. Each lands only with or after PR #19's
+ratification of the commits it follows, and is re-aligned before A1 is
+ratified if one of those commits changes first, and, if A1 is ratified first,
+is re-aligned for Brett Heap's review before PR #34 merges. So PR #34 does not
+merge before that ratification; if Brett Heap wants it to land sooner, the
+four items move to a later amendment of this change, and A1 lands without
+them. Each item is declared here for Brett Heap's review:
+
+- **`relative-config-path` (LQ-15; PR #19 at `cc000ea` and `9fb22fa`), a
+  declared item.** Once its arguments are parsed, and before any Git child
+  starts, the version check included, the overview refuses with
+  `relative-config-path` and exit 2 when `HOME` or `XDG_CONFIG_HOME` is set
+  to a non-empty value whose first byte is not `/`, tested on the raw bytes
+  and for each variable whether or not Git would read a file through it, not
+  following Git's order of precedence (C-44's other half, which PR #19 adds
+  at `9fb22fa`), its message naming each variable that fails the test, never
+  its value, as `project clean`'s refusal does; under `--json` it prints only
+  the error object with that code. The order is PR #19's at `9fb22fa`:
+  argument errors, then this refusal, then the version check. A separate
+  sentence applies the same test to `GIT_CONFIG_GLOBAL` and
+  `GIT_CONFIG_SYSTEM`, the lead's extension in PR #19; if Brett Heap strikes
+  that extension, A1's sentence is struck with PR #19's sites (its design
+  D11's list at `9fb22fa`), and no other text here tests the two variables:
+  the scenario's precedence AND, which names an absolute `GIT_CONFIG_GLOBAL`,
+  stays, as PR #19's own does by the sentence after that list. Amended:
+  requirement 8's exit-2 code list (POD:677-678); requirement 11's exit rule
+  (POD:765-768), a new paragraph after POD:768, and the scenario "A relative
+  configuration path" after "Git unavailable" (POD:790), with its
+  precedence AND, 62 scenarios in all; design D13's scenario map
+  (design.md:697); the summary of requirement 8 in Capabilities
+  (proposal.md:334-335); and task 1.4, which records the 62. PR #19 at
+  `9fb22fa` leaves the overview's code and exit status under this test to
+  this change. The code departs from the packet's closed list of exit-2 codes
+  (DI:1086-1089). If Brett Heap strikes the code, the fallback is `refused`
+  with exit 2, which departs from nothing.
+- **`operation-in-progress` and `worktree-only-commits` (LQ-14, PR #19 at
+  `43f7107` and `1ebdd90`; LQ-13, at `93de4bb`; both at `2b86a5f` and
+  `9267303`), a declared proposal.** PR #19 adds them as [G]'s last two gates,
+  in that order after `hidden-local-state`: an operation marker of [G]'s list
+  at `1ebdd90` (its `specs/project-clean/spec.md:650-659`, after R-126) in the
+  worktree's administrative directory, read by one listing and no Git child;
+  and a commit that only the worktree's HEAD reflog or a ref under its
+  `refs/worktree/` holds, read from `logs/HEAD` and one `rev-list` child. A1
+  makes both further exclusions that only the batch applies, beside the index
+  gates: the overview evaluates neither, makes no listing, `logs/HEAD` read or
+  `rev-list` child for them, and keeps its `--all-safe` suggestion, which
+  `project clean`'s batch then excludes itself. That clause follows the one
+  outcome rule of each gate that R-124 settles at `2b86a5f`, as PR #19's round
+  (d) amends it at `9267303` (its `specs/project-clean/spec.md:719-722` and
+  :741-746 there; lane openRepoProject-3's W32 L1 and lane openRepoProject-2's
+  R-208, with lane openRepoProject-3's W39 LOW-3 and LOW-4 on these words),
+  pending PR #19's ratification: the overview still evaluates neither gate,
+  and the batch decides each itself. It excludes the worktree on a decided
+  result: a marker present; a `rev-list` child that exits 0 and prints
+  anything; a `logs/HEAD` read to its 64 KiB bound or holding a line that
+  cannot be parsed. An error on the listing, any other error on the read (a
+  missing or empty `logs/HEAD` giving no candidate), and a child that cannot
+  be started or exits nonzero make the worktree `inspection-error`; a child
+  stopped at its 5 s budget, or a listing or read not finished within the
+  filesystem budget, the deadline not being the limit, records `probe-timeout`
+  and makes the worktree `inspection-error`; the deadline's cut records
+  `deadline-exceeded`; and each of these leaves the batch's plan incomplete.
+  Amended: requirement 7 (POD:525-526) and design D5 (design.md:324-325), with
+  the proposal's summaries of the batch's exclusions in What Changes
+  (proposal.md:100-101) and in Capabilities, requirement 7
+  (proposal.md:290-291), and design's in D5's `target-cap` item
+  (design.md:346) and in Risks (design.md:732-733). The reflog-gates departure
+  (proposal.md:704) keeps its ratified words, with an A1 note after it. The
+  route departs from the packet's OV:110-113 and DI:690-692, which name
+  `hidden-local-state` and `contains-submodule` as the only exclusions the
+  batch applies beyond the overview's gates. The alternative, for Brett Heap:
+  overview gate codes `operation-in-progress` and `worktree-only-commits`,
+  evaluated from the same reads, each a new row in requirement 7's closed gate
+  table, which withholds `--all-safe` for that worktree; the second costs one
+  Git child per row that reaches it.
+- **The redirected work tree (LQ-11, PR #19 at `addd346` and `93f3194`), a
+  minimal amendment.** PR #19 adds to the shared evidence model one
+  `extensions.worktreeConfig` read per common directory and, where that is
+  taken as true, one `rev-parse --path-format=absolute --show-toplevel` in
+  each linked row whose registration agrees, before its status probe, a
+  different work tree making the registration disagree. The overview reaches
+  both by citation, but this change's own probe counts are closed: the
+  scenario "One probe set per repository" counts `probes.performed` exactly,
+  and the `estimated` rule and design D6 list the repository-wide probes.
+  Amended: requirement 3's `estimated` rule (POD:250-254) and that scenario
+  (POD:129), whose fixture now states that the repository does not set
+  `extensions.worktreeConfig` (POD:127); design D6 (design.md:390-392); and
+  the shared evidence model as "Dependencies and Sequencing" lists it
+  (proposal.md:472-473). The counts depart from the packet's DI:506-509 ("3
+  more per distinct repository") and DI:1193-1201 ("plus three"). Amended
+  also, where this change's text contradicts PR #19's two reads, at the sites
+  spec 005 recorded at `b511bdb`: the collector table's `probe-failed` row
+  (POD:333), so that the extension read's exit 1 with nothing printed on
+  standard output or standard error, by which Git reports the value not set,
+  reads as false with no error, as PR #19 has an unset value, while an exit 1
+  with a warning, as for an unreadable `config`, stays a failure that counts
+  as true, and so that the effective-work-tree read records no error where a
+  probe that fails, as it does under `core.bare=true` (exit 128) and as a
+  probe that cannot be spawned does, on the lane openRepoProject-4 lead's
+  ruling, and output that is not exactly one line each make the row's
+  registration disagree, as PR #19 has it at `addd346` and as POD:89-95
+  classifies a disagreeing registration (lane openRepoProject-3's W17 L2, W20
+  M2 and W25 L8); the second phase, which runs a linked row's
+  effective-work-tree read before its status probe (POD:238-239 and a sentence
+  after POD:246); and design D8, a task for the realpath of the toplevel that
+  read reports (after design.md:463), with its outcomes, `ENOENT` or `ENOTDIR`
+  making the registration disagree with no error and any other `OSError` or a
+  missed wait leaving the check not completed, and its count (design.md:478).
+  POD:248-254 and design D6, amended above, agree with both reads. The table's
+  two exceptions depart from the packet's DI:535 ("A Git child exits nonzero |
+  `probe-failed`"). R-125 at `93f3194` adds the administrative directory's
+  `commondir` file to [E]'s two-way registration: it must name `<common_dir>`,
+  read by the filesystem with no Git child as Git reads it; a missing one, or
+  one naming another directory, makes the registration disagree, and a read of
+  it that fails gives the row `inspection-error` (its scenario "A commondir
+  that names another repository"). It reaches the overview through the shared
+  evidence model, by the registration check that requirement 2 cites (POD:84),
+  with no Git child and no task or count of its own. Two texts are amended for
+  it. D8's per-row task names its reads and now names the `commondir` file
+  (design.md:461-462). Requirement 2's closed case list (POD:89-95) gains,
+  after its second case, a case for a registration check that cannot be
+  completed: a registration read, the `commondir` read included, failing with
+  an error that shows no disagreement, or the realpath of the toplevel that
+  the effective-work-tree read reports failing other than with `ENOENT` or
+  `ENOTDIR`, or that realpath or that read itself being cut, gives no status
+  probe, the code that fits it and `inspection-error` set directly, as [E] at
+  `93f3194` has a failed `commondir` read ("a read of it that fails SHALL give
+  the row `inspection-error` and no probe", its
+  `specs/project-command/spec.md:211-213`) and as D8's realpath task leaves
+  the check not completed (lane openRepoProject-3's W25 M1, W29 L1 for the
+  words, which are spec 005 FR-007's, and W34 LOW-1 for the cut, which is the
+  realpath's and the work-tree read's only). Its disagreement case gains
+  FR-007's tie-break: a `<path>/.git` that is missing (`ENOENT` or `ENOTDIR`)
+  or not a regular file, or an administrative `gitdir` or `commondir` file
+  that is missing (`ENOENT` or `ENOTDIR`), is a disagreement and not such an
+  error, as [E] requires that `<path>/.git` "SHALL be a regular file", that
+  the `gitdir` file "SHALL name `<path>/.git`" and that "A `commondir` file
+  that is missing" makes the registration disagree (its :203-213, unchanged
+  through `6f2cb54` and `a664799`). What a failed read of the `.git` or
+  `gitdir` file gives, and that a missing or non-regular file decides as a
+  disagreement before any read can fail, [E] does not state; they are A1's
+  fill, in FR-007's words. Without the new case the list sent such a row to
+  its last case, a status probe. The case departs from the packet's
+  DI:251-261, whose table of the cases a registered path falls into has none
+  for a check that cannot be completed. Spec 005 carries the parity.
+- **The stat pins (LQ-10, PR #19 at `ea697ba`; its pointer at `93f3194`), a
+  restatement.** PR #19 adds `-c core.trustctime=true -c
+  core.checkStat=default` after `-c core.fsmonitor=false` on every status
+  probe, and on its hidden-state probe and removal, because Git compares a
+  file's ctime only while both settings keep these values, so that under a
+  repository's `core.trustctime=false` or `core.checkStat=minimal` an edit
+  that keeps a file's size and restores its mtime would read unchanged. The
+  overview's status probe takes the four pins through [E], by citation; the
+  overview runs no hidden-state probe and no removal. This change quoted [E]'s
+  status pins as the two older ones, quotes that PR #19 at `93f3194` calls
+  stale after LQ-10 and this change's to restate (its Dependencies and
+  Sequencing). Amended: requirement 3's quote (POD:202-204) and design D13's
+  (design.md:650-652), each now `-c core.untrackedCache=false -c
+  core.fsmonitor=false -c core.trustctime=true -c core.checkStat=default` on a
+  status probe. D13's fixture-rewrite item (design.md:664-665) keeps its
+  words: it names the two pins that disarm a `core.fsmonitor` hook, which [E]
+  still passes on every status probe. PR #19 at `93f3194` changes no pin; it
+  adds a precondition to the scenario "An edit that keeps its size and
+  restores its mtime" (lane openRepoProject-3's W9 L1). No packet line quotes
+  the two older pins: the packet gives the status probe's argv with no `-c`
+  pin (DI:396, DI:1181), so no departure is declared. PR #19 accepts in its
+  design Risks, on Brett Heap's ruling LQ-10, that where ctimes or inodes
+  change without an edit the probe is slower, never wrong, and a slow probe
+  makes a plan incomplete, never unsafe; and that where the repository defines
+  a clean filter, a ctime-only change under `core.trustctime=false` now runs
+  that filter once per probe, where it ran none before, which widens the
+  clean-filter residual that LQ-16 leaves open (requirement 9's sentence after
+  POD:717, Q9 B above), a filter whose command is missing giving a false
+  `dirty` or a failed probe, both of which fail closed (lane
+  openRepoProject-3's W25 L10).
+
+Q15 A and Q16 B together: the handlers only record the signal wherever a
+child can run, and Q15 A's raising span, feature 004's `raising_signals` (its
+lead ruling R-47), is entered only after every child is reaped or abandoned,
+so that no child runs under its raising handlers (design D1).
+
+Requirement 2 and design D8 together (lane openRepoProject-3's W29 O2):
+requirement 2's second case now also takes an `lstat` whose filesystem task
+reaches its 5 s limit or that the deadline ends or prevents, with the code
+that fits it, `os-error`, `probe-timeout` or `deadline-exceeded` (POD:330,
+:334-335), as spec 005's FR-007 does. By its words the closed list sent a cut
+`lstat` to its last case, a status probe, and only its closing sentence, that
+no probe runs in a path the overview could not `lstat`, kept the probe from
+running. Design D8 already gives the outcome: one task for the row's `lstat`
+and registration reads (design.md:461-462), whose missed wait records
+`probe-timeout` or `deadline-exceeded` and leaves every field it would have
+established null (design.md:473-475). That task's cut, its `lstat` and its
+registration reads together, is therefore the second case's, and the third
+case's cut is that of the toplevel realpath and of the effective-work-tree
+read only (lane openRepoProject-3's W34 LOW-1), as the packet has the row's
+`lstat` and registration reads form one task with the same wait (DI:477-479).
+Amended: requirement 2's second case (POD:90-92). It departs from no packet
+line: DI:258's row, "`lstat` fails with any other `OSError`", does not exclude
+a cut, and DI:477-480 and DI:1238-1242 give a row cut this way `probe-timeout`
+or `deadline-exceeded`.
+
+Open point, left to Brett Heap with no behaviour written (lead decision M1,
+from lane openRepoProject-3's fidelity read of spec 005 at `c54d393`): Q7 A is
+silent on parity with `project clean` run from the same working directory
+when that directory's realpath cannot be established. Requirement 5's
+equality clause (POD:381-386) stays as ratified, while at `2cf34d3` feature
+004 gives every present row `inspection-error` there (its
+`project:2960-2962`, :2887-2888 and :2081), wider than the two classes Q7 A
+converts, so that rows such as a `dirty` one would differ.
+
+Points for Brett Heap's review, beside the answers themselves: Q8 D's six
+drafted texts and its OPERATION values, with the fill that prints an error's
+`path` in the human report (lane openRepoProject-3's W7-M1); PR #19's new
+refusal code, `relative-config-path`, and its two new gates,
+`operation-in-progress` and `worktree-only-commits`, reaching the overview,
+with the route and the alternative each takes above; LQ-11's counted reads and
+its conflict sites: the collector table's two exceptions to `probe-failed`,
+the second phase's effective-work-tree read, design D8's toplevel realpath
+task with its outcomes and the `commondir` read in its per-row task, and
+requirement 2's case for a check that cannot be completed; LQ-10's four stat
+pins, restated where this change quoted two; the merge order, under which PR
+#34 does not merge before PR #19's ratification of the commits its four LQ
+items follow, unless Brett Heap moves those items to a later amendment; and
+the open point M1. Brett Heap ratified A1 whole, with these points, on
+2026-10-22 ("ratify 34").
+
+The changes that carry this change's requirements in MODIFIED blocks are to
+re-align them to A1's text: lane openRepoProject-5's
+`add-project-clean-cache-disposal` (#24, PR #27) for requirement 5, and
+`add-project-overview-remote-merge-status` (#25, PR #29) for requirements 3, 8
+and 9 and, through its task 2.3, for the spawning sentence of its design D7.
+Spec 005 folded its FR-011, FR-022, FR-039, FR-044, SC-009 and SC-011 ahead of
+A1, and re-reads them against A1's text, now ratified.
