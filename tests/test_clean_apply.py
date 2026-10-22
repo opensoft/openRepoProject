@@ -464,8 +464,9 @@ class ApplyTests(clean_support.CleanCase):
                 with self.subTest(path=row["path"]):
                     entry = project.make_target(plan, row)
                     self.assertIsNone(project.revalidate(plan, entry, run))
-                    # Rows 3, 4, 6 and 7 again, never the memo, and the target's status.
-                    self.assertEqual(entry["probes_performed"], 5)
+                    # Rows 3, 4, 6 and 7 again, never the memo, and the target's
+                    # status, hidden-state and reachability probes (D7, LQ-13).
+                    self.assertEqual(entry["probes_performed"], 6)
             self.assertEqual(self.snapshot(root, trees.values()), before)
 
     def test_clean_revalidate_refuses_a_changed_target_with_state_changed(self):

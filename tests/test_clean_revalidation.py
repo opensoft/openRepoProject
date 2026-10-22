@@ -806,6 +806,178 @@ class RevalidationTests(clean_support.CleanCase):
             self.assert_stopped_at_first(result, trees, "state-changed")
             admin.chmod(0o700)
             self.assert_nothing_removed(root, trees, before, log)
+        with self.subTest("a logs/HEAD line names an object the repository does not hold"):
+            root, trees = self.batch("bad-object")
+            head = self.head(trees[0])
+            absent = "1" * len(head)
+            self.assertEqual(self.git(root, "cat-file", "--batch-check", input=absent + "\n").split(),
+                             [absent, "missing"])
+            entry = f"{head} {absent} {clean_support.REFLOG_IDENT} 0 +0000\tplanted\n"
+            before = self.snapshot(root, trees)
+            env, log = self.counting()
+
+            def plant():
+                with (self.admin(trees[0]) / "logs" / "HEAD").open("a") as stream:
+                    stream.write(entry)
+
+            result = self.apply(root, plant, env=env, log=log)
+            self.assert_stopped_at_first(result, trees, "state-changed")
+            self.assert_nothing_removed(root, trees, before, log)
+            reachability = [record for record in clean_support.child_log(log)
+                            if subcommand(record)[:3] == ["rev-list", "--max-count=1", "--glob=refs/worktree"]]
+            self.assertEqual([directory(record) for record in reachability], [str(trees[0])])
+            self.assertIn(absent, subcommand(reachability[0]))
+
+    def test_clean_a_worktree_only_commit_made_after_the_plan(self):
+        for case in ("head-reflog", "refs-worktree"):
+            with self.subTest(case):
+                root, trees = self.batch(case)
+                branch = self.git(trees[0], "branch", "--show-current").strip()
+
+                def commit_only_there(tree=trees[0], branch=branch, case=case):
+                    if case == "head-reflog":
+                        self.git(tree, "checkout", "-q", "--detach")
+                        (tree / "late-work").write_text("made after the plan\n")
+                        self.commit(tree, "late work")
+                        self.git(tree, "checkout", "-q", branch)
+                    else:
+                        held = self.git(tree, "commit-tree", "HEAD^{tree}", "-p", "HEAD", "-m", "late").strip()
+                        self.git(tree, "update-ref", "refs/worktree/keep", held)
+
+                before = self.snapshot(root, trees)
+                env, log = self.counting()
+                result = self.apply(root, commit_only_there, env=env, log=log)
+                self.assert_stopped_at_first(result, trees, "worktree-only-commits")
+                self.assert_nothing_removed(root, trees, before, log)
+                self.assertEqual(self.git(trees[0], "branch", "--show-current").strip(), branch)
+
+    def test_clean_a_work_tree_probe_that_decides_nothing_at_revalidation(self):
+        # The lead's R-171 (#19 at 4485678, "Cleanup revalidates destructive
+        # actions" and D7): where the plan read extensions.worktreeConfig as
+        # true, only a decided different effective work tree is
+        # identity-changed (lane E's test of a work tree redirected after the
+        # plan pins it). In process, after the question, P's work-tree probe
+        # made to exit 128, to time out, and to print two lines, each
+        # state-changed; and cut by the work deadline, which is no difference
+        # (P not-attempted with deadline-exceeded, exit 1).
+        probe = ["rev-parse", "--path-format=absolute", "--show-toplevel"]
+        cases = (("exits 128", dict(name="failed", status=128), ("refused", "state-changed"), 2),
+                 ("times out", dict(name="timeout"), ("refused", "state-changed"), 2),
+                 ("prints two lines", dict(name="complete", status=0, result=b"/a\n/b\n"),
+                  ("refused", "state-changed"), 2),
+                 ("is cut by the deadline", dict(name="deadline"), ("not-attempted", "deadline-exceeded"), 1))
+        for number, (label, fields, expected, status) in enumerate(cases):
+            with self.subTest(f"the work-tree probe {label}"):
+                root, trees = self.batch(f"work-tree-{number}")
+                self.git(root, "config", "extensions.worktreeConfig", "true")
+                before = self.snapshot(root, trees)
+                asked, calls, real_run_bounded = [], [], project.run_bounded
+
+                def run_bounded(spec, parser, run, fields=fields, asked=asked, calls=calls, target=bytes(trees[0])):
+                    kind, args, cwd = spec
+                    if asked and args[2:] == probe and args[1] == target:
+                        calls.append(args[1])
+                        return project.DriverOutcome(project.git_argv(kind, args), **fields)
+                    return real_run_bounded(spec, parser, run)
+
+                env, log = self.counting()
+                with mock.patch.object(project, "run_bounded", run_bounded):
+                    result = self.apply(root, lambda: asked.append(True), env=env, log=log)
+                self.assertEqual(len(calls), 1, "one work-tree probe at P's revalidation")
+                self.assertEqual(self.stages(result)[0], (str(trees[0]), *expected), result.stderr)
+                self.assertEqual([stage for _, stage, _ in self.stages(result)[1:]], ["not-attempted"])
+                self.assertEqual((result.status, result.document["exit_code"]), (status, status))
+                self.assert_nothing_removed(root, trees, before, log)
+
+    # The lead's R-195 (#19 at 4485678, "Cleanup revalidates destructive
+    # actions"): every Git child of the revalidation that fails, or runs past
+    # its own budget while the deadline is not the limit, is state-changed,
+    # whatever its step; a child gives its step's own reason only for a value
+    # it decided.
+
+    def assert_child_that_decides_nothing(self, case, words, in_target):
+        """P's revalidation child whose words follow `-C DIR` (DIR the command
+        directory, or P where in_target) made, after the question, to exit
+        128 and to time out: each refuses P with state-changed, Q is
+        not-attempted, exit 2, nothing removed."""
+        for label, fields in (("exits 128", dict(name="failed", status=128)), ("times out", dict(name="timeout"))):
+            with self.subTest(f"{case} {label}"):
+                root, trees = self.batch(f"{case}-{fields['name']}")
+                directory_bytes = bytes(trees[0]) if in_target else os.fsencode(root)
+                before = self.snapshot(root, trees)
+                asked, calls, real_run_bounded = [], [], project.run_bounded
+
+                def run_bounded(spec, parser, run, fields=fields, asked=asked, calls=calls, at=directory_bytes):
+                    kind, args, cwd = spec
+                    if asked and not calls and args[2:] == words and os.fsencode(args[1]) == at:
+                        calls.append(args)
+                        return project.DriverOutcome(project.git_argv(kind, args), **fields)
+                    return real_run_bounded(spec, parser, run)
+
+                env, log = self.counting()
+                with mock.patch.object(project, "run_bounded", run_bounded):
+                    result = self.apply(root, lambda: asked.append(True), env=env, log=log)
+                self.assertEqual(len(calls), 1, "the child was reached at P's revalidation")
+                self.assert_stopped_at_first(result, trees, "state-changed")
+                self.assert_nothing_removed(root, trees, before, log)
+
+    def test_clean_an_identity_probe_that_decides_nothing_at_revalidation(self):
+        # Step 1: identity-changed only for a decided different identity
+        # ("Repository replaced mid-batch" pins it).
+        self.assert_child_that_decides_nothing(
+            "identity", ["rev-parse", "--path-format=absolute", *project.IDENTITY_OPTIONS], in_target=False)
+
+    def test_clean_a_registry_listing_that_decides_nothing_at_revalidation(self):
+        # Step 3: identity-changed only for a missing or doubled entry.
+        self.assert_child_that_decides_nothing("registry", ["worktree", "list", "--porcelain", "-z"], in_target=False)
+
+    def test_clean_a_hidden_state_probe_that_decides_nothing_at_revalidation(self):
+        # Step 7: hidden-local-state only for a decided flagged entry ("Hidden
+        # local state", its after-confirmation clause, pins it).
+        self.assert_child_that_decides_nothing("hidden", list(project.HIDDEN_STATE_PROBE), in_target=True)
+
+    def test_clean_worktree_only_commits_check_cut_at_revalidation(self):
+        # In process, after the question: the read of P's logs/HEAD made to
+        # time out, and the reachability child made to exit 128 and to time
+        # out, each a value that cannot be re-read (state-changed); the child
+        # cut by the work deadline, which is no difference (P not-attempted
+        # with deadline-exceeded, exit 1).
+        cases = (("a read that times out", "read", dict(name="timeout"), ("refused", "state-changed"), 2),
+                 ("a child that exits 128", "child", dict(name="failed", status=128), ("refused", "state-changed"), 2),
+                 ("a child that times out", "child", dict(name="timeout"), ("refused", "state-changed"), 2),
+                 ("a child cut by the deadline", "child", dict(name="deadline"),
+                  ("not-attempted", "deadline-exceeded"), 1))
+        for label, where, fields, expected, status in cases:
+            with self.subTest(label):
+                root, trees = self.batch("cut-" + label.split()[1] + "-" + fields["name"])
+                log_path = os.fsencode(self.admin(trees[0]) / "logs" / "HEAD")
+                before = self.snapshot(root, trees)
+                asked, calls = [], []
+                real_fs_call, real_run_bounded = project.fs_call, project.run_bounded
+
+                def fs_call(fn, *args, where=where, fields=fields, asked=asked, calls=calls, **options):
+                    if where == "read" and asked and fn is project._read_head and args[:1] == (log_path,):
+                        calls.append(args[0])
+                        return project.DriverOutcome(None, fields["name"], detail="cut here")
+                    return real_fs_call(fn, *args, **options)
+
+                def run_bounded(spec, parser, run, where=where, fields=fields, asked=asked, calls=calls):
+                    kind, args, cwd = spec
+                    if (where == "child" and asked and args[2:5] == ["rev-list", "--max-count=1", "--glob=refs/worktree"]
+                            and args[1] == bytes(trees[0])):
+                        calls.append(args[1])
+                        return project.DriverOutcome(project.git_argv(kind, args), **fields)
+                    return real_run_bounded(spec, parser, run)
+
+                env, log = self.counting()
+                with mock.patch.object(project, "fs_call", fs_call), \
+                        mock.patch.object(project, "run_bounded", run_bounded):
+                    result = self.apply(root, lambda: asked.append(True), env=env, log=log)
+                self.assertEqual(len(calls), 1, "one read or child at P's revalidation")
+                self.assertEqual(self.stages(result)[0], (str(trees[0]), *expected), result.stderr)
+                self.assertEqual([stage for _, stage, _ in self.stages(result)[1:]], ["not-attempted"])
+                self.assertEqual((result.status, result.document["exit_code"]), (status, status))
+                self.assert_nothing_removed(root, trees, before, log)
 
     def test_clean_operation_in_progress_listing_cut_at_revalidation(self):
         # In process: the listing of P's admin directory, after the question,
@@ -838,7 +1010,7 @@ class RevalidationTests(clean_support.CleanCase):
 
     # D7's bound, by the counting wrapper (lead rulings R-68 (d) and R-73 (f)).
 
-    def test_clean_revalidation_spawns_at_most_five_children(self):
+    def test_clean_revalidation_spawns_at_most_six_children(self):
         # Five rows: the main worktree, three selected targets, and a merged
         # worktree made dirty, which is not selected. The log is emptied at the
         # question, so it holds exactly the children after confirmation.
@@ -855,8 +1027,9 @@ class RevalidationTests(clean_support.CleanCase):
         segments = [records[:at[0]], records[at[0] + 1:at[1]], records[at[1] + 1:at[2]], records[at[2] + 1:]]
         words = [[subcommand(child)[0] for child in segment] for segment in segments]
         # The first revalidation: the identity probe, the registry listing, one
-        # narrowed ref listing, the status probe and the hidden-state probe.
-        self.assertEqual(words[0], ["rev-parse", "worktree", "for-each-ref", "status", "ls-files"])
+        # narrowed ref listing, the status probe, the hidden-state probe and
+        # the reachability probe of worktree-only-commits (D21, LQ-13).
+        self.assertEqual(words[0], ["rev-parse", "worktree", "for-each-ref", "status", "ls-files", "rev-list"])
         narrowed = subcommand(segments[0][2])
         self.assertEqual(narrowed[2:], ["refs/heads/main", "refs/heads/master", "refs/remotes/origin/HEAD",
                                         "refs/heads/001-p", "refs/remotes/origin/001-p",
@@ -864,23 +1037,23 @@ class RevalidationTests(clean_support.CleanCase):
                                         "refs/heads/003-r", "refs/remotes/origin/003-r"])
         # T085: after a plain `removed`, the rescan's three repository children
         # are the next target's steps 1 to 4, so each later target spawns only
-        # its status and hidden-state probes, and counts five; the rescan after
-        # the last target is the final rescan, three.
+        # its status, hidden-state and reachability probes, and counts six; the
+        # rescan after the last target is the final rescan, three.
         rescan = ["rev-parse", "worktree", "for-each-ref"]
-        self.assertEqual(words[1], rescan + ["status", "ls-files"])
-        self.assertEqual(words[2], rescan + ["status", "ls-files"])
+        self.assertEqual(words[1], rescan + ["status", "ls-files", "rev-list"])
+        self.assertEqual(words[2], rescan + ["status", "ls-files", "rev-list"])
         self.assertEqual(words[3], rescan, "the final rescan spawns three")
-        self.assertEqual([target["probes_performed"] for target in result.document["targets"]], [5, 5, 5])
-        self.assertEqual(len([child for child in records if not is_removal(child)]), 5 * 3 + 3)
+        self.assertEqual([target["probes_performed"] for target in result.document["targets"]], [6, 6, 6])
+        self.assertEqual(len([child for child in records if not is_removal(child)]), 6 * 3 + 3)
         # No merged-set listing, and no status probe of a row not selected; each
-        # status and ls-files child names its own target, every other child the
-        # command directory.
+        # status, ls-files and rev-list child names its own target, every other
+        # child the command directory.
         after = [child for child in records if not is_removal(child)]
         self.assertFalse(any(any(word.startswith("--merged") for word in subcommand(child)) for child in after))
         targets_of = {str(tree) for tree in trees}
         for child in after:
             with self.subTest(argv=child.argv):
-                if subcommand(child)[0] in ("status", "ls-files"):
+                if subcommand(child)[0] in ("status", "ls-files", "rev-list"):
                     self.assertIn(directory(child), targets_of)
                 else:
                     self.assertEqual(directory(child), str(root))
@@ -889,7 +1062,7 @@ class RevalidationTests(clean_support.CleanCase):
                 self.assertEqual(directory(child), str(root))
         # The record counts every child once: probes the planning's and these.
         probes, operations = result.document["probes"], result.document["operations"]
-        planning = probes["estimated"] - 5 * 3 - 3
+        planning = probes["estimated"] - 6 * 3 - 3
         self.assertEqual(probes["performed"], planning + len(after))
         self.assertEqual(probes["performed"], probes["estimated"], "performed no longer exceeds estimated")
         self.assertEqual(operations, {"estimated": 3, "performed": 3})
@@ -1123,8 +1296,8 @@ class RevalidationTests(clean_support.CleanCase):
                          "children started after SIGINT")
         self.assertEqual(records, at_signal)
         self.assertEqual([subcommand(child)[0] for child in records[-5:]],
-                         ["ls-files", "rev-parse", "worktree", "for-each-ref", "status"],
-                         "planning's last hidden-state probe, then the revalidation's four children")
+                         ["rev-list", "rev-parse", "worktree", "for-each-ref", "status"],
+                         "planning's last reachability probe (D21, LQ-13), then the revalidation's four children")
         self.assertFalse(any(map(is_removal, records)))
         self.assertEqual(self.stages(result), [(str(tree), "not-attempted", "interrupted") for tree in trees],
                          result.stderr)

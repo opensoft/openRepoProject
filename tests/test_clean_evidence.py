@@ -402,7 +402,11 @@ class EvidenceTests(clean_support.CleanCase):
         self.assertEqual(self.status_dirs(records), sorted(map(str, (root, merged, unstarted))),
                          "one status probe per present, verified row; none for the stale row")
         self.assertEqual([c[2:] for c in commands if c[2:3] == ["rev-parse"] and c[2:] != DISCOVER], [ROW_3])
-        self.assertEqual([c for c in commands if c[2:3] and c[2] in REPLACED], [],
+        # The one rev-list is gate 12's reachability probe (D21, LQ-13), which a
+        # report runs as any plan does, in the one row that reaches it.
+        reachability = [c for c in commands if c[2:5] == ["rev-list", "--max-count=1", "--glob=refs/worktree"]]
+        self.assertEqual([c[1] for c in reachability], [str(merged)])
+        self.assertEqual([c for c in commands if c[2:3] and c[2] in REPLACED and c not in reachability], [],
                          "no per-row rev-parse, rev-list, merge-base, show-ref or symbolic-ref")
         self.assert_pinned(records)
         rows = by_name(result.document)

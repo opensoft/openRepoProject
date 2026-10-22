@@ -1051,7 +1051,7 @@ class ResultTests(clean_support.CleanCase):
         stages = {
             "removed": (None, "branch-advanced-after-removal", "branch-missing-after-removal", "removal-ceiling"),
             "refused": ("identity-changed", "branch-changed", "state-changed", "contains-submodule",
-                        "hidden-local-state", "operation-in-progress"),
+                        "hidden-local-state", "operation-in-progress", "worktree-only-commits"),
             "failed": ("git-refused", "git-failed", "spawn-error"),
             "unknown": ("unconfirmed-removal", "reconciliation-incomplete", "internal-error", "removal-ceiling"),
             "not-attempted": ("batch-stopped", "interrupted", "deadline-exceeded"),
