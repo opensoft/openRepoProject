@@ -61,12 +61,14 @@ openRepoProject-3's confirm read of round A9, its LOW-2 to LOW-5, and PR
 revalidation rule) and to D7 and Risks (the fit at `a664799` and PR #19's
 LQ-20; LOW-2 and LOW-3) (proposal, "Re-read and Codex Findings (round
 A10)"). Round A11 maps A-39 (lane openRepoProject-3's confirm read of round
-A10, its MEDIUM-1 and LOW-1 to LOW-5, and PR #19's round (c) at `2e819ad`)
-to D7 and Risks (the case where the plan read `extensions.worktreeConfig` as
-true on the three bases of PR #19's D14, LQ-20's first step and its option
-(c); MEDIUM-1 and LOW-4) and to D9 (LOW-2); its LOW-3 edits the spec delta
-alone, and its LOW-1 and LOW-5 `tasks.md` and the proposal (proposal,
-"Re-read and Codex Findings (round A11)").
+A10, its MEDIUM-1 and LOW-1 to LOW-5), as ruling A-40 amends it for PR #19's
+round (d) at `9267303`, to D7 and Risks (the case where the plan read
+`extensions.worktreeConfig` as true on the three bases of PR #19's D14, a
+flagged run under each option of its LQ-20 on each basis, LQ-20's first step
+and its option (c), and 45 s named the spawn limit; MEDIUM-1, LOW-4 and
+A-40) and to D9 (LOW-2); its LOW-3 edits the spec delta alone, and its LOW-1
+and LOW-5 `tasks.md` and the proposal (proposal, "Re-read and Codex Findings
+(round A11)").
 
 Citations follow `proposal.md`: packet files at `da33d92`, `CAS` for change 1,
 `APO` for change 2, `project:N` and `tests:N` at `961c405`, all unchanged at
@@ -740,7 +742,10 @@ cache change and with one reflog child, target k's removal spawns after 7 +
 (152 + 5k) x 0.15 + 0.3(k - 1) + 0.6(k - 1) = 21.9 + 1.65k s, and its branch
 child 1.05 s later (the removal, the three rescan children, the re-read's
 listing and its re-proof), at 22.95 + 1.65k s. The spawn floor needs each at
-or before 45 s: removals 1 to 14 spawn (the 14th at 45.0 s, on the boundary,
+or before 45 s, the spawn limit, which is the 50 s work deadline less the 5 s
+removal floor, as PR #19's D14 names it at `9267303` (its
+`design.md:916-918`; ruling A-40): removals 1 to 14 spawn (the 14th at
+45.0 s, on the boundary,
 which change 1's inclusive test for a removal admits), branch children 1 to 13
 spawn (the 13th at 44.4 s), and the 14th branch child, due at 46.05 s, cannot
 start; no branch child falls on the boundary, so the branch child's strict
@@ -763,19 +768,20 @@ after that lane's round (b), keeps every input this paragraph takes, each
 checked against `6f2cb54`, while its D14, restated with the child counts
 that lane openRepoProject-2 measured (its R-178), counts one more child at
 plan time where the plan read `extensions.worktreeConfig` as true (ruling
-A-38). Its head `2e819ad`, after that lane's round (c), keeps every input
-this paragraph takes, each checked against `a664799` by content, while its
-D14 states the fit on three bases and chooses none (its
-`design.md:876-879`; ruling A-39). At `2e819ad`: F = 8, its row 4c added
-(its `design.md:329-330` and D14 at `:880`); E and the reachability probes
-of its D21 at most 16 each (`:845-846`), D21 adding one child to each
-revalidation (`:966-967`); and six children per revalidation, seven where
+A-38). Its head `9267303`, after that lane's rounds (c) and (d), keeps every
+input this paragraph takes, each checked by content from `a664799` through
+`2e819ad`, while its D14 states the fit on three bases, chooses none, and
+gives each option of its LQ-20 on each basis (its `design.md:885-888` and
+`:967-990`; rulings A-39 and A-40). At `9267303`: F = 8, its row 4c added
+(its `design.md:331-332` and D14 at `:889`); E and the reachability probes
+of its D21 at most 16 each (`:854-855`), D21 adding one child to each
+revalidation (`:992-993`); and six children per revalidation, seven where
 the plan read the repository's `extensions.worktreeConfig` as true (its
-`specs/project-clean/spec.md:1023-1025` and
+`specs/project-clean/spec.md:1024-1026` and
 `specs/project-clean-review-safety/spec.md:76-77`).
 
 - Where the plan read `extensions.worktreeConfig` as false, six children per
-  target, on D14's 150 ms basis at `2e819ad` (its `design.md:887`, the row
+  target, on D14's 150 ms basis at `9267303` (its `design.md:897`, the row
   for row 4c false), target k's removal spawns after k - 1 removals and their
   4(k - 1) stage children, at (169 + 6k) x 0.15 + 0.3(k - 1) + 0.6(k - 1) =
   24.45 + 1.8k s, and its branch child at 25.5 + 1.8k s: removals 1 to 11
@@ -783,36 +789,36 @@ the plan read the repository's `extensions.worktreeConfig` as true (its
   s); the 11th branch child, due at 45.3 s, cannot start, and the 12th
   removal, due at 46.05 s, does not spawn. At the packet's 150 ms per child
   (D14's 150 ms basis) a flagged run of 16 then removes 11 worktrees and
-  retires 10 branches, at `2e819ad` as at `a664799` and `6f2cb54`, where
-  `c462d87` gives 14 and 13; without the flag all 16 removals spawn, the 16th
-  at 44.1 s, as D14 says (its `:887` and `:908-909`).
+  retires 10 branches, at `9267303` as at `2e819ad`, `a664799` and
+  `6f2cb54`, where `c462d87` gives 14 and 13; without the flag all 16
+  removals spawn, the 16th at 44.1 s, as D14 says (its `:897` and
+  `:918-919`).
 - Where the plan read `extensions.worktreeConfig` as true, seven children per
-  target, D14 at `2e819ad` also counts the effective-work-tree probe at plan
-  time on each linked row (its `design.md:897-899`; the probe at `:435-437`),
+  target, D14 at `9267303` also counts the effective-work-tree probe at plan
+  time on each linked row (its `design.md:907-909`; the probe at `:437-439`),
   so that on its 150 ms basis its planning term is 39 + 2R children for R
   rows and at 128 rows the first removal would spawn at 45.3 s: nothing is
   removed, every target is `not-attempted` with `deadline-exceeded`, and the
-  run exits 1, never unsafe (its `:888` and `:909-915`). A flagged run there
+  run exits 1, never unsafe (its `:898` and `:919-925`). A flagged run there
   adds the reflog child, so that, with the 127 linked rows' probes, target
   k's removal spawns after k - 1 removals and their 4(k - 1) stage children,
   at (296 + 7k) x 0.15 + 0.3(k - 1) + 0.6(k - 1) = 43.5 + 1.95k s: the first
-  is due at 45.45 s, past the floor, so that at the packet's 150 ms per child
-  (D14's 150 ms basis) a flagged run of 16 at 128 rows removes 0 worktrees
-  and retires 0 branches.
+  is due at 45.45 s, past the spawn limit, so that at the packet's 150 ms per
+  child (D14's 150 ms basis) a flagged run of 16 at 128 rows removes 0
+  worktrees and retires 0 branches.
 
-D14 at `2e819ad` states that case on three bases and chooses none, because
-task 2.1 measured neither LQ-11's per-row `rev-parse --show-toplevel` nor
-LQ-13's `rev-list` (its `design.md:876-879` and `:924-944`, the row at
-`:949`; ruling A-39, lane openRepoProject-3's W35, MEDIUM-1). On each basis
-this change's figure for a flagged run of 16 at 128 rows is change 1's with
-this change's own children added by this section's method: before target
-k's removal its 4(k - 1) stage children and the reflog child, 61 before the
-16th (60 for the 15 earlier targets, and the reflog child), and each branch
-child after its removal, the rescan's three children, the re-read's listing
-and the re-proof. Task 2.1 measured none of this change's children, so each
-figure names the cost it gives them: 150 ms, or task 2.1's average of about
-0.0827 s per child (23.6 s less 15 removals at 0.3 s, over its 231
-children; W35, MEDIUM-1).
+D14 at `9267303` states that case on three bases and chooses none, because task
+2.1 measured neither LQ-11's per-row `rev-parse --show-toplevel` nor LQ-13's
+`rev-list` (its `design.md:885-888` and `:935-958`, the row at `:963`; rulings
+A-39 and A-40, lane openRepoProject-3's W35, MEDIUM-1). On each basis this
+change's figure for a flagged run of 16 at 128 rows is change 1's with this
+change's own children added by this section's method: before target k's removal
+its 4(k - 1) stage children and the reflog child, 61 before the 16th (60 for
+the 15 earlier targets, and the reflog child), and each branch child after its
+removal, the rescan's three children, the re-read's listing and the re-proof.
+Task 2.1 measured none of this change's children, so each figure names the cost
+it gives them: 150 ms, or task 2.1's average of about 0.0827 s per child (23.6
+s less 15 removals at 0.3 s, over its 231 children; W35, MEDIUM-1).
 
 - On D14's 150 ms basis, every child at 150 ms: change 1 alone removes none,
   its first removal due at 45.3 s, and a flagged run removes 0 and retires
@@ -822,7 +828,7 @@ children; W35, MEDIUM-1).
   probes task 2.1 did not measure at the stand-ins D14 names, row 4c's read
   and the per-row `rev-parse --show-toplevel` at the identity probe's
   19.7 ms and LQ-13's `rev-list` at the full ref listing's 359.7 ms (its
-  `:924-936`): change 1 alone removes all 16, the 16th at 37.9 s with
+  `:935-950`): change 1 alone removes all 16, the 16th at 37.9 s with
   12.1 s left, or 15 with 20,000-file removals, the 16th due at 45.6 s.
   With this change's children at 150 ms each, as the paragraph below on
   change 1's measured costs takes them, a flagged run's 16th removal moves
@@ -833,7 +839,7 @@ children; W35, MEDIUM-1).
   the 16th branch child at 43.89 s, or 13 removed and 12 retired with
   20,000-file removals.
 - On the mixed basis, task 2.1's measured costs for the children it
-  measured and 150 ms for each child added since (its `:937-941`): change 1
+  measured and 150 ms for each child added since (its `:951-955`): change 1
   alone removes 11, the 12th due at 45.3 s and the 16th at 50.0 s, 176
   children having been added before the 16th to task 2.1's 231. This
   change's 61 are added children too, at 150 ms by that basis, 237 before
@@ -843,53 +849,69 @@ children; W35, MEDIUM-1).
 
 Which basis the cap test uses, or what those two probes cost, is the first
 step of PR #19's open question LQ-20, before Brett Heap (its
-`design.md:1730-1748`, and Risks `:1574-1589`): (i) measure LQ-11's and
+`design.md:1762-1805`, and Risks `:1603-1620`): (i) measure LQ-11's and
 LQ-13's two probes on task 2.1's protocol and rerun the cap test, or (ii)
-decide which basis the cap test uses. Its options apply only if the case
-still fails after that step, and none is chosen: (a) accept that worst
-case; (b) bound the plan-time work-tree probe to the selected targets, at
-most 16; (c) a longer work deadline where `extensions.worktreeConfig` is
-true; and (d) the rule's own step, lowering the caps (`BA:766-771`), whose
-result on each basis D14 gives (its `:953-964`). So the worst case of this
-fit where the plan read `extensions.worktreeConfig` as true waits on Brett
-Heap's LQ-20 for PR #19, whose framing lane openRepoProject-2 may revise.
-On D14's 150 ms basis, options (a) to (c) give a flagged run of 16 at 128
-rows, with one reflog child:
+decide which basis the cap test uses, the measured basis, D5's as ratified,
+the mixed basis, or the flat 150 ms, which would change D5. Its options
+apply only if the case still fails after that step, and none is chosen: (a)
+accept that worst case; (b) bound the plan-time work-tree probe to the
+selected targets, at most 16; (c) "a longer work deadline where
+`extensions.worktreeConfig` is true, so that later removals can still start,
+the 5 s removal floor kept" (its `:1792-1793`); and (d) the rule's own step,
+lowering the caps (`BA:766-771`). D14 gives each option's result on each
+basis for change 1 (its table at `:967-976`, with its notes at `:978-990`).
+So the worst case of this fit where the plan read
+`extensions.worktreeConfig` as true waits on Brett Heap's LQ-20 for PR #19,
+whose framing lane openRepoProject-2 may revise.
 
-- (a), accepting the shortfall: 0 removed and 0 retired, and no removal
-  without the flag;
-- (b), bounding the plan-time work-tree probe to the selected targets, at
-  most 16: with 16 such probes in place of 127, removals at
-  (185 + 7k) x 0.15 + 0.3(k - 1) + 0.6(k - 1) = 26.85 + 1.95k s, 9 removed
-  (the 9th at 44.4 s) and 8 retired (the 8th branch child at 43.5 s, the
-  9th due at 45.45 s), and 13 removals without the flag;
-- (c), a longer work deadline where `extensions.worktreeConfig` is true:
-  all 16 removed and retired would need the 16th branch child, due at
-  75.75 s, to start with more than the 5 s floor left, a work deadline above
-  80.75 s where change 1's is 50 s; without the flag the 16th removal, due
-  at 65.55 s, would need one of at least 70.55 s.
+A flagged run of 16 at 128 rows, with one reflog child, has these results
+under each option on each basis, by this section's method (ruling A-40);
+change 1's own figures are D14's table. This change's children cost 150 ms
+on the 150 ms and mixed bases, and on the measured basis 150 ms, or, in
+brackets, task 2.1's average of about 0.0827 s. Each cell gives the
+worktrees removed and the branches retired, against the 45 s spawn limit
+with the 5 s removal floor kept, except where (c) moves the limit:
+
+| Option | 150 ms basis | Measured basis | Mixed basis |
+| --- | --- | --- | --- |
+| (a) accept the worst case | 0 and 0 on every run, since a re-run builds the same plan, and from 127 rows too, where change 1 removes 1 a run at first, the reflog child moving the first removal to 45.15 s | 14 and 14, the 15th removal due at 45.24 s; then, rows falling by each run's removals, 15 and 15 at 114 rows, 16 and 15 at 99, and 16 and 16 a run from 83 [16 and 16 a run] | 7 and 7, the 8th removal due at 45.05 s; then 8 and 8, 9 and 9, 11 and 10, 12 and 11, 13 and 13, 15 and 15, and 16 and 16 a run from 53 rows |
+| (b) bound the plan-time work-tree probe to the selected targets | 9 and 8, the 9th removal at 44.4 s and its branch child due at 45.45 s, where change 1 alone removes 13, so that (b) alone still fails, as for change 1 | 16 and 15, the 16th removal at 44.89 s and its branch child due at 45.95 s [16 and 16, the 16th branch child at 41.71 s] | 16 and 16, the 16th branch child at 43.54 s |
+| (c) a longer work deadline where `extensions.worktreeConfig` is true | at least 79.70 s for all 16 removals, the 16th at 74.70 s, and more than 80.75 s for all 16 retired, the 16th branch child at 75.75 s, which moves the 64 s run bound above 94.75 s | still needed: at least 52.08 s for all 16 removals, the 16th at 47.08 s, and more than 53.13 s for all 16 retired, the 16th branch child at 48.13 s, a run bound above 67.13 s [none needed: the 16th branch child at 43.89 s] | at least 64.13 s for all 16 removals, the 16th at 59.13 s, and more than 65.19 s for all 16 retired, the 16th branch child at 60.19 s, a run bound above 79.19 s |
+| (d) the rule's own step, `BA:766-771` | at change 1's 64 rows and 8 targets 8 and 8, the 8th branch child at 38.55 s; at its 32 rows and 16 targets 15 and 14, the 15th branch child due at 45.0 s, on the spawn limit, which the branch child's strict test refuses, and the 16th removal due at 45.9 s | still needed: change 1 needs no step, so its caps stand and a flagged run is (a)'s 14 and 14; the rule's step for that run gives 128 rows and 8 targets, 8 and 8, or 64 rows and 16 targets, 16 and 16 [none needed] | at change 1's 128 rows and 8 targets 8 and 8, the 8th branch child at 44.70 s; at its 64 rows and 16 targets 16 and 15, the 16th branch child due at 45.84 s |
+
+Where D14's table needs no option for change 1, on the measured basis for
+(c) and (d), a flagged run still needs one to take all 16 in one run with
+this change's children at 150 ms, and needs none with them at task 2.1's
+average. A-9 chooses no option: under each, as under none, a target the
+spawn limit stops is `not-attempted` with `deadline-exceeded`, and a branch
+whose child it stops `retained` with `deadline-exceeded`, exit 1, never
+unsafe, and the next run takes them. (c)'s two figures on each basis differ
+by the 16th branch child: it spawns after its removal, the rescan's three
+children, the re-read's listing and the re-proof, 1.05 s later on the
+150 ms basis, and needs more than the removal floor left, where a removal
+needs at least that floor; so on the 150 ms basis all 16 removals need at
+least 79.70 s, change 1's 70.55 s and this change's 61 children at 150 ms,
+and all 16 retirements more than 80.75 s.
 
 The other figures of this section, the worst case of the reflog proof, the
-joint fit with the cache change, change 1's measured fit as its task 2.1
-gives it and a lower target cap's arithmetic, stand on change 1's terms at
-`c462d87`. This change
-ratifies its two blocks on PR #19's text only as written at `c462d87`
-(`tasks.md` 1.6), PR #19's later heads do not block it, and the figures meet
-PR #19's final text at the re-base (`tasks.md` 2.2).
+joint fit with the cache change, change 1's measured fit as its task 2.1 gives
+it and a lower target cap's arithmetic, stand on change 1's terms at `c462d87`.
+This change ratifies its two blocks on PR #19's text only as written at
+`c462d87` (`tasks.md` 1.6), PR #19's later heads do not block it, and the
+figures meet PR #19's final text at the re-base (`tasks.md` 2.2).
 
 At change 1's measured costs (CAS `tasks.md` 2.1: the 16th removal spawning at
 23.6 s with 26.4 s left), the 60 stage children before the 16th removal, four
 for each earlier target, even at 150 ms each, and one reflog child move it to
 23.6 + 9.0 + 0.15 = about 32.75 s, and 17 reflog children to about 35.15 s;
-its branch child follows within about a second, far inside the floor. Change
-1 kept its caps on its measured fit, task 2.1's, and this design does the
-same: no cap changes. Where the plan read `extensions.worktreeConfig` as
+its branch child follows within about a second, far inside the spawn limit.
+Change 1 kept its caps on its measured fit, task 2.1's, and this design does
+the same: no cap changes. Where the plan read `extensions.worktreeConfig` as
 true, the basis of PR #19's cap test is the first step of its LQ-20 (above),
-and A-9 there waits on Brett Heap's LQ-20 for PR #19. Where the assumed
-costs do hold, the last
-targets are `not-attempted` with `deadline-exceeded`, exit 1, and the next run
-takes their worktrees; a branch `retained` with `deadline-exceeded` keeps
-`delete-branch` as its retry (Risks).
+and A-9 there waits on Brett Heap's LQ-20 for PR #19. Where the assumed costs
+do hold, the last targets are `not-attempted` with `deadline-exceeded`, exit 1,
+and the next run takes their worktrees; a branch `retained` with
+`deadline-exceeded` keeps `delete-branch` as its retry (Risks).
 
 With `add-project-clean-cache-disposal` archived first (L-5), its 16 cache
 enumerations join the plan, and every time moves 2.4 s later again: target k's
@@ -912,7 +934,7 @@ read, D3(i)); the last bullet below gives the worst order a run can take.
   so the 10th branch is `retained` with `deadline-exceeded`, and the 11th
   removal, due at 46.45 s, does not spawn. In the worst case of 17 reflog
   children, at 30.7 + 1.65k s, 8 removals spawn (the 8th at 43.9 s) and 8
-  branch children (the 8th at 44.95 s, 0.05 s inside the floor).
+  branch children (the 8th at 44.95 s, 0.05 s inside the spawn limit).
 - At a thread per call, at 24.3 + 10.9 + 1.65k = 35.2 + 1.65k s, 5 removals
   spawn (the 5th at 43.45 s) and 5 branch children (the 5th at 44.5 s); in the
   worst case, at 37.6 + 1.65k s, 4 removals (the 4th at 44.2 s) and 3 branch
@@ -932,7 +954,7 @@ At change 1's measured costs the 16th removal then spawns near 32.75 + 2.4 + 4
 = 39.15 s through a worker with one reflog child and near 41.55 s with 17, and
 all 16 fit, each branch child within about a second. At a thread per call it
 is due near 32.75 + 2.4 + 10.9 = 46.05 s with one reflog child and near 48.45
-s with 17, past the floor either way, so at least the 16th target is
+s with 17, past the spawn limit either way, so at least the 16th target is
 `not-attempted` with `deadline-exceeded`, exit 1. These figures take the 16
 enumerations at the packet's 150 ms a child, 2.4 s, as they take the stage and
 reflog children, while the cache change gives at most about 3.7 s for them at
@@ -954,8 +976,8 @@ ordinary trees, and stay under its B-3/CD-6 question and its `cache_opens`
 Open Question before Brett Heap (ruling A-25).
 
 So at the packet's 150 ms model a flagged run with cache disposal brings 9 of
-its 16 targets through their stage before the floor, 8 in the worst case of
-the reflog proof, through one worker per stage, and at least 5, or 3, at a
+its 16 targets through their stage before the spawn limit, 8 in the worst case
+of the reflog proof, through one worker per stage, and at least 5, or 3, at a
 thread per call, 6, or 5, in the worst order a run can take; change 1's own
 deadline rule makes the rest `not-attempted` with `deadline-exceeded`, the run
 exits 1, and the next run takes them, never unsafe (`BA:772-774`). At change
@@ -1324,37 +1346,36 @@ proposal puts it before Brett Heap with L-4's recommendation.
   `delete-branch` today] -> Its time counts in the child's 5 s budget, and the
   post-check decides; the hook is the repository owner's code.
 - [At the packet's assumed costs a flagged run of 16 retires 13 branches on
-  change 1's terms at PR #19's `c462d87`, and, at the packet's 150 ms per
-  child (D14's 150 ms basis), 10 at its `6f2cb54`, `a664799` and `2e819ad`
-  where the plan read `extensions.worktreeConfig` as false; where it read it
-  as true, PR #19's D14 at `2e819ad` counts a plan-time probe on each linked
-  row, so that at 128 rows a flagged run removes and retires nothing on its
-  150 ms basis, its first removal due at 45.45 s, 14 and 14 on its measured
-  basis with this change's children at 150 ms, and 7 and 7 on its mixed
-  basis (D7); with the cache change and its filesystem time, at `c462d87`, 9
-  through one worker per stage, 8 in the worst case of the reflog proof, and
-  at least 5, or 3, at a thread per call, 6, or 5, in the worst order a run
-  can take]
+  change 1's terms at PR #19's `c462d87`, and, at the packet's 150 ms per child
+  (D14's 150 ms basis), 10 at its `6f2cb54`, `a664799`, `2e819ad` and `9267303`
+  where the plan read `extensions.worktreeConfig` as false; where it read it as
+  true, PR #19's D14 at `9267303` counts a plan-time probe on each linked row,
+  so that at 128 rows a flagged run removes and retires nothing on its 150 ms
+  basis, its first removal due at 45.45 s, 14 and 14 on its measured basis with
+  this change's children at 150 ms, and 7 and 7 on its mixed basis (D7); with
+  the cache change and its filesystem time, at `c462d87`, 9 through one worker
+  per stage, 8 in the worst case of the reflog proof, and at least 5, or 3, at
+  a thread per call, 6, or 5, in the worst order a run can take]
   -> Change 1's measured fit, task 2.1's, governs where the plan read
   `extensions.worktreeConfig` as false (D7, A-9), under which all 16 fit
-  through a worker and at least the 16th is deferred at a thread per call,
-  with one reflog child or 17; the degraded case is a `not-attempted`
-  target with `deadline-exceeded`, exit 1, never unsafe, and the next run
-  takes it; a branch `retained` with `deadline-exceeded` is retried with
-  `delete-branch`. Where it read it as true, PR #19's D14 at `2e819ad`
-  states the case on three bases and chooses none: change 1 alone removes
-  none on its 150 ms basis, all 16 on its measured basis with the stand-ins
-  it names, or 15 with 20,000-file removals, and 11 on its mixed basis; a
-  flagged run of 16 at 128 rows removes and retires 0 and 0 on the 150 ms
-  basis, 14 and 14 on the measured basis with this change's children at
-  150 ms, or 16 and 16 with them at task 2.1's average of about 0.0827 s,
-  and 7 and 7 on the mixed basis, every shortfall leaving targets
-  `not-attempted` with `deadline-exceeded` and exit 1, never unsafe. Which
-  basis governs
-  there is the first step of PR #19's LQ-20, to measure the two probes or to
-  decide the basis, its options (a) to (d) applying only if the case still
-  fails, none chosen, so that A-9 there waits on Brett Heap's LQ-20 for PR
-  #19, whose framing lane openRepoProject-2 may revise (D7).
+  through a worker and at least the 16th is deferred at a thread per call, with
+  one reflog child or 17; the degraded case is a `not-attempted` target with
+  `deadline-exceeded`, exit 1, never unsafe, and the next run takes it; a
+  branch `retained` with `deadline-exceeded` is retried with `delete-branch`.
+  Where it read it as true, PR #19's D14 at `9267303` states the case on three
+  bases and chooses none: change 1 alone removes none on its 150 ms basis, all
+  16 on its measured basis with the stand-ins it names, or 15 with 20,000-file
+  removals, and 11 on its mixed basis; a flagged run of 16 at 128 rows removes
+  and retires 0 and 0 on the 150 ms basis, 14 and 14 on the measured basis with
+  this change's children at 150 ms, or 16 and 16 with them at task 2.1's
+  average of about 0.0827 s, and 7 and 7 on the mixed basis, every shortfall
+  leaving targets `not-attempted` with `deadline-exceeded` and exit 1, never
+  unsafe. Which basis governs there is the first step of PR #19's LQ-20, to
+  measure the two probes or to decide the basis, its options (a) to (d)
+  applying only if the case still fails, none chosen, D7's table giving a
+  flagged run's result under each on each basis, so that A-9 there waits on
+  Brett Heap's LQ-20 for PR #19, whose framing lane openRepoProject-2 may
+  revise (D7).
 - [The re-read runs no identity probe] -> The compared head, upstream evidence
   and merge-target SHA, with the plan's reflog proof and the stage's re-proof,
   bound what any deletion can lose (D4); concurrent writers are outside the
