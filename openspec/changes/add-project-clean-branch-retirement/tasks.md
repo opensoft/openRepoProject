@@ -14,7 +14,8 @@ duplicate them.
   `design.md` D7 also stating its fit at PR #19's `6f2cb54`, `a664799`,
   `9267303` and `f0bf538` (rounds A9 to A12, rulings A-37 to A-42), the joint
   fit with the cache change also at that change's own 3.7 s (round A13, ruling
-  A-44); verified by its Capabilities section accounting for every
+  A-44), and `design.md` D8 giving a holder that is the main worktree its own
+  next step (round A14, ruling A-45); verified by its Capabilities section accounting for every
   canonical requirement of `project-clean` and `project-clean-review-safety`
   and every requirement change 1 adds to them.
 - [x] 1.2 Alignment resolved: the stack-architect and qa-lead findings on
@@ -108,7 +109,12 @@ duplicate them.
   and its observations (rulings A-43 and A-44), by `dba86c2` (the spec
   deltas), `62ccd10` (the design) and the commit that edits the proposal's
   body, records the round's table and updates this task; verified by "Re-read
-  and Codex Findings (round A13)" in `proposal.md`.
+  and Codex Findings (round A13)" in `proposal.md`. Round A14, on `1bf217c`,
+  applied Codex's P2 on `1bf217c` and lane openRepoProject-3's confirm read of
+  round A13, its LOW-1, LOW-2 and LOW-4, with its LOW-3 kept (rulings A-45 and
+  A-46), by `a307cac` (the spec deltas), `901f691` (the design) and the commit
+  that edits the proposal's body, records the round's table and updates this
+  task; verified by "Re-read and Codex Findings (round A14)" in `proposal.md`.
 - [x] 1.4 Spec deltas and design written: `specs/project-clean/spec.md`
   modifies five requirements and adds one (68 scenarios: 43 carried unchanged
   from change 1 and PR #19, 6, 14, 10, 5 and 8 by block, and 25 added, the
@@ -123,7 +129,11 @@ duplicate them.
   A-40, round A12 editing no spec file, under rulings A-41 and A-42, and
   round A13 adding no scenario, editing step 3 of the ADDED requirement, its
   `state-changed` and `reflog-unmerged` reasons, its result line and the
-  result of one AND of an ADDED scenario, under rulings A-43 and A-44),
+  result of one AND of an ADDED scenario, under rulings A-43 and A-44, and
+  round A14 adding no scenario, editing step 1 of the ADDED requirement, its
+  `Kept` next steps, one AND of an ADDED scenario, split in two, the literals
+  of three more ADDED scenarios' ANDs and one sentence of the review-safety
+  delta, under rulings A-45 and A-46),
   `specs/project-clean-review-safety/spec.md` modifies one (4 scenarios: 3
   carried, 1 added), and `specs/project-command/spec.md` modifies one on PR
   #19's text (9 scenarios carried, none added; agreed by lane
@@ -132,9 +142,9 @@ duplicate them.
   each modified requirement's source text kept byte for byte; `design.md`
   holds D1 to D10 (`8341954`, `d0b33ce`, and the commit titled 'Settle which
   later targets carry branch-retention-stop'), revised by the alignment fix
-  round (1.2), the council round (1.3) and rounds A3 to A13; verified
+  round (1.2), the council round (1.3) and rounds A3 to A14; verified
   by `grep -c '^#### Scenario:'` on each spec file and by a scenario-carry
-  script run after the council round and again after rounds A3 to A13
+  script run after the council round and again after rounds A3 to A14
   over all seven MODIFIED blocks, every source scenario present byte for byte
   and in order.
 - [x] 1.5 Validation passes: `/usr/bin/openspec validate
@@ -143,7 +153,7 @@ duplicate them.
   `/usr/bin/openspec status --change add-project-clean-branch-retirement
   --json` shows every artifact done; verified by running the three on this
   branch after 1.4, after the alignment fix round, after the council round
-  and after rounds A3 to A13
+  and after rounds A3 to A14
   (build 1.13.1, which notes only as INFO that archive would refuse the
   MODIFIED blocks whose base still sits in change 1).
 - [ ] 1.6 Ratified by Brett Heap's word on the pull request, quoted with its
