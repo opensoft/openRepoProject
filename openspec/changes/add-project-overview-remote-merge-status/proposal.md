@@ -15,9 +15,9 @@ L2 to L5), with no spec edit, in `design.md` and `tasks.md`, C-47 also in Impact
 and Open Question 1; round C14's C-48, RC's other five findings, its spec edit
 committed on lane openRepoProject-4's YES of 2026-10-21, and C-49, lane
 openRepoProject-3's eight LOWs, both also in `design.md`, Impact and `tasks.md`;
-and rounds C15 to C21 (C-50 to C-67: W16, RF's M1, W22, W28, RH's M4, RI-6,
-W57-1, RH's L4, W53's cites, W61), in `design.md` and `tasks.md`, C-58, C-66,
-C-67 also in the spec, C-63, C-65 in Decisions; ratification by Brett Heap
+and rounds C15 to C22 (C-50 to C-68: W16, RF's M1, W22, W28, RH's M4, RI-6,
+W57-1, RH's L4, W53's cites, W61, W66), in `design.md` and `tasks.md`, C-58,
+C-66, C-67 also in the spec, C-63, C-65 in Decisions; ratification by Brett Heap
 pending; nothing here is ratified. Governing issue: opensoft/openRepoProject#25,
 claimed by lane openRepoProject-5 (comment 6111242617); refs #6, the record of
 the project maintenance design packet. Proposed on Brett Heap's word "usage
@@ -42,7 +42,7 @@ executable. Change 1's evidence model, `Repository inspection requires Git 2.36
 and shares one evidence model` (CAS/cmd:90), is [E]. The lane's rulings are
 cited as L-1 to L-9 and C-1 to C-8 (2026-10-11), L-10 to L-15, B-14, C-9 and
 C-10 (2026-10-18), L-16, L-17 and C-11 to C-14 (2026-10-19), and F-3 and C-15 to
-C-67 (2026-10-20 to 2026-10-22, C-16 to C-22 being the council's verdicts).
+C-68 (2026-10-20 to 2026-10-22, C-16 to C-22 being the council's verdicts).
 `PR19/cmd` is draft PR #19's
 `openspec/changes/add-project-clean-all-safe/specs/project-command/spec.md` at
 `c462d87`.
@@ -2366,3 +2366,218 @@ backslash-u, and a grep of the three files for placeholders found none.
 | C-67 (b), every other cite of a spec line in `design.md`, `proposal.md` and `tasks.md`, checked against the text it names at this head | ruling | C-67 (b): none other needs a correction. `design.md` :350, :1246 (`:392-393`) and :429 (`:389-390`) are exact; :219 (`:405-417`) is qualified "at `2ab3743`"; :396, :650 and :657 cite change 1's and change 2's specs at a named sha. In `proposal.md`, the cites in the round C5 to C20 sections and the "Questions Resolved by the Alignment Review" table record what was true then, :508 is qualified "on `67e43ae`", and the Capabilities cites are APO/ov's and the canonical `project-command` spec's at `961c405`. In `tasks.md` the one cite is `PR19/cmd` at `f0bf538`. All stay. :508 and the rows of rounds C6 to C12 lie inside parts that lane openRepoProject-4 cites, and are history by the same rule and not edited, so nothing is reported as stale | none |
 | The round C20 writer's note (c): the commit messages of `a6080a7` and `6527f73` hold small slips | note | C-67: recorded and not amended, since amending a pushed commit would need a force push, which the house rules bar; they stand as history. In `a6080a7`'s, "the round C20 section with its eleven rows": its table holds 10. In `6527f73`'s, "design.md 1548 to 1560 lines, all of it after D7 but 1 to 602 and 671 to 1180 equal to 9a3f684's": D5's two edits (:603-619 and :646-670) lie before D7 (:954), so "all of it after D7" is wrong, though the line counts and the two equal ranges are right (`cmp` shows lines 1 to 602 and 671 to 1180 equal). The lead's note names the first slip; the second is the one the writer found. The commit messages of `1cd73fb` and `266a30f` were read against the same checks and hold no slip that the writer saw | none |
 | The record: Status, the citation key, and tasks 1.1, 1.3 (this round records itself, C-56), 1.4 and 1.5, in place | ruling | C-67's record: Status says "rounds C15 to C21", "C-50 to C-67" and "C-58, C-66, C-67 also in the spec", within its 22 lines, by no longer listing "the currency check" among its sources (the round C19 section still records it); the citation key reads "C-15 to C-67"; `tasks.md` 1.1 lists C-45 to C-67, 1.3 gains a round C21 clause (this round recording itself, as C-56 orders) and "Re-read and Codex Findings (round C21)" in its verified-by list, 1.4 gains one clause for the committed one-word spec edit, which is beyond the brief's list as C18's and C20's were (1.4 records each round's committed spec edit), and 1.5 names round C21; the tasks file is 45 lines still | Status; citation key; `tasks.md` 1.1, 1.3, 1.4, 1.5 |
+
+### Re-read and Codex Findings (round C22)
+
+Round C22 (2026-10-22, on team-01n) applies C-68 on the lead's brief for the
+round (`rulings-2026-10-20.md`: the bullets "Lane 3's W66 on C19 and C20" and
+"C-68"). Lane openRepoProject-3's W66 (`confirm-c19c20-findings.md`, brett-wip
+`4ea08c0b3`, received by the lead at 15:34:53Z) read rounds C19 and C20,
+`e1a9f84..a6080a7`, and found 0 HIGH, 0 MEDIUM and 4 LOW, with nothing that
+departs from a ruling, the packet or ratified text, and six observations that
+ask for no edit. Two of the four LOWs, C20-1 and C20-2, are the items that round
+C21 applied (`1cd73fb` and `266a30f`); the other two, C20-3 and C20-4, are this
+round's. The brief also has PR #19's current head read against every place that
+cites it, and asks for a report, with no edit, of the places that carry the
+three texts that Brett Heap's ruling R-263 (15:24Z) had PR #19's round (h)
+carry. The lead's message to the running round moved that head from `6bf9f77` to
+`b3228bb`, where round (h) is accepted, and had the three texts quoted from
+`b3228bb` itself. The `@codex review` request of 15:36:19Z on `8276945` drew
+Codex's usage-limit reply at 15:36:31Z, as the lead's late read of 15:52:41Z
+records, so Codex did not review round C21 and no Codex finding is applied here;
+that read also finds CI, all six test jobs, and SonarCloud passing on #29 at
+`bbe8d53`, the first commit of this round.
+
+The round edits `design.md` (`bbe8d53`, committed first: three lines of D5's
+paragraph on the two texts) and, in its last commit, this file (Status, the
+citation key and this section) and `tasks.md` (1.1, 1.3 and 1.5, in place, 45
+lines still). It edits no spec: `specs/project-overview/spec.md` is still sha256
+`d42139fb5e6c26952e30aa953173cfcc5efb01f01f82e1f496e34bad6d77d306` with its 36
+scenarios and `specs/project-command/spec.md` still
+`208c06c36656194d2560614c44251cf404786cce90c54c9d8f6a0d6a5f2b601d` with its 10,
+so that the count stays 46, and `git diff 8276945` on both is empty.
+
+The design edit is two changes in one sentence of D5's paragraph "Two texts that
+land before this change" and nothing else (`git diff --word-diff` against
+`8276945`): a semicolon for the comma after "(`relative-config-path`)", and "is
+left to" for "being". At :653-654 the sentence read "... bars every Git child
+and inspects no repository (`relative-config-path`), whether the subcommand then
+refuses or reports being its own requirement's rule", where "being" had no verb
+to follow (W66's C20-3). It now ends its clause at the code and goes on ";
+whether the subcommand then refuses or reports is left to its own requirement's
+rule": the sense of `PR19/cmd` at `f0bf538`, :128-129 ("whether the subcommand
+then refuses or reports is its own requirement's rule, as for the version"),
+with the lead's "left to". The brief's "refuses the run or reports" is written
+without "the run": with it the paragraph takes 26 lines at 80 columns and D7
+moves, and #19's own words give "refuses" no object either. The paragraph keeps
+its 25 lines (:646-670): three lines re-wrap, :653 to :655, "Change 2's" now
+splitting across :654 and :655, and the rest is as it was. Lines 1 to 652 and
+656 to 1560 of `design.md` are byte for byte as at `8276945`, so the file stays
+1560 lines, and D5's residual :574-601 (sha256 `da48e5684e354a9d` at its first
+16 digits) and D7 :954-989 (`8a03ba68b8166c74`) are `cmp`-identical to it. W66
+adds that the round C20 section quotes the sentence; that quotation (:2177-2178
+of this file), like the message of `6527f73`, records what that commit wrote and
+stands as history, since a round's record is not edited.
+
+The currency check. The heads, read with `git ls-remote origin` at the start of
+the round, were `6bf9f77` for PR #19's branch, `d764c26` for feature 004 (branch
+`004-project-clean-all-safe`, pull request #33), `e4a30fc` for amendment A1's
+(pull request #34), `15504f1` for main and `8276945` for this change's. After
+the lead's message a second read of the same refs gave `b3228bb` for PR #19's
+branch (also `refs/pull/19/head`), `b60792c` for feature 004, `e4a30fc` and
+`15504f1` again, and `bbe8d53`, the round's design commit, for this change's.
+Round C19 read PR #19 at `662be89` (round (f)); it has since moved to `4f1c0e0`
+(round (g)), `3dcd2d8` (g2), `6bf9f77` (g3) and `b3228bb` (round (h), R-258 to
+R-263, four commits: `e322f52`, `324192f`, `fc95766` and `b3228bb`), and feature
+004 from `8f6fa31` to `d764c26` and `b60792c`. The check read every place in the
+three files that names a head of PR #19, of feature 004 or of main, by a search
+of each file for `f0bf538`, `662be89`, `4f1c0e0`, `3dcd2d8`, `6bf9f77`,
+`b3228bb`, `c462d87`, `423a532`, `e69f6ef`, `8f6fa31`, `d764c26`, `b60792c`,
+`e4a30fc` and `15504f1`, and for each mention of PR #19 and of `PR19/cmd` in the
+design, the tasks and the proposal before its round sections.
+
+Rounds (g) to (h) change six files of change 1 (`git diff --name-only 662be89
+b3228bb`): its `design.md`, `proposal.md`, `tasks.md`,
+`specs/project-clean/spec.md`, `specs/project-clean-review-safety/spec.md` and
+`specs/project-command/spec.md`. The last is the file this change's block of [E]
+is written on. It is two lines longer at `b3228bb` (361 lines, sha256
+`fa8e7c21db35e86c7c6fa9b949a689eb974634ce8772bdd38b2e7b39db073258`) than at
+`f0bf538`, `662be89`, `4f1c0e0` and `3dcd2d8` (359 lines, `d4cb310646343df4...`,
+the same at all four), and one line longer than at `6bf9f77` (360 lines,
+`cca102e8078bc18e...`). `git diff -U0 f0bf538 b3228bb` on it is two hunks, `@@
+-313,0 +314 @@` and `@@ -315,0 +317 @@`, both in the scenario "A linked worktree
+whose work tree is redirected" (:311-318), after the "Configuration paths"
+paragraph: the AND on `registration-mismatch` that round (g3) added at :314,
+which round (h) extends in place, so that the `inspection-incomplete` refusals
+name the same unsetting in their remedy, and a new AND at :317 for a repository
+`config` that sets `core.worktree` to the main worktree's path. Lines 1 to 313
+are the same at `f0bf538`, `6bf9f77` and `b3228bb` (sha256 `070d8434cad8b1e2` at
+its first 16 digits). So the block of [E] is `:108-361`, 254 lines, at
+`b3228bb`, where it was `:108-360`, 253 lines, at `6bf9f77` (W66's OBS-4) and
+`:108-359`, 252 lines, at `f0bf538`, and the cite `PR19/cmd` at `f0bf538`,
+:116-129 holds at `b3228bb`: the paragraph begins at :116 ("Configuration paths:
+before any Git child starts") and ends at :129 ("as for the version."), the same
+lines in both.
+
+No place in this change's three files states PR #19's current head as live text,
+so none moves to `b3228bb`, and history stays. `proposal.md:1961`, the W57-1 row
+of the round C18 table, says that the block is 252 lines (`:108-359`) at
+`f0bf538`: a round's record, qualified by its sha and true there. `tasks.md:13`
+holds `662be89` in its round C19 clause ("PR #19's head, now `662be89`"): the
+record of what round C19 read, as every "now" in a round's clause is; the round
+C22 clause added beside it gives `b3228bb`. Every other `f0bf538`, `662be89` and
+`4f1c0e0` is in the sections for rounds C17 to C21 or in task 1.3's clauses for
+them, records of the head each round read, but for `design.md:650`, `PR19/cmd`
+at `f0bf538`, :116-129, a cite qualified by its sha and true at `b3228bb`. The
+other places that speak of PR #19 in the live text (`design.md:14`, :107, :114,
+:121, :396, :591, :659, :1369 and :1521-1536; `proposal.md:46`, :173-178, :251,
+:336-338, :430-447, :548-549, :578-582, :656-657, :760-776, :799 and :1088) cite
+`c462d87`, `f0bf538` or `423a532`, or say nothing of its head, and none says
+what the head is now. Every `c462d87` stays as the ratification base, which the
+key defines for `PR19/cmd`, and so do the cites of `PR19/cmd` at that base
+(:123-125 at `design.md:396`, :189-192 and :206 at `proposal.md:764-765` and
+:799).
+
+Every `423a532` (`design.md:107`, :174 and :591, and the round C15 section)
+cites feature 005's Q9 B at the sha where it was read: the nine lines of
+PR #19's design on the scrub of Git children are `:331-339` at `423a532`,
+`:358-366` at `f0bf538`, `:361-369` at `662be89`, `:364-372` at `4f1c0e0`,
+`:365-373` at `3dcd2d8`, `:370-378` at `6bf9f77` and `:377-385` at `b3228bb`,
+byte for byte equal at the seven, so the cite is true at the new head, and
+stays. Feature 004's `project` at `b60792c` is no longer byte for byte as at
+`e69f6ef`, as it still was at `8f6fa31` (`git diff --shortstat e69f6ef b60792c
+-- project`: 78 insertions and 24 deletions), but `ChildHandle.start` still
+spawns with `env=git_env(kind)` at `project:1077`, with `GIT_KINDS` at :984 and
+`git_env` at :1000, the same lines as at `d764c26`, so RI-6's note stands at the
+new head, and its `e69f6ef` cite (`design.md:215` and the round C18 section)
+stays as the sha it was read at. A1 is still at `e4a30fc`, so D5's ":868-876 at
+`e4a30fc`" (`design.md:657`) stays, and main is still at `15504f1`, so the
+places that name it stay. Places edited for currency: none.
+
+The report on PR #19's round (h), with no edit, quoted from `b3228bb` itself.
+Brett Heap ruled F-1, F-2 and O-1 at 15:24Z (R-263), and round (h) carries them,
+in change 1's `specs/project-clean/spec.md`. F-1 gives the ceiling's recovery
+text two forms: "inspect, then `git worktree remove --force <path>` by hand"
+"where the rescan finds both its `.git` file and its registry entry present",
+and "inspect, then `git worktree prune` and delete `<path>` by hand" "otherwise,
+as where either is gone, since Git then refuses `git worktree remove --force`"
+(the ceiling paragraph, :321-331; its scenario, :500-504; the reconcilable
+block, :1158-1162). O-1 gives gate 7's budget-cut sentence gate 11's form: "a
+read not finished within the filesystem budget, the deadline not being the
+limit, SHALL leave the row unprobed and the plan incomplete with
+`inspection-incomplete`; and a read that the deadline cuts SHALL record
+`deadline-exceeded` and leave the row unprobed and the plan incomplete with
+`deadline-exceeded`, not `inspection-incomplete`, as for every other filesystem
+read" (:713-718). F-2 stands as written, its locked-worktree text being
+"inspect, unlock it, then `git worktree remove --force <path>` by hand"
+(:170-172 and :211-212, the same lines as at `6bf9f77`).
+
+This change carries or restates none of the three. A search of the five files,
+before this section was added, for "worktree remove", "inspect, then", "inspect,
+unlock", "unlock it", "git worktree prune", "delete `<path>`",
+`partially-removed`, `removal-ceiling`, "hard ceiling", "recovery text",
+`inspection-incomplete`, "filesystem budget", "the deadline not",
+`reflog-unavailable`, "gate 7", "--force" and "worktreeConfig" found no line,
+and "ceiling", "300 s", "unprobed" and "unlock" gave three places that come near
+them, none a restatement. `specs/project-command/spec.md:107-108` is the carried
+Termination sentence of [E], as PR #19 has it at `c462d87` and still at
+`b3228bb` ("A removal child SHALL instead be waited for, and SHALL NOT be
+signalled before its 300 s ceiling"): it names the ceiling and not the recovery
+text. `specs/project-overview/spec.md:71-75` is change 2's own sentence on a
+task cut by its bound, "a reflog read cut this way leaving its row unprobed for
+the gate that `Overview suggests only gated clean commands` states", which is
+not gate 7's sentence and does not repeat its cases.
+`specs/project-overview/spec.md:6` says "no worktree created, pruned, repaired,
+locked or unlocked", the read-only guarantee, which is no recovery text. So this
+change has no site that re-bases on round (h). Round (h)'s change to the
+`project-command` spec lies at :314 and :317, in the scenario "A linked worktree
+whose work tree is redirected", which this change's block does not carry: the
+block carries PR #19's nine scenarios as at `c462d87`, which has no such
+scenario (`grep` of that file for "redirected" finds none), and adds its own
+tenth.
+
+This file: Status, within its 22 lines, says "rounds C15 to C22" and "C-50 to
+C-68" and names "W66"; its clause "C-58, C-66, C-67 also in the spec, C-63, C-65
+in Decisions" is as it was, C-68 being in `design.md` alone; and the citation
+key, at :45, reads "C-68". No line of this file moved: lines 1 to 2368 keep
+their numbers, this section following them, and every paragraph before line 1252
+keeps its line count and its place (55 paragraphs, each with the same first line
+and the same line count). Lane openRepoProject-4's pinned ranges are
+`cmp`-identical to `8276945`: lines 1252 to 1417 of this file, rounds C6 to C12,
+and lines 334-345, 367-370 and 430-438; "Dependencies and Sequencing" (181
+lines, sha256 `c4d7a1797d240880` at its first 16 digits) and "Open Questions"
+(39 lines, `ca53d0f392adc7e5`), each compared whole by sha256; `tasks.md` lines
+20-23 (sha256
+`2e177de7a91d644759bb5e12177696c749be9d9e90a763ce9899e238e7c0e2c0`); D5's
+residual :574-601 and D7 :954-989 of `design.md`; and lines 1 to 419 of the
+spec.
+
+The writer checked these on 2026-10-22, in a scratch directory outside this
+tree. W66's report was read from lane openRepoProject-3's attachments on the
+register's `origin/main` with `git show`, and its lines were found at this head
+by their text; PR #19's files were read with `git show` at each head named
+above. The carry check of every MODIFIED block against its source is as in
+rounds C19 to C21, since both spec files are byte for byte as at `8276945`:
+"Overview is local and read-only" 1 of 1 scenarios, +33/-0; "Overview bounds its
+work and reports what it omitted" 13 of 13, +26/-0; "Overview prints a versioned
+JSON envelope" 6 of 6, +12/-0, against change 2 at `961c405`; and [E] 9 of 9,
++11/-0, against PR #19 at `c462d87`. Validation, run before each of the round's
+commits and again at its head (a commit cannot hold its own sha; the head is in
+the round's report): `/usr/bin/openspec validate
+add-project-overview-remote-merge-status --strict` reports the change valid with
+its two INFO lines, `/usr/bin/openspec validate --all --strict` passes 8 of 8,
+and `/usr/bin/openspec status --change add-project-overview-remote-merge-status
+--json` shows every artifact done. The added text holds no non-ASCII character,
+bidi control, host path or literal backslash-u, and a grep of the three files
+for placeholders found none.
+
+| Finding | Severity | Ruling | Section edited |
+| --- | --- | --- | --- |
+| Lane openRepoProject-3's W66 on rounds C19 and C20 (`e1a9f84..a6080a7`, `confirm-c19c20-findings.md`, brett-wip `4ea08c0b3`, received by the lead at 15:34:53Z) | 0 HIGH, 0 MEDIUM, 4 LOW | C-68: W66 found 0 HIGH, 0 MEDIUM and 4 LOW (C20-1 to C20-4) and six observations (OBS-1 to OBS-6), and no departure from a ruling, the packet or ratified text. C-62, C-63, C-65 and C-66 are applied: task 2.4 equals lane openRepoProject-4's held new line byte for byte, with task 2.3 unchanged; the four packet quotes in the two Decisions entries match `da33d92`; the Departures heading is right; D11's split list, D5's append, Risks' bracket and the Decisions bullet carry C-58; the cite "`PR19/cmd` at `f0bf538`, :116-129" stands at every old site; and the spec's sha256 and counts are as recorded at `a6080a7` (`6fda0ae8...`, 36 and 10). Lane openRepoProject-4's pins are `cmp`-identical, `validate --strict` is valid, `--all --strict` passes 8 of 8, and every hunk is declared. Its four LOWs are the next rows. The observations ask for no edit: OBS-1 (D5's append points at the paragraph and C-58, acceptable as applied), OBS-2 (29-01's "departs from both", harmless), OBS-3 (a cite in W62's own row, lane openRepoProject-3's file), OBS-5 (task 1.3's C18 clause still says "a run that neither refuses first", history beside round C20's wording) and OBS-6 (D11 on a base with [E] and no A1, not new to C20, and D11 names the A1 case only) are left as they are, and OBS-4 (#19 had moved) is the currency row's | none |
+| W66's C20-3 (`design.md:653-654`: "whether the subcommand then refuses or reports being its own requirement's rule" does not parse; #19's text is "whether the subcommand then refuses or reports is its own requirement's rule, as for the version", `PR19/cmd` at `f0bf538`, :128-129; W66's fix ends the clause at "(`relative-config-path`)", adds the "; whether ..." clause, and corrects the quotation in the round C20 section) | LOW | C-68: applied to the design, in `bbe8d53`, committed first: the clause ends at the code and goes on "; whether the subcommand then refuses or reports is left to its own requirement's rule", the lead's "left to" for #19's "is", and without the brief's "the run", which would take the paragraph to 26 lines and move D7. The paragraph keeps its 25 lines (:646-670) and `design.md` its 1560, with D5's residual :574-601 and D7 :954-989 `cmp`-identical to `8276945`. Declined, for the quotation in the round C20 section (:2177-2178): it records what `6527f73` wrote, and a round's record is history that this round does not edit | `design.md` D5 (:653-655) |
+| W66's C20-4 (optional: the round C20 table has no row for Codex's review of `9a3f684`, as the round C18 and C19 tables have rows for their heads) | LOW | C-68: recorded as this row, since round tables are history and no earlier table is edited. Codex's review of `9a3f684` (2026-10-22T14:17:24Z) found no major issue ("Didn't find any major issues"), as the lead's late read of 14:23:00Z records it, with SonarCloud passing; the head had already moved to `e053ad6`, round C20's first commit, as that read notes. Nothing to apply | none |
+| W66's C20-1 (the last AND of the scenario "No gh, or a gh without authentication", `specs/project-overview/spec.md:624`, says "refuses the run" of both requirements) and C20-2 (four cites of the overview spec in `design.md`, :918, :1152, :1167 and :1168, are stale; W66 adds the fourth to the three that lane 5 queued) | LOW | C-68: both are the items that round C21 applied, which W66 found real: "refuses" became "stops" in `1cd73fb`, and the four cites became `spec.md:483` (:918 and :1152), `:478-479` (:1167) and `(:470-471)` (:1168) in `266a30f`. Recorded here as applied in round C21, whose table holds their rows, with nothing to apply again; at this head :624 says "stops" and the four cites read as above | none |
+| The lead's currency check for round C22, as the lead's message moved it: PR #19 is now at `b3228bb` (round (g) at `4f1c0e0`, (g2) at `3dcd2d8`, (g3) at `6bf9f77` and round (h) at `b3228bb`, after round (f) at `662be89`), its `project-command` spec two lines longer than at `f0bf538` (361 lines, sha256 `fa8e7c21...`), feature 004 at `b60792c`, A1 (#34) at `e4a30fc` and main at `15504f1`; W66's OBS-4 had it at `6bf9f77` | ruling | applied by reading every place, and no place edited: no place in the proposal, design or tasks states PR #19's current head as live text, so none moves to `b3228bb`. The block of [E] is `:108-361`, 254 lines, at `b3228bb` (`:108-360`, 253 lines, at `6bf9f77`; `:108-359`, 252 lines, at `f0bf538`), the two added lines lying at :314 and :317 in the scenario "A linked worktree whose work tree is redirected", and the cite `PR19/cmd` at `f0bf538`, :116-129 holds there. Read and left: `proposal.md:1961` (a row of the round C18 table, "252 lines (`:108-359`) at `f0bf538`", qualified by its sha); `tasks.md:13` (`662be89` in the round C19 clause, the record of what round C19 read); every other `f0bf538`, `662be89` and `4f1c0e0` (rounds C17 to C21); `design.md:650`; every `c462d87`, the ratification base; every `423a532` (Q9 B's nine lines, equal at seven heads, `:377-385` at `b3228bb`); RI-6's `e69f6ef` (`ChildHandle.start` still spawns with `env=git_env(kind)` at `b60792c`, `project:1077`); A1's `e4a30fc` (`design.md:657`); and main's `15504f1`. The paragraphs above give each | none |
+| Report only, with no edit: PR #19's round (h), accepted at `b3228bb` (Brett Heap's ruling R-263 of 15:24Z: F-1 prune-then-delete, F-2 yes, O-1 deadline-exceeded), which carries the ceiling's two recovery texts (PR #19's `specs/project-clean/spec.md` at `b3228bb`, :321-331, :500-504 and :1158-1162), gate 7's budget-cut sentence (:713-718) and F-2's locked-worktree text (:170-172 and :211-212) | report | C-68: this change carries or restates none of the three, and no line is edited. A search of the five files for the texts' words found no line; the three places that come near them are `specs/project-command/spec.md:107-108` (the carried Termination sentence, "A removal child SHALL instead be waited for, and SHALL NOT be signalled before its 300 s ceiling", which names the ceiling and not the recovery text), `specs/project-overview/spec.md:71-75` (change 2's own sentence on a cut reflog read, which is not gate 7's) and `:6` (the read-only guarantee's "locked or unlocked"). The paragraphs above quote the three texts and give the search. Round (h)'s change to the `project-command` spec (:314 and :317) lies in a scenario that this change's block does not carry (the block has PR #19's nine scenarios as at `c462d87`, and its own tenth) | none |
+| The `@codex review` request on `8276945`, round C21's head, of 15:36:19Z (comment 6344720178), and the lead's late read of 15:52:41Z | no finding | Codex's usage-limit reply came at 15:36:31Z, so Codex did not review round C21, and there is no Codex finding to apply; the late read finds CI, all six test jobs, and SonarCloud passing on #29 at `bbe8d53`, this round's first commit. Nothing to apply | none |
+| The record: Status, the citation key, and tasks 1.1, 1.3 and 1.5, in place | ruling | C-68's record: Status says "rounds C15 to C22" and "C-50 to C-68" and names W66, within its 22 lines (its clause "C-58, C-66, C-67 also in the spec, C-63, C-65 in Decisions" is as it was, C-68 being in `design.md` alone); the citation key reads "C-15 to C-68"; `tasks.md` 1.1 lists C-45 to C-68, 1.3 gains a round C22 clause (this round recording itself, as C-56 orders) and "Re-read and Codex Findings (round C22)" in its verified-by list, and 1.5 names round C22; 1.4 is not edited, since no spec edit is committed; the tasks file is 45 lines still | Status; citation key; `tasks.md` 1.1, 1.3, 1.5 |
