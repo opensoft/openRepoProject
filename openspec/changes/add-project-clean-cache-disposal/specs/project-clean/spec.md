@@ -794,6 +794,11 @@ plan's `probes.estimated` SHALL count those extra children.
   worktree and the 127 linked worktrees with the smallest paths are the ones
   inspected, and the preview exits 1
 - **AND** `--apply` refuses with exit 2 before any mutation
+- **AND** where the cause is the row cap, that refusal names the remedy "{N}
+  rows exceed the row cap of {M}; remove worktrees explicitly, or prune stale
+  entries by hand; if a worktree's path cannot be read, do not run git worktree
+  prune until it can", whether or not any inspected row's path was read, since
+  the rows past the cap are never read
 
 #### Scenario: Twenty rows pass every gate before deferred-target-cap
 
