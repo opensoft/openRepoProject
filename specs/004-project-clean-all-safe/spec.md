@@ -1585,6 +1585,16 @@ written".
   other than FR-026's unchanged; and MUST keep running on every runtime
   version the README supports and CI runs. Traces: proposal, "Impact" and
   "Corrections to the Packet" (C4); design, "Goals / Non-Goals".
+  Note, 2026-10-22: `new` does not stay unchanged. Lane H's addendum 1
+  changed `new()`, `projects_dirs()` and `workbenches()` under lead rulings
+  R-202 and R-205 (`22f95d1`, merged on 004 as `0b7dd94`): the first two
+  expand through `home_directory()` and `expand_user()`, and `new()` refuses
+  under a `HOME` that fails D11's test when it has no parent argument, no
+  `--into` and no `PROJECTS_DIR`. This is a departure from the requirement
+  above, declared in contracts/project-clean.md (the paragraph on `new` under
+  "`status`, `doctor` and `update`") and in PR #33's body; plan.md's "Code
+  touched, and what stays" lists the three functions. The requirement's text
+  stands as written.
 - **FR-065**: The README's "Clean up Git worktrees" section MUST open with
   the five behaviour changes users will notice: plain `project clean`
   exiting 1 on an incomplete report; `clean` refusing below Git 2.36;
@@ -1906,7 +1916,13 @@ Non-Goals"):
 - Any change to `new` or `benches`, or to the confirmation that `new`,
   `update` and `clean`'s push and branch deletion use; bounding push and
   branch-deletion children; versioning the JSON of `status` and `doctor`; a
-  doctor health section.
+  doctor health section. Note, 2026-10-22: lane H's addendum 1 changed
+  `new()`, `projects_dirs()` and `workbenches()` under lead rulings R-202 and
+  R-205 (`22f95d1`, merged on 004 as `0b7dd94`), so the build does change
+  `new`: a departure from this bullet and from FR-064, declared in
+  contracts/project-clean.md (the paragraph on `new` under "`status`,
+  `doctor` and `update`") and in PR #33's body. The bullet's text stands as
+  written.
 - The requirements and capabilities the change leaves untouched ("Cleanup
   protects the process worktree", "Cleanup respects configured upstream
   mappings", "Delegate project creation", "Distribution and compatibility",
