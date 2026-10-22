@@ -112,22 +112,28 @@ def git_text(root, *args):
 
 
 def projects_dirs():
+    """The projects directories: PROJECTS_DIR, or the two under the home
+    directory; none that needs a HOME which fails D11's test (home_directory(),
+    expand_user(); lead ruling R-202)."""
     if os.environ.get("PROJECTS_DIR"):
-        return [Path(os.environ["PROJECTS_DIR"]).expanduser().resolve()]
-    return [Path.home() / "projects", Path.home() / "Projects"]
+        found = expand_user(os.environ["PROJECTS_DIR"])
+        return [] if found is None else [found.resolve()]
+    home = home_directory()
+    return [] if home is None else [home / "projects", home / "Projects"]
 
 
 def workbenches(explicit=None, required=True):
     supplied = explicit or os.environ.get("WORKBENCHES_ROOT")
-    candidates = [Path(supplied).expanduser()] if supplied else []
+    # expand_user() gives None for a `~` path under a HOME that fails D11's test (R-202).
+    candidates = [expand_user(supplied)] if supplied else []
     if not supplied:
         marker = Path(sys.argv[0]).resolve().parent / ".workbenches-path"
         if marker.is_file():
-            candidates.append(Path(marker.read_text().strip()).expanduser())
+            candidates.append(expand_user(marker.read_text().strip()))
         candidates += [p / "workBenches" for p in projects_dirs()]
         candidates += [Path.cwd(), *(p / "workBenches" for p in Path.cwd().parents)]
     for root in candidates:
-        if (root / "config/bench-config.json").is_file():
+        if root is not None and (root / "config/bench-config.json").is_file():
             return root.resolve()
     if required or supplied:
         raise Refused("Cannot find workBenches; set WORKBENCHES_ROOT or --workbenches PATH.")
@@ -369,6 +375,8 @@ def new(args):
         raise Refused("Project name must start with a letter or digit and contain letters, digits, _ or -.")
     if args.parent and args.into:
         raise Refused("Use either positional parent or --into.")
+    if not (args.into or args.parent or projects_dirs()):  # no default parent under such a HOME (R-202)
+        raise Refused(config_path_message(["HOME"]))
     parent = Path(args.into or args.parent or projects_dirs()[0]).expanduser().resolve()
     if args.family and not re.fullmatch(r"[A-Za-z][A-Za-z0-9]*", args.family):
         raise Refused("Family must be a single folder name.")
@@ -494,7 +502,9 @@ def discover(target=None):
     messages are the baseline's."""
     bare = False
     if target:
-        path = Path(target).expanduser()
+        path = expand_user(target)
+        if path is None:  # `~` under a HOME that fails D11's test (lead ruling R-202)
+            raise Refused(config_path_message(["HOME"]), code="relative-config-path")
         # Named estates prefer family holders over similarly named roots.
         if not path.is_absolute() and len(path.parts) == 1:
             bare = path.name not in (".", "..")
@@ -826,8 +836,35 @@ def relative_config_paths():
     Git would read a file through it, not in Git's order of precedence. The
     values are read for this test alone: they reach every child unchanged, and
     nothing prints them."""
-    return [name for name in (*CONFIG_PATH_RULED, *CONFIG_PATH_EXTENSION)
-            if os.environb.get(os.fsencode(name), b"")[:1] not in (b"", b"/")]
+    return [name for name in (*CONFIG_PATH_RULED, *CONFIG_PATH_EXTENSION) if config_path_fails(name)]
+
+
+def config_path_fails(name):
+    """Whether the variable NAME fails D11's test: its raw value is set, not
+    empty, and its first byte is not b"/"."""
+    return os.environb.get(os.fsencode(name), b"")[:1] not in (b"", b"/")
+
+
+def home_directory():
+    """project's own home directory, Path.home(), for the files status, doctor
+    and update read under it (the workspace configuration, the credential
+    presence checks, the default projects directories); None when HOME fails
+    D11's test. Such a HOME names no home directory: nothing is read under it,
+    and Path.home(), which raises RuntimeError for a HOME that begins with `~`
+    and resolves a relative one against the working directory, is never called
+    on it (lead ruling R-202; lane 3's W30 M-1)."""
+    return None if config_path_fails("HOME") else Path.home()
+
+
+def expand_user(path):
+    """Path(path).expanduser(), or None for a path that names the current
+    user's home, `~` alone or `~/...`, while HOME fails D11's test, so that
+    nothing is expanded against such a HOME (R-202). `~user` is read from the
+    user database, never from HOME, and expands as before."""
+    path = Path(path)
+    if path.parts[:1] == ("~",) and config_path_fails("HOME"):
+        return None
+    return path.expanduser()
 
 
 def config_path_message(names):
@@ -6595,12 +6632,17 @@ def handoff(root, data, repository):
     which repo_state() reports only past the version check. Any other root
     (no .git, an old or missing Git) reads no remote and spawns no Git child,
     with the output as before (lead ruling R-66 (c);
-    contracts/project-clean.md, "status, doctor and update")."""
-    config_path = Path.home() / ".agents/workspace.yaml"
+    contracts/project-clean.md, "status, doctor and update"). Under a HOME
+    that fails D11's test no workspace configuration is read, and a `~`
+    workspace path is not configured (home_directory(), expand_user(); lead
+    ruling R-202)."""
+    home = home_directory()
+    config_path = (Path("~") if home is None else home) / ".agents/workspace.yaml"
+    configured = home is not None and config_path.is_file()
     override = os.environ.get("SPECKIT_WORKSPACE_PATH")
-    if not config_path.is_file() and not override:
+    if not configured and not override:
         return {"state": "workspace not configured"}
-    config = read_yaml(config_path) if config_path.is_file() else {}
+    config = read_yaml(config_path) if configured else {}
     remote = ""
     if repository.get("present") is True:
         remote = git_text(root, "remote", "get-url", "origin") or ""
@@ -6620,7 +6662,9 @@ def handoff(root, data, repository):
     path = override or specific.get("path") or config.get("path")
     if not isinstance(path, str) or not path:
         return {"state": "workspace path not configured"}
-    workspace = Path(path).expanduser()
+    workspace = expand_user(path)
+    if workspace is None:
+        return {"state": "workspace path not configured"}
     if not workspace.is_absolute():
         raise Refused(f"Workspace path must be absolute or home-relative in {config_path}")
     records = workspace / "workspaces" / org
@@ -6861,11 +6905,15 @@ def inspect_project(args):
             checks.append({"level": "ok" if available else "error", "check": "bench", "detail": declared + (" available" if available else " missing")})
         # Presence only: never read credentials or imply that a login is valid.
         report["ai_tools"] = {name: bool(shutil.which(name)) for name in ("claude", "codex", "gemini", "copilot")}
+        home = home_directory()  # None under a HOME that fails D11's test: no file is read under it (R-202)
+
+        def present(relative):
+            return home is not None and (home / relative).is_file()
         report["credential_configuration"] = {
             "verification": "presence only; authentication not tested",
-            "claude": (Path.home() / ".claude/.credentials.json").is_file() or bool(os.environ.get("ANTHROPIC_API_KEY")),
-            "codex": (Path.home() / ".codex/auth.json").is_file() or bool(os.environ.get("OPENAI_API_KEY")),
-            "gemini": (Path.home() / ".gemini/oauth_creds.json").is_file() or bool(os.environ.get("GEMINI_API_KEY")),
+            "claude": present(".claude/.credentials.json") or bool(os.environ.get("ANTHROPIC_API_KEY")),
+            "codex": present(".codex/auth.json") or bool(os.environ.get("OPENAI_API_KEY")),
+            "gemini": present(".gemini/oauth_creds.json") or bool(os.environ.get("GEMINI_API_KEY")),
         }
         if args.validate:
             def validate(item):

@@ -467,6 +467,61 @@ class StatusDoctorUpdateTests(clean_support.CleanCase):
             self.assertEqual(git_row(document)["detail"], "relative-config-path: " + config_lines("HOME"))
             self.assertEqual(records, [])
 
+    def test_status_a_relative_configuration_path_in_status_doctor_and_update_home_beginning_with_tilde(self):
+        # Lead ruling R-202 (lane 3's W30 M-1): a HOME of `~`, `~/x` or
+        # `~user` fails D11's test as any relative value does, and
+        # Path.home() raises RuntimeError for it, so nothing may call
+        # Path.home() or expanduser() on it. Each command reports
+        # relative-config-path as for HOME=h, with no traceback and no Git
+        # child: status exits 0, doctor 1 (also with no WORKBENCHES_ROOT, so
+        # that its workBenches lookup runs), update's report 0, shape 2 with no
+        # owner tool run, and workflow 0. clean refuses as before, and a target
+        # that needs `~` expanded refuses with the HOME line.
+        root = self.repo("Atlas")
+        (root / "project.yaml").write_text("kind: project-manifest\nlegs: []\n")
+        self.commit(root)
+        bin_dir = self.fake_bin()
+        workflow = self.recording_tool(bin_dir / "setup-openspeckit")
+        shape = self.base / "shape"
+        shape_runs = self.recording_script(shape / "update-shape.py")
+        line = config_lines("HOME")
+        for home in ("~", "~/x", "~user"):
+            env = self.path_first(bin_dir, dict(self.env, HOME=home))
+            no_root = {name: value for name, value in env.items() if name != "WORKBENCHES_ROOT"}
+            runs = (("status", (), env, 0), ("doctor", (), env, 1), ("doctor", (), no_root, 1), ("update", (), env, 0),
+                    ("update", ("--apply", "--component", "shape", "--shape-source", shape, "--at", "a" * 40, "--yes"),
+                     env, 2),
+                    ("update", ("--apply", "--component", "workflow", "--yes"), env, 0))
+            for name, extra, run_env, code in runs:
+                for output in ((("--json",), ()) if not extra else ((),)):
+                    label = " ".join([name, *map(os.fspath, extra), *output])
+                    with self.subTest(home=home, run=label, workbenches_root="WORKBENCHES_ROOT" in run_env):
+                        result, records = self.counted(name, root, *extra, *output, env=run_env)
+                        self.assertNotIn("Traceback", result.stderr)
+                        self.assert_status(result, code)
+                        self.assertEqual(records, [], "no Git child, git --version included")
+                        if output:
+                            self.assertEqual(self.assert_one_document(result)["repository"]["errors"],
+                                             [{"code": "relative-config-path", "message": line}])
+                        if name == "doctor" and output:
+                            self.assertEqual(git_row(result.document)["detail"], "relative-config-path: " + line)
+                            self.assertIn("workBenches", [row["check"] for row in result.document["checks"]])
+                        if "shape" in extra:
+                            self.assertEqual(result.stderr, "REFUSED: " + CLEAN_TRACKING + "\n")
+                            self.assertFalse(shape_runs.exists(), "the owner tool was never invoked")
+                        if "workflow" in extra:
+                            self.assertEqual(workflow.read_text(), f"--repo {root}\n")
+                            workflow.unlink()
+            with self.subTest(home=home, run="clean"):
+                result, records = self.counted("clean", root, env=env)
+                self.assert_status(result, 2)
+                self.assertEqual((result.stderr, records), ("REFUSED: " + line + "\n", []))
+            with self.subTest(home=home, run="status ~/Atlas"):
+                result, records = self.counted("status", "~/Atlas", env=env)
+                self.assertNotIn("Traceback", result.stderr)
+                self.assert_status(result, 2)
+                self.assertEqual((result.stderr, records), ("REFUSED: " + line + "\n", []))
+
     def test_doctor_no_git_on_path(self):
         # Research.md R2: with no git, discover() finds the root by the nearest
         # .git entry, and doctor reports git-unavailable as an error row.
