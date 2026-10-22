@@ -1106,10 +1106,10 @@ A-62). Its head `e0c91bb`, PR #19's current head, after that lane's round
 paragraph included, and task 2.1 byte for byte, each checked against
 `b3228bb` (D14 at its `:944-1119`), so that every figure above stands; its
 spec moves only in the ceiling's recovery text, a third text for a `.git`
-file that the rescan cannot read (the lead's R-284, put to Brett Heap), which
-this section does not take. Every cite below of PR #19's design at `662be89`
-holds at `e0c91bb` by content, 49 or 60 lines later (`:441-443` 27 lines
-later, the F = 8 sentence at `:361-363`, re-wrapped beside round (i)'s
+file that the rescan cannot read (lane openRepoProject-2's R-284, put to Brett
+Heap), which this section does not take. Every cite below of PR #19's design at
+`662be89` holds at `e0c91bb` by content, 49 or 60 lines later (`:441-443` 27
+lines later, the F = 8 sentence at `:361-363`, re-wrapped beside round (i)'s
 account of row 3, the measured basis at `:1016-1029`, every figure unchanged,
 and the LQ-20 entry at `:1984-2046`), task 2.1's step (i) at its
 `tasks.md:165-175`, and every cite of its spec at `f0bf538` holds there 28 to
