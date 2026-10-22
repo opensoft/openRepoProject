@@ -523,10 +523,12 @@ be `not-attempted` with `deadline-exceeded`. A branch stage of
 `--retire-branches`, as "Clean retires a removed worktree's branch only on
 fresh head and ancestry evidence" states, SHALL start its re-read, that
 re-read's re-proof of the reflog, and its branch child only while more than
-that floor remains, under the same rule, and the re-read's manifest read and
-ref listing, and its re-proof's reflog read and child, SHALL get `min(5 s, work
-remaining less the removal floor)`, so that the floor is left for the branch
-child. A
+that floor remains, a strict test, where a removal child is spawned while at
+least that floor remains, so that with exactly that floor left a removal child
+is spawned and none of the stage's children starts, and the re-read's manifest
+read and ref listing, and its re-proof's reflog read and child, SHALL get
+`min(5 s, work remaining less the removal floor)`, so that the floor is left
+for the branch child. A
 removal child still running at
 the deadline SHALL be waited for, up to its 300 s hard ceiling, and the
 reconciliation reserve SHALL count from its exit. A run with no removal in
@@ -931,9 +933,11 @@ precedes any later target's revalidation, in this order:
    protocol.git.allow=never -c protocol.http.allow=never -c
    protocol.https.allow=never -c protocol.ext.allow=never -C <command
    directory> branch -d -- <branch>`, in its own process group, with the
-   seventeen variables that "Repository inspection requires Git 2.36 and
-   shares one evidence model" lists removed from its environment and no
-   `GIT_OPTIONAL_LOCKS`, under `min(5 s, work remaining)`. The branch child
+   environment that "Repository inspection requires Git 2.36 and shares one
+   evidence model" gives every Git child, the variables it removes and the
+   variables it sets, any trace2 variables among them, and no
+   `GIT_OPTIONAL_LOCKS`, which it gives to read-only probes alone, under
+   `min(5 s, work remaining)`. The branch child
    SHALL NOT be signalled on SIGINT, SIGTERM or SIGHUP, and SHALL be waited for
    within that budget; past it, its process group SHALL receive SIGTERM and,
    2 s later, SIGKILL, and its reap SHALL wait at most a further 2 s.
@@ -989,7 +993,8 @@ split of exit statuses at 128:
   `state-changed` (the re-read found an upstream value, the manifest's
   `tracking_branch` or the merge target different from the plan, or could not
   establish one of them at its own budget, or its re-proof's reflog read or
-  child failed or ran past its own budget), `branch-in-use` (the rescan's
+  child failed or ran past its own budget, each while the work deadline is not
+  the limit), `branch-in-use` (the rescan's
   registry listing shows
   a worktree holding the branch), `reflog-unmerged` (the re-proof printed a
   commit, or its read decided that the reflog cannot be proven, one missing,
@@ -1094,10 +1099,10 @@ order:
   worktree at PATH2, where Git refuses that checkout, `; next: MERGE_TARGET is
   checked out at PATH2, so check out its tip TARGET_SHA detached in the main
   worktree, then: RETRY`, the `git-refused` line carrying `; if a rebase or
-  bisect in another worktree holds BRANCH, wait for it to end and remove that
-  worktree, or, for the main worktree, which Git refuses to remove, switch it
-  off BRANCH, by checking out another branch there, such as MERGE_TARGET, or
-  by detaching it` before its `; next: `; for `branch-in-use`, `; next: BRANCH
+  bisect in another worktree holds BRANCH, wait for it to end, and then remove
+  that worktree or, for the main worktree, which Git refuses to remove, switch
+  it off BRANCH, by checking out another branch there, such as MERGE_TARGET,
+  or by detaching it` before its `; next: `; for `branch-in-use`, `; next: BRANCH
   is checked out at PATH2; remove that worktree first`, or, when PATH2 is the
   main worktree, which Git refuses to remove, `; next: BRANCH is checked out at
   PATH2, the main worktree; switch it off BRANCH, by checking out another
@@ -1110,13 +1115,18 @@ order:
   proof failed, or the re-proof found the reflog missing, empty, at its bound
   or undecidable, `; its reflog is not proven merged into MERGE_TARGET;
   inspect git -C ROOT reflog show refs/heads/BRANCH before any delete-branch`;
-  for `git-refused`
+  for `state-changed` when its re-proof's reflog read or child failed or ran
+  past its own budget, which left the reflog neither proven merged nor found
+  unmerged, `; its reflog is not proven merged into MERGE_TARGET; inspect git
+  -C ROOT reflog show refs/heads/BRANCH before retrying: RETRY`, because RETRY
+  proves only the branch's tip and would delete the branch with a reflog that
+  may name a commit only that reflog holds; for `git-refused`
   when the branch's upstream remote-tracking ref is present, `; if a rebase
-  or bisect in another worktree holds BRANCH, wait for it to end and remove
-  that worktree, or, for the main worktree, which Git refuses to remove,
+  or bisect in another worktree holds BRANCH, wait for it to end, and then
+  remove that worktree or, for the main worktree, which Git refuses to remove,
   switch it off BRANCH, by checking out another branch there, such as
-  MERGE_TARGET, or by detaching it; then retry: RETRY`; and otherwise
-  `; retry: RETRY`.
+  MERGE_TARGET, or by detaching it; then retry: RETRY`; and otherwise, a
+  `state-changed` that the re-read's values caused included, `; retry: RETRY`.
 
 RETRY is `project clean ROOT --apply --action delete-branch --branch
 BRANCH`, or `--branch=BRANCH` for a name that begins with `-`, the explicit
@@ -1170,8 +1180,10 @@ N; branches kept: `; and then the residual-window line.
 - **AND** a counting `git` wrapper on PATH records one reflog child before the
   question, and each branch child with `-c protocol.allow=never`, the six
   per-protocol pins, `-C <command directory>` and `branch -d -- <branch>`, the
-  seventeen scrubbed names and `GIT_OPTIONAL_LOCKS` absent from its
-  environment and a process group of its own, and none with `-D`, `--force` or
+  environment that "Repository inspection requires Git 2.36 and shares one
+  evidence model" gives every Git child, the variables it removes absent and
+  any trace2 variables it sets as it sets them, and `GIT_OPTIONAL_LOCKS`
+  absent, and a process group of its own, and none with `-D`, `--force` or
   `-f`, each re-read and post-check listing with `-C <command directory>` and
   the revalidation's narrowed ref patterns, and, between each re-read listing
   and its branch child, one re-proof child with `-C <command directory>`; the
@@ -1244,6 +1256,11 @@ N; branches kept: `; and then the residual-window line.
   deleted upstream of a target whose plan recorded `upstream_oid` null, edits
   the manifest's `tracking_branch` to name another existing branch, or makes
   the re-read's ref listing fail
+- **AND** in each of these cases the result prints `Kept <branch>
+  (state-changed); retry: project clean <root> --apply --action delete-branch
+  --branch <branch>`, with no advice to inspect the reflog, since the re-read
+  stopped at a value outside the reflog, before its re-proof, with the plan's
+  proof of the reflog standing
 
 #### Scenario: A branch another worktree holds is retained
 
@@ -1323,8 +1340,8 @@ N; branches kept: `; and then the residual-window line.
   `batch-stopped` and its `branch_retirement` `not-attempted` with
   `branch-retention-stop`, and the exit status is 2
 - **AND** the result prints `Kept <branch> (git-refused); if a rebase or bisect
-  in another worktree holds <branch>, wait for it to end and remove that
-  worktree, or, for the main worktree, which Git refuses to remove, switch it
+  in another worktree holds <branch>, wait for it to end, and then remove that
+  worktree or, for the main worktree, which Git refuses to remove, switch it
   off <branch>, by checking out another branch there, such as <merge target>,
   or by detaching it; then retry: project clean <root> --apply --action
   delete-branch --branch <branch>`
@@ -1341,7 +1358,7 @@ N; branches kept: `; and then the residual-window line.
   Git refuses the deletion with exit 1, the target's `branch_retirement` is
   `retained` with `git-refused`, the branch remains, the result prints `Kept
   <branch> (git-refused); if a rebase or bisect in another worktree holds
-  <branch>, wait for it to end and remove that worktree, or, for the main
+  <branch>, wait for it to end, and then remove that worktree or, for the main
   worktree, which Git refuses to remove, switch it off <branch>, by checking
   out another branch there, such as <merge target>, or by detaching it; next:
   check out <merge target> in the main worktree, then: project clean <root>
@@ -1536,8 +1553,10 @@ N; branches kept: `; and then the residual-window line.
 - **AND** when a test `git` instead makes only that re-proof exit nonzero, or
   hang past its 5 s budget, with nothing moved, the branch is `retained` with
   `state-changed`, no branch child is spawned, the result prints `Kept
-  <branch> (state-changed); retry: project clean <root> --apply --action
-  delete-branch --branch <branch>`, and the exit status is 2
+  <branch> (state-changed); its reflog is not proven merged into <merge
+  target>; inspect git -C <root> reflog show refs/heads/<branch> before
+  retrying: project clean <root> --apply --action delete-branch --branch
+  <branch>`, and the exit status is 2
 - **AND** when that re-proof hangs instead, with nothing moved, and starts with
   less than 5 s of the work deadline left above the removal floor, so that its
   budget ends when only the removal floor remains, it is stopped there, no
@@ -1627,10 +1646,10 @@ N; branches kept: `; and then the residual-window line.
 - **AND** when instead a test `git` whose `branch -d` refuses with exit 1 is
   first on PATH, the branch's upstream remote-tracking ref present, the result
   prints `Kept topic;id (git-refused); if a rebase or bisect in another
-  worktree holds topic;id, wait for it to end and remove that worktree, or,
-  for the main worktree, which Git refuses to remove, switch it off topic;id,
-  by checking out another branch there, such as <merge target>, or by
-  detaching it; then retry: project clean '<root>' --apply --action
+  worktree holds topic;id, wait for it to end, and then remove that worktree
+  or, for the main worktree, which Git refuses to remove, switch it off
+  topic;id, by checking out another branch there, such as <merge target>, or
+  by detaching it; then retry: project clean '<root>' --apply --action
   delete-branch --branch 'topic;id'`
 - **AND** when instead the branch's reflog names a commit the merge target
   lacks, the result prints `Kept topic;id (reflog-unmerged); its reflog is not
