@@ -41,6 +41,16 @@ deadline, invocation deadline and run bound stated on each basis, and
 checked the branch stage's filesystem reads against PR #19's R-208, under
 the lane's rulings A-41 and A-42, Codex having found no major issue in
 `7eb0615`;
+round A13 applied lane openRepoProject-2's answer on R-208 for this change and
+lane openRepoProject-3's confirm read of round A12, its LOW-1 and LOW-2 and its
+observations: a re-proof whose reflog read or child fails or runs past its own
+budget is retained with `state-changed`, not `reflog-unmerged`, the decided
+values keeping `reflog-unmerged`, `design.md` D4's manifest sentence is
+narrowed to a manifest read with a `tracking_branch`, the joint fit with the
+cache change is also given at the cache change's own 3.7 s for its
+enumerations, and the 16th branch child's due time carries the stage's re-read
+refused first at 45.02 s, under the lane's rulings A-43 and A-44, Codex having
+found no major issue in `a11bde8`;
 nothing here is ratified. Governing issue:
 opensoft/openRepoProject#23, claimed by lane openRepoProject-5 (comment
 6111211798); refs #6, the record of the project maintenance design packet.
@@ -100,7 +110,9 @@ that lane's confirm read of round A10 and on PR #19's round (c), A-39, as
 its ruling on PR #19's round (d), A-40, amends it, and its plan for round
 A12, A-41, with that plan's addendum on PR #19's round (e), and its ruling
 on that lane's confirm read of round A11, A-42, with item 3 of its ruling
-B-60, bind this draft and are applied under Decisions and
+B-60, and its rulings on lane openRepoProject-2's answer on R-208 for this
+change, A-43, and on lane openRepoProject-3's confirm read of round A12, A-44,
+bind this draft and are applied under Decisions and
 in the round tables. That wave's readers are lane openRepoProject-5's RA (an
 adversarial read of `01b5dd8`), RD (how this change, PR #27 at `fe5b245` and
 PR #29 at `e11d755` compose in archive order) and RE (feature 004 at
@@ -130,10 +142,16 @@ round A10, by its reader W35, is
 `98a65851b`, cited by finding id, MEDIUM-1 and LOW-1 to LOW-5, and its
 confirm read of round A11, by its reader W40, is
 `attachments/lane-openRepoProject-3/confirm-a11-findings.md`, read at
-`1cbdc517d`, cited by finding id, MEDIUM-1, MEDIUM-2 and LOW-1; lane
-openRepoProject-2's answer on option (c) of PR #19's LQ-20 is recorded in
+`1cbdc517d`, cited by finding id, MEDIUM-1, MEDIUM-2 and LOW-1, and its confirm
+read of round A12, by its reader W46, is
+`attachments/lane-openRepoProject-3/confirm-a12-findings.md`, read at
+`44c47d893`, cited by finding id, LOW-1 and LOW-2, and by its section 1 (iii);
+lane openRepoProject-2's answer on option (c) of PR #19's LQ-20 is recorded in
 this lane's `attachments/lane-openRepoProject-5/rulings-2026-10-20.md:1193`,
-read at `61f71de88`, where that line gives its time, 02:29:29Z.
+read at `61f71de88`, where that line gives its time, 02:29:29Z, and its answer
+on R-208 for this change in the same file at `:1456`, with rulings A-43 and
+A-44 at `:1462` and `:1496`, read at `a622a156e`, where the first gives its
+time, 08:16:04Z.
 
 ## Why
 
@@ -229,7 +247,10 @@ confirmed run, on fresh evidence, with nothing changed for a run without it.
      child, so that a branch moved to a commit the merge target lacks and back
      since the plan, which passes every check above, is retained with
      `reflog-unmerged` and stops the run, its worktree's removal standing, as
-     is one whose re-proof fails or times out (ruling A-24);
+     is one whose reflog the re-proof finds missing, empty, at its bound or
+     undecidable (ruling A-24); a re-proof whose read or child fails or times
+     out at its own budget decides nothing and is retained with
+     `state-changed` (rulings A-43 and A-44);
   4. it spawns Git's non-force `git -c protocol.allow=never` with the six
      per-protocol pins, `-C <command directory> branch -d -- <branch>`, with
      change 1's seventeen-name environment scrub, in its own process group;
@@ -921,8 +942,9 @@ open:
   the flag; in that case, on D14's measured basis at `f0bf538`, where change
   1's 16th removal spawns at 35.1 s, or 42.8 s with 20,000-file removals, a
   flagged run of 16 removes 16 and retires 15 with this change's children at
-  150 ms, the 16th branch child due at 45.32 s and `retained` with
-  `deadline-exceeded`, exit 1, never unsafe, and 16 and 16 with them at task
+  150 ms, the 16th branch child due at 45.32 s, its re-read refused first at
+  45.02 s, and `retained` with `deadline-exceeded`, exit 1, never unsafe, and
+  16 and 16 with them at task
   2.1's average of about 0.063 s per child (`design.md` D7). Where the plan
   read `extensions.worktreeConfig` as true, seven, PR #19's D14 counts a
   plan-time probe on each linked row, and at `f0bf538` it states that case on
@@ -960,8 +982,10 @@ open:
   2.1's 23.6 s, which predates LQ-11's and LQ-13's children, all 16 fit
   through a worker, while at a thread per call at least the 16th target is
   deferred, with one reflog child as in the worst case, and on D14's measured
-  basis at `f0bf538` 12 of the 16 come through their stage through a worker
-  and at least 8 at a thread per call. These are the cache change's
+  basis at `f0bf538`, with the cache change's 16 enumerations at 2.4 s, 12 of
+  the 16 come through their stage through a worker and at least 8 at a thread
+  per call, and at the cache change's own 3.7 s for them 11 and at least 7
+  (ruling A-44). These are the cache change's
   ordinary trees; its worst shapes lie outside this fit, under its own cap
   questions to Brett Heap (`design.md` D7; ruling A-25).
   The alternative, a lower target cap under the flag (8 by the packet's rule),
@@ -1058,9 +1082,14 @@ departs:
   other check while its reflog names that commit, which `branch -d` would
   leave unreachable. Such a branch is retained with `reflog-unmerged`, a
   retention the stage discovers, so the run stops with exit 2 while the
-  worktree's removal stands; a re-proof that fails or times out at its own
-  budget retains it with the same reason, the one a failed proof gives in the
-  plan, and one that the deadline stops with `deadline-exceeded`.
+  worktree's removal stands, as is one whose reflog the re-proof finds missing,
+  empty, at its 64 KiB bound or undecidable, each a value the re-proof
+  decided; a re-proof whose read or child fails or runs past its own budget
+  decides nothing and retains it with `state-changed`, as PR #19's rule for
+  revalidation gives a call that decides nothing, again exit 2 (rulings A-43
+  and A-44; lane openRepoProject-2's answer on R-208), and one that the
+  deadline stops with `deadline-exceeded`. The plan's own failed proof stays a
+  `reflog-unmerged` keep.
 - **The plan's keep order.** `reflog-unmerged`, then `branch-in-use`, then
   `head-not-merge-target`, then `branch-shared`, so that the next step printed
   for a kept branch never leads to deleting work only its reflog holds: the
@@ -1098,7 +1127,8 @@ departs:
   with 20,000-file removals; task 2.1's 23.6 s predates LQ-11's and LQ-13's
   children, its `:1002-1003`), on which a flagged run of 16 removes 16 and
   retires 15 with this change's children at 150 ms (the 16th branch child due
-  at 45.32 s, `retained` with `deadline-exceeded`, exit 1, never unsafe), 15
+  at 45.32 s, its re-read refused first at 45.02 s, `retained` with
+  `deadline-exceeded`, exit 1, never unsafe), 15
   and 14 with 17 reflog children, 13 and 12 with 20,000-file removals, and 16
   and 16 at task 2.1's average, or 15 and 14 with 20,000-file removals; the
   caps stay, as change 1 kept them on its measurement. Task 2.1's own
@@ -1299,8 +1329,9 @@ recommendation, and a different ruling edits them before ratification.
   `extensions.worktreeConfig` as false, six children per revalidation, and on
   D14's measured basis at `f0bf538`, where change 1's 16th removal spawns at
   35.1 s, 16 and 15 with this change's children at 150 ms, the 16th branch
-  child due at 45.32 s and `retained` with `deadline-exceeded`, exit 1, never
-  unsafe, and 16 and 16 with them at task 2.1's average of about 0.063 s per
+  child due at 45.32 s, its re-read refused first at 45.02 s, and `retained`
+  with `deadline-exceeded`, exit 1, never unsafe, and 16 and 16 with them at
+  task 2.1's average of about 0.063 s per
   child (`design.md` D7); where it read it as true, seven, PR #19's D14 counts
   a plan-time probe on each linked row and at `f0bf538` states that case on
   three bases, choosing none: at 128 rows a flagged run of 16 removes and
@@ -1338,8 +1369,10 @@ recommendation, and a different ruling edits them before ratification.
   deferred; at the cache change's measured 3.7 s for its enumerations each
   figure is 1.3 s later and no conclusion changes. On D14's measured basis at
   `f0bf538`, where the plan read `extensions.worktreeConfig` as false, the same
-  additions bring 12 of the 16 targets through their stage through a worker,
-  and at least 8 at a thread per call (`design.md` D7). These figures are for
+  additions, with the 16 enumerations at 2.4 s, bring 12 of the 16 targets
+  through their stage through a worker, and at least 8 at a thread per call,
+  and at the cache change's own 3.7 s for them 11 and at least 7 (`design.md`
+  D7; ruling A-44). These figures are for
   the cache change's ordinary trees; its worst shapes, a walk of directories
   only and deep chains,
   lie outside them, under its own cap questions to Brett Heap (`design.md` D7;
@@ -1816,3 +1849,58 @@ earlier rounds did.
 | lane 3 confirm read (7eb0615), its observation that the citation key gives lane openRepoProject-2's answer as 02:29:29Z at `rulings-2026-10-20.md:1193` read at `1e5bdf22f`, where that line reads "about 02:3xZ" | note | A-42: applied: the key cites the line at the register's `61f71de88`, where it reads "(02:29:29Z)" (checked: at `1e5bdf22f` it reads "(about 02:3xZ)", and `61f71de88` is on the register's `origin/main`); round A11's prose and its LOW-4 row, which give the same time with `1e5bdf22f`, are left as that round's record, the time being at `61f71de88` | citation key |
 | lane 3 confirm read (7eb0615), its observation of an optional third cost, by kind, for this change's children | note | A-42: not adopted: with D14's stand-ins this change's four stage children average about 0.158 s (the re-read listing at the narrowed listing's 101.6 ms, the post-check at the identity probe's 19.7 ms, the re-proof's `rev-list` at the full ref listing's 359.7 ms, and `branch -d`, with no measured match, at 150 ms), close to the 150 ms variant, so no third variant is added | none |
 | Codex (7eb0615): its review receipt on PR #26 of 2026-10-22T03:07:56Z, "Didn't find any major issues", for reviewed commit `7eb0615f78` | none | no finding and no edit | none |
+
+### Re-read and Codex Findings (round A13)
+
+Lane openRepoProject-2 answered on 2026-10-22 (08:16:04Z) the question that
+the lead put to it on round A12's third judgment call: a failed re-proof
+reflog read should be worded `state-changed`, not `reflog-unmerged`. Under
+R-208 only a decided value gives its step's own reason, so that a failed read,
+which decides nothing, would have `reflog-unmerged` claim unmerged commits
+that were never seen, as feature 004's gate 7 leaves such a row unprobed and
+never reports it unmerged; this change's D4 cites PR #19's rule at `f0bf538`
+(its `specs/project-clean-review-safety/spec.md:113-135`) for a re-proof that
+revalidates a destructive action, so that splitting the rule inside one stage
+would need a declared departure, and aligning is cheaper; the outcome is
+unchanged, retained with exit 2, a report-truth point at LOW; and the
+manifest re-read is right as stated. The lead's ruling A-43 takes the answer
+and overrules round A12's call on the failed read. Lane openRepoProject-3's
+reader W46 read round A12, `7eb0615..a11bde8` (`confirm-a12-findings.md` at
+the register's `44c47d893`): no HIGH, no MEDIUM, two LOW and nothing
+departing. It upheld the writer's three calls: the joint fit with the cache
+change belongs in this change, and re-derives at 12 and 12, 11 and 10, 9 and 8
+and 7 and 7; the manifest case needs no spec clause; and a reflog missing at
+the re-proof, where the plan proved one merged, is a decided absence that
+keeps `reflog-unmerged`, PR #19's `:122-127` and `:133-135` giving a decided
+value its step's own reason and the plan never selecting a branch with no
+reflog. It re-derived every figure of round A12 and found every MEDIUM-1,
+MEDIUM-2, LOW-1 and A-41 (c) figure equal, with the carry check, validate,
+the scenarios and the project-command blob unchanged. It left the failed read
+ungraded under A-43 and asked that this round say whether the re-proof's
+child, which step 3 groups with the read and to which PR #19's `:115-120`
+gives `state-changed`, moves too. The lead's ruling A-44 takes its two LOW,
+its two observations (the due time, and the rounding, which it keeps) and that
+point. Codex reviewed `a11bde8` (2026-10-22T08:17:23Z) and found no major
+issue. Of the 7 rows below, 5 are applied, 1 is kept as it stands and 1 is a review with
+no finding. No ruling needs `specs/project-command/spec.md`, which is
+unchanged (blob `e7665dda`). Round A13 edits the project-clean delta, step 3
+of the ADDED requirement, its `state-changed` and `reflog-unmerged` reasons,
+its result line and one AND of one ADDED scenario, and one sentence of the
+review-safety delta, and adds no scenario, so the scenarios stay 68, 4 and 9
+and every MODIFIED block still carries its source scenarios byte for byte.
+Every figure was derived two ways, by round A12's closed form and its step
+simulation, each extended for this round and agreeing. Rounds A4, A10 and
+A12's rows, which give the re-proof's failed read or child `reflog-unmerged`,
+keep their words as those rounds' record; row 1 below supersedes them. The
+round also updates `design.md`'s Context map, the Status clause, the citation
+key and tasks 1.1, 1.3, 1.4 and 1.5, as earlier rounds did.
+
+| Finding | Severity | Ruling | Section edited |
+| --- | --- | --- | --- |
+| lane openRepoProject-2's answer on R-208 for this change (08:16:04Z): the re-proof's reflog read that fails or runs past its own budget keeps the step's own reason, `reflog-unmerged`, where PR #19's rule for revalidation (its `specs/project-clean-review-safety/spec.md:113-135`, R-171 and R-208) gives `state-changed` to a call that decides nothing; round A12's judgment call 3 kept it | LOW (a report-truth point; the outcome is unchanged, retained with exit 2) | A-43: applied: step 3 of the ADDED requirement gives a re-proof whose read fails or runs past its own 5 s budget while the work deadline is not the limit `state-changed`, and one whose budget the work deadline ends `deadline-exceeded`, as before; the stage's `state-changed` reason takes in the re-proof's failed read; D4 states the reading, that a read that fails decides nothing and `reflog-unmerged` would say that a commit was seen, with the plan's own failed proof staying a `reflog-unmerged` keep (the plan's reasons are its keep list's four and a keep never stops the run); the missing-reflog case is settled by W46's section 1 (iii): a reflog missing at the re-proof (`ENOENT` or `ENOTDIR`) is a decided absence and keeps `reflog-unmerged`, as do one found empty, one read to its 64 KiB bound and one that the gate's reading cannot decide, each a value the read decided, as PR #19 gives its own `worktree-only-commits` to a `logs/HEAD` read to that bound or holding a line that cannot be parsed (its `:110-111`) | project-clean delta (ADDED: step 3, the reasons); `design.md` D4, D5; What Changes; Decisions |
+| lane 3 confirm read (a11bde8), section 1 (iii) and its note for A13: the re-proof's child, which step 3 groups with the read, fails or times out at its own 5 s budget, and PR #19's `:115-120` gives such a call `state-changed`; the places that A-43 moves together | LOW | A-44 item 1: applied: the child gives `state-changed` as the read does, and one that the work deadline cuts `deadline-exceeded`; the places moved together: step 3, whose failed read and child and ground "the reason a failed proof gives in the plan" are replaced; the stage's `state-changed` reason; `reflog-unmerged`'s "or could not prove the reflog", narrowed to the values the proof decided; the result line, worded for a proof that printed a commit, the plan's proof that failed and a re-proof that found the reflog missing, empty, at its bound or undecidable, so that it stays true for the plan's own failed proof; `design.md` D4 (check 6, the paragraph that splits the outcomes, the re-proof's split and the two filesystem reads); and, by the same ground, the review-safety delta's one sentence on a reflog its re-proof "does not prove", D5's stage table, D7's table row for the re-proof, D8's `Kept` line and Risks' restatement; the one scenario that pins it, "A branch moved to an unmerged commit and back is retained", its AND with only the re-proof made to exit nonzero or hang past its 5 s budget, gave `reflog-unmerged` and `Kept <branch> (reflog-unmerged)` and now gives `state-changed` and `Kept <branch> (state-changed); retry: project clean <root> --apply --action delete-branch --branch <branch>`, exit 2 as before; the ANDs of the plan's failed reflog child and of a reflog that names a commit the merge target lacks stay; no scenario added, the counts 68, 4 and 9 | project-clean delta (ADDED: step 3, the reasons, the result line, the scenario's AND); review-safety delta (narrow guarantee); `design.md` D4, D5, D7, D8, Risks; What Changes; Decisions |
+| lane 3 confirm read (a11bde8) LOW-1: `design.md` D4's sentence that a manifest the plan read and the re-read finds absent is a manifest difference is wider than step 2, which compares only the manifest's `tracking_branch` and the merge target re-resolved from it | LOW | A-44 item 2: applied in W46's wording: "one that the plan read with a `tracking_branch` and the re-read finds absent is a `tracking_branch` difference, `state-changed`", and one that the plan read with no `tracking_branch` and the re-read finds absent gives no difference; no spec word changes | `design.md` D4 |
+| lane 3 confirm read (a11bde8) LOW-2: D7's joint fit with the cache change gives only the 16 enumerations at 2.4 s, so that "at least 9 and 8", and Risks' "at least 8", hold only there; at the cache change's own 3.7 s for them (its D4 at `e1049b2`) the pairs fall | LOW | A-44 item 3: applied: each place gives both costs, named: the enumerations at 2.4 s, 6.4 s through a worker and 13.3 s at a thread per call before the first removal, 12 removed and 12 retired through a worker (the 13th removal due at 45.20 s), 11 and 10 with 17 reflog children, and at least 9 and 8, or 7 and 7, at a thread per call; and at 3.7 s, 7.7 s and 14.6 s, 12 and 11 through a worker (the 12th removal at 44.68 s, the 12th branch child due at 45.74 s), 10 and 10 with 17 reflog children, and at least 8 and 7, or 7 and 6, at a thread per call; re-derived by round A12's closed form and step simulation extended for this round, with a check that the worst order a run can take gives the same four pairs at each cost; Risks' "at least 8" and the proposal's "at least 8" are scoped to 2.4 s, with 11 and at least 7 at 3.7 s | `design.md` D7, Risks; Decisions (A-9; readings, the fit); Open Questions (A-9) |
+| lane 3 confirm read (a11bde8), its observation that "the 16th branch child, due at 45.32 s, cannot start": the stage's re-read is refused first, at 45.02 s | note | A-44 item 4: applied: where 45.32 s is cited for the 16th branch child, in D7, Risks, Decisions (A-9; readings, the fit) and Open Questions (A-9), "its re-read refused first at 45.02 s" is added: the 16th removal at 44.26 s, its removal's 0.604 s and its rescan's three children's 0.155 s put the re-read's due time at 45.02 s, past the 45 s before which it may start, so that the outcome, `retained` with `deadline-exceeded`, exit 1, is unchanged; both figures reproduced by the closed form and the step simulation; the other due times keep W40's convention of ungated due times, as W46 notes | `design.md` D7, Risks; Decisions (A-9; readings, the fit); Open Questions (A-9) |
+| lane 3 confirm read (a11bde8), its observation that 41.77 s and 42.65 s follow from 23.6 s, and that task 2.1's exact 23.578 s gives 41.76 s and 42.64 s | note | A-44: kept: 41.77 s and 42.65 s stand, from the stated 23.6 s, "about 0.063 s" either way; no edit | none |
+| Codex (a11bde8): its review receipt on PR #26 of 2026-10-22T08:17:23Z, which found no major issues, for reviewed commit `a11bde8` | none | no finding and no edit | none |

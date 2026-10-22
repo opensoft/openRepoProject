@@ -12,10 +12,11 @@ duplicate them.
   contract (`BA:1339-1345`) under the lane's rulings L-1 to L-9 and A-1 to A-7,
   on change 1's text at `961c405` and PR #19's at `c462d87` (`d66d02c`),
   `design.md` D7 also stating its fit at PR #19's `6f2cb54`, `a664799`,
-  `9267303` and `f0bf538` (rounds A9 to A12, rulings A-37 to A-42); verified
-  by its Capabilities section accounting for every canonical requirement of
-  `project-clean` and `project-clean-review-safety` and every requirement
-  change 1 adds to them.
+  `9267303` and `f0bf538` (rounds A9 to A12, rulings A-37 to A-42), the joint
+  fit with the cache change also at that change's own 3.7 s (round A13, ruling
+  A-44); verified by its Capabilities section accounting for every
+  canonical requirement of `project-clean` and `project-clean-review-safety`
+  and every requirement change 1 adds to them.
 - [x] 1.2 Alignment resolved: the stack-architect and qa-lead findings on
   `e7f3e65` (SA-1 to SA-5, QA-1 to QA-4) are applied, MISMATCH and DRIFT at
   once and qa-lead's GAP (QA-3) by its own scenario text, and the review's
@@ -101,7 +102,13 @@ duplicate them.
   #19's round (e) at `f0bf538` (rulings A-41 and A-42), by `042d826` (the
   design) and the commit that edits the proposal's body, records the round's
   table and updates this task, no spec file being edited; verified by
-  "Re-read and Codex Findings (round A12)" in `proposal.md`.
+  "Re-read and Codex Findings (round A12)" in `proposal.md`. Round A13, on
+  `a11bde8`, applied lane openRepoProject-2's answer on R-208 for this change
+  and lane openRepoProject-3's confirm read of round A12, its LOW-1 and LOW-2
+  and its observations (rulings A-43 and A-44), by `dba86c2` (the spec
+  deltas), `62ccd10` (the design) and the commit that edits the proposal's
+  body, records the round's table and updates this task; verified by "Re-read
+  and Codex Findings (round A13)" in `proposal.md`.
 - [x] 1.4 Spec deltas and design written: `specs/project-clean/spec.md`
   modifies five requirements and adds one (68 scenarios: 43 carried unchanged
   from change 1 and PR #19, 6, 14, 10, 5 and 8 by block, and 25 added, the
@@ -113,7 +120,10 @@ duplicate them.
   requirement's step 2 edited under ruling A-38, and round A11 adding no
   scenario, one phrase of the ADDED requirement's `state-changed` reason and
   the words of one AND of an ADDED scenario edited under rulings A-39 and
-  A-40, and round A12 editing no spec file, under rulings A-41 and A-42),
+  A-40, round A12 editing no spec file, under rulings A-41 and A-42, and
+  round A13 adding no scenario, editing step 3 of the ADDED requirement, its
+  `state-changed` and `reflog-unmerged` reasons, its result line and the
+  result of one AND of an ADDED scenario, under rulings A-43 and A-44),
   `specs/project-clean-review-safety/spec.md` modifies one (4 scenarios: 3
   carried, 1 added), and `specs/project-command/spec.md` modifies one on PR
   #19's text (9 scenarios carried, none added; agreed by lane
@@ -122,9 +132,9 @@ duplicate them.
   each modified requirement's source text kept byte for byte; `design.md`
   holds D1 to D10 (`8341954`, `d0b33ce`, and the commit titled 'Settle which
   later targets carry branch-retention-stop'), revised by the alignment fix
-  round (1.2), the council round (1.3) and rounds A3 to A12; verified
+  round (1.2), the council round (1.3) and rounds A3 to A13; verified
   by `grep -c '^#### Scenario:'` on each spec file and by a scenario-carry
-  script run after the council round and again after rounds A3 to A12
+  script run after the council round and again after rounds A3 to A13
   over all seven MODIFIED blocks, every source scenario present byte for byte
   and in order.
 - [x] 1.5 Validation passes: `/usr/bin/openspec validate
@@ -133,7 +143,7 @@ duplicate them.
   `/usr/bin/openspec status --change add-project-clean-branch-retirement
   --json` shows every artifact done; verified by running the three on this
   branch after 1.4, after the alignment fix round, after the council round
-  and after rounds A3 to A12
+  and after rounds A3 to A13
   (build 1.13.1, which notes only as INFO that archive would refuse the
   MODIFIED blocks whose base still sits in change 1).
 - [ ] 1.6 Ratified by Brett Heap's word on the pull request, quoted with its
