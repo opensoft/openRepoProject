@@ -1118,8 +1118,14 @@ short only at the 20,000-file removal of D14's sensitivity case with them at
 target that the spawn limit stops being `not-attempted` with
 `deadline-exceeded` and a branch whose stage it stops `retained` with
 `deadline-exceeded`, exit 1, never unsafe, the next run taking them. A-9
-therefore no longer waits on LQ-20 and stays Brett Heap's question on these
-figures (proposal, Open Questions).
+therefore no longer waits on LQ-20, and its question for Brett Heap is about
+two cases only: the packet's flat 150 ms per child, at which a flagged run
+falls short in every case of this section, and the 20,000-file removal with
+this change's children at 150 ms (proposal, Open Questions). Lane
+openRepoProject-3's W62 reached the same sums by this section's method,
+adding the 61 children to D14's rounded 30.0 s and 28.7 s: the 16th removal
+at about 39.15 s and 37.85 s, where the figures above take D14's unrounded
+29.97 s and 28.73 s.
 
 The other figures of this section, the worst case of the reflog proof, the
 joint fit with the cache change, change 1's measured fit as its task 2.1 gives
