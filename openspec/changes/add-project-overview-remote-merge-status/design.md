@@ -650,9 +650,9 @@ alignment reader AL1's conflict C1; C-66). Change 1's evidence model, on draft
 PR #19's text (`PR19/cmd` at `f0bf538`, :116-129, LQ-15 there), tests `HOME` and
 `XDG_CONFIG_HOME`, and `GIT_CONFIG_GLOBAL` and `GIT_CONFIG_SYSTEM`, before any
 Git child, `git --version` included, and where one is relative bars every Git
-child and inspects no repository (`relative-config-path`), whether the
-subcommand then refuses or reports being its own requirement's rule. Change 2's
-`Overview exits by completeness and severity`, as amendment A1 words it
+child and inspects no repository (`relative-config-path`); whether the
+subcommand then refuses or reports is left to its own requirement's rule. Change
+2's `Overview exits by completeness and severity`, as amendment A1 words it
 (ratified by Brett Heap; `add-project-overview/specs/project-overview/spec.md`
 :868-876 at `e4a30fc`), refuses the overview for the same two variables, with
 that code and status 2. This change's own bases hold neither: its block of the
