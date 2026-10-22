@@ -170,6 +170,14 @@ path that reaches `choose()` without `--type` prints a list and asks
 `Select a generator number`. Paths below are shown as `$T/...`; the command
 prints them resolved.
 
+No row reads a path that an earlier row made. User Story 2's last row creates
+`$T/absent2/my-app`, a path of its own, so `$T/absent` stays missing for User
+Story 3's row on it. User Story 4's two rows change `$T/rfile` and `$T/bdir`,
+which no other row reads (run each once). User Story 5's last row creates
+`$T/nowhere`, which User Story 3 reads as missing, so it runs last, as it says.
+A run that moves `$T/bin/openRepoShape` aside puts it back at once after the
+run, so that the next row finds it.
+
 The lines, with `PARENT` and `ANCESTOR` resolved paths:
 
 ```text
@@ -221,7 +229,7 @@ empty `--workbenches` gave their own sentences.
 | the same with `--dry-run` | `2` | the same |
 | `p new MyApp --into "$T/afile/sub"`, with and without `--dry-run` | `2` | line (b), then the head refusal (b), `exit=2`, nothing else |
 | `p new MyApp --into "$T/afile" --type test` | none | the same `REFUSED:` line as the first row, `exit=2`, no question, no `Create:` |
-| `p new my-app --into "$T/absent"` with `$T/bin/openRepoShape` moved aside | `2`, then `1` at `Select a generator number`, then `yes` | as today: the generator list, the plan, `Created: $T/absent/my-app`, `exit=0`, no `warning:` line |
+| `p new my-app --into "$T/absent2"` with `$T/bin/openRepoShape` moved aside (put it back after the run) | `2`, then `1` at `Select a generator number`, then `yes` | as today: the generator list, the plan, `Created: $T/absent2/my-app`, `exit=0`, no `warning:` line |
 
 Before the realization, the first row reached the generator list (two
 generators) and, with one generator, the plan and `yes`, then `[Errno 17]`;
@@ -234,7 +242,7 @@ with `--dry-run` it printed the plan and exited 0.
 | `p new MyApp --into "$T/afile/sub"` | Ctrl-D | entry 1 is still first and the default; its one parent line is line (b), PARENT `$T/afile/sub`, ANCESTOR `$T/afile`; no line says `does not exist` or contains `--into`; `REFUSED: No answer to the Triad question (end of input); nothing was created.`, `exit=2` |
 | the same | Enter | `REFUSED: A Triad cannot be created here. The parent $T/afile/sub cannot be created because $T/afile exists but is not a directory; choose a parent that is a directory. Nothing was created.`, `exit=2`, no `GitHub organization for the Triad:` prompt |
 | the same with `--dry-run` | Enter | the same refusal, `exit=2` |
-| `p new my-app --into "$T/afile/sub"` with `$T/bin/openRepoShape` moved aside | Enter | the composed refusal: the name, openRepoShape and (b) sentences in that order, `exit=2` |
+| `p new my-app --into "$T/afile/sub"` with `$T/bin/openRepoShape` moved aside (put it back after the run) | Enter | the composed refusal: the name, openRepoShape and (b) sentences in that order, `exit=2` |
 | `p new MyApp --into "$T/afile"` | Ctrl-D, then Enter | line (a) and its Triad refusal, byte for byte as today |
 | `p new MyApp --into "$T/absent"`, and `--into "$T/dangling"` | Ctrl-D | the missing line, PARENT `$T/absent` and `$T/nowhere`, as today |
 | `p new MyApp --into "$T/todir"` | Ctrl-D | no `Not possible here:` line |
