@@ -16,6 +16,7 @@ which calls the real git by its absolute path. Expected human text comes from
 clean_support's fixtures (rule 8).
 """
 import contextlib
+import errno
 import io
 import json
 import os
@@ -806,6 +807,27 @@ class RevalidationTests(clean_support.CleanCase):
             self.assert_stopped_at_first(result, trees, "state-changed")
             admin.chmod(0o700)
             self.assert_nothing_removed(root, trees, before, log)
+        with self.subTest("P's .git file loses its read permission (R-208)"):
+            root, trees = self.batch("unreadable-dotgit")
+            dotgit = trees[0] / ".git"
+            self.addCleanup(dotgit.chmod, 0o644)
+            before = self.snapshot(root, trees)
+            env, log = self.counting()
+            result = self.apply(root, lambda: dotgit.chmod(0o000), env=env, log=log)
+            self.assert_stopped_at_first(result, trees, "state-changed")
+            dotgit.chmod(0o644)
+            self.assert_nothing_removed(root, trees, before, log)
+        with self.subTest("P's .git file is gone: an absent path decides identity-changed"):
+            root, trees = self.batch("missing-dotgit")
+            dotgit = trees[0] / ".git"
+            saved = dotgit.read_bytes()
+            self.addCleanup(lambda: dotgit.exists() or dotgit.write_bytes(saved))
+            before = self.snapshot(root, trees)
+            env, log = self.counting()
+            result = self.apply(root, dotgit.unlink, env=env, log=log)
+            self.assert_stopped_at_first(result, trees, "identity-changed")
+            dotgit.write_bytes(saved)
+            self.assert_nothing_removed(root, trees, before, log)
         with self.subTest("a logs/HEAD line names an object the repository does not hold"):
             root, trees = self.batch("bad-object")
             head = self.head(trees[0])
@@ -888,6 +910,151 @@ class RevalidationTests(clean_support.CleanCase):
                 self.assertEqual([stage for _, stage, _ in self.stages(result)[1:]], ["not-attempted"])
                 self.assertEqual((result.status, result.document["exit_code"]), (status, status))
                 self.assert_nothing_removed(root, trees, before, log)
+
+    def test_clean_a_redirected_work_tree_beside_a_later_check_s_difference(self):
+        # The lead's R-198: the review-safety delta orders the target's
+        # identity, its `modules` check and its operation-in-progress listing,
+        # by filesystem reads, before its effective-work-tree probe, stopping at
+        # the first difference. A work tree redirected after the plan (lane E's
+        # decoy in P's config.worktree) beside a `modules` entry made at the
+        # same time is contains-submodule, and beside a marker
+        # operation-in-progress, and no work-tree probe runs at P's
+        # revalidation. The redirection alone stays identity-changed (lane E's
+        # test of a work tree redirected after the plan).
+        probe = ["rev-parse", "--path-format=absolute", "--show-toplevel"]
+        for case, entry, reason in (("modules", "modules", "contains-submodule"),
+                                    ("marker", "MERGE_HEAD", "operation-in-progress")):
+            with self.subTest(case):
+                root, trees = self.batch("redirected-" + case)
+                self.git(root, "config", "extensions.worktreeConfig", "true")
+                decoy = self.base / ("decoy-" + case)
+                decoy.mkdir()
+                for name in self.git(trees[0], "ls-files", "-z").split("\0"):
+                    if name:
+                        shutil.copy2(trees[0] / name, decoy / name)
+                admin = self.admin(trees[0])
+
+                def redirect_and_mark(admin=admin, decoy=decoy, entry=entry):
+                    self.git(trees[0], "config", "--file", admin / "config.worktree", "core.worktree", decoy)
+                    if entry == "modules":
+                        (admin / entry).mkdir()
+                    else:
+                        (admin / entry).write_text(self.head(root) + "\n")
+
+                before = self.snapshot(root, trees)
+                env, log = self.counting()
+                result = self.apply(root, redirect_and_mark, env=env, log=log)
+                self.assertEqual(self.git(trees[0], *probe).strip(), str(decoy), "P's work tree is redirected")
+                self.assert_stopped_at_first(result, trees, reason)
+                records = clean_support.child_log(log)
+                self.assertEqual([record for record in records if subcommand(record) == probe], [],
+                                 "the work-tree probe's child is skipped")
+                self.assertEqual(result.document["targets"][0]["probes_performed"], 3,
+                                 "the identity probe, the registry listing and the ref listing only")
+                self.assert_nothing_removed(root, trees, before, log)
+
+    # The lead's R-208 (#19 at 9267303, "Cleanup revalidates destructive
+    # actions"): every filesystem call of the revalidation that fails, or runs
+    # past its own budget while the deadline is not the limit, is
+    # state-changed, whatever its step; ENOENT and ENOTDIR are no failure, and
+    # decide that the path is absent, which keeps the step's reason.
+
+    def refused_by_a_read(self, case, place, fn, answer, expected, extra=None):
+        """--all-safe --apply over two selected targets P and Q, in process,
+        the first filesystem call fn(place(root, trees), ...) after the
+        question answered by answer (an exception it raises, or a
+        DriverOutcome); the first target's stage and reason are expected, Q
+        not-attempted, nothing removed. extra(root) adds rows first."""
+        root, trees = self.batch(case)
+        if extra is not None:
+            extra(root)
+        path = place(root, trees)
+        before = self.snapshot(root, trees)
+        asked, calls, real_fs_call = [], [], project.fs_call
+
+        def fs_call(call, *args, **options):
+            if asked and not calls and call is fn and args[:1] == (path,):
+                calls.append(path)
+                if isinstance(answer, BaseException):
+                    raise answer
+                return answer
+            return real_fs_call(call, *args, **options)
+
+        env, log = self.counting()
+        with mock.patch.object(project, "fs_call", fs_call):
+            result = self.apply(root, lambda: asked.append(True), env=env, log=log)
+        self.assertEqual(calls, [path], "the read was reached at P's revalidation")
+        self.assertEqual(self.stages(result)[0], (str(trees[0]), *expected), result.stderr)
+        self.assertEqual([stage for _, stage, _ in self.stages(result)[1:]], ["not-attempted"])
+        self.assertEqual(result.status, 2)
+        self.assert_nothing_removed(root, trees, before, log)
+
+    def denied(self, path):
+        return PermissionError(errno.EACCES, os.strerror(errno.EACCES), os.fsdecode(path))
+
+    def timed_out(self):
+        return project.DriverOutcome(None, "timeout", detail="no answer within 5 s")
+
+    def missing(self, path):
+        return FileNotFoundError(errno.ENOENT, os.strerror(errno.ENOENT), os.fsdecode(path))
+
+    def test_clean_identity_reads_that_fail_at_revalidation(self):
+        # Step 1: the lstat of the common directory, after the identity probe.
+        def common(root, trees):
+            return os.fsencode(os.path.realpath(root / ".git"))
+
+        for label, answer, expected in (
+                ("EACCES", self.denied(b"x"), ("refused", "state-changed")),
+                ("a timeout", self.timed_out(), ("refused", "state-changed")),
+                ("ENOENT, an absent path", self.missing(b"x"), ("refused", "identity-changed"))):
+            with self.subTest(label):
+                self.refused_by_a_read("identity-" + label.split()[0].strip(","), common, os.lstat, answer,
+                                       expected)
+
+    def test_clean_a_target_lstat_that_fails_at_revalidation(self):
+        # Step 5: the lstat of the target's path.
+        def target(root, trees):
+            return bytes(trees[0])
+
+        for label, answer, expected in (
+                ("EACCES", self.denied(b"x"), ("refused", "state-changed")),
+                ("a timeout", self.timed_out(), ("refused", "state-changed")),
+                ("ENOENT, an absent path", self.missing(b"x"), ("refused", "identity-changed"))):
+            with self.subTest(label):
+                self.refused_by_a_read("lstat-" + label.split()[0].strip(","), target, os.lstat, answer, expected)
+
+    def test_clean_a_twin_read_that_fails_at_revalidation(self):
+        # Step 5's twin check reads every registry entry: an unselected dirty
+        # row whose lstat fails there.
+        def add_dirty(root):
+            tree = self.merged_worktree("009-z", path=root.parent / "trees" / "009-z", root=root)
+            (tree / "uncommitted").write_text("keep")
+
+        def dirty(root, trees):
+            return bytes(root.parent / "trees" / "009-z")
+
+        for label, answer in (("EACCES", self.denied(b"x")), ("a timeout", self.timed_out())):
+            with self.subTest(label):
+                self.refused_by_a_read("twin-" + label.split()[0], dirty, os.lstat, answer,
+                                       ("refused", "state-changed"), extra=add_dirty)
+
+    def test_clean_a_modules_check_that_fails_at_revalidation(self):
+        # Step 5's modules check: the lstat of `<admin>/modules`.
+        def modules(root, trees):
+            return os.fsencode(self.admin(trees[0]) / "modules")
+
+        for label, answer in (("EACCES", self.denied(b"x")), ("a timeout", self.timed_out())):
+            with self.subTest(label):
+                self.refused_by_a_read("modules-" + label.split()[0], modules, os.lstat, answer,
+                                       ("refused", "state-changed"))
+
+    def test_clean_an_admin_directory_gone_at_its_listing(self):
+        # Step 5's listing (D22) finding no admin directory decides that the
+        # target's registration is gone: identity-changed, not a failed read.
+        def admin(root, trees):
+            return os.fsencode(self.admin(trees[0]))
+
+        self.refused_by_a_read("listing-gone", admin, os.listdir, self.missing(b"x"), ("refused", "identity-changed"))
 
     # The lead's R-195 (#19 at 4485678, "Cleanup revalidates destructive
     # actions"): every Git child of the revalidation that fails, or runs past

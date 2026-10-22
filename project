@@ -800,16 +800,19 @@ NEXT_STEPS = {
         "the branch's reflog is missing, expired or undecidable; review, then git worktree remove yourself",
     "contains-submodule": "review, then remove the worktree yourself",
     "hidden-local-state": "review, then remove the worktree yourself",
-    # LQ-14 (lead rulings R-126 and R-146).
+    # LQ-14 (lead rulings R-126, R-146 and R-171; #19 at 2e819ad, lane 3's W26 F-1).
     "operation-in-progress":
         "a git am, merge, notes merge, cherry-pick, revert, rebase or bisect is, or may be, in progress there; "
-        "finish or abort it (a squash merge that holds an autostash ends only with git commit, --allow-empty "
-        "where nothing is staged), then run again",
+        "finish or abort it (a squash merge that holds an autostash ends with git commit, --allow-empty where "
+        "nothing is staged, or with git merge --quit, which keeps the edit in the stash list), then run again",
     # LQ-13.
     "worktree-only-commits":
         "a commit is, or may be, held only by this worktree's HEAD reflog or refs/worktree; keep it on a branch "
         "or tag, or review, then git worktree remove yourself",
-    "registration-mismatch": "review, then git worktree repair or git worktree prune, or remove the row by hand",
+    # LQ-11 (the lead's R-125; #19 at 2e819ad, D18).
+    "registration-mismatch":
+        "review, then git worktree repair or git worktree prune, unset core.worktree and core.bare in the "
+        "worktree's config.worktree, or remove the row by hand",
     "inspection-error": "review, then git worktree repair or git worktree prune, or remove the row by hand",
     "locked-worktree": "unlock it yourself if it should go",
     # The contract's next steps for the three reasons D18 gives none (T052;
@@ -5370,8 +5373,10 @@ def repository_identity(root, run, errors=None):
     directory and the lstat of that directory, by filesystem calls. Returns
     {root, common_dir, dev, ino, superproject}, or None when the probe failed
     or a call gave no value. errors, when given, is a list that receives the
-    probe's row error where the probe gave no value, so that a caller can tell
-    a child that decided nothing from an identity read (the lead's R-195)."""
+    row error of the probe where it gave no value, and of a filesystem call
+    that failed other than with ENOENT or ENOTDIR, or was cut at its budget,
+    so that a caller can tell a read that decided nothing from an identity
+    read, an absent path included (the lead's R-195 and R-208)."""
     values, error = identity_probe(root, run)
     if error is not None:
         if errors is not None:
@@ -5381,7 +5386,9 @@ def repository_identity(root, run, errors=None):
         common_dir = _realpath(values[1])
         found = _fs("lstat", os.lstat, common_dir)
         toplevel = _realpath(values[0])
-    except EvidenceError:
+    except EvidenceError as exc:
+        if errors is not None and exc.errno not in (errno.ENOENT, errno.ENOTDIR):
+            errors.append(exc.error)
         return None
     return {"root": toplevel, "common_dir": common_dir, "dev": found.st_dev, "ino": found.st_ino,
             "superproject": values[2]}
@@ -5521,17 +5528,18 @@ def registry_twin(evidence, records, rows, common_dir, unread=frozenset()):
     builds no row for skipped, then compared by shared_identities().
     Returns `identity-changed` when a present entry shares a checked row's
     realpath or admin id, since two spellings of one worktree both pass the
-    two-way check; `deadline-exceeded` when the work deadline cut one of these
-    reads (R-80, P-2), so that no twin goes unread for want of time; else
-    None. Every entry is read, a row past the cap included, since the cap
+    two-way check; `state-changed` when an entry's lstat or realpath decided
+    nothing (the lead's R-208); `deadline-exceeded` when the work deadline cut
+    one of these reads (R-80, P-2), so that no twin goes unread for want of
+    time; else None. Every entry is read, a row past the cap included, since the cap
     bounds planning's rows and not this comparison. rows are the checked
     rows; common_dir the planned common directory; unread the raw paths of
     the plan's rows whose lstat failed while planning (`present: null`).
 
     An entry whose lstat or realpath fails other than with ENOENT or ENOTDIR,
-    a call cut at its probe budget included, gives `identity-changed` at
-    once: a twin could stand behind it, and a value that cannot be re-read is
-    a difference (the project-clean-review-safety delta, rs:92-93; lead
+    a call cut at its probe budget included, gives `state-changed` at once
+    (R-208): a twin could stand behind it, and a value that cannot be re-read
+    is a difference (the project-clean-review-safety delta, rs:92-93; lead
     ruling R-93 (e), LOW-3). Planning fails closed on such an entry too:
     --all-safe makes its row `inspection-error`, and in single mode a
     realpath that raises leaves P's match undecided (R-78 (b)). One entry is
@@ -5561,7 +5569,7 @@ def registry_twin(evidence, records, rows, common_dir, unread=frozenset()):
         realpath_failed = (read["present"] is True and read["tree"] is None
                            and not _absence_error(read["errors"][-1], "realpath"))
         if lstat_failed or realpath_failed:
-            return "identity-changed"
+            return "state-changed"  # a read that decided nothing (R-208)
         if raw in own:
             checked.add(len(reads))
         reads.append(read)
@@ -5595,11 +5603,7 @@ def revalidation_difference(plan, target, run, part, seen):
        target re-resolved as planned, else `state-changed`.
     5. By filesystem reads, each checked row's path present with its planned
        `dev` and `ino`, and its two-way registration holding with its planned
-       `admin_id` (verify_registration()), else `identity-changed`; where the
-       plan's row 4c read true, the target's effective work tree
-       (effective_work_tree(), strict), `identity-changed` only for a decided
-       other toplevel and `state-changed` for a probe that decided nothing
-       (the lead's R-171); then no
+       `admin_id` (verify_registration()), else `identity-changed`; then no
        other present entry of the registry listing sharing a checked row's
        realpath or admin id, a twin made after planning (registry_twin();
        lead ruling R-81 (a)), and no entry whose lstat or realpath cannot
@@ -5607,7 +5611,13 @@ def revalidation_difference(plan, target, run, part, seen):
        R-93 (e), LOW-3), else `identity-changed`; then the target's
        `modules` check, else `contains-submodule`; then the listing of its
        admin directory (operation_check(); D22, LQ-14), else
-       `operation-in-progress` for a marker it finds.
+       `operation-in-progress` for a marker it finds; then, where the plan's
+       row 4c read true, the target's effective work tree
+       (effective_work_tree(), strict), `identity-changed` only for a decided
+       other toplevel and `state-changed` for a probe that decided nothing
+       (the lead's R-171). The filesystem checks come before that probe, in
+       the review-safety delta's order (the lead's R-198), so that one of
+       them that refuses spares its child.
     6. The combined status probe in the target, which must print no record,
        else `state-changed`.
     7. The hidden-state probe in the target: its own reason
@@ -5619,21 +5629,27 @@ def revalidation_difference(plan, target, run, part, seen):
 
     The checked rows are the target's own, or for the first selected target
     every selected row: its revalidation is the preflight of every selected
-    target in steps 3 to 5, so that a difference on any of them refuses the
-    first target and nothing is removed (research.md R16, lead ruling R-41,
-    LQ-4); steps 6 and 7, the ignored-file state and the classification
-    among them, run in each target's own revalidation. A value null in the
+    target in steps 3 and 4 and in step 5's identity reads and twin check,
+    so that a difference there on any of them refuses the first target and
+    nothing is removed (research.md R16, lead ruling R-41, LQ-4). Step 5's
+    `modules` check, admin directory listing and effective-work-tree probe,
+    and steps 6 to 8, the ignored-file state, the classification and the
+    worktree-only commits among them, read the target alone, in each
+    target's own revalidation (lane 3's W32 L2). A value null in the
     plan and null again is no difference; a value that cannot be re-read is
     one. Every Git child of these steps that fails, or runs past its own
     budget while the deadline is not the limit, is `state-changed`, whatever
     its step, and gives its step's own reason only for a value it decided
     (the lead's R-171 and R-195; #19 at 4485678): the identity probe, the
     registry listing, the ref listing, the work-tree probe, the status
-    probe, the hidden-state probe and the reachability probe. A filesystem
-    read that fails takes its step's reason: a failed `modules` check
-    `contains-submodule`; a failed admin directory listing or read of
-    logs/HEAD `state-changed` (lead rulings R-124 and R-127). A `timeout`
-    stays such a difference (T084).
+    probe, the hidden-state probe and the reachability probe; and so is
+    every filesystem call of these steps that fails other than with ENOENT
+    or ENOTDIR, or runs past its own budget (the lead's R-208; #19 at
+    9267303): step 1's identity reads, step 5's lstat, registration reads,
+    twin reads, `modules` check, admin directory listing and read of
+    logs/HEAD. ENOENT or ENOTDIR decides that the path is absent, which
+    keeps the step's reason: an absent target, `.git` or admin directory is
+    `identity-changed`. A `timeout` stays such a difference (T084).
 
     A read the work deadline cut gives `deadline-exceeded` instead, never a
     difference (T099; lead ruling R-80, P-2): its row error's code says so,
@@ -5656,12 +5672,12 @@ def revalidation_difference(plan, target, run, part, seen):
 
     if not part and slot_set(run):
         return "interrupted"
-    probe_errors = []
-    found = part["identity"] if part else repository_identity(root, run, probe_errors)
-    if found is None and not part and (work_spent(run) or any(map(read_cut, probe_errors))):
+    read_errors = []
+    found = part["identity"] if part else repository_identity(root, run, read_errors)
+    if found is None and not part and (work_spent(run) or any(map(read_cut, read_errors))):
         return "deadline-exceeded"
-    if found is None and probe_errors:
-        return "state-changed"  # an identity probe that decided nothing (R-195)
+    if found is None and read_errors:
+        return "state-changed"  # an identity probe or read that decided nothing (R-195, R-208)
     if not same_repository(found, planned):
         return "identity-changed"
 
@@ -5733,24 +5749,20 @@ def revalidation_difference(plan, target, run, part, seen):
             seen["path_present"] = present
         if isinstance(result, EvidenceError) and read_cut(result.error):
             return "deadline-exceeded"
+        if present is None:
+            return "state-changed"  # an lstat that decided nothing (R-208)
         if not present or (result.st_dev, result.st_ino) != (row.dev, row.ino):
             return "identity-changed"
         try:
             registered, admin_id = verify_registration(row.raw_path, common_dir, False)
         except EvidenceError as exc:
-            return "deadline-exceeded" if read_cut(exc.error) else "identity-changed"
+            if read_cut(exc.error):
+                return "deadline-exceeded"
+            # A registration read that failed decided nothing (R-208); an
+            # absent file decides, as verify_registration() reads one.
+            return "identity-changed" if exc.errno in (errno.ENOENT, errno.ENOTDIR) else "state-changed"
         if not registered or admin_id != row.admin_id:
             return "identity-changed"
-    if evidence.get("worktree_config") is True:  # the target's effective work tree, as row 4c read (LQ-11)
-        if slot_set(run):
-            return "interrupted"
-        holds, error = effective_work_tree(target.row.raw_path, run, strict=True)
-        if read_cut(error):
-            return "deadline-exceeded"
-        if holds is None:
-            return "state-changed"  # a probe that decided nothing (R-171)
-        if not holds:
-            return "identity-changed"  # a decided different work tree
     if slot_set(run):
         return "interrupted"
     unread = {row.raw_path for row in getattr(plan, "rows", None) or () if row["present"] is None}
@@ -5762,17 +5774,34 @@ def revalidation_difference(plan, target, run, part, seen):
     reason, error = modules_check(common_dir, target.row.admin_id, run)
     if read_cut(error):
         return "deadline-exceeded"
-    if reason is not None or error is not None:
-        return "contains-submodule"
+    if error is not None:
+        return "state-changed"  # a modules check that decided nothing (R-208)
+    if reason is not None:
+        return reason
     if slot_set(run):
         return "interrupted"
     reason, error = operation_check(common_dir, target.row.admin_id, run)  # D22's listing (LQ-14)
     if read_cut(error):
         return "deadline-exceeded"
     if error is not None:
-        return "state-changed"  # a value that cannot be re-read (R-124, R-127)
+        # An admin directory found absent decides that the registration is gone
+        # (R-208); any other failure is a value that cannot be re-read (R-124,
+        # R-127).
+        return "identity-changed" if _absence_error(error, "listdir") else "state-changed"
     if reason is not None:
         return reason
+    # The target's effective work tree, as row 4c read (LQ-11), after the
+    # filesystem checks, in the text's order (the lead's R-198).
+    if evidence.get("worktree_config") is True:
+        if slot_set(run):
+            return "interrupted"
+        holds, error = effective_work_tree(target.row.raw_path, run, strict=True)
+        if read_cut(error):
+            return "deadline-exceeded"
+        if holds is None:
+            return "state-changed"  # a probe that decided nothing (R-171)
+        if not holds:
+            return "identity-changed"  # a decided different work tree
 
     if slot_set(run):
         return "interrupted"
