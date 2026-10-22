@@ -10,7 +10,7 @@ duplicate them, and nothing here is an implementation step.
 
 - [x] 1.1 Proposal written: `proposal.md` adopts the packet's cache-disposal
   contract (`BA:1314-1337`) under the lane's rulings L-1 to L-17 and B-1 to
-  B-99, names three departures from B-6 as first written, which B-11 accepted,
+  B-106, names three departures from B-6 as first written, which B-11 accepted,
   and one from B's list of modified requirements (CD-1 to CD-4) with the rest
   of its own decisions (CD-5 to CD-18), and puts six Open Questions before
   Brett Heap; verified by its Capabilities section accounting for every
@@ -55,15 +55,17 @@ duplicate them, and nothing here is an implementation step.
   and committed as `9f30fb9`, and B-30's scope, lane 4's own words, committed
   as `4d5855a` (2.2); `design.md` holds D1 to D14 and `clarifications.md` the
   NOTED S-4; verified by `grep -c '^#### Scenario'` on each delta, by a script
-  run after the council round and again after each round from B3 to B21 that
+  run after the council round and again after each round from B3 to B22 that
   compares every scenario of each of the nine MODIFIED blocks with its source
   text, the eight blocks written on PR #19's text against it at each block's
-  base since round B21, `20084cd` for the bounds block, `173d83c` for the
-  retire and revalidation blocks, `e14ada0` for the reconcilable-result block,
-  `b3228bb` for the batch block, `6bf9f77` for the classification block and
-  `f0bf538` for the preservation and narrow-guarantee blocks, whose text
-  `20084cd` keeps (B-76, B-80, B-84, B-87, B-88, B-93, B-95, B-99), the bounds
-  block at `b3228bb` in rounds B16 to B20, the retire, reconcilable-result and
+  base since round B22, `2250830` for the retire, reconcilable-result and
+  bounds blocks, `173d83c` for the revalidation block, `b3228bb` for the batch
+  block, `6bf9f77` for the classification block and `f0bf538` for the
+  preservation and narrow-guarantee blocks, whose text `2250830` keeps (B-76,
+  B-80, B-84, B-87, B-88, B-93, B-95, B-99, B-104), the bounds block at
+  `20084cd` in round B21, the retire block at `173d83c` and the
+  reconcilable-result block at `e14ada0` in rounds B19 to B21, the bounds block
+  at `b3228bb` in rounds B16 to B20, the retire, reconcilable-result and
   revalidation blocks at `e14ada0` in round B18, the retire and
   reconcilable-result blocks at `e0c91bb` and the revalidation block at
   `b3228bb` in round B17, the retire and reconcilable-result blocks at
@@ -78,7 +80,7 @@ duplicate them, and nothing here is an implementation step.
   branch after 1.4, after the alignment fix round, after the council round
   (the last with the B-22 `project-overview` edit not yet committed), again
   after lane 4's agreement and that edit's commit, after round B3, after round
-  B4, and after each round from B5 to B21. The INFO lines, that the archive
+  B4, and after each round from B5 to B22. The INFO lines, that the archive
   would refuse a delta whose MODIFIED requirement change 1 or change 2 adds
   until that change is archived, are the expected state for blocks written on
   sister changes.
@@ -92,15 +94,15 @@ duplicate them, and nothing here is an implementation step.
   feature 004 merges, with draft PR #19's amendment of change 1 landed first
   (L-16), or PR #19 closed, and the eight MODIFIED blocks written on PR #19's
   text, each at its base (B-54, B-58, B-60, B-69, B-76, B-80, B-84, B-87, B-88,
-  B-93, B-95, B-99), one at `20084cd` ("Clean bounds its Git work and reports
-  omitted work"), two at `173d83c` ("Clean can explicitly retire verified
-  worktrees" and "Cleanup revalidates destructive actions"), one at `e14ada0`
-  ("Clean records a reconcilable result for every removal target"), one at
-  `b3228bb` ("Clean previews and applies a batch of eligible worktree removals
+  B-93, B-95, B-99, B-104), three at `2250830` ("Clean can explicitly retire
+  verified worktrees", "Clean bounds its Git work and reports omitted work" and
+  "Clean records a reconcilable result for every removal target"), one at
+  `173d83c` ("Cleanup revalidates destructive actions"), one at `b3228bb`
+  ("Clean previews and applies a batch of eligible worktree removals
   in one repository"), one at `6bf9f77` ("Clean classifies preservation and
   cleanup actions") and two at `f0bf538` ("Cleanup preserves all local work not
   proven disposable" and "Cleanup states a narrow guarantee and its residual
-  window"), whose text `20084cd` keeps, re-checked against the archived text
+  window"), whose text `2250830` keeps, re-checked against the archived text
   and rewritten where it differs; if PR #19 closes unmerged, those eight blocks
   are re-based on change 1's text at main (B-52, RD's M2); a re-base that
   changes this change's added text returns the block to Brett Heap before the
