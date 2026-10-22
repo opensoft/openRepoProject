@@ -685,7 +685,7 @@ NEXT_STEP_FIXTURES = {
     "reflog-unavailable": "the branch's reflog is missing, expired or undecidable; review, then git worktree remove yourself",
     "contains-submodule": "review, then remove the worktree yourself",
     "hidden-local-state": "review, then remove the worktree yourself",
-    "operation-in-progress": "a git am, merge, notes merge, cherry-pick, revert, rebase or bisect is, or may be, in progress there; finish or abort it (a squash merge that holds an autostash ends only with git commit, --allow-empty where nothing is staged), then run again",
+    "operation-in-progress": "a git am, merge, notes merge, cherry-pick, revert, rebase or bisect is, or may be, in progress there; finish or abort it (a squash merge that holds an autostash ends with git commit, --allow-empty where nothing is staged, or with git merge --quit, which keeps the edit in the stash list), then run again",
     "worktree-only-commits": "a commit is, or may be, held only by this worktree's HEAD reflog or refs/worktree; keep it on a branch or tag, or review, then git worktree remove yourself",
     "registration-mismatch": "review, then git worktree repair or git worktree prune, or remove the row by hand",
     "inspection-error": "review, then git worktree repair or git worktree prune, or remove the row by hand",
