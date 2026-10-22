@@ -615,6 +615,32 @@ Lane: openRepoProject-4
   `suggestions-gates.md` and CHK015 here were re-read, no category changing,
   and the totals below were recounted by script. Re-validation: 16 of 16 items
   pass, with the checks of iteration 2 re-run by script on the edited spec.
+- 2026-10-22, a fourteenth pass: #19's round (d), `9267303` (lane
+  openRepoProject-2's R-207 and R-208; lane openRepoProject-3's W36 read and
+  W32 L1), and A1's revision 9 at `4261ff8`, by the lead's commit 3l decisions.
+  For #19's two batch-only gates, a listing or read not finished within the
+  filesystem budget, the deadline not being the limit, now records
+  `probe-timeout` and makes the row `inspection-error`, where it left the row
+  unprobed; FR-032, SC-004 and the LQ-13 bullet follow it, as A1 does, and so
+  do CHK012 of `suggestions-gates.md` and CHK020 of `integration.md`, their
+  categories unchanged; the overview's own branch-reflog gate (FR-033, FR-034)
+  is unchanged. The LQ intro re-checks round (d): `project-command` is
+  unchanged; the gate block changes those two sentences only; the scenarios,
+  the caps of "Clean bounds" and the Risk keep their text at the lines it
+  states; R-208 governs revalidation only, the LQ-13 bullet's revalidation
+  sentence still holding; and R-207 costs LQ-20's options, (c) moving no value
+  this spec states and step (d) now lowering the report's row cap too, so the
+  re-align condition's second arm also takes the 256-row cap. Every live
+  citation of A1 now cites `4261ff8` by A1's line map: its spec's lines do not
+  move; its proposal's lines from :1323 on move down 4, the gates item to
+  :1300-1338 and its outcome rule to :1311-1326, and its LQ intro's merge order
+  ends at :1271. No other pin moves, and `clarify-questions.md` is unchanged.
+  In this folder, CHK006 of `deployment.md`, CHK012 and CHK020 of
+  `integration.md`, CHK012 of `ux.md`, CHK003 and CHK011 of `observability.md`,
+  CHK002, CHK003 and CHK019 of `security.md`, CHK012 of `suggestions-gates.md`
+  and CHK015 here were re-read, no category changing, and the totals below were
+  recounted by script. Re-validation: 16 of 16 items pass, with the checks of
+  iteration 2 re-run by script on the edited spec.
 - Items marked incomplete require spec updates before `/speckit-clarify` or `/speckit-plan`
 
 ## Cross-cutting Requirements Quality (no-argument `/speckit.checklist`, 2026-10-19)
@@ -661,7 +687,7 @@ Lane: openRepoProject-4
   - Result: pass.
 - [x] CHK015 Are the exit rules consistent across FR-029, FR-042, FR-043, FR-044 and the stories? [Consistency, Spec FR-042]
   - Result: pass; FR-043's pointer also names FR-042's exit-2 causes
-    (POD:765-766), for which amendment A1 at `177eadf` proposes
+    (POD:765-766), for which amendment A1 at `4261ff8` proposes
     `relative-config-path` with exit 2, pending.
 
 ### Acceptance Criteria Quality
@@ -727,4 +753,5 @@ notes (PN-1 to PN-18 but PN-4 and PN-11, withdrawn on 2026-10-21; PN-2 narrowed
 to an exception of any other kind in human mode and widened to a failed write's
 standard-error line), 0 new questions. Recounted by script on 2026-10-21, and
 again after the re-check, after the W6 read and after the fourth to twelfth
-passes of that day, and after the thirteenth pass on 2026-10-22.
+passes of that day, and after the thirteenth and fourteenth passes on
+2026-10-22.
