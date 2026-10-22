@@ -44,10 +44,11 @@ of 2026-10-22 on LQ-20, choosing its step (i), with that step's measurement, and
 lane openRepoProject-3's W42 read of round (e), under the lead's R-236, Context,
 D7, D14, D22, Risks and Open Questions; and its W52 read of next steps that Git
 refuses, under the lead's R-248, Context, D4, D18, Risks and the Migration Plan,
-its F-1, the ceiling's recovery text, left for Brett Heap. Brett Heap's ruling
-of 2026-10-09 on open question 1, that a local ancestry proof outranks
-`remote-gone` for worktree rows, is in `proposal.md` Decisions and edited
-Context, D6, D7, D20, Risks, the Migration Plan and Open Questions here.
+its F-1, the ceiling's recovery text, left for Brett Heap; and the shortening of
+F-7's clause, under the lead's R-252, Context, D18 and the Migration Plan. Brett
+Heap's ruling of 2026-10-09 on open question 1, that a local ancestry proof
+outranks `remote-gone` for worktree rows, is in `proposal.md` Decisions and
+edited Context, D6, D7, D20, Risks, the Migration Plan and Open Questions here.
 
 Citations are `file:line` at `da33d92`: `BA`, `DI`, `OV` and `HO` are the
 packet's batch-cleanup, project-discovery, overview and handoff documents, and
@@ -1189,22 +1190,21 @@ complete plan selects nothing, `No eligible worktrees`.
 The next steps by reason: `dirty` "commit or preserve the changes";
 `ignored-local-files` "move or delete the ignored files by hand";
 `unstarted-branch` "no commit was made on this branch here since it was created;
-review, then git worktree remove yourself, with --force where Git refuses it for
-a submodule"; `reflog-unavailable` "the branch's reflog is missing, expired or
-undecidable; review, then git worktree remove yourself, with --force where Git
-refuses it for a submodule", since both are gate 7, ahead of
-`contains-submodule`, and a plain `git worktree remove` of a worktree holding a
-submodule exits 128 (lane openRepoProject-3's W52 F-7, R-248);
-`contains-submodule` "review, then git worktree remove --force yourself" (W52
-F-8, R-248); `hidden-local-state` "review, then remove the worktree yourself";
-`operation-in-progress` "a git am, merge, notes merge, cherry-pick, revert,
-rebase or bisect is, or may be, in progress there; finish or abort it (a squash
-merge that holds an autostash ends with git commit, --allow-empty where nothing
-is staged, or with git merge --quit, which keeps the edit in the stash list),
-or, where Git says none is in progress, its --quit, then run again" (LQ-14,
-R-126, R-146, R-171), the `--quit` clause for a marker left with nothing in
-progress, such as an empty `sequencer` or `rebase-merge`, where `--abort` fails
-and only `--quit` clears it (W52 F-9, R-248);
+review, then git worktree remove yourself (--force if it holds a submodule)";
+`reflog-unavailable` "the branch's reflog is missing, expired or undecidable;
+review, then git worktree remove yourself (--force if it holds a submodule)",
+since both are gate 7, ahead of `contains-submodule`, and a plain `git worktree
+remove` of a worktree holding a submodule exits 128 (lane openRepoProject-3's
+W52 F-7, R-248); `contains-submodule` "review, then git worktree remove --force
+yourself" (W52 F-8, R-248); `hidden-local-state` "review, then remove the
+worktree yourself"; `operation-in-progress` "a git am, merge, notes merge,
+cherry-pick, revert, rebase or bisect is, or may be, in progress there; finish
+or abort it (a squash merge that holds an autostash ends with git commit,
+--allow-empty where nothing is staged, or with git merge --quit, which keeps the
+edit in the stash list), or, where Git says none is in progress, its --quit,
+then run again" (LQ-14, R-126, R-146, R-171), the `--quit` clause for a marker
+left with nothing in progress, such as an empty `sequencer` or `rebase-merge`,
+where `--abort` fails and only `--quit` clears it (W52 F-9, R-248);
 `worktree-only-commits` "a commit is, or may be, held only by this worktree's
 HEAD reflog or refs/worktree; keep it on a branch or tag, or review, then git
 worktree remove yourself" (LQ-13); `registration-mismatch` "review, then git
@@ -1754,16 +1754,16 @@ Users meet five behaviour changes first: plain `project clean` exits 1 when its
 report is incomplete; `clean` refuses below Git 2.36; `--worktree P` refuses a
 freshly created merged worktree whose branch has no commit of its own, with the
 remedy "no commit was made on this branch here since it was created; review,
-then git worktree remove yourself, with --force where Git refuses it for a
-submodule"; a merged worktree whose branch reflog keeps no decisive entry (no
-activity for `gc.reflogExpire`, 90 days by default, D10) is refused as
-`reflog-unavailable` in single mode as well as withheld from the batch, with the
-remedy "the branch's reflog is missing, expired or undecidable; review, then git
-worktree remove yourself, with --force where Git refuses it for a submodule"
-(D18; lane openRepoProject-3's W52 F-7, R-248); and `--worktree P` removes a
-merged worktree whose upstream was deleted, as `merged-removable` when its gates
-pass, its branch kept, where `a040790` refuses it as `unpublished` (D6, Brett
-Heap's ruling on open question 1). The README's clean section states them first.
+then git worktree remove yourself (--force if it holds a submodule)"; a merged
+worktree whose branch reflog keeps no decisive entry (no activity for
+`gc.reflogExpire`, 90 days by default, D10) is refused as `reflog-unavailable`
+in single mode as well as withheld from the batch, with the remedy "the branch's
+reflog is missing, expired or undecidable; review, then git worktree remove
+yourself (--force if it holds a submodule)" (D18; lane openRepoProject-3's W52
+F-7, R-248); and `--worktree P` removes a merged worktree whose upstream was
+deleted, as `merged-removable` when its gates pass, its branch kept, where
+`a040790` refuses it as `unpublished` (D6, Brett Heap's ruling on open
+question 1). The README's clean section states them first.
 
 1. Ratification by Brett Heap's word on PR #11 (`tasks.md` 1.6), which
    ratified the V5 deferral and left the squash-merge question before him; the

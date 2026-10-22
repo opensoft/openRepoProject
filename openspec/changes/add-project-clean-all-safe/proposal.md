@@ -83,18 +83,16 @@ Scope).
   worktree whose branch has no commit of its own (`target-excluded`, reason
   `unstarted-branch`), where `a040790` removes it (M4), with the remedy "no
   commit was made on this branch here since it was created; review, then git
-  worktree remove yourself, with --force where Git refuses it for a
-  submodule". A merged worktree whose branch reflog keeps no decisive entry
-  (the branch saw no activity for `gc.reflogExpire`, 90 days by default) is
-  likewise refused in single mode (`target-excluded`, reason
-  `reflog-unavailable`) as well as withheld from the batch, with the remedy
-  "the branch's reflog is missing, expired or undecidable; review, then git
-  worktree remove yourself, with --force where Git refuses it for a
-  submodule". And where `a040790` refuses a merged worktree
-  whose upstream was deleted as `unpublished`, `--worktree P` now removes it
-  as `merged-removable` when its gates pass, its branch kept (Brett Heap's
-  ruling of 2026-10-09; Decisions). The README's clean section states these
-  five first.
+  worktree remove yourself (--force if it holds a submodule)". A merged worktree
+  whose branch reflog keeps no decisive entry (the branch saw no activity for
+  `gc.reflogExpire`, 90 days by default) is likewise refused in single mode
+  (`target-excluded`, reason `reflog-unavailable`) as well as withheld from the
+  batch, with the remedy "the branch's reflog is missing, expired or
+  undecidable; review, then git worktree remove yourself (--force if it holds a
+  submodule)". And where `a040790` refuses a merged worktree whose upstream was
+  deleted as `unpublished`, `--worktree P` now removes it as `merged-removable`
+  when its gates pass, its branch kept (Brett Heap's ruling of 2026-10-09;
+  Decisions). The README's clean section states these five first.
 - **`project clean <root> --all-safe` previews a batch.** It plans every
   eligible linked worktree of one resolved repository: `selected` and
   `excluded`, each exclusion with one reason in the fixed gate order
@@ -1790,7 +1788,17 @@ Capabilities `:55`; this list; design Context, D4, D18, Risks, Migration Plan;
 `tasks.md` 1.2; the deltas' `Clean classifies preservation and cleanup
 actions`, `Clean can explicitly retire verified worktrees` and its scenario
 "Branch deletion refuses a branch it may not delete", and `Clean previews and
-applies a batch of eligible worktree removals in one repository`).
+applies a batch of eligible worktree removals in one repository`). Round (g2),
+lane openRepoProject-4's A1 on change 2's overview (PR #34), under the lead's
+R-252: the overview mirrors the remedies of `unstarted-branch` and
+`reflog-unavailable` under a 200-character message rule, so the clause that
+round (g) added to them (F-7) is shortened. Both remedies now end "review, then
+git worktree remove yourself (--force if it holds a submodule)", in What
+Changes, first bullet, and in design D18 and the Migration Plan. The advice, the
+gate order and the scenario counts stay, and no delta is edited. This commit
+also re-wrapped the paragraphs its edits shortened or lengthened, with no other
+change of words (What Changes, first bullet; this list; design Context, D18,
+Migration Plan; `tasks.md` 1.2).
 
 ### Council Verdicts
 
