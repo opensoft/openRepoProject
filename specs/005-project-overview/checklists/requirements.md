@@ -693,17 +693,42 @@ Lane: openRepoProject-4
   cited at `c193f7b`. No checklist result changes, and the totals below were
   recounted by script. Re-validation: 16 of 16 items pass, with the checks of
   iteration 2 re-run by script on the edited spec.
-- 2026-10-22, an eighteenth pass: lane openRepoProject-3's W43 read of 3n and
-  3o (HIGH 0, MEDIUM 0, LOW 2), by the lead's commit 3p decisions. The round
-  (d) sentence now says that the proposal states that step (d) lowers the
-  report's row cap, the 256-row cap that the Dependencies state, as design D14
-  already gave it at `2e819ad`, with no figure of (d) (LOW-1); and the LQ-13
-  bullet puts "where the listing or read left the row unprobed before" in
-  parentheses, so that it cannot attach to the deadline arm (LOW-2). W43's O1
-  and O2 are left as observations. No pin moves, A1 stays cited at `c193f7b`,
-  and `clarify-questions.md` is unchanged. No checklist result changes, and the
-  totals below were recounted by script. Re-validation: 16 of 16 items pass,
-  with the checks of iteration 2 re-run by script on the edited spec.
+- 2026-10-22, an eighteenth pass: lane openRepoProject-3's W43 read of A1's
+  revision 10 and of 3n and 3o (HIGH 0, MEDIUM 0, LOW 2), by the lead's commit
+  3p decisions. The round (d) sentence now says that the proposal states that
+  step (d) lowers the report's row cap, the 256-row cap that the Dependencies
+  state, as design D14 already gave it at `2e819ad`, with no figure of (d)
+  (LOW-1); and the LQ-13 bullet puts "where the listing or read left the row
+  unprobed before" in parentheses, so that it cannot attach to the deadline arm
+  (LOW-2). W43's O1 and O2 are left as observations. No pin moves, A1 stays
+  cited at `c193f7b`, and `clarify-questions.md` is unchanged. No checklist
+  result changes, and the totals below were recounted by script. Re-validation:
+  16 of 16 items pass, with the checks of iteration 2 re-run by script on the
+  edited spec.
+- 2026-10-22, a nineteenth pass: Brett Heap ratified amendment A1 on
+  2026-10-22, at about 12:04Z in lane openRepoProject-4's session, in his words
+  "ratify 34", and A1 records it in its task 1.7 at `e4a30fc`, by the lead's
+  commit 3q decisions. Every "pending" of the spec and of this folder was
+  classified: 28 of the spec's 48 and 11 of this folder's 33 mark A1's own
+  ratification and now read "ratified" (or "ratified by Brett Heap in PR #34");
+  the spec's other 20 mark PR #19's or #29's ratification or feature 004's fix,
+  and this folder's other 22 mark PR #19's ratification, feature 004's fix or a
+  dated record, and stay. The Clarifications intro cites the RULED line once,
+  where the spec first states A1's status; the A1 bullet, its ordering rule and
+  the LQ intro say that A1 was ratified first, so that PR #34 stays a draft
+  until #19's ratification of the commits its four LQ items follow, and that
+  the gate on planning from the folded requirements is met, the plan still
+  waiting for Brett Heap's word (C-56). Every live citation of A1 now cites
+  `e4a30fc` by A1's line map: its spec's lines do not move, and its proposal's
+  lines move by the map (the A1 section to :1073-1510). The eighteenth pass now
+  names A1's revision 10 in W43's range (lane openRepoProject-3's W45). No
+  other pin moves, and `clarify-questions.md` is unchanged. In this folder,
+  CHK006 of `deployment.md`, CHK012 and CHK020 of `integration.md`, CHK012 of
+  `ux.md`, CHK003 and CHK011 of `observability.md`, CHK002, CHK003 and CHK019
+  of `security.md`, CHK012 of `suggestions-gates.md` and CHK015 here were
+  re-read, no category changing, and the totals below were recounted by script.
+  Re-validation: 16 of 16 items pass, with the checks of iteration 2 re-run by
+  script on the edited spec.
 - Items marked incomplete require spec updates before `/speckit-clarify` or `/speckit-plan`
 
 ## Cross-cutting Requirements Quality (no-argument `/speckit.checklist`, 2026-10-19)
@@ -750,8 +775,8 @@ Lane: openRepoProject-4
   - Result: pass.
 - [x] CHK015 Are the exit rules consistent across FR-029, FR-042, FR-043, FR-044 and the stories? [Consistency, Spec FR-042]
   - Result: pass; FR-043's pointer also names FR-042's exit-2 causes
-    (POD:765-766), for which amendment A1 at `c193f7b` proposes
-    `relative-config-path` with exit 2, pending.
+    (POD:765-766), for which amendment A1 at `e4a30fc` proposes
+    `relative-config-path` with exit 2, ratified.
 
 ### Acceptance Criteria Quality
 
@@ -816,5 +841,5 @@ notes (PN-1 to PN-18 but PN-4 and PN-11, withdrawn on 2026-10-21; PN-2 narrowed
 to an exception of any other kind in human mode and widened to a failed write's
 standard-error line), 0 new questions. Recounted by script on 2026-10-21, and
 again after the re-check, after the W6 read and after the fourth to twelfth
-passes of that day, and after the thirteenth to eighteenth passes on
+passes of that day, and after the thirteenth to nineteenth passes on
 2026-10-22.

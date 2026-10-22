@@ -21,7 +21,7 @@ Lane: openRepoProject-4
   - Result: pass; re-read on 2026-10-21: [E]'s list as PR #19 amends it at
     `423a532`, thirty-one names, and [E]'s four status pins, the last two as PR
     #19 adds them at `ea697ba` for LQ-10, pending its ratification, and the
-    four as amendment A1 at `c193f7b` restates them, pending (FR-016; C-63).
+    four as amendment A1 at `e4a30fc` restates them, ratified (FR-016; C-63).
 - [x] CHK003 Are the residuals beyond the pins and the scrub recorded (remote-helper protocols, configuration files, trace targets, attribute filters)? [Completeness, Spec EC-006, EC-022]
   - Result: fixed in spec.md, EC-036 (2026-10-21): a relative `HOME` or
     `XDG_CONFIG_HOME` makes a file inside a candidate act as the user's
@@ -29,7 +29,7 @@ Lane: openRepoProject-4
     openRepoProject-2's LQ-15 refuses such a value, as PR #19 amends [E] at
     `cc000ea` and `9fb22fa`, pending its ratification, `9fb22fa` leaving the
     overview's code and exit status to `add-project-overview`, where amendment
-    A1 at `c193f7b` proposes `relative-config-path` with exit 2, pending,
+    A1 at `e4a30fc` proposes `relative-config-path` with exit 2, ratified,
     departing from the packet's DI:1086-1089 (FR-043; Dependencies). The `gh`
     children of #25, which the overview never starts, are recorded outside
     Q9 B's claim, the caller's environment passing to them unread (#29's D5 at
@@ -38,7 +38,7 @@ Lane: openRepoProject-4
     `d644517`, EC-022 and FR-040 also record that LQ-10's status pins widen the
     clean-filter residual, as #19's design Risks says (its
     `design.md:1420-1425` at `1ebdd90`) and A1 records beside requirement 9's
-    sentence after POD:717 (its `proposal.md:1433-1442` at `c193f7b`), pending
+    sentence after POD:717 (its `proposal.md:1443-1452` at `e4a30fc`), ratified
     (lane openRepoProject-3's W25 L10).
 - [x] CHK004 Is the treatment of those residuals decided (accept, scrub the
   trace variables, or drop the user's configuration)? [Completeness, Spec
@@ -105,7 +105,7 @@ Lane: openRepoProject-4
 
 - [x] CHK019 Do the pins in FR-016 match [E]'s and design D13's lists character for character? [Consistency, Spec FR-016]
   - Result: pass. The seven `-c protocol.*` pins agree in all three texts.
-    FR-016 quotes [E]'s four status pins as amendment A1 at `c193f7b` restates
+    FR-016 quotes [E]'s four status pins as amendment A1 at `e4a30fc` restates
     them in requirement 3 and design D13 (its
     `specs/project-overview/spec.md:230-232` and design.md:690-691), character
     for character, the last two as PR #19 adds them at `ea697ba`, pending its
@@ -156,9 +156,10 @@ read of `08d5d79`, and CHK003 after A1's revision 3 at `367223a` and #29's
 `79d196a`, and CHK002, CHK003 and CHK019 after A1's revision 5 at `3ee860c` and
 #29's `2eeaec4`, and again after A1's revision 6 at `d644517`, and after its
 revision 7 at `0394be4` and #29's `6b5bf8f`, and after its revisions 8, 9 and
-10 at `177eadf`, `4261ff8` and `c193f7b`. 25 items: 23 pass, 1 fixed in the
-spec, 0 open, 1 plan notes, 0 new questions. An open item waits on the question
-or residual its result names; a plan note is for the plan, not the spec; a new
-question is asked in `clarify-questions.md`.
+10 at `177eadf`, `4261ff8` and `c193f7b`, and after its ratification at
+`e4a30fc`. 25 items: 23 pass, 1 fixed in the spec, 0 open, 1 plan notes, 0 new
+questions. An open item waits on the question or residual its result names; a
+plan note is for the plan, not the spec; a new question is asked in
+`clarify-questions.md`.
 
 Plan notes: PN-15 (CHK005).

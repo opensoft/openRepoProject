@@ -50,9 +50,9 @@ Lane: openRepoProject-4
   - Result: pass with C-57: one more `-k` prefix selects a small set of the
     overview's tests (FR-050); the job's `-k` selection is unchanged at
     `c9103ba` (Dependencies, Runtime and CI). Amendment A1 carries that
-    selection in change 2's Impact, the second branch Q3 B allows, at `c193f7b`
-    (its `proposal.md:455-460`), proposed in draft PR #34, pending Brett Heap's
-    ratification (FR-050).
+    selection in change 2's Impact, the second branch Q3 B allows, at `e4a30fc`
+    (its `proposal.md:456-461`), ratified by Brett Heap in PR #34
+    (Dependencies; FR-050).
 - [x] CHK013 Is the state of feature 004 that must exist before the plan
   decided? [Completeness, Dependency, Spec Dependencies]
   - Result: pass with C-56: feature 004 merged into `main`, the plan starting
@@ -87,7 +87,7 @@ Lane: openRepoProject-4
     `43f7107`) and `worktree-only-commits` (LQ-13, `93de4bb`) join the index
     gates among the exclusions only the batch applies (FR-032, SC-004). The
     overview keeps the `--all-safe` suggestion of such a worktree, as amendment
-    A1 at `c193f7b` proposes, pending, under the one outcome rule of each gate
+    A1 at `e4a30fc` proposes, ratified, under the one outcome rule of each gate
     that R-124 settles at `2b86a5f`, as #19's round (d) amends it at `9267303`,
     pending: the batch excludes the worktree on a decided result; an error on
     the listing, any other error on the `logs/HEAD` read, and a `rev-list`
@@ -143,11 +143,11 @@ CHK012 and CHK020 again after A1's revision 3 at `367223a`, and CHK020 after PR
 #19's R-124, and CHK012 and CHK020 again after A1's revision 5 at `3ee860c`,
 CHK020 with R-124's outcome rule in `2b86a5f`'s words, and again after its
 revisions 6, 7, 8, 9 and 10 at `d644517`, `0394be4`, `177eadf`, `4261ff8` and
-`c193f7b`, CHK020 also after #19's rounds (d) and (e) at `9267303` and
-`f0bf538` and after lane openRepoProject-3's W39 LOW-4, their categories
-unchanged. 26 items: 24 pass, 0 fixed in the spec, 0 open, 2 plan notes, 0 new
-questions. An open item waits on the question or residual its result names; a
-plan note is for the plan, not the spec; a new question is asked in
-`clarify-questions.md`.
+`c193f7b` and its ratification at `e4a30fc`, CHK020 also after #19's rounds (d)
+and (e) at `9267303` and `f0bf538` and after lane openRepoProject-3's W39
+LOW-4, their categories unchanged. 26 items: 24 pass, 0 fixed in the spec, 0
+open, 2 plan notes, 0 new questions. An open item waits on the question or
+residual its result names; a plan note is for the plan, not the spec; a new
+question is asked in `clarify-questions.md`.
 
 Plan notes: PN-16 (CHK025), PN-18 (CHK026).

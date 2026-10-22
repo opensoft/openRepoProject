@@ -28,9 +28,9 @@ Lane: openRepoProject-4
   [Completeness, Spec Dependencies]
   - Result: pass with C-57: a small set of the overview's tests joins the
     `git-floor` job by one more `-k` prefix, which amendment A1 carries in
-    change 2's Impact, the second branch Q3 B allows, at `c193f7b` (its
-    `proposal.md:455-460`), proposed in draft PR #34, pending Brett Heap's
-    ratification, so that it is no departure (FR-050).
+    change 2's Impact, the second branch Q3 B allows, at `e4a30fc` (its
+    `proposal.md:456-461`), ratified by Brett Heap in PR #34 (Dependencies), so
+    that it is no departure (FR-050).
 - [x] CHK007 Is distribution to installed copies stated as out of scope? [Completeness, Spec Assumptions, Out of Scope]
   - Result: pass.
 - [x] CHK008 Is the governance state of change 2's tasks stated (3.2 open until the handoff names one feature)? [Completeness, Spec Dependencies]
@@ -62,10 +62,10 @@ Lane: openRepoProject-4
 Evaluated on 2026-10-19 against `spec.md` at `8f433f7`; CHK001 and CHK006
 re-evaluated on 2026-10-21 after Brett Heap's answers (C-55 to C-71), and
 CHK006 again after the alignment with amendment A1 at `b020edc` and again at
-`367223a`, `3ee860c`, `d644517`, `0394be4`, `177eadf`, `4261ff8` and `c193f7b`,
-its result still pass. 12 items: 11 pass, 1 fixed in the spec, 0 open, 0 plan
-notes, 0 new questions. An open item waits on the question or residual its
-result names; a plan note is for the plan, not the spec; a new question is
-asked in `clarify-questions.md`.
+`367223a`, `3ee860c`, `d644517`, `0394be4`, `177eadf`, `4261ff8` and `c193f7b`
+and its ratification at `e4a30fc`, its result still pass. 12 items: 11 pass, 1
+fixed in the spec, 0 open, 0 plan notes, 0 new questions. An open item waits on
+the question or residual its result names; a plan note is for the plan, not the
+spec; a new question is asked in `clarify-questions.md`.
 
 Plan notes: none.
