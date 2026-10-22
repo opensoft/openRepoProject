@@ -1594,7 +1594,14 @@ written".
   above, declared in contracts/project-clean.md (the paragraph on `new` under
   "`status`, `doctor` and `update`") and in PR #33's body; plan.md's "Code
   touched, and what stays" lists the three functions. The requirement's text
-  stands as written.
+  stands as written. Note, 2026-10-22: one baseline text stays as it was
+  though `clean`'s own has changed: `status`'s advice for a stale worktree,
+  `Review the stale worktree metadata before pruning it manually.`
+  (`repo_state()`), omits unlocking for a locked stale entry, which `git
+  worktree prune` keeps, where `clean`'s report says to unlock it first. It is
+  a known residual, left to a follow-on change because this requirement keeps
+  the baseline's functions unchanged (lane 3's W65 LOW-3; lead ruling R-269;
+  contracts/project-clean.md, "`status`, `doctor` and `update`").
 - **FR-065**: The README's "Clean up Git worktrees" section MUST open with
   the five behaviour changes users will notice: plain `project clean`
   exiting 1 on an incomplete report; `clean` refusing below Git 2.36;

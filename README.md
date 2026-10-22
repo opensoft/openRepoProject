@@ -281,9 +281,14 @@ Standard input that is not a terminal, without `--yes`, refuses with
 exit 2 (a preview of it exits 1): `The plan is incomplete (CODE): REMEDY.` For
 `inspection-incomplete` the remedy is to repair or remove the inspection-error
 rows first (`git worktree repair`, `git worktree prune`, or remove the row by
-hand after review); for `inspect-cap`, to remove worktrees explicitly or prune
-stale entries by hand; for `deadline-exceeded`, to remove worktrees explicitly
-or re-run.
+hand after review), and where any row the refusal counts is excluded as
+`registration-mismatch`, it also names the unset, `unset core.worktree and
+core.bare in the repository's config or in a worktree's config.worktree`,
+before the removal by hand; that holds for every registration mismatch, a
+linked worktree that `core.worktree` or `core.bare` redirects or one whose
+registration is broken, or a path two entries share; for `inspect-cap`, to
+remove worktrees explicitly or prune stale entries by hand; for
+`deadline-exceeded`, to remove worktrees explicitly or re-run.
 
 `--all-safe` cannot be combined with `--action`, `--branch` or `--worktree`,
 and `--expect-plan` needs `--all-safe` and `--apply`: each is
@@ -354,7 +359,7 @@ carries its next step:
 | `deferred-target-cap` | this run removes up to 16; run again: project clean ROOT --all-safe --apply |
 | `contains-submodule` | review, then git worktree remove --force yourself |
 | `hidden-local-state` | review, then remove the worktree yourself |
-| `operation-in-progress` | a git am, merge, notes merge, cherry-pick, revert, rebase or bisect is, or may be, in progress there; finish or abort it (a squash merge that holds an autostash ends with git commit, --allow-empty where nothing is staged, or with git merge --quit, which keeps the edit in the stash list), or, where --abort fails for a marker with nothing in progress, its --quit, then run again |
+| `operation-in-progress` | a git am, merge, notes merge, cherry-pick, revert, rebase or bisect is, or may be, in progress there; finish or abort it (a squash merge that holds an autostash ends with git commit, --allow-empty where nothing is staged, or with git merge --quit, which keeps the edit in the stash list), or, where --abort fails for a marker with nothing in progress, its --quit, or, where Git leaves such a marker in place, delete it by hand from that worktree's git directory, then run again |
 | `worktree-only-commits` | a commit is, or may be, held only by this worktree's HEAD reflog or refs/worktree; keep it on a branch or tag, or review, then git worktree remove yourself |
 
 The first four reasons are facts about the row. The next four are its
@@ -371,7 +376,11 @@ marker there (`MERGE_HEAD`, `CHERRY_PICK_HEAD`, `REVERT_HEAD`, `BISECT_LOG`,
 `BISECT_START`, `rebase-apply`, `rebase-merge`, `sequencer`,
 `MERGE_AUTOSTASH`, `NOTES_MERGE_PARTIAL` or `NOTES_MERGE_REF`), though the
 worktree's files and index may look clean. A directory that cannot be listed
-makes the worktree `inspection-error`. `worktree-only-commits`, the last gate,
+makes the worktree `inspection-error`. A marker that no Git command clears,
+such as an empty `sequencer` file, which `git cherry-pick` and `git revert`
+refuse to remove with `--quit` or `--abort`, is deleted by hand from that
+worktree's git directory (`git rev-parse --git-dir` there prints it), and the
+worktree is then selected again. `worktree-only-commits`, the last gate,
 keeps a worktree that holds a commit no branch, tag or remote-tracking ref
 holds: one made on a detached HEAD there and left behind when the branch was
 checked out again, which only the worktree's HEAD reflog names, or one only a
@@ -456,17 +465,25 @@ the removal is killed, and its target is `removed` or `unknown` with reason
 fails ends the run with Git's own status.
 
 A removal killed at the ceiling, or whose exit was not seen, can leave the
-worktree's registry entry or directory behind. The note `Probable partial
-removal: inspect, then git worktree remove --force PATH by hand.` appears on
-that target (`partially-removed`), and under the `dirty` advice of a worktree
+worktree's registry entry or directory behind. The result then prints a note
+for that target (`partially-removed`), and the note follows what the rescan
+finds, because Git refuses `git worktree remove --force` once the worktree's
+`.git` file is gone or its registry entry is gone. Where the rescan shows the
+registry entry and the `.git` file both present, the note is `Probable partial
+removal: inspect, then git worktree remove --force PATH by hand.` Otherwise
+(the `.git` file or the entry gone, as a kill part way through a removal
+usually leaves it, or either one not established) it is `Probable partial
+removal: inspect, then git worktree prune and delete PATH by hand.` The rescan
+reads the `.git` file with one `lstat`, never a Git child, and only where it
+shows the entry and the path both present; the JSON result is the same either
+way. The `--force` note is also the one under the `dirty` advice of a worktree
 whose tracked files are all deleted, which is how an interrupted removal looks
 and why the note says "probable". For a locked worktree, which `git worktree
 remove --force` refuses, the row's note in the report and the preview reads
 `Probable partial removal: inspect, unlock it, then git worktree remove --force
-PATH by hand.` That form replaces ratified wording for a locked row, so it
-waits on Brett Heap's word, together with F-1, in a commit of its own,
-64ad453, which reverts alone. The forced removal is the person's own step,
-after looking, never `clean`'s. A target with the note `orphaned-directory` has
+PATH by hand.` The forced removal, or the deletion after a prune, is the
+person's own step, after looking, never `clean`'s. A target with the note
+`orphaned-directory` has
 lost its registry entry but its directory is still there. When Git had already
 deleted the worktree's `.git` file, the row is `registration-mismatch`: use
 `git worktree repair` or `git worktree prune`, or remove the row by hand.

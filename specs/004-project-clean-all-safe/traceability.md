@@ -247,6 +247,23 @@ revalidation reads cut at the work deadline,
 (F-5) (T073), `test_clean_row_evidence_never_recommends_a_step_git_refuses` and
 `test_clean_report_advice_for_the_main_worktree_and_a_locked_stale_row` (F-6
 and F-10; T028) and `test_clean_a_locked_worktree_s_partial_removal_note_unlocks_it_first`
-(F-2; T091), which no scenario title names. F-2's note replaces ratified text,
-so it waits on Brett Heap's word, together with F-1, and it is in its own
-commit, `64ad453`, which reverts alone.
+(F-2; T091), which no scenario title names. F-2's note replaces ratified text;
+Brett Heap ruled it on 2026-10-22, "F-2: yes" (the lead's R-263), and it is in
+its own commit, `64ad453`, which stays.
+
+His other ruling of that day that changes the build's text, "F-1:
+prune-then-delete", and #19's round (h) at `b3228bb` (writer G's `3eb2e9c`,
+`457a20f`, `63e4573` and `c26e44b`, merged as `7164d7f`; the lead's R-258,
+R-259, R-263 and R-274) add tests that no scenario title names either: F-1's
+`test_clean_rescan_reads_the_git_file_where_the_entry_and_the_path_remain`
+(T085), `test_clean_the_ceiling_s_recovery_text_follows_the_git_file_and_the_entry`
+(T089) and `test_clean_the_ceiling_s_partial_removal_note_follows_the_git_file_and_the_entry`
+(T091); and round (h)'s
+`test_clean_operation_in_progress_a_marker_git_leaves_is_deleted_by_hand`
+(T063), `test_clean_a_redirected_worktree_s_incomplete_plan_names_the_unset`
+(T061) and
+`test_clean_the_estimate_counts_an_identity_probe_read_one_option_per_child`
+(T098). F-1's ceiling literal in `test_clean_the_stop_block` and the
+registration-mismatch pins of `test_clean_every_protected_classifier_incomplete_copy`
+and `test_clean_the_preview_says_what_keeps_each_row_single_mode_shared_path`
+(T061, T053) change with them.

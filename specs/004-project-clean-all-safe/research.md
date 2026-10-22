@@ -383,8 +383,12 @@ scratch directory, never in the repository.
   probes and gate 12's reachability probes (LQ-13) among them, W the status
   probes, E the hidden-state probes, T the selected targets, and 6 or 7 the
   children of one revalidation (`revalidation_children()`; lead rulings
-  R-165 and R-201); `operations` is T. `performed` counts the children
-  actually spawned. Tests
+  R-165 and R-201), each 3 more, and the final rescan's 3 likewise 3 more,
+  where the path of the repository's root or of its common directory holds a
+  line feed and the identity probe is read one option per child
+  (`identity_split_children()`, `rescan_children()`; lane 5's RI-3, #19's
+  round (h) at `b3228bb`, lead ruling R-259); `operations` is T. `performed`
+  counts the children actually spawned. Tests
   compare `probes.performed` with the counting wrapper's count of children
   other than `worktree remove`, and `operations.performed` with its count of
   `worktree remove`.

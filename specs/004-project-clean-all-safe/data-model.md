@@ -236,7 +236,12 @@ row, where the ladder says `merged-removable` or `merged-current`, takes
 `The main worktree is never removed by project clean.`, since no removal of
 it can succeed, and a locked `stale-worktree` row takes `Review, unlock it,
 then prune stale worktree metadata manually.`, since `git worktree prune`
-keeps a locked entry. The class is unchanged in both.
+keeps a locked entry. The class is unchanged in both. `status` is not among
+them: its `repo_state()` keeps the baseline's `Review the stale worktree
+metadata before pruning it manually.` for every stale entry, a locked one
+included, a known residual left to a follow-on change (lane 3's W65 LOW-3;
+lead ruling R-269; contracts/project-clean.md, "`status`, `doctor` and
+`update`").
 
 ### Gate (FR-020 to FR-023; D10, D12, D13)
 
@@ -374,7 +379,14 @@ Fields, in the delta's envelope order: `schema_version`, `observed_at`,
 (`{count, exactness: "exact"}`), `notes`, `completeness`, `apply_allowed`,
 `refusals` and `plan_digest` (R12 in research.md).
 `probes` counts every Git child other than a removal and `operations` the
-removals, each child once (lead ruling R-27; research.md R8). Rows are ordered
+removals, each child once (lead ruling R-27; research.md R8). `probes.estimated`
+adds, for each selected target, the children of one revalidation (6, or 7
+where row 4c read true) and, once, those of the final rescan (3), and counts 3
+more of each where the path of the repository's root or of its common
+directory, as the plan read them, holds a line feed, since the identity probe
+is then read one option per child (9, or 10, and 6; "Revalidation step and
+`probes_performed`", below; lane 5's RI-3; #19's round (h) at `b3228bb`;
+writer G's `c26e44b`, merged as `7164d7f`). Rows are ordered
 main worktree first, then by raw path bytes; `selected`, `excluded` and the
 execution order are by raw path bytes.
 
@@ -459,6 +471,29 @@ its `spec.md:253-256`, "otherwise `unknown` with the note
 nothing is `unknown` with `removal-ceiling` and no note, failing safe (lead
 ruling R-76 (c)).
 
+Where the rescan shows the registry entry and the path both present, its last
+read is one `lstat` of the target's `.git` (`git_file_presence()`; the
+reserve's budget as for any rescan read, no Git child, so the rescan's three
+Git children stand). The result is kept on the `Target` object as
+`git_file_present` (true, false on `ENOENT` or `ENOTDIR`, or null where the
+read was not made, failed, was cut at its budget or was abandoned by a second
+SIGINT) and in no record, so that no document carries it: the reconciliation
+record, `notes` and the JSON result are unchanged. Only the human
+partial-removal note of the result reads it (`partial_removal_text()`): D18's
+`git worktree remove --force` form where `registry_entry_present` and
+`git_file_present` are both true, and otherwise `Probable partial removal:
+inspect, then git worktree prune and delete PATH by hand.`, since Git refuses
+`git worktree remove --force` once the `.git` file is gone ("validation
+failed", as a kill part way through a removal usually leaves it) or the entry
+is gone ("is not a working tree"), and accepts `git worktree prune`, which
+leaves the path a plain directory for deletion by hand; a value not
+established never shows both present. A report row's note is the baseline's
+and keeps its text, its `.git` file and entry being present (lane 3's W52
+F-1; Brett Heap's ruling "F-1: prune-then-delete" of 2026-10-22, lead ruling
+R-263, which amends ratified text, the `project-clean` delta's `spec.md:253-256`
+and `:922-926` at `0050f3e`; #19 at `b3228bb`; writer G's `3eb2e9c`, merged
+as `7164d7f`).
+
 ### Revalidation step and `probes_performed` (D7; FR-046, FR-047)
 
 Each target's revalidation runs these steps in order and stops at the first
@@ -487,9 +522,15 @@ common directory's path makes step 1 read row 3 again, one child per option, as
 design D6 allows for "the rare repeat" (`design.md:298-302`), so that a
 revalidation then runs up to 9 children, 10 with the work-tree probe, and the
 final rescan up to 6, a fill of the `project-clean` delta's bound (its
-`spec.md:825-826`; lead ruling R-82 (c), lane 3's LOW-4). A value null in the
-plan and null again is no difference; a value that cannot be re-read is a
-difference. One rule decides every read of these steps that does not finish
+`spec.md:825-826`; lead ruling R-82 (c), lane 3's LOW-4). The plan's
+`probes.estimated` counts those 3 extra children for each revalidation and 3
+for the final rescan (`identity_split_children()`, `revalidation_children()`
+and `rescan_children()`), so that it equals `probes.performed` on such a path,
+as #19's round (h) requires of it (its `spec.md:1050-1056` at `b3228bb`; lane
+5's RI-3, lead ruling R-259; writer G's `c26e44b`, merged as `7164d7f`); it
+fell three short for each target and three for the rescan before. A value
+null in the plan and null again is no difference; a value that cannot be
+re-read is a difference. One rule decides every read of these steps that does not finish
 with a value: a Git child that fails, runs past its own budget while the
 deadline is not the limit, or, as the work-tree probe can, prints anything but
 one line, and a filesystem call that fails other than with `ENOENT` or
@@ -532,12 +573,15 @@ spawned target, they are the final rescan.
 
 `probes_performed` counts the Git children of that target's revalidation,
 the three it shares with the previous target's rescan included: at most 6,
-or 7 where row 4c read true, fewer when it stopped at a difference, and 0
-when it was never revalidated.
+or 7 where row 4c read true, 3 more where a line feed repeats the identity
+probe, fewer when it stopped at a difference, and 0 when it was never
+revalidated.
 The record's `probes.performed` is the plan's count plus each target's
-`probes_performed` plus the final rescan, which is 3 when the rescan after
-the last spawned target counted toward no later target and 0 otherwise
-(`BA:816-830` and `BA:1039-1042` at `da33d92`).
+`probes_performed` plus the final rescan, which is 3 (6 where a line feed
+repeats the identity probe) when the rescan after the last spawned target
+counted toward no later target and 0 otherwise (`BA:816-830` and
+`BA:1039-1042` at `da33d92`); the plan's `probes.estimated` counts those
+extra children (above).
 
 ### Apply result record (FR-044)
 
@@ -862,7 +906,7 @@ check row, its rule unchanged; `update --apply --component shape` or
 | targets per run | 16 |
 | `ignored_entries`, `status_records`, `ignored_samples` | 64, 4,096, 8 |
 | reflog read, manifest read | 64 KiB, 1 MiB |
-| revalidation, final rescan | at most 6 and 3 Git children, 7 for revalidation where row 4c read true (LQ-11, LQ-13); 9 (10) and 6 when a line feed repeats the identity probe (D6) |
+| revalidation, final rescan | at most 6 and 3 Git children, 7 for revalidation where row 4c read true (LQ-11, LQ-13); 9 (10) and 6 when a line feed repeats the identity probe (D6), which `probes.estimated` counts (lane 5's RI-3; #19's round (h)) |
 
 The timing values live in one module-level table, `TIMING`, read at call
 time only, never captured in a default argument or a derived constant
