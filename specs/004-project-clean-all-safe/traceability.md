@@ -127,19 +127,19 @@ cover the scenario.
 | project-command (PR #19 draft) | Repository inspection requires Git 2.36 and shares one evidence model | The push child reaches its remote | US3 | `test_clean_the_push_child_reaches_its_remote`, `test_clean_the_push_child_reaches_its_remote_at_a_terminal` |
 | project-clean (PR #19 draft) | Clean reports local worktree state | A relative configuration path | US9 | `test_clean_a_relative_configuration_path`, `test_clean_a_relative_configuration_path_each_variable_and_spelling`, `test_clean_a_relative_configuration_path_not_valid_utf_8`, `test_clean_a_relative_configuration_path_empty_and_absolute_values_pass`, `test_clean_a_relative_configuration_path_before_the_version_check`, `test_clean_a_relative_configuration_path_after_the_argument_checks` |
 | project-clean (PR #19 draft) | Clean can explicitly push safe feature branches | Push refuses a branch it may not push | US3 | `test_clean_push_refuses_a_branch_it_may_not_push_no_unique_worktree` |
-| project-clean (PR #19 draft) | Clean can explicitly retire verified worktrees | Branch deletion refuses a branch it may not delete | US3 | none named after it at `9ab996e` (a gap; below) |
+| project-clean (PR #19 draft) | Clean can explicitly retire verified worktrees | Branch deletion refuses a branch it may not delete | US3 | none named after it at `8f6fa31` (a gap; below) |
 | project-clean (PR #19 draft) | Clean previews and applies a batch of eligible worktree removals in one repository | An operation in progress | US2 | `test_clean_an_operation_in_progress`, `test_clean_an_operation_in_progress_admin_directory_that_cannot_be_listed` |
 | project-clean (PR #19 draft) | Clean previews and applies a batch of eligible worktree removals in one repository | A squash merge that holds an autostash | US2 | `test_clean_a_squash_merge_that_holds_an_autostash` |
 | project-clean (PR #19 draft) | Clean previews and applies a batch of eligible worktree removals in one repository | A commit held only by the worktree | US2 | `test_clean_a_commit_held_only_by_the_worktree` |
 | project-clean-review-safety (PR #19 draft) | Cleanup revalidates destructive actions | A worktree-only commit made after the plan | US4 | `test_clean_a_worktree_only_commit_made_after_the_plan` |
 | project-clean-review-safety (PR #19 draft) | Cleanup revalidates destructive actions | An operation started after the plan | US4 | `test_clean_an_operation_started_after_the_plan` |
 | project-clean-review-safety (PR #19 draft) | Cleanup revalidates destructive actions | A check that fails at revalidation | US4 | `test_clean_a_check_that_fails_at_revalidation` |
-| project-clean-review-safety (PR #19 draft) | Cleanup revalidates destructive actions | A work-tree probe at revalidation | US4 | none named after it at `9ab996e` (a gap; below) |
+| project-clean-review-safety (PR #19 draft) | Cleanup revalidates destructive actions | A work-tree probe at revalidation | US4 | none named after it at `8f6fa31` (a gap; below) |
 | project-command (PR #19 draft) | Explicit maintenance | Owner tools see the repository the check inspected | US9 | `test_update_owner_tools_see_the_repository_the_check_inspected` |
 | project-command (PR #19 draft) | Repository inspection requires Git 2.36 and shares one evidence model | A linked worktree whose work tree is redirected | US9 | `test_clean_a_linked_worktree_whose_work_tree_is_redirected`, `test_clean_a_linked_worktree_whose_work_tree_is_redirected_after_the_plan` |
 | project-command (PR #19 draft) | Repository inspection requires Git 2.36 and shares one evidence model | A commondir that names another repository | US9 | `test_clean_a_commondir_that_names_another_repository` |
 | project-command (PR #19 draft) | Repository inspection requires Git 2.36 and shares one evidence model | A relative configuration path in status, doctor and update | US9 | `test_status_a_relative_configuration_path_in_status_doctor_and_update`, `test_status_a_relative_configuration_path_in_status_doctor_and_update_home_beginning_with_tilde` |
-| project-command (PR #19 draft) | Repository inspection requires Git 2.36 and shares one evidence model | An edit that keeps its size and restores its mtime | US9 | none named after it at `9ab996e` (a gap; below) |
+| project-command (PR #19 draft) | Repository inspection requires Git 2.36 and shares one evidence model | An edit that keeps its size and restores its mtime | US9 | none named after it at `8f6fa31` (a gap; below) |
 | project-command (PR #19 draft) | Repository inspection requires Git 2.36 and shares one evidence model | Trace targets are never written | US9 | `test_status_trace_targets_are_never_written`, `test_status_trace_targets_are_never_written_by_any_kind_of_child` |
 
 T126's writer fills the Tests cells from the merged tests (lead ruling R-32b).
@@ -151,7 +151,7 @@ the others from `main`'s deltas.
 
 A test goes in a row only when its name begins with its scenario's title, as
 rule 1 and T126 require (lead ruling R-98 (a) 2). Three of PR #19's scenarios
-have no test so named at `9ab996e`, though tests cover them; each is a gap,
+have no test so named at `8f6fa31`, though tests cover them; each is a gap,
 not a missing check (lead ruling R-166):
 
 - "Branch deletion refuses a branch it may not delete" (round (a)): by
@@ -189,7 +189,18 @@ clauses: the unlistable administrative directory (LQ-14) and, since writer
 G's `8ae0bb5`, a `logs/HEAD` line naming an object the repository does not
 hold, the reachability child exiting 128 (LQ-13); since writer G's `73d8888`
 it also pins a `.git` made unreadable (`state-changed`) and one gone, an
-absent path (`identity-changed`; the lead's R-208).
+absent path (`identity-changed`; the lead's R-208). Since writer B's `46c1f87`
+(lane 3's W41 L-4; the lead's R-241) the absence clause for a `.git` that goes
+between its lstat and its read is pinned too, by
+`test_clean_a_dot_git_file_gone_between_its_lstat_and_its_read` (T083), which
+no scenario title names.
+
+"State changes before revalidation" names its test, which since writer B's
+`9af46ab` (lane 3's W41, NOT DONE 5; the lead's R-241) also pins an unreadable
+manifest where planning read no candidate from it, in two cases,
+`manifest-unparseable-where-the-plan-read-none` and
+`manifest-unparseable-where-the-plan-read-no-key` (T081, the cases listed in
+T083).
 
 Tests that pin a requirement and match no scenario title are listed in their
 tasks, not here: among them N10's
@@ -204,4 +215,17 @@ and `test_clean_operation_in_progress_never_reaches_a_row_past_the_cap`
 `test_clean_a_target_lstat_that_fails_at_revalidation`,
 `test_clean_a_twin_read_that_fails_at_revalidation`,
 `test_clean_a_modules_check_that_fails_at_revalidation` and
-`test_clean_an_admin_directory_gone_at_its_listing` (T083).
+`test_clean_an_admin_directory_gone_at_its_listing` (T083), and lane 3's W41
+tests (writer B's `9af46ab` and `46c1f87`; the lead's R-241), the nine tests of
+revalidation reads cut at the work deadline,
+`test_clean_an_identity_probe_cut_at_revalidation`,
+`test_clean_a_manifest_re_read_cut_at_revalidation`,
+`test_clean_a_registry_listing_cut_at_revalidation`,
+`test_clean_a_ref_listing_cut_at_revalidation`,
+`test_clean_a_target_lstat_cut_at_revalidation`,
+`test_clean_a_registration_read_cut_at_revalidation`,
+`test_clean_a_twin_read_cut_at_revalidation`,
+`test_clean_a_modules_check_cut_at_revalidation` and
+`test_clean_a_status_probe_cut_at_revalidation`, beside
+`test_clean_a_ref_listing_that_decides_nothing_at_revalidation` and
+`test_clean_a_dot_git_file_gone_between_its_lstat_and_its_read` (T083).
