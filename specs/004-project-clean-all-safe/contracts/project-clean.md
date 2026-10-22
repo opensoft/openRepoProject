@@ -94,8 +94,8 @@ than the cap's 128, and the run refuses with `inspection-incomplete`, exit 2
 5. Planning under the deadline (row 7, then each row in order; in
    single mode for `--action remove` P is matched first,
    `worktree-not-found` if absent, and its row is established first, its
-   status probe then its gates (1 to 7, the deferral with P alone, then 9,
-   10 and 11), before any other row is inspected; then the other rows in order and
+   status probe then its gates (1 to 7, the deferral with P alone, then 9
+   to 12), before any other row is inspected; then the other rows in order and
    their gates), then `plan_digest`.
 6. Plan checks, in this order: an incomplete plan (a preview or report exits
    1; with `--apply`, exit 2 before any question, coded
@@ -128,8 +128,9 @@ In single mode, step 5's order is design D13's, "inspects P's row first:
 identity, status probe, gates" (`design.md:594-599`), which the delta's "P
 SHALL be probed first" (its `spec.md:262-263`) and FR-013's "probed first"
 say in short: a fill, not a departure. `build_plan()` runs gates 1 to 7,
-gate 8 (P alone) and gates 9, 10 and 11 over P's row, gate 10's `ls-files`
-and gate 11's listing included, right after it builds that row and before `worktree_rows()` takes
+gate 8 (P alone) and gates 9 to 12 over P's row, gate 10's `ls-files`,
+gate 11's listing and gate 12's `logs/HEAD` read and reachability probe
+included, right after it builds that row and before `worktree_rows()` takes
 any other row, and no gate reads another row to decide P. A work deadline
 reached among the other rows then leaves P's row decided and the plan
 complete beside the non-blocking note `deadline-exceeded`, and the apply
@@ -220,7 +221,7 @@ message}` objects, an `inspect-cap` note adding `rows`.
 | "D14 completeness line" | report: `Report: complete` or `Report: incomplete (CODES)` |
 | "D14 selection line" | report at 128 rows or fewer: `--all-safe would select N`; above: `--all-safe would be incomplete (inspect-cap)` |
 | "D18 preview layout" | `Selected (N):` with one `  remove PATH [BRANCH]` per row; `Excluded (M):` with one `  REASON (K): NEXT STEP` group per reason and `    PATH [BRANCH]` rows; an `ignored-local-files` row adds its count and first sample |
-| "D18 deferral line", "D18 non-drain line" | the `deferred-target-cap` group; the line shown when all 16 rows past the cap are `contains-submodule` |
+| "D18 deferral line", "D18 non-drain line" | the `deferred-target-cap` group; under it, when a gate after the cap excludes all 16 rows the cap took, `  these deferred rows will not drain while the 16 rows ahead of them are REASONS; review those worktrees, then remove them yourself`, REASONS their reasons, each once, in gate order, joined by `, `, so that it reads as before when all 16 are `contains-submodule` (`AFTER_CAP_REASONS`; D18 at draft PR #19 `2e819ad`; lead ruling R-146, lane 3's W21 L-f; writer G's `310f97d`) |
 | "D18 next steps" | the next step for each reason |
 | "D18 residual-window line" | the confirmation and the result |
 | "D18 empty line" | `No eligible worktrees` |
@@ -345,25 +346,32 @@ LQ-5, listed for Brett Heap in the feature PR body).
 
 Brett Heap's ruling LQ-14 adds gate 11, `operation-in-progress`, after
 `hidden-local-state` (design D22; draft PR #19 at `43f7107`, `2b86a5f` and
-`1ebdd90`; lead rulings R-102, R-121, R-124, R-126 and R-180), and with it
-two lines. Its group's next step is #19's as round (b) words it at
+`1ebdd90`; lead rulings R-102, R-121, R-124, R-126 and R-180), and his
+ruling LQ-13 gate 12, `worktree-only-commits`, after it, the last gate
+(design D21; draft PR #19 at `93de4bb` and `2b86a5f`; lead rulings R-102,
+R-124 and R-146; data-model.md, "Gate"), and with them three lines. Gate
+11's group's next step is #19's as round (b) words it at
 `4485678`: `a git am, merge, notes merge, cherry-pick, revert, rebase or
 bisect is, or may be, in progress there; finish or abort it (a squash merge
 that holds an autostash ends with git commit, --allow-empty where nothing is
 staged, or with git merge --quit, which keeps the edit in the stash list),
-then run again`. `project` at `cceb6d7` still prints round (a)'s wording,
+then run again`. `project` at `93a3ae9` still prints round (a)'s wording,
 `... ends only with git commit, --allow-empty where nothing is staged), then
 run again`, which is false, since `git merge --quit` and `git reset --hard`
 also end a held autostash, saving the edit to the stash list (lane 3's W26
-F-1; lead ruling R-171); its `NEXT_STEPS` entry follows round (b) in a later
-build. The residual-window line gains LQ-14's third item, `Not protected:
-ignored files created, index flags set or operations started after the last
-check, and any change after Git's own check.`; LQ-13's fourth, `worktree-only
-commits made`, waits for that gate. In the preview the `operation-in-progress`
-group follows `hidden-local-state`, in gate order (`EXCLUDED_GROUP_ORDER`).
+F-1; lead ruling R-171); writer G's `c15ec02`, not yet on 004, brings its
+`NEXT_STEPS` entry to round (b) (lane 3's W32 M1; lead ruling R-200). Gate
+12's group's next step is D18's at `2e819ad`: `a commit is, or may be, held
+only by this worktree's HEAD reflog or refs/worktree; keep it on a branch or
+tag, or review, then git worktree remove yourself`. The residual-window line
+gains LQ-14's third item and LQ-13's fourth: `Not protected: ignored files
+created, index flags set, operations started or worktree-only commits made
+after the last check, and any change after Git's own check.` In the preview
+the `operation-in-progress` and `worktree-only-commits` groups follow
+`hidden-local-state`, in gate order (`EXCLUDED_GROUP_ORDER`).
 `registration-mismatch`'s next step at `4485678` also names `unset
 core.worktree and core.bare in the worktree's config.worktree` (LQ-11, lead
-ruling R-125 L6); `project` at `cceb6d7` prints `review, then git worktree
+ruling R-125 L6); `project` at `93a3ae9` prints `review, then git worktree
 repair or git worktree prune, or remove the row by hand`, without that
 clause, and the text here follows the code until `NEXT_STEPS` takes it (lane
 E's and lane G's reports).
@@ -411,7 +419,7 @@ are closed within the version.
 | `merge_target` | `name`, `source`, `sha` |
 | `limits` | `worktree_rows` (the mode's cap, 128 or 256), `targets` (16), `ignored_entries` (64), `status_records` (4096), `ignored_samples` (8), the values in force |
 | `budget` | `probe_timeout_seconds` (5), `invocation_timeout_seconds` (60), `reconciliation_reserve_seconds` (10), `removal_floor_seconds` (5), `removal_ceiling_seconds` (300), `probe_concurrency` (1), the values in force |
-| `probes`, `operations` | `{estimated, performed}` integers: `probes` counts every Git child other than a removal, `operations` the removals, each child once (lead ruling R-27); `estimated` is the upper bound for an `--apply` run of this plan in every mode, previews included: F + W + E + 5T + 3 and T (research.md R8) |
+| `probes`, `operations` | `{estimated, performed}` integers: `probes` counts every Git child other than a removal, `operations` the removals, each child once (lead ruling R-27); `estimated` is the upper bound for an `--apply` run of this plan in every mode, previews included: the planning children this invocation ran (F + W + E, with LQ-11's work-tree probes and gate 12's reachability probes among them) + 6T + 3, or + 7T + 3 where row 4c read `extensions.worktreeConfig` as true (`revalidation_children()`), and T (research.md R8) |
 | `selected` | array in canonical order, or null in a report above 128 rows; each entry: `path`, `path_valid_utf8`, `branch`, `head`, `upstream`, `upstream_oid`, `ahead`, `behind`, `dev`, `ino`, `admin_id`, `locked`, the baseline signature fields (`present`, `dirty`, `ignored_files`, `remote_present`, `merged_into_target`, `current`, `classification`), and `operation` (`{kind: "worktree-remove", argv}`, the exact argument vector) |
 | `excluded` | array in canonical order: `path`, `path_valid_utf8`, `branch` (or null), `classification` (or null when never classified), `reason` (a string, the first failing gate, never null: a row left unprobed, its reflog read not finished within the filesystem budget, is `reflog-unavailable`, keeps its classification and makes the plan incomplete with `inspection-incomplete`; lead ruling R-67 (a), withdrawing R-56's null) |
 | `omitted` | `{count, exactness: "exact"}` |
@@ -470,8 +478,9 @@ values in data-model.md).
 
 Each plan note and row error carries one fixed message (lead ruling R-45).
 OPERATION names what was cut: `git SUBCOMMAND` for a Git child, or the
-filesystem call (`lstat`, `realpath`, `read`, or `listdir`, gate 11's
-listing of the row's administrative directory; LQ-14). The lane that first prints
+filesystem call (`lstat`, `realpath`, `read`, gate 12's read of `logs/HEAD`
+among them, or `listdir`, gate 11's listing of the row's administrative
+directory; LQ-13, LQ-14). The lane that first prints
 each adds its `TEXT` key as a lead-approved contracts edit, with its fixture
 in `tests/clean_support.py`: the plan notes the plan lane (T049, T051), the
 row errors lane G (T031, T032), and the two status and doctor texts the US9
@@ -617,12 +626,13 @@ restores its mtime still shows by its ctime under a repository's
 | row 4 | `-C DIR worktree list --porcelain -z` | there while the main worktree is unknown, else `root` |
 | row 4b | `-C DIR config --get core.worktree` | only when the first record is `common_dir` |
 | row 4c | `-C DIR config --file COMMON_DIR/config --type=bool --get extensions.worktreeConfig` | where rows 6 and 7 run, once per common directory, before row 6: true, false (Git prints `false` or exits 1, the key unset), or not read where an earlier probe failed, which is read as true; any other outcome is true, failing closed (Brett Heap's ruling LQ-11; draft PR #19 at `addd346`; lead rulings R-101 (g) and R-113) |
-| work tree | `-C WORKTREE rev-parse --path-format=absolute --show-toplevel` | each present linked row whose identity and registration hold, before its status probe, only where row 4c is not false; at revalidation the target's, only where row 4c read true; one line naming the row's own realpath holds; another path, a failure such as exit 128 under `core.bare=true`, or other output makes the row `registration-mismatch`, unprobed; a probe cut at its budget or the deadline, or a realpath read that fails, is a row error instead, the row `inspection-error` (LQ-11; lane E's report). At revalidation a different work tree, and at `cceb6d7` also a failed or timed-out probe, is `identity-changed`; lead ruling R-171 rules `state-changed` for the failed or timed-out probe, which lane G is building (lead ruling R-180) |
+| work tree | `-C WORKTREE rev-parse --path-format=absolute --show-toplevel` | each present linked row whose identity and registration hold, before its status probe, only where row 4c is not false; at revalidation the target's, only where row 4c read true; one line naming the row's own realpath holds; another path, a failure such as exit 128 under `core.bare=true`, or other output makes the row `registration-mismatch`, unprobed; a probe cut at its budget or the deadline, or a realpath read that fails, is a row error instead, the row `inspection-error` (LQ-11; lane E's report). At revalidation a work tree the probe decides is not the target's path is `identity-changed`, and a probe that fails, runs past its own budget or prints anything but one line is `state-changed` (the lead's R-171; writer G's `6dec3f4`) |
 | row 5 | row 3 again | `root`, only when row 3 ran elsewhere |
 | row 6 | `-C ROOT for-each-ref --format=%(refname)%00%(objectname)%00%(symref)%00%(upstream)%00%(upstream:short)%00%(upstream:track,nobracket) refs/heads refs/remotes` | `root` |
 | row 7 | `-C ROOT for-each-ref --merged=SHA --format=%(refname) refs/heads` | `root` |
 | status | `-c core.untrackedCache=false -c core.fsmonitor=false -c core.trustctime=true -c core.checkStat=default` + protocol pins + `-C WORKTREE status --porcelain=v1 -z --untracked-files=normal --ignored=matching` | the row's worktree |
 | hidden state | `-c core.untrackedCache=false -c core.fsmonitor=false -c core.trustctime=true -c core.checkStat=default` + protocol pins + `-C WORKTREE ls-files -v --stage -z` | the target's worktree |
+| reachability (gate 12) | `-C WORKTREE rev-list --max-count=1 --glob=refs/worktree CANDIDATES --not --branches --tags --remotes NEGATIVES`, CANDIDATES the non-zero objects that the row's `logs/HEAD` names, NEGATIVES those that its branch's reflog named when gate 7 read it (design D21; LQ-13) | the row's worktree, for each row that passed gate 11, at most 16, and at revalidation the target's, after its hidden-state probe; a `logs/HEAD` read to its 64 KiB bound or holding a line that cannot be parsed runs no child |
 | narrowed ref listing (revalidation) | row 6's format with patterns naming the merge target, the manifest's candidate, the branch `origin/HEAD` named, `main`, `master`, `refs/remotes/origin/HEAD`, and the selected branches and their upstreams | `root` |
 | remote URL | `-C ROOT remote get-url origin` | `root` (push; `handoff()` in `status` and `doctor`, for an inspected repository only, R-66 (c)) |
 | removal | `-c status.showUntrackedFiles=normal -c core.untrackedCache=false -c core.fsmonitor=false -c core.trustctime=true -c core.checkStat=default` + protocol pins + `-C ROOT worktree remove PATH` | `root`; PATH the registry's raw bytes, one argument, never `--force` |
@@ -652,6 +662,21 @@ prints nothing there on a clean run, and it translates its `warning:` and
 `error:` prefixes under a localized catalogue, so the rule reads no prefix
 but the advice one; no DETAIL form is added.
 
+At revalidation (data-model.md, "Revalidation step and `probes_performed`")
+one rule decides every Git child that does not finish with a value, one that
+fails, runs past its own budget while the deadline is not the limit, or, as
+the work-tree probe can, prints anything but one line: it gives
+`state-changed`, whatever its step; a child gives its step's own reason only
+for a value it decided; and one that the work deadline cuts gives
+`deadline-exceeded`, the target and every later one `not-attempted` (draft PR
+#19 at `4485678` and `2e819ad`, "Cleanup revalidates destructive actions";
+the lead's R-171, R-195 and R-198; writer G's `6dec3f4` and `f6082db`). So the
+identity probe, the registry listing and the hidden-state probe, which gave
+`identity-changed` or `hidden-local-state` for a failure until R-195, give
+`state-changed`. A filesystem read keeps its step's reason, so that a failed
+read of the identity in step 1 still gives `identity-changed`, an open point
+for lane 3's next read (lead ruling R-201).
+
 Bounds: each probe child gets `min(5 s, work remaining)` under `clean`'s 60 s
 deadline (50 s of work, a 10 s reserve, time at the question excluded), each
 rescan child `min(5 s, reserve remaining)`; a child past its budget, at its
@@ -666,16 +691,25 @@ signals either child, waits for it, and then exits by D19's first row
 is spawned, so a signal recorded by then runs no child (lane 3's N13; lead
 ruling R-177). Probing is serial; termination never blocks (data-model.md,
 "Child handle").
-Revalidation spawns at most five Git children per target, six where row 4c
-read `extensions.worktreeConfig` as true (the work-tree probe; LQ-11), the
-final rescan at most three, the identity probe counted once: a line feed in
-the root's or the common directory's path repeats it, one child per option,
-so that they run up to 8 (9 with the work-tree probe) and 6 (design D6, "the
+Revalidation spawns at most six Git children per target, gate 12's
+reachability probe the sixth (LQ-13), and seven where row 4c read
+`extensions.worktreeConfig` as true (the work-tree probe; LQ-11), the final
+rescan at most three, the identity probe counted once: a line feed in the
+root's or the common directory's path repeats it, one child per option, so
+that they run up to 9 (10 with the work-tree probe) and 6 (design D6, "the
 rare repeat"; data-model.md, "Revalidation step and `probes_performed`";
-lead ruling R-82 (c)). Gate 11's listing is a filesystem read, no child
-(LQ-14). `LIMITS["revalidation_children"]` stays 5 and the plan's estimate
-`5T + 3`; reconciling them with the sixth child is held with D14's fit for
-#19's round (b) and LQ-20 (lead rulings R-168, R-170 and R-178).
+lead ruling R-82 (c)). Gate 11's listing and gate 12's `logs/HEAD` read are
+filesystem reads, no child (LQ-14, LQ-13). `LIMITS["revalidation_children"]`
+is 6 and `LIMITS["revalidation_children_worktree_config"]` 7, and the plan's
+estimate counts 6T + 3, or 7T + 3 where row 4c read true, the number
+`revalidation_children()` picks, so that `probes.estimated` equals
+`probes.performed` there too (lead rulings R-165 and R-201; writer G's
+`8ae0bb5`). Whether these bounds fit the 50 s work deadline is D14's to
+say: draft PR #19 at `2e819ad` gives the fit on three bases, BA's flat 150 ms
+per child, task 2.1's measured costs with stand-ins for the two probes it did
+not measure, and a mixed basis, and chooses none; which basis the cap test
+uses, or what those two probes cost, is the first step of open question
+LQ-20, before Brett Heap (lead rulings R-196 and R-197).
 
 ## `status`, `doctor` and `update` (FR-050 to FR-053, FR-059; D16)
 

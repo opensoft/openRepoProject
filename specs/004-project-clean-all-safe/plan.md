@@ -217,11 +217,15 @@ with their reason on macOS, as a person's local run may do.
 with no removal, push or branch deletion in flight ends within 64 s of its
 start, not counting time at the question (SC-004); a removal in flight adds
 at most 300 s; each probe child gets `min(5 s, work remaining)` (SC-005);
-each revalidation spawns at most 5 Git children and the final rescan 3
-(SC-006). Task 2.1's fit holds them: at 128 rows and 16 targets the 16th
-removal spawns at 23.6 s with 26.4 s left, and 256 report rows take 19.9 s
-(task 2.1's measured medians; D14's model at BA's 150 ms per child gives
-39.15 s and 41.85 s).
+each revalidation spawns at most 6 Git children, 7 where row 4c read
+`extensions.worktreeConfig` as true, and the final rescan 3 (SC-006; LQ-11
+and LQ-13). Task 2.1 measured the fit before LQ-11 and LQ-13 added children it
+did not measure, so design D14 at draft PR #19 `2e819ad` gives the fit on
+three bases, BA's flat 150 ms per child, task 2.1's measured costs with
+stand-ins for the two unmeasured probes, and a mixed basis, and chooses none;
+which basis the cap test uses, or what those two probes cost, is the first
+step of open question LQ-20, before Brett Heap (lead rulings R-196 and
+R-197).
 
 **Constraints**: local evidence only and no network (the pins, R1); ASCII in
 all added text; no flag outside `clean`, no configurable limit, and no time
@@ -429,8 +433,9 @@ The feature PR body lists these for his word:
   the code stays as built (T117).
 
 The others are recorded where they apply: LQ-3, the push-child exception
-(R1); LQ-4, the preflight's scope (R16); and LQ-5, the remedy reading
-(contract, "Human output").
+(R1); LQ-4, the preflight's scope (R16); LQ-5, the remedy reading
+(contract, "Human output"); and LQ-20, the basis of design D14's fit, which
+draft PR #19 at `2e819ad` gives on three bases (Performance Goals, above).
 
 ## Complexity Tracking
 

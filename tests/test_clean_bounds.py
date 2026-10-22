@@ -834,8 +834,9 @@ class BoundsTests(clean_support.CleanCase):
         self.assertEqual(stages(document), [(str(tree), "not-attempted", "deadline-exceeded") for tree in trees],
                          f"elapsed {result.elapsed:.1f} s\n{result.stderr}")
         first, second = document["targets"]
-        # The first target's revalidation ran its five children, the last cut;
-        # the second was never revalidated.
+        # The first target's revalidation ran five of its six children (D7, as
+        # LQ-13 amends it), the hidden-state probe last and cut; the second was
+        # never revalidated.
         self.assertEqual((first["reconciliation"], first["exit_status"], first["probes_performed"]), (None, None, 5))
         self.assertEqual((second["reconciliation"], second["exit_status"], second["probes_performed"]),
                          (None, None, 0))
