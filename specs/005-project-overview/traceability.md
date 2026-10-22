@@ -102,9 +102,10 @@ changes"); lane 2 or lane openRepoProject-3 reads the diff before feature
 - FR-004: collect (no Git child for a candidate without `.git`).
 - FR-005: discovery; R10 (PN-9); contract "Row and scan errors".
 - FR-006: collect; R5; data model "Repository".
-- FR-007: collect; R9, R17 (PN-18); research.md O5 (held).
-- FR-008, FR-009: collect, findings; R5; contract "Other findings";
-  research.md O4, O7 (held).
+- FR-007: collect; R9, R17 (PN-18); research.md O5 (open).
+- FR-008, FR-009: collect, findings; R5, R9; contract "Other findings",
+  "Git children"; research.md O4 (a) and O7 (chosen), O11 (part 1 built
+  now, part 2 open).
 - FR-010: collect; data model "Repository".
 - FR-011, FR-012: loop; R4, R9; data model "Child outcome to row error".
 - FR-013: loop; R7 (PN-10).
@@ -113,26 +114,27 @@ changes"); lane 2 or lane openRepoProject-3 reads the diff before feature
 - FR-016: runner reuse; R3; contract "Git children".
 - FR-017, FR-018: discovery, loop; R6; data model "Root", "Worktree row".
 - FR-019: loop; R6; the concurrency-1 and concurrency-4 runs.
-- FR-020: render; R14 (PN-12); research.md O3, O4 (held).
+- FR-020: render; R14 (PN-12); research.md O3 (open), O4 (chosen).
 - FR-021, FR-022: collect; R5; contract "Row and scan errors".
 - FR-023: collect (manifest reader); `test_overview_yaml.py`.
 - FR-024, FR-025: collect (change 1's `resolve_merge_target`, reused,
   over the kept records); R3; data model "Repository"; contract "Other
   findings".
-- FR-026: collect (`row_evidence`, `classify`); R3, R18; research.md O9.
+- FR-026: collect (`row_evidence`, `classify`); R3, R18; research.md O9
+  (open).
 - FR-027: contract "The attention table".
 - FR-028: findings; R12 (PN-1); contract "Findings from the ladder";
-  research.md O6, O8 (held).
+  research.md O6 (chosen), O8 (open).
 - FR-029, FR-030: render; data model "Exit statuses"; contract "Human
   report".
 - FR-031 to FR-035: findings; R12; data model "Gates"; contract
-  "Remedies", "Composer"; research.md O1, O2, O4, O6 (held).
+  "Remedies", "Composer"; research.md O1, O2, O4, O6 (chosen).
 - FR-036 to FR-038: render; R11, R15 (PN-6, PN-8); contract "JSON".
 - FR-039: render, dispatcher; R15 (PN-2); contract "Exit-2 outputs".
 - FR-040: R3 (the ban), R18 (the wrapper's allow-list), R19.
 - FR-041: findings; contract "Default-branch findings".
 - FR-042 to FR-044: dispatcher, loop, render; R4, R15; data model "States
-  of a run"; research.md O10.
+  of a run"; research.md O10 (open).
 - FR-045, FR-046: render; R16 (PN-3, PN-5); contract "Human report",
   "Fixed lines".
 - FR-047: R3 (one subcommand; no new limit, variable, file or dependency).
@@ -149,11 +151,11 @@ Requirement 1, discovery (R10, R11): 1 Independent clones and aliases; 2
 Unreadable candidate directory; 3 Family holder count, relationships and
 probe ownership; 4 Every root is absent.
 
-Requirement 2, identity (R5, R9, R17): 5 One probe set per repository; 6
-Present eligible external worktree; 7 Missing external worktree; 8
-Unreadable external worktree; 9 A separate git directory; 10 A submodule
-checkout under a root; 11 A deleted main worktree; 12 A bare repository
-with a linked worktree.
+Requirement 2, identity (R5, R9, R17; O11 for 9): 5 One probe set per
+repository; 6 Present eligible external worktree; 7 Missing external worktree;
+8 Unreadable external worktree; 9 A separate git directory; 10 A submodule
+checkout under a root; 11 A deleted main worktree; 12 A bare repository with a
+linked worktree.
 
 Requirement 3, bounds (R4, R6, R7, R8, R14): 13 Candidate cap after
 sorting, with an exact count; 14 Candidate cap with an incomplete listing;
@@ -173,7 +175,7 @@ Missing target; 34 Every protected classifier.
 Requirement 6, attention (R12): 35 Attention filter per category; 36 A
 merged worktree whose upstream was deleted.
 
-Requirement 7, suggestions (R12; held O1, O2, O4, O6): 37 Gated merged
+Requirement 7, suggestions (R12; chosen O1, O2, O4, O6): 37 Gated merged
 worktrees; 38 Canonical identity through the handoff; 39 More eligible
 worktrees than the batch's target limit; 40 The two inspect-cap bands; 41
 A row left unprobed closes the repository gate; 42 An unstarted branch; 43
@@ -190,7 +192,7 @@ Requirement 10, default branch: 51 A default branch pushed without an
 upstream; 52 A repository with no remote; 53 A dirty default branch ahead
 of its upstream; 54 A failed status probe on the default branch.
 
-Requirement 11, exits (R4, R15; held O10): 55 Git too old; 56 Git
+Requirement 11, exits (R4, R15; open O10): 55 Git too old; 56 Git
 unavailable; 57 SIGTERM or SIGHUP during collection; 58 SIGINT during
 collection; 64 A relative configuration path (A1's).
 
@@ -204,17 +206,18 @@ manifest with invalid text in its row.
 
 ## Requirements no scenario exercises (FR-049)
 
-Each gets a test of its own, named here when written: FR-004's candidates
-that are not family holders; FR-007's twins (EC-031), its identity re-read
-before a status probe, its extension read, effective-work-tree probe and
-`commondir` check, and a wrapper log with no `rev-parse` child in a linked
-worktree where the extension reads false; FR-010; FR-020's `estimated`;
-FR-021's `refused` and `undecodable-output`; FR-022's 200-character bound,
-with the composer's length tables (R12); FR-033's reflogs of 65,535 and
-65,536 bytes; FR-037's orders, ties by rank (PN-8) and the repository-level
-finding first; FR-039's `refused` and `os-error`; EC-033's branch named
-`HEAD` (PN-17); the empty `--root` (PN-13); a root listing that fails
-partway (PN-9); and the overview's own readings of R9.
+Each gets a test of its own, named here when written: FR-004's candidates that
+are not family holders; FR-007's twins (EC-031), its identity re-read before a
+status probe, its extension read, effective-work-tree probe and `commondir`
+check, and a wrapper log with no `rev-parse` child in a linked worktree where
+the extension reads false; FR-010; FR-020's `estimated`; FR-021's `refused` and
+`undecodable-output`; FR-022's 200-character bound, with the composer's length
+tables (R12; R20's "Lengths"); O11 part 2's `core.worktree` read that prints
+and exits 1 (R18); FR-033's reflogs of 65,535 and 65,536 bytes; FR-037's
+orders, ties by rank (PN-8) and the repository-level finding first; FR-039's
+`refused` and `os-error`; EC-033's branch named `HEAD` (PN-17); the empty
+`--root` (PN-13); a root listing that fails partway (PN-9); and the overview's
+own readings of R9.
 
 ## Success criteria
 

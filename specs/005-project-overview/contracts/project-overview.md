@@ -12,10 +12,14 @@ and D10; [spec.md](../spec.md) settles their readings, and
 **Reading the texts.** A quoted text that does not fit one line continues
 on the next line, indented; each line break inside a quoted text reads as
 one space. Placeholders are in capitals (`PATH`, `N`, `M`, `CAUSE`), each
-replaced by an escaped value ([P]; FR-038). A row marked **HELD** is an
-item of research.md R20 that waits on Brett Heap; the text above it is the
-one built until his word, the text after it the other answer. Each held
-item changes only its own rows.
+replaced by an escaped value ([P]; FR-038). A row marked **CHOSEN** is an
+item of research.md R20 that Brett Heap's word chose for change 2 (C-72):
+the text above it is the one built until A1's re-alignment lands at PR
+#34, the text after it the one built then. A row marked **OPEN** waits on
+his direct word: the text above it is the one built until his word, the
+text after it the other answer, the lane's recommendation. Each item of
+R20 changes only its own rows. Every warning is in the words of PR #19's
+round (n) (`2250830`; R-343, his "R-324: yes").
 
 ## Invocation
 
@@ -104,7 +108,8 @@ No other option, variable or file changes a limit or a time (FR-047).
 
 The error object is exactly `{"error": MESSAGE, "code": CODE}`.
 `relative-config-path` with exit 2 is ratified ("ratify 34"); only the two
-names of LQ-15's extension stay open with PR #19 (O10).
+names of LQ-15's extension stay open with PR #19 (O10, OPEN; the lane
+recommends keeping them).
 
 ## JSON (FR-036 to FR-039)
 
@@ -205,7 +210,13 @@ the four status pins (kind `status`). No other argument vector is started.
   OPTION` once per option (EC-032).
 - `registry`: `worktree list --porcelain -z`, per repository.
 - `core-worktree`: `config --get core.worktree`, where the first registry
-  record is `common_dir` (A1 design D3, case 3).
+  record is `common_dir` (A1 design D3, case 3). Its exit 1 with nothing
+  on either stream is the key unset, with no error (O11, part 1, the
+  plan's reading of a conflict in ratified A1; research.md R9); any other
+  failure records the row error and leaves the root null, with no
+  suggestion and no gate code.
+  - OPEN (O11, part 2): the findings that would suggest a clean command
+    carry `suggestion_gate: target-not-repository-root`.
 - `extension`: `config --file COMMON_DIR/config --type=bool --get
   extensions.worktreeConfig`, per repository.
 - `refs`: `for-each-ref --format=REF_FORMAT refs/heads refs/remotes`, read
@@ -216,7 +227,7 @@ the four status pins (kind `status`). No other argument vector is started.
   true.
 - `status`: `status --porcelain=v1 -z --untracked-files=normal
   --ignored=matching`, in each row FR-007's last case reaches.
-- HELD (O4 (a)): `main-toplevel`, `rev-parse --path-format=absolute
+- CHOSEN (O4 (a)): `main-toplevel`, `rev-parse --path-format=absolute
   --show-toplevel` in the main worktree where it is no Git candidate.
 
 ## The attention table (FR-027; A1:491-514)
@@ -255,8 +266,8 @@ table says, and none sets the row's `suggested_command`.
 
 ## Messages
 
-Every text the overview prints, one entry each; a held item edits only its
-own entries.
+Every text the overview prints, one entry each; an item of research.md R20
+edits only its own entries.
 
 ### Composer (A1 design D5; research.md R12)
 
@@ -264,16 +275,20 @@ own entries.
 finding whose suggestion a gate withheld or limited: own text, `; `,
 remedy, at most 200 characters; when both do not fit, the own text is cut
 and ends `...`, the remedy whole. Every other finding's message is its own
-text alone. Two held clauses apply only with `warning` given (a
-`stale-worktree` message that carries the warning of O6):
+text alone. Two chosen clauses apply only with `warning` given (a
+`stale-worktree` message that carries O6's warning, 109 characters with
+its period), which happens once A1's re-alignment lands:
 
-- clause 1, HELD (O6): the warning is kept whole and the recommendation
-  before it is cut instead; D5's "remedy kept whole" stands;
-- clause 2, HELD (O4, with O6): where the warning and the remedy cannot
-  both fit, which only the redirect remedy reaches (under O4 (a) through
-  its new row, and under O4 (b) through sub-item (c)'s row), the
-  recommendation is left out and the remedy cut with `...`, reversing
-  D5's "remedy kept whole" for that one case.
+- clause 1, CHOSEN (O6 (A)): the warning is kept whole and the
+  recommendation before it is cut instead; D5's "remedy kept whole"
+  stands;
+- clause 2, CHOSEN (O4 (a), with O6 (A)): where the warning and the remedy
+  cannot both fit, which only the redirect remedy reaches (through O4
+  (a)'s new row and through sub-item (c)'s row), the recommendation is
+  left out and the remedy cut with `...`, reversing D5's "remedy kept
+  whole" for that one case.
+
+Every length these rules give is in research.md R20, "Lengths".
 
 ### Row and scan errors (FR-022; A1:392-403)
 
@@ -293,7 +308,12 @@ config`, `git for-each-ref`, `git status`), a filesystem call (`lstat`,
   decoded"
 - `error.internal-error`: "internal error (CLASS)"
 - `error.probe-failed`: "OPERATION failed: DETAIL", DETAIL one of "exit N",
-  "signal N", "cannot spawn (STRERROR)", "unparseable output"
+  "signal N", "cannot spawn (STRERROR)", "unparseable output"; it records
+  a Git child's nonzero exit, except in three cases that record no error:
+  the extension read's exit 1 with nothing printed (`false`), the work-tree
+  probe's failure (the registration disagrees) and, as the plan's reading
+  of a conflict in ratified A1 (research.md R9; O11, part 1), the
+  `core.worktree` read's exit 1 with nothing printed (the key unset)
 - `error.probe-timeout`: "OPERATION timed out after S s"
 - `error.deadline-exceeded`: "OPERATION stopped at the invocation deadline"
 - `error.scan-limit`: "LIMIT cap of M reached"
@@ -306,13 +326,16 @@ The class's recommendation, verbatim:
 
 - `finding.stale-worktree`: "Review and prune stale worktree metadata
   manually."
-  - HELD (O6): while any worktree row of the same repository has
+  - CHOSEN (O6 (A)): while any worktree row of the same repository has
     `present: null`: "Review and prune stale worktree metadata manually;
-    a row's path could not be read, so do not run git worktree prune until
-    it can."
-  - HELD (O8): for a locked row, feature 004's "Review, unlock it, then
-    prune stale worktree metadata manually.", with the same warning under
-    O6's test; no text is drafted for change 2.
+    a row's path could not be read, so do not run git worktree prune, git
+    worktree remove or git gc until it can."
+  - OPEN (O8): for a locked row, feature 004's "Review, unlock it, then
+    prune stale worktree metadata manually.", and under O6's test "Review,
+    unlock it, then prune stale worktree metadata manually; a row's path
+    could not be read, so do not run git worktree prune, git worktree
+    remove or git gc until it can." (#19's T7, `#19
+    design.md:1347-1367`)
 - `finding.inspection-error`: "Preserve this worktree; Git could not
   establish its clean state."; its second rung: "Preserve this worktree;
   Git could not establish its ignored-file state."
@@ -363,18 +386,14 @@ The class's recommendation, verbatim:
 
 - `finding.unsupported-layout.submodule`: "submodule checkout, which
   project clean refuses; review it yourself"
-- `finding.unsupported-layout.redirect`, HELD (O4 (b)): "core.worktree or
-  core.bare redirects the main worktree; unset both in the repository's
-  config, or in the main worktree's config.worktree, then run again", no
-  suggestion
 - `finding.unsupported-layout.gitfile`: "The checkout of this git directory
   cannot be named; set core.worktree or move the checkout"
 - `finding.main-worktree-missing`: "The main worktree is missing; restore
   or prune the main worktree by hand"
-  - HELD (O7): while any worktree row of the same repository has
+  - CHOSEN (O7): while any worktree row of the same repository has
     `present: null`: "The main worktree is missing; restore or prune the
     main worktree by hand; a row's path could not be read, so do not run
-    git worktree prune until it can"
+    git worktree prune, git worktree remove or git gc until it can"
 - `finding.main-worktree`: "The main worktree is never removed by project
   clean." (feature 004's text, `project:864`)
 - `finding.locked-worktree`: "This worktree is locked; unlock it before
@@ -402,11 +421,12 @@ from `limits` when the message is built.
 
 - `remedy.target-not-repository-root`: "run project clean from the main
   worktree root"
-  - HELD (O4 (a)), for a redirected main worktree, and (O4's sub-item
-    (c), under (a) or (b)) for a bare entry whose path joined with `/.git`
-    is `common_dir`: "core.worktree or core.bare redirects the main
-    worktree; unset both in the repository's config, or in the main
-    worktree's config.worktree, then run again"
+  - CHOSEN (O4 (a)), for a redirected main worktree, a bare entry whose
+    path joined with `/.git` is `common_dir` (sub-item (c)) and a
+    main-worktree probe that exits nonzero (sub-item (d)): "core.worktree
+    or core.bare redirects the main worktree; unset both in the
+    repository's config, or in the main worktree's config.worktree, then
+    run again"
 - `remedy.unsupported-path-bytes`: "rename the path to valid UTF-8"
 - `remedy.inspection-incomplete`: "repair the inspection-error rows, or
   re-run for the rows left unprobed, first"
@@ -417,16 +437,16 @@ from `limits` when the message is built.
 - `remedy.scan-limit`: "re-run with --root <repository parent>",
   `<repository parent>` the parent of `repository.root`, escaped by [P]
 - `remedy.deadline-exceeded`: "re-run with --root <repository parent>"
-  - HELD (O2 (A)): also the gate of a row whose reflog read the deadline
-    cut, in place of `inspection-incomplete`
+  - CHOSEN (O2 (A)): also the gate of a row whose reflog read the
+    deadline cut, in place of `inspection-incomplete`
 - `remedy.unstarted-branch`: "no commit was made on this branch here since
   it was created; review, then git worktree remove yourself"
-  - HELD (O1 (A)): "no commit was made on this branch here since it was
+  - CHOSEN (O1 (A)): "no commit was made on this branch here since it was
     created; review, then git worktree remove yourself (--force if it holds
     a submodule)"
 - `remedy.reflog-unavailable`: "the branch's reflog is missing, expired or
   undecidable; review, then git worktree remove yourself"
-  - HELD (O1 (A)): "the branch's reflog is missing, expired or
+  - CHOSEN (O1 (A)): "the branch's reflog is missing, expired or
     undecidable; review, then git worktree remove yourself (--force if it
     holds a submodule)"
 - `remedy.target-cap` (limited): "limited to the batch's target limit of M

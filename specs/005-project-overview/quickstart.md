@@ -204,10 +204,20 @@ byte `0xff`: the same row error, CAUSE `not valid UTF-8 text`, while
 ## User Story 8: unusual layouts are named
 
 `git init --separate-git-dir "$F/sep.git" "$PROJECTS_DIR/sep"`: the row's
-root comes from its checkout. A bare repository with a linked worktree
-under the root: `repository.root` null, its findings withheld with
+root comes from its checkout, with no row error, since the `core.worktree`
+read's exit 1 with nothing printed is the key unset (research.md R9; O11,
+part 1). A bare repository with a linked worktree under the root:
+`repository.root` null, its findings withheld with
 `target-not-repository-root`. A deleted main worktree:
 `main-worktree-missing` with its remedy in the message.
+
+The items Brett Heap's word chose (research.md R20; C-72) change these
+texts only once A1's re-alignment lands at PR #34; until then each prints
+as A1 is ratified. After it, with another worktree of the repository made
+unreadable (`chmod 000` on its parent, as a user other than root), the
+deleted main worktree's message ends with O7's warning, "a row's path could
+not be read, so do not run git worktree prune, git worktree remove or git
+gc until it can", and a stale row's with O6's.
 
 ## User Story 9: the merge-target checkout's own health
 

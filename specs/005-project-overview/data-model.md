@@ -7,7 +7,7 @@ keeps no state beyond the invocation (FR-040); these are the values one run
 reads, derives and reports. The JSON shapes and key orders are in
 [contracts/project-overview.md](contracts/project-overview.md); exact human
 text is A1's design D3, D4, D5 and D10 and the contract's message table.
-`project:N` is feature 004's `project` at `0a82a62` ([plan.md](plan.md),
+`project:N` is feature 004's `project` at `211e43d` ([plan.md](plan.md),
 "Citations").
 
 ## Entities
@@ -119,7 +119,12 @@ or its cut, and the wall-clock time it completed (research.md R13).
 
 Exceptions (A1's collector table): the extension read's exit 1 with nothing
 on either stream is `false` with no error; the work-tree probe's failure or
-unusable output makes the registration disagree, with no error.
+unusable output makes the registration disagree, with no error. And, as the
+plan's reading of a conflict in ratified A1 (research.md R9; R20's O11,
+part 1): the `core.worktree` read's exit 1 with nothing on either stream
+is the key unset, with no error, so the root falls through to the
+candidate's toplevel (`config_key_unset`, `project:2735`); any other
+failure of that read keeps the table's row error and leaves `root` null.
 
 ### Filesystem task (FR-013; research.md R7)
 
@@ -152,7 +157,9 @@ Keyed by the `(dev, ino)` of the no-follow `lstat` of `common_dir`.
 - `rows`: its worktree rows, main first
 
 `root` is null for a bare repository, a submodule checkout, an unnamed
-gitfile checkout and a missing main worktree (FR-008, FR-009).
+gitfile checkout, a gitfile checkout whose `core.worktree` read failed
+other than as unset (R20's O11, part 2), and a missing main worktree
+(FR-008, FR-009).
 
 ### Worktree row (FR-006, FR-007, FR-018, FR-026)
 
@@ -304,12 +311,14 @@ every worktree of the repository (FR-031, FR-034):
     (16)
   - Effect: each keeps it, limited
 
-A root left null by `unsupported-layout` or `main-worktree-missing` carries
-no gate code. A gate is recorded only on a finding whose own suggestion it
-changed: a `dirty` finding in an `inspection-incomplete` repository keeps
-its read-only suggestion and a null `suggestion_gate` (A1 design D5).
-The held items O1, O2 and O4 of research.md R20 each change one row of
-these tables.
+A root left null by `unsupported-layout`, by `main-worktree-missing` or by
+a failed `core.worktree` read carries no gate code; for the last, the
+gate code `target-not-repository-root` is O11's part 2, open. A gate is
+recorded only on a finding whose own suggestion it changed: a `dirty`
+finding in an `inspection-incomplete` repository keeps its read-only
+suggestion and a null `suggestion_gate` (A1 design D5). The items O1, O2
+and O4 that Brett Heap's word chose (C-72; research.md R20) each change
+one row of these tables once A1's re-alignment lands.
 
 ### Suggestion (FR-031)
 
