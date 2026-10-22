@@ -113,7 +113,14 @@ Lane: openRepoProject-4
     case's cut is the realpath's and the effective-work-tree read's only, "or
     that realpath or that read itself being cut", and its second case takes the
     row task's cut, as FR-007's cases now do (its
-    `specs/project-overview/spec.md:105-114`; W34 LOW-1).
+    `specs/project-overview/spec.md:105-114`; W34 LOW-1). PR #19's round (j) at
+    `e14ada0` reads the effective-work-tree probe's output, less the one line
+    feed Git ends it with, as one path, so that a linked worktree whose own
+    path holds a line feed is read as its registered path, output that is
+    empty, names no path or does not end in a line feed disagreeing in place of
+    output that is not exactly one line; FR-007 keeps "not exactly one line",
+    as A1 gives it, and A1's re-alignment is held for Brett Heap's ruling for
+    change 2 (FR-007).
 
 ## Requirement Consistency
 
@@ -176,9 +183,10 @@ its result still pass, and again after lane openRepoProject-3's W6 read of
 `8082d3b`, and after its W11 read of `08d5d79` and PR #19's `addd346`, and
 again after its W17 read of `b511bdb` and PR #19's `93f3194`, and after its W20
 read of A1 revision 3, and after A1's revisions 5, 6, 7 and 8 at `3ee860c`,
-`d644517`, `0394be4` and `177eadf`. 29 items: 27 pass, 1 fixed in the spec, 0
-open, 1 plan notes, 0 new questions. An open item waits on the question or
-residual its result names; a plan note is for the plan, not the spec; a new
-question is asked in `clarify-questions.md`.
+`d644517`, `0394be4` and `177eadf`, and CHK016 after PR #19's round (j) at
+`e14ada0`. 29 items: 27 pass, 1 fixed in the spec, 0 open, 1 plan notes, 0 new
+questions. An open item waits on the question or residual its result names; a
+plan note is for the plan, not the spec; a new question is asked in
+`clarify-questions.md`.
 
 Plan notes: PN-9 (CHK024).

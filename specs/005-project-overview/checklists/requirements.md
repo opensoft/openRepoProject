@@ -908,13 +908,14 @@ Lane: openRepoProject-4
   (64 of 64). Re-validation: 16 of 16 items pass, with the checks of iteration
   2 re-run by script on the edited spec.
 - 2026-10-22, a twenty-eighth pass: #19's round (i) at `e0c91bb` (`4204eb9`,
-  `b60f6ac`, `1a4785e` and `e0c91bb`; the lead's R-271 and R-284) is recorded,
-  with lane openRepoProject-3's W77 read of 3x and 3y (LOW 4), by the lead's
-  commit 3z decisions. #19: every cite of its three specs, 192 rows, the 156 of
-  the round (h) record and the 36 places that record gives at `b3228bb`, was
-  located by line alignment and re-checked against `b3228bb`; round (i) edits
-  its `project-clean` spec alone, at three sites, each F-1's third text,
-  pending Brett Heap's confirmation (R-284), which reaches the overview through
+  `b60f6ac`, `1a4785e` and `e0c91bb`; lane openRepoProject-2's R-271 and R-284)
+  is recorded, with lane openRepoProject-3's W77 read of 3x and 3y (LOW 4), by
+  the lead's commit 3z decisions. #19: every cite of its three specs, 192 rows,
+  the 156 of the round (h) record and the 36 places that record gives at
+  `b3228bb`, was located by line alignment and re-checked against `b3228bb`;
+  round (i) edits its `project-clean` spec alone, at three sites, each F-1's
+  third text, by R-284, which Brett Heap has since confirmed, "R-284: yes"
+  (lane openRepoProject-2's R-290), a text that reaches the overview through
   neither [E] nor [G], and every other cite keeps its text, at its own lines or
   new ones. Two of its design edits meet what the spec states, and both are
   held: the refusal of a redirected main worktree, which D18 now words (R-271),
@@ -939,6 +940,46 @@ Lane: openRepoProject-4
   No pin moves, A1 stays cited at `e4a30fc`, and `clarify-questions.md` is
   unchanged. Re-validation: 16 of 16 items pass, with the checks of iteration 2
   re-run by script on the edited spec.
+- 2026-10-22, a twenty-ninth pass: #19's round (j) at `e14ada0` (lane
+  openRepoProject-2's R-285, R-287 and R-291) and #24 at its draft PR #27's
+  head `97bf4ee`, after round B17, are recorded, with Brett Heap's confirmation
+  of R-284, "R-284: yes" (lane openRepoProject-2's R-290), and lane
+  openRepoProject-3's W83 read of 3z (MEDIUM 1, LOW 4), by the lead's commit
+  3aa decisions. #19: every cite of its three specs, 224 rows, the 192 of the
+  round (i) record and the 32 places that it and FR-006 give at `e0c91bb`, was
+  located by line alignment and re-checked against `e0c91bb`; round (j) changes
+  LQ-11's work-tree probe sentence in `project-command` (:224-229) and adds an
+  AND at :320, changes the review-safety rule's sentence on that probe
+  (:131-135) and the scenario "A work-tree probe at revalidation" (:283-289),
+  and narrows the reason clause of F-1's sentences in `project-clean`, F-1's
+  three texts keeping their words; every other cite keeps its text, at its own
+  lines or new ones. The list keeps two rows of the LQ-15 item at `9fb22fa`,
+  :8-17 and :266, which W77's L4 pinned to `cc000ea`, so it checks two places
+  more than the spec now cites. The one-path reading reaches FR-007, which
+  keeps A1's "not exactly one line": FR-007, the round (j) record and CHK016 of
+  `discovery-identity.md` state the held condition. #24: its pin `fe5b245`
+  kept, the eight ranges byte-identical to their text at `57bfc15` by `cmp`, at
+  new lines (proposal :740-743, :764-767, :838-850 and :868-869; design
+  :1003-1006, :1082-1085 and :1679-1685; task 3.2 at :190-205), its
+  `project-overview` block the same blob, `a40458cb`; B17 re-bases its retire
+  and reconcilable-result blocks on #19's round (i), which the spec does not
+  read. R-284: the round (i) record and the twenty-eighth pass say that he
+  confirmed it. W83: CHK017's Result, C-55 and User Story 8's introduction
+  scope "never suggests what `project clean` refuses" to every layout but the
+  redirected main worktree that FR-006 holds, CHK017's category kept (M1; W83
+  names C-56, but the sentence at its :660 is C-55's); R-271 and R-284 are
+  named lane openRepoProject-2's (L1); the round (i) record's :353-364 is named
+  D6's, beside feature 004's `project:2663-2689` (L2); FR-006's held note names
+  the three outcomes that W83 found with feature 004 at `60631eb` on Git 2.43.0
+  and 2.36.6 (L3); and FR-020's hold covers any identity probe that prints
+  other than two lines and names A1's design D3, its :167-170 (L4). CHK016 of
+  `discovery-identity.md` and CHK017 of `suggestions-gates.md` record the held
+  conditions, their categories unchanged; CHK020 of `integration.md` and CHK003
+  of `observability.md` were re-read, no category changing, and the totals
+  below were recounted by script. Traceability is checked against A1's ratified
+  deltas at `e4a30fc` (64 of 64). No pin moves, A1 stays cited at `e4a30fc`,
+  and `clarify-questions.md` is unchanged. Re-validation: 16 of 16 items pass,
+  with the checks of iteration 2 re-run by script on the edited spec.
 - Items marked incomplete require spec updates before `/speckit-clarify` or `/speckit-plan`
 
 ## Cross-cutting Requirements Quality (no-argument `/speckit.checklist`, 2026-10-19)
@@ -1060,5 +1101,5 @@ notes (PN-1 to PN-18 but PN-4 and PN-11, withdrawn on 2026-10-21; PN-2 narrowed
 to an exception of any other kind in human mode and widened to a failed write's
 standard-error line), 0 new questions. Recounted by script on 2026-10-21, and
 again after the re-check, after the W6 read and after the fourth to twelfth
-passes of that day, and after the thirteenth to twenty-eighth passes on
+passes of that day, and after the thirteenth to twenty-ninth passes on
 2026-10-22.

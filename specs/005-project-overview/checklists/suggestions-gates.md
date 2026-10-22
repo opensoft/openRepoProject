@@ -68,13 +68,16 @@ Lane: openRepoProject-4
 ## Requirement Consistency
 
 - [x] CHK017 Do the gates mirror [G]'s order and outcomes, so that a suggestion never points at what `project clean` refuses? [Consistency, Spec FR-032, FR-034, US4 s2]
-  - Result: pass. Where a main worktree's own `core.worktree` names another
-    directory, `project clean` refuses that checkout at resolution, and PR
-    #19's round (i) at `e0c91bb` gives the refusal a message that names the
-    redirect (R-271), while this spec, as A1 does, names that toplevel or the
-    checkout as the root (FR-006, FR-009), so that a suggestion there is
-    refused or reaches another repository; A1's re-alignment for that layout is
-    held for Brett Heap's ruling for change 2 (FR-006).
+  - Result: pass for every layout but one. Where a main worktree's own
+    `core.worktree` names another directory, this spec, as A1 does, names that
+    toplevel or the checkout as the root (FR-006, FR-009), and `project clean`
+    refuses the checkout, with a message that names the redirect since PR #19's
+    round (i) at `e0c91bb` (lane openRepoProject-2's R-271), refuses a toplevel
+    that is not a repository's main worktree root and resolves one that is
+    another repository's, so that a suggestion there is refused or reaches
+    another repository, an exception to C-55's and User Story 8's "never
+    suggests what `project clean` refuses"; A1's re-alignment for that layout
+    is held for Brett Heap's ruling for change 2 (FR-006).
 - [x] CHK018 Are the causes of `inspection-incomplete` consistent across FR-007, FR-013, FR-033 and FR-034 (failed or cut presence, registration and reflog reads)? [Consistency, Spec Clarifications C-23]
   - Result: pass; since 2026-10-21 the twins of FR-007 and a row whose identity
     changed before its probe are `inspection-error` too, so FR-034's
@@ -139,13 +142,14 @@ LQ-14, theirs too, and CHK012 again after A1's revision 3 at `367223a`, and
 CHK012 and CHK020 after PR #19's R-124 and R-126, and again after A1's revision
 5 at `3ee860c`, with R-124's outcome rule in `2b86a5f`'s words, and CHK012
 after its revisions 6, 7, 8, 9 and 10 at `d644517`, `0394be4`, `177eadf`,
-`4261ff8` and `c193f7b`, after #19's rounds (d) to (i) at `9267303`, `f0bf538`,
-`662be89`, `4f1c0e0`, `3dcd2d8`, `6bf9f77`, `b3228bb` and `e0c91bb`, after lane
-openRepoProject-3's W39 LOW-4, and after A1's ratification at `e4a30fc`, and
-CHK010 after #19's rounds (g) and (g2), and CHK023 after its round (h), and
-CHK017 after its round (i). 29 items: 28 pass, 1 fixed in the spec, 0 open, 0
-plan notes, 0 new questions. An open item waits on the question or residual its
-result names; a plan note is for the plan, not the spec; a new question is
-asked in `clarify-questions.md`.
+`4261ff8` and `c193f7b`, after #19's rounds (d) to (j) at `9267303`, `f0bf538`,
+`662be89`, `4f1c0e0`, `3dcd2d8`, `6bf9f77`, `b3228bb`, `e0c91bb` and `e14ada0`,
+after lane openRepoProject-3's W39 LOW-4, and after A1's ratification at
+`e4a30fc`, and CHK010 after #19's rounds (g) and (g2), and CHK023 after its
+round (h), and CHK017 after its round (i) and lane openRepoProject-3's W83 read
+of it. 29 items: 28 pass, 1 fixed in the spec, 0 open, 0 plan notes, 0 new
+questions. An open item waits on the question or residual its result names; a
+plan note is for the plan, not the spec; a new question is asked in
+`clarify-questions.md`.
 
 Plan notes: none.
