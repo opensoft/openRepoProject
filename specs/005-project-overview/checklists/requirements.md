@@ -890,6 +890,23 @@ Lane: openRepoProject-4
   A1 stays cited at `e4a30fc`, and `clarify-questions.md` is unchanged.
   Re-validation: 16 of 16 items pass, with the checks of iteration 2 re-run by
   script on the edited spec.
+- 2026-10-22, a twenty-seventh pass: #24 is re-checked at its draft PR #27's
+  head `57bfc15`, after round B16, its pin `fe5b245` kept, by lane
+  openRepoProject-5's B16 line map and this spec's own `cmp` of each range
+  against `8d34525` and the pin, by the lead's commit 3y decisions: every
+  pinned range is byte-identical at new lines (proposal :733-736, :757-760 and
+  :858-859; design :979-982, :1058-1061 and :1655-1661; task 3.2 at :189-204)
+  but the Archive order sentence (proposal :828-840, the pin's :596-607), one
+  line of which, on lane openRepoProject-4's YES (B-77), names "the blocks
+  written on PR #19's text" for "the two blocks", the range growing from 12
+  lines to 13; its `project-overview` block is the same blob, and B16's
+  re-basing of five of its blocks on #19's round (h) and one on (g3) touches no
+  block that the spec reads. The header paragraph and the Dependencies bullet
+  record it; A1 stays cited at `e4a30fc`, and `clarify-questions.md` is
+  unchanged. No checklist result changes, and the totals below were recounted
+  by script. Traceability is checked against A1's ratified deltas at `e4a30fc`
+  (64 of 64). Re-validation: 16 of 16 items pass, with the checks of iteration
+  2 re-run by script on the edited spec.
 - Items marked incomplete require spec updates before `/speckit-clarify` or `/speckit-plan`
 
 ## Cross-cutting Requirements Quality (no-argument `/speckit.checklist`, 2026-10-19)
@@ -1011,5 +1028,5 @@ notes (PN-1 to PN-18 but PN-4 and PN-11, withdrawn on 2026-10-21; PN-2 narrowed
 to an exception of any other kind in human mode and widened to a failed write's
 standard-error line), 0 new questions. Recounted by script on 2026-10-21, and
 again after the re-check, after the W6 read and after the fourth to twelfth
-passes of that day, and after the thirteenth to twenty-sixth passes on
+passes of that day, and after the thirteenth to twenty-seventh passes on
 2026-10-22.

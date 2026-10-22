@@ -130,7 +130,10 @@ compared by `cmp`, except its task 3.2, which gains reader RF's M1; and at
 `25f7333`, after its rounds B11 (`f170079`) and B12, and at `bced895`,
 `69cb7a1` and `8d34525`, after its rounds B13, B14 and B15, they are
 byte-identical at new lines once more, by `cmp`, its task 3.2 and its
-`project-overview` block unchanged (Dependencies).
+`project-overview` block unchanged; and at `57bfc15`, after its round B16, they
+are byte-identical at new lines again but for one line of its Archive order
+sentence, which on lane openRepoProject-4's YES now names the blocks "written
+on PR #19's text" (its B-77; Dependencies).
 
 **Created before feature 004 merges**: The change creates this feature only
 after feature 004 merges (proposal, Status and "Dependencies and
@@ -3591,7 +3594,26 @@ and [P] are change 1's requirements as the header names them.
     :791-792, its `design.md` ranges at :887-890, :966-969 and D14's
     :1559-1565, and its task 3.2 at :185-200, each byte-identical, the task as
     at `69cb7a1` and its first line as at the pin; its `project-overview` block
-    is the same blob, `a40458cb`.
+    is the same blob, `a40458cb`. Re-checked again at `57bfc15`, its head after
+    round B16 (`4d41a98` in its spec deltas, `a183b5f` in its design, `57bfc15`
+    in its proposal and tasks), which re-bases five of its blocks, the retire,
+    batch, bounds, reconcilable-result and revalidation blocks, on PR #19's
+    round (h) at `b3228bb` (its B-84) and its classification block on round
+    (g3) at `6bf9f77` (B-80), its preservation and narrow-guarantee blocks
+    staying on `f0bf538`, on lane openRepoProject-2's YES to the set, by lane
+    openRepoProject-5's line map and this spec's own `cmp` of each range
+    against `8d34525` and against the pin: its `proposal.md` ranges sit at
+    :733-736, :757-760, :828-840 and :858-859, its `design.md` ranges at
+    :979-982, :1058-1061 and D14's :1655-1661, and its task 3.2 at :189-204,
+    each byte-identical, the task as at `8d34525` and its first line as at the
+    pin, but for the Archive order sentence in `proposal.md` :828-840 (the
+    pin's :596-607), which on lane openRepoProject-4's YES (its B-77) now reads
+    "or PR #19 has closed and the blocks written on PR #19's text have been
+    rewritten" where it read "the two blocks", so that the range grows from 12
+    lines to 13, its other lines byte-identical; its `project-overview` block
+    is the same blob, `a40458cb`. None of those eight blocks is one that this
+    spec reads, the overview taking #24's `project-overview` block alone
+    (FR-026; C-71), so nothing that this spec states moves.
   - `add-project-overview-remote-merge-status` (issue #25, draft PR #29)
     MODIFIES "Overview bounds its work and reports what it omitted", "Overview
     prints a versioned JSON envelope" and "Overview is local and read-only"
