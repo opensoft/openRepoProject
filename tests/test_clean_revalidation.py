@@ -485,6 +485,16 @@ class RevalidationTests(clean_support.CleanCase):
             ("manifest-unparseable", through_manifest,
              lambda root, trees: self.manifest(root, text="kind: project-manifest\ntracking_branch: [main\n"),
              "manifest"),
+            # A manifest that can no longer be read differs even where the plan
+            # read no candidate from it, no manifest or one without the key,
+            # which as_candidate() reads as none, as it reads the unreadable
+            # value (lane 3's W41, its unmutated manifest arm).
+            ("manifest-unparseable-where-the-plan-read-none", None,
+             lambda root, trees: self.manifest(root, text="kind: project-manifest\ntracking_branch: [main\n"),
+             "main"),
+            ("manifest-unparseable-where-the-plan-read-no-key", lambda root: self.manifest(root),
+             lambda root, trees: self.manifest(root, text="kind: project-manifest\ntracking_branch: [main\n"),
+             "main"),
             # Lead ruling R-77: the manifest's tracking_branch is compared as
             # written, so a spelling that resolves the same still differs.
             ("manifest-spelled-with-its-remote", through_manifest,
@@ -1056,6 +1066,24 @@ class RevalidationTests(clean_support.CleanCase):
 
         self.refused_by_a_read("listing-gone", admin, os.listdir, self.missing(b"x"), ("refused", "identity-changed"))
 
+    def test_clean_a_dot_git_file_gone_between_its_lstat_and_its_read(self):
+        # Step 5's registration reads (verify_registration()): _gitfile()
+        # decides ENOENT and ENOTDIR at its lstat of P's `.git`, but not at its
+        # read of that file, made once the lstat found a regular file. A `.git`
+        # removed between the two, or P replaced by a file, raises them there,
+        # and revalidation_difference() decides them as absence (project:5763):
+        # identity-changed, as an absent `.git` is (the lead's R-208). The race
+        # is made in process: that read raises the error. Lane 3's W41 L-4 took
+        # the clause for dead; this pins it.
+        def dotgit(root, trees):
+            return os.path.join(bytes(trees[0]), b".git")
+
+        not_a_directory = NotADirectoryError(errno.ENOTDIR, os.strerror(errno.ENOTDIR), "x")
+        for label, answer in (("ENOENT", self.missing(b"x")), ("ENOTDIR", not_a_directory)):
+            with self.subTest(label):
+                self.refused_by_a_read("dotgit-read-" + label, dotgit, project._read_head, answer,
+                                       ("refused", "identity-changed"))
+
     # The lead's R-195 (#19 at 4485678, "Cleanup revalidates destructive
     # actions"): every Git child of the revalidation that fails, or runs past
     # its own budget while the deadline is not the limit, is state-changed,
@@ -1063,10 +1091,10 @@ class RevalidationTests(clean_support.CleanCase):
     # it decided.
 
     def assert_child_that_decides_nothing(self, case, words, in_target):
-        """P's revalidation child whose words follow `-C DIR` (DIR the command
-        directory, or P where in_target) made, after the question, to exit
-        128 and to time out: each refuses P with state-changed, Q is
-        not-attempted, exit 2, nothing removed."""
+        """P's first revalidation child whose words after `-C DIR` (DIR the
+        command directory, or P where in_target) begin with words made, after
+        the question, to exit 128 and to time out: each refuses P with
+        state-changed, Q is not-attempted, exit 2, nothing removed."""
         for label, fields in (("exits 128", dict(name="failed", status=128)), ("times out", dict(name="timeout"))):
             with self.subTest(f"{case} {label}"):
                 root, trees = self.batch(f"{case}-{fields['name']}")
@@ -1076,7 +1104,7 @@ class RevalidationTests(clean_support.CleanCase):
 
                 def run_bounded(spec, parser, run, fields=fields, asked=asked, calls=calls, at=directory_bytes):
                     kind, args, cwd = spec
-                    if asked and not calls and args[2:] == words and os.fsencode(args[1]) == at:
+                    if asked and not calls and args[2:2 + len(words)] == words and os.fsencode(args[1]) == at:
                         calls.append(args)
                         return project.DriverOutcome(project.git_argv(kind, args), **fields)
                     return real_run_bounded(spec, parser, run)
@@ -1097,6 +1125,13 @@ class RevalidationTests(clean_support.CleanCase):
     def test_clean_a_registry_listing_that_decides_nothing_at_revalidation(self):
         # Step 3: identity-changed only for a missing or doubled entry.
         self.assert_child_that_decides_nothing("registry", ["worktree", "list", "--porcelain", "-z"], in_target=False)
+
+    def test_clean_a_ref_listing_that_decides_nothing_at_revalidation(self):
+        # Step 4, the narrowed ref listing (lane 3's W41 M-2): branch-changed
+        # only for a decided different branch or head ("Branch advances before
+        # removal" pins it), state-changed for a decided different upstream or
+        # merge target, and state-changed for a listing that decided nothing.
+        self.assert_child_that_decides_nothing("refs", ["for-each-ref"], in_target=False)
 
     def test_clean_a_hidden_state_probe_that_decides_nothing_at_revalidation(self):
         # Step 7: hidden-local-state only for a decided flagged entry ("Hidden
@@ -1174,6 +1209,133 @@ class RevalidationTests(clean_support.CleanCase):
                 self.assertEqual([stage for _, stage, _ in self.stages(result)[1:]], ["not-attempted"])
                 self.assertEqual((result.status, result.document["exit_code"]), (status, status))
                 self.assert_nothing_removed(root, trees, before, log)
+
+    # T099 (lead ruling R-80, P-2; #19 at 9267303, "Cleanup revalidates
+    # destructive actions"): a revalidation read that the work deadline cuts is
+    # no difference, whatever its step; P and every later target are
+    # not-attempted, P with deadline-exceeded, and the exit status is 1. Lane
+    # 3's W41 M-1: one test per read whose deadline arm no test reached, each
+    # cutting that read of P's revalidation as the listing's test above cuts
+    # the listing.
+
+    def assert_cut_at_the_work_deadline(self, case, fs=None, child=None, spend=False, extra=None):
+        """--all-safe --apply over two selected targets P and Q, in process: the
+        first read after the question that fs or child picks is cut at the work
+        deadline, a DriverOutcome `deadline` returned in its place. fs(root,
+        trees) gives a test of a filesystem call, given its function and
+        arguments; child(root, trees) a test of a Git child, given its words
+        after `git` (`-C DIR` first). With spend, the work deadline is also
+        made to pass at the cut (Invocation.work_end), as a real cut leaves it,
+        for a step that reads work_spent() and not the read's code. extra(root)
+        adds rows first. P is not-attempted with deadline-exceeded, Q
+        not-attempted, exit 1, and nothing is removed."""
+        root, trees = self.batch(case)
+        if extra is not None:
+            extra(root)
+        picks_fs = fs(root, trees) if fs is not None else None
+        picks_child = child(root, trees) if child is not None else None
+        before = self.snapshot(root, trees)
+        asked, calls = [], []
+        real_fs_call, real_run_bounded = project.fs_call, project.run_bounded
+
+        def cut(run, read):
+            calls.append(read)
+            if spend:
+                run.work_end = run.now()
+
+        def fs_call(fn, *args, **options):
+            if asked and not calls and picks_fs is not None and picks_fs(fn, args):
+                cut(project.current_invocation(), args[:1])
+                return project.DriverOutcome(None, "deadline", detail="cut here")
+            return real_fs_call(fn, *args, **options)
+
+        def run_bounded(spec, parser, run):
+            kind, args, cwd = spec
+            if asked and not calls and picks_child is not None and picks_child(args):
+                cut(run, args)
+                return project.DriverOutcome(project.git_argv(kind, args), "deadline", detail="cut here")
+            return real_run_bounded(spec, parser, run)
+
+        env, log = self.counting()
+        with mock.patch.object(project, "fs_call", fs_call), mock.patch.object(project, "run_bounded", run_bounded):
+            result = self.apply(root, lambda: asked.append(True), env=env, log=log)
+        self.assertEqual(len(calls), 1, "the read was reached at P's revalidation")
+        self.assertEqual(self.stages(result)[0], (str(trees[0]), "not-attempted", "deadline-exceeded"), result.stderr)
+        self.assertEqual([stage for _, stage, _ in self.stages(result)[1:]], ["not-attempted"])
+        self.assertEqual((result.status, result.document["exit_code"]), (1, 1))
+        self.assert_nothing_removed(root, trees, before, log)
+
+    def at_root(self, words):
+        """A child test: words after `-C ROOT`, the command directory."""
+        return lambda root, trees: lambda args: os.fsencode(args[1]) == os.fsencode(root) and args[2:] == words
+
+    def lstat_of(self, place):
+        """A filesystem-call test: the lstat of place(root, trees)."""
+        def picks(root, trees):
+            path = place(root, trees)
+            return lambda fn, args: fn is os.lstat and args[:1] == (path,)
+        return picks
+
+    def test_clean_an_identity_probe_cut_at_revalidation(self):
+        # Step 1, the identity probe (project:5677-5678).
+        self.assert_cut_at_the_work_deadline(
+            "identity-cut", child=self.at_root(["rev-parse", "--path-format=absolute", *project.IDENTITY_OPTIONS]))
+
+    def test_clean_a_manifest_re_read_cut_at_revalidation(self):
+        # Step 2, the manifest's re-read (project:5687-5688), one bounded call
+        # whose cut reread_manifest() keeps no code for: the step reads that no
+        # work time is left (work_spent()), so the cut spends it, as a real
+        # cut does.
+        def manifest(root, trees):
+            return lambda fn, args: (getattr(fn, "__qualname__", "") == "declared_tracking_branch.<locals>.examine"
+                                     and os.path.basename(args[0]) == "project.yaml")
+
+        self.assert_cut_at_the_work_deadline("manifest-cut", fs=manifest, spend=True)
+
+    def test_clean_a_registry_listing_cut_at_revalidation(self):
+        # Step 3, the registry listing (project:5700-5701).
+        self.assert_cut_at_the_work_deadline(
+            "registry-cut", child=self.at_root(["worktree", "list", "--porcelain", "-z"]))
+
+    def test_clean_a_ref_listing_cut_at_revalidation(self):
+        # Step 4, the narrowed ref listing (project:5723-5724).
+        def refs(root, trees):
+            return lambda args: os.fsencode(args[1]) == os.fsencode(root) and args[2:3] == ["for-each-ref"]
+
+        self.assert_cut_at_the_work_deadline("refs-cut", child=refs)
+
+    def test_clean_a_target_lstat_cut_at_revalidation(self):
+        # Step 5, the lstat of the target's path (project:5750-5751).
+        self.assert_cut_at_the_work_deadline("lstat-cut", fs=self.lstat_of(lambda root, trees: bytes(trees[0])))
+
+    def test_clean_a_registration_read_cut_at_revalidation(self):
+        # Step 5, the first registration read (verify_registration(),
+        # project:5759-5760): _gitfile()'s lstat of P's `.git`.
+        self.assert_cut_at_the_work_deadline(
+            "registration-cut", fs=self.lstat_of(lambda root, trees: os.path.join(bytes(trees[0]), b".git")))
+
+    def test_clean_a_twin_read_cut_at_revalidation(self):
+        # Step 5's twin check (registry_twin(), project:5566-5567): the lstat of
+        # an unselected dirty row, which only that check reads.
+        def add_dirty(root):
+            tree = self.merged_worktree("009-z", path=root.parent / "trees" / "009-z", root=root)
+            (tree / "uncommitted").write_text("keep")
+
+        self.assert_cut_at_the_work_deadline(
+            "twin-cut", fs=self.lstat_of(lambda root, trees: bytes(root.parent / "trees" / "009-z")), extra=add_dirty)
+
+    def test_clean_a_modules_check_cut_at_revalidation(self):
+        # Step 5's modules check (project:5775-5776): the lstat of
+        # `<admin>/modules`.
+        self.assert_cut_at_the_work_deadline(
+            "modules-cut", fs=self.lstat_of(lambda root, trees: os.fsencode(self.admin(trees[0]) / "modules")))
+
+    def test_clean_a_status_probe_cut_at_revalidation(self):
+        # Step 6, the status probe in the target (project:5809-5810).
+        def status(root, trees):
+            return lambda args: os.fsencode(args[1]) == bytes(trees[0]) and args[2:] == list(project.STATUS_PROBE)
+
+        self.assert_cut_at_the_work_deadline("status-cut", child=status)
 
     # D7's bound, by the counting wrapper (lead rulings R-68 (d) and R-73 (f)).
 
