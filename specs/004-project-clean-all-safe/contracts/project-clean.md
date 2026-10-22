@@ -350,17 +350,16 @@ Brett Heap's ruling LQ-14 adds gate 11, `operation-in-progress`, after
 ruling LQ-13 gate 12, `worktree-only-commits`, after it, the last gate
 (design D21; draft PR #19 at `93de4bb` and `2b86a5f`; lead rulings R-102,
 R-124 and R-146; data-model.md, "Gate"), and with them three lines. Gate
-11's group's next step is #19's as round (b) words it at
-`4485678`: `a git am, merge, notes merge, cherry-pick, revert, rebase or
-bisect is, or may be, in progress there; finish or abort it (a squash merge
-that holds an autostash ends with git commit, --allow-empty where nothing is
-staged, or with git merge --quit, which keeps the edit in the stash list),
-then run again`. `project` at `0b7dd94` still prints round (a)'s wording,
-`... ends only with git commit, --allow-empty where nothing is staged), then
-run again`, which is false, since `git merge --quit` and `git reset --hard`
-also end a held autostash, saving the edit to the stash list (lane 3's W26
-F-1; lead ruling R-171); writer G's `c15ec02`, not yet on 004, brings its
-`NEXT_STEPS` entry to round (b) (lane 3's W32 M1; lead ruling R-200). Gate
+11's group's next step is #19's as round (b) words it at `4485678`, and
+`NEXT_STEPS` in `project` at `9ab996e` prints it: `a git am, merge, notes
+merge, cherry-pick, revert, rebase or bisect is, or may be, in progress
+there; finish or abort it (a squash merge that holds an autostash ends with
+git commit, --allow-empty where nothing is staged, or with git merge --quit,
+which keeps the edit in the stash list), then run again`. Round (a)'s `...
+ends only with git commit` was false, since `git merge --quit` and `git
+reset --hard` also end a held autostash, saving the edit to the stash list
+(lane 3's W26 F-1 and W32 M1; lead rulings R-171 and R-200; writer G's
+`c15ec02`, merged as `e2e423d`). Gate
 12's group's next step is D18's at `2e819ad`: `a commit is, or may be, held
 only by this worktree's HEAD reflog or refs/worktree; keep it on a branch or
 tag, or review, then git worktree remove yourself`. The residual-window line
@@ -369,12 +368,12 @@ created, index flags set, operations started or worktree-only commits made
 after the last check, and any change after Git's own check.` In the preview
 the `operation-in-progress` and `worktree-only-commits` groups follow
 `hidden-local-state`, in gate order (`EXCLUDED_GROUP_ORDER`).
-`registration-mismatch`'s next step at `4485678` also names `unset
-core.worktree and core.bare in the worktree's config.worktree` (LQ-11, lead
-ruling R-125 L6); `project` at `0b7dd94` prints `review, then git worktree
-repair or git worktree prune, or remove the row by hand`, without that
-clause, and the text here follows the code until `NEXT_STEPS` takes it (lane
-E's and lane G's reports).
+`registration-mismatch`'s next step, as `NEXT_STEPS` in `project` at
+`9ab996e` prints it, names R-125's `config.worktree` remedy: `review, then
+git worktree repair or git worktree prune, unset core.worktree and core.bare
+in the worktree's config.worktree, or remove the row by hand` (LQ-11; D18 at
+draft PR #19 `2e819ad`; lead ruling R-125 L6; writer G's `f57ecf9`, merged
+as `e2e423d`).
 
 All new text is ASCII. A path prints verbatim in prose and shell-quoted in
 commands, unless it holds a code point of general category Cc, Cf, Zl or Zp
@@ -626,7 +625,7 @@ restores its mtime still shows by its ctime under a repository's
 | row 4 | `-C DIR worktree list --porcelain -z` | there while the main worktree is unknown, else `root` |
 | row 4b | `-C DIR config --get core.worktree` | only when the first record is `common_dir` |
 | row 4c | `-C DIR config --file COMMON_DIR/config --type=bool --get extensions.worktreeConfig` | where rows 6 and 7 run, once per common directory, before row 6: true, false (Git prints `false` or exits 1, the key unset), or not read where an earlier probe failed, which is read as true; any other outcome is true, failing closed (Brett Heap's ruling LQ-11; draft PR #19 at `addd346`; lead rulings R-101 (g) and R-113) |
-| work tree | `-C WORKTREE rev-parse --path-format=absolute --show-toplevel` | each present linked row whose identity and registration hold, before its status probe, only where row 4c is not false; at revalidation the target's, only where row 4c read true; one line naming the row's own realpath holds; another path, a failure such as exit 128 under `core.bare=true`, or other output makes the row `registration-mismatch`, unprobed; a probe cut at its budget or the deadline, or a realpath read that fails, is a row error instead, the row `inspection-error` (LQ-11; lane E's report). At revalidation a work tree the probe decides is not the target's path is `identity-changed`, and a probe that fails, runs past its own budget or prints anything but one line is `state-changed` (the lead's R-171; writer G's `6dec3f4`); the delta runs the probe after the `modules` check and the listing (the lead's R-198), which `project` at `0b7dd94` does not yet do, writer G's `963fccf` not being on 004 |
+| work tree | `-C WORKTREE rev-parse --path-format=absolute --show-toplevel` | each present linked row whose identity and registration hold, before its status probe, only where row 4c is not false; at revalidation the target's, only where row 4c read true; one line naming the row's own realpath holds; another path, a failure such as exit 128 under `core.bare=true`, or other output makes the row `registration-mismatch`, unprobed; a probe cut at its budget or the deadline, or a realpath read that fails, is a row error instead, the row `inspection-error` (LQ-11; lane E's report). At revalidation a work tree the probe decides is not the target's path is `identity-changed`, and a probe that fails, runs past its own budget or prints anything but one line is `state-changed` (the lead's R-171; writer G's `6dec3f4`); it runs after step 5's filesystem checks, the `modules` check and the listing among them, so that one of them that refuses spares its child (the lead's R-198; writer G's `963fccf`, merged as `e2e423d`) |
 | row 5 | row 3 again | `root`, only when row 3 ran elsewhere |
 | row 6 | `-C ROOT for-each-ref --format=%(refname)%00%(objectname)%00%(symref)%00%(upstream)%00%(upstream:short)%00%(upstream:track,nobracket) refs/heads refs/remotes` | `root` |
 | row 7 | `-C ROOT for-each-ref --merged=SHA --format=%(refname) refs/heads` | `root` |
@@ -663,53 +662,63 @@ prints nothing there on a clean run, and it translates its `warning:` and
 but the advice one; no DETAIL form is added.
 
 At revalidation (data-model.md, "Revalidation step and `probes_performed`")
-one rule decides every Git child that does not finish with a value, one that
-fails, runs past its own budget while the deadline is not the limit, or, as
-the work-tree probe can, prints anything but one line: it gives
-`state-changed`, whatever its step; a child gives its step's own reason only
-for a value it decided; and one that the work deadline cuts gives
-`deadline-exceeded`, the target and every later one `not-attempted` (draft PR
-#19 at `4485678` and `2e819ad`, "Cleanup revalidates destructive actions";
-the lead's R-171, R-195 and R-198; writer G's `6dec3f4` and `f6082db`). So the
+one rule decides every read that does not finish with a value: a Git child
+that fails, runs past its own budget while the deadline is not the limit, or,
+as the work-tree probe can, prints anything but one line, and a filesystem
+call that fails other than with `ENOENT` or `ENOTDIR`, or runs past its own
+budget while the deadline is not the limit, gives `state-changed`, whatever
+its step; a read gives its step's own reason only for a value it decided;
+and one that the work deadline cuts gives `deadline-exceeded`, the target and
+every later one `not-attempted` (draft PR #19 at `4485678`, `2e819ad` and
+`9267303`, "Cleanup revalidates destructive actions"; the lead's R-171,
+R-195, R-198 and R-208; writer G's `6dec3f4`, `f6082db` and `73d8888`). So the
 identity probe, the registry listing and the hidden-state probe, which gave
 `identity-changed` or `hidden-local-state` for a failure until R-195, give
-`state-changed`. A filesystem read keeps its step's reason, so that a failed
-read of the identity in step 1 still gives `identity-changed`, an open point
-for lane 3's next read (lead ruling R-201).
+`state-changed`, and since R-208 so do step 1's identity reads (the
+realpaths and the common directory's lstat), step 5's lstat of the target,
+its registration reads (a `.git` that cannot be read among them), the twin
+check's lstat and realpath of a registry entry, and the `modules` check,
+which gave `identity-changed` or, for the `modules` check, `contains-submodule`
+before. `ENOENT` or `ENOTDIR` is no failure: it decides that the path is
+absent, which keeps the step's reason, so that an absent target or `.git`
+is `identity-changed`, and so is a listing that finds no administrative
+directory, writer G's reading of a gap in #19 at `9267303`, which lane 3's
+W38 L-4 asks #19's round (e) to state (lead ruling R-220).
 
 Bounds: each probe child gets `min(5 s, work remaining)` under `clean`'s 60 s
 deadline (50 s of work, a 10 s reserve, time at the question excluded), each
 rescan child `min(5 s, reserve remaining)`; a child past its budget, at its
-record bound or on a signal gets SIGTERM to its group, SIGKILL 2 s later, and
-a reap wait of at most 2 s more, then is abandoned as `probe-timeout`. The
+record bound or on a signal gets SIGTERM to its group, SIGKILL 2 s later, and a
+reap wait of at most 2 s more, then is abandoned as `probe-timeout`. The
 removal is spawned only while 5 s of the work deadline remains, is never
-signalled before its 300 s ceiling, and is waited for. Push and branch
-deletion stay unbounded: no budget and no deadline. A signal recorded while
-the push or `git branch -d` child runs is not passed on: `project` never
-signals either child, waits for it, and then exits by D19's first row
-(data-model.md, "Exit statuses"); the slot is read just before either child
-is spawned, so a signal recorded by then runs no child (lane 3's N13; lead
-ruling R-177). Probing is serial; termination never blocks (data-model.md,
-"Child handle").
-Revalidation spawns at most six Git children per target, gate 12's
-reachability probe the sixth (LQ-13), and seven where row 4c read
-`extensions.worktreeConfig` as true (the work-tree probe; LQ-11), the final
-rescan at most three, the identity probe counted once: a line feed in the
-root's or the common directory's path repeats it, one child per option, so
-that they run up to 9 (10 with the work-tree probe) and 6 (design D6, "the
-rare repeat"; data-model.md, "Revalidation step and `probes_performed`";
-lead ruling R-82 (c)). Gate 11's listing and gate 12's `logs/HEAD` read are
-filesystem reads, no child (LQ-14, LQ-13). `LIMITS["revalidation_children"]`
-is 6 and `LIMITS["revalidation_children_worktree_config"]` 7, and the plan's
-estimate counts 6T + 3, or 7T + 3 where row 4c read true, the number
+signalled before its 300 s ceiling, and is waited for. Push and branch deletion
+stay unbounded: no budget and no deadline. A signal recorded while the push or
+`git branch -d` child runs is not passed on: `project` never signals either
+child, waits for it, and then exits by D19's first row (data-model.md, "Exit
+statuses"); the slot is read just before either child is spawned, so a signal
+recorded by then runs no child (lane 3's N13; lead ruling R-177). Probing is
+serial; termination never blocks (data-model.md, "Child handle"). Revalidation
+spawns at most six Git children per target, gate 12's reachability probe the
+sixth (LQ-13), and seven where row 4c read `extensions.worktreeConfig` as true
+(the work-tree probe; LQ-11), the final rescan at most three, the identity
+probe counted once: a line feed in the root's or the common directory's path
+repeats it, one child per option, so that they run up to 9 (10 with the
+work-tree probe) and 6 (design D6, "the rare repeat"; data-model.md,
+"Revalidation step and `probes_performed`"; lead ruling R-82 (c)). The
+work-tree probe runs after step 5's filesystem checks, so that where one of
+them refuses first its child, the seventh where row 4c read true, does not run
+(R-198). Gate 11's listing and gate 12's `logs/HEAD` read are filesystem reads,
+no child (LQ-14, LQ-13). `LIMITS["revalidation_children"]` is 6 and
+`LIMITS["revalidation_children_worktree_config"]` 7, and the plan's estimate
+counts 6T + 3, or 7T + 3 where row 4c read true, the number
 `revalidation_children()` picks, so that `probes.estimated` equals
 `probes.performed` there too (lead rulings R-165 and R-201; writer G's
-`8ae0bb5`). Whether these bounds fit the 50 s work deadline is D14's to
-say: draft PR #19 at `2e819ad` gives the fit on three bases, BA's flat 150 ms
-per child, task 2.1's measured costs with stand-ins for the two probes it did
-not measure, and a mixed basis, and chooses none; which basis the cap test
-uses, or what those two probes cost, is the first step of open question
-LQ-20, before Brett Heap (lead rulings R-196 and R-197).
+`8ae0bb5`). Whether these bounds fit the 50 s work deadline is D14's to say:
+draft PR #19 at `2e819ad` gives the fit on three bases, BA's flat 150 ms per
+child, task 2.1's measured costs with stand-ins for the two probes it did not
+measure, and a mixed basis, and chooses none; which basis the cap test uses, or
+what those two probes cost, is the first step of open question LQ-20, before
+Brett Heap (lead rulings R-196 and R-197).
 
 ## `status`, `doctor` and `update` (FR-050 to FR-053, FR-059; D16)
 

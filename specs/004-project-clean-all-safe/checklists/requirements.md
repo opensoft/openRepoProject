@@ -181,5 +181,10 @@ proceeding to planning
   scenarios. The delta-scenario lists of User Stories 2 and 4 add LQ-13's two
   titles and round (c)'s "A work-tree probe at revalidation", sixteen of PR
   #19's titles in all, each once.
+- Doc round 15 (2026-10-22) brought FR-047 to 004 at `9ab996e` and to draft
+  PR #19 at `9267303`: a revalidation filesystem read that fails, or runs
+  past its own budget, is `state-changed` whatever its step, and a path
+  found absent keeps its step's reason (the lead's R-208). No FR and no
+  scenario is added.
 - Items marked incomplete require spec updates before `/speckit-clarify`
   or `/speckit-plan`

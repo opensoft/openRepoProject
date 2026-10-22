@@ -1369,22 +1369,25 @@ written".
 - **FR-047**: A difference MUST refuse the target, spawn nothing, attempt no
   later target and exit 2, with `identity-changed` (an identity or registration
   difference, an effective work tree that the probe decides is not the target's
-  path, or a missing registry entry), `branch-changed` (a different branch name
-  or head), `state-changed` (any other signature, lock, manifest or
-  merge-target difference, and by LQ-14 a listing of the administrative
-  directory that fails or is cut), `contains-submodule` (a new gitlink or
-  `modules` entry), `hidden-local-state` (a newly flagged index entry),
-  `operation-in-progress` (a marker, LQ-14) or `worktree-only-commits` (a
-  commit that only the target's HEAD reflog or `refs/worktree/` holds, LQ-13).
-  A value null in the plan and null at revalidation MUST NOT count as a
-  difference, and a value that cannot be re-read, a timed-out filesystem call
-  included, MUST. A Git child of the revalidation that fails, runs past its own
-  budget while the deadline is not the limit, or, as the work-tree probe can,
-  prints anything but one line MUST count as `state-changed`, whatever its
-  step, a child giving its step's own reason only for a value it decided, and
-  one that the work deadline cuts MUST leave the target and every later one
-  `not-attempted` with `deadline-exceeded` (PR #19 at `4485678` and `2e819ad`;
-  the lead's R-171, R-195 and R-198). The first target's repository-wide checks
+  path, a missing registry entry, or a target path, `.git` or administrative
+  directory found absent), `branch-changed` (a different branch name or head),
+  `state-changed` (any other signature, lock, manifest or merge-target
+  difference, and by LQ-14 a listing of the administrative directory that fails
+  or is cut), `contains-submodule` (a new gitlink or `modules` entry),
+  `hidden-local-state` (a newly flagged index entry), `operation-in-progress`
+  (a marker, LQ-14) or `worktree-only-commits` (a commit that only the target's
+  HEAD reflog or `refs/worktree/` holds, LQ-13). A value null in the plan and
+  null at revalidation MUST NOT count as a difference, and a value that cannot
+  be re-read, a timed-out filesystem call included, MUST. A Git child of the
+  revalidation that fails, runs past its own budget while the deadline is not
+  the limit, or, as the work-tree probe can, prints anything but one line, and
+  a filesystem call of it that fails other than with `ENOENT` or `ENOTDIR` or
+  runs past its own budget, MUST count as `state-changed`, whatever its step, a
+  read giving its step's own reason only for a value it decided, `ENOENT` or
+  `ENOTDIR` deciding that the path is absent, and one that the work deadline
+  cuts MUST leave the target and every later one `not-attempted` with
+  `deadline-exceeded` (PR #19 at `4485678`, `2e819ad` and `9267303`; the lead's
+  R-171, R-195, R-198 and R-208). The first target's repository-wide checks
   MUST serve as the preflight of every selected target, so that a difference
   found there removes nothing at all. Push and branch deletion MUST keep the
   full re-inspection and refuse with `inspection-incomplete`, `inspect-cap` or

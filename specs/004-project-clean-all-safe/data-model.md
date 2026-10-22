@@ -146,11 +146,14 @@ regular file, so a `.git` that is a symbolic link gives no admin id), two
 registered entries with one admin id also share a realpath, so the admin-id
 comparison is a second guard that never decides alone (R-81 (a); lane 3's
 final delta read, LOW-6; lead ruling R-101 (e)), and a present entry sharing a
-checked row's realpath or admin id gives `identity-changed`. An entry whose lstat or realpath fails other than
-with `ENOENT` or `ENOTDIR`, a call cut at its probe budget included, is a
-difference too, `identity-changed`, since a twin could stand behind it and a
-value that cannot be re-read is a difference (the `project-clean-review-safety`
-delta's `spec.md:92-93`), as planning fails closed on such an entry alike.
+checked row's realpath or admin id gives `identity-changed`. An entry whose
+lstat or realpath fails other than with `ENOENT` or `ENOTDIR`, a call cut at
+its probe budget included, is a difference too, since a twin could stand
+behind it and a value that cannot be re-read is a difference (the
+`project-clean-review-safety` delta's `spec.md:92-93`), as planning fails
+closed on such an entry alike: `state-changed` since the lead's R-208, a read
+that decided nothing, where it was `identity-changed` (writer G's `73d8888`,
+merged as `9ab996e`).
 One entry is none: a row the plan itself read as `present: null`, whose
 lstat fails again, null in the plan and null again (the same delta's
 `spec.md:89-92`); in single mode the plan recorded it as another row's
@@ -456,65 +459,68 @@ target:
 
 | Step | Read by | A difference gives |
 | --- | --- | --- |
-| 1. the identity probe (row 3 at `root`) | Git child | `identity-changed` (a decided different identity, or a filesystem read of it that fails); `state-changed` (a probe that decides nothing; the lead's R-195) |
+| 1. the identity probe (row 3 at `root`), then the realpaths of the toplevel and the common directory and the common directory's lstat | Git child, then filesystem | `identity-changed` (a decided different identity, or a path the reads find absent, `ENOENT` or `ENOTDIR`); `state-changed` (a probe that decides nothing, the lead's R-195, or a read that fails otherwise or runs past its own budget, R-208) |
 | 2. the manifest re-read | filesystem | `state-changed` (manifest or merge target); a `tracking_branch` that is not a string, YAML's `.nan` among them, reads as none on both sides, as planning reads it (`as_candidate()`; lead ruling R-101 (d), the apply review's F2) |
 | 3. the registry listing | Git child | `identity-changed` (a checked row's path missing or listed twice); `state-changed` (lock, or a listing that decides nothing; R-195) |
 | 4. the narrowed ref listing | Git child | `branch-changed` (branch name or head); `state-changed` (upstream, `upstream_oid`, `ahead`, `behind`, merge target, or a listing that decides nothing) |
-| 5. the target's identity and registration (its `commondir` included), a twin of a checked row, the `modules` check and gate 11's listing of its administrative directory, by filesystem reads; then, where row 4c read true, its effective work tree, as the delta orders it (the lead's R-198), which `project` at `0b7dd94` does not yet do: it probes the work tree before the twin, `modules` and listing checks, so that where one of their differences coexists with the probe's own it gives the probe's reason, and the probe's child runs even where one of them would refuse; writer G's `963fccf`, not yet on 004, moves the probe | filesystem, then one Git child for the work tree | `identity-changed` (the identity or registration; another present entry of the fresh registry listing sharing a checked row's realpath or admin id, `registry_twin()`, R-81 (a); or an entry whose lstat or realpath fails other than with `ENOENT` or `ENOTDIR`, unless the plan read its lstat as failed too, null and null again, R-95 (c)); `contains-submodule` (a `modules` entry, or a `modules` check that fails); `operation-in-progress` (a marker), and `state-changed` for a listing that fails or times out (LQ-14; lead rulings R-124 and R-127); for the work-tree probe, `identity-changed` only for a work tree the probe decides is not the target's path, and `state-changed` for one that fails, runs past its own budget or prints anything but one line (LQ-11; the lead's R-171) |
+| 5. the target's identity and registration (its `commondir` included), a twin of a checked row, the `modules` check and gate 11's listing of its administrative directory, by filesystem reads; then, where row 4c read true, its effective work tree, so that a filesystem check that refuses spares the probe's child (the lead's R-198; writer G's `963fccf`) | filesystem, then one Git child for the work tree | `identity-changed` (the identity or registration decided different; the target's path, its `.git` or its administrative directory found absent, `ENOENT` or `ENOTDIR`, the listing that finds no administrative directory included, writer G's reading of a gap in #19 at `9267303`, lead ruling R-220; or another present entry of the fresh registry listing sharing a checked row's realpath or admin id, `registry_twin()`, R-81 (a)); `contains-submodule` (a `modules` entry); `operation-in-progress` (a marker, LQ-14); `state-changed` for a read that fails other than with `ENOENT` or `ENOTDIR` or runs past its own budget: the target's lstat, its registration reads (a `.git` that cannot be read among them), a registry entry's lstat or realpath in the twin check, unless the plan read its lstat as failed too, null and null again (R-95 (c)), the `modules` check and the listing (the lead's R-208; lead rulings R-124 and R-127); for the work-tree probe, `identity-changed` only for a work tree the probe decides is not the target's path, and `state-changed` for one that fails, runs past its own budget or prints anything but one line (LQ-11; the lead's R-171) |
 | 6. the combined status probe in the target, which must print nothing | Git child | `state-changed` (a record, or a probe that decides nothing) |
 | 7. the hidden-state probe | Git child | `contains-submodule` (a gitlink); `hidden-local-state` (a flagged entry); `state-changed` (a probe that decides nothing; R-195) |
 | 8. gate 12's check in the target: `logs/HEAD` read again and the reachability probe run again, the negatives the plan's, taken as they were | filesystem, then one Git child | `worktree-only-commits` (an object printed, or a `logs/HEAD` read to its bound or holding a line that cannot be parsed); `state-changed` (a read that fails or times out, or a probe that decides nothing; LQ-13, lead rulings R-124 and R-127) |
 
-At most six Git children (steps 1, 3, 4, 6, 7 and 8), as T084 built them
-and LQ-13 added step 8's probe (lead ruling R-75 (i)), and seven where row 4c
-read `extensions.worktreeConfig` as true, step 5's work-tree probe added
-(LQ-11; lane E's report), `LIMITS["revalidation_children"]` and
-`LIMITS["revalidation_children_worktree_config"]` (lead ruling R-165), the
-identity probe counted once: a line feed in
-the root's or the common directory's path makes step 1 read row 3 again,
-one child per option, as design D6 allows for "the rare repeat"
-(`design.md:298-302`), so that a revalidation then runs up to 9 children,
-10 with the work-tree probe, and the final rescan up to 6, a fill of the
-`project-clean` delta's bound (its `spec.md:825-826`; lead ruling R-82 (c),
-lane 3's LOW-4). A value null in the plan and null again is no difference;
-a value that cannot be re-read is a difference. One rule decides every Git
-child of these steps that does not finish with a value, one that fails, runs
-past its own budget while the deadline is not the limit, or, as the
-work-tree probe can, prints anything but one line: it gives `state-changed`,
-whatever its step, and a child gives its step's own reason only for a value
-it decided (the lead's R-171, R-195 and R-198; draft PR #19 at `4485678`
-and `2e819ad`). A filesystem read that fails keeps its step's reason: in step
-1 `identity-changed`, which R-195, covering Git children only, leaves open
-for lane 3's next read (lead ruling R-201); in step 5 `identity-changed` for
-the identity, registration and twin reads and `contains-submodule` for the
-`modules` check; and `state-changed` for step 5's listing and step 8's
-`logs/HEAD` read (lead rulings R-124 and R-127). A read the work deadline
-cut is none: `revalidate()` returns its
+At most six Git children (steps 1, 3, 4, 6, 7 and 8), as T084 built them and
+LQ-13 added step 8's probe (lead ruling R-75 (i)), and seven where row 4c read
+`extensions.worktreeConfig` as true, step 5's work-tree probe added (LQ-11;
+lane E's report), `LIMITS["revalidation_children"]` and
+`LIMITS["revalidation_children_worktree_config"]` (lead ruling R-165); where a
+filesystem check of step 5 refuses first, the work-tree probe does not run
+(R-198); the identity probe counted once: a line feed in the root's or the
+common directory's path makes step 1 read row 3 again, one child per option, as
+design D6 allows for "the rare repeat" (`design.md:298-302`), so that a
+revalidation then runs up to 9 children, 10 with the work-tree probe, and the
+final rescan up to 6, a fill of the `project-clean` delta's bound (its
+`spec.md:825-826`; lead ruling R-82 (c), lane 3's LOW-4). A value null in the
+plan and null again is no difference; a value that cannot be re-read is a
+difference. One rule decides every read of these steps that does not finish
+with a value: a Git child that fails, runs past its own budget while the
+deadline is not the limit, or, as the work-tree probe can, prints anything but
+one line, and a filesystem call that fails other than with `ENOENT` or
+`ENOTDIR`, or runs past its own budget while the deadline is not the limit,
+gives `state-changed`, whatever its step, and a read gives its step's own
+reason only for a value it decided (the lead's R-171, R-195, R-198 and R-208;
+draft PR #19 at `4485678`, `2e819ad` and `9267303`; writer G's `73d8888`,
+merged as `9ab996e`). The filesystem calls are step 1's identity reads, step
+5's lstat of the target, its registration reads, the twin check's reads, the
+`modules` check and the listing, and step 8's read of `logs/HEAD`; the
+`modules` check that fails gave `contains-submodule` and the others
+`identity-changed` before R-208. `ENOENT` or `ENOTDIR` decides that the path is
+absent, which keeps the step's reason, `identity-changed` for an absent target,
+`.git` or administrative directory; step 8's missing `logs/HEAD` names no
+candidate. A read the work deadline cut is none: `revalidate()` returns its
 distinct `deadline-exceeded`, and that target and every later one are
-`not-attempted` with that reason and no reconciliation (T099; lead ruling
-R-80 P-2), `registry_twin()` giving it too when the deadline cut one of its
-reads, so that no twin goes unread for want of time. A signal in the slot
-before a read starts is no difference either: `revalidate()` returns
-`interrupted`, its own return beside the deadline's, and that target and every
-later one are `not-attempted` with `interrupted` and no reconciliation (T093;
-lead ruling R-95 (a)). The first
-target's revalidation is the preflight of every selected target: its steps 3
-and 4 and its filesystem reads compare every selected target's registration,
-`locked` and filesystem identity, branch tip and upstream object, beside the
-merge-target SHA, and a difference on any target refuses the first target
-with that step's reason, nothing removed and later targets `not-attempted`
-with `batch-stopped`; step 5's `modules` check, listing and work-tree probe,
-and steps 6 to 8 (the target's ignored-file state, classification and
-worktree-only commits among them) read the target alone, in its own
-revalidation (research.md R16, lead ruling R-41; lane 3's W32 L2). After
-target k's removal child is reaped, its rescan runs steps 1 to 4 again, as built: the
-identity probe, the manifest re-read, the registry listing and row 6's
-full ref listing (`refs/heads refs/remotes`), three Git children and a
-file read. The full listing is a superset of step 4's narrowed one, which
-is how design D7's "its rescan runs the same three" (`design.md:374`) is
-read (lead rulings R-77 (a) and R-82 (a); lane 3's LOW-3). When k ends as
-a plain `removed` they are target k+1's steps 1 to 4, and otherwise, or
-after the last spawned target, they are the final rescan.
+`not-attempted` with that reason and no reconciliation (T099; lead ruling R-80
+P-2), `registry_twin()` giving it too when the deadline cut one of its reads,
+so that no twin goes unread for want of time. A signal in the slot before a
+read starts is no difference either: `revalidate()` returns `interrupted`, its
+own return beside the deadline's, and that target and every later one are
+`not-attempted` with `interrupted` and no reconciliation (T093; lead ruling
+R-95 (a)). The first target's revalidation is the preflight of every selected
+target: its steps 3 and 4 and its filesystem reads compare every selected
+target's registration, `locked` and filesystem identity, branch tip and
+upstream object, beside the merge-target SHA, and a difference on any target
+refuses the first target with that step's reason, nothing removed and later
+targets `not-attempted` with `batch-stopped`; step 5's `modules` check, listing
+and work-tree probe, and steps 6 to 8 (the target's ignored-file state,
+classification and worktree-only commits among them) read the target alone, in
+its own revalidation (research.md R16, lead ruling R-41; lane 3's W32 L2).
+After target k's removal child is reaped, its rescan runs steps 1 to 4 again,
+as built: the identity probe, the manifest re-read, the registry listing and
+row 6's full ref listing (`refs/heads refs/remotes`), three Git children and a
+file read. The full listing is a superset of step 4's narrowed one, which is
+how design D7's "its rescan runs the same three" (`design.md:374`) is read
+(lead rulings R-77 (a) and R-82 (a); lane 3's LOW-3). When k ends as a plain
+`removed` they are target k+1's steps 1 to 4, and otherwise, or after the last
+spawned target, they are the final rescan.
 
 `probes_performed` counts the Git children of that target's revalidation,
 the three it shares with the previous target's rescan included: at most 6,
