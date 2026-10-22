@@ -639,6 +639,20 @@ TEXT_FIXTURES = {
     # The variant where any row the refusal counts is excluded as registration-mismatch, a
     # redirected linked worktree (#19's round (h) at b3228bb, design.md D18).
     "remedy_inspection_incomplete_redirect": "repair or remove the inspection-error rows first: git worktree repair, git worktree prune, unset core.worktree and core.bare in the repository's config or in a worktree's config.worktree, or remove the row by hand after review",
+    # The two remedies above where any row of the plan, a deadline-stopped row included, has a
+    # path that could not be read (its planning lstat failed, present null), and the next step of
+    # such an inspection-error row: no git worktree prune, which deletes that live worktree's
+    # admin directory (#19's round (l); lane 3's W87 M-1, lead ruling R-307), copied exactly from
+    # the lead's brief.
+    "remedy_inspection_incomplete_unread": "repair or remove the inspection-error rows first: git worktree repair, or remove the row by hand after review; a row's path could not be read, so do not run git worktree prune until it can",
+    "remedy_inspection_incomplete_redirect_unread": "repair or remove the inspection-error rows first: git worktree repair, unset core.worktree and core.bare in the repository's config or in a worktree's config.worktree, or remove the row by hand after review; a row's path could not be read, so do not run git worktree prune until it can",
+    "next_step_unread_row": "inspect the row by hand; its path could not be read, so do not run git worktree prune until it can",
+    # NEXT_STEP_FIXTURES's inspection-error and registration-mismatch next steps where any row of
+    # the plan has such a path, since prune acts on the whole repository: each without " or git
+    # worktree prune" and with the same warning appended (the lead's R-310, an addendum to R-307),
+    # copied exactly from the lead's message.
+    "next_step_inspection_error_unread": "review, then git worktree repair, or remove the row by hand; a row's path could not be read, so do not run git worktree prune until it can",
+    "next_step_registration_mismatch_unread": "review, then git worktree repair, unset core.worktree and core.bare in the repository's config, or in that worktree's config.worktree, or remove the row by hand; a row's path could not be read, so do not run git worktree prune until it can",
     "remedy_inspect_cap": "{N} rows exceed the row cap of {M}; remove worktrees explicitly, or prune stale entries by hand",
     "remedy_deadline_exceeded": "the run ran out of time; remove worktrees explicitly or re-run",
     # The contract, beyond D18.

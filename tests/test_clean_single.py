@@ -286,8 +286,10 @@ class SingleTests(clean_support.CleanCase):
             fresh_copy()
             self.unreadable_worktree(root, "003-hidden", site / "hidden")
             before = self.snapshot(root)
+            # The row's path could not be read, so the remedy names no git
+            # worktree prune (#19's round (l); W87 M-1, lead ruling R-307).
             refused = "REFUSED: " + TEXT["plan_incomplete"].format(
-                CODE="inspection-incomplete", REMEDY=TEXT["remedy_inspection_incomplete"]) + "\n"
+                CODE="inspection-incomplete", REMEDY=TEXT["remedy_inspection_incomplete_unread"]) + "\n"
             batch, records = self.run_counted("clean", root, "--all-safe", "--apply", "--yes")
             self.assert_status(batch, 2)
             self.assertEqual(batch.stderr, refused)

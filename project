@@ -751,6 +751,41 @@ TEXT = {
         "repair or remove the inspection-error rows first: git worktree repair, git worktree prune, "
         "unset core.worktree and core.bare in the repository's config or in a worktree's config.worktree, "
         "or remove the row by hand after review",
+    # The two remedies above where any row of the plan, a deadline-stopped row
+    # included, has a path that could not be read, its planning lstat having
+    # failed (`present` null; unread_paths()), the redirect's where that
+    # variant would otherwise print: each without `git worktree prune, ` and
+    # with a warning against it, since prune deletes the admin directory of a
+    # live worktree whose path Git cannot stat (EACCES) (#19's round (l);
+    # lane 3's W87 M-1, lead ruling R-307).
+    "remedy_inspection_incomplete_unread":
+        "repair or remove the inspection-error rows first: git worktree repair, or remove the row by hand after "
+        "review; a row's path could not be read, so do not run git worktree prune until it can",
+    "remedy_inspection_incomplete_redirect_unread":
+        "repair or remove the inspection-error rows first: git worktree repair, "
+        "unset core.worktree and core.bare in the repository's config or in a worktree's config.worktree, "
+        "or remove the row by hand after review; a row's path could not be read, so do not run git worktree "
+        "prune until it can",
+    # The next step of an `inspection-error` row whose own path could not be
+    # read, its planning lstat having failed (`present` null), in place of
+    # NEXT_STEPS's, which names `git worktree prune`; the preview prints such
+    # rows in a group of their own under `inspection-error` (excluded_groups();
+    # #19's round (l) at d1c5343; lane 3's W87 M-1, lead ruling R-307).
+    "next_step_unread_row":
+        "inspect the row by hand; its path could not be read, so do not run git worktree prune until it can",
+    # NEXT_STEPS's two next steps that name `git worktree prune`, where any row
+    # of the plan has a path that could not be read, as for the two remedies
+    # above, since prune acts on the whole repository: each without ` or git
+    # worktree prune` and with the same warning appended, the first for the
+    # other `inspection-error` rows, whose paths were read (excluded_groups();
+    # #19's round (l); the lead's R-310, an addendum to R-307).
+    "next_step_inspection_error_unread":
+        "review, then git worktree repair, or remove the row by hand; a row's path could not be read, so do not "
+        "run git worktree prune until it can",
+    "next_step_registration_mismatch_unread":
+        "review, then git worktree repair, unset core.worktree and core.bare in the repository's config, or in "
+        "that worktree's config.worktree, or remove the row by hand; a row's path could not be read, so do not "
+        "run git worktree prune until it can",
     "remedy_inspect_cap":
         "{N} rows exceed the row cap of {M}; remove worktrees explicitly, or prune stale entries by hand",
     "remedy_deadline_exceeded": "the run ran out of time; remove worktrees explicitly or re-run",
@@ -4264,6 +4299,28 @@ def deadline_stopped(row):
             and cut_at_deadline(row.get("errors")))
 
 
+def path_unread(row):
+    """Whether row's path could not be read at planning: its lstat failed
+    other than for the path's absence, or was cut at its budget or the work
+    deadline, so that its `present` is null (presence_from_lstat()), and the
+    row is inspection-error. `git worktree prune` deletes the admin directory
+    of a live worktree whose path Git cannot stat (EACCES), so such a row's
+    next step, and the inspection-incomplete remedy and the inspection-error
+    and registration-mismatch next steps of a plan that holds one, take the
+    texts that name no prune (#19's round (l); lane 3's W87 M-1, lead rulings
+    R-307 and R-310)."""
+    return row["present"] is None
+
+
+def unread_paths(plan):
+    """The raw paths of plan's rows whose path could not be read at planning
+    (path_unread()), from what planning recorded, nothing read again: the
+    rows a revalidation lstat may fail on again without deciding anything
+    (registry_twin()), and the cause of the unread inspection-incomplete
+    remedies wherever this is not empty (incomplete_refusal())."""
+    return {row.raw_path for row in getattr(plan, "rows", None) or () if path_unread(row)}
+
+
 def counted_rows(plan, exclude=()):
     """The rows of plan.rows that plan_completeness() counts, in their order:
     those not in exclude, and in mode single for --action remove only P's
@@ -4333,7 +4390,14 @@ def incomplete_refusal(plan, code, exclude=()):
     when check_plan()'s step 3 passes no exclude, so that a row of P's the
     work deadline stopped is not counted there either, as no such row of a
     batch is (lead ruling R-287 (a); lane 3's W73 L-2). Otherwise the base
-    remedy."""
+    remedy. Each takes its unread form, `remedy_inspection_incomplete_unread`
+    or `remedy_inspection_incomplete_redirect_unread`, which names no `git
+    worktree prune` and warns against it, wherever any row of plan.rows, a
+    deadline-stopped row or one the refusal does not count included, has a
+    path that could not be read (unread_paths()), since prune deletes such a
+    live worktree's admin directory: the cause is safety, not counting, and
+    the redirect's counting is unchanged (#19's round (l); lane 3's W87 M-1,
+    lead ruling R-307)."""
     if code == "inspect-cap":
         evidence = plan.evidence or {}
         registry = evidence.get("records") or ()
@@ -4347,7 +4411,11 @@ def incomplete_refusal(plan, code, exclude=()):
         mismatched = {id(row) for row, reason in getattr(plan, "excluded", None) or ()
                       if reason == "registration-mismatch"}
         redirect = any(id(row) in mismatched for row in rows)
-        remedy = TEXT["remedy_inspection_incomplete_redirect" if redirect else "remedy_inspection_incomplete"]
+        if unread_paths(plan):  # R-307: any row of the plan, counted or not
+            remedy = TEXT["remedy_inspection_incomplete_redirect_unread" if redirect
+                          else "remedy_inspection_incomplete_unread"]
+        else:
+            remedy = TEXT["remedy_inspection_incomplete_redirect" if redirect else "remedy_inspection_incomplete"]
     return Refused(TEXT["plan_incomplete"].format(CODE=code, REMEDY=remedy), code=code)
 
 
@@ -5346,6 +5414,31 @@ def ignored_suffix(row):
     return TEXT[key].format(N=row["ignored_files"], SAMPLE=human_path(samples[0]))
 
 
+def excluded_groups(reason, rows, unread):
+    """The preview's groups of the rows excluded for reason, rows in raw path
+    byte order: [(NEXT STEP, rows)], each group non-empty; unread is whether
+    any row of the plan has a path that could not be read at planning
+    (unread_paths()). An `inspection-error` row whose own path could not be
+    read (path_unread()) takes TEXT's `next_step_unread_row`, so such rows
+    form a group of their own under `inspection-error`, first, the reason's
+    other rows following (#19's round (l) at d1c5343, design D18; lane 3's
+    W87 M-1, lead ruling R-307). Every other group takes next_step()'s, but
+    that where unread, since `git worktree prune` acts on the whole
+    repository, `inspection-error` and `registration-mismatch` take TEXT's
+    `next_step_inspection_error_unread` and
+    `next_step_registration_mismatch_unread`, which name no prune (the lead's
+    R-310)."""
+    step = next_step(reason) or ""
+    if unread and reason in ("inspection-error", "registration-mismatch"):
+        step = TEXT[{"inspection-error": "next_step_inspection_error_unread",
+                     "registration-mismatch": "next_step_registration_mismatch_unread"}[reason]]
+    if reason != "inspection-error":
+        return [(step, rows)]
+    own = [row for row in rows if path_unread(row)]
+    read = [row for row in rows if not path_unread(row)]
+    return [(text, part) for text, part in ((TEXT["next_step_unread_row"], own), (step, read)) if part]
+
+
 def preview_lines(plan):
     """D18's preview layout (design.md D18; contracts/project-clean.md, "Human
     output"): `Selected (N):` and one `  remove PATH [BRANCH]` per selected row;
@@ -5368,7 +5461,10 @@ def preview_lines(plan):
     `No eligible worktrees` when a complete --all-safe plan that carries no refusal selects
     nothing; and the residual-window line when anything is selected. Rows go
     in raw path byte order. In mode single, P is the one selected row and the
-    other eligible rows form the `not-requested` group."""
+    other eligible rows form the `not-requested` group. Each group's NEXT
+    STEP is excluded_groups()'s, which splits off the `inspection-error`
+    rows whose paths could not be read and names no `git worktree prune`
+    while any row of the plan has such a path (R-307, R-310)."""
     lines = []
     selected = plan.selected or []
     if selected:
@@ -5381,6 +5477,7 @@ def preview_lines(plan):
             groups.setdefault(reason, []).append(row)
         order = [reason for reason in EXCLUDED_GROUP_ORDER if reason in groups]
         order += [reason for reason in groups if reason not in EXCLUDED_GROUP_ORDER]
+        unread = bool(unread_paths(plan))  # R-307, R-310: any row of the plan
         lines.append(TEXT["excluded_heading"].format(M=len(plan.excluded)))
         for reason in order:
             rows = groups[reason]
@@ -5389,16 +5486,19 @@ def preview_lines(plan):
                 ahead = [reason for reason in AFTER_CAP_REASONS if reason in groups]
                 if sum(len(groups[reason]) for reason in ahead) == LIMITS["targets"]:
                     lines.append(TEXT["non_drain_line"].format(REASONS=", ".join(ahead)))
+                parts = [(None, rows)]
             else:
-                lines.append(TEXT["excluded_group"].format(REASON=reason, K=len(rows),
-                                                           NEXT_STEP=next_step(reason) or ""))
-            for row in rows:
-                suffix = ignored_suffix(row) if reason == "ignored-local-files" else ""
-                lines.append(TEXT["excluded_row"].format(PATH=human_path(row.raw_path),
-                                                         BRANCH=human_path(row["branch"])) + suffix)
-                if "partially-removed" in (row.get("notes") or ()):
-                    note = "partial_removal_note_locked" if row.get("locked") else "partial_removal_note"  # F-2
-                    lines.append("      " + TEXT[note].format(PATH=human_path(row.raw_path, command=True)))
+                parts = excluded_groups(reason, rows, unread)
+            for step, part in parts:
+                if step is not None:
+                    lines.append(TEXT["excluded_group"].format(REASON=reason, K=len(part), NEXT_STEP=step))
+                for row in part:
+                    suffix = ignored_suffix(row) if reason == "ignored-local-files" else ""
+                    lines.append(TEXT["excluded_row"].format(PATH=human_path(row.raw_path),
+                                                             BRANCH=human_path(row["branch"])) + suffix)
+                    if "partially-removed" in (row.get("notes") or ()):
+                        note = "partial_removal_note_locked" if row.get("locked") else "partial_removal_note"  # F-2
+                        lines.append("      " + TEXT[note].format(PATH=human_path(row.raw_path, command=True)))
     if plan.mode == "all-safe" and not selected and plan.completeness == "complete" and not plan.refusals:
         lines.append(TEXT["empty_line"])
     if selected:
@@ -6029,7 +6129,7 @@ def revalidation_difference(plan, target, run, part, seen):
             return "identity-changed"
     if slot_set(run):
         return "interrupted"
-    unread = {row.raw_path for row in getattr(plan, "rows", None) or () if row["present"] is None}
+    unread = unread_paths(plan)
     twin = registry_twin(evidence, records, rows, common_dir, unread)
     if twin is not None:
         return twin

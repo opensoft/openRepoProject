@@ -308,7 +308,9 @@ class BoundsTests(clean_support.CleanCase):
         self.assertEqual(human.stdout.splitlines()[3:5], [
             TEXT["completeness_line_incomplete"].format(CODES="inspection-incomplete"),
             TEXT["selection_line"].format(N=1)])
-        self.assertEqual(human.stderr, refused("inspection-incomplete", TEXT["remedy_inspection_incomplete"]))
+        # The row's path could not be read, so the remedy names no git
+        # worktree prune (#19's round (l); W87 M-1, lead ruling R-307).
+        self.assertEqual(human.stderr, refused("inspection-incomplete", TEXT["remedy_inspection_incomplete_unread"]))
 
     def test_clean_a_failed_status_probe_on_the_merge_target_checkout(self):
         # The main worktree on a branch of its own, and the merge target, main,
