@@ -304,9 +304,9 @@ are no part of that defense.
   `config.worktree` in P's administrative directory sets `core.worktree` to a
   clean directory D elsewhere
 - **THEN** P's work-tree probe prints D's path, so P is `refused` with
-  `identity-changed`, no removal child is spawned, Q is `not-attempted`,
-  nothing is removed, and the exit status is 2, and the same holds where D's
-  name holds a line feed, the probe's two lines being read as one path, D's
+  `identity-changed`, no removal child is spawned, Q is `not-attempted`, nothing
+  is removed, and the exit status is 2, and the same holds where D's name holds
+  a line feed, since the probe's two lines are read as one path, which is D's
 - **AND** when that `config.worktree` instead sets `core.bare` to true, so that
   the probe exits 128, or when a `git` wrapper prints the probe's path without
   the line feed Git ends it with, or holds the probe past its own 5 s budget,

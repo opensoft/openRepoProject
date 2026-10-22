@@ -316,10 +316,11 @@ target there, and then retrying.
   once the `.git` file is gone, its path and registry entry remaining, or once
   the registry entry is gone, its path remaining
 - **AND** where the rescan cannot read the target's `.git` file, as when a
-  directory above it denies search, the recovery text is "inspect `<path>` by
-  hand; its `.git` could not be read, so do not run `git worktree prune` until
-  it can", since `git worktree prune` would delete that live worktree's
-  administrative directory
+  directory above it denies search, the recovery text is instead "inspect
+  `<path>` by hand; its `.git` could not be read, so do not run `git worktree
+  prune` until it can", whatever the rescan finds of the registry entry, since
+  `git worktree prune` would delete that live worktree's administrative
+  directory
 
 #### Scenario: project killed during a deletion
 
