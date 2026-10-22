@@ -22,7 +22,9 @@ Lane: openRepoProject-4
 - [ ] CHK004 Is the full fixed sentence specified for every finding code whose message is not the ladder's recommendation (`main-worktree`, `locked-worktree`, `registration-mismatch`, `unsupported-path-bytes`, `no-merge-target`, `merge-target-conflict`, and the gitfile `unsupported-layout` and `main-worktree-missing` around their fixed remedies)? [Completeness, Gap, Spec FR-028, SC-010]
   - Result: plan note PN-1.
 - [x] CHK005 Is the message of a gated finding specified: its own text, then `; `, then the remedy, within 200 characters, the own text shortened with `...` when both do not fit? [Completeness, Spec FR-035, Clarifications C-11]
-  - Result: pass. C-11 cites design D5 for the composition and the shortening rule.
+  - Result: pass. C-11 cites design D5 for the composition and the shortening
+    rule. A rule that keeps the warning of A1's item 10 whole is held with that
+    item, for Brett Heap's word for change 2 (FR-035).
 - [ ] CHK006 Are the human text of an exit-2 refusal without `--json` (`git-too-old`, `git-unavailable`, an internal error) and the stream it is written to specified? [Completeness, Gap, Spec FR-039, FR-043]
   - Result: plan note PN-2, narrowed to an exception of any other kind in human
     mode. The rest is fixed in spec.md, FR-039 and FR-043 (2026-10-20, after
@@ -136,7 +138,8 @@ at `e4a30fc`, its category unchanged. 34 items: 27 pass, 3 fixed in the spec, 0
 open, 4 plan notes, 0 new questions. An open item waits on the question or
 residual its result names; a plan note is for the plan, not the spec; a new
 question is asked in `clarify-questions.md`. CHK024 was re-read on 2026-10-22
-after the re-read's N1, its category unchanged.
+after the re-read's N1, its category unchanged, and CHK005 after PR #19's round
+(m) at `20084cd`, its category unchanged too.
 
 Plan notes: PN-1 (CHK004, CHK023), PN-2 (CHK006, narrowed to an exception of
 any other kind in human mode, and since 2026-10-21 also the standard-error line

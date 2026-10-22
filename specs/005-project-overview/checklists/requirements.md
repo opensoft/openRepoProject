@@ -1047,19 +1047,19 @@ Lane: openRepoProject-4
 - 2026-10-22, a thirty-second pass: #19's round (l) at `ccc52b9` (`d1c5343` and
   `ccc52b9`; lane openRepoProject-2's R-307 and R-310, accepted by its R-311,
   on lane openRepoProject-3's W87) is recorded, pending Brett Heap's
-  confirmation of its five texts and his ratification of #19, by the lead's
-  commit 3ad decisions. #19: the 256 rows were re-checked by line alignment
-  against `173d83c`; round (l) adds a 21-line AND clause to "An unreadable
-  worktree is one row" in `project-clean` (:88-108), whose five texts leave
-  `git worktree prune` out while any row of the plan has a path that could not
-  be read, and the 130 cited rows after it move down 21, keeping their text,
-  `project-command` and the review-safety spec being unchanged. Its design
-  changes D7's attribution, D18's bare name under a `core.bare` true and the
-  ceiling's locked note, and its proposal `BA:725-727` and R-146's place among
-  LQ-13's lane parts. The spec mirrors none of the five texts, the overview's
-  own `inspection-incomplete` remedy being change 2's, and no hold moves,
-  FR-006's D18 changing only at the bare name, which its note does not state.
-  The round (j) record's quote of the evidence model now carries D7's
+  ratification of #19, its five texts since confirmed (the thirty-third pass),
+  by the lead's commit 3ad decisions. #19: the 256 rows were re-checked by line
+  alignment against `173d83c`; round (l) adds a 21-line AND clause to "An
+  unreadable worktree is one row" in `project-clean` (:88-108), whose five
+  texts leave `git worktree prune` out while any row of the plan has a path
+  that could not be read, and the 130 cited rows after it move down 21, keeping
+  their text, `project-command` and the review-safety spec being unchanged. Its
+  design changes D7's attribution, D18's bare name under a `core.bare` true and
+  the ceiling's locked note, and its proposal `BA:725-727` and R-146's place
+  among LQ-13's lane parts. The spec mirrors none of the five texts, the
+  overview's own `inspection-incomplete` remedy being change 2's, and no hold
+  moves, FR-006's D18 changing only at the bare name, which its note does not
+  state. The round (j) record's quote of the evidence model now carries D7's
   attribution at `ccc52b9` (`design.md:484-485`). CHK012 of
   `suggestions-gates.md` and CHK020 of `integration.md` were re-read, round (l)
   changing no gate, their categories unchanged, and the totals below were
@@ -1067,6 +1067,38 @@ Lane: openRepoProject-4
   `e4a30fc` (64 of 64). No pin moves, A1 stays cited at `e4a30fc`, and
   `clarify-questions.md` is unchanged. Re-validation: 16 of 16 items pass, with
   the checks of iteration 2 re-run by script on the edited spec.
+- 2026-10-22, a thirty-third pass, a records pass by the lead's commit 3ae
+  decisions: Brett Heap's "T1-T5: yes" (19:41:37Z), "R-307: yes; R-310: yes"
+  (19:42Z, lane openRepoProject-2's R-319) and "R-320: yes" (19:47:01Z, its
+  R-321) confirm round (l)'s five texts, T1 to T5, and rule T6 to T8, which
+  #19's round (m) at `20084cd` records (R-323); the round (l) record and the
+  thirty-second pass no longer wait on his confirmation. #19: the 256 rows were
+  re-checked by line alignment against `ccc52b9`; round (m) adds a 5-line AND
+  clause to "Row cap and planning failures" in `project-clean` (:1099-1103),
+  carrying T8, and the five cited rows after it move down 5, keeping their
+  text, `project-command` and the review-safety spec being unchanged. Round (m)
+  reaches the overview only through A1's held item 10, for Brett Heap's word
+  for change 2: FR-028 (the stale finding's message), FR-009 (the
+  `main-worktree-missing` remedy) and FR-035 (D5's cut) carry held notes, and
+  CHK025 of `discovery-identity.md` and CHK005 of `ux.md` name the hold, their
+  categories unchanged. Lane openRepoProject-2's R-332 reads the extension read
+  as FR-007 already does, with no hold. #24 at its draft PR #27's head
+  `04be7f6`, after round B21, with round B20 at `383da59` on the way: the eight
+  ranges byte-identical to their text at `dc39ec3` by `cmp`, the
+  `project-overview` block the same blob, `a40458cb`. The round (l) record's
+  cites are corrected by lane openRepoProject-3's W93 L1 and L2 (D18's
+  resolution sentences at :1432-1511, and the variant remedy's sentence running
+  on through :1423 into T2 and T3), and it names the stale finding's message
+  beside FR-009's remedy. Brett Heap's word "lane 4 plans 005 now"
+  (2026-10-22T19:46:57Z) is recorded in Status, C-56, the note on creation,
+  Assumptions and Dependencies, with the plan at `a80f10b` and its revision 1
+  at `aeb0bb2`; the tasks and the implementation still wait for his word.
+  CHK012 of `suggestions-gates.md` and CHK020 of `integration.md` were re-read,
+  round (m) changing no gate, and the totals below were recounted by script.
+  Traceability is checked against A1's ratified deltas at `e4a30fc` (64 of 64).
+  No pin moves, A1 stays cited at `e4a30fc`, and `clarify-questions.md` is
+  unchanged. Re-validation: 16 of 16 items pass, with the checks of iteration 2
+  re-run by script on the edited spec.
 - Items marked incomplete require spec updates before `/speckit-clarify` or `/speckit-plan`
 
 ## Cross-cutting Requirements Quality (no-argument `/speckit.checklist`, 2026-10-19)
@@ -1188,5 +1220,5 @@ notes (PN-1 to PN-18 but PN-4 and PN-11, withdrawn on 2026-10-21; PN-2 narrowed
 to an exception of any other kind in human mode and widened to a failed write's
 standard-error line), 0 new questions. Recounted by script on 2026-10-21, and
 again after the re-check, after the W6 read and after the fourth to twelfth
-passes of that day, and after the thirteenth to thirty-second passes on
+passes of that day, and after the thirteenth to thirty-third passes on
 2026-10-22.

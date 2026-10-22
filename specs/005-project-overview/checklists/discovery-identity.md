@@ -152,7 +152,10 @@ Lane: openRepoProject-4
 - [ ] CHK024 Exception: is a root whose listing fails partway specified (its state, and whether the candidates read before the failure are kept)? [Coverage, Edge Case, Gap, Spec FR-005, FR-017]
   - Result: plan note PN-9.
 - [x] CHK025 Recovery: is it specified how a person brings an unnamed gitfile checkout or a missing main worktree back into the report? [Recovery, Spec EC-012, FR-009]
-  - Result: pass. Add the checkout's parent with `--root`; restore or prune the main worktree by hand.
+  - Result: pass. Add the checkout's parent with `--root`; restore or prune the
+    main worktree by hand. Since #19's round (m), a warning against `git
+    worktree prune` in that remedy is held in A1's item 10, for Brett Heap's
+    word for change 2 (FR-009).
 - [x] CHK026 Non-functional: are discovery's own costs bounded (no recursion, the entry cap, the root listing's budget)? [Coverage, Spec FR-002, FR-013, FR-017]
   - Result: pass.
 - [x] CHK027 Edge: are overlapping roots (one root an immediate entry of another) covered? [Edge Case, Spec FR-003, Clarifications C-1]
@@ -188,9 +191,10 @@ its result still pass, and again after lane openRepoProject-3's W6 read of
 again after its W17 read of `b511bdb` and PR #19's `93f3194`, and after its W20
 read of A1 revision 3, and after A1's revisions 5, 6, 7 and 8 at `3ee860c`,
 `d644517`, `0394be4` and `177eadf`, and CHK016 after PR #19's round (j) at
-`e14ada0` and lane openRepoProject-3's W88 read. 29 items: 27 pass, 1 fixed in
-the spec, 0 open, 1 plan notes, 0 new questions. An open item waits on the
-question or residual its result names; a plan note is for the plan, not the
-spec; a new question is asked in `clarify-questions.md`.
+`e14ada0` and lane openRepoProject-3's W88 read, and CHK025 after its round (m)
+at `20084cd`. 29 items: 27 pass, 1 fixed in the spec, 0 open, 1 plan notes, 0
+new questions. An open item waits on the question or residual its result names;
+a plan note is for the plan, not the spec; a new question is asked in
+`clarify-questions.md`.
 
 Plan notes: PN-9 (CHK024).
