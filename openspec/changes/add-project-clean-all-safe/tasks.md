@@ -90,9 +90,12 @@ duplicate them, and nothing here is an implementation step.
   3's W80 read of round (i), with its W81 read of feature 004, under the lead's
   R-294, and lane 4's reading of a revalidation scenario, under the lead's R-299
   (the commit titled 'Amend change 1: round (k), lane 3's W80 read of round (i)
-  (R-294, R-299)'); verified by the table "Questions Resolved by the Alignment
-  Review" in `proposal.md` and the later-rulings list under it, which name the
-  section each ruling edited.
+  (R-294, R-299)'); and round (l), lane 3's W87 read of rounds (j) and (k),
+  under the lead's R-307, with the prune advice of a row whose path could not be
+  read (the commit titled 'Amend change 1: round (l), lane 3's W87 read of
+  rounds (j) and (k) (R-307)'); verified by the table "Questions Resolved by the
+  Alignment Review" in `proposal.md` and the later-rulings list under it, which
+  name the section each ruling edited.
 - [x] 1.3 Council resolved: every concern is VALID, none dismissed, the verdicts
   V1 to V12 applied to `proposal.md` (`ea9c73b`) and the five NOTED constraints
   recorded as N1 to N5 in `clarifications.md` (`1d4ed5b`); verified by

@@ -85,6 +85,19 @@ resolved repository.
 - **THEN** that row has `present: null`, an `os-error` and classification
   `inspection-error`, every other row is reported, and the report is incomplete
   and exits 1, where before this change the whole command refused with exit 2
+- **AND** a preview of `--all-safe` on that repository lists the row under
+  `inspection-error` with the next step "inspect the row by hand; its path could
+  not be read, so do not run git worktree prune until it can", and the
+  `inspection-incomplete` refusal of that preview and of `--all-safe --apply
+  --yes` names the remedy "repair or remove the inspection-error rows first: git
+  worktree repair, or remove the row by hand after review; a row's path could
+  not be read, so do not run git worktree prune until it can" or, where a row it
+  counts is also excluded as `registration-mismatch`, "repair or remove the
+  inspection-error rows first: git worktree repair, unset core.worktree and
+  core.bare in the repository's config or in a worktree's config.worktree, or
+  remove the row by hand after review; a row's path could not be read, so do not
+  run git worktree prune until it can", since `git worktree prune` would delete
+  that live worktree's administrative directory and so does not fit this cause
 
 #### Scenario: A failed status probe on the merge-target checkout
 
