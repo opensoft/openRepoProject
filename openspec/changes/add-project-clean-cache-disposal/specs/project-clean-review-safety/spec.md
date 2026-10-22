@@ -11,21 +11,28 @@ worktree whose index holds a gitlink or whose administrative directory holds a
 `modules` entry (`contains-submodule`); a worktree whose index flags any entry
 assume-unchanged or skip-worktree, sparse checkouts included
 (`hidden-local-state`); a worktree whose registration disagrees in either
-direction (`registration-mismatch`); a path that is not valid UTF-8
+direction, or whose effective work tree is not its registered path
+(`registration-mismatch`); a path that is not valid UTF-8
 (`unsupported-path-bytes`); a branch whose reflog shows no movement since its
 anchor, its last entry whose old object is all zeros, as any entry that creates
 the branch has whatever its message, or whose message begins
 `branch: Created from` or `branch: Reset to` (`unstarted-branch`), a head equal
 to the merge target's SHA not being proof of that; a branch whose reflog is
 missing, empty or read to its 64 KiB bound, or whose surviving entries cannot
-decide that (`reflog-unavailable`); and a worktree whose path cannot be read or
-whose state could not be established (`inspection-error`). It
-MUST not offer destructive removal for those states. A value that is not
-established SHALL be null, never false or 0, and SHALL keep its row out of every
-removal. A listed cache SHALL be disposable only by the cache stage of a target
-that a confirmed plan selected, under "Cache disposal never follows a symlink or
-leaves its worktree"; in every other row it SHALL stay an ignored local file, as
-an ignored path not proven a listed cache SHALL in every row.
+decide that (`reflog-unavailable`); a worktree whose administrative directory
+shows a merge, notes merge, cherry-pick, revert, `am`, rebase or bisect in
+progress, or a merge's held autostash (`operation-in-progress`); a worktree
+whose HEAD reflog or `refs/worktree/` holds a commit that no branch, tag or
+remote-tracking ref reaches, nor its branch's reflog, or whose HEAD reflog is
+read to its 64 KiB bound or holds a line that cannot be parsed
+(`worktree-only-commits`); and a worktree whose path cannot be read or whose
+state could not be established (`inspection-error`). It MUST not offer
+destructive removal for those states. A value that is not established SHALL be
+null, never false or 0, and SHALL keep its row out of every removal. A listed
+cache SHALL be disposable only by the cache stage of a target that a confirmed
+plan selected, under "Cache disposal never follows a symlink or leaves its
+worktree"; in every other row it SHALL stay an ignored local file, as an
+ignored path not proven a listed cache SHALL in every row.
 
 #### Scenario: A merged worktree has ignored local files
 
@@ -324,17 +331,22 @@ SHALL claim no lock, lease or writer-quiescence handoff. Its one guarantee for a
 worktree removal SHALL be that a removal child is spawned only if, at the
 revalidation performed immediately before spawning it, or, for a target whose
 plan lists caches, immediately before its cache stage, the repository identity,
-the target's worktree identity and branch evidence, every baseline signature
-field of the target, its `locked` flag, the absence of submodules and of hidden
-local state in its own index (read inside the target worktree), the manifest's
-`tracking_branch`, and the merge target's name, source and SHA all equal the
-values in the confirmed plan. A cache stage SHALL carry the one guarantee for
-the cache entries it removes that "Cache disposal never follows a symlink or
-leaves its worktree" states, and nothing SHALL run between that stage and the
-spawn but the removal floor and signal checks.
+the target's worktree identity, its effective work tree where the plan read it,
+and its branch evidence, every baseline signature field of the target, its
+`locked` flag, the absence of submodules and of hidden local state in its own
+index (read inside the target worktree), the absence of an operation in
+progress in its administrative directory, the absence of a commit that only its
+HEAD reflog or `refs/worktree/` holds, the manifest's `tracking_branch`, and
+the merge target's name, source and SHA all equal the values in the confirmed
+plan. A cache stage SHALL carry the one guarantee for the cache entries it
+removes that "Cache disposal never follows a symlink or leaves its worktree"
+states, and nothing SHALL run between that stage and the spawn but the removal
+floor and signal checks.
 
-Ignored files created, and index flags set, after that revalidation, and any
-change made after Git's own check, SHALL be outside the contract; the
+Ignored files created, index flags set, operations started, and commits made
+that only the target's HEAD reflog or `refs/worktree/` holds, after that
+revalidation, and
+any change made after Git's own check, SHALL be outside the contract; the
 confirmation and the result SHALL each state this residual window in one line.
 For a target whose plan lists caches, that window SHALL include a cache
 recreated after its cache stage and ignored files created during its cache

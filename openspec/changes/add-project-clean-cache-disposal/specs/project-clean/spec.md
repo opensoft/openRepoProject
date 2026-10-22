@@ -10,11 +10,11 @@ classes, by a ladder tested in this order: `stale-worktree`,
 `pushed-unmerged`. The ladder SHALL be a function of the row's evidence alone,
 and its names SHALL NOT change; its order SHALL NOT change except by the one
 ancestry test stated here. A row whose evidence could not be established (a
-path that cannot be read, a registration that disagrees, or a combined status
-probe that failed or timed out) SHALL be classified `inspection-error` directly,
-whatever its branch. A branch with no configured upstream SHALL be
-`unpublished`. A branch whose configured upstream's remote-tracking ref no
-longer exists SHALL be
+path that cannot be read, a registration that disagrees, an effective work tree
+that is not the registered path, or a combined status probe that failed or
+timed out) SHALL be classified `inspection-error` directly, whatever
+its branch. A branch with no configured upstream SHALL be `unpublished`. A
+branch whose configured upstream's remote-tracking ref no longer exists SHALL be
 tested for local ancestry before the `remote-gone` rung: when its
 `merged_into_target` is true, the row SHALL be `merged-removable`, or
 `merged-current` when it is the current worktree, and otherwise it SHALL be
@@ -112,7 +112,8 @@ caches, dispose of them as "Clean disposes of listed caches before a worktree
 removal" states; spawn, only while at least the
 5 s removal floor of the work deadline remains, the non-force command `git -c
 status.showUntrackedFiles=normal -c core.untrackedCache=false -c
-core.fsmonitor=false -c protocol.allow=never -c protocol.file.allow=never -c
+core.fsmonitor=false -c core.trustctime=true -c core.checkStat=default -c
+protocol.allow=never -c protocol.file.allow=never -c
 protocol.ssh.allow=never -c protocol.git.allow=never -c
 protocol.http.allow=never -c protocol.https.allow=never -c
 protocol.ext.allow=never -C <command directory> worktree remove <path>` in its
@@ -139,6 +140,13 @@ from the row cap.
 It SHALL remove a local branch only as a separate, explicit action after the
 worktree is gone and the branch is verified merged.
 It MUST never use a force removal, reset, or deletion of unmerged work.
+Branch deletion SHALL refuse, before its plan is shown, with exit status 2,
+no code, the baseline's message after `REFUSED: ` on standard error and no
+`git branch -d`: the default branch; a branch that a present worktree holds,
+the main worktree included; and a branch that the plan's evidence does not
+show merged into the merge target, by its ref listing and its merged set, so
+that a branch merged only into the current branch is refused, where `git
+branch -d` alone would delete it.
 
 #### Scenario: Remove a merged clean worktree
 
@@ -146,6 +154,20 @@ It MUST never use a force removal, reset, or deletion of unmerged work.
   is an ancestor of the target branch
 - **THEN** the command confirms and removes that worktree, while refusing to
   remove its branch unless the user separately requests branch deletion
+
+#### Scenario: Branch deletion refuses a branch it may not delete
+
+- **WHEN** `--apply --action delete-branch --branch B --yes` names, in turn:
+  the merge target, while the main worktree is on another branch; a branch
+  merged into the merge target that a linked worktree holds, and one that the
+  main worktree holds; and a branch merged into the main worktree's current
+  branch, which is not the merge target, but not into the merge target
+- **THEN** each refuses with exit 2, printing nothing on standard output and
+  on standard error only `REFUSED: ` followed, in turn, by `The default
+  branch is protected and cannot be deleted.`, `Remove the linked worktree
+  first; branch deletion is a separate action.` and `Branch B is not verified
+  as merged into T.`, T the merge target
+- **AND** no `git branch -d` runs, and every branch and worktree is kept
 
 #### Scenario: Every branch remains after a batch
 
@@ -299,11 +321,12 @@ row SHALL carry one `reason`, its first failing gate in this order:
 `locked-worktree`; the row's classification when it is not `merged-removable`;
 `not-requested`, for an eligible row other than the named one in a single-target
 removal; `unstarted-branch`, or `reflog-unavailable` where the reflog cannot
-decide it; `deferred-target-cap`; `contains-submodule`; and
-`hidden-local-state`. A head equal to the merge target's SHA SHALL NOT by itself
-prove a branch unstarted, because a branch fast-forward merged into the target
-sits at the target's tip, so the gate SHALL read the branch's reflog,
-`logs/refs/heads/<branch>` in the common directory, for every row it checks,
+decide it; `deferred-target-cap`; `contains-submodule`; `hidden-local-state`;
+`operation-in-progress`; and `worktree-only-commits`. A head equal to the merge
+target's SHA SHALL NOT by itself prove a branch unstarted, because a branch
+fast-forward merged into the target sits at the target's tip, so the gate
+SHALL read the branch's reflog, `logs/refs/heads/<branch>` in the common
+directory, for every row it checks,
 from the filesystem, at most 64 KiB, counted in the filesystem budget and never
 by a Git child. The reflog's anchor SHALL be its last surviving entry whose old
 object is all zeros, as every entry that creates the branch has, whatever
@@ -335,6 +358,51 @@ a `modules` entry, and as
 skip-worktree, sparse checkouts included; the index SHALL be read inside the
 row's own worktree, and both gates SHALL be checked only for rows that pass
 every earlier gate.
+
+A row SHALL be excluded as `operation-in-progress` when its own administrative
+directory, `<common_dir>/worktrees/<admin_id>`, holds an entry of any kind
+named `MERGE_HEAD`, `CHERRY_PICK_HEAD`, `REVERT_HEAD`, `BISECT_LOG`,
+`BISECT_START`, `rebase-apply`, `rebase-merge`, `sequencer`,
+`MERGE_AUTOSTASH`, `NOTES_MERGE_PARTIAL` or `NOTES_MERGE_REF`: the markers by
+which Git knows that a merge, a cherry-pick or revert or a sequence of them, an
+`am` or a rebase, a bisect, or a notes merge is in progress there, or that a
+merge holds an autostash, and which the removal would delete with that
+directory, even where the operation left the index and the working tree
+unchanged. The gate SHALL read that directory by one listing, counted in the
+filesystem budget and never by a Git child. One outcome rule SHALL govern the
+gate: a marker present SHALL make the row `operation-in-progress`; an error on
+the listing SHALL make the row `inspection-error`, as any failed row probe does,
+so that the plan is incomplete with `inspection-incomplete`; a listing not
+finished within the filesystem budget, the deadline not being the limit, SHALL
+record `probe-timeout` and make the row `inspection-error` likewise; and the
+deadline passing SHALL leave it incomplete with `deadline-exceeded`, as for
+every other read.
+
+A row SHALL be excluded as `worktree-only-commits` when a commit that its own
+HEAD reflog or a ref under its own `refs/worktree/` holds is reachable from no
+branch, tag or remote-tracking ref and from no non-zero object that its branch's
+reflog names, because removing the worktree deletes that reflog and those refs
+with its administrative directory. The gate SHALL read `logs/HEAD` in that
+directory by one filesystem call, at most 64 KiB, counted in the filesystem
+budget, every non-zero old and new object it names being a candidate, and SHALL
+then run one Git child in the worktree, `git rev-list --max-count=1
+--glob=refs/worktree <candidates> --not --branches --tags --remotes <the
+non-zero objects the branch's reflog names>`, which prints a commit exactly when
+one is held that way. A `logs/HEAD` that is missing (`ENOENT` or `ENOTDIR`) or
+empty SHALL give no candidate. One outcome rule SHALL govern the gate, split as
+the branch reflog's is, except that a read not finished within the filesystem
+budget makes the row `inspection-error` here: a child that exits 0 and prints
+anything, and a
+`logs/HEAD` read to its 64 KiB bound or holding a line that cannot be parsed,
+SHALL each make the row `worktree-only-commits`, at the gate's place in this
+order; any other error on the read, and a child that cannot be started or exits
+nonzero, as on a missing object, SHALL make the row `inspection-error`, as any
+failed row probe does; a child stopped at its 5 s budget, the deadline not being
+the limit, SHALL record `probe-timeout` and make the row `inspection-error`, and
+so SHALL a read not finished within the filesystem budget; and a read or child
+that the deadline cuts SHALL record `deadline-exceeded`. Each of those four
+SHALL leave the plan incomplete, with `inspection-incomplete` or
+`deadline-exceeded`, as for every other read and child.
 
 `selected` and `excluded` SHALL be in canonical order, by raw path bytes, and
 that order SHALL be the execution order. Once a plan is built, these checks
@@ -378,7 +446,8 @@ gate excludes SHALL refuse with `target-excluded`, whose `reason` carries the
 exclusion reason and whose message keeps the existing wording for the current
 worktree and for a class that is not removable. Every refusal that blocks a
 plan, in either mode, SHALL name a manual remedy: `git worktree prune`, `git
-worktree repair`, or removing the offending row by hand, as the cause fits.
+worktree repair`, unsetting `core.worktree` and `core.bare` in a worktree's
+`config.worktree`, or removing the offending row by hand, as the cause fits.
 
 The human preview SHALL list the selected rows, then the excluded rows grouped
 by reason, each group with its next step; an `ignored-local-files` exclusion
@@ -437,6 +506,66 @@ apply SHALL print `Removed N; branches kept: ` followed by the branches kept.
   administrative directory before its revalidation, that target is `refused`
   with `contains-submodule`, later targets are `not-attempted`, and the exit
   status is 2
+
+#### Scenario: An operation in progress
+
+- **WHEN** otherwise eligible linked worktrees each hold, with an index and a
+  working tree equal to their branch head: a `git am` that failed on a patch
+  that does not apply; a `git cherry-pick` of two commits stopped at a conflict
+  on the first and resolved to the branch's own content; a `git merge
+  --no-commit -s ours` of another branch; a `git notes merge` stopped at a
+  conflict; and a `git bisect start --no-checkout`
+- **THEN** the combined status probe prints no record for any of them,
+  `--all-safe` excludes each as `operation-in-progress`, and `--all-safe
+  --apply --yes` removes none of them
+- **AND** `--apply --action remove --worktree` naming one refuses with
+  `target-excluded`, reason `operation-in-progress`, and exit 2
+- **AND** once each operation is aborted (`git am --abort`, `git cherry-pick
+  --abort`, `git merge --abort`, `git notes merge --abort` and `git bisect
+  reset`), each worktree is selected as before, although the aborted notes
+  merge leaves its `NOTES_MERGE_WORKTREE` directory behind
+- **AND** a worktree whose administrative directory cannot be listed, its read
+  permission removed while its `gitdir` file stays readable, is
+  `inspection-error`, the plan is incomplete with `inspection-incomplete`, the
+  preview exits 1, and `--all-safe --apply --yes` refuses with exit 2 before
+  any removal
+
+#### Scenario: A squash merge that holds an autostash
+
+- **WHEN** an otherwise eligible linked worktree has an edit to a tracked file
+  and runs `git merge --squash --autostash -s ours` of another branch, on a
+  Git that keeps the autostash until the squash is committed, as 2.40.4 and
+  2.43.0 do, so that only `MERGE_AUTOSTASH` in its administrative directory
+  holds the edit, `git stash list` is empty and the combined status probe
+  prints no record
+- **THEN** `--all-safe` excludes it as `operation-in-progress`, and
+  `--all-safe --apply --yes` leaves the worktree and its `MERGE_AUTOSTASH` in
+  place, where before this change the non-force removal exited 0 and left the
+  edit unreachable
+- **AND** on Git 2.36.6, which applies the autostash at once, the edit is back
+  in the working tree and the row is excluded as `dirty`
+
+#### Scenario: A commit held only by the worktree
+
+- **WHEN** one otherwise eligible linked worktree had its HEAD detached, a
+  commit made there and its branch checked out again, so that only its HEAD
+  reflog holds that commit, and another holds a commit made the same way that
+  only its `refs/worktree/keep` holds
+- **THEN** `--all-safe` excludes both as `worktree-only-commits`,
+  `--all-safe --apply --yes` removes neither, and both commits stay reachable
+  from their worktrees
+- **AND** `--apply --action remove --worktree` naming either refuses with
+  `target-excluded`, reason `worktree-only-commits`, and exit 2
+- **AND** once the first commit is tagged, and a branch is made at the second
+  and its `refs/worktree/keep` deleted, both worktrees are selected as before
+- **AND** a worktree whose branch was amended and reset, so that its HEAD
+  reflog names commits that only that branch's reflog still holds, is selected
+  as before
+- **AND** a worktree whose HEAD reflog names a commit whose object was deleted
+  from the repository, so that the child exits 128 with `fatal: bad object`,
+  is `inspection-error`, the plan is incomplete with `inspection-incomplete`,
+  the preview exits 1, and `--all-safe --apply --yes` refuses with exit 2
+  before any removal
 
 #### Scenario: Paths and empty plans
 
@@ -529,7 +658,8 @@ a removal child SHALL be spawned only while at least the 5 s removal floor of
 the work deadline remains, and otherwise that target and every later one SHALL
 be `not-attempted` with `deadline-exceeded`. A cache stage, as "Clean disposes
 of listed caches before a worktree removal" states, SHALL start only while more
-than that floor remains, under the same rule, and each of its reads SHALL get
+than that floor remains, a stricter test than the removal child's, which is
+spawned while at least that floor remains, and each of its reads SHALL get
 `min(5 s, work remaining less the removal floor)`, so that the floor is left for
 the spawn. A cache stage SHALL hand an unlink or a directory removal to its
 worker only while more than that floor remains. A removal handed over SHALL be
@@ -699,7 +829,8 @@ accepted. Each selected target SHALL end in one stage with one reason:
   `removal-ceiling`;
 - `refused`: revalidation found a difference, or a cache stage ended `refused`
   or `partial`, and nothing was spawned; `identity-changed`, `branch-changed`,
-  `state-changed`, `contains-submodule` or `hidden-local-state`;
+  `state-changed`, `contains-submodule`, `hidden-local-state`,
+  `operation-in-progress` or `worktree-only-commits`;
 - `failed`: the child exited nonzero on its own, whether or not a signal reached
   `project`, or could not be spawned; `git-refused` for exit status 128,
   `git-failed` for any other status (128 plus the signal number when a signal
@@ -708,10 +839,11 @@ accepted. Each selected target SHALL end in one stage with one reason:
   not proven; `unconfirmed-removal`, `reconciliation-incomplete`,
   `internal-error` or `removal-ceiling`;
 - `not-attempted`: the run stopped before reaching the target, or before
-  spawning its removal because less than the removal floor remained, or, for a
-  target whose cache stage ended `disposed`, before its removal was spawned
-  because a signal had been received or less than the removal floor remained;
-  `batch-stopped`, `interrupted` or `deadline-exceeded`.
+  spawning its removal because less than the removal floor remained or the
+  work deadline cut its revalidation, or, for a target whose cache stage ended
+  `disposed`, before its removal was spawned because a signal had been
+  received or less than the removal floor remained; `batch-stopped`,
+  `interrupted` or `deadline-exceeded`.
 
 A removal child that exits nonzero on its own SHALL be `failed` with Git's
 status, `git-refused` for 128 and `git-failed` otherwise, whether or not a
@@ -878,8 +1010,9 @@ holds. For the candidates in canonical order, at most 16 per invocation
 (`limits.cache_rows`), `project clean` SHALL run one cache enumeration each,
 after the row's identity is verified: one Git child in the row's own worktree,
 `status --porcelain=v2 -z --untracked-files=normal --ignored=matching`,
-carrying the status pins `-c core.untrackedCache=false -c
-core.fsmonitor=false`, its own pin `-c status.showStash=false`, so that a
+carrying the four status pins that every status probe carries, `-c
+core.untrackedCache=false -c core.fsmonitor=false -c core.trustctime=true -c
+core.checkStat=default`, its own pin `-c status.showStash=false`, so that a
 repository's stash never puts a `# stash` header before its records, the
 protocol pins, the scrubbed environment and
 `GIT_OPTIONAL_LOCKS=0` that every read-only Git child carries, under the
@@ -1094,7 +1227,10 @@ number of its cache paths, entries and bytes and its first cache path. An
 counts, each printed `unknown` with the reason when null, its first blocking
 path when established, its `candidate_block` with that class's or gate's next
 step when it has one, and, for `cache-unwritable`, the next step to fix the
-ownership or mode of its caches and re-run. The confirmation question SHALL
+ownership or mode of the first directory, by raw path bytes, that the row's
+access check found the running user cannot change, named by its path relative
+to the worktree, `.` for the worktree itself, or, on a read-only filesystem, to
+remount it writable, and re-run. The confirmation question SHALL
 stay as "Clean previews and applies a batch of eligible worktree removals in
 one repository" states it. A successful apply SHALL add one line naming how
 many cache paths were disposed of in how many worktrees. A run that stops at a
@@ -1263,8 +1399,9 @@ and its residual window" states.
 - **THEN** the wrapper records one `status --porcelain=v2 -z
   --untracked-files=normal --ignored=matching` child naming that worktree as its
   directory and carrying `-c core.untrackedCache=false -c
-  core.fsmonitor=false`, `-c status.showStash=false` and the seven protocol
-  pins, the enumeration succeeds, its output holding no `# stash` header, and
+  core.fsmonitor=false -c core.trustctime=true -c core.checkStat=default`,
+  `-c status.showStash=false` and the seven protocol pins, the enumeration
+  succeeds, its output holding no `# stash` header, and
   `probes.performed` counts that child
 - **AND** `--all-safe --apply --yes` then revalidates the candidate with the
   same child and pins, which prints exactly the planned records, disposes of
@@ -1388,7 +1525,10 @@ and its residual window" states.
   `blocking` 0, it is not selected, nothing in it is deleted, the second is
   removed, and the exit status is 0
 - **AND** its preview line names `cache-unwritable` with the next step to fix
-  the ownership or mode of its caches and re-run, and a re-run plans the same
+  the ownership or mode of that `__pycache__` directory, named by its path
+  relative to the worktree, or, on a read-only filesystem, to remount it
+  writable, and re-run, and a re-run plans the same, also after a mode change
+  of the worktree itself
 - **AND** when the access check passes but a test hook makes the stage's first
   unlink fail with `EACCES` or `EROFS`, the stage ends `refused` with
   `cache-changed` and nothing deleted, the target is `refused` with
