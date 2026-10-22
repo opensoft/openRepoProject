@@ -418,6 +418,33 @@ class PushTests(clean_support.CleanCase):
         self.assertEqual(pushes(clean_support.child_log(log)), [], "no push child")
         self.assertEqual((self.refs(root), self.refs(remote)), before, "nothing pushed")
 
+    def test_clean_push_refuses_a_branch_it_may_not_push_no_unique_worktree(self):
+        # The first case of PR #19's "Push refuses a branch it may not push" (at
+        # 4485678, round (b)): the baseline's refusal (project:684-685
+        # at 961c405; project:6128-6130 at fc27b73), exit 2 and no code, when
+        # the rows hold the branch other than exactly once. 002-loose has a
+        # commit of its own and no worktree; 003-shared, unpublished with a
+        # commit of its own, is held by two worktrees, the second added with
+        # --force, and is refused with the same message.
+        root = self.repo()
+        remote = self.bare_remote()
+        loose = self.git(root, "commit-tree", "main^{tree}", "-p", "main", "-m", "a commit of its own").strip()
+        self.git(root, "update-ref", "refs/heads/002-loose", loose)
+        first, second = self.base / "shared-tree", self.base / "shared-tree-2"
+        self.git(root, "worktree", "add", "-q", "-b", "003-shared", first)
+        self.advance(first)
+        self.git(root, "worktree", "add", "-q", "--force", second, "003-shared")
+        registry = self.git(root, "worktree", "list", "--porcelain").splitlines()
+        self.assertEqual((registry.count("branch refs/heads/002-loose"), registry.count("branch refs/heads/003-shared")),
+                         (0, 2))
+        env, log = self.counting()
+        for case, branch in (("no worktree", "002-loose"), ("two worktrees", "003-shared")):
+            with self.subTest(case):
+                self.assert_push_refused(root, branch, env, log, f"No unique linked worktree found for branch {branch}",
+                                         remote)
+        self.assertEqual(self.git(root, "config", "--get-all", "branch.003-shared.remote", check=False), "",
+                         "no upstream was set")
+
     def test_clean_push_refuses_the_default_branch(self):
         # P1 (project:5761-5762 at 92daad9): main, the merge target, one commit
         # ahead of its upstream origin/main; P1 pushed it to origin.
@@ -904,6 +931,49 @@ class PushTests(clean_support.CleanCase):
                 self.assertIn(f"Deleted branch {branch} (was ", out.getvalue(), "the child ran and was reaped")
                 self.assertEqual(self.git(root, "for-each-ref", "refs/heads/" + branch), "", "the branch is gone")
 
+    def test_clean_a_signal_during_the_push_or_branch_deletion_recorded_before_the_spawn(self):
+        # Lead ruling R-177 (lane 3's M-2 at 2439838, mutant N13), design D15:
+        # the slot is read before each spawn. main() in process under the
+        # counting wrapper; the signal is recorded in the slot as
+        # require_unchanged_cleanup_state() returns, the last read before the
+        # child, as signal_scope()'s handler records one, with no signal sent.
+        # The slot read just after it raises, so no child is spawned and main()
+        # prints `Cancelled.`, exit 128 plus the signal's number, the plan
+        # shown and nothing else. Without that read (N13) `git branch -d` ran
+        # and deleted the branch, and the push ran, each then reported with
+        # `Interrupted; ...` instead.
+        root = self.repo()
+        remote = self.bare_remote()
+        self.unpushed("001-feature")
+        env, log = self.counting()
+        real = project.require_unchanged_cleanup_state
+        cases = [("delete-branch", "002-merged-" + signum.name.lower(), signum)
+                 for signum in (signal.SIGTERM, signal.SIGINT, signal.SIGHUP)]
+        cases.append(("push", "001-feature", signal.SIGTERM))
+        for action, branch, signum in cases:
+            with self.subTest(action=action, signal=signum.name):
+                if action == "delete-branch":
+                    self.git(root, "branch", branch)  # at the merge target's tip, with no worktree
+
+                def then_signalled(repo, run, which, name, signum=signum):
+                    real(repo, run, which, name)
+                    run.record_signal(signum)
+
+                before = (self.refs(root), self.refs(remote))
+                clean_support.reset_child_log(log)
+                out, err = io.StringIO(), io.StringIO()
+                with mock.patch.dict(os.environ, env, clear=True), \
+                        mock.patch.object(project, "require_unchanged_cleanup_state", then_signalled), \
+                        mock.patch.object(project.sys, "stdout", out), mock.patch.object(project.sys, "stderr", err):
+                    status = project.main(["clean", str(root), "--apply", "--action", action, "--branch", branch,
+                                           "--yes"])
+                self.assertEqual((status, err.getvalue()), (128 + signum, "Cancelled.\n"))
+                self.assertTrue(out.getvalue().startswith("Cleanup action: "), out.getvalue())
+                records = clean_support.child_log(log)
+                self.assertTrue(records, "the counting wrapper recorded the inspection's children")
+                self.assertEqual((deletions(records), pushes(records)), ([], []), "no child was spawned")
+                self.assertEqual((self.refs(root), self.refs(remote)), before, "the branch survives, nothing pushed")
+
     def test_clean_push_and_delete_branch_escape_their_paths(self):
         # The root's name holds a tab (Cc) and U+202E (Cf), and so does one
         # branch's U+202E; each is built with chr(), as is the backslash of
@@ -953,7 +1023,7 @@ class PushTests(clean_support.CleanCase):
 
     def assert_children(self, records, pid, root, branch, kept=()):
         """The push child alone: the vector shown, no pin, project's process
-        group, the seventeen names removed but those kept; every other child:
+        group, the thirty-one names removed but those kept; every other child:
         the seven pins, its own process group, no scrubbed name. Returns the
         push child's record."""
         [push] = pushes(records)

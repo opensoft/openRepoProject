@@ -52,7 +52,7 @@ REAL_GIT = _which_git()
 
 # The thirty-one names every Git child of `project` runs without, in the order of
 # specs/004-project-clean-all-safe/contracts/project-clean.md, "Git children"
-# (:297-301), and the one name read-only probes set. This is the harness's own
+# (:562-570), and the one name read-only probes set. This is the harness's own
 # literal transcription, never imported from project's GIT_SCRUB (lead ruling
 # R-42); test_clean_counting_wrapper_records_and_execs asserts the two equal, in
 # order. The counting wrapper records these names, and CleanCase removes them
@@ -262,7 +262,7 @@ def install_counting_git(bin_dir, log, real=REAL_GIT, hooks=None, proc="/proc"):
     fields NUL-terminated and the record ended by an argument count and a final
     `end` field: the pid, the parent pid, the process group (from
     /proc/$$/stat, else `ps -o pgid= -p $$`), the working directory (`pwd -P`),
-    which of the seventeen scrubbed names and GIT_OPTIONAL_LOCKS are set (each
+    which of the thirty-one scrubbed names and GIT_OPTIONAL_LOCKS are set (each
     tested as ${NAME+x}), GIT_OPTIONAL_LOCKS's value, and the argument vector.
     With no hook it then execs real by absolute path, so the record's pid and
     process group are Git's own. hooks, a dict with "pre" and/or "post", applies
@@ -614,7 +614,7 @@ TEXT_FIXTURES = {
     "ignored_suffix_truncated": ": at least {N} ignored; first: {SAMPLE}",
     "deferral_line": "  deferred-target-cap ({K}): this run removes up to 16; run again: project clean {ROOT} --all-safe --apply",
     "non_drain_line": "  these deferred rows will not drain while the 16 rows ahead of them are contains-submodule; review those worktrees, then remove them yourself",
-    "residual_window_line": "Not protected: ignored files created or index flags set after the last check, and any change after Git's own check.",
+    "residual_window_line": "Not protected: ignored files created, index flags set or operations started after the last check, and any change after Git's own check.",
     "empty_line": "No eligible worktrees",
     # D18: the question, the wait, the result.
     "question": "Remove {N} worktrees, keeping {N} branches? [yes/N]",
@@ -685,6 +685,7 @@ NEXT_STEP_FIXTURES = {
     "reflog-unavailable": "the branch's reflog is missing, expired or undecidable; review, then git worktree remove yourself",
     "contains-submodule": "review, then remove the worktree yourself",
     "hidden-local-state": "review, then remove the worktree yourself",
+    "operation-in-progress": "a git am, merge, notes merge, cherry-pick, revert, rebase or bisect is, or may be, in progress there; finish or abort it (a squash merge that holds an autostash ends only with git commit, --allow-empty where nothing is staged), then run again",
     "registration-mismatch": "review, then git worktree repair or git worktree prune, or remove the row by hand",
     "inspection-error": "review, then git worktree repair or git worktree prune, or remove the row by hand",
     "locked-worktree": "unlock it yourself if it should go",
@@ -702,7 +703,7 @@ class CleanCase(unittest.TestCase):
     builds (tests/test_project.py:117-136): a resolved temporary base, a fake
     workBenches with the test generator, and self.env with WORKBENCHES_ROOT,
     HOME, PROJECTS_DIR, GIT_CONFIG_NOSYSTEM=1 and GIT_CONFIG_GLOBAL=os.devnull;
-    plus a fixed author and committer, and none of the seventeen scrubbed names
+    plus a fixed author and committer, and none of the thirty-one scrubbed names
     or GIT_OPTIONAL_LOCKS inherited from the caller."""
 
     def setUp(self):

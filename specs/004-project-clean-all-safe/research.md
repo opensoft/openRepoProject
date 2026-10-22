@@ -54,9 +54,10 @@ scratch directory, never in the repository.
   and waits for it to exit; it is unbounded, with no `min(5 s, remaining)`
   budget and no 64 s deadline; it carries none of the seven protocol pins;
   and it yields no evidence. Under the lead's ruling R-28 it keeps the
-  caller's `GIT_ALLOW_PROTOCOL`, while the other sixteen scrubbed names are
-  removed from it, so it acts on the repository the run inspected. Every
-  other Git child keeps the seventeen-name scrub, the pins and its own
+  caller's `GIT_ALLOW_PROTOCOL`, while the other scrubbed names, sixteen then
+  and thirty since Brett Heap's ruling Q9 B, are removed from it, so it acts
+  on the repository the run inspected. Every other Git child keeps the
+  scrub, seventeen names then and thirty-one since Q9 B, the pins and its own
   process group: `git --version`, every identity, registry, ref,
   merged-set, status, hidden-state and `remote get-url` child, every
   revalidation and rescan child, the removal child and the delete-branch
@@ -283,10 +284,12 @@ scratch directory, never in the repository.
     (128 plus the signal number) unless a signal was recorded meanwhile, when
     the run exits 130, 143 or 129 (R4). The delete-branch child `git branch -d`
     becomes a D2 handle run by the driver: its own process group, the
-    seventeen-name scrub and the seven pins, with no budget and never signalled
+    scrub (thirty-one names since Q9 B) and the seven pins, with no budget and
+    never signalled
     (R4), its output relayed to `project`'s own streams. The push child stays
     on `execute()` as R1 describes: `project`'s process group and streams,
-    sixteen names scrubbed (`GIT_ALLOW_PROTOCOL` kept, R-28), no pin, never
+    every scrubbed name but `GIT_ALLOW_PROTOCOL` removed (R-28; thirty since
+    Q9 B), no pin, never
     signalled. `execute()` gains only an optional environment argument, and is
     unchanged for non-Git delegates.
 - **Scenarios**: "Bounded revalidation work" (US6-6, `probes.performed` equal

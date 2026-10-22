@@ -819,6 +819,310 @@ class GatesTests(clean_support.CleanCase):
                 self.assert_refused_target(result, tree, reason, message)
         self.assertEqual(self.snapshot(root), before, "nothing removed")
 
+    # LQ-14 (Brett Heap, 2026-10-21; design D22; lead rulings R-124, R-126 and
+    # R-146): the gate `operation-in-progress`, one listing of the row's admin
+    # directory. Scenarios "An operation in progress" and "A squash merge that
+    # holds an autostash", the eleven markers, and the listing's failures.
+
+    # The combined status probe's words after `-C PATH` (D6, D11).
+    STATUS_WORDS = ("status", "--porcelain=v1", "-z", "--untracked-files=normal", "--ignored=matching")
+    # The eleven markers of D22, written here as literals (rule 11).
+    MARKERS = ("MERGE_HEAD", "CHERRY_PICK_HEAD", "REVERT_HEAD", "BISECT_LOG", "BISECT_START", "rebase-apply",
+               "rebase-merge", "sequencer", "MERGE_AUTOSTASH", "NOTES_MERGE_PARTIAL", "NOTES_MERGE_REF")
+
+    def admin_dir(self, tree):
+        """The administrative directory of the linked worktree at tree."""
+        return Path(self.git(tree, "rev-parse", "--path-format=absolute", "--git-dir").rstrip("\n"))
+
+    def side_commits(self, root, branch, *changes):
+        """One commit per change ({file: text}) on a new branch BRANCH from
+        root's first commit, made in a temporary worktree that is then removed,
+        so the branch is no worktree row. Returns the commits' SHAs."""
+        first = self.git(root, "rev-list", "--max-parents=0", "HEAD").strip()
+        tmp = self.base / ("side-" + branch)
+        self.git(root, "worktree", "add", "-q", "-b", branch, tmp, first)
+        shas = []
+        for change in changes:
+            for name, text in change.items():
+                (tmp / name).write_text(text)
+            shas.append(self.commit(tmp, f"side {len(shas) + 1}"))
+        self.git(root, "worktree", "remove", tmp)
+        return shas
+
+    def assert_status_clean(self, tree):
+        """The combined status probe prints no record for tree."""
+        self.assertEqual(self.git(tree, *self.STATUS_WORDS), "", f"{tree} reads clean to the status probe")
+
+    def test_clean_an_operation_in_progress(self):
+        root = self.repo()
+        self.bare_remote()
+        plain = self.merged_worktree("001-plain", path=self.base / "plain")
+        branches = {"am": "002-am", "cherry-pick": "003-cherry-pick", "merge": "004-merge", "notes": "005-notes",
+                    "bisect": "006-bisect"}
+        trees = {name: self.merged_worktree(branch, path=self.base / name) for name, branch in branches.items()}
+        # A side branch whose first two commits add each worktree's own file
+        # with other content, so that a patch of the first does not apply and a
+        # cherry-pick of the second stops at a conflict; a third adds a file of
+        # its own.
+        add_am, add_pick, third = self.side_commits(root, "side", {"work-002-am": "other\n"},
+                                                    {"work-003-cherry-pick": "other\n"}, {"side-file": "side\n"})
+        patch = self.base / "add-am.patch"
+        patch.write_text(self.git(root, "format-patch", "-1", "--stdout", add_am))
+        self.git(trees["am"], "am", patch, check=False)
+        self.assertTrue((self.admin_dir(trees["am"]) / "rebase-apply").is_dir(), "the failed am stopped")
+        self.git(trees["cherry-pick"], "cherry-pick", add_pick, third, check=False)
+        self.git(trees["cherry-pick"], "checkout", "--ours", "work-003-cherry-pick")
+        self.git(trees["cherry-pick"], "add", "work-003-cherry-pick")
+        self.git(trees["merge"], "merge", "-q", "--no-commit", "-s", "ours", "side")
+        notes = trees["notes"]
+        self.git(notes, "notes", "add", "-m", "base", "HEAD")
+        self.git(notes, "update-ref", "refs/notes/other", "refs/notes/commits")
+        self.git(notes, "notes", "add", "-f", "-m", "mine", "HEAD")
+        self.git(notes, "notes", "--ref=other", "add", "-f", "-m", "theirs", "HEAD")
+        self.git(notes, "notes", "merge", "refs/notes/other", check=False)
+        self.git(trees["bisect"], "bisect", "start", "--no-checkout")
+        expected = {"am": {"rebase-apply"}, "cherry-pick": {"CHERRY_PICK_HEAD", "sequencer"},
+                    "merge": {"MERGE_HEAD"}, "notes": {"NOTES_MERGE_PARTIAL", "NOTES_MERGE_REF"},
+                    "bisect": {"BISECT_LOG", "BISECT_START"}}
+        for name, tree in trees.items():
+            with self.subTest(made_by=name):
+                self.assertEqual(set(self.MARKERS) & set(os.listdir(self.admin_dir(tree))), expected[name])
+                self.assert_status_clean(tree)
+                self.assertEqual(self.git(tree, "branch", "--show-current").strip(), branches[name], "not detached")
+        before = self.snapshot(root)
+        result = self.preview(root)
+        self.assert_status(result, 0)
+        document = result.document
+        self.assertEqual([entry["path"] for entry in document["selected"]], [str(plain)])
+        self.assertEqual(by_path(document), {str(root): "main-worktree",
+                                             **{str(tree): "operation-in-progress" for tree in trees.values()}})
+        for tree in trees.values():
+            self.assertEqual((row_of(document, tree)["classification"], row_of(document, tree)["errors"]),
+                             ("merged-removable", []), "the gate excludes without relabelling")
+        human = self.run_cli("clean", root, "--all-safe")
+        self.assert_status(human, 0)
+        lines = human.stdout.splitlines()
+        group = lines.index(TEXT["excluded_group"].format(REASON="operation-in-progress", K=5,
+                                                          NEXT_STEP=STEPS["operation-in-progress"]))
+        ordered = sorted(trees.values(), key=lambda tree: os.fsencode(tree))
+        names = {tree: branches[name] for name, tree in trees.items()}
+        self.assertEqual(lines[group + 1:group + 6],
+                         [TEXT["excluded_row"].format(PATH=tree, BRANCH=names[tree]) for tree in ordered])
+        self.assertEqual(self.snapshot(root), before, "a preview changes nothing")
+        # The batch removes none of them.
+        result, records = self.run_counted("clean", root, "--all-safe", "--apply", "--yes")
+        self.assert_status(result, 0)
+        self.assertEqual([argv_words(record)[-1] for record in removals(records)], [str(plain)])
+        for name, tree in trees.items():
+            self.assertTrue(tree.is_dir(), name)
+            self.assertEqual(set(self.MARKERS) & set(os.listdir(self.admin_dir(tree))), expected[name])
+        # Naming one refuses with target-excluded, reason operation-in-progress.
+        message = TEXT["target_excluded_gate"].format(REASON="operation-in-progress",
+                                                      NEXT_STEP=STEPS["operation-in-progress"])
+        result, records = self.run_counted("clean", root, "--apply", "--action", "remove", "--worktree",
+                                           trees["merge"], "--yes")
+        self.assert_status(result, 2)
+        self.assertEqual(result.stderr, f"REFUSED: {message}\n")
+        self.assertEqual(removals(records), [])
+        for tree in trees.values():
+            with self.subTest(named=str(tree)):
+                result = self.run_json("clean", root, "--apply", "--action", "remove", "--worktree", tree, "--yes",
+                                       "--json")
+                self.assert_refused_target(result, tree, "operation-in-progress", message)
+        # Once each is aborted, each is selected as before; the aborted notes
+        # merge leaves its NOTES_MERGE_WORKTREE behind, which is no marker.
+        self.git(trees["am"], "am", "--abort")
+        self.git(trees["cherry-pick"], "cherry-pick", "--abort")
+        self.git(trees["merge"], "merge", "--abort")
+        self.git(notes, "notes", "merge", "--abort")
+        self.git(trees["bisect"], "bisect", "reset")
+        self.assertTrue((self.admin_dir(notes) / "NOTES_MERGE_WORKTREE").exists())
+        result = self.preview(root)
+        self.assert_status(result, 0)
+        self.assertEqual([entry["path"] for entry in result.document["selected"]], [str(tree) for tree in ordered])
+        self.assertEqual(by_path(result.document), {str(root): "main-worktree"})
+
+    @clean_support.not_root
+    def test_clean_an_operation_in_progress_admin_directory_that_cannot_be_listed(self):
+        # The scenario's last clause: read permission removed from the admin
+        # directory while its gitdir file stays readable (write and search
+        # kept), so that only the listing fails.
+        root = self.repo()
+        self.bare_remote()
+        tree = self.merged_worktree("001-unlisted", path=self.base / "unlisted")
+        admin = self.admin_dir(tree)
+        admin.chmod(0o300)
+        self.addCleanup(admin.chmod, 0o700)
+        self.assertTrue((admin / "gitdir").read_text().strip())
+        refused = {"code": "inspection-incomplete", "message": TEXT["plan_incomplete"].format(
+            CODE="inspection-incomplete", REMEDY=TEXT["remedy_inspection_incomplete"])}
+        error = {"code": "os-error", "message": TEXT["row_error_os_error"].format(
+            OPERATION="listdir", STRERROR=os.strerror(errno.EACCES))}
+        for words, status in ((("--all-safe", "--json"), 1), (("--all-safe", "--apply", "--yes", "--json"), 2)):
+            with self.subTest(words=words):
+                result, records = self.run_counted("clean", root, *words)
+                self.assert_status(result, status)
+                document = self.load_json(result)
+                self.assertEqual((document["selected"], by_path(document)),
+                                 ([], {str(root): "main-worktree", str(tree): "inspection-error"}))
+                row = row_of(document, tree)
+                self.assertEqual((row["classification"], row["recommendation"], row["errors"]),
+                                 ("inspection-error", INSPECTION_ERROR_ADVICE, [error]))
+                self.assertEqual((document["completeness"], document["apply_allowed"], document["refusals"]),
+                                 ("incomplete", False, [refused]))
+                self.assertEqual(removals(records), [])
+        self.assertTrue(tree.is_dir())
+
+    def test_clean_operation_in_progress_markers(self):
+        # Each of the eleven markers, of any kind (a file, a directory, a
+        # dangling symbolic link), excludes an otherwise eligible row; the
+        # entries that are no marker, NOTES_MERGE_WORKTREE and SQUASH_MSG, do not.
+        root = self.repo()
+        self.bare_remote()
+        marked = {}
+        for number, marker in enumerate(self.MARKERS, start=1):
+            tree = self.merged_worktree(f"{number:03d}-marker", path=self.base / f"m{number:02d}-{marker}")
+            place = self.admin_dir(tree) / marker
+            kind = ("file", "directory", "symlink")[number % 3]
+            if kind == "file":
+                place.write_text("planted\n")
+            elif kind == "directory":
+                place.mkdir()
+            else:
+                place.symlink_to(self.base / "nowhere")
+            marked[str(tree)] = kind
+        unmarked = []
+        for number, (name, directory) in enumerate((("NOTES_MERGE_WORKTREE", True), ("SQUASH_MSG", False)), start=20):
+            tree = self.merged_worktree(f"{number:03d}-unmarked", path=self.base / f"u{number}-{name}")
+            place = self.admin_dir(tree) / name
+            place.mkdir() if directory else place.write_text("squash\n")
+            unmarked.append(tree)
+        plain = self.merged_worktree("030-plain", path=self.base / "z-plain")
+        result = self.preview(root)
+        self.assert_status(result, 0)
+        self.assertEqual([entry["path"] for entry in result.document["selected"]],
+                         [str(tree) for tree in unmarked] + [str(plain)])
+        self.assertEqual(by_path(result.document), {str(root): "main-worktree",
+                                                    **{path: "operation-in-progress" for path in marked}})
+        self.assertEqual(sorted(set(marked.values())), ["directory", "file", "symlink"])
+
+    def test_clean_operation_in_progress_markers_from_real_operations(self):
+        # The markers a revert and both rebase backends leave, made by Git. A
+        # revert whose index and tree are put back to the head is excluded as
+        # operation-in-progress; a stopped rebase detaches HEAD, so its row is
+        # `detached` first, and the listing alone is checked to find it.
+        root = self.repo()
+        self.bare_remote()
+        revert = self.merged_worktree("001-revert", path=self.base / "revert")
+        merge_backend = self.merged_worktree("002-rebase-merge", path=self.base / "rebase-merge")
+        apply_backend = self.merged_worktree("003-rebase-apply", path=self.base / "rebase-apply")
+        [side] = self.side_commits(root, "side", {"work-003-rebase-apply": "other\n"})
+        self.git(revert, "revert", "--no-commit", "HEAD")
+        self.git(revert, "checkout", "HEAD", "--", ".")
+        self.assert_status_clean(revert)
+        self.git(merge_backend, "rebase", "--exec", "false", "HEAD~1", check=False)
+        self.git(apply_backend, "rebase", "--apply", "side", check=False)
+        found = {"revert": "REVERT_HEAD", "merge": "rebase-merge", "apply": "rebase-apply"}
+        common = os.fsencode(self.common_dir(root))
+        for name, tree in (("revert", revert), ("merge", merge_backend), ("apply", apply_backend)):
+            with self.subTest(made_by=name):
+                self.assertIn(found[name], os.listdir(self.admin_dir(tree)))
+                with project.Invocation("clean") as run:
+                    self.assertEqual(project.operation_check(common, os.fsencode(tree.name), run),
+                                     ("operation-in-progress", None))
+        result = self.preview(root)
+        self.assert_status(result, 0)
+        reasons = by_path(result.document)
+        self.assertEqual((result.document["selected"], reasons[str(revert)], reasons[str(merge_backend)]),
+                         ([], "operation-in-progress", "detached"))
+        self.assertNotIn(str(apply_backend), [entry["path"] for entry in result.document["selected"]])
+
+    def test_clean_a_squash_merge_that_holds_an_autostash(self):
+        version = clean_support.GIT_VERSION
+        if version is None or not (version >= (2, 40) or version <= (2, 36)):
+            self.skipTest("needs Git 2.40 or later, which keeps the autostash, or Git 2.36, which applies it at "
+                          "once; found " + (".".join(map(str, version)) if version else "none"))
+        root = self.repo()
+        self.bare_remote()
+        self.side_commits(root, "side", {"side-file": "side\n"})
+        tree = self.merged_worktree("001-squash", path=self.base / "squash")
+        (tree / "work-001-squash").write_text("an edit to a tracked file\n")
+        self.git(tree, "merge", "-q", "--squash", "--autostash", "-s", "ours", "side")
+        held = self.admin_dir(tree) / "MERGE_AUTOSTASH"
+        result = self.preview(root)
+        self.assert_status(result, 0)
+        if version <= (2, 36):
+            # Git 2.36.6 applies the autostash at once: the edit is back, dirty.
+            self.assertFalse(held.exists())
+            self.assertEqual((tree / "work-001-squash").read_text(), "an edit to a tracked file\n")
+            self.assertEqual(by_path(result.document), {str(root): "main-worktree", str(tree): "dirty"})
+            return
+        # Only MERGE_AUTOSTASH holds the edit: no stash entry, no status record.
+        self.assertTrue(held.is_file())
+        self.assertEqual(self.git(tree, "stash", "list"), "")
+        self.assert_status_clean(tree)
+        self.assertEqual((result.document["selected"], by_path(result.document)),
+                         ([], {str(root): "main-worktree", str(tree): "operation-in-progress"}))
+        result, records = self.run_counted("clean", root, "--all-safe", "--apply", "--yes")
+        self.assert_status(result, 0)
+        self.assertEqual(removals(records), [])
+        self.assertTrue(tree.is_dir())
+        self.assertTrue(held.is_file(), "the worktree and its MERGE_AUTOSTASH stay")
+
+    def test_clean_operation_in_progress_listing_that_fails(self):
+        # R-124: a listing that fails decides nothing. In process, the listing
+        # of the row's admin directory made to raise PermissionError, to time
+        # out at its budget and to be cut by the work deadline; every other
+        # filesystem call runs as it is. The first two leave the plan
+        # incomplete with inspection-incomplete, the deadline with
+        # deadline-exceeded; the preview exits 1, --apply 2, nothing removed.
+        root = self.repo()
+        self.bare_remote()
+        tree = self.merged_worktree("001-target", path=self.base / "target")
+        admin = os.fsencode(self.common_dir(root) / "worktrees" / tree.name)
+        real_fs_call = project.fs_call
+        denied = PermissionError(errno.EACCES, os.strerror(errno.EACCES), os.fsdecode(admin))
+        cases = (
+            ("PermissionError", denied, {"code": "os-error", "message": TEXT["row_error_os_error"].format(
+                OPERATION="listdir", STRERROR=os.strerror(errno.EACCES))}, "inspection-incomplete"),
+            ("a timeout", project.DriverOutcome(None, "timeout", detail="no answer within 5 s"),
+             {"code": "probe-timeout", "message": TEXT["row_error_probe_timeout"].format(OPERATION="listdir", S="5")},
+             "inspection-incomplete"),
+            ("the work deadline", project.DriverOutcome(None, "deadline", detail="no time was left to start it"),
+             {"code": "deadline-exceeded", "message": TEXT["row_error_deadline_exceeded"].format(
+                 OPERATION="listdir")}, "deadline-exceeded"),
+        )
+        remedies = {"inspection-incomplete": TEXT["remedy_inspection_incomplete"],
+                    "deadline-exceeded": TEXT["remedy_deadline_exceeded"]}
+        for label, answer, error, code in cases:
+            with self.subTest(f"the listing meets {label}"):
+                calls = []
+
+                def fs_call(fn, *args, answer=answer, calls=calls, **options):
+                    if fn is os.listdir and args == (admin,):
+                        calls.append(args[0])
+                        if isinstance(answer, BaseException):
+                            raise answer
+                        return answer
+                    return real_fs_call(fn, *args, **options)
+
+                refused = {"code": code, "message": TEXT["plan_incomplete"].format(CODE=code, REMEDY=remedies[code])}
+                before = self.snapshot(root)
+                for words, status in ((("--all-safe", "--json"), 1), (("--all-safe", "--apply", "--yes", "--json"), 2)):
+                    out_status, out, err = self.main_in_process("clean", root, *words, fs_call=fs_call)
+                    self.assertEqual(out_status, status, out + err)
+                    document = json.loads(out)
+                    self.assertEqual((document["selected"], by_path(document)),
+                                     ([], {str(root): "main-worktree", str(tree): "inspection-error"}))
+                    row = row_of(document, tree)
+                    self.assertEqual((row["classification"], row["recommendation"], row["errors"]),
+                                     ("inspection-error", INSPECTION_ERROR_ADVICE, [error]))
+                    self.assertEqual((document["completeness"], document["apply_allowed"], document["refusals"]),
+                                     ("incomplete", False, [refused]))
+                self.assertEqual(calls, [admin, admin], "one listing per run")
+                self.assertEqual(self.snapshot(root), before, "nothing removed")
+                self.assertTrue(tree.is_dir())
+
 
 if __name__ == "__main__":
     unittest.main()

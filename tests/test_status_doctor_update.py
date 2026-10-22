@@ -30,7 +30,7 @@ TEXT = clean_support.TEXT_FIXTURES
 # XDG_CONFIG_HOME. Striking it here is this one line, made `()`.
 EXTENSION = ("GIT_CONFIG_GLOBAL", "GIT_CONFIG_SYSTEM")
 
-# The seven protocol pins and the two status pins, as the contract writes them
+# The seven protocol pins and the four status pins, as the contract writes them
 # (contracts/project-clean.md, "Git children").
 PINS = ["-c", "protocol.allow=never", "-c", "protocol.file.allow=never",
         "-c", "protocol.ssh.allow=never", "-c", "protocol.git.allow=never",

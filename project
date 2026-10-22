@@ -641,7 +641,7 @@ REFUSAL_CODES = (
 STAGE_REASONS = {
     "removed": (None, "branch-advanced-after-removal", "branch-missing-after-removal", "removal-ceiling"),
     "refused": ("identity-changed", "branch-changed", "state-changed", "contains-submodule",
-                "hidden-local-state"),
+                "hidden-local-state", "operation-in-progress"),
     "failed": ("git-refused", "git-failed", "spawn-error"),
     "unknown": ("unconfirmed-removal", "reconciliation-incomplete", "internal-error", "removal-ceiling"),
     "not-attempted": ("batch-stopped", "interrupted", "deadline-exceeded"),
@@ -684,7 +684,7 @@ TEXT = {
         "  these deferred rows will not drain while the 16 rows ahead of them are contains-submodule; "
         "review those worktrees, then remove them yourself",
     "residual_window_line":
-        "Not protected: ignored files created or index flags set after the last check, "
+        "Not protected: ignored files created, index flags set or operations started after the last check, "
         "and any change after Git's own check.",
     "empty_line": "No eligible worktrees",
     # D18: the question, the wait, the result.
@@ -784,6 +784,11 @@ NEXT_STEPS = {
         "the branch's reflog is missing, expired or undecidable; review, then git worktree remove yourself",
     "contains-submodule": "review, then remove the worktree yourself",
     "hidden-local-state": "review, then remove the worktree yourself",
+    # LQ-14 (lead rulings R-126 and R-146).
+    "operation-in-progress":
+        "a git am, merge, notes merge, cherry-pick, revert, rebase or bisect is, or may be, in progress there; "
+        "finish or abort it (a squash merge that holds an autostash ends only with git commit, --allow-empty "
+        "where nothing is staged), then run again",
     "registration-mismatch": "review, then git worktree repair or git worktree prune, or remove the row by hand",
     "inspection-error": "review, then git worktree repair or git worktree prune, or remove the row by hand",
     "locked-worktree": "unlock it yourself if it should go",
@@ -4364,18 +4369,19 @@ def build_plan(repo, run):
 # endregion plan
 
 # region gates
-# The ten gates of FR-020 (T050; design D10, D12 and D13; data-model.md,
-# "Gate"; lead rulings R-56 Q-6 and R-67 (a)). A row is selected only when it
-# passes every gate, and an excluded row's reason is its first failing gate:
-# 1 main-worktree, 2 unsupported-path-bytes, 3 registration-mismatch (region
-# index), 4 locked-worktree, 5 the classification when it is not
-# merged-removable, 6 not-requested, 7 unstarted-branch or reflog-unavailable
-# (region reflog), 8 deferred-target-cap, 9 contains-submodule and 10
-# hidden-local-state (region index). Gates 1 to 7 are per-row functions,
-# gate(row, plan, run) returning the reason or None, each free to set the row's
-# `errors`, set its class to inspection-error or set its unprobed marker; gate 8
-# takes the rows that passed gates 1 to 7 together; gates 9 and 10 run only for
-# the rows gate 8 takes. Every excluded row carries the reason its failing gate
+# The eleven gates of FR-020 (T050; design D10, D12, D13 and D22; data-model.md,
+# "Gate"; lead rulings R-56 Q-6 and R-67 (a); Brett Heap's ruling LQ-14). A row
+# is selected only when it passes every gate, and an excluded row's reason is
+# its first failing gate: 1 main-worktree, 2 unsupported-path-bytes, 3
+# registration-mismatch (region index), 4 locked-worktree, 5 the classification
+# when it is not merged-removable, 6 not-requested, 7 unstarted-branch or
+# reflog-unavailable (region reflog), 8 deferred-target-cap, 9
+# contains-submodule and 10 hidden-local-state (region index), and 11
+# operation-in-progress. Gates 1 to 7 are per-row functions, gate(row, plan,
+# run) returning the reason or None, each free to set the row's `errors`, set
+# its class to inspection-error or set its unprobed marker; gate 8 takes the
+# rows that passed gates 1 to 7 together; gates 9 to 11 run only for the rows
+# gate 8 takes. Every excluded row carries the reason its failing gate
 # returned, never null (R-67 (a)).
 
 
@@ -4424,13 +4430,76 @@ def deferral_gate(candidates, plan):
     """Gate 8, `deferred-target-cap` (T100; D12, FR-032): candidates
     are the rows that passed gates 1 to 7, in canonical order. Returns (taken,
     deferred): taken, the first LIMITS["targets"] (16) of them, which go on to
-    the index gates (9 and 10); deferred, the rest, which gate_rows() excludes
-    as `deferred-target-cap` with no index probe. A row an index gate then
+    the gates after it (9 to 11); deferred, the rest, which gate_rows() excludes
+    as `deferred-target-cap` with no index probe. A row a gate after it then
     excludes keeps its place among the 16. It runs no child. In mode single
     the candidates are at most P, so the limit counts P alone (pcl:815-817);
     in a report the gates run as in any plan."""
     cap = LIMITS["targets"]
     return list(candidates[:cap]), list(candidates[cap:])
+
+
+# The markers of an operation in progress (design D22; LQ-14, lead ruling
+# R-126): an entry of any kind of one of these eleven names in a worktree's
+# administrative directory, from Git's own state detection at 2.36.6 and
+# 2.43.7, with MERGE_AUTOSTASH, NOTES_MERGE_PARTIAL and NOTES_MERGE_REF beside
+# what `git status` reports. NOTES_MERGE_WORKTREE, which a notes merge's
+# --abort and --commit leave behind, is none.
+OPERATION_MARKERS = frozenset((
+    b"MERGE_HEAD", b"CHERRY_PICK_HEAD", b"REVERT_HEAD", b"BISECT_LOG", b"BISECT_START", b"rebase-apply",
+    b"rebase-merge", b"sequencer", b"MERGE_AUTOSTASH", b"NOTES_MERGE_PARTIAL", b"NOTES_MERGE_REF"))
+
+
+def operation_check(common_dir, admin_id, run):
+    """Gate 11's read for one row (design D22; LQ-14; lead rulings R-124 and
+    R-126), shared with the revalidation (revalidation_difference()).
+
+    Signature: operation_check(common_dir, admin_id, run) -> (result,
+    row_error). common_dir is the repository's common directory and admin_id
+    the row's admin directory name, both bytes; run is the Invocation in force,
+    whose per-child budget bounds the call. One fs_call() listing of
+    `<common_dir>/worktrees/<admin_id>` (through _fs(), OPERATION `listdir`),
+    never a Git child:
+
+    - a name of OPERATION_MARKERS among the entries: ("operation-in-progress",
+      None), the one decided result that gives the reason;
+    - none: (None, None), the gate passes;
+    - any error on the listing: (None, its `os-error`);
+    - the call cut at its budget: (None, a `probe-timeout` row error), or
+      `deadline-exceeded` where the work deadline was the limit.
+
+    A row error means the listing decided nothing (R-124)."""
+    path = os.path.join(common_dir, b"worktrees", admin_id)
+    try:
+        names = _fs("listdir", os.listdir, path)
+    except EvidenceError as exc:
+        return None, exc.error
+    return ("operation-in-progress" if OPERATION_MARKERS.intersection(names) else None), None
+
+
+def admin_state_gates(row, plan, run):
+    """Gate 11, `operation-in-progress` (design D22; LQ-14; lead ruling
+    R-124), for a row that passed gates 1 to 10 only.
+
+    Contract: admin_state_gates(row, plan, run) -> reason or None. Through
+    operation_check(common_dir, admin_id, run), the common directory the
+    plan's (plan.evidence["identity"]): `operation-in-progress` for a marker
+    in the row's admin directory; and `inspection-error`, after putting the
+    listing's row error in row["errors"] and setting row["classification"] to
+    inspection-error (_index_undecided()), for a listing that failed, timed out
+    or met the deadline, so that the plan is incomplete with
+    inspection-incomplete, or with deadline-exceeded where only the deadline
+    cut it (plan_completeness()). A row whose admin directory or common
+    directory is not established cannot be checked and is inspection-error,
+    with no read made, as index_gates() makes it."""
+    identity = plan.evidence["identity"] if plan.evidence else None
+    common_dir = identity["common_dir"] if identity else None
+    if common_dir is None or row.admin_id is None:
+        return _index_undecided(row, None)
+    reason, error = operation_check(common_dir, row.admin_id, run)
+    if error is not None:
+        return _index_undecided(row, error)
+    return reason
 
 
 def first_failing_gate(row, gates, plan, run):
@@ -4445,8 +4514,8 @@ def first_failing_gate(row, gates, plan, run):
 def gate_rows(rows, plan, run):
     """The gates of FR-020 over rows, plan's rows in canonical order (data-model.md,
     "Gate"): gates 1 to 7 per row (row_gates()), then gate 8 over the rows that
-    passed them (deferral_gate()), then gates 9 and 10 (index_gates()) for the
-    rows gate 8 took. Returns (selected, excluded): selected, the rows that
+    passed them (deferral_gate()), then gates 9 and 10 (index_gates()) and gate
+    11 (admin_state_gates()) for the rows gate 8 took. Returns (selected, excluded): selected, the rows that
     passed every gate; excluded, (row, reason) pairs, reason the first failing
     gate's, never None (R-67 (a)); both by raw path bytes."""
     excluded, candidates = [], []
@@ -4461,6 +4530,8 @@ def gate_rows(rows, plan, run):
     selected = []
     for row in taken:
         reason = index_gates(row, plan, run)
+        if reason is None:
+            reason = admin_state_gates(row, plan, run)
         if reason is None:
             selected.append(row)
         else:
@@ -4793,7 +4864,7 @@ def print_plan(plan, run):
 # order (RECOMMENDATIONS's), then the later gates; a reason not listed follows.
 EXCLUDED_GROUP_ORDER = ("main-worktree", "unsupported-path-bytes", "registration-mismatch", "locked-worktree",
                         *RECOMMENDATIONS, "not-requested", "unstarted-branch", "reflog-unavailable",
-                        "deferred-target-cap", "contains-submodule", "hidden-local-state")
+                        "deferred-target-cap", "contains-submodule", "hidden-local-state", "operation-in-progress")
 
 
 def _shown(value):
@@ -5353,7 +5424,9 @@ def revalidation_difference(plan, target, run, part, seen):
        lead ruling R-81 (a)), and no entry whose lstat or realpath cannot
        be read, unless the plan read its lstat as failed too (lead ruling
        R-93 (e), LOW-3), else `identity-changed`; then the target's
-       `modules` check, else `contains-submodule`.
+       `modules` check, else `contains-submodule`; then the listing of its
+       admin directory (operation_check(); D22, LQ-14), else
+       `operation-in-progress` for a marker it finds.
     6. The combined status probe in the target, which must print no record,
        else `state-changed`.
     7. The hidden-state probe in the target: its own reason
@@ -5368,8 +5441,9 @@ def revalidation_difference(plan, target, run, part, seen):
     plan and null again is no difference; a value that cannot be re-read is
     one, with its step's reason: a failed registry listing `identity-changed`,
     a failed ref listing `state-changed`, a failed `modules` check
-    `contains-submodule`, a failed hidden-state probe `hidden-local-state`. A
-    `timeout` stays such a difference (T084).
+    `contains-submodule`, a failed admin directory listing `state-changed`
+    (lead rulings R-124 and R-127), a failed hidden-state probe
+    `hidden-local-state`. A `timeout` stays such a difference (T084).
 
     A read the work deadline cut gives `deadline-exceeded` instead, never a
     difference (T099; lead ruling R-80, P-2): its row error's code says so,
@@ -5379,7 +5453,7 @@ def revalidation_difference(plan, target, run, part, seen):
 
     The signal slot is read before each read a step starts (slot_set()): the
     Git children of steps 1, 3, 4, 6 and 7, the manifest re-read, and step
-    5's identity reads, twin reads and `modules` check. A signal recorded
+    5's identity reads, twin reads, `modules` check and admin listing. A signal recorded
     gives `interrupted`, never a difference, and no later read starts (lead
     ruling R-93 (e), LOW-1; pcl:931-933). A step whose values come from part
     starts no read. A step that has already read is decided first, so a
@@ -5495,6 +5569,15 @@ def revalidation_difference(plan, target, run, part, seen):
         return "deadline-exceeded"
     if reason is not None or error is not None:
         return "contains-submodule"
+    if slot_set(run):
+        return "interrupted"
+    reason, error = operation_check(common_dir, target.row.admin_id, run)  # D22's listing (LQ-14)
+    if read_cut(error):
+        return "deadline-exceeded"
+    if error is not None:
+        return "state-changed"  # a value that cannot be re-read (R-124, R-127)
+    if reason is not None:
+        return reason
 
     if slot_set(run):
         return "interrupted"

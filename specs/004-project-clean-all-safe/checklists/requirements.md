@@ -164,5 +164,12 @@ proceeding to planning
   the review round on the tree of `4e4b00f`; the figure SC-012 states, and once
   more after the second review round's fixes, where it ran 96 tests, all
   passing.
+- Doc round 13 (2026-10-21) brought spec.md to 004 at `cceb6d7` and to
+  draft PR #19 at `6f2cb54`, for Brett Heap's rulings Q9 B and LQ-10 to
+  LQ-15 that 004 builds (LQ-13 held): FR-068 makes 68 FRs; User Story 9
+  gains acceptance scenario 11, 74 in all; the delta-scenario lists of User
+  Stories 2, 3, 4 and 9 add the thirteen of PR #19's titles that 004 builds,
+  each once, which traceability.md traces. The
+  counts above are those of the review rounds.
 - Items marked incomplete require spec updates before `/speckit-clarify`
   or `/speckit-plan`

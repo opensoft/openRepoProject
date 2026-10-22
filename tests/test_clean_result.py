@@ -46,7 +46,7 @@ NAMES = ("001-p", "002-q", "003-r")
 CANCELLED = "Cancelled."
 
 # The removal child's pins, as the contract writes them ("Git children"): the
-# three status pins, then the seven protocol pins, before `-C ROOT`.
+# five status pins, then the seven protocol pins, before `-C ROOT`.
 REMOVAL_PINS = ["-c", "status.showUntrackedFiles=normal", "-c", "core.untrackedCache=false",
                 "-c", "core.fsmonitor=false", "-c", "core.trustctime=true", "-c", "core.checkStat=default",
                 "-c", "protocol.allow=never", "-c", "protocol.file.allow=never",
@@ -1051,7 +1051,7 @@ class ResultTests(clean_support.CleanCase):
         stages = {
             "removed": (None, "branch-advanced-after-removal", "branch-missing-after-removal", "removal-ceiling"),
             "refused": ("identity-changed", "branch-changed", "state-changed", "contains-submodule",
-                        "hidden-local-state"),
+                        "hidden-local-state", "operation-in-progress"),
             "failed": ("git-refused", "git-failed", "spawn-error"),
             "unknown": ("unconfirmed-removal", "reconciliation-incomplete", "internal-error", "removal-ceiling"),
             "not-attempted": ("batch-stopped", "interrupted", "deadline-exceeded"),

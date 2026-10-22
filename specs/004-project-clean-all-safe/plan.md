@@ -42,7 +42,8 @@ Implementation slices, in dependency order; each leaves the suite green:
    own; bulk registrations written directly; a counting `git` wrapper (a POSIX
    `sh` script that logs, per child, its arguments, directory, pid, parent pid,
    process group (`/proc/$$/stat` on Linux, `ps -o pgid= -p $$` elsewhere) and
-   which of the seventeen scrubbed names are set, runs an optional pre-hook,
+   which of the scrubbed names are set, thirty-one since Brett Heap's ruling
+   Q9 B, runs an optional pre-hook,
    runs the real `git` by absolute path, runs an optional post-hook after
    `worktree remove`, and exits with Git's status; with no hook set it `exec`s
    Git, so the record is the child's own; a wrapper of the harness spike
@@ -65,7 +66,9 @@ Implementation slices, in dependency order; each leaves the suite green:
    `run_bounded` (one selector over both pipes and a wakeup pipe, the 100 ms
    tick, a 4 KiB standard-error head); the scoped signal handlers; the five
    incremental parsers; filesystem calls on daemon threads under
-   `min(5 s, work remaining)`; the seventeen-name scrub and the pins (R1); the
+   `min(5 s, work remaining)`; the scrub, seventeen names and Q9 B's fourteen
+   trace names with the trace2 targets set to `0`, and the pins, LQ-10's two
+   stat pins among the status pins (R1; lead rulings R-99 (d) and R-102); the
    memoized version check; path escaping. Tests: each parser fed byte by byte
    and whole (FR-062); two handles driven at once through the shared scrub,
    termination path and parsers (SC-012); the three fake Gits of D1; the
@@ -409,10 +412,15 @@ The feature PR body lists these for his word:
   any locale, the display form keeping `\u` and `\U`. This feature
   implements the delta as written and records the limit (contract, "Human
   output").
-- **LQ-9, a bare repository's entry in `status`'s `worktrees`** (lead
-  ruling R-75 (a)): T117 leaves a bare repository's registry entry out of
-  `worktrees`, while the `project-command` delta keeps every value "except
-  where a requirement states a change" (its `spec.md:196-197`). Lane 3
+- **LQ-9, a bare repository's entry, and a gitfile layout's git-directory
+  entry, in `status`'s `worktrees`** (lead rulings R-75 (a) and R-101 (e)):
+  T117 leaves a bare repository's registry entry out of `worktrees`, and in a
+  gitfile layout (a separate git directory, or a submodule's checkout) the
+  first record, the git directory, becomes the checkout's row, its path the
+  checkout and its `dirty` and `ignored_files` read there (false and 0 where
+  they were null; lane 3's F5 M-2, accepted as a fill of the `project-clean`
+  delta's `spec.md:478`), while the `project-command` delta keeps every value
+  "except where a requirement states a change" (its `spec.md:196-197`). Lane 3
   reads the `project-clean` delta's "the common directory SHALL never be
   probed as a worktree row" (its `spec.md:478`) as covering it, a fill,
   which the lead recommends; the lead reads that sentence as part of
