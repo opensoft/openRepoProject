@@ -269,7 +269,7 @@ or `README.md` (the paths of G2's `FIRSTSHA`); a commit under `specs/` (the
 planning commit with `qs.sh`, the traceability skeleton) is a record commit,
 not an implementation commit.
 
-- [ ] T001 [S] [Q5] In `openspec/changes/refuse-non-directory-parent-early/tasks.md`
+- [X] T001 [S] [Q5] In `openspec/changes/refuse-non-directory-parent-early/tasks.md`
   make exactly G1 (plan slice G1) of plan.md "G1 and G2 exact text": the six
   whole-line replacements of lines 16, 20, 31, 36, 37 and 38 (the 1.6 tick with
   the quote and its link; the 2.1 tick with its appended "Created:" clause; the
@@ -288,14 +288,14 @@ not an implementation commit.
 
 **Purpose**: The baseline, and the traceability skeleton (feature 003's T002).
 
-- [ ] T002 [P] [S] Confirm the baseline (plan slice S1) after T001: the suite passes with the
+- [X] T002 [P] [S] Confirm the baseline (plan slice S1) after T001: the suite passes with the
   merge base's `N0` tests, and `project`, `tests/test_project.py` and
   `README.md` are the merge base's. No file changes and no commit. It runs
   before any edit of `README.md` (T015), `tests/test_project.py` (T004) or
   `project` (T014): its verify requires the three at the base.
   -- files: (none)
   -- verify: `B=$(git merge-base origin/main HEAD) && bash specs/006-refuse-non-directory-parent-early/qs.sh suite ADDED=0 && git diff --quiet "$B" -- project tests/test_project.py README.md`
-- [ ] T003 [P] [S] Create `specs/006-refuse-non-directory-parent-early/traceability.md`
+- [X] T003 [P] [S] Create `specs/006-refuse-non-directory-parent-early/traceability.md`
   (plan slice S2), lane line first, in feature 003's form (quickstart.md "Traceability": a
   short intro, then a table with the columns `#`, Requirement, Scenario, FRs,
   Tests): one row per scenario of the delta
