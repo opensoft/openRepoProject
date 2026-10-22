@@ -1565,7 +1565,7 @@ class EvidenceTests(clean_support.CleanCase):
             self.assertEqual(ask(), (1, b"", b""))
             self.assertIs(read(), False)
         with self.subTest("the common directory's config is a directory"):
-            # Lane 3's W100 LOW-B (lead ruling R-336's addendum): Git cannot
+            # Lane 3's W100 LOW-B (routed here by the lead's R-344): Git cannot
             # read a `config` that is a directory, so on 2.43.0 and 2.36.6 it
             # prints `warning:` lines and exits 1 with nothing on standard
             # output. That is an exit 1 that printed, not the unset key, so row
@@ -1777,7 +1777,7 @@ class EvidenceTests(clean_support.CleanCase):
                                  (str(checkout), "complete", [str(checkout)]))
                 self.assertEqual(self.status_dirs(records), [str(checkout)])
         with self.subTest("the common directory's config is a directory"):
-            # Lane 3's W100 LOW-B (lead ruling R-336's addendum): Git cannot
+            # Lane 3's W100 LOW-B (routed here by the lead's R-344): Git cannot
             # read a `config` that is a directory, so on 2.43.0 and 2.36.6 it
             # prints `warning:` lines and exits 1 with nothing on standard
             # output. That is an exit 1 that printed, not the unset key, so the
