@@ -83,12 +83,14 @@ Scope).
   worktree whose branch has no commit of its own (`target-excluded`, reason
   `unstarted-branch`), where `a040790` removes it (M4), with the remedy "no
   commit was made on this branch here since it was created; review, then git
-  worktree remove yourself". A merged worktree whose branch reflog keeps no
-  decisive entry (the branch saw no activity for `gc.reflogExpire`, 90 days
-  by default) is likewise refused in single mode (`target-excluded`, reason
+  worktree remove yourself, with --force where Git refuses it for a
+  submodule". A merged worktree whose branch reflog keeps no decisive entry
+  (the branch saw no activity for `gc.reflogExpire`, 90 days by default) is
+  likewise refused in single mode (`target-excluded`, reason
   `reflog-unavailable`) as well as withheld from the batch, with the remedy
   "the branch's reflog is missing, expired or undecidable; review, then git
-  worktree remove yourself". And where `a040790` refuses a merged worktree
+  worktree remove yourself, with --force where Git refuses it for a
+  submodule". And where `a040790` refuses a merged worktree
   whose upstream was deleted as `unpublished`, `--worktree P` now removes it
   as `merged-removable` when its gates pass, its branch kept (Brett Heap's
   ruling of 2026-10-09; Decisions). The README's clean section states these
@@ -489,9 +491,12 @@ Headers are quoted verbatim, one per line; ADDED headers are proposed text.
     `project` and its child are killed with SIGKILL mid-deletion, the report
     shows the partial-removal note beside the `dirty` advice. By the lead's
     R-147, a sentence after `:59-61` names branch deletion's refusals, the
-    default branch, a branch a present worktree holds and a branch the plan's
-    evidence does not show merged into the merge target, with the added
-    scenario "Branch deletion refuses a branch it may not delete".
+    default branch, a branch a present linked worktree holds, a branch the
+    main worktree holds and a branch the plan's evidence does not show merged
+    into the merge target, with the added scenario "Branch deletion refuses a
+    branch it may not delete"; by the lead's R-248, the main worktree's
+    refusal names detaching HEAD there, or checking out the merge target
+    there, and then retrying (lane openRepoProject-3's W52 F-5).
   - MODIFIED (`:70`): `### Requirement: Clean hands off work requiring review`.
     `:75-76` requires "explicit confirmation and action targets", and
     `--all-safe --apply --yes` names no single target, so the text defines
@@ -1752,7 +1757,40 @@ LQ-3 (its 19-08). No requirement changes and no delta is edited. This commit
 also re-wrapped the paragraphs its edits lengthened in `design.md` and this
 file, with no other change of words (Decisions, departures and council; Open
 Questions; this list; design Context, D7, D14, D22, Risks, Open Questions;
-`tasks.md` 1.2, 2.1).
+`tasks.md` 1.2, 2.1). Lane openRepoProject-3's W52 read of next steps that tell
+a person to do what Git refuses, at `f0bf538` and feature 004's `e69f6ef`, each
+finding confirmed on Git 2.43.0 and on the 2.36.6 floor, under the lead's R-248:
+`registration-mismatch`'s next step, and the plan-blocking remedy that `Clean
+previews and applies a batch of eligible worktree removals in one repository`
+names, unset `core.worktree` and `core.bare` in the repository's `config`, or in
+that worktree's `config.worktree`, where they named only `config.worktree`,
+since with the setting in the repository's own `config` the unset finds nothing
+and `git worktree repair` and `git worktree prune` change nothing (F-3); branch
+deletion's refusal of a branch that the main worktree holds names detaching HEAD
+there, or checking out the merge target there, and then retrying, where the
+baseline's `Remove the linked worktree first` names a removal that Git refuses
+for the main worktree with exit 128 (F-5, lane openRepoProject-5's RI-4); the
+next steps of `unstarted-branch` and `reflog-unavailable`, gate 7, which comes
+before `contains-submodule`, add `--force` where Git refuses the removal for a
+submodule (F-7); `contains-submodule`'s next step names `git worktree remove
+--force` (F-8); `operation-in-progress`'s adds, for a marker left with nothing
+in progress, the operation's `--quit`, since an empty `sequencer` or
+`rebase-merge` fails `--abort` (F-9); and a locked worktree's partial-removal
+note says to unlock it first, since `git worktree remove --force` refuses a
+locked worktree, in a sentence added beside the ratified recovery text, which
+stays (F-2). The scenario "Branch deletion refuses a branch it may not delete"
+quotes the new refusal, and the scenario counts stay. W52's F-6 and F-10 are
+baseline report texts that this change neither states nor quotes, D14 keeping
+the baseline report's layout, and are feature 004's; its F-4 is feature 004's
+`delete-branch` argv, and its F-11 and F-12 are lane openRepoProject-5's. Its
+F-1, the ceiling's recovery text, amends ratified text and waits on Brett Heap,
+and is unchanged. This commit also re-wrapped the paragraphs its edits
+lengthened, with no other change of words (What Changes, first bullet;
+Capabilities `:55`; this list; design Context, D4, D18, Risks, Migration Plan;
+`tasks.md` 1.2; the deltas' `Clean classifies preservation and cleanup
+actions`, `Clean can explicitly retire verified worktrees` and its scenario
+"Branch deletion refuses a branch it may not delete", and `Clean previews and
+applies a batch of eligible worktree removals in one repository`).
 
 ### Council Verdicts
 

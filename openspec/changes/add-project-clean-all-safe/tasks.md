@@ -63,9 +63,12 @@ duplicate them, and nothing here is an implementation step.
   that step's measurement, lane 3's W42 read of round (e) and the three
   departures of lane 3's W53 ledger, under the lead's R-236 and R-245 (the
   commit titled 'Amend change 1: LQ-20 resolved by measurement, lane 3's W42
-  read and three departures (R-236, R-245)'); verified by the table "Questions
-  Resolved by the Alignment Review" in `proposal.md` and the later-rulings list
-  under it, which name the section each ruling edited.
+  read and three departures (R-236, R-245)'); and lane 3's W52 read of next
+  steps that Git refuses, under the lead's R-248, its F-1 left for Brett Heap
+  (the commit titled 'Amend change 1: lane 3's W52 read, next steps that Git
+  refuses (R-248)'); verified by the table "Questions Resolved by the Alignment
+  Review" in `proposal.md` and the later-rulings list under it, which name the
+  section each ruling edited.
 - [x] 1.3 Council resolved: every concern is VALID, none dismissed, the verdicts
   V1 to V12 applied to `proposal.md` (`ea9c73b`) and the five NOTED constraints
   recorded as N1 to N5 in `clarifications.md` (`1d4ed5b`); verified by

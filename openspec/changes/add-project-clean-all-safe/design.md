@@ -42,8 +42,10 @@ D14, D21, D22, Risks and Open Questions; and its W38 read of round (d), with the
 lead's R-213 and R-216, Context, D7 and Open Questions; and Brett Heap's ruling
 of 2026-10-22 on LQ-20, choosing its step (i), with that step's measurement, and
 lane openRepoProject-3's W42 read of round (e), under the lead's R-236, Context,
-D7, D14, D22, Risks and Open Questions. Brett Heap's ruling of
-2026-10-09 on open question 1, that a local ancestry proof outranks
+D7, D14, D22, Risks and Open Questions; and its W52 read of next steps that Git
+refuses, under the lead's R-248, Context, D4, D18, Risks and the Migration Plan,
+its F-1, the ceiling's recovery text, left for Brett Heap. Brett Heap's ruling
+of 2026-10-09 on open question 1, that a local ancestry proof outranks
 `remote-gone` for worktree rows, is in `proposal.md` Decisions and edited
 Context, D6, D7, D20, Risks, the Migration Plan and Open Questions here.
 
@@ -249,7 +251,8 @@ prefix read; the note says "probable" either way, since a person's own `rm` of
 every tracked file looks the same. The note is advisory: no classification, gate
 or eligibility changes; JSON shows `notes: ["partially-removed"]` on the row,
 and the human report prints it on its own line under the `dirty` advice with the
-recovery text (D18).
+recovery text, which for a locked worktree says to unlock it first (D18; lane
+openRepoProject-3's W52 F-2, R-248).
 
 When Git had already deleted `<path>/.git` (readdir order decides), the
 registration check fails, no status probe runs, and the row is excluded as
@@ -1186,22 +1189,31 @@ complete plan selects nothing, `No eligible worktrees`.
 The next steps by reason: `dirty` "commit or preserve the changes";
 `ignored-local-files` "move or delete the ignored files by hand";
 `unstarted-branch` "no commit was made on this branch here since it was created;
-review, then git worktree remove yourself"; `reflog-unavailable` "the branch's
-reflog is missing, expired or undecidable; review, then git worktree remove
-yourself"; `contains-submodule` and `hidden-local-state` "review, then remove
-the worktree yourself"; `operation-in-progress` "a git am, merge, notes merge,
-cherry-pick, revert, rebase or bisect is, or may be, in progress there; finish
-or abort it (a squash merge that holds an autostash ends with git commit,
---allow-empty where nothing is staged, or with git merge --quit, which keeps the
-edit in the stash list), then run again" (LQ-14, R-126, R-146, R-171);
+review, then git worktree remove yourself, with --force where Git refuses it for
+a submodule"; `reflog-unavailable` "the branch's reflog is missing, expired or
+undecidable; review, then git worktree remove yourself, with --force where Git
+refuses it for a submodule", since both are gate 7, ahead of
+`contains-submodule`, and a plain `git worktree remove` of a worktree holding a
+submodule exits 128 (lane openRepoProject-3's W52 F-7, R-248);
+`contains-submodule` "review, then git worktree remove --force yourself" (W52
+F-8, R-248); `hidden-local-state` "review, then remove the worktree yourself";
+`operation-in-progress` "a git am, merge, notes merge, cherry-pick, revert,
+rebase or bisect is, or may be, in progress there; finish or abort it (a squash
+merge that holds an autostash ends with git commit, --allow-empty where nothing
+is staged, or with git merge --quit, which keeps the edit in the stash list),
+or, where Git says none is in progress, its --quit, then run again" (LQ-14,
+R-126, R-146, R-171), the `--quit` clause for a marker left with nothing in
+progress, such as an empty `sequencer` or `rebase-merge`, where `--abort` fails
+and only `--quit` clears it (W52 F-9, R-248);
 `worktree-only-commits` "a commit is, or may be, held only by this worktree's
 HEAD reflog or refs/worktree; keep it on a branch or tag, or review, then git
 worktree remove yourself" (LQ-13); `registration-mismatch` "review, then git
 worktree repair or git worktree prune, unset core.worktree and core.bare in the
-worktree's config.worktree, or remove the row by hand" (LQ-11, R-125);
-`inspection-error` "review, then git worktree repair or git worktree prune, or
-remove the row by hand"; `locked-worktree` "unlock it yourself if it should go";
-every other class its recommendation.
+repository's config, or in that worktree's config.worktree, or remove the row by
+hand" (LQ-11, R-125), naming both files from which Git applies the redirect (W52
+F-3, R-248); `inspection-error` "review, then git worktree repair or git
+worktree prune, or remove the row by hand"; `locked-worktree` "unlock it
+yourself if it should go"; every other class its recommendation.
 
 The question: `Remove N worktrees, keeping N branches? [yes/N]`, in the singular
 for one. The wait line, at most once: `Waiting for git worktree remove PATH to
@@ -1210,13 +1222,24 @@ finish; a started removal is never interrupted (at most 300 s).` Success:
 of N. Not attempted: P1, P2. Next: project clean ROOT --all-safe`, then the
 retained branches and the residual-window line. The partial-removal note, under
 the `dirty` advice or on a `partially-removed` target: `Probable partial
-removal: inspect, then git worktree remove --force PATH by hand.`
+removal: inspect, then git worktree remove --force PATH by hand.` For a locked
+worktree, which `git worktree remove --force` refuses, the note reads `Probable
+partial removal: inspect, unlock it, then git worktree remove --force PATH by
+hand.` (W52 F-2, R-248).
 
 Refusal messages keep the baseline wording where a test reads it:
 `target-excluded` for the current worktree, `Cannot remove the current
 worktree.`; for a class that is not removable, `Worktree is CLASS; only clean
 merged worktrees may be removed.`; for a gate, `Worktree is excluded: REASON;
-NEXT STEP`. A plan-blocking refusal names its remedy: `inspection-incomplete`
+NEXT STEP`. Branch deletion keeps the baseline's refusals, except for a branch
+that the main worktree holds, where the baseline's `Remove the linked worktree
+first; branch deletion is a separate action.` names a removal that Git refuses
+for the main worktree (`git worktree remove` of it exits 128, "is a main working
+tree"): `Branch BRANCH is checked out in the main worktree; detach HEAD there,
+or check out NAME there, then retry.`, NAME the merge target, a detach being
+named first because Git refuses a checkout of the merge target while a linked
+worktree holds it (lane openRepoProject-3's W52 F-5, lane openRepoProject-5's
+RI-4, R-248). A plan-blocking refusal names its remedy: `inspection-incomplete`
 "repair or remove the inspection-error rows first: git worktree repair, git
 worktree prune, or remove the row by hand after review"; `inspect-cap` "N rows
 exceed the row cap of M; remove worktrees explicitly, or prune stale entries by
@@ -1595,9 +1618,10 @@ record from the probe, and its `--abort` leaves `NOTES_MERGE_WORKTREE` alone.
   directory after a crash or a lone `BISECT_START` after a cut-short `git
   bisect reset`, keeps its worktree out as `operation-in-progress`] -> Fails
   closed, as Brett Heap's ruling LQ-14 asks; the remedy says to finish or abort
-  the operation, which clears the marker (`git cherry-pick --quit`, `git bisect
-  reset`), and Git itself refuses a new sequence while that directory exists
-  (D18, D22).
+  the operation or, where Git says none is in progress, to use its `--quit`,
+  each of which clears the marker (`git bisect reset`, `git cherry-pick
+  --quit`), and Git itself refuses a new sequence while that directory exists
+  (D18, D22; lane openRepoProject-3's W52 F-9, R-248).
 - [A branch created from a remote branch that already had commits, then merged
   elsewhere, reads as unstarted, because nothing moved it here since its
   creation entry] -> Fails closed as `unstarted-branch`; the remedy says that no
@@ -1730,14 +1754,16 @@ Users meet five behaviour changes first: plain `project clean` exits 1 when its
 report is incomplete; `clean` refuses below Git 2.36; `--worktree P` refuses a
 freshly created merged worktree whose branch has no commit of its own, with the
 remedy "no commit was made on this branch here since it was created; review,
-then git worktree remove yourself"; a merged worktree whose branch reflog keeps
-no decisive entry (no activity for `gc.reflogExpire`, 90 days by default, D10)
-is refused as `reflog-unavailable` in single mode as well as withheld from the
-batch, with the remedy "the branch's reflog is missing, expired or undecidable;
-review, then git worktree remove yourself"; and `--worktree P` removes a merged
-worktree whose upstream was deleted, as `merged-removable` when its gates pass,
-its branch kept, where `a040790` refuses it as `unpublished` (D6, Brett Heap's
-ruling on open question 1). The README's clean section states them first.
+then git worktree remove yourself, with --force where Git refuses it for a
+submodule"; a merged worktree whose branch reflog keeps no decisive entry (no
+activity for `gc.reflogExpire`, 90 days by default, D10) is refused as
+`reflog-unavailable` in single mode as well as withheld from the batch, with the
+remedy "the branch's reflog is missing, expired or undecidable; review, then git
+worktree remove yourself, with --force where Git refuses it for a submodule"
+(D18; lane openRepoProject-3's W52 F-7, R-248); and `--worktree P` removes a
+merged worktree whose upstream was deleted, as `merged-removable` when its gates
+pass, its branch kept, where `a040790` refuses it as `unpublished` (D6, Brett
+Heap's ruling on open question 1). The README's clean section states them first.
 
 1. Ratification by Brett Heap's word on PR #11 (`tasks.md` 1.6), which
    ratified the V5 deferral and left the squash-merge question before him; the

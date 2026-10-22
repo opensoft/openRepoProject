@@ -167,9 +167,11 @@ tracked files in the working tree, while its `.git` file and its registry entry
 are present, SHALL carry the row note `partially-removed`: the human report
 SHALL show a probable partial removal with the recovery text "inspect, then `git
 worktree remove --force <path>` by hand" beside the `dirty` advice, never
-instead of it. A status stream stopped at its record bound SHALL be judged on
-the records read. The note SHALL be advisory and SHALL NOT change the row's
-classification, the ladder or any gate.
+instead of it. For a locked worktree, which `git worktree remove --force`
+refuses, the recovery text SHALL instead be "inspect, unlock it, then `git
+worktree remove --force <path>` by hand". A status stream stopped at its record
+bound SHALL be judged on the records read. The note SHALL be advisory and SHALL
+NOT change the row's classification, the ladder or any gate.
 
 #### Scenario: Dirty or unmerged work is preserved
 
@@ -333,12 +335,16 @@ It SHALL remove a local branch only as a separate, explicit action after the
 worktree is gone and the branch is verified merged.
 It MUST never use a force removal, reset, or deletion of unmerged work.
 Branch deletion SHALL refuse, before its plan is shown, with exit status 2,
-no code, the baseline's message after `REFUSED: ` on standard error and no
-`git branch -d`: the default branch; a branch that a present worktree holds,
-the main worktree included; and a branch that the plan's evidence does not
-show merged into the merge target, by its ref listing and its merged set, so
-that a branch merged only into the current branch is refused, where `git
-branch -d` alone would delete it.
+no code, a message after `REFUSED: ` on standard error and no `git branch
+-d`: the default branch; a branch that a present linked worktree holds; a
+branch that the main worktree holds; and a branch that the plan's evidence
+does not show merged into the merge target, by its ref listing and its merged
+set, so that a branch merged only into the current branch is refused, where
+`git branch -d` alone would delete it. The message SHALL be the baseline's,
+except for a branch that the main worktree holds, where the baseline's message
+names a removal that Git refuses for the main worktree: that message SHALL
+instead name detaching HEAD in the main worktree, or checking out the merge
+target there, and then retrying.
 
 #### Scenario: Remove a merged clean worktree
 
@@ -357,8 +363,9 @@ branch -d` alone would delete it.
 - **THEN** each refuses with exit 2, printing nothing on standard output and
   on standard error only `REFUSED: ` followed, in turn, by `The default
   branch is protected and cannot be deleted.`, `Remove the linked worktree
-  first; branch deletion is a separate action.` and `Branch B is not verified
-  as merged into T.`, T the merge target
+  first; branch deletion is a separate action.`, `Branch B is checked out in
+  the main worktree; detach HEAD there, or check out T there, then retry.`
+  and `Branch B is not verified as merged into T.`, T the merge target
 - **AND** no `git branch -d` runs, and every branch and worktree is kept
 
 #### Scenario: Every branch remains after a batch
@@ -782,8 +789,9 @@ gate excludes SHALL refuse with `target-excluded`, whose `reason` carries the
 exclusion reason and whose message keeps the existing wording for the current
 worktree and for a class that is not removable. Every refusal that blocks a
 plan, in either mode, SHALL name a manual remedy: `git worktree prune`, `git
-worktree repair`, unsetting `core.worktree` and `core.bare` in a worktree's
-`config.worktree`, or removing the offending row by hand, as the cause fits.
+worktree repair`, unsetting `core.worktree` and `core.bare` in the repository's
+`config` or in a worktree's `config.worktree`, or removing the offending row by
+hand, as the cause fits.
 
 The human preview SHALL list the selected rows, then the excluded rows grouped
 by reason, each group with its next step; an `ignored-local-files` exclusion
