@@ -284,7 +284,7 @@ message}` objects, an `inspect-cap` note adding `rows`.
 | "D18 empty line" | `No eligible worktrees` |
 | "D18 question", "D18 wait line" | above; the wait line once, at the first signal or deadline during a removal (D9) |
 | "D18 success line", "D18 stop block" | the result; the stop block names the retained branches and the residual window |
-| "D18 partial-removal note" | in three places (lead ruling R-79 P-11): in the report, on the line right after the row's recommendation line, two spaces in; in the preview, right after the row of the `dirty` group, six spaces in; in the result, first, before the stop block, one line per `partially-removed` target in canonical order, its path in the command form, whose text follows the rescan: D18's `Probable partial removal: inspect, then git worktree remove --force PATH by hand.` (`partial_removal_note`) only where the rescan shows the target's registry entry and its `.git` file both present, `Probable partial removal: inspect PATH by hand; its .git could not be read, so do not run git worktree prune until it can.` (`partial_removal_note_unread`) wherever the rescan made its `.git` lstat and it gave no value, since it failed for a reason other than the file's absence, as `EACCES` does for a worktree directory the process may not search, or was cut at its budget or abandoned by a second SIGINT, or wherever the rescan's lstat of the target's own path failed other than for absence (`path_present` null in the record, as where a directory above the target denies search), so that no `.git` read was made, whatever else the record shows, because `git worktree prune` deletes the admin directory of a live worktree whose `.git` Git cannot stat (#19's round (i) at `1a4785e`; lane 3's W73 M-1; lead ruling R-284, which Brett Heap ruled "R-284: yes", R-290; writer G's `6a32d10`, merged as `3bc1d68`; and, for the null path, lane 3's W90 M-1, lead ruling R-329, which applies Brett Heap's R-284 as ruled, with #19's ceiling scenario, "as when a directory above it denies search"; writer's `b96b335`, merged as `7149e08`), and otherwise `Probable partial removal: inspect, then git worktree prune and delete PATH by hand.` (`partial_removal_note_prune`), the `.git` shown absent, or the entry gone or not established, since Git refuses `git worktree remove --force` once the `.git` file ("validation failed") or the registry entry ("is not a working tree") is gone, and accepts `git worktree prune`; the rescan reads the `.git` by one `lstat`, no Git child, only where it shows the entry and the path both present (a path it could not look at leaves the `.git` unread), and keeps the read, and whether it was made (`git_file_read`), on the target and in no record, so that the JSON result is unchanged, and a report's or a preview's note keeps its own text, since its `.git` file and entry are present (lane 3's W52 F-1; Brett Heap's ruling "F-1: prune-then-delete" of 2026-10-22, lead ruling R-263, which amends ratified text, the `project-clean` delta's `spec.md:253-256` and `:922-926` at `0050f3e`; #19 at `b3228bb`; writer G's `3eb2e9c`, merged as `7164d7f`); a locked row's note, in the report and the preview, is `Probable partial removal: inspect, unlock it, then git worktree remove --force PATH by hand.` (`partial_removal_note_locked`), since `git worktree remove --force` refuses a locked worktree, and the result never takes it, since a locked row is excluded at gate 4 and is never a target (lane 3's W52 F-2; #19 at `4f1c0e0`; lead ruling R-248); it replaces ratified text (`spec.md:135-138` at `0050f3e`), and Brett Heap ruled it on 2026-10-22, "F-2: yes" (lead ruling R-263), in its own commit, `64ad453`, which stays (lead ruling R-259) |
+| "D18 partial-removal note" | in three places (lead ruling R-79 P-11): in the report, on the line right after the row's recommendation line, two spaces in; in the preview, right after the row of the `dirty` group, six spaces in; in the result, first, before the stop block, one line per `partially-removed` target in canonical order, its path in the command form, whose text follows the rescan: D18's `Probable partial removal: inspect, then git worktree remove --force PATH by hand.` (`partial_removal_note`) only where the rescan shows the target's registry entry and its `.git` file both present, `Probable partial removal: inspect PATH by hand; its .git could not be read, so do not run git worktree prune, git worktree remove or git gc until it can.` (`partial_removal_note_unread`) wherever the rescan made its `.git` lstat and it gave no value, since it failed for a reason other than the file's absence, as `EACCES` does for a worktree directory the process may not search, or was cut at its budget or abandoned by a second SIGINT, or wherever the rescan's lstat of the target's own path failed other than for absence (`path_present` null in the record, as where a directory above the target denies search), so that no `.git` read was made, whatever else the record shows, because `git worktree prune` deletes the admin directory of a live worktree whose `.git` Git cannot stat (#19's round (i) at `1a4785e`; lane 3's W73 M-1; lead ruling R-284, which Brett Heap ruled "R-284: yes", R-290; writer G's `6a32d10`, merged as `3bc1d68`; and, for the null path, lane 3's W90 M-1, lead ruling R-329, which applies Brett Heap's R-284 as ruled, with #19's ceiling scenario, "as when a directory above it denies search"; writer's `b96b335`, merged as `7149e08`; its warning also names `git worktree remove` and `git gc`, R-324, ruled by Brett Heap, "R-324: yes", lead R-343; #19's round (n) at `2250830`; writer's `e8dda2a`), and otherwise `Probable partial removal: inspect, then git worktree prune and delete PATH by hand.` (`partial_removal_note_prune`), the `.git` shown absent, or the entry gone or not established, since Git refuses `git worktree remove --force` once the `.git` file ("validation failed") or the registry entry ("is not a working tree") is gone, and accepts `git worktree prune`; the rescan reads the `.git` by one `lstat`, no Git child, only where it shows the entry and the path both present (a path it could not look at leaves the `.git` unread), and keeps the read, and whether it was made (`git_file_read`), on the target and in no record, so that the JSON result is unchanged, and a report's or a preview's note keeps its own text, since its `.git` file and entry are present (lane 3's W52 F-1; Brett Heap's ruling "F-1: prune-then-delete" of 2026-10-22, lead ruling R-263, which amends ratified text, the `project-clean` delta's `spec.md:253-256` and `:922-926` at `0050f3e`; #19 at `b3228bb`; writer G's `3eb2e9c`, merged as `7164d7f`); a locked row's note, in the report and the preview, is `Probable partial removal: inspect, unlock it, then git worktree remove --force PATH by hand.` (`partial_removal_note_locked`), since `git worktree remove --force` refuses a locked worktree, and the result never takes it, since a locked row is excluded at gate 4 and is never a target (lane 3's W52 F-2; #19 at `4f1c0e0`; lead ruling R-248); it replaces ratified text (`spec.md:135-138` at `0050f3e`), and Brett Heap ruled it on 2026-10-22, "F-2: yes" (lead ruling R-263), in its own commit, `64ad453`, which stays (lead ruling R-259) |
 | "D18 refusal messages", "D18 remedies" | `target-excluded` (the current-worktree and class messages kept), gates, and the plan-blocking remedies |
 
 Lines D18 leaves open are fixed here before tasks: the `Report:` and
@@ -351,7 +351,7 @@ code with no baseline message gets one here:
 | `target-not-repository-root` | `Not the main worktree of a repository: PATH; pass the repository root.`, or, where a `core.worktree` or `core.bare` of the repository's own redirects the main worktree away from the directory examined (see "Resolution"), `Not the main worktree of a repository: PATH; core.worktree or core.bare redirects the main worktree; unset both in the repository's config, or in the main worktree's config.worktree, then run again.` (`target_not_repository_root_redirect`) |
 | `unsupported-path-bytes` | `The repository path is not valid UTF-8: PATH` |
 | `manifest-invalid` | `Manifest PATH is larger than 1 MiB.`; otherwise the baseline messages of `read_yaml()` and `manifest()`: `Cannot read PATH: ...` (an `OSError`, a read cut at its budget, or a parse error), `Expected a mapping in PATH`, `Unexpected kind in PATH; expected project-manifest` or `expected family-manifest`, and, where PyYAML is missing, `read_yaml()`'s own `YAML inspection needs PyYAML; use a workBench with python3-yaml installed.` (lead ruling R-73 (e)) |
-| `inspection-incomplete`, `inspect-cap`, `deadline-exceeded` | `The plan is incomplete (CODE): REMEDY.`, REMEDY being "D18 remedies": for `inspection-incomplete`, `repair or remove the inspection-error rows first: git worktree repair, git worktree prune, or remove the row by hand after review` (`remedy_inspection_incomplete`) and, where any row the refusal counts is excluded as `registration-mismatch`, `repair or remove the inspection-error rows first: git worktree repair, git worktree prune, unset core.worktree and core.bare in the repository's config or in a worktree's config.worktree, or remove the row by hand after review` (`remedy_inspection_incomplete_redirect`, below), each in its unread form where any row of the plan has a path that could not be read (`remedy_inspection_incomplete_unread` and `remedy_inspection_incomplete_redirect_unread`, "The unread forms" below); for `inspect-cap`, `N rows exceed the row cap of M; remove worktrees explicitly, or prune stale entries by hand; if a worktree's path cannot be read, do not run git worktree prune until it can` (`remedy_inspect_cap`, always, "The unread forms" below); for `deadline-exceeded`, `the run ran out of time; remove worktrees explicitly or re-run` |
+| `inspection-incomplete`, `inspect-cap`, `deadline-exceeded` | `The plan is incomplete (CODE): REMEDY.`, REMEDY being "D18 remedies": for `inspection-incomplete`, `repair or remove the inspection-error rows first: git worktree repair, git worktree prune, or remove the row by hand after review` (`remedy_inspection_incomplete`) and, where any row the refusal counts is excluded as `registration-mismatch`, `repair or remove the inspection-error rows first: git worktree repair, git worktree prune, unset core.worktree and core.bare in the repository's config or in a worktree's config.worktree, or remove the row by hand after review` (`remedy_inspection_incomplete_redirect`, below), each in its unread form where any row of the plan has a path that could not be read (`remedy_inspection_incomplete_unread` and `remedy_inspection_incomplete_redirect_unread`, "The unread forms" below); for `inspect-cap`, `N rows exceed the row cap of M; remove worktrees explicitly, or prune stale entries by hand; if a worktree's path cannot be read, do not run git worktree prune, git worktree remove or git gc until it can` (`remedy_inspect_cap`, always, "The unread forms" below); for `deadline-exceeded`, `the run ran out of time; remove worktrees explicitly or re-run` |
 | `plan-digest-mismatch` | `The fresh plan's digest DIGEST differs from --expect-plan EXPECTED; nothing was changed.` |
 | `confirmation-required` | `Standard input is not a terminal; pass --yes to apply this plan.` (the removal question; `confirm()` keeps its own) |
 | push, `remote-gone` | `Cannot push BRANCH; its upstream UPSTREAM was deleted (remote-gone); review it before it is republished.` |
@@ -382,26 +382,63 @@ registration mismatch; `inspect-cap` and `deadline-exceeded` keep their
 remedies.
 
 The unread forms are #19's round (l) at `ccc52b9`, design D18 (lane 3's W87
-M-1; the lead's R-307 and R-310, confirmed by Brett Heap (R-319); writer's `e569564`, merged as `1edf64e`). A row
-is unread where its path could not be read at planning: its `lstat` failed for a
-reason other than the path's absence, or was cut at its budget or at the work
-deadline, so that `present` is null and the row is `inspection-error`
-(`path_unread()`; `unread_paths(plan)` collects the raw paths of such rows of
-`plan.rows`, from what planning recorded, nothing read again). `git worktree
-prune` deletes the admin directory of a live worktree whose path Git cannot stat
-(`EACCES`, for a directory the process may not search), and acts on the whole
-repository, so wherever any row of the plan is unread, a deadline-stopped row and
-a row the refusal does not count included, the plan prints no prune advice. The
-`inspection-incomplete` remedy is `remedy_inspection_incomplete_unread`, `repair or remove the inspection-error rows first: git worktree repair, or remove the row by hand after review; a row's path could not be read, so do not run git worktree prune until it can`,
-and, where the redirect variant would print, `remedy_inspection_incomplete_redirect_unread`,
-`repair or remove the inspection-error rows first: git worktree repair, unset core.worktree and core.bare in the repository's config or in a worktree's config.worktree, or remove the row by hand after review; a row's path could not be read, so do not run git worktree prune until it can`; the variant's counting is unchanged, a single removal that names the unread
-row counts P's rows alone, none redirected, so it takes the first, and
-`deadline-exceeded` keeps its remedy, and the `inspect-cap` remedy is `remedy_inspect_cap`, `N rows exceed the row cap of M; remove worktrees explicitly, or prune stale entries by hand; if a worktree's path cannot be read, do not run git worktree prune until it can`, always, whether or not any row is unread, because the rows past the cap are never read and no run can tell whether their paths can be (R-320, ruled by Brett Heap ("R-320: yes", lead R-321); lane 3's W86 NM-1; writer's `dfc2baa`, merged as `12c1821`). In the preview the
-unread rows form a group of their own under `inspection-error`, printed first,
-with `next_step_unread_row`, `inspect the row by hand; its path could not be read, so do not run git worktree prune until it can`; the other `inspection-error` rows take
-`next_step_inspection_error_unread`, `review, then git worktree repair, or remove the row by hand; a row's path could not be read, so do not run git worktree prune until it can`, and the
-`registration-mismatch` rows `next_step_registration_mismatch_unread`, `review, then git worktree repair, unset core.worktree and core.bare in the repository's config, or in that worktree's config.worktree, or remove the row by hand; a row's path could not be read, so do not run git worktree prune until it can`.
-Where any row of the plan is unread, `stale_recommendations()`, which `build_plan()` calls once every row is gated, also gives each `stale-worktree` row the recommendation `recommendation_stale_worktree_unread`, `Review and prune stale worktree metadata manually; a row's path could not be read, so do not run git worktree prune until it can.`, or, for a locked row, `recommendation_stale_locked_unread`, `Review, unlock it, then prune stale worktree metadata manually; a row's path could not be read, so do not run git worktree prune until it can.`, in the report, the plan envelope's `worktrees` and `plan.report`, and the preview's `stale-worktree` group takes the first as its next step (`UNREAD_NEXT_STEPS`; a locked stale row is excluded as `locked-worktree`, gate 4), from what planning recorded, the class unchanged (R-320, ruled by Brett Heap ("R-320: yes", lead R-321)). Where no row is unread every text is as before.
+M-1; the lead's R-307 and R-310, confirmed by Brett Heap (R-319); writer's
+`e569564`, merged as `1edf64e`). A row is unread where its path could not be
+read at planning: its `lstat` failed for a reason other than the path's
+absence, or was cut at its budget or at the work deadline, so that `present`
+is null and the row is `inspection-error` (`path_unread()`;
+`unread_paths(plan)` collects the raw paths of such rows of `plan.rows`, from
+what planning recorded, nothing read again). `git worktree prune` deletes the
+admin directory of a live worktree whose path Git cannot stat (`EACCES`, for a
+directory the process may not search), and acts on the whole repository, so
+wherever any row of the plan is unread, a deadline-stopped row and a row the
+refusal does not count included, the plan prints no prune advice, and every
+warning also names `git worktree remove` and `git gc` (R-324, ruled by Brett
+Heap, "R-324: yes", lead R-343; #19's round (n) at `2250830`; writer's
+`e8dda2a`). The `inspection-incomplete` remedy is
+`remedy_inspection_incomplete_unread`, `repair or remove the inspection-error
+rows first: git worktree repair, or remove the row by hand after review; a
+row's path could not be read, so do not run git worktree prune, git worktree
+remove or git gc until it can`, and, where the redirect variant would print,
+`remedy_inspection_incomplete_redirect_unread`, `repair or remove the
+inspection-error rows first: git worktree repair, unset core.worktree and
+core.bare in the repository's config or in a worktree's config.worktree, or
+remove the row by hand after review; a row's path could not be read, so do not
+run git worktree prune, git worktree remove or git gc until it can`; the
+variant's counting is unchanged, a single removal that names the unread row
+counts P's rows alone, none redirected, so it takes the first, and
+`deadline-exceeded` keeps its remedy, and the `inspect-cap` remedy is
+`remedy_inspect_cap`, `N rows exceed the row cap of M; remove worktrees
+explicitly, or prune stale entries by hand; if a worktree's path cannot be
+read, do not run git worktree prune, git worktree remove or git gc until it
+can`, always, whether or not any row is unread, because the rows past the cap
+are never read and no run can tell whether their paths can be (R-320, ruled by
+Brett Heap ("R-320: yes", lead R-321); lane 3's W86 NM-1; writer's `dfc2baa`,
+merged as `12c1821`). In the preview the unread rows form a group of their own
+under `inspection-error`, printed first, with `next_step_unread_row`, `inspect
+the row by hand; its path could not be read, so do not run git worktree prune,
+git worktree remove or git gc until it can`; the other `inspection-error` rows
+take `next_step_inspection_error_unread`, `review, then git worktree repair,
+or remove the row by hand; a row's path could not be read, so do not run git
+worktree prune, git worktree remove or git gc until it can`, and the
+`registration-mismatch` rows `next_step_registration_mismatch_unread`,
+`review, then git worktree repair, unset core.worktree and core.bare in the
+repository's config, or in that worktree's config.worktree, or remove the row
+by hand; a row's path could not be read, so do not run git worktree prune, git
+worktree remove or git gc until it can`. Where any row of the plan is unread,
+`stale_recommendations()`, which `build_plan()` calls once every row is gated,
+also gives each `stale-worktree` row the recommendation
+`recommendation_stale_worktree_unread`, `Review and prune stale worktree
+metadata manually; a row's path could not be read, so do not run git worktree
+prune, git worktree remove or git gc until it can.`, or, for a locked row,
+`recommendation_stale_locked_unread`, `Review, unlock it, then prune stale
+worktree metadata manually; a row's path could not be read, so do not run git
+worktree prune, git worktree remove or git gc until it can.`, in the report,
+the plan envelope's `worktrees` and `plan.report`, and the preview's
+`stale-worktree` group takes the first as its next step (`UNREAD_NEXT_STEPS`;
+a locked stale row is excluded as `locked-worktree`, gate 4), from what
+planning recorded, the class unchanged (R-320, ruled by Brett Heap ("R-320:
+yes", lead R-321)). Where no row is unread every text is as before.
 
 `repository-not-found`, `ambiguous-name`, `no-merge-target`,
 `worktree-not-found` and `cancelled` keep the baseline's messages, and

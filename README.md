@@ -271,25 +271,25 @@ executing each action.
 
 `project clean ROOT --all-safe` previews and changes nothing, ROOT being the
 repository's main worktree. After the header (`Cleanup plan for ROOT`, `Merge
-target: NAME (SOURCE)`, `Freshness:`) it prints `Selected (N):` with one
-`  remove PATH [BRANCH]` line for each worktree a batch would remove, then
+target: NAME (SOURCE)`, `Freshness:`) it prints `Selected (N):` with one `
+remove PATH [BRANCH]` line for each worktree a batch would remove, then
 `Excluded (M):` with a group `  REASON (K): NEXT STEP` for each reason and its
 worktrees beneath (each heading prints only when it has rows), then, when a
 worktree is selected, `Not protected: ...` (see "What is guaranteed"). A
 worktree whose path could not be read (the `lstat` failed for a reason other
-than the path's absence, as it does for a directory the process may not search,
-or ran out of time) is `inspection-error`, and such worktrees form a group of
-their own, printed first under that reason, with the next step `inspect the
-row by hand; its path could not be read, so do not run git worktree prune
-until it can`;
-the plan's other `inspection-error` and `registration-mismatch` groups then
-name no `git worktree prune` either (see "Gates and next steps"). When a
-complete plan selects nothing it prints `No eligible worktrees` and exits 0.
-The plain report adds `Report: complete` or `Report: incomplete (CODES)` and
-`--all-safe would select N`. A plain report inspects up to 256 worktrees and
-`--all-safe` up to 128; a report of more than 128 says `--all-safe would be
-incomplete (inspect-cap)` in place of the count and withholds the selection;
-such a report, up to 256 worktrees, is still complete and exits 0.
+than the path's absence, as it does for a directory the process may not
+search, or ran out of time) is `inspection-error`, and such worktrees form a
+group of their own, printed first under that reason, with the next step
+`inspect the row by hand; its path could not be read, so do not run git
+worktree prune, git worktree remove or git gc until it can`; the plan's other
+`inspection-error` and `registration-mismatch` groups then name no `git
+worktree prune` either (see "Gates and next steps"). When a complete plan
+selects nothing it prints `No eligible worktrees` and exits 0. The plain
+report adds `Report: complete` or `Report: incomplete (CODES)` and `--all-safe
+would select N`. A plain report inspects up to 256 worktrees and `--all-safe`
+up to 128; a report of more than 128 says `--all-safe would be incomplete
+(inspect-cap)` in place of the count and withholds the selection; such a
+report, up to 256 worktrees, is still complete and exits 0.
 
 `--apply` runs the plan. `clean` plans again, prints the plan, and asks
 `Remove N worktrees, keeping N branches? [yes/N]` (singular for one). Only
@@ -310,19 +310,21 @@ linked worktree that `core.worktree` or `core.bare` redirects or one whose
 registration is broken, or a path two entries share; for `inspect-cap`, `N
 rows exceed the row cap of M; remove worktrees explicitly, or prune stale
 entries by hand; if a worktree's path cannot be read, do not run git worktree
-prune until it can`, whether or not any row is unread, since the rows past the
-cap are never read; for `deadline-exceeded`, to remove worktrees explicitly or
-re-run. Where any row of the plan has a path that could not be read, whether
-or not the refusal counts that row, the `inspection-incomplete` remedy names
-no `git worktree prune` and warns against it, since `git worktree prune`
-deletes the registration of a live worktree whose path Git cannot stat:
+prune, git worktree remove or git gc until it can`, whether or not any row is
+unread, since the rows past the cap are never read; for `deadline-exceeded`,
+to remove worktrees explicitly or re-run. Where any row of the plan has a path
+that could not be read, whether or not the refusal counts that row, the
+`inspection-incomplete` remedy names no `git worktree prune` and warns against
+it, and against `git worktree remove` and `git gc` too, since `git worktree
+prune` deletes the registration of a live worktree whose path Git cannot stat:
 `repair or remove the inspection-error rows first: git worktree repair, or
 remove the row by hand after review; a row's path could not be read, so do not
-run git worktree prune until it can`; and where the unset above would be
-named, `repair or remove the inspection-error rows first: git worktree repair,
-unset core.worktree and core.bare in the repository's config or in a
-worktree's config.worktree, or remove the row by hand after review; a row's
-path could not be read, so do not run git worktree prune until it can`.
+run git worktree prune, git worktree remove or git gc until it can`; and where
+the unset above would be named, `repair or remove the inspection-error rows
+first: git worktree repair, unset core.worktree and core.bare in the
+repository's config or in a worktree's config.worktree, or remove the row by
+hand after review; a row's path could not be read, so do not run git worktree
+prune, git worktree remove or git gc until it can`.
 
 `--all-safe` cannot be combined with `--action`, `--branch` or `--worktree`,
 and `--expect-plan` needs `--all-safe` and `--apply`: each is
@@ -400,23 +402,26 @@ carries its next step:
 
 Where any row of the plan has a path that could not be read, none of these
 next steps offers `git worktree prune`, which acts on the whole repository and
-deletes the registration of a live worktree whose path Git cannot stat: the
+deletes the registration of a live worktree whose path Git cannot stat, and
+each warns against `git worktree remove` and `git gc` as well: the
 `registration-mismatch` next step reads `review, then git worktree repair,
 unset core.worktree and core.bare in the repository's config, or in that
 worktree's config.worktree, or remove the row by hand; a row's path could not
-be read, so do not run git worktree prune until it can`, the
-`inspection-error` next step reads `review, then git worktree repair, or
-remove the row by hand; a row's path could not be read, so do not run git
-worktree prune until it can`, and an `inspection-error` row whose own path
-could not be read has a group of its own, listed first, with the next step
-`inspect the row by hand; its path could not be read, so do not run git
-worktree prune until it can`; and a `stale-worktree` row's recommendation,
-which the report prints and the preview's group takes as its next step, reads
-`Review and prune stale worktree metadata manually; a row's path could not be
-read, so do not run git worktree prune until it can.`, or, for a locked row in
-the report, `Review, unlock it, then prune stale worktree metadata manually; a
-row's path could not be read, so do not run git worktree prune until it can.`.
-With every path readable the table above applies.
+be read, so do not run git worktree prune, git worktree remove or git gc until
+it can`, the `inspection-error` next step reads `review, then git worktree
+repair, or remove the row by hand; a row's path could not be read, so do not
+run git worktree prune, git worktree remove or git gc until it can`, and an
+`inspection-error` row whose own path could not be read has a group of its
+own, listed first, with the next step `inspect the row by hand; its path could
+not be read, so do not run git worktree prune, git worktree remove or git gc
+until it can`; and a `stale-worktree` row's recommendation, which the report
+prints and the preview's group takes as its next step, reads `Review and prune
+stale worktree metadata manually; a row's path could not be read, so do not
+run git worktree prune, git worktree remove or git gc until it can.`, or, for
+a locked row in the report, `Review, unlock it, then prune stale worktree
+metadata manually; a row's path could not be read, so do not run git worktree
+prune, git worktree remove or git gc until it can.`. With every path readable
+the table above applies.
 
 The first four reasons are facts about the row. The next four are its
 classification, one gate, and only a `merged-removable` row passes it.
@@ -540,22 +545,22 @@ or running out of time, or where its own `lstat` of the worktree's path failed
 the same way, as it does when a directory above the worktree denies search, so
 that it read no `.git` at all, whatever it showed of the entry, it is
 `Probable partial removal: inspect PATH by hand; its .git could not be read,
-so do not run git worktree prune until it can.`, because `git worktree prune`
-deletes the registration of a live worktree whose `.git` Git cannot stat. The
-rescan reads the `.git` file with one `lstat`, never a Git child, and only
-where it shows the entry and the path both present (a path it could not look
-at is a `.git` it could not read); the JSON result is the same in every case.
-The `--force` note is also the one under the `dirty` advice of a worktree
-whose tracked files are all deleted, which is how an interrupted removal looks
-and why the note says "probable". For a locked worktree, which `git worktree
-remove --force` refuses, the row's note in the report and the preview reads
-`Probable partial removal: inspect, unlock it, then git worktree remove
---force PATH by hand.` The forced removal, or the deletion after a prune, is
-the person's own step, after looking, never `clean`'s. A target with the note
-`orphaned-directory` has lost its registry entry but its directory is still
-there. When Git had already deleted the worktree's `.git` file, the row is
-`registration-mismatch`: use `git worktree repair` or `git worktree prune`, or
-remove the row by hand.
+so do not run git worktree prune, git worktree remove or git gc until it
+can.`, because `git worktree prune` deletes the registration of a live
+worktree whose `.git` Git cannot stat. The rescan reads the `.git` file with
+one `lstat`, never a Git child, and only where it shows the entry and the path
+both present (a path it could not look at is a `.git` it could not read); the
+JSON result is the same in every case. The `--force` note is also the one
+under the `dirty` advice of a worktree whose tracked files are all deleted,
+which is how an interrupted removal looks and why the note says "probable".
+For a locked worktree, which `git worktree remove --force` refuses, the row's
+note in the report and the preview reads `Probable partial removal: inspect,
+unlock it, then git worktree remove --force PATH by hand.` The forced removal,
+or the deletion after a prune, is the person's own step, after looking, never
+`clean`'s. A target with the note `orphaned-directory` has lost its registry
+entry but its directory is still there. When Git had already deleted the
+worktree's `.git` file, the row is `registration-mismatch`: use `git worktree
+repair` or `git worktree prune`, or remove the row by hand.
 
 ### Close sessions first
 

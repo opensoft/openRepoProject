@@ -569,6 +569,11 @@ T033), when B, D, E and F are; H, guard (T034, T035), when T023 is, beside G
   `dfc2baa`, merged as `12c1821`) ends `remedy_inspect_cap` with the same
   warning, always, and adds `recommendation_stale_worktree_unread` and
   `recommendation_stale_locked_unread`. The same test pins each.
+  R-324 (R-324, ruled by Brett Heap, "R-324: yes", lead R-343; #19's round (n)
+  at `2250830`; writer's `e8dda2a`) changes the nine `TEXT_FIXTURES` entries
+  that carry a no-prune warning, the ones above, `partial_removal_note_unread`
+  and `remedy_inspect_cap`, so that each also names `git worktree remove` and
+  `git gc`. The same test pins each.
   — files: `tests/clean_support.py`
   — verify: `python3 -c "import sys;sys.path.insert(0,'tests');import clean_support as c;M=[n for n in sys.argv[1:] if not (hasattr(c,n) or hasattr(c.CleanCase,n))];[print('missing:',m) for m in M];sys.exit(1 if M or not sys.argv[1:] else 0)" install_counting_git child_log install_fake_git path_without_git && python3 -m unittest discover -s tests -p 'test_clean_harness.py' && python3 -c "import sys;sys.path.insert(0,'tests');import clean_support as c;M=[k for k in sys.argv[1:] if k not in c.FAKE_KINDS];[print('absent kind:',m) for m in M];sys.exit(1 if M or not sys.argv[1:] else 0)" status-slow-again-in ls-files-stuck-again-in`
 
@@ -2262,7 +2267,14 @@ carrying the reason the gate order gives.
   `stale-worktree` group takes the first as its next step (the locked row is
   excluded as `locked-worktree`, gate 4); the exit codes and every other line
   are as before, nothing is removed, and with the path readable again the
-  plain texts print.
+  plain texts print. Since R-324 (R-324, ruled by Brett Heap, "R-324: yes",
+  lead R-343; #19's round (n) at `2250830`; writer's `e8dda2a`) the four tests
+  of this round read the warnings with `git worktree remove` and `git gc`
+  named beside `git worktree prune`:
+  `test_clean_an_unread_row_s_next_step_and_remedy_name_no_prune`,
+  `test_clean_an_unread_row_beside_a_readable_inspection_error_row`,
+  `test_clean_an_unread_row_beside_a_redirected_row` and
+  `test_clean_a_stale_row_beside_an_unread_row_warns_against_prune`.
   — files: `tests/test_clean_gates.py`
   — verify: `python3 -c "import sys,unittest as u;L=u.defaultTestLoader;f=lambda s:[i for t in s for i in (f(t) if isinstance(t,u.TestSuite) else [t.id()])];I=[i for i in f(L.discover('tests',pattern=sys.argv[1])) if not i.startswith('unittest.')];A=sys.argv[2:];M=[a for a in A if not any(a in ('*',i.split('.')[-1]) for i in I)];[print('not collected:',m) for m in M];[print(e) for e in L.errors];sys.exit(1 if M or L.errors or not A else 0)" test_clean_gates.py 'test_clean_every_protected_classifier' 'test_clean_every_protected_classifier_incomplete_copy' 'test_clean_a_redirected_worktree_s_incomplete_plan_names_the_unset' 'test_clean_a_redirected_row_the_deadline_stopped_is_not_counted_for_the_variant' 'test_clean_a_named_removal_s_repository_wide_refusal_beside_a_redirected_target' 'test_clean_an_unread_row_s_next_step_and_remedy_name_no_prune' 'test_clean_an_unread_row_beside_a_readable_inspection_error_row' 'test_clean_an_unread_row_beside_a_redirected_row' 'test_clean_a_stale_row_beside_an_unread_row_warns_against_prune'`
 - [x] T062 [P] [US2] [O] Add to `tests/test_clean_gates.py`:
@@ -3423,6 +3435,9 @@ lead ruling R-83).
   is prunable and `git worktree remove --force` removes the worktree, the
   branch kept; since lane 3's W90 M-1 (lead ruling R-329) a rescan whose lstat of
   the target's own path failed gives the same note, which T091's table pins).
+  Since R-324 (R-324, ruled by Brett Heap, "R-324: yes", lead R-343; #19's
+  round (n) at `2250830`; writer's `e8dda2a`) the note's warning also names
+  `git worktree remove` and `git gc`, and this test's literal expects it.
   — files: `tests/test_clean_result.py`
   — verify: `python3 -c "import sys,unittest as u;L=u.defaultTestLoader;f=lambda s:[i for t in s for i in (f(t) if isinstance(t,u.TestSuite) else [t.id()])];I=[i for i in f(L.discover('tests',pattern=sys.argv[1])) if not i.startswith('unittest.')];A=sys.argv[2:];M=[a for a in A if not any(a in ('*',i.split('.')[-1]) for i in I)];[print('not collected:',m) for m in M];[print(e) for e in L.errors];sys.exit(1 if M or L.errors or not A else 0)" test_clean_result.py 'test_clean_a_removal_past_the_hard_ceiling' 'test_clean_unreadable_path_after_removal' 'test_clean_exception_after_the_apply_phase_begins' 'test_clean_the_ceiling_s_recovery_text_follows_the_git_file_and_the_entry' 'test_clean_the_ceiling_s_recovery_text_where_the_git_file_cannot_be_read'`
 - [x] T090 [P] [US5] [S] Add `test_clean_stage_and_reason_table` to
@@ -3500,7 +3515,8 @@ lead ruling R-83).
   `1a4785e` (lane 3's W73 M-1; lead ruling R-284, ruled by Brett Heap,
   "R-284: yes", R-290; writer G's `6a32d10`), `partial_removal_note_unread`,
   `Probable partial removal: inspect PATH by hand; its .git could not be read,
-  so do not run git worktree prune until it can.`, wherever the `.git` read was
+  so do not run git worktree prune, git worktree remove or git gc until it
+  can.`, wherever the `.git` read was
   made and gave no value, whatever the record shows of the entry, three of the
   twelve, and, since lane 3's W90 M-1 (lead ruling R-329, applying R-284 as Brett
   Heap ruled it; writer's `b96b335`, merged as `7149e08`), wherever the
@@ -3509,6 +3525,9 @@ lead ruling R-83).
   of the entry, the other three, the rows "the path lstat failed"; the note prints first and once; a target that is a plain dict, which
   carries no `.git` read, takes the prune note; a report row's note is
   `partial_removal_note()`'s and keeps its text).
+  R-324 (R-324, ruled by Brett Heap, "R-324: yes", lead R-343; #19's round (n)
+  at `2250830`; writer's `e8dda2a`) has the unread note's warning also name
+  `git worktree remove` and `git gc`, and this test's literal expects it.
   — files: `tests/test_clean_stop.py`
   — verify: `python3 -c "import sys,unittest as u;L=u.defaultTestLoader;f=lambda s:[i for t in s for i in (f(t) if isinstance(t,u.TestSuite) else [t.id()])];I=[i for i in f(L.discover('tests',pattern=sys.argv[1])) if not i.startswith('unittest.')];A=sys.argv[2:];M=[a for a in A if not any(a in ('*',i.split('.')[-1]) for i in I)];[print('not collected:',m) for m in M];[print(e) for e in L.errors];sys.exit(1 if M or L.errors or not A else 0)" test_clean_stop.py 'test_clean_the_stop_block' 'test_clean_only_tracked_file_deletions' 'test_clean_project_killed_during_a_deletion' 'test_clean_a_locked_worktree_s_partial_removal_note_unlocks_it_first' 'test_clean_the_ceiling_s_partial_removal_note_follows_the_git_file_and_the_entry'`
 
@@ -3701,7 +3720,12 @@ statuses, the child counts and the order of what was cut.
   `test_clean_row_cap_and_planning_failures` (129 rows: incomplete with
   `inspect-cap`, `omitted` visible, the status children those of the main
   worktree and the 127 smallest paths, the preview exit 1, and `--apply` exit 2
-  before any mutation, the refusal's remedy being `remedy_inspect_cap`, which ends with the warning against `git worktree prune`, in the human line and in `refusals` (R-320, ruled by Brett Heap, "R-320: yes", lead R-321); a status probe timing out under the launcher
+  before any mutation, the refusal's remedy being `remedy_inspect_cap`, which
+  ends with the warning against `git worktree prune`, in the human line and in
+  `refusals` (R-320, ruled by Brett Heap, "R-320: yes", lead R-321, and, since
+  R-324, naming `git worktree remove` and `git gc` too: ruled by Brett Heap,
+  "R-324: yes", lead R-343; writer's `e8dda2a`); a status probe timing out
+  under the launcher
   (`status-hangs-in`, with a table that shortens the probe budget to no less
   than 1 s; R-29): `inspection-incomplete` with the row visible; the work
   deadline passing during planning under the launcher (a table that shortens
