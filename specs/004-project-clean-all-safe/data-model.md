@@ -114,10 +114,13 @@ rows before it may take their whole budgets; a row whose identity changed
 gets no probe and is `inspection-error`, and once the work deadline has
 passed no probe starts (lane 3's F3; lead ruling R-101 (e)). Then, where row
 4c is not false, each linked row's effective work tree is probed (`rev-parse
---path-format=absolute --show-toplevel` in it): a work tree other than its
-path, a failure or other output is `registration-mismatch`, unprobed, and a
-probe cut at its budget or the deadline is a row error, `inspection-error`
-(LQ-11; lead ruling R-113). A row with `present:
+--path-format=absolute --show-toplevel` in it); its output, less the one
+closing line feed, is read as one path, which may hold line feeds, since a
+worktree whose own path holds one prints that path over two lines or more: a
+work tree other than its path, a failure, or output that is empty, a line feed
+alone or without a closing line feed is `registration-mismatch`, unprobed, and
+a probe cut at its budget or the deadline is a row error, `inspection-error`
+(LQ-11; lead rulings R-113 and R-287; lane 3's W70 M-2). A row with `present:
 false` is decided first: it gets no registration check, no shared-path
 check and no probe, and its reason is its class, `stale-worktree` (lead
 rulings R-57 and R-59 D5). Otherwise a row whose registration disagrees
@@ -236,18 +239,28 @@ row, where the ladder says `merged-removable` or `merged-current`, takes
 `The main worktree is never removed by project clean.`, since no removal of
 it can succeed, and a locked `stale-worktree` row takes `Review, unlock it,
 then prune stale worktree metadata manually.`, since `git worktree prune`
-keeps a locked entry. The class is unchanged in both.
+keeps a locked entry. The class is unchanged in both. `status` is not among
+them: its `repo_state()` keeps the baseline's `Review the stale worktree
+metadata before pruning it manually.` for every stale entry, a locked one
+included, a known residual left to a follow-on change (lane 3's W65 LOW-3;
+lead ruling R-269; contracts/project-clean.md, "`status`, `doctor` and
+`update`").
 
 ### Gate (FR-020 to FR-023; D10, D12, D13)
 
 A row is selected only when it passes every gate; every excluded row
 carries one `reason`, its first failing gate, never null. A row left
-unprobed, whose reflog read did not finish within the filesystem budget
-(T066's read, the unprobed marker's only setter), is excluded as
-`reflog-unavailable` with its classification kept and its marker set, and
-the plan is incomplete with `inspection-incomplete`; no reason value and no
-group of its own are added for it (lead ruling R-67 (a), withdrawing R-56's
-null reason for R-53's P-3):
+unprobed, whose reflog read did not finish, the filesystem budget or the work
+deadline having cut it (T066's read, the unprobed marker's only setter), is
+excluded as `reflog-unavailable` with its classification kept and its marker
+set, and the plan is incomplete with `inspection-incomplete` where the budget
+cut the read, and with `deadline-exceeded`, not `inspection-incomplete`, where
+the deadline did; no reason value and no group of its own are added for it
+(lead ruling R-67 (a), withdrawing R-56's null reason for R-53's P-3; Brett
+Heap's ruling "O-1: deadline-exceeded" of 2026-10-22, lead rulings R-263 and
+R-278, which amends ratified text, the `project-clean` delta's `spec.md:606-608`
+at `0050f3e`; #19 at `b3228bb`, `spec.md:713-718`; writer G's `99848dd`, merged
+as `3bc1d68`):
 
 | Order | Reason | Fails when |
 | --- | --- | --- |
@@ -303,11 +316,16 @@ administrative directory that cannot be listed is `inspection-error`, not
 gives `worktree-only-commits`; a null flag never passes gate 9, 10, 11 or 12,
 while gate 3 fails only on a
 registration read and found to disagree (R-53 P-16). A reflog read not
-finished within the filesystem budget follows the `project-clean` delta's
-reflog outcome rule instead: the row is left unprobed, its marker set, and
-excluded as `reflog-unavailable`, "where the reflog cannot decide it", never
-selected, and the plan is incomplete with `inspection-incomplete` (R-67
-(a)).
+finished, the filesystem budget or the work deadline having cut it, follows
+the `project-clean` delta's reflog outcome rule instead: the row is left
+unprobed, its marker set and its class kept, and excluded as
+`reflog-unavailable`, "where the reflog cannot decide it", never selected; the
+read's row error, `probe-timeout` or `deadline-exceeded`, is the row's one
+error, and the plan is incomplete with `inspection-incomplete` for the first
+and with `deadline-exceeded` for the second, whose refusal names no repair (R-67
+(a) and R-278). Gate 7 is the only gate whose deadline cut leaves a row
+unprobed: every other gate's read that the deadline cuts makes the row
+`inspection-error` with that `deadline-exceeded` error.
 
 ### Reflog anchor and movement (D10; FR-021, FR-022)
 
@@ -327,7 +345,7 @@ message when there is one.
 | --- | --- |
 | `reflog-unavailable` | missing (`ENOENT`, `ENOTDIR`), 0 bytes, or the read reached its 64 KiB bound (65,536 bytes read) |
 | `inspection-error` | any other error on the read |
-| `reflog-unavailable`, the row left unprobed (its marker set, its class kept, `probe-timeout` or `deadline-exceeded` in its `errors`; the plan `inspection-incomplete`; R-67 (a), R-73 (c)) | the read did not finish within the filesystem budget |
+| `reflog-unavailable`, the row left unprobed (its marker set, its class kept, `probe-timeout` in its `errors` and the plan `inspection-incomplete` where the filesystem budget cut the read, `deadline-exceeded` in its `errors` and the plan `deadline-exceeded`, with no repair remedy, where the work deadline did; R-67 (a), R-73 (c), R-278) | the read did not finish |
 | `reflog-unavailable` | a line that is not `<old> <new> ...`, a truncated last line included: the entries cannot decide, never `inspection-error` (lead ruling R-53 P-22) |
 | `reflog-unavailable` | the last entry's new object is not the head |
 | pass | a movement survives |
@@ -374,7 +392,14 @@ Fields, in the delta's envelope order: `schema_version`, `observed_at`,
 (`{count, exactness: "exact"}`), `notes`, `completeness`, `apply_allowed`,
 `refusals` and `plan_digest` (R12 in research.md).
 `probes` counts every Git child other than a removal and `operations` the
-removals, each child once (lead ruling R-27; research.md R8). Rows are ordered
+removals, each child once (lead ruling R-27; research.md R8). `probes.estimated`
+adds, for each selected target, the children of one revalidation (6, or 7
+where row 4c read true) and, once, those of the final rescan (3), and counts 3
+more of each where the path of the repository's root or of its common
+directory, as the plan read them, holds a line feed, since the identity probe
+is then read one option per child (9, or 10, and 6; "Revalidation step and
+`probes_performed`", below; lane 5's RI-3; #19's round (h) at `b3228bb`;
+writer G's `c26e44b`, merged as `7164d7f`). Rows are ordered
 main worktree first, then by raw path bytes; `selected`, `excluded` and the
 execution order are by raw path bytes.
 
@@ -385,14 +410,21 @@ match is undecided, any entry's realpath unread among the causes
 (`inspection-incomplete`; lead rulings R-67 (b), R-73 (d), R-75 (b) and
 R-78 (b)), or the deadline passed while planning (`deadline-exceeded`), each
 row it stopped being `inspection-error` with a `deadline-exceeded` row error,
-never left unprobed (lead rulings R-67 (a) and R-69; T099). In single mode
+or, where it cut gate 7's reflog read alone, left unprobed with that error and
+excluded as `reflog-unavailable` (lead rulings R-67 (a), R-69 and R-278;
+T099); either way the plan is `deadline-exceeded` and not
+`inspection-incomplete`. In single mode
 those three are non-blocking notes about other rows, and only P's own row,
 P's match and the repository-wide probes decide (D13; lane 3's L-7). P's
 row is established first there, its status probe then its gates, before any
 other row is inspected, which is how D13's "inspects P's row first:
 identity, status probe, gates" is built, a fill of FR-013's "probed first":
 a work deadline reached among the other rows leaves P's row decided and the
-plan complete (lead ruling R-93 (d)). When P's match is undecided, none of
+plan complete (lead ruling R-93 (d)), while one that cuts a read of P's own
+row refuses `deadline-exceeded`, as a one-item batch's plan is refused, where
+P's row is one the deadline stopped, and `inspection-incomplete` where it left
+P's match undecided (lead ruling R-283; writer G's `a038961`). When P's match
+is undecided, none of
 the three notes is recorded, since each says that rows "do not block" P
 beside the plan's refusal of P, `inspection-incomplete`, which speaks alone;
 a P that matches several entries is decided, so the notes stay (lead
@@ -459,6 +491,39 @@ its `spec.md:253-256`, "otherwise `unknown` with the note
 nothing is `unknown` with `removal-ceiling` and no note, failing safe (lead
 ruling R-76 (c)).
 
+Where the rescan shows the registry entry and the path both present, its last
+read is one `lstat` of the target's `.git` (`git_file_presence()`; the
+reserve's budget as for any rescan read, no Git child, so the rescan's three
+Git children stand). The result is kept on the `Target` object as
+`git_file_present` (true, false on `ENOENT` or `ENOTDIR`, or null where the
+read was not made, failed, was cut at its budget or was abandoned by a second
+SIGINT), with `git_file_read`, whether the read was made, false until the
+rescan makes it, and in no record, so that no document carries either: the
+reconciliation record, `notes` and the JSON result are unchanged. Only the
+human partial-removal note of the result reads them (`partial_removal_text()`),
+in this order. First, where `git_file_read` is true and `git_file_present` is
+null, whatever the record shows of the entry (the read is made only where the
+rescan shows the entry and the path present), `Probable partial removal:
+inspect PATH by hand; its .git could not be read, so do not run git worktree
+prune until it can.`, since `git worktree prune` deletes the admin directory of
+a live worktree whose `.git` Git cannot stat (`EACCES`, for a worktree
+directory the process may not search; #19's round (i) at `1a4785e`; lane 3's
+W73 M-1; lead ruling R-284, which Brett Heap ruled "R-284: yes", R-290;
+writer G's `6a32d10`, merged as `3bc1d68`). Otherwise D18's `git worktree
+remove --force` form where `registry_entry_present` and `git_file_present` are
+both true, and `Probable partial removal: inspect, then git worktree prune and
+delete PATH by hand.` for the rest, since Git refuses `git worktree remove
+--force` once the `.git` file is gone ("validation failed", as a kill part way
+through a removal usually leaves it) or the entry is gone ("is not a working
+tree"), and accepts `git worktree prune`, which leaves the path a plain
+directory for deletion by hand; a value not established never shows both
+present. A report row's note is the baseline's
+and keeps its text, its `.git` file and entry being present (lane 3's W52
+F-1; Brett Heap's ruling "F-1: prune-then-delete" of 2026-10-22, lead ruling
+R-263, which amends ratified text, the `project-clean` delta's `spec.md:253-256`
+and `:922-926` at `0050f3e`; #19 at `b3228bb`; writer G's `3eb2e9c`, merged
+as `7164d7f`).
+
 ### Revalidation step and `probes_performed` (D7; FR-046, FR-047)
 
 Each target's revalidation runs these steps in order and stops at the first
@@ -471,7 +536,7 @@ target:
 | 2. the manifest re-read | filesystem | `state-changed` (manifest or merge target); a `tracking_branch` that is not a string, YAML's `.nan` among them, reads as none on both sides, as planning reads it (`as_candidate()`; lead ruling R-101 (d), the apply review's F2) |
 | 3. the registry listing | Git child | `identity-changed` (a checked row's path missing or listed twice); `state-changed` (lock, or a listing that decides nothing; R-195) |
 | 4. the narrowed ref listing | Git child | `branch-changed` (branch name or head); `state-changed` (upstream, `upstream_oid`, `ahead`, `behind`, merge target, or a listing that decides nothing) |
-| 5. the target's identity and registration (its `commondir` included), a twin of a checked row, the `modules` check and gate 11's listing of its administrative directory, by filesystem reads; then, where row 4c read true, its effective work tree, so that a filesystem check that refuses spares the probe's child (the lead's R-198; writer G's `963fccf`) | filesystem, then one Git child for the work tree | `identity-changed` (the identity or registration decided different; the target's path, its `.git` or its administrative directory found absent, `ENOENT` or `ENOTDIR`, the listing that finds no administrative directory included, writer G's reading of a gap in #19 at `9267303`, lead ruling R-220; or another present entry of the fresh registry listing sharing a checked row's realpath or admin id, `registry_twin()`, R-81 (a)); `contains-submodule` (a `modules` entry); `operation-in-progress` (a marker, LQ-14); `state-changed` for a read that fails other than with `ENOENT` or `ENOTDIR` or runs past its own budget: the target's lstat, its registration reads (a `.git` that cannot be read among them), a registry entry's lstat or realpath in the twin check, unless the plan read its lstat as failed too, null and null again (R-95 (c)), the `modules` check and the listing (the lead's R-208; lead rulings R-124 and R-127); for the work-tree probe, `identity-changed` only for a work tree the probe decides is not the target's path, and `state-changed` for one that fails, runs past its own budget or prints anything but one line (LQ-11; the lead's R-171) |
+| 5. the target's identity and registration (its `commondir` included), a twin of a checked row, the `modules` check and gate 11's listing of its administrative directory, by filesystem reads; then, where row 4c read true, its effective work tree, so that a filesystem check that refuses spares the probe's child (the lead's R-198; writer G's `963fccf`) | filesystem, then one Git child for the work tree | `identity-changed` (the identity or registration decided different; the target's path, its `.git` or its administrative directory found absent, `ENOENT` or `ENOTDIR`, the listing that finds no administrative directory included, writer G's reading of a gap in #19 at `9267303`, lead ruling R-220; or another present entry of the fresh registry listing sharing a checked row's realpath or admin id, `registry_twin()`, R-81 (a)); `contains-submodule` (a `modules` entry); `operation-in-progress` (a marker, LQ-14); `state-changed` for a read that fails other than with `ENOENT` or `ENOTDIR` or runs past its own budget: the target's lstat, its registration reads (a `.git` that cannot be read among them), a registry entry's lstat or realpath in the twin check, unless the plan read its lstat as failed too, null and null again (R-95 (c)), the `modules` check and the listing (the lead's R-208; lead rulings R-124 and R-127); for the work-tree probe, `identity-changed` only for a work tree the probe decides is not the target's path, its output read as one path (R-287), and `state-changed` for one that fails, runs past its own budget or prints output that is empty, a line feed alone or without a closing line feed (LQ-11; the lead's R-171 and R-287) |
 | 6. the combined status probe in the target, which must print nothing | Git child | `state-changed` (a record, or a probe that decides nothing) |
 | 7. the hidden-state probe | Git child | `contains-submodule` (a gitlink); `hidden-local-state` (a flagged entry); `state-changed` (a probe that decides nothing; R-195) |
 | 8. gate 12's check in the target: `logs/HEAD` read again and the reachability probe run again, the negatives the plan's, taken as they were | filesystem, then one Git child | `worktree-only-commits` (an object printed, or a `logs/HEAD` read to its bound or holding a line that cannot be parsed); `state-changed` (a read that fails or times out, or a probe that decides nothing; LQ-13, lead rulings R-124 and R-127) |
@@ -487,12 +552,19 @@ common directory's path makes step 1 read row 3 again, one child per option, as
 design D6 allows for "the rare repeat" (`design.md:298-302`), so that a
 revalidation then runs up to 9 children, 10 with the work-tree probe, and the
 final rescan up to 6, a fill of the `project-clean` delta's bound (its
-`spec.md:825-826`; lead ruling R-82 (c), lane 3's LOW-4). A value null in the
-plan and null again is no difference; a value that cannot be re-read is a
-difference. One rule decides every read of these steps that does not finish
-with a value: a Git child that fails, runs past its own budget while the
-deadline is not the limit, or, as the work-tree probe can, prints anything but
-one line, and a filesystem call that fails other than with `ENOENT` or
+`spec.md:825-826`; lead ruling R-82 (c), lane 3's LOW-4). The plan's
+`probes.estimated` counts those 3 extra children for each revalidation and 3
+for the final rescan (`identity_split_children()`, `revalidation_children()`
+and `rescan_children()`), so that it equals `probes.performed` on such a path,
+as #19's round (h) requires of it (its `spec.md:1050-1056` at `b3228bb`; lane
+5's RI-3, lead ruling R-259; writer G's `c26e44b`, merged as `7164d7f`); it
+fell three short for each target and three for the rescan before. A value
+null in the plan and null again is no difference; a value that cannot be
+re-read is a difference. One rule decides every read of these steps that does
+not finish with a value: a Git child that fails, runs past its own budget while
+the deadline is not the limit, or, as the work-tree probe can, prints output
+that names no path (empty, a line feed alone or without a closing line feed;
+R-287), and a filesystem call that fails other than with `ENOENT` or
 `ENOTDIR`, or runs past its own budget while the deadline is not the limit,
 gives `state-changed`, whatever its step, and a read gives its step's own
 reason only for a value it decided (the lead's R-171, R-195, R-198 and R-208;
@@ -532,12 +604,15 @@ spawned target, they are the final rescan.
 
 `probes_performed` counts the Git children of that target's revalidation,
 the three it shares with the previous target's rescan included: at most 6,
-or 7 where row 4c read true, fewer when it stopped at a difference, and 0
-when it was never revalidated.
+or 7 where row 4c read true, 3 more where a line feed repeats the identity
+probe, fewer when it stopped at a difference, and 0 when it was never
+revalidated.
 The record's `probes.performed` is the plan's count plus each target's
-`probes_performed` plus the final rescan, which is 3 when the rescan after
-the last spawned target counted toward no later target and 0 otherwise
-(`BA:816-830` and `BA:1039-1042` at `da33d92`).
+`probes_performed` plus the final rescan, which is 3 (6 where a line feed
+repeats the identity probe) when the rescan after the last spawned target
+counted toward no later target and 0 otherwise (`BA:816-830` and
+`BA:1039-1042` at `da33d92`); the plan's `probes.estimated` counts those
+extra children (above).
 
 ### Apply result record (FR-044)
 
@@ -862,7 +937,7 @@ check row, its rule unchanged; `update --apply --component shape` or
 | targets per run | 16 |
 | `ignored_entries`, `status_records`, `ignored_samples` | 64, 4,096, 8 |
 | reflog read, manifest read | 64 KiB, 1 MiB |
-| revalidation, final rescan | at most 6 and 3 Git children, 7 for revalidation where row 4c read true (LQ-11, LQ-13); 9 (10) and 6 when a line feed repeats the identity probe (D6) |
+| revalidation, final rescan | at most 6 and 3 Git children, 7 for revalidation where row 4c read true (LQ-11, LQ-13); 9 (10) and 6 when a line feed repeats the identity probe (D6), which `probes.estimated` counts (lane 5's RI-3; #19's round (h)) |
 
 The timing values live in one module-level table, `TIMING`, read at call
 time only, never captured in a default argument or a derived constant
