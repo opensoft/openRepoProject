@@ -16,34 +16,34 @@ M4, M5, L6 and L2 to L5), with no spec edit, in `design.md` and `tasks.md`, C-47
 also in Impact and Open Question 1; round C14's C-48, RC's other five findings,
 its spec edit committed on lane openRepoProject-4's YES of 2026-10-21, and C-49,
 lane openRepoProject-3's eight LOWs, both also in `design.md`, Impact and
-`tasks.md`; and rounds C15 and C16 (C-50 to C-52: W16, RF's M1, W22), in
-`design.md` and `tasks.md`; ratification by Brett Heap pending; nothing here is
-ratified. Governing issue: opensoft/openRepoProject#25, claimed by lane
-openRepoProject-5 (comment 6111242617); refs #6, the record of the project
-maintenance design packet. Proposed on Brett Heap's word "usage reset, resume
-all. read handoff and resume and fan out wide and do as much as possible in
-parallel" (2026-10-11), read by lanes openRepoProject-4 and openRepoProject-5 as
-a go for the candidate list they put to him.
+`tasks.md`; and rounds C15 to C17 (C-50 to C-54: W16, RF's M1, W22, W28, the
+currency check), in `design.md` and `tasks.md`; ratification by Brett Heap
+pending; nothing here is ratified. Governing issue: opensoft/openRepoProject#25,
+claimed by lane openRepoProject-5 (comment 6111242617); refs #6, the record of
+the project maintenance design packet. Proposed on Brett Heap's word "usage
+reset, resume all. read handoff and resume and fan out wide and do as much as
+possible in parallel" (2026-10-11), read by lanes openRepoProject-4 and
+openRepoProject-5 as a go for the candidate list they put to him.
 
 Citations are `file:line`. The packet is cited at `da33d92`, equal to main
 `961c405` for `ideation/`: `DI`, `SY`, `BA` and `OV` are its
 `project-maintenance-` files `project-discovery.md`,
 `synthesis-inspect-and-retire.md`, `batch-cleanup.md` and `overview.md`, and
 `HO` is `next-session-project-maintenance-fix-handoff.md`. Everything else is
-cited at main `961c405`, whose `openspec/`, `ideation/`, `project` and
-`tests/` main still holds unchanged at `e9d6711` (L-15): `APO` is
-`openspec/changes/add-project-overview/` (change 2, ratified and unarchived)
-and `APO/ov` its `specs/project-overview/spec.md`, the text this change's
-deltas are written on; `CAS` is `openspec/changes/add-project-clean-all-safe/`
-(change 1), with `CAS/pc` and `CAS/cmd` its `specs/project-clean/spec.md` and
-`specs/project-command/spec.md`; `PRS` is
-`openspec/specs/project-review-safety/spec.md`; and `project:N` is the
-executable. Change 1's evidence model,
-`Repository inspection requires Git 2.36 and shares one evidence model`
-(CAS/cmd:90), is [E]. The lane's rulings are cited as L-1 to L-9 and C-1 to C-8
-(2026-10-11), L-10 to L-15, B-14, C-9 and C-10 (2026-10-18), L-16, L-17 and
-C-11 to C-14 (2026-10-19), and F-3 and C-15 to C-52 (2026-10-20 and 2026-10-21,
-C-16 to C-22 being the council's verdicts). `PR19/cmd` is draft PR #19's
+cited at main `961c405` (L-15), whose `project`, `tests/` and `openspec/` main
+holds unchanged at `15504f1`, two added changes aside, where PR #16 (`e45155a`)
+revised `ideation/`: `APO` is `openspec/changes/add-project-overview/` (change
+2, ratified and unarchived) and `APO/ov` its `specs/project-overview/spec.md`,
+the text this change's deltas are written on; `CAS` is
+`openspec/changes/add-project-clean-all-safe/` (change 1), with `CAS/pc` and
+`CAS/cmd` its `specs/project-clean/spec.md` and `specs/project-command/spec.md`;
+`PRS` is `openspec/specs/project-review-safety/spec.md`; and `project:N` is the
+executable. Change 1's evidence model, `Repository inspection requires Git 2.36
+and shares one evidence model` (CAS/cmd:90), is [E]. The lane's rulings are
+cited as L-1 to L-9 and C-1 to C-8 (2026-10-11), L-10 to L-15, B-14, C-9 and
+C-10 (2026-10-18), L-16, L-17 and C-11 to C-14 (2026-10-19), and F-3 and C-15 to
+C-54 (2026-10-20 to 2026-10-22, C-16 to C-22 being the council's verdicts).
+`PR19/cmd` is draft PR #19's
 `openspec/changes/add-project-clean-all-safe/specs/project-command/spec.md` at
 `c462d87`.
 
@@ -403,7 +403,7 @@ scenarios (14, 2, 7 and 13), and one MODIFIED requirement in `project-command`,
   `python -m unittest discover -s tests -v` (`.github/workflows/tests.yml:17`)
   on Linux only since PR #32: the `tests` workflow's two jobs, `test (3.10)`
   and `test (3.12)`, on `ubuntu-latest` (`.github/workflows/tests.yml` at
-  main `e9d6711`; L-12).
+  main `15504f1`; L-12).
 - **Speckit handoff**: exactly one feature, created by `/speckit.specify`
   after ratification, after feature 005 lands and after change 2 is
   archived, under the next free number, 006 or later, from a local `main`
@@ -420,8 +420,8 @@ scenarios (14, 2, 7 and 13), and one MODIFIED requirement in `project-command`,
   MODIFIED blocks are change 2's "Overview bounds its work and reports what it
   omitted" (APO/ov:166-315), "Overview prints a versioned JSON envelope"
   (APO/ov:606-707) and "Overview is local and read-only" (APO/ov:709-722) as
-  merged at `961c405`, which main still holds at `e9d6711` with change 2
-  unarchived (2026-10-18), not `openspec/specs/`, which has no
+  merged at `961c405`, which main still holds at `15504f1` with change 2
+  unarchived (2026-10-22), not `openspec/specs/`, which has no
   `project-overview` yet; main is not merged into this branch. `openspec
   validate --strict` passes while change 2 is unarchived; archive is the gate
   for the MODIFIED base. If change 2's text moves before it archives, these
@@ -1788,4 +1788,86 @@ for placeholders found none.
 | Lane openRepoProject-3's W22-1 (four "not made" statements are false at the head: `tasks.md:13`, task 1.3, checked, says that C-51's edits of 2.3 and 2.4 are not made, beside 2.3 and 2.4 (`:22-23`), which now hold them, and the round C15 section says the same in three places that `2eeaec4` did not touch, `proposal.md:1647-1651`, `:1653-1656` (the cmp of `tasks.md` 20-23, true now for 20-21 only) and the C-51 row at `:1703`; the addendum does not say that it supersedes them) | LOW | C-52: applied as W22 words it, in two places. In `tasks.md` 1.3 the clause "and C-51's edits of 2.3 and 2.4 are not made, those lines being lane openRepoProject-4's pinned lines 20-23 of this file" becomes "and C-51's edits of 2.3 and 2.4 are made on lane openRepoProject-4's YES (round C15's addendum), 2.3's follow-on for amendment A1 still waiting", the rest of the line kept. The addendum gains its last sentence, that it supersedes the three statements above that those edits are not made and the cmp of `tasks.md` 20-23, which now holds for 20-21. The three statements are left as they are: they record the state at `86324ff`. Not edited: 1.3's round C14 clause "`design.md` D7 and 2.3 waiting for amendment A1's alignment", which W22 notes beside the committed 2.3 but gives no fix for and C-52 does not take up; it records that round, and the new words say that 2.3's follow-on for A1 still waits | `tasks.md` 1.3; the round C15 section's addendum |
 | W22-2 (D3 step 3's first sentence, `design.md:416-418`, lists "an explicit port" among the cases where `remote_repository_identity()` "yields no identity", while the sentences after it say that before a one-segment path the function gives one, `22/widget`; the row at `:1699` declares that step 3 "keeps its sentence and gains one clause", so this is wording) | LOW | C-52: applied as W22 words it: the first sentence ends at "a user other than `git`", and the next begins "An explicit port is also refused here, before that function runs and whatever identity it would give", the rest of its words kept. One word beyond W22's: "or" for the comma before "a user other than `git`", since removing "or an explicit port" leaves two cases and not three. The paragraph keeps its ten lines, the new breaks falling in its second to fourth lines, and `design.md` its 1512. The row at `:1699` stays as round C15's record | `design.md` D3 |
 | W22-3 (observation: the addendum says that lane openRepoProject-4 "said YES" with no time or log line, where the round C14 section cites lane openRepoProject-4's NOTED for C-48's YES; lane openRepoProject-4's register log has no NOTED for this YES through 16:04:29Z) | observation | C-52: taken: the addendum cites the YES by its message time, 2026-10-21T15:44:09Z, and by the lead's NOTED line in `lanes/log/openRepoProject-5.md`, which records it beside lane openRepoProject-4's YES of 16:13:14Z on #27's task 3.2 | the round C15 section's addendum |
-| Codex's review of `2eeaec4` (15:55:35Z) | no finding | "Found no major issues", as the lead's record in `rulings-2026-10-20.md` has it, with CI's six test jobs and SonarCloud passing; nothing to apply | none |
+| Codex's review of `2eeaec4` (15:55:35Z) | no finding | "Didn't find any major issues", as Codex's receipt reads, for `2eeaec489c` (round C17, W28-1, corrects the quotation), with CI's six test jobs and SonarCloud passing; nothing to apply | none |
+
+### Re-read and Codex Findings (round C17)
+
+Round C17 (2026-10-22, on team-01l) applies C-53 and C-54 on the lead's brief
+for the round (`rulings-2026-10-20.md`: C-53 under the bullet "W28 on #29's
+round C16", and C-54 in the lead's wave of 2026-10-22, 12:0xZ). C-53 is the
+lead's ruling on lane openRepoProject-3's confirm read of round C16,
+`2eeaec4..6b5bf8f` (W28, `confirm-c16-findings.md`: no HIGH, no MEDIUM, two LOWs
+and no undeclared departure, W28-1 and W28-2), accepted for this round, with no
+spec edit. W28 found C-52 applied (W22-1 and W22-2 as worded, with one declared
+word beyond W22's, and W22-3), lane openRepoProject-4's pinned ranges
+`cmp`-identical to `2eeaec4`, the spec's sha256 unchanged, and validation at 8
+of 8 with 36 and 10 scenarios. C-54 adds a currency check: every place in the
+proposal, design and tasks that states the current head of PR #19
+(`origin/change/amend-clean-all-safe-push-pins`, now `f0bf538`) or of main (now
+`15504f1`) is brought to it, and history, text that names a sha as the state at
+an earlier round, is left as it is. This change ratifies its PR #19 blocks on
+`c462d87`, so no block is re-based in this round. Codex's review of `6b5bf8f`
+(2026-10-21T16:40:00Z) found no major issues (the last row).
+
+The round edits `design.md` (`120b98c`: one sha in the Citations paragraph, its
+1512 lines kept) and, in its last commit, this file (Status, the Citations
+paragraph with the citation key, Impact's CI bullet, the first bullet of
+Dependencies and Sequencing, the round C16 section's last row and this section)
+and `tasks.md` (1.1, 1.3 and 1.5, in place, 45 lines still; 1.3 for W28-2's
+clause alone, as the brief names it, so that 1.3 records round C16 and not yet
+this round). No spec file changed: `git diff 6b5bf8f -- '*/specs/*'` is empty,
+`specs/project-overview/spec.md` is still the file lane openRepoProject-4
+agreed, sha256
+`8ef40dcabe1974d52a059ef6a513f883aa48af692759e74dea3f772a8d3145bc`, with its 36
+scenarios, `specs/project-command/spec.md` is unchanged with its 10, and the
+count stays 46.
+
+Lines 1252 to 1417 of this file, rounds C6 to C12, are unchanged (`cmp` against
+`6b5bf8f`), as are lines 334-345, 367-370 and 430-438 and `tasks.md` lines
+20-23, lane openRepoProject-4's pinned ranges. No range of this file moved:
+lines 1 to 1790 keep their numbers, the round C16 section's last row being
+edited in place, and this section follows it. Every paragraph of this file
+before line 1252 keeps its line count, the four edits there (Status at 5-26, the
+Citations paragraph at 28-48 with the citation key, Impact's CI bullet at
+396-406 and the first bullet of Dependencies and Sequencing at 419-429) each
+replacing as many lines as they had. To hold the counts, Status says "rounds C15
+to C17" for "rounds C15 and C16", and the Citations paragraph is re-wrapped from
+its line 33 on, its citation key reading "C-15 to C-54 (2026-10-20 to
+2026-10-22".
+
+The writer checked these on 2026-10-22, in a scratch directory outside this
+tree. The heads, read with `git ls-remote origin` before each of the round's
+commits, were `f0bf538` for PR #19's branch and `15504f1` for main, as the brief
+names them, with no move. At main, `git diff 961c405 15504f1` is empty for
+`project`, `tests/`, `openspec/changes/add-project-overview`,
+`openspec/changes/add-project-clean-all-safe` and `openspec/specs`; for
+`openspec/` as a whole it adds the 12 files of two changes,
+`refuse-non-directory-parent-early` (#21) and `support-later-python-versions`
+(#28); it modifies the five packet files under `ideation/brainstorm/` (PR #16,
+`e45155a`), while `da33d92`, `961c405` and `e9d6711` are equal for `ideation/`;
+`.github/workflows/tests.yml` is the same at `e9d6711` and `15504f1`, with `test
+(3.10)` and `test (3.12)` on `ubuntu-latest`; and `openspec/specs/` holds no
+`project-overview`, change 2 being unarchived. PR #19's branch is 24 commits
+after `c462d87`, and Q9 B's scrub of Git children in its `design.md` is the same
+nine lines at `f0bf538` (358-366) as at `423a532` (331-339). The carry check of
+every MODIFIED block against its source passes, as in round C16, the spec file
+being byte for byte the one it checked: "Overview is local and read-only" 1 of 1
+scenarios byte for byte, +33/-0; "Overview bounds its work and reports what it
+omitted" 13 of 13, +26/-0; "Overview prints a versioned JSON envelope" 6 of 6,
++12/-0, against change 2 at `961c405`; and [E] 9 of 9, +11/-0, against PR #19 at
+`c462d87`. Validation, run on the tree of the design commit, before the last
+commit and again at its head (a commit cannot hold its own sha; the head is in
+the round's report): `/usr/bin/openspec validate
+add-project-overview-remote-merge-status --strict` reports the change valid with
+its two INFO lines, `/usr/bin/openspec validate --all --strict` passes 8 of 8,
+and `/usr/bin/openspec status --change add-project-overview-remote-merge-status
+--json` shows every artifact done. The added text holds no non-ASCII character,
+bidi control, host path or literal backslash-u, and a grep of the three files
+for placeholders found none.
+
+| Finding | Severity | Ruling | Section edited |
+| --- | --- | --- | --- |
+| Lane openRepoProject-3's W28-1 (the round C16 row of Codex's review, `proposal.md:1791`, puts quotation marks round "Found no major issues", words that are neither Codex's, whose receipt reads "Didn't find any major issues. Chef's kiss.", nor the lead's, whose record in `rulings-2026-10-20.md` has no quotation marks) | LOW | C-53: applied as W28 words it, in the first of its two forms: the row quotes Codex, "Didn't find any major issues", as the round C15 row at `:1706` does, names the commit that Codex's receipt reviewed, `2eeaec489c`, and says that round C17 corrects the quotation. The round C16 introduction's paraphrase, "found no major issues", which W28 finds fair, is left as it is | the round C16 section (its last row) |
+| W28-2 (task 1.3 has W22-1's clause but no round C16 clause and no "Re-read and Codex Findings (round C16)" in its verified-by list, which ends at round C15, while 1.1 lists C-52 and 1.5 names C16; the round C16 section declares it) | LOW | C-53: applied as W28 words it: `tasks.md` 1.3 gains, after its round C15 clause, "in round C16, lane openRepoProject-3's confirm read of round C15 (W22: two LOWs and an observation, C-52) is applied in `design.md` (D3's step 3 ...), in `tasks.md` (the round C15 clause above ...) and in `proposal.md` (the round C15 addendum ...), with no spec edit, the sha256 unchanged", and its verified-by list gains "Re-read and Codex Findings (round C16)". The task is still one line, and `tasks.md` 45 lines. 1.3 does not yet record this round: the brief names 1.3 for W28-2's clause alone, as round C16's named it for W22-1's | `tasks.md` 1.3 |
+| C-54, the lead's currency check: every place in the proposal, design and tasks that states the current head of PR #19 (now `f0bf538`) or of main (now `15504f1`) is brought to it, and history is left as it is | ruling | C-54: applied in four places, with every other place that names a sha of main or of PR #19 read and left. Edited: (1) the Citations paragraph, `:28-48`, whose "main still holds unchanged at `e9d6711`" for `openspec/`, `ideation/`, `project` and `tests/` is false at `15504f1` for two of the four, `openspec/` having gained two changes and `ideation/` five revised packet files, and which now says that main `15504f1` holds `project`, `tests/` and `openspec/` unchanged from `961c405`, two added changes aside, where PR #16 (`e45155a`) revised `ideation/`, with "(L-15)", the ruling that sets the base, after "main `961c405`"; (2) `design.md:113-114`, "which main `e9d6711` holds unchanged for them" (APO, CAS, PRS and `project:N`), now `15504f1`, which the diffs above bear out; (3) Impact's CI bullet, `:405-406`, "`.github/workflows/tests.yml` at main `e9d6711`", now `15504f1`, the file being the same at both; (4) the first bullet of Dependencies and Sequencing, `:423-424`, "which main still holds at `e9d6711` with change 2 unarchived (2026-10-18)", now `15504f1` and 2026-10-22, change 2's directory being unchanged and `openspec/specs/` holding no `project-overview`. Read and left: `:28-30`, the packet at `da33d92`, equal to main `961c405` for `ideation/`, which stays true; L-15's entry in the Decisions list (`:654`), the ruling of 2026-10-18 as worded when main was `e9d6711`; the round C13 row of RC's M4 (`:1493`, "main `e9d6711`") and that round's runs at `961c405` (`:1475`); `design.md:231-234`, the pull requests #31 and #17 squashed as `63dd4ad` and `f401e06`, live checks of 2026-10-19; the register's shas in the round sections, which name where a line was read; every `c462d87`, the base on which this change ratifies its PR #19 blocks (the citation key, Dependencies and Sequencing, `design.md`'s Context and Migration Plan, tasks 1.4, 1.6 and 2.4, and the round sections), which the brief keeps and which lane openRepoProject-4's pins at `:430-438` hold byte for byte; and every `423a532` (`design.md:107` and `:582`, and the round C15 section at `:1626` and `:1702`), a citation of feature 005's Q9 B at the sha where it was read (C-50, W16-4), whose scrub of Git children reads the same on PR #19's branch at `f0bf538`. `tasks.md` names no sha of main's or of PR #19's head: 3.3 reads `origin/main` without one. Not checked: the word "draft" for PR #19, which is no head claim, and for which no GitHub read was made. PR #19 is 24 commits past `c462d87`, and its block of [E] runs to 253 lines there, from 167; this change's block stays on `c462d87`, its ratification base (1.6), and a re-base waits for task 2.4 and its second diff (C-51) | Citations paragraph, Impact, Dependencies and Sequencing; `design.md` Citations paragraph |
+| Codex's review of `6b5bf8f` (2026-10-21T16:40:00Z) | no finding | "Didn't find any major issues", as Codex's receipt reads, for `6b5bf8fe51`; the lead's late read (16:42Z) found the pull request MERGEABLE with its six test jobs passing, and SonarCloud's quality gate passed at 16:41:18Z; nothing to apply | none |
