@@ -82,7 +82,14 @@ and its observations) to D4 (the re-proof's failed read and failed child, and
 the manifest sentence), D5 (the sub-record's reasons), D7 (the re-proof's row,
 the joint fit at the cache change's own 3.7 s, and the stage's re-read gate at
 45.02 s), D8 (the `Kept` line) and Risks (proposal, "Re-read and Codex
-Findings (round A13)").
+Findings (round A13)"). Round A14 maps A-45 (Codex's P2 on `1bf217c`: a holder
+that is the main worktree, which Git refuses to remove) and A-46 (lane
+openRepoProject-3's confirm read of round A13, `a11bde8..1bf217c`, its LOW-1,
+LOW-2 and LOW-4, with LOW-3 kept) to the Context table (a row for
+`git worktree remove` of a main worktree), D8 (the `branch-in-use`,
+`branch-shared` and `git-refused` next steps) and Risks; LOW-1 edits the
+review-safety delta, LOW-2 the spec's step 1, which D4 already states, and
+LOW-4 the proposal (proposal, "Re-read and Codex Findings (round A14)").
 
 Citations follow `proposal.md`: packet files at `da33d92`, `CAS` for change 1,
 `APO` for change 2, `project:N` and `tests:N` at `961c405`, all unchanged at
@@ -156,6 +163,7 @@ bare remote, `GIT_CONFIG_NOSYSTEM=1` and an empty global configuration:
 | a rebase, then a bisect, of `b` in another worktree (round A7, ruling A-32, RA's LOW-5) | an interactive rebase whose instruction list begins with `break` stops at once, `worktree list --porcelain` lists that worktree as `detached` with no `branch` line, and `b` stays at its SHA; `branch -d -- b` refuses, "cannot delete branch 'b' used by worktree at", exit 1; after `rebase --abort` the worktree lists `branch refs/heads/b` and Git still refuses; a bisect of `b` started there behaves alike, detached while it runs and holding `b` after `bisect reset`; once that worktree is removed, `branch -d -- b` deletes it, exit 0 |
 | `git -C '<root>' rev-parse --verify refs/heads/<b>`, run from `/` (round A7, ruling A-31) | exit 0 while the branch exists, `refs/heads/-f` and `refs/heads/HEAD` included; after `branch -d`, "fatal: Needed a single revision", exit 128; the restore line then recreates the branch, exit 0 |
 | a rebase of `b` in another worktree, `b` published and its upstream's remote-tracking ref deleted, the main worktree on the merge target (round A8; ruling A-35, lane openRepoProject-3's F4 and its `exp2`, re-run) | `branch -d -- b` refuses, "cannot delete branch 'b' used by worktree at", exit 1, as it does with the ref present and with no upstream configured; `git checkout <merge target>` in the main worktree, which already holds it, exits 0, and `branch -d b` still refuses, exit 1; after `rebase --abort` and `worktree remove` of that worktree, the same checkout and `branch -d b` delete the branch, exit 0; with no rebase and the main worktree moved to a branch that lacks `b`, Git refuses "the branch 'b' is not fully merged", exit 1, and the checkout of the merge target and `branch -d b` delete it, exit 0 |
+| `git worktree remove` given the main worktree, and the main worktree as the holder of a branch (round A14; ruling A-45, Codex's P2 on `1bf217c`), re-run on Git 2.43.0 and on the 2.36.6 floor | `git worktree remove <main>` and `git worktree remove --force <main>`, run from the main worktree or from a linked one, print "'<main>' is a main working tree", exit 128, and the main worktree stays; with the main worktree on a merged branch `b`, `branch -d b` run in it refuses, "cannot delete branch 'b' used by worktree at" (2.36.6: "Cannot delete branch 'b' checked out at"), exit 1, and so it does with a rebase of `b` stopped in it, which lists the main worktree `detached`, with a bisect of `b` in it, and again once `rebase --abort` or `bisect reset` leaves it on `b`; after `git checkout <other branch>`, or after `git checkout --detach`, `branch -d b` deletes it, exit 0; `git checkout <branch>` in the main worktree for a branch that a linked worktree holds is refused, "'topic' is already used by worktree at" (2.36.6: "already checked out at"), exit 128, so that a step that names a branch such as the merge target names a detach too, as `head-not-merge-target`'s linked case does |
 
 The council's adversary engineer added, on Git 2.43.0 (council finding AE-1):
 a commit reset or amended away on a branch stays reachable through that
@@ -1225,11 +1233,19 @@ as amended, Codex's P2 on `9ff8202`).
     its tip TARGET_SHA detached in the main worktree, then: RETRY` (lane
     openRepoProject-3's re-read, LOW-10; Context);
   - `Kept BRANCH (branch-in-use); next: BRANCH is checked out at PATH2; remove
-    that worktree first`;
+    that worktree first`, or, when PATH2 is the main worktree, which Git
+    refuses to remove (`worktree remove` of it exits 128, "is a main working
+    tree"), `next: BRANCH is checked out at PATH2, the main worktree; switch it
+    off BRANCH, by checking out another branch there, such as MERGE_TARGET, or
+    by detaching it, then: RETRY` (ruling A-45, Codex's P2 on `1bf217c`;
+    Context); the line names a detach too because a checkout of MERGE_TARGET
+    is refused while a linked worktree holds it;
   - `Kept BRANCH (branch-shared); next: BRANCH is checked out at PATH2; remove
     that worktree first`, once, for a shared branch whose last holder PATH2
-    the run did not remove (its re-read, LOW-11); when the run removed the
-    last holder, the branch's line is that holder's;
+    the run did not remove (its re-read, LOW-11), the first form alone: PATH2
+    is a selected row, and change 1's first gate, `main-worktree`
+    (`CAS/pc:576-578`), never selects the main worktree (ruling A-45); when
+    the run removed the last holder, the branch's line is that holder's;
   - `Kept BRANCH (branch-changed); now at SHA2; inspect it before retrying:
     RETRY`;
   - `Kept BRANCH (reflog-unmerged); its reflog is not proven merged into
@@ -1244,21 +1260,29 @@ as amended, Codex's P2 on `9ff8202`).
     reflog` subcommands, and `git reflog show HEAD` reads the main worktree's
     own reflog (Context);
   - `Kept BRANCH (git-refused); if a rebase or bisect in another worktree
-    holds BRANCH, wait for it to end and remove that worktree; then retry:
-    RETRY`, for `git-refused` with the upstream ref present (ruling A-32,
-    RA's LOW-5): the branch child's output is captured, so the person never
-    sees Git's "used by worktree"; a worktree mid-rebase or mid-bisect is
-    listed detached and Git refuses, and once the rebase or bisect ends that
-    worktree holds the branch again and Git still refuses until it is removed
-    (Context), which is why the hint names both steps; with the upstream ref
-    absent, the same clause comes before that line's `next:` step above,
-    `Kept BRANCH (git-refused); if a rebase or bisect in another worktree
-    holds BRANCH, wait for it to end and remove that worktree; next: check out
-    MERGE_TARGET in the main worktree, then: RETRY`, because Git refuses a
-    branch so held whether its upstream's ref is present or absent, or no
-    upstream is configured, and the checkout alone, of a merge target the main
-    worktree already holds, changes nothing (ruling A-35, lane
-    openRepoProject-3's F4; Context);
+    holds BRANCH, wait for it to end and remove that worktree, or, for the
+    main worktree, which Git refuses to remove, switch it off BRANCH, by
+    checking out another branch there, such as MERGE_TARGET, or by detaching
+    it; then retry: RETRY`, for `git-refused` with the upstream ref present
+    (ruling A-32, RA's LOW-5): the branch child's output is captured, so the
+    person never sees Git's "used by worktree"; a worktree mid-rebase or
+    mid-bisect is listed detached and Git refuses, and once the rebase or
+    bisect ends that worktree holds the branch again and Git still refuses
+    until it is removed or, for the main worktree, switched off the branch
+    (Context), which is why the hint names both steps, the wait and the
+    removal or switch; the registry listing shows such a worktree detached,
+    with no `branch` line, so that the line cannot say whether its holder is
+    linked or the main worktree and carries both forms (ruling A-45, Codex's
+    P2 on `1bf217c`); with the upstream ref absent, the same clause comes
+    before that line's `next:` step above, `Kept BRANCH (git-refused); if a
+    rebase or bisect in another worktree holds BRANCH, wait for it to end and
+    remove that worktree, or, for the main worktree, which Git refuses to
+    remove, switch it off BRANCH, by checking out another branch there, such as
+    MERGE_TARGET, or by detaching it; next: check out MERGE_TARGET in the main
+    worktree, then: RETRY`, because Git refuses a branch so held whether its
+    upstream's ref is present or absent, or no upstream is configured, and the
+    checkout alone, of a merge target the main worktree already holds, changes
+    nothing (ruling A-35, lane openRepoProject-3's F4; Context);
   - otherwise `Kept BRANCH (REASON); retry: RETRY`.
 - Stop block: change 1's, with a branch stage's stop reading `Stopped at PATH
   (branch BRANCH: REASON). Removed K of N. Not attempted: P1, P2. Next: project
@@ -1466,14 +1490,16 @@ proposal puts it before Brett Heap with L-4's recommendation.
   foresees never stops it (D6).
 - [A holder appearing only after the plan, or a branch whose later holder the
   run did not reach] -> `retained` with `branch-in-use` and a stop, or a line
-  naming the holder; once that worktree is removed, `delete-branch` retires
-  the branch.
+  naming the holder; once that worktree is removed, or, for the main worktree,
+  which Git refuses to remove, switched off the branch, `delete-branch`
+  retires the branch (ruling A-45).
 - [A rebase or bisect of the branch in progress in another worktree, which the
   registry listing shows detached] -> A residual (ruling A-32, RA's LOW-5): no
   plan keep or check sees it, Git's own checked-out refusal does, so the
   branch is `retained` with `git-refused` and the run stops with exit 2; the
   `git-refused` line says to wait for the rebase or bisect to end and remove
-  that worktree before the retry (D8; Context). No commit is at risk.
+  that worktree, or, for the main worktree, to switch it off the branch,
+  before the retry (D8; Context; ruling A-45). No commit is at risk.
 - [A local branch whose configured upstream is the retired branch] -> Its
   upstream then reads gone, an unmerged one reads `remote-gone` under change
   1's ladder, and a later selected row on it is refused with `state-changed`,
