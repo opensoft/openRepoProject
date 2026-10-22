@@ -1756,6 +1756,33 @@ class ProjectTests(unittest.TestCase):
             self.assertEqual(result.stderr, REFUSED + head_refusal(line) + "\n")
             self.assert_parent_file_unchanged(kept, before)
 
+    def test_pty_single_answer_with_a_blocked_parent_is_refused_at_once(self):
+        # refuse-non-directory-parent-early design D1, D2 and D3 item 4 (research R5, R-4.1 to R-4.4): the
+        # answer 2 with a parent blocked by a non-directory ends at the head refusal, with and without
+        # --dry-run, before the generator list would be printed: with a second available generator the
+        # list is printed and asked for today, so the run shows that nothing is asked after the answer.
+        self.config["benches"]["testBench"]["project_scripts"].append(
+            {"name": "second", "script": "scripts/new-test.sh"})
+        self.save_config()
+        env = self.shape_env(ci=None)
+        givens = self.blocked_parents()
+        for label in ("the file", "below the file"):
+            extra, change, line, kept = givens[label]
+            for dry_run in (False, True):
+                with self.subTest(given=label, dry_run=dry_run):
+                    before = sorted(self.base.rglob("*"))
+                    result = self.run_pty("new", "MyApp", *extra, *(("--dry-run",) if dry_run else ()), env=env,
+                                          steps=[(QUESTION_PROMPT, "2")])
+                    self.assert_status(result, 2)
+                    self.assert_question(result.stdout, "MyApp", line)
+                    self.assert_line_ends(result.stderr, REFUSED + head_refusal(line))
+                    combined = result.stdout + result.stderr
+                    self.assertEqual(combined.count(REFUSED), 1, combined)
+                    for text in (GENERATOR_LIST_FIRST, GENERATOR_PROMPT, "Create:", CONFIRM_PROMPT):
+                        self.assertNotIn(text, combined)
+                    self.assertIsNone(self.shape_record())
+                    self.assert_parent_file_unchanged(kept, before)
+
     def test_pty_triad_answer_below_a_file_leaves_the_file_intact(self):
         # refuse-non-directory-parent-early design D3 items 5 and 6 (clarification Q2): the two case (b)
         # rows of known_obstacle_cases(), run as test_pty_triad_answer_with_an_obstacle_refuses runs
