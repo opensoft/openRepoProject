@@ -44,11 +44,16 @@ of 2026-10-22 on LQ-20, choosing its step (i), with that step's measurement, and
 lane openRepoProject-3's W42 read of round (e), under the lead's R-236, Context,
 D7, D14, D22, Risks and Open Questions; and its W52 read of next steps that Git
 refuses, under the lead's R-248, Context, D4, D18, Risks and the Migration Plan,
-its F-1, the ceiling's recovery text, left for Brett Heap; and the shortening of
-F-7's clause, under the lead's R-252, Context, D18 and the Migration Plan; and
-lane openRepoProject-3's W59 read of rounds (f) and (g), under the lead's R-253,
-Context, D4, D7, D14, D18, Risks and Open Questions. Brett Heap's ruling of
-2026-10-09 on open question 1, that a local ancestry proof outranks
+its F-1, the ceiling's recovery text, and, by W59's G-1, its F-2, a locked row's
+recovery text, left for Brett Heap, who ruled both on 2026-10-22 (round (h));
+and the shortening of F-7's clause, under the lead's R-252, Context, D18 and the
+Migration Plan; and lane openRepoProject-3's W59 read of rounds (f) and (g),
+under the lead's R-253, Context, D4, D7, D14, D18, Risks and Open Questions; and
+round (h), under the lead's R-258, R-259, R-260 and R-263, with writer E's
+report, lane openRepoProject-5's RI-3 and O-1, lane openRepoProject-3's W64 read
+of rounds (g2) and (g3), and Brett Heap's ruling of 2026-10-22 on F-2, F-1 and
+O-1, Context, D4, D7, D9, D10, D14, D18, Risks and Open Questions. Brett Heap's
+ruling of 2026-10-09 on open question 1, that a local ancestry proof outranks
 `remote-gone` for worktree rows, is in `proposal.md` Decisions and edited
 Context, D6, D7, D20, Risks, the Migration Plan and Open Questions here.
 
@@ -257,8 +262,10 @@ and the human report prints it on its own line under the `dirty` advice with the
 recovery text, which for a locked worktree says to unlock it first (D18; lane
 openRepoProject-3's W52 F-2, R-248). For a locked row that text replaces the
 ratified recovery text of `0050f3e`, which the delta keeps for every other row,
-so it waits on Brett Heap's word together with W52's F-1, the ceiling's recovery
-text (lane openRepoProject-3's W59 G-1, R-253).
+by Brett Heap's ruling of 2026-10-22, "F-2: yes" (lane openRepoProject-3's W59
+G-1, R-253; R-263). A report row's `.git` file and registry entry are present,
+so its note keeps `git worktree remove --force`; the ceiling's recovery text for
+a target whose `.git` file or entry is gone is D9's.
 
 When Git had already deleted `<path>/.git` (readdir order decides), the
 registration check fails, no status probe runs, and the row is excluded as
@@ -510,7 +517,8 @@ out, counts as a mismatch": a read that fails decides no identity difference, so
 its mismatch is the packet's "any other" difference, `state-changed`; this
 reading went to Brett Heap to confirm, as O-2, on 2026-10-22. Row 4c itself is
 not re-read, which keeps revalidation at six Git children in a repository
-without the extension: an extension turned on after the plan, with a
+without the extension (nine where the path of its root or common directory holds
+a line feed, D14): an extension turned on after the plan, with a
 `core.worktree` for a target, is a concurrent writer's change outside the
 contract (Risks). Ancestry needs no child: it is a function of the branch head
 and the merge-target SHA, both compared. The reflog of D10 is not re-read: a
@@ -601,7 +609,16 @@ The ceiling is 300 s from the spawn, on the monotonic clock: `terminate_group()`
 stuck in uninterruptible sleep on a hung mount. For such a child, or one whose
 exit could not be observed, the rescan decides: `removed` when its registry
 entry and path are gone, otherwise `unknown` with the note `partially-removed`;
-its reason is `removal-ceiling` either way, and the run exits 1 (D19). 300 s is
+its reason is `removal-ceiling` either way, and the run exits 1 (D19). The
+note's recovery text names `git worktree remove --force` only where the rescan
+finds both the target's `.git` file and its registry entry present, and
+otherwise `git worktree prune` and a deletion of the path by hand, because Git
+deletes the work tree first and the administrative directory after, so that a
+removal cut short can leave the path and the entry without the `.git` file, or
+the path alone, and Git refuses the forced removal of either (D18; W52 F-1;
+Brett Heap's ruling of 2026-10-22, "F-1: prune-then-delete", R-263). The rescan
+reads the `.git` file by one `lstat`, a filesystem call under the reserve's
+budget, so it still spawns at most three Git children. 300 s is
 about two hundred times fixture `k`'s 1.27 s, ample even for drvfs at ten times
 slower; task 2.1 measured it, the 20,000-file removal taking 0.66 s warm and
 0.72 s cold at low load and 14.1 s at worst under saturation, 21 times under
@@ -630,9 +647,14 @@ not excluded by an earlier gate, in `mode: "single"` as well as the others (M4):
    holds: `ENOENT` or `ENOTDIR`, a file of 0 bytes, the 64 KiB bound reached, or
    surviving entries that cannot decide give `reflog-unavailable` for that row;
    any other OS error on the read is that row's `inspection-error` with
-   `os-error`, like any failed row probe; and a read not finished inside the
-   filesystem budget leaves the row unprobed and the plan incomplete with
-   `inspection-incomplete`, as for every other filesystem read.
+   `os-error`, like any failed row probe; a read not finished inside the
+   filesystem budget, the deadline not being the limit, leaves the row unprobed
+   and the plan incomplete with `inspection-incomplete`; and a read that the
+   deadline cuts records `deadline-exceeded` and leaves the row unprobed and the
+   plan incomplete with `deadline-exceeded`, whose remedy names no repair, as
+   for every other filesystem read and as D21's `logs/HEAD` read has it (lane
+   openRepoProject-5's O-1; Brett Heap's ruling of 2026-10-22, "O-1:
+   deadline-exceeded", R-263, which amends `0050f3e` pcl:606-608).
 2. Each line is `<old> <new> <identity> <time> <zone>`, then a tab and the
    message when there is one; an `update-ref` without `-m` writes neither
    (Context). The anchor is the last surviving entry whose old object is all
@@ -951,7 +973,18 @@ about 64.5 there; at that P the 14th would spawn at 43.8 s and the 15th at
 P as 168 in every repository, which left the per-row probe out (lane
 openRepoProject-5's A9, R-178). Writer G's run also found the build's
 `probes.estimated` short where row 4c reads true, 37 children performed against
-34 estimated, which is the build's to correct.
+34 estimated, which is the build's to correct. Where the path of the
+repository's root or of its common directory holds a line feed, row 3 is read
+one option per child (D6), four children in place of one, wherever it runs, so a
+revalidation spawns nine children, ten where row 4c reads true, and the final
+rescan six: writer E measured nine, ten and six on Git 2.43.0 and 2.36.6 for a
+root holding one, and round (h) the same for a separate git directory holding
+one under a plain root (lane openRepoProject-5's RI-3, R-259). The delta states
+that exception beside the six, seven and three, and has `probes.estimated` count
+the extra children, three per target and three for the final rescan, which
+feature 004 at `d764c26` leaves out. On the measured basis below, the 51 extra
+children before a 16th spawn cost about 1.0 s at the identity probe's 19.7 ms,
+so the case still fits.
 
 On the measured basis, D5's, each child costs task 2.1's warm median times 1.5,
 the larger median of its runs 2 and 3, as its record posted on PR #11 gives them
@@ -1208,11 +1241,25 @@ cherry-pick, revert, rebase or bisect is, or may be, in progress there; finish
 or abort it (a squash merge that holds an autostash ends with git commit,
 --allow-empty where nothing is staged, or with git merge --quit, which keeps the
 edit in the stash list), or, where --abort fails for a marker with nothing in
-progress, its --quit, then run again" (LQ-14, R-126, R-146, R-171), the `--quit`
-clause for a marker left with nothing in progress, such as an empty `sequencer`
-or `rebase-merge`, where `--abort` fails and only `--quit` clears it (W52 F-9,
-R-248), the clause naming the failed `--abort`, since for an empty
-`rebase-merge` `git status` still reports a rebase in progress (W59 G-5, R-253);
+progress, its --quit, or, where Git leaves such a marker in place, delete it by
+hand from that worktree's git directory, then run again" (LQ-14, R-126, R-146,
+R-171), the `--quit` clause for a marker left with nothing in progress, such as
+an empty `sequencer` or `rebase-merge` directory, where `--abort` fails and only
+`--quit` clears it (W52 F-9, R-248), the clause naming the failed `--abort`,
+since for an empty `rebase-merge` `git status` still reports a rebase in
+progress (W59 G-5, R-253), and the by-hand clause for a leftover marker that no
+Git command clears, on Git 2.43.0 and 2.36.6 alike: an empty `CHERRY_PICK_HEAD`,
+`REVERT_HEAD` or `MERGE_AUTOSTASH`, file or directory, whose `--abort` exits 128
+and whose `--quit` exits 0 and leaves it; a lone `BISECT_LOG` or an empty
+`BISECT_START`, which `git bisect reset` leaves, there being no `--quit`, and on
+2.36.6 a `BISECT_START` naming a branch that another worktree has checked out,
+whose reset exits 1; an empty `MERGE_HEAD` directory, which `git merge --abort`
+and `--quit` leave; a `NOTES_MERGE_REF` or `NOTES_MERGE_PARTIAL` file, which
+`git notes merge --abort` leaves; and a `rebase-apply`, `rebase-merge` or
+`sequencer` that is an empty file, which every `--abort` and `--quit` fails or
+leaves (writer E's table, R-259; round (h) re-ran it on both builds, and deleted
+eight such markers by hand from the worktree's `git rev-parse --git-dir`, after
+which `--all-safe` selected all eight rows);
 `worktree-only-commits` "a commit is, or may be, held only by this worktree's
 HEAD reflog or refs/worktree; keep it on a branch or tag, or review, then git
 worktree remove yourself" (LQ-13); `registration-mismatch` "review, then git
@@ -1229,14 +1276,22 @@ finish; a started removal is never interrupted (at most 300 s).` Success:
 `Removed N; branches kept: B1, B2.` A stop: `Stopped at PATH (REASON). Removed K
 of N. Not attempted: P1, P2. Next: project clean ROOT --all-safe`, then the
 retained branches and the residual-window line. The partial-removal note, under
-the `dirty` advice or on a `partially-removed` target: `Probable partial
-removal: inspect, then git worktree remove --force PATH by hand.` For a locked
-worktree, which `git worktree remove --force` refuses, the note reads `Probable
-partial removal: inspect, unlock it, then git worktree remove --force PATH by
-hand.` (W52 F-2, R-248). For a locked row that note replaces the ratified
-recovery text of `0050f3e`, which the delta keeps for every other row, so it
-waits on Brett Heap's word together with W52's F-1, the ceiling's recovery text
-(W59 G-1, R-253).
+the `dirty` advice, or on a `partially-removed` target whose `.git` file and
+registry entry the rescan finds present: `Probable partial removal: inspect,
+then git worktree remove --force PATH by hand.` On a `partially-removed` target
+where the rescan finds either gone, the note reads `Probable partial removal:
+inspect, then git worktree prune and delete PATH by hand.`, since `git worktree
+remove --force` then exits 128 on Git 2.43.0 and 2.36.6, with `validation
+failed, cannot remove working tree: 'PATH/.git' does not exist` once the `.git`
+file is gone and `'PATH' is not a working tree` once the entry is, while `git
+worktree prune` and a deletion by hand succeed (W52 F-1; Brett Heap's ruling of
+2026-10-22, "F-1: prune-then-delete", R-263). For a locked worktree, which `git
+worktree remove --force` refuses, the note reads `Probable partial removal:
+inspect, unlock it, then git worktree remove --force PATH by hand.` (W52 F-2,
+R-248). For a locked row that note replaces the ratified recovery text of
+`0050f3e`, which the delta keeps for every other row, by Brett Heap's ruling of
+2026-10-22, "F-2: yes" (W59 G-1, R-253; R-263); a report row needs no other
+text, since its `.git` file and registry entry are present (D4).
 
 Refusal messages keep the baseline wording where a test reads it:
 `target-excluded` for the current worktree, `Cannot remove the current
@@ -1250,12 +1305,31 @@ tree"): `Branch BRANCH is checked out in the main worktree; detach HEAD there,
 or check out NAME there, then retry.`, NAME the merge target, a detach being
 named first because Git refuses a checkout of the merge target while a linked
 worktree holds it (lane openRepoProject-3's W52 F-5, lane openRepoProject-5's
-RI-4, R-248). A plan-blocking refusal names its remedy: `inspection-incomplete`
+RI-4, R-248). This change does not state branch deletion's delegated argument
+vector; feature 004 runs it as `git -C ROOT branch -d -- BRANCH`, the `--`
+ending the options, so that a branch whose name begins with `-` is deleted
+rather than read as an option (W52 F-4, R-259). A plan-blocking refusal names
+its remedy: `inspection-incomplete` "repair or remove the inspection-error rows
+first: git worktree repair, git worktree prune, or remove the row by hand after
+review", and, where any row it counts is excluded as `registration-mismatch`,
 "repair or remove the inspection-error rows first: git worktree repair, git
-worktree prune, or remove the row by hand after review"; `inspect-cap` "N rows
+worktree prune, unset core.worktree and core.bare in the repository's config or
+in a worktree's config.worktree, or remove the row by hand after review";
+`inspect-cap` "N rows
 exceed the row cap of M; remove worktrees explicitly, or prune stale entries by
 hand"; `deadline-exceeded` "the run ran out of time; remove worktrees explicitly
-or re-run". `relative-config-path` prints one line per variable that fails
+or re-run". Every refusal that a `core.worktree` or `core.bare` redirect of a
+linked worktree causes is that `inspection-incomplete` one, with the variant
+remedy: in the preview, the apply and the report of the batch; in push and
+branch deletion, which count every row; and in a single-target removal naming
+the redirected row, whose own row is `inspection-error`, so that its incomplete
+plan is refused before any gate's exclusion, never with `target-excluded` and
+the class wording. A redirect of the main worktree itself, by a `core.worktree`
+or `core.bare` in the repository's `config` or in the main worktree's
+`config.worktree`, is refused earlier, at resolution, with
+`target-not-repository-root`, before any plan is built (round (h), with feature
+004 at `d764c26` on Git 2.43.0 and 2.36.6; lane openRepoProject-3's W64 M-1).
+`relative-config-path` prints one line per variable that fails
 D11's test, in the order `HOME`, `XDG_CONFIG_HOME`, `GIT_CONFIG_GLOBAL`,
 `GIT_CONFIG_SYSTEM`: `NAME is set to a path that does not begin with /; make it
 absolute or unset it.`, never the value; doctor's `error` row and status's
@@ -1629,11 +1703,15 @@ record from the probe, and its `--abort` leaves `NOTES_MERGE_WORKTREE` alone.
   directory after a crash or a lone `BISECT_START` after a cut-short `git
   bisect reset`, keeps its worktree out as `operation-in-progress`] -> Fails
   closed, as Brett Heap's ruling LQ-14 asks; the remedy says to finish or abort
-  the operation or, where `--abort` fails for a marker with nothing in progress,
-  to use its `--quit`, each of which clears the marker (`git bisect reset`, `git
-  cherry-pick --quit`), and Git itself refuses a new sequence while that
-  directory exists (D18, D22; lane openRepoProject-3's W52 F-9, R-248, and W59
-  G-5, R-253).
+  the operation, where `--abort` fails for a marker with nothing in progress to
+  use its `--quit`, which clears an empty `sequencer` directory (`git
+  cherry-pick --quit`), and where Git leaves such a marker in place, as `git
+  bisect reset` leaves a lone `BISECT_LOG` or an empty `BISECT_START` and every
+  command leaves an empty `sequencer` file, to delete it by hand from that
+  worktree's git directory, after which the row is selected; Git itself refuses
+  a new sequence while a `sequencer` directory exists (D18, D22; lane
+  openRepoProject-3's W52 F-9, R-248, and W59 G-5, R-253; writer E's table,
+  R-259, and round (h)).
 - [A branch created from a remote branch that already had commits, then merged
   elsewhere, reads as unstarted, because nothing moved it here since its
   creation entry] -> Fails closed as `unstarted-branch`; the remedy says that no
@@ -1907,5 +1985,14 @@ archive.
 Ruled on 2026-10-09: a merged worktree whose remote branch was deleted is
 `merged-removable`, Brett Heap having ruled that a local ancestry proof
 outranks `remote-gone` for worktree rows (D6; `proposal.md` Decisions). The V5
-deferral (D12) and the other departures were ratified with the merge of PR #11
-(Brett Heap: "ratify, merge #11 and run the runbook").
+deferral (D12) and the other departures that PR #11 carried were ratified with
+its merge (Brett Heap: "ratify, merge #11 and run the runbook"). Of those this
+amendment adds, seven carry his own rulings of 2026-10-21, Q9 B and LQ-10 to
+LQ-15, each named in its entry, and three, declared by the amendment's rounds,
+wait on his ratification of it: a revalidation read or child that the work
+deadline cuts (D7), push's wider upstream refusal and branch deletion's message
+for a branch the main worktree holds (D18), as does the push-child exception
+(Open Questions above). His word of 2026-10-22, "F-2: yes; F-1:
+prune-then-delete; O-1: deadline-exceeded", amends three ratified sentences: a
+locked row's recovery text (D4, D18), the ceiling's recovery text (D9, D18) and
+gate 7's read that the deadline cuts (D10) (`proposal.md` Decisions).

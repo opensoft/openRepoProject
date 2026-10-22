@@ -173,9 +173,11 @@ Scope).
   bound-reaching reflog, one whose surviving entries cannot decide, and one
   whose last entry's new object is not the head fail closed as
   `reflog-unavailable`, at the same gate position; any other error on the read
-  is the row's `inspection-error`; and a read not finished within the filesystem
-  budget leaves the row unprobed (`inspection-incomplete`). The gate applies in
-  single mode too (M4).
+  is the row's `inspection-error`; a read not finished within the filesystem
+  budget leaves the row unprobed (`inspection-incomplete`); and one that the
+  work deadline cuts leaves it unprobed with `deadline-exceeded` (Brett Heap's
+  ruling O-1 of 2026-10-22; Decisions, amendments). The gate applies in single
+  mode too (M4).
 - **Single-target `remove` becomes a one-item batch.** Flags unchanged,
   `--apply --json` now accepted (OQ-10). It builds the same plan (`mode:
   "single"`), lists every other eligible row as `not-requested`, and shares
@@ -188,8 +190,10 @@ Scope).
   exempt from the 128-row cap, which counts registered rows, `present: false`
   included; the 16-target limit counts P alone, as `not-requested` precedes
   the counted gates. Every plan-blocking refusal left, in either mode, names
-  a manual remedy: `git worktree prune`, `git worktree repair`, or removing
-  that row by hand. `push` and `delete-branch` change in argument resolution
+  a manual remedy: `git worktree prune`, `git worktree repair`, unsetting
+  `core.worktree` and `core.bare` in the repository's `config` or in a
+  worktree's `config.worktree`, or removing that row by hand, as the cause
+  fits. `push` and `delete-branch` change in argument resolution
   (`BA:424-425`) and two refusals (MODIFIED `:39`, `:49`); with either,
   `--apply --json` stays refused with `invalid-arguments`, exit 2.
 - **One mutation seam, `retire_worktree(plan, target)`.** Revalidate; spawn the
@@ -207,14 +211,19 @@ Scope).
   observed, the rescan decides: the target is `removed` when its registry entry
   and path are gone, and otherwise `unknown` with the note `partially-removed`
   and the recovery text "inspect, then `git worktree remove --force <path>` by
-  hand"; the reason `removal-ceiling` names the ceiling cause, and the run exits
-  1 (Decisions).
+  hand" where its `.git` file and registry entry both remain, and "inspect, then
+  `git worktree prune` and delete `<path>` by hand" where either is gone, which
+  Git's forced removal refuses (Brett Heap's ruling F-1 of 2026-10-22); the
+  reason `removal-ceiling` names the ceiling cause, and the run exits 1
+  (Decisions).
 - **Targeted revalidation under a narrow guarantee.** Each target is
   revalidated with at most six Git children, the sixth the reachability probe
   of `worktree-only-commits` (LQ-13), and seven in a repository whose
-  `extensions.worktreeConfig` the plan read as true (LQ-11), a manifest
-  re-read, a `modules` check and the `operation-in-progress` listing (LQ-14),
-  never the full report (`BA:677-719`), against recorded
+  `extensions.worktreeConfig` the plan read as true (LQ-11), three more, and
+  three more in the final rescan, where the path of the repository's root or of
+  its common directory holds a line feed (lane openRepoProject-5's RI-3), a
+  manifest re-read, a `modules` check and the `operation-in-progress` listing
+  (LQ-14), never the full report (`BA:677-719`), against recorded
   repository, worktree and merge-target identity objects (`BA:203-235`).
   Concurrent writers are outside the contract and no lock is claimed; the
   guarantee is `BA:261-268`, its outcomes are the changes-after-confirmation
@@ -812,10 +821,14 @@ Headers are quoted verbatim, one per line; ADDED headers are proposed text.
 
 ## Decisions Taken by This Proposal
 
-Each is a proposal decision, ratified with the merge of PR #11 by Brett Heap's
-word of 2026-10-09, "ratify, merge #11 and run the runbook", the departures
-from packet decisions below included. OQ numbers are the lane's decision list.
-Packet open decisions taken, each citing the packet text that leaves it open:
+Each is a proposal decision. Those that PR #11 carried were ratified with its
+merge by Brett Heap's word of 2026-10-09, "ratify, merge #11 and run the
+runbook". This amendment adds others: the departures from packet decisions
+below say which of their entries are which, the council's push-child exception
+names its own standing, before Brett Heap, and the amendments of ratified text
+after the departures rest on his word of 2026-10-22; every other entry was
+carried by PR #11. OQ numbers are the lane's decision list. Packet open
+decisions taken, each citing the packet text that leaves it open:
 
 - **OQ-4, measured costs** (`BA:723-724`; `OV:314-319`): measured by governance
   task 2.1 on 2026-10-09, and the caps stand as measured. The measurement was
@@ -857,7 +870,15 @@ Packet open decisions taken, each citing the packet text that leaves it open:
   family, bench, container and park each need their own change.
 - **OQ-28, the ladder** (`DI:599-600`): a pure function over evidence.
 
-Departures from packet decisions, each citing the decision departed from:
+Departures from packet decisions, each citing the decision departed from. They
+are of two kinds. The first eleven, from OQ-23 to local ancestry outranking a
+deleted upstream, were ratified with the merge of PR #11, and the next seven,
+from trace output to an operation in progress, carry Brett Heap's own rulings
+of 2026-10-21, each entry naming its ruling. The last three, a revalidation read
+or child that the work deadline cuts, push's wider upstream refusal and branch
+deletion's message for a branch the main worktree holds, were declared by this
+amendment's own rounds on the lead's rulings and are not ratified: they take
+effect only when Brett Heap ratifies this amendment.
 
 - **OQ-23, Git 2.36 scope** (`BA:1241-1245`; `OV:231-234`): narrowed by R6.
   Design verifies each probe, the variable list and the removal refusals on
@@ -1125,6 +1146,39 @@ Departures from packet decisions, each citing the decision departed from:
   baseline refused (Capabilities `:55`; design D18; the delta `Clean can
   explicitly retire verified worktrees` and its scenario "Branch deletion
   refuses a branch it may not delete").
+
+Amendments of ratified text, each replacing a sentence that the merge of PR #11
+ratified, on Brett Heap's word of 2026-10-22, "F-2: yes; F-1: prune-then-delete;
+O-1: deadline-exceeded" (the lead's R-263):
+
+- **A locked worktree's recovery text** (lane openRepoProject-3's W52 F-2;
+  amends `0050f3e` pcl:135-138): a locked linked worktree whose status records
+  are all deletions of tracked files shows the recovery text "inspect, unlock
+  it, then `git worktree remove --force <path>` by hand", since `git worktree
+  remove --force` refuses a locked worktree; every other such row keeps the
+  ratified text (the delta `Clean classifies preservation and cleanup actions`
+  and its scenario "Only tracked-file deletions"; design D4, D18).
+- **The ceiling's recovery text** (W52 F-1; amends `0050f3e` pcl:253-256 and
+  pcl:922-926): a `partially-removed` target shows "inspect, then `git worktree
+  remove --force <path>` by hand" only where the rescan finds both its `.git`
+  file and its registry entry present, and otherwise "inspect, then `git
+  worktree prune` and delete `<path>` by hand", since Git deletes the work tree
+  before the administrative directory and refuses the forced removal once the
+  `.git` file or the entry is gone, exit 128 on Git 2.43.0 and 2.36.6; the
+  rescan reads the `.git` file by one `lstat`, a filesystem call, so it still
+  spawns at most three Git children (the deltas `Clean can explicitly retire
+  verified worktrees`, with its scenario "A removal past the hard ceiling", and
+  `Clean records a reconcilable result for every removal target`; design D9,
+  D18).
+- **Gate 7's read that the deadline cuts** (lane openRepoProject-5's O-1;
+  amends `0050f3e` pcl:606-608): a branch reflog read that the work deadline
+  cuts records `deadline-exceeded` and leaves the row unprobed and the plan
+  incomplete with `deadline-exceeded`, whose remedy names no repair, as the
+  `worktree-only-commits` gate's reads do, where the ratified sentence made it
+  `inspection-incomplete`; a read not finished within the filesystem budget
+  while the deadline is not the limit still leaves the plan incomplete with
+  `inspection-incomplete` (the delta `Clean previews and applies a batch of
+  eligible worktree removals in one repository`; design D10).
 
 Packet decisions adopted, not open: OQ-5, the caps and bounds of `BA:966`,
 subject to OQ-4, less the target cap's refusal; OQ-9, the budgets of

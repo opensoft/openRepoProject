@@ -74,13 +74,15 @@ removal child is spawned; a change after it is the residual window that "Cleanup
 states a narrow guarantee and its residual window" states. A worktree removal
 SHALL be revalidated by a targeted check, never by recomputing the full report:
 at most six Git children, and a seventh where the plan read the repository's
-`extensions.worktreeConfig` as true, a fresh manifest read and the `modules`
-and `operation-in-progress` checks, run in this order and stopping at the first
-difference: the identity probe in the command directory; the manifest re-read;
-the registry listing; one ref listing that names the merge-target candidates,
-`refs/remotes/origin/HEAD`, and the selected branches and their upstreams; the
-target's identity, its `modules` check and its `operation-in-progress` check,
-by filesystem reads, and, where the plan read
+`extensions.worktreeConfig` as true, three more where the path of the
+repository's root or of its common directory holds a line feed, as "Clean bounds
+its Git work and reports omitted work" states, a fresh manifest read and the
+`modules` and `operation-in-progress` checks, run in this order and stopping at
+the first difference: the identity probe in the command directory; the manifest
+re-read; the registry listing; one ref listing that names the merge-target
+candidates, `refs/remotes/origin/HEAD`, and the selected branches and their
+upstreams; the target's identity, its `modules` check and its
+`operation-in-progress` check, by filesystem reads, and, where the plan read
 `extensions.worktreeConfig` as true, its effective work tree, by the probe that
 "Repository inspection requires Git 2.36 and shares one evidence model" states;
 and, inside the target worktree, the combined status probe, which SHALL print

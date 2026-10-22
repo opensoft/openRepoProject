@@ -324,7 +324,11 @@ ceiling 300 s after its spawn SHALL end the wait, by killing the child's process
 group. The rescan SHALL then decide the target: `removed` when its registry
 entry and path are gone, and otherwise `unknown` with the note
 `partially-removed` and the recovery text "inspect, then `git worktree remove
---force <path>` by hand"; the reason SHALL be `removal-ceiling` in both cases.
+--force <path>` by hand" where the rescan finds both its `.git` file and its
+registry entry present, and "inspect, then `git worktree prune` and delete
+`<path>` by hand" otherwise, as where either is gone, since Git then refuses
+`git worktree remove --force`; the reason SHALL be `removal-ceiling` in both
+cases.
 
 For a removal named by `--worktree P`, the plan's completeness SHALL be the
 repository-wide evidence plus P's own row: another row's `inspection-error`, its
@@ -493,6 +497,11 @@ target there, and then retrying.
   recovery text when its registry entry or path remains, and `removed` with
   reason `removal-ceiling` when both are gone; later targets are
   `not-attempted`, and the exit status is 1
+- **AND** the recovery text is "inspect, then `git worktree remove --force
+  <path>` by hand" while the target's `.git` file and registry entry both
+  remain, and "inspect, then `git worktree prune` and delete `<path>` by hand"
+  once the `.git` file is gone, its path and registry entry remaining, or once
+  the registry entry is gone, its path remaining
 
 #### Scenario: project killed during a deletion
 
@@ -701,9 +710,12 @@ outcome rule SHALL govern the read: a reflog that is missing (`ENOENT` or
 entries cannot decide, no anchor and no movement surviving included, SHALL make
 that row `reflog-unavailable`, at the gate's place in this order; any other
 error on the read SHALL make that row `inspection-error`, as any failed row
-probe does; and a read not finished within the filesystem budget SHALL leave
-the row unprobed and the plan incomplete with `inspection-incomplete`, as for
-every other filesystem read. A row SHALL be excluded as `contains-submodule`
+probe does; a read not finished within the filesystem budget, the deadline not
+being the limit, SHALL leave the row unprobed and the plan incomplete with
+`inspection-incomplete`; and a read that the deadline cuts SHALL record
+`deadline-exceeded` and leave the row unprobed and the plan incomplete with
+`deadline-exceeded`, not `inspection-incomplete`, as for every other filesystem
+read. A row SHALL be excluded as `contains-submodule`
 when its index holds any gitlink or its worktree administrative directory holds
 a `modules` entry, and as
 `hidden-local-state` when its index flags any entry assume-unchanged or
@@ -1035,7 +1047,13 @@ under `operations` and every other child under `probes`; `limits`
 `removal_floor_seconds` 5, `removal_ceiling_seconds` 300 and `probe_concurrency`
 1). Revalidating one target SHALL spawn at most six Git children, seven where
 the plan read the repository's `extensions.worktreeConfig` as true, and never
-recompute the full report, and the final rescan at most three.
+recompute the full report, and the final rescan at most three, except where the
+path of the repository's root or of its common directory holds a line feed: `git
+rev-parse` prints one value per line and has no NUL form, so the identity probe
+is then read one option per child, four children in place of one, and
+revalidating one target spawns at most nine Git children, ten where the plan
+read `extensions.worktreeConfig` as true, and the final rescan at most six. The
+plan's `probes.estimated` SHALL count those extra children.
 
 #### Scenario: Row cap and planning failures
 
@@ -1138,7 +1156,12 @@ every reconciliation field SHALL be null and `reconciled` false. A target's
 its path present, and `partially-removed` when its removal child was killed at
 the ceiling, or its exit could not be observed, and the rescan shows its
 registry entry or its path remaining; a `partially-removed` target SHALL show
-the recovery text "inspect, then `git worktree remove --force <path>` by hand".
+the recovery text "inspect, then `git worktree remove --force <path>` by hand"
+where the rescan finds both its `.git` file and its registry entry present, and
+"inspect, then `git worktree prune` and delete `<path>` by hand" otherwise, as
+where either is gone, because Git then refuses `git worktree remove --force`.
+The rescan SHALL read the `.git` file by one `lstat`, a filesystem call that
+starts no Git child.
 
 Before the apply phase, SIGINT, SIGTERM or SIGHUP SHALL terminate and reap every
 probe child, print "Cancelled." on standard error and no JSON document, and exit
