@@ -703,7 +703,7 @@ NEXT_STEP_FIXTURES = {
     "reflog-unavailable": "the branch's reflog is missing, expired or undecidable; review, then git worktree remove yourself (--force if it holds a submodule)",
     "contains-submodule": "review, then git worktree remove --force yourself",
     "hidden-local-state": "review, then remove the worktree yourself",
-    "operation-in-progress": "a git am, merge, notes merge, cherry-pick, revert, rebase or bisect is, or may be, in progress there; finish or abort it (a squash merge that holds an autostash ends with git commit, --allow-empty where nothing is staged, or with git merge --quit, which keeps the edit in the stash list), or, where --abort fails for a marker with nothing in progress, its --quit, then run again",
+    "operation-in-progress": "a git am, merge, notes merge, cherry-pick, revert, rebase or bisect is, or may be, in progress there; finish or abort it (a squash merge that holds an autostash ends with git commit, --allow-empty where nothing is staged, or with git merge --quit, which keeps the edit in the stash list), or, where --abort fails for a marker with nothing in progress, its --quit, or, where Git leaves such a marker in place, delete it by hand from that worktree's git directory, then run again",
     "worktree-only-commits": "a commit is, or may be, held only by this worktree's HEAD reflog or refs/worktree; keep it on a branch or tag, or review, then git worktree remove yourself",
     # W52 F-3 (#19 at 4f1c0e0, design.md:1210-1213; R-248).
     "registration-mismatch": "review, then git worktree repair or git worktree prune, unset core.worktree and core.bare in the repository's config, or in that worktree's config.worktree, or remove the row by hand",

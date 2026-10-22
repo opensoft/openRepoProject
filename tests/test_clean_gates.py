@@ -1123,6 +1123,37 @@ class GatesTests(clean_support.CleanCase):
                 self.assertEqual(self.snapshot(root), before, "nothing removed")
                 self.assertTrue(tree.is_dir())
 
+    def test_clean_operation_in_progress_a_marker_git_leaves_is_deleted_by_hand(self):
+        # #19's round (h) at b3228bb (design.md D18; writer E's table, R-259):
+        # an empty `sequencer` file, which `git cherry-pick` and `git revert`
+        # --quit and --abort refuse (128) and leave, on Git 2.43.0 and 2.36.6
+        # alike. The next step's by-hand clause deletes it from that
+        # worktree's git directory (`git rev-parse --git-dir`), one file, after
+        # which the row is selected.
+        root = self.repo()
+        self.bare_remote()
+        tree = self.merged_worktree("001-left", path=self.base / "left")
+        marker = self.admin_dir(tree) / "sequencer"
+        marker.write_bytes(b"")
+        for words in (("cherry-pick", "--quit"), ("cherry-pick", "--abort"), ("revert", "--quit"),
+                      ("revert", "--abort")):
+            self.git(tree, *words, check=False)
+            self.assertTrue(marker.is_file(), f"git {' '.join(words)} leaves the empty sequencer file")
+        step = STEPS["operation-in-progress"]
+        self.assertTrue(step.endswith(", or, where Git leaves such a marker in place, delete it by hand from that "
+                                      "worktree's git directory, then run again"), step)
+        human = self.run_cli("clean", root, "--all-safe")
+        self.assert_status(human, 0)
+        lines = human.stdout.splitlines()
+        group = lines.index(TEXT["excluded_group"].format(REASON="operation-in-progress", K=1, NEXT_STEP=step))
+        self.assertEqual(lines[group + 1], TEXT["excluded_row"].format(PATH=tree, BRANCH="001-left"))
+        git_dir = Path(self.git(tree, "rev-parse", "--path-format=absolute", "--git-dir").rstrip("\n"))
+        (git_dir / "sequencer").unlink()  # the step, by hand
+        result = self.preview(root)
+        self.assert_status(result, 0)
+        self.assertEqual(([entry["path"] for entry in result.document["selected"]], by_path(result.document)),
+                         ([str(tree)], {str(root): "main-worktree"}))
+
     # LQ-13 (Brett Heap, 2026-10-21; design D21; lead rulings R-124 and R-146):
     # the last gate, `worktree-only-commits`: one bounded read of the row's
     # logs/HEAD, then one `rev-list` in the worktree. Scenario "A commit held
