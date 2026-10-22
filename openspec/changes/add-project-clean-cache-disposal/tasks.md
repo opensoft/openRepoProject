@@ -10,7 +10,7 @@ duplicate them, and nothing here is an implementation step.
 
 - [x] 1.1 Proposal written: `proposal.md` adopts the packet's cache-disposal
   contract (`BA:1314-1337`) under the lane's rulings L-1 to L-17 and B-1 to
-  B-85, names three departures from B-6 as first written, which B-11 accepted,
+  B-87, names three departures from B-6 as first written, which B-11 accepted,
   and one from B's list of modified requirements (CD-1 to CD-4) with the rest
   of its own decisions (CD-5 to CD-18), and puts six Open Questions before
   Brett Heap; verified by its Capabilities section accounting for every
@@ -55,15 +55,16 @@ duplicate them, and nothing here is an implementation step.
   and committed as `9f30fb9`, and B-30's scope, lane 4's own words, committed
   as `4d5855a` (2.2); `design.md` holds D1 to D14 and `clarifications.md` the
   NOTED S-4; verified by `grep -c '^#### Scenario'` on each delta, by a script
-  run after the council round and again after each round from B3 to B16 that
+  run after the council round and again after each round from B3 to B17 that
   compares every scenario of each of the nine MODIFIED blocks with its source
   text, the eight blocks written on PR #19's text against it at each block's
-  base since round B16, `b3228bb` for the retire, batch, bounds,
-  reconcilable-result and revalidation blocks, `6bf9f77` for the classification
-  block and `f0bf538` for the preservation and narrow-guarantee blocks, whose
-  text `b3228bb` keeps (B-76, B-80, B-84), and at `f0bf538` in rounds B13 to
-  B15, the two of rounds B10 to B13 since round B13 and the other six since
-  round B15, and by `design.md`'s headings.
+  base since round B17, `e0c91bb` for the retire and reconcilable-result
+  blocks, `b3228bb` for the batch, bounds and revalidation blocks, `6bf9f77`
+  for the classification block and `f0bf538` for the preservation and
+  narrow-guarantee blocks, whose text `e0c91bb` keeps (B-76, B-80, B-84, B-87),
+  the retire and reconcilable-result blocks at `b3228bb` in round B16, and at
+  `f0bf538` in rounds B13 to B15, the two of rounds B10 to B13 since round B13
+  and the other six since round B15, and by `design.md`'s headings.
 - [x] 1.5 Validation passes: `/usr/bin/openspec validate
   add-project-clean-cache-disposal --strict` reports the change valid,
   `/usr/bin/openspec validate --all --strict` passes every item, and
@@ -72,7 +73,7 @@ duplicate them, and nothing here is an implementation step.
   branch after 1.4, after the alignment fix round, after the council round
   (the last with the B-22 `project-overview` edit not yet committed), again
   after lane 4's agreement and that edit's commit, after round B3, after round
-  B4, and after each round from B5 to B16. The
+  B4, and after each round from B5 to B17. The
   INFO lines, that the archive would refuse a delta
   whose MODIFIED requirement change 1 or change 2 adds until that change is
   archived, are the expected state for blocks written on sister changes.
@@ -85,19 +86,19 @@ duplicate them, and nothing here is an implementation step.
 - [ ] 2.1 Change 1 archived: `add-project-clean-all-safe` is archived after
   feature 004 merges, with draft PR #19's amendment of change 1 landed first
   (L-16), or PR #19 closed, and the eight MODIFIED blocks written on PR #19's
-  text, each at its base (B-54, B-58, B-60, B-69, B-76, B-80, B-84), five at
-  `b3228bb` ("Clean can explicitly retire verified worktrees", "Clean previews
-  and applies a batch of eligible worktree removals in one repository", "Clean
-  bounds its Git work and reports omitted work", "Clean records a reconcilable
-  result for every removal target" and "Cleanup revalidates destructive
-  actions"), one at `6bf9f77` ("Clean classifies preservation and cleanup
-  actions") and two at `f0bf538` ("Cleanup preserves all local work not proven
-  disposable" and "Cleanup states a narrow guarantee and its residual window"),
-  whose text `b3228bb` keeps, re-checked against the archived text and
-  rewritten where it differs; if PR #19 closes unmerged, those eight blocks are
-  re-based on change 1's text at main (B-52, RD's M2); a re-base that changes
-  this change's added text returns the block to Brett Heap before the Speckit
-  handoff (reader RF's M1; B-54);
+  text, each at its base (B-54, B-58, B-60, B-69, B-76, B-80, B-84, B-87), two
+  at `e0c91bb` ("Clean can explicitly retire verified worktrees" and "Clean
+  records a reconcilable result for every removal target"), three at `b3228bb`
+  ("Clean previews and applies a batch of eligible worktree removals in one
+  repository", "Clean bounds its Git work and reports omitted work" and
+  "Cleanup revalidates destructive actions"), one at `6bf9f77` ("Clean
+  classifies preservation and cleanup actions") and two at `f0bf538` ("Cleanup
+  preserves all local work not proven disposable" and "Cleanup states a narrow
+  guarantee and its residual window"), whose text `e0c91bb` keeps, re-checked
+  against the archived text and rewritten where it differs; if PR #19 closes
+  unmerged, those eight blocks are re-based on change 1's text at main (B-52,
+  RD's M2); a re-base that changes this change's added text returns the block
+  to Brett Heap before the Speckit handoff (reader RF's M1; B-54);
   verified by
   `openspec/specs/project-clean/spec.md` and
   `openspec/specs/project-clean-review-safety/spec.md` holding every requirement
