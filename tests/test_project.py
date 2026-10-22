@@ -61,6 +61,28 @@ ADVISORY_CONVERSION = "warning: openRepoShape's adopt-project.py converts a repo
 # parent that does not exist keeps OBSTACLE_PARENT above, unchanged.
 OBSTACLE_PARENT_NOT_A_DIRECTORY = "     Not possible here: The parent {PARENT} exists but is not a directory; choose a parent that is a directory."
 
+# Fixed text of openspec/changes/refuse-non-directory-parent-early/design.md, D2 (that
+# design's numbering), character for character. PARENT and ANCESTOR are the format fields
+# {PARENT} and {ANCESTOR}; every other character is literal. Sentence (b), for a parent that
+# does not exist and is blocked by a path above it that exists but is not a directory; the two
+# parent lines above are unchanged (design D2).
+OBSTACLE_PARENT_BELOW_A_NON_DIRECTORY = "     Not possible here: The parent {PARENT} cannot be created because {ANCESTOR} exists but is not a directory; choose a parent that is a directory."
+# The head refusal's ending (design D2), pinned as its own literal beside OBSTACLES_REFUSAL_END:
+# the two are equal in value today and neither is built from the other.
+HEAD_REFUSAL_END = " Nothing was created."
+
+
+def head_refusal(question_line):
+    """The head refusal (design D2) of a question's parent line: its sentence and the ending."""
+    return question_line.split(OBSTACLE_LINE_START, 1)[1] + HEAD_REFUSAL_END
+
+
+# Existing text that refuse-non-directory-parent-early keeps (design D3 items 9 and 10), pinned as
+# literals because no test pins it as a constant today.
+SHAPE_NEEDS_EXISTING_PARENT = "Shape creation requires an existing --into parent directory."
+GENERATOR_LIST_FIRST = "1. testBench:test"
+FAMILY_NOT_A_FOLDER_NAME = "Family must be a single folder name."
+
 
 def obstacles_refusal(*obstacle_lines):
     """The D13 known-obstacles refusal composed from formatted obstacle lines, in their order."""
@@ -403,6 +425,9 @@ class ProjectTests(unittest.TestCase):
         # (fix-parent-obstacle-wording design D3).
         parent_file, file_link, dangling_link, dangling_target = self.parent_fixtures()
         file_line = OBSTACLE_PARENT_NOT_A_DIRECTORY.format(PARENT=parent_file)
+        # A parent that does not exist below the file: sentence (b) names the file as its ancestor
+        # (refuse-non-directory-parent-early design D2, D3 item 5).
+        below_line = OBSTACLE_PARENT_BELOW_A_NON_DIRECTORY.format(PARENT=parent_file / "sub", ANCESTOR=parent_file)
         return {"name": ("my-app", True, (), [name_line]),
                 "openRepoShape": ("MyApp", False, (), [OBSTACLE_OPENREPOSHAPE]),
                 "parent": ("MyApp", True, ("--into", absent), [parent_line]),
@@ -411,6 +436,9 @@ class ProjectTests(unittest.TestCase):
                 "link to the file parent": ("MyApp", True, ("--into", file_link), [file_line]),
                 "dangling link parent": ("MyApp", True, ("--into", dangling_link),
                                          [OBSTACLE_PARENT.format(PARENT=dangling_target)]),
+                "parent below a file": ("MyApp", True, ("--into", parent_file / "sub"), [below_line]),
+                "all three with the parent below a file": ("my-app", False, ("--into", parent_file / "sub"),
+                                                           [name_line, OBSTACLE_OPENREPOSHAPE, below_line]),
                 "all three with the file parent": ("my-app", False, ("--into", parent_file),
                                                    [name_line, OBSTACLE_OPENREPOSHAPE, file_line])}
 
@@ -442,6 +470,77 @@ class ProjectTests(unittest.TestCase):
         self.assertEqual(sorted(self.base.rglob("*")), before)
         self.assertTrue(path.is_file() and not path.is_symlink(), f"{path} is no longer a regular file")
         self.assertEqual(path.read_text(), self.parent_file_content)
+
+    def blocked_parents(self):
+        """The givens of refuse-non-directory-parent-early design D3 item 1 (research R5, K1 to K12),
+        built under self.base at names apart from parent_fixtures()'s. Returns label to (the arguments
+        after the name, the environment change, the expected question line, the kept path); a change
+        value of None removes that variable. When an AF_UNIX socket cannot be bound here the socket's
+        items are empty and its kept path is None, and a test calls skipTest for that given."""
+        import socket
+        blocked = self.parent_file_fixture(self.base / "blocked file")
+        link = self.base / "link to blocked file"
+        link.symlink_to(blocked)
+        fifo = self.base / "blocked fifo"
+        os.mkfifo(fifo)  # never opened
+        below_link = self.base / "link below blocked file"
+        below_link.symlink_to(blocked / "x")  # dangling, and below the file
+        sock = self.base / "sock"
+        try:
+            with socket.socket(socket.AF_UNIX) as listener:
+                listener.bind(str(sock))
+        except OSError:
+            sock = None
+        home_projects = self.parent_file_fixture(Path(self.env["HOME"]) / "projects")
+        null = Path("/dev/null")
+
+        def not_a_directory(parent):
+            return OBSTACLE_PARENT_NOT_A_DIRECTORY.format(PARENT=parent)
+
+        def below_a_non_directory(parent):
+            return OBSTACLE_PARENT_BELOW_A_NON_DIRECTORY.format(PARENT=parent, ANCESTOR=blocked)
+
+        return {"the file": (("--into", blocked), {}, not_a_directory(blocked), blocked),
+                "a link to the file": (("--into", link), {}, not_a_directory(blocked), blocked),
+                "a FIFO": (("--into", fifo), {}, not_a_directory(fifo), fifo),
+                "the file with a trailing slash": (("--into", str(blocked) + os.sep), {}, not_a_directory(blocked),
+                                                   blocked),
+                "below the file": (("--into", blocked / "sub"), {}, below_a_non_directory(blocked / "sub"), blocked),
+                "two below the file": (("--into", blocked / "a" / "b"), {},
+                                       below_a_non_directory(blocked / "a" / "b"), blocked),
+                "a link below the file": (("--into", below_link), {}, below_a_non_directory(blocked / "x"), blocked),
+                "a socket": ((), {}, None, None) if sock is None
+                else (("--into", sock), {}, not_a_directory(sock), sock),
+                "/dev/null": (("--into", null), {}, not_a_directory(null), null),
+                "the file, positional": ((blocked,), {}, not_a_directory(blocked), blocked),
+                "the file as PROJECTS_DIR": ((), {"PROJECTS_DIR": str(blocked)}, not_a_directory(blocked), blocked),
+                "the file as ~/projects": ((), {"PROJECTS_DIR": None}, not_a_directory(home_projects),
+                                           home_projects)}
+
+    def run_inproc_acting(self, *args, ci, answers):
+        """run_inproc() with answers that may also be callables (refuse-non-directory-parent-early
+        design D3 item 7): a callable answer is called with the prompt and its return value is the
+        answer, so a test can change the file system while the question waits. Otherwise it behaves as
+        run_inproc(): the inproc_terminal() streams, the prompts list and the check that no scripted
+        answer is left unused. run_inproc() itself is not edited."""
+        script = list(answers)
+        prompts = []
+
+        def scripted_input(prompt=""):
+            prompts.append(prompt)
+            if not script:
+                raise AssertionError(f"Unscripted prompt: {prompt!r}")
+            answer = script.pop(0)
+            if isinstance(answer, BaseException) or (isinstance(answer, type) and issubclass(answer, BaseException)):
+                raise answer
+            return answer(prompt) if callable(answer) else answer
+
+        with self.inproc_terminal(ci) as (stdout, stderr), patch("builtins.input", scripted_input):
+            code = module.main([str(arg) for arg in args])
+        self.assertEqual(script, [], "Scripted answers left unused")
+        result = subprocess.CompletedProcess(args, code, stdout.getvalue(), stderr.getvalue())
+        result.prompts = prompts
+        return result
 
     def run_cli_streams(self, *args, stdin="", stderr=subprocess.PIPE, prefix=()):
         """Like run_cli, with the stdin text and the stderr target chosen by the test (a pipe,
@@ -1488,6 +1587,10 @@ class ProjectTests(unittest.TestCase):
                       "link to the file parent": (("MyApp", "--into", file_link), [file_line]),
                       "dangling link parent": (("MyApp", "--into", dangling_link),
                                                [OBSTACLE_PARENT.format(PARENT=dangling_target)])})
+        # A parent below the file (refuse-non-directory-parent-early design D3 item 5): sentence (b).
+        cases["parent below a file"] = (("MyApp", "--into", parent_file / "sub"),
+                                       [OBSTACLE_PARENT_BELOW_A_NON_DIRECTORY.format(
+                                           PARENT=parent_file / "sub", ANCESTOR=parent_file)])
         fixtures_before = sorted(self.base.rglob("*"))
         for label, (extra, obstacles) in cases.items():
             with self.subTest(label):
@@ -1524,33 +1627,377 @@ class ProjectTests(unittest.TestCase):
             self.assertNotIn(text, combined)
 
     def test_pty_single_answer_with_a_file_parent_ends_as_the_flag_chosen_path(self):
-        # fix-parent-obstacle-wording design D3: with a parent that exists but is not a directory,
-        # the single-repository answer ends as the same name and parent end with the generator
-        # chosen by flag (--type test, not asked): the same exit status, the same stdout from
-        # Create: on and the same REFUSED: line; the advisory is left out of the comparison.
+        # refuse-non-directory-parent-early design D1, D2 and D3 item 6 (it replaces the version of this
+        # test that fix-parent-obstacle-wording design D3 wrote, whose runs reached the plan and the
+        # confirmation): with a parent that exists but is not a directory, the single-repository answer
+        # ends as the same name and parent end with the generator chosen by flag (--type test, not
+        # asked): both are refused at once, before the plan, with the same exit status and the same
+        # REFUSED: line, the head refusal; the advisory is left out of the comparison.
         env = self.shape_env(ci=None)
         parent_file = self.parent_file_fixture(self.base / "file parent")
+        file_line = OBSTACLE_PARENT_NOT_A_DIRECTORY.format(PARENT=parent_file)
         before = sorted(self.base.rglob("*"))
-        asked = self.run_pty("new", "MyApp", "--into", parent_file, env=env,
-                             steps=[(QUESTION_PROMPT, "2"), (CONFIRM_PROMPT, "yes")])
-        baseline = self.run_pty("new", "MyApp", "--into", parent_file, "--type", "test", env=env,
-                                steps=[(CONFIRM_PROMPT, "yes")])
-        self.assert_question(asked.stdout, "MyApp", OBSTACLE_PARENT_NOT_A_DIRECTORY.format(PARENT=parent_file))
+        asked = self.run_pty("new", "MyApp", "--into", parent_file, env=env, steps=[(QUESTION_PROMPT, "2")])
+        baseline = self.run_pty("new", "MyApp", "--into", parent_file, "--type", "test", env=env)
+        self.assert_question(asked.stdout, "MyApp", file_line)
         self.assert_not_asked(baseline)
-        self.assert_status(asked, baseline.returncode)
         for result in (asked, baseline):
-            self.assertIn("Create:", result.stdout)
-        self.assertEqual(asked.stdout[asked.stdout.index("Create:"):],
-                         baseline.stdout[baseline.stdout.index("Create:"):])
+            self.assert_status(result, 2)
+            self.assertNotIn("Create:", result.stdout)
         # A prompt can precede the report on its stderr line (see assert_line_ends), so each line is
         # compared from REFUSED: on.
-        refused = [[line[line.index(REFUSED):] for line in result.stderr.split("\n") if REFUSED in line]
+        refused = [[text[text.index(REFUSED):] for text in result.stderr.split("\n") if REFUSED in text]
                    for result in (asked, baseline)]
         self.assertEqual(len(refused[0]), 1, asked.stderr)
+        self.assertEqual(len(refused[1]), 1, baseline.stderr)
         self.assertEqual(refused[0], refused[1])
-        self.assertNotIn("warning:", asked.stdout + asked.stderr)
+        self.assertEqual(refused[0], [REFUSED + head_refusal(file_line)])
+        for result in (asked, baseline):
+            self.assertNotIn("warning:", result.stdout + result.stderr)
         self.assertIsNone(self.shape_record())
         self.assert_parent_file_unchanged(parent_file, before)
+
+    def test_blocked_parent_by_flag_is_refused_before_the_plan(self):
+        # refuse-non-directory-parent-early design D1, D2 and D3 items 2 and 3, forms F1 (--type test
+        # --yes) and F2 (--type test --dry-run) for every given of blocked_parents(): refused before
+        # the plan, with the head refusal, exit 2, nothing printed on standard output, nothing created.
+        pristine = self.env
+        for label, (extra, change, line, kept) in self.blocked_parents().items():
+            for form, flags in (("F1", ("--type", "test", "--yes")), ("F2", ("--type", "test", "--dry-run"))):
+                with self.subTest(given=label, form=form):
+                    if kept is None:
+                        self.skipTest("an AF_UNIX socket cannot be bound here")
+                    self.env = pristine
+                    self.env = {key: value for key, value in {**self.question_env(None), **change}.items()
+                                if value is not None}
+                    before = sorted(self.base.rglob("*"))
+                    result = self.run_cli("new", "MyApp", *extra, *flags)
+                    self.assert_status(result, 2)
+                    self.assertEqual(result.stdout, "")
+                    self.assertEqual(result.stderr, REFUSED + head_refusal(line) + "\n")
+                    if kept.is_file():
+                        self.assert_parent_file_unchanged(kept, before)
+                    else:
+                        self.assertEqual(sorted(self.base.rglob("*")), before)
+                        self.assertTrue(kept.is_fifo() or kept.is_socket() or kept.is_char_device(), kept)
+
+    def test_blocked_parent_is_refused_without_a_terminal(self):
+        # refuse-non-directory-parent-early design D1, D2 and D3 item 3, form F5 (no choosing flag,
+        # standard input not a terminal) for every given of blocked_parents(): the question is not
+        # asked, and the head refusal comes first.
+        pristine = self.env
+        for label, (extra, change, line, kept) in self.blocked_parents().items():
+            with self.subTest(given=label, form="F5"):
+                if kept is None:
+                    self.skipTest("an AF_UNIX socket cannot be bound here")
+                self.env = pristine
+                self.env = {key: value for key, value in {**self.question_env(None), **change}.items()
+                            if value is not None}
+                before = sorted(self.base.rglob("*"))
+                result = self.run_cli("new", "MyApp", *extra)
+                self.assert_status(result, 2)
+                self.assert_not_asked(result)
+                self.assertEqual(result.stdout, "")
+                self.assertEqual(result.stderr, REFUSED + head_refusal(line) + "\n")
+                if kept.is_file():
+                    self.assert_parent_file_unchanged(kept, before)
+                else:
+                    self.assertEqual(sorted(self.base.rglob("*")), before)
+                    self.assertTrue(kept.is_fifo() or kept.is_socket() or kept.is_char_device(), kept)
+
+    def test_pty_blocked_parent_by_type_without_yes_is_refused(self):
+        # refuse-non-directory-parent-early design D1, D2 and D3 item 2, form F3 (--type test at a
+        # terminal, no --yes) for every given of blocked_parents(): refused before the plan and before
+        # the confirmation prompt, with the head refusal, exit 2, nothing created.
+        for label, (extra, change, line, kept) in self.blocked_parents().items():
+            with self.subTest(given=label, form="F3"):
+                if kept is None:
+                    self.skipTest("an AF_UNIX socket cannot be bound here")
+                env = {key: value for key, value in {**self.question_env(None), **change}.items()
+                       if value is not None}
+                before = sorted(self.base.rglob("*"))
+                result = self.run_pty("new", "MyApp", *extra, "--type", "test", env=env)
+                self.assert_status(result, 2)
+                self.assertEqual(result.stdout, "")
+                self.assertEqual(result.stderr, REFUSED + head_refusal(line) + "\n")
+                if kept.is_file():
+                    self.assert_parent_file_unchanged(kept, before)
+                else:
+                    self.assertEqual(sorted(self.base.rglob("*")), before)
+                    self.assertTrue(kept.is_fifo() or kept.is_socket() or kept.is_char_device(), kept)
+
+    def test_pty_blocked_parent_is_refused_where_ci_is_true(self):
+        # refuse-non-directory-parent-early design D1, D2 and D3 item 3, form F4 (no choosing flag,
+        # CI=true, at a terminal) for every given of blocked_parents(): the question is not asked.
+        for label, (extra, change, line, kept) in self.blocked_parents().items():
+            with self.subTest(given=label, form="F4"):
+                if kept is None:
+                    self.skipTest("an AF_UNIX socket cannot be bound here")
+                env = {key: value for key, value in {**self.question_env("true"), **change}.items()
+                       if value is not None}
+                before = sorted(self.base.rglob("*"))
+                result = self.run_pty("new", "MyApp", *extra, env=env)
+                self.assert_status(result, 2)
+                self.assert_not_asked(result)
+                self.assertEqual(result.stdout, "")
+                self.assertEqual(result.stderr, REFUSED + head_refusal(line) + "\n")
+                if kept.is_file():
+                    self.assert_parent_file_unchanged(kept, before)
+                else:
+                    self.assertEqual(sorted(self.base.rglob("*")), before)
+                    self.assertTrue(kept.is_fifo() or kept.is_socket() or kept.is_char_device(), kept)
+
+    def test_pty_blocked_parent_is_refused_for_a_workspace_name(self):
+        # refuse-non-directory-parent-early design D1, D2 and D3 item 3, form F6 (the workspace name
+        # alice-wip, no choosing flag, at a terminal) for every given of blocked_parents(): the question
+        # is not asked for that name, and the head refusal comes first. The last subtest adds the dry run
+        # that is not asked either (research R5, R-3.1).
+        givens = self.blocked_parents()
+        for label, (extra, change, line, kept) in givens.items():
+            with self.subTest(given=label, form="F6"):
+                if kept is None:
+                    self.skipTest("an AF_UNIX socket cannot be bound here")
+                env = {key: value for key, value in {**self.question_env(None), **change}.items()
+                       if value is not None}
+                before = sorted(self.base.rglob("*"))
+                result = self.run_pty("new", "alice-wip", *extra, env=env)
+                self.assert_status(result, 2)
+                self.assert_not_asked(result)
+                self.assertEqual(result.stdout, "")
+                self.assertEqual(result.stderr, REFUSED + head_refusal(line) + "\n")
+                if kept.is_file():
+                    self.assert_parent_file_unchanged(kept, before)
+                else:
+                    self.assertEqual(sorted(self.base.rglob("*")), before)
+                    self.assertTrue(kept.is_fifo() or kept.is_socket() or kept.is_char_device(), kept)
+        extra, change, line, kept = givens["the file"]
+        with self.subTest(given="the file", form="F6 --dry-run"):
+            env = self.question_env(None)
+            before = sorted(self.base.rglob("*"))
+            result = self.run_pty("new", "alice-wip", *extra, "--dry-run", env=env)
+            self.assert_status(result, 2)
+            self.assert_not_asked(result)
+            self.assertEqual(result.stdout, "")
+            self.assertEqual(result.stderr, REFUSED + head_refusal(line) + "\n")
+            self.assert_parent_file_unchanged(kept, before)
+
+    def test_pty_single_answer_with_a_blocked_parent_is_refused_at_once(self):
+        # refuse-non-directory-parent-early design D1, D2 and D3 item 4 (research R5, R-4.1 to R-4.4): the
+        # answer 2 with a parent blocked by a non-directory ends at the head refusal, with and without
+        # --dry-run, before the generator list would be printed: with a second available generator the
+        # list is printed and asked for today, so the run shows that nothing is asked after the answer.
+        self.config["benches"]["testBench"]["project_scripts"].append(
+            {"name": "second", "script": "scripts/new-test.sh"})
+        self.save_config()
+        env = self.shape_env(ci=None)
+        givens = self.blocked_parents()
+        for label in ("the file", "below the file"):
+            extra, change, line, kept = givens[label]
+            for dry_run in (False, True):
+                with self.subTest(given=label, dry_run=dry_run):
+                    before = sorted(self.base.rglob("*"))
+                    result = self.run_pty("new", "MyApp", *extra, *(("--dry-run",) if dry_run else ()), env=env,
+                                          steps=[(QUESTION_PROMPT, "2")])
+                    self.assert_status(result, 2)
+                    self.assert_question(result.stdout, "MyApp", line)
+                    self.assert_line_ends(result.stderr, REFUSED + head_refusal(line))
+                    combined = result.stdout + result.stderr
+                    self.assertEqual(combined.count(REFUSED), 1, combined)
+                    for text in (GENERATOR_LIST_FIRST, GENERATOR_PROMPT, "Create:", CONFIRM_PROMPT):
+                        self.assertNotIn(text, combined)
+                    self.assertIsNone(self.shape_record())
+                    self.assert_parent_file_unchanged(kept, before)
+
+    def test_pty_triad_answer_below_a_file_leaves_the_file_intact(self):
+        # refuse-non-directory-parent-early design D3 items 5 and 6 (clarification Q2): the two case (b)
+        # rows of known_obstacle_cases(), run as test_pty_triad_answer_with_an_obstacle_refuses runs
+        # them, plus the file the refusal names (the ancestor of the row's --into, not --into itself)
+        # still a regular file holding its content, and nothing created.
+        rows = {label: case for label, case in self.known_obstacle_cases().items()
+                if label in ("parent below a file", "all three with the parent below a file")}
+        self.assertEqual(len(rows), 2)
+        for label, (name, fake, extra, obstacles) in rows.items():
+            with self.subTest(label):
+                env = self.obstacle_env(fake)
+                parent = Path(extra[1])
+                before = sorted(self.base.rglob("*"))
+                result = self.run_pty("new", name, *extra, env=env, steps=[(QUESTION_PROMPT, "")])
+                self.assert_status(result, 2)
+                self.assert_question(result.stdout, name, *obstacles)
+                self.assert_line_ends(result.stderr, REFUSED + obstacles_refusal(*obstacles))
+                self.assertNotIn(ORG_PROMPT, result.stdout + result.stderr)
+                self.assertNotIn("Create:", result.stdout)
+                self.assertIsNone(self.shape_record())
+                self.assert_parent_file_unchanged(parent.parent, before)
+
+    def test_inproc_triad_answer_below_a_file_leaves_the_file_intact(self):
+        # refuse-non-directory-parent-early design D3 items 5 and 6 (clarification Q2): the same two rows
+        # in process, as test_inproc_triad_obstacle_runs_nothing runs them, plus the file the refusal
+        # names still a regular file holding its content, and nothing created.
+        def forbidden(what):
+            return AssertionError(f"{what} was called on a Triad answer with a known obstacle")
+        rows = {label: case for label, case in self.known_obstacle_cases().items()
+                if label in ("parent below a file", "all three with the parent below a file")}
+        self.assertEqual(len(rows), 2)
+        for label, (name, fake, extra, obstacles) in rows.items():
+            with self.subTest(label):
+                self.obstacle_env(fake)
+                parent = Path(extra[1])
+                before = sorted(self.base.rglob("*"))
+                with patch.object(module, "execute", side_effect=forbidden("execute")), \
+                        patch("subprocess.run", side_effect=forbidden("subprocess.run")), \
+                        patch("subprocess.Popen", side_effect=forbidden("subprocess.Popen")), \
+                        patch("socket.socket", side_effect=forbidden("socket.socket")):
+                    result = self.run_inproc("new", name, *extra, ci=None, answers=[""])
+                self.assert_status(result, 2)
+                self.assertEqual(result.prompts, [QUESTION_PROMPT + " "])
+                self.assertEqual(result.stdout, "\n".join([QUESTION_HEADER.format(NAME=name), QUESTION_TRIAD,
+                                                           *obstacles, QUESTION_SINGLE]) + "\n")
+                self.assertEqual(result.stderr, REFUSED + obstacles_refusal(*obstacles) + "\n")
+                self.assertIsNone(self.shape_record())
+                self.assert_parent_file_unchanged(parent.parent, before)
+
+    def test_inproc_parent_repaired_while_the_question_waits_is_created(self):
+        # refuse-non-directory-parent-early design D1 and D3 item 7 (research R5, R-7.1): the parent is
+        # a regular file when the question is read and a directory when the answer 2 arrives. The head
+        # check reads the parent afresh, so the repository is created in it.
+        parent = self.parent_file_fixture(self.base / "parent repaired while waiting")
+        question_line = OBSTACLE_PARENT_NOT_A_DIRECTORY.format(PARENT=parent)
+
+        def repair(prompt):
+            parent.unlink()
+            parent.mkdir()
+            return "2"
+
+        self.fake_bin()
+        before = sorted(self.base.rglob("*"))
+        result = self.run_inproc_acting("new", "MyApp", "--into", parent, ci=None, answers=[repair, "yes"])
+        destination = parent / "MyApp"
+        self.assert_status(result, 0)
+        self.assertEqual(result.prompts, [QUESTION_PROMPT + " ", CONFIRM_PROMPT + " "])
+        self.assert_in_order(result.stdout, question_line, f"Create: {destination}", f"Created: {destination}")
+        self.assertEqual(result.stderr, "")
+        self.assert_created(destination)
+        self.assertEqual(sorted(self.base.rglob("*")),
+                         sorted([*before, destination, destination / ".project.json", destination / "arguments"]))
+
+    def test_inproc_parent_broken_while_the_question_waits_is_refused(self):
+        # refuse-non-directory-parent-early design D1, D2 and D3 item 7 (research R5, R-7.2): the parent
+        # is a directory when the question is read and a regular file when the answer 2 arrives. The
+        # head check reads the parent afresh, so the head refusal comes before the confirmation prompt.
+        parent = self.base / "parent broken while waiting"
+        parent.mkdir()
+
+        def break_parent(prompt):
+            parent.rmdir()
+            self.parent_file_fixture(parent)
+            return "2"
+
+        self.fake_bin()
+        before = sorted(self.base.rglob("*"))
+        result = self.run_inproc_acting("new", "MyApp", "--into", parent, ci=None, answers=[break_parent])
+        self.assert_status(result, 2)
+        self.assertEqual(result.prompts, [QUESTION_PROMPT + " "])
+        self.assertEqual(result.stderr,
+                         REFUSED + head_refusal(OBSTACLE_PARENT_NOT_A_DIRECTORY.format(PARENT=parent)) + "\n")
+        self.assertNotIn("Create:", result.stdout)
+        self.assert_parent_file_unchanged(parent, before)
+
+    def test_dangling_link_parent_is_created_as_before(self):
+        # refuse-non-directory-parent-early design D1 and D3 item 8 (research R5, R-8.1): a dangling
+        # symbolic link to a path below a directory is a missing parent, not a blocked one: by flag it
+        # is created through the link, as before.
+        target = self.base / "absent target"
+        link = self.base / "dangling parent link"
+        link.symlink_to(target)
+        result = self.run_cli("new", "MyApp", "--into", link, "--type", "test", "--yes")
+        self.assert_status(result, 0)
+        self.assertEqual(result.stdout, self.creation_stdout("MyApp", target))
+        self.assertEqual(result.stderr, "\n".join(self.advisory("MyApp")) + "\n")
+        self.assert_created(target / "MyApp")
+        self.assertTrue(link.is_symlink())
+
+    def test_blocked_parent_is_refused_before_later_faults(self):
+        # refuse-non-directory-parent-early design D1 and D3 item 9 (research R5, R-9.1, R-9.2, R-9.8): the
+        # head refusal comes before the faults that the choice of generator would raise later: an unknown
+        # type, --workflow without setup-openspeckit, and a workBenches directory with no registry.
+        extra, change, line, kept = self.blocked_parents()["the file"]
+        empty_workbenches = self.base / "empty workbenches"
+        empty_workbenches.mkdir()
+        self.env = self.question_env(None)
+        self.assert_absent_from_path(self.env, "setup-openspeckit")
+        runs = {"R-9.1": ("--type", "nomatch", "--yes"),
+                "R-9.2": ("--type", "test", "--workflow", "--yes"),
+                "R-9.8": ("--type", "test", "--yes", "--workbenches", empty_workbenches)}
+        for run, flags in runs.items():
+            with self.subTest(run=run):
+                before = sorted(self.base.rglob("*"))
+                result = self.run_cli("new", "MyApp", *extra, *flags)
+                self.assert_status(result, 2)
+                self.assertEqual(result.stdout, "")
+                self.assertEqual(result.stderr, REFUSED + head_refusal(line) + "\n")
+                self.assert_parent_file_unchanged(kept, before)
+
+    def test_earlier_refusals_keep_their_text_with_a_blocked_parent(self):
+        # refuse-non-directory-parent-early design D1 and D3 item 9 (research R5, R-9.3, R-9.4, R-9.7): the
+        # refusals that come before the parent is read keep their own text with a blocked parent.
+        extra, change, line, kept = self.blocked_parents()["the file"]
+        runs = {"R-9.3": ("MyApp", ("--org", "example", "--yes"), ORG_NEEDS_SHAPE),
+                "R-9.4": ("bad name", ("--type", "test", "--yes"), INVALID_NAME),
+                "R-9.7": ("MyApp", ("--family", "1bad", "--yes"), FAMILY_NOT_A_FOLDER_NAME)}
+        for run, (name, flags, refusal) in runs.items():
+            with self.subTest(run=run):
+                before = sorted(self.base.rglob("*"))
+                result = self.run_cli("new", name, *extra, *flags)
+                self.assert_status(result, 2)
+                self.assertEqual(result.stdout, "")
+                self.assertEqual(result.stderr, REFUSED + refusal + "\n")
+                self.assert_parent_file_unchanged(kept, before)
+
+    def test_shape_by_flag_keeps_its_parent_refusal_with_a_blocked_parent(self):
+        # refuse-non-directory-parent-early design D1 and D3 item 9 (research R5, R-9.5, R-9.6, R-9.5b,
+        # R-9.6b): a Triad chosen by flag keeps the refusal of its own branch for a parent that is not a
+        # directory, with and without --dry-run, for the file and for a path below it.
+        givens = self.blocked_parents()
+        shape = ("--shape", "--org", "example", "--visibility", "private")
+        runs = {"R-9.5": ("the file", ()), "R-9.6": ("the file", ("--dry-run",)),
+                "R-9.5b": ("below the file", ()), "R-9.6b": ("below the file", ("--dry-run",))}
+        for run, (label, flags) in runs.items():
+            with self.subTest(run=run):
+                extra, change, line, kept = givens[label]
+                before = sorted(self.base.rglob("*"))
+                result = self.run_cli("new", "MyApp", *extra, *shape, *flags)
+                self.assert_status(result, 2)
+                self.assertEqual(result.stdout, "")
+                self.assertEqual(result.stderr, REFUSED + SHAPE_NEEDS_EXISTING_PARENT + "\n")
+                self.assert_parent_file_unchanged(kept, before)
+
+    def test_unwritable_directory_child_passes_dry_run_and_fails_at_creation(self):
+        # refuse-non-directory-parent-early design D1, D3 item 10 and D6 (research R5, R-10.1, R-10.2): no
+        # permission is read. A missing child of a directory that cannot be written passes the dry run, and
+        # fails at creation with the raw error and without the head refusal's ending.
+        if not hasattr(os, "geteuid") or os.geteuid() == 0:
+            self.skipTest("this user can write to a directory of mode 555")
+        locked = self.base / "locked directory"
+        locked.mkdir()
+        self.addCleanup(locked.chmod, 0o755)
+        locked.chmod(0o555)
+        child = locked / "child"
+        plan = f"Create: {child / 'MyApp'}\n  " + shlex.join(["bash", str(self.generator), "MyApp", str(child)]) + "\n"
+        for run, flag in (("R-10.1", "--dry-run"), ("R-10.2", "--yes")):
+            with self.subTest(run=run):
+                before = sorted(self.base.rglob("*"))
+                result = self.run_cli("new", "MyApp", "--into", child, "--type", "test", flag)
+                self.assertEqual(result.stdout, plan)
+                if flag == "--dry-run":
+                    self.assert_status(result, 0)
+                    self.assertEqual(result.stderr, "")
+                else:
+                    self.assert_status(result, 2)
+                    self.assertEqual(result.stderr,
+                                     f"REFUSED: [Errno {errno.EACCES}] {os.strerror(errno.EACCES)}: '{child}'\n")
+                self.assertFalse(child.exists())
+                self.assertEqual(sorted(self.base.rglob("*")), before)
 
     def test_pty_symbolic_link_to_a_directory_names_no_obstacle(self):
         # fix-parent-obstacle-wording design D3: a symbolic link to a directory is a parent, and the

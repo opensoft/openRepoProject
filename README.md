@@ -57,11 +57,15 @@ confirmation. `project` never writes `single-repository.yaml`.
 Under the Triad entry, the question names any known obstacle, read locally
 with no network access: a name that cannot be a Triad name (a letter first,
 then letters and digits only, such as `MyApp`), `openRepoShape` missing from
-`PATH`, or a parent that is missing or is not a directory. A single-repository
-answer creates a missing parent; a parent that exists but is not a directory
-blocks both answers, so choose another parent. The Triad stays first and the
-default. A Triad answer with an obstacle is refused at once with exit 2, before
-any further prompt; a single-repository answer is unaffected.
+`PATH`, or a parent that is missing or is blocked by a non-directory. A
+single-repository answer creates a missing parent whose nearest existing path
+above it is a directory. A parent blocked by a non-directory (it, or the
+nearest existing path above it, exists and is not a directory) blocks both
+answers: neither answer can create anything in such a parent, and either is
+refused at once with exit 2, so choose another parent. The Triad stays first
+and the default. A Triad answer with an obstacle is refused at once with exit
+2, before any further prompt; a single-repository answer is unaffected by the
+name and openRepoShape obstacles.
 
 The question is not asked when:
 
@@ -72,14 +76,14 @@ The question is not asked when:
 - `CI` is set to anything other than empty, `0`, `false` or `no`, in any letter case and ignoring surrounding spaces;
 - the name is a `<user>-wip` workspace name, such as `alice-wip`.
 
-A choosing flag restores the path without the question exactly: its prompts,
-refusals, standard output, files and exit status are those `project new` had
-before the question existed. To create a single repository without being
-asked, name the generator, for example
-`project new MyApp --bench flutterBench --type flutter`. `--dry-run`,
-`--workflow`, `--into` or the positional parent, and `--workbenches` choose
-nothing, so a dry run at a terminal asks too, then prints the plan of the path
-its answer chose and writes nothing.
+A choosing flag restores the path without the question: its prompts, refusals,
+standard output, files and exit status are exactly as they would be without the
+question. To create a single repository without being asked, name the
+generator, for example `project new MyApp --bench flutterBench --type flutter`.
+`--dry-run`, `--workflow`, `--into` or the positional parent, and
+`--workbenches` choose nothing, so a dry run at a terminal asks too, then
+prints the plan of the path its answer chose, unless a refusal comes first, and
+writes nothing.
 
 A Triad answer asks for the GitHub organization, then the visibility, typed in
 full as `private`, `public` or `internal`, with no default. An empty or invalid
@@ -94,6 +98,11 @@ the command it will run. A single repository then asks for `yes` before
 running its generator; a Triad ends at openRepoShape's own typed confirmation.
 `--yes` confirms bench creation for scripted use. `--dry-run` prints the plan
 without creating even the parent directory. Existing destinations refuse.
+A parent blocked by a non-directory is refused before the plan and the `yes`
+confirmation, with exit 2, `--dry-run` included. `--dry-run` reads no
+permissions: a parent that is a directory the person cannot write still passes
+the dry run and fails at creation, as before, and so, for a single repository,
+does a missing parent whose nearest existing path above it is such a directory.
 Generator errors pass through unchanged. The generator owns language runtime
 requirements and environment creation: run it in the appropriate bench.
 
