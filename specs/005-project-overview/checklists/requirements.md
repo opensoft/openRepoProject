@@ -641,6 +641,17 @@ Lane: openRepoProject-4
   and CHK015 here were re-read, no category changing, and the totals below were
   recounted by script. Re-validation: 16 of 16 items pass, with the checks of
   iteration 2 re-run by script on the edited spec.
+- 2026-10-22, a fifteenth pass: #24 is re-checked at its draft PR #27's head
+  `25f7333`, after round B12, with round B11 at `f170079` recorded on the way,
+  its pin `fe5b245` kept, by lane openRepoProject-5's two line maps and this
+  spec's own `cmp` of each range against `d4e960b` and the pin: every pinned
+  range of its proposal and design is byte-identical at new lines, its task 3.2
+  is unchanged at :178-193, and its `project-overview` block is the same blob.
+  The header paragraph and the Dependencies bullet record it; C-71 and
+  `clarify-questions.md` keep their `fe5b245` pins unchanged, and A1 stays
+  cited at `4261ff8`. No checklist result changes, and the totals below were
+  recounted by script. Re-validation: 16 of 16 items pass, with the checks of
+  iteration 2 re-run by script on the edited spec.
 - Items marked incomplete require spec updates before `/speckit-clarify` or `/speckit-plan`
 
 ## Cross-cutting Requirements Quality (no-argument `/speckit.checklist`, 2026-10-19)
@@ -753,5 +764,4 @@ notes (PN-1 to PN-18 but PN-4 and PN-11, withdrawn on 2026-10-21; PN-2 narrowed
 to an exception of any other kind in human mode and widened to a failed write's
 standard-error line), 0 new questions. Recounted by script on 2026-10-21, and
 again after the re-check, after the W6 read and after the fourth to twelfth
-passes of that day, and after the thirteenth and fourteenth passes on
-2026-10-22.
+passes of that day, and after the thirteenth to fifteenth passes on 2026-10-22.
