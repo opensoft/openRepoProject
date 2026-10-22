@@ -633,6 +633,9 @@ TEXT_FIXTURES = {
     # D18: refusal messages and remedies.
     "target_excluded_gate": "Worktree is excluded: {REASON}; {NEXT_STEP}",
     "remedy_inspection_incomplete": "repair or remove the inspection-error rows first: git worktree repair, git worktree prune, or remove the row by hand after review",
+    # The variant where any row the refusal counts is excluded as registration-mismatch, a
+    # redirected linked worktree (#19's round (h) at b3228bb, design.md D18).
+    "remedy_inspection_incomplete_redirect": "repair or remove the inspection-error rows first: git worktree repair, git worktree prune, unset core.worktree and core.bare in the repository's config or in a worktree's config.worktree, or remove the row by hand after review",
     "remedy_inspect_cap": "{N} rows exceed the row cap of {M}; remove worktrees explicitly, or prune stale entries by hand",
     "remedy_deadline_exceeded": "the run ran out of time; remove worktrees explicitly or re-run",
     # The contract, beyond D18.

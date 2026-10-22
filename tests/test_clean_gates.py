@@ -263,11 +263,18 @@ class GatesTests(clean_support.CleanCase):
         plain = str(trees["plain"])
         refused = TEXT["plan_incomplete"].format(CODE="inspection-incomplete",
                                                  REMEDY=TEXT["remedy_inspection_incomplete"])
+        # Where a row the refusal counts is excluded as registration-mismatch,
+        # the remedy is the variant naming the unset (#19's round (h) at
+        # b3228bb, design.md D18), a broken admin registration's and a shared
+        # registry path's included.
+        mismatch = TEXT["plan_incomplete"].format(CODE="inspection-incomplete",
+                                                  REMEDY=TEXT["remedy_inspection_incomplete_redirect"])
 
         def assert_incomplete(added):
             """The copy's plan, with added (path to reason) beside the
             scenario's rows: incomplete, its preview exit 1, and --apply with
             --yes refused with exit 2, nothing removed."""
+            message = mismatch if "registration-mismatch" in added.values() else refused
             before = self.snapshot(root)
             result = self.preview(root, cwd=current)
             self.assert_status(result, 1)
@@ -278,12 +285,12 @@ class GatesTests(clean_support.CleanCase):
                 self.assertEqual({row["classification"] for row in document["worktrees"] if row["path"] == path},
                                  {"inspection-error"}, path)
             self.assertEqual((document["completeness"], document["apply_allowed"], document["refusals"]),
-                             ("incomplete", False, [{"code": "inspection-incomplete", "message": refused}]))
+                             ("incomplete", False, [{"code": "inspection-incomplete", "message": message}]))
             result, records = self.run_counted("clean", root, "--all-safe", "--apply", "--yes", "--json",
                                                cwd=current)
             self.assert_status(result, 2)
             self.assertEqual(self.load_json(result)["refusals"],
-                             [{"code": "inspection-incomplete", "message": refused}])
+                             [{"code": "inspection-incomplete", "message": message}])
             self.assertEqual(removals(records), [])
             self.assertEqual(self.snapshot(root), before, "nothing removed")
 
@@ -332,13 +339,13 @@ class GatesTests(clean_support.CleanCase):
             result, records = self.run_counted("clean", root, "--apply", "--action", "remove", "--worktree", shared,
                                                "--yes", cwd=current)
             self.assert_status(result, 2)
-            self.assertEqual(result.stderr, f"REFUSED: {refused}\n")
+            self.assertEqual(result.stderr, f"REFUSED: {mismatch}\n")
             self.assertEqual(removals(records), [])
             result = self.run_json("clean", root, "--apply", "--action", "remove", "--worktree", shared, "--yes",
                                    "--json", cwd=current)
             self.assert_status(result, 2)
             self.assertEqual((result.document["refusals"], result.document["selected"]),
-                             ([{"code": "inspection-incomplete", "message": refused}], []))
+                             ([{"code": "inspection-incomplete", "message": mismatch}], []))
             self.assertEqual(self.snapshot(root), before, "nothing removed")
 
     # T062: "Hidden local state" (its after-confirmation clause is T083's);
@@ -1122,6 +1129,89 @@ class GatesTests(clean_support.CleanCase):
                 self.assertEqual(calls, [admin, admin], "one listing per run")
                 self.assertEqual(self.snapshot(root), before, "nothing removed")
                 self.assertTrue(tree.is_dir())
+
+    def test_clean_a_redirected_worktree_s_incomplete_plan_names_the_unset(self):
+        # #19's round (h) at b3228bb (design.md D18; lane 2's R-258): a linked
+        # worktree that core.worktree or core.bare redirects is inspection-error
+        # and excluded as registration-mismatch, so the plan is incomplete with
+        # inspection-incomplete in every mode, and the refusal's remedy is the
+        # variant naming the unset wherever a row it counts is excluded as
+        # registration-mismatch: the report, the --all-safe preview and apply,
+        # a single removal naming W, push and delete-branch (round (h)'s
+        # fixtures, on Git 2.43.0 and 2.36.6). A plain inspection-error row, a
+        # reflog read that fails with EISDIR, keeps the base remedy; beside a
+        # redirected row the variant prints.
+        variant = TEXT.get("remedy_inspection_incomplete_redirect")
+        self.assertEqual(variant, "repair or remove the inspection-error rows first: git worktree repair, git worktree "
+                                  "prune, unset core.worktree and core.bare in the repository's config or in a "
+                                  "worktree's config.worktree, or remove the row by hand after review")
+
+        def refused(remedy):
+            return "REFUSED: " + TEXT["plan_incomplete"].format(CODE="inspection-incomplete", REMEDY=remedy) + "\n"
+
+        def fixture(case):
+            root = self.repo(case)
+            self.bare_remote(root, name=f"{case}-remote.git")
+            tree = self.merged_worktree(f"{case}-w", path=self.base / f"{case}-w", root=root)
+            other = self.merged_worktree(f"{case}-v", path=self.base / f"{case}-v", root=root)
+            self.git(root, "branch", f"{case}-m", "main")
+            return root, tree, other
+
+        def runs(root, tree, case, skip=()):
+            """(mode, the run, its status) for each mode not in skip, each run
+            made only when its mode is reached."""
+            for mode, words, status in (
+                    ("report", (), 1), ("--all-safe", ("--all-safe",), 1),
+                    ("--all-safe --apply", ("--all-safe", "--apply", "--yes"), 2),
+                    ("--worktree W", ("--apply", "--action", "remove", "--worktree", tree, "--yes"), 2),
+                    ("push", ("--apply", "--action", "push", "--branch", f"{case}-v", "--yes"), 2),
+                    ("delete-branch", ("--apply", "--action", "delete-branch", "--branch", f"{case}-m", "--yes"), 2)):
+                if mode not in skip:
+                    yield mode, self.run_cli("clean", root, *words), status
+
+        decoy = self.base / "decoy"
+        decoy.mkdir()
+        for case, redirect in (
+                ("c1", lambda root, tree: self.git(tree, "config", "--worktree", "core.worktree", decoy)),
+                ("c2", lambda root, tree: self.git(tree, "config", "--worktree", "core.bare", "true")),
+                ("c3", lambda root, tree: self.git(root, "config", "core.worktree", root))):
+            with self.subTest(case=case):
+                root, tree, other = fixture(case)
+                self.git(root, "config", "extensions.worktreeConfig", "true")
+                redirect(root, tree)
+                self.assertNotEqual(self.git(tree, "rev-parse", "--show-toplevel", check=False).strip(), str(tree))
+                document = self.preview(root).document
+                self.assertEqual(by_path(document)[str(tree)], "registration-mismatch")
+                self.assertEqual(row_of(document, tree)["classification"], "inspection-error")
+                self.assertEqual(document["refusals"], [{"code": "inspection-incomplete", "message": refused(
+                    variant)[len("REFUSED: "):-1]}])
+                for mode, result, status in runs(root, tree, case):
+                    with self.subTest(case=case, mode=mode):
+                        self.assert_status(result, status)
+                        self.assertIn(refused(variant), result.stderr)
+                        self.assertNotIn(TEXT["remedy_inspection_incomplete"], result.stderr)
+                self.assertTrue(tree.is_dir() and other.is_dir(), "nothing removed")
+                self.assertEqual(self.git(root, "branch", "--list", f"{case}-m").strip(), f"{case}-m")
+
+        # A plain inspection-error row: the base remedy; beside a redirect, the variant.
+        root, tree, other = fixture("c5")
+        self.reflog_file("c5-v", root).unlink()
+        self.reflog_file("c5-v", root).mkdir()  # EISDIR: gate 7's other read error
+        # Gate 7 reads a reflog only for a row that passed gate 6, so in a run
+        # naming W, or in push or delete-branch, the failing read is never
+        # made and nothing refuses: those three are not run.
+        for mode, result, status in runs(root, tree, "c5", skip=("--worktree W", "push", "delete-branch")):
+            with self.subTest(case="plain inspection-error", mode=mode):
+                self.assert_status(result, status)
+                self.assertIn(refused(TEXT["remedy_inspection_incomplete"]), result.stderr)
+                self.assertNotIn(variant, result.stderr)
+        self.git(root, "config", "extensions.worktreeConfig", "true")
+        self.git(tree, "config", "--worktree", "core.bare", "true")
+        result = self.run_cli("clean", root, "--all-safe")
+        self.assert_status(result, 1)
+        self.assertEqual(result.stderr, refused(variant))
+        self.assertEqual(by_path(self.preview(root).document),
+                         {str(root): "main-worktree", str(tree): "registration-mismatch", str(other): "inspection-error"})
 
     def test_clean_operation_in_progress_a_marker_git_leaves_is_deleted_by_hand(self):
         # #19's round (h) at b3228bb (design.md D18; writer E's table, R-259):

@@ -732,6 +732,13 @@ TEXT = {
     "remedy_inspection_incomplete":
         "repair or remove the inspection-error rows first: git worktree repair, git worktree prune, "
         "or remove the row by hand after review",
+    # The variant where any row the refusal counts is excluded as
+    # `registration-mismatch`, a linked worktree redirected by core.worktree or
+    # core.bare (#19's round (h) at b3228bb, design.md D18; lane 2's R-258).
+    "remedy_inspection_incomplete_redirect":
+        "repair or remove the inspection-error rows first: git worktree repair, git worktree prune, "
+        "unset core.worktree and core.bare in the repository's config or in a worktree's config.worktree, "
+        "or remove the row by hand after review",
     "remedy_inspect_cap":
         "{N} rows exceed the row cap of {M}; remove worktrees explicitly, or prune stale entries by hand",
     "remedy_deadline_exceeded": "the run ran out of time; remove worktrees explicitly or re-run",
@@ -3851,10 +3858,11 @@ def check_plan(plan, run):
         return 2 if plan.refusals else 0
     single, removing = plan.mode == "single", plan.action == "remove"
     target_rows = getattr(plan, "target_rows", [])
-    codes = plan_completeness(plan, target_rows if single and removing else ())
+    exclude = target_rows if single and removing else ()
+    codes = plan_completeness(plan, exclude)
     if codes:
         for code in codes:
-            refuse(plan, incomplete_refusal(plan, code), run)
+            refuse(plan, incomplete_refusal(plan, code, exclude), run)
         return 2 if apply else 1
     if plan.refusals:
         return 2
@@ -3863,7 +3871,7 @@ def check_plan(plan, run):
     if single:
         target = plan.target
         if target is None or row_incomplete(target):
-            return refuse(plan, incomplete_refusal(plan, "inspection-incomplete"), run)
+            return refuse(plan, incomplete_refusal(plan, "inspection-incomplete", rows=target_rows), run)
         reason = next((reason for row, reason in plan.excluded if row is target), None)
         if reason is not None:
             return refuse(plan, target_refusal(target, reason), run)
@@ -4141,6 +4149,16 @@ def deadline_stopped(row):
             and cut_at_deadline(row.get("errors")))
 
 
+def counted_rows(plan, exclude=()):
+    """The rows of plan.rows that plan_completeness() counts, in their order:
+    those not in exclude, and in mode single for --action remove only P's
+    own (plan.target_rows). incomplete_refusal() counts the same rows."""
+    skip = {id(row) for row in exclude}
+    named = plan.mode == "single" and plan.action == "remove"
+    own = {id(row) for row in getattr(plan, "target_rows", [])}
+    return [row for row in plan.rows if id(row) not in skip and (id(row) in own or not named)]
+
+
 def plan_completeness(plan, exclude=()):
     """The codes that make plan incomplete, in REFUSAL_CODES order (FR-024,
     FR-031; data-model.md, "Plan"; analyze M6; T075, T099): `inspection-incomplete`
@@ -4163,8 +4181,7 @@ def plan_completeness(plan, exclude=()):
     skip = {id(row) for row in exclude}
     target_rows = getattr(plan, "target_rows", [])
     named = plan.mode == "single" and plan.action == "remove"
-    own = {id(row) for row in target_rows}
-    counted = [row for row in plan.rows if id(row) not in skip and (id(row) in own or not named)]
+    counted = counted_rows(plan, exclude)
     errors = (plan.evidence or {}).get("errors") or []
     incomplete = [row for row in counted if row_incomplete(row)]
     stopped = [row for row in incomplete if deadline_stopped(row)]
@@ -4179,14 +4196,23 @@ def plan_completeness(plan, exclude=()):
     return codes
 
 
-def incomplete_refusal(plan, code):
+def incomplete_refusal(plan, code, exclude=(), rows=None):
     """The refusal of a plan incomplete with code (FR-024, FR-031; design D18):
     `The plan is incomplete (CODE): REMEDY.`, REMEDY D18's for the code. The
     inspect-cap remedy's N counts the registry entries that become rows, as
     the row cap and build_plan() count them: a bare first entry, and a first
     entry that is the common directory with no main worktree named, are no
     rows (D8; contracts/project-clean.md, "Codes"; lead rulings R-73 (d) and
-    R-89 (b))."""
+    R-89 (b)). The inspection-incomplete remedy is the variant
+    `remedy_inspection_incomplete_redirect`, which names the unset of
+    core.worktree and core.bare, where any row the refusal counts is excluded
+    as `registration-mismatch` (plan.excluded), as a linked worktree that
+    core.worktree or core.bare redirects is, its own row inspection-error
+    (#19's round (h) at b3228bb, design.md D18): rows, when given, are those
+    rows (check_plan()'s step 3 gives P's rows); otherwise the rows
+    plan_completeness(plan, exclude) counts toward inspection-incomplete,
+    counted_rows()'s that are inspection-error or unprobed and not
+    deadline_stopped(). Otherwise the base remedy."""
     if code == "inspect-cap":
         evidence = plan.evidence or {}
         registry = evidence.get("records") or ()
@@ -4196,7 +4222,12 @@ def incomplete_refusal(plan, code):
     elif code == "deadline-exceeded":
         remedy = TEXT["remedy_deadline_exceeded"]
     else:
-        remedy = TEXT["remedy_inspection_incomplete"]
+        if rows is None:
+            rows = [row for row in counted_rows(plan, exclude) if row_incomplete(row) and not deadline_stopped(row)]
+        mismatched = {id(row) for row, reason in getattr(plan, "excluded", None) or ()
+                      if reason == "registration-mismatch"}
+        redirect = any(id(row) in mismatched for row in rows)
+        remedy = TEXT["remedy_inspection_incomplete_redirect" if redirect else "remedy_inspection_incomplete"]
     return Refused(TEXT["plan_incomplete"].format(CODE=code, REMEDY=remedy), code=code)
 
 
