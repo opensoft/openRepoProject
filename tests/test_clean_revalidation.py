@@ -1218,7 +1218,7 @@ class RevalidationTests(clean_support.CleanCase):
     # cutting that read of P's revalidation as the listing's test above cuts
     # the listing.
 
-    def assert_cut_at_the_work_deadline(self, case, fs=None, child=None, spend=False, extra=None):
+    def assert_cut_at_the_work_deadline(self, case, fs=None, child=None, spend=False, extra=None, fails=False):
         """--all-safe --apply over two selected targets P and Q, in process: the
         first read after the question that fs or child picks is cut at the work
         deadline, a DriverOutcome `deadline` returned in its place. fs(root,
@@ -1226,9 +1226,12 @@ class RevalidationTests(clean_support.CleanCase):
         arguments; child(root, trees) a test of a Git child, given its words
         after `git` (`-C DIR` first). With spend, the work deadline is also
         made to pass at the cut (Invocation.work_end), as a real cut leaves it,
-        for a step that reads work_spent() and not the read's code. extra(root)
-        adds rows first. P is not-attempted with deadline-exceeded, Q
-        not-attempted, exit 1, and nothing is removed."""
+        for a step that reads work_spent() and not the read's code. With fails,
+        the picked read is not cut but fails with a non-cut error (a Git child
+        exits 128; a filesystem call gives `probe-failed`), so that only
+        work_spent() makes it a deadline-exceeded and not a state-changed.
+        extra(root) adds rows first. P is not-attempted with deadline-exceeded,
+        Q not-attempted, exit 1, and nothing is removed."""
         root, trees = self.batch(case)
         if extra is not None:
             extra(root)
@@ -1243,17 +1246,22 @@ class RevalidationTests(clean_support.CleanCase):
             if spend:
                 run.work_end = run.now()
 
+        def outcome(argv):
+            if fails:
+                return project.DriverOutcome(argv, "failed", status=128, stderr=b"fatal: cut here", stderr_bytes=15)
+            return project.DriverOutcome(argv, "deadline", detail="cut here")
+
         def fs_call(fn, *args, **options):
             if asked and not calls and picks_fs is not None and picks_fs(fn, args):
                 cut(project.current_invocation(), args[:1])
-                return project.DriverOutcome(None, "deadline", detail="cut here")
+                return outcome(None)
             return real_fs_call(fn, *args, **options)
 
         def run_bounded(spec, parser, run):
             kind, args, cwd = spec
             if asked and not calls and picks_child is not None and picks_child(args):
                 cut(run, args)
-                return project.DriverOutcome(project.git_argv(kind, args), "deadline", detail="cut here")
+                return outcome(project.git_argv(kind, args))
             return real_run_bounded(spec, parser, run)
 
         env, log = self.counting()
@@ -1280,6 +1288,18 @@ class RevalidationTests(clean_support.CleanCase):
         # Step 1, the identity probe (project:5677-5678).
         self.assert_cut_at_the_work_deadline(
             "identity-cut", child=self.at_root(["rev-parse", "--path-format=absolute", *project.IDENTITY_OPTIONS]))
+
+    def test_clean_an_identity_probe_that_fails_with_no_work_time_left_at_revalidation(self):
+        # Step 1's first disjunct (project:5721, work_spent(run) or
+        # any(map(read_cut, read_errors))): the identity probe fails with
+        # `probe-failed`, which read_cut() does not read as a cut, as the work
+        # deadline passes (the lead's R-195, R-208; lane 3's W41 LOW-3). Only
+        # work_spent() then makes it deadline-exceeded; without it the same
+        # failed probe is state-changed (the next arm) and P is refused.
+        self.assert_cut_at_the_work_deadline(
+            "identity-fails-spent",
+            child=self.at_root(["rev-parse", "--path-format=absolute", *project.IDENTITY_OPTIONS]),
+            spend=True, fails=True)
 
     def test_clean_a_manifest_re_read_cut_at_revalidation(self):
         # Step 2, the manifest's re-read (project:5687-5688), one bounded call
