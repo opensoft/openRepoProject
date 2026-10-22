@@ -18,7 +18,7 @@ duplicate them.
 ## 2. Speckit handoff
 
 - [x] 2.1 Exactly one Speckit feature owns the implementation: `specs/NNN-<slug>/`, created by `/speckit.specify` after 1.6 from a local main synced to origin/main, where NNN is the next number free that day (`001` to `003` exist; lane openRepoProject-2 holds `004`, `add-project-clean-all-safe`, in progress, and expects `005`, `add-project-overview`; no number is fixed here); verified when "Speckit Handoff" below names its feature identifier, branch and repo-relative `tasks.md` path, filled in once. Created: feature 006-refuse-non-directory-parent-early on branch 006-refuse-non-directory-parent-early (worktree ../openRepoProject-worktrees/006-refuse-non-directory-parent-early, cut from main at b233333; 006 was the next free number on 2026-10-21), spec at specs/006-refuse-non-directory-parent-early/spec.md.
-- [ ] 2.2 `/opsx:apply` is not run until "Speckit Handoff" names exactly one feature; verified by reading that section before the first `/opsx:apply`.
+- [x] 2.2 `/opsx:apply` is not run until "Speckit Handoff" names exactly one feature; verified by reading that section before the first `/opsx:apply`. Met: the handoff named feature 006-refuse-non-directory-parent-early at baea233 before the first implementation commit 7dcaf5f.
 
 ## 3. Landing and archive readiness
 
