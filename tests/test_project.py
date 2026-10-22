@@ -1905,6 +1905,102 @@ class ProjectTests(unittest.TestCase):
         self.assertNotIn("Create:", result.stdout)
         self.assert_parent_file_unchanged(parent, before)
 
+    def test_dangling_link_parent_is_created_as_before(self):
+        # refuse-non-directory-parent-early design D1 and D3 item 8 (research R5, R-8.1): a dangling
+        # symbolic link to a path below a directory is a missing parent, not a blocked one: by flag it
+        # is created through the link, as before.
+        target = self.base / "absent target"
+        link = self.base / "dangling parent link"
+        link.symlink_to(target)
+        result = self.run_cli("new", "MyApp", "--into", link, "--type", "test", "--yes")
+        self.assert_status(result, 0)
+        self.assertEqual(result.stdout, self.creation_stdout("MyApp", target))
+        self.assertEqual(result.stderr, "\n".join(self.advisory("MyApp")) + "\n")
+        self.assert_created(target / "MyApp")
+        self.assertTrue(link.is_symlink())
+
+    def test_blocked_parent_is_refused_before_later_faults(self):
+        # refuse-non-directory-parent-early design D1 and D3 item 9 (research R5, R-9.1, R-9.2, R-9.8): the
+        # head refusal comes before the faults that the choice of generator would raise later: an unknown
+        # type, --workflow without setup-openspeckit, and a workBenches directory with no registry.
+        extra, change, line, kept = self.blocked_parents()["the file"]
+        empty_workbenches = self.base / "empty workbenches"
+        empty_workbenches.mkdir()
+        self.env = self.question_env(None)
+        self.assert_absent_from_path(self.env, "setup-openspeckit")
+        runs = {"R-9.1": ("--type", "nomatch", "--yes"),
+                "R-9.2": ("--type", "test", "--workflow", "--yes"),
+                "R-9.8": ("--type", "test", "--yes", "--workbenches", empty_workbenches)}
+        for run, flags in runs.items():
+            with self.subTest(run=run):
+                before = sorted(self.base.rglob("*"))
+                result = self.run_cli("new", "MyApp", *extra, *flags)
+                self.assert_status(result, 2)
+                self.assertEqual(result.stdout, "")
+                self.assertEqual(result.stderr, REFUSED + head_refusal(line) + "\n")
+                self.assert_parent_file_unchanged(kept, before)
+
+    def test_earlier_refusals_keep_their_text_with_a_blocked_parent(self):
+        # refuse-non-directory-parent-early design D1 and D3 item 9 (research R5, R-9.3, R-9.4, R-9.7): the
+        # refusals that come before the parent is read keep their own text with a blocked parent.
+        extra, change, line, kept = self.blocked_parents()["the file"]
+        runs = {"R-9.3": ("MyApp", ("--org", "example", "--yes"), ORG_NEEDS_SHAPE),
+                "R-9.4": ("bad name", ("--type", "test", "--yes"), INVALID_NAME),
+                "R-9.7": ("MyApp", ("--family", "1bad", "--yes"), FAMILY_NOT_A_FOLDER_NAME)}
+        for run, (name, flags, refusal) in runs.items():
+            with self.subTest(run=run):
+                before = sorted(self.base.rglob("*"))
+                result = self.run_cli("new", name, *extra, *flags)
+                self.assert_status(result, 2)
+                self.assertEqual(result.stdout, "")
+                self.assertEqual(result.stderr, REFUSED + refusal + "\n")
+                self.assert_parent_file_unchanged(kept, before)
+
+    def test_shape_by_flag_keeps_its_parent_refusal_with_a_blocked_parent(self):
+        # refuse-non-directory-parent-early design D1 and D3 item 9 (research R5, R-9.5, R-9.6, R-9.5b,
+        # R-9.6b): a Triad chosen by flag keeps the refusal of its own branch for a parent that is not a
+        # directory, with and without --dry-run, for the file and for a path below it.
+        givens = self.blocked_parents()
+        shape = ("--shape", "--org", "example", "--visibility", "private")
+        runs = {"R-9.5": ("the file", ()), "R-9.6": ("the file", ("--dry-run",)),
+                "R-9.5b": ("below the file", ()), "R-9.6b": ("below the file", ("--dry-run",))}
+        for run, (label, flags) in runs.items():
+            with self.subTest(run=run):
+                extra, change, line, kept = givens[label]
+                before = sorted(self.base.rglob("*"))
+                result = self.run_cli("new", "MyApp", *extra, *shape, *flags)
+                self.assert_status(result, 2)
+                self.assertEqual(result.stdout, "")
+                self.assertEqual(result.stderr, REFUSED + SHAPE_NEEDS_EXISTING_PARENT + "\n")
+                self.assert_parent_file_unchanged(kept, before)
+
+    def test_unwritable_directory_child_passes_dry_run_and_fails_at_creation(self):
+        # refuse-non-directory-parent-early design D1, D3 item 10 and D6 (research R5, R-10.1, R-10.2): no
+        # permission is read. A missing child of a directory that cannot be written passes the dry run, and
+        # fails at creation with the raw error and without the head refusal's ending.
+        if not hasattr(os, "geteuid") or os.geteuid() == 0:
+            self.skipTest("this user can write to a directory of mode 555")
+        locked = self.base / "locked directory"
+        locked.mkdir()
+        self.addCleanup(locked.chmod, 0o755)
+        locked.chmod(0o555)
+        child = locked / "child"
+        plan = f"Create: {child / 'MyApp'}\n  " + shlex.join(["bash", str(self.generator), "MyApp", str(child)]) + "\n"
+        for run, flag in (("R-10.1", "--dry-run"), ("R-10.2", "--yes")):
+            with self.subTest(run=run):
+                before = sorted(self.base.rglob("*"))
+                result = self.run_cli("new", "MyApp", "--into", child, "--type", "test", flag)
+                self.assertEqual(result.stdout, plan)
+                if flag == "--dry-run":
+                    self.assert_status(result, 0)
+                    self.assertEqual(result.stderr, "")
+                else:
+                    self.assert_status(result, 2)
+                    self.assertEqual(result.stderr,
+                                     f"REFUSED: [Errno {errno.EACCES}] {os.strerror(errno.EACCES)}: '{child}'\n")
+                self.assertFalse(child.exists())
+                self.assertEqual(sorted(self.base.rglob("*")), before)
+
     def test_pty_symbolic_link_to_a_directory_names_no_obstacle(self):
         # fix-parent-obstacle-wording design D3: a symbolic link to a directory is a parent, and the
         # question names no obstacle, as in test_pty_no_known_obstacle_names_none.
