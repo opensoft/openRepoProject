@@ -110,7 +110,7 @@ block by a second diff, from this change's own block at its ratified head, and
 returns any change to this change's ratified words to Brett Heap.
 
 Citations follow `proposal.md`: the packet at `da33d92`; APO, CAS, PRS and
-`project:N` at main `961c405`, which main `e9d6711` holds unchanged for them
+`project:N` at main `961c405`, which main `15504f1` holds unchanged for them
 (L-15). [E] is cited on PR #19's `specs/project-command/spec.md` at `c462d87`
 (C-11). Change 2's requirements are cited by header under these labels: [B]
 `Overview bounds its work and reports what it omitted`, which this change
