@@ -151,7 +151,7 @@ the others from `main`'s deltas.
 
 A test goes in a row only when its name begins with its scenario's title, as
 rule 1 and T126 require (lead ruling R-98 (a) 2). Three of PR #19's scenarios
-have no test so named at `211e43d`, though tests cover them; each is a gap,
+have no test so named at `28db786`, though tests cover them; each is a gap,
 not a missing check (lead ruling R-166):
 
 - "Branch deletion refuses a branch it may not delete" (round (a)): by
@@ -333,8 +333,14 @@ writer's `c8e23cd`), in `tests/test_clean_evidence.py`
 and `test_clean_a_row_4c_exit_1_that_printed_adds_its_probes_to_the_estimate`; and, for row 4b (lead ruling R-336; writer's `b3f7e0b`),
 `test_clean_row_4b_reads_an_exit_1_by_what_it_printed`,
 `test_clean_a_row_4b_exit_1_that_printed_leaves_the_main_worktree_unreadable`
-and `test_clean_row_4b_reads_a_real_repository_s_unset_core_worktree_as_unset`.
-R-324 (R-324, ruled by Brett Heap, "R-324: yes", lead R-343; #19's round (n)
+and `test_clean_row_4b_reads_a_real_repository_s_unset_core_worktree_as_unset`;
+and, with no new test name, a subtest "the common directory's config is a
+directory" on real Git in each of
+`test_clean_row_4c_reads_a_real_repository_s_keys` and
+`test_clean_row_4b_reads_a_real_repository_s_unset_core_worktree_as_unset`
+(T030, T031; lane 3's W100 LOW-B, routed by the lead's R-344; writer's
+`2057c31`).
+R-324 (ruled by Brett Heap, "R-324: yes", lead R-343; #19's round (n)
 at `2250830`; writer's `e8dda2a`) changes seven tests, which expect the
 warning with `git worktree remove` and `git gc` named:
 `test_clean_the_ceiling_s_partial_removal_note_follows_the_git_file_and_the_entry`

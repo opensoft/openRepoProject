@@ -569,7 +569,7 @@ T033), when B, D, E and F are; H, guard (T034, T035), when T023 is, beside G
   `dfc2baa`, merged as `12c1821`) ends `remedy_inspect_cap` with the same
   warning, always, and adds `recommendation_stale_worktree_unread` and
   `recommendation_stale_locked_unread`. The same test pins each.
-  R-324 (R-324, ruled by Brett Heap, "R-324: yes", lead R-343; #19's round (n)
+  R-324 (ruled by Brett Heap, "R-324: yes", lead R-343; #19's round (n)
   at `2250830`; writer's `e8dda2a`) changes the nine `TEXT_FIXTURES` entries
   that carry a no-prune warning, the ones above, `partial_removal_note_unread`
   and `remedy_inspect_cap`, so that each also names `git worktree remove` and
@@ -1009,7 +1009,7 @@ T033), when B, D, E and F are; H, guard (T034, T035), when T023 is, beside G
   `test_clean_row_4c_reads_a_real_repository_s_keys` (Git's own answers on the
   Git in use: a key not set exits 1 with nothing printed, which reads false,
   and a value that is not a boolean exits 128 with a fatal line, which reads
-  true);
+  true; and, in a subtest, "the common directory's config is a directory", where Git 2.43.0 and 2.36.6 exit 1 with only `warning:` lines and nothing on standard output, so that row 4c reads true, one child shown by a spy; lane 3's W100 LOW-B, routed by the lead's R-344; writer's `2057c31`);
   `test_clean_a_row_4c_exit_1_that_printed_gives_each_linked_row_its_work_tree_probe`
   (a fake Git answering row 4c with exit 1: nothing printed probes no linked
   row's work tree, anything printed probes each, and the plan stays complete);
@@ -1033,7 +1033,7 @@ T033), when B, D, E and F are; H, guard (T034, T035), when T023 is, beside G
   `test_clean_row_4b_reads_a_real_repository_s_unset_core_worktree_as_unset`
   (Git's own answer on the Git in use: an unset `core.worktree` exits 1 with
   nothing printed, which reads as the key unset, and a set value reads as
-  before, a relative one against the git directory).
+  before, a relative one against the git directory; and, in a subtest, "the common directory's config is a directory", where Git exits 1 with only `warning:` lines and nothing on standard output, so that `main_worktree()`, which the subtest calls directly, since a whole `clean` run stops earlier there, Git exiting 128 for `rev-parse` and `worktree list`, returns `(None, "unreadable")`, one child shown by a spy; lane 3's W100 LOW-B, routed by the lead's R-344; writer's `2057c31`). A mutant `config_key_unset()` that reads any exit 1 as unset fails both subtests.
   Rule 1 would give PR #19's two scenario tests the prefix `test_status_`;
   they take `test_clean_`, which the floor job's `-k` selects as well. Since
   R-116, `test_status_a_git_that_floods_standard_error` reads its row
@@ -1058,7 +1058,7 @@ T033), when B, D, E and F are; H, guard (T034, T035), when T023 is, beside G
   other failure of that read, an exit 1 that printed anything included, gives
   `(None, "unreadable")` (R-336, as R-332 for row 4c; #19's design D7, "an
   unset value is false and any other failure counts as true"; writer's
-  `b3f7e0b`). It returns that path, or `(None, cause)` where none is
+  `b3f7e0b`; the two real-Git subtests of T030, lane 3's W100 LOW-B, routed by the lead's R-344; writer's `2057c31`, pin that a common directory whose `config` is a directory, where Git exits 1 with only `warning:` lines, reads true for row 4c and `(None, "unreadable")` for row 4b). It returns that path, or `(None, cause)` where none is
   named, and never raises or refuses (FR-055; analyze H4, lead rulings R-42
   and R-51), so that a separate-git-dir checkout, which `clean` handles today
   with exit 0, is not refused between T033 and T107;
@@ -2267,7 +2267,7 @@ carrying the reason the gate order gives.
   `stale-worktree` group takes the first as its next step (the locked row is
   excluded as `locked-worktree`, gate 4); the exit codes and every other line
   are as before, nothing is removed, and with the path readable again the
-  plain texts print. Since R-324 (R-324, ruled by Brett Heap, "R-324: yes",
+  plain texts print. Since R-324 (ruled by Brett Heap, "R-324: yes",
   lead R-343; #19's round (n) at `2250830`; writer's `e8dda2a`) the four tests
   of this round read the warnings with `git worktree remove` and `git gc`
   named beside `git worktree prune`:
@@ -3435,7 +3435,7 @@ lead ruling R-83).
   is prunable and `git worktree remove --force` removes the worktree, the
   branch kept; since lane 3's W90 M-1 (lead ruling R-329) a rescan whose lstat of
   the target's own path failed gives the same note, which T091's table pins).
-  Since R-324 (R-324, ruled by Brett Heap, "R-324: yes", lead R-343; #19's
+  Since R-324 (ruled by Brett Heap, "R-324: yes", lead R-343; #19's
   round (n) at `2250830`; writer's `e8dda2a`) the note's warning also names
   `git worktree remove` and `git gc`, and this test's literal expects it.
   — files: `tests/test_clean_result.py`
@@ -3525,7 +3525,7 @@ lead ruling R-83).
   of the entry, the other three, the rows "the path lstat failed"; the note prints first and once; a target that is a plain dict, which
   carries no `.git` read, takes the prune note; a report row's note is
   `partial_removal_note()`'s and keeps its text).
-  R-324 (R-324, ruled by Brett Heap, "R-324: yes", lead R-343; #19's round (n)
+  R-324 (ruled by Brett Heap, "R-324: yes", lead R-343; #19's round (n)
   at `2250830`; writer's `e8dda2a`) has the unread note's warning also name
   `git worktree remove` and `git gc`, and this test's literal expects it.
   — files: `tests/test_clean_stop.py`
