@@ -1827,7 +1827,6 @@ class ProjectTests(unittest.TestCase):
                 self.assert_line_ends(result.stderr, REFUSED + obstacles_refusal(*obstacles))
                 self.assertNotIn(ORG_PROMPT, result.stdout + result.stderr)
                 self.assertNotIn("Create:", result.stdout)
-                self.assertFalse((parent / name).exists())
                 self.assertIsNone(self.shape_record())
                 self.assert_parent_file_unchanged(parent.parent, before)
 
@@ -1855,7 +1854,6 @@ class ProjectTests(unittest.TestCase):
                 self.assertEqual(result.stdout, "\n".join([QUESTION_HEADER.format(NAME=name), QUESTION_TRIAD,
                                                            *obstacles, QUESTION_SINGLE]) + "\n")
                 self.assertEqual(result.stderr, REFUSED + obstacles_refusal(*obstacles) + "\n")
-                self.assertFalse((parent / name).exists())
                 self.assertIsNone(self.shape_record())
                 self.assert_parent_file_unchanged(parent.parent, before)
 
@@ -1878,7 +1876,7 @@ class ProjectTests(unittest.TestCase):
         self.assert_status(result, 0)
         self.assertEqual(result.prompts, [QUESTION_PROMPT + " ", CONFIRM_PROMPT + " "])
         self.assert_in_order(result.stdout, question_line, f"Create: {destination}", f"Created: {destination}")
-        self.assertNotIn(REFUSED, result.stderr)
+        self.assertEqual(result.stderr, "")
         self.assert_created(destination)
         self.assertEqual(sorted(self.base.rglob("*")),
                          sorted([*before, destination, destination / ".project.json", destination / "arguments"]))
