@@ -524,7 +524,7 @@ phase.
 
 **Purpose**: The read, the head refusal, and the README texts.
 
-- [ ] T014 [O] [Q2] After T013 (the red-first checkpoint, seen as planned), in
+- [X] T014 [O] [Q2] After T013 (the red-first checkpoint, seen as planned), in
   `project` (plan slice I1; D1; FR-001 to FR-011): (1) insert
   `parent_case(parent)` and then `blocked_parent_sentence(parent, kind, path)`
   after `:234` (the second blank line after `VISIBILITIES`, `:232`), each
@@ -589,7 +589,7 @@ each task's output. T016 first, then T017; T018 and T019 after T016, one at a
 time; T020 to T027 after T017, in any order. T028 (Phase 5) follows. The hand
 walk and the adversarial review are lane steps 1 and 2, not tasks.
 
-- [ ] T016 [S] [Q2] Run the full suite (plan slice V1), in the foreground, with check `suite`:
+- [X] T016 [S] [Q2] Run the full suite (plan slice V1), in the foreground, with check `suite`:
   once with the default `PY=python3` (3.12.3) and once with `PY` a 3.10
   interpreter (the check links PyYAML in when it lacks it); both must give
   `Ran N0+15 tests`, `OK`, `N0` measured at the merge base. A 3.10 run without
@@ -597,7 +597,7 @@ walk and the adversarial review are lane steps 1 and 2, not tasks.
   quickstart.md "Run the tests" names (SC-006).
   -- files: (none)
   -- verify: `bash specs/006-refuse-non-directory-parent-early/qs.sh suite ADDED=15 && bash specs/006-refuse-non-directory-parent-early/qs.sh suite ADDED=15 PY="$(uv python find 3.10)"`
-- [ ] T017 [S] [Q5] Make G2 (plan slice G2) of plan.md "G1 and G2 exact text" in
+- [X] T017 [S] [Q5] Make G2 (plan slice G2) of plan.md "G1 and G2 exact text" in
   `openspec/changes/refuse-non-directory-parent-early/tasks.md`: line 21's
   `- [ ] 2.2` becomes `- [x] 2.2`, the rest of the line byte for byte, then one
   space and the "Met:" sentence with `G1SHA` and `FIRSTSHA` replaced by the
@@ -609,13 +609,13 @@ walk and the adversarial review are lane steps 1 and 2, not tasks.
   commit.
   -- files: `openspec/changes/refuse-non-directory-parent-early/tasks.md`
   -- verify: `bash specs/006-refuse-non-directory-parent-early/qs.sh governance STAGE=g2`
-- [ ] T018 [S] [Q1] [Q2] [Q3] [Q4] Record red first for the pull request (plan
+- [X] T018 [S] [Q1] [Q2] [Q3] [Q4] Record red first for the pull request (plan
   slice V2; FR-014): with the realized tests and `project` taken from the
   merge base, check `red-first` over its whole list prints `checkpoint as
   planned`, as at the Phase 2 checkpoint. Keep its output.
   -- files: (none)
   -- verify: `bash specs/006-refuse-non-directory-parent-early/qs.sh red-first`
-- [ ] T019 [S] Run the mutation checks of quickstart.md "Mutation checks" (plan
+- [X] T019 [S] Run the mutation checks of quickstart.md "Mutation checks" (plan
   slice V3) in scratch copies only, never in the worktree and never
   committed. The mutants live in one fixed directory outside every repository,
   `006-mutants` in the temporary directory (the verify computes it as the
@@ -632,7 +632,7 @@ walk and the adversarial review are lane steps 1 and 2, not tasks.
   being caught.
   -- files: (none)
   -- verify: `T=$(dirname "$(mktemp -u)")/006-mutants && test -s "$T/M1/project" && test -s "$T/M2/project" && test -s "$T/M3/project" && test -s "$T/M4a/project" && test -s "$T/M4b/project" && python3 -I -c 'import ast,sys;[ast.parse(open(p).read()) for p in sys.argv[1:]]' "$T/M1/project" "$T/M2/project" "$T/M3/project" "$T/M4a/project" "$T/M4b/project" && bash specs/006-refuse-non-directory-parent-early/qs.sh red-first MUTANT="$T/M1/project" RF_MUST_FAIL="test_inproc_parent_repaired_while_the_question_waits_is_created test_inproc_parent_broken_while_the_question_waits_is_refused" && bash specs/006-refuse-non-directory-parent-early/qs.sh red-first MUTANT="$T/M2/project" RF_MUST_FAIL="test_blocked_parent_is_refused_before_later_faults test_pty_single_answer_with_a_blocked_parent_is_refused_at_once" && bash specs/006-refuse-non-directory-parent-early/qs.sh red-first MUTANT="$T/M3/project" RF_MUST_FAIL="test_inproc_parent_repaired_while_the_question_waits_is_created test_earlier_refusals_keep_their_text_with_a_blocked_parent test_shape_by_flag_keeps_its_parent_refusal_with_a_blocked_parent" && { bash specs/006-refuse-non-directory-parent-early/qs.sh ast-project PROJECT="$T/M4a/project"; test $? -eq 1; } && { bash specs/006-refuse-non-directory-parent-early/qs.sh ast-project PROJECT="$T/M4b/project"; test $? -eq 1; }`
-- [ ] T020 [P] [S] [Q5] Check that every added line is ASCII (plan slice V4; FR-013; SC-010),
+- [X] T020 [P] [S] [Q5] Check that every added line is ASCII (plan slice V4; FR-013; SC-010),
   check `ascii-added`: the `+` lines of the diff from the merge base over
   `project`, `tests/test_project.py`, `README.md`, this feature's directory
   and `[Q5]` the change's `tasks.md`. The whole files are not checked:
@@ -640,14 +640,14 @@ walk and the adversarial review are lane steps 1 and 2, not tasks.
   and the test module one at `:622` (archived N4).
   -- files: (none)
   -- verify: `bash specs/006-refuse-non-directory-parent-early/qs.sh ascii-added`
-- [ ] T021 [P] [S] Check the fixed text (plan slice V4), check `fixed-text`, both parts: the
+- [X] T021 [P] [S] Check the fixed text (plan slice V4), check `fixed-text`, both parts: the
   fixtures equal `design.md:136-138`, `:147` and `:155-156` character for
   character, `HEAD_REFUSAL_END` is its own literal, and the README holds
   `design.md:169`, `:177`, `:184` and `:190` once each (D2; FR-005, FR-006,
   FR-012, FR-014).
   -- files: (none)
   -- verify: `bash specs/006-refuse-non-directory-parent-early/qs.sh fixed-text`
-- [ ] T022 [P] [US6] [S] Check the README (plan slice V4), check `readme-texts`
+- [X] T022 [P] [US6] [S] Check the README (plan slice V4), check `readme-texts`
   (`grep -oF ... | wc -l` on the lines joined by single spaces, never
   `grep -c`): each of the four fixed texts once, edit 4 as "Existing
   destinations refuse. " followed by it, lane 4's phrase once, each replaced
@@ -655,7 +655,7 @@ walk and the adversarial review are lane steps 1 and 2, not tasks.
   check supersedes feature 003's README check.
   -- files: (none)
   -- verify: `bash specs/006-refuse-non-directory-parent-early/qs.sh readme-texts`
-- [ ] T023 [P] [S] [Q5] Check the files changed (plan slice V5; FR-016 as the
+- [X] T023 [P] [S] [Q5] Check the files changed (plan slice V5; FR-016 as the
   Clarifications narrow it), check `files-changed`: since the merge base the
   branch changes only `project`, `tests/test_project.py`, `README.md`, `[Q5]`
   the change's `tasks.md`, and files under
@@ -668,7 +668,7 @@ walk and the adversarial review are lane steps 1 and 2, not tasks.
   planning commit.
   -- files: (none)
   -- verify: `bash specs/006-refuse-non-directory-parent-early/qs.sh files-changed`
-- [ ] T024 [P] [S] Check `project`'s structure (plan slice V5), check `ast-project` (D1, D6;
+- [X] T024 [P] [S] Check `project`'s structure (plan slice V5), check `ast-project` (D1, D6;
   FR-002, FR-011): only `parent_case()` and `blocked_parent_sentence()` are
   new, just above `known_obstacles()` and above `discover()`; only
   `known_obstacles()` and `new()` change; `new()` gains one block, between the
@@ -679,21 +679,21 @@ walk and the adversarial review are lane steps 1 and 2, not tasks.
   refusal; lane 4's design D7, plan D6).
   -- files: (none)
   -- verify: `bash specs/006-refuse-non-directory-parent-early/qs.sh ast-project`
-- [ ] T025 [P] [S] [Q2] Check the tests' structure (plan slice V5), check `ast-tests` (FR-014;
+- [X] T025 [P] [S] [Q2] Check the tests' structure (plan slice V5), check `ast-tests` (FR-014;
   SC-006): no existing module-level statement or member removed or changed
   but the rewritten test; `known_obstacle_cases()` and
   `test_pty_dry_run_with_an_obstacle_refuses` gained lines only; exactly 15 new
   test methods (`NEW_TESTS`, default 15).
   -- files: (none)
   -- verify: `bash specs/006-refuse-non-directory-parent-early/qs.sh ast-tests`
-- [ ] T026 [P] [S] Validate OpenSpec (plan slice V6), check `openspec`, with
+- [X] T026 [P] [S] Validate OpenSpec (plan slice V6), check `openspec`, with
   `/usr/bin/openspec` (1.6.0) or the openspec in py-bench, never the host's
   npm-global 1.2.0: the change is valid strictly, and `--all --strict` prints
   `Totals: N passed, 0 failed` (9 of 9 at `d47e8a4`). Without network, 1.6.0
   first prints a harmless telemetry error.
   -- files: (none)
   -- verify: `bash specs/006-refuse-non-directory-parent-early/qs.sh openspec`
-- [ ] T027 [P] [S] Run the merge check against PR #33's head as it is when the
+- [X] T027 [P] [S] Run the merge check against PR #33's head as it is when the
   task runs, check `merge-check` (plan.md "Other lanes", step 1; research R9):
   `project`, `README.md` and `tests/test_project.py` merge cleanly with that
   head and the merged `project` parses. Read-only for the worktree, the branch
@@ -713,7 +713,7 @@ walk and the adversarial review are lane steps 1 and 2, not tasks.
 
 ## Phase 5: Traceability (D4; FR-015)
 
-- [ ] T028 [S] [Q2] Complete `specs/006-refuse-non-directory-parent-early/traceability.md`
+- [X] T028 [S] [Q2] Complete `specs/006-refuse-non-directory-parent-early/traceability.md`
   (plan slice V7): replace each `pending (T028)` cell with the tests plan.md's
   "Coverage map" plans for that scenario, by method name (N1 to N15 as plan.md
   D3 names them; "the rewritten test" is
