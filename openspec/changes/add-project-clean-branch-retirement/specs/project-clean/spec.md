@@ -1094,14 +1094,15 @@ order:
   `Retired` line would print, for a null `stage`, which never gets a `Kept`
   line;
 - `Kept BRANCH (REASON)` and its next step: for `head-not-merge-target`, `;
-  next: check out MERGE_TARGET in the main worktree; its reflog is not proven
-  merged into MERGE_TARGET; inspect git -C ROOT reflog show refs/heads/BRANCH
-  before retrying: RETRY`, or, when the plan's registry listing shows
-  MERGE_TARGET checked out in a linked worktree at PATH2, where Git refuses
-  that checkout, `; next: MERGE_TARGET is checked out at PATH2, so check out
-  its tip TARGET_SHA detached in the main worktree; its reflog is not proven
-  merged into MERGE_TARGET; inspect git -C ROOT reflog show refs/heads/BRANCH
-  before retrying: RETRY`; for `git-refused` when the branch's upstream
+  next: check out MERGE_TARGET in the main worktree; BRANCH's reflog was
+  proven merged into MERGE_TARGET only at this run's plan; inspect git -C ROOT
+  reflog show refs/heads/BRANCH before retrying: RETRY`, or, when the plan's
+  registry listing shows MERGE_TARGET checked out in a linked worktree at
+  PATH2, where Git refuses that checkout, `; next: MERGE_TARGET is checked out
+  at PATH2, so check out its tip TARGET_SHA detached in the main worktree;
+  BRANCH's reflog was proven merged into MERGE_TARGET only at this run's plan;
+  inspect git -C ROOT reflog show refs/heads/BRANCH before retrying: RETRY`;
+  for `git-refused` when the branch's upstream
   remote-tracking ref is absent, `; if a rebase or bisect in another worktree
   holds BRANCH, wait for it to end, and then remove that worktree or, for the
   main worktree, which Git refuses to remove, switch it off BRANCH, by
@@ -1114,9 +1115,10 @@ order:
   worktree first`, which prints no retry, or, when PATH2 is the main
   worktree, which Git refuses to remove, `; next: BRANCH is checked out at
   PATH2, the main worktree; switch it off BRANCH, by checking out another
-  branch there, such as MERGE_TARGET, or by detaching it; its reflog is not
-  proven merged into MERGE_TARGET; inspect git -C ROOT reflog show
-  refs/heads/BRANCH before retrying: RETRY`; for `branch-shared`, printed only
+  branch there, such as MERGE_TARGET, or by detaching it; BRANCH's reflog was
+  proven merged into MERGE_TARGET only at this run's plan; inspect git -C ROOT
+  reflog show refs/heads/BRANCH before retrying: RETRY`; for `branch-shared`,
+  printed only
   when the run did not remove the branch's last holder PATH2, a selected row
   and so never the main worktree, the first of those next steps; for
   `branch-changed`, `; now at SHA2; its reflog is not proven merged into
@@ -1148,9 +1150,11 @@ order:
   `branch-changed` lines name that inspection for the same reason, their own
   steps ending in RETRY for a branch the stage did not re-prove: a plan's keep
   spawns no stage, and a stage that keeps a branch with `branch-in-use` or
-  `branch-changed` stops before its re-proof, or never starts; the
-  `git-refused` lines keep the bare retry after their own steps, their branch
-  child having run after the re-proof proved the reflog.
+  `branch-changed` stops before its re-proof, or never starts; the first two
+  say that only this run's plan proved BRANCH's reflog, since the plan's keep
+  order tests `reflog-unmerged` first, a proof that the retry does not make
+  again; the `git-refused` lines keep the bare retry after their own steps,
+  their branch child having run after the re-proof proved the reflog.
 
 RETRY is `project clean ROOT --apply --action delete-branch --branch
 BRANCH`, or `--branch=BRANCH` for a name that begins with `-`, the explicit
@@ -1312,10 +1316,11 @@ N; branches kept: `; and then the residual-window line.
   `not-attempted` with `branch-in-use`, the result prints `Kept <branch>
   (branch-in-use); next: <branch> is checked out at <holder path>, the main
   worktree; switch it off <branch>, by checking out another branch there, such
-  as <merge target>, or by detaching it; its reflog is not proven merged into
-  <merge target>; inspect git -C <root> reflog show refs/heads/<branch> before
-  retrying: project clean <root> --apply --action delete-branch --branch
-  <branch>`, the holder and the branch remain, and the exit status is 0
+  as <merge target>, or by detaching it; <branch>'s reflog was proven merged
+  into <merge target> only at this run's plan; inspect git -C <root> reflog
+  show refs/heads/<branch> before retrying: project clean <root> --apply
+  --action delete-branch --branch <branch>`, the holder and the branch remain,
+  and the exit status is 0
 - **AND** when instead a test hook checks the branch out in a new worktree
   after the second removal and before its rescan, the second target's
   `branch_retirement` is `retained` with `branch-in-use`, no branch child
@@ -1342,20 +1347,20 @@ N; branches kept: `; and then the residual-window line.
   `branch_retirement` is `not-attempted` with `head-not-merge-target`, the
   second's branch is retired, and the exit status is 0
 - **AND** the result prints `Kept <branch> (head-not-merge-target); next: check
-  out <merge target> in the main worktree; its reflog is not proven merged
-  into <merge target>; inspect git -C <root> reflog show refs/heads/<branch>
-  before retrying: project clean <root> --apply --action delete-branch
-  --branch <branch>`, and running the checkout and then the retry deletes the
-  branch with exit 0
+  out <merge target> in the main worktree; <branch>'s reflog was proven merged
+  into <merge target> only at this run's plan; inspect git -C <root> reflog
+  show refs/heads/<branch> before retrying: project clean <root> --apply
+  --action delete-branch --branch <branch>`, and running the checkout and then
+  the retry deletes the branch with exit 0
 - **AND** when the merge target is instead checked out in a linked worktree at
   <holder path>, so that Git refuses to check it out in the main worktree, the
   result prints `Kept <branch> (head-not-merge-target); next: <merge target> is
   checked out at <holder path>, so check out its tip <merge target SHA>
-  detached in the main worktree; its reflog is not proven merged into <merge
-  target>; inspect git -C <root> reflog show refs/heads/<branch> before
-  retrying: project clean <root> --apply --action delete-branch --branch
-  <branch>`, and running the checkout and then the retry deletes the branch
-  with exit 0
+  detached in the main worktree; <branch>'s reflog was proven merged into
+  <merge target> only at this run's plan; inspect git -C <root> reflog show
+  refs/heads/<branch> before retrying: project clean <root> --apply --action
+  delete-branch --branch <branch>`, and running the checkout and then the
+  retry deletes the branch with exit 0
 - **AND** with the main worktree on the merge target, the same rows are both
   retired and the exit status is 0
 
