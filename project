@@ -3838,7 +3838,12 @@ def check_plan(plan, run):
     2. single, `worktree-not-found`, which build_plan() recorded;
     3. single, P's own incompleteness: P names no single row (several
        matched, or one not decided), or its row is inspection-error or
-       unprobed: inspection-incomplete;
+       unprobed: inspection-incomplete, its remedy incomplete_refusal()'s
+       for P's rows; but `deadline-exceeded`, with the deadline's remedy,
+       where P's row is deadline_stopped(), the rule plan_completeness()
+       gives a batch row by, so that single mode shares the batch's refusal
+       codes (#19 at b3228bb; Brett Heap's ruling "O-1: deadline-exceeded",
+       lead rulings R-263 and R-283);
     4. all-safe, an --expect-plan digest that differs (`plan-digest-mismatch`);
     5. all-safe, a complete plan selecting nothing: exit 0, no question;
     6. single, P excluded by a gate (`target-excluded`, target_refusal());
@@ -3873,7 +3878,8 @@ def check_plan(plan, run):
     if single:
         target = plan.target
         if target is None or row_incomplete(target):
-            return refuse(plan, incomplete_refusal(plan, "inspection-incomplete", rows=target_rows), run)
+            code = "deadline-exceeded" if target is not None and deadline_stopped(target) else "inspection-incomplete"
+            return refuse(plan, incomplete_refusal(plan, code, rows=target_rows), run)
         reason = next((reason for row, reason in plan.excluded if row is target), None)
         if reason is not None:
             return refuse(plan, target_refusal(target, reason), run)
@@ -4144,7 +4150,8 @@ def deadline_stopped(row):
     (T099; lead rulings R-67 (a), R-69 and R-80, P-1): `inspection-error` or
     carrying the unprobed marker, and every row error `deadline-exceeded`.
     Such a row is `deadline-exceeded`'s, never `inspection-incomplete`'s, and
-    incomplete_refusal() does not count it.
+    incomplete_refusal() does not count it. check_plan()'s step 3 reads the
+    same rule for P's own row in mode single (lead ruling R-283).
 
     The unprobed arm is gate 7's alone (#19's round (h) at b3228bb, pcl:713-718
     and design D10; Brett Heap's ruling "O-1: deadline-exceeded", lead rulings
@@ -4433,7 +4440,8 @@ def build_plan(repo, run):
     work deadline reached among the other rows leaves P's row decided and
     the plan complete beside the note `deadline-exceeded`, while one that
     cuts P's own read leaves P's row incomplete, which check_plan() refuses
-    as inspection-incomplete. Another row's
+    as deadline-exceeded where the row is deadline_stopped(), as a one-item
+    batch's plan is, and as inspection-incomplete otherwise. Another row's
     inspection-error or unprobed marker, the rows past the cap, and the rows
     the work deadline stopped are its non-blocking notes
     `inspection-incomplete`, `inspect-cap` and `deadline-exceeded`, a row
