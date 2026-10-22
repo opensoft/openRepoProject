@@ -74,10 +74,10 @@ duplicate them, and nothing here is an implementation step.
   round (h), lane 2's open points after writer E under the lead's R-258 to
   R-260, with lane 5's RI-3 and O-1, lane 3's W64 read of rounds (g2) and (g3),
   and Brett Heap's ruling of 2026-10-22, "F-2: yes; F-1: prune-then-delete; O-1:
-  deadline-exceeded" (R-263), in two commits (the commits titled 'Amend change
-  1: round (h) text, Brett Heap's F-2, F-1 and O-1, and lane 2's open points
-  (R-258 to R-263)' and 'Amend change 1: round (h) records and lane 3's W64 LOWs
-  (R-263)'); verified by the table "Questions Resolved by the Alignment Review"
+  deadline-exceeded" (R-263) (the commits whose titles begin 'Amend change 1:
+  round (h)', the first titled 'Amend change 1: round (h) text, Brett Heap's
+  F-2, F-1 and O-1, and lane 2's open points (R-258 to R-263)'); verified by the
+  table "Questions Resolved by the Alignment Review"
   in `proposal.md` and the later-rulings list under it, which name the section
   each ruling edited.
 - [x] 1.3 Council resolved: every concern is VALID, none dismissed, the verdicts
