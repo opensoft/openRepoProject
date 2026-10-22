@@ -221,13 +221,13 @@ message}` objects, an `inspect-cap` note adding `rows`.
 | "D14 completeness line" | report: `Report: complete` or `Report: incomplete (CODES)` |
 | "D14 selection line" | report at 128 rows or fewer: `--all-safe would select N`; above: `--all-safe would be incomplete (inspect-cap)` |
 | "D18 preview layout" | `Selected (N):` with one `  remove PATH [BRANCH]` per row; `Excluded (M):` with one `  REASON (K): NEXT STEP` group per reason and `    PATH [BRANCH]` rows; an `ignored-local-files` row adds its count and first sample |
-| "D18 deferral line", "D18 non-drain line" | the `deferred-target-cap` group; under it, when a gate after the cap excludes all 16 rows the cap took, `  these deferred rows will not drain while the 16 rows ahead of them are REASONS; review those worktrees, then remove them yourself`, REASONS their reasons, each once, in gate order, joined by `, `, so that it reads as before when all 16 are `contains-submodule` (`AFTER_CAP_REASONS`; D18 at draft PR #19 `2e819ad`; lead ruling R-146, lane 3's W21 L-f; writer G's `310f97d`) |
+| "D18 deferral line", "D18 non-drain line" | the `deferred-target-cap` group; under it, when a gate after the cap excludes all 16 rows the cap took, `  these deferred rows will not drain while the 16 rows ahead of them are REASONS; review those worktrees, then remove them yourself (--force for any that holds a submodule)`, REASONS their reasons, each once, in gate order, joined by `, `, so that it reads as before, bar its `--force` clause, when all 16 are `contains-submodule` (`AFTER_CAP_REASONS`; D18 at draft PR #19 `2e819ad`; lead ruling R-146, lane 3's W21 L-f; writer G's `310f97d`; the `--force` clause is lane 3's W59 G-4, #19's round (g3) at `6bf9f77`, lead ruling R-259, writer E's `02aa71d`) |
 | "D18 next steps" | the next step for each reason |
 | "D18 residual-window line" | the confirmation and the result |
 | "D18 empty line" | `No eligible worktrees` |
 | "D18 question", "D18 wait line" | above; the wait line once, at the first signal or deadline during a removal (D9) |
 | "D18 success line", "D18 stop block" | the result; the stop block names the retained branches and the residual window |
-| "D18 partial-removal note" | in three places (lead ruling R-79 P-11): in the report, on the line right after the row's recommendation line, two spaces in; in the preview, right after the row of the `dirty` group, six spaces in; in the result, first, before the stop block, one line per `partially-removed` target in canonical order, its path in the command form |
+| "D18 partial-removal note" | in three places (lead ruling R-79 P-11): in the report, on the line right after the row's recommendation line, two spaces in; in the preview, right after the row of the `dirty` group, six spaces in; in the result, first, before the stop block, one line per `partially-removed` target in canonical order, its path in the command form; a locked row's note, in the report and the preview, is `Probable partial removal: inspect, unlock it, then git worktree remove --force PATH by hand.` (`partial_removal_note_locked`), since `git worktree remove --force` refuses a locked worktree, and the result keeps D18's form, since a locked row is excluded at gate 4 and is never a target (lane 3's W52 F-2; #19 at `4f1c0e0`; lead ruling R-248); it replaces ratified text, so it waits on Brett Heap's word, together with F-1, and it is in its own commit, `64ad453`, which reverts alone (lead ruling R-259) |
 | "D18 refusal messages", "D18 remedies" | `target-excluded` (the current-worktree and class messages kept), gates, and the plan-blocking remedies |
 
 Lines D18 leaves open are fixed here before tasks: the `Report:` and
@@ -297,6 +297,7 @@ code with no baseline message gets one here:
 | `plan-digest-mismatch` | `The fresh plan's digest DIGEST differs from --expect-plan EXPECTED; nothing was changed.` |
 | `confirmation-required` | `Standard input is not a terminal; pass --yes to apply this plan.` (the removal question; `confirm()` keeps its own) |
 | push, `remote-gone` | `Cannot push BRANCH; its upstream UPSTREAM was deleted (remote-gone); review it before it is republished.` |
+| delete-branch, a branch the main worktree holds | `Branch BRANCH is checked out in the main worktree; detach HEAD there, or check out NAME there, then retry.`, NAME the merge target; a branch that a linked worktree holds keeps the baseline's `Remove the linked worktree first; branch deletion is a separate action.` (`branch_held_by_main_worktree`; lane 3's W52 F-5, lane 5's RI-4; #19 at `4f1c0e0`; lead ruling R-248) |
 
 `repository-not-found`, `ambiguous-name`, `no-merge-target`,
 `worktree-not-found` and `cancelled` keep the baseline's messages, and
@@ -304,7 +305,9 @@ code with no baseline message gets one here:
 a twentieth code, since the delta, with LQ-15's `relative-config-path`,
 closes the nineteen: push, which prints
 no JSON, refuses with no code and the reason `remote-gone`, printing
-`REFUSED: ` and the message above (lead ruling R-45).
+`REFUSED: ` and the message above (lead ruling R-45); delete-branch, which
+prints no JSON either, refuses with no code, printing `REFUSED: ` and its
+message, the one above for a branch the main worktree holds included.
 
 Two of the baseline messages print the user's own argument raw in
 `discover()`: `Directory does not exist: PATH` and `No project found at
@@ -350,30 +353,65 @@ Brett Heap's ruling LQ-14 adds gate 11, `operation-in-progress`, after
 ruling LQ-13 gate 12, `worktree-only-commits`, after it, the last gate
 (design D21; draft PR #19 at `93de4bb` and `2b86a5f`; lead rulings R-102,
 R-124 and R-146; data-model.md, "Gate"), and with them three lines. Gate
-11's group's next step is #19's as round (b) words it at `4485678`, and
-`NEXT_STEPS` in `project` at `9ab996e` prints it: `a git am, merge, notes
-merge, cherry-pick, revert, rebase or bisect is, or may be, in progress
-there; finish or abort it (a squash merge that holds an autostash ends with
-git commit, --allow-empty where nothing is staged, or with git merge --quit,
-which keeps the edit in the stash list), then run again`. Round (a)'s `...
-ends only with git commit` was false, since `git merge --quit` and `git
-reset --hard` also end a held autostash, saving the edit to the stash list
-(lane 3's W26 F-1 and W32 M1; lead rulings R-171 and R-200; writer G's
-`c15ec02`, merged as `e2e423d`). Gate
-12's group's next step is D18's at `2e819ad`: `a commit is, or may be, held
-only by this worktree's HEAD reflog or refs/worktree; keep it on a branch or
-tag, or review, then git worktree remove yourself`. The residual-window line
-gains LQ-14's third item and LQ-13's fourth: `Not protected: ignored files
-created, index flags set, operations started or worktree-only commits made
-after the last check, and any change after Git's own check.` In the preview
-the `operation-in-progress` and `worktree-only-commits` groups follow
+11's group's next step is #19's as round (b) words it at `4485678`, with
+the tail of round (g3) at `6bf9f77`, and `NEXT_STEPS` in `project` at
+`d764c26` prints it: `a git am, merge, notes merge, cherry-pick, revert,
+rebase or bisect is, or may be, in progress there; finish or abort it (a
+squash merge that holds an autostash ends with git commit, --allow-empty
+where nothing is staged, or with git merge --quit, which keeps the edit in
+the stash list), or, where --abort fails for a marker with nothing in
+progress, its --quit, then run again`. Round (a)'s `... ends only with git
+commit` was false, since `git merge --quit` and `git reset --hard` also end
+a held autostash, saving the edit to the stash list (lane 3's W26 F-1 and
+W32 M1; lead rulings R-171 and R-200; writer G's `c15ec02`, merged as
+`e2e423d`); the tail from `or, where --abort fails` on is lane 3's W52 F-9,
+worded as W59's G-5 has it (lead rulings R-248 and R-259; writer E's
+`02aa71d`, merged as `d764c26`). Gate 12's group's next step is D18's at
+`2e819ad`: `a commit is, or may be, held only by this worktree's HEAD
+reflog or refs/worktree; keep it on a branch or tag, or review, then git
+worktree remove yourself`. The residual-window line gains LQ-14's third
+item and LQ-13's fourth: `Not protected: ignored files created, index flags
+set, operations started or worktree-only commits made after the last check,
+and any change after Git's own check.` In the preview the
+`operation-in-progress` and `worktree-only-commits` groups follow
 `hidden-local-state`, in gate order (`EXCLUDED_GROUP_ORDER`).
 `registration-mismatch`'s next step, as `NEXT_STEPS` in `project` at
-`9ab996e` prints it, names R-125's `config.worktree` remedy: `review, then
-git worktree repair or git worktree prune, unset core.worktree and core.bare
-in the worktree's config.worktree, or remove the row by hand` (LQ-11; D18 at
-draft PR #19 `2e819ad`; lead ruling R-125 L6; writer G's `f57ecf9`, merged
-as `e2e423d`).
+`d764c26` prints it, names R-125's `config.worktree` remedy and, since lane
+3's W52 F-3, the repository's config beside it, the two files from which
+Git applies the redirect: `review, then git worktree repair or git worktree
+prune, unset core.worktree and core.bare in the repository's config, or in
+that worktree's config.worktree, or remove the row by hand` (LQ-11; D18 at
+draft PR #19 `2e819ad`, F-3's wording at `4f1c0e0`; lead rulings R-125 L6
+and R-248; writer G's `f57ecf9`, merged as `e2e423d`; writer E's `02aa71d`,
+merged as `d764c26`).
+
+Note, 2026-10-22 (doc round 18; lead ruling R-259): writer E's `02aa71d`
+and `64ad453`, merged into 004 as `d764c26`, bring `project` to lane 3's
+W52 (F-2 to F-10) and W59 (G-4 and G-5), and their strings equal draft PR
+#19's at `6bf9f77`, round (g3), for F-2, F-3, F-5, F-7, F-8, F-9 (G-5) and
+G-4 (lead rulings R-248 and R-259). Beyond the texts quoted above,
+`NEXT_STEPS` now has, for gate 7's two reasons, a clause that Git needs
+where the worktree holds a submodule (F-7): `unstarted-branch` is `no
+commit was made on this branch here since it was created; review, then git
+worktree remove yourself (--force if it holds a submodule)` and
+`reflog-unavailable` is `the branch's reflog is missing, expired or
+undecidable; review, then git worktree remove yourself (--force if it holds
+a submodule)`; and, for gate 9, which a plain removal of a worktree that
+holds a submodule would fail, `contains-submodule` is `review, then git
+worktree remove --force yourself` (F-8). Two report recommendations are
+004's own texts, which #19 at `4f1c0e0` does not carry (F-6 and F-10): the
+main worktree's row, where the ladder says `merged-removable` or
+`merged-current`, reads `The main worktree is never removed by project
+clean.` (`recommendation_main_worktree`), since no removal of it can
+succeed, and a locked `stale-worktree` row reads `Review, unlock it, then
+prune stale worktree metadata manually.` (`recommendation_stale_locked`),
+since `git worktree prune` keeps a locked entry; the class is unchanged in
+both, and every other row keeps its class's baseline recommendation. The
+partial-removal note for a locked row (F-2) is in the "D18 partial-removal
+note" row above, and delete-branch's refusal (F-5) and its `--` (F-4) are
+in the code table and the spawn table below. F-2 replaces ratified text, so
+it waits on Brett Heap's word, together with F-1, and it is in its own
+commit, `64ad453`, which reverts alone.
 
 All new text is ASCII. A path prints verbatim in prose and shell-quoted in
 commands, unless it holds a code point of general category Cc, Cf, Zl or Zp
@@ -635,9 +673,20 @@ restores its mtime still shows by its ctime under a repository's
 | narrowed ref listing (revalidation) | row 6's format with patterns naming the merge target, the manifest's candidate, the branch `origin/HEAD` named, `main`, `master`, `refs/remotes/origin/HEAD`, and the selected branches and their upstreams | `root` |
 | remote URL | `-C ROOT remote get-url origin` | `root` (push; `handoff()` in `status` and `doctor`, for an inspected repository only, R-66 (c)) |
 | removal | `-c status.showUntrackedFiles=normal -c core.untrackedCache=false -c core.fsmonitor=false -c core.trustctime=true -c core.checkStat=default` + protocol pins + `-C ROOT worktree remove PATH` | `root`; PATH the registry's raw bytes, one argument, never `--force` |
-| branch deletion | protocol pins + `-C ROOT branch -d BRANCH` | `root`; a D2 handle run by the driver with no budget, its output relayed to `project`'s streams |
+| branch deletion | protocol pins + `-C ROOT branch -d -- BRANCH` | `root`; a D2 handle run by the driver with no budget, its output relayed to `project`'s streams; `--` ends the options, as push's has, so that a name that begins with `-` is a branch and never an option (lane 3's W52 F-4; lead ruling R-259; a departure, declared below the table) |
 | upstream mapping | `-C ROOT config --get-all branch.BRANCH.remote`, then `branch.BRANCH.merge` | push only, for a branch with a configured upstream, after the plan's checks; one value each, REMOTE not `.` and MERGE under `refs/heads/` and not that prefix alone, or `Unsupported upstream mapping for BRANCH: U` (lead ruling R-101 (e); lane 3's F2 H-2) |
 | push | `-C ROOT push -- REMOTE refs/heads/BRANCH:MERGE`, or, with no upstream, `push -u -- origin refs/heads/BRANCH:refs/heads/BRANCH` after `remote get-url origin` finds an `origin`; never a `+`, `--` ending the options; no protocol pins (lead ruling R-101 (e); lane 3's F2 H-1, M-1) | `root`; run by `execute()`, not the driver: `project`'s own streams, never read or capped; `project`'s process group, in the terminal's foreground when `project` is; never signalled, waited for, unbounded; yields no evidence |
+
+The `--` in branch deletion's vector is an accepted departure, declared
+here beside its row, since it changes a printed line: the `Cleanup action:`
+command line and the child's own words read `branch -d -- BRANCH`, where
+the baseline's read `branch -d BRANCH`, and neither the packet (BA:424-425)
+nor draft PR #19 states the `--`. Without it Git reads a branch named `-f`
+as an option (`fatal: branch name required`, exit 128, the branch kept), so
+the retry `--branch=-f` that #26 prints could never succeed; with it, as
+push's vector has it, `git branch -d -- -f` deletes the branch (lane 3's
+W52 F-4; lead ruling R-259; writer E's `02aa71d`, merged as `d764c26`).
+#19's round (h) is to add the `--` to #19's design.
 
 Row 6 cannot establish the upstream of a branch named `HEAD`
 (`refs/heads/HEAD`), because `git for-each-ref` reports the current branch's

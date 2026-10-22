@@ -81,7 +81,7 @@ names and types; the last six are added.
 | `ignored_files` | ignored records read; a lower bound when truncated | probe not run or failed, or stopped before any ignored record |
 | `current` | the working directory is inside it (baseline) | |
 | `merged_into_target` | head is in row 7's merged set | detached, or not established |
-| `classification`, `recommendation` | the ladder below; the recommendation keeps its baseline text | |
+| `classification`, `recommendation` | the ladder below; the recommendation keeps its baseline text, except for the main worktree's row where the ladder says `merged-removable` or `merged-current`, and a locked `stale-worktree` row (lane 3's W52 F-6 and F-10; lead ruling R-259) | |
 | `prunable` | `true` when the record says `prunable`, else absent | |
 | `locked` | from the registry's `locked` attribute | never null |
 | `ignored_files_truncated` | the probe stopped at a bound | probe not run or failed |
@@ -224,11 +224,19 @@ marked):
 | `merged-current` | merged and current |
 | `pushed-unmerged` | otherwise |
 
-The ladder is a pure function of the row (OQ-28). The partial-removal note is
-added after it by a separate function (D4): a present, registration-verified,
-`dirty` linked worktree whose status records read are all tracked-file
-deletions (`" D"`), judged on the records read when the stream stopped at its
-bound. It changes no class, rung or gate.
+The ladder is a pure function of the row (OQ-28). The partial-removal note
+is added after it by a separate function (D4): a present,
+registration-verified, `dirty` linked worktree whose status records read
+are all tracked-file deletions (`" D"`), judged on the records read when
+the stream stopped at its bound. It changes no class, rung or gate. The
+recommendation is the ladder's too, but in two cases `row_evidence()`
+replaces it after the ladder has run (lane 3's W52 F-6 and F-10; writer E's
+`02aa71d`, merged as `d764c26`; lead ruling R-259): the main worktree's
+row, where the ladder says `merged-removable` or `merged-current`, takes
+`The main worktree is never removed by project clean.`, since no removal of
+it can succeed, and a locked `stale-worktree` row takes `Review, unlock it,
+then prune stale worktree metadata manually.`, since `git worktree prune`
+keeps a locked entry. The class is unchanged in both.
 
 ### Gate (FR-020 to FR-023; D10, D12, D13)
 
