@@ -865,7 +865,7 @@ Lane: openRepoProject-4
   deadline-exceeded" (R-263), and #25 at its draft PR #29's heads `8276945` and
   `a529310`, after rounds C21 and C22, are recorded, with lane
   openRepoProject-3's W68 read of 3v and 3w (MEDIUM 1, LOW 5), by the lead's
-  commit 3x decisions. #19: every cite of its three specs, 154 rows, was
+  commit 3x decisions. #19: every cite of its three specs, 156 rows, was
   located by line alignment and re-checked against `6bf9f77`; round (h) changes
   the gate block's gate-7 sentence (O-1), the review-safety rule's bound (RI-3)
   and the redirected scenario's AND, every other cite keeping its text, at its
@@ -907,6 +907,38 @@ Lane: openRepoProject-4
   by script. Traceability is checked against A1's ratified deltas at `e4a30fc`
   (64 of 64). Re-validation: 16 of 16 items pass, with the checks of iteration
   2 re-run by script on the edited spec.
+- 2026-10-22, a twenty-eighth pass: #19's round (i) at `e0c91bb` (`4204eb9`,
+  `b60f6ac`, `1a4785e` and `e0c91bb`; the lead's R-271 and R-284) is recorded,
+  with lane openRepoProject-3's W77 read of 3x and 3y (LOW 4), by the lead's
+  commit 3z decisions. #19: every cite of its three specs, 192 rows, the 156 of
+  the round (h) record and the 36 places that record gives at `b3228bb`, was
+  located by line alignment and re-checked against `b3228bb`; round (i) edits
+  its `project-clean` spec alone, at three sites, each F-1's third text,
+  pending Brett Heap's confirmation (R-284), which reaches the overview through
+  neither [E] nor [G], and every other cite keeps its text, at its own lines or
+  new ones. Two of its design edits meet what the spec states, and both are
+  held: the refusal of a redirected main worktree, which D18 now words (R-271),
+  against FR-006's unaffected toplevel for a `core.worktree` naming another
+  directory, FR-006 and the round (i) record now stating the held condition,
+  which round (h)'s refusal at resolution already made; and D6's repeat of the
+  identity probe on any count of lines but two, which re-reads a submodule
+  candidate's probe, EC-032 holding it with the line-feed count. W77: the round
+  (h) record's 154 rows are 156, counting FR-007's two cites, `addd346`
+  :216-219 and `93f3194` :224-227, which 3x's list left out and which keep
+  their text at `6bf9f77`, `b3228bb` and `e0c91bb` (L1), and the twenty-sixth
+  pass is corrected for it; FR-034's lead clause says that A1 words [G]'s gate,
+  which O-1 no longer matches for a read that the deadline cuts (L2); the LQ-15
+  item's :266 is `cc000ea`'s line (L4); and L3, that 3x's commit message lists
+  #25's proposal :1252-1417, a range that no spec file cites and that is equal
+  at `a6080a7` and `a529310`, needs no change, the message being history.
+  CHK017 of `suggestions-gates.md` and CHK003 of `observability.md` record the
+  held conditions, their categories unchanged; CHK012 and CHK023 of
+  `suggestions-gates.md` and CHK020 of `integration.md` were re-read, no
+  category changing, and the totals below were recounted by script.
+  Traceability is checked against A1's ratified deltas at `e4a30fc` (64 of 64).
+  No pin moves, A1 stays cited at `e4a30fc`, and `clarify-questions.md` is
+  unchanged. Re-validation: 16 of 16 items pass, with the checks of iteration 2
+  re-run by script on the edited spec.
 - Items marked incomplete require spec updates before `/speckit-clarify` or `/speckit-plan`
 
 ## Cross-cutting Requirements Quality (no-argument `/speckit.checklist`, 2026-10-19)
@@ -1028,5 +1060,5 @@ notes (PN-1 to PN-18 but PN-4 and PN-11, withdrawn on 2026-10-21; PN-2 narrowed
 to an exception of any other kind in human mode and widened to a failed write's
 standard-error line), 0 new questions. Recounted by script on 2026-10-21, and
 again after the re-check, after the W6 read and after the fourth to twelfth
-passes of that day, and after the thirteenth to twenty-seventh passes on
+passes of that day, and after the thirteenth to twenty-eighth passes on
 2026-10-22.
