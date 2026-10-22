@@ -127,19 +127,19 @@ cover the scenario.
 | project-command (PR #19 draft) | Repository inspection requires Git 2.36 and shares one evidence model | The push child reaches its remote | US3 | `test_clean_the_push_child_reaches_its_remote`, `test_clean_the_push_child_reaches_its_remote_at_a_terminal` |
 | project-clean (PR #19 draft) | Clean reports local worktree state | A relative configuration path | US9 | `test_clean_a_relative_configuration_path`, `test_clean_a_relative_configuration_path_each_variable_and_spelling`, `test_clean_a_relative_configuration_path_not_valid_utf_8`, `test_clean_a_relative_configuration_path_empty_and_absolute_values_pass`, `test_clean_a_relative_configuration_path_before_the_version_check`, `test_clean_a_relative_configuration_path_after_the_argument_checks` |
 | project-clean (PR #19 draft) | Clean can explicitly push safe feature branches | Push refuses a branch it may not push | US3 | `test_clean_push_refuses_a_branch_it_may_not_push_no_unique_worktree` |
-| project-clean (PR #19 draft) | Clean can explicitly retire verified worktrees | Branch deletion refuses a branch it may not delete | US3 | none named after it at `b3f7e0b` (a gap; below) |
+| project-clean (PR #19 draft) | Clean can explicitly retire verified worktrees | Branch deletion refuses a branch it may not delete | US3 | none named after it at `0fbf00b` (a gap; below) |
 | project-clean (PR #19 draft) | Clean previews and applies a batch of eligible worktree removals in one repository | An operation in progress | US2 | `test_clean_an_operation_in_progress`, `test_clean_an_operation_in_progress_admin_directory_that_cannot_be_listed` |
 | project-clean (PR #19 draft) | Clean previews and applies a batch of eligible worktree removals in one repository | A squash merge that holds an autostash | US2 | `test_clean_a_squash_merge_that_holds_an_autostash` |
 | project-clean (PR #19 draft) | Clean previews and applies a batch of eligible worktree removals in one repository | A commit held only by the worktree | US2 | `test_clean_a_commit_held_only_by_the_worktree` |
 | project-clean-review-safety (PR #19 draft) | Cleanup revalidates destructive actions | A worktree-only commit made after the plan | US4 | `test_clean_a_worktree_only_commit_made_after_the_plan` |
 | project-clean-review-safety (PR #19 draft) | Cleanup revalidates destructive actions | An operation started after the plan | US4 | `test_clean_an_operation_started_after_the_plan` |
 | project-clean-review-safety (PR #19 draft) | Cleanup revalidates destructive actions | A check that fails at revalidation | US4 | `test_clean_a_check_that_fails_at_revalidation` |
-| project-clean-review-safety (PR #19 draft) | Cleanup revalidates destructive actions | A work-tree probe at revalidation | US4 | none named after it at `b3f7e0b` (a gap; below) |
+| project-clean-review-safety (PR #19 draft) | Cleanup revalidates destructive actions | A work-tree probe at revalidation | US4 | none named after it at `0fbf00b` (a gap; below) |
 | project-command (PR #19 draft) | Explicit maintenance | Owner tools see the repository the check inspected | US9 | `test_update_owner_tools_see_the_repository_the_check_inspected` |
 | project-command (PR #19 draft) | Repository inspection requires Git 2.36 and shares one evidence model | A linked worktree whose work tree is redirected | US9 | `test_clean_a_linked_worktree_whose_work_tree_is_redirected`, `test_clean_a_linked_worktree_whose_work_tree_is_redirected_after_the_plan` |
 | project-command (PR #19 draft) | Repository inspection requires Git 2.36 and shares one evidence model | A commondir that names another repository | US9 | `test_clean_a_commondir_that_names_another_repository` |
 | project-command (PR #19 draft) | Repository inspection requires Git 2.36 and shares one evidence model | A relative configuration path in status, doctor and update | US9 | `test_status_a_relative_configuration_path_in_status_doctor_and_update`, `test_status_a_relative_configuration_path_in_status_doctor_and_update_home_beginning_with_tilde` |
-| project-command (PR #19 draft) | Repository inspection requires Git 2.36 and shares one evidence model | An edit that keeps its size and restores its mtime | US9 | none named after it at `b3f7e0b` (a gap; below) |
+| project-command (PR #19 draft) | Repository inspection requires Git 2.36 and shares one evidence model | An edit that keeps its size and restores its mtime | US9 | none named after it at `0fbf00b` (a gap; below) |
 | project-command (PR #19 draft) | Repository inspection requires Git 2.36 and shares one evidence model | Trace targets are never written | US9 | `test_status_trace_targets_are_never_written`, `test_status_trace_targets_are_never_written_by_any_kind_of_child` |
 
 T126's writer fills the Tests cells from the merged tests (lead ruling R-32b).
@@ -151,7 +151,7 @@ the others from `main`'s deltas.
 
 A test goes in a row only when its name begins with its scenario's title, as
 rule 1 and T126 require (lead ruling R-98 (a) 2). Three of PR #19's scenarios
-have no test so named at `7149e08`, though tests cover them; each is a gap,
+have no test so named at `0fbf00b`, though tests cover them; each is a gap,
 not a missing check (lead ruling R-166):
 
 - "Branch deletion refuses a branch it may not delete" (round (a)): by
