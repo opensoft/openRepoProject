@@ -75,7 +75,14 @@ filesystem reads under PR #19's revalidation rule, R-208) and to D7 and
 Risks (the case where the plan read `extensions.worktreeConfig` as false on
 D14's measured basis, task 2.1's average per child corrected, the (d) cells,
 and option (c)'s work deadline, invocation deadline and run bound) (proposal,
-"Re-read and Codex Findings (round A12)").
+"Re-read and Codex Findings (round A12)"). Round A13 maps A-43 (lane
+openRepoProject-2's answer on R-208 for this change) and A-44 (lane
+openRepoProject-3's confirm read of round A12, `a11bde8`, its LOW-1 and LOW-2
+and its observations) to D4 (the re-proof's failed read and failed child, and
+the manifest sentence), D5 (the sub-record's reasons), D7 (the re-proof's row,
+the joint fit at the cache change's own 3.7 s, and the stage's re-read gate at
+45.02 s), D8 (the `Kept` line) and Risks (proposal, "Re-read and Codex
+Findings (round A13)").
 
 Citations follow `proposal.md`: packet files at `da33d92`, `CAS` for change 1,
 `APO` for change 2, `project:N` and `tests:N` at `961c405`, all unchanged at
@@ -431,18 +438,20 @@ first failure:
    read again as the `unstarted-branch` gate reads it, names no commit that
    one `rev-list --max-count=1 --stdin` child prints, given every named commit
    and then the one line `^<merge target SHA>`, as the plan's proof is given;
-   else `retained`, `reflog-unmerged`.
+   else `retained`, `reflog-unmerged`, or `state-changed` where its read or
+   child fails or runs past its own budget (below).
 
 A value the re-read's manifest read or listing cannot establish, a listing that
 fails or times out at its own 5 s budget or a manifest read that does, is
 `retained` with `state-changed`, as change 1's revalidation counts an
-unreadable value as a difference. A re-proof that cannot prove the reflog, its
-child failed or timed out at its own 5 s budget, or its read failed, timed out
-or found the reflog missing, empty or at its 64 KiB bound, or found what the
-gate's reading cannot decide, a line that does not parse or a last entry whose
-new object is not the head the re-read observed (ruling A-32, RA's LOW-6), is
-`retained` with `reflog-unmerged`, the reason a failed proof gives in the plan,
-so that no branch child runs on a reflog the stage has not proved. A re-read
+unreadable value as a difference; so is a re-proof that decides nothing,
+whether its child failed or timed out at its own 5 s budget or its read failed
+or ran past its own budget (rulings A-43 and A-44). A re-proof that decides the
+reflog cannot be proven, its read finding the reflog missing, empty or at its
+64 KiB bound, or finding what the gate's reading cannot decide, a line that
+does not parse or a last entry whose new object is not the head the re-read
+observed (ruling A-32, RA's LOW-6), is `retained` with `reflog-unmerged`, so
+that no branch child runs on a reflog the stage has not proved. A re-read
 whose budget the work deadline ended, its re-proof included, is `retained` with
 `deadline-exceeded`. A signal stops neither: as change 1's D15 has it for the
 apply phase, the handler only records, so a re-read or re-proof in flight runs
@@ -471,9 +480,15 @@ reason to `branch BRANCH: deadline-exceeded`; and the later targets from
 `not-attempted` with `batch-stopped` to `not-attempted` with
 `deadline-exceeded`, their `branch_retirement` staying `branch-retention-stop`.
 Its next step, `retry: RETRY`, and the stop block's `Next:` are unchanged. The
-re-proof keeps its own split: its own failure or timeout gives
-`reflog-unmerged`, and a budget the work deadline ends gives
-`deadline-exceeded`.
+re-proof follows the rule as well (rulings A-43 and A-44): its own failure or
+timeout, of its read or its child, gives `state-changed`, as a re-read
+listing's does, and a budget the work deadline ends gives `deadline-exceeded`.
+For a re-proof that fails or runs past its own budget this changes the reason
+from `reflog-unmerged` to `state-changed`, its line from `Kept BRANCH
+(reflog-unmerged)` to `Kept BRANCH (state-changed)`, its next step from the
+reflog inspection to `retry: RETRY`, and the stop block's reason to `branch
+BRANCH: state-changed`; the branch remains and the exit status stays 2, by
+D6's row 4.
 
 The stage makes two filesystem reads, each checked against that rule (ruling
 A-42; lane openRepoProject-3's W40, its observation on R-208). The re-read's
@@ -483,28 +498,47 @@ a difference, `state-changed`, and one that the work deadline cuts gives
 decides that the repository has none, as the plan's merge-target resolution
 takes a repository without one, with no manifest candidate, so that a
 manifest absent at the plan and at the re-read is no difference, its
-`tracking_branch` null in both, and one that the plan read and the re-read
-finds absent is a manifest difference, `state-changed`, the step's own
-reason. The re-proof's reflog read, read as the `unstarted-branch` gate reads
-it, takes the rule's decided absence: a reflog missing at its path (`ENOENT`
-or `ENOTDIR`) keeps the re-proof's own reason, `reflog-unmerged`, as step 3
-says. A reflog read that fails or runs past its own budget keeps the
-re-proof's own split, `reflog-unmerged`, where the rule, for a removal's
-revalidation, gives `state-changed`: the re-proof proves rather than
-compares, a reflog it cannot read is not proven, and that is the reason a
-failed proof gives at the plan; either reason retains the branch, is not
-plain and exits 2 by D6's row 4. No
-other filesystem read is in the stage: the post-check and the branch child
-are Git children, the checks run in memory, and the plan's proof reuses the
-gate's read. The stage reads no administrative directory, so round (e)'s
-L-4, by which one that the `operation-in-progress` listing finds absent is a
-registration difference, `identity-changed`, does not reach it, and its L-5
-changes only the case of a SHALL NOT. R-208 is PR #19's reading of
+`tracking_branch` null in both, and one that the plan read with a
+`tracking_branch` and the re-read finds absent is a `tracking_branch`
+difference, `state-changed`, the step's own reason, where one that the plan
+read with no `tracking_branch` and the re-read finds absent gives no
+difference (lane openRepoProject-3's W46, LOW-1). The re-proof's reflog read,
+read as the `unstarted-branch` gate reads it, takes the rule whole. A reflog
+missing at its path (`ENOENT` or `ENOTDIR`) is the rule's decided absence and
+keeps the re-proof's own reason, `reflog-unmerged`, as step 3 says, as do a
+reflog found empty or read to its 64 KiB bound and one that the gate's reading
+cannot decide: each is a value that the read decided, as PR #19 gives its own
+`worktree-only-commits` to a `logs/HEAD` read to that bound or holding a line
+that cannot be parsed (its `specs/project-clean-review-safety/spec.md:110-111`,
+`:122-127` and `:133-135`). The plan never selects a branch with no reflog
+(the gate excludes it as `reflog-unavailable`) and records no reflog value, so
+that a reflog missing at the re-proof is a change since the plan which the
+stage's `state-changed` (the manifest's `tracking_branch` and the merge
+target) does not take in (lane openRepoProject-3's W46, section 1 (iii)). A
+reflog read that fails or runs past its own budget while the work deadline is
+not the limit decides nothing, and gives `state-changed`, as the rule gives a
+call that decides nothing (its `:115-120`): `reflog-unmerged` would say that a
+commit the merge target lacks was seen, and none was (ruling A-43, lane
+openRepoProject-2's answer on R-208). The re-proof's child follows the same
+rule, a child that fails or runs past its own 5 s budget giving
+`state-changed` (ruling A-44), and a read or child that the work deadline cuts
+gives `deadline-exceeded`. The plan's own failed proof stays a
+`reflog-unmerged` keep: the plan's reasons are its keep list's four, it has no
+`state-changed`, and a keep never stops the run, where the re-proof gates a
+deletion. Each retention of the stage keeps the branch, is not plain and
+exits 2 by D6's row 4. No other filesystem read is in the stage: the
+post-check and the branch child are Git children, the checks run in memory,
+and the plan's proof reuses the gate's read. The stage reads no
+administrative directory, so round (e)'s L-4, by which one that the
+`operation-in-progress` listing finds absent is a registration difference,
+`identity-changed`, does not reach it, and its L-5 changes only the case of a
+SHALL NOT. R-208 is PR #19's reading of
 `BA:271-276`, which went to Brett Heap to confirm as its O-2 (its
-`design.md:493-497`). No word of the spec delta changes for it: step 2's
-value that the manifest read "cannot establish" does not take in a decided
-absence, which establishes the manifest's values as absent, and step 3
-already names a missing reflog.
+`design.md:493-497`). No word of step 2 changes for the manifest: its value
+that the manifest read "cannot establish" does not take in a decided absence,
+which establishes the manifest's values as absent; and step 3 already names a
+missing reflog, while its failed read and failed child now give
+`state-changed` (rulings A-43 and A-44).
 
 The re-read compares every value of the branch's evidence that change 1's
 removal revalidation compares (`CAS/rs:77-82`): `branch`, `head`, `upstream`,
@@ -585,7 +619,7 @@ unknown or not established (`CAS/pc:1128-1129`).
 | Stage | When | Reasons |
 | --- | --- | --- |
 | `retired` | the post-check shows the branch absent after the branch child ran | null (exit 0); `git-failed` (nonzero exit); `probe-timeout` (`project` stopped the child past its 5 s budget); `internal-error` (an exception ended the stage after that post-check) |
-| `retained` | the target is `removed` and its branch is present when the stage ends | `branch-changed`, `state-changed`, `branch-in-use`, `reflog-unmerged` (the re-proof printed a commit, or could not prove the reflog), `deadline-exceeded` (too little work time to start the re-read, its re-proof or the branch child, or the deadline stopped the re-read), `interrupted`, `spawn-error`, `git-refused` (nonzero exit), `unconfirmed-retirement` (exit 0), `probe-timeout`, `internal-error` (an exception ended the stage before its branch child was spawned, or after the post-check showed the branch present), `removal-ceiling` |
+| `retained` | the target is `removed` and its branch is present when the stage ends | `branch-changed`, `state-changed` (a value the re-read found different or could not establish, or the re-proof's read or child failed or ran past its own budget), `branch-in-use`, `reflog-unmerged` (the re-proof printed a commit, or its read decided that the reflog cannot be proven: missing, empty, at its 64 KiB bound or undecidable), `deadline-exceeded` (too little work time to start the re-read, its re-proof or the branch child, or the deadline stopped the re-read), `interrupted`, `spawn-error`, `git-refused` (nonzero exit), `unconfirmed-retirement` (exit 0), `probe-timeout`, `internal-error` (an exception ended the stage before its branch child was spawned, or after the post-check showed the branch present), `removal-ceiling` |
 | `not-attempted` | the plan kept the branch, no branch remained to retire, or no stage ran | `reflog-unmerged`, `branch-in-use`, `head-not-merge-target`, `branch-shared` (the plan's keeps); `branch-missing`, `branch-retention-stop`, `target-not-removed` |
 | null | the post-check failed, timed out or was abandoned by a second SIGINT, or an exception ended the stage after its branch child was spawned and before the post-check decided | `reconciliation-incomplete` |
 
@@ -723,7 +757,7 @@ change 1 stops after `removed` with `removal-ceiling`.
 | --- | --- | --- |
 | reflog proof, at plan time (one per repository, and one per selected row only when the first prints a commit); a failure or a timeout at its own budget keeps branches and leaves the plan complete | `min(5 s, work remaining)` | `probes` |
 | re-read listing (and the manifest read, a filesystem call) | `min(5 s, work remaining less the removal floor)`, started only while more than the floor remains | `probes`, the sub-record's `probes_performed` |
-| re-proof, the re-read's last step, after its checks pass (ruling A-24): one `rev-list --max-count=1 --stdin` child over the commits the branch's reflog then names (and the reflog read, a filesystem call); a commit printed, a failure or a timeout at its own budget retains the branch with `reflog-unmerged` | the re-read's, `min(5 s, work remaining less the removal floor)`, started only while more than the floor remains | `probes`, the sub-record's `probes_performed` |
+| re-proof, the re-read's last step, after its checks pass (ruling A-24): one `rev-list --max-count=1 --stdin` child over the commits the branch's reflog then names (and the reflog read, a filesystem call); a commit printed retains the branch with `reflog-unmerged`, and a failure or a timeout at its own budget with `state-changed` | the re-read's, `min(5 s, work remaining less the removal floor)`, started only while more than the floor remains | `probes`, the sub-record's `probes_performed` |
 | branch child | `min(5 s, work remaining)`, spawned only while more than the 5 s removal floor remains | `operations` |
 | post-check listing, only after a branch child | `min(5 s, reserve remaining)` | `probes`, the sub-record's `probes_performed` |
 
@@ -978,9 +1012,11 @@ was the margin before LQ-11 and LQ-13 added children", its `:1002-1003`). On
 it a flagged run of 16 at 128 rows removes 16 and retires 15 with this
 change's children at 150 ms: the 16th removal spawns at 44.26 s and the 15th
 branch child at 43.50 s, while the 16th branch child, due at 45.32 s, cannot
-start, so that its branch is `retained` with `deadline-exceeded`, exit 1,
-never unsafe. With 17 reflog children it removes 15 and retires 14 (the 15th
-branch child and the 16th removal due at 45.90 s and 46.66 s), and with
+start (the stage's re-read is refused first, at 45.02 s, with the same
+outcome, since it starts only while less than 45 s have run), so that its
+branch is `retained` with `deadline-exceeded`, exit 1, never unsafe. With 17
+reflog children it removes 15 and retires 14 (the 15th branch child and the
+16th removal due at 45.90 s and 46.66 s), and with
 20,000-file removals 13 and 12 (the 13th branch child and the 14th removal
 due at 46.54 s and 47.30 s); with this change's children at task 2.1's
 average of about 0.063 s it removes and retires all 16, the 16th branch child
@@ -1050,7 +1086,16 @@ already retires 15 of 16 without the cache change (above), and the same
 additions, the 16 enumerations at 2.4 s and the filesystem time taken whole
 before the first removal, leave 12 removed and 12 retired through a worker
 (the 13th removal due at 45.20 s), 11 and 10 with 17 reflog children, and at
-least 9 and 8, or 7 and 7, at a thread per call (ruling A-42). Where the
+least 9 and 8, or 7 and 7, at a thread per call (ruling A-42). At the cache
+change's own 3.7 s for the enumerations, the same bound, with 7.7 s through a
+worker and 14.6 s at a thread per call before the first removal, leaves 12
+removed and 11 retired through a worker (the 12th removal at 44.68 s, the
+12th branch child due at 45.74 s, its re-read refused first at 45.44 s), 10
+and 10 with 17 reflog children (the 11th removal due at 45.26 s), and at
+least 8 and 7, or 7 and 6, at a thread per call (the 8th branch child due at
+45.37 s, or, with 17 reflog children, the 7th at 45.95 s); the worst order a
+run can take gives the same four pairs at each cost (ruling A-44, lane
+openRepoProject-3's W46, LOW-2). Where the
 cache change's fit sentence counts, as it reads at `e1049b2`, "at most 250
 Git children besides the 16
 removals, about 42.3 s", which the flag's up to 81 more children make false,
@@ -1073,8 +1118,10 @@ deadline rule makes the rest `not-attempted` with `deadline-exceeded`, the run
 exits 1, and the next run takes them, never unsafe (`BA:772-774`). On change
 1's measured costs at `c462d87` all 16 fit through a worker, and at a thread
 per call at least the 16th target is deferred, with one reflog child as in the
-worst case; on D14's measured basis at `f0bf538` 12 are removed and 12
-retired through a worker, and at least 9 and 8 at a thread per call.
+worst case; on D14's measured basis at `f0bf538`, with the enumerations at
+2.4 s, 12 are removed and 12 retired through a worker, and at least 9 and 8 at
+a thread per call, and at the cache change's own 3.7 s for them 12 and 11
+through a worker, and at least 8 and 7 at a thread per call.
 `limits.targets` stays 16 (A-9). The alternative, a lower
 target cap under the flag, would be 8 by the packet's rule (`BA:729-735`),
 since the last of T such targets then spawns at about (136 + 7T) x 0.15 +
@@ -1187,12 +1234,15 @@ as amended, Codex's P2 on `9ff8202`).
     RETRY`;
   - `Kept BRANCH (reflog-unmerged); its reflog is not proven merged into
     MERGE_TARGET; inspect git -C ROOT reflog show refs/heads/BRANCH before any
-    delete-branch`, alike for a proof that printed a commit and one that failed
-    or timed out, at the plan or at the re-proof (lane openRepoProject-3's
-    delta read, D4), `show` and the full ref name because `show`, `expire`,
-    `delete` and `exists` are valid branch names and also `git reflog`
-    subcommands, and `git reflog show HEAD` reads the main worktree's own
-    reflog (Context);
+    delete-branch`, alike for a proof that printed a commit, one that failed
+    or timed out at the plan, and a re-proof that found the reflog missing,
+    empty, at its bound or undecidable (lane openRepoProject-3's delta read,
+    D4; a re-proof whose read or child failed or ran past its own budget
+    prints the last line below, `Kept BRANCH (state-changed); retry: RETRY`;
+    rulings A-43 and A-44), `show` and the full ref name because `show`,
+    `expire`, `delete` and `exists` are valid branch names and also `git
+    reflog` subcommands, and `git reflog show HEAD` reads the main worktree's
+    own reflog (Context);
   - `Kept BRANCH (git-refused); if a rebase or bisect in another worktree
     holds BRANCH, wait for it to end and remove that worktree; then retry:
     RETRY`, for `git-refused` with the upstream ref present (ruling A-32,
@@ -1384,8 +1434,8 @@ proposal puts it before Brett Heap with L-4's recommendation.
 - [Retiring a branch deletes its reflog and its `branch.<b>` section] -> The
   plan proves every commit the reflog names merged, and the stage proves it
   again over the reflog as it then reads, or the branch is kept
-  (`reflog-unmerged`), so no commit named when the branch child spawns is
-  lost. The section's keys
+  (`reflog-unmerged`, or `state-changed` where the re-proof cannot run), so no
+  commit named when the branch child spawns is lost. The section's keys
   (`description`, `pushRemote`, any tool's keys) are deleted and not
   restored; the printed restore line, `git -C ROOT branch BRANCH SHA` or, for
   a name `git branch` refuses to create, one that begins with `-` or equals
@@ -1455,13 +1505,15 @@ proposal puts it before Brett Heap with L-4's recommendation.
   removal at 35.1 s, or 42.8 s with 20,000-file removals; task 2.1's 23.6 s
   predates LQ-11's and LQ-13's children, its `:1002-1003`), on which a
   flagged run of 16 removes 16 and retires 15 with this change's children at
-  150 ms (the 16th branch child due at 45.32 s, `retained` with
-  `deadline-exceeded`, exit 1, never unsafe), 15 and 14 with 17 reflog
-  children, 13 and 12 with 20,000-file removals, and 16 and 16 at task 2.1's
-  average of about 0.063 s per child, or 15 and 14 with 20,000-file removals;
-  with the cache change and one reflog child it brings 12 of 16 through their
-  stage through one worker per stage, and at least 8 at a thread per call (D7;
-  ruling A-42).
+  150 ms (the 16th branch child due at 45.32 s, its re-read refused first at
+  45.02 s, `retained` with `deadline-exceeded`, exit 1, never unsafe), 15 and
+  14 with 17 reflog children, 13 and 12 with 20,000-file removals, and 16 and
+  16 at task 2.1's average of about 0.063 s per child, or 15 and 14 with
+  20,000-file removals; with the cache change and one reflog child, and its
+  16 enumerations at 2.4 s, it brings 12 of 16 through their stage through
+  one worker per stage, and at least 8 at a thread per call, and at the cache
+  change's own 3.7 s for them 11 of 16 and at least 7 (D7; rulings A-42 and
+  A-44).
   Task 2.1's own account, `c462d87`'s, under which all 16 fit through a
   worker and at least the 16th is deferred at a thread per call, with one
   reflog child or 17, is kept as that sha's (D7). The caps stay (A-9): the
