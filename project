@@ -5693,10 +5693,13 @@ def revalidation_difference(plan, target, run, part, seen):
     `identity-changed`. A `timeout` stays such a difference (T084).
 
     A read the work deadline cut gives `deadline-exceeded` instead, never a
-    difference (T099; lead ruling R-80, P-2): its row error's code says so,
-    and for steps 1 and 2, read through repository_identity() and
-    reread_manifest(), which keep no code, an unread value with no work time
-    left (work_spent()).
+    difference (T099; lead ruling R-80, P-2): its row error's code says so
+    (read_cut()). Step 1, read through repository_identity(), keeps the row
+    errors of its reads in its `errors` list (R-195, R-208), so it takes a
+    cut from their codes, and also an identity that no read gave, whatever
+    the error, with no work time left (work_spent()); step 2, read through
+    reread_manifest(), keeps no code, so it takes an unread value with no
+    work time left (work_spent()).
 
     The signal slot is read before each read a step starts (slot_set()): the
     Git children of steps 1, 3, 4, 6, 7 and 8, the manifest re-read, and
