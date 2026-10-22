@@ -13,11 +13,11 @@ duplicate them.
 - [x] 1.3 Clarifications recorded: the NOTED constraints, N1 to N6, are in `clarifications.md`; verified by `design.md`, which answers each with a named decision.
 - [x] 1.4 Spec delta written: `specs/project-command/spec.md` adds "A parent blocked by a non-directory is refused before the single-repository path's steps", with ten scenarios, and modifies "Delegate project creation", "Creation question is asked only of a person choosing at the terminal", "Creation question offers the Triad first" and "Known Triad obstacles are named before the question and refused on a Triad answer", each as a full block changing only the statements this change makes false; verified by `openspec validate refuse-non-directory-parent-early --strict` passing.
 - [x] 1.5 Design written: `design.md`, decisions D1 to D6, with no open question that changes what is built; verified by `openspec status --change refuse-non-directory-parent-early --json` showing every artifact done.
-- [ ] 1.6 Ratified by Brett Heap's word "ratify 21", quoted with its link on PR #21; PR #21 lands by squash; verified by that quote. No implementation starts before it.
+- [x] 1.6 Ratified by Brett Heap's word "ratify 21" (2026-10-21), quoted with its link on PR #21 (https://github.com/opensoft/openRepoProject/pull/21#issuecomment-6313890629); PR #21 landed by squash as b23333397f989462d13cf625c69e41bee8da8700 (of 8f3ca2d); verified by that quote. No implementation started before it.
 
 ## 2. Speckit handoff
 
-- [ ] 2.1 Exactly one Speckit feature owns the implementation: `specs/NNN-<slug>/`, created by `/speckit.specify` after 1.6 from a local main synced to origin/main, where NNN is the next number free that day (`001` to `003` exist; lane openRepoProject-2 holds `004`, `add-project-clean-all-safe`, in progress, and expects `005`, `add-project-overview`; no number is fixed here); verified when "Speckit Handoff" below names its feature identifier, branch and repo-relative `tasks.md` path, filled in once.
+- [x] 2.1 Exactly one Speckit feature owns the implementation: `specs/NNN-<slug>/`, created by `/speckit.specify` after 1.6 from a local main synced to origin/main, where NNN is the next number free that day (`001` to `003` exist; lane openRepoProject-2 holds `004`, `add-project-clean-all-safe`, in progress, and expects `005`, `add-project-overview`; no number is fixed here); verified when "Speckit Handoff" below names its feature identifier, branch and repo-relative `tasks.md` path, filled in once. Created: feature 006-refuse-non-directory-parent-early on branch 006-refuse-non-directory-parent-early (worktree ../openRepoProject-worktrees/006-refuse-non-directory-parent-early, cut from main at b233333; 006 was the next free number on 2026-10-21), spec at specs/006-refuse-non-directory-parent-early/spec.md.
 - [ ] 2.2 `/opsx:apply` is not run until "Speckit Handoff" names exactly one feature; verified by reading that section before the first `/opsx:apply`.
 
 ## 3. Landing and archive readiness
@@ -28,13 +28,13 @@ duplicate them.
 
 ## Speckit Handoff
 
-Implementation is tracked exclusively in one Speckit feature, to be created
+Implementation is tracked exclusively in one Speckit feature, created
 by `/speckit.specify` after ratification. The feature covers the read and the
 head refusal (`design.md` D1 and D2) in `project`, the README texts of D2, and
 the tests of D3, and its spec carries the supersession statement of D4.
 
-- Feature identifier: to be created by `/speckit.specify` after ratification (the next free number that day)
-- Branch: to be created with the feature
-- Tasks: `specs/<feature>/tasks.md` (to be created by `/speckit.tasks`)
+- Feature identifier: 006-refuse-non-directory-parent-early
+- Branch: 006-refuse-non-directory-parent-early (worktree ../openRepoProject-worktrees/006-refuse-non-directory-parent-early, cut from main at b233333)
+- Tasks: specs/006-refuse-non-directory-parent-early/tasks.md (created by /speckit.tasks)
 
 `/opsx:apply` is not run until this section names exactly one feature.
