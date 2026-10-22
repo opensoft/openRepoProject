@@ -556,7 +556,10 @@ subtests below (skipped socket subtests count toward it), with none passing;
 an existing test that gains rows must be red in exactly its new rows; a guard
 must be green. Seven tests must also be red for their planned reason, read
 from each failure's traceback and message (`maxDiff` is lifted for this
-process so that the message holds its whole diff): N7, N8 and the three
+process so that the message holds its whole diff; `flat()` then splits
+unittest's diff back into its two sides and joins the quoted pieces into which
+pprint wraps a long string, so the verdict does not depend on the length of
+the temporary path): N7, N8 and the three
 existing tests that gain rows fail on the parent line: the failure shows
 sentence (b) expected ("cannot be created because") and today's missing
 sentence printed ("does not exist"), and never arises inside
@@ -610,7 +613,16 @@ GREEN = ["test_inproc_parent_repaired_while_the_question_waits_is_created",
          "test_earlier_refusals_keep_their_text_with_a_blocked_parent",
          "test_shape_by_flag_keeps_its_parent_refusal_with_a_blocked_parent",
          "test_unwritable_directory_child_passes_dry_run_and_fails_at_creation"]
-# Planned reasons: every failure of these tests, whole or subtest, must hold each NEED text and no AVOID text.
+# Planned reasons: every failure of these tests, whole or subtest, must hold each NEED text and no AVOID text,
+# each looked for in flat(failure text).
+def flat(text):
+    """The failure text with the renderers' line breaks undone, so that a phrase is found wherever pprint (80 columns)
+    broke it, which depends on the length of the temporary path. unittest's ndiff of two pformat renderings is split
+    back into its two sides (the lines marked "-" or unmarked, the lines marked "+" or unmarked); on each side, and on
+    the text itself, a closing quote, whitespace or a newline and an opening quote (pprint's continuation of a long
+    string) are removed; then every run of whitespace becomes one space."""
+    sides = ["\n".join(line[2:] for line in text.splitlines() if line[:2] in ("  ", mark + " ")) for mark in "-+"]
+    return " ".join(" ".join(re.sub(r"""["']\s*\n\s*["']""", "", part).split()) for part in (text, *sides))
 B = "cannot be created because"                 # sentence (b): expected, absent at the base
 TODAY = "does not exist"                        # the missing-parent sentence the base prints instead
 FILE_CHECK = "in assert_parent_file_unchanged"   # a traceback frame of the file check
@@ -661,7 +673,7 @@ for name in sys.argv[1:] or must_fail or [*RED, *EXISTING, *GREEN]:
     if red and name in REASON:
         need, avoid = REASON[name]
         wrong = [text for _, text in log.failures + log.errors
-                 if not all(n in text for n in need) or any(a in text for a in avoid)]
+                 if not all(n in flat(text) for n in need) or any(a in flat(text) for a in avoid)]
         for text in wrong[:1]:
             raised = next((l for l in text.splitlines() if re.match(r"\w+(Error|Exception)\b", l)), text.splitlines()[-1])
             print(f"      red for the wrong reason ({len(wrong)} of {len(log.failures + log.errors)}): {raised[:160]}")
