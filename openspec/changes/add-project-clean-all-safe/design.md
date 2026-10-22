@@ -70,10 +70,12 @@ recommendations and the cap remedy, with F-1's (b) beside an unread row recorded
 as open, Context, D18 and Open Questions; and round (n), lane
 openRepoProject-3's W91 and W95 reads of rounds (l) and (m) and its W100 LOW-A,
 under the lead's R-341 and R-336, with Brett Heap's "R-324: yes" (the lead's
-R-343), Context, D7, D8, D9, D18 and Open Questions. Brett Heap's ruling of
-2026-10-09 on open question 1, that a local ancestry proof outranks
-`remote-gone` for worktree rows, is in `proposal.md` Decisions and edited
-Context, D6, D7, D20, Risks, the Migration Plan and Open Questions here.
+R-343), Context, D7, D8, D9, D18 and Open Questions; and round (o), lane
+openRepoProject-3's W103 read of round (n), under the lead's R-349, Context.
+Brett Heap's ruling of 2026-10-09 on open question 1, that a local ancestry
+proof outranks `remote-gone` for worktree rows, is in `proposal.md` Decisions
+and edited Context, D6, D7, D20, Risks, the Migration Plan and Open Questions
+here.
 
 Citations are `file:line` at `da33d92`: `BA`, `DI`, `OV` and `HO` are the
 packet's batch-cleanup, project-discovery, overview and handoff documents, and

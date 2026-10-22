@@ -1311,7 +1311,7 @@ R-321) and "R-324: yes" (the lead's R-343) of the same day:
   each the next step as it stood, round (g)'s for `registration-mismatch`, with
   " or git worktree prune" removed and the warning appended. The delta states
   the rule as an AND clause of its scenario "An unreadable worktree is one row",
-  the "as the cause fits" of pcl:649-651, now pcl:836-840, governing it, so that
+  the "as the cause fits" of pcl:649-651, now pcl:838-842, governing it, so that
   the scenario counts stay 71, 22 and 24 (the delta `Clean reports local
   worktree state`; What Changes; design D18). Brett Heap confirmed the five
   texts, three next steps and two remedies on 2026-10-22, in his words "R-307:
@@ -2335,9 +2335,10 @@ Heap's F-1 ruling applies to a read that fails and was put to him to confirm, as
 he did on 2026-10-22 in his words "R-284: yes" (the lead's R-290), such a
 target's recovery text is "inspect `<path>` by hand; its `.git`
 could not be read, so do not run `git worktree prune`, `git worktree remove` or
-`git gc` until it can", whatever the rescan finds of the registry entry, while
-"where either is gone" keeps a `.git` file shown absent and an entry gone where
-the `.git` file was read (W80 L-1, round (k)); the deltas `Clean can explicitly
+`git gc` until it can" (its closing phrase as Brett Heap's "R-324: yes" extended
+it in round (n)), whatever the rescan finds of the registry entry, while "where
+either is gone" keeps a `.git` file shown absent and an entry gone where the
+`.git` file was read (W80 L-1, round (k)); the deltas `Clean can explicitly
 retire verified worktrees` and `Clean records a reconcilable result for every
 removal target` state it, the scenario "A removal past the hard ceiling" gains
 an AND clause, and What Changes, Capabilities, the amendments list and design D9
@@ -2501,7 +2502,7 @@ has such a path. The amendments list, second group, quotes them in an entry of
 its own beside the `0050f3e` sentences they qualify, design:757-758 and
 design:775-777, and design Open Questions counts it; the delta states the rule
 as an AND clause of the scenario "An unreadable worktree is one row",
-pcl:836-840's "as the cause fits" governing it; and What Changes names it. D7
+pcl:838-842's "as the cause fits" governing it; and What Changes names it. D7
 and round (j)'s entry no longer present the evidence model's sentence as R-291's
 words, a composite that no record holds: it is the lead's R-287, with R-291's
 refinement, which the evidence model words so (W87 LOW-1). Design D18 says that
@@ -2584,55 +2585,57 @@ an `inspection-error` row whose path could not be read; T2 and T3 are the plan's
 and T5 are the next steps of the other `inspection-error` rows and of the
 `registration-mismatch` rows; T6 and T7 are the recommendation of a
 `stale-worktree` row and its locked form; T8 is the `inspect-cap` remedy. The
-unread forms, T1 to T7, now state one condition in the same words at every site:
-any row of the plan has a path whose planning `lstat` failed other than for the
-path's absence, or was cut at its budget, a row whose `lstat` the deadline
-stopped included, so that its `present` is null (W91 MEDIUM-1, W95 MEDIUM-1;
-held for this round by the lead's R-324). D18's definition of the unread
-`inspection-error` row, which T4 and T5 refer back to, and the condition of T6
-and T7, in D18 and in the entry for T6 to T8, gain the clause that T2 and T3 and
-the entry for T1 to T5 already had. That entry says "stopped", as D18's remedies
-and R-311 do, where it said "cut", and round (l)'s entry words the clause as the
-others do. The meaning does not change: a row whose `lstat` the deadline stopped
-is `present: null` either way, the requirement `Clean bounds its Git work and
-reports omitted work` leaving the values of a filesystem call that the deadline
-stopped null. Round (l)'s entry and the entry for T1 to T5 place the "as the
-cause fits" sentence (`0050f3e` pcl:649-651) at pcl:836-840, where they placed
-it at pcl:815-819, which round (l)'s own AND clause had moved (W91 LOW-A). D18,
-the entry for T6 to T8 and round (m)'s entry say "plan" where they said "plan or
-listing", the plain report being a plan in `mode: "report"` (W95 LOW-2). The
-locked form of the stale recommendation, T7, is stated as the report row's
-recommendation alone, in the human report and in `--json`, because the preview
-excludes a locked stale row as `locked-worktree`, ahead of its class, so that no
-preview group has it as its next step, as feature 004 at `0a82a62` builds it;
-design D18 and the entry for T6 to T8 say so (W95 LOW-3). Design D18 says once
-that T8's `{N}` and `{M}` stand for the row count and the cap, the ratified
-remedy's `N` and `M`, which are the only braced placeholders of a text in this
-change (W95 LOW-1). In his words "R-324: yes" Brett Heap ruled that every
-no-prune warning, the ceiling's third text (R-284's) and T1 to T8, extends to
-name `git worktree remove` and `git gc` beside `git worktree prune`: each ends
-"so do not run git worktree prune, git worktree remove or git gc until it can",
-and the cap remedy "if a worktree's path cannot be read, do not run git worktree
-prune, git worktree remove or git gc until it can", every other word of the nine
-texts staying (W91 MEDIUM-2 and W95: `git worktree remove`, with or without
-`--force`, deletes the administrative directory of a worktree whose path Git
-cannot stat; W80 L-6 and E6: so does the automatic worktree prune of `git gc`,
-once that directory's index is older than `gc.worktreePruneExpire`, three months
-by default). The nine texts are edited at every site that quotes them, and the
-sentences that name the third text's warning with them: design D9 and D18, What
-Changes, Capabilities `:55`, the amendments list's entries for R-284, T1 to T5
-and T6 to T8, round (j)'s entry's quote of the third text, and the deltas `Clean
-reports local worktree state` (its scenario "An unreadable worktree is one
-row"), `Clean can explicitly retire verified worktrees` (its requirement and its
-scenario "A removal past the hard ceiling"), `Clean records a reconcilable
-result for every removal target` (its requirement) and `Clean bounds its Git
-work and reports omitted work` (its scenario "Row cap and planning failures");
-where the third text stands with its commands in code spans, each of the three
-has its own. The first group's heading names his words, an entry of its own
-records the ruling, and design D18's sentence on the third note, like round
-(k)'s entry, no longer says that naming `git worktree remove` or `git gc` there
-waits on his word (W80 M-1, second part, with L-6); What Changes, design Context
-and Open Questions say the same. The requirements `Clean can explicitly retire
+unread forms, T1 to T7, now state one condition in the same words at every site
+of design D18 and of the amendments list's entries for them: any row of the plan
+has a path whose planning `lstat` failed other than for the path's absence, or
+was cut at its budget, a row whose `lstat` the deadline stopped included, so
+that its `present` is null (W91 MEDIUM-1, W95 MEDIUM-1; held for this round by
+the lead's R-324). D18's definition of the unread `inspection-error` row, which
+T4 and T5 refer back to, and the condition of T6 and T7, in D18 and in the entry
+for T6 to T8, gain the clause that T2 and T3 and the entry for T1 to T5 already
+had. That entry says "stopped", as D18's remedies and R-311 do, where it said
+"cut", and round (l)'s entry words the clause as the others do. The meaning does
+not change: a row whose `lstat` the deadline stopped is `present: null` either
+way, the requirement `Clean bounds its Git work and reports omitted work`
+leaving the values of a filesystem call that the deadline stopped null. Round
+(l)'s entry and the entry for T1 to T5 place the "as the cause fits" sentence
+(`0050f3e` pcl:649-651) at pcl:838-842, where they placed it at pcl:815-819,
+which round (l)'s own AND clause had moved (W91 LOW-A). D18, the entry for T6 to
+T8 and round (m)'s entry say "plan" where they said "plan or listing", the plain
+report being a plan in `mode: "report"` (W95 LOW-2). The locked form of the
+stale recommendation, T7, is stated as the report row's recommendation alone, in
+the human report and in `--json`, because the preview excludes a locked stale
+row as `locked-worktree`, ahead of its class, so that no preview group has it as
+its next step, as feature 004 at `0a82a62` builds it; design D18 and the entry
+for T6 to T8 say so (W95 LOW-3). Design D18 says once that T8's `{N}` and `{M}`
+stand for the row count and the cap, the ratified remedy's `N` and `M`, which
+are the only braced placeholders of a text in this change (W95 LOW-1). In his
+words "R-324: yes" Brett Heap ruled that every no-prune warning, the ceiling's
+third text (R-284's) and T1 to T8, extends to name `git worktree remove` and
+`git gc` beside `git worktree prune`: each ends "so do not run git worktree
+prune, git worktree remove or git gc until it can", and the cap remedy "if a
+worktree's path cannot be read, do not run git worktree prune, git worktree
+remove or git gc until it can", every other word of the nine texts staying (W91
+MEDIUM-2 and W95: `git worktree remove`, with or without `--force`, deletes the
+administrative directory of a worktree whose path Git cannot stat; W80 L-6 and
+E6: so does the automatic worktree prune of `git gc`, once that directory's
+index is older than `gc.worktreePruneExpire`, three months by default). The nine
+texts are edited at every site that quotes them, and the sentences that name the
+third text's warning with them: design D9 and D18, What Changes, Capabilities
+`:55`, the amendments list's entries for R-284, T1 to T5 and T6 to T8, round
+(i)'s entry's quote of the third text, and the deltas `Clean reports local
+worktree state` (its scenario "An unreadable worktree is one row"), `Clean can
+explicitly retire verified worktrees` (its requirement and its scenario "A
+removal past the hard ceiling"), `Clean records a reconcilable result for every
+removal target` (its requirement) and `Clean bounds its Git work and reports
+omitted work` (its scenario "Row cap and planning failures"); where the third
+text stands with its commands in code spans, each of the three has its own. The
+first group's heading names his words, an entry of its own records the ruling,
+and design D18's sentence on the third note, like round (k)'s entry, no longer
+says that naming `git worktree remove` or `git gc` there waits on his word (W80
+M-1, second part, with L-6); What Changes, design Context and Open Questions,
+design D18 (after its remedies) and the closing sentence of the R-284, T1 to T5
+and T6 to T8 entries say the same. The requirements `Clean can explicitly retire
 verified worktrees` and `Clean records a reconcilable result for every removal
 target` change in the third recovery text alone, and the three scenarios named
 above change in their ANDs; no requirement or scenario is added or removed, the
@@ -2652,6 +2655,36 @@ re-wrapped the lines after each of their edits, up to where the old line breaks
 resume, with no other change of words (this list; the amendments list; What
 Changes; Capabilities `:55`; design Context, D7, D8, D9, D18, Open Questions;
 `tasks.md` 1.2; the deltas named above).
+
+Round (o), lane openRepoProject-3's W103 confirm read of round (n) at `2250830`
+(HIGH 0, MEDIUM 0, LOW 4, all four in the records), under the lead's R-349
+(validate 9 of 9, the scenario counts 71, 22 and 24, no delta changed). Round
+(n) set the closing phrase of Brett Heap's "R-324: yes" into the quote of the
+third text that stands in round (i)'s entry, and recorded that quote as "round
+(j)'s entry's quote of the third text", as the message of `e6b6b16` does too;
+the quote is round (i)'s, so the record now reads "round (i)'s entry's quote of
+the third text", and the quote carries the label that round (k)'s entry has,
+"(its closing phrase as Brett Heap's "R-324: yes" extended it in round (n))"
+(W103 LOW-1). The message of `e6b6b16` is not amended and still says "round
+(j)'s". Round (n)'s record said that the one condition of T1 to T7 stands in the
+same words at every site; it stands so in design D18 and in the amendments
+list's entries for those texts, and the record now says that. Round (m)'s entry,
+which round (n) edited only to drop "or listing", states the condition of T4 and
+T5 and of T6 and T7 without the deadline clause, and keeps its own words as
+history, the effect being the same: a row whose `lstat` the deadline stopped is
+`present: null` either way. Round (m)'s entry is not edited (W103 LOW-2). The
+"as the cause fits" sentence of `0050f3e` pcl:649-651 stands at pcl:838-842, not
+pcl:836-840: round (n)'s re-wrap of the AND of "An unreadable worktree is one
+row" added two lines before it, as round (l)'s own AND clause had moved it
+before, and the entry for T1 to T5, round (l)'s entry and round (n)'s record
+cite pcl:838-842 now (W103 LOW-3). Round (n)'s list of the places that record
+"R-324: yes" now names design D18, after its remedies, and the closing sentence
+of the entries for R-284, T1 to T5 and T6 to T8 (W103 LOW-4). T1 to T8, the
+third text, F-1's (a) and (b) and F-2's text are unchanged, byte for byte, no
+spec file changes, and F-1's (b) beside an unread row stays open in design Open
+Questions as worded. This round's commit also re-wrapped the lines after each of
+its edits, up to where the old line breaks resume, with no other change of words
+(this list; the amendments list; design Context; `tasks.md` 1.2).
 
 ### Council Verdicts
 

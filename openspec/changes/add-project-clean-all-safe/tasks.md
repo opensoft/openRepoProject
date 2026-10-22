@@ -105,7 +105,9 @@ duplicate them, and nothing here is an implementation step.
   no-prune warning to `git worktree remove` and `git gc` (the commits whose
   titles begin 'Amend change 1: round (n)', the first titled 'Amend change 1:
   round (n), one unread condition, W91 and W95 items, R-324: yes (R-341,
-  R-343)'); verified by the table "Questions Resolved by the Alignment Review"
+  R-343)'); and round (o), lane 3's W103 read of round (n), under the lead's
+  R-349 (the commit titled 'Amend change 1: round (o), W103's four record items
+  (R-349)'); verified by the table "Questions Resolved by the Alignment Review"
   in `proposal.md` and the later-rulings list under it, which name the section
   each ruling edited.
 - [x] 1.3 Council resolved: every concern is VALID, none dismissed, the verdicts
