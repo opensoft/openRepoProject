@@ -583,7 +583,9 @@ TIMING = {
 # each plan mode; the first five keys are the plan's `limits` object. A
 # target's revalidation spawns at most six Git children, seven where the plan
 # read the repository's extensions.worktreeConfig as true (design D7 and D14;
-# LQ-11, LQ-13; lead ruling R-165); revalidation_children() picks one.
+# LQ-11, LQ-13; lead ruling R-165); revalidation_children() picks one. Where
+# the identity probe is read one option per child (identity_split_children()),
+# each revalidation and the final rescan spawn three more (#19's round (h)).
 LIMITS = {
     "worktree_rows": {"report": 256, "all-safe": 128, "single": 128},
     "targets": 16,
@@ -4282,10 +4284,33 @@ def revalidation_children(plan):
     plan read the repository's extensions.worktreeConfig as true"; lead ruling
     R-165): LIMITS["revalidation_children_worktree_config"] where the plan's
     row 4c read the extension as true, as revalidation_difference() then runs
-    the effective-work-tree probe, else LIMITS["revalidation_children"]."""
+    the effective-work-tree probe, else LIMITS["revalidation_children"]; each
+    plus identity_split_children(plan), the three more children of an
+    identity probe read one option per child (#19's round (h))."""
     evidence = getattr(plan, "evidence", None) or {}
     worktree_config = evidence.get("worktree_config") is True
-    return LIMITS["revalidation_children_worktree_config" if worktree_config else "revalidation_children"]
+    bound = LIMITS["revalidation_children_worktree_config" if worktree_config else "revalidation_children"]
+    return bound + identity_split_children(plan)
+
+
+def identity_split_children(plan):
+    """The children the identity probe adds where it is read one option per
+    child (identity_probe()), every time it runs: len(IDENTITY_OPTIONS),
+    three, beside its combined child, where the path of the plan's repository
+    root or of its common directory, as the plan read them, holds a line
+    feed, since `git rev-parse` prints one value per line and has no NUL
+    form; otherwise 0 (lane 5's RI-3, writer E's measure; #19's round (h) at
+    b3228bb, design.md D14: a revalidation then spawns at most nine children,
+    ten where row 4c reads true, and the final rescan six)."""
+    identity = (getattr(plan, "evidence", None) or {}).get("identity") or {}
+    split = any(b"\n" in (identity.get(key) or b"") for key in ("root", "common_dir"))
+    return len(IDENTITY_OPTIONS) if split else 0
+
+
+def rescan_children(plan):
+    """The most Git children the final rescan spawns: LIMITS["rescan_children"],
+    three, plus identity_split_children(plan) (#19's round (h) at b3228bb)."""
+    return LIMITS["rescan_children"] + identity_split_children(plan)
 
 
 def plan_limits(mode):
@@ -4313,8 +4338,10 @@ def plan_document(plan):
     `worktrees`, the rows in canonical order, row `notes` code strings;
     `probes` and `operations` (research.md R8; lead ruling R-27), `estimated`
     the upper bound of an --apply run of this plan in every mode, F + W + E +
-    RT + 3 and T, R the children of one revalidation (revalidation_children(),
-    six or seven) and 3 the final rescan's (LIMITS["rescan_children"]), and
+    RT + S and T, R the children of one revalidation (revalidation_children(),
+    six or seven, three more each where the identity probe is read one option
+    per child) and S the final rescan's (rescan_children(), three, or six
+    then; #19's round (h)), and
     `performed` from the counters of the invocation in force;
     `selected` (select_entry()), `excluded` {path, path_valid_utf8, branch,
     classification, reason}, `omitted` ({count: 0, exactness: "exact"} until
@@ -4341,7 +4368,7 @@ def plan_document(plan):
         "limits": plan_limits(plan.mode),
         "budget": plan_budget(),
         "probes": {"estimated": getattr(plan, "planning_probes", 0) + revalidation_children(plan) * targets
-                   + LIMITS["rescan_children"], "performed": run.probes},
+                   + rescan_children(plan), "performed": run.probes},
         "operations": {"estimated": targets, "performed": run.operations},
         "selected": None if selected is None else [select_entry(row, plan) for row in selected],
         "excluded": [{"path": row["path"], "path_valid_utf8": row["path_valid_utf8"], "branch": row.get("branch"),
@@ -6338,7 +6365,7 @@ def apply_removals(plan, run):
     best_effort(print_result, plan, targets, run)
     if getattr(run.args, "json", False):
         estimated = (getattr(plan, "planning_probes", 0) + revalidation_children(plan) * len(targets)
-                     + LIMITS["rescan_children"])
+                     + rescan_children(plan))
         best_effort(lambda: write_document(result_document(
             targets, status, repository=getattr(plan, "repository", None), merge_target=plan.merge_target,
             plan_digest=plan.digest, probes={"estimated": estimated, "performed": run.probes},
