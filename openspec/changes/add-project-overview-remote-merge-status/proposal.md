@@ -15,15 +15,15 @@ L2 to L5), with no spec edit, in `design.md` and `tasks.md`, C-47 also in Impact
 and Open Question 1; round C14's C-48, RC's other five findings, its spec edit
 committed on lane openRepoProject-4's YES of 2026-10-21, and C-49, lane
 openRepoProject-3's eight LOWs, both also in `design.md`, Impact and `tasks.md`;
-and rounds C15 to C18 (C-50 to C-61: W16, RF's M1, W22, W28, the currency check,
-RH's M4, RI-6, W57-1), in `design.md` and `tasks.md`, C-58 also in the spec;
-ratification by Brett Heap pending; nothing here is ratified. Governing issue:
-opensoft/openRepoProject#25, claimed by lane openRepoProject-5 (comment
-6111242617); refs #6, the record of the project maintenance design packet.
-Proposed on Brett Heap's word "usage reset, resume all. read handoff and resume
-and fan out wide and do as much as possible in parallel" (2026-10-11), read by
-lanes openRepoProject-4 and openRepoProject-5 as a go for the candidate list
-they put to him.
+and rounds C15 to C19 (C-50 to C-63: W16, RF's M1, W22, W28, the currency check,
+RH's M4, RI-6, W57-1, RH's L4, W53's cites), in `design.md` and `tasks.md`, C-58
+also in the spec, C-63 in Decisions; ratification by Brett Heap pending; nothing
+here is ratified. Governing issue: opensoft/openRepoProject#25, claimed by lane
+openRepoProject-5 (comment 6111242617); refs #6, the record of the project
+maintenance design packet. Proposed on Brett Heap's word "usage reset, resume
+all. read handoff and resume and fan out wide and do as much as possible in
+parallel" (2026-10-11), read by lanes openRepoProject-4 and openRepoProject-5 as
+a go for the candidate list they put to him.
 
 Citations are `file:line`. The packet is cited at `da33d92`, equal to main
 `961c405` for `ideation/`: `DI`, `SY`, `BA` and `OV` are its
@@ -42,7 +42,7 @@ executable. Change 1's evidence model, `Repository inspection requires Git 2.36
 and shares one evidence model` (CAS/cmd:90), is [E]. The lane's rulings are
 cited as L-1 to L-9 and C-1 to C-8 (2026-10-11), L-10 to L-15, B-14, C-9 and
 C-10 (2026-10-18), L-16, L-17 and C-11 to C-14 (2026-10-19), and F-3 and C-15 to
-C-61 (2026-10-20 to 2026-10-22, C-16 to C-22 being the council's verdicts).
+C-63 (2026-10-20 to 2026-10-22, C-16 to C-22 being the council's verdicts).
 `PR19/cmd` is draft PR #19's
 `openspec/changes/add-project-clean-all-safe/specs/project-command/spec.md` at
 `c462d87`.
@@ -921,19 +921,17 @@ Decisions where the sources and the rulings are silent:
   looks up by branch name, hides the page information and stops at gh's
   default of 30; and a head-branch lookup beside the association in the same
   request (S-1), weighed under Departures ("No `closed` state").
-- **Matching**: the head object id exactly the row's head, the base branch
-  the merge ref's branch and the base repository the one GitHub resolved for
-  the identity, its `nameWithOwner` from the same answer (C-19); then
-  `merged` before `open`, the highest number within a state, a closed pull
-  request never matching (C-16). Rejected: the highest number first, as
-  `09af8c8` chose, which a suppressed Copilot finding faulted for picking
-  before checking the state; and the identity read from the URL as the base
-  to match, which would read every queried row of a renamed repository
-  `not-found` (S-2).
-- **A remote phase after collection**, its 30 s starting with the first
-  request. Rejected: interleaving requests with collection, which would need
-  a hook in feature 005's scheduler and make dispatch depend on completion
-  order.
+- **Matching**: the head object id exactly the row's head, the base branch the
+  merge ref's branch and the base repository the one GitHub resolved for the
+  identity, its `nameWithOwner` from the same answer (C-19); then `merged`
+  before `open`, the highest number within a state, a closed pull request never
+  matching (C-16). Rejected: the highest number first, as `09af8c8` chose, which
+  a suppressed Copilot finding faulted for picking before checking the state;
+  and the identity read from the URL as the base to match, which would read
+  every queried row of a renamed repository `not-found` (S-2).
+- **A remote phase after collection**, its 30 s starting with the first request.
+  Rejected: interleaving requests with collection, which would need a hook in
+  feature 005's scheduler and make dispatch depend on completion order.
 - **At most two Git children per repository for the remote target**, the
   second only when the first names a usable remote, counted in the
   envelope's `probes` (C-9). Rejected: parsing
@@ -942,24 +940,25 @@ Decisions where the sources and the rulings are silent:
   design.md:218-219); listing the whole configuration, which would read values
   such as `http.<url>.extraHeader` that may hold a token.
 - **`unavailable` beyond DI:1041-1042.** The packet makes a credential-bearing,
-  malformed or non-GitHub remote `unavailable` with no request; this change
-  gives the same state where no answer can come for want of a target or a
-  client: `no-remote-target`, `gh-unavailable`, and `gh-unauthenticated` (sent,
-  but gh's exit 4 says nothing can be answered without a login). Rejected:
-  `unknown` for these, which would make `remote.completeness` `incomplete` on a
-  machine without `gh` though nothing was cut.
+  malformed or non-GitHub remote `unavailable` with no request (DI:1041-1042),
+  and a failed or timed-out request an explicit unknown (DI:1055-1056); this
+  change departs from both where no answer can come for want of a target or a
+  client, and gives `unavailable` also to `no-remote-target`, `gh-unavailable`
+  (no `gh`, a failed lookup, or one past its 5 s limit) and `gh-unauthenticated`
+  (sent, but gh's exit 4 says nothing can be answered without a login), so
+  `remote.completeness` stays `complete`. Rejected: `unknown` for these, which
+  would make it `incomplete` on a machine without `gh` though nothing was cut.
 - **Fields only in a `--remote` run, and the row's only on a queried row**;
-  absent, never null, elsewhere. L-10 settles the first half; the second
-  departs from L-10's C clause read alone, as lane openRepoProject-4 agreed on
+  absent, never null, elsewhere. L-10 settles the first half; the second departs
+  from L-10's C clause read alone, as lane openRepoProject-4 agreed on
   2026-10-19 (departure 3 of "Lane openRepoProject-4's check"), since L-10
   forbids null for "not applicable" and a row outside the query set was not
   asked. Rejected: `remote: null` on every row of every run, which would change
   the default document feature 005 builds; in a `--remote` run, `remote: null`
-  outside the query set, as the first draft had, which would say "unknown"
-  where nothing was asked (null keeps change 1's meaning, unknown or not
-  established, CAS/pc:1128-1129); and a sixth state such as `not-queried`
-  on every row, which would only restate the row's own `branch`, `head` and
-  `merged_into_target`.
+  outside the query set, as the first draft had, which would say "unknown" where
+  nothing was asked (null keeps change 1's meaning, unknown or not established,
+  CAS/pc:1128-1129); and a sixth state such as `not-queried` on every row, which
+  would only restate the row's own `branch`, `head` and `merged_into_target`.
 - **No effect on `completeness` or the exit.** The `remote` object carries its
   own `completeness`, and a remote result, or a failed, cut or stopped
   remote-target read or `gh` child, leaves the envelope's `completeness` and
@@ -975,18 +974,19 @@ Decisions where the sources and the rulings are silent:
   each key is answered on its own. Rejected: stopping at the first, which
   saves at most 63 fast failures but makes which rows are answered depend on
   completion order, against APO/ov:243-246.
-- **gh's own traffic off.** Each `gh` child runs with
-  `GH_NO_UPDATE_NOTIFIER=1`, `GH_NO_EXTENSION_UPDATE_NOTIFIER=1`,
-  `GH_PROMPT_DISABLED=1`, `GH_TELEMETRY=false` and `NO_COLOR=1` (gh 2.96.0's
-  `gh help environment`), and without `GH_DEBUG`, `DEBUG`, `GH_HOST`,
-  `GH_REPO`, `GH_FORCE_TTY` or `CLICOLOR_FORCE`, so that it checks for no
-  update and writes none of the state it keeps for that check, prompts for
-  nothing, logs nothing and prints plain output; the new scenario of "Overview
-  is local and read-only" asserts the first three. An addition, made against
-  DI:1038-1039; what gh does beyond its documented switches is the client's
-  (What This Repository Does Not Own).
+- **gh's own traffic off.** Each `gh` child runs with `GH_NO_UPDATE_NOTIFIER=1`,
+  `GH_NO_EXTENSION_UPDATE_NOTIFIER=1`, `GH_PROMPT_DISABLED=1`,
+  `GH_TELEMETRY=false` and `NO_COLOR=1` (gh 2.96.0's `gh help environment`), and
+  without `GH_DEBUG`, `DEBUG`, `GH_HOST`, `GH_REPO`, `GH_FORCE_TTY` or
+  `CLICOLOR_FORCE`, so that it checks for no update and writes none of the state
+  it keeps for that check, prompts for nothing, logs nothing and prints plain
+  output; the new scenario of "Overview is local and read-only" asserts the
+  first three. An addition, made against DI:1038-1039 ("opt-in and read-only"),
+  with no Git scrub; what a `gh` child reads, writes or sends beyond its argv
+  and these switches is the client's own, a residual (What This Repository Does
+  Not Own) against that line and DI:307-308 ("never ... writes files").
 
-Departures, each naming what it departs from:
+Departures from C-5, each naming what it departs from:
 
 - **The merged-row wording** (C-5's example, "merged on GitHub by squash;
   local ancestry does not prove it; never retired"): GitHub's answer does not
@@ -1960,3 +1960,147 @@ for placeholders found none.
 | Lane openRepoProject-3's W57 on round C17 (`6b5bf8f..2ab3743`) | 0 HIGH, 0 MEDIUM, 1 LOW | W57 found one LOW, W57-1 (the next row); nothing else to apply, as the lead's message reports | none |
 | W57-1 (the C-54 row of the round C17 table says that PR #19's block of [E] "runs to 253 lines there, from 167"; by the file it is 252 lines (`:108-359`) at `f0bf538` and 166 (`:90-255`) at `c462d87`, the range that `:436` cites) | LOW | C-61: applied: counted again here with `git show` of `specs/project-command/spec.md` at both shas, the block being the last in the file at each, 359 lines in all at `f0bf538` with the block's header at 108, and 255 at `c462d87` with it at 90, so 252 and 166. The round C17 section's C-54 row now reads "252 lines there (`:108-359`), from 166 (`:90-255` at `c462d87`)" and says that round C18 corrected them (W57-1), in place; every other earlier round row keeps its words as history. Round C18 corrects the counts; the row at `:1872` is the only place that gave them | the round C17 section (its C-54 row) |
 | Codex's review of `2ab3743` (2026-10-22T12:48:43Z) | no finding | "Didn't find any major issues", as the lead's late read of 12:55:48Z records it, which also found CI and SonarCloud passing at `2ab3743`; nothing to apply | none |
+
+### Re-read and Codex Findings (round C19)
+
+Round C19 (2026-10-22, on team-01m) applies C-62 and C-63 on the lead's brief
+for the round (`rulings-2026-10-20.md`: C-62 under the bullets "Lane 4 on C18's
+held file" and "C-62, the lead's ruling, for C19", and C-63 under "A-54, B-75
+and C-63"). Lane openRepoProject-4 answered round C18's held file
+(`held-task-2.4.md`, sha256
+`65e41f03d58531fdbb61c46434f0ffe51330d7536e6c17c653cb590c70c2a7bf`), as the lead
+received it at 13:17:48Z and lane openRepoProject-4 noted it at 13:17:56Z
+(`lanes/log/openRepoProject-4.md:195`, register commit `d72029d50`): YES to its
+item 1, task 2.4 (reader RH's L4), and NO to its item 2, the offered line for
+task 2.3, since amendment A1 is ratified but has not landed and the offered line
+drops "or clarifications N1"; C-59's alignment round records the fact once #34
+lands. C-62 commits task 2.4 as held, with the Migration Plan's step 4 taking
+the same clause, and leaves task 2.3 as it is. C-63 is the lead's ruling on lane
+openRepoProject-3's W53 departure ledger (`departure-ledger.md`, received at
+13:17:04Z, read from lane openRepoProject-3's attachments on the register's
+`origin/main`), which has 3 departure rows for this change, 29-01 to 29-03, each
+lane-only, and one inherited row, 29-R. W53 finds 29-01 and 29-02 declared in
+this proposal but not cited against the packet line each changes, and C-63 has
+the proposal cite those lines, so that the packet revision can take them as
+written; the rows go to Brett Heap with the packet revision. Codex's review of
+`e1a9f84` found no major issues (the last row).
+
+The round edits `design.md` (`d38b282`: the Migration Plan's step 4 takes task
+2.4's clause, six lines becoming seven, so that the file is 1548 lines, from
+1547) and, in its last commit, this file (Status, the citation key, two
+Decisions bullets edited and three re-wrapped, the heading of the Departures
+list and this section) and `tasks.md` (1.1, 1.3, 1.5 and 2.4, in place, 45 lines
+still). No spec file changed: `git diff e1a9f84 -- '*/specs/*'` is empty,
+`specs/project-overview/spec.md` is still sha256
+`dee66d4f6608b3c53a2d9ae0464af023f4c87662719247543ca74cdb6ce3c46f` with its 36
+scenarios, and `specs/project-command/spec.md` is unchanged (sha256
+`208c06c36656194d2560614c44251cf404786cce90c54c9d8f6a0d6a5f2b601d`) with its 10,
+so that the count stays 46. Spec 005 re-checks #25 once, at the head that
+commits task 2.4, which is this round's last commit (the head is in the round's
+report, a commit not being able to hold its own sha).
+
+Lines 1252 to 1417 of this file, rounds C6 to C12, are unchanged (`cmp` against
+`e1a9f84`), as are lines 334-345, 367-370 and 430-438 and `tasks.md` lines
+20-22, lane openRepoProject-4's pinned ranges. Line 23 of `tasks.md`, task 2.4,
+is the one change inside those pins, agreed by lane openRepoProject-4's YES, and
+is the held file's new line byte for byte: the sha256 of lines 20-23 is now
+`2e177de7a91d644759bb5e12177696c749be9d9e90a763ce9899e238e7c0e2c0`, from
+`f81b5eb94bdb1faf87395cee093d408278f0426586c705b1b18498a6a4082053`, that of
+lines 20-22 alone is `21be1248e5c178f7` at its first 16 digits before and after,
+and that of line 23 alone is now
+`6289ab629aa6d849f7ef61a9514dea22f65b898145100909041ae933f8615986`. Every
+paragraph of this file before line 1252 keeps its line count and its place (55
+blocks, each with the same first line and length, and the same blank lines):
+Status (5-26, its clause on rounds C15 to C19 re-wrapped from line 18 on) and
+the citation key (45) in place, the heading of the Departures list in place, and
+the Decisions list's block of 82 lines (906-987), in which the two edited
+bullets take more lines than they had, "`unavailable` beyond DI:1041-1042" two
+and "gh's own traffic off" one, from three bullets with a line to spare,
+"Matching", "A remote phase after collection" and "Fields only in a `--remote`
+run", re-wrapped at 80 columns with their words unchanged (checked word for
+word). The bullets between move: "A remote phase after collection" from 933 to
+932, "At most two Git children per repository for the remote target" from 937 to
+935, "`unavailable` beyond DI:1041-1042" from 944 to 942, "No effect on
+`completeness` or the exit" from 963 to 962, "No early stop" from 974 to 973 and
+"gh's own traffic off" from 978 to 977; no line outside 924-987 moves, so every
+other cite of this file's lines holds.
+
+W53's 29-R, that this proposal's own "Departures" list (`:989-1016`) departs
+from lane 5's ruling C-5 (its example wording and its listed `closed` state) and
+from no packet line, is why the cites go where they do. The list's two entries,
+the merged-row wording and no `closed` state, are departures from C-5, a lane
+ruling, and stay as they are; its heading now says so, "Departures from C-5,
+each naming what it departs from:". W53's 29-01 and 29-02 are departures from
+the packet, which this proposal declared in its Decisions list, as
+"`unavailable` beyond DI:1041-1042" and "gh's own traffic off", the first citing
+DI:1041-1042 only and the second DI:1038-1039 only, with no cite of
+DI:1055-1056, which 29-01 changes, or of DI:307-308, which 29-02's residual
+stands against. The cites are added to those two entries, in place, so that the
+list is not mixed with them and no departure's meaning changes. The lines were
+read with `git show` of the packet's `project-maintenance-project-discovery.md`
+at `da33d92`, the pin that every DI cite here uses: DI:1041-1042 "A
+credential-bearing, malformed, or non-GitHub remote produces `remote status
+unavailable` without a request"; DI:1055-1056 "A rate limit, 401, 403, timeout,
+truncation, or other API failure produces an explicit unknown result";
+DI:1038-1039 "it must be opt-in and read-only"; DI:307-308 "it never fetches,
+pulls, resets, bootstraps, runs validators, writes files, or contacts the
+network". The numbers are `da33d92`'s, as W53 gives them; main's packet is
+revision 1 (`e45155a`), and W53's open item 5, main's line for each row, is not
+taken here.
+
+The writer checked these on 2026-10-22, in a scratch directory outside this
+tree. The heads, read with `git ls-remote origin` before the round's commits,
+were `662be89` for PR #19's branch (also `refs/pull/19/head`), `8f6fa31` for
+feature 004 (branch `004-project-clean-all-safe`, pull request #33), `e4a30fc`
+for amendment A1's, `15504f1` for main and `e1a9f84` for this change's, with no
+move. The currency check read every place in the three files that names a head
+of PR #19, of feature 004 or of main, by a search of each file for `f0bf538`,
+`423a532`, `c462d87`, `e69f6ef`, `15504f1`, `662be89` and `8f6fa31`. PR #19's
+round (f) at `662be89` changes `design.md`, `proposal.md` and `tasks.md` of
+change 1 only (`git diff --stat f0bf538 662be89`: 3 files, 228 insertions, 93
+deletions) and no spec: `specs/project-command/spec.md` there is byte for byte
+the file at `f0bf538`, 359 lines with the block of [E] at `:108-359`, 252 lines,
+as round C18's correction counts it. No place in this change's three files
+states PR #19's current head as live text. Every mention of `f0bf538` is in the
+round C17 and C18 sections, which record the head as it stood, in the round C18
+clause of task 1.3, or is a cite of the spec text read there (D5's
+`PR19/cmd:116-128`, `design.md:650`), which round (f) leaves equal; so nothing
+moves to `662be89`, and history stays. Every `c462d87` stays as the ratification
+base. Every `423a532` (`design.md:107`, `:174` and `:591`, and the round C15
+section) cites feature 005's Q9 B at the sha where it was read: the nine lines
+of PR #19's design on the scrub of Git children are `:331-339` at `423a532`,
+`:358-366` at `f0bf538` and `:361-369` at `662be89`, byte for byte equal at the
+three, so the cite is true at the new head, and stays. Feature 004 at `8f6fa31`
+holds `project` byte for byte as at `e69f6ef` (`git diff e69f6ef 8f6fa31 --
+project` is empty; only `tests/test_clean_revalidation.py` differs):
+`ChildHandle.start` still spawns with `env=git_env(kind)` at `project:1049`,
+with `GIT_KINDS` at `:956` and `git_env` at `:972`, so RI-6's note stands at the
+new head, and its `e69f6ef` cite (`design.md:215` and the round C18 section)
+stays as the sha it was read at. Main is still at `15504f1`, so the places that
+name it stay. Places edited for currency: none.
+
+The carry check of every MODIFIED block against its source passes, as in round
+C18 (the spec file untouched): "Overview is local and read-only" 1 of 1
+scenarios byte for byte, +33/-0; "Overview bounds its work and reports what it
+omitted" 13 of 13, +26/-0; "Overview prints a versioned JSON envelope" 6 of 6,
++12/-0, against change 2 at `961c405`; and [E] 9 of 9, +11/-0, against PR #19 at
+`c462d87`. Validation, run before each of the round's commits and again at its
+head (a commit cannot hold its own sha; the head is in the round's report):
+`/usr/bin/openspec validate add-project-overview-remote-merge-status --strict`
+reports the change valid with its two INFO lines, `/usr/bin/openspec validate
+--all --strict` passes 8 of 8, and `/usr/bin/openspec status --change
+add-project-overview-remote-merge-status --json` shows every artifact done. The
+added text holds no non-ASCII character, bidi control, host path or literal
+backslash-u, and a grep of the three files for placeholders found none.
+
+| Finding | Severity | Ruling | Section edited |
+| --- | --- | --- | --- |
+| Reader RH's L4 (task 2.4, `tasks.md:23`, says only "re-read" for the case where PR #19 lands first and #26 has not archived, though its own first `diff -u`, of the archived block against this change's block "showing additions only", and its second can pass only after a re-base, PR #19's block having moved past the text this change carries at `c462d87`), held in round C18 for lane openRepoProject-4's YES | LOW | C-62: applied on lane openRepoProject-4's YES (13:17:48Z, noted at 13:17:56Z), as held and byte for byte: the line gains "and re-based on it if the archived block moved past PR #19's text at `c462d87`," after "re-read against the archived block", the credit "reader RH's L4" after "C-51", and "as re-based where it was," in the first `diff -u`; `design.md`'s Migration Plan step 4 takes the same clause, as "re-read against change 1's archived block and re-based on it if that block moved past PR #19's text at `c462d87`", after the block of [E] re-based on change 1's text (`d38b282`). The re-base rule is unchanged in effect: a re-base that changes the block's added text still returns it to Brett Heap before the archive (C-51). It is the one change inside lane openRepoProject-4's pinned lines 20-23. The round C18 section says that this wording is held and written nowhere in this change; this row supersedes that for task 2.4, as the round C15 addendum did for C-51's edits | `tasks.md` 2.4; `design.md` Migration Plan (step 4) |
+| AL1's note that task 2.3's condition is met, and the line offered for 2.3 in the held file's item 2, inside lane openRepoProject-4's pinned `tasks.md:22` | note | C-62: lane openRepoProject-4 said NO to the offered line: amendment A1 is ratified but has not landed, and the offered line drops "or clarifications N1". Task 2.3 stays exactly as it is, `tasks.md` lines 20-22 byte for byte as at `e1a9f84` (`cmp`), and C-59's alignment round records the fact once #34 lands | none |
+| W53's 29-01 (#29, DI, lane-only: "`unavailable` beyond DI:1041-1042" says that `unavailable` also covers `no-remote-target`, `gh-unavailable` and `gh-unauthenticated`, so `remote.completeness` stays `complete`, and cites DI:1041-1042 only, while the packet makes a failed or timed-out request unknown, DI:1055-1056) | ruling | C-63: applied: the entry cites both lines at `da33d92` with what each says (the first: a credential-bearing, malformed or non-GitHub remote is `unavailable` with no request; the second: "a rate limit, 401, 403, timeout, truncation, or other API failure" gives an explicit unknown), says that this change departs from both where no answer can come for want of a target or a client, and gives `unavailable` also to the three reasons, with the three causes of `gh-unavailable` (no `gh`, a failed lookup, or one past its 5 s limit) and the effect that `remote.completeness` stays `complete`; its gloss of exit 4 and its rejected alternative are kept. No departure's meaning changes: the rule and the three reasons are those the entry had, those of C-25 and C-26 and those of the spec | Decisions ("`unavailable` beyond DI:1041-1042") |
+| W53's 29-02 (#29, DI, lane-only: "gh's own traffic off" says that each `gh` child runs with six variables removed and five set, and cites DI:1038-1039 only, while the Git scrub does not apply and what a `gh` child reads, writes or sends beyond its argv and those switches is the GitHub client's own, a residual, against the packet's "read-only" and "never ... writes files") | ruling | C-63: applied: the entry's last sentence cites DI:1038-1039 with the packet's words ("opt-in and read-only"), says that the Git scrub does not apply, names what a `gh` child reads, writes or sends beyond its argv and these switches as the client's own, a residual (What This Repository Does Not Own), and cites DI:307-308 ("never ... writes files") beside DI:1038-1039 as the lines that residual stands against. The six removed and five set variables are unchanged; the words "beyond its documented switches" became "beyond its argv and these switches", those of the third bullet of What This Repository Does Not Own. No departure's meaning changes | Decisions ("gh's own traffic off") |
+| W53's 29-R and its note that #29's own "Departures" list rests on C-5 and not on the packet (the list's two entries depart from C-5's example wording and its listed `closed` state, lane 4's three departures from change 2's text and L-10, and none from a packet line; the MODIFIED block of [E] carries PR #19's rows) | note | C-63: kept as W53 has it: the list's two departures, the merged-row wording and no `closed` state, stay as they are, resting on C-5 and cited to it, and the cites of 29-01 and 29-02 go into the two Decisions entries that declare the packet departures, so that the Departures list is not mixed with them. Its heading, "Departures, each naming what it departs from:", now reads "Departures from C-5, each naming what it departs from:", so that a reader takes the list as departures from a lane ruling and finds the two packet departures in Decisions. No departure's meaning changes | Departures list (heading) |
+| W53's 29-03 (five readings of the packet: the credential store, the URL's user information, "recorded as unknown", the two keys against "Every field ... is always present", and the 1 MiB body) | ruling | C-63: nothing to cite: W53 marks the row DECLARED as readings, and "Readings of packet and ratified text" already cites DI:310, DI:1056-1058, DI:1053, DI:823 with DI:834-835, and DI:1048-1050; its packet line to change is optional clarifying clauses. Left as it is | none |
+| The lead's currency check for round C19: PR #19 is now at `662be89` (round (f): design, proposal and tasks only, with spec text equal to `f0bf538`'s), feature 004 at `8f6fa31` | ruling | applied by reading every place, and no place edited: no place in the proposal, design or tasks states PR #19's current head as live text, so none moves to `662be89`. Read and left: every `f0bf538` (the round C17 and C18 sections, the round C18 clause of task 1.3 and D5's `PR19/cmd:116-128` at `design.md:650`, whose spec text is the same at `662be89`); every `c462d87`, the ratification base; every `423a532`, Q9 B's nine lines, equal at `423a532`, `f0bf538` and `662be89`; RI-6's `e69f6ef`, since `project` at `8f6fa31` is byte for byte `e69f6ef`'s; and main's `15504f1`, still main's head. The paragraph above gives each | none |
+| The record: Status, the citation key, and tasks 1.1, 1.3 and 1.5, in place | ruling | C-56 and C-63's record: Status says "rounds C15 to C19" and "C-50 to C-63" and names RH's L4 and W53's cites, within its 22 lines; the citation key reads "C-15 to C-63", a span that still includes C-55 and C-60, which this change cites nowhere, and C-59, which it cites as not applied; `tasks.md` 1.1 lists C-45 to C-63, 1.3 gains a round C19 clause (C-62, C-63 and the currency check, this round recording itself as C-56 orders) and "Re-read and Codex Findings (round C19)" in its verified-by list, and 1.5 names round C19; the tasks file is 45 lines still | Status; citation key; `tasks.md` 1.1, 1.3, 1.5 |
+| Codex's review of `e1a9f84` (2026-10-22T13:19:21Z) | no finding | "Didn't find any major issues", as the lead's late read of 13:25:49Z records it, which also found CI and SonarCloud passing at `e1a9f84`; nothing to apply | none |
