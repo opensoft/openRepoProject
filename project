@@ -2967,27 +2967,30 @@ def worktree_config(common_dir, directory, run):
 def effective_work_tree(raw, run, strict=False):
     """Whether the linked worktree at raw has raw as its effective work tree,
     the work tree a Git command run in it uses (design D7; LQ-11; change 1
-    as amended at addd346): WORK_TREE_PROBE in raw, a `probe` child.
-    Returns (holds, error): holds True when it prints exactly one line whose
-    realpath is raw's realpath; False when it prints another, fails (Git
-    exits 128 under `core.bare=true`, `fatal: this operation must be run in
-    a work tree`) or prints other than one non-empty line; None with error,
-    the row error, when the probe timed out or met the work deadline or a
-    realpath read failed. strict, at revalidation, keeps False for the one
-    decided value, another toplevel, and gives a probe that fails or prints
-    other than one non-empty line None with its row error too, since it
-    decided nothing (the lead's R-171; #19 at 4485678, D7). A pure reader:
-    the caller decides."""
+    as amended at addd346): WORK_TREE_PROBE in raw, a `probe` child. The
+    probe asks for one option, so its standard output, less the one line
+    feed Git ends it with, is read as one path, which may itself hold line
+    feeds (lead ruling R-287; lane 3's W70 M-2): a linked worktree whose own
+    path holds a line feed prints that path over two lines or more. Returns
+    (holds, error): holds True when that path's realpath is raw's realpath;
+    False when it is another, when the probe fails (Git exits 128 under
+    `core.bare=true`, `fatal: this operation must be run in a work tree`),
+    and when the output is empty, does not end in a line feed, or is that
+    line feed alone, which names no path; None with error, the row error,
+    when the probe timed out or met the work deadline or a realpath read
+    failed. strict, at revalidation, keeps False for the one decided value,
+    another toplevel, and gives a probe that fails or prints such output None
+    with its row error too, since it decided nothing (the lead's R-171; #19
+    at 4485678, D7). A pure reader: the caller decides."""
     outcome, error = _git(run, raw, list(WORK_TREE_PROBE), "rev-parse")
     if error is not None:
         return (False, None) if error["code"] == "probe-failed" and not strict else (None, error)
-    lines = outcome.result.split(b"\n")
-    if lines[-1] == b"":
-        lines.pop()
-    if len(lines) != 1 or not lines[0]:
+    output = outcome.result
+    path = output[:-1]
+    if not output.endswith(b"\n") or not path:
         return (None, unparseable_error("rev-parse")) if strict else (False, None)
     try:
-        return _realpath(lines[0]) == _realpath(raw), None
+        return _realpath(path) == _realpath(raw), None
     except EvidenceError as exc:
         return None, exc.error
 
@@ -3304,7 +3307,8 @@ def _work_tree_holds(read, raw, run):
     effective work tree (effective_work_tree(); LQ-11), read after its
     identity and before its status probe in a repository whose row 4c read
     true. Otherwise False, and the row gets no probe: another work tree, a
-    failed probe or other output sets `registered` false
+    failed probe, or output that is empty or does not end in a line feed
+    (R-287) sets `registered` false
     (registration-mismatch), and a probe that timed out or met the work
     deadline, or a failed realpath read, appends its row error."""
     holds, error = effective_work_tree(raw, run)

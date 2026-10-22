@@ -889,18 +889,30 @@ class RevalidationTests(clean_support.CleanCase):
         # true, only a decided different effective work tree is
         # identity-changed (lane E's test of a work tree redirected after the
         # plan pins it). In process, after the question, P's work-tree probe
-        # made to exit 128, to time out, and to print two lines, each
-        # state-changed; and cut by the work deadline, which is no difference
-        # (P not-attempted with deadline-exceeded, exit 1).
+        # made to exit 128, to time out, to print nothing, and to print P's
+        # own path with no line feed after it, each state-changed; and cut by
+        # the work deadline, which is no difference (P not-attempted with
+        # deadline-exceeded, exit 1). Its output, less the one line feed Git
+        # ends it with, is one path, which may hold line feeds (lead ruling
+        # R-287; lane 3's W70 M-2), so two lines are one other path, a decided
+        # different work tree: identity-changed.
         probe = ["rev-parse", "--path-format=absolute", "--show-toplevel"]
+        lf = chr(0x0A).encode("ascii")
         cases = (("exits 128", dict(name="failed", status=128), ("refused", "state-changed"), 2),
                  ("times out", dict(name="timeout"), ("refused", "state-changed"), 2),
-                 ("prints two lines", dict(name="complete", status=0, result=b"/a\n/b\n"),
+                 ("prints nothing", dict(name="complete", status=0, result=lambda target: b""),
                   ("refused", "state-changed"), 2),
+                 ("prints P's path with no line feed", dict(name="complete", status=0, result=lambda target: target),
+                  ("refused", "state-changed"), 2),
+                 ("prints two lines, one other path",
+                  dict(name="complete", status=0, result=lambda target: b"/a" + lf + b"/b" + lf),
+                  ("refused", "identity-changed"), 2),
                  ("is cut by the deadline", dict(name="deadline"), ("not-attempted", "deadline-exceeded"), 1))
         for number, (label, fields, expected, status) in enumerate(cases):
             with self.subTest(f"the work-tree probe {label}"):
                 root, trees = self.batch(f"work-tree-{number}")
+                if callable(fields.get("result")):  # the output, from P's own path
+                    fields = {**fields, "result": fields["result"](bytes(trees[0]))}
                 self.git(root, "config", "extensions.worktreeConfig", "true")
                 before = self.snapshot(root, trees)
                 asked, calls, real_run_bounded = [], [], project.run_bounded
