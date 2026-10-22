@@ -1044,6 +1044,29 @@ Lane: openRepoProject-4
   No pin moves, A1 stays cited at `e4a30fc`, and `clarify-questions.md` is
   unchanged. Re-validation: 16 of 16 items pass, with the checks of iteration 2
   re-run by script on the edited spec.
+- 2026-10-22, a thirty-second pass: #19's round (l) at `ccc52b9` (`d1c5343` and
+  `ccc52b9`; lane openRepoProject-2's R-307 and R-310, accepted by its R-311,
+  on lane openRepoProject-3's W87) is recorded, pending Brett Heap's
+  confirmation of its five texts and his ratification of #19, by the lead's
+  commit 3ad decisions. #19: the 256 rows were re-checked by line alignment
+  against `173d83c`; round (l) adds a 21-line AND clause to "An unreadable
+  worktree is one row" in `project-clean` (:88-108), whose five texts leave
+  `git worktree prune` out while any row of the plan has a path that could not
+  be read, and the 130 cited rows after it move down 21, keeping their text,
+  `project-command` and the review-safety spec being unchanged. Its design
+  changes D7's attribution, D18's bare name under a `core.bare` true and the
+  ceiling's locked note, and its proposal `BA:725-727` and R-146's place among
+  LQ-13's lane parts. The spec mirrors none of the five texts, the overview's
+  own `inspection-incomplete` remedy being change 2's, and no hold moves,
+  FR-006's D18 changing only at the bare name, which its note does not state.
+  The round (j) record's quote of the evidence model now carries D7's
+  attribution at `ccc52b9` (`design.md:484-485`). CHK012 of
+  `suggestions-gates.md` and CHK020 of `integration.md` were re-read, round (l)
+  changing no gate, their categories unchanged, and the totals below were
+  recounted by script. Traceability is checked against A1's ratified deltas at
+  `e4a30fc` (64 of 64). No pin moves, A1 stays cited at `e4a30fc`, and
+  `clarify-questions.md` is unchanged. Re-validation: 16 of 16 items pass, with
+  the checks of iteration 2 re-run by script on the edited spec.
 - Items marked incomplete require spec updates before `/speckit-clarify` or `/speckit-plan`
 
 ## Cross-cutting Requirements Quality (no-argument `/speckit.checklist`, 2026-10-19)
@@ -1165,5 +1188,5 @@ notes (PN-1 to PN-18 but PN-4 and PN-11, withdrawn on 2026-10-21; PN-2 narrowed
 to an exception of any other kind in human mode and widened to a failed write's
 standard-error line), 0 new questions. Recounted by script on 2026-10-21, and
 again after the re-check, after the W6 read and after the fourth to twelfth
-passes of that day, and after the thirteenth to thirty-first passes on
+passes of that day, and after the thirteenth to thirty-second passes on
 2026-10-22.

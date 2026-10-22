@@ -4390,12 +4390,12 @@ and [P] are change 1's requirements as the header names them.
   his words "R-284: yes", lane openRepoProject-2's R-290), follows, and edits
   all three of its specs, the scenario counts staying 71 in `project-clean`, 24
   in `project-command` and 22 in the review-safety spec. In `project-command`,
-  by R-287 and R-291's refinement, the evidence model reads LQ-11's work-tree
-  probe so, in words that #19's D7, at `e14ada0` and still at `173d83c`, gives
-  as R-291's: "the probe's standard output, less the one line feed Git ends it
-  with, SHALL be read as one path, which may itself hold line feeds; output
-  that is empty, that names no path, or that does not end in a line feed SHALL
-  make the row's registration disagree" (its
+  LQ-11's work-tree probe is read "by the lead's R-287, with R-291's
+  refinement, which the evidence model words so", as #19's D7 has it at
+  `ccc52b9` (`design.md:484-485`): "the probe's standard output, less the one
+  line feed Git ends it with, SHALL be read as one path, which may itself hold
+  line feeds; output that is empty, that names no path, or that does not end in
+  a line feed SHALL make the row's registration disagree" (its
   `specs/project-command/spec.md:224-229`, where :224-227 at `e0c91bb` made
   output that is not exactly one line disagree), and the scenario "A linked
   worktree whose work tree is redirected" gains an AND at :320 for a linked
@@ -4534,6 +4534,67 @@ and [P] are change 1's requirements as the header names them.
   repeat itself wait on Brett Heap's ratification of #19, as this spec's hold
   of the count does (FR-020, EC-032). FR-007's hold and those of gate 7 and F-7
   stay as they are, the texts they rest on unchanged (D7, D10, D18). No
+  requirement of this spec moves. #19's round (l), `ccc52b9`, two commits from
+  `173d83c` (`d1c5343` and `ccc52b9`; lane openRepoProject-3's W87 read of
+  rounds (j) and (k); lane openRepoProject-2's R-307 and R-310, and its R-311
+  accepting the round), follows, pending Brett Heap's confirmation of its five
+  texts and his ratification of #19, and edits one of its specs at one site,
+  its `project-command` and review-safety specs unchanged (`git diff --quiet`),
+  the scenario counts staying 71 in `project-clean`, 24 in `project-command`
+  and 22 in the review-safety spec: in `project-clean` the scenario "An
+  unreadable worktree is one row" gains a 21-line AND clause after :87 (W87
+  M-1; its `specs/project-clean/spec.md:88-108`), whose five texts leave `git
+  worktree prune` out and warn against it while any row of the plan has a path
+  that could not be read: that row's next step in the preview, the
+  `inspection-incomplete` remedy, that remedy's variant where a row it counts
+  is also excluded as `registration-mismatch`, and the next steps of the other
+  `inspection-error` rows and of the `registration-mismatch` rows, since `git
+  worktree prune` deletes the administrative directory of a live worktree whose
+  path Git cannot stat and acts on the whole repository. Its design D18 gives
+  the five (`design.md:1314-1332` and :1408-1423), and its proposal puts them
+  to Brett Heap to confirm, as R-284 was, in an entry of the second group of
+  amendments of ratified text (`proposal.md:1315-1364`), whose "now
+  pcl:815-819" gives the lines at `173d83c`, :836-840 at `ccc52b9`. Its design
+  D7 now gives the evidence model's sentence "by the lead's R-287, with R-291's
+  refinement, which the evidence model words so" (:484-485; W87 LOW-1), the
+  sentence's words unchanged; D18 says that under a `core.bare` true a bare
+  name that finds a directory holding a `.project.json` file or a
+  `.devcontainer` directory is taken by feature 004's discovery after row 2
+  fails, and the redirect message prints, where round (k) refused it with
+  `repository-not-found` (W87 LOW-2; :1446-1451); and D18 and D4 say that the
+  locked note is a report row's own form, a ceiling target showing the first,
+  second or third note and never the locked one, round (k)'s precedence
+  sentences now reading so (W87 LOW-3; :1366-1385 and :281-283), the third
+  text's words unchanged. Its proposal cites `BA:725-727` where the round (i)
+  record above gives #19's `BA:726-727` (W87 OBS-1; `proposal.md:1175` and
+  :2298), and names R-146, the drain line's naming of the gates' reasons, among
+  the lane parts of LQ-13 (W87 OBS-3; :899-900 and :1108-1110), a line that the
+  overview never prints. The round is recorded at `proposal.md:2392-2435` and
+  in `tasks.md` 1.2 (:89-97). Re-checked by script against `173d83c`, the 256
+  rows above located by line alignment: in `project-command` and the
+  review-safety spec every cited line keeps its number and text; in
+  `project-clean` the 11 rows before the new AND keep theirs, and the 130 after
+  it move down 21, keeping their text, among them the AND of "A removal past
+  the hard ceiling", now :531-536, [R]'s absolute-path rule, now :588-592, and
+  the gate block, now :714-801. In its design, D18's resolution sentences
+  (:1387-1462 at `173d83c`, now :1432-1512) change only at LOW-2's bare name,
+  their three cases, the missing directory and the submodule limits keeping
+  their words, re-wrapped, at :1440-1444, :1471-1480 and :1492-1507, as does
+  its variant `inspection-incomplete` remedy, now :1405-1408; D4's and D18's
+  F-2 sentences, D6's row 3b and four-line paragraph, D7's probe text at
+  :531-539, D9's record of R-284's confirmation, D10's O-1, F-7's next steps
+  and the Risk that EC-022 cites keep their text, moved down 2 to 49 lines; and
+  the amendment entry for D6's repeat keeps its text at
+  `proposal.md:1304-1314`, design Open Questions now counting six. Round (l)
+  reaches the overview through neither [E] nor [G], and this spec mirrors none
+  of the five texts: the overview prints no plan's next step and no remedy of
+  [G], its own `inspection-incomplete` remedy being change 2's (A1's :624),
+  which names no prune, and its one remedy that says prune, FR-009's for
+  `main-worktree-missing`, being change 2's own, for a main worktree whose path
+  does not exist; nor does the bare name reach it (FR-031), nor the ceiling
+  notes, which it does not show. No held note needs the five texts, and round
+  (l) changes the #19 text behind no hold but FR-006's, at the bare name, which
+  FR-006's note does not state, so that every hold stays as it is. No
   requirement of this spec moves. So PR #34 does not merge before #19's
   ratification of those commits; should Brett Heap want #34 sooner, the four
   items move to a later amendment of change 2, and A1 lands without them (its

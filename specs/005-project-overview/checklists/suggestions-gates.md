@@ -148,10 +148,10 @@ LQ-14, theirs too, and CHK012 again after A1's revision 3 at `367223a`, and
 CHK012 and CHK020 after PR #19's R-124 and R-126, and again after A1's revision
 5 at `3ee860c`, with R-124's outcome rule in `2b86a5f`'s words, and CHK012
 after its revisions 6, 7, 8, 9 and 10 at `d644517`, `0394be4`, `177eadf`,
-`4261ff8` and `c193f7b`, after #19's rounds (d) to (k) at `9267303`, `f0bf538`,
-`662be89`, `4f1c0e0`, `3dcd2d8`, `6bf9f77`, `b3228bb`, `e0c91bb`, `e14ada0` and
-`173d83c`, after lane openRepoProject-3's W39 LOW-4, and after A1's
-ratification at `e4a30fc`, and CHK010 after #19's rounds (g) and (g2), and
+`4261ff8` and `c193f7b`, after #19's rounds (d) to (l) at `9267303`, `f0bf538`,
+`662be89`, `4f1c0e0`, `3dcd2d8`, `6bf9f77`, `b3228bb`, `e0c91bb`, `e14ada0`,
+`173d83c` and `ccc52b9`, after lane openRepoProject-3's W39 LOW-4, and after
+A1's ratification at `e4a30fc`, and CHK010 after #19's rounds (g) and (g2), and
 CHK023 after its round (h), and CHK017 after its round (i), lane
 openRepoProject-3's W83 read of it, its round (k) and lane openRepoProject-3's
 W88 read. 29 items: 28 pass, 1 fixed in the spec, 0 open, 0 plan notes, 0 new
