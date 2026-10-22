@@ -53,9 +53,11 @@ Lane: openRepoProject-1
 - **Iteration 2** failed one item, fixed in the spec:
   - "Requirements are testable and unambiguous". SC-001 said that the tests
     cover "each case (a) and case (b) kind in each of these forms", which
-    contradicts the Assumptions entry "Test breadth". That entry makes
-    `design.md` D3's matrix the minimum. SC-001 now reads "Across the kinds
-    of `design.md` D3, the runs include each of these forms".
+    contradicts the Assumptions entry "Test breadth". That entry made
+    `design.md` D3's matrix the minimum. SC-001 then read "Across the kinds
+    of `design.md` D3, the runs include each of these forms" (as of
+    2026-10-21; Q1 B has since replaced both, see the re-validation under
+    Iteration 3).
 - **Iteration 3**: every item passes. The mechanical checks gave 0 markers,
   0 template placeholders and 0 non-ASCII characters, and every quoted
   string matches its source verbatim. The quoted strings are the README
@@ -65,6 +67,23 @@ Lane: openRepoProject-1
   comes first". One coverage gap was closed in the same pass: User Story 3
   scenario 4 now says "with or without `--dry-run`", for the delta's "A
   dry run with a known obstacle" on case (a) and the missing parent.
+  - **Re-validated 2026-10-22**, after the Clarifications of that day (Q1 B,
+    Q2 A, Q3 A, Q4 B, Q5 A). This is not a fourth iteration: the cap of 3
+    belongs to the specify loop. SC-001 and the Assumptions entry "Test
+    breadth" are now fixed by Q1 B: SC-001 enumerates every kind of FR-014
+    by `--into` and `FILE` by each of its other routes, in each of six
+    forms, and "Test breadth" says that `design.md` D3's matrix is "the
+    least" the tests cover. The mechanical checks of the spec after the
+    answers gave 0 `[NEEDS CLARIFICATION]` markers, 0 template placeholders
+    and 0 non-ASCII characters. All 16 items still pass.
+  - **`OSError`** is named on purpose, as the skip rule of the socket test
+    (Clarifications, Q3; EC-001; FR-014), the rule `design.md` D3 item 1
+    gives; EC-008 names the permission error `[Errno 13]` as the behaviour
+    observed. The statement "No language, function, module, test method or
+    test-harness API is named" in the content-quality note below is
+    therefore not exact word for word, and the items it supports still pass
+    on substance: the spec states behaviour, and the one name is a rule of
+    the tests.
 - **Delta coverage.** All 40 scenarios of the delta's 5 requirements are
   accounted for, and 24 of them are named by title in the spec:
   - User Story 5 scenario 8 names 22: the 20 scenarios that the feature
@@ -111,7 +130,8 @@ Lane: openRepoProject-1
   recorded under the spec's Assumptions, as in features 002 and 003. The
   ratified delta fixes flags, paths, standard streams and exit statuses as
   behaviour. SC-006 names the CI jobs, as 003's SC-006 did. No language,
-  function, module, test method or test-harness API is named. FR-014 states
+  function, module, test method or test-harness API is named, but for
+  `OSError` (see the re-validation under Iteration 3). FR-014 states
   test obligations only at the level that `design.md` D3 and D4 and report
   A's notes fix them.
 - **Report notes.** Report A's notes are carried where they belong: A1 and

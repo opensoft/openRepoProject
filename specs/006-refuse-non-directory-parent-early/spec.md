@@ -444,8 +444,13 @@ creates a missing parent, which fails below a file.
   - an invalid `--family` is refused at the family check;
   - a valid `--family` without `--shape` meets the shape-only refusal.
 
-  Both orders, the two family faults before the head refusal and the later
-  faults after it, are pinned by tests (FR-014; Clarifications, Q4).
+  Under the answer Q4 B (FR-014; Clarifications, Q4), tests pin an invalid
+  `--family` (before the head refusal) and the workBenches lookup fault, a
+  `--workbenches` directory without its registry file (after it), as well as
+  the generator and the late `--workflow` check. A valid `--family` without
+  `--shape` shares its check with `--org` without `--shape`, which is run.
+  The generator registry fault, a malformed registry file, is not pinned
+  (plan.md, "Not tested").
 - **EC-007**: For an invocation that is asked, `--workflow` without
   `setup-openspeckit` on PATH is refused before the question, and so before
   the head refusal, as today.
@@ -662,13 +667,16 @@ creates a missing parent, which fails below a file.
     unaffected" (feature 003's `traceability.md:25`, row 7).
 - **FR-016**: The records of features 002 and 003, and the OpenSpec change's
   proposal, design, clarifications and spec delta, MUST NOT be edited. The
-  change's `tasks.md` MUST NOT be edited either, except for the entries and
-  fields below, which are edited on this feature's branch, as feature 003's
-  realization did (Clarifications, Q5):
+  change's `tasks.md` MUST NOT be edited either, except for the entries,
+  fields and line below, which are edited on this feature's branch, as
+  feature 003's realization did (Clarifications, Q5):
   - before the first implementation commit, 1.6 is ticked with the quote of
-    Brett Heap's word and its link, 2.1 is ticked, and the Speckit Handoff
+    Brett Heap's word and its link, 2.1 is ticked, the Speckit Handoff
     fields name this feature's identifier, branch and repo-relative
-    `tasks.md` path;
+    `tasks.md` path, and the Handoff section's prose line, line 31, is
+    rewritten ("to be created" becomes "created"), as the plan's G1 gives
+    each of these lines; the two tick lines may carry the evidence text that
+    G1 gives;
   - 2.2 is ticked later in the same pull request, once the first
     implementation step has run after reading that section.
 

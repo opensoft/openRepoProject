@@ -10,9 +10,9 @@ Lane: openRepoProject-1
 **Packet**: `openspec/changes/refuse-non-directory-parent-early/`, ratified by
 Brett Heap ("ratify 21", 2026-10-21).
 
-**Drafted**: 2026-10-21 by lane openRepoProject-1's clarify drafter. No answers
-yet. The lead puts this block to Brett Heap. The answers are then encoded in
-the spec's Clarifications section, and only then does `/speckit-plan` run.
+**Drafted**: 2026-10-21 by lane openRepoProject-1's clarify drafter. Answered
+2026-10-22 by Brett Heap, verbatim "all recommended"; recorded in spec.md's
+Clarifications (Session 2026-10-22).
 
 **Corrected**: 2026-10-21, before any answer was given: Q5's precedent and option A now say that feature 003 ticked 2.2 after its first implementation commit, not before (`90a4cee` left it open; `f401e06` has it ticked).
 

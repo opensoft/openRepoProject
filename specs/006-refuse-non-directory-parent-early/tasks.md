@@ -79,7 +79,9 @@ feature files under `specs/006-refuse-non-directory-parent-early/` (among
 them `qs.sh`, from the planning commit). No other file changes (FR-016 as the Clarifications
 narrow it `[Q5]`). Line references are at `d47e8a4`, where `project`,
 `tests/test_project.py` and `README.md` are the merge base's; once main is
-merged in (lane step 4), cite by function name and re-read the line.
+merged in (lane step 4), cite by function name and re-read the line. Every
+line citation is the merge base's: after T004 shifts `tests/test_project.py`,
+locate a site by the function or test name the task gives.
 
 ## File sets and writers
 
@@ -206,6 +208,13 @@ with `grep -c '^    def test_'` (the verify defines its own
 `B=$(git merge-base origin/main HEAD)` in front). That is the only per-task
 guard that a task added exactly its methods: check `ast-tests` cannot run
 before T009 rewrites its test.
+
+Run each verify in the foreground with the Bash tool's timeout raised to
+600000 ms: the default 120000 ms kills a long verify, and that is a timeout,
+not a failed verify. The long ones are T007, T013 and T018, which take 3 to 4
+minutes (the red pty runs wait `pty_timeout = 5` each at the base), and the
+full-suite verifies T002, T004, T014 and T016, which can pass 2 minutes under
+load.
 
 ## Rules for every new row and test (D3)
 
@@ -721,7 +730,7 @@ walk and the adversarial review are lane steps 1 and 2, not tasks.
   FR-015's mappings, but not that each mapped row names the tests the plan's
   coverage map plans for it.
   -- files: `specs/006-refuse-non-directory-parent-early/traceability.md`
-  -- verify: `bash specs/006-refuse-non-directory-parent-early/qs.sh traceability && python3 -I -c 'import re,sys;V=chr(124);B=chr(96);row=lambda l:[c.strip() for c in l.strip().strip(V).split(V)];tab=lambda p:[row(l) for l in open(p).read().splitlines() if l.startswith(V)][2:];P="specs/006-refuse-non-directory-parent-early/";pl=open(P+"plan.md").read().splitlines();N={m.group(1):m.group(2) for m in (re.match(r"^\| (N\d+) \| "+B+r"(test_\w+)"+B,l) for l in pl) if m};C={m.group(2):m.group(3) for m in (re.match(r"^\| (ADDED|MODIFIED) \"([^\"]+)\" \| (.*) \|$",l) for l in pl) if m};T3=[r[4] for r in tab("specs/003-parent-obstacle-wording/traceability.md")];RW="test_pty_single_answer_with_a_file_parent_ends_as_the_flag_chosen_path";q=lambda c:re.findall(B+r"(test_\w+)"+B,c);need=lambda c:[N[k] for k in re.findall(r"\bN\d+\b",c)]+q(c)+([RW] if "the rewritten test" in c else [])+[n for k in re.findall(r"003 traceability row (\d+)",c) for n in q(T3[int(k)-1])];R=tab(P+"traceability.md");miss=[(r[2],sorted(set(need(C[r[2]]))-set(q(r[4])))) for r in R if r[2] in C and not set(need(C[r[2]]))<=set(q(r[4]))];e=[x for x in (len(N)==15 or "methods",len(C)==20 or "map",sum(r[2] in C for r in R)==20 or "map rows",not miss or miss) if x is not True];print("map",e or "OK");sys.exit(1 if e else 0)'`
+  -- verify: `bash specs/006-refuse-non-directory-parent-early/qs.sh traceability && python3 -I -c 'import re,sys;V=chr(124);B=chr(96);row=lambda l:[c.strip() for c in l.strip().strip(V).split(V)];tab=lambda p:[row(l) for l in open(p).read().splitlines() if l.startswith(V)][2:];P="specs/006-refuse-non-directory-parent-early/";pl=open(P+"plan.md").read().splitlines();N={m.group(1):m.group(2) for m in (re.match(r"^\| (N\d+) \| "+B+r"(test_\w+)"+B,l) for l in pl) if m};C={m.group(2):m.group(3) for m in (re.match(r"^\| (ADDED|MODIFIED) \"([^\"]+)\" \| (.*) \|$",l) for l in pl) if m};T3=[r[4] for r in tab("specs/003-parent-obstacle-wording/traceability.md")];RW="test_pty_single_answer_with_a_file_parent_ends_as_the_flag_chosen_path";q=lambda c:re.findall(B+r"(test_\w+)"+B,c);need=lambda c:[N[k] for k in re.findall(r"\bN\d+\b",c)]+q(c)+([RW] if "the rewritten test" in c else [])+[n for k in re.findall(r"003 traceability row (\d+)",c) for n in q(T3[int(k)-1])];R=tab(P+"traceability.md");miss=[(r[2],sorted(set(need(C[r[2]]))-set(q(r[4])))) for r in R if r[2] in C and not set(need(C[r[2]]))<=set(q(r[4]))];e=[x for x in (len(N)==15 or "methods",len(C)==20 or "map",sum(r[2] in C for r in R)==20 or "map rows",not miss or miss) if x is not True];print("map",e or "OK");sys.exit(1 if e else 0)' && bash specs/006-refuse-non-directory-parent-early/qs.sh ascii-added && bash specs/006-refuse-non-directory-parent-early/qs.sh files-changed`
 
 ---
 
@@ -1034,6 +1043,9 @@ checkpoint) stays `[S]` by the lead's ruling.
   builder leaves `tests/test_project.py` alone and reports it; the lead routes a
   fix task to the tests' writer. `tests/test_project.py` keeps one writer at a
   time (FS-T), so no `project` builder edits it.
+- A block caused by a defect in an earlier task's output counts as that earlier
+  task's failure, not the later task's: the lead re-opens the earlier task at
+  its tier, then re-dispatches the later one.
 - Plan slice ids (T1 to T9, V1 to V9, S1, S2, G1, G2, I1, I2) are not task
   ids (T001 to T028): the crosswalk above maps one to the other, and a task
   names its slice where the plan's text is cited.

@@ -163,10 +163,11 @@ Heap answered them on 2026-10-22 (see the banner above and research R12).
 gates are defined. What governs instead: the ratified change
 (`openspec/changes/refuse-non-directory-parent-early/`: the spec delta,
 `design.md` D1 to D6, `clarifications.md` N1 to N6) and the lane's rules:
-ASCII-only text, the lane line first in every file, merges only (no rebase, no
-force push; the org ruleset refuses force pushes), plain pushes, no work
-outside this feature's worktree, no edit of features 002 and 003 or of the
-change's files beyond `[Q5]`. Pre-research: pass, nothing to evaluate.
+ASCII-only text, the lane line first in every Markdown file (`qs.sh`, a
+script, has none), merges only (no rebase, no force push; the org ruleset
+refuses force pushes), plain pushes, no work outside this feature's
+worktree, no edit of features 002 and 003 or of the change's files beyond
+`[Q5]`. Pre-research: pass, nothing to evaluate.
 Post-design: pass, re-checked with `research.md` and `quickstart.md` in their
 final form: they restate the design and contradict none of it; every research
 number this plan cites (R1, R2, R5 to R12, R14, R15) resolves there with the
@@ -936,7 +937,7 @@ blocked parent with standard output not a terminal.
 
 ```text
 specs/006-refuse-non-directory-parent-early/
-  spec.md                  feature specification (/speckit-specify), with its Clarifications once answered
+  spec.md                  feature specification (/speckit-specify), with its Clarifications as answered
   clarify-questions.md     the five questions (/speckit-clarify)
   checklists/requirements.md
   plan.md                  this file (/speckit-plan)
