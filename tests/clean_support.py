@@ -613,7 +613,8 @@ TEXT_FIXTURES = {
     "ignored_suffix": ": {N} ignored; first: {SAMPLE}",
     "ignored_suffix_truncated": ": at least {N} ignored; first: {SAMPLE}",
     "deferral_line": "  deferred-target-cap ({K}): this run removes up to 16; run again: project clean {ROOT} --all-safe --apply",
-    "non_drain_line": "  these deferred rows will not drain while the 16 rows ahead of them are {REASONS}; review those worktrees, then remove them yourself",
+    # The submodule clause: lane 3's W59 G-4, for #19's round (g3).
+    "non_drain_line": "  these deferred rows will not drain while the 16 rows ahead of them are {REASONS}; review those worktrees, then remove them yourself (--force for any that holds a submodule)",
     "residual_window_line": "Not protected: ignored files created, index flags set, operations started or worktree-only commits made after the last check, and any change after Git's own check.",
     "empty_line": "No eligible worktrees",
     # D18: the question, the wait, the result.
@@ -623,6 +624,9 @@ TEXT_FIXTURES = {
     "success_line": "Removed {N}; branches kept: {BRANCHES}.",
     "stop_block": "Stopped at {PATH} ({REASON}). Removed {K} of {N}. Not attempted: {NOT_ATTEMPTED}. Next: project clean {ROOT} --all-safe",
     "partial_removal_note": "Probable partial removal: inspect, then git worktree remove --force {PATH} by hand.",
+    # D18's note for a locked worktree (#19 at 4f1c0e0, design.md:1225-1228; W52 F-2, R-248),
+    # which replaces ratified text and so waits on Brett Heap's word.
+    "partial_removal_note_locked": "Probable partial removal: inspect, unlock it, then git worktree remove --force {PATH} by hand.",
     # D18: refusal messages and remedies.
     "target_excluded_gate": "Worktree is excluded: {REASON}; {NEXT_STEP}",
     "remedy_inspection_incomplete": "repair or remove the inspection-error rows first: git worktree repair, git worktree prune, or remove the row by hand after review",
@@ -660,6 +664,14 @@ TEXT_FIXTURES = {
     "note_inspect_cap_report": "{N} rows exceed the --all-safe row cap of {M}; --all-safe would be incomplete (inspect-cap).",
     "confirmation_required": "Standard input is not a terminal; pass --yes to apply this plan.",
     "push_remote_gone": "Cannot push {BRANCH}; its upstream {UPSTREAM} was deleted (remote-gone); review it before it is republished.",
+    # D18's delete-branch refusal where the main worktree holds the branch, NAME
+    # the merge target (#19 at 4f1c0e0, design.md:1234-1242; W52 F-5, RI-4, R-248).
+    "branch_held_by_main_worktree": "Branch {BRANCH} is checked out in the main worktree; detach HEAD there, or check out {NAME} there, then retry.",
+    # Feature 004's own report recommendations, not in #19 at 4f1c0e0: the main
+    # worktree's merged-removable or merged-current row, and a locked stale row
+    # (lane 3's W52 F-6 and F-10).
+    "recommendation_main_worktree": "The main worktree is never removed by project clean.",
+    "recommendation_stale_locked": "Review, unlock it, then prune stale worktree metadata manually.",
     # Baseline texts kept (project at 961c405).
     "target_excluded_current": "Cannot remove the current worktree.",
     "target_excluded_class": "Worktree is {CLASS}; only clean merged worktrees may be removed.",
@@ -681,13 +693,17 @@ TEXT_FIXTURES = {
 NEXT_STEP_FIXTURES = {
     "dirty": "commit or preserve the changes",
     "ignored-local-files": "move or delete the ignored files by hand",
-    "unstarted-branch": "no commit was made on this branch here since it was created; review, then git worktree remove yourself",
-    "reflog-unavailable": "the branch's reflog is missing, expired or undecidable; review, then git worktree remove yourself",
-    "contains-submodule": "review, then remove the worktree yourself",
+    # W52 F-7 (#19's round (g) as the lead corrected it after 4f1c0e0), F-8
+    # (#19 at 4f1c0e0, design.md:1198-1199) and F-9 (lane 3's W59 G-5, for
+    # #19's round (g3)); R-248.
+    "unstarted-branch": "no commit was made on this branch here since it was created; review, then git worktree remove yourself (--force if it holds a submodule)",
+    "reflog-unavailable": "the branch's reflog is missing, expired or undecidable; review, then git worktree remove yourself (--force if it holds a submodule)",
+    "contains-submodule": "review, then git worktree remove --force yourself",
     "hidden-local-state": "review, then remove the worktree yourself",
-    "operation-in-progress": "a git am, merge, notes merge, cherry-pick, revert, rebase or bisect is, or may be, in progress there; finish or abort it (a squash merge that holds an autostash ends with git commit, --allow-empty where nothing is staged, or with git merge --quit, which keeps the edit in the stash list), then run again",
+    "operation-in-progress": "a git am, merge, notes merge, cherry-pick, revert, rebase or bisect is, or may be, in progress there; finish or abort it (a squash merge that holds an autostash ends with git commit, --allow-empty where nothing is staged, or with git merge --quit, which keeps the edit in the stash list), or, where --abort fails for a marker with nothing in progress, its --quit, then run again",
     "worktree-only-commits": "a commit is, or may be, held only by this worktree's HEAD reflog or refs/worktree; keep it on a branch or tag, or review, then git worktree remove yourself",
-    "registration-mismatch": "review, then git worktree repair or git worktree prune, unset core.worktree and core.bare in the worktree's config.worktree, or remove the row by hand",
+    # W52 F-3 (#19 at 4f1c0e0, design.md:1210-1213; R-248).
+    "registration-mismatch": "review, then git worktree repair or git worktree prune, unset core.worktree and core.bare in the repository's config, or in that worktree's config.worktree, or remove the row by hand",
     "inspection-error": "review, then git worktree repair or git worktree prune, or remove the row by hand",
     "locked-worktree": "unlock it yourself if it should go",
     # The contract's next steps for the three reasons D18 gives none

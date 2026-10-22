@@ -656,12 +656,17 @@ class PushTests(clean_support.CleanCase):
     def test_clean_a_branch_deletion_of_a_branch_a_worktree_holds_is_refused(self):
         # Each branch is merged into main, the merge target, so that this refusal
         # alone stands before `git branch -d`: held by a present linked worktree,
-        # then by the main worktree, checked out on a branch other than main.
+        # with the baseline's message, then by the main worktree, checked out on
+        # a branch other than main, with D18's (#19 at 4f1c0e0; W52 F-5, RI-4).
         root = self.repo()
         self.bare_remote()
         tree = self.merged_worktree("001-merged")
         env, log = self.counting()
-        for holder, branch in (("a linked worktree", "001-merged"), ("the main worktree", "002-held")):
+        held_by_main = TEXT["branch_held_by_main_worktree"].format(BRANCH="002-held", NAME="main")
+        for holder, branch, message in (
+                ("a linked worktree", "001-merged",
+                 "Remove the linked worktree first; branch deletion is a separate action."),
+                ("the main worktree", "002-held", held_by_main)):
             with self.subTest(holder):
                 if branch == "002-held":
                     self.git(root, "checkout", "-q", "-b", branch)
@@ -671,11 +676,57 @@ class PushTests(clean_support.CleanCase):
                 result = self.run_cli("clean", root, "--apply", "--action", "delete-branch", "--branch", branch,
                                       "--yes", env=env)
                 self.assert_status(result, 2)
-                self.assertEqual((result.stdout, result.stderr), (
-                    "", "REFUSED: Remove the linked worktree first; branch deletion is a separate action.\n"))
+                self.assertEqual((result.stdout, result.stderr), ("", f"REFUSED: {message}\n"))
                 self.assertEqual(deletions(clean_support.child_log(log)), [], "no git branch -d")
                 self.assertEqual(self.refs(root), before, "the branch is kept")
         self.assertTrue((tree / "work-001-merged").is_file(), "the linked worktree is kept")
+
+    def test_clean_a_branch_the_main_worktree_holds_is_deleted_after_either_remedy(self):
+        # Lane 3's W52 F-5 and lane 5's RI-4 (R-248): the baseline's "Remove the
+        # linked worktree first" named, for a branch the main worktree holds, a
+        # removal Git refuses (`git worktree remove` of the main worktree exits
+        # 128). D18's refusal names two remedies instead, and after each one the
+        # same command deletes the branch, exit 0, through one `git branch -d`.
+        root = self.repo()
+        self.bare_remote()
+        removal = subprocess.run([clean_support.REAL_GIT, "-C", str(root), "worktree", "remove", str(root)],
+                                 env=self.env, capture_output=True, text=True, timeout=clean_support.TIMEOUT)
+        self.assertEqual(removal.returncode, 128, removal.stderr)
+        self.assertIn("is a main working tree", removal.stderr)
+        env, log = self.counting()
+        for remedy, branch, follow in (("detach HEAD there", "002-held", ("checkout", "-q", "--detach")),
+                                       ("check out the merge target there", "003-held", ("checkout", "-q", "main"))):
+            with self.subTest(remedy):
+                self.git(root, "checkout", "-q", "-b", branch, "main")  # merged: at the merge target's tip
+                argv = ("clean", root, "--apply", "--action", "delete-branch", "--branch", branch, "--yes")
+                clean_support.reset_child_log(log)
+                result = self.run_cli(*argv, env=env)
+                self.assert_status(result, 2)
+                self.assertEqual((result.stdout, result.stderr), (
+                    "", "REFUSED: " + TEXT["branch_held_by_main_worktree"].format(BRANCH=branch, NAME="main") + "\n"))
+                self.assertEqual(deletions(clean_support.child_log(log)), [], "no git branch -d")
+                self.git(root, *follow)
+                clean_support.reset_child_log(log)
+                result = self.run_cli(*argv, env=env)
+                self.assert_status(result, 0)
+                self.assertEqual(len(deletions(clean_support.child_log(log))), 1, "one git branch -d")
+                self.assertEqual(self.git(root, "for-each-ref", f"refs/heads/{branch}"), "", "the branch is deleted")
+
+    def test_clean_a_branch_deletion_passes_the_name_after_double_dash(self):
+        # Lane 3's W52 F-4: `git branch -d -f` reads a branch named `-f` as an
+        # option ("fatal: branch name required", exit 128, the branch kept), so
+        # #26's printed retry `--branch=-f` could never succeed. With `--` before
+        # the name, as the push's vector has it, `git branch -d -- -f` deletes it.
+        root = self.repo()
+        self.bare_remote()
+        self.git(root, "update-ref", "refs/heads/-f", "main")  # merged: the merge target's tip, held by no worktree
+        env, log = self.counting()
+        result = self.run_cli("clean", root, "--apply", "--action", "delete-branch", "--branch=-f", "--yes", env=env)
+        self.assert_status(result, 0)
+        self.assertIn(f"  git {' '.join(PINS)} -C {root} branch -d -- -f\n", result.stdout)
+        [child] = deletions(clean_support.child_log(log))
+        self.assertEqual(words(child), ["-C", str(root), "branch", "-d", "--", "-f"])
+        self.assertEqual(self.git(root, "for-each-ref", "refs/heads/-f"), "", "the branch is deleted")
 
     def test_clean_a_branch_deletion_of_a_branch_not_merged_into_the_merge_target_is_refused(self):
         # Lead ruling R-155 (lane 3's W19 M-2, mutant D3): delete-branch's third
@@ -992,9 +1043,9 @@ class PushTests(clean_support.CleanCase):
         cases = (("push", "001-feature", "push branch 001-feature",
                   f"git -C {escaped} push -- origin refs/heads/001-feature:refs/heads/001-feature"),
                  ("delete-branch", "002-merged", "delete verified merged local branch 002-merged",
-                  f"git {pinned} -C {escaped} branch -d 002-merged"),
+                  f"git {pinned} -C {escaped} branch -d -- 002-merged"),
                  ("delete-branch", reversed_branch, f"delete verified merged local branch {shown}",
-                  f"git {pinned} -C {escaped} branch -d {shown}"))
+                  f"git {pinned} -C {escaped} branch -d -- {shown}"))
         for action, branch, what, command in cases:
             with self.subTest(action=action, branch=ascii(branch)):
                 result = self.run_cli("clean", root, "--apply", "--action", action, "--branch", branch)
@@ -1158,10 +1209,10 @@ class PushTests(clean_support.CleanCase):
         self.bare_remote()
         self.git(root, "branch", "002-merged")  # at the merge target's tip, with no worktree
         wrapper = self.base / "counting-bin" / "git"
-        delegate = ["git", *PINS, "-C", str(root), "branch", "-d", "002-merged"]
+        delegate = ["git", *PINS, "-C", str(root), "branch", "-d", "--", "002-merged"]
         shown = ("Cleanup action: delete verified merged local branch 002-merged\n"
                  f"Working directory: {root}\n"
-                 f"  git {' '.join(PINS)} -C {root} branch -d 002-merged\n")
+                 f"  git {' '.join(PINS)} -C {root} branch -d -- 002-merged\n")
         for variant, disable, code in (("not executable", lambda: wrapper.chmod(0o644), errno.EACCES),
                                        ("missing", wrapper.unlink, errno.ENOENT)):
             with self.subTest(variant):
