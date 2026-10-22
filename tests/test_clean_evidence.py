@@ -1622,6 +1622,132 @@ class EvidenceTests(clean_support.CleanCase):
                                  sorted(map(str, trees * 2)) if per_target == 7 else [],
                                  "planning's probe and revalidation's, per row, or none")
 
+    def test_clean_row_4b_reads_an_exit_1_by_what_it_printed(self):
+        # The lead's R-336, row 4b as R-332 reads row 4c (#19's design D7: "an
+        # unset value is false and any other failure counts as true"): in a
+        # gitfile layout `config --get core.worktree` exiting 1 with nothing on
+        # either stream is the key unset, and the main worktree is named by
+        # the candidate toplevel whose `.git` file names the common directory;
+        # any other exit 1, one that printed anything or one cut by its
+        # budget, is a read that failed, like every other failure, and gives
+        # `unreadable`. Literal outcomes stand in for the child.
+        checkout, gitdir = self.base / "checkout", self.base / "checkout.git"
+        checkout.mkdir()
+        gitdir.mkdir()
+        (checkout / ".git").write_text(f"gitdir: {gitdir}\n")
+        identity = {"common_dir": os.fsencode(gitdir), "toplevel": os.fsencode(checkout),
+                    "directory": os.fsencode(checkout)}
+        records = [{"path": os.fsencode(gitdir), "bare": False}]
+        named, unreadable = (os.fsencode(checkout), None), (None, "unreadable")
+        head = b"error: could not lock config file\n"
+
+        def outcome(name, status, result=b"", stderr=b"", counted=None, detail=None):
+            return project.DriverOutcome(
+                ["git"], name, result=result, status=status, stderr=stderr,
+                stderr_bytes=len(stderr) if counted is None else counted, detail=detail)
+
+        failed = lambda **kwargs: outcome("failed", 1, **kwargs)
+        cases = (
+            ("exit 1 and nothing on either stream", failed(), named),
+            ("exit 1 and a line on standard error", failed(stderr=head), unreadable),
+            ("exit 1 and Git's hint lines alone", failed(stderr=b"hint: one\nhint: two\n"), unreadable),
+            ("exit 1 and a count of standard error with no head", failed(counted=1), unreadable),
+            ("exit 1 and standard error past the 4 KiB kept", failed(stderr=head * 200, counted=8192), unreadable),
+            ("exit 1 and a line on standard output", failed(result=b"../checkout\n"), unreadable),
+            ("exit 1 and a line feed alone on standard output", failed(result=b"\n"), unreadable),
+            ("exit 1 and output on both", failed(result=b"../checkout\n", stderr=head), unreadable),
+            ("exit 128, the config file unreadable", outcome("failed", 128, stderr=b"fatal: unable to read\n"),
+             unreadable),
+            ("exit 128 and nothing printed", outcome("failed", 128), unreadable),
+            ("exit 2", outcome("failed", 2), unreadable),
+            ("a signal", outcome("failed", -9), unreadable),
+            ("a child that could not be spawned", outcome("failed", None, result=None, detail="cannot run git"),
+             unreadable),
+            ("a timeout", outcome("timeout", None, result=None), unreadable),
+            ("a timeout that ended with exit 1 and nothing printed", outcome("timeout", 1, result=None), unreadable),
+            ("the deadline", outcome("deadline", None, result=None, detail="no time was left"), unreadable),
+            ("nothing, exit 0", outcome("complete", 0), named),
+            ("a relative value, exit 0", outcome("complete", 0, result=b"../checkout\n"), named),
+        )
+        run = project.Invocation("status")
+        for label, answered, expected in cases:
+            asked = []
+
+            def run_bounded(spec, parser, run, answered=answered, asked=asked):
+                asked.append(spec[1])
+                return answered
+
+            with self.subTest(label), mock.patch.object(project, "run_bounded", run_bounded):
+                self.assertEqual(project.main_worktree(identity, records, run), expected)
+                self.assertEqual(asked, [["-C", identity["directory"], *ROW_4B]], "one child, row 4b's")
+
+    def test_clean_a_row_4b_exit_1_that_printed_leaves_the_main_worktree_unreadable(self):
+        # R-336: a fake git answers row 4b's child in a gitfile layout with
+        # exit 1 and what it prints, and execs Git for every other child.
+        # Nothing printed is the key unset, so the checkout resolves as the
+        # main worktree and the plan is complete; any output, on either
+        # stream, is a read that failed, the main worktree is unreadable, and
+        # the target is refused `target-not-repository-root`, exit 2, with no
+        # probe in the checkout.
+        checkout, gitdir = self.base / "checkout", self.base / "checkout.git"
+        self.git(self.base, "init", "-q", "-b", "main", "--separate-git-dir", gitdir, checkout)
+        self.git(checkout, "commit", "-q", "--allow-empty", "-m", "initial")
+        message = TEXT["target_not_repository_root"].format(PATH=checkout)
+        pattern = '*" config --get core.worktree "*'
+        for number, (label, answer, resolves) in enumerate((
+                ("nothing, as Git answers an unset key", ":", True),
+                ("a line on standard error", "echo 'error: could not read config' >&2", False),
+                ("hint lines on standard error", "printf 'hint: one\\nhint: two\\n' >&2", False),
+                ("a line on standard output", "echo ../checkout", False),
+                ("a line feed alone on standard output", "echo", False),
+                ("a line on each stream", "echo ../checkout; echo 'error: x' >&2", False))):
+            with self.subTest(label):
+                fake = self.fake_script(f"row4b-{number}", f'case " $* " in {pattern}) {answer}; exit 1;; esac')
+                result, records = self.counted("clean", checkout, "--json", real=fake)
+                commands = [command(record) for record in records]
+                self.assertEqual([c[1] for c in commands if c[2:] == ROW_4B], [str(checkout)], "row 4b once")
+                if resolves:
+                    self.assert_status(result, 0)
+                    self.assertEqual((result.document["root"], result.document["completeness"]),
+                                     (str(checkout), "complete"))
+                    self.assertEqual(self.status_dirs(records), [str(checkout)])
+                    continue
+                self.assert_status(result, 2)
+                self.assertEqual((result.document["code"], result.document["error"]),
+                                 ("target-not-repository-root", message))
+                self.assertEqual(self.status_dirs(records), [], "no status probe in the checkout")
+
+    def test_clean_row_4b_reads_a_real_repository_s_unset_core_worktree_as_unset(self):
+        # Git's own answer, on the Git in use (2.43.0, and 2.36.6 the floor):
+        # `config --get core.worktree` of a key that is not set exits 1 with
+        # nothing on standard output and nothing on standard error, which row 4b
+        # reads as the key unset (R-336; design D7), so that a gitfile layout
+        # resolves normally, named by its `.git` file; a value is read as
+        # before, a relative one against the git directory.
+        checkout, gitdir = self.base / "checkout", self.base / "checkout.git"
+        self.git(self.base, "init", "-q", "-b", "main", "--separate-git-dir", gitdir, checkout)
+        self.git(checkout, "commit", "-q", "--allow-empty", "-m", "initial")
+
+        def ask():
+            """Git's answer to the child row 4b runs: (exit status, standard output, standard error)."""
+            answered = subprocess.run([clean_support.REAL_GIT, "-C", str(checkout), *ROW_4B], env=self.env,
+                                      capture_output=True, timeout=clean_support.TIMEOUT)
+            return answered.returncode, answered.stdout, answered.stderr
+
+        for label, value, answer in (("core.worktree is not set", None, (1, b"", b"")),
+                                     ("core.worktree is a relative value", "../checkout", (0, b"../checkout\n", b""))):
+            with self.subTest(label):
+                if value is not None:
+                    self.git(checkout, "config", "core.worktree", value)
+                self.assertEqual(ask(), answer)
+                result, records = self.report(checkout)
+                self.assertEqual([command(record)[1] for record in records if command(record)[2:] == ROW_4B],
+                                 [str(checkout)], "row 4b once")
+                self.assertEqual((result.document["root"], result.document["completeness"],
+                                  [row["path"] for row in result.document["worktrees"]]),
+                                 (str(checkout), "complete", [str(checkout)]))
+                self.assertEqual(self.status_dirs(records), [str(checkout)])
+
     def test_clean_evidence_a_failed_ref_listing_establishes_no_branch_evidence(self):
         # Plan review F3; pcl:121-125 ("A row whose evidence could not be
         # established ... SHALL be classified inspection-error directly,
