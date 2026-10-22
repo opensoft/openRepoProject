@@ -742,6 +742,48 @@ class ApplyTests(clean_support.CleanCase):
             self.assertEqual((found, entry.git_file_present, entry.git_file_read),
                              (record(True, False, True, planned), None, False))
             self.assertNotIn(dotgit, lstats, "no .git read without the path")
+        with self.subTest("a directory above the target denies search: the path lstat fails"):
+            # Lane 3's W90 M-1 (lead ruling R-329; #19's ceiling scenario,
+            # "as when a directory above it denies search"): the target's own
+            # lstat fails with EACCES, so the path is null, no `.git` read is
+            # made or could be, and the `.git` counts as unread: the
+            # ceiling's note for the record this rescan leaves is the third
+            # one, which advises no prune, whatever the entry shows; plain
+            # `git worktree prune` would delete the live worktree's admin
+            # directory. The mode is restored in a cleanup that tolerates a
+            # missing path.
+            if hasattr(os, "geteuid") and os.geteuid() == 0:
+                self.skipTest("permission fixtures do not bind the superuser (effective uid 0)")
+            parent = self.base / "par"
+            parent.mkdir()
+            unread = self.merged_worktree("002-par", path=parent / "wt", root=root)
+            planned_unread = self.head(unread)
+            with self.in_process() as run:
+                plan_unread = self.plan_of(root, run, [unread])
+                held = project.make_target(plan_unread, plan_unread.selected[0])
+            mode = parent.stat().st_mode & 0o7777
+
+            def searchable_again():
+                with contextlib.suppress(FileNotFoundError):
+                    parent.chmod(mode)
+
+            self.addCleanup(searchable_again)
+            parent.chmod(0o000)
+            try:
+                with self.in_process() as run:
+                    found = project.rescan(held, run)
+            finally:
+                searchable_again()
+            self.assertEqual((found, type(found)), (record(True, None, True, planned_unread),
+                                                    project.UnfinishedRescan))
+            self.assertIs(found["reconciled"], False)
+            self.assertIsNone(held.git_file_present, "no value for the `.git`")
+            held["reconciliation"] = found  # as apply_removals() keeps it
+            killed = project.DriverOutcome(["git"], "timeout", status=-signal.SIGKILL)
+            self.assertEqual(project.decide_stage(held, killed, found),
+                             ("unknown", "removal-ceiling", ["partially-removed"]))
+            self.assertEqual(project.partial_removal_text(held), "partial_removal_note_unread",
+                             "the third note: no prune advice where the path could not be read")
         found, _, _ = rescan()
         self.assertEqual((found, entry.git_file_present), (kept, True), "the fixture is restored")
 
