@@ -15,7 +15,7 @@ in round B10 and at `c462d87` before it), and
 change 1 and change 2 equal `961c405`'s, `ideation/` differs by PR #16's
 packet revision (`e45155a`), and `openspec/changes/` gains two other changes
 (L-15). The lane's rulings are L-1 to
-L-17 and B-1 to B-62, and A-9, A-23 and A-24 for #23; this change's own
+L-17 and B-1 to B-64, and A-9, A-23 and A-24 for #23; this change's own
 decisions are CD-1 to CD-18 in `proposal.md`, and the alignment review's
 findings (SA-n, QA-n, G1 to G5) are resolved in its table. The council (P-n,
 S-n and AE-n) read `9ebe9f0`; its VALID verdicts, ruled as B-16 to B-24, are
@@ -65,6 +65,11 @@ administrative directory that the `operation-in-progress` listing finds absent
 at revalidation a registration difference, `identity-changed`, which no word
 of this change contradicts (D10), and the drain sentence gives the candidates
 that the invocation's totals leave a condition of their own (W33's M-1, D4).
+Lane 3's W44 read of round B13, whose three wording LOWs the lead ruled as
+B-63 and B-64, is applied in round B14 (proposal, "Re-read and Codex
+Findings (round B14)"): D10 states outright the rule that a decided absence
+keeps its step's own reason (PR19/rs:122-127 at `f0bf538`), and no word of
+the deltas changes.
 
 How the packet's contract and the rulings map to the decisions below:
 
@@ -133,6 +138,8 @@ How the packet's contract and the rulings map to the decisions below:
 | B-60 | the plan for round B13: "Cleanup revalidates destructive actions" re-based on PR #19's round (e) at `f0bf538`, which writes "SHALL NOT" (W38's L-5) and makes an administrative directory that the `operation-in-progress` listing finds absent at revalidation a registration difference, `identity-changed` (W38's L-4); this change's own words read against W38's L-4; the bounds block byte-identical to round B12's; every cite of PR #19's current text moved to `f0bf538` | D4, D10 |
 | B-61 | the lead's ruling on round B13's own observation: an error or timeout of the admin-directory pre-filter's listing filters nothing, the row staying a would-be candidate that meets change 1's own gates in their turn, so the pre-filter never makes a plan incomplete | proposal, Open Questions |
 | B-62 | lane 3's W33 read of rounds B10 to B12, all its findings: the drain sentence gives each cap its own condition, the candidates that the invocation's totals leave draining as the candidates ahead of them are removed, cease to be candidates or cease to count toward those totals, since a candidate that a gate after `deferred-target-cap` excludes stops counting toward them but keeps its place among the 16 (M-1); D10 cites PR #19's carve-out at `f0bf538` (L-1); D4 numbers feature 004's gates since `93a3ae9` (L-2); `tasks.md` 1.4's attribution (L-3); the round B12 record's fit-clause row (L-4); short lines re-wrapped only in passages this round edits (O-1) | D4, D10 |
+| B-63 | lane 3's W44 read of round B13, `25f7333..bced895`, no HIGH or MEDIUM and three wording LOWs, queued for #27's next round and not a round of their own; LOW-3 is applied by making D10 state the decided-absence rule explicitly, which makes the B13 pull-request comment's sentence exact, the comment itself standing | D10 |
+| B-64 | the lead's ruling that round B14 runs on Brett Heap's word of 2026-10-22 to do as much as possible in parallel, the trigger that B-63 waited for: W44's LOW-1 (lane 2's check covered three held blocks), LOW-2 (round B13's tally counts as the earlier rounds' do) and LOW-3 (D10 states the rule outright, PR19/rs:122-127 at `f0bf538`) are applied with no spec edit and no PR #19 block change, so lane openRepoProject-2 needs no check | D10; proposal, round B13 and round B14 records |
 
 What in `project` shapes the approach:
 
@@ -1155,12 +1162,16 @@ PR #19 states for every Git child and every filesystem call of the revalidation
 W38's L-4; B-55, B-58, B-60); the child is one of those steps, so the block
 needs no sentence of its own for it. This change adds no filesystem call to
 the revalidation and leaves PR #19's reads of the administrative directory,
-its `modules` and `operation-in-progress` checks, as they are. A listed
-cache missing there is a record that the child does not print, a value it
-decided, so a listed-cache difference, `state-changed`, as R-208 keeps a
-decided value's own reason, and as W38's L-4 makes an administrative directory
-that the `operation-in-progress` listing finds absent a registration
-difference, `identity-changed`; a cache directory that cannot be read either
+its `modules` and `operation-in-progress` checks, as they are. It follows
+PR #19's rule for a path found missing: a filesystem call that finds no file
+or directory at its path (`ENOENT` or `ENOTDIR`) decides that the path is
+absent, and a decided value keeps its step's own reason (PR19/rs:122-127 at
+`f0bf538`; the lead's R-208 and W38's L-4; B-64). So a decided absence keeps
+its step's own reason: a listed cache missing at revalidation is a record
+that the child does not print, a value it decided, and is a listed-cache
+difference, `state-changed`, and an administrative directory that the
+`operation-in-progress` listing finds absent is a registration difference,
+`identity-changed`; a cache directory that cannot be read either
 changes the child's records, a difference, or meets the stage's preflight,
 whose failed read refuses the target with `state-changed` (D7), the reason
 R-208 gives a failed read; and a read that the deadline cuts is
