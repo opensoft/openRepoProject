@@ -115,14 +115,25 @@ re-prove names it) to D4, D7, D8, D9 and Risks; A-47 (PR #19's LQ-20
 resolved by measurement at its round (f), `662be89`, and this change's
 restatements of option (c) withdrawn, reader RH's item 6) to D4, D7 and
 Risks, every cite of PR #19's design moving to `662be89` and its spec cites
-staying at `f0bf538`, and names PR #19's current head, `6bf9f77`, after its
-rounds (g) to (g3), where a place states it, every cite at `662be89` and at
-`f0bf538` holding there by content (D7); and A-54 (lane openRepoProject-3's
+staying at `f0bf538`, and names PR #19's head at that round, `6bf9f77`, after
+its rounds (g) to (g3), where a place states it, every cite at `662be89` and
+at `f0bf538` holding there by content (D7); and A-54 (lane openRepoProject-3's
 W53 departure ledger) and A-56 (W60's four LOW) to the proposal and the spec
-deltas; the spec deltas edit the ADDED requirement's `Kept` next steps, five
+deltas; the spec deltas edit the ADDED requirement's `Kept` next steps, four
 ANDs of four ADDED scenarios, one of them added, the bounds block's
 strict-test sentence and the review-safety scenario's last AND (proposal,
-"Re-read and Codex Findings (round A16)").
+"Re-read and Codex Findings (round A16)"; round A17 corrects the count, which
+read five, under ruling A-61). Round A17 maps A-60 (lane openRepoProject-3's
+W69, LOW-3: the own steps that end in RETRY for a branch the stage did not
+re-prove, `head-not-merge-target`, `branch-in-use` with the main worktree as
+holder and `branch-changed`, name the reflog inspection too) to D4, D8 and
+Risks; A-59 (PR #19's round (h) at `b3228bb`: step 1 of the ADDED requirement
+worded relatively to the gate's rule, which (h) changes for a read the
+deadline cuts, A-50's note and the currency) and A-62 (D14's new line-feed
+case) to D4 and D7; and A-61 (W69's other LOW) to this map, the proposal and
+the tasks; the spec delta edits the ADDED requirement's `Kept` next steps and
+its step 1 and the literals of three ADDED scenarios, and adds no scenario
+(proposal, "Re-read and Codex Findings (round A17)").
 
 Citations follow `proposal.md`: packet files at `da33d92`, `CAS` for change 1,
 `APO` for change 2, `project:N` and `tests:N` at `961c405`, all but the packet
@@ -514,16 +525,16 @@ leaves the branch to retire, the stage starts nothing more and the branch is
 
 The re-read's outcomes follow PR #19's rule for revalidation, which since its
 round (d) governs every Git child and every filesystem call of its steps, cited
-here at `f0bf538`, whose text there its rounds (f) to (g3) keep, up to its
-current head `6bf9f77` (its `specs/project-clean-review-safety/spec.md:113-135`
-at each; lane openRepoProject-2's
+here at `f0bf538`, whose text there its rounds (f) to (h) keep, up to its
+current head `b3228bb` (its `specs/project-clean-review-safety/spec.md:113-135`,
+and `:115-137` at `b3228bb`; lane openRepoProject-2's
 R-171 and R-208; rulings A-38, A-42 and A-47): a child or a
 read that the work deadline cuts counts as no difference and gives
 `deadline-exceeded`, and one that fails, or runs past its own budget while the
 deadline is not the limit, gives `state-changed`; a filesystem call that finds
 no file or directory at its path (`ENOENT` or `ENOTDIR`) does not fail but
 decides that the path is absent, a value that keeps its step's reason (its
-`design.md:489-503` at `662be89`, the same words at `:497-511` at `6bf9f77`).
+`design.md:489-503` at `662be89`, the same words at `:504-518` at `b3228bb`).
 Step 2 of the ADDED requirement had
 counted a re-read listing or manifest read that "fails or times out" as a
 difference, which took in one whose budget the work deadline ended, while
@@ -587,9 +598,25 @@ before the branch child, and a `deadline-exceeded`, `interrupted` or
 `internal-error` after that proof, too little work time being left to start
 the branch child, a signal received before it, or an exception after the
 proof or once the post-check showed the branch present. The lines with their
-own next steps keep them: `branch-changed`'s `inspect it before retrying`,
-`reflog-unmerged`'s `before any delete-branch`, and the `head-not-merge-target`,
-`branch-in-use`, `branch-shared` and `git-refused` steps. A target that the
+own next steps keep them, and those whose own step ends in RETRY for a branch
+the stage did not re-prove name the inspection too, after their step and
+before the retry (ruling A-60; lane openRepoProject-3's W69, LOW-3, which
+showed on Git 2.43.0 and 2.36.6 that following such a step deletes the branch
+and orphans a commit only its reflog held, as this round's run of each own
+step did again): `head-not-merge-target`, a plan keep, which spawns no stage,
+in both its forms; `branch-in-use` with the main worktree as holder, a plan
+keep or the rescan's; and `branch-changed`, whose re-read stopped before its
+re-proof or whose stage never ran, which reads `; now at SHA2; its reflog is
+not proven merged into MERGE_TARGET; inspect it and git -C ROOT reflog show
+refs/heads/BRANCH before retrying: RETRY`. The other own steps keep their
+text: `branch-in-use` with a linked holder and `branch-shared` print `remove
+that worktree first` and no retry, and the run showed that step leaving the
+branch and its reflog in place; `reflog-unmerged` prints no retry and already
+names the inspection, `before any delete-branch`; and both `git-refused`
+lines keep their bare retry after their steps, their branch child having run
+after the re-proof proved the reflog, as for `spawn-error`, so that
+`git-refused` with the upstream ref absent no longer shares
+`head-not-merge-target`'s text. A target that the
 run did not reach gets no `Kept` line: its retry is the deferral line or the
 stop block's `Next:`, a flagged run that plans again and proves the reflog
 again.
@@ -638,7 +665,7 @@ administrative directory, so round (e)'s L-4, by which one that the
 `identity-changed`, does not reach it, and its L-5 changes only the case of a
 SHALL NOT. R-208 is PR #19's reading of
 `BA:271-276`, which went to Brett Heap to confirm as its O-2 (its
-`design.md:499-503` at `662be89`, `:507-511` at `6bf9f77`). No word of step 2
+`design.md:499-503` at `662be89`, `:514-518` at `b3228bb`). No word of step 2
 changes for the
 manifest: its value that the manifest read "cannot establish" does not take
 in a decided absence, which establishes the manifest's values as absent; and
@@ -939,8 +966,9 @@ revalidation, seven where the repository sets the extension (`:1026-1028`),
 which feature 004 at `e69f6ef` computes as its planning children plus 6T, or
 7T, plus 3 (`project:4261-4262` and `:6218-6219`; reader RI's RI-8). The
 figures below give each at its own base, those on 5T at `c462d87`'s terms and
-those on 6T or 7T at `f0bf538`'s, which `662be89` and `6bf9f77` keep, as
-round A9 stated
+those on 6T or 7T at `f0bf538`'s, which `662be89` and `6bf9f77` keep, and
+`b3228bb` keeps where no path of the repository's root or common directory
+holds a line feed (below), as round A9 stated
 D7's figures at both heads, and no figure changes its meaning (ruling A-50).
 No `limits` or `budget`
 member is added: the stage spawns one branch child per target, so
@@ -1006,8 +1034,8 @@ did not measure, which move D14's measured basis (below; ruling A-47). At
 six children per revalidation, seven where the plan read the repository's
 `extensions.worktreeConfig` as true (its `specs/project-clean/spec.md:1026-1028`
 and `specs/project-clean-review-safety/spec.md:76-77` at `f0bf538`, which
-`662be89` keeps). Its head `6bf9f77`, PR #19's current head, after that lane's
-rounds (g), (g2) and (g3) (`4f1c0e0` and `3dcd2d8` before it), keeps every
+`662be89` keeps). Its head `6bf9f77`, after that lane's rounds (g), (g2) and
+(g3) (`4f1c0e0` and `3dcd2d8` before it), keeps every
 input this section takes and every figure of D14 and of task 2.1, each
 checked by content from `662be89`: its D14 differs only in the runs per case
 of step (i)'s protocol, 40 to 48 where `662be89` has 30 to 48, and its task
@@ -1020,7 +1048,43 @@ and `:441-443` 9 lines later, and the LQ-20 entry of its Open Questions,
 `:1805-1866`, at `:1843-1905`, with the same options, none taken, re-wrapped),
 the measured basis at `:956-969` with every figure unchanged at `:964-977`,
 and every cite of its spec at `f0bf538` holds there 9 or 10 lines later, the
-review-safety lines unmoved (ruling A-47).
+review-safety lines unmoved (ruling A-47). Its head `b3228bb`, PR #19's
+current head, after that lane's round (h) (`e322f52`, `324192f` and
+`fc95766` before it), which carries Brett Heap's R-263, keeps task 2.1 and
+every figure of D14 that this section takes, each checked by content from
+`6bf9f77`; its D14 (`:925-1100`) adds one paragraph, a new case: where the
+path of the repository's root or of its common directory holds a line feed,
+the identity probe is read one option per child, so that a revalidation
+spawns nine children, ten where row 4c reads true, and the final rescan six,
+and the 51 extra children before a 16th spawn cost about 1.0 s at the
+identity probe's 19.7 ms, so that change 1's case still fits (ruling A-62).
+Its spec states that exception beside the six and seven children
+(`specs/project-clean/spec.md:1048-1056` and
+`specs/project-clean-review-safety/spec.md:76-79` at `b3228bb`), so that the
+counts above hold for a repository whose paths hold no line feed, which is
+the case this section's figures take, and its spec also moves in the ceiling's
+recovery text, gate 7's sentence on a read the deadline cuts and the
+project-command block, none of whose moved lines this section takes. Every
+cite below of PR #19's design at `662be89` holds at `b3228bb` by content, 30
+or 41 lines later (`:335-336` and `:441-443` 16 lines later, the measured
+basis at `:956-969` at `:997-1010`, every figure unchanged, and the LQ-20
+entry at `:1921-1983`), task 2.1's step (i) at its `tasks.md:159-169`, and
+every cite of its spec at `f0bf538` holds there 18 to 22 lines later, the
+review-safety lines 2 lines later, except the two counts above. For a flagged
+run whose root or common-directory path holds a line feed, D14's own pricing
+of those extra children, about 1.0 s before a 16th spawn and 3 more per
+target before each earlier one, puts this change's 16th removal near 40.1 s
+where the plan read `extensions.worktreeConfig` as true, or 38.9 s, its
+branch child near 41.2 s, or 39.9 s, still inside the spawn limit at
+10,000-file removals; with 20,000-file removals it removes 14 and retires 13
+where the plan read the setting as true, the 15th removal then due near
+45.6 s and the 14th branch child due about 0.01 s past the limit, so that it
+does not start, and 15 and 14 where it read it as false, the 15th removal near
+44.4 s and the 15th target's re-read due near 45.7 s. This change's own
+children are not modelled separately for that case: its stage runs no
+identity probe, only its ref listings, its re-proof and its branch child, and
+the figures take D14's pricing of change 1's extra children alone (ruling
+A-62).
 
 - Where the plan read `extensions.worktreeConfig` as false, six children per
   target, on D14's 150 ms basis at `662be89` (its `design.md:910`, the row
@@ -1031,7 +1095,7 @@ review-safety lines unmoved (ruling A-47).
   s); the 11th branch child, due at 45.3 s, cannot start, and the 12th
   removal, due at 46.05 s, does not spawn. At the packet's 150 ms per child
   (D14's 150 ms basis) a flagged run of 16 then removes 11 worktrees and
-  retires 10 branches, at `6bf9f77` and `662be89` as at `f0bf538`,
+  retires 10 branches, at `b3228bb`, `6bf9f77` and `662be89` as at `f0bf538`,
   `9267303`, `2e819ad`, `a664799` and `6f2cb54`, where `c462d87` gives 14 and
   13; without the flag all 16 removals spawn, the 16th at 44.1 s, as D14 says
   (its `:910` and `:931-932`).
@@ -1055,11 +1119,11 @@ D14 at `f0bf538` stated that case on three bases and chose none, because task
 LQ-13's `rev-list` (rulings A-39 to A-42, lane openRepoProject-3's W35,
 MEDIUM-1). Brett Heap ruled PR #19's LQ-20 on 2026-10-22, choosing its step
 (i), to measure those two probes first, and D14 at `662be89` gives that
-measurement, unchanged at `6bf9f77`, on task 2.1's protocol in the same
+measurement, unchanged at `b3228bb`, on task 2.1's protocol in the same
 container: the work-tree probe's warm median 5.8 ms, 8.7 ms with the 1.5
 margin, and the `rev-list`'s 106.9 ms, 160.3 ms with the margin, row 4c's
 read keeping the identity probe's 19.7 ms (its `design.md:956-965` and
-`tasks.md:145-155` at `662be89`, `:964-973` and `:152-162` at `6bf9f77`;
+`tasks.md:145-155` at `662be89`, `:997-1006` and `:159-169` at `b3228bb`;
 lane openRepoProject-2's R-236; ruling A-47). On each basis this
 change's figure for a flagged run of 16 at 128 rows is change 1's with this
 change's own children added by this section's method: before target k's removal
@@ -1080,7 +1144,7 @@ with those removals at 0.3 s).
   probes that step (i) measured at its costs, the per-row `rev-parse
   --show-toplevel` at 8.7 ms and LQ-13's `rev-list` at 160.3 ms, row 4c's
   read at the identity probe's 19.7 ms (its `:948-969` at `662be89`, its
-  figures unchanged at `6bf9f77`):
+  figures unchanged at `b3228bb`):
   change 1 alone removes all 16, the first at 14.55 s and the 16th at
   30.0 s with 20.0 s left, or at 37.7 s with 20,000-file removals, so that
   the case passes (its `:992`). With this change's children at 150 ms each,
@@ -1406,29 +1470,40 @@ as amended, Codex's P2 on `9ff8202`).
     line carries the SHA and the restore that a deletion needs;
     `rev-parse --verify` exits 128 for a ref that is gone (Context);
   - `Kept BRANCH (head-not-merge-target); next: check out MERGE_TARGET in the
-    main worktree, then: RETRY`, the same next step for `git-refused` when the
-    upstream ref is absent, after that line's rebase-or-bisect clause (below);
-    when the plan's registry listing shows MERGE_TARGET checked out in a
-    linked worktree at PATH2, where Git refuses
-    that checkout, `next: MERGE_TARGET is checked out at PATH2, so check out
-    its tip TARGET_SHA detached in the main worktree, then: RETRY` (lane
-    openRepoProject-3's re-read, LOW-10; Context);
+    main worktree; its reflog is not proven merged into MERGE_TARGET; inspect
+    git -C ROOT reflog show refs/heads/BRANCH before retrying: RETRY`; when
+    the plan's registry listing shows MERGE_TARGET checked out in a linked
+    worktree at PATH2, where Git refuses that checkout, `next: MERGE_TARGET is
+    checked out at PATH2, so check out its tip TARGET_SHA detached in the main
+    worktree; its reflog is not proven merged into MERGE_TARGET; inspect git
+    -C ROOT reflog show refs/heads/BRANCH before retrying: RETRY` (lane
+    openRepoProject-3's re-read, LOW-10; Context): the plan's keep spawns no
+    stage, so nothing re-proves the reflog before the retry, and the
+    inspection comes after the checkout and before the retry (ruling A-60;
+    lane openRepoProject-3's W69, LOW-3); `git-refused` with the upstream ref
+    absent keeps `then: RETRY` after the same checkout steps (below);
   - `Kept BRANCH (branch-in-use); next: BRANCH is checked out at PATH2; remove
     that worktree first`, or, when PATH2 is the main worktree, which Git
     refuses to remove (`worktree remove` of it exits 128, "is a main working
     tree"), `next: BRANCH is checked out at PATH2, the main worktree; switch it
     off BRANCH, by checking out another branch there, such as MERGE_TARGET, or
-    by detaching it, then: RETRY` (ruling A-45, Codex's P2 on `1bf217c`;
-    Context); the line names a detach too because a checkout of MERGE_TARGET
-    is refused while a linked worktree holds it;
+    by detaching it; its reflog is not proven merged into MERGE_TARGET; inspect
+    git -C ROOT reflog show refs/heads/BRANCH before retrying: RETRY` (ruling
+    A-45, Codex's P2 on `1bf217c`; Context; the inspection under ruling A-60,
+    since neither the plan's keep nor the rescan's re-proves the reflog); the
+    line names a detach too because a checkout of MERGE_TARGET is refused
+    while a linked worktree holds it, and the linked form prints no retry;
   - `Kept BRANCH (branch-shared); next: BRANCH is checked out at PATH2; remove
     that worktree first`, once, for a shared branch whose last holder PATH2
     the run did not remove (its re-read, LOW-11), the first form alone: PATH2
     is a selected row, and change 1's first gate, `main-worktree`
     (`CAS/pc:576-578`), never selects the main worktree (ruling A-45); when
     the run removed the last holder, the branch's line is that holder's;
-  - `Kept BRANCH (branch-changed); now at SHA2; inspect it before retrying:
-    RETRY`;
+  - `Kept BRANCH (branch-changed); now at SHA2; its reflog is not proven
+    merged into MERGE_TARGET; inspect it and git -C ROOT reflog show
+    refs/heads/BRANCH before retrying: RETRY`, the new head and the reflog
+    both to be inspected, since the re-read stopped before its re-proof, or
+    no stage ran (ruling A-60);
   - `Kept BRANCH (reflog-unmerged); its reflog is not proven merged into
     MERGE_TARGET; inspect git -C ROOT reflog show refs/heads/BRANCH before any
     delete-branch`, alike for a proof that printed a commit, one that failed
@@ -1457,7 +1532,9 @@ as amended, Codex's P2 on `9ff8202`).
     caused, a `deadline-exceeded`, `interrupted` or `internal-error` before
     the re-proof proved the reflog, or a `removal-ceiling`, as in `Kept BRANCH
     (deadline-exceeded); its reflog is not proven merged into MERGE_TARGET;
-    inspect git -C ROOT reflog show refs/heads/BRANCH before retrying: RETRY`;
+    inspect git -C ROOT reflog show refs/heads/BRANCH before retrying: RETRY`,
+    and the own steps above that end in that retry carry it before the retry
+    (ruling A-60);
   - `Kept BRANCH (git-refused); if a rebase or bisect in another worktree
     holds BRANCH, wait for it to end, and then remove that worktree or, for
     the main worktree, which Git refuses to remove, switch it off BRANCH, by
@@ -1477,15 +1554,20 @@ as amended, Codex's P2 on `9ff8202`).
     with no `branch` line, so that the line cannot say whether its holder is
     linked or the main worktree and carries both forms (ruling A-45, Codex's
     P2 on `1bf217c`); with the upstream ref absent, the same clause comes
-    before that line's `next:` step above, `Kept BRANCH (git-refused); if a
+    before that line's own checkout step, `Kept BRANCH (git-refused); if a
     rebase or bisect in another worktree holds BRANCH, wait for it to end, and
     then remove that worktree or, for the main worktree, which Git refuses to
     remove, switch it off BRANCH, by checking out another branch there, such as
     MERGE_TARGET, or by detaching it; next: check out MERGE_TARGET in the main
-    worktree, then: RETRY`, because Git refuses a branch so held whether its
+    worktree, then: RETRY`, or its detached-tip form where a linked worktree
+    holds MERGE_TARGET, because Git refuses a branch so held whether its
     upstream's ref is present or absent, or no upstream is configured, and the
     checkout alone, of a merge target the main worktree already holds, changes
-    nothing (ruling A-35, lane openRepoProject-3's F4; Context);
+    nothing (ruling A-35, lane openRepoProject-3's F4; Context); both
+    `git-refused` lines keep the bare retry, their branch child having run
+    after the re-proof proved the reflog, so that the absent form no longer
+    shares `head-not-merge-target`'s text, which names the inspection (ruling
+    A-60);
   - otherwise, where the stage's re-proof proved the reflog merged, `Kept
     BRANCH (REASON); retry: RETRY`: `spawn-error`, `unconfirmed-retirement`
     and `probe-timeout`, and a `deadline-exceeded`, `interrupted` or
@@ -1672,9 +1754,10 @@ proposal puts it before Brett Heap with L-4's recommendation.
 - [Retiring a branch deletes its reflog and its `branch.<b>` section] -> The
   plan proves every commit the reflog names merged, and the stage proves it
   again over the reflog as it then reads, or the branch is kept
-  (`reflog-unmerged`, or another retention, whose line names the reflog
-  inspection before the retry wherever the stage did not re-prove the
-  reflog; D8, rulings A-53 and A-55), so no commit named when the branch
+  (`reflog-unmerged`, or another retention or plan keep, whose line names
+  the reflog inspection before the retry wherever the stage did not re-prove
+  the reflog, its own step first where it has one; D8, rulings A-53, A-55 and
+  A-60), so no commit named when the branch
   child spawns is lost. The section's keys
   (`description`, `pushRemote`, any tool's keys) are deleted and not
   restored; the printed restore line, `git -C ROOT branch BRANCH SHA` or, for
@@ -1733,7 +1816,7 @@ proposal puts it before Brett Heap with L-4's recommendation.
 - [At the packet's assumed costs a flagged run of 16 retires 13 branches on
   change 1's terms at PR #19's `c462d87`, and, at the packet's 150 ms per child
   (D14's 150 ms basis), 10 at its `6f2cb54`, `a664799`, `2e819ad`, `9267303`,
-  `f0bf538`, `662be89` and `6bf9f77` where the plan read
+  `f0bf538`, `662be89`, `6bf9f77` and `b3228bb` where the plan read
   `extensions.worktreeConfig` as false; where it read it as true, PR #19's
   D14 counts a plan-time probe on each linked row, so that at 128 rows a
   flagged run removes and retires
@@ -1744,7 +1827,7 @@ proposal puts it before Brett Heap with L-4's recommendation.
   6, or 5, in the worst order a run can take]
   -> On PR #19's measured basis at `662be89`, where LQ-20's step (i) measured
   the two probes that task 2.1 did not (its `design.md:956-969`, its figures
-  unchanged at `6bf9f77`; ruling A-47),
+  unchanged at `b3228bb`; rulings A-47 and A-62),
   change 1 alone removes all 16 at 128 rows, the 16th at 28.7 s where the plan
   read `extensions.worktreeConfig` as false and at 30.0 s where it read it as
   true, or 36.4 s and 37.7 s with 20,000-file removals; on it a flagged run of
