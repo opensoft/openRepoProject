@@ -4127,7 +4127,8 @@ def match_target(plan, run, entries, cap):
 
 def row_incomplete(row):
     """Whether a row's own evidence is incomplete: `inspection-error`, or
-    carrying the unprobed marker (T066's reflog read past its budget)."""
+    carrying the unprobed marker (T066's reflog read not finished, past its
+    filesystem budget or cut by the work deadline)."""
     return bool(row.unprobed) or row["classification"] == "inspection-error"
 
 
@@ -4140,14 +4141,23 @@ def cut_at_deadline(errors):
 
 def deadline_stopped(row):
     """Whether row is incomplete only because the work deadline stopped it
-    (T099; lead rulings R-67 (a), R-69 and R-80, P-1): `inspection-error`,
-    every row error `deadline-exceeded`, and no unprobed marker. Such a row is
-    `deadline-exceeded`'s, never `inspection-incomplete`'s; a row left
-    unprobed by its reflog read, which only a cut at the filesystem budget
-    leaves, stays `inspection-incomplete`'s, while one whose reflog read the
-    deadline cut is inspection-error and so this function's (reflog_gate();
-    Brett Heap's ruling "O-1: deadline-exceeded", lead ruling R-263)."""
-    return (not row.unprobed and row["classification"] == "inspection-error"
+    (T099; lead rulings R-67 (a), R-69 and R-80, P-1): `inspection-error` or
+    carrying the unprobed marker, and every row error `deadline-exceeded`.
+    Such a row is `deadline-exceeded`'s, never `inspection-incomplete`'s, and
+    incomplete_refusal() does not count it.
+
+    The unprobed arm is gate 7's alone (#19's round (h) at b3228bb, pcl:713-718
+    and design D10; Brett Heap's ruling "O-1: deadline-exceeded", lead rulings
+    R-263 and R-278): reflog_gate() is the marker's only setter, and a row
+    reaches gate 7 `merged-removable` (gate 5), so with no row error
+    (classify()), and leaves it unprobed with its one read's error. Such a row
+    is this function's when the work deadline cut that read, its
+    `deadline-exceeded`, and stays `inspection-incomplete`'s when the
+    filesystem budget did, its `probe-timeout`. Every other row is decided as
+    before: an inspection-error row by its errors, whatever gate or probe
+    left them (the status probe, gates 9 to 12, the work-tree probe), and a
+    row past the row cap is no row here."""
+    return ((row["classification"] == "inspection-error" or bool(row.unprobed))
             and cut_at_deadline(row.get("errors")))
 
 
@@ -4170,8 +4180,9 @@ def plan_completeness(plan, exclude=()):
     (plan.target None while plan.target_rows holds rows); `inspect-cap` when
     rows were left past the row cap (plan.omitted's count); and
     `deadline-exceeded` when the work deadline stopped planning: a counted
-    row deadline_stopped() names, or a repository-wide probe whose every
-    error is `deadline-exceeded`, counts toward it and not toward
+    row deadline_stopped() names (an unprobed row among them where the
+    deadline cut its gate-7 reflog read), or a repository-wide probe whose
+    every error is `deadline-exceeded`, counts toward it and not toward
     `inspection-incomplete`, so that no row counts twice (lead ruling R-80,
     P-1). In mode single for --action remove only P's own rows count and the
     cap is no code: another row's state and the rows past the cap are
@@ -4438,9 +4449,12 @@ def build_plan(repo, run):
     (child_budget(), region runner), and once none is left none is started,
     so each row the deadline stops is `inspection-error` with a
     `deadline-exceeded` row error, excluded as `inspection-error`, never
-    unprobed (lead rulings R-67 (a) and R-69), and the plan is incomplete
-    with `deadline-exceeded` (plan_completeness()). Then `selected` and
-    `excluded` from gate_rows(), P's rows' and the other rows' together, both
+    unprobed (lead rulings R-67 (a) and R-69), but for a row whose gate-7
+    reflog read the deadline cuts, which reflog_gate() leaves unprobed with
+    that `deadline-exceeded` and excluded as `reflog-unavailable` (#19's
+    round (h); lead ruling R-278); either way the plan is incomplete with
+    `deadline-exceeded` (plan_completeness(), deadline_stopped()). Then
+    `selected` and `excluded` from gate_rows(), P's rows' and the other rows' together, both
     by raw path bytes, each selected row given `removal_args`, ["-C",
     ROOT, "worktree", "remove", PATH] with ROOT the command directory and PATH
     the registry's raw bytes (design D9); `completeness` and `apply_allowed`
@@ -4864,14 +4878,13 @@ def read_reflog(common_dir, branch, head, run, named=None):
     needs no fstat (R-33); it is never a Git child. ENOENT or ENOTDIR is
     (`reflog-unavailable`, None); any other OSError (`inspection-error`, its
     `os-error` for OPERATION read); a call cut at its budget or the deadline
-    (`reflog-unavailable`, its `probe-timeout` or `deadline-exceeded`), which
-    reflog_gate() leaves unprobed, or for the deadline makes
-    inspection-error; and bytes read, (reflog_outcome(data, head),
-    None). run is the invocation in force, whose per-child budget fs_call()
-    gives the read and the timeout message names, as _fs() does; Interrupted
-    passes up. named, when given, is a list that receives the non-zero
-    objects the bytes read name (reflog_objects()), the negatives of gate 12
-    (D21, LQ-13)."""
+    (`reflog-unavailable`, its `probe-timeout` or `deadline-exceeded`), the
+    row to be left unprobed either way (reflog_gate()); and bytes read,
+    (reflog_outcome(data, head), None). run is the invocation in force, whose
+    per-child budget fs_call() gives the read and the timeout message names,
+    as _fs() does; Interrupted passes up. named, when given, is a list that
+    receives the non-zero objects the bytes read name (reflog_objects()), the
+    negatives of gate 12 (D21, LQ-13)."""
     path = reflog_path(common_dir, branch)
     budget, _ = current_invocation().child_budget("probe")
     try:
@@ -4903,32 +4916,33 @@ def reflog_gate(row, plan, run):
     that cannot decide, or a last entry whose new object is not the head);
     `inspection-error`, after putting an `os-error` in row["errors"] and
     setting row["classification"] to inspection-error, for any other read
-    error; and None when a movement survives. A read not finished within the
-    filesystem budget, the work deadline not being the limit, returns
-    `reflog-unavailable` AND sets row.unprobed, the marker's only setter,
-    which plan_completeness() reads as inspection-incomplete; its
-    `probe-timeout` goes in row["errors"], as the delta records for every
-    filesystem call cut at its budget. A read the work deadline cuts
-    (read_cut()) is gate 11's: its `deadline-exceeded` goes in row["errors"]
-    and the row is `inspection-error`, never unprobed (_index_undecided()),
-    so that deadline_stopped() names it and the plan is incomplete with
-    `deadline-exceeded`, whose refusal prints no repair remedy, as for every
-    other read (Brett Heap's ruling "O-1: deadline-exceeded", lead ruling
-    R-263, amending ratified 0050f3e pcl:606-608; writer E's O-1). The
-    inspection-error row also takes that class's recommendation, as
-    classify() pairs them. It sets row.reflog_objects, the non-zero objects
-    the reflog names, which gate 12 and the revalidation take as negatives,
-    as they were (D21, LQ-13); no document writes it."""
+    error; and None when a movement survives. A read not finished, whether
+    the filesystem budget or the work deadline cut it, returns
+    `reflog-unavailable` AND sets row.unprobed, the marker's only setter, the
+    row keeping its class and recommendation; the read's row error goes in
+    row["errors"], as the delta records for every filesystem call cut at its
+    budget. plan_completeness() reads the two cuts apart by that error
+    (deadline_stopped()): a `probe-timeout`, the deadline not being the
+    limit, makes the plan incomplete with `inspection-incomplete`; a
+    `deadline-exceeded` makes it incomplete with `deadline-exceeded`, not
+    `inspection-incomplete`, whose refusal prints no repair remedy (#19's
+    round (h) at b3228bb, pcl:713-718 and design D10; Brett Heap's ruling
+    "O-1: deadline-exceeded", lead rulings R-263 and R-278, amending ratified
+    0050f3e pcl:606-608). The inspection-error row also takes that class's
+    recommendation, as classify() pairs them. It sets row.reflog_objects, the
+    non-zero objects the reflog names, which gate 12 and the revalidation take
+    as negatives, as they were (D21, LQ-13); no document writes it."""
     common_dir = plan.evidence["identity"]["common_dir"]
     named = []
     reason, error = read_reflog(common_dir, row["branch"], row["head"], run, named)
     row.reflog_objects = tuple(named)
-    if error is None:
-        return reason
-    if reason == "inspection-error" or read_cut(error):
-        return _index_undecided(row, error)
-    row["errors"].append(error)
-    row.unprobed = True
+    if error is not None:
+        row["errors"].append(error)
+        if reason == "inspection-error":
+            row["classification"] = "inspection-error"
+            row["recommendation"] = RECOMMENDATIONS["inspection-error"]
+        else:
+            row.unprobed = True
     return reason
 
 

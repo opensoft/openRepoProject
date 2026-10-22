@@ -12,6 +12,7 @@ on disposable repositories (rule 4), whose eligible rows are made by
 merged_worktree(), a commit of their own (lead ruling R-56). Expected human
 text comes from clean_support's fixtures (rule 8).
 """
+import ast
 import contextlib
 import errno
 import io
@@ -265,13 +266,16 @@ class ReflogTests(clean_support.CleanCase):
 
         # A read not finished within the filesystem budget, the deadline not
         # being the limit: reflog-unavailable, the row left unprobed with its
-        # probe-timeout, its class kept, and the plan incomplete (R-67 (a)).
-        # The budget is the 15 s of an invocation with no deadline, set to
-        # 0.3 s in TIMING here. A read the work deadline cuts, 0.3 s of work
-        # left under clean's deadline, is gate 11's: the row inspection-error
-        # with its deadline-exceeded, never unprobed, and the plan incomplete
-        # with deadline-exceeded (Brett Heap's ruling "O-1:
-        # deadline-exceeded", lead ruling R-263).
+        # probe-timeout, its class kept, and the plan incomplete with
+        # inspection-incomplete (R-67 (a)). The budget is the 15 s of an
+        # invocation with no deadline, set to 0.3 s in TIMING here. A read the
+        # work deadline cuts, 0.3 s of work left under clean's deadline, leaves
+        # the row the same, reflog-unavailable and unprobed with its class
+        # kept, its error deadline-exceeded, and the plan incomplete with
+        # deadline-exceeded, not inspection-incomplete, the row
+        # deadline_stopped() (#19's round (h) at b3228bb, pcl:713-718 and
+        # design D10; Brett Heap's ruling "O-1: deadline-exceeded", lead
+        # rulings R-263 and R-278).
         with self.subTest(case="timeout"):
             self.temp_common_reset()
             common, row, plan = self.gate_fixture()
@@ -283,6 +287,7 @@ class ReflogTests(clean_support.CleanCase):
                    "message": TEXT["row_error_probe_timeout"].format(OPERATION="read", S="0.3")}
             self.assert_row(row, plan, "merged-removable", [cut], True, ["inspection-incomplete"])
             self.assertEqual(row["recommendation"], MERGED_REMOVABLE)
+            self.assertFalse(project.deadline_stopped(row))
         with self.subTest(case="deadline"):
             self.temp_common_reset()
             common, row, plan = self.gate_fixture()
@@ -290,12 +295,15 @@ class ReflogTests(clean_support.CleanCase):
             with project.Invocation("clean") as run, \
                     mock.patch.object(project, "_read_head", self.stuck_read()):
                 run.work_end = run.now() + 0.3
-                self.assertEqual(self.gate(row, plan, run), "inspection-error")
+                self.assertEqual(self.gate(row, plan, run), "reflog-unavailable")
             cut = {"code": "deadline-exceeded",
                    "message": TEXT["row_error_deadline_exceeded"].format(OPERATION="read")}
-            self.assert_row(row, plan, "inspection-error", [cut], False, ["deadline-exceeded"])
-            self.assertEqual(row["recommendation"], INSPECTION_ERROR)
+            self.assert_row(row, plan, "merged-removable", [cut], True, ["deadline-exceeded"])
+            self.assertEqual(row["recommendation"], MERGED_REMOVABLE)
             self.assertTrue(project.deadline_stopped(row))
+            self.assertEqual(project.incomplete_refusal(plan, "deadline-exceeded").as_object(),
+                             {"code": "deadline-exceeded", "message": TEXT["plan_incomplete"].format(
+                                 CODE="deadline-exceeded", REMEDY=TEXT["remedy_deadline_exceeded"])})
         with self.subTest(case="an unprobed row keeps a reason"):
             self.temp_common_reset()
             common, row, plan = self.gate_fixture()
@@ -377,37 +385,45 @@ class ReflogTests(clean_support.CleanCase):
         return status, out.getvalue(), err.getvalue()
 
     def test_clean_a_reflog_read_cut_by_the_deadline_against_its_budget(self):
-        # Brett Heap's ruling "O-1: deadline-exceeded" (lead ruling R-263;
-        # writer E's O-1), gate 7 split as gate 11's listing is
-        # (test_clean_operation_in_progress_listing_that_fails). In process,
-        # the read of one row's branch reflog made to time out at its budget,
-        # the deadline not being the limit, and to be cut by the work deadline;
-        # every other filesystem call runs as it is. The budget's cut leaves
-        # the row unprobed as `reflog-unavailable`, its class kept, and the
-        # plan incomplete with inspection-incomplete, whose remedy is the
-        # repair one; the deadline's cut makes the row inspection-error with
-        # its deadline-exceeded, never unprobed, and the plan incomplete with
-        # deadline-exceeded, whose refusal prints the deadline's remedy and
-        # never the repair one. The preview exits 1, --apply 2, nothing removed.
+        # #19's round (h) at b3228bb (pcl:713-718, design D10; Brett Heap's
+        # ruling "O-1: deadline-exceeded", lead rulings R-263 and R-278). In
+        # process, the read of one row's branch reflog made to time out at its
+        # budget, the deadline not being the limit, and to be cut by the work
+        # deadline; every other filesystem call runs as it is. Either cut
+        # leaves the row as gate 7 leaves an unfinished read: excluded as
+        # `reflog-unavailable`, its unprobed marker set (read off the row
+        # reflog_gate() returned for, since no document writes the marker),
+        # its class and recommendation kept, the read's error its one error,
+        # and in the preview's `reflog-unavailable` group, never the
+        # `inspection-error` one. The budget's cut makes the plan incomplete
+        # with inspection-incomplete, whose remedy is the repair one; the
+        # deadline's with deadline-exceeded alone, whose refusal prints the
+        # deadline's remedy and never the repair one. The preview exits 1,
+        # --apply 2, nothing removed.
         root = self.repo()
         self.bare_remote()
         control = self.merged_worktree("001-control")
         cut = self.merged_worktree("002-cut")
         reflog = os.fsencode(self.reflog_file("002-cut"))
-        real_fs_call = project.fs_call
+        real_fs_call, real_gate = project.fs_call, project.reflog_gate
+        excluded = [
+            TEXT["excluded_heading"].format(M=2),
+            TEXT["excluded_group"].format(REASON="main-worktree", K=1, NEXT_STEP=STEPS["main-worktree"]),
+            TEXT["excluded_row"].format(PATH=root, BRANCH="main"),
+            TEXT["excluded_group"].format(REASON="reflog-unavailable", K=1, NEXT_STEP=STEPS["reflog-unavailable"]),
+            TEXT["excluded_row"].format(PATH=cut, BRANCH="002-cut"),
+        ]
         cases = (
             ("its budget", project.DriverOutcome(None, "timeout", detail="no answer within 5 s"),
-             "reflog-unavailable", "merged-removable", MERGED_REMOVABLE,
              {"code": "probe-timeout", "message": TEXT["row_error_probe_timeout"].format(OPERATION="read", S="5")},
-             "inspection-incomplete", TEXT["remedy_inspection_incomplete"]),
+             "inspection-incomplete", TEXT["remedy_inspection_incomplete"], False),
             ("the work deadline", project.DriverOutcome(None, "deadline", detail="no time was left to start it"),
-             "inspection-error", "inspection-error", INSPECTION_ERROR,
              {"code": "deadline-exceeded", "message": TEXT["row_error_deadline_exceeded"].format(OPERATION="read")},
-             "deadline-exceeded", TEXT["remedy_deadline_exceeded"]),
+             "deadline-exceeded", TEXT["remedy_deadline_exceeded"], True),
         )
-        for label, answer, reason, classification, advice, error, code, remedy in cases:
+        for label, answer, error, code, remedy, stopped in cases:
             with self.subTest(f"the reflog read meets {label}"):
-                calls = []
+                calls, gated = [], []
 
                 def fs_call(fn, *args, answer=answer, calls=calls, **options):
                     if fn is project._read_head and args[:1] == (reflog,):
@@ -415,27 +431,152 @@ class ReflogTests(clean_support.CleanCase):
                         return answer
                     return real_fs_call(fn, *args, **options)
 
+                def reflog_gate(row, plan, run, gated=gated):
+                    reason = real_gate(row, plan, run)
+                    if row["path"] == str(cut):
+                        gated.append((reason, row))
+                    return reason
+
                 message = TEXT["plan_incomplete"].format(CODE=code, REMEDY=remedy)
-                for words, status in ((("--all-safe", "--json"), 1), (("--all-safe", "--apply", "--yes", "--json"), 2)):
-                    out_status, out, err = self.main_in_process("clean", root, *words, fs_call=fs_call)
-                    self.assertEqual(out_status, status, out + err)
-                    document = json.loads(out)
-                    self.assertEqual(([entry["path"] for entry in document["selected"]],
-                                      {entry["path"]: entry["reason"] for entry in document["excluded"]}),
-                                     ([str(control)], {str(root): "main-worktree", str(cut): reason}))
-                    [row] = [row for row in document["worktrees"] if row["path"] == str(cut)]
-                    self.assertEqual((row["classification"], row["recommendation"], row["errors"]),
-                                     (classification, advice, [error]))
-                    self.assertEqual((document["completeness"], document["apply_allowed"], document["refusals"]),
-                                     ("incomplete", False, [{"code": code, "message": message}]))
-                out_status, out, err = self.main_in_process("clean", root, "--all-safe", "--apply", "--yes",
-                                                            fs_call=fs_call)
-                self.assertEqual((out_status, err), (2, "REFUSED: " + message + "\n"), out)
-                self.assertNotIn("[yes/N]", out)
-                if code == "deadline-exceeded":
+                with mock.patch.object(project, "reflog_gate", reflog_gate):
+                    for words, status in ((("--all-safe", "--json"), 1),
+                                          (("--all-safe", "--apply", "--yes", "--json"), 2)):
+                        out_status, out, err = self.main_in_process("clean", root, *words, fs_call=fs_call)
+                        self.assertEqual(out_status, status, out + err)
+                        document = json.loads(out)
+                        self.assertEqual(([entry["path"] for entry in document["selected"]],
+                                          {entry["path"]: entry["reason"] for entry in document["excluded"]}),
+                                         ([str(control)], {str(root): "main-worktree", str(cut): "reflog-unavailable"}))
+                        [row] = [row for row in document["worktrees"] if row["path"] == str(cut)]
+                        self.assertEqual((row["classification"], row["recommendation"], row["errors"]),
+                                         ("merged-removable", MERGED_REMOVABLE, [error]))
+                        self.assertEqual((document["completeness"], document["apply_allowed"], document["refusals"]),
+                                         ("incomplete", False, [{"code": code, "message": message}]))
+                    # The human preview: the row in the reflog-unavailable group.
+                    out_status, out, err = self.main_in_process("clean", root, "--all-safe", fs_call=fs_call)
+                    self.assertEqual((out_status, err), (1, "REFUSED: " + message + "\n"), out)
+                    lines = out.splitlines()
+                    self.assertIn(excluded[0], lines, out)
+                    at = lines.index(excluded[0])
+                    self.assertEqual(lines[at:at + len(excluded)], excluded, out)
+                    self.assertNotIn(STEPS["inspection-error"], out)
+                    out_status, out, err = self.main_in_process("clean", root, "--all-safe", "--apply", "--yes",
+                                                                fs_call=fs_call)
+                    self.assertEqual((out_status, err), (2, "REFUSED: " + message + "\n"), out)
+                    self.assertNotIn("[yes/N]", out)
+                if stopped:
                     self.assertNotIn(TEXT["remedy_inspection_incomplete"], err)
-                self.assertEqual(calls, [reflog] * 3, "one read per run")
+                self.assertEqual(calls, [reflog] * 4, "one read per run")
+                # The row each run's gate 7 left: unprobed, its class kept, the
+                # read's error its one error, and deadline_stopped() for the
+                # deadline's cut alone.
+                self.assertEqual([(reason, row["classification"], row["errors"], row.unprobed,
+                                   project.deadline_stopped(row)) for reason, row in gated],
+                                 [("reflog-unavailable", "merged-removable", [error], True, stopped)] * 4)
                 self.assertTrue(control.is_dir() and cut.is_dir(), "nothing removed")
+
+    def test_clean_only_gate_7_s_deadline_cut_makes_an_unprobed_row_deadline_stopped(self):
+        # The completeness rule's scope (#19's round (h) at b3228bb; lead
+        # ruling R-278): deadline_stopped() names an unprobed row whose every
+        # error is deadline-exceeded, and it changes no other row's outcome.
+        # First, reflog_gate() is the unprobed marker's only setter, so the
+        # unprobed arm is gate 7's reflog read alone; a new setter must
+        # revisit the rule.
+        setters = []
+        for statement in ast.parse(clean_support.CLI.read_text()).body:
+            name = getattr(statement, "name", "<module>")
+            for node in ast.walk(statement):
+                targets = node.targets if isinstance(node, ast.Assign) else [node.target] if isinstance(
+                    node, (ast.AugAssign, ast.AnnAssign)) else []
+                if any(isinstance(target, ast.Attribute) and target.attr == "unprobed"
+                       for each in targets for target in ast.walk(each)):
+                    setters.append(name)
+                if (isinstance(node, ast.Call) and isinstance(node.func, ast.Name) and node.func.id == "setattr"
+                        and any(isinstance(arg, ast.Constant) and arg.value == "unprobed" for arg in node.args)):
+                    setters.append(name)
+        self.assertEqual(setters, ["reflog_gate"])
+
+        def row(path, classification="merged-removable", errors=(), unprobed=False):
+            made = project.WorktreeRow(path=path, present=True, branch=path, head=TIP.decode(),
+                                       classification=classification, recommendation=MERGED_REMOVABLE,
+                                       locked=False, path_valid_utf8=True, errors=[dict(error) for error in errors])
+            made.raw_path, made.main, made.registered, made.unprobed = os.fsencode(path), False, True, unprobed
+            return made
+
+        def plan_of(*rows, omitted=0, errors=(), excluded=()):
+            plan = project.Plan({"root": Path("/w/main")}, types.SimpleNamespace(mode="all-safe", action=None))
+            plan.evidence = {"identity": None, "errors": list(errors)}
+            plan.rows, plan.excluded = list(rows), list(excluded)
+            plan.omitted = {"count": omitted, "exactness": "exact"}
+            return plan
+
+        stopped = {"code": "deadline-exceeded", "message": TEXT["row_error_deadline_exceeded"].format(OPERATION="read")}
+        timed_out = {"code": "probe-timeout",
+                     "message": TEXT["row_error_probe_timeout"].format(OPERATION="read", S="5")}
+        failed = {"code": "os-error", "message": TEXT["row_error_os_error"].format(
+            OPERATION="listdir", STRERROR=os.strerror(errno.EACCES))}
+        # (label, row, deadline_stopped(row), its plan's codes alone). Only the
+        # first changes with the rule; every other row is decided as before.
+        cases = [
+            ("gate 7's read cut by the deadline", row("/w/a", errors=[stopped], unprobed=True),
+             True, ["deadline-exceeded"]),
+            ("gate 7's read cut at its budget", row("/w/b", errors=[timed_out], unprobed=True),
+             False, ["inspection-incomplete"]),
+            ("unprobed with no row error", row("/w/c", unprobed=True), False, ["inspection-incomplete"]),
+            ("unprobed, one error of the deadline and one of the budget",
+             row("/w/d", errors=[stopped, timed_out], unprobed=True), False, ["inspection-incomplete"]),
+            ("inspection-error, every error the deadline's (the status probe, gates 9 to 12)",
+             row("/w/e", "inspection-error", [stopped]), True, ["deadline-exceeded"]),
+            ("inspection-error, another gate's read cut at its budget",
+             row("/w/f", "inspection-error", [timed_out]), False, ["inspection-incomplete"]),
+            ("inspection-error, a read that failed", row("/w/g", "inspection-error", [failed]),
+             False, ["inspection-incomplete"]),
+            ("inspection-error with no row error (registration-mismatch)", row("/w/h", "inspection-error"),
+             False, ["inspection-incomplete"]),
+            ("a complete row", row("/w/i"), False, []),
+            ("a complete row carrying a deadline-exceeded", row("/w/j", errors=[stopped]), False, []),
+        ]
+        for label, made, expected, codes in cases:
+            with self.subTest(case=label):
+                self.assertEqual((project.deadline_stopped(made), project.plan_completeness(plan_of(made))),
+                                 (expected, codes))
+        gate_7_cut, budget_cut = cases[0][1], cases[1][1]
+        other_cut = cases[5][1]
+        with self.subTest(case="the row cap and the repository-wide probes stay their own codes"):
+            self.assertEqual(project.plan_completeness(plan_of(omitted=3)), ["inspect-cap"])
+            self.assertEqual(project.plan_completeness(plan_of(gate_7_cut, omitted=3)),
+                             ["inspect-cap", "deadline-exceeded"])
+            self.assertEqual(project.plan_completeness(plan_of(budget_cut, errors=[stopped])),
+                             ["inspection-incomplete", "deadline-exceeded"])
+            self.assertEqual(project.plan_completeness(plan_of(gate_7_cut, errors=[timed_out])),
+                             ["inspection-incomplete", "deadline-exceeded"])
+        with self.subTest(case="beside another row, each counts toward its own code"):
+            plan = plan_of(gate_7_cut, other_cut, excluded=[(gate_7_cut, "reflog-unavailable"),
+                                                           (other_cut, "inspection-error")])
+            self.assertEqual(project.plan_completeness(plan), ["inspection-incomplete", "deadline-exceeded"])
+            self.assertEqual([project.incomplete_refusal(plan, code).as_object() for code in
+                              project.plan_completeness(plan)],
+                             [{"code": "inspection-incomplete", "message": TEXT["plan_incomplete"].format(
+                                 CODE="inspection-incomplete", REMEDY=TEXT["remedy_inspection_incomplete"])},
+                              {"code": "deadline-exceeded", "message": TEXT["plan_incomplete"].format(
+                                  CODE="deadline-exceeded", REMEDY=TEXT["remedy_deadline_exceeded"])}])
+        with self.subTest(case="the variant remedy does not count a deadline-stopped row"):
+            # 63e4573's counting: incomplete_refusal() counts the rows
+            # plan_completeness() counts toward inspection-incomplete, so a
+            # deadline-stopped row is not among them. Each pairing below is
+            # built by hand to show the count: the variant prints where a
+            # counted row is excluded as registration-mismatch, and the base
+            # where only the deadline-stopped one is.
+            remedy = {}
+            for name, marked in (("the gate-7 deadline cut", gate_7_cut),
+                                 ("another gate's budget cut", other_cut)):
+                plan = plan_of(gate_7_cut, other_cut, excluded=[(marked, "registration-mismatch")])
+                remedy[name] = str(project.incomplete_refusal(plan, "inspection-incomplete"))
+            self.assertEqual(remedy, {
+                "the gate-7 deadline cut": TEXT["plan_incomplete"].format(
+                    CODE="inspection-incomplete", REMEDY=TEXT["remedy_inspection_incomplete"]),
+                "another gate's budget cut": TEXT["plan_incomplete"].format(
+                    CODE="inspection-incomplete", REMEDY=TEXT["remedy_inspection_incomplete_redirect"])})
 
     # T060: the reflog scenarios.
 
