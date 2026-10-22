@@ -6431,7 +6431,11 @@ def rescan(target, run):
     cut or a second SIGINT during it leaves `git_file_present` None and the
     record as the other reads made it; `git_file_read` says the read was
     made, so that the note then advises no prune (#19's round (i) at
-    1a4785e; lane 3's W73 M-1, lead ruling R-284).
+    1a4785e; lane 3's W73 M-1, lead ruling R-284). Where the lstat of the
+    target's own path failed other than for absence (`path_present` null, as
+    where a directory above the target denies search), no `.git` read is
+    made, and partial_removal_text() reads the null path in the record as
+    the same unread `.git` (lane 3's W90 M-1, lead ruling R-329).
 
     These three repository children, with the manifest value, are left on
     run as `rescan_part`, for the next selected target's revalidation to
@@ -6815,9 +6819,15 @@ def partial_removal_text(target):
     the rescan found of the registry entry, since `git worktree prune`
     deletes the admin directory of a live worktree whose `.git` Git cannot
     stat (#19's round (i) at 1a4785e; lane 3's W73 M-1, lead ruling R-284).
-    Otherwise `partial_removal_note`, whose `git worktree remove --force` Git
-    accepts, only where the rescan showed both the registry entry
-    (`registry_entry_present` true) and the target's `.git`
+    The `.git` is as unread where the rescan's lstat of the target's own
+    path failed other than for absence (`path_present` null in the
+    reconciliation record, as where a directory above the target denies
+    search), since the rescan then makes no `.git` read: the same note,
+    whatever the record shows of the registry entry (#19's ceiling scenario,
+    "as when a directory above it denies search"; lane 3's W90 M-1, lead
+    ruling R-329). Otherwise `partial_removal_note`, whose `git worktree
+    remove --force` Git accepts, only where the rescan showed both the
+    registry entry (`registry_entry_present` true) and the target's `.git`
     (`git_file_present` true) present, and `partial_removal_note_prune`
     otherwise: the `.git` shown absent, or the entry gone with the `.git` shown
     absent or not reached, since Git refuses that command once the `.git`
@@ -6827,9 +6837,11 @@ def partial_removal_text(target):
     alone; a report row's note is partial_removal_note()'s and keeps its own
     text."""
     git_file = getattr(target, "git_file_present", None)
-    if getattr(target, "git_file_read", False) and git_file is None:
+    record = target["reconciliation"] or {}
+    unread = getattr(target, "git_file_read", False) or ("path_present" in record and record["path_present"] is None)
+    if unread and git_file is None:
         return "partial_removal_note_unread"
-    entry = (target["reconciliation"] or {}).get("registry_entry_present")
+    entry = record.get("registry_entry_present")
     if entry is True and git_file is True:
         return "partial_removal_note"
     return "partial_removal_note_prune"
