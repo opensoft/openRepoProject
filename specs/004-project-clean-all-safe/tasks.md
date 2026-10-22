@@ -985,7 +985,7 @@ T033), when B, D, E and F are; H, guard (T034, T035), when T023 is, beside G
   ending in one, is W, at planning and strictly at revalidation; another path,
   two lines of one other path included, is False in both; empty output, W's
   path with no closing line feed and a line feed alone are False at planning
-  and a probe that decided nothing, None with its row error, at revalidation);
+  and a probe that decided nothing, None with its row error, at revalidation; each case runs again with the working directory at the worktree, where an empty path would read as the worktree itself, a difference observable only there: lead ruling R-291; lane 3's W90 L-1; writer's `488d6f6`, merged as `7149e08`);
   `test_clean_a_work_tree_probe_whose_output_is_empty_or_ends_in_no_line_feed`
   (where row 4c reads true, a fake Git answering the probe in W alone: W's
   path and one line feed leaves W `merged-removable` and selected, nothing and
@@ -994,6 +994,41 @@ T033), when B, D, E and F are; H, guard (T034, T035), when T023 is, beside G
   and `test_clean_a_redirected_linked_worktree_whose_path_holds_a_line_feed`
   (a real redirect of a worktree whose path holds a line feed, by
   `core.worktree` in its `config.worktree`, stays `registration-mismatch`).
+  Lead ruling R-332 (#19's design D7; writer's `c8e23cd`)
+  adds four tests: `test_clean_row_4c_reads_an_exit_1_by_what_it_printed`
+  (literal outcomes standing in for the child: an exit 1 with nothing on
+  either stream is false, `false` is false, and an exit 1 that printed on
+  either stream, Git's `hint:` lines or a byte past the 4 KiB kept included,
+  another exit status, a signal, a spawn failure, a timeout, the deadline, and
+  a timeout that ended with exit 1 are true);
+  `test_clean_row_4c_reads_a_real_repository_s_keys` (Git's own answers on the
+  Git in use: a key not set exits 1 with nothing printed, which reads false,
+  and a value that is not a boolean exits 128 with a fatal line, which reads
+  true);
+  `test_clean_a_row_4c_exit_1_that_printed_gives_each_linked_row_its_work_tree_probe`
+  (a fake Git answering row 4c with exit 1: nothing printed probes no linked
+  row's work tree, anything printed probes each, and the plan stays complete);
+  and
+  `test_clean_a_row_4c_exit_1_that_printed_adds_its_probes_to_the_estimate`
+  (where it reads true from an exit 1 that printed, each revalidation spawns
+  seven children and `probes.estimated` equals `probes.performed`; the plain
+  exit 1 reads false: six).
+  Lead ruling R-336 (writer's `b3f7e0b`) reads row 4b the same way, through
+  `config_key_unset()`, and adds three more:
+  `test_clean_row_4b_reads_an_exit_1_by_what_it_printed` (literal outcomes in
+  a gitfile layout: an exit 1 with nothing on either stream is the key unset,
+  and the main worktree is named by the candidate toplevel whose `.git` file
+  names the common directory; any other exit 1, one that printed anything or
+  one cut by its budget, gives `unreadable`);
+  `test_clean_a_row_4b_exit_1_that_printed_leaves_the_main_worktree_unreadable`
+  (a fake Git answering row 4b with exit 1: nothing printed resolves the
+  checkout and the plan is complete, anything printed leaves the main worktree
+  unreadable and refuses `target-not-repository-root`, exit 2, with no probe
+  in the checkout); and
+  `test_clean_row_4b_reads_a_real_repository_s_unset_core_worktree_as_unset`
+  (Git's own answer on the Git in use: an unset `core.worktree` exits 1 with
+  nothing printed, which reads as the key unset, and a set value reads as
+  before, a relative one against the git directory).
   Rule 1 would give PR #19's two scenario tests the prefix `test_status_`;
   they take `test_clean_`, which the floor job's `-k` selects as well. Since
   R-116, `test_status_a_git_that_floods_standard_error` reads its row
@@ -1002,7 +1037,7 @@ T033), when B, D, E and F are; H, guard (T034, T035), when T023 is, beside G
   linked worktree whose work tree is redirected" and "A commondir that names
   another repository".
   — files: `tests/test_clean_evidence.py`
-  — verify: `python3 -c "import sys,unittest as u;L=u.defaultTestLoader;f=lambda s:[i for t in s for i in (f(t) if isinstance(t,u.TestSuite) else [t.id()])];I=[i for i in f(L.discover('tests',pattern=sys.argv[1])) if not i.startswith('unittest.')];A=sys.argv[2:];M=[a for a in A if not any(a in ('*',i.split('.')[-1]) for i in I)];[print('not collected:',m) for m in M];[print(e) for e in L.errors];sys.exit(1 if M or L.errors or not A else 0)" test_clean_evidence.py 'test_status_a_git_that_floods_standard_error' 'test_status_a_git_that_ignores_sigterm' 'test_status_five_thousand_ignored_records' 'test_status_user_status_configuration' 'test_status_a_caller_s_git_environment_is_ignored' 'test_status_the_sixteenth_scrubbed_name_on_git_2_36' 'test_status_a_lazy_fetch_in_a_partial_clone_is_refused_locally' && python3 -c "import sys,unittest as u;L=u.defaultTestLoader;f=lambda s:[i for t in s for i in (f(t) if isinstance(t,u.TestSuite) else [t.id()])];I=[i for i in f(L.discover('tests',pattern=sys.argv[1])) if not i.startswith('unittest.')];A=sys.argv[2:];M=[a for a in A if not any(a in ('*',i.split('.')[-1]) for i in I)];[print('not collected:',m) for m in M];[print(e) for e in L.errors];sys.exit(1 if M or L.errors or not A else 0)" test_clean_evidence.py 'test_clean_a_linked_worktree_whose_work_tree_is_redirected' 'test_clean_a_linked_worktree_whose_work_tree_is_redirected_after_the_plan' 'test_clean_a_commondir_that_names_another_repository' 'test_clean_evidence_verifies_each_identity_immediately_before_its_status_probe' 'test_clean_evidence_a_status_probe_that_warns_establishes_nothing' 'test_clean_evidence_a_failed_ref_listing_establishes_no_branch_evidence' 'test_clean_effective_work_tree_reads_its_output_as_one_path' 'test_clean_a_work_tree_probe_whose_output_is_empty_or_ends_in_no_line_feed' 'test_clean_a_redirected_linked_worktree_whose_path_holds_a_line_feed'`
+  — verify: `python3 -c "import sys,unittest as u;L=u.defaultTestLoader;f=lambda s:[i for t in s for i in (f(t) if isinstance(t,u.TestSuite) else [t.id()])];I=[i for i in f(L.discover('tests',pattern=sys.argv[1])) if not i.startswith('unittest.')];A=sys.argv[2:];M=[a for a in A if not any(a in ('*',i.split('.')[-1]) for i in I)];[print('not collected:',m) for m in M];[print(e) for e in L.errors];sys.exit(1 if M or L.errors or not A else 0)" test_clean_evidence.py 'test_status_a_git_that_floods_standard_error' 'test_status_a_git_that_ignores_sigterm' 'test_status_five_thousand_ignored_records' 'test_status_user_status_configuration' 'test_status_a_caller_s_git_environment_is_ignored' 'test_status_the_sixteenth_scrubbed_name_on_git_2_36' 'test_status_a_lazy_fetch_in_a_partial_clone_is_refused_locally' && python3 -c "import sys,unittest as u;L=u.defaultTestLoader;f=lambda s:[i for t in s for i in (f(t) if isinstance(t,u.TestSuite) else [t.id()])];I=[i for i in f(L.discover('tests',pattern=sys.argv[1])) if not i.startswith('unittest.')];A=sys.argv[2:];M=[a for a in A if not any(a in ('*',i.split('.')[-1]) for i in I)];[print('not collected:',m) for m in M];[print(e) for e in L.errors];sys.exit(1 if M or L.errors or not A else 0)" test_clean_evidence.py 'test_clean_a_linked_worktree_whose_work_tree_is_redirected' 'test_clean_a_linked_worktree_whose_work_tree_is_redirected_after_the_plan' 'test_clean_a_commondir_that_names_another_repository' 'test_clean_evidence_verifies_each_identity_immediately_before_its_status_probe' 'test_clean_evidence_a_status_probe_that_warns_establishes_nothing' 'test_clean_evidence_a_failed_ref_listing_establishes_no_branch_evidence' 'test_clean_effective_work_tree_reads_its_output_as_one_path' 'test_clean_a_work_tree_probe_whose_output_is_empty_or_ends_in_no_line_feed' 'test_clean_a_redirected_linked_worktree_whose_path_holds_a_line_feed' 'test_clean_row_4c_reads_an_exit_1_by_what_it_printed' 'test_clean_row_4c_reads_a_real_repository_s_keys' 'test_clean_a_row_4c_exit_1_that_printed_gives_each_linked_row_its_work_tree_probe' 'test_clean_a_row_4c_exit_1_that_printed_adds_its_probes_to_the_estimate' 'test_clean_row_4b_reads_an_exit_1_by_what_it_printed' 'test_clean_a_row_4b_exit_1_that_printed_leaves_the_main_worktree_unreadable' 'test_clean_row_4b_reads_a_real_repository_s_unset_core_worktree_as_unset'`
 - [x] T031 [P] [O] Add to region `evidence` of `project`: `identity_probe()` (row
   3, repeated one option per child when a value holds a line feed);
   `main_worktree(identity, records, run)`, which builds D8's whole order (M6)
@@ -1012,7 +1047,13 @@ T033), when B, D, E and F are; H, guard (T034, T035), when T023 is, beside G
   directory, as Git documents and project-overview's spec states, lead ruling
   R-36) or the candidate toplevel whose `.git` file names it, else names
   none; a first record whose path is missing names none; otherwise the first
-  record's realpath. It returns that path, or `(None, cause)` where none is
+  record's realpath; row 4b's exit 1 with nothing on standard output or
+  standard error, none counted past the 4 KiB kept, is the key unset, which
+  `config_key_unset(outcome, error)` decides for rows 4b and 4c alike, and any
+  other failure of that read, an exit 1 that printed anything included, gives
+  `(None, "unreadable")` (R-336, as R-332 for row 4c; #19's design D7, "an
+  unset value is false and any other failure counts as true"; writer's
+  `b3f7e0b`). It returns that path, or `(None, cause)` where none is
   named, and never raises or refuses (FR-055; analyze H4, lead rulings R-42
   and R-51), so that a separate-git-dir checkout, which `clean` handles today
   with exit 0, is not refused between T033 and T107;
@@ -1078,7 +1119,11 @@ T033), when B, D, E and F are; H, guard (T034, T035), when T023 is, beside G
   leaving each present row on a branch with that probe's errors,
   `inspection-error`; the evidence's `main_path`, so that `repository.root`
   stays null when row 5 fails; row 4c (`worktree_config()`) once per common
-  directory before row 6, true where not read; the effective-work-tree probe
+  directory before row 6, true where not read, false only where Git prints
+  `false` or a `probe-failed` child exits 1 having printed nothing on either
+  stream, and true for any other exit 1, a cut child's included (R-332; #19's
+  design D7, "an unset value is false and any other failure counts as true";
+  writer's `c8e23cd`); the effective-work-tree probe
   (`effective_work_tree()`) for each linked row where row 4c is not false,
   its output, less the one closing line feed, read as one path, which may hold
   line feeds (output that is empty, a line feed alone or without a closing
@@ -1089,7 +1134,7 @@ T033), when B, D, E and F are; H, guard (T034, T035), when T023 is, beside G
   `verify_registration()` and the work-tree probe through an 8-line hunk in
   region `apply` (`revalidation_difference()`), a departure R-149 accepts.
   — files: `project`, `tests/clean_support.py`
-  — verify: `python3 -c "import sys,re;t=open('project').read();A=sys.argv[1:];c=lambda r:t.split('# region '+r+'\n')[1].split('# endregion '+r+'\n')[0];M=[a for a in A if not ((a.split('%',1)[1] not in c(a.split('%',1)[0])) if '%' in a else (a.split('~',1)[1] in c(a.split('~',1)[0])) if '~' in a else re.search(r'^[a-z]*\s?'+re.escape(a.split(':',1)[1])+r'\b',c(a.split(':',1)[0]),re.M))];[print('region check failed:',m) for m in M];sys.exit(1 if M or not A else 0)" 'evidence:identity_probe' 'evidence:main_worktree' 'evidence:inspect_repository' 'evidence:verify_registration' 'evidence:status_probe' 'evidence:worktree_rows' 'evidence~def inspect_repository(directory, run, refresh=False, *, repeat_identity_at_root=True)' 'evidence~def worktree_rows(repo, run, records=None)' && python3 -m unittest discover -s tests -p 'test_clean_evidence.py' -k '*.test_clean_evidence_parity_with_the_baseline_reader' -k '*.test_clean_evidence_a_bare_repository_s_registry_listing_runs_where_the_argument_resolves' && python3 -m unittest discover -s tests -p 'test_clean_harness.py' -k '*.test_clean_text_fixtures_equal_the_contract_table' && python3 -c "import sys,re;t=open('project').read();A=sys.argv[1:];c=lambda r:t.split('# region '+r+'\n')[1].split('# endregion '+r+'\n')[0];M=[a for a in A if not ((a.split('%',1)[1] not in c(a.split('%',1)[0])) if '%' in a else (a.split('~',1)[1] in c(a.split('~',1)[0])) if '~' in a else re.search(r'^[a-z]*\s?'+re.escape(a.split(':',1)[1])+r'\b',c(a.split(':',1)[0]),re.M))];[print('region check failed:',m) for m in M];sys.exit(1 if M or not A else 0)" 'evidence:status_warned' 'evidence:worktree_config' 'evidence:effective_work_tree' 'evidence:_admin_commondir' 'evidence:_identity_unchanged' 'evidence~"main_path"' && python3 -m unittest discover -s tests -p 'test_clean_evidence.py'`
+  — verify: `python3 -c "import sys,re;t=open('project').read();A=sys.argv[1:];c=lambda r:t.split('# region '+r+'\n')[1].split('# endregion '+r+'\n')[0];M=[a for a in A if not ((a.split('%',1)[1] not in c(a.split('%',1)[0])) if '%' in a else (a.split('~',1)[1] in c(a.split('~',1)[0])) if '~' in a else re.search(r'^[a-z]*\s?'+re.escape(a.split(':',1)[1])+r'\b',c(a.split(':',1)[0]),re.M))];[print('region check failed:',m) for m in M];sys.exit(1 if M or not A else 0)" 'evidence:identity_probe' 'evidence:main_worktree' 'evidence:config_key_unset' 'evidence:inspect_repository' 'evidence:verify_registration' 'evidence:status_probe' 'evidence:worktree_rows' 'evidence~def inspect_repository(directory, run, refresh=False, *, repeat_identity_at_root=True)' 'evidence~def worktree_rows(repo, run, records=None)' && python3 -m unittest discover -s tests -p 'test_clean_evidence.py' -k '*.test_clean_evidence_parity_with_the_baseline_reader' -k '*.test_clean_evidence_a_bare_repository_s_registry_listing_runs_where_the_argument_resolves' && python3 -m unittest discover -s tests -p 'test_clean_harness.py' -k '*.test_clean_text_fixtures_equal_the_contract_table' && python3 -c "import sys,re;t=open('project').read();A=sys.argv[1:];c=lambda r:t.split('# region '+r+'\n')[1].split('# endregion '+r+'\n')[0];M=[a for a in A if not ((a.split('%',1)[1] not in c(a.split('%',1)[0])) if '%' in a else (a.split('~',1)[1] in c(a.split('~',1)[0])) if '~' in a else re.search(r'^[a-z]*\s?'+re.escape(a.split(':',1)[1])+r'\b',c(a.split(':',1)[0]),re.M))];[print('region check failed:',m) for m in M];sys.exit(1 if M or not A else 0)" 'evidence:status_warned' 'evidence:worktree_config' 'evidence:effective_work_tree' 'evidence:_admin_commondir' 'evidence:_identity_unchanged' 'evidence~"main_path"' && python3 -m unittest discover -s tests -p 'test_clean_evidence.py'`
 - [x] T032 [P] [O] Add to region `evidence`: `classify()` (pure, with its one
   reorder; `RECOMMENDATIONS` from `project:566-616`); `partial_removal_note()`;
   `declared_tracking_branch(root)` (today's `manifest()` read, bounded by
@@ -2981,7 +3026,7 @@ US3, US7 and US9; US5's text lane follows it (analyze M2 and L9).
   `not-attempted` with `deadline-exceeded`, exit 1);
   `test_clean_a_work_tree_probe_that_decides_nothing_at_revalidation` (where
   row 4c read true, the work-tree probe exiting 128, timing out, printing
-  nothing or printing P's own path with no closing line feed: `state-changed`;
+  nothing, printing only a line feed or printing P's own path with no closing line feed: `state-changed`, a line feed alone naming no path (lead ruling R-291; lane 3's W90 L-1; writer's `488d6f6`, merged as `7149e08`);
   printing two lines, which are one other path: `identity-changed`, since its
   output, less the one closing line feed, is read as one path (lead ruling
   R-287; lane 3's W70 M-2; writer G's `4dfd6f5`); cut by the work deadline:
@@ -3204,13 +3249,19 @@ US3, US7 and US9; US5's text lane follows it (analyze M2 and L9).
   which Brett Heap ruled "R-284: yes", R-290; writer G's `6a32d10`, merged as
   `3bc1d68`), and in no record, so that the reconciliation record and the
   JSON result are unchanged; only `partial_removal_text()` reads them (T091,
-  T094). Its test,
+  T094).
+  Where the `lstat` of the target's own path failed other than for absence, as
+  where a directory above the target denies search, `path_present` is null, no
+  read is made, and `partial_removal_text()` reads the null path in the record
+  as the same unread `.git` (lane 3's W90 M-1, lead ruling R-329, which
+  applies Brett Heap's R-284 as ruled; writer's `b96b335`, merged as
+  `7149e08`). Its test,
   `test_clean_rescan_reads_the_git_file_where_the_entry_and_the_path_remain`,
   is in `tests/test_clean_apply.py`, beside T056's rescan tests, and this
   task's verify names it: the `.git` file present, gone (as a kill part way
   through `git worktree remove` leaves it), cut at its budget and abandoned by
   a second SIGINT, and the entry or the path gone, where no read is made, each
-  with the lstat last and the rescan's three children only; the `.git` file
+  with the lstat last and the rescan's three children only, and, in a subtest, a directory above the target that denies search (skipped as the superuser): the rescan leaves `path_present` null and `git_file_present` None, `decide_stage()` gives `unknown` with `removal-ceiling`, and `partial_removal_text()` gives `partial_removal_note_unread`; the `.git` file
   and the admin directory are renamed aside and back, and nothing is deleted
   recursively.
   — files: `project`, `tests/test_clean_revalidation.py`
@@ -3370,7 +3421,8 @@ lead ruling R-83).
   --verbose` names the live worktree's admin directory for removal, which is
   what the prune note would have led to, and with the permission back nothing
   is prunable and `git worktree remove --force` removes the worktree, the
-  branch kept).
+  branch kept; since lane 3's W90 M-1 (lead ruling R-329) a rescan whose lstat of
+  the target's own path failed gives the same note, which T091's table pins).
   — files: `tests/test_clean_result.py`
   — verify: `python3 -c "import sys,unittest as u;L=u.defaultTestLoader;f=lambda s:[i for t in s for i in (f(t) if isinstance(t,u.TestSuite) else [t.id()])];I=[i for i in f(L.discover('tests',pattern=sys.argv[1])) if not i.startswith('unittest.')];A=sys.argv[2:];M=[a for a in A if not any(a in ('*',i.split('.')[-1]) for i in I)];[print('not collected:',m) for m in M];[print(e) for e in L.errors];sys.exit(1 if M or L.errors or not A else 0)" test_clean_result.py 'test_clean_a_removal_past_the_hard_ceiling' 'test_clean_unreadable_path_after_removal' 'test_clean_exception_after_the_apply_phase_begins' 'test_clean_the_ceiling_s_recovery_text_follows_the_git_file_and_the_entry' 'test_clean_the_ceiling_s_recovery_text_where_the_git_file_cannot_be_read'`
 - [x] T090 [P] [US5] [S] Add `test_clean_stage_and_reason_table` to
@@ -3438,7 +3490,7 @@ lead ruling R-83).
   its `.git` read, through the module's `with_git_file()`, true, and keeps
   the `--force` note; and
   `test_clean_the_ceiling_s_partial_removal_note_follows_the_git_file_and_the_entry`
-  (nine literal targets through `partial_removal_text()` and `print_result()`,
+  (twelve literal targets through `partial_removal_text()` and `print_result()`,
   built with the module's `with_git_file(target, present, read)`:
   `partial_removal_note`, the `--force` form, only where the entry and the
   `.git` file are both shown present, and `partial_removal_note_prune`,
@@ -3450,7 +3502,11 @@ lead ruling R-83).
   `Probable partial removal: inspect PATH by hand; its .git could not be read,
   so do not run git worktree prune until it can.`, wherever the `.git` read was
   made and gave no value, whatever the record shows of the entry, three of the
-  nine; the note prints first and once; a target that is a plain dict, which
+  twelve, and, since lane 3's W90 M-1 (lead ruling R-329, applying R-284 as Brett
+  Heap ruled it; writer's `b96b335`, merged as `7149e08`), wherever the
+  reconciliation record's `path_present` is null, the lstat of the target's own
+  path having failed, so that no `.git` read was made, whatever the record shows
+  of the entry, the other three, the rows "the path lstat failed"; the note prints first and once; a target that is a plain dict, which
   carries no `.git` read, takes the prune note; a report row's note is
   `partial_removal_note()`'s and keeps its text).
   — files: `tests/test_clean_stop.py`
@@ -3578,8 +3634,8 @@ lead ruling R-83).
   lead ruling R-263), `print_result()` prints the note of
   `partial_removal_text(target)`, in region `result`: first
   `partial_removal_note_unread` where `git_file_read` (T085) is true and
-  `git_file_present` is None, whatever the record shows of the entry (W73
-  M-1; R-284); otherwise `partial_removal_note` where the target's
+  `git_file_present` is None, or where the record's `path_present` is null, whatever the record shows of the entry (W73
+  M-1, R-284; W90 M-1, R-329); otherwise `partial_removal_note` where the target's
   reconciliation shows its registry entry present and its `git_file_present`
   is true, and `partial_removal_note_prune` for the rest; a report row's note
   is still `partial_removal_note()`'s.
