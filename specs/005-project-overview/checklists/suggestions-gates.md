@@ -71,14 +71,19 @@ Lane: openRepoProject-4
   - Result: pass for every layout but one. Where a main worktree's own
     `core.worktree` names another directory, this spec, as A1 does, names that
     toplevel or the checkout as the root (FR-006, FR-009), and `project clean`
-    refuses the checkout, with a message that names the redirect since PR #19's
-    round (i) at `e0c91bb` (lane openRepoProject-2's R-271), or with the plain
-    one where a relative `core.worktree` names a missing directory (its round
-    (k)), refuses a toplevel that is not a repository's main worktree root and
-    resolves one that is another repository's, so that a suggestion there is
-    refused or reaches another repository, an exception to C-55's and User
-    Story 8's "never suggests what `project clean` refuses"; A1's re-alignment
-    for that layout is held for Brett Heap's ruling for change 2 (FR-006).
+    refuses the checkout with a message that names the redirect, since PR #19's
+    round (i) at `e0c91bb` (lane openRepoProject-2's R-271), refuses a toplevel
+    that is not a repository's main worktree root with the plain message, "Not
+    the main worktree of a repository: PATH; pass the repository root.", and
+    resolves a toplevel that is another repository's root as that repository.
+    Where a relative `core.worktree` names a missing directory, Git prints no
+    toplevel at all, the identity probe exiting 128, so that this spec names
+    the checkout as the root only where a linked worktree reaches the
+    repository first (FR-009), and `project clean` refuses it with the plain
+    message (#19's round (k) at `173d83c`). A suggestion there is therefore
+    refused or reaches another repository, an exception to the "never" of C-55
+    and of User Stories 4 and 8; A1's re-alignment for that layout is held for
+    Brett Heap's ruling for change 2 (FR-006).
 - [x] CHK018 Are the causes of `inspection-incomplete` consistent across FR-007, FR-013, FR-033 and FR-034 (failed or cut presence, registration and reflog reads)? [Consistency, Spec Clarifications C-23]
   - Result: pass; since 2026-10-21 the twins of FR-007 and a row whose identity
     changed before its probe are `inspection-error` too, so FR-034's
@@ -148,9 +153,10 @@ after its revisions 6, 7, 8, 9 and 10 at `d644517`, `0394be4`, `177eadf`,
 `173d83c`, after lane openRepoProject-3's W39 LOW-4, and after A1's
 ratification at `e4a30fc`, and CHK010 after #19's rounds (g) and (g2), and
 CHK023 after its round (h), and CHK017 after its round (i), lane
-openRepoProject-3's W83 read of it and its round (k). 29 items: 28 pass, 1
-fixed in the spec, 0 open, 0 plan notes, 0 new questions. An open item waits on
-the question or residual its result names; a plan note is for the plan, not the
-spec; a new question is asked in `clarify-questions.md`.
+openRepoProject-3's W83 read of it, its round (k) and lane openRepoProject-3's
+W88 read. 29 items: 28 pass, 1 fixed in the spec, 0 open, 0 plan notes, 0 new
+questions. An open item waits on the question or residual its result names; a
+plan note is for the plan, not the spec; a new question is asked in
+`clarify-questions.md`.
 
 Plan notes: none.

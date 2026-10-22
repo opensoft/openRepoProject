@@ -118,9 +118,13 @@ Lane: openRepoProject-4
     feed Git ends it with, as one path, so that a linked worktree whose own
     path holds a line feed is read as its registered path, output that is
     empty, names no path or does not end in a line feed disagreeing in place of
-    output that is not exactly one line; FR-007 keeps "not exactly one line",
-    as A1 gives it, and A1's re-alignment is held for Brett Heap's ruling for
-    change 2 (FR-007).
+    output that is not exactly one line, as feature 004 at `3bc1d68` reads it
+    too (its `project:2984-3012`, from `4dfd6f5`); FR-007 keeps "not exactly
+    one line", as A1 gives it, so that such a worktree, where
+    `extensions.worktreeConfig` is true, reads `registration-mismatch` in the
+    overview while `project clean` selects it where it is otherwise eligible,
+    and A1's re-alignment is held for Brett Heap's ruling for change 2
+    (FR-007).
 
 ## Requirement Consistency
 
@@ -184,9 +188,9 @@ its result still pass, and again after lane openRepoProject-3's W6 read of
 again after its W17 read of `b511bdb` and PR #19's `93f3194`, and after its W20
 read of A1 revision 3, and after A1's revisions 5, 6, 7 and 8 at `3ee860c`,
 `d644517`, `0394be4` and `177eadf`, and CHK016 after PR #19's round (j) at
-`e14ada0`. 29 items: 27 pass, 1 fixed in the spec, 0 open, 1 plan notes, 0 new
-questions. An open item waits on the question or residual its result names; a
-plan note is for the plan, not the spec; a new question is asked in
-`clarify-questions.md`.
+`e14ada0` and lane openRepoProject-3's W88 read. 29 items: 27 pass, 1 fixed in
+the spec, 0 open, 1 plan notes, 0 new questions. An open item waits on the
+question or residual its result names; a plan note is for the plan, not the
+spec; a new question is asked in `clarify-questions.md`.
 
 Plan notes: PN-9 (CHK024).

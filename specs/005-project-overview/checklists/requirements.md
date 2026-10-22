@@ -964,7 +964,8 @@ Lane: openRepoProject-4
   `project-overview` block the same blob, `a40458cb`; B17 re-bases its retire
   and reconcilable-result blocks on #19's round (i), which the spec does not
   read. R-284: the round (i) record and the twenty-eighth pass say that he
-  confirmed it. W83: CHK017's Result, C-55 and User Story 8's introduction
+  confirmed it. W83: CHK017's Result, C-55 and User Story 8's introduction, and
+  since the thirty-first pass User Story 4's "Why this priority" (W88 L1),
   scope "never suggests what `project clean` refuses" to every layout but the
   redirected main worktree that FR-006 holds, CHK017's category kept (M1; W83
   names C-56, but the sentence at its :660 is C-55's); R-271 and R-284 are
@@ -1002,6 +1003,47 @@ Lane: openRepoProject-4
   `e4a30fc`, and `clarify-questions.md` is unchanged. Re-validation: 16 of 16
   items pass, with the checks of iteration 2 re-run by script on the edited
   spec.
+- 2026-10-22, a thirty-first pass: #24 at its draft PR #27's head `dc39ec3`,
+  after round B19, with round B18 at `9473b2c` on the way, and lane
+  openRepoProject-3's W88 read of 3aa and 3ab (LOW 7) and W87 read of #19's
+  rounds (j) and (k) (its currency notes), by the lead's commit 3ac decisions.
+  #24: its pin `fe5b245` kept, the eight ranges byte-identical to their text at
+  `97bf4ee` by `cmp`, at new lines at both heads (at `dc39ec3`, proposal
+  :754-757, :778-781, :865-877 and :895-896; design :1048-1051, :1127-1130 and
+  :1724-1730; task 3.2 at :194-209), its `project-overview` block the same
+  blob, `a40458cb`; B18 re-bases its retire, reconcilable-result and
+  revalidation blocks on #19's round (j) and B19 its retire and revalidation
+  blocks on round (k), none of which the spec reads. W88: User Story 4's "Why
+  this priority" takes the exception that C-55 and User Story 8 take, and
+  FR-006's note, CHK017 and the twenty-ninth pass name it (L1); FR-007's hold
+  and CHK016 state the effect, a linked worktree whose own path holds a line
+  feed reading `registration-mismatch` here while `project clean` selects it,
+  and name feature 004's own one-path reading at `3bc1d68`
+  (`project:2984-3012`, from `4dfd6f5`), so that the divergence is from #19 and
+  feature 004 alike (L2, O3); C-55 and User Story 8 read "except for", "relax
+  that rule" and what is held (L3); FR-006's note is split, quotes the plain
+  message once and cites #19's spec and D18 at `173d83c` alone, D18 as
+  :1387-1462, the redirect text's last line being :1462 (L4); the round (k)
+  record names feature 004's discovery, not a function (L5), and quotes D18's
+  three cases for a bare name's toplevel (:1395-1398), saying that round (k)
+  changed both halves of round (i)'s narrowing, the bare name and the relative
+  path from any directory (L7, W87); CHK017 quotes the plain message, labels
+  round (k) `173d83c` and puts the missing-directory case in its own sentence
+  (L6). O1 needs no change, and CHK003 of `observability.md` stays true under
+  round (k)'s four-line case (O2). The round (j) record's cites stay as history
+  at `e14ada0` (C2; W87's notes on :510-514, D18 :1318-1323, now :1324-1329 by
+  `cmp`, and D18 :1334-1338, :1358-1361, :1371-1412 and D6 :356-367), but its
+  quote of the evidence model now says that #19's D7 gives those words as
+  R-291's (W87 LOW-1). W88's NOT DONE item 3: 233 shorthand cites of #19's
+  three specs, each tracked by a row of the 256 at a sha that its paragraph
+  names, six of them once the scan's guess of their file is corrected by hand,
+  and three being bounds ("through :316") rather than cites. CHK016 of
+  `discovery-identity.md` and CHK017 of `suggestions-gates.md` change, their
+  categories unchanged, and the totals below were recounted by script.
+  Traceability is checked against A1's ratified deltas at `e4a30fc` (64 of 64).
+  No pin moves, A1 stays cited at `e4a30fc`, and `clarify-questions.md` is
+  unchanged. Re-validation: 16 of 16 items pass, with the checks of iteration 2
+  re-run by script on the edited spec.
 - Items marked incomplete require spec updates before `/speckit-clarify` or `/speckit-plan`
 
 ## Cross-cutting Requirements Quality (no-argument `/speckit.checklist`, 2026-10-19)
@@ -1123,5 +1165,5 @@ notes (PN-1 to PN-18 but PN-4 and PN-11, withdrawn on 2026-10-21; PN-2 narrowed
 to an exception of any other kind in human mode and widened to a failed write's
 standard-error line), 0 new questions. Recounted by script on 2026-10-21, and
 again after the re-check, after the W6 read and after the fourth to twelfth
-passes of that day, and after the thirteenth to thirtieth passes on
+passes of that day, and after the thirteenth to thirty-first passes on
 2026-10-22.
