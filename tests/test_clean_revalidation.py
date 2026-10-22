@@ -889,18 +889,22 @@ class RevalidationTests(clean_support.CleanCase):
         # true, only a decided different effective work tree is
         # identity-changed (lane E's test of a work tree redirected after the
         # plan pins it). In process, after the question, P's work-tree probe
-        # made to exit 128, to time out, to print nothing, and to print P's
-        # own path with no line feed after it, each state-changed; and cut by
-        # the work deadline, which is no difference (P not-attempted with
-        # deadline-exceeded, exit 1). Its output, less the one line feed Git
-        # ends it with, is one path, which may hold line feeds (lead ruling
-        # R-287; lane 3's W70 M-2), so two lines are one other path, a decided
-        # different work tree: identity-changed.
+        # made to exit 128, to time out, to print nothing, to print only a
+        # line feed, and to print P's own path with no line feed after it,
+        # each state-changed; and cut by the work deadline, which is no
+        # difference (P not-attempted with deadline-exceeded, exit 1). Its
+        # output, less the one line feed Git ends it with, is one path, which
+        # may hold line feeds (lead ruling R-287; lane 3's W70 M-2), so two
+        # lines are one other path, a decided different work tree:
+        # identity-changed. A line feed alone names no path, so it decides
+        # nothing, like empty output (lead ruling R-291; lane 3's W90 L-1).
         probe = ["rev-parse", "--path-format=absolute", "--show-toplevel"]
         lf = chr(0x0A).encode("ascii")
         cases = (("exits 128", dict(name="failed", status=128), ("refused", "state-changed"), 2),
                  ("times out", dict(name="timeout"), ("refused", "state-changed"), 2),
                  ("prints nothing", dict(name="complete", status=0, result=lambda target: b""),
+                  ("refused", "state-changed"), 2),
+                 ("prints only a line feed", dict(name="complete", status=0, result=lambda target: lf),
                   ("refused", "state-changed"), 2),
                  ("prints P's path with no line feed", dict(name="complete", status=0, result=lambda target: target),
                   ("refused", "state-changed"), 2),

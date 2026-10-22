@@ -396,7 +396,11 @@ class StopTests(clean_support.CleanCase):
         # its text (the test above). #19's round (i) at 1a4785e (lane 3's W73
         # M-1, lead ruling R-284): where the rescan made the `.git` lstat and
         # it failed or was cut, the third note, which advises no prune, comes
-        # first, whatever the rescan found of the registry entry.
+        # first, whatever the rescan found of the registry entry. So does a
+        # rescan whose lstat of the target's own path failed other than for
+        # absence (the path null, as where a directory above it denies
+        # search), which could make no `.git` read: #19's ceiling scenario
+        # (lane 3's W90 M-1, lead ruling R-329).
         prune = TEXT.get("partial_removal_note_prune")
         self.assertEqual(prune, "Probable partial removal: inspect, then git worktree prune and delete {PATH} by "
                                 "hand.")
@@ -416,6 +420,10 @@ class StopTests(clean_support.CleanCase):
                 ("the .git read failed or cut, the entry gone", False, True, None, True,
                  "partial_removal_note_unread"),
                 ("the .git read failed or cut, the entry not established", None, True, None, True,
+                 "partial_removal_note_unread"),
+                ("the path lstat failed", True, None, None, None, "partial_removal_note_unread"),
+                ("the path lstat failed, the entry gone", False, None, None, None, "partial_removal_note_unread"),
+                ("the path lstat failed, the entry not established", None, None, None, None,
                  "partial_removal_note_unread")]:
             with self.subTest(label):
                 target = with_git_file(literal_target(
