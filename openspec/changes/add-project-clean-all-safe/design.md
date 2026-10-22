@@ -63,10 +63,14 @@ D7, D9, D18 and Open Questions; and round (k), lane openRepoProject-3's W80 read
 of round (i), with its W81 read of feature 004 at `2707ff2`, under the lead's
 R-294, Context, D4, D6, D18 and Open Questions; and round (l), lane
 openRepoProject-3's W87 read of rounds (j) and (k), under the lead's R-307 and
-R-310, Context, D4, D7, D18 and Open Questions. Brett Heap's ruling of
-2026-10-09 on open question 1, that a local ancestry proof outranks
-`remote-gone` for worktree rows, is in `proposal.md` Decisions and edited
-Context, D6, D7, D20, Risks, the Migration Plan and Open Questions here.
+R-310, Context, D4, D7, D18 and Open Questions; and round (m), Brett Heap's
+confirmation of round (l)'s five texts on 2026-10-22, "R-307: yes; R-310: yes"
+(the lead's R-319), and his "R-320: yes" (the lead's R-321) on the stale
+recommendations and the cap remedy, with F-1's (b) beside an unread row recorded
+as open, Context, D18 and Open Questions. Brett Heap's ruling of 2026-10-09 on
+open question 1, that a local ancestry proof outranks `remote-gone` for worktree
+rows, is in `proposal.md` Decisions and edited Context, D6, D7, D20, Risks, the
+Migration Plan and Open Questions here.
 
 Citations are `file:line` at `da33d92`: `BA`, `DI`, `OV` and `HO` are the
 packet's batch-cleanup, project-discovery, overview and handoff documents, and
@@ -1330,7 +1334,20 @@ do not run git worktree prune until it can" for any other `inspection-error`
 row, since `git worktree prune` acts on the whole repository and so deletes the
 directory of the row whose path could not be read, whichever row it is run for
 (the lead's R-310); `locked-worktree` "unlock it yourself if it should go";
-every other class its recommendation.
+every other class its recommendation. The `stale-worktree` class's, "Review and
+prune stale worktree metadata manually.", and its locked form, which lane
+openRepoProject-3's W52 F-10 gave feature 004, become, where any row of the same
+plan or listing has a path that could not be read, a row whose planning `lstat`
+failed other than for the path's absence, or was cut at its budget, a row with
+`present: null`, "Review and prune stale worktree metadata manually; a row's
+path could not be read, so do not run git worktree prune until it can." and, for
+a locked row, "Review, unlock it, then prune stale worktree metadata manually; a
+row's path could not be read, so do not run git worktree prune until it can.",
+since `git worktree prune`, run for a stale entry's sake, deletes the
+administrative directory of a worktree whose path Git cannot stat too, on Git
+2.43.0 and 2.36.6 (lane openRepoProject-3's W86 NM-1, through lane
+openRepoProject-4; the lead's R-320, which Brett Heap ruled on 2026-10-22,
+"R-320: yes", R-321); with no such row they print unchanged.
 
 The question: `Remove N worktrees, keeping N branches? [yes/N]`, in the singular
 for one. The wait line, at most once: `Waiting for git worktree remove PATH to
@@ -1418,16 +1435,21 @@ in a worktree's config.worktree, or remove the row by hand after review; a row's
 path could not be read, so do not run git worktree prune until it can", since
 `git worktree prune` deletes the administrative directory of a live worktree
 whose path Git cannot stat, and omitting prune advice never harms (lane
-openRepoProject-3's W87 M-1; the lead's R-307 and R-310, which put the five
-texts, three next steps and two remedies, to Brett Heap to confirm, as R-284
-was); `inspect-cap` "N rows exceed the row cap of M; remove worktrees
-explicitly, or prune stale entries by hand"; `deadline-exceeded` "the run ran
-out of time; remove worktrees explicitly or re-run". Every refusal that a
-`core.worktree` or `core.bare` redirect of a linked worktree causes is that
-`inspection-incomplete` one, with the variant remedy, in its unread form where
-any row of the plan has a path that could not be read: in the preview, the apply
-and the report of the batch; in push and branch deletion, which count every row;
-and in a single-target removal naming the redirected row, whose own row is
+openRepoProject-3's W87 M-1; the lead's R-307 and R-310, which Brett Heap
+confirmed on 2026-10-22 in his words "R-307: yes; R-310: yes", R-319);
+`inspect-cap` "N rows exceed the row cap of M; remove worktrees explicitly, or
+prune stale entries by hand", which is always, in place of the ratified remedy,
+"{N} rows exceed the row cap of {M}; remove worktrees explicitly, or prune stale
+entries by hand; if a worktree's path cannot be read, do not run git worktree
+prune until it can", since the rows past the cap are never read (lane
+openRepoProject-3's W86 NM-1; the lead's R-320, which Brett Heap ruled on
+2026-10-22, "R-320: yes", R-321); `deadline-exceeded` "the run ran out of time;
+remove worktrees explicitly or re-run". Every refusal that a `core.worktree` or
+`core.bare` redirect of a linked worktree causes is that `inspection-incomplete`
+one, with the variant remedy, in its unread form where any row of the plan has a
+path that could not be read: in the preview, the apply and the report of the
+batch; in push and branch deletion, which count every row; and in a
+single-target removal naming the redirected row, whose own row is
 `inspection-error`, so that its incomplete plan is refused before any gate's
 exclusion, never with `target-excluded` and the class wording. A redirect of the
 main worktree itself, by a `core.worktree` or `core.bare` in the repository's
@@ -2081,9 +2103,10 @@ downstream.
 ## Open Questions
 
 Each is before Brett Heap with a recommendation, except LQ-20, which he resolved
-on 2026-10-22 and which stays below as the record of what was costed; the deltas
-implement the reading stated, and a different ruling edits the deltas before the
-archive.
+on 2026-10-22 and which stays below as the record of what was costed, and the
+last, F-1's (b) beside an unread row, which is put to him as a question, with no
+recommendation here, and is not ruled; the deltas implement the reading stated,
+and a different ruling edits the deltas before the archive.
 
 - Squash-merged branches never put their tip into the target's ancestry
   (BA:195-199). Recommendation: a local patch-equivalence proof (`git cherry` or
@@ -2161,6 +2184,13 @@ archive.
   This draft recommended none of them, and none is taken: the case passes on the
   measured basis, so the deltas stand as written.
 
+- F-1's (b) beside an unread row (from R-310; before Brett Heap, not ruled):
+  F-1's (b), 'inspect, then git worktree prune and delete PATH by hand', can
+  print in single mode for a ceiling-cut P beside a row whose path could not be
+  read; since git worktree prune acts on the whole repository, that prune would
+  delete that row's administrative directory. Should (b) carry the same warning
+  there?
+
 Ruled on 2026-10-09: a merged worktree whose remote branch was deleted is
 `merged-removable`, Brett Heap having ruled that a local ancestry proof outranks
 `remote-gone` for worktree rows (D6; `proposal.md` Decisions). The V5 deferral
@@ -2182,12 +2212,17 @@ holds (D18) and the line-feed exception to the revalidation and rescan bounds
 three ratified sentences: a locked row's recovery text (D4, D18), the ceiling's
 recovery text (D9, D18) and gate 7's read that the deadline cuts (D10); his
 "R-284: yes" of the same day confirms the ceiling's third text, for a `.git` the
-rescan cannot read (D9, D18). Six more amendments of ratified sentences rest on
-lane rulings and findings rather than his word, and wait on his ratification of
-this amendment: the line-feed exception to the bounds (D7, D14), the next steps
-of F-7 and F-8 (D18, the Migration Plan), the cap's re-run and the count split
-(`proposal.md` Decisions), the identity probe's line count, which repeats the
-probe on any count but two (D6; lane openRepoProject-3's W80 M-3), and the prune
-advice where a row's path could not be read, whose five texts, three next steps
-and two remedies, are also put to him to confirm, as R-284's were (D18; lane
-openRepoProject-3's W87 M-1, the lead's R-307 and R-310).
+rescan cannot read (D9, D18), and his "R-307: yes; R-310: yes" of the same day
+(the lead's R-319) confirms the five texts, three next steps and two remedies,
+of the prune advice where a row's path could not be read (D18; lane
+openRepoProject-3's W87 M-1, the lead's R-307 and R-310), and his "R-320: yes"
+of the same day (the lead's R-321) amends two more ratified sentences, the
+remedy of `inspect-cap` and the ladder's recommendation for a `stale-worktree`
+row, which leave `git worktree prune` out beside a row whose path could not be
+read, the cap remedy always (D18; lane openRepoProject-3's W86 NM-1). Five more
+amendments of ratified sentences rest on lane rulings and findings rather than
+his word, and wait on his ratification of this amendment: the line-feed
+exception to the bounds (D7, D14), the next steps of F-7 and F-8 (D18, the
+Migration Plan), the cap's re-run and the count split (`proposal.md` Decisions),
+and the identity probe's line count, which repeats the probe on any count but
+two (D6; lane openRepoProject-3's W80 M-3).

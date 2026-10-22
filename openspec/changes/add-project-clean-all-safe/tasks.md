@@ -94,9 +94,14 @@ duplicate them, and nothing here is an implementation step.
   under the lead's R-307 and R-310, with the prune advice where a row's path
   could not be read (the commits whose titles begin 'Amend change 1: round (l)',
   the first titled 'Amend change 1: round (l), lane 3's W87 read of rounds (j)
-  and (k) (R-307)'); verified by the table "Questions Resolved by the Alignment
-  Review" in `proposal.md` and the later-rulings list under it, which name the
-  section each ruling edited.
+  and (k) (R-307)'); and round (m), Brett Heap's confirmation of round (l)'s
+  five texts on 2026-10-22, "R-307: yes; R-310: yes" (R-319), and his "R-320:
+  yes" (R-321) on the stale recommendations and the cap remedy, with F-1's (b)
+  beside an unread row recorded as open (the commit titled 'Amend change 1:
+  round (m), Brett Heap confirms round (l)'s five texts and rules R-320 (R-319,
+  R-321)'); verified by the table "Questions Resolved by the Alignment Review"
+  in `proposal.md` and the later-rulings list under it, which name the section
+  each ruling edited.
 - [x] 1.3 Council resolved: every concern is VALID, none dismissed, the verdicts
   V1 to V12 applied to `proposal.md` (`ea9c73b`) and the five NOTED constraints
   recorded as N1 to N5 in `clarifications.md` (`1d4ed5b`); verified by
