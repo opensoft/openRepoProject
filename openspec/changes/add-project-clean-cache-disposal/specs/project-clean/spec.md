@@ -46,9 +46,11 @@ tracked files in the working tree, while its `.git` file and its registry entry
 are present, SHALL carry the row note `partially-removed`: the human report
 SHALL show a probable partial removal with the recovery text "inspect, then `git
 worktree remove --force <path>` by hand" beside the `dirty` advice, never
-instead of it. A status stream stopped at its record bound SHALL be judged on
-the records read. The note SHALL be advisory and SHALL NOT change the row's
-classification, the ladder or any gate.
+instead of it. For a locked worktree, which `git worktree remove --force`
+refuses, the recovery text SHALL instead be "inspect, unlock it, then `git
+worktree remove --force <path>` by hand". A status stream stopped at its record
+bound SHALL be judged on the records read. The note SHALL be advisory and SHALL
+NOT change the row's classification, the ladder or any gate.
 
 #### Scenario: Dirty or unmerged work is preserved
 
@@ -85,6 +87,8 @@ classification, the ladder or any gate.
 - **THEN** it is classified `dirty` with the dirty advice, the human report
   shows the probable partial-removal note and the recovery text beside that
   advice, and the JSON row carries `notes: ["partially-removed"]`
+- **AND** when that worktree is also locked, the recovery text shown is
+  "inspect, unlock it, then `git worktree remove --force <path>` by hand"
 - **AND** a worktree with one deleted tracked file and one untracked file
   carries no such note
 
@@ -128,7 +132,11 @@ ceiling 300 s after its spawn SHALL end the wait, by killing the child's process
 group. The rescan SHALL then decide the target: `removed` when its registry
 entry and path are gone, and otherwise `unknown` with the note
 `partially-removed` and the recovery text "inspect, then `git worktree remove
---force <path>` by hand"; the reason SHALL be `removal-ceiling` in both cases.
+--force <path>` by hand" where the rescan finds both its `.git` file and its
+registry entry present, and "inspect, then `git worktree prune` and delete
+`<path>` by hand" otherwise, as where either is gone, since Git then refuses
+`git worktree remove --force`; the reason SHALL be `removal-ceiling` in both
+cases.
 
 For a removal named by `--worktree P`, the plan's completeness SHALL be the
 repository-wide evidence plus P's own row: another row's `inspection-error`, its
@@ -141,12 +149,16 @@ It SHALL remove a local branch only as a separate, explicit action after the
 worktree is gone and the branch is verified merged.
 It MUST never use a force removal, reset, or deletion of unmerged work.
 Branch deletion SHALL refuse, before its plan is shown, with exit status 2,
-no code, the baseline's message after `REFUSED: ` on standard error and no
-`git branch -d`: the default branch; a branch that a present worktree holds,
-the main worktree included; and a branch that the plan's evidence does not
-show merged into the merge target, by its ref listing and its merged set, so
-that a branch merged only into the current branch is refused, where `git
-branch -d` alone would delete it.
+no code, a message after `REFUSED: ` on standard error and no `git branch
+-d`: the default branch; a branch that a present linked worktree holds; a
+branch that the main worktree holds; and a branch that the plan's evidence
+does not show merged into the merge target, by its ref listing and its merged
+set, so that a branch merged only into the current branch is refused, where
+`git branch -d` alone would delete it. The message SHALL be the baseline's,
+except for a branch that the main worktree holds, where the baseline's message
+names a removal that Git refuses for the main worktree: that message SHALL
+instead name detaching HEAD in the main worktree, or checking out the merge
+target there, and then retrying.
 
 #### Scenario: Remove a merged clean worktree
 
@@ -165,8 +177,9 @@ branch -d` alone would delete it.
 - **THEN** each refuses with exit 2, printing nothing on standard output and
   on standard error only `REFUSED: ` followed, in turn, by `The default
   branch is protected and cannot be deleted.`, `Remove the linked worktree
-  first; branch deletion is a separate action.` and `Branch B is not verified
-  as merged into T.`, T the merge target
+  first; branch deletion is a separate action.`, `Branch B is checked out in
+  the main worktree; detach HEAD there, or check out T there, then retry.`
+  and `Branch B is not verified as merged into T.`, T the merge target
 - **AND** no `git branch -d` runs, and every branch and worktree is kept
 
 #### Scenario: Every branch remains after a batch
@@ -292,6 +305,11 @@ branch -d` alone would delete it.
   recovery text when its registry entry or path remains, and `removed` with
   reason `removal-ceiling` when both are gone; later targets are
   `not-attempted`, and the exit status is 1
+- **AND** the recovery text is "inspect, then `git worktree remove --force
+  <path>` by hand" while the target's `.git` file and registry entry both
+  remain, and "inspect, then `git worktree prune` and delete `<path>` by hand"
+  once the `.git` file is gone, its path and registry entry remaining, or once
+  the registry entry is gone, its path remaining
 
 #### Scenario: project killed during a deletion
 
@@ -346,12 +364,15 @@ outcome rule SHALL govern the read: a reflog that is missing (`ENOENT` or
 entries cannot decide, no anchor and no movement surviving included, SHALL make
 that row `reflog-unavailable`, at the gate's place in this order; any other
 error on the read SHALL make that row `inspection-error`, as any failed row
-probe does; and a read not finished within the filesystem budget SHALL leave
-the row unprobed and the plan incomplete with `inspection-incomplete`, as for
-every other filesystem read, except a read of the cache walk that times out,
-which leaves its row `cache-unverified` and the plan complete, as "Clean
-disposes of listed caches before a worktree removal" states. A row SHALL be
-excluded as `contains-submodule`
+probe does; a read not finished within the filesystem budget, the deadline not
+being the limit, SHALL leave the row unprobed and the plan incomplete with
+`inspection-incomplete`, except a read of the cache walk that times out, which
+leaves its row `cache-unverified` and the plan complete, as "Clean disposes of
+listed caches before a worktree removal" states; and a read that the deadline
+cuts SHALL record
+`deadline-exceeded` and leave the row unprobed and the plan incomplete with
+`deadline-exceeded`, not `inspection-incomplete`, as for every other filesystem
+read. A row SHALL be excluded as `contains-submodule`
 when its index holds any gitlink or its worktree administrative directory holds
 a `modules` entry, and as
 `hidden-local-state` when its index flags any entry assume-unchanged or
@@ -446,8 +467,9 @@ gate excludes SHALL refuse with `target-excluded`, whose `reason` carries the
 exclusion reason and whose message keeps the existing wording for the current
 worktree and for a class that is not removable. Every refusal that blocks a
 plan, in either mode, SHALL name a manual remedy: `git worktree prune`, `git
-worktree repair`, unsetting `core.worktree` and `core.bare` in a worktree's
-`config.worktree`, or removing the offending row by hand, as the cause fits.
+worktree repair`, unsetting `core.worktree` and `core.bare` in the repository's
+`config` or in a worktree's `config.worktree`, or removing the offending row by
+hand, as the cause fits.
 
 The human preview SHALL list the selected rows, then the excluded rows grouped
 by reason, each group with its next step; an `ignored-local-files` exclusion
@@ -719,7 +741,9 @@ The cache enumerations SHALL count in the fit that sets the row and target
 caps: with 128 worktree rows, 16 cache enumerations and 16 targets, planning,
 revalidation and the final rescan spawn at most 283 Git children besides the 16
 removals where the plan read the repository's `extensions.worktreeConfig` as
-false, about 47.3 s on the packet's basis of 150 ms per child and 0.3 s per
+false and neither the path of the repository's root nor that of its common
+directory holds a line feed, about 47.3 s on the packet's basis of 150 ms per
+child and 0.3 s per
 removal, the cache walk's and the cache stages' filesystem calls not counted,
 on which count the
 first 14 targets start any cache stage and their removal child before only the
@@ -742,7 +766,13 @@ and `cache_bytes_total` 1073741824); and `budget` (`probe_timeout_seconds`
 `removal_floor_seconds` 5, `removal_ceiling_seconds` 300 and `probe_concurrency`
 1). Revalidating one target SHALL spawn at most six Git children, seven where
 the plan read the repository's `extensions.worktreeConfig` as true, and never
-recompute the full report, and the final rescan at most three.
+recompute the full report, and the final rescan at most three, except where the
+path of the repository's root or of its common directory holds a line feed: `git
+rev-parse` prints one value per line and has no NUL form, so the identity probe
+is then read one option per child, four children in place of one, and
+revalidating one target spawns at most nine Git children, ten where the plan
+read `extensions.worktreeConfig` as true, and the final rescan at most six. The
+plan's `probes.estimated` SHALL count those extra children.
 
 #### Scenario: Row cap and planning failures
 
@@ -863,7 +893,12 @@ every reconciliation field SHALL be null and `reconciled` false. A target's
 its path present, and `partially-removed` when its removal child was killed at
 the ceiling, or its exit could not be observed, and the rescan shows its
 registry entry or its path remaining; a `partially-removed` target SHALL show
-the recovery text "inspect, then `git worktree remove --force <path>` by hand".
+the recovery text "inspect, then `git worktree remove --force <path>` by hand"
+where the rescan finds both its `.git` file and its registry entry present, and
+"inspect, then `git worktree prune` and delete `<path>` by hand" otherwise, as
+where either is gone, because Git then refuses `git worktree remove --force`.
+The rescan SHALL read the `.git` file by one `lstat`, a filesystem call that
+starts no Git child.
 
 Before the apply phase, SIGINT, SIGTERM or SIGHUP SHALL terminate and reap every
 probe child, print "Cancelled." on standard error and no JSON document, and exit
