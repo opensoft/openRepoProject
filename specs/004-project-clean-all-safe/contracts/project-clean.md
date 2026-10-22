@@ -136,8 +136,17 @@ reached among the other rows then leaves P's row decided and the plan
 complete beside the non-blocking note `deadline-exceeded`, and the apply
 phase's removal floor gives P `not-attempted` with `deadline-exceeded`,
 exit 1 (D19, row 2); a deadline that cuts P's own read leaves P's row
-incomplete, refused with `inspection-incomplete` (lead ruling R-93 (d);
-T070's `test_clean_single_target_a_deadline_among_other_rows_leaves_p_decided`).
+incomplete, and the run refuses it as a one-item batch's plan is refused: with
+`deadline-exceeded`, the deadline's remedy and no repair remedy, where P's row
+is one the deadline stopped, whichever of its reads it cut (gate 7's reflog
+read, gate 11's listing, the status probe), and with `inspection-incomplete`
+where P's match was left undecided, a realpath read cut among them, or P's row
+is `inspection-error` or unprobed for another cause (lead rulings R-93 (d) and
+R-283; T070's
+`test_clean_single_target_a_deadline_among_other_rows_leaves_p_decided`, and
+`test_clean_single_target_p_s_reflog_read_cut_by_the_deadline`,
+`test_clean_single_target_p_s_admin_listing_cut_by_the_deadline` and
+`test_clean_single_target_p_s_status_probe_cut_by_the_deadline`).
 
 ## Resolution (FR-016, FR-017; D8)
 
@@ -157,6 +166,45 @@ the first record is the main worktree. Every refusal here is
 manifest-ancestor redirections (`project:455-461`) never apply to a path
 argument. The command directory is `root`: every repository-wide Git child
 after resolution, every removal and the manifest read use it.
+
+The refusal takes a variant message, `Not the main worktree of a repository:
+PATH; core.worktree or core.bare redirects the main worktree; unset both in the
+repository's config, or in the main worktree's config.worktree, then run
+again.` (`target_not_repository_root_redirect`), only where a `core.worktree` or
+`core.bare` of the repository's own explains it: #19's round (i) at `1a4785e`
+(design D6 and D18; lead ruling R-271; writer G's `2707ff2`, merged as
+`60631eb`). That is so only where the directory examined, the one that PATH
+names, holds its own `.git`, a directory, a link to one or a gitfile that names
+a git directory, whose realpath is the repository's common directory, so that
+the directory is where the main worktree would be, and Git run there uses
+another work tree or none. Where row 3 succeeded and printed no third line,
+that is a toplevel that is not the directory's own realpath, which only a
+`core.worktree` in the repository's `config` or in the main worktree's
+`config.worktree` gives, and no Git child runs, only filesystem reads. Where
+row 3 failed, as it does under `core.bare=true`, row 3b runs: one `probe` child
+in the directory, `rev-parse --path-format=absolute --git-dir --git-common-dir
+--is-bare-repository`, which needs no work tree, counted and bounded as row 3
+is; it prints the git directory, the common directory, both that `.git`, and
+`true`, which only a `core.bare` of true in one of those files gives. Row 3b
+runs once, only on this refusal and only where the directory holds a `.git`,
+and never in a run that resolves. Every other refusal keeps the plain message:
+a directory outside any repository, a repository made by `git init --bare` and
+passed by its own directory, which an unset `core.bare` would not make a work
+tree, a subdirectory, a linked worktree, a linked worktree that its own
+`config.worktree` redirects, a submodule checkout with its normal
+configuration, and a working directory that is gone; so does a read that fails
+or is cut, and a row 3b that fails, is cut or prints anything else. Two limits
+of the variant are declared in #19's round (k) (lane 3's W81, M-1 and L-1):
+a relative `core.worktree` that names a missing directory gets the plain
+message, because Git itself fails in rows 3 and 3b (`fatal: cannot chdir to
+...`, exit 128), a missing directory named absolutely taking the variant; and
+a submodule whose own configuration redirects, by `core.bare` or by a
+`core.worktree` that names another directory, takes the variant, after which,
+the redirect gone, the plain refusal prints, and passing the superproject
+root resolves it. A repository made by `git init --bare X/.git` and passed as
+X has the configuration of a checkout at X whose `core.bare` is true, which
+nothing Git reads tells apart, so it takes the variant, and the variant fits
+it: with `core.bare` unset, X resolves.
 
 A name the lookup cannot examine, `~user` for no such user, a name too long
 for a path component (256 bytes or more), or one looked up from a working
@@ -227,7 +275,7 @@ message}` objects, an `inspect-cap` note adding `rows`.
 | "D18 empty line" | `No eligible worktrees` |
 | "D18 question", "D18 wait line" | above; the wait line once, at the first signal or deadline during a removal (D9) |
 | "D18 success line", "D18 stop block" | the result; the stop block names the retained branches and the residual window |
-| "D18 partial-removal note" | in three places (lead ruling R-79 P-11): in the report, on the line right after the row's recommendation line, two spaces in; in the preview, right after the row of the `dirty` group, six spaces in; in the result, first, before the stop block, one line per `partially-removed` target in canonical order, its path in the command form, whose text follows the rescan: D18's `Probable partial removal: inspect, then git worktree remove --force PATH by hand.` (`partial_removal_note`) only where the rescan shows the target's registry entry and its `.git` file both present, and otherwise `Probable partial removal: inspect, then git worktree prune and delete PATH by hand.` (`partial_removal_note_prune`), a value the rescan did not establish included, since Git refuses `git worktree remove --force` once the `.git` file ("validation failed") or the registry entry ("is not a working tree") is gone, and accepts `git worktree prune`; the rescan reads the `.git` by one `lstat`, no Git child, only where it shows the entry and the path both present, and keeps the read on the target and in no record, so that the JSON result is unchanged, and a report's or a preview's note keeps its own text, since its `.git` file and entry are present (lane 3's W52 F-1; Brett Heap's ruling "F-1: prune-then-delete" of 2026-10-22, lead ruling R-263, which amends ratified text, the `project-clean` delta's `spec.md:253-256` and `:922-926` at `0050f3e`; #19 at `b3228bb`; writer G's `3eb2e9c`, merged as `7164d7f`); a locked row's note, in the report and the preview, is `Probable partial removal: inspect, unlock it, then git worktree remove --force PATH by hand.` (`partial_removal_note_locked`), since `git worktree remove --force` refuses a locked worktree, and the result never takes it, since a locked row is excluded at gate 4 and is never a target (lane 3's W52 F-2; #19 at `4f1c0e0`; lead ruling R-248); it replaces ratified text (`spec.md:135-138` at `0050f3e`), and Brett Heap ruled it on 2026-10-22, "F-2: yes" (lead ruling R-263), in its own commit, `64ad453`, which stays (lead ruling R-259) |
+| "D18 partial-removal note" | in three places (lead ruling R-79 P-11): in the report, on the line right after the row's recommendation line, two spaces in; in the preview, right after the row of the `dirty` group, six spaces in; in the result, first, before the stop block, one line per `partially-removed` target in canonical order, its path in the command form, whose text follows the rescan: D18's `Probable partial removal: inspect, then git worktree remove --force PATH by hand.` (`partial_removal_note`) only where the rescan shows the target's registry entry and its `.git` file both present, `Probable partial removal: inspect PATH by hand; its .git could not be read, so do not run git worktree prune until it can.` (`partial_removal_note_unread`) wherever the rescan made its `.git` lstat and it gave no value, since it failed for a reason other than the file's absence, as `EACCES` does for a worktree directory the process may not search, or was cut at its budget or abandoned by a second SIGINT, whatever else the record shows, because `git worktree prune` deletes the admin directory of a live worktree whose `.git` Git cannot stat (#19's round (i) at `1a4785e`; lane 3's W73 M-1; lead ruling R-284, which Brett Heap ruled "R-284: yes", R-290; writer G's `6a32d10`, merged as `3bc1d68`), and otherwise `Probable partial removal: inspect, then git worktree prune and delete PATH by hand.` (`partial_removal_note_prune`), the `.git` shown absent, or the entry gone or not established, since Git refuses `git worktree remove --force` once the `.git` file ("validation failed") or the registry entry ("is not a working tree") is gone, and accepts `git worktree prune`; the rescan reads the `.git` by one `lstat`, no Git child, only where it shows the entry and the path both present, and keeps the read, and whether it was made (`git_file_read`), on the target and in no record, so that the JSON result is unchanged, and a report's or a preview's note keeps its own text, since its `.git` file and entry are present (lane 3's W52 F-1; Brett Heap's ruling "F-1: prune-then-delete" of 2026-10-22, lead ruling R-263, which amends ratified text, the `project-clean` delta's `spec.md:253-256` and `:922-926` at `0050f3e`; #19 at `b3228bb`; writer G's `3eb2e9c`, merged as `7164d7f`); a locked row's note, in the report and the preview, is `Probable partial removal: inspect, unlock it, then git worktree remove --force PATH by hand.` (`partial_removal_note_locked`), since `git worktree remove --force` refuses a locked worktree, and the result never takes it, since a locked row is excluded at gate 4 and is never a target (lane 3's W52 F-2; #19 at `4f1c0e0`; lead ruling R-248); it replaces ratified text (`spec.md:135-138` at `0050f3e`), and Brett Heap ruled it on 2026-10-22, "F-2: yes" (lead ruling R-263), in its own commit, `64ad453`, which stays (lead ruling R-259) |
 | "D18 refusal messages", "D18 remedies" | `target-excluded` (the current-worktree and class messages kept), gates, and the plan-blocking remedies |
 
 Lines D18 leaves open are fixed here before tasks: the `Report:` and
@@ -251,8 +299,9 @@ result, and a plan that selects nothing has neither (lead ruling R-72 (e), a
 fill); push and delete-branch print no plan layout, only their `Cleanup
 action:` output as today (lead ruling R-56 Q-11); a row left unprobed
 prints in the `reflog-unavailable` group, its reason, with that group's next
-step, and no group of its own is added (lead ruling R-67 (a), withdrawing
-R-56's); one progress line per target, printed at its final stage,
+step, and no group of its own is added, whether the filesystem budget or the
+work deadline cut its read (lead rulings R-67 (a), withdrawing R-56's, and
+R-278); one progress line per target, printed at its final stage,
 `  STAGE PATH` or `  STAGE PATH (REASON)`, `pending` never printed (R-56
 Q-10); "D18 success line" followed by "D18 residual-window line", as the
 stop block is (R-56 Q-9): a stopped run's human result is the stop block,
@@ -290,7 +339,7 @@ code with no baseline message gets one here:
 | `git-unavailable` | `Git is unavailable (DETAIL); clean needs Git 2.36 or later.`, DETAIL one of `not found`, `exit N`, `timed out`, `unparseable version`; clean's refusal only, a status or doctor row taking the command-neutral text in "Codes" (lead ruling R-48) |
 | `git-too-old` | `Git VERSION is older than 2.36; clean needs Git 2.36 or later.`; clean's refusal only, as above (R-48) |
 | `relative-config-path` | D18's line, `NAME is set to a path that does not begin with /; make it absolute or unset it.`, one line per variable that fails the configuration-path test, in the order `HOME`, `XDG_CONFIG_HOME`, `GIT_CONFIG_GLOBAL`, `GIT_CONFIG_SYSTEM`, never its value; a human refusal prints `REFUSED: ` before the first line only; status's `errors` entry and doctor's rows carry the same lines (LQ-15; R-102, R-131 (b)) |
-| `target-not-repository-root` | `Not the main worktree of a repository: PATH; pass the repository root.` |
+| `target-not-repository-root` | `Not the main worktree of a repository: PATH; pass the repository root.`, or, where a `core.worktree` or `core.bare` of the repository's own redirects the main worktree away from the directory examined (see "Resolution"), `Not the main worktree of a repository: PATH; core.worktree or core.bare redirects the main worktree; unset both in the repository's config, or in the main worktree's config.worktree, then run again.` (`target_not_repository_root_redirect`) |
 | `unsupported-path-bytes` | `The repository path is not valid UTF-8: PATH` |
 | `manifest-invalid` | `Manifest PATH is larger than 1 MiB.`; otherwise the baseline messages of `read_yaml()` and `manifest()`: `Cannot read PATH: ...` (an `OSError`, a read cut at its budget, or a parse error), `Expected a mapping in PATH`, `Unexpected kind in PATH; expected project-manifest` or `expected family-manifest`, and, where PyYAML is missing, `read_yaml()`'s own `YAML inspection needs PyYAML; use a workBench with python3-yaml installed.` (lead ruling R-73 (e)) |
 | `inspection-incomplete`, `inspect-cap`, `deadline-exceeded` | `The plan is incomplete (CODE): REMEDY.`, REMEDY being "D18 remedies": for `inspection-incomplete`, `repair or remove the inspection-error rows first: git worktree repair, git worktree prune, or remove the row by hand after review` (`remedy_inspection_incomplete`) and, where any row the refusal counts is excluded as `registration-mismatch`, `repair or remove the inspection-error rows first: git worktree repair, git worktree prune, unset core.worktree and core.bare in the repository's config or in a worktree's config.worktree, or remove the row by hand after review` (`remedy_inspection_incomplete_redirect`, below); for `inspect-cap`, `N rows exceed the row cap of M; remove worktrees explicitly, or prune stale entries by hand`; for `deadline-exceeded`, `the run ran out of time; remove worktrees explicitly or re-run` |
@@ -309,12 +358,19 @@ or `core.bare` redirects, which is `inspection-error`, but also a broken admin
 registration or a path that two registry entries share, which no redirect
 causes, as #19's wording requires. The rows the refusal counts are those that
 make the plan `inspection-incomplete`, an `inspection-error` or unprobed row
-that the work deadline did not stop, in every mode that counts every row (the
-report, the `--all-safe` preview and apply, push and delete-branch), and, in
-single mode for `--action remove`, P's own rows. A plain `inspection-error`
-row, as a reflog read that fails with `EISDIR` makes, keeps the base remedy
-unless a counted row beside it is a registration mismatch; `inspect-cap` and
-`deadline-exceeded` keep their remedies.
+that the work deadline did not stop (`deadline_stopped()`; such a row is
+`deadline-exceeded`'s and is never counted for the variant), in every mode that
+counts every row (the report, the `--all-safe` preview and apply, push and
+delete-branch), and, in single mode for `--action remove`, P's own rows, counted
+the same way, where P's own incompleteness refuses: where P matches several
+entries, or where P's row is `inspection-error` or unprobed and the work
+deadline did not stop it. A refusal of that mode that comes earlier, for a
+repository-wide read, counts none of P's rows and keeps the base remedy (lead
+ruling R-287 (a); lane 3's W73 L-2; writer G's `ded85bb`, merged as
+`3bc1d68`). A plain `inspection-error` row, as a reflog read that fails with
+`EISDIR` makes, keeps the base remedy unless a counted row beside it is a
+registration mismatch; `inspect-cap` and `deadline-exceeded` keep their
+remedies.
 
 `repository-not-found`, `ambiguous-name`, `no-merge-target`,
 `worktree-not-found` and `cancelled` keep the baseline's messages, and
@@ -447,19 +503,28 @@ in the code table and the spawn table below. F-2 replaces ratified text;
 Brett Heap ruled it on 2026-10-22, "F-2: yes" (lead ruling R-263), and it is
 in its own commit, `64ad453`, which stays.
 
-Note, 2026-10-22 (doc round 19; lead rulings R-258, R-259, R-263 and R-274):
-Brett Heap ruled at 15:24Z, verbatim, "F-2: yes; F-1: prune-then-delete; O-1:
-deadline-exceeded" (R-263). F-2 and F-1 each replace a sentence that the merge
-of PR #11 ratified (`0050f3e`; the `project-clean` delta's `spec.md:135-138`
-for F-2, `:253-256` and `:922-926` for F-1), as #19 records them at `b3228bb`
-under "Amendments of ratified text". Writer G built F-1 (`3eb2e9c`) and the
-strings of #19's round (h) (`457a20f`, `63e4573` and `c26e44b`), merged into
-004 as `7164d7f` (R-274): the "D18 partial-removal note" row above holds F-1's
-two forms, gate 11's paragraph above the by-hand clause of
-`operation-in-progress`, the "Codes" table and its paragraph the redirect
-variant of the `inspection-incomplete` remedy, and the plan envelope's
-`probes` row and the "Git children" bounds the estimate's extra children for a
-line feed in the root's or the common directory's path (lane 5's RI-3).
+Note, 2026-10-22 (doc round 19; lead rulings R-258, R-259, R-263, R-271,
+R-274, R-278, R-283, R-284, R-287 and R-290): Brett Heap ruled at 15:24Z,
+verbatim, "F-2: yes; F-1: prune-then-delete; O-1: deadline-exceeded" (R-263).
+Each replaces a sentence that the merge of PR #11 ratified (`0050f3e`; the
+`project-clean` delta's `spec.md:135-138` for F-2, `:253-256` and `:922-926`
+for F-1, `:606-608` for O-1), as #19 records them at `b3228bb` under
+"Amendments of ratified text". Writer G built F-1 (`3eb2e9c`), O-1 (`c33f761`,
+then `99848dd` and, for a named removal, `a038961`) and the strings of #19's
+round (h) (`457a20f`, `63e4573` and `c26e44b`), merged into 004 as `7164d7f`
+(R-274) and `3bc1d68`, which also carry round (i)'s refusal (`2707ff2`), R-284's
+note for a `.git` the rescan cannot read (`6a32d10`; Brett Heap, "R-284: yes",
+R-290), the work-tree probe's output read as one path (`4dfd6f5`; R-287) and the
+variant remedy's counting in single mode (`ded85bb`). Where each is
+documented: the "D18 partial-removal note" row above and "Apply result record"
+(F-1, R-284), gate 7's reflog read and the paragraph on the rows the work
+deadline stopped (O-1), gate 11's paragraph (the by-hand clause of
+`operation-in-progress`), the "Codes" table and its paragraphs (the redirect
+variant of the `inspection-incomplete` remedy, and `target-not-repository-root`'s
+variant under "Resolution"), the plan envelope's `probes` row and the "Git
+children" bounds (the estimate's extra children for a line feed in the root's or
+the common directory's path, lane 5's RI-3; row 3b, and the work-tree probe's
+output).
 
 All new text is ASCII. A path prints verbatim in prose and shell-quoted in
 commands, unless it holds a code point of general category Cc, Cf, Zl or Zp
@@ -506,7 +571,7 @@ are closed within the version.
 | `budget` | `probe_timeout_seconds` (5), `invocation_timeout_seconds` (60), `reconciliation_reserve_seconds` (10), `removal_floor_seconds` (5), `removal_ceiling_seconds` (300), `probe_concurrency` (1), the values in force |
 | `probes`, `operations` | `{estimated, performed}` integers: `probes` counts every Git child other than a removal, `operations` the removals, each child once (lead ruling R-27); `estimated` is the upper bound for an `--apply` run of this plan in every mode, previews included: the planning children this invocation ran (F + W + E, with LQ-11's work-tree probes and gate 12's reachability probes among them) + RT + S, R being 6, or 7 where row 4c read `extensions.worktreeConfig` as true (`revalidation_children()`), S being 3 (`rescan_children()`), and R and S each 3 more where the path of the repository's root or of its common directory, as the plan read them, holds a line feed, so that the identity probe is read one option per child (lane 5's RI-3; #19's round (h) at `b3228bb`; "Git children" below), and T (research.md R8) |
 | `selected` | array in canonical order, or null in a report above 128 rows; each entry: `path`, `path_valid_utf8`, `branch`, `head`, `upstream`, `upstream_oid`, `ahead`, `behind`, `dev`, `ino`, `admin_id`, `locked`, the baseline signature fields (`present`, `dirty`, `ignored_files`, `remote_present`, `merged_into_target`, `current`, `classification`), and `operation` (`{kind: "worktree-remove", argv}`, the exact argument vector) |
-| `excluded` | array in canonical order: `path`, `path_valid_utf8`, `branch` (or null), `classification` (or null when never classified), `reason` (a string, the first failing gate, never null: a row left unprobed, its reflog read not finished within the filesystem budget, is `reflog-unavailable`, keeps its classification and makes the plan incomplete with `inspection-incomplete`; lead ruling R-67 (a), withdrawing R-56's null) |
+| `excluded` | array in canonical order: `path`, `path_valid_utf8`, `branch` (or null), `classification` (or null when never classified), `reason` (a string, the first failing gate, never null: a row left unprobed, its reflog read not finished, is `reflog-unavailable`, keeps its classification and makes the plan incomplete: with `inspection-incomplete` where the filesystem budget cut the read, its row error `probe-timeout`, and with `deadline-exceeded`, never `inspection-incomplete`, where the work deadline cut it, its row error `deadline-exceeded`; lead rulings R-67 (a), withdrawing R-56's null, and R-278) |
 | `omitted` | `{count, exactness: "exact"}` |
 | `notes` | `{code, message}` objects; `merge-target-conflict`; in single mode the non-blocking `inspection-incomplete`, `inspect-cap`, `deadline-exceeded`, none of them when P's match is undecided (below); in a report above 128 rows `inspect-cap` with `rows` |
 | `completeness` | `complete` or `incomplete` |
@@ -532,9 +597,10 @@ branch from the manifest, origin/HEAD, main, or master.`, `project:551`).
 `command`, `exit_status`, `probes_performed`, `reconciliation` (shapes and
 values in data-model.md). The record carries nothing of the rescan's read of
 the target's `.git`: that read picks the human text of the ceiling's
-partial-removal note ("D18 partial-removal note", above) and is kept on the
-target, so the JSON result is unchanged, `notes` and `reconciliation` keeping
-their keys and values (lane 3's W52 F-1; lead ruling R-263).
+partial-removal note ("D18 partial-removal note", above), among its three
+forms, and is kept on the target, with whether it was made, so the JSON result
+is unchanged, `notes` and `reconciliation` keeping their keys and values (lane
+3's W52 F-1 and W73 M-1; lead rulings R-263 and R-284).
 
 ### Codes
 
@@ -551,9 +617,9 @@ their keys and values (lane 3's W52 F-1; lead ruling R-263).
 | `unsupported-path-bytes` | resolve | `root` or `common_dir` not valid UTF-8 |
 | `manifest-invalid` | resolve | unreadable, not a mapping, wrong kind, over 1 MiB by `st_size`, or PyYAML missing |
 | `no-merge-target` | resolve | no candidate exists as a local branch |
-| `inspection-incomplete` | plan | a repository-wide probe failed, a row is `inspection-error`, a row was left unprobed, or, in single mode, P matches several entries or its match is undecided, any entry's realpath unread among the causes (lead rulings R-67 (b), R-73 (d), R-75 (b) and R-78 (b)) |
+| `inspection-incomplete` | plan | a repository-wide probe failed, a row is `inspection-error`, a row was left unprobed (gate 7's reflog read cut at its filesystem budget), or, in single mode, P matches several entries or its match is undecided, any entry's realpath unread among the causes (lead rulings R-67 (b), R-73 (d), R-75 (b) and R-78 (b)) |
 | `inspect-cap` | plan | more rows than the mode's cap, which counts the registry entries that become rows, the main worktree and missing rows included; a bare repository's `bare` entry and a first record equal to `common_dir` with no main worktree are no rows (D8; lead ruling R-73 (d)) |
-| `deadline-exceeded` | plan | the work deadline passed while planning |
+| `deadline-exceeded` | plan | the work deadline passed while planning, or cut a read of a row (gate 7's reflog read among them, which leaves that row unprobed); in single mode, one that cut a read of P's own row (lead rulings R-278 and R-283) |
 | `worktree-not-found` | select | `--worktree` matches no registry entry |
 | `target-excluded` | select | a gate excludes P; `reason` carries the gate |
 | `plan-digest-mismatch` | confirm | the fresh digest differs from `--expect-plan` |
@@ -592,13 +658,18 @@ R-48).
 | `git-unavailable` | status or doctor row error, and doctor's `git` row | `Git is unavailable (DETAIL); repository inspection needs Git 2.36 or later.`, DETAIL as for clean's refusal |
 | `relative-config-path` | status or doctor row error, and doctor's `git` row | D18's lines, as for clean's refusal; no Git child ran (LQ-15) |
 
-The rows the work deadline stopped are `deadline-exceeded`'s, never
-unprobed: each is `inspection-error` with a `deadline-exceeded` row error,
-excluded with reason `inspection-error`, never a null reason and never
-carrying the unprobed marker, which only T066's reflog read past its
-filesystem budget sets (lead rulings R-67 (a), R-69 and R-75 (g)). T099
-decides which single-mode note counts them, and brings the `deadline-exceeded`
-note's `TEXT` key and its fixture to the message above.
+The rows the work deadline stopped are `deadline-exceeded`'s: each has only
+`deadline-exceeded` row errors and is either `inspection-error`, excluded
+with reason `inspection-error`, never a null reason and never carrying the
+unprobed marker, or, for gate 7 alone, the row whose reflog read the deadline
+cut, which stays unprobed: excluded as `reflog-unavailable`, its marker set,
+its classification and recommendation kept, `deadline-exceeded` its one row
+error. The marker's only setter is T066's reflog read, whether the filesystem
+budget (`probe-timeout`) or the work deadline (`deadline-exceeded`) cut it, and
+only the second row is `deadline-exceeded`'s (lead rulings R-67 (a), R-69,
+R-75 (g) and R-278; Brett Heap's ruling "O-1: deadline-exceeded", R-263).
+T099 decides which single-mode note counts them, and brings the
+`deadline-exceeded` note's `TEXT` key and its fixture to the message above.
 
 When P's match is undecided, none of the three single-mode notes is recorded:
 each says that rows "do not block PATH" beside the plan's refusal of P,
@@ -712,10 +783,11 @@ restores its mtime still shows by its ctime under a repository's
 | row 1 | `--version` | the working directory |
 | row 2 | `-C DIR rev-parse --show-toplevel` | the name lookup's directory (bare name only) |
 | row 3 | `-C DIR rev-parse --path-format=absolute --show-toplevel --git-common-dir --show-superproject-working-tree` | where the argument resolves |
+| row 3b | `-C DIR rev-parse --path-format=absolute --git-dir --git-common-dir --is-bare-repository` | the directory the refusal examined, only on a `target-not-repository-root` refusal where row 3 failed and that directory holds its own `.git`, once; never in a run that resolves; a `probe` child through the driver, counted and bounded as row 3 is; it needs no work tree, so that it answers under `core.bare=true`; a failure, a cut, or output other than the git directory, the common directory, both that `.git`, and `true` leaves the plain message (#19's round (i) at `1a4785e`, design D6; lead ruling R-271; "Resolution") |
 | row 4 | `-C DIR worktree list --porcelain -z` | there while the main worktree is unknown, else `root` |
 | row 4b | `-C DIR config --get core.worktree` | only when the first record is `common_dir` |
 | row 4c | `-C DIR config --file COMMON_DIR/config --type=bool --get extensions.worktreeConfig` | where rows 6 and 7 run, once per common directory, before row 6: true, false (Git prints `false` or exits 1, the key unset), or not read where an earlier probe failed, which is read as true; any other outcome is true, failing closed (Brett Heap's ruling LQ-11; draft PR #19 at `addd346`; lead rulings R-101 (g) and R-113) |
-| work tree | `-C WORKTREE rev-parse --path-format=absolute --show-toplevel` | each present linked row whose identity and registration hold, before its status probe, only where row 4c is not false; at revalidation the target's, only where row 4c read true; one line naming the row's own realpath holds; another path, a failure such as exit 128 under `core.bare=true`, or other output makes the row `registration-mismatch`, unprobed; a probe cut at its budget or the deadline, or a realpath read that fails, is a row error instead, the row `inspection-error` (LQ-11; lane E's report). At revalidation a work tree the probe decides is not the target's path is `identity-changed`, and a probe that fails, runs past its own budget or prints anything but one line is `state-changed` (the lead's R-171; writer G's `6dec3f4`); it runs after step 5's filesystem checks, the `modules` check and the listing among them, so that one of them that refuses spares its child (the lead's R-198; writer G's `963fccf`, merged as `e2e423d`) |
+| work tree | `-C WORKTREE rev-parse --path-format=absolute --show-toplevel` | each present linked row whose identity and registration hold, before its status probe, only where row 4c is not false; at revalidation the target's, only where row 4c read true; its output, less the one closing line feed Git ends it with, is read as one path, which may hold line feeds of its own, and where that path's realpath is the row's own realpath it holds; another path, a failure such as exit 128 under `core.bare=true`, or output that is empty, a line feed alone or without a closing line feed, which names no path, makes the row `registration-mismatch`, unprobed; a probe cut at its budget or the deadline, or a realpath read that fails, is a row error instead, the row `inspection-error` (LQ-11; lane E's report; lane 3's W70 M-2, lead ruling R-287; writer G's `4dfd6f5`, merged as `fc0019e`). At revalidation a work tree the probe decides is not the target's path, two lines of output included, since they are one path, is `identity-changed`, and a probe that fails, runs past its own budget or prints empty output, a line feed alone or output without a closing line feed is `state-changed` (the lead's R-171 and R-287; writer G's `6dec3f4`); it runs after step 5's filesystem checks, the `modules` check and the listing among them, so that one of them that refuses spares its child (the lead's R-198; writer G's `963fccf`, merged as `e2e423d`) |
 | row 5 | row 3 again | `root`, only when row 3 ran elsewhere |
 | row 6 | `-C ROOT for-each-ref --format=%(refname)%00%(objectname)%00%(symref)%00%(upstream)%00%(upstream:short)%00%(upstream:track,nobracket) refs/heads refs/remotes` | `root` |
 | row 7 | `-C ROOT for-each-ref --merged=SHA --format=%(refname) refs/heads` | `root` |
@@ -771,7 +843,8 @@ but the advice one; no DETAIL form is added.
 At revalidation (data-model.md, "Revalidation step and `probes_performed`")
 one rule decides every read that does not finish with a value: a Git child
 that fails, runs past its own budget while the deadline is not the limit, or,
-as the work-tree probe can, prints anything but one line, and a filesystem
+as the work-tree probe can, prints output that names no path (empty, a line
+feed alone, or without a closing line feed; R-287), and a filesystem
 call that fails other than with `ENOENT` or `ENOTDIR`, or runs past its own
 budget while the deadline is not the limit, gives `state-changed`, whatever
 its step; a read gives its step's own reason only for a value it decided;

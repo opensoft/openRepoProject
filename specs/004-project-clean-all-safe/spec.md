@@ -1073,6 +1073,17 @@ written".
   MUST leave the row unprobed and the plan incomplete with
   `inspection-incomplete`. Traces: "Clean previews and applies a batch of
   eligible worktree removals in one repository"; design D10.
+  Note, 2026-10-22: the last clause is now two. By Brett Heap's ruling "O-1:
+  deadline-exceeded" (lead rulings R-263 and R-278), #19's round (h) at
+  `b3228bb` (the `project-clean` delta's `spec.md:713-718`, design D10) words
+  it: a read not finished within the filesystem budget, the work deadline not
+  being the limit, leaves the row unprobed and the plan incomplete with
+  `inspection-incomplete`; a read that the deadline cuts records
+  `deadline-exceeded`, leaves the row unprobed and the plan incomplete with
+  `deadline-exceeded`, not `inspection-incomplete`, as for every other
+  filesystem read. It amends ratified text (`0050f3e`, the delta's
+  `spec.md:606-608`), and the build follows it (writer G's `99848dd`, merged as
+  `3bc1d68`). The requirement's text stands as written.
 - **FR-023**: Only rows that pass every earlier gate MUST be checked, inside
   their own worktree, for `contains-submodule` (any gitlink in the index, or a
   `modules` entry in the worktree's administrative directory) and
@@ -1395,6 +1406,14 @@ written".
   MUST be the last defense only on the removal command's pinned status
   configuration, the protocol pins being no part of it. Traces: "Cleanup
   revalidates destructive actions"; design D7.
+  Note, 2026-10-22: the work-tree probe's output, less the one closing line
+  feed Git ends it with, is read as one path, which may hold line feeds (lane
+  3's W70 M-2; lead ruling R-287; writer G's `4dfd6f5`, merged as `fc0019e`):
+  it is an effective work tree that is not the target's, `identity-changed`,
+  whatever its line count, and the probe is `state-changed` where it prints
+  nothing, a line feed alone or no closing line feed, which is how "prints
+  anything but one line" above is read. The requirement's text stands as
+  written.
 - **FR-048**: Concurrent writers MUST be outside the safe contract, and cleanup
   MUST claim no lock, lease or writer-quiescence handoff. Its one guarantee
   MUST be that a removal child is spawned only if, at the revalidation
