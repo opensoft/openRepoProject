@@ -2180,15 +2180,17 @@ and [P] are change 1's requirements as the header names them.
   there and that toplevel the repository's main worktree (PR #19's
   `specs/project-clean/spec.md:566-570` at `e14ada0`): the checkout is refused
   with `target-not-repository-root` and the message that names the redirect
-  (its design D18, `design.md:1371-1412`; lane openRepoProject-2's R-271), a
-  toplevel that is a plain directory, a subdirectory of a repository or a
-  linked worktree is refused with the plain message, and a toplevel that is
-  another repository's main worktree root resolves that other repository, as
-  lane openRepoProject-3's W83 found with feature 004 at `60631eb` on Git
-  2.43.0 and 2.36.6. A1's re-alignment for that layout is held for Brett Heap's
-  ruling for change 2, and until then this spec follows A1 as ratified, a
-  suggestion there being an exception to C-55's and User Story 8's "never
-  suggests what `project clean` refuses" (Dependencies).
+  (its design D18, `design.md:1371-1412`; lane openRepoProject-2's R-271), or
+  with the plain message where a relative `core.worktree` names a missing
+  directory, Git then using no work tree there (its round (k) at `173d83c`,
+  `design.md:1422-1430`), a toplevel that is a plain directory, a subdirectory
+  of a repository or a linked worktree is refused with the plain message, and a
+  toplevel that is another repository's main worktree root resolves that other
+  repository, as lane openRepoProject-3's W83 found with feature 004 at
+  `60631eb` on Git 2.43.0 and 2.36.6. A1's re-alignment for that layout is held
+  for Brett Heap's ruling for change 2, and until then this spec follows A1 as
+  ratified, a suggestion there being an exception to C-55's and User Story 8's
+  "never suggests what `project clean` refuses" (Dependencies).
 - **FR-007**: Each registered path MUST fall into exactly one case: `lstat`
   fails with "no such entry" or "not a directory" (`present: false`, no status
   probe); `lstat` fails otherwise, or the row's task, which encloses its
@@ -4433,11 +4435,78 @@ and [P] are change 1's requirements as the header names them.
   and the departures entry record standings that this spec already holds, F-7's
   remedies at A1's six sites (above) and RI-3's count (FR-020), as it already
   records the lane parts of LQ-11, LQ-13, LQ-14 and LQ-15 as pending #19's
-  ratification (the LQ items below). No requirement of this spec moves. So PR
-  #34 does not merge before #19's ratification of those commits; should Brett
-  Heap want #34 sooner, the four items move to a later amendment of change 2,
-  and A1 lands without them (its :1281-1284), the parts of this spec that
-  follow them following that amendment instead.
+  ratification (the LQ items below). No requirement of this spec moves. #19's
+  round (k), `173d83c` (lane openRepoProject-3's W80 read of round (i), with
+  the M-1 and L-1 of its W81 read of feature 004 at `2707ff2`; lane
+  openRepoProject-2's R-294 and R-299), follows, and edits two of its specs at
+  one site each, its `project-command` spec unchanged (`git diff --quiet`), the
+  scenario counts staying 71 in `project-clean`, 24 in `project-command` and 22
+  in the review-safety spec: in `project-clean` the AND of the scenario "A
+  removal past the hard ceiling" says that the third text applies "instead" and
+  "whatever the rescan finds of the registry entry" (W80 L-1; its
+  `specs/project-clean/spec.md:510-515`), the text's words unchanged, and in
+  the review-safety spec the THEN line of "A work-tree probe at revalidation"
+  ends "since the probe's two lines are read as one path, which is D's", where
+  round (j)'s ended "the probe's two lines being read as one path, D's", its
+  meaning unchanged (R-299; :282-284), a line that this spec does not quote.
+  Its design has the third ceiling note take precedence over the locked note
+  wherever the `.git` file cannot be read, since once such a worktree is
+  unlocked `git worktree remove`, with or without `--force`, deletes its
+  administrative directory as `git worktree prune` does (W80 M-1, R-294; D18,
+  `design.md:1344-1354`, and D4, :277-279), the third text's words staying as
+  Brett Heap confirmed them; corrects D18's resolution sentences (:1387-1462),
+  so that a bare name is refused with the redirect message only where
+  `discover()` resolves it to the root itself and otherwise takes Git's
+  toplevel, the redirect target, refused with the plain message or resolved
+  where it is a work tree, under a `core.bare` true the run being refused with
+  `repository-not-found` (W80 M-2), a relative path naming the root resolves
+  from any directory (W80 L-4), a relative `core.worktree` naming a missing
+  directory keeps the plain message, since Git then uses no work tree there and
+  row 3 and row 3b exit 128 (W80 L-2, W81 M-1; :1422-1430), and a submodule
+  checkout keeps the plain message only where its own configuration redirects
+  nothing, the other submodule layouts and a copy of a checkout being recorded
+  as known limits (W80 L-5, W81 L-1; :1443-1457); has D6 say that a toplevel
+  holding one line feed, with its common directory under it, prints four lines
+  (W80 L-3; :360-373); and moves round (i)'s D6 change, the repeat on any count
+  but two, into the second group of amendments of ratified text, which wait on
+  Brett Heap's ratification of #19 (W80 M-3; `proposal.md:1294-1304`, quoting
+  `0050f3e` design:298-301; design Open Questions, :2116-2140, now counting
+  five). The round is recorded at `proposal.md:2266-2330` and in `tasks.md` 1.2
+  (:89-93). Re-checked by script against `e14ada0`, every cite of its three
+  specs located by line alignment (256 rows: the 224 above and the 32 places
+  that the round (j) record, FR-006 and FR-007 give at `e14ada0`): in
+  `project-command` every cited line keeps its number and text; in the
+  review-safety spec every cited line keeps its number, and every one its text
+  but the scenario "A work-tree probe at revalidation", :274-294, whose THEN
+  line changes; and in `project-clean` the lines before the AND at :510-514
+  keep their numbers and text, F-1's sentence at :327-336 and its AND at
+  :505-509 among them, that AND changes, now :510-515, and the lines after it
+  move down 1, keeping their text, among them [R]'s absolute-path rule at
+  :567-571, the gate block at :693-780, its gate order at :693-700, O-1 at
+  :724-729, the markers at :737-746, the clauses that FR-032 and SC-004 cite at
+  :751-754 and :775-780 and round (e)'s clause at :767-769, F-3 at :817-819,
+  the three scenarios at :878, :901 and :916, the caps and the re-run sentence
+  at :1020-1023 and :1040-1050, RI-3's exception at :1061-1067 and F-1's
+  sentence at :1170-1179. In its design, D4's F-2 sentence keeps its text at
+  :272-275 and D18's at :1340-1344, D7's probe text at :480-499 and :526-534,
+  D9's record of R-284's confirmation at :660-661, D10's O-1 at :688-697, D18's
+  variant `inspection-incomplete` remedy at :1374-1377, D6's row 3b at :340 and
+  the Risk that EC-022 cites at :1869-1874. Round (k) changes the #19 text
+  behind two of this spec's holds, and neither hold moves. FR-006's held note
+  now names the plain message for a missing directory that a relative
+  `core.worktree` names (FR-006); the bare-name and relative-path corrections
+  do not reach the overview, whose suggestions name the absolute canonical root
+  (FR-031), nor do the submodule limits, since the overview gives a submodule
+  checkout no clean suggestion (FR-008). D6's four-line case is a count other
+  than two, which FR-020's hold already names, and its amendment entry has the
+  repeat itself wait on Brett Heap's ratification of #19, as this spec's hold
+  of the count does (FR-020, EC-032). FR-007's hold and those of gate 7 and F-7
+  stay as they are, the texts they rest on unchanged (D7, D10, D18). No
+  requirement of this spec moves. So PR #34 does not merge before #19's
+  ratification of those commits; should Brett Heap want #34 sooner, the four
+  items move to a later amendment of change 2, and A1 lands without them (its
+  :1281-1284), the parts of this spec that follow them following that amendment
+  instead.
   - LQ-10, on PR #19 at `ea697ba`, pending its ratification: every status
     probe, the hidden-state probe and the removal pass `-c core.trustctime=true
     -c core.checkStat=default` after `-c core.fsmonitor=false`, four status

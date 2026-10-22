@@ -980,6 +980,28 @@ Lane: openRepoProject-4
   deltas at `e4a30fc` (64 of 64). No pin moves, A1 stays cited at `e4a30fc`,
   and `clarify-questions.md` is unchanged. Re-validation: 16 of 16 items pass,
   with the checks of iteration 2 re-run by script on the edited spec.
+- 2026-10-22, a thirtieth pass: #19's round (k) at `173d83c` (lane
+  openRepoProject-2's R-294 and R-299, on lane openRepoProject-3's W80 and W81)
+  is recorded, by the lead's commit 3ab decisions. #19: every cite of its three
+  specs, 256 rows, the 224 of the round (j) record and the 32 places that it,
+  FR-006 and FR-007 give at `e14ada0`, was located by line alignment and
+  re-checked against `e14ada0`; round (k) changes the AND of "A removal past
+  the hard ceiling" in `project-clean` (:510-515, one line longer) and the THEN
+  line of "A work-tree probe at revalidation" in the review-safety spec
+  (:282-284), which the spec does not quote, `project-command` being unchanged;
+  every other cite keeps its text, the `project-clean` lines after the AND one
+  line down. Round (k)'s design changes the #19 text behind two holds, and
+  neither moves: FR-006's held note now names D18's plain message for a missing
+  directory that a relative `core.worktree` names, and D6's four-line case and
+  its new amendment entry leave FR-020's and EC-032's hold as written. CHK017
+  of `suggestions-gates.md` names the same plain message, its category
+  unchanged; CHK020 of `integration.md`, CHK003 of `observability.md` and
+  CHK016 of `discovery-identity.md` were re-read, no category changing, and the
+  totals below were recounted by script. Traceability is checked against A1's
+  ratified deltas at `e4a30fc` (64 of 64). No pin moves, A1 stays cited at
+  `e4a30fc`, and `clarify-questions.md` is unchanged. Re-validation: 16 of 16
+  items pass, with the checks of iteration 2 re-run by script on the edited
+  spec.
 - Items marked incomplete require spec updates before `/speckit-clarify` or `/speckit-plan`
 
 ## Cross-cutting Requirements Quality (no-argument `/speckit.checklist`, 2026-10-19)
@@ -1101,5 +1123,5 @@ notes (PN-1 to PN-18 but PN-4 and PN-11, withdrawn on 2026-10-21; PN-2 narrowed
 to an exception of any other kind in human mode and widened to a failed write's
 standard-error line), 0 new questions. Recounted by script on 2026-10-21, and
 again after the re-check, after the W6 read and after the fourth to twelfth
-passes of that day, and after the thirteenth to twenty-ninth passes on
+passes of that day, and after the thirteenth to thirtieth passes on
 2026-10-22.
