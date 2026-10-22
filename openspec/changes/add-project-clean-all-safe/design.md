@@ -56,10 +56,13 @@ O-1, Context, D4, D7, D9, D10, D14, D18, Risks and Open Questions; and round
 (i), round (h)'s open point, the message of a redirected main worktree's
 refusal, under the lead's R-271, with lane openRepoProject-4's finding on the
 identity probe and lane openRepoProject-3's W73 M-1 under the lead's R-284,
-Context, D6, D9 and D18. Brett Heap's ruling of 2026-10-09 on open question 1,
-that a local ancestry proof outranks `remote-gone` for worktree rows, is in
-`proposal.md` Decisions and edited Context, D6, D7, D20, Risks, the Migration
-Plan and Open Questions here.
+Context, D6, D9 and D18; and round (j), lane openRepoProject-3's W70 read of
+round (h), under the lead's R-285, R-287 and R-291, with Brett Heap's
+confirmation of R-284 on 2026-10-22, "R-284: yes" (the lead's R-290), Context,
+D7, D9, D18 and Open Questions. Brett Heap's ruling of 2026-10-09 on open
+question 1, that a local ancestry proof outranks `remote-gone` for worktree
+rows, is in `proposal.md` Decisions and edited Context, D6, D7, D20, Risks, the
+Migration Plan and Open Questions here.
 
 Citations are `file:line` at `da33d92`: `BA`, `DI`, `OV` and `HO` are the
 packet's batch-cleanup, project-discovery, overview and handoff documents, and
@@ -468,16 +471,26 @@ without includes, as Git's own format check reads it; an unset value is false
 and any other failure counts as true. Where it is true, each linked row whose
 registration agrees gets one more worktree probe, `git rev-parse
 --path-format=absolute --show-toplevel`, after its identity reads and before its
-status probe, and a toplevel whose realpath differs from the registered path's,
-a failed probe (as under `core.bare=true`, `fatal: this operation must be run in
-a work tree`) or output that is not one line makes the row's registration
-disagree, so the row is `registration-mismatch`, `inspection-error` and
-unprobed. Asking Git covers every way the extension can redirect a row, without
-parsing configuration in `project`, and the probe runs only in such
-repositories. Checked here on Git 2.36.6 and 2.43.0: the extension read exits 1
-when unset and prints `true` when set; the probe prints the decoy for a
-`core.worktree` in `config.worktree` and for one in the common `config`, and
-fails with 128 under `core.bare=true`.
+status probe. That probe asks for one value, and by the lead's R-287, as R-291
+words it, "the probe's standard output, less the one line feed Git ends it with,
+SHALL be read as one path, which may itself hold line feeds; output that is
+empty, that names no path, or that does not end in a line feed SHALL make the
+row's registration disagree" (output that is only a line feed names no path); a
+toplevel whose realpath differs from the registered path's and a failed probe
+(as under `core.bare=true`, `fatal: this operation must be run in a work tree`)
+make it disagree too, so the row is `registration-mismatch`, `inspection-error`
+and unprobed. A linked worktree whose own path holds a line feed is therefore
+read as its own path, as the ratified scenario "Control-character and non-UTF-8
+paths" requires, where reading the output as one line made it
+`registration-mismatch` wherever the extension is true, with a remedy that names
+an unset where nothing is set (lane openRepoProject-3's W70 M-2, reproduced on
+Git 2.43.0 and 2.36.6); unlike row 3, which asks for three values (D6), this
+probe needs no second child for it. Asking Git covers every way the extension
+can redirect a row, without parsing configuration in `project`, and the probe
+runs only in such repositories. Checked here on Git 2.36.6 and 2.43.0: the
+extension read exits 1 when unset and prints `true` when set; the probe prints
+the decoy for a `core.worktree` in `config.worktree` and for one in the common
+`config`, and fails with 128 under `core.bare=true`.
 
 The two-way registration also reads the administrative directory's `commondir`
 file, from which Git takes a linked worktree's common directory
@@ -504,13 +517,15 @@ target, the manifest's candidate, the branch the plan's `origin/HEAD` named,
 `main`, `master`, `refs/remotes/origin/HEAD`, and the selected branches and
 their upstreams; the target's identity, `modules` check and D22's listing of its
 administrative directory, by filesystem reads, and, where the plan's row 4c read
-true, its effective-work-tree probe, whose decided difference, a toplevel that
-is not the target's path, is `identity-changed`, while a probe that fails, runs
-past its own budget or prints anything but one line is `state-changed` and one
-that the deadline cuts leaves the target `not-attempted` with
-`deadline-exceeded`, as for every revalidation child (the lead's R-171; at
-planning such a probe makes the row's registration disagree instead, as above,
-by the lead's R-187 erratum); then, inside the target worktree, the combined
+true, its effective-work-tree probe, its output read as at planning: output read
+as one path that is not the target's, even over several lines, is a decided
+difference, `identity-changed`, while a probe that fails, runs past its own
+budget or prints output that is empty, names no path or does not end in a line
+feed is `state-changed`, a value that cannot be re-read, and one that the
+deadline cuts leaves the target `not-attempted` with `deadline-exceeded`, as for
+every revalidation child (the lead's R-171, R-287 and R-291; at planning such a
+probe makes the row's registration disagree instead, as above, by the lead's
+R-187 erratum); then, inside the target worktree, the combined
 status probe, which must print nothing, the hidden-state probe, and D21's
 `logs/HEAD` re-read and reachability probe, which must print nothing. Every
 filesystem read of these steps follows the rule of a Git child (the lead's
@@ -636,12 +651,12 @@ be read: where Git cannot stat a worktree's `.git`, as under `EACCES` on its
 path, `git worktree prune` deletes that live worktree's administrative
 directory, its index, `HEAD`, per-worktree refs and reflog with it, on Git
 2.43.0 and 2.36.6 (lane openRepoProject-3's W73 M-1; the lead's R-284, which
-refines how Brett Heap's F-1 ruling applies to a read that fails and is put to
-him to confirm; round (i) reproduced it on both builds). 300 s is
-about two hundred times fixture `k`'s 1.27 s, ample even for drvfs at ten times
-slower; task 2.1 measured it, the 20,000-file removal taking 0.66 s warm and
-0.72 s cold at low load and 14.1 s at worst under saturation, 21 times under
-the ceiling.
+refines how Brett Heap's F-1 ruling applies to a read that fails and which he
+confirmed on 2026-10-22, "R-284: yes" (R-290); round (i) reproduced it on both
+builds). 300 s is about two hundred times fixture `k`'s 1.27 s, ample even for
+drvfs at ten times slower; task 2.1 measured it, the 20,000-file removal taking
+0.66 s warm and 0.72 s cold at low load and 14.1 s at worst under saturation, 21
+times under the ceiling.
 
 The 10 s reserve counts from the child's exit or the ceiling, each rescan child
 getting `min(5 s, reserve remaining)`. A run with no removal in flight therefore
@@ -1300,18 +1315,21 @@ registry entry the rescan finds present: `Probable partial removal: inspect,
 then git worktree remove --force PATH by hand.` On a `partially-removed` target
 where the rescan finds either gone, the note reads `Probable partial removal:
 inspect, then git worktree prune and delete PATH by hand.`, since `git worktree
-remove --force` then exits 128 on Git 2.43.0 and 2.36.6, with `validation
-failed, cannot remove working tree: 'PATH/.git' does not exist` once the `.git`
-file is gone and `'PATH' is not a working tree` once the entry is, while `git
-worktree prune` and a deletion by hand succeed (W52 F-1; Brett Heap's ruling of
+remove --force` then exits 128 on Git 2.43.0 and 2.36.6 while the path remains,
+with `validation failed, cannot remove working tree: 'PATH/.git' does not exist`
+once the `.git` file is gone and `'PATH' is not a working tree` once the entry
+is, and exits 0 once the path itself is gone, the entry remaining, as lane
+openRepoProject-3's W70 LOW-1 found on both builds, while `git worktree prune`
+and a deletion by hand succeed (W52 F-1; R-285; Brett Heap's ruling of
 2026-10-22, "F-1: prune-then-delete", R-263). On a `partially-removed` target
-whose `.git` file the rescan cannot read, its `lstat` failing other than for
-the file's absence or cut at its budget, whatever it finds of the registry
-entry, the note reads `Probable partial removal: inspect PATH by hand; its .git
+whose `.git` file the rescan cannot read, its `lstat` failing other than for the
+file's absence or cut at its budget, whatever it finds of the registry entry,
+the note reads `Probable partial removal: inspect PATH by hand; its .git
 could not be read, so do not run git worktree prune until it can.`, since `git
 worktree prune` deletes the administrative directory of a live worktree whose
-`.git` Git cannot stat (D9; W73 M-1, R-284, put to Brett Heap to confirm). For
-a locked worktree, which `git worktree remove --force` refuses, the note reads
+`.git` Git cannot stat (D9; lane openRepoProject-3's W73 M-1; the lead's R-284,
+which Brett Heap confirmed on 2026-10-22, "R-284: yes", R-290). For a locked
+worktree, which `git worktree remove --force` refuses, the note reads
 `Probable partial removal: inspect, unlock it, then git worktree remove --force
 PATH by hand.` (W52 F-2, R-248). For a locked row that note replaces the
 ratified recovery text of `0050f3e`, which the delta keeps for every other row,
@@ -2046,16 +2064,26 @@ archive.
   measured basis, so the deltas stand as written.
 
 Ruled on 2026-10-09: a merged worktree whose remote branch was deleted is
-`merged-removable`, Brett Heap having ruled that a local ancestry proof
-outranks `remote-gone` for worktree rows (D6; `proposal.md` Decisions). The V5
-deferral (D12) and the other departures that PR #11 carried were ratified with
-its merge (Brett Heap: "ratify, merge #11 and run the runbook"). Of those this
-amendment adds, seven carry his own rulings of 2026-10-21, Q9 B and LQ-10 to
-LQ-15, each named in its entry, and three, declared by the amendment's rounds,
-wait on his ratification of it: a revalidation read or child that the work
-deadline cuts (D7), push's wider upstream refusal and branch deletion's message
-for a branch the main worktree holds (D18), as does the push-child exception
-(Open Questions above). His word of 2026-10-22, "F-2: yes; F-1:
-prune-then-delete; O-1: deadline-exceeded", amends three ratified sentences: a
-locked row's recovery text (D4, D18), the ceiling's recovery text (D9, D18) and
-gate 7's read that the deadline cuts (D10) (`proposal.md` Decisions).
+`merged-removable`, Brett Heap having ruled that a local ancestry proof outranks
+`remote-gone` for worktree rows (D6; `proposal.md` Decisions). The V5 deferral
+(D12) and the other departures that PR #11 carried were ratified with its merge
+(Brett Heap: "ratify, merge #11 and run the runbook"). Of those this amendment
+adds, seven carry his own rulings of 2026-10-21, Q9 B and LQ-10 to LQ-15, each
+named in its entry, but the parts of four of them that the lead's rulings added
+wait on his ratification of it: the extension of LQ-15's test to
+`GIT_CONFIG_GLOBAL` and `GIT_CONFIG_SYSTEM` (R-102 (c) 3), the `commondir` check
+of LQ-11's registration (R-125), the branch reflog's non-zero objects among
+LQ-13's negatives (R-124 (c), R-127) and the three markers that LQ-14's gate
+gained (R-126). So do the four departures that the amendment's rounds declared,
+a revalidation read or child that the work deadline cuts (D7), push's wider
+upstream refusal and branch deletion's message for a branch the main worktree
+holds (D18) and the line-feed exception to the revalidation and rescan bounds
+(D7, D14), as does the push-child exception (Open Questions above). His word of
+2026-10-22, "F-2: yes; F-1: prune-then-delete; O-1: deadline-exceeded", amends
+three ratified sentences: a locked row's recovery text (D4, D18), the ceiling's
+recovery text (D9, D18) and gate 7's read that the deadline cuts (D10); his
+"R-284: yes" of the same day confirms the ceiling's third text, for a `.git` the
+rescan cannot read (D9, D18). Four more amendments of ratified sentences rest on
+the lead's rulings and wait on his ratification of this amendment: the line-feed
+exception to the bounds (D7, D14), the next steps of F-7 and F-8 (D18, the
+Migration Plan), the cap's re-run and the count split (`proposal.md` Decisions).

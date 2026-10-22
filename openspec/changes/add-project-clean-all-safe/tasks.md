@@ -82,10 +82,13 @@ duplicate them, and nothing here is an implementation step.
   3's W73 M-1, a `.git` the rescan cannot read, under the lead's R-284 (the
   commits whose titles begin 'Amend change 1: round (i)', the first titled
   'Amend change 1: round (i), name the redirect in a redirected main worktree's
-  refusal (R-271)'); verified by the
-  table "Questions Resolved by the Alignment Review"
-  in `proposal.md` and the later-rulings list under it, which name the section
-  each ruling edited.
+  refusal (R-271)'); and round (j), lane 3's W70 read of round (h), under the
+  lead's R-285, R-287 and R-291, with LQ-11's work-tree probe read as one path,
+  and Brett Heap's confirmation of R-284 on 2026-10-22, "R-284: yes" (R-290)
+  (the commit titled 'Amend change 1: round (j), lane 3's W70 read of round (h)
+  and LQ-11's one-path probe (R-285, R-287, R-290, R-291)'); verified by the
+  table "Questions Resolved by the Alignment Review" in `proposal.md` and the
+  later-rulings list under it, which name the section each ruling edited.
 - [x] 1.3 Council resolved: every concern is VALID, none dismissed, the verdicts
   V1 to V12 applied to `proposal.md` (`ea9c73b`) and the five NOTED constraints
   recorded as N1 to N5 in `clarifications.md` (`1d4ed5b`); verified by

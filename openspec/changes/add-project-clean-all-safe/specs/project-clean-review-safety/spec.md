@@ -128,9 +128,11 @@ administrative directory that the `operation-in-progress` listing finds absent
 SHALL be a registration difference, `identity-changed`. A Git child or a
 filesystem call SHALL give its step's own reason only for a value it decided, so
 that, of the work-tree probe's outcomes, only an effective work tree that it
-decides is not the target's path gives `identity-changed`, and a work-tree probe
-that fails, runs past its own budget or prints anything but one line gives
-`state-changed` (the lead's R-171), and so that a filesystem call reading the
+decides is not the target's path, its output read as one path even over several
+lines, gives `identity-changed`, and a work-tree probe that fails, runs past its
+own budget or prints output that is empty, names no path or does not end in a
+line feed gives `state-changed` (the lead's R-171, R-287 and R-291), and so that
+a filesystem call reading the
 repository's or the target's identity or registration that fails, or runs past
 its own budget while the deadline is not the limit, gives `state-changed`, while
 a different value that it decides, an absent path included, gives
@@ -278,13 +280,13 @@ are no part of that defense.
   clean directory D elsewhere
 - **THEN** P's work-tree probe prints D's path, so P is `refused` with
   `identity-changed`, no removal child is spawned, Q is `not-attempted`,
-  nothing is removed, and the exit status is 2
+  nothing is removed, and the exit status is 2, and the same holds where D's
+  name holds a line feed, the probe's two lines being read as one path, D's
 - **AND** when that `config.worktree` instead sets `core.bare` to true, so that
-  the probe exits 128, or sets `core.worktree` to an existing directory whose
-  name holds a line feed, so that the probe prints two lines, or when a `git`
-  wrapper holds the probe past its own 5 s budget, the probe having started
-  with more than 5 s of the work deadline left, P is `refused` with
-  `state-changed`, nothing is removed, and the exit status is 2
+  the probe exits 128, or when a `git` wrapper prints the probe's path without
+  the line feed Git ends it with, or holds the probe past its own 5 s budget,
+  the probe having started with more than 5 s of the work deadline left, P is
+  `refused` with `state-changed`, nothing is removed, and the exit status is 2
 - **AND** when a `git` wrapper holds the probe until the work deadline passes,
   the probe having started with less than 5 s of it left, P and Q are
   `not-attempted` with `deadline-exceeded`, nothing is removed, and the exit

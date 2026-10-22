@@ -221,13 +221,14 @@ worktree another work tree, or none, only through a `core.worktree` or a
 `config` sets `extensions.worktreeConfig` to true. In such a repository, each
 linked row whose registration agrees SHALL have its effective work tree read,
 after its identity is verified and before its status probe, by `git rev-parse
---path-format=absolute --show-toplevel` run in it; a toplevel whose realpath is
-not the realpath of the row's registered path, a probe that fails, as it does
-under `core.bare=true`, and output that is not exactly one line SHALL each make
-the row's registration disagree. A
-registered path whose `lstat` fails because it does not exist SHALL be `present:
-false`; any other failure SHALL give `present: null`, an `os-error`,
-`inspection-error` and no probe.
+--path-format=absolute --show-toplevel` run in it: the probe's standard output,
+less the one line feed Git ends it with, SHALL be read as one path, which may
+itself hold line feeds; output that is empty, that names no path, or that does
+not end in a line feed SHALL make the row's registration disagree, and so SHALL
+a toplevel whose realpath is not that of the row's registered path and a probe
+that fails, as it does under `core.bare=true`. A registered path whose `lstat`
+fails because it does not exist SHALL be `present: false`; any other failure
+SHALL give `present: null`, an `os-error`, `inspection-error` and no probe.
 
 Probes: for each repository, once per common directory, the identity probe; the
 registry listing, `worktree list --porcelain -z`; one ref listing over
@@ -316,6 +317,7 @@ requirement states a change.
 - **AND** the same holds when W's `config.worktree` sets `core.bare` to true instead
 - **AND** when the repository's own `config` sets `core.worktree` to the main worktree's path instead, which leaves the main worktree's toplevel as it was while every linked worktree's becomes that path, W and every other linked worktree read `registration-mismatch` with classification `inspection-error`, `--all-safe --apply --yes` and `--apply --action remove --worktree W --yes` each refuse with `inspection-incomplete` and exit 2 and remove nothing, and that refusal's remedy names the same unsetting
 - **AND** with the extension set and neither setting for W, W's effective work tree is its path and W is selected as before, and without the extension a counting `git` wrapper records no `rev-parse` child whose directory is a linked worktree
+- **AND** with the extension set and neither setting for a linked worktree whose own path holds a line feed, the work-tree probe prints that path over two lines, which is read as one path, its registered path, so the worktree is not `registration-mismatch` and is selected where it is otherwise eligible, as the scenario "Control-character and non-UTF-8 paths" selects such a worktree
 
 #### Scenario: A commondir that names another repository
 - **WHEN** a linked worktree W of a repository R, which does not set `extensions.worktreeConfig`, holds an ignored file; a shared clone X of R sets `extensions.worktreeConfig` to true; the `config.worktree` in W's administrative directory sets `core.worktree` to a clean decoy directory D; and the `commondir` file in that administrative directory is rewritten to name X's git directory, while W's `.git` file and that directory's `gitdir` file still agree
