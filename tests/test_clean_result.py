@@ -198,6 +198,8 @@ if MODE == "unregister":  # the registry entry gone, its admin directory renamed
     with open(os.path.join(ARGV[-1], ".git")) as stream:
         admin = stream.read().split("gitdir: ", 1)[1].strip()
     os.rename(admin, os.path.join(os.path.dirname(os.path.dirname(admin)), "unregistered-" + os.path.basename(admin)))
+if MODE == "unsearchable":  # the worktree's search permission gone: an lstat of its .git fails EACCES (W73 M-1)
+    os.chmod(ARGV[-1], 0o600)
 log(event="ready", pgid=os.getpgrp())
 while True:
     time.sleep(3600)
@@ -207,8 +209,10 @@ while True:
 def ceiling_git(bin_dir, mode):
     """bin_dir/git: on `worktree remove`, the ceiling child in mode (`hang`,
     `remove-first`, `unlink-git`, which unlinks the worktree's `.git` file
-    first, or `unregister`, which first renames its admin directory out of
-    the registry), its events in bin_dir/ceiling-events.jsonl; every other
+    first, `unregister`, which first renames its admin directory out of
+    the registry, or `unsearchable`, which first takes the search permission
+    from the worktree's directory, mode 0600, so that no lstat of its `.git`
+    succeeds), its events in bin_dir/ceiling-events.jsonl; every other
     command the real git. Returns the events file."""
     events = Path(bin_dir) / "ceiling-events.jsonl"
     write_script(Path(bin_dir) / "git", f"""#!/bin/sh
@@ -832,6 +836,63 @@ class ResultTests(clean_support.CleanCase):
                 self.assertNotIn(f"worktree {trees[0]}\n", listed)
                 self.assertTrue(trees[0].is_dir(), "left for deletion by hand")
                 self.assertEqual(self.git(root, "worktree", "prune", "--dry-run", "--verbose"), "")
+
+    @clean_support.not_root
+    def test_clean_the_ceiling_s_recovery_text_where_the_git_file_cannot_be_read(self):
+        # #19's round (i) at 1a4785e (lane 3's W73 M-1, lead ruling R-284),
+        # through the launcher with the ceiling's table above. The ceiling
+        # child takes the search permission from the first target's directory
+        # (unsearchable), so that the rescan shows the registry entry and the
+        # path present while its lstat of the target's `.git` fails with
+        # EACCES: the note is the third one, which advises no prune. Git cannot
+        # stat that `.git` either, and `git worktree prune --dry-run --verbose`
+        # names the live worktree's admin directory for removal, which is what
+        # the prune note would have led to; with the permission back nothing is
+        # prunable, and `git worktree remove --force` removes the worktree.
+        table = clean_support.timing_table(removal_ceiling=1.5, term_grace=0.5, reap_wait=0.5)
+        root, trees = self.batch("recovery-unsearchable", count=2)
+        planned = [self.head(tree) for tree in trees]
+        self.addCleanup(os.chmod, trees[0], 0o755)
+        bin_dir = self.base / "recovery-unsearchable-bin"
+        ceiling_git(bin_dir, "unsearchable")
+        result = self.run_json("clean", root, "--all-safe", "--apply", "--yes", "--json", timing=table,
+                               env=self.path_first(bin_dir))
+        self.assert_status(result, 1)
+        first, second = result.document["targets"]
+        self.assertEqual((first["stage"], first["reason"], first["notes"]),
+                         ("unknown", "removal-ceiling", ["partially-removed"]))
+        self.assertEqual(first["reconciliation"], record(True, True, True, planned[0]))
+        self.assertEqual((second["stage"], second["reason"]), ("not-attempted", "batch-stopped"))
+        note = TEXT["partial_removal_note_unread"].format(PATH=quoted(trees[0]))
+        self.assertEqual(note, f"Probable partial removal: inspect {quoted(trees[0])} by hand; its .git could not "
+                               "be read, so do not run git worktree prune until it can.")
+        lines = result.stderr.splitlines()
+        self.assertEqual([line for line in lines if line.startswith("Probable partial removal:")], [note],
+                         result.stderr)
+        stop = TEXT["stop_block"].format(PATH=trees[0], REASON="removal-ceiling", K=0, N=2,
+                                         NOT_ATTEMPTED=trees[1], ROOT=quoted(root))
+        self.assertLess(lines.index(note), lines.index(stop), "the note prints first")
+        admin = self.common_dir(root) / "worktrees" / trees[0].name
+
+        def prune_dry_run():
+            """`git worktree prune --dry-run --verbose`, which removes nothing
+            and names on standard error each entry prune would remove."""
+            done = subprocess.run([REAL_GIT, "-C", str(root), "worktree", "prune", "--dry-run", "--verbose"],
+                                  env=self.env, capture_output=True, text=True, timeout=TIMEOUT)
+            self.assertEqual(done.returncode, 0, done.stderr)
+            return done.stdout + done.stderr
+
+        self.assertTrue(admin.is_dir())
+        self.assertIn(f"Removing worktrees/{trees[0].name}: ", prune_dry_run(),
+                      "prune would delete the live worktree's admin directory")
+        self.assertTrue(admin.is_dir(), "a dry run removes nothing")
+        os.chmod(trees[0], 0o755)
+        self.assertEqual(prune_dry_run(), "")
+        force = subprocess.run([REAL_GIT, "-C", str(root), "worktree", "remove", "--force", str(trees[0])],
+                               env=self.env, capture_output=True, text=True, timeout=TIMEOUT)
+        self.assertEqual(force.returncode, 0, force.stderr)
+        self.assertFalse(trees[0].exists())
+        self.assertEqual(self.head(root, "refs/heads/" + NAMES[0]), planned[0], "the branch is kept")
 
     @clean_support.not_root
     def test_clean_unreadable_path_after_removal(self):

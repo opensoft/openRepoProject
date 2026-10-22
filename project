@@ -717,13 +717,23 @@ TEXT = {
         "Next: project clean {ROOT} --all-safe",
     "partial_removal_note": "Probable partial removal: inspect, then git worktree remove --force {PATH} by hand.",
     # The ceiling's note where the rescan does not show both the target's
-    # `.git` and its registry entry present: Git then refuses `git worktree
+    # `.git` and its registry entry present, and made no `.git` read that
+    # failed (partial_removal_text()): Git then refuses `git worktree
     # remove --force` ("validation failed" with the `.git` file gone, "is not
     # a working tree" with the entry gone) and accepts `git worktree prune`
     # (lane 3's W52 F-1; Brett Heap's ruling "F-1: prune-then-delete", lead
     # ruling R-263, amending ratified 0050f3e pcl:922-926).
     "partial_removal_note_prune":
         "Probable partial removal: inspect, then git worktree prune and delete {PATH} by hand.",
+    # The ceiling's note where the rescan's lstat of the target's `.git`
+    # failed other than for its absence or was cut, whatever it found of the
+    # registry entry: `git worktree prune` deletes the admin directory of a
+    # live worktree whose `.git` Git cannot stat (EACCES), so this note
+    # advises no prune (#19's round (i) at 1a4785e; lane 3's W73 M-1, lead
+    # ruling R-284).
+    "partial_removal_note_unread":
+        "Probable partial removal: inspect {PATH} by hand; its .git could not be read, "
+        "so do not run git worktree prune until it can.",
     # D18's note for a locked worktree's row, which `git worktree remove
     # --force` refuses (#19 at 4f1c0e0; lane 3's W52 F-2, R-248). It replaces
     # ratified text, so it waits on Brett Heap's word, in a commit of its own.
@@ -5380,10 +5390,12 @@ class Target(dict):
     {root, common_dir, dev, ino}, which the rescan re-establishes first; and
     `git_file_present`, whether the rescan found the target's `.git` present
     (git_file_presence()), None where it did not read it or the read gave no
-    value, which only the human partial-removal note reads
-    (partial_removal_text(); lane 3's W52 F-1, lead ruling R-263)."""
+    value, and `git_file_read`, whether the rescan made that read, which
+    only the human partial-removal note reads (partial_removal_text(); lane
+    3's W52 F-1, lead ruling R-263; W73 M-1, R-284)."""
 
     row = removal_args = root = identity = git_file_present = None
+    git_file_read = False
 
 
 def make_target(plan, row):
@@ -6144,7 +6156,9 @@ def rescan(target, run):
     are present (partial_removal_text(); lane 3's W52 F-1, Brett Heap's
     ruling "F-1: prune-then-delete", lead ruling R-263). Its failure, its
     cut or a second SIGINT during it leaves `git_file_present` None and the
-    record as the other reads made it.
+    record as the other reads made it; `git_file_read` says the read was
+    made, so that the note then advises no prune (#19's round (i) at
+    1a4785e; lane 3's W73 M-1, lead ruling R-284).
 
     These three repository children, with the manifest value, are left on
     run as `rescan_part`, for the next selected target's revalidation to
@@ -6162,6 +6176,7 @@ def rescan(target, run):
     next target. Interrupted never leaves the rescan."""
     before = run.probes
     run.rescan_part = target.git_file_present = None
+    target.git_file_read = False
     root = os.fsencode(target.root)
     planned = target.identity
     records = refs = path_present = None
@@ -6185,6 +6200,7 @@ def rescan(target, run):
     registry_entry_present = None if records is None else any(
         record["path"] == target["path"] for record in records)
     if not abandoned and registry_entry_present is True and path_present is True:
+        target.git_file_read = True  # W73 M-1: a read made that gives None advises no prune
         target.git_file_present = git_file_presence(target["path"])  # W52 F-1
     branch_present, branch_sha = _branch_evidence(target, refs)
     reconciliation = reconciliation_record(registry_entry_present, path_present, branch_present, branch_sha)
@@ -6519,17 +6535,29 @@ def partial_removal_text(target):
     """The TEXT key of the partial-removal note of a target noted
     `partially-removed` at its removal ceiling (lane 3's W52 F-1; Brett
     Heap's ruling "F-1: prune-then-delete", lead ruling R-263), a pure
-    function: `partial_removal_note`, whose `git worktree remove --force`
-    Git accepts, only where the rescan showed both the registry entry
+    function. First, `partial_removal_note_unread`, which advises no prune,
+    wherever the rescan made its `.git` lstat (`git_file_read` true) and it
+    gave no value (`git_file_present` None: it failed other than for the
+    file's absence, was cut at its budget, or met a second SIGINT), whatever
+    the rescan found of the registry entry, since `git worktree prune`
+    deletes the admin directory of a live worktree whose `.git` Git cannot
+    stat (#19's round (i) at 1a4785e; lane 3's W73 M-1, lead ruling R-284).
+    Otherwise `partial_removal_note`, whose `git worktree remove --force` Git
+    accepts, only where the rescan showed both the registry entry
     (`registry_entry_present` true) and the target's `.git`
-    (`git_file_present` true) present; otherwise `partial_removal_note_prune`,
-    since Git refuses that command once the `.git` file is gone ("validation
-    failed") or the entry is gone ("is not a working tree"), and a value not
-    established never shows both present. A target that is a plain dict
-    carries no `.git` read. print_result()'s alone; a report row's note is
-    partial_removal_note()'s and keeps its own text."""
+    (`git_file_present` true) present, and `partial_removal_note_prune`
+    otherwise: the `.git` shown absent, or the entry gone with the `.git` shown
+    absent or not reached, since Git refuses that command once the `.git`
+    file is gone ("validation failed") or the entry is gone ("is not a
+    working tree"), and a value not established never shows both present.
+    A target that is a plain dict carries no `.git` read. print_result()'s
+    alone; a report row's note is partial_removal_note()'s and keeps its own
+    text."""
+    git_file = getattr(target, "git_file_present", None)
+    if getattr(target, "git_file_read", False) and git_file is None:
+        return "partial_removal_note_unread"
     entry = (target["reconciliation"] or {}).get("registry_entry_present")
-    if entry is True and getattr(target, "git_file_present", None) is True:
+    if entry is True and git_file is True:
         return "partial_removal_note"
     return "partial_removal_note_prune"
 
