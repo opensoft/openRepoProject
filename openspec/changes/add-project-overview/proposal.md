@@ -1260,7 +1260,10 @@ ruling R-102 (c) 3) names `clean`, `status`, `doctor` and `update`, and what
 reaches the overview reaches it through [E] and [G], which this change cites;
 beyond that, each item is A1's own proposal, put to Brett Heap here. Each
 follows PR #19's text at the commits its heading names, a draft pending its
-own ratification; PR #19's tip is `9267303`, and its rulings R-124 (`2b86a5f`,
+own ratification; PR #19's tip is `f0bf538`, whose round (e) keeps the two
+gates' outcome and names the `worktree-only-commits` gate's unfinished read as
+its exception to the branch reflog's split (its
+`specs/project-clean/spec.md:736-737` there); its rulings R-124 (`2b86a5f`,
 amended at `9267303` by PR #19's round (d)), R-125 (`93f3194`) and R-126
 (`1ebdd90`) are taken in below. Each lands only with or after PR #19's
 ratification of the commits it follows, and is re-aligned before A1 is
@@ -1311,21 +1314,22 @@ them. Each item is declared here for Brett Heap's review:
   `project clean`'s batch then excludes itself. That clause follows the one
   outcome rule of each gate that R-124 settles at `2b86a5f`, as PR #19's round
   (d) amends it at `9267303` (its `specs/project-clean/spec.md:719-722` and
-  :741-745 there; lane openRepoProject-2's R-207 and R-208, and lane
-  openRepoProject-3's W32 L1), pending PR #19's ratification: the overview
-  still evaluates neither gate, and the batch decides each itself. It excludes
-  the worktree on a decided result: a marker present; a `rev-list` child that
-  exits 0 and prints anything; a `logs/HEAD` read to its 64 KiB bound or
-  holding a line that cannot be parsed. An error on the listing, any other
-  error on the read (a missing or empty `logs/HEAD` giving no candidate), and
-  a child that cannot be started, exits nonzero or is stopped at its 5 s
-  budget, make the worktree `inspection-error`; a listing or read not finished
-  within the filesystem budget, the deadline not being the limit, records
-  `probe-timeout` and makes the worktree `inspection-error`; the deadline's
-  cut records `deadline-exceeded`; and each of these leaves the batch's plan
-  incomplete. Amended: requirement 7 (POD:525-526) and design D5
-  (design.md:324-325), with the proposal's summaries of the batch's exclusions
-  in What Changes (proposal.md:100-101) and in Capabilities, requirement 7
+  :741-746 there; lane openRepoProject-3's W32 L1 and lane openRepoProject-2's
+  R-208, with lane openRepoProject-3's W39 LOW-3 and LOW-4 on these words),
+  pending PR #19's ratification: the overview still evaluates neither gate,
+  and the batch decides each itself. It excludes the worktree on a decided
+  result: a marker present; a `rev-list` child that exits 0 and prints
+  anything; a `logs/HEAD` read to its 64 KiB bound or holding a line that
+  cannot be parsed. An error on the listing, any other error on the read (a
+  missing or empty `logs/HEAD` giving no candidate), and a child that cannot
+  be started or exits nonzero make the worktree `inspection-error`; a child
+  stopped at its 5 s budget, or a listing or read not finished within the
+  filesystem budget, the deadline not being the limit, records `probe-timeout`
+  and makes the worktree `inspection-error`; the deadline's cut records
+  `deadline-exceeded`; and each of these leaves the batch's plan incomplete.
+  Amended: requirement 7 (POD:525-526) and design D5 (design.md:324-325), with
+  the proposal's summaries of the batch's exclusions in What Changes
+  (proposal.md:100-101) and in Capabilities, requirement 7
   (proposal.md:290-291), and design's in D5's `target-cap` item
   (design.md:346) and in Risks (design.md:732-733). The reflog-gates departure
   (proposal.md:704) keeps its ratified words, with an A1 note after it. The
