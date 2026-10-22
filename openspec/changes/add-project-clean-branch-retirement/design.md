@@ -139,12 +139,17 @@ name BRANCH's reflog and say that only this run's plan proved it, the keep
 order's account names the inspection, and the line-feed case's 13 retired
 rests on D14's rounding) to D4, D7 and D8, and A-64 (PR #19's round (i),
 `e0c91bb`, its head then, with A-50's note) to D4 and D7; the spec delta
-edits the ADDED requirement's `Kept` next steps and the literals of three
-ADDED scenarios, and adds no scenario (proposal, "Re-read and Codex Findings
-(round A18)"). Round A19 maps A-66 (Brett Heap's confirmation of lane
-openRepoProject-2's R-284, R-290) to D7, and A-67 (PR #19's round (j),
-`e14ada0`, its current head, with A-50's note) to D4, D7 and Risks; no spec
-delta changes (proposal, "Re-read and Codex Findings (round A19)").
+edits the ADDED requirement's `Kept` next steps and the literals of two ADDED
+scenarios, three in all (proposal, "Re-read and Codex Findings (round A18)";
+round A19 corrects the count, which read three scenarios, under ruling A-69).
+Round A19 maps A-66 (Brett Heap's confirmation of lane openRepoProject-2's
+R-284, R-290) to D7; A-67 (PR #19's round (j), `e14ada0`, its current head,
+with A-50's note) to D4, D7 and Risks; A-68 (lane openRepoProject-3's W84 on
+the lines for a branch the stage did not re-prove, which say that only this
+run's plan proved its reflog) to D4 and D8; and A-69 (W84's three LOW) to
+this map and D7; the spec delta edits the ADDED requirement's `Kept` next
+steps and the literals of four ADDED scenarios, five in all, and adds no
+scenario (proposal, "Re-read and Codex Findings (round A19)").
 
 Citations follow `proposal.md`: packet files at `da33d92`, `CAS` for change 1,
 `APO` for change 2, `project:N` and `tests:N` at `961c405`, all but the packet
@@ -576,8 +581,9 @@ from `reflog-unmerged` to `state-changed`, its line from `Kept BRANCH
 (reflog-unmerged)` to `Kept BRANCH (state-changed)`, and the stop block's
 reason to `branch BRANCH: state-changed`; the branch remains and the exit
 status stays 2, by D6's row 4. Its next step keeps the reflog inspection, ahead
-of the retry: `; its reflog is not proven merged into MERGE_TARGET; inspect git
--C ROOT reflog show refs/heads/BRANCH before retrying: RETRY`, where
+of the retry: `; BRANCH's reflog was proven merged into MERGE_TARGET only at
+this run's plan; inspect git -C ROOT reflog show refs/heads/BRANCH before
+retrying: RETRY`, where
 `reflog-unmerged`'s ends `before any delete-branch` (ruling A-49, Codex's P2 on
 `7b224c7`; it supersedes ruling A-46's keeping of W47's LOW-3, which had the
 line say `retry: RETRY` alone). RETRY is change 1's `delete-branch`, whose own
@@ -1101,7 +1107,7 @@ does not start, and 15 and 14 where it read it as false, the 15th removal near
 44.4 s and the 15th target's re-read due near 45.7 s. The 13 rests on D14's
 figures as rounded to 0.1 s: the 14th branch child falls within that rounding
 of the spawn limit, 0.006 to 0.023 s past it for D14's 37.7 s read as 37.68
-to 37.70 s, and before it below about 37.66 s, so that the case retires 13 or
+to 37.70 s, and before it below about 37.67 s, so that the case retires 13 or
 14 (ruling A-63; lane openRepoProject-3's W78, LOW-4). This change's own
 children are not modelled separately for that case: its stage runs no
 identity probe, only its ref listings, its re-proof and its branch child, and
@@ -1570,16 +1576,16 @@ as amended, Codex's P2 on `9ff8202`).
     `show` and the full ref name because `show`, `expire`, `delete` and
     `exists` are valid branch names and also `git reflog` subcommands, and
     `git reflog show HEAD` reads the main worktree's own reflog (Context);
-  - `Kept BRANCH (state-changed); its reflog is not proven merged into
-    MERGE_TARGET; inspect git -C ROOT reflog show refs/heads/BRANCH before
-    retrying: RETRY`, for a re-proof whose reflog read or child failed or ran
-    past its own budget while the work deadline is not the limit (rulings
-    A-43, A-44 and A-49, Codex's P2 on `7b224c7`): such a re-proof saw no
-    commit, so that `reflog-unmerged` would claim one, and proved nothing, and
-    RETRY is change 1's `delete-branch`, which proves only the branch's tip
-    and deletes the branch with its reflog, so the line names the inspection
-    before the retry, in the form that `branch-changed`'s step, `inspect it
-    before retrying`, had when ruling A-49 chose it, and keeps
+  - `Kept BRANCH (state-changed); BRANCH's reflog was proven merged into
+    MERGE_TARGET only at this run's plan; inspect git -C ROOT reflog show
+    refs/heads/BRANCH before retrying: RETRY`, for a re-proof whose reflog read
+    or child failed or ran past its own budget while the work deadline is not
+    the limit (rulings A-43, A-44 and A-49, Codex's P2 on `7b224c7`): such a
+    re-proof saw no commit, so that `reflog-unmerged` would claim one, and
+    proved nothing, and RETRY is change 1's `delete-branch`, which proves only
+    the branch's tip and deletes the branch with its reflog, so the line names
+    the inspection before the retry, in the form that `branch-changed`'s step,
+    `inspect it before retrying`, had when ruling A-49 chose it, and keeps
     `reflog-unmerged`'s `show` and full ref name; it supersedes ruling A-46's
     keeping of W47's LOW-3. The same next step
     follows every `Kept` line whose next step is RETRY for a branch the stage
@@ -1588,10 +1594,17 @@ as amended, Codex's P2 on `9ff8202`).
     (rulings A-53 and A-55; D4): a `state-changed` that the re-read's values
     caused, a `deadline-exceeded`, `interrupted` or `internal-error` before
     the re-proof proved the reflog, or a `removal-ceiling`, as in `Kept BRANCH
-    (deadline-exceeded); its reflog is not proven merged into MERGE_TARGET;
-    inspect git -C ROOT reflog show refs/heads/BRANCH before retrying: RETRY`,
-    and the own steps above that end in that retry carry it before the retry
-    (ruling A-60);
+    (deadline-exceeded); BRANCH's reflog was proven merged into MERGE_TARGET
+    only at this run's plan; inspect git -C ROOT reflog show refs/heads/BRANCH
+    before retrying: RETRY`, and the own steps above that end in that retry
+    carry it before the retry (ruling A-60); each of these lines says that only
+    this run's plan proved BRANCH's reflog, which is what the plan found, since
+    the plan retires a branch only after its `reflog-unmerged` keep does not
+    hold, where these lines had said that the reflog was not proven merged, the
+    opposite of what the plan found (ruling A-68; lane openRepoProject-3's W84,
+    which showed on Git 2.43.0 and 2.36.6, for `removal-ceiling` and both kinds
+    of `state-changed`, that the inspection names the commit only the reflog
+    holds and the retry then orphans it);
   - `Kept BRANCH (git-refused); if a rebase or bisect in another worktree
     holds BRANCH, wait for it to end, and then remove that worktree or, for
     the main worktree, which Git refuses to remove, switch it off BRANCH, by
