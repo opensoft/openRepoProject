@@ -342,7 +342,7 @@ carries its next step:
 | --- | --- |
 | `main-worktree` | never removed by project clean |
 | `unsupported-path-bytes` | rename the path to valid UTF-8 |
-| `registration-mismatch` | review, then git worktree repair or git worktree prune, or remove the row by hand |
+| `registration-mismatch` | review, then git worktree repair or git worktree prune, unset core.worktree and core.bare in the worktree's config.worktree, or remove the row by hand |
 | `locked-worktree` | unlock it yourself if it should go |
 | `inspection-error` | review, then git worktree repair or git worktree prune, or remove the row by hand |
 | `dirty` | commit or preserve the changes |
