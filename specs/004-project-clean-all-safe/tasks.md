@@ -2016,8 +2016,18 @@ carrying the reason the gate order gives.
   to its bound or holding a line that cannot be parsed:
   `worktree-only-commits`, no child). Scenario: PR #19's "A commit held only
   by the worktree".
+  Lane 3's W32 M2 folds in here, writer G's `435a2dc`, merged as `e2e423d`
+  (lead rulings R-200 and R-214): gate 11's place, in process, every listing
+  of an administrative directory recorded:
+  `test_clean_operation_in_progress_comes_after_the_index_gates` (a marker
+  beside a `modules` entry is `contains-submodule`, and beside an
+  assume-unchanged flag `hidden-local-state`, the listing never run for
+  either) and
+  `test_clean_operation_in_progress_never_reaches_a_row_past_the_cap` (a
+  seventeenth row holding a marker is `deferred-target-cap` and its
+  administrative directory never listed).
   — files: `tests/test_clean_gates.py`
-  — verify: `python3 -c "import sys,unittest as u;L=u.defaultTestLoader;f=lambda s:[i for t in s for i in (f(t) if isinstance(t,u.TestSuite) else [t.id()])];I=[i for i in f(L.discover('tests',pattern=sys.argv[1])) if not i.startswith('unittest.')];A=sys.argv[2:];M=[a for a in A if not any(a in ('*',i.split('.')[-1]) for i in I)];[print('not collected:',m) for m in M];[print(e) for e in L.errors];sys.exit(1 if M or L.errors or not A else 0)" test_clean_gates.py 'test_clean_submodules' 'test_clean_a_worktree_holding_a_submodule_is_never_offered' && python3 -c "import sys,unittest as u;L=u.defaultTestLoader;f=lambda s:[i for t in s for i in (f(t) if isinstance(t,u.TestSuite) else [t.id()])];I=[i for i in f(L.discover('tests',pattern=sys.argv[1])) if not i.startswith('unittest.')];A=sys.argv[2:];M=[a for a in A if not any(a in ('*',i.split('.')[-1]) for i in I)];[print('not collected:',m) for m in M];[print(e) for e in L.errors];sys.exit(1 if M or L.errors or not A else 0)" test_clean_gates.py 'test_clean_an_operation_in_progress' 'test_clean_an_operation_in_progress_admin_directory_that_cannot_be_listed' 'test_clean_operation_in_progress_markers' 'test_clean_operation_in_progress_markers_from_real_operations' 'test_clean_a_squash_merge_that_holds_an_autostash' 'test_clean_operation_in_progress_listing_that_fails' 'test_clean_submodules_beside_hidden_local_state' 'test_clean_submodules_beside_hidden_local_state_with_a_modules_entry' && python3 -c "import sys,unittest as u;L=u.defaultTestLoader;f=lambda s:[i for t in s for i in (f(t) if isinstance(t,u.TestSuite) else [t.id()])];I=[i for i in f(L.discover('tests',pattern=sys.argv[1])) if not i.startswith('unittest.')];A=sys.argv[2:];M=[a for a in A if not any(a in ('*',i.split('.')[-1]) for i in I)];[print('not collected:',m) for m in M];[print(e) for e in L.errors];sys.exit(1 if M or L.errors or not A else 0)" test_clean_gates.py 'test_clean_a_commit_held_only_by_the_worktree' 'test_clean_worktree_only_commits_reads_and_children_that_fail' 'test_clean_worktree_only_commits_decided_by_the_read'`
+  — verify: `python3 -c "import sys,unittest as u;L=u.defaultTestLoader;f=lambda s:[i for t in s for i in (f(t) if isinstance(t,u.TestSuite) else [t.id()])];I=[i for i in f(L.discover('tests',pattern=sys.argv[1])) if not i.startswith('unittest.')];A=sys.argv[2:];M=[a for a in A if not any(a in ('*',i.split('.')[-1]) for i in I)];[print('not collected:',m) for m in M];[print(e) for e in L.errors];sys.exit(1 if M or L.errors or not A else 0)" test_clean_gates.py 'test_clean_submodules' 'test_clean_a_worktree_holding_a_submodule_is_never_offered' && python3 -c "import sys,unittest as u;L=u.defaultTestLoader;f=lambda s:[i for t in s for i in (f(t) if isinstance(t,u.TestSuite) else [t.id()])];I=[i for i in f(L.discover('tests',pattern=sys.argv[1])) if not i.startswith('unittest.')];A=sys.argv[2:];M=[a for a in A if not any(a in ('*',i.split('.')[-1]) for i in I)];[print('not collected:',m) for m in M];[print(e) for e in L.errors];sys.exit(1 if M or L.errors or not A else 0)" test_clean_gates.py 'test_clean_an_operation_in_progress' 'test_clean_an_operation_in_progress_admin_directory_that_cannot_be_listed' 'test_clean_operation_in_progress_markers' 'test_clean_operation_in_progress_markers_from_real_operations' 'test_clean_a_squash_merge_that_holds_an_autostash' 'test_clean_operation_in_progress_listing_that_fails' 'test_clean_submodules_beside_hidden_local_state' 'test_clean_submodules_beside_hidden_local_state_with_a_modules_entry' && python3 -c "import sys,unittest as u;L=u.defaultTestLoader;f=lambda s:[i for t in s for i in (f(t) if isinstance(t,u.TestSuite) else [t.id()])];I=[i for i in f(L.discover('tests',pattern=sys.argv[1])) if not i.startswith('unittest.')];A=sys.argv[2:];M=[a for a in A if not any(a in ('*',i.split('.')[-1]) for i in I)];[print('not collected:',m) for m in M];[print(e) for e in L.errors];sys.exit(1 if M or L.errors or not A else 0)" test_clean_gates.py 'test_clean_a_commit_held_only_by_the_worktree' 'test_clean_worktree_only_commits_reads_and_children_that_fail' 'test_clean_worktree_only_commits_decided_by_the_read' 'test_clean_operation_in_progress_comes_after_the_index_gates' 'test_clean_operation_in_progress_never_reaches_a_row_past_the_cap'`
 - [x] T064 [P] [US2] [S] Add to `tests/test_clean_gates.py`:
   `test_clean_a_merged_worktree_whose_upstream_was_deleted` (a clean, merged
   worktree with a commit of its own and a deleted remote-tracking upstream is
@@ -2646,8 +2656,29 @@ US3, US7 and US9; US5's text lane follows it (analyze M2 and L9).
   #19's "A worktree-only commit made after the plan" and "A work-tree probe at
   revalidation" (round (c), `2e819ad`), its arms; neither test is named after
   the second (traceability.md).
+  The lead's R-198 and R-208 fold in here, writer G's `963fccf` and
+  `73d8888`, merged as `e2e423d` and `9ab996e` (lead rulings R-214, R-218 and
+  R-220): `test_clean_a_redirected_work_tree_beside_a_later_check_s_difference`
+  (a work tree redirected after the plan beside a new `modules` entry is
+  `contains-submodule`, and beside a `MERGE_HEAD` marker
+  `operation-in-progress`, no work-tree probe run);
+  `test_clean_a_check_that_fails_at_revalidation` gains P's `.git` made
+  unreadable (`state-changed`) and P's `.git` gone, an absent path
+  (`identity-changed`); `test_clean_identity_reads_that_fail_at_revalidation`
+  (step 1's lstat of the common directory: `EACCES` and a timeout
+  `state-changed`, `ENOENT` `identity-changed`);
+  `test_clean_a_target_lstat_that_fails_at_revalidation` (the same three for
+  step 5's lstat of the target);
+  `test_clean_a_twin_read_that_fails_at_revalidation` (an unselected dirty
+  row's lstat in the twin check: `EACCES` and a timeout
+  `state-changed`); `test_clean_a_modules_check_that_fails_at_revalidation`
+  (`EACCES` and a timeout: `state-changed`, where it was
+  `contains-submodule`); and `test_clean_an_admin_directory_gone_at_its_listing`
+  (the listing finding no administrative directory: `identity-changed`).
+  T099's `test_clean_admin_registration_changed_a_twin_spelled_through_an_unsearchable_directory`
+  now expects `state-changed` in its three refusing cases (R-208).
   — files: `tests/test_clean_revalidation.py`
-  — verify: `python3 -c "import sys,unittest as u;L=u.defaultTestLoader;f=lambda s:[i for t in s for i in (f(t) if isinstance(t,u.TestSuite) else [t.id()])];I=[i for i in f(L.discover('tests',pattern=sys.argv[1])) if not i.startswith('unittest.')];A=sys.argv[2:];M=[a for a in A if not any(a in ('*',i.split('.')[-1]) for i in I)];[print('not collected:',m) for m in M];[print(e) for e in L.errors];sys.exit(1 if M or L.errors or not A else 0)" test_clean_revalidation.py 'test_clean_branch_advances_after_removal' 'test_clean_repository_replaced_mid_batch' 'test_clean_hidden_local_state_after_confirmation' 'test_clean_submodules_after_confirmation' && python3 -c "import sys,unittest as u;L=u.defaultTestLoader;f=lambda s:[i for t in s for i in (f(t) if isinstance(t,u.TestSuite) else [t.id()])];I=[i for i in f(L.discover('tests',pattern=sys.argv[1])) if not i.startswith('unittest.')];A=sys.argv[2:];M=[a for a in A if not any(a in ('*',i.split('.')[-1]) for i in I)];[print('not collected:',m) for m in M];[print(e) for e in L.errors];sys.exit(1 if M or L.errors or not A else 0)" test_clean_revalidation.py 'test_clean_an_operation_started_after_the_plan' 'test_clean_a_check_that_fails_at_revalidation' 'test_clean_operation_in_progress_listing_cut_at_revalidation' && python3 -c "import sys,unittest as u;L=u.defaultTestLoader;f=lambda s:[i for t in s for i in (f(t) if isinstance(t,u.TestSuite) else [t.id()])];I=[i for i in f(L.discover('tests',pattern=sys.argv[1])) if not i.startswith('unittest.')];A=sys.argv[2:];M=[a for a in A if not any(a in ('*',i.split('.')[-1]) for i in I)];[print('not collected:',m) for m in M];[print(e) for e in L.errors];sys.exit(1 if M or L.errors or not A else 0)" test_clean_revalidation.py 'test_clean_a_worktree_only_commit_made_after_the_plan' 'test_clean_worktree_only_commits_check_cut_at_revalidation' 'test_clean_a_work_tree_probe_that_decides_nothing_at_revalidation' 'test_clean_an_identity_probe_that_decides_nothing_at_revalidation' 'test_clean_a_registry_listing_that_decides_nothing_at_revalidation' 'test_clean_a_hidden_state_probe_that_decides_nothing_at_revalidation' 'test_clean_revalidation_spawns_at_most_six_children'`
+  — verify: `python3 -c "import sys,unittest as u;L=u.defaultTestLoader;f=lambda s:[i for t in s for i in (f(t) if isinstance(t,u.TestSuite) else [t.id()])];I=[i for i in f(L.discover('tests',pattern=sys.argv[1])) if not i.startswith('unittest.')];A=sys.argv[2:];M=[a for a in A if not any(a in ('*',i.split('.')[-1]) for i in I)];[print('not collected:',m) for m in M];[print(e) for e in L.errors];sys.exit(1 if M or L.errors or not A else 0)" test_clean_revalidation.py 'test_clean_branch_advances_after_removal' 'test_clean_repository_replaced_mid_batch' 'test_clean_hidden_local_state_after_confirmation' 'test_clean_submodules_after_confirmation' && python3 -c "import sys,unittest as u;L=u.defaultTestLoader;f=lambda s:[i for t in s for i in (f(t) if isinstance(t,u.TestSuite) else [t.id()])];I=[i for i in f(L.discover('tests',pattern=sys.argv[1])) if not i.startswith('unittest.')];A=sys.argv[2:];M=[a for a in A if not any(a in ('*',i.split('.')[-1]) for i in I)];[print('not collected:',m) for m in M];[print(e) for e in L.errors];sys.exit(1 if M or L.errors or not A else 0)" test_clean_revalidation.py 'test_clean_an_operation_started_after_the_plan' 'test_clean_a_check_that_fails_at_revalidation' 'test_clean_operation_in_progress_listing_cut_at_revalidation' && python3 -c "import sys,unittest as u;L=u.defaultTestLoader;f=lambda s:[i for t in s for i in (f(t) if isinstance(t,u.TestSuite) else [t.id()])];I=[i for i in f(L.discover('tests',pattern=sys.argv[1])) if not i.startswith('unittest.')];A=sys.argv[2:];M=[a for a in A if not any(a in ('*',i.split('.')[-1]) for i in I)];[print('not collected:',m) for m in M];[print(e) for e in L.errors];sys.exit(1 if M or L.errors or not A else 0)" test_clean_revalidation.py 'test_clean_a_worktree_only_commit_made_after_the_plan' 'test_clean_worktree_only_commits_check_cut_at_revalidation' 'test_clean_a_work_tree_probe_that_decides_nothing_at_revalidation' 'test_clean_an_identity_probe_that_decides_nothing_at_revalidation' 'test_clean_a_registry_listing_that_decides_nothing_at_revalidation' 'test_clean_a_hidden_state_probe_that_decides_nothing_at_revalidation' 'test_clean_revalidation_spawns_at_most_six_children' && python3 -c "import sys,unittest as u;L=u.defaultTestLoader;f=lambda s:[i for t in s for i in (f(t) if isinstance(t,u.TestSuite) else [t.id()])];I=[i for i in f(L.discover('tests',pattern=sys.argv[1])) if not i.startswith('unittest.')];A=sys.argv[2:];M=[a for a in A if not any(a in ('*',i.split('.')[-1]) for i in I)];[print('not collected:',m) for m in M];[print(e) for e in L.errors];sys.exit(1 if M or L.errors or not A else 0)" test_clean_revalidation.py 'test_clean_a_redirected_work_tree_beside_a_later_check_s_difference' 'test_clean_identity_reads_that_fail_at_revalidation' 'test_clean_a_target_lstat_that_fails_at_revalidation' 'test_clean_a_twin_read_that_fails_at_revalidation' 'test_clean_a_modules_check_that_fails_at_revalidation' 'test_clean_an_admin_directory_gone_at_its_listing'`
 
 ### Implementation for User Story 4
 
@@ -2690,11 +2721,11 @@ US3, US7 and US9; US5's text lane follows it (analyze M2 and L9).
   effective work tree, a further Git child, a work tree the probe decides is
   not the target's giving `identity-changed` (LQ-11; lane E's hunk, R-149),
   and a probe that fails, times out or prints anything but one line
-  `state-changed` (the lead's R-171; writer G's `6dec3f4`), the probe still
-  run before the twin, `modules` and listing checks at `0b7dd94`, where the
-  delta runs it after them (R-198; writer G's `963fccf`, not yet on 004); and
-  step 5 ends
-  with LQ-14's listing of the target's administrative directory
+  `state-changed` (the lead's R-171; writer G's `6dec3f4`), the probe run
+  after the twin, `modules` and listing checks, as the delta orders it, so
+  that one of them that refuses spares its child (R-198; writer G's
+  `963fccf`, merged as `e2e423d`); and step 5's filesystem checks end with
+  LQ-14's listing of the target's administrative directory
   (`operation_check()`), a marker giving `operation-in-progress`, a listing
   that fails or times out `state-changed` and a cut at the work deadline
   `deadline-exceeded` (lead rulings R-124, R-127 and R-180). LQ-13 adds step
@@ -2706,10 +2737,18 @@ US3, US7 and US9; US5's text lane follows it (analyze M2 and L9).
   read true (`revalidation_children()`; writer G's `8ae0bb5`); and every Git
   child that decides nothing gives `state-changed` whatever its step, the
   identity probe, the registry listing and the hidden-state probe among them
-  (the lead's R-195; writer G's `f6082db`), a filesystem read keeping its
-  step's reason (R-201).
+  (the lead's R-195; writer G's `f6082db`); and since R-208 (writer G's
+  `73d8888`, merged as `9ab996e`) every filesystem call of these steps that
+  fails other than with `ENOENT` or `ENOTDIR`, or runs past its own budget,
+  gives `state-changed` too: step 1's identity reads
+  (`repository_identity()`'s errors take them), step 5's lstat of the target,
+  its registration reads, the twin check's reads (`registry_twin()`) and the
+  `modules` check, which gave `contains-submodule`; `ENOENT` or `ENOTDIR`
+  decides absence and keeps `identity-changed`, and the listing that finds
+  no administrative directory gives `identity-changed` (G's reading of a gap
+  in #19 at `9267303`; lead ruling R-220).
   — files: `project`
-  — verify: `python3 -c "import sys,re;t=open('project').read();A=sys.argv[1:];c=lambda r:t.split('# region '+r+'\n')[1].split('# endregion '+r+'\n')[0];M=[a for a in A if not ((a.split('%',1)[1] not in c(a.split('%',1)[0])) if '%' in a else (a.split('~',1)[1] in c(a.split('~',1)[0])) if '~' in a else re.search(r'^[a-z]*\s?'+re.escape(a.split(':',1)[1])+r'\b',c(a.split(':',1)[0]),re.M))];[print('region check failed:',m) for m in M];sys.exit(1 if M or not A else 0)" 'apply:narrowed_ref_patterns' && python3 project clean --help >/dev/null && python3 -c "import sys,re;t=open('project').read();A=sys.argv[1:];c=lambda r:t.split('# region '+r+'\n')[1].split('# endregion '+r+'\n')[0];M=[a for a in A if not ((a.split('%',1)[1] not in c(a.split('%',1)[0])) if '%' in a else (a.split('~',1)[1] in c(a.split('~',1)[0])) if '~' in a else re.search(r'^[a-z]*\s?'+re.escape(a.split(':',1)[1])+r'\b',c(a.split(':',1)[0]),re.M))];[print('region check failed:',m) for m in M];sys.exit(1 if M or not A else 0)" 'apply:as_candidate' 'apply:reserve_budget' 'apply~operation_check(' 'apply~effective_work_tree(' 'apply~worktree_only_check(' 'apply~revalidation_children(plan)'`
+  — verify: `python3 -c "import sys,re;t=open('project').read();A=sys.argv[1:];c=lambda r:t.split('# region '+r+'\n')[1].split('# endregion '+r+'\n')[0];M=[a for a in A if not ((a.split('%',1)[1] not in c(a.split('%',1)[0])) if '%' in a else (a.split('~',1)[1] in c(a.split('~',1)[0])) if '~' in a else re.search(r'^[a-z]*\s?'+re.escape(a.split(':',1)[1])+r'\b',c(a.split(':',1)[0]),re.M))];[print('region check failed:',m) for m in M];sys.exit(1 if M or not A else 0)" 'apply:narrowed_ref_patterns' && python3 project clean --help >/dev/null && python3 -c "import sys,re;t=open('project').read();A=sys.argv[1:];c=lambda r:t.split('# region '+r+'\n')[1].split('# endregion '+r+'\n')[0];M=[a for a in A if not ((a.split('%',1)[1] not in c(a.split('%',1)[0])) if '%' in a else (a.split('~',1)[1] in c(a.split('~',1)[0])) if '~' in a else re.search(r'^[a-z]*\s?'+re.escape(a.split(':',1)[1])+r'\b',c(a.split(':',1)[0]),re.M))];[print('region check failed:',m) for m in M];sys.exit(1 if M or not A else 0)" 'apply:as_candidate' 'apply:reserve_budget' 'apply~operation_check(' 'apply~effective_work_tree(' 'apply~worktree_only_check(' 'apply~revalidation_children(plan)' 'apply~R-208'`
 - [x] T085 [US4] [O] In `rescan()` and `decide_stage()` (region `apply`; D7,
   FR-035, FR-049): the rescan re-establishes the repository identity first, and
   where it differs every reconciliation field is null, `reconciled` is false,
@@ -3264,7 +3303,10 @@ statuses, the child counts and the order of what was cut.
   first target is refused by R-41's preflight and the second is
   `batch-stopped`, and with `--worktree` naming the second it is refused
   itself, `identity-changed` and exit 2 either way, with the realpath half in
-  process (R-95 (c)).
+  process (R-95 (c)). Since the lead's R-208 (writer G's `73d8888`, merged as
+  `9ab996e`) an entry whose lstat or realpath fails other than with `ENOENT`
+  or `ENOTDIR` is `state-changed`, a read that decided nothing, and the test
+  expects `state-changed` in its three refusing cases.
   — files: `project`, `tests/clean_support.py`
   — verify: `python3 -c "import sys,re;t=open('project').read();A=sys.argv[1:];c=lambda r:t.split('# region '+r+'\n')[1].split('# endregion '+r+'\n')[0];M=[a for a in A if not ((a.split('%',1)[1] not in c(a.split('%',1)[0])) if '%' in a else (a.split('~',1)[1] in c(a.split('~',1)[0])) if '~' in a else re.search(r'^[a-z]*\s?'+re.escape(a.split(':',1)[1])+r'\b',c(a.split(':',1)[0]),re.M))];[print('region check failed:',m) for m in M];sys.exit(1 if M or not A else 0)" 'apply~removal_floor' 'apply:registry_twin' && python3 project clean --help >/dev/null && python3 -c "import sys;sys.path.insert(0,'tests');import clean_support as c;t=c.load_project().TEXT['note_deadline_exceeded'];f=c.TEXT_FIXTURES['note_deadline_exceeded'];print('note_deadline_exceeded:',t);sys.exit(1 if 'unprobed' in t+f else 0)" && python3 -m unittest discover -s tests -p 'test_clean_harness.py' -k '*.test_clean_text_fixtures_equal_the_contract_table' && python3 -m unittest discover -s tests -p 'test_clean_bounds.py' -k '*.test_clean_deadline_expiry_mid_batch_a_rescan_read_cut_at_the_deadline' -k '*.test_clean_admin_registration_changed_a_twin_made_after_planning' -k '*.test_clean_admin_registration_changed_a_twin_spelled_through_an_unsearchable_directory'`
 - [x] T100 [US6] [O] Fill `deferral_gate` (region `gates`; D12, FR-032): the first
