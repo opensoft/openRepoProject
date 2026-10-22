@@ -762,7 +762,7 @@ T030.
   -- files: `tests/test_project.py`
   -- verify: `bash specs/006-refuse-non-directory-parent-early/qs.sh suite ADDED=15 && bash specs/006-refuse-non-directory-parent-early/qs.sh suite ADDED=15 PY="$(uv python find 3.10)" && bash specs/006-refuse-non-directory-parent-early/qs.sh red-first && bash specs/006-refuse-non-directory-parent-early/qs.sh ast-tests && bash specs/006-refuse-non-directory-parent-early/qs.sh ascii-added && bash specs/006-refuse-non-directory-parent-early/qs.sh files-changed && python3 -I -c 'import ast;s=open("tests/test_project.py").read();F={n.name:ast.get_source_segment(s,n) for n in ast.walk(ast.parse(s)) if isinstance(n,ast.FunctionDef)};a="self.assertFalse((parent / name).exists())";k="self.assert_parent_file_unchanged(parent.parent, before)";n9=F["test_inproc_parent_repaired_while_the_question_waits_is_created"];e=[x for x in (all(a not in F[m] and k in F[m] for m in ("test_pty_triad_answer_below_a_file_leaves_the_file_intact","test_inproc_triad_answer_below_a_file_leaves_the_file_intact")) or "N7 N8",("self.assertEqual(result.stderr, \"\")" in n9 and "self.assertNotIn(REFUSED, result.stderr)" not in n9) or "N9") if x is not True];print("T029",e or "OK");raise SystemExit(1 if e else 0)' && test "$(git diff --numstat HEAD~1 HEAD | tr '\t' ' ')" = "1 3 tests/test_project.py"`
 
-- [ ] T030 [S] Fix the review's third nit in
+- [X] T030 [S] Fix the review's third nit in
   `specs/006-refuse-non-directory-parent-early/traceability.md` (FS-D) and
   change no other line: in its opening paragraph, replace "the cell reads
   `pending (T028)` until `tasks.md` T028 fills it with the tests the plan
