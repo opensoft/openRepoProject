@@ -1162,6 +1162,19 @@ written".
   refusal messages MUST read as `design.md` D18 fixes them, in ASCII.
   Traces: "Clean previews and applies a batch of eligible worktree removals
   in one repository"; design D18.
+  Note, 2026-10-22: the next step for a reason and the remedy of an
+  `inspection-incomplete` refusal (FR-027's manual remedies) name no `git
+  worktree prune` where any row of the plan has a path that could not be read
+  at planning, since `git worktree prune` deletes the admin directory of a
+  live worktree whose path Git cannot stat and acts on the whole repository.
+  By #19's round (l) at `ccc52b9` (design D18; lane 3's W87 M-1; the lead's
+  R-307 and R-310), such a row forms a group of its own under
+  `inspection-error` with a next step that names no prune, and the other
+  `inspection-error` and `registration-mismatch` groups and the refusal's
+  remedy take forms that name none and warn against it
+  (`contracts/project-clean.md`, "The unread forms"; writer's `e569564`,
+  merged as `1edf64e`). FR-027's list of remedies stands as written, each
+  where it fits, and the requirement's text is unchanged.
 - **FR-029**: Each `project clean` invocation MUST set one monotonic deadline
   60 s after it starts and hold back a 10 s reconciliation reserve, so that
   work stops 50 s after start, both moving later by the time spent blocked at

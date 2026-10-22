@@ -558,6 +558,13 @@ T033), when B, D, E and F are; H, guard (T034, T035), when T023 is, beside G
   `60631eb`; lead rulings R-271 and R-284, the second ruled by Brett Heap,
   "R-284: yes", R-290): `TEXT_FIXTURES` gains `partial_removal_note_unread`
   (W73 M-1) and `target_not_repository_root_redirect`.
+  #19's round (l) at `ccc52b9` (lane 3's W87 M-1; lead rulings R-307 and
+  R-310; writer's `e569564`, merged as `1edf64e`) adds five more:
+  `TEXT_FIXTURES` gains `remedy_inspection_incomplete_unread`,
+  `remedy_inspection_incomplete_redirect_unread`, `next_step_unread_row`,
+  `next_step_inspection_error_unread` and
+  `next_step_registration_mismatch_unread`, which name no `git worktree prune`
+  where a row's path could not be read. The same test pins each.
   — files: `tests/clean_support.py`
   — verify: `python3 -c "import sys;sys.path.insert(0,'tests');import clean_support as c;M=[n for n in sys.argv[1:] if not (hasattr(c,n) or hasattr(c.CleanCase,n))];[print('missing:',m) for m in M];sys.exit(1 if M or not sys.argv[1:] else 0)" install_counting_git child_log install_fake_git path_without_git && python3 -m unittest discover -s tests -p 'test_clean_harness.py' && python3 -c "import sys;sys.path.insert(0,'tests');import clean_support as c;M=[k for k in sys.argv[1:] if k not in c.FAKE_KINDS];[print('absent kind:',m) for m in M];sys.exit(1 if M or not sys.argv[1:] else 0)" status-slow-again-in ls-files-stuck-again-in`
 
@@ -1258,8 +1265,11 @@ L-8).
   selecting nothing prints `No eligible worktrees` and exits 0 without asking,
   as a preview and under `--apply`; an incomplete plan selecting nothing, from
   an unreadable row (`not_root`), previews with exit 1 and under `--apply`
-  prints the plan, then `REFUSED: MESSAGE`, and exits 2 before any question;
-  plan review M8). Scenarios: "Preview is advisory"; "Paths and empty plans".
+  prints the plan, then `REFUSED: MESSAGE`, and exits 2 before any question,
+  the row's group taking `next_step_unread_row` and the refusal's remedy being
+  `remedy_inspection_incomplete_unread`, neither naming `git worktree prune`
+  (#19's round (l); lane 3's W87 M-1, R-307); plan review M8). Scenarios:
+  "Preview is advisory"; "Paths and empty plans".
   — files: `tests/test_clean_batch.py`
   — verify: `python3 -c "import sys,unittest as u;L=u.defaultTestLoader;f=lambda s:[i for t in s for i in (f(t) if isinstance(t,u.TestSuite) else [t.id()])];I=[i for i in f(L.discover('tests',pattern=sys.argv[1])) if not i.startswith('unittest.')];A=sys.argv[2:];M=[a for a in A if not any(a in ('*',i.split('.')[-1]) for i in I)];[print('not collected:',m) for m in M];[print(e) for e in L.errors];sys.exit(1 if M or L.errors or not A else 0)" test_clean_batch.py 'test_clean_preview_is_advisory' 'test_clean_paths_and_empty_plans'`
 - [x] T039 [P] [US1] [S] Add to `tests/test_clean_batch.py`:
@@ -1753,8 +1763,16 @@ L-8).
   residual-window line; exit 2 and nothing removed, whichever of T047's
   baseline confirmation and T053's `confirmation-required` refuses; lead
   ruling R-59 D8).
+  #19's round (l) at `ccc52b9` (lane 3's W87 M-1; lead rulings R-307 and
+  R-310; writer's `e569564`, merged as `1edf64e`) changes the groups' next
+  steps: `excluded_groups(reason, rows, unread)` gives an `inspection-error`
+  row whose path could not be read (`path_unread()`) a group of its own, first
+  under that reason, with `next_step_unread_row`, and, while any row of the
+  plan is unread (`unread_paths(plan)`), the other `inspection-error` rows
+  `next_step_inspection_error_unread` and the `registration-mismatch` rows
+  `next_step_registration_mismatch_unread`, none naming `git worktree prune`.
   — files: `project`, `tests/clean_support.py`, `tests/test_clean_batch.py`
-  — verify: `python3 -c "import sys,re;t=open('project').read();A=sys.argv[1:];c=lambda r:t.split('# region '+r+'\n')[1].split('# endregion '+r+'\n')[0];M=[a for a in A if not ((a.split('%',1)[1] not in c(a.split('%',1)[0])) if '%' in a else (a.split('~',1)[1] in c(a.split('~',1)[0])) if '~' in a else re.search(r'^[a-z]*\s?'+re.escape(a.split(':',1)[1])+r'\b',c(a.split(':',1)[0]),re.M))];[print('region check failed:',m) for m in M];sys.exit(1 if M or not A else 0)" 'preview~human_path' 'preview~selected_heading' 'preview~excluded_group' 'contracts~"main-worktree":' 'contracts~"unsupported-path-bytes":' 'contracts~"not-requested":' && python3 project clean --help >/dev/null && python3 -m unittest discover -s tests -p 'test_clean_harness.py' -k '*.test_clean_text_fixtures_equal_the_contract_table' && python3 -c "import sys,unittest as u;L=u.defaultTestLoader;f=lambda s:[i for t in s for i in (f(t) if isinstance(t,u.TestSuite) else [t.id()])];I=[i for i in f(L.discover('tests',pattern=sys.argv[1])) if not i.startswith('unittest.')];A=sys.argv[2:];M=[a for a in A if not any(a in ('*',i.split('.')[-1]) for i in I)];[print('not collected:',m) for m in M];[print(e) for e in L.errors];sys.exit(1 if M or L.errors or not A else 0)" test_clean_batch.py 'test_clean_a_reader_that_closes_standard_output' 'test_clean_the_preview_says_what_keeps_each_row_single_mode' && python3 -m unittest discover -s tests -p 'test_clean_batch.py' -k '*.test_clean_a_reader_that_closes_standard_output' -k '*.test_clean_the_preview_says_what_keeps_each_row_single_mode'`
+  — verify: `python3 -c "import sys,re;t=open('project').read();A=sys.argv[1:];c=lambda r:t.split('# region '+r+'\n')[1].split('# endregion '+r+'\n')[0];M=[a for a in A if not ((a.split('%',1)[1] not in c(a.split('%',1)[0])) if '%' in a else (a.split('~',1)[1] in c(a.split('~',1)[0])) if '~' in a else re.search(r'^[a-z]*\s?'+re.escape(a.split(':',1)[1])+r'\b',c(a.split(':',1)[0]),re.M))];[print('region check failed:',m) for m in M];sys.exit(1 if M or not A else 0)" 'preview~human_path' 'preview~selected_heading' 'preview~excluded_group' 'preview:excluded_groups' 'contracts~"main-worktree":' 'contracts~"unsupported-path-bytes":' 'contracts~"not-requested":' && python3 project clean --help >/dev/null && python3 -m unittest discover -s tests -p 'test_clean_harness.py' -k '*.test_clean_text_fixtures_equal_the_contract_table' && python3 -c "import sys,unittest as u;L=u.defaultTestLoader;f=lambda s:[i for t in s for i in (f(t) if isinstance(t,u.TestSuite) else [t.id()])];I=[i for i in f(L.discover('tests',pattern=sys.argv[1])) if not i.startswith('unittest.')];A=sys.argv[2:];M=[a for a in A if not any(a in ('*',i.split('.')[-1]) for i in I)];[print('not collected:',m) for m in M];[print(e) for e in L.errors];sys.exit(1 if M or L.errors or not A else 0)" test_clean_batch.py 'test_clean_a_reader_that_closes_standard_output' 'test_clean_the_preview_says_what_keeps_each_row_single_mode' && python3 -m unittest discover -s tests -p 'test_clean_batch.py' -k '*.test_clean_a_reader_that_closes_standard_output' -k '*.test_clean_the_preview_says_what_keeps_each_row_single_mode'`
 - [x] T053 [P] [US1] [O] Fill `check_plan(plan, run)` in region `dispatcher`, in
   FR-024's order: an incomplete plan (an all-safe preview records its
   refusal, so that `REFUSED:` and its remedy print and the envelope carries
@@ -1818,8 +1836,17 @@ L-8).
   as `3bc1d68`). `test_clean_the_preview_says_what_keeps_each_row_single_mode_shared_path`,
   this task's companion to the single-mode test, expects the variant for the
   two rows that share P's path, by bytes and by realpath alike.
+  #19's round (l) at `ccc52b9` (lane 3's W87 M-1; lead rulings R-307 and
+  R-310; writer's `e569564`, merged as `1edf64e`) gives that remedy its unread
+  forms: wherever `unread_paths(plan)`, the raw paths of the plan's rows whose
+  `present` is null (`path_unread()`), is not empty, a deadline-stopped row or
+  one the refusal does not count included, `incomplete_refusal()` takes
+  `remedy_inspection_incomplete_unread`, or
+  `remedy_inspection_incomplete_redirect_unread` where the variant would
+  print, neither naming `git worktree prune`; the variant's counting is as
+  before.
   — files: `project`
-  — verify: `python3 -m unittest discover -s tests -p 'test_clean_batch.py'`
+  — verify: `python3 -c "import sys,re;t=open('project').read();A=sys.argv[1:];c=lambda r:t.split('# region '+r+'\n')[1].split('# endregion '+r+'\n')[0];M=[a for a in A if not ((a.split('%',1)[1] not in c(a.split('%',1)[0])) if '%' in a else (a.split('~',1)[1] in c(a.split('~',1)[0])) if '~' in a else re.search(r'^[a-z]*\s?'+re.escape(a.split(':',1)[1])+r'\b',c(a.split(':',1)[0]),re.M))];[print('region check failed:',m) for m in M];sys.exit(1 if M or not A else 0)" 'plan:path_unread' 'plan:unread_paths' 'plan:incomplete_refusal' && python3 -m unittest discover -s tests -p 'test_clean_batch.py'`
 - [x] T054 [P] [US1] [O] Add `ask_removal(plan, run)` and fill `confirm_removal()`
   in region `apply` (R3, FR-026): under `raising_signals()` and with the clock
   paused, write the D18 question, singular for one, to the human stream and
@@ -2078,7 +2105,8 @@ carrying the reason the gate order gives.
   `7164d7f`; lead ruling R-258) the refusals of the broken admin
   registration's copy and of the shared path's, which count a row excluded as
   `registration-mismatch`, carry TEXT's `remedy_inspection_incomplete_redirect`,
-  and the unreadable worktree's keeps `remedy_inspection_incomplete`, and the
+  and the unreadable worktree's, since #19's round (l) (lane 3's W87 M-1; lead
+  ruling R-307), carries `remedy_inspection_incomplete_unread`, and the
   same file gains
   `test_clean_a_redirected_worktree_s_incomplete_plan_names_the_unset` (a
   linked worktree that `core.worktree` or `core.bare` redirects, set in its
@@ -2108,8 +2136,36 @@ carrying the reason the gate order gives.
   over the same repository counts the redirected row and names the unset; with
   row 7 answered, `--worktree P` reaches step 3, which counts P's row, and the
   remedy is the variant).
+  #19's round (l) at `ccc52b9` (lane 3's W87 M-1; lead rulings R-307 and
+  R-310; writer's `e569564`, merged as `1edf64e`) adds three tests, each
+  against its own fixture:
+  `test_clean_an_unread_row_s_next_step_and_remedy_name_no_prune` (a merged
+  worktree and an unread one: the unread row's group, first under
+  `inspection-error`, takes `next_step_unread_row` and the plan's remedy is
+  `remedy_inspection_incomplete_unread`, in the report, the `--all-safe`
+  preview and apply, a single removal naming the unread row with and without
+  `--yes`, human and `--json`, push and delete-branch; a single removal naming
+  the other row is complete and its preview prints the unread row's group
+  before it stops at `confirmation-required`);
+  `test_clean_an_unread_row_beside_a_readable_inspection_error_row` (the
+  unread remedy wherever any row of the plan is unread, whether or not the
+  refusal counts that row and whether or not the work deadline stopped it; the
+  unread row alone in a group of its own, first, while a readable
+  `inspection-error` row, a reflog read that fails with `EISDIR`, takes
+  `next_step_inspection_error_unread` in the group that follows; with the path
+  readable again the plain remedy and next step print as before); and
+  `test_clean_an_unread_row_beside_a_redirected_row` (beside a row the refusal
+  counts as `registration-mismatch` the remedy is
+  `remedy_inspection_incomplete_redirect_unread`, in the report, the preview
+  and apply, and a single removal naming the redirected row, while a single
+  removal naming the unread row counts P's rows alone, none redirected, and
+  takes `remedy_inspection_incomplete_unread`; in every preview the redirected
+  row's group takes `next_step_registration_mismatch_unread`; with the path
+  readable again the variant and the plain next step print as before).
+  `test_clean_every_protected_classifier_incomplete_copy`'s unreadable copy
+  expects the unread remedy.
   — files: `tests/test_clean_gates.py`
-  — verify: `python3 -c "import sys,unittest as u;L=u.defaultTestLoader;f=lambda s:[i for t in s for i in (f(t) if isinstance(t,u.TestSuite) else [t.id()])];I=[i for i in f(L.discover('tests',pattern=sys.argv[1])) if not i.startswith('unittest.')];A=sys.argv[2:];M=[a for a in A if not any(a in ('*',i.split('.')[-1]) for i in I)];[print('not collected:',m) for m in M];[print(e) for e in L.errors];sys.exit(1 if M or L.errors or not A else 0)" test_clean_gates.py 'test_clean_every_protected_classifier' 'test_clean_every_protected_classifier_incomplete_copy' 'test_clean_a_redirected_worktree_s_incomplete_plan_names_the_unset' 'test_clean_a_redirected_row_the_deadline_stopped_is_not_counted_for_the_variant' 'test_clean_a_named_removal_s_repository_wide_refusal_beside_a_redirected_target'`
+  — verify: `python3 -c "import sys,unittest as u;L=u.defaultTestLoader;f=lambda s:[i for t in s for i in (f(t) if isinstance(t,u.TestSuite) else [t.id()])];I=[i for i in f(L.discover('tests',pattern=sys.argv[1])) if not i.startswith('unittest.')];A=sys.argv[2:];M=[a for a in A if not any(a in ('*',i.split('.')[-1]) for i in I)];[print('not collected:',m) for m in M];[print(e) for e in L.errors];sys.exit(1 if M or L.errors or not A else 0)" test_clean_gates.py 'test_clean_every_protected_classifier' 'test_clean_every_protected_classifier_incomplete_copy' 'test_clean_a_redirected_worktree_s_incomplete_plan_names_the_unset' 'test_clean_a_redirected_row_the_deadline_stopped_is_not_counted_for_the_variant' 'test_clean_a_named_removal_s_repository_wide_refusal_beside_a_redirected_target' 'test_clean_an_unread_row_s_next_step_and_remedy_name_no_prune' 'test_clean_an_unread_row_beside_a_readable_inspection_error_row' 'test_clean_an_unread_row_beside_a_redirected_row'`
 - [x] T062 [P] [US2] [O] Add to `tests/test_clean_gates.py`:
   `test_clean_hidden_local_state` (two otherwise eligible worktrees, one
   holding an edit to a file flagged assume-unchanged and one a file flagged
@@ -2345,8 +2401,9 @@ US2, US7 and US9.
   process as T046 patches it, and both giving the same stage, reason, exit
   status 2 and human result text, since both run at one path (lead ruling
   R-53 P-14); with another worktree
-  unreadable (`not_root`), the batch refuses with `inspection-incomplete` while
-  the named removal removes P; an unregistered path gives `worktree-not-found`,
+  unreadable (`not_root`), the batch refuses with `inspection-incomplete`, its
+  remedy `remedy_inspection_incomplete_unread` (R-307), while the named removal
+  removes P; an unregistered path gives `worktree-not-found`,
   and a dirty worktree `target-excluded` with `reason: "dirty"`. Two more
   tests of the scenario, the single lane's:
   `test_clean_single_target_a_failed_realpath_read_counts_as_a_match`
@@ -2442,7 +2499,8 @@ US2, US7 and US9.
   2, no push child; the same for `--action delete-branch`, with no `branch -d`
   child; and at a pseudo-terminal, a callable step removing search permission
   from another worktree's parent while `Type yes` waits, then `yes`: refused
-  after confirmation with `inspection-incomplete`, exit 2, no delegate,
+  after confirmation with `inspection-incomplete`, its remedy
+  `remedy_inspection_incomplete_unread` (R-307), exit 2, no delegate,
   `not_root`; plan review B1; the deadline clause is T098's); and
   `test_clean_push_and_branch_deletion_stay_human_only` (`--apply --json` with
   `--action push` or `--action delete-branch`: `invalid-arguments`, exit 2, no
@@ -3515,7 +3573,7 @@ statuses, the child counts and the order of what was cut.
   with `inspect-cap`); `test_clean_an_unreadable_worktree_is_one_row`
   (`not_root`; a parent without search permission: `present: null`, an
   `os-error`, `inspection-error`, every other row reported, an incomplete
-  report, exit 1);
+  report, exit 1, its remedy `remedy_inspection_incomplete_unread` (R-307));
   `test_clean_a_failed_status_probe_on_the_merge_target_checkout`
   (`status-fails-in`, and `status-hangs-in` under the launcher with its own
   table, on the worktree holding the merge-target branch: `inspection-error`,

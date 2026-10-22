@@ -198,6 +198,21 @@ that probe's row errors and is `inspection-error`, its upstream fields null,
 where every row once printed as `unpublished` (the plan review's F3; lead
 ruling R-101 (c)).
 
+A row whose `present` is null is unread: `path_unread(row)` is `row["present"]
+is None`, and `unread_paths(plan)` is the set of the raw paths of such rows of
+`plan.rows`, from what planning recorded and nothing read again (the
+revalidation's registry-twin check reads it too). Wherever it is not empty, a
+deadline-stopped row and a row the refusal does not count included, the plan
+prints no `git worktree prune` advice, since prune deletes the admin directory
+of a live worktree whose path Git cannot stat: `TEXT`'s `next_step_unread_row`
+for the unread row, `next_step_inspection_error_unread` and
+`next_step_registration_mismatch_unread` for the other two reasons' groups,
+and `remedy_inspection_incomplete_unread` or
+`remedy_inspection_incomplete_redirect_unread` for the refusal, each as the
+contract's "The unread forms" gives it (#19's round (l); lane 3's W87 M-1;
+lead rulings R-307 and R-310; writer's `e569564`, merged as `1edf64e`). Only
+texts change: no field, code, class or reason does.
+
 ### Classification (D6; FR-007)
 
 First, a row whose evidence could not be established (`present` null, a

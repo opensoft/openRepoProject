@@ -275,7 +275,15 @@ target: NAME (SOURCE)`, `Freshness:`) it prints `Selected (N):` with one
 `  remove PATH [BRANCH]` line for each worktree a batch would remove, then
 `Excluded (M):` with a group `  REASON (K): NEXT STEP` for each reason and its
 worktrees beneath (each heading prints only when it has rows), then, when a
-worktree is selected, `Not protected: ...` (see "What is guaranteed"). When a
+worktree is selected, `Not protected: ...` (see "What is guaranteed"). A
+worktree whose path could not be read (the `lstat` failed for a reason other
+than the path's absence, as it does for a directory the process may not search,
+or ran out of time) is `inspection-error`, and such worktrees form a group of
+their own, printed first under that reason, with the next step `inspect the
+row by hand; its path could not be read, so do not run git worktree prune
+until it can`;
+the plan's other `inspection-error` and `registration-mismatch` groups then
+name no `git worktree prune` either (see "Gates and next steps"). When a
 complete plan selects nothing it prints `No eligible worktrees` and exits 0.
 The plain report adds `Report: complete` or `Report: incomplete (CODES)` and
 `--all-safe would select N`. A plain report inspects up to 256 worktrees and
@@ -301,7 +309,19 @@ before the removal by hand; that holds for every registration mismatch, a
 linked worktree that `core.worktree` or `core.bare` redirects or one whose
 registration is broken, or a path two entries share; for `inspect-cap`, to
 remove worktrees explicitly or prune stale entries by hand; for
-`deadline-exceeded`, to remove worktrees explicitly or re-run.
+`deadline-exceeded`, to remove worktrees explicitly or re-run. Where any
+row of the plan has a path that could not be read, whether or not the refusal
+counts that row, the `inspection-incomplete` remedy names no `git worktree
+prune` and warns against it, since `git worktree prune` deletes the
+registration of a live worktree whose path Git cannot stat: `repair or remove
+the inspection-error rows first: git worktree repair, or remove the row by
+hand after review; a row's path could not be read, so do not run git worktree
+prune until it can`;
+and where the unset above would be named, `repair or remove the
+inspection-error rows first: git worktree repair, unset core.worktree and
+core.bare in the repository's config or in a worktree's config.worktree, or
+remove the row by hand after review; a row's path could not be read, so do not
+run git worktree prune until it can`.
 
 `--all-safe` cannot be combined with `--action`, `--branch` or `--worktree`,
 and `--expect-plan` needs `--all-safe` and `--apply`: each is
@@ -376,6 +396,21 @@ carries its next step:
 | `hidden-local-state` | review, then remove the worktree yourself |
 | `operation-in-progress` | a git am, merge, notes merge, cherry-pick, revert, rebase or bisect is, or may be, in progress there; finish or abort it (a squash merge that holds an autostash ends with git commit, --allow-empty where nothing is staged, or with git merge --quit, which keeps the edit in the stash list), or, where --abort fails for a marker with nothing in progress, its --quit, or, where Git leaves such a marker in place, delete it by hand from that worktree's git directory, then run again |
 | `worktree-only-commits` | a commit is, or may be, held only by this worktree's HEAD reflog or refs/worktree; keep it on a branch or tag, or review, then git worktree remove yourself |
+
+Where any row of the plan has a path that could not be read, none of these
+next steps offers `git worktree prune`, which acts on the whole repository and
+deletes the registration of a live worktree whose path Git cannot stat: the
+`registration-mismatch` next step reads `review, then git worktree repair,
+unset core.worktree and core.bare in the repository's config, or in that
+worktree's config.worktree, or remove the row by hand; a row's path could not
+be read, so do not run git worktree prune until it can`, the
+`inspection-error` next step reads `review, then git worktree repair, or
+remove the row by hand; a row's path could not be read, so do not run git
+worktree prune until it can`, and an `inspection-error` row whose own path
+could not be read has a group of its own, listed first, with the next step
+`inspect the row by hand; its path could not be read, so do not run git
+worktree prune until it can`. With every path readable the table above
+applies.
 
 The first four reasons are facts about the row. The next four are its
 classification, one gate, and only a `merged-removable` row passes it.
