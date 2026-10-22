@@ -863,9 +863,12 @@ class BatchTests(clean_support.CleanCase):
         # one registry entry names, by raw bytes or by realpath, is P's own
         # evidence incomplete: nothing is selected for it, no
         # worktree-not-found, and the run refuses with inspection-incomplete,
-        # exit 2, before any target-excluded; nothing is removed.
+        # exit 2, before any target-excluded; nothing is removed. P's rows are
+        # excluded as registration-mismatch, by bytes and by realpath alike, so
+        # the remedy is the variant naming the unset (#19's round (h) at
+        # b3228bb, design.md D18).
         refused = "REFUSED: " + TEXT["plan_incomplete"].format(
-            CODE="inspection-incomplete", REMEDY=TEXT["remedy_inspection_incomplete"]) + "\n"
+            CODE="inspection-incomplete", REMEDY=TEXT["remedy_inspection_incomplete_redirect"]) + "\n"
         # Raw bytes: a copied admin directory lists the same path twice (lane G's
         # fixture), and both rows are inspection-error (registration-mismatch).
         bytes_root = self.repo("bytes-repo")

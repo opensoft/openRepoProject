@@ -12,7 +12,10 @@ on disposable repositories (rule 4), whose eligible rows are made by
 merged_worktree(), a commit of their own (lead ruling R-56). Expected human
 text comes from clean_support's fixtures (rule 8).
 """
+import contextlib
 import errno
+import io
+import json
 import os
 from pathlib import Path
 import threading
@@ -260,11 +263,15 @@ class ReflogTests(clean_support.CleanCase):
                 self.assert_row(row, plan, "inspection-error", [error], False, ["inspection-incomplete"])
                 self.assertEqual(row["recommendation"], INSPECTION_ERROR)
 
-        # A read not finished within the filesystem budget: reflog-unavailable,
-        # the row left unprobed with its probe-timeout (or deadline-exceeded),
-        # its class kept, and the plan incomplete (R-67 (a)). The budget is the
-        # 15 s of an invocation with no deadline, set to 0.3 s in TIMING here,
-        # or 0.3 s of work left under clean's deadline.
+        # A read not finished within the filesystem budget, the deadline not
+        # being the limit: reflog-unavailable, the row left unprobed with its
+        # probe-timeout, its class kept, and the plan incomplete (R-67 (a)).
+        # The budget is the 15 s of an invocation with no deadline, set to
+        # 0.3 s in TIMING here. A read the work deadline cuts, 0.3 s of work
+        # left under clean's deadline, is gate 11's: the row inspection-error
+        # with its deadline-exceeded, never unprobed, and the plan incomplete
+        # with deadline-exceeded (Brett Heap's ruling "O-1:
+        # deadline-exceeded", lead ruling R-263).
         with self.subTest(case="timeout"):
             self.temp_common_reset()
             common, row, plan = self.gate_fixture()
@@ -283,10 +290,12 @@ class ReflogTests(clean_support.CleanCase):
             with project.Invocation("clean") as run, \
                     mock.patch.object(project, "_read_head", self.stuck_read()):
                 run.work_end = run.now() + 0.3
-                self.assertEqual(self.gate(row, plan, run), "reflog-unavailable")
+                self.assertEqual(self.gate(row, plan, run), "inspection-error")
             cut = {"code": "deadline-exceeded",
                    "message": TEXT["row_error_deadline_exceeded"].format(OPERATION="read")}
-            self.assert_row(row, plan, "merged-removable", [cut], True, ["inspection-incomplete"])
+            self.assert_row(row, plan, "inspection-error", [cut], False, ["deadline-exceeded"])
+            self.assertEqual(row["recommendation"], INSPECTION_ERROR)
+            self.assertTrue(project.deadline_stopped(row))
         with self.subTest(case="an unprobed row keeps a reason"):
             self.temp_common_reset()
             common, row, plan = self.gate_fixture()
@@ -353,6 +362,80 @@ class ReflogTests(clean_support.CleanCase):
                 self.assertEqual(result.stderr, refused)
                 self.assertNotIn("[yes/N]", result.stdout)
                 self.assertTrue(control.is_dir() and broken.is_dir(), "nothing removed")
+
+    def main_in_process(self, *argv, fs_call=None):
+        """project's main(ARGV) in this process, in self.env, fs_call replaced
+        by its stand-in: (status, stdout, stderr). A small helper of this
+        module's own (tasks.md rule 3), as test_clean_gates.py has one."""
+        out, err = io.StringIO(), io.StringIO()
+        with contextlib.ExitStack() as stack:
+            stack.enter_context(mock.patch.dict(os.environ, self.env, clear=True))
+            stack.enter_context(mock.patch.object(project, "fs_call", fs_call))
+            stack.enter_context(contextlib.redirect_stdout(out))
+            stack.enter_context(contextlib.redirect_stderr(err))
+            status = project.main([os.fspath(arg) for arg in argv])
+        return status, out.getvalue(), err.getvalue()
+
+    def test_clean_a_reflog_read_cut_by_the_deadline_against_its_budget(self):
+        # Brett Heap's ruling "O-1: deadline-exceeded" (lead ruling R-263;
+        # writer E's O-1), gate 7 split as gate 11's listing is
+        # (test_clean_operation_in_progress_listing_that_fails). In process,
+        # the read of one row's branch reflog made to time out at its budget,
+        # the deadline not being the limit, and to be cut by the work deadline;
+        # every other filesystem call runs as it is. The budget's cut leaves
+        # the row unprobed as `reflog-unavailable`, its class kept, and the
+        # plan incomplete with inspection-incomplete, whose remedy is the
+        # repair one; the deadline's cut makes the row inspection-error with
+        # its deadline-exceeded, never unprobed, and the plan incomplete with
+        # deadline-exceeded, whose refusal prints the deadline's remedy and
+        # never the repair one. The preview exits 1, --apply 2, nothing removed.
+        root = self.repo()
+        self.bare_remote()
+        control = self.merged_worktree("001-control")
+        cut = self.merged_worktree("002-cut")
+        reflog = os.fsencode(self.reflog_file("002-cut"))
+        real_fs_call = project.fs_call
+        cases = (
+            ("its budget", project.DriverOutcome(None, "timeout", detail="no answer within 5 s"),
+             "reflog-unavailable", "merged-removable", MERGED_REMOVABLE,
+             {"code": "probe-timeout", "message": TEXT["row_error_probe_timeout"].format(OPERATION="read", S="5")},
+             "inspection-incomplete", TEXT["remedy_inspection_incomplete"]),
+            ("the work deadline", project.DriverOutcome(None, "deadline", detail="no time was left to start it"),
+             "inspection-error", "inspection-error", INSPECTION_ERROR,
+             {"code": "deadline-exceeded", "message": TEXT["row_error_deadline_exceeded"].format(OPERATION="read")},
+             "deadline-exceeded", TEXT["remedy_deadline_exceeded"]),
+        )
+        for label, answer, reason, classification, advice, error, code, remedy in cases:
+            with self.subTest(f"the reflog read meets {label}"):
+                calls = []
+
+                def fs_call(fn, *args, answer=answer, calls=calls, **options):
+                    if fn is project._read_head and args[:1] == (reflog,):
+                        calls.append(args[0])
+                        return answer
+                    return real_fs_call(fn, *args, **options)
+
+                message = TEXT["plan_incomplete"].format(CODE=code, REMEDY=remedy)
+                for words, status in ((("--all-safe", "--json"), 1), (("--all-safe", "--apply", "--yes", "--json"), 2)):
+                    out_status, out, err = self.main_in_process("clean", root, *words, fs_call=fs_call)
+                    self.assertEqual(out_status, status, out + err)
+                    document = json.loads(out)
+                    self.assertEqual(([entry["path"] for entry in document["selected"]],
+                                      {entry["path"]: entry["reason"] for entry in document["excluded"]}),
+                                     ([str(control)], {str(root): "main-worktree", str(cut): reason}))
+                    [row] = [row for row in document["worktrees"] if row["path"] == str(cut)]
+                    self.assertEqual((row["classification"], row["recommendation"], row["errors"]),
+                                     (classification, advice, [error]))
+                    self.assertEqual((document["completeness"], document["apply_allowed"], document["refusals"]),
+                                     ("incomplete", False, [{"code": code, "message": message}]))
+                out_status, out, err = self.main_in_process("clean", root, "--all-safe", "--apply", "--yes",
+                                                            fs_call=fs_call)
+                self.assertEqual((out_status, err), (2, "REFUSED: " + message + "\n"), out)
+                self.assertNotIn("[yes/N]", out)
+                if code == "deadline-exceeded":
+                    self.assertNotIn(TEXT["remedy_inspection_incomplete"], err)
+                self.assertEqual(calls, [reflog] * 3, "one read per run")
+                self.assertTrue(control.is_dir() and cut.is_dir(), "nothing removed")
 
     # T060: the reflog scenarios.
 

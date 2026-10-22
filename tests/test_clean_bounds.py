@@ -619,6 +619,53 @@ class BoundsTests(clean_support.CleanCase):
         self.assert_bounded_revalidation(root, trees, per_target=7,
                                          row_probes=("rev-parse", "status", "ls-files", "rev-list"))
 
+    def test_clean_the_estimate_counts_an_identity_probe_read_one_option_per_child(self):
+        # Lane 5's RI-3 (#19's round (h) at b3228bb, design.md D14; writer E's
+        # measure, R-259): `git rev-parse` prints one value per line and has no
+        # NUL form, so where the path of the repository's root or of its
+        # common directory holds a line feed, the identity probe is read one
+        # option per child, four children in place of one, wherever it runs:
+        # each revalidation spawns nine, ten where row 4c reads true, and the
+        # final rescan six, and probes.estimated counts them, equal to
+        # probes.performed. Both triggers, two targets each: a root under a
+        # directory whose name holds a line feed, and a plain root whose
+        # separate git directory's name holds one.
+        for label, separate in (("a root holding a line feed", False), ("a git directory holding one", True)):
+            for worktree_config, per_target in ((False, 9), (True, 10)):
+                with self.subTest(label, worktree_config=worktree_config):
+                    case = f"{'gitdir' if separate else 'root'}-{int(worktree_config)}"
+                    top = self.base / case
+                    top.mkdir()
+                    if separate:
+                        root = top / "repo"
+                        self.git(top, "init", "-q", "-b", "main", f"--separate-git-dir={top}/g\nd", root)
+                    else:
+                        root = top / "li\nne" / "repo"
+                        root.mkdir(parents=True)
+                        self.git(root, "init", "-q", "-b", "main")
+                    self.git(root, "commit", "-q", "--allow-empty", "-m", "initial")
+                    self.bare_remote(root, name=f"{case}/remote.git")
+                    trees = [self.merged_worktree(name, path=top / "trees" / name, root=root)
+                             for name in ("001-a", "002-b")]
+                    if worktree_config:
+                        self.git(root, "config", "extensions.worktreeConfig", "true")
+                    lines = self.git(root, "rev-parse", "--path-format=absolute", *project.IDENTITY_OPTIONS)
+                    self.assertGreater(len(lines.rstrip("\n").split("\n")), 2, "the combined probe cannot be read")
+                    preview = self.run_json("clean", root, "--all-safe", "--json")
+                    self.assert_status(preview, 0)
+                    planning = preview.document["probes"]["performed"]
+                    self.assertEqual(preview.document["probes"]["estimated"], planning + per_target * 2 + 6)
+                    result = self.run_json("clean", root, "--all-safe", "--apply", "--yes", "--json")
+                    self.assert_status(result, 0)
+                    document = result.document
+                    self.assertEqual(stages(document), [(str(tree), "removed", None) for tree in trees])
+                    revalidations = [target["probes_performed"] for target in document["targets"]]
+                    self.assertEqual(revalidations, [per_target] * 2)
+                    probes = document["probes"]
+                    self.assertEqual(probes["performed"] - planning - sum(revalidations), 6, "the final rescan's six")
+                    self.assertEqual(probes, {"estimated": planning + per_target * 2 + 6,
+                                              "performed": planning + per_target * 2 + 6})
+
     def assert_bounded_revalidation(self, root, trees, per_target, row_probes):
         """--all-safe --apply --yes --json over trees, three selected targets:
         every revalidation spawns per_target children, the repository's three

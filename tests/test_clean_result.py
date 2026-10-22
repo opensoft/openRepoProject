@@ -192,6 +192,12 @@ for fd in (ack_read, ack_write, read_end):
     os.close(fd)
 if MODE == "remove-first":
     log(event="removed", status=subprocess.run([REAL, *ARGV]).returncode)
+if MODE == "unlink-git":  # the .git file gone, as a kill part way through leaves it (W52 F-1)
+    os.unlink(os.path.join(ARGV[-1], ".git"))
+if MODE == "unregister":  # the registry entry gone, its admin directory renamed out of worktrees/
+    with open(os.path.join(ARGV[-1], ".git")) as stream:
+        admin = stream.read().split("gitdir: ", 1)[1].strip()
+    os.rename(admin, os.path.join(os.path.dirname(os.path.dirname(admin)), "unregistered-" + os.path.basename(admin)))
 log(event="ready", pgid=os.getpgrp())
 while True:
     time.sleep(3600)
@@ -200,8 +206,10 @@ while True:
 
 def ceiling_git(bin_dir, mode):
     """bin_dir/git: on `worktree remove`, the ceiling child in mode (`hang`,
-    or `remove-first`), its events in bin_dir/ceiling-events.jsonl; every
-    other command the real git. Returns the events file."""
+    `remove-first`, `unlink-git`, which unlinks the worktree's `.git` file
+    first, or `unregister`, which first renames its admin directory out of
+    the registry), its events in bin_dir/ceiling-events.jsonl; every other
+    command the real git. Returns the events file."""
     events = Path(bin_dir) / "ceiling-events.jsonl"
     write_script(Path(bin_dir) / "git", f"""#!/bin/sh
 case " $* " in *" worktree remove "*)
@@ -775,6 +783,55 @@ class ResultTests(clean_support.CleanCase):
                 else:
                     self.assertNotIn(note, lines)
                     self.assertFalse(any(line.startswith("Probable partial removal:") for line in lines))
+
+    def test_clean_the_ceiling_s_recovery_text_follows_the_git_file_and_the_entry(self):
+        # Lane 3's W52 F-1 (Brett Heap's ruling "F-1: prune-then-delete", lead
+        # ruling R-263), through the launcher with the ceiling's table above.
+        # The ceiling child leaves the first target with its `.git` file and
+        # registry entry (hang), with its `.git` file gone (unlink-git, as a
+        # kill part way through `git worktree remove` leaves it), or with its
+        # entry gone and its `.git` file kept (unregister). The rescan's reads
+        # pick the partial-removal note: `git worktree remove --force` only
+        # where both are present, otherwise prune, then delete by hand. The
+        # Git first on PATH then answers each note as it says: --force
+        # accepted, or refused (128) with prune accepted and the path left a
+        # plain directory, unregistered, for deletion by hand.
+        table = clean_support.timing_table(removal_ceiling=1.5, term_grace=0.5, reap_wait=0.5)
+        for mode, entry, git_file, key, refused in (
+                ("hang", True, True, "partial_removal_note", None),
+                ("unlink-git", True, False, "partial_removal_note_prune", "validation failed"),
+                ("unregister", False, True, "partial_removal_note_prune", "is not a working tree")):
+            with self.subTest(mode):
+                root, trees = self.batch(f"recovery-{mode}", count=2)
+                planned = [self.head(tree) for tree in trees]
+                bin_dir = self.base / f"recovery-{mode}-bin"
+                ceiling_git(bin_dir, mode)
+                result = self.run_json("clean", root, "--all-safe", "--apply", "--yes", "--json", timing=table,
+                                       env=self.path_first(bin_dir))
+                self.assert_status(result, 1)
+                first, second = result.document["targets"]
+                notes = ["partially-removed"] if entry else ["orphaned-directory", "partially-removed"]
+                self.assertEqual((first["stage"], first["reason"], first["notes"]),
+                                 ("unknown", "removal-ceiling", notes))
+                self.assertEqual(first["reconciliation"], record(entry, True, True, planned[0]))
+                self.assertEqual((second["stage"], second["reason"]), ("not-attempted", "batch-stopped"))
+                self.assertEqual(((trees[0] / ".git").exists(), trees[0].is_dir()), (git_file, True))
+                note = TEXT[key].format(PATH=quoted(trees[0]))
+                self.assertEqual([line for line in result.stderr.splitlines()
+                                  if line.startswith("Probable partial removal:")], [note], result.stderr)
+                force = subprocess.run([REAL_GIT, "-C", str(root), "worktree", "remove", "--force", str(trees[0])],
+                                       env=self.env, capture_output=True, text=True, timeout=TIMEOUT)
+                if refused is None:
+                    self.assertEqual(force.returncode, 0, force.stderr)
+                    self.assertFalse(trees[0].exists())
+                    continue
+                self.assertEqual(force.returncode, 128, force.stderr)
+                self.assertIn(refused, force.stderr)
+                self.git(root, "worktree", "prune")
+                listed = self.git(root, "worktree", "list", "--porcelain")
+                self.assertNotIn(f"worktree {trees[0]}\n", listed)
+                self.assertTrue(trees[0].is_dir(), "left for deletion by hand")
+                self.assertEqual(self.git(root, "worktree", "prune", "--dry-run", "--verbose"), "")
 
     @clean_support.not_root
     def test_clean_unreadable_path_after_removal(self):

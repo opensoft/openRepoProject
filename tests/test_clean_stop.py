@@ -102,6 +102,16 @@ def note_line(path):
     return TEXT["partial_removal_note"].format(PATH=shlex.quote(os.fsdecode(path)))
 
 
+def with_git_file(target, present):
+    """target, a literal target, as a project.Target whose rescan read its
+    `.git` file as present (true, false or None, not read or no value), the
+    one read the partial-removal note's text follows beside the registry
+    entry (lane 3's W52 F-1; lead ruling R-263)."""
+    target = project.Target(target)
+    target.git_file_present = present
+    return target
+
+
 class StopTests(clean_support.CleanCase):
 
     def counting(self, hooks=None):
@@ -227,10 +237,12 @@ class StopTests(clean_support.CleanCase):
             # partially-removed target, its PATH in the command form (R-83,
             # P-2), before the stop block; the result still ends with the stop
             # block, `Branches kept:` and the residual-window line (R-76 (d)).
+            # Its `.git` file and registry entry both found present, the note
+            # keeps --force (W52 F-1, R-263).
             ("partially removed at the ceiling",
              [literal_target("removed", exit_status=0, **p1),
-              literal_target("unknown", "removal-ceiling", path=b"/w/p 2", branch="b2", notes=[NOTE],
-                             reconciliation=record(True, True, True, SHA_B), exit_status=137),
+              with_git_file(literal_target("unknown", "removal-ceiling", path=b"/w/p 2", branch="b2", notes=[NOTE],
+                                           reconciliation=record(True, True, True, SHA_B), exit_status=137), True),
               literal_target("not-attempted", "batch-stopped", **p3)],
              [TEXT["partial_removal_note"].format(PATH="'/w/p 2'"),
               stop_block("/w/p 2", "removal-ceiling", 1, 3, "/w/p3"),
@@ -368,6 +380,42 @@ class StopTests(clean_support.CleanCase):
         self.git(root, "worktree", "unlock", locked)
         self.git(root, "worktree", "remove", "--force", locked)
         self.assertFalse(os.path.lexists(locked), "the note's steps removed the worktree")
+
+    def test_clean_the_ceiling_s_partial_removal_note_follows_the_git_file_and_the_entry(self):
+        # Lane 3's W52 F-1 (Brett Heap's ruling "F-1: prune-then-delete", lead
+        # ruling R-263): Git refuses `git worktree remove --force` once the
+        # target's `.git` file is gone ("validation failed") or its registry
+        # entry is gone ("is not a working tree"). So print_result() keeps
+        # D18's --force note only for a ceiling target whose rescan showed the
+        # entry and the `.git` file both present, and prints the prune note
+        # otherwise, a value not established included; a report row's note is
+        # partial_removal_note()'s and keeps its text (the test above).
+        prune = TEXT.get("partial_removal_note_prune")
+        self.assertEqual(prune, "Probable partial removal: inspect, then git worktree prune and delete {PATH} by "
+                                "hand.")
+        plan = types.SimpleNamespace(root=b"/r oot")
+        for label, entry, path, git_file, key in [
+                ("the entry and the .git file present", True, True, True, "partial_removal_note"),
+                ("the .git file gone", True, True, False, "partial_removal_note_prune"),
+                ("the .git file not established", True, True, None, "partial_removal_note_prune"),
+                ("the entry gone, the path left", False, True, None, "partial_removal_note_prune"),
+                ("the entry not established", None, True, None, "partial_removal_note_prune"),
+                ("the path gone, the entry left", True, False, None, "partial_removal_note_prune")]:
+            with self.subTest(label):
+                target = with_git_file(literal_target(
+                    "unknown", "removal-ceiling", path=b"/w/p 2", branch="b2", notes=[NOTE],
+                    reconciliation=record(entry, path, True, SHA_B), exit_status=137), git_file)
+                self.assertEqual(project.partial_removal_text(target), key)
+                run = types.SimpleNamespace(human=io.StringIO(), write_error=None)
+                project.print_result(plan, [target], run)
+                lines = run.human.getvalue().splitlines()
+                self.assertEqual([line for line in lines if line.startswith("Probable partial removal:")],
+                                 [TEXT[key].format(PATH="'/w/p 2'")])
+                self.assertEqual(lines[0], TEXT[key].format(PATH="'/w/p 2'"), "the note prints first")
+        with self.subTest("a plain dict carries no .git read"):
+            target = literal_target("unknown", "removal-ceiling", notes=[NOTE],
+                                    reconciliation=record(True, True, True, SHA_B), exit_status=137)
+            self.assertEqual(project.partial_removal_text(target), "partial_removal_note_prune")
 
 
 class KilledDuringDeletionTests(clean_support.CleanCase):

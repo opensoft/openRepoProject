@@ -624,12 +624,18 @@ TEXT_FIXTURES = {
     "success_line": "Removed {N}; branches kept: {BRANCHES}.",
     "stop_block": "Stopped at {PATH} ({REASON}). Removed {K} of {N}. Not attempted: {NOT_ATTEMPTED}. Next: project clean {ROOT} --all-safe",
     "partial_removal_note": "Probable partial removal: inspect, then git worktree remove --force {PATH} by hand.",
+    # The ceiling's note where the rescan does not show both the target's .git and its
+    # registry entry present (W52 F-1; Brett Heap's ruling "F-1: prune-then-delete", R-263).
+    "partial_removal_note_prune": "Probable partial removal: inspect, then git worktree prune and delete {PATH} by hand.",
     # D18's note for a locked worktree (#19 at 4f1c0e0, design.md:1225-1228; W52 F-2, R-248),
     # which replaces ratified text and so waits on Brett Heap's word.
     "partial_removal_note_locked": "Probable partial removal: inspect, unlock it, then git worktree remove --force {PATH} by hand.",
     # D18: refusal messages and remedies.
     "target_excluded_gate": "Worktree is excluded: {REASON}; {NEXT_STEP}",
     "remedy_inspection_incomplete": "repair or remove the inspection-error rows first: git worktree repair, git worktree prune, or remove the row by hand after review",
+    # The variant where any row the refusal counts is excluded as registration-mismatch, a
+    # redirected linked worktree (#19's round (h) at b3228bb, design.md D18).
+    "remedy_inspection_incomplete_redirect": "repair or remove the inspection-error rows first: git worktree repair, git worktree prune, unset core.worktree and core.bare in the repository's config or in a worktree's config.worktree, or remove the row by hand after review",
     "remedy_inspect_cap": "{N} rows exceed the row cap of {M}; remove worktrees explicitly, or prune stale entries by hand",
     "remedy_deadline_exceeded": "the run ran out of time; remove worktrees explicitly or re-run",
     # The contract, beyond D18.
@@ -700,7 +706,7 @@ NEXT_STEP_FIXTURES = {
     "reflog-unavailable": "the branch's reflog is missing, expired or undecidable; review, then git worktree remove yourself (--force if it holds a submodule)",
     "contains-submodule": "review, then git worktree remove --force yourself",
     "hidden-local-state": "review, then remove the worktree yourself",
-    "operation-in-progress": "a git am, merge, notes merge, cherry-pick, revert, rebase or bisect is, or may be, in progress there; finish or abort it (a squash merge that holds an autostash ends with git commit, --allow-empty where nothing is staged, or with git merge --quit, which keeps the edit in the stash list), or, where --abort fails for a marker with nothing in progress, its --quit, then run again",
+    "operation-in-progress": "a git am, merge, notes merge, cherry-pick, revert, rebase or bisect is, or may be, in progress there; finish or abort it (a squash merge that holds an autostash ends with git commit, --allow-empty where nothing is staged, or with git merge --quit, which keeps the edit in the stash list), or, where --abort fails for a marker with nothing in progress, its --quit, or, where Git leaves such a marker in place, delete it by hand from that worktree's git directory, then run again",
     "worktree-only-commits": "a commit is, or may be, held only by this worktree's HEAD reflog or refs/worktree; keep it on a branch or tag, or review, then git worktree remove yourself",
     # W52 F-3 (#19 at 4f1c0e0, design.md:1210-1213; R-248).
     "registration-mismatch": "review, then git worktree repair or git worktree prune, unset core.worktree and core.bare in the repository's config, or in that worktree's config.worktree, or remove the row by hand",

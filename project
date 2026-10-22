@@ -583,7 +583,9 @@ TIMING = {
 # each plan mode; the first five keys are the plan's `limits` object. A
 # target's revalidation spawns at most six Git children, seven where the plan
 # read the repository's extensions.worktreeConfig as true (design D7 and D14;
-# LQ-11, LQ-13; lead ruling R-165); revalidation_children() picks one.
+# LQ-11, LQ-13; lead ruling R-165); revalidation_children() picks one. Where
+# the identity probe is read one option per child (identity_split_children()),
+# each revalidation and the final rescan spawn three more (#19's round (h)).
 LIMITS = {
     "worktree_rows": {"report": 256, "all-safe": 128, "single": 128},
     "targets": 16,
@@ -714,6 +716,14 @@ TEXT = {
         "Stopped at {PATH} ({REASON}). Removed {K} of {N}. Not attempted: {NOT_ATTEMPTED}. "
         "Next: project clean {ROOT} --all-safe",
     "partial_removal_note": "Probable partial removal: inspect, then git worktree remove --force {PATH} by hand.",
+    # The ceiling's note where the rescan does not show both the target's
+    # `.git` and its registry entry present: Git then refuses `git worktree
+    # remove --force` ("validation failed" with the `.git` file gone, "is not
+    # a working tree" with the entry gone) and accepts `git worktree prune`
+    # (lane 3's W52 F-1; Brett Heap's ruling "F-1: prune-then-delete", lead
+    # ruling R-263, amending ratified 0050f3e pcl:922-926).
+    "partial_removal_note_prune":
+        "Probable partial removal: inspect, then git worktree prune and delete {PATH} by hand.",
     # D18's note for a locked worktree's row, which `git worktree remove
     # --force` refuses (#19 at 4f1c0e0; lane 3's W52 F-2, R-248). It replaces
     # ratified text, so it waits on Brett Heap's word, in a commit of its own.
@@ -723,6 +733,13 @@ TEXT = {
     "target_excluded_gate": "Worktree is excluded: {REASON}; {NEXT_STEP}",
     "remedy_inspection_incomplete":
         "repair or remove the inspection-error rows first: git worktree repair, git worktree prune, "
+        "or remove the row by hand after review",
+    # The variant where any row the refusal counts is excluded as
+    # `registration-mismatch`, a linked worktree redirected by core.worktree or
+    # core.bare (#19's round (h) at b3228bb, design.md D18; lane 2's R-258).
+    "remedy_inspection_incomplete_redirect":
+        "repair or remove the inspection-error rows first: git worktree repair, git worktree prune, "
+        "unset core.worktree and core.bare in the repository's config or in a worktree's config.worktree, "
         "or remove the row by hand after review",
     "remedy_inspect_cap":
         "{N} rows exceed the row cap of {M}; remove worktrees explicitly, or prune stale entries by hand",
@@ -826,12 +843,15 @@ NEXT_STEPS = {
     "hidden-local-state": "review, then remove the worktree yourself",
     # LQ-14 (lead rulings R-126, R-146 and R-171; #19 at 2e819ad, lane 3's W26
     # F-1), and the --quit clause for a marker left with nothing in progress
-    # (W52 F-9, R-248; worded as lane 3's W59 G-5 has it, for #19's round (g3)).
+    # (W52 F-9, R-248; worded as lane 3's W59 G-5 has it, for #19's round (g3)),
+    # then the by-hand clause for a marker no Git command clears (writer E's
+    # table, R-259; #19's round (h) at b3228bb, design.md D18).
     "operation-in-progress":
         "a git am, merge, notes merge, cherry-pick, revert, rebase or bisect is, or may be, in progress there; "
         "finish or abort it (a squash merge that holds an autostash ends with git commit, --allow-empty where "
         "nothing is staged, or with git merge --quit, which keeps the edit in the stash list), or, where --abort "
-        "fails for a marker with nothing in progress, its --quit, then run again",
+        "fails for a marker with nothing in progress, its --quit, or, where Git leaves such a marker in place, "
+        "delete it by hand from that worktree's git directory, then run again",
     # LQ-13.
     "worktree-only-commits":
         "a commit is, or may be, held only by this worktree's HEAD reflog or refs/worktree; keep it on a branch "
@@ -3840,10 +3860,11 @@ def check_plan(plan, run):
         return 2 if plan.refusals else 0
     single, removing = plan.mode == "single", plan.action == "remove"
     target_rows = getattr(plan, "target_rows", [])
-    codes = plan_completeness(plan, target_rows if single and removing else ())
+    exclude = target_rows if single and removing else ()
+    codes = plan_completeness(plan, exclude)
     if codes:
         for code in codes:
-            refuse(plan, incomplete_refusal(plan, code), run)
+            refuse(plan, incomplete_refusal(plan, code, exclude), run)
         return 2 if apply else 1
     if plan.refusals:
         return 2
@@ -3852,7 +3873,7 @@ def check_plan(plan, run):
     if single:
         target = plan.target
         if target is None or row_incomplete(target):
-            return refuse(plan, incomplete_refusal(plan, "inspection-incomplete"), run)
+            return refuse(plan, incomplete_refusal(plan, "inspection-incomplete", rows=target_rows), run)
         reason = next((reason for row, reason in plan.excluded if row is target), None)
         if reason is not None:
             return refuse(plan, target_refusal(target, reason), run)
@@ -4122,10 +4143,22 @@ def deadline_stopped(row):
     (T099; lead rulings R-67 (a), R-69 and R-80, P-1): `inspection-error`,
     every row error `deadline-exceeded`, and no unprobed marker. Such a row is
     `deadline-exceeded`'s, never `inspection-incomplete`'s; a row left
-    unprobed by its reflog read stays `inspection-incomplete`'s, whatever cut
-    the read."""
+    unprobed by its reflog read, which only a cut at the filesystem budget
+    leaves, stays `inspection-incomplete`'s, while one whose reflog read the
+    deadline cut is inspection-error and so this function's (reflog_gate();
+    Brett Heap's ruling "O-1: deadline-exceeded", lead ruling R-263)."""
     return (not row.unprobed and row["classification"] == "inspection-error"
             and cut_at_deadline(row.get("errors")))
+
+
+def counted_rows(plan, exclude=()):
+    """The rows of plan.rows that plan_completeness() counts, in their order:
+    those not in exclude, and in mode single for --action remove only P's
+    own (plan.target_rows). incomplete_refusal() counts the same rows."""
+    skip = {id(row) for row in exclude}
+    named = plan.mode == "single" and plan.action == "remove"
+    own = {id(row) for row in getattr(plan, "target_rows", [])}
+    return [row for row in plan.rows if id(row) not in skip and (id(row) in own or not named)]
 
 
 def plan_completeness(plan, exclude=()):
@@ -4150,8 +4183,7 @@ def plan_completeness(plan, exclude=()):
     skip = {id(row) for row in exclude}
     target_rows = getattr(plan, "target_rows", [])
     named = plan.mode == "single" and plan.action == "remove"
-    own = {id(row) for row in target_rows}
-    counted = [row for row in plan.rows if id(row) not in skip and (id(row) in own or not named)]
+    counted = counted_rows(plan, exclude)
     errors = (plan.evidence or {}).get("errors") or []
     incomplete = [row for row in counted if row_incomplete(row)]
     stopped = [row for row in incomplete if deadline_stopped(row)]
@@ -4166,14 +4198,23 @@ def plan_completeness(plan, exclude=()):
     return codes
 
 
-def incomplete_refusal(plan, code):
+def incomplete_refusal(plan, code, exclude=(), rows=None):
     """The refusal of a plan incomplete with code (FR-024, FR-031; design D18):
     `The plan is incomplete (CODE): REMEDY.`, REMEDY D18's for the code. The
     inspect-cap remedy's N counts the registry entries that become rows, as
     the row cap and build_plan() count them: a bare first entry, and a first
     entry that is the common directory with no main worktree named, are no
     rows (D8; contracts/project-clean.md, "Codes"; lead rulings R-73 (d) and
-    R-89 (b))."""
+    R-89 (b)). The inspection-incomplete remedy is the variant
+    `remedy_inspection_incomplete_redirect`, which names the unset of
+    core.worktree and core.bare, where any row the refusal counts is excluded
+    as `registration-mismatch` (plan.excluded), as a linked worktree that
+    core.worktree or core.bare redirects is, its own row inspection-error
+    (#19's round (h) at b3228bb, design.md D18): rows, when given, are those
+    rows (check_plan()'s step 3 gives P's rows); otherwise the rows
+    plan_completeness(plan, exclude) counts toward inspection-incomplete,
+    counted_rows()'s that are inspection-error or unprobed and not
+    deadline_stopped(). Otherwise the base remedy."""
     if code == "inspect-cap":
         evidence = plan.evidence or {}
         registry = evidence.get("records") or ()
@@ -4183,7 +4224,12 @@ def incomplete_refusal(plan, code):
     elif code == "deadline-exceeded":
         remedy = TEXT["remedy_deadline_exceeded"]
     else:
-        remedy = TEXT["remedy_inspection_incomplete"]
+        if rows is None:
+            rows = [row for row in counted_rows(plan, exclude) if row_incomplete(row) and not deadline_stopped(row)]
+        mismatched = {id(row) for row, reason in getattr(plan, "excluded", None) or ()
+                      if reason == "registration-mismatch"}
+        redirect = any(id(row) in mismatched for row in rows)
+        remedy = TEXT["remedy_inspection_incomplete_redirect" if redirect else "remedy_inspection_incomplete"]
     return Refused(TEXT["plan_incomplete"].format(CODE=code, REMEDY=remedy), code=code)
 
 
@@ -4238,10 +4284,33 @@ def revalidation_children(plan):
     plan read the repository's extensions.worktreeConfig as true"; lead ruling
     R-165): LIMITS["revalidation_children_worktree_config"] where the plan's
     row 4c read the extension as true, as revalidation_difference() then runs
-    the effective-work-tree probe, else LIMITS["revalidation_children"]."""
+    the effective-work-tree probe, else LIMITS["revalidation_children"]; each
+    plus identity_split_children(plan), the three more children of an
+    identity probe read one option per child (#19's round (h))."""
     evidence = getattr(plan, "evidence", None) or {}
     worktree_config = evidence.get("worktree_config") is True
-    return LIMITS["revalidation_children_worktree_config" if worktree_config else "revalidation_children"]
+    bound = LIMITS["revalidation_children_worktree_config" if worktree_config else "revalidation_children"]
+    return bound + identity_split_children(plan)
+
+
+def identity_split_children(plan):
+    """The children the identity probe adds where it is read one option per
+    child (identity_probe()), every time it runs: len(IDENTITY_OPTIONS),
+    three, beside its combined child, where the path of the plan's repository
+    root or of its common directory, as the plan read them, holds a line
+    feed, since `git rev-parse` prints one value per line and has no NUL
+    form; otherwise 0 (lane 5's RI-3, writer E's measure; #19's round (h) at
+    b3228bb, design.md D14: a revalidation then spawns at most nine children,
+    ten where row 4c reads true, and the final rescan six)."""
+    identity = (getattr(plan, "evidence", None) or {}).get("identity") or {}
+    split = any(b"\n" in (identity.get(key) or b"") for key in ("root", "common_dir"))
+    return len(IDENTITY_OPTIONS) if split else 0
+
+
+def rescan_children(plan):
+    """The most Git children the final rescan spawns: LIMITS["rescan_children"],
+    three, plus identity_split_children(plan) (#19's round (h) at b3228bb)."""
+    return LIMITS["rescan_children"] + identity_split_children(plan)
 
 
 def plan_limits(mode):
@@ -4269,8 +4338,10 @@ def plan_document(plan):
     `worktrees`, the rows in canonical order, row `notes` code strings;
     `probes` and `operations` (research.md R8; lead ruling R-27), `estimated`
     the upper bound of an --apply run of this plan in every mode, F + W + E +
-    RT + 3 and T, R the children of one revalidation (revalidation_children(),
-    six or seven) and 3 the final rescan's (LIMITS["rescan_children"]), and
+    RT + S and T, R the children of one revalidation (revalidation_children(),
+    six or seven, three more each where the identity probe is read one option
+    per child) and S the final rescan's (rescan_children(), three, or six
+    then; #19's round (h)), and
     `performed` from the counters of the invocation in force;
     `selected` (select_entry()), `excluded` {path, path_valid_utf8, branch,
     classification, reason}, `omitted` ({count: 0, exactness: "exact"} until
@@ -4297,7 +4368,7 @@ def plan_document(plan):
         "limits": plan_limits(plan.mode),
         "budget": plan_budget(),
         "probes": {"estimated": getattr(plan, "planning_probes", 0) + revalidation_children(plan) * targets
-                   + LIMITS["rescan_children"], "performed": run.probes},
+                   + rescan_children(plan), "performed": run.probes},
         "operations": {"estimated": targets, "performed": run.operations},
         "selected": None if selected is None else [select_entry(row, plan) for row in selected],
         "excluded": [{"path": row["path"], "path_valid_utf8": row["path_valid_utf8"], "branch": row.get("branch"),
@@ -4793,8 +4864,9 @@ def read_reflog(common_dir, branch, head, run, named=None):
     needs no fstat (R-33); it is never a Git child. ENOENT or ENOTDIR is
     (`reflog-unavailable`, None); any other OSError (`inspection-error`, its
     `os-error` for OPERATION read); a call cut at its budget or the deadline
-    (`reflog-unavailable`, its `probe-timeout` or `deadline-exceeded`), the
-    row to be left unprobed; and bytes read, (reflog_outcome(data, head),
+    (`reflog-unavailable`, its `probe-timeout` or `deadline-exceeded`), which
+    reflog_gate() leaves unprobed, or for the deadline makes
+    inspection-error; and bytes read, (reflog_outcome(data, head),
     None). run is the invocation in force, whose per-child budget fs_call()
     gives the read and the timeout message names, as _fs() does; Interrupted
     passes up. named, when given, is a list that receives the non-zero
@@ -4832,25 +4904,31 @@ def reflog_gate(row, plan, run):
     `inspection-error`, after putting an `os-error` in row["errors"] and
     setting row["classification"] to inspection-error, for any other read
     error; and None when a movement survives. A read not finished within the
-    filesystem budget returns `reflog-unavailable` AND sets row.unprobed, the
-    marker's only setter, which plan_completeness() reads as
-    inspection-incomplete; its `probe-timeout` or `deadline-exceeded` goes in
-    row["errors"], as the delta records for every filesystem call cut at its
-    budget. The inspection-error row also takes that class's
-    recommendation, as classify() pairs them. It sets row.reflog_objects, the
-    non-zero objects the reflog names, which gate 12 and the revalidation take
-    as negatives, as they were (D21, LQ-13); no document writes it."""
+    filesystem budget, the work deadline not being the limit, returns
+    `reflog-unavailable` AND sets row.unprobed, the marker's only setter,
+    which plan_completeness() reads as inspection-incomplete; its
+    `probe-timeout` goes in row["errors"], as the delta records for every
+    filesystem call cut at its budget. A read the work deadline cuts
+    (read_cut()) is gate 11's: its `deadline-exceeded` goes in row["errors"]
+    and the row is `inspection-error`, never unprobed (_index_undecided()),
+    so that deadline_stopped() names it and the plan is incomplete with
+    `deadline-exceeded`, whose refusal prints no repair remedy, as for every
+    other read (Brett Heap's ruling "O-1: deadline-exceeded", lead ruling
+    R-263, amending ratified 0050f3e pcl:606-608; writer E's O-1). The
+    inspection-error row also takes that class's recommendation, as
+    classify() pairs them. It sets row.reflog_objects, the non-zero objects
+    the reflog names, which gate 12 and the revalidation take as negatives,
+    as they were (D21, LQ-13); no document writes it."""
     common_dir = plan.evidence["identity"]["common_dir"]
     named = []
     reason, error = read_reflog(common_dir, row["branch"], row["head"], run, named)
     row.reflog_objects = tuple(named)
-    if error is not None:
-        row["errors"].append(error)
-        if reason == "inspection-error":
-            row["classification"] = "inspection-error"
-            row["recommendation"] = RECOMMENDATIONS["inspection-error"]
-        else:
-            row.unprobed = True
+    if error is None:
+        return reason
+    if reason == "inspection-error" or read_cut(error):
+        return _index_undecided(row, error)
+    row["errors"].append(error)
+    row.unprobed = True
     return reason
 
 
@@ -5276,10 +5354,14 @@ class Target(dict):
     `reconciliation`, the record, or None while none was read. As attributes,
     what no document writes: `row`, the plan's selected WorktreeRow;
     `removal_args`, its removal's arguments (region dispatcher, Plan); `root`,
-    the command directory; and `identity`, the plan's repository identity
-    {root, common_dir, dev, ino}, which the rescan re-establishes first."""
+    the command directory; `identity`, the plan's repository identity
+    {root, common_dir, dev, ino}, which the rescan re-establishes first; and
+    `git_file_present`, whether the rescan found the target's `.git` present
+    (git_file_presence()), None where it did not read it or the read gave no
+    value, which only the human partial-removal note reads
+    (partial_removal_text(); lane 3's W52 F-1, lead ruling R-263)."""
 
-    row = removal_args = root = identity = None
+    row = removal_args = root = identity = git_file_present = None
 
 
 def make_target(plan, row):
@@ -5341,6 +5423,20 @@ def path_presence(raw, budget=None):
     if isinstance(found, DriverOutcome):
         return None
     return presence_from_lstat(found)[0]
+
+
+def git_file_presence(raw):
+    """Whether the `.git` of the worktree at raw, the registry's path bytes,
+    is present (lane 3's W52 F-1; Brett Heap's ruling "F-1:
+    prune-then-delete", lead ruling R-263): one lstat of raw/.git through
+    path_presence(), at the per-child budget, never a Git child. True when
+    it succeeds, false on ENOENT or ENOTDIR, and None on any other error, a
+    call cut at its budget, or a second SIGINT, which abandons the call
+    (Interrupted does not pass, as it never leaves the rescan)."""
+    try:
+        return path_presence(os.path.join(os.fsencode(raw), b".git"))
+    except Interrupted:
+        return None
 
 
 def reserve_budget(run):
@@ -6020,7 +6116,16 @@ def rescan(target, run):
     narrowed listing; lead ruling R-77 (a)) and an lstat of the planned path.
     Returns the reconciliation record: whether the registry still lists the
     planned path, whether the path is present, and the branch's presence and
-    SHA, a value not established null.
+    SHA, a value not established null. Last, only where the registry entry
+    and the path are both shown present, one lstat of the target's `.git`
+    (git_file_presence()), never a Git child, kept on the target as
+    `git_file_present` and in no record: Git refuses `git worktree remove
+    --force` once that file is gone, so the partial-removal note that a
+    removal cut at its ceiling prints names that command only where both
+    are present (partial_removal_text(); lane 3's W52 F-1, Brett Heap's
+    ruling "F-1: prune-then-delete", lead ruling R-263). Its failure, its
+    cut or a second SIGINT during it leaves `git_file_present` None and the
+    record as the other reads made it.
 
     These three repository children, with the manifest value, are left on
     run as `rescan_part`, for the next selected target's revalidation to
@@ -6037,7 +6142,7 @@ def rescan(target, run):
     stay null, the record is an UnfinishedRescan, and no part is left for a
     next target. Interrupted never leaves the rescan."""
     before = run.probes
-    run.rescan_part = None
+    run.rescan_part = target.git_file_present = None
     root = os.fsencode(target.root)
     planned = target.identity
     records = refs = path_present = None
@@ -6060,6 +6165,8 @@ def rescan(target, run):
         run.rescan_part, abandoned = None, True
     registry_entry_present = None if records is None else any(
         record["path"] == target["path"] for record in records)
+    if not abandoned and registry_entry_present is True and path_present is True:
+        target.git_file_present = git_file_presence(target["path"])  # W52 F-1
     branch_present, branch_sha = _branch_evidence(target, refs)
     reconciliation = reconciliation_record(registry_entry_present, path_present, branch_present, branch_sha)
     if abandoned or None in (records, refs, path_present):
@@ -6094,7 +6201,8 @@ def decide_stage(target, outcome, reconciliation):
       D9): the rescan alone decides, `removed` when the entry and the path
       are gone and the record is reconciled, otherwise `unknown`, each with
       `removal-ceiling`, and the note `partially-removed` while the entry or
-      the path is shown to remain; a repository found replaced or lost at
+      the path is shown to remain, whose human text partial_removal_text()
+      picks (W52 F-1, R-263); a repository found replaced or lost at
       the ceiling, every field null, is `unknown` with `removal-ceiling` and
       no note.
 
@@ -6260,7 +6368,7 @@ def apply_removals(plan, run):
     best_effort(print_result, plan, targets, run)
     if getattr(run.args, "json", False):
         estimated = (getattr(plan, "planning_probes", 0) + revalidation_children(plan) * len(targets)
-                     + LIMITS["rescan_children"])
+                     + rescan_children(plan))
         best_effort(lambda: write_document(result_document(
             targets, status, repository=getattr(plan, "repository", None), merge_target=plan.merge_target,
             plan_digest=plan.digest, probes={"estimated": estimated, "performed": run.probes},
@@ -6388,13 +6496,33 @@ def branch_not_confirmed(target):
     return present is False or (present is None and target["stage"] in RESCANNED_STAGES)
 
 
+def partial_removal_text(target):
+    """The TEXT key of the partial-removal note of a target noted
+    `partially-removed` at its removal ceiling (lane 3's W52 F-1; Brett
+    Heap's ruling "F-1: prune-then-delete", lead ruling R-263), a pure
+    function: `partial_removal_note`, whose `git worktree remove --force`
+    Git accepts, only where the rescan showed both the registry entry
+    (`registry_entry_present` true) and the target's `.git`
+    (`git_file_present` true) present; otherwise `partial_removal_note_prune`,
+    since Git refuses that command once the `.git` file is gone ("validation
+    failed") or the entry is gone ("is not a working tree"), and a value not
+    established never shows both present. A target that is a plain dict
+    carries no `.git` read. print_result()'s alone; a report row's note is
+    partial_removal_note()'s and keeps its own text."""
+    entry = (target["reconciliation"] or {}).get("registry_entry_present")
+    if entry is True and getattr(target, "git_file_present", None) is True:
+        return "partial_removal_note"
+    return "partial_removal_note_prune"
+
+
 def print_result(plan, targets, run):
     """The human result of an apply (design D18; lead rulings R-56 Q-9,
     R-76 (d) and (f) and R-79, P-10 and P-11), after every target's progress
     line, through say(), so standard error under --apply --json and a failed
     write recorded, never raised. First, D18's partial-removal note for each
     target noted `partially-removed`, in canonical order, its PATH in the
-    command form (lead ruling R-83, P-2). Then, when every target is
+    command form (lead ruling R-83, P-2), its text partial_removal_text()'s
+    (W52 F-1, R-263). Then, when every target is
     `removed` with reason null, `Removed N; branches kept: B1, B2.`, naming
     every selected target's branch, since the apply phase deletes no branch;
     otherwise D18's stop block at the first target that is not, its `Not
@@ -6408,7 +6536,7 @@ def print_result(plan, targets, run):
     their command form."""
     for target in targets:
         if "partially-removed" in (target["notes"] or ()):
-            say(run, TEXT["partial_removal_note"].format(PATH=human_path(target["path"], command=True)))
+            say(run, TEXT[partial_removal_text(target)].format(PATH=human_path(target["path"], command=True)))
     stop = next((target for target in targets
                  if not (target["stage"] == "removed" and target["reason"] is None)), None)
     if stop is None:
