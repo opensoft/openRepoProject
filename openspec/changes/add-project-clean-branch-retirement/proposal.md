@@ -89,7 +89,7 @@ the measured costs, a flagged run of 16 taking all 16 at 10,000-file
 removals, and its question for Brett Heap is about the packet's flat 150 ms
 and the 20,000-file case only; each departure cites the packet line it
 changes, as lane openRepoProject-3's departure ledger gives it; the cites of
-PR #19's design move to `662be89`, its current head, `6bf9f77`, after its
+PR #19's design move to `662be89`, its head then being `6bf9f77`, after its
 rounds (g) to (g3), keeping every figure and input this change cites, and
 main is named at `15504f1`, Codex's review of `36adbc0` having found no major
 issues;
@@ -99,11 +99,18 @@ LOW): the `head-not-merge-target`, main-worktree `branch-in-use` and
 `branch-changed` lines, whose own steps end in the retry for a branch the
 stage did not re-prove, name the reflog inspection before the retry too,
 every other own step tested and kept; step 1 words the gate's outcome
-relatively, so that it holds on PR #19's round (h), `b3228bb`, its current
-head, where a read the deadline cuts records `deadline-exceeded`; D14's new
+relatively, so that it holds on PR #19's round (h), `b3228bb`, its head
+then, where a read the deadline cuts records `deadline-exceeded`; D14's new
 case for a path that holds a line feed is priced and A-47's figures stand;
 and W69's other LOW are applied, Codex's review of `1cc2d9c` having drawn
 only its usage-limit reply;
+round A18 applied the lane's rulings A-63 and A-64, with lane
+openRepoProject-3's W78 confirm read of round A17 (0 HIGH, 0 MEDIUM and 4
+LOW): the plan-keep lines name the branch's reflog and say that only this
+run's plan proved it, the keep order's account names the inspection, the
+line-feed case's 13 retired is said to rest on D14's rounding, and PR #19's
+current head is named at its round (i), `e0c91bb`, whose D14 and task 2.1
+leave every figure unchanged, Codex still being at its usage limit;
 nothing here is ratified. Governing issue:
 opensoft/openRepoProject#23, claimed by lane openRepoProject-5 (comment
 6111211798); refs #6, the record of the project maintenance design packet.
@@ -149,15 +156,19 @@ design and of `f0bf538`'s spec in this change held there by content (ruling
 A-57); its spec moved in three of the seven requirements this change
 modifies and in the classification requirement, none of them cited here, and
 the lane's record says that this change needs nothing from round (g) (its
-rulings file at `:1813` and `:1820`, below). PR #19's current head is
-`b3228bb`, after that lane's round (h), `e322f52`, `324192f` and `fc95766`
-before it, which carries Brett Heap's R-263: its task 2.1 and every D14
-figure this change takes are unchanged there, its D14 adding a case for a
-root or common-directory path that holds a line feed (ruling A-62), and every
-cite of `662be89`'s design and of `f0bf538`'s spec holds there by content, at
-the lines `design.md` D7 gives, but for the two child counts that round (h)
-qualifies for such a path, so that the cites stay at those shas (rulings
-A-59 and A-62).
+rulings file at `:1813` and `:1820`, below). At `b3228bb`, after that
+lane's round (h), `e322f52`, `324192f` and `fc95766` before it, which carries
+Brett Heap's R-263, its task 2.1 and every D14 figure this change takes were
+unchanged, its D14 adding a case for a root or common-directory path that
+holds a line feed (ruling A-62), and every cite of `662be89`'s design and of
+`f0bf538`'s spec held there by content, but for the two child counts that
+round (h) qualifies for such a path (rulings A-59 and A-62). PR #19's current
+head is `e0c91bb`, after that lane's round (i), `4204eb9`, `b60f6ac` and
+`1a4785e` before it: its D14, the line-feed paragraph included, and its task
+2.1 equal `b3228bb`'s byte for byte, and every such cite holds there by
+content, at the lines `design.md` D7 gives, so that the cites stay at those
+shas (ruling A-64); its spec moves only in the ceiling's recovery text, which
+this change carries only in blocks that keep `c462d87`'s and main's text.
 `project:N` and `tests:N` are
 `project` and `tests/test_project.py` at `961c405`. Main is now `15504f1`,
 whose `ideation/` has moved from `961c405`'s with packet revision 1
@@ -194,7 +205,9 @@ triggered it, A-53 on round A15's question, A-54 on lane openRepoProject-3's
 departure ledger, A-55 and A-56 on that lane's confirm read of round A15,
 and A-57 on PR #19's head at round (g3), and its rulings for round A17, A-59
 on PR #19's round (h), A-60 and A-61 on lane openRepoProject-3's W69 confirm
-read of round A16, and A-62 on D14's line-feed case, bind this draft and are
+read of round A16, and A-62 on D14's line-feed case, and its rulings for
+round A18, A-63 on lane openRepoProject-3's W78 confirm read of round A17 and
+A-64 on PR #19's round (i), bind this draft and are
 applied under Decisions and in the round tables. That wave's readers are lane
 openRepoProject-5's RA (an adversarial read of `01b5dd8`), RD (how this change,
 PR #27 at `fe5b245` and PR #29 at `e11d755` compose in archive order) and RE
@@ -250,8 +263,12 @@ of lane openRepoProject-3's W62 sums at `:1884-1888`, read at its later
 `origin/main` `dd6957f0b`, and A-57 at `:1983`, read at its `origin/main`
 `9fbf8eb99`, and PR #19's round (h) at `:2059`, A-59 at `:2075`, #26's late
 read at 1cc2d9c at `:2081`, W69's findings at `:2099`, A-60 at `:2118`, A-61
-at `:2122` and A-62 at `:2139`, read at its `origin/main` `130e21064`; the
-reader files RI and RH, at
+at `:2122` and A-62 at `:2139`, read at its `origin/main` `130e21064`, and
+#26's late read at 04db6ef at `:2247`, W78's findings at `:2248`, A-63 at
+`:2265`, PR #19's round (i) at `:2283` and A-64 at `:2289`, read at its
+`origin/main` `7a6bae367`, W78's findings file,
+`attachments/lane-openRepoProject-3/confirm-a17-findings.md`, attached at
+`7bd999a06`; the reader files RI and RH, at
 `S/review-1022/`, are the lane's working records, cited by finding id, RI-1 to
 RI-9 and M2, M3, L1 and L3, and RH's item 6; lane openRepoProject-3's confirm
 read of round A14,
@@ -779,18 +796,23 @@ their `CAS` line.
   blocks are byte-identical on `main` and PR #19 at `c462d87`. PR #19 has
   since moved: at `1ebdd90`, at `6f2cb54`, at `a664799`, at `9267303`, at
   `f0bf538`, at `662be89`, its round (f), whose spec text equals
-  `f0bf538`'s, at `6bf9f77`, after its rounds (g), (g2) and (g3), and at
-  `b3228bb`, its current head, after its round (h), it changes all seven
+  `f0bf538`'s, at `6bf9f77`, after its rounds (g), (g2) and (g3), at
+  `b3228bb`, after its round (h), and at `e0c91bb`, its current head, after
+  its round (i), it changes all seven
   requirements this change modifies, and the inputs of `design.md` D7's fit,
   which D7 states at `c462d87`, at `6f2cb54`, at `a664799`, at `9267303`, at
   `f0bf538` and at `662be89`, where LQ-20's step (i) measured the two probes
-  that moved D14's measured basis, each of them unchanged at `b3228bb`, whose
-  D14 adds a case for a path that holds a line feed (`design.md` D7; ruling
-  A-62). At `b3228bb` the text of all seven requirements differs from this
-  change's sources, and five of the seven blocks would not carry their
-  scenarios from it, 15 scenarios in all, where lane openRepoProject-3's W60
-  counted 14 at `f0bf538` and `662be89` and this change counted 14 at
-  `6bf9f77`: round (h) adds an AND to the retire requirement's scenario "A
+  that moved D14's measured basis, each of them unchanged at `e0c91bb`, whose
+  D14, like `b3228bb`'s, adds a case for a path that holds a line feed
+  (`design.md` D7; rulings A-62 and A-64). At `e0c91bb` the text of all seven
+  requirements differs from this change's sources, and five of the seven
+  blocks would not carry their scenarios from it, 15 scenarios in all, as at
+  `b3228bb`, where lane openRepoProject-3's W60 counted 14 at `f0bf538` and
+  `662be89` and this change counted 14 at `6bf9f77`: round (i) adds a third
+  recovery text for the ceiling, for a `.git` file that the rescan cannot
+  read (lane openRepoProject-2's R-284, put to Brett Heap), with an AND to "A
+  removal past the hard ceiling", and moves the retire and reconcilable-result
+  requirements; round (h) adds an AND to the retire requirement's scenario "A
   removal past the hard ceiling", which no longer carries, and moves the
   retire, batch, bounds and reconcilable-result requirements, the
   project-command block and "Cleanup revalidates destructive actions", which
@@ -798,8 +820,8 @@ their `CAS` line.
   batch requirements, the project-command block and the classification
   requirement, which this change does not modify either. This change keeps its
   blocks on `c462d87`'s and main's text and re-bases none of them now
-  (rulings A-50, A-57 and A-59). This does not block this change, whose blocks
-  meet PR #19's final text at the re-base (`tasks.md` 2.1 to 2.3 and 3.2;
+  (rulings A-50, A-57, A-59 and A-64). This does not block this change, whose
+  blocks meet PR #19's final text at the re-base (`tasks.md` 2.1 to 2.3 and 3.2;
   reader RF's M2; rulings A-37 to A-42 and A-47).
   Ratifying this change ratifies
   those two blocks only as written on PR #19's text at `c462d87`, not PR #19's
@@ -1094,8 +1116,8 @@ open:
   packet's 150 ms per child, a flagged run of 16 without the cache change
   removes 14 worktrees and retires 13 branches on change 1's terms at PR
   #19's `c462d87`. At PR #19's `6f2cb54`, `a664799`, `9267303`, `f0bf538`,
-  `662be89`, `6bf9f77` and `b3228bb`, at the packet's 150 ms per child
-  (D14's 150 ms basis), it removes 11 and retires 10 where the plan read
+  `662be89`, `6bf9f77`, `b3228bb` and `e0c91bb`, at the packet's 150 ms per
+  child (D14's 150 ms basis), it removes 11 and retires 10 where the plan read
   `extensions.worktreeConfig` as false, six children per revalidation, all 16
   removals spawning without the flag, and where it read it as true, seven, PR
   #19's D14 counting a plan-time probe on each linked row, a flagged run of 16
@@ -1105,8 +1127,8 @@ open:
   task 2.1 did not measure were measured, 8.7 ms and 160.3 ms with the margin,
   and the case passes on the measured basis, D5's as ratified, none of LQ-20's
   options being taken (PR #19's `design.md:956-969` at `662be89`, its figures
-  unchanged at `b3228bb`; rulings A-47, A-57 and A-62). On that basis, change
-  1's 16th removal spawning at 30.0 s at 128 rows where the plan read the
+  unchanged at `e0c91bb`; rulings A-47, A-57, A-62 and A-64). On that basis,
+  change 1's 16th removal spawning at 30.0 s at 128 rows where the plan read the
   setting as true and at 28.7 s where it read it as false,
   a flagged run of 16 removes and retires all 16 in both cases with this
   change's children at 150 ms each, its 16th removal at about 30.0 + 61 x
@@ -1216,13 +1238,18 @@ open:
   orphans a commit only its reflog held); the linked `branch-in-use` and
   `branch-shared` lines print no retry, `reflog-unmerged`'s already names the
   inspection, and both `git-refused` lines keep the bare retry after their
-  steps, their branch child having run after the re-proof. A `branch-in-use`
-  line whose holder PATH2 is the main worktree reads `next: BRANCH is checked
-  out at PATH2, the main worktree; switch it off BRANCH, by checking out
-  another branch there, such as MERGE_TARGET, or by detaching it; its reflog
-  is not proven merged into MERGE_TARGET; inspect git -C ROOT reflog show
-  refs/heads/BRANCH before retrying: RETRY`, where `git worktree remove`
-  of a main worktree exits 128, "is a main working tree", on Git 2.43.0 and on
+  steps, their branch child having run after the re-proof. The
+  `head-not-merge-target` and main-worktree `branch-in-use` lines say
+  "BRANCH's reflog was proven merged into MERGE_TARGET only at this run's
+  plan", which names the branch and says what the plan found, since the
+  plan's keep order tests `reflog-unmerged` first (ruling A-63; lane
+  openRepoProject-3's W78, LOW-2 and LOW-3). A `branch-in-use` line whose holder
+  PATH2 is the main worktree reads `next: BRANCH is checked out at PATH2, the
+  main worktree; switch it off BRANCH, by checking out another branch there,
+  such as MERGE_TARGET, or by detaching it; BRANCH's reflog was proven merged
+  into MERGE_TARGET only at this run's plan; inspect git -C ROOT reflog show
+  refs/heads/BRANCH before retrying: RETRY`, where `git worktree remove` of a
+  main worktree exits 128, "is a main working tree", on Git 2.43.0 and on
   2.36.6; `branch-shared`'s holder is a selected row, which change 1's
   `main-worktree` gate never selects, so its line keeps the linked form
   (ruling A-45, Codex's P2 on `1bf217c`).
@@ -1302,9 +1329,13 @@ departs:
   read, stays a `reflog-unmerged` keep (ruling A-46, W47's LOW-2).
 - **The plan's keep order.** `reflog-unmerged`, then `branch-in-use`, then
   `head-not-merge-target`, then `branch-shared`, so that the next step printed
-  for a kept branch never leads to deleting work only its reflog holds: the
-  `head-not-merge-target` advice ends in a `delete-branch` retry, which Git's
-  merge test would let through for a branch whose head is merged.
+  for a kept branch never leads to deleting work only its reflog holds as this
+  run's plan read it: the `head-not-merge-target` advice ends in a
+  `delete-branch` retry, which Git's merge test would let through for a branch
+  whose head is merged. Since the branch can move between the plan and the
+  retry, that line and the main-worktree `branch-in-use` line also name the
+  reflog inspection before the retry, saying that only this run's plan proved
+  the reflog (rulings A-60 and A-63; lane openRepoProject-3's W78, LOW-3).
 - **Children per target, and the fit** (A-5, as amended twice; A-24). The stage
   spawns the re-read that A-2 requires, with its re-proof of the reflog (ruling
   A-24), the branch child, and a post-check that change 1's evidence rule
@@ -1321,28 +1352,28 @@ departs:
   at 45.0 s, on the spawn limit's boundary, but its branch child, due at 46.05
   s, cannot start, so 14 worktrees are removed and 13 branches retired, the
   15th and 16th targets deferred, on change 1's terms at PR #19's `c462d87`; at
-  its `6f2cb54`, `a664799`, `9267303`, `f0bf538`, `662be89`, `6bf9f77` and
-  `b3228bb`, at the same 150 ms per child (D14's 150 ms basis), 11 and 10
-  where the plan read `extensions.worktreeConfig` as false; where it read it as
-  true, PR #19's D14 counting a plan-time probe on each linked row, a flagged
-  run of 16 at 128 rows removes and retires 0 and 0 on that basis, and 7 and 7
-  on its mixed basis as first stated, where change 1 alone removes 0 and 11. On
-  PR #19's measured basis at `662be89`, with LQ-20's step (i)'s costs for the
-  two probes that task 2.1 did not measure (its `design.md:956-969`, its figures
-  unchanged at `b3228bb`; rulings A-47, A-57 and A-62), change 1 alone removes
-  all 16 at 128 rows, the 16th at 30.0 s where the plan read the setting as true
-  and at 28.7 s where it read it as false, or 37.7 s and 36.4 s with 20,000-file
-  removals (its `:991-992`), and a flagged run of 16 removes and retires all 16
-  in both cases with this change's children at 150 ms, the 16th branch child at
-  40.18 s and 38.94 s, and with 17 reflog children, and with them at task 2.1's
-  average of about 0.063 s per child (23.6 s less its 15 removals at 0.604 s,
-  over its 231 children); with 20,000-file removals and this change's children
-  at 150 ms it removes 15 and retires 14 in both cases, or 14 and 13 with 17
-  reflog children, the 15th branch where the setting was false kept with
-  `deadline-exceeded` because the work deadline ends its re-proof's budget,
-  and all 16 at the average (`design.md` D7). At `f0bf538`, with the
-  stand-ins that step (i) replaced, the same fit gave 14 and 14 where the
-  setting was true and, on D14's measured basis there (its `design.md:968`:
+  its `6f2cb54`, `a664799`, `9267303`, `f0bf538`, `662be89`, `6bf9f77`,
+  `b3228bb` and `e0c91bb`, at the same 150 ms per child (D14's 150 ms basis), 11
+  and 10 where the plan read `extensions.worktreeConfig` as false; where it read
+  it as true, PR #19's D14 counting a plan-time probe on each linked row, a
+  flagged run of 16 at 128 rows removes and retires 0 and 0 on that basis, and 7
+  and 7 on its mixed basis as first stated, where change 1 alone removes 0 and
+  11. On PR #19's measured basis at `662be89`, with LQ-20's step (i)'s costs for
+  the two probes that task 2.1 did not measure (its `design.md:956-969`, its
+  figures unchanged at `e0c91bb`; rulings A-47, A-57, A-62 and A-64), change 1
+  alone removes all 16 at 128 rows, the 16th at 30.0 s where the plan read the
+  setting as true and at 28.7 s where it read it as false, or 37.7 s and 36.4 s
+  with 20,000-file removals (its `:991-992`), and a flagged run of 16 removes
+  and retires all 16 in both cases with this change's children at 150 ms, the
+  16th branch child at 40.18 s and 38.94 s, and with 17 reflog children, and
+  with them at task 2.1's average of about 0.063 s per child (23.6 s less its 15
+  removals at 0.604 s, over its 231 children); with 20,000-file removals and
+  this change's children at 150 ms it removes 15 and retires 14 in both cases,
+  or 14 and 13 with 17 reflog children, the 15th branch where the setting was
+  false kept with `deadline-exceeded` because the work deadline ends its
+  re-proof's budget, and all 16 at the average (`design.md` D7). At `f0bf538`,
+  with the stand-ins that step (i) replaced, the same fit gave 14 and 14 where
+  the setting was true and, on D14's measured basis there (its `design.md:968`:
   the 16th removal at 35.1 s, 42.8 s with 20,000-file removals), 16 and 15
   where it was false, the 16th branch child due at 45.32 s and its re-read
   refused first at 45.02 s, 15 and 14 with 17 reflog children, 13 and 12 with
@@ -1586,33 +1617,32 @@ recommendation, and a different ruling edits them before ratification.
 - **The target cap of a flagged run** (A-9). Without the cache change, at the
   packet's 150 ms per child, a flagged run of 16 removes 14 worktrees and
   retires 13 branches on change 1's terms at PR #19's `c462d87`, and at its
-  `6f2cb54`, `a664799`, `9267303`, `f0bf538`, `662be89`, `6bf9f77` and
-  `b3228bb`, at the packet's 150 ms per child (D14's 150 ms basis), 11 and
-  10 where the plan read `extensions.worktreeConfig` as false, six children per
-  revalidation, and 0 and 0 at 128 rows where it read it as true, seven, PR
-  #19's D14 counting a plan-time probe on each linked row. PR #19's LQ-20, which
-  this question waited on for that case, is resolved: Brett Heap chose its step
-  (i) on 2026-10-22, the two probes were measured, and the case passes on the
-  measured basis, D5's as ratified, none of LQ-20's options being taken
-  (PR #19's `design.md:956-969` at `662be89`, its figures unchanged at
-  `b3228bb`; rulings A-47, A-57 and A-62). On that basis, at
-  128 rows, a flagged run of 16 removes and retires all 16 where the plan
-  read the setting as true and where it read it as false, with this change's
-  children at 150 ms each, its 16th removal at about 39.15 s, or 37.85 s,
-  30.0 s or 28.7 s for change 1 alone plus 61 x 0.15 s, or at task 2.1's
-  average of about 0.063 s per child; it falls short only with 20,000-file
-  removals and this change's children at 150 ms, 15 and 14 in both cases, a
-  shortfall that leaves targets `not-attempted` with `deadline-exceeded`,
-  exit 1, never unsafe (`design.md` D7; lane openRepoProject-3's W62 reached
-  the same sums). The question before Brett Heap is therefore about two cases
-  only: the packet's flat 150 ms per child, at which a flagged run of 16 falls
-  short in every case above, and the 20,000-file removal with this change's
-  children at 150 ms; task 2.1 measured none of this change's children. At
-  `f0bf538`, with the stand-ins that step (i) replaced, the figures were 14
-  and 14 where the setting was true and 16 and 15 where it was false, and
-  `design.md` D7 gave a flagged run's result under each option of LQ-20,
-  which is withdrawn (reader RH's item 6; rulings A-37 to A-42 and A-47). The
-  figures that follow are at `c462d87`; this change ratifies its
+  `6f2cb54`, `a664799`, `9267303`, `f0bf538`, `662be89`, `6bf9f77`,
+  `b3228bb` and `e0c91bb`, at the packet's 150 ms per child (D14's 150 ms
+  basis), 11 and 10 where the plan read `extensions.worktreeConfig` as false,
+  six children per revalidation, and 0 and 0 at 128 rows where it read it as
+  true, seven, PR #19's D14 counting a plan-time probe on each linked row. PR
+  #19's LQ-20, which this question waited on for that case, is resolved: Brett
+  Heap chose its step (i) on 2026-10-22, the two probes were measured, and the
+  case passes on the measured basis, D5's as ratified, none of LQ-20's options
+  being taken (PR #19's `design.md:956-969` at `662be89`, its figures unchanged
+  at `e0c91bb`; rulings A-47, A-57, A-62 and A-64). On that basis, at 128 rows,
+  a flagged run of 16 removes and retires all 16 where the plan read the setting
+  as true and where it read it as false, with this change's children at 150 ms
+  each, its 16th removal at about 39.15 s, or 37.85 s, 30.0 s or 28.7 s for
+  change 1 alone plus 61 x 0.15 s, or at task 2.1's average of about 0.063 s per
+  child; it falls short only with 20,000-file removals and this change's
+  children at 150 ms, 15 and 14 in both cases, a shortfall that leaves targets
+  `not-attempted` with `deadline-exceeded`, exit 1, never unsafe (`design.md`
+  D7; lane openRepoProject-3's W62 reached the same sums). The question before
+  Brett Heap is therefore about two cases only: the packet's flat 150 ms per
+  child, at which a flagged run of 16 falls short in every case above, and the
+  20,000-file removal with this change's children at 150 ms; task 2.1 measured
+  none of this change's children. At `f0bf538`, with the stand-ins that step (i)
+  replaced, the figures were 14 and 14 where the setting was true and 16 and 15
+  where it was false, and `design.md` D7 gave a flagged run's result under each
+  option of LQ-20, which is withdrawn (reader RH's item 6; rulings A-37 to A-42
+  and A-47). The figures that follow are at `c462d87`; this change ratifies its
   PR #19 blocks only as written there (`tasks.md` 1.6), PR #19's later heads do
   not block it, and every figure meets PR #19's final text at the re-base. With
   `add-project-clean-cache-disposal` archived first, its plan-time walk (about
@@ -2417,3 +2447,48 @@ did.
 | lane 3's W69, LOW-6: in the 26-09 index entry, "(main's `BA:1763-1770`, beside `BA:275` and `BA:1553-1558`)" may not read as putting `BA:275` and `BA:1553-1558` at main, where the key puts citations at `da33d92` | LOW | A-61: applied: "(main's `BA:1763-1770`, beside main's `BA:275` and `BA:1553-1558`, both at `15504f1`)"; the Decisions entry for A-3 names main's `BA:1763-1770` alone and is unchanged | Corrections to the Packet (the index) |
 | lane 3 confirm read of round A16 (1cc2d9c), its W69: 0 HIGH, 0 MEDIUM and 6 LOW, nothing departing; A-55, A-56, A-54, A-57 and A-47 applied, every A-47 figure re-derived within 0.04 s of W62's, valid and 8 of 8, ALL BLOCKS CARRIED, 68, 4 and 9, `e7665dda`, all 75 hunks declared | check | A-60 and A-61: upheld, no change beyond rows 1, 3 and 6 to 9 | none |
 | Codex (1cc2d9c): the `@codex review` request of 15:38:05Z drew Codex's usage-limit reply at 15:38:21Z, with no finding, while CI's six test jobs and SonarCloud pass at `1cc2d9c` (`:2081`) | none | no finding and no edit | none |
+
+### Re-read and Codex Findings (round A18)
+
+Lane openRepoProject-3's reader W78 read round A17, `1cc2d9c..04db6ef`
+(`confirm-a17-findings.md`, attached at the register's `7bd999a06`): 0 HIGH, 0
+MEDIUM, 4 LOW and nothing departing (`rulings-2026-10-20.md:2248` there, read at
+its `origin/main` `7a6bae367`). It found A-60 applied, each changed line
+printing, on Git 2.43.0 and 2.36.6, its own step, then the inspection, which
+shows the commit only the reflog holds, then a retry that orphans that commit,
+and the `git-refused` carve-out sound; A-59 and A-61 applied; and A-62's figures
+re-derived. The lead's ruling A-63 (`:2265`) takes its four LOW, the fourth by
+saying that the figure lies within D14's rounding, and A-64 (`:2289`) runs the
+round once PR #19's round (i) had settled at `e0c91bb` (`:2283`; `4204eb9`,
+`b60f6ac` and `1a4785e` before it): D14 and task 2.1 are diffed there, to stop
+if the measured figures moved, A-50's note is brought there, and the ceiling's
+third recovery text, for a `.git` that the rescan cannot read (lane
+openRepoProject-2's R-284, put to Brett Heap), gets no edit, since this change
+carries the ceiling's text only in blocks that keep `c462d87`'s. CI's six test
+jobs and SonarCloud pass at `04db6ef` (16:56Z and 17:02Z; `:2247` and `:2248`),
+and Codex is still at its usage limit. Where a ruling and a finding differ, the
+ruling governs. Of the 9 rows below, 6 are applied, 1 is a ruling with no edit,
+1 is a check upheld with no change and 1 records CI, SonarCloud and Codex, with
+no finding; none is declined. No ruling needs `specs/project-command/spec.md`,
+which is unchanged (blob `e7665dda`). Round A18 edits the project-clean delta's
+ADDED requirement, its `Kept` next steps and the reason its rule gives for them,
+and the literals of three ADDED scenarios, and adds no scenario, so the
+scenarios stay 68, 4 and 9 and every MODIFIED block still carries its source
+scenarios byte for byte, no block being re-based (A-50). Round A17's first row,
+which gives the plan keeps' lines `its reflog is not proven merged into
+MERGE_TARGET`, and its fifth, which states the line-feed case's 13 retired as
+fixed, keep their words as that round's record; rows 2 to 4 below supersede
+them. The round also updates `design.md`'s Context map, the Status clause, the
+rulings and citation key and tasks 1.1, 1.3, 1.4 and 1.5, as earlier rounds did.
+
+| Finding | Severity | Ruling | Section edited |
+| --- | --- | --- | --- |
+| lane 3 confirm read (04db6ef), its W78, LOW-1: in the Status paragraph, proposal :92 still calls `6bf9f77` PR #19's current head, "the cites of PR #19's design move to `662be89`, its current head, `6bf9f77`, after its rounds (g) to (g3)", a clause unchanged from `1cc2d9c`, while :101-103 call `b3228bb` its current head | LOW | A-63 (`:2265`): applied: round A16's clause reads "the cites of PR #19's design move to `662be89`, its head then being `6bf9f77`, after its rounds (g) to (g3)" (:92), round A17's names `b3228bb` "its head then" (:102-103), and round A18's clause names PR #19's current head, `e0c91bb` (:107-113; row 5) | Status |
+| lane 3's W78, LOW-2: the `its` of "its reflog is not proven merged into MERGE_TARGET" in the three lines to which A-60 gave the inspection, `head-not-merge-target` in both its forms (`specs/project-clean/spec.md:1096-1098` and `:1102-1103` at `04db6ef`) and `branch-in-use` with the main worktree as holder (`:1115-1119`), and in their three scenario literals, has a nearer noun to point at, the main worktree or the detached checkout, where it means BRANCH's | LOW | A-63: applied, with LOW-3, by one wording that names BRANCH: each of the three lines reads `BRANCH's reflog was proven merged into MERGE_TARGET only at this run's plan; inspect git -C ROOT reflog show refs/heads/BRANCH before retrying: RETRY` after its own step (`:1096-1104` and `:1114-1119` now), and the literals of "A branch another worktree holds is retained" (`:1316-1323`) and "A branch Git would judge against another HEAD is kept", in both forms (`:1349-1354` and `:1355-1363`), read `<branch>'s reflog was proven merged into <merge target> only at this run's plan`; the A-55 lines, which have no nearer noun, and `branch-changed`'s `now at SHA2; its reflog`, which W78 found to read correctly, keep their words | project-clean delta (ADDED: the `Kept` next steps; "A branch another worktree holds is retained"; "A branch Git would judge against another HEAD is kept"); `design.md` D8; Decisions |
+| lane 3's W78, LOW-3: for the plan's keeps, "its reflog is not proven merged" is not what the plan found, its keep order, `reflog-unmerged`, `branch-in-use`, `head-not-merge-target`, `branch-shared`, having proved the reflog of every row that reaches `branch-in-use` or `head-not-merge-target`; and the keep order's rationale (`design.md:431`, proposal :1303-1307 at `04db6ef`) names the order alone as the safeguard, not the inspection that A-60 adds | LOW | A-63: applied: the lines say what the plan found and that nothing since has proved it, "BRANCH's reflog was proven merged into MERGE_TARGET only at this run's plan" (row 2), true of both plan keeps and of the rescan's `branch-in-use`, whose row passed the plan's proof and whose stage stops before its re-proof; the rule's reason sentence adds "the first two say that only this run's plan proved BRANCH's reflog, since the plan's keep order tests `reflog-unmerged` first, a proof that the retry does not make again" (`specs/project-clean/spec.md:1153-1156`); `design.md` D4's keep order (`:437-443`) keeps the order "so that the printed advice never leads to deleting work only the reflog holds as this run's plan read it" and says that, a branch being able to move between the plan and the retry, a kept line whose step ends in the retry also names the inspection, saying that only this run's plan proved the reflog; the proposal's keep-order reading (:1330-1338) and its decision on the own steps (:1241-1246) say the same; `branch-changed` and the A-55 lines keep "its reflog is not proven merged into MERGE_TARGET", which A-63 does not reach | project-clean delta (ADDED: the reason the `Kept` rule gives); `design.md` D4, D8; Decisions; readings (the plan's keep order) |
+| lane 3's W78, LOW-4: A-62's sentence in `design.md` D7 (`:1080-1083` at `04db6ef`) says that with 20,000-file removals, where the plan read `extensions.worktreeConfig` as true, a flagged run whose path holds a line feed retires 13, its 14th branch child due about 0.01 s past the limit, "so that it does not start"; D14 prints that 16th removal as 37.7 s, rounded to 0.1 s, and the 14th branch child is due at 44.979, 45.005, 45.023 and 45.066 s for 37.65, 37.68, 37.70 and 37.75 s, and at 45.006 s from D7's own 44.12 s | LOW | A-63: applied, saying that the figure lies within D14's rounding: "The 13 rests on D14's figures as rounded to 0.1 s: the 14th branch child falls within that rounding of the spawn limit, 0.006 to 0.023 s past it for D14's 37.7 s read as 37.68 to 37.70 s, and before it below about 37.66 s, so that the case retires 13 or 14" (`design.md:1096-1100`), the removals staying 14; the brief's "13th branch child" is W78's 14th, the child whose spawn decides between 13 and 14 retired, and the sentence names it so; no other live text states the 13, and round A17's fifth row keeps its words as that round's record | `design.md` D7 |
+| A-64 (`:2289`): the currency, PR #19's round (i), `e0c91bb` (`:2283`; `4204eb9`, `b60f6ac` and `1a4785e` before it), after D14 and task 2.1 are diffed against `b3228bb`, the round to stop if the measured figures or the line-feed paragraph's pricing moved | ruling | applied: D14 (its `design.md:944-1119` at `e0c91bb`, `:925-1100` at `b3228bb`), the line-feed paragraph included, and task 2.1 (its `tasks.md:124-175`, `:118-169`) compare equal byte for byte, so the round does not stop, and A-47's figures are cited at `662be89` with "its figures unchanged at `e0c91bb`"; every place that states PR #19's current head names `e0c91bb`: Status, the citation key, Dependencies and Sequencing, `design.md` D4 and D7, the A-9 places in Decisions, the readings and Open Questions, the lists of heads at which the 150 ms basis gives 11 and 10, and task 1.1, `b3228bb` kept as round A17's head and `6bf9f77` as round A16's; every cite of `662be89`'s design holds at `e0c91bb` by content, D14's 49 or 60 lines later, `:441-443` 27 later, the F = 8 sentence at `:361-363`, the measured basis `:956-969` at `:1016-1029`, D4's `:489-503` and `:499-503` at `:515-529` and `:525-529`, the LQ-20 entry at `:1984-2046` and task 2.1's step (i) at `tasks.md:165-175`, and every cite of `f0bf538`'s spec 28 to 32 lines later, the revalidation rule at `specs/project-clean-review-safety/spec.md:115-137`, the two counts of children per revalidation still qualified by round (h)'s line-feed exception (`specs/project-clean/spec.md:1058-1066` and `specs/project-clean-review-safety/spec.md:76-79` at `e0c91bb`); step 1's relative wording holds on gate 7 at `e0c91bb` (its `specs/project-clean/spec.md:723-728`), equal to `b3228bb`'s | citation key; Status; Dependencies and Sequencing; Decisions (A-9); readings; Open Questions (A-9); `design.md` Context, D4, D7, Risks; `tasks.md` 1.1 |
+| A-64: A-50's note on how many carried blocks differ from PR #19's current text, brought to `e0c91bb` | ruling | applied in Dependencies and Sequencing: at `e0c91bb` the text of all seven requirements differs from this change's sources, and five of the seven blocks would not carry their scenarios from it, 15 scenarios in all, as at `b3228bb` (this round's run of `carry_at.py` at `e0c91bb`): round (i) adds a third recovery text for the ceiling, with an AND to "A removal past the hard ceiling", which already did not carry, and moves the retire and reconcilable-result requirements, the reconcilable-result block still carrying its 8 scenarios; nothing is re-based (A-50); R-284 is named, there and in `design.md` D7, as lane openRepoProject-2's, as this change names that lane's R-171 and R-208, `63a1594` correcting `d70ab13`'s "the lead's R-284" in D7 | Dependencies and Sequencing; `design.md` D7 |
+| lane openRepoProject-2's R-284, in PR #19's `1a4785e` (`:2283`): the ceiling gains a third recovery text, for a `.git` that the rescan cannot read, "inspect `<path>` by hand; its `.git` could not be read, so do not run `git worktree prune` until it can", pending Brett Heap's confirmation | ruling | A-64: no edit: this change carries the ceiling's recovery text only in blocks that keep `c462d87`'s and main's text, and names it only in carried blocks and scenarios (round A17's map, its third row), so the text follows at the re-base (`tasks.md` 2.1 to 2.3; A-50); A-50's note counts it (row 6) | none |
+| lane 3 confirm read of round A17 (04db6ef), its W78: 0 HIGH, 0 MEDIUM and 4 LOW, nothing departing; A-60 applied on Git 2.43.0 and 2.36.6, the `git-refused` carve-out sound (the advised wait adds only the rebase's finish entry, and an unmerged tip is refused with exit 1), four scenarios and five literals edited and none added; A-59 applied, step 1 true on `c462d87` and `b3228bb`; A-62 re-derived, 40.1, 38.9, 41.2 and 39.9 s, 14 and 13, 15 and 14; A-61 applied; the lead's checks hold | check | A-63: upheld, no change beyond rows 1 to 4; W78's observation that the reason sentence could say the advised wait adds at most the rebase's finish entry to the reflog is no finding and no ruling takes it, so the sentence keeps its words | none |
+| CI, SonarCloud and Codex (04db6ef): CI's six test jobs and SonarCloud, its quality gate passed with 0 new issues, pass at `04db6ef` (the lead's late read at 16:56:42Z, `:2247`, and again at 17:02Z, `:2248`); no `@codex review` was requested on `04db6ef`, Codex being still at its usage limit | none | no finding and no edit | none |

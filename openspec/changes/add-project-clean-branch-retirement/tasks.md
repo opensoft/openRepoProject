@@ -13,17 +13,19 @@ duplicate them.
   on change 1's text at `961c405` and PR #19's at `c462d87` (`d66d02c`),
   `design.md` D7 also stating its fit at PR #19's `6f2cb54`, `a664799`,
   `9267303` and `f0bf538` (rounds A9 to A12, rulings A-37 to A-42) and on its
-  measured basis at `662be89`, unchanged at its current head `b3228bb` (rounds
-  A16 and A17, rulings A-47, A-57 and A-62), the joint fit with the cache change
-  also at that change's own 3.7 s (round A13, ruling A-44), `design.md` D8
-  giving a holder that is the main worktree its own next step (round A14, ruling
-  A-45), its restatements of PR #19's moving facts worded relatively (round A15,
-  ruling A-50), and every `Kept` line whose next step is the retry for a branch
-  the stage did not re-prove naming the reflog inspection (round A16, rulings
-  A-53 and A-55), after the line's own step where it has one (round A17, ruling
-  A-60); verified by its Capabilities section accounting for every canonical
-  requirement of `project-clean` and `project-clean-review-safety` and every
-  requirement change 1 adds to them.
+  measured basis at `662be89`, unchanged at its current head `e0c91bb` (rounds
+  A16 to A18, rulings A-47, A-57, A-62 and A-64), the joint fit with the cache
+  change also at that change's own 3.7 s (round A13, ruling A-44), `design.md`
+  D8 giving a holder that is the main worktree its own next step (round A14,
+  ruling A-45), its restatements of PR #19's moving facts worded relatively
+  (round A15, ruling A-50), and every `Kept` line whose next step is the retry
+  for a branch the stage did not re-prove naming the reflog inspection (round
+  A16, rulings A-53 and A-55), after the line's own step where it has one (round
+  A17, ruling A-60), the lines of the plan's keeps saying that only this run's
+  plan proved the branch's reflog (round A18, ruling A-63); verified by its
+  Capabilities section accounting for every canonical requirement of
+  `project-clean` and `project-clean-review-safety` and every requirement
+  change 1 adds to them.
 - [x] 1.2 Alignment resolved: the stack-architect and qa-lead findings on
   `e7f3e65` (SA-1 to SA-5, QA-1 to QA-4) are applied, MISMATCH and DRIFT at
   once and qa-lead's GAP (QA-3) by its own scenario text, and the review's
@@ -143,7 +145,13 @@ duplicate them.
   `b15d418` (the spec delta), `722a0c4`, `670af25`, `d52bb22` and `7411520`
   (the design) and the commit that edits the proposal's body, records the
   round's table and updates this task; verified by "Re-read and Codex
-  Findings (round A17)" in `proposal.md`.
+  Findings (round A17)" in `proposal.md`. Round A18, on `04db6ef`, applied the
+  lane's rulings A-63 (lane openRepoProject-3's W78 confirm read of round A17,
+  0 HIGH, 0 MEDIUM and 4 LOW) and A-64 (PR #19's round (i) at `e0c91bb`), by
+  `e1760c4` (the spec delta), `d70ab13` and `63a1594` (the design) and the
+  commit that edits the proposal's body, records the round's table and updates
+  this task; verified by "Re-read and Codex Findings (round A18)" in
+  `proposal.md`.
 - [x] 1.4 Spec deltas and design written: `specs/project-clean/spec.md`
   modifies five requirements and adds one (68 scenarios: 43 carried unchanged
   from change 1 and PR #19, 6, 14, 10, 5 and 8 by block, and 25 added, the
@@ -174,7 +182,9 @@ duplicate them.
   review-safety scenario, under rulings A-53, A-55 and A-56, and round A17
   adding no scenario, editing the ADDED requirement's step 1 and its `Kept`
   next steps and the literals of four ADDED scenarios, under rulings A-59 and
-  A-60),
+  A-60, and round A18 adding no scenario, editing the ADDED requirement's
+  `Kept` next steps and the literals of three ADDED scenarios, under ruling
+  A-63),
   `specs/project-clean-review-safety/spec.md` modifies one (4 scenarios: 3
   carried, 1 added), and `specs/project-command/spec.md` modifies one on PR
   #19's text (9 scenarios carried, none added; agreed by lane
@@ -183,9 +193,9 @@ duplicate them.
   each modified requirement's source text kept byte for byte; `design.md`
   holds D1 to D10 (`8341954`, `d0b33ce`, and the commit titled 'Settle which
   later targets carry branch-retention-stop'), revised by the alignment fix
-  round (1.2), the council round (1.3) and rounds A3 to A17; verified
+  round (1.2), the council round (1.3) and rounds A3 to A18; verified
   by `grep -c '^#### Scenario:'` on each spec file and by a scenario-carry
-  script run after the council round and again after rounds A3 to A17
+  script run after the council round and again after rounds A3 to A18
   over all seven MODIFIED blocks, every source scenario present byte for byte
   and in order.
 - [x] 1.5 Validation passes: `/usr/bin/openspec validate
@@ -194,7 +204,7 @@ duplicate them.
   `/usr/bin/openspec status --change add-project-clean-branch-retirement
   --json` shows every artifact done; verified by running the three on this
   branch after 1.4, after the alignment fix round, after the council round
-  and after rounds A3 to A17
+  and after rounds A3 to A18
   (build 1.13.1, which notes only as INFO that archive would refuse the
   MODIFIED blocks whose base still sits in change 1).
 - [ ] 1.6 Ratified by Brett Heap's word on the pull request, quoted with its
