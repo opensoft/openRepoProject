@@ -376,10 +376,15 @@ scratch directory, never in the repository.
   where `BA` is `ideation/brainstorm/project-maintenance-batch-cleanup.md` at
   `da33d92`, as the change's `proposal.md:25` at `0050f3e` keys it), in every
   mode, previews
-  included: `probes` is F + W + E + 5T + 3, F the repository-wide children this
-  invocation ran (rows 1 to 7, with 2, 4b, 5 or a row 3 repeat when they ran),
-  W the status probes, E the hidden-state probes, T the selected targets;
-  `operations` is T. `performed` counts the children actually spawned. Tests
+  included: `probes` is F + W + E + 6T + 3, or F + W + E + 7T + 3 where row 4c
+  read `extensions.worktreeConfig` as true, F the repository-wide children
+  this invocation ran (rows 1 to 7, with 2, 4b, 4c, 5 or a row 3 repeat when
+  they ran) and every other planning child but W and E, LQ-11's work-tree
+  probes and gate 12's reachability probes (LQ-13) among them, W the status
+  probes, E the hidden-state probes, T the selected targets, and 6 or 7 the
+  children of one revalidation (`revalidation_children()`; lead rulings
+  R-165 and R-201); `operations` is T. `performed` counts the children
+  actually spawned. Tests
   compare `probes.performed` with the counting wrapper's count of children
   other than `worktree remove`, and `operations.performed` with its count of
   `worktree remove`.
@@ -396,8 +401,8 @@ scratch directory, never in the repository.
   does, and US6 scenario 6 and SC-006 of the reviewed spec read it this way
   until then (lead rulings R-57 L4 and R-59 D10).
 - **Alternatives considered**: counting removals in `probes` too, rejected
-  (then `operations` would duplicate a subset of `probes`); adding 5T + 3
-  and T only for an apply, rejected by the plan review (a preview's
+  (then `operations` would duplicate a subset of `probes`); adding 6T + 3
+  (7T + 3) and T only for an apply, rejected by the plan review (a preview's
   estimates would then differ from the packet's fixture).
 
 ## R9. Switching the evidence model: `cleanup_report()` first
@@ -708,8 +713,9 @@ scratch directory, never in the repository.
   `da33d92`). Neither says which target is recorded `refused` when the
   difference is on another one, and a target's ignored-file state and
   classification come from a status probe inside its own worktree, which the
-  first target's revalidation does not run (D7: at most five Git children per
-  target).
+  first target's revalidation does not run (D7: at most six Git children per
+  target, seven where row 4c read `extensions.worktreeConfig` as true; LQ-11
+  and LQ-13).
 - **Decision** (ruled by the lead as R-41, amended): the first target's
   revalidation is the preflight of every selected target. Its registry
   listing, its narrowed ref listing (which names every selected branch and its
@@ -742,6 +748,8 @@ scratch directory, never in the repository.
   the first `not-attempted`, rejected (a `not-attempted` target would precede
   the refused one in canonical order, against the stop rule); a status and a
   hidden-state probe in every selected worktree at the preflight, rejected
-  (D7's five children per target); naming the differing path in the first
+  (D7's six or seven children per target, whose fit to the work deadline
+  design D14 gives on three bases at draft PR #19 `2e819ad`, choosing none,
+  and LQ-20 leaves open for Brett Heap); naming the differing path in the first
   target's refusal, withdrawn by R-41's amendment (no message field carries
   it).

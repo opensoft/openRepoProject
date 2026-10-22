@@ -214,7 +214,8 @@ worktree has ignored local files"; "Default branch cannot be established
 locally"; "An edit hidden by assume-unchanged survives"; "A worktree holding a
 submodule is never offered"; "The main worktree and a locked worktree";
 "Pushed feature branch has an open review path"; and PR #19's "An operation
-in progress" and "A squash merge that holds an autostash" (LQ-14).
+in progress" and "A squash merge that holds an autostash" (LQ-14) and "A
+commit held only by the worktree" (LQ-13).
 
 The after-confirmation clauses of "Hidden local state" and "Submodules" are
 exercised by User Story 4, scenario 2.
@@ -383,9 +384,10 @@ revalidation"; "Changed later target"; "Untracked file under
 status.showUntrackedFiles=no"; "Branch advances before removal"; "Deleted
 upstream reappears before revalidation"; "Git's own check runs on the pinned
 configuration"; "Ignored file in the residual window"; "Branch advances after
-removal"; "Repository replaced mid-batch"; and PR #19's "An operation started
-after the plan" (LQ-14) and "A check that fails at revalidation" (round
-(a)).
+removal"; "Repository replaced mid-batch"; and PR #19's "A worktree-only
+commit made after the plan" (LQ-13), "An operation started after the plan"
+(LQ-14), "A check that fails at revalidation" (round (a)) and "A work-tree
+probe at revalidation" (round (c), `2e819ad`).
 
 ---
 
@@ -529,8 +531,9 @@ statuses, the child counts and each run's elapsed time.
    classification `dirty`, the plan complete.
 6. **Given** five rows with three selected and a counting `git` wrapper on
    PATH, **When** `--all-safe --apply --yes` runs, **Then** each target's
-   revalidation spawns at most five children (six where row 4c read
-   `extensions.worktreeConfig` as true, LQ-11), the final rescan three, no
+   revalidation spawns at most six children (seven where row 4c read
+   `extensions.worktreeConfig` as true, LQ-11; the sixth is LQ-13's
+   reachability probe), the final rescan three, no
    merged-set listing and no probe of a non-selected worktree runs after
    confirmation, `status` and `ls-files` children run in their own
    worktree and every other child after resolution, the removals included,
@@ -807,8 +810,10 @@ written".
   (design D3).
 - **EC-008**: Sixteen rows that an index gate always excludes, ahead of a
   backlog, stop the deferral from draining until a person handles them; when
-  all sixteen are `contains-submodule` (Opensoft-Tenant's case in task 2.1's
-  survey) the human report says why (design D12 and D18, Risks).
+  a gate after the cap excludes all sixteen, as when all are
+  `contains-submodule` (Opensoft-Tenant's case in task 2.1's survey), the
+  human report says why, naming their reasons (design D12 and D18, Risks;
+  lead ruling R-146, lane 3's W21 L-f).
 - **EC-009**: Rows of 100,000-entry indexes and CPU saturation exceed the
   measured budgets; the plan goes incomplete with `deadline-exceeded`, never
   unsafe, and a removal started within the floor is waited for (design D5,
@@ -833,9 +838,10 @@ written".
 - **EC-015**: A value null in the plan and null at revalidation, such as a
   deleted upstream's `upstream_oid`, is no difference; a value that cannot be
   re-read, a timed-out filesystem call included, is one (design D7 and D20).
-- **EC-016**: Ignored files created, index flags set, or operations started
-  (LQ-14), after the last revalidation, and any change after Git's own check,
-  are outside the
+- **EC-016**: Ignored files created, index flags set, operations started
+  (LQ-14), or commits made that only the target's HEAD reflog or
+  `refs/worktree/` holds (LQ-13), after the last revalidation, and any change
+  after Git's own check, are outside the
   guarantee: such a target is removed, and the residual-window line says so
   (design D7).
 - **EC-017**: A probe stopped at its record bound is complete, never
@@ -1036,12 +1042,13 @@ written".
   excluded row MUST carry one `reason`, its first failing gate in this order:
   `main-worktree`; `unsupported-path-bytes`; `registration-mismatch`;
   `locked-worktree`; its classification when not `merged-removable`;
-  `not-requested` (an eligible row other than the named one in a
-  single-target removal); `unstarted-branch` or `reflog-unavailable`;
-  `deferred-target-cap`; `contains-submodule`; `hidden-local-state`;
-  `operation-in-progress`, Brett Heap's ruling LQ-14 (draft PR #19; lead
-  rulings R-102 and R-121). Traces: "Clean previews and applies a batch of
-  eligible worktree removals in one repository"; design D10, D12 and D22.
+  `not-requested` (an eligible row other than the named one in a single-target
+  removal); `unstarted-branch` or `reflog-unavailable`; `deferred-target-cap`;
+  `contains-submodule`; `hidden-local-state`; `operation-in-progress`, Brett
+  Heap's ruling LQ-14 (draft PR #19; lead rulings R-102 and R-121);
+  `worktree-only-commits`, his ruling LQ-13 (draft PR #19; lead rulings R-102
+  and R-124). Traces: "Clean previews and applies a batch of eligible worktree
+  removals in one repository"; design D10, D12, D21 and D22.
 - **FR-021**: The `unstarted-branch` gate MUST read the branch's reflog,
   `logs/refs/heads/<branch>` in the common directory, for every row it checks,
   in every mode, from the filesystem (at most 64 KiB, counted in the filesystem
@@ -1067,8 +1074,8 @@ written".
   `inspection-incomplete`. Traces: "Clean previews and applies a batch of
   eligible worktree removals in one repository"; design D10.
 - **FR-023**: Only rows that pass every earlier gate MUST be checked, inside
-  their own worktree, for `contains-submodule` (any gitlink in the index, or
-  a `modules` entry in the worktree's administrative directory) and
+  their own worktree, for `contains-submodule` (any gitlink in the index, or a
+  `modules` entry in the worktree's administrative directory) and
   `hidden-local-state` (any index entry flagged assume-unchanged or
   skip-worktree, sparse checkouts included), and then for
   `operation-in-progress`: an entry named by one of eleven markers in the
@@ -1076,12 +1083,22 @@ written".
   the filesystem budget and never by a Git child (`MERGE_HEAD`,
   `CHERRY_PICK_HEAD`, `REVERT_HEAD`, `BISECT_LOG`, `BISECT_START`,
   `rebase-apply`, `rebase-merge`, `sequencer`, `MERGE_AUTOSTASH`,
-  `NOTES_MERGE_PARTIAL` and `NOTES_MERGE_REF`), a listing that fails or is
-  cut making the row `inspection-error` and the plan incomplete (LQ-14; lead
-  rulings R-124 and R-126). Traces: "Clean previews and applies a batch of
-  eligible worktree removals in one repository"; "Cleanup preserves all local
-  work not proven disposable"; PR #19's "An operation in progress" and "A
-  squash merge that holds an autostash".
+  `NOTES_MERGE_PARTIAL` and `NOTES_MERGE_REF`), a listing that fails or is cut
+  making the row `inspection-error` and the plan incomplete (LQ-14; lead
+  rulings R-124 and R-126); and last, where none is in progress, for
+  `worktree-only-commits`: a commit that only the worktree's HEAD reflog or
+  `refs/worktree/` holds, read from its `logs/HEAD` by one filesystem call of
+  at most 64 KiB and decided by one Git child in the worktree, `rev-list
+  --max-count=1 --glob=refs/worktree` over the objects `logs/HEAD` names, not
+  reachable from any branch, tag or remote-tracking ref or from the objects
+  the branch's reflog named, a
+  `logs/HEAD` read to its bound or holding a line that cannot be parsed
+  counting as such a commit, and a read or child that fails or is cut making
+  the row `inspection-error` and the plan incomplete (LQ-13; lead rulings
+  R-124 and R-146). Traces: "Clean previews and applies a batch of eligible
+  worktree removals in one repository"; "Cleanup preserves all local work not
+  proven disposable"; PR #19's "An operation in progress", "A squash merge
+  that holds an autostash" and "A commit held only by the worktree".
 - **FR-024**: `selected` and `excluded` MUST be in canonical order by raw
   path bytes, which is also the execution order. Once a plan is built, an
   incomplete plan MUST be refused first (a preview or report exits 1, and
@@ -1171,37 +1188,37 @@ written".
   when it is complete, deferred rows included. Traces: "Clean bounds its Git
   work and reports omitted work".
 - **FR-032**: When more than 16 rows pass every gate before
-  `deferred-target-cap`, the first 16 in canonical order MUST go on to the
-  two index gates and the rest MUST be excluded as `deferred-target-cap`
-  with the command to run next; the plan MUST stay complete and apply
-  allowed, and each re-run MUST take the next 16 with its own fresh plan and
-  revalidation. Rows that an index gate then excludes MUST keep their places
-  among the 16, and when all 16 are `contains-submodule` the human report
-  MUST say why the deferred rows will not drain. A plan MUST NOT be refused
-  for having more than 16 such rows, and `project clean` MUST NOT raise
-  `target-cap`. Traces: "Clean bounds its Git work and reports omitted
-  work"; design D12.
-- **FR-033**: Plans and apply results MUST report `probes` and `operations`
-  as `{estimated, performed}`, every Git child counted once, `probes` for each
-  Git child other than a removal child and `operations` for each removal child;
+  `deferred-target-cap`, the first 16 in canonical order MUST go on to the two
+  index gates and the rest MUST be excluded as `deferred-target-cap` with the
+  command to run next; the plan MUST stay complete and apply allowed, and each
+  re-run MUST take the next 16 with its own fresh plan and revalidation. Rows
+  that a gate after the cap then excludes MUST keep their places among the 16,
+  and when a gate after the cap excludes all 16 the human report MUST say why
+  the deferred rows will not drain, naming those gates' reasons (lead ruling
+  R-146, lane 3's W21 L-f). A plan MUST NOT be refused for having more than 16
+  such rows, and `project clean` MUST NOT raise `target-cap`. Traces: "Clean
+  bounds its Git work and reports omitted work"; design D12.
+- **FR-033**: Plans and apply results MUST report `probes` and `operations` as
+  `{estimated, performed}`, every Git child counted once, `probes` for each Git
+  child other than a removal child and `operations` for each removal child;
   `limits` (`worktree_rows`, the row cap of the plan's mode, `targets`,
   `ignored_entries`, `status_records` and `ignored_samples`); and `budget`
   (`probe_timeout_seconds` 5, `invocation_timeout_seconds` 60,
   `reconciliation_reserve_seconds` 10, `removal_floor_seconds` 5,
   `removal_ceiling_seconds` 300 and `probe_concurrency` 1). Revalidating one
-  target MUST spawn at most five Git children, six where row 4c read
-  `extensions.worktreeConfig` as true (Brett Heap's ruling LQ-11, draft PR
-  #19), and never recompute the full report, and the final rescan at most
-  three. Traces: "Clean bounds its Git
-  work and reports omitted work"; design D7; lead ruling R-27 (Assumptions).
-- **FR-034**: The apply phase MUST begin when the question is answered `yes`
-  or `--yes` is accepted, and each selected target MUST end in one stage
-  with one reason from that stage's list: `removed`, when the rescan shows its
-  registry entry and its path both absent, with `reconciled` true (null,
+  target MUST spawn at most six Git children, seven where row 4c read
+  `extensions.worktreeConfig` as true (Brett Heap's rulings LQ-11 and LQ-13,
+  draft PR #19), and never recompute the full report, and the final rescan at
+  most three. Traces: "Clean bounds its Git work and reports omitted work";
+  design D7; lead ruling R-27 (Assumptions).
+- **FR-034**: The apply phase MUST begin when the question is answered `yes` or
+  `--yes` is accepted, and each selected target MUST end in one stage with one
+  reason from that stage's list: `removed`, when the rescan shows its registry
+  entry and its path both absent, with `reconciled` true (null,
   `branch-advanced-after-removal`, `branch-missing-after-removal` or
   `removal-ceiling`); `refused` (`identity-changed`, `branch-changed`,
-  `state-changed`, `contains-submodule`, `hidden-local-state` or, by LQ-14,
-  `operation-in-progress`); `failed`
+  `state-changed`, `contains-submodule`, `hidden-local-state` or, by LQ-14 and
+  LQ-13, `operation-in-progress` and `worktree-only-commits`); `failed`
   (`git-refused` for exit status 128, `git-failed` for any other status, which
   is 128 plus the signal number when a signal that `project` did not send ended
   the child, or `spawn-error`); `unknown`, where a child ran or an exception
@@ -1324,61 +1341,69 @@ written".
   or SIGHUP before the apply phase or end of input at the question, MUST
   print no JSON document. Traces: "Clean plans and refusals are versioned
   JSON".
-- **FR-045**: Cleanup MUST treat as preservation or review states, and MUST
-  NOT offer destructive removal for, ignored local files, dirty work,
-  detached state, an unknown default branch, remote divergence, the main
-  worktree, a locked worktree, `contains-submodule`, `hidden-local-state`,
+- **FR-045**: Cleanup MUST treat as preservation or review states, and MUST NOT
+  offer destructive removal for, ignored local files, dirty work, detached
+  state, an unknown default branch, remote divergence, the main worktree, a
+  locked worktree, `contains-submodule`, `hidden-local-state`,
   `registration-mismatch`, `unsupported-path-bytes`, `unstarted-branch`,
-  `reflog-unavailable`, `operation-in-progress` (LQ-14) and
-  `inspection-error` (a path that cannot be read or
-  state that could not be established). A value that is not established MUST
-  be null, never false or 0, and MUST keep its row out of every removal.
+  `reflog-unavailable`, `operation-in-progress` (LQ-14),
+  `worktree-only-commits` (LQ-13) and `inspection-error` (a path that cannot be
+  read or state that could not be established). A value that is not established
+  MUST be null, never false or 0, and MUST keep its row out of every removal.
   Traces: "Cleanup preserves all local work not proven disposable".
 - **FR-046**: Cleanup MUST re-inspect the selected target after confirmation
   and before a push, worktree removal or local branch deletion, and refuse when
   its state no longer matches the reviewed plan; for a removal, that MUST hold
   at the revalidation immediately before each spawn. A removal MUST be
-  revalidated by a targeted check, never the full report, of at most five Git
-  children (six where row 4c read true, LQ-11), a fresh manifest read, the
-  `modules` check and LQ-14's listing of the administrative directory, in
-  the delta's order
-  and stopping at the first difference, comparing the recorded repository
-  identity, the target's worktree identity and two-way registration, its branch
-  evidence, every baseline signature field (the row's `path`, `branch`, `head`,
-  `present`, `dirty`, `ignored_files`, `upstream`, `ahead`, `behind`,
-  `remote_present`, `merged_into_target`, `current` and `classification`), its
-  `locked` flag, the manifest's `tracking_branch` and the merge target
-  re-resolved from the fresh read. Traces: "Cleanup revalidates destructive
-  actions"; design D7.
+  revalidated by a targeted check, never the full report, of at most six Git
+  children (seven where row 4c read true; LQ-11 and LQ-13), a fresh manifest
+  read, the `modules` check, LQ-14's listing of the administrative directory
+  and LQ-13's read of its `logs/HEAD`, in the delta's order and stopping at the
+  first difference, comparing the recorded repository identity, the target's
+  worktree identity and two-way registration, its branch evidence, every
+  baseline signature field (the row's `path`, `branch`, `head`, `present`,
+  `dirty`, `ignored_files`, `upstream`, `ahead`, `behind`, `remote_present`,
+  `merged_into_target`, `current` and `classification`), its `locked` flag, the
+  manifest's `tracking_branch` and the merge target re-resolved from the fresh
+  read. Traces: "Cleanup revalidates destructive actions"; design D7.
 - **FR-047**: A difference MUST refuse the target, spawn nothing, attempt no
-  later target and exit 2, with `identity-changed` (an identity or
-  registration difference, or a missing registry entry), `branch-changed` (a
-  different branch name or head), `state-changed` (any other signature, lock,
-  manifest or merge-target difference, and by LQ-14 a listing of the
-  administrative directory that fails or is cut), `contains-submodule` (a new
-  gitlink or `modules` entry), `hidden-local-state` (a newly flagged index
-  entry) or `operation-in-progress` (a marker, LQ-14). A
-  value null in the plan and null at revalidation MUST NOT count as a
+  later target and exit 2, with `identity-changed` (an identity or registration
+  difference, an effective work tree that the probe decides is not the target's
+  path, or a missing registry entry), `branch-changed` (a different branch name
+  or head), `state-changed` (any other signature, lock, manifest or
+  merge-target difference, and by LQ-14 a listing of the administrative
+  directory that fails or is cut), `contains-submodule` (a new gitlink or
+  `modules` entry), `hidden-local-state` (a newly flagged index entry),
+  `operation-in-progress` (a marker, LQ-14) or `worktree-only-commits` (a
+  commit that only the target's HEAD reflog or `refs/worktree/` holds, LQ-13).
+  A value null in the plan and null at revalidation MUST NOT count as a
   difference, and a value that cannot be re-read, a timed-out filesystem call
-  included, MUST. The first target's repository-wide checks MUST serve as the
-  preflight of every selected target, so that a difference found there
-  removes nothing at all. Push and branch deletion MUST keep the full
-  re-inspection and refuse with `inspection-incomplete`, `inspect-cap` or
+  included, MUST. A Git child of the revalidation that fails, runs past its own
+  budget while the deadline is not the limit, or, as the work-tree probe can,
+  prints anything but one line MUST count as `state-changed`, whatever its
+  step, a child giving its step's own reason only for a value it decided, and
+  one that the work deadline cuts MUST leave the target and every later one
+  `not-attempted` with `deadline-exceeded` (PR #19 at `4485678` and `2e819ad`;
+  the lead's R-171, R-195 and R-198). The first target's repository-wide checks
+  MUST serve as the preflight of every selected target, so that a difference
+  found there removes nothing at all. Push and branch deletion MUST keep the
+  full re-inspection and refuse with `inspection-incomplete`, `inspect-cap` or
   `deadline-exceeded`, exit 2, when it is incomplete. Git's own non-force check
   MUST be the last defense only on the removal command's pinned status
   configuration, the protocol pins being no part of it. Traces: "Cleanup
   revalidates destructive actions"; design D7.
-- **FR-048**: Concurrent writers MUST be outside the safe contract, and
-  cleanup MUST claim no lock, lease or writer-quiescence handoff. Its one
-  guarantee MUST be that a removal child is spawned only if, at the
-  revalidation immediately before it, every value FR-046 compares, the
-  absence of submodules and of hidden local state in the target's own index
-  included, and by LQ-14 no operation in progress, equals the confirmed
-  plan's. Ignored files created, index flags set and operations started
+- **FR-048**: Concurrent writers MUST be outside the safe contract, and cleanup
+  MUST claim no lock, lease or writer-quiescence handoff. Its one guarantee
+  MUST be that a removal child is spawned only if, at the revalidation
+  immediately before it, every value FR-046 compares, the absence of submodules
+  and of hidden local state in the target's own index included, by LQ-14 no
+  operation in progress and by LQ-13 no commit that only the target's HEAD
+  reflog or `refs/worktree/` holds, equals the confirmed plan's. Ignored files
+  created, index flags set, operations started and worktree-only commits made
   after that revalidation, and any change after Git's own check, MUST be
-  outside the contract, and the confirmation and the result MUST each
-  state that residual window in one line. Traces: "Cleanup states a narrow
-  guarantee and its residual window"; design D7.
+  outside the contract, and the confirmation and the result MUST each state
+  that residual window in one line. Traces: "Cleanup states a narrow guarantee
+  and its residual window"; design D7.
 - **FR-049**: The removal path, `--all-safe --apply` and `--action remove`,
   MUST never delete a branch, so that a branch race loses no commit, a branch
   being deleted only by FR-014's separate action: a branch change seen at
@@ -1607,7 +1632,11 @@ written".
   exit 0; `doctor` MUST report it as an `error` check row and exit 1; and
   `update --apply --component shape` or `bench` MUST refuse with exit 2,
   invoking no owner tool, while `tools` and `workflow` run as before; none of
-  them starts a Git child. Traces: "Clean reports local worktree state" ("A
+  them starts a Git child. A `HOME` that begins with `~` fails the test as
+  any relative value does, and `status`, `doctor` and `update` MUST read
+  nothing under a `HOME` that fails it and expand no `~` path against it, a
+  target that needs one refusing with `relative-config-path`, exit 2 (lead
+  rulings R-202 and R-205). Traces: "Clean reports local worktree state" ("A
   relative configuration path"); "Repository inspection requires Git 2.36
   and shares one evidence model" ("A relative configuration path in status,
   doctor and update"), both in draft PR #19; design D11, D16 and D18; Brett
@@ -1687,8 +1716,9 @@ written".
   deletion children stay unbounded.
 - **SC-006**: No plan inspects more than 128 worktree rows in a batch or a
   named removal (P aside) or 256 in a plain report; no run removes more than
-  16 worktrees; each target's revalidation spawns at most 5 Git children and
-  the final rescan at most 3; and `probes.performed` equals a counting
+  16 worktrees; each target's revalidation spawns at most 6 Git children (7
+  where row 4c read `extensions.worktreeConfig` as true) and the final rescan
+  at most 3; and `probes.performed` equals a counting
   wrapper's count of Git children other than removals, and
   `operations.performed` its count of removals, in every apply.
 - **SC-007**: Every selected target of every apply ends in exactly one of

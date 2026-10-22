@@ -22,12 +22,12 @@ Git 2.36 or later is required wherever `project` inspects a repository:
 report it as an inspection error.
 `HOME`, `XDG_CONFIG_HOME`, `GIT_CONFIG_GLOBAL` and `GIT_CONFIG_SYSTEM` must be
 absolute paths when set to anything but an empty value: Git reads a relative
-one inside the repository it runs in, so a repository's own files would act as your configuration. Where
-one is set to a value that does not begin with `/`, `project clean` refuses
-with `relative-config-path` (exit 2) before it runs Git, `project status`
-and `project doctor` report it as an inspection error, and `project update
---apply --component shape` or `bench` refuses; make the value absolute or
-unset it.
+one inside the repository it runs in, so a repository's own files would act as
+your configuration. Where one is set to a value that does not begin with `/`,
+`project clean` refuses with `relative-config-path` (exit 2) before it runs
+Git, `project status` and `project doctor` report it as an inspection error,
+and `project update --apply --component shape` or `bench` refuses; make the
+value absolute or unset it.
 For source development, run `python3 project --help` in this checkout.
 
 ## Create a project
@@ -355,6 +355,7 @@ carries its next step:
 | `contains-submodule` | review, then remove the worktree yourself |
 | `hidden-local-state` | review, then remove the worktree yourself |
 | `operation-in-progress` | a git am, merge, notes merge, cherry-pick, revert, rebase or bisect is, or may be, in progress there; finish or abort it (a squash merge that holds an autostash ends with git commit, --allow-empty where nothing is staged, or with git merge --quit, which keeps the edit in the stash list), then run again |
+| `worktree-only-commits` | a commit is, or may be, held only by this worktree's HEAD reflog or refs/worktree; keep it on a branch or tag, or review, then git worktree remove yourself |
 
 The first four reasons are facts about the row. The next four are its
 classification, one gate, and only a `merged-removable` row passes it.
@@ -370,15 +371,28 @@ marker there (`MERGE_HEAD`, `CHERRY_PICK_HEAD`, `REVERT_HEAD`, `BISECT_LOG`,
 `BISECT_START`, `rebase-apply`, `rebase-merge`, `sequencer`,
 `MERGE_AUTOSTASH`, `NOTES_MERGE_PARTIAL` or `NOTES_MERGE_REF`), though the
 worktree's files and index may look clean. A directory that cannot be listed
-makes the worktree `inspection-error`.
+makes the worktree `inspection-error`. `worktree-only-commits`, the last gate,
+keeps a worktree that holds a commit no branch, tag or remote-tracking ref
+holds: one made on a detached HEAD there and left behind when the branch was
+checked out again, which only the worktree's HEAD reflog names, or one only a
+ref under its `refs/worktree/` holds. It reads the worktree's `logs/HEAD` in
+that administrative directory and runs one `git rev-list` in the worktree,
+for the same 16; the commits that the branch's own reflog names, as after an
+amend and a reset, do not count. A `logs/HEAD` too large or too damaged to
+read keeps the worktree as `worktree-only-commits`, and a read or a
+`git rev-list` that fails, as on a commit whose object was deleted, makes it
+`inspection-error`. Tag the commit or make a branch at it, and the worktree is
+selected again.
 
 A run removes at most 16 worktrees. Further eligible worktrees show as
 `deferred-target-cap`, and each run plans afresh, so run the same command again
 until none are left; the preview digest covers only the selected worktrees, so a
 deferred one's change leaves a preview valid. When every one of the 16 worktrees
-ahead of the deferred ones is excluded as `contains-submodule`, the preview says
-`these deferred rows will not drain while the 16 rows ahead of them are
-contains-submodule; review those worktrees, then remove them yourself`.
+ahead of the deferred ones is excluded by a gate after `deferred-target-cap`,
+the preview says `these deferred rows will not drain while the 16 rows ahead of
+them are REASONS; review those worktrees, then remove them yourself`, REASONS
+naming their reasons, each once, in gate order, such as
+`contains-submodule, worktree-only-commits`.
 
 ### What is guaranteed
 
@@ -386,8 +400,10 @@ contains-submodule; review those worktrees, then remove them yourself`.
 it spawns a removal only if, at the revalidation immediately before it, what
 the plan recorded still holds: the repository and the worktree (identity,
 registration, lock), the branch's name and tip, its upstream, the merge target,
-the manifest, a clean status, no submodule or hidden index flag, and no
-operation in progress (`operation-in-progress`). The first
+the manifest, a clean status, no submodule or hidden index flag, no
+operation in progress (`operation-in-progress`), and no commit that only the
+worktree's HEAD reflog or `refs/worktree/` holds (`worktree-only-commits`).
+The first
 target's repository-wide checks serve every target, so a difference found there
 removes nothing at all. A difference refuses that target (`refused`), starts no
 removal, attempts no later target and exits 2. Git's own `git worktree remove`,
@@ -395,8 +411,9 @@ never forced, is the last check.
 
 The residual window is stated in one line in the preview when a worktree is
 selected, in the confirmation and in the result: `Not protected: ignored files
-created, index flags set or operations started after the last check, and any
-change after Git's own check.` A removal never deletes a branch, so a branch that moves during a run
+created, index flags set, operations started or worktree-only commits made
+after the last check, and any change after Git's own check.` A removal never
+deletes a branch, so a branch that moves during a run
 loses no commit; one seen only after Git removed the worktree leaves the target
 `removed` with `branch-advanced-after-removal` or
 `branch-missing-after-removal`, stops the run and exits 2.

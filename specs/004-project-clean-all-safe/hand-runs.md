@@ -8,12 +8,12 @@ the lead runs them through tmux and no subagent dispatches them.
 
 - Code under test: `project` at e48de37. Every code lane is merged there, and
   its `project` equals c813869's. The code has moved since: the push fix, Q9
-  B's trace names, Brett Heap's rulings LQ-10, LQ-11, LQ-12, LQ-14 and LQ-15,
-  and the fix lanes landed after it (`cceb6d7` is 004's head now). Lane 3's
-  W24 walked three of these entries again at 2439838 (the US1 apply rows, the
-  US3 rows at "push remote-gone", "push `--json`" and the named removal, and
-  the US9 rows), and each still matched; the other rows were walked at
-  e48de37 only (lead ruling R-174, O-1).
+  B's trace names, Brett Heap's rulings LQ-10 to LQ-15, and the fix lanes
+  landed after it (doc round 14 cites 004 at `0b7dd94`, its head on
+  2026-10-22). Lane 3's W24 walked three of these entries again at 2439838 (the
+  US1 apply rows, the US3 rows at "push remote-gone", "push `--json`" and the
+  named removal, and the US9 rows), and each still matched; the other rows were
+  walked at e48de37 only (lead ruling R-174, O-1).
 - Terminal: a tmux pane (a pseudo-terminal) in the py-bench container, with
   bash 5.2.21 (history expansion off, `set +H`), Git 2.43.0 and Python 3.12.3.
 - Fixture: quickstart.md's "Set up a fixture for hand runs (bash)",

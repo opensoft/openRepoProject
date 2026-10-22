@@ -171,5 +171,15 @@ proceeding to planning
   Stories 2, 3, 4 and 9 add the thirteen of PR #19's titles that 004 builds,
   each once, which traceability.md traces. The
   counts above are those of the review rounds.
+- Doc round 14 (2026-10-22) brought spec.md to 004 at `93a3ae9` and to
+  draft PR #19 at `2e819ad`: LQ-13's gate in FR-020, FR-023, FR-034, FR-045,
+  FR-046 to FR-048 and EC-016; six revalidation children, seven where row 4c
+  read true, in FR-033, SC-006 and User Story 6 scenario 6; the drain line
+  naming every gate after the cap in FR-032 and EC-008; and the revalidation
+  rule for a Git child that decides nothing (the lead's R-171, R-195 and
+  R-198) in FR-047. No FR and no acceptance scenario is added: 68 FRs and 74
+  scenarios. The delta-scenario lists of User Stories 2 and 4 add LQ-13's two
+  titles and round (c)'s "A work-tree probe at revalidation", sixteen of PR
+  #19's titles in all, each once.
 - Items marked incomplete require spec updates before `/speckit-clarify`
   or `/speckit-plan`
