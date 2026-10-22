@@ -379,11 +379,12 @@ scratch directory, never in the repository.
   included: `probes` is F + W + E + 6T + 3, or F + W + E + 7T + 3 where row 4c
   read `extensions.worktreeConfig` as true, F the repository-wide children
   this invocation ran (rows 1 to 7, with 2, 4b, 4c, 5 or a row 3 repeat when
-  they ran), W the status probes and, where row 4c is not false, the
-  work-tree probes (LQ-11), E the hidden-state probes and gate 12's
-  reachability probes (LQ-13), T the selected targets, and 6 or 7 the
+  they ran) and every other planning child but W and E, LQ-11's work-tree
+  probes and gate 12's reachability probes (LQ-13) among them, W the status
+  probes, E the hidden-state probes, T the selected targets, and 6 or 7 the
   children of one revalidation (`revalidation_children()`; lead rulings
-  R-165 and R-201); `operations` is T. `performed` counts the children actually spawned. Tests
+  R-165 and R-201); `operations` is T. `performed` counts the children
+  actually spawned. Tests
   compare `probes.performed` with the counting wrapper's count of children
   other than `worktree remove`, and `operations.performed` with its count of
   `worktree remove`.

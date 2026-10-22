@@ -2690,7 +2690,10 @@ US3, US7 and US9; US5's text lane follows it (analyze M2 and L9).
   effective work tree, a further Git child, a work tree the probe decides is
   not the target's giving `identity-changed` (LQ-11; lane E's hunk, R-149),
   and a probe that fails, times out or prints anything but one line
-  `state-changed` (the lead's R-171; writer G's `6dec3f4`); and step 5 ends
+  `state-changed` (the lead's R-171; writer G's `6dec3f4`), the probe still
+  run before the twin, `modules` and listing checks at `0b7dd94`, where the
+  delta runs it after them (R-198; writer G's `963fccf`, not yet on 004); and
+  step 5 ends
   with LQ-14's listing of the target's administrative directory
   (`operation_check()`), a marker giving `operation-in-progress`, a listing
   that fails or times out `state-changed` and a cut at the work deadline

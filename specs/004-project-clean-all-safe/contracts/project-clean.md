@@ -355,7 +355,7 @@ R-124 and R-146; data-model.md, "Gate"), and with them three lines. Gate
 bisect is, or may be, in progress there; finish or abort it (a squash merge
 that holds an autostash ends with git commit, --allow-empty where nothing is
 staged, or with git merge --quit, which keeps the edit in the stash list),
-then run again`. `project` at `93a3ae9` still prints round (a)'s wording,
+then run again`. `project` at `0b7dd94` still prints round (a)'s wording,
 `... ends only with git commit, --allow-empty where nothing is staged), then
 run again`, which is false, since `git merge --quit` and `git reset --hard`
 also end a held autostash, saving the edit to the stash list (lane 3's W26
@@ -371,7 +371,7 @@ the `operation-in-progress` and `worktree-only-commits` groups follow
 `hidden-local-state`, in gate order (`EXCLUDED_GROUP_ORDER`).
 `registration-mismatch`'s next step at `4485678` also names `unset
 core.worktree and core.bare in the worktree's config.worktree` (LQ-11, lead
-ruling R-125 L6); `project` at `93a3ae9` prints `review, then git worktree
+ruling R-125 L6); `project` at `0b7dd94` prints `review, then git worktree
 repair or git worktree prune, or remove the row by hand`, without that
 clause, and the text here follows the code until `NEXT_STEPS` takes it (lane
 E's and lane G's reports).
@@ -626,7 +626,7 @@ restores its mtime still shows by its ctime under a repository's
 | row 4 | `-C DIR worktree list --porcelain -z` | there while the main worktree is unknown, else `root` |
 | row 4b | `-C DIR config --get core.worktree` | only when the first record is `common_dir` |
 | row 4c | `-C DIR config --file COMMON_DIR/config --type=bool --get extensions.worktreeConfig` | where rows 6 and 7 run, once per common directory, before row 6: true, false (Git prints `false` or exits 1, the key unset), or not read where an earlier probe failed, which is read as true; any other outcome is true, failing closed (Brett Heap's ruling LQ-11; draft PR #19 at `addd346`; lead rulings R-101 (g) and R-113) |
-| work tree | `-C WORKTREE rev-parse --path-format=absolute --show-toplevel` | each present linked row whose identity and registration hold, before its status probe, only where row 4c is not false; at revalidation the target's, only where row 4c read true; one line naming the row's own realpath holds; another path, a failure such as exit 128 under `core.bare=true`, or other output makes the row `registration-mismatch`, unprobed; a probe cut at its budget or the deadline, or a realpath read that fails, is a row error instead, the row `inspection-error` (LQ-11; lane E's report). At revalidation a work tree the probe decides is not the target's path is `identity-changed`, and a probe that fails, runs past its own budget or prints anything but one line is `state-changed` (the lead's R-171; writer G's `6dec3f4`) |
+| work tree | `-C WORKTREE rev-parse --path-format=absolute --show-toplevel` | each present linked row whose identity and registration hold, before its status probe, only where row 4c is not false; at revalidation the target's, only where row 4c read true; one line naming the row's own realpath holds; another path, a failure such as exit 128 under `core.bare=true`, or other output makes the row `registration-mismatch`, unprobed; a probe cut at its budget or the deadline, or a realpath read that fails, is a row error instead, the row `inspection-error` (LQ-11; lane E's report). At revalidation a work tree the probe decides is not the target's path is `identity-changed`, and a probe that fails, runs past its own budget or prints anything but one line is `state-changed` (the lead's R-171; writer G's `6dec3f4`); the delta runs the probe after the `modules` check and the listing (the lead's R-198), which `project` at `0b7dd94` does not yet do, writer G's `963fccf` not being on 004 |
 | row 5 | row 3 again | `root`, only when row 3 ran elsewhere |
 | row 6 | `-C ROOT for-each-ref --format=%(refname)%00%(objectname)%00%(symref)%00%(upstream)%00%(upstream:short)%00%(upstream:track,nobracket) refs/heads refs/remotes` | `root` |
 | row 7 | `-C ROOT for-each-ref --merged=SHA --format=%(refname) refs/heads` | `root` |
