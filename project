@@ -786,8 +786,15 @@ TEXT = {
         "review, then git worktree repair, unset core.worktree and core.bare in the repository's config, or in "
         "that worktree's config.worktree, or remove the row by hand; a row's path could not be read, so do not "
         "run git worktree prune until it can",
+    # The inspect-cap remedy, with a warning against `git worktree prune`
+    # always, not only where a row's path could not be read, since the rows
+    # past the cap are never read, so no run can tell whether their paths can
+    # be; prune deletes the admin directory of a live worktree whose path Git
+    # cannot stat (EACCES), on Git 2.43.0 and 2.36.6 (lane 3's W86 NM-1;
+    # R-320, ruled by Brett Heap, "R-320: yes", lead R-321).
     "remedy_inspect_cap":
-        "{N} rows exceed the row cap of {M}; remove worktrees explicitly, or prune stale entries by hand",
+        "{N} rows exceed the row cap of {M}; remove worktrees explicitly, or prune stale entries by hand; if a "
+        "worktree's path cannot be read, do not run git worktree prune until it can",
     "remedy_deadline_exceeded": "the run ran out of time; remove worktrees explicitly or re-run",
     # The contract beyond D18 (plan review M8): progress, kept branches and the
     # message of each refusal code that has no baseline message.
@@ -856,6 +863,19 @@ TEXT = {
     # 3's W52 F-6 and F-10).
     "recommendation_main_worktree": "The main worktree is never removed by project clean.",
     "recommendation_stale_locked": "Review, unlock it, then prune stale worktree metadata manually.",
+    # RECOMMENDATIONS's `stale-worktree` text and the locked form above where
+    # any row of the plan has a path that could not be read, its planning
+    # lstat having failed (`present` null; unread_paths()): each with the
+    # warning against `git worktree prune` appended, which deletes the admin
+    # directory of a live worktree whose path Git cannot stat (EACCES), on
+    # Git 2.43.0 and 2.36.6 (stale_recommendations(), excluded_groups(); lane
+    # 3's W86 NM-1; R-320, ruled by Brett Heap, "R-320: yes", lead R-321).
+    "recommendation_stale_worktree_unread":
+        "Review and prune stale worktree metadata manually; a row's path could not be read, so do not run git "
+        "worktree prune until it can.",
+    "recommendation_stale_locked_unread":
+        "Review, unlock it, then prune stale worktree metadata manually; a row's path could not be read, so do "
+        "not run git worktree prune until it can.",
     # Baseline texts kept: `target-excluded` for the current worktree and for a
     # class (D18), and `no-merge-target` (project:551 at 961c405).
     "target_excluded_current": "Cannot remove the current worktree.",
@@ -3212,7 +3232,10 @@ def row_evidence(record, raw, main, read, refs, merged, target):
     merged-current, takes TEXT's `recommendation_main_worktree`, since no
     removal of it can succeed, and a locked stale row takes
     `recommendation_stale_locked`, since `git worktree prune` keeps a locked
-    entry. The class is unchanged in both. record is
+    entry. The class is unchanged in both. A plan then gives each stale row
+    the form of its text that warns against `git worktree prune` wherever
+    any of its rows' paths could not be read, which no one row's evidence
+    shows (stale_recommendations(); R-320). record is
     the row's registry record; raw the row's path bytes; main whether it is
     the main worktree; refs row 6's records by refname; merged row 7's set,
     or None where row 7 did not run; target the merge target's name, or None.
@@ -4336,6 +4359,29 @@ def unread_paths(plan):
     return {row.raw_path for row in getattr(plan, "rows", None) or () if path_unread(row)}
 
 
+def stale_recommendations(plan):
+    """Where any row of plan.rows has a path that could not be read at
+    planning (unread_paths()), give each `stale-worktree` row of plan.rows
+    TEXT's `recommendation_stale_worktree_unread` as its recommendation, or
+    `recommendation_stale_locked_unread` for a locked row, in place of
+    RECOMMENDATIONS's text or `recommendation_stale_locked`, the one
+    row_evidence() chose: each the same advice with a warning against `git
+    worktree prune` appended, since prune deletes the admin directory of a
+    live worktree whose path Git cannot stat (EACCES), and acts on the whole
+    repository. From what planning recorded, nothing read again; the class,
+    and every other row, are unchanged. build_plan() calls it once every row
+    is gated, so that the report, the plan envelope's `worktrees` and
+    plan.report carry the text; the preview's `stale-worktree` group takes
+    the same text through excluded_groups() (lane 3's W86 NM-1; R-320, ruled
+    by Brett Heap, "R-320: yes", lead R-321)."""
+    if not unread_paths(plan):
+        return
+    for row in plan.rows:
+        if row["classification"] == "stale-worktree":
+            row["recommendation"] = TEXT["recommendation_stale_locked_unread" if row["locked"]
+                                         else "recommendation_stale_worktree_unread"]
+
+
 def counted_rows(plan, exclude=()):
     """The rows of plan.rows that plan_completeness() counts, in their order:
     those not in exclude, and in mode single for --action remove only P's
@@ -4666,7 +4712,10 @@ def build_plan(repo, run):
     `inspect-cap` with `rows`, that count, which alone leaves it complete,
     while the gates still run and `excluded` lists every inspected row a
     gate excludes; its own cap of 256 rows makes it `inspect-cap` incomplete
-    (T101; D14, FR-031)."""
+    (T101; D14, FR-031). Once every row is gated, each `stale-worktree` row
+    takes the form of its recommendation that warns against `git worktree
+    prune` wherever any row's path could not be read (stale_recommendations();
+    R-320)."""
     plan = Plan(repo, run)
     root = repo["root"]
     evidence = plan.evidence = repo.get("evidence")  # the resolution's: row 3 runs once (R-71 (b))
@@ -4719,6 +4768,7 @@ def build_plan(repo, run):
     later_selected, later_excluded = gate_rows([row for row in plan.rows if id(row) not in first], plan, run)
     plan.selected = sorted(selected + later_selected, key=lambda row: row.raw_path)
     plan.excluded = sorted(excluded + later_excluded, key=lambda item: item[0].raw_path)
+    stale_recommendations(plan)  # R-320: no prune advice beside a row whose path could not be read
     command_dir = identity["root"] if identity["root"] is not None else os.fsencode(root)
     for row in plan.selected:
         row.removal_args = ["-C", command_dir, "worktree", "remove", row.raw_path]
@@ -5429,6 +5479,17 @@ def ignored_suffix(row):
     return TEXT[key].format(N=row["ignored_files"], SAMPLE=human_path(samples[0]))
 
 
+# The TEXT key of each preview group's next step that names `git worktree
+# prune` only to warn against it, where any row of the plan has a path that
+# could not be read (excluded_groups(); the lead's R-310, and R-320, ruled by
+# Brett Heap).
+UNREAD_NEXT_STEPS = {
+    "inspection-error": "next_step_inspection_error_unread",
+    "registration-mismatch": "next_step_registration_mismatch_unread",
+    "stale-worktree": "recommendation_stale_worktree_unread",
+}
+
+
 def excluded_groups(reason, rows, unread):
     """The preview's groups of the rows excluded for reason, rows in raw path
     byte order: [(NEXT STEP, rows)], each group non-empty; unread is whether
@@ -5442,11 +5503,14 @@ def excluded_groups(reason, rows, unread):
     repository, `inspection-error` and `registration-mismatch` take TEXT's
     `next_step_inspection_error_unread` and
     `next_step_registration_mismatch_unread`, which name no prune (the lead's
-    R-310)."""
+    R-310), and `stale-worktree`, whose next step is RECOMMENDATIONS's text,
+    takes `recommendation_stale_worktree_unread`, which warns against it, as
+    the rows' own recommendations do (stale_recommendations(); a locked stale
+    row is excluded as `locked-worktree`, gate 4; R-320, ruled by Brett Heap,
+    "R-320: yes", lead R-321)."""
     step = next_step(reason) or ""
-    if unread and reason in ("inspection-error", "registration-mismatch"):
-        step = TEXT[{"inspection-error": "next_step_inspection_error_unread",
-                     "registration-mismatch": "next_step_registration_mismatch_unread"}[reason]]
+    if unread and reason in UNREAD_NEXT_STEPS:
+        step = TEXT[UNREAD_NEXT_STEPS[reason]]
     if reason != "inspection-error":
         return [(step, rows)]
     own = [row for row in rows if path_unread(row)]
@@ -5478,8 +5542,9 @@ def preview_lines(plan):
     in raw path byte order. In mode single, P is the one selected row and the
     other eligible rows form the `not-requested` group. Each group's NEXT
     STEP is excluded_groups()'s, which splits off the `inspection-error`
-    rows whose paths could not be read and names no `git worktree prune`
-    while any row of the plan has such a path (R-307, R-310)."""
+    rows whose paths could not be read and names `git worktree prune` only
+    to warn against it while any row of the plan has such a path (R-307,
+    R-310 and R-320)."""
     lines = []
     selected = plan.selected or []
     if selected:

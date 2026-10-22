@@ -653,7 +653,10 @@ TEXT_FIXTURES = {
     # copied exactly from the lead's message.
     "next_step_inspection_error_unread": "review, then git worktree repair, or remove the row by hand; a row's path could not be read, so do not run git worktree prune until it can",
     "next_step_registration_mismatch_unread": "review, then git worktree repair, unset core.worktree and core.bare in the repository's config, or in that worktree's config.worktree, or remove the row by hand; a row's path could not be read, so do not run git worktree prune until it can",
-    "remedy_inspect_cap": "{N} rows exceed the row cap of {M}; remove worktrees explicitly, or prune stale entries by hand",
+    # The inspect-cap remedy always warns against git worktree prune, since the rows past the
+    # cap are never read (lane 3's W86 NM-1; R-320, ruled by Brett Heap, "R-320: yes", lead
+    # R-321), copied exactly from the lead's brief.
+    "remedy_inspect_cap": "{N} rows exceed the row cap of {M}; remove worktrees explicitly, or prune stale entries by hand; if a worktree's path cannot be read, do not run git worktree prune until it can",
     "remedy_deadline_exceeded": "the run ran out of time; remove worktrees explicitly or re-run",
     # The contract, beyond D18.
     "progress_line": "  {STAGE} {PATH}",
@@ -698,6 +701,13 @@ TEXT_FIXTURES = {
     # (lane 3's W52 F-6 and F-10).
     "recommendation_main_worktree": "The main worktree is never removed by project clean.",
     "recommendation_stale_locked": "Review, unlock it, then prune stale worktree metadata manually.",
+    # The stale-worktree recommendation and its locked form above where any row of the plan has
+    # a path that could not be read (its planning lstat failed, present null): each with a
+    # warning against git worktree prune, which deletes that live worktree's admin directory
+    # (lane 3's W86 NM-1; R-320, ruled by Brett Heap, "R-320: yes", lead R-321), copied exactly
+    # from the lead's brief.
+    "recommendation_stale_worktree_unread": "Review and prune stale worktree metadata manually; a row's path could not be read, so do not run git worktree prune until it can.",
+    "recommendation_stale_locked_unread": "Review, unlock it, then prune stale worktree metadata manually; a row's path could not be read, so do not run git worktree prune until it can.",
     # Baseline texts kept (project at 961c405).
     "target_excluded_current": "Cannot remove the current worktree.",
     "target_excluded_class": "Worktree is {CLASS}; only clean merged worktrees may be removed.",
