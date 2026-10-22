@@ -568,8 +568,8 @@ a branch that briefly held a commit the merge target lacks, or an amended-away
 one, and then returned to its merged tip passes it, and `git branch -d` deletes
 the branch with its reflog, the only reachability of that commit. A re-proof
 that decided nothing has not proved the reflog, so the line says to inspect it
-before the retry, in the form `branch-changed`'s `inspect it before retrying`
-has. The same holds wherever the stage did not re-prove the reflog, its
+before the retry, in the form that `branch-changed`'s step, `inspect it
+before retrying`, had when ruling A-49 chose it. The same holds wherever the stage did not re-prove the reflog, its
 re-proof never starting or never finishing with a proof, and the line's next
 step is RETRY (rulings A-53 and A-55; lane openRepoProject-3's W60,
 MEDIUM-1): the plan's proof of the reflog does not stand by itself, since
@@ -1522,8 +1522,8 @@ as amended, Codex's P2 on `9ff8202`).
     commit, so that `reflog-unmerged` would claim one, and proved nothing, and
     RETRY is change 1's `delete-branch`, which proves only the branch's tip
     and deletes the branch with its reflog, so the line names the inspection
-    before the retry, in the form that `branch-changed`'s `inspect it before
-    retrying` has, and keeps `reflog-unmerged`'s `show` and full ref name; it
+    before the retry, in the form that `branch-changed`'s step, `inspect it
+    before retrying`, had when ruling A-49 chose it, and keeps `reflog-unmerged`'s `show` and full ref name; it
     supersedes ruling A-46's keeping of W47's LOW-3. The same next step
     follows every `Kept` line whose next step is RETRY for a branch the stage
     did not re-prove, its re-proof never starting or never finishing with a
