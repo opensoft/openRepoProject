@@ -603,20 +603,20 @@ those names beside `GH_DEBUG` and `DEBUG`.
 The child starts in `/`, which re-anchors every relative path in its
 environment. So the lookup of `gh` counts as failing when any of
 `GH_CONFIG_DIR`, `XDG_CONFIG_HOME` and `HOME` is set to a non-empty value whose
-first byte is not `/` (C-44). Those are the three that `gh help environment`
-names for the configuration directory (`GH_CONFIG_DIR`, else
-`$XDG_CONFIG_HOME/gh`, else on Windows only `$AppData/GitHub CLI`, else
-`$HOME/.config/gh`), and `gh`, started in `/`, resolves a relative one against
-`/` and not against the caller's working directory. Normally that names no
-configuration; but if the resolved path exists, `gh` reads the configuration
-there, and a tree under `/` that any local user can write, such as `tmp`,
-`var/tmp` or `dev/shm`, would let another user plant one, which can capture the
-token `gh` sends (the lead's check, below). A failed lookup gives what one
-already gives, below: every keyed row, whether or not its key is past the 64th,
-is `unavailable` with reason `gh-unavailable`, and no child starts. The reason
-stays `gh-unavailable`, which already covers more than one cause: a distinct
-reason would cost an enum value for a cause that the README's next step makes
-discoverable.
+first byte is not `/` (C-44; `XDG_CONFIG_HOME` and `HOME` as the "Two texts"
+paragraph says, C-58). Those are the three that `gh help environment` names for
+the configuration directory (`GH_CONFIG_DIR`, else `$XDG_CONFIG_HOME/gh`, else
+on Windows only `$AppData/GitHub CLI`, else `$HOME/.config/gh`), and `gh`,
+started in `/`, resolves a relative one against `/` and not against the caller's
+working directory. Normally that names no configuration; but if the resolved
+path exists, `gh` reads the configuration there, and a tree under `/` that any
+local user can write, such as `tmp`, `var/tmp` or `dev/shm`, would let another
+user plant one, which can capture the token `gh` sends (the lead's check,
+below). A failed lookup gives what one already gives, below: every keyed row,
+whether or not its key is past the 64th, is `unavailable` with reason
+`gh-unavailable`, and no child starts. The reason stays `gh-unavailable`, which
+already covers more than one cause: a distinct reason would cost an enum value
+for a cause that the README's next step makes discoverable.
 
 The test is made on the raw bytes of each value, by design: ` /x`, `~/x` and `.`
 are all refused, and so is a value whose first byte is any byte other than `/`,
@@ -643,31 +643,31 @@ alone and relative, a relative `XDG_CONFIG_HOME` or `HOME` beside an absolute
 `GH_CONFIG_DIR`, ` /x`, `~/x`, `.`, a first byte of FF and one of EF, which are
 refused, and `/` alone, empty, unset and all three absolute, which are not.
 
-Two texts that land before this change refuse a relative `HOME` or
+Two texts that land before this change stop a run under a relative `HOME` or
 `XDG_CONFIG_HOME` before any child starts, so that such a run has no lookup and
 no row to be `gh-unavailable` (C-58, the lead's ruling on reader RH's M4 and the
-alignment reader AL1's conflict C1). Change 1's evidence model, on draft PR
-#19's text at `f0bf538` (`PR19/cmd:116-128`, LQ-15 there), tests `HOME` and
+alignment reader AL1's conflict C1; C-66). Change 1's evidence model, on draft
+PR #19's text (`PR19/cmd` at `f0bf538`, :116-129, LQ-15 there), tests `HOME` and
 `XDG_CONFIG_HOME`, and `GIT_CONFIG_GLOBAL` and `GIT_CONFIG_SYSTEM`, before any
-Git child, `git --version` included, and where one is relative the subcommand
-starts no Git child and inspects no repository (`relative-config-path`). Change
-2's `Overview exits by completeness and severity`, as amendment A1 words it
+Git child, `git --version` included, and where one is relative bars every Git
+child and inspects no repository (`relative-config-path`), whether the
+subcommand then refuses or reports being its own requirement's rule. Change 2's
+`Overview exits by completeness and severity`, as amendment A1 words it
 (ratified by Brett Heap; `add-project-overview/specs/project-overview/spec.md`
 :868-876 at `e4a30fc`), refuses the overview for the same two variables, with
 that code and status 2. This change's own bases hold neither: its block of the
 evidence model is PR #19's text at `c462d87`, change 2 at `961c405` has no such
 refusal, and neither defines `relative-config-path`. So the spec keeps C-44's
 rule whole for `GH_CONFIG_DIR`, which neither text tests, and states it for
-`XDG_CONFIG_HOME` and `HOME` only in a run that neither requirement refuses
-before any child starts; the AND on "No gh, or a gh without authentication"
-says the same for those two cases and keeps "no `gh` child starts" on every
-base, and adds no scenario, so the counts stay 36 and 10. AL1's proposed edit,
-which has those two cases exit 2 with `relative-config-path`, is not taken: it
-names a code that this change's own base does not define. D4, D11, Risks and
-the rest of this decision state C-44's refusal for all three variables without
-that condition; they are read with this paragraph, and are re-aligned, with
-A1's other places, when this change's blocks are re-read against the archived
-texts (task 2.3).
+`XDG_CONFIG_HOME` and `HOME` only in a run that neither requirement stops before
+any child starts; the AND on "No gh, or a gh without authentication" says the
+same for those two cases and keeps "no `gh` child starts" on every base, and
+adds no scenario, so the counts stay 36 and 10. AL1's proposed edit, which has
+those two cases exit 2 with `relative-config-path`, is not taken: it names a
+code that this change's own base does not define. D4 and the rest of this
+decision state C-44's refusal for all three variables without that condition;
+they are read with this paragraph, and are re-aligned, with A1's other places,
+when this change's blocks are re-read against the archived texts (task 2.3).
 
 The evidence was observed offline on `gh` 2.96.0 on 2026-10-20 with fake tokens,
 and none of it is a test of this change. The lead's check, with the token
@@ -1178,16 +1178,27 @@ reader of these fields, so remote evidence never reaches an eligibility gate, a
 - One test pins C-44's rule, with the fake `gh` first on `PATH` and two queried
   rows with distinct heads, each case its own run that changes only the three
   variables, the rest of the caller's environment being the same:
-  - Refused: `GH_CONFIG_DIR=.gh-config`; `XDG_CONFIG_HOME=cfg`; `HOME=h`; a
-    relative `XDG_CONFIG_HOME` or `HOME` beside an absolute `GH_CONFIG_DIR`,
-    since the rule holds whichever of the three `gh` would use and does not
-    depend on its order; each of the three relative beside the other two
-    absolute; and, for `GH_CONFIG_DIR`, the values ` /x` (a leading space),
-    `~/x` and `.`, since the test is on the raw bytes. Each gives both rows
-    `unavailable` with reason `gh-unavailable`, `remote.requests.performed` 0,
-    `remote.observed_at` null, no start record of the fake `gh` although it lies
-    first on `PATH`, and the exit status and every local field those of the run
-    without `--remote`.
+  - Refused on every base: `GH_CONFIG_DIR=.gh-config`; a relative
+    `GH_CONFIG_DIR` beside an absolute `XDG_CONFIG_HOME` and an absolute `HOME`;
+    and, for `GH_CONFIG_DIR`, the values ` /x` (a leading space), `~/x` and `.`,
+    since the test is on the raw bytes. Each gives both rows `unavailable` with
+    reason `gh-unavailable`, `remote.requests.performed` 0, `remote.observed_at`
+    null, no start record of the fake `gh` although it lies first on `PATH`, and
+    the exit status and every local field those of the run without `--remote`.
+  - Refused only where neither requirement stops the run first (C-58, C-66):
+    `XDG_CONFIG_HOME=cfg`; `HOME=h`; a relative `XDG_CONFIG_HOME` or `HOME`
+    beside an absolute `GH_CONFIG_DIR`, since the rule holds whichever of the
+    three `gh` would use and does not depend on its order; and each of those two
+    relative beside the other two absolute. Where neither stops the run before
+    any child starts, each gives what the first list gives. Where either does,
+    by `Repository inspection requires Git 2.36 and shares one evidence model`
+    (which bars every Git child and inspects no repository) or by `Overview
+    exits by completeness and severity` (which refuses the run), the run has no
+    lookup and no row to be `gh-unavailable` (D5, "Two texts"), and the case
+    asserts only that no `gh` child starts, the fake `gh` having no start
+    record, and that the run ends as the requirement that stops it says: under
+    change 2's requirement as amendment A1 words it, status 2 with
+    `relative-config-path` and no row.
   - Not refused: an absolute `GH_CONFIG_DIR`; an empty `GH_CONFIG_DIR`; an empty
     `XDG_CONFIG_HOME` and an empty `HOME`; all three unset; and all three
     absolute. Each starts the `gh` children, answers both rows, and has the fake
@@ -1400,10 +1411,11 @@ requests".
   value.
 - [A `GH_CONFIG_DIR`, `XDG_CONFIG_HOME` or `HOME` set to a non-empty value that
   does not begin with `/` makes every keyed row `gh-unavailable` and starts no
-  child (C-44)] -> A caller whose configuration sits under a relative path gets
-  no remote evidence, which fails closed and is never a wrong answer, and the
-  README's next step for `gh-unavailable` says to make the path absolute, so
-  that a person with a relative `HOME` does not go looking for `gh` on `PATH`.
+  child (C-44; for `XDG_CONFIG_HOME` and `HOME`, where C-58's condition holds)]
+  -> A caller whose configuration sits under a relative path gets no remote
+  evidence, which fails closed and is never a wrong answer, and the README's
+  next step for `gh-unavailable` says to make the path absolute, so that a
+  person with a relative `HOME` does not go looking for `gh` on `PATH`.
   The refusal holds whichever of the three `gh` would use, on the raw bytes, and
   so covers a relative `HOME` beside an absolute `GH_CONFIG_DIR`, which lane
   openRepoProject-4's check of extensions found harmless today, since the argv
