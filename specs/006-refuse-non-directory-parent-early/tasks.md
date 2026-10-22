@@ -739,6 +739,10 @@ reported two nits, both in `tests/test_project.py`. The lead ruled both
 fixed by T029, as lane step 2 says: "a fix is a new task on its own file
 set, after which the review re-runs on the new head".
 
+Its first full report, still at `fc71792`, added a third nit, in
+`traceability.md`, after T029 was written; the lead ruled it fixed by
+T030.
+
 - [X] T029 [S] Fix the review's two nits in `tests/test_project.py` (FS-T) and
   change no other line. (1) In N7
   `test_pty_triad_answer_below_a_file_leaves_the_file_intact` and N8
@@ -757,6 +761,15 @@ set, after which the review re-runs on the new head".
   their planned reason; check `red-first` reads both.
   -- files: `tests/test_project.py`
   -- verify: `bash specs/006-refuse-non-directory-parent-early/qs.sh suite ADDED=15 && bash specs/006-refuse-non-directory-parent-early/qs.sh suite ADDED=15 PY="$(uv python find 3.10)" && bash specs/006-refuse-non-directory-parent-early/qs.sh red-first && bash specs/006-refuse-non-directory-parent-early/qs.sh ast-tests && bash specs/006-refuse-non-directory-parent-early/qs.sh ascii-added && bash specs/006-refuse-non-directory-parent-early/qs.sh files-changed && python3 -I -c 'import ast;s=open("tests/test_project.py").read();F={n.name:ast.get_source_segment(s,n) for n in ast.walk(ast.parse(s)) if isinstance(n,ast.FunctionDef)};a="self.assertFalse((parent / name).exists())";k="self.assert_parent_file_unchanged(parent.parent, before)";n9=F["test_inproc_parent_repaired_while_the_question_waits_is_created"];e=[x for x in (all(a not in F[m] and k in F[m] for m in ("test_pty_triad_answer_below_a_file_leaves_the_file_intact","test_inproc_triad_answer_below_a_file_leaves_the_file_intact")) or "N7 N8",("self.assertEqual(result.stderr, \"\")" in n9 and "self.assertNotIn(REFUSED, result.stderr)" not in n9) or "N9") if x is not True];print("T029",e or "OK");raise SystemExit(1 if e else 0)' && test "$(git diff --numstat HEAD~1 HEAD | tr '\t' ' ')" = "1 3 tests/test_project.py"`
+
+- [ ] T030 [S] Fix the review's third nit in
+  `specs/006-refuse-non-directory-parent-early/traceability.md` (FS-D) and
+  change no other line: in its opening paragraph, replace "the cell reads
+  `pending (T028)` until `tasks.md` T028 fills it with the tests the plan
+  maps." with "`tasks.md` T028 filled the cell with the tests the plan
+  maps.", which is what happened. The table is unchanged.
+  -- files: `specs/006-refuse-non-directory-parent-early/traceability.md`
+  -- verify: `bash specs/006-refuse-non-directory-parent-early/qs.sh traceability && bash specs/006-refuse-non-directory-parent-early/qs.sh ascii-added && bash specs/006-refuse-non-directory-parent-early/qs.sh files-changed && python3 -I -c 'import sys;t=open("specs/006-refuse-non-directory-parent-early/traceability.md").read();e=[x for x in ("pending (T028)" not in t or "pending",("T028 filled the cell with the tests" in t) or "sentence") if x is not True];print("T030",e or "OK");sys.exit(1 if e else 0)' && test "$(git diff --numstat HEAD~1 HEAD | tr '\t' ' ')" = "2 2 specs/006-refuse-non-directory-parent-early/traceability.md"`
 
 ---
 
@@ -843,9 +856,9 @@ the fixed baseline `961c405`; re-pointing them is lane 2's work.
   implementation commit, T004's or T015's, already exists); T018 and T019 after
   T016, one at a time (pty load); T020 to T027 after T017, in parallel.
 - **Phase 5**: T028 after T016 (every named test defined).
-- **Phase 6**: T029 after lane step 2's first report (the review at
-  `fc71792`); lane step 2 then re-runs on T029's head, before the pull
-  request opens.
+- **Phase 6**: T029 and T030 after lane step 2's first report (the review
+  at `fc71792`), one at a time; lane step 2 then re-runs on the head that
+  ticks both, before the pull request opens.
 - **Lane steps**: after T028 for steps 1 and 2, which come before the pull
   request opens; step 4 at any phase boundary once #33 is on main.
 
