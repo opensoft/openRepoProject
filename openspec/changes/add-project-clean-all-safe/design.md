@@ -1703,9 +1703,9 @@ record from the probe, and its `--abort` leaves `NOTES_MERGE_WORKTREE` alone.
   directory after a crash or a lone `BISECT_START` after a cut-short `git
   bisect reset`, keeps its worktree out as `operation-in-progress`] -> Fails
   closed, as Brett Heap's ruling LQ-14 asks; the remedy says to finish or abort
-  the operation, where `--abort` fails for a marker with nothing in progress to
+  the operation; where `--abort` fails for a marker with nothing in progress, to
   use its `--quit`, which clears an empty `sequencer` directory (`git
-  cherry-pick --quit`), and where Git leaves such a marker in place, as `git
+  cherry-pick --quit`); and, where Git leaves such a marker in place, as `git
   bisect reset` leaves a lone `BISECT_LOG` or an empty `BISECT_START` and every
   command leaves an empty `sequencer` file, to delete it by hand from that
   worktree's git directory, after which the row is selected; Git itself refuses
