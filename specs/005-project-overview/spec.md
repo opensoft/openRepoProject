@@ -2914,10 +2914,11 @@ and [P] are change 1's requirements as the header names them.
   ratified by Brett Heap in PR #34 (Dependencies). FR-039 and FR-042 restate
   those two sites, and US10 s5, SC-012 and the Appendix carry the scenario (the
   lane openRepoProject-4 lead's re-read against A1's ratified text, as A1's
-  `proposal.md:1509-1510` at `e4a30fc` asks). The code departs from the
-  packet's closed list of exit-2 codes (DI:1086-1089); should he strike it, the
-  fallback is `refused` with exit 2, inside change 2's lists, which departs
-  from nothing (Dependencies).
+  `proposal.md:1509-1510` at `e4a30fc` records that this spec does; lane
+  openRepoProject-3's W55 L5). The code departs from the packet's closed list
+  of exit-2 codes (DI:1086-1089); should he strike it, the fallback is
+  `refused` with exit 2, inside change 2's lists, which departs from nothing
+  (Dependencies).
 - **FR-044**: On SIGINT, SIGTERM or SIGHUP the overview MUST stop scheduling,
   terminate and reap every child as FR-011 states, abandoning one still
   unreaped 2 s after SIGKILL, start no result document once the signal is read
@@ -3221,12 +3222,15 @@ and [P] are change 1's requirements as the header names them.
   UTF-8 path round-trips exactly; and
   every other path carries a false validity flag and feeds no suggestion.
 - **SC-010**: Human output contains 0 raw characters of general category Cc,
-  Cf, Zl or Zp and 0 undecodable bytes from a path, and every fixed line,
-  message and remedy matches design D3, D4, D5 and D10, the delta's gate table
-  and amendment A1's table of error messages (A1's
-  `specs/project-overview/spec.md:385-403` at `e4a30fc`, ratified; FR-022),
-  OPERATION taking only the values that table names, character for character in
-  its fixed text, which is ASCII.
+  Cf, Zl or Zp and 0 undecodable bytes from a path or from any other string
+  FR-038 escapes, names, branch names and admin ids among them (A1's
+  `specs/project-overview/spec.md:748-752` at `e4a30fc`; the lane
+  openRepoProject-4 lead's re-read against A1's ratified text, its second
+  pass's N1), and every fixed line, message and remedy matches design D3, D4,
+  D5 and D10, the delta's gate table and amendment A1's table of error messages
+  (A1's `specs/project-overview/spec.md:385-403` at `e4a30fc`, ratified;
+  FR-022), OPERATION taking only the values that table names, character for
+  character in its fixed text, which is ASCII.
 - **SC-011**: Every run's exit status is the one FR-042 gives, a recorded
   signal deciding it (FR-044); after SIGINT, SIGTERM or SIGHUP, 0 of the
   overview's child process groups remain, apart from children abandoned while
@@ -3701,21 +3705,27 @@ and [P] are change 1's requirements as the header names them.
     amendments, below). FR-011, FR-022, FR-039, FR-044, FR-045, FR-050, SC-009,
     SC-010 and SC-011 were folded here ahead of their carrier, A1, on Brett
     Heap's answers. A1 being ratified, the gate that nothing is planned or
-    built from them before its ratification is met, and each is to be re-read
-    against A1's ratified text before the plan builds from it, as A1 records
-    (its `proposal.md:1504-1510` at `e4a30fc`); the plan itself still waits for
-    Brett Heap's own word for it, after feature 004's merge (C-56; A1's task
-    1.7). The same holds for what follows A1's four items of its own, which
-    also wait for #19's ratification of the commits they follow: FR-007's LQ-11
-    parity with FR-013, FR-019, FR-020 and US1 s3; FR-032's batch-only gates
-    with SC-004 and EC-007; FR-043's code; and FR-016's four status pins. One
-    point A1 leaves to Brett Heap, as this spec does, with no behaviour written
-    (its proposal, "Open point", `proposal.md:1479-1486` at `e4a30fc`): Q7 A is
-    silent on FR-026's parity with `project clean` run from the same working
-    directory when that directory's realpath cannot be established, and at
-    `2cf34d3` feature 004 gives every present row `inspection-error` there (its
-    `project:2960-2962`, :2887-2888 and :2081), wider than the two classes Q7 A
-    converts (C-61; lane openRepoProject-3's fidelity read of `c54d393`, M1).
+    built from them before its ratification is met, and each is re-read against
+    A1's text, now ratified, as A1 records (its `proposal.md:1509-1510` at
+    `e4a30fc`, which names six of them: FR-011, FR-022, FR-039, FR-044, SC-009
+    and SC-011). That the re-read comes before the plan builds from them, a
+    gate beside A1's task 1.7, and that it takes FR-045, FR-050 and SC-010
+    beside those six, are this spec's own; the re-read is done for all nine
+    (the lane openRepoProject-4 lead's re-read against A1's ratified text,
+    applied at `bbf1f7c`; lane openRepoProject-3's W55 L2); the plan itself
+    still waits for Brett Heap's own word for it, after feature 004's merge
+    (C-56; A1's task 1.7). The same holds for what follows A1's four items of
+    its own, which also wait for #19's ratification of the commits they follow:
+    FR-007's LQ-11 parity with FR-013, FR-019, FR-020 and US1 s3; FR-032's
+    batch-only gates with SC-004 and EC-007; FR-043's code; and FR-016's four
+    status pins. One point A1 leaves to Brett Heap, as this spec does, with no
+    behaviour written (its proposal, "Open point", `proposal.md:1479-1486` at
+    `e4a30fc`): Q7 A is silent on FR-026's parity with `project clean` run from
+    the same working directory when that directory's realpath cannot be
+    established, and at `2cf34d3` feature 004 gives every present row
+    `inspection-error` there (its `project:2960-2962`, :2887-2888 and :2081),
+    wider than the two classes Q7 A converts (C-61; lane openRepoProject-3's
+    fidelity read of `c54d393`, M1).
   - Change 1's [E], for Q9 B: lane openRepoProject-2 agreed on 2026-10-21 that
     its draft PR #19, which already edits [E]'s Environment paragraph
     (CMD:98-122), carries the trace pins and the trace-variable scrub names

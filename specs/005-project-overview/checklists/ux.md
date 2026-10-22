@@ -86,7 +86,9 @@ Lane: openRepoProject-4
 - [x] CHK023 Can every fixed human line be verified character for character against its source? [Measurability, Spec SC-010]
   - Result: pass for every text the change fixes; the sentences it leaves to the plan are PN-1.
 - [x] CHK024 Is the absence of raw control, format and separator characters, and of undecodable bytes, in human output measurable? [Measurability, Spec SC-010]
-  - Result: pass.
+  - Result: pass. Since the re-read's second pass (N1), SC-010 also counts
+    undecodable bytes from every other string FR-038 escapes, names, branch
+    names and admin ids among them.
 - [x] CHK025 Is the README's coverage measurable by a review checklist with one line per FR-048 item? [Measurability, Spec SC-013]
   - Result: pass.
 
@@ -133,7 +135,8 @@ PN-4 withdrawn, and after its revisions 5, 6, 7, 8, 9 and 10 at `3ee860c`,
 at `e4a30fc`, its category unchanged. 34 items: 27 pass, 3 fixed in the spec, 0
 open, 4 plan notes, 0 new questions. An open item waits on the question or
 residual its result names; a plan note is for the plan, not the spec; a new
-question is asked in `clarify-questions.md`.
+question is asked in `clarify-questions.md`. CHK024 was re-read on 2026-10-22
+after the re-read's N1, its category unchanged.
 
 Plan notes: PN-1 (CHK004, CHK023), PN-2 (CHK006, narrowed to an exception of
 any other kind in human mode, and since 2026-10-21 also the standard-error line

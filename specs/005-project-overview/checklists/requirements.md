@@ -763,6 +763,21 @@ Lane: openRepoProject-4
   records. No pin moves, A1 stays cited at `e4a30fc`, and
   `clarify-questions.md` is unchanged. Re-validation: 16 of 16 items pass, with
   the checks of iteration 2 re-run by script on the edited spec.
+- 2026-10-22, a twenty-second pass: lane openRepoProject-3's W55 read of 3s (L2
+  and L5) and the lead's re-read's second pass (N1). The A1 bullet now ends "as
+  A1 records" at the re-read against A1's text, which A1's
+  `proposal.md:1509-1510` states for six units, and says that the re-read's
+  timing, before the plan builds from them, and its three further units,
+  FR-045, FR-050 and SC-010, are this spec's own, the re-read being done for
+  all nine at `bbf1f7c` (L2); FR-043's record says that A1 records the re-read
+  rather than asks for it (L5); and SC-010 counts undecodable bytes from every
+  other string FR-038 escapes, as A1's Q8 D rule has it (A1 spec:748-752; N1).
+  CHK024 of `ux.md` and CHK014 of `path-encoding.md` were re-read, no category
+  changing, and the totals below were recounted by script. Traceability is
+  checked against A1's ratified deltas at `e4a30fc` (64 of 64). No pin moves,
+  A1 stays cited at `e4a30fc`, and `clarify-questions.md` is unchanged.
+  Re-validation: 16 of 16 items pass, with the checks of iteration 2 re-run by
+  script on the edited spec.
 - Items marked incomplete require spec updates before `/speckit-clarify` or `/speckit-plan`
 
 ## Cross-cutting Requirements Quality (no-argument `/speckit.checklist`, 2026-10-19)
@@ -884,5 +899,5 @@ notes (PN-1 to PN-18 but PN-4 and PN-11, withdrawn on 2026-10-21; PN-2 narrowed
 to an exception of any other kind in human mode and widened to a failed write's
 standard-error line), 0 new questions. Recounted by script on 2026-10-21, and
 again after the re-check, after the W6 read and after the fourth to twelfth
-passes of that day, and after the thirteenth to twenty-first passes on
+passes of that day, and after the thirteenth to twenty-second passes on
 2026-10-22.

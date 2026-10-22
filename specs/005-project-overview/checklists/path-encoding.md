@@ -52,7 +52,9 @@ Lane: openRepoProject-4
 - [x] CHK013 Is round-tripping measurable (every valid UTF-8 path exact; every other path flagged false)? [Measurability, Spec SC-009]
   - Result: pass.
 - [x] CHK014 Is the absence of raw controls in human output measurable? [Measurability, Spec SC-010]
-  - Result: pass.
+  - Result: pass. Since the re-read's second pass (N1), SC-010 also counts
+    undecodable bytes from every other string FR-038 escapes, names, branch
+    names and admin ids among them.
 
 ## Scenario Coverage
 
@@ -88,6 +90,7 @@ Evaluated on 2026-10-19 against `spec.md` at `8f433f7`; CHK005 and CHK021
 re-evaluated on 2026-10-21 after Brett Heap's answers (C-55 to C-71). 21 items:
 21 pass, 0 fixed in the spec, 0 open, 0 plan notes, 0 new questions. An open
 item waits on the question or residual its result names; a plan note is for the
-plan, not the spec; a new question is asked in `clarify-questions.md`.
+plan, not the spec; a new question is asked in `clarify-questions.md`. CHK014
+was re-read on 2026-10-22 after the re-read's N1, its category unchanged.
 
 Plan notes: none.
