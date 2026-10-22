@@ -1323,6 +1323,107 @@ class EvidenceTests(clean_support.CleanCase):
         self.assertTrue((tree / "local.env").exists(), "W and its ignored file survive")
         self.assertIn(tree.name, self.git(root, "worktree", "list", "--porcelain"))
 
+    def test_clean_effective_work_tree_reads_its_output_as_one_path(self):
+        # Lead ruling R-287 (lane 3's W70 M-2): the work-tree probe's standard
+        # output, less the one line feed Git ends it with, is read as one path,
+        # which may itself hold line feeds; output that is empty or does not
+        # end in a line feed makes the row's registration disagree: False at
+        # planning, and at revalidation (strict) a probe that decided nothing,
+        # None with its row error (R-171). A decided other path is False in
+        # both. A line feed alone names no path. Literal outputs stand in for
+        # the child; the realpaths are read.
+        lf = chr(0x0A).encode("ascii")
+        plain, inside, ending = (self.base / "plain", self.base / ("a" + chr(0x0A) + "b"),
+                                 self.base / ("c" + chr(0x0A)))
+        for path in (plain, inside, ending):
+            path.mkdir()
+        unparseable = (None, project.unparseable_error("rev-parse"))
+        cases = (
+            ("its path", plain, bytes(plain) + lf, (True, None), (True, None)),
+            ("its path, holding a line feed", inside, bytes(inside) + lf, (True, None), (True, None)),
+            ("its path, ending in a line feed", ending, bytes(ending) + lf, (True, None), (True, None)),
+            ("another path", plain, bytes(inside) + lf, (False, None), (False, None)),
+            ("two lines, one other path", plain, bytes(plain) + lf + bytes(plain) + lf, (False, None),
+             (False, None)),
+            ("nothing", plain, b"", (False, None), unparseable),
+            ("its path with no line feed", plain, bytes(plain), (False, None), unparseable),
+            ("its path, holding a line feed, with none after it", inside, bytes(inside), (False, None),
+             unparseable),
+            ("a line feed alone", plain, lf, (False, None), unparseable),
+        )
+        run = project.Invocation("status")
+        for label, raw, output, planning, revalidation in cases:
+            asked = []
+
+            def run_bounded(spec, parser, run, output=output, asked=asked):
+                kind, args, _cwd = spec
+                asked.append(args)
+                return project.DriverOutcome(project.git_argv(kind, args), "complete", result=output, status=0)
+
+            with self.subTest(label), mock.patch.object(project, "run_bounded", run_bounded):
+                self.assertEqual(project.effective_work_tree(bytes(raw), run), planning)
+                self.assertEqual(project.effective_work_tree(bytes(raw), run, strict=True), revalidation)
+                self.assertEqual(asked, [["-C", bytes(raw), *WORK_TREE_PROBE]] * 2, "one child per call")
+
+    def test_clean_a_work_tree_probe_whose_output_is_empty_or_ends_in_no_line_feed(self):
+        # Lead ruling R-287 (lane 3's W70 M-2): at planning, in a repository
+        # whose row 4c reads true, W's work-tree probe printing nothing, or
+        # W's own path with no line feed after it, makes W's registration
+        # disagree (registration-mismatch, inspection-error, no status probe,
+        # the plan incomplete), while W's path and one line feed is read as W.
+        # A fake git answers the probe in W only; every other child is Git's.
+        root = self.repo()
+        self.bare_remote()
+        tree = self.merged_worktree("001-probed")
+        plain = self.merged_worktree("002-plain")
+        self.git(root, "config", "extensions.worktreeConfig", "true")
+        quoted = shlex.quote(str(tree))
+        pattern = f'*" -C "{quoted}" {" ".join(WORK_TREE_PROBE)} "'
+        for number, (label, answer, agrees) in enumerate((
+                ("W's path and one line feed", f"printf '%s\\n' {quoted}", True),
+                ("nothing", ":", False),
+                ("W's path with no line feed", f"printf '%s' {quoted}", False))):
+            with self.subTest(label):
+                fake = self.fake_script(f"probe-{number}", f'case " $* " in {pattern}) {answer}; exit 0;; esac')
+                result, records = self.report(root, "--all-safe", real=fake)
+                self.assertIn(str(tree), [command(record)[1] for record in records
+                                          if command(record)[2:] == WORK_TREE_PROBE])
+                document = result.document
+                row = by_name(document)[tree.name]
+                excluded = {entry["path"]: entry["reason"] for entry in document["excluded"]}
+                if agrees:
+                    self.assertEqual([entry["path"] for entry in document["selected"]], sorted(map(str, (tree, plain))))
+                    self.assertEqual((row["errors"], row["classification"], document["completeness"]),
+                                     ([], "merged-removable", "complete"))
+                    self.assertIn(str(tree), self.status_dirs(records))
+                    continue
+                self.assertEqual([row[key] for key in ("present", "dirty", "errors", "classification")],
+                                 [True, None, [], "inspection-error"])
+                self.assertEqual(excluded[str(tree)], "registration-mismatch")
+                self.assertEqual([entry["path"] for entry in document["selected"]], [str(plain)])
+                self.assertEqual((document["completeness"], document["refusals"][0]["code"]),
+                                 ("incomplete", "inspection-incomplete"))
+                self.assertNotIn(str(tree), self.status_dirs(records), "no status probe in W")
+
+    def test_clean_a_redirected_linked_worktree_whose_path_holds_a_line_feed(self):
+        # Lead ruling R-287 reads W's toplevel as one path, line feeds and all,
+        # so a real redirect of a worktree whose path holds a line feed stays
+        # registration-mismatch: core.worktree in W's config.worktree names
+        # the decoy D, and Git in W reads D.
+        root = self.repo()
+        self.bare_remote()
+        tree = self.merged_worktree("001-redirected", path=self.base / ("lf-a" + chr(0x0A) + "b"),
+                                    setup=lambda t: (t / ".gitignore").write_text("*.env\n"))
+        plain = self.merged_worktree("002-plain")
+        (tree / "local.env").write_text("SECRET=keep-me\n")
+        decoy = self.decoy_of(tree)
+        self.git(root, "config", "extensions.worktreeConfig", "true")
+        self.git(tree, "config", "--worktree", "core.worktree", decoy)
+        self.assertEqual(self.git(tree, *WORK_TREE_PROBE), str(decoy) + chr(0x0A), "Git reads D for W")
+
+        records = self.assert_kept_unprobed(root, tree, decoy, selected=[plain])
+        self.assertIn(str(tree), [command(record)[1] for record in records if command(record)[2:] == WORK_TREE_PROBE])
+
     def test_clean_a_commondir_that_names_another_repository(self):
         # The project-command delta as amended at 93f3194 (lead ruling R-125;
         # lane 3's W9 M2): Git takes a linked worktree's common directory, and
