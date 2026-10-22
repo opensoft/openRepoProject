@@ -10,9 +10,9 @@ duplicate them, and nothing here is an implementation step.
 
 - [x] 1.1 Proposal written: `proposal.md` adopts the packet's cache-disposal
   contract (`BA:1314-1337`) under the lane's rulings L-1 to L-17 and B-1 to
-  B-55, names three departures from B-6 as first written, which B-11 accepted,
+  B-56, names three departures from B-6 as first written, which B-11 accepted,
   and one from B's list of modified requirements (CD-1 to CD-4) with the rest
-  of its own decisions (CD-5 to CD-18), and puts five Open Questions before
+  of its own decisions (CD-5 to CD-18), and puts six Open Questions before
   Brett Heap; verified by its Capabilities section accounting for every
   requirement of `project-clean` and `project-clean-review-safety`, canonical
   and change 1's ADDED alike, and for change 2's `project-overview`.
@@ -40,8 +40,8 @@ duplicate them, and nothing here is an implementation step.
 - [x] 1.4 Spec deltas and design written: `specs/project-clean/spec.md`
   modifies five requirements and adds one (55 scenarios: 5, 14, 11, 6, 8 and
   11), and `specs/project-clean-review-safety/spec.md` modifies three and adds
-  one (31 scenarios: 6, 14, 4 and 7, B-26's among the 7, the 14 being
-  PR #19's 13 at `a664799` and one added, B-54, B-55), every scenario of
+  one (32 scenarios: 6, 15, 4 and 7, B-26's among the 7, the 15 being
+  PR #19's 14 at `2e819ad` and one added, B-54, round B11), every scenario of
   each modified
   requirement's source text kept by name, in order and byte-exact except four,
   whose ignored files are now named as not Python bytecode caches:
@@ -54,10 +54,10 @@ duplicate them, and nothing here is an implementation step.
   and committed as `9f30fb9`, and B-30's scope, lane 4's own words, committed
   as `4d5855a` (2.2); `design.md` holds D1 to D14 and `clarifications.md` the
   NOTED S-4; verified by `grep -c '^#### Scenario'` on each delta, by a script
-  run after the council round and again after each round from B3 to B10
+  run after the council round and again after each round from B3 to B11
   that compares every scenario of each of the nine MODIFIED blocks with its
   source text, the two blocks written on PR #19's text against it at
-  `a664799` since round B10, and by `design.md`'s headings.
+  `2e819ad` since round B11, and by `design.md`'s headings.
 - [x] 1.5 Validation passes: `/usr/bin/openspec validate
   add-project-clean-cache-disposal --strict` reports the change valid,
   `/usr/bin/openspec validate --all --strict` passes every item, and
@@ -66,12 +66,12 @@ duplicate them, and nothing here is an implementation step.
   branch after 1.4, after the alignment fix round, after the council round
   (the last with the B-22 `project-overview` edit not yet committed), again
   after lane 4's agreement and that edit's commit, after round B3, after round
-  B4, and after each round from B5 to B10. The
+  B4, and after each round from B5 to B11. The
   INFO lines, that the archive would refuse a delta
   whose MODIFIED requirement change 1 or change 2 adds until that change is
   archived, are the expected state for blocks written on sister changes.
 - [ ] 1.6 Ratified by Brett Heap's word on this change's pull request, quoted
-  with its link here, with the five Open Questions of `proposal.md` before
+  with its link here, with the six Open Questions of `proposal.md` before
   him; verified by that quote. No implementation starts before it.
 
 ## 2. Before the Speckit handoff
@@ -79,7 +79,7 @@ duplicate them, and nothing here is an implementation step.
 - [ ] 2.1 Change 1 archived: `add-project-clean-all-safe` is archived after
   feature 004 merges, with draft PR #19's amendment of change 1 landed first
   (L-16), or PR #19 closed, and the two
-  MODIFIED blocks written on PR #19's text at `a664799` (B-54; "Clean bounds
+  MODIFIED blocks written on PR #19's text at `2e819ad` (B-54; "Clean bounds
   its Git work and reports omitted work" and "Cleanup revalidates destructive
   actions")
   re-checked against the archived text and rewritten where it differs, as every
