@@ -852,7 +852,15 @@ class ResultTests(clean_support.CleanCase):
         table = clean_support.timing_table(removal_ceiling=1.5, term_grace=0.5, reap_wait=0.5)
         root, trees = self.batch("recovery-unsearchable", count=2)
         planned = [self.head(tree) for tree in trees]
-        self.addCleanup(os.chmod, trees[0], 0o755)
+
+        def searchable_again():
+            """The first target's search permission given back for the
+            cleanup, unless the test's own `git worktree remove --force` has
+            already removed that directory."""
+            with contextlib.suppress(FileNotFoundError):
+                os.chmod(trees[0], 0o755)
+
+        self.addCleanup(searchable_again)
         bin_dir = self.base / "recovery-unsearchable-bin"
         ceiling_git(bin_dir, "unsearchable")
         result = self.run_json("clean", root, "--all-safe", "--apply", "--yes", "--json", timing=table,
