@@ -1754,6 +1754,57 @@ class ProjectTests(unittest.TestCase):
             self.assertEqual(result.stderr, REFUSED + head_refusal(line) + "\n")
             self.assert_parent_file_unchanged(kept, before)
 
+    def test_pty_triad_answer_below_a_file_leaves_the_file_intact(self):
+        # refuse-non-directory-parent-early design D3 items 5 and 6 (clarification Q2): the two case (b)
+        # rows of known_obstacle_cases(), run as test_pty_triad_answer_with_an_obstacle_refuses runs
+        # them, plus the file the refusal names (the ancestor of the row's --into, not --into itself)
+        # still a regular file holding its content, and nothing created.
+        rows = {label: case for label, case in self.known_obstacle_cases().items()
+                if label in ("parent below a file", "all three with the parent below a file")}
+        self.assertEqual(len(rows), 2)
+        for label, (name, fake, extra, obstacles) in rows.items():
+            with self.subTest(label):
+                env = self.obstacle_env(fake)
+                parent = Path(extra[1])
+                before = sorted(self.base.rglob("*"))
+                result = self.run_pty("new", name, *extra, env=env, steps=[(QUESTION_PROMPT, "")])
+                self.assert_status(result, 2)
+                self.assert_question(result.stdout, name, *obstacles)
+                self.assert_line_ends(result.stderr, REFUSED + obstacles_refusal(*obstacles))
+                self.assertNotIn(ORG_PROMPT, result.stdout + result.stderr)
+                self.assertNotIn("Create:", result.stdout)
+                self.assertFalse((parent / name).exists())
+                self.assertIsNone(self.shape_record())
+                self.assert_parent_file_unchanged(parent.parent, before)
+
+    def test_inproc_triad_answer_below_a_file_leaves_the_file_intact(self):
+        # refuse-non-directory-parent-early design D3 items 5 and 6 (clarification Q2): the same two rows
+        # in process, as test_inproc_triad_obstacle_runs_nothing runs them, plus the file the refusal
+        # names still a regular file holding its content, and nothing created.
+        def forbidden(what):
+            return AssertionError(f"{what} was called on a Triad answer with a known obstacle")
+        rows = {label: case for label, case in self.known_obstacle_cases().items()
+                if label in ("parent below a file", "all three with the parent below a file")}
+        self.assertEqual(len(rows), 2)
+        for label, (name, fake, extra, obstacles) in rows.items():
+            with self.subTest(label):
+                self.obstacle_env(fake)
+                parent = Path(extra[1])
+                before = sorted(self.base.rglob("*"))
+                with patch.object(module, "execute", side_effect=forbidden("execute")), \
+                        patch("subprocess.run", side_effect=forbidden("subprocess.run")), \
+                        patch("subprocess.Popen", side_effect=forbidden("subprocess.Popen")), \
+                        patch("socket.socket", side_effect=forbidden("socket.socket")):
+                    result = self.run_inproc("new", name, *extra, ci=None, answers=[""])
+                self.assert_status(result, 2)
+                self.assertEqual(result.prompts, [QUESTION_PROMPT + " "])
+                self.assertEqual(result.stdout, "\n".join([QUESTION_HEADER.format(NAME=name), QUESTION_TRIAD,
+                                                           *obstacles, QUESTION_SINGLE]) + "\n")
+                self.assertEqual(result.stderr, REFUSED + obstacles_refusal(*obstacles) + "\n")
+                self.assertFalse((parent / name).exists())
+                self.assertIsNone(self.shape_record())
+                self.assert_parent_file_unchanged(parent.parent, before)
+
     def test_pty_symbolic_link_to_a_directory_names_no_obstacle(self):
         # fix-parent-obstacle-wording design D3: a symbolic link to a directory is a parent, and the
         # question names no obstacle, as in test_pty_no_known_obstacle_names_none.
