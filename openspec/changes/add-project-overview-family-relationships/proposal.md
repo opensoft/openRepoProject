@@ -14,7 +14,8 @@ ADDED requirement is written once feature 005's clarify answers land as amendmen
 the MODIFIED blocks shared with #29 are not held for #29, they are re-based at archive time under
 lane 5's rule (Dependencies and Sequencing). An alignment review and a council, both of
 2026-10-22, are applied (the last two sections); next: Brett Heap's rulings on Tier 1, then the
-design.
+design. Brett Heap's "all recommended" (2026-10-22T19:46:44Z) ruled the Tier 1 Decisions as
+recommended; Tier 2 stays for design time, and the deltas and `design.md` wait for #34 to merge.
 
 Citations are `file:line` at the sha named. `APO` is `openspec/changes/add-project-overview/`
 (change 2, ratified, unarchived) and `APO/ov` its `specs/project-overview/spec.md`; `CAS` is
@@ -307,6 +308,9 @@ recommendation, and the Decision says so where it does.
 
 ### Tier 1: rule now
 
+Ruled by Brett Heap, "all recommended" (2026-10-22T19:46:44Z): T1-0 A, T1-1 A, T1-2 C, T1-3 A,
+T1-4 A, T1-5 A, T1-6 A, T1-7 A, T1-8 A.
+
 **T1-0. Scope: what is this change for?** Both sides of one argument are right about different
 things. The product advocate (PA-1): the pain is that a member's working clone, its Git health
 and its worktrees never reach the attention report; relationships are informational and hide
@@ -333,17 +337,17 @@ with the plain run on every row, error and exit (#29 `specs/project-overview/spe
 - (C) No extension now: document `--root <family folder>` in README.md, and revisit when a second
   family exists (council-product.md, Concern 1).
 
-Recommended: A. B delivers the member visibility that the product advocate asks for, at the price
-of the guarantees above. A keeps every row, error and exit equal to the plain run (T1-6) and
-leaves member rows to a change that can measure them and rule on displacement. C is the fallback
+Recommended: A. RULED: A. B delivers the member visibility that the product advocate asks for, at
+the price of the guarantees above. A keeps every row, error and exit equal to the plain run (T1-6)
+and leaves member rows to a change that can measure them and rule on displacement. C is the fallback
 if Brett Heap wants no extension while this estate holds one family.
 
 **T1-1. Is the extension opt-in, and how?** (A) A `--families` flag on `project overview` alone.
 (B) On by default. (C) A generic `--relationships` flag, later shared with parked records.
-Recommended: A. The packet makes it opt-in (DI:1329-1331 at `15504f1`); #29 sets the precedent of
-a flag whose absence leaves change 2's document untouched (#29 proposal.md:73-76); and `--family`
-already names a family folder on `project new` (project:1088), so the plural keeps one meaning per
-spelling. C would couple this change to the park extension, which is its own.
+Recommended: A. RULED: A. The packet makes it opt-in (DI:1329-1331 at `15504f1`); #29 sets the
+precedent of a flag whose absence leaves change 2's document untouched (#29 proposal.md:73-76); and
+`--family` already names a family folder on `project new` (project:1088), so the plural keeps one
+meaning per spelling. C would couple this change to the park extension, which is its own.
 
 **T1-2. Do member clones become rows, and where does sibling expansion run in the ratified
 pipeline?** In change 2 the holder's manifest is read inside its collector, after the identity
@@ -370,8 +374,8 @@ so the members list is not known when the candidate list is final.
   manifest read and no second cap, but undeclared directories in the family folder also become
   rows, and the flag changes the rows.
 
-Recommended: C, for this change (T1-0 A); the earlier draft recommended A. Reasons (SA-1, AE-1;
-council-architect.md and council-adversary.md):
+Recommended: C, for this change (T1-0 A); the earlier draft recommended A. RULED: C. Reasons (SA-1,
+AE-1; council-architect.md and council-adversary.md):
 
 - A is the only option that moves a ratified invariant, the candidate list being final before
   collection, and it contradicts the isolation this record claims. A candidate that a sibling
@@ -414,9 +418,9 @@ itself a holder is a row of kind `family-holder` where it has a row (APO/ov:24-3
 members are not read, and its entry is `invalid` with reason `nested-family` (PA-4): a holder in
 a member slot breaks openRepoShape's contract that each member is "a whole project in its own
 right" (ORS `templates/family-root/family.yaml:15-25`, `038dafb`). (B) A plus each member's legs.
-(C) A plus the pinned copies. Recommended: A. Legs are mounted as submodules of their assembly
-root (ORS `contracts/repository-naming.yaml:348-360`, `038dafb`) and pinned copies are submodules
-of the holder (ORS `contracts/repository-naming.yaml:392-393`; ORS
+(C) A plus the pinned copies. Recommended: A. RULED: A. Legs are mounted as submodules of their
+assembly root (ORS `contracts/repository-naming.yaml:348-360`, `038dafb`) and pinned copies are
+submodules of the holder (ORS `contracts/repository-naming.yaml:392-393`; ORS
 `templates/family-root/family.yaml:15-17`, `038dafb`); change 2 gives a submodule checkout an
 `unsupported-layout` repair error (APO/ov:97-102); pinned copies are detached by design (ORS
 `templates/family-root/scripts/siblings.py:28-31`, `038dafb`) and inside the holder's own
@@ -496,8 +500,8 @@ Two effects stay apart. A member's state is informational: no state changes any 
 summary, `completeness` or the exit. Whether a cut or capped family check is incompleteness is
 T1-6. As findings: (A) informational only, states in `relationships` and the human lines, no
 finding code. (B) A new code such as `family-member-missing`. (C) Findings for `invalid` and
-`mismatched` only. Recommended: A. A member not cloned is ordinary work (APO proposal.md:154-156)
-and "a project that belongs to no family is reviewed identically" (ORS
+`mismatched` only. Recommended: A. RULED: A. A member not cloned is ordinary work (APO
+proposal.md:154-156) and "a project that belongs to no family is reviewed identically" (ORS
 `templates/family-root/family.yaml:23-25`, `038dafb`); the finding table is closed for version 1
 (APO/ov:421-422); #29 isolates its evidence the same way (#29 proposal.md:121-126). doctor's
 `error` for a missing member (project:897, O5) is untouched, so the two commands differ (T1-8).
@@ -515,7 +519,7 @@ point at that tool; and membership grants nothing (ORS `contracts/repository-nam
 `038dafb`). (B) Rely on change 2's "Grouping grants nothing" (APO proposal.md:157-158) with no new
 scenario. Recommended: A, stated in the ADDED requirement with a scenario each, since SY:34-37
 names the risk, the packet holds that "No layout or family membership changes authority"
-(OV:395-397 at `15504f1`), and B leaves it untested.
+(OV:395-397 at `15504f1`), and B leaves it untested. RULED: A.
 
 **T1-6. Does a cut or capped family check make the run incomplete?** (A) No: a cut or capped
 check stays in the entry (`unknown` plus its reason) and in the envelope's family evidence
@@ -530,10 +534,10 @@ makes one, a cap (APO/ov:222-224) and the deadline's count of candidates not sta
 (APO/ov:180-181), and here a family cap too, a `scan-limit` with an exact `omitted`; either
 makes the run incomplete (APO/ov:654-655), so it exits 1 (APO/ov:762-764); the entry keeps its
 `unknown` state. B is what the fix round of this record
-wrote after QA-13. Recommended: A (SA-1). An informational feature should not turn the holder's
-row to `error`, add scan errors or exit 1 because one member's mount is slow; B lets a failure on
-another candidate's directory change this candidate's row, which APO/ov:322-324 forbids for a
-failure in another candidate. A is coherent with T2-2 B, a family phase outside the
+wrote after QA-13. Recommended: A (SA-1). RULED: A. An informational feature should not turn the
+holder's row to `error`, add scan errors or exit 1 because one member's mount is slow; B lets a
+failure on another candidate's directory change this candidate's row, which APO/ov:322-324 forbids
+for a failure in another candidate. A is coherent with T2-2 B, a family phase outside the
 per-candidate boundary. Under T1-0 B (member rows) A cannot promise the plain run's rows.
 
 **T1-7. May a sibling read reach beyond openRepoShape's family folder, or outside every
@@ -554,10 +558,10 @@ Heap is the reach.
   children, findings and `project clean <sibling> --all-safe` suggestions (APO/ov:494-498) for
   directories the person never configured.
 
-Recommended: A. The requirement is titled "Overview discovers projects within configured roots
-only" (APO/ov:10); openRepoShape owns the family layout (README.md:264) and the packet says each
-extension keeps its owner's boundary (OV:185-190 at `15504f1`); and a `family.yaml` from someone
-else's repository should not decide which directories the overview reads (AE-2). The cost:
+Recommended: A. RULED: A. The requirement is titled "Overview discovers projects within configured
+roots only" (APO/ov:10); openRepoShape owns the family layout (README.md:264) and the packet says
+each extension keeps its owner's boundary (OV:185-190 at `15504f1`); and a `family.yaml` from
+someone else's repository should not decide which directories the overview reads (AE-2). The cost:
 `--root <holder>` gives the holder's row and entries that are all `unknown`, `outside-roots`;
 the family folder as a root gives the relationships.
 
@@ -571,10 +575,10 @@ step, and the divergence is stated and accepted; the overview reports, openRepoS
 `doctor` repair. (B) Yes: the `member` line of a `missing` member carries the same prose as
 `doctor` (project:897), a pointer at openRepoShape's tool with no argv and no
 `suggested_command`, still informational; T1-5 A then needs a prose exception. Recommended: A (no
-council verdict gave one). T1-5 A already says that no clone, bootstrap or fetch of a missing
-member is suggested, as openRepoShape owns those (README.md:264); A keeps the overview to what it
-observes, and the Risks line becomes a divergence that Brett Heap has accepted. B stays open if
-he wants the two commands to speak alike.
+council verdict gave one). RULED: A. T1-5 A already says that no clone, bootstrap or fetch of a
+missing member is suggested, as openRepoShape owns those (README.md:264); A keeps the overview to
+what it observes, and the Risks line becomes a divergence that Brett Heap has accepted. B stays open
+if he wants the two commands to speak alike.
 
 ### Tier 2: design constraints, ruled at design time
 
@@ -1084,7 +1088,7 @@ Candidates, each a test on Python 3.10 and 3.12:
 - The family folder itself, never a candidate: feature 005's recorded edge case EC-025, kept by
   Brett Heap's Q10 A (F005 `spec.md:1871-1878`, :812-814).
 - **An existing defect of `project status`, to be filed as its own issue on Brett Heap's word**
-  (AE-4; this lane has not filed it): a member link that loops crashes `status`. `inside()` calls
+  (AE-4; filed as #38): a member link that loops crashes `status`. `inside()` calls
   `Path.resolve()` (project:51-57, :54 at the call), which raises `RuntimeError` on a loop, not
   an `OSError`, and `main()` catches only `Refused` and `OSError` (project:1143), so `status`
   ends in a traceback with exit 1 and no JSON, even under `--json`, on Python 3.12 and 3.10, for
