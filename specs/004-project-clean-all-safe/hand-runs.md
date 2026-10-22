@@ -82,11 +82,24 @@ reaches gates 11 and 12, the revalidation rules R-171 to R-208, the drain
 line or the HOME refusals as a reason; what the walk shows of them is noted
 in the rows and under "Not walked by hand".
 
+Note, 2026-10-22: writer E's next-step changes (lead ruling R-259) brought
+004's head to d764c26, whose `project` prints lane 3's W52 and W59 texts,
+which e69f6ef's does not. The lead walked User Story 1's first run
+(`--all-safe`) and User Story 2's first two runs again at d764c26, in the
+tmux window `openRepoProject-2-pyBench:handruns`, from 14:43Z to 14:48Z on
+2026-10-22, under account team-01m. All three MATCH with the new texts,
+which the two User Story 2 rows below quote: the `unstarted-branch` refusal
+of `$W/f` and the `reflog-unavailable` group of `$W/c` each end ` (--force
+if it holds a submodule)`. F-6 is not exercised by these fixtures, because
+the main worktree's row there is `PROTECTED-DEFAULT`. The other rows were
+walked at e69f6ef and are unchanged, so a plan they print lists
+`unstarted-branch` with that commit's next step, not the new one.
+
 ## User Story 1: retire every safe worktree in one run
 
 | Run | Observed | Verdict |
 | --- | --- | --- |
-| `p clean "$R" --all-safe` | `Selected (3):` a, b, c. `Excluded (6):` main-worktree, locked-worktree, dirty, ignored-local-files (`1 ignored; first: x.cache`), pushed-unmerged, unstarted-branch, each with its next step. Then the `Not protected:` line, which reads `Not protected: ignored files created, index flags set, operations started or worktree-only commits made after the last check, and any change after Git's own check.`, and `exit=0` | MATCH |
+| `p clean "$R" --all-safe` | `Selected (3):` a, b, c. `Excluded (6):` main-worktree, locked-worktree, dirty, ignored-local-files (`1 ignored; first: x.cache`), pushed-unmerged, unstarted-branch, each with its next step. Then the `Not protected:` line, which reads `Not protected: ignored files created, index flags set, operations started or worktree-only commits made after the last check, and any change after Git's own check.`, and `exit=0` | MATCH (re-run at d764c26) |
 | `--all-safe --json`, through `python3 -m json.tool` | one document: mode `all-safe`, `apply_allowed` true, `completeness` complete, selected a, b and c, a 64-character `plan_digest`, no refusals; its `probes` read estimated 42, performed 21 | MATCH |
 | `--all-safe --apply`, answered `y` | the plan, `Remove 3 worktrees, keeping 3 branches? [yes/N]`, then `REFUSED: Cancelled; no command was run.`, `exit=2`; nothing removed | MATCH |
 | the same, answered `yes` | `removed` a, b and c in that order; `Removed 3; branches kept: a, b, c.`, then the `Not protected:` line again; `exit=0`; `branch --list` shows a, b and c | MATCH |
@@ -100,8 +113,8 @@ in the rows and under "Not walked by hand".
 
 | Run | Observed | Verdict |
 | --- | --- | --- |
-| `--apply --action remove --worktree "$W/f" --yes` | the plan, with `not-requested (3)` over a, b and c, then `REFUSED: Worktree is excluded: unstarted-branch; no commit was made on this branch here since it was created; review, then git worktree remove yourself`, `exit=2` (target-excluded); `$W/f` remains | MATCH |
-| c's reflog removed, then emptied; `--all-safe` | each time `Selected (2):` a, b, and `$W/c` under `reflog-unavailable (1): the branch's reflog is missing, expired or undecidable; review, then git worktree remove yourself`; `exit=0` | MATCH |
+| `--apply --action remove --worktree "$W/f" --yes` | the plan, with `not-requested (3)` over a, b and c, then `REFUSED: Worktree is excluded: unstarted-branch; no commit was made on this branch here since it was created; review, then git worktree remove yourself (--force if it holds a submodule)`, `exit=2` (target-excluded); `$W/f` remains | MATCH (re-run at d764c26) |
+| c's reflog removed, then emptied; `--all-safe` | each time `Selected (2):` a, b, and `$W/c` under `reflog-unavailable (1): the branch's reflog is missing, expired or undecidable; review, then git worktree remove yourself (--force if it holds a submodule)`; `exit=0` | MATCH (re-run at d764c26) |
 | `b.txt` assume-unchanged plus an edit; remove `$W/b` | `REFUSED: Worktree is excluded: hidden-local-state; review, then remove the worktree yourself`, `exit=2` (target-excluded); the edit survives | MATCH |
 | `refs/remotes/origin/a` deleted; `--all-safe`, then `--all-safe --json` | a still selected; in JSON `merged-removable`, upstream `origin/a`, and `upstream_oid`, `ahead` and `behind` null | MATCH |
 | main renamed trunk, `origin/HEAD` removed; `p clean "$R"` | `REFUSED: Cannot determine the default branch from the manifest, origin/HEAD, main, or master.`, `exit=2` (no-merge-target, the baseline message) | MATCH |

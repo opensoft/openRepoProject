@@ -127,19 +127,19 @@ cover the scenario.
 | project-command (PR #19 draft) | Repository inspection requires Git 2.36 and shares one evidence model | The push child reaches its remote | US3 | `test_clean_the_push_child_reaches_its_remote`, `test_clean_the_push_child_reaches_its_remote_at_a_terminal` |
 | project-clean (PR #19 draft) | Clean reports local worktree state | A relative configuration path | US9 | `test_clean_a_relative_configuration_path`, `test_clean_a_relative_configuration_path_each_variable_and_spelling`, `test_clean_a_relative_configuration_path_not_valid_utf_8`, `test_clean_a_relative_configuration_path_empty_and_absolute_values_pass`, `test_clean_a_relative_configuration_path_before_the_version_check`, `test_clean_a_relative_configuration_path_after_the_argument_checks` |
 | project-clean (PR #19 draft) | Clean can explicitly push safe feature branches | Push refuses a branch it may not push | US3 | `test_clean_push_refuses_a_branch_it_may_not_push_no_unique_worktree` |
-| project-clean (PR #19 draft) | Clean can explicitly retire verified worktrees | Branch deletion refuses a branch it may not delete | US3 | none named after it at `8f6fa31` (a gap; below) |
+| project-clean (PR #19 draft) | Clean can explicitly retire verified worktrees | Branch deletion refuses a branch it may not delete | US3 | none named after it at `d764c26` (a gap; below) |
 | project-clean (PR #19 draft) | Clean previews and applies a batch of eligible worktree removals in one repository | An operation in progress | US2 | `test_clean_an_operation_in_progress`, `test_clean_an_operation_in_progress_admin_directory_that_cannot_be_listed` |
 | project-clean (PR #19 draft) | Clean previews and applies a batch of eligible worktree removals in one repository | A squash merge that holds an autostash | US2 | `test_clean_a_squash_merge_that_holds_an_autostash` |
 | project-clean (PR #19 draft) | Clean previews and applies a batch of eligible worktree removals in one repository | A commit held only by the worktree | US2 | `test_clean_a_commit_held_only_by_the_worktree` |
 | project-clean-review-safety (PR #19 draft) | Cleanup revalidates destructive actions | A worktree-only commit made after the plan | US4 | `test_clean_a_worktree_only_commit_made_after_the_plan` |
 | project-clean-review-safety (PR #19 draft) | Cleanup revalidates destructive actions | An operation started after the plan | US4 | `test_clean_an_operation_started_after_the_plan` |
 | project-clean-review-safety (PR #19 draft) | Cleanup revalidates destructive actions | A check that fails at revalidation | US4 | `test_clean_a_check_that_fails_at_revalidation` |
-| project-clean-review-safety (PR #19 draft) | Cleanup revalidates destructive actions | A work-tree probe at revalidation | US4 | none named after it at `8f6fa31` (a gap; below) |
+| project-clean-review-safety (PR #19 draft) | Cleanup revalidates destructive actions | A work-tree probe at revalidation | US4 | none named after it at `d764c26` (a gap; below) |
 | project-command (PR #19 draft) | Explicit maintenance | Owner tools see the repository the check inspected | US9 | `test_update_owner_tools_see_the_repository_the_check_inspected` |
 | project-command (PR #19 draft) | Repository inspection requires Git 2.36 and shares one evidence model | A linked worktree whose work tree is redirected | US9 | `test_clean_a_linked_worktree_whose_work_tree_is_redirected`, `test_clean_a_linked_worktree_whose_work_tree_is_redirected_after_the_plan` |
 | project-command (PR #19 draft) | Repository inspection requires Git 2.36 and shares one evidence model | A commondir that names another repository | US9 | `test_clean_a_commondir_that_names_another_repository` |
 | project-command (PR #19 draft) | Repository inspection requires Git 2.36 and shares one evidence model | A relative configuration path in status, doctor and update | US9 | `test_status_a_relative_configuration_path_in_status_doctor_and_update`, `test_status_a_relative_configuration_path_in_status_doctor_and_update_home_beginning_with_tilde` |
-| project-command (PR #19 draft) | Repository inspection requires Git 2.36 and shares one evidence model | An edit that keeps its size and restores its mtime | US9 | none named after it at `8f6fa31` (a gap; below) |
+| project-command (PR #19 draft) | Repository inspection requires Git 2.36 and shares one evidence model | An edit that keeps its size and restores its mtime | US9 | none named after it at `d764c26` (a gap; below) |
 | project-command (PR #19 draft) | Repository inspection requires Git 2.36 and shares one evidence model | Trace targets are never written | US9 | `test_status_trace_targets_are_never_written`, `test_status_trace_targets_are_never_written_by_any_kind_of_child` |
 
 T126's writer fills the Tests cells from the merged tests (lead ruling R-32b).
@@ -151,7 +151,7 @@ the others from `main`'s deltas.
 
 A test goes in a row only when its name begins with its scenario's title, as
 rule 1 and T126 require (lead ruling R-98 (a) 2). Three of PR #19's scenarios
-have no test so named at `8f6fa31`, though tests cover them; each is a gap,
+have no test so named at `d764c26`, though tests cover them; each is a gap,
 not a missing check (lead ruling R-166):
 
 - "Branch deletion refuses a branch it may not delete" (round (a)): by
@@ -159,7 +159,12 @@ not a missing check (lead ruling R-166):
   `test_clean_a_branch_deletion_of_a_branch_a_worktree_holds_is_refused` and,
   for D3's `REFUSED: Branch B is not verified as merged into main.`,
   `test_clean_a_branch_deletion_of_a_branch_not_merged_into_the_merge_target_is_refused`
-  (T073; lead ruling R-167).
+  (T073; lead ruling R-167). Since writer E's `02aa71d` (lane 3's W52 F-5;
+  lead ruling R-259) the second of them expects D18's own refusal for a branch
+  that the main worktree holds, and
+  `test_clean_a_branch_the_main_worktree_holds_is_deleted_after_either_remedy`
+  pins that the two remedies it names work (T073); neither is named after the
+  scenario either.
 - "An edit that keeps its size and restores its mtime" (LQ-10): by
   `test_status_the_pinned_status_configuration_sees_a_same_size_edit`, named
   after "The pinned status configuration" (T012).
@@ -193,7 +198,12 @@ absent path (`identity-changed`; the lead's R-208). Since writer B's `46c1f87`
 (lane 3's W41 L-4; the lead's R-241) the absence clause for a `.git` that goes
 between its lstat and its read is pinned too, by
 `test_clean_a_dot_git_file_gone_between_its_lstat_and_its_read` (T083), which
-no scenario title names.
+no scenario title names. Lane 3's W49 LOW-3 adds
+`test_clean_an_identity_probe_that_fails_with_no_work_time_left_at_revalidation`
+(T083; writer `impl/004-w49-low3`'s `16c4474`, which the lead merges into 004
+and which is not yet on this branch), step 1's `work_spent(run)` arm: an
+identity probe that fails with exit 128 with no work time left ends the target
+`not-attempted` with `deadline-exceeded`.
 
 "State changes before revalidation" names its test, which since writer B's
 `9af46ab` (lane 3's W41, NOT DONE 5; the lead's R-241) also pins an unreadable
@@ -228,4 +238,16 @@ revalidation reads cut at the work deadline,
 `test_clean_a_modules_check_cut_at_revalidation` and
 `test_clean_a_status_probe_cut_at_revalidation`, beside
 `test_clean_a_ref_listing_that_decides_nothing_at_revalidation` and
-`test_clean_a_dot_git_file_gone_between_its_lstat_and_its_read` (T083).
+`test_clean_a_dot_git_file_gone_between_its_lstat_and_its_read` (T083), and
+`test_clean_an_identity_probe_that_fails_with_no_work_time_left_at_revalidation`
+(T083; lane 3's W49 LOW-3, writer `impl/004-w49-low3`'s `16c4474`, to be merged
+into 004 by the lead), and lane 3's W52 and W59 tests (writer E's `02aa71d` and
+`64ad453`; the lead's R-259):
+`test_clean_a_branch_deletion_passes_the_name_after_double_dash` (F-4) and
+`test_clean_a_branch_the_main_worktree_holds_is_deleted_after_either_remedy`
+(F-5) (T073), `test_clean_row_evidence_never_recommends_a_step_git_refuses` and
+`test_clean_report_advice_for_the_main_worktree_and_a_locked_stale_row` (F-6
+and F-10; T028) and `test_clean_a_locked_worktree_s_partial_removal_note_unlocks_it_first`
+(F-2; T091), which no scenario title names. F-2's note replaces ratified text,
+so it waits on Brett Heap's word, together with F-1, and it is in its own
+commit, `64ad453`, which reverts alone.
