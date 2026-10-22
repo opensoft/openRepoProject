@@ -517,6 +517,31 @@ class ProjectTests(unittest.TestCase):
                 "the file as ~/projects": ((), {"PROJECTS_DIR": None}, not_a_directory(home_projects),
                                            home_projects)}
 
+    def run_inproc_acting(self, *args, ci, answers):
+        """run_inproc() with answers that may also be callables (refuse-non-directory-parent-early
+        design D3 item 7): a callable answer is called with the prompt and its return value is the
+        answer, so a test can change the file system while the question waits. Otherwise it behaves as
+        run_inproc(): the inproc_terminal() streams, the prompts list and the check that no scripted
+        answer is left unused. run_inproc() itself is not edited."""
+        script = list(answers)
+        prompts = []
+
+        def scripted_input(prompt=""):
+            prompts.append(prompt)
+            if not script:
+                raise AssertionError(f"Unscripted prompt: {prompt!r}")
+            answer = script.pop(0)
+            if isinstance(answer, BaseException) or (isinstance(answer, type) and issubclass(answer, BaseException)):
+                raise answer
+            return answer(prompt) if callable(answer) else answer
+
+        with self.inproc_terminal(ci) as (stdout, stderr), patch("builtins.input", scripted_input):
+            code = module.main([str(arg) for arg in args])
+        self.assertEqual(script, [], "Scripted answers left unused")
+        result = subprocess.CompletedProcess(args, code, stdout.getvalue(), stderr.getvalue())
+        result.prompts = prompts
+        return result
+
     def run_cli_streams(self, *args, stdin="", stderr=subprocess.PIPE, prefix=()):
         """Like run_cli, with the stdin text and the stderr target chosen by the test (a pipe,
         subprocess.STDOUT, a descriptor or a file) and an optional command prefix, such as a
@@ -1833,6 +1858,52 @@ class ProjectTests(unittest.TestCase):
                 self.assertFalse((parent / name).exists())
                 self.assertIsNone(self.shape_record())
                 self.assert_parent_file_unchanged(parent.parent, before)
+
+    def test_inproc_parent_repaired_while_the_question_waits_is_created(self):
+        # refuse-non-directory-parent-early design D1 and D3 item 7 (research R5, R-7.1): the parent is
+        # a regular file when the question is read and a directory when the answer 2 arrives. The head
+        # check reads the parent afresh, so the repository is created in it.
+        parent = self.parent_file_fixture(self.base / "parent repaired while waiting")
+        question_line = OBSTACLE_PARENT_NOT_A_DIRECTORY.format(PARENT=parent)
+
+        def repair(prompt):
+            parent.unlink()
+            parent.mkdir()
+            return "2"
+
+        self.fake_bin()
+        before = sorted(self.base.rglob("*"))
+        result = self.run_inproc_acting("new", "MyApp", "--into", parent, ci=None, answers=[repair, "yes"])
+        destination = parent / "MyApp"
+        self.assert_status(result, 0)
+        self.assertEqual(result.prompts, [QUESTION_PROMPT + " ", CONFIRM_PROMPT + " "])
+        self.assert_in_order(result.stdout, question_line, f"Create: {destination}", f"Created: {destination}")
+        self.assertNotIn(REFUSED, result.stderr)
+        self.assert_created(destination)
+        self.assertEqual(sorted(self.base.rglob("*")),
+                         sorted([*before, destination, destination / ".project.json", destination / "arguments"]))
+
+    def test_inproc_parent_broken_while_the_question_waits_is_refused(self):
+        # refuse-non-directory-parent-early design D1, D2 and D3 item 7 (research R5, R-7.2): the parent
+        # is a directory when the question is read and a regular file when the answer 2 arrives. The
+        # head check reads the parent afresh, so the head refusal comes before the confirmation prompt.
+        parent = self.base / "parent broken while waiting"
+        parent.mkdir()
+
+        def break_parent(prompt):
+            parent.rmdir()
+            self.parent_file_fixture(parent)
+            return "2"
+
+        self.fake_bin()
+        before = sorted(self.base.rglob("*"))
+        result = self.run_inproc_acting("new", "MyApp", "--into", parent, ci=None, answers=[break_parent])
+        self.assert_status(result, 2)
+        self.assertEqual(result.prompts, [QUESTION_PROMPT + " "])
+        self.assertEqual(result.stderr,
+                         REFUSED + head_refusal(OBSTACLE_PARENT_NOT_A_DIRECTORY.format(PARENT=parent)) + "\n")
+        self.assertNotIn("Create:", result.stdout)
+        self.assert_parent_file_unchanged(parent, before)
 
     def test_pty_symbolic_link_to_a_directory_names_no_obstacle(self):
         # fix-parent-obstacle-wording design D3: a symbolic link to a directory is a parent, and the
