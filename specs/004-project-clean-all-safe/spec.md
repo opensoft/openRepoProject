@@ -1168,13 +1168,18 @@ written".
   at planning, since `git worktree prune` deletes the admin directory of a
   live worktree whose path Git cannot stat and acts on the whole repository.
   By #19's round (l) at `ccc52b9` (design D18; lane 3's W87 M-1; the lead's
-  R-307 and R-310), such a row forms a group of its own under
+  R-307 and R-310, confirmed by Brett Heap (R-319)), such a row forms a group of its own under
   `inspection-error` with a next step that names no prune, and the other
   `inspection-error` and `registration-mismatch` groups and the refusal's
   remedy take forms that name none and warn against it
   (`contracts/project-clean.md`, "The unread forms"; writer's `e569564`,
-  merged as `1edf64e`). FR-027's list of remedies stands as written, each
-  where it fits, and the requirement's text is unchanged.
+  merged as `1edf64e`). R-320 (ruled by Brett Heap, "R-320: yes", lead R-321;
+  lane 3's W86 NM-1; writer's `dfc2baa`, merged as `12c1821`) extends it: a
+  `stale-worktree` row's recommendation, and that group's next step, carry the
+  same warning wherever such a row stands beside an unread one, and the
+  `inspect-cap` remedy carries it always, since the rows past the cap are
+  never read. FR-027's list of remedies stands as written, each where it fits, and the
+  requirement's text is unchanged.
 - **FR-029**: Each `project clean` invocation MUST set one monotonic deadline
   60 s after it starts and hold back a 10 s reconciliation reserve, so that
   work stops 50 s after start, both moving later by the time spent blocked at
@@ -1286,6 +1291,18 @@ written".
   ignored in every scope, as the baseline left it, so this requirement does
   not reach it (lead ruling R-101 (b), the runner review's F2). Traces:
   "Clean records a reconcilable result for every removal target"; design D15.
+  Note, 2026-10-22: a failed write refuses before the apply phase as well
+  (R-55), and since R-322 (Codex's P2 on PR #33) so does `--json` with
+  standard output closed when `project` started. An `--apply --json` run,
+  `--all-safe` or single, writes nothing to standard output before the apply
+  phase, so it would have reached its first failed write at the result record,
+  after the removals; `check_writes()` now records the closed stream as the
+  failed write `write_document()` records for it, EBADF, and the run refuses
+  with `internal-error`, exit 2, before any removal
+  (`contracts/project-clean.md`, "Streams"; writer's `42454cb`, merged as
+  `12c1821`). A reader that disconnects once the apply phase has begun stays
+  best-effort, the removals continuing, and the human stream stays as lane 3's
+  F4 L-2 records it. The requirement's text stands as written.
 - **FR-037**: A run with `--apply` MUST exit with the first matching row: 130,
   143 or 129 when a signal was received, the first deciding, or 130 when
   input ended at the question; 1 when the deadline stopped work after the

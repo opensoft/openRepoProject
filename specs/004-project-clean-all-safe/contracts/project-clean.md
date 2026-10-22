@@ -249,8 +249,14 @@ the run ends as `internal-error`, exit 2, and its object is the one document
 (`print_plan()`; lead ruling R-101 (b), the runner review's F1). A standard
 output that is closed when `project` starts counts as a failed write too, so
 `clean --json` refuses with `internal-error`, exit 2, with no traceback, R-55
-extended (R-101 (b), F3); a closed human stream does not refuse, which lane 3
-records as open (its F4 L-2).
+extended (R-101 (b), F3), and so does an `--apply --json` run, `--all-safe` or
+single, before any removal: it writes nothing to standard output before the
+apply phase, so `check_writes()` records the closed stream as the failed write
+`write_document()` records for it, EBADF, where `sys.stdout` is None under
+`--json` (R-322 (Codex's P2 on PR #33); the result record, written after the removals, was
+the first write to fail); a reader that disconnects once the apply phase has
+begun stays best-effort, the removals continuing and the failed write recorded;
+a closed human stream does not refuse, which lane 3 records as open (its F4 L-2).
 
 `invalid-arguments`, `internal-error` and every resolve refusal print the
 extended error object; `worktree-not-found`, `target-excluded`, the plan
@@ -268,7 +274,7 @@ message}` objects, an `inspect-cap` note adding `rows`.
 | baseline header | `Cleanup plan for ROOT` and `Freshness:` as the baseline prints them, around `Merge target: NAME (SOURCE)`, which is new text: the baseline prints `Merge target: NAME` (`project:630`), though D18 names the line among the baseline's |
 | "D14 completeness line" | report: `Report: complete` or `Report: incomplete (CODES)` |
 | "D14 selection line" | report at 128 rows or fewer: `--all-safe would select N`; above: `--all-safe would be incomplete (inspect-cap)` |
-| "D18 preview layout" | `Selected (N):` with one `  remove PATH [BRANCH]` per row; `Excluded (M):` with one `  REASON (K): NEXT STEP` group per reason and `    PATH [BRANCH]` rows; an `ignored-local-files` row adds its count and first sample; an `inspection-error` row whose path could not be read (`present` null) is a group of its own, first under that reason, with `next_step_unread_row`, and where any row of the plan is unread the other `inspection-error` rows and the `registration-mismatch` rows take `next_step_inspection_error_unread` and `next_step_registration_mismatch_unread` (`excluded_groups()`; "The unread forms" below) |
+| "D18 preview layout" | `Selected (N):` with one `  remove PATH [BRANCH]` per row; `Excluded (M):` with one `  REASON (K): NEXT STEP` group per reason and `    PATH [BRANCH]` rows; an `ignored-local-files` row adds its count and first sample; an `inspection-error` row whose path could not be read (`present` null) is a group of its own, first under that reason, with `next_step_unread_row`, and where any row of the plan is unread the other `inspection-error` rows and the `registration-mismatch` rows take `next_step_inspection_error_unread` and `next_step_registration_mismatch_unread`, and the `stale-worktree` rows `recommendation_stale_worktree_unread` (`excluded_groups()`; "The unread forms" below) |
 | "D18 deferral line", "D18 non-drain line" | the `deferred-target-cap` group; under it, when a gate after the cap excludes all 16 rows the cap took, `  these deferred rows will not drain while the 16 rows ahead of them are REASONS; review those worktrees, then remove them yourself (--force for any that holds a submodule)`, REASONS their reasons, each once, in gate order, joined by `, `, so that it reads as before, bar its `--force` clause, when all 16 are `contains-submodule` (`AFTER_CAP_REASONS`; D18 at draft PR #19 `2e819ad`; lead ruling R-146, lane 3's W21 L-f; writer G's `310f97d`; the `--force` clause is lane 3's W59 G-4, #19's round (g3) at `6bf9f77`, lead ruling R-259, writer E's `02aa71d`) |
 | "D18 next steps" | the next step for each reason |
 | "D18 residual-window line" | the confirmation and the result |
@@ -342,7 +348,7 @@ code with no baseline message gets one here:
 | `target-not-repository-root` | `Not the main worktree of a repository: PATH; pass the repository root.`, or, where a `core.worktree` or `core.bare` of the repository's own redirects the main worktree away from the directory examined (see "Resolution"), `Not the main worktree of a repository: PATH; core.worktree or core.bare redirects the main worktree; unset both in the repository's config, or in the main worktree's config.worktree, then run again.` (`target_not_repository_root_redirect`) |
 | `unsupported-path-bytes` | `The repository path is not valid UTF-8: PATH` |
 | `manifest-invalid` | `Manifest PATH is larger than 1 MiB.`; otherwise the baseline messages of `read_yaml()` and `manifest()`: `Cannot read PATH: ...` (an `OSError`, a read cut at its budget, or a parse error), `Expected a mapping in PATH`, `Unexpected kind in PATH; expected project-manifest` or `expected family-manifest`, and, where PyYAML is missing, `read_yaml()`'s own `YAML inspection needs PyYAML; use a workBench with python3-yaml installed.` (lead ruling R-73 (e)) |
-| `inspection-incomplete`, `inspect-cap`, `deadline-exceeded` | `The plan is incomplete (CODE): REMEDY.`, REMEDY being "D18 remedies": for `inspection-incomplete`, `repair or remove the inspection-error rows first: git worktree repair, git worktree prune, or remove the row by hand after review` (`remedy_inspection_incomplete`) and, where any row the refusal counts is excluded as `registration-mismatch`, `repair or remove the inspection-error rows first: git worktree repair, git worktree prune, unset core.worktree and core.bare in the repository's config or in a worktree's config.worktree, or remove the row by hand after review` (`remedy_inspection_incomplete_redirect`, below), each in its unread form where any row of the plan has a path that could not be read (`remedy_inspection_incomplete_unread` and `remedy_inspection_incomplete_redirect_unread`, "The unread forms" below); for `inspect-cap`, `N rows exceed the row cap of M; remove worktrees explicitly, or prune stale entries by hand`; for `deadline-exceeded`, `the run ran out of time; remove worktrees explicitly or re-run` |
+| `inspection-incomplete`, `inspect-cap`, `deadline-exceeded` | `The plan is incomplete (CODE): REMEDY.`, REMEDY being "D18 remedies": for `inspection-incomplete`, `repair or remove the inspection-error rows first: git worktree repair, git worktree prune, or remove the row by hand after review` (`remedy_inspection_incomplete`) and, where any row the refusal counts is excluded as `registration-mismatch`, `repair or remove the inspection-error rows first: git worktree repair, git worktree prune, unset core.worktree and core.bare in the repository's config or in a worktree's config.worktree, or remove the row by hand after review` (`remedy_inspection_incomplete_redirect`, below), each in its unread form where any row of the plan has a path that could not be read (`remedy_inspection_incomplete_unread` and `remedy_inspection_incomplete_redirect_unread`, "The unread forms" below); for `inspect-cap`, `N rows exceed the row cap of M; remove worktrees explicitly, or prune stale entries by hand; if a worktree's path cannot be read, do not run git worktree prune until it can` (`remedy_inspect_cap`, always, "The unread forms" below); for `deadline-exceeded`, `the run ran out of time; remove worktrees explicitly or re-run` |
 | `plan-digest-mismatch` | `The fresh plan's digest DIGEST differs from --expect-plan EXPECTED; nothing was changed.` |
 | `confirmation-required` | `Standard input is not a terminal; pass --yes to apply this plan.` (the removal question; `confirm()` keeps its own) |
 | push, `remote-gone` | `Cannot push BRANCH; its upstream UPSTREAM was deleted (remote-gone); review it before it is republished.` |
@@ -373,7 +379,7 @@ registration mismatch; `inspect-cap` and `deadline-exceeded` keep their
 remedies.
 
 The unread forms are #19's round (l) at `ccc52b9`, design D18 (lane 3's W87
-M-1; the lead's R-307 and R-310; writer's `e569564`, merged as `1edf64e`). A row
+M-1; the lead's R-307 and R-310, confirmed by Brett Heap (R-319); writer's `e569564`, merged as `1edf64e`). A row
 is unread where its path could not be read at planning: its `lstat` failed for a
 reason other than the path's absence, or was cut at its budget or at the work
 deadline, so that `present` is null and the row is `inspection-error`
@@ -387,12 +393,12 @@ a row the refusal does not count included, the plan prints no prune advice. The
 and, where the redirect variant would print, `remedy_inspection_incomplete_redirect_unread`,
 `repair or remove the inspection-error rows first: git worktree repair, unset core.worktree and core.bare in the repository's config or in a worktree's config.worktree, or remove the row by hand after review; a row's path could not be read, so do not run git worktree prune until it can`; the variant's counting is unchanged, a single removal that names the unread
 row counts P's rows alone, none redirected, so it takes the first, and
-`inspect-cap` and `deadline-exceeded` keep their remedies. In the preview the
+`deadline-exceeded` keeps its remedy, and the `inspect-cap` remedy is `remedy_inspect_cap`, `N rows exceed the row cap of M; remove worktrees explicitly, or prune stale entries by hand; if a worktree's path cannot be read, do not run git worktree prune until it can`, always, whether or not any row is unread, because the rows past the cap are never read and no run can tell whether their paths can be (R-320, ruled by Brett Heap ("R-320: yes", lead R-321); lane 3's W86 NM-1; writer's `dfc2baa`, merged as `12c1821`). In the preview the
 unread rows form a group of their own under `inspection-error`, printed first,
 with `next_step_unread_row`, `inspect the row by hand; its path could not be read, so do not run git worktree prune until it can`; the other `inspection-error` rows take
 `next_step_inspection_error_unread`, `review, then git worktree repair, or remove the row by hand; a row's path could not be read, so do not run git worktree prune until it can`, and the
 `registration-mismatch` rows `next_step_registration_mismatch_unread`, `review, then git worktree repair, unset core.worktree and core.bare in the repository's config, or in that worktree's config.worktree, or remove the row by hand; a row's path could not be read, so do not run git worktree prune until it can`.
-Where no row is unread every text is as before.
+Where any row of the plan is unread, `stale_recommendations()`, which `build_plan()` calls once every row is gated, also gives each `stale-worktree` row the recommendation `recommendation_stale_worktree_unread`, `Review and prune stale worktree metadata manually; a row's path could not be read, so do not run git worktree prune until it can.`, or, for a locked row, `recommendation_stale_locked_unread`, `Review, unlock it, then prune stale worktree metadata manually; a row's path could not be read, so do not run git worktree prune until it can.`, in the report, the plan envelope's `worktrees` and `plan.report`, and the preview's `stale-worktree` group takes the first as its next step (`UNREAD_NEXT_STEPS`; a locked stale row is excluded as `locked-worktree`, gate 4), from what planning recorded, the class unchanged (R-320, ruled by Brett Heap ("R-320: yes", lead R-321)). Where no row is unread every text is as before.
 
 `repository-not-found`, `ambiguous-name`, `no-merge-target`,
 `worktree-not-found` and `cancelled` keep the baseline's messages, and
@@ -520,7 +526,7 @@ clean.` (`recommendation_main_worktree`), since no removal of it can
 succeed, and a locked `stale-worktree` row reads `Review, unlock it, then
 prune stale worktree metadata manually.` (`recommendation_stale_locked`),
 since `git worktree prune` keeps a locked entry; the class is unchanged in
-both, and every other row keeps its class's baseline recommendation. The
+both, and every other row keeps its class's baseline recommendation, but that each `stale-worktree` row takes `recommendation_stale_worktree_unread` (locked, `recommendation_stale_locked_unread`) where any row of the plan is unread ("The unread forms" above; R-320). The
 partial-removal note for a locked row (F-2) is in the "D18 partial-removal
 note" row above, and delete-branch's refusal (F-5) and its `--` (F-4) are
 in the code table and the spawn table below. F-2 replaces ratified text;
@@ -965,7 +971,7 @@ before pruning it manually.` (`repo_state()`), which omits unlocking for a
 locked stale entry, though `git worktree prune` keeps a locked entry, on Git
 2.43.0 and 2.36.6 alike, while `clean`'s report says `Review, unlock it, then
 prune stale worktree metadata manually.` (F-10; `recommendation_stale_locked`;
-data-model.md, "Classification"). It is left to a follow-on change, because
+data-model.md, "Classification"). It also lacks the warning against `git worktree prune` that `clean`'s recommendation takes beside an unread row (`recommendation_stale_worktree_unread`; R-320, lane 3's W86 NM-1). Both are left to a follow-on change, because
 FR-064 keeps the baseline's functions unchanged (lane 3's W65 LOW-3, read
 again in W72; lead ruling R-269).
 

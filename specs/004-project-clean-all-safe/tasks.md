@@ -559,12 +559,16 @@ T033), when B, D, E and F are; H, guard (T034, T035), when T023 is, beside G
   "R-284: yes", R-290): `TEXT_FIXTURES` gains `partial_removal_note_unread`
   (W73 M-1) and `target_not_repository_root_redirect`.
   #19's round (l) at `ccc52b9` (lane 3's W87 M-1; lead rulings R-307 and
-  R-310; writer's `e569564`, merged as `1edf64e`) adds five more:
+  R-310, confirmed by Brett Heap (R-319); writer's `e569564`, merged as `1edf64e`) adds five more:
   `TEXT_FIXTURES` gains `remedy_inspection_incomplete_unread`,
   `remedy_inspection_incomplete_redirect_unread`, `next_step_unread_row`,
   `next_step_inspection_error_unread` and
   `next_step_registration_mismatch_unread`, which name no `git worktree prune`
   where a row's path could not be read. The same test pins each.
+  Brett Heap's R-320 ("R-320: yes", lead R-321; lane 3's W86 NM-1; writer's
+  `dfc2baa`, merged as `12c1821`) ends `remedy_inspect_cap` with the same
+  warning, always, and adds `recommendation_stale_worktree_unread` and
+  `recommendation_stale_locked_unread`. The same test pins each.
   — files: `tests/clean_support.py`
   — verify: `python3 -c "import sys;sys.path.insert(0,'tests');import clean_support as c;M=[n for n in sys.argv[1:] if not (hasattr(c,n) or hasattr(c.CleanCase,n))];[print('missing:',m) for m in M];sys.exit(1 if M or not sys.argv[1:] else 0)" install_counting_git child_log install_fake_git path_without_git && python3 -m unittest discover -s tests -p 'test_clean_harness.py' && python3 -c "import sys;sys.path.insert(0,'tests');import clean_support as c;M=[k for k in sys.argv[1:] if k not in c.FAKE_KINDS];[print('absent kind:',m) for m in M];sys.exit(1 if M or not sys.argv[1:] else 0)" status-slow-again-in ls-files-stuck-again-in`
 
@@ -1103,6 +1107,11 @@ T033), when B, D, E and F are; H, guard (T034, T035), when T023 is, beside G
   `recommendation_stale_locked`, since `git worktree prune` keeps a locked
   entry. Both keys have their fixtures in `tests/clean_support.py` (T011), and
   T028 tests them.
+  Where any row of the plan has a path that could not be read,
+  `stale_recommendations()` (T049) gives each stale row the form that warns
+  against `git worktree prune`, `recommendation_stale_worktree_unread` or,
+  locked, `recommendation_stale_locked_unread` (R-320, ruled by Brett Heap
+  ("R-320: yes", lead R-321)); no one row's evidence shows it.
   — files: `project`, `tests/clean_support.py`
   — verify: `python3 -c "import sys,re;t=open('project').read();A=sys.argv[1:];c=lambda r:t.split('# region '+r+'\n')[1].split('# endregion '+r+'\n')[0];M=[a for a in A if not ((a.split('%',1)[1] not in c(a.split('%',1)[0])) if '%' in a else (a.split('~',1)[1] in c(a.split('~',1)[0])) if '~' in a else re.search(r'^[a-z]*\s?'+re.escape(a.split(':',1)[1])+r'\b',c(a.split(':',1)[0]),re.M))];[print('region check failed:',m) for m in M];sys.exit(1 if M or not A else 0)" 'evidence:classify' 'evidence:RECOMMENDATIONS' 'evidence:partial_removal_note' 'evidence:declared_tracking_branch' 'evidence:resolve_merge_target' && python3 -m unittest discover -s tests -p 'test_clean_evidence.py' -k '*.test_clean_evidence_parity_with_the_baseline_reader' && python3 -m unittest discover -s tests -p 'test_clean_harness.py' -k '*.test_clean_text_fixtures_equal_the_contract_table'`
 - [x] T033 [P] [O] Switch `cleanup_report()` (`project:544-622`) onto T031 and
@@ -1146,6 +1155,10 @@ T033), when B, D, E and F are; H, guard (T034, T035), when T023 is, beside G
   `test_clean_the_plain_report_in_json_with_standard_output_closed`
   (descriptor 1 closed at start: `internal-error`, exit 2, no traceback,
   R-55).
+  Since R-322 (Codex's P2 on PR #33) the same holds for an `--apply --json`
+  run, `--all-safe` or single: `check_writes()` records the closed stream
+  before the apply phase, so it refuses `internal-error`, exit 2, before any
+  removal; T057's six tests pin it.
   — files: `tests/test_clean_guard.py`
   — verify: `python3 -c "import sys,unittest as u;L=u.defaultTestLoader;f=lambda s:[i for t in s for i in (f(t) if isinstance(t,u.TestSuite) else [t.id()])];I=[i for i in f(L.discover('tests',pattern=sys.argv[1])) if not i.startswith('unittest.')];A=sys.argv[2:];M=[a for a in A if not any(a in ('*',i.split('.')[-1]) for i in I)];[print('not collected:',m) for m in M];[print(e) for e in L.errors];sys.exit(1 if M or L.errors or not A else 0)" test_clean_guard.py '*' && python3 -c "import os,sys;e=os.path.isfile(sys.argv[1]);t=open(sys.argv[1]).read() if e else '';M=[k for k in sys.argv[2:] if k not in t];print('missing file:',sys.argv[1]) if not e else [print('absent:',m) for m in M];sys.exit(1 if M or not e or len(sys.argv)<3 else 0)" tests/test_clean_guard.py 'internal-error' 'REFUSED: ' 'RuntimeError: boom' 'Cancelled.' && python3 -c "import sys,unittest as u;L=u.defaultTestLoader;f=lambda s:[i for t in s for i in (f(t) if isinstance(t,u.TestSuite) else [t.id()])];I=[i for i in f(L.discover('tests',pattern=sys.argv[1])) if not i.startswith('unittest.')];A=sys.argv[2:];M=[a for a in A if not any(a in ('*',i.split('.')[-1]) for i in I)];[print('not collected:',m) for m in M];[print(e) for e in L.errors];sys.exit(1 if M or L.errors or not A else 0)" test_clean_guard.py 'test_clean_the_plain_report_exits_by_completeness_when_the_caller_ignores_the_signal' 'test_clean_the_plain_report_in_json_with_standard_output_closed'`
 - [x] T035 [P] [O] Give `Refused` (`project:23-24`) the keyword fields `code`,
@@ -1477,7 +1490,7 @@ L-8).
   the apply phase that error is `internal-error`, exit 2, nothing mutated,
   unless a recorded signal outranks it (130, 143 or 129 with `Cancelled.`);
   after the apply phase begins, writes are best-effort and D19 decides the
-  exit. For this T047 makes one lead-approved edit to `write_document()` in
+  exit. Since R-322 (Codex's P2 on PR #33) `check_writes()` also records the failed write of a standard output closed when `project` started, EBADF, under `--json`, where `sys.stdout` is None, so that an `--apply --json` run, which writes nothing to it before the apply phase, refuses `internal-error`, exit 2, before any removal; a reader lost after the apply phase begins stays best-effort. For this T047 makes one lead-approved edit to `write_document()` in
   region `guard`, and makes `main()`'s `REFUSED:` and `Cancelled.` prints
   best-effort, a failed write of an advisory line never changing the exit
   status (R-54 X-3), with X-3's test in `tests/test_clean_guard.py`:
@@ -1515,7 +1528,7 @@ L-8).
   `RESOLVING_STAGE` constants (R-49). The 96 tests pass, the one T046
   rewrites aside, and so does T034.
   — files: `project`, `tests/test_clean_guard.py`
-  — verify: `python3 -c "import sys,re;t=open('project').read();A=sys.argv[1:];c=lambda r:t.split('# region '+r+'\n')[1].split('# endregion '+r+'\n')[0];M=[a for a in A if not ((a.split('%',1)[1] not in c(a.split('%',1)[0])) if '%' in a else (a.split('~',1)[1] in c(a.split('~',1)[0])) if '~' in a else re.search(r'^[a-z]*\s?'+re.escape(a.split(':',1)[1])+r'\b',c(a.split(':',1)[0]),re.M))];[print('region check failed:',m) for m in M];sys.exit(1 if M or not A else 0)" 'resolution:resolve_clean_target' 'plan:build_plan' 'preview:print_plan' 'apply:confirm_removal' 'apply:apply_removals' 'push:push_or_delete' 'dispatcher:check_clean_arguments' 'dispatcher:require_git' 'dispatcher:check_plan' 'dispatcher:say' 'dispatcher:refuse' && python3 -c "import ast,sys;t=open(sys.argv[1]).read();F=[n for n in ast.walk(ast.parse(t)) if isinstance(n,ast.FunctionDef) and n.name==sys.argv[2]];s=ast.get_source_segment(t,F[0]) if F else '';M=[k for k in sys.argv[3:] if k not in s];[print('absent from',sys.argv[2]+':',m) for m in M];sys.exit(1 if M or not F or len(sys.argv)<4 else 0)" project clean 'signal_scope' 'phase' 'check_clean_arguments' 'require_git' 'resolve_clean_target' 'build_plan' 'check_plan' 'print_plan' 'push_or_delete' 'confirm_removal' 'apply_removals' && python3 -c "import subprocess as s,sys;o=s.run([sys.executable,'project','clean','--help'],capture_output=True,text=True).stdout;M=[k for k in ('--all-safe','--expect-plan') if k not in o];print('clean --help lacks:',M);sys.exit(1 if M else 0)" && python3 -c "import sys,unittest as u;g=lambda s:[x for t in s for x in (g(t) if isinstance(t,u.TestSuite) else [t])];T=[t for t in g(u.defaultTestLoader.discover('tests',pattern='test_project.py')) if not t.id().endswith('.test_clean_revalidates_a_worktree_after_confirmation')];r=u.TextTestRunner().run(u.TestSuite(T));print(len(T),'tests');sys.exit(0 if len(T)==95 and r.wasSuccessful() else 1)" && python3 -c "import ast,sys;t=ast.parse(open('tests/test_clean_guard.py').read());A={n.targets[0].id:n.value.value for n in t.body if isinstance(n,ast.Assign) and len(n.targets)==1 and isinstance(n.targets[0],ast.Name) and isinstance(n.value,ast.Constant)};W={'RESOLVING_STAGE':'resolve_clean_target','PLANNING_STAGE':'build_plan'};M=[k+' = '+repr(A.get(k)) for k in W if not A.get(k)==W[k]];print('stage constants not retargeted:',M);sys.exit(1 if M else 0)" && python3 -m unittest discover -s tests -p 'test_clean_guard.py'`
+  — verify: `python3 -c "import sys,re;t=open('project').read();A=sys.argv[1:];c=lambda r:t.split('# region '+r+'\n')[1].split('# endregion '+r+'\n')[0];M=[a for a in A if not ((a.split('%',1)[1] not in c(a.split('%',1)[0])) if '%' in a else (a.split('~',1)[1] in c(a.split('~',1)[0])) if '~' in a else re.search(r'^[a-z]*\s?'+re.escape(a.split(':',1)[1])+r'\b',c(a.split(':',1)[0]),re.M))];[print('region check failed:',m) for m in M];sys.exit(1 if M or not A else 0)" 'resolution:resolve_clean_target' 'plan:build_plan' 'preview:print_plan' 'apply:confirm_removal' 'apply:apply_removals' 'push:push_or_delete' 'dispatcher:check_clean_arguments' 'dispatcher:require_git' 'dispatcher:check_plan' 'dispatcher:say' 'dispatcher:refuse' 'dispatcher:check_writes' && python3 -c "import ast,sys;t=open(sys.argv[1]).read();F=[n for n in ast.walk(ast.parse(t)) if isinstance(n,ast.FunctionDef) and n.name==sys.argv[2]];s=ast.get_source_segment(t,F[0]) if F else '';M=[k for k in sys.argv[3:] if k not in s];[print('absent from',sys.argv[2]+':',m) for m in M];sys.exit(1 if M or not F or len(sys.argv)<4 else 0)" project clean 'signal_scope' 'phase' 'check_clean_arguments' 'require_git' 'resolve_clean_target' 'build_plan' 'check_plan' 'print_plan' 'push_or_delete' 'confirm_removal' 'apply_removals' && python3 -c "import subprocess as s,sys;o=s.run([sys.executable,'project','clean','--help'],capture_output=True,text=True).stdout;M=[k for k in ('--all-safe','--expect-plan') if k not in o];print('clean --help lacks:',M);sys.exit(1 if M else 0)" && python3 -c "import sys,unittest as u;g=lambda s:[x for t in s for x in (g(t) if isinstance(t,u.TestSuite) else [t])];T=[t for t in g(u.defaultTestLoader.discover('tests',pattern='test_project.py')) if not t.id().endswith('.test_clean_revalidates_a_worktree_after_confirmation')];r=u.TextTestRunner().run(u.TestSuite(T));print(len(T),'tests');sys.exit(0 if len(T)==95 and r.wasSuccessful() else 1)" && python3 -c "import ast,sys;t=ast.parse(open('tests/test_clean_guard.py').read());A={n.targets[0].id:n.value.value for n in t.body if isinstance(n,ast.Assign) and len(n.targets)==1 and isinstance(n.targets[0],ast.Name) and isinstance(n.value,ast.Constant)};W={'RESOLVING_STAGE':'resolve_clean_target','PLANNING_STAGE':'build_plan'};M=[k+' = '+repr(A.get(k)) for k in W if not A.get(k)==W[k]];print('stage constants not retargeted:',M);sys.exit(1 if M else 0)" && python3 -m unittest discover -s tests -p 'test_clean_guard.py'`
 - [x] T048 [P] [US1] [O] Fill `check_clean_arguments(args)` (the contract's
   "Argument checks": `invalid-arguments` with the baseline messages kept,
   this task owning them outside `TEXT` (lead ruling R-45);
@@ -1642,8 +1655,14 @@ L-8).
   for another entry's). Otherwise
   P is selected alone, and every other eligible row is `not-requested`; in mode
   report the plan is the same, with `apply_allowed: false`.
+  Once every row is gated, `build_plan()` calls `stale_recommendations(plan)`,
+  which gives each `stale-worktree` row the form of its recommendation that
+  warns against `git worktree prune` wherever `unread_paths(plan)` is not
+  empty (R-320, ruled by Brett Heap ("R-320: yes", lead R-321); lane 3's W86
+  NM-1; writer's `dfc2baa`, merged as `12c1821`); the class and every other
+  row are unchanged.
   — files: `project`
-  — verify: `python3 -c "import sys,re;t=open('project').read();A=sys.argv[1:];c=lambda r:t.split('# region '+r+'\n')[1].split('# endregion '+r+'\n')[0];M=[a for a in A if not ((a.split('%',1)[1] not in c(a.split('%',1)[0])) if '%' in a else (a.split('~',1)[1] in c(a.split('~',1)[0])) if '~' in a else re.search(r'^[a-z]*\s?'+re.escape(a.split(':',1)[1])+r'\b',c(a.split(':',1)[0]),re.M))];[print('region check failed:',m) for m in M];sys.exit(1 if M or not A else 0)" 'plan:select_entry' 'plan:plan_completeness' 'plan:revalidation_children' 'plan:identity_split_children' 'plan:rescan_children' && python3 project clean --help >/dev/null`
+  — verify: `python3 -c "import sys,re;t=open('project').read();A=sys.argv[1:];c=lambda r:t.split('# region '+r+'\n')[1].split('# endregion '+r+'\n')[0];M=[a for a in A if not ((a.split('%',1)[1] not in c(a.split('%',1)[0])) if '%' in a else (a.split('~',1)[1] in c(a.split('~',1)[0])) if '~' in a else re.search(r'^[a-z]*\s?'+re.escape(a.split(':',1)[1])+r'\b',c(a.split(':',1)[0]),re.M))];[print('region check failed:',m) for m in M];sys.exit(1 if M or not A else 0)" 'plan:select_entry' 'plan:plan_completeness' 'plan:revalidation_children' 'plan:identity_split_children' 'plan:rescan_children' 'plan:stale_recommendations' && python3 project clean --help >/dev/null`
 - [x] T050 [P] [US1] [O] Fill `gate_rows(rows, plan, run)` in region `gates`:
   the ten gates of FR-020 (twelve since LQ-14 and LQ-13, below) as one
   ordered tuple of gate functions, the per-row
@@ -1764,15 +1783,19 @@ L-8).
   baseline confirmation and T053's `confirmation-required` refuses; lead
   ruling R-59 D8).
   #19's round (l) at `ccc52b9` (lane 3's W87 M-1; lead rulings R-307 and
-  R-310; writer's `e569564`, merged as `1edf64e`) changes the groups' next
+  R-310, confirmed by Brett Heap (R-319); writer's `e569564`, merged as `1edf64e`) changes the groups' next
   steps: `excluded_groups(reason, rows, unread)` gives an `inspection-error`
   row whose path could not be read (`path_unread()`) a group of its own, first
   under that reason, with `next_step_unread_row`, and, while any row of the
   plan is unread (`unread_paths(plan)`), the other `inspection-error` rows
   `next_step_inspection_error_unread` and the `registration-mismatch` rows
   `next_step_registration_mismatch_unread`, none naming `git worktree prune`.
+  Since R-320 (ruled by Brett Heap, "R-320: yes", lead R-321; lane 3's W86
+  NM-1) the `stale-worktree` group's next step is
+  `recommendation_stale_worktree_unread` there too, through the module's
+  `UNREAD_NEXT_STEPS`.
   — files: `project`, `tests/clean_support.py`, `tests/test_clean_batch.py`
-  — verify: `python3 -c "import sys,re;t=open('project').read();A=sys.argv[1:];c=lambda r:t.split('# region '+r+'\n')[1].split('# endregion '+r+'\n')[0];M=[a for a in A if not ((a.split('%',1)[1] not in c(a.split('%',1)[0])) if '%' in a else (a.split('~',1)[1] in c(a.split('~',1)[0])) if '~' in a else re.search(r'^[a-z]*\s?'+re.escape(a.split(':',1)[1])+r'\b',c(a.split(':',1)[0]),re.M))];[print('region check failed:',m) for m in M];sys.exit(1 if M or not A else 0)" 'preview~human_path' 'preview~selected_heading' 'preview~excluded_group' 'preview:excluded_groups' 'contracts~"main-worktree":' 'contracts~"unsupported-path-bytes":' 'contracts~"not-requested":' && python3 project clean --help >/dev/null && python3 -m unittest discover -s tests -p 'test_clean_harness.py' -k '*.test_clean_text_fixtures_equal_the_contract_table' && python3 -c "import sys,unittest as u;L=u.defaultTestLoader;f=lambda s:[i for t in s for i in (f(t) if isinstance(t,u.TestSuite) else [t.id()])];I=[i for i in f(L.discover('tests',pattern=sys.argv[1])) if not i.startswith('unittest.')];A=sys.argv[2:];M=[a for a in A if not any(a in ('*',i.split('.')[-1]) for i in I)];[print('not collected:',m) for m in M];[print(e) for e in L.errors];sys.exit(1 if M or L.errors or not A else 0)" test_clean_batch.py 'test_clean_a_reader_that_closes_standard_output' 'test_clean_the_preview_says_what_keeps_each_row_single_mode' && python3 -m unittest discover -s tests -p 'test_clean_batch.py' -k '*.test_clean_a_reader_that_closes_standard_output' -k '*.test_clean_the_preview_says_what_keeps_each_row_single_mode'`
+  — verify: `python3 -c "import sys,re;t=open('project').read();A=sys.argv[1:];c=lambda r:t.split('# region '+r+'\n')[1].split('# endregion '+r+'\n')[0];M=[a for a in A if not ((a.split('%',1)[1] not in c(a.split('%',1)[0])) if '%' in a else (a.split('~',1)[1] in c(a.split('~',1)[0])) if '~' in a else re.search(r'^[a-z]*\s?'+re.escape(a.split(':',1)[1])+r'\b',c(a.split(':',1)[0]),re.M))];[print('region check failed:',m) for m in M];sys.exit(1 if M or not A else 0)" 'preview~human_path' 'preview~selected_heading' 'preview~excluded_group' 'preview:excluded_groups' 'preview:UNREAD_NEXT_STEPS' 'contracts~"main-worktree":' 'contracts~"unsupported-path-bytes":' 'contracts~"not-requested":' && python3 project clean --help >/dev/null && python3 -m unittest discover -s tests -p 'test_clean_harness.py' -k '*.test_clean_text_fixtures_equal_the_contract_table' && python3 -c "import sys,unittest as u;L=u.defaultTestLoader;f=lambda s:[i for t in s for i in (f(t) if isinstance(t,u.TestSuite) else [t.id()])];I=[i for i in f(L.discover('tests',pattern=sys.argv[1])) if not i.startswith('unittest.')];A=sys.argv[2:];M=[a for a in A if not any(a in ('*',i.split('.')[-1]) for i in I)];[print('not collected:',m) for m in M];[print(e) for e in L.errors];sys.exit(1 if M or L.errors or not A else 0)" test_clean_batch.py 'test_clean_a_reader_that_closes_standard_output' 'test_clean_the_preview_says_what_keeps_each_row_single_mode' && python3 -m unittest discover -s tests -p 'test_clean_batch.py' -k '*.test_clean_a_reader_that_closes_standard_output' -k '*.test_clean_the_preview_says_what_keeps_each_row_single_mode'`
 - [x] T053 [P] [US1] [O] Fill `check_plan(plan, run)` in region `dispatcher`, in
   FR-024's order: an incomplete plan (an all-safe preview records its
   refusal, so that `REFUSED:` and its remedy print and the envelope carries
@@ -1837,7 +1860,7 @@ L-8).
   this task's companion to the single-mode test, expects the variant for the
   two rows that share P's path, by bytes and by realpath alike.
   #19's round (l) at `ccc52b9` (lane 3's W87 M-1; lead rulings R-307 and
-  R-310; writer's `e569564`, merged as `1edf64e`) gives that remedy its unread
+  R-310, confirmed by Brett Heap (R-319); writer's `e569564`, merged as `1edf64e`) gives that remedy its unread
   forms: wherever `unread_paths(plan)`, the raw paths of the plan's rows whose
   `present` is null (`path_unread()`), is not empty, a deadline-stopped row or
   one the refusal does not count included, `incomplete_refusal()` takes
@@ -1920,8 +1943,27 @@ L-8).
   human line to standard error. T045 passes; T041 to T044 and T046 are
   written after the plan lane is merged in (Lanes, above), the apply-side
   closed-pipe test among them in T044 (lead ruling R-67 (d)).
+  R-322 (Codex's P2 on PR #33) refuses an `--apply --json` run with standard
+  output closed at startup before any removal (`check_writes()`, T047;
+  writer's `42454cb`, merged as `12c1821`), and `tests/test_clean_apply.py`
+  gains six tests, run by this verify:
+  `test_clean_all_safe_apply_json_with_standard_output_closed_at_startup_removes_nothing`
+  and
+  `test_clean_single_apply_json_with_standard_output_closed_at_startup_removes_nothing`
+  (nothing removed, `internal-error`, exit 2);
+  `test_clean_standard_output_closed_at_startup_refuses_as_the_write_error`
+  (`run_clean()` in process with `sys.stdout` None ends in the
+  `internal-error` refusal of the EBADF that `write_document()` records,
+  before any removal child);
+  `test_clean_push_and_delete_branch_with_json_never_reach_the_apply_phase`
+  (`invalid-arguments`, exit 2, no push and no deletion);
+  `test_clean_check_writes_records_a_missing_json_stream_only_under_json` (the
+  check raises the EBADF only for a None standard output under `--json`); and
+  `test_clean_a_reader_that_closes_after_the_apply_phase_began_keeps_the_removals`
+  (the removals continue, the result record's failed write is best-effort,
+  exit 0, no traceback).
   — files: `project`
-  — verify: `python3 -c "import sys,re;t=open('project').read();A=sys.argv[1:];c=lambda r:t.split('# region '+r+'\n')[1].split('# endregion '+r+'\n')[0];M=[a for a in A if not ((a.split('%',1)[1] not in c(a.split('%',1)[0])) if '%' in a else (a.split('~',1)[1] in c(a.split('~',1)[0])) if '~' in a else re.search(r'^[a-z]*\s?'+re.escape(a.split(':',1)[1])+r'\b',c(a.split(':',1)[0]),re.M))];[print('region check failed:',m) for m in M];sys.exit(1 if M or not A else 0)" 'result:apply_exit_status' 'result:result_document' 'result:print_result' 'result~def apply_exit_status(targets, signum)' && python3 -m unittest discover -s tests -p 'test_clean_apply.py' && python3 -m unittest discover -s tests -p 'test_project.py'`
+  — verify: `python3 -c "import sys,re;t=open('project').read();A=sys.argv[1:];c=lambda r:t.split('# region '+r+'\n')[1].split('# endregion '+r+'\n')[0];M=[a for a in A if not ((a.split('%',1)[1] not in c(a.split('%',1)[0])) if '%' in a else (a.split('~',1)[1] in c(a.split('~',1)[0])) if '~' in a else re.search(r'^[a-z]*\s?'+re.escape(a.split(':',1)[1])+r'\b',c(a.split(':',1)[0]),re.M))];[print('region check failed:',m) for m in M];sys.exit(1 if M or not A else 0)" 'result:apply_exit_status' 'result:result_document' 'result:print_result' 'result~def apply_exit_status(targets, signum)' && python3 -c "import sys,unittest as u;L=u.defaultTestLoader;f=lambda s:[i for t in s for i in (f(t) if isinstance(t,u.TestSuite) else [t.id()])];I=[i for i in f(L.discover('tests',pattern=sys.argv[1])) if not i.startswith('unittest.')];A=sys.argv[2:];M=[a for a in A if not any(a in ('*',i.split('.')[-1]) for i in I)];[print('not collected:',m) for m in M];[print(e) for e in L.errors];sys.exit(1 if M or L.errors or not A else 0)" test_clean_apply.py 'test_clean_all_safe_apply_json_with_standard_output_closed_at_startup_removes_nothing' 'test_clean_single_apply_json_with_standard_output_closed_at_startup_removes_nothing' 'test_clean_standard_output_closed_at_startup_refuses_as_the_write_error' 'test_clean_push_and_delete_branch_with_json_never_reach_the_apply_phase' 'test_clean_check_writes_records_a_missing_json_stream_only_under_json' 'test_clean_a_reader_that_closes_after_the_apply_phase_began_keeps_the_removals' && python3 -m unittest discover -s tests -p 'test_clean_apply.py' && python3 -m unittest discover -s tests -p 'test_project.py'`
 - [x] T058 [US1] [S] Run T036 to T046, every Phase 2 module and the 96 tests (95
   unchanged and the one rewritten): all pass.
   — files: (none)
@@ -2137,7 +2179,7 @@ carrying the reason the gate order gives.
   row 7 answered, `--worktree P` reaches step 3, which counts P's row, and the
   remedy is the variant).
   #19's round (l) at `ccc52b9` (lane 3's W87 M-1; lead rulings R-307 and
-  R-310; writer's `e569564`, merged as `1edf64e`) adds three tests, each
+  R-310, confirmed by Brett Heap (R-319); writer's `e569564`, merged as `1edf64e`) adds three tests, each
   against its own fixture:
   `test_clean_an_unread_row_s_next_step_and_remedy_name_no_prune` (a merged
   worktree and an unread one: the unread row's group, first under
@@ -2164,8 +2206,20 @@ carrying the reason the gate order gives.
   readable again the variant and the plain next step print as before).
   `test_clean_every_protected_classifier_incomplete_copy`'s unreadable copy
   expects the unread remedy.
+  R-320 (ruled by Brett Heap, "R-320: yes", lead R-321; lane 3's W86 NM-1;
+  writer's `dfc2baa`, merged as `12c1821`) adds
+  `test_clean_a_stale_row_beside_an_unread_row_warns_against_prune`: a merged
+  worktree, a stale one, a locked stale one and an unread one; the stale row's
+  recommendation is `recommendation_stale_worktree_unread` and the locked
+  stale row's `recommendation_stale_locked_unread`, in the report's human
+  lines and the `worktrees` rows of `--json`, in the report, the `--all-safe`
+  preview and a single removal naming the merged row, while the preview's
+  `stale-worktree` group takes the first as its next step (the locked row is
+  excluded as `locked-worktree`, gate 4); the exit codes and every other line
+  are as before, nothing is removed, and with the path readable again the
+  plain texts print.
   — files: `tests/test_clean_gates.py`
-  — verify: `python3 -c "import sys,unittest as u;L=u.defaultTestLoader;f=lambda s:[i for t in s for i in (f(t) if isinstance(t,u.TestSuite) else [t.id()])];I=[i for i in f(L.discover('tests',pattern=sys.argv[1])) if not i.startswith('unittest.')];A=sys.argv[2:];M=[a for a in A if not any(a in ('*',i.split('.')[-1]) for i in I)];[print('not collected:',m) for m in M];[print(e) for e in L.errors];sys.exit(1 if M or L.errors or not A else 0)" test_clean_gates.py 'test_clean_every_protected_classifier' 'test_clean_every_protected_classifier_incomplete_copy' 'test_clean_a_redirected_worktree_s_incomplete_plan_names_the_unset' 'test_clean_a_redirected_row_the_deadline_stopped_is_not_counted_for_the_variant' 'test_clean_a_named_removal_s_repository_wide_refusal_beside_a_redirected_target' 'test_clean_an_unread_row_s_next_step_and_remedy_name_no_prune' 'test_clean_an_unread_row_beside_a_readable_inspection_error_row' 'test_clean_an_unread_row_beside_a_redirected_row'`
+  — verify: `python3 -c "import sys,unittest as u;L=u.defaultTestLoader;f=lambda s:[i for t in s for i in (f(t) if isinstance(t,u.TestSuite) else [t.id()])];I=[i for i in f(L.discover('tests',pattern=sys.argv[1])) if not i.startswith('unittest.')];A=sys.argv[2:];M=[a for a in A if not any(a in ('*',i.split('.')[-1]) for i in I)];[print('not collected:',m) for m in M];[print(e) for e in L.errors];sys.exit(1 if M or L.errors or not A else 0)" test_clean_gates.py 'test_clean_every_protected_classifier' 'test_clean_every_protected_classifier_incomplete_copy' 'test_clean_a_redirected_worktree_s_incomplete_plan_names_the_unset' 'test_clean_a_redirected_row_the_deadline_stopped_is_not_counted_for_the_variant' 'test_clean_a_named_removal_s_repository_wide_refusal_beside_a_redirected_target' 'test_clean_an_unread_row_s_next_step_and_remedy_name_no_prune' 'test_clean_an_unread_row_beside_a_readable_inspection_error_row' 'test_clean_an_unread_row_beside_a_redirected_row' 'test_clean_a_stale_row_beside_an_unread_row_warns_against_prune'`
 - [x] T062 [P] [US2] [O] Add to `tests/test_clean_gates.py`:
   `test_clean_hidden_local_state` (two otherwise eligible worktrees, one
   holding an edit to a file flagged assume-unchanged and one a file flagged
@@ -3591,7 +3645,7 @@ statuses, the child counts and the order of what was cut.
   `test_clean_row_cap_and_planning_failures` (129 rows: incomplete with
   `inspect-cap`, `omitted` visible, the status children those of the main
   worktree and the 127 smallest paths, the preview exit 1, and `--apply` exit 2
-  before any mutation; a status probe timing out under the launcher
+  before any mutation, the refusal's remedy being `remedy_inspect_cap`, which ends with the warning against `git worktree prune`, in the human line and in `refusals` (R-320, ruled by Brett Heap, "R-320: yes", lead R-321); a status probe timing out under the launcher
   (`status-hangs-in`, with a table that shortens the probe budget to no less
   than 1 s; R-29): `inspection-incomplete` with the row visible; the work
   deadline passing during planning under the launcher (a table that shortens
@@ -3809,7 +3863,10 @@ statuses, the child counts and the order of what was cut.
   lead ruling R-259), the recommendation line `report_lines()` prints is
   TEXT's `recommendation_main_worktree` for the main worktree's merged row and
   `recommendation_stale_locked` for a locked stale row (T028), and the note
-  below it is the locked form for a locked row (T094).
+  below it is the locked form for a locked row (T094). Where any row of the plan is
+  unread, `stale_recommendations()` (T049) has replaced a stale row's text by
+  `recommendation_stale_worktree_unread` or `recommendation_stale_locked_unread`,
+  which the line prints (R-320).
   — files: `project`
   — verify: `python3 -c "import sys,re;t=open('project').read();A=sys.argv[1:];c=lambda r:t.split('# region '+r+'\n')[1].split('# endregion '+r+'\n')[0];M=[a for a in A if not ((a.split('%',1)[1] not in c(a.split('%',1)[0])) if '%' in a else (a.split('~',1)[1] in c(a.split('~',1)[0])) if '~' in a else re.search(r'^[a-z]*\s?'+re.escape(a.split(':',1)[1])+r'\b',c(a.split(':',1)[0]),re.M))];[print('region check failed:',m) for m in M];sys.exit(1 if M or not A else 0)" 'preview:report_lines' 'preview~completeness_line_complete' 'preview~selection_line_above_cap' && python3 project clean --help >/dev/null`
 - [x] T102 [US6] [O] Account the counts (FR-033, research.md R8; regions `plan` and

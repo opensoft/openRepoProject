@@ -210,8 +210,17 @@ for the unread row, `next_step_inspection_error_unread` and
 and `remedy_inspection_incomplete_unread` or
 `remedy_inspection_incomplete_redirect_unread` for the refusal, each as the
 contract's "The unread forms" gives it (#19's round (l); lane 3's W87 M-1;
-lead rulings R-307 and R-310; writer's `e569564`, merged as `1edf64e`). Only
-texts change: no field, code, class or reason does.
+lead rulings R-307 and R-310, confirmed by Brett Heap (R-319); writer's `e569564`, merged as `1edf64e`).
+R-320 (lane 3's W86 NM-1; ruled by Brett Heap, "R-320: yes", lead R-321;
+writer's `dfc2baa`, merged as `12c1821`) adds
+`recommendation_stale_worktree_unread`, or, locked,
+`recommendation_stale_locked_unread`, as each `stale-worktree` row's
+recommendation wherever the set is not empty, set by `stale_recommendations()`
+once every row is gated, and makes the `inspect-cap` remedy
+`remedy_inspect_cap`, which carries the same warning always, since the rows
+past the cap are never read. Only texts change: no field, code, class or
+reason does, though a stale row's `recommendation` in the report and in
+`--json` carries the new text.
 
 ### Classification (D6; FR-007)
 
@@ -254,7 +263,7 @@ row, where the ladder says `merged-removable` or `merged-current`, takes
 `The main worktree is never removed by project clean.`, since no removal of
 it can succeed, and a locked `stale-worktree` row takes `Review, unlock it,
 then prune stale worktree metadata manually.`, since `git worktree prune`
-keeps a locked entry. The class is unchanged in both. `status` is not among
+keeps a locked entry. The class is unchanged in both. Where any row of the plan is unread (`unread_paths(plan)`), `stale_recommendations()`, which `build_plan()` calls once every row is gated, replaces each `stale-worktree` row's recommendation by `Review and prune stale worktree metadata manually; a row's path could not be read, so do not run git worktree prune until it can.` (`recommendation_stale_worktree_unread`) or, locked, `Review, unlock it, then prune stale worktree metadata manually; a row's path could not be read, so do not run git worktree prune until it can.` (`recommendation_stale_locked_unread`), from what planning recorded and nothing read again (R-320; lane 3's W86 NM-1; ruled by Brett Heap, "R-320: yes", lead R-321). `status` is not among
 them: its `repo_state()` keeps the baseline's `Review the stale worktree
 metadata before pruning it manually.` for every stale entry, a locked one
 included, a known residual left to a follow-on change (lane 3's W65 LOW-3;

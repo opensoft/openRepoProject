@@ -307,21 +307,22 @@ hand after review), and where any row the refusal counts is excluded as
 core.bare in the repository's config or in a worktree's config.worktree`,
 before the removal by hand; that holds for every registration mismatch, a
 linked worktree that `core.worktree` or `core.bare` redirects or one whose
-registration is broken, or a path two entries share; for `inspect-cap`, to
-remove worktrees explicitly or prune stale entries by hand; for
-`deadline-exceeded`, to remove worktrees explicitly or re-run. Where any
-row of the plan has a path that could not be read, whether or not the refusal
-counts that row, the `inspection-incomplete` remedy names no `git worktree
-prune` and warns against it, since `git worktree prune` deletes the
-registration of a live worktree whose path Git cannot stat: `repair or remove
-the inspection-error rows first: git worktree repair, or remove the row by
-hand after review; a row's path could not be read, so do not run git worktree
-prune until it can`;
-and where the unset above would be named, `repair or remove the
-inspection-error rows first: git worktree repair, unset core.worktree and
-core.bare in the repository's config or in a worktree's config.worktree, or
+registration is broken, or a path two entries share; for `inspect-cap`, `N
+rows exceed the row cap of M; remove worktrees explicitly, or prune stale
+entries by hand; if a worktree's path cannot be read, do not run git worktree
+prune until it can`, whether or not any row is unread, since the rows past the
+cap are never read; for `deadline-exceeded`, to remove worktrees explicitly or
+re-run. Where any row of the plan has a path that could not be read, whether
+or not the refusal counts that row, the `inspection-incomplete` remedy names
+no `git worktree prune` and warns against it, since `git worktree prune`
+deletes the registration of a live worktree whose path Git cannot stat:
+`repair or remove the inspection-error rows first: git worktree repair, or
 remove the row by hand after review; a row's path could not be read, so do not
-run git worktree prune until it can`.
+run git worktree prune until it can`; and where the unset above would be
+named, `repair or remove the inspection-error rows first: git worktree repair,
+unset core.worktree and core.bare in the repository's config or in a
+worktree's config.worktree, or remove the row by hand after review; a row's
+path could not be read, so do not run git worktree prune until it can`.
 
 `--all-safe` cannot be combined with `--action`, `--branch` or `--worktree`,
 and `--expect-plan` needs `--all-safe` and `--apply`: each is
@@ -409,8 +410,13 @@ remove the row by hand; a row's path could not be read, so do not run git
 worktree prune until it can`, and an `inspection-error` row whose own path
 could not be read has a group of its own, listed first, with the next step
 `inspect the row by hand; its path could not be read, so do not run git
-worktree prune until it can`. With every path readable the table above
-applies.
+worktree prune until it can`; and a `stale-worktree` row's recommendation,
+which the report prints and the preview's group takes as its next step, reads
+`Review and prune stale worktree metadata manually; a row's path could not be
+read, so do not run git worktree prune until it can.`, or, for a locked row in
+the report, `Review, unlock it, then prune stale worktree metadata manually; a
+row's path could not be read, so do not run git worktree prune until it can.`.
+With every path readable the table above applies.
 
 The first four reasons are facts about the row. The next four are its
 classification, one gate, and only a `merged-removable` row passes it.
