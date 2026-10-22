@@ -265,7 +265,9 @@ F-1: `test_clean_rescan_reads_the_git_file_where_the_entry_and_the_path_remain`
 (T089) and `test_clean_the_ceiling_s_partial_removal_note_follows_the_git_file_and_the_entry`
 (T091); and, since R-284 (ruled by Brett Heap, "R-284: yes", R-290),
 `test_clean_the_ceiling_s_recovery_text_where_the_git_file_cannot_be_read`
-(T089), whose third note a failed lstat of the target's own path also gives (lane 3's W90 M-1, lead ruling R-329, which applies R-284 as Brett Heap ruled it; the rows of T091's table). O-1:
+(T089), whose third note a failed lstat of the target's own path also gives
+(lane 3's W90 M-1, lead ruling R-329, which applies R-284 as Brett Heap ruled
+it; the rows of T091's table). O-1:
 `test_clean_a_reflog_read_cut_by_the_deadline_against_its_budget` and
 `test_clean_only_gate_7_s_deadline_cut_makes_an_unprobed_row_deadline_stopped`
 (T059), and, for a named removal whose own row the deadline cut,
@@ -313,7 +315,23 @@ changed `test_clean_row_cap_and_planning_failures` (T097); and, for R-322
 `test_clean_standard_output_closed_at_startup_refuses_as_the_write_error`,
 `test_clean_push_and_delete_branch_with_json_never_reach_the_apply_phase`,
 `test_clean_check_writes_records_a_missing_json_stream_only_under_json` and
-`test_clean_a_reader_that_closes_after_the_apply_phase_began_keeps_the_removals`; and for lane 3's W90 (M-1, lead ruling R-329; L-1, R-291; writers' `b96b335` and `488d6f6`, merged as `7149e08`), the changed `test_clean_rescan_reads_the_git_file_where_the_entry_and_the_path_remain` (T085, the subtest for a directory above the target that denies search), `test_clean_the_ceiling_s_partial_removal_note_follows_the_git_file_and_the_entry` (T091, three more rows), `test_clean_a_work_tree_probe_that_decides_nothing_at_revalidation` (T083, a line feed alone) and `test_clean_effective_work_tree_reads_its_output_as_one_path` (T030, the working-directory cases). The work-tree probe's output read as one path (lane 3's W70 M-2, R-287):
+`test_clean_a_reader_that_closes_after_the_apply_phase_began_keeps_the_removals`;
+and for lane 3's W90 (M-1, lead ruling R-329; L-1, R-291; writers' `b96b335`
+and `488d6f6`, merged as `7149e08`), the changed
+`test_clean_rescan_reads_the_git_file_where_the_entry_and_the_path_remain`
+(T085, the subtest for a directory above the target that denies search),
+`test_clean_the_ceiling_s_partial_removal_note_follows_the_git_file_and_the_entry`
+(T091, three more rows),
+`test_clean_a_work_tree_probe_that_decides_nothing_at_revalidation` (T083, a
+line feed alone) and
+`test_clean_effective_work_tree_reads_its_output_as_one_path` (T030, the
+working-directory cases). Row 4c's exit 1 (lead ruling R-332; #19's design D7;
+writer's `c8e23cd`, merged as `7149e08`), in `tests/test_clean_evidence.py`
+(T030): `test_clean_row_4c_reads_an_exit_1_by_what_it_printed`,
+`test_clean_row_4c_reads_a_real_repository_s_keys`,
+`test_clean_a_row_4c_exit_1_that_printed_gives_each_linked_row_its_work_tree_probe`
+and `test_clean_a_row_4c_exit_1_that_printed_adds_its_probes_to_the_estimate`.
+The work-tree probe's output read as one path (lane 3's W70 M-2, R-287):
 `test_clean_effective_work_tree_reads_its_output_as_one_path`,
 `test_clean_a_work_tree_probe_whose_output_is_empty_or_ends_in_no_line_feed` and
 `test_clean_a_redirected_linked_worktree_whose_path_holds_a_line_feed` (T030),

@@ -994,6 +994,25 @@ T033), when B, D, E and F are; H, guard (T034, T035), when T023 is, beside G
   and `test_clean_a_redirected_linked_worktree_whose_path_holds_a_line_feed`
   (a real redirect of a worktree whose path holds a line feed, by
   `core.worktree` in its `config.worktree`, stays `registration-mismatch`).
+  Lead ruling R-332 (#19's design D7; writer's `c8e23cd`, merged as `7149e08`)
+  adds four tests: `test_clean_row_4c_reads_an_exit_1_by_what_it_printed`
+  (literal outcomes standing in for the child: an exit 1 with nothing on
+  either stream is false, `false` is false, and an exit 1 that printed on
+  either stream, Git's `hint:` lines or a byte past the 4 KiB kept included,
+  another exit status, a signal, a spawn failure, a timeout, the deadline, and
+  a timeout that ended with exit 1 are true);
+  `test_clean_row_4c_reads_a_real_repository_s_keys` (Git's own answers on the
+  Git in use: a key not set exits 1 with nothing printed, which reads false,
+  and a value that is not a boolean exits 128 with a fatal line, which reads
+  true);
+  `test_clean_a_row_4c_exit_1_that_printed_gives_each_linked_row_its_work_tree_probe`
+  (a fake Git answering row 4c with exit 1: nothing printed probes no linked
+  row's work tree, anything printed probes each, and the plan stays complete);
+  and
+  `test_clean_a_row_4c_exit_1_that_printed_adds_its_probes_to_the_estimate`
+  (where it reads true from an exit 1 that printed, each revalidation spawns
+  seven children and `probes.estimated` equals `probes.performed`; the plain
+  exit 1 reads false: six).
   Rule 1 would give PR #19's two scenario tests the prefix `test_status_`;
   they take `test_clean_`, which the floor job's `-k` selects as well. Since
   R-116, `test_status_a_git_that_floods_standard_error` reads its row
@@ -1002,7 +1021,7 @@ T033), when B, D, E and F are; H, guard (T034, T035), when T023 is, beside G
   linked worktree whose work tree is redirected" and "A commondir that names
   another repository".
   — files: `tests/test_clean_evidence.py`
-  — verify: `python3 -c "import sys,unittest as u;L=u.defaultTestLoader;f=lambda s:[i for t in s for i in (f(t) if isinstance(t,u.TestSuite) else [t.id()])];I=[i for i in f(L.discover('tests',pattern=sys.argv[1])) if not i.startswith('unittest.')];A=sys.argv[2:];M=[a for a in A if not any(a in ('*',i.split('.')[-1]) for i in I)];[print('not collected:',m) for m in M];[print(e) for e in L.errors];sys.exit(1 if M or L.errors or not A else 0)" test_clean_evidence.py 'test_status_a_git_that_floods_standard_error' 'test_status_a_git_that_ignores_sigterm' 'test_status_five_thousand_ignored_records' 'test_status_user_status_configuration' 'test_status_a_caller_s_git_environment_is_ignored' 'test_status_the_sixteenth_scrubbed_name_on_git_2_36' 'test_status_a_lazy_fetch_in_a_partial_clone_is_refused_locally' && python3 -c "import sys,unittest as u;L=u.defaultTestLoader;f=lambda s:[i for t in s for i in (f(t) if isinstance(t,u.TestSuite) else [t.id()])];I=[i for i in f(L.discover('tests',pattern=sys.argv[1])) if not i.startswith('unittest.')];A=sys.argv[2:];M=[a for a in A if not any(a in ('*',i.split('.')[-1]) for i in I)];[print('not collected:',m) for m in M];[print(e) for e in L.errors];sys.exit(1 if M or L.errors or not A else 0)" test_clean_evidence.py 'test_clean_a_linked_worktree_whose_work_tree_is_redirected' 'test_clean_a_linked_worktree_whose_work_tree_is_redirected_after_the_plan' 'test_clean_a_commondir_that_names_another_repository' 'test_clean_evidence_verifies_each_identity_immediately_before_its_status_probe' 'test_clean_evidence_a_status_probe_that_warns_establishes_nothing' 'test_clean_evidence_a_failed_ref_listing_establishes_no_branch_evidence' 'test_clean_effective_work_tree_reads_its_output_as_one_path' 'test_clean_a_work_tree_probe_whose_output_is_empty_or_ends_in_no_line_feed' 'test_clean_a_redirected_linked_worktree_whose_path_holds_a_line_feed'`
+  — verify: `python3 -c "import sys,unittest as u;L=u.defaultTestLoader;f=lambda s:[i for t in s for i in (f(t) if isinstance(t,u.TestSuite) else [t.id()])];I=[i for i in f(L.discover('tests',pattern=sys.argv[1])) if not i.startswith('unittest.')];A=sys.argv[2:];M=[a for a in A if not any(a in ('*',i.split('.')[-1]) for i in I)];[print('not collected:',m) for m in M];[print(e) for e in L.errors];sys.exit(1 if M or L.errors or not A else 0)" test_clean_evidence.py 'test_status_a_git_that_floods_standard_error' 'test_status_a_git_that_ignores_sigterm' 'test_status_five_thousand_ignored_records' 'test_status_user_status_configuration' 'test_status_a_caller_s_git_environment_is_ignored' 'test_status_the_sixteenth_scrubbed_name_on_git_2_36' 'test_status_a_lazy_fetch_in_a_partial_clone_is_refused_locally' && python3 -c "import sys,unittest as u;L=u.defaultTestLoader;f=lambda s:[i for t in s for i in (f(t) if isinstance(t,u.TestSuite) else [t.id()])];I=[i for i in f(L.discover('tests',pattern=sys.argv[1])) if not i.startswith('unittest.')];A=sys.argv[2:];M=[a for a in A if not any(a in ('*',i.split('.')[-1]) for i in I)];[print('not collected:',m) for m in M];[print(e) for e in L.errors];sys.exit(1 if M or L.errors or not A else 0)" test_clean_evidence.py 'test_clean_a_linked_worktree_whose_work_tree_is_redirected' 'test_clean_a_linked_worktree_whose_work_tree_is_redirected_after_the_plan' 'test_clean_a_commondir_that_names_another_repository' 'test_clean_evidence_verifies_each_identity_immediately_before_its_status_probe' 'test_clean_evidence_a_status_probe_that_warns_establishes_nothing' 'test_clean_evidence_a_failed_ref_listing_establishes_no_branch_evidence' 'test_clean_effective_work_tree_reads_its_output_as_one_path' 'test_clean_a_work_tree_probe_whose_output_is_empty_or_ends_in_no_line_feed' 'test_clean_a_redirected_linked_worktree_whose_path_holds_a_line_feed' 'test_clean_row_4c_reads_an_exit_1_by_what_it_printed' 'test_clean_row_4c_reads_a_real_repository_s_keys' 'test_clean_a_row_4c_exit_1_that_printed_gives_each_linked_row_its_work_tree_probe' 'test_clean_a_row_4c_exit_1_that_printed_adds_its_probes_to_the_estimate'`
 - [x] T031 [P] [O] Add to region `evidence` of `project`: `identity_probe()` (row
   3, repeated one option per child when a value holds a line feed);
   `main_worktree(identity, records, run)`, which builds D8's whole order (M6)
@@ -1078,7 +1097,7 @@ T033), when B, D, E and F are; H, guard (T034, T035), when T023 is, beside G
   leaving each present row on a branch with that probe's errors,
   `inspection-error`; the evidence's `main_path`, so that `repository.root`
   stays null when row 5 fails; row 4c (`worktree_config()`) once per common
-  directory before row 6, true where not read; the effective-work-tree probe
+  directory before row 6, true where not read, false only where Git prints `false` or a `probe-failed` child exits 1 having printed nothing on either stream, and true for any other exit 1, a cut child's included (R-332; #19's design D7, "an unset value is false and any other failure counts as true"; writer's `c8e23cd`, merged as `7149e08`); the effective-work-tree probe
   (`effective_work_tree()`) for each linked row where row 4c is not false,
   its output, less the one closing line feed, read as one path, which may hold
   line feeds (output that is empty, a line feed alone or without a closing
