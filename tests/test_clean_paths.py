@@ -315,6 +315,72 @@ class PathsTests(clean_support.CleanCase):
             self.assertTrue(os.path.isdir(bad), "the fifth is still present")
             self.assertIn(bad, registry)
 
+    @clean_support.linux_paths
+    def test_clean_line_feed_paths_where_row_4c_reads_true(self):
+        # "Control-character and non-UTF-8 paths" in a repository whose
+        # extensions.worktreeConfig is true (lane 3's W70 M-2; lead ruling
+        # R-287): LQ-11's work-tree probe prints a linked worktree's own path
+        # over two lines where that path holds a line feed, and its output,
+        # less the one line feed Git ends it with, is read as one path. Two
+        # merged worktrees, nothing redirected: one whose path holds a line
+        # feed inside, one whose path ends in one. Both are selected, the probe
+        # runs in each at planning and again at its revalidation, both are
+        # removed and the rescan proves it, and the counts are the extension's:
+        # seven children per revalidation, three for the final rescan, and
+        # probes.estimated equal to probes.performed.
+        root = self.repo()
+        self.bare_remote()
+        self.assert_plain_base()
+        base = os.fsencode(self.base)
+        eligible = []  # (raw path, branch, exact text), in raw path byte order
+        for name, branch in (("end-a" + chr(0x0A), "001-end"), ("lf-a" + chr(0x0A) + "b", "002-lf")):
+            raw = base + b"/" + name.encode("ascii")
+            self.merged_worktree(branch, path=raw)
+            eligible.append((raw, branch, os.fsdecode(raw)))
+        self.git(root, "config", "extensions.worktreeConfig", "true")
+        probe = [b"rev-parse", b"--path-format=absolute", b"--show-toplevel"]
+        for _raw, _branch, text in eligible:
+            printed = self.git(Path(text), *(word.decode("ascii") for word in probe))
+            self.assertEqual(printed, text + chr(0x0A), "Git prints the path and one line feed")
+            self.assertGreater(len(printed.split(chr(0x0A))), 2, "over two lines or more")
+
+        preview = self.run_json("clean", root, "--all-safe", "--json")
+        self.assert_status(preview, 0)
+        document = self.one_document(preview)
+        self.assertEqual([(entry["path"], entry["branch"]) for entry in document["selected"]],
+                         [(text, branch) for _raw, branch, text in eligible])
+        self.assertEqual([entry["reason"] for entry in document["excluded"]], ["main-worktree"],
+                         "no registration-mismatch")
+        rows = {row["path"]: row for row in document["worktrees"]}
+        for _raw, _branch, text in eligible:
+            self.assertEqual((rows[text]["errors"], rows[text]["classification"]), ([], "merged-removable"))
+        self.assertEqual((document["completeness"], document["refusals"]), ("complete", []))
+        planning = document["probes"]["performed"]
+        self.assertEqual(document["probes"]["estimated"], planning + 7 * len(eligible) + 3)
+
+        env, log = self.counting()
+        applied = self.run_json("clean", root, "--all-safe", "--apply", "--yes", "--json", env=env)
+        self.assert_status(applied, 0)
+        document = self.one_document(applied)
+        self.assertEqual([(target["path"], target["stage"], target["reason"]) for target in document["targets"]],
+                         [(text, "removed", None) for _raw, _branch, text in eligible])
+        for target in document["targets"]:
+            record = target["reconciliation"]
+            self.assertEqual((record["registry_entry_present"], record["path_present"], record["reconciled"]),
+                             (False, False, True), "the rescan proves it removed")
+        revalidations = [target["probes_performed"] for target in document["targets"]]
+        self.assertEqual(revalidations, [7] * len(eligible))
+        self.assertEqual(document["probes"], {"estimated": planning + sum(revalidations) + 3,
+                                              "performed": planning + sum(revalidations) + 3})
+        probed = [argv_words(record)[1] for record in clean_support.child_log(log)
+                  if argv_words(record)[2:] == probe]
+        self.assertEqual(sorted(probed), sorted([raw for raw, _b, _t in eligible] * 2),
+                         "the work-tree probe at planning and again at each revalidation")
+        registry = self.registry(root)
+        for raw, _branch, _text in eligible:
+            self.assertFalse(os.path.lexists(raw), raw)
+            self.assertNotIn(raw, registry)
+
     # T110: "Non-UTF-8 repository root".
 
     @clean_support.linux_paths

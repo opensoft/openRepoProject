@@ -42,6 +42,9 @@ ROW_2 = ["rev-parse", "--show-toplevel"]
 ROW_3 = ["rev-parse", "--path-format=absolute", "--show-toplevel", "--git-common-dir",
          "--show-superproject-working-tree"]
 STATUS = ["status", "--porcelain=v1", "-z", "--untracked-files=normal", "--ignored=matching"]
+# Row 3b (#19's round (i) at e0c91bb, design.md D6 :333): only on a target-not-repository-root
+# refusal, where row 3 failed and the directory holds its own .git.
+ROW_3B = ["rev-parse", "--path-format=absolute", "--git-dir", "--git-common-dir", "--is-bare-repository"]
 
 
 def command(record):
@@ -534,6 +537,229 @@ class ResolutionTests(clean_support.CleanCase):
                 mode = "all-safe" if "--all-safe" in words else "report"
                 self.assert_error_document(result, "target-not-repository-root", message, mode, path=path)
         self.assertEqual(self.snapshot(superproject), before, "nothing changes")
+
+    # #19's round (i) (design.md D6 and D18 at e0c91bb; lead ruling R-271): a
+    # main worktree that a core.worktree or core.bare of the repository's own
+    # redirects is refused target-not-repository-root, as before, but with the
+    # variant that names the redirect; every other such refusal keeps the
+    # plain message.
+
+    def redirected(self, path):
+        return TEXT["target_not_repository_root_redirect"].format(PATH=path)
+
+    def row_3b_dirs(self, records):
+        return [command(record)[1] for record in records if command(record)[2:] == ROW_3B]
+
+    def redirect(self, root, key, value, place):
+        """Inline fixture (rule 3): set key to value for root's main worktree in
+        place, "config" (the repository's own) or "config.worktree" (the main
+        worktree's, with extensions.worktreeConfig set true), through the real
+        git's `config --file`. Returns the git directory."""
+        gitdir = Path(self.git(root, "rev-parse", "--path-format=absolute", "--git-dir").rstrip("\n"))
+        if place == "config.worktree":
+            self.git(root, "config", "extensions.worktreeConfig", "true")
+        self.git(root, "config", "--file", gitdir / place, key, value)
+        return gitdir
+
+    def unset_redirect(self, gitdir):
+        """What the variant says: unset core.worktree and core.bare in the git
+        directory's config and config.worktree."""
+        for place in ("config", "config.worktree"):
+            if (gitdir / place).exists():
+                for key in ("core.worktree", "core.bare"):
+                    self.git(self.base, "config", "--file", gitdir / place, "--unset", key, check=False)
+
+    def test_clean_a_redirected_main_worktree_names_the_redirect(self):
+        # D18: a core.bare true, or a core.worktree naming another directory (a
+        # missing one included), in the repository's config or in the main
+        # worktree's config.worktree, is refused target-not-repository-root,
+        # exit 2, before any plan, with the variant. Row 3b runs once, in the
+        # root, only where row 3 failed (core.bare); once both settings are
+        # unset, as the variant says, the root resolves, and that run spawns no
+        # row 3b. Identical on Git 2.43.0 and 2.36.6 (round (i)'s fixtures).
+        cases = (("core.bare true in the repository's config", "core.bare", None, "config"),
+                 ("core.worktree naming another directory in the repository's config",
+                  "core.worktree", "other", "config"),
+                 ("core.bare true in the main worktree's config.worktree", "core.bare", None, "config.worktree"),
+                 ("core.worktree naming another directory in the main worktree's config.worktree",
+                  "core.worktree", "other", "config.worktree"),
+                 ("core.worktree naming a missing directory", "core.worktree", "missing", "config"))
+        modes = (("report", ()), ("all-safe", ("--all-safe", "--apply", "--yes")))
+        for number, (label, key, target, place) in enumerate(cases):
+            with self.subTest(label):
+                root = self.repo(f"redirected-{number}")
+                value = "true"
+                if key == "core.worktree":
+                    value = str(self.base / f"{target}-{number}")
+                    if target == "other":
+                        Path(value).mkdir()
+                gitdir = self.redirect(root, key, value, place)
+                message = self.redirected(root)
+                row_3b = [str(root)] if key == "core.bare" else []
+                for mode, words in modes:
+                    result, records = self.counted("clean", root, *words)
+                    self.assert_refused_human(result, message)
+                    self.assert_no_plan(records)
+                    self.assertEqual(self.row_3b_dirs(records), row_3b, "row 3b only where row 3 failed")
+                    result, records = self.counted("clean", root, *words, "--json")
+                    self.assert_error_document(result, "target-not-repository-root", message, mode, path=root)
+                    self.assert_no_plan(records)
+                result, records = self.counted("clean", root, "--apply", "--action", "delete-branch",
+                                               "--branch", "main", "--yes")
+                self.assert_refused_human(result, message)
+                self.assert_no_plan(records)
+                if key == "core.bare":  # no argument, from the root itself: Git finds no worktree there
+                    result, records = self.counted("clean", cwd=root)
+                    self.assert_refused_human(result, message)
+                    self.assertEqual(self.row_3b_dirs(records), row_3b)
+                self.unset_redirect(gitdir)
+                result, records = self.counted("clean", root, "--json")
+                self.assert_status(result, 0)
+                self.assertEqual(result.document["root"], str(root))
+                self.assertEqual(self.row_3b_dirs(records), [], "a run that resolves spawns no row 3b")
+
+    def test_clean_a_redirected_main_worktree_whose_git_is_a_file(self):
+        # D18 with D8's gitfile layout (`git init --separate-git-dir`): a
+        # core.worktree naming another directory, or a core.bare true, takes
+        # the variant, row 3b running only for the core.bare, and with both
+        # unset the checkout resolves; a core.worktree naming the checkout
+        # itself resolves as before (D8), with no row 3b.
+        elsewhere = self.base / "elsewhere"
+        elsewhere.mkdir()
+        other = self.base / "other"
+        other.mkdir()
+        cases = (("core.worktree naming another directory", "core.worktree", str(other), True),
+                 ("core.bare true", "core.bare", "true", True),
+                 ("core.worktree naming the checkout itself", "core.worktree", None, False))
+        for number, (label, key, value, refused) in enumerate(cases):
+            with self.subTest(label):
+                checkout, gitdir = self.base / f"checkout-{number}", self.base / f"checkout-{number}.git"
+                self.git(self.base, "init", "-q", "-b", "main", "--separate-git-dir", gitdir, checkout)
+                self.git(checkout, "commit", "-q", "--allow-empty", "-m", "initial")
+                self.git(checkout, "config", key, str(checkout) if value is None else value)
+                result, records = self.counted("clean", checkout, "--json", cwd=elsewhere)
+                if refused:
+                    self.assert_error_document(result, "target-not-repository-root", self.redirected(checkout),
+                                               "report", path=checkout)
+                    self.assert_no_plan(records)
+                    self.assertEqual(self.row_3b_dirs(records), [str(checkout)] if key == "core.bare" else [])
+                    self.assert_refused_human(self.run_cli("clean", checkout, cwd=elsewhere),
+                                              self.redirected(checkout))
+                    self.unset_redirect(gitdir)
+                    result, records = self.counted("clean", checkout, "--json", cwd=elsewhere)
+                self.assert_status(result, 0)
+                self.assertEqual(result.document["root"], str(checkout))
+                self.assertEqual(self.row_3b_dirs(records), [], "a run that resolves spawns no row 3b")
+
+    def test_clean_a_bare_repository_beside_a_main_worktree_that_core_bare_redirects(self):
+        # D18: a `git init --bare` repository passed by its own directory holds
+        # no .git, keeps the plain message and runs no row 3b, and an unset of
+        # its core.bare does not make it a work tree. One made by `git init
+        # --bare X/.git` and passed as X has the configuration of a checkout at
+        # X whose core.bare is true, which nothing Git reads tells apart, so it
+        # takes the variant, which is true of it: with core.bare unset X
+        # resolves.
+        seed = self.repo("seed")
+        bare = self.base / "plain.git"
+        self.git(self.base, "init", "-q", "--bare", bare)
+        self.git(seed, "push", "-q", bare, "main")
+        holder = self.base / "holder"
+        holder.mkdir()
+        self.git(self.base, "init", "-q", "--bare", holder / ".git")
+        self.git(seed, "push", "-q", holder / ".git", "main")
+        for label, path, message, row_3b in (
+                ("passed by its own directory", bare, self.not_root(bare), []),
+                ("made at X/.git and passed as X", holder, self.redirected(holder), [str(holder)])):
+            with self.subTest(label):
+                result, records = self.counted("clean", path)
+                self.assert_refused_human(result, message)
+                self.assert_no_plan(records)
+                self.assertEqual(self.row_3b_dirs(records), row_3b)
+                result, records = self.counted("clean", path, "--all-safe", "--json")
+                self.assert_error_document(result, "target-not-repository-root", message, "all-safe", path=path)
+        with self.subTest("core.bare unset"):
+            self.git(self.base, "config", "--file", bare / "config", "--unset", "core.bare")
+            self.assert_refused_human(self.run_cli("clean", bare), self.not_root(bare))
+            self.git(self.base, "config", "--file", holder / ".git" / "config", "--unset", "core.bare")
+            document = self.run_json("clean", holder, "--json").document
+            self.assertEqual(document["root"], str(holder))
+
+    def test_clean_plain_refusals_beside_a_redirected_main_worktree(self):
+        # D18: only the directory where the main worktree would be takes the
+        # variant. Beside a root whose own config sets core.bare true, its
+        # subdirectory and its linked worktree keep the plain message, by an
+        # absolute path and with no argument from inside them, and so do a
+        # linked worktree that its own config.worktree redirects, by core.bare
+        # (row 3 fails there, and row 3b runs and finds that worktree's git
+        # directory, not the common one) or by core.worktree (its .git names
+        # no common directory, and no row 3b runs), a submodule checkout and a
+        # directory outside any repository.
+        root = self.repo()
+        linked = self.base / "linked"
+        self.git(root, "worktree", "add", "-q", "-b", "linked", linked)
+        (root / "sub").mkdir()
+        self.git(root, "config", "core.bare", "true")
+        other = self.repo("other")
+        redirected = self.base / "other-linked"
+        self.git(other, "worktree", "add", "-q", "-b", "other-linked", redirected)
+        decoyed = self.base / "other-decoyed"
+        self.git(other, "worktree", "add", "-q", "-b", "other-decoyed", decoyed)
+        decoy = self.base / "decoy"
+        decoy.mkdir()
+        self.git(other, "config", "extensions.worktreeConfig", "true")
+        self.git(redirected, "config", "--worktree", "core.bare", "true")
+        self.git(decoyed, "config", "--worktree", "core.worktree", decoy)
+        superproject = self.repo("super")
+        submodule = self.submodule(superproject)
+        self.commit(superproject)
+        outside = self.base / "outside"
+        outside.mkdir()
+        cases = (("the redirected root", root, self.redirected(root), [str(root)]),
+                 ("its subdirectory", root / "sub", self.not_root(root / "sub"), []),
+                 ("its linked worktree", linked, self.not_root(linked), []),
+                 ("a linked worktree that its own config.worktree makes bare", redirected,
+                  self.not_root(redirected), [str(redirected)]),
+                 ("a linked worktree that its own config.worktree sends elsewhere", decoyed,
+                  self.not_root(decoyed), []),
+                 ("a submodule checkout", submodule, self.not_root(submodule), []),
+                 ("a directory outside any repository", outside, self.not_root(outside), []))
+        for label, path, message, row_3b in cases:
+            with self.subTest(label):
+                result, records = self.counted("clean", path)
+                self.assert_refused_human(result, message)
+                self.assert_no_plan(records)
+                self.assertEqual(self.row_3b_dirs(records), row_3b)
+                result, records = self.counted("clean", path, "--all-safe", "--json")
+                self.assert_error_document(result, "target-not-repository-root", message, "all-safe", path=path)
+        for path in (linked, root / "sub"):
+            with self.subTest("no argument", cwd=path):
+                self.assert_refused_human(self.run_cli("clean", cwd=path), self.not_root(path))
+
+    def test_clean_a_row_3b_that_fails_or_is_cut_keeps_the_plain_message(self):
+        # D6 and D18: row 3b is one `probe` child through run_bounded(), counted
+        # and bounded as row 3 is, run once and only on the refusal; one that
+        # fails, times out or meets the work deadline leaves the plain message.
+        root = self.repo()
+        self.git(root, "config", "core.bare", "true")
+        real = project.run_bounded
+        for name, exit_status in (("failed", 128), ("timeout", None), ("deadline", None)):
+            attempts = []
+
+            def stand_in(spec, parser, run, name=name, exit_status=exit_status, attempts=attempts):
+                kind, args, cwd = spec
+                if "--is-bare-repository" in args:
+                    attempts.append((kind, [os.fsdecode(arg) for arg in args]))
+                    return project.DriverOutcome(project.git_argv(kind, args), name, status=exit_status,
+                                                 detail="stand-in")
+                return real(spec, parser, run)
+
+            with self.subTest(outcome=name):
+                status, out, err = self.main_in_process("clean", root, run_bounded=stand_in)
+                self.assertEqual((status, out, err), (2, "", f"REFUSED: {self.not_root(root)}\n"))
+                self.assertEqual(attempts, [("probe", ["-C", str(root), *ROW_3B])])
+        with self.subTest("the same run, row 3b answering, takes the variant"):
+            status, out, err = self.main_in_process("clean", root)
+            self.assertEqual((status, out, err), (2, "", f"REFUSED: {self.redirected(root)}\n"))
 
     # T106: "Merge target missing, invalid, or conflicting".
 

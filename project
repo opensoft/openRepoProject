@@ -717,13 +717,23 @@ TEXT = {
         "Next: project clean {ROOT} --all-safe",
     "partial_removal_note": "Probable partial removal: inspect, then git worktree remove --force {PATH} by hand.",
     # The ceiling's note where the rescan does not show both the target's
-    # `.git` and its registry entry present: Git then refuses `git worktree
+    # `.git` and its registry entry present, and made no `.git` read that
+    # failed (partial_removal_text()): Git then refuses `git worktree
     # remove --force` ("validation failed" with the `.git` file gone, "is not
     # a working tree" with the entry gone) and accepts `git worktree prune`
     # (lane 3's W52 F-1; Brett Heap's ruling "F-1: prune-then-delete", lead
     # ruling R-263, amending ratified 0050f3e pcl:922-926).
     "partial_removal_note_prune":
         "Probable partial removal: inspect, then git worktree prune and delete {PATH} by hand.",
+    # The ceiling's note where the rescan's lstat of the target's `.git`
+    # failed other than for its absence or was cut, whatever it found of the
+    # registry entry: `git worktree prune` deletes the admin directory of a
+    # live worktree whose `.git` Git cannot stat (EACCES), so this note
+    # advises no prune (#19's round (i) at 1a4785e; lane 3's W73 M-1, lead
+    # ruling R-284).
+    "partial_removal_note_unread":
+        "Probable partial removal: inspect {PATH} by hand; its .git could not be read, "
+        "so do not run git worktree prune until it can.",
     # D18's note for a locked worktree's row, which `git worktree remove
     # --force` refuses (#19 at 4f1c0e0; lane 3's W52 F-2, R-248). It replaces
     # ratified text, so it waits on Brett Heap's word, in a commit of its own.
@@ -773,6 +783,13 @@ TEXT = {
     # ruling LQ-15; lead ruling R-102).
     "relative_config_path": "{NAME} is set to a path that does not begin with /; make it absolute or unset it.",
     "target_not_repository_root": "Not the main worktree of a repository: {PATH}; pass the repository root.",
+    # The variant where a core.worktree or core.bare of the repository's own
+    # redirects the main worktree away from the directory the resolution
+    # examined (main_worktree_redirected(); #19's round (i), design.md D18;
+    # lead ruling R-271).
+    "target_not_repository_root_redirect":
+        "Not the main worktree of a repository: {PATH}; core.worktree or core.bare redirects the main worktree; "
+        "unset both in the repository's config, or in the main worktree's config.worktree, then run again.",
     "unsupported_path_bytes": "The repository path is not valid UTF-8: {PATH}",
     "manifest_invalid_size": "Manifest {PATH} is larger than 1 MiB.",
     "plan_incomplete": "The plan is incomplete ({CODE}): {REMEDY}.",
@@ -2967,27 +2984,30 @@ def worktree_config(common_dir, directory, run):
 def effective_work_tree(raw, run, strict=False):
     """Whether the linked worktree at raw has raw as its effective work tree,
     the work tree a Git command run in it uses (design D7; LQ-11; change 1
-    as amended at addd346): WORK_TREE_PROBE in raw, a `probe` child.
-    Returns (holds, error): holds True when it prints exactly one line whose
-    realpath is raw's realpath; False when it prints another, fails (Git
-    exits 128 under `core.bare=true`, `fatal: this operation must be run in
-    a work tree`) or prints other than one non-empty line; None with error,
-    the row error, when the probe timed out or met the work deadline or a
-    realpath read failed. strict, at revalidation, keeps False for the one
-    decided value, another toplevel, and gives a probe that fails or prints
-    other than one non-empty line None with its row error too, since it
-    decided nothing (the lead's R-171; #19 at 4485678, D7). A pure reader:
-    the caller decides."""
+    as amended at addd346): WORK_TREE_PROBE in raw, a `probe` child. The
+    probe asks for one option, so its standard output, less the one line
+    feed Git ends it with, is read as one path, which may itself hold line
+    feeds (lead ruling R-287; lane 3's W70 M-2): a linked worktree whose own
+    path holds a line feed prints that path over two lines or more. Returns
+    (holds, error): holds True when that path's realpath is raw's realpath;
+    False when it is another, when the probe fails (Git exits 128 under
+    `core.bare=true`, `fatal: this operation must be run in a work tree`),
+    and when the output is empty, does not end in a line feed, or is that
+    line feed alone, which names no path; None with error, the row error,
+    when the probe timed out or met the work deadline or a realpath read
+    failed. strict, at revalidation, keeps False for the one decided value,
+    another toplevel, and gives a probe that fails or prints such output None
+    with its row error too, since it decided nothing (the lead's R-171; #19
+    at 4485678, D7). A pure reader: the caller decides."""
     outcome, error = _git(run, raw, list(WORK_TREE_PROBE), "rev-parse")
     if error is not None:
         return (False, None) if error["code"] == "probe-failed" and not strict else (None, error)
-    lines = outcome.result.split(b"\n")
-    if lines[-1] == b"":
-        lines.pop()
-    if len(lines) != 1 or not lines[0]:
+    output = outcome.result
+    path = output[:-1]
+    if not output.endswith(b"\n") or not path:
         return (None, unparseable_error("rev-parse")) if strict else (False, None)
     try:
-        return _realpath(lines[0]) == _realpath(raw), None
+        return _realpath(path) == _realpath(raw), None
     except EvidenceError as exc:
         return None, exc.error
 
@@ -3304,7 +3324,8 @@ def _work_tree_holds(read, raw, run):
     effective work tree (effective_work_tree(); LQ-11), read after its
     identity and before its status probe in a repository whose row 4c read
     true. Otherwise False, and the row gets no probe: another work tree, a
-    failed probe or other output sets `registered` false
+    failed probe, or output that is empty or does not end in a line feed
+    (R-287) sets `registered` false
     (registration-mismatch), and a probe that timed out or met the work
     deadline, or a failed realpath read, appends its row error."""
     holds, error = effective_work_tree(raw, run)
@@ -3838,7 +3859,16 @@ def check_plan(plan, run):
     2. single, `worktree-not-found`, which build_plan() recorded;
     3. single, P's own incompleteness: P names no single row (several
        matched, or one not decided), or its row is inspection-error or
-       unprobed: inspection-incomplete;
+       unprobed: inspection-incomplete, its remedy incomplete_refusal()'s,
+       which counts P's rows as a batch's are counted, through counted_rows()
+       with no exclude (in this mode P's own rows only), those
+       inspection-error or unprobed and not deadline_stopped(), so that a row
+       of P's the work deadline stopped never counts toward the variant
+       remedy (lead ruling R-287 (a); lane 3's W73 L-2); but `deadline-exceeded`,
+       with the deadline's remedy, where P's row is deadline_stopped(), the
+       rule plan_completeness() gives a batch row by, so that single mode
+       shares the batch's refusal codes (#19 at b3228bb; Brett Heap's ruling
+       "O-1: deadline-exceeded", lead rulings R-263 and R-283);
     4. all-safe, an --expect-plan digest that differs (`plan-digest-mismatch`);
     5. all-safe, a complete plan selecting nothing: exit 0, no question;
     6. single, P excluded by a gate (`target-excluded`, target_refusal());
@@ -3873,7 +3903,8 @@ def check_plan(plan, run):
     if single:
         target = plan.target
         if target is None or row_incomplete(target):
-            return refuse(plan, incomplete_refusal(plan, "inspection-incomplete", rows=target_rows), run)
+            code = "deadline-exceeded" if target is not None and deadline_stopped(target) else "inspection-incomplete"
+            return refuse(plan, incomplete_refusal(plan, code), run)
         reason = next((reason for row, reason in plan.excluded if row is target), None)
         if reason is not None:
             return refuse(plan, target_refusal(target, reason), run)
@@ -3916,6 +3947,67 @@ def escaped_not_found(message):
     return None
 
 
+# Row 3b (#19's round (i), design.md D6): run only by main_worktree_redirected(),
+# on a refusal where row 3 failed. Unlike row 3's --show-toplevel it needs no
+# work tree, so it answers under core.bare=true.
+REDIRECT_PROBE = ("rev-parse", "--path-format=absolute", "--git-dir", "--git-common-dir", "--is-bare-repository")
+
+
+def main_worktree_redirected(directory, evidence, run):
+    """Whether a core.worktree or core.bare of the repository's own explains the
+    `target-not-repository-root` refusal of directory, the directory the
+    resolution examined, so that the refusal prints the variant that names the
+    redirect (#19's round (i), design.md D6 and D18; lead ruling R-271).
+    evidence is inspect_repository()'s dict for directory. Called only on that
+    refusal path, after resolve_clean_target() has decided to refuse; a run
+    that resolves never calls it.
+
+    True only where directory holds its own `.git`, a directory (or a link to
+    one) or a gitfile naming a git directory, whose realpath is the
+    repository's common directory, so that directory is where the main
+    worktree would be, and Git run there uses another work tree or none:
+    - row 3 succeeded: no submodule checkout (row 3's third line), the common
+      directory row 3's, and the toplevel not directory's realpath, which only
+      a core.worktree in the repository's config or the main worktree's
+      config.worktree gives; no Git child runs, only filesystem reads;
+    - row 3 failed: REDIRECT_PROBE, one `probe` child in directory through
+      run_bounded(), counted and bounded as row 3 is, prints three lines, the
+      git directory and the common directory, both that `.git`, and `true`,
+      which only a core.bare true in one of those files gives.
+    It runs no child where directory holds no `.git`: a directory outside any
+    repository, and a `git init --bare` repository passed by its own
+    directory, which an unset of core.bare does not make a work tree, keep the
+    plain message. A linked worktree, its git directory not the common one, a
+    subdirectory and a submodule checkout keep it too. A repository made by
+    `git init --bare X/.git` and passed as X has the configuration of a
+    checkout at X whose core.bare is true, and nothing Git reads tells the two
+    apart: it gives True, which the variant's text fits, since with core.bare
+    unset X resolves. A read that fails or is cut, and a REDIRECT_PROBE that
+    fails, is cut or prints anything else, give False: the plain message."""
+    if evidence.get("superproject") is not None:
+        return False
+    dotgit = os.path.join(directory, b".git")
+    try:
+        mode = _fs("lstat", os.lstat, dotgit).st_mode
+        own = _gitfile(directory) if stat.S_ISREG(mode) else _realpath(dotgit)
+        if own is None:
+            return False
+        identity = evidence.get("identity")
+        if identity is not None:
+            return own == identity["common_dir"] and evidence["toplevel"] != _realpath(directory)
+        outcome, error = _git(run, directory, list(REDIRECT_PROBE), "rev-parse")
+        if error is not None:
+            return False
+        lines = outcome.result.split(b"\n")
+        if lines[-1] == b"":
+            lines.pop()
+        if len(lines) != 3 or not lines[0] or not lines[1] or lines[2] != b"true":
+            return False
+        return _realpath(lines[0]) == own and _realpath(lines[1]) == own
+    except EvidenceError:
+        return False
+
+
 def resolve_clean_target(args, run):
     """Resolve the target argument Git-first to exactly one repository and
     its main worktree (T107; D8, FR-016, FR-017; contracts/project-clean.md,
@@ -3951,7 +4043,11 @@ def resolve_clean_target(args, run):
     context, in M6's order: row 3 failed (a directory outside any
     repository, a bare repository's own directory, a timeout); a submodule
     checkout (row 3's third line); a main worktree that main_worktree() gives
-    as (None, cause); then the absolute-path and bare-name rules above. Then
+    as (None, cause); then the absolute-path and bare-name rules above. Where
+    main_worktree_redirected() finds that a core.worktree or core.bare of the
+    repository's own explains that refusal, its message is the variant that
+    names the redirect, and only then may it run row 3b (#19's round (i), D18;
+    lead ruling R-271). Then
     `unsupported-path-bytes`, exit 2, before any plan or digest, for a root or
     common directory that is not valid UTF-8 (json_path()'s flag; FR-041,
     T112): the root, the command directory this returns, is checked first and
@@ -3971,9 +4067,14 @@ def resolve_clean_target(args, run):
     text = os.path.expanduser(target)
     bare, absolute = is_bare_name(target), os.path.isabs(text)
 
-    def refused(path):
-        return Refused(TEXT["target_not_repository_root"].format(PATH=human_path(path)),
-                       code="target-not-repository-root", path=path)
+    def refused(path, examined=None, evidence=None):
+        # With the evidence of the directory examined, the variant that names a
+        # redirect of the main worktree where one explains the refusal (#19's
+        # round (i), D18; R-271); without it, as for a working directory that
+        # is gone, the plain message.
+        redirected = evidence is not None and main_worktree_redirected(examined, evidence, run)
+        key = "target_not_repository_root_redirect" if redirected else "target_not_repository_root"
+        return Refused(TEXT[key].format(PATH=human_path(path)), code="target-not-repository-root", path=path)
 
     if bare:
         try:
@@ -4022,7 +4123,7 @@ def resolve_clean_target(args, run):
     evidence = inspect_repository(directory, run)
     identity = evidence["identity"]
     if identity is None or evidence["superproject"] is not None or evidence["main_cause"] is not None:
-        raise refused(shown)
+        raise refused(shown, directory, evidence)
     # Where row 5 failed the root is not confirmed, but the main worktree is
     # still the one main_worktree() named, never a linked toplevel (plan review F2).
     toplevel, root = evidence["toplevel"], identity["root"] or evidence.get("main_path")
@@ -4032,7 +4133,7 @@ def resolve_clean_target(args, run):
         except EvidenceError:
             exact = False
         if not exact or (absolute and root is not None and toplevel != root):
-            raise refused(shown)
+            raise refused(shown, directory, evidence)
     for raw in (toplevel if root is None else root, identity["common_dir"]):  # FR-041; R-80 P-13
         if not json_path(raw)[1]:
             raise Refused(TEXT["unsupported_path_bytes"].format(PATH=human_path(raw)),
@@ -4127,7 +4228,8 @@ def match_target(plan, run, entries, cap):
 
 def row_incomplete(row):
     """Whether a row's own evidence is incomplete: `inspection-error`, or
-    carrying the unprobed marker (T066's reflog read past its budget)."""
+    carrying the unprobed marker (T066's reflog read not finished, past its
+    filesystem budget or cut by the work deadline)."""
     return bool(row.unprobed) or row["classification"] == "inspection-error"
 
 
@@ -4140,21 +4242,34 @@ def cut_at_deadline(errors):
 
 def deadline_stopped(row):
     """Whether row is incomplete only because the work deadline stopped it
-    (T099; lead rulings R-67 (a), R-69 and R-80, P-1): `inspection-error`,
-    every row error `deadline-exceeded`, and no unprobed marker. Such a row is
-    `deadline-exceeded`'s, never `inspection-incomplete`'s; a row left
-    unprobed by its reflog read, which only a cut at the filesystem budget
-    leaves, stays `inspection-incomplete`'s, while one whose reflog read the
-    deadline cut is inspection-error and so this function's (reflog_gate();
-    Brett Heap's ruling "O-1: deadline-exceeded", lead ruling R-263)."""
-    return (not row.unprobed and row["classification"] == "inspection-error"
+    (T099; lead rulings R-67 (a), R-69 and R-80, P-1): `inspection-error` or
+    carrying the unprobed marker, and every row error `deadline-exceeded`.
+    Such a row is `deadline-exceeded`'s, never `inspection-incomplete`'s, and
+    incomplete_refusal() does not count it, among a batch's rows or among P's
+    in mode single (lead ruling R-287 (a)). check_plan()'s step 3 reads the
+    same rule for P's own row in mode single (lead ruling R-283).
+
+    The unprobed arm is gate 7's alone (#19's round (h) at b3228bb, pcl:713-718
+    and design D10; Brett Heap's ruling "O-1: deadline-exceeded", lead rulings
+    R-263 and R-278): reflog_gate() is the marker's only setter, and a row
+    reaches gate 7 `merged-removable` (gate 5), so with no row error
+    (classify()), and leaves it unprobed with its one read's error. Such a row
+    is this function's when the work deadline cut that read, its
+    `deadline-exceeded`, and stays `inspection-incomplete`'s when the
+    filesystem budget did, its `probe-timeout`. Every other row is decided as
+    before: an inspection-error row by its errors, whatever gate or probe
+    left them (the status probe, gates 9 to 12, the work-tree probe), and a
+    row past the row cap is no row here."""
+    return ((row["classification"] == "inspection-error" or bool(row.unprobed))
             and cut_at_deadline(row.get("errors")))
 
 
 def counted_rows(plan, exclude=()):
     """The rows of plan.rows that plan_completeness() counts, in their order:
     those not in exclude, and in mode single for --action remove only P's
-    own (plan.target_rows). incomplete_refusal() counts the same rows."""
+    own (plan.target_rows). incomplete_refusal() counts the same rows, P's
+    among them for check_plan()'s step 3, which passes no exclude (lead
+    ruling R-287 (a))."""
     skip = {id(row) for row in exclude}
     named = plan.mode == "single" and plan.action == "remove"
     own = {id(row) for row in getattr(plan, "target_rows", [])}
@@ -4170,8 +4285,9 @@ def plan_completeness(plan, exclude=()):
     (plan.target None while plan.target_rows holds rows); `inspect-cap` when
     rows were left past the row cap (plan.omitted's count); and
     `deadline-exceeded` when the work deadline stopped planning: a counted
-    row deadline_stopped() names, or a repository-wide probe whose every
-    error is `deadline-exceeded`, counts toward it and not toward
+    row deadline_stopped() names (an unprobed row among them where the
+    deadline cut its gate-7 reflog read), or a repository-wide probe whose
+    every error is `deadline-exceeded`, counts toward it and not toward
     `inspection-incomplete`, so that no row counts twice (lead ruling R-80,
     P-1). In mode single for --action remove only P's own rows count and the
     cap is no code: another row's state and the rows past the cap are
@@ -4198,7 +4314,7 @@ def plan_completeness(plan, exclude=()):
     return codes
 
 
-def incomplete_refusal(plan, code, exclude=(), rows=None):
+def incomplete_refusal(plan, code, exclude=()):
     """The refusal of a plan incomplete with code (FR-024, FR-031; design D18):
     `The plan is incomplete (CODE): REMEDY.`, REMEDY D18's for the code. The
     inspect-cap remedy's N counts the registry entries that become rows, as
@@ -4210,11 +4326,14 @@ def incomplete_refusal(plan, code, exclude=(), rows=None):
     core.worktree and core.bare, where any row the refusal counts is excluded
     as `registration-mismatch` (plan.excluded), as a linked worktree that
     core.worktree or core.bare redirects is, its own row inspection-error
-    (#19's round (h) at b3228bb, design.md D18): rows, when given, are those
-    rows (check_plan()'s step 3 gives P's rows); otherwise the rows
+    (#19's round (h) at b3228bb, design.md D18). The rows it counts are those
     plan_completeness(plan, exclude) counts toward inspection-incomplete,
     counted_rows()'s that are inspection-error or unprobed and not
-    deadline_stopped(). Otherwise the base remedy."""
+    deadline_stopped(): in mode single for --action remove, P's own rows
+    when check_plan()'s step 3 passes no exclude, so that a row of P's the
+    work deadline stopped is not counted there either, as no such row of a
+    batch is (lead ruling R-287 (a); lane 3's W73 L-2). Otherwise the base
+    remedy."""
     if code == "inspect-cap":
         evidence = plan.evidence or {}
         registry = evidence.get("records") or ()
@@ -4224,8 +4343,7 @@ def incomplete_refusal(plan, code, exclude=(), rows=None):
     elif code == "deadline-exceeded":
         remedy = TEXT["remedy_deadline_exceeded"]
     else:
-        if rows is None:
-            rows = [row for row in counted_rows(plan, exclude) if row_incomplete(row) and not deadline_stopped(row)]
+        rows = [row for row in counted_rows(plan, exclude) if row_incomplete(row) and not deadline_stopped(row)]
         mismatched = {id(row) for row, reason in getattr(plan, "excluded", None) or ()
                       if reason == "registration-mismatch"}
         redirect = any(id(row) in mismatched for row in rows)
@@ -4422,7 +4540,8 @@ def build_plan(repo, run):
     work deadline reached among the other rows leaves P's row decided and
     the plan complete beside the note `deadline-exceeded`, while one that
     cuts P's own read leaves P's row incomplete, which check_plan() refuses
-    as inspection-incomplete. Another row's
+    as deadline-exceeded where the row is deadline_stopped(), as a one-item
+    batch's plan is, and as inspection-incomplete otherwise. Another row's
     inspection-error or unprobed marker, the rows past the cap, and the rows
     the work deadline stopped are its non-blocking notes
     `inspection-incomplete`, `inspect-cap` and `deadline-exceeded`, a row
@@ -4438,9 +4557,12 @@ def build_plan(repo, run):
     (child_budget(), region runner), and once none is left none is started,
     so each row the deadline stops is `inspection-error` with a
     `deadline-exceeded` row error, excluded as `inspection-error`, never
-    unprobed (lead rulings R-67 (a) and R-69), and the plan is incomplete
-    with `deadline-exceeded` (plan_completeness()). Then `selected` and
-    `excluded` from gate_rows(), P's rows' and the other rows' together, both
+    unprobed (lead rulings R-67 (a) and R-69), but for a row whose gate-7
+    reflog read the deadline cuts, which reflog_gate() leaves unprobed with
+    that `deadline-exceeded` and excluded as `reflog-unavailable` (#19's
+    round (h); lead ruling R-278); either way the plan is incomplete with
+    `deadline-exceeded` (plan_completeness(), deadline_stopped()). Then
+    `selected` and `excluded` from gate_rows(), P's rows' and the other rows' together, both
     by raw path bytes, each selected row given `removal_args`, ["-C",
     ROOT, "worktree", "remove", PATH] with ROOT the command directory and PATH
     the registry's raw bytes (design D9); `completeness` and `apply_allowed`
@@ -4864,14 +4986,13 @@ def read_reflog(common_dir, branch, head, run, named=None):
     needs no fstat (R-33); it is never a Git child. ENOENT or ENOTDIR is
     (`reflog-unavailable`, None); any other OSError (`inspection-error`, its
     `os-error` for OPERATION read); a call cut at its budget or the deadline
-    (`reflog-unavailable`, its `probe-timeout` or `deadline-exceeded`), which
-    reflog_gate() leaves unprobed, or for the deadline makes
-    inspection-error; and bytes read, (reflog_outcome(data, head),
-    None). run is the invocation in force, whose per-child budget fs_call()
-    gives the read and the timeout message names, as _fs() does; Interrupted
-    passes up. named, when given, is a list that receives the non-zero
-    objects the bytes read name (reflog_objects()), the negatives of gate 12
-    (D21, LQ-13)."""
+    (`reflog-unavailable`, its `probe-timeout` or `deadline-exceeded`), the
+    row to be left unprobed either way (reflog_gate()); and bytes read,
+    (reflog_outcome(data, head), None). run is the invocation in force, whose
+    per-child budget fs_call() gives the read and the timeout message names,
+    as _fs() does; Interrupted passes up. named, when given, is a list that
+    receives the non-zero objects the bytes read name (reflog_objects()), the
+    negatives of gate 12 (D21, LQ-13)."""
     path = reflog_path(common_dir, branch)
     budget, _ = current_invocation().child_budget("probe")
     try:
@@ -4903,32 +5024,33 @@ def reflog_gate(row, plan, run):
     that cannot decide, or a last entry whose new object is not the head);
     `inspection-error`, after putting an `os-error` in row["errors"] and
     setting row["classification"] to inspection-error, for any other read
-    error; and None when a movement survives. A read not finished within the
-    filesystem budget, the work deadline not being the limit, returns
-    `reflog-unavailable` AND sets row.unprobed, the marker's only setter,
-    which plan_completeness() reads as inspection-incomplete; its
-    `probe-timeout` goes in row["errors"], as the delta records for every
-    filesystem call cut at its budget. A read the work deadline cuts
-    (read_cut()) is gate 11's: its `deadline-exceeded` goes in row["errors"]
-    and the row is `inspection-error`, never unprobed (_index_undecided()),
-    so that deadline_stopped() names it and the plan is incomplete with
-    `deadline-exceeded`, whose refusal prints no repair remedy, as for every
-    other read (Brett Heap's ruling "O-1: deadline-exceeded", lead ruling
-    R-263, amending ratified 0050f3e pcl:606-608; writer E's O-1). The
-    inspection-error row also takes that class's recommendation, as
-    classify() pairs them. It sets row.reflog_objects, the non-zero objects
-    the reflog names, which gate 12 and the revalidation take as negatives,
-    as they were (D21, LQ-13); no document writes it."""
+    error; and None when a movement survives. A read not finished, whether
+    the filesystem budget or the work deadline cut it, returns
+    `reflog-unavailable` AND sets row.unprobed, the marker's only setter, the
+    row keeping its class and recommendation; the read's row error goes in
+    row["errors"], as the delta records for every filesystem call cut at its
+    budget. plan_completeness() reads the two cuts apart by that error
+    (deadline_stopped()): a `probe-timeout`, the deadline not being the
+    limit, makes the plan incomplete with `inspection-incomplete`; a
+    `deadline-exceeded` makes it incomplete with `deadline-exceeded`, not
+    `inspection-incomplete`, whose refusal prints no repair remedy (#19's
+    round (h) at b3228bb, pcl:713-718 and design D10; Brett Heap's ruling
+    "O-1: deadline-exceeded", lead rulings R-263 and R-278, amending ratified
+    0050f3e pcl:606-608). The inspection-error row also takes that class's
+    recommendation, as classify() pairs them. It sets row.reflog_objects, the
+    non-zero objects the reflog names, which gate 12 and the revalidation take
+    as negatives, as they were (D21, LQ-13); no document writes it."""
     common_dir = plan.evidence["identity"]["common_dir"]
     named = []
     reason, error = read_reflog(common_dir, row["branch"], row["head"], run, named)
     row.reflog_objects = tuple(named)
-    if error is None:
-        return reason
-    if reason == "inspection-error" or read_cut(error):
-        return _index_undecided(row, error)
-    row["errors"].append(error)
-    row.unprobed = True
+    if error is not None:
+        row["errors"].append(error)
+        if reason == "inspection-error":
+            row["classification"] = "inspection-error"
+            row["recommendation"] = RECOMMENDATIONS["inspection-error"]
+        else:
+            row.unprobed = True
     return reason
 
 
@@ -5358,10 +5480,12 @@ class Target(dict):
     {root, common_dir, dev, ino}, which the rescan re-establishes first; and
     `git_file_present`, whether the rescan found the target's `.git` present
     (git_file_presence()), None where it did not read it or the read gave no
-    value, which only the human partial-removal note reads
-    (partial_removal_text(); lane 3's W52 F-1, lead ruling R-263)."""
+    value, and `git_file_read`, whether the rescan made that read, which
+    only the human partial-removal note reads (partial_removal_text(); lane
+    3's W52 F-1, lead ruling R-263; W73 M-1, R-284)."""
 
     row = removal_args = root = identity = git_file_present = None
+    git_file_read = False
 
 
 def make_target(plan, row):
@@ -6125,7 +6249,9 @@ def rescan(target, run):
     are present (partial_removal_text(); lane 3's W52 F-1, Brett Heap's
     ruling "F-1: prune-then-delete", lead ruling R-263). Its failure, its
     cut or a second SIGINT during it leaves `git_file_present` None and the
-    record as the other reads made it.
+    record as the other reads made it; `git_file_read` says the read was
+    made, so that the note then advises no prune (#19's round (i) at
+    1a4785e; lane 3's W73 M-1, lead ruling R-284).
 
     These three repository children, with the manifest value, are left on
     run as `rescan_part`, for the next selected target's revalidation to
@@ -6143,6 +6269,7 @@ def rescan(target, run):
     next target. Interrupted never leaves the rescan."""
     before = run.probes
     run.rescan_part = target.git_file_present = None
+    target.git_file_read = False
     root = os.fsencode(target.root)
     planned = target.identity
     records = refs = path_present = None
@@ -6166,6 +6293,7 @@ def rescan(target, run):
     registry_entry_present = None if records is None else any(
         record["path"] == target["path"] for record in records)
     if not abandoned and registry_entry_present is True and path_present is True:
+        target.git_file_read = True  # W73 M-1: a read made that gives None advises no prune
         target.git_file_present = git_file_presence(target["path"])  # W52 F-1
     branch_present, branch_sha = _branch_evidence(target, refs)
     reconciliation = reconciliation_record(registry_entry_present, path_present, branch_present, branch_sha)
@@ -6500,17 +6628,29 @@ def partial_removal_text(target):
     """The TEXT key of the partial-removal note of a target noted
     `partially-removed` at its removal ceiling (lane 3's W52 F-1; Brett
     Heap's ruling "F-1: prune-then-delete", lead ruling R-263), a pure
-    function: `partial_removal_note`, whose `git worktree remove --force`
-    Git accepts, only where the rescan showed both the registry entry
+    function. First, `partial_removal_note_unread`, which advises no prune,
+    wherever the rescan made its `.git` lstat (`git_file_read` true) and it
+    gave no value (`git_file_present` None: it failed other than for the
+    file's absence, was cut at its budget, or met a second SIGINT), whatever
+    the rescan found of the registry entry, since `git worktree prune`
+    deletes the admin directory of a live worktree whose `.git` Git cannot
+    stat (#19's round (i) at 1a4785e; lane 3's W73 M-1, lead ruling R-284).
+    Otherwise `partial_removal_note`, whose `git worktree remove --force` Git
+    accepts, only where the rescan showed both the registry entry
     (`registry_entry_present` true) and the target's `.git`
-    (`git_file_present` true) present; otherwise `partial_removal_note_prune`,
-    since Git refuses that command once the `.git` file is gone ("validation
-    failed") or the entry is gone ("is not a working tree"), and a value not
-    established never shows both present. A target that is a plain dict
-    carries no `.git` read. print_result()'s alone; a report row's note is
-    partial_removal_note()'s and keeps its own text."""
+    (`git_file_present` true) present, and `partial_removal_note_prune`
+    otherwise: the `.git` shown absent, or the entry gone with the `.git` shown
+    absent or not reached, since Git refuses that command once the `.git`
+    file is gone ("validation failed") or the entry is gone ("is not a
+    working tree"), and a value not established never shows both present.
+    A target that is a plain dict carries no `.git` read. print_result()'s
+    alone; a report row's note is partial_removal_note()'s and keeps its own
+    text."""
+    git_file = getattr(target, "git_file_present", None)
+    if getattr(target, "git_file_read", False) and git_file is None:
+        return "partial_removal_note_unread"
     entry = (target["reconciliation"] or {}).get("registry_entry_present")
-    if entry is True and getattr(target, "git_file_present", None) is True:
+    if entry is True and git_file is True:
         return "partial_removal_note"
     return "partial_removal_note_prune"
 

@@ -663,8 +663,11 @@ class ApplyTests(clean_support.CleanCase):
         # (a kill part way through `git worktree remove` leaves it gone), the
         # lstat cut at its budget or interrupted by a second SIGINT (None, the
         # record as the other reads made it), and the entry or the path gone
-        # (no read, None). No recursive delete: the `.git` file and the admin
-        # directory are renamed aside and back.
+        # (no read, None). git_file_read says whether the read was made, so
+        # that a read that failed or was cut is told from one not reached
+        # (#19's round (i) at 1a4785e; W73 M-1, lead ruling R-284). No
+        # recursive delete: the `.git` file and the admin directory are
+        # renamed aside and back.
         root, trees = self.merged_repository("001-a")
         tree = trees["001-a"]
         planned = self.head(tree)
@@ -697,7 +700,7 @@ class ApplyTests(clean_support.CleanCase):
         with self.in_process() as run:
             plan = self.plan_of(root, run, [tree])
             entry = project.make_target(plan, plan.selected[0])
-        self.assertIsNone(entry.git_file_present)
+        self.assertEqual((entry.git_file_present, entry.git_file_read), (None, False))
         kept = record(True, True, True, planned)
         for label, answer, expected in [
                 ("present", None, True),
@@ -707,6 +710,7 @@ class ApplyTests(clean_support.CleanCase):
                 found, lstats, children = rescan(answer)
                 self.assertEqual((found, type(found)), (kept, dict))
                 self.assertIs(entry.git_file_present, expected)
+                self.assertIs(entry.git_file_read, True, "the read was made (W73 M-1, R-284)")
                 self.assertEqual(lstats[-1], dotgit, "the .git lstat comes last")
                 self.assertEqual(children, 3, "rows 3, 4 and 6 only: no Git child reads the .git file")
         aside = self.base / "dotgit-aside"
@@ -716,7 +720,8 @@ class ApplyTests(clean_support.CleanCase):
                 found, lstats, children = rescan()
             finally:
                 os.rename(aside, tree / ".git")
-            self.assertEqual((found, entry.git_file_present, lstats[-1], children), (kept, False, dotgit, 3))
+            self.assertEqual((found, entry.git_file_present, entry.git_file_read, lstats[-1], children),
+                             (kept, False, True, dotgit, 3))
         with self.subTest("the registry entry gone, the path kept"):
             moved = admin.parent.parent / "admin-aside"
             os.rename(admin, moved)
@@ -724,7 +729,8 @@ class ApplyTests(clean_support.CleanCase):
                 found, lstats, children = rescan()
             finally:
                 os.rename(moved, admin)
-            self.assertEqual((found, entry.git_file_present), (record(False, True, True, planned), None))
+            self.assertEqual((found, entry.git_file_present, entry.git_file_read),
+                             (record(False, True, True, planned), None, False))
             self.assertNotIn(dotgit, lstats, "no .git read without the entry")
         with self.subTest("the path gone, the entry kept"):
             moved = self.base / "tree-aside"
@@ -733,7 +739,8 @@ class ApplyTests(clean_support.CleanCase):
                 found, lstats, children = rescan()
             finally:
                 os.rename(moved, tree)
-            self.assertEqual((found, entry.git_file_present), (record(True, False, True, planned), None))
+            self.assertEqual((found, entry.git_file_present, entry.git_file_read),
+                             (record(True, False, True, planned), None, False))
             self.assertNotIn(dotgit, lstats, "no .git read without the path")
         found, _, _ = rescan()
         self.assertEqual((found, entry.git_file_present), (kept, True), "the fixture is restored")
