@@ -995,7 +995,9 @@ class BoundsTests(clean_support.CleanCase):
         # admin id cannot be read. A value that cannot be re-read is a
         # difference (the project-clean-review-safety delta, rs:92-93), as
         # planning fails closed on an unread realpath (R-78 (b)): the target is
-        # refused with identity-changed, exit 2, and nothing is removed. Under
+        # refused with state-changed, since a read that decided nothing is
+        # state-changed whatever its step (the lead's R-208, #19 at 9267303),
+        # exit 2, and nothing is removed. Under
         # --all-safe the first target's preflight reads the fresh registry
         # listing (R-41), so the first target is the one refused and the
         # second is not attempted; with --worktree naming the second target,
@@ -1025,7 +1027,7 @@ class BoundsTests(clean_support.CleanCase):
                 self.assertIn(f"worktree {spelled}", registry)
                 document = json.loads(out)
                 refused_tree = trees[0] if mode == "all-safe" else trees[1]
-                expected = [(str(refused_tree), "refused", "identity-changed")]
+                expected = [(str(refused_tree), "refused", "state-changed")]
                 if mode == "all-safe":
                     expected.append((str(trees[1]), "not-attempted", "batch-stopped"))
                 self.assertEqual(stages(document), expected, err)
@@ -1074,7 +1076,7 @@ class BoundsTests(clean_support.CleanCase):
                     self.assertEqual(stages(document), [(str(tree), "removed", None) for tree in trees], err)
                     self.assertEqual((status, document["exit_code"]), (0, 0))
                     continue
-                self.assertEqual(stages(document), [(str(trees[0]), "refused", "identity-changed"),
+                self.assertEqual(stages(document), [(str(trees[0]), "refused", "state-changed"),
                                                     (str(trees[1]), "not-attempted", "batch-stopped")], err)
                 self.assertEqual((status, document["exit_code"]), (2, 2))
                 self.assertTrue(all(tree.is_dir() for tree in trees), "nothing removed")
@@ -1084,7 +1086,7 @@ class BoundsTests(clean_support.CleanCase):
         # plan and null again (rs:89-92), the plan's non-blocking
         # inspection-error that does not refuse P (pcl:258-262), so P is
         # removed; the same worktree made unsearchable at the question can no
-        # longer be re-read, so P is refused with identity-changed.
+        # longer be re-read, so P is refused with state-changed (R-208).
         for when in ("before-planning", "at-the-question"):
             with self.subTest(another_worktree_unsearchable=when):
                 root, trees = self.batch(f"other-unsearchable-{when}", ["001-p", "002-q"])
@@ -1107,7 +1109,7 @@ class BoundsTests(clean_support.CleanCase):
                     self.assertEqual((status, document["exit_code"]), (0, 0))
                     self.assertFalse(trees[0].exists())
                     continue
-                self.assertEqual(stages(document), [(str(trees[0]), "refused", "identity-changed")], err)
+                self.assertEqual(stages(document), [(str(trees[0]), "refused", "state-changed")], err)
                 self.assertEqual((status, document["exit_code"]), (2, 2))
                 self.assertTrue(all(tree.is_dir() for tree in trees), "nothing removed")
 
