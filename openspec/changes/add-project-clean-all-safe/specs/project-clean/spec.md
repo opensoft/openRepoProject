@@ -97,7 +97,15 @@ resolved repository.
   core.bare in the repository's config or in a worktree's config.worktree, or
   remove the row by hand after review; a row's path could not be read, so do not
   run git worktree prune until it can", since `git worktree prune` would delete
-  that live worktree's administrative directory and so does not fit this cause
+  that live worktree's administrative directory and so does not fit this cause;
+  and while that row exists, the preview's next step for any other
+  `inspection-error` row, whose path was read, is "review, then git worktree
+  repair, or remove the row by hand; a row's path could not be read, so do not
+  run git worktree prune until it can", and for a `registration-mismatch` row
+  "review, then git worktree repair, unset core.worktree and core.bare in the
+  repository's config, or in that worktree's config.worktree, or remove the row
+  by hand; a row's path could not be read, so do not run git worktree prune
+  until it can", since `git worktree prune` acts on the whole repository
 
 #### Scenario: A failed status probe on the merge-target checkout
 
