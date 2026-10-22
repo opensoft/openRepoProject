@@ -326,7 +326,7 @@ The nine tasks T004 to T012 edit `tests/test_project.py`: one writer at a
 time, in order. T013, the red-first checkpoint, edits nothing and closes the
 phase.
 
-- [ ] T004 [S] [Q4] Add the fixture block of D3 item 1 (plan slice T1) to `tests/test_project.py`,
+- [X] T004 [S] [Q4] Add the fixture block of D3 item 1 (plan slice T1) to `tests/test_project.py`,
   inserted after `:62` (`OBSTACLE_PARENT_NOT_A_DIRECTORY`) and before the
   blank lines `:63-64` and `obstacles_refusal()` (`:65`), under a comment
   header naming `openspec/changes/refuse-non-directory-parent-early/design.md`,
@@ -348,7 +348,7 @@ phase.
   that check reads only the D2 texts.
   -- files: `tests/test_project.py`
   -- verify: `bash specs/006-refuse-non-directory-parent-early/qs.sh fixed-text PARTS=fixtures && python3 -I -c "import sys;sys.path.insert(0,'tests');import test_project as t;assert (t.SHAPE_NEEDS_EXISTING_PARENT,t.GENERATOR_LIST_FIRST,t.FAMILY_NOT_A_FOLDER_NAME)==('Shape creation requires an existing --into parent directory.','1. testBench:test','Family must be a single folder name.');print('OK: kept texts')" && bash specs/006-refuse-non-directory-parent-early/qs.sh suite ADDED=0`
-- [ ] T005 [US3] [S] [Q2] Add the case (b) rows (plan slice T2; research R5 R-5.1 to R-5.5) to
+- [X] T005 [US3] [S] [Q2] Add the case (b) rows (plan slice T2; research R5 R-5.1 to R-5.5) to
   `tests/test_project.py`: in `known_obstacle_cases()` insert after `:405` the
   local `below_line = OBSTACLE_PARENT_BELOW_A_NON_DIRECTORY.format(PARENT=parent_file / "sub", ANCESTOR=parent_file)`,
   and after `:413`, before the last row `:414`, the rows
@@ -365,7 +365,7 @@ phase.
   `red-first` reads the reason from each failure itself.
   -- files: `tests/test_project.py`
   -- verify: `bash specs/006-refuse-non-directory-parent-early/qs.sh red-first "TESTS=test_pty_triad_answer_with_an_obstacle_refuses test_inproc_triad_obstacle_runs_nothing test_pty_dry_run_with_an_obstacle_refuses"`
-- [ ] T006 [US1] [S] [Q1] [Q3] Add to `tests/test_project.py` (plan slice T3) the builder
+- [X] T006 [US1] [S] [Q1] [Q3] Add to `tests/test_project.py` (plan slice T3) the builder
   `blocked_parents()`, a `ProjectTests` method after
   `assert_parent_file_unchanged()` (`:439-444`) and before `run_cli_streams()`
   (`:446`), and the first two new methods, N1 and N2. The builder makes FILE
@@ -396,7 +396,7 @@ phase.
   SC-002; EC-001, EC-002).
   -- files: `tests/test_project.py`
   -- verify: `B=$(git merge-base origin/main HEAD) && bash specs/006-refuse-non-directory-parent-early/qs.sh red-first "TESTS=test_blocked_parent_by_flag_is_refused_before_the_plan test_blocked_parent_is_refused_without_a_terminal" && test "$(grep -c '^    def test_' tests/test_project.py)" -eq "$(( $(git show "${B}:tests/test_project.py" | grep -c '^    def test_') + 2 ))"`
-- [ ] T007 [US1] [S] [Q1] [Q3] Add N3, N4 and N5 (plan slice T4) to `tests/test_project.py`,
+- [X] T007 [US1] [S] [Q1] [Q3] Add N3, N4 and N5 (plan slice T4) to `tests/test_project.py`,
   each a pty method over every given of `blocked_parents()`, `run_pty` with no
   steps: N3 `test_pty_blocked_parent_by_type_without_yes_is_refused`, form F3
   (`--type test`, no `--yes`, `env` = `question_env(None)` plus the change);
@@ -413,7 +413,7 @@ phase.
   SC-002).
   -- files: `tests/test_project.py`
   -- verify: `B=$(git merge-base origin/main HEAD) && bash specs/006-refuse-non-directory-parent-early/qs.sh red-first "TESTS=test_pty_blocked_parent_by_type_without_yes_is_refused test_pty_blocked_parent_is_refused_where_ci_is_true test_pty_blocked_parent_is_refused_for_a_workspace_name" && test "$(grep -c '^    def test_' tests/test_project.py)" -eq "$(( $(git show "${B}:tests/test_project.py" | grep -c '^    def test_') + 5 ))"`
-- [ ] T008 [US3] [S] [Q2] Add N7 `test_pty_triad_answer_below_a_file_leaves_the_file_intact`
+- [X] T008 [US3] [S] [Q2] Add N7 `test_pty_triad_answer_below_a_file_leaves_the_file_intact`
   and N8 `test_inproc_triad_answer_below_a_file_leaves_the_file_intact` to
   `tests/test_project.py`, after N5 (plan slice T5; research R5 R-5.6 to R-5.9; report A1):
   each takes the two case (b) rows of `known_obstacle_cases()` by label
@@ -429,7 +429,7 @@ phase.
   itself ("red for the wrong reason" fails it), so no second command is needed.
   -- files: `tests/test_project.py`
   -- verify: `B=$(git merge-base origin/main HEAD) && bash specs/006-refuse-non-directory-parent-early/qs.sh red-first "TESTS=test_pty_triad_answer_below_a_file_leaves_the_file_intact test_inproc_triad_answer_below_a_file_leaves_the_file_intact" && test "$(grep -c '^    def test_' tests/test_project.py)" -eq "$(( $(git show "${B}:tests/test_project.py" | grep -c '^    def test_') + 7 ))"`
-- [ ] T009 [US2] [S] [Q2] Rewrite `test_pty_single_answer_with_a_file_parent_ends_as_the_flag_chosen_path`
+- [X] T009 [US2] [S] [Q2] Rewrite `test_pty_single_answer_with_a_file_parent_ends_as_the_flag_chosen_path`
   (`:1526-1553`) in `tests/test_project.py`, the one existing test that
   changes (plan slice T6; D3 item 6; N3, AC5; research R5 R-6.1, R-6.2): its name and its
   comparison form stay; its comment names this design. The asked run answers
@@ -444,7 +444,7 @@ phase.
   stay.
   -- files: `tests/test_project.py`
   -- verify: `B=$(git merge-base origin/main HEAD) && bash specs/006-refuse-non-directory-parent-early/qs.sh red-first "TESTS=test_pty_single_answer_with_a_file_parent_ends_as_the_flag_chosen_path" && test "$(grep -c '^    def test_' tests/test_project.py)" -eq "$(( $(git show "${B}:tests/test_project.py" | grep -c '^    def test_') + 7 ))"`
-- [ ] T010 [US2] [S] [Q2] Add N6 `test_pty_single_answer_with_a_blocked_parent_is_refused_at_once`
+- [X] T010 [US2] [S] [Q2] Add N6 `test_pty_single_answer_with_a_blocked_parent_is_refused_at_once`
   to `tests/test_project.py`, immediately after N5 and before N7 and N8 (the
   Rules' order N1 to N15 holds in the file, though T008 wrote N7 and N8
   first; plan slice T7; research R5 R-4.1 to R-4.4): first a second
@@ -465,7 +465,7 @@ phase.
   as mutant M2 needs): check `red-first` reads that reason itself.
   -- files: `tests/test_project.py`
   -- verify: `B=$(git merge-base origin/main HEAD) && bash specs/006-refuse-non-directory-parent-early/qs.sh red-first "TESTS=test_pty_single_answer_with_a_blocked_parent_is_refused_at_once" && test "$(grep -c '^    def test_' tests/test_project.py)" -eq "$(( $(git show "${B}:tests/test_project.py" | grep -c '^    def test_') + 8 ))"`
-- [ ] T011 [US4] [S] [Q2] Add the in-process helper `run_inproc_acting(*args, ci, answers)`
+- [X] T011 [US4] [S] [Q2] Add the in-process helper `run_inproc_acting(*args, ci, answers)`
   (plan slice T8) to `tests/test_project.py`, after `blocked_parents()`: it behaves as
   `run_inproc()` (`:324-346`: the `inproc_terminal()` streams, the prompts
   list, the "Scripted answers left unused" check) except that an answer may
@@ -480,7 +480,7 @@ phase.
   reason itself.
   -- files: `tests/test_project.py`
   -- verify: `B=$(git merge-base origin/main HEAD) && bash specs/006-refuse-non-directory-parent-early/qs.sh red-first "TESTS=test_inproc_parent_repaired_while_the_question_waits_is_created test_inproc_parent_broken_while_the_question_waits_is_refused" && test "$(grep -c '^    def test_' tests/test_project.py)" -eq "$(( $(git show "${B}:tests/test_project.py" | grep -c '^    def test_') + 10 ))"`
-- [ ] T012 [S] [Q2] [Q4] Add N11 to N15 (plan slice T9) to `tests/test_project.py`, as research
+- [X] T012 [S] [Q2] [Q4] Add N11 to N15 (plan slice T9) to `tests/test_project.py`, as research
   R5 gives their runs (US1 scenario 6 for N12; US5 for N11, N13, N14, N15),
   each run of N12 to N15 in `self.subTest(run=ID)` with its R5 id: N11
   `test_dangling_link_parent_is_created_as_before` (R-8.1, one run); N12
@@ -499,7 +499,7 @@ phase.
   (FR-003, FR-008, FR-009, FR-010; SC-004, SC-005, SC-008).
   -- files: `tests/test_project.py`
   -- verify: `B=$(git merge-base origin/main HEAD) && bash specs/006-refuse-non-directory-parent-early/qs.sh red-first "TESTS=test_dangling_link_parent_is_created_as_before test_blocked_parent_is_refused_before_later_faults test_earlier_refusals_keep_their_text_with_a_blocked_parent test_shape_by_flag_keeps_its_parent_refusal_with_a_blocked_parent test_unwritable_directory_child_passes_dry_run_and_fails_at_creation" && test "$(grep -c '^    def test_' tests/test_project.py)" -eq "$(( $(git show "${B}:tests/test_project.py" | grep -c '^    def test_') + 15 ))"`
-- [ ] T013 [S] [Q1] [Q2] [Q3] [Q4] The red-first checkpoint (plan.md "Phase 2
+- [X] T013 [S] [Q1] [Q2] [Q3] [Q4] The red-first checkpoint (plan.md "Phase 2
   checkpoint"), with `project` unchanged: run check `red-first` over its whole
   list and report its output. Owner: one `[S]` writer with no file set; it edits
   no file and makes no commit, and a failure is filed as a defect against the
@@ -554,7 +554,7 @@ phase.
   committed.
   -- files: `project`
   -- verify: `bash specs/006-refuse-non-directory-parent-early/qs.sh suite ADDED=15 && bash specs/006-refuse-non-directory-parent-early/qs.sh ast-project`
-- [ ] T015 [P] [US6] [S] After T002, make the four README edits of plan.md D2
+- [X] T015 [P] [US6] [S] After T002, make the four README edits of plan.md D2
   (plan slice I2) in `README.md` (FR-012; SC-009), each fixed text copied from
   `design.md` character for character: edit 1, `design.md:169`, from "or a parent that is missing or is
   not a directory." (`:60`) to the end of the paragraph `:57-64`; edit 2,
