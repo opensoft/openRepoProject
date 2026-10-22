@@ -1066,6 +1066,24 @@ class RevalidationTests(clean_support.CleanCase):
 
         self.refused_by_a_read("listing-gone", admin, os.listdir, self.missing(b"x"), ("refused", "identity-changed"))
 
+    def test_clean_a_dot_git_file_gone_between_its_lstat_and_its_read(self):
+        # Step 5's registration reads (verify_registration()): _gitfile()
+        # decides ENOENT and ENOTDIR at its lstat of P's `.git`, but not at its
+        # read of that file, made once the lstat found a regular file. A `.git`
+        # removed between the two, or P replaced by a file, raises them there,
+        # and revalidation_difference() decides them as absence (project:5763):
+        # identity-changed, as an absent `.git` is (the lead's R-208). The race
+        # is made in process: that read raises the error. Lane 3's W41 L-4 took
+        # the clause for dead; this pins it.
+        def dotgit(root, trees):
+            return os.path.join(bytes(trees[0]), b".git")
+
+        not_a_directory = NotADirectoryError(errno.ENOTDIR, os.strerror(errno.ENOTDIR), "x")
+        for label, answer in (("ENOENT", self.missing(b"x")), ("ENOTDIR", not_a_directory)):
+            with self.subTest(label):
+                self.refused_by_a_read("dotgit-read-" + label, dotgit, project._read_head, answer,
+                                       ("refused", "identity-changed"))
+
     # The lead's R-195 (#19 at 4485678, "Cleanup revalidates destructive
     # actions"): every Git child of the revalidation that fails, or runs past
     # its own budget while the deadline is not the limit, is state-changed,
