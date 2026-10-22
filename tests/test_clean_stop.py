@@ -321,6 +321,55 @@ class StopTests(clean_support.CleanCase):
             TEXT["empty_line"]], "\n" + clean_support.transcript(preview))
 
 
+    def test_clean_a_locked_worktree_s_partial_removal_note_unlocks_it_first(self):
+        # Lane 3's W52 F-2 (#19 at 4f1c0e0, R-248): `git worktree remove
+        # --force` refuses a locked worktree, exit 128, so a locked row's
+        # partial-removal note, in the report and in the preview, says to
+        # unlock it first, while an unlocked row keeps D18's note. Git then
+        # accepts the locked note's steps: unlock, then remove --force.
+        root = self.repo()
+        self.bare_remote()
+        locked = self.merged_worktree("001-locked", path=self.base / "locked tree")
+        plain = self.merged_worktree("002-plain", path=self.base / "plain-tree")
+        self.git(root, "worktree", "lock", "--reason", "fixture", locked)
+        for tree in (locked, plain):  # every tracked file deleted by hand, the `.git` file kept
+            for path in tree.iterdir():
+                if path.name != ".git":
+                    path.unlink()
+            self.assertEqual([path.name for path in tree.iterdir()], [".git"])
+        locked_note = TEXT["partial_removal_note_locked"].format(PATH=shlex.quote(os.fsdecode(locked)))
+        self.assertEqual(locked_note, "Probable partial removal: inspect, unlock it, then git worktree remove --force "
+                                      f"'{locked}' by hand.")
+
+        report = self.run_cli("clean", root)
+        self.assert_status(report, 0)
+        lines = report.stdout.splitlines()
+        transcript = "\n" + clean_support.transcript(report)
+        [at] = [index for index, line in enumerate(lines) if line.startswith(f"DIRTY: {locked} [001-locked] ")]
+        self.assertEqual(lines[at + 1:at + 3], [REPORT_INDENT + DIRTY_ADVICE, REPORT_INDENT + locked_note], transcript)
+        self.assertEqual([line for line in lines if "Probable partial removal" in line],
+                         [REPORT_INDENT + locked_note, REPORT_INDENT + note_line(plain)], transcript)
+
+        preview = self.run_cli("clean", root, "--all-safe")
+        self.assert_status(preview, 0)
+        lines = preview.stdout.splitlines()
+        transcript = "\n" + clean_support.transcript(preview)
+        at = lines.index(TEXT["excluded_group"].format(REASON="locked-worktree", K=1,
+                                                       NEXT_STEP=STEPS["locked-worktree"]))
+        self.assertEqual(lines[at + 1:at + 3], [TEXT["excluded_row"].format(PATH=locked, BRANCH="001-locked"),
+                                                PREVIEW_INDENT + locked_note], transcript)
+        self.assertEqual([line for line in lines if "Probable partial removal" in line],
+                         [PREVIEW_INDENT + locked_note, PREVIEW_INDENT + note_line(plain)], transcript)
+
+        refused = subprocess.run([REAL_GIT, "-C", str(root), "worktree", "remove", "--force", str(locked)],
+                                 env=self.env, capture_output=True, text=True, timeout=clean_support.TIMEOUT)
+        self.assertEqual(refused.returncode, 128, refused.stderr)
+        self.assertIn("cannot remove a locked working tree", refused.stderr)
+        self.git(root, "worktree", "unlock", locked)
+        self.git(root, "worktree", "remove", "--force", locked)
+        self.assertFalse(os.path.lexists(locked), "the note's steps removed the worktree")
+
+
 class KilledDuringDeletionTests(clean_support.CleanCase):
     """T091's "project killed during a deletion" (design D4): a worktree of
     about 8,000 tracked files, its repository built once per class as a

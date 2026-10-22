@@ -714,6 +714,11 @@ TEXT = {
         "Stopped at {PATH} ({REASON}). Removed {K} of {N}. Not attempted: {NOT_ATTEMPTED}. "
         "Next: project clean {ROOT} --all-safe",
     "partial_removal_note": "Probable partial removal: inspect, then git worktree remove --force {PATH} by hand.",
+    # D18's note for a locked worktree's row, which `git worktree remove
+    # --force` refuses (#19 at 4f1c0e0; lane 3's W52 F-2, R-248). It replaces
+    # ratified text, so it waits on Brett Heap's word, in a commit of its own.
+    "partial_removal_note_locked":
+        "Probable partial removal: inspect, unlock it, then git worktree remove --force {PATH} by hand.",
     # D18: the gate refusal and the remedies of the plan-blocking refusals.
     "target_excluded_gate": "Worktree is excluded: {REASON}; {NEXT_STEP}",
     "remedy_inspection_incomplete":
@@ -5100,7 +5105,8 @@ def report_lines(plan):
     order: `CLASS: PATH [BRANCH] dirty=D; upstream=U; DELTA; merged=M`, then
     the recommendation; a null dirty, merge answer or count shown as
     `unknown`, and no upstream configured as `none`, as the baseline prints it.
-    A row noted `partially-removed` (D4) prints D18's partial-removal note on
+    A row noted `partially-removed` (D4) prints D18's partial-removal note,
+    its locked form for a locked row (W52 F-2, R-248), on
     its own line right after its recommendation, the `dirty` advice, and
     indented as that line is, its PATH in the command form, since the note
     names a command to paste (T094; lead rulings R-79, P-11, and R-83, P-2).
@@ -5124,7 +5130,8 @@ def report_lines(plan):
                      f"merged={_shown(row.get('merged_into_target'))}")
         lines.append(f"  {row['recommendation']}")
         if "partially-removed" in (row.get("notes") or ()):
-            lines.append("  " + TEXT["partial_removal_note"].format(PATH=human_path(row.raw_path, command=True)))
+            note = "partial_removal_note_locked" if row.get("locked") else "partial_removal_note"  # W52 F-2
+            lines.append("  " + TEXT[note].format(PATH=human_path(row.raw_path, command=True)))
     return lines
 
 
@@ -5146,7 +5153,8 @@ def preview_lines(plan):
     NEXT STEP` (next_step()) over one `    PATH [BRANCH]` per row, an
     ignored-local-files row adding its count and first sample, and a row
     noted `partially-removed` (D4), a dirty one, followed by D18's
-    partial-removal note, six spaces in, its PATH in the command form (T094;
+    partial-removal note, its locked form for a locked row (W52 F-2, R-248),
+    six spaces in, its PATH in the command form (T094;
     lead rulings R-79, P-11, and R-83, P-2); the `deferred-target-cap`
     group headed by D18's deferral line in place of the generic one, its K
     the deferred rows and its ROOT plan_root() in the command form (T100;
@@ -5189,8 +5197,8 @@ def preview_lines(plan):
                 lines.append(TEXT["excluded_row"].format(PATH=human_path(row.raw_path),
                                                          BRANCH=human_path(row["branch"])) + suffix)
                 if "partially-removed" in (row.get("notes") or ()):
-                    lines.append("      " + TEXT["partial_removal_note"].format(
-                        PATH=human_path(row.raw_path, command=True)))
+                    note = "partial_removal_note_locked" if row.get("locked") else "partial_removal_note"  # F-2
+                    lines.append("      " + TEXT[note].format(PATH=human_path(row.raw_path, command=True)))
     if plan.mode == "all-safe" and not selected and plan.completeness == "complete" and not plan.refusals:
         lines.append(TEXT["empty_line"])
     if selected:

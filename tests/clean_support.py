@@ -624,6 +624,9 @@ TEXT_FIXTURES = {
     "success_line": "Removed {N}; branches kept: {BRANCHES}.",
     "stop_block": "Stopped at {PATH} ({REASON}). Removed {K} of {N}. Not attempted: {NOT_ATTEMPTED}. Next: project clean {ROOT} --all-safe",
     "partial_removal_note": "Probable partial removal: inspect, then git worktree remove --force {PATH} by hand.",
+    # D18's note for a locked worktree (#19 at 4f1c0e0, design.md:1225-1228; W52 F-2, R-248),
+    # which replaces ratified text and so waits on Brett Heap's word.
+    "partial_removal_note_locked": "Probable partial removal: inspect, unlock it, then git worktree remove --force {PATH} by hand.",
     # D18: refusal messages and remedies.
     "target_excluded_gate": "Worktree is excluded: {REASON}; {NEXT_STEP}",
     "remedy_inspection_incomplete": "repair or remove the inspection-error rows first: git worktree repair, git worktree prune, or remove the row by hand after review",
