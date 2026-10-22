@@ -109,14 +109,18 @@ test, step 4 of the ADDED requirement, its `state-changed` definition and
 scenario's last AND (proposal, "Re-read and Codex Findings (round A15)").
 Round A16 maps A-53 (any line that keeps a branch with its reflog unproven
 names the reflog inspection, `deadline-exceeded` from the re-proof included)
-to D4, D7, D8, D9 and Risks; A-47 (PR #19's LQ-20 resolved by measurement at
-its round (f), `662be89`, and this change's restatements of option (c)
-withdrawn, reader RH's item 6) to D4, D7 and Risks, every cite of PR #19's
-current design moving to `662be89` and its spec cites staying at `f0bf538`,
-whose spec text `662be89` keeps; and A-54 (lane openRepoProject-3's W53
-departure ledger) to the proposal alone; the spec delta edits the ADDED
-requirement's `Kept` next steps and three ADDED scenarios' ANDs, one of them
-added (proposal, "Re-read and Codex Findings (round A16)").
+and A-55 (lane openRepoProject-3's W60 confirm read of round A15, its
+MEDIUM-1: every line whose next step is RETRY for a branch the stage did not
+re-prove names it) to D4, D7, D8, D9 and Risks; A-47 (PR #19's LQ-20
+resolved by measurement at its round (f), `662be89`, and this change's
+restatements of option (c) withdrawn, reader RH's item 6) to D4, D7 and
+Risks, every cite of PR #19's current design moving to `662be89` and its
+spec cites staying at `f0bf538`, whose spec text `662be89` keeps; and A-54
+(lane openRepoProject-3's W53 departure ledger) and A-56 (W60's four LOW)
+to the proposal and the spec deltas; the spec deltas edit the ADDED
+requirement's `Kept` next steps, five ADDED scenarios' ANDs, one of them
+added, the bounds block's strict-test sentence and the review-safety
+scenario's last AND (proposal, "Re-read and Codex Findings (round A16)").
 
 Citations follow `proposal.md`: packet files at `da33d92`, `CAS` for change 1,
 `APO` for change 2, `project:N` and `tests:N` at `961c405`, all but the packet
@@ -528,7 +532,9 @@ a read this changes the exit status from 2, by D6's exit row 4 for a
 reason to `branch BRANCH: deadline-exceeded`; and the later targets from
 `not-attempted` with `batch-stopped` to `not-attempted` with
 `deadline-exceeded`, their `branch_retirement` staying `branch-retention-stop`.
-Its next step, `retry: RETRY`, and the stop block's `Next:` are unchanged. The
+Its next step, then `retry: RETRY`, now names the reflog inspection before
+the retry, since the re-read stopped before its re-proof (below; ruling
+A-55), and the stop block's `Next:` is unchanged. The
 re-proof follows the rule as well (rulings A-43 and A-44): its own failure or
 timeout, of its read or its child, gives `state-changed`, as a re-read
 listing's does, and a budget the work deadline ends gives `deadline-exceeded`.
@@ -548,32 +554,41 @@ one, and then returned to its merged tip passes it, and `git branch -d` deletes
 the branch with its reflog, the only reachability of that commit. A re-proof
 that decided nothing has not proved the reflog, so the line says to inspect it
 before the retry, in the form `branch-changed`'s `inspect it before retrying`
-has. The other `state-changed` lines keep `retry: RETRY` (checked under ruling
-A-49): the re-read's values that cause them, an upstream value, the manifest's
-`tracking_branch` or the merge target different from the plan, or one that
-could not be established, stop the stage at its reads or at checks 3 and 4,
-before the re-proof, with the head at the plan's SHA where a check was reached
-and the plan's proof of the reflog standing, and name no fault of the
-reflog. A re-proof whose budget the work deadline ended has not proved the
-reflog either, so that its `deadline-exceeded` line names the same inspection,
-and so does the `internal-error` line of an exception that ended the stage
-after its re-proof started and before that re-proof proved the reflog (ruling
-A-53: any line that keeps a branch with its reflog unproven). The other
-`deadline-exceeded` lines keep `retry: RETRY`: each came before the re-proof
-started, too little work time being left to start the re-read or the
-re-proof, or the deadline cutting the re-read's listing or manifest read,
-with the plan's proof of the reflog standing, or after the re-proof proved
-it, too little being left to start the branch child. So do the `interrupted`
-lines, since a signal stops no re-proof, which runs to its own end or budget
-and decides, so that `interrupted` comes before the re-proof starts or after
-it proves the reflog; the other `internal-error` lines, an exception before
-the re-proof started, after it proved the reflog, or once the post-check
-showed the branch present; and the `spawn-error`, `unconfirmed-retirement`,
-`probe-timeout` and `git-refused` lines, whose re-proof proved the reflog
-before the branch child, and the `removal-ceiling` line, whose stage never
-ran, the plan's proof standing. A target that the run did not reach gets no
-`Kept` line: its retry is the deferral line or the stop block's `Next:`, a
-flagged run whose plan proves the reflog again.
+has. The same holds wherever the stage did not re-prove the reflog, its
+re-proof never starting or never finishing with a proof, and the line's next
+step is RETRY (rulings A-53 and A-55; lane openRepoProject-3's W60,
+MEDIUM-1): the plan's proof of the reflog does not stand by itself, since
+step 3's reason for the re-proof is that a branch moved to a commit the merge
+target lacks and back since the plan passes every check of the re-read while
+its reflog names that commit, so that only the re-proof renews the plan's
+proof. W60 reproduced the loss on Git 2.43.0 and on the 2.36.6 floor: with
+the merge target moved, the re-read stops at check 4, and the printed retry's
+`git branch -d -- b` deletes `b`, its reflog-only commit becoming
+unreachable. So the line names the reflog inspection before the retry for a
+`state-changed` that the re-read's values caused, an upstream value, the
+manifest's `tracking_branch` or the merge target different from the plan, or
+one that could not be established, a failed listing or manifest read
+included, which stops the stage at its reads or at checks 3 and 4, before the
+re-proof (ruling A-55 reverses round A15's keeping of `retry: RETRY` there,
+which rested on the plan's proof standing); for a `deadline-exceeded` whose
+re-read or re-proof could not start, or whose re-read or re-proof budget the
+work deadline ended (ruling A-53 for the re-proof's); for an `interrupted`
+before the re-proof started, a signal stopping no re-proof, which runs to its
+own end or budget and decides; for an `internal-error` of an exception
+before the re-proof proved the reflog; and for a `removal-ceiling`, whose
+stage never ran. `retry: RETRY` stays where the stage's re-proof proved the
+reflog merged before the stage ended: the `spawn-error`,
+`unconfirmed-retirement` and `probe-timeout` lines, whose re-proof proved it
+before the branch child, and a `deadline-exceeded`, `interrupted` or
+`internal-error` after that proof, too little work time being left to start
+the branch child, a signal received before it, or an exception after the
+proof or once the post-check showed the branch present. The lines with their
+own next steps keep them: `branch-changed`'s `inspect it before retrying`,
+`reflog-unmerged`'s `before any delete-branch`, and the `head-not-merge-target`,
+`branch-in-use`, `branch-shared` and `git-refused` steps. A target that the
+run did not reach gets no `Kept` line: its retry is the deferral line or the
+stop block's `Next:`, a flagged run that plans again and proves the reflog
+again.
 
 The stage makes two filesystem reads, each checked against that rule (ruling
 A-42; lane openRepoProject-3's W40, its observation on R-208). The re-read's
@@ -1056,7 +1071,8 @@ with those removals at 0.3 s).
   change 1's 16th at 37.7 s, 15 are removed (the 15th at 44.69 s, the 16th
   due at 46.83 s) and 14 retired (the 14th branch child at 44.12 s), the 15th
   target's re-read, due at 45.96 s, being refused, so that its branch is
-  `retained` with `deadline-exceeded`, exit 1, never unsafe; 14 and 13 with
+  `retained` with `deadline-exceeded`, exit 1, never unsafe, its line naming
+  the reflog inspection before the retry (D8; ruling A-55); 14 and 13 with
   17 reflog children. With this change's children at task 2.1's average all
   16 are removed and retired, the 16th branch child at 34.70 s, or at
   42.92 s with 20,000-file removals. At `f0bf538`, with the stand-ins that
@@ -1151,7 +1167,8 @@ costs or on D14's bases, a target the spawn limit stops is `not-attempted`
 with `deadline-exceeded` and a branch whose child it stops `retained` with
 `deadline-exceeded`, exit 1; the next run takes their worktrees, and such a
 branch keeps `delete-branch` as its retry, after the reflog inspection that
-its line names where the deadline ended its re-proof (Risks; D8).
+its line names wherever its stage did not re-prove the reflog (Risks; D8;
+rulings A-53 and A-55).
 
 With `add-project-clean-cache-disposal` archived first (L-5), its 16 cache
 enumerations join the plan, and every time moves 2.4 s later again: target k's
@@ -1405,12 +1422,14 @@ as amended, Codex's P2 on `9ff8202`).
     before the retry, in the form that `branch-changed`'s `inspect it before
     retrying` has, and keeps `reflog-unmerged`'s `show` and full ref name; it
     supersedes ruling A-46's keeping of W47's LOW-3. The same next step
-    follows `Kept BRANCH (deadline-exceeded)` for a re-proof whose budget the
-    work deadline ended, and `Kept BRANCH (internal-error)` for an exception
-    that ended the stage after its re-proof started and before that re-proof
-    proved the reflog, since neither re-proof proved the reflog either
-    (ruling A-53). A `state-changed` that the re-read's values caused takes
-    the last bullet's `retry: RETRY` (D4);
+    follows every `Kept` line whose next step is RETRY for a branch the stage
+    did not re-prove, its re-proof never starting or never finishing with a
+    proof, since the plan's proof holds only until the re-proof renews it
+    (rulings A-53 and A-55; D4): a `state-changed` that the re-read's values
+    caused, a `deadline-exceeded`, `interrupted` or `internal-error` before
+    the re-proof proved the reflog, or a `removal-ceiling`, as in `Kept BRANCH
+    (deadline-exceeded); its reflog is not proven merged into MERGE_TARGET;
+    inspect git -C ROOT reflog show refs/heads/BRANCH before retrying: RETRY`;
   - `Kept BRANCH (git-refused); if a rebase or bisect in another worktree
     holds BRANCH, wait for it to end, and then remove that worktree or, for
     the main worktree, which Git refuses to remove, switch it off BRANCH, by
@@ -1439,11 +1458,11 @@ as amended, Codex's P2 on `9ff8202`).
     upstream's ref is present or absent, or no upstream is configured, and the
     checkout alone, of a merge target the main worktree already holds, changes
     nothing (ruling A-35, lane openRepoProject-3's F4; Context);
-  - otherwise `Kept BRANCH (REASON); retry: RETRY`, a `state-changed` that the
-    re-read's values caused, and a `deadline-exceeded`, `interrupted` or
-    `internal-error` that came before the re-proof started or after it proved
-    the reflog, included, since the plan's proof of the reflog, or the
-    re-proof's, stands (rulings A-49 and A-53; D4).
+  - otherwise, where the stage's re-proof proved the reflog merged, `Kept
+    BRANCH (REASON); retry: RETRY`: `spawn-error`, `unconfirmed-retirement`
+    and `probe-timeout`, and a `deadline-exceeded`, `interrupted` or
+    `internal-error` that came after that proof, the re-proof's standing
+    (rulings A-49, A-53 and A-55; D4).
 - Stop block: change 1's, with a branch stage's stop reading `Stopped at PATH
   (branch BRANCH: REASON). Removed K of N. Not attempted: P1, P2. Next: project
   clean ROOT --all-safe --retire-branches`.
@@ -1625,10 +1644,10 @@ proposal puts it before Brett Heap with L-4's recommendation.
 - [Retiring a branch deletes its reflog and its `branch.<b>` section] -> The
   plan proves every commit the reflog names merged, and the stage proves it
   again over the reflog as it then reads, or the branch is kept
-  (`reflog-unmerged`, or, where the re-proof decides nothing, `state-changed`,
-  `deadline-exceeded` or `internal-error`, each line naming the reflog
-  inspection before the retry; D8, ruling A-53), so no commit named when the
-  branch child spawns is lost. The section's keys
+  (`reflog-unmerged`, or another retention, whose line names the reflog
+  inspection before the retry wherever the stage did not re-prove the
+  reflog; D8, rulings A-53 and A-55), so no commit named when the branch
+  child spawns is lost. The section's keys
   (`description`, `pushRemote`, any tool's keys) are deleted and not
   restored; the printed restore line, `git -C ROOT branch BRANCH SHA` or, for
   a name `git branch` refuses to create, one that begins with `-` or equals
@@ -1718,7 +1737,8 @@ proposal puts it before Brett Heap with L-4's recommendation.
   `deadline-exceeded`, or a branch `retained` with it, exit 1, never unsafe,
   and the next run takes it; a branch `retained` with `deadline-exceeded` is
   retried with `delete-branch`, after the reflog inspection that its line
-  names where the deadline ended its re-proof (D8; ruling A-53). LQ-20 is
+  names wherever its stage did not re-prove the reflog (D8; rulings A-53 and
+  A-55). LQ-20 is
   resolved with none of its options taken, so that A-9 no longer waits on it
   and stays Brett Heap's question on these figures (D7).
 - [The re-read runs no identity probe] -> The compared head, upstream evidence
