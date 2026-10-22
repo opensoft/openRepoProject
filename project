@@ -3848,12 +3848,16 @@ def check_plan(plan, run):
     2. single, `worktree-not-found`, which build_plan() recorded;
     3. single, P's own incompleteness: P names no single row (several
        matched, or one not decided), or its row is inspection-error or
-       unprobed: inspection-incomplete, its remedy incomplete_refusal()'s
-       for P's rows; but `deadline-exceeded`, with the deadline's remedy,
-       where P's row is deadline_stopped(), the rule plan_completeness()
-       gives a batch row by, so that single mode shares the batch's refusal
-       codes (#19 at b3228bb; Brett Heap's ruling "O-1: deadline-exceeded",
-       lead rulings R-263 and R-283);
+       unprobed: inspection-incomplete, its remedy incomplete_refusal()'s,
+       which counts P's rows as a batch's are counted, through counted_rows()
+       with no exclude (in this mode P's own rows only), those
+       inspection-error or unprobed and not deadline_stopped(), so that a row
+       of P's the work deadline stopped never counts toward the variant
+       remedy (lead ruling R-287 (a); lane 3's W73 L-2); but `deadline-exceeded`,
+       with the deadline's remedy, where P's row is deadline_stopped(), the
+       rule plan_completeness() gives a batch row by, so that single mode
+       shares the batch's refusal codes (#19 at b3228bb; Brett Heap's ruling
+       "O-1: deadline-exceeded", lead rulings R-263 and R-283);
     4. all-safe, an --expect-plan digest that differs (`plan-digest-mismatch`);
     5. all-safe, a complete plan selecting nothing: exit 0, no question;
     6. single, P excluded by a gate (`target-excluded`, target_refusal());
@@ -3889,7 +3893,7 @@ def check_plan(plan, run):
         target = plan.target
         if target is None or row_incomplete(target):
             code = "deadline-exceeded" if target is not None and deadline_stopped(target) else "inspection-incomplete"
-            return refuse(plan, incomplete_refusal(plan, code, rows=target_rows), run)
+            return refuse(plan, incomplete_refusal(plan, code), run)
         reason = next((reason for row, reason in plan.excluded if row is target), None)
         if reason is not None:
             return refuse(plan, target_refusal(target, reason), run)
@@ -4160,7 +4164,8 @@ def deadline_stopped(row):
     (T099; lead rulings R-67 (a), R-69 and R-80, P-1): `inspection-error` or
     carrying the unprobed marker, and every row error `deadline-exceeded`.
     Such a row is `deadline-exceeded`'s, never `inspection-incomplete`'s, and
-    incomplete_refusal() does not count it. check_plan()'s step 3 reads the
+    incomplete_refusal() does not count it, among a batch's rows or among P's
+    in mode single (lead ruling R-287 (a)). check_plan()'s step 3 reads the
     same rule for P's own row in mode single (lead ruling R-283).
 
     The unprobed arm is gate 7's alone (#19's round (h) at b3228bb, pcl:713-718
@@ -4181,7 +4186,9 @@ def deadline_stopped(row):
 def counted_rows(plan, exclude=()):
     """The rows of plan.rows that plan_completeness() counts, in their order:
     those not in exclude, and in mode single for --action remove only P's
-    own (plan.target_rows). incomplete_refusal() counts the same rows."""
+    own (plan.target_rows). incomplete_refusal() counts the same rows, P's
+    among them for check_plan()'s step 3, which passes no exclude (lead
+    ruling R-287 (a))."""
     skip = {id(row) for row in exclude}
     named = plan.mode == "single" and plan.action == "remove"
     own = {id(row) for row in getattr(plan, "target_rows", [])}
@@ -4226,7 +4233,7 @@ def plan_completeness(plan, exclude=()):
     return codes
 
 
-def incomplete_refusal(plan, code, exclude=(), rows=None):
+def incomplete_refusal(plan, code, exclude=()):
     """The refusal of a plan incomplete with code (FR-024, FR-031; design D18):
     `The plan is incomplete (CODE): REMEDY.`, REMEDY D18's for the code. The
     inspect-cap remedy's N counts the registry entries that become rows, as
@@ -4238,11 +4245,14 @@ def incomplete_refusal(plan, code, exclude=(), rows=None):
     core.worktree and core.bare, where any row the refusal counts is excluded
     as `registration-mismatch` (plan.excluded), as a linked worktree that
     core.worktree or core.bare redirects is, its own row inspection-error
-    (#19's round (h) at b3228bb, design.md D18): rows, when given, are those
-    rows (check_plan()'s step 3 gives P's rows); otherwise the rows
+    (#19's round (h) at b3228bb, design.md D18). The rows it counts are those
     plan_completeness(plan, exclude) counts toward inspection-incomplete,
     counted_rows()'s that are inspection-error or unprobed and not
-    deadline_stopped(). Otherwise the base remedy."""
+    deadline_stopped(): in mode single for --action remove, P's own rows
+    when check_plan()'s step 3 passes no exclude, so that a row of P's the
+    work deadline stopped is not counted there either, as no such row of a
+    batch is (lead ruling R-287 (a); lane 3's W73 L-2). Otherwise the base
+    remedy."""
     if code == "inspect-cap":
         evidence = plan.evidence or {}
         registry = evidence.get("records") or ()
@@ -4252,8 +4262,7 @@ def incomplete_refusal(plan, code, exclude=(), rows=None):
     elif code == "deadline-exceeded":
         remedy = TEXT["remedy_deadline_exceeded"]
     else:
-        if rows is None:
-            rows = [row for row in counted_rows(plan, exclude) if row_incomplete(row) and not deadline_stopped(row)]
+        rows = [row for row in counted_rows(plan, exclude) if row_incomplete(row) and not deadline_stopped(row)]
         mismatched = {id(row) for row, reason in getattr(plan, "excluded", None) or ()
                       if reason == "registration-mismatch"}
         redirect = any(id(row) in mismatched for row in rows)

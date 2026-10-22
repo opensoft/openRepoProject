@@ -1213,6 +1213,141 @@ class GatesTests(clean_support.CleanCase):
         self.assertEqual(by_path(self.preview(root).document),
                          {str(root): "main-worktree", str(tree): "registration-mismatch", str(other): "inspection-error"})
 
+    def redirected_repository(self, *names):
+        """The main worktree and a merged linked worktree per name, the first
+        redirected by core.bare in its config.worktree (round (h)'s second
+        fixture), so that its row is registration-mismatch: (root, trees)."""
+        root = self.repo()
+        self.bare_remote()
+        trees = [self.merged_worktree(name, path=self.base / name) for name in names]
+        self.git(root, "config", "extensions.worktreeConfig", "true")
+        self.git(trees[0], "config", "--worktree", "core.bare", "true")
+        return root, trees
+
+    def child_cut(self, picks, answers, calls):
+        """A run_bounded() stand-in for main_in_process(): the Git child that
+        picks(args) names KEY of is answered by the DriverOutcome
+        answers[KEY], (name, detail), and appended to calls; every other
+        child is real."""
+        real_run_bounded = project.run_bounded
+
+        def run_bounded(spec, parser, run):
+            kind, args, cwd = spec
+            key = picks([os.fsdecode(arg) for arg in args])
+            if key in answers:
+                calls.append(key)
+                return project.DriverOutcome(project.git_argv(kind, args), answers[key][0], detail=answers[key][1])
+            return real_run_bounded(spec, parser, run)
+        return run_bounded
+
+    def test_clean_a_redirected_row_the_deadline_stopped_is_not_counted_for_the_variant(self):
+        # Lane 3's W73 L-2, a corner of 63e4573's counting (#19's round (h),
+        # design.md D18): incomplete_refusal() names the unset of
+        # core.worktree and core.bare where a row it counts toward
+        # inspection-incomplete is excluded as registration-mismatch, and it
+        # counts no deadline_stopped() row, as plan_completeness() does not.
+        # A redirected row and a second linked worktree; in process, every read
+        # and child real but two: row 6's ref listing (design D6), whose row
+        # error each present row on a branch then carries (plan review F3), and
+        # the status probe in the second worktree, cut at its budget, so that
+        # the plan is incomplete with inspection-incomplete whatever row 6
+        # meets. Row 6 cut by the work deadline: the redirected row's one error
+        # is the deadline's, it is deadline_stopped() and not counted, and the
+        # refusal takes the base remedy beside deadline-exceeded. Row 6 cut at
+        # its budget: the row is counted and the remedy is the variant.
+        root, (tree, other) = self.redirected_repository("001-redirected", "002-other")
+
+        def picks(args):
+            if args[2:3] == ["for-each-ref"] and args[-2:] == ["refs/heads", "refs/remotes"]:
+                return "row 6"
+            if args[2:] == list(project.STATUS_PROBE) and args[1] == str(other):
+                return "status"
+            return None
+
+        def refused(code, remedy):
+            return {"code": code, "message": TEXT["plan_incomplete"].format(CODE=code, REMEDY=remedy)}
+
+        status_cut = {"code": "probe-timeout",
+                      "message": TEXT["row_error_probe_timeout"].format(OPERATION="git status", S="5")}
+        cases = (
+            ("the work deadline", ("deadline", "no time was left to start it"),
+             {"code": "deadline-exceeded",
+              "message": TEXT["row_error_deadline_exceeded"].format(OPERATION="git for-each-ref")},
+             [refused("inspection-incomplete", TEXT["remedy_inspection_incomplete"]),
+              refused("deadline-exceeded", TEXT["remedy_deadline_exceeded"])]),
+            ("its budget", ("timeout", "no answer within 5 s"),
+             {"code": "probe-timeout",
+              "message": TEXT["row_error_probe_timeout"].format(OPERATION="git for-each-ref", S="5")},
+             [refused("inspection-incomplete", TEXT["remedy_inspection_incomplete_redirect"])]),
+        )
+        before = self.snapshot(root)
+        for label, cut, error, refusals in cases:
+            with self.subTest(f"row 6 meets {label}"):
+                for words, status in ((("--all-safe", "--json"), 1), (("--all-safe", "--apply", "--yes", "--json"), 2),
+                                      (("--all-safe",), 1)):
+                    calls = []
+                    run_bounded = self.child_cut(picks, {"row 6": cut, "status": ("timeout", "no answer within 5 s")},
+                                                 calls)
+                    out_status, out, err = self.main_in_process("clean", root, *words, run_bounded=run_bounded)
+                    self.assertEqual(out_status, status, out + err)
+                    self.assertEqual(calls, ["row 6", "status"])
+                    if "--json" not in words:  # human output prints the first refusal, inspection-incomplete's
+                        self.assertEqual(err, "REFUSED: " + refusals[0]["message"] + "\n")
+                        continue
+                    document = json.loads(out)
+                    self.assertEqual((document["selected"], by_path(document)),
+                                     ([], {str(root): "main-worktree", str(tree): "registration-mismatch",
+                                           str(other): "inspection-error"}))
+                    self.assertEqual([(row["path"], row["classification"], row["errors"])
+                                      for row in document["worktrees"]],
+                                     [(str(root), "inspection-error", [error]),
+                                      (str(tree), "inspection-error", [error]),
+                                      (str(other), "inspection-error", [status_cut, error])])
+                    self.assertEqual((document["completeness"], document["apply_allowed"], document["refusals"]),
+                                     ("incomplete", False, refusals))
+        self.assertEqual(self.snapshot(root), before, "nothing removed")
+
+    def test_clean_a_named_removal_s_repository_wide_refusal_beside_a_redirected_target(self):
+        # Lane 3's W73 L-2, a corner of 63e4573's counting: in mode single for
+        # --action remove, check_plan()'s step 1 judges the plan without P's
+        # rows, which are step 3's, so its refusal counts none of them for the
+        # variant remedy. P is the redirected row; in process, every read and
+        # child real but row 7's merged-set listing (design D6), a
+        # repository-wide probe, cut at its budget. --worktree P then refuses
+        # at step 1 inspection-incomplete with the base remedy, while the
+        # batch over the same repository counts P's row and names the unset;
+        # with row 7 answered, --worktree P reaches step 3, which counts P's
+        # row: the variant again.
+        root, (tree,) = self.redirected_repository("001-redirected")
+
+        def picks(args):
+            return "row 7" if args[2:3] == ["for-each-ref"] and args[3].startswith("--merged=") else None
+
+        base = TEXT["plan_incomplete"].format(CODE="inspection-incomplete", REMEDY=TEXT["remedy_inspection_incomplete"])
+        variant = TEXT["plan_incomplete"].format(CODE="inspection-incomplete",
+                                                 REMEDY=TEXT["remedy_inspection_incomplete_redirect"])
+        single = ("--apply", "--action", "remove", "--worktree", tree, "--yes")
+        before = self.snapshot(root)
+        for label, words, cut, status, message in (
+                ("--worktree P, row 7 cut", single, True, 2, base),
+                ("--all-safe --apply, row 7 cut", ("--all-safe", "--apply", "--yes"), True, 2, variant),
+                ("--all-safe, row 7 cut", ("--all-safe",), True, 1, variant),
+                ("--worktree P, row 7 answered", single, False, 2, variant)):
+            with self.subTest(label):
+                calls = []
+                answers = {"row 7": ("timeout", "no answer within 5 s")} if cut else {}
+                run_bounded = self.child_cut(picks, answers, calls)
+                out_status, out, err = self.main_in_process("clean", root, *words, "--json", run_bounded=run_bounded)
+                self.assertEqual(out_status, status, out + err)
+                self.assertEqual(calls, ["row 7"] if cut else [])
+                document = json.loads(out)
+                self.assertEqual((by_path(document), document["selected"], document["refusals"]),
+                                 ({str(root): "main-worktree", str(tree): "registration-mismatch"}, [],
+                                  [{"code": "inspection-incomplete", "message": message}]))
+                out_status, out, err = self.main_in_process("clean", root, *words, run_bounded=run_bounded)
+                self.assertEqual((out_status, err), (status, "REFUSED: " + message + "\n"), out)
+        self.assertEqual(self.snapshot(root), before, "nothing removed")
+
     def test_clean_operation_in_progress_a_marker_git_leaves_is_deleted_by_hand(self):
         # #19's round (h) at b3228bb (design.md D18; writer E's table, R-259):
         # an empty `sequencer` file, which `git cherry-pick` and `git revert`
