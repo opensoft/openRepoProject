@@ -8,22 +8,23 @@ See `proposal.md` for why and what, and the deltas under `specs/` for the
 requirements. Citations follow the proposal's key: the packet at `da33d92`
 (`BA`, `SY`, `OV`, `HO`), change 1 (`CAS`, `CAS/pc`, `CAS/rs`, `CAS/cmd`) and
 change 2 (`APO`, `APO/ov`) at `961c405`, draft PR #19 (`PR19/pc`, `PR19/rs`,
-`PR19/cmd`) at `20084cd`, its round (m) and its head, for the bounds
-requirement of `PR19/pc`, whose text round (m) changed; at `173d83c`, its round
-(k), for the two requirements whose text round (k) changed, the retire
-requirement of `PR19/pc` and the revalidation requirement of `PR19/rs`; at
-`e14ada0`, its round (j), for the reconcilable-result requirement of `PR19/pc`;
-at `b3228bb`, its round (h), for the batch requirement of `PR19/pc`; at
+`PR19/cmd`) at `2250830`, its round (n) and its head, for the three
+requirements of `PR19/pc` whose text round (n) changed, the retire, bounds and
+reconcilable-result requirements; at `173d83c`, its round (k), for the
+revalidation requirement of `PR19/rs`, whose text round (k) changed; at
+`b3228bb`, its round (h), for the batch requirement of `PR19/pc`; at
 `6bf9f77`, its round (g3), for the classification requirement; at
 `4f1c0e0`, its round (g), for its design, proposal and tasks; and at `f0bf538`,
-its round (e), for the rest of the spec text this change cites; `20084cd` keeps
+its round (e), for the rest of the spec text this change cites; `2250830` keeps
 byte for byte each of those texts and every string of its design, proposal and
-tasks that this change quotes (in rounds B16 to B20 the bounds requirement at
-`b3228bb`, in round B18 the retire, reconcilable-result and revalidation
-requirements at `e14ada0`, its round (j), in round B17 the retire and
-reconcilable-result requirements at `e0c91bb`, its round (i), and the
-revalidation requirement at `b3228bb`, in round B16 the retire and
-reconcilable-result requirements at `b3228bb`, and in
+tasks that this change quotes (in round B21 the bounds requirement at
+`20084cd`, its round (m), in rounds B19 to B21 the retire requirement at
+`173d83c` and the reconcilable-result requirement at `e14ada0`, in rounds B16
+to B20 the bounds requirement at `b3228bb`, in round B18 the retire,
+reconcilable-result and revalidation requirements at `e14ada0`, its round (j),
+in round B17 the retire and reconcilable-result requirements at `e0c91bb`, its
+round (i), and the revalidation requirement at `b3228bb`, in round B16 the
+retire and reconcilable-result requirements at `b3228bb`, and in
 its earlier stages the retire and batch requirements at `4f1c0e0` and the other
 three at `f0bf538`, at `f0bf538` throughout in rounds B13 to B15, at `9267303`
 in round B12, at `2e819ad` in round B11, at `a664799` in round B10 and at
@@ -31,7 +32,7 @@ in round B12, at `2e819ad` in round B11, at `a664799` in round B10 and at
 `project`, `openspec/specs/` and the directories of change 1 and change 2 equal
 `961c405`'s, `ideation/` differs by PR #16's packet revision (`e45155a`), and
 `openspec/changes/` gains two other changes (L-15). The lane's rulings are L-1
-to L-17 and B-1 to B-99, and A-9, A-23 and A-24 for #23; this change's own
+to L-17 and B-1 to B-106, and A-9, A-23 and A-24 for #23; this change's own
 decisions are CD-1 to CD-18 in `proposal.md`, and the alignment review's
 findings (SA-n, QA-n, G1 to G5) are resolved in its table. The council (P-n,
 S-n and AE-n) read `9ebe9f0`; its VALID verdicts, ruled as B-16 to B-24, are
@@ -176,42 +177,70 @@ being present at `173d83c`. PR #19's round (l) at `ccc52b9` (d1c5343 and
 ccc52b9), its answer to lane 3's W87 read of its rounds (j) and (k) (lane
 openRepoProject-2's R-307, R-310 and R-311), which drops `git worktree prune`
 from the next steps and the `inspection-incomplete` remedies while a row's path
-could not be read, in five texts, round (l)'s T1 to T5, which Brett Heap has
-confirmed ("T1-T5: yes", lane openRepoProject-3's RULED line d6dd6d9a8, and
-"R-307: yes; R-310: yes", as lane openRepoProject-2 relays it, its R-319), and
-names D18's locked note as a report row's own form, never a ceiling target's,
-and lane 3's W92 read of rounds B18 and B19, ruled as B-95 to B-98, are applied
-in round B20 (proposal, "Re-read and Codex Findings (round B20)"): its one spec
-change, an AND in the scenario "An unreadable worktree is one row" of "Clean
-reports local worktree state", is in no block that this change carries, so the
-eight blocks keep their bases, whose text `ccc52b9` keeps byte for byte, and
-nothing is re-based; no live text of this change's own restates D18's remedies,
-and its two mentions of the locked note, round (g3)'s recovery text in the
-classification block's scenario "Only tracked-file deletions", name a report
-row's form and stay; and round (l)'s changes to PR #19's design, proposal and
-tasks leave D14 and task 2.1 byte for byte as they were and every string that
-this change quotes from them present at `ccc52b9`; and D4 scopes its claim that
-no change of rounds (g) to (l) states a count of children or a time to PR #19's
-spec text and its D14 (W92's LOW-1). PR #19's round (m) at `20084cd`, which
-records Brett Heap's confirmation of round (l)'s T1 to T5 and his ruling of
-three more texts, T6 to T8, "R-320: yes" (lane openRepoProject-2's R-321), the
-recommendations of a stale worktree beside a row whose path could not be read
-and the row cap's remedy, each leaving out or warning against `git worktree
-prune` (lane 2's R-323), ruled as B-99, is applied in round B21 (proposal,
-"Re-read and Codex Findings (round B21)"): its one spec change, an AND in the
-bounds block's scenario "Row cap and planning failures" that names the row
-cap's remedy, "{N} rows exceed the row cap of {M}; remove worktrees explicitly,
+could not be read, warning against it, and since round (n) against `git
+worktree remove` and `git gc` too (R-324), in five texts, round (l)'s T1 to T5,
+which Brett Heap has confirmed ("T1-T5: yes", lane openRepoProject-3's RULED
+line d6dd6d9a8, and "R-307: yes; R-310: yes", as lane openRepoProject-2 relays
+it, its R-319), and names D18's locked note as a report row's own form, never a
+ceiling target's, and lane 3's W92 read of rounds B18 and B19, ruled as B-95 to
+B-98, are applied in round B20 (proposal, "Re-read and Codex Findings (round
+B20)"): its one spec change, an AND in the scenario "An unreadable worktree is
+one row" of "Clean reports local worktree state", is in no block that this
+change carries, so the eight blocks keep their bases, whose text `ccc52b9`
+keeps byte for byte, and nothing is re-based; no live text of this change's own
+restates D18's remedies, and its two mentions of the locked note, round (g3)'s
+recovery text in the classification block's scenario "Only tracked-file
+deletions", name a report row's form and stay; and round (l)'s changes to PR
+#19's design, proposal and tasks leave D14 and task 2.1 byte for byte as they
+were and every string that this change quotes from them present at `ccc52b9`;
+and D4 scopes its claim that no change of rounds (g) to (l) states a count of
+children or a time to PR #19's spec text and its D14 (W92's LOW-1). PR #19's
+round (m) at `20084cd`, which records Brett Heap's confirmation of round (l)'s
+T1 to T5 and his ruling of three more texts, T6 to T8, "R-320: yes" (lane
+openRepoProject-2's R-321), the recommendations of a stale worktree beside a
+row whose path could not be read and the row cap's remedy, each leaving out or
+warning against `git worktree prune` (lane 2's R-323; round (n) adds `git
+worktree remove` and `git gc` to each warning, R-324), ruled as B-99, is
+applied in round B21 (proposal, "Re-read and Codex Findings (round B21)"): its
+one spec change, an AND in the bounds block's scenario "Row cap and planning
+failures" that names the row cap's remedy, "{N} rows exceed the row cap of {M};
+remove worktrees explicitly, or prune stale entries by hand; if a worktree's
+path cannot be read, do not run git worktree prune until it can" (its words at
+`20084cd`, which round (n) extends, below), is carried by re-basing that block
+on `20084cd`, PR #19's text carried byte for byte and this
+change's additions re-applied word for word with no adaptation, with lane
+openRepoProject-2's byte check of the held block before the commit; the other
+seven blocks keep their bases, whose text `20084cd` keeps byte for byte; the
+cites into the bounds block take `20084cd`'s lines; no live text of this
+change's own restates the row cap's remedy or a stale worktree's
+recommendation; and round (m)'s changes to PR #19's design, proposal and tasks
+leave D14 and task 2.1 byte for byte as they were and every string that this
+change quotes from them present at `20084cd`. PR #19's round (n) at `2250830`
+(e6b6b16 and 2250830; lane openRepoProject-2's R-345), which applies Brett
+Heap's ruling "R-324: yes" of 2026-10-22 (lane openRepoProject-5's RULED line
+26e556b43; lane 2's R-343), extending the warnings of round (l)'s and round
+(m)'s T1 to T8, and the removal ceiling's third recovery text, to `git worktree
+remove` and `git gc` beside `git worktree prune`, so that T8, the row cap's
+remedy, reads "{N} rows exceed the row cap of {M}; remove worktrees explicitly,
 or prune stale entries by hand; if a worktree's path cannot be read, do not run
-git worktree prune until it can", is carried by re-basing that block on
-`20084cd`, PR #19's text carried byte for byte and this change's additions
-re-applied word for word with no adaptation, with lane openRepoProject-2's byte
-check of the held block before the commit; the other seven blocks keep their
-bases, whose text `20084cd` keeps byte for byte; the cites into the bounds
-block take `20084cd`'s lines; no live text of this change's own restates the
-row cap's remedy or a stale worktree's recommendation; and round (m)'s changes
-to PR #19's design, proposal and tasks leave D14 and task 2.1 byte for byte as
-they were and every string that this change quotes from them present at
-`20084cd`.
+git worktree prune, git worktree remove or git gc until it can", and lane 3's
+W97 read of rounds B20 and B21, ruled as B-100 to B-106, are applied in round
+B22 (proposal, "Re-read and Codex Findings (round B22)"): round (n)'s changes
+to three blocks that this change carries, the third recovery text in the retire
+block's requirement text and in its scenario "A removal past the hard ceiling",
+the third recovery text in the reconcilable-result block's requirement text,
+and T8's AND in the bounds block's scenario "Row cap and planning failures",
+are carried by re-basing those three blocks on `2250830`, PR #19's text carried
+byte for byte and this change's additions re-applied word for word with no
+adaptation, with lane openRepoProject-2's byte check of each held block before
+the commit; its fifth change, to the scenario "An unreadable worktree is one
+row" of "Clean reports local worktree state", is in no block that this change
+carries; the other five blocks keep their bases, whose text `2250830` keeps
+byte for byte; the cites into the three blocks take `2250830`'s lines; this
+change's own live mentions of those warnings name round (n)'s extension; and
+round (n)'s changes to PR #19's design, proposal and tasks leave D14 and task
+2.1 byte for byte as they were and every string that this change quotes from
+them present at `2250830`.
 
 How the packet's contract and the rulings map to the decisions below:
 
@@ -317,6 +346,13 @@ How the packet's contract and the rulings map to the decisions below:
 | B-97 | the lead's ruling: Brett Heap has confirmed round (l)'s T1 to T5, the unread forms of the next steps and remedies (lane openRepoProject-2's R-307 and R-310), in his words "T1-T5: yes" (lane openRepoProject-3's RULED line, d6dd6d9a8), so the Context's "put to Brett Heap to confirm" for them names his confirmation, and so does any other live mention of them as put to him, round records staying as history | Context |
 | B-98 | the lead's ruling on lane 3's W92 read of rounds B18 and B19, 0 HIGH, 0 MEDIUM, 1 LOW and nothing departing: D4's claim that no change of rounds (g) to (l) states a count of children or a time is scoped to PR #19's spec text and its D14, since round (k)'s proposal states three more children for a submodule checkout's repeated identity probe, which D14 does not count, so that no figure moves (LOW-1); W92's verdict and notes are rows of round B20's table | Context, D4 |
 | B-99 | the lead's ruling: round B21 re-bases the bounds block on PR #19's round (m) at `20084cd`, which lane openRepoProject-2 accepted (R-323), in two stages with lane 2's byte check before the commit: the block's scenario "Row cap and planning failures" gains an AND that names the row cap's remedy, "{N} rows exceed the row cap of {M}; remove worktrees explicitly, or prune stale entries by hand; if a worktree's path cannot be read, do not run git worktree prune until it can"; the other seven blocks are byte-identical at `20084cd`; the round also takes round (m)'s currency, Brett Heap's confirmation of T1 to T8 ("R-307: yes; R-310: yes" and "R-320: yes", as lane 2 relays them), and a report on any live restatement of F-1, whose (b) PR #19 now records as open; PR #19's head is `20084cd` | Context, Goals, D4, Migration Plan; the bounds block |
+| B-100 | the lead's ruling: round B21's stage 2, its commits, its record and its line map, runs on lane openRepoProject-2's YES to the held set (R-325), with a checkpoint if the lane's usage meter reaches 85% | none |
+| B-101 | the lead's ruling on lane 3's W97 read of rounds B20 and B21, 0 HIGH, 0 MEDIUM, 1 LOW and nothing departing: its LOW-1, that round B21's row on round (m)'s changes to PR #19's design, proposal and tasks names as the 22nd cited range the residual-window line (its design.md:1183-1185 at `4f1c0e0`), which is byte-identical at every sha, where the range that changed is its design.md:1189-1216 at `4f1c0e0`, goes to round B22: the line inside round B21's record stays as history, and its correction is a row of round B22's record; round B22 waits for Brett Heap's answer to R-324 | proposal, "Re-read and Codex Findings (round B22)" |
+| B-102 | the lead's ruling, refining B-101: W97's LOW-1 corrects only a row of round B21's record, which stays as history, and changes no live text that Brett Heap ratifies, so it opens no round by itself; round B22 opens when R-324 is answered yes, or when lane 3's next read of this change brings a finding, and the LOW-1 row rides with it | none |
+| B-103 | the lead's ruling: Brett Heap having ruled "R-324: yes" (lane openRepoProject-5's RULED line 26e556b43; lane openRepoProject-2's R-343), so that every no-prune warning, the removal ceiling's third recovery text and T1 to T8, names `git worktree remove` and `git gc` beside `git worktree prune`, round B22 re-bases on PR #19's round (n), once its sha comes, the retire and bounds blocks, the two that lane 2 first reported it changing, in two stages with lane 2's byte check before the commit, records R-324, and carries W97's LOW-1 row (B-101, B-102) | Context; proposal, Capabilities, Dependencies and Sequencing |
+| B-104 | the lead's ruling: PR #19's round (n) is at `2250830` (e6b6b16 and 2250830), which lane openRepoProject-2 accepted (R-345), and round B22 re-bases three blocks on it, retire (its requirement text's third recovery text and the AND of the scenario "A removal past the hard ceiling"), reconcilable result (its requirement text's third recovery text) and bounds (T8's AND in the scenario "Row cap and planning failures"); round (n)'s fifth change, in the scenario "An unreadable worktree is one row", is in a block that this change does not carry; the other five blocks are byte-identical at `2250830`, and D14 and task 2.1 are byte-identical to `20084cd`'s; PR #19's head is `2250830` | Context, Goals, D4, Migration Plan; the retire, reconcilable-result and bounds blocks |
+| B-105 | the lead's ruling: after the lane's swap to team-01e, round B22 runs now, its stage 1 on PR #19's round (n) at `2250830`, in parallel with round A22 on #26, one writer to each tree | none |
+| B-106 | the lead's ruling on round B22's five questions: the ruling range runs to B-106, the B-100 row staying and rows B-105 and B-106 added, in the design's ruling table, the key and the Status; the round B22 table may start in stage 1; round B21's Context sentence keeps its quotation of T8 in round (m)'s words, marked as such; the re-wrap of the proposal's key and of Dependencies and Sequencing stands, the round B22 table naming each re-wrapped paragraph and saying that its words are unchanged except where the word diff shows; and W97's O-1 gets no edit and is recorded as a note | Context; proposal, Status, key, "Re-read and Codex Findings (round B22)" |
 
 What in `project` shapes the approach:
 
@@ -380,8 +416,8 @@ Facts checked here, on Git 2.43.0 and Linux 6.18, with Python 3.10.21 and
   removal floor, at most six children per revalidation, seven where the plan
   read `extensions.worktreeConfig` as true, and nine and ten where the path of
   the repository's root or of its common directory holds a line feed, as PR #19
-  states them at `173d83c` and `20084cd`, as at `b3228bb` (B-54, B-58, B-60,
-  B-84, B-88, B-93, B-99), and the fit (D4, D12).
+  states them at `173d83c` and `2250830`, as at `b3228bb` (B-54, B-58, B-60,
+  B-84, B-88, B-93, B-99, B-104), and the fit (D4, D12).
 
 **Non-Goals:**
 
@@ -538,8 +574,9 @@ for the combined status probe (D10), so it carries what that probe carries. With
 only the first two of those pins, an edit that keeps a tracked file's size and
 restores its mtime would read unchanged under a user's `core.trustctime=false`
 or `core.checkStat=minimal`, the cache stage would run, and only Git's own check
-on the removal, which carries all four pins (PR19/pc:310-311), would refuse, the
-worktree kept and its caches gone (reader RH's M1; B-69).
+on the removal, which carries all four pins (PR19/pc:333-334 at `2250830`,
+:310-311 at `173d83c`), would refuse, the worktree kept and its caches gone
+(reader RH's M1; B-69).
 
 A sixth incremental parser, beside change 1's five, reads porcelain v2 with
 `-z`: an ignored record is `! `, then a NUL-terminated path, a directory's path
@@ -657,8 +694,8 @@ and its line names it.
 A cap reached keeps the row `ignored-local-files` and the plan complete, so the
 batch removes everything else. A later run takes the rows that
 `deferred-target-cap` defers as the rows ahead of them are removed or excluded
-by a gate before the cap, as PR #19's deferral drains (PR19/pc:1057-1071 at
-`20084cd`, :1025-1039 at `b3228bb`, as at its round (c)); the candidates that
+by a gate before the cap, as PR #19's deferral drains (PR19/pc:1059-1073 at
+`2250830`, :1025-1039 at `b3228bb`, as at its round (c)); the candidates that
 the invocation's totals leave as the candidates ahead of them are removed,
 cease to be candidates or cease to count toward those totals (round B13, W33's
 M-1); and, unless each of the 16 enumerated candidates is held for a persistent
@@ -816,17 +853,18 @@ reconcilable-result and revalidation blocks on `b3228bb`, its round (h) (B-76,
 B-80, B-84), round B17 the retire and reconcilable-result blocks on `e0c91bb`,
 its round (i) (B-87), round B18 those two and the revalidation block on
 `e14ada0`, its round (j) (B-88), round B19 the retire and revalidation blocks
-on `173d83c`, its round (k) (B-93), and round B21 the bounds block on
-`20084cd`, its round (m) (B-99), whose D14 and task 2.1 cite here at
+on `173d83c`, its round (k) (B-93), round B21 the bounds block on `20084cd`,
+its round (m) (B-99), and round B22 the retire, reconcilable-result and bounds
+blocks on `2250830`, its round (n) (B-104), whose D14 and task 2.1 cite here at
 `4f1c0e0` are its round (f)'s at `662be89`, byte for byte, the strings quoted
-here unchanged at `20084cd`; on its 150 ms basis every figure of this paragraph
+here unchanged at `2250830`; on its 150 ms basis every figure of this paragraph
 for a plan that read `extensions.worktreeConfig` as false is unchanged, none of
-the six and no change of rounds (g) to (m) to its spec text or its D14 stating
+the six and no change of rounds (g) to (n) to its spec text or its D14 stating
 a count of children or a time, save round (h)'s count for a path that holds a
 line feed, below. PR #19's D14 (its design.md:898-1062) has F = 8, D21's
 reachability probe for at most 16 rows, and six revalidation children a target,
 seven where the plan read `extensions.worktreeConfig` as true
-(PR19/pc:1080-1088 at `20084cd`, PR19/rs:76-79), and since round (h) nine and
+(PR19/pc:1082-1090 at `2250830`, PR19/rs:76-79), and since round (h) nine and
 ten, with a final rescan of six, where the path of the repository's root or of
 its common directory holds a line feed (its design.md:976-987 at `b3228bb`), a
 case that this section's arithmetic, which is for paths without a line feed,
@@ -1910,9 +1948,9 @@ cache phase" and "A file placed in a cache directory during the stage".
 2. Before the Speckit handoff (`tasks.md` section 2): change 1 archived after
    feature 004 merges, with PR #19's amendment of change 1 landed (L-16), or
    PR #19 closed, and the eight blocks written on its text, one at `6bf9f77`,
-   two at `f0bf538`, one at `b3228bb`, one at `e14ada0`, two at `173d83c` and
-   one at `20084cd`, whose text `20084cd` keeps byte for byte (B-54, B-58,
-   B-60, B-69, B-76, B-80, B-84, B-87, B-88, B-93, B-95, B-99), re-checked, or
+   two at `f0bf538`, one at `b3228bb`, one at `173d83c` and three at `2250830`,
+   whose text `2250830` keeps byte for byte (B-54, B-58, B-60, B-69, B-76,
+   B-80, B-84, B-87, B-88, B-93, B-95, B-99, B-104), re-checked, or
    re-based on change 1's text at main if PR #19 closes unmerged (B-52), each
    block written on change 1's or PR #19's text checked by the two diffs below,
    a change to this change's added text returning the block to Brett Heap
@@ -1957,8 +1995,8 @@ them would still show additions only, validate and archive. The second,
 `diff -u` of this change's block as committed at its ratified head against the
 re-based block, shows only the archived block's own text carried in: for the
 eight blocks written on PR #19's text, change 1's archived text in place of PR
-#19's at each block's base, `6bf9f77`, `b3228bb`, `e14ada0`, `173d83c`,
-`20084cd` or `f0bf538`; and for the `project-overview` block, main's text in
+#19's at each block's base, `6bf9f77`, `b3228bb`, `173d83c`, `2250830` or
+`f0bf538`; and for the `project-overview` block, main's text in
 place of change 2's at `961c405`, every amendment that landed there included.
 Any change that the second diff shows to this change's own ratified words, its
 added sentences, clauses and scenarios and its edits of carried scenarios,
