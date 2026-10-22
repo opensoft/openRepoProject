@@ -673,9 +673,20 @@ restores its mtime still shows by its ctime under a repository's
 | narrowed ref listing (revalidation) | row 6's format with patterns naming the merge target, the manifest's candidate, the branch `origin/HEAD` named, `main`, `master`, `refs/remotes/origin/HEAD`, and the selected branches and their upstreams | `root` |
 | remote URL | `-C ROOT remote get-url origin` | `root` (push; `handoff()` in `status` and `doctor`, for an inspected repository only, R-66 (c)) |
 | removal | `-c status.showUntrackedFiles=normal -c core.untrackedCache=false -c core.fsmonitor=false -c core.trustctime=true -c core.checkStat=default` + protocol pins + `-C ROOT worktree remove PATH` | `root`; PATH the registry's raw bytes, one argument, never `--force` |
-| branch deletion | protocol pins + `-C ROOT branch -d -- BRANCH` | `root`; a D2 handle run by the driver with no budget, its output relayed to `project`'s streams; `--` ends the options, as push's has, so that a name that begins with `-` is a branch and never an option (lane 3's W52 F-4; lead ruling R-259) |
+| branch deletion | protocol pins + `-C ROOT branch -d -- BRANCH` | `root`; a D2 handle run by the driver with no budget, its output relayed to `project`'s streams; `--` ends the options, as push's has, so that a name that begins with `-` is a branch and never an option (lane 3's W52 F-4; lead ruling R-259; a departure, declared below the table) |
 | upstream mapping | `-C ROOT config --get-all branch.BRANCH.remote`, then `branch.BRANCH.merge` | push only, for a branch with a configured upstream, after the plan's checks; one value each, REMOTE not `.` and MERGE under `refs/heads/` and not that prefix alone, or `Unsupported upstream mapping for BRANCH: U` (lead ruling R-101 (e); lane 3's F2 H-2) |
 | push | `-C ROOT push -- REMOTE refs/heads/BRANCH:MERGE`, or, with no upstream, `push -u -- origin refs/heads/BRANCH:refs/heads/BRANCH` after `remote get-url origin` finds an `origin`; never a `+`, `--` ending the options; no protocol pins (lead ruling R-101 (e); lane 3's F2 H-1, M-1) | `root`; run by `execute()`, not the driver: `project`'s own streams, never read or capped; `project`'s process group, in the terminal's foreground when `project` is; never signalled, waited for, unbounded; yields no evidence |
+
+The `--` in branch deletion's vector is an accepted departure, declared
+here beside its row, since it changes a printed line: the `Cleanup action:`
+command line and the child's own words read `branch -d -- BRANCH`, where
+the baseline's read `branch -d BRANCH`, and neither the packet (BA:424-425)
+nor draft PR #19 states the `--`. Without it Git reads a branch named `-f`
+as an option (`fatal: branch name required`, exit 128, the branch kept), so
+the retry `--branch=-f` that #26 prints could never succeed; with it, as
+push's vector has it, `git branch -d -- -f` deletes the branch (lane 3's
+W52 F-4; lead ruling R-259; writer E's `02aa71d`, merged as `d764c26`).
+#19's round (h) is to add the `--` to #19's design.
 
 Row 6 cannot establish the upstream of a branch named `HEAD`
 (`refs/heads/HEAD`), because `git for-each-ref` reports the current branch's

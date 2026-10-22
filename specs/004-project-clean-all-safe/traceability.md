@@ -200,8 +200,7 @@ between its lstat and its read is pinned too, by
 `test_clean_a_dot_git_file_gone_between_its_lstat_and_its_read` (T083), which
 no scenario title names. Lane 3's W49 LOW-3 adds
 `test_clean_an_identity_probe_that_fails_with_no_work_time_left_at_revalidation`
-(T083; writer `impl/004-w49-low3`'s `16c4474`, which the lead merges into 004
-and which is not yet on this branch), step 1's `work_spent(run)` arm: an
+(T083; writer `impl/004-w49-low3`'s `16c4474`, merged as `b60792c`), step 1's `work_spent(run)` arm: an
 identity probe that fails with exit 128 with no work time left ends the target
 `not-attempted` with `deadline-exceeded`.
 
@@ -240,8 +239,8 @@ revalidation reads cut at the work deadline,
 `test_clean_a_ref_listing_that_decides_nothing_at_revalidation` and
 `test_clean_a_dot_git_file_gone_between_its_lstat_and_its_read` (T083), and
 `test_clean_an_identity_probe_that_fails_with_no_work_time_left_at_revalidation`
-(T083; lane 3's W49 LOW-3, writer `impl/004-w49-low3`'s `16c4474`, to be merged
-into 004 by the lead), and lane 3's W52 and W59 tests (writer E's `02aa71d` and
+(T083; lane 3's W49 LOW-3, writer `impl/004-w49-low3`'s `16c4474`, merged as
+`b60792c`), and lane 3's W52 and W59 tests (writer E's `02aa71d` and
 `64ad453`; the lead's R-259):
 `test_clean_a_branch_deletion_passes_the_name_after_double_dash` (F-4) and
 `test_clean_a_branch_the_main_worktree_holds_is_deleted_after_either_remedy`
