@@ -829,7 +829,12 @@ holds:
    ancestor of the merge target's SHA, a commit being named when it is the new
    object of an entry of `logs/refs/heads/<branch>`, as the `unstarted-branch`
    gate read it, or the non-zero old object of one, the oldest surviving entry's
-   old object included. The proof SHALL be one Git child per repository,
+   old object included. The plan SHALL NOT repeat that read: a read that fails
+   or does not finish is the gate's own outcome, a row excluded as
+   `reflog-unavailable` or `inspection-error`, or left unprobed with the plan
+   incomplete, as the gate's rule above states, so that no row reaches this
+   keep without a read the gate finished, and the plan's own failed proof is
+   its Git child's alone. The proof SHALL be one Git child per repository,
    `rev-list --max-count=1 --stdin`, given on its standard input the named
    commits of every selected row, one per line, and then the one line
    `^<merge target SHA>`, `^` immediately followed by the merge target's SHA
@@ -1090,11 +1095,17 @@ order:
   checked out at PATH2, so check out its tip TARGET_SHA detached in the main
   worktree, then: RETRY`, the `git-refused` line carrying `; if a rebase or
   bisect in another worktree holds BRANCH, wait for it to end and remove that
-  worktree` before its `; next: `; for `branch-in-use`, `; next: BRANCH is
-  checked out at PATH2; remove that worktree first`; for `branch-shared`,
-  printed only
-  when the run did not remove the branch's last holder PATH2, the same next
-  step; for `branch-changed`, `; now at SHA2; inspect it before retrying:
+  worktree, or, for the main worktree, which Git refuses to remove, switch it
+  off BRANCH, by checking out another branch there, such as MERGE_TARGET, or
+  by detaching it` before its `; next: `; for `branch-in-use`, `; next: BRANCH
+  is checked out at PATH2; remove that worktree first`, or, when PATH2 is the
+  main worktree, which Git refuses to remove, `; next: BRANCH is checked out at
+  PATH2, the main worktree; switch it off BRANCH, by checking out another
+  branch there, such as MERGE_TARGET, or by detaching it, then: RETRY`; for
+  `branch-shared`, printed only when the run did not remove the branch's last
+  holder PATH2, a selected row and so never the main worktree, the first of
+  those next steps; for `branch-changed`, `; now at SHA2; inspect it before
+  retrying:
   RETRY`; for `reflog-unmerged`, whether its proof printed a commit, the plan's
   proof failed, or the re-proof found the reflog missing, empty, at its bound
   or undecidable, `; its reflog is not proven merged into MERGE_TARGET;
@@ -1102,7 +1113,10 @@ order:
   for `git-refused`
   when the branch's upstream remote-tracking ref is present, `; if a rebase
   or bisect in another worktree holds BRANCH, wait for it to end and remove
-  that worktree; then retry: RETRY`; and otherwise `; retry: RETRY`.
+  that worktree, or, for the main worktree, which Git refuses to remove,
+  switch it off BRANCH, by checking out another branch there, such as
+  MERGE_TARGET, or by detaching it; then retry: RETRY`; and otherwise
+  `; retry: RETRY`.
 
 RETRY is `project clean ROOT --apply --action delete-branch --branch
 BRANCH`, or `--branch=BRANCH` for a name that begins with `-`, the explicit
@@ -1243,13 +1257,21 @@ N; branches kept: `; and then the residual-window line.
   null, one branch child runs, and the exit status is 0
 - **AND** run without `--yes` at a terminal, its question reads `Remove 2
   worktrees and retire their 1 local branch? [yes/N]`
-- **AND** when a dirty linked worktree, or the main worktree, also has the
-  branch checked out, the plan lists `  remove <second path>; keep <branch>
-  (checked out at <holder path>)`, no branch child runs, the second target's
-  `branch_retirement` is `not-attempted` with `branch-in-use`, the result
-  prints `Kept <branch> (branch-in-use); next: <branch> is checked out at
-  <holder path>; remove that worktree first`, the holder and the branch
-  remain, and the exit status is 0
+- **AND** when a dirty linked worktree also has the branch checked out, the
+  plan lists `  remove <second path>; keep <branch> (checked out at <holder
+  path>)`, no branch child runs, the second target's `branch_retirement` is
+  `not-attempted` with `branch-in-use`, the result prints `Kept <branch>
+  (branch-in-use); next: <branch> is checked out at <holder path>; remove that
+  worktree first`, the holder and the branch remain, and the exit status is 0
+- **AND** when instead the main worktree also has the branch checked out, the
+  plan lists `  remove <second path>; keep <branch> (checked out at <holder
+  path>)`, no branch child runs, the second target's `branch_retirement` is
+  `not-attempted` with `branch-in-use`, the result prints `Kept <branch>
+  (branch-in-use); next: <branch> is checked out at <holder path>, the main
+  worktree; switch it off <branch>, by checking out another branch there, such
+  as <merge target>, or by detaching it, then: project clean <root> --apply
+  --action delete-branch --branch <branch>`, the holder and the branch remain,
+  and the exit status is 0
 - **AND** when instead a test hook checks the branch out in a new worktree
   after the second removal and before its rescan, the second target's
   `branch_retirement` is `retained` with `branch-in-use`, no branch child
@@ -1302,8 +1324,10 @@ N; branches kept: `; and then the residual-window line.
   `branch-retention-stop`, and the exit status is 2
 - **AND** the result prints `Kept <branch> (git-refused); if a rebase or bisect
   in another worktree holds <branch>, wait for it to end and remove that
-  worktree; then retry: project clean <root> --apply --action delete-branch
-  --branch <branch>`
+  worktree, or, for the main worktree, which Git refuses to remove, switch it
+  off <branch>, by checking out another branch there, such as <merge target>,
+  or by detaching it; then retry: project clean <root> --apply --action
+  delete-branch --branch <branch>`
 - **AND** when instead, with the real Git first on PATH, a test hook starts in
   another worktree, after the first target's rescan and before its re-read, a
   rebase of the first branch that stops at once, so that the registry listing
@@ -1317,9 +1341,11 @@ N; branches kept: `; and then the residual-window line.
   Git refuses the deletion with exit 1, the target's `branch_retirement` is
   `retained` with `git-refused`, the branch remains, the result prints `Kept
   <branch> (git-refused); if a rebase or bisect in another worktree holds
-  <branch>, wait for it to end and remove that worktree; next: check out
-  <merge target> in the main worktree, then: project clean <root> --apply
-  --action delete-branch --branch <branch>`, and the exit status is 2
+  <branch>, wait for it to end and remove that worktree, or, for the main
+  worktree, which Git refuses to remove, switch it off <branch>, by checking
+  out another branch there, such as <merge target>, or by detaching it; next:
+  check out <merge target> in the main worktree, then: project clean <root>
+  --apply --action delete-branch --branch <branch>`, and the exit status is 2
 
 #### Scenario: The deadline before the branch stage
 
@@ -1601,9 +1627,11 @@ N; branches kept: `; and then the residual-window line.
 - **AND** when instead a test `git` whose `branch -d` refuses with exit 1 is
   first on PATH, the branch's upstream remote-tracking ref present, the result
   prints `Kept topic;id (git-refused); if a rebase or bisect in another
-  worktree holds topic;id, wait for it to end and remove that worktree; then
-  retry: project clean '<root>' --apply --action delete-branch --branch
-  'topic;id'`
+  worktree holds topic;id, wait for it to end and remove that worktree, or,
+  for the main worktree, which Git refuses to remove, switch it off topic;id,
+  by checking out another branch there, such as <merge target>, or by
+  detaching it; then retry: project clean '<root>' --apply --action
+  delete-branch --branch 'topic;id'`
 - **AND** when instead the branch's reflog names a commit the merge target
   lacks, the result prints `Kept topic;id (reflog-unmerged); its reflog is not
   proven merged into <merge target>; inspect git -C '<root>' reflog show
