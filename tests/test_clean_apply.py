@@ -16,6 +16,7 @@ Expected human text comes from clean_support's fixtures (rule 8), and the
 contract's key tuples are written here as literals.
 """
 import contextlib
+import errno
 import io
 import json
 import os
@@ -1105,6 +1106,158 @@ class ApplyTests(clean_support.CleanCase):
         self.assertEqual(result.stderr, "\n".join(self.plan_lines(root, selected) + self.result_lines(selected)) + "\n")
         self.assertEqual(len(removals(clean_support.child_log(log))), 2)
         self.assertFalse(any(tree.exists() for tree in trees))
+        self.assertEqual(self.branches(root), branches)
+
+
+    # Lead ruling R-322 (Codex's P2 on PR #33): standard output closed when
+    # project starts, under --json, is a failed write before the apply phase.
+
+    def run_with_standard_output_closed(self, argv, env):
+        """Run argv with descriptor 1 closed when project starts, as
+        `exec "$@" >&-` closes it (so sys.stdout is None), standard input empty
+        and standard error on a pipe. Returns the exit status and standard
+        error as text."""
+        result = subprocess.run(["/bin/sh", "-c", 'exec "$@" >&-', "sh", *argv], cwd=self.base, env=env,
+                                stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL, stderr=subprocess.PIPE,
+                                timeout=clean_support.TIMEOUT)
+        return result.returncode, result.stderr.decode("utf-8", "replace")
+
+    def assert_apply_json_with_standard_output_closed_removes_nothing(self, *form):
+        # --apply --yes --json writes nothing to standard output before the
+        # apply phase (the human plan goes to standard error and --yes skips the
+        # question), so with descriptor 1 closed when project starts no write
+        # had failed when the removals began: they ran, and the result record,
+        # written best-effort, went nowhere, with exit 0 and no JSON. The rule
+        # (R-322): that is a failed write before the apply phase, the one
+        # write_document() records for it (EBADF), so the run refuses as
+        # `internal-error`, exit 2, with no removal child spawned, as R-101 (b)
+        # does for `clean --json`. The batch is two merged worktrees; the form
+        # names its own arguments, the first worktree's path where it needs one.
+        root, trees = self.merged_repository("001-a", "002-b")
+        env, log = self.counting()
+        before = self.snapshot(root, trees.values())
+        branches = self.branches(root)
+        words = [trees["001-a"] if word is None else word for word in form]
+        status, err = self.run_with_standard_output_closed(
+            clean_support.cli_argv("clean", root, *words, "--apply", "--yes", "--json"), env)
+        self.assertEqual(status, 2, err)
+        self.assertNotIn("Traceback", err)
+        self.assertNotIn("Exception ignored", err)
+        self.assertEqual(removals(clean_support.child_log(log)), [], "no removal child")
+        self.assertTrue(all(tree.is_dir() for tree in trees.values()), "every worktree kept")
+        self.assertEqual(self.snapshot(root, trees.values()), before)
+        self.assertEqual(self.branches(root), branches)
+
+    def test_clean_all_safe_apply_json_with_standard_output_closed_at_startup_removes_nothing(self):
+        self.assert_apply_json_with_standard_output_closed_removes_nothing("--all-safe")
+
+    def test_clean_single_apply_json_with_standard_output_closed_at_startup_removes_nothing(self):
+        # Mode single, --action remove --worktree P: the same rule, one target.
+        self.assert_apply_json_with_standard_output_closed_removes_nothing("--action", "remove", "--worktree", None)
+
+    def test_clean_standard_output_closed_at_startup_refuses_as_the_write_error(self):
+        # The refusal's content, which a closed descriptor 1 leaves no stream to
+        # carry: run_clean() in process with sys.stdout None, as a closed
+        # descriptor 1 gives it, ends in the `internal-error` refusal of the
+        # EBADF that write_document() records for it (R-101 (b), F3; the
+        # extended error object holds this message), before any removal child.
+        root, trees = self.merged_repository("001-a")
+        env, log = self.counting()
+        args = project.parser().parse_args(["clean", os.fspath(root), "--all-safe", "--apply", "--yes", "--json"])
+        err = io.StringIO()
+        with self.in_process(env, "clean"), mock.patch.object(project.sys, "stdout", None), \
+                contextlib.redirect_stderr(err), self.assertRaises(project.Refused) as caught:
+            project.run_clean(args)
+        self.assertEqual(caught.exception.code, "internal-error")
+        self.assertEqual(str(caught.exception), TEXT["internal_error"].format(
+            TYPE="OSError", TEXT=f"[Errno {errno.EBADF}] {os.strerror(errno.EBADF)}"))
+        self.assertEqual(removals(clean_support.child_log(log)), [], "no removal child")
+        self.assertTrue(trees["001-a"].is_dir())
+
+    def test_clean_push_and_delete_branch_with_json_never_reach_the_apply_phase(self):
+        # --apply --json with --action push or delete-branch is `invalid-arguments`
+        # (OQ-10), refused before any child; with standard output closed there
+        # is no document to carry it, so the run ends with exit 2 and runs no
+        # push and no deletion (R-322: no form of --apply --json goes on with
+        # its standard output closed at startup).
+        root, trees = self.merged_repository("001-a")
+        env, log = self.counting()
+        before = self.snapshot(root, trees.values())
+        branches = self.branches(root)
+        for action in ("push", "delete-branch"):
+            with self.subTest(action=action):
+                clean_support.reset_child_log(log)
+                argv = clean_support.cli_argv("clean", root, "--apply", "--action", action, "--branch", "001-a",
+                                              "--yes", "--json")
+                status, err = self.run_with_standard_output_closed(argv, env)
+                self.assertEqual(status, 2, err)
+                self.assertNotIn("Traceback", err)
+                self.assertEqual(clean_support.child_log(log), [], "no child")
+                self.assertEqual(self.snapshot(root, trees.values()), before)
+                self.assertEqual(self.branches(root), branches)
+
+    def test_clean_check_writes_records_a_missing_json_stream_only_under_json(self):
+        # R-322's boundary, in process: the check after printing raises the
+        # EBADF of a standard output that is None under --json, and only
+        # there. Without --json (the human stream, which lane 3 records as open,
+        # F4 L-2) and with a stream present it raises nothing and records
+        # nothing.
+        def check(json_output, stdout):
+            run = types.SimpleNamespace(args=types.SimpleNamespace(json=json_output), write_error=None)
+            with mock.patch.object(project.sys, "stdout", stdout):
+                try:
+                    project.check_writes(run)
+                except OSError as exc:
+                    return run, exc
+            return run, None
+
+        run, raised = check(True, None)
+        self.assertEqual((raised.errno, run.write_error), (errno.EBADF, raised))
+        for label, json_output, stdout in (("no --json", False, None), ("a stream", True, io.StringIO()),
+                                           ("neither", False, io.StringIO())):
+            with self.subTest(case=label):
+                run, raised = check(json_output, stdout)
+                self.assertEqual((raised, run.write_error), (None, None))
+
+    def test_clean_a_reader_that_closes_after_the_apply_phase_began_keeps_the_removals(self):
+        # R-322 leaves a reader that disconnects once the apply phase has begun
+        # as it was (R-55, P-9): the removals continue, the result record's
+        # failed write is best-effort and recorded, and the exit is D19's, 0,
+        # with no traceback. The first removal child waits in the counting
+        # wrapper's pre-hook, so the test closes the read end of standard
+        # output while the apply phase is under way, then releases it.
+        root, trees = self.merged_repository("001-a", "002-b")
+        started, release = self.base / "removal-started", self.base / "removal-release"
+        hook = (f"touch {shlex.quote(str(started))}; n=0; while [ ! -e {shlex.quote(str(release))} ] "
+                "&& [ $n -lt 400 ]; do sleep 0.05; n=$((n+1)); done")
+        bin_dir, log = self.base / "counting-bin", self.base / "children.log"
+        clean_support.install_counting_git(bin_dir, log, hooks={"pre": hook})
+        clean_support.reset_child_log(log)
+        branches = self.branches(root)
+        child = subprocess.Popen(clean_support.cli_argv("clean", root, "--all-safe", "--apply", "--yes", "--json"),
+                                 cwd=self.base, env=self.path_first(bin_dir), stdin=subprocess.DEVNULL,
+                                 stdout=subprocess.PIPE, stderr=subprocess.PIPE, start_new_session=True)
+        try:
+            deadline = time.monotonic() + clean_support.TIMEOUT
+            while child.poll() is None and not started.exists():
+                if time.monotonic() > deadline:
+                    self.fail(f"no removal started within {clean_support.TIMEOUT} s")
+                time.sleep(0.01)
+            self.assertIsNone(child.poll(), "the apply phase is under way")
+            child.stdout.close()  # the reader disconnects after the apply phase began
+            release.touch()
+            _, err = child.communicate(timeout=clean_support.TIMEOUT)
+        finally:
+            release.touch()
+            if child.poll() is None:
+                os.killpg(child.pid, signal.SIGKILL)
+                child.communicate()
+        err = err.decode("utf-8", "replace")
+        self.assertEqual(child.returncode, 0, err)
+        self.assertNotIn("Traceback", err)
+        self.assertNotIn("Exception ignored", err)
+        self.assertEqual(len(removals(clean_support.child_log(log))), 2)
+        self.assertFalse(any(tree.exists() for tree in trees.values()))
         self.assertEqual(self.branches(root), branches)
 
 

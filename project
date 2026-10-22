@@ -3750,7 +3750,22 @@ def check_writes(run):
     write error, if any. The pipeline calls it after the plan is printed and
     after the question, so before the apply phase a failed write ends the run:
     run_clean() makes the OSError `internal-error`, exit 2, and clean() makes
-    it Interrupted when a signal was recorded first."""
+    it Interrupted when a signal was recorded first.
+
+    A `--json` run whose standard output was closed when project started
+    (sys.stdout None, the stream say() skips) has no stream to flush, and an
+    `--apply --json` run writes nothing to it before the apply phase (the
+    human plan goes to standard error, and --yes skips the question), so no
+    write would fail until the result record, which the apply phase writes
+    best-effort after the removals. It is recorded here as the failed write
+    write_document() records for it, EBADF, so that the run refuses before any
+    removal, as `internal-error`, exit 2, whichever form of --apply --json it
+    is (lead ruling R-322, Codex's P2 on PR #33; R-101 (b), F3). A reader that
+    disconnects once the apply phase has begun is another case, and stays
+    best-effort: removals continue, and write_document() records the failed
+    write as before."""
+    if sys.stdout is None and getattr(getattr(run, "args", None), "json", False):
+        write_failed(run, None, OSError(errno.EBADF, os.strerror(errno.EBADF)))
     for stream in (sys.stdout, sys.stderr):
         if stream is None:
             continue
@@ -7173,7 +7188,9 @@ def clean(args):
     probe groups reaped, `Cancelled.`, 130, 143 or 129, no document), and an
     exception that leaves the scope with the slot set in `planning` becomes
     Interrupted. A failed write before the apply phase ends the run as
-    `internal-error`, exit 2 (check_writes(); R-55)."""
+    `internal-error`, exit 2 (check_writes(); R-55), and so does a --json run
+    whose standard output was closed when project started, before any removal
+    (check_writes(); R-322)."""
     run = None
     try:
         with signal_scope() as scope:
