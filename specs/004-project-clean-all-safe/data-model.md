@@ -525,15 +525,18 @@ SIGINT), with `git_file_read`, whether the read was made, false until the
 rescan makes it, and in no record, so that no document carries either: the
 reconciliation record, `notes` and the JSON result are unchanged. Only the
 human partial-removal note of the result reads them (`partial_removal_text()`),
-in this order. First, where `git_file_read` is true and `git_file_present` is
-null, whatever the record shows of the entry (the read is made only where the
-rescan shows the entry and the path present), `Probable partial removal:
+in this order. First, where `git_file_read` is true and `git_file_present` is null, or where
+the reconciliation record's `path_present` is null (the lstat of the target's
+own path failed other than for absence, as where a directory above the target
+denies search, so that no read was made), whatever the record shows of the
+entry (the read is made only where the rescan shows the entry and the path
+present), `Probable partial removal:
 inspect PATH by hand; its .git could not be read, so do not run git worktree
 prune until it can.`, since `git worktree prune` deletes the admin directory of
 a live worktree whose `.git` Git cannot stat (`EACCES`, for a worktree
 directory the process may not search; #19's round (i) at `1a4785e`; lane 3's
 W73 M-1; lead ruling R-284, which Brett Heap ruled "R-284: yes", R-290;
-writer G's `6a32d10`, merged as `3bc1d68`). Otherwise D18's `git worktree
+writer G's `6a32d10`, merged as `3bc1d68`; for the null path, lane 3's W90 M-1, lead ruling R-329, which applies Brett Heap's R-284 as ruled; writer's `b96b335`, merged as `7149e08`). Otherwise D18's `git worktree
 remove --force` form where `registry_entry_present` and `git_file_present` are
 both true, and `Probable partial removal: inspect, then git worktree prune and
 delete PATH by hand.` for the rest, since Git refuses `git worktree remove

@@ -985,7 +985,7 @@ T033), when B, D, E and F are; H, guard (T034, T035), when T023 is, beside G
   ending in one, is W, at planning and strictly at revalidation; another path,
   two lines of one other path included, is False in both; empty output, W's
   path with no closing line feed and a line feed alone are False at planning
-  and a probe that decided nothing, None with its row error, at revalidation);
+  and a probe that decided nothing, None with its row error, at revalidation; each case runs again with the working directory at the worktree, where an empty path would read as the worktree itself, a difference observable only there: lead ruling R-291; lane 3's W90 L-1; writer's `488d6f6`, merged as `7149e08`);
   `test_clean_a_work_tree_probe_whose_output_is_empty_or_ends_in_no_line_feed`
   (where row 4c reads true, a fake Git answering the probe in W alone: W's
   path and one line feed leaves W `merged-removable` and selected, nothing and
@@ -2981,7 +2981,7 @@ US3, US7 and US9; US5's text lane follows it (analyze M2 and L9).
   `not-attempted` with `deadline-exceeded`, exit 1);
   `test_clean_a_work_tree_probe_that_decides_nothing_at_revalidation` (where
   row 4c read true, the work-tree probe exiting 128, timing out, printing
-  nothing or printing P's own path with no closing line feed: `state-changed`;
+  nothing, printing only a line feed or printing P's own path with no closing line feed: `state-changed`, a line feed alone naming no path (lead ruling R-291; lane 3's W90 L-1; writer's `488d6f6`, merged as `7149e08`);
   printing two lines, which are one other path: `identity-changed`, since its
   output, less the one closing line feed, is read as one path (lead ruling
   R-287; lane 3's W70 M-2; writer G's `4dfd6f5`); cut by the work deadline:
@@ -3204,13 +3204,19 @@ US3, US7 and US9; US5's text lane follows it (analyze M2 and L9).
   which Brett Heap ruled "R-284: yes", R-290; writer G's `6a32d10`, merged as
   `3bc1d68`), and in no record, so that the reconciliation record and the
   JSON result are unchanged; only `partial_removal_text()` reads them (T091,
-  T094). Its test,
+  T094).
+  Where the `lstat` of the target's own path failed other than for absence, as
+  where a directory above the target denies search, `path_present` is null, no
+  read is made, and `partial_removal_text()` reads the null path in the record
+  as the same unread `.git` (lane 3's W90 M-1, lead ruling R-329, which
+  applies Brett Heap's R-284 as ruled; writer's `b96b335`, merged as
+  `7149e08`). Its test,
   `test_clean_rescan_reads_the_git_file_where_the_entry_and_the_path_remain`,
   is in `tests/test_clean_apply.py`, beside T056's rescan tests, and this
   task's verify names it: the `.git` file present, gone (as a kill part way
   through `git worktree remove` leaves it), cut at its budget and abandoned by
   a second SIGINT, and the entry or the path gone, where no read is made, each
-  with the lstat last and the rescan's three children only; the `.git` file
+  with the lstat last and the rescan's three children only, and, in a subtest, a directory above the target that denies search (skipped as the superuser): the rescan leaves `path_present` null and `git_file_present` None, `decide_stage()` gives `unknown` with `removal-ceiling`, and `partial_removal_text()` gives `partial_removal_note_unread`; the `.git` file
   and the admin directory are renamed aside and back, and nothing is deleted
   recursively.
   — files: `project`, `tests/test_clean_revalidation.py`
@@ -3370,7 +3376,8 @@ lead ruling R-83).
   --verbose` names the live worktree's admin directory for removal, which is
   what the prune note would have led to, and with the permission back nothing
   is prunable and `git worktree remove --force` removes the worktree, the
-  branch kept).
+  branch kept; since lane 3's W90 M-1 (lead ruling R-329) a rescan whose lstat of
+  the target's own path failed gives the same note, which T091's table pins).
   — files: `tests/test_clean_result.py`
   — verify: `python3 -c "import sys,unittest as u;L=u.defaultTestLoader;f=lambda s:[i for t in s for i in (f(t) if isinstance(t,u.TestSuite) else [t.id()])];I=[i for i in f(L.discover('tests',pattern=sys.argv[1])) if not i.startswith('unittest.')];A=sys.argv[2:];M=[a for a in A if not any(a in ('*',i.split('.')[-1]) for i in I)];[print('not collected:',m) for m in M];[print(e) for e in L.errors];sys.exit(1 if M or L.errors or not A else 0)" test_clean_result.py 'test_clean_a_removal_past_the_hard_ceiling' 'test_clean_unreadable_path_after_removal' 'test_clean_exception_after_the_apply_phase_begins' 'test_clean_the_ceiling_s_recovery_text_follows_the_git_file_and_the_entry' 'test_clean_the_ceiling_s_recovery_text_where_the_git_file_cannot_be_read'`
 - [x] T090 [P] [US5] [S] Add `test_clean_stage_and_reason_table` to
@@ -3438,7 +3445,7 @@ lead ruling R-83).
   its `.git` read, through the module's `with_git_file()`, true, and keeps
   the `--force` note; and
   `test_clean_the_ceiling_s_partial_removal_note_follows_the_git_file_and_the_entry`
-  (nine literal targets through `partial_removal_text()` and `print_result()`,
+  (twelve literal targets through `partial_removal_text()` and `print_result()`,
   built with the module's `with_git_file(target, present, read)`:
   `partial_removal_note`, the `--force` form, only where the entry and the
   `.git` file are both shown present, and `partial_removal_note_prune`,
@@ -3450,7 +3457,11 @@ lead ruling R-83).
   `Probable partial removal: inspect PATH by hand; its .git could not be read,
   so do not run git worktree prune until it can.`, wherever the `.git` read was
   made and gave no value, whatever the record shows of the entry, three of the
-  nine; the note prints first and once; a target that is a plain dict, which
+  twelve, and, since lane 3's W90 M-1 (lead ruling R-329, applying R-284 as Brett
+  Heap ruled it; writer's `b96b335`, merged as `7149e08`), wherever the
+  reconciliation record's `path_present` is null, the lstat of the target's own
+  path having failed, so that no `.git` read was made, whatever the record shows
+  of the entry, the other three, the rows "the path lstat failed"; the note prints first and once; a target that is a plain dict, which
   carries no `.git` read, takes the prune note; a report row's note is
   `partial_removal_note()`'s and keeps its text).
   — files: `tests/test_clean_stop.py`
@@ -3578,8 +3589,8 @@ lead ruling R-83).
   lead ruling R-263), `print_result()` prints the note of
   `partial_removal_text(target)`, in region `result`: first
   `partial_removal_note_unread` where `git_file_read` (T085) is true and
-  `git_file_present` is None, whatever the record shows of the entry (W73
-  M-1; R-284); otherwise `partial_removal_note` where the target's
+  `git_file_present` is None, or where the record's `path_present` is null, whatever the record shows of the entry (W73
+  M-1, R-284; W90 M-1, R-329); otherwise `partial_removal_note` where the target's
   reconciliation shows its registry entry present and its `git_file_present`
   is true, and `partial_removal_note_prune` for the rest; a report row's note
   is still `partial_removal_note()`'s.
