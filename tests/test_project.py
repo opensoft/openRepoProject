@@ -425,6 +425,9 @@ class ProjectTests(unittest.TestCase):
         # (fix-parent-obstacle-wording design D3).
         parent_file, file_link, dangling_link, dangling_target = self.parent_fixtures()
         file_line = OBSTACLE_PARENT_NOT_A_DIRECTORY.format(PARENT=parent_file)
+        # A parent that does not exist below the file: sentence (b) names the file as its ancestor
+        # (refuse-non-directory-parent-early design D2, D3 item 5).
+        below_line = OBSTACLE_PARENT_BELOW_A_NON_DIRECTORY.format(PARENT=parent_file / "sub", ANCESTOR=parent_file)
         return {"name": ("my-app", True, (), [name_line]),
                 "openRepoShape": ("MyApp", False, (), [OBSTACLE_OPENREPOSHAPE]),
                 "parent": ("MyApp", True, ("--into", absent), [parent_line]),
@@ -433,6 +436,9 @@ class ProjectTests(unittest.TestCase):
                 "link to the file parent": ("MyApp", True, ("--into", file_link), [file_line]),
                 "dangling link parent": ("MyApp", True, ("--into", dangling_link),
                                          [OBSTACLE_PARENT.format(PARENT=dangling_target)]),
+                "parent below a file": ("MyApp", True, ("--into", parent_file / "sub"), [below_line]),
+                "all three with the parent below a file": ("my-app", False, ("--into", parent_file / "sub"),
+                                                           [name_line, OBSTACLE_OPENREPOSHAPE, below_line]),
                 "all three with the file parent": ("my-app", False, ("--into", parent_file),
                                                    [name_line, OBSTACLE_OPENREPOSHAPE, file_line])}
 
@@ -1510,6 +1516,10 @@ class ProjectTests(unittest.TestCase):
                       "link to the file parent": (("MyApp", "--into", file_link), [file_line]),
                       "dangling link parent": (("MyApp", "--into", dangling_link),
                                                [OBSTACLE_PARENT.format(PARENT=dangling_target)])})
+        # A parent below the file (refuse-non-directory-parent-early design D3 item 5): sentence (b).
+        cases["parent below a file"] = (("MyApp", "--into", parent_file / "sub"),
+                                       [OBSTACLE_PARENT_BELOW_A_NON_DIRECTORY.format(
+                                           PARENT=parent_file / "sub", ANCESTOR=parent_file)])
         fixtures_before = sorted(self.base.rglob("*"))
         for label, (extra, obstacles) in cases.items():
             with self.subTest(label):
