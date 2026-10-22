@@ -654,6 +654,90 @@ class ApplyTests(clean_support.CleanCase):
             self.git(root, "branch", "-D", "001-a")
             self.assertEqual(project.rescan(entry, run), record(False, False, False, None))
 
+    def test_clean_rescan_reads_the_git_file_where_the_entry_and_the_path_remain(self):
+        # Lane 3's W52 F-1 (Brett Heap's ruling "F-1: prune-then-delete", lead
+        # ruling R-263): where the registry entry and the path are both shown
+        # present, the rescan ends with one lstat of the target's `.git`
+        # through fs_call(), no Git child, kept on the target as
+        # git_file_present and in no record. The `.git` file present and gone
+        # (a kill part way through `git worktree remove` leaves it gone), the
+        # lstat cut at its budget or interrupted by a second SIGINT (None, the
+        # record as the other reads made it), and the entry or the path gone
+        # (no read, None). No recursive delete: the `.git` file and the admin
+        # directory are renamed aside and back.
+        root, trees = self.merged_repository("001-a")
+        tree = trees["001-a"]
+        planned = self.head(tree)
+        dotgit = os.fsencode(tree / ".git")
+        admin = Path(self.git(tree, "rev-parse", "--path-format=absolute", "--git-dir").strip())
+        real_fs_call = project.fs_call
+
+        def rescan(answer=None):
+            """The rescan in a fresh Invocation, every lstat recorded and the
+            `.git` lstat answered by answer when given: (record, lstats, the
+            children it ran)."""
+            lstats = []
+
+            def fs_call(fn, *args, **options):
+                if fn is os.lstat:
+                    lstats.append(args[0])
+                    if answer is not None and args[0] == dotgit:
+                        if isinstance(answer, BaseException):
+                            raise answer
+                        return answer
+                return real_fs_call(fn, *args, **options)
+
+            with self.in_process() as run:
+                entry.identity = plan.evidence["identity"]
+                before = run.probes
+                with mock.patch.object(project, "fs_call", fs_call):
+                    found = project.rescan(entry, run)
+                return found, lstats, run.probes - before
+
+        with self.in_process() as run:
+            plan = self.plan_of(root, run, [tree])
+            entry = project.make_target(plan, plan.selected[0])
+        self.assertIsNone(entry.git_file_present)
+        kept = record(True, True, True, planned)
+        for label, answer, expected in [
+                ("present", None, True),
+                ("cut at its budget", project.DriverOutcome(None, "timeout", detail="cut here"), None),
+                ("a second SIGINT", project.Interrupted(signal.SIGINT), None)]:
+            with self.subTest(f"the .git file read: {label}"):
+                found, lstats, children = rescan(answer)
+                self.assertEqual((found, type(found)), (kept, dict))
+                self.assertIs(entry.git_file_present, expected)
+                self.assertEqual(lstats[-1], dotgit, "the .git lstat comes last")
+                self.assertEqual(children, 3, "rows 3, 4 and 6 only: no Git child reads the .git file")
+        aside = self.base / "dotgit-aside"
+        with self.subTest("the .git file gone, the entry and the path kept"):
+            os.rename(tree / ".git", aside)
+            try:
+                found, lstats, children = rescan()
+            finally:
+                os.rename(aside, tree / ".git")
+            self.assertEqual((found, entry.git_file_present, lstats[-1], children), (kept, False, dotgit, 3))
+        with self.subTest("the registry entry gone, the path kept"):
+            moved = admin.parent.parent / "admin-aside"
+            os.rename(admin, moved)
+            try:
+                found, lstats, children = rescan()
+            finally:
+                os.rename(moved, admin)
+            self.assertEqual((found, entry.git_file_present), (record(False, True, True, planned), None))
+            self.assertNotIn(dotgit, lstats, "no .git read without the entry")
+        with self.subTest("the path gone, the entry kept"):
+            moved = self.base / "tree-aside"
+            os.rename(tree, moved)
+            try:
+                found, lstats, children = rescan()
+            finally:
+                os.rename(moved, tree)
+            self.assertEqual((found, entry.git_file_present), (record(True, False, True, planned), None))
+            self.assertNotIn(dotgit, lstats, "no .git read without the path")
+        found, _, _ = rescan()
+        self.assertEqual((found, entry.git_file_present), (kept, True), "the fixture is restored")
+
     def test_clean_decide_stage_on_literal_outcomes(self):
         outcome = project.DriverOutcome
         gone, kept = record(False, False, True, SHA_A), record(True, True, True, SHA_A)

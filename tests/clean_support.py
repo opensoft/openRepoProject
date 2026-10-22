@@ -624,6 +624,9 @@ TEXT_FIXTURES = {
     "success_line": "Removed {N}; branches kept: {BRANCHES}.",
     "stop_block": "Stopped at {PATH} ({REASON}). Removed {K} of {N}. Not attempted: {NOT_ATTEMPTED}. Next: project clean {ROOT} --all-safe",
     "partial_removal_note": "Probable partial removal: inspect, then git worktree remove --force {PATH} by hand.",
+    # The ceiling's note where the rescan does not show both the target's .git and its
+    # registry entry present (W52 F-1; Brett Heap's ruling "F-1: prune-then-delete", R-263).
+    "partial_removal_note_prune": "Probable partial removal: inspect, then git worktree prune and delete {PATH} by hand.",
     # D18's note for a locked worktree (#19 at 4f1c0e0, design.md:1225-1228; W52 F-2, R-248),
     # which replaces ratified text and so waits on Brett Heap's word.
     "partial_removal_note_locked": "Probable partial removal: inspect, unlock it, then git worktree remove --force {PATH} by hand.",
