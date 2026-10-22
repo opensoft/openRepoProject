@@ -12,14 +12,17 @@ duplicate them.
   contract (`BA:1339-1345`) under the lane's rulings L-1 to L-9 and A-1 to A-7,
   on change 1's text at `961c405` and PR #19's at `c462d87` (`d66d02c`),
   `design.md` D7 also stating its fit at PR #19's `6f2cb54`, `a664799`,
-  `9267303` and `f0bf538` (rounds A9 to A12, rulings A-37 to A-42), the joint
-  fit with the cache change also at that change's own 3.7 s (round A13, ruling
-  A-44), `design.md` D8 giving a holder that is the main worktree its own
-  next step (round A14, ruling A-45), and its restatements of PR #19's moving
-  facts worded relatively (round A15, ruling A-50); verified by its
-  Capabilities section accounting for every canonical requirement of
-  `project-clean` and `project-clean-review-safety` and every requirement
-  change 1 adds to them.
+  `9267303` and `f0bf538` (rounds A9 to A12, rulings A-37 to A-42) and on its
+  measured basis at `662be89`, unchanged at its current head `6bf9f77` (round
+  A16, rulings A-47 and A-57), the joint fit with the cache change also at that
+  change's own 3.7 s (round A13, ruling A-44), `design.md` D8 giving a holder
+  that is the main worktree its own next step (round A14, ruling A-45), its
+  restatements of PR #19's moving facts worded relatively (round A15, ruling
+  A-50), and every `Kept` line whose next step is the retry for a branch the
+  stage did not re-prove naming the reflog inspection (round A16, rulings A-53
+  and A-55); verified by its Capabilities section accounting for every canonical
+  requirement of `project-clean` and `project-clean-review-safety` and every
+  requirement change 1 adds to them.
 - [x] 1.2 Alignment resolved: the stack-architect and qa-lead findings on
   `e7f3e65` (SA-1 to SA-5, QA-1 to QA-4) are applied, MISMATCH and DRIFT at
   once and qa-lead's GAP (QA-3) by its own scenario text, and the review's
@@ -123,7 +126,15 @@ duplicate them.
   A-48 to A-52), by `8f3ed60` (the spec deltas), `87a3e85` and `75ea447` (the
   design) and the commit that edits the proposal's body, records the round's
   table and updates this task; verified by "Re-read and Codex Findings (round
-  A15)" in `proposal.md`.
+  A15)" in `proposal.md`. Round A16, on `36adbc0`, applied the lane's rulings
+  A-47 (reader RH's item 6, as PR #19's round (f) at `662be89` triggered it),
+  A-53, A-54 (lane openRepoProject-3's departure ledger), A-55 and A-56 (that
+  lane's W60 confirm read of round A15, 0 HIGH, 1 MEDIUM and 4 LOW) and A-57
+  (PR #19's current head, `6bf9f77`), with the currency of PR #19 and main, by
+  `7f3c3da` and `131025b` (the spec deltas), `916e5a6`, `9d53a12`, `9d7c611`
+  and `fcc441e` (the design), `9f22b3a` (the proposal's body) and the commit
+  that records the round's table and updates this task; verified by
+  "Re-read and Codex Findings (round A16)" in `proposal.md`.
 - [x] 1.4 Spec deltas and design written: `specs/project-clean/spec.md`
   modifies five requirements and adds one (68 scenarios: 43 carried unchanged
   from change 1 and PR #19, 6, 14, 10, 5 and 8 by block, and 25 added, the
@@ -147,7 +158,11 @@ duplicate them.
   its `state-changed` definition and `Kept` next steps, the literals of four
   ADDED scenarios' ANDs, adding one AND to "The merge target moves before the
   branch stage" and editing the last AND of one review-safety scenario, under
-  rulings A-48 to A-51),
+  rulings A-48 to A-51, and round A16 adding no scenario, editing the
+  ADDED requirement's `Kept` next steps, one AND in each of three ADDED
+  scenarios, adding one AND to "The deadline before the branch stage", and
+  editing one sentence of the bounds block and the last AND of one
+  review-safety scenario, under rulings A-53, A-55 and A-56),
   `specs/project-clean-review-safety/spec.md` modifies one (4 scenarios: 3
   carried, 1 added), and `specs/project-command/spec.md` modifies one on PR
   #19's text (9 scenarios carried, none added; agreed by lane
@@ -156,9 +171,9 @@ duplicate them.
   each modified requirement's source text kept byte for byte; `design.md`
   holds D1 to D10 (`8341954`, `d0b33ce`, and the commit titled 'Settle which
   later targets carry branch-retention-stop'), revised by the alignment fix
-  round (1.2), the council round (1.3) and rounds A3 to A15; verified
+  round (1.2), the council round (1.3) and rounds A3 to A16; verified
   by `grep -c '^#### Scenario:'` on each spec file and by a scenario-carry
-  script run after the council round and again after rounds A3 to A15
+  script run after the council round and again after rounds A3 to A16
   over all seven MODIFIED blocks, every source scenario present byte for byte
   and in order.
 - [x] 1.5 Validation passes: `/usr/bin/openspec validate
@@ -167,7 +182,7 @@ duplicate them.
   `/usr/bin/openspec status --change add-project-clean-branch-retirement
   --json` shows every artifact done; verified by running the three on this
   branch after 1.4, after the alignment fix round, after the council round
-  and after rounds A3 to A15
+  and after rounds A3 to A16
   (build 1.13.1, which notes only as INFO that archive would refuse the
   MODIFIED blocks whose base still sits in change 1).
 - [ ] 1.6 Ratified by Brett Heap's word on the pull request, quoted with its
@@ -311,7 +326,7 @@ duplicate them.
 ## 3. Landing and archive readiness
 
 - [ ] 3.1 The realization PR is merged with green checks on every job of
-  `.github/workflows/tests.yml` at its merge (at `origin/main` `e9d6711`, the
+  `.github/workflows/tests.yml` at its merge (at `origin/main` `15504f1`, the
   `test` job on `ubuntu-latest` for Python 3.10 and 3.12; feature 004 adds
   `git-floor`) and closes issue #23; verified by citing its merge sha here,
   from `gh pr view <number> --json mergeCommit,statusCheckRollup`.
