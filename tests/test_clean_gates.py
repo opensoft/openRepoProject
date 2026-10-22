@@ -1618,6 +1618,118 @@ class GatesTests(clean_support.CleanCase):
                 TEXT["excluded_heading"].format(M=2), *main, *mismatch, TEXT["residual_window_line"]])
             self.assertEqual(removals(records), [])
 
+    # R-320 (lane 3's W86 NM-1; ruled by Brett Heap, "R-320: yes", lead
+    # R-321): `git worktree prune`, run for a stale entry's sake, also deletes
+    # the admin directory of a worktree whose path cannot be read, on Git
+    # 2.43.0 and 2.36.6, so beside such a row a stale row's recommendation
+    # warns against it (T6), a locked stale row's too (T7).
+
+    def stale_worktree(self, root, branch, locked=False):
+        """A linked worktree added at self.base/BRANCH, locked when locked is
+        true, then its directory moved away to BRANCH-moved: a stale-worktree
+        row. Returns the registered path."""
+        tree = self.base / branch
+        self.git(root, "worktree", "add", "-q", "-b", branch, tree)
+        if locked:
+            self.git(root, "worktree", "lock", "--reason", "fixture", tree)
+        tree.rename(tree.with_name(tree.name + "-moved"))
+        return tree
+
+    @clean_support.not_root
+    def test_clean_a_stale_row_beside_an_unread_row_warns_against_prune(self):
+        # A merged worktree, a stale one, a locked stale one and an unread one
+        # (W73's layout): the stale row's recommendation is T6 and the locked
+        # stale row's T7, in the report's human lines and in the `worktrees`
+        # rows of --json, in the report, the --all-safe preview and a single
+        # removal naming the merged row; the preview's stale-worktree group
+        # takes T6 (the locked row is excluded as locked-worktree, gate 4),
+        # in the --all-safe preview and that single removal's. The exit
+        # codes and every other line are as before, and nothing is removed.
+        # With the path readable again, the plain texts print.
+        root = self.repo()
+        self.bare_remote()
+        merged = self.merged_worktree("001-merged", path=self.base / "001-merged")
+        stale = self.stale_worktree(root, "002-stale")
+        locked = self.stale_worktree(root, "003-locked", locked=True)
+        tree, restore = self.unread_worktree(root, "004-unread")
+        plain, plain_locked = ("Review and prune stale worktree metadata manually.",
+                               "Review, unlock it, then prune stale worktree metadata manually.")
+        unread, unread_locked = (
+            "Review and prune stale worktree metadata manually; a row's path could not be read, so do not run "
+            "git worktree prune until it can.",
+            "Review, unlock it, then prune stale worktree metadata manually; a row's path could not be read, so "
+            "do not run git worktree prune until it can.")
+        self.assertEqual((TEXT["recommendation_stale_worktree_unread"], TEXT["recommendation_stale_locked_unread"]),
+                         (unread, unread_locked))
+        main = self.excluded_group("main-worktree", [(root, "main")])
+        held = self.excluded_group("locked-worktree", [(locked, "003-locked")])
+        unread_group = self.excluded_group("inspection-error", [(tree, "004-unread")], TEXT["next_step_unread_row"])
+        selected = [TEXT["selected_heading"].format(N=1),
+                    TEXT["selected_row"].format(PATH=merged, BRANCH="001-merged")]
+        named = ("--apply", "--action", "remove", "--worktree", merged)
+
+        def advice(result, head):
+            """The report line after result's one row line that starts with head."""
+            lines = result.stdout.splitlines()
+            [at] = [index for index, line in enumerate(lines) if line.startswith(head)]
+            return lines[at + 1]
+
+        def assert_texts(texts, codes, previews):
+            """texts, the stale and the locked stale row's recommendations;
+            codes, the exit statuses of the report and the --all-safe preview
+            (the single removal, refused as confirmation-required, exits 2);
+            previews, the human lines after the header of the --all-safe
+            preview and of the single removal."""
+            for label, words, code, body in (("report", (), codes[0], None),
+                                             ("--all-safe", ("--all-safe",), codes[1], previews[0]),
+                                             ("--worktree W, the merged row", named, 2, previews[1])):
+                with self.subTest(label, texts=texts):
+                    result, records = self.run_counted("clean", root, *words)
+                    self.assert_status(result, code)
+                    if body is None:
+                        self.assertEqual([advice(result, f"STALE-WORKTREE: {stale} [002-stale] "),
+                                          advice(result, f"STALE-WORKTREE: {locked} [003-locked] ")],
+                                         ["  " + text for text in texts], "\n" + clean_support.transcript(result))
+                    else:
+                        self.assertEqual(result.stdout.splitlines()[3:], body)
+                    if words == named:
+                        self.assertEqual(result.stderr, "REFUSED: " + TEXT["confirmation_required"] + "\n")
+                    self.assertEqual(removals(records), [])
+                    result, records = self.run_counted("clean", root, *words, "--json")
+                    self.assert_status(result, code)
+                    document = self.load_json(result)
+                    self.assertEqual([(row["classification"], row["recommendation"])
+                                      for row in (row_of(document, stale), row_of(document, locked))],
+                                     [("stale-worktree", text) for text in texts])
+                    self.assertEqual(removals(records), [])
+
+        before = self.snapshot(root)
+        # The same groups in both previews: the merged row is P, and no other
+        # row is eligible.
+        groups = [*selected, TEXT["excluded_heading"].format(M=4), *main, *held,
+                  *self.excluded_group("stale-worktree", [(stale, "002-stale")], unread), *unread_group,
+                  TEXT["residual_window_line"]]
+        assert_texts((unread, unread_locked), (1, 1), (groups, groups))
+        document = self.preview(root).document
+        self.assertEqual([(row["present"], row["classification"]) for row in (row_of(document, tree),
+                                                                              row_of(document, stale))],
+                         [(None, "inspection-error"), (False, "stale-worktree")])
+        self.assertEqual(self.snapshot(root), before, "nothing removed")
+        self.assertTrue((self.common_dir(root) / "worktrees" / "wt").is_dir(), "the unread row's admin directory")
+        restore()
+        # The path readable again: the unread row is merged-removable, so
+        # selected in the preview and not requested in the single removal.
+        before = self.snapshot(root)
+        assert_texts((plain, plain_locked), (0, 0), (
+            [TEXT["selected_heading"].format(N=2), TEXT["selected_row"].format(PATH=merged, BRANCH="001-merged"),
+             TEXT["selected_row"].format(PATH=tree, BRANCH="004-unread"), TEXT["excluded_heading"].format(M=3),
+             *main, *held, *self.excluded_group("stale-worktree", [(stale, "002-stale")], plain),
+             TEXT["residual_window_line"]],
+            [*selected, TEXT["excluded_heading"].format(M=4), *main, *held,
+             *self.excluded_group("stale-worktree", [(stale, "002-stale")], plain),
+             *self.excluded_group("not-requested", [(tree, "004-unread")]), TEXT["residual_window_line"]]))
+        self.assertEqual(self.snapshot(root), before, "nothing removed")
+
     def test_clean_operation_in_progress_a_marker_git_leaves_is_deleted_by_hand(self):
         # #19's round (h) at b3228bb (design.md D18; writer E's table, R-259):
         # an empty `sequencer` file, which `git cherry-pick` and `git revert`
