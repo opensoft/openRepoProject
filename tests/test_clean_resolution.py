@@ -19,6 +19,7 @@ import json
 import os
 from pathlib import Path
 import shlex
+import subprocess
 import unittest
 from unittest import mock
 
@@ -760,6 +761,97 @@ class ResolutionTests(clean_support.CleanCase):
         with self.subTest("the same run, row 3b answering, takes the variant"):
             status, out, err = self.main_in_process("clean", root)
             self.assertEqual((status, out, err), (2, "", f"REFUSED: {self.redirected(root)}\n"))
+
+    def test_clean_a_main_checkout_refused_for_another_reason_keeps_the_plain_message(self):
+        # D18: the variant needs Git to use another work tree or none. A main checkout whose
+        # `.git` is a symbolic link to a git directory elsewhere is refused (D8's `unnamed`: Git
+        # names the main worktree by the common directory's realpath, which no longer ends in
+        # /.git), its toplevel is the directory itself and nothing redirects it, so the message
+        # stays plain and no row 3b runs. Kills main_worktree_redirected() without its
+        # "toplevel differs from the directory" condition.
+        root = self.repo()
+        kept = self.base / "kept-gitdir"
+        os.rename(root / ".git", kept)
+        os.symlink(kept, root / ".git")
+        message = self.not_root(root)
+        result, records = self.counted("clean", root)
+        self.assert_refused_human(result, message)
+        self.assert_no_plan(records)
+        self.assertEqual(self.row_3b_dirs(records), [])
+        result, records = self.counted("clean", root, "--json")
+        self.assert_error_document(result, "target-not-repository-root", message, "report", path=root)
+        self.assert_no_plan(records)
+
+    def test_clean_a_dot_git_file_that_names_no_git_directory_keeps_the_plain_message(self):
+        # D18: the variant needs a `.git` whose realpath is the repository's common directory. A
+        # `.git` file with no gitdir line names none, so no row 3b runs and the message stays
+        # plain; one that names a git directory that is not there runs row 3b once, which fails,
+        # and the message stays plain. Kills main_worktree_redirected() with its `own is None`
+        # clause turned to True.
+        bare_file = self.base / "no-gitdir-line"
+        bare_file.mkdir()
+        (bare_file / ".git").write_text("this is not a gitfile\n")
+        dangling = self.base / "dangling"
+        dangling.mkdir()
+        (dangling / ".git").write_text(f"gitdir: {self.base}/no-such-gitdir\n")
+        cases = (("a .git file with no gitdir line", bare_file, []),
+                 ("a .git file naming a git directory that is not there", dangling, [str(dangling)]))
+        for label, path, row_3b in cases:
+            with self.subTest(label):
+                message = self.not_root(path)
+                result, records = self.counted("clean", path)
+                self.assert_refused_human(result, message)
+                self.assert_no_plan(records)
+                self.assertEqual(self.row_3b_dirs(records), row_3b)
+                result, records = self.counted("clean", path, "--json")
+                self.assert_error_document(result, "target-not-repository-root", message, "report", path=path)
+
+    def test_clean_a_relative_core_worktree_naming_a_missing_directory_keeps_the_plain_message(self):
+        # D18 as #19's round (k) declares it (W81 M-1, lead ruling R-297): "a missing one
+        # included" holds for an ABSOLUTE core.worktree, which Git's row 3 prints as the toplevel
+        # and which takes the variant (the redirect test's "naming a missing directory" case). A
+        # RELATIVE value naming a missing directory makes Git itself fail in row 3 and in row 3b
+        # (`fatal: cannot chdir to '../missing-relative'`), so row 3b runs once, fails, and the
+        # plain message stays, in human and --json forms, with no plan. This pins the declared
+        # behaviour, a known limit and not a wanted one: where a later round makes 004 read
+        # core.worktree itself, this test changes with it.
+        plain = self.repo("relative-plain")
+        plain_gitdir = self.redirect(plain, "core.worktree", "../missing-relative", "config")
+        checkout, separate = self.base / "relative-checkout", self.base / "relative-checkout.git"
+        self.git(self.base, "init", "-q", "-b", "main", "--separate-git-dir", separate, checkout)
+        self.git(checkout, "commit", "-q", "--allow-empty", "-m", "initial")
+        self.git(checkout, "config", "core.worktree", "../missing-relative")
+        layouts = (("the plain layout, .git a directory", plain, plain_gitdir),
+                   ("the .git-file layout, --separate-git-dir", checkout, separate))
+        for number, (label, root, gitdir) in enumerate(layouts):
+            with self.subTest(label):
+                # A relative core.worktree resolves against the git directory.
+                named = os.path.normpath(gitdir / "../missing-relative")
+                self.assertFalse(os.path.lexists(named), "the directory the value names is missing")
+                for row in (ROW_3, ROW_3B):
+                    git = subprocess.run([clean_support.REAL_GIT, "-C", str(root), *row], env=self.env,
+                                         capture_output=True, text=True, errors="surrogateescape")
+                    self.assertEqual((git.returncode != 0, git.stdout), (True, ""), clean_support.transcript(git))
+                message = self.not_root(root)
+                result, records = self.counted("clean", root)
+                self.assert_refused_human(result, message)
+                self.assert_no_plan(records)
+                self.assertEqual(self.row_3b_dirs(records), [str(root)], "row 3b runs once, and fails")
+                result, records = self.counted("clean", root, "--json")
+                self.assert_error_document(result, "target-not-repository-root", message, "report", path=root)
+                self.assert_no_plan(records)
+                self.assertEqual(self.row_3b_dirs(records), [str(root)], "row 3b runs once, and fails")
+                # The same fixture with the value absolute: Git's row 3 prints the missing directory
+                # as the toplevel, row 3b does not run, and the variant names the redirect.
+                self.git(self.base, "config", "--file", gitdir / "config", "core.worktree",
+                         str(self.base / f"missing-absolute-{number}"))
+                message = self.redirected(root)
+                result, records = self.counted("clean", root)
+                self.assert_refused_human(result, message)
+                self.assert_no_plan(records)
+                self.assertEqual(self.row_3b_dirs(records), [], "row 3 succeeds, so no row 3b")
+                result, records = self.counted("clean", root, "--json")
+                self.assert_error_document(result, "target-not-repository-root", message, "report", path=root)
 
     # T106: "Merge target missing, invalid, or conflicting".
 
