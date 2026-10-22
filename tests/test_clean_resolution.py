@@ -864,7 +864,9 @@ class ResolutionTests(clean_support.CleanCase):
         # in D18's order, and no value is printed.
         root = self.repo()
         cases = [({"XDG_CONFIG_HOME": "cfg"}, ("XDG_CONFIG_HOME",)),
-                 ({"HOME": " /x"}, ("HOME",)), ({"HOME": "~/x"}, ("HOME",)), ({"HOME": "."}, ("HOME",))]
+                 ({"HOME": " /x"}, ("HOME",)), ({"HOME": "~/x"}, ("HOME",)), ({"HOME": "."}, ("HOME",)),
+                 # Lead ruling R-202 (lane 3's W30 M-2): the commonest relative spelling.
+                 ({"HOME": "./h"}, ("HOME",)), ({"XDG_CONFIG_HOME": "./cfg"}, ("XDG_CONFIG_HOME",))]
         cases += [({name: "h/.gitconfig"}, (name,)) for name in EXTENSION]
         cases.append(({"HOME": "h", "XDG_CONFIG_HOME": "cfg", **{name: "h/.gitconfig" for name in EXTENSION}},
                       ("HOME", "XDG_CONFIG_HOME", *EXTENSION)))
