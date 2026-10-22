@@ -1140,21 +1140,27 @@ order:
   `probe-timeout` and for a `deadline-exceeded`, `interrupted` or
   `internal-error` that came after that proof, and otherwise, when the stage
   did not re-prove the reflog, its re-proof never starting or never finishing
-  with a proof, `; its reflog is not proven merged into MERGE_TARGET; inspect
-  git -C ROOT reflog show refs/heads/BRANCH before retrying: RETRY`: the
-  plan's proof of the reflog holds only until the stage's re-proof renews it,
-  since a branch moved to a commit the merge target lacks and back passes
-  every check of the re-read, and RETRY proves only the branch's tip and
-  would delete the branch with a reflog that may name a commit only that
+  with a proof, `; BRANCH's reflog was proven merged into MERGE_TARGET only at
+  this run's plan; inspect git -C ROOT reflog show refs/heads/BRANCH before
+  retrying: RETRY`: the plan's proof of the reflog holds only until the stage's
+  re-proof renews it, since a branch moved to a commit the merge target lacks
+  and back passes every check of the re-read, and RETRY proves only the branch's
+  tip and would delete the branch with a reflog that may name a commit only that
   reflog holds. The `head-not-merge-target`, main-worktree `branch-in-use` and
   `branch-changed` lines name that inspection for the same reason, their own
   steps ending in RETRY for a branch the stage did not re-prove: a plan's keep
   spawns no stage, and a stage that keeps a branch with `branch-in-use` or
-  `branch-changed` stops before its re-proof, or never starts; the first two
-  say that only this run's plan proved BRANCH's reflog, since the plan's keep
-  order tests `reflog-unmerged` first, a proof that the retry does not make
-  again; the `git-refused` lines keep the bare retry after their own steps,
-  their branch child having run after the re-proof proved the reflog.
+  `branch-changed` stops before its re-proof, or never starts. The lines that
+  name that inspection for `state-changed`, `deadline-exceeded`, `interrupted`,
+  `internal-error` and `removal-ceiling`, and the `head-not-merge-target` and
+  main-worktree `branch-in-use` lines, say that only this run's plan proved
+  BRANCH's reflog: the plan tests `reflog-unmerged` before its other keeps and
+  before it retires a branch, so that it proved the reflog of every branch that
+  it kept for a later reason or retired, a proof that the retry does not make
+  again; the `branch-changed` line keeps `its reflog is not proven merged`, the
+  branch having moved since the plan proved it; and the `git-refused` lines keep
+  the bare retry after their own steps, their branch child having run after the
+  re-proof proved the reflog.
 
 RETRY is `project clean ROOT --apply --action delete-branch --branch
 BRANCH`, or `--branch=BRANCH` for a name that begins with `-`, the explicit
@@ -1286,11 +1292,11 @@ N; branches kept: `; and then the residual-window line.
   the manifest's `tracking_branch` to name another existing branch, or makes
   the re-read's ref listing fail
 - **AND** in each of these cases the result prints `Kept <branch>
-  (state-changed); its reflog is not proven merged into <merge target>;
-  inspect git -C <root> reflog show refs/heads/<branch> before retrying:
-  project clean <root> --apply --action delete-branch --branch <branch>`,
-  since the re-read stopped before its re-proof, so that the stage did not
-  re-prove the reflog
+  (state-changed); <branch>'s reflog was proven merged into <merge target> only
+  at this run's plan; inspect git -C <root> reflog show refs/heads/<branch>
+  before retrying: project clean <root> --apply --action delete-branch --branch
+  <branch>`, since the re-read stopped before its re-proof, so that the stage
+  did not re-prove the reflog
 
 #### Scenario: A branch another worktree holds is retained
 
@@ -1413,9 +1419,10 @@ N; branches kept: `; and then the residual-window line.
   `branch_retirement` is `retained` with `deadline-exceeded`, the second
   target is `not-attempted` with `deadline-exceeded`, and the exit status is 1
 - **AND** in both cases the result prints `Kept <branch> (deadline-exceeded);
-  its reflog is not proven merged into <merge target>; inspect git -C <root>
-  reflog show refs/heads/<branch> before retrying: project clean <root>
-  --apply --action delete-branch --branch <branch>`, since no re-proof ran
+  <branch>'s reflog was proven merged into <merge target> only at this run's
+  plan; inspect git -C <root> reflog show refs/heads/<branch> before retrying:
+  project clean <root> --apply --action delete-branch --branch <branch>`, since
+  no re-proof ran
 
 #### Scenario: A signal around the branch child
 
@@ -1528,10 +1535,10 @@ N; branches kept: `; and then the residual-window line.
   <planned_sha>`, and the exit status is 2; and when it raises it during the
   re-read, before or while its re-proof runs, no branch child is spawned, the
   `branch_retirement` is `retained` with `internal-error`, the branch
-  remains, the result prints `Kept <branch> (internal-error); its reflog is
-  not proven merged into <merge target>; inspect git -C <root> reflog show
-  refs/heads/<branch> before retrying: project clean <root> --apply --action
-  delete-branch --branch <branch>`, and the exit status is 2
+  remains, the result prints `Kept <branch> (internal-error); <branch>'s reflog
+  was proven merged into <merge target> only at this run's plan; inspect git -C
+  <root> reflog show refs/heads/<branch> before retrying: project clean <root>
+  --apply --action delete-branch --branch <branch>`, and the exit status is 2
 
 #### Scenario: A branch whose reflog holds amended-away work keeps it
 
@@ -1597,26 +1604,26 @@ N; branches kept: `; and then the residual-window line.
 - **AND** when a test `git` instead makes only that re-proof exit nonzero, or
   hang past its 5 s budget, with nothing moved, the branch is `retained` with
   `state-changed`, no branch child is spawned, the result prints `Kept
-  <branch> (state-changed); its reflog is not proven merged into <merge
-  target>; inspect git -C <root> reflog show refs/heads/<branch> before
-  retrying: project clean <root> --apply --action delete-branch --branch
-  <branch>`, and the exit status is 2
+  <branch> (state-changed); <branch>'s reflog was proven merged into <merge
+  target> only at this run's plan; inspect git -C <root> reflog show
+  refs/heads/<branch> before retrying: project clean <root> --apply --action
+  delete-branch --branch <branch>`, and the exit status is 2
 - **AND** when that re-proof hangs instead, with nothing moved, and starts with
   less than 5 s of the work deadline left above the removal floor, so that its
   budget ends when only the removal floor remains, it is stopped there, no
   branch child is spawned,
   the branch is `retained` with `deadline-exceeded`, the result prints `Kept
-  <branch> (deadline-exceeded); its reflog is not proven merged into <merge
-  target>; inspect git -C <root> reflog show refs/heads/<branch> before
-  retrying: project clean <root> --apply --action delete-branch --branch
-  <branch>`, and the exit status is 1;
-  and when a test `git` instead delays that re-proof by 2 s, with nothing
-  moved, and SIGINT arrives while it runs, it is not signalled and runs to its
-  end, printing nothing, no branch child is spawned, the branch is `retained`
-  with `interrupted`, the result prints `Kept <branch> (interrupted); retry:
-  project clean <root> --apply --action delete-branch --branch <branch>`,
-  with no advice to inspect the reflog, since that re-proof proved the reflog
-  merged, the second target is `not-attempted` with `interrupted` and its
+  <branch> (deadline-exceeded); <branch>'s reflog was proven merged into <merge
+  target> only at this run's plan; inspect git -C <root> reflog show
+  refs/heads/<branch> before retrying: project clean <root> --apply --action
+  delete-branch --branch <branch>`, and the exit status is 1; and when a test
+  `git` instead delays that re-proof by 2 s, with nothing moved, and SIGINT
+  arrives while it runs, it is not signalled and runs to its end, printing
+  nothing, no branch child is spawned, the branch is `retained` with
+  `interrupted`, the result prints `Kept <branch> (interrupted); retry: project
+  clean <root> --apply --action delete-branch --branch <branch>`, with no advice
+  to inspect the reflog, since that re-proof proved the reflog merged, the
+  second target is `not-attempted` with `interrupted` and its
   `branch_retirement` `not-attempted` with `branch-retention-stop`, and the
   exit status is 130
 
