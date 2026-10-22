@@ -22,12 +22,12 @@ Git 2.36 or later is required wherever `project` inspects a repository:
 report it as an inspection error.
 `HOME`, `XDG_CONFIG_HOME`, `GIT_CONFIG_GLOBAL` and `GIT_CONFIG_SYSTEM` must be
 absolute paths when set to anything but an empty value: Git reads a relative
-one inside the repository it runs in, so a repository's own files would act as your configuration. Where
-one is set to a value that does not begin with `/`, `project clean` refuses
-with `relative-config-path` (exit 2) before it runs Git, `project status`
-and `project doctor` report it as an inspection error, and `project update
---apply --component shape` or `bench` refuses; make the value absolute or
-unset it.
+one inside the repository it runs in, so a repository's own files would act as
+your configuration. Where one is set to a value that does not begin with `/`,
+`project clean` refuses with `relative-config-path` (exit 2) before it runs
+Git, `project status` and `project doctor` report it as an inspection error,
+and `project update --apply --component shape` or `bench` refuses; make the
+value absolute or unset it.
 For source development, run `python3 project --help` in this checkout.
 
 ## Create a project
