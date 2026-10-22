@@ -138,10 +138,13 @@ its step 1 and the literals of four ADDED scenarios, and adds no scenario
 name BRANCH's reflog and say that only this run's plan proved it, the keep
 order's account names the inspection, and the line-feed case's 13 retired
 rests on D14's rounding) to D4, D7 and D8, and A-64 (PR #19's round (i),
-`e0c91bb`, its current head, with A-50's note) to D4 and D7; the spec delta
+`e0c91bb`, its head then, with A-50's note) to D4 and D7; the spec delta
 edits the ADDED requirement's `Kept` next steps and the literals of three
 ADDED scenarios, and adds no scenario (proposal, "Re-read and Codex Findings
-(round A18)").
+(round A18)"). Round A19 maps A-66 (Brett Heap's confirmation of lane
+openRepoProject-2's R-284, R-290) to D7, and A-67 (PR #19's round (j),
+`e14ada0`, its current head, with A-50's note) to D4, D7 and Risks; no spec
+delta changes (proposal, "Re-read and Codex Findings (round A19)").
 
 Citations follow `proposal.md`: packet files at `da33d92`, `CAS` for change 1,
 `APO` for change 2, `project:N` and `tests:N` at `961c405`, all but the packet
@@ -537,16 +540,19 @@ leaves the branch to retire, the stage starts nothing more and the branch is
 
 The re-read's outcomes follow PR #19's rule for revalidation, which since its
 round (d) governs every Git child and every filesystem call of its steps, cited
-here at `f0bf538`, whose text there its rounds (f) to (i) keep, up to its
-current head `e0c91bb` (its `specs/project-clean-review-safety/spec.md:113-135`,
-and `:115-137` at `e0c91bb`; lane openRepoProject-2's
-R-171 and R-208; rulings A-38, A-42 and A-47): a child or a
+here at `f0bf538`, whose text there its rounds (f) to (i) keep, and its round
+(j), at its current head `e14ada0`, keeps but for the work-tree probe's
+outcomes, whose output it reads as one path even over several lines (lane
+openRepoProject-2's R-287 and R-291), which this section does not restate (its
+`specs/project-clean-review-safety/spec.md:113-135`, and `:115-139` at
+`e14ada0`; lane openRepoProject-2's R-171 and R-208; rulings A-38, A-42, A-47
+and A-67): a child or a
 read that the work deadline cuts counts as no difference and gives
 `deadline-exceeded`, and one that fails, or runs past its own budget while the
 deadline is not the limit, gives `state-changed`; a filesystem call that finds
 no file or directory at its path (`ENOENT` or `ENOTDIR`) does not fail but
 decides that the path is absent, a value that keeps its step's reason (its
-`design.md:489-503` at `662be89`, the same words at `:515-529` at `e0c91bb`).
+`design.md:489-503` at `662be89`, the same words at `:530-544` at `e14ada0`).
 Step 2 of the ADDED requirement had
 counted a re-read listing or manifest read that "fails or times out" as a
 difference, which took in one whose budget the work deadline ended, while
@@ -678,7 +684,7 @@ administrative directory, so round (e)'s L-4, by which one that the
 `identity-changed`, does not reach it, and its L-5 changes only the case of a
 SHALL NOT. R-208 is PR #19's reading of
 `BA:271-276`, which went to Brett Heap to confirm as its O-2 (its
-`design.md:499-503` at `662be89`, `:525-529` at `e0c91bb`). No word of step 2
+`design.md:499-503` at `662be89`, `:540-544` at `e14ada0`). No word of step 2
 changes for the
 manifest: its value that the manifest read "cannot establish" does not take
 in a decided absence, which establishes the manifest's values as absent; and
@@ -980,11 +986,10 @@ which feature 004 at `e69f6ef` computes as its planning children plus 6T, or
 7T, plus 3 (`project:4261-4262` and `:6218-6219`; reader RI's RI-8). The
 figures below give each at its own base, those on 5T at `c462d87`'s terms and
 those on 6T or 7T at `f0bf538`'s, which `662be89` and `6bf9f77` keep, and
-`b3228bb` and `e0c91bb` keep where no path of the repository's root or common
-directory holds a line feed (below), as round A9 stated
-D7's figures at both heads, and no figure changes its meaning (ruling A-50).
-No `limits` or `budget`
-member is added: the stage spawns one branch child per target, so
+`b3228bb`, `e0c91bb` and `e14ada0` keep where no path of the repository's root
+or common directory holds a line feed (below), as round A9 stated D7's figures
+at both heads, and no figure changes its meaning (ruling A-50). No `limits` or
+`budget` member is added: the stage spawns one branch child per target, so
 `limits.targets` (16) caps them, and `budget.probe_timeout_seconds` (5) bounds
 each. A run adds at most 81 children: 64 for the stage, 16 under `operations`
 and 48 under `probes` (A-5 as amended, with ruling A-24's re-proof, one more
@@ -1101,20 +1106,35 @@ to 37.70 s, and before it below about 37.66 s, so that the case retires 13 or
 children are not modelled separately for that case: its stage runs no
 identity probe, only its ref listings, its re-proof and its branch child, and
 the figures take D14's pricing of change 1's extra children alone (ruling
-A-62). Its head `e0c91bb`, PR #19's current head, after that lane's round
-(i) (`4204eb9`, `b60f6ac` and `1a4785e` before it), keeps D14, its line-feed
-paragraph included, and task 2.1 byte for byte, each checked against
-`b3228bb` (D14 at its `:944-1119`), so that every figure above stands; its
-spec moves only in the ceiling's recovery text, a third text for a `.git`
-file that the rescan cannot read (lane openRepoProject-2's R-284, put to Brett
-Heap), which this section does not take. Every cite below of PR #19's design at
-`662be89` holds at `e0c91bb` by content, 49 or 60 lines later (`:441-443` 27
-lines later, the F = 8 sentence at `:361-363`, re-wrapped beside round (i)'s
-account of row 3, the measured basis at `:1016-1029`, every figure unchanged,
-and the LQ-20 entry at `:1984-2046`), task 2.1's step (i) at its
-`tasks.md:165-175`, and every cite of its spec at `f0bf538` holds there 28 to
-32 lines later, the review-safety lines 2 lines later, except the two counts
-above (ruling A-64).
+A-62). Its head `e0c91bb`, after that lane's round (i) (`4204eb9`, `b60f6ac` and
+`1a4785e` before it), kept D14, its line-feed paragraph included, and task 2.1
+byte for byte, each checked against `b3228bb` (D14 at its `:944-1119`), so that
+every figure above stands; its spec moved only in the ceiling's recovery text, a
+third text for a `.git` file that the rescan cannot read (lane
+openRepoProject-2's R-284, confirmed by Brett Heap (R-290)), which this section
+does not take. Every cite below of PR #19's design at `662be89` held at
+`e0c91bb` by content, 49 or 60 lines later (`:441-443` 27 lines later, the F = 8
+sentence at `:361-363`, re-wrapped beside round (i)'s account of row 3, the
+measured basis at `:1016-1029`, every figure unchanged, and the LQ-20 entry at
+`:1984-2046`), task 2.1's step (i) at its `tasks.md:165-175`, and every cite of
+its spec at `f0bf538` held there 28 to 32 lines later, the review-safety lines 2
+lines later, except the two counts above (ruling A-64). Its head `e14ada0`,
+PR #19's current head, after that lane's round (j), keeps D14 and task 2.1 byte
+for byte, each checked against `e0c91bb` (D14 at its `:959-1134`), so that every
+figure above stands; its spec moves only in the reason clause of the ceiling's
+second recovery text, now "Git refusing `git worktree remove --force` while the
+path remains" (lane openRepoProject-3's W70, LOW-1), in the revalidation rule's
+account of the work-tree probe, whose output it reads as one path even over
+several lines (lane openRepoProject-2's R-287 and R-291), with its scenario "A
+work-tree probe at revalidation", and in the project-command block's work-tree
+probe, with an AND of its scenario "A linked worktree whose work tree is
+redirected", none of which this section takes. Every cite below of PR #19's
+design at `662be89` holds at `e14ada0` by content, 64 or 75 lines later
+(`:441-443` 30 lines later, the F = 8 sentence at `:364-366`, the measured basis
+at `:1031-1044` and the LQ-20 entry at `:2002-2064`), task 2.1's step (i) at its
+`tasks.md:168-178`, and every cite of its spec at `f0bf538` holds there 28 to 32
+lines later, the review-safety lines 2 or 4 lines later, except the two counts
+above and the revalidation rule's sentence on the work-tree probe (ruling A-67).
 
 - Where the plan read `extensions.worktreeConfig` as false, six children per
   target, on D14's 150 ms basis at `662be89` (its `design.md:910`, the row
@@ -1125,10 +1145,10 @@ above (ruling A-64).
   s); the 11th branch child, due at 45.3 s, cannot start, and the 12th
   removal, due at 46.05 s, does not spawn. At the packet's 150 ms per child
   (D14's 150 ms basis) a flagged run of 16 then removes 11 worktrees and
-  retires 10 branches, at `e0c91bb`, `b3228bb`, `6bf9f77` and `662be89` as at
-  `f0bf538`, `9267303`, `2e819ad`, `a664799` and `6f2cb54`, where `c462d87`
-  gives 14 and 13; without the flag all 16 removals spawn, the 16th at 44.1 s,
-  as D14 says (its `:910` and `:931-932`).
+  retires 10 branches, at `e14ada0`, `e0c91bb`, `b3228bb`, `6bf9f77` and
+  `662be89` as at `f0bf538`, `9267303`, `2e819ad`, `a664799` and `6f2cb54`,
+  where `c462d87` gives 14 and 13; without the flag all 16 removals spawn, the
+  16th at 44.1 s, as D14 says (its `:910` and `:931-932`).
 - Where the plan read `extensions.worktreeConfig` as true, seven children per
   target, D14 at `662be89`, as at `f0bf538`, also counts the
   effective-work-tree probe at plan time on each linked row (its
@@ -1149,11 +1169,11 @@ D14 at `f0bf538` stated that case on three bases and chose none, because task
 LQ-13's `rev-list` (rulings A-39 to A-42, lane openRepoProject-3's W35,
 MEDIUM-1). Brett Heap ruled PR #19's LQ-20 on 2026-10-22, choosing its step
 (i), to measure those two probes first, and D14 at `662be89` gives that
-measurement, unchanged at `e0c91bb`, on task 2.1's protocol in the same
+measurement, unchanged at `e14ada0`, on task 2.1's protocol in the same
 container: the work-tree probe's warm median 5.8 ms, 8.7 ms with the 1.5
 margin, and the `rev-list`'s 106.9 ms, 160.3 ms with the margin, row 4c's
 read keeping the identity probe's 19.7 ms (its `design.md:956-965` and
-`tasks.md:145-155` at `662be89`, `:1016-1025` and `:165-175` at `e0c91bb`;
+`tasks.md:145-155` at `662be89`, `:1031-1040` and `:168-178` at `e14ada0`;
 lane openRepoProject-2's R-236; ruling A-47). On each basis this
 change's figure for a flagged run of 16 at 128 rows is change 1's with this
 change's own children added by this section's method: before target k's removal
@@ -1174,7 +1194,7 @@ with those removals at 0.3 s).
   probes that step (i) measured at its costs, the per-row `rev-parse
   --show-toplevel` at 8.7 ms and LQ-13's `rev-list` at 160.3 ms, row 4c's
   read at the identity probe's 19.7 ms (its `:948-969` at `662be89`, its
-  figures unchanged at `e0c91bb`):
+  figures unchanged at `e14ada0`):
   change 1 alone removes all 16, the first at 14.55 s and the 16th at
   30.0 s with 20.0 s left, or at 37.7 s with 20,000-file removals, so that
   the case passes (its `:992`). With this change's children at 150 ms each,
@@ -1853,9 +1873,9 @@ proposal puts it before Brett Heap with L-4's recommendation.
 - [At the packet's assumed costs a flagged run of 16 retires 13 branches on
   change 1's terms at PR #19's `c462d87`, and, at the packet's 150 ms per child
   (D14's 150 ms basis), 10 at its `6f2cb54`, `a664799`, `2e819ad`, `9267303`,
-  `f0bf538`, `662be89`, `6bf9f77`, `b3228bb` and `e0c91bb` where the plan
-  read `extensions.worktreeConfig` as false; where it read it as true, PR #19's
-  D14 counts a plan-time probe on each linked row, so that at 128 rows a
+  `f0bf538`, `662be89`, `6bf9f77`, `b3228bb`, `e0c91bb` and `e14ada0` where the
+  plan read `extensions.worktreeConfig` as false; where it read it as true, PR
+  #19's D14 counts a plan-time probe on each linked row, so that at 128 rows a
   flagged run removes and retires
   nothing on its 150 ms basis, its first removal due at 45.45 s, and 7 and 7
   on its mixed basis as first stated (D7); with the cache change and its
@@ -1864,7 +1884,7 @@ proposal puts it before Brett Heap with L-4's recommendation.
   6, or 5, in the worst order a run can take]
   -> On PR #19's measured basis at `662be89`, where LQ-20's step (i) measured
   the two probes that task 2.1 did not (its `design.md:956-969`, its figures
-  unchanged at `e0c91bb`; rulings A-47, A-62 and A-64),
+  unchanged at `e14ada0`; rulings A-47, A-62, A-64 and A-67),
   change 1 alone removes all 16 at 128 rows, the 16th at 28.7 s where the plan
   read `extensions.worktreeConfig` as false and at 30.0 s where it read it as
   true, or 36.4 s and 37.7 s with 20,000-file removals; on it a flagged run of
