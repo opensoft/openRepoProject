@@ -201,9 +201,13 @@ Scope).
   same where any row's path could not be read, and the `inspect-cap` remedy
   always, its rows past the cap never being read (design D18; lane
   openRepoProject-3's W86 NM-1, the lead's R-320, which Brett Heap ruled on
-  2026-10-22, "R-320: yes"). `push` and `delete-branch` change in argument
-  resolution (`BA:424-425`) and two refusals (MODIFIED `:39`, `:49`); with
-  either, `--apply --json` stays refused with `invalid-arguments`, exit 2.
+  2026-10-22, "R-320: yes"). Every one of those warnings, with the ceiling's
+  third text, also names `git worktree remove` and `git gc` beside `git worktree
+  prune` (design D18; lane openRepoProject-3's W91 MEDIUM-2 and W95, and W80
+  L-6; Brett Heap's "R-324: yes" of 2026-10-22, the lead's R-343). `push` and
+  `delete-branch` change in argument resolution (`BA:424-425`) and two refusals
+  (MODIFIED `:39`, `:49`); with either, `--apply --json` stays refused with
+  `invalid-arguments`, exit 2.
 - **One mutation seam, `retire_worktree(plan, target)`.** Revalidate; spawn the
   non-force `git -c status.showUntrackedFiles=normal -c
   core.untrackedCache=false -c core.fsmonitor=false -c core.trustctime=true -c
@@ -224,11 +228,12 @@ Scope).
   Git's forced removal refuses, exit 128, while the path remains, though not
   once the path itself is gone (Brett Heap's ruling F-1 of 2026-10-22), but
   "inspect `<path>` by hand; its `.git` could not be read, so do not run `git
-  worktree prune` until it can" where the rescan cannot read its `.git` file,
-  since `git worktree prune` deletes a live worktree's administrative directory
-  when Git cannot stat its `.git` (the lead's R-284, which Brett Heap confirmed
-  on 2026-10-22, "R-284: yes"); the reason `removal-ceiling` names the ceiling
-  cause, and the run exits 1 (Decisions).
+  worktree prune`, `git worktree remove` or `git gc` until it can" where the
+  rescan cannot read its `.git` file, since `git worktree prune` deletes a live
+  worktree's administrative directory when Git cannot stat its `.git` (the
+  lead's R-284, which Brett Heap confirmed on 2026-10-22, "R-284: yes"); the
+  reason `removal-ceiling` names the ceiling cause, and the run exits 1
+  (Decisions).
 - **Targeted revalidation under a narrow guarantee.** Each target is
   revalidated with at most six Git children, the sixth the reachability probe
   of `worktree-only-commits` (LQ-13), and seven in a repository whose
@@ -510,17 +515,18 @@ Headers are quoted verbatim, one per line; ADDED headers are proposed text.
     `partially-removed`, the reason `removal-ceiling` either way, its recovery
     text naming `git worktree prune` and a deletion by hand once the `.git` file
     or the registry entry is gone (Brett Heap's ruling F-1), and instead warning
-    against `git worktree prune` where the `.git` file cannot be read, whatever
-    the rescan finds of the registry entry (R-284, which Brett Heap confirmed on
-    2026-10-22, "R-284: yes"); after `project` and its child are killed with
-    SIGKILL mid-deletion, the report shows the partial-removal note beside the
-    `dirty` advice. By the lead's R-147, a sentence after `:59-61` names branch
-    deletion's refusals, the default branch, a branch a present linked worktree
-    holds, a branch the main worktree holds and a branch the plan's evidence
-    does not show merged into the merge target, with the added scenario "Branch
-    deletion refuses a branch it may not delete"; by the lead's R-248, the main
-    worktree's refusal names detaching HEAD there, or checking out the merge
-    target there, and then retrying (lane openRepoProject-3's W52 F-5).
+    against `git worktree prune`, `git worktree remove` and `git gc` where the
+    `.git` file cannot be read, whatever the rescan finds of the registry entry
+    (R-284, which Brett Heap confirmed on 2026-10-22, "R-284: yes", and R-324,
+    "R-324: yes", the lead's R-343); after `project` and its child are killed
+    with SIGKILL mid-deletion, the report shows the partial-removal note beside
+    the `dirty` advice. By the lead's R-147, a sentence after `:59-61` names
+    branch deletion's refusals, the default branch, a branch a present linked
+    worktree holds, a branch the main worktree holds and a branch the plan's
+    evidence does not show merged into the merge target, with the added scenario
+    "Branch deletion refuses a branch it may not delete"; by the lead's R-248,
+    the main worktree's refusal names detaching HEAD there, or checking out the
+    merge target there, and then retrying (lane openRepoProject-3's W52 F-5).
   - MODIFIED (`:70`): `### Requirement: Clean hands off work requiring review`.
     `:75-76` requires "explicit confirmation and action targets", and
     `--all-safe --apply --yes` names no single target, so the text defines
@@ -1197,8 +1203,8 @@ W87 OBS-3). They take effect only when Brett Heap ratifies this amendment.
 Amendments of ratified text, each replacing a sentence that the merge of PR #11
 ratified, on Brett Heap's word of 2026-10-22, "F-2: yes; F-1: prune-then-delete;
 O-1: deadline-exceeded" (the lead's R-263), and on his "R-284: yes" (the lead's
-R-290), "R-307: yes; R-310: yes" (the lead's R-319) and "R-320: yes" (the lead's
-R-321) of the same day:
+R-290), "R-307: yes; R-310: yes" (the lead's R-319), "R-320: yes" (the lead's
+R-321) and "R-324: yes" (the lead's R-343) of the same day:
 
 - **A locked worktree's recovery text** (lane openRepoProject-3's W52 F-2;
   amends `0050f3e` pcl:135-138): a locked linked worktree whose status records
@@ -1234,18 +1240,21 @@ R-321) of the same day:
   its `lstat` failing other than for the file's absence or cut at its budget,
   shows, whatever the rescan finds of its registry entry and whether or not the
   worktree is locked, "inspect `<path>` by hand; its `.git` could not be read,
-  so do not run `git worktree prune` until it can", since `git worktree prune`
-  deletes a live worktree's administrative directory where Git cannot stat its
-  `.git`, and so, once it is unlocked, does `git worktree remove`, with or
-  without `--force` (round (i); for the lock, lane openRepoProject-3's W80 M-1
-  and the lead's R-294, by R-284's letter, "A `.git` read that fails or is cut
-  gets a third note", though a ceiling target is shown no locked text, which is
-  a report row's own, and a locked one whose `.git` file and registry entry the
-  rescan reads present is shown the first text, whose forced removal Git refuses
-  while it is locked, so that it fails safe (W87 LOW-3); the deltas `Clean can
-  explicitly retire verified worktrees`, with an AND clause in its scenario "A
-  removal past the hard ceiling", and `Clean records a reconcilable result for
-  every removal target`; What Changes; Capabilities `:55`; design D4, D9, D18).
+  so do not run `git worktree prune`, `git worktree remove` or `git gc` until it
+  can", since `git worktree prune` deletes a live worktree's administrative
+  directory where Git cannot stat its `.git`, and so, once it is unlocked, does
+  `git worktree remove`, with or without `--force` (round (i); for the lock,
+  lane openRepoProject-3's W80 M-1 and the lead's R-294, by R-284's letter, "A
+  `.git` read that fails or is cut gets a third note", though a ceiling target
+  is shown no locked text, which is a report row's own, and a locked one whose
+  `.git` file and registry entry the rescan reads present is shown the first
+  text, whose forced removal Git refuses while it is locked, so that it fails
+  safe (W87 LOW-3); the deltas `Clean can explicitly retire verified worktrees`,
+  with an AND clause in its scenario "A removal past the hard ceiling", and
+  `Clean records a reconcilable result for every removal target`; What Changes;
+  Capabilities `:55`; design D4, D9, D18). The warning that closes the third
+  text names `git worktree prune`, `git worktree remove` and `git gc`, as his
+  "R-324: yes" (the lead's R-343) extended it, in the last entry of this group.
 - **Gate 7's read that the deadline cuts** (lane openRepoProject-5's O-1;
   amends `0050f3e` pcl:606-608): a branch reflog read that the work deadline
   cuts records `deadline-exceeded` and leaves the row unprobed and the plan
@@ -1275,36 +1284,40 @@ R-321) of the same day:
   and classification `inspection-error`, and feature 004 at `3bc1d68` printed
   that remedy for such a row in report mode. Such a row's next step is now
   "inspect the row by hand; its path could not be read, so do not run git
-  worktree prune until it can", in place of the ratified words, and the plan's
-  `inspection-incomplete` remedy is "repair or remove the inspection-error rows
-  first: git worktree repair, or remove the row by hand after review; a row's
-  path could not be read, so do not run git worktree prune until it can" or,
-  where any row it counts is excluded as `registration-mismatch`, "repair or
-  remove the inspection-error rows first: git worktree repair, unset
-  core.worktree and core.bare in the repository's config or in a worktree's
-  config.worktree, or remove the row by hand after review; a row's path could
-  not be read, so do not run git worktree prune until it can", in place of the
-  ratified remedy and round (h)'s variant of it, which name `git worktree prune`
-  too. The unread forms take precedence wherever any row of the plan has such a
-  path, a row whose `lstat` the deadline cut included, since omitting prune
-  advice never harms. Nor is the hazard confined to that row: `git worktree
-  prune` acts on the whole repository, so a prune run for another row's sake
-  deletes the unread row's directory too (checked on Git 2.43.0), and by the
-  lead's R-310, while any row of the plan has such a path, the next step of
+  worktree prune, git worktree remove or git gc until it can", in place of the
+  ratified words, and the plan's `inspection-incomplete` remedy is "repair or
+  remove the inspection-error rows first: git worktree repair, or remove the row
+  by hand after review; a row's path could not be read, so do not run git
+  worktree prune, git worktree remove or git gc until it can" or, where any row
+  it counts is excluded as `registration-mismatch`, "repair or remove the
+  inspection-error rows first: git worktree repair, unset core.worktree and
+  core.bare in the repository's config or in a worktree's config.worktree, or
+  remove the row by hand after review; a row's path could not be read, so do not
+  run git worktree prune, git worktree remove or git gc until it can", in place
+  of the ratified remedy and round (h)'s variant of it, which name `git worktree
+  prune` too. The unread forms take precedence wherever any row of the plan has
+  such a path, a row whose `lstat` the deadline stopped included, since omitting
+  prune advice never harms. Nor is the hazard confined to that row: `git
+  worktree prune` acts on the whole repository, so a prune run for another row's
+  sake deletes the unread row's directory too (checked on Git 2.43.0), and by
+  the lead's R-310, while any row of the plan has such a path, the next step of
   every other `inspection-error` row is "review, then git worktree repair, or
   remove the row by hand; a row's path could not be read, so do not run git
-  worktree prune until it can" and that of every `registration-mismatch` row is
-  "review, then git worktree repair, unset core.worktree and core.bare in the
-  repository's config, or in that worktree's config.worktree, or remove the row
-  by hand; a row's path could not be read, so do not run git worktree prune
-  until it can", each the next step as it stood, round (g)'s for
-  `registration-mismatch`, with " or git worktree prune" removed and the warning
-  appended. The delta states the rule as an AND clause of its scenario "An
-  unreadable worktree is one row", the "as the cause fits" of pcl:649-651, now
-  pcl:815-819, governing it, so that the scenario counts stay 71, 22 and 24 (the
-  delta `Clean reports local worktree state`; What Changes; design D18). Brett
-  Heap confirmed the five texts, three next steps and two remedies on
-  2026-10-22, in his words "R-307: yes; R-310: yes" (the lead's R-319).
+  worktree prune, git worktree remove or git gc until it can" and that of every
+  `registration-mismatch` row is "review, then git worktree repair, unset
+  core.worktree and core.bare in the repository's config, or in that worktree's
+  config.worktree, or remove the row by hand; a row's path could not be read, so
+  do not run git worktree prune, git worktree remove or git gc until it can",
+  each the next step as it stood, round (g)'s for `registration-mismatch`, with
+  " or git worktree prune" removed and the warning appended. The delta states
+  the rule as an AND clause of its scenario "An unreadable worktree is one row",
+  the "as the cause fits" of pcl:649-651, now pcl:836-840, governing it, so that
+  the scenario counts stay 71, 22 and 24 (the delta `Clean reports local
+  worktree state`; What Changes; design D18). Brett Heap confirmed the five
+  texts, three next steps and two remedies on 2026-10-22, in his words "R-307:
+  yes; R-310: yes" (the lead's R-319). The warning that closes each of the five
+  names `git worktree prune`, `git worktree remove` and `git gc`, as his "R-324:
+  yes" (the lead's R-343) extended it, in the last entry of this group.
 - **No prune advice in the stale recommendations or the cap remedy** (lane
   openRepoProject-3's W86 NM-1, through lane openRepoProject-4; the lead's
   R-320; amends `0050f3e` design:777-779, the remedy of `inspect-cap`, "N rows
@@ -1316,25 +1329,64 @@ R-321) of the same day:
   directory of a worktree whose path Git cannot stat too (W86 NM-1, on Git
   2.43.0 and 2.36.6), the hazard of R-307 and R-310 met at two more texts, yet
   both ratified sentences advise it beside such a row. Where any row of the same
-  plan or listing has a path that could not be read, a row whose planning
-  `lstat` failed other than for the path's absence, or was cut at its budget, a
-  row with `present: null`, a `stale-worktree` row's recommendation is "Review
-  and prune stale worktree metadata manually; a row's path could not be read, so
-  do not run git worktree prune until it can." and a locked one's, the form that
-  lane openRepoProject-3's W52 F-10 gave feature 004 and this change did not
-  state, is "Review, unlock it, then prune stale worktree metadata manually; a
-  row's path could not be read, so do not run git worktree prune until it can.";
-  with no such row both print unchanged. The `inspect-cap` remedy, whose rows
-  past the cap are never read, is always "{N} rows exceed the row cap of {M};
-  remove worktrees explicitly, or prune stale entries by hand; if a worktree's
-  path cannot be read, do not run git worktree prune until it can" in place of
-  the ratified remedy. Design D18 states the three texts beside the sentences
-  they qualify, and the delta states the cap remedy as an AND clause of its
-  scenario "Row cap and planning failures", so that the scenario counts stay 71,
-  22 and 24 (the delta `Clean bounds its Git work and reports omitted work`;
-  What Changes; design D18); no delta lists the stale recommendation, the
-  baseline report's text, so none states the first two. Brett Heap ruled all
-  three on 2026-10-22, in his words "R-320: yes" (the lead's R-321).
+  plan has a path that could not be read, a row whose planning `lstat` failed
+  other than for the path's absence, or was cut at its budget, a row whose
+  `lstat` the deadline stopped included, so that its `present` is null, a
+  `stale-worktree` row's recommendation is "Review and prune stale worktree
+  metadata manually; a row's path could not be read, so do not run git worktree
+  prune, git worktree remove or git gc until it can." and a locked one's, which
+  only the report's row recommendation carries, in the human report and in
+  `--json`, since the preview excludes a locked stale row as `locked-worktree`,
+  "unlock it yourself if it should go", the form that lane openRepoProject-3's
+  W52 F-10 gave feature 004 and this change did not state, is "Review, unlock
+  it, then prune stale worktree metadata manually; a row's path could not be
+  read, so do not run git worktree prune, git worktree remove or git gc until it
+  can."; with no such row both print unchanged. The `inspect-cap` remedy, whose
+  rows past the cap are never read, is always "{N} rows exceed the row cap of
+  {M}; remove worktrees explicitly, or prune stale entries by hand; if a
+  worktree's path cannot be read, do not run git worktree prune, git worktree
+  remove or git gc until it can" in place of the ratified remedy. Design D18
+  states the three texts beside the sentences they qualify, and the delta states
+  the cap remedy as an AND clause of its scenario "Row cap and planning
+  failures", so that the scenario counts stay 71, 22 and 24 (the delta `Clean
+  bounds its Git work and reports omitted work`; What Changes; design D18); no
+  delta lists the stale recommendation, the baseline report's text, so none
+  states the first two. Brett Heap ruled all three on 2026-10-22, in his words
+  "R-320: yes" (the lead's R-321). The warning that closes each of the three
+  names `git worktree prune`, `git worktree remove` and `git gc`, as his "R-324:
+  yes" (the lead's R-343) extended it, in the last entry of this group.
+- **The warnings also name `git worktree remove` and `git gc`** (lane
+  openRepoProject-3's W91 MEDIUM-2 and W95, and its W80 L-6 and E6; the lead's
+  R-324 and R-343; amends the third ceiling text above and the eight texts of
+  the two entries before this one, which replace `0050f3e` pcl:253-256,
+  pcl:922-926, design:757-758, design:775-779 and design:759-760): `git worktree
+  prune` is not the only command that deletes the administrative directory of a
+  worktree whose path Git cannot stat. `git worktree remove`, with or without
+  `--force`, deletes it on Git 2.43.0 and 2.36.6 (W91 MEDIUM-2; W95), and so
+  does `git gc`, whose automatic worktree prune deletes it once the directory's
+  index is older than `gc.worktreePruneExpire`, three months by default (W80
+  L-6, E6), yet each of the nine warnings named `git worktree prune` alone. The
+  lead put one question to Brett Heap in R-324, and he ruled on 2026-10-22, in
+  his words "R-324: yes" (the lead's R-343), that every no-prune warning
+  extends: the third ceiling text, the five texts of the first of those two
+  entries and the two stale recommendations of the second now end "so do not run
+  git worktree prune, git worktree remove or git gc until it can", and the cap
+  remedy now reads "if a worktree's path cannot be read, do not run git worktree
+  prune, git worktree remove or git gc until it can", every other word of the
+  nine texts staying; where the third text stands with its commands in code
+  spans, each of the three has its own. Design D18 and the deltas carry the
+  extended texts at every site that quotes them (the deltas `Clean reports local
+  worktree state`, in its scenario "An unreadable worktree is one row"; `Clean
+  can explicitly retire verified worktrees`, in its requirement and in its
+  scenario "A removal past the hard ceiling"; `Clean records a reconcilable
+  result for every removal target`, in its requirement; and `Clean bounds its
+  Git work and reports omitted work`, in its scenario "Row cap and planning
+  failures"; What Changes; design D18), and the reasons that they give for `git
+  worktree prune` stand. The sentence of design D18 and of round (k)'s entry
+  that said naming `git worktree remove` or `git gc` in the third text waits on
+  his word (W80 M-1, second part, with L-6) is closed by the same words. F-1's
+  (b), which can print in single mode beside a row whose path could not be read,
+  stays open in design Open Questions as worded.
 
 Amendments of ratified text on lane rulings, waiting on his ratification of #19:
 each replaces a sentence that the merge of PR #11 ratified, on a ruling of the
@@ -2282,24 +2334,24 @@ prune`, the case being unspecified. By the lead's R-284, which refines how Brett
 Heap's F-1 ruling applies to a read that fails and was put to him to confirm, as
 he did on 2026-10-22 in his words "R-284: yes" (the lead's R-290), such a
 target's recovery text is "inspect `<path>` by hand; its `.git`
-could not be read, so do not run `git worktree prune` until it can", whatever
-the rescan finds of the registry entry, while "where either is gone" keeps a
-`.git` file shown absent and an entry gone where the `.git` file was read (W80
-L-1, round (k)); the deltas `Clean can explicitly retire verified worktrees` and
-`Clean records a reconcilable result for every removal target` state it, the
-scenario "A removal past the hard ceiling" gains an AND clause, and What
-Changes, Capabilities, the amendments list and design D9 and D18 carry it.
-Design D18 also narrows round (h)'s sentence that a redirect of the main
-worktree is refused at resolution to an absolute path or a bare name, and says
-what a relative path or no argument from the root does: refused the same way
-under `core.bare` true, where Git finds no worktree there, but under a
-`core.worktree` not refused, the plan reading the main row where `core.worktree`
-points, as round (i)'s fixtures show, exit 0, or 1 with an incomplete plan (lane
-openRepoProject-3's W70 LOW-3); the variant's unset is the remedy wherever the
-refusal prints (W80 L-4, round (k)). The scenario counts stay 71, 22 and 24. The
-round's commits also re-wrapped the paragraphs their edits lengthened, with no
-other change of words (What Changes; design Context, D6, D9 and D18), and
-`tasks.md` 1.2 names the round.
+could not be read, so do not run `git worktree prune`, `git worktree remove` or
+`git gc` until it can", whatever the rescan finds of the registry entry, while
+"where either is gone" keeps a `.git` file shown absent and an entry gone where
+the `.git` file was read (W80 L-1, round (k)); the deltas `Clean can explicitly
+retire verified worktrees` and `Clean records a reconcilable result for every
+removal target` state it, the scenario "A removal past the hard ceiling" gains
+an AND clause, and What Changes, Capabilities, the amendments list and design D9
+and D18 carry it. Design D18 also narrows round (h)'s sentence that a redirect
+of the main worktree is refused at resolution to an absolute path or a bare
+name, and says what a relative path or no argument from the root does: refused
+the same way under `core.bare` true, where Git finds no worktree there, but
+under a `core.worktree` not refused, the plan reading the main row where
+`core.worktree` points, as round (i)'s fixtures show, exit 0, or 1 with an
+incomplete plan (lane openRepoProject-3's W70 LOW-3); the variant's unset is the
+remedy wherever the refusal prints (W80 L-4, round (k)). The scenario counts
+stay 71, 22 and 24. The round's commits also re-wrapped the paragraphs their
+edits lengthened, with no other change of words (What Changes; design Context,
+D6, D9 and D18), and `tasks.md` 1.2 names the round.
 
 Round (j), lane openRepoProject-3's W70 confirm read of round (h) at `b3228bb`
 (HIGH 0, MEDIUM 3, LOW 5; validate 9 of 9, the scenario counts 71, 22 and 24),
@@ -2370,12 +2422,13 @@ forced removal would delete it too (W80 M-1, its E5 and E7): design D18 now says
 that the third ceiling text takes precedence over the locked note wherever the
 `.git` file cannot be read, as R-284's letter gives it, "A `.git` read that
 fails or is cut gets a third note", and design D4 and the amendments list's F-2
-and R-284 entries say the same. The third text's words stay as Brett Heap
+and R-284 entries say the same. The third text's words stayed as Brett Heap
 confirmed them: naming `git worktree remove` in them, or `git gc`, whose
 automatic worktree prune deletes such a directory once its index is three months
-old (W80 L-6), would change his ruled text and waits on his word. The scenario
-"A removal past the hard ceiling", Capabilities `:55` and the amendments list's
-F-1 entry now say that the third text applies whatever the rescan finds of the
+old (W80 L-6), would change his ruled text and waited on his word, which he gave
+on 2026-10-22, "R-324: yes" (the lead's R-343, round (n)). The scenario "A
+removal past the hard ceiling", Capabilities `:55` and the amendments list's F-1
+entry now say that the third text applies whatever the rescan finds of the
 registry entry, and round (i)'s entry that "where either is gone" keeps an entry
 gone where the `.git` file was read (W80 L-1). Design D18's sentence that a
 redirect of the main worktree is refused at resolution where the root is passed
@@ -2440,15 +2493,15 @@ R-319, round (m), which moved their amendments entry to the first group): the
 next step of such an `inspection-error` row, and the plan's remedy in its plain
 form and in its redirect variant, each leaving `git worktree prune` out and the
 remedies adding that a row's path could not be read, the unread forms taking
-precedence wherever any row of the plan has such a path, a row that the deadline
-stopped included; and, since `git worktree prune` acts on the whole repository
-(R-310), the next steps of the other `inspection-error` rows and of the
-`registration-mismatch` rows, which drop it too while any row of the plan has
-such a path. The amendments list, second group, quotes them in an entry of its
-own beside the `0050f3e` sentences they qualify, design:757-758 and
+precedence wherever any row of the plan has such a path, a row whose `lstat` the
+deadline stopped included; and, since `git worktree prune` acts on the whole
+repository (R-310), the next steps of the other `inspection-error` rows and of
+the `registration-mismatch` rows, which drop it too while any row of the plan
+has such a path. The amendments list, second group, quotes them in an entry of
+its own beside the `0050f3e` sentences they qualify, design:757-758 and
 design:775-777, and design Open Questions counts it; the delta states the rule
 as an AND clause of the scenario "An unreadable worktree is one row",
-pcl:815-819's "as the cause fits" governing it; and What Changes names it. D7
+pcl:836-840's "as the cause fits" governing it; and What Changes names it. D7
 and round (j)'s entry no longer present the evidence model's sentence as R-291's
 words, a composite that no record holds: it is the lead's R-287, with R-291's
 refinement, which the evidence model words so (W87 LOW-1). Design D18 says that
@@ -2495,30 +2548,102 @@ design Open Questions now say that he confirmed them. In his words "R-320: yes"
 (R-321) he ruled the lead's proposal on W86 NM-1, which lane openRepoProject-4
 relayed: `git worktree prune`, run for a stale entry's sake, deletes the
 administrative directory of a worktree whose path Git cannot stat too, on Git
-2.43.0 and 2.36.6, so that while any row of the same plan or listing has such a
-path, the recommendation of a `stale-worktree` row and the locked form of it
-leave prune out and warn against it, and the `inspect-cap` remedy, whose rows
-past the cap are never read, always does. The amendments list's first group
-gains an entry of its own for the three texts, quoting `0050f3e` design:777-779
-and design:759-760 and the ladder's `project:568`; design D18 states them beside
-the sentences they qualify; the delta `Clean bounds its Git work and reports
-omitted work` states the cap remedy as an AND clause of its scenario "Row cap
-and planning failures", the only edit of a delta, which changes no requirement's
-text; and What Changes names them. No delta lists the stale recommendation, the
-baseline report's text, so none states it; W52's F-10, which round (g) left to
-feature 004, is named by D18 only for its locked form, which takes the second of
-the two recommendations where a path could not be read. One question stays open
-and is recorded in design Open Questions, in the lead's words, before Brett Heap
-and not ruled: F-1's (b), "inspect, then git worktree prune and delete PATH by
-hand", can print in single mode for a ceiling-cut P beside a row whose path
-could not be read, and whether it should carry the same warning there (from
-R-310); no text it names changes. Round (l)'s five texts, F-1's three texts and
-F-2's text are unchanged, byte for byte, and the scenario counts stay 71, 22 and
+2.43.0 and 2.36.6, so that while any row of the same plan has such a path, the
+recommendation of a `stale-worktree` row and the locked form of it leave prune
+out and warn against it, and the `inspect-cap` remedy, whose rows past the cap
+are never read, always does. The amendments list's first group gains an entry of
+its own for the three texts, quoting `0050f3e` design:777-779 and design:759-760
+and the ladder's `project:568`; design D18 states them beside the sentences they
+qualify; the delta `Clean bounds its Git work and reports omitted work` states
+the cap remedy as an AND clause of its scenario "Row cap and planning failures",
+the only edit of a delta, which changes no requirement's text; and What Changes
+names them. No delta lists the stale recommendation, the baseline report's text,
+so none states it; W52's F-10, which round (g) left to feature 004, is named by
+D18 only for its locked form, which takes the second of the two recommendations
+where a path could not be read. One question stays open and is recorded in
+design Open Questions, in the lead's words, before Brett Heap and not ruled:
+F-1's (b), "inspect, then git worktree prune and delete PATH by hand", can print
+in single mode for a ceiling-cut P beside a row whose path could not be read,
+and whether it should carry the same warning there (from R-310); no text it
+names changes. Round (l)'s five texts, F-1's three texts and F-2's text are
+unchanged, byte for byte, and the scenario counts stay 71, 22 and
 24. This round's commit also re-wrapped the lines after each of its edits, up to
 where the old line breaks resume, with no other change of words (What Changes;
 Decisions, amendments; this list; design Context, D18, Open Questions;
 `tasks.md` 1.2; the delta's `Clean bounds its Git work and reports omitted
 work`, its scenario "Row cap and planning failures").
+
+Round (n), lane openRepoProject-3's W91 confirm read of round (l) at `ccc52b9`
+(HIGH 0, MEDIUM 2, LOW 1) and W95 confirm read of round (m) at `20084cd` (HIGH
+0, MEDIUM 1, LOW 3), under the lead's R-341, with Brett Heap's answer of
+2026-10-22 to the one question that the lead's R-324 put to him, "R-324: yes"
+(the lead's R-343) (validate 9 of 9, the scenario counts 71, 22 and 24). The
+labels T1 to T8 are W91's and W95's: T1 is the next step of an
+`inspection-error` row whose path could not be read; T2 and T3 are the plan's
+`inspection-incomplete` remedy in its plain form and in its redirect variant; T4
+and T5 are the next steps of the other `inspection-error` rows and of the
+`registration-mismatch` rows; T6 and T7 are the recommendation of a
+`stale-worktree` row and its locked form; T8 is the `inspect-cap` remedy. The
+unread forms, T1 to T7, now state one condition in the same words at every site:
+any row of the plan has a path whose planning `lstat` failed other than for the
+path's absence, or was cut at its budget, a row whose `lstat` the deadline
+stopped included, so that its `present` is null (W91 MEDIUM-1, W95 MEDIUM-1;
+held for this round by the lead's R-324). D18's definition of the unread
+`inspection-error` row, which T4 and T5 refer back to, and the condition of T6
+and T7, in D18 and in the entry for T6 to T8, gain the clause that T2 and T3 and
+the entry for T1 to T5 already had. That entry says "stopped", as D18's remedies
+and R-311 do, where it said "cut", and round (l)'s entry words the clause as the
+others do. The meaning does not change: a row whose `lstat` the deadline stopped
+is `present: null` either way, the requirement `Clean bounds its Git work and
+reports omitted work` leaving the values of a filesystem call that the deadline
+stopped null. Round (l)'s entry and the entry for T1 to T5 place the "as the
+cause fits" sentence (`0050f3e` pcl:649-651) at pcl:836-840, where they placed
+it at pcl:815-819, which round (l)'s own AND clause had moved (W91 LOW-A). D18,
+the entry for T6 to T8 and round (m)'s entry say "plan" where they said "plan or
+listing", the plain report being a plan in `mode: "report"` (W95 LOW-2). The
+locked form of the stale recommendation, T7, is stated as the report row's
+recommendation alone, in the human report and in `--json`, because the preview
+excludes a locked stale row as `locked-worktree`, ahead of its class, so that no
+preview group has it as its next step, as feature 004 at `0a82a62` builds it;
+design D18 and the entry for T6 to T8 say so (W95 LOW-3). Design D18 says once
+that T8's `{N}` and `{M}` stand for the row count and the cap, the ratified
+remedy's `N` and `M`, which are the only braced placeholders of a text in this
+change (W95 LOW-1). In his words "R-324: yes" Brett Heap ruled that every
+no-prune warning, the ceiling's third text (R-284's) and T1 to T8, extends to
+name `git worktree remove` and `git gc` beside `git worktree prune`: each ends
+"so do not run git worktree prune, git worktree remove or git gc until it can",
+and the cap remedy "if a worktree's path cannot be read, do not run git worktree
+prune, git worktree remove or git gc until it can", every other word of the nine
+texts staying (W91 MEDIUM-2 and W95: `git worktree remove`, with or without
+`--force`, deletes the administrative directory of a worktree whose path Git
+cannot stat; W80 L-6 and E6: so does the automatic worktree prune of `git gc`,
+once that directory's index is older than `gc.worktreePruneExpire`, three months
+by default). The nine texts are edited at every site that quotes them, and the
+sentences that name the third text's warning with them: design D9 and D18, What
+Changes, Capabilities `:55`, the amendments list's entries for R-284, T1 to T5
+and T6 to T8, round (j)'s entry's quote of the third text, and the deltas `Clean
+reports local worktree state` (its scenario "An unreadable worktree is one
+row"), `Clean can explicitly retire verified worktrees` (its requirement and its
+scenario "A removal past the hard ceiling"), `Clean records a reconcilable
+result for every removal target` (its requirement) and `Clean bounds its Git
+work and reports omitted work` (its scenario "Row cap and planning failures");
+where the third text stands with its commands in code spans, each of the three
+has its own. The first group's heading names his words, an entry of its own
+records the ruling, and design D18's sentence on the third note, like round
+(k)'s entry, no longer says that naming `git worktree remove` or `git gc` there
+waits on his word (W80 M-1, second part, with L-6); What Changes, design Context
+and Open Questions say the same. The requirements `Clean can explicitly retire
+verified worktrees` and `Clean records a reconcilable result for every removal
+target` change in the third recovery text alone, and the three scenarios named
+above change in their ANDs; no requirement or scenario is added or removed, the
+reasons that the deltas give for `git worktree prune` stand, and the scenario
+counts stay 71, 22 and 24. Apart from that closing clause, T1 to T8 and the
+third text are unchanged, and F-1's (a) and (b) and F-2's text are unchanged,
+byte for byte; F-1's (b) beside an unread row stays open in design Open
+Questions as worded. This round's commit also re-wrapped the lines after each of
+its edits, up to where the old line breaks resume, with no other change of words
+(this list; the amendments list; What Changes; Capabilities `:55`; design
+Context, D9, D18, Open Questions; `tasks.md` 1.2; the deltas named above).
 
 ### Council Verdicts
 

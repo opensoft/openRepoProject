@@ -87,25 +87,27 @@ resolved repository.
   and exits 1, where before this change the whole command refused with exit 2
 - **AND** a preview of `--all-safe` on that repository lists the row under
   `inspection-error` with the next step "inspect the row by hand; its path could
-  not be read, so do not run git worktree prune until it can", and the
-  `inspection-incomplete` refusal of that preview and of `--all-safe --apply
-  --yes` names the remedy "repair or remove the inspection-error rows first: git
-  worktree repair, or remove the row by hand after review; a row's path could
-  not be read, so do not run git worktree prune until it can" or, where a row it
-  counts is also excluded as `registration-mismatch`, "repair or remove the
+  not be read, so do not run git worktree prune, git worktree remove or git gc
+  until it can", and the `inspection-incomplete` refusal of that preview and of
+  `--all-safe --apply --yes` names the remedy "repair or remove the
+  inspection-error rows first: git worktree repair, or remove the row by hand
+  after review; a row's path could not be read, so do not run git worktree
+  prune, git worktree remove or git gc until it can" or, where a row it counts
+  is also excluded as `registration-mismatch`, "repair or remove the
   inspection-error rows first: git worktree repair, unset core.worktree and
   core.bare in the repository's config or in a worktree's config.worktree, or
   remove the row by hand after review; a row's path could not be read, so do not
-  run git worktree prune until it can", since `git worktree prune` would delete
-  that live worktree's administrative directory and so does not fit this cause;
-  and while that row exists, the preview's next step for any other
-  `inspection-error` row, whose path was read, is "review, then git worktree
-  repair, or remove the row by hand; a row's path could not be read, so do not
-  run git worktree prune until it can", and for a `registration-mismatch` row
-  "review, then git worktree repair, unset core.worktree and core.bare in the
-  repository's config, or in that worktree's config.worktree, or remove the row
-  by hand; a row's path could not be read, so do not run git worktree prune
-  until it can", since `git worktree prune` acts on the whole repository
+  run git worktree prune, git worktree remove or git gc until it can", since
+  `git worktree prune` would delete that live worktree's administrative
+  directory and so does not fit this cause; and while that row exists, the
+  preview's next step for any other `inspection-error` row, whose path was read,
+  is "review, then git worktree repair, or remove the row by hand; a row's path
+  could not be read, so do not run git worktree prune, git worktree remove or
+  git gc until it can", and for a `registration-mismatch` row "review, then git
+  worktree repair, unset core.worktree and core.bare in the repository's config,
+  or in that worktree's config.worktree, or remove the row by hand; a row's path
+  could not be read, so do not run git worktree prune, git worktree remove or
+  git gc until it can", since `git worktree prune` acts on the whole repository
 
 #### Scenario: A failed status probe on the merge-target checkout
 
@@ -352,9 +354,9 @@ remove --force` while the path remains; the reason SHALL be `removal-ceiling` in
 both cases. Where the rescan cannot read that `.git` file, the read failing
 other than for the file's absence or cut at its budget, the recovery text SHALL
 instead be "inspect `<path>` by hand; its `.git` could not be read, so do not
-run `git worktree prune` until it can", since `git worktree prune` deletes the
-administrative directory of a worktree whose `.git` Git cannot stat, even a
-live one.
+run `git worktree prune`, `git worktree remove` or `git gc` until it can", since
+`git worktree prune` deletes the administrative directory of a worktree whose
+`.git` Git cannot stat, even a live one.
 
 For a removal named by `--worktree P`, the plan's completeness SHALL be the
 repository-wide evidence plus P's own row: another row's `inspection-error`, its
@@ -531,9 +533,9 @@ target there, and then retrying.
 - **AND** where the rescan cannot read the target's `.git` file, as when a
   directory above it denies search, the recovery text is instead "inspect
   `<path>` by hand; its `.git` could not be read, so do not run `git worktree
-  prune` until it can", whatever the rescan finds of the registry entry, since
-  `git worktree prune` would delete that live worktree's administrative
-  directory
+  prune`, `git worktree remove` or `git gc` until it can", whatever the rescan
+  finds of the registry entry, since `git worktree prune` would delete that live
+  worktree's administrative directory
 
 #### Scenario: project killed during a deletion
 
@@ -1099,8 +1101,8 @@ plan's `probes.estimated` SHALL count those extra children.
 - **AND** where the cause is the row cap, that refusal names the remedy "{N}
   rows exceed the row cap of {M}; remove worktrees explicitly, or prune stale
   entries by hand; if a worktree's path cannot be read, do not run git worktree
-  prune until it can", whether or not any inspected row's path was read, since
-  the rows past the cap are never read
+  prune, git worktree remove or git gc until it can", whether or not any
+  inspected row's path was read, since the rows past the cap are never read
 
 #### Scenario: Twenty rows pass every gate before deferred-target-cap
 
@@ -1201,8 +1203,9 @@ remains. The rescan SHALL read the `.git` file by one `lstat`, a filesystem call
 that starts no Git child. Where that `lstat` fails other than for the file's
 absence, or is cut at its budget, the recovery text SHALL instead be "inspect
 `<path>` by hand; its `.git` could not be read, so do not run `git worktree
-prune` until it can", since `git worktree prune` deletes the administrative
-directory of a worktree whose `.git` Git cannot stat, even a live one.
+prune`, `git worktree remove` or `git gc` until it can", since `git worktree
+prune` deletes the administrative directory of a worktree whose `.git` Git
+cannot stat, even a live one.
 
 Before the apply phase, SIGINT, SIGTERM or SIGHUP SHALL terminate and reap every
 probe child, print "Cancelled." on standard error and no JSON document, and exit

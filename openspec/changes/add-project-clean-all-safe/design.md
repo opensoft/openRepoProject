@@ -67,10 +67,13 @@ R-310, Context, D4, D7, D18 and Open Questions; and round (m), Brett Heap's
 confirmation of round (l)'s five texts on 2026-10-22, "R-307: yes; R-310: yes"
 (the lead's R-319), and his "R-320: yes" (the lead's R-321) on the stale
 recommendations and the cap remedy, with F-1's (b) beside an unread row recorded
-as open, Context, D18 and Open Questions. Brett Heap's ruling of 2026-10-09 on
-open question 1, that a local ancestry proof outranks `remote-gone` for worktree
-rows, is in `proposal.md` Decisions and edited Context, D6, D7, D20, Risks, the
-Migration Plan and Open Questions here.
+as open, Context, D18 and Open Questions; and round (n), lane
+openRepoProject-3's W91 and W95 reads of rounds (l) and (m), under the lead's
+R-341, with Brett Heap's "R-324: yes" (the lead's R-343), Context, D9, D18 and
+Open Questions. Brett Heap's ruling of 2026-10-09 on open question 1, that a
+local ancestry proof outranks `remote-gone` for worktree rows, is in
+`proposal.md` Decisions and edited Context, D6, D7, D20, Risks, the Migration
+Plan and Open Questions here.
 
 Citations are `file:line` at `da33d92`: `BA`, `DI`, `OV` and `HO` are the
 packet's batch-cleanup, project-discovery, overview and handoff documents, and
@@ -661,9 +664,10 @@ Brett Heap's ruling of 2026-10-22, "F-1: prune-then-delete", R-263). The rescan
 reads the `.git` file by one `lstat`, a filesystem call under the reserve's
 budget, so it still spawns at most three Git children. Where that `lstat` fails
 other than for the file's absence, or is cut at its budget, the recovery text
-names neither and warns against `git worktree prune` until the `.git` file can
-be read: where Git cannot stat a worktree's `.git`, as under `EACCES` on its
-path, `git worktree prune` deletes that live worktree's administrative
+names neither and warns against `git worktree prune`, `git worktree remove` and
+`git gc` until the `.git` file can be read (Brett Heap's "R-324: yes", the
+lead's R-343): where Git cannot stat a worktree's `.git`, as under `EACCES` on
+its path, `git worktree prune` deletes that live worktree's administrative
 directory, its index, `HEAD`, per-worktree refs and reflog with it, on Git
 2.43.0 and 2.36.6 (lane openRepoProject-3's W73 M-1; the lead's R-284, which
 refines how Brett Heap's F-1 ruling applies to a read that fails and which he
@@ -1318,36 +1322,45 @@ hand" (LQ-11, R-125), naming both files from which Git applies the redirect (W52
 F-3, R-248), and, where any row of the plan has a path that could not be read,
 as below, "review, then git worktree repair, unset core.worktree and core.bare
 in the repository's config, or in that worktree's config.worktree, or remove the
-row by hand; a row's path could not be read, so do not run git worktree prune
-until it can" in its place (W87 M-1; the lead's R-310); `inspection-error`
-"review, then git worktree repair or git worktree prune, or remove the row by
-hand", and, for an `inspection-error` row whose path could not be read, its
-planning `lstat` failing other than for the path's absence or cut at its budget,
+row by hand; a row's path could not be read, so do not run git worktree prune,
+git worktree remove or git gc until it can" in its place (W87 M-1; the lead's
+R-310); `inspection-error` "review, then git worktree repair or git worktree
+prune, or remove the row by hand", and, for an `inspection-error` row whose path
+could not be read, its planning `lstat` failing other than for the path's
+absence or cut at its budget, a row whose `lstat` the deadline stopped included,
 so that its `present` is null, "inspect the row by hand; its path could not be
-read, so do not run git worktree prune until it can", which the preview prints
-for such rows in a group of their own under `inspection-error`, since `git
-worktree prune` deletes the administrative directory of a live worktree whose
-path Git cannot stat (D9; lane openRepoProject-3's W73 M-1 and W87 M-1; the
-lead's R-307), and, where any row of the plan has such a path, "review, then git
-worktree repair, or remove the row by hand; a row's path could not be read, so
-do not run git worktree prune until it can" for any other `inspection-error`
+read, so do not run git worktree prune, git worktree remove or git gc until it
+can", which the preview prints for such rows in a group of their own under
+`inspection-error`, since `git worktree prune` deletes the administrative
+directory of a live worktree whose path Git cannot stat (D9; lane
+openRepoProject-3's W73 M-1 and W87 M-1; the lead's R-307), and, where any row
+of the plan has such a path, "review, then git worktree repair, or remove the
+row by hand; a row's path could not be read, so do not run git worktree prune,
+git worktree remove or git gc until it can" for any other `inspection-error`
 row, since `git worktree prune` acts on the whole repository and so deletes the
 directory of the row whose path could not be read, whichever row it is run for
 (the lead's R-310); `locked-worktree` "unlock it yourself if it should go";
 every other class its recommendation. The `stale-worktree` class's, "Review and
 prune stale worktree metadata manually.", and its locked form, which lane
 openRepoProject-3's W52 F-10 gave feature 004, become, where any row of the same
-plan or listing has a path that could not be read, a row whose planning `lstat`
-failed other than for the path's absence, or was cut at its budget, a row with
-`present: null`, "Review and prune stale worktree metadata manually; a row's
-path could not be read, so do not run git worktree prune until it can." and, for
-a locked row, "Review, unlock it, then prune stale worktree metadata manually; a
-row's path could not be read, so do not run git worktree prune until it can.",
-since `git worktree prune`, run for a stale entry's sake, deletes the
-administrative directory of a worktree whose path Git cannot stat too, on Git
-2.43.0 and 2.36.6 (lane openRepoProject-3's W86 NM-1, through lane
-openRepoProject-4; the lead's R-320, which Brett Heap ruled on 2026-10-22,
-"R-320: yes", R-321); with no such row they print unchanged.
+plan has a path that could not be read, a row whose planning `lstat` failed
+other than for the path's absence, or was cut at its budget, a row whose `lstat`
+the deadline stopped included, so that its `present` is null, "Review and prune
+stale worktree metadata manually; a row's path could not be read, so do not run
+git worktree prune, git worktree remove or git gc until it can." and, for a
+locked row, in the report's row recommendation alone, "Review, unlock it, then
+prune stale worktree metadata manually; a row's path could not be read, so do
+not run git worktree prune, git worktree remove or git gc until it can.", since
+`git worktree prune`, run for a stale entry's sake, deletes the administrative
+directory of a worktree whose path Git cannot stat too, on Git 2.43.0 and 2.36.6
+(lane openRepoProject-3's W86 NM-1, through lane openRepoProject-4; the lead's
+R-320, which Brett Heap ruled on 2026-10-22, "R-320: yes", R-321); with no such
+row they print unchanged. A locked stale row is excluded in the preview as
+`locked-worktree`, whose gate comes ahead of its class, with the next step
+"unlock it yourself if it should go", so the locked form is never a preview
+group's next step: it prints only as the report row's recommendation, in the
+human report and in `--json`, as feature 004 at `0a82a62` builds it (lane
+openRepoProject-3's W95 LOW-3).
 
 The question: `Remove N worktrees, keeping N branches? [yes/N]`, in the singular
 for one. The wait line, at most once: `Waiting for git worktree remove PATH to
@@ -1370,36 +1383,36 @@ and a deletion by hand succeed (W52 F-1; R-285; Brett Heap's ruling of
 whose `.git` file the rescan cannot read, its `lstat` failing other than for the
 file's absence or cut at its budget, whatever it finds of the registry entry,
 the note reads `Probable partial removal: inspect PATH by hand; its .git
-could not be read, so do not run git worktree prune until it can.`, since `git
-worktree prune` deletes the administrative directory of a live worktree whose
-`.git` Git cannot stat (D9; lane openRepoProject-3's W73 M-1; the lead's R-284,
-which Brett Heap confirmed on 2026-10-22, "R-284: yes", R-290). For a locked
-worktree, which `git worktree remove --force` refuses, the note reads
-`Probable partial removal: inspect, unlock it, then git worktree remove --force
-PATH by hand.` (W52 F-2, R-248). For a locked row that note replaces the
-ratified recovery text of `0050f3e`, which the delta keeps for every other row,
-by Brett Heap's ruling of 2026-10-22, "F-2: yes" (W59 G-1, R-253; R-263); a
-report row needs no other text, since its `.git` file and registry entry are
-present (D4). The locked note is the report row's own form: a ceiling target,
-which is no report row, shows the first, the second or the third note and never
-the locked one, since the deltas give it no locked form and feature 004 builds
-none (`partial_removal_text()` at `3bc1d68`; lane openRepoProject-3's W87
-LOW-3). A locked ceiling target whose `.git` file and registry entry the rescan
-finds present therefore shows the first note, and its `git worktree remove
---force` fails safe: Git refuses it while the worktree is locked, exit 128 on
-Git 2.43.0 and 2.36.6, and removes nothing. Where the `.git` file cannot be
-read, a ceiling target shows the third note, locked or not and whatever the
-rescan finds of the registry entry, by R-284's letter, "A `.git` read that fails
-or is cut gets a third note", and the third note would take precedence over a
-locked one, as over the entry's state, were a ceiling target ever given it: Git
-treats a path it cannot stat as missing, so that once such a worktree is
-unlocked, `git worktree remove`, with or without `--force`, deletes its
-administrative directory as `git worktree prune` does, on Git 2.43.0 and 2.36.6
-(lane openRepoProject-3's W80 M-1; the lead's R-294). The third note's words
-name only `git worktree prune`; naming `git worktree remove` in them too, or
-`git gc`, whose automatic worktree prune deletes such a directory once its index
-is three months old (W80 L-6), would change Brett Heap's ruled text and waits on
-his word.
+could not be read, so do not run git worktree prune, git worktree remove or git
+gc until it can.`, since `git worktree prune` deletes the administrative
+directory of a live worktree whose `.git` Git cannot stat (D9; lane
+openRepoProject-3's W73 M-1; the lead's R-284, which Brett Heap confirmed on
+2026-10-22, "R-284: yes", R-290). For a locked worktree, which `git worktree
+remove --force` refuses, the note reads `Probable partial removal: inspect,
+unlock it, then git worktree remove --force PATH by hand.` (W52 F-2, R-248). For
+a locked row that note replaces the ratified recovery text of `0050f3e`, which
+the delta keeps for every other row, by Brett Heap's ruling of 2026-10-22, "F-2:
+yes" (W59 G-1, R-253; R-263); a report row needs no other text, since its `.git`
+file and registry entry are present (D4). The locked note is the report row's
+own form: a ceiling target, which is no report row, shows the first, the second
+or the third note and never the locked one, since the deltas give it no locked
+form and feature 004 builds none (`partial_removal_text()` at `3bc1d68`; lane
+openRepoProject-3's W87 LOW-3). A locked ceiling target whose `.git` file and
+registry entry the rescan finds present therefore shows the first note, and its
+`git worktree remove --force` fails safe: Git refuses it while the worktree is
+locked, exit 128 on Git 2.43.0 and 2.36.6, and removes nothing. Where the `.git`
+file cannot be read, a ceiling target shows the third note, locked or not and
+whatever the rescan finds of the registry entry, by R-284's letter, "A `.git`
+read that fails or is cut gets a third note", and the third note would take
+precedence over a locked one, as over the entry's state, were a ceiling target
+ever given it: Git treats a path it cannot stat as missing, so that once such a
+worktree is unlocked, `git worktree remove`, with or without `--force`, deletes
+its administrative directory as `git worktree prune` does, on Git 2.43.0 and
+2.36.6 (lane openRepoProject-3's W80 M-1; the lead's R-294). The third note's
+words name `git worktree prune`, `git worktree remove` and `git gc`, the last
+because its automatic worktree prune deletes such a directory once its index is
+three months old (W80 L-6), as Brett Heap ruled on 2026-10-22, "R-324: yes" (the
+lead's R-343).
 
 Refusal messages keep the baseline wording where a test reads it:
 `target-excluded` for the current worktree, `Cannot remove the current
@@ -1428,115 +1441,125 @@ where any row of the plan has a path that could not be read, its planning
 whose `lstat` the deadline stopped included, the remedy is instead "repair or
 remove the inspection-error rows first: git worktree repair, or remove the row
 by hand after review; a row's path could not be read, so do not run git worktree
-prune until it can", or, where any row it counts is excluded as
-`registration-mismatch`, "repair or remove the inspection-error rows first: git
-worktree repair, unset core.worktree and core.bare in the repository's config or
-in a worktree's config.worktree, or remove the row by hand after review; a row's
-path could not be read, so do not run git worktree prune until it can", since
-`git worktree prune` deletes the administrative directory of a live worktree
-whose path Git cannot stat, and omitting prune advice never harms (lane
-openRepoProject-3's W87 M-1; the lead's R-307 and R-310, which Brett Heap
-confirmed on 2026-10-22 in his words "R-307: yes; R-310: yes", R-319);
-`inspect-cap` "N rows exceed the row cap of M; remove worktrees explicitly, or
-prune stale entries by hand", which is always, in place of the ratified remedy,
-"{N} rows exceed the row cap of {M}; remove worktrees explicitly, or prune stale
-entries by hand; if a worktree's path cannot be read, do not run git worktree
-prune until it can", since the rows past the cap are never read (lane
-openRepoProject-3's W86 NM-1; the lead's R-320, which Brett Heap ruled on
+prune, git worktree remove or git gc until it can", or, where any row it counts
+is excluded as `registration-mismatch`, "repair or remove the inspection-error
+rows first: git worktree repair, unset core.worktree and core.bare in the
+repository's config or in a worktree's config.worktree, or remove the row by
+hand after review; a row's path could not be read, so do not run git worktree
+prune, git worktree remove or git gc until it can", since `git worktree prune`
+deletes the administrative directory of a live worktree whose path Git cannot
+stat, and omitting prune advice never harms (lane openRepoProject-3's W87 M-1;
+the lead's R-307 and R-310, which Brett Heap confirmed on 2026-10-22 in his
+words "R-307: yes; R-310: yes", R-319); `inspect-cap` "N rows exceed the row cap
+of M; remove worktrees explicitly, or prune stale entries by hand", which is
+always, in place of the ratified remedy, "{N} rows exceed the row cap of {M};
+remove worktrees explicitly, or prune stale entries by hand; if a worktree's
+path cannot be read, do not run git worktree prune, git worktree remove or git
+gc until it can", its `{N}` and `{M}` standing for the row count and the cap,
+the ratified remedy's `N` and `M`, since the rows past the cap are never read
+(lane openRepoProject-3's W86 NM-1; the lead's R-320, which Brett Heap ruled on
 2026-10-22, "R-320: yes", R-321); `deadline-exceeded` "the run ran out of time;
-remove worktrees explicitly or re-run". Every refusal that a `core.worktree` or
-`core.bare` redirect of a linked worktree causes is that `inspection-incomplete`
-one, with the variant remedy, in its unread form where any row of the plan has a
-path that could not be read: in the preview, the apply and the report of the
-batch; in push and branch deletion, which count every row; and in a
-single-target removal naming the redirected row, whose own row is
-`inspection-error`, so that its incomplete plan is refused before any gate's
-exclusion, never with `target-excluded` and the class wording. A redirect of the
-main worktree itself, by a `core.worktree` or `core.bare` in the repository's
-`config` or in the main worktree's `config.worktree`, is refused earlier, at
-resolution, with `target-not-repository-root`, before any plan is built, where
-the root is passed by an absolute path, or by a bare name that `discover()`
-resolves to the root itself, through a family holder or a manifest there (round
-(h), with feature 004 at `d764c26` on Git 2.43.0 and 2.36.6; lane
-openRepoProject-3's W64 M-1 and W80 M-2). Otherwise a bare name takes Git's
-toplevel, row 2, as D8 and BA:860 have it, and under a `core.worktree` that
-toplevel is the redirect target: a target outside any repository, or a missing
-one, is refused with the plain message quoted below, which names that target;
-one inside the repository resolves to the repository; and another repository's
-root resolves to that other repository. Under a `core.bare` true row 2 fails,
-and the run is refused with `repository-not-found`, `No project found at PATH;
-supply a path or name.`, unless the directory X that the name finds holds a
-`.project.json` file or a `.devcontainer` directory, which `discover()` takes
-after row 2 fails, and then the variant prints (W80 M-2, reading feature 004's
-`discover()` at `2707ff2`, with row 2 run on Git 2.43.0 and 2.36.6; lane
-openRepoProject-3's W87 LOW-2, a bare name through the projects directory in
-report mode on both builds, `discover()` at `3bc1d68`, `project:549`). A
-relative path naming the root, from any directory, as `./X` from its parent or
-`../X` from a sibling, or no argument run from the root, resolves as "Clean
-resolves its target Git-first" states, to the repository Git finds there with
-`root` set to its main worktree: under a `core.bare` true Git finds no worktree
-there, and the run is refused the same way, but under a `core.worktree` it is
-not refused and builds a plan whose main row Git reads where `core.worktree`
-points (lane openRepoProject-3's W70 LOW-3 and W80 L-4; round (i)'s fixtures,
-where such runs exit 0, or 1 with an incomplete plan). A refusal at resolution
-names the redirect, since feature 004's plain message for the code, `Not the
-main worktree of a repository: PATH; pass the repository root.`, asks for the
-root that was passed: it reads `Not the main worktree of a repository: PATH;
-core.worktree or core.bare redirects the main worktree; unset both in the
-repository's config, or in the main worktree's config.worktree, then run again.`
-It does so only where the directory the resolution examined holds its own
-`.git`, a directory or a gitfile, whose realpath is the repository's common
-directory, and Git run there uses another work tree or none: another where row 3
-succeeded and its toplevel is not that directory, which only a `core.worktree`
-gives, and none where row 3 failed and row 3b prints that `.git` as both the git
-directory and the common directory, and `true`, which only a `core.bare` true
-gives, each from the repository's `config` or the main worktree's
-`config.worktree`. A relative `core.worktree` naming a missing directory
-redirects too, but Git run there uses no work tree at all: row 3 and row 3b each
-exit 128 with Git's own `fatal: cannot chdir to '<value>'`, so the plain message
-prints, in the plain layout, the `.git`-file layout and a submodule checkout
-moved by hand alike (lane openRepoProject-3's W80 L-2 and W81 M-1, on Git 2.43.0
-and 2.36.6); run there, `git config --unset` fails the same way, as does `git
-config --file`, while run outside the repository `git config --file
-X/.git/config --unset core.worktree` clears it (round (k), on Git 2.43.0). Where
-row 3 succeeded the decision reads only the filesystem (the `lstat` of the
-`.git`, its gitdir line and the realpaths). Every other
-`target-not-repository-root` refusal keeps the plain message: a subdirectory, a
-linked worktree, a linked worktree that its own `config.worktree` redirects, a
-directory outside any repository, a submodule checkout whose own configuration
-redirects nothing, and a `git init --bare` repository passed by its own
-directory, which holds no `.git` and which an unset of `core.bare` does not make
-a work tree. A repository made by `git init --bare X/.git` and passed as X has
-the configuration of a checkout at X whose `core.bare` is true, and nothing Git
-reads tells the two apart, so it takes the variant, which is true of it: with
-`core.bare` unset, X resolves. A main checkout whose `.git` is a file and whose
-`core.worktree` names that checkout resolves as before (D8); one whose
-`core.worktree` names another directory, or whose `core.bare` is true, takes the
-variant. A submodule checkout keeps the plain message only where its own
-configuration redirects nothing, its toplevel then being its own directory, or
-where, moved by hand, its relative `core.worktree` names a missing directory;
-feature 004's check that excludes a checkout whose row 3 prints a superproject
-decided no outcome in any fixture that W80 or W81 built. One whose module's
-`config`, `modules/<name>/config`, sets `core.bare` true, or a `core.worktree`
-naming another directory, a sibling submodule's checkout among them, takes the
-variant, which is true of the redirect, and so does a copy of a submodule
-checkout whose gitfile names the module, where row 3 run in the copy finds no
-gitlink and prints two lines. Unsetting the redirect does not make any of them a
-main worktree: the first three are then refused again, with the plain message,
-and the superproject's root is what resolves, so a person is refused twice, and
-for the copy the remedy may not clear the cause either. These are known limits,
-recorded and not fixed (W80 L-5 and W81 L-1, on Git 2.43.0 and 2.36.6). Row 3b
-runs only on that refusal, after the resolution has decided to refuse, counted
-and bounded as row 3 is, and only where the directory holds a `.git`, so a run
-that resolves spawns no child for it, and a row 3b that fails or is cut leaves
-the plain message (round (i), with feature 004 at `7164d7f` on Git 2.43.0 and
-2.36.6; the lead's R-271). `relative-config-path` prints one line per variable
-that fails D11's test, in the order `HOME`, `XDG_CONFIG_HOME`,
-`GIT_CONFIG_GLOBAL`, `GIT_CONFIG_SYSTEM`: `NAME is set to a path that does not
-begin with /; make it absolute or unset it.`, never the value; doctor's `error`
-row and status's `errors` entry carry the same text. The line and its order are
-a fill of this change: Brett Heap's ruling LQ-15 names the code and the refusal,
-not the text.
+remove worktrees explicitly or re-run". Every warning of this section, the third
+note's too, ends "do not run git worktree prune, git worktree remove or git gc
+until it can", the cap remedy's "if a worktree's path cannot be read" before it,
+as Brett Heap ruled on 2026-10-22, "R-324: yes" (the lead's R-343): `git
+worktree remove`, with or without `--force`, deletes the administrative
+directory of a worktree whose path Git cannot stat, as `git worktree prune` does
+(lane openRepoProject-3's W91 MEDIUM-2 and W95), and so does the automatic
+worktree prune of `git gc` once that directory's index is older than
+`gc.worktreePruneExpire`, three months by default (W80 L-6, E6); every other
+word of those texts stands. Every refusal that a `core.worktree` or `core.bare`
+redirect of a linked worktree causes is that `inspection-incomplete` one, with
+the variant remedy, in its unread form where any row of the plan has a path that
+could not be read: in the preview, the apply and the report of the batch; in
+push and branch deletion, which count every row; and in a single-target removal
+naming the redirected row, whose own row is `inspection-error`, so that its
+incomplete plan is refused before any gate's exclusion, never with
+`target-excluded` and the class wording. A redirect of the main worktree itself,
+by a `core.worktree` or `core.bare` in the repository's `config` or in the main
+worktree's `config.worktree`, is refused earlier, at resolution, with
+`target-not-repository-root`, before any plan is built, where the root is passed
+by an absolute path, or by a bare name that `discover()` resolves to the root
+itself, through a family holder or a manifest there (round (h), with feature 004
+at `d764c26` on Git 2.43.0 and 2.36.6; lane openRepoProject-3's W64 M-1 and W80
+M-2). Otherwise a bare name takes Git's toplevel, row 2, as D8 and BA:860 have
+it, and under a `core.worktree` that toplevel is the redirect target: a target
+outside any repository, or a missing one, is refused with the plain message
+quoted below, which names that target; one inside the repository resolves to the
+repository; and another repository's root resolves to that other repository.
+Under a `core.bare` true row 2 fails, and the run is refused with
+`repository-not-found`, `No project found at PATH; supply a path or name.`,
+unless the directory X that the name finds holds a `.project.json` file or a
+`.devcontainer` directory, which `discover()` takes after row 2 fails, and then
+the variant prints (W80 M-2, reading feature 004's `discover()` at `2707ff2`,
+with row 2 run on Git 2.43.0 and 2.36.6; lane openRepoProject-3's W87 LOW-2, a
+bare name through the projects directory in report mode on both builds,
+`discover()` at `3bc1d68`, `project:549`). A relative path naming the root, from
+any directory, as `./X` from its parent or `../X` from a sibling, or no argument
+run from the root, resolves as "Clean resolves its target Git-first" states, to
+the repository Git finds there with `root` set to its main worktree: under a
+`core.bare` true Git finds no worktree there, and the run is refused the same
+way, but under a `core.worktree` it is not refused and builds a plan whose main
+row Git reads where `core.worktree` points (lane openRepoProject-3's W70 LOW-3
+and W80 L-4; round (i)'s fixtures, where such runs exit 0, or 1 with an
+incomplete plan). A refusal at resolution names the redirect, since feature
+004's plain message for the code, `Not the main worktree of a repository: PATH;
+pass the repository root.`, asks for the root that was passed: it reads `Not the
+main worktree of a repository: PATH; core.worktree or core.bare redirects the
+main worktree; unset both in the repository's config, or in the main worktree's
+config.worktree, then run again.` It does so only where the directory the
+resolution examined holds its own `.git`, a directory or a gitfile, whose
+realpath is the repository's common directory, and Git run there uses another
+work tree or none: another where row 3 succeeded and its toplevel is not that
+directory, which only a `core.worktree` gives, and none where row 3 failed and
+row 3b prints that `.git` as both the git directory and the common directory,
+and `true`, which only a `core.bare` true gives, each from the repository's
+`config` or the main worktree's `config.worktree`. A relative `core.worktree`
+naming a missing directory redirects too, but Git run there uses no work tree at
+all: row 3 and row 3b each exit 128 with Git's own `fatal: cannot chdir to
+'<value>'`, so the plain message prints, in the plain layout, the `.git`-file
+layout and a submodule checkout moved by hand alike (lane openRepoProject-3's
+W80 L-2 and W81 M-1, on Git 2.43.0 and 2.36.6); run there, `git config --unset`
+fails the same way, as does `git config --file`, while run outside the
+repository `git config --file X/.git/config --unset core.worktree` clears it
+(round (k), on Git 2.43.0). Where row 3 succeeded the decision reads only the
+filesystem (the `lstat` of the `.git`, its gitdir line and the realpaths). Every
+other `target-not-repository-root` refusal keeps the plain message: a
+subdirectory, a linked worktree, a linked worktree that its own
+`config.worktree` redirects, a directory outside any repository, a submodule
+checkout whose own configuration redirects nothing, and a `git init --bare`
+repository passed by its own directory, which holds no `.git` and which an unset
+of `core.bare` does not make a work tree. A repository made by `git init --bare
+X/.git` and passed as X has the configuration of a checkout at X whose
+`core.bare` is true, and nothing Git reads tells the two apart, so it takes the
+variant, which is true of it: with `core.bare` unset, X resolves. A main
+checkout whose `.git` is a file and whose `core.worktree` names that checkout
+resolves as before (D8); one whose `core.worktree` names another directory, or
+whose `core.bare` is true, takes the variant. A submodule checkout keeps the
+plain message only where its own configuration redirects nothing, its toplevel
+then being its own directory, or where, moved by hand, its relative
+`core.worktree` names a missing directory; feature 004's check that excludes a
+checkout whose row 3 prints a superproject decided no outcome in any fixture
+that W80 or W81 built. One whose module's `config`, `modules/<name>/config`,
+sets `core.bare` true, or a `core.worktree` naming another directory, a sibling
+submodule's checkout among them, takes the variant, which is true of the
+redirect, and so does a copy of a submodule checkout whose gitfile names the
+module, where row 3 run in the copy finds no gitlink and prints two lines.
+Unsetting the redirect does not make any of them a main worktree: the first
+three are then refused again, with the plain message, and the superproject's
+root is what resolves, so a person is refused twice, and for the copy the remedy
+may not clear the cause either. These are known limits, recorded and not fixed
+(W80 L-5 and W81 L-1, on Git 2.43.0 and 2.36.6). Row 3b runs only on that
+refusal, after the resolution has decided to refuse, counted and bounded as row
+3 is, and only where the directory holds a `.git`, so a run that resolves spawns
+no child for it, and a row 3b that fails or is cut leaves the plain message
+(round (i), with feature 004 at `7164d7f` on Git 2.43.0 and 2.36.6; the lead's
+R-271). `relative-config-path` prints one line per variable that fails D11's
+test, in the order `HOME`, `XDG_CONFIG_HOME`, `GIT_CONFIG_GLOBAL`,
+`GIT_CONFIG_SYSTEM`: `NAME is set to a path that does not begin with /; make it
+absolute or unset it.`, never the value; doctor's `error` row and status's
+`errors` entry carry the same text. The line and its order are a fill of this
+change: Brett Heap's ruling LQ-15 names the code and the refusal, not the text.
 
 ### D19. Stages, notes and exit codes, as normalised
 
@@ -2219,10 +2242,13 @@ openRepoProject-3's W87 M-1, the lead's R-307 and R-310), and his "R-320: yes"
 of the same day (the lead's R-321) amends two more ratified sentences, the
 remedy of `inspect-cap` and the ladder's recommendation for a `stale-worktree`
 row, which leave `git worktree prune` out beside a row whose path could not be
-read, the cap remedy always (D18; lane openRepoProject-3's W86 NM-1). Five more
-amendments of ratified sentences rest on lane rulings and findings rather than
-his word, and wait on his ratification of this amendment: the line-feed
-exception to the bounds (D7, D14), the next steps of F-7 and F-8 (D18, the
-Migration Plan), the cap's re-run and the count split (`proposal.md` Decisions),
-and the identity probe's line count, which repeats the probe on any count but
-two (D6; lane openRepoProject-3's W80 M-3).
+read, the cap remedy always (D18; lane openRepoProject-3's W86 NM-1), and his
+"R-324: yes" of the same day (the lead's R-343) extends the warnings of all
+those texts, and the ceiling's third text, to `git worktree remove` and `git gc`
+beside `git worktree prune` (D18; lane openRepoProject-3's W91 MEDIUM-2, W95 and
+W80 L-6). Five more amendments of ratified sentences rest on lane rulings and
+findings rather than his word, and wait on his ratification of this amendment:
+the line-feed exception to the bounds (D7, D14), the next steps of F-7 and F-8
+(D18, the Migration Plan), the cap's re-run and the count split (`proposal.md`
+Decisions), and the identity probe's line count, which repeats the probe on any
+count but two (D6; lane openRepoProject-3's W80 M-3).
