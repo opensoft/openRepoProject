@@ -1084,6 +1084,29 @@ Departures from packet decisions, each citing the decision departed from:
   refuses the target with the same reason (lane openRepoProject-3's reader RB,
   R-107), and the residual-window line names an operation started after that
   check. No JSON field is added (design D7, D18, D21, D22, Risks).
+- **A revalidation read or child that the work deadline cuts is no difference**
+  (the lead's R-124 (a), R-171, R-187 and R-190; a departure from `BA:271-272`,
+  "A value that cannot be re-read, including a filesystem call that times out,
+  counts as a mismatch", a mismatch refusing the target with exit 2,
+  `BA:270-271`): at revalidation a Git child or filesystem call that the work
+  deadline cuts counts as no difference, and the target and every later one are
+  `not-attempted` with `deadline-exceeded`, as when less than the 5 s removal
+  floor remains (`BA:392-394`, `BA:437-441`), and the run exits 1; one that
+  fails, or runs past its own budget while the deadline is not the limit, still
+  counts as a difference, `state-changed` (the lead's R-208). A deadline that
+  runs out establishes no difference in the target, so the target is left
+  `not-attempted`, as every target the deadline stops is, not refused
+  (Capabilities, review-safety `:49`; design D7, D21, D22; the delta `Cleanup
+  revalidates destructive actions`).
+- **Push refuses a wider set of upstream mappings** (the lead's R-130, on lane
+  openRepoProject-3's F2 H-2; a departure from `BA:424-425`, "`push` and
+  `delete-branch` keep their behavior apart from argument resolution"): push
+  refuses a configured upstream that is not one remote other than `.` with one
+  branch under `refs/heads/`, where `a040790` refused only an upstream whose
+  short name lacked a remote or a branch part; the trigger is wider and the
+  message is the baseline's. It only refuses more, so it allows no push that
+  `a040790` refused (Capabilities `:39`; the delta `Clean can explicitly push
+  safe feature branches`).
 
 Packet decisions adopted, not open: OQ-5, the caps and bounds of `BA:966`,
 subject to OQ-4, less the target cap's refusal; OQ-9, the budgets of
@@ -1138,12 +1161,17 @@ Council decisions, with the packet text each replaces or extends:
   Q9 B (departures). Accepted residual: a remote-helper protocol
   of another name with its own `allow=always` in the repository's configuration
   could still fetch; the probe then succeeds rather than fails, and no unsafe
-  removal follows (design Context, D11, Risks). The push-child exception: the
-  push child of `clean --action push` reaches a remote, which the pins would
-  refuse over every protocol, so it keeps the scrub but for
-  `GIT_ALLOW_PROTOCOL`, runs unbounded in `project`'s process group as
-  `execute` runs it today, carries none of the pins, and no evidence comes from
-  it (Open Questions). Accepted residual of the exception: the push child
+  removal follows (design Context, D11, Risks). The push-child exception (R-23,
+  R-25 and R-28; before Brett Heap as LQ-3, Open Questions): the push child of
+  `clean --action push` reaches a remote, which the pins would refuse over every
+  protocol, so it keeps the scrub but for `GIT_ALLOW_PROTOCOL`, the other thirty
+  names removed and a caller's `GIT_ALLOW_PROTOCOL` kept (R-28), runs unbounded
+  in `project`'s process group as `execute` runs it today, carries none of the
+  pins, and no evidence comes from it. Its process group departs from
+  `BA:1238-1240`, by which every Git child runs in its own process group, and
+  from `BA:465-468`, by which probe children run in their own process groups, so
+  that a terminal Ctrl-C reaches only `project`, which then sends SIGTERM to the
+  group of a child in flight. Accepted residual of the exception: the push child
   follows the configuration as `git push` would, an `ext::` origin that
   `protocol.ext.allow=always` allows included, and takes no `-c` from the
   caller's environment (design Risks).
@@ -1274,7 +1302,20 @@ OQ-29's cap; these bind until that revision merges (C2 is now reading R9).
   alternative is a follow-up change after the archive, as
   `fix-parent-obstacle-wording` followed `prefer-triad-in-project-new`, which
   costs a second archive and leaves the archived spec wrong in between.
-- **LQ-20, the fit where `extensions.worktreeConfig` is true.** LQ-11's
+- **LQ-20, the fit where `extensions.worktreeConfig` is true.** RESOLVED on
+  2026-10-22: Brett Heap chose step (i), in his words to lane openRepoProject-2,
+  "LQ-20: go with (i), measure first" (the lead's R-236). The two probes were
+  measured on task 2.1's protocol, in the same container and at a comparable
+  load: LQ-11's work-tree probe at 5.8 ms warm, 8.7 ms with the margin, and
+  LQ-13's `rev-list` at 106.9 ms warm, 160.3 ms with the margin, its walk
+  covering a whole history of 9,940 commits (design D14; `tasks.md` 2.1). The
+  cap test, rerun on those costs, passes on the measured basis: at 128 rows and
+  16 targets where `extensions.worktreeConfig` is true, all 16 removals fit, the
+  16th spawning at 30.0 s with 20.0 s left (37.7 s with 20,000-file removals).
+  Options (a) to (d) are therefore not needed, and none is taken; the deltas
+  stand as written. The question as it stood before the ruling follows, kept as
+  the record of what was costed; its measured basis is at the stand-ins that
+  step (i) replaced. LQ-11's
   effective-work-tree probe runs for every linked row at plan time, and the
   question's first step is the basis (design D14, Risks; the lead's R-178,
   R-190, R-207 and R-208). The cap test is D5's, at task 2.1's measured costs
@@ -1294,34 +1335,35 @@ OQ-29's cap; these bind until that revision merges (C2 is now reading R9).
   one, or BA's flat 150 ms, which would change D5 and fails the case at once, so
   that an option has to be chosen with it; then, only if the case fails on that
   basis, one of these, each with its result at 128 rows on each basis:
-  - (a) accept that worst case:
+  - (a) accept that worst case (not taken):
     - 150 ms: no removal on this run or any re-run, since a re-run builds the
       same plan, so a re-run does not continue there; from 127 rows, one removal
       a run at first; a `--worktree` removal still fits;
     - measured: 16 a run;
     - mixed: 11, then 13, then 16 a run;
   - (b) bound the plan-time work-tree probe to the selected targets, at most 16,
-    and report the other rows' identity as unverified:
+    and report the other rows' identity as unverified (not taken):
     - 150 ms: 13 of 16, so (c) or (d) would be needed as well;
     - measured: 16;
     - mixed: 16;
   - (c) a longer work deadline where `extensions.worktreeConfig` is true, so
     that later removals can still start, the 5 s removal floor kept, which there
     also moves the ratified 60 s invocation deadline,
-    `budget.invocation_timeout_seconds` in every plan record:
+    `budget.invocation_timeout_seconds` in every plan record (not taken):
     - 150 ms: at least 70.55 s, which moves the invocation deadline to 80.55 s
       and the 64 s run bound to 84.55 s;
     - measured: none needed;
     - mixed: at least 55.0 s, an invocation deadline of 65.0 s and a run bound
       of 69.0 s;
-  - (d) the rule's own step, lowering the caps (BA:766-771):
+  - (d) the rule's own step, lowering the caps (BA:766-771; not taken):
     - 150 ms: 64 rows and 8 targets, or 32 rows and 16 targets with the row cap
       chosen first, and a report cap of 128;
     - measured: none needed;
     - mixed: 128 rows and 8 targets, or 64 rows and 16 targets with the row cap
       chosen first, and a report cap of 128.
 
-  The deltas as written give (a)'s behaviour until he rules.
+  None was recommended, and none is taken: the case passes on the measured
+  basis, so the deltas stand as written.
 
 The question of a merged worktree whose remote branch was deleted is closed:
 Brett Heap ruled on 2026-10-09 that a local ancestry proof outranks
@@ -1680,7 +1722,37 @@ lead's question file. This commit also re-wrapped the paragraphs its edits
 lengthened in `design.md` and this file, with no other change of words (Open
 Questions; this list; design Context, D7, Open Questions; `tasks.md` 1.2; the
 deltas' `Clean previews and applies a batch of eligible worktree removals in one
-repository` and `Cleanup revalidates destructive actions`).
+repository` and `Cleanup revalidates destructive actions`). Brett Heap's ruling
+of 2026-10-22 on LQ-20, in his words to lane openRepoProject-2, "LQ-20: go with
+(i), measure first" (the lead's R-236), chose its step (i): LQ-11's work-tree
+probe and LQ-13's `rev-list` were measured on task 2.1's protocol, in the same
+`py-bench` container at a 1-minute load of 15 to 21, at 5.8 ms and 106.9 ms
+warm, 8.7 ms and 160.3 ms with the margin, neither reading the index, and the
+cap test, rerun on those costs, passes on the measured basis: at 128 rows and 16
+targets where `extensions.worktreeConfig` is true all 16 removals fit, the 16th
+spawning at 30.0 s with 20.0 s left (37.7 s with 20,000-file removals), and they
+would stop fitting only at about 114 ms for the work-tree probe or 630 ms for
+the `rev-list`, with the margin. Options (a) to (d) are therefore not needed and
+none is taken; they stay, each marked not taken, as the record of what was
+costed. D14's measured column and reachability sentence, and the Risks entry,
+take the measured costs, and D14's mixed basis, restated with them, fits all 16
+as well. With it, lane openRepoProject-3's W42 confirm read of round (e) at
+`f0bf538` (HIGH 0, MEDIUM 0, LOW 2): D14 says that option (c) also moves the
+ratified 60 s invocation deadline, to 80.55 s on the 150 ms basis and 65.0 s on
+the mixed one, where it named only the 64 s run bound (L-1); and D7 and D22's
+Revalidation bullet carry W38's L-4 clause, that an administrative directory
+that the `operation-in-progress` listing finds absent is a registration
+difference, `identity-changed` (L-2). By the lead's R-245, on lane
+openRepoProject-3's W53 departure ledger, the departures gain two entries, a
+revalidation read or child that the work deadline cuts counting as no difference
+(`BA:271-272`; its 19-10) and push's wider upstream-mapping refusal
+(`BA:424-425`; its 19-11), and the push-child exception names the packet lines
+its process group departs from, `BA:1238-1240` and `BA:465-468`, with R-28 and
+LQ-3 (its 19-08). No requirement changes and no delta is edited. This commit
+also re-wrapped the paragraphs its edits lengthened in `design.md` and this
+file, with no other change of words (Decisions, departures and council; Open
+Questions; this list; design Context, D7, D14, D22, Risks, Open Questions;
+`tasks.md` 1.2, 2.1).
 
 ### Council Verdicts
 

@@ -59,9 +59,13 @@ duplicate them, and nothing here is an implementation step.
   read, LQ-20's options costed, and filesystem reads at revalidation (R-207,
   R-208)'); and its W38 read of round (d), under the lead's R-213 and R-216 (the
   commit titled 'Amend change 1: lane 3's W38 read of round (d) (R-213,
-  R-216)'); verified by the table "Questions Resolved by the Alignment Review"
-  in `proposal.md` and the later-rulings list under it, which name the section
-  each ruling edited.
+  R-216)'); and Brett Heap's ruling of 2026-10-22 on LQ-20, its step (i), with
+  that step's measurement, lane 3's W42 read of round (e) and the three
+  departures of lane 3's W53 ledger, under the lead's R-236 and R-245 (the
+  commit titled 'Amend change 1: LQ-20 resolved by measurement, lane 3's W42
+  read and three departures (R-236, R-245)'); verified by the table "Questions
+  Resolved by the Alignment Review" in `proposal.md` and the later-rulings list
+  under it, which name the section each ruling edited.
 - [x] 1.3 Council resolved: every concern is VALID, none dismissed, the verdicts
   V1 to V12 applied to `proposal.md` (`ea9c73b`) and the five NOTED constraints
   recorded as N1 to N5 in `clarifications.md` (`1d4ed5b`); verified by
@@ -138,7 +142,17 @@ duplicate them, and nothing here is an implementation step.
   deferral's motivating repository, 20 rows pass every gate before
   `deferred-target-cap` and all are `contains-submodule` after it, so it yields
   no removable row each run and its deferred count never drains (design Risks,
-  R-24). Results posted on PR #11; the caps stand as measured.
+  R-24). Results posted on PR #11; the caps stand as measured. LQ-20's step (i)
+  (Brett Heap, 2026-10-22; the lead's R-236) measured by the same protocol the
+  two children that LQ-11 and LQ-13 added, in the same container, on a
+  10,001-file fixture with `extensions.worktreeConfig` true, eight linked
+  worktrees, 1,000 branches, 1,991 loose refs and 9,940 commits, at a 1-minute
+  load of 15 to 21, 30 to 48 runs a case, the larger median of two runs:
+  medians, warm / cold, the work-tree probe 5.8 / 9.8 ms and the `rev-list` over
+  the whole history 106.9 / 686 ms, neither reading the index; with them the fit
+  still rejects no cap, the 16th removal spawning at 30.0 s with 20.0 s left at
+  128 rows and 16 targets where `extensions.worktreeConfig` is true (37.7 s with
+  20,000-file removals).
 - [x] 2.2 The Git 2.36 floor verified by the approach of `design.md` D17: each
   behaviour in its table checked on a pinned Git 2.36 build in a scratch
   directory, or by a CI job, against Git 2.43's output; verified by the results

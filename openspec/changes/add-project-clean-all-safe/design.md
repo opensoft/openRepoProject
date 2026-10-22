@@ -39,7 +39,10 @@ lead's R-187 and R-190 and lane openRepoProject-5's A10 read, Context, D7, D14,
 D21, D22, Risks and Open Questions; and its W36 read of round (c), with its W32
 read of LQ-14 in feature 004 and the lead's R-200, R-207 and R-208, Context, D7,
 D14, D21, D22, Risks and Open Questions; and its W38 read of round (d), with the
-lead's R-213 and R-216, Context, D7 and Open Questions. Brett Heap's ruling of
+lead's R-213 and R-216, Context, D7 and Open Questions; and Brett Heap's ruling
+of 2026-10-22 on LQ-20, choosing its step (i), with that step's measurement, and
+lane openRepoProject-3's W42 read of round (e), under the lead's R-236, Context,
+D7, D14, D22, Risks and Open Questions. Brett Heap's ruling of
 2026-10-09 on open question 1, that a local ancestry proof outranks
 `remote-gone` for worktree rows, is in `proposal.md` Decisions and edited
 Context, D6, D7, D20, Risks, the Migration Plan and Open Questions here.
@@ -489,8 +492,11 @@ the deadline is not the limit, is `state-changed` whatever its step, so that a
 failed read of the repository's or the target's identity or registration is
 `state-changed`, not `identity-changed`; one that finds its path missing
 (`ENOENT` or `ENOTDIR`) decides that the path is absent, a value that keeps its
-step's reason; and one that the deadline cuts leaves the target `not-attempted`
-with `deadline-exceeded`. R-208 is a reading of BA:271-276, by which "a value
+step's reason, and an administrative directory that D22's
+`operation-in-progress` listing finds absent is a registration difference,
+`identity-changed` (lane openRepoProject-3's W38 L-4 and W42 L-2); and one that
+the deadline cuts leaves the target `not-attempted` with `deadline-exceeded`.
+R-208 is a reading of BA:271-276, by which "a value
 that cannot be re-read, including a filesystem call that times out, counts as a
 mismatch": a read that fails decides no identity difference, so its mismatch is
 the packet's "any other" difference, `state-changed`; this reading went to Brett
@@ -891,10 +897,11 @@ full-repository completeness.
 The cap test is D5's: BA:729-735 reapplied at task 2.1's measured warm medians
 with the 1.5 margin, a failing cap lowered by the rule's steps (BA:766-771).
 Task 2.1 ran it before LQ-11 and LQ-13 added children that it did not measure,
-so this section gives the fit on three bases and chooses none (LQ-20). At BA's
-flat 150 ms per Git child, with F = 8 (row 4c of LQ-11 included), the Time
-column giving a run to its end, or to the point where it stops, every child and
-removal counted:
+so this section gives the fit on three bases (LQ-20); LQ-20's step (i), which
+Brett Heap chose on 2026-10-22, has since measured those children, and the case
+passes on the measured basis, D5's as ratified. At BA's flat 150 ms per Git
+child, with F = 8 (row 4c of LQ-11 included), the Time column giving a run to
+its end, or to the point where it stops, every child and removal counted:
 
 | Mode | Children | Time | Fits the 50 s work deadline |
 | --- | --- | --- | --- |
@@ -946,39 +953,59 @@ set 72.6 ms, status probe 74.1 ms and `ls-files` 26.1 ms, at 10,000 files), and
 a removal 0.604 s, the 10,000-file removal, which task 2.1's verdict took and
 the cap test here takes as well, with the 20,000-file removal, 1.118 s, as its
 sensitivity case (lane openRepoProject-3's W36 L-b and L-c). Task 2.1 measured
-neither kind of child added since. Here row 4c's read and LQ-11's per-row
-`rev-parse --show-toplevel` are costed at the identity probe's 19.7 ms, a
-`rev-parse` of the same kind, and LQ-13's `rev-list` at the full ref listing's
-359.7 ms, since it reads every branch, tag and remote-tracking ref; its walk is
-unmeasured. The measured result rests on those stand-ins: where row 4c reads
-true, all 16 removals fit at 128 rows only while the work-tree probe costs at
-most about 69 ms with the margin, a warm median of about 46 ms, and the
-`rev-list` at most about 581 ms, each with the other at its stand-in. On the
-mixed basis, task 2.1's measured costs stand for the children it measured, its
-16th removal spawning at 23.6 s, and each child added since costs 150 ms: 33
-before the 16th spawn where row 4c reads false (row 4c's read, 16 reachability
-probes at plan time and one per revalidation) and 176 where it reads true (also
-127 per-row probes and a second child per revalidation). No timing was run for
-this restatement; every figure below is arithmetic on task 2.1's numbers and
-D14's counts (the lead's R-190, on lane openRepoProject-3's W31 M-2 and lane
-openRepoProject-5's A10 read):
+neither kind of child added since; LQ-20's step (i), which Brett Heap chose on
+2026-10-22 (the lead's R-236), measured both on its protocol, in the same
+`py-bench` container with Git 2.43.0 and Python 3.12.3, at a 1-minute load of 15
+to 21 on 32 threads, the larger median of two runs of 30 to 48 each: LQ-11's
+per-row `rev-parse --path-format=absolute --show-toplevel`, 5.8 ms warm and 9.8
+ms cold, so 8.7 ms with the margin, and LQ-13's `rev-list`, 106.9 ms warm and
+686 ms cold, so 160.3 ms, its walk covering the whole history of a repository of
+10,001 files, 1,000 branches with their upstreams, 1,991 loose refs and 9,940
+commits with no commit-graph; neither child reads the index, so the 10,000-file
+fixture is the one. Row 4c's read keeps the identity probe's 19.7 ms. On those
+costs, where row 4c reads true, all 16 removals fit at 128 rows, the first
+spawning at 14.55 s and the 16th at 30.0 s with 20.0 s left, and with
+20,000-file removals all 16 as well, the 16th at 37.7 s with 12.3 s left; the
+case passes on the measured basis, as D5 ratified it, and needs none of LQ-20's
+options there. It would stop passing only if the work-tree probe cost about 114
+ms with the margin, a warm median of about 76 ms, or the `rev-list` about 630
+ms, about 420 ms warm, each with the other at its measured cost (about 60 ms and
+389 ms with 20,000-file removals). On the mixed basis as first stated, task
+2.1's measured costs stand for the children it measured, its 16th removal
+spawning at 23.6 s, and each child added since costs 150 ms: 33 before the 16th
+spawn where row 4c reads false (row 4c's read, 16 reachability probes at plan
+time and one per revalidation) and 176 where it reads true (also 127 per-row
+probes and a second child per revalidation). When the mixed basis is restated
+after step (i), with the two kinds that step (i) measured at their measured
+costs, only row 4c's read keeps 150 ms, and all 16 fit where row 4c reads true,
+the 16th at 30.1 s (37.8 s with 20,000-file removals). The table's mixed column,
+and the options' after it, keep the mixed basis as first stated. Every figure in
+the 150 ms and mixed columns is arithmetic on task 2.1's numbers and D14's
+counts, with no timing run for them (the lead's R-190, on lane
+openRepoProject-3's W31 M-2 and lane openRepoProject-5's A10 read), and every
+figure in the measured column is arithmetic on those and step (i)'s two measured
+costs (the lead's R-236):
 
 | Case | 150 ms basis | Measured basis | Mixed basis |
 | --- | --- | --- | --- |
-| all-safe, 128 rows, 16 targets, row 4c false | 16 removals; the 16th spawns at 44.1 s | 16; the 16th at 35.1 s, 14.9 s left (42.8 s with 20,000-file removals) | 16; the 16th at 28.5 s |
-| all-safe, 128 rows, 16 targets, row 4c true | none; the first would spawn at 45.3 s | 16; the 16th at 37.9 s, 12.1 s left; with 20,000-file removals 15, the 16th at 45.6 s | 11; the 12th would spawn at 45.3 s, the 16th at 50.0 s |
-| report, 256 rows, row 4c true | 82.65 s; incomplete above 147 rows | 30.7 s | 60.7 s; incomplete above 208 rows |
-| single, 128 rows plus P, row 4c true | 41.85 s | 14.4 s | 30.9 s |
+| all-safe, 128 rows, 16 targets, row 4c false | 16 removals; the 16th spawns at 44.1 s | 16; the 16th at 28.7 s, 21.3 s left (36.4 s with 20,000-file removals) | 16; the 16th at 28.5 s |
+| all-safe, 128 rows, 16 targets, row 4c true | none; the first would spawn at 45.3 s | 16; the 16th at 30.0 s, 20.0 s left; with 20,000-file removals 16, the 16th at 37.7 s | 11; the 12th would spawn at 45.3 s, the 16th at 50.0 s |
+| report, 256 rows, row 4c true | 82.65 s; incomplete above 147 rows | 24.7 s | 60.7 s; incomplete above 208 rows |
+| single, 128 rows plus P, row 4c true | 41.85 s | 12.6 s | 30.9 s |
 
-Each option of LQ-20 has this result on each basis, for a 128-row, 16-target
-`--all-safe --apply` where row 4c reads true, the 45 s spawn limit and the 5 s
-removal floor kept except where (c) moves the limit:
+Each option of LQ-20 had this result on each basis as costed before step (i),
+its measured column at the stand-ins that step (i) replaced, the work-tree probe
+at the identity probe's 19.7 ms and the `rev-list` at the full ref listing's
+359.7 ms, for a 128-row, 16-target `--all-safe --apply` where row 4c reads true,
+the 45 s spawn limit and the 5 s removal floor kept except where (c) moves the
+limit. None was taken, since the case passes on the measured basis; the table
+stays as the record of what was costed (Open Questions):
 
 | Option | 150 ms basis | Measured basis | Mixed basis |
 | --- | --- | --- | --- |
 | (a) accept the worst case | 0 removals on every run, since a re-run builds the same plan; from 127 rows 1 a run at first (1, 1, 1, 1, 1, 2, 2, 3, 3, ...); a `--worktree` removal fits, at 41.85 s | 16 a run | 11, then 13, then 16 a run |
 | (b) bound the plan-time work-tree probe to the selected targets | 13: the 13th spawns at 44.85 s and the 14th would at 46.2 s; a 256-row report completes at 46.8 s | 16; the 16th at 35.7 s | 16; the 16th at 33.3 s |
-| (c) a longer work deadline where row 4c reads true | at least 70.55 s, the 16th spawning at 65.55 s; the 64 s run bound becomes 84.55 s; a 256-row report would need 82.65 s | none needed | at least 55.0 s, the 16th spawning at 49.98 s; a run bound of 69.0 s; a 256-row report would need 60.7 s |
+| (c) a longer work deadline where row 4c reads true | at least 70.55 s, the 16th spawning at 65.55 s; the 60 s invocation deadline becomes 80.55 s and the 64 s run bound 84.55 s; a 256-row report would need 82.65 s | none needed | at least 55.0 s, the 16th spawning at 49.98 s; an invocation deadline of 65.0 s and a run bound of 69.0 s; a 256-row report would need 60.7 s |
 | (d) the rule's own step, BA:766-771 | 64 rows and 8 targets, the 8th at 33.15 s; or, with the row cap chosen first, 32 rows and 16 targets, the 16th at 36.75 s; a report cap of 128 | none needed | 128 rows and 8 targets, the 8th at 39.3 s; or, with the row cap chosen first, 64 rows and 16 targets, the 16th at 35.6 s; a report cap of 128 |
 
 (d) lowers the target cap in steps of 8 and the row cap in powers of two,
@@ -986,21 +1013,24 @@ keeping the row cap as large as it can, which gives the first pair; choosing the
 row cap first, as BA:733-734 does, gives the second; each takes E = T, as BA:731
 does (lane openRepoProject-3's W36 L-a). On the 150 ms basis (b) alone still
 fails the cap test and would need (c) or (d) as well. (c) keeps the 5 s removal
-floor and moves the spawn limit, and with it the 64 s run bound of "Clean bounds
-its Git work and reports omitted work", later. On the measured basis, at the
-10,000-file removal and with the stand-ins above, no cap fails and no option is
-needed. Which basis the cap test uses, or what the two unmeasured probes cost,
-is therefore the first step of open question LQ-20, before Brett Heap; only a
-case that fails on the basis chosen needs one of its options (Risks, Open
-Questions; the lead's R-207 and R-208, on lane openRepoProject-3's W36 M-A and
-M-B).
+floor and moves the spawn limit, and with it the ratified 60 s invocation
+deadline, `budget.invocation_timeout_seconds` in every plan record (80.55 s on
+the 150 ms basis, 65.0 s on the mixed one), and the 64 s run bound of "Clean
+bounds its Git work and reports omitted work", later (lane openRepoProject-3's
+W42 L-1). On the measured basis, at step (i)'s measured costs and with
+10,000-file or 20,000-file removals, no cap fails and no option is needed. Which
+basis the cap test uses, or what the two probes then unmeasured cost, was the
+first step of open question LQ-20; Brett Heap chose its step (i), to measure
+them, on 2026-10-22, and since the case passes on the measured basis none of its
+options is taken (Risks, Open Questions; the lead's R-207 and R-208, on lane
+openRepoProject-3's W36 M-A and M-B, and R-236).
 
 D21's reachability probe adds one child for each of at most 16 rows
-and one to each revalidation (LQ-13); its walk is unmeasured, and at task 2.1's
-`for-each-ref` cost over 1,000 loose branches, 240 ms warm, those 32 children
-add about 7.7 s, or 11.5 s with the margin, which the measured basis above
-counts, leaving 14.9 s at the 16th spawn where row 4c reads false; task 2.1's
-26.4 s was the margin before LQ-11 and LQ-13 added children (W31 L-6). A slower
+and one to each revalidation (LQ-13); its walk, measured by LQ-20's step (i)
+over a whole history of 9,940 commits at 106.9 ms warm, makes those 32 children
+about 3.4 s, or 5.1 s with the margin, which the measured basis above counts,
+leaving 21.3 s at the 16th spawn where row 4c reads false; task 2.1's 26.4 s
+was the margin before LQ-11 and LQ-13 added children (W31 L-6). A slower
 walk is never unsafe: one stopped at its 5 s budget makes its row
 `inspection-error` and the plan incomplete, one that the deadline cuts gives
 `deadline-exceeded`, and at revalidation one that runs past its own budget while
@@ -1496,15 +1526,18 @@ conflict (its W14 M1). Each decision below is the simple, conservative one:
   R-208), and the deadline gives `deadline-exceeded`, as for every read.
 - Revalidation. The same listing runs again in revalidation's filesystem step,
   beside the target's identity and `modules` check, with no new Git child; a
-  marker refuses the target with `operation-in-progress`, and a listing that
-  fails, or runs past its own budget while the deadline is not the limit,
-  refuses it with `state-changed`, as every filesystem call of that step does,
-  by the one rule of `Cleanup revalidates destructive actions`, while one that
-  the deadline cuts leaves the target `not-attempted` with `deadline-exceeded`
-  (R-124, R-126, R-127, R-208). It catches an operation started after the plan,
-  which no step read before (lane openRepoProject-3's reader RB at `2cf34d3`,
-  whose cases were all removed with exit 0; R-107). An operation started after
-  that revalidation is in the residual window, whose line names it (D18).
+  marker refuses the target with `operation-in-progress`; an administrative
+  directory that the `operation-in-progress` listing finds absent is a
+  registration difference, `identity-changed`, as feature 004 builds it (lane
+  openRepoProject-3's W38 L-4 and W42 L-2); and a listing that fails, or runs
+  past its own budget while the deadline is not the limit, refuses it with
+  `state-changed`, as every filesystem call of that step does, by the one rule
+  of `Cleanup revalidates destructive actions`, while one that the deadline cuts
+  leaves the target `not-attempted` with `deadline-exceeded` (R-124, R-126,
+  R-127, R-208). It catches an operation started after the plan, which no step
+  read before (lane openRepoProject-3's reader RB at `2cf34d3`, whose cases were
+  all removed with exit 0; R-107). An operation started after that revalidation
+  is in the residual window, whose line names it (D18).
 - Rendering. The reason appears where every gate's does, so no JSON field is
   added and the closed enums gain one value within `schema_version: 1`, before
   any release; the human preview groups it with its next step (D18).
@@ -1611,19 +1644,21 @@ record from the probe, and its `--abort` leaves `NOTES_MERGE_WORKTREE` alone.
   150 ms per child a 128-row `--all-safe --apply` there reaches its first
   removal at 45.3 s, past the 45 s spawn limit, and removes nothing, on every
   re-run as well, and a report goes incomplete above 147 rows; on D5's measured
-  basis, with the two probes that task 2.1 did not measure costed at the
-  identity probe's 19.7 ms and the full ref listing's 359.7 ms, all 16 removals
-  fit; on the mixed basis 11 do (D14)] -> Fails safe: a target that the floor
-  stops is `not-attempted` with `deadline-exceeded`, as is every later one, and
-  the run exits 1. Open question LQ-20, which awaits Brett Heap, asks first for
-  the basis: measure those two probes on task 2.1's protocol, or decide which
-  basis the cap test uses. Only a case that then fails needs one of its options,
-  none chosen here: (a) accept it; (b) bound the plan-time work-tree probe to
-  the selected targets, at most 16, and report the other rows' identity as
-  unverified; (c) a longer work deadline where `extensions.worktreeConfig` is
+  basis, with the two probes that task 2.1 did not measure at the costs that
+  LQ-20's step (i) measured, 8.7 ms and 160.3 ms with the margin, all 16
+  removals fit, the 16th spawning at 30.0 s (37.7 s with 20,000-file removals);
+  on the mixed basis as first stated 11 do (D14)] -> Fails safe: a target that
+  the floor stops is `not-attempted` with `deadline-exceeded`, as is every later
+  one, and the run exits 1. Open question LQ-20 is resolved: Brett Heap chose
+  its step (i) on 2026-10-22, those two probes were measured on task 2.1's
+  protocol, and the case passes on the measured basis, D5's as ratified, so none
+  of its options is taken: (a) accept it; (b) bound the plan-time work-tree
+  probe to the selected targets, at most 16, and report the other rows' identity
+  as unverified; (c) a longer work deadline where `extensions.worktreeConfig` is
   true, the 5 s removal floor kept; and (d) the rule's own step, lowering the
   caps (BA:766-771). D14 and Open Questions give each option's result on each
-  basis (the lead's R-178, R-190, R-207 and R-208).
+  basis as costed before the measurement (the lead's R-178, R-190, R-207, R-208
+  and R-236).
 - [Rows of 100,000-entry indexes: the fit of BA:729-735 would give 64 rows, 16
   targets and a report cap of 128, since the plan term alone for 128 such rows
   is 46.6 s] -> The caps measured at 10,000 entries stand; a plan over such rows
@@ -1677,7 +1712,8 @@ record from the probe, and its `--abort` leaves `NOTES_MERGE_WORKTREE` alone.
 - [The caps and the Git floor were unverified until tasks 2.1 and 2.2] -> Both
   ran before the handoff: the caps stand as measured (D5, the degraded cases
   above) and the floor stays 2.36 with the scrub extended (D17, R-21). The
-  children that LQ-11 and LQ-13 added since are unmeasured (D14, LQ-20).
+  children that LQ-11 and LQ-13 added since were measured by LQ-20's step (i) on
+  2026-10-22, and the caps still stand (D14, LQ-20).
 - [`doctor` now exits 1 where a probe fails, a worktree is unreadable or `git`
   is missing, and `push` refuses while any row is `inspection-error`] ->
   Intended (D-S, D-D); the error rows and refusals name the cause and the
@@ -1749,9 +1785,10 @@ downstream.
 
 ## Open Questions
 
-Each is before Brett Heap with a recommendation, except LQ-20, which states its
-options and recommends none; the deltas implement the reading stated, and a
-different ruling edits the deltas before the archive.
+Each is before Brett Heap with a recommendation, except LQ-20, which he resolved
+on 2026-10-22 and which stays below as the record of what was costed; the deltas
+implement the reading stated, and a different ruling edits the deltas before the
+archive.
 
 - Squash-merged branches never put their tip into the target's ancestry
   (BA:195-199). Recommendation: a local patch-equivalence proof (`git cherry` or
@@ -1765,7 +1802,19 @@ different ruling edits the deltas before the archive.
   follow-up change after the archive, as `fix-parent-obstacle-wording` followed
   `prefer-triad-in-project-new`, which costs a second archive and leaves the
   archived spec wrong in between.
-- LQ-20, the fit where `extensions.worktreeConfig` is true (D14, Risks). Its
+- LQ-20, the fit where `extensions.worktreeConfig` is true (D14, Risks).
+  RESOLVED on 2026-10-22: Brett Heap chose step (i), in his words to lane
+  openRepoProject-2, "LQ-20: go with (i), measure first" (the lead's R-236). The
+  two probes were measured on task 2.1's protocol, in the same container and at
+  a comparable load: LQ-11's work-tree probe at 5.8 ms warm, 8.7 ms with the
+  margin, and LQ-13's `rev-list` at 106.9 ms warm, 160.3 ms with the margin, its
+  walk covering a whole history of 9,940 commits (D14; `tasks.md` 2.1). The cap
+  test, rerun on those costs, passes on the measured basis: at 128 rows and 16
+  targets where row 4c reads true, all 16 removals fit, the 16th spawning at
+  30.0 s with 20.0 s left (37.7 s with 20,000-file removals). Options (a) to (d)
+  are therefore not needed, and none is taken; the deltas stand as written. The
+  question as it stood before the ruling follows, kept as the record of what was
+  costed; its measured basis is at the stand-ins that step (i) replaced. Its
   first step is the basis. The cap test is D5's, at task 2.1's measured costs
   and its 10,000-file removal, but task 2.1 measured neither LQ-11's per-row
   `rev-parse --show-toplevel` nor LQ-13's `rev-list`. For a 128-row `--all-safe
@@ -1785,14 +1834,14 @@ different ruling edits the deltas before the archive.
   the case at once, so that an option below has to be chosen with it. If the
   case then passes, no option is needed and the deltas stand. If it fails, the
   options are these, each with its result at 128 rows on each basis:
-  - (a) accept that worst case:
+  - (a) accept that worst case (not taken):
     - 150 ms: no removal on this run or any re-run, since a re-run builds the
       same plan, so a re-run does not continue there; from 127 rows, one removal
       a run at first; a `--worktree` removal still fits, at 41.85 s;
     - measured: 16 a run;
     - mixed: 11, then 13, then 16 a run;
   - (b) bound the plan-time work-tree probe to the selected targets, at most 16,
-    and report the other rows' identity as unverified:
+    and report the other rows' identity as unverified (not taken):
     - 150 ms: 13 of 16, so (b) alone still fails the cap test and would need (c)
       or (d) as well;
     - measured: 16;
@@ -1800,21 +1849,21 @@ different ruling edits the deltas before the archive.
   - (c) a longer work deadline where `extensions.worktreeConfig` is true, so
     that later removals can still start, the 5 s removal floor kept, which there
     also moves the ratified 60 s invocation deadline,
-    `budget.invocation_timeout_seconds` in every plan record:
+    `budget.invocation_timeout_seconds` in every plan record (not taken):
     - 150 ms: at least 70.55 s, which moves the invocation deadline to 80.55 s
       and the 64 s run bound to 84.55 s;
     - measured: none needed;
     - mixed: at least 55.0 s, an invocation deadline of 65.0 s and a run bound
       of 69.0 s;
-  - (d) the rule's own step, lowering the caps (BA:766-771):
+  - (d) the rule's own step, lowering the caps (BA:766-771; not taken):
     - 150 ms: 64 rows and 8 targets, or 32 rows and 16 targets with the row cap
       chosen first, and a report cap of 128;
     - measured: none needed;
     - mixed: 128 rows and 8 targets, or 64 rows and 16 targets with the row cap
       chosen first, and a report cap of 128.
 
-  This draft recommends none of them; the deltas as written give (a)'s behaviour
-  until he rules.
+  This draft recommended none of them, and none is taken: the case passes on the
+  measured basis, so the deltas stand as written.
 
 Ruled on 2026-10-09: a merged worktree whose remote branch was deleted is
 `merged-removable`, Brett Heap having ruled that a local ancestry proof
