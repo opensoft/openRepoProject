@@ -1331,7 +1331,11 @@ class EvidenceTests(clean_support.CleanCase):
         # planning, and at revalidation (strict) a probe that decided nothing,
         # None with its row error (R-171). A decided other path is False in
         # both. A line feed alone names no path. Literal outputs stand in for
-        # the child; the realpaths are read.
+        # the child; the realpaths are read. Each case runs again with the
+        # working directory at the worktree: the realpath of no path is the
+        # working directory, so an empty path would read as the worktree
+        # itself, a difference only observable there (lane 3's W90 L-1, lead
+        # ruling R-291).
         lf = chr(0x0A).encode("ascii")
         plain, inside, ending = (self.base / "plain", self.base / ("a" + chr(0x0A) + "b"),
                                  self.base / ("c" + chr(0x0A)))
@@ -1352,18 +1356,24 @@ class EvidenceTests(clean_support.CleanCase):
             ("a line feed alone", plain, lf, (False, None), unparseable),
         )
         run = project.Invocation("status")
-        for label, raw, output, planning, revalidation in cases:
+        home = os.getcwd()
+        self.addCleanup(os.chdir, home)
+        for at_worktree, (label, raw, output, planning, revalidation) in (
+                (at, case) for at in (False, True) for case in cases):
             asked = []
+            os.chdir(raw if at_worktree else home)
 
             def run_bounded(spec, parser, run, output=output, asked=asked):
                 kind, args, _cwd = spec
                 asked.append(args)
                 return project.DriverOutcome(project.git_argv(kind, args), "complete", result=output, status=0)
 
-            with self.subTest(label), mock.patch.object(project, "run_bounded", run_bounded):
+            with self.subTest(label + (", the working directory at the worktree" if at_worktree else "")), \
+                    mock.patch.object(project, "run_bounded", run_bounded):
                 self.assertEqual(project.effective_work_tree(bytes(raw), run), planning)
                 self.assertEqual(project.effective_work_tree(bytes(raw), run, strict=True), revalidation)
                 self.assertEqual(asked, [["-C", bytes(raw), *WORK_TREE_PROBE]] * 2, "one child per call")
+        os.chdir(home)
 
     def test_clean_a_work_tree_probe_whose_output_is_empty_or_ends_in_no_line_feed(self):
         # Lead ruling R-287 (lane 3's W70 M-2): at planning, in a repository
