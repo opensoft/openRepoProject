@@ -213,9 +213,13 @@ Scope).
   and the recovery text "inspect, then `git worktree remove --force <path>` by
   hand" where its `.git` file and registry entry both remain, and "inspect, then
   `git worktree prune` and delete `<path>` by hand" where either is gone, which
-  Git's forced removal refuses (Brett Heap's ruling F-1 of 2026-10-22); the
-  reason `removal-ceiling` names the ceiling cause, and the run exits 1
-  (Decisions).
+  Git's forced removal refuses (Brett Heap's ruling F-1 of 2026-10-22), but
+  "inspect `<path>` by hand; its `.git` could not be read, so do not run `git
+  worktree prune` until it can" where the rescan cannot read its `.git` file,
+  since `git worktree prune` deletes a live worktree's administrative directory
+  when Git cannot stat its `.git` (the lead's R-284, put to Brett Heap to
+  confirm); the reason `removal-ceiling` names the ceiling cause, and the run
+  exits 1 (Decisions).
 - **Targeted revalidation under a narrow guarantee.** Each target is
   revalidated with at most six Git children, the sixth the reachability probe
   of `worktree-only-commits` (LQ-13), and seven in a repository whose
@@ -496,7 +500,9 @@ Headers are quoted verbatim, one per line; ADDED headers are proposed text.
     registry entry and path are gone and otherwise `unknown` with
     `partially-removed`, the reason `removal-ceiling` either way, its recovery
     text naming `git worktree prune` and a deletion by hand once the `.git`
-    file or the registry entry is gone (Brett Heap's ruling F-1); after
+    file or the registry entry is gone (Brett Heap's ruling F-1), and warning
+    against `git worktree prune` where the `.git` file cannot be read (R-284,
+    put to Brett Heap to confirm); after
     `project` and its child are killed with SIGKILL mid-deletion, the report
     shows the partial-removal note beside the `dirty` advice. By the lead's
     R-147, a sentence after `:59-61` names branch deletion's refusals, the
@@ -1171,7 +1177,14 @@ O-1: deadline-exceeded" (the lead's R-263):
   spawns at most three Git children (the deltas `Clean can explicitly retire
   verified worktrees`, with its scenario "A removal past the hard ceiling", and
   `Clean records a reconcilable result for every removal target`; design D9,
-  D18).
+  D18). Round (i) adds, by the lead's R-284, which refines how this ruling
+  applies to a read that fails and is put to Brett Heap to confirm, a third
+  text at the same sites: where the rescan cannot read the `.git` file, its
+  `lstat` failing other than for the file's absence or cut at its budget,
+  "inspect `<path>` by hand; its `.git` could not be read, so do not run `git
+  worktree prune` until it can", since `git worktree prune` deletes a live
+  worktree's administrative directory where Git cannot stat its `.git` (lane
+  openRepoProject-3's W73 M-1).
 - **Gate 7's read that the deadline cuts** (lane openRepoProject-5's O-1;
   amends `0050f3e` pcl:606-608): a branch reflog read that the work deadline
   cuts records `deadline-exceeded` and leaves the row unprobed and the plan
@@ -2044,10 +2057,26 @@ directory, a separate git directory among them, holds a line feed in its path
 prints three lines too, and on any count but two the probe is read again one
 option per child, which tells the two apart, as feature 004's
 `identity_probe()` does at `7164d7f` (lane openRepoProject-4's finding, through
-the lead). No delta states this code's message text, and no spec text changes,
-so no delta is edited, and the scenario counts stay 71, 22 and 24. The round's
+the lead). No delta states this code's message text, so neither of those items
+edits a delta. Lane openRepoProject-3's W73 M-1 reproduced on Git 2.43.0 and
+2.36.6, and this round again, that where Git cannot stat a worktree's `.git`,
+as under `EACCES` on its path, `git worktree prune` deletes that live
+worktree's administrative directory, its index, `HEAD`, per-worktree refs and
+reflog with it, while F-1's text sent a `partially-removed` target whose `.git`
+the rescan could not read, a read that failed or was cut, to `git worktree
+prune`, the case being unspecified. By the lead's R-284, which refines how
+Brett Heap's F-1 ruling applies to a read that fails and is put to him to
+confirm, such a target's recovery text is "inspect `<path>` by hand; its `.git`
+could not be read, so do not run `git worktree prune` until it can", whatever
+the rescan finds of the registry entry, while "where either is gone" keeps a
+`.git` file shown absent and an entry gone; the deltas `Clean can explicitly
+retire verified worktrees` and `Clean records a reconcilable result for every
+removal target` state it, the scenario "A removal past the hard ceiling" gains
+an AND clause, and What Changes, Capabilities, the amendments list and design
+D9 and D18 carry it. The scenario counts stay 71, 22 and 24. The round's
 commits also re-wrapped the paragraphs their edits lengthened, with no other
-change of words (design Context and D6), and `tasks.md` 1.2 names the round.
+change of words (What Changes; design Context, D6, D9 and D18), and `tasks.md`
+1.2 names the round.
 
 ### Council Verdicts
 

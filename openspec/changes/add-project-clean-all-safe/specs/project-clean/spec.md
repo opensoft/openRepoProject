@@ -328,7 +328,12 @@ entry and path are gone, and otherwise `unknown` with the note
 registry entry present, and "inspect, then `git worktree prune` and delete
 `<path>` by hand" otherwise, as where either is gone, since Git then refuses
 `git worktree remove --force`; the reason SHALL be `removal-ceiling` in both
-cases.
+cases. Where the rescan cannot read that `.git` file, the read failing other
+than for the file's absence or cut at its budget, the recovery text SHALL
+instead be "inspect `<path>` by hand; its `.git` could not be read, so do not
+run `git worktree prune` until it can", since `git worktree prune` deletes the
+administrative directory of a worktree whose `.git` Git cannot stat, even a
+live one.
 
 For a removal named by `--worktree P`, the plan's completeness SHALL be the
 repository-wide evidence plus P's own row: another row's `inspection-error`, its
@@ -502,6 +507,11 @@ target there, and then retrying.
   remain, and "inspect, then `git worktree prune` and delete `<path>` by hand"
   once the `.git` file is gone, its path and registry entry remaining, or once
   the registry entry is gone, its path remaining
+- **AND** where the rescan cannot read the target's `.git` file, as when a
+  directory above it denies search, the recovery text is "inspect `<path>` by
+  hand; its `.git` could not be read, so do not run `git worktree prune` until
+  it can", since `git worktree prune` would delete that live worktree's
+  administrative directory
 
 #### Scenario: project killed during a deletion
 
@@ -1161,7 +1171,11 @@ where the rescan finds both its `.git` file and its registry entry present, and
 "inspect, then `git worktree prune` and delete `<path>` by hand" otherwise, as
 where either is gone, because Git then refuses `git worktree remove --force`.
 The rescan SHALL read the `.git` file by one `lstat`, a filesystem call that
-starts no Git child.
+starts no Git child. Where that `lstat` fails other than for the file's
+absence, or is cut at its budget, the recovery text SHALL instead be "inspect
+`<path>` by hand; its `.git` could not be read, so do not run `git worktree
+prune` until it can", since `git worktree prune` deletes the administrative
+directory of a worktree whose `.git` Git cannot stat, even a live one.
 
 Before the apply phase, SIGINT, SIGTERM or SIGHUP SHALL terminate and reap every
 probe child, print "Cancelled." on standard error and no JSON document, and exit

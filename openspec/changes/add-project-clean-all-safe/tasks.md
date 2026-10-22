@@ -78,7 +78,8 @@ duplicate them, and nothing here is an implementation step.
   round (h)', the first titled 'Amend change 1: round (h) text, Brett Heap's
   F-2, F-1 and O-1, and lane 2's open points (R-258 to R-263)'); and round (i),
   round (h)'s open point, the message of a redirected main worktree's refusal,
-  under the lead's R-271, with lane 4's finding on D6's identity probe (the
+  under the lead's R-271, with lane 4's finding on D6's identity probe and lane
+  3's W73 M-1, a `.git` the rescan cannot read, under the lead's R-284 (the
   commits whose titles begin 'Amend change 1: round (i)', the first titled
   'Amend change 1: round (i), name the redirect in a redirected main worktree's
   refusal (R-271)'); verified by the

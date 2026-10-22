@@ -54,10 +54,12 @@ report, lane openRepoProject-5's RI-3 and O-1, lane openRepoProject-3's W64 read
 of rounds (g2) and (g3), and Brett Heap's ruling of 2026-10-22 on F-2, F-1 and
 O-1, Context, D4, D7, D9, D10, D14, D18, Risks and Open Questions; and round
 (i), round (h)'s open point, the message of a redirected main worktree's
-refusal, under the lead's R-271, Context, D6 and D18. Brett Heap's ruling of
-2026-10-09 on open question 1, that a local ancestry proof outranks
-`remote-gone` for worktree rows, is in `proposal.md` Decisions and edited
-Context, D6, D7, D20, Risks, the Migration Plan and Open Questions here.
+refusal, under the lead's R-271, with lane openRepoProject-4's finding on the
+identity probe and lane openRepoProject-3's W73 M-1 under the lead's R-284,
+Context, D6, D9 and D18. Brett Heap's ruling of 2026-10-09 on open question 1,
+that a local ancestry proof outranks `remote-gone` for worktree rows, is in
+`proposal.md` Decisions and edited Context, D6, D7, D20, Risks, the Migration
+Plan and Open Questions here.
 
 Citations are `file:line` at `da33d92`: `BA`, `DI`, `OV` and `HO` are the
 packet's batch-cleanup, project-discovery, overview and handoff documents, and
@@ -627,7 +629,15 @@ removal cut short can leave the path and the entry without the `.git` file, or
 the path alone, and Git refuses the forced removal of either (D18; W52 F-1;
 Brett Heap's ruling of 2026-10-22, "F-1: prune-then-delete", R-263). The rescan
 reads the `.git` file by one `lstat`, a filesystem call under the reserve's
-budget, so it still spawns at most three Git children. 300 s is
+budget, so it still spawns at most three Git children. Where that `lstat` fails
+other than for the file's absence, or is cut at its budget, the recovery text
+names neither and warns against `git worktree prune` until the `.git` file can
+be read: where Git cannot stat a worktree's `.git`, as under `EACCES` on its
+path, `git worktree prune` deletes that live worktree's administrative
+directory, its index, `HEAD`, per-worktree refs and reflog with it, on Git
+2.43.0 and 2.36.6 (lane openRepoProject-3's W73 M-1; the lead's R-284, which
+refines how Brett Heap's F-1 ruling applies to a read that fails and is put to
+him to confirm; round (i) reproduced it on both builds). 300 s is
 about two hundred times fixture `k`'s 1.27 s, ample even for drvfs at ten times
 slower; task 2.1 measured it, the 20,000-file removal taking 0.66 s warm and
 0.72 s cold at low load and 14.1 s at worst under saturation, 21 times under
@@ -1294,13 +1304,20 @@ remove --force` then exits 128 on Git 2.43.0 and 2.36.6, with `validation
 failed, cannot remove working tree: 'PATH/.git' does not exist` once the `.git`
 file is gone and `'PATH' is not a working tree` once the entry is, while `git
 worktree prune` and a deletion by hand succeed (W52 F-1; Brett Heap's ruling of
-2026-10-22, "F-1: prune-then-delete", R-263). For a locked worktree, which `git
-worktree remove --force` refuses, the note reads `Probable partial removal:
-inspect, unlock it, then git worktree remove --force PATH by hand.` (W52 F-2,
-R-248). For a locked row that note replaces the ratified recovery text of
-`0050f3e`, which the delta keeps for every other row, by Brett Heap's ruling of
-2026-10-22, "F-2: yes" (W59 G-1, R-253; R-263); a report row needs no other
-text, since its `.git` file and registry entry are present (D4).
+2026-10-22, "F-1: prune-then-delete", R-263). On a `partially-removed` target
+whose `.git` file the rescan cannot read, its `lstat` failing other than for
+the file's absence or cut at its budget, whatever it finds of the registry
+entry, the note reads `Probable partial removal: inspect PATH by hand; its .git
+could not be read, so do not run git worktree prune until it can.`, since `git
+worktree prune` deletes the administrative directory of a live worktree whose
+`.git` Git cannot stat (D9; W73 M-1, R-284, put to Brett Heap to confirm). For
+a locked worktree, which `git worktree remove --force` refuses, the note reads
+`Probable partial removal: inspect, unlock it, then git worktree remove --force
+PATH by hand.` (W52 F-2, R-248). For a locked row that note replaces the
+ratified recovery text of `0050f3e`, which the delta keeps for every other row,
+by Brett Heap's ruling of 2026-10-22, "F-2: yes" (W59 G-1, R-253; R-263); a
+report row needs no other text, since its `.git` file and registry entry are
+present (D4).
 
 Refusal messages keep the baseline wording where a test reads it:
 `target-excluded` for the current worktree, `Cannot remove the current
