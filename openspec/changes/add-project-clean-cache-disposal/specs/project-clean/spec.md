@@ -592,8 +592,9 @@ removals where the plan read the repository's `extensions.worktreeConfig` as
 false, about 47.3 s on the packet's basis of 150 ms per child and 0.3 s per
 removal, the cache walk's and the cache stages' filesystem calls not counted,
 on which count the
-first 14 targets start any cache stage and their removal child before the
-removal floor and the last two are `not-attempted` with `deadline-exceeded`; a
+first 14 targets start any cache stage and their removal child before only the
+removal floor remains, and the last two are `not-attempted` with
+`deadline-exceeded`; a
 target whose cache stage or spawn cannot start under the removal floor SHALL be
 `not-attempted` with `deadline-exceeded`, as for every removal, and a cache
 stage's removal that does not return SHALL hold the run only as a removal in
@@ -969,10 +970,15 @@ remove by hand a worktree whose state was not established. When that holds but
 no later candidate is so left, as when there are exactly 16 candidates, each
 row's own reason and next step SHALL print as usual, and no stall line SHALL
 print. When any of the first 16 is not held for a persistent reason, a later
-run SHALL take the rows the caps left as the rows ahead of them are removed or
-excluded by a gate before the cap, unless the rows that `deferred-target-cap`
-defers will not drain, as "Clean bounds its Git work and reports omitted work"
-states, whose human report then says so. A deadline that passes
+run SHALL take the candidates that the 16-enumeration cap left as the
+candidates ahead of them are removed or cease to be candidates, since a
+candidate that its enumeration leaves at the `ignored-local-files` rung keeps
+its place among the 16 enumerations though a gate before `deferred-target-cap`
+excludes it. A later run SHALL take the rows that `deferred-target-cap` left as
+the rows ahead of them are removed or excluded by a gate before the cap. Both
+hold unless the rows that `deferred-target-cap` defers will not drain, as
+"Clean bounds its Git work and reports omitted work" states, whose human report
+then says so. A deadline that passes
 during an enumeration SHALL make the plan incomplete with `deadline-exceeded`,
 as it does during any probe. A row whose enumeration finished with no cap
 reached SHALL have its ignored records counted as `disposable`, those that are
