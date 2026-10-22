@@ -132,7 +132,7 @@ worded relatively to the gate's rule, which (h) changes for a read the
 deadline cuts, A-50's note and the currency) and A-62 (D14's new line-feed
 case) to D4 and D7; and A-61 (W69's other LOW) to this map, the proposal and
 the tasks; the spec delta edits the ADDED requirement's `Kept` next steps and
-its step 1 and the literals of three ADDED scenarios, and adds no scenario
+its step 1 and the literals of four ADDED scenarios, and adds no scenario
 (proposal, "Re-read and Codex Findings (round A17)").
 
 Citations follow `proposal.md`: packet files at `da33d92`, `CAS` for change 1,
