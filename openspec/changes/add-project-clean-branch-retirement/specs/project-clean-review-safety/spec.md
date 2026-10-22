@@ -41,10 +41,12 @@ Git removed the worktree SHALL leave the target `removed` with
 `branch-missing-after-removal`, stop the run, and exit 2. Under
 `--retire-branches` those outcomes SHALL hold unchanged and such a target's
 branch SHALL never be deleted; a branch change seen by the re-read SHALL retain
-the branch with `branch-changed`, and a reflog its re-proof does not prove, as
+the branch with `branch-changed`, and a reflog its re-proof finds unproven, as
 when the branch moved to a commit the merge target lacks and back after the
-plan, SHALL retain it with `reflog-unmerged`, each stopping the run with exit
-2; and a branch change after the re-proof, that re-read's last check, SHALL be
+plan, SHALL retain it with `reflog-unmerged`, and a re-proof whose read or
+child fails or runs past its own budget SHALL retain it with `state-changed`,
+each stopping the run with exit 2; and a branch change after the re-proof, that
+re-read's last check, SHALL be
 outside the contract, guarded only by Git's own non-force check on the value
 Git reads, so that the residual-window line under the flag SHALL also name a
 branch changed after its last check, after every other clause the run's line

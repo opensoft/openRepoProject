@@ -910,14 +910,17 @@ precedes any later target's revalidation, in this order:
    keeps, one per line, and then the one line `^<merge target SHA>`, as the
    plan's proof is given. A re-proof whose child prints a commit
    SHALL keep the branch, and so SHALL one whose read finds the reflog missing
-   or empty or reaches its 64 KiB bound, one whose read the gate's reading
+   or empty or reaches its 64 KiB bound, or one whose read the gate's reading
    cannot decide, a line that does not parse or a last entry whose new object
-   is not the head the re-read observed included, or one whose read or child
-   fails or times out at its own 5 s budget: the stage SHALL then spawn nothing
-   more and SHALL retain the branch with `reflog-unmerged`, the reason a failed
-   proof gives in the plan, so that no branch child runs on a reflog the stage
-   has not proved. A re-proof whose budget the work deadline ends SHALL retain
-   the branch with `deadline-exceeded`.
+   is not the head the re-read observed included: each is a value that the
+   proof decided, and the stage SHALL then spawn nothing more and SHALL retain
+   the branch with `reflog-unmerged`, so that no branch child runs on a reflog
+   the stage has not proved. A re-proof whose read or child fails, or runs past
+   its own 5 s budget while the work deadline is not the limit, decides no
+   value: the stage SHALL spawn nothing more and SHALL retain the branch with
+   `state-changed`, as it does for a value that the re-read cannot establish.
+   A re-proof whose budget the work deadline ends SHALL retain the branch with
+   `deadline-exceeded`.
 4. Spawn the non-force command `git -c protocol.allow=never -c
    protocol.file.allow=never -c protocol.ssh.allow=never -c
    protocol.git.allow=never -c protocol.http.allow=never -c
@@ -980,10 +983,13 @@ split of exit statuses at 128:
   `removed` with `branch-advanced-after-removal` and no stage ran),
   `state-changed` (the re-read found an upstream value, the manifest's
   `tracking_branch` or the merge target different from the plan, or could not
-  establish one of them at its own budget), `branch-in-use` (the rescan's
+  establish one of them at its own budget, or its re-proof's reflog read or
+  child failed or ran past its own budget), `branch-in-use` (the rescan's
   registry listing shows
   a worktree holding the branch), `reflog-unmerged` (the re-proof printed a
-  commit, or could not prove the reflog), `deadline-exceeded` (too little of
+  commit, or its read decided that the reflog cannot be proven, one missing,
+  empty, read to its 64 KiB bound or undecidable by the gate's reading),
+  `deadline-exceeded` (too little of
   the work deadline remained to start the re-read, its re-proof or the branch
   child, or the deadline stopped the re-read), `interrupted`, `spawn-error`,
   `git-refused` (the child exited nonzero), `unconfirmed-retirement` (the
@@ -1089,9 +1095,11 @@ order:
   printed only
   when the run did not remove the branch's last holder PATH2, the same next
   step; for `branch-changed`, `; now at SHA2; inspect it before retrying:
-  RETRY`; for `reflog-unmerged`, whether its proof printed a commit or failed,
-  `; its reflog is not proven merged into MERGE_TARGET; inspect git -C ROOT
-  reflog show refs/heads/BRANCH before any delete-branch`; for `git-refused`
+  RETRY`; for `reflog-unmerged`, whether its proof printed a commit, the plan's
+  proof failed, or the re-proof found the reflog missing, empty, at its bound
+  or undecidable, `; its reflog is not proven merged into MERGE_TARGET;
+  inspect git -C ROOT reflog show refs/heads/BRANCH before any delete-branch`;
+  for `git-refused`
   when the branch's upstream remote-tracking ref is present, `; if a rebase
   or bisect in another worktree holds BRANCH, wait for it to end and remove
   that worktree; then retry: RETRY`; and otherwise `; retry: RETRY`.
@@ -1501,8 +1509,9 @@ N; branches kept: `; and then the residual-window line.
   and before its re-read
 - **AND** when a test `git` instead makes only that re-proof exit nonzero, or
   hang past its 5 s budget, with nothing moved, the branch is `retained` with
-  `reflog-unmerged`, no branch child is spawned, the result prints the same
-  `Kept <branch> (reflog-unmerged)` line as above, and the exit status is 2
+  `state-changed`, no branch child is spawned, the result prints `Kept
+  <branch> (state-changed); retry: project clean <root> --apply --action
+  delete-branch --branch <branch>`, and the exit status is 2
 - **AND** when that re-proof hangs instead, with nothing moved, and starts with
   less than 5 s of the work deadline left above the removal floor, so that its
   budget ends when only the removal floor remains, it is stopped there, no
