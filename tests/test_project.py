@@ -1602,31 +1602,33 @@ class ProjectTests(unittest.TestCase):
             self.assertNotIn(text, combined)
 
     def test_pty_single_answer_with_a_file_parent_ends_as_the_flag_chosen_path(self):
-        # fix-parent-obstacle-wording design D3: with a parent that exists but is not a directory,
-        # the single-repository answer ends as the same name and parent end with the generator
-        # chosen by flag (--type test, not asked): the same exit status, the same stdout from
-        # Create: on and the same REFUSED: line; the advisory is left out of the comparison.
+        # refuse-non-directory-parent-early design D1, D2 and D3 item 6 (it replaces the version of this
+        # test that fix-parent-obstacle-wording design D3 wrote, whose runs reached the plan and the
+        # confirmation): with a parent that exists but is not a directory, the single-repository answer
+        # ends as the same name and parent end with the generator chosen by flag (--type test, not
+        # asked): both are refused at once, before the plan, with the same exit status and the same
+        # REFUSED: line, the head refusal; the advisory is left out of the comparison.
         env = self.shape_env(ci=None)
         parent_file = self.parent_file_fixture(self.base / "file parent")
+        file_line = OBSTACLE_PARENT_NOT_A_DIRECTORY.format(PARENT=parent_file)
         before = sorted(self.base.rglob("*"))
-        asked = self.run_pty("new", "MyApp", "--into", parent_file, env=env,
-                             steps=[(QUESTION_PROMPT, "2"), (CONFIRM_PROMPT, "yes")])
-        baseline = self.run_pty("new", "MyApp", "--into", parent_file, "--type", "test", env=env,
-                                steps=[(CONFIRM_PROMPT, "yes")])
-        self.assert_question(asked.stdout, "MyApp", OBSTACLE_PARENT_NOT_A_DIRECTORY.format(PARENT=parent_file))
+        asked = self.run_pty("new", "MyApp", "--into", parent_file, env=env, steps=[(QUESTION_PROMPT, "2")])
+        baseline = self.run_pty("new", "MyApp", "--into", parent_file, "--type", "test", env=env)
+        self.assert_question(asked.stdout, "MyApp", file_line)
         self.assert_not_asked(baseline)
-        self.assert_status(asked, baseline.returncode)
         for result in (asked, baseline):
-            self.assertIn("Create:", result.stdout)
-        self.assertEqual(asked.stdout[asked.stdout.index("Create:"):],
-                         baseline.stdout[baseline.stdout.index("Create:"):])
+            self.assert_status(result, 2)
+            self.assertNotIn("Create:", result.stdout)
         # A prompt can precede the report on its stderr line (see assert_line_ends), so each line is
         # compared from REFUSED: on.
-        refused = [[line[line.index(REFUSED):] for line in result.stderr.split("\n") if REFUSED in line]
+        refused = [[text[text.index(REFUSED):] for text in result.stderr.split("\n") if REFUSED in text]
                    for result in (asked, baseline)]
         self.assertEqual(len(refused[0]), 1, asked.stderr)
+        self.assertEqual(len(refused[1]), 1, baseline.stderr)
         self.assertEqual(refused[0], refused[1])
-        self.assertNotIn("warning:", asked.stdout + asked.stderr)
+        self.assertEqual(refused[0], [REFUSED + head_refusal(file_line)])
+        for result in (asked, baseline):
+            self.assertNotIn("warning:", result.stdout + result.stderr)
         self.assertIsNone(self.shape_record())
         self.assert_parent_file_unchanged(parent_file, before)
 
