@@ -729,6 +729,22 @@ Lane: openRepoProject-4
   re-read, no category changing, and the totals below were recounted by script.
   Re-validation: 16 of 16 items pass, with the checks of iteration 2 re-run by
   script on the edited spec.
+- 2026-10-22, a twentieth pass: #24 is re-checked at its draft PR #27's head
+  `69cb7a1`, after round B14, and #25 at its draft PR #29's head `2ab3743`,
+  after round C17, their pins `fe5b245` and `05a424a` kept, by lane
+  openRepoProject-5's B14 line map and this spec's own `cmp` of each range
+  against the previous head and the pin. #24: every pinned range of its
+  proposal and design is byte-identical at new lines, its task 3.2 is unchanged
+  at :178-193, and its `specs/` tree and `project-overview` block are
+  unchanged. #25: no spec is edited and every cited range is byte-identical at
+  its own lines; its "Dependencies and Sequencing" changes only the currency of
+  one sentence (:423-424), and its task 1.3 adds round C16's record (C-52);
+  EC-022 and CHK003 of `security.md` add `2ab3743` for its D5 residual,
+  unchanged at `design.md:565-592`. The header paragraph and the two
+  Dependencies bullets record it; A1 stays cited at `e4a30fc`, and
+  `clarify-questions.md` is unchanged. No checklist result changes, and the
+  totals below were recounted by script. Re-validation: 16 of 16 items pass,
+  with the checks of iteration 2 re-run by script on the edited spec.
 - Items marked incomplete require spec updates before `/speckit-clarify` or `/speckit-plan`
 
 ## Cross-cutting Requirements Quality (no-argument `/speckit.checklist`, 2026-10-19)
@@ -841,5 +857,4 @@ notes (PN-1 to PN-18 but PN-4 and PN-11, withdrawn on 2026-10-21; PN-2 narrowed
 to an exception of any other kind in human mode and widened to a failed write's
 standard-error line), 0 new questions. Recounted by script on 2026-10-21, and
 again after the re-check, after the W6 read and after the fourth to twelfth
-passes of that day, and after the thirteenth to nineteenth passes on
-2026-10-22.
+passes of that day, and after the thirteenth to twentieth passes on 2026-10-22.
