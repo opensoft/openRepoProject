@@ -732,6 +732,32 @@ walk and the adversarial review are lane steps 1 and 2, not tasks.
   -- files: `specs/006-refuse-non-directory-parent-early/traceability.md`
   -- verify: `bash specs/006-refuse-non-directory-parent-early/qs.sh traceability && python3 -I -c 'import re,sys;V=chr(124);B=chr(96);row=lambda l:[c.strip() for c in l.strip().strip(V).split(V)];tab=lambda p:[row(l) for l in open(p).read().splitlines() if l.startswith(V)][2:];P="specs/006-refuse-non-directory-parent-early/";pl=open(P+"plan.md").read().splitlines();N={m.group(1):m.group(2) for m in (re.match(r"^\| (N\d+) \| "+B+r"(test_\w+)"+B,l) for l in pl) if m};C={m.group(2):m.group(3) for m in (re.match(r"^\| (ADDED|MODIFIED) \"([^\"]+)\" \| (.*) \|$",l) for l in pl) if m};T3=[r[4] for r in tab("specs/003-parent-obstacle-wording/traceability.md")];RW="test_pty_single_answer_with_a_file_parent_ends_as_the_flag_chosen_path";q=lambda c:re.findall(B+r"(test_\w+)"+B,c);need=lambda c:[N[k] for k in re.findall(r"\bN\d+\b",c)]+q(c)+([RW] if "the rewritten test" in c else [])+[n for k in re.findall(r"003 traceability row (\d+)",c) for n in q(T3[int(k)-1])];R=tab(P+"traceability.md");miss=[(r[2],sorted(set(need(C[r[2]]))-set(q(r[4])))) for r in R if r[2] in C and not set(need(C[r[2]]))<=set(q(r[4]))];e=[x for x in (len(N)==15 or "methods",len(C)==20 or "map",sum(r[2] in C for r in R)==20 or "map rows",not miss or miss) if x is not True];print("map",e or "OK");sys.exit(1 if e else 0)' && bash specs/006-refuse-non-directory-parent-early/qs.sh ascii-added && bash specs/006-refuse-non-directory-parent-early/qs.sh files-changed`
 
+## Phase 6: Review fixes (lane step 2)
+
+Lane step 2's adversarial review (agent REV, `opus-xhigh`, at `fc71792`)
+reported two nits, both in `tests/test_project.py`. The lead ruled both
+fixed by T029, as lane step 2 says: "a fix is a new task on its own file
+set, after which the review re-runs on the new head".
+
+- [ ] T029 [S] Fix the review's two nits in `tests/test_project.py` (FS-T) and
+  change no other line. (1) In N7
+  `test_pty_triad_answer_below_a_file_leaves_the_file_intact` and N8
+  `test_inproc_triad_answer_below_a_file_leaves_the_file_intact`, delete the
+  line `self.assertFalse((parent / name).exists())`. There `parent` is the
+  row's `FILE/sub`, so `exists()` on `FILE/sub/NAME` is false on ENOTDIR
+  whatever the command did; the next line,
+  `self.assert_parent_file_unchanged(parent.parent, before)`, carries
+  "nothing created" with its snapshot. (2) In N9
+  `test_inproc_parent_repaired_while_the_question_waits_is_created`, replace
+  `self.assertNotIn(REFUSED, result.stderr)` with
+  `self.assertEqual(result.stderr, "")`. That keeps research R-7.1's "no
+  `REFUSED:`" and also pins FR-008's "with no creation advisory" on the
+  repaired path (in process no prompt goes to standard error). N9 stays a
+  guard that passes at the base, and N7 and N8 stay red at the base for
+  their planned reason; check `red-first` reads both.
+  -- files: `tests/test_project.py`
+  -- verify: `bash specs/006-refuse-non-directory-parent-early/qs.sh suite ADDED=15 && bash specs/006-refuse-non-directory-parent-early/qs.sh suite ADDED=15 PY="$(uv python find 3.10)" && bash specs/006-refuse-non-directory-parent-early/qs.sh red-first && bash specs/006-refuse-non-directory-parent-early/qs.sh ast-tests && bash specs/006-refuse-non-directory-parent-early/qs.sh ascii-added && bash specs/006-refuse-non-directory-parent-early/qs.sh files-changed && python3 -I -c 'import ast;s=open("tests/test_project.py").read();F={n.name:ast.get_source_segment(s,n) for n in ast.walk(ast.parse(s)) if isinstance(n,ast.FunctionDef)};a="self.assertFalse((parent / name).exists())";k="self.assert_parent_file_unchanged(parent.parent, before)";n9=F["test_inproc_parent_repaired_while_the_question_waits_is_created"];e=[x for x in (all(a not in F[m] and k in F[m] for m in ("test_pty_triad_answer_below_a_file_leaves_the_file_intact","test_inproc_triad_answer_below_a_file_leaves_the_file_intact")) or "N7 N8",("self.assertEqual(result.stderr, \"\")" in n9 and "self.assertNotIn(REFUSED, result.stderr)" not in n9) or "N9") if x is not True];print("T029",e or "OK");raise SystemExit(1 if e else 0)' && test "$(git diff --numstat HEAD~1 HEAD | tr '\t' ' ')" = "1 3 tests/test_project.py"`
+
 ---
 
 ## Lane steps (the lane lead's, after T028)
@@ -817,6 +843,9 @@ the fixed baseline `961c405`; re-pointing them is lane 2's work.
   implementation commit, T004's or T015's, already exists); T018 and T019 after
   T016, one at a time (pty load); T020 to T027 after T017, in parallel.
 - **Phase 5**: T028 after T016 (every named test defined).
+- **Phase 6**: T029 after lane step 2's first report (the review at
+  `fc71792`); lane step 2 then re-runs on T029's head, before the pull
+  request opens.
 - **Lane steps**: after T028 for steps 1 and 2, which come before the pull
   request opens; step 4 at any phase boundary once #33 is on main.
 
@@ -873,7 +902,7 @@ failure record.
 | FR-005 | T004, T006, T007, T009, T010, T014, T021 |
 | FR-006 | T005, T014, T021 |
 | FR-007 | T005, T008 |
-| FR-008 | T012 (N11), T016 (`test_pty_single_answer_is_unaffected_by_obstacles`) |
+| FR-008 | T012 (N11), T016 (`test_pty_single_answer_is_unaffected_by_obstacles`), T029 (N9's empty standard error) |
 | FR-009 | T012 (N14) |
 | FR-010 | T012 (N15), T014 |
 | FR-011 | T014, T016, T024, T025 |
