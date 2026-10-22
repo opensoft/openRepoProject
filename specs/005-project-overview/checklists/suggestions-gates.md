@@ -94,7 +94,10 @@ Lane: openRepoProject-4
 - [x] CHK022 Alternate: are `target-cap`, the two `inspect-cap` bands and every reflog outcome covered? [Coverage, Spec US4 s3 to s6]
   - Result: pass.
 - [x] CHK023 Exception: are `inspection-error` rows, an unreadable reflog and unprobed rows covered? [Coverage, Spec US4 s1, US4 s6, US6 s3]
-  - Result: pass.
+  - Result: pass. Since PR #19's round (h) (O-1), [G] ends a plan whose reflog
+    read the deadline cut `deadline-exceeded`; the overview keeps
+    `inspection-incomplete`, as amendment A1 gives it, held for Brett Heap's
+    ruling for change 2 (FR-034).
 - [x] CHK024 Recovery: does the suggestion return after a repair, and does a re-run drain a backlog? [Recovery, Spec US4 s1, FR-035]
   - Result: pass.
 - [x] CHK025 Non-functional: do the gates need no Git child beyond design D3's and one bounded read per gated row? [Coverage, Spec FR-032, FR-033]
@@ -130,12 +133,12 @@ LQ-14, theirs too, and CHK012 again after A1's revision 3 at `367223a`, and
 CHK012 and CHK020 after PR #19's R-124 and R-126, and again after A1's revision
 5 at `3ee860c`, with R-124's outcome rule in `2b86a5f`'s words, and CHK012
 after its revisions 6, 7, 8, 9 and 10 at `d644517`, `0394be4`, `177eadf`,
-`4261ff8` and `c193f7b`, after #19's rounds (d) to (g3) at `9267303`,
-`f0bf538`, `662be89`, `4f1c0e0`, `3dcd2d8` and `6bf9f77`, after lane
+`4261ff8` and `c193f7b`, after #19's rounds (d) to (h) at `9267303`, `f0bf538`,
+`662be89`, `4f1c0e0`, `3dcd2d8`, `6bf9f77` and `b3228bb`, after lane
 openRepoProject-3's W39 LOW-4, and after A1's ratification at `e4a30fc`, and
-CHK010 after #19's rounds (g) and (g2). 29 items: 28 pass, 1 fixed in the spec,
-0 open, 0 plan notes, 0 new questions. An open item waits on the question or
-residual its result names; a plan note is for the plan, not the spec; a new
-question is asked in `clarify-questions.md`.
+CHK010 after #19's rounds (g) and (g2), and CHK023 after its round (h). 29
+items: 28 pass, 1 fixed in the spec, 0 open, 0 plan notes, 0 new questions. An
+open item waits on the question or residual its result names; a plan note is
+for the plan, not the spec; a new question is asked in `clarify-questions.md`.
 
 Plan notes: none.

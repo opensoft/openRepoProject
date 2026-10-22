@@ -113,10 +113,11 @@ after its round C15, and at `2eeaec4`, which commits C-51's edits of its tasks
 2.3 and 2.4, they are byte-identical as at `3965dfb`, except those two tasks,
 `tasks.md:22-23`, which gain C-51's second diff; and at `6b5bf8f`, after its
 round C16, at `2ab3743`, after its round C17, at `e1a9f84`, after its round
-C18, and at `a6080a7`, after its rounds C19 (`9a3f684`) and C20, C18 and C20
-editing its overview spec only in the ADDED requirement's `gh` lookup, which
-the LQ-15 item cites in its C20 form, they are byte-identical as at `2eeaec4`,
-some at new lines, its design's D5 residual and D7 from `e1a9f84` (now :574-601
+C18, and at `a6080a7` and `a529310`, after its rounds C19 (`9a3f684`) and C20
+and its rounds C21 (`8276945`) and C22, they are byte-identical as at
+`2eeaec4`, C18, C20 and C21 editing its overview spec only in the ADDED
+requirement's `gh` lookup, which the LQ-15 item cites in its C21 form, and some
+sit at new lines, its design's D5 residual and D7 from `e1a9f84` (now :574-601
 and :954-989) and its scenario "Expiry cancels queued and in-flight requests"
 (now :645-651), except its task 2.4, `tasks.md:23`, which at `9a3f684` gains,
 on lane openRepoProject-4's YES, a re-base of its block of [E] where change 1's
@@ -345,8 +346,13 @@ for Brett Heap (answered 2026-10-21, C-55 to C-71).
   left unprobed (its marker set, its class kept, `probe-timeout` or
   `deadline-exceeded` in its errors, the plan `inspection-incomplete`; its
   "Reflog anchor and movement", :237-261 there; lead rulings R-67 (a) and R-73
-  (c)), still never `inspection-error`, so the claim is unchanged. Where
-  applied: FR-033; FR-049; EC-009.
+  (c)), still never `inspection-error`, so the claim is unchanged. PR #19's
+  round (h) at `b3228bb` amends the ratified sentence for [G]'s own gate
+  (`0050f3e` pcl:606-608), so that a read that the deadline cuts ends its plan
+  `deadline-exceeded`, not `inspection-incomplete` (O-1, its
+  `specs/project-clean/spec.md:713-718`); the overview's outcome follows
+  amendment A1, held for Brett Heap (FR-034). Where applied: FR-033; FR-049;
+  EC-009.
 
 ### Session 2026-10-19
 
@@ -1796,9 +1802,11 @@ path"; "Non-UTF-8 common directory".
   never `probe-failed` (design D1; [E]); it is still stopped by SIGTERM to
   its group, and only a child not reaped within the grace is abandoned and
   recorded `probe-timeout` (POD:172-176; Clarifications, C-2).
-- **EC-020**: A reflog read that does not finish leaves its row unprobed,
-  which withholds `--all-safe` for the whole repository with
-  `inspection-incomplete` (POD:521-529; R-16).
+- **EC-020**: A reflog read that does not finish leaves its row unprobed, which
+  withholds `--all-safe` for the whole repository with `inspection-incomplete`
+  (POD:521-529; R-16). Since PR #19's round (h) (O-1), [G] ends its plan
+  `deadline-exceeded` where the deadline cut the read; the overview's code here
+  follows amendment A1, held for Brett Heap (FR-034).
 - **EC-021**: Ignored files in the merge-target checkout raise no finding,
   since a `.venv` would otherwise warn on most projects (proposal, OQ-20).
 - **EC-022**: The pins and the scrub do not cover everything Git does with the
@@ -1837,9 +1845,10 @@ path"; "Non-UTF-8 common directory".
   200 answer is not verified. Re-checked at `86324ff`, #29's head after its
   round C15, at `2eeaec4`, at `6b5bf8f`, its head after round C16, at
   `2ab3743`, its head after round C17, at `e1a9f84`, its head after round C18,
-  and at `a6080a7`, its head after round C20: the residual reads the same, at
-  `design.md:565-592` up to `2ab3743` and at :574-601 from `e1a9f84`, apart
-  from D5 now locating Q9 B at PR #19's `423a532` (C-50).
+  at `a6080a7`, its head after round C20, and at `a529310`, its head after
+  round C22: the residual reads the same, at `design.md:565-592` up to
+  `2ab3743` and at :574-601 from `e1a9f84`, apart from D5 now locating Q9 B at
+  PR #19's `423a532` (C-50).
 - **EC-023**: Each field is as of its own probe. A commit, a new worktree or
   a recreated repository during the scan can mix moments within one row, in
   which case the reflog's head test fails closed (FR-033); and a common
@@ -1953,7 +1962,11 @@ path"; "Non-UTF-8 common directory".
   option, each counted (change 1's design D6, row 3), so that for such a path
   `probes.performed` exceeds `probes.estimated`, which counts 1 identity probe
   per Git candidate (FR-020; POD:248-254). No scenario asserts the two equal
-  there, and FR-020's identity-probe count stands as ratified.
+  there, and FR-020's identity-probe count stands as ratified. PR #19's round
+  (h) at `b3228bb` has `project clean`'s `probes.estimated` count those extra
+  children (RI-3, its `specs/project-clean/spec.md:1050-1056`); A1's
+  re-alignment of the overview's count is held for Brett Heap with #19's
+  ratification (FR-020).
 - **EC-033**: A present worktree on a branch named `HEAD` (`refs/heads/HEAD`)
   fails closed. Its `branch` and `head` come rightly from the registry, its
   `merged_into_target` from the merged set and its status from its own probe,
@@ -2483,6 +2496,12 @@ and [P] are change 1's requirements as the header names them.
   repository whose extension read is taken as true, for its effective-work-tree
   probe. These counts depart from the packet's DI:506-509 ("3 more per distinct
   repository") and DI:1193-1201 ("plus three"), as A1 records (Dependencies).
+  Where the path of a repository's root or common directory holds a line feed,
+  the count stays one identity probe per Git candidate, as A1 gives it, though
+  the probe is then read one option per child (EC-032); PR #19's round (h) has
+  `project clean`'s `probes.estimated` count those extra children (RI-3, its
+  `specs/project-clean/spec.md:1050-1056` at `b3228bb`), and A1's re-alignment
+  is held for Brett Heap with #19's ratification (Dependencies).
 
 **Isolation**
 
@@ -2696,26 +2715,33 @@ and [P] are change 1's requirements as the header names them.
   `inspection-error`. Either reflog code MUST keep the `merged-removable`
   finding with the read-only suggestion (POD:502-525; design D5;
   Clarifications, C-22).
-- **FR-034**: The `--all-safe` form MUST also be withheld for every worktree
-  of a repository whose batch plan [G] would refuse as
-  `inspection-incomplete` (any worktree row `inspection-error`, a row whose
-  presence or registration read failed or was cut included, or any row
-  unprobed because its reflog read did not finish) or as `inspect-cap` (more
-  worktree rows than the batch's row cap), each computed from the overview's
-  own evidence, and of a repository with any row the overview's own cap or
-  deadline left unclassified, a bare repository's main worktree row, whose
-  classification FR-008 leaves null, not being such a row (Clarifications,
-  C-68); those findings MUST suggest the read-only form. A repository's
-  worktree rows, for both row caps, MUST be every
-  registry entry of the repository, the main worktree and the rows with
+- **FR-034**: The `--all-safe` form MUST also be withheld for every worktree of
+  a repository whose batch plan [G] would refuse as `inspection-incomplete`
+  (any worktree row `inspection-error`, a row whose presence or registration
+  read failed or was cut included, or any row unprobed because its reflog read
+  did not finish) or as `inspect-cap` (more worktree rows than the batch's row
+  cap), each computed from the overview's own evidence, and of a repository
+  with any row the overview's own cap or deadline left unclassified, a bare
+  repository's main worktree row, whose classification FR-008 leaves null, not
+  being such a row (Clarifications, C-68); those findings MUST suggest the
+  read-only form. A repository's worktree rows, for both row caps, MUST be
+  every registry entry of the repository, the main worktree and the rows with
   `present: false` included, within the overview's 512-row cap or past it
   (Clarifications, C-46). A repository with more worktree rows than the
   report's row cap MUST have its read-only suggestions limited by
-  `inspect-cap`; and when more of one repository's `merged-removable`
-  worktrees keep the `--all-safe` form than the batch's target limit, each
-  MUST keep it, limited by `target-cap` (Clarifications, C-45). `project
-  clean` MUST remain free to recompute, show and confirm its own plan and to
-  exclude a suggested worktree (POD:526-537, :563-564; design D5).
+  `inspect-cap`; and when more of one repository's `merged-removable` worktrees
+  keep the `--all-safe` form than the batch's target limit, each MUST keep it,
+  limited by `target-cap` (Clarifications, C-45). `project clean` MUST remain
+  free to recompute, show and confirm its own plan and to exclude a suggested
+  worktree (POD:526-537, :563-564; design D5). For a row whose reflog read the
+  deadline cut, PR #19's round (h) at `b3228bb` has [G] end the plan
+  `deadline-exceeded`, not `inspection-incomplete` (O-1, its
+  `specs/project-clean/spec.md:713-718`), a read not finished within the
+  filesystem budget while the deadline is not the limit staying
+  `inspection-incomplete`; this spec keeps `inspection-incomplete` for both, as
+  amendment A1 at `e4a30fc` gives it (its
+  `specs/project-overview/spec.md:598-603` and :624), and A1's re-alignment of
+  its seven sites is held for Brett Heap's ruling for change 2 (Dependencies).
 - **FR-035**: Each finding MUST carry `suggestion_gate`, null unless a gate
   withheld or limited its own suggestion, else the first applicable code in the
   order of the delta's gate table (`target-not-repository-root`,
@@ -3638,47 +3664,48 @@ and [P] are change 1's requirements as the header names them.
     in its spec, `78d6c84` and `b0d7c2a` in its design, and `e1a9f84` in its
     proposal and tasks), the first of its rounds since C14 to edit a spec:
     `51e854b` applies C-58 to its ADDED requirement alone, at its overview
-    spec's :420-424, :488-491 and :623, text that this spec does not cite, so
-    that a relative `XDG_CONFIG_HOME` or `HOME` fails its `gh` lookup only in a
-    run that neither stops before any child starts, [E] as PR #19 amends it
-    (LQ-15) starting no Git child and "Overview exits by completeness and
-    severity" as A1 words it (FR-043) refusing with exit 2, while a relative
-    `GH_CONFIG_DIR` keeps #25's C-44 rule whole, no `gh` child starting in any
-    of the three cases, as the LQ-15 item below records; no scenario is added
-    or removed (36 and 10), and its `project-command` spec is the blob of
-    `11a0ba2`. Every range that this spec and `clarify-questions.md` cite is
-    byte-identical to `2ab3743`'s, compared by `cmp`: its overview spec's lines
-    1 to 419, which hold every line of it that they cite, the pin's lines 1 to
-    155 and the root-path lines at `:209-212`, `:232-233` and `:244-246` among
-    them, and its scenario "Expiry cancels queued and in-flight requests", now
-    at :644-650; its `proposal.md` :334-345, :367-370 and :430-438
-    (byte-identical to the pin's as well) and :423-424, its "Dependencies and
-    Sequencing", its Open Questions and its `tasks.md` :20-24; and its design
-    D7, now at :954-989, and D5's residual, which EC-022 cites, now at
-    :574-601, D5 gaining after it C-58's paragraph on the two texts that stop a
-    run with a relative `HOME` or `XDG_CONFIG_HOME` before any child starts
-    (:646-670). Its task 1.3 still records that C-51's edits of 2.3 and 2.4 are
-    made on lane openRepoProject-4's YES, 2.3's follow-on for amendment A1
-    still waiting, and now records rounds C17 and C18 (C-56, C-57, C-58 and
-    C-61), reader RH's L4, the wording of task 2.4 and A1's note that task
-    2.3's condition is met being drafted and held for lane openRepoProject-4's
-    YES and written nowhere in that change. Re-checked again at `9a3f684`, its
-    head after round C19 (`d38b282` in its design, `9a3f684` in its proposal
-    and tasks), and at `a6080a7`, its head after round C20 (`e053ad6` in its
-    spec, `6527f73` in its design, `a6080a7` in its proposal and tasks), each
-    by `cmp` against `e1a9f84`. Round C19 edits no spec and commits task 2.4 as
-    held on lane openRepoProject-4's YES (C-62, reader RH's L4), so that
-    `tasks.md:23` now re-reads its block of [E] against change 1's archived
-    block and re-bases it there if that block moved past PR #19's text at
-    `c462d87`, the design's Migration Plan step 4 taking the same clause; its
-    pinned lines 20 to 23 are now as lane openRepoProject-5 holds them (sha256
-    `2e177de7a91d6447...`), :20-22 and :24 unchanged. Round C20 applies C-66 to
-    its ADDED requirement alone (`e053ad6`, sha256 `6fda0ae8c5c60dab...`, 36
-    and 10 scenarios), at lines that the LQ-15 item below now cites in that
-    form, on lane openRepoProject-4's YES to lane openRepoProject-3's W61: the
-    Requests paragraph pairs each text with its own verb, [E] "by barring every
-    Git child and inspecting no repository" and "Overview exits by completeness
-    and severity" "by refusing the run", neither of which "stops it before any
+    spec's :420-424, :488-491 and :623, text that only the LQ-15 item below
+    cites, so that a relative `XDG_CONFIG_HOME` or `HOME` fails its `gh` lookup
+    only in a run in which neither [E] as PR #19 amends it (LQ-15), starting no
+    Git child, nor "Overview exits by completeness and severity" as A1 words it
+    (FR-043), refusing with exit 2, stops it before any child starts, while a
+    relative `GH_CONFIG_DIR` keeps #25's C-44 rule whole, no `gh` child
+    starting in any of the three cases, as the LQ-15 item below records; no
+    scenario is added or removed (36 and 10), and its `project-command` spec is
+    the blob of `11a0ba2`. Every other range that this spec and
+    `clarify-questions.md` cite is byte-identical to `2ab3743`'s, compared by
+    `cmp`: its overview spec's lines 1 to 419, which hold every other line of
+    it that they cite, the pin's lines 1 to 155 and the root-path lines at
+    `:209-212`, `:232-233` and `:244-246` among them, and its scenario "Expiry
+    cancels queued and in-flight requests", now at :644-650; its `proposal.md`
+    :334-345, :367-370 and :430-438 (byte-identical to the pin's as well) and
+    :423-424, its "Dependencies and Sequencing", its Open Questions and its
+    `tasks.md` :20-24; and its design D7, now at :954-989, and D5's residual,
+    which EC-022 cites, now at :574-601, D5 gaining after it C-58's paragraph
+    on the two texts that stop a run with a relative `HOME` or
+    `XDG_CONFIG_HOME` before any child starts (:646-670). Its task 1.3 still
+    records that C-51's edits of 2.3 and 2.4 are made on lane
+    openRepoProject-4's YES, 2.3's follow-on for amendment A1 still waiting,
+    and now records rounds C17 and C18 (C-56, C-57, C-58 and C-61), reader RH's
+    L4, the wording of task 2.4 and A1's note that task 2.3's condition is met
+    being drafted and held for lane openRepoProject-4's YES and written nowhere
+    in that change. Re-checked again at `9a3f684`, its head after round C19
+    (`d38b282` in its design, `9a3f684` in its proposal and tasks), and at
+    `a6080a7`, its head after round C20 (`e053ad6` in its spec, `6527f73` in
+    its design, `a6080a7` in its proposal and tasks), each by `cmp` against
+    `e1a9f84`. Round C19 edits no spec and commits task 2.4 as held on lane
+    openRepoProject-4's YES (C-62, reader RH's L4), so that `tasks.md:23` now
+    re-reads its block of [E] against change 1's archived block and re-bases it
+    there if that block moved past PR #19's text at `c462d87`, the design's
+    Migration Plan step 4 taking the same clause; its pinned lines 20 to 23 are
+    now as lane openRepoProject-5 holds them (sha256 `2e177de7a91d6447...`),
+    :20-22 and :24 unchanged. Round C20 applies C-66 to its ADDED requirement
+    alone (`e053ad6`, sha256 `6fda0ae8c5c60dab...`, 36 and 10 scenarios), at
+    lines that the LQ-15 item below now cites in that form, on lane
+    openRepoProject-4's YES to lane openRepoProject-3's W61: the Requests
+    paragraph pairs each text with its own verb, [E] "by barring every Git
+    child and inspecting no repository" and "Overview exits by completeness and
+    severity" "by refusing the run", neither of which "stops it before any
     child starts" (:420-426), and the Results paragraph reads "not stopped"
     (:490), the scenario's AND still saying "refuses the run" of both (:624);
     every line after :425 moves down 1, the scenario "Expiry cancels queued and
@@ -3688,7 +3715,19 @@ and [P] are change 1's requirements as the header names them.
     :423-424, its "Dependencies and Sequencing" and Open Questions (by sha256),
     and its design's D5 residual at :574-601 and D7 at :954-989, while D5's
     C-58 paragraph (:646), D11, Risks and `proposal.md:892-893` change outside
-    them.
+    them. Re-checked again at `8276945`, its head after round C21 (`1cd73fb` in
+    its spec, `266a30f` in its design, `8276945` in its proposal and tasks),
+    and at `a529310`, its head after round C22 (`bbe8d53` in its design,
+    `a529310` in its proposal and tasks), each by `cmp` against `a6080a7`:
+    `1cd73fb` changes only "refuses" to "stops" in that AND (:624; C-67 (a), on
+    lane openRepoProject-4's YES), the spec's sha256 now `d42139fb5e6c2695...`,
+    36 and 10 scenarios in 661 lines; round C22 edits no spec, its design
+    changing at :653-655 (C-68) and D7 staying at :954-989; and every other
+    pinned and cited range is byte-identical at its lines: its overview spec's
+    lines 1 to 623 and 625 to 661, the scenario at :645-651 among them, its
+    `proposal.md` :334-345, :367-370, :430-438 and :423-424, its `tasks.md`
+    :20-24 (sha256 of :20-23 `2e177de7a91d6447...`), D5's residual at :574-601,
+    D7, and its "Dependencies and Sequencing" and Open Questions (by sha256).
   - `add-project-clean-branch-retirement` (issue #23, draft PR #26) leaves
     `project-overview` untouched. It MODIFIES [E], [G]'s two requirements
     and other `project-clean` requirements for `clean --retire-branches`
@@ -4012,7 +4051,7 @@ and [P] are change 1's requirements as the header names them.
   follows, and edits its `project-clean` spec, its `project-command` and
   review-safety specs unchanged (`git diff --quiet`). Re-checked by script
   against `662be89`: its four hunks there, :170-172, :336-341, :360-361 and
-  :785-786 (:170-174, :338-347, :366-368 and :792-795 at `4f1c0e0`), touch no
+  :785-786 (:170-174, :338-347, :366-368 and :792-794 at `4f1c0e0`), touch no
   line that this spec cites from it, so that each cite keeps its text. The
   lines before :170 keep their numbers, among them the refusal paragraph at
   :11-24 and the scenario "A relative configuration path", at :112; the gate
@@ -4026,16 +4065,17 @@ and [P] are change 1's requirements as the header names them.
   records above stay as written, each at the commit it names. Round (g)'s spec
   edits are three: `Clean classifies preservation and cleanup actions` gains,
   for a locked worktree, the recovery text "inspect, unlock it, then `git
-  worktree remove --force <path>` by hand" (:170-174 at `4f1c0e0`; F-2; design
-  D4, :254-255, and D18, :1224-1228); `Clean can explicitly retire verified
-  worktrees` refuses a branch that the main worktree holds with a message that
-  names detaching HEAD there or checking out the merge target there, then
-  retrying (:338-347, which the scenario "Branch deletion refuses a branch it
-  may not delete" quotes at :366-368; F-5; D18, :1234-1242); and the
+  worktree remove --force <path>` by hand" (:170-174 at `4f1c0e0`; F-2, which
+  Brett Heap's ruling at 15:24Z, "F-2: yes", settles in round (h), below;
+  design D4, :254-255, and D18, :1224-1228); `Clean can explicitly retire
+  verified worktrees` refuses a branch that the main worktree holds with a
+  message that names detaching HEAD there or checking out the merge target
+  there, then retrying (:338-347, which the scenario "Branch deletion refuses a
+  branch it may not delete" quotes at :366-368; F-5; D18, :1234-1242); and the
   plan-blocking remedy of `Clean previews and applies a batch of eligible
   worktree removals in one repository` names "unsetting `core.worktree` and
   `core.bare` in the repository's `config` or in a worktree's
-  `config.worktree`" (:792-795; F-3), as D18's `registration-mismatch` next
+  `config.worktree`" (:792-794; F-3), as D18's `registration-mismatch` next
   step does (:1210-1214). D18's strings also change in the design alone:
   `operation-in-progress`'s next step adds, for a marker left with nothing in
   progress, "or, where Git says none is in progress, its --quit" (:1200-1207;
@@ -4067,48 +4107,118 @@ and [P] are change 1's requirements as the header names them.
   :91-92 at `3dcd2d8`). Round (g3) adds one AND to each of two scenarios, no
   scenario or requirement being added: "Only tracked-file deletions" in its
   `project-clean` spec pins F-2's locked recovery text (:211-212 at `6bf9f77`),
-  and "A linked worktree whose work tree is redirected" in its
-  `project-command` spec pins the remedy that the preview's
-  `registration-mismatch` group names, unsetting `core.worktree` and
-  `core.bare` in the repository's `config` or in a worktree's `config.worktree`
-  (:314). Re-checked by script against `4f1c0e0`, its `project-command` spec
-  changing for the first time since round (e): there, every line before :314
-  keeps its number and text, among them the refusal codes at :8-17, the
-  "Configuration paths" test at :116-129 with :124-125, the trace list and pins
-  at :131-157, the status pins at :158-165, the registration lines at :204-214
-  and :232-240 with :211-213, [E]'s :221-227 and the redirected scenario's
-  header at :311, and the scenarios after :314 move down 1, "A commondir that
-  names another repository" to :319, "A relative configuration path in status,
-  doctor and update" to :324, "The pinned status configuration" to :335, "An
-  edit that keeps its size and restores its mtime" to :339 and "Trace targets
-  are never written" to :356; in its `project-clean` spec every line up to :210
-  keeps its number, the refusal paragraph at :11-24, `project clean`'s refusal
-  at :15-16, the scenario "A relative configuration path" at :112 and F-2's
-  sentence at :170-174 among them, and the rest move down 2, the gate block to
-  :673-757, its gate order at :673-680, the clauses that FR-032 and SC-004 cite
-  at :728-731 and :752-757 and round (e)'s clause at :744-746, the three
-  scenarios to :855, :878 and :893, the caps and the re-run sentence to
-  :997-1000 and :1017-1027, and round (g)'s F-5 and F-3 to :340-349, :368-370
-  and :794-797, each keeping its text; and its review-safety spec is unchanged.
-  Round (g3)'s design edits, at `6bf9f77`: D18's non-drain line ends "(--force
-  for any that holds a submodule)" (its `design.md:1183-1190`; G-4);
-  `operation-in-progress`'s next step ends "or, where --abort fails for a
-  marker with nothing in progress, its --quit" (:1206-1215, and its Risk at
-  :1628-1636; G-5); D4 and D18 say that F-2's text replaces the ratified
-  recovery text of `0050f3e` for a locked row and waits on Brett Heap's word
-  with F-1, the ceiling's recovery text (:257-261 and :1236-1239; G-1); and its
-  proposal declares F-5 a departure from `BA:424-425` (`proposal.md:1113-1127`;
-  G-2). None of them reaches the overview through [E] or [G]: the redirected
-  scenario's AND states what `project clean`'s preview lists, not the evidence
-  model's rule, which keeps its text, so that FR-007's LQ-11 reading and A1's,
-  which follow `addd346` and `93f3194`, hold; and the overview shows no
-  partial-removal note, no non-drain line and none of `project clean`'s next
-  steps, its own `registration-mismatch` finding naming no command. No
-  requirement of this spec moves. So PR #34 does not merge before #19's
-  ratification of those commits; should Brett Heap want #34 sooner, the four
-  items move to a later amendment of change 2, and A1 lands without them (its
-  :1281-1284), the parts of this spec that follow them following that amendment
-  instead.
+  as Brett Heap later ruled (round (h), below), and "A linked worktree whose
+  work tree is redirected" in its `project-command` spec pins the remedy that
+  the preview's `registration-mismatch` group names, unsetting `core.worktree`
+  and `core.bare` in the repository's `config` or in a worktree's
+  `config.worktree` (:314). Re-checked by script against `4f1c0e0`, its
+  `project-command` spec changing for the first time since `93f3194`: there,
+  every line before :314 keeps its number and text, among them the refusal
+  codes at :8-17, the "Configuration paths" test at :116-129 with :124-125, the
+  trace list and pins at :131-157, the status pins at :158-165, the
+  registration lines at :204-214 and :232-240 with :211-213, [E]'s :221-227 and
+  the redirected scenario's header at :311, and the scenarios after :314 move
+  down 1, "A commondir that names another repository" to :319, "A relative
+  configuration path in status, doctor and update" to :324, "The pinned status
+  configuration" to :335, "An edit that keeps its size and restores its mtime"
+  to :339 and "Trace targets are never written" to :356; in its `project-clean`
+  spec every line up to :210 keeps its number, the refusal paragraph at :11-24,
+  `project clean`'s refusal at :15-16, the scenario "A relative configuration
+  path" at :112 and F-2's sentence, ruled in round (h), at :170-174 among them,
+  and the rest move down 2, the gate block to :673-757, its gate order at
+  :673-680, the clauses that FR-032 and SC-004 cite at :728-731 and :752-757
+  and round (e)'s clause at :744-746, the three scenarios to :855, :878 and
+  :893, the caps and the re-run sentence to :997-1000 and :1017-1027, and round
+  (g)'s F-5 and F-3 to :340-349, :368-370 and :794-796, each keeping its text;
+  and its review-safety spec is unchanged. Round (g3)'s design edits, at
+  `6bf9f77`: D18's non-drain line ends "(--force for any that holds a
+  submodule)" (its `design.md:1183-1190`; G-4); `operation-in-progress`'s next
+  step ends "or, where --abort fails for a marker with nothing in progress, its
+  --quit" (:1206-1215, and its Risk at :1628-1636; G-5); D4 and D18 say that
+  F-2's text replaces the ratified recovery text of `0050f3e` for a locked row
+  and waits on Brett Heap's word with F-1, the ceiling's recovery text
+  (:257-261 and :1236-1239; G-1), a word that he gave at 15:24Z (round (h),
+  below); and its proposal declares F-5 a departure from `BA:424-425`
+  (`proposal.md:1113-1127`; G-2). None of them reaches the overview through [E]
+  or [G]: the redirected scenario's AND states what `project clean`'s preview
+  lists, not the evidence model's rule, which keeps its text, so that FR-007's
+  LQ-11 reading and A1's, which follow `addd346` and `93f3194`, hold; and the
+  overview shows no partial-removal note, no non-drain line and none of
+  `project clean`'s next steps, its own `registration-mismatch` finding naming
+  no command. No requirement of this spec moves. #19's round (h), `b3228bb`
+  (`e322f52`, `324192f`, `fc95766` and `b3228bb`; lane openRepoProject-2's
+  R-258 to R-263, with lane openRepoProject-5's RI-3 and O-1 and lane
+  openRepoProject-3's W64), follows, and carries Brett Heap's ruling of
+  2026-10-22 at 15:24Z, in his words to lane openRepoProject-2, "F-2: yes; F-1:
+  prune-then-delete; O-1: deadline-exceeded" (R-263), which its proposal lists
+  among its amendments of ratified text (its `proposal.md:1152-1183`): F-2's
+  locked recovery text stands, replacing the ratified text for a locked row
+  (design D4, :263-266, and D18, :1291-1294); F-1's ceiling recovery text is
+  "inspect, then `git worktree remove --force <path>` by hand" only where the
+  rescan finds both the target's `.git` file and its registry entry present,
+  and otherwise "inspect, then `git worktree prune` and delete `<path>` by
+  hand" (its `specs/project-clean/spec.md:327-331`, in `Clean can explicitly
+  retire verified worktrees`, with an AND in its scenario "A removal past the
+  hard ceiling" at :500-504, and :1159-1164, in `Clean records a reconcilable
+  result for every removal target`); and O-1 has gate 7's branch reflog read
+  that the deadline cuts record `deadline-exceeded` and leave the plan
+  incomplete with `deadline-exceeded`, not `inspection-incomplete`, a read not
+  finished within the filesystem budget while the deadline is not the limit
+  still leaving it `inspection-incomplete` (:713-718, in `Clean previews and
+  applies a batch of eligible worktree removals in one repository`; design D10,
+  :648-657), the branch reflog's rule that the round (e) record above reads at
+  `f0bf538`. Round (h) also gives `Clean bounds its Git work and reports
+  omitted work` and the review-safety rule `Cleanup revalidates destructive
+  actions` RI-3's exception for a root or common directory whose path holds a
+  line feed, the identity probe then read one option per child, revalidation
+  spawning at most nine Git children, ten where the plan read
+  `extensions.worktreeConfig` as true, and the final rescan at most six, with
+  `probes.estimated` counting the extra children (:1050-1056; review-safety
+  :77-85); and, by R-258, D18 gives the `inspection-incomplete` refusal a
+  variant remedy naming the unset of `core.worktree` and `core.bare` wherever a
+  row it counts is `registration-mismatch` (`design.md:1311-1331`), which the
+  `project-command` scenario "A linked worktree whose work tree is redirected"
+  now pins in its AND at :314, with a new AND at :317 for a `core.worktree` in
+  the repository's own `config`. Re-checked by script against `6bf9f77`, every
+  cite of its three specs located by line alignment (154 rows: 43 of
+  `project-command`, 83 of `project-clean` and 28 of the review-safety spec):
+  in `project-command` every cited line through :316 keeps its number and text,
+  :314's AND aside, and the five scenarios after it move down 1, to :320, :325,
+  :336, :340 and :357; in `project-clean` the lines through :326 keep theirs,
+  the refusal paragraph at :11-24, :15-16, :112, :170-174 and :211-212 among
+  them, and the rest keep their text at new lines, F-5 at :344-353 and
+  :372-374, F-3 at :806-808, the three scenarios at :867, :890 and :905, and
+  the caps and the re-run sentence at :1009-1012 and :1029-1039, but for the
+  gate block, now :682-769, whose gate-7 sentence O-1 rewrites, its cited parts
+  keeping their text, the gate order at :682-689, the markers at :726-735, the
+  clauses that FR-032 and SC-004 cite at :740-743 and :764-769 and round (e)'s
+  clause at :756-758; in the review-safety spec RI-3's lines change (:77-85)
+  and every cited line after them moves down 2, the rule's :122-126 at
+  `f0bf538` to :124-128 and the scenarios to :236, :248 and :272-292; and the
+  Risk that EC-022 cites keeps its text, at its `design.md:1739-1744`. Two of
+  these reach what change 2 mirrors, and both are held. Change 2's overview
+  gives the repository `inspection-incomplete` for a row whose reflog read did
+  not finish, as [G] did before O-1 (A1's
+  `specs/project-overview/spec.md:598-603` and :624, `design.md:321-329` and
+  :342-346, and `proposal.md:291-294`, :532-537 and :713-715, at `e4a30fc`);
+  A1's re-alignment of those seven sites is held for Brett Heap's ruling for
+  change 2, between mirroring O-1, which lanes openRepoProject-4 and
+  openRepoProject-2 recommend (R-273), and keeping `inspection-incomplete` with
+  a difference that D12 records, and this spec's outcome follows A1 until then
+  (FR-034; C-22, FR-033, EC-020). A1's `estimated` rule counts one identity
+  probe per Git candidate, where round (h) has `project clean` count the extra
+  children for a line-feed path; that re-alignment is held with #19's
+  ratification, and this spec's count follows A1 (FR-020, EC-032). The rest
+  reaches the overview through neither [E] nor [G]: it shows no partial-removal
+  note and runs no removal (F-2, F-1), its own `inspection-incomplete` remedy
+  is change 2's (A1's :624) rather than [G]'s (R-258), it has no revalidation
+  (RI-3's review-safety bound), and the AND at :317 is a case of [E]'s
+  unchanged rule, which FR-007 reads as A1 does. The records above that say F-2
+  and F-1 wait on his word are settled by this ruling. So PR #34 does not merge
+  before #19's ratification of those commits; should Brett Heap want #34
+  sooner, the four items move to a later amendment of change 2, and A1 lands
+  without them (its :1281-1284), the parts of this spec that follow them
+  following that amendment instead.
   - LQ-10, on PR #19 at `ea697ba`, pending its ratification: every status
     probe, the hidden-state probe and the removal pass `-c core.trustctime=true
     -c core.checkStat=default` after `-c core.fsmonitor=false`, four status
@@ -4255,7 +4365,7 @@ and [P] are change 1's requirements as the header names them.
     it, not following Git's order of precedence; where one fails, the
     subcommand starts no Git child and inspects no repository
     (`relative-config-path`). #25's C-44 (draft PR #29), in the form its rounds
-    C18 and C20 give it at `a6080a7` (its
+    C18, C20 and C21 give it at `a529310` (its
     `specs/project-overview/spec.md:417-426`, :489-495 and :624), tests
     `GH_CONFIG_DIR`, `XDG_CONFIG_HOME` and `HOME` for `gh`: a relative
     `GH_CONFIG_DIR` makes the lookup of `gh` fail, every queried row being
@@ -4267,11 +4377,13 @@ and [P] are change 1's requirements as the header names them.
     `relative-config-path` and exit 2 (A1's
     `specs/project-overview/spec.md:868-876` at `e4a30fc`; FR-043); and in
     every case no `gh` child starts. Where #29's text at `e1a9f84` said that
-    both refuse, its round C20 pairs each with its own verb, the evidence model
-    "by barring every Git child and inspecting no repository" and the exit rule
-    "by refusing the run" (:422-424 at `a6080a7`; its C-66, on lane
-    openRepoProject-3's W61), the evidence model leaving the refusal to each
-    command's own requirement, as `project clean`'s is at its
+    both refuse, its rounds C20 and C21 pair each with its own verb: the
+    Requests paragraph has the evidence model "by barring every Git child and
+    inspecting no repository" and the exit rule "by refusing the run"
+    (:422-424; its C-66, on lane openRepoProject-3's W61), the Results
+    paragraph reads "not stopped" (:490), and the scenario's AND reads "stops"
+    (:624; its C-67 (a)), all at `a529310`, the evidence model leaving the
+    refusal to each command's own requirement, as `project clean`'s is at its
     `specs/project-clean/spec.md:15-16` at `4f1c0e0`. Brett Heap also gave
     LQ-15 to lane openRepoProject-2 directly, "yes, refuse relative HOME like
     #29" (R-102 (a)). `clean` refuses with `relative-config-path` and exit

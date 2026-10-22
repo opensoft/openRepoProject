@@ -21,7 +21,11 @@ Lane: openRepoProject-4
   - Result: pass; since 2026-10-21 `estimated` also counts FR-007's extension
     read and effective-work-tree probes (LQ-11, PR #19 at `addd346`, pending
     its ratification), which POD:248-254 does not name and amendment A1 at
-    `e4a30fc` adds to it, ratified (FR-020).
+    `e4a30fc` adds to it, ratified (FR-020). Since PR #19's round (h) at
+    `b3228bb` (RI-3), `project clean`'s `estimated` counts the extra
+    identity-probe children for a root or common directory whose path holds a
+    line feed; FR-020 and EC-032 keep the overview's count as A1 gives it, held
+    for Brett Heap.
 - [ ] CHK004 Is it specified whether `probes.estimated` counts a worktree row that never takes a status probe, such as a git-directory record? [Clarity, Gap, Spec FR-020]
   - Result: plan note PN-12, narrowed on 2026-10-21 by C-68: a bare
     repository's main worktree row adds none (FR-020); the other rows that take
@@ -90,9 +94,10 @@ re-read on 2026-10-21 after Brett Heap's answers (C-55 to C-71), their
 categories unchanged, and CHK003 and CHK011 after PR #19's `addd346` and lane
 openRepoProject-3's W7 read of A1, theirs too, and again after A1's revisions
 3, 5, 6, 7, 8, 9 and 10, at `367223a`, `3ee860c`, `d644517`, `0394be4`,
-`177eadf`, `4261ff8` and `c193f7b`, and after its ratification at `e4a30fc`. 18
-items: 17 pass, 0 fixed in the spec, 0 open, 1 plan notes, 0 new questions. An
-open item waits on the question or residual its result names; a plan note is
-for the plan, not the spec; a new question is asked in `clarify-questions.md`.
+`177eadf`, `4261ff8` and `c193f7b`, and after its ratification at `e4a30fc`,
+and CHK003 after PR #19's round (h) at `b3228bb`. 18 items: 17 pass, 0 fixed in
+the spec, 0 open, 1 plan notes, 0 new questions. An open item waits on the
+question or residual its result names; a plan note is for the plan, not the
+spec; a new question is asked in `clarify-questions.md`.
 
 Plan notes: PN-7 (CHK006), PN-12 (CHK004, narrowed by C-68).

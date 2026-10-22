@@ -840,7 +840,7 @@ Lane: openRepoProject-4
   as #19's text at `3dcd2d8`, its re-alignment still held for Brett Heap with
   #19's ratification and the spec's remedy texts still following A1; (g3) adds
   one AND to each of two scenarios, in `project-clean` and in
-  `project-command`, which changes for the first time since round (e), and
+  `project-command`, which changes for the first time since `93f3194`, and
   every cite of either was re-checked by script against `4f1c0e0`, each keeping
   its text, `project-command` lines before :314 at their numbers and five
   scenarios after it down 1, `project-clean` lines up to :210 at theirs and the
@@ -849,17 +849,47 @@ Lane: openRepoProject-4
   every cited range is byte-identical to `e1a9f84`'s by `cmp` but task 2.4,
   `tasks.md:23`, which C19 commits on lane openRepoProject-4's YES (C-62), and
   the scenario "Expiry cancels queued and in-flight requests", which C20's spec
-  edit (C-66, W61) moves to :645-651; EC-022 and CHK003 of `security.md` add
-  `a6080a7`, and the LQ-15 item cites C-44 in its C20 form, no longer pending.
-  W58: the A1 bullet names both passes of the re-read, `bbf1f7c` and `49d66a8`
-  (L1), and the header's #25 clause names the ranges at new lines and task 2.4
-  (L2). CHK010 and CHK012 of `suggestions-gates.md`, CHK020 of `integration.md`
-  and CHK003 of `security.md` were re-read, no category changing, and the
-  totals below were recounted by script. Traceability is checked against A1's
-  ratified deltas at `e4a30fc` (64 of 64). No pin moves, A1 stays cited at
-  `e4a30fc`, and `clarify-questions.md` is unchanged. Re-validation: 16 of 16
-  items pass, with the checks of iteration 2 re-run by script on the edited
-  spec.
+  edit (C-66, W61) moves to :645-651, and the C-44 lines that the LQ-15 item
+  cites, which C20 edits; EC-022 and CHK003 of `security.md` add `a6080a7`, and
+  the LQ-15 item cites C-44 in its C20 form, no longer pending. W58: the A1
+  bullet names both passes of the re-read, `bbf1f7c` and `49d66a8` (L1), and
+  the header's #25 clause names the ranges at new lines and task 2.4 (L2).
+  CHK010 and CHK012 of `suggestions-gates.md`, CHK020 of `integration.md` and
+  CHK003 of `security.md` were re-read, no category changing, and the totals
+  below were recounted by script. Traceability is checked against A1's ratified
+  deltas at `e4a30fc` (64 of 64). No pin moves, A1 stays cited at `e4a30fc`,
+  and `clarify-questions.md` is unchanged. Re-validation: 16 of 16 items pass,
+  with the checks of iteration 2 re-run by script on the edited spec.
+- 2026-10-22, a twenty-sixth pass: #19's round (h) at `b3228bb`, carrying Brett
+  Heap's ruling of 15:24Z, "F-2: yes; F-1: prune-then-delete; O-1:
+  deadline-exceeded" (R-263), and #25 at its draft PR #29's heads `8276945` and
+  `a529310`, after rounds C21 and C22, are recorded, with lane
+  openRepoProject-3's W68 read of 3v and 3w (MEDIUM 1, LOW 5), by the lead's
+  commit 3x decisions. #19: every cite of its three specs, 154 rows, was
+  located by line alignment and re-checked against `6bf9f77`; round (h) changes
+  the gate block's gate-7 sentence (O-1), the review-safety rule's bound (RI-3)
+  and the redirected scenario's AND, every other cite keeping its text, at its
+  own lines or new ones; the records of F-2 and F-1 now say that he ruled; O-1,
+  which change 2 mirrors at A1's seven sites, and RI-3's `estimated` count are
+  held for Brett Heap, FR-034 and FR-020 with EC-032 recording them, and the
+  overview's outcome and count still follow A1. #25: its pin `05a424a` kept,
+  every pinned and cited range is byte-identical to `a6080a7`'s by `cmp` but
+  the AND at :624, which C21 changes from "refuses" to "stops"; the LQ-15 item
+  now says that C20 and C21 pair the verbs (W68 L4), and EC-022 and CHK003 of
+  `security.md` add `a529310`. W68: the #25 bullet's C18 sentence says that
+  only the LQ-15 item cites C18's edited lines (M1) and gives its "neither" a
+  "nor" (L5); round (g)'s check ran over 48 cites, not 49, six of them located
+  only by their first and last lines, all of them located by line alignment now
+  (L1); `project-command` last changed at `93f3194` before round (g3) (L2);
+  F-3's span is :792-794 at `4f1c0e0` and :794-796 at `6bf9f77` (L3); and the
+  twenty-fifth pass is corrected for M1 and L2. CHK012 and CHK023 of
+  `suggestions-gates.md`, CHK020 of `integration.md`, CHK003 of
+  `observability.md` and CHK003 of `security.md` were re-read, no category
+  changing, and the totals below were recounted by script. Traceability is
+  checked against A1's ratified deltas at `e4a30fc` (64 of 64). No pin moves,
+  A1 stays cited at `e4a30fc`, and `clarify-questions.md` is unchanged.
+  Re-validation: 16 of 16 items pass, with the checks of iteration 2 re-run by
+  script on the edited spec.
 - Items marked incomplete require spec updates before `/speckit-clarify` or `/speckit-plan`
 
 ## Cross-cutting Requirements Quality (no-argument `/speckit.checklist`, 2026-10-19)
@@ -981,5 +1011,5 @@ notes (PN-1 to PN-18 but PN-4 and PN-11, withdrawn on 2026-10-21; PN-2 narrowed
 to an exception of any other kind in human mode and widened to a failed write's
 standard-error line), 0 new questions. Recounted by script on 2026-10-21, and
 again after the re-check, after the W6 read and after the fourth to twelfth
-passes of that day, and after the thirteenth to twenty-fifth passes on
+passes of that day, and after the thirteenth to twenty-sixth passes on
 2026-10-22.
