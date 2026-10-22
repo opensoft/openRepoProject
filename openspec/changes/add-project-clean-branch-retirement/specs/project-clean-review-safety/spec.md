@@ -98,7 +98,7 @@ repository found replaced by the rescan after a removal SHALL make that target
   survives at the new commit, the target's `branch_retirement` is `retained`
   with `git-refused`, later targets are `not-attempted`, no commit is lost, and
   the exit status is 2
-- **AND** the confirmation and the result carry the residual-window line that
-  this requirement has each state, which under the flag also names a branch
-  changed after its last check, after every other clause that line names and
-  before its last clause, any change after Git's own check
+- **AND** the confirmation and the result each state this requirement's
+  residual-window line, which under the flag also names a branch changed
+  after its last check, after every other clause that line names and before
+  its last clause, any change after Git's own check
