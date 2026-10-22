@@ -61,6 +61,28 @@ ADVISORY_CONVERSION = "warning: openRepoShape's adopt-project.py converts a repo
 # parent that does not exist keeps OBSTACLE_PARENT above, unchanged.
 OBSTACLE_PARENT_NOT_A_DIRECTORY = "     Not possible here: The parent {PARENT} exists but is not a directory; choose a parent that is a directory."
 
+# Fixed text of openspec/changes/refuse-non-directory-parent-early/design.md, D2 (that
+# design's numbering), character for character. PARENT and ANCESTOR are the format fields
+# {PARENT} and {ANCESTOR}; every other character is literal. Sentence (b), for a parent that
+# does not exist and is blocked by a path above it that exists but is not a directory; the two
+# parent lines above are unchanged (design D2).
+OBSTACLE_PARENT_BELOW_A_NON_DIRECTORY = "     Not possible here: The parent {PARENT} cannot be created because {ANCESTOR} exists but is not a directory; choose a parent that is a directory."
+# The head refusal's ending (design D2), pinned as its own literal beside OBSTACLES_REFUSAL_END:
+# the two are equal in value today and neither is built from the other.
+HEAD_REFUSAL_END = " Nothing was created."
+
+
+def head_refusal(question_line):
+    """The head refusal (design D2) of a question's parent line: its sentence and the ending."""
+    return question_line.split(OBSTACLE_LINE_START, 1)[1] + HEAD_REFUSAL_END
+
+
+# Existing text that refuse-non-directory-parent-early keeps (design D3 items 9 and 10), pinned as
+# literals because no test pins it as a constant today.
+SHAPE_NEEDS_EXISTING_PARENT = "Shape creation requires an existing --into parent directory."
+GENERATOR_LIST_FIRST = "1. testBench:test"
+FAMILY_NOT_A_FOLDER_NAME = "Family must be a single folder name."
+
 
 def obstacles_refusal(*obstacle_lines):
     """The D13 known-obstacles refusal composed from formatted obstacle lines, in their order."""
