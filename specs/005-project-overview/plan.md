@@ -6,8 +6,9 @@ Lane: openRepoProject-4
 **Spec**: [spec.md](spec.md)
 
 **Input**: Feature specification from `specs/005-project-overview/spec.md`
-at `2580915` (its 71 clarifications, Brett Heap's answers of 2026-10-21
-folded in), with its 17 checklists and `clarify-questions.md`.
+at `7af798a` (its commit 3ae; its 71 clarifications, Brett Heap's answers
+of 2026-10-21 folded in), with its 17 checklists and
+`clarify-questions.md`.
 
 **Technical design**: `openspec/changes/add-project-overview/` as amendment
 A1 at `e4a30fc` leaves it (PR #34; Brett Heap, "ratify 34", 2026-10-22):
@@ -22,8 +23,9 @@ can still decide (R20, O1 to O10).
 
 **Authority**: Brett Heap, 2026-10-22T19:46:57Z: "lane 4 plans 005 now".
 That word moves C-56's order (the plan after feature 004's merge) for this
-plan step only, as C-21's moved the specify step; it gives no word for
-tasks or implementation (research.md R1, R2).
+plan step only, as C-21's moved the specify step, and spec commit 3ae
+records it in C-56; it gives no word for tasks or implementation
+(research.md R1, R2).
 
 ## Summary
 
@@ -61,10 +63,11 @@ Implementation slices, in dependency order; each leaves the suite green:
    18, 19, 20, 57 and 58; PN-10.
 4. **Repositories and rows** (R5, R8, R9, R14, R17). The registry, A1
    design D3's layouts, the manifest reader, the extension read, the
-   keep-filter, the resolver, the merged set, the row tasks, the twins, the
-   work-tree probe, the re-verification, the status probe and
-   classification through `row_evidence`. Scenarios 5 to 12, 15, 17, 21,
-   22, 24 to 34, 62 and 63; EC-031 to EC-033.
+   keep-filter, change 1's resolver (`resolve_merge_target`, called on the
+   kept records), the merged set, the row tasks, the twins, the work-tree
+   probe, the re-verification, the status probe and classification through
+   `row_evidence`. Scenarios 5 to 12, 15, 17, 21, 22, 24 to 34, 62 and 63;
+   EC-031 to EC-033.
 5. **Findings, gates and messages** (R12, R13). The attention table, the
    default-branch set, the row and repository gates, the reflog gate, the
    composer and the suggestions. Scenarios 35 to 43 and 51 to 54.
@@ -93,17 +96,21 @@ gate on the change and on its verification (research.md R3):
 - **(a)** feature 004's existing tests pass with no edit (new tests may be
   added): the whole suite green, and no diff in feature 004's test files
   or helpers against the base.
-- **(b)** the split keeps every probe count, every per-probe budget and
-  deadline figure and the cut semantics (R-80 P-2, the deadline-stopped
-  marker) byte-identical in `clean`'s output, shown by a side-by-side run
-  of the base and the split `project` over `clean`'s fixtures comparing
-  probes, operations, exit statuses, documents (each `observed_at`
-  masked) and the wrapper's child logs ([quickstart.md](quickstart.md)).
+- **(b)** the split keeps `clean`'s output, JSON and human,
+  byte-identical: every probe count, every per-probe budget and deadline
+  figure and the cut semantics (R-80 P-2, the deadline-stopped marker),
+  shown by a side-by-side run of the base and the split `project` over
+  `clean`'s fixtures comparing probes, operations, exit statuses,
+  documents (each `observed_at` masked) and the wrapper's child logs, and
+  the same commands without `--json`, standard output and standard error
+  byte for byte ([quickstart.md](quickstart.md)).
 - **(c)** the `Invocation` branch leaves `clean`'s 50 s work deadline and
   10 s reserve untouched: its `clean` branch is not edited, and a unit test
   pins both figures.
 - **(d)** `parser()` and `main()` add `overview` only: `clean`'s arguments,
-  help text, refusals and exit codes unchanged.
+  help text, refusals and exit codes unchanged, and `project SUB --help`
+  byte-identical for every other subcommand (`new`, `benches`, `status`,
+  `doctor`, `update`, `clean`).
 - **(e)** the changes land on `main` after PR #33; if the split changes
   anything PR #19's text describes of the driver or bounded work (its D1,
   D2, D9 and D14), feature 005's spec says so and PR #19 is not edited for
@@ -132,11 +139,16 @@ feature 005 merges, and slice 1's pull request quotes the checks of (a) to
 - POD, PRSD, CMD, CLN, DI, BA and the labels [E], [L], [G], [R] and [P]:
   as [spec.md](spec.md) defines them.
 - The lane's A1 re-alignment draft, held for Brett Heap's review and not
-  a source of behaviour: its items 1 to 10 as read at sha256
+  a source of behaviour: its items 1 to 7 and 9 as read at sha256
   `00205d73ba3831d23cf87ff67bf22b79099b2767bad8cc9091ff9064c8a802ea`
-  (2,295 lines), and its note on row 4c's exit 1 as read at sha256
+  (2,295 lines), its note on row 4c's exit 1 as read at sha256
   `10890e2c0b9342c68832df71e0cc2742d3092be08beb81a12684e3c70c33398c`
-  (2,353 lines; research.md R9).
+  (2,353 lines; research.md R9), and its items 8 and 10 as read at sha256
+  `8ce4e9fb60e83cc29129b13c5173d442598fd153c78a13c93662001811991efc`
+  (2,422 lines; research.md R12, R20).
+- Lane openRepoProject-3's W96 read of this plan at `a80f10b`, with its
+  delta read at `aeb0bb2`: revision 2 takes each of its findings
+  (research.md, "Revision 2").
 
 ## Technical Context
 
@@ -230,7 +242,10 @@ file, plain pushes, merges never rebases, no work outside this worktree).
   only where research.md records why: the plan written before feature 004
   merges, on Brett Heap's word (R1); two read ends on one selector in place
   of D1's one self-pipe (R4); and the plan's own readings where the change
-  leaves a choice (R5's manifest place, R10, R11, R13 to R16).
+  leaves a choice (R5's manifest place, R10, R11, R13 to R16). They keep
+  A1's Non-Goals: the merge target is change 1's `resolve_merge_target`,
+  called on the kept records, and no second classifier, resolution order
+  or path escaper is written (A1 design.md:73-74; R3).
 
 ## Project Structure
 
@@ -296,10 +311,10 @@ suggestions lead to `project clean`.
   (O9); and, if #24's realization merges first, a cache-only worktree
   (C-71). Parity tests leave these cases out by name.
 - **Readings that differ from feature 004's code** (research.md R9): the
-  extension read's exit 1 with a warning (feature 004 to follow PR #19's D7
-  by R-332, queued; whether A1's recorded `probe-failed` matches #19's
-  "counts as true" is PENDING the A1 drafter's check), strict realpaths, an
-  abandoned child the deadline cut, the deadline text and
+  extension read's exit 1 with a warning, which A1 counts as true as PR
+  #19's D7 does (A1 proposal.md:1370-1375; feature 004 to follow D7 by
+  R-332, queued; no class differs, and no held item arises), strict
+  realpaths, an abandoned child the deadline cut, the deadline text and
   `tracking_freshness`; each is the overview's own decider, tested alone.
 - **Threads**: at most 2,465 tasks a run, each its own daemon thread, the
   stuck ones never joined (R7); a filesystem call stuck in the kernel can
@@ -307,22 +322,28 @@ suggestions lead to `project clean`.
 - **Hostile repositories**: R19's threat model; filter drivers a
   repository's own configuration defines stay a residual (EC-022).
 - The agent-context step of the plan workflow is not run: this repository's
-  `CLAUDE.md` and `AGENTS.md` carry no `SPECKIT` markers, and none is added.
+  `CLAUDE.md` and `AGENTS.md` carry no agent-context markers (only the
+  OPENSPEC-SPECKIT-GLOBAL protocol block), and `.specify/scripts` has no
+  agent-context script; none is added.
 
 ### Open questions for Brett Heap
 
 Each is OPEN; research.md R20 gives the design of each answer.
 
-- O1: item 2, the F-7 clause on two remedies.
-- O2: item 6, O-1, a deadline-cut reflog read's gate.
+- O1: item 2, the reflog remedies' submodule clause.
+- O2: item 6, the deadline's cut at the reflog gate, as R-263 ruled it
+  for `project clean` ("O-1: deadline-exceeded").
 - O3: item 7, the identity re-read in `probes.estimated`.
-- O4: item 8 with (c) and (d), the redirected main worktree.
+- O4: item 8, the redirected main worktree: (a), (b) or as ratified;
+  sub-items (c) and (d); and the composer's clause 2 beside the redirect
+  remedy.
 - O5: item 9, the work-tree probe's one-path reading.
-- O6: item 10 part 1, the stale warning and the composer's rule.
+- O6: item 10 part 1, the stale warning and the composer's clause 1.
 - O7: item 10 part 2, the `main-worktree-missing` remedy's warning.
 - O8: T7's locked form for a locked stale row.
 - O9: M1, parity when the working directory's realpath fails.
-- O10: LQ-15's extension, and the code if `relative-config-path` goes.
+- O10: LQ-15's extension to `GIT_CONFIG_GLOBAL` and `GIT_CONFIG_SYSTEM`;
+  the code and its exit are ratified, only the two names are open.
 - The base: `main` after PR #33 (recommended, C-56), or stacked on feature
   004's branch (his word needed; R2).
 - His word on the tasks, then on the implementation.

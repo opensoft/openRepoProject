@@ -27,6 +27,31 @@ New regions of `project`, after feature 004's (research.md R3):
 - changed: `Invocation` (one branch), `run_bounded` factored into
   `start_child` and `conclude`, `parser()` and `main()` (one dispatch).
 
+## Slices (plan.md, Summary)
+
+Each region lands in one slice, and a requirement reaches its slice
+through its region: discovery in slice 2, the loop in 3, collect in 4,
+findings in 5, render in 6. `overview contracts` grows in every slice,
+each table with its first user, and `FsTask`, in the loop region, lands in
+slice 2, which first uses it.
+
+- Slice 1, base, factoring and scaffolding: the changed code above, the
+  subparser and the dispatch, `tests/overview_support.py` and
+  `test_overview_factoring.py`; scenarios 47, 55, 56 and 64.
+- Slice 2, discovery: `overview discovery` and `FsTask`; scenarios 1 to
+  4, 13, 14 and 23.
+- Slice 3, the loop and the scheduler: `overview loop`; scenarios 16, 18,
+  19, 20, 57 and 58.
+- Slice 4, repositories and rows: `overview collect`; scenarios 5 to 12,
+  15, 17, 21, 22, 24 to 34, 62 and 63.
+- Slice 5, findings, gates and messages: `overview findings`; scenarios 35
+  to 43 and 51 to 54.
+- Slice 6, output: `overview render`; scenarios 44 to 46, 48 to 50 and 59
+  to 61.
+- Slice 7, documentation, CI and records: `README.md`,
+  `.github/workflows/tests.yml` and, if T123 lands, `AGENTS.md`; no
+  scenario.
+
 Test modules under `tests/`, with `overview_support.py`:
 
 | Module | Covers |
@@ -57,13 +82,16 @@ changes"); lane 2 or lane openRepoProject-3 reads the diff before feature
 
 - (a) feature 004's tests unedited and passing: the whole suite; no diff
   in its test files and helpers against the base.
-- (b) probes, budgets, deadline figures and cut semantics byte-identical
-  in `clean`'s output: the side-by-side run of the base and the split
-  `project`, recorded in slice 1's pull request.
+- (b) `clean`'s output, JSON and human, byte-identical (probes, budgets,
+  deadline figures and cut semantics): the side-by-side run of the base
+  and the split `project`, with and without `--json`, standard output and
+  standard error compared byte for byte, recorded in slice 1's pull
+  request.
 - (c) `clean`'s 50 s work deadline and 10 s reserve untouched:
   `test_overview_factoring.py`, and feature 004's timing tests unedited.
-- (d) `overview` added only: the `--help` diffs, and feature 004's
-  argument and refusal tests unedited.
+- (d) `overview` added only: the `--help` diffs of the top level and of
+  every other subcommand, and feature 004's argument and refusal tests
+  unedited.
 - (e) on `main` after PR #33; a change to what PR #19's D1, D2, D9 or D14
   describe goes into feature 005's spec, never into PR #19.
 
@@ -88,7 +116,9 @@ changes"); lane 2 or lane openRepoProject-3 reads the diff before feature
 - FR-020: render; R14 (PN-12); research.md O3, O4 (held).
 - FR-021, FR-022: collect; R5; contract "Row and scan errors".
 - FR-023: collect (manifest reader); `test_overview_yaml.py`.
-- FR-024, FR-025: collect (resolver); R3; data model "Repository".
+- FR-024, FR-025: collect (change 1's `resolve_merge_target`, reused,
+  over the kept records); R3; data model "Repository"; contract "Other
+  findings".
 - FR-026: collect (`row_evidence`, `classify`); R3, R18; research.md O9.
 - FR-027: contract "The attention table".
 - FR-028: findings; R12 (PN-1); contract "Findings from the ladder";
@@ -143,7 +173,7 @@ Missing target; 34 Every protected classifier.
 Requirement 6, attention (R12): 35 Attention filter per category; 36 A
 merged worktree whose upstream was deleted.
 
-Requirement 7, suggestions (R12; held O1, O2, O6): 37 Gated merged
+Requirement 7, suggestions (R12; held O1, O2, O4, O6): 37 Gated merged
 worktrees; 38 Canonical identity through the handoff; 39 More eligible
 worktrees than the batch's target limit; 40 The two inspect-cap bands; 41
 A row left unprobed closes the repository gate; 42 An unstarted branch; 43

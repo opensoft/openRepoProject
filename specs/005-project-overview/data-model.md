@@ -58,7 +58,8 @@ its position in canonical order after the dedupe (first spelling wins) and
 before the 128-candidate cap. A candidate past the cap is counted by one
 `scan-limit` error, `limit: "candidates"`, exactness `exact` when every
 root listing completed, else `lower-bound`. A marker check that fails with
-an error other than `ENOENT` yields an error row instead (FR-005).
+an error other than `ENOENT` or `ENOTDIR` (DI:142) yields an error row
+instead (FR-005).
 
 ### Collector (FR-021; research.md R5)
 
@@ -140,8 +141,12 @@ Keyed by the `(dev, ino)` of the no-follow `lstat` of `common_dir`.
 - `refs`: the keep-filter's records: local heads, `origin/HEAD`, the upstreams
   the heads name
 - `remote_copy`: one flag per candidate name known before the listing (A1
-  design D9)
-- `merge_target`: `{name, source, sha}` or null (FR-024, FR-025)
+  design D9); when the merge target comes from `origin/HEAD`, its remote
+  copy is the symref's own target, listed by construction, so the flag is
+  set (D9, `A1 design.md:526-528`)
+- `merge_target`: `{name, source, sha}` from change 1's
+  `resolve_merge_target` (`project:2503`) over `refs` and the manifest's
+  `tracking_branch`, less its `notes`; or null (FR-024, FR-025)
 - `merged`: the merged set at `merge_target.sha` (`MergedSetParser`), or null
 - `errors`: the project row's errors, in step order
 - `rows`: its worktree rows, main first

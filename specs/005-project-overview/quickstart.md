@@ -44,10 +44,14 @@ git diff --stat "$B" HEAD -- tests/test_clean_*.py \
     tests/test_status_doctor_update.py tests/test_project.py \
     tests/clean_support.py tests/launch_project.py     # expect no output
 python3 -m unittest discover -s tests -v
-# (d) clean's help unchanged; the top-level help gains one line only
+# (d) every other subcommand's help unchanged; the top-level help gains
+# one line only
 mkdir "$F/base" && git show "${B}:project" > "$F/base/project" \
     && chmod +x "$F/base/project"       # same name, so usage lines match
-diff <("$F/base/project" clean --help) <(./project clean --help)
+for sub in new benches status doctor update clean; do
+    diff <("$F/base/project" "$sub" --help) <(./project "$sub" --help) \
+        || echo "DIFFERS: $sub"                       # expect no output
+done
 diff <("$F/base/project" --help) <(./project --help)
 # expect only the subcommand list's new name and the overview's help line
 ```
@@ -67,9 +71,12 @@ and a held one (fake Gits); a reflog read and a status probe cut by the
 deadline through `tests/launch_project.py --timing=...` (the
 deadline-stopped marker); a bare repository. Commands: `clean ROOT --json`,
 `clean ROOT --all-safe --json`, `clean ROOT --all-safe --apply --yes
---json`. Compared: exit statuses, `probes` and `operations`, each document
-with every `observed_at` masked, and the wrapper's logs with process IDs
-and times masked. Every comparison is identical, or the slice stops.
+--json`, and the same three without `--json`. Compared: exit statuses,
+`probes` and `operations`, each document with every `observed_at` masked,
+and the wrapper's logs with process IDs and times masked; for the three
+human runs, standard output and standard error byte for byte (the human
+report prints no clock). Every comparison is identical, or the slice
+stops.
 
 ## The Git 2.36 floor run
 

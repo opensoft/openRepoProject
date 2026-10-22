@@ -22,7 +22,9 @@ plan, and isolate what only Brett Heap can still decide:
 - R18: the test strategy (decision 4);
 - R19: the threat model (PN-15);
 - R20: the held items, each OPEN for Brett Heap with the design of each
-  answer (decision 2).
+  answer (decision 2);
+- Revision 2: where each finding of lane openRepoProject-3's W96 read is
+  taken.
 
 Each entry gives a Decision, its Rationale and the Alternatives considered.
 Citations, as [plan.md](plan.md) "Citations" defines them: `project:N` is
@@ -34,16 +36,18 @@ line N of feature 004's `project` at `0a82a62` (branch
 `specs/project-command/spec.md`, `specs/project-clean/spec.md` and
 `design.md` at PR #19's `20084cd`; POD, PRSD, CMD, CLN and DI are as
 [spec.md](spec.md) defines them. Revision 1 moved every cite from
-`4b4c36b` and `ccc52b9` (R1). Nothing here was run against a repository:
-the plan step ran no `project` and no owner tool (R18).
+`4b4c36b` and `ccc52b9` (R1); revision 2 moved none. Nothing here was run
+against a repository: the plan step ran no `project` and no owner tool
+(R18).
 
 ## R1. Authority, pins and re-pins
 
-- **Finding**: C-56 (Q2 A) and A1's task 1.7 have the plan start only after
-  feature 004 merges into `main`, on Brett Heap's word given after that
-  merge. Feature 004 has not merged: PR #33 is a draft, its branch at
-  `0a82a62`. Brett Heap said, at 2026-10-22T19:46:57Z, "lane 4 plans 005
-  now".
+- **Finding**: C-56 (Q2 A) and A1's task 1.7 set the plan after feature 004
+  merges into `main`, on Brett Heap's word given after that merge; spec 005 at
+  `7af798a` (its commit 3ae) now records in C-56 and its Status that his word
+  below moved that order for the plan step. Feature 004 has not merged: PR #33
+  is a draft, its branch at `0a82a62`. Brett Heap said, at
+  2026-10-22T19:46:57Z, "lane 4 plans 005 now".
 - **Decision**: that word moves C-56's order for this plan step only, as his
   "lane 4 specifies 005 now" moved change 2's order for the specify step
   (C-21). It authorizes this plan and nothing after it: no `tasks.md`, no
@@ -143,7 +147,8 @@ the plan step ran no `project` and no owner tool (R18).
     (`:1054`), `PROTOCOL_PINS` (`:1058-1063`), `STATUS_PINS`
     (`:1070-1071`), `GIT_KINDS` (`:1076-1089`; kinds `probe` and `status`
     only), `git_env` (`:1092`), `git_argv` (`:1105`),
-    `relative_config_paths` (`:963`), `config_path_message` (`:1003`);
+    `relative_config_paths` (`:963`), `config_path_message` (`:1003`),
+    `home_directory` (`:981`), `expand_user` (`:992`);
   - runner: `ChildHandle` (`:1131-1265`), `LIVE_PROBES` (`:1124`),
     `kill_live_probes` (`:1268-1287`), `Interrupted` and `Terminated`
     (`:1296-1314`), `Invocation` (`:1323-1438`, one branch added),
@@ -165,7 +170,9 @@ the plan step ran no `project` and no owner tool (R18).
     `registration_verdict` (`:2909`), `verify_registration` with
     `fs=_direct` (`:2946`), `status_warned` (`:2980`),
     `WORK_TREE_PROBE` (`:3019`), `shared_paths` (`:3182`),
-    `shared_identities` (`:3192`) and `row_evidence` (`:3224`);
+    `shared_identities` (`:3192`), `row_evidence` (`:3224`) and
+    `resolve_merge_target` (`:2503-2543`), change 1's resolver, called as
+    below;
   - guard: `observed_at` (`:3536`);
   - dispatcher: `divert_stream` (`:3719`), `write_failed` (`:3743`) and
     `advise` (`:3818`);
@@ -183,9 +190,14 @@ the plan step ran no `project` and no owner tool (R18).
     leaves to this feature, keeping its `feed_stderr` and `tick` hooks; the
     one-wide loop stays in `run_bounded` between them;
   - `parser()` (`:7788`) gains the `overview` subparser and `main()`
-    (`:7843`) one dispatch line; every exception of an overview run is
-    mapped inside its own entry point (R15), so `main()`'s handlers keep
-    their behaviour for every other subcommand.
+    (`:7843`) one dispatch line, placed before its fall-through `return
+    inspect_project(args)` (`:7861`). Every `Exception` of an overview run
+    is mapped inside its own entry point (R15), so `main()`'s `(Refused,
+    OSError)` handler keeps its behaviour for every other subcommand; the
+    `BaseException`s, `Interrupted` and `Terminated` (`:7870-7873`) and
+    `KeyboardInterrupt` (`:7874-7876`), reach `main()`'s existing
+    handlers, which print `Cancelled.` and return 128 plus the signal, as
+    they do for `clean`.
 
   **Lane openRepoProject-2's five conditions.** Lane 2 owns feature 004 and
   agrees in principle to these three changes as refactors that keep feature
@@ -197,17 +209,19 @@ the plan step ran no `project` and no owner tool (R18).
     feature 004's test files (`tests/test_clean_*.py`,
     `tests/test_status_doctor_update.py`, `tests/test_project.py`,
     `tests/clean_support.py`, `tests/launch_project.py`) against the base.
-  - **(b)** the `run_bounded` split keeps every probe count, every
-    per-probe budget and deadline figure, and the cut semantics (lane 2's
-    R-80 P-2; the deadline-stopped marker, `deadline_stopped`, `:4316`)
-    byte-identical in `clean`'s output. Check: a side-by-side run of the
-    base `project` and the split one over `clean`'s fixtures, each fixture
-    built twice from one script, comparing exit statuses, `probes` and
-    `operations`, the documents with each `observed_at` masked, and the
-    counting wrapper's child logs (argument vectors, directories, order);
-    the runs include deadline cuts under the launcher's shortened table,
-    with a fake Git holding a chosen child so that the cut falls on the
-    same child in both. It is a hand run, recorded in the change's pull
+  - **(b)** the `run_bounded` split keeps `clean`'s output, JSON and
+    human, byte-identical: every probe count, every per-probe budget and
+    deadline figure, and the cut semantics (lane 2's R-80 P-2; the
+    deadline-stopped marker, `deadline_stopped`, `:4316`). Check: a
+    side-by-side run of the base `project` and the split one over `clean`'s
+    fixtures, each fixture built twice from one script, comparing exit
+    statuses, `probes` and `operations`, the documents with each
+    `observed_at` masked, and the counting wrapper's child logs (argument
+    vectors, directories, order); each command also runs without `--json`,
+    its standard output and standard error compared byte for byte; the
+    runs include deadline cuts under the launcher's shortened table, with
+    a fake Git holding a chosen child so that the cut falls on the same
+    child in both. It is a hand run, recorded in the change's pull
     request, not a CI test, since CI's checkout holds no base `project`
     ([quickstart.md](quickstart.md)).
   - **(c)** the `Invocation` branch leaves `clean`'s 50 s work deadline and
@@ -218,9 +232,11 @@ the plan step ran no `project` and no owner tool (R18).
     real table.
   - **(d)** `parser()` and `main()` add `overview` only; `clean`'s
     arguments, help text, refusals and exit codes are unchanged. Check:
-    `project clean --help` byte-identical side by side, `project --help`
-    differing only by the overview's name in the subcommand list and its
-    help line, and feature 004's argument and refusal tests unchanged.
+    `project SUB --help` byte-identical side by side for every other
+    subcommand (`new`, `benches`, `status`, `doctor`, `update`, `clean`),
+    `project --help` differing only by the overview's name in the
+    subcommand list and its help line, and feature 004's argument and
+    refusal tests unchanged.
   - **(e)** the changes land on `main` after PR #33 (R2's base). If the
     split changes anything PR #19's text describes of the driver or of
     bounded work (its design D1 and D2, `run_bounded`'s contract at `#19
@@ -243,17 +259,32 @@ the plan step ran no `project` and no owner tool (R18).
   `worktree_config` (`:3022`), `effective_work_tree` (`:3039`),
   `inspect_repository` (`:3070`), `_read_row`, `_identity_unchanged`,
   `_read_status` and `worktree_rows` (`:3306-3512`), `read_reflog`
-  (`:5114`) and `declared_tracking_branch` (`:2426`): each blocks its
-  caller until one child or call ends, or reads as R9 says the overview may
-  not, while the overview's one loop drives four children and many tasks at
-  once (FR-019). The overview calls the same deciders from its own
-  generators instead, in the same order. `resolve_merge_target` (`:2503`)
-  is not called: it refuses on no target and reads its declared name from
-  `declared_tracking_branch`; the overview applies the same order (FR-024)
-  in a small resolver of its own over the keep-filter's records, and
-  [R]'s order is tested against `project clean` (R18). `discover()`
+  (`:5114`), `declared_tracking_branch` (`:2426`) and `projects_dirs`
+  (`:114-122`): each blocks its caller until one child or call ends, or
+  reads as R9 says the overview may not, while the overview's one loop
+  drives four children and many tasks at once (FR-019); `projects_dirs`
+  resolves `PROJECTS_DIR` on the calling thread (`found.resolve()`,
+  `:120`), outside the root task (R10). The overview calls the same
+  deciders from its own generators instead, in the same order. `discover()`
   (`:491`), `repo_state()`, the lookup by name and the recursive project
   snapshot are never called (FR-003).
+- **The merge target, by change 1's resolver** (FR-024, FR-025; A1 design
+  D3 and its Non-Goal at design.md:73-74, "A second classifier, resolution
+  order or path escaper: the overview calls change 1's"):
+  `resolve_merge_target(refs, declared)` is pure over the records and a
+  name passed in, and its caller reads that name (`:3167-3169`). The
+  overview calls it on the keep-filter's records, which hold every record
+  it reads (the local heads and `refs/remotes/origin/HEAD`, `:2517-2529`),
+  with `declared` the manifest's `tracking_branch` as a string, or None
+  for a manifest shown absent or read with none. FR-025's other branches
+  are decided before the call: a failed, refused, timed-out or cut
+  manifest read, or a failed ref listing, makes no call, `merge_target`
+  null and the row's error recorded. The call's `Refused` with code
+  `no-merge-target` becomes the `no-merge-target` finding, `merge_target`
+  null and no ladder; a non-empty `notes` becomes the
+  `merge-target-conflict` finding, whose message is the contract's row,
+  the two names escaped for the output's mode (FR-038). `{name, source,
+  sha}` is the call's result less `notes`.
 - **FR-040's ban kept**: the overview starts only `probe` and `status`
   handles, every one read-only with `GIT_OPTIONAL_LOCKS=0`, the 31-name
   scrub, `TRACE2_OFF` and the seven protocol pins (`GIT_KINDS`, `:1076`);
@@ -264,8 +295,9 @@ the plan step ran no `project` and no owner tool (R18).
   (R18).
 - **Rationale**: one evidence model is the change's point ([E]); the
   deciders were split out of feature 004's readers for exactly this caller
-  (its R-54 X-1; `shared_identities`, `:3192-3209`, names "another driver
-  (feature 005's overview)"). Reusing the deciders keeps the ladder's
+  (its R-54 X-1; the evidence region's comment at `:2552-2558` names
+  "another driver (feature 005's overview)", which "can feed it values it
+  read itself"). Reusing the deciders keeps the ladder's
   classification equal to `project clean`'s (FR-026), while new readers are
   needed only where the reading itself must not block.
 - **Alternatives considered**: calling `inspect_repository()` and
@@ -300,13 +332,22 @@ the plan step ran no `project` and no owner tool (R18).
 - **Rationale**: A1's design D1 fixes this shape; feature 004's handle
   already never blocks on termination (its R-30), so four handles share one
   loop with no new process code.
-- **One departure from D1's wording**: D1 names "one self-pipe" that the
-  workers and the signal handlers write to. `signal_scope` keeps its pipe's
-  write end private (`:1478-1541`), so the plan registers two read ends on
-  the one selector, the scope's and the loop's task pipe. The behaviour D1
-  asks for, any signal or finished task waking the loop at once, holds;
-  exposing the scope's write end would change feature 004's signal code for
-  no gain. This is an implementation choice within D1, not a spec change.
+- **One departure from D1's wording: the self-pipe is two read ends.** A1
+  names one self-pipe that the workers and the signal handlers write to:
+  design D1 (`A1 design.md:86`, `:104`), D2 (`:155`), D8 (`:470`) and N1's
+  design impact (A1 `clarifications.md:39`). In this plan that self-pipe
+  is two read ends on the one selector: `signal_scope`'s wakeup pipe,
+  which the handlers write to (`signal_wakeup()`, `:1624-1627`), and the
+  loop's own task pipe, which the workers write to (R7). `signal_scope`
+  keeps its pipe's write end private (`:1478-1541`), so the handlers cannot
+  write to the task pipe without a change to feature 004's signal code.
+  The behaviour D1 asks for, any signal or finished task waking the loop
+  at once, holds; no spec line changes. Neither the packet nor spec 005
+  names a pipe, so a reader of A1 finds this choice only here; the record
+  line for spec 005's Dependencies or the A1 draft's lane-findings group
+  (text only, the lead's call): "D1's one self-pipe is realized as two
+  read ends on one selector, `signal_scope`'s wakeup pipe and the loop's
+  task pipe; behaviour unchanged (plan R4)."
 - **Alternatives considered**: threads per repository and `asyncio`
   (rejected by D1); polling the workers on the tick alone, rejected because
   a 0.1 s tick would add latency to every one of up to 2,465 tasks (R7).
@@ -339,13 +380,19 @@ the plan step ran no `project` and no owner tool (R18).
   generator ends.
 - **The manifest's place**: FR-021 lists the manifest read before the
   repository's probes, and A1 design D9 needs it before the ref listing,
-  whose keep-filter takes its `tracking_branch`. Where the candidate is
-  the main worktree itself (its common directory is its own `.git`
-  directory), the manifest is read right after the identity probe; where
-  `repository.root` comes from the registry (a linked worktree reached the
-  repository first, or D3's layouts), it is read as soon as the registry
-  names the root, and always before the ref listing. Row errors keep that
-  step order.
+  whose keep-filter takes its `tracking_branch`. The plan reads it at
+  `repository.root` once that is named (after the identity probe where the
+  candidate is the main worktree, else after the registry listing and
+  design D3's steps), always before the ref listing (design D9), or at the
+  candidate for a row without Git; row errors keep that step order. In D3
+  item 3's layout, a first registry record equal to `common_dir` whose
+  checkout no candidate has yet named, a later candidate may still name it
+  (D3's third wait, `A1 design.md:196-201`), so that repository's manifest
+  read, ref listing and merged set wait with its second phase until every
+  candidate's identity probe has completed or failed: the root is then
+  final, and the manifest is read there, or at the row's `path` while the
+  root stays null. So the manifest, the merge target and the JSON never
+  depend on completion order in that layout either (FR-019).
 - **Rationale**: generators give D1's continuations with no thread per
   candidate and keep each candidate's row errors in its own serial step
   order, which is FR-037's order for row errors.
@@ -398,7 +445,9 @@ the plan step ran no `project` and no owner tool (R18).
     registration reads (`verify_registration(..., fs=_direct)`), the
     `commondir` read included; the missing-main `lstat`, and D3's `.git`
     reads with the realpath of `core.worktree`, take the same shape;
-  - one per re-verification (the same reads again, R17);
+  - one per re-verification that FR-007 makes immediately before a status
+    probe, enclosing the same reads again (lane openRepoProject-2's R-101
+    (j); R17);
   - one per linked row whose work-tree probe ran: the strict realpath of
     the toplevel it printed, compared with the row's;
   - one per reflog read (at most 64 KiB, `reflog_path`, `:5034`);
@@ -434,8 +483,11 @@ the plan step ran no `project` and no owner tool (R18).
   (A1 design D9); a `refs/heads/` record that arrives after a
   `refs/remotes/` record breaks that order, since an upstream it names may
   already be dropped, and is a `ParseError` (`failed`, `probe-failed` with
-  DETAIL `unparseable output`), never a silent drop. `RefParser` itself,
-  used by feature 004, is unchanged.
+  DETAIL `unparseable output`), never a silent drop. When the merge
+  target comes from `origin/HEAD`, its remote copy is the symref's own
+  target, listed by construction (A1 design D9, `design.md:526-528`), so
+  that flag needs no record of its own. `RefParser` itself, used by
+  feature 004, is unchanged.
 - **Rationale**: FR-015 bounds what the listing keeps by the heads; feature
   004's parser keeps every record and has no hook (its parsers are those of
   `96a08d4`); a subclass is the smallest change that leaves feature 004
@@ -453,25 +505,21 @@ no Git and a later ruling edits one function:
   with nothing on either stream is false with no error; any other outcome
   is true with the row error change 2's table gives (`probe-failed`, its
   DETAIL `unparseable output` for other output; `probe-timeout`;
-  `deadline-exceeded`). Feature 004's `worktree_config` (`:3022-3036`)
-  still reads every exit 1 as false at `0a82a62` (`return outcome.status !=
-  1`, `:3036`) and other output as true with no error, so the classes
-  differ only where an exit 1 that prints something hides a work-tree
-  redirect, which this reading fails closed on. Lane openRepoProject-2's
-  R-332 has feature 004 follow PR #19's D7 (`#19 design.md:482-485`), "an
-  unset value is false and any other failure counts as true", so that an
-  exit 1 that prints something counts as true there too; the fix is queued
-  for feature 004's next window, after which the value agrees and the
-  overview differs only in also recording `probe-failed` on the project
-  row (A1:369). PENDING: the A1 drafter checks whether that recorded
-  `probe-failed` has the same effect as #19's "counts as true"; if it does
-  not, the difference is a held A1 item and joins R20, and this decider
-  stays as written until Brett Heap's word. The draft's copy at sha256
-  `10890e2c0b9342c6...` (2,353 lines) reads it as no item: the work-tree
-  reads still run, so rows, classes, gates and suggestions come from the
-  same evidence as `clean`'s, and the one difference is the row error,
-  which gates nothing and makes the run incomplete (exit 1); the point
-  stays pending until the lead confirms that reading.
+  `deadline-exceeded`). A1's proposal says so of that exit 1 with a
+  warning: it "stays a failure that counts as true" (A1 `proposal.md`
+  :1370-1375). Feature 004's `worktree_config` (`:3022-3036`) still reads
+  every exit 1 as false at `0a82a62` (`return outcome.status != 1`,
+  `:3036`); lane openRepoProject-2's R-332 has it follow PR #19's D7, "an
+  unset value is false and any other failure counts as true" (`#19
+  design.md:484-485`), a fix queued for feature 004's next window. The only
+  exit 1 with a warning is a common `config` that cannot be read, where the
+  identity probe and the registry listing already fail (exit 128, measured
+  on Git 2.43.0 and 2.36.6 by lane openRepoProject-3's W96), so no class
+  differs in either reading. The one difference from #19 is the
+  `probe-failed` row error that A1's table records on the project row
+  (A1:369), ratified, which gates nothing and makes the run incomplete
+  (exit 1). The A1 drafter and W96 each found no held A1 item in it, so
+  nothing joins R20.
 - **Realpaths**: the overview's tasks use `os.path.realpath(...,
   strict=True)`, so `ENOENT` and `ENOTDIR` can be told from other errors
   as FR-007 and FR-026 need; feature 004's `_realpath` (`:2723`) is not
@@ -493,10 +541,13 @@ no Git and a later ruling edits one function:
 
 - **Decision**:
   - Roots come from `--root` (repeatable), else `PROJECTS_DIR` when set and
-    not empty, else `~/projects` and `~/Projects`, `~` expanded by feature
-    004's home rule (`projects_dirs`, `:114-122`, whose empty
-    `PROJECTS_DIR` already reads as unset). A relative root is joined to
-    the working directory.
+    not empty, else `~/projects` and `~/Projects`: the strings
+    `projects_dirs` (`:114-122`) selects, with its empty `PROJECTS_DIR`
+    read as unset, made with `expand_user` (`:992`) and `home_directory`
+    (`:981`) and canonicalised in the root task, never by `projects_dirs`
+    itself, whose `found.resolve()` (`:120`) would run a filesystem call on
+    the main thread (A1 design D8, `design.md:504-505`) and skip C-67's cut
+    path (FR-001). A relative root is joined to the working directory.
   - **An empty `--root` value (PN-13)** is an invalid invocation: the
     option's type check refuses it, so argparse prints its usage message
     on standard error, exit 2, no JSON and no Git child (FR-039, FR-042).
@@ -509,11 +560,13 @@ no Git and a later ruling edits one function:
     root's `path` records it; the candidate cap's exactness is then
     `lower-bound` (FR-017). A failure to open the root is `unreadable` with
     `root-unreadable` (FR-005).
-  - A marker check that fails other than with "no such entry" makes that
-    directory an error row (FR-005), its `os-error` OPERATION `stat`; `ENOTDIR`
-    reads as "no such entry" too, as FR-007 and FR-033 pair the two, so that a
-    file named like its directory (the holder marker's `D/<name of D>`) is no
-    error.
+  - A marker check that fails other than with `ENOENT` or `ENOTDIR` makes
+    that directory an error row (FR-005), its `os-error` OPERATION `stat`:
+    the packet's rule, "`ENOENT` and `ENOTDIR` mean 'no marker'" (DI:142),
+    so that a file named like its directory (the holder marker's `D/<name
+    of D>`) is no error. Change 2's "an error other than 'no such entry'"
+    (POD:46, A1:51) is narrower than DI:142; FR-005's wording is the
+    spec's to change (lane openRepoProject-3's W96, LOW-7).
 - **Rationale**: PN-9's two choices keep what was read (the run is already
   incomplete) and use the codes the closed set already has; FR-022 names
   `scandir` as an OPERATION for exactly such a task.
@@ -550,11 +603,16 @@ no Git and a later ruling edits one function:
   message of a gated finding is built by one pure function,
   `compose_message(own, remedy, warning=None)`: own text, `; `, remedy,
   within 200 characters, the own text shortened with `...` when both do not
-  fit (A1 design D5). The held item 10's rule (R20, O6) is a second branch
-  of that one function, reached only when `warning` is given, and the
-  function is tested by length tables alone.
+  fit (A1 design D5). The draft's two held clauses are branches of that
+  one function, reached only when `warning` is given: clause 1, keep the
+  warning whole and shorten the recommendation before it (item 10 part 1,
+  R20's O6), and clause 2, where the warning and the remedy cannot both be
+  kept, leave the recommendation out and shorten the remedy, a reversal of
+  ratified D5's "remedy kept whole" that only item 8's redirect remedy
+  reaches (R20's O4). The function is tested by length tables alone, with
+  both answers of each held item.
 - **Rationale**: a held text then lands as a one-row change, and the cut
-  rule, which item 10 and item 2 both touch, sits in one testable place.
+  rule, which items 2, 8 and 10 all touch, sits in one testable place.
 
 ## R13. A finding's `observed_at` (PN-7)
 
@@ -653,12 +711,12 @@ no Git and a later ruling edits one function:
     helpers) and `tests/launch_project.py` reused unchanged. Each delta
     scenario has a test named `test_overview_<scenario>`, in human and
     `--json` form; the existing tests pass unchanged.
-  - **The 004-touching changes**: lane openRepoProject-2's conditions (a)
-    to (e) of R3, checked in slice 1 before the change is read: the suite
-    with feature 004's tests unedited (a), the side-by-side run (b), a unit
-    test of `Invocation("clean")`'s figures and of `start_child()` and
-    `conclude()` in `tests/test_overview_factoring.py` (c), the help diffs
-    (d), and the base and the spec check of (e)
+  - **The 004-touching changes**: lane openRepoProject-2's conditions (a) to
+    (e) of R3, checked in slice 1 before the change is read: the suite with
+    feature 004's tests unedited (a), the side-by-side run, JSON and human (b),
+    a unit test of `Invocation("clean")`'s figures and of `start_child()` and
+    `conclude()` in `tests/test_overview_factoring.py` (c), the help diffs of
+    every subcommand (d), and the base and the spec check of (e)
     ([quickstart.md](quickstart.md)).
   - **Isolation**: every test runs with a scratch `HOME`, `PROJECTS_DIR`
     set or unset explicitly, `WORKBENCHES_ROOT` at an empty scratch
@@ -737,93 +795,172 @@ no Git and a later ruling edits one function:
 
 ## R20. The held items: OPEN for Brett Heap (brief decision 2)
 
-Each is isolated to one table row, one decider or one count term, so that
-either answer lands without touching the rest. "As ratified" is what the
-implementation builds until his word. The lane's A1 re-alignment draft
-(read at sha256 `00205d73ba38...`, 2,295 lines, its items 1 to 10) is
-the source of each option; items 1, 3, 4 and 5 there change text only and
-have no design impact.
+Each is isolated to one table row, one decider, one count term or one
+branch of the composer, so that either answer lands without touching the
+rest. "As ratified" is what the implementation builds until his word. The
+lane's A1 re-alignment draft is the source of each option: items 1 to 7
+and 9 as read at sha256 `00205d73ba38...` (2,295 lines), items 8 and 10 as
+read at `8ce4e9fb60e83cc2...` (2,422 lines), where item 8 gains "D5 beside
+this item's remedy" and item 10 keeps D5's first clause only. Items 1, 3, 4
+and 5 there change text only and have no design impact. Each question below
+is lane openRepoProject-3's W96 wording, with its section 7 correction.
 
-- **O1. Item 2, the F-7 clause** (FR-035). (A) the `unstarted-branch` and
-  `reflog-unavailable` remedies take PR #19's " (--force if it holds a
-  submodule)", the draft's lean; (B) they keep A1's short texts (as ratified).
-  Design: two rows of the remedy table. Under (A) the composer cuts the
-  `merged-removable` own text to 59 of 67 characters beside `unstarted-branch`,
-  and the `reflog-unavailable` message is exactly 200 characters; the length
-  tests carry both tables.
-- **O2. Item 6, O-1 at gate 7** (FR-034). (A) a reflog read cut by the deadline
-  withholds with `deadline-exceeded` and its remedy, as PCL's round (h) has
-  `project clean` end its plan, the draft's and lane openRepoProject-2's lean;
-  (B) `inspection-incomplete` for both cuts (as ratified). Design: one branch
-  in the repository gate, keyed on the cut's limit, which the filesystem task
-  already records.
+- **O1. Item 2, the reflog remedies' submodule clause** (FR-035). "Should
+  the overview's two reflog remedies end with ' (--force if it holds a
+  submodule)', as `project clean`'s next steps now do (#19 round (g))? (A)
+  yes; the merged worktree's own text is then cut to 59 of its 67
+  characters beside `unstarted-branch`. (B) no; keep A1's ratified texts."
+  The draft leans (A); as ratified, (B). Design: two rows of the remedy
+  table; under (A) the `reflog-unavailable` message is exactly 200
+  characters. The length tests carry both answers.
+- **O2. Item 6, the deadline's cut at the reflog gate** (FR-034). "You ruled
+  this for `project clean` on 2026-10-22, 'O-1: deadline-exceeded' (R-263).
+  Should the overview's suggestion gate do the same? (A) yes: a reflog read
+  the deadline cuts withholds with `deadline-exceeded`; (B) no:
+  `inspection-incomplete` for both cuts, as A1 is ratified." His ruling
+  reaches PR #19 only; the draft and lane openRepoProject-2 lean (A).
+  Design: one branch in the repository gate, keyed on the cut's limit,
+  which the filesystem task already records.
 - **O3. Item 7, the identity re-read in `estimated`** (FR-020; EC-032). Take:
-  +3 per Git candidate whose identity probe prints other than two lines; leave
-  (as ratified): no term. Design: one term in R14's sum; `performed` counts the
-  re-reads either way, and A1 design D3's "adds no child" is reworded either
-  way (text only).
-- **O4. Item 8, the redirected main worktree** (FR-006; R-271). (a)
-  `repository.root` null and every clean suggestion withheld with
-  `target-not-repository-root` and a new remedy row, "core.worktree or
-  core.bare redirects the main worktree; unset both in the repository's config,
-  or in the main worktree's config.worktree, then run again", detected by
-  comparing the main worktree's toplevel with the first registry record's
-  canonical path, which adds one counted `rev-parse` child where the main
-  worktree is no Git candidate (+1 in `estimated` per such repository), the
-  draft's recommendation; (b) an `unsupported-layout` error finding instead;
-  sub-items (c), a bare entry whose path plus `/.git` is `common_dir`, and (d),
-  a main-worktree probe that exits nonzero counting as a redirect. As ratified:
-  the toplevel or checkout is the root and a suggestion is given that `project
-  clean` refuses. Design: one detector, off as ratified; one remedy row; one
-  estimate term; under (a) the composer's second clause (O6) is the only place
-  the redirect remedy meets the stale warning.
+  +3 per Git candidate whose identity probe prints other than two lines;
+  leave (as ratified): no term. Design: one term in R14's sum; `performed`
+  counts the re-reads either way, and A1 design D3's "adds no child" is
+  reworded either way (text only).
+- **O4. Item 8, the redirected main worktree** (FR-006; R-271, a lead
+  ruling of lane openRepoProject-2's). "Where a main worktree's own
+  `core.worktree` or `core.bare` redirects it, `project clean` refuses the
+  checkout. Should the overview (a) give no clean suggestion, with a new
+  remedy naming the redirect (one more Git child per such repository), (b)
+  report it as an `unsupported-layout` error, or keep A1's ratified
+  behaviour, a suggestion that `project clean` will refuse? With (a) or
+  (b): should a bare entry whose path plus `/.git` is the common directory
+  (the draft's sub-item (c)), and a main-worktree probe that exits nonzero
+  (sub-item (d)), count as a redirect too? (yes / no each). With (a) or
+  (b), where the warning and the redirect remedy cannot both fit, should
+  the advice be left out and the remedy shortened?" The draft recommends
+  (a). Design: one detector, off as ratified, comparing the main
+  worktree's toplevel with the first registry record's canonical path; one
+  remedy row, "core.worktree or core.bare redirects the main worktree;
+  unset both in the repository's config, or in the main worktree's
+  config.worktree, then run again" (152 characters); +1 in `estimated` per
+  such repository whose main worktree is no Git candidate; and the
+  composer's clause 2, held here: where a `stale-worktree` message carries
+  O6's warning (78 characters with its period) beside this remedy, the two
+  cannot both be kept within 200 characters (78 + 2 + 152), which happens
+  under (a) through its new row and under (b) through sub-item (c)'s row,
+  which carries the same remedy. Clause 2 leaves the recommendation out and
+  shortens the remedy with `...`, reversing ratified D5's "remedy kept
+  whole" for that one case; without it, D5 prints "Review and prune stale
+  worktree metadata ma..." and the remedy whole, the prune advice with no
+  warning. Clause 2 fires only when O4 takes (a) or (b) and O6 takes (A).
 - **O5. Item 9, the work-tree probe's output** (FR-007; LQ-11). As
   ratified: output that is not exactly one line disagrees; PR #19's round
   (j): the output less its final line feed is one path. Design: one
   decider `work_tree_output()`; a linked worktree whose path holds a line
   feed, in a repository whose extension is true, is the test either way.
-- **O6. Item 10 part 1, the stale warning**. While any worktree row of the same
-  repository has `present: null`, the `stale-worktree` message is [L]'s text
-  with "; a row's path could not be read, so do not run git worktree prune
-  until it can" before its final period (T6, 129 characters), and the composer
-  keeps that warning whole, shortening the recommendation instead, and, where
-  the warning and the remedy cannot both fit (only beside O4 (a)'s remedy),
-  leaves the recommendation out and shortens the remedy. As ratified: [L]'s
-  single text, D5's one cut rule; the draft recommends parts 1 and 2. Design:
-  one message-table condition and the composer's `warning` branch; with D5's
-  rule alone, beside the report-cap remedy (75 characters at 260 rows) the
-  message would be 206 characters and the cut would fall inside T6's warning,
-  which the length tests pin. PR #19's T6 fires on any row of its plan or
-  listing (`#19 design.md:1337-1350`); the overview, which has neither, takes
-  the draft's own trigger, any worktree row of the same repository with
-  `present: null`, and `compose_message` (R12) holds the whole cut rule, so it
-  is tested by itself.
-- **O7. Item 10 part 2, the `main-worktree-missing` remedy**. Under the
-  same test: "restore or prune the main worktree by hand; a row's path could
-  not be read, so do not run git worktree prune until it can" (121
-  characters). As ratified: "restore or prune the main worktree by
-  hand". Design: one message-table row; it carries no gate, so no cut.
-- **O8. T7's locked form**. Whether a locked stale row's message takes feature
-  004's "Review, unlock it, then prune stale worktree metadata manually." (lane
-  openRepoProject-3's W52 F-10; `TEXT`, `:865`), with T7's warning (`:876-878`
-  at `0a82a62`, where feature 004 now builds T6 and T7); as ratified, A1
-  carries [L]'s one stale text for every stale row, and the overview's test for
-  the warning is its own (O6). No text is drafted. Design: one message-table
-  row keyed on `locked`.
+- **O6. Item 10 part 1, the stale warning**. "Should the overview's stale
+  message carry the warning while a row's path cannot be read, keeping the
+  warning whole and shortening the advice to fit 200 characters (A), or
+  keep A1's one stale text (B)?" Held for his word for this change: his
+  "R-320: yes" ruled T6 for PR #19 only, and it does not reach A1 by
+  reference, since #19's ladder is a function of the row's evidence alone
+  (pcl:164) while T6 depends on other rows, so A1's reference to the
+  ladder still carries its one stale text (the draft's item 10, lane
+  openRepoProject-3's W86 NM3-1). The draft recommends (A). Design: one
+  message-table condition, the overview's own trigger, any worktree row of
+  the same repository with `present: null` (#19's T6 fires on any row of
+  its plan or listing, `#19 design.md:1337-1350`, and the overview has
+  neither), and the composer's clause 1: the warning kept whole and the
+  recommendation before it shortened, which keeps D5's "remedy kept
+  whole". T6 is 129 characters; with D5's rule alone, beside the
+  report-cap remedy (75 characters at 260 rows), the message would be 206
+  characters and the cut would fall inside the warning, while under clause
+  1 it is 200, "Review and prune stale worktree metadata...; a row's path
+  could not be read, so do not run git worktree prune until it can.; 260
+  rows exceed the report's row cap of 256; the report would be
+  incomplete". The beside-the-redirect case is O4's clause 2.
+- **O7. Item 10 part 2, the `main-worktree-missing` remedy**. Held for his
+  word for this change, as part 1 is. Under the same test: "restore or
+  prune the main worktree by hand; a row's path could not be read, so do
+  not run git worktree prune until it can" (121 characters). As ratified:
+  "restore or prune the main worktree by hand". Design: one message-table
+  row; it carries no gate, so no cut.
+- **O8. T7's locked form**. "A locked stale worktree: should the
+  overview's message be (A) `project clean`'s locked text, 'Review, unlock
+  it, then prune stale worktree metadata manually.', with the same
+  warning, or (B) the one stale text for every stale row, as A1 is
+  ratified?" The text is feature 004's (lane openRepoProject-3's W52 F-10;
+  `TEXT`, `:865`), with T7's warning at `:876-878`. Design: one
+  message-table row keyed on `locked`.
 - **O9. M1, parity when the working directory's realpath fails** (FR-026;
-  C-61). The overview makes only `merged-removable` and `merged-current`
-  rows `inspection-error`; feature 004 makes every present row so. Design:
-  none in the overview, whose rule is ratified; the parity tests leave the
-  case out until he rules (R18).
-- **O10. LQ-15's extension** (FR-043; EC-036). If he strikes the test of
-  `GIT_CONFIG_GLOBAL` and `GIT_CONFIG_SYSTEM`, feature 004's
-  `CONFIG_PATH_EXTENSION` (`:960`) loses them and the overview follows,
-  since it calls `relative_config_paths` (`:963`); should
-  `relative-config-path` itself be struck, the code falls back to
-  `refused`, exit 2, one row of the contract's exit-2 table.
+  C-61). "When the working directory's realpath cannot be read, the
+  overview marks only merged rows `inspection-error`, but `project clean`
+  marks every present row so. Should (A) the overview keep its ratified
+  rule and the parity tests leave this case out, (B) feature 004 follow
+  the overview, or (C) the overview follow feature 004 (an amendment of
+  change 2)?" Design: (A) none, the parity tests naming the case (R18);
+  (B) none in the overview, and the case returns to the parity tests; (C)
+  one branch of the classification step, every present row
+  `inspection-error`.
+- **O10. LQ-15's extension** (FR-043; EC-036). "You ratified
+  `relative-config-path` with exit 2 in 'ratify 34'. One point stays open
+  with #19: lane 2's extension of the test to `GIT_CONFIG_GLOBAL` and
+  `GIT_CONFIG_SYSTEM`. Keep it (A), or strike it (B), in which case the
+  overview drops those two names with `project clean`?" The code and its
+  exit are ratified; only the two names are open. Design: none in the
+  overview, which calls `relative_config_paths` (`:963`); under (B)
+  feature 004's `CONFIG_PATH_EXTENSION` (`:960`) loses them.
 - **Recorded, no design impact**: F-1's (b) beside an unread row, open in
   PR #19 (`#19 design.md:2187-2192` at `20084cd`), reaches no overview text,
   since A1 mirrors none of F-1's texts; T8, clean's always-on cap warning,
   reaches no A1 site, since the overview's two `inspect-cap` remedies are
   its own and name no prune; and FR-051 applies only if he accepts feature
   004's T123 departure, else the sentence moves to a separate small change.
+
+## Revision 2: lane openRepoProject-3's W96 read
+
+W96 read this plan at `a80f10b` and, in a delta read, revision 1 at
+`aeb0bb2`. Revision 2, made from `7af798a` (spec commit 3ae), takes each
+finding, every one checked against the text it cites:
+
+- **HIGH-1**, a second merge-target resolver against A1's Non-Goal (A1
+  design.md:73-74): change 1's `resolve_merge_target` (`:2503-2543`) is
+  pure, its caller reading the manifest (`:3167-3169`), so the overview
+  calls it (R3, "The merge target, by change 1's resolver"; the data
+  model's `merge_target`; the contract's two findings; traceability's
+  FR-024 and FR-025; plan.md's slice 4 and Post-design). No departure is
+  left to declare.
+- **MEDIUM-1**, the plan word where the order is stated: the spec's text,
+  which commit 3ae records in C-56 and its Status; R1's finding and
+  plan.md's Authority say so.
+- **LOW-1**: R4 names the five places A1 says one self-pipe and gives the
+  record line for the spec or the A1 draft.
+- **LOW-2**: R5 picks one for D3 item 3's unnamed-gitfile root: the
+  manifest read, ref listing and merged set wait with phase 2.
+- **LOW-3**: R8 and the data model's `remote_copy` carry D9's origin/HEAD
+  sentence.
+- **LOW-4**: R10 canonicalises the home rule's strings in the root task,
+  and R3 lists `projects_dirs` as not reused.
+- **LOW-5 and LOW-7**: the data model's marker line and R10 cite DI:142
+  for `ENOTDIR`; FR-005's wording is the spec's to change.
+- **LOW-6**: R9's extension read is rewritten, with no held item; the
+  PENDING mark goes from R9 and from plan.md's Risks.
+- **LOW-8 and LOW-9**: R7's re-verification task and R5's manifest place
+  take W96's words for FR-013 and FR-021, which are the spec's to change.
+- **LOW-10**: O2 quotes R-263, "O-1: deadline-exceeded".
+- **LOW-11**: traceability.md gains "Slices", mapping regions and
+  scenarios to plan.md's slices.
+- **LOW-12**: R3 cites `:2552-2558` for "another driver".
+- **LOW-13**: plan.md's Risks name the agent-context markers rightly.
+- **GAP-3b with D-LOW-1, and D-LOW-2**: gate (b) compares `clean`'s
+  output, JSON and human, standard output and standard error byte for
+  byte, and gate (d) diffs every subcommand's help (R3, plan.md's Gates,
+  quickstart.md, traceability.md). **GAP-3c and GAP-3e** were fixed in
+  revision 1.
+- **Section 4's rewordings**: O1, O2, O4 and O6 to O10 take them, O6 in
+  section 7's corrected form (R20). One departure, in wording only: O4's
+  ratified option carries no "(c)" label, since (c) names the draft's
+  sub-item in the same question.
+- **Section 7's currency** (the draft at `8ce4e9fb`): clause 2 moves to
+  O4 with its (b) path, through sub-item (c)'s row, and O6 keeps clause 1
+  (R12, R20, the contract's "Composer").

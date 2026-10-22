@@ -102,9 +102,9 @@ No other option, variable or file changes a limit or a time (FR-047).
 | any other exception there | error object, `internal-error` | `REFUSED:` |
 | failed write to standard output | `line.write-failed` on stderr | the same |
 
-The error object is exactly `{"error": MESSAGE, "code": CODE}`. HELD (O10):
-should Brett Heap strike `relative-config-path`, its row's code is
-`refused`, exit 2.
+The error object is exactly `{"error": MESSAGE, "code": CODE}`.
+`relative-config-path` with exit 2 is ratified ("ratify 34"); only the two
+names of LQ-15's extension stay open with PR #19 (O10).
 
 ## JSON (FR-036 to FR-039)
 
@@ -264,11 +264,16 @@ own entries.
 finding whose suggestion a gate withheld or limited: own text, `; `,
 remedy, at most 200 characters; when both do not fit, the own text is cut
 and ends `...`, the remedy whole. Every other finding's message is its own
-text alone. HELD (O6): with `warning` given (a `stale-worktree` message
-that carries T6's warning), the warning is kept whole and the
-recommendation before it is cut instead; where the warning and the remedy
-cannot both fit, the recommendation is left out and the remedy cut with
-`...`.
+text alone. Two held clauses apply only with `warning` given (a
+`stale-worktree` message that carries the warning of O6):
+
+- clause 1, HELD (O6): the warning is kept whole and the recommendation
+  before it is cut instead; D5's "remedy kept whole" stands;
+- clause 2, HELD (O4, with O6): where the warning and the remedy cannot
+  both fit, which only the redirect remedy reaches (under O4 (a) through
+  its new row, and under O4 (b) through sub-item (c)'s row), the
+  recommendation is left out and the remedy cut with `...`, reversing
+  D5's "remedy kept whole" for that one case.
 
 ### Row and scan errors (FR-022; A1:392-403)
 
@@ -358,6 +363,10 @@ The class's recommendation, verbatim:
 
 - `finding.unsupported-layout.submodule`: "submodule checkout, which
   project clean refuses; review it yourself"
+- `finding.unsupported-layout.redirect`, HELD (O4 (b)): "core.worktree or
+  core.bare redirects the main worktree; unset both in the repository's
+  config, or in the main worktree's config.worktree, then run again", no
+  suggestion
 - `finding.unsupported-layout.gitfile`: "The checkout of this git directory
   cannot be named; set core.worktree or move the checkout"
 - `finding.main-worktree-missing`: "The main worktree is missing; restore
@@ -379,10 +388,12 @@ The class's recommendation, verbatim:
   common directory is not valid UTF-8, so no clean command can name it;
   rename the path to valid UTF-8."
 - `finding.no-merge-target`: "Cannot determine the default branch from the
-  manifest, origin/HEAD, main, or master." (feature 004's, `project:883`)
+  manifest, origin/HEAD, main, or master." (feature 004's, `project:883`),
+  where change 1's `resolve_merge_target` refuses `no-merge-target`
 - `finding.merge-target-conflict`: "The manifest names NAME and origin/HEAD
   names OTHER; NAME is the merge target." (feature 004's,
-  `project:842-843`)
+  `project:842-843`), where that resolver's `notes` holds the conflict;
+  NAME and OTHER are escaped for the output's mode (FR-038)
 
 ### Remedies (FR-035; A1:620-631)
 
@@ -391,9 +402,11 @@ from `limits` when the message is built.
 
 - `remedy.target-not-repository-root`: "run project clean from the main
   worktree root"
-  - HELD (O4 (a)), for a redirected main worktree: "core.worktree or
-    core.bare redirects the main worktree; unset both in the repository's
-    config, or in the main worktree's config.worktree, then run again"
+  - HELD (O4 (a)), for a redirected main worktree, and (O4's sub-item
+    (c), under (a) or (b)) for a bare entry whose path joined with `/.git`
+    is `common_dir`: "core.worktree or core.bare redirects the main
+    worktree; unset both in the repository's config, or in the main
+    worktree's config.worktree, then run again"
 - `remedy.unsupported-path-bytes`: "rename the path to valid UTF-8"
 - `remedy.inspection-incomplete`: "repair the inspection-error rows, or
   re-run for the rows left unprobed, first"
