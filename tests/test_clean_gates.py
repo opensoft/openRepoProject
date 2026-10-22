@@ -1359,7 +1359,9 @@ class GatesTests(clean_support.CleanCase):
     # (EACCES), on Git 2.43.0 and 2.36.6, and acts on the whole repository, so
     # such a row's next step (T1), and the remedy (T2, T3) and the
     # inspection-error and registration-mismatch next steps (T4, T5) of a plan
-    # that holds one, name prune only to warn against it.
+    # that holds one, name prune only to warn against it. Each warning also
+    # names `git worktree remove` and `git gc` (R-324, ruled by Brett Heap,
+    # "R-324: yes", lead R-343).
 
     def unread_worktree(self, root, branch):
         """W73's layout under the test's base: a merged linked worktree at
@@ -1434,11 +1436,11 @@ class GatesTests(clean_support.CleanCase):
         tree, _ = self.unread_worktree(root, "002-unread")
         step = TEXT["next_step_unread_row"]
         self.assertEqual(step, "inspect the row by hand; its path could not be read, so do not run git worktree "
-                               "prune until it can")
+                               "prune, git worktree remove or git gc until it can")
         self.assertEqual(TEXT["remedy_inspection_incomplete_unread"],
                          "repair or remove the inspection-error rows first: git worktree repair, or remove the row "
-                         "by hand after review; a row's path could not be read, so do not run git worktree prune "
-                         "until it can")
+                         "by hand after review; a row's path could not be read, so do not run git worktree prune, "
+                         "git worktree remove or git gc until it can")
         message = TEXT["plan_incomplete"].format(CODE="inspection-incomplete",
                                                  REMEDY=TEXT["remedy_inspection_incomplete_unread"])
         main = self.excluded_group("main-worktree", [(root, "main")])
@@ -1495,7 +1497,7 @@ class GatesTests(clean_support.CleanCase):
         self.reflog_file("001-failing", root).mkdir()  # EISDIR: gate 7's other read error
         self.assertEqual(TEXT["next_step_inspection_error_unread"],
                          "review, then git worktree repair, or remove the row by hand; a row's path could not be "
-                         "read, so do not run git worktree prune until it can")
+                         "read, so do not run git worktree prune, git worktree remove or git gc until it can")
         unread_remedy = TEXT["plan_incomplete"].format(CODE="inspection-incomplete",
                                                        REMEDY=TEXT["remedy_inspection_incomplete_unread"])
         main = self.excluded_group("main-worktree", [(root, "main")])
@@ -1574,8 +1576,8 @@ class GatesTests(clean_support.CleanCase):
         self.assertEqual(TEXT["remedy_inspection_incomplete_redirect_unread"],
                          "repair or remove the inspection-error rows first: git worktree repair, unset core.worktree "
                          "and core.bare in the repository's config or in a worktree's config.worktree, or remove the "
-                         "row by hand after review; a row's path could not be read, so do not run git worktree prune "
-                         "until it can")
+                         "row by hand after review; a row's path could not be read, so do not run git worktree prune, "
+                         "git worktree remove or git gc until it can")
 
         def message(key):
             return TEXT["plan_incomplete"].format(CODE="inspection-incomplete", REMEDY=TEXT[key])
@@ -1583,7 +1585,8 @@ class GatesTests(clean_support.CleanCase):
         self.assertEqual(TEXT["next_step_registration_mismatch_unread"],
                          "review, then git worktree repair, unset core.worktree and core.bare in the repository's "
                          "config, or in that worktree's config.worktree, or remove the row by hand; a row's path "
-                         "could not be read, so do not run git worktree prune until it can")
+                         "could not be read, so do not run git worktree prune, git worktree remove or git gc until "
+                         "it can")
         main = self.excluded_group("main-worktree", [(root, "main")])
         mismatch = self.excluded_group("registration-mismatch", [(redirected, "001-redirected")])
         groups = [TEXT["excluded_heading"].format(M=3), *main,
@@ -1622,7 +1625,9 @@ class GatesTests(clean_support.CleanCase):
     # R-321): `git worktree prune`, run for a stale entry's sake, also deletes
     # the admin directory of a worktree whose path cannot be read, on Git
     # 2.43.0 and 2.36.6, so beside such a row a stale row's recommendation
-    # warns against it (T6), a locked stale row's too (T7).
+    # warns against it (T6), a locked stale row's too (T7). Each warning also
+    # names `git worktree remove` and `git gc` (R-324, ruled by Brett Heap,
+    # "R-324: yes", lead R-343).
 
     def stale_worktree(self, root, branch, locked=False):
         """A linked worktree added at self.base/BRANCH, locked when locked is
@@ -1656,9 +1661,9 @@ class GatesTests(clean_support.CleanCase):
                                "Review, unlock it, then prune stale worktree metadata manually.")
         unread, unread_locked = (
             "Review and prune stale worktree metadata manually; a row's path could not be read, so do not run "
-            "git worktree prune until it can.",
+            "git worktree prune, git worktree remove or git gc until it can.",
             "Review, unlock it, then prune stale worktree metadata manually; a row's path could not be read, so "
-            "do not run git worktree prune until it can.")
+            "do not run git worktree prune, git worktree remove or git gc until it can.")
         self.assertEqual((TEXT["recommendation_stale_worktree_unread"], TEXT["recommendation_stale_locked_unread"]),
                          (unread, unread_locked))
         main = self.excluded_group("main-worktree", [(root, "main")])

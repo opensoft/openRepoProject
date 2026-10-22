@@ -873,7 +873,8 @@ class ResultTests(clean_support.CleanCase):
         self.assertEqual((second["stage"], second["reason"]), ("not-attempted", "batch-stopped"))
         note = TEXT["partial_removal_note_unread"].format(PATH=quoted(trees[0]))
         self.assertEqual(note, f"Probable partial removal: inspect {quoted(trees[0])} by hand; its .git could not "
-                               "be read, so do not run git worktree prune until it can.")
+                               "be read, so do not run git worktree prune, git worktree remove or git gc "
+                               "until it can.")
         lines = result.stderr.splitlines()
         self.assertEqual([line for line in lines if line.startswith("Probable partial removal:")], [note],
                          result.stderr)

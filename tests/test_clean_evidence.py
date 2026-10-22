@@ -1564,6 +1564,25 @@ class EvidenceTests(clean_support.CleanCase):
             self.git(self.base, "config", "--file", common / "config", "--unset", "extensions.worktreeConfig")
             self.assertEqual(ask(), (1, b"", b""))
             self.assertIs(read(), False)
+        with self.subTest("the common directory's config is a directory"):
+            # Lane 3's W100 LOW-B (routed here by the lead's R-344): Git cannot
+            # read a `config` that is a directory, so on 2.43.0 and 2.36.6 it
+            # prints `warning:` lines and exits 1 with nothing on standard
+            # output. That is an exit 1 that printed, not the unset key, so row
+            # 4c reads true, the safe side. The directory is made under this
+            # test's base and the file put back.
+            config, kept, before = common / "config", self.base / "config.kept", ask()
+            os.replace(config, kept)
+            os.mkdir(config)
+            try:
+                status, output, error = ask()
+                self.assertEqual((status, output), (1, b""))
+                self.assertTrue(error and all(line.startswith(b"warning: ") for line in error.splitlines()), error)
+                self.assertIs(read(), True)
+            finally:
+                os.rmdir(config)
+                os.replace(kept, config)
+            self.assertEqual(ask(), before, "the repository's config is the file again")
 
     def test_clean_a_row_4c_exit_1_that_printed_gives_each_linked_row_its_work_tree_probe(self):
         # R-332 (#19's design D7): a fake git answers row 4c's child with exit
@@ -1757,6 +1776,36 @@ class EvidenceTests(clean_support.CleanCase):
                                   [row["path"] for row in result.document["worktrees"]]),
                                  (str(checkout), "complete", [str(checkout)]))
                 self.assertEqual(self.status_dirs(records), [str(checkout)])
+        with self.subTest("the common directory's config is a directory"):
+            # Lane 3's W100 LOW-B (routed here by the lead's R-344): Git cannot
+            # read a `config` that is a directory, so on 2.43.0 and 2.36.6 it
+            # prints `warning:` lines and exits 1 with nothing on standard
+            # output. That is an exit 1 that printed, not the unset key, so the
+            # main worktree is `unreadable`. main_worktree() is called itself,
+            # with row 3's values as the literal-outcome test above builds them:
+            # a whole `clean` run stops earlier in this state, since Git exits
+            # 128 for `rev-parse` and `worktree list`, so row 4b's child is
+            # not reached. The directory is made under this test's base and
+            # the file put back.
+            config, kept, before = gitdir / "config", self.base / "config.kept", ask()
+            os.replace(config, kept)
+            os.mkdir(config)
+            try:
+                status, output, error = ask()
+                self.assertEqual((status, output), (1, b""))
+                self.assertTrue(error and all(line.startswith(b"warning: ") for line in error.splitlines()), error)
+                identity = {"common_dir": os.fsencode(gitdir), "toplevel": os.fsencode(checkout),
+                            "directory": os.fsencode(checkout)}
+                with mock.patch.dict(os.environ, self.env, clear=True), \
+                        mock.patch.object(project, "run_bounded", wraps=project.run_bounded) as spy:
+                    self.assertEqual(project.main_worktree(identity, [{"path": os.fsencode(gitdir), "bare": False}],
+                                                           project.Invocation("status")), (None, "unreadable"))
+                self.assertEqual([call.args[0][1] for call in spy.call_args_list],
+                                 [["-C", os.fsencode(checkout), *ROW_4B]], "one child, row 4b's")
+            finally:
+                os.rmdir(config)
+                os.replace(kept, config)
+            self.assertEqual(ask(), before, "the repository's config is the file again")
 
     def test_clean_evidence_a_failed_ref_listing_establishes_no_branch_evidence(self):
         # Plan review F3; pcl:121-125 ("A row whose evidence could not be
