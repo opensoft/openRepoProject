@@ -2019,8 +2019,9 @@ scenario "A linked worktree whose work tree is redirected").
 Round (i), round (h)'s open point, under the lead's R-271: a redirect of the
 main worktree, by a `core.worktree` or `core.bare` in the repository's `config`,
 or in the main worktree's `config.worktree` where `extensions.worktreeConfig` is
-true, is refused at resolution with `target-not-repository-root`, rightly, since
-no main worktree is there to clean, but feature 004's message for that code,
+true, is refused at resolution with `target-not-repository-root` where the root
+is passed by an absolute path or a bare name, rightly, since no main worktree is
+there to clean, but feature 004's message for that code,
 `Not the main worktree of a repository: PATH; pass the repository root.`, asks a
 person who passed the root to pass it. The message is feature 004's, from its
 contract, not the baseline's (`project` at `961c405` holds no such text), so
@@ -2073,7 +2074,14 @@ the rescan finds of the registry entry, while "where either is gone" keeps a
 retire verified worktrees` and `Clean records a reconcilable result for every
 removal target` state it, the scenario "A removal past the hard ceiling" gains
 an AND clause, and What Changes, Capabilities, the amendments list and design
-D9 and D18 carry it. The scenario counts stay 71, 22 and 24. The round's
+D9 and D18 carry it. Design D18 also narrows round (h)'s sentence that a
+redirect of the main worktree is refused at resolution to an absolute path or a
+bare name, and says what a relative path or no argument from the root does:
+refused the same way under `core.bare` true, where Git finds no worktree there,
+but under a `core.worktree` not refused, the plan reading the main row where
+`core.worktree` points, as round (i)'s fixtures show, exit 0, or 1 with an
+incomplete plan (lane openRepoProject-3's W70 LOW-3); the variant's unset is
+the remedy in every form. The scenario counts stay 71, 22 and 24. The round's
 commits also re-wrapped the paragraphs their edits lengthened, with no other
 change of words (What Changes; design Context, D6, D9 and D18), and `tasks.md`
 1.2 names the round.

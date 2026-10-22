@@ -1353,38 +1353,45 @@ plan is refused before any gate's exclusion, never with `target-excluded` and
 the class wording. A redirect of the main worktree itself, by a `core.worktree`
 or `core.bare` in the repository's `config` or in the main worktree's
 `config.worktree`, is refused earlier, at resolution, with
-`target-not-repository-root`, before any plan is built (round (h), with feature
-004 at `d764c26` on Git 2.43.0 and 2.36.6; lane openRepoProject-3's W64 M-1).
-That refusal names the redirect, since feature 004's plain message for the
-code, `Not the main worktree of a repository: PATH; pass the repository root.`,
-asks for the root that was passed: it reads `Not the main worktree of a
-repository: PATH; core.worktree or core.bare redirects the main worktree; unset
-both in the repository's config, or in the main worktree's config.worktree,
-then run again.` It does so only where the directory the resolution examined
-holds its own `.git`, a directory or a gitfile, whose realpath is the
-repository's common directory, and Git run there uses another work tree or
-none: another where row 3 succeeded and its toplevel is not that directory,
-which only a `core.worktree` gives, and none where row 3 failed and row 3b
-prints that `.git` as both the git directory and the common directory, and
-`true`, which only a `core.bare` true gives, each from the repository's `config`
-or the main worktree's `config.worktree`; a submodule checkout is excluded
-first. Where row 3 succeeded the decision reads only the filesystem (the `lstat`
-of the `.git`, its gitdir line and the realpaths). Every other
+`target-not-repository-root`, before any plan is built, where the root is
+passed by an absolute path or a bare name (round (h), with feature 004 at
+`d764c26` on Git 2.43.0 and 2.36.6; lane openRepoProject-3's W64 M-1). A
+relative path or no argument, run from the root, resolves as "Clean resolves
+its target Git-first" states, to the repository Git finds there with `root` set
+to its main worktree: under a `core.bare` true Git finds no worktree there, and
+the run is refused the same way, but under a `core.worktree` it is not refused
+and builds a plan whose main row Git reads where `core.worktree` points (lane
+openRepoProject-3's W70 LOW-3; round (i)'s fixtures, where such runs exit 0, or
+1 with an incomplete plan). That refusal names the redirect, since feature 004's
+plain message for the code, `Not the main worktree of a repository: PATH; pass
+the repository root.`, asks for the root that was passed: it reads `Not the main
+worktree of a repository: PATH; core.worktree or core.bare redirects the main
+worktree; unset both in the repository's config, or in the main worktree's
+config.worktree, then run again.` It does so only where the directory the
+resolution examined holds its own `.git`, a directory or a gitfile, whose
+realpath is the repository's common directory, and Git run there uses another
+work tree or none: another where row 3 succeeded and its toplevel is not that
+directory, which only a `core.worktree` gives, and none where row 3 failed and
+row 3b prints that `.git` as both the git directory and the common directory,
+and `true`, which only a `core.bare` true gives, each from the repository's
+`config` or the main worktree's `config.worktree`; a submodule checkout is
+excluded first. Where row 3 succeeded the decision reads only the filesystem
+(the `lstat` of the `.git`, its gitdir line and the realpaths). Every other
 `target-not-repository-root` refusal keeps the plain message: a subdirectory, a
 linked worktree, a linked worktree that its own `config.worktree` redirects, a
 directory outside any repository, a submodule checkout, and a `git init --bare`
-repository passed by its own directory, which holds no `.git` and which an
-unset of `core.bare` does not make a work tree. A repository made by `git init
---bare X/.git` and passed as X has the configuration of a checkout at X whose
+repository passed by its own directory, which holds no `.git` and which an unset
+of `core.bare` does not make a work tree. A repository made by `git init --bare
+X/.git` and passed as X has the configuration of a checkout at X whose
 `core.bare` is true, and nothing Git reads tells the two apart, so it takes the
 variant, which is true of it: with `core.bare` unset, X resolves. A main
 checkout whose `.git` is a file and whose `core.worktree` names that checkout
 resolves as before (D8); one whose `core.worktree` names another directory, or
 whose `core.bare` is true, takes the variant. Row 3b runs only on that refusal,
-after the resolution has decided to refuse, counted and bounded as row 3 is,
-and only where the directory holds a `.git`, so a run that resolves spawns no
-child for it, and a row 3b that fails or is cut leaves the plain message (round
-(i), with feature 004 at `7164d7f` on Git 2.43.0 and 2.36.6; the lead's R-271).
+after the resolution has decided to refuse, counted and bounded as row 3 is, and
+only where the directory holds a `.git`, so a run that resolves spawns no child
+for it, and a row 3b that fails or is cut leaves the plain message (round (i),
+with feature 004 at `7164d7f` on Git 2.43.0 and 2.36.6; the lead's R-271).
 `relative-config-path` prints one line per variable that fails
 D11's test, in the order `HOME`, `XDG_CONFIG_HOME`, `GIT_CONFIG_GLOBAL`,
 `GIT_CONFIG_SYSTEM`: `NAME is set to a path that does not begin with /; make it
