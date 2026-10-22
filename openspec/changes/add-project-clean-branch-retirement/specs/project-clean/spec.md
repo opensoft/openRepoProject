@@ -980,7 +980,8 @@ split of exit statuses at 128:
   `removed` with `branch-advanced-after-removal` and no stage ran),
   `state-changed` (the re-read found an upstream value, the manifest's
   `tracking_branch` or the merge target different from the plan, or could not
-  establish one of them), `branch-in-use` (the rescan's registry listing shows
+  establish one of them at its own budget), `branch-in-use` (the rescan's
+  registry listing shows
   a worktree holding the branch), `reflog-unmerged` (the re-proof printed a
   commit, or could not prove the reflog), `deadline-exceeded` (too little of
   the work deadline remained to start the re-read, its re-proof or the branch
