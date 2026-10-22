@@ -10,7 +10,7 @@ duplicate them, and nothing here is an implementation step.
 
 - [x] 1.1 Proposal written: `proposal.md` adopts the packet's cache-disposal
   contract (`BA:1314-1337`) under the lane's rulings L-1 to L-17 and B-1 to
-  B-59, names three departures from B-6 as first written, which B-11 accepted,
+  B-62, names three departures from B-6 as first written, which B-11 accepted,
   and one from B's list of modified requirements (CD-1 to CD-4) with the rest
   of its own decisions (CD-5 to CD-18), and puts six Open Questions before
   Brett Heap; verified by its Capabilities section accounting for every
@@ -41,8 +41,8 @@ duplicate them, and nothing here is an implementation step.
   modifies five requirements and adds one (55 scenarios: 5, 14, 11, 6, 8 and
   11), and `specs/project-clean-review-safety/spec.md` modifies three and adds
   one (32 scenarios: 6, 15, 4 and 7, B-26's among the 7, the 15 being
-  PR #19's 14 at `9267303` and one added, B-54, round B12), every scenario of
-  each modified
+  PR #19's 14 at `f0bf538` (B-54, round B13) and this change's one), every
+  scenario of each modified
   requirement's source text kept by name, in order and byte-exact except four,
   whose ignored files are now named as not Python bytecode caches:
   "Ignored-file bound", "A merged worktree has ignored local files", and,
@@ -54,10 +54,10 @@ duplicate them, and nothing here is an implementation step.
   and committed as `9f30fb9`, and B-30's scope, lane 4's own words, committed
   as `4d5855a` (2.2); `design.md` holds D1 to D14 and `clarifications.md` the
   NOTED S-4; verified by `grep -c '^#### Scenario'` on each delta, by a script
-  run after the council round and again after each round from B3 to B12
+  run after the council round and again after each round from B3 to B13
   that compares every scenario of each of the nine MODIFIED blocks with its
   source text, the two blocks written on PR #19's text against it at
-  `9267303` since round B12, and by `design.md`'s headings.
+  `f0bf538` since round B13, and by `design.md`'s headings.
 - [x] 1.5 Validation passes: `/usr/bin/openspec validate
   add-project-clean-cache-disposal --strict` reports the change valid,
   `/usr/bin/openspec validate --all --strict` passes every item, and
@@ -66,7 +66,7 @@ duplicate them, and nothing here is an implementation step.
   branch after 1.4, after the alignment fix round, after the council round
   (the last with the B-22 `project-overview` edit not yet committed), again
   after lane 4's agreement and that edit's commit, after round B3, after round
-  B4, and after each round from B5 to B12. The
+  B4, and after each round from B5 to B13. The
   INFO lines, that the archive would refuse a delta
   whose MODIFIED requirement change 1 or change 2 adds until that change is
   archived, are the expected state for blocks written on sister changes.
@@ -79,9 +79,9 @@ duplicate them, and nothing here is an implementation step.
 - [ ] 2.1 Change 1 archived: `add-project-clean-all-safe` is archived after
   feature 004 merges, with draft PR #19's amendment of change 1 landed first
   (L-16), or PR #19 closed, and the two
-  MODIFIED blocks written on PR #19's text at `9267303` (B-54, B-58; "Clean
-  bounds its Git work and reports omitted work" and "Cleanup revalidates
-  destructive actions")
+  MODIFIED blocks written on PR #19's text at `f0bf538` (B-54, B-58, B-60;
+  "Clean bounds its Git work and reports omitted work" and "Cleanup
+  revalidates destructive actions")
   re-checked against the archived text and rewritten where it differs, as every
   other block written on change 1's text is; if PR #19 closes unmerged, those
   two blocks are re-based on change 1's text at main (B-52, RD's M2); a
