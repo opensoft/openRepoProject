@@ -99,13 +99,15 @@ duplicate them, and nothing here is an implementation step.
   yes" (R-321) on the stale recommendations and the cap remedy, with F-1's (b)
   beside an unread row recorded as open (the commit titled 'Amend change 1:
   round (m), Brett Heap confirms round (l)'s five texts and rules R-320 (R-319,
-  R-321)'); and round (n), lane 3's W91 and W95 reads of rounds (l) and (m),
-  under the lead's R-341, with one unread condition at every site, and Brett
-  Heap's "R-324: yes" (R-343), which extends every no-prune warning to `git
-  worktree remove` and `git gc` (the commit titled 'Amend change 1: round (n),
-  one unread condition, W91 and W95 items, R-324: yes (R-341, R-343)'); verified
-  by the table "Questions Resolved by the Alignment Review" in `proposal.md` and
-  the later-rulings list under it, which name the section each ruling edited.
+  R-321)'); and round (n), lane 3's W91 and W95 reads of rounds (l) and (m) and
+  its W100 LOW-A, under the lead's R-341 and R-336, with one unread condition at
+  every site, and Brett Heap's "R-324: yes" (R-343), which extends every
+  no-prune warning to `git worktree remove` and `git gc` (the commits whose
+  titles begin 'Amend change 1: round (n)', the first titled 'Amend change 1:
+  round (n), one unread condition, W91 and W95 items, R-324: yes (R-341,
+  R-343)'); verified by the table "Questions Resolved by the Alignment Review"
+  in `proposal.md` and the later-rulings list under it, which name the section
+  each ruling edited.
 - [x] 1.3 Council resolved: every concern is VALID, none dismissed, the verdicts
   V1 to V12 applied to `proposal.md` (`ea9c73b`) and the five NOTED constraints
   recorded as N1 to N5 in `clarifications.md` (`1d4ed5b`); verified by

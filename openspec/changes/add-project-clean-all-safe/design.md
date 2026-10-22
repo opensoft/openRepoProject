@@ -68,12 +68,12 @@ confirmation of round (l)'s five texts on 2026-10-22, "R-307: yes; R-310: yes"
 (the lead's R-319), and his "R-320: yes" (the lead's R-321) on the stale
 recommendations and the cap remedy, with F-1's (b) beside an unread row recorded
 as open, Context, D18 and Open Questions; and round (n), lane
-openRepoProject-3's W91 and W95 reads of rounds (l) and (m), under the lead's
-R-341, with Brett Heap's "R-324: yes" (the lead's R-343), Context, D9, D18 and
-Open Questions. Brett Heap's ruling of 2026-10-09 on open question 1, that a
-local ancestry proof outranks `remote-gone` for worktree rows, is in
-`proposal.md` Decisions and edited Context, D6, D7, D20, Risks, the Migration
-Plan and Open Questions here.
+openRepoProject-3's W91 and W95 reads of rounds (l) and (m) and its W100 LOW-A,
+under the lead's R-341 and R-336, with Brett Heap's "R-324: yes" (the lead's
+R-343), Context, D7, D8, D9, D18 and Open Questions. Brett Heap's ruling of
+2026-10-09 on open question 1, that a local ancestry proof outranks
+`remote-gone` for worktree rows, is in `proposal.md` Decisions and edited
+Context, D6, D7, D20, Risks, the Migration Plan and Open Questions here.
 
 Citations are `file:line` at `da33d92`: `BA`, `DI`, `OV` and `HO` are the
 packet's batch-cleanup, project-discovery, overview and handoff documents, and
@@ -508,7 +508,11 @@ can redirect a row, without parsing configuration in `project`, and the probe
 runs only in such repositories. Checked here on Git 2.36.6 and 2.43.0: the
 extension read exits 1 when unset and prints `true` when set; the probe prints
 the decoy for a `core.worktree` in `config.worktree` and for one in the common
-`config`, and fails with 128 under `core.bare=true`.
+`config`, and fails with 128 under `core.bare=true`. Row 4b reads
+`core.worktree` the same way: an exit 1 with nothing printed is the key unset,
+and any other failure, an exit 1 that printed anything included, makes the main
+worktree unreadable, so the run is refused `target-not-repository-root` (lane
+openRepoProject-3's W100 LOW-A; the lead's R-336).
 
 The two-way registration also reads the administrative directory's `commondir`
 file, from which Git takes a linked worktree's common directory
@@ -605,11 +609,11 @@ The main worktree is decided in this order (M6, R11):
    `target-not-repository-root` in every mode (R10, OQ-15).
 3. The first registry record equals the common directory (a main checkout whose
    `.git` is a file): the main worktree is the realpath of `core.worktree` (row
-   4b); where that is unset, as `git init --separate-git-dir` leaves it, it is
-   the candidate toplevel whose `.git` file's `gitdir:` line names the common
-   directory; where neither names it, as from a linked worktree of such a
-   repository, the argument is refused. The common directory is never probed as
-   a row.
+   4b, whose failure rule D7 gives); where that is unset, as `git init
+   --separate-git-dir` leaves it, it is the candidate toplevel whose `.git`
+   file's `gitdir:` line names the common directory; where neither names it, as
+   from a linked worktree of such a repository, the argument is refused. The
+   common directory is never probed as a row.
 4. Otherwise the main worktree is the first record's realpath.
 
 The merge target follows the resolution order the deltas state, over row 6's

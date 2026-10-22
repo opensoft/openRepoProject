@@ -2575,11 +2575,11 @@ work`, its scenario "Row cap and planning failures").
 
 Round (n), lane openRepoProject-3's W91 confirm read of round (l) at `ccc52b9`
 (HIGH 0, MEDIUM 2, LOW 1) and W95 confirm read of round (m) at `20084cd` (HIGH
-0, MEDIUM 1, LOW 3), under the lead's R-341, with Brett Heap's answer of
-2026-10-22 to the one question that the lead's R-324 put to him, "R-324: yes"
-(the lead's R-343) (validate 9 of 9, the scenario counts 71, 22 and 24). The
-labels T1 to T8 are W91's and W95's: T1 is the next step of an
-`inspection-error` row whose path could not be read; T2 and T3 are the plan's
+0, MEDIUM 1, LOW 3), and its W100 LOW-A, under the lead's R-341 and R-336, with
+Brett Heap's answer of 2026-10-22 to the one question that the lead's R-324 put
+to him, "R-324: yes" (the lead's R-343) (validate 9 of 9, the scenario counts
+71, 22 and 24). The labels T1 to T8 are W91's and W95's: T1 is the next step of
+an `inspection-error` row whose path could not be read; T2 and T3 are the plan's
 `inspection-incomplete` remedy in its plain form and in its redirect variant; T4
 and T5 are the next steps of the other `inspection-error` rows and of the
 `registration-mismatch` rows; T6 and T7 are the recommendation of a
@@ -2640,10 +2640,18 @@ reasons that the deltas give for `git worktree prune` stand, and the scenario
 counts stay 71, 22 and 24. Apart from that closing clause, T1 to T8 and the
 third text are unchanged, and F-1's (a) and (b) and F-2's text are unchanged,
 byte for byte; F-1's (b) beside an unread row stays open in design Open
-Questions as worded. This round's commit also re-wrapped the lines after each of
-its edits, up to where the old line breaks resume, with no other change of words
-(this list; the amendments list; What Changes; Capabilities `:55`; design
-Context, D9, D18, Open Questions; `tasks.md` 1.2; the deltas named above).
+Questions as worded. Design D7 states the failure rule of row 4b (`config --get
+core.worktree`, row 4b of D6's table, which D8 uses), where #19 stated none: an
+exit 1 with nothing printed is the key unset, and any other failure, an exit 1
+that printed anything included, makes the main worktree unreadable, so the run
+is refused `target-not-repository-root`, as row 4c reads an unset value as false
+and any other failure as true (W100 LOW-A; the lead's R-336, which gave feature
+004 the same reading); it is a lane ruling that adds a rule and replaces no
+sentence, in no delta, and D8's row 4b points to it. This round's commits also
+re-wrapped the lines after each of their edits, up to where the old line breaks
+resume, with no other change of words (this list; the amendments list; What
+Changes; Capabilities `:55`; design Context, D7, D8, D9, D18, Open Questions;
+`tasks.md` 1.2; the deltas named above).
 
 ### Council Verdicts
 
