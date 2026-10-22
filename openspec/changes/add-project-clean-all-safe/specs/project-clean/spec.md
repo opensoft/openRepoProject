@@ -716,9 +716,10 @@ filesystem budget and never by a Git child. One outcome rule SHALL govern the
 gate: a marker present SHALL make the row `operation-in-progress`; an error on
 the listing SHALL make the row `inspection-error`, as any failed row probe does,
 so that the plan is incomplete with `inspection-incomplete`; a listing not
-finished within the filesystem budget SHALL leave the row unprobed and the plan
-incomplete with `inspection-incomplete`; and the deadline passing SHALL leave it
-incomplete with `deadline-exceeded`, as for every other read.
+finished within the filesystem budget, the deadline not being the limit, SHALL
+record `probe-timeout` and make the row `inspection-error` likewise; and the
+deadline passing SHALL leave it incomplete with `deadline-exceeded`, as for
+every other read.
 
 A row SHALL be excluded as `worktree-only-commits` when a commit that its own
 HEAD reflog or a ref under its own `refs/worktree/` holds is reachable from no
@@ -738,10 +739,10 @@ SHALL each make the row `worktree-only-commits`, at the gate's place in this
 order; any other error on the read, and a child that cannot be started or exits
 nonzero, as on a missing object, SHALL make the row `inspection-error`, as any
 failed row probe does; a child stopped at its 5 s budget, the deadline not being
-the limit, SHALL record `probe-timeout` and make the row `inspection-error`; a
-read not finished within the filesystem budget SHALL leave the row unprobed; and
-a read or child that the deadline cuts SHALL record `deadline-exceeded`. Each of
-those four SHALL leave the plan incomplete, with `inspection-incomplete` or
+the limit, SHALL record `probe-timeout` and make the row `inspection-error`, and
+so SHALL a read not finished within the filesystem budget; and a read or child
+that the deadline cuts SHALL record `deadline-exceeded`. Each of those four
+SHALL leave the plan incomplete, with `inspection-incomplete` or
 `deadline-exceeded`, as for every other read and child.
 
 `selected` and `excluded` SHALL be in canonical order, by raw path bytes, and

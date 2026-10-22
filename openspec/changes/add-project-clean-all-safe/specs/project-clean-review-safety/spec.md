@@ -111,21 +111,26 @@ manifest or merge-target difference, `contains-submodule` for a new gitlink or
 a line that cannot be parsed. A value that was null in the plan and is null at
 revalidation, such as the `upstream_oid`, `ahead` and `behind` of a selected row
 whose upstream was deleted, SHALL NOT count as a difference; a value that cannot
-be re-read, a filesystem call that times out included, SHALL count as a
-difference, other than a read that the work deadline cuts, which the rule below
-decides, and where the listing, read or child of the `operation-in-progress` or
-`worktree-only-commits` check fails or runs past its own budget, that difference
-SHALL be `state-changed`, as it is for a status probe that fails there. One rule
-SHALL decide every Git child of these steps that does not finish with a value:
-one that the work deadline cuts, as any read the deadline cuts, SHALL count as
-no difference, and the target and every later one SHALL be `not-attempted` with
-`deadline-exceeded`; one that fails, or that runs past its own budget while the
-deadline is not the limit, SHALL count as a difference with the reason
-`state-changed`, whatever its step. A Git child SHALL give its step's own reason
-only for a value it decided, so that only an effective work tree that the probe
+be re-read SHALL count as a difference, other than one that the work deadline
+cuts, as the rule that follows decides. One rule SHALL decide every Git child
+and every filesystem call of these steps that does not finish with a value: one
+that the work deadline cuts SHALL count as no difference, and the target and
+every later one SHALL be `not-attempted` with `deadline-exceeded`; one that
+fails, or that runs past its own budget while the deadline is not the limit,
+SHALL count as a difference with the reason `state-changed`, whatever its step,
+as for a status probe that fails there and for the listing, read or child of the
+`operation-in-progress` or `worktree-only-commits` check. A filesystem call that
+finds no file or directory at its path (`ENOENT` or `ENOTDIR`) SHALL not count
+as one that fails: it SHALL decide that the path is absent. A Git child or a
+filesystem call SHALL give its step's own reason only for a value it decided, so
+that, of the work-tree probe's outcomes, only an effective work tree that it
 decides is not the target's path gives `identity-changed`, and a work-tree probe
 that fails, runs past its own budget or prints anything but one line gives
-`state-changed` (the lead's R-171). The first target's repository-wide checks
+`state-changed` (the lead's R-171), and so that a filesystem call reading the
+repository's or the target's identity or registration that fails, or runs past
+its own budget while the deadline is not the limit, gives `state-changed`, while
+a different value that it decides, an absent path included, gives
+`identity-changed` (the lead's R-208). The first target's repository-wide checks
 SHALL serve as the preflight of every selected target, so that a difference
 found there removes nothing at all. Push and delete-branch SHALL keep the full
 re-inspection, and SHALL refuse with `inspection-incomplete`, `inspect-cap` or
@@ -256,6 +261,9 @@ are no part of that defense.
 - **AND** the same holds when, instead, a line naming an object that the
   repository does not hold is appended to P's `logs/HEAD`, so that the
   reachability child exits 128 with `fatal: bad object`
+- **AND** the same holds, with `state-changed` rather than `identity-changed`,
+  when, instead, P's `.git` file loses its read permission, so that the read of
+  P's registration fails
 
 #### Scenario: A work-tree probe at revalidation
 

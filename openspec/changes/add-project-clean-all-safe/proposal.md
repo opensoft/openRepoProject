@@ -574,9 +574,13 @@ Headers are quoted verbatim, one per line; ADDED headers are proposed text.
     child except the push child are no part of it). A value null in the plan and
     null at revalidation, as a deleted upstream's `upstream_oid`, `ahead` and
     `behind` are, is no difference, while a value that cannot be re-read is
-    (Brett Heap's ruling of 2026-10-09; Decisions). The scenario (`:55-58`)
-    stays; a worktree that becomes dirty after revalidation is refused by Git
-    (`failed`, `git-refused`, exit 128) and is still preserved (`BA:298`).
+    (Brett Heap's ruling of 2026-10-09; Decisions); a Git child or filesystem
+    call that fails, or runs past its own budget while the deadline is not the
+    limit, is `state-changed` whatever its step, and one that the work deadline
+    cuts leaves the target `not-attempted` with `deadline-exceeded` (the lead's
+    R-171 and R-208). The scenario (`:55-58`) stays; a worktree that becomes
+    dirty after revalidation is refused by Git (`failed`, `git-refused`, exit
+    128) and is still preserved (`BA:298`).
   - Untouched (`:9`, `current` keeps its baseline meaning):
     `### Requirement: Cleanup protects the process worktree`.
   - Untouched (`:38`, a push still uses the configured mapping):
@@ -1272,25 +1276,45 @@ OQ-29's cap; these bind until that revision merges (C2 is now reading R9).
   costs a second archive and leaves the archived spec wrong in between.
 - **LQ-20, the fit where `extensions.worktreeConfig` is true.** LQ-11's
   effective-work-tree probe runs for every linked row at plan time, and the
-  question's first step is the basis (design D14, Risks; the lead's R-178 and
-  R-190). The cap test is D5's, at task 2.1's measured costs, but task 2.1
-  measured neither that probe nor LQ-13's `rev-list`. At D14's flat 150 ms per
-  child a 128-row `--all-safe --apply` in such a repository reaches its first
-  removal at 45.3 s, past the 5 s floor, and removes nothing, which is safe. At
-  the measured costs, with the identity probe's 19.7 ms and the full ref
-  listing's 359.7 ms standing in for the two unmeasured probes, all 16 removals
-  fit (15 with 20,000-file removals), the 16th only while the work-tree probe
-  costs at most about 69 ms with the margin. On the mixed basis, the measured
-  costs plus 150 ms for each child added since, 11 fit. Before Brett Heap, with
-  no recommendation here: first, (i) measure those two probes on task 2.1's
-  protocol and rerun the cap test, or (ii) decide which basis the cap test uses;
-  then, only if the case fails on that basis, (a) accept that worst case; (b)
-  bound the plan-time work-tree probe to the selected targets, at most 16, and
-  report the other rows' identity as unverified; (c) a larger removal floor
-  where `extensions.worktreeConfig` is true; or (d) the rule's own step,
-  lowering the caps (BA:766-771), which gives 64 rows and 8 targets on the 150
-  ms basis and 128 rows and 8 targets on the mixed one, or, where the row cap is
-  chosen first, 32 rows and 16 targets and 64 rows and 16 targets (design D14).
+  question's first step is the basis (design D14, Risks; the lead's R-178,
+  R-190, R-207 and R-208). The cap test is D5's, at task 2.1's measured costs
+  and its 10,000-file removal, but task 2.1 measured neither that probe nor
+  LQ-13's `rev-list`. At D14's flat 150 ms per child a 128-row `--all-safe
+  --apply` in such a repository reaches its first removal at 45.3 s, past the
+  45 s spawn limit (the 50 s work deadline less the 5 s removal floor), and
+  removes nothing, which is safe. At the measured costs, with the identity
+  probe's 19.7 ms and the full ref listing's 359.7 ms standing in for the two
+  unmeasured probes, all 16 removals fit (15 with 20,000-file removals), the
+  16th only while the work-tree probe costs at most about 69 ms with the margin.
+  On the mixed basis, the measured costs plus 150 ms for each child added since,
+  11 fit. Before Brett Heap, with no recommendation here: first, (i) measure
+  those two probes on task 2.1's protocol and rerun the cap test, or (ii) decide
+  which basis the cap test uses, the measured one as D5 was ratified, the mixed
+  one, or BA's flat 150 ms, which would change D5; then, only if the case fails
+  on that basis, one of these, each with its result at 128 rows on each basis:
+  - (a) accept that worst case:
+    - 150 ms: no removal on this run or any re-run, since a re-run builds the
+      same plan, so a re-run does not continue there; from 127 rows, one removal
+      a run at first; a `--worktree` removal still fits;
+    - measured: 16 a run;
+    - mixed: 11, then 13, then 16 a run;
+  - (b) bound the plan-time work-tree probe to the selected targets, at most 16,
+    and report the other rows' identity as unverified:
+    - 150 ms: 13 of 16, so (c) or (d) would be needed as well;
+    - measured: 16;
+    - mixed: 16;
+  - (c) a longer work deadline where `extensions.worktreeConfig` is true, so
+    that later removals can still start, the 5 s removal floor kept:
+    - 150 ms: at least 70.55 s, which moves the 64 s run bound to 84.55 s;
+    - measured: none needed;
+    - mixed: at least 55.0 s, a run bound of 69.0 s;
+  - (d) the rule's own step, lowering the caps (BA:766-771):
+    - 150 ms: 64 rows and 8 targets, or 32 rows and 16 targets with the row cap
+      chosen first, and a report cap of 128;
+    - measured: none needed;
+    - mixed: 128 rows and 8 targets, or 64 rows and 16 targets with the row cap
+      chosen first, and a report cap of 128.
+
   The deltas as written give (a)'s behaviour until he rules.
 
 The question of a merged worktree whose remote branch was deleted is closed:
@@ -1602,7 +1626,34 @@ re-wrapped the paragraphs its edits lengthened, with no other change of words
 (Open Questions; this list; design Context, D7, D14, D21, D22, Risks, Open
 Questions; `tasks.md` 1.2, 1.4; the deltas' `Clean bounds its Git work and
 reports omitted work` and `Cleanup revalidates destructive actions`, with its
-added scenario "A work-tree probe at revalidation").
+added scenario "A work-tree probe at revalidation"). Lane openRepoProject-3's
+W36 confirm read of that round at `2e819ad` (HIGH 0, MEDIUM 2, LOW 6), under the
+lead's R-207 and R-208, with its W32 read of LQ-14 in feature 004 (the lead's
+R-200): rewords LQ-20's option (c) as a longer work deadline where
+`extensions.worktreeConfig` is true, the 5 s removal floor kept, since a larger
+floor would remove fewer, and calls 45 s the spawn limit (M-A, R-207); gives
+each option's result on each basis, among them that under (a) a 128-row
+repository at 150 ms per child removes nothing on every re-run, and that (b)
+fits 13 of 16 there (M-B); gives (d)'s 150 ms time with E = T, 33.15 s (L-a);
+cites PR #11 and its rule for D14's costs (L-b); names the 10,000-file removal
+as the cap test's (L-c); excepts LQ-20 from the Open Questions preamble's
+recommendation (L-d); names the three bases of LQ-20's step (ii), BA's flat one
+as a change to D5 (L-e); and says where D14's Time column stops (L-f). By W32's
+L1 and R-208, a listing of the `operation-in-progress` gate, or a `logs/HEAD`
+read of the `worktree-only-commits` gate, not finished within the filesystem
+budget makes the row `inspection-error` with `probe-timeout`, as feature 004
+builds both, where the text said the row was left unprobed. By R-208, at
+revalidation a filesystem call that fails, or runs past its own budget while the
+deadline is not the limit, gives `state-changed` whatever its step, as a Git
+child does, a decided value keeping its step's reason, a path found missing
+deciding that it is absent, and a deadline cut giving `deadline-exceeded`; the
+scenario "A check that fails at revalidation" gains an unreadable `.git` file.
+This commit also re-wrapped the paragraphs its edits lengthened, with no other
+change of words (Capabilities `:49`; Open Questions; this list; design Context,
+D7, D14, D21, D22, Risks, Open Questions; `tasks.md` 1.2; the deltas' `Clean
+previews and applies a batch of eligible worktree removals in one repository`
+and `Cleanup revalidates destructive actions`, with its scenario "A check that
+fails at revalidation").
 
 ### Council Verdicts
 
